@@ -4369,7 +4369,10 @@ components:
         expression:
           type: string
         filterByContainerStatus:
-          $ref: '#/components/schemas/InframonitoringtypesContainerStatus'
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesContainerStatus'
+          nullable: true
+          type: array
       type: object
     InframonitoringtypesContainerReady:
       enum:

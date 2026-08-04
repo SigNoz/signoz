@@ -83,11 +83,11 @@ type PostableContainers struct {
 }
 
 // ContainerFilter is the attribute filter plus an optional secondary filter on
-// the derived container display status (see ContainerStatus). Empty
-// FilterByContainerStatus = off.
+// the derived container display status(es) (see ContainerStatus; matches any
+// listed, OR). Empty FilterByContainerStatus = off.
 type ContainerFilter struct {
 	qbtypes.Filter          `json:",inline"`
-	FilterByContainerStatus ContainerStatus `json:"filterByContainerStatus"`
+	FilterByContainerStatus []ContainerStatus `json:"filterByContainerStatus"`
 }
 
 // Validate ensures PostableContainers contains acceptable values.
@@ -129,8 +129,12 @@ func (req *PostableContainers) Validate() error {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "offset cannot be negative")
 	}
 
-	if req.Filter != nil && !req.Filter.FilterByContainerStatus.IsZero() && !IsFilterableContainerStatus(req.Filter.FilterByContainerStatus) {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid filter by container status: %s", req.Filter.FilterByContainerStatus)
+	if req.Filter != nil {
+		for _, c := range req.Filter.FilterByContainerStatus {
+			if !IsFilterableContainerStatus(c) {
+				return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid filter by container status: %s", c)
+			}
+		}
 	}
 
 	if req.OrderBy != nil {

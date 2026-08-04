@@ -5972,7 +5972,10 @@ export interface InframonitoringtypesContainerFilterDTO {
 	 * @type string
 	 */
 	expression?: string;
-	filterByContainerStatus?: InframonitoringtypesContainerStatusDTO;
+	/**
+	 * @type array,null
+	 */
+	filterByContainerStatus?: InframonitoringtypesContainerStatusDTO[] | null;
 }
 
 export enum InframonitoringtypesContainerReadyDTO {

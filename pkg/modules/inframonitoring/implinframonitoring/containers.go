@@ -154,7 +154,7 @@ func (m *module) getTopContainerGroupsAndMetadata(
 		statusCounts            map[string]containerStatusCounts
 		statusWarning           *qbtypes.QueryWarnData
 		filter                  *qbtypes.Filter
-		filterByContainerStatus inframonitoringtypes.ContainerStatus
+		filterByContainerStatus []inframonitoringtypes.ContainerStatus
 	)
 
 	orderByKey = req.OrderBy.Key.Name
@@ -175,7 +175,7 @@ func (m *module) getTopContainerGroupsAndMetadata(
 		return err
 	})
 
-	if !filterByContainerStatus.IsZero() {
+	if len(filterByContainerStatus) != 0 {
 		g.Go(func() error {
 			var err error
 			statusCounts, statusWarning, err = m.getPerGroupContainerStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, filter, req.GroupBy, nil, filterByContainerStatus)
@@ -190,7 +190,7 @@ func (m *module) getTopContainerGroupsAndMetadata(
 		// Secondary filter: keep only status-matching groups. A missing metric
 		// yields an empty statusCounts, so this correctly empties the result
 		// (the caller also surfaces the warning).
-		if !filterByContainerStatus.IsZero() {
+		if len(filterByContainerStatus) != 0 {
 			metadataMap = intersectMap(metadataMap, statusCounts)
 		}
 		pageGroups := inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.ContainerNameAttrKey)
@@ -246,7 +246,7 @@ func (m *module) getTopContainerGroupsAndMetadata(
 	// Secondary filter: intersect ranked groups + metadata with the status keyset.
 	// A missing metric yields an empty statusCounts, correctly emptying the result
 	// (the caller also surfaces the warning).
-	if !filterByContainerStatus.IsZero() {
+	if len(filterByContainerStatus) != 0 {
 		allMetricGroups = intersectRankedGroups(allMetricGroups, statusCounts)
 		metadataMap = intersectMap(metadataMap, statusCounts)
 	}
@@ -282,7 +282,7 @@ func (m *module) getPerGroupContainerStatusCountsWithReqMetricChecks(
 	filter *qbtypes.Filter,
 	groupBy []qbtypes.GroupByKey,
 	pageGroups []map[string]string,
-	filterByContainerStatus inframonitoringtypes.ContainerStatus,
+	filterByContainerStatus []inframonitoringtypes.ContainerStatus,
 ) (map[string]containerStatusCounts, *qbtypes.QueryWarnData, error) {
 	present, err := m.getMetricsExistence(ctx, containerStatusMetricNamesList)
 	if err != nil {
@@ -315,15 +315,19 @@ func (m *module) getPerGroupContainerStatusCountsWithReqMetricChecks(
 	return counts, nil, nil
 }
 
-// containerStatusFilterClause returns the outer WHERE clause (and its arg) that
-// restricts container_status to a single display status. valuer lowercases the
-// wire value while display_status is kubectl-cased, so we compare lower() on
-// both. Empty status returns no clause.
-func containerStatusFilterClause(filterByContainerStatus inframonitoringtypes.ContainerStatus) (string, []any) {
-	if filterByContainerStatus.IsZero() {
-		return "", nil
+// applyContainerStatusFilter adds the display-status push-down (lower(display_status)
+// IN (...)) to the outer count builder. valuer lowercases the wire value while
+// display_status is kubectl-cased, so we compare lower() on both. No-op when the
+// requested set is empty.
+func applyContainerStatusFilter(cb *sqlbuilder.SelectBuilder, filterByContainerStatus []inframonitoringtypes.ContainerStatus) {
+	if len(filterByContainerStatus) == 0 {
+		return
 	}
-	return " WHERE lower(display_status) = ? ", []any{filterByContainerStatus.StringValue()}
+	vals := make([]string, len(filterByContainerStatus))
+	for i, c := range filterByContainerStatus {
+		vals[i] = c.StringValue()
+	}
+	cb.Where(cb.In("lower(display_status)", sqlbuilder.List(vals)))
 }
 
 // getPerGroupContainerStatusCounts computes per-group counts of distinct
@@ -350,11 +354,11 @@ func (m *module) getPerGroupContainerStatusCounts(
 	filter *qbtypes.Filter,
 	groupBy []qbtypes.GroupByKey,
 	pageGroups []map[string]string,
-	filterByContainerStatus inframonitoringtypes.ContainerStatus,
+	filterByContainerStatus []inframonitoringtypes.ContainerStatus,
 ) (map[string]containerStatusCounts, error) {
 	// Empty pageGroups means "span all under user filter", allowed only in
 	// full-scope mode (filtering by status). Otherwise it's an empty page.
-	if len(groupBy) == 0 || (len(pageGroups) == 0 && filterByContainerStatus.IsZero()) {
+	if len(groupBy) == 0 || (len(pageGroups) == 0 && len(filterByContainerStatus) == 0) {
 		return map[string]containerStatusCounts{}, nil
 	}
 
@@ -538,14 +542,15 @@ func (m *module) getPerGroupContainerStatusCounts(
 		countGroupBy = append(countGroupBy, col)
 	}
 	countSelectCols = append(countSelectCols, statusCountCols...)
-	// Push-down: keep only containers whose display status matches the requested one.
-	statusWhereClause, statusWhereArgs := containerStatusFilterClause(filterByContainerStatus)
-	countSQL := fmt.Sprintf(
-		"SELECT %s FROM container_status%s GROUP BY %s",
-		strings.Join(countSelectCols, ", "),
-		statusWhereClause,
-		strings.Join(countGroupBy, ", "),
-	)
+
+	// Outer count query. Built with sqlbuilder so the status push-down uses a
+	// proper IN (keep only containers whose display status is in the requested set).
+	countBuilder := sqlbuilder.NewSelectBuilder()
+	countBuilder.Select(countSelectCols...)
+	countBuilder.From("container_status")
+	applyContainerStatusFilter(countBuilder, filterByContainerStatus)
+	countBuilder.GroupBy(countGroupBy...)
+	countSQL, countArgs := countBuilder.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	// Combine CTEs + outer. Arg order mirrors CTE declaration order.
 	cteFragments := []string{
@@ -558,7 +563,7 @@ func (m *module) getPerGroupContainerStatusCounts(
 	finalSQL := querybuilder.CombineCTEs(cteFragments) + countSQL
 	finalArgs := querybuilder.PrependArgs([][]any{
 		stateFpsArgs, containerStateArgs, reasonFpsArgs, reasonInnerArgs,
-	}, statusWhereArgs)
+	}, countArgs)
 
 	rows, err := m.telemetryStore.ClickhouseDB().Query(ctx, finalSQL, finalArgs...)
 	if err != nil {

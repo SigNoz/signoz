@@ -399,7 +399,7 @@ func (m *module) ListContainers(ctx context.Context, orgID valuer.UUID, req *inf
 	var (
 		filterExpr              string
 		containerFilter         *qbtypes.Filter
-		filterByContainerStatus inframonitoringtypes.ContainerStatus
+		filterByContainerStatus []inframonitoringtypes.ContainerStatus
 		queryResp               *qbtypes.QueryRangeResponse
 		restartCounts           map[string]int64
 		readyCounts             map[string]containerReadyCounts
@@ -420,7 +420,7 @@ func (m *module) ListContainers(ctx context.Context, orgID valuer.UUID, req *inf
 	}
 
 	// Required metric missing while filtering: surface the warning + empty result.
-	if !filterByContainerStatus.IsZero() && statusWarning != nil {
+	if len(filterByContainerStatus) != 0 && statusWarning != nil {
 		resp.Warning = statusWarning
 		resp.Records = []inframonitoringtypes.ContainerRecord{}
 		resp.Total = 0
@@ -455,10 +455,10 @@ func (m *module) ListContainers(ctx context.Context, orgID valuer.UUID, req *inf
 	})
 	// When filtering, statusCounts already holds the full-scope map (a superset
 	// of the page); otherwise compute it page-scoped here.
-	if filterByContainerStatus.IsZero() {
+	if len(filterByContainerStatus) == 0 {
 		g.Go(func() error {
 			var err error
-			statusCounts, statusWarning, err = m.getPerGroupContainerStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, containerFilter, req.GroupBy, pageGroups, inframonitoringtypes.ContainerStatus{})
+			statusCounts, statusWarning, err = m.getPerGroupContainerStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, containerFilter, req.GroupBy, pageGroups, nil)
 			return err
 		})
 	}

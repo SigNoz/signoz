@@ -132,7 +132,7 @@ def test_kube_containers_status_health_and_base_set(
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
-            "filter": {"expression": "k8s.pod.name = 'crun'", "filterByContainerStatus": "running"},
+            "filter": {"expression": "k8s.pod.name = 'crun'", "filterByContainerStatus": ["running"]},
         },
         timeout=5,
     )
@@ -148,7 +148,7 @@ def test_kube_containers_status_health_and_base_set(
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
-            "filter": {"expression": "k8s.pod.name = 'cclo'", "filterByContainerStatus": "CrashLoopBackOff"},
+            "filter": {"expression": "k8s.pod.name = 'cclo'", "filterByContainerStatus": ["CrashLoopBackOff"]},
         },
         timeout=5,
     )
@@ -163,12 +163,42 @@ def test_kube_containers_status_health_and_base_set(
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
-            "filter": {"expression": "k8s.pod.name = 'crun'", "filterByContainerStatus": "CrashLoopBackOff"},
+            "filter": {"expression": "k8s.pod.name = 'crun'", "filterByContainerStatus": ["CrashLoopBackOff"]},
         },
         timeout=5,
     )
     assert crun_mismatch.status_code == HTTPStatus.OK, crun_mismatch.text
     assert crun_mismatch.json()["data"]["total"] == 0
+
+    # Multi-select is OR: a set containing the container's status keeps it; a set
+    # with none of its statuses drops it.
+    crun_or_keep = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.pod.name = 'crun'", "filterByContainerStatus": ["running", "CrashLoopBackOff"]},
+        },
+        timeout=5,
+    )
+    assert crun_or_keep.status_code == HTTPStatus.OK, crun_or_keep.text
+    assert crun_or_keep.json()["data"]["total"] == 1
+
+    crun_all_mismatch = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.pod.name = 'crun'", "filterByContainerStatus": ["CrashLoopBackOff", "OOMKilled"]},
+        },
+        timeout=5,
+    )
+    assert crun_all_mismatch.status_code == HTTPStatus.OK, crun_all_mismatch.text
+    assert crun_all_mismatch.json()["data"]["total"] == 0
 
 
 def test_kube_containers_status_counts_grouped_mode(
@@ -225,7 +255,7 @@ def test_kube_containers_status_counts_grouped_mode(
             "end": int(now.timestamp() * 1000),
             "groupBy": [{"name": "k8s.namespace.name", "fieldDataType": "string", "fieldContext": "resource"}],
             "limit": 50,
-            "filter": {"filterByContainerStatus": "running"},
+            "filter": {"filterByContainerStatus": ["running"]},
         },
         timeout=5,
     )
@@ -243,7 +273,7 @@ def test_kube_containers_status_counts_grouped_mode(
             "end": int(now.timestamp() * 1000),
             "groupBy": [{"name": "k8s.namespace.name", "fieldDataType": "string", "fieldContext": "resource"}],
             "limit": 50,
-            "filter": {"filterByContainerStatus": "OOMKilled"},
+            "filter": {"filterByContainerStatus": ["OOMKilled"]},
         },
         timeout=5,
     )
@@ -261,12 +291,48 @@ def test_kube_containers_status_counts_grouped_mode(
             "end": int(now.timestamp() * 1000),
             "groupBy": [{"name": "k8s.namespace.name", "fieldDataType": "string", "fieldContext": "resource"}],
             "limit": 50,
-            "filter": {"filterByContainerStatus": "Terminated"},
+            "filter": {"filterByContainerStatus": ["Terminated"]},
         },
         timeout=5,
     )
     assert absent.status_code == HTTPStatus.OK, absent.text
     assert absent.json()["data"]["total"] == 0
+
+    # Multi-select is OR: keeps every group with any matching container (union
+    # across groups); a fully-absent set drops all.
+    union = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "groupBy": [{"name": "k8s.namespace.name", "fieldDataType": "string", "fieldContext": "resource"}],
+            "limit": 50,
+            "filter": {"filterByContainerStatus": ["running", "OOMKilled"]},
+        },
+        timeout=5,
+    )
+    assert union.status_code == HTTPStatus.OK, union.text
+    udata = union.json()["data"]
+    u_by_ns = {r["meta"]["k8s.namespace.name"]: r for r in udata["records"]}
+    assert set(u_by_ns) == {"ns-a", "ns-b"}
+    assert u_by_ns["ns-a"]["containerCountsByStatus"]["running"] == 2
+    assert u_by_ns["ns-b"]["containerCountsByStatus"]["oomKilled"] == 1
+
+    absent_multi = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "groupBy": [{"name": "k8s.namespace.name", "fieldDataType": "string", "fieldContext": "resource"}],
+            "limit": 50,
+            "filter": {"filterByContainerStatus": ["Terminated", "Waiting"]},
+        },
+        timeout=5,
+    )
+    assert absent_multi.status_code == HTTPStatus.OK, absent_multi.text
+    assert absent_multi.json()["data"]["total"] == 0
 
 
 def test_kube_containers_status_recency(
@@ -396,7 +462,7 @@ def test_kube_containers_status_warning_missing_metrics(
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
-            "filter": {"filterByContainerStatus": "Running"},
+            "filter": {"filterByContainerStatus": ["Running"]},
         },
         timeout=5,
     )
@@ -527,12 +593,12 @@ def test_kube_containers_orderby_and_pagination(
             id="orderby_container_name_with_groupby",
         ),
         pytest.param(
-            {"filter": {"filterByContainerStatus": "bogus"}},
+            {"filter": {"filterByContainerStatus": ["bogus"]}},
             "invalid filter by container status",
             id="filter_by_container_status_invalid",
         ),
         pytest.param(
-            {"filter": {"filterByContainerStatus": "no_data"}},
+            {"filter": {"filterByContainerStatus": ["no_data"]}},
             "invalid filter by container status",
             id="filter_by_container_status_no_data",
         ),
