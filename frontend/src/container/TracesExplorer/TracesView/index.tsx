@@ -34,8 +34,9 @@ import DOCLINKS from 'utils/docLinks';
 
 import TraceExplorerControls from '../Controls';
 import { TracesLoading } from '../TraceLoading/TraceLoading';
-import { columns, PER_PAGE_OPTIONS } from './configs';
+import { getTraceViewColumns, PER_PAGE_OPTIONS } from './configs';
 import { ActionsContainer, Container } from './styles';
+import useTraceViewColumns from './useTraceViewColumns';
 
 interface TracesViewProps {
 	isFilterApplied: boolean;
@@ -62,6 +63,25 @@ function TracesView({
 		QueryParams.pagination,
 	);
 
+	// POC: own column visibility — not useOptionsMenu (would collide with List View)
+	const { visibleKeys, selectedFields, availableFields, onFieldsChange } =
+		useTraceViewColumns();
+
+	const fieldsSelectorConfig = useMemo(
+		() => ({
+			fieldsSelector: {
+				value: selectedFields,
+				onFieldsChange,
+			},
+		}),
+		[selectedFields, onFieldsChange],
+	);
+
+	const visibleColumns = useMemo(
+		() => getTraceViewColumns(visibleKeys),
+		[visibleKeys],
+	);
+
 	const transformedQuery = useMemo(
 		() => getListViewQuery(stagedQuery || initialQueriesMap.traces),
 		[stagedQuery],
@@ -76,6 +96,7 @@ function TracesView({
 			stagedQuery,
 			panelType,
 			paginationQueryData,
+			// POC D5: column visibility is client-side — do NOT put visibleKeys in queryKey
 		],
 		[
 			globalSelectedTime,
@@ -100,6 +121,8 @@ function TracesView({
 			params: {
 				dataSource: 'traces',
 			},
+			// POC D5: never send selectColumns — backend returns all columns;
+			// visibility is client-side so toggling is refetch-free.
 			tableParams: {
 				pagination: paginationQueryData,
 			},
@@ -162,6 +185,8 @@ function TracesView({
 							isLoading={isLoading}
 							totalCount={responseData?.length || 0}
 							perPageOptions={PER_PAGE_OPTIONS}
+							config={fieldsSelectorConfig}
+							availableFields={availableFields}
 						/>
 					</div>
 				</ActionsContainer>
@@ -190,7 +215,7 @@ function TracesView({
 			{(tableData || []).length !== 0 && (
 				<ResizeTable
 					loading={isLoading}
-					columns={columns}
+					columns={visibleColumns}
 					tableLayout="fixed"
 					dataSource={tableData}
 					scroll={{ x: true }}

@@ -5,6 +5,7 @@ import FieldsSelector from 'components/FieldsSelector';
 import Controls, { ControlsProps } from 'container/Controls';
 import { OptionsMenuConfig } from 'container/OptionsMenu/types';
 import useQueryPagination from 'hooks/queryPagination/useQueryPagination';
+import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import styles from './Controls.module.scss';
@@ -15,6 +16,7 @@ function TraceExplorerControls({
 	perPageOptions,
 	config,
 	showSizeChanger = true,
+	availableFields,
 }: TraceExplorerControlsProps): JSX.Element | null {
 	const { t } = useTranslation(['trace']);
 	const [isFieldsSelectorOpen, setIsFieldsSelectorOpen] = useState(false);
@@ -44,6 +46,7 @@ function TraceExplorerControls({
 						onFieldsChange={config.fieldsSelector.onFieldsChange}
 						onClose={(): void => setIsFieldsSelectorOpen(false)}
 						signal={DataSource.TRACES}
+						availableFields={availableFields}
 					/>
 				</>
 			)}
@@ -63,20 +66,20 @@ function TraceExplorerControls({
 	);
 }
 
-TraceExplorerControls.defaultProps = {
-	config: null,
-};
-
 type TraceExplorerControlsProps = Pick<
 	ControlsProps,
 	'isLoading' | 'totalCount' | 'perPageOptions'
 > & {
 	config?: OptionsMenuConfig | null;
 	showSizeChanger?: boolean;
+	/** POC: whitelist for FieldsSelector (skips unscoped key fetch). */
+	availableFields?: TelemetryFieldKey[];
 };
 
 TraceExplorerControls.defaultProps = {
+	config: null,
 	showSizeChanger: true,
+	availableFields: undefined,
 };
 
 export default memo(TraceExplorerControls);

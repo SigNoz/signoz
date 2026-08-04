@@ -31,6 +31,11 @@ interface FieldsSelectorProps {
 	width?: number;
 	height?: number;
 	defaultPosition?: { x: number; y: number };
+	/**
+	 * POC / AI Trace View: when set, Other Fields lists this whitelist instead of
+	 * fetching unscoped keys from the API.
+	 */
+	availableFields?: TelemetryFieldKey[];
 }
 
 type FieldsSelectorContentProps = Omit<FieldsSelectorProps, 'isOpen'>;
@@ -49,6 +54,7 @@ function FieldsSelectorContent({
 	width = DEFAULT_PANEL_WIDTH,
 	height,
 	defaultPosition,
+	availableFields,
 }: FieldsSelectorContentProps): JSX.Element {
 	const resolvedHeight =
 		height ?? window.innerHeight - DEFAULT_PANEL_HEIGHT_OFFSET;
@@ -153,6 +159,7 @@ function FieldsSelectorContent({
 					addedFields={draftFields}
 					onAdd={handleAdd}
 					isAtLimit={isAtLimit}
+					availableFields={availableFields}
 				/>
 
 				{hasUnsavedChanges && (
