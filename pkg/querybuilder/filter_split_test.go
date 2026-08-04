@@ -3,6 +3,7 @@ package querybuilder
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -215,8 +216,8 @@ func TestSplitFilterForAggregates(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			require.Equal(t, c.span, span, "span part")
-			require.Equal(t, c.having, having, "having part")
+			assert.Equal(t, c.span, span, "span part")
+			assert.Equal(t, c.having, having, "having part")
 		})
 	}
 }
