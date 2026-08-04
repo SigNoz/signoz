@@ -1,5 +1,4 @@
 import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
-import { logInfraFilterCustomizedEvent } from 'constants/events';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import {
 	StatusFilterValue,
@@ -9,6 +8,7 @@ import {
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 
 import styles from './StatusFilter.module.scss';
+import { logInfraFilterCustomizedEvent } from 'container/InfraMonitoringK8sV2/Base/events';
 
 const statusOptions: Array<{
 	label: string;
