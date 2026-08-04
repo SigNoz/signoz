@@ -69,7 +69,7 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 		},
 	},
 	{
-		id: 'daemonsetName',
+		id: INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME,
 		header: (): React.ReactNode => (
 			<EntityGroupHeader
 				title="DaemonSet Name"
@@ -80,7 +80,7 @@ export const k8sDaemonSetsColumnsConfig: DaemonSetTableColumnConfig[] = [
 		accessorFn: (row): string =>
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] || '',
 		width: { min: 290 },
-		enableSort: false,
+		enableSort: true,
 		enableRemove: false,
 		enableMove: false,
 		pin: 'left',

@@ -70,7 +70,7 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesSt
 			},
 		},
 		{
-			id: 'statefulsetName',
+			id: INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME,
 			header: (): React.ReactNode => (
 				<EntityGroupHeader
 					title="StatefulSet Name"
@@ -81,7 +81,7 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesSt
 			accessorFn: (row): string =>
 				row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME] || '',
 			width: { min: 290 },
-			enableSort: false,
+			enableSort: true,
 			enableRemove: false,
 			enableMove: false,
 			pin: 'left',

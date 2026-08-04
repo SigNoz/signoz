@@ -98,7 +98,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 		),
 	},
 	{
-		id: 'hostName',
+		id: INFRA_MONITORING_ATTR_KEYS.HOST_NAME,
 		header: (): React.ReactNode => (
 			<EntityGroupHeader
 				title="Hostname"
@@ -108,7 +108,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 		),
 		accessorFn: (row): string => row.hostName ?? '',
 		width: { min: 290 },
-		enableSort: false,
+		enableSort: true,
 		enableRemove: false,
 		enableMove: false,
 		pin: 'left',

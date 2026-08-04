@@ -68,7 +68,7 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 		},
 	},
 	{
-		id: 'podName',
+		id: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME,
 		header: (): React.ReactNode => (
 			<EntityGroupHeader
 				title="Pod Name"
@@ -79,7 +79,7 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 		accessorFn: (row): string =>
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 		width: { min: 290 },
-		enableSort: false,
+		enableSort: true,
 		enableRemove: false,
 		enableMove: false,
 		pin: 'left',

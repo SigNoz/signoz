@@ -70,7 +70,7 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<InframonitoringtypesDep
 			},
 		},
 		{
-			id: 'deploymentName',
+			id: INFRA_MONITORING_ATTR_KEYS.K8S_DEPLOYMENT_NAME,
 			header: (): React.ReactNode => (
 				<EntityGroupHeader
 					title="Deployment Name"
@@ -81,7 +81,7 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<InframonitoringtypesDep
 			accessorFn: (row): string =>
 				row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DEPLOYMENT_NAME] || '',
 			width: { min: 290 },
-			enableSort: false,
+			enableSort: true,
 			enableRemove: false,
 			enableMove: false,
 			pin: 'left',

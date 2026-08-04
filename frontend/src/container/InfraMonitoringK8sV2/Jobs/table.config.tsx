@@ -63,7 +63,7 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		},
 	},
 	{
-		id: 'jobName',
+		id: INFRA_MONITORING_ATTR_KEYS.K8S_JOB_NAME,
 		header: (): React.ReactNode => (
 			<EntityGroupHeader
 				title="Job Name"
@@ -74,7 +74,7 @@ export const k8sJobsColumnsConfig: JobTableColumnConfig[] = [
 		accessorFn: (row): string =>
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_JOB_NAME] || '',
 		width: { min: 290 },
-		enableSort: false,
+		enableSort: true,
 		enableRemove: false,
 		enableMove: false,
 		pin: 'left',
