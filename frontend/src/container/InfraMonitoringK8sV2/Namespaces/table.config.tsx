@@ -8,8 +8,8 @@ import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatBytes, getPodStatusItems } from '../commonUtils';
 import {
-	CellValueTooltip,
 	GroupedStatusCounts,
+	TextNoData,
 	ValidateColumnValueWrapper,
 } from '../components';
 import {
@@ -81,10 +81,9 @@ export const k8sNamespacesColumnsConfig: NamespaceTableColumnConfig[] = [
 		enableMove: false,
 		pin: 'left',
 		visibilityBehavior: 'hidden-on-expand',
-		cell: ({ value }): React.ReactNode => {
-			const namespaceName = value as string;
-			return <CellValueTooltip value={namespaceName} />;
-		},
+		cell: ({ value }): React.ReactNode => (
+			<TanStackTable.Text>{value}</TanStackTable.Text>
+		),
 	},
 	{
 		id: 'clusterName',
@@ -114,13 +113,16 @@ export const k8sNamespacesColumnsConfig: NamespaceTableColumnConfig[] = [
 			row.podCountsByStatus,
 		width: { min: 250 },
 		enableSort: false,
-		cell: ({ row }): React.ReactNode => {
+		cell: ({ row, rowId }): React.ReactNode => {
 			const podCountsByStatus = row.podCountsByStatus;
 			if (!podCountsByStatus) {
-				return <TanStackTable.Text>-</TanStackTable.Text>;
+				return <TextNoData type="tanstack" />;
 			}
 			return (
-				<GroupedStatusCounts items={getPodStatusItems(row.podCountsByStatus)} />
+				<GroupedStatusCounts
+					items={getPodStatusItems(row.podCountsByStatus)}
+					rowId={rowId}
+				/>
 			);
 		},
 	},
@@ -134,13 +136,14 @@ export const k8sNamespacesColumnsConfig: NamespaceTableColumnConfig[] = [
 		accessorFn: (row): number => row.namespaceCPU,
 		width: { min: 190 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const cpu = Number(value);
 			return (
 				<ValidateColumnValueWrapper
 					value={cpu}
 					entity={InfraMonitoringEntity.NAMESPACES}
 					attribute="CPU metric"
+					rowId={rowId}
 				>
 					<TanStackTable.Text>{cpu.toFixed(2)}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
@@ -157,13 +160,14 @@ export const k8sNamespacesColumnsConfig: NamespaceTableColumnConfig[] = [
 		accessorFn: (row): number => row.namespaceMemory,
 		width: { min: 220 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const memory = Number(value);
 			return (
 				<ValidateColumnValueWrapper
 					value={memory}
 					entity={InfraMonitoringEntity.NAMESPACES}
 					attribute="memory metric"
+					rowId={rowId}
 				>
 					<TanStackTable.Text>{formatBytes(memory)}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>

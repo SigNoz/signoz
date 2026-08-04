@@ -1,0 +1,1828 @@
+{
+  "schemaVersion": "v6",
+  "image": "/assets/Logos/gcp-gke",
+  "name": "",
+  "generateName": true,
+  "tags": [
+    {
+      "key": "tag",
+      "value": "kubernetes"
+    },
+    {
+      "key": "tag",
+      "value": "gke"
+    },
+    {
+      "key": "tag",
+      "value": "overview"
+    }
+  ],
+  "spec": {
+    "display": {
+      "name": "GCP Kubernetes Engine Overview",
+      "description": "Overview of GCP Kubernetes Engine metrics"
+    },
+    "variables": [
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "display": {
+            "name": "project_id",
+            "description": "GCP Project ID"
+          },
+          "defaultValue": null,
+          "allowAllValue": false,
+          "allowMultiple": false,
+          "customAllValue": "",
+          "capturingRegexp": "",
+          "sort": "none",
+          "plugin": {
+            "kind": "signoz/DynamicVariable",
+            "spec": {
+              "name": "project_id",
+              "signal": "metrics"
+            }
+          },
+          "name": "project_id"
+        }
+      },
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "display": {
+            "name": "cluster_name",
+            "description": "GKE Cluster name"
+          },
+          "defaultValue": null,
+          "allowAllValue": false,
+          "allowMultiple": false,
+          "customAllValue": "",
+          "capturingRegexp": "",
+          "sort": "none",
+          "plugin": {
+            "kind": "signoz/DynamicVariable",
+            "spec": {
+              "name": "cluster_name",
+              "signal": "metrics"
+            }
+          },
+          "name": "cluster_name"
+        }
+      },
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "display": {
+            "name": "namespace_name",
+            "description": "Kubernetes namespace"
+          },
+          "defaultValue": null,
+          "allowAllValue": false,
+          "allowMultiple": false,
+          "customAllValue": "",
+          "capturingRegexp": "",
+          "sort": "none",
+          "plugin": {
+            "kind": "signoz/DynamicVariable",
+            "spec": {
+              "name": "namespace_name",
+              "signal": "metrics"
+            }
+          },
+          "name": "namespace_name"
+        }
+      }
+    ],
+    "panels": {
+      "1256cd26-13db-47b8-bfb8-e9c651c6d531": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "% Container Memory Limit Utilization",
+            "description": "Non-evictable container memory as a fraction of its memory limit. Cannot exceed 100%; approaching 100% predicts an OOMKill."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "%",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "right",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "stepInterval": 0,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "kubernetes.io/container/memory/limit_utilization",
+                              "temporality": "",
+                              "timeAggregation": "max",
+                              "spaceAggregation": "max",
+                              "reduceTo": "avg"
+                            }
+                          ],
+                          "disabled": true,
+                          "filter": {
+                            "expression": "project_id = $project_id AND cluster_name in $cluster_name AND namespace_name in $namespace_name AND gcp.resource_type = 'k8s_container' AND memory_type = 'non-evictable'"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "pod_name",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            },
+                            {
+                              "name": "container_name",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            }
+                          ],
+                          "order": [],
+                          "selectFields": null,
+                          "having": {
+                            "expression": ""
+                          },
+                          "secondaryAggregations": null,
+                          "functions": [],
+                          "legend": "{{pod_name}}/{{container_name}}"
+                        }
+                      },
+                      {
+                        "type": "builder_formula",
+                        "spec": {
+                          "name": "F1",
+                          "expression": "100*A",
+                          "disabled": false,
+                          "order": null,
+                          "having": {
+                            "expression": ""
+                          },
+                          "functions": null,
+                          "legend": "{{pod_name}}/{{container_name}}"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "12f7a656-230b-466c-bd18-7d90efd47be7": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "% PVC Volume Utilization",
+            "description": "PersistentVolumeClaim fill level. Cannot exceed 100%. Alert above ~85% — a full volume takes the app down."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "%",
+                "decimalPrecision": "3"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "right",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "stepInterval": 0,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "kubernetes.io/pod/volume/utilization",
+                              "temporality": "",
+                              "timeAggregation": "max",
+                              "spaceAggregation": "sum",
+                              "reduceTo": "avg"
+                            }
+                          ],
+                          "disabled": true,
+                          "filter": {
+                            "expression": "project_id = $project_id AND cluster_name in $cluster_name AND namespace_name in $namespace_name AND gcp.resource_type = 'k8s_pod'"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "persistentvolumeclaim_name",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            },
+                            {
+                              "name": "volume_name",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            }
+                          ],
+                          "order": [],
+                          "selectFields": null,
+                          "having": {
+                            "expression": ""
+                          },
+                          "secondaryAggregations": null,
+                          "functions": [],
+                          "legend": "{{persistentvolumeclaim_name}}/{{volume_name}}"
+                        }
+                      },
+                      {
+                        "type": "builder_formula",
+                        "spec": {
+                          "name": "F1",
+                          "expression": "100*A",
+                          "disabled": false,
+                          "order": null,
+                          "having": {
+                            "expression": ""
+                          },
+                          "functions": null,
+                          "legend": "{{persistentvolumeclaim_name}}/{{volume_name}}"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "26b31f4c-2110-4ee2-8427-a1ddb6313f67": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Pod Network Receive Throughput",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "By/s",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "right",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "kubernetes.io/pod/network/received_bytes_count",
+                        "temporality": "",
+                        "timeAggregation": "rate",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "project_id = $project_id AND cluster_name in $cluster_name AND namespace_name in $namespace_name AND gcp.resource_type = 'k8s_pod'"
+                    },
+                    "groupBy": [
+                      {
+                        "name": "pod_name",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{pod_name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "4dd32795-36c5-486c-a616-a84214695f01": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "% Container CPU Limit Utilization",
+            "description": "Container CPU usage as a fraction of its CPU limit. Can exceed 100% (bursting); sustained >100% indicates throttling."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "%",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "right",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "stepInterval": 0,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "kubernetes.io/container/cpu/limit_utilization",
+                              "temporality": "",
+                              "timeAggregation": "max",
+                              "spaceAggregation": "max",
+                              "reduceTo": "avg"
+                            }
+                          ],
+                          "disabled": true,
+                          "filter": {
+                            "expression": "project_id = $project_id AND cluster_name in $cluster_name AND namespace_name in $namespace_name AND gcp.resource_type = 'k8s_container'"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "pod_name",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            },
+                            {
+                              "name": "container_name",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            }
+                          ],
+                          "order": [],
+                          "selectFields": null,
+                          "having": {
+                            "expression": ""
+                          },
+                          "secondaryAggregations": null,
+                          "functions": [],
+                          "legend": "{{pod_name}}/{{container_name}}"
+                        }
+                      },
+                      {
+                        "type": "builder_formula",
+                        "spec": {
+                          "name": "F1",
+                          "expression": "100*A",
+                          "disabled": false,
+                          "order": null,
+                          "having": {
+                            "expression": ""
+                          },
+                          "functions": null,
+                          "legend": "{{pod_name}}/{{container_name}}"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "5343ccba-8341-4446-ad76-bc215380e108": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "% Container Memory Request Utilization",
+            "description": "Non-evictable container memory as a fraction of its memory request. Guides right-sizing of memory requests."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "%",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "right",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "stepInterval": 0,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "kubernetes.io/container/memory/request_utilization",
+                              "temporality": "",
+                              "timeAggregation": "max",
+                              "spaceAggregation": "max",
+                              "reduceTo": "avg"
+                            }
+                          ],
+                          "disabled": true,
+                          "filter": {
+                            "expression": "project_id = $project_id AND cluster_name in $cluster_name AND namespace_name in $namespace_name AND gcp.resource_type = 'k8s_container' AND memory_type = 'non-evictable'"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "pod_name",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            },
+                            {
+                              "name": "container_name",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            }
+                          ],
+                          "order": [],
+                          "selectFields": null,
+                          "having": {
+                            "expression": ""
+                          },
+                          "secondaryAggregations": null,
+                          "functions": [],
+                          "legend": "{{pod_name}}/{{container_name}}"
+                        }
+                      },
+                      {
+                        "type": "builder_formula",
+                        "spec": {
+                          "name": "F1",
+                          "expression": "100*A",
+                          "disabled": false,
+                          "order": null,
+                          "having": {
+                            "expression": ""
+                          },
+                          "functions": null,
+                          "legend": "{{pod_name}}/{{container_name}}"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "5c48f945-d4c2-4d22-992a-abf286caf463": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Node Network Receive Throughput",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "By/s",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "right",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "kubernetes.io/node/network/received_bytes_count",
+                        "temporality": "",
+                        "timeAggregation": "rate",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "project_id = $project_id AND cluster_name in $cluster_name AND gcp.resource_type = 'k8s_node'"
+                    },
+                    "groupBy": [
+                      {
+                        "name": "node_name",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{node_name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "6059e5a8-71ce-484a-99b9-cdb17eec596b": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "% Node CPU Allocatable Utilization",
+            "description": "Node CPU usage as a fraction of allocatable CPU (excludes system daemons). High values indicate node saturation and scheduling pressure."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "%",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "right",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "stepInterval": 0,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "kubernetes.io/node/cpu/allocatable_utilization",
+                              "temporality": "",
+                              "timeAggregation": "max",
+                              "spaceAggregation": "max",
+                              "reduceTo": "avg"
+                            }
+                          ],
+                          "disabled": true,
+                          "filter": {
+                            "expression": "project_id = $project_id AND cluster_name in $cluster_name AND gcp.resource_type = 'k8s_node'"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "node_name",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            }
+                          ],
+                          "order": [],
+                          "selectFields": null,
+                          "having": {
+                            "expression": ""
+                          },
+                          "secondaryAggregations": null,
+                          "functions": [],
+                          "legend": "{{node_name}}"
+                        }
+                      },
+                      {
+                        "type": "builder_formula",
+                        "spec": {
+                          "name": "F1",
+                          "expression": "100*A",
+                          "disabled": false,
+                          "order": null,
+                          "having": {
+                            "expression": ""
+                          },
+                          "functions": null,
+                          "legend": "{{node_name}}"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "6d0e4208-bfad-447c-80f1-f9f9eebc9508": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "% Node Ephemeral Storage Utilization",
+            "description": "Node ephemeral disk used / allocatable. Approaching 100% triggers DiskPressure -> eviction and image-pull failures."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "%",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "right",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "stepInterval": 0,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "kubernetes.io/node/ephemeral_storage/used_bytes",
+                              "temporality": "",
+                              "timeAggregation": "max",
+                              "spaceAggregation": "sum",
+                              "reduceTo": "avg"
+                            }
+                          ],
+                          "disabled": true,
+                          "filter": {
+                            "expression": "project_id = $project_id AND cluster_name in $cluster_name AND gcp.resource_type = 'k8s_node'"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "node_name",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            }
+                          ],
+                          "order": [],
+                          "selectFields": null,
+                          "having": {
+                            "expression": ""
+                          },
+                          "secondaryAggregations": null,
+                          "functions": [],
+                          "legend": "{{node_name}}"
+                        }
+                      },
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "B",
+                          "stepInterval": 0,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "kubernetes.io/node/ephemeral_storage/allocatable_bytes",
+                              "temporality": "",
+                              "timeAggregation": "max",
+                              "spaceAggregation": "sum",
+                              "reduceTo": "avg"
+                            }
+                          ],
+                          "disabled": true,
+                          "filter": {
+                            "expression": "project_id = $project_id AND cluster_name in $cluster_name AND gcp.resource_type = 'k8s_node'"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "node_name",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            }
+                          ],
+                          "order": [],
+                          "selectFields": null,
+                          "having": {
+                            "expression": ""
+                          },
+                          "secondaryAggregations": null,
+                          "functions": [],
+                          "legend": "{{node_name}}"
+                        }
+                      },
+                      {
+                        "type": "builder_formula",
+                        "spec": {
+                          "name": "F1",
+                          "expression": "100*A/B",
+                          "disabled": false,
+                          "order": null,
+                          "having": {
+                            "expression": ""
+                          },
+                          "functions": null,
+                          "legend": "{{node_name}}"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "76c5b446-2b1e-404b-90ac-575479f330dc": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Pod Network Sent Throughput",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "By/s",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "right",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "kubernetes.io/pod/network/sent_bytes_count",
+                        "temporality": "",
+                        "timeAggregation": "rate",
+                        "spaceAggregation": "sum",
+                        "reduceTo": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "project_id = $project_id AND cluster_name in $cluster_name AND namespace_name in $namespace_name AND gcp.resource_type = 'k8s_pod'"
+                    },
+                    "groupBy": [
+                      {
+                        "name": "pod_name",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{pod_name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "8db4e826-6a3e-4ca6-bdc9-0cc878dd8c57": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Node Network Sent Throughput",
+            "description": ""
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "By/s",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "right",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "stepInterval": 0,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "kubernetes.io/node/network/sent_bytes_count",
+                              "temporality": "",
+                              "timeAggregation": "rate",
+                              "spaceAggregation": "sum",
+                              "reduceTo": "avg"
+                            }
+                          ],
+                          "disabled": false,
+                          "filter": {
+                            "expression": "project_id = $project_id AND cluster_name in $cluster_name AND gcp.resource_type = 'k8s_node'"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "node_name",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            }
+                          ],
+                          "order": null,
+                          "selectFields": null,
+                          "secondaryAggregations": null,
+                          "functions": null,
+                          "legend": "{{node_name}}"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "9b4efc2b-59de-48ae-ae6c-493ba8c4a89c": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Container Restarts (total)",
+            "description": "Cumulative restart count per container."
+          },
+          "plugin": {
+            "kind": "signoz/TablePanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "columnUnits": {
+                  "A": ""
+                },
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "kubernetes.io/container/restart_count",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "max",
+                        "reduceTo": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "project_id = $project_id AND cluster_name in $cluster_name AND namespace_name in $namespace_name AND gcp.resource_type = 'k8s_container'"
+                    },
+                    "groupBy": [
+                      {
+                        "name": "pod_name",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "container_name",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": "value > 0"
+                    },
+                    "functions": [],
+                    "legend": "value"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "bea0cf3c-74ef-4ab2-96ec-ae78f9aeee4c": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Node status conditions",
+            "description": "Current Kubernetes node conditions (Ready / MemoryPressure / DiskPressure / PIDPressure / NetworkUnavailable)."
+          },
+          "plugin": {
+            "kind": "signoz/TablePanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "columnUnits": {
+                  "A": ""
+                },
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "kubernetes.io/node/status_condition",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "avg",
+                        "reduceTo": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "project_id = $project_id AND cluster_name in $cluster_name AND gcp.resource_type = 'k8s_node' AND ((condition = 'Ready' AND status != 'True') OR (condition != 'Ready' AND status = 'True'))"
+                    },
+                    "groupBy": [
+                      {
+                        "name": "node_name",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "condition",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "status",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "value"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "d417f675-57fc-4e4e-b7ac-053cf131155b": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "% Container CPU Request Utilization",
+            "description": "Container CPU usage as a fraction of its CPU request. Persistently <<100% = over-provisioned; >>100% = under-requested (scheduling/noisy-neighbor risk)."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "%",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "right",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "stepInterval": 0,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "kubernetes.io/container/cpu/request_utilization",
+                              "temporality": "",
+                              "timeAggregation": "max",
+                              "spaceAggregation": "max",
+                              "reduceTo": "avg"
+                            }
+                          ],
+                          "disabled": true,
+                          "filter": {
+                            "expression": "project_id = $project_id AND cluster_name in $cluster_name AND namespace_name in $namespace_name AND gcp.resource_type = 'k8s_container'"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "pod_name",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            },
+                            {
+                              "name": "container_name",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            }
+                          ],
+                          "order": [],
+                          "selectFields": null,
+                          "having": {
+                            "expression": ""
+                          },
+                          "secondaryAggregations": null,
+                          "functions": [],
+                          "legend": "{{pod_name}}/{{container_name}}"
+                        }
+                      },
+                      {
+                        "type": "builder_formula",
+                        "spec": {
+                          "name": "F1",
+                          "expression": "100*A",
+                          "disabled": false,
+                          "order": null,
+                          "having": {
+                            "expression": ""
+                          },
+                          "functions": null,
+                          "legend": "{{pod_name}}/{{container_name}}"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "e3b1242c-3f3a-487f-949f-7b3ca27521c5": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "% Node Memory Allocatable Utilization",
+            "description": "Node memory usage as a fraction of allocatable memory (summed across components and memory types). Approaching 100% risks MemoryPressure and pod eviction."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "%",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "right",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "stepInterval": 0,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "kubernetes.io/node/memory/allocatable_utilization",
+                              "temporality": "",
+                              "timeAggregation": "max",
+                              "spaceAggregation": "max",
+                              "reduceTo": "avg"
+                            }
+                          ],
+                          "disabled": true,
+                          "filter": {
+                            "expression": "project_id = $project_id AND cluster_name in $cluster_name AND gcp.resource_type = 'k8s_node'"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "node_name",
+                              "signal": "",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            }
+                          ],
+                          "order": [],
+                          "selectFields": null,
+                          "having": {
+                            "expression": ""
+                          },
+                          "secondaryAggregations": null,
+                          "functions": [],
+                          "legend": "{{node_name}}"
+                        }
+                      },
+                      {
+                        "type": "builder_formula",
+                        "spec": {
+                          "name": "F1",
+                          "expression": "100*A",
+                          "disabled": false,
+                          "order": null,
+                          "having": {
+                            "expression": ""
+                          },
+                          "functions": null,
+                          "legend": "{{node_name}}"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "fad482bb-f1ac-4b1c-a3ab-5bf59ea70151": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Pod First-Ready Latency",
+            "description": "End-to-end pod startup time (Created to Ready), including image pulls."
+          },
+          "plugin": {
+            "kind": "signoz/TablePanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time"
+              },
+              "formatting": {
+                "columnUnits": {
+                  "A": "s"
+                },
+                "decimalPrecision": "2"
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "kubernetes.io/pod/latencies/pod_first_ready",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "max",
+                        "reduceTo": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "project_id = $project_id AND cluster_name in $cluster_name AND namespace_name in $namespace_name AND gcp.resource_type = 'k8s_pod'"
+                    },
+                    "groupBy": [
+                      {
+                        "name": "pod_name",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "Latency"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      }
+    },
+    "layouts": [
+      {
+        "kind": "Grid",
+        "spec": {
+          "display": {
+            "title": "CPU & Memory",
+            "collapse": {
+              "open": true
+            }
+          },
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/4dd32795-36c5-486c-a616-a84214695f01"
+              }
+            },
+            {
+              "x": 6,
+              "y": 0,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/d417f675-57fc-4e4e-b7ac-053cf131155b"
+              }
+            },
+            {
+              "x": 0,
+              "y": 6,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/1256cd26-13db-47b8-bfb8-e9c651c6d531"
+              }
+            },
+            {
+              "x": 6,
+              "y": 6,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/5343ccba-8341-4446-ad76-bc215380e108"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "kind": "Grid",
+        "spec": {
+          "display": {
+            "title": "Workload Health",
+            "collapse": {
+              "open": true
+            }
+          },
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/9b4efc2b-59de-48ae-ae6c-493ba8c4a89c"
+              }
+            },
+            {
+              "x": 6,
+              "y": 0,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/fad482bb-f1ac-4b1c-a3ab-5bf59ea70151"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "kind": "Grid",
+        "spec": {
+          "display": {
+            "title": "Network",
+            "collapse": {
+              "open": true
+            }
+          },
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/26b31f4c-2110-4ee2-8427-a1ddb6313f67"
+              }
+            },
+            {
+              "x": 6,
+              "y": 0,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/76c5b446-2b1e-404b-90ac-575479f330dc"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "kind": "Grid",
+        "spec": {
+          "display": {
+            "title": "Storage",
+            "collapse": {
+              "open": true
+            }
+          },
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/12f7a656-230b-466c-bd18-7d90efd47be7"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "kind": "Grid",
+        "spec": {
+          "display": {
+            "title": "Nodes (namespace agnostic)",
+            "collapse": {
+              "open": true
+            }
+          },
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/6059e5a8-71ce-484a-99b9-cdb17eec596b"
+              }
+            },
+            {
+              "x": 6,
+              "y": 0,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/e3b1242c-3f3a-487f-949f-7b3ca27521c5"
+              }
+            },
+            {
+              "x": 0,
+              "y": 6,
+              "width": 12,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/bea0cf3c-74ef-4ab2-96ec-ae78f9aeee4c"
+              }
+            },
+            {
+              "x": 6,
+              "y": 12,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/5c48f945-d4c2-4d22-992a-abf286caf463"
+              }
+            },
+            {
+              "x": 0,
+              "y": 12,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/6d0e4208-bfad-447c-80f1-f9f9eebc9508"
+              }
+            },
+            {
+              "x": 0,
+              "y": 18,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/8db4e826-6a3e-4ca6-bdc9-0cc878dd8c57"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "duration": "",
+    "refreshInterval": "",
+    "links": []
+  }
+}

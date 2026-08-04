@@ -6,7 +6,9 @@ import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { Drawer } from 'antd';
+import logEvent from 'api/common/logEvent';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import { useCopyToClipboard } from 'react-use';
 import { toast } from '@signozhq/ui/sonner';
 
@@ -51,9 +53,17 @@ function JsonEditorDrawer({
 	const onCopy = useCallback((): void => {
 		copyToClipboard(draft);
 		toast.success('JSON copied to clipboard');
-	}, [copyToClipboard, draft]);
+		void logEvent(DashboardDetailEvents.JsonEditorAction, {
+			action: 'copy',
+			dashboardId: dashboard.id,
+		});
+	}, [copyToClipboard, draft, dashboard.id]);
 
 	const onDownload = useCallback((): void => {
+		void logEvent(DashboardDetailEvents.JsonEditorAction, {
+			action: 'download',
+			dashboardId: dashboard.id,
+		});
 		const blob = new Blob([draft], { type: 'application/json' });
 		const url = URL.createObjectURL(blob);
 		const link = document.createElement('a');
@@ -63,11 +73,17 @@ function JsonEditorDrawer({
 		link.click();
 		document.body.removeChild(link);
 		URL.revokeObjectURL(url);
-	}, [draft, dashboard.name]);
+	}, [draft, dashboard.name, dashboard.id]);
 
 	const onKeyDown = useCallback(
 		(event: KeyboardEvent<HTMLDivElement>): void => {
 			event.stopPropagation();
+
+			if (event.key === 'Escape') {
+				onClose();
+				return;
+			}
+
 			if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
 				event.preventDefault();
 				if (!readOnly) {
@@ -75,7 +91,7 @@ function JsonEditorDrawer({
 				}
 			}
 		},
-		[apply, readOnly],
+		[apply, readOnly, onClose],
 	);
 
 	const applyDisabled = readOnly || !isDirty || !validity.valid || isSaving;

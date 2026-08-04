@@ -1,9 +1,14 @@
 import { useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
+import logEvent from 'api/common/logEvent';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import type { PANEL_TYPES } from 'constants/queryBuilder';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
+import { getPanelBuilderQuery } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getPanelBuilderQuery';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { clearViewPanelHandoff } from '../ViewPanelModal/viewPanelHandoffStore';
@@ -11,8 +16,8 @@ import { clearViewPanelHandoff } from '../ViewPanelModal/viewPanelHandoffStore';
 export interface UseViewPanelApi {
 	/** Panel id currently expanded in the View modal; null when none is open. */
 	expandedPanelId: string | null;
-	/** Open the View modal on the saved panel (clears any leftover in-modal query/kind). */
-	openView: (panelId: string) => void;
+	/** Open the View modal on the saved panel, its query carried in `compositeQuery`. */
+	openView: (panelId: string, panel: DashboardtypesPanelDTO) => void;
 	/**
 	 * Open the View modal pre-seeded with a drilldown query + kind, persisted in the URL so it
 	 * survives refresh (V1 parity); the modal hydrates its draft from these on mount.
@@ -28,29 +33,38 @@ export interface UseViewPanelApi {
 
 /**
  * Drives the panel View modal off the URL (V1 parity): `expandedWidgetId` holds the open
- * panel, and a drilldown additionally seeds `compositeQuery` + `graphType`. URL-backed state
- * is shareable, survives refresh, and the browser back-button closes it.
+ * panel and `compositeQuery` the query it opens on, which a drilldown retargets along with
+ * `graphType`. URL-backed state is shareable, survives refresh, and browser Back closes it.
  */
 export function useViewPanel(): UseViewPanelApi {
 	const { safeNavigate } = useSafeNavigate();
 	const { pathname } = useLocation();
 	const urlQuery = useUrlQuery();
+	const { resetQuery } = useQueryBuilder();
 
 	const expandedPanelId = urlQuery.get(QueryParams.expandedWidgetId);
 
 	const openView = useCallback(
-		(panelId: string): void => {
+		(panelId: string, panel: DashboardtypesPanelDTO): void => {
 			// Copy before mutating: useUrlQuery returns a memoized instance.
 			const next = new URLSearchParams(urlQuery);
 			next.set(QueryParams.expandedWidgetId, panelId);
-			// Drop leftover in-modal query/kind + the editor's handoff so a plain View opens
-			// on the saved panel, not stale state the modal would otherwise hydrate from.
-			next.delete(QueryParams.compositeQuery);
+			// Only a drilldown retargets the panel type.
 			next.delete(QueryParams.graphType);
 			clearViewPanelHandoff();
+			const query = getPanelBuilderQuery(panel);
+			next.set(
+				QueryParams.compositeQuery,
+				encodeURIComponent(JSON.stringify(query)),
+			);
+			// The provider applies the URL in an effect, a tick after the builder's fields have
+			// mounted and read the query they keep. `resetQuery` — not `initQueryBuilderData`:
+			// swapping one staged id for another re-anchors global time and refetches the grid.
+			resetQuery(query);
+			void logEvent(DashboardDetailEvents.PanelViewed, { panelId });
 			safeNavigate(`${pathname}?${next.toString()}`);
 		},
-		[pathname, safeNavigate, urlQuery],
+		[pathname, safeNavigate, urlQuery, resetQuery],
 	);
 
 	const openViewWithQuery = useCallback(
@@ -60,6 +74,10 @@ export function useViewPanel(): UseViewPanelApi {
 			next.set(QueryParams.graphType, panelType);
 			// A grid drilldown opens on the saved panel, never a stale editor handoff.
 			clearViewPanelHandoff();
+			// As in `openView`. Clearing the staged query matters twice over here: the URL
+			// below carries this query's own id, and a staged query with a matching id
+			// makes the provider skip the hydration that normalises legacy filter fields.
+			resetQuery(query);
 			// Same encoding the query builder uses (see `useGetCompositeQueryParam`): the URL
 			// value is `encodeURIComponent(JSON.stringify(query))`, decoded once on read.
 			next.set(
@@ -68,7 +86,7 @@ export function useViewPanel(): UseViewPanelApi {
 			);
 			safeNavigate(`${pathname}?${next.toString()}`);
 		},
-		[pathname, safeNavigate, urlQuery],
+		[pathname, safeNavigate, urlQuery, resetQuery],
 	);
 
 	const closeView = useCallback((): void => {

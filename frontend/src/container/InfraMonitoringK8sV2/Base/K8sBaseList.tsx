@@ -1,14 +1,19 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import TanStackTable, {
+	SortState,
 	TableColumnDef,
 	useCalculatedPageSize,
 	useHiddenColumnIds,
 	useTableParams,
 } from 'components/TanStackTableView';
-import { InfraMonitoringEvents } from 'constants/events';
+import {
+	InfraMonitoringEvents,
+	logInfraColumnSortedEvent,
+	logInfraTimeRangeCustomizedEvent,
+} from 'constants/events';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGlobalTimeStore } from 'store/globalTime';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
@@ -27,11 +32,16 @@ import {
 	useInfraMonitoringSelectedItemParams,
 	useInfraMonitoringStatusFilter,
 } from '../hooks';
-import { useInfraMonitoringLineClamp } from '../components';
+import {
+	useInfraMonitoringFontSize,
+	useInfraMonitoringLineClamp,
+} from './useInfraMonitoringTablePreferencesStore';
 import { K8sEmptyState } from './K8sEmptyState';
 import { K8sExpandedRow } from './K8sExpandedRow';
+import K8sOptionsSidePanel from './K8sOptionsSidePanel';
 import K8sHeader from './K8sHeader';
 import { K8sPaginationWarning } from './K8sPaginationWarning';
+import K8sTableToolbar from './K8sTableToolbar';
 import { K8sBaseFilters } from './types';
 import { getGroupedByMeta } from './utils';
 import { K8sInstrumentationChecksCallout } from './components/K8sInstrumentationChecksCallout/K8sInstrumentationChecksCallout';
@@ -74,14 +84,15 @@ export type K8sBaseListProps<
 		warning?: Querybuildertypesv5QueryWarnDataDTO | null;
 	}>;
 	/** Function to get the unique key for a row. */
-	getRowKey?: (record: T) => string;
+	getRowKey: (record: T) => string;
 	/** Function to get the item key used for selection. Can return string or SelectedItemParams. */
-	getItemKey?: (record: T) => TItemKey;
+	getItemKey: (record: T) => TItemKey;
 	eventCategory: InfraMonitoringEvents;
 	renderEmptyState?: (
 		context: K8sBaseListEmptyStateContext,
 	) => React.ReactNode | null;
 	extraQueryKeyParts?: string[];
+	detailsQueryKeyPrefix: string;
 };
 
 export function K8sBaseList<
@@ -98,10 +109,12 @@ export function K8sBaseList<
 	eventCategory,
 	renderEmptyState,
 	extraQueryKeyParts = [],
+	detailsQueryKeyPrefix,
 }: K8sBaseListProps<T, TItemKey>): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 	const expression = currentQuery.builder.queryData[0]?.filter?.expression || '';
 	const lineClamp = useInfraMonitoringLineClamp();
+	const fontSize = useInfraMonitoringFontSize();
 	const [groupBy] = useInfraMonitoringGroupBy();
 	const [orderBy] = useInfraMonitoringOrderBy();
 	const [statusFilter] = useInfraMonitoringStatusFilter();
@@ -111,6 +124,7 @@ export function K8sBaseList<
 
 	const columnStorageKey = `k8s-${entity}-columns`;
 	const hiddenColumnIds = useHiddenColumnIds(columnStorageKey);
+	const [isOptionsDrawerOpen, setIsOptionsDrawerOpen] = useState(false);
 
 	const { containerRef, calculatedPageSize } = useCalculatedPageSize({
 		rowHeight: 42,
@@ -215,6 +229,14 @@ export function K8sBaseList<
 		void queryClient.cancelQueries({ queryKey });
 	}, [queryClient, queryKey]);
 
+	const handleOpenOptionsDrawer = useCallback((): void => {
+		setIsOptionsDrawerOpen(true);
+	}, []);
+
+	const handleCloseOptionsDrawer = useCallback((): void => {
+		setIsOptionsDrawerOpen(false);
+	}, []);
+
 	const pageData = data?.data ?? [];
 	const totalCount = data?.total || 0;
 	const hasFilters = !!expression?.trim();
@@ -233,18 +255,38 @@ export function K8sBaseList<
 		});
 	}, [eventCategory, totalCount]);
 
+	const prevSelectedTimeRef = useRef(selectedTime);
+	useEffect(() => {
+		if (prevSelectedTimeRef.current !== selectedTime) {
+			logInfraTimeRangeCustomizedEvent(entity, selectedTime);
+			prevSelectedTimeRef.current = selectedTime;
+		}
+	}, [selectedTime, entity]);
+
 	const handleRowClick = useCallback(
-		(_record: T, itemKey: TItemKey): void => {
+		(record: T, itemKey: TItemKey): void => {
 			if (groupBy.length === 0) {
-				if (typeof itemKey === 'object' && itemKey !== null) {
-					setSelectedItemParams(itemKey);
-				} else {
-					setSelectedItemParams({
-						selectedItem: itemKey,
-						clusterName: null,
-						namespaceName: null,
-					});
+				const params: SelectedItemParams =
+					typeof itemKey === 'object'
+						? itemKey
+						: {
+								selectedItem: itemKey,
+								clusterName: null,
+								namespaceName: null,
+							};
+
+				if (detailsQueryKeyPrefix) {
+					const detailQueryKey = getAutoRefreshQueryKey(
+						selectedTime,
+						`${detailsQueryKeyPrefix}EntityDetails`,
+						params.selectedItem,
+						params.clusterName,
+						params.namespaceName,
+					);
+					queryClient.setQueryData(detailQueryKey, { data: record });
 				}
+
+				setSelectedItemParams(params);
 			}
 
 			void logEvent(InfraMonitoringEvents.ItemClicked, {
@@ -253,7 +295,15 @@ export function K8sBaseList<
 				category: eventCategory,
 			});
 		},
-		[eventCategory, groupBy.length, setSelectedItemParams],
+		[
+			eventCategory,
+			groupBy.length,
+			setSelectedItemParams,
+			detailsQueryKeyPrefix,
+			getAutoRefreshQueryKey,
+			selectedTime,
+			queryClient,
+		],
 	);
 
 	const handleRowClickNewTab = useCallback(
@@ -324,6 +374,7 @@ export function K8sBaseList<
 				extraQueryKeyParts={extraQueryKeyParts}
 				getRowKey={getRowKey}
 				getItemKey={getItemKey}
+				detailsQueryKeyPrefix={detailsQueryKeyPrefix}
 			/>
 		),
 		[
@@ -333,12 +384,22 @@ export function K8sBaseList<
 			getItemKey,
 			expandedRowColumns,
 			extraQueryKeyParts,
+			detailsQueryKeyPrefix,
 		],
 	);
 
 	const getRowCanExpand = useCallback(
 		(): boolean => isGroupedByAttribute,
 		[isGroupedByAttribute],
+	);
+
+	const handleSort = useCallback(
+		(sort: SortState | null): void => {
+			if (sort) {
+				logInfraColumnSortedEvent(entity, sort.columnName, sort.order, 'list');
+			}
+		},
+		[entity],
 	);
 
 	const showTableLoadingState = isLoading;
@@ -370,16 +431,20 @@ export function K8sBaseList<
 		<>
 			<K8sHeader
 				controlListPrefix={controlListPrefix}
-				leftFilters={leftFilters}
 				entity={entity}
 				showAutoRefresh={!selectedItem}
-				columns={tableColumns}
-				columnStorageKey={columnStorageKey}
 				isFetching={isFetching}
 				cancelQuery={cancelQuery}
 			/>
 			<div ref={containerRef} className={styles.tableContainer}>
 				<K8sInstrumentationChecksCallout entity={entity} />
+
+				<K8sTableToolbar
+					entity={entity}
+					eventCategory={eventCategory}
+					leftFilters={leftFilters}
+					onOpenOptionsDrawer={handleOpenOptionsDrawer}
+				/>
 
 				{isError && (
 					<Typography>
@@ -401,9 +466,10 @@ export function K8sBaseList<
 						getGroupKey={getGroupKeyFn}
 						onRowClick={handleRowClick}
 						onRowClickNewTab={handleRowClickNewTab}
+						onSort={handleSort}
 						renderExpandedRow={isGroupedByAttribute ? renderExpandedRow : undefined}
 						getRowCanExpand={isGroupedByAttribute ? getRowCanExpand : undefined}
-						className={cx(styles.k8SListTable, expandedRowColumns)}
+						className={cx(styles.k8SListTable)}
 						enableQueryParams={{
 							page: INFRA_MONITORING_K8S_PARAMS_KEYS.PAGE,
 							limit: INFRA_MONITORING_K8S_PARAMS_KEYS.PAGE_SIZE,
@@ -418,11 +484,21 @@ export function K8sBaseList<
 							onLimitChange: setLimit,
 						}}
 						plainTextCellLineClamp={lineClamp}
+						cellTypographySize={fontSize}
 						prefixPaginationContent={paginationWarningContent}
 						paginationClassname={styles.paginationContainer}
+						resetScrollKey={entity}
 					/>
 				)}
 			</div>
+
+			<K8sOptionsSidePanel
+				open={isOptionsDrawerOpen}
+				columns={tableColumns}
+				storageKey={columnStorageKey}
+				entity={entity}
+				onClose={handleCloseOptionsDrawer}
+			/>
 		</>
 	);
 }

@@ -150,12 +150,17 @@ def test_traces_aggregate_functions(
     Tests:
     A grouped scalar query computes count / sum / avg / min / max / p50 / p90 over
     duration_nano, countIf over the intrinsic status_code and the calculated
-    response_status_code, and avg over a numeric attribute — all matching values
-    derived from the inserted spans. Under the corrupt variant the same-named
-    colliding attributes must not change any of these.
+    response_status_code, rate and rate_sum over the query window, and avg over a
+    numeric attribute — all matching values derived from the inserted spans. Under
+    the corrupt variant the same-named colliding attributes must not change any of
+    these.
     """
     extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    # A scalar rate divides by the whole query window, so both sides agree on it.
+    # Traces derives this separately from logs (telemetrytraces/statement_builder.go).
+    lookback_minutes = 5
+    rate_interval_seconds = lookback_minutes * 60
 
     def mk(service: str, dur_s: float, status: TracesStatusCode, rsc: str, latency: float) -> Traces:
         return Traces(
@@ -189,6 +194,8 @@ def test_traces_aggregate_functions(
         build_aggregation("p50(duration_nano)", "p50_d"),
         build_aggregation("p90(duration_nano)", "p90_d"),
         build_aggregation("countIf(status_code = 2)", "errs"),
+        build_aggregation("rate()", "rate_all"),
+        build_aggregation("rate_sum(duration_nano)", "rate_sum_d"),
         build_aggregation("avg(latency_ms)", "avg_lat"),
     ]
     query = build_traces_scalar_query(
@@ -196,7 +203,7 @@ def test_traces_aggregate_functions(
         group_by=[build_group_by_field("service.name", "string", "resource")],
         order=[build_order_by("count()", "desc")],
     )
-    response = make_scalar_query_request(signoz, token, now, [query])
+    response = make_scalar_query_request(signoz, token, now, [query], lookback_minutes=lookback_minutes)
 
     assert response.status_code == HTTPStatus.OK, response.text
     data = get_scalar_table_data(response.json())
@@ -214,6 +221,11 @@ def test_traces_aggregate_functions(
             float(np.percentile(durations, 50)),  # p50(duration_nano)
             float(np.percentile(durations, 90)),  # p90(duration_nano)
             sum(1 for s in group if int(s.status_code) == 2),  # countIf(status_code = 2)
+            # Response floats are rounded to 3 significant figures below 1 and to 3
+            # decimals at or above it (roundToNonZeroDecimals). The two rates land on
+            # either side of that boundary, so each mirrors its own form.
+            float(f"{len(group) / rate_interval_seconds:.3g}"),  # rate()
+            round(sum(durations) / rate_interval_seconds, 3),  # rate_sum(duration_nano)
             sum(latencies) / len(latencies),  # avg(latency_ms)
         )
 

@@ -1,4 +1,5 @@
 import { useCallback, useRef } from 'react';
+import logEvent from 'api/common/logEvent';
 import type {
 	DashboardtypesPanelPluginDTO,
 	DashboardtypesPanelSpecDTO,
@@ -11,6 +12,7 @@ import {
 	type PartialPanelTypes,
 } from 'container/NewWidget/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import type {
 	OrderByPayload,
 	Query,
@@ -96,6 +98,10 @@ export function usePanelTypeSwitch({
 			if (newKind === oldKind) {
 				return;
 			}
+			void logEvent(DashboardDetailEvents.PanelTypeChanged, {
+				from: oldKind,
+				to: newKind,
+			});
 			const query = queryRef.current;
 
 			cacheRef.current.set(oldKind, {

@@ -49,6 +49,14 @@ describe('newPanelRoute', () => {
 			return { path, params: new URLSearchParams(search) };
 		};
 
+		// Mirrors useGetCompositeQueryParam: it decodes the param twice.
+		const readCompositeQuery = (params: URLSearchParams): unknown =>
+			JSON.parse(
+				decodeURIComponent(
+					(params.get('compositeQuery') as string).replace(/\+/g, ' '),
+				),
+			);
+
 		it.each([
 			[PANEL_TYPES.TIME_SERIES, 'signoz/TimeSeriesPanel'],
 			[PANEL_TYPES.TABLE, 'signoz/TablePanel'],
@@ -67,16 +75,34 @@ describe('newPanelRoute', () => {
 			);
 		});
 
-		it('carries the query as a decodable compositeQuery param', () => {
+		it('carries the query as a compositeQuery param the reader can decode', () => {
 			const link = buildExportPanelLink({
 				dashboardId: 'dash-1',
 				panelType: PANEL_TYPES.TIME_SERIES,
 				query,
 			});
 			const { params } = parseLink(link);
-			expect(JSON.parse(params.get('compositeQuery') as string)).toStrictEqual(
-				query,
-			);
+			expect(readCompositeQuery(params)).toStrictEqual(query);
+		});
+
+		// Regression: a bare `%`/`+` must survive the reader's double-decode.
+		it('round-trips a filter expression containing % and + literals', () => {
+			const queryWithLiterals = {
+				id: 'q1',
+				queryType: 'builder',
+				builder: {
+					queryData: [
+						{ filter: { expression: "severity_text ILIKE 'Inf%' AND path = 'a+b'" } },
+					],
+				},
+			} as unknown as Query;
+			const link = buildExportPanelLink({
+				dashboardId: 'dash-1',
+				panelType: PANEL_TYPES.LIST,
+				query: queryWithLiterals,
+			});
+			const { params } = parseLink(link);
+			expect(readCompositeQuery(params)).toStrictEqual(queryWithLiterals);
 		});
 
 		it('returns null for a panel type with no V2 kind', () => {

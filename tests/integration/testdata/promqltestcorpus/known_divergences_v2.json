@@ -1,0 +1,4 @@
+{
+  "note": "Divergences of the clickhousev2 provider (pinned via X-SigNoz-PromQL-Provider) from the upstream reference engine, enforced exactly by 01_upstream_corpus.py in both directions. This ledger is the rollout scorecard for the provider swap: the default provider cannot be replaced by clickhousev2 while anything is listed here. Entries must carry the defect's cause and be REMOVED as the provider is fixed.",
+  "divergences": {}
+}

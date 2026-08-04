@@ -15,6 +15,10 @@
 
 	&--legend-right {
 		flex-direction: row;
+
+		.chart-layout__legend-wrapper {
+			padding-top: 8px;
+		}
 	}
 
 	&__legend-wrapper {

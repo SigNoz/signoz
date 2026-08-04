@@ -30,7 +30,6 @@ type JobRecord struct {
 	ActivePods            int               `json:"activePods" required:"true"`
 	FailedPods            int               `json:"failedPods" required:"true"`
 	SuccessfulPods        int               `json:"successfulPods" required:"true"`
-	PodCountsByPhase      PodCountsByPhase  `json:"podCountsByPhase" required:"true"`
 	PodCountsByStatus     PodCountsByStatus `json:"podCountsByStatus" required:"true"`
 	Meta                  JobMeta           `json:"meta" required:"true"`
 }

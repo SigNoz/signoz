@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useGetAlertRuleDetailsStats } from 'pages/AlertDetails/hooks';
 import DataStateRenderer from 'periscope/components/DataStateRenderer/DataStateRenderer';
+import { StatsTimeSeriesItem } from 'types/api/alerts/def';
 
 import AverageResolutionCard from '../AverageResolutionCard/AverageResolutionCard';
 import StatsCard from '../StatsCard/StatsCard';
@@ -25,24 +26,59 @@ type StatsCardsRendererProps = {
 };
 
 // TODO(shaheer): render the DataStateRenderer inside the TotalTriggeredCard/AverageResolutionCard, it should display the title
+type AdaptedStatsData = {
+	totalCurrentTriggers: number;
+	totalPastTriggers: number;
+	currentAvgResolutionTime: string;
+	pastAvgResolutionTime: string;
+	currentTriggersSeries: StatsTimeSeriesItem[];
+	currentAvgResolutionTimeSeries: StatsTimeSeriesItem[];
+};
+
 function StatsCardsRenderer({
 	setTotalCurrentTriggers,
 }: StatsCardsRendererProps): JSX.Element {
 	const { isLoading, isRefetching, isError, data, isValidRuleId, ruleId } =
 		useGetAlertRuleDetailsStats();
 
-	useEffect(() => {
-		if (data?.payload?.data?.totalCurrentTriggers !== undefined) {
-			setTotalCurrentTriggers(data.payload.data.totalCurrentTriggers);
+	const adaptedData = useMemo((): AdaptedStatsData | null => {
+		if (!data?.data) {
+			return null;
 		}
-	}, [data, setTotalCurrentTriggers]);
+		const statsData = data.data;
+
+		const adaptTimeSeries = (
+			series: typeof statsData.currentTriggersSeries,
+		): StatsTimeSeriesItem[] =>
+			series?.values?.map((item) => ({
+				timestamp: item.timestamp ?? 0,
+				value: String(item.value ?? 0),
+			})) ?? [];
+
+		return {
+			totalCurrentTriggers: statsData.totalCurrentTriggers,
+			totalPastTriggers: statsData.totalPastTriggers,
+			currentAvgResolutionTime: String(statsData.currentAvgResolutionTime),
+			pastAvgResolutionTime: String(statsData.pastAvgResolutionTime),
+			currentTriggersSeries: adaptTimeSeries(statsData.currentTriggersSeries),
+			currentAvgResolutionTimeSeries: adaptTimeSeries(
+				statsData.currentAvgResolutionTimeSeries,
+			),
+		};
+	}, [data?.data]);
+
+	useEffect(() => {
+		if (adaptedData?.totalCurrentTriggers !== undefined) {
+			setTotalCurrentTriggers(adaptedData.totalCurrentTriggers);
+		}
+	}, [adaptedData, setTotalCurrentTriggers]);
 
 	return (
 		<DataStateRenderer
 			isLoading={isLoading}
 			isRefetching={isRefetching}
 			isError={isError || !isValidRuleId || !ruleId}
-			data={data?.payload?.data || null}
+			data={adaptedData}
 		>
 			{(data): JSX.Element => {
 				const {
@@ -60,7 +96,7 @@ function StatsCardsRenderer({
 							<TotalTriggeredCard
 								totalCurrentTriggers={totalCurrentTriggers}
 								totalPastTriggers={totalPastTriggers}
-								timeSeries={currentTriggersSeries?.values}
+								timeSeries={currentTriggersSeries}
 							/>
 						) : (
 							<StatsCard
@@ -77,7 +113,7 @@ function StatsCardsRenderer({
 							<AverageResolutionCard
 								currentAvgResolutionTime={currentAvgResolutionTime}
 								pastAvgResolutionTime={pastAvgResolutionTime}
-								timeSeries={currentAvgResolutionTimeSeries?.values}
+								timeSeries={currentAvgResolutionTimeSeries}
 							/>
 						) : (
 							<StatsCard

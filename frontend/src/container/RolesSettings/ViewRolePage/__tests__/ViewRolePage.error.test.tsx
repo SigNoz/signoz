@@ -4,7 +4,7 @@ import * as roleApi from 'api/generated/services/role';
 import { customRoleResponse } from 'mocks-server/__mockdata__/roles';
 import { server } from 'mocks-server/server';
 import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
-import { render, screen, waitFor } from 'tests/test-utils';
+import { render, screen } from 'tests/test-utils';
 
 import * as useRolePermissionsModule from '../../hooks/useRolePermissions';
 import ViewRolePage from '../ViewRolePage';
@@ -45,12 +45,12 @@ describe('ViewRolePage - Error State', () => {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
-		await waitFor(() => {
-			expect(document.querySelector('.error-in-place')).toBeInTheDocument();
-		});
+		await expect(
+			screen.findByTestId('role-error-banner'),
+		).resolves.toBeInTheDocument();
 	});
 
-	it('displays error state with title when API fails without role data', async () => {
+	it('displays error state when API fails without role data', async () => {
 		jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
 			data: undefined,
 			isLoading: false,
@@ -62,12 +62,10 @@ describe('ViewRolePage - Error State', () => {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
+		// Error shows in content area after authz check passes
 		await expect(
-			screen.findByText('Failed to load role'),
+			screen.findByTestId('role-error-banner'),
 		).resolves.toBeInTheDocument();
-		await waitFor(() => {
-			expect(document.querySelector('.error-in-place')).toBeInTheDocument();
-		});
 	});
 
 	it('shows back button on error state', async () => {

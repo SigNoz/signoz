@@ -22,6 +22,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/variables"
 )
 
+type Handler interface {
+	QueryRange(rw http.ResponseWriter, req *http.Request)
+	QueryRangePreview(rw http.ResponseWriter, req *http.Request)
+	QueryRawStream(rw http.ResponseWriter, req *http.Request)
+	ReplaceVariables(rw http.ResponseWriter, req *http.Request)
+}
+
 type handler struct {
 	set       factory.ProviderSettings
 	analytics analytics.Analytics
@@ -50,6 +57,7 @@ func (handler *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 		render.Error(rw, err)
 		return
 	}
+	queryRangeRequest.PromQLProvider = req.Header.Get("X-SigNoz-PromQL-Provider")
 
 	// Validate the query request
 	if err := queryRangeRequest.Validate(); err != nil {
