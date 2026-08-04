@@ -51,6 +51,7 @@ import { useColumnHandlers } from './useColumnHandlers';
 import { useColumnState } from './useColumnState';
 import { useEffectiveData } from './useEffectiveData';
 import { useFlatItems } from './useFlatItems';
+import { useResetScroll } from './useResetScroll';
 import { useRowKeyData } from './useRowKeyData';
 import { useTableParams } from './useTableParams';
 import { buildPageSizeItems, buildTanstackColumnDef } from './utils';
@@ -110,6 +111,7 @@ function TanStackTableInner<TData, TItemKey = string>(
 		suffixPaginationContent,
 		enableAlternatingRowColors,
 		disableVirtualScroll,
+		resetScrollKey,
 	}: TanStackTableProps<TData, TItemKey>,
 	forwardedRef: React.ForwardedRef<TanStackTableHandle>,
 ): JSX.Element {
@@ -323,6 +325,8 @@ function TanStackTableInner<TData, TItemKey = string>(
 			behavior: 'auto',
 		});
 	}, [flatIndexForActiveRow]);
+
+	useResetScroll(virtuosoRef, resetScrollKey);
 
 	const { sensors, columnIds, handleDragEnd } = useColumnDnd({
 		columns: effectiveColumns,

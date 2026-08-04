@@ -34,7 +34,7 @@ def test_create_and_get_public_dashboard(
         json={
             "schemaVersion": "v6",
             "name": "sample-title",
-            "spec": {"display": {"name": "Sample Title"}, "links": []},
+            "spec": {"variables": [], "panels": {}, "layouts": [], "display": {"name": "Sample Title"}, "links": []},
             "tags": [],
         },
         headers={"Authorization": f"Bearer {admin_token}"},

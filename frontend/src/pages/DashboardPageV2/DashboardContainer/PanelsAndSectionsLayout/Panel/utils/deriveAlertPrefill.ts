@@ -104,20 +104,6 @@ function pickHighestDanger(
 	)[0];
 }
 
-// The alert UI has no inclusive operator; collapse "or equal" onto its strict variant.
-function panelOperatorToAlertOperator(
-	operator: DashboardtypesComparisonOperatorDTO | undefined,
-): AlertThresholdOperator | undefined {
-	switch (operator) {
-		case 'above_or_equal':
-			return normalizeOperator('above');
-		case 'below_or_equal':
-			return normalizeOperator('below');
-		default:
-			return normalizeOperator(operator);
-	}
-}
-
 export function deriveAlertPrefill(
 	panel: DashboardtypesPanelDTO,
 	query: Query,
@@ -135,7 +121,7 @@ export function deriveAlertPrefill(
 
 	const top = pickHighestDanger(readPanelThresholds(panel.spec.plugin));
 	if (top) {
-		prefill.operator = panelOperatorToAlertOperator(top.operator);
+		prefill.operator = normalizeOperator(top.operator);
 		prefill.threshold = {
 			id: uuid(),
 			label: 'critical',
