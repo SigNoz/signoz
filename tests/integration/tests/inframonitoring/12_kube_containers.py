@@ -568,6 +568,107 @@ def test_kube_containers_orderby_and_pagination(
     assert seen == order, f"paginated sequence {seen} != full-page order {order}"
 
 
+def test_kube_containers_filter_pagination_and_ordering(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """filterByContainerStatus (multi-select) composed with pagination + name
+    ordering. The full-scope status keyset is resolved before slicing, so total
+    reflects the full matched set and pages stay disjoint + complete on both the
+    metric-ordering branch (paginateWithBackfill -- including its metadata-only
+    backfill arm, since coom has no cpu metric) and the name-ordering branch
+    (PaginateMetadataByName). ['running','crashloopbackoff','oomkilled'] matches 4
+    containers in kube_containers_dataset.jsonl: crun, cnr, cclo, coom.
+
+    Name-branch order is not asserted: every container shares k8s.container.name
+    ('app'), so the sort ties -- we assert the filtered set + disjoint/complete pages."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/kube_containers_dataset.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    start = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end = int(now.timestamp() * 1000)
+    statuses = ["running", "crashloopbackoff", "oomkilled"]
+    matched = {"crun", "cnr", "cclo", "coom"}
+
+    # Metric-ordering branch (default cpu order): total is invariant across a paged
+    # walk and the pages are disjoint + cover the full matched set (coom arrives via
+    # the metadata-only backfill arm). Non-matching containers never appear.
+    seen: list[str] = []
+    totals: set[int] = set()
+    for offset in (0, 2, 4):
+        resp = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
+                "start": start,
+                "end": end,
+                "limit": 2,
+                "offset": offset,
+                "filter": {"filterByContainerStatus": statuses},
+            },
+            timeout=5,
+        )
+        assert resp.status_code == HTTPStatus.OK, resp.text
+        data = resp.json()["data"]
+        totals.add(data["total"])
+        assert len(data["records"]) == max(0, min(2, 4 - offset)), f"offset={offset}: {data['records']!r}"
+        seen.extend(r["meta"]["k8s.pod.name"] for r in data["records"])
+    assert totals == {4}, f"total not invariant under filter+pagination: {totals}"
+    assert len(seen) == 4, f"pages overlapped: {seen}"
+    assert set(seen) == matched
+
+    # Name-ordering branch (orderBy k8s.container.name asc, groupBy empty): the
+    # filtered set is returned and total is the full matched count.
+    ordered = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": start,
+            "end": end,
+            "limit": 50,
+            "filter": {"filterByContainerStatus": statuses},
+            "orderBy": {"key": {"name": "k8s.container.name"}, "direction": "asc"},
+        },
+        timeout=5,
+    )
+    assert ordered.status_code == HTTPStatus.OK, ordered.text
+    odata = ordered.json()["data"]
+    assert odata["total"] == 4
+    assert {r["meta"]["k8s.pod.name"] for r in odata["records"]} == matched
+
+    # Name branch paginated: PaginateMetadataByName slices the filtered set into
+    # disjoint pages that together cover it, with total unchanged.
+    name_seen: list[str] = []
+    for offset in (0, 2):
+        resp = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
+                "start": start,
+                "end": end,
+                "limit": 2,
+                "offset": offset,
+                "filter": {"filterByContainerStatus": statuses},
+                "orderBy": {"key": {"name": "k8s.container.name"}, "direction": "asc"},
+            },
+            timeout=5,
+        )
+        assert resp.status_code == HTTPStatus.OK, resp.text
+        data = resp.json()["data"]
+        assert data["total"] == 4
+        assert len(data["records"]) == 2, f"offset={offset}: {data['records']!r}"
+        name_seen.extend(r["meta"]["k8s.pod.name"] for r in data["records"])
+    assert len(name_seen) == 4, f"name-branch pages overlapped: {name_seen}"
+    assert set(name_seen) == matched
+
+
 @pytest.mark.parametrize(
     ("payload_override", "err_substr"),
     [
