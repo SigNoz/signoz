@@ -233,6 +233,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewFillDashboardMeterSourceFactory(sqlstore, dashboardStore),
 		sqlmigration.NewUpdateRoleTransactionGroupsFactory(),
 		sqlmigration.NewFillDashboardSpecCollectionsFactory(sqlstore, dashboardStore),
+		sqlmigration.NewScrubEmailChannelTransportFactory(sqlstore),
 	)
 }
 
