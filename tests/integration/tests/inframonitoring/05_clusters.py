@@ -372,7 +372,7 @@ def test_clusters_node_readiness_aggregation(
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
-            "filter": {"expression": "k8s.cluster.name = 'rn-cluster'", "filterByNodeReadiness": "ready"},
+            "filter": {"expression": "k8s.cluster.name = 'rn-cluster'", "filterByNodeReadiness": ["ready"]},
         },
         timeout=5,
     )
@@ -386,12 +386,27 @@ def test_clusters_node_readiness_aggregation(
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
-            "filter": {"expression": "k8s.cluster.name = 'rn-cluster'", "filterByNodeReadiness": "not_ready"},
+            "filter": {"expression": "k8s.cluster.name = 'rn-cluster'", "filterByNodeReadiness": ["not_ready"]},
         },
         timeout=5,
     )
     assert not_ready.status_code == HTTPStatus.OK, not_ready.text
     assert not_ready.json()["data"]["records"][0]["nodeCountsByReadiness"] == {"ready": 0, "notReady": 2}
+
+    # Multi-select is OR: both buckets populated (union) for the kept cluster.
+    both = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.cluster.name = 'rn-cluster'", "filterByNodeReadiness": ["ready", "not_ready"]},
+        },
+        timeout=5,
+    )
+    assert both.status_code == HTTPStatus.OK, both.text
+    assert both.json()["data"]["records"][0]["nodeCountsByReadiness"] == {"ready": 3, "notReady": 2}
 
 
 def test_clusters_pod_status_aggregation(
@@ -435,10 +450,11 @@ def test_clusters_pod_status_aggregation(
     assert all("Pod status could not be computed" not in w["message"] for w in get_all_warnings(response.json()))
 
     # filterByPodStatus: cluster kept (>=1 matching pod), only the filtered
-    # bucket populated; an absent status yields an empty page.
+    # buckets populated. Multi-select is OR -> the union of requested buckets.
     for fbps, expected in (
-        ("running", expected_status_counts(running=3)),
-        ("CrashLoopBackOff", expected_status_counts(crashLoopBackOff=1)),
+        (["running"], expected_status_counts(running=3)),
+        (["CrashLoopBackOff"], expected_status_counts(crashLoopBackOff=1)),
+        (["running", "CrashLoopBackOff"], expected_status_counts(running=3, crashLoopBackOff=1)),
     ):
         resp = requests.post(
             signoz.self.host_configs["8080"].get(ENDPOINT),
@@ -456,19 +472,21 @@ def test_clusters_pod_status_aggregation(
         assert fdata["total"] == 1
         assert fdata["records"][0]["podCountsByStatus"] == expected
 
-    absent = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "filter": {"expression": "k8s.cluster.name = 'pp-cluster'", "filterByPodStatus": "completed"},
-        },
-        timeout=5,
-    )
-    assert absent.status_code == HTTPStatus.OK, absent.text
-    assert absent.json()["data"]["total"] == 0
+    # A set fully absent from the cluster -> empty page (single and multi).
+    for fbps in (["completed"], ["completed", "oomKilled"]):
+        absent = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
+                "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+                "end": int(now.timestamp() * 1000),
+                "limit": 50,
+                "filter": {"expression": "k8s.cluster.name = 'pp-cluster'", "filterByPodStatus": fbps},
+            },
+            timeout=5,
+        )
+        assert absent.status_code == HTTPStatus.OK, absent.text
+        assert absent.json()["data"]["total"] == 0, f"cluster must be dropped by filterByPodStatus={fbps!r}"
 
     # Combined filterByPodStatus + filterByNodeReadiness = AND. pp-cluster has a
     # Ready node and Running pods -> kept when both match; dropped if either side
@@ -480,7 +498,7 @@ def test_clusters_pod_status_aggregation(
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
-            "filter": {"expression": "k8s.cluster.name = 'pp-cluster'", "filterByPodStatus": "running", "filterByNodeReadiness": "ready"},
+            "filter": {"expression": "k8s.cluster.name = 'pp-cluster'", "filterByPodStatus": ["running"], "filterByNodeReadiness": ["ready"]},
         },
         timeout=5,
     )
@@ -498,7 +516,7 @@ def test_clusters_pod_status_aggregation(
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
-            "filter": {"expression": "k8s.cluster.name = 'pp-cluster'", "filterByPodStatus": "running", "filterByNodeReadiness": "not_ready"},
+            "filter": {"expression": "k8s.cluster.name = 'pp-cluster'", "filterByPodStatus": ["running"], "filterByNodeReadiness": ["not_ready"]},
         },
         timeout=5,
     )
@@ -513,7 +531,7 @@ def test_clusters_pod_status_aggregation(
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
-            "filter": {"expression": "k8s.cluster.name = 'pp-cluster'", "filterByPodStatus": "completed", "filterByNodeReadiness": "ready"},
+            "filter": {"expression": "k8s.cluster.name = 'pp-cluster'", "filterByPodStatus": ["completed"], "filterByNodeReadiness": ["ready"]},
         },
         timeout=5,
     )
@@ -746,17 +764,17 @@ def test_clusters_orderby(  # pylint: disable=too-many-arguments,too-many-positi
             id="orderby_clustername_with_groupby",
         ),
         pytest.param(
-            {"filter": {"filterByPodStatus": "Bogus"}},
+            {"filter": {"filterByPodStatus": ["Bogus"]}},
             "invalid filter by pod status",
             id="filter_by_pod_status_invalid",
         ),
         pytest.param(
-            {"filter": {"filterByNodeReadiness": "bogus"}},
+            {"filter": {"filterByNodeReadiness": ["bogus"]}},
             "invalid filter by node readiness",
             id="filter_by_node_readiness_invalid",
         ),
         pytest.param(
-            {"filter": {"filterByNodeReadiness": "notready"}},
+            {"filter": {"filterByNodeReadiness": ["notready"]}},
             "invalid filter by node readiness",
             id="filter_by_node_readiness_missing_underscore",
         ),

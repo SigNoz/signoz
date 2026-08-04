@@ -4217,9 +4217,15 @@ components:
         expression:
           type: string
         filterByNodeReadiness:
-          $ref: '#/components/schemas/InframonitoringtypesNodeCondition'
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesNodeCondition'
+          nullable: true
+          type: array
         filterByPodStatus:
-          $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          nullable: true
+          type: array
       type: object
     InframonitoringtypesClusterRecord:
       properties:
@@ -4469,7 +4475,10 @@ components:
         expression:
           type: string
         filterByPodStatus:
-          $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          nullable: true
+          type: array
       type: object
     InframonitoringtypesDaemonSetRecord:
       properties:
@@ -4548,7 +4557,10 @@ components:
         expression:
           type: string
         filterByPodStatus:
-          $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          nullable: true
+          type: array
       type: object
     InframonitoringtypesDeploymentRecord:
       properties:
@@ -4696,7 +4708,10 @@ components:
         expression:
           type: string
         filterByPodStatus:
-          $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          nullable: true
+          type: array
       type: object
     InframonitoringtypesJobRecord:
       properties:
@@ -4826,7 +4841,10 @@ components:
         expression:
           type: string
         filterByPodStatus:
-          $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          nullable: true
+          type: array
       type: object
     InframonitoringtypesNamespaceRecord:
       properties:
@@ -4914,9 +4932,15 @@ components:
         expression:
           type: string
         filterByNodeReadiness:
-          $ref: '#/components/schemas/InframonitoringtypesNodeCondition'
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesNodeCondition'
+          nullable: true
+          type: array
         filterByPodStatus:
-          $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          nullable: true
+          type: array
       type: object
     InframonitoringtypesNodeRecord:
       properties:
@@ -5039,7 +5063,10 @@ components:
         expression:
           type: string
         filterByPodStatus:
-          $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          nullable: true
+          type: array
       type: object
     InframonitoringtypesPodRecord:
       properties:
@@ -5430,7 +5457,10 @@ components:
         expression:
           type: string
         filterByPodStatus:
-          $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          nullable: true
+          type: array
       type: object
     InframonitoringtypesStatefulSetRecord:
       properties:

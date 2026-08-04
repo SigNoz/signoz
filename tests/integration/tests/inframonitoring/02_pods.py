@@ -597,9 +597,14 @@ def test_pods_orderby(  # pylint: disable=too-many-arguments,too-many-positional
             id="orderby_podname_with_groupby",
         ),
         pytest.param(
-            {"filter": {"filterByPodStatus": "Bogus"}},
+            {"filter": {"filterByPodStatus": ["Bogus"]}},
             "invalid filter by pod status",
             id="filter_by_pod_status_invalid",
+        ),
+        pytest.param(
+            {"filter": {"filterByPodStatus": ["running", "Bogus"]}},
+            "invalid filter by pod status",
+            id="filter_by_pod_status_invalid_member",
         ),
     ],
 )
@@ -707,9 +712,10 @@ def test_pods_status_list_mode(
             assert rec["podCountsByStatus"][other] == 0, f"expected {other}=0 when status={expected_status}, got {rec['podCountsByStatus']}"
 
     # filterByPodStatus (secondary filter, applied after status is assigned):
-    # matching status keeps the pod; a mismatched status filters it out. Wire
-    # value is case-insensitive (valuer lowercases).
-    for variant in (expected_status, expected_status.upper()):
+    # a set containing the pod's status keeps it; a set without it filters it
+    # out. Wire value is case-insensitive (valuer lowercases). Multi-select is
+    # OR: [own_status, other] still keeps the pod.
+    for variant in ([expected_status], [expected_status.upper()], [expected_status, "running"]):
         matched = requests.post(
             signoz.self.host_configs["8080"].get(ENDPOINT),
             headers={"authorization": f"Bearer {token}"},
@@ -726,21 +732,22 @@ def test_pods_status_list_mode(
         assert mdata["total"] == 1, f"filterByPodStatus={variant!r} should keep {pod_name}"
         assert mdata["records"][0]["podCountsByStatus"][bucket] == 1
 
-    # None of the seeded pods resolves to plain Running -> a reliable mismatch.
-    mismatch = "running" if expected_status != "running" else "pending"
-    filtered_out = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "filter": {"expression": f"k8s.pod.name = '{pod_name}'", "filterByPodStatus": mismatch},
-        },
-        timeout=5,
-    )
-    assert filtered_out.status_code == HTTPStatus.OK, filtered_out.text
-    assert filtered_out.json()["data"]["total"] == 0, f"{pod_name} must be filtered out by filterByPodStatus={mismatch!r}"
+    # None of the seeded pods resolves to Running or OOMKilled -> reliable
+    # mismatches, as a single value and as an all-absent multi-select set.
+    for fbps in (["running"], ["running", "oomKilled"]):
+        filtered_out = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
+                "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+                "end": int(now.timestamp() * 1000),
+                "limit": 50,
+                "filter": {"expression": f"k8s.pod.name = '{pod_name}'", "filterByPodStatus": fbps},
+            },
+            timeout=5,
+        )
+        assert filtered_out.status_code == HTTPStatus.OK, filtered_out.text
+        assert filtered_out.json()["data"]["total"] == 0, f"{pod_name} must be filtered out by filterByPodStatus={fbps!r}"
 
 
 @pytest.mark.parametrize(
@@ -923,7 +930,7 @@ def test_pods_status_grouped_mode(
     assert rec["podCountsByStatus"] == expected_counts
 
     # filterByPodStatus in grouped mode: the group is kept because >=1 pod
-    # matches, and only the filtered bucket is populated (others zeroed).
+    # matches, and only the filtered buckets are populated (others zeroed).
     running = requests.post(
         signoz.self.host_configs["8080"].get(ENDPOINT),
         headers={"authorization": f"Bearer {token}"},
@@ -932,7 +939,7 @@ def test_pods_status_grouped_mode(
             "end": int(now.timestamp() * 1000),
             "limit": 50,
             "groupBy": [{"name": "k8s.namespace.name", "fieldDataType": "string", "fieldContext": "resource"}],
-            "filter": {"filterByPodStatus": "running"},
+            "filter": {"filterByPodStatus": ["running"]},
         },
         timeout=5,
     )
@@ -941,8 +948,8 @@ def test_pods_status_grouped_mode(
     assert rdata["total"] == 1
     assert rdata["records"][0]["podCountsByStatus"] == expected_status_counts(running=2)
 
-    # A status absent from the group -> group dropped, empty page.
-    absent = requests.post(
+    # Multi-select is OR: both requested buckets populated (union), others zeroed.
+    multi = requests.post(
         signoz.self.host_configs["8080"].get(ENDPOINT),
         headers={"authorization": f"Bearer {token}"},
         json={
@@ -950,12 +957,32 @@ def test_pods_status_grouped_mode(
             "end": int(now.timestamp() * 1000),
             "limit": 50,
             "groupBy": [{"name": "k8s.namespace.name", "fieldDataType": "string", "fieldContext": "resource"}],
-            "filter": {"filterByPodStatus": "oomKilled"},
+            "filter": {"filterByPodStatus": ["running", "crashLoopBackOff"]},
         },
         timeout=5,
     )
-    assert absent.status_code == HTTPStatus.OK, absent.text
-    assert absent.json()["data"]["total"] == 0
+    assert multi.status_code == HTTPStatus.OK, multi.text
+    mdata = multi.json()["data"]
+    assert mdata["total"] == 1
+    assert mdata["records"][0]["podCountsByStatus"] == expected_status_counts(running=2, crashLoopBackOff=1)
+
+    # A set fully absent from the group -> group dropped, empty page (single
+    # and multi-select both).
+    for fbps in (["oomKilled"], ["oomKilled", "unknown"]):
+        absent = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
+                "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+                "end": int(now.timestamp() * 1000),
+                "limit": 50,
+                "groupBy": [{"name": "k8s.namespace.name", "fieldDataType": "string", "fieldContext": "resource"}],
+                "filter": {"filterByPodStatus": fbps},
+            },
+            timeout=5,
+        )
+        assert absent.status_code == HTTPStatus.OK, absent.text
+        assert absent.json()["data"]["total"] == 0, f"group must be dropped by filterByPodStatus={fbps!r}"
 
 
 def test_pods_restarts_grouped_mode(
@@ -1057,7 +1084,7 @@ def test_pods_status_missing_metric_warning(
             "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
             "end": int(now.timestamp() * 1000),
             "limit": 50,
-            "filter": {"expression": "k8s.pod.name = 'miss-p1'", "filterByPodStatus": "running"},
+            "filter": {"expression": "k8s.pod.name = 'miss-p1'", "filterByPodStatus": ["running"]},
         },
         timeout=5,
     )

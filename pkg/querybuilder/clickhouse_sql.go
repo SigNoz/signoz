@@ -3,6 +3,8 @@ package querybuilder
 import (
 	"context"
 	"log/slog"
+	"maps"
+	"slices"
 	"strings"
 
 	chparser "github.com/AfterShip/clickhouse-sql-parser/parser"
@@ -25,7 +27,23 @@ var internalDatabases = map[string]struct{}{
 	"information_schema": {},
 }
 
-// The parser's grammar has gaps against SQL that ClickHouse itself accepts. See TestErrIfStatementIsNotValid_ShouldPassButFails.
+// generatorTableFunctions compute their rows from their arguments alone. They open no file or socket, reach no other host, and name no table, database or dictionary, so none of them can read through anything the rules here exist to protect. Can be used to build a dense axis to join a sparse series against. Every other table function is refused.
+//
+// Keyed by the lowercased name so that matching is case-insensitive, valued by the spelling to name it back to the caller.
+//
+// TODO(@therealpandey): take a deployment level allow list on top of this, so an operator can permit more without a release.
+var generatorTableFunctions = map[string]string{
+	"numbers":         "numbers",
+	"numbers_mt":      "numbers_mt",
+	"zeros":           "zeros",
+	"zeros_mt":        "zeros_mt",
+	"generateseries":  "generateSeries",
+	"generate_series": "generate_series",
+}
+
+var generatorTableFunctionsMessage = "allowed table functions are " + strings.Join(slices.Sorted(maps.Values(generatorTableFunctions)), ", ")
+
+// The parser's grammar has gaps against SQL that ClickHouse itself accepts.
 func ErrIfStatementIsNotValid(query string) (err error) {
 	defer func() {
 		// The parser has a history of panicking on malformed input rather than returning an error.
@@ -52,8 +70,17 @@ func ErrIfStatementIsNotValid(query string) (err error) {
 	visitor := &chparser.DefaultASTVisitor{Visit: func(node chparser.Expr) error {
 		switch expr := node.(type) {
 		case *chparser.TableFunctionExpr:
-			// Source table functions remain usable in ClickHouse read-only mode.
-			return errors.NewInvalidInputf(CodeClickHouseSQLTableFunction, "ClickHouse table functions are not allowed in SQL queries: %s", chparser.Format(expr.Name))
+			// Source table functions remain usable in ClickHouse read-only mode. Arguments are
+			// visited before this, so a read smuggled into one is already refused by the time
+			// an allowed generator gets here.
+			name := chparser.Format(expr.Name)
+			if _, ok := generatorTableFunctions[strings.ToLower(name)]; ok {
+				return nil
+			}
+
+			return errors.
+				NewInvalidInputf(CodeClickHouseSQLTableFunction, "ClickHouse table functions are not allowed in SQL queries: %s", name).
+				WithAdditional(generatorTableFunctionsMessage)
 
 		case *chparser.TableIdentifier:
 			// Reading these is unaffected by ClickHouse read-only mode.

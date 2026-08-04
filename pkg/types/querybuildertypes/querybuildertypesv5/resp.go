@@ -404,7 +404,7 @@ func sanitizeValue(v any) any {
 			result[keyStr] = sanitizeValue(rv.MapIndex(key).Interface())
 		}
 		return result
-	case reflect.Ptr:
+	case reflect.Pointer:
 		if rv.IsNil() {
 			return nil
 		}
