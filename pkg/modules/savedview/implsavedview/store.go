@@ -101,9 +101,7 @@ func (store *store) List(ctx context.Context, orgID string, sourcePage savedview
 	return views, nil
 }
 
-// normalizeSelectedFields fixes up a scanned row's nil SelectedFields (an
-// empty/never-set spec round-trips through the DB as JSON null) to an
-// explicit empty slice, so the API response never serializes it as null.
+// normalizeSelectedFields fixes up a scanned row's nil SelectedFields.
 func normalizeSelectedFields(view *savedviewtypes.SavedView) {
 	if view.Data.Spec.SelectedFields == nil {
 		view.Data.Spec.SelectedFields = []telemetrytypes.TelemetryFieldKey{}

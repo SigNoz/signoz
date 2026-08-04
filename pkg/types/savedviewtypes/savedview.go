@@ -15,11 +15,6 @@ var (
 	ErrCodeSavedViewNotFound     = errors.MustNewCode("saved_view_not_found")
 )
 
-// SavedView is the core domain type. It also doubles as the API response
-// type: Data is a named field, so bun stores it as a single opaque "data"
-// column while json nests it under a "data" key in responses too, mirroring
-// dashboardtypes.DashboardView's use of the same named-field trick for the
-// same reason.
 type SavedView struct {
 	bun.BaseModel `bun:"table:saved_view"`
 
