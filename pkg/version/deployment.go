@@ -214,7 +214,7 @@ func detectPlatform() string {
 		}
 	}
 
-	// Akamai (Linode) metadata (requires token handshake)
+	// Akamai (Linode) metadata, reads are token-gated — a 200 on the token grant is enough to identify the platform, the token is discarded. The expiry header is the token's lifetime, not a request timeout.
 	if req, err := http.NewRequest(http.MethodPut, "http://169.254.169.254/v1/token", nil); err == nil {
 		req.Header.Add("Metadata-Token-Expiry-Seconds", "3600")
 		if resp, err := client.Do(req); err == nil {
@@ -225,7 +225,7 @@ func detectPlatform() string {
 		}
 	}
 
-	// IBM metadata (requires token handshake)
+	// IBM metadata, reads are token-gated — a 200 on the token grant is enough to identify the platform, the token is discarded.
 	if req, err := http.NewRequest(http.MethodPut, "http://169.254.169.254/instance_identity/v1/token?version=2022-03-08", nil); err == nil {
 		req.Header.Add("Metadata-Flavor", "ibm")
 		if resp, err := client.Do(req); err == nil {
