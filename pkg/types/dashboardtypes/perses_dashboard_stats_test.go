@@ -10,6 +10,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func statsSpecJSON(panelsJSON string) string {
+	return `{
+		"display": {"name": "Stats Dashboard"},
+		"variables": [],
+		"panels": {` + panelsJSON + `},
+		"layouts": [],
+		"links": []
+	}`
+}
+
 // newStatsStorableV2 builds a stored v2 row from a panels JSON fragment, going
 // through the untyped data blob the way a row read off the DB does.
 func newStatsStorableV2(t *testing.T, panelsJSON string) *StorableDashboard {
@@ -17,13 +27,7 @@ func newStatsStorableV2(t *testing.T, panelsJSON string) *StorableDashboard {
 
 	raw := `{
 		"metadata": {"schemaVersion": "` + SchemaVersion + `"},
-		"spec": {
-			"display": {"name": "Stats Dashboard"},
-			"variables": [],
-			"panels": {` + panelsJSON + `},
-			"layouts": [],
-			"links": []
-		}
+		"spec": ` + statsSpecJSON(panelsJSON) + `
 	}`
 
 	var data StorableDashboardData
@@ -35,6 +39,19 @@ func newStatsStorableV2(t *testing.T, panelsJSON string) *StorableDashboard {
 		Source:       SourceUser,
 		Name:         "stats-dashboard",
 		Data:         data,
+	}
+}
+
+func newStatsPostableV2(t *testing.T, panelsJSON string) PostableDashboardV2 {
+	t.Helper()
+
+	var spec DashboardSpec
+	require.NoError(t, json.Unmarshal([]byte(statsSpecJSON(panelsJSON)), &spec))
+
+	return PostableDashboardV2{
+		DashboardV2MetadataBase: DashboardV2MetadataBase{SchemaVersion: SchemaVersion},
+		Name:                    "stats-dashboard",
+		Spec:                    spec,
 	}
 }
 
@@ -163,6 +180,31 @@ func TestNewStatsFromStorableDashboardsSkipsNonV2Rows(t *testing.T) {
 	stats := NewStatsFromStorableDashboards([]*StorableDashboard{v1, empty})
 
 	assert.Equal(t, int64(2), stats[statKeyDashboardCount])
+	assert.Equal(t, int64(0), stats[statKeyPanelCount])
+	assert.Equal(t, int64(0), stats[statKeyPanelLogsCount])
+}
+
+// The create path counts off the postable spec, so it never round-trips through a
+// storable to be counted.
+func TestNewStatsFromPostableDashboardV2(t *testing.T) {
+	postable := newStatsPostableV2(t, `
+		"p1": `+statsPanel(statsBuilderQuery("logs"))+`,
+		"p2": `+statsPanel(statsBuilderQuery("traces"))+`
+	`)
+
+	stats := NewStatsFromPostableDashboardV2(postable)
+
+	assert.Equal(t, int64(1), stats[statKeyDashboardCount])
+	assert.Equal(t, int64(2), stats[statKeyPanelCount])
+	assert.Equal(t, int64(1), stats[statKeyPanelLogsCount])
+	assert.Equal(t, int64(1), stats[statKeyPanelTracesCount])
+	assert.Equal(t, int64(0), stats[statKeyPanelMetricsCount])
+}
+
+func TestNewStatsFromPostableDashboardV2WithNoPanels(t *testing.T) {
+	stats := NewStatsFromPostableDashboardV2(newStatsPostableV2(t, ``))
+
+	assert.Equal(t, int64(1), stats[statKeyDashboardCount])
 	assert.Equal(t, int64(0), stats[statKeyPanelCount])
 	assert.Equal(t, int64(0), stats[statKeyPanelLogsCount])
 }

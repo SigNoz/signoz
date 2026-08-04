@@ -21,34 +21,50 @@ var panelSignalStatKeys = map[telemetrytypes.Signal]string{
 	telemetrytypes.SignalLogs:    statKeyPanelLogsCount,
 }
 
+// NewStatsFromStorableDashboards reports the stats of stored dashboards. Rows that
+// do not decode as v2 contribute to dashboard.count only.
 func NewStatsFromStorableDashboards(dashboards []*StorableDashboard) map[string]any {
-	stats := map[string]any{
-		statKeyPanelCount:        int64(0),
-		statKeyPanelTracesCount:  int64(0),
-		statKeyPanelMetricsCount: int64(0),
-		statKeyPanelLogsCount:    int64(0),
-	}
+	stats := newPanelStats()
+
 	for _, dashboard := range dashboards {
-		addStatsFromStorableDashboard(dashboard, stats)
+		if dashboard == nil {
+			continue
+		}
+		dashboardV2, err := dashboard.ToDashboardV2(nil)
+		if err != nil {
+			continue
+		}
+		addPanelStats(&dashboardV2.Spec, stats)
 	}
 
 	stats[statKeyDashboardCount] = int64(len(dashboards))
 	return stats
 }
 
-// addStatsFromStorableDashboard counts the panels and per-signal queries of a v2
-// dashboard. Rows that do not decode as v2 contribute to dashboard.count only.
-func addStatsFromStorableDashboard(dashboard *StorableDashboard, stats map[string]any) {
-	if dashboard == nil {
-		return
-	}
+// NewStatsFromPostableDashboardV2 reports the stats of a dashboard as it is
+// created, straight off the postable spec — the create path has no reason to make
+// a storable round-trip just to be counted.
+func NewStatsFromPostableDashboardV2(postable PostableDashboardV2) map[string]any {
+	stats := newPanelStats()
+	addPanelStats(&postable.Spec, stats)
 
-	dashboardV2, err := dashboard.ToDashboardV2(nil)
-	if err != nil {
-		return
-	}
+	stats[statKeyDashboardCount] = int64(1)
+	return stats
+}
 
-	for _, panel := range dashboardV2.Spec.Panels {
+func newPanelStats() map[string]any {
+	return map[string]any{
+		statKeyPanelCount:        int64(0),
+		statKeyPanelTracesCount:  int64(0),
+		statKeyPanelMetricsCount: int64(0),
+		statKeyPanelLogsCount:    int64(0),
+	}
+}
+
+// addPanelStats counts the panels of a v2 spec, and each panel's queries against
+// the signal they read.
+func addPanelStats(spec *DashboardSpec, stats map[string]any) {
+	for _, panel := range spec.Panels {
 		if panel == nil {
 			continue
 		}
