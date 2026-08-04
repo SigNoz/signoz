@@ -62,12 +62,9 @@ func detectMode() string {
 		return "kubernetes"
 	}
 
-	// Check the container environment variable, set by some container managers (podman does, docker does not)
-	switch os.Getenv("container") {
-	case "podman":
+	// Check if running in podman, which sets the container environment variable
+	if os.Getenv("container") == "podman" {
 		return "podman"
-	case "docker":
-		return "docker"
 	}
 
 	// Check for container manager marker files, Podman must come before Docker — mirrors systemd's detect_container to avoid mistaking another container manager for docker
