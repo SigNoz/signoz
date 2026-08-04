@@ -9,9 +9,9 @@ import K8sGroupCell from '../Base/K8sGroupCell';
 import { SelectedItemParams } from '../hooks';
 import { formatBytes, getPodStatusItems } from '../commonUtils';
 import {
-	CellValueTooltip,
 	EntityProgressBar,
 	GroupedStatusCounts,
+	TextNoData,
 	ValidateColumnValueWrapper,
 } from '../components';
 import {
@@ -86,10 +86,9 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesSt
 			enableMove: false,
 			pin: 'left',
 			visibilityBehavior: 'hidden-on-expand',
-			cell: ({ value }): React.ReactNode => {
-				const statefulsetName = value as string;
-				return <CellValueTooltip value={statefulsetName} />;
-			},
+			cell: ({ value }): React.ReactNode => (
+				<TanStackTable.Text>{value}</TanStackTable.Text>
+			),
 		},
 		{
 			id: 'namespaceName',
@@ -103,10 +102,9 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesSt
 			width: { min: 180 },
 			enableSort: false,
 			enableResize: true,
-			cell: ({ value }): React.ReactNode => {
-				const namespaceName = value as string;
-				return <CellValueTooltip value={namespaceName} />;
-			},
+			cell: ({ value }): React.ReactNode => (
+				<TanStackTable.Text>{value}</TanStackTable.Text>
+			),
 		},
 		{
 			id: 'pod_counts_by_status',
@@ -125,7 +123,7 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesSt
 			cell: ({ row, rowId }): React.ReactNode => {
 				const podCountsByStatus = row.podCountsByStatus;
 				if (!podCountsByStatus) {
-					return <TanStackTable.Text>-</TanStackTable.Text>;
+					return <TextNoData type="tanstack" />;
 				}
 				return (
 					<GroupedStatusCounts
@@ -168,8 +166,7 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesSt
 			id: 'cpu_request',
 			header: (): React.ReactNode => (
 				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/statefulsets#cpu-req-usage-">
-					CPU Request
-					<br /> Usage (%)
+					CPU Request Usage (%)
 				</ColumnHeader>
 			),
 			accessorFn: (row): number => row.statefulSetCPURequest,
@@ -177,10 +174,11 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesSt
 			enableSort: true,
 			enableResize: true,
 			defaultVisibility: false,
-			cell: ({ value }): React.ReactNode => {
+			cell: ({ value, rowId }): React.ReactNode => {
 				const cpuRequest = value as number;
 				return (
 					<ValidateColumnValueWrapper
+						rowId={rowId}
 						value={cpuRequest}
 						entity={InfraMonitoringEntity.STATEFULSETS}
 						attribute="CPU Request"
@@ -194,18 +192,18 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesSt
 			id: 'cpu_limit',
 			header: (): React.ReactNode => (
 				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/statefulsets#cpu-limit-usage-">
-					CPU Limit
-					<br /> Usage (%)
+					CPU Limit Usage (%)
 				</ColumnHeader>
 			),
 			accessorFn: (row): number => row.statefulSetCPULimit,
 			width: { min: 200, default: 200 },
 			enableSort: true,
 			enableResize: true,
-			cell: ({ value }): React.ReactNode => {
+			cell: ({ value, rowId }): React.ReactNode => {
 				const cpuLimit = value as number;
 				return (
 					<ValidateColumnValueWrapper
+						rowId={rowId}
 						value={cpuLimit}
 						entity={InfraMonitoringEntity.STATEFULSETS}
 						attribute="CPU Limit"
@@ -219,8 +217,7 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesSt
 			id: 'cpu',
 			header: (): React.ReactNode => (
 				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/statefulsets#cpu-usage-cores">
-					CPU Usage
-					<br /> (cores)
+					CPU Usage (cores)
 				</ColumnHeader>
 			),
 			accessorFn: (row): number => row.statefulSetCPU,
@@ -228,10 +225,11 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesSt
 			enableSort: true,
 			enableResize: true,
 			defaultVisibility: false,
-			cell: ({ value }): React.ReactNode => {
+			cell: ({ value, rowId }): React.ReactNode => {
 				const cpu = Number(value);
 				return (
 					<ValidateColumnValueWrapper
+						rowId={rowId}
 						value={cpu}
 						entity={InfraMonitoringEntity.STATEFULSETS}
 						attribute="CPU metric"
@@ -245,8 +243,7 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesSt
 			id: 'memory_request',
 			header: (): React.ReactNode => (
 				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/statefulsets#mem-req-usage-">
-					Memory Request
-					<br /> Usage (%)
+					Memory Request Usage (%)
 				</ColumnHeader>
 			),
 			accessorFn: (row): number => row.statefulSetMemoryRequest,
@@ -254,10 +251,11 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesSt
 			enableSort: true,
 			enableResize: true,
 			defaultVisibility: false,
-			cell: ({ value }): React.ReactNode => {
+			cell: ({ value, rowId }): React.ReactNode => {
 				const memoryRequest = value as number;
 				return (
 					<ValidateColumnValueWrapper
+						rowId={rowId}
 						value={memoryRequest}
 						entity={InfraMonitoringEntity.STATEFULSETS}
 						attribute="Memory Request"
@@ -271,18 +269,18 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesSt
 			id: 'memory_limit',
 			header: (): React.ReactNode => (
 				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/statefulsets#mem-limit-usage-">
-					Memory Limit
-					<br /> Usage (%)
+					Memory Limit Usage (%)
 				</ColumnHeader>
 			),
 			accessorFn: (row): number => row.statefulSetMemoryLimit,
 			width: { min: 180 },
 			enableSort: true,
 			enableResize: true,
-			cell: ({ value }): React.ReactNode => {
+			cell: ({ value, rowId }): React.ReactNode => {
 				const memoryLimit = value as number;
 				return (
 					<ValidateColumnValueWrapper
+						rowId={rowId}
 						value={memoryLimit}
 						entity={InfraMonitoringEntity.STATEFULSETS}
 						attribute="Memory Limit"
@@ -296,8 +294,7 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesSt
 			id: 'memory',
 			header: (): React.ReactNode => (
 				<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/statefulsets#mem-usage-wss">
-					Memory Usage
-					<br /> (WSS)
+					Memory Usage (WSS)
 				</ColumnHeader>
 			),
 			accessorFn: (row): number => row.statefulSetMemory,
@@ -305,10 +302,11 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesSt
 			enableSort: true,
 			enableResize: true,
 			defaultVisibility: false,
-			cell: ({ value }): React.ReactNode => {
+			cell: ({ value, rowId }): React.ReactNode => {
 				const memory = value as number;
 				return (
 					<ValidateColumnValueWrapper
+						rowId={rowId}
 						value={memory}
 						entity={InfraMonitoringEntity.STATEFULSETS}
 						attribute="memory metric"
@@ -329,10 +327,11 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesSt
 			width: { min: 120 },
 			enableSort: true,
 			defaultVisibility: false,
-			cell: ({ value }): React.ReactNode => {
+			cell: ({ value, rowId }): React.ReactNode => {
 				const currentPods = value as number;
 				return (
 					<ValidateColumnValueWrapper
+						rowId={rowId}
 						value={currentPods}
 						entity={InfraMonitoringEntity.STATEFULSETS}
 						attribute="current pod"
@@ -353,10 +352,11 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<InframonitoringtypesSt
 			width: { min: 120 },
 			enableSort: true,
 			defaultVisibility: false,
-			cell: ({ value }): React.ReactNode => {
+			cell: ({ value, rowId }): React.ReactNode => {
 				const desiredPods = value as number;
 				return (
 					<ValidateColumnValueWrapper
+						rowId={rowId}
 						value={desiredPods}
 						entity={InfraMonitoringEntity.STATEFULSETS}
 						attribute="desired pod"

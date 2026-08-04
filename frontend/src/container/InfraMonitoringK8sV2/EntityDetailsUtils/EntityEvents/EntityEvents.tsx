@@ -16,7 +16,10 @@ import {
 	combineInitialAndUserExpression,
 	getUserExpressionFromCombined,
 } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
-import { InfraMonitoringEvents } from 'constants/events';
+import {
+	InfraMonitoringEvents,
+	logInfraDrawerFilterCustomizedEvent,
+} from 'constants/events';
 import Controls from 'container/Controls';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import LoadingContainer from 'container/InfraMonitoringK8sV2/LoadingContainer';
@@ -123,6 +126,13 @@ function EntityEventsContent({
 					category,
 					view: InfraMonitoringEvents.EventsView,
 				});
+
+				logInfraDrawerFilterCustomizedEvent(
+					category,
+					'events',
+					newUserExpression || '',
+					'search',
+				);
 
 				refetch();
 			}
