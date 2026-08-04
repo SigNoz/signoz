@@ -96,7 +96,7 @@ export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 			</ColumnHeader>
 		),
 		accessorFn: (row): string => row.podStatus,
-		width: { min: 160 },
+		width: { min: 250 },
 		enableSort: false,
 		visibilityBehavior: 'hidden-on-expand',
 		cell: ({ row }): React.ReactNode => {
