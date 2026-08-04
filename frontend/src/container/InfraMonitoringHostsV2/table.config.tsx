@@ -221,7 +221,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 		},
 	},
 	{
-		id: 'diskUsage',
+		id: 'disk_usage',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/host-monitoring#disk-usage">
 				Disk Usage

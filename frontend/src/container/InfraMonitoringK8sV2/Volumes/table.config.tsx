@@ -195,7 +195,7 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 		},
 	},
 	{
-		id: 'inodesUsed',
+		id: 'inodes_used',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/volumes#volume-inodes-used">
 				Inodes Used
@@ -219,7 +219,7 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 		},
 	},
 	{
-		id: 'inodesFree',
+		id: 'inodes_free',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/volumes#volume-inodes-free">
 				Inodes Free
