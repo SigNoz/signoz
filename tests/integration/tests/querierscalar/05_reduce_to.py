@@ -70,3 +70,39 @@ def test_metrics_scalar_reduce_to_modes(
     assert response.json()["status"] == "success"
     data = get_scalar_table_data(response.json())
     assert_scalar_result_order(data, [("service-a", expected)], f"metrics reduceTo={reduce_to}")
+
+
+def test_metrics_scalar_missing_reduce_to_rejected(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+) -> None:
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    query = build_scalar_query(
+        name="A",
+        signal="metrics",
+        aggregations=[build_metrics_aggregation("test.reduce.metric", "latest", "sum", "unspecified")],
+    )
+    response = make_scalar_query_request(signoz, token, now, [query])
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert "reduceTo is required" in response.json()["error"]["message"], response.text
+
+
+def test_metrics_scalar_invalid_reduce_to_rejected(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+) -> None:
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    aggregation = build_metrics_aggregation("test.reduce.metric", "latest", "sum", "unspecified")
+    aggregation["reduceTo"] = "p99"
+    query = build_scalar_query(name="A", signal="metrics", aggregations=[aggregation])
+    response = make_scalar_query_request(signoz, token, now, [query])
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert "invalid reduceTo" in response.json()["error"]["message"], response.text

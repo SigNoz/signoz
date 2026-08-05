@@ -118,6 +118,10 @@ const (
 	FilterOperatorHasToken
 	FilterOperatorHasAny
 	FilterOperatorHasAll
+
+	// FilterOperatorSearch backs search('term'): keyless, fanned out by the condition
+	// builder across every searchable column.
+	FilterOperatorSearch
 )
 
 var operatorInverseMapping = map[FilterOperator]FilterOperator{
@@ -186,7 +190,8 @@ func (f FilterOperator) IsNegativeOperator() bool {
 		FilterOperatorIn,
 		FilterOperatorExists,
 		FilterOperatorRegexp,
-		FilterOperatorContains:
+		FilterOperatorContains,
+		FilterOperatorSearch:
 		return false
 	}
 	return true
@@ -243,10 +248,11 @@ func (f FilterOperator) IsArrayFunctionOperator() bool {
 }
 
 // IsFunctionOperator reports whether the operator is a query function
-// (has/hasAny/hasAll/hasToken); these apply to the logs body column only.
+// (has/hasAny/hasAll/hasToken/search) — logs-only, and skipped by the
+// resource-fingerprint builder.
 func (f FilterOperator) IsFunctionOperator() bool {
 	switch f {
-	case FilterOperatorHas, FilterOperatorHasAny, FilterOperatorHasAll, FilterOperatorHasToken:
+	case FilterOperatorHas, FilterOperatorHasAny, FilterOperatorHasAll, FilterOperatorHasToken, FilterOperatorSearch:
 		return true
 	default:
 		return false
@@ -265,6 +271,8 @@ func (f FilterOperator) FunctionName() string {
 		return "hasAll"
 	case FilterOperatorHasToken:
 		return "hasToken"
+	case FilterOperatorSearch:
+		return "search"
 	default:
 		return ""
 	}
@@ -320,6 +328,10 @@ func (ReduceTo) Enum() []any {
 		ReduceToLast,
 		ReduceToMedian,
 	}
+}
+
+func (r ReduceTo) IsValid() bool {
+	return slices.ContainsFunc(r.Enum(), func(v any) bool { return v == r })
 }
 
 // FunctionReduceTo applies the reduceTo operator to a time series and returns a new series with the reduced value

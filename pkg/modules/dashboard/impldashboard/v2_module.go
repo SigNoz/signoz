@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/transition"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/tagtypes"
@@ -119,6 +120,51 @@ func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UU
 	}
 
 	return storable.ToDashboardV2(tags)
+}
+
+// MigrateV2 retries the v1→v2 migration on a dashboard still stored as v1 (one the
+// bulk 103 migration skipped or failed). Idempotent: an already-v2 one is unchanged.
+func (module *module) MigrateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
+	storable, err := module.store.Get(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Already migrated: return as-is.
+	if storable.IsV2() {
+		tags, err := module.tagModule.ListForResource(ctx, orgID, coretypes.KindDashboard, id)
+		if err != nil {
+			return nil, err
+		}
+		return storable.ToDashboardV2(tags)
+	}
+
+	// v1→v2 needs v5-shaped queries; run v4→v5 in place first.
+	transition.NewDashboardMigrateV5(module.settings.Logger(), nil, nil).Migrate(ctx, storable.Data)
+
+	v2, err := storable.ConvertV1ToV2()
+	if err != nil {
+		return nil, err
+	}
+
+	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
+		resolvedTags, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, v2.ID, tagtypes.NewPostableTagsFromTags(v2.Tags))
+		if err != nil {
+			return err
+		}
+		v2.Tags = resolvedTags
+
+		storableV2, err := v2.ToStorableDashboard()
+		if err != nil {
+			return err
+		}
+		return module.store.Update(ctx, orgID, storableV2)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return v2, nil
 }
 
 func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updatable dashboardtypes.UpdatableDashboardV2) (*dashboardtypes.DashboardV2, error) {

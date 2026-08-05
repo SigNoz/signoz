@@ -1,6 +1,10 @@
 // Fill the section field so the select lines up with the other full-width controls.
 .select {
 	width: 100%;
+
+	:global(.ant-select-selector) {
+		border-color: var(--l2-border) !important;
+	}
 }
 
 .item {

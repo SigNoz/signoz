@@ -1,4 +1,7 @@
 import { useCallback } from 'react';
+import logEvent from 'api/common/logEvent';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
+import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
@@ -38,12 +41,21 @@ export function useDeletePanel({
 				return;
 			}
 
+			const removed = section.items.find((i) => i.id === panelId);
 			const nextItems = section.items.filter((i) => i.id !== panelId);
 			try {
 				await patchAsync([
 					replaceSectionItemsOp(layoutIndex, nextItems),
 					removePanelOp(panelId),
 				]);
+				void logEvent(DashboardDetailEvents.PanelAction, {
+					action: 'delete',
+					panelType: removed?.panel
+						? PANEL_KIND_TO_PANEL_TYPE[removed.panel.spec.plugin.kind]
+						: undefined,
+					panelId,
+					dashboardId,
+				});
 			} catch (error) {
 				showErrorModal(error as APIError);
 			}

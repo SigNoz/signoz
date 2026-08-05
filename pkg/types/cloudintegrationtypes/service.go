@@ -44,10 +44,6 @@ type GettableServicesMetadata struct {
 	Services []*ServiceMetadata `json:"services" required:"true" nullable:"false"`
 }
 
-type ListServicesMetadataParams struct {
-	CloudIntegrationID valuer.UUID `query:"cloud_integration_id" required:"false"`
-}
-
 // Service represents a cloud integration service with its definition,
 // cloud integration service is non nil only when the service entry exists in DB with ANY config (enabled or disabled).
 type Service struct {
@@ -61,10 +57,6 @@ type Service struct {
 
 type ServiceAssets struct {
 	Dashboards []*ServiceDashboard `json:"dashboards" required:"true" nullable:"false"`
-}
-
-type GetServiceParams struct {
-	CloudIntegrationID valuer.UUID `query:"cloud_integration_id" required:"false"`
 }
 
 type UpdatableService struct {
@@ -125,10 +117,10 @@ type CollectedMetric struct {
 // This is used to show available pre-made dashboards for a service,
 // hence has additional fields like id, title and description.
 type Dashboard struct {
-	ID          string                               `json:"id"`
-	Title       string                               `json:"title"`
-	Description string                               `json:"description"`
-	Definition  dashboardtypes.StorableDashboardData `json:"definition,omitempty"`
+	ID          string                             `json:"id"`
+	Title       string                             `json:"title"`
+	Description string                             `json:"description"`
+	Definition  dashboardtypes.PostableDashboardV2 `json:"definition"`
 }
 
 type ServiceDashboard struct {

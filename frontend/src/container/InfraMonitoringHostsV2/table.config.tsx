@@ -9,6 +9,7 @@ import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { getGroupByEl } from 'container/InfraMonitoringK8sV2/Base/utils';
 import {
 	EntityProgressBar,
+	EntityProgressThresholds,
 	ExpandButtonWrapper,
 	GroupedStatusCounts,
 	ValidateColumnValueWrapper,
@@ -98,7 +99,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 		),
 	},
 	{
-		id: 'hostName',
+		id: INFRA_MONITORING_ATTR_KEYS.HOST_NAME,
 		header: (): React.ReactNode => (
 			<EntityGroupHeader
 				title="Hostname"
@@ -108,7 +109,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 		),
 		accessorFn: (row): string => row.hostName ?? '',
 		width: { min: 290 },
-		enableSort: false,
+		enableSort: true,
 		enableRemove: false,
 		enableMove: false,
 		pin: 'left',
@@ -130,12 +131,13 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 		accessorFn: (row): string => row.status,
 		width: { min: 140 },
 		enableSort: false,
-		cell: ({ value, groupMeta, row }): React.ReactNode => {
+		cell: ({ value, groupMeta, row, rowId }): React.ReactNode => {
 			const status = value as InframonitoringtypesHostStatusDTO;
 
 			if (groupMeta) {
 				return (
 					<GroupedStatusCounts
+						rowId={rowId}
 						items={[
 							{
 								value: row.activeHostCount,
@@ -167,14 +169,17 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 	{
 		id: 'cpu',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/host-monitoring#cpu-usage">
+			<ColumnHeader
+				docPath="/infrastructure-monitoring/host-monitoring#cpu-usage"
+				tooltip={<EntityProgressThresholds type="cpu" />}
+			>
 				CPU Usage
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.cpu,
 		width: { min: 220 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const cpu = value as number;
 			return (
 				<div className={styles.progressContainer}>
@@ -182,6 +187,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 						value={cpu}
 						entity={InfraMonitoringEntity.HOSTS}
 						attribute="CPU metric"
+						rowId={rowId}
 					>
 						<EntityProgressBar value={cpu} type="cpu" />
 					</ValidateColumnValueWrapper>
@@ -193,17 +199,18 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 		id: 'memory',
 		header: (): React.ReactNode => (
 			<ColumnHeader
-				tooltip="Excluding cache memory."
+				tooltip={
+					<EntityProgressThresholds type="memory" note="Excluding cache memory." />
+				}
 				docPath="/infrastructure-monitoring/host-monitoring#memory-usage"
-				className={styles.memoryUsageHeader}
 			>
 				Memory Usage (WSS)
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.memory,
-		width: { min: 240 },
+		width: { min: 200 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const memory = value as number;
 			return (
 				<div className={styles.progressContainer}>
@@ -211,8 +218,39 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 						value={memory}
 						entity={InfraMonitoringEntity.HOSTS}
 						attribute="memory metric"
+						rowId={rowId}
 					>
 						<EntityProgressBar value={memory} type="memory" />
+					</ValidateColumnValueWrapper>
+				</div>
+			);
+		},
+	},
+	{
+		id: 'disk_usage',
+		header: (): React.ReactNode => (
+			<ColumnHeader
+				docPath="/infrastructure-monitoring/host-monitoring#disk-usage"
+				tooltip={<EntityProgressThresholds type="disk" />}
+			>
+				Disk Usage
+			</ColumnHeader>
+		),
+		accessorFn: (row): number => row.diskUsage,
+		width: { min: 200 },
+		enableSort: true,
+		cell: ({ value, rowId }): React.ReactNode => {
+			const diskUsage = value as number;
+
+			return (
+				<div className={styles.progressContainer}>
+					<ValidateColumnValueWrapper
+						value={diskUsage}
+						entity={InfraMonitoringEntity.HOSTS}
+						attribute="disk usage metric"
+						rowId={rowId}
+					>
+						<EntityProgressBar value={diskUsage} type="disk" />
 					</ValidateColumnValueWrapper>
 				</div>
 			);
@@ -228,7 +266,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 		accessorFn: (row): number => row.wait,
 		width: { min: 120 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const wait = value as number;
 
 			return (
@@ -236,6 +274,7 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 					value={wait}
 					entity={InfraMonitoringEntity.HOSTS}
 					attribute="IOWait metric"
+					rowId={rowId}
 				>
 					<TanStackTable.Text>
 						{`${Number((wait * 100).toFixed(1))}%`}
@@ -252,9 +291,9 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 			</ColumnHeader>
 		),
 		accessorFn: (row): number => row.load15,
-		width: { min: 200 },
+		width: { min: 160 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const load15 = Number(value);
 
 			return (
@@ -262,35 +301,10 @@ export const hostColumnsConfig: HostColumnConfigType[] = [
 					value={load15}
 					entity={InfraMonitoringEntity.HOSTS}
 					attribute="load average metric"
+					rowId={rowId}
 				>
 					<TanStackTable.Text>{load15.toFixed(2)}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
-			);
-		},
-	},
-	{
-		id: 'diskUsage',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath="/infrastructure-monitoring/host-monitoring#disk-usage">
-				Disk Usage
-			</ColumnHeader>
-		),
-		accessorFn: (row): number => row.diskUsage,
-		width: { min: 160 },
-		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
-			const diskUsage = value as number;
-
-			return (
-				<div className={styles.progressContainer}>
-					<ValidateColumnValueWrapper
-						value={diskUsage}
-						entity={InfraMonitoringEntity.HOSTS}
-						attribute="disk usage metric"
-					>
-						<EntityProgressBar value={diskUsage} type="disk" />
-					</ValidateColumnValueWrapper>
-				</div>
 			);
 		},
 	},

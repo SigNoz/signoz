@@ -1,6 +1,6 @@
 import {
+	DashboardtypesDynamicVariableSignalDTO,
 	DashboardtypesListVariableSpecSortDTO,
-	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { DashboardtypesVariableDefaultValueDTO } from 'api/generated/services/sigNoz.schemas';
 import { sortBy } from 'lodash-es';
@@ -15,22 +15,13 @@ import { sortBy } from 'lodash-es';
  */
 export type VariableType = 'QUERY' | 'CUSTOM' | 'TEXT' | 'DYNAMIC';
 
-/** Telemetry signal — the generated enum (traces / logs / metrics). */
-// A query/variable signal is only logs/traces/metrics. TelemetrytypesSignalDTO
-// also carries the empty "any" value used on field keys, which is not a valid
-// query/variable signal, so exclude it here.
-export type TelemetrySignal =
-	| TelemetrytypesSignalDTO.logs
-	| TelemetrytypesSignalDTO.traces
-	| TelemetrytypesSignalDTO.metrics;
-
-/**
- * Signal selected in the dynamic-variable editor. `'all'` is UI-only (the
- * generated `TelemetrytypesSignalDTO` has no "all") — it searches across every
- * signal and maps to an omitted `signal` on the wire (see {@link signalForApi}).
- */
-export const DYNAMIC_SIGNAL_ALL = 'all' as const;
-export type DynamicSignalOption = TelemetrySignal | typeof DYNAMIC_SIGNAL_ALL;
+/** Analytics label for each variable type (TEXT is surfaced as "textbox"). */
+export const VARIABLE_TYPE_EVENT_LABEL: Record<VariableType, string> = {
+	QUERY: 'query',
+	CUSTOM: 'custom',
+	TEXT: 'textbox',
+	DYNAMIC: 'dynamic',
+};
 
 /**
  * Sort order for list-variable values, keyed by the generated wire enum so the
@@ -73,25 +64,38 @@ export const VARIABLE_SORT_LABEL: Record<VariableSort, string> = {
 	[VARIABLE_SORT.CI_DESC]: 'Alphabetical, case-insensitive (descending)',
 };
 
-export const DYNAMIC_SIGNALS: DynamicSignalOption[] = [
-	DYNAMIC_SIGNAL_ALL,
-	TelemetrytypesSignalDTO.traces,
-	TelemetrytypesSignalDTO.logs,
-	TelemetrytypesSignalDTO.metrics,
+export const DYNAMIC_SIGNALS: DashboardtypesDynamicVariableSignalDTO[] = [
+	DashboardtypesDynamicVariableSignalDTO.all,
+	DashboardtypesDynamicVariableSignalDTO.traces,
+	DashboardtypesDynamicVariableSignalDTO.logs,
+	DashboardtypesDynamicVariableSignalDTO.metrics,
 ];
 
-export const DYNAMIC_SIGNAL_LABEL: Record<DynamicSignalOption, string> = {
-	[DYNAMIC_SIGNAL_ALL]: 'All telemetry',
-	[TelemetrytypesSignalDTO.traces]: 'Traces',
-	[TelemetrytypesSignalDTO.logs]: 'Logs',
-	[TelemetrytypesSignalDTO.metrics]: 'Metrics',
+export const DYNAMIC_SIGNAL_LABEL: Record<
+	DashboardtypesDynamicVariableSignalDTO,
+	string
+> = {
+	[DashboardtypesDynamicVariableSignalDTO.all]: 'All telemetry',
+	[DashboardtypesDynamicVariableSignalDTO.traces]: 'Traces',
+	[DashboardtypesDynamicVariableSignalDTO.logs]: 'Logs',
+	[DashboardtypesDynamicVariableSignalDTO.metrics]: 'Metrics',
 };
 
-/** Maps the editor's signal selection to the wire value (`'all'` → omitted). */
+/**
+ * Field-keys/values API param. The `all` signal is omitted (that endpoint only
+ * accepts a concrete signal), everything else passes through.
+ */
 export function signalForApi(
-	signal: DynamicSignalOption,
-): TelemetrySignal | undefined {
-	return signal === DYNAMIC_SIGNAL_ALL ? undefined : signal;
+	signal: DashboardtypesDynamicVariableSignalDTO,
+):
+	| Exclude<
+			DashboardtypesDynamicVariableSignalDTO,
+			DashboardtypesDynamicVariableSignalDTO.all
+	  >
+	| undefined {
+	return signal === DashboardtypesDynamicVariableSignalDTO.all
+		? undefined
+		: signal;
 }
 
 type SortableValues = (string | number | boolean)[];
@@ -136,7 +140,7 @@ export interface VariableFormModel {
 	textValue: string; // TEXT
 	textConstant: boolean; // TEXT
 	dynamicAttribute: string; // DYNAMIC — the telemetry field name
-	dynamicSignal: DynamicSignalOption; // DYNAMIC — the telemetry signal
+	dynamicSignal: DashboardtypesDynamicVariableSignalDTO; // DYNAMIC — the telemetry signal (`all` = every signal)
 
 	/**
 	 * Runtime-selected default, not editable in the management tab yet; carried
@@ -158,6 +162,6 @@ export function emptyVariableFormModel(): VariableFormModel {
 		textValue: '',
 		textConstant: false,
 		dynamicAttribute: '',
-		dynamicSignal: DYNAMIC_SIGNAL_ALL,
+		dynamicSignal: DashboardtypesDynamicVariableSignalDTO.all,
 	};
 }

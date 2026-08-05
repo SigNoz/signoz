@@ -35,6 +35,7 @@ function clone(groups: DraftGroup[]): DraftGroup[] {
 
 export interface AttributeMappingEditor {
 	groups: DraftGroup[];
+	snapshot: DraftGroup[];
 	isLoading: boolean;
 	isError: boolean;
 	isDirty: boolean;
@@ -304,6 +305,7 @@ export function useAttributeMappingEditor(): AttributeMappingEditor {
 
 	return {
 		groups: draft ?? [],
+		snapshot,
 		isLoading: !ready || draft === null,
 		isError: groupsQuery.isError,
 		isDirty,

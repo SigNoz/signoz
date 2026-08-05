@@ -223,6 +223,14 @@ const extractVarName = (
 	return match;
 };
 
+// Per-row fields are registered `_`-prefixed, but templates use the bare name (`{{trace_id}}`).
+// Exact match first so dashboard/global variables keep precedence over a same-named row field.
+const lookupVariableValue = (
+	varName: string,
+	processedVariables: Record<string, string>,
+): string | undefined =>
+	processedVariables[varName] ?? processedVariables[`_${varName}`];
+
 // Utility function to resolve text with processed variables
 const resolveText = (
 	text: string,
@@ -233,7 +241,7 @@ const resolveText = (
 
 	return text.replace(combinedPattern, (match) => {
 		const varName = extractVarName(match, matcher, processedVariables);
-		const value = processedVariables[varName];
+		const value = lookupVariableValue(varName, processedVariables);
 
 		if (value != null) {
 			const parts = value.split('-|-');
@@ -254,7 +262,7 @@ const resolveTextWithTruncation = (
 
 	const result = text.replace(combinedPattern, (match) => {
 		const varName = extractVarName(match, matcher, processedVariables);
-		const value = processedVariables[varName];
+		const value = lookupVariableValue(varName, processedVariables);
 
 		if (value != null) {
 			const parts = value.split('-|-');

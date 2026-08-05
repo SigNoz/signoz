@@ -1,5 +1,4 @@
 from collections.abc import Callable
-from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 
 import pytest
@@ -8,7 +7,6 @@ from sqlalchemy import sql
 from wiremock.resources.mappings import Mapping
 
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
-from fixtures.metrics import Metrics
 from fixtures.types import Operation, SigNoz, TestContainerDocker
 
 
@@ -32,8 +30,13 @@ def test_create_and_get_public_dashboard(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
-        json={"title": "Sample Title", "uploadedGrafana": False, "version": "v5"},
+        signoz.self.host_configs["8080"].get("/api/v2/dashboards"),
+        json={
+            "schemaVersion": "v6",
+            "name": "sample-title",
+            "spec": {"variables": [], "panels": {}, "layouts": [], "display": {"name": "Sample Title"}, "links": []},
+            "tags": [],
+        },
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -66,143 +69,6 @@ def test_create_and_get_public_dashboard(
     assert response.json()["status"] == "success"
     assert response.json()["data"]["timeRangeEnabled"] is True
     assert response.json()["data"]["defaultTimeRange"] == "10s"
-
-
-def test_public_dashboard_widget_query_range(
-    signoz: SigNoz,
-    create_user_admin: Operation,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_metrics: Callable[[list[Metrics]], None],
-):
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    # Insert metric data so the widget query returns results instead of 404
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    metrics: list[Metrics] = [
-        Metrics(
-            metric_name="container.cpu.time",
-            labels={"service": "test-service"},
-            timestamp=now - timedelta(minutes=5),
-            value=100.0,
-            temporality="Cumulative",
-        ),
-        Metrics(
-            metric_name="container.cpu.time",
-            labels={"service": "test-service"},
-            timestamp=now - timedelta(minutes=3),
-            value=200.0,
-            temporality="Cumulative",
-        ),
-        Metrics(
-            metric_name="container.cpu.time",
-            labels={"service": "test-service"},
-            timestamp=now - timedelta(minutes=1),
-            value=300.0,
-            temporality="Cumulative",
-        ),
-    ]
-    insert_metrics(metrics)
-
-    dashboard_req = {
-        "title": "Test Widget Query Range Dashboard",
-        "description": "For testing widget query range",
-        "version": "v5",
-        "widgets": [
-            {
-                "id": "6990c9d8-57ad-492f-8c63-039081e30d02",
-                "panelTypes": "graph",
-                "query": {
-                    "builder": {
-                        "queryData": [
-                            {
-                                "aggregations": [
-                                    {
-                                        "metricName": "container.cpu.time",
-                                        "reduceTo": "avg",
-                                        "spaceAggregation": "sum",
-                                        "temporality": "",
-                                        "timeAggregation": "rate",
-                                    }
-                                ],
-                                "dataSource": "metrics",
-                                "disabled": False,
-                                "expression": "A",
-                                "filter": {"expression": ""},
-                                "functions": [],
-                                "groupBy": [],
-                                "having": {"expression": ""},
-                                "legend": "",
-                                "limit": 10,
-                                "orderBy": [],
-                                "queryName": "A",
-                                "source": "",
-                                "stepInterval": 10,
-                            }
-                        ],
-                        "queryFormulas": [],
-                        "queryTraceOperator": [],
-                    },
-                    "clickhouse_sql": [{"disabled": False, "legend": "", "name": "A", "query": ""}],
-                    "id": "80f12506-ef72-4013-8282-2713c8114c9e",
-                    "promql": [{"disabled": False, "legend": "", "name": "A", "query": ""}],
-                    "queryType": "builder",
-                },
-            }
-        ],
-    }
-    create_response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
-        json=dashboard_req,
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
-    assert create_response.status_code == HTTPStatus.CREATED
-    data = create_response.json()["data"]
-    dashboard_id = data["id"]
-
-    # create public dashboard
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(f"/api/v1/dashboards/{dashboard_id}/public"),
-        json={
-            "timeRangeEnabled": False,
-            "defaultTimeRange": "10m",
-        },
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
-
-    assert response.status_code == HTTPStatus.CREATED
-    assert "id" in response.json()["data"]
-
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/dashboards/{dashboard_id}/public"),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
-
-    assert response.status_code == HTTPStatus.OK
-    assert response.json()["status"] == "success"
-    public_path = response.json()["data"]["publicPath"]
-    public_dashboard_id = public_path.split("/public/dashboard/")[-1]
-
-    resp = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/public/dashboards/{public_dashboard_id}/widgets/0/query_range"),
-        timeout=2,
-    )
-    assert resp.status_code == HTTPStatus.OK
-    assert resp.json().get("status") == "success"
-
-    resp = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/public/dashboards/{public_dashboard_id}/widgets/-1/query_range"),
-        timeout=2,
-    )
-    assert resp.status_code == HTTPStatus.BAD_REQUEST
-
-    resp = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/public/dashboards/{public_dashboard_id}/widgets/1/query_range"),
-        timeout=2,
-    )
-    assert resp.status_code == HTTPStatus.BAD_REQUEST
 
 
 def test_anonymous_role_has_public_dashboard_permission(

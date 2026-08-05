@@ -65,6 +65,22 @@ class TracesKind(Enum):
     def from_value(cls, value: int) -> "TracesKind":
         return cls(value)
 
+    def kind_string(self) -> str:
+        """The `kind_string` column value, mirroring ptrace.SpanKind.String() — the exporter
+        writes `otelSpan.Kind().String()`. Features filter on these, e.g. third-party-apis
+        requires `kind_string = 'Client'`."""
+        return _KIND_STRINGS[self]
+
+
+_KIND_STRINGS = {
+    TracesKind.SPAN_KIND_UNSPECIFIED: "Unspecified",
+    TracesKind.SPAN_KIND_INTERNAL: "Internal",
+    TracesKind.SPAN_KIND_SERVER: "Server",
+    TracesKind.SPAN_KIND_CLIENT: "Client",
+    TracesKind.SPAN_KIND_PRODUCER: "Producer",
+    TracesKind.SPAN_KIND_CONSUMER: "Consumer",
+}
+
 
 class TracesStatusCode(Enum):
     STATUS_CODE_UNSET = 0
@@ -344,7 +360,7 @@ class Traces(ABC):
         self.flags = flags
         self.name = name
         self.kind = kind.value
-        self.kind_string = kind.name
+        self.kind_string = kind.kind_string()
         self.status_code = status_code.value
         self.status_message = status_message
         self.status_code_string = status_code.name

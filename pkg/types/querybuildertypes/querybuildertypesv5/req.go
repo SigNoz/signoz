@@ -160,8 +160,7 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 		q.Spec = spec
 
 	case QueryTypeBuilderAI:
-		// A dedicated AI query is always a traces builder query; the signal is
-		// implied by the type, so pin it rather than requiring the caller to send it.
+		// the signal is implied by the type, so pin it
 		var spec QueryBuilderQuery[TraceAggregation]
 		if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
 			return err
@@ -388,6 +387,14 @@ type QueryRangeRequest struct {
 
 	// NoCache is a flag to disable caching for the request.
 	NoCache bool `json:"noCache,omitempty"`
+
+	// PromQLProvider serves this request's PromQL queries via the named
+	// prometheus provider ("clickhousev2") instead of the default — the same
+	// data read through a different implementation. It is set from the
+	// X-SigNoz-PromQL-Provider header by the API handler, never from the
+	// body: a rollout-scoped comparison hook for integration tests and
+	// support should not become part of the public request schema.
+	PromQLProvider string `json:"-"`
 
 	FormatOptions *FormatOptions `json:"formatOptions,omitempty"`
 }

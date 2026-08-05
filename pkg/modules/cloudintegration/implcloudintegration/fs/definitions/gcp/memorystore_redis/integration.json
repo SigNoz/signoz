@@ -1,0 +1,94 @@
+{
+  "id": "memorystore_redis",
+  "title": "GCP Memorystore Redis",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supportedSignals": {
+    "metrics": true,
+    "logs": true
+  },
+  "dataCollected": {
+    "metrics": [
+      {
+        "name": "redis.googleapis.com/server/uptime",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "redis.googleapis.com/stats/memory/usage_ratio",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "redis.googleapis.com/stats/memory/system_memory_usage_ratio",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "redis.googleapis.com/stats/cpu_utilization_main_thread",
+        "unit": "Seconds",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "redis.googleapis.com/clients/connected",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "redis.googleapis.com/stats/cache_hit_ratio",
+        "unit": "None",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "redis.googleapis.com/keyspace/keys",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "redis.googleapis.com/commands/usec_per_call",
+        "unit": "Microseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "redis.googleapis.com/commands/calls",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      },
+      {
+        "name": "redis.googleapis.com/clients/blocked",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "redis.googleapis.com/stats/reject_connections_count",
+        "unit": "Count",
+        "type": "Sum",
+        "description": ""
+      }
+    ],
+    "logs": []
+  },
+  "telemetryCollectionStrategy": {
+    "gcp": {}
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "GCP Memorystore Redis Overview",
+        "description": "Overview of GCP Memorystore Redis metrics",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}
