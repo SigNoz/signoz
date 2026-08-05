@@ -31,6 +31,7 @@ _ACTOR_PASSWORD = "password123Z$"
 _TARGET_A = "dashboard-authz-target-a"
 _TARGET_B = "dashboard-authz-target-b"
 _CLONE_SOURCE = "dashboard-authz-clone-source"
+_VIEW_NAME = "dashboard-authz-view"
 
 _SPEC = {
     "display": {"name": "Dashboard Authz"},
@@ -249,12 +250,14 @@ def test_editor_allowed_on_mutations(
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
 
-def test_editor_forbidden_on_public_config(
+def test_viewer_forbidden_on_public_config(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    token = get_token(_EDITOR_EMAIL, _EDITOR_PASSWORD)
+    # The public config routes authorize on the dashboard itself, so a viewer is
+    # refused before the handler runs, licensed or not.
+    token = get_token(_VIEWER_EMAIL, _VIEWER_PASSWORD)
 
     response = requests.get(
         signoz.self.host_configs["8080"].get(f"{V2_BASE_URL}?limit={MAX_LIST_LIMIT}"),
@@ -272,13 +275,6 @@ def test_editor_forbidden_on_public_config(
     )
     assert response.status_code == HTTPStatus.FORBIDDEN, f"create public: expected 403, got {response.status_code}: {response.text}"
 
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/dashboards/{target_id}/public"),
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.FORBIDDEN, f"read public: expected 403, got {response.status_code}: {response.text}"
-
     response = requests.put(
         signoz.self.host_configs["8080"].get(f"/api/v1/dashboards/{target_id}/public"),
         json={"timeRangeEnabled": False, "defaultTimeRange": "10m"},
@@ -295,6 +291,39 @@ def test_editor_forbidden_on_public_config(
     assert response.status_code == HTTPStatus.FORBIDDEN, f"delete public: expected 403, got {response.status_code}: {response.text}"
 
 
+def test_viewer_allowed_on_saved_views(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    # Saved views ride on dashboard list, which a viewer holds, so the whole CRUD
+    # surface is open to them.
+    token = get_token(_VIEWER_EMAIL, _VIEWER_PASSWORD)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/dashboard_views"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v2/dashboard_views"),
+        json={"name": _VIEW_NAME, "data": {"version": "v1", "sort": "updated_at", "order": "desc"}},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    view_id = response.json()["data"]["id"]
+
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"/api/v2/dashboard_views/{view_id}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+
 # ─── per-object FGA scoping (enterprise, custom role) ─────────────────────────
 
 
@@ -305,6 +334,56 @@ def test_apply_license(
     get_token: Callable[[str, str], str],
 ) -> None:
     add_license(signoz, make_http_mocks, get_token)
+
+
+def test_editor_allowed_on_public_config(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    # An editor holds dashboard update, which is what the public config routes ask
+    # for, so publishing is open to editors and not just admins.
+    token = get_token(_EDITOR_EMAIL, _EDITOR_PASSWORD)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{V2_BASE_URL}?limit={MAX_LIST_LIMIT}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    target_id = {dashboard["name"]: dashboard["id"] for dashboard in response.json()["data"]["dashboards"]}[_TARGET_B]
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(f"/api/v1/dashboards/{target_id}/public"),
+        json={"timeRangeEnabled": True, "defaultTimeRange": "10m"},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v1/dashboards/{target_id}/public"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    # Reading the config asks only for dashboard read, so a viewer sees it too.
+    viewer_token = get_token(_VIEWER_EMAIL, _VIEWER_PASSWORD)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v1/dashboards/{target_id}/public"),
+        headers={"Authorization": f"Bearer {viewer_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"/api/v1/dashboards/{target_id}/public"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
 
 def test_setup_scoped_actor(
@@ -403,7 +482,7 @@ def test_publish_and_unpublish_require_update_on_the_dashboard(
     assert response.status_code == HTTPStatus.OK, response.text
     target_id = {dashboard["name"]: dashboard["id"] for dashboard in response.json()["data"]["dashboards"]}[_TARGET_A]
 
-    # public-dashboard create on "*" alone must not be enough to publish.
+    # read and list alone must not be enough to publish.
     response = requests.put(
         signoz.self.host_configs["8080"].get(f"/api/v1/roles/{actor_role_id}"),
         json={
@@ -411,7 +490,6 @@ def test_publish_and_unpublish_require_update_on_the_dashboard(
             "transactionGroups": [
                 transaction_group("read", "metaresource", "dashboard", [target_id]),
                 transaction_group("list", "metaresource", "dashboard", ["*"]),
-                transaction_group("create", "metaresource", "public-dashboard", ["*"]),
             ],
         },
         headers={"Authorization": f"Bearer {admin_token}"},
@@ -437,7 +515,6 @@ def test_publish_and_unpublish_require_update_on_the_dashboard(
                 transaction_group("read", "metaresource", "dashboard", [target_id]),
                 transaction_group("list", "metaresource", "dashboard", ["*"]),
                 transaction_group("update", "metaresource", "dashboard", [target_id]),
-                transaction_group("create", "metaresource", "public-dashboard", ["*"]),
             ],
         },
         headers={"Authorization": f"Bearer {admin_token}"},
@@ -453,7 +530,7 @@ def test_publish_and_unpublish_require_update_on_the_dashboard(
     )
     assert response.status_code == HTTPStatus.CREATED, f"publish with dashboard update: {response.text}"
 
-    # Unpublishing takes the same pair: delete on public-dashboard alone is not enough.
+    # Unpublishing asks for the same update grant.
     response = requests.put(
         signoz.self.host_configs["8080"].get(f"/api/v1/roles/{actor_role_id}"),
         json={
@@ -461,7 +538,6 @@ def test_publish_and_unpublish_require_update_on_the_dashboard(
             "transactionGroups": [
                 transaction_group("read", "metaresource", "dashboard", [target_id]),
                 transaction_group("list", "metaresource", "dashboard", ["*"]),
-                transaction_group("delete", "metaresource", "public-dashboard", ["*"]),
             ],
         },
         headers={"Authorization": f"Bearer {admin_token}"},
@@ -484,7 +560,6 @@ def test_publish_and_unpublish_require_update_on_the_dashboard(
                 transaction_group("read", "metaresource", "dashboard", [target_id]),
                 transaction_group("list", "metaresource", "dashboard", ["*"]),
                 transaction_group("update", "metaresource", "dashboard", [target_id]),
-                transaction_group("delete", "metaresource", "public-dashboard", ["*"]),
             ],
         },
         headers={"Authorization": f"Bearer {admin_token}"},

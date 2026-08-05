@@ -1,7 +1,6 @@
 package signozapiserver
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
@@ -333,8 +332,9 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
-	// read, not update: pinning only mutates the calling user's pin list, not the
-	// dashboard itself — anyone who can view a dashboard can bookmark it.
+	// Pinning mutates the calling user's pin list, not the dashboard, so it rides
+	// on the collection-level list permission rather than a per-dashboard check.
+	// The id is still extracted, for audit.
 	if err := router.Handle("/api/v2/users/me/dashboards/{id}/pins", handler.New(
 		provider.authzMiddleware.CheckResources(provider.dashboardHandler.PinV2, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
@@ -349,14 +349,14 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusNoContent,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound, http.StatusConflict},
 			Deprecated:          false,
-			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceDashboard.Scope(coretypes.VerbRead)}),
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceDashboard.Scope(coretypes.VerbList)}),
 		},
 		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceMetaResourceDashboard,
-			Verb:     coretypes.VerbRead,
-			Category: coretypes.ActionCategoryConfigurationChange,
+			Verb:     coretypes.VerbList,
+			Category: coretypes.ActionCategoryDataAccess,
 			ID:       coretypes.PathParam("id"),
-			Selector: coretypes.IDSelector,
+			Selector: coretypes.WildcardSelector,
 		}),
 	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
@@ -376,84 +376,122 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusNoContent,
 			ErrorStatusCodes:    []int{http.StatusBadRequest},
 			Deprecated:          false,
-			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceDashboard.Scope(coretypes.VerbRead)}),
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceDashboard.Scope(coretypes.VerbList)}),
 		},
 		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceMetaResourceDashboard,
-			Verb:     coretypes.VerbRead,
-			Category: coretypes.ActionCategoryConfigurationChange,
+			Verb:     coretypes.VerbList,
+			Category: coretypes.ActionCategoryDataAccess,
 			ID:       coretypes.PathParam("id"),
-			Selector: coretypes.IDSelector,
+			Selector: coretypes.WildcardSelector,
 		}),
 	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/dashboard_views", handler.New(provider.authzMiddleware.ViewAccess(provider.dashboardHandler.ListViews), handler.OpenAPIDef{
-		ID:                  "ListDashboardViews",
-		Tags:                []string{"dashboard"},
-		Summary:             "List dashboard saved views",
-		Description:         "Returns every saved view in the calling user's org. Saved views are shared org-wide.",
-		Request:             nil,
-		RequestContentType:  "",
-		Response:            new(dashboardtypes.ListableDashboardView),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-	})).Methods(http.MethodGet).GetError(); err != nil {
+	// Saved views hold dashboard listing state (query, sort, order) rather than any
+	// one dashboard, so all four ride on the collection-level list permission.
+	if err := router.Handle("/api/v2/dashboard_views", handler.New(
+		provider.authzMiddleware.CheckResources(provider.dashboardHandler.ListViews, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
+		handler.OpenAPIDef{
+			ID:                  "ListDashboardViews",
+			Tags:                []string{"dashboard"},
+			Summary:             "List dashboard saved views",
+			Description:         "Returns every saved view in the calling user's org. Saved views are shared org-wide.",
+			Request:             nil,
+			RequestContentType:  "",
+			Response:            new(dashboardtypes.ListableDashboardView),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{},
+			Deprecated:          false,
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceDashboard.Scope(coretypes.VerbList)}),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceDashboard,
+			Verb:     coretypes.VerbList,
+			Category: coretypes.ActionCategoryDataAccess,
+			Selector: coretypes.WildcardSelector,
+		}),
+	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/dashboard_views", handler.New(provider.authzMiddleware.EditAccess(provider.dashboardHandler.CreateView), handler.OpenAPIDef{
-		ID:                  "CreateDashboardView",
-		Tags:                []string{"dashboard"},
-		Summary:             "Create dashboard saved view",
-		Description:         "Persists the calling user's dashboard listing state (query, sort, order) as a named, reusable view shared across the org.",
-		Request:             new(dashboardtypes.PostableDashboardView),
-		RequestContentType:  "application/json",
-		Response:            new(dashboardtypes.DashboardView),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusCreated,
-		ErrorStatusCodes:    []int{http.StatusBadRequest},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	if err := router.Handle("/api/v2/dashboard_views", handler.New(
+		provider.authzMiddleware.CheckResources(provider.dashboardHandler.CreateView, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		handler.OpenAPIDef{
+			ID:                  "CreateDashboardView",
+			Tags:                []string{"dashboard"},
+			Summary:             "Create dashboard saved view",
+			Description:         "Persists the calling user's dashboard listing state (query, sort, order) as a named, reusable view shared across the org.",
+			Request:             new(dashboardtypes.PostableDashboardView),
+			RequestContentType:  "application/json",
+			Response:            new(dashboardtypes.DashboardView),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusCreated,
+			ErrorStatusCodes:    []int{http.StatusBadRequest},
+			Deprecated:          false,
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceDashboard.Scope(coretypes.VerbList)}),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceDashboard,
+			Verb:     coretypes.VerbList,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			Selector: coretypes.WildcardSelector,
+		}),
+	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/dashboard_views/{id}", handler.New(provider.authzMiddleware.EditAccess(provider.dashboardHandler.UpdateView), handler.OpenAPIDef{
-		ID:                  "UpdateDashboardView",
-		Tags:                []string{"dashboard"},
-		Summary:             "Update dashboard saved view",
-		Description:         "Replaces a saved view's name and data. Saved views are shared org-wide.",
-		Request:             new(dashboardtypes.UpdatableDashboardView),
-		RequestContentType:  "application/json",
-		Response:            new(dashboardtypes.DashboardView),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
-	})).Methods(http.MethodPut).GetError(); err != nil {
+	if err := router.Handle("/api/v2/dashboard_views/{id}", handler.New(
+		provider.authzMiddleware.CheckResources(provider.dashboardHandler.UpdateView, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		handler.OpenAPIDef{
+			ID:                  "UpdateDashboardView",
+			Tags:                []string{"dashboard"},
+			Summary:             "Update dashboard saved view",
+			Description:         "Replaces a saved view's name and data. Saved views are shared org-wide.",
+			Request:             new(dashboardtypes.UpdatableDashboardView),
+			RequestContentType:  "application/json",
+			Response:            new(dashboardtypes.DashboardView),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+			Deprecated:          false,
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceDashboard.Scope(coretypes.VerbList)}),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceDashboard,
+			Verb:     coretypes.VerbList,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			Selector: coretypes.WildcardSelector,
+		}),
+	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/dashboard_views/{id}", handler.New(provider.authzMiddleware.EditAccess(provider.dashboardHandler.DeleteView), handler.OpenAPIDef{
-		ID:                  "DeleteDashboardView",
-		Tags:                []string{"dashboard"},
-		Summary:             "Delete dashboard saved view",
-		Description:         "Removes a saved view. Saved views are shared org-wide. Deleting a non-existent view returns 404.",
-		Request:             nil,
-		RequestContentType:  "",
-		Response:            nil,
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
-	})).Methods(http.MethodDelete).GetError(); err != nil {
+	if err := router.Handle("/api/v2/dashboard_views/{id}", handler.New(
+		provider.authzMiddleware.CheckResources(provider.dashboardHandler.DeleteView, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		handler.OpenAPIDef{
+			ID:                  "DeleteDashboardView",
+			Tags:                []string{"dashboard"},
+			Summary:             "Delete dashboard saved view",
+			Description:         "Removes a saved view. Saved views are shared org-wide. Deleting a non-existent view returns 404.",
+			Request:             nil,
+			RequestContentType:  "",
+			Response:            nil,
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusNoContent,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+			Deprecated:          false,
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceDashboard.Scope(coretypes.VerbList)}),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceDashboard,
+			Verb:     coretypes.VerbList,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			Selector: coretypes.WildcardSelector,
+		}),
+	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
 
@@ -471,35 +509,21 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusCreated,
 			ErrorStatusCodes:    []int{},
 			Deprecated:          false,
-			SecuritySchemes: newScopedSecuritySchemes([]string{
-				coretypes.ResourceMetaResourcePublicDashboard.Scope(coretypes.VerbCreate),
-				coretypes.ResourceMetaResourceDashboard.Scope(coretypes.VerbUpdate),
-			}),
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceDashboard.Scope(coretypes.VerbUpdate)}),
 		},
-		// update, not read, on the dashboard being exposed: viewing one must not
-		// be enough to share it publicly.
-		handler.WithResourceDefs(
-			handler.BasicResourceDef{
-				Resource: coretypes.ResourceMetaResourcePublicDashboard,
-				Verb:     coretypes.VerbCreate,
-				Category: coretypes.ActionCategoryConfigurationChange,
-				ID:       coretypes.ResponseJSONPath("data.id"),
-				Selector: coretypes.WildcardSelector,
-			},
-			handler.BasicResourceDef{
-				Resource: coretypes.ResourceMetaResourceDashboard,
-				Verb:     coretypes.VerbUpdate,
-				Category: coretypes.ActionCategoryConfigurationChange,
-				ID:       coretypes.PathParam("id"),
-				Selector: coretypes.IDSelector,
-			},
-		),
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceDashboard,
+			Verb:     coretypes.VerbUpdate,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
+		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(
-		provider.authzMiddleware.CheckResources(provider.dashboardHandler.GetPublic, authtypes.SigNozAdminRoleName),
+		provider.authzMiddleware.CheckResources(provider.dashboardHandler.GetPublic, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "GetPublicDashboard",
 			Tags:                []string{"dashboard"},
@@ -512,27 +536,15 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{},
 			Deprecated:          false,
-			SecuritySchemes: newScopedSecuritySchemes([]string{
-				coretypes.ResourceMetaResourcePublicDashboard.Scope(coretypes.VerbRead),
-				coretypes.ResourceMetaResourceDashboard.Scope(coretypes.VerbRead),
-			}),
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceDashboard.Scope(coretypes.VerbRead)}),
 		},
-		handler.WithResourceDefs(
-			handler.BasicResourceDef{
-				Resource: coretypes.ResourceMetaResourcePublicDashboard,
-				Verb:     coretypes.VerbRead,
-				Category: coretypes.ActionCategoryDataAccess,
-				ID:       coretypes.PathParam("id"),
-				Selector: provider.publicDashboardSelector,
-			},
-			handler.BasicResourceDef{
-				Resource: coretypes.ResourceMetaResourceDashboard,
-				Verb:     coretypes.VerbRead,
-				Category: coretypes.ActionCategoryDataAccess,
-				ID:       coretypes.PathParam("id"),
-				Selector: coretypes.IDSelector,
-			},
-		),
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceDashboard,
+			Verb:     coretypes.VerbRead,
+			Category: coretypes.ActionCategoryDataAccess,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
+		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -551,27 +563,15 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusNoContent,
 			ErrorStatusCodes:    []int{},
 			Deprecated:          false,
-			SecuritySchemes: newScopedSecuritySchemes([]string{
-				coretypes.ResourceMetaResourcePublicDashboard.Scope(coretypes.VerbUpdate),
-				coretypes.ResourceMetaResourceDashboard.Scope(coretypes.VerbUpdate),
-			}),
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceDashboard.Scope(coretypes.VerbUpdate)}),
 		},
-		handler.WithResourceDefs(
-			handler.BasicResourceDef{
-				Resource: coretypes.ResourceMetaResourcePublicDashboard,
-				Verb:     coretypes.VerbUpdate,
-				Category: coretypes.ActionCategoryConfigurationChange,
-				ID:       coretypes.PathParam("id"),
-				Selector: provider.publicDashboardSelector,
-			},
-			handler.BasicResourceDef{
-				Resource: coretypes.ResourceMetaResourceDashboard,
-				Verb:     coretypes.VerbUpdate,
-				Category: coretypes.ActionCategoryConfigurationChange,
-				ID:       coretypes.PathParam("id"),
-				Selector: coretypes.IDSelector,
-			},
-		),
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceDashboard,
+			Verb:     coretypes.VerbUpdate,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
+		}),
 	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
@@ -590,28 +590,15 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusNoContent,
 			ErrorStatusCodes:    []int{},
 			Deprecated:          false,
-			SecuritySchemes: newScopedSecuritySchemes([]string{
-				coretypes.ResourceMetaResourcePublicDashboard.Scope(coretypes.VerbDelete),
-				coretypes.ResourceMetaResourceDashboard.Scope(coretypes.VerbUpdate),
-			}),
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceDashboard.Scope(coretypes.VerbUpdate)}),
 		},
-		// Unpublishing changes exposure too, so it also takes update on the dashboard.
-		handler.WithResourceDefs(
-			handler.BasicResourceDef{
-				Resource: coretypes.ResourceMetaResourcePublicDashboard,
-				Verb:     coretypes.VerbDelete,
-				Category: coretypes.ActionCategoryConfigurationChange,
-				ID:       coretypes.PathParam("id"),
-				Selector: provider.publicDashboardSelector,
-			},
-			handler.BasicResourceDef{
-				Resource: coretypes.ResourceMetaResourceDashboard,
-				Verb:     coretypes.VerbUpdate,
-				Category: coretypes.ActionCategoryConfigurationChange,
-				ID:       coretypes.PathParam("id"),
-				Selector: coretypes.IDSelector,
-			},
-		),
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceDashboard,
+			Verb:     coretypes.VerbUpdate,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
+		}),
 	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
@@ -730,24 +717,4 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 	}
 
 	return nil
-}
-
-// publicDashboardSelector maps a dashboard id to the public dashboard's own id,
-// which is what public-dashboard FGA objects are keyed by. An unshared dashboard
-// has no such id, so resolution failure falls back to the wildcard alone: denied
-// unless the caller holds the wildcard, and the handler reports why.
-func (provider *provider) publicDashboardSelector(ctx context.Context, resource coretypes.Resource, id string, orgID valuer.UUID) ([]coretypes.Selector, error) {
-	selectors := []coretypes.Selector{resource.Type().MustSelector(coretypes.WildCardSelectorString)}
-
-	dashboardID, err := valuer.NewUUID(id)
-	if err != nil {
-		return selectors, nil
-	}
-
-	publicDashboard, err := provider.dashboardModule.GetPublic(ctx, orgID, dashboardID)
-	if err != nil {
-		return selectors, nil
-	}
-
-	return append(selectors, resource.Type().MustSelector(publicDashboard.ID.StringValue())), nil
 }

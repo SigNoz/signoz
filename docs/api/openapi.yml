@@ -10247,10 +10247,8 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - public-dashboard:delete
         - dashboard:update
       - tokenizer:
-        - public-dashboard:delete
         - dashboard:update
       summary: Delete public dashboard
       tags:
@@ -10300,10 +10298,8 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - public-dashboard:read
         - dashboard:read
       - tokenizer:
-        - public-dashboard:read
         - dashboard:read
       summary: Get public dashboard
       tags:
@@ -10359,10 +10355,8 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - public-dashboard:create
         - dashboard:update
       - tokenizer:
-        - public-dashboard:create
         - dashboard:update
       summary: Create public dashboard
       tags:
@@ -10405,10 +10399,8 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - public-dashboard:update
         - dashboard:update
       - tokenizer:
-        - public-dashboard:update
         - dashboard:update
       summary: Update public dashboard
       tags:
@@ -14747,9 +14739,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - dashboard:list
       - tokenizer:
-        - VIEWER
+        - dashboard:list
       summary: List dashboard saved views
       tags:
       - dashboard
@@ -14804,9 +14796,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - dashboard:list
       - tokenizer:
-        - EDITOR
+        - dashboard:list
       summary: Create dashboard saved view
       tags:
       - dashboard
@@ -14857,9 +14849,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - dashboard:list
       - tokenizer:
-        - EDITOR
+        - dashboard:list
       summary: Delete dashboard saved view
       tags:
       - dashboard
@@ -14925,9 +14917,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - dashboard:list
       - tokenizer:
-        - EDITOR
+        - dashboard:list
       summary: Update dashboard saved view
       tags:
       - dashboard
@@ -23752,9 +23744,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - dashboard:read
+        - dashboard:list
       - tokenizer:
-        - dashboard:read
+        - dashboard:list
       summary: Unpin a dashboard for the current user (v2)
       tags:
       - dashboard
@@ -23811,9 +23803,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - dashboard:read
+        - dashboard:list
       - tokenizer:
-        - dashboard:read
+        - dashboard:list
       summary: Pin a dashboard for the current user (v2)
       tags:
       - dashboard

@@ -56,11 +56,10 @@ func (migration *addDashboardTuples) Up(ctx context.Context, db *bun.DB) error {
 
 	isPG := migration.sqlstore.BunDB().Dialect().Name() == dialect.PG
 
-	// The dashboard and public sharing config routes now authorize per resource,
-	// so every org needs the managed-role tuples for both kinds. Orgs
-	// bootstrapped before these entries landed in ManagedRoleToTransactions
-	// never got them, and migration 063 covered only the anonymous read on
-	// public-dashboard.
+	// The dashboard routes, including the public sharing config, now authorize per
+	// resource, so every org needs the managed-role dashboard tuples. Orgs
+	// bootstrapped before these entries landed in ManagedRoleToTransactions never
+	// got them.
 	tuples := []migrationTuple{
 		{authtypes.SigNozAdminRoleName, "metaresource", "dashboard", "read"},
 		{authtypes.SigNozAdminRoleName, "metaresource", "dashboard", "update"},
@@ -74,11 +73,6 @@ func (migration *addDashboardTuples) Up(ctx context.Context, db *bun.DB) error {
 		{authtypes.SigNozEditorRoleName, "metaresource", "dashboard", "list"},
 		{authtypes.SigNozViewerRoleName, "metaresource", "dashboard", "read"},
 		{authtypes.SigNozViewerRoleName, "metaresource", "dashboard", "list"},
-		{authtypes.SigNozAdminRoleName, "metaresource", "public-dashboard", "read"},
-		{authtypes.SigNozAdminRoleName, "metaresource", "public-dashboard", "update"},
-		{authtypes.SigNozAdminRoleName, "metaresource", "public-dashboard", "delete"},
-		{authtypes.SigNozAdminRoleName, "metaresource", "public-dashboard", "create"},
-		{authtypes.SigNozAdminRoleName, "metaresource", "public-dashboard", "list"},
 	}
 
 	for _, orgID := range orgIDs {
