@@ -134,11 +134,21 @@ export function resolveDefaultSelection(
 	return { value: model.multiSelect ? [] : '', allSelected: false };
 }
 
+interface ReconcileOptions {
+	/**
+	 * Set when no other variable caused this refetch (time-range change, reload): the
+	 * selection then outranks the options and is kept as-is. Leave false for a
+	 * dependency cascade, where a selection that no longer applies must give way.
+	 */
+	preserveSelection?: boolean;
+}
+
 /**
  * Reconciles a variable's current selection against its freshly-fetched options.
  * Returns the next selection, or null when nothing should change (a valid pick is
  * left untouched — local-first). Behaviour, in order:
  * - materialize ALL to the full option set (query/custom);
+ * - keep a multi-select selection outright when `preserveSelection` is set;
  * - keep a still-valid multi-select subset, dropping only invalid entries;
  * - otherwise auto-pick the default (or first option) so dependent variables and
  *   panels always resolve against a usable value.
@@ -147,6 +157,7 @@ export function reconcileWithOptions(
 	model: VariableFormModel,
 	current: VariableSelection,
 	options: string[],
+	{ preserveSelection = false }: ReconcileOptions = {},
 ): VariableSelection | null {
 	if (options.length === 0) {
 		return null;
@@ -161,6 +172,12 @@ export function reconcileWithOptions(
 		Array.isArray(current.value) &&
 		current.value.length > 0
 	) {
+		// A pick this window has no data for is still the user's filter; re-defaulting it
+		// here is what widened a single pick to ALL on every time-range change.
+		if (preserveSelection) {
+			return null;
+		}
+
 		const valid = current.value.map(String).filter((c) => options.includes(c));
 		if (valid.length === current.value.length) {
 			return null;

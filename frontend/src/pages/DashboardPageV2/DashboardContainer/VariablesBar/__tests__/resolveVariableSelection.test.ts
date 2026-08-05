@@ -145,6 +145,53 @@ describe('reconcileWithOptions', () => {
 			),
 		).toBeNull();
 	});
+
+	describe('preserveSelection (options moved on their own — time range, reload)', () => {
+		const multi = model({
+			type: 'DYNAMIC',
+			multiSelect: true,
+			showAllOption: true,
+			dynamicAttribute: 'service.name',
+		});
+
+		it('keeps a multi-select pick the new option list no longer offers', () => {
+			expect(
+				reconcileWithOptions(multi, { value: ['frontend'], allSelected: false }, [
+					'backend',
+					'cart',
+				]),
+			).toStrictEqual({ value: null, allSelected: true });
+
+			expect(
+				reconcileWithOptions(
+					multi,
+					{ value: ['frontend'], allSelected: false },
+					['backend', 'cart'],
+					{ preserveSelection: true },
+				),
+			).toBeNull();
+		});
+
+		it('still materializes ALL, which must track the option list', () => {
+			expect(
+				reconcileWithOptions(
+					model({ type: 'QUERY', multiSelect: true, showAllOption: true }),
+					{ value: ['a'], allSelected: true },
+					['a', 'b'],
+					{ preserveSelection: true },
+				),
+			).toStrictEqual({ value: ['a', 'b'], allSelected: true });
+		});
+
+		it('still fills the default when nothing is selected yet', () => {
+			expect(
+				reconcileWithOptions(multi, { value: [], allSelected: false }, ['a', 'b'], {
+					preserveSelection: true,
+				}),
+			).toStrictEqual({ value: null, allSelected: true });
+		});
+	});
+
 });
 
 describe('configuredDefaultValue', () => {
