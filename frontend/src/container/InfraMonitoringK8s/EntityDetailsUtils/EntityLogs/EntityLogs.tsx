@@ -40,6 +40,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import createQueryParams from 'lib/createQueryParams';
 import { generateFilterQuery } from 'lib/logs/generateFilterQuery';
+import { saveRecentQueryByExpression } from 'lib/recentQueries/saveRecentQuery';
 import { ILog } from 'types/api/logs/log';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -140,6 +141,7 @@ function EntityLogsContent({
 			);
 
 			if (validation.isValid) {
+				saveRecentQueryByExpression(DataSource.LOGS, newUserExpression);
 				querySearchOnRun(newUserExpression);
 
 				void logEvent(InfraMonitoringEvents.FilterApplied, {

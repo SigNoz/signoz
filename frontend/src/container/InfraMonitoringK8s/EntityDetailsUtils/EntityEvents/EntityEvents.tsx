@@ -27,6 +27,7 @@ import {
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';
 import { ChevronDown, ChevronRight } from '@signozhq/icons';
+import { saveRecentQueryByExpression } from 'lib/recentQueries/saveRecentQuery';
 import { useQueryState } from 'nuqs';
 import { DataSource } from 'types/common/queryBuilder';
 import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
@@ -129,6 +130,7 @@ function EntityEventsContent({
 					: newUserExpression || '',
 			);
 			if (validation.isValid) {
+				saveRecentQueryByExpression(DataSource.LOGS, newUserExpression);
 				querySearchOnRun(newUserExpression || '');
 
 				logEvent(InfraMonitoringEvents.FilterApplied, {
