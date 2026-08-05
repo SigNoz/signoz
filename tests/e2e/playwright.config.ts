@@ -2,6 +2,8 @@ import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
 import path from 'path';
 
+import parkedSpecs from './parked-specs.json';
+
 // .env holds user-provided defaults (staging creds).
 // .env.local is written by tests/e2e/bootstrap/setup.py when the pytest
 // lifecycle brings the backend up locally; override=true so local-backend
@@ -14,10 +16,10 @@ dotenv.config({ path: path.resolve(__dirname, '.env.local'), override: true });
 export default defineConfig({
 	testDir: './tests',
 
-	// Temporarily excluded: the V1 -> V2 dashboard migration changes the
-	// behaviour the dashboards specs assert against, so they fail as written.
-	// Remove this once they are updated for the V2 dashboard.
-	testIgnore: ['**/tests/dashboards/**'],
+	// Parked specs, listed one by one with a reason in parked-specs.json — not a
+	// blanket glob, so nothing new can land inside an excluded directory unnoticed.
+	// `pnpm guard:specs` keeps this list and the suite honest.
+	testIgnore: parkedSpecs.specs,
 
 	// All Playwright output lands under artifacts/. One subdir per reporter
 	// plus results/ for per-test artifacts (traces/screenshots/videos).
