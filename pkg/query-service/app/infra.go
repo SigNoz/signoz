@@ -20,7 +20,14 @@ func (aH *APIHandler) getHostAttributeKeys(w http.ResponseWriter, r *http.Reques
 	}
 
 	// get attribute keys
-	keys, err := aH.hostsRepo.GetHostAttributeKeys(ctx, *req)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	keys, err := aH.hostsRepo.GetHostAttributeKeys(ctx, orgID, *req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -41,7 +48,14 @@ func (aH *APIHandler) getHostAttributeValues(w http.ResponseWriter, r *http.Requ
 	}
 
 	// get attribute values
-	values, err := aH.hostsRepo.GetHostAttributeValues(ctx, *req)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	values, err := aH.hostsRepo.GetHostAttributeValues(ctx, orgID, *req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -91,7 +105,14 @@ func (aH *APIHandler) getProcessAttributeKeys(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	keys, err := aH.processesRepo.GetProcessAttributeKeys(ctx, *req)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	keys, err := aH.processesRepo.GetProcessAttributeKeys(ctx, orgID, *req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -108,7 +129,14 @@ func (aH *APIHandler) getProcessAttributeValues(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	values, err := aH.processesRepo.GetProcessAttributeValues(ctx, *req)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	values, err := aH.processesRepo.GetProcessAttributeValues(ctx, orgID, *req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -154,7 +182,14 @@ func (aH *APIHandler) getPodAttributeKeys(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	keys, err := aH.podsRepo.GetPodAttributeKeys(ctx, *req)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	keys, err := aH.podsRepo.GetPodAttributeKeys(ctx, orgID, *req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -171,7 +206,14 @@ func (aH *APIHandler) getPodAttributeValues(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	values, err := aH.podsRepo.GetPodAttributeValues(ctx, *req)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	values, err := aH.podsRepo.GetPodAttributeValues(ctx, orgID, *req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -217,7 +259,14 @@ func (aH *APIHandler) getNodeAttributeKeys(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	keys, err := aH.nodesRepo.GetNodeAttributeKeys(ctx, *req)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	keys, err := aH.nodesRepo.GetNodeAttributeKeys(ctx, orgID, *req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -234,7 +283,14 @@ func (aH *APIHandler) getNodeAttributeValues(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	values, err := aH.nodesRepo.GetNodeAttributeValues(ctx, *req)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	values, err := aH.nodesRepo.GetNodeAttributeValues(ctx, orgID, *req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -297,7 +353,14 @@ func (aH *APIHandler) getNamespaceAttributeValues(w http.ResponseWriter, r *http
 		return
 	}
 
-	values, err := aH.namespacesRepo.GetNamespaceAttributeValues(ctx, *req)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	values, err := aH.namespacesRepo.GetNamespaceAttributeValues(ctx, orgID, *req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -343,7 +406,14 @@ func (aH *APIHandler) getClusterAttributeKeys(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	keys, err := aH.clustersRepo.GetClusterAttributeKeys(ctx, *req)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	keys, err := aH.clustersRepo.GetClusterAttributeKeys(ctx, orgID, *req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -360,7 +430,14 @@ func (aH *APIHandler) getClusterAttributeValues(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	values, err := aH.clustersRepo.GetClusterAttributeValues(ctx, *req)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	values, err := aH.clustersRepo.GetClusterAttributeValues(ctx, orgID, *req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -406,7 +483,14 @@ func (aH *APIHandler) getDeploymentAttributeKeys(w http.ResponseWriter, r *http.
 		return
 	}
 
-	keys, err := aH.deploymentsRepo.GetDeploymentAttributeKeys(ctx, *req)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	keys, err := aH.deploymentsRepo.GetDeploymentAttributeKeys(ctx, orgID, *req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -423,7 +507,14 @@ func (aH *APIHandler) getDeploymentAttributeValues(w http.ResponseWriter, r *htt
 		return
 	}
 
-	values, err := aH.deploymentsRepo.GetDeploymentAttributeValues(ctx, *req)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	values, err := aH.deploymentsRepo.GetDeploymentAttributeValues(ctx, orgID, *req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -469,7 +560,14 @@ func (aH *APIHandler) getDaemonSetAttributeKeys(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	keys, err := aH.daemonsetsRepo.GetDaemonSetAttributeKeys(ctx, *req)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	keys, err := aH.daemonsetsRepo.GetDaemonSetAttributeKeys(ctx, orgID, *req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -486,7 +584,14 @@ func (aH *APIHandler) getDaemonSetAttributeValues(w http.ResponseWriter, r *http
 		return
 	}
 
-	values, err := aH.daemonsetsRepo.GetDaemonSetAttributeValues(ctx, *req)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	values, err := aH.daemonsetsRepo.GetDaemonSetAttributeValues(ctx, orgID, *req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -532,7 +637,14 @@ func (aH *APIHandler) getStatefulSetAttributeKeys(w http.ResponseWriter, r *http
 		return
 	}
 
-	keys, err := aH.statefulsetsRepo.GetStatefulSetAttributeKeys(ctx, *req)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	keys, err := aH.statefulsetsRepo.GetStatefulSetAttributeKeys(ctx, orgID, *req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -549,7 +661,14 @@ func (aH *APIHandler) getStatefulSetAttributeValues(w http.ResponseWriter, r *ht
 		return
 	}
 
-	values, err := aH.statefulsetsRepo.GetStatefulSetAttributeValues(ctx, *req)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	values, err := aH.statefulsetsRepo.GetStatefulSetAttributeValues(ctx, orgID, *req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -595,7 +714,14 @@ func (aH *APIHandler) getJobAttributeKeys(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	keys, err := aH.jobsRepo.GetJobAttributeKeys(ctx, *req)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	keys, err := aH.jobsRepo.GetJobAttributeKeys(ctx, orgID, *req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -611,7 +737,14 @@ func (aH *APIHandler) getJobAttributeValues(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	values, err := aH.jobsRepo.GetJobAttributeValues(ctx, *req)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	values, err := aH.jobsRepo.GetJobAttributeValues(ctx, orgID, *req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -685,7 +818,14 @@ func (aH *APIHandler) getPvcAttributeKeys(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	keys, err := aH.pvcsRepo.GetPvcAttributeKeys(ctx, *req)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	keys, err := aH.pvcsRepo.GetPvcAttributeKeys(ctx, orgID, *req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -702,7 +842,14 @@ func (aH *APIHandler) getPvcAttributeValues(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	values, err := aH.pvcsRepo.GetPvcAttributeValues(ctx, *req)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	values, err := aH.pvcsRepo.GetPvcAttributeValues(ctx, orgID, *req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return

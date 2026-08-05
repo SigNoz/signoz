@@ -3,6 +3,16 @@ import { RefObject, useCallback, useState } from 'react';
 interface UseCrosshairArgs {
 	containerRef: RefObject<HTMLElement>;
 	enabled?: boolean;
+	/**
+	 * Symmetric horizontal inset (px) of the content (ruler ticks + bars) inside
+	 * the container: shifts the origin right by `insetX` and shrinks the usable
+	 * width by `2 * insetX`. The waterfall pads its rows by 15px while the
+	 * crosshair container spans the full width, so the crosshair must map the
+	 * cursor into that inset content box to line up with 0ms/ticks/bars.
+	 * Flamegraph pads its parent instead, so its container is already the content
+	 * box → 0 (default).
+	 */
+	insetX?: number;
 }
 
 interface UseCrosshairReturn {
@@ -25,6 +35,7 @@ interface UseCrosshairReturn {
 export function useCrosshair({
 	containerRef,
 	enabled = true,
+	insetX = 0,
 }: UseCrosshairArgs): UseCrosshairReturn {
 	const [cursorX, setCursorX] = useState<number | null>(null);
 	const [cursorXPercent, setCursorXPercent] = useState<number | null>(null);
@@ -39,11 +50,18 @@ export function useCrosshair({
 				return;
 			}
 
-			const x = e.clientX - rect.left;
-			setCursorX(x);
-			setCursorXPercent(x / rect.width);
+			// Map the cursor into the inset content box so 0% aligns with the first
+			// tick / bar origin (not the container edge). Clamp so the dead padding
+			// zones don't produce a line/time before 0ms or past the end.
+			const contentWidth = Math.max(1, rect.width - insetX * 2);
+			const xInContent = Math.max(
+				0,
+				Math.min(e.clientX - rect.left - insetX, contentWidth),
+			);
+			setCursorX(xInContent + insetX);
+			setCursorXPercent(xInContent / contentWidth);
 		},
-		[containerRef, enabled],
+		[containerRef, enabled, insetX],
 	);
 
 	const onMouseLeave = useCallback((): void => {

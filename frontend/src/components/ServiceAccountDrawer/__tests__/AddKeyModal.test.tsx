@@ -1,13 +1,13 @@
 import { toast } from '@signozhq/ui/sonner';
+import { buildSAAttachPermission } from 'lib/authz/hooks/useAuthZ/permissions/service-account.permissions';
+import {
+	setupAuthzAdmin,
+	setupAuthzDeny,
+	setupAuthzDenyAll,
+} from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import {
-	render,
-	screen,
-	userEvent,
-	waitFor,
-	waitForElementToBeRemoved,
-} from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import AddKeyModal from '../AddKeyModal';
 
@@ -59,6 +59,7 @@ describe('AddKeyModal', () => {
 			rest.post(SA_KEYS_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(201), ctx.json(createdKeyResponse)),
 			),
+			setupAuthzAdmin(),
 		);
 	});
 
@@ -70,32 +71,33 @@ describe('AddKeyModal', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		renderModal();
 
-		expect(screen.getByRole('button', { name: /Create Key/i })).toBeDisabled();
+		// The form only renders once the checks resolve, so waiting for it also
+		// guarantees the button is no longer in its authz-loading state.
+		const nameInput = await screen.findByTestId('add-key-name-input');
+		const createBtn = await screen.findByTestId('add-key-submit-btn');
 
-		await user.type(screen.getByPlaceholderText(/Enter key name/i), 'My Key');
+		expect(createBtn).toBeDisabled();
 
-		await waitFor(() =>
-			expect(
-				screen.getByRole('button', { name: /Create Key/i }),
-			).not.toBeDisabled(),
-		);
+		await user.type(nameInput, 'My Key');
+		await waitFor(() => expect(createBtn).not.toBeDisabled());
+
+		await user.clear(nameInput);
+		await waitFor(() => expect(createBtn).toBeDisabled());
 	});
 
 	it('successful creation transitions to phase 2 with key displayed and security callout', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		renderModal();
 
-		await user.type(screen.getByPlaceholderText(/Enter key name/i), 'Deploy Key');
-		await waitFor(() =>
-			expect(
-				screen.getByRole('button', { name: /Create Key/i }),
-			).not.toBeDisabled(),
-		);
-		await user.click(screen.getByRole('button', { name: /Create Key/i }));
+		const nameInput = await screen.findByTestId('add-key-name-input');
+		const submitBtn = await screen.findByTestId('add-key-submit-btn');
+		await user.type(nameInput, 'Deploy Key');
+		await waitFor(() => expect(submitBtn).not.toBeDisabled());
+		await user.click(submitBtn);
 
 		await screen.findByText('snz_abc123xyz456secret');
 		expect(screen.getByText(/Store the key securely/i)).toBeInTheDocument();
-		await screen.findByRole('dialog', { name: /Key Created Successfully/i });
+		expect(screen.getByTestId('add-key-modal')).toBeInTheDocument();
 	});
 
 	it('copy button writes key to clipboard and shows toast.success', async () => {
@@ -103,13 +105,11 @@ describe('AddKeyModal', () => {
 
 		renderModal();
 
-		await user.type(screen.getByPlaceholderText(/Enter key name/i), 'Deploy Key');
-		await waitFor(() =>
-			expect(
-				screen.getByRole('button', { name: /Create Key/i }),
-			).not.toBeDisabled(),
-		);
-		await user.click(screen.getByRole('button', { name: /Create Key/i }));
+		const nameInput = await screen.findByTestId('add-key-name-input');
+		const submitBtn = await screen.findByTestId('add-key-submit-btn');
+		await user.type(nameInput, 'Deploy Key');
+		await waitFor(() => expect(submitBtn).not.toBeDisabled());
+		await user.click(submitBtn);
 
 		await screen.findByText('snz_abc123xyz456secret');
 
@@ -127,13 +127,60 @@ describe('AddKeyModal', () => {
 		});
 	});
 
+	it('shows inline permission denial and hides the form when key create is denied', async () => {
+		server.use(setupAuthzDenyAll());
+
+		renderModal();
+
+		await expect(
+			screen.findByText(/is not authorized to perform/i),
+		).resolves.toBeInTheDocument();
+
+		expect(screen.queryByTestId('add-key-name-input')).not.toBeInTheDocument();
+		expect(screen.getByTestId('add-key-modal')).toBeInTheDocument();
+	});
+
+	it('keeps the footer usable when key create is denied', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		server.use(setupAuthzDenyAll());
+
+		renderModal();
+
+		await expect(
+			screen.findByText(/is not authorized to perform/i),
+		).resolves.toBeInTheDocument();
+
+		// The footer lives outside the guard: submit is gated, Cancel still works.
+		expect(screen.getByTestId('add-key-submit-btn')).toBeDisabled();
+
+		await user.click(screen.getByTestId('add-key-cancel-btn'));
+
+		await waitFor(() => {
+			expect(screen.queryByTestId('add-key-modal')).not.toBeInTheDocument();
+		});
+	});
+
+	it('shows inline permission denial when attach on the service account is denied', async () => {
+		server.use(setupAuthzDeny(buildSAAttachPermission('sa-1')));
+
+		renderModal();
+
+		await expect(
+			screen.findByText(/is not authorized to perform/i),
+		).resolves.toBeInTheDocument();
+
+		expect(screen.queryByTestId('add-key-name-input')).not.toBeInTheDocument();
+	});
+
 	it('Cancel button closes the modal', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		renderModal();
 
-		const dialog = await screen.findByRole('dialog', { name: /Add a New Key/i });
-		await user.click(screen.getByRole('button', { name: /Cancel/i }));
+		const cancelBtn = await screen.findByTestId('add-key-cancel-btn');
+		await user.click(cancelBtn);
 
-		await waitForElementToBeRemoved(dialog);
+		await waitFor(() => {
+			expect(screen.queryByTestId('add-key-modal')).not.toBeInTheDocument();
+		});
 	});
 });

@@ -1,16 +1,20 @@
-import type { ChangeEvent } from 'react';
 import { Typography } from '@signozhq/ui/typography';
-import { Input } from 'antd';
 import {
 	DashboardtypesFillModeDTO,
 	DashboardtypesLineInterpolationDTO,
 	DashboardtypesLineStyleDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import type { SectionEditorProps } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
+import type {
+	SectionEditorProps,
+	SectionKind,
+} from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 
 import ConfigSegmented from '../../controls/ConfigSegmented/ConfigSegmented';
 import ConfigSelect from '../../controls/ConfigSelect/ConfigSelect';
 import ConfigSwitch from '../../controls/ConfigSwitch/ConfigSwitch';
+import { SegmentIcon } from '../../controls/segmentIcons';
+import type { SectionEditorContext } from '../../sectionContext';
+import DisconnectValuesField from './DisconnectValuesField';
 
 import styles from './ChartAppearanceSection.module.scss';
 
@@ -31,22 +35,22 @@ const LINE_INTERPOLATION_OPTIONS = [
 	{
 		value: DashboardtypesLineInterpolationDTO.linear,
 		label: 'Linear',
-		icon: 'interp-linear' as const,
+		icon: <SegmentIcon name="interp-linear" />,
 	},
 	{
 		value: DashboardtypesLineInterpolationDTO.spline,
 		label: 'Spline',
-		icon: 'interp-spline' as const,
+		icon: <SegmentIcon name="interp-spline" />,
 	},
 	{
 		value: DashboardtypesLineInterpolationDTO.step_before,
 		label: 'Step before',
-		icon: 'interp-step-before' as const,
+		icon: <SegmentIcon name="interp-step-before" />,
 	},
 	{
 		value: DashboardtypesLineInterpolationDTO.step_after,
 		label: 'Step after',
-		icon: 'interp-step-after' as const,
+		icon: <SegmentIcon name="interp-step-after" />,
 	},
 ];
 
@@ -77,16 +81,9 @@ function ChartAppearanceSection({
 	value,
 	controls,
 	onChange,
-}: SectionEditorProps<'chartAppearance'>): JSX.Element {
-	// `spanGaps.fillLessThan` is a stringified seconds threshold: empty means "connect
-	// every gap" (the chart default), a number means "only bridge gaps shorter than this".
-	const handleSpanGaps = (e: ChangeEvent<HTMLInputElement>): void => {
-		const raw = e.target.value;
-		onChange({
-			...value,
-			spanGaps: raw === '' ? undefined : { ...value?.spanGaps, fillLessThan: raw },
-		});
-	};
+	stepInterval,
+}: SectionEditorProps<SectionKind.ChartAppearance> &
+	Pick<SectionEditorContext, 'stepInterval'>): JSX.Element {
 	return (
 		<>
 			{controls.lineStyle && (
@@ -114,7 +111,7 @@ function ChartAppearanceSection({
 						onChange={(next): void =>
 							onChange({
 								...value,
-								lineInterpolation: next as DashboardtypesLineInterpolationDTO,
+								lineInterpolation: next,
 							})
 						}
 					/>
@@ -146,16 +143,12 @@ function ChartAppearanceSection({
 			)}
 
 			{controls.spanGaps && (
-				<div className={styles.field}>
-					<Typography.Text>Connect gaps shorter than (s)</Typography.Text>
-					<Input
-						data-testid="panel-editor-v2-span-gaps"
-						type="number"
-						placeholder="All gaps"
-						value={value?.spanGaps?.fillLessThan ?? ''}
-						onChange={handleSpanGaps}
-					/>
-				</div>
+				<DisconnectValuesField
+					testId="panel-editor-v2-span-gaps"
+					value={value?.spanGaps}
+					stepInterval={stepInterval}
+					onChange={(spanGaps): void => onChange({ ...value, spanGaps })}
+				/>
 			)}
 		</>
 	);

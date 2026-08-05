@@ -62,6 +62,7 @@ describe('TanStackRowCells', () => {
 		const ctx: TableRowContext<Row> = {
 			colCount: 1,
 			onRowClick,
+			getRowKeyData: () => ({ finalKey: 'r1', itemKey: 'r1' }),
 			hasSingleColumn: false,
 			columnOrderKey: '',
 			columnVisibilityKey: '',
@@ -84,19 +85,18 @@ describe('TanStackRowCells', () => {
 			</table>,
 		);
 		await user.click(screen.getAllByRole('cell')[0]);
-		// onRowClick receives (rowData, itemKey) - itemKey is empty when getRowKeyData not provided
-		expect(onRowClick).toHaveBeenCalledWith({ id: 'r1' }, '');
+		expect(onRowClick).toHaveBeenCalledWith({ id: 'r1' }, 'r1', {
+			isActive: false,
+		});
 	});
 
-	it('calls onRowDeactivate instead of onRowClick when row is active', async () => {
+	it('fires onRowClick with empty itemKey when getRowKeyData is not provided', async () => {
+		// Mirrors Logs Explorer / Live Logs, which set onRowClick but no getRowKey.
 		const user = userEvent.setup();
 		const onRowClick = jest.fn();
-		const onRowDeactivate = jest.fn();
 		const ctx: TableRowContext<Row> = {
 			colCount: 1,
 			onRowClick,
-			onRowDeactivate,
-			isRowActive: () => true,
 			hasSingleColumn: false,
 			columnOrderKey: '',
 			columnVisibilityKey: '',
@@ -119,8 +119,81 @@ describe('TanStackRowCells', () => {
 			</table>,
 		);
 		await user.click(screen.getAllByRole('cell')[0]);
-		expect(onRowDeactivate).toHaveBeenCalled();
-		expect(onRowClick).not.toHaveBeenCalled();
+		expect(onRowClick).toHaveBeenCalledWith({ id: 'r1' }, '', {
+			isActive: false,
+		});
+	});
+
+	it('calls onRowClick with isActive: true when the row is active', async () => {
+		// The table no longer owns open/close — it reports the active state and the
+		// consumer routes the click. An active row must still fire onRowClick.
+		const user = userEvent.setup();
+		const onRowClick = jest.fn();
+		const ctx: TableRowContext<Row> = {
+			colCount: 1,
+			onRowClick,
+			isRowActive: () => true,
+			getRowKeyData: () => ({ finalKey: 'r1', itemKey: 'r1' }),
+			hasSingleColumn: false,
+			columnOrderKey: '',
+			columnVisibilityKey: '',
+		};
+		const row = buildMockRow([{ id: 'body' }]);
+		render(
+			<table>
+				<tbody>
+					<tr>
+						<TanStackRowCells<Row>
+							row={row as never}
+							context={ctx}
+							itemKind="row"
+							hasSingleColumn={false}
+							columnOrderKey=""
+							columnVisibilityKey=""
+						/>
+					</tr>
+				</tbody>
+			</table>,
+		);
+		await user.click(screen.getAllByRole('cell')[0]);
+		expect(onRowClick).toHaveBeenCalledWith({ id: 'r1' }, 'r1', {
+			isActive: true,
+		});
+	});
+
+	it('calls onRowClick with isActive: false when the row is not active', async () => {
+		const user = userEvent.setup();
+		const onRowClick = jest.fn();
+		const ctx: TableRowContext<Row> = {
+			colCount: 1,
+			onRowClick,
+			isRowActive: () => false,
+			getRowKeyData: () => ({ finalKey: 'r1', itemKey: 'r1' }),
+			hasSingleColumn: false,
+			columnOrderKey: '',
+			columnVisibilityKey: '',
+		};
+		const row = buildMockRow([{ id: 'body' }]);
+		render(
+			<table>
+				<tbody>
+					<tr>
+						<TanStackRowCells<Row>
+							row={row as never}
+							context={ctx}
+							itemKind="row"
+							hasSingleColumn={false}
+							columnOrderKey=""
+							columnVisibilityKey=""
+						/>
+					</tr>
+				</tbody>
+			</table>,
+		);
+		await user.click(screen.getAllByRole('cell')[0]);
+		expect(onRowClick).toHaveBeenCalledWith({ id: 'r1' }, 'r1', {
+			isActive: false,
+		});
 	});
 
 	it('does not render renderRowActions before hover', () => {
@@ -194,6 +267,7 @@ describe('TanStackRowCells', () => {
 				colCount: 1,
 				onRowClick,
 				onRowClickNewTab,
+				getRowKeyData: () => ({ finalKey: 'r1', itemKey: 'r1' }),
 				hasSingleColumn: false,
 				columnOrderKey: '',
 				columnVisibilityKey: '',
@@ -216,7 +290,7 @@ describe('TanStackRowCells', () => {
 				</table>,
 			);
 			fireEvent.click(screen.getAllByRole('cell')[0], { ctrlKey: true });
-			expect(onRowClickNewTab).toHaveBeenCalledWith({ id: 'r1' }, '');
+			expect(onRowClickNewTab).toHaveBeenCalledWith({ id: 'r1' }, 'r1');
 			expect(onRowClick).not.toHaveBeenCalled();
 		});
 
@@ -227,6 +301,7 @@ describe('TanStackRowCells', () => {
 				colCount: 1,
 				onRowClick,
 				onRowClickNewTab,
+				getRowKeyData: () => ({ finalKey: 'r1', itemKey: 'r1' }),
 				hasSingleColumn: false,
 				columnOrderKey: '',
 				columnVisibilityKey: '',
@@ -249,7 +324,7 @@ describe('TanStackRowCells', () => {
 				</table>,
 			);
 			fireEvent.click(screen.getAllByRole('cell')[0], { metaKey: true });
-			expect(onRowClickNewTab).toHaveBeenCalledWith({ id: 'r1' }, '');
+			expect(onRowClickNewTab).toHaveBeenCalledWith({ id: 'r1' }, 'r1');
 			expect(onRowClick).not.toHaveBeenCalled();
 		});
 
@@ -260,6 +335,7 @@ describe('TanStackRowCells', () => {
 				colCount: 1,
 				onRowClick,
 				onRowClickNewTab,
+				getRowKeyData: () => ({ finalKey: 'r1', itemKey: 'r1' }),
 				hasSingleColumn: false,
 				columnOrderKey: '',
 				columnVisibilityKey: '',

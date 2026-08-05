@@ -28,6 +28,7 @@ interface TableThresholdRowProps {
 	isEditing: boolean;
 	onEdit: () => void;
 	onSave: (next: DashboardtypesTableThresholdDTO) => void;
+	onLiveChange: (next: DashboardtypesTableThresholdDTO) => void;
 	onDiscard: () => void;
 	onRemove: () => void;
 }
@@ -45,10 +46,15 @@ function TableThresholdRow({
 	isEditing,
 	onEdit,
 	onSave,
+	onLiveChange,
 	onDiscard,
 	onRemove,
 }: TableThresholdRowProps): JSX.Element {
-	const { draft, setDraft, setValue } = useThresholdDraft(threshold, isEditing);
+	const { draft, setDraft, setValue } = useThresholdDraft(
+		threshold,
+		isEditing,
+		onLiveChange,
+	);
 
 	// Stored columnName is the query key; resolve its label + configured unit.
 	const columnUnit = tableColumns.find((c) => c.key === draft.columnName)?.unit;

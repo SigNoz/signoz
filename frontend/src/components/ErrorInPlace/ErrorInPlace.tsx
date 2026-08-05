@@ -21,6 +21,8 @@ interface ErrorInPlaceProps {
 	width?: string | number;
 	/** Custom content instead of ErrorContent */
 	children?: ReactNode;
+	/** Test ID for testing */
+	'data-testid'?: string;
 }
 
 /**
@@ -44,6 +46,7 @@ function ErrorInPlace({
 	height = '100%',
 	width = '100%',
 	children,
+	'data-testid': dataTestId,
 }: ErrorInPlaceProps): JSX.Element {
 	const containerStyle: React.CSSProperties = {
 		display: 'flex',
@@ -59,7 +62,11 @@ function ErrorInPlace({
 	};
 
 	return (
-		<div className={`error-in-place ${className}`.trim()} style={containerStyle}>
+		<div
+			className={`error-in-place ${className}`.trim()}
+			style={containerStyle}
+			data-testid={dataTestId}
+		>
 			{children || <ErrorContent error={error} />}
 		</div>
 	);

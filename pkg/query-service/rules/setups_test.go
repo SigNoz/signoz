@@ -3,15 +3,16 @@ package rules
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querier"
-	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/telemetrylogs"
-	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
+	"github.com/SigNoz/signoz/pkg/statementbuilder"
+	"github.com/SigNoz/signoz/pkg/statementbuilder/logsstatementbuilder"
+	"github.com/SigNoz/signoz/pkg/statementbuilder/metricsstatementbuilder"
+	"github.com/SigNoz/signoz/pkg/statementbuilder/tracesstatementbuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/stretchr/testify/require"
@@ -23,7 +24,7 @@ func prepareQuerierForMetrics(t *testing.T, telemetryStore telemetrystore.Teleme
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	metadataStore := telemetrytypestest.NewMockMetadataStore()
 
-	flagger, err := flagger.New(
+	fl, err := flagger.New(
 		context.Background(),
 		instrumentationtest.New().ToProviderSettings(),
 		flagger.Config{},
@@ -31,29 +32,26 @@ func prepareQuerierForMetrics(t *testing.T, telemetryStore telemetrystore.Teleme
 	)
 	require.NoError(t, err)
 
-	metricFieldMapper := telemetrymetrics.NewFieldMapper()
-	metricConditionBuilder := telemetrymetrics.NewConditionBuilder(metricFieldMapper)
-	metricStmtBuilder := telemetrymetrics.NewMetricQueryStatementBuilder(
-		providerSettings,
-		metadataStore,
-		metricFieldMapper,
-		metricConditionBuilder,
-		flagger,
-	)
+	metricStmtBuilder, err := metricsstatementbuilder.NewFactory(metadataStore, fl).New(context.Background(), providerSettings, statementbuilder.Config{})
+	require.NoError(t, err)
 
 	return querier.New(
 		providerSettings,
 		telemetryStore,
 		metadataStore,
 		nil, // prometheus
+		nil, // promV2
 		nil, // traceStmtBuilder
+		nil, // aiTraceStmtBuilder
 		nil, // logStmtBuilder
 		nil, // auditStmtBuilder
 		metricStmtBuilder,
 		nil, // meterStmtBuilder
 		nil, // traceOperatorStmtBuilder
 		nil, // bucketCache
-		flagger,
+		fl,
+		0,
+		0, // maxConcurrentQueries (0 means default)
 	), metadataStore
 }
 
@@ -70,43 +68,26 @@ func prepareQuerierForLogs(t *testing.T, telemetryStore telemetrystore.Telemetry
 	metadataStore.KeysMap = keysMap
 
 	fl := flaggertest.New(t)
-	logFieldMapper := telemetrylogs.NewFieldMapper(fl)
-	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper, fl)
-	logAggExprRewriter := querybuilder.NewAggExprRewriter(
-		providerSettings,
-		telemetrylogs.DefaultFullTextColumn,
-		logFieldMapper,
-		logConditionBuilder,
-		telemetrylogs.GetBodyJSONKey,
-		fl,
-	)
-	logStmtBuilder := telemetrylogs.NewLogQueryStatementBuilder(
-		providerSettings,
-		metadataStore,
-		logFieldMapper,
-		logConditionBuilder,
-		logAggExprRewriter,
-		telemetrylogs.DefaultFullTextColumn,
-		telemetrylogs.GetBodyJSONKey,
-		fl,
-		nil,
-		false,
-		100000,
-	)
+	logStmtBuilder, err := logsstatementbuilder.NewFactory(nil, metadataStore, fl).New(context.Background(), providerSettings, statementbuilder.Config{})
+	require.NoError(t, err)
 
 	return querier.New(
 		providerSettings,
 		telemetryStore,
 		metadataStore,
-		nil,            // prometheus
-		nil,            // traceStmtBuilder
-		logStmtBuilder, // logStmtBuilder
-		nil,            // auditStmtBuilder
-		nil,            // metricStmtBuilder
-		nil,            // meterStmtBuilder
-		nil,            // traceOperatorStmtBuilder
-		nil,            // bucketCache
+		nil, // prometheus
+		nil, // promV2
+		nil, // traceStmtBuilder
+		nil, // aiTraceStmtBuilder
+		logStmtBuilder,
+		nil, // auditStmtBuilder
+		nil, // metricStmtBuilder
+		nil, // meterStmtBuilder
+		nil, // traceOperatorStmtBuilder
+		nil, // bucketCache
 		fl,
+		5*time.Minute, // logTraceIDWindowPadding
+		0,             // maxConcurrentQueries (0 means default)
 	)
 }
 
@@ -123,36 +104,26 @@ func prepareQuerierForTraces(t *testing.T, telemetryStore telemetrystore.Telemet
 	}
 	metadataStore.KeysMap = keysMap
 
-	// Create trace statement builder
-	traceFieldMapper := telemetrytraces.NewFieldMapper()
-	traceConditionBuilder := telemetrytraces.NewConditionBuilder(traceFieldMapper)
-
 	fl := flaggertest.New(t)
-	traceAggExprRewriter := querybuilder.NewAggExprRewriter(providerSettings, nil, traceFieldMapper, traceConditionBuilder, nil, fl)
-	traceStmtBuilder := telemetrytraces.NewTraceQueryStatementBuilder(
-		providerSettings,
-		metadataStore,
-		traceFieldMapper,
-		traceConditionBuilder,
-		traceAggExprRewriter,
-		telemetryStore,
-		fl,
-		false,
-		100000,
-	)
+	traceStmtBuilder, err := tracesstatementbuilder.NewFactory(telemetryStore, metadataStore, fl).New(context.Background(), providerSettings, statementbuilder.Config{})
+	require.NoError(t, err)
 
 	return querier.New(
 		providerSettings,
 		telemetryStore,
 		metadataStore,
-		nil,              // prometheus
-		traceStmtBuilder, // traceStmtBuilder
-		nil,              // logStmtBuilder
-		nil,              // auditStmtBuilder
-		nil,              // metricStmtBuilder
-		nil,              // meterStmtBuilder
-		nil,              // traceOperatorStmtBuilder
-		nil,              // bucketCache
+		nil, // prometheus
+		nil, // promV2
+		traceStmtBuilder,
+		nil, // aiTraceStmtBuilder
+		nil, // logStmtBuilder
+		nil, // auditStmtBuilder
+		nil, // metricStmtBuilder
+		nil, // meterStmtBuilder
+		nil, // traceOperatorStmtBuilder
+		nil, // bucketCache
 		fl,
+		0,
+		0, // maxConcurrentQueries (0 means default)
 	)
 }

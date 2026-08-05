@@ -3,6 +3,7 @@ package llmpricingruletypes
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"path"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -15,17 +16,10 @@ import (
 const (
 	LLMCostFeatureType agentConf.AgentFeatureType = "llm_pricing"
 
-	GenAIRequestModel                  = "gen_ai.request.model"
-	GenAIUsageInputTokens              = "gen_ai.usage.input_tokens"
-	GenAIUsageOutputTokens             = "gen_ai.usage.output_tokens"
-	GenAIUsageCacheReadInputTokens     = "gen_ai.usage.cache_read.input_tokens"
-	GenAIUsageCacheCreationInputTokens = "gen_ai.usage.cache_creation.input_tokens"
-
 	SignozGenAICostInput      = "_signoz.gen_ai.cost_input"
 	SignozGenAICostOutput     = "_signoz.gen_ai.cost_output"
 	SignozGenAICostCacheRead  = "_signoz.gen_ai.cost_cache_read"
 	SignozGenAICostCacheWrite = "_signoz.gen_ai.cost_cache_write"
-	SignozGenAITotalCost      = "_signoz.gen_ai.total_cost"
 )
 
 var (
@@ -53,7 +47,8 @@ var (
 	LLMPricingRuleCacheModeSubtract = LLMPricingRuleCacheMode{valuer.NewString("subtract")}
 	// LLMPricingRuleCacheModeAdditive: cached tokens are reported separately (Anthropic-style).
 	LLMPricingRuleCacheModeAdditive = LLMPricingRuleCacheMode{valuer.NewString("additive")}
-	// LLMPricingRuleCacheModeUnknown: provider behaviour is unknown; falls back to subtract.
+	// LLMPricingRuleCacheModeUnknown: provider behaviour is unknown. buildProcessorConfig
+	// normalizes this to an empty mode in the collector config.
 	LLMPricingRuleCacheModeUnknown = LLMPricingRuleCacheMode{valuer.NewString("unknown")}
 )
 
@@ -138,6 +133,17 @@ type GettablePricingRules struct {
 	Limit  int                       `json:"limit"  required:"true"`
 }
 
+// Models deleted from spans which doesn't have a corresponding pricing entry.
+type UnmappedModel struct {
+	ModelName string `json:"modelName" required:"true"`
+	Provider  string `json:"provider"`
+	SpanCount uint64 `json:"spanCount" required:"true"`
+}
+
+type GettableUnmappedModels struct {
+	Items []*UnmappedModel `json:"items" required:"true"`
+}
+
 func (LLMPricingRuleUnit) Enum() []any {
 	return []any{UnitPerMillionTokens}
 }
@@ -206,6 +212,12 @@ func NewGettableLLMPricingRulesFromLLMPricingRules(items []*LLMPricingRule, tota
 	}
 }
 
+func NewGettableUnmappedModels(items []*UnmappedModel) *GettableUnmappedModels {
+	return &GettableUnmappedModels{
+		Items: items,
+	}
+}
+
 func NewLLMPricingRuleFromUpdatable(u *UpdatableLLMPricingRule, orgID valuer.UUID, userEmail string, now time.Time) *LLMPricingRule {
 	isOverride := true
 	if u.IsOverride != nil {
@@ -249,4 +261,15 @@ func (r *LLMPricingRule) Update(u *UpdatableLLMPricingRule, userEmail string, no
 	r.SyncedAt = &now
 	r.UpdatedAt = now
 	r.UpdatedBy = userEmail
+}
+
+func ModelMatchesAnyRule(model string, rules []*LLMPricingRule) bool {
+	for _, r := range rules {
+		for _, pattern := range r.ModelPattern {
+			if ok, err := path.Match(pattern, model); err == nil && ok {
+				return true
+			}
+		}
+	}
+	return false
 }

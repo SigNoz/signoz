@@ -2,6 +2,7 @@ import type { MessageContext } from 'api/ai-assistant/chat';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { AlertListTabs } from 'pages/AlertList/types';
+import { NEW_PANEL_ID } from 'pages/DashboardPageV2/DashboardContainer/PanelEditor/newPanelRoute';
 import { matchPath } from 'react-router-dom';
 
 /**
@@ -30,22 +31,23 @@ export function getAutoContexts(
 
 	// ── Dashboards ────────────────────────────────────────────────────────────
 
-	// Widget edit (panel_edit) — `/dashboard/:dashboardId/:widgetId`.
-	const widgetMatch = matchPath<{ dashboardId: string; widgetId: string }>(
+	// Panel editor (V2). `panel/new` has no widget id yet and the schema requires
+	// a non-empty `panel_edit.widgetId`, so it reports `panel_create` instead.
+	const panelEditorMatch = matchPath<{ dashboardId: string; panelId: string }>(
 		pathname,
-		{ path: ROUTES.DASHBOARD_WIDGET, exact: true },
+		{ path: ROUTES.DASHBOARD_PANEL_EDITOR, exact: true },
 	);
-	if (widgetMatch) {
+	if (panelEditorMatch) {
+		const { dashboardId, panelId } = panelEditorMatch.params;
+		const isNewPanel = panelId === NEW_PANEL_ID;
 		return [
 			{
 				source: 'auto',
 				type: 'dashboard',
-				resourceId: widgetMatch.params.dashboardId,
-				metadata: {
-					page: 'panel_edit',
-					widgetId: widgetMatch.params.widgetId,
-					...sharedMetadata,
-				},
+				resourceId: dashboardId,
+				metadata: isNewPanel
+					? { page: 'panel_create', ...sharedMetadata }
+					: { page: 'panel_edit', widgetId: panelId, ...sharedMetadata },
 			},
 		];
 	}
@@ -124,7 +126,9 @@ export function getAutoContexts(
 		}
 	}
 
-	// Alert edit — `/alerts/edit?ruleId=…`.
+	// Alert edit — `/alerts/edit?ruleId=…`. The form syncs its query-builder
+	// state to the URL (`useShareBuilderUrl`), so shared metadata carries the
+	// alert's query + time range, mirroring the dashboard panel editor.
 	if (matchPath(pathname, { path: ROUTES.EDIT_ALERTS, exact: true })) {
 		const ruleId = params.get(QueryParams.ruleId);
 		if (ruleId) {
@@ -133,19 +137,21 @@ export function getAutoContexts(
 					source: 'auto',
 					type: 'alert',
 					resourceId: ruleId,
-					metadata: { page: 'alert_edit', ruleId },
+					metadata: { page: 'alert_edit', ruleId, ...sharedMetadata },
 				},
 			];
 		}
 	}
 
+	// Alert new — `/alerts/new`. No rule id yet (draft), but the query-builder
+	// state is on the URL, so shared metadata carries the in-progress query.
 	if (matchPath(pathname, { path: ROUTES.ALERTS_NEW, exact: true })) {
 		return [
 			{
 				source: 'auto',
 				type: 'alert',
 				resourceId: null,
-				metadata: { page: 'alert_new' },
+				metadata: { page: 'alert_new', ...sharedMetadata },
 			},
 		];
 	}

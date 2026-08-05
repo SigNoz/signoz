@@ -124,14 +124,33 @@ describe('prepareRawTable', () => {
 		expect(table?.columns).not.toContain('attributes_string');
 	});
 
-	it('does not flatten for non-log signals (traces return flat data)', () => {
+	// Trace rows nest resource attributes the same way logs do: the span fields
+	// (`name`, `duration_nano`) are top-level, but `service.name` lives under
+	// `resources_string`, so it must be lifted to render (V1 parity).
+	const traceRow = {
+		timestamp: '2026-06-24T16:43:57Z',
+		data: {
+			name: 'resolve',
+			duration_nano: 4120000,
+			attributes_string: {},
+			resources_string: { 'service.name': 'adservice' },
+		},
+	};
+
+	it('flattens nested resource maps for traces so service.name resolves', () => {
 		const table = prepareRawTable({
-			results: [result([logRow])],
-			selectFields: [],
+			results: [result([traceRow])],
+			selectFields: [field('name'), field('duration_nano'), field('service.name')],
 			signal: TelemetrytypesSignalDTO.traces,
 		});
 
+		expect(table?.rows[0]).toMatchObject({
+			name: 'resolve',
+			duration_nano: 4120000,
+			'service.name': 'adservice',
+		});
+		// The structured map is retained for the drawer, lifted child is a column.
 		expect(table?.rows[0]).toHaveProperty('resources_string');
-		expect(table?.rows[0]).not.toHaveProperty('service.name');
+		expect(table?.columns).toContain('service.name');
 	});
 });

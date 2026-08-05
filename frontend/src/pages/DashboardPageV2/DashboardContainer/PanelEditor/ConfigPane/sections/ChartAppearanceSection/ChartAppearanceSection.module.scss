@@ -3,3 +3,14 @@
 	flex-direction: column;
 	gap: 8px;
 }
+
+.thresholdField {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.thresholdPrefix {
+	padding-right: 4px;
+	opacity: 0.6;
+}

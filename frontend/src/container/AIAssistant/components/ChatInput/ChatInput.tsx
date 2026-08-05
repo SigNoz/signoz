@@ -17,16 +17,21 @@ import type { UploadFile } from 'antd';
 import getSessionStorage from 'api/browser/sessionstorage/get';
 import setSessionStorage from 'api/browser/sessionstorage/set';
 import {
+	getListDashboardsForUserV2QueryKey,
+	useListDashboardsForUserV2,
+} from 'api/generated/services/dashboard';
+import {
 	getListRulesQueryKey,
 	useListRules,
 } from 'api/generated/services/rules';
-import type { ListRules200 } from 'api/generated/services/sigNoz.schemas';
+import type {
+	DashboardtypesListedDashboardForUserV2DTO,
+	ListDashboardsForUserV2200,
+	ListDashboardsForUserV2Params,
+	ListRules200,
+} from 'api/generated/services/sigNoz.schemas';
 import logEvent from 'api/common/logEvent';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import { useQueryService } from 'hooks/useQueryService';
-import type { SuccessResponseV2 } from 'types/api';
-import type { Dashboard } from 'types/api/dashboard/getAll';
 // eslint-disable-next-line
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -42,19 +47,22 @@ import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
 import { MessageAttachment } from '../../types';
 import { MessageContext } from '../../../../api/ai-assistant/chat';
 import {
-	Bell,
-	LayoutDashboard,
 	Mic,
 	Plus,
 	Search,
 	Send,
-	ShieldCheck,
 	Square,
 	TriangleAlert,
 	X,
 } from '@signozhq/icons';
 
 import styles from './ChatInput.module.scss';
+import ContextPickerEmptyState from './ContextPickerEmptyState';
+import {
+	CONTEXT_CATEGORIES,
+	CONTEXT_CATEGORY_ICONS,
+	ContextCategory,
+} from './contextPicker';
 
 interface ChatInputProps {
 	onSend: (
@@ -97,6 +105,8 @@ function autoContextLabel(ctx: MessageContext): string {
 			return 'Current dashboard';
 		case 'panel_edit':
 			return 'Editing panel';
+		case 'panel_create':
+			return 'New panel';
 		case 'panel_fullscreen':
 			return 'Panel (fullscreen)';
 		case 'dashboard_list':
@@ -161,10 +171,18 @@ const TEXTAREA_MAX_HEIGHT_PX = 200;
 const HOME_SERVICES_INTERVAL = 30 * 60 * 1000;
 /** sessionStorage key for the "voice input failed this tab" flag. */
 const VOICE_UNAVAILABLE_KEY = 'ai-assistant-voice-unavailable';
+/**
+ * The picker filters client-side, so it pulls one large page instead of
+ * paginating. Shared with `getQueryData` below — the params are part of the
+ * generated query key, so both sides must use the same object.
+ */
+const DASHBOARD_LIST_PARAMS: ListDashboardsForUserV2Params = { limit: 1000 };
 
-const CONTEXT_CATEGORIES = ['Dashboards', 'Alerts', 'Services'] as const;
-
-type ContextCategory = (typeof CONTEXT_CATEGORIES)[number];
+function dashboardTitle(
+	dashboard: DashboardtypesListedDashboardForUserV2DTO,
+): string {
+	return dashboard.spec.display?.name || dashboard.name || 'Untitled';
+}
 
 interface SelectedContextItem {
 	category: ContextCategory;
@@ -204,12 +222,6 @@ interface ContextEntityItem {
 	id: string;
 	value: string;
 }
-
-const CONTEXT_CATEGORY_ICONS = {
-	Dashboards: LayoutDashboard,
-	Alerts: Bell,
-	Services: ShieldCheck,
-} satisfies Record<ContextCategory, unknown>;
 
 function fileToDataUrl(file: File): Promise<string> {
 	return new Promise((resolve, reject) => {
@@ -329,6 +341,30 @@ export default function ChatInput({
 			}
 		},
 		[mentionRange, selectedContexts, text],
+	);
+
+	// Empty-state CTA: drop a starter prompt into the composer (never auto-sent)
+	// and hand the user the caret at the end so they can finish the sentence.
+	const handleContextPrefill = useCallback(
+		(prompt: string) => {
+			const next = capText(prompt);
+			setText(next);
+			committedTextRef.current = next;
+			setMentionRange(null);
+			setPickerSearchQuery('');
+			setIsContextPickerOpen(false);
+			// Defer so React commits the new value before we place the caret.
+			requestAnimationFrame(() => {
+				const el = textareaRef.current;
+				if (!el) {
+					return;
+				}
+				el.focus();
+				const end = el.value.length;
+				el.setSelectionRange(end, end);
+			});
+		},
+		[capText],
 	);
 
 	const focusCategory = useCallback((category: ContextCategory) => {
@@ -699,9 +735,11 @@ export default function ChatInput({
 		data: dashboardsResponse,
 		isLoading: isDashboardsLoading,
 		isError: isDashboardsError,
-	} = useGetAllDashboard({
-		enabled: isContextPickerOpen && activeContextCategory === 'Dashboards',
-		staleTime: Infinity,
+	} = useListDashboardsForUserV2(DASHBOARD_LIST_PARAMS, {
+		query: {
+			enabled: isContextPickerOpen && activeContextCategory === 'Dashboards',
+			staleTime: Infinity,
+		},
 	});
 
 	const {
@@ -748,12 +786,12 @@ export default function ChatInput({
 				return ctx.resourceId;
 			}
 			if (ctx.type === 'dashboard' && ctx.resourceId) {
-				const cached = queryClient.getQueryData<SuccessResponseV2<Dashboard[]>>(
-					REACT_QUERY_KEY.GET_ALL_DASHBOARDS,
+				const cached = queryClient.getQueryData<ListDashboardsForUserV2200>(
+					getListDashboardsForUserV2QueryKey(DASHBOARD_LIST_PARAMS),
 				);
-				const dash = cached?.data?.find((d) => d.id === ctx.resourceId);
-				if (dash?.data.title) {
-					return dash.data.title;
+				const dash = cached?.data?.dashboards?.find((d) => d.id === ctx.resourceId);
+				if (dash) {
+					return dashboardTitle(dash);
 				}
 			}
 			if (ctx.type === 'alert' && ctx.resourceId) {
@@ -783,9 +821,9 @@ export default function ChatInput({
 	const contextEntitiesByCategory: Record<ContextCategory, ContextEntityItem[]> =
 		{
 			Dashboards:
-				dashboardsResponse?.data?.map((dashboard) => ({
+				dashboardsResponse?.data?.dashboards?.map((dashboard) => ({
 					id: dashboard.id,
-					value: dashboard.data.title ?? 'Untitled',
+					value: dashboardTitle(dashboard),
 				})) ?? [],
 			Alerts:
 				alertsResponse?.data
@@ -824,10 +862,14 @@ export default function ChatInput({
 	// Type-ahead filter against the `@<query>` typed in the textarea. When
 	// the picker was opened from the "Add Context" button there's no
 	// mention query, so fall back to the in-popover search input.
-	const mentionQuery = mentionRange
-		? text.slice(mentionRange.start + 1, mentionRange.end).toLowerCase()
+	const rawMentionQuery = mentionRange
+		? text.slice(mentionRange.start + 1, mentionRange.end)
 		: '';
+	const mentionQuery = rawMentionQuery.toLowerCase();
 	const activeQuery = mentionQuery || pickerSearchQuery.trim().toLowerCase();
+	// Original-case query for empty-state copy + prefill ("checkout", not the
+	// lowercased filter key). Mirrors `activeQuery`'s mention-then-search order.
+	const displayQuery = rawMentionQuery || pickerSearchQuery.trim();
 	const filteredContextOptions = activeQuery
 		? contextEntitiesByCategory[activeContextCategory].filter((entity) =>
 				entity.value.toLowerCase().includes(activeQuery),
@@ -1071,9 +1113,11 @@ export default function ChatInput({
 												Failed to load {activeContextCategory.toLowerCase()}.
 											</div>
 										) : filteredContextOptions.length === 0 ? (
-											<div className={styles.contextPopoverEmpty}>
-												No matching entities
-											</div>
+											<ContextPickerEmptyState
+												category={activeContextCategory}
+												query={displayQuery}
+												onPrefill={handleContextPrefill}
+											/>
 										) : (
 											filteredContextOptions.map((option, index) => {
 												const isSelected = selectedContexts.some(

@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"golang.org/x/sync/errgroup"
 )
 
 // buildVolumeRecords assembles the page records. VolumeUsage is taken from the
@@ -68,16 +69,36 @@ func buildVolumeRecords(
 	return records
 }
 
-func (m *module) getTopVolumeGroups(
+func (m *module) getTopVolumeGroupsAndMetadata(
 	ctx context.Context,
 	orgID valuer.UUID,
 	req *inframonitoringtypes.PostableVolumes,
-	metadataMap map[string]map[string]string,
-) ([]map[string]string, error) {
-	orderByKey := req.OrderBy.Key.Name
+) ([]map[string]string, map[string]map[string]string, error) {
+
+	var (
+		orderByKey      string
+		metadataMap     map[string]map[string]string
+		allMetricGroups []rankedGroup
+	)
+
+	orderByKey = req.OrderBy.Key.Name
+
+	g, gCtx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		var err error
+		metadataMap, err = m.getVolumesTableMetadata(gCtx, orgID, req)
+		return err
+	})
+
 	if orderByKey == inframonitoringtypes.PersistentVolumeClaimNameAttrKey {
-		return inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.PersistentVolumeClaimNameAttrKey), nil
+		if err := g.Wait(); err != nil {
+			return nil, nil, err
+		}
+		pageGroups := inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.PersistentVolumeClaimNameAttrKey)
+		return pageGroups, metadataMap, nil
 	}
+
 	queryNamesForOrderBy := orderByToVolumesQueryNames[orderByKey]
 	rankingQueryName := queryNamesForOrderBy[len(queryNamesForOrderBy)-1]
 
@@ -111,21 +132,28 @@ func (m *module) getTopVolumeGroups(
 		topReq.CompositeQuery.Queries = append(topReq.CompositeQuery.Queries, copied)
 	}
 
-	resp, err := m.querier.QueryRange(ctx, orgID, topReq)
-	if err != nil {
-		return nil, err
+	g.Go(func() error {
+		resp, err := m.querier.QueryRange(gCtx, orgID, topReq)
+		if err != nil {
+			return err
+		}
+		allMetricGroups = parseAndSortGroups(resp, rankingQueryName, req.GroupBy, req.OrderBy.Direction)
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return nil, nil, err
 	}
 
-	allMetricGroups := parseAndSortGroups(resp, rankingQueryName, req.GroupBy, req.OrderBy.Direction)
-	return paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit), nil
+	return paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit), metadataMap, nil
 }
 
-func (m *module) getVolumesTableMetadata(ctx context.Context, req *inframonitoringtypes.PostableVolumes) (map[string]map[string]string, error) {
+func (m *module) getVolumesTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableVolumes) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
 	for _, key := range volumeAttrKeysForMetadata {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}
 	}
-	return m.getMetadata(ctx, volumesTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
+	return m.getMetadata(ctx, orgID, volumesTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
 }

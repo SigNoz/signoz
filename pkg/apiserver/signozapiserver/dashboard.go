@@ -85,6 +85,23 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v2/dashboards/{id}/migrate", handler.New(provider.authzMiddleware.EditAccess(provider.dashboardHandler.MigrateV2), handler.OpenAPIDef{
+		ID:                  "MigrateDashboardV2",
+		Tags:                []string{"dashboard"},
+		Summary:             "Migrate dashboard to v2",
+		Description:         "This endpoint retries the v1→v2 (Perses) migration on a dashboard still stored in the v1 schema and returns the v2-shape result. It is idempotent: a dashboard already in the v2 schema is returned unchanged.",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            new(dashboardtypes.GettableDashboardV2),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+	})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v2/dashboards/{id}", handler.New(provider.authzMiddleware.ViewAccess(provider.dashboardHandler.GetV2), handler.OpenAPIDef{
 		ID:                  "GetDashboardV2",
 		Tags:                []string{"dashboard"},
@@ -415,6 +432,63 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
+		Deprecated:          false,
+		SecuritySchemes:     newAnonymousSecuritySchemes([]string{coretypes.ResourceMetaResourcePublicDashboard.Scope(coretypes.VerbRead)}),
+	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/public/dashboards/{id}", handler.New(provider.authzMiddleware.CheckWithoutClaims(
+		provider.dashboardHandler.GetPublicDataV2,
+		authtypes.Relation{Verb: coretypes.VerbRead},
+		coretypes.ResourceMetaResourcePublicDashboard,
+		func(req *http.Request, orgs []*types.Organization) ([]coretypes.Selector, valuer.UUID, error) {
+			id, err := valuer.NewUUID(mux.Vars(req)["id"])
+			if err != nil {
+				return nil, valuer.UUID{}, err
+			}
+
+			return provider.dashboardModule.GetPublicDashboardSelectorsAndOrg(req.Context(), id, orgs)
+		}, []string{}), handler.OpenAPIDef{
+		ID:                  "GetPublicDashboardDataV2",
+		Tags:                []string{"dashboard"},
+		Summary:             "Get public dashboard data (v2)",
+		Description:         "This endpoint returns the sanitized v2-shape dashboard data for public access. Each panel query is reduced to a safe field subset, so filters and raw query strings are not exposed.",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            new(dashboardtypes.GettablePublicDashboardDataV2),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     newAnonymousSecuritySchemes([]string{coretypes.ResourceMetaResourcePublicDashboard.Scope(coretypes.VerbRead)}),
+	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/public/dashboards/{id}/panels/{key}/query_range", handler.New(provider.authzMiddleware.CheckWithoutClaims(
+		provider.dashboardHandler.GetPublicWidgetQueryRangeV2,
+		authtypes.Relation{Verb: coretypes.VerbRead},
+		coretypes.ResourceMetaResourcePublicDashboard,
+		func(req *http.Request, orgs []*types.Organization) ([]coretypes.Selector, valuer.UUID, error) {
+			id, err := valuer.NewUUID(mux.Vars(req)["id"])
+			if err != nil {
+				return nil, valuer.UUID{}, err
+			}
+
+			return provider.dashboardModule.GetPublicDashboardSelectorsAndOrg(req.Context(), id, orgs)
+		}, []string{}), handler.OpenAPIDef{
+		ID:                  "GetPublicDashboardPanelQueryRangeV2",
+		Tags:                []string{"dashboard"},
+		Summary:             "Get query range result (v2)",
+		Description:         "This endpoint returns query range results for a panel of a v2-shape public dashboard. The panel is addressed by its key in spec.panels.",
+		Request:             nil,
+		RequestQuery:        new(dashboardtypes.PublicWidgetQueryRangeParams),
+		RequestContentType:  "",
+		Response:            new(querybuildertypesv5.QueryRangeResponse),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     newAnonymousSecuritySchemes([]string{coretypes.ResourceMetaResourcePublicDashboard.Scope(coretypes.VerbRead)}),
 	})).Methods(http.MethodGet).GetError(); err != nil {

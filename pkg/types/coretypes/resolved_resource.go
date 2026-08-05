@@ -7,6 +7,7 @@ type resolvedResource struct {
 	selector    SelectorFunc
 	idExtractor ResourceIDExtractor
 	ids         []string
+	err         error
 }
 
 func NewResolvedResource(
@@ -29,10 +30,37 @@ func NewResolvedResource(
 	return resolved
 }
 
-func (resolved *resolvedResource) fill(phase ExtractPhase, ec ExtractorContext) {
-	if id, ok := resolved.idExtractor.RunFor(phase, ec); ok && id != "" {
+func NewResolvedResourceWithID(verb Verb, category ActionCategory, resource Resource, id string, selector SelectorFunc) ResolvedResource {
+	resolved := &resolvedResource{verb: verb, category: category, resource: resource, selector: selector}
+	if id != "" {
 		resolved.ids = []string{id}
 	}
+
+	return resolved
+}
+
+func NewResolvedResourceWithError(verb Verb, category ActionCategory, err error) ResolvedResource {
+	return &resolvedResource{verb: verb, category: category, err: err}
+}
+
+func (resolved *resolvedResource) fill(phase ExtractPhase, ec ExtractorContext) {
+	if !resolved.idExtractor.IsPhase(phase) {
+		return
+	}
+
+	id, err := resolved.idExtractor.Fn(ec)
+	if err != nil && phase == PhaseRequest {
+		resolved.err = err
+		return
+	}
+
+	if id != "" {
+		resolved.ids = []string{id}
+	}
+}
+
+func (resolved *resolvedResource) Err() error {
+	return resolved.err
 }
 
 func (resolved *resolvedResource) Verb() Verb {

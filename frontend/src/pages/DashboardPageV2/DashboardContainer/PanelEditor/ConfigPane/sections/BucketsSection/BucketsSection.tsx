@@ -2,7 +2,10 @@ import type { ChangeEvent } from 'react';
 import { Typography } from '@signozhq/ui/typography';
 import { Input } from 'antd';
 import type { DashboardtypesHistogramBucketsDTO } from 'api/generated/services/sigNoz.schemas';
-import type { SectionEditorProps } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
+import type {
+	SectionEditorProps,
+	SectionKind,
+} from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 
 import ConfigSwitch from '../../controls/ConfigSwitch/ConfigSwitch';
 
@@ -23,7 +26,7 @@ function BucketsSection({
 	value,
 	controls,
 	onChange,
-}: SectionEditorProps<'buckets'>): JSX.Element {
+}: SectionEditorProps<SectionKind.Buckets>): JSX.Element {
 	// Empty clears the bound to null (chart auto-sizes); otherwise parse to a number,
 	// ignoring transient non-numeric input by leaving it unset.
 	const handleNumber =

@@ -78,6 +78,7 @@ type validationConfig struct {
 	skipSelectFieldValidation      bool
 	skipGroupByValidation          bool
 	withTimestampGroupByValidation bool
+	withReduceToValidation         bool
 }
 
 func applyValidationOptions(opts []ValidationOption) validationConfig {
@@ -140,6 +141,15 @@ func WithSkipGroupByValidation() ValidationOption {
 func WithTimestampGroupByValidation() ValidationOption {
 	return func(cfg *validationConfig) {
 		cfg.withTimestampGroupByValidation = true
+	}
+}
+
+// WithReduceToValidation enables validation that metric aggregations carry a
+// valid reduceTo operator. Used for scalar request types, where the time
+// series produced by a metric query must be reduced to a single value.
+func WithReduceToValidation() ValidationOption {
+	return func(cfg *validationConfig) {
+		cfg.withReduceToValidation = true
 	}
 }
 
@@ -277,6 +287,29 @@ func (q *QueryBuilderQuery[T]) validateAggregations(cfg validationConfig) error 
 					errors.TypeInvalidInput,
 					errors.CodeInvalidInput,
 					"invalid space aggregation, should be one of the following: [`sum`, `avg`, `min`, `max`, `count`, `p50`, `p75`, `p90`, `p95`, `p99`]",
+				)
+			}
+			if cfg.withReduceToValidation && !v.ReduceTo.IsValid() {
+				aggId := fmt.Sprintf("aggregation #%d", i+1)
+				if q.Name != "" {
+					aggId = fmt.Sprintf("aggregation #%d in query '%s'", i+1, q.Name)
+				}
+				if v.ReduceTo == ReduceToUnknown {
+					return errors.NewInvalidInputf(
+						errors.CodeInvalidInput,
+						"reduceTo is required for %s for the scalar request type",
+						aggId,
+					).WithAdditional(
+						"Metric queries produce a time series; scalar requests must specify how to reduce it to a single value. Valid values are: sum, count, avg, min, max, last, median",
+					)
+				}
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"invalid reduceTo `%s` for %s",
+					v.ReduceTo.StringValue(),
+					aggId,
+				).WithAdditional(
+					"Valid values are: sum, count, avg, min, max, last, median",
 				)
 			}
 		case TraceAggregation:
@@ -518,7 +551,7 @@ func (q *QueryBuilderQuery[T]) validateOrderByForAggregation() error {
 				orderId,
 			).WithAdditional(
 				fmt.Sprintf("For aggregation queries, order by can only reference group by keys, aggregation aliases/expressions, or aggregation indices. Valid keys are: %s", strings.Join(validKeys, ", ")),
-			).WithSuggestions(errors.SuggestionsOnLevenshteinDistance(orderKey, validKeys)...)
+			).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(orderKey, errors.NounKeys, validKeys)...)
 		}
 	}
 
@@ -575,6 +608,75 @@ func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
 	return nil
 }
 
+// ValidateRequestScope validates request-level invariants (not individual query
+// specs) and returns the request type's ValidationOptions. The dry-run path uses
+// this so per-query errors can be attributed individually via QueryEnvelope.Validate
+// instead of failing fast like Validate does.
+func (r *QueryRangeRequest) ValidateRequestScope() ([]ValidationOption, error) {
+	if r.RequestType != RequestTypeRawStream && r.Start >= r.End {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "start time must be before end time")
+	}
+
+	var opts []ValidationOption
+	switch r.RequestType {
+	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace, RequestTypeTimeSeries, RequestTypeScalar:
+		opts = GetValidationOptions(r.RequestType)
+	default:
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid request type: %s", r.RequestType).
+			WithAdditional("Valid request types are: raw, timeseries, scalar")
+	}
+
+	if r.RequestType == RequestTypeRaw || r.RequestType == RequestTypeRawStream || r.RequestType == RequestTypeTrace {
+		for _, envelope := range r.CompositeQuery.Queries {
+			if envelope.GetSignal() == telemetrytypes.SignalMetrics {
+				return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "raw request type is not supported for metric queries")
+			}
+		}
+	}
+
+	if len(r.CompositeQuery.Queries) == 0 {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "at least one query is required")
+	}
+
+	// Builder query names must be unique across the composite query.
+	queryNames := make(map[string]bool)
+	for _, envelope := range r.CompositeQuery.Queries {
+		if envelope.Type == QueryTypeBuilder || envelope.Type == QueryTypeSubQuery || envelope.Type == QueryTypeBuilderAI {
+			name := envelope.GetQueryName()
+			if name != "" {
+				if queryNames[name] {
+					return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "duplicate query name '%s'", name)
+				}
+				queryNames[name] = true
+			}
+		}
+	}
+
+	if err := r.validateAllQueriesNotDisabled(); err != nil {
+		return nil, err
+	}
+
+	return opts, nil
+}
+
+// Validate parses the preview query-string parameters. Verbose defaults to true
+// and accepts true/1/false/0; any other value is rejected.
+func (p *QueryRangePreviewParams) Validate() (QueryRangePreviewOptions, error) {
+	switch strings.ToLower(strings.TrimSpace(p.Verbose)) {
+	case "", "true", "1":
+		return QueryRangePreviewOptions{Verbose: true}, nil
+	case "false", "0":
+		return QueryRangePreviewOptions{Verbose: false}, nil
+	}
+	return QueryRangePreviewOptions{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid verbose value %q (allowed: true, false)", p.Verbose)
+}
+
+// Validate validates a single query envelope's spec — the per-query counterpart
+// to ValidateRequestScope, letting the dry-run report errors independently.
+func (e QueryEnvelope) Validate(opts ...ValidationOption) error {
+	return validateQueryEnvelope(e, opts...)
+}
+
 // validateAllQueriesNotDisabled validates that at least one query in the composite query is enabled.
 func (r *QueryRangeRequest) validateAllQueriesNotDisabled() error {
 	for _, envelope := range r.CompositeQuery.Queries {
@@ -608,7 +710,7 @@ func (c *CompositeQuery) Validate(opts ...ValidationOption) error {
 		}
 
 		// Check name uniqueness for builder queries
-		if envelope.Type == QueryTypeBuilder || envelope.Type == QueryTypeSubQuery {
+		if envelope.Type == QueryTypeBuilder || envelope.Type == QueryTypeSubQuery || envelope.Type == QueryTypeBuilderAI {
 			name := envelope.GetQueryName()
 			if name != "" {
 				if queryNames[name] {
@@ -642,6 +744,15 @@ func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) err
 				"unknown query spec type",
 			)
 		}
+	case QueryTypeBuilderAI:
+		spec, ok := envelope.Spec.(QueryBuilderQuery[TraceAggregation])
+		if !ok {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"invalid AI builder query spec",
+			)
+		}
+		return spec.Validate(opts...)
 	case QueryTypeFormula:
 		spec, ok := envelope.Spec.(QueryBuilderFormula)
 		if !ok {
@@ -711,8 +822,8 @@ func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) err
 			"unknown query type: %s",
 			envelope.Type,
 		).WithAdditional(
-			"Valid query types are: builder_query, builder_sub_query, builder_formula, builder_join, promql, clickhouse_sql, trace_operator",
-		).WithSuggestions(errors.ValidReferences(QueryType{}.Enum()...))
+			"Valid query types are: builder_query, builder_ai_query, builder_sub_query, builder_formula, builder_join, promql, clickhouse_sql, trace_operator",
+		).WithSuggestions(errors.NewValidReferences(errors.NounQueryTypes, QueryType{}.Enum()...))
 	}
 }
 
@@ -721,7 +832,7 @@ func GetValidationOptions(requestType RequestType) []ValidationOption {
 	case RequestTypeTimeSeries:
 		return []ValidationOption{WithSkipSelectFieldValidation(), WithTimestampGroupByValidation()}
 	case RequestTypeScalar:
-		return []ValidationOption{WithSkipSelectFieldValidation()}
+		return []ValidationOption{WithSkipSelectFieldValidation(), WithReduceToValidation()}
 	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace:
 		return []ValidationOption{WithSkipAggregationValidation(), WithSkipHavingValidation(), WithSkipAggregationOrderBy(), WithSkipGroupByValidation()}
 	default:

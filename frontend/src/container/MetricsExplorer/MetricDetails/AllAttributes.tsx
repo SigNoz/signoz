@@ -33,6 +33,7 @@ function AllAttributes({
 	metricName,
 	metricType,
 	isMonotonic,
+	temporality,
 	minTime,
 	maxTime,
 }: AllAttributesProps): JSX.Element {
@@ -48,18 +49,14 @@ function AllAttributes({
 		isLoading: isLoadingAttributes,
 		isError: isErrorAttributes,
 		refetch: refetchAttributes,
-	} = useGetMetricAttributes(
-		{
-			metricName,
-		},
-		{
-			start: minTime ? Math.floor(minTime / 1000000) : undefined,
-			end: maxTime ? Math.floor(maxTime / 1000000) : undefined,
-		},
-	);
+	} = useGetMetricAttributes({
+		metricName,
+		start: minTime ? Math.floor(minTime / 1000000) : undefined,
+		end: maxTime ? Math.floor(maxTime / 1000000) : undefined,
+	});
 
 	const attributes = useMemo(
-		() => attributesData?.data?.attributes ?? [],
+		() => attributesData?.data.attributes ?? [],
 		[attributesData],
 	);
 
@@ -75,6 +72,7 @@ function AllAttributes({
 				groupBy,
 				limit,
 				isMonotonic,
+				temporality,
 			);
 			handleExplorerTabChange(
 				PANEL_TYPES.TIME_SERIES,
@@ -93,7 +91,7 @@ function AllAttributes({
 				[MetricsExplorerEventKeys.AttributeKey]: groupBy,
 			});
 		},
-		[metricName, metricType, isMonotonic, handleExplorerTabChange],
+		[metricName, metricType, isMonotonic, temporality, handleExplorerTabChange],
 	);
 
 	const goToMetricsExploreWithAppliedAttribute = useCallback(
@@ -105,6 +103,7 @@ function AllAttributes({
 				undefined,
 				undefined,
 				isMonotonic,
+				temporality,
 			);
 			handleExplorerTabChange(
 				PANEL_TYPES.TIME_SERIES,
@@ -124,7 +123,7 @@ function AllAttributes({
 				[MetricsExplorerEventKeys.AttributeValue]: value,
 			});
 		},
-		[metricName, metricType, isMonotonic, handleExplorerTabChange],
+		[metricName, metricType, isMonotonic, temporality, handleExplorerTabChange],
 	);
 
 	const handleKeyMenuItemClick = useCallback(

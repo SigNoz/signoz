@@ -1,0 +1,34 @@
+.footer {
+	display: flex;
+	flex-direction: column;
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+	z-index: 100;
+	pointer-events: none;
+}
+
+.lockedText {
+	align-self: flex-end;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 4px 6px;
+	border-radius: 4px 0 0 0;
+	background: var(--bg-sakura-500);
+	color: var(--l1-foreground);
+	backdrop-filter: blur(6px);
+	font-family: 'Space Mono';
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 16px;
+	letter-spacing: 0.48px;
+	text-transform: uppercase;
+}
+
+.lockedBar {
+	width: 100%;
+	height: 6px;
+	background: var(--bg-sakura-500);
+}

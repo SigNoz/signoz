@@ -25,12 +25,12 @@ import CodeMirror, {
 } from '@uiw/react-codemirror';
 import { Button, Popover, Tooltip } from 'antd';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
-import { QUERY_BUILDER_KEY_TYPES } from 'constants/antlrQueryConstants';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
 import { tracesAggregateOperatorOptions } from 'constants/queryBuilderOperators';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Info, TriangleAlert } from '@signozhq/icons';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { FieldDataType } from 'types/api/v5/queryRange';
 import { TracesAggregatorOperator } from 'types/common/queryBuilder';
 
 import { useQueryBuilderV2Context } from '../../QueryBuilderV2Context';
@@ -323,16 +323,16 @@ function QueryAggregationSelect({
 				TracesAggregatorOperator.RATE,
 			];
 
-			const fieldDataType =
+			const fieldDataType: FieldDataType | undefined =
 				functionContextForFetch &&
 				operatorsWithoutDataType.includes(functionContextForFetch)
 					? undefined
-					: QUERY_BUILDER_KEY_TYPES.NUMBER;
+					: 'number';
 
 			return getKeySuggestions({
 				signal: queryData.dataSource,
 				searchText: '',
-				fieldDataType: fieldDataType as QUERY_BUILDER_KEY_TYPES,
+				fieldDataType,
 			});
 		},
 		{
@@ -676,7 +676,7 @@ function QueryAggregationSelect({
 						</span>
 						<br />
 						<a
-							href="https://signoz.io/docs/userguide/query-builder-v5/#core-aggregation-functions"
+							href="https://signoz.io/docs/querying/aggregation-grouping/#core-aggregation-functions-logs--traces"
 							target="_blank"
 							rel="noopener noreferrer"
 							style={{ color: '#1890ff', textDecoration: 'underline' }}

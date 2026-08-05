@@ -3,12 +3,14 @@ import { Popover, Tooltip } from 'antd';
 import { Button } from '@signozhq/ui/button';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
-import { ArrowDown, ArrowUp, Check, HdmiPort } from '@signozhq/icons';
+import { ArrowDown, ArrowUp, Check, Columns3 } from '@signozhq/icons';
 
+import logEvent from 'api/common/logEvent';
 import {
 	DashboardtypesListOrderDTO,
 	DashboardtypesListSortDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { DashboardListEvents } from 'pages/DashboardsListPageV2/constants/events';
 
 import {
 	type DashboardDynamicColumns,
@@ -54,16 +56,20 @@ function ListHeader({
 
 	const metadataContent = (
 		<div className={styles.metaPanel}>
-			<Typography.Text className={styles.sortHeading}>Metadata</Typography.Text>
+			<Typography.Text className={styles.sortHeading}>Columns</Typography.Text>
 			{METADATA_COLUMNS.map((col) => (
 				<div key={col.key} className={styles.metaRow}>
 					<Typography.Text className={styles.metaLabel}>{col.label}</Typography.Text>
 					<Switch
 						value={visibleColumns[col.key]}
 						testId={`metadata-toggle-${col.key}`}
-						onChange={(checked): void =>
-							setVisibleColumns({ ...visibleColumns, [col.key]: checked })
-						}
+						onChange={(checked): void => {
+							void logEvent(DashboardListEvents.ColumnsToggled, {
+								column: col.key,
+								visible: checked,
+							});
+							setVisibleColumns({ ...visibleColumns, [col.key]: checked });
+						}}
 					/>
 				</div>
 			))}
@@ -171,7 +177,7 @@ function ListHeader({
 							)
 						}
 					>
-						<span className={styles.sortPrefix}>Sort:</span>{' '}
+						<Typography.Text className={styles.sortPrefix}>Sort:</Typography.Text>{' '}
 						{SORT_LABELS[sortColumn]}{' '}
 					</Button>
 				</Popover>
@@ -183,15 +189,15 @@ function ListHeader({
 					placement="bottomRight"
 					arrow={false}
 				>
-					<Tooltip title="Metadata">
+					<Tooltip title="Columns">
 						<Button
 							variant="ghost"
 							color="secondary"
 							size="icon"
-							aria-label="Metadata"
-							testId="configure-metadata-trigger"
+							aria-label="Columns"
+							testId="configure-columns-trigger"
 						>
-							<HdmiPort size={14} />
+							<Columns3 size={14} />
 						</Button>
 					</Tooltip>
 				</Popover>

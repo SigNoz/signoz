@@ -1,0 +1,48 @@
+.drawerSection {
+	composes: drawerSection from '../../shared.module.scss';
+}
+
+.help {
+	composes: help from '../../shared.module.scss';
+}
+
+.patternBox {
+	display: flex;
+	flex-direction: column;
+	padding: var(--spacing-6);
+	border-radius: 6px;
+	border: 1px solid var(--l2-border);
+}
+
+.patternChips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--spacing-0) var(--spacing-3);
+}
+
+.patternChip {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	margin-bottom: var(--spacing-4);
+}
+
+.patternChipRemove {
+	background: transparent;
+	border: none;
+	padding: 0;
+	margin-left: 2px;
+	cursor: pointer;
+	color: inherit;
+	display: inline-flex;
+	align-items: center;
+
+	&:hover {
+		color: var(--accent-cherry);
+	}
+}
+
+.patternAdd {
+	display: flex;
+	gap: var(--spacing-3);
+}

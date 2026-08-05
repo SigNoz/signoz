@@ -251,23 +251,7 @@ func (handler *handler) ListServicesMetadata(rw http.ResponseWriter, r *http.Req
 		return
 	}
 
-	queryParams := new(cloudintegrationtypes.ListServicesMetadataParams)
-	if err := binding.Query.BindQuery(r.URL.Query(), queryParams); err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	orgID := valuer.MustNewUUID(claims.OrgID)
-	// check if integration account exists and is not removed.
-	if !queryParams.CloudIntegrationID.IsZero() {
-		_, err := handler.module.GetConnectedAccount(ctx, orgID, queryParams.CloudIntegrationID, provider)
-		if err != nil {
-			render.Error(rw, err)
-			return
-		}
-	}
-
-	services, err := handler.module.ListServicesMetadata(ctx, orgID, provider, queryParams.CloudIntegrationID)
+	services, err := handler.module.ListServicesMetadata(ctx, valuer.MustNewUUID(claims.OrgID), provider, valuer.UUID{})
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -336,22 +320,7 @@ func (handler *handler) GetService(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queryParams := new(cloudintegrationtypes.GetServiceParams)
-	if err := binding.Query.BindQuery(r.URL.Query(), queryParams); err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	// check if integration account exists and is not removed.
-	if !queryParams.CloudIntegrationID.IsZero() {
-		_, err := handler.module.GetConnectedAccount(ctx, valuer.MustNewUUID(claims.OrgID), queryParams.CloudIntegrationID, provider)
-		if err != nil {
-			render.Error(rw, err)
-			return
-		}
-	}
-
-	svc, err := handler.module.GetService(ctx, valuer.MustNewUUID(claims.OrgID), serviceID, provider, queryParams.CloudIntegrationID)
+	svc, err := handler.module.GetService(ctx, valuer.MustNewUUID(claims.OrgID), serviceID, provider, valuer.UUID{})
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -481,6 +450,7 @@ func (handler *handler) UpdateService(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
+// TODO: Rename AgentCheckIn to just CheckIn.
 func (handler *handler) AgentCheckIn(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()

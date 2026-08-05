@@ -41,6 +41,16 @@ func makePricingRule(model string, patterns []string, cacheMode LLMPricingRuleCa
 	}
 }
 
+func makePricingRuleNoCache(model string, patterns []string, costIn, costOut float64) *LLMPricingRule {
+	return &LLMPricingRule{
+		Model:        model,
+		ModelPattern: StringSlice(patterns),
+		Unit:         UnitPerMillionTokens,
+		Pricing:      LLMRulePricing{Input: costIn, Output: costOut},
+		Enabled:      true,
+	}
+}
+
 func TestGenerateCollectorConfigWithLLMPricingProcessor(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -61,6 +71,24 @@ func TestGenerateCollectorConfigWithLLMPricingProcessor(t *testing.T) {
 			name:         "no_rules",
 			rules:        nil,
 			expectedFile: "collector_no_rules.yaml",
+		},
+		// A rule without cache pricing omits the cache block entirely so the
+		// collector does not apply any cache cost.
+		{
+			name: "rule_without_cache",
+			rules: []*LLMPricingRule{
+				makePricingRuleNoCache("gpt-4o", []string{"gpt-4o*"}, 5.0, 15.0),
+			},
+			expectedFile: "collector_rule_without_cache.yaml",
+		},
+		// An unknown cache mode still emits the cache block (with prices) but omits
+		// the mode field; the collector handles a missing mode in its default branch.
+		{
+			name: "rule_cache_mode_unknown",
+			rules: []*LLMPricingRule{
+				makePricingRule("gpt-4o", []string{"gpt-4o*"}, LLMPricingRuleCacheModeUnknown, 5.0, 15.0, 2.5, 0),
+			},
+			expectedFile: "collector_rule_cache_mode_unknown.yaml",
 		},
 	}
 

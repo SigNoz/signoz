@@ -22,6 +22,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/variables"
 )
 
+type Handler interface {
+	QueryRange(rw http.ResponseWriter, req *http.Request)
+	QueryRangePreview(rw http.ResponseWriter, req *http.Request)
+	QueryRawStream(rw http.ResponseWriter, req *http.Request)
+	ReplaceVariables(rw http.ResponseWriter, req *http.Request)
+}
+
 type handler struct {
 	set       factory.ProviderSettings
 	analytics analytics.Analytics
@@ -50,6 +57,7 @@ func (handler *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 		render.Error(rw, err)
 		return
 	}
+	queryRangeRequest.PromQLProvider = req.Header.Get("X-SigNoz-PromQL-Provider")
 
 	// Validate the query request
 	if err := queryRangeRequest.Validate(); err != nil {
@@ -73,6 +81,53 @@ func (handler *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 
 	render.Success(rw, http.StatusOK, queryRangeResponse)
 }
+
+// QueryRangePreview is the dry-run counterpart of QueryRange: it validates and
+// renders each query without executing it.
+func (handler *handler) QueryRangePreview(rw http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "querier",
+		instrumentationtypes.CodeFunctionName: "QueryRangePreview",
+	})
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	var queryRangeRequest qbtypes.QueryRangeRequest
+	if err := json.NewDecoder(req.Body).Decode(&queryRangeRequest); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	// Validation is deferred to QueryRangePreview, which reports per-query
+	// errors instead of failing fast.
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	previewParams := qbtypes.QueryRangePreviewParams{Verbose: req.URL.Query().Get("verbose")}
+	previewOpts, err := previewParams.Validate()
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	preview, err := handler.querier.QueryRangePreview(ctx, orgID, &queryRangeRequest, previewOpts)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, preview)
+}
+
 func (handler *handler) QueryRawStream(rw http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
@@ -195,7 +250,7 @@ func (handler *handler) ReplaceVariables(rw http.ResponseWriter, req *http.Reque
 	errs := []error{}
 
 	for idx, item := range queryRangeRequest.CompositeQuery.Queries {
-		if item.Type == qbtypes.QueryTypeBuilder {
+		if item.Type == qbtypes.QueryTypeBuilder || item.Type == qbtypes.QueryTypeBuilderAI {
 			switch spec := item.Spec.(type) {
 			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
 				if spec.Filter != nil && spec.Filter.Expression != "" {

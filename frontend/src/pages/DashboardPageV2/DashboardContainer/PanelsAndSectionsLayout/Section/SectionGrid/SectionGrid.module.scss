@@ -20,3 +20,9 @@
 		}
 	}
 }
+
+// Lazy-load observer boundary (SectionGridItem); fills the grid cell.
+.panelWrapper {
+	height: 100%;
+	width: 100%;
+}

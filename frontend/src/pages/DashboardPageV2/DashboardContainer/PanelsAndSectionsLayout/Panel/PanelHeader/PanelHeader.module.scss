@@ -5,6 +5,7 @@
 	padding: 8px 12px;
 	border-bottom: 1px solid var(--l2-border);
 	cursor: grab;
+	min-height: 32px;
 }
 
 .headerLeft {
@@ -52,4 +53,9 @@
 	background: var(--l3-background);
 	border: 1px solid var(--l3-border);
 	cursor: default;
+}
+
+.descriptionTooltip {
+	max-width: 240px;
+	padding: 12px;
 }

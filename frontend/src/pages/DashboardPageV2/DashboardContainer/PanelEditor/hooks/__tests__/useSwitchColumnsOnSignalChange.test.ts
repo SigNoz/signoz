@@ -10,10 +10,13 @@ import {
 } from 'container/OptionsMenu/constants';
 
 import { sanitizeSelectFields } from '../../ListColumnsEditor/selectFields';
-import { useSwitchColumnsOnSignalChange } from '../useSwitchColumnsOnSignalChange';
+import {
+	useSwitchColumnsOnSignalChange,
+	type UseSwitchColumnsOnSignalChangeArgs,
+} from '../useSwitchColumnsOnSignalChange';
 
-// The hook applies the datasource defaults reduced to the field-key DTO (the V1
-// constants carry extra keys like `isIndexed`); assertions mirror that.
+// V1 constants carry extra keys (e.g. `isIndexed`); the hook reduces them to the
+// field-key DTO, so assertions sanitize the same way.
 const expectedLogs = sanitizeSelectFields(
 	defaultLogsSelectedColumns as TelemetrytypesTelemetryFieldKeyDTO[],
 );
@@ -30,16 +33,12 @@ function makeSpec(
 	} as unknown as DashboardtypesPanelSpecDTO;
 }
 
-type Props = {
-	enabled: boolean;
-	signal: TelemetrytypesSignalDTO | undefined;
-	spec: DashboardtypesPanelSpecDTO;
-	onChangeSpec: (next: DashboardtypesPanelSpecDTO) => void;
-};
-
-function renderWith(initial: Props): { rerender: (next: Props) => void } {
+function renderWith(initial: UseSwitchColumnsOnSignalChangeArgs): {
+	rerender: (next: UseSwitchColumnsOnSignalChangeArgs) => void;
+} {
 	const { rerender } = renderHook(
-		(props: Props) => useSwitchColumnsOnSignalChange(props),
+		(props: UseSwitchColumnsOnSignalChangeArgs) =>
+			useSwitchColumnsOnSignalChange(props),
 		{ initialProps: initial },
 	);
 	return { rerender };
@@ -71,6 +70,45 @@ describe('useSwitchColumnsOnSignalChange', () => {
 		expect(selectFieldsOf(onChangeSpec.mock.calls[0][0])).toStrictEqual(
 			expectedTraces,
 		);
+	});
+
+	it('restores the original columns on logs → traces → logs', () => {
+		// Customized logs selection, not the timestamp/body defaults.
+		const original = [
+			{ name: 'timestamp' },
+			{ name: 'body' },
+			{ name: 'response_status_code' },
+			{ name: 'trace_id' },
+		];
+		// Mirror the real parent: persist the spec so the next switch stashes the
+		// columns the previous one applied.
+		let spec = makeSpec(original);
+		const onChangeSpec = jest.fn((next: DashboardtypesPanelSpecDTO) => {
+			spec = next;
+		});
+		const { rerender } = renderWith({
+			enabled: true,
+			signal: TelemetrytypesSignalDTO.logs,
+			spec,
+			onChangeSpec,
+		});
+
+		rerender({
+			enabled: true,
+			signal: TelemetrytypesSignalDTO.traces,
+			spec,
+			onChangeSpec,
+		});
+		expect(selectFieldsOf(spec)).toStrictEqual(expectedTraces);
+
+		// Switching back restores the original columns, not the log defaults.
+		rerender({
+			enabled: true,
+			signal: TelemetrytypesSignalDTO.logs,
+			spec,
+			onChangeSpec,
+		});
+		expect(selectFieldsOf(spec)).toStrictEqual(original);
 	});
 
 	it('switches to the log defaults when going traces → logs', () => {
@@ -111,20 +149,6 @@ describe('useSwitchColumnsOnSignalChange', () => {
 			spec,
 			onChangeSpec,
 		});
-		expect(onChangeSpec).not.toHaveBeenCalled();
-	});
-
-	it('does not switch on a transient undefined signal', () => {
-		const onChangeSpec = jest.fn();
-		const spec = makeSpec([{ name: 'body' }]);
-		const { rerender } = renderWith({
-			enabled: true,
-			signal: TelemetrytypesSignalDTO.logs,
-			spec,
-			onChangeSpec,
-		});
-
-		rerender({ enabled: true, signal: undefined, spec, onChangeSpec });
 		expect(onChangeSpec).not.toHaveBeenCalled();
 	});
 

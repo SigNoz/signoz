@@ -1,0 +1,56 @@
+.k8SListControls {
+	padding: var(--spacing-4);
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: var(--spacing-4);
+	width: 100%;
+}
+
+.k8SListControlsRow {
+	display: flex;
+	gap: var(--spacing-4);
+	width: 100%;
+	align-items: center;
+	justify-content: flex-end;
+}
+
+.k8SQbSearchContainer {
+	width: 100%;
+}
+
+.k8SRunButton {
+	flex: 0 0 auto;
+}
+
+.k8SFiltersButton {
+	flex: 0 0 auto;
+}
+
+.k8SDateTimeSelection {
+	margin-left: auto;
+	display: flex;
+	justify-content: flex-end;
+
+	--date-time-selector-border-color: var(--l2-border);
+
+	:global(.timeSelection-input) {
+		height: 32px;
+	}
+
+	:global(.ant-input-affix-wrapper) {
+		border-color: var(--l2-border);
+
+		&:hover {
+			border-color: var(--l2-border) !important;
+		}
+	}
+
+	:global(.refresh-actions .ant-form-item-control-input) {
+		&,
+		:global(.ant-btn) {
+			height: 30px;
+			min-height: unset;
+		}
+	}
+}

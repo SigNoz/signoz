@@ -19,6 +19,7 @@
 
 .backBtn {
 	flex-shrink: 0;
+	border: 1px solid var(--l1-border);
 }
 
 .traceIdSection {
@@ -26,6 +27,11 @@
 	align-items: center;
 	gap: 8px;
 	flex-shrink: 0;
+
+	// Tabular figures so the trace ID's digits line up at a fixed width.
+	:global(.key-value-label__value) {
+		font-variant-numeric: tabular-nums;
+	}
 }
 
 .filterSection {
@@ -59,25 +65,6 @@
 	padding: 4px 16px 8px;
 	font-size: 13px;
 	color: var(--l2-foreground);
-}
-
-.subItem {
-	display: flex;
-	align-items: center;
-	gap: 6px;
-	white-space: nowrap;
-}
-
-.separator {
-	color: var(--l2-foreground);
-	opacity: 0.5;
-}
-
-.entryPointBadge {
-	padding: 2px 8px;
-	border: 1px solid var(--l2-border);
-	border-radius: 4px;
-	font-size: 12px;
 }
 
 .skeleton {

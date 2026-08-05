@@ -4,8 +4,12 @@ import (
 	"bytes"
 	"crypto/rand"
 	"encoding/json"
+	"fmt"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -20,6 +24,15 @@ const (
 	MaxTagsPerDashboard    = 10
 	dashboardNameSuffixLen = 8
 )
+
+const (
+	dashboardIconPathPrefix = "/assets/Icons/"
+	dashboardLogoPathPrefix = "/assets/Logos/"
+)
+
+// base64ImageDataURIRegex matches the only free-form image value we allow — a
+// base64 image data URI. Mirrors the frontend resolver's allow-list.
+var base64ImageDataURIRegex = regexp.MustCompile(`^data:image/(?:png|jpe?g|gif|webp|avif|svg\+xml);base64,[A-Za-z0-9+/]+={0,2}$`)
 
 type DSLKey string
 
@@ -134,17 +147,60 @@ func (d *DashboardV2) ErrIfNotClonable() error {
 }
 
 func (d DashboardV2) ToPostableForCloning() PostableDashboardV2 {
+	spec := d.Spec
+	spec.Display.Name = nextCloneDisplayName(spec.Display.Name)
 	return PostableDashboardV2{
 		DashboardV2MetadataBase: d.DashboardV2MetadataBase,
 		GenerateName:            true,
 		Tags:                    tagtypes.NewPostableTagsFromTags(d.Tags),
-		Spec:                    d.Spec,
+		Spec:                    spec,
 	}
+}
+
+// cloneCopySuffixRegex matches a " - Copy" or " - Copy (n)" suffix on a display name.
+var cloneCopySuffixRegex = regexp.MustCompile(`^(.*) - Copy(?: \((\d+)\))?$`)
+
+// nextCloneDisplayName appends " - Copy" to a clone's display name, bumping an
+// existing " - Copy (n)" counter, then truncates the base to fit MaxDisplayNameLen.
+func nextCloneDisplayName(name string) string {
+	base, count := name, 0
+	if m := cloneCopySuffixRegex.FindStringSubmatch(name); m != nil {
+		base = m[1]
+		count = 1 // bare " - Copy"
+		if m[2] != "" {
+			count, _ = strconv.Atoi(m[2])
+		}
+	}
+
+	suffix := " - Copy"
+	if count++; count > 1 {
+		suffix = fmt.Sprintf(" - Copy (%d)", count)
+	}
+
+	limit := max(MaxDisplayNameLen-utf8.RuneCountInString(suffix), 0)
+	if runes := []rune(base); len(runes) > limit {
+		base = strings.TrimRight(string(runes[:limit]), " ")
+	}
+	return base + suffix
 }
 
 type DashboardV2MetadataBase struct {
 	SchemaVersion string `json:"schemaVersion" required:"true"`
-	Image         string `json:"image,omitempty"`
+	Image         string `json:"image"`
+}
+
+func (m DashboardV2MetadataBase) validateImage() error {
+	if m.Image == "" {
+		return nil
+	}
+	if (strings.HasPrefix(m.Image, dashboardIconPathPrefix) && len(m.Image) > len(dashboardIconPathPrefix)) ||
+		(strings.HasPrefix(m.Image, dashboardLogoPathPrefix) && len(m.Image) > len(dashboardLogoPathPrefix)) {
+		return nil
+	}
+	if base64ImageDataURIRegex.MatchString(m.Image) {
+		return nil
+	}
+	return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "image must be an %q or %q path, or a base64 image data URI", dashboardIconPathPrefix, dashboardLogoPathPrefix)
 }
 
 // ════════════════════════════════════════════════════════════════════════
@@ -153,8 +209,8 @@ type DashboardV2MetadataBase struct {
 
 type PostableDashboardV2 struct {
 	DashboardV2MetadataBase
-	Name         string                 `json:"name,omitempty"`
-	GenerateName bool                   `json:"generateName,omitempty"`
+	Name         string                 `json:"name"`
+	GenerateName bool                   `json:"generateName"`
 	Tags         []tagtypes.PostableTag `json:"tags" required:"true"`
 	Spec         DashboardSpec          `json:"spec" required:"true"`
 }
@@ -204,6 +260,9 @@ func (p *PostableDashboardV2) Validate() error {
 		return err
 	}
 	if err := validateDashboardTags(p.Tags); err != nil {
+		return err
+	}
+	if err := p.validateImage(); err != nil {
 		return err
 	}
 	return p.Spec.Validate()
@@ -374,6 +433,9 @@ func (u *UpdatableDashboardV2) Validate() error {
 		return err
 	}
 	if err := validateDashboardTags(u.Tags); err != nil {
+		return err
+	}
+	if err := u.validateImage(); err != nil {
 		return err
 	}
 	return u.Spec.Validate()

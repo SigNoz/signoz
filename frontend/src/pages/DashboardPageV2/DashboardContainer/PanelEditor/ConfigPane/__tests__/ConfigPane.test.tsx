@@ -1,8 +1,12 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import { useState } from 'react';
+import type {
+	DashboardtypesPanelDTO,
+	DashboardtypesPanelSpecDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { render, screen, userEvent } from 'tests/test-utils';
+import { EQueryType } from 'types/common/dashboard';
 
 import ConfigPane from '../ConfigPane';
-import { PanelKind } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 
 function spec(unit?: string): DashboardtypesPanelSpecDTO {
 	return {
@@ -19,14 +23,33 @@ function renderConfigPane(
 	overrides: Partial<React.ComponentProps<typeof ConfigPane>> = {},
 ): React.ComponentProps<typeof ConfigPane> {
 	const props: React.ComponentProps<typeof ConfigPane> = {
-		panelKind: 'signoz/TimeSeriesPanel',
 		spec: spec(),
 		onChangeSpec: jest.fn(),
+		onChangePanelKind: jest.fn(),
+		queryType: EQueryType.QUERY_BUILDER,
 		legendSeries: [],
 		tableColumns: [],
+		panel: { kind: 'Panel', spec: spec() } as DashboardtypesPanelDTO,
+		panelId: 'panel-1',
 		...overrides,
 	};
-	render(<ConfigPane {...props} />);
+
+	// Stateful so typed edits feed back into the spec, as the panel editor owns it.
+	function Harness(): JSX.Element {
+		const [currentSpec, setCurrentSpec] = useState(props.spec);
+		return (
+			<ConfigPane
+				{...props}
+				spec={currentSpec}
+				onChangeSpec={(next): void => {
+					props.onChangeSpec(next);
+					setCurrentSpec(next);
+				}}
+			/>
+		);
+	}
+
+	render(<Harness />);
 	return props;
 }
 
@@ -40,14 +63,15 @@ describe('ConfigPane', () => {
 		);
 	});
 
-	it('reports title edits through onChangeSpec (into spec.display)', () => {
+	it('reports title edits through onChangeSpec (into spec.display)', async () => {
+		const user = userEvent.setup();
 		const { onChangeSpec } = renderConfigPane();
 
-		fireEvent.change(screen.getByTestId('panel-editor-v2-title'), {
-			target: { value: 'Memory' },
-		});
+		const title = screen.getByTestId('panel-editor-v2-title');
+		await user.clear(title);
+		await user.type(title, 'Memory');
 
-		expect(onChangeSpec).toHaveBeenCalledWith(
+		expect(onChangeSpec).toHaveBeenLastCalledWith(
 			expect.objectContaining({
 				display: { name: 'Memory', description: 'usage' },
 			}),
@@ -57,13 +81,32 @@ describe('ConfigPane', () => {
 	it('renders the Formatting section for a kind that declares it', () => {
 		renderConfigPane();
 		// The TimeSeries kind declares a Formatting section; its collapsible header shows.
-		expect(screen.getByTestId('config-section-Formatting')).toBeInTheDocument();
+		expect(
+			screen.getByTestId('config-section-formatting-&-units'),
+		).toBeInTheDocument();
 	});
 
-	it('omits the Formatting section for an unknown kind', () => {
-		renderConfigPane({ panelKind: 'signoz/UnknownPanel' as PanelKind });
+	it('renders the Actions group for a create-alert-capable panel', () => {
+		// renderConfigPane defaults to a TimeSeries panel, which can seed an alert.
+		renderConfigPane();
+
+		expect(screen.getByText('Actions')).toBeInTheDocument();
 		expect(
-			screen.queryByTestId('config-section-Formatting'),
+			screen.getByTestId('panel-editor-v2-create-alert'),
+		).toBeInTheDocument();
+	});
+
+	it('omits the create-alert action for a kind that cannot seed an alert', () => {
+		// Table panels can't seed alerts → the Actions group hides its row. Only the
+		// panel passed to ConfigActions needs the kind; sections are asserted elsewhere.
+		const panel = {
+			kind: 'Panel',
+			spec: { ...spec(), plugin: { kind: 'signoz/TablePanel', spec: {} } },
+		} as DashboardtypesPanelDTO;
+		renderConfigPane({ panel });
+
+		expect(
+			screen.queryByTestId('panel-editor-v2-create-alert'),
 		).not.toBeInTheDocument();
 	});
 });

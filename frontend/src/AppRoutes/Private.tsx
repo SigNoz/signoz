@@ -3,18 +3,21 @@ import { matchPath, Redirect, useLocation } from 'react-router-dom';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import { useListUsers } from 'api/generated/services/users';
-import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
+import { useIsAIObservabilityEnabled } from 'hooks/useIsAIObservabilityEnabled';
 import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
 import { OrgPreference } from 'types/api/preferences/preference';
 import { USER_ROLES } from 'types/roles';
-import { routePermission } from 'utils/permission';
+import {
+	routePermission,
+	routeWithInitialAuthZSupport,
+} from 'utils/permission';
 
 import routes, {
 	LIST_LICENSES,
@@ -37,12 +40,11 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		activeLicense,
 		isFetchingActiveLicense,
 		trialInfo,
-		featureFlags,
 	} = useAppContext();
 
 	const isAdmin = user.role === USER_ROLES.ADMIN;
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
-
+	const isAIObservabilityEnabled = useIsAIObservabilityEnabled();
 	const mapRoutes = useMemo(
 		() =>
 			new Map(
@@ -133,6 +135,14 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		return <Redirect to={ROUTES.HOME} />;
 	}
 
+	if (
+		(pathname.startsWith(`${ROUTES.AI_OBSERVABILITY_BASE}/`) ||
+			pathname === ROUTES.AI_OBSERVABILITY_BASE) &&
+		!isAIObservabilityEnabled
+	) {
+		return <Redirect to={ROUTES.HOME} />;
+	}
+
 	// Check for workspace access restriction (cloud only)
 	const isCloudPlatform = activeLicense?.platform === LicensePlatform.CLOUD;
 
@@ -212,21 +222,22 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		}
 	}
 
-	// Check for GET_STARTED → GET_STARTED_WITH_CLOUD redirect (feature flag)
-	if (
-		currentRoute?.path === ROUTES.GET_STARTED &&
-		featureFlags?.find((e) => e.name === FeatureKeys.ONBOARDING_V3)?.active
-	) {
-		return <Redirect to={ROUTES.GET_STARTED_WITH_CLOUD} />;
-	}
-
 	// Main routing logic
 	if (currentRoute) {
 		const { isPrivate, key } = currentRoute;
 		if (isPrivate) {
 			if (isLoggedInState) {
 				const route = routePermission[key];
-				if (route && route.find((e) => e === user.role) === undefined) {
+				const hasInitialAuthZSupport = Object.hasOwn(
+					routeWithInitialAuthZSupport,
+					key,
+				);
+
+				if (
+					route &&
+					route.find((e) => e === user.role) === undefined &&
+					hasInitialAuthZSupport === false
+				) {
 					return <Redirect to={ROUTES.UN_AUTHORIZED} />;
 				}
 			} else {

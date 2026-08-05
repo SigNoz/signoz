@@ -213,6 +213,41 @@ func (store *store) sortExprForListV2(sort dashboardtypes.ListSort) (string, err
 		"unsupported sort field %q", sort)
 }
 
+func (store *store) ListByDataContainsAny(ctx context.Context, orgID valuer.UUID, searches []string) ([]*dashboardtypes.StorableDashboard, error) {
+	storableDashboards := make([]*dashboardtypes.StorableDashboard, 0)
+	if len(searches) == 0 {
+		return storableDashboards, nil
+	}
+
+	clause, args := buildContainsAnyClauseForDataColumn(store.sqlstore.Formatter(), searches)
+	err := store.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Model(&storableDashboards).
+		Where("org_id = ?", orgID).
+		Where(clause, args...).
+		Scan(ctx)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't list dashboards by data")
+	}
+
+	return storableDashboards, nil
+}
+
+// buildContainsAnyClauseForDataColumn builds a parenthesised OR of `data LIKE` predicates, one
+// per search, matching the raw substring literally (LIKE wildcards escaped). It
+// returns the predicate and its bind args, ready for a single bun Where call.
+func buildContainsAnyClauseForDataColumn(formatter sqlstore.SQLFormatter, searches []string) (string, []any) {
+	conditions := make([]string, 0, len(searches))
+	args := make([]any, 0, len(searches))
+	for _, search := range searches {
+		conditions = append(conditions, "data LIKE ? ESCAPE '\\'")
+		args = append(args, "%"+formatter.EscapeLikePattern(search)+"%")
+	}
+	return "(" + strings.Join(conditions, " OR ") + ")", args
+}
+
 func (store *store) GetPublic(ctx context.Context, dashboardID string) (*dashboardtypes.StorablePublicDashboard, error) {
 	storable := new(dashboardtypes.StorablePublicDashboard)
 	err := store.
@@ -311,6 +346,23 @@ func (store *store) Update(ctx context.Context, orgID valuer.UUID, storableDashb
 		Exec(ctx)
 	if err != nil {
 		return store.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "dashboard with id %s doesn't exist", storableDashboard.ID)
+	}
+
+	return nil
+}
+
+func (store *store) UpdateName(ctx context.Context, orgID valuer.UUID, id valuer.UUID, name string) error {
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewUpdate().
+		Model((*dashboardtypes.StorableDashboard)(nil)).
+		Set("name = ?", name).
+		Where("id = ?", id).
+		Where("org_id = ?", orgID).
+		Exec(ctx)
+	if err != nil {
+		return store.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "dashboard with id %s doesn't exist", id)
 	}
 
 	return nil

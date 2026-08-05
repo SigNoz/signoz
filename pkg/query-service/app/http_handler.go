@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/thirdpartyapi"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 
 	"log/slog"
@@ -1078,75 +1079,11 @@ func prepareQuery(r *http.Request) (string, error) {
 }
 
 func (aH *APIHandler) Get(rw http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
-
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	id := mux.Vars(r)["id"]
-	if id == "" {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is missing in the path"))
-		return
-	}
-
-	dashboardID, err := valuer.NewUUID(id)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-	dashboard, err := aH.Signoz.Modules.Dashboard.Get(ctx, orgID, dashboardID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	gettableDashboard, err := dashboardtypes.NewGettableDashboardFromDashboard(dashboard)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	render.Success(rw, http.StatusOK, gettableDashboard)
+	render.Error(rw, dashboardtypes.NewV1DeprecatedError("get a dashboard with GET /api/v2/dashboards/{id}"))
 }
 
 func (aH *APIHandler) List(rw http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
-
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	dashboards, err := aH.Signoz.Modules.Dashboard.List(ctx, orgID)
-	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-		render.Error(rw, err)
-		return
-	}
-
-	gettableDashboards, err := dashboardtypes.NewGettableDashboardsFromDashboards(dashboards)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-	render.Success(rw, http.StatusOK, gettableDashboards)
+	render.Error(rw, dashboardtypes.NewV1DeprecatedError("list dashboards with GET /api/v2/dashboards"))
 }
 
 func (aH *APIHandler) queryDashboardVarsV2(w http.ResponseWriter, r *http.Request) {
@@ -1155,6 +1092,8 @@ func (aH *APIHandler) queryDashboardVarsV2(w http.ResponseWriter, r *http.Reques
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
+
+	querybuilder.LogIfStatementIsNotValid(r.Context(), aH.logger, query)
 
 	dashboardVars, err := aH.reader.QueryDashboardVars(r.Context(), query)
 	if err != nil {
@@ -1655,24 +1594,6 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 	featureSet = append(featureSet, &licensetypes.Feature{
 		Name:       valuer.NewString(flagger.FeatureUseJSONBody.String()),
 		Active:     bodyJSONQuery,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	})
-
-	fineGrainedAuthz := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureUseFineGrainedAuthz, evalCtx)
-	featureSet = append(featureSet, &licensetypes.Feature{
-		Name:       valuer.NewString(flagger.FeatureUseFineGrainedAuthz.String()),
-		Active:     fineGrainedAuthz,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	})
-
-	useDashboardV2 := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureUseDashboardV2, evalCtx)
-	featureSet = append(featureSet, &licensetypes.Feature{
-		Name:       valuer.NewString(flagger.FeatureUseDashboardV2.String()),
-		Active:     useDashboardV2,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
@@ -3045,7 +2966,7 @@ func (aH *APIHandler) calculateConnectionStatus(
 		}
 
 		statusForLastReceivedMetric, apiErr := aH.reader.GetLatestReceivedMetric(
-			ctx, connectionTests.Metrics, nil,
+			ctx, orgID, connectionTests.Metrics, nil,
 		)
 
 		resultLock.Lock()
@@ -3514,9 +3435,16 @@ func (aH *APIHandler) autoCompleteAttributeKeys(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		aH.HandleError(w, err, http.StatusInternalServerError)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
 	switch req.DataSource {
 	case v3.DataSourceMetrics:
-		response, err = aH.reader.GetMetricAttributeKeys(r.Context(), req)
+		response, err = aH.reader.GetMetricAttributeKeys(r.Context(), orgID, req)
 	case v3.DataSourceMeter:
 		response, err = aH.reader.GetMeterAttributeKeys(r.Context(), req)
 	case v3.DataSourceLogs:
@@ -3545,9 +3473,16 @@ func (aH *APIHandler) autoCompleteAttributeValues(w http.ResponseWriter, r *http
 		return
 	}
 
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		aH.HandleError(w, err, http.StatusInternalServerError)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
 	switch req.DataSource {
 	case v3.DataSourceMetrics:
-		response, err = aH.reader.GetMetricAttributeValues(r.Context(), req)
+		response, err = aH.reader.GetMetricAttributeValues(r.Context(), orgID, req)
 	case v3.DataSourceLogs:
 		response, err = aH.reader.GetLogAttributeValues(r.Context(), req)
 	case v3.DataSourceTraces:
@@ -3574,9 +3509,16 @@ func (aH *APIHandler) autoCompleteAttributeValuesPost(w http.ResponseWriter, r *
 		return
 	}
 
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		aH.HandleError(w, err, http.StatusInternalServerError)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
 	switch req.DataSource {
 	case v3.DataSourceMetrics:
-		response, err = aH.reader.GetMetricAttributeValues(r.Context(), req)
+		response, err = aH.reader.GetMetricAttributeValues(r.Context(), orgID, req)
 	case v3.DataSourceLogs:
 		response, err = aH.reader.GetLogAttributeValues(r.Context(), req)
 	case v3.DataSourceTraces:

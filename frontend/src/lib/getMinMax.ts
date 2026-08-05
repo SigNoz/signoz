@@ -7,7 +7,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import getMinAgo from './getStartAndEndTime/getMinAgo';
 
-const validCustomTimeRegex = /^(\d+)([mhdw])$/;
+const validCustomTimeRegex = /^(\d+)(months?|[mhdw])$/;
 
 export const isValidShortHandDateTimeFormat = (time: string): boolean =>
 	validCustomTimeRegex.test(time);

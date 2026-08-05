@@ -8,6 +8,7 @@ import (
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/prometheus/common/model"
 	"github.com/swaggest/jsonschema-go"
 )
 
@@ -31,7 +32,49 @@ type DynamicVariableSpec struct {
 	// Name is the name of the attribute being fetched dynamically from the
 	// signal. This could be extended to a richer selector in the future.
 	Name   string                `json:"name" validate:"required" required:"true"`
-	Signal telemetrytypes.Signal `json:"signal"`
+	Signal DynamicVariableSignal `json:"signal" required:"true" nullable:"false"`
+}
+
+// DynamicVariableSignal is the telemetry signal a dynamic variable draws its
+// values from. Separate from telemetrytypes.Signal because it carries "all"
+// (values span every signal) rather than "" for an unpinned query signal.
+type DynamicVariableSignal struct{ valuer.String }
+
+var (
+	DynamicVariableSignalTraces  = DynamicVariableSignal{valuer.NewString("traces")}
+	DynamicVariableSignalLogs    = DynamicVariableSignal{valuer.NewString("logs")}
+	DynamicVariableSignalMetrics = DynamicVariableSignal{valuer.NewString("metrics")}
+	DynamicVariableSignalAll     = DynamicVariableSignal{valuer.NewString("all")} // default
+)
+
+func (DynamicVariableSignal) Enum() []any {
+	return []any{DynamicVariableSignalTraces, DynamicVariableSignalLogs, DynamicVariableSignalMetrics, DynamicVariableSignalAll}
+}
+
+func (s DynamicVariableSignal) ValueOrDefault() string {
+	if s.IsZero() {
+		return DynamicVariableSignalAll.StringValue()
+	}
+	return s.StringValue()
+}
+
+func (s DynamicVariableSignal) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.ValueOrDefault())
+}
+
+func (s *DynamicVariableSignal) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid signal: must be a string, one of `traces`, `logs`, `metrics`, or `all`")
+	}
+	sig := DynamicVariableSignal{valuer.NewString(v)}
+	switch sig {
+	case DynamicVariableSignalTraces, DynamicVariableSignalLogs, DynamicVariableSignalMetrics, DynamicVariableSignalAll:
+		*s = sig
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid signal %q: must be `traces`, `logs`, `metrics`, or `all`", v)
+	}
 }
 
 type QueryVariableSpec struct {
@@ -136,16 +179,6 @@ func (PanelPluginKind) Enum() []any {
 	return []any{PanelKindTimeSeries, PanelKindBarChart, PanelKindNumber, PanelKindPieChart, PanelKindTable, PanelKindHistogram, PanelKindList}
 }
 
-type DatasourcePluginKind string
-
-const (
-	DatasourceKindSigNoz DatasourcePluginKind = "signoz/Datasource"
-)
-
-func (DatasourcePluginKind) Enum() []any {
-	return []any{DatasourceKindSigNoz}
-}
-
 type TimeSeriesPanelSpec struct {
 	Visualization   TimeSeriesVisualization   `json:"visualization"`
 	Formatting      PanelFormatting           `json:"formatting"`
@@ -201,7 +234,7 @@ type HistogramBuckets struct {
 }
 
 type ListPanelSpec struct {
-	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitempty" validate:"dive"`
+	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitzero" validate:"dive"`
 }
 
 // ══════════════════════════════════════════════
@@ -241,18 +274,25 @@ type TableFormatting struct {
 
 type Legend struct {
 	Position     LegendPosition    `json:"position"`
+	Mode         LegendMode        `json:"mode"`
 	CustomColors map[string]string `json:"customColors"`
 }
 
 type ThresholdWithLabel struct {
-	Value float64 `json:"value" validate:"required" required:"true"`
+	// Value is always present in the schema (required:"true"), but 0 is a legitimate
+	// threshold, so it drops validate:"required" — go-playground's required treats a
+	// zero float as unset and would wrongly reject value: 0.
+	Value float64 `json:"value" required:"true"`
 	Unit  string  `json:"unit"`
 	Color string  `json:"color" validate:"required" required:"true"`
-	Label string  `json:"label" validate:"required" required:"true"`
+	Label string  `json:"label"`
 }
 
 type ComparisonThreshold struct {
-	Value    float64            `json:"value" validate:"required" required:"true"`
+	// Value is always present in the schema (required:"true"), but 0 is a legitimate
+	// threshold, so it drops validate:"required" — go-playground's required treats a
+	// zero float as unset and would wrongly reject value: 0.
+	Value    float64            `json:"value" required:"true"`
 	Operator ComparisonOperator `json:"operator"`
 	Unit     string             `json:"unit"`
 	Color    string             `json:"color" validate:"required" required:"true"`
@@ -303,10 +343,6 @@ func (t *TimePreference) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid timePreference: must be a string, one of `global_time`, `last_5_min`, `last_15_min`, `last_30_min`, `last_1_hr`, `last_6_hr`, `last_1_day`, `last_3_days`, `last_1_week`, or `last_1_month`")
 	}
-	if v == "" {
-		*t = TimePreferenceGlobalTime
-		return nil
-	}
 	tp := TimePreference{valuer.NewString(v)}
 	switch tp {
 	case TimePreferenceGlobalTime, TimePreferenceLast5Min, TimePreferenceLast15Min, TimePreferenceLast30Min, TimePreferenceLast1Hr, TimePreferenceLast6Hr, TimePreferenceLast1Day, TimePreferenceLast3Days, TimePreferenceLast1Week, TimePreferenceLast1Month:
@@ -344,10 +380,6 @@ func (l *LegendPosition) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid legend position: must be a string, one of `bottom` or `right`")
 	}
-	if v == "" {
-		*l = LegendPositionBottom
-		return nil
-	}
 	lp := LegendPosition{valuer.NewString(v)}
 	switch lp {
 	case LegendPositionBottom, LegendPositionRight:
@@ -355,6 +387,43 @@ func (l *LegendPosition) UnmarshalJSON(data []byte) error {
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid legend position %q: must be `bottom` or `right`", v)
+	}
+}
+
+type LegendMode struct{ valuer.String }
+
+var (
+	LegendModeList  = LegendMode{valuer.NewString("list")} // default
+	LegendModeTable = LegendMode{valuer.NewString("table")}
+)
+
+func (LegendMode) Enum() []any {
+	return []any{LegendModeList} // others are not supported in UI yet
+}
+
+func (m LegendMode) ValueOrDefault() string {
+	if m.IsZero() {
+		return LegendModeList.StringValue()
+	}
+	return m.StringValue()
+}
+
+func (m LegendMode) MarshalJSON() ([]byte, error) {
+	return json.Marshal(m.ValueOrDefault())
+}
+
+func (m *LegendMode) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid legend mode: must be a string, one of `list` or `table`")
+	}
+	lm := LegendMode{valuer.NewString(v)}
+	switch lm {
+	case LegendModeList, LegendModeTable:
+		*m = lm
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid legend mode %q: must be `list` or `table`", v)
 	}
 }
 
@@ -384,10 +453,6 @@ func (f *ThresholdFormat) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid threshold format: must be a string, one of `text` or `background`")
-	}
-	if v == "" {
-		*f = ThresholdFormatText
-		return nil
 	}
 	tf := ThresholdFormat{valuer.NewString(v)}
 	switch tf {
@@ -432,10 +497,6 @@ func (o *ComparisonOperator) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid comparison operator: must be a string, one of `above`, `below`, `above_or_equal`, `below_or_equal`, `equal`, or `not_equal`")
 	}
-	if v == "" {
-		*o = ComparisonOperatorAbove
-		return nil
-	}
 	co := ComparisonOperator{valuer.NewString(v)}
 	switch co {
 	case ComparisonOperatorAbove, ComparisonOperatorBelow, ComparisonOperatorAboveOrEqual, ComparisonOperatorBelowOrEqual,
@@ -476,10 +537,6 @@ func (li *LineInterpolation) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid line interpolation: must be a string, one of `linear`, `spline`, `step_after`, or `step_before`")
 	}
-	if v == "" {
-		*li = LineInterpolationSpline
-		return nil
-	}
 	val := LineInterpolation{valuer.NewString(v)}
 	switch val {
 	case LineInterpolationLinear, LineInterpolationSpline, LineInterpolationStepAfter, LineInterpolationStepBefore:
@@ -517,10 +574,6 @@ func (ls *LineStyle) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid line style: must be a string, one of `solid` or `dashed`")
 	}
-	if v == "" {
-		*ls = LineStyleSolid
-		return nil
-	}
 	val := LineStyle{valuer.NewString(v)}
 	switch val {
 	case LineStyleSolid, LineStyleDashed:
@@ -534,9 +587,9 @@ func (ls *LineStyle) UnmarshalJSON(data []byte) error {
 type FillMode struct{ valuer.String }
 
 var (
-	FillModeSolid    = FillMode{valuer.NewString("solid")} // default
+	FillModeSolid    = FillMode{valuer.NewString("solid")}
 	FillModeGradient = FillMode{valuer.NewString("gradient")}
-	FillModeNone     = FillMode{valuer.NewString("none")}
+	FillModeNone     = FillMode{valuer.NewString("none")} // default
 )
 
 func (FillMode) Enum() []any {
@@ -545,7 +598,7 @@ func (FillMode) Enum() []any {
 
 func (fm FillMode) ValueOrDefault() string {
 	if fm.IsZero() {
-		return FillModeSolid.StringValue()
+		return FillModeNone.StringValue()
 	}
 	return fm.StringValue()
 }
@@ -559,10 +612,6 @@ func (fm *FillMode) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid fill mode: must be a string, one of `solid`, `gradient`, or `none`")
 	}
-	if v == "" {
-		*fm = FillModeSolid
-		return nil
-	}
 	val := FillMode{valuer.NewString(v)}
 	switch val {
 	case FillModeSolid, FillModeGradient, FillModeNone:
@@ -573,12 +622,40 @@ func (fm *FillMode) UnmarshalJSON(data []byte) error {
 	}
 }
 
-// SpanGaps controls whether lines connect across null values.
-// When FillOnlyBelow is false (default), all gaps are connected.
-// When FillOnlyBelow is true, only gaps smaller than FillLessThan are connected.
 type SpanGaps struct {
-	FillOnlyBelow bool                `json:"fillOnlyBelow"`
-	FillLessThan  valuer.TextDuration `json:"fillLessThan"`
+	FillOnlyBelow bool   `json:"fillOnlyBelow" description:"Controls whether lines connect across null values. When false (default), all gaps are connected. When true, only gaps smaller than fillLessThan are connected."`
+	FillLessThan  string `json:"fillLessThan" description:"The maximum gap size to connect when fillOnlyBelow is true. Gaps larger than this duration are left disconnected."`
+}
+
+func (sg *SpanGaps) UnmarshalJSON(data []byte) error {
+	type alias SpanGaps
+	var tmp alias
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid spanGaps")
+	}
+	*sg = SpanGaps(tmp)
+	return sg.validate()
+}
+
+// validate enforces FillLessThan only when FillOnlyBelow is set, since that is
+// the only mode in which it applies. It must then be a valid positive duration.
+// prometheus's parser accepts day/week/year units (e.g. "1d"); time.ParseDuration
+// caps at hours.
+func (sg SpanGaps) validate() error {
+	if !sg.FillOnlyBelow {
+		return nil
+	}
+	if sg.FillLessThan == "" {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spanGaps.fillLessThan is required when fillOnlyBelow is true")
+	}
+	d, err := model.ParseDuration(sg.FillLessThan)
+	if err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid spanGaps.fillLessThan duration %q", sg.FillLessThan)
+	}
+	if d <= 0 {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spanGaps.fillLessThan duration must be positive, got %q", sg.FillLessThan)
+	}
+	return nil
 }
 
 type PrecisionOption struct{ valuer.String }
@@ -622,10 +699,6 @@ func (p *PrecisionOption) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid precision option: must be `0`, `1`, `2`, `3`, `4`, or `full`")
-	}
-	if v == "" {
-		*p = PrecisionOption2
-		return nil
 	}
 	val := PrecisionOption{valuer.NewString(v)}
 	switch val {

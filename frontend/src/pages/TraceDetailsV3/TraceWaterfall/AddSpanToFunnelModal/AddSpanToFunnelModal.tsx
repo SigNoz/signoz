@@ -72,7 +72,7 @@ function FunnelDetailsView({
 			<FunnelConfiguration
 				funnel={funnel}
 				isTraceDetailsPage
-				span={span as any}
+				span={span}
 				triggerAutoSave={triggerAutoSave}
 				showNotifications={showNotifications}
 			/>

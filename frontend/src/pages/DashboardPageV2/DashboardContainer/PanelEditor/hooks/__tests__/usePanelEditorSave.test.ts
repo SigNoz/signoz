@@ -1,40 +1,38 @@
 import { renderHook } from '@testing-library/react';
-import {
-	getGetDashboardV2QueryKey,
-	usePatchDashboardV2,
-} from 'api/generated/services/dashboard';
 import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 
 import { usePanelEditorSave } from '../usePanelEditorSave';
 
-const mockInvalidateQueries = jest.fn();
+const mockPatchAsync = jest.fn().mockResolvedValue(undefined);
+let mockIsPatching = false;
+jest.mock('../../../hooks/useOptimisticPatch', () => ({
+	useOptimisticPatch: (): {
+		patchAsync: jest.Mock;
+		isPatching: boolean;
+		error: Error | null;
+	} => ({ patchAsync: mockPatchAsync, isPatching: mockIsPatching, error: null }),
+}));
+
+// The hook reads getQueryData only for the isNew branch; a stub client is enough here.
 jest.mock('react-query', () => ({
-	useQueryClient: (): { invalidateQueries: jest.Mock } => ({
-		invalidateQueries: mockInvalidateQueries,
+	useQueryClient: (): { getQueryData: jest.Mock } => ({
+		getQueryData: jest.fn(),
 	}),
 }));
 
 jest.mock('api/generated/services/dashboard', () => ({
-	usePatchDashboardV2: jest.fn(),
 	getGetDashboardV2QueryKey: jest.fn(() => ['/api/v2/dashboards/dash-1']),
 }));
 
-const mockUsePatch = usePatchDashboardV2 as unknown as jest.Mock;
-const mockGetQueryKey = getGetDashboardV2QueryKey as unknown as jest.Mock;
+jest.mock('uuid', () => ({ v4: (): string => 'minted-panel-id' }));
 
 describe('usePanelEditorSave', () => {
-	const mutateAsync = jest.fn().mockResolvedValue(undefined);
-
 	beforeEach(() => {
 		jest.clearAllMocks();
-		mockUsePatch.mockReturnValue({
-			mutateAsync,
-			isLoading: false,
-			error: null,
-		});
+		mockIsPatching = false;
 	});
 
-	it('emits an add patch replacing the whole panel spec and invalidates the dashboard query', async () => {
+	it('optimistically patches an add replacing the whole panel spec', async () => {
 		const { result } = renderHook(() =>
 			usePanelEditorSave({ dashboardId: 'dash-1', panelId: 'panel-9' }),
 		);
@@ -48,30 +46,38 @@ describe('usePanelEditorSave', () => {
 			queries: [],
 		} as unknown as DashboardtypesPanelSpecDTO;
 
-		await result.current.save(spec);
+		const savedPanelId = await result.current.save(spec);
 
-		expect(mutateAsync).toHaveBeenCalledWith({
-			pathParams: { id: 'dash-1' },
-			data: [
-				{
-					op: 'add',
-					path: '/spec/panels/panel-9/spec',
-					value: spec,
-				},
-			],
-		});
-		expect(mockGetQueryKey).toHaveBeenCalledWith({ id: 'dash-1' });
-		expect(mockInvalidateQueries).toHaveBeenCalledWith([
-			'/api/v2/dashboards/dash-1',
+		expect(mockPatchAsync).toHaveBeenCalledWith([
+			{
+				op: 'add',
+				path: '/spec/panels/panel-9/spec',
+				value: spec,
+			},
 		]);
+		// Editing resolves with the panel's own id.
+		expect(savedPanelId).toBe('panel-9');
 	});
 
-	it('surfaces the mutation loading state as isSaving', () => {
-		mockUsePatch.mockReturnValue({
-			mutateAsync,
-			isLoading: true,
-			error: null,
-		});
+	it('mints and resolves with a fresh id when creating a new panel', async () => {
+		const { result } = renderHook(() =>
+			usePanelEditorSave({ dashboardId: 'dash-1', panelId: 'new', isNew: true }),
+		);
+
+		const spec = {
+			display: { name: 'New panel' },
+			plugin: { kind: 'signoz/TimeSeriesPanel', spec: {} },
+			queries: [],
+		} as unknown as DashboardtypesPanelSpecDTO;
+
+		const savedPanelId = await result.current.save(spec);
+
+		expect(savedPanelId).toBe('minted-panel-id');
+		expect(mockPatchAsync).toHaveBeenCalled();
+	});
+
+	it('surfaces the patch in-flight state as isSaving', () => {
+		mockIsPatching = true;
 
 		const { result } = renderHook(() =>
 			usePanelEditorSave({ dashboardId: 'dash-1', panelId: 'panel-9' }),

@@ -6,11 +6,14 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
+	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
+	"golang.org/x/sync/errgroup"
 )
 
 // getPerGroupHostStatusCounts computes the number of active and inactive hosts per group
@@ -20,11 +23,14 @@ import (
 // and a simple uniqExactIf for total count. Inactive = total - active (computed in Go).
 func (m *module) getPerGroupHostStatusCounts(
 	ctx context.Context,
+	orgID valuer.UUID,
 	req *inframonitoringtypes.PostableHosts,
 	metricNames []string,
 	pageGroups []map[string]string,
 	sinceUnixMilli int64,
 ) (map[string]groupHostStatusCounts, error) {
+
+	reductionEnabled := m.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableMetricsReduction, featuretypes.NewFlaggerEvaluationContext(orgID))
 
 	// Build the full filter expression from req (user filter + status filter) and page groups.
 	reqFilterExpr := ""
@@ -53,27 +59,65 @@ func (m *module) getPerGroupHostStatusCounts(
 		fmt.Sprintf("uniqExactIf(%s, %s != '') AS total_host_count", hostNameExpr, hostNameExpr),
 	)
 
-	// Build a fingerprint subquery to restrict to fingerprints with actual sample
-	// data in the floored time range.
-	fpSB := m.buildSamplesTblFingerprintSubQuery(metricNames, localSamplesTable, samplesStartMs, flooredEndMs)
-
 	sb.Select(selectCols...)
-	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTimeSeriesTableName))
-	sb.Where(
-		sb.In("metric_name", sqlbuilder.List(metricNames)),
-		sb.GE("unix_milli", tsAdjustedStartMs),
-		sb.LE("unix_milli", flooredEndMs),
-		fmt.Sprintf("fingerprint IN (%s)", sb.Var(fpSB)),
-	)
 
-	// Apply the combined filter expression (user filter + status filter + page groups IN).
-	if filterExpr != "" {
-		filterClause, err := m.buildFilterClause(ctx, &qbtypes.Filter{Expression: filterExpr}, req.Start, req.End)
-		if err != nil {
-			return nil, err
+	if reductionEnabled {
+		var filterClause *sqlbuilder.WhereClause
+		if filterExpr != "" {
+			var err error
+			filterClause, err = m.buildFilterClause(ctx, orgID, &qbtypes.Filter{Expression: filterExpr}, req.Start, req.End)
+			if err != nil {
+				return nil, err
+			}
 		}
+
+		rawSrc := sqlbuilder.NewSelectBuilder()
+		rawSrc.Select("labels")
+		rawSrc.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, distributedTimeSeriesTableName))
+		rawSrc.Where(
+			rawSrc.In("metric_name", sqlbuilder.List(metricNames)),
+			rawSrc.GE("unix_milli", tsAdjustedStartMs),
+			rawSrc.LE("unix_milli", flooredEndMs),
+			fmt.Sprintf("fingerprint IN (%s)", rawSrc.Var(m.buildSamplesTblFingerprintSubQuery(metricNames, localSamplesTable, samplesStartMs, flooredEndMs))),
+		)
 		if filterClause != nil {
-			sb.AddWhereClause(filterClause)
+			rawSrc.AddWhereClause(sqlbuilder.CopyWhereClause(filterClause))
+		}
+
+		reducedSrc := sqlbuilder.NewSelectBuilder()
+		reducedSrc.Select("labels")
+		reducedSrc.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, metricstelemetryschema.TimeseriesV4ReducedTableName))
+		reducedSrc.Where(
+			reducedSrc.In("metric_name", sqlbuilder.List(metricNames)),
+			reducedSrc.GE("unix_milli", tsAdjustedStartMs),
+			reducedSrc.LE("unix_milli", flooredEndMs),
+			fmt.Sprintf("fingerprint IN (%s)", reducedSrc.Var(m.buildReducedSamplesTblFingerprintSubQuery(metricNames, samplesStartMs, flooredEndMs))),
+		)
+		if filterClause != nil {
+			reducedSrc.AddWhereClause(sqlbuilder.CopyWhereClause(filterClause))
+		}
+
+		sb.From(sb.BuilderAs(sqlbuilder.UnionAll(rawSrc, reducedSrc), "series"))
+	} else {
+
+		fpSB := m.buildSamplesTblFingerprintSubQuery(metricNames, localSamplesTable, samplesStartMs, flooredEndMs)
+
+		sb.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, distributedTimeSeriesTableName))
+		sb.Where(
+			sb.In("metric_name", sqlbuilder.List(metricNames)),
+			sb.GE("unix_milli", tsAdjustedStartMs),
+			sb.LE("unix_milli", flooredEndMs),
+			fmt.Sprintf("fingerprint IN (%s)", sb.Var(fpSB)),
+		)
+
+		if filterExpr != "" {
+			filterClause, err := m.buildFilterClause(ctx, orgID, &qbtypes.Filter{Expression: filterExpr}, req.Start, req.End)
+			if err != nil {
+				return nil, err
+			}
+			if filterClause != nil {
+				sb.AddWhereClause(filterClause)
+			}
 		}
 	}
 
@@ -205,19 +249,41 @@ func buildHostRecords(
 	return records
 }
 
-// getTopHostGroups runs a ranking query for the ordering metric, sorts the
-// results, paginates, and backfills from metadataMap when the page extends
-// past the metric-ranked groups.
-func (m *module) getTopHostGroups(
+// getTopHostGroupsAndMetadata fetches the group metadata and the ordering-metric
+// ranking concurrently, then sorts the ranked results, paginates, and backfills
+// from metadataMap when the page extends past the metric-ranked groups. Returns
+// the page of groups and the metadata map (the caller needs it for Total and
+// records). Callers must apply any req.Filter mutation before calling.
+func (m *module) getTopHostGroupsAndMetadata(
 	ctx context.Context,
 	orgID valuer.UUID,
 	req *inframonitoringtypes.PostableHosts,
-	metadataMap map[string]map[string]string,
-) ([]map[string]string, error) {
-	orderByKey := req.OrderBy.Key.Name
+) ([]map[string]string, map[string]map[string]string, error) {
+
+	var (
+		orderByKey      string
+		metadataMap     map[string]map[string]string
+		allMetricGroups []rankedGroup
+	)
+
+	orderByKey = req.OrderBy.Key.Name
+
+	g, gCtx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		var err error
+		metadataMap, err = m.getHostsTableMetadata(gCtx, orgID, req)
+		return err
+	})
+
 	if orderByKey == inframonitoringtypes.HostNameAttrKey {
-		return inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.HostNameAttrKey), nil
+		if err := g.Wait(); err != nil {
+			return nil, nil, err
+		}
+		pageGroups := inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.HostNameAttrKey)
+		return pageGroups, metadataMap, nil
 	}
+
 	queryNamesForOrderBy := orderByToHostsQueryNames[orderByKey]
 	// The last entry is the formula/query whose value we sort by.
 	rankingQueryName := queryNamesForOrderBy[len(queryNamesForOrderBy)-1]
@@ -252,13 +318,20 @@ func (m *module) getTopHostGroups(
 		topReq.CompositeQuery.Queries = append(topReq.CompositeQuery.Queries, copied)
 	}
 
-	resp, err := m.querier.QueryRange(ctx, orgID, topReq)
-	if err != nil {
-		return nil, err
+	g.Go(func() error {
+		resp, err := m.querier.QueryRange(gCtx, orgID, topReq)
+		if err != nil {
+			return err
+		}
+		allMetricGroups = parseAndSortGroups(resp, rankingQueryName, req.GroupBy, req.OrderBy.Direction)
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return nil, nil, err
 	}
 
-	allMetricGroups := parseAndSortGroups(resp, rankingQueryName, req.GroupBy, req.OrderBy.Direction)
-	return paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit), nil
+	return paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit), metadataMap, nil
 }
 
 // applyHostsActiveStatusFilter MODIFIES req.Filter.Expression to include an IN/NOT IN
@@ -288,7 +361,7 @@ func (m *module) applyHostsActiveStatusFilter(req *inframonitoringtypes.Postable
 	return false
 }
 
-func (m *module) getHostsTableMetadata(ctx context.Context, req *inframonitoringtypes.PostableHosts) (map[string]map[string]string, error) {
+func (m *module) getHostsTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableHosts) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
 	for _, key := range hostAttrKeysForMetadata {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
@@ -299,7 +372,7 @@ func (m *module) getHostsTableMetadata(ctx context.Context, req *inframonitoring
 	if req.Filter != nil {
 		filter = &req.Filter.Filter
 	}
-	metadataMap, err := m.getMetadata(ctx, hostsTableMetricNamesList, req.GroupBy, nonGroupByAttrs, filter, req.Start, req.End)
+	metadataMap, err := m.getMetadata(ctx, orgID, hostsTableMetricNamesList, req.GroupBy, nonGroupByAttrs, filter, req.Start, req.End)
 	if err != nil {
 		return nil, err
 	}
@@ -314,7 +387,7 @@ func (m *module) getActiveHostsQuery(metricNames []string, hostNameAttr string, 
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Distinct()
 	sb.Select("attr_string_value")
-	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
+	sb.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, metricstelemetryschema.AttributesMetadataTableName))
 	sb.Where(
 		sb.In("metric_name", sqlbuilder.List(metricNames)),
 		sb.E("attr_name", hostNameAttr),

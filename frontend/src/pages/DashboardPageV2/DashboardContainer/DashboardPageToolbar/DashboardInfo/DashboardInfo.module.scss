@@ -1,29 +1,23 @@
 .dashboardInfo {
 	display: flex;
-	flex-direction: column;
-	gap: 8px;
-	width: 40%;
-
-	@media (min-width: 1280px) {
-		width: 30%;
-	}
-}
-
-.dashboardTitleContainer {
-	display: flex;
+	flex: 1;
 	align-items: center;
 	gap: 8px;
-	width: 100%;
+	min-width: 0;
 }
 
 .dashboardImage {
 	flex-shrink: 0;
+	// Fixed 16px box (matches the breadcrumb icon); object-fit keeps a custom
+	// base64 icon from distorting or ballooning past it.
+	width: 16px;
+	height: 16px;
+	object-fit: contain;
 }
 
 .dashboardTitle {
-	flex: 1;
+	flex: 0 1 auto;
 	min-width: 0;
-	max-width: fit-content;
 	color: var(--l1-foreground);
 	font-size: 18px;
 	font-weight: 500;
@@ -35,6 +29,63 @@
 
 .dashboardTitleHover {
 	cursor: text !important;
+}
+
+.descriptionIcon {
+	flex-shrink: 0;
+	color: var(--l2-foreground);
+	cursor: help;
+}
+
+.descriptionTooltip {
+	display: block;
+	overflow-wrap: anywhere;
+	/* Preserve author-entered line breaks in the description. */
+	white-space: pre-wrap;
+
+	a {
+		color: var(--accent-primary);
+		text-decoration: underline;
+
+		&:hover {
+			text-decoration: none;
+		}
+	}
+}
+
+.publicLink {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: inherit;
+	cursor: pointer;
+}
+
+.lockButton {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: inherit;
+	cursor: pointer;
+}
+
+.lockButton:disabled {
+	cursor: default;
+}
+
+.divider {
+	flex-shrink: 0;
+	width: 1px;
+	height: 18px;
+	background: var(--l2-border);
 }
 
 .dashboardTitleEditor {
@@ -54,8 +105,23 @@
 	flex-shrink: 0;
 }
 
+/* Fixed footprint (2 tags + `+N`): never shrinks, so a long title ellipsizes
+   around it rather than collapsing the tags. */
 .dashboardTags {
 	display: flex;
-	flex-wrap: wrap;
-	gap: 8px;
+	flex: none;
+	align-items: center;
+	gap: 4px;
+}
+
+// Hidden tags revealed on hovering the `+N` badge: the same chips as inline, one per
+// line (easier to scan than a wrapped cloud) and width-capped so a long tag wraps
+// instead of stretching the tooltip off-screen.
+.overflowTags {
+	display: flex;
+	max-width: 360px;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 4px;
+	overflow-wrap: anywhere;
 }

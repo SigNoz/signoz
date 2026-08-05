@@ -23,13 +23,14 @@ const basePostableJSON = `{
 	"tags": [{"key": "team", "value": "alpha"}, {"key": "env", "value": "prod"}],
 	"spec": {
 		"display": {"name": "Service overview"},
+		"links": [],
 		"variables": [
 			{
 				"kind": "ListVariable",
 				"spec": {
 					"name": "service",
 					"allowAllValue": true,
-					"allowMultiple": false,
+					"allowMultiple": true,
 					"plugin": {
 						"kind": "signoz/DynamicVariable",
 						"spec": {"name": "service.name", "signal": "metrics"}
@@ -41,6 +42,7 @@ const basePostableJSON = `{
 			"p1": {
 				"kind": "Panel",
 				"spec": {
+					"links": [],
 					"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
 					"queries": [
 						{
@@ -64,6 +66,7 @@ const basePostableJSON = `{
 			"p2": {
 				"kind": "Panel",
 				"spec": {
+					"links": [],
 					"plugin": {"kind": "signoz/NumberPanel", "spec": {}},
 					"queries": [
 						{
@@ -149,10 +152,15 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 	})
 
 	t.Run("add metadata image", func(t *testing.T) {
-		out, err := decode(t, `[{"op": "add", "path": "/image", "value": "https://example.com/img.png"}]`).Apply(base)
+		out, err := decode(t, `[{"op": "add", "path": "/image", "value": "/assets/Icons/eight-ball"}]`).Apply(base)
 		require.NoError(t, err)
-		assert.Equal(t, "https://example.com/img.png", out.Image)
+		assert.Equal(t, "/assets/Icons/eight-ball", out.Image)
 		assert.Equal(t, SchemaVersion, out.SchemaVersion, "schemaVersion preserved")
+	})
+
+	t.Run("reject non-icon/logo image", func(t *testing.T) {
+		_, err := decode(t, `[{"op": "add", "path": "/image", "value": "https://example.com/img.png"}]`).Apply(base)
+		assert.Error(t, err, "a URL image must be rejected")
 	})
 
 	t.Run("replace display name", func(t *testing.T) {
@@ -182,6 +190,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 			"value": {
 				"kind": "Panel",
 				"spec": {
+					"links": [],
 					"plugin": {"kind": "signoz/TablePanel", "spec": {}},
 					"queries": [{
 						"kind": "time_series",
@@ -216,6 +225,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 			"value": {
 				"kind": "Panel",
 				"spec": {
+					"links": [],
 					"plugin": {"kind": "signoz/BarChartPanel", "spec": {}},
 					"queries": [{
 						"kind": "time_series",
@@ -299,19 +309,22 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 	// Layout edits
 	// ─────────────────────────────────────────────────────────────────
 
-	t.Run("move panel by editing layout x coordinate", func(t *testing.T) {
-		out, err := decode(t, `[{"op": "replace", "path": "/spec/layouts/0/spec/items/0/x", "value": 6}]`).Apply(base)
+	t.Run("move panel by editing layout y coordinate", func(t *testing.T) {
+		// p2 fills the right half of row 0, so p1 can only move to a fresh row
+		// without tripping overlap validation.
+		out, err := decode(t, `[{"op": "replace", "path": "/spec/layouts/0/spec/items/0/y", "value": 6}]`).Apply(base)
 		require.NoError(t, err)
 		raw := jsonOf(t, out)
-		// The first item used to live at x=0, now lives at x=6.
-		assert.Contains(t, raw, `"x":6,"y":0,"width":6,"height":6,"content":{"$ref":"#/spec/panels/p1"}`)
+		// The first item used to live at y=0, now lives at y=6.
+		assert.Contains(t, raw, `"x":0,"y":6,"width":6,"height":6,"content":{"$ref":"#/spec/panels/p1"}`)
 	})
 
 	t.Run("resize panel by editing layout width", func(t *testing.T) {
-		out, err := decode(t, `[{"op": "replace", "path": "/spec/layouts/0/spec/items/0/width", "value": 12}]`).Apply(base)
+		// p2 sits at x=6, so p1 (at x=0) can only shrink; widening it would overlap.
+		out, err := decode(t, `[{"op": "replace", "path": "/spec/layouts/0/spec/items/0/width", "value": 3}]`).Apply(base)
 		require.NoError(t, err)
 		raw := jsonOf(t, out)
-		assert.Contains(t, raw, `"width":12`)
+		assert.Contains(t, raw, `"width":3`)
 	})
 
 	t.Run("rename layout row title", func(t *testing.T) {
@@ -321,11 +334,12 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 	})
 
 	t.Run("append layout item", func(t *testing.T) {
-		out, err := decode(t, `[{
-			"op": "add",
-			"path": "/spec/layouts/0/spec/items/-",
-			"value": {"x": 0, "y": 6, "width": 12, "height": 6, "content": {"$ref": "#/spec/panels/p1"}}
-		}]`).Apply(base)
+		// Appending needs a not-yet-placed panel, so add one in the same patch;
+		// re-placing p1 or p2 would be a duplicate reference.
+		out, err := decode(t, `[
+			{"op": "add", "path": "/spec/panels/p3", "value": {"kind": "Panel", "spec": {"links": [], "plugin": {"kind": "signoz/TablePanel", "spec": {}}, "queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}}}]}}},
+			{"op": "add", "path": "/spec/layouts/0/spec/items/-", "value": {"x": 0, "y": 6, "width": 12, "height": 6, "content": {"$ref": "#/spec/panels/p3"}}}
+		]`).Apply(base)
 		require.NoError(t, err)
 		// Item count went 2 → 3.
 		raw := jsonOf(t, out)
@@ -342,6 +356,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 				"value": {
 					"kind": "Panel",
 					"spec": {
+						"links": [],
 						"plugin": {"kind": "signoz/TablePanel", "spec": {}},
 						"queries": [{
 							"kind": "time_series",
@@ -405,6 +420,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 		out, err := decode(t, `[
 			{"op": "replace", "path": "/spec/display/name", "value": "Multi-step"},
 			{"op": "remove",  "path": "/spec/panels/p2"},
+			{"op": "remove",  "path": "/spec/layouts/0/spec/items/1"},
 			{"op": "add",     "path": "/tags/-", "value": {"key": "env", "value": "staging"}}
 		]`).Apply(base)
 		require.NoError(t, err)
@@ -491,7 +507,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 			"path": "/spec/panels/p1",
 			"value": {
 				"kind": "Panel",
-				"spec": {"plugin": {"kind": "signoz/NotAPanel", "spec": {}}}
+				"spec": {"links": [], "plugin": {"kind": "signoz/NotAPanel", "spec": {}}}
 			}
 		}]`).Apply(base)
 		require.Error(t, err)
@@ -507,6 +523,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 			"value": {
 				"kind": "Panel",
 				"spec": {
+					"links": [],
 					"plugin": {"kind": "signoz/ListPanel", "spec": {}},
 					"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
 				}
@@ -532,6 +549,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 			"value": {
 				"kind": "Panel",
 				"spec": {
+					"links": [],
 					"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
 					"queries": [
 						{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {

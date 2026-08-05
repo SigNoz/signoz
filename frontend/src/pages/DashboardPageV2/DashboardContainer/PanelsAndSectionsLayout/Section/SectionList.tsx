@@ -11,7 +11,6 @@ import {
 import type { DashboardtypesLayoutDTO } from 'api/generated/services/sigNoz.schemas';
 
 import type { DashboardSection } from '../../utils';
-import { useAddPanelToSection } from '../Panel/hooks/useAddPanelToSection';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import { useSectionDragReorder } from './hooks/useSectionDragReorder';
 import Section from './Section/Section';
@@ -34,8 +33,6 @@ function SectionList({ sections, layouts }: SectionListProps): JSX.Element {
 		onDragEnd,
 		onDragCancel,
 	} = useSectionDragReorder({ sections, layouts });
-
-	const onAddPanel = useAddPanelToSection({ sections });
 
 	// Only titled sections participate in reordering; untitled (free-flow)
 	// blocks render in place without a drag handle.
@@ -66,19 +63,9 @@ function SectionList({ sections, layouts }: SectionListProps): JSX.Element {
 			<SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
 				{orderedSections.map((section) =>
 					section.title ? (
-						<SortableSection
-							key={section.id}
-							section={section}
-							sections={sections}
-							onAddPanel={onAddPanel}
-						/>
+						<SortableSection key={section.id} section={section} sections={sections} />
 					) : (
-						<Section
-							key={section.id}
-							section={section}
-							sections={sections}
-							onAddPanel={onAddPanel}
-						/>
+						<Section key={section.id} section={section} sections={sections} />
 					),
 				)}
 			</SortableContext>

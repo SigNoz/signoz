@@ -17,3 +17,15 @@ export const PANEL_KIND_TO_PANEL_TYPE: Record<PanelKind, PANEL_TYPES> = {
 	'signoz/HistogramPanel': PANEL_TYPES.HISTOGRAM,
 	'signoz/ListPanel': PANEL_TYPES.LIST,
 };
+
+/**
+ * Reverse of {@link PANEL_KIND_TO_PANEL_TYPE} — the mapping is a bijection, so every
+ * panel kind round-trips. Partial because `PANEL_TYPES` also has types with no V2 kind
+ * (e.g. trace/empty); a lookup on those returns `undefined`.
+ */
+export const PANEL_TYPE_TO_PANEL_KIND: Partial<Record<PANEL_TYPES, PanelKind>> =
+	Object.fromEntries(
+		(Object.entries(PANEL_KIND_TO_PANEL_TYPE) as [PanelKind, PANEL_TYPES][]).map(
+			([kind, type]) => [type, kind],
+		),
+	);

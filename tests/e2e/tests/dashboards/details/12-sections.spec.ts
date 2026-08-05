@@ -137,6 +137,26 @@ async function toggleSection(row: ReturnType<Page['locator']>): Promise<void> {
 	});
 }
 
+// Poll a section to the target collapsed/expanded state, re-clicking if a
+// toggle is dropped under CI load. `name` has no regex metacharacters.
+async function setSectionCollapsed(
+	page: Page,
+	name: string,
+	collapsed: boolean,
+): Promise<void> {
+	const collapsedTitle = new RegExp(`^${name} \\(\\d+ widgets?\\)$`);
+	await expect(async () => {
+		const alreadyCollapsed = (await page.getByText(collapsedTitle).count()) > 0;
+		if (alreadyCollapsed === collapsed) {
+			return;
+		}
+		await toggleSection(
+			sectionRow(page, alreadyCollapsed ? collapsedTitle : name),
+		);
+		expect((await page.getByText(collapsedTitle).count()) > 0).toBe(collapsed);
+	}).toPass({ timeout: 30_000 });
+}
+
 /**
  * Click the settings (⋮) icon on a section header, bypassing the sidenav's
  * pointer-event interception via `dispatchEvent('click')` (same root cause
@@ -392,17 +412,17 @@ test.describe('Dashboard Detail — Sections', () => {
 			page.getByText(panelName, { exact: true }).first(),
 		).toBeVisible();
 
-		// The panel ⋮ menu opens on HOVER (not click) — see
-		// `openPanelMoreMenu` in 21-panel-actions.spec.ts. Clicking the kebab
-		// can momentarily toggle the menu and immediately re-close it, racing
-		// the menuitem click on the next line. Use hover and wait for the
-		// menu role to be visible before clicking Delete.
+		// The panel ⋮ menu is a Radix `DropdownMenuSimple` — it opens on click,
+		// not hover (see `openPanelMoreMenu` in 21-panel-actions.spec.ts). The
+		// container hover only reveals the kebab (it's `visibility: hidden`
+		// until then); the click toggles the menu. Wait for the menu role to be
+		// visible before clicking Delete.
 		const panelTitle = page.getByText(panelName, { exact: true }).first();
 		await panelTitle.hover();
 		const panelContainer = panelTitle.locator('../..');
 		await panelContainer.scrollIntoViewIfNeeded();
 		await panelContainer.hover();
-		await panelContainer.getByTestId('widget-header-options').hover();
+		await panelContainer.getByTestId('widget-header-options').click();
 		const menu = page.getByRole('menu');
 		await menu.waitFor({ state: 'visible' });
 		await menu.getByRole('menuitem', { name: 'Delete', exact: true }).click();
@@ -475,19 +495,19 @@ test.describe('Dashboard Detail — Sections', () => {
 	}) => {
 		await gotoApmDashboard(page);
 
-		await toggleSection(sectionRow(page, 'DB Metrics'));
+		await setSectionCollapsed(page, 'DB Metrics', true);
 		await expect(
 			page.getByText(/^DB Metrics \(\d+ widgets?\)$/).first(),
 		).toBeVisible();
 
-		await toggleSection(sectionRow(page, 'External calls'));
+		await setSectionCollapsed(page, 'External calls', true);
 		await expect(
 			page.getByText(/^External calls \(\d+ widgets?\)$/).first(),
 		).toBeVisible();
 
 		// Restore both so the test leaves no state behind.
-		await toggleSection(sectionRow(page, /^DB Metrics \(\d+ widgets?\)$/));
-		await toggleSection(sectionRow(page, /^External calls \(\d+ widgets?\)$/));
+		await setSectionCollapsed(page, 'DB Metrics', false);
+		await setSectionCollapsed(page, 'External calls', false);
 		await expect(page.getByText(/^DB Metrics \(\d+ widgets?\)$/)).toHaveCount(0);
 		await expect(page.getByText(/^External calls \(\d+ widgets?\)$/)).toHaveCount(
 			0,

@@ -2,8 +2,9 @@ import { useCallback, useMemo, useRef } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Skeleton } from 'antd';
 import cx from 'classnames';
-import Uplot from 'components/Uplot';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import TimeSeries from 'container/DashboardContainer/visualization/charts/TimeSeries/TimeSeries';
+import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
@@ -13,13 +14,13 @@ import {
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
+import { useMultiIntersectionObserver } from 'hooks/useMultiIntersectionObserver';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
+import { useTimezone } from 'providers/Timezone';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { AlignedData, Options } from 'uplot';
 
-import { useMultiIntersectionObserver } from 'hooks/useMultiIntersectionObserver';
+import { buildEntityMetricsChartConfig } from './configBuilder';
 
 import { useEntityMetrics } from './hooks';
 import { isKeyNotFoundError } from '../utils';
@@ -70,7 +71,7 @@ function EntityMetrics<T>({
 		{ threshold: 0.1 },
 	);
 
-	const { queries, chartData, queryPayloads } = useEntityMetrics({
+	const { queries, chartData, tableData, queryPayloads } = useEntityMetrics({
 		queryKey,
 		timeRange,
 		entity,
@@ -80,16 +81,10 @@ function EntityMetrics<T>({
 	});
 
 	const isDarkMode = useIsDarkMode();
+	const { timezone } = useTimezone();
 	const graphRef = useRef<HTMLDivElement>(null);
 	const dimensions = useResizeObserver(graphRef);
 	const { currentQuery } = useQueryBuilder();
-	const legendScrollPositionRef = useRef<{
-		scrollTop: number;
-		scrollLeft: number;
-	}>({
-		scrollTop: 0,
-		scrollLeft: 0,
-	});
 
 	const onDragSelect = useCallback(
 		(start: number, end: number): void => {
@@ -101,43 +96,39 @@ function EntityMetrics<T>({
 		[handleTimeChange],
 	);
 
-	const options = useMemo(
+	const configs = useMemo(
 		() =>
 			queries.map(({ data }, idx) => {
 				const panelType = queryPayloads[idx]?.graphType;
 				if (panelType === PANEL_TYPES.TABLE) {
 					return null;
 				}
-				return getUPlotChartOptions({
-					apiResponse: data?.payload,
+				const widgetTitle = entityWidgetInfo[idx].title
+					.toLowerCase()
+					.replace(/\s+/g, '-');
+				return buildEntityMetricsChartConfig({
+					id: `${category}-${widgetTitle}`,
 					isDarkMode,
-					dimensions,
+					currentQuery,
+					onDragSelect,
+					apiResponse: data?.payload,
+					timezone,
 					yAxisUnit: entityWidgetInfo[idx].yAxisUnit,
-					softMax: null,
-					softMin: null,
 					minTimeScale: timeRange.startTime,
 					maxTimeScale: timeRange.endTime,
-					onDragSelect,
-					query: currentQuery,
-					legendScrollPosition: legendScrollPositionRef.current,
-					setLegendScrollPosition: (position: {
-						scrollTop: number;
-						scrollLeft: number;
-					}): void => {
-						legendScrollPositionRef.current = position;
-					},
 				});
 			}),
 		[
 			queries,
 			queryPayloads,
+			category,
 			isDarkMode,
-			dimensions,
+			currentQuery,
+			onDragSelect,
+			timezone,
 			entityWidgetInfo,
 			timeRange.startTime,
 			timeRange.endTime,
-			onDragSelect,
-			currentQuery,
 		],
 	);
 
@@ -170,14 +161,22 @@ function EntityMetrics<T>({
 			>
 				{panelType === PANEL_TYPES.TABLE ? (
 					<MetricsTable
-						rows={chartData[idx]?.[0]?.rows ?? []}
-						columns={chartData[idx]?.[0]?.columns ?? []}
+						rows={tableData[idx]?.[0]?.rows ?? []}
+						columns={tableData[idx]?.[0]?.columns ?? []}
 					/>
 				) : (
-					<Uplot
-						options={options[idx] as Options}
-						data={chartData[idx] as AlignedData}
-					/>
+					configs[idx] &&
+					chartData[idx] && (
+						<TimeSeries
+							config={configs[idx]}
+							data={chartData[idx]}
+							legendConfig={{ position: LegendPosition.BOTTOM }}
+							width={dimensions.width}
+							height={dimensions.height}
+							timezone={timezone}
+							yAxisUnit={entityWidgetInfo[idx].yAxisUnit}
+						/>
+					)
 				)}
 			</div>
 		);

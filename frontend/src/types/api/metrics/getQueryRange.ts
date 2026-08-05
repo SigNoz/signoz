@@ -8,7 +8,11 @@ import {
 	IClickHouseQuery,
 	IPromQLQuery,
 } from '../queryBuilder/queryBuilderData';
-import { ExecStats, QueryRangeRequestV5 } from '../v5/queryRange';
+import {
+	ExecStats,
+	QueryRangeRequestV5,
+	QueryRangeResponseV5,
+} from '../v5/queryRange';
 import { QueryData, QueryDataV3 } from '../widgets/getQuery';
 
 export type QueryRangePayload = {
@@ -48,6 +52,9 @@ export interface MetricQueryRangeSuccessResponse extends SuccessResponse<
 > {
 	warning?: Warning;
 	meta?: ExecStats;
+	// Raw V5 response (pre-legacy-conversion) + per-query legend map, for client-side export.
+	rawV5Response?: QueryRangeResponseV5;
+	legendMap?: Record<string, string>;
 }
 
 export interface MetricRangePayloadV3 {

@@ -3,6 +3,7 @@ import { Checkbox } from '@signozhq/ui/checkbox';
 import { CSSProperties } from 'react';
 
 import { CheckBoxProps } from '../types';
+import styles from './CustomCheckBox.module.scss';
 
 function CustomCheckBox({
 	data,
@@ -15,12 +16,11 @@ function CustomCheckBox({
 	const isChecked = graphVisibilityState[index] || false;
 
 	const colorStyle = {
-		'--checkbox-checked-background': color,
-		'--checkbox-border-color': color,
+		'--series-color': color,
 	} as CSSProperties;
 
 	return (
-		<span style={colorStyle}>
+		<span className={styles.wrapper} style={colorStyle}>
 			<Checkbox
 				onChange={(checked): void => checkBoxOnChangeHandler(checked, index)}
 				value={isChecked}

@@ -1,19 +1,22 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { patchDashboardV2 } from 'api/generated/services/dashboard';
+import { DashboardtypesPatchOpDTO } from 'api/generated/services/sigNoz.schemas';
 import type {
 	DashboardtypesGettableDashboardV2DTO,
 	DashboardtypesJSONPatchOperationDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { toast } from '@signozhq/ui/sonner';
+import logEvent from 'api/common/logEvent';
 import { isEqual } from 'lodash-es';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
-import { useDashboardStore } from '../../store/useDashboardStore';
+import { useOptimisticPatch } from '../../hooks/useOptimisticPatch';
 import CrossPanelSync from './CrossPanelSync/CrossPanelSync';
 import DashboardInfoForm from './DashboardInfoForm/DashboardInfoForm';
 import UnsavedChangesFooter from './UnsavedChangesFooter/UnsavedChangesFooter';
-import { Base64Icons, stringsToTags, tagsToStrings } from './utils';
+import { stringsToTags, tagsToStrings } from './utils';
+import { DEFAULT_DASHBOARD_ICON_PATH } from 'pages/DashboardPageV2/DashboardContainer/dashboardIcons';
 import styles from './Overview.module.scss';
 
 interface OverviewProps {
@@ -23,11 +26,11 @@ interface OverviewProps {
 function Overview({ dashboard }: OverviewProps): JSX.Element {
 	const id = dashboard.id;
 
-	const refetch = useDashboardStore((s) => s.refetch);
+	const { patchAsync } = useOptimisticPatch();
 
 	const title = dashboard.spec.display.name;
 	const description = dashboard.spec.display.description ?? '';
-	const image = dashboard.image || Base64Icons[0];
+	const image = dashboard.image || DEFAULT_DASHBOARD_ICON_PATH;
 	const tagsAsStrings = useMemo(
 		() => tagsToStrings(dashboard.tags ?? []),
 		[dashboard.tags],
@@ -55,23 +58,46 @@ function Overview({ dashboard }: OverviewProps): JSX.Element {
 
 	const buildPatch = useCallback((): DashboardtypesJSONPatchOperationDTO[] => {
 		const ops: DashboardtypesJSONPatchOperationDTO[] = [];
+		const op = (
+			operation: DashboardtypesJSONPatchOperationDTO['op'],
+			path: string,
+			value: unknown,
+		): DashboardtypesJSONPatchOperationDTO => ({ op: operation, path, value });
 		const replace = (
 			path: string,
 			value: unknown,
-		): DashboardtypesJSONPatchOperationDTO => ({
-			op: 'replace' as DashboardtypesJSONPatchOperationDTO['op'],
-			path,
-			value,
-		});
+		): DashboardtypesJSONPatchOperationDTO =>
+			op(DashboardtypesPatchOpDTO.replace, path, value);
 
 		if (updatedTitle !== title && updatedTitle !== '') {
 			ops.push(replace('/spec/display/name', updatedTitle));
 		}
 		if (updatedDescription !== description) {
-			ops.push(replace('/spec/display/description', updatedDescription));
+			// `replace` fails when the description doesn't exist yet, so add it when
+			// the current one is empty (`add` creates or replaces the member).
+			ops.push(
+				op(
+					description
+						? DashboardtypesPatchOpDTO.replace
+						: DashboardtypesPatchOpDTO.add,
+					'/spec/display/description',
+					updatedDescription,
+				),
+			);
 		}
 		if (updatedImage !== image) {
-			ops.push(replace('/image', updatedImage));
+			// `replace` fails when the image doesn't exist yet, so add it when the
+			// dashboard has none (`add` creates or replaces the member). Key off the
+			// raw stored value, not the default-filled local `image`.
+			ops.push(
+				op(
+					dashboard.image
+						? DashboardtypesPatchOpDTO.replace
+						: DashboardtypesPatchOpDTO.add,
+					'/image',
+					updatedImage,
+				),
+			);
 		}
 		if (!isEqual(updatedTags, tagsAsStrings)) {
 			ops.push(replace('/tags', stringsToTags(updatedTags)));
@@ -84,6 +110,7 @@ function Overview({ dashboard }: OverviewProps): JSX.Element {
 		description,
 		updatedImage,
 		image,
+		dashboard.image,
 		updatedTags,
 		tagsAsStrings,
 	]);
@@ -96,15 +123,15 @@ function Overview({ dashboard }: OverviewProps): JSX.Element {
 
 		try {
 			setIsSaving(true);
-			await patchDashboardV2({ id }, ops);
+			await patchAsync(ops);
 			toast.success('Dashboard updated');
-			refetch();
+			void logEvent(DashboardDetailEvents.OverviewSaved, { dashboardId: id });
 		} catch (error) {
 			showErrorModal(error as APIError);
 		} finally {
 			setIsSaving(false);
 		}
-	}, [id, buildPatch, refetch, showErrorModal]);
+	}, [buildPatch, patchAsync, showErrorModal, id]);
 
 	useEffect(() => {
 		let numberOfUnsavedChanges = 0;
@@ -137,7 +164,8 @@ function Overview({ dashboard }: OverviewProps): JSX.Element {
 		setUpdatedImage(image);
 		setUpdatedTags(tagsAsStrings);
 		setUpdatedDescription(description);
-	}, [title, image, tagsAsStrings, description]);
+		void logEvent(DashboardDetailEvents.OverviewDiscarded, { dashboardId: id });
+	}, [title, image, tagsAsStrings, description, id]);
 
 	return (
 		<div className={styles.overviewContent}>

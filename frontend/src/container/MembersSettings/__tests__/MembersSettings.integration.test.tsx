@@ -110,7 +110,9 @@ describe('MembersSettings (integration)', () => {
 
 		fireEvent.click(await screen.findByText('Alice Smith'));
 
-		await screen.findByText('Member Details');
+		await expect(
+			screen.findByText('Member Details'),
+		).resolves.toBeInTheDocument();
 	});
 
 	it('opens EditMemberDrawer when a deleted member row is clicked', async () => {
@@ -127,7 +129,17 @@ describe('MembersSettings (integration)', () => {
 		fireEvent.click(screen.getByRole('button', { name: /invite member/i }));
 
 		await expect(
-			screen.findAllByPlaceholderText('john@signoz.io'),
+			screen.findAllByPlaceholderText('e.g. john@signoz.io'),
+		).resolves.toHaveLength(3);
+	});
+
+	it('opens InviteMembersModal when invite=true query param is present', async () => {
+		render(<MembersSettings />, undefined, {
+			initialRoute: '/settings/members?invite=true',
+		});
+
+		await expect(
+			screen.findAllByPlaceholderText('e.g. john@signoz.io'),
 		).resolves.toHaveLength(3);
 	});
 });

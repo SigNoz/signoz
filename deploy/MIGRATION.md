@@ -1,48 +1,76 @@
-# Migrating from the install script to Foundry
+# Migrating from the install script and `deploy/` to Foundry
+
+The install script (`install.sh`) and the bundled Compose and Swarm files
+under `deploy/` are deprecated in favor of [Foundry][foundry], the supported
+way to install and manage SigNoz. This guide moves an existing Docker Compose
+or Docker Swarm deployment to Foundry and reattaches your existing volumes, so
+your data is preserved.
 
 > [!IMPORTANT]
-> The install script is now deprecated and will no longer receive updates.
+> This guide is only for **existing** `install.sh` / `deploy/` deployments.
+> Setting up SigNoz for the first time? Skip migration and install Foundry
+> directly: [SigNoz install docs][install-docs].
 
-This guide walks you through migrating an existing SigNoz deployment running via
-Docker Compose to [Foundry](https://signoz.io/docs/install/docker/).
+## How it works
 
-> [!NOTE]
-> Setting up SigNoz for the first time? You don't need this guide — follow the [SigNoz installation docs](https://signoz.io/docs/install/) instead.
+Foundry splits a deployment into two commands:
 
-## Overview
-To stay up to date on new installation platforms and patterns, please refer to [Foundry](https://github.com/SigNoz/foundry).
+- `foundryctl forge` generates the deployment manifests from a `casting.yaml`.
+  It never touches running containers, so it is safe to re-run while you
+  iterate.
+- `foundryctl cast` applies those manifests: it (re)creates the containers and
+  reuses the volumes you point it at.
 
-Two `foundryctl` commands are used throughout this guide:
-- **`forge`** — generates deployment manifests from your `casting.yaml`. It does not touch running containers, so it is safe to re-run while you iterate.
-- **`cast`** — applies the generated manifests: it creates and starts the containers (and pulls new images).
+You write one `casting.yaml`, point a few patches at your existing data
+volumes, then cast. The steps below are the same for Compose and Swarm; they
+differ only in the casting (step 3) and how you stop the old stack (step 5).
 
 ## Prerequisites
-- [ ] Install Foundry - `curl -fsSL https://signoz.io/foundry.sh | bash`
 
-## Migration Steps
-> [!WARNING]
-> **Before proceeding, back up both:**
-> - **Your docker volumes** — these hold your data.
-> - **Your existing `docker-compose.yaml` (and any config it references)** — keep a copy somewhere safe. The compose manifests are no longer distributed by SigNoz, so this backup is your only way to roll back to your previous setup.
+- An existing SigNoz deployment from `install.sh` or `deploy/` (Compose or
+  Swarm).
+- `foundryctl` (installed in step 1).
 
-1. Make a note of the volume names used by your existing deployment for the following components:
-- ClickHouse
-- SigNoz
-- ZooKeeper
+## Migrate
 
-> If you used the docker compose file we provided, the volumes will be `signoz-clickhouse`, `signoz-sqlite`, and `signoz-zookeeper-1`.
+### 1. Install Foundry
 
-2. Generate your `casting.yaml`. Based on internal testing, the following casting should generate the manifests that mimic the legacy docker compose setup (compare against your backed-up `docker-compose.yaml`). Once created, run `foundryctl forge -f casting.yaml`.
+```bash
+curl -fsSL https://signoz.io/foundry.sh | bash
+```
 
-Foundry has a [Docker Compose example](https://github.com/SigNoz/foundry/tree/main/docs/examples/docker/compose). Please use it as a reference.
+### 2. Keep your rollback path
 
-> [!WARNING]
-> If your deployment had more than 1 shard or replica, you will need to adjust your manifest volumes accordingly.
+This migration reattaches your existing volumes in place; it does not move or
+delete your data. The only destructive action is passing `--volumes` / `-v`
+when you stop the old stack (step 5), so avoid that flag.
 
 > [!IMPORTANT]
-> The `replica` and `shard` macros below are placeholders. Replace them with the values from your existing ClickHouse configuration (check the `macros` section of your current ClickHouse config, e.g. `config.xml`/`metrika.xml`), otherwise the generated manifests will not match your existing data.
+> Keep a copy of your existing `docker-compose.yaml` / stack file (and any
+> config it references). SigNoz no longer distributes these files, so this copy
+> is your only way to roll back.
+
+### 3. Write your `casting.yaml`
+
+Use the casting for your deployment. Both reproduce the legacy single-node
+setup (ClickHouse + ZooKeeper + SQLite) and reattach your existing volumes;
+they differ only in `spec.deployment.flavor` and the volume-reuse patch
+(Compose volumes have a `name` to replace; Swarm volumes are bare, so the whole
+entry is replaced). If your deployment ran more than one shard or replica,
+adjust the volume patches accordingly. The
+[Docker Compose example][compose-example] is a useful reference.
+
+> [!IMPORTANT]
+> The `replica` and `shard` macros are placeholders. Replace them with the
+> values from your existing ClickHouse config (the `macros` section of
+> `config.xml` / `metrika.xml`), or the generated manifests will not match your
+> existing data.
+
+<details>
+<summary><b>Docker Compose</b> casting.yaml</summary>
 
 ```yaml
+# casting.yaml
 apiVersion: v1alpha1
 kind: Installation
 metadata:
@@ -61,8 +89,8 @@ spec:
         data:
           config-0-0.yaml: |
             macros:
-              replica: "example01-01-1" # replace with your existing ClickHouse replica macro (see legacy configuration files for reference)
-              shard: "01"               # replace with your existing ClickHouse shard macro (see legacy configuration files for reference)
+              replica: "example01-01-1" # replace with your replica macro
+              shard: "01" # replace with your shard macro
   patches:
     - target: "deployment/compose.yaml"
       operations:
@@ -80,50 +108,163 @@ spec:
           value: root
 ```
 
+</details>
+
+<details>
+<summary><b>Docker Swarm</b> casting.yaml</summary>
+
+```yaml
+# casting.yaml
+apiVersion: v1alpha1
+kind: Installation
+metadata:
+  name: signoz
+spec:
+  deployment:
+    flavor: swarm
+    mode: docker
+  metastore:
+    kind: sqlite
+  telemetrykeeper:
+    kind: zookeeper
+  telemetrystore:
+    spec:
+      config:
+        data:
+          config-0-0.yaml: |
+            macros:
+              replica: "example01-01-1" # replace with your replica macro
+              shard: "01" # replace with your shard macro
+  patches:
+    - target: "deployment/compose.yaml"
+      operations:
+        - op: replace
+          path: /volumes/signoz-telemetrykeeper-0-data
+          value:
+            name: signoz-zookeeper-1
+        - op: replace
+          path: /volumes/signoz-telemetrystore-0-0-data
+          value:
+            name: signoz-clickhouse
+        - op: replace
+          path: /volumes/signoz-metastore-sqlite-0-data
+          value:
+            name: signoz-sqlite
+        - op: add
+          path: /services/signoz-telemetrykeeper-zookeeper-0/user
+          value: root
+```
+
+</details>
+
 > [!NOTE]
-> The `user: root` patch on the ZooKeeper service is required so the container can read/write the data in your reused ZooKeeper volume, which was created with `root`-owned files by the legacy compose setup. Without it, ZooKeeper may fail to start with permission errors.
+> The `user: root` patch on the ZooKeeper service lets the container read and
+> write the data in your reused ZooKeeper volume, whose files the legacy setup
+> created as `root`. Without it, ZooKeeper may fail to start with permission
+> errors.
 
-If you had custom configurations for features like SMTP or additional ingestion processors/receivers, you will need to include those in your casting file via [patches](https://github.com/SigNoz/foundry/blob/main/docs/concepts/patches.md), [custom configuration](https://github.com/SigNoz/foundry/blob/main/docs/concepts/moldings.md#custom-config-files) or [environment variables](https://github.com/SigNoz/foundry/blob/main/docs/reference/casting-file.md#molding-spec) based on your previous configuration.
+If you had custom configuration (SMTP, extra ingestion receivers/processors,
+or custom ClickHouse settings), carry it over via [patches][patches],
+[custom config files][custom-config], or [environment variables][env-vars].
 
-3. Review your manifests, we suggest executing the following checks on your manifests before proceeding:
-- [ ] Validate the container images match what your deployment had, Foundry uses `latest` on generation by default.
-- [ ] If your signoz version was older than latest, please check the [upgrade path](https://signoz.io/docs/operate/upgrade/) first.
-- [ ] Check the produced manifests in `pours/deployment` match your older configurations. Extra consideration and review needs to be done on `compose.yaml` as this will be the main entry point for your new deployment.
-- [ ] The configuration files for clickhouse are now in YAML so validate your custom settings are present.
+### 4. Generate and review the manifests
 
-4. Execute a `docker compose down`. **Do not** include parameters such as `--volumes` (or `-v`), as it will wipe the volumes we need to maintain and reuse to avoid data loss. 
+```bash
+foundryctl forge -f casting.yaml
+```
+
+Review `pours/deployment/` before deploying:
+
+- [ ] Container images match your current deployment. Foundry generates with
+  `latest` by default; if your SigNoz version was older than latest, check the
+  [upgrade path][upgrade-path] first.
+- [ ] The generated manifests match your previous configuration, especially
+  `compose.yaml` (the new entry point for your deployment).
+- [ ] The ClickHouse config is now YAML rather than XML; confirm your custom
+  settings carried over (see [ClickHouse configuration files][ch-config] for
+  the XML-to-YAML mapping).
+
+### 5. Stop the old deployment
+
+Use the command for your deployment. Do **not** pass `--volumes` / `-v`; that
+would delete the data you are migrating.
+
+```bash
+docker compose down        # Compose
+docker stack rm signoz     # Swarm
+```
 
 > [!NOTE]
-> This will generate downtime so please plan accordingly.
+> This causes downtime, so plan accordingly.
 
-5. Validate the SigNoz containers are down with `docker ps -a`. Multiple containers cannot bind the same volume.
+Confirm nothing is still bound to the volumes before continuing:
 
-6. Run `foundryctl cast -f casting.yaml`. This will recreate the containers based on the spec. This process will download new container images.
+```bash
+docker ps -a
+```
 
-> [!NOTE]
-> When `cast` is run, the migration container will execute its migrations.
+### 6. Deploy with Foundry
 
-## Verifying the Migration
-- SigNoz containers will be up and running.
-- Log in to the SigNoz UI and verify that data is present.
-    - Signoz will run on localhost:8080
-- Validate that your data ingestion is receiving data.
-    - Ingesters will receive data on localhost:4317(grpc) and localhost:4318(http)
-- Review the logs from both ClickHouse and ZooKeeper; no errors should be present.
+```bash
+foundryctl cast -f casting.yaml
+```
 
-## Rolling Back
-Because step 4 brought the legacy stack down *without* `-v`, your original volumes
-are untouched and still hold your data. To roll back:
+This recreates the containers against your existing volumes and pulls the
+images. The migration container runs the schema migrations as part of `cast`.
 
-- Stop and remove the containers created by Foundry (`docker compose down`, again without `-v`).
-- Confirm the containers are gone with `docker ps -a` so nothing else is bound to the volumes.
-- Reapply your original docker compose file (`docker compose up -d`). It will reattach to the
-  existing volumes and restore your prior state.
+**Prefer not to use `cast`?** The manifests in `pours/deployment/` are standard
+Docker artifacts you can apply yourself. Run the command from that directory so
+the relative config paths resolve:
+
+```bash
+cd pours/deployment
+docker compose up -d                        # Compose
+docker stack deploy -c compose.yaml signoz  # Swarm
+```
+
+## Verify
+
+- All SigNoz containers are running.
+- The UI is reachable on `http://localhost:8080`, and OTLP on `4317` (gRPC)
+  and `4318` (HTTP), so already-instrumented apps and saved bookmarks keep
+  working.
+- Your existing data is present in the UI, and new data is being ingested.
+- ClickHouse and ZooKeeper logs show no errors.
+
+## Roll back
+
+Step 5 left your volumes untouched, so your data is intact. To return to the
+previous setup:
+
+1. Bring down the Foundry deployment (`docker compose down` or
+   `docker stack rm signoz`, again without `-v`).
+2. Confirm the containers are gone with `docker ps -a`.
+3. Re-apply your backed-up stack: `docker compose up -d` (Compose) or
+   `docker stack deploy -c docker-compose.yaml signoz` (Swarm). It reattaches
+   the same volumes and restores your prior state.
 
 ## Troubleshooting
-- Please reach out to our community on [Slack](https://signoz.io/slack).
+
+If the migration runs into trouble, reach out on [Slack][slack] or open a
+[Foundry issue][foundry-issues].
 
 ## References
-- [SigNoz Docker installation docs](https://signoz.io/docs/install/docker/)
-- [SigNoz documentation](https://signoz.io/docs)
-- [Foundry](https://github.com/SigNoz/foundry)
+
+- [Foundry][foundry]
+- [Casting file reference][casting-ref]
+- [Custom config files][custom-config]
+- [Patches][patches]
+- [SigNoz documentation][signoz-docs]
+
+[foundry]: https://github.com/SigNoz/foundry
+[install-docs]: https://signoz.io/docs/install/
+[compose-example]: https://github.com/SigNoz/foundry/tree/main/docs/examples/docker/compose
+[patches]: https://github.com/SigNoz/foundry/blob/main/docs/concepts/patches.md
+[custom-config]: https://github.com/SigNoz/foundry/blob/main/docs/concepts/moldings.md#custom-config-files
+[env-vars]: https://github.com/SigNoz/foundry/blob/main/docs/reference/casting-file.md#molding-spec
+[casting-ref]: https://github.com/SigNoz/foundry/blob/main/docs/reference/casting-file.md
+[ch-config]: https://clickhouse.com/docs/operations/configuration-files
+[upgrade-path]: https://signoz.io/docs/operate/upgrade/
+[slack]: https://signoz.io/slack
+[foundry-issues]: https://github.com/SigNoz/foundry/issues
+[signoz-docs]: https://signoz.io/docs

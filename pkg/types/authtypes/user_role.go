@@ -36,14 +36,39 @@ type UserWithRoles struct {
 }
 
 type PostableUser struct {
-	DisplayName     string              `json:"displayName"`
-	Email           valuer.Email        `json:"email" required:"true"`
-	FrontendBaseUrl string              `json:"frontendBaseUrl"`
-	UserRoles       []*PostableUserRole `json:"userRoles" required:"false" nullable:"false"`
+	DisplayName     string                        `json:"displayName"`
+	Email           valuer.Email                  `json:"email" required:"true"`
+	FrontendBaseUrl string                        `json:"frontendBaseUrl"`
+	UserRoles       []*DeprecatedPostableUserRole `json:"userRoles" required:"false" nullable:"false"`
+}
+
+type DeprecatedPostableUserRole struct {
+	ID valuer.UUID `json:"id" required:"true"`
 }
 
 type PostableUserRole struct {
-	ID valuer.UUID `json:"id" required:"true"`
+	UserID valuer.UUID `json:"userId" required:"true"`
+	RoleID valuer.UUID `json:"roleId" required:"true"`
+}
+
+func (p *PostableUserRole) UnmarshalJSON(data []byte) error {
+	type Alias PostableUserRole
+
+	var temp Alias
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	if temp.UserID.IsZero() {
+		return errors.New(errors.TypeInvalidInput, ErrCodeUserRoleInvalidInput, "userId is required")
+	}
+
+	if temp.RoleID.IsZero() {
+		return errors.New(errors.TypeInvalidInput, ErrCodeUserRoleInvalidInput, "roleId is required")
+	}
+
+	*p = PostableUserRole(temp)
+	return nil
 }
 
 func (p *PostableUser) UnmarshalJSON(data []byte) error {
@@ -90,6 +115,9 @@ type UserRoleStore interface {
 
 	// get user roles by user id
 	GetUserRolesByUserID(ctx context.Context, userID valuer.UUID) ([]*UserRole, error)
+
+	// get a single user role entry by org id and its own id
+	GetUserRoleByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*UserRole, error)
 
 	// list all user_role entries for
 	ListUserRolesByOrgIDAndUserIDs(ctx context.Context, orgID valuer.UUID, userIDs []valuer.UUID) ([]*UserRole, error)

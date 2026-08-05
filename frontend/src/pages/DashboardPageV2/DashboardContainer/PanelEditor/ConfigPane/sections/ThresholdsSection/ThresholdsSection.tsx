@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import {
@@ -8,12 +8,14 @@ import {
 	DashboardtypesThresholdFormatDTO,
 	type DashboardtypesThresholdWithLabelDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import type {
+import {
 	AnyThreshold,
 	ThresholdVariant,
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
+import { ThresholdColor } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/threshold';
 
 import type { TableColumnOption } from '../../../hooks/useTableColumns';
+import type { SectionEditorContext } from '../../sectionContext';
 import ComparisonThresholdRow from './rows/ComparisonThresholdRow';
 import LabelThresholdRow from './rows/LabelThresholdRow';
 import TableThresholdRow from './rows/TableThresholdRow';
@@ -21,7 +23,7 @@ import TableThresholdRow from './rows/TableThresholdRow';
 import styles from './ThresholdsSection.module.scss';
 
 // New thresholds default to red (the first palette preset); the user recolors per rule.
-const DEFAULT_THRESHOLD_COLOR = '#F1575F';
+const DEFAULT_THRESHOLD_COLOR = ThresholdColor.RED;
 
 // Add-button testId per variant — kept stable so existing E2E/unit selectors hold.
 const ADD_TESTID: Record<ThresholdVariant, string> = {
@@ -61,11 +63,10 @@ type ThresholdsSectionProps = {
 	/** `variant` picks the row editor + element shape; defaults to `label`. */
 	controls?: { variant?: ThresholdVariant };
 	onChange: (next: AnyThreshold[]) => void;
-	/** Panel formatting unit; scopes each row's unit picker to its category (V1 parity). */
-	yAxisUnit?: string;
-	/** Table panel's resolved value columns (table variant only). */
-	tableColumns?: TableColumnOption[];
-};
+} & Pick<
+	SectionEditorContext,
+	'yAxisUnit' | 'tableColumns' | 'registerHeaderAction'
+>;
 
 /**
  * Edits the `thresholds` slice for every panel kind. All variants share the same
@@ -79,18 +80,38 @@ function ThresholdsSection({
 	onChange,
 	yAxisUnit,
 	tableColumns = [],
+	registerHeaderAction,
 }: ThresholdsSectionProps): JSX.Element {
-	const variant = controls?.variant ?? 'label';
+	const variant = controls?.variant ?? ThresholdVariant.LABEL;
 	const thresholds = value ?? [];
 	// Which row is being edited, and whether it was just added (so Discard removes it).
 	const [editingIndex, setEditingIndex] = useState<number | null>(null);
 	const [unsavedIndex, setUnsavedIndex] = useState<number | null>(null);
+	// The saved threshold captured on edit entry, restored if the edit is discarded
+	// (edits stream into the spec live, so Discard can't just drop a local draft).
+	const editSnapshot = useRef<AnyThreshold | null>(null);
 
-	const addThreshold = (): void => {
-		const nextIndex = thresholds.length;
-		onChange([...thresholds, defaultThreshold(variant, tableColumns)]);
-		setEditingIndex(nextIndex);
-		setUnsavedIndex(nextIndex);
+	const updateAt =
+		(index: number) =>
+		(next: AnyThreshold): void => {
+			onChange(thresholds.map((t, i) => (i === index ? next : t)));
+		};
+
+	const addThreshold = useCallback((): void => {
+		const current = value ?? [];
+		onChange([...current, defaultThreshold(variant, tableColumns)]);
+		setEditingIndex(current.length);
+		setUnsavedIndex(current.length);
+	}, [value, onChange, variant, tableColumns]);
+
+	useEffect(() => {
+		registerHeaderAction?.(addThreshold);
+		return (): void => registerHeaderAction?.(null);
+	}, [registerHeaderAction, addThreshold]);
+
+	const beginEdit = (index: number): void => {
+		editSnapshot.current = thresholds[index] ?? null;
+		setEditingIndex(index);
 	};
 
 	const saveAt =
@@ -108,10 +129,14 @@ function ThresholdsSection({
 	};
 
 	const discardAt = (index: number) => (): void => {
-		// Discarding a row that was never saved removes it; otherwise just exit edit.
+		// A never-saved row is removed; otherwise revert the live edits to the snapshot.
 		if (index === unsavedIndex) {
 			removeAt(index);
 			return;
+		}
+		const original = editSnapshot.current;
+		if (original) {
+			onChange(thresholds.map((t, i) => (i === index ? original : t)));
 		}
 		setEditingIndex(null);
 	};
@@ -123,8 +148,9 @@ function ThresholdsSection({
 			index,
 			yAxisUnit,
 			isEditing: editingIndex === index,
-			onEdit: (): void => setEditingIndex(index),
+			onEdit: (): void => beginEdit(index),
 			onSave: saveAt(index),
+			onLiveChange: updateAt(index),
 			onDiscard: discardAt(index),
 			onRemove: (): void => removeAt(index),
 		};

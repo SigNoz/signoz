@@ -1,0 +1,16 @@
+.section {
+	margin-top: 16px;
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 10px;
+	color: var(--bg-vanilla-400, #c0c1c3);
+}
+
+.title {
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}

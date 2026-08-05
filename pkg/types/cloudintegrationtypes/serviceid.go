@@ -39,6 +39,13 @@ var (
 	AzureServiceCosmosDB                   = ServiceID{valuer.NewString("cosmosdb")}
 	AzureServiceCassandraDB                = ServiceID{valuer.NewString("cassandradb")}
 	AzureServiceRedis                      = ServiceID{valuer.NewString("redis")}
+
+	// GCP services.
+	GCPServiceCloudSQLPostgres = ServiceID{valuer.NewString("cloudsql_postgres")}
+	GCPServiceMemorystoreRedis = ServiceID{valuer.NewString("memorystore_redis")}
+	GCPServiceComputeEngine    = ServiceID{valuer.NewString("computeengine")}
+	GCPServiceGKE              = ServiceID{valuer.NewString("gke")}
+	GCPServiceCloudStorage     = ServiceID{valuer.NewString("cloudstorage")}
 )
 
 func (ServiceID) Enum() []any {
@@ -70,6 +77,11 @@ func (ServiceID) Enum() []any {
 		AzureServiceCosmosDB,
 		AzureServiceCassandraDB,
 		AzureServiceRedis,
+		GCPServiceCloudSQLPostgres,
+		GCPServiceMemorystoreRedis,
+		GCPServiceComputeEngine,
+		GCPServiceGKE,
+		GCPServiceCloudStorage,
 	}
 }
 
@@ -106,6 +118,13 @@ var SupportedServices = map[CloudProviderType][]ServiceID{
 		AzureServiceCassandraDB,
 		AzureServiceRedis,
 	},
+	CloudProviderTypeGCP: {
+		GCPServiceCloudSQLPostgres,
+		GCPServiceMemorystoreRedis,
+		GCPServiceComputeEngine,
+		GCPServiceGKE,
+		GCPServiceCloudStorage,
+	},
 }
 
 func NewServiceID(provider CloudProviderType, service string) (ServiceID, error) {
@@ -123,5 +142,5 @@ func NewServiceID(provider CloudProviderType, service string) (ServiceID, error)
 
 	return ServiceID{}, errors.NewInvalidInputf(ErrCodeInvalidServiceID,
 		"invalid service id %q for %s cloud provider", service, provider.StringValue()).
-		WithSuggestions(errors.SuggestionsOnLevenshteinDistance(service, validServices)...)
+		WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(service, errors.NounServices, validServices)...)
 }

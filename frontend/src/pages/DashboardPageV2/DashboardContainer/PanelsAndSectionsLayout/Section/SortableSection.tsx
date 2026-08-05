@@ -2,19 +2,16 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
 import type { DashboardSection } from '../../utils';
-import type { AddPanelArgs } from '../Panel/hooks/useAddPanelToSection';
 import Section from './Section/Section';
 
 interface SortableSectionProps {
 	section: DashboardSection;
 	sections: DashboardSection[];
-	onAddPanel: (args: AddPanelArgs) => void;
 }
 
 function SortableSection({
 	section,
 	sections,
-	onAddPanel,
 }: SortableSectionProps): JSX.Element {
 	const {
 		attributes,
@@ -41,7 +38,6 @@ function SortableSection({
 			<Section
 				section={section}
 				sections={sections}
-				onAddPanel={onAddPanel}
 				dragHandle={{ attributes, listeners, setActivatorNodeRef }}
 			/>
 		</div>

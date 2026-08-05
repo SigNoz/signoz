@@ -1,9 +1,12 @@
 import { useCallback } from 'react';
+import logEvent from 'api/common/logEvent';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
+import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 
-import { patchDashboardV2 } from 'api/generated/services/dashboard';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
+import { useOptimisticPatch } from '../../../hooks/useOptimisticPatch';
 import { removePanelOp, replaceSectionItemsOp } from '../../../patchOps';
 import { useDashboardStore } from '../../../store/useDashboardStore';
 import type { DashboardSection } from '../../../utils';
@@ -25,7 +28,7 @@ export function useDeletePanel({
 	sections,
 }: Params): (args: DeletePanelArgs) => Promise<void> {
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
-	const refetch = useDashboardStore((s) => s.refetch);
+	const { patchAsync } = useOptimisticPatch();
 	const { showErrorModal } = useErrorModal();
 
 	return useCallback(
@@ -38,17 +41,25 @@ export function useDeletePanel({
 				return;
 			}
 
+			const removed = section.items.find((i) => i.id === panelId);
 			const nextItems = section.items.filter((i) => i.id !== panelId);
 			try {
-				await patchDashboardV2({ id: dashboardId }, [
+				await patchAsync([
 					replaceSectionItemsOp(layoutIndex, nextItems),
 					removePanelOp(panelId),
 				]);
-				refetch();
+				void logEvent(DashboardDetailEvents.PanelAction, {
+					action: 'delete',
+					panelType: removed?.panel
+						? PANEL_KIND_TO_PANEL_TYPE[removed.panel.spec.plugin.kind]
+						: undefined,
+					panelId,
+					dashboardId,
+				});
 			} catch (error) {
 				showErrorModal(error as APIError);
 			}
 		},
-		[sections, dashboardId, refetch, showErrorModal],
+		[sections, dashboardId, patchAsync, showErrorModal],
 	);
 }

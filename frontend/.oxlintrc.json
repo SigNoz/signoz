@@ -293,6 +293,8 @@
     // Forces subpath imports (@signozhq/ui/<component>) instead of the eagerly-loaded barrel
     "signoz/no-css-module-bracket-access": "warn",
     // Prevents bracket access on CSS modules (styles['kebab-case']) which fails with camelCaseOnly config
+    "signoz/no-dashboard-fetch-outside-root": "error",
+    // Forces useDashboardFetchRequired() outside the root V2 pages (allowlisted in overrides below)
     "no-restricted-globals": [
       "error",
       {
@@ -328,6 +330,11 @@
           {
             "name": "immer",
             "message": "[State mgmt] Direct immer usage is deprecated. Use Zustand (which integrates immer via the immer middleware) instead."
+          },
+          {
+            "name": "api/generated/services/dashboard",
+            "importNames": ["patchDashboardV2", "usePatchDashboardV2"],
+            "message": "[dashboard-v2] Don't call patchDashboardV2/usePatchDashboardV2 directly — use useOptimisticPatch().patchAsync so spec edits update the react-query cache optimistically and reconcile on settle."
           }
         ]
       }
@@ -552,6 +559,18 @@
       ],
       "rules": {
         "signoz/no-zustand-getstate-in-hooks": "off"
+      }
+    },
+    {
+      // Root V2 pages own the dashboard fetch lifecycle; useDashboardFetchRequired wraps it.
+      // Everywhere else must use useDashboardFetchRequired().
+      "files": [
+        "src/pages/DashboardPageV2/DashboardPageV2.tsx",
+        "src/pages/DashboardPageV2/PanelEditorPage/PanelEditorPage.tsx",
+        "src/pages/DashboardPageV2/DashboardContainer/hooks/useDashboardFetchRequired.ts"
+      ],
+      "rules": {
+        "signoz/no-dashboard-fetch-outside-root": "off"
       }
     }
   ]

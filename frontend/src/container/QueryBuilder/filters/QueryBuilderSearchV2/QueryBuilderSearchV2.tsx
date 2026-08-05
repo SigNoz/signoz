@@ -50,7 +50,7 @@ import {
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { popupContainer } from 'utils/selectPopupContainer';
+import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
@@ -156,6 +156,8 @@ function QueryBuilderSearchV2(
 		skipQueryBuilderRedirect,
 		selectProps,
 	} = props;
+
+	const getPopupContainer = useSelectPopupContainer();
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
@@ -754,10 +756,14 @@ function QueryBuilderSearchV2(
 
 			let operatorOptions;
 			if (currentFilterItem?.key?.dataType) {
-				operatorOptions = QUERY_BUILDER_OPERATORS_BY_TYPES[
-					currentFilterItem.key
-						.dataType as keyof typeof QUERY_BUILDER_OPERATORS_BY_TYPES
-				].map((operator) => ({
+				// Fallback to universal suggestions if no match found for currentFilter dataType
+				const operatorsForDataType =
+					QUERY_BUILDER_OPERATORS_BY_TYPES[
+						currentFilterItem.key
+							.dataType as keyof typeof QUERY_BUILDER_OPERATORS_BY_TYPES
+					] ?? QUERY_BUILDER_OPERATORS_BY_TYPES.universal;
+
+				operatorOptions = operatorsForDataType.map((operator) => ({
 					label: operator,
 					value: operator,
 				}));
@@ -989,7 +995,7 @@ function QueryBuilderSearchV2(
 				{...selectProps}
 				data-testid={'qb-search-select'}
 				ref={selectRef}
-				{...(hasPopupContainer ? { getPopupContainer: popupContainer } : {})}
+				{...(hasPopupContainer ? { getPopupContainer } : {})}
 				{...(maxTagCount ? { maxTagCount } : {})}
 				key={queryTags.join('.')}
 				virtual={false}

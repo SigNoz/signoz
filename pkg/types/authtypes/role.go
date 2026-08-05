@@ -11,13 +11,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/uptrace/bun"
 )
 
 var (
 	ErrCodeRoleInvalidInput                 = errors.MustNewCode("role_invalid_input")
-	ErrCodeRoleEmptyPatch                   = errors.MustNewCode("role_empty_patch")
 	ErrCodeInvalidTypeRelation              = errors.MustNewCode("role_invalid_type_relation")
 	ErrCodeRoleNotFound                     = errors.MustNewCode("role_not_found")
 	ErrCodeRoleAlreadyExists                = errors.MustNewCode("role_already_exists")
@@ -25,6 +23,7 @@ var (
 	ErrCodeRoleUnsupported                  = errors.MustNewCode("role_unsupported")
 	ErrCodeRoleHasUserAssignees             = errors.MustNewCode("role_has_user_assignees")
 	ErrCodeRoleHasServiceAccountAssignees   = errors.MustNewCode("role_has_service_account_assignees")
+	ErrCodeRoleHasAuthDomainMappings        = errors.MustNewCode("role_has_auth_domain_mappings")
 )
 
 var (
@@ -67,21 +66,26 @@ type Role struct {
 
 	types.Identifiable
 	types.TimeAuditable
-	Name        string        `bun:"name,type:string" json:"name" required:"true"`
-	Description string        `bun:"description,type:string"  json:"description" required:"true"`
-	Type        valuer.String `bun:"type,type:string" json:"type" required:"true"`
-	OrgID       valuer.UUID   `bun:"org_id,type:string" json:"orgId" required:"true"`
+	Name              string            `bun:"name,type:string" json:"name" required:"true"`
+	Description       string            `bun:"description,type:string"  json:"description" required:"true"`
+	Type              valuer.String     `bun:"type,type:string" json:"type" required:"true"`
+	OrgID             valuer.UUID       `bun:"org_id,type:string" json:"orgId" required:"true"`
+	TransactionGroups TransactionGroups `bun:"transaction_groups,nullzero,type:text" json:"transactionGroups" required:"true" nullable:"false"`
 }
 
-type RoleWithTransactionGroups struct {
-	*Role
-	TransactionGroups TransactionGroups `json:"transactionGroups" required:"true" nullable:"false"`
+type GettableRole struct {
+	types.Identifiable
+	types.TimeAuditable
+	Name        string        `json:"name" required:"true"`
+	Description string        `json:"description" required:"true"`
+	Type        valuer.String `json:"type" required:"true"`
+	OrgID       valuer.UUID   `json:"orgId" required:"true"`
 }
 
 type PostableRole struct {
 	Name              string            `json:"name" required:"true"`
-	Description       string            `json:"description" required:"true"`
-	TransactionGroups TransactionGroups `json:"transactionGroups" required:"true" nullable:"false"`
+	Description       string            `json:"description" required:"false"`
+	TransactionGroups TransactionGroups `json:"transactionGroups" required:"false" nullable:"false"`
 }
 
 type UpdatableRole struct {
@@ -89,11 +93,7 @@ type UpdatableRole struct {
 	TransactionGroups TransactionGroups `json:"transactionGroups" required:"true" nullable:"false"`
 }
 
-type PatchableRole struct {
-	Description string `json:"description" required:"true"`
-}
-
-func NewRole(name, description string, roleType valuer.String, orgID valuer.UUID) *Role {
+func NewRole(name, description string, roleType valuer.String, orgID valuer.UUID, transactionGroups TransactionGroups) *Role {
 	return &Role{
 		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
@@ -102,51 +102,54 @@ func NewRole(name, description string, roleType valuer.String, orgID valuer.UUID
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
-		Name:        name,
-		Description: description,
-		Type:        roleType,
-		OrgID:       orgID,
-	}
-}
-
-func NewRoleWithTransactionGroups(name, description string, roleType valuer.String, orgID valuer.UUID, transactionGroups TransactionGroups) *RoleWithTransactionGroups {
-	role := NewRole(name, description, roleType, orgID)
-
-	return &RoleWithTransactionGroups{
-		Role:              role,
+		Name:              name,
+		Description:       description,
+		Type:              roleType,
+		OrgID:             orgID,
 		TransactionGroups: transactionGroups,
 	}
 }
 
-func MakeRoleWithTransactionGroups(role *Role, transactionGroups TransactionGroups) *RoleWithTransactionGroups {
-	return &RoleWithTransactionGroups{
-		Role:              role,
-		TransactionGroups: transactionGroups,
+func NewGettableRolesFromRoles(roles []*Role) []*GettableRole {
+	gettableRoles := make([]*GettableRole, len(roles))
+	for index, role := range roles {
+		gettableRoles[index] = &GettableRole{
+			Identifiable:  role.Identifiable,
+			TimeAuditable: role.TimeAuditable,
+			Name:          role.Name,
+			Description:   role.Description,
+			Type:          role.Type,
+			OrgID:         role.OrgID,
+		}
 	}
+
+	return gettableRoles
 }
 
 func NewManagedRoles(orgID valuer.UUID) []*Role {
 	return []*Role{
-		NewRole(SigNozAdminRoleName, SigNozAdminRoleDescription, RoleTypeManaged, orgID),
-		NewRole(SigNozEditorRoleName, SigNozEditorRoleDescription, RoleTypeManaged, orgID),
-		NewRole(SigNozViewerRoleName, SigNozViewerRoleDescription, RoleTypeManaged, orgID),
-		NewRole(SigNozAnonymousRoleName, SigNozAnonymousRoleDescription, RoleTypeManaged, orgID),
+		NewRole(SigNozAdminRoleName, SigNozAdminRoleDescription, RoleTypeManaged, orgID, NewTransactionGroupsFromTransactions(coretypes.ManagedRoleToTransactions[SigNozAdminRoleName])),
+		NewRole(SigNozEditorRoleName, SigNozEditorRoleDescription, RoleTypeManaged, orgID, NewTransactionGroupsFromTransactions(coretypes.ManagedRoleToTransactions[SigNozEditorRoleName])),
+		NewRole(SigNozViewerRoleName, SigNozViewerRoleDescription, RoleTypeManaged, orgID, NewTransactionGroupsFromTransactions(coretypes.ManagedRoleToTransactions[SigNozViewerRoleName])),
+		NewRole(SigNozAnonymousRoleName, SigNozAnonymousRoleDescription, RoleTypeManaged, orgID, NewTransactionGroupsFromTransactions(coretypes.ManagedRoleToTransactions[SigNozAnonymousRoleName])),
 	}
-
 }
 
-func (role *Role) PatchMetadata(description string) error {
-	err := role.ErrIfManaged()
-	if err != nil {
-		return err
+func NewStatsFromRoles(roles []*Role) map[string]any {
+	stats := make(map[string]any)
+	for _, role := range roles {
+		key := "role." + role.Type.StringValue() + ".count"
+		if value, ok := stats[key]; ok {
+			stats[key] = value.(int64) + 1
+		} else {
+			stats[key] = int64(1)
+		}
 	}
-
-	role.Description = description
-	role.UpdatedAt = time.Now()
-	return nil
+	stats["role.count"] = int64(len(roles))
+	return stats
 }
 
-func (role *RoleWithTransactionGroups) Update(description string, transactionGroups TransactionGroups) error {
+func (role *Role) Update(description string, transactionGroups TransactionGroups) error {
 	err := role.ErrIfManaged()
 	if err != nil {
 		return err
@@ -167,48 +170,53 @@ func (role *Role) ErrIfManaged() error {
 }
 
 func (role *PostableRole) UnmarshalJSON(data []byte) error {
-	type Alias PostableRole
-	var temp Alias
-
-	if err := json.Unmarshal(data, &temp); err != nil {
-		return err
-	}
-
-	if temp.Name == "" {
-		return errors.New(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "name is missing from the request")
-	}
-
-	if match := roleNameRegex.MatchString(temp.Name); !match {
-		return errors.New(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "name must contain only lowercase letters (a-z) and hyphens (-), and be at most 50 characters long.")
-	}
-
-	if strings.HasPrefix(temp.Name, managedRolePrefix) {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "role name cannot start with %q as it is reserved for SigNoz managed roles.", managedRolePrefix)
-	}
-
-	if temp.TransactionGroups == nil {
-		return errors.New(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "transactionGroups is required").WithAdditional("send an empty array to create a role with no transaction groups")
-	}
-
-	role.Name = temp.Name
-	role.Description = temp.Description
-	role.TransactionGroups = temp.TransactionGroups
-	return nil
-}
-
-func (role *UpdatableRole) UnmarshalJSON(data []byte) error {
 	shadow := struct {
-		Description       *string           `json:"description"`
-		TransactionGroups TransactionGroups `json:"transactionGroups"`
+		Name              string           `json:"name"`
+		Description       string           `json:"description"`
+		TransactionGroups *json.RawMessage `json:"transactionGroups"`
 	}{}
 
 	if err := json.Unmarshal(data, &shadow); err != nil {
 		return err
 	}
 
-	// A pointer distinguishes an omitted/null description from an explicit empty string: the field
-	// must be sent (update reconciles to exactly what is given), but an empty string is allowed so a
-	// caller can deliberately clear the description.
+	if shadow.Name == "" {
+		return errors.New(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "name is missing from the request")
+	}
+
+	if match := roleNameRegex.MatchString(shadow.Name); !match {
+		return errors.New(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "name must contain only lowercase letters (a-z) and hyphens (-), and be at most 50 characters long.")
+	}
+
+	if strings.HasPrefix(shadow.Name, managedRolePrefix) {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "role name cannot start with %q as it is reserved for SigNoz managed roles.", managedRolePrefix)
+	}
+
+	var transactionGroups TransactionGroups
+	if shadow.TransactionGroups != nil {
+		var err error
+		transactionGroups, err = NewTransactionGroups(*shadow.TransactionGroups)
+		if err != nil {
+			return err
+		}
+	}
+
+	role.Name = shadow.Name
+	role.Description = shadow.Description
+	role.TransactionGroups = transactionGroups
+	return nil
+}
+
+func (role *UpdatableRole) UnmarshalJSON(data []byte) error {
+	shadow := struct {
+		Description       *string          `json:"description"`
+		TransactionGroups *json.RawMessage `json:"transactionGroups"`
+	}{}
+
+	if err := json.Unmarshal(data, &shadow); err != nil {
+		return err
+	}
+
 	if shadow.Description == nil {
 		return errors.New(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "description is required").WithAdditional("send an empty string to clear the description")
 	}
@@ -217,82 +225,34 @@ func (role *UpdatableRole) UnmarshalJSON(data []byte) error {
 		return errors.New(errors.TypeInvalidInput, ErrCodeRoleInvalidInput, "transactionGroups is required").WithAdditional("send an empty array to clear the role's transaction groups")
 	}
 
-	role.Description = *shadow.Description
-	role.TransactionGroups = shadow.TransactionGroups
-	return nil
-}
-
-func (role *PatchableRole) UnmarshalJSON(data []byte) error {
-	type shadowPatchableRole struct {
-		Description string `json:"description"`
-	}
-
-	var shadowRole shadowPatchableRole
-	if err := json.Unmarshal(data, &shadowRole); err != nil {
+	transactionGroups, err := NewTransactionGroups(*shadow.TransactionGroups)
+	if err != nil {
 		return err
 	}
 
-	if shadowRole.Description == "" {
-		return errors.New(errors.TypeInvalidInput, ErrCodeRoleEmptyPatch, "empty role patch request received, description must be present")
-	}
-
-	role.Description = shadowRole.Description
-
+	role.Description = *shadow.Description
+	role.TransactionGroups = transactionGroups
 	return nil
-}
-
-func GetAdditionTuples(name string, orgID valuer.UUID, relation Relation, additions []*coretypes.Object) ([]*openfgav1.TupleKey, error) {
-	tuples := make([]*openfgav1.TupleKey, 0)
-
-	for _, object := range additions {
-		resource := coretypes.MustNewResourceFromTypeAndKind(object.Resource.Type, object.Resource.Kind)
-		transactionTuples := NewTuples(
-			resource,
-			MustNewSubject(
-				coretypes.NewResourceRole(),
-				name,
-				orgID,
-				&coretypes.VerbAssignee,
-			),
-			relation,
-			[]coretypes.Selector{object.Selector},
-			orgID,
-		)
-
-		tuples = append(tuples, transactionTuples...)
-	}
-
-	return tuples, nil
-}
-
-func GetDeletionTuples(name string, orgID valuer.UUID, relation Relation, deletions []*coretypes.Object) ([]*openfgav1.TupleKey, error) {
-	tuples := make([]*openfgav1.TupleKey, 0)
-
-	for _, object := range deletions {
-		resource := coretypes.MustNewResourceFromTypeAndKind(object.Resource.Type, object.Resource.Kind)
-		transactionTuples := NewTuples(
-			resource,
-			MustNewSubject(
-				coretypes.NewResourceRole(),
-				name,
-				orgID,
-				&coretypes.VerbAssignee,
-			),
-			relation,
-			[]coretypes.Selector{object.Selector},
-			orgID,
-		)
-
-		tuples = append(tuples, transactionTuples...)
-	}
-
-	return tuples, nil
 }
 
 func MustGetSigNozManagedRoleFromExistingRole(role types.Role) string {
 	managedRole, ok := ExistingRoleToSigNozManagedRoleMap[role]
 	if !ok {
 		panic(errors.Newf(errors.TypeInternal, errors.CodeInternal, "invalid role: %s", role.String()))
+	}
+
+	return managedRole
+}
+
+func NormalizeRoleName(role string) string {
+	legacyRole, err := types.NewRole(strings.ToUpper(role))
+	if err != nil {
+		return role
+	}
+
+	managedRole, ok := ExistingRoleToSigNozManagedRoleMap[legacyRole]
+	if !ok {
+		return role
 	}
 
 	return managedRole

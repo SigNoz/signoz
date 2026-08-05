@@ -1,5 +1,5 @@
 import type {
-	DashboardLinkDTO,
+	DashboardtypesLinkDTO,
 	DashboardtypesAxesDTO,
 	DashboardtypesBarChartVisualizationDTO,
 	DashboardtypesComparisonThresholdDTO,
@@ -14,15 +14,16 @@ import type {
 	TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import {
+	Antenna,
 	BarChart,
 	Columns3,
 	Hash,
-	Layers,
-	LayoutDashboard,
-	Link,
+	Link2,
 	Palette,
-	Ruler,
-	SlidersHorizontal,
+	PencilRuler,
+	Scale3D,
+	Signpost,
+	Wallpaper,
 } from '@signozhq/icons';
 
 // Derived from an actual icon component so the type stays exact (size is a
@@ -36,13 +37,33 @@ export interface SectionMetadata {
 }
 
 /**
+ * Discriminant for each config section (the `kind` field of a `SectionConfig`). The
+ * string values match the keys each slice persists under in the plugin spec.
+ */
+export enum SectionKind {
+	Formatting = 'formatting',
+	Axes = 'axes',
+	Legend = 'legend',
+	ChartAppearance = 'chartAppearance',
+	Buckets = 'buckets',
+	Visualization = 'visualization',
+	Thresholds = 'thresholds',
+	ContextLinks = 'contextLinks',
+	Columns = 'columns',
+}
+
+/**
  * Which threshold editor a kind uses. All three variants persist to the same
  * `plugin.spec.thresholds` key with different element shapes:
  * - `label` — value + color + label lines (TimeSeries / Bar)
  * - `comparison` — value crosses an operator → recolor (Number)
  * - `table` — per-column comparison (Table)
  */
-export type ThresholdVariant = 'label' | 'comparison' | 'table';
+export enum ThresholdVariant {
+	LABEL = 'label',
+	COMPARISON = 'comparison',
+	TABLE = 'table',
+}
 
 /** Union of every threshold element shape stored under `plugin.spec.thresholds`. */
 export type AnyThreshold =
@@ -60,17 +81,17 @@ export type PanelFormattingSlice = DashboardtypesPanelFormattingDTO &
 	Pick<DashboardtypesTableFormattingDTO, 'columnUnits'>;
 
 export interface SectionSpecMap {
-	formatting: PanelFormattingSlice; // spec.plugin.spec.formatting
-	axes: DashboardtypesAxesDTO; // spec.plugin.spec.axes
-	legend: DashboardtypesLegendDTO; // spec.plugin.spec.legend
-	chartAppearance: DashboardtypesTimeSeriesChartAppearanceDTO; // spec.plugin.spec.chartAppearance
-	buckets: DashboardtypesHistogramBucketsDTO; // spec.plugin.spec.histogramBuckets
+	[SectionKind.Formatting]: PanelFormattingSlice; // spec.plugin.spec.formatting
+	[SectionKind.Axes]: DashboardtypesAxesDTO; // spec.plugin.spec.axes
+	[SectionKind.Legend]: DashboardtypesLegendDTO; // spec.plugin.spec.legend
+	[SectionKind.ChartAppearance]: DashboardtypesTimeSeriesChartAppearanceDTO; // spec.plugin.spec.chartAppearance
+	[SectionKind.Buckets]: DashboardtypesHistogramBucketsDTO; // spec.plugin.spec.histogramBuckets
 	// spec.plugin.spec.visualization — typed as the Bar shape (widest superset);
 	// the `controls` bag gates which fields each kind writes.
-	visualization: DashboardtypesBarChartVisualizationDTO;
-	thresholds: AnyThreshold[]; // spec.plugin.spec.thresholds (variant picks the editor)
-	contextLinks: DashboardLinkDTO[]; // spec.links (PANEL-level)
-	columns: TelemetrytypesTelemetryFieldKeyDTO[]; // spec.plugin.spec.selectFields (List)
+	[SectionKind.Visualization]: DashboardtypesBarChartVisualizationDTO;
+	[SectionKind.Thresholds]: AnyThreshold[]; // spec.plugin.spec.thresholds (variant picks the editor)
+	[SectionKind.ContextLinks]: DashboardtypesLinkDTO[]; // spec.links (PANEL-level)
+	[SectionKind.Columns]: TelemetrytypesTelemetryFieldKeyDTO[]; // spec.plugin.spec.selectFields (List)
 }
 
 /**
@@ -78,33 +99,42 @@ export interface SectionSpecMap {
  * analogue of V1's `allowSoftMinMax` / `allowLegendColors` flags).
  */
 export interface SectionControls {
-	formatting: { unit?: boolean; decimals?: boolean; columnUnits?: boolean };
-	axes: { minMax?: boolean; logScale?: boolean }; // minMax → softMin/softMax
-	legend: { position?: boolean; colors?: boolean }; // colors → customColors
-	chartAppearance: {
+	[SectionKind.Formatting]: {
+		unit?: boolean;
+		decimals?: boolean;
+		columnUnits?: boolean;
+	};
+	[SectionKind.Axes]: { minMax?: boolean; logScale?: boolean }; // minMax → softMin/softMax
+	[SectionKind.Legend]: { position?: boolean; colors?: boolean }; // colors → customColors
+	[SectionKind.ChartAppearance]: {
 		lineStyle?: boolean;
 		lineInterpolation?: boolean;
 		fillMode?: boolean;
 		showPoints?: boolean;
 		spanGaps?: boolean;
 	};
-	buckets: { count?: boolean; width?: boolean; mergeQueries?: boolean };
-	// stacking → stackedBarChart (Bar); fillSpans → fill gaps with 0 (TimeSeries).
-	visualization: {
+	[SectionKind.Buckets]: {
+		count?: boolean;
+		width?: boolean;
+		mergeQueries?: boolean;
+	};
+	// switchPanelKind → the visualization-type switcher (every kind, so you can switch
+	// away from any panel); stacking → stackedBarChart (Bar); fillSpans → fill gaps with
+	// 0 (TimeSeries).
+	[SectionKind.Visualization]: {
+		switchPanelKind: boolean;
 		timePreference?: boolean;
 		stacking?: boolean;
 		fillSpans?: boolean;
 	};
 	// Editor discriminator (not a spec field): which threshold variant a kind edits.
-	thresholds: { variant?: ThresholdVariant };
+	[SectionKind.Thresholds]: { variant?: ThresholdVariant };
 }
 
 export type ControlledSectionKind = keyof SectionControls;
 
 /** Atomic sections — no sub-controls; a kind either shows them or not. */
-export type AtomicSectionKind = 'contextLinks' | 'columns';
-
-export type SectionKind = ControlledSectionKind | AtomicSectionKind;
+export type AtomicSectionKind = SectionKind.ContextLinks | SectionKind.Columns;
 
 /** Predicate to hide a section from the current spec; returning true removes it. */
 export type SectionVisibilityPredicate = (
@@ -128,15 +158,15 @@ export type SectionConfig =
 // Per-section title + sidebar icon. Pure data; the editor component + spec lens
 // live in the ConfigPane section registry.
 export const SECTION_METADATA = {
-	formatting: { title: 'Formatting', icon: Hash },
-	axes: { title: 'Axes', icon: Ruler },
-	legend: { title: 'Legend', icon: Layers },
-	chartAppearance: { title: 'Chart appearance', icon: Palette },
-	visualization: { title: 'Visualization', icon: LayoutDashboard },
-	buckets: { title: 'Histogram / Buckets', icon: BarChart },
-	thresholds: { title: 'Thresholds', icon: SlidersHorizontal },
-	contextLinks: { title: 'Context Links', icon: Link },
-	columns: { title: 'Columns', icon: Columns3 },
+	[SectionKind.Formatting]: { title: 'Formatting & Units', icon: PencilRuler },
+	[SectionKind.Axes]: { title: 'Axes', icon: Scale3D },
+	[SectionKind.Legend]: { title: 'Legend', icon: Signpost },
+	[SectionKind.ChartAppearance]: { title: 'Chart appearance', icon: Palette },
+	[SectionKind.Visualization]: { title: 'Visualization', icon: Wallpaper },
+	[SectionKind.Buckets]: { title: 'Histogram / Buckets', icon: BarChart },
+	[SectionKind.Thresholds]: { title: 'Thresholds', icon: Antenna },
+	[SectionKind.ContextLinks]: { title: 'Context Links', icon: Link2 },
+	[SectionKind.Columns]: { title: 'Columns', icon: Columns3 },
 } as const satisfies Record<SectionKind, SectionMetadata>;
 
 /**

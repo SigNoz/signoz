@@ -4,7 +4,7 @@ import logEvent from 'api/common/logEvent';
 import { Plus, Undo2 } from '@signozhq/icons';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useAppContext } from 'providers/App/App';
-import { Span } from 'types/api/trace/getTraceV2';
+import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import FunnelStep from './FunnelStep';
 import InterStepConfig from './InterStepConfig';
@@ -18,7 +18,7 @@ function StepsContent({
 	span,
 }: {
 	isTraceDetailsPage?: boolean;
-	span?: Span;
+	span?: SpanV3;
 }): JSX.Element {
 	const { steps, handleAddStep, handleReplaceStep } = useFunnelContext();
 	const { hasEditPermission } = useAppContext();
@@ -30,7 +30,7 @@ function StepsContent({
 
 		const stepWasAdded = handleAddStep();
 		if (stepWasAdded) {
-			handleReplaceStep(steps.length, span.serviceName, span.name);
+			handleReplaceStep(steps.length, span['service.name'], span.name);
 		}
 		logEvent(
 			'Trace Funnels: span added for a new step from trace details page',
@@ -61,12 +61,12 @@ function StepsContent({
 												className="funnel-step-wrapper__replace-button"
 												icon={<Undo2 size={12} />}
 												disabled={
-													(step.service_name === span.serviceName &&
+													(step.service_name === span['service.name'] &&
 														step.span_name === span.name) ||
 													!hasEditPermission
 												}
 												onClick={(): void =>
-													handleReplaceStep(index, span.serviceName, span.name)
+													handleReplaceStep(index, span['service.name'], span.name)
 												}
 											>
 												Replace

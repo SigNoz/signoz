@@ -15,7 +15,7 @@ import (
 
 const (
 	DashboardViewSchemaVersion = "v1"
-	MaxDashboardViewNameLen    = 32
+	MaxDashboardViewNameLen    = 64
 )
 
 var (

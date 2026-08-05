@@ -1,5 +1,8 @@
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
-import type { VariableDefaultValueDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	DashboardtypesDynamicVariableSignalDTO,
+	DashboardtypesListVariableSpecSortDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesVariableDefaultValueDTO } from 'api/generated/services/sigNoz.schemas';
 import { sortBy } from 'lodash-es';
 
 /**
@@ -12,31 +15,28 @@ import { sortBy } from 'lodash-es';
  */
 export type VariableType = 'QUERY' | 'CUSTOM' | 'TEXT' | 'DYNAMIC';
 
-/** Telemetry signal — the generated enum (traces / logs / metrics). */
-export type TelemetrySignal = TelemetrytypesSignalDTO;
+/** Analytics label for each variable type (TEXT is surfaced as "textbox"). */
+export const VARIABLE_TYPE_EVENT_LABEL: Record<VariableType, string> = {
+	QUERY: 'query',
+	CUSTOM: 'custom',
+	TEXT: 'textbox',
+	DYNAMIC: 'dynamic',
+};
 
 /**
- * Signal selected in the dynamic-variable editor. `'all'` is UI-only (the
- * generated `TelemetrytypesSignalDTO` has no "all") — it searches across every
- * signal and maps to an omitted `signal` on the wire (see {@link signalForApi}).
- */
-export const DYNAMIC_SIGNAL_ALL = 'all' as const;
-export type DynamicSignalOption = TelemetrySignal | typeof DYNAMIC_SIGNAL_ALL;
-
-/**
- * Sort order for list-variable values. The wire (Perses) validates `sort`
- * against a fixed method set. There is no generated TS enum for it
- * (`DashboardtypesListOrderDTO` is the query-builder order, a different field),
- * so we mirror the Perses `Sort` tokens here.
+ * Sort order for list-variable values, keyed by the generated wire enum so the
+ * form model and the DTO `sort` field share one source of truth. The friendly
+ * keys (`DISABLED` / `ASC` / …) are UI-facing; the values are the Perses `Sort`
+ * tokens the wire validates against.
  */
 export const VARIABLE_SORT = {
-	DISABLED: 'none',
-	ASC: 'alphabetical-asc',
-	DESC: 'alphabetical-desc',
-	NUMERICAL_ASC: 'numerical-asc',
-	NUMERICAL_DESC: 'numerical-desc',
-	CI_ASC: 'alphabetical-ci-asc',
-	CI_DESC: 'alphabetical-ci-desc',
+	DISABLED: DashboardtypesListVariableSpecSortDTO.none,
+	ASC: DashboardtypesListVariableSpecSortDTO['alphabetical-asc'],
+	DESC: DashboardtypesListVariableSpecSortDTO['alphabetical-desc'],
+	NUMERICAL_ASC: DashboardtypesListVariableSpecSortDTO['numerical-asc'],
+	NUMERICAL_DESC: DashboardtypesListVariableSpecSortDTO['numerical-desc'],
+	CI_ASC: DashboardtypesListVariableSpecSortDTO['alphabetical-ci-asc'],
+	CI_DESC: DashboardtypesListVariableSpecSortDTO['alphabetical-ci-desc'],
 } as const;
 
 export type VariableSort = (typeof VARIABLE_SORT)[keyof typeof VARIABLE_SORT];
@@ -64,25 +64,38 @@ export const VARIABLE_SORT_LABEL: Record<VariableSort, string> = {
 	[VARIABLE_SORT.CI_DESC]: 'Alphabetical, case-insensitive (descending)',
 };
 
-export const DYNAMIC_SIGNALS: DynamicSignalOption[] = [
-	DYNAMIC_SIGNAL_ALL,
-	TelemetrytypesSignalDTO.traces,
-	TelemetrytypesSignalDTO.logs,
-	TelemetrytypesSignalDTO.metrics,
+export const DYNAMIC_SIGNALS: DashboardtypesDynamicVariableSignalDTO[] = [
+	DashboardtypesDynamicVariableSignalDTO.all,
+	DashboardtypesDynamicVariableSignalDTO.traces,
+	DashboardtypesDynamicVariableSignalDTO.logs,
+	DashboardtypesDynamicVariableSignalDTO.metrics,
 ];
 
-export const DYNAMIC_SIGNAL_LABEL: Record<DynamicSignalOption, string> = {
-	[DYNAMIC_SIGNAL_ALL]: 'All telemetry',
-	[TelemetrytypesSignalDTO.traces]: 'Traces',
-	[TelemetrytypesSignalDTO.logs]: 'Logs',
-	[TelemetrytypesSignalDTO.metrics]: 'Metrics',
+export const DYNAMIC_SIGNAL_LABEL: Record<
+	DashboardtypesDynamicVariableSignalDTO,
+	string
+> = {
+	[DashboardtypesDynamicVariableSignalDTO.all]: 'All telemetry',
+	[DashboardtypesDynamicVariableSignalDTO.traces]: 'Traces',
+	[DashboardtypesDynamicVariableSignalDTO.logs]: 'Logs',
+	[DashboardtypesDynamicVariableSignalDTO.metrics]: 'Metrics',
 };
 
-/** Maps the editor's signal selection to the wire value (`'all'` → omitted). */
+/**
+ * Field-keys/values API param. The `all` signal is omitted (that endpoint only
+ * accepts a concrete signal), everything else passes through.
+ */
 export function signalForApi(
-	signal: DynamicSignalOption,
-): TelemetrySignal | undefined {
-	return signal === DYNAMIC_SIGNAL_ALL ? undefined : signal;
+	signal: DashboardtypesDynamicVariableSignalDTO,
+):
+	| Exclude<
+			DashboardtypesDynamicVariableSignalDTO,
+			DashboardtypesDynamicVariableSignalDTO.all
+	  >
+	| undefined {
+	return signal === DashboardtypesDynamicVariableSignalDTO.all
+		? undefined
+		: signal;
 }
 
 type SortableValues = (string | number | boolean)[];
@@ -127,13 +140,13 @@ export interface VariableFormModel {
 	textValue: string; // TEXT
 	textConstant: boolean; // TEXT
 	dynamicAttribute: string; // DYNAMIC — the telemetry field name
-	dynamicSignal: DynamicSignalOption; // DYNAMIC — the telemetry signal
+	dynamicSignal: DashboardtypesDynamicVariableSignalDTO; // DYNAMIC — the telemetry signal (`all` = every signal)
 
 	/**
 	 * Runtime-selected default, not editable in the management tab yet; carried
 	 * through edits so saving a definition doesn't clobber it.
 	 */
-	defaultValue?: VariableDefaultValueDTO;
+	defaultValue?: DashboardtypesVariableDefaultValueDTO;
 }
 
 export function emptyVariableFormModel(): VariableFormModel {
@@ -149,6 +162,6 @@ export function emptyVariableFormModel(): VariableFormModel {
 		textValue: '',
 		textConstant: false,
 		dynamicAttribute: '',
-		dynamicSignal: DYNAMIC_SIGNAL_ALL,
+		dynamicSignal: DashboardtypesDynamicVariableSignalDTO.all,
 	};
 }

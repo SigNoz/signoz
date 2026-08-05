@@ -82,14 +82,14 @@ def test_create_rejects_name_too_long(
 
     response = requests.post(
         signoz.self.host_configs["8080"].get(BASE_URL),
-        json={"name": "x" * 33, "data": {"version": "v1"}},
+        json={"name": "x" * 65, "data": {"version": "v1"}},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
     assert response.json()["error"]["code"] == "dashboard_view_invalid_input"
-    assert response.json()["error"]["message"] == "name must be at most 32 characters, got 33"
+    assert response.json()["error"]["message"] == "name must be at most 64 characters, got 65"
 
 
 def test_create_rejects_wrong_schema_version(

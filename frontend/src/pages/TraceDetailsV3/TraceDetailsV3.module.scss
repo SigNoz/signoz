@@ -22,8 +22,8 @@
 .rightDock {
 	display: flex;
 	flex-direction: column;
-	border-left: 1px solid var(--l2-border);
 	min-width: 0;
+	border-top: 1px solid var(--l2-border);
 }
 
 // Shared Ant Collapse chrome reset for both the flamegraph and waterfall
@@ -41,6 +41,7 @@
 	:global(.ant-collapse-header) {
 		border-top: 1px solid var(--l2-border);
 		border-bottom: 1px solid var(--l2-border);
+		border-radius: 0 !important;
 	}
 
 	:global(.ant-collapse-content) {
@@ -97,6 +98,13 @@
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
+
+	// The flamegraph's ResizableBox above renders a 1px resize handle at its
+	// bottom edge; drop the header's own top border so the two don't stack
+	// into a double border at the flamegraph/waterfall juncture.
+	:global(.ant-collapse-header) {
+		border-top: none;
+	}
 
 	:global(.ant-collapse-item) {
 		flex: 1;

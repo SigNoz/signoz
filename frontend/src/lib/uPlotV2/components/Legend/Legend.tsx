@@ -1,12 +1,11 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { VirtuosoGrid } from 'react-virtuoso';
 import { Input } from 'antd';
-import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
-import { useCopyToClipboard } from 'hooks/useCopyToClipboard';
+import { useResizeObserver } from 'hooks/useDimensions';
 import { LegendItem } from 'lib/uPlotV2/config/types';
-import { Check, Copy } from '@signozhq/icons';
+import CopyButton from 'periscope/components/CopyButton/CopyButton';
 
 import { LegendPosition, LegendProps } from '../types';
 
@@ -32,21 +31,19 @@ export default function Legend({
 }: LegendProps): JSX.Element {
 	const legendContainerRef = useRef<HTMLDivElement | null>(null);
 	const [legendSearchQuery, setLegendSearchQuery] = useState('');
-	const { copyToClipboard, id: copiedId } = useCopyToClipboard();
 
 	// Search is intrinsic to the right-positioned legend.
 	const searchEnabled = position === LegendPosition.RIGHT;
+	const { width: containerWidth } = useResizeObserver(legendContainerRef);
 
 	const isSingleRow = useMemo(() => {
-		if (!legendContainerRef.current || position !== LegendPosition.BOTTOM) {
+		if (position !== LegendPosition.BOTTOM || containerWidth <= 0) {
 			return false;
 		}
-		const containerWidth = legendContainerRef.current.clientWidth;
-
 		const totalLegendWidth = items.length * (averageLegendWidth + 16);
 		const totalRows = Math.ceil(totalLegendWidth / containerWidth);
 		return totalRows <= 1;
-	}, [averageLegendWidth, items.length, position]);
+	}, [averageLegendWidth, items.length, position, containerWidth]);
 
 	const visibleLegendItems = useMemo(() => {
 		if (!searchEnabled || !legendSearchQuery.trim()) {
@@ -57,17 +54,8 @@ export default function Legend({
 		return items.filter((item) => item.label?.toLowerCase().includes(query));
 	}, [searchEnabled, legendSearchQuery, items]);
 
-	const handleCopyLegendItem = useCallback(
-		(e: React.MouseEvent, seriesIndex: number, label: string): void => {
-			e.stopPropagation();
-			copyToClipboard(label, seriesIndex);
-		},
-		[copyToClipboard],
-	);
-
 	const renderLegendItem = useCallback(
 		(item: LegendItem): JSX.Element => {
-			const isCopied = copiedId === item.seriesIndex;
 			// `color` is uPlot's stroke union (string | fn | gradient); only a string
 			// is a usable CSS colour for the marker.
 			const markerColor = typeof item.color === 'string' ? item.color : undefined;
@@ -91,36 +79,18 @@ export default function Legend({
 						</div>
 					</TooltipSimple>
 					{showCopy && (
-						<TooltipSimple
-							title={isCopied ? 'Copied' : 'Copy'}
-							arrow
-							side="top"
-							disableHoverableContent
-						>
-							<Button
-								type="button"
-								size="icon"
-								variant="ghost"
-								color="secondary"
-								className="legend-copy-button"
-								onClick={(e): void =>
-									handleCopyLegendItem(e, item.seriesIndex, item.label ?? '')
-								}
-								aria-label={`Copy ${item.label}`}
-								// data-testid (not testId): TooltipSimple's trigger injects
-								// data-testid:undefined via Radix Slot, and Button spreads
-								// incoming props after its own testId — so set it as a prop
-								// that wins the Slot merge and survives the spread.
-								data-testid="legend-copy"
-							>
-								{isCopied ? <Check size={12} /> : <Copy size={12} />}
-							</Button>
-						</TooltipSimple>
+						<CopyButton
+							value={item.label ?? ''}
+							size={12}
+							className="legend-copy-button"
+							ariaLabel={`Copy ${item.label}`}
+							testId="legend-copy"
+						/>
 					)}
 				</div>
 			);
 		},
-		[copiedId, focusedSeriesIndex, handleCopyLegendItem, position, showCopy],
+		[focusedSeriesIndex, position, showCopy],
 	);
 
 	const isEmptyState = useMemo(() => {

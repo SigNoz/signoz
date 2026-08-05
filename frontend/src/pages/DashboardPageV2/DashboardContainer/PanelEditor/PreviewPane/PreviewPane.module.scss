@@ -43,8 +43,17 @@
 	border-radius: 4px;
 	overflow: hidden;
 	display: flex;
+	// Header stacks above the body, flush to the border — mirrors the dashboard
+	// grid's `.panel` so the preview reads as the real panel chrome.
+	flex-direction: column;
 	background: var(--l2-background);
-	padding: 8px;
+}
+
+// Standalone View stacks the graph-manager below the chart inside the surface (it
+// must stay within the chart's PlotContext). Let it flow out of the surface so the
+// modal body scrolls as a whole, instead of clipping it or scrolling the panel.
+.surfaceStacked {
+	overflow: visible;
 }
 
 .state {
@@ -56,4 +65,8 @@
 	color: var(--l2-forground);
 	font-size: 13px;
 	text-align: center;
+}
+
+.dateTimeSelector {
+	margin-left: auto;
 }

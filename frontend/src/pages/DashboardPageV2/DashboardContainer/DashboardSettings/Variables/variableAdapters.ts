@@ -1,5 +1,5 @@
 import {
-	DashboardtypesVariableEnvelopeGithubComPersesSpecGoDashboardTextVariableSpecDTOKind as TextEnvelopeKind,
+	DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTOKind as TextEnvelopeKind,
 	DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesListVariableSpecDTOKind as ListEnvelopeKind,
 	DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesCustomVariableSpecDTOKind as CustomPluginKind,
 	DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpecDTOKind as DynamicPluginKind,
@@ -9,17 +9,13 @@ import type {
 	DashboardtypesListVariableSpecDTO,
 	DashboardtypesVariableDTO,
 	DashboardtypesVariablePluginDTO,
-	DashboardTextVariableSpecDTO,
+	DashboardtypesTextVariableSpecDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
 import {
-	DYNAMIC_SIGNAL_ALL,
-	type DynamicSignalOption,
 	emptyVariableFormModel,
-	signalForApi,
 	VARIABLE_SORT_DISABLED,
 	type VariableFormModel,
-	type VariableSort,
 } from './variableFormModel';
 
 /** DTO envelope → flat form model (for display / editing). */
@@ -37,7 +33,7 @@ export function dtoToFormModel(
 
 	// Text variable — a distinct envelope (no list plugin).
 	if (dto.kind === TextEnvelopeKind.TextVariable) {
-		const spec = dto.spec as DashboardTextVariableSpecDTO;
+		const spec = dto.spec as DashboardtypesTextVariableSpecDTO;
 		return {
 			...common,
 			type: 'TEXT',
@@ -52,7 +48,7 @@ export function dtoToFormModel(
 		...common,
 		multiSelect: spec.allowMultiple ?? false,
 		showAllOption: spec.allowAllValue ?? false,
-		sort: (spec.sort as VariableSort) ?? VARIABLE_SORT_DISABLED,
+		sort: spec.sort ?? VARIABLE_SORT_DISABLED,
 		defaultValue: spec.defaultValue,
 	};
 	const plugin = spec.plugin;
@@ -69,9 +65,8 @@ export function dtoToFormModel(
 			...listCommon,
 			type: 'DYNAMIC',
 			dynamicAttribute: plugin.spec.name ?? '',
-			// An omitted wire signal means "all telemetry".
-			dynamicSignal:
-				(plugin.spec.signal as DynamicSignalOption) ?? DYNAMIC_SIGNAL_ALL,
+			// signal is a required wire field (`all` = every telemetry signal), used as-is.
+			dynamicSignal: plugin.spec.signal,
 		};
 	}
 	// Default to Query (also covers a query plugin or a missing/unknown plugin).
@@ -99,7 +94,7 @@ function buildPlugin(
 				kind: DynamicPluginKind['signoz/DynamicVariable'],
 				spec: {
 					name: model.dynamicAttribute,
-					signal: signalForApi(model.dynamicSignal),
+					signal: model.dynamicSignal,
 				},
 			};
 		case 'QUERY':
@@ -138,9 +133,14 @@ export function formModelToDto(
 			name: model.name,
 			display,
 			allowMultiple: model.multiSelect,
-			// Dynamic variables always expose the aggregate "ALL" entry (matches V1,
-			// which forced showALLOption true on save); other types respect the toggle.
-			allowAllValue: model.type === 'DYNAMIC' ? true : model.showAllOption,
+			// Dynamic variables always expose the aggregate "ALL" entry (matches V1, which
+			// forced showALLOption true on save); other types respect the toggle. Either
+			// way it needs multi-select — ALL is a set of values, and the API rejects the
+			// flag without it, which used to make a single-select dynamic variable
+			// unsaveable and blocked every other edit to the dashboard with it.
+			allowAllValue:
+				model.multiSelect &&
+				(model.type === 'DYNAMIC' ? true : model.showAllOption),
 			// model.sort is already a Perses sort token (`none` / `alphabetical-*`).
 			sort: model.sort,
 			defaultValue: model.defaultValue,

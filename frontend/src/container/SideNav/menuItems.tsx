@@ -36,6 +36,7 @@ import {
 	UserPlus,
 	Users,
 	Binoculars,
+	Brain,
 } from '@signozhq/icons';
 
 import {
@@ -48,12 +49,6 @@ import Noz from 'components/Noz/Noz';
 import { NOZ_TOOLTIP_TITLE } from 'components/Noz/Noz.constants';
 
 export const getStartedMenuItem = {
-	key: ROUTES.GET_STARTED,
-	label: 'Get Started',
-	icon: <Rocket size={16} style={{ transform: 'rotate(45deg)' }} />,
-};
-
-export const getStartedV3MenuItem = {
 	key: ROUTES.GET_STARTED_WITH_CLOUD,
 	label: 'Get Started',
 	icon: <Rocket size={16} style={{ transform: 'rotate(45deg)' }} />,
@@ -66,7 +61,7 @@ export const homeMenuItem = {
 };
 
 export const inviteMemberMenuItem = {
-	key: `${ROUTES.ORG_SETTINGS}#invite-team-members`,
+	key: `${ROUTES.MEMBERS_SETTINGS}?invite=true`,
 	label: 'Invite Team Member',
 	icon: <UserPlus size={16} />,
 };
@@ -293,6 +288,16 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 		isNew: true,
 		isEnabled: true,
 		itemKey: 'external-apis',
+	},
+	{
+		key: ROUTES.AI_OBSERVABILITY_OVERVIEW,
+		label: 'AI Observability',
+		icon: <Brain size={16} />,
+		isNew: true,
+		// Gated behind the `enable_ai_observability` feature flag in
+		// SideNav's `computedSecondaryMenuItems`; disabled by default.
+		isEnabled: false,
+		itemKey: 'ai-observability',
 	},
 	{
 		key: ROUTES.METER,
@@ -559,7 +564,9 @@ export const getUserSettingsDropdownMenuItems = ({
 		},
 	].filter(Boolean);
 
-/** Mapping of some newly added routes and their corresponding active sidebar menu key */
+/** Mapping of some newly added routes and their corresponding active sidebar menu key
+    This is used to highlight the correct menu item when the user navigates to a new route
+**/
 export const NEW_ROUTES_MENU_ITEM_KEY_MAP: Record<string, string> = {
 	[ROUTES.TRACE]: ROUTES.TRACES_EXPLORER,
 	[ROUTES.TRACE_EXPLORER]: ROUTES.TRACES_EXPLORER,
@@ -569,6 +576,7 @@ export const NEW_ROUTES_MENU_ITEM_KEY_MAP: Record<string, string> = {
 		ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
 	[ROUTES.API_MONITORING_BASE]: ROUTES.API_MONITORING,
 	[ROUTES.MESSAGING_QUEUES_BASE]: ROUTES.MESSAGING_QUEUES_OVERVIEW,
+	[ROUTES.AI_OBSERVABILITY_BASE]: ROUTES.AI_OBSERVABILITY_OVERVIEW,
 	// `getActiveMenuKeyFromPath` strips the URL down to its first segment;
 	// `/ai-assistant/<id>` reduces to `/ai-assistant`, which we point back
 	// to the AI Assistant menu item's concrete key.

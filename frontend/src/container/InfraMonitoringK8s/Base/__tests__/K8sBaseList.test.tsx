@@ -611,7 +611,7 @@ describe('K8sBaseList', () => {
 				expect(link).toBeInTheDocument();
 				expect(link).toHaveAttribute(
 					'href',
-					'https://signoz.io/docs/userguide/hostmetrics/',
+					'https://signoz.io/docs/infrastructure-monitoring/hostmetrics/',
 				);
 			});
 		});

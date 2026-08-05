@@ -24,6 +24,7 @@ import (
 	"github.com/SigNoz/signoz/ee/modules/cloudintegration/implcloudintegration"
 	"github.com/SigNoz/signoz/ee/modules/cloudintegration/implcloudintegration/implcloudprovider"
 	"github.com/SigNoz/signoz/ee/modules/dashboard/impldashboard"
+	eeimplmetricreductionrule "github.com/SigNoz/signoz/ee/modules/metricreductionrule/implmetricreductionrule"
 	eequerier "github.com/SigNoz/signoz/ee/querier"
 	enterpriseapp "github.com/SigNoz/signoz/ee/query-service/app"
 	eerules "github.com/SigNoz/signoz/ee/query-service/rules"
@@ -46,6 +47,7 @@ import (
 	pkgcloudintegration "github.com/SigNoz/signoz/pkg/modules/cloudintegration/implcloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	pkgimpldashboard "github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
+	"github.com/SigNoz/signoz/pkg/modules/metricreductionrule"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/retention"
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
@@ -175,12 +177,17 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 				return nil, err
 			}
 			azureCloudProviderModule := implcloudprovider.NewAzureCloudProvider(defStore)
+			gcpCloudProviderModule := implcloudprovider.NewGCPCloudProvider(defStore)
 			cloudProvidersMap := map[cloudintegrationtypes.CloudProviderType]cloudintegration.CloudProviderModule{
 				cloudintegrationtypes.CloudProviderTypeAWS:   awsCloudProviderModule,
 				cloudintegrationtypes.CloudProviderTypeAzure: azureCloudProviderModule,
+				cloudintegrationtypes.CloudProviderTypeGCP:   gcpCloudProviderModule,
 			}
 
 			return implcloudintegration.NewModule(pkgcloudintegration.NewStore(sqlStore), dashboardModule, global, zeus, gateway, licensing, serviceAccount, cloudProvidersMap, config)
+		},
+		func(sqlStore sqlstore.SQLStore, ts telemetrystore.TelemetryStore, dashboardModule dashboard.Module, queryParser queryparser.QueryParser, lic licensing.Licensing, flgr pkgflagger.Flagger, ms telemetrytypes.MetadataStore, ps factory.ProviderSettings, threads int) metricreductionrule.Module {
+			return eeimplmetricreductionrule.NewModule(sqlStore, ts, dashboardModule, queryParser, lic, flgr, ms, ps, threads)
 		},
 		func(c cache.Cache, am alertmanager.Alertmanager, ss sqlstore.SQLStore, ts telemetrystore.TelemetryStore, ms telemetrytypes.MetadataStore, p prometheus.Prometheus, og organization.Getter, rsh rulestatehistory.Module, q querier.Querier, qp queryparser.QueryParser) factory.NamedMap[factory.ProviderFactory[ruler.Ruler, ruler.Config]] {
 			return factory.MustNewNamedMap(signozruler.NewFactory(c, am, ss, ts, ms, p, og, rsh, q, qp, eerules.PrepareTaskFunc, eerules.TestNotification))

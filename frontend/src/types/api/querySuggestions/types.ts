@@ -1,4 +1,4 @@
-import { QUERY_BUILDER_KEY_TYPES } from 'constants/antlrQueryConstants';
+import { FieldDataType } from 'types/api/v5/queryRange';
 
 export interface QueryKeyDataSuggestionsProps {
 	label: string;
@@ -7,7 +7,12 @@ export interface QueryKeyDataSuggestionsProps {
 	apply?: string;
 	detail?: string;
 	fieldContext?: 'resource' | 'scope' | 'attribute' | 'span';
-	fieldDataType?: QUERY_BUILDER_KEY_TYPES;
+	/**
+	 * The field's type as the API reports it. Was declared as the antlr key-type enum
+	 * (`string | number | boolean`), which the endpoint never returns — every consumer cast it
+	 * back to `FieldDataType`.
+	 */
+	fieldDataType?: FieldDataType;
 	name: string;
 	signal: 'traces' | 'logs' | 'metrics';
 }
@@ -26,8 +31,9 @@ export interface QueryKeyRequestProps {
 	signal: 'traces' | 'logs' | 'metrics';
 	searchText: string;
 	fieldContext?: 'resource' | 'scope' | 'attribute' | 'span';
-	fieldDataType?: QUERY_BUILDER_KEY_TYPES;
+	fieldDataType?: FieldDataType;
 	metricName?: string;
+	metricNamespace?: string;
 	signalSource?: 'meter' | '';
 }
 

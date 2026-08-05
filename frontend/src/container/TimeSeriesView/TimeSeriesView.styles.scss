@@ -3,6 +3,14 @@
 	min-height: 350px;
 	padding: 0px 12px;
 
+	&__header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 12px 0;
+		flex-shrink: 0;
+	}
+
 	.ant-card-body {
 		height: 50vh;
 		min-height: 350px;

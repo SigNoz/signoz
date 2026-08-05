@@ -4,6 +4,7 @@ import (
 	"bytes"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"gopkg.in/yaml.v3"
 )
 
@@ -26,24 +27,23 @@ type LLMPricingRuleProcessorAttrs struct {
 	CacheWrite string `yaml:"cache_write" json:"cache_write"`
 }
 
-// LLMPricingRuleProcessorDefaultPricing holds the pricing unit and the list of model-specific rules.
+// LLMPricingRuleProcessorDefaultPricing holds the list of model-specific rules.
 type LLMPricingRuleProcessorDefaultPricing struct {
-	Unit  string                    `yaml:"unit" json:"unit"`
 	Rules []LLMPricingRuleProcessor `yaml:"rules" json:"rules"`
 }
 
 // LLMPricingRuleProcessor is a single pricing rule inside the processor config.
 type LLMPricingRuleProcessor struct {
-	Name    string                       `yaml:"name" json:"name"`
-	Pattern []string                     `yaml:"pattern" json:"pattern"`
-	Cache   LLMPricingRuleProcessorCache `yaml:"cache" json:"cache"`
-	In      float64                      `yaml:"in" json:"in"`
-	Out     float64                      `yaml:"out" json:"out"`
+	Name    string                        `yaml:"name" json:"name"`
+	Pattern []string                      `yaml:"pattern" json:"pattern"`
+	Cache   *LLMPricingRuleProcessorCache `yaml:"cache,omitempty" json:"cache,omitempty"`
+	In      float64                       `yaml:"in" json:"in"`
+	Out     float64                       `yaml:"out" json:"out"`
 }
 
 // LLMPricingRuleProcessorCache describes how cached tokens are accounted for.
 type LLMPricingRuleProcessorCache struct {
-	Mode  string  `yaml:"mode" json:"mode"`
+	Mode  string  `yaml:"mode,omitempty" json:"mode,omitempty"`
 	Read  float64 `yaml:"read" json:"read"`
 	Write float64 `yaml:"write" json:"write"`
 }
@@ -61,10 +61,14 @@ type LLMPricingRuleProcessorOutputAttrs struct {
 func buildProcessorConfig(rules []*LLMPricingRule) *LLMPricingRuleProcessorConfig {
 	pricingRules := make([]LLMPricingRuleProcessor, 0, len(rules))
 	for _, r := range rules {
-		var cache LLMPricingRuleProcessorCache
+		var cache *LLMPricingRuleProcessorCache
 		if r.Pricing.Cache != nil {
-			cache = LLMPricingRuleProcessorCache{
-				Mode:  r.Pricing.Cache.Mode.StringValue(),
+			mode := r.Pricing.Cache.Mode.StringValue()
+			if mode != LLMPricingRuleCacheModeSubtract.StringValue() && mode != LLMPricingRuleCacheModeAdditive.StringValue() {
+				mode = ""
+			}
+			cache = &LLMPricingRuleProcessorCache{
+				Mode:  mode,
 				Read:  r.Pricing.Cache.Read,
 				Write: r.Pricing.Cache.Write,
 			}
@@ -80,14 +84,13 @@ func buildProcessorConfig(rules []*LLMPricingRule) *LLMPricingRuleProcessorConfi
 
 	return &LLMPricingRuleProcessorConfig{
 		Attrs: LLMPricingRuleProcessorAttrs{
-			Model:      GenAIRequestModel,
-			In:         GenAIUsageInputTokens,
-			Out:        GenAIUsageOutputTokens,
-			CacheRead:  GenAIUsageCacheReadInputTokens,
-			CacheWrite: GenAIUsageCacheCreationInputTokens,
+			Model:      telemetrytypes.GenAIRequestModel,
+			In:         telemetrytypes.GenAIUsageInputTokens,
+			Out:        telemetrytypes.GenAIUsageOutputTokens,
+			CacheRead:  telemetrytypes.GenAIUsageCacheReadInputTokens,
+			CacheWrite: telemetrytypes.GenAIUsageCacheCreationInputTokens,
 		},
 		DefaultPricing: LLMPricingRuleProcessorDefaultPricing{
-			Unit:  UnitPerMillionTokens.StringValue(),
 			Rules: pricingRules,
 		},
 		OutputAttrs: LLMPricingRuleProcessorOutputAttrs{
@@ -95,7 +98,7 @@ func buildProcessorConfig(rules []*LLMPricingRule) *LLMPricingRuleProcessorConfi
 			Out:        SignozGenAICostOutput,
 			CacheRead:  SignozGenAICostCacheRead,
 			CacheWrite: SignozGenAICostCacheWrite,
-			Total:      SignozGenAITotalCost,
+			Total:      telemetrytypes.SignozGenAITotalCost,
 		},
 	}
 }

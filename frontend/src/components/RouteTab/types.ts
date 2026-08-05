@@ -1,10 +1,11 @@
+import { ComponentType } from 'react';
 import { TabsProps } from 'antd';
 import { History } from 'history';
 
 export type TabRoutes = {
 	name: React.ReactNode;
 	route: string;
-	Component: () => JSX.Element;
+	Component: ComponentType;
 	key: string;
 };
 

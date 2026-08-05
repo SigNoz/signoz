@@ -77,7 +77,7 @@ def register_admin(
             timeout=5,
         )
 
-        assert response.status_code == HTTPStatus.OK
+        assert response.status_code == HTTPStatus.OK, f"failed to register admin: {response.status_code} {response.text}"
 
         return types.Operation(name="create_user_admin")
 

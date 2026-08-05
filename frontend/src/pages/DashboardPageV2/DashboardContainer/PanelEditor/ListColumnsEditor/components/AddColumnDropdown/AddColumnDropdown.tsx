@@ -21,7 +21,7 @@ import { useListColumnSuggestions } from '../../hooks/useListColumnSuggestions';
 import styles from './AddColumnDropdown.module.scss';
 
 interface AddColumnDropdownProps {
-	signal: TelemetrytypesSignalDTO | undefined;
+	signal: TelemetrytypesSignalDTO;
 	/** Names already chosen — drives the checked state + toggle behavior. */
 	selectedNames: Set<string>;
 	onToggle: (field: TelemetrytypesTelemetryFieldKeyDTO) => void;
@@ -63,7 +63,7 @@ function AddColumnDropdown({
 					<Plus size={16} />
 				</Button>
 			</ComboboxTrigger>
-			<ComboboxContent arrow side="top" align="end" className={styles.dropdown}>
+			<ComboboxContent arrow side="bottom" align="end" className={styles.dropdown}>
 				<ComboboxCommand shouldFilter={false}>
 					<ComboboxInput
 						value={searchText}

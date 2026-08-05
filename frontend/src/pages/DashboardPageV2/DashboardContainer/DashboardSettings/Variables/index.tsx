@@ -3,15 +3,19 @@ import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/service
 import cx from 'classnames';
 
 import settingsStyles from '../DashboardSettings.module.scss';
+import { useOptimisticPatch } from '../../hooks/useOptimisticPatch';
 import { useDashboardStore } from '../../store/useDashboardStore';
-import { useSaveVariables } from './useSaveVariables';
+import { getPanelIdsReferencingVariable } from './utils/applyVariableToPanelsPatch';
+import { useSaveVariables } from './hooks/useSaveVariables';
+import { useVariableListActions } from './hooks/useVariableListActions';
 import { dtoToFormModel } from './variableAdapters';
 import {
 	emptyVariableFormModel,
 	type VariableFormModel,
 } from './variableFormModel';
 import VariableForm from './VariableForm/VariableForm';
-import VariablesList from './VariablesList';
+import VariableImpactDialog from './VariableImpactDialog/VariableImpactDialog';
+import VariablesList from './components/VariablesList/VariablesList';
 import styles from './Variables.module.scss';
 import AddVariableButton from './components/AddVariableButton';
 import NoVariablesCard from './components/NoVariablesCard/NoVariablesCard';
@@ -23,7 +27,13 @@ interface VariablesSettingsProps {
 
 function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 	const isEditable = useDashboardStore((s) => s.isEditable);
+	// The drawer destroys on close, so reading this once on mount is enough to
+	// open the add-form when deep-linked (e.g. the bar's "Add variable" button).
+	const openAddOnMount = useDashboardStore(
+		(s) => s.settingsRequest?.addVariable ?? false,
+	);
 	const { save, isSaving } = useSaveVariables();
+	const { patchAsync, isPatching } = useOptimisticPatch();
 
 	const initialFormModels = useMemo(
 		() => dashboard.spec.variables.map(dtoToFormModel),
@@ -38,10 +48,31 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [dashboard.updatedAt]);
 
-	const [isEditing, setIsEditing] = useState<EditingState>(null);
-	const [confirmDeleteIndex, setConfirmDeleteIndex] = useState<number | null>(
-		null,
+	const [isEditing, setIsEditing] = useState<EditingState>(
+		openAddOnMount && isEditable ? { type: 'new' } : null,
 	);
+
+	const {
+		confirmDeleteIndex,
+		setConfirmDeleteIndex,
+		impact,
+		setImpact,
+		handleFormSave,
+		handleMove,
+		requestDelete,
+		handleConfirmDelete,
+		requestApplyToAll,
+		appliedToAllNames,
+		handleImpactConfirm,
+	} = useVariableListActions({
+		dashboard,
+		variables,
+		setVariables,
+		isEditing,
+		setIsEditing,
+		save,
+		patchAsync,
+	});
 
 	const editingFormModel: VariableFormModel | null = useMemo(() => {
 		if (!isEditing) {
@@ -57,36 +88,26 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 		return variables.filter((_, i) => i !== self);
 	}, [variables, isEditing]);
 
-	const persist = (next: VariableFormModel[]): void => {
-		setVariables(next);
-		void save(next);
-	};
+	const panelOptions = useMemo(
+		() =>
+			Object.entries(dashboard.spec.panels ?? {}).map(([id, panel]) => ({
+				value: id,
+				label: panel.spec?.display?.name || id,
+			})),
+		[dashboard.spec.panels],
+	);
 
-	const handleFormSave = (Formmodel: VariableFormModel): void => {
-		const next = [...variables];
-		if (isEditing?.type === 'new') {
-			next.push(Formmodel);
-		} else if (isEditing?.type === 'edit') {
-			next[isEditing.index] = Formmodel;
+	// Panels the edited variable is already applied to — pre-checks the picker.
+	const appliedPanelIds = useMemo(() => {
+		if (!editingFormModel || editingFormModel.type !== 'DYNAMIC') {
+			return [];
 		}
-		setIsEditing(null);
-		persist(next);
-	};
-
-	const handleMove = (from: number, to: number): void => {
-		if (to < 0 || to >= variables.length) {
-			return;
-		}
-		const next = [...variables];
-		const [moved] = next.splice(from, 1);
-		next.splice(to, 0, moved);
-		persist(next);
-	};
-
-	const handleConfirmDelete = (index: number): void => {
-		persist(variables.filter((_, i) => i !== index));
-		setConfirmDeleteIndex(null);
-	};
+		return getPanelIdsReferencingVariable(
+			dashboard.spec.panels,
+			editingFormModel.dynamicAttribute,
+			editingFormModel.name,
+		);
+	}, [editingFormModel, dashboard.spec.panels]);
 
 	if (editingFormModel) {
 		return (
@@ -95,34 +116,47 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 				siblings={siblings}
 				isNew={isEditing?.type === 'new'}
 				isSaving={isSaving}
+				panelOptions={panelOptions}
+				appliedPanelIds={appliedPanelIds}
 				onClose={(): void => setIsEditing(null)}
 				onSave={handleFormSave}
 			/>
 		);
 	}
 
-	// Master view — the variables list.
 	return (
 		<div className={cx(styles.container, settingsStyles.settingsCard)}>
 			{variables.length === 0 ? (
 				<NoVariablesCard isEditable={isEditable} setIsEditing={setIsEditing} />
 			) : (
 				<>
-					<div className={styles.header}>
-						<AddVariableButton isEditable={isEditable} setIsEditing={setIsEditing} />
-					</div>
 					<VariablesList
 						variables={variables}
 						canEdit={isEditable}
 						confirmingIndex={confirmDeleteIndex}
 						onEdit={(index): void => setIsEditing({ type: 'edit', index })}
-						onRequestDelete={(index): void => setConfirmDeleteIndex(index)}
+						onRequestDelete={requestDelete}
 						onConfirmDelete={handleConfirmDelete}
 						onCancelDelete={(): void => setConfirmDeleteIndex(null)}
 						onMove={handleMove}
+						onApplyToAll={requestApplyToAll}
+						appliedToAllNames={appliedToAllNames}
 					/>
+					<div className={styles.footer}>
+						<AddVariableButton isEditable={isEditable} setIsEditing={setIsEditing} />
+					</div>
 				</>
 			)}
+			<VariableImpactDialog
+				open={impact !== null}
+				mode={impact?.mode ?? 'delete'}
+				variableName={impact?.variableName ?? ''}
+				newName={impact?.newName}
+				usages={impact?.usages ?? []}
+				isLoading={isPatching}
+				onConfirm={(resolved): void => void handleImpactConfirm(resolved)}
+				onClose={(): void => setImpact(null)}
+			/>
 		</div>
 	);
 }

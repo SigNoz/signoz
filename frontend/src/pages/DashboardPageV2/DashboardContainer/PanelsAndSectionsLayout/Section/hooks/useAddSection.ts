@@ -1,23 +1,27 @@
 import { useCallback, useState } from 'react';
 
-import { patchDashboardV2 } from 'api/generated/services/dashboard';
+import logEvent from 'api/common/logEvent';
 import type { DashboardtypesLayoutDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
+import { useOptimisticPatch } from '../../../hooks/useOptimisticPatch';
 import {
 	addSectionOp,
 	newGridLayout,
 	reorderLayoutsOp,
 } from '../../../patchOps';
 import { useDashboardStore } from '../../../store/useDashboardStore';
+import { useScrollIntoViewStore } from '../../../store/useScrollIntoViewStore';
+import { getSectionStableId } from '../../../utils';
 
 interface Params {
 	layouts: DashboardtypesLayoutDTO[] | undefined | null;
 }
 
 interface Result {
-	addSection: (title: string) => Promise<void>;
+	addSection: (title: string) => Promise<boolean>;
 	isSaving: boolean;
 }
 
@@ -28,31 +32,41 @@ interface Result {
  */
 export function useAddSection({ layouts }: Params): Result {
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
-	const refetch = useDashboardStore((s) => s.refetch);
+	const { patchAsync } = useOptimisticPatch();
 	const [isSaving, setIsSaving] = useState(false);
 	const { showErrorModal } = useErrorModal();
+	const setScrollTargetId = useScrollIntoViewStore((s) => s.setScrollTargetId);
 
 	const addSection = useCallback(
-		async (title: string): Promise<void> => {
+		async (title: string): Promise<boolean> => {
 			const trimmed = title.trim();
 			if (!dashboardId || !trimmed) {
-				return;
+				return false;
 			}
-			const op =
-				!layouts || layouts.length === 0
-					? reorderLayoutsOp([newGridLayout(trimmed)])
-					: addSectionOp(trimmed);
+			const isFirstSection = !layouts || layouts.length === 0;
+			const op = isFirstSection
+				? reorderLayoutsOp([newGridLayout(trimmed)])
+				: addSectionOp(trimmed);
 			try {
 				setIsSaving(true);
-				await patchDashboardV2({ id: dashboardId }, [op]);
-				refetch();
+				await patchAsync([op]);
+				void logEvent(DashboardDetailEvents.SectionAction, {
+					action: 'add',
+					dashboardId,
+				});
+				// The new empty section is appended, so its layout index is the prior count;
+				// key it the way `getSectionStableId` does so it reveals itself on render.
+				const newIndex = isFirstSection ? 0 : layouts.length;
+				setScrollTargetId(getSectionStableId([], newIndex));
+				return true;
 			} catch (error) {
 				showErrorModal(error as APIError);
+				return false;
 			} finally {
 				setIsSaving(false);
 			}
 		},
-		[layouts, dashboardId, refetch, showErrorModal],
+		[layouts, dashboardId, patchAsync, showErrorModal, setScrollTargetId],
 	);
 
 	return { addSection, isSaving };

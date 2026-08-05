@@ -29,8 +29,7 @@ import styles from './ListColumnsEditor.module.scss';
 interface ListColumnsEditorProps {
 	spec: DashboardtypesPanelSpecDTO;
 	onChangeSpec: (next: DashboardtypesPanelSpecDTO) => void;
-	/** Committed query's signal — scopes the add-dropdown's field suggestions. */
-	signal: TelemetrytypesSignalDTO | undefined;
+	signal: TelemetrytypesSignalDTO;
 }
 
 /**

@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { render, RenderOptions, RenderResult } from '@testing-library/react';
+import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { FeatureKeys } from 'constants/features';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
@@ -149,13 +150,6 @@ export const defaultFeatureFlags = [
 		usage_limit: -1,
 		route: '',
 	},
-	{
-		name: FeatureKeys.USE_FINE_GRAINED_AUTHZ,
-		active: true,
-		usage: 0,
-		usage_limit: -1,
-		route: '',
-	},
 ];
 
 export function getAppContextMock(
@@ -241,6 +235,7 @@ export function getAppContextMock(
 		userPreferences: [],
 		updateUserPreferenceInContext: jest.fn(),
 		isFetchingOrgPreferences: false,
+		isFetchingUserPreferences: false,
 		orgPreferencesFetchError: null,
 		isLoggedIn: true,
 		isPreflightLoading: false,
@@ -300,9 +295,11 @@ export function AllTheProviders({
 							<ResourceProvider>
 								<ErrorModalProvider>
 									<TimezoneProvider>
-										<PreferenceContextProvider>
-											{queryBuilderContent}
-										</PreferenceContextProvider>
+										<TooltipProvider>
+											<PreferenceContextProvider>
+												{queryBuilderContent}
+											</PreferenceContextProvider>
+										</TooltipProvider>
 									</TimezoneProvider>
 								</ErrorModalProvider>
 							</ResourceProvider>
