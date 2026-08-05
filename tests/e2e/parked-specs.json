@@ -1,7 +1,6 @@
 {
 	"$comment": "Specs not currently running, and why. This is the ONLY place a spec may be excluded from the suite: `playwright.config.ts` feeds `specs` to `testIgnore`, and `pnpm guard:specs` fails if any spec that is NOT listed here contains a skipped, fixme'd or .only test. So a spec is either running and complete, or parked here with a reason — nothing rots quietly in between. Every entry is removed by the PR that migrates it; the list only shrinks.",
 	"specs": [
-		"**/tests/dashboards/list.spec.ts",
 		"**/tests/dashboards/details/03-viewing.spec.ts",
 		"**/tests/dashboards/details/12-sections.spec.ts",
 		"**/tests/dashboards/details/21-panel-actions.spec.ts",
