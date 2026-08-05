@@ -115,12 +115,10 @@ test.describe('Dashboard settings — variables', () => {
 		await page.getByTestId('variable-type-custom').click();
 		await page.getByTestId('variable-custom-input').fill('a,b');
 
-		const save = page.getByTestId('variable-save');
-		if (await save.isEnabled()) {
-			await save.click();
-		}
+		// The form refuses the duplicate outright, so Save never becomes available.
+		await expect(page.getByTestId('variable-save')).toBeDisabled();
 
-		// However it is refused, the dashboard must not end up with two `cu_service`.
+		// And the dashboard does not end up with two `cu_service`.
 		const names = (
 			(await getDashboardV2(page, id)).spec.variables as {
 				spec: { name: string };
