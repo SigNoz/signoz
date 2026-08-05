@@ -16,10 +16,11 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
-// This file implements scalar / time-series for builder_ai_query.
+// This file implements scalar / time-series for scoped-trace queries
+// (builder_ai_query being the current consumer).
 //
 // Aggregations come in two domains, chosen per expression by the `trace.` prefix:
-//   - span-level (bare keys): aggregate over individual gen_ai spans. Delegated to the
+//   - span-level (bare keys): aggregate over individual in-scope spans. Delegated to the
 //     standard trace builder with the gate ANDed in; a trace-level filter part becomes
 //     a __trace_scope qualification (see buildDelegated).
 //   - trace-level (`trace.` prefix): aggregate over window-clipped per-trace values
@@ -30,7 +31,7 @@ import (
 //	__qualified   traces whose window-clipped aggregates satisfy the trace-level
 //	   │          filter — whole-window values, so a trace qualifies once. Only
 //	   ▼          present when the filter has a trace-level part.
-//	__ai_traces   per-trace values: windowed, mask-pruned GROUP BY trace_id
+//	__scoped_traces   per-trace values: windowed, mask-pruned GROUP BY trace_id
 //	   │          (+ time bucket for time series → per-bucket clipping, + group-by
 //	   ▼          columns), spans filtered by gate AND span-level filter; rows with
 //	main          no LLM activity are dropped (activity gate). Outer aggregation over
@@ -112,7 +113,7 @@ func (b *scopedTraceStatementBuilder) validateGroupByAndOrder(requestType qbtype
 	for _, gb := range query.GroupBy {
 		if isTraceLevelKey(gb.Name, gb.FieldContext, aliases) {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput,
-				"grouping by trace-level aggregate %q is not supported; group by span attributes instead (e.g. gen_ai.request.model, service.name)", gb.Name)
+				"grouping by trace-level aggregate %q is not supported; group by span attributes instead (e.g. service.name)", gb.Name)
 		}
 	}
 	for _, o := range query.Order {
@@ -364,7 +365,8 @@ func (b *scopedTraceStatementBuilder) buildQualifiedStatement(
 		return nil, nil
 	}
 	var resourcePred string
-	if stmt, err := b.resourceFilterStmt(ctx, orgID, query, start, end, variables); err != nil {
+	// nil when the filter has no resource-attribute conditions
+	if stmt, err := b.resourceFilterStmtBuilder.Build(ctx, orgID, start, end, qbtypes.RequestTypeRaw, query, variables); err != nil {
 		return nil, err
 	} else if stmt != nil {
 		inlined, err := embedExpr(sb, stmt.Query, stmt.Args)
@@ -379,18 +381,6 @@ func (b *scopedTraceStatementBuilder) buildQualifiedStatement(
 		resourcePred: resourcePred,
 	})
 	return &qbtypes.Statement{Query: sql, Args: args}, nil
-}
-
-// resourceFilterStmt resolves the fingerprint statement for the resource attributes
-// in the query's filter; nil when there are none.
-func (b *scopedTraceStatementBuilder) resourceFilterStmt(
-	ctx context.Context,
-	orgID valuer.UUID,
-	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
-	start, end uint64,
-	variables map[string]qbtypes.VariableItem,
-) (*qbtypes.Statement, error) {
-	return b.resourceFilterStmtBuilder.Build(ctx, orgID, start, end, qbtypes.RequestTypeRaw, query, variables)
 }
 
 // embedExpr inlines a pre-built statement into sb, replacing each `?` placeholder
@@ -661,7 +651,7 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 		selects = append(selects, fmt.Sprintf("%s AS __result_%d", ta.rendered(rateInterval), i))
 	}
 	sb.Select(selects...)
-	sb.From("__ai_traces")
+	sb.From("__scoped_traces")
 
 	// grouped, limited time series → rank groups on whole-window per-trace values
 	// (exact for non-composable aggregates) and constrain the main query to the top-N.
@@ -678,7 +668,7 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 			qualified:    qualified,
 			activityExpr: activityGate(b.scope, tsc.resolved),
 		})
-		cteFragments = append(cteFragments, fmt.Sprintf("__ai_traces_total AS (%s)", totalSQL))
+		cteFragments = append(cteFragments, fmt.Sprintf("__scoped_traces_total AS (%s)", totalSQL))
 		cteArgs = append(cteArgs, totalArgs)
 
 		limitSQL, limitArgs := outerLimitSQL(query, traceAggs, groupNames, (end-start)/querybuilder.NsToSeconds)
@@ -705,7 +695,7 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 		// avg(trace.output_tokens) agree on the set of traces they see.
 		activityExpr: activityGate(b.scope, msc.resolved),
 	})
-	cteFragments = append(cteFragments, fmt.Sprintf("__ai_traces AS (%s)", perTraceSQL))
+	cteFragments = append(cteFragments, fmt.Sprintf("__scoped_traces AS (%s)", perTraceSQL))
 	cteArgs = append(cteArgs, perTraceArgs)
 
 	groupBys := []string{}
@@ -795,7 +785,7 @@ func outerLimitSQL(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], tr
 		selects = append(selects, fmt.Sprintf("%s AS __result_%d", ta.rendered(windowSeconds), i))
 	}
 	sb.Select(selects...)
-	sb.From("__ai_traces_total")
+	sb.From("__scoped_traces_total")
 	sb.GroupBy(groupNames...)
 	for _, orderBy := range query.Order {
 		if idx, ok := traceAggOrderIndex(orderBy, query); ok {

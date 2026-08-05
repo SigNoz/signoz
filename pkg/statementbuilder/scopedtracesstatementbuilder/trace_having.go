@@ -51,14 +51,12 @@ func (b *scopedTraceStatementBuilder) resolveTraceHaving(ctx context.Context, ex
 		}
 	}
 
-	// every user-facing spelling of an alias resolves to the same synthetic key:
-	// bare + trace.-prefixed here; tracefield. parses to FieldContextTrace, which
-	// matches the bare entry's context
-	fieldKeys := make(map[string][]*telemetrytypes.TelemetryFieldKey, len(allowed)*2)
+	// every user-facing spelling resolves here: the key parser strips the trace./
+	// tracefield. prefix into FieldContextTrace, which matches this entry's context
+	fieldKeys := make(map[string][]*telemetrytypes.TelemetryFieldKey, len(allowed))
 	for alias := range allowed {
 		key := &telemetrytypes.TelemetryFieldKey{Name: alias, FieldContext: telemetrytypes.FieldContextTrace}
 		fieldKeys[alias] = []*telemetrytypes.TelemetryFieldKey{key}
-		fieldKeys["trace."+alias] = []*telemetrytypes.TelemetryFieldKey{key}
 	}
 
 	cb := &aliasConditionBuilder{allowed: allowed, used: make(map[string]struct{})}
@@ -102,10 +100,9 @@ func (c *aliasConditionBuilder) ConditionFor(
 ) ([]string, []string, error) {
 	matching := keys[key.Name]
 	if len(matching) == 0 {
-		name := strings.TrimPrefix(strings.TrimPrefix(key.Name, "tracefield."), "trace.")
 		return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"aggregate %q cannot be used in an AI trace-list filter; filterable aggregates: %s",
-			name, strings.Join(sortedAliases(c.allowed), ", "))
+			"aggregate %q cannot be used in a trace-level filter; filterable aggregates: %s",
+			key.Name, strings.Join(sortedAliases(c.allowed), ", "))
 	}
 	alias := matching[0].Name
 	c.used[alias] = struct{}{}

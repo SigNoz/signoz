@@ -73,6 +73,7 @@ func ValidateVariablesInExpr(query string, variables map[string]qbtypes.Variable
 			walk(node.GetChild(i))
 		}
 	}
+	// syntax errors are ignored here; downstream re-parsing surfaces them
 	tree, _ := parseFilterQuery(query)
 	walk(tree)
 	return err

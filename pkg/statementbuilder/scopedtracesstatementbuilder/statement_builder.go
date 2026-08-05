@@ -607,17 +607,6 @@ func (b *scopedTraceStatementBuilder) aggregateAliasSet() map[string]struct{} {
 	return set
 }
 
-// orderableAliasSet is the subset of aliases computable in the matched pass.
-func orderableAliasSet(resolved []resolvedColumn) map[string]struct{} {
-	set := make(map[string]struct{})
-	for _, rc := range resolved {
-		if rc.orderable {
-			set[rc.alias] = struct{}{}
-		}
-	}
-	return set
-}
-
 // neededMatchedAliases is the minimal alias set the matched pass must select: those
 // in ORDER BY plus those the resolved trace-level HAVING touches.
 func neededMatchedAliases(orders []listOrder, having *traceHaving) map[string]struct{} {
@@ -636,16 +625,16 @@ func neededMatchedAliases(orders []listOrder, having *traceHaving) map[string]st
 // validateAggregateFilter rejects a trace-level filter referencing an aggregate not
 // computable in the matched pass (e.g. span_count, duration_nano) with a targeted
 // top-level error — the same check inside the where-clause visitor would surface only
-// as a detail of a combined error. Key positions only: `x > $threshold` references x.
+// as a detail of a combined error. Key positions only: `x > $threshold` references x;
+// context prefixes (trace./tracefield.) are already stripped by the key parser.
 func validateAggregateFilter(havingExpr string, orderableSet map[string]struct{}) error {
 	if strings.TrimSpace(havingExpr) == "" {
 		return nil
 	}
 	for _, key := range querybuilder.ExprKeys(havingExpr) {
-		name := strings.TrimPrefix(strings.TrimPrefix(key.Name, "tracefield."), "trace.")
-		if _, ok := orderableSet[name]; !ok {
+		if _, ok := orderableSet[key.Name]; !ok {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput,
-				"aggregate %q cannot be used in the trace-list filter; filterable aggregates: %s", name, strings.Join(sortedAliases(orderableSet), ", "))
+				"aggregate %q cannot be used in a trace-level filter; filterable aggregates: %s", key.Name, strings.Join(sortedAliases(orderableSet), ", "))
 		}
 	}
 	return nil

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,10 +18,10 @@ func TestExprKeys(t *testing.T) {
 	}
 
 	// value-position tokens are not keys, unlike QueryStringToKeysSelectors
-	require.Equal(t, []string{"output_tokens"}, names("output_tokens > $threshold"))
+	assert.Equal(t, []string{"output_tokens"}, names("output_tokens > $threshold"))
 	// the trace. prefix parses into FieldContext, leaving the bare name
-	require.Equal(t, []string{"output_tokens"}, names("trace.output_tokens > 1000"))
-	require.Equal(t, []string{"a", "b"}, names("a > 1 AND b IN ('x', 'y')"))
+	assert.Equal(t, []string{"output_tokens"}, names("trace.output_tokens > 1000"))
+	assert.Equal(t, []string{"a", "b"}, names("a > 1 AND b IN ('x', 'y')"))
 }
 
 func TestValidateVariablesInExpr(t *testing.T) {

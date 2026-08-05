@@ -29,93 +29,11 @@ from fixtures.querier import (
     get_scalar_table_data,
     make_query_request,
 )
+from fixtures.querierai import ai_trace, query_window, tool_only_trace
 from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
 
 
-def _ai_trace(
-    *,
-    now: datetime,
-    service: str,
-    in_tokens: int,
-    out_tokens: int,
-    model: str = "gpt-4o-mini",
-) -> list[Traces]:
-    """A minimal AI trace: root span + one LLM span with gen_ai attributes."""
-    trace_id = TraceIdGenerator.trace_id()
-    root_id = TraceIdGenerator.span_id()
-    resources = {"service.name": service}
-
-    root = Traces(
-        timestamp=now - timedelta(seconds=5),
-        duration=timedelta(seconds=2),
-        trace_id=trace_id,
-        span_id=root_id,
-        parent_span_id="",
-        name="POST /api/chat",
-        kind=TracesKind.SPAN_KIND_SERVER,
-        status_code=TracesStatusCode.STATUS_CODE_OK,
-        resources=resources,
-        attributes={"http.request.method": "POST"},
-    )
-    llm = Traces(
-        timestamp=now - timedelta(seconds=4),
-        duration=timedelta(seconds=1),
-        trace_id=trace_id,
-        span_id=TraceIdGenerator.span_id(),
-        parent_span_id=root_id,
-        name="chat",
-        kind=TracesKind.SPAN_KIND_CLIENT,
-        status_code=TracesStatusCode.STATUS_CODE_OK,
-        resources=resources,
-        attributes={
-            "gen_ai.request.model": model,
-            "gen_ai.usage.input_tokens": in_tokens,
-            "gen_ai.usage.output_tokens": out_tokens,
-        },
-    )
-    return [root, llm]
-
-
-def _tool_only_trace(*, now: datetime, service: str) -> list[Traces]:
-    """Root + one tool span: passes the gen_ai gate but has NO LLM span."""
-    trace_id = TraceIdGenerator.trace_id()
-    root_id = TraceIdGenerator.span_id()
-    resources = {"service.name": service}
-    return [
-        Traces(
-            timestamp=now - timedelta(seconds=5),
-            duration=timedelta(seconds=2),
-            trace_id=trace_id,
-            span_id=root_id,
-            parent_span_id="",
-            name="POST /api/tool",
-            kind=TracesKind.SPAN_KIND_SERVER,
-            status_code=TracesStatusCode.STATUS_CODE_OK,
-            resources=resources,
-            attributes={"http.request.method": "POST"},
-        ),
-        Traces(
-            timestamp=now - timedelta(seconds=4),
-            duration=timedelta(seconds=0.5),
-            trace_id=trace_id,
-            span_id=TraceIdGenerator.span_id(),
-            parent_span_id=root_id,
-            name="execute_tool",
-            kind=TracesKind.SPAN_KIND_INTERNAL,
-            status_code=TracesStatusCode.STATUS_CODE_OK,
-            resources=resources,
-            attributes={"gen_ai.tool.name": "get_weather", "gen_ai.tool.type": "function"},
-        ),
-    ]
-
-
-def _window_ms(now: datetime) -> tuple[int, int]:
-    start_ms = int((now - timedelta(minutes=10)).timestamp() * 1000)
-    end_ms = int((now + timedelta(minutes=1)).timestamp() * 1000)
-    return start_ms, end_ms
-
-
-def _scalar_query(
+def scalar_query(
     service: str,
     expression: str,
     *,
@@ -140,14 +58,14 @@ def _scalar_query(
     ).to_dict()
 
 
-def _scalar_value(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, service: str, expression: str) -> float:
+def scalar_value(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, service: str, expression: str) -> float:
     """Run one single-aggregation scalar query and return its value."""
     resp = make_query_request(
         signoz,
         token,
         start_ms,
         end_ms,
-        [_scalar_query(service, expression)],
+        [scalar_query(service, expression)],
         request_type=RequestType.SCALAR,
     )
     assert resp.status_code == HTTPStatus.OK, f"{expression}: {resp.text}"
@@ -156,7 +74,7 @@ def _scalar_value(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, 
     return float(data[0][-1])
 
 
-def _series_values(response_json: dict) -> list[list[float]]:
+def series_values(response_json: dict) -> list[list[float]]:
     """Per-series lists of bucket values (bucket order as returned)."""
     series = response_json["data"]["data"]["results"][0]["aggregations"][0]["series"]
     return [[v["value"] for v in ser["values"]] for ser in series]
@@ -175,24 +93,24 @@ def test_ai_scalar_trace_level_aggregations(
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-agg-scalar"
-    insert_traces(_ai_trace(now=now, service=service, in_tokens=10, out_tokens=100) + _ai_trace(now=now, service=service, in_tokens=30, out_tokens=300))
+    insert_traces(ai_trace(now=now, service=service, in_tokens=10, out_tokens=100) + ai_trace(now=now, service=service, in_tokens=30, out_tokens=300))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _window_ms(now)
+    start_ms, end_ms = query_window(now)
 
-    def scalar_value(expression: str) -> float:
-        return _scalar_value(signoz, token, start_ms, end_ms, service, expression)
+    def value(expression: str) -> float:
+        return scalar_value(signoz, token, start_ms, end_ms, service, expression)
 
-    assert scalar_value("avg(trace.output_tokens)") == pytest.approx(200)
-    assert scalar_value("count(trace.trace_id)") == 2
-    assert scalar_value("max(trace.total_tokens)") == pytest.approx(330)
-    assert scalar_value("p50(trace.output_tokens)") == pytest.approx(200)  # AggreFuncMap -> quantile(0.50)
+    assert value("avg(trace.output_tokens)") == pytest.approx(200)
+    assert value("count(trace.trace_id)") == 2
+    assert value("max(trace.total_tokens)") == pytest.approx(330)
+    assert value("p50(trace.output_tokens)") == pytest.approx(200)  # AggreFuncMap -> quantile(0.50)
     # arithmetic inside one function and between functions
-    assert scalar_value("avg(trace.output_tokens + trace.input_tokens)") == pytest.approx(220)
-    assert scalar_value("sum(trace.output_tokens)/count(trace.trace_id)") == pytest.approx(200)
+    assert value("avg(trace.output_tokens + trace.input_tokens)") == pytest.approx(220)
+    assert value("sum(trace.output_tokens)/count(trace.trace_id)") == pytest.approx(200)
     # span-level domain still works through the same request type
-    assert scalar_value("count()") == 2  # the two LLM spans; roots are not gen_ai
-    assert scalar_value("sum(gen_ai.usage.output_tokens)") == pytest.approx(400)
+    assert value("count()") == 2  # the two LLM spans; roots are not gen_ai
+    assert value("sum(gen_ai.usage.output_tokens)") == pytest.approx(400)
 
     # multiple trace-level aggregations in one query -> one column per aggregation
     multi = BuilderQuery(
@@ -221,10 +139,10 @@ def test_ai_scalar_trace_level_filter_qualifies_traces(
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-agg-qualify"
-    insert_traces(_ai_trace(now=now, service=service, in_tokens=10, out_tokens=100) + _ai_trace(now=now, service=service, in_tokens=30, out_tokens=300))
+    insert_traces(ai_trace(now=now, service=service, in_tokens=10, out_tokens=100) + ai_trace(now=now, service=service, in_tokens=30, out_tokens=300))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _window_ms(now)
+    start_ms, end_ms = query_window(now)
 
     for expression, expected in (
         ("sum(trace.output_tokens)", 300),  # native trace-domain path
@@ -235,7 +153,7 @@ def test_ai_scalar_trace_level_filter_qualifies_traces(
             token,
             start_ms,
             end_ms,
-            [_scalar_query(service, expression, filter_extra="trace.output_tokens > 100")],
+            [scalar_query(service, expression, filter_extra="trace.output_tokens > 100")],
             request_type=RequestType.SCALAR,
         )
         assert resp.status_code == HTTPStatus.OK, resp.text
@@ -253,7 +171,7 @@ def test_ai_scalar_trace_level_filter_qualifies_traces(
     )
     resp = make_query_request(signoz, token, start_ms, end_ms, [ts.to_dict()], request_type=RequestType.TIME_SERIES)
     assert resp.status_code == HTTPStatus.OK, resp.text
-    values = _series_values(resp.json())
+    values = series_values(resp.json())
     assert values == [[pytest.approx(300)]], values
 
 
@@ -266,17 +184,17 @@ def test_ai_scalar_group_by_model(
     """Trace-level aggregation grouped by a span attribute: per-model avg of per-trace tokens."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-agg-groupby"
-    insert_traces(_ai_trace(now=now, service=service, in_tokens=10, out_tokens=100, model="gpt-4o") + _ai_trace(now=now, service=service, in_tokens=10, out_tokens=300, model="gpt-4o") + _ai_trace(now=now, service=service, in_tokens=10, out_tokens=50, model="gpt-4o-mini"))
+    insert_traces(ai_trace(now=now, service=service, in_tokens=10, out_tokens=100, model="gpt-4o") + ai_trace(now=now, service=service, in_tokens=10, out_tokens=300, model="gpt-4o") + ai_trace(now=now, service=service, in_tokens=10, out_tokens=50, model="gpt-4o-mini"))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _window_ms(now)
+    start_ms, end_ms = query_window(now)
 
     resp = make_query_request(
         signoz,
         token,
         start_ms,
         end_ms,
-        [_scalar_query(service, "avg(trace.output_tokens)", group_by=[TelemetryFieldKey(name="gen_ai.request.model")])],
+        [scalar_query(service, "avg(trace.output_tokens)", group_by=[TelemetryFieldKey(name="gen_ai.request.model")])],
         request_type=RequestType.SCALAR,
     )
     assert resp.status_code == HTTPStatus.OK, resp.text
@@ -294,10 +212,10 @@ def test_ai_timeseries_trace_level_aggregation(
     """Time-series over per-trace values: all spans fall in one step bucket, avg=200."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-agg-ts"
-    insert_traces(_ai_trace(now=now, service=service, in_tokens=10, out_tokens=100) + _ai_trace(now=now, service=service, in_tokens=30, out_tokens=300))
+    insert_traces(ai_trace(now=now, service=service, in_tokens=10, out_tokens=100) + ai_trace(now=now, service=service, in_tokens=30, out_tokens=300))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _window_ms(now)
+    start_ms, end_ms = query_window(now)
 
     query = BuilderQuery(
         signal="traces",
@@ -317,7 +235,7 @@ def test_ai_timeseries_trace_level_aggregation(
     )
     assert resp.status_code == HTTPStatus.OK, resp.text
 
-    values = _series_values(resp.json())
+    values = series_values(resp.json())
     assert values == [[pytest.approx(200)]], values
 
 
@@ -329,15 +247,15 @@ def test_ai_timeseries_top_n_groups(
 ) -> None:
     """
     Grouped, limited time series ranks groups on whole-window per-trace values
-    (__ai_traces_total -> __limit_cte) and returns only the top-N: gpt-4o sums to
+    (__scoped_traces_total -> __limit_cte) and returns only the top-N: gpt-4o sums to
     400 across two traces vs gpt-4o-mini's 50, so limit=1 keeps only gpt-4o.
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-agg-topn"
-    insert_traces(_ai_trace(now=now, service=service, in_tokens=10, out_tokens=300, model="gpt-4o") + _ai_trace(now=now, service=service, in_tokens=10, out_tokens=100, model="gpt-4o") + _ai_trace(now=now, service=service, in_tokens=10, out_tokens=50, model="gpt-4o-mini"))
+    insert_traces(ai_trace(now=now, service=service, in_tokens=10, out_tokens=300, model="gpt-4o") + ai_trace(now=now, service=service, in_tokens=10, out_tokens=100, model="gpt-4o") + ai_trace(now=now, service=service, in_tokens=10, out_tokens=50, model="gpt-4o-mini"))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _window_ms(now)
+    start_ms, end_ms = query_window(now)
 
     query = BuilderQuery(
         signal="traces",
@@ -376,7 +294,7 @@ def test_ai_timeseries_span_time_bucketing(
     root_id = TraceIdGenerator.span_id()
     resources = {"service.name": service}
 
-    def _llm(offset_s: float, out_tokens: int) -> Traces:
+    def llm(offset_s: float, out_tokens: int) -> Traces:
         return Traces(
             timestamp=now - timedelta(seconds=offset_s),
             duration=timedelta(seconds=1),
@@ -402,10 +320,10 @@ def test_ai_timeseries_span_time_bucketing(
         resources=resources,
         attributes={"http.request.method": "POST"},
     )
-    insert_traces([root, _llm(124, 100), _llm(4, 300)])
+    insert_traces([root, llm(124, 100), llm(4, 300)])
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _window_ms(now)
+    start_ms, end_ms = query_window(now)
 
     query = BuilderQuery(
         signal="traces",
@@ -418,7 +336,7 @@ def test_ai_timeseries_span_time_bucketing(
     resp = make_query_request(signoz, token, start_ms, end_ms, [query.to_dict()], request_type=RequestType.TIME_SERIES)
     assert resp.status_code == HTTPStatus.OK, resp.text
 
-    values = _series_values(resp.json())
+    values = series_values(resp.json())
     assert len(values) == 1, values
     assert sorted(values[0]) == [pytest.approx(100), pytest.approx(300)], f"each call's tokens in its own bucket: {values}"
 
@@ -435,11 +353,11 @@ def test_ai_scalar_variables_in_trace_level_filter(
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-agg-vars"
-    insert_traces(_ai_trace(now=now, service=service, in_tokens=10, out_tokens=100) + _ai_trace(now=now, service=service, in_tokens=30, out_tokens=300))
+    insert_traces(ai_trace(now=now, service=service, in_tokens=10, out_tokens=100) + ai_trace(now=now, service=service, in_tokens=30, out_tokens=300))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _window_ms(now)
-    query = _scalar_query(service, "sum(trace.output_tokens)", filter_extra="trace.output_tokens > $threshold")
+    start_ms, end_ms = query_window(now)
+    query = scalar_query(service, "sum(trace.output_tokens)", filter_extra="trace.output_tokens > $threshold")
 
     resp = make_query_request(
         signoz,
@@ -493,18 +411,18 @@ def test_ai_scalar_activity_gate_excludes_tool_only_traces(
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-agg-gate"
-    insert_traces(_ai_trace(now=now, service=service, in_tokens=10, out_tokens=100) + _tool_only_trace(now=now, service=service))
+    insert_traces(ai_trace(now=now, service=service, in_tokens=10, out_tokens=100) + tool_only_trace(now=now, service=service))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _window_ms(now)
+    start_ms, end_ms = query_window(now)
 
-    def scalar_value(expression: str) -> float:
-        return _scalar_value(signoz, token, start_ms, end_ms, service, expression)
+    def value(expression: str) -> float:
+        return scalar_value(signoz, token, start_ms, end_ms, service, expression)
 
     # count and avg agree on the trace set — the gate's purpose
-    assert scalar_value("count(trace.trace_id)") == 1, "tool-only trace must be dropped by the LLM-activity gate"
-    assert scalar_value("avg(trace.output_tokens)") == pytest.approx(100), "avg over the same gated trace set"
-    assert scalar_value("count()") == 2, "span-level count still sees the tool span"
+    assert value("count(trace.trace_id)") == 1, "tool-only trace must be dropped by the LLM-activity gate"
+    assert value("avg(trace.output_tokens)") == pytest.approx(100), "avg over the same gated trace set"
+    assert value("count()") == 2, "span-level count still sees the tool span"
 
 
 def test_ai_scalar_having_on_aggregation(
@@ -516,10 +434,10 @@ def test_ai_scalar_having_on_aggregation(
     """The outer having filters aggregation results per group (by alias)."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-agg-having"
-    insert_traces(_ai_trace(now=now, service=service, in_tokens=10, out_tokens=300, model="gpt-4o") + _ai_trace(now=now, service=service, in_tokens=10, out_tokens=50, model="gpt-4o-mini"))
+    insert_traces(ai_trace(now=now, service=service, in_tokens=10, out_tokens=300, model="gpt-4o") + ai_trace(now=now, service=service, in_tokens=10, out_tokens=50, model="gpt-4o-mini"))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _window_ms(now)
+    start_ms, end_ms = query_window(now)
 
     resp = make_query_request(
         signoz,
@@ -527,7 +445,7 @@ def test_ai_scalar_having_on_aggregation(
         start_ms,
         end_ms,
         [
-            _scalar_query(
+            scalar_query(
                 service,
                 "avg(trace.output_tokens)",
                 group_by=[TelemetryFieldKey(name="gen_ai.request.model")],
@@ -551,9 +469,9 @@ def test_ai_aggregation_rejections(
     """Targeted 400s: mixed domains, group-by on a trace column, raw order by a trace column."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-agg-reject"
-    insert_traces(_ai_trace(now=now, service=service, in_tokens=10, out_tokens=100))
+    insert_traces(ai_trace(now=now, service=service, in_tokens=10, out_tokens=100))
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _window_ms(now)
+    start_ms, end_ms = query_window(now)
 
     # span-level and trace-level aggregations cannot be mixed in one query
     mixed = BuilderQuery(

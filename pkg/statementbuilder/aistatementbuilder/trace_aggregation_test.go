@@ -153,7 +153,7 @@ func TestBuild_Aggregation_QualificationResourcePruned(t *testing.T) {
 			Filter:       filter,
 		}, nil)
 	require.NoError(t, err)
-	qualified := stmt.Query[strings.Index(stmt.Query, "__qualified"):strings.Index(stmt.Query, "__ai_traces")]
+	qualified := stmt.Query[strings.Index(stmt.Query, "__qualified"):strings.Index(stmt.Query, "__scoped_traces")]
 	assert.Contains(t, qualified, "resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
 
 	stmt, err = b.Build(ctx, valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeRaw,
@@ -183,7 +183,7 @@ func TestBuild_FullSQL_Scalar_TraceAgg(t *testing.T) {
 	require.NoError(t, err)
 
 	assertSQLEqual(t, `
-WITH __ai_traces AS (
+WITH __scoped_traces AS (
     SELECT trace_id,
         sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens
     FROM signoz_traces.distributed_signoz_index_v3
@@ -196,7 +196,7 @@ WITH __ai_traces AS (
     HAVING (countIf(mapContains(attributes_string, 'gen_ai.request.model'))) > 0
 )
 SELECT avg(output_tokens) AS __result_0
-FROM __ai_traces
+FROM __scoped_traces
 ORDER BY __result_0 DESC
 SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 `, stmt)
@@ -215,7 +215,7 @@ func TestBuild_FullSQL_TimeSeries_TraceAgg(t *testing.T) {
 	require.NoError(t, err)
 
 	assertSQLEqual(t, `
-WITH __ai_traces AS (
+WITH __scoped_traces AS (
     SELECT trace_id,
         toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts,
         sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens
@@ -229,7 +229,7 @@ WITH __ai_traces AS (
     HAVING (countIf(mapContains(attributes_string, 'gen_ai.request.model'))) > 0
 )
 SELECT ts, avg(output_tokens) AS __result_0
-FROM __ai_traces
+FROM __scoped_traces
 GROUP BY ts
 SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 `, stmt)
