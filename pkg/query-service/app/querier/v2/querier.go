@@ -18,6 +18,8 @@ import (
 	chErrors "github.com/SigNoz/signoz/pkg/query-service/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/querycache"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	qbvalidation "github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 
 	"log/slog"
@@ -127,6 +129,14 @@ func (q *querier) execClickHouseQuery(ctx context.Context, query string) ([]*v3.
 		q.logger.ErrorContext(ctx, "found points with negative timestamps for query", "query", query)
 	}
 	return result, err
+}
+
+func (q *querier) execUserClickHouseQuery(ctx context.Context, query string) ([]*v3.Series, error) {
+	if err := qbvalidation.ErrIfStatementIsNotValid(query); err != nil {
+		return nil, err
+	}
+
+	return q.execClickHouseQuery(ctxtypes.SetClickhouseReadOnly(ctx), query)
 }
 
 // execPromQuery executes the prom query and returns the series list
@@ -281,7 +291,7 @@ func (q *querier) runClickHouseQueries(ctx context.Context, params *v3.QueryRang
 		wg.Add(1)
 		go func(queryName string, clickHouseQuery *v3.ClickHouseQuery) {
 			defer wg.Done()
-			series, err := q.execClickHouseQuery(ctx, clickHouseQuery.Query)
+			series, err := q.execUserClickHouseQuery(ctx, clickHouseQuery.Query)
 			channelResults <- channelResult{Err: err, Name: queryName, Query: clickHouseQuery.Query, Series: series}
 		}(queryName, clickHouseQuery)
 	}

@@ -26,6 +26,11 @@ func NewSettings(ctx context.Context, providerSettings factory.ProviderSettings,
 }
 
 func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent) context.Context {
+	settings := h.settingsForContext(ctx)
+	return clickhouse.Context(ctx, clickhouse.WithSettings(settings))
+}
+
+func (h *provider) settingsForContext(ctx context.Context) clickhouse.Settings {
 	settings := clickhouse.Settings{}
 
 	settings["log_comment"] = ctxtypes.CommentFromContext(ctx).String()
@@ -72,12 +77,16 @@ func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent
 		settings["result_overflow_mode"] = ctx.Value("result_overflow_mode")
 	}
 
+	if ctxtypes.IsClickhouseReadOnly(ctx) {
+		// Mode 2 blocks writes while still allowing SELECT-level settings.
+		settings["readonly"] = 2
+	}
+
 	// TODO(srikanthccv): enable it when the "Cannot read all data" issue is fixed
 	// https://github.com/ClickHouse/ClickHouse/issues/82283
 	settings["secondary_indices_enable_bulk_filtering"] = false
 
-	ctx = clickhouse.Context(ctx, clickhouse.WithSettings(settings))
-	return ctx
+	return settings
 }
 
 func (h *provider) AfterQuery(ctx context.Context, event *telemetrystore.QueryEvent) {}

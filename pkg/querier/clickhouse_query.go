@@ -20,7 +20,6 @@ import (
 )
 
 type chSQLQuery struct {
-	logger         *slog.Logger
 	telemetryStore telemetrystore.TelemetryStore
 
 	query  qbtypes.ClickHouseQuery
@@ -35,7 +34,7 @@ var _ qbtypes.Query = (*chSQLQuery)(nil)
 var _ qbtypes.StatementProvider = (*chSQLQuery)(nil)
 
 func newchSQLQuery(
-	logger *slog.Logger,
+	_ *slog.Logger,
 	telemetryStore telemetrystore.TelemetryStore,
 	query qbtypes.ClickHouseQuery,
 	args []any,
@@ -44,7 +43,6 @@ func newchSQLQuery(
 	variables map[string]qbtypes.VariableItem,
 ) *chSQLQuery {
 	return &chSQLQuery{
-		logger:         logger,
 		telemetryStore: telemetryStore,
 		query:          query,
 		args:           args,
@@ -100,20 +98,22 @@ func (q *chSQLQuery) renderVars(query string, vars map[string]qbtypes.VariableIt
 	return newQuery.String(), nil
 }
 
-func (q *chSQLQuery) render(ctx context.Context) (string, error) {
+func (q *chSQLQuery) render() (string, error) {
 	rendered, err := q.renderVars(q.query.Query, q.vars, q.fromMS, q.toMS)
 	if err != nil {
 		return "", err
 	}
 
-	querybuilder.LogIfStatementIsNotValid(ctx, q.logger, rendered)
+	if err := querybuilder.ErrIfStatementIsNotValid(rendered); err != nil {
+		return "", err
+	}
 
 	return rendered, nil
 }
 
 // Statement renders the SQL without executing it, for the preview path.
-func (q *chSQLQuery) Statement(ctx context.Context) (*qbtypes.Statement, error) {
-	rendered, err := q.render(ctx)
+func (q *chSQLQuery) Statement(_ context.Context) (*qbtypes.Statement, error) {
+	rendered, err := q.render()
 	if err != nil {
 		return nil, err
 	}
@@ -135,10 +135,11 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 		elapsed += p.Elapsed
 	}))
 
-	query, err := q.render(ctx)
+	query, err := q.render()
 	if err != nil {
 		return nil, err
 	}
+	ctx = ctxtypes.SetClickhouseReadOnly(ctx)
 
 	rows, err := q.telemetryStore.ClickhouseDB().Query(ctx, query, q.args...)
 	if err != nil {
