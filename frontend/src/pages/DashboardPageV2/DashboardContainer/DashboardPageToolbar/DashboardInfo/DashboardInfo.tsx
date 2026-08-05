@@ -1,4 +1,4 @@
-import { KeyboardEvent } from 'react';
+import { type FocusEvent, KeyboardEvent } from 'react';
 import {
 	Check,
 	Globe,
@@ -12,15 +12,23 @@ import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
+import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { isEmpty } from 'lodash-es';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import { linkifyText } from 'utils/linkifyText';
 import { openInNewTab } from 'utils/navigation';
 
 import styles from './DashboardInfo.module.scss';
-import { useVisibleTagCount } from './useVisibleTagCount';
+import { TOOLTIP_SCROLL_CONTENT_CLASS } from 'components/TooltipScrollArea/TooltipScrollArea';
+
+import TagsOverflowTooltip from './TagsOverflowTooltip';
 import { DASHBOARD_NAME_MAX_LENGTH } from '../../constants';
 import { useDashboardStore } from '../../store/useDashboardStore';
+
+// The tag cluster keeps a fixed footprint so a long title ellipsizes around it
+// instead of collapsing the tags: show up to two tags, then a `+N` overflow badge.
+const MAX_VISIBLE_TAGS = 2;
 
 interface DashboardInfoProps {
 	title: string;
@@ -61,14 +69,13 @@ function DashboardInfo({
 	onCancel,
 }: DashboardInfoProps): JSX.Element {
 	const canEdit = useDashboardStore((s) => s.isEditable);
+	const dashboardId = useDashboardStore((s) => s.dashboardId);
 
 	const hasTags = tags.length > 0;
 	const hasDescription = !isEmpty(description);
 
-	const { containerRef, visibleCount } = useVisibleTagCount(tags);
-	const needsOverflow = tags.length > visibleCount;
-	const visibleTags = needsOverflow ? tags.slice(0, visibleCount) : tags;
-	const remainingTags = needsOverflow ? tags.slice(visibleCount) : [];
+	const visibleTags = tags.slice(0, MAX_VISIBLE_TAGS);
+	const remainingTags = tags.slice(MAX_VISIBLE_TAGS);
 
 	let lockTooltip: string;
 	if (onToggleLock) {
@@ -90,12 +97,28 @@ function DashboardInfo({
 		}
 	};
 
+	// Clicking outside the editor commits, matching the input's Enter behaviour.
+	// Guard against blurs that move focus to the Save/Cancel buttons within it.
+	const onEditorBlur = (event: FocusEvent<HTMLDivElement>): void => {
+		if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+			onCommit();
+		}
+	};
+
+	const handleOpenPublicUrl = (): void => {
+		void logEvent(DashboardDetailEvents.PublicUrlOpened, {
+			dashboardId,
+			dashboardName: title,
+		});
+		openInNewTab(publicUrl);
+	};
+
 	return (
 		<div className={styles.dashboardInfo}>
 			<img src={image} alt={title} className={styles.dashboardImage} />
 
 			{isEditing ? (
-				<div className={styles.dashboardTitleEditor}>
+				<div className={styles.dashboardTitleEditor} onBlur={onEditorBlur}>
 					<Input
 						autoFocus
 						value={draft}
@@ -174,7 +197,7 @@ function DashboardInfo({
 						className={styles.publicLink}
 						aria-label="Open public dashboard"
 						testId="dashboard-public-link"
-						onClick={(): void => openInNewTab(publicUrl)}
+						onClick={handleOpenPublicUrl}
 					>
 						<Globe size={14} />
 					</Button>
@@ -206,16 +229,15 @@ function DashboardInfo({
 			{hasTags && (
 				<>
 					<span className={styles.divider} />
-					<div
-						ref={containerRef}
-						className={styles.dashboardTags}
-						data-testid="dashboard-tags"
-					>
+					<div className={styles.dashboardTags} data-testid="dashboard-tags">
 						{visibleTags.map((tag) => (
 							<TagBadge key={tag}>{tag}</TagBadge>
 						))}
 						{remainingTags.length > 0 && (
-							<TooltipSimple title={remainingTags.join(', ')}>
+							<TooltipSimple
+								title={<TagsOverflowTooltip tags={remainingTags} />}
+								tooltipContentProps={{ className: TOOLTIP_SCROLL_CONTENT_CLASS }}
+							>
 								<span data-testid="dashboard-tags-overflow">
 									<TagBadge>+{remainingTags.length}</TagBadge>
 								</span>

@@ -5,16 +5,15 @@ import { Button } from '@signozhq/ui/button';
 import { Divider } from '@signozhq/ui/divider';
 import { RadioGroup, RadioGroupItem } from '@signozhq/ui/radio-group';
 import { Tabs } from '@signozhq/ui/tabs';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import { Skeleton } from 'antd';
 import { useGetRole } from 'api/generated/services/role';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
-import PermissionDeniedFullPage from 'lib/authz/components/PermissionDeniedFullPage/PermissionDeniedFullPage';
 import { useDeleteRoleModal } from 'container/RolesSettings/DeleteRoleModal/useDeleteRoleModal';
-import { useRoleAuthZ } from 'container/RolesSettings/hooks/useRoleAuthZ';
 import { transformApiToRolePermissions } from 'container/RolesSettings/hooks/useRolePermissions';
 import { useRolesFeatureGate } from 'hooks/useRolesFeatureGate';
+import { withAuthZContent } from 'lib/authz/components/withAuthZ/withAuthZContent';
+import { buildRoleReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/role.permissions';
 import { useTimezone } from 'providers/Timezone';
 import APIError from 'types/api/error';
 import { RoleType } from 'types/roles';
@@ -26,55 +25,35 @@ import ReadOnlyJsonViewer from './ReadOnlyJsonViewer';
 import { useViewRolePageActions } from './useViewRolePageActions';
 
 import styles from './ViewRolePage.module.scss';
+import { ViewRolePageHeaderActions } from 'container/RolesSettings/ViewRolePage/ViewRolePageHeaderActions';
 
-function ViewRolePage(): JSX.Element {
+interface ViewRoleContentProps {
+	roleId: string;
+	roleName: string;
+	viewMode: 'list' | 'json';
+	expandedResources: Set<string>;
+	setExpandedResources: (resources: Set<string>) => void;
+	handleModeChange: (value: string) => void;
+	handleTabChange: (key: string) => void;
+	activeTab: 'overview';
+}
+
+function ViewRoleContentInner({
+	roleId,
+	viewMode,
+	expandedResources,
+	setExpandedResources,
+	handleModeChange,
+	handleTabChange,
+	activeTab,
+}: ViewRoleContentProps): JSX.Element {
 	const { formatTimezoneAdjustedTimestampOptional } = useTimezone();
-	const { isRolesEnabled, isLoading: isFeatureGateLoading } =
-		useRolesFeatureGate();
-
-	const {
-		roleId,
-		roleName,
-		activeTab,
-		viewMode,
-		expandedResources,
-		setExpandedResources,
-		handleRedirectToUpdate,
-		handleCancel,
-		handleModeChange,
-		handleTabChange,
-	} = useViewRolePageActions();
-
-	const {
-		hasReadPermission,
-		readRolePermission,
-		hasUpdatePermission,
-		updateRolePermission,
-		hasDeletePermission,
-		isAuthZLoading,
-	} = useRoleAuthZ(roleName);
 
 	const { data, isLoading, error } = useGetRole(
-		{ id: roleId ?? '' },
-		{ query: { enabled: !!roleId && hasReadPermission } },
+		{ id: roleId },
+		{ query: { enabled: !!roleId } },
 	);
 	const role = data?.data;
-	const isManaged = role?.type === RoleType.MANAGED;
-
-	const {
-		isDeleteModalOpen,
-		isDeleteDisabled,
-		deleteDisabledReason,
-		deleteError,
-		handleOpenDeleteModal,
-		handleCloseDeleteModal,
-		handleConfirmDelete,
-	} = useDeleteRoleModal({
-		roleId,
-		isManaged: isManaged ?? false,
-		hasDeletePermission,
-		onDeleteSuccess: handleCancel,
-	});
 
 	const tabItems = useMemo(
 		() => [
@@ -122,7 +101,7 @@ function ViewRolePage(): JSX.Element {
 						<div className={styles.permissionContent}>
 							{viewMode === 'list' ? (
 								<PermissionOverview
-									roleId={roleId ?? ''}
+									roleId={roleId}
 									expandedResources={expandedResources}
 									onExpandedResourcesChange={setExpandedResources}
 								/>
@@ -144,11 +123,108 @@ function ViewRolePage(): JSX.Element {
 		],
 	);
 
-	if (!hasReadPermission && !isAuthZLoading) {
+	if (isLoading) {
+		return <Skeleton active paragraph={{ rows: 6 }} />;
+	}
+
+	if (error) {
 		return (
-			<PermissionDeniedFullPage permissionName={readRolePermission.object} />
+			<ErrorInPlace
+				error={toAPIError(error, 'Failed to load role details')}
+				data-testid="role-error-banner"
+			/>
 		);
 	}
+
+	if (!role) {
+		return <></>;
+	}
+
+	return (
+		<div className={styles.viewRolePageContent}>
+			<div className={styles.viewRolePageForm}>
+				<div className={styles.formField}>
+					<label htmlFor="role-description" className={styles.formLabel}>
+						Description
+					</label>
+					<Typography>{role.description}</Typography>
+				</div>
+				<div className={styles.formRow}>
+					<div className={styles.formField}>
+						<label htmlFor="role-created-at" className={styles.formLabel}>
+							Created At
+						</label>
+						<Badge color="secondary">
+							{formatTimezoneAdjustedTimestampOptional(role.createdAt)}
+						</Badge>
+					</div>
+					<div className={styles.formField}>
+						<label htmlFor="role-modified-at" className={styles.formLabel}>
+							Last Modified At
+						</label>
+						<Badge color="secondary">
+							{formatTimezoneAdjustedTimestampOptional(role.updatedAt)}
+						</Badge>
+					</div>
+				</div>
+			</div>
+
+			<Divider />
+
+			<Tabs
+				className={styles.roleTabs}
+				value={activeTab}
+				onChange={handleTabChange}
+				items={tabItems}
+			/>
+		</div>
+	);
+}
+
+const ViewRoleContent = withAuthZContent<ViewRoleContentProps>(
+	ViewRoleContentInner,
+	{
+		checks: (props: ViewRoleContentProps) =>
+			props.roleName ? [buildRoleReadPermission(props.roleName)] : [],
+		fallbackOnLoading: <Skeleton active paragraph={{ rows: 6 }} />,
+	},
+);
+
+function ViewRolePage(): JSX.Element {
+	const { isRolesEnabled, isLoading: isFeatureGateLoading } =
+		useRolesFeatureGate();
+
+	const {
+		roleId,
+		roleName,
+		activeTab,
+		viewMode,
+		expandedResources,
+		setExpandedResources,
+		handleRedirectToUpdate,
+		handleCancel,
+		handleModeChange,
+		handleTabChange,
+	} = useViewRolePageActions();
+
+	const { data, isLoading: isRoleLoading } = useGetRole(
+		{ id: roleId ?? '' },
+		{ query: { enabled: !!roleId } },
+	);
+	const role = data?.data;
+	const isManaged = role?.type === RoleType.MANAGED;
+
+	const {
+		isDeleteModalOpen,
+		deleteError,
+		handleOpenDeleteModal,
+		handleCloseDeleteModal,
+		handleConfirmDelete,
+	} = useDeleteRoleModal({
+		roleId,
+		isManaged: isManaged ?? false,
+		onDeleteSuccess: handleCancel,
+	});
 
 	if (!isRolesEnabled && !isFeatureGateLoading) {
 		return (
@@ -187,42 +263,12 @@ function ViewRolePage(): JSX.Element {
 		);
 	}
 
-	if (isAuthZLoading || isLoading || isFeatureGateLoading) {
+	if (isFeatureGateLoading) {
 		return (
 			<div className={styles.viewRolePage}>
 				<Skeleton active paragraph={{ rows: 8 }} />
 			</div>
 		);
-	}
-
-	if (error) {
-		return (
-			<div className={styles.viewRolePage} data-testid="view-role-page">
-				<div className={styles.viewRolePageHeader}>
-					<div className={styles.viewRolePageHeaderLeft}>
-						<Button
-							variant="ghost"
-							color="secondary"
-							onClick={handleCancel}
-							data-testid="cancel-button"
-							className={styles.backButton}
-						>
-							<ArrowLeft size={16} />
-						</Button>
-						<Typography.Title level={3}>Failed to load role</Typography.Title>
-					</div>
-				</div>
-
-				<ErrorInPlace
-					error={toAPIError(error, 'Failed to load role details')}
-					data-testid="role-error-banner"
-				/>
-			</div>
-		);
-	}
-
-	if (!role) {
-		return <></>;
 	}
 
 	return (
@@ -239,95 +285,35 @@ function ViewRolePage(): JSX.Element {
 						<ArrowLeft size={16} />
 					</Button>
 					<Typography.Title level={3}>
-						{'Role - ' + role.name || 'Loading role...'}
+						{'Role - ' + (roleName || 'Loading role...')}
 					</Typography.Title>
 				</div>
 
-				<div className={styles.viewRolePageActions}>
-					<TooltipSimple
-						title={isDeleteDisabled ? deleteDisabledReason : 'Open delete modal'}
-					>
-						<Button
-							variant="link"
-							color="destructive"
-							onClick={handleOpenDeleteModal}
-							disabled={isDeleteDisabled}
-							data-testid="delete-button"
-							className={styles.deleteButton}
-						>
-							Delete
-						</Button>
-					</TooltipSimple>
-
-					<Divider type="vertical" />
-
-					<TooltipSimple
-						title={
-							isManaged
-								? 'Managed roles cannot be updated'
-								: hasUpdatePermission
-									? 'Open update page'
-									: `You are not authorized to perform ${updateRolePermission.object}`
-						}
-					>
-						<Button
-							variant="solid"
-							color="primary"
-							data-testid="save-button"
-							disabled={isManaged || !hasUpdatePermission}
-							onClick={handleRedirectToUpdate}
-							style={
-								isManaged || !hasUpdatePermission
-									? { pointerEvents: 'auto' }
-									: undefined
-							}
-						>
-							Update
-						</Button>
-					</TooltipSimple>
-				</div>
-			</div>
-
-			<div className={styles.viewRolePageContent}>
-				<div className={styles.viewRolePageForm}>
-					<div className={styles.formField}>
-						<label htmlFor="role-description" className={styles.formLabel}>
-							Description
-						</label>
-						<Typography>{role.description}</Typography>
-					</div>
-					<div className={styles.formRow}>
-						<div className={styles.formField}>
-							<label htmlFor="role-created-at" className={styles.formLabel}>
-								Created At
-							</label>
-							<Badge color="secondary">
-								{formatTimezoneAdjustedTimestampOptional(role.createdAt)}
-							</Badge>
-						</div>
-						<div className={styles.formField}>
-							<label htmlFor="role-modified-at" className={styles.formLabel}>
-								Last Modified At
-							</label>
-							<Badge color="secondary">
-								{formatTimezoneAdjustedTimestampOptional(role.updatedAt)}
-							</Badge>
-						</div>
-					</div>
-				</div>
-
-				<Divider />
-
-				<Tabs
-					className={styles.roleTabs}
-					value={activeTab}
-					onChange={handleTabChange}
-					items={tabItems}
+				<ViewRolePageHeaderActions
+					isRoleLoading={isRoleLoading}
+					isManaged={isManaged}
+					roleName={roleName}
+					handleOpenDeleteModal={handleOpenDeleteModal}
+					handleRedirectToUpdate={handleRedirectToUpdate}
 				/>
 			</div>
+
+			{roleId && (
+				<ViewRoleContent
+					roleId={roleId}
+					roleName={roleName}
+					viewMode={viewMode}
+					expandedResources={expandedResources}
+					setExpandedResources={setExpandedResources}
+					handleModeChange={handleModeChange}
+					handleTabChange={handleTabChange}
+					activeTab={activeTab}
+				/>
+			)}
+
 			<DeleteRoleModal
 				isOpen={isDeleteModalOpen}
-				roleName={role.name}
+				roleName={roleName}
 				error={deleteError}
 				onCancel={handleCloseDeleteModal}
 				onConfirm={handleConfirmDelete}

@@ -4,9 +4,12 @@ import type {
 } from 'api/generated/services/sigNoz.schemas';
 
 import {
+	bottomRowSlot,
 	cloneSectionOps,
 	createDefaultPanel,
 	createPanelOps,
+	findFreeSlot,
+	itemsOverlap,
 } from '../patchOps';
 
 function item(y: number, height: number): DashboardGridItemDTO {
@@ -142,6 +145,77 @@ describe('createPanelOps', () => {
 		expect(ops[1]).toMatchObject({ op: 'add', path: '/spec/panels/p1' });
 		expect(ops[2].path).toBe('/spec/layouts/0/spec/items/-');
 		expect((ops[2].value as DashboardGridItemDTO).y).toBe(0);
+	});
+
+	it('wraps to the bottom when the last-row slot is blocked by a taller earlier-row panel', () => {
+		// Regression: the last row (top-y 6) has room at x:3, but the tall right
+		// panel spans y:0..12 into it. Placing at x:3,y:6 would overlap it, so the
+		// panel must drop to a fresh row at the bottom (y:12) instead.
+		const layouts = [
+			section([
+				itemAt(0, 0, 6, 6),
+				itemAt(6, 0, 6, 12), // tall, reaches down into the last row
+				itemAt(0, 6, 3, 6),
+			]),
+		];
+		const ops = createPanelOps({ layouts, layoutIndex: 0, panelId: 'p1', panel });
+
+		const value = ops[1].value as DashboardGridItemDTO;
+		expect(value.x).toBe(0);
+		expect(value.y).toBe(12);
+	});
+});
+
+describe('itemsOverlap', () => {
+	it('is true only when rectangles intersect on both axes', () => {
+		const a = { x: 0, y: 0, width: 6, height: 6 };
+		expect(itemsOverlap(a, { x: 3, y: 3, width: 6, height: 6 })).toBe(true);
+		// Touching edges do not overlap (half-open intervals).
+		expect(itemsOverlap(a, { x: 6, y: 0, width: 6, height: 6 })).toBe(false);
+		expect(itemsOverlap(a, { x: 0, y: 6, width: 6, height: 6 })).toBe(false);
+		// Overlaps on x only (disjoint on y) → no overlap.
+		expect(itemsOverlap(a, { x: 3, y: 6, width: 6, height: 6 })).toBe(false);
+	});
+});
+
+describe('findFreeSlot', () => {
+	it('places the first item at the origin', () => {
+		expect(findFreeSlot([], 6)).toStrictEqual({ x: 0, y: 0 });
+	});
+
+	it('fills the right of the last row when it fits and is clear', () => {
+		expect(findFreeSlot([itemAt(0, 0, 6, 6)], 6)).toStrictEqual({ x: 6, y: 0 });
+	});
+
+	it('never returns a slot that overlaps an existing item', () => {
+		const items = [itemAt(0, 0, 6, 6), itemAt(6, 0, 6, 12), itemAt(0, 6, 3, 6)];
+		const slot = findFreeSlot(items, 6);
+		const placed = { ...slot, width: 6, height: 6 };
+		expect(items.some((it) => itemsOverlap(placed, it))).toBe(false);
+		expect(slot).toStrictEqual({ x: 0, y: 12 });
+	});
+
+	it('clamps a too-wide panel to the grid width', () => {
+		// width 20 > 12 cols → clamped to 12, so it wraps below the first row.
+		expect(findFreeSlot([itemAt(0, 0, 6, 6)], 20)).toStrictEqual({ x: 0, y: 6 });
+	});
+});
+
+describe('bottomRowSlot', () => {
+	it('is the origin for an empty section', () => {
+		expect(bottomRowSlot([])).toStrictEqual({ x: 0, y: 0 });
+	});
+
+	it('drops a fresh left-edge row below the tallest reaching item', () => {
+		// max(y + height) across items: itemAt(6,0,6,12) reaches y=12.
+		const items = [itemAt(0, 0, 6, 6), itemAt(6, 0, 6, 12)];
+		expect(bottomRowSlot(items)).toStrictEqual({ x: 0, y: 12 });
+	});
+
+	it('never returns a slot that overlaps an existing item', () => {
+		const items = [itemAt(0, 0, 6, 6), itemAt(6, 0, 6, 12), itemAt(0, 6, 3, 6)];
+		const placed = { ...bottomRowSlot(items), width: 12, height: 6 };
+		expect(items.some((it) => itemsOverlap(placed, it))).toBe(false);
 	});
 });
 

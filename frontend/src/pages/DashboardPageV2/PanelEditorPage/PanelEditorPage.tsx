@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import {
 	generatePath,
 	Redirect,
@@ -7,15 +7,13 @@ import {
 } from 'react-router-dom';
 import { Typography } from '@signozhq/ui/typography';
 import Spinner from 'components/Spinner';
-import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 
 import { useDashboardFetch } from '../DashboardContainer/hooks/useDashboardFetch';
 import { useDashboardEditGuard } from '../DashboardContainer/hooks/useDashboardEditGuard';
-import { getPanelDefinition } from '../DashboardContainer/Panels/registry';
-import { buildPluginSpec } from '../DashboardContainer/Panels/utils/buildPluginSpec';
-import { buildDefaultQueries } from '../DashboardContainer/Panels/utils/buildDefaultQueries';
+import { useResolvedVariables } from '../DashboardContainer/hooks/useResolvedVariables';
 import PanelEditorContainer from '../DashboardContainer/PanelEditor';
 import type { PanelEditorHandoffState } from '../DashboardContainer/PanelEditor/panelEditorHandoff';
 import {
@@ -23,7 +21,11 @@ import {
 	parseNewPanelLayoutIndex,
 } from '../DashboardContainer/PanelEditor/newPanelRoute';
 import { useSyncVariablesForSuggestions } from '../DashboardContainer/hooks/useSyncVariablesForSuggestions';
+import { useTimeSearchParams } from '../DashboardContainer/hooks/useTimeSearchParams';
 import { createDefaultPanel } from '../DashboardContainer/patchOps';
+import { useDashboardStore } from '../DashboardContainer/store/useDashboardStore';
+import { useSeedVariableSelection } from '../DashboardContainer/VariablesBar/hooks/useSeedVariableSelection';
+import { buildNewPanelSeed } from './newPanelSeed';
 import styles from './PanelEditorPage.module.scss';
 
 /**
@@ -37,31 +39,62 @@ function PanelEditorPage(): JSX.Element {
 	}>();
 	const { search, state } = useLocation();
 	const { safeNavigate } = useSafeNavigate();
+	const timeSearch = useTimeSearchParams();
 
 	// Edits handed off from the View modal's drilldown — open the editor on these
 	// instead of the saved panel. Lost on refresh/new-tab, which falls back to saved.
 	const handoffSpec = (state as PanelEditorHandoffState | null)?.editSpec;
 
-	const { dashboard, isLoading, isError, error } =
+	const { dashboard, isLoading, isError, error, refetch } =
 		useDashboardFetch(dashboardId);
 	// Derived here (not from the store) because the editor route doesn't mount
 	// DashboardContainer, so the store's edit context may be cold on a direct URL.
-	const { isEditable, editDisabledReason } = useDashboardEditGuard(dashboard);
+	const { isEditable, isLocked, canEditDashboard, editDisabledReason } =
+		useDashboardEditGuard(dashboard);
+
+	// On a refresh/direct URL this route is the only mount, so seed the edit
+	// context the way DashboardContainer does — during render, so the subtree's
+	// first render already sees the id (useDashboardFetchRequired throws without it).
+	const setEditContext = useDashboardStore((s) => s.setEditContext);
+	if (dashboard?.id) {
+		setEditContext({
+			dashboardId: dashboard.id,
+			isLocked,
+			canEditDashboard,
+			refetch,
+		});
+	}
+
+	// No variables bar on this route: seed the selection and publish the resolved
+	// payload so the preview and context links get variable values after a refresh.
+	useSeedVariableSelection(dashboard);
+	useResolvedVariables(dashboard);
 
 	// Feed variables to the query builder autocomplete inside the editor.
 	useSyncVariablesForSuggestions(dashboard);
 
+	// An explorer "Add to Dashboard" export rides the query in `compositeQuery` (V1
+	// parity). Captured once at mount: the editor rewrites `compositeQuery` in the URL
+	// as the user edits, and re-reading it would churn the draft (its reset target and
+	// dirty baseline live in the initially-loaded panel).
+	const exportCompositeQuery = useGetCompositeQueryParam();
+	const exportCompositeQueryRef = useRef(exportCompositeQuery);
+
 	// A `panel/new?panelKind=…` route means "create": seed a default panel of that
-	// kind rather than looking one up. Persisted (with a real id) only on save.
+	// kind rather than looking one up (seeded from the exported query when present).
+	// Persisted (with a real id) only on save.
 	const newKind = parseNewPanelKind(panelId, search);
 	const existingPanel = dashboard?.spec.panels[panelId];
 	const panel = useMemo(() => {
 		if (newKind) {
-			return createDefaultPanel(
+			// A `compositeQuery` at mount means the explorer routed an export here.
+			const isExplorerExport = !!exportCompositeQueryRef.current;
+			const { kind, pluginSpec, queries } = buildNewPanelSeed(
 				newKind,
-				buildPluginSpec(getPanelDefinition(newKind).sections),
-				buildDefaultQueries(newKind),
+				exportCompositeQueryRef.current,
+				isExplorerExport,
 			);
+			return createDefaultPanel(kind, pluginSpec, queries);
 		}
 		if (!existingPanel) {
 			return undefined;
@@ -74,20 +107,11 @@ function PanelEditorPage(): JSX.Element {
 	const layoutIndex = parseNewPanelLayoutIndex(search);
 
 	const backToDashboard = useCallback((): void => {
-		// Carry only dashboard params; drop editor-only URL state (chiefly
-		// `compositeQuery`) so it doesn't leak into the dashboard. Time lives in Redux.
-		const params = new URLSearchParams();
-		const variables = new URLSearchParams(search).get(QueryParams.variables);
-		if (variables) {
-			params.set(QueryParams.variables, variables);
-		}
-		const query = params.toString();
-		safeNavigate(
-			`${generatePath(ROUTES.DASHBOARD, { dashboardId })}${
-				query ? `?${query}` : ''
-			}`,
-		);
-	}, [safeNavigate, dashboardId, search]);
+		// Drop editor-only URL state (variables come from the persisted store), but carry
+		// time so a custom range picked in the editor isn't reset to the dashboard default.
+		const path = generatePath(ROUTES.DASHBOARD, { dashboardId });
+		safeNavigate(timeSearch ? `${path}?${timeSearch}` : path);
+	}, [safeNavigate, dashboardId, timeSearch]);
 
 	if (isLoading) {
 		return <Spinner tip="Loading dashboard..." />;
@@ -116,6 +140,7 @@ function PanelEditorPage(): JSX.Element {
 			dashboardId={dashboardId}
 			panelId={panelId}
 			panel={panel}
+			savedPanel={existingPanel}
 			isNew={!!newKind}
 			layoutIndex={layoutIndex}
 			isEditable={isEditable}

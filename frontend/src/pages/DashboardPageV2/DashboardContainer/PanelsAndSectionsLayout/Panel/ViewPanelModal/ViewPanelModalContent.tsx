@@ -1,8 +1,9 @@
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import ContextMenu from 'periscope/components/ContextMenu';
+import ListColumnsEditor from 'pages/DashboardPageV2/DashboardContainer/PanelEditor/ListColumnsEditor/ListColumnsEditor';
 import PanelEditorQueryBuilder from 'pages/DashboardPageV2/DashboardContainer/PanelEditor/PanelEditorQueryBuilder/PanelEditorQueryBuilder';
 import PreviewPane from 'pages/DashboardPageV2/DashboardContainer/PanelEditor/PreviewPane/PreviewPane';
 import type { DashboardPreference } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/rendererProps';
@@ -15,6 +16,11 @@ import ViewPanelModalHeader from './ViewPanelModalHeader';
 import { useViewPanelMode } from './useViewPanelMode';
 import { useViewPanelTimeWindow } from './useViewPanelTimeWindow';
 import styles from './ViewPanelModal.module.scss';
+import logEvent from 'api/common/logEvent';
+import {
+	DashboardDetailEvents,
+	DashboardEvents,
+} from 'pages/DashboardPageV2/constants/events';
 
 interface ViewPanelModalContentProps {
 	panel: DashboardtypesPanelDTO;
@@ -44,6 +50,7 @@ function ViewPanelModalContent({
 
 	const {
 		draft,
+		setSpec,
 		panelDefinition,
 		signal,
 		queryType,
@@ -54,7 +61,17 @@ function ViewPanelModalContent({
 		buildSaveSpec,
 		applyDrilldownQuery,
 	} = useViewPanelMode({ panel, panelId, time: timeOverride });
-	const { data, isFetching, error, refetch, cancelQuery, pagination } = query;
+	const {
+		data,
+		isFetching,
+		isPreviousData,
+		error,
+		refetch,
+		cancelQuery,
+		pagination,
+	} = query;
+
+	const isListPanel = draft.spec.plugin.kind === 'signoz/ListPanel';
 
 	// Grid drill-down, but filter-by-value / breakout refine this view in place. Drills the draft
 	// so it reflects in-modal edits (and the click's time range follows the per-view window).
@@ -71,6 +88,21 @@ function ViewPanelModalContent({
 	);
 	const openPanelEditor = useOpenPanelEditor();
 
+	// Modal drag-to-zoom is its own path (local window, not the grid's) — tag it distinctly.
+	const handleDragSelect = useCallback(
+		(start: number, end: number): void => {
+			if (Math.floor(start) !== Math.floor(end)) {
+				void logEvent(DashboardDetailEvents.PanelZoomed, {
+					context: 'viewModal',
+					panelType: draft.spec.plugin.kind,
+					panelId,
+				});
+			}
+			onDragSelect(start, end);
+		},
+		[onDragSelect, draft.spec.plugin.kind, panelId],
+	);
+
 	// Publish the modal's local extender for the nested no-data state; cleared on close.
 	const setViewPanelExtendWindow = useViewPanelStore(
 		(s) => s.setViewPanelExtendWindow,
@@ -84,6 +116,16 @@ function ViewPanelModalContent({
 	if (!panelDefinition) {
 		return null;
 	}
+
+	const onSwitchToEdit = (): void => {
+		// Carry the drilldown edits so the editor opens on them, not the saved panel.
+		logEvent(DashboardEvents.SWITCH_TO_EDIT_MODE, {
+			panelId: panelId,
+		});
+		openPanelEditor(panelId, {
+			handoffState: { editSpec: buildSaveSpec(draft.spec) },
+		});
+	};
 
 	return (
 		<div className={styles.content} data-testid="view-panel-modal-content">
@@ -102,10 +144,7 @@ function ViewPanelModalContent({
 						refreshWindow();
 					}
 				}}
-				onSwitchToEdit={(): void =>
-					// Carry the drilldown edits so the editor opens on them, not the saved panel.
-					openPanelEditor(panelId, { editSpec: buildSaveSpec(draft.spec) })
-				}
+				onSwitchToEdit={onSwitchToEdit}
 				panelKind={draft.spec.plugin.kind}
 				queryType={queryType}
 				signal={signal}
@@ -119,6 +158,16 @@ function ViewPanelModalContent({
 					isLoadingQueries={isFetching}
 					onStageRunQuery={runQuery}
 					onCancelQuery={cancelQuery}
+					stickyHeader={false}
+					footer={
+						isListPanel ? (
+							<ListColumnsEditor
+								spec={draft.spec}
+								onChangeSpec={setSpec}
+								signal={signal}
+							/>
+						) : undefined
+					}
 				/>
 			</div>
 			<div className={styles.body}>
@@ -128,9 +177,10 @@ function ViewPanelModalContent({
 					panelDefinition={panelDefinition}
 					data={data}
 					isFetching={isFetching}
+					isPreviousData={isPreviousData}
 					error={error}
 					refetch={refetch}
-					onDragSelect={onDragSelect}
+					onDragSelect={handleDragSelect}
 					pagination={pagination}
 					panelMode={PanelMode.STANDALONE_VIEW}
 					dashboardPreference={isolatedPreference}

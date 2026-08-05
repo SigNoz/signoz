@@ -27,7 +27,9 @@ func ExprKeys(query string) []*telemetrytypes.TelemetryFieldKey {
 			walk(node.GetChild(i))
 		}
 	}
-	walk(parseFilterQuery(query))
+	// syntax errors are ignored here; downstream re-parsing surfaces them
+	tree, _ := parseFilterQuery(query)
+	walk(tree)
 	return keys
 }
 
@@ -71,6 +73,7 @@ func ValidateVariablesInExpr(query string, variables map[string]qbtypes.Variable
 			walk(node.GetChild(i))
 		}
 	}
-	walk(parseFilterQuery(query))
+	tree, _ := parseFilterQuery(query)
+	walk(tree)
 	return err
 }

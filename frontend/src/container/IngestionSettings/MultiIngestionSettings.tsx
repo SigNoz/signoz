@@ -48,6 +48,8 @@ import { QueryParams } from 'constants/query';
 import { initialQueryMeterWithType } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { INITIAL_ALERT_THRESHOLD_STATE } from 'container/CreateAlertV2/context/constants';
+import { EvaluationWindowPreset } from 'container/CreateAlertV2/context/resolveUrlAlertPrefill';
+import { AlertThresholdMatchType } from 'container/CreateAlertV2/context/types';
 import dayjs from 'dayjs';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useGetGlobalConfig } from 'api/generated/services/global';
@@ -907,6 +909,7 @@ function MultiIngestionSettings(): JSX.Element {
 			? `[ingestion][${signal.signal}] ${keyName} has exceeded daily ingestion limit`
 			: `[ingestion][${signal.signal}] ${signal.signal} has exceeded daily ingestion limit`;
 
+		// Declare the metering prefill explicitly: "in total" + the meter window.
 		const URL = `${ROUTES.ALERTS_NEW}?${
 			QueryParams.compositeQuery
 		}=${encodeURIComponent(stringifiedQuery)}&${
@@ -915,7 +918,9 @@ function MultiIngestionSettings(): JSX.Element {
 			QueryParams.ruleName
 		}=${encodeURIComponent(ruleName)}&${
 			QueryParams.yAxisUnit
-		}=${encodeURIComponent(yAxisUnit)}`;
+		}=${encodeURIComponent(yAxisUnit)}&${QueryParams.matchType}=${
+			AlertThresholdMatchType.IN_TOTAL
+		}&${QueryParams.evaluationWindowPreset}=${EvaluationWindowPreset.METER}`;
 
 		history.push(URL);
 	};

@@ -8,7 +8,7 @@ import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Pan
 import { resolveSignal } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getBuilderQueries';
 import type { EQueryType } from 'types/common/dashboard';
 
-import type { LegendSeries } from '../hooks/useLegendSeries';
+import type { LegendSeries } from '../utils/legendSeries';
 import type { TableColumnOption } from '../hooks/useTableColumns';
 import ConfigActions from './ConfigActions/ConfigActions';
 import SectionSlot from './SectionSlot/SectionSlot';
@@ -77,8 +77,10 @@ function ConfigPane({
 	return (
 		<div className={styles.config}>
 			<header className={styles.heading}>
-				<Typography.Text>Panel settings</Typography.Text>
+				<span className={styles.marker} />
+				<Typography.Text>Panel Details</Typography.Text>
 			</header>
+			<div className={styles.divider} />
 
 			<div className={styles.group}>
 				<div className={styles.field}>
@@ -108,7 +110,7 @@ function ConfigPane({
 				<>
 					<div className={styles.divider} />
 					<div className={styles.sectionsContainer}>
-						<span className={styles.eyebrow}>Display</span>
+						<span className={styles.eyebrow}>DISPLAY OPTIONS</span>
 						<div className={styles.sections}>
 							{sections.map((config) => (
 								<SectionSlot

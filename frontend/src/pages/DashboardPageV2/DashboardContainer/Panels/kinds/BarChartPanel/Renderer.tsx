@@ -27,6 +27,7 @@ import { stepClickTimeRange } from '../../utils/drilldown/chartClickTimeRange';
 import { enrichChartClick } from '../../utils/drilldown/enrichChartClick';
 import { getBuilderQueries } from '../../utils/getBuilderQueries';
 import { getPanelTimeRange } from '../../utils/getPanelTimeRange';
+import { sortSeriesByMeanDesc } from '../../utils/sortSeriesByMean';
 
 import { buildBarChartConfig } from './utils/buildConfig';
 import { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
@@ -70,7 +71,12 @@ function BarPanelRenderer({
 
 	const flatSeries = useMemo(
 		() =>
-			flattenTimeSeries(getTimeSeriesResults(data.response), data.legendMap ?? {}),
+			sortSeriesByMeanDesc(
+				flattenTimeSeries(
+					getTimeSeriesResults(data.response),
+					data.legendMap ?? {},
+				),
+			),
 		[data.response, data.legendMap],
 	);
 
@@ -193,7 +199,7 @@ function BarPanelRenderer({
 			className={PanelStyles.panelContainer}
 		>
 			{flatSeries.length === 0 && (
-				<NoData isFetching={isFetching} onRetry={refetch} />
+				<NoData isFetching={isFetching} onRetry={refetch} panel={panel} />
 			)}
 			{flatSeries.length > 0 &&
 				containerDimensions.width > 0 &&

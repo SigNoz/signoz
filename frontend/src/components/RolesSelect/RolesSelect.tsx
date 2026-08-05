@@ -3,7 +3,7 @@ import { Select } from 'antd';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useListRoles } from 'api/generated/services/role';
-import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesGettableRoleDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
 import APIError from 'types/api/error';
 import { popupContainer } from 'utils/selectPopupContainer';
@@ -16,7 +16,7 @@ export interface RoleOption {
 }
 
 export function useRoles(): {
-	roles: AuthtypesRoleDTO[];
+	roles: AuthtypesGettableRoleDTO[];
 	isLoading: boolean;
 	isError: boolean;
 	error: APIError | undefined;
@@ -33,7 +33,7 @@ export function useRoles(): {
 }
 
 export function getRoleOptions(
-	roles: AuthtypesRoleDTO[],
+	roles: AuthtypesGettableRoleDTO[],
 	valueField: 'id' | 'name',
 ): RoleOption[] {
 	return roles.map((role) => ({
@@ -79,7 +79,7 @@ interface BaseProps {
 	placeholder?: string;
 	className?: string;
 	getPopupContainer?: (trigger: HTMLElement) => HTMLElement;
-	roles?: AuthtypesRoleDTO[];
+	roles?: AuthtypesGettableRoleDTO[];
 	loading?: boolean;
 	isError?: boolean;
 	error?: APIError;

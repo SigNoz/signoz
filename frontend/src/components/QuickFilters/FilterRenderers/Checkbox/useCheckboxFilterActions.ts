@@ -1,5 +1,6 @@
 import {
 	IQuickFiltersConfig,
+	QuickFilterChangeEventData,
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -10,6 +11,8 @@ import {
 	applyCheckboxToggle,
 	clearFilterFromQuery,
 } from './checkboxFilterQuery';
+import { CheckedState } from '../../types';
+import { SectionType } from './v2/itemRules';
 
 interface UseCheckboxFilterActionsProps {
 	filter: IQuickFiltersConfig;
@@ -17,6 +20,7 @@ interface UseCheckboxFilterActionsProps {
 	attributeValues: string[];
 	activeQueryIndex: number;
 	onFilterChange?: ((query: Query) => void) | null;
+	onQuickFilterChange?: (data: QuickFilterChangeEventData) => void;
 }
 
 interface UseCheckboxFilterActionsReturn {
@@ -24,6 +28,8 @@ interface UseCheckboxFilterActionsReturn {
 		value: string,
 		checked: boolean,
 		isOnlyOrAllClicked: boolean,
+		previousState?: CheckedState,
+		sectionType?: SectionType,
 	) => void;
 	onClear: () => void;
 }
@@ -38,6 +44,7 @@ function useCheckboxFilterActions({
 	attributeValues,
 	activeQueryIndex,
 	onFilterChange,
+	onQuickFilterChange,
 }: UseCheckboxFilterActionsProps): UseCheckboxFilterActionsReturn {
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 
@@ -53,19 +60,37 @@ function useCheckboxFilterActions({
 		value: string,
 		checked: boolean,
 		isOnlyOrAllClicked: boolean,
+		previousState?: CheckedState,
+		sectionType?: SectionType,
 	): void => {
-		dispatch(
-			applyCheckboxToggle({
-				currentQuery,
-				activeQueryIndex,
-				filter,
-				source,
-				attributeValues,
-				value,
-				checked,
-				isOnlyOrAllClicked,
-			}),
-		);
+		const updatedQuery = applyCheckboxToggle({
+			currentQuery,
+			activeQueryIndex,
+			filter,
+			source,
+			attributeValues,
+			value,
+			checked,
+			isOnlyOrAllClicked,
+			previousState,
+			sectionType,
+		});
+
+		dispatch(updatedQuery);
+
+		if (onQuickFilterChange) {
+			const queryData = updatedQuery.builder.queryData[activeQueryIndex];
+			const expression = queryData?.filter?.expression || '';
+			const filterItemKeys = (queryData?.filters?.items || [])
+				.map((item) => item.key?.key)
+				.filter((key): key is string => !!key);
+
+			onQuickFilterChange({
+				filterKey: filter.attributeKey.key,
+				expression,
+				filterItemKeys,
+			});
+		}
 	};
 
 	const onClear = (): void => {

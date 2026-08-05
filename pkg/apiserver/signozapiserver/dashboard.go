@@ -85,6 +85,23 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v2/dashboards/{id}/migrate", handler.New(provider.authzMiddleware.EditAccess(provider.dashboardHandler.MigrateV2), handler.OpenAPIDef{
+		ID:                  "MigrateDashboardV2",
+		Tags:                []string{"dashboard"},
+		Summary:             "Migrate dashboard to v2",
+		Description:         "This endpoint retries the v1→v2 (Perses) migration on a dashboard still stored in the v1 schema and returns the v2-shape result. It is idempotent: a dashboard already in the v2 schema is returned unchanged.",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            new(dashboardtypes.GettableDashboardV2),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+	})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v2/dashboards/{id}", handler.New(provider.authzMiddleware.ViewAccess(provider.dashboardHandler.GetV2), handler.OpenAPIDef{
 		ID:                  "GetDashboardV2",
 		Tags:                []string{"dashboard"},
@@ -466,6 +483,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		Summary:             "Get query range result (v2)",
 		Description:         "This endpoint returns query range results for a panel of a v2-shape public dashboard. The panel is addressed by its key in spec.panels.",
 		Request:             nil,
+		RequestQuery:        new(dashboardtypes.PublicWidgetQueryRangeParams),
 		RequestContentType:  "",
 		Response:            new(querybuildertypesv5.QueryRangeResponse),
 		ResponseContentType: "application/json",

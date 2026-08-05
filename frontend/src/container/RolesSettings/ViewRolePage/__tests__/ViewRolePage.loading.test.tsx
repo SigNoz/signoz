@@ -1,7 +1,7 @@
 import * as roleApi from 'api/generated/services/role';
-import * as useAuthZModule from 'lib/authz/hooks/useAuthZ/useAuthZ';
-import { mockUseAuthZGrantAll } from 'lib/authz/utils/authz-test-utils';
-import { render } from 'tests/test-utils';
+import { server } from 'mocks-server/server';
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
+import { render, screen } from 'tests/test-utils';
 
 import ViewRolePage from '../ViewRolePage';
 
@@ -13,13 +13,12 @@ import {
 
 describe('ViewRolePage - Loading State', () => {
 	beforeEach(() => {
-		jest
-			.spyOn(useAuthZModule, 'useAuthZ')
-			.mockImplementation(mockUseAuthZGrantAll);
+		server.use(setupAuthzAdmin());
 	});
 
 	afterEach(() => {
 		jest.restoreAllMocks();
+		server.resetHandlers();
 	});
 
 	it('shows skeleton while fetching role', () => {
@@ -35,6 +34,24 @@ describe('ViewRolePage - Loading State', () => {
 		});
 
 		expect(document.querySelector('.ant-skeleton')).toBeInTheDocument();
+	});
+
+	it('keeps the header visible with delete disabled while fetching role', async () => {
+		jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
+			data: undefined,
+			isLoading: true,
+			isError: false,
+			error: null,
+		} as ReturnType<typeof roleApi.useGetRole>);
+
+		render(<ViewRolePage />, undefined, {
+			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
+		});
+
+		await expect(
+			screen.findByTestId('delete-button'),
+		).resolves.toBeInTheDocument();
+		expect(screen.getByTestId('delete-button')).toBeDisabled();
 	});
 
 	it('does not fetch when roleId is missing from URL', () => {

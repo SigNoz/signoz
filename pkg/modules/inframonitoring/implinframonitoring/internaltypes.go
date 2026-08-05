@@ -17,15 +17,6 @@ type groupHostStatusCounts struct {
 	Inactive int
 }
 
-// podPhaseCounts holds per-group pod counts bucketed by latest phase in window.
-type podPhaseCounts struct {
-	Pending   int
-	Running   int
-	Succeeded int
-	Failed    int
-	Unknown   int
-}
-
 // podStatusCounts holds per-group pod counts bucketed by latest kubectl-style
 // display status in window. Mirrors inframonitoringtypes.PodCountsByStatus.
 type podStatusCounts struct {
@@ -131,4 +122,62 @@ func (s checkSpec) getAllAttrs() []string {
 		out = append(out, b.RequiredAttrs...)
 	}
 	return out
+}
+
+// containerStatusCounts holds per-group container counts bucketed by latest
+// kubectl-style display status in window. Mirrors inframonitoringtypes.ContainerCountsByStatus.
+type containerStatusCounts struct {
+	// State fallback.
+	Running    int
+	Waiting    int
+	Terminated int
+
+	// Container-level reasons.
+	CrashLoopBackOff           int
+	ImagePullBackOff           int
+	ErrImagePull               int
+	CreateContainerConfigError int
+	ContainerCreating          int
+	OOMKilled                  int
+	Completed                  int
+	Error                      int
+	ContainerCannotRun         int
+
+	Unknown int
+}
+
+// containerStatusCountsToResponse copies the internal per-group status counts
+// into the public response struct.
+func containerStatusCountsToResponse(c containerStatusCounts) inframonitoringtypes.ContainerCountsByStatus {
+	return inframonitoringtypes.ContainerCountsByStatus{
+		Running:                    c.Running,
+		Waiting:                    c.Waiting,
+		Terminated:                 c.Terminated,
+		CrashLoopBackOff:           c.CrashLoopBackOff,
+		ImagePullBackOff:           c.ImagePullBackOff,
+		ErrImagePull:               c.ErrImagePull,
+		CreateContainerConfigError: c.CreateContainerConfigError,
+		ContainerCreating:          c.ContainerCreating,
+		OOMKilled:                  c.OOMKilled,
+		Completed:                  c.Completed,
+		Error:                      c.Error,
+		ContainerCannotRun:         c.ContainerCannotRun,
+		Unknown:                    c.Unknown,
+	}
+}
+
+// containerReadyCounts holds per-group container counts bucketed by latest
+// readiness in window. Mirrors inframonitoringtypes.ContainerCountsByReady.
+type containerReadyCounts struct {
+	Ready    int
+	NotReady int
+}
+
+// containerReadyCountsToResponse copies the internal per-group ready counts
+// into the public response struct.
+func containerReadyCountsToResponse(c containerReadyCounts) inframonitoringtypes.ContainerCountsByReady {
+	return inframonitoringtypes.ContainerCountsByReady{
+		Ready:    c.Ready,
+		NotReady: c.NotReady,
+	}
 }

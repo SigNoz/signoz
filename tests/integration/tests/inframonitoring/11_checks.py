@@ -83,7 +83,7 @@ SPECS = {
         "attrs": {KAP: ["k8s.deployment.name", "k8s.namespace.name"], RDP: ["k8s.cluster.name"]},
     },
     "daemonsets": {
-        "default": {KSR: ["k8s.pod.cpu.usage", "k8s.pod.memory.working_set"], KCR: ["k8s.pod.phase", "k8s.daemonset.desired_scheduled_nodes", "k8s.daemonset.current_scheduled_nodes"]},
+        "default": {KSR: ["k8s.pod.cpu.usage", "k8s.pod.memory.working_set"], KCR: ["k8s.pod.phase", "k8s.daemonset.desired_scheduled_nodes", "k8s.daemonset.current_scheduled_nodes", "k8s.daemonset.ready_nodes", "k8s.daemonset.misscheduled_nodes"]},
         "optional": {KSR: list(_PODS_OPT), KCR: list(_POD_STATUS_OPT)},
         "attrs": {KAP: ["k8s.daemonset.name", "k8s.namespace.name"], RDP: ["k8s.cluster.name"]},
     },
@@ -111,6 +111,14 @@ SPECS = {
         "default": {KSR: ["k8s.volume.available", "k8s.volume.capacity", "k8s.volume.inodes", "k8s.volume.inodes.free", "k8s.volume.inodes.used"]},
         "optional": {},
         "attrs": {KAP: ["k8s.persistentvolumeclaim.name", "k8s.namespace.name"], RDP: ["k8s.cluster.name"]},
+    },
+    "kube_containers": {
+        "default": {KSR: ["container.cpu.usage", "container.memory.working_set"], KCR: ["k8s.container.restarts", "k8s.container.ready"]},
+        "optional": {
+            KSR: ["k8s.container.cpu_request_utilization", "k8s.container.cpu_limit_utilization", "k8s.container.memory_request_utilization", "k8s.container.memory_limit_utilization"],
+            KCR: ["k8s.container.status.state", "k8s.container.status.reason"],
+        },
+        "attrs": {KAP: ["k8s.pod.uid", "k8s.container.name"]},
     },
 }
 

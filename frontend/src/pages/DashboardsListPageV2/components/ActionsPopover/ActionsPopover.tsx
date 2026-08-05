@@ -12,16 +12,21 @@ import {
 	LockKeyhole,
 	PenLine,
 	SquareArrowOutUpRight,
+	Tag,
 } from '@signozhq/icons';
 import { useCopyToClipboard } from 'react-use';
+import logEvent from 'api/common/logEvent';
 import {
 	cloneDashboardV2,
+	getGetDashboardV2QueryKey,
 	invalidateListDashboardsForUserV2,
 	lockDashboardV2,
 	unlockDashboardV2,
 } from 'api/generated/services/dashboard';
+import type { GetDashboardV2200 } from 'api/generated/services/sigNoz.schemas';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { DashboardListEvents } from 'pages/DashboardsListPageV2/constants/events';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
@@ -30,6 +35,7 @@ import { getAbsoluteUrl } from 'utils/basePath';
 import { openInNewTab } from 'utils/navigation';
 
 import DeleteActionItem from './DeleteActionItem';
+import EditTagsModal from './EditTagsModal';
 import RenameDashboardModal from './RenameDashboardModal';
 import styles from './ActionsPopover.module.scss';
 
@@ -39,9 +45,15 @@ interface Props {
 	dashboardName: string;
 	createdBy: string;
 	isLocked: boolean;
+	// Current tags as `key:value` strings, for the inline tag editor.
+	tags: string[];
 	// Edit permission (edit_dashboard). Read actions show regardless; edit actions are hidden without it.
 	canEdit: boolean;
 	onView: (event: React.MouseEvent<HTMLElement>) => void;
+	// A legacy (pre-v2) dashboard has no v2 spec, so the actions that operate on
+	// one (view, open, copy link, rename, edit tags, duplicate, lock) don't apply —
+	// only Delete is kept.
+	isLegacy?: boolean;
 }
 
 function ActionsPopover({
@@ -50,13 +62,16 @@ function ActionsPopover({
 	dashboardName,
 	createdBy,
 	isLocked,
+	tags,
 	canEdit,
 	onView,
+	isLegacy = false,
 }: Props): JSX.Element {
 	const [, setCopy] = useCopyToClipboard();
 	const { safeNavigate } = useSafeNavigate();
 	const { showErrorModal } = useErrorModal();
 	const [isRenameOpen, setIsRenameOpen] = useState(false);
+	const [isEditTagsOpen, setIsEditTagsOpen] = useState(false);
 
 	// Clone keeps the source's name/panels/tags as a new unlocked dashboard owned
 	// by the caller; open the copy so it can be tweaked right away.
@@ -64,6 +79,10 @@ function ActionsPopover({
 		mutationFn: () => cloneDashboardV2({ id: dashboardId }),
 		onSuccess: (response) => {
 			toast.success(`Duplicated "${dashboardName}"`);
+			void logEvent(DashboardListEvents.RowAction, {
+				action: 'duplicate',
+				dashboardId,
+			});
 			safeNavigate(
 				generatePath(ROUTES.DASHBOARD, { dashboardId: response.data.id }),
 			);
@@ -88,12 +107,47 @@ function ActionsPopover({
 				: lockDashboardV2({ id: dashboardId }),
 		onSuccess: async () => {
 			toast.success(isLocked ? 'Dashboard unlocked' : 'Dashboard locked');
+			void logEvent(DashboardListEvents.RowAction, {
+				action: isLocked ? 'unlock' : 'lock',
+				dashboardId,
+			});
+			// Patch the detail-page cache too: it uses staleTime:Infinity +
+			// refetchOnMount:false, so without this, returning to the dashboard would
+			// still show the stale (pre-toggle) lock state.
+			const key = getGetDashboardV2QueryKey({ id: dashboardId });
+			const cached = queryClient.getQueryData<GetDashboardV2200>(key);
+			if (cached) {
+				queryClient.setQueryData<GetDashboardV2200>(key, {
+					...cached,
+					data: { ...cached.data, locked: !isLocked },
+				});
+			}
 			await invalidateListDashboardsForUserV2(queryClient);
 		},
 		onError: (error: APIError) => {
 			showErrorModal(error);
 		},
 	});
+
+	const handleOpenInNewTab = (e: React.MouseEvent<HTMLElement>): void => {
+		e.stopPropagation();
+		e.preventDefault();
+		openInNewTab(link);
+		void logEvent(DashboardListEvents.RowAction, {
+			action: 'openNewTab',
+			dashboardId,
+		});
+	};
+
+	const handleCopyLink = (e: React.MouseEvent<HTMLElement>): void => {
+		e.stopPropagation();
+		e.preventDefault();
+		setCopy(getAbsoluteUrl(link));
+		void logEvent(DashboardListEvents.RowAction, {
+			action: 'copyLink',
+			dashboardId,
+		});
+	};
 
 	return (
 		<>
@@ -103,99 +157,124 @@ function ActionsPopover({
 					// row's onClick, which would navigate to the dashboard.
 					// eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events -- wrapper only guards propagation, not an interactive control
 					<div className={styles.content} onClick={(e): void => e.stopPropagation()}>
-						<Button
-							color="secondary"
-							className={styles.menuItem}
-							prefix={<Expand size={14} />}
-							onClick={onView}
-							testId="dashboard-action-view"
-						>
-							View
-						</Button>
-						<Button
-							color="secondary"
-							className={styles.menuItem}
-							prefix={<SquareArrowOutUpRight size={14} />}
-							onClick={(e): void => {
-								e.stopPropagation();
-								e.preventDefault();
-								openInNewTab(link);
-							}}
-							testId="dashboard-action-open-new-tab"
-						>
-							Open in New Tab
-						</Button>
-						<Button
-							color="secondary"
-							className={styles.menuItem}
-							prefix={<Link2 size={14} />}
-							onClick={(e): void => {
-								e.stopPropagation();
-								e.preventDefault();
-								setCopy(getAbsoluteUrl(link));
-							}}
-							testId="dashboard-action-copy-link"
-						>
-							Copy Link
-						</Button>
-						{canEdit && (
-							<Tooltip
-								placement="left"
-								title={
-									isLocked ? 'This dashboard is locked, so it cannot be renamed.' : ''
-								}
-							>
-								<span className={styles.menuItemWrap}>
+						{!isLegacy && (
+							<>
+								<Button
+									color="secondary"
+									className={styles.menuItem}
+									prefix={<Expand size={14} />}
+									onClick={onView}
+									testId="dashboard-action-view"
+								>
+									View
+								</Button>
+								<Button
+									color="secondary"
+									className={styles.menuItem}
+									prefix={<SquareArrowOutUpRight size={14} />}
+									onClick={handleOpenInNewTab}
+									testId="dashboard-action-open-new-tab"
+								>
+									Open in New Tab
+								</Button>
+								<Button
+									color="secondary"
+									className={styles.menuItem}
+									prefix={<Link2 size={14} />}
+									onClick={handleCopyLink}
+									testId="dashboard-action-copy-link"
+								>
+									Copy Link
+								</Button>
+								{canEdit && (
+									<Tooltip
+										placement="left"
+										title={
+											isLocked ? 'This dashboard is locked, so it cannot be renamed.' : ''
+										}
+									>
+										<span className={styles.menuItemWrap}>
+											<Button
+												color="secondary"
+												className={styles.menuItem}
+												prefix={<PenLine size={14} />}
+												disabled={isLocked}
+												onClick={(e): void => {
+													e.stopPropagation();
+													e.preventDefault();
+													if (!isLocked) {
+														setIsRenameOpen(true);
+													}
+												}}
+												testId="dashboard-action-rename"
+											>
+												Rename
+											</Button>
+										</span>
+									</Tooltip>
+								)}
+								{canEdit && (
+									<Tooltip
+										placement="left"
+										title={
+											isLocked
+												? 'This dashboard is locked, so its tags cannot be edited.'
+												: ''
+										}
+									>
+										<span className={styles.menuItemWrap}>
+											<Button
+												color="secondary"
+												className={styles.menuItem}
+												prefix={<Tag size={14} />}
+												disabled={isLocked}
+												onClick={(e): void => {
+													e.stopPropagation();
+													e.preventDefault();
+													if (!isLocked) {
+														setIsEditTagsOpen(true);
+													}
+												}}
+												testId="dashboard-action-edit-tags"
+											>
+												{tags.length > 0 ? 'Edit Tags' : 'Add Tags'}
+											</Button>
+										</span>
+									</Tooltip>
+								)}
+								{canEdit && (
 									<Button
 										color="secondary"
 										className={styles.menuItem}
-										prefix={<PenLine size={14} />}
-										disabled={isLocked}
+										prefix={<Copy size={14} />}
+										loading={isCloning}
 										onClick={(e): void => {
 											e.stopPropagation();
 											e.preventDefault();
-											if (!isLocked) {
-												setIsRenameOpen(true);
-											}
+											runClone();
 										}}
-										testId="dashboard-action-rename"
+										testId="dashboard-action-duplicate"
 									>
-										Rename
+										Duplicate
 									</Button>
-								</span>
-							</Tooltip>
-						)}
-						{canEdit && (
-							<Button
-								color="secondary"
-								className={styles.menuItem}
-								prefix={<Copy size={14} />}
-								loading={isCloning}
-								onClick={(e): void => {
-									e.stopPropagation();
-									e.preventDefault();
-									runClone();
-								}}
-								testId="dashboard-action-duplicate"
-							>
-								Duplicate
-							</Button>
-						)}
-						{canToggleLock && (
-							<Button
-								color="secondary"
-								className={styles.menuItem}
-								prefix={<LockKeyhole size={14} />}
-								loading={isTogglingLock}
-								onClick={(e): void => {
-									e.stopPropagation();
-									e.preventDefault();
-									runLockToggle();
-								}}
-								testId="dashboard-action-lock"
-							>
-								{isLocked ? 'Unlock Dashboard' : 'Lock Dashboard'}
-							</Button>
+								)}
+								{canToggleLock && (
+									<Button
+										color="secondary"
+										className={styles.menuItem}
+										prefix={<LockKeyhole size={14} />}
+										loading={isTogglingLock}
+										onClick={(e): void => {
+											e.stopPropagation();
+											e.preventDefault();
+											runLockToggle();
+										}}
+										testId="dashboard-action-lock"
+									>
+										{isLocked ? 'Unlock Dashboard' : 'Lock Dashboard'}
+									</Button>
+								)}
+							</>
 						)}
 						{canEdit && (
 							<DeleteActionItem
@@ -203,6 +282,7 @@ function ActionsPopover({
 								dashboardName={dashboardName}
 								createdBy={createdBy}
 								isLocked={isLocked}
+								showDivider={!isLegacy}
 							/>
 						)}
 					</div>
@@ -230,6 +310,12 @@ function ActionsPopover({
 				dashboardId={dashboardId}
 				currentName={dashboardName}
 				onClose={(): void => setIsRenameOpen(false)}
+			/>
+			<EditTagsModal
+				open={isEditTagsOpen}
+				dashboardId={dashboardId}
+				currentTags={tags}
+				onClose={(): void => setIsEditTagsOpen(false)}
 			/>
 		</>
 	);

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import FormattingSection from '../FormattingSection';
 
-// Auto-seeding is covered by useMetricYAxisUnit's tests; here `metricUnit` is just a prop.
+// Auto-seeding is covered by useSeedMetricUnit's tests; here `metricUnit` is just a prop.
 
 // Open the Decimals select (clicking its antd selector) and pick the option with the
 // given visible label.
@@ -93,6 +93,35 @@ describe('FormattingSection', () => {
 			<FormattingSection
 				value={{ unit: 's' }}
 				controls={{ unit: true }}
+				metricUnit="s"
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(screen.queryByLabelText('warning')).not.toBeInTheDocument();
+	});
+
+	it('warns when a column unit mismatches the metric unit', () => {
+		// metric sent in seconds, but the column is set to bytes.
+		render(
+			<FormattingSection
+				value={{ columnUnits: { A: 'By' } }}
+				controls={{ columnUnits: true }}
+				tableColumns={[{ key: 'A', label: 'A' }]}
+				metricUnit="s"
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(screen.getByLabelText('warning')).toBeInTheDocument();
+	});
+
+	it('shows no warning when the column unit matches the metric unit', () => {
+		render(
+			<FormattingSection
+				value={{ columnUnits: { A: 's' } }}
+				controls={{ columnUnits: true }}
+				tableColumns={[{ key: 'A', label: 'A' }]}
 				metricUnit="s"
 				onChange={jest.fn()}
 			/>,

@@ -12,6 +12,7 @@ import (
 	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/antlr4-go/antlr/v4"
 
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
@@ -25,6 +26,7 @@ const stringMatchingOperatorDocURL = "https://signoz.io/docs/userguide/operators
 // to convert the parsed filter expressions into ClickHouse WHERE clause.
 type filterExpressionVisitor struct {
 	context            context.Context
+	orgID              valuer.UUID
 	fieldMapper        qbtypes.FieldMapper
 	conditionBuilder   qbtypes.ConditionBuilder
 	warnings           []string
@@ -41,10 +43,13 @@ type filterExpressionVisitor struct {
 	keysWithWarnings map[string]bool
 	startNs          uint64
 	endNs            uint64
+
+	requiresCostGuard bool
 }
 
 type FilterExprVisitorOpts struct {
 	Context            context.Context
+	OrgID              valuer.UUID
 	Logger             *slog.Logger
 	FieldMapper        qbtypes.FieldMapper
 	ConditionBuilder   qbtypes.ConditionBuilder
@@ -62,6 +67,7 @@ type FilterExprVisitorOpts struct {
 func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVisitor {
 	return &filterExpressionVisitor{
 		context:            opts.Context,
+		orgID:              opts.OrgID,
 		fieldMapper:        opts.FieldMapper,
 		conditionBuilder:   opts.ConditionBuilder,
 		fieldKeys:          opts.FieldKeys,
@@ -77,9 +83,13 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 }
 
 type PreparedWhereClause struct {
-	WhereClause    *sqlbuilder.WhereClause
-	Warnings       []string
-	WarningsDocURL string
+	WhereClause *sqlbuilder.WhereClause
+	// Expr is the bare predicate ($n markers bound to opts.Builder), embeddable
+	// outside a WHERE clause (e.g. inside countIf).
+	Expr              string
+	Warnings          []string
+	WarningsDocURL    string
+	RequiresCostGuard bool
 }
 
 func (p PreparedWhereClause) IsEmpty() bool {
@@ -161,12 +171,12 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (PreparedWhere
 
 	// Return empty where clause so callers can skip the WHERE clause
 	if cond == "" || cond == SkipConditionLiteral {
-		return PreparedWhereClause{WhereClause: nil, Warnings: visitor.warnings, WarningsDocURL: visitor.mainWarnURL}, nil
+		return PreparedWhereClause{WhereClause: nil, Warnings: visitor.warnings, WarningsDocURL: visitor.mainWarnURL, RequiresCostGuard: visitor.requiresCostGuard}, nil
 	}
 
 	whereClause := sqlbuilder.NewWhereClause().AddWhereExpr(visitor.builder.Args, cond)
 
-	return PreparedWhereClause{WhereClause: whereClause, Warnings: visitor.warnings, WarningsDocURL: visitor.mainWarnURL}, nil
+	return PreparedWhereClause{WhereClause: whereClause, Expr: cond, Warnings: visitor.warnings, WarningsDocURL: visitor.mainWarnURL, RequiresCostGuard: visitor.requiresCostGuard}, nil
 }
 
 // Visit dispatches to the specific visit method based on node type.
@@ -199,6 +209,8 @@ func (v *filterExpressionVisitor) Visit(tree antlr.ParseTree) any {
 		return v.VisitValueList(t)
 	case *grammar.FullTextContext:
 		return v.VisitFullText(t)
+	case *grammar.SearchCallContext:
+		return v.VisitSearchCall(t)
 	case *grammar.FunctionCallContext:
 		return v.VisitFunctionCall(t)
 	case *grammar.FunctionParamListContext:
@@ -313,6 +325,8 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 		return v.Visit(ctx.Comparison())
 	} else if ctx.FunctionCall() != nil {
 		return v.Visit(ctx.FunctionCall())
+	} else if ctx.SearchCall() != nil {
+		return v.Visit(ctx.SearchCall())
 	} else if ctx.FullText() != nil {
 		return v.Visit(ctx.FullText())
 	}
@@ -365,26 +379,7 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 // VisitComparison handles all comparison operators.
 func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext) any {
 	key := v.Visit(ctx.Key()).(*telemetrytypes.TelemetryFieldKey)
-	matching := matchingFieldKeys(key, v.fieldKeys)
-
-	// Skip resource filtering on the main table when a sub-query covers it. Resolve
-	// ambiguity first (resource+attribute defaults to resource), then drop resource
-	// matches; skip the term if nothing remains. Empty matches flow to the builder.
-	if v.skipResourceFilter && len(matching) > 0 {
-		resolved, warning := ResolveKeys(key, matching)
-		// emit the ambiguity warning even when the term is skipped below
-		v.addWarnings([]string{warning}, len(matching) > 1)
-		filtered := []*telemetrytypes.TelemetryFieldKey{}
-		for _, k := range resolved {
-			if k.FieldContext != telemetrytypes.FieldContextResource {
-				filtered = append(filtered, k)
-			}
-		}
-		if len(filtered) == 0 {
-			return SkipConditionLiteral
-		}
-		matching = filtered
-	}
+	matching := MatchingFieldKeys(key, v.fieldKeys)
 
 	// Handle EXISTS specially
 	if ctx.EXISTS() != nil {
@@ -729,9 +724,13 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 		return ErrorConditionLiteral
 	}
 
-	value := params[1:]
+	value, err := normalizeFunctionValue(operator, functionName, params[1:])
+	if err != nil {
+		v.errors = append(v.errors, err.Error())
+		return ErrorConditionLiteral
+	}
 
-	conds, ok := v.buildConditions(key, matchingFieldKeys(key, v.fieldKeys), operator, value)
+	conds, ok := v.buildConditions(key, MatchingFieldKeys(key, v.fieldKeys), operator, value)
 	if !ok {
 		return ErrorConditionLiteral
 	}
@@ -743,6 +742,117 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 		return conds[0]
 	}
 	return v.builder.Or(conds...)
+}
+
+// normalizeFunctionValue validates and normalizes the value argument(s) of a has-family
+// function call, returning them in the wrapper slice the condition builder unwraps.
+//
+//   - has/hasToken take exactly one scalar value. More than one argument, or an array
+//     argument, is rejected rather than silently dropping the extras.
+//   - hasAny/hasAll take a set of values, supplied either as a single array literal
+//     (hasAny(k, ['a','b'])) or as several scalar arguments (hasAny(k, 'a', 'b')); the
+//     latter are folded into one list so no argument is silently ignored.
+func normalizeFunctionValue(operator qbtypes.FilterOperator, functionName string, valueParams []any) (any, error) {
+	switch operator {
+	case qbtypes.FilterOperatorHas, qbtypes.FilterOperatorHasToken:
+		if len(valueParams) != 1 {
+			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "function `%s` expects exactly one value argument", functionName)
+		}
+		if _, isArray := valueParams[0].([]any); isArray {
+			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "function `%s` expects a single scalar value, not an array", functionName)
+		}
+		return valueParams, nil
+	case qbtypes.FilterOperatorHasAny, qbtypes.FilterOperatorHasAll:
+		// A single array literal is already the value set.
+		if len(valueParams) == 1 {
+			if _, isArray := valueParams[0].([]any); isArray {
+				return valueParams, nil
+			}
+		}
+		// Otherwise fold the positional scalar arguments into one list.
+		values := make([]any, 0, len(valueParams))
+		for _, p := range valueParams {
+			if _, isArray := p.([]any); isArray {
+				return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "function `%s` expects either a single array literal or scalar values, not a mix of the two", functionName)
+			}
+			values = append(values, p)
+		}
+		return []any{values}, nil
+	}
+	return valueParams, nil
+}
+
+// VisitSearchCall handles search('term'[, body, resource, …]): a case-insensitive
+// search term plus optional field-context scopes, ORing one FilterOperatorSearch per
+// scope (no scope = keyless, covering every field).
+func (v *filterExpressionVisitor) VisitSearchCall(ctx *grammar.SearchCallContext) any {
+	// Flag scan-heavy so the statement builder attaches the cost guard.
+	v.requiresCostGuard = true
+
+	valueList := ctx.ValueList()
+	if valueList == nil {
+		v.errors = append(v.errors, "function `search` expects a search term, e.g. search('error')")
+		return ErrorConditionLiteral
+	}
+	params := valueList.AllValue()
+	if len(params) == 0 {
+		v.errors = append(v.errors, "function `search` expects a search term, e.g. search('error')")
+		return ErrorConditionLiteral
+	}
+
+	searchText, ok := searchParamText(params[0])
+	if !ok {
+		v.errors = append(v.errors, "function `search` expects a search term as its first argument, e.g. search('error')")
+		return ErrorConditionLiteral
+	}
+
+	var fieldContexts []telemetrytypes.FieldContext
+	if len(params) == 1 {
+		fieldContexts = []telemetrytypes.FieldContext{telemetrytypes.FieldContextUnspecified}
+	} else {
+		for _, p := range params[1:] {
+			scopeText, sok := searchParamText(p)
+			if !sok {
+				v.errors = append(v.errors, "function `search` expects each scope to be a context, e.g. search('error', body, resource)")
+				return ErrorConditionLiteral
+			}
+			fc, fok := telemetrytypes.FieldContextFromText(scopeText)
+			if !fok {
+				v.errors = append(v.errors, fmt.Sprintf("invalid search scope %q; expected a field context: body, attribute, resource, or log", scopeText))
+				return ErrorConditionLiteral
+			}
+			fieldContexts = append(fieldContexts, fc)
+		}
+	}
+
+	var conds []string
+	for _, fieldContext := range fieldContexts {
+		key := telemetrytypes.NewTelemetryFieldKey("", fieldContext, telemetrytypes.FieldDataTypeUnspecified)
+		scoped, cok := v.buildConditions(key, nil, qbtypes.FilterOperatorSearch, searchText)
+		if !cok {
+			return ErrorConditionLiteral
+		}
+		conds = append(conds, scoped...)
+	}
+	if len(conds) == 0 {
+		return SkipConditionLiteral
+	}
+	if len(conds) == 1 {
+		return conds[0]
+	}
+	return v.builder.Or(conds...)
+}
+
+// searchParamText returns an argument's raw token text (quoted or bare) rather than its
+// visited value, so a bare word stays literal and search(1000000) isn't "1e+06".
+func searchParamText(val grammar.IValueContext) (string, bool) {
+	if val == nil {
+		return "", false
+	}
+	if val.QUOTED_TEXT() != nil {
+		return trimQuotes(val.QUOTED_TEXT().GetText()), true
+	}
+	return val.GetText(), true
 }
 
 // VisitFunctionParamList handles the parameter list for function calls.
@@ -811,10 +921,9 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 }
 
 // buildConditions invokes the condition builder for a filter term, folding its
-// warnings/errors into visitor state. It returns the conditions and false if an error
-// was recorded.
+// warnings/errors into visitor state; returns false if an error was recorded.
 func (v *filterExpressionVisitor) buildConditions(key *telemetrytypes.TelemetryFieldKey, matching []*telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOperator, value any) ([]string, bool) {
-	conds, warns, err := v.conditionBuilder.ConditionFor(v.context, v.startNs, v.endNs, key, matching, op, value, v.builder)
+	conds, warns, err := v.conditionBuilder.ConditionFor(v.context, v.orgID, v.startNs, v.endNs, key, v.fieldKeys, qbtypes.ConditionBuilderOptions{SkipResourceFilter: v.skipResourceFilter}, op, value, v.builder)
 	if err != nil {
 		_, _, _, _, errURL, _ := errors.Unwrapb(err)
 		assignIfEmpty(&v.mainErrorURL, errURL)
@@ -870,10 +979,9 @@ func assignIfEmpty(s *string, value string) {
 	}
 }
 
-// matchingFieldKeys returns the field keys from the provided map that match the given
-// key, honoring any context/data type the user specified. It also resolves the case
-// where GetFieldKeyFromKeyText split a context off a name that legitimately contained it.
-func matchingFieldKeys(field *telemetrytypes.TelemetryFieldKey, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
+// MatchingFieldKeys returns the field keys from the map that match the given key,
+// honoring any context/data type the user specified.
+func MatchingFieldKeys(field *telemetrytypes.TelemetryFieldKey, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
 	fieldKeysForName := []*telemetrytypes.TelemetryFieldKey{}
 
 	// match by name; keep items whose context and data type match (unspecified matches any)

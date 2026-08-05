@@ -3,12 +3,12 @@ import {
 	CoretypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import * as roleApi from 'api/generated/services/role';
-import * as useAuthZModule from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import {
 	customRoleResponse,
 	managedRoleResponse,
 } from 'mocks-server/__mockdata__/roles';
-import { mockUseAuthZGrantAll } from 'lib/authz/utils/authz-test-utils';
+import { server } from 'mocks-server/server';
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 
 import * as useRolePermissionsModule from '../../hooks/useRolePermissions';
 
@@ -79,9 +79,7 @@ export const mockPermissionsData = {
 };
 
 export function mockHooksForCustomRole(): void {
-	jest
-		.spyOn(useAuthZModule, 'useAuthZ')
-		.mockImplementation(mockUseAuthZGrantAll);
+	server.use(setupAuthzAdmin());
 
 	jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
 		data: customRoleResponse,
@@ -99,9 +97,7 @@ export function mockHooksForCustomRole(): void {
 }
 
 export function mockHooksWithPermissions(permissions: unknown): void {
-	jest
-		.spyOn(useAuthZModule, 'useAuthZ')
-		.mockImplementation(mockUseAuthZGrantAll);
+	server.use(setupAuthzAdmin());
 
 	jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
 		data: customRoleResponse,
@@ -119,9 +115,7 @@ export function mockHooksWithPermissions(permissions: unknown): void {
 }
 
 export function mockHooksForManagedRole(): void {
-	jest
-		.spyOn(useAuthZModule, 'useAuthZ')
-		.mockImplementation(mockUseAuthZGrantAll);
+	server.use(setupAuthzAdmin());
 
 	jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
 		data: managedRoleResponse,

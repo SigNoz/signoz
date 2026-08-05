@@ -1,5 +1,5 @@
 """
-Integration tests for source="ai" scalar / time-series aggregations.
+Integration tests for query_type="builder_ai_query" scalar / time-series aggregations.
 
 Aggregations come in two domains, chosen per expression by the `trace.` prefix:
   - span-level (bare keys): over individual gen_ai spans (count(), sum(gen_ai.*))
@@ -130,7 +130,7 @@ def _scalar_query(
         filter_expression += f" AND {filter_extra}"
     return BuilderQuery(
         signal="traces",
-        source="ai",
+        query_type="builder_ai_query",
         name="A",
         filter_expression=filter_expression,
         aggregations=[Aggregation(expression=expression, alias=alias)],
@@ -197,7 +197,7 @@ def test_ai_scalar_trace_level_aggregations(
     # multiple trace-level aggregations in one query -> one column per aggregation
     multi = BuilderQuery(
         signal="traces",
-        source="ai",
+        query_type="builder_ai_query",
         name="A",
         filter_expression=f"service.name = '{service}'",
         aggregations=[Aggregation(expression="avg(trace.output_tokens)"), Aggregation(expression="count(trace.trace_id)")],
@@ -245,7 +245,7 @@ def test_ai_scalar_trace_level_filter_qualifies_traces(
     # the qualification also constrains delegated (span-domain) time series
     ts = BuilderQuery(
         signal="traces",
-        source="ai",
+        query_type="builder_ai_query",
         name="A",
         filter_expression=f"service.name = '{service}' AND trace.output_tokens > 100",
         aggregations=[Aggregation(expression="sum(gen_ai.usage.output_tokens)")],
@@ -301,7 +301,7 @@ def test_ai_timeseries_trace_level_aggregation(
 
     query = BuilderQuery(
         signal="traces",
-        source="ai",
+        query_type="builder_ai_query",
         name="A",
         filter_expression=f"service.name = '{service}'",
         aggregations=[Aggregation(expression="avg(trace.output_tokens)")],
@@ -334,18 +334,14 @@ def test_ai_timeseries_top_n_groups(
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-agg-topn"
-    insert_traces(
-        _ai_trace(now=now, service=service, in_tokens=10, out_tokens=300, model="gpt-4o")
-        + _ai_trace(now=now, service=service, in_tokens=10, out_tokens=100, model="gpt-4o")
-        + _ai_trace(now=now, service=service, in_tokens=10, out_tokens=50, model="gpt-4o-mini")
-    )
+    insert_traces(_ai_trace(now=now, service=service, in_tokens=10, out_tokens=300, model="gpt-4o") + _ai_trace(now=now, service=service, in_tokens=10, out_tokens=100, model="gpt-4o") + _ai_trace(now=now, service=service, in_tokens=10, out_tokens=50, model="gpt-4o-mini"))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     start_ms, end_ms = _window_ms(now)
 
     query = BuilderQuery(
         signal="traces",
-        source="ai",
+        query_type="builder_ai_query",
         name="A",
         filter_expression=f"service.name = '{service}'",
         aggregations=[Aggregation(expression="sum(trace.output_tokens)")],
@@ -413,7 +409,7 @@ def test_ai_timeseries_span_time_bucketing(
 
     query = BuilderQuery(
         signal="traces",
-        source="ai",
+        query_type="builder_ai_query",
         name="A",
         filter_expression=f"service.name = '{service}'",
         aggregations=[Aggregation(expression="avg(trace.output_tokens)")],
@@ -562,7 +558,7 @@ def test_ai_aggregation_rejections(
     # span-level and trace-level aggregations cannot be mixed in one query
     mixed = BuilderQuery(
         signal="traces",
-        source="ai",
+        query_type="builder_ai_query",
         name="A",
         filter_expression=f"service.name = '{service}'",
         aggregations=[Aggregation(expression="avg(trace.output_tokens)"), Aggregation(expression="count()")],
@@ -574,7 +570,7 @@ def test_ai_aggregation_rejections(
     # grouping by a trace-level per-trace column is rejected with a targeted error
     bad_group = BuilderQuery(
         signal="traces",
-        source="ai",
+        query_type="builder_ai_query",
         name="A",
         filter_expression=f"service.name = '{service}'",
         aggregations=[Aggregation(expression="avg(trace.output_tokens)")],
@@ -587,7 +583,7 @@ def test_ai_aggregation_rejections(
     # ordering the span list by a trace-level column is rejected with a targeted error
     bad_order = BuilderQuery(
         signal="traces",
-        source="ai",
+        query_type="builder_ai_query",
         name="A",
         filter_expression=f"service.name = '{service}'",
         order=[OrderBy(key=TelemetryFieldKey(name="trace.output_tokens"), direction="desc")],

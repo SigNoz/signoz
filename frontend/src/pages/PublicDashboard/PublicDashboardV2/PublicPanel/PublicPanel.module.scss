@@ -1,0 +1,10 @@
+.panel {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	width: 100%;
+	background: var(--l2-background);
+	border: 1px solid var(--l2-border);
+	border-radius: 4px;
+	overflow: hidden;
+}

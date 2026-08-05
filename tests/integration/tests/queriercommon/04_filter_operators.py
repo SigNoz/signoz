@@ -7,12 +7,12 @@ import pytest
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
-from fixtures.querier import get_column_data_from_response, make_query_request
+from fixtures.querier import get_all_warnings, get_column_data_from_response, make_query_request
 
 # Filter-operator coverage that 01_filter_expression.py (NOT semantics) and
 # 06_json_body.py (CONTAINS) leave out: ILIKE / NOT LIKE / NOT CONTAINS, the
 # `key:number` data-type-suffix disambiguator on an ambiguous key, and a
-# truly-unknown key (rejected as a bad request on this HEAD).
+# truly-unknown key (synthesized, query succeeds with a not-found warning).
 #
 # Data model mirrors 01_filter_expression.py::test_not_filter_expression:
 #   alpha-log: resources region="us-east"; attributes status_code=200 (number)
@@ -97,11 +97,8 @@ def test_logs_filter_key_not_found(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    """A filter on a key that exists in no context is rejected (400).
-
-    NOTE: reflects current HEAD behavior. The parked `convert-not-found-to-warning`
-    change will turn this into a 200 with a warning — update this assertion when it lands.
-    """
+    """A filter on a key that exists in no context is synthesized: the query succeeds
+    (200) with a key-not-found warning, so typos still surface."""
     now = datetime.now(tz=UTC)
     insert_logs(
         [
@@ -138,4 +135,6 @@ def test_logs_filter_key_not_found(
             }
         ],
     )
-    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.status_code == HTTPStatus.OK, response.text
+    messages = [w.get("message", "") for w in get_all_warnings(response.json())]
+    assert any("totally.unknown.key" in m and "not found" in m for m in messages), f"expected a key-not-found warning, got warnings={messages}"

@@ -35,6 +35,26 @@ export default {
 					'update',
 				],
 			},
+			{
+				kind: 'logs',
+				type: 'telemetryresource',
+				allowedVerbs: ['read'],
+			},
+			{
+				kind: 'meter-metrics',
+				type: 'telemetryresource',
+				allowedVerbs: ['read'],
+			},
+			{
+				kind: 'metrics',
+				type: 'telemetryresource',
+				allowedVerbs: ['read'],
+			},
+			{
+				kind: 'traces',
+				type: 'telemetryresource',
+				allowedVerbs: ['read'],
+			},
 		],
 		relations: {
 			assignee: ['role'],
@@ -43,7 +63,7 @@ export default {
 			delete: ['metaresource', 'role', 'serviceaccount'],
 			detach: ['metaresource', 'role', 'serviceaccount'],
 			list: ['metaresource', 'role', 'serviceaccount'],
-			read: ['metaresource', 'role', 'serviceaccount'],
+			read: ['metaresource', 'role', 'serviceaccount', 'telemetryresource'],
 			update: ['metaresource', 'role', 'serviceaccount'],
 		},
 	},

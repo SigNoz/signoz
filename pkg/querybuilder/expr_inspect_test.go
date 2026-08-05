@@ -18,7 +18,8 @@ func TestExprKeys(t *testing.T) {
 
 	// value-position tokens are not keys, unlike QueryStringToKeysSelectors
 	require.Equal(t, []string{"output_tokens"}, names("output_tokens > $threshold"))
-	require.Equal(t, []string{"trace.output_tokens"}, names("trace.output_tokens > 1000"))
+	// the trace. prefix parses into FieldContext, leaving the bare name
+	require.Equal(t, []string{"output_tokens"}, names("trace.output_tokens > 1000"))
 	require.Equal(t, []string{"a", "b"}, names("a > 1 AND b IN ('x', 'y')"))
 }
 

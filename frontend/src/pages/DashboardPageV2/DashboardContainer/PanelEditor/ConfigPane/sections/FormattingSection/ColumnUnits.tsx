@@ -11,6 +11,8 @@ interface ColumnUnitsProps {
 	columns: TableColumnOption[];
 	/** Current per-column unit map (`formatting.columnUnits`), keyed by column key. */
 	value: Record<string, string>;
+	/** Unit the selected metric was sent with; each column warns if its unit mismatches. */
+	metricUnit?: string;
 	onChange: (next: Record<string, string>) => void;
 }
 
@@ -23,6 +25,7 @@ interface ColumnUnitsProps {
 function ColumnUnits({
 	columns,
 	value,
+	metricUnit,
 	onChange,
 }: ColumnUnitsProps): JSX.Element {
 	if (columns.length === 0) {
@@ -53,6 +56,7 @@ function ColumnUnits({
 						placeholder="Select unit"
 						source={YAxisSource.DASHBOARDS}
 						value={value[column.key]}
+						initialValue={metricUnit}
 						containerClassName={styles.columnUnitSelector}
 						onChange={(unit): void => setUnit(column.key, unit)}
 					/>

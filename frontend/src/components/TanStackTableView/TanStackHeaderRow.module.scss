@@ -2,10 +2,22 @@
 	position: sticky;
 	top: 0;
 	z-index: 2;
-	padding: var(--tanstack-cell-padding-top, 0.3rem)
-		var(--tanstack-cell-padding-right, 0.3rem)
-		var(--tanstack-cell-padding-bottom, 0.3rem)
-		var(--tanstack-cell-padding-left, 0.3rem);
+	padding: var(
+			--tanstack-cell-header-padding-top-override,
+			var(--tanstack-cell-padding-top, 0.3rem)
+		)
+		var(
+			--tanstack-cell-header-padding-right-override,
+			var(--tanstack-cell-padding-right, 0.3rem)
+		)
+		var(
+			--tanstack-cell-header-padding-bottom-override,
+			var(--tanstack-cell-padding-bottom, 0.3rem)
+		)
+		var(
+			--tanstack-cell-header-padding-left-override,
+			var(--tanstack-cell-padding-left, 0.3rem)
+		);
 	transform: translate3d(
 		var(--tanstack-header-translate-x, 0px),
 		var(--tanstack-header-translate-y, 0px),
@@ -239,6 +251,7 @@
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	min-width: 0;
+	width: var(--tanstack-table-header-label-width);
 }
 
 .tanstackSortIndicator {

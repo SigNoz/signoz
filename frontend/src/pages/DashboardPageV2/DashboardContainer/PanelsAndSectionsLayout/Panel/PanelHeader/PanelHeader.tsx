@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { Fragment, useMemo } from 'react';
 import { Info, Loader } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
 import type {
@@ -15,6 +15,7 @@ import PanelHeaderSearch from './PanelHeaderSearch';
 import PanelStatusPopover from '../PanelStatus/PanelStatusPopover';
 import {
 	panelStatusFromError,
+	panelStatusFromMultipleEnabledQueries,
 	panelStatusFromWarning,
 } from '../PanelStatus/utils';
 import styles from './PanelHeader.module.scss';
@@ -74,6 +75,27 @@ function PanelHeader({
 		[warning],
 	);
 
+	// Client-derived: warn a Number panel that has more than one enabled query (#9512).
+	const multiQueryWarningDetail = useMemo(
+		() => panelStatusFromMultipleEnabledQueries(panel),
+		[panel],
+	);
+
+	/**
+	 * Hide the entire header when there's no title, description, or status to show,
+	 * and the actions menu is suppressed (editor preview).
+	 */
+	if (
+		!name &&
+		!description &&
+		!errorDetail &&
+		!warningDetail &&
+		!multiQueryWarningDetail &&
+		hideActions
+	) {
+		return <Fragment />;
+	}
+
 	return (
 		<div className={cx(styles.header, 'panel-drag-handle')}>
 			<div className={styles.headerLeft}>
@@ -115,6 +137,13 @@ function PanelHeader({
 				{errorDetail && <PanelStatusPopover variant="error" detail={errorDetail} />}
 				{warningDetail && (
 					<PanelStatusPopover variant="warning" detail={warningDetail} />
+				)}
+				{multiQueryWarningDetail && (
+					<PanelStatusPopover
+						variant="warning"
+						detail={multiQueryWarningDetail}
+						testId="panel-status-config-warning"
+					/>
 				)}
 				{/* Renders nothing when no action survives its gates (kind/role/context). */}
 				{!hideActions && (

@@ -118,6 +118,10 @@ const (
 	FilterOperatorHasToken
 	FilterOperatorHasAny
 	FilterOperatorHasAll
+
+	// FilterOperatorSearch backs search('term'): keyless, fanned out by the condition
+	// builder across every searchable column.
+	FilterOperatorSearch
 )
 
 var operatorInverseMapping = map[FilterOperator]FilterOperator{
@@ -186,7 +190,8 @@ func (f FilterOperator) IsNegativeOperator() bool {
 		FilterOperatorIn,
 		FilterOperatorExists,
 		FilterOperatorRegexp,
-		FilterOperatorContains:
+		FilterOperatorContains,
+		FilterOperatorSearch:
 		return false
 	}
 	return true
@@ -243,10 +248,11 @@ func (f FilterOperator) IsArrayFunctionOperator() bool {
 }
 
 // IsFunctionOperator reports whether the operator is a query function
-// (has/hasAny/hasAll/hasToken); these apply to the logs body column only.
+// (has/hasAny/hasAll/hasToken/search) — logs-only, and skipped by the
+// resource-fingerprint builder.
 func (f FilterOperator) IsFunctionOperator() bool {
 	switch f {
-	case FilterOperatorHas, FilterOperatorHasAny, FilterOperatorHasAll, FilterOperatorHasToken:
+	case FilterOperatorHas, FilterOperatorHasAny, FilterOperatorHasAll, FilterOperatorHasToken, FilterOperatorSearch:
 		return true
 	default:
 		return false
@@ -265,6 +271,8 @@ func (f FilterOperator) FunctionName() string {
 		return "hasAll"
 	case FilterOperatorHasToken:
 		return "hasToken"
+	case FilterOperatorSearch:
+		return "search"
 	default:
 		return ""
 	}
@@ -320,6 +328,10 @@ func (ReduceTo) Enum() []any {
 		ReduceToLast,
 		ReduceToMedian,
 	}
+}
+
+func (r ReduceTo) IsValid() bool {
+	return slices.ContainsFunc(r.Enum(), func(v any) bool { return v == r })
 }
 
 // FunctionReduceTo applies the reduceTo operator to a time series and returns a new series with the reduced value
@@ -613,15 +625,15 @@ func (o OrderBy) Copy() OrderBy {
 type SecondaryAggregation struct {
 	// stepInterval of the query
 	// if not set, it will use the step interval of the primary aggregation
-	StepInterval Step `json:"stepInterval,omitempty"`
+	StepInterval Step `json:"stepInterval,omitzero"`
 	// expression to aggregate. example: count(), sum(item_price), countIf(day > 10)
 	Expression string `json:"expression"`
 	// if any, it will be used as the alias of the aggregation in the result
 	Alias string `json:"alias,omitempty"`
 	// groupBy fields to group by
-	GroupBy []GroupByKey `json:"groupBy,omitempty"`
+	GroupBy []GroupByKey `json:"groupBy,omitzero"`
 	// order by keys and directions
-	Order []OrderBy `json:"order,omitempty"`
+	Order []OrderBy `json:"order,omitzero"`
 	// limit the maximum number of rows to return
 	Limit int `json:"limit,omitempty"`
 	// limitBy fields to limit by
@@ -691,7 +703,7 @@ type Function struct {
 	Name FunctionName `json:"name"`
 
 	// args is the arguments to the function
-	Args []FunctionArg `json:"args,omitempty"`
+	Args []FunctionArg `json:"args,omitzero"`
 }
 
 // Copy creates a deep copy of Function.

@@ -532,7 +532,7 @@ describe('Footer utils', () => {
 			['symbol', '>', 'at_least_once'],
 			['literal', 'above', 'at_least_once'],
 			['short', 'eq', 'avg'],
-			['UI-unexposed', 'above_or_equal', 'at_least_once'],
+			['inclusive', 'above_or_equal', 'at_least_once'],
 		])(
 			'round-trips %s op/matchType unchanged through the submit payload (%s / %s)',
 			(_desc, op, matchType) => {

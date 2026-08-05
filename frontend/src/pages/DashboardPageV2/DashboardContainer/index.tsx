@@ -14,7 +14,7 @@ import DashboardPageHeader from './components/DashboardPageHeader/DashboardPageH
 import LockedIndicator from './components/LockedIndicator/LockedIndicator';
 import DashboardChangedDialog from './components/DashboardChangedDialog/DashboardChangedDialog';
 import { useDashboardStaleCheck } from './hooks/useDashboardStaleCheck';
-import { Base64Icons } from './DashboardSettings/Overview/utils';
+import { resolveDashboardImage } from 'pages/DashboardPageV2/DashboardContainer/dashboardIcons';
 
 interface DashboardContainerProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
@@ -26,12 +26,17 @@ function DashboardContainer({
 	refetch,
 }: DashboardContainerProps): JSX.Element {
 	const spec = dashboard.spec;
-	const image = dashboard.image || Base64Icons[0];
+	const image = resolveDashboardImage(dashboard.image);
 	const name = spec.display.name;
 
 	useEffect(() => {
 		document.title = name;
 	}, [name]);
+
+	// Store is app-level and outlives the page: clear transient variable fetch state on
+	// unmount so the next visit doesn't inherit stale states / climbing cycle ids.
+	const resetVariableFetch = useDashboardStore((s) => s.resetVariableFetch);
+	useEffect(() => resetVariableFetch, [resetVariableFetch]);
 
 	const fullScreenHandle = useFullScreenHandle();
 
@@ -55,11 +60,7 @@ function DashboardContainer({
 	// suggests them ($variable) in the panel editor and dashboards-page builder.
 	useSyncVariablesForSuggestions(dashboard);
 
-	const staleCheck = useDashboardStaleCheck(
-		dashboard.id,
-		dashboard.updatedAt,
-		refetch,
-	);
+	const staleCheck = useDashboardStaleCheck(dashboard, refetch);
 
 	// In full screen show only the sections and panels — the header/toolbar chrome
 	// is hidden for a clean presentation view (exit with Esc).

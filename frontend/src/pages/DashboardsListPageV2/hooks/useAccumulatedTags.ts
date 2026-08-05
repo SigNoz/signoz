@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react';
 
-import type { SelectedTag } from '../types';
+// A key:value tag pair the list API reports across the org's dashboards.
+export interface TagPair {
+	key: string;
+	value: string;
+}
 
-const tagId = (tag: SelectedTag): string => `${tag.key}:${tag.value}`;
+const tagId = (tag: TagPair): string => `${tag.key}:${tag.value}`;
 
 // The list response only reports the tags present in the current (filtered) page,
-// so tags vanish from the filter options as results narrow. Accumulate every tag
-// we've ever seen so previously-surfaced tags stay selectable across refetches.
-export function useAccumulatedTags(responseTags: SelectedTag[]): SelectedTag[] {
-	const [tags, setTags] = useState<SelectedTag[]>([]);
+// so tags vanish from the suggestions as results narrow. Accumulate every tag
+// we've ever seen so previously-surfaced tags stay suggestable across refetches.
+export function useAccumulatedTags(responseTags: TagPair[]): TagPair[] {
+	const [tags, setTags] = useState<TagPair[]>([]);
 
 	useEffect(() => {
 		if (responseTags.length === 0) {

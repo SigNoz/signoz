@@ -1,6 +1,9 @@
 import { useCallback } from 'react';
 import { toast } from '@signozhq/ui/sonner';
+import logEvent from 'api/common/logEvent';
 import { cloneDeep } from 'lodash-es';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
+import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 import { v4 as uuid } from 'uuid';
 
 import { useOptimisticPatch } from '../../../hooks/useOptimisticPatch';
@@ -10,6 +13,7 @@ import {
 	panelRef,
 } from '../../../patchOps';
 import { useDashboardStore } from '../../../store/useDashboardStore';
+import { useScrollIntoViewStore } from '../../../store/useScrollIntoViewStore';
 import type { DashboardSection } from '../../../utils';
 
 interface Params {
@@ -32,6 +36,7 @@ export function useClonePanel({
 }: Params): (args: ClonePanelArgs) => Promise<void> {
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
 	const { patchAsync } = useOptimisticPatch();
+	const setScrollTargetId = useScrollIntoViewStore((s) => s.setScrollTargetId);
 
 	return useCallback(
 		async ({ panelId, layoutIndex }: ClonePanelArgs): Promise<void> => {
@@ -64,16 +69,25 @@ export function useClonePanel({
 				success: 'Panel cloned',
 				error: 'Failed to clone panel',
 				position: 'top-center',
+				duration: 2000,
+				// Defer the reveal to the toast's auto-close so the confirmation shows first.
+				onAutoClose: () => setScrollTargetId(newPanelId),
 			});
 
 			// toast.promise owns the error UX; swallow here to avoid an unhandled
 			// rejection (the optimistic cache write + settle refetch handle state).
 			try {
 				await clone;
+				void logEvent(DashboardDetailEvents.PanelAction, {
+					action: 'clone',
+					panelType: PANEL_KIND_TO_PANEL_TYPE[source.panel.spec.plugin.kind],
+					panelId,
+					dashboardId,
+				});
 			} catch {
 				// no-op
 			}
 		},
-		[sections, dashboardId, patchAsync],
+		[sections, dashboardId, patchAsync, setScrollTargetId],
 	);
 }

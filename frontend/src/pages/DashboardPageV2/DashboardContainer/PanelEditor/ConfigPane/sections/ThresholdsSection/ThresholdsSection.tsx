@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import {
@@ -12,6 +12,7 @@ import {
 	AnyThreshold,
 	ThresholdVariant,
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
+import { ThresholdColor } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/threshold';
 
 import type { TableColumnOption } from '../../../hooks/useTableColumns';
 import type { SectionEditorContext } from '../../sectionContext';
@@ -22,7 +23,7 @@ import TableThresholdRow from './rows/TableThresholdRow';
 import styles from './ThresholdsSection.module.scss';
 
 // New thresholds default to red (the first palette preset); the user recolors per rule.
-const DEFAULT_THRESHOLD_COLOR = '#F1575F';
+const DEFAULT_THRESHOLD_COLOR = ThresholdColor.RED;
 
 // Add-button testId per variant — kept stable so existing E2E/unit selectors hold.
 const ADD_TESTID: Record<ThresholdVariant, string> = {
@@ -62,7 +63,10 @@ type ThresholdsSectionProps = {
 	/** `variant` picks the row editor + element shape; defaults to `label`. */
 	controls?: { variant?: ThresholdVariant };
 	onChange: (next: AnyThreshold[]) => void;
-} & Pick<SectionEditorContext, 'yAxisUnit' | 'tableColumns'>;
+} & Pick<
+	SectionEditorContext,
+	'yAxisUnit' | 'tableColumns' | 'registerHeaderAction'
+>;
 
 /**
  * Edits the `thresholds` slice for every panel kind. All variants share the same
@@ -76,6 +80,7 @@ function ThresholdsSection({
 	onChange,
 	yAxisUnit,
 	tableColumns = [],
+	registerHeaderAction,
 }: ThresholdsSectionProps): JSX.Element {
 	const variant = controls?.variant ?? ThresholdVariant.LABEL;
 	const thresholds = value ?? [];
@@ -92,12 +97,17 @@ function ThresholdsSection({
 			onChange(thresholds.map((t, i) => (i === index ? next : t)));
 		};
 
-	const addThreshold = (): void => {
-		const nextIndex = thresholds.length;
-		onChange([...thresholds, defaultThreshold(variant, tableColumns)]);
-		setEditingIndex(nextIndex);
-		setUnsavedIndex(nextIndex);
-	};
+	const addThreshold = useCallback((): void => {
+		const current = value ?? [];
+		onChange([...current, defaultThreshold(variant, tableColumns)]);
+		setEditingIndex(current.length);
+		setUnsavedIndex(current.length);
+	}, [value, onChange, variant, tableColumns]);
+
+	useEffect(() => {
+		registerHeaderAction?.(addThreshold);
+		return (): void => registerHeaderAction?.(null);
+	}, [registerHeaderAction, addThreshold]);
 
 	const beginEdit = (index: number): void => {
 		editSnapshot.current = thresholds[index] ?? null;

@@ -56,13 +56,19 @@
 	margin-top: 4px;
 }
 
-// Wraps the shared chart Legend. Its width/height are set inline from the
-// computed chart dimensions, so the VirtuosoGrid inside gets the same bounded
-// box (right column / bottom rows) the uPlot charts use.
+// width/height are set inline from the computed chart dimensions; border-box
+// keeps the padding inside that height and overflow:hidden clips the
+// virtualized grid to the rectangle.
 .pieChartLegend {
 	flex: 0 0 auto;
+	box-sizing: border-box;
 	min-height: 0;
 	min-width: 0;
+	overflow: hidden;
 	padding-left: 12px;
 	padding-bottom: 12px;
+}
+
+.pieChartLegendRight {
+	padding-top: 8px;
 }

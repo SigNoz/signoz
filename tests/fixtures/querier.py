@@ -78,6 +78,7 @@ class BuilderQuery:
     signal: str
     name: str = "A"
     source: str | None = None
+    query_type: str = "builder_query"
     limit: int | None = None
     offset: int | None = None
     filter_expression: str | None = None
@@ -114,7 +115,7 @@ class BuilderQuery:
         if self.step_interval is not None:
             spec["stepInterval"] = self.step_interval
 
-        return {"type": "builder_query", "spec": spec}
+        return {"type": self.query_type, "spec": spec}
 
 
 @dataclass
@@ -174,6 +175,7 @@ def make_query_request(
     variables: dict | None = None,
     no_cache: bool = True,
     timeout: int = QUERY_TIMEOUT,
+    headers: dict | None = None,
 ) -> requests.Response:
     if format_options is None:
         format_options = {"formatTableResultForUI": False, "fillGaps": False}
@@ -193,9 +195,94 @@ def make_query_request(
     return requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
         timeout=timeout,
+        headers={"authorization": f"Bearer {token}", **(headers or {})},
+        json=payload,
+    )
+
+
+def make_preview_query_request(
+    signoz: types.SigNoz,
+    token: str,
+    start_ms: int,
+    end_ms: int,
+    queries: list[dict],
+    *,
+    request_type: str = RequestType.TIME_SERIES,
+    format_options: dict | None = None,
+    variables: dict | None = None,
+    verbose: bool = True,
+    timeout: int = QUERY_TIMEOUT,
+) -> requests.Response:
+    """Dry-run the same payload as make_query_request against /query_range/preview.
+    Verbose (the default) renders the underlying ClickHouse statement per query."""
+    if format_options is None:
+        format_options = {"formatTableResultForUI": False, "fillGaps": False}
+
+    payload = {
+        "schemaVersion": "v1",
+        "start": start_ms,
+        "end": end_ms,
+        "requestType": request_type,
+        "compositeQuery": {"queries": queries},
+        "formatOptions": format_options,
+    }
+    if variables:
+        payload["variables"] = variables
+
+    return requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range/preview"),
+        params={"verbose": str(verbose).lower()},
+        timeout=timeout,
         headers={"authorization": f"Bearer {token}"},
         json=payload,
     )
+
+
+def get_preview_statements(response: requests.Response, name: str) -> list[dict[str, Any]]:
+    """The rendered statements for the named query in a preview response."""
+    assert response.status_code == HTTPStatus.OK, response.text
+    preview = response.json()["data"]["compositeQuery"][name]
+    assert preview["valid"], f"preview for query {name} is invalid: {preview['error']}"
+    return preview["statements"]
+
+
+def get_preview_sql(response: requests.Response, name: str) -> str:
+    """The single rendered ClickHouse statement for the named query in a preview response."""
+    statements = get_preview_statements(response, name)
+    assert len(statements) == 1, f"expected 1 statement for query {name}, got {len(statements)}"
+    return statements[0]["db.statement.query"]
+
+
+def aligned_epoch(ago: timedelta, step_seconds: int = DEFAULT_STEP_INTERVAL) -> int:
+    """Epoch seconds for `now - ago`, floored to a step boundary so seeded
+    points land exactly on the query's toStartOfInterval buckets."""
+    epoch = (int((datetime.now(tz=UTC) - ago).timestamp()) // step_seconds) * step_seconds
+    if epoch % 3600 == 0:
+        epoch += step_seconds
+    return epoch
+
+
+def query_metric_values(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    signoz: types.SigNoz,
+    token: str,
+    metric_name: str,
+    start_epoch: int,
+    end_epoch: int,
+    time_agg: str,
+    space_agg: str,
+    step_interval: int = DEFAULT_STEP_INTERVAL,
+) -> list[dict]:
+    """Run a single metrics builder query over [start_epoch, end_epoch) in
+    epoch seconds and return its series values sorted by timestamp."""
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=start_epoch * 1000,
+        end_ms=end_epoch * 1000,
+        queries=[build_builder_query("A", metric_name, time_agg, space_agg, step_interval=step_interval)],
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    return sorted(get_series_values(response.json(), "A"), key=lambda v: v["timestamp"])
 
 
 def build_builder_query(
@@ -547,6 +634,7 @@ def build_scalar_query(
     having_expression: str | None = None,
     step_interval: int = DEFAULT_STEP_INTERVAL,
     disabled: bool = False,
+    functions: list[dict] | None = None,
 ) -> dict:
     spec: dict[str, Any] = {
         "name": name,
@@ -574,7 +662,39 @@ def build_scalar_query(
     if having_expression:
         spec["having"] = {"expression": having_expression}
 
+    if functions:
+        spec["functions"] = functions
+
     return {"type": "builder_query", "spec": spec}
+
+
+def build_traces_scalar_query(
+    aggregations: list[dict],
+    *,
+    name: str = "A",
+    group_by: list[dict] | None = None,
+    order: list[dict] | None = None,
+    limit: int | None = None,
+    filter_expression: str | None = None,
+    having_expression: str | None = None,
+    step_interval: int = DEFAULT_STEP_INTERVAL,
+    disabled: bool = False,
+    functions: list[dict] | None = None,
+) -> dict:
+    """build_scalar_query pinned to the traces signal, with name defaulting to 'A'."""
+    return build_scalar_query(
+        name=name,
+        signal="traces",
+        aggregations=aggregations,
+        group_by=group_by,
+        order=order,
+        limit=limit,
+        filter_expression=filter_expression,
+        having_expression=having_expression,
+        step_interval=step_interval,
+        disabled=disabled,
+        functions=functions,
+    )
 
 
 def build_raw_query(
@@ -622,7 +742,7 @@ def build_order_by(name: str, direction: str = "desc") -> dict:
     return {"key": {"name": name}, "direction": direction}
 
 
-def build_logs_aggregation(expression: str, alias: str | None = None) -> dict:
+def build_aggregation(expression: str, alias: str | None = None) -> dict:
     agg: dict[str, Any] = {"expression": expression}
     if alias:
         agg["alias"] = alias
@@ -634,13 +754,17 @@ def build_metrics_aggregation(
     time_aggregation: str,
     space_aggregation: str,
     temporality: str = "cumulative",
+    reduce_to: str | None = None,
 ) -> dict:
-    return {
+    agg = {
         "metricName": metric_name,
         "temporality": temporality,
         "timeAggregation": time_aggregation,
         "spaceAggregation": space_aggregation,
     }
+    if reduce_to:
+        agg["reduceTo"] = reduce_to
+    return agg
 
 
 def get_scalar_table_data(response_json: dict) -> list[list[Any]]:

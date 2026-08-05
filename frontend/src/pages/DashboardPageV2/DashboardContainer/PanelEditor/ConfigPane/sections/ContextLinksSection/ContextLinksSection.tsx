@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import type { DashboardLinkDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesLinkDTO } from 'api/generated/services/sigNoz.schemas';
 import type {
 	SectionEditorProps,
 	SectionKind,
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 
+import type { SectionEditorContext } from '../../sectionContext';
 import ContextLinkDialog from './ContextLinkDialog';
 import ContextLinkListItem from './ContextLinkListItem';
 import { useContextLinkVariables } from './useContextLinkVariables';
@@ -21,7 +22,9 @@ import styles from './ContextLinksSection.module.scss';
 function ContextLinksSection({
 	value,
 	onChange,
-}: SectionEditorProps<SectionKind.ContextLinks>): JSX.Element {
+	registerHeaderAction,
+}: SectionEditorProps<SectionKind.ContextLinks> &
+	Pick<SectionEditorContext, 'registerHeaderAction'>): JSX.Element {
 	const links = value ?? [];
 	const variables = useContextLinkVariables();
 
@@ -31,10 +34,20 @@ function ContextLinksSection({
 		index: null,
 	});
 
+	const openAddDialog = useCallback(
+		(): void => setDialog({ open: true, index: null }),
+		[],
+	);
+
+	useEffect(() => {
+		registerHeaderAction?.(openAddDialog);
+		return (): void => registerHeaderAction?.(null);
+	}, [registerHeaderAction, openAddDialog]);
+
 	const removeAt = (index: number): void =>
 		onChange(links.filter((_, i) => i !== index));
 
-	const handleSave = (link: DashboardLinkDTO): void => {
+	const handleSave = (link: DashboardtypesLinkDTO): void => {
 		onChange(
 			dialog.index === null
 				? [...links, link]
@@ -66,7 +79,7 @@ function ContextLinksSection({
 				color="secondary"
 				prefix={<Plus size={14} />}
 				data-testid="panel-editor-v2-add-link"
-				onClick={(): void => setDialog({ open: true, index: null })}
+				onClick={openAddDialog}
 			>
 				Add Context Link
 			</Button>

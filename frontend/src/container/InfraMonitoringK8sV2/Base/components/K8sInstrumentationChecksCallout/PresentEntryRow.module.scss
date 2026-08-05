@@ -1,0 +1,16 @@
+.entryRow {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	flex-wrap: wrap;
+	color: var(--l1-foreground);
+}
+
+.presentIcon {
+	color: var(--success-background);
+	flex-shrink: 0;
+}
+
+.divider {
+	--divider-color: var(--callout-warning-border);
+}
