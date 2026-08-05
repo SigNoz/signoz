@@ -1,11 +1,86 @@
+import { ILog } from 'types/api/logs/log';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import {
+	aggregateAttributesResourcesToObject,
 	flattenObject,
 	getDataTypes,
 	getSanitizedLogBody,
+	parseJsonStringBody,
 	recursiveParseJSON,
 } from './utils';
+
+describe('parseJsonStringBody', () => {
+	it('parses a JSON-object string into an object', () => {
+		expect(parseJsonStringBody('{"a":1,"b":{"c":2}}')).toStrictEqual({
+			a: 1,
+			b: { c: 2 },
+		});
+	});
+
+	it('parses a JSON-array string into an array', () => {
+		expect(parseJsonStringBody('[1,2,3]')).toStrictEqual([1, 2, 3]);
+	});
+
+	it('returns a plain (non-JSON) string unchanged', () => {
+		expect(parseJsonStringBody('plain log line')).toBe('plain log line');
+	});
+
+	it('returns a string that is not object/array-looking unchanged', () => {
+		expect(parseJsonStringBody('42')).toBe('42');
+	});
+
+	it('returns an invalid JSON string unchanged', () => {
+		expect(parseJsonStringBody('{not valid}')).toBe('{not valid}');
+	});
+
+	it('returns an already-object body unchanged (same reference)', () => {
+		const body = { message: 'hi', a: 1 };
+		expect(parseJsonStringBody(body)).toBe(body);
+	});
+
+	it('leaves a body larger than the 128KB parse guard as a string', () => {
+		const huge = `{"x":"${'a'.repeat(130 * 1024)}"}`;
+		expect(parseJsonStringBody(huge)).toBe(huge);
+	});
+});
+
+describe('aggregateAttributesResourcesToObject', () => {
+	const mockLog = {
+		id: 'log-1',
+		timestamp: 1234,
+		body: 'hello',
+		severity_text: 'INFO',
+		severity_number: 9,
+		attributes_string: { 'http.method': 'GET' },
+		attributes_int: { retries: 3 },
+		resources_string: { 'service.name': 'cart' },
+		scope_string: { lib: 'otel' },
+	} as unknown as ILog;
+
+	it('merges attributes_/resources_/scope_ maps and keeps scalars + body', () => {
+		const result = aggregateAttributesResourcesToObject(mockLog);
+
+		expect(result.attributes).toStrictEqual({
+			'http.method': 'GET',
+			retries: 3,
+		});
+		expect(result.resources).toStrictEqual({ 'service.name': 'cart' });
+		expect(result.scope).toStrictEqual({ lib: 'otel' });
+		expect(result.body).toBe('hello');
+		expect(result.id).toBe('log-1');
+		expect(result.severity_text).toBe('INFO');
+	});
+
+	it('does not parse a JSON-string body (leaves it raw)', () => {
+		const result = aggregateAttributesResourcesToObject({
+			...mockLog,
+			body: '{"a":1}',
+		} as unknown as ILog);
+
+		expect(result.body).toBe('{"a":1}');
+	});
+});
 
 describe('recursiveParseJSON', () => {
 	it('should return an empty object if the input is not valid JSON', () => {
