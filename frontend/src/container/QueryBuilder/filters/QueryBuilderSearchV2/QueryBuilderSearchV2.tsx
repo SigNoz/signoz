@@ -54,7 +54,7 @@ import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 
 import { selectStyle } from './config';
-import { PLACEHOLDER } from '../QueryBuilderSearch/constant';
+import { PLACEHOLDER } from './constant';
 import { TypographyText } from '../QueryBuilderSearch/style';
 import {
 	checkCommaInValue,
