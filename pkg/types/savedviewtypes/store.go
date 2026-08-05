@@ -15,8 +15,5 @@ type Store interface {
 
 	Delete(ctx context.Context, orgID string, id valuer.UUID) error
 
-	// List returns the org's saved views, optionally filtered by sourcePage
-	// (exact match) and name (substring). A zero-value sourcePage means "no
-	// filter" -- it does not match a literal empty source_page column value.
 	List(ctx context.Context, orgID string, sourcePage SourcePage, name string) ([]*SavedView, error)
 }

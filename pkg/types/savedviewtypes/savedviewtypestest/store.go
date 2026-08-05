@@ -1,9 +1,3 @@
-// Package savedviewtypestest pairs a savedviewtypes.Store with the sqlmock
-// handle used to construct it, mirroring spantypes/spantypestest: the caller
-// builds the real implementation and its mock, then wires both in here via
-// New. That keeps this package's only dependency on savedviewtypes and
-// sqlmock -- never on the concrete implsavedview package -- while still
-// letting tests assert against genuinely-generated SQL.
 package savedviewtypestest
 
 import (
