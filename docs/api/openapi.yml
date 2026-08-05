@@ -22807,9 +22807,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - saved-view:list
       - tokenizer:
-        - VIEWER
+        - saved-view:list
       summary: List saved views
       tags:
       - saved_view
@@ -22865,9 +22865,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - saved-view:create
       - tokenizer:
-        - EDITOR
+        - saved-view:create
       summary: Create saved view
       tags:
       - saved_view
@@ -22917,9 +22917,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - saved-view:delete
       - tokenizer:
-        - EDITOR
+        - saved-view:delete
       summary: Delete saved view
       tags:
       - saved_view
@@ -22980,9 +22980,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - saved-view:read
       - tokenizer:
-        - VIEWER
+        - saved-view:read
       summary: Get saved view
       tags:
       - saved_view
@@ -23036,9 +23036,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - saved-view:update
       - tokenizer:
-        - EDITOR
+        - saved-view:update
       summary: Update saved view
       tags:
       - saved_view
