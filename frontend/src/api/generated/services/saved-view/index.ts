@@ -215,11 +215,11 @@ export const useCreateSavedView = <
  * @summary Delete saved view
  */
 export const deleteSavedView = (
-	{ viewId }: DeleteSavedViewPathParameters,
+	{ id }: DeleteSavedViewPathParameters,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
-		url: `/api/v2/saved_views/${viewId}`,
+		url: `/api/v2/saved_views/${id}`,
 		method: 'DELETE',
 		signal,
 	});
@@ -294,27 +294,25 @@ export const useDeleteSavedView = <
  * @summary Get saved view
  */
 export const getSavedView = (
-	{ viewId }: GetSavedViewPathParameters,
+	{ id }: GetSavedViewPathParameters,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<GetSavedView200>({
-		url: `/api/v2/saved_views/${viewId}`,
+		url: `/api/v2/saved_views/${id}`,
 		method: 'GET',
 		signal,
 	});
 };
 
-export const getGetSavedViewQueryKey = ({
-	viewId,
-}: GetSavedViewPathParameters) => {
-	return [`/api/v2/saved_views/${viewId}`] as const;
+export const getGetSavedViewQueryKey = ({ id }: GetSavedViewPathParameters) => {
+	return [`/api/v2/saved_views/${id}`] as const;
 };
 
 export const getGetSavedViewQueryOptions = <
 	TData = Awaited<ReturnType<typeof getSavedView>>,
 	TError = ErrorType<RenderErrorResponseDTO>,
 >(
-	{ viewId }: GetSavedViewPathParameters,
+	{ id }: GetSavedViewPathParameters,
 	options?: {
 		query?: UseQueryOptions<
 			Awaited<ReturnType<typeof getSavedView>>,
@@ -325,16 +323,16 @@ export const getGetSavedViewQueryOptions = <
 ) => {
 	const { query: queryOptions } = options ?? {};
 
-	const queryKey = queryOptions?.queryKey ?? getGetSavedViewQueryKey({ viewId });
+	const queryKey = queryOptions?.queryKey ?? getGetSavedViewQueryKey({ id });
 
 	const queryFn: QueryFunction<Awaited<ReturnType<typeof getSavedView>>> = ({
 		signal,
-	}) => getSavedView({ viewId }, signal);
+	}) => getSavedView({ id }, signal);
 
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!viewId,
+		enabled: !!id,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getSavedView>>,
@@ -356,7 +354,7 @@ export function useGetSavedView<
 	TData = Awaited<ReturnType<typeof getSavedView>>,
 	TError = ErrorType<RenderErrorResponseDTO>,
 >(
-	{ viewId }: GetSavedViewPathParameters,
+	{ id }: GetSavedViewPathParameters,
 	options?: {
 		query?: UseQueryOptions<
 			Awaited<ReturnType<typeof getSavedView>>,
@@ -365,7 +363,7 @@ export function useGetSavedView<
 		>;
 	},
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getGetSavedViewQueryOptions({ viewId }, options);
+	const queryOptions = getGetSavedViewQueryOptions({ id }, options);
 
 	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
 		queryKey: QueryKey;
@@ -379,11 +377,11 @@ export function useGetSavedView<
  */
 export const invalidateGetSavedView = async (
 	queryClient: QueryClient,
-	{ viewId }: GetSavedViewPathParameters,
+	{ id }: GetSavedViewPathParameters,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
-		{ queryKey: getGetSavedViewQueryKey({ viewId }) },
+		{ queryKey: getGetSavedViewQueryKey({ id }) },
 		options,
 	);
 
@@ -395,12 +393,12 @@ export const invalidateGetSavedView = async (
  * @summary Update saved view
  */
 export const updateSavedView = (
-	{ viewId }: UpdateSavedViewPathParameters,
+	{ id }: UpdateSavedViewPathParameters,
 	savedviewtypesPostableSavedViewDTO?: BodyType<SavedviewtypesPostableSavedViewDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
-		url: `/api/v2/saved_views/${viewId}`,
+		url: `/api/v2/saved_views/${id}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		data: savedviewtypesPostableSavedViewDTO,

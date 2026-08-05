@@ -12184,10 +12184,10 @@ export type CreateSavedView200 = {
 };
 
 export type DeleteSavedViewPathParameters = {
-	viewId: string;
+	id: string;
 };
 export type GetSavedViewPathParameters = {
-	viewId: string;
+	id: string;
 };
 export type GetSavedView200 = {
 	data: SavedviewtypesSavedViewDTO;
@@ -12198,7 +12198,7 @@ export type GetSavedView200 = {
 };
 
 export type UpdateSavedViewPathParameters = {
-	viewId: string;
+	id: string;
 };
 export type GetSessionContext200 = {
 	data: AuthtypesSessionContextDTO;

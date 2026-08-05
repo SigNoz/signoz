@@ -22871,14 +22871,14 @@ paths:
       summary: Create saved view
       tags:
       - saved_view
-  /api/v2/saved_views/{viewId}:
+  /api/v2/saved_views/{id}:
     delete:
       deprecated: false
       description: Deletes a saved view by id.
       operationId: DeleteSavedView
       parameters:
       - in: path
-        name: viewId
+        name: id
         required: true
         schema:
           type: string
@@ -22929,7 +22929,7 @@ paths:
       operationId: GetSavedView
       parameters:
       - in: path
-        name: viewId
+        name: id
         required: true
         schema:
           type: string
@@ -22992,7 +22992,7 @@ paths:
       operationId: UpdateSavedView
       parameters:
       - in: path
-        name: viewId
+        name: id
         required: true
         schema:
           type: string

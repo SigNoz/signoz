@@ -53,7 +53,7 @@ func (handler *handler) GetV2(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	viewID := mux.Vars(r)["viewId"]
+	viewID := mux.Vars(r)["id"]
 	viewUUID, err := valuer.NewUUID(viewID)
 	if err != nil {
 		render.Error(w, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to parse view id"))
@@ -79,7 +79,7 @@ func (handler *handler) UpdateV2(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	viewID := mux.Vars(r)["viewId"]
+	viewID := mux.Vars(r)["id"]
 	viewUUID, err := valuer.NewUUID(viewID)
 	if err != nil {
 		render.Error(w, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to parse view id"))

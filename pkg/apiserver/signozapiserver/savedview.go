@@ -32,7 +32,7 @@ func (provider *provider) addSavedViewRoutes(router *mux.Router) error {
 		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceMetaResourceSavedView,
 			Verb:     coretypes.VerbList,
-			Category: coretypes.ActionCategoryConfigurationChange,
+			Category: coretypes.ActionCategoryDataAccess,
 			Selector: coretypes.WildcardSelector,
 		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
@@ -58,7 +58,7 @@ func (provider *provider) addSavedViewRoutes(router *mux.Router) error {
 		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceMetaResourceSavedView,
 			Verb:     coretypes.VerbCreate,
-			Category: coretypes.ActionCategoryConfigurationChange,
+			Category: coretypes.ActionCategoryDataAccess,
 			ID:       coretypes.ResponseJSONPath("data"),
 			Selector: coretypes.WildcardSelector,
 		}),
@@ -66,7 +66,7 @@ func (provider *provider) addSavedViewRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/saved_views/{viewId}", handler.New(
+	if err := router.Handle("/api/v2/saved_views/{id}", handler.New(
 		provider.authzMiddleware.CheckResources(provider.savedViewHandler.GetV2, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "GetSavedView",
@@ -85,15 +85,15 @@ func (provider *provider) addSavedViewRoutes(router *mux.Router) error {
 		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceMetaResourceSavedView,
 			Verb:     coretypes.VerbRead,
-			Category: coretypes.ActionCategoryConfigurationChange,
-			ID:       coretypes.PathParam("viewId"),
+			Category: coretypes.ActionCategoryDataAccess,
+			ID:       coretypes.PathParam("id"),
 			Selector: coretypes.IDSelector,
 		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/saved_views/{viewId}", handler.New(
+	if err := router.Handle("/api/v2/saved_views/{id}", handler.New(
 		provider.authzMiddleware.CheckResources(provider.savedViewHandler.UpdateV2, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
 		handler.OpenAPIDef{
 			ID:                  "UpdateSavedView",
@@ -112,15 +112,15 @@ func (provider *provider) addSavedViewRoutes(router *mux.Router) error {
 		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceMetaResourceSavedView,
 			Verb:     coretypes.VerbUpdate,
-			Category: coretypes.ActionCategoryConfigurationChange,
-			ID:       coretypes.PathParam("viewId"),
+			Category: coretypes.ActionCategoryDataAccess,
+			ID:       coretypes.PathParam("id"),
 			Selector: coretypes.IDSelector,
 		}),
 	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/saved_views/{viewId}", handler.New(
+	if err := router.Handle("/api/v2/saved_views/{id}", handler.New(
 		provider.authzMiddleware.CheckResources(provider.savedViewHandler.Delete, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
 		handler.OpenAPIDef{
 			ID:                  "DeleteSavedView",
@@ -139,8 +139,8 @@ func (provider *provider) addSavedViewRoutes(router *mux.Router) error {
 		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceMetaResourceSavedView,
 			Verb:     coretypes.VerbDelete,
-			Category: coretypes.ActionCategoryConfigurationChange,
-			ID:       coretypes.PathParam("viewId"),
+			Category: coretypes.ActionCategoryDataAccess,
+			ID:       coretypes.PathParam("id"),
 			Selector: coretypes.IDSelector,
 		}),
 	)).Methods(http.MethodDelete).GetError(); err != nil {
