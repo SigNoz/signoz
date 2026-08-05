@@ -132,6 +132,7 @@ export function useResizableColumns<T>({
 					onHeaderCell: (): ResizableHeaderProps => ({
 						width,
 						onResize: key && width ? handleResize(key) : undefined,
+						columnKey: key,
 					}),
 				} as Column<T>;
 			}),
