@@ -88,6 +88,11 @@ export type K8sBaseListProps<
 	getRowKey: (record: T) => string;
 	/** Function to get the item key used for selection. Can return string or SelectedItemParams. */
 	getItemKey: (record: T) => TItemKey;
+	/**
+	 * Row `data-testid`. Defaults to `row-<getRowKey(record)>` so every entity's
+	 * rows are addressable without each config having to opt in.
+	 */
+	getRowTestId?: (record: T) => string;
 	eventCategory: InfraMonitoringEvents;
 	renderEmptyState?: (
 		context: K8sBaseListEmptyStateContext,
@@ -107,6 +112,7 @@ export function K8sBaseList<
 	fetchListData,
 	getRowKey,
 	getItemKey,
+	getRowTestId,
 	eventCategory,
 	renderEmptyState,
 	extraQueryKeyParts = [],
@@ -367,6 +373,11 @@ export function K8sBaseList<
 
 	const isGroupedByAttribute = groupBy.length > 0;
 
+	const resolveRowTestId = useCallback(
+		(record: T): string => getRowTestId?.(record) ?? `row-${getRowKey(record)}`,
+		[getRowTestId, getRowKey],
+	);
+
 	// Filter columns for expanded row based on parent's hidden columns
 	const expandedRowColumns = useMemo(
 		() => tableColumns.filter((col) => !hiddenColumnIds.includes(col.id)),
@@ -388,6 +399,7 @@ export function K8sBaseList<
 				extraQueryKeyParts={extraQueryKeyParts}
 				getRowKey={getRowKey}
 				getItemKey={getItemKey}
+				getRowTestId={resolveRowTestId}
 				detailsQueryKeyPrefix={detailsQueryKeyPrefix}
 			/>
 		),
@@ -396,6 +408,7 @@ export function K8sBaseList<
 			fetchListData,
 			getRowKey,
 			getItemKey,
+			resolveRowTestId,
 			expandedRowColumns,
 			extraQueryKeyParts,
 			detailsQueryKeyPrefix,
@@ -477,6 +490,7 @@ export function K8sBaseList<
 						isLoading={showTableLoadingState}
 						getRowKey={getRowKey}
 						getItemKey={getItemKey}
+						getRowTestId={resolveRowTestId}
 						groupBy={groupBy.map((g) => ({ key: g }))}
 						getGroupKey={getGroupKeyFn}
 						onRowClick={handleRowClick}

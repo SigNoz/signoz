@@ -263,6 +263,36 @@ describe('useColumnStore', () => {
 			expect(result.current).toBe(firstSnapshot);
 		});
 
+		it.each([
+			['only hiddenColumnIds', { hiddenColumnIds: ['persisted'] }],
+			['only columnOrder', { columnOrder: ['a', 'b'] }],
+			['an empty object', {}],
+			['a wrong-typed hiddenColumnIds', { hiddenColumnIds: 'nope' }],
+		])(
+			'normalises a persisted value carrying %s so selectors never yield undefined',
+			(_label, stored) => {
+				// Once a table is in memory the selectors read its fields directly, so an
+				// un-normalised partial value returns `undefined` to callers doing
+				// `.includes(...)` — which crashed the whole infra-monitoring route.
+				localStorage.setItem(
+					'@signoz/table-columns/test-table',
+					JSON.stringify(stored),
+				);
+
+				act(() => {
+					useColumnStore.getState().initializeFromDefaults(TEST_KEY, []);
+				});
+
+				const hidden = renderHook(() => useHiddenColumnIds(TEST_KEY));
+				const order = renderHook(() => useColumnOrder(TEST_KEY));
+				const sizing = renderHook(() => useColumnSizing(TEST_KEY));
+
+				expect(Array.isArray(hidden.result.current)).toBe(true);
+				expect(Array.isArray(order.result.current)).toBe(true);
+				expect(typeof sizing.result.current).toBe('object');
+			},
+		);
+
 		it('useColumnSizing returns sizing', () => {
 			act(() => {
 				useColumnStore.getState().initializeFromDefaults(TEST_KEY, []);
