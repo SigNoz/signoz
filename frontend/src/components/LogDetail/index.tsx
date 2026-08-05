@@ -435,6 +435,8 @@ function LogDetailInner({
 
 				{isLogDetailsV2 && <LogHighlights log={log} />}
 
+				{isLogDetailsV2 && <div className="log-detail-drawer__section-divider" />}
+
 				<div className="tabs-and-search">
 					<ToggleGroupSimple
 						type="single"
