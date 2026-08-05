@@ -78,9 +78,9 @@ func Scope() scopedtraces.TraceScope {
 	}
 }
 
-// TraceAggregateFieldKeys returns the filterable+orderable aggregates as trace-context
-// keys for builder_ai_query suggestions; order-only columns would be rejected in filters.
-func TraceAggregateFieldKeys() []*telemetrytypes.TelemetryFieldKey {
+// MetadataFieldKeys returns the aggregates the metadata store surfaces as trace-context
+// keys for builder_ai_query suggestions; only filterable columns qualify.
+func MetadataFieldKeys() []*telemetrytypes.TelemetryFieldKey {
 	cols := Scope().Columns
 	keys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(cols))
 	for _, c := range cols {

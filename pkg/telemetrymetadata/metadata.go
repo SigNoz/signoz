@@ -1180,7 +1180,7 @@ func enrichWithIntrinsicMetricKeys(keys map[string][]*telemetrytypes.TelemetryFi
 // enrichWithAITraceAggregateKeys adds the computed per-trace aggregate keys for
 // builder_ai_query selectors; they are never ingested, so the scan cannot serve them.
 func enrichWithAITraceAggregateKeys(keys map[string][]*telemetrytypes.TelemetryFieldKey, selectors []*telemetrytypes.FieldKeySelector) map[string][]*telemetrytypes.TelemetryFieldKey {
-	defs := aistatementbuilder.TraceAggregateFieldKeys()
+	defs := aistatementbuilder.MetadataFieldKeys()
 	matched := make(map[string]*telemetrytypes.TelemetryFieldKey)
 	for _, selector := range selectors {
 		if selector.QueryType != qbtypes.QueryTypeBuilderAI.StringValue() {
