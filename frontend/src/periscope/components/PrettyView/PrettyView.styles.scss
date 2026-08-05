@@ -175,6 +175,13 @@
 	&__row &__value-row {
 		justify-content: space-between;
 		width: 100%;
+		// Anchor the ... to the top of the value (not centered in a tall value)
+		align-items: flex-start;
+
+		.pretty-view__actions {
+			position: sticky;
+			top: 4px;
+		}
 	}
 
 	// ... actions button — hidden by default, shown on row hover
