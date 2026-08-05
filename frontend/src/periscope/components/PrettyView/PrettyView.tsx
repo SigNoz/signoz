@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { JSONTree, KeyPath } from 'react-json-tree';
 import { useCopyToClipboard } from 'react-use';
-import { Copy, Ellipsis, Pin, PinOff } from '@signozhq/icons';
+import { Copy, Ellipsis, Loader, Pin, PinOff } from '@signozhq/icons';
 import { DropdownMenuSimple as Dropdown } from '@signozhq/ui/dropdown-menu';
 import { Input } from '@signozhq/ui/input';
 import { toast } from '@signozhq/ui/sonner';
@@ -34,6 +34,11 @@ interface MenuItem {
 	onClick: () => void;
 }
 
+export interface PrettyActionState {
+	disabled?: boolean;
+	loading?: boolean;
+}
+
 export interface PrettyViewAction {
 	key: string;
 	label: React.ReactNode;
@@ -45,6 +50,7 @@ export interface PrettyViewAction {
 	 * (e.g. anything under `events.*`).
 	 */
 	shouldHide?: (key: string, fieldKeyPath: (string | number)[]) => boolean;
+	getActionState?: (context: FieldContext) => PrettyActionState;
 }
 
 export interface VisibleActionsConfig {
@@ -67,6 +73,16 @@ export interface PrettyViewProps {
 	 */
 	pinnedFieldsValue?: string[];
 	onPinnedFieldsChange?: (next: string[]) => void;
+	/**
+	 * Optional per-leaf value renderer. Return a node to override the default
+	 * `String(value)` rendering for that leaf, or `undefined` to fall back. Used
+	 * e.g. to sanitize/format log body values (ANSI → color, unescape).
+	 */
+	renderLeafValue?: (
+		value: unknown,
+		keyPath: readonly (string | number)[],
+	) => React.ReactNode | undefined;
+	onActionMenuOpen?: (context: FieldContext) => void;
 }
 
 function PrettyView({
@@ -78,6 +94,8 @@ function PrettyView({
 	drawerKey = 'default',
 	pinnedFieldsValue,
 	onPinnedFieldsChange,
+	renderLeafValue,
+	onActionMenuOpen,
 }: PrettyViewProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const [, setCopy] = useCopyToClipboard();
@@ -183,10 +201,16 @@ function PrettyView({
 						!(action.shouldHide && action.shouldHide(leafKey, context.fieldKeyPath)),
 				);
 				visibleCustomActions.forEach((action) => {
+					const state = action.getActionState?.(context);
 					items.push({
 						key: action.key,
 						label: action.label,
-						icon: action.icon,
+						icon: state?.loading ? (
+							<Loader size={12} className="animate-spin" />
+						) : (
+							action.icon
+						),
+						disabled: state?.disabled || state?.loading,
 						onClick: (): void => {
 							action.onClick(context);
 						},
@@ -233,7 +257,10 @@ function PrettyView({
 					>
 						<span
 							className="pretty-view__actions"
-							onClick={(e): void => e.stopPropagation()}
+							onClick={(e): void => {
+								e.stopPropagation();
+								onActionMenuOpen?.(context);
+							}}
 							role="button"
 							tabIndex={0}
 						>
@@ -243,7 +270,7 @@ function PrettyView({
 				</span>
 			);
 		},
-		[buildMenuItems],
+		[buildMenuItems, onActionMenuOpen],
 	);
 
 	// eslint-disable-next-line max-params
@@ -278,15 +305,16 @@ function PrettyView({
 			...keyPath: KeyPath
 		): React.ReactNode => {
 			const forwardPath = keyPathToForward(keyPath);
+			const custom = renderLeafValue?.(value, keyPath);
 			return renderWithActions({
-				content: String(valueAsString),
+				content: custom ?? String(valueAsString),
 				fieldKey: keyPathToDisplayString(keyPath),
 				fieldKeyPath: forwardPath,
 				value,
 				isNested: typeof value === 'object' && value !== null,
 			});
 		},
-		[renderWithActions],
+		[renderWithActions, renderLeafValue],
 	);
 
 	const pinnedLabelRenderer = useCallback(

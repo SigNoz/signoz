@@ -24,16 +24,22 @@ export interface DataViewerProps {
 	data: Record<string, any>;
 	drawerKey?: string;
 	prettyViewProps?: Omit<PrettyViewProps, 'data' | 'drawerKey'>;
+	// Optional override for the JSON view + Copy button. When provided it is used
+	// verbatim (e.g. the raw record, body unparsed); otherwise `data` is
+	// stringified as before. Pretty view always renders `data`.
+	jsonString?: string;
 }
 
 function DataViewer({
 	data,
 	drawerKey = 'default',
 	prettyViewProps,
+	jsonString,
 }: DataViewerProps): JSX.Element {
 	const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Pretty);
 
-	const jsonString = useMemo(() => JSON.stringify(data, null, 2), [data]);
+	const derivedJson = useMemo(() => JSON.stringify(data, null, 2), [data]);
+	const json = jsonString ?? derivedJson;
 
 	const handleViewModeChange = (value: string): void => {
 		const next = value as ViewMode;
@@ -65,14 +71,14 @@ function DataViewer({
 					items={VIEW_MODE_OPTIONS}
 					testId="data-viewer-view-mode"
 				/>
-				<CopyButton value={jsonString} ariaLabel="Copy JSON" />
+				<CopyButton value={json} ariaLabel="Copy JSON" />
 			</div>
 
 			<div className="data-viewer__content">
 				{viewMode === ViewMode.Pretty && (
 					<PrettyView data={data} drawerKey={drawerKey} {...prettyViewProps} />
 				)}
-				{viewMode === ViewMode.Json && <JsonView data={jsonString} />}
+				{viewMode === ViewMode.Json && <JsonView data={json} />}
 			</div>
 		</div>
 	);
