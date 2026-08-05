@@ -8,7 +8,6 @@
 		"**/tests/dashboards/details/35-add-panel.spec.ts",
 		"**/tests/dashboards/details/44-edit-panel.spec.ts",
 		"**/tests/dashboards/details/56-time-range.spec.ts",
-		"**/tests/dashboards/details/67-variables.spec.ts",
 		"**/tests/dashboards/details/78-edit-mode.spec.ts",
 		"**/tests/dashboards/details/87-configure.spec.ts",
 		"**/tests/dashboards/details/95-edge-cases.spec.ts",
