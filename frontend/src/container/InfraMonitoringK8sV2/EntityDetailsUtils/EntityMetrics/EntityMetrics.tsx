@@ -21,6 +21,7 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { getMetricsExplorerUrl } from 'utils/explorerUtils';
 
 import { getDrawerDurationMs } from 'container/InfraMonitoringK8sV2/Base/useDrawerLifecycleStore';
+import { K8sDetailsWidgetInfo } from 'container/InfraMonitoringK8sV2/Base/types';
 
 import { buildEntityMetricsChartConfig } from './configBuilder';
 import ChartHeader from './ChartHeader';
@@ -37,11 +38,7 @@ import { logInfraExplorerNavigatedEvent } from 'container/InfraMonitoringK8sV2/B
 interface EntityMetricsProps<T> {
 	entity: T;
 	eventEntity: string;
-	entityWidgetInfo: {
-		title: string;
-		yAxisUnit: string;
-		docPath?: string;
-	}[];
+	entityWidgetInfo: K8sDetailsWidgetInfo[];
 	getEntityQueryPayload: (
 		node: T,
 		start: number,
@@ -197,6 +194,7 @@ function EntityMetrics<T>({
 						<ChartHeader
 							title={entityWidgetInfo[idx].title}
 							docPath={entityWidgetInfo[idx].docPath}
+							tooltip={entityWidgetInfo[idx].description}
 							metricsExplorerUrl={
 								queryPayloads[idx] && queryPayloads[idx].graphType !== PANEL_TYPES.TABLE
 									? getMetricsExplorerUrl({
