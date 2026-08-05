@@ -186,10 +186,9 @@ test.describe('Dashboards list', () => {
 		await expect(page.getByTestId('dashboard-title')).toContainText(name);
 
 		// Created through the UI, so register it for cleanup by id from the URL.
-		const created = page.url().split('/dashboard/')[1]?.split('?')[0];
-		if (created) {
-			seedIds.add(created);
-		}
+		const created = page.url().split('/dashboard/')[1]?.split('?')[0] ?? '';
+		expect(created).not.toBe('');
+		seedIds.add(created);
 	});
 
 	test('TC-10 a deleted dashboard leaves the list', async ({
