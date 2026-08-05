@@ -127,8 +127,13 @@ export const variableTextInput = (page: Page, name: string): Locator =>
  */
 export const WIDE_VIEWPORT = { width: 1920, height: 1080 };
 
+/**
+ * The overflow ("+N") tooltip listing the collapsed variables. `.first()` because the
+ * tooltip primitive renders its content twice — once visible, once as an a11y copy —
+ * so an unscoped locator is a strict-mode violation rather than a missing element.
+ */
 export const hiddenVariablesTooltip = (page: Page): Locator =>
-	page.getByTestId('hidden-variables-tooltip');
+	page.getByTestId('hidden-variables-tooltip').first();
 
 /** Resolved when the variable's options have arrived and its spinner is gone. */
 export async function awaitVariableSettled(
@@ -160,13 +165,17 @@ export async function readVariableSelection(
 	return (await variableControl(page, name).innerText()).trim();
 }
 
+/** The open option list, whichever control opened it. */
+export const anyDropdown = (page: Page): Locator =>
+	page.locator('.custom-multiselect-dropdown, .custom-select-dropdown');
+
 export async function openVariableDropdown(
 	page: Page,
 	name: string,
 ): Promise<void> {
 	await awaitVariableSettled(page, name);
 	await variableControl(page, name).click();
-	await expect(page.locator('.custom-multiselect-dropdown')).toBeVisible();
+	await expect(anyDropdown(page)).toBeVisible();
 }
 
 /**
@@ -174,8 +183,14 @@ export async function openVariableDropdown(
  * Escape leaves the control focused without re-opening it, unlike clicking away.
  */
 export async function closeVariableDropdown(page: Page): Promise<void> {
+	// Escape closes it when the control still holds focus, which a row click can move.
+	// Falling back to a click outside covers that, and is what a user does anyway —
+	// either way the close is what commits the edit.
 	await page.keyboard.press('Escape');
-	await expect(page.locator('.custom-multiselect-dropdown')).toBeHidden();
+	if (await anyDropdown(page).first().isVisible()) {
+		await page.getByTestId('dashboard-title').click();
+	}
+	await expect(anyDropdown(page).first()).toBeHidden();
 }
 
 const escapeForRegExp = (value: string): string =>
@@ -187,17 +202,19 @@ const escapeForRegExp = (value: string): string =>
  * that name, so a name-based locator stops matching halfway through an interaction.
  */
 export function optionRow(page: Page, value: string): Locator {
-	return page.locator('.custom-multiselect-dropdown .option-item').filter({
-		has: page.locator('.option-label-text', {
-			hasText: new RegExp(`^${escapeForRegExp(value)}$`),
-		}),
-	});
+	const exact = new RegExp(`^${escapeForRegExp(value)}$`);
+	// Multi-select rows carry a `.option-label-text` and, once hovered, Only / Toggle
+	// buttons whose text would break an exact match on the row itself. Single-select
+	// rows have neither — just the label — so each shape needs its own matcher.
+	const multi = page
+		.locator('.custom-multiselect-dropdown .option-item')
+		.filter({ has: page.locator('.option-label-text', { hasText: exact }) });
+	const single = page
+		.locator('.custom-select-dropdown .option-item')
+		.filter({ hasText: exact });
+	return multi.or(single);
 }
 
-/**
- * Select exactly `values` in a multi-select variable and commit them. Returns once the
- * dropdown is shut — i.e. after the single commit that closing triggers.
- */
 export async function pickVariableValues(
 	page: Page,
 	name: string,
@@ -210,13 +227,28 @@ export async function pickVariableValues(
 	// opens with every option checked, so a click would UNcheck the wanted value and
 	// leave the rest selected. "Only" collapses to exactly this option either way,
 	// and the clear icon is deliberately unavailable while the draft is all.
+	// Wait for each target to be visible before acting: the dropdown re-renders as
+	// options resolve, and a click on a row that is still arriving (or has just been
+	// replaced) hangs until the test times out.
 	const firstRow = optionRow(page, first);
+	await expect(firstRow).toBeVisible();
 	await firstRow.hover();
-	await firstRow.locator('.only-btn').click();
+	const onlyButton = firstRow.locator('.only-btn');
+	await expect(onlyButton).toBeVisible();
+	await onlyButton.click();
 
-	// Additional values then add to that selection.
+	// Additional values then add to that selection. Click the row's checkbox, not the
+	// row: the row body carries no toggle handler, so clicking it leaves the option
+	// unchecked and the value silently absent from the commit.
 	for (const value of rest) {
-		await optionRow(page, value).click();
+		const row = optionRow(page, value);
+		await expect(row).toBeVisible();
+		const checkbox = row.locator('.option-checkbox');
+		if ((await checkbox.count()) > 0) {
+			await checkbox.first().click();
+		} else {
+			await row.click();
+		}
 	}
 	await closeVariableDropdown(page);
 }
@@ -245,4 +277,23 @@ export const sectionByName = (page: Page, name: string): Locator =>
 /** Resolved when no panel on the page is still fetching. */
 export async function awaitPanelsSettled(page: Page): Promise<void> {
 	await expect(page.getByTestId('panel-refetching')).toHaveCount(0);
+}
+
+/**
+ * The values currently checked in a multi-select's list, read from the open dropdown —
+ * the closed control shows at most one tag plus a "+N", so it cannot confirm a
+ * multi-value selection on its own. Excludes the aggregate ALL row.
+ */
+export async function readCheckedOptions(
+	page: Page,
+	name: string,
+): Promise<string[]> {
+	await openVariableDropdown(page, name);
+	const labels = await page
+		.locator(
+			'.custom-multiselect-dropdown .option-item[aria-selected="true"]:not(.all-option) .option-label-text',
+		)
+		.allInnerTexts();
+	await closeVariableDropdown(page);
+	return labels.map((label) => label.trim());
 }

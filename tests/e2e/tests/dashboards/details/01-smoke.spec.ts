@@ -24,13 +24,16 @@ test.use({ viewport: WIDE_VIEWPORT });
 const seedIds = new Set<string>();
 let dashboardId = '';
 
+// Per worker: `beforeAll` runs once in each, and the v2 API rejects a duplicate name.
+const SUITE_TITLE = `detail-smoke-suite-${process.env.TEST_WORKER_INDEX ?? '0'}`;
+
 test.beforeAll(async ({ browser }) => {
 	const ctx = await newAdminContext(browser);
 	const page = await ctx.newPage();
 	try {
 		dashboardId = await createDashboardV2ViaApi(
 			page,
-			'detail-smoke-suite',
+			SUITE_TITLE,
 			customVariables.spec,
 		);
 		seedIds.add(dashboardId);
@@ -62,9 +65,7 @@ test.describe('Dashboard detail — V2 foundation', () => {
 	}) => {
 		await page.goto(dashboardV2Path(dashboardId));
 
-		await expect(page.getByTestId('dashboard-title')).toContainText(
-			'detail-smoke-suite',
-		);
+		await expect(page.getByTestId('dashboard-title')).toContainText(SUITE_TITLE);
 		await expect(variablesBar(page)).toBeVisible();
 		for (const name of ['tb_env', 'cu_service', 'cu_region']) {
 			await expect(variablePill(page, name)).toBeVisible();
