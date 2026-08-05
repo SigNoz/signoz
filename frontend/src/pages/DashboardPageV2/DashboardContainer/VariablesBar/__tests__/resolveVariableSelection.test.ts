@@ -192,6 +192,86 @@ describe('reconcileWithOptions', () => {
 		});
 	});
 
+	// A typed value is in no option list, so no refetch can invalidate it.
+	describe('customValues (typed in, never offered by the data)', () => {
+		const multi = model({
+			type: 'DYNAMIC',
+			multiSelect: true,
+			showAllOption: true,
+			dynamicAttribute: 'service.name',
+		});
+
+		it('keeps them through a re-scope that drops a fetched value', () => {
+			expect(
+				reconcileWithOptions(
+					multi,
+					{
+						value: ['frontend', 'typed-in'],
+						allSelected: false,
+						customValues: ['typed-in'],
+					},
+					['backend', 'cart'],
+				),
+			).toStrictEqual({
+				value: ['typed-in'],
+				allSelected: false,
+				customValues: ['typed-in'],
+			});
+		});
+
+		it('never re-defaults a selection made only of them', () => {
+			expect(
+				reconcileWithOptions(
+					multi,
+					{ value: ['typed-in'], allSelected: false, customValues: ['typed-in'] },
+					['backend', 'cart'],
+				),
+			).toBeNull();
+		});
+
+		// An inert marker is not worth a store write + dependent refetch to prune.
+		it('leaves a stale marker alone when it drops nothing', () => {
+			expect(
+				reconcileWithOptions(
+					multi,
+					{
+						value: ['frontend', 'typed-in'],
+						allSelected: false,
+						customValues: ['typed-in', 'removed-earlier'],
+					},
+					['frontend'],
+				),
+			).toBeNull();
+		});
+
+		it('prunes markers for values it does drop', () => {
+			expect(
+				reconcileWithOptions(
+					multi,
+					{
+						value: ['stale', 'typed-in'],
+						allSelected: false,
+						customValues: ['typed-in'],
+					},
+					['frontend'],
+				),
+			).toStrictEqual({
+				value: ['typed-in'],
+				allSelected: false,
+				customValues: ['typed-in'],
+			});
+		});
+
+		it('still drops an unmarked value the list no longer offers', () => {
+			expect(
+				reconcileWithOptions(
+					multi,
+					{ value: ['frontend', 'stale'], allSelected: false },
+					['frontend'],
+				),
+			).toStrictEqual({ value: ['frontend'], allSelected: false });
+		});
+	});
 });
 
 describe('configuredDefaultValue', () => {

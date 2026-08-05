@@ -149,7 +149,8 @@ interface ReconcileOptions {
  * left untouched — local-first). Behaviour, in order:
  * - materialize ALL to the full option set (query/custom);
  * - keep a multi-select selection outright when `preserveSelection` is set;
- * - keep a still-valid multi-select subset, dropping only invalid entries;
+ * - keep a still-valid multi-select subset, dropping only entries the list no longer
+ *   offers and the user did not type in (`customValues`);
  * - otherwise auto-pick the default (or first option) so dependent variables and
  *   panels always resolve against a usable value.
  */
@@ -178,13 +179,25 @@ export function reconcileWithOptions(
 			return null;
 		}
 
-		const valid = current.value.map(String).filter((c) => options.includes(c));
+		// A typed value is in no option list, so it is never "no longer offered".
+		const custom = new Set(current.customValues ?? []);
+		const valid = current.value
+			.map(String)
+			.filter((c) => options.includes(c) || custom.has(c));
+
 		if (valid.length === current.value.length) {
 			return null;
 		}
-		return valid.length > 0
-			? { value: valid, allSelected: false }
-			: fillDefault(model, options);
+		if (valid.length === 0) {
+			return fillDefault(model, options);
+		}
+
+		const customValues = valid.filter((v) => custom.has(v));
+		return {
+			value: valid,
+			allSelected: false,
+			...(customValues.length > 0 && { customValues }),
+		};
 	}
 
 	if (!model.multiSelect) {
