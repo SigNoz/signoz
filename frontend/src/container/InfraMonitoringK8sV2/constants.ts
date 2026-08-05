@@ -119,8 +119,6 @@ export const INFRA_MONITORING_ATTR_KEYS = {
 	SYSTEM_CPU_LOAD_AVERAGE_15M: 'system.cpu.load_average.15m',
 } as const;
 
-export const DEFAULT_PAGE_SIZE = 10;
-
 export enum InfraMonitoringEntity {
 	HOSTS = 'hosts',
 	PODS = 'pods',

@@ -2,14 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import get from 'api/browser/localstorage/get';
 import set from 'api/browser/localstorage/set';
 
-import { DEFAULT_PAGE_SIZE } from './constants';
+export const DEFAULT_PAGE_SIZE = 10;
 
-export interface IEntityColumn {
-	label: string;
-	value: string;
-	id: string;
-	canRemove: boolean;
-}
 /**
  * Custom hook to manage the page size for a table.
  * The page size is stored in local storage and is retrieved on initialization.
