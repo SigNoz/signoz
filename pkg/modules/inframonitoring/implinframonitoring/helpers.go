@@ -372,9 +372,7 @@ func (m *module) buildSamplesTblFingerprintSubQuery(metricNames []string, sample
 }
 
 // buildReducedSamplesTblFingerprintSubQuery is like buildSamplesTblFingerprintSubQuery
-// but for the reduced tables. Uses local tables: a distributed subquery inside the
-// distributed outer query is rejected by ClickHouse (distributed_product_mode = 'deny'),
-// and reduced series/samples share the same sharding key so per-shard lookup is exact.
+// but for the reduced tables.
 func (m *module) buildReducedSamplesTblFingerprintSubQuery(metricNames []string, flooredStart, flooredEnd uint64) *sqlbuilder.SelectBuilder {
 	lastSB := sqlbuilder.NewSelectBuilder()
 	lastSB.Select("reduced_fingerprint")

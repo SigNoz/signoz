@@ -40,51 +40,52 @@ POD_EXTRA_LABELS = {
     "k8s.pod.start_time": "2025-01-01T00:00:00Z",
 }
 
-ENTITY_CASES = [
-    pytest.param(
-        "/api/v2/infra_monitoring/hosts",
-        "host",
-        ["system.cpu.load_average.15m"],
-        lambda name: {"host.name": name, "os.type": "linux"},
-        lambda record: record["hostName"],
-        id="hosts",
-    ),
-    pytest.param(
-        "/api/v2/infra_monitoring/nodes",
-        "node",
-        ["k8s.node.cpu.usage", "k8s.node.memory.working_set"],
-        lambda name: {"k8s.node.name": name, "k8s.node.uid": f"{name}-uid", "k8s.cluster.name": "cluster-mr"},
-        lambda record: record["nodeName"],
-        id="nodes",
-    ),
-    pytest.param(
-        "/api/v2/infra_monitoring/pods",
-        "pod",
-        ["k8s.pod.cpu.usage", "k8s.pod.memory.working_set"],
-        lambda name: {"k8s.pod.uid": f"{name}-uid", "k8s.pod.name": name, "k8s.deployment.name": "dep-mr", **POD_EXTRA_LABELS},
-        lambda record: record["meta"]["k8s.pod.name"],
-        id="pods",
-    ),
-    pytest.param(
-        "/api/v2/infra_monitoring/clusters",
-        "cluster",
-        ["k8s.node.cpu.usage", "k8s.node.memory.working_set"],
-        lambda name: {"k8s.node.name": f"{name}-n1", "k8s.node.uid": f"{name}-n1-uid", "k8s.cluster.name": name},
-        lambda record: record["clusterName"],
-        id="clusters",
-    ),
-    pytest.param(
-        "/api/v2/infra_monitoring/deployments",
-        "deployment",
-        ["k8s.pod.cpu.usage", "k8s.pod.memory.working_set"],
-        lambda name: {"k8s.pod.uid": f"{name}-p1-uid", "k8s.pod.name": f"{name}-p1", "k8s.deployment.name": name, **POD_EXTRA_LABELS},
-        lambda record: record["deploymentName"],
-        id="deployments",
-    ),
-]
 
-
-@pytest.mark.parametrize("endpoint, prefix, metric_names, labels_of, name_of", ENTITY_CASES)
+@pytest.mark.parametrize(
+    "endpoint, prefix, metric_names, labels_of, name_of",
+    [
+        pytest.param(
+            "/api/v2/infra_monitoring/hosts",
+            "host",
+            ["system.cpu.load_average.15m"],
+            lambda name: {"host.name": name, "os.type": "linux"},
+            lambda record: record["hostName"],
+            id="hosts",
+        ),
+        pytest.param(
+            "/api/v2/infra_monitoring/nodes",
+            "node",
+            ["k8s.node.cpu.usage", "k8s.node.memory.working_set"],
+            lambda name: {"k8s.node.name": name, "k8s.node.uid": f"{name}-uid", "k8s.cluster.name": "cluster-mr"},
+            lambda record: record["nodeName"],
+            id="nodes",
+        ),
+        pytest.param(
+            "/api/v2/infra_monitoring/pods",
+            "pod",
+            ["k8s.pod.cpu.usage", "k8s.pod.memory.working_set"],
+            lambda name: {"k8s.pod.uid": f"{name}-uid", "k8s.pod.name": name, "k8s.deployment.name": "dep-mr", **POD_EXTRA_LABELS},
+            lambda record: record["meta"]["k8s.pod.name"],
+            id="pods",
+        ),
+        pytest.param(
+            "/api/v2/infra_monitoring/clusters",
+            "cluster",
+            ["k8s.node.cpu.usage", "k8s.node.memory.working_set"],
+            lambda name: {"k8s.node.name": f"{name}-n1", "k8s.node.uid": f"{name}-n1-uid", "k8s.cluster.name": name},
+            lambda record: record["clusterName"],
+            id="clusters",
+        ),
+        pytest.param(
+            "/api/v2/infra_monitoring/deployments",
+            "deployment",
+            ["k8s.pod.cpu.usage", "k8s.pod.memory.working_set"],
+            lambda name: {"k8s.pod.uid": f"{name}-p1-uid", "k8s.pod.name": f"{name}-p1", "k8s.deployment.name": name, **POD_EXTRA_LABELS},
+            lambda record: record["deploymentName"],
+            id="deployments",
+        ),
+    ],
+)
 def test_list_merges_raw_and_reduced_entities(  # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
