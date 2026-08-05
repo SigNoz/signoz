@@ -10,7 +10,7 @@ import {
 	orderByValueDelimiter,
 	splitOrderByFromString,
 } from './OrderByFilter/utils';
-import { getRemoveOrderFromValue } from './QueryBuilderSearch/utils';
+import { getRemoveOrderFromValue } from './QueryBuilderSearchV2/utils';
 
 export const handleKeyDownLimitFilter: React.KeyboardEventHandler<
 	HTMLInputElement

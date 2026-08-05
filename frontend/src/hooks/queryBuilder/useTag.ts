@@ -2,7 +2,7 @@ import { INFRA_SHORT_TO_LONG_OPERATOR_MAP } from 'constants/queryBuilder';
 import {
 	getOperatorFromValue,
 	isInNInOperator,
-} from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
+} from 'container/QueryBuilder/filters/QueryBuilderSearchV2/utils';
 import { unparse } from 'papaparse';
 import type { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 

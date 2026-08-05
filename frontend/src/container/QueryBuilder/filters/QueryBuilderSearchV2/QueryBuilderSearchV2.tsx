@@ -62,7 +62,7 @@ import {
 	getOperatorValue,
 	getTagToken,
 	isInNInOperator,
-} from '../QueryBuilderSearch/utils';
+} from './utils';
 import { filterByOperatorConfig } from '../utils';
 import QueryBuilderSearchDropdown from './QueryBuilderSearchDropdown';
 import SpanScopeSelector from './SpanScopeSelector';

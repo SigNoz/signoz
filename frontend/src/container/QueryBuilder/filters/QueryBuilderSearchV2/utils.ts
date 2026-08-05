@@ -1,7 +1,7 @@
 import { OPERATORS } from 'constants/queryBuilder';
 import { queryFilterTags } from 'hooks/queryBuilder/useTag';
 import { parse } from 'papaparse';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import type { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import { orderByValueDelimiter } from '../OrderByFilter/utils';
 
