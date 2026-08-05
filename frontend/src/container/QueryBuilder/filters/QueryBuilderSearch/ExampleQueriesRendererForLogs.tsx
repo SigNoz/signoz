@@ -1,7 +1,5 @@
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
-import './QueryBuilderSearch.styles.scss';
-
 function ExampleQueriesRendererForLogs({
 	label,
 	value,

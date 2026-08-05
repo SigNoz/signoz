@@ -1,4 +1,3 @@
-import { Check } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import styled from 'styled-components';
 
@@ -16,10 +15,6 @@ export const TypographyText = styled.span<{
 	white-space: nowrap;
 	padding-left: 8px;
 	${({ $disabled }): string => ($disabled ? 'opacity: 0.6' : '')}
-`;
-
-export const StyledCheckOutlined = styled(Check)`
-	float: right;
 `;
 
 export const TagContainer = styled(Badge).attrs({
