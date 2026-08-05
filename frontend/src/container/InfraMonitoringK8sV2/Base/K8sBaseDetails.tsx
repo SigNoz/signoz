@@ -229,6 +229,7 @@ export default function K8sBaseDetails<T>({
 		<DrawerWrapper
 			open={!!selectedItem}
 			onOpenChange={handleOpenChange}
+			testId="drawer-wrapper"
 			direction="right"
 			title={drawerTitle}
 			showCloseButton={false}

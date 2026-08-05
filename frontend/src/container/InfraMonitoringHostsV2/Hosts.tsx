@@ -213,6 +213,9 @@ function Hosts(): JSX.Element {
 				className="periscope-btn ghost"
 				type="text"
 				size="small"
+				data-testid="quick-filters-toggle"
+				aria-label="Open Filters"
+				aria-expanded={false}
 				onClick={handleFilterVisibilityChange}
 			>
 				<Filter size={14} />
@@ -235,11 +238,16 @@ function Hosts(): JSX.Element {
 									<div className={styles.quickFiltersContainerHeader}>
 										<Typography.Text>Filters</Typography.Text>
 										<Tooltip title="Collapse Filters">
-											<ArrowUpToLine
-												style={{ rotate: '270deg', cursor: 'pointer' }}
+											<button
+												type="button"
+												className={styles.collapseFiltersButton}
 												onClick={handleFilterVisibilityChange}
-												size="md"
-											/>
+												aria-label="Collapse Filters"
+												aria-expanded
+												data-testid="quick-filters-toggle"
+											>
+												<ArrowUpToLine style={{ rotate: '270deg' }} size="md" />
+											</button>
 										</Tooltip>
 									</div>
 									<QuickFilters

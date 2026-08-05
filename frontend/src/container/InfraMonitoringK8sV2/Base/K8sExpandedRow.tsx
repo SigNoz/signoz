@@ -68,6 +68,8 @@ export type K8sExpandedRowProps<T, TItemKey = string> = {
 	getRowKey?: (record: T) => string;
 	/** Function to get the item key used for selection. Defaults to getRowKey if not provided. */
 	getItemKey?: (record: T) => TItemKey;
+	/** Row `data-testid`, so members of an expanded group are addressable too. */
+	getRowTestId?: (record: T) => string;
 	/** Query key prefix for pre-caching detail data on row click */
 	detailsQueryKeyPrefix?: string;
 };
@@ -84,6 +86,7 @@ export function K8sExpandedRow<
 	extraQueryKeyParts = [],
 	getRowKey,
 	getItemKey,
+	getRowTestId,
 	detailsQueryKeyPrefix,
 }: K8sExpandedRowProps<T, TItemKey>): JSX.Element {
 	const fontSize = useInfraMonitoringFontSize();
@@ -317,6 +320,7 @@ export function K8sExpandedRow<
 						isLoading={isLoading}
 						getRowKey={getRowKey}
 						getItemKey={getItemKey}
+						getRowTestId={getRowTestId}
 						onRowClick={handleRowClick}
 						onSort={handleSort}
 						enableQueryParams={{
