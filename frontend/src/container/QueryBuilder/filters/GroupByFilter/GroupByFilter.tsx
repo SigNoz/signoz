@@ -24,7 +24,7 @@ import { SelectOption } from 'types/common/select';
 import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
-import OptionRenderer from '../QueryBuilderSearch/OptionRenderer';
+import OptionRenderer from '../OptionRenderer/OptionRenderer';
 import { GroupByFilterProps } from './GroupByFilter.interfaces';
 
 export const GroupByFilter = memo(function GroupByFilter({

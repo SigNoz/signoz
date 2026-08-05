@@ -17,7 +17,7 @@ import { ExtendedSelectOption } from 'types/common/select';
 import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
-import OptionRenderer from '../QueryBuilderSearch/OptionRenderer';
+import OptionRenderer from '../OptionRenderer/OptionRenderer';
 
 import './MetricNameSelector.styles.scss';
 
