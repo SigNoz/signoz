@@ -1,6 +1,6 @@
 import { blue, red } from '@ant-design/colors';
 
-export const RESTRICTED_SELECTED_FIELDS = ['timestamp', 'id'];
+export const RESTRICTED_SELECTED_FIELDS = ['timestamp', 'id', 'date'];
 
 export const ICON_STYLE = {
 	PLUS: { color: blue[5] },
