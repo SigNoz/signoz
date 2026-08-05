@@ -254,7 +254,7 @@ def test_saved_view_lifecycle(
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
-    view_id = response.json()["data"]
+    view_id = response.json()["data"]["id"]
 
     response = requests.post(
         signoz.self.host_configs["8080"].get(BASE_URL),
@@ -366,7 +366,7 @@ def test_create_roundtrip_preserves_zero_values(
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
-    view_id = response.json()["data"]
+    view_id = response.json()["data"]["id"]
 
     try:
         response = requests.get(
@@ -414,7 +414,7 @@ def test_selected_fields_omitted_on_create_reads_back_as_empty_list_not_null(
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
-    view_id = response.json()["data"]
+    view_id = response.json()["data"]["id"]
 
     try:
         response = requests.get(
@@ -462,7 +462,7 @@ def test_update_does_not_corrupt_zero_values(
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
-    view_id = response.json()["data"]
+    view_id = response.json()["data"]["id"]
 
     try:
         response = requests.get(
