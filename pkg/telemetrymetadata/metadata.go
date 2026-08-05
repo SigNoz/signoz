@@ -1177,8 +1177,11 @@ func enrichWithIntrinsicMetricKeys(keys map[string][]*telemetrytypes.TelemetryFi
 	return keys
 }
 
-// enrichWithAITraceAggregateKeys adds keys that can be queried for AI trace aggregate signals.
+// enrichWithAITraceAggregateKeys adds the computed per-trace aggregate keys for
+// builder_ai_query selectors; they are never ingested, so the scan cannot serve them.
 func enrichWithAITraceAggregateKeys(keys map[string][]*telemetrytypes.TelemetryFieldKey, selectors []*telemetrytypes.FieldKeySelector) map[string][]*telemetrytypes.TelemetryFieldKey {
+	defs := aistatementbuilder.TraceAggregateFieldKeys()
+	matched := make(map[string]*telemetrytypes.TelemetryFieldKey)
 	for _, selector := range selectors {
 		if selector.QueryType != qbtypes.QueryTypeBuilderAI.StringValue() {
 			continue
@@ -1186,19 +1189,16 @@ func enrichWithAITraceAggregateKeys(keys map[string][]*telemetrytypes.TelemetryF
 		if selector.Signal != telemetrytypes.SignalTraces && selector.Signal != telemetrytypes.SignalUnspecified {
 			continue
 		}
-		for _, def := range aistatementbuilder.TraceAggregateFieldKeys() {
-			if !selectorMatchesIntrinsicField(selector, *def) {
-				continue
+		for _, def := range defs {
+			if selectorMatchesIntrinsicField(selector, *def) {
+				matched[def.Name] = def
 			}
-			if slices.ContainsFunc(keys[def.Name], func(k *telemetrytypes.TelemetryFieldKey) bool {
-				return k.FieldContext == telemetrytypes.FieldContextTrace
-			}) {
-				continue // already added by an earlier selector
-			}
-			keys[def.Name] = append(keys[def.Name], def)
 		}
 	}
 
+	for name, def := range matched {
+		keys[name] = append(keys[name], def)
+	}
 	return keys
 }
 
