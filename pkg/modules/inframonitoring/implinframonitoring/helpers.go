@@ -372,11 +372,13 @@ func (m *module) buildSamplesTblFingerprintSubQuery(metricNames []string, sample
 }
 
 // buildReducedSamplesTblFingerprintSubQuery is like buildSamplesTblFingerprintSubQuery
-// but for the reduced tables.
+// but for the reduced tables. Uses local tables: a distributed subquery inside the
+// distributed outer query is rejected by ClickHouse (distributed_product_mode = 'deny'),
+// and reduced series/samples share the same sharding key so per-shard lookup is exact.
 func (m *module) buildReducedSamplesTblFingerprintSubQuery(metricNames []string, flooredStart, flooredEnd uint64) *sqlbuilder.SelectBuilder {
 	lastSB := sqlbuilder.NewSelectBuilder()
 	lastSB.Select("reduced_fingerprint")
-	lastSB.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, metricstelemetryschema.SamplesV4ReducedLastTableName))
+	lastSB.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, metricstelemetryschema.SamplesV4ReducedLastLocalTableName))
 	lastSB.Where(
 		lastSB.In("metric_name", sqlbuilder.List(metricNames)),
 		lastSB.GE("unix_milli", flooredStart),
@@ -385,7 +387,7 @@ func (m *module) buildReducedSamplesTblFingerprintSubQuery(metricNames []string,
 
 	sumSB := sqlbuilder.NewSelectBuilder()
 	sumSB.Select("reduced_fingerprint")
-	sumSB.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, metricstelemetryschema.SamplesV4ReducedSumTableName))
+	sumSB.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, metricstelemetryschema.SamplesV4ReducedSumLocalTableName))
 	sumSB.Where(
 		sumSB.In("metric_name", sqlbuilder.List(metricNames)),
 		sumSB.GE("unix_milli", flooredStart),
