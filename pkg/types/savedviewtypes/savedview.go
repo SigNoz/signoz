@@ -15,6 +15,13 @@ var (
 	ErrCodeSavedViewNotFound     = errors.MustNewCode("saved_view_not_found")
 )
 
+var (
+	SourcePageTraces  = SourcePage{valuer.NewString("traces")}
+	SourcePageLogs    = SourcePage{valuer.NewString("logs")}
+	SourcePageMetrics = SourcePage{valuer.NewString("metrics")}
+	SourcePageMeter   = SourcePage{valuer.NewString("meter")}
+)
+
 type SavedView struct {
 	bun.BaseModel `bun:"table:saved_view"`
 
@@ -43,13 +50,6 @@ type ListSavedViewsParams struct {
 type SourcePage struct {
 	valuer.String
 }
-
-var (
-	SourcePageTraces  = SourcePage{valuer.NewString("traces")}
-	SourcePageLogs    = SourcePage{valuer.NewString("logs")}
-	SourcePageMetrics = SourcePage{valuer.NewString("metrics")}
-	SourcePageMeter   = SourcePage{valuer.NewString("meter")}
-)
 
 func (SourcePage) Enum() []any {
 	return []any{

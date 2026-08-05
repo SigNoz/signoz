@@ -10,6 +10,14 @@ import (
 // SavedViewSchemaVersion is the only schemaVersion currently.
 const SavedViewSchemaVersion = "v2"
 
+var (
+	PanelTypeValue = PanelType{valuer.NewString("value")}
+	PanelTypeGraph = PanelType{valuer.NewString("graph")}
+	PanelTypeTable = PanelType{valuer.NewString("table")}
+	PanelTypeList  = PanelType{valuer.NewString("list")}
+	PanelTypeTrace = PanelType{valuer.NewString("trace")}
+)
+
 // Display holds view-rendering preferences.
 type Display struct {
 	MaxLines int    `json:"maxLines"`
@@ -36,14 +44,6 @@ type SavedViewData struct {
 type PanelType struct {
 	valuer.String
 }
-
-var (
-	PanelTypeValue = PanelType{valuer.NewString("value")}
-	PanelTypeGraph = PanelType{valuer.NewString("graph")}
-	PanelTypeTable = PanelType{valuer.NewString("table")}
-	PanelTypeList  = PanelType{valuer.NewString("list")}
-	PanelTypeTrace = PanelType{valuer.NewString("trace")}
-)
 
 func (PanelType) Enum() []any {
 	return []any{
