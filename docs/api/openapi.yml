@@ -22830,8 +22830,7 @@ paths:
               schema:
                 properties:
                   data:
-                    nullable: true
-                    type: string
+                    $ref: '#/components/schemas/TypesIdentifiable'
                   status:
                     type: string
                 required:

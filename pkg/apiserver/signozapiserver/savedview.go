@@ -4,10 +4,10 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/savedviewtypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
 
@@ -48,7 +48,7 @@ func (provider *provider) addSavedViewRoutes(router *mux.Router) error {
 			Description:         "Persists a saved view for the explore page. Returns the id of the created view.",
 			Request:             new(savedviewtypes.PostableSavedView),
 			RequestContentType:  "application/json",
-			Response:            new(valuer.UUID),
+			Response:            new(types.Identifiable),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest},
@@ -59,7 +59,7 @@ func (provider *provider) addSavedViewRoutes(router *mux.Router) error {
 			Resource: coretypes.ResourceMetaResourceSavedView,
 			Verb:     coretypes.VerbCreate,
 			Category: coretypes.ActionCategoryDataAccess,
-			ID:       coretypes.ResponseJSONPath("data"),
+			ID:       coretypes.ResponseJSONPath("data.id"),
 			Selector: coretypes.WildcardSelector,
 		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {

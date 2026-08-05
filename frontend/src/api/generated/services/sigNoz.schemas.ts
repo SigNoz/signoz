@@ -12173,10 +12173,7 @@ export type ListSavedViews200 = {
 };
 
 export type CreateSavedView200 = {
-	/**
-	 * @type string,null
-	 */
-	data: string | null;
+	data: TypesIdentifiableDTO;
 	/**
 	 * @type string
 	 */

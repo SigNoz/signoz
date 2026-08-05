@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/savedviewtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -40,7 +41,7 @@ func (handler *handler) CreateV2(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(w, http.StatusOK, uuid)
+	render.Success(w, http.StatusOK, types.Identifiable{ID: uuid})
 }
 
 func (handler *handler) GetV2(w http.ResponseWriter, r *http.Request) {
