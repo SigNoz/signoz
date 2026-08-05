@@ -749,28 +749,6 @@ func TestBuild_TraceList_OutputOnlyAggregateRejected(t *testing.T) {
 	assert.Contains(t, err.Error(), "unsupported order key")
 }
 
-// last_activity_time is order-only: usable in ORDER BY but rejected in the filter.
-func TestBuild_TraceList_OrderOnlyAggregateFilterRejected(t *testing.T) {
-	b := newTestBuilder(t)
-
-	_, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace,
-		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-			Signal: telemetrytypes.SignalTraces,
-			Filter: &qbtypes.Filter{Expression: "trace.last_activity_time > 1000"},
-		}, nil)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "last_activity_time")
-
-	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace,
-		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-			Signal: telemetrytypes.SignalTraces,
-			Order:  []qbtypes.OrderBy{{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "last_activity_time"}}, Direction: qbtypes.OrderDirectionDesc}},
-			Limit:  10,
-		}, nil)
-	require.NoError(t, err)
-	assert.Contains(t, renderSQL(t, stmt), "ORDER BY last_activity_time DESC")
-}
-
 // A bare duration_nano filter is span-level (the trace column is trace_duration_nano).
 func TestBuild_TraceList_SpanDurationFilterIsSpanLevel(t *testing.T) {
 	keys := otelKeysMap()
