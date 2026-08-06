@@ -16,10 +16,9 @@ import type {
 import { resolveDashboardImage } from 'pages/DashboardPageV2/DashboardContainer/dashboardIcons';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
-import { useAppContext } from 'providers/App/App';
+import { useDashboardLockPermission } from 'hooks/dashboards/useDashboardLockPermission';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
-import { USER_ROLES } from 'types/roles';
 import { getAbsoluteUrl } from 'utils/basePath';
 
 import { useCreatePanel } from '../hooks/useCreatePanel';
@@ -64,7 +63,6 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 		[dashboard.tags],
 	);
 
-	const { user } = useAppContext();
 	const { showErrorModal } = useErrorModal();
 	const { patchAsync } = useOptimisticPatch();
 	const {
@@ -75,14 +73,13 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 		targetLayoutIndex,
 	} = useCreatePanel();
 
-	const isAuthor =
-		!!user?.email && !!dashboard.createdBy && dashboard.createdBy === user.email;
-
-	// Author/admin can lock-unlock (mirrors the Actions menu gate); integration-owned
+	// dashboard:update plus the backend's creator-or-admin rule; integration-owned
 	// dashboards are never toggleable.
-	const canToggleLock =
-		(isAuthor || user.role === USER_ROLES.ADMIN) &&
-		dashboard.createdBy !== 'integration';
+	const { canToggleLock, disabledReason: lockDisabledReason } =
+		useDashboardLockPermission({
+			dashboardId: id,
+			createdBy: dashboard.createdBy,
+		});
 
 	// Public-sharing meta (deduped react-query read); drives the header globe.
 	const { isPublic, publicMeta } = usePublicDashboardMeta(id);
@@ -187,6 +184,7 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 							? (): void => void handleLockDashboardToggle('header')
 							: undefined
 					}
+					lockDisabledReason={lockDisabledReason}
 					isEditing={isEditing}
 					draft={draft}
 					onDraftChange={setDraft}
@@ -199,7 +197,6 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 					dashboard={dashboard}
 					handle={handle}
 					isDashboardLocked={isDashboardLocked}
-					isAuthor={isAuthor}
 					onAddPanel={onAddPanel}
 					onLockToggle={(): void => void handleLockDashboardToggle('menu')}
 					onOpenRename={startEdit}

@@ -15,7 +15,8 @@ function DisabledControlTooltip({
 	disabled,
 	children,
 }: DisabledControlTooltipProps): JSX.Element {
-	if (!disabled) {
+	// No reason means the check is still in flight — disable without an empty tooltip.
+	if (!disabled || !reason) {
 		return <>{children}</>;
 	}
 	return (

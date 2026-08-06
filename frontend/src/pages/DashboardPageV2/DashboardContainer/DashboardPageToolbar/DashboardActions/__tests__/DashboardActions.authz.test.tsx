@@ -1,0 +1,161 @@
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
+import { server } from 'mocks-server/server';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import {
+	setupAuthzAdmin,
+	setupAuthzAllow,
+	setupAuthzDenyAll,
+} from 'lib/authz/utils/authz-test-utils';
+import { IsAdminPermission } from 'lib/authz/hooks/useAuthZ/legacy';
+import {
+	buildDashboardDeletePermission,
+	buildDashboardReadPermission,
+	buildDashboardUpdatePermission,
+	DashboardListPermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
+
+import { useDashboardStore } from '../../../store/useDashboardStore';
+import DashboardActions from '../DashboardActions';
+
+const DASHBOARD_ID = 'dash-1';
+
+const dashboard = {
+	id: DASHBOARD_ID,
+	createdBy: 'someone-else@signoz.io',
+	locked: false,
+	spec: { display: { name: 'D' }, panels: {}, layouts: [], variables: [] },
+} as unknown as DashboardtypesGettableDashboardV2DTO;
+
+function seedStore(overrides?: {
+	canEditDashboard?: boolean;
+	canDeleteDashboard?: boolean;
+	isLocked?: boolean;
+}): void {
+	useDashboardStore.getState().setEditContext({
+		dashboardId: DASHBOARD_ID,
+		isLocked: overrides?.isLocked ?? false,
+		canEditDashboard: overrides?.canEditDashboard ?? false,
+		canDeleteDashboard: overrides?.canDeleteDashboard ?? false,
+		isPermissionLoading: false,
+		refetch: (): void => undefined,
+	});
+}
+
+// The dropdown trigger's testId is swallowed by Radix's asChild clone.
+function openActionsMenu(): Promise<void> {
+	return userEvent.click(screen.getByRole('button', { name: /Actions/ }));
+}
+
+function renderActions(): ReturnType<typeof render> {
+	return render(
+		<DashboardActions
+			title="D"
+			dashboard={dashboard}
+			handle={
+				{
+					active: false,
+					enter: jest.fn(),
+					exit: jest.fn(),
+					node: { current: null },
+				} as never
+			}
+			isDashboardLocked={false}
+			onAddPanel={jest.fn()}
+			onLockToggle={jest.fn()}
+			onOpenRename={jest.fn()}
+		/>,
+	);
+}
+
+describe('DashboardActions - AuthZ', () => {
+	afterEach(() => {
+		jest.restoreAllMocks();
+		server.resetHandlers();
+	});
+
+	describe('permission denied', () => {
+		// These controls used to be removed from the DOM entirely.
+		it('keeps the toolbar buttons visible and disabled', async () => {
+			server.use(setupAuthzDenyAll());
+			seedStore({ canEditDashboard: false });
+
+			renderActions();
+
+			await waitFor(() => {
+				expect(screen.getByTestId('show-drawer')).toBeDisabled();
+			});
+			expect(screen.getByTestId('add-panel-header')).toBeDisabled();
+			// JSON stays available — it's a read-only inspect.
+			expect(screen.getByTestId('edit-json')).toBeEnabled();
+		});
+
+		it('keeps the menu items present and disabled', async () => {
+			server.use(setupAuthzDenyAll());
+			seedStore({ canEditDashboard: false, canDeleteDashboard: false });
+
+			renderActions();
+			await openActionsMenu();
+
+			await expect(screen.findByText('Rename')).resolves.toBeInTheDocument();
+			expect(screen.getByText('New section')).toBeInTheDocument();
+			expect(screen.getByText('Delete dashboard')).toBeInTheDocument();
+			expect(screen.getByText('Clone dashboard')).toBeInTheDocument();
+			// Full screen never depended on permission.
+			expect(screen.getByText('Full screen')).toBeInTheDocument();
+		});
+	});
+
+	describe('partial permissions', () => {
+		// Delete is independent of read/update (authz guide rule 3).
+		it('enables delete for a user who can only delete', async () => {
+			server.use(setupAuthzAllow(buildDashboardDeletePermission(DASHBOARD_ID)));
+			seedStore({ canEditDashboard: false, canDeleteDashboard: true });
+
+			renderActions();
+
+			await waitFor(() => {
+				expect(screen.getByTestId('show-drawer')).toBeDisabled();
+			});
+			await openActionsMenu();
+			await expect(
+				screen.findByText('Delete dashboard'),
+			).resolves.toBeInTheDocument();
+		});
+
+		it('disables clone when create is denied but edit is allowed', async () => {
+			server.use(
+				setupAuthzAllow(
+					buildDashboardReadPermission(DASHBOARD_ID),
+					buildDashboardUpdatePermission(DASHBOARD_ID),
+					DashboardListPermission,
+					IsAdminPermission,
+				),
+			);
+			seedStore({ canEditDashboard: true });
+
+			renderActions();
+
+			await waitFor(() => {
+				expect(screen.getByTestId('show-drawer')).toBeEnabled();
+			});
+			await openActionsMenu();
+			await expect(
+				screen.findByText('Clone dashboard'),
+			).resolves.toBeInTheDocument();
+		});
+	});
+
+	describe('permission granted', () => {
+		it('enables the toolbar for a full-rights user', async () => {
+			server.use(setupAuthzAdmin());
+			seedStore({ canEditDashboard: true, canDeleteDashboard: true });
+
+			renderActions();
+
+			await waitFor(() => {
+				expect(screen.getByTestId('show-drawer')).toBeEnabled();
+			});
+			expect(screen.getByTestId('add-panel-header')).toBeEnabled();
+		});
+	});
+});
