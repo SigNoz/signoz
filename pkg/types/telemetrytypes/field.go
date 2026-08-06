@@ -46,6 +46,13 @@ type TelemetryFieldKey struct {
 	JSONPlan     JSONAccessPlan               `json:"-"`
 	Indexes      []TelemetryFieldKeySkipIndex `json:"-"`
 	Materialized bool                         `json:"-"` // refers to promoted in case of body.... fields
+	// MaterializedColumnName preserves the physical column when its DEFAULT
+	// expression resolves a newer semantic-convention key than the historical
+	// column identifier (for example db.system.name in db$$system).
+	MaterializedColumnName string `json:"-"`
+	// MaterializedSemconv is true when the column's DEFAULT expression already
+	// coalesces every enabled family member and is therefore safe for a family query.
+	MaterializedSemconv bool `json:"-"`
 
 	Evolutions     []*EvolutionEntry `json:"-"`
 	SemconvMembers []string          `json:"-"`
@@ -130,6 +137,8 @@ func (f *TelemetryFieldKey) OverrideMetadataFrom(src *TelemetryFieldKey) {
 	f.FieldDataType = src.FieldDataType
 	f.Indexes = src.Indexes
 	f.Materialized = src.Materialized
+	f.MaterializedColumnName = src.MaterializedColumnName
+	f.MaterializedSemconv = src.MaterializedSemconv
 	f.JSONPlan = src.JSONPlan
 	f.Evolutions = src.Evolutions
 	f.SemconvMembers = src.SemconvMembers
@@ -208,6 +217,9 @@ func TelemetryFieldKeyToText(key *TelemetryFieldKey) string {
 }
 
 func FieldKeyToMaterializedColumnName(key *TelemetryFieldKey) string {
+	if key.MaterializedColumnName != "" {
+		return fmt.Sprintf("`%s`", key.MaterializedColumnName)
+	}
 	return fmt.Sprintf("`%s_%s_%s`",
 		key.FieldContext.String,
 		fieldDataTypes[key.FieldDataType.StringValue()].StringValue(),
@@ -216,6 +228,9 @@ func FieldKeyToMaterializedColumnName(key *TelemetryFieldKey) string {
 }
 
 func FieldKeyToMaterializedColumnNameForExists(key *TelemetryFieldKey) string {
+	if key.MaterializedColumnName != "" {
+		return fmt.Sprintf("`%s_exists`", key.MaterializedColumnName)
+	}
 	return fmt.Sprintf("`%s_%s_%s_exists`",
 		key.FieldContext.String,
 		fieldDataTypes[key.FieldDataType.StringValue()].StringValue(),

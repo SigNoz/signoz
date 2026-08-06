@@ -89,10 +89,12 @@ func (v *TelemetryFieldVisitor) VisitColumnDef(expr *parser.ColumnDef) error {
 
 	// Create and store the TelemetryFieldKey
 	field := &telemetrytypes.TelemetryFieldKey{
-		Name:          fieldName,
-		FieldContext:  fieldContext,
-		FieldDataType: fieldDataType,
-		Materialized:  true,
+		Name:                   fieldName,
+		FieldContext:           fieldContext,
+		FieldDataType:          fieldDataType,
+		Materialized:           true,
+		MaterializedColumnName: columnName,
+		MaterializedSemconv:    strings.Count(defaultExprStr, "['") > 1,
 	}
 
 	v.Fields = append(v.Fields, field)

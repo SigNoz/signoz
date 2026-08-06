@@ -10,8 +10,8 @@ import (
 	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/metrics"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/semconv"
 )
 
 // ValidateAndCastValue validates and casts the value of a key to the corresponding data type of the key
@@ -234,12 +234,12 @@ func ClickHouseFormattedValue(v interface{}) string {
 
 func ClickHouseFormattedMetricNames(v interface{}) string {
 	if name, ok := v.(string); ok {
-		transitionedMetrics := metrics.GetTransitionedMetric(name, !constants.IsDotMetricsEnabled)
-		if transitionedMetrics != name {
-			return ClickHouseFormattedValue([]interface{}{transitionedMetrics})
-		} else {
-			return ClickHouseFormattedValue([]interface{}{name})
+		members := semconv.MetricNames(name)
+		values := make([]interface{}, 0, len(members))
+		for _, member := range members {
+			values = append(values, member)
 		}
+		return ClickHouseFormattedValue(values)
 	}
 
 	return ClickHouseFormattedValue(v)

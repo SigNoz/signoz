@@ -2,6 +2,7 @@ package metricstelemetryschema
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
@@ -11,6 +12,32 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestMetricLabelSemconvSpellings(t *testing.T) {
+	fm := NewFieldMapper()
+	key := &telemetrytypes.TelemetryFieldKey{
+		Name:          "db.system.name",
+		Signal:        telemetrytypes.SignalMetrics,
+		FieldContext:  telemetrytypes.FieldContextResource,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	}
+
+	expression, err := fm.FieldFor(context.Background(), valuer.UUID{}, 0, 0, key)
+	require.NoError(t, err)
+	for _, member := range []string{
+		"resource_db.system.name", "resource_db_system_name", "db.system.name", "db_system_name",
+		"resource_db.system", "resource_db_system", "db.system", "db_system",
+	} {
+		assert.Contains(t, expression, "'"+member+"'")
+	}
+	assert.Less(t, strings.Index(expression, "resource_db.system.name"), strings.Index(expression, "resource_db.system'"))
+
+	exact := *key
+	exact.SemconvMembers = []string{"resource_db_system"}
+	expression, err = fm.FieldFor(context.Background(), valuer.UUID{}, 0, 0, &exact)
+	require.NoError(t, err)
+	assert.Equal(t, "JSONExtractString(labels, 'resource_db_system')", expression)
+}
 
 func TestGetColumn(t *testing.T) {
 	ctx := context.Background()

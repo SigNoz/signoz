@@ -152,12 +152,24 @@ func (t *telemetryMetaStore) tracesTblStatementToFieldKeys(ctx context.Context) 
 	return materialisedKeys, nil
 }
 
-func traceSemconvMembers(name string, fieldContext telemetrytypes.FieldContext) []string {
-	return semconv.Members(semconv.KindAttribute, telemetrytypes.FieldKeySelector{
+func attributeSemconvMembers(name string, signal telemetrytypes.Signal, fieldContext telemetrytypes.FieldContext) []string {
+	return semconv.AttributeMembers(telemetrytypes.FieldKeySelector{
 		Name:         name,
-		Signal:       telemetrytypes.SignalTraces,
+		Signal:       signal,
 		FieldContext: fieldContext,
 	})
+}
+
+func traceSemconvMembers(name string, fieldContext telemetrytypes.FieldContext) []string {
+	return attributeSemconvMembers(name, telemetrytypes.SignalTraces, fieldContext)
+}
+
+func inStrings(sb *sqlbuilder.SelectBuilder, column string, values []string) string {
+	args := make([]any, 0, len(values))
+	for _, value := range values {
+		args = append(args, value)
+	}
+	return sb.In(column, args...)
 }
 
 // getTracesKeys returns the keys from the spans that match the field selection criteria.
@@ -1321,6 +1333,37 @@ func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID
 		}
 	}
 
+	// GetKeys backs key suggestions and remains literal. Internal multi-key
+	// lookups expand selectors so query builders can inspect stored family members.
+	expandSelectors := func(selectors []*telemetrytypes.FieldKeySelector, signal telemetrytypes.Signal) []*telemetrytypes.FieldKeySelector {
+		expanded := make([]*telemetrytypes.FieldKeySelector, 0, len(selectors))
+		for _, selector := range selectors {
+			metricNames := []string{""}
+			if signal == telemetrytypes.SignalMetrics && selector.MetricContext != nil && selector.MetricContext.MetricName != "" {
+				metricNames = semconv.MetricNames(selector.MetricContext.MetricName)
+			}
+			for _, member := range attributeSemconvMembers(selector.Name, signal, selector.FieldContext) {
+				for _, metricName := range metricNames {
+					memberSelector := *selector
+					memberSelector.Name = member
+					if selector.MetricContext != nil {
+						metricContext := *selector.MetricContext
+						if metricName != "" {
+							metricContext.MetricName = metricName
+						}
+						memberSelector.MetricContext = &metricContext
+					}
+					expanded = append(expanded, &memberSelector)
+				}
+			}
+		}
+		return expanded
+	}
+	logsSelectors = expandSelectors(logsSelectors, telemetrytypes.SignalLogs)
+	tracesSelectors = expandSelectors(tracesSelectors, telemetrytypes.SignalTraces)
+	metricsSelectors = expandSelectors(metricsSelectors, telemetrytypes.SignalMetrics)
+	meterSourceMetricsSelectors = expandSelectors(meterSourceMetricsSelectors, telemetrytypes.SignalMetrics)
+
 	logsKeys, logsComplete, err := t.getLogsKeys(ctx, orgID, logsSelectors)
 	if err != nil {
 		return nil, false, err
@@ -1329,17 +1372,6 @@ func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID
 	if err != nil {
 		return nil, false, err
 	}
-	// GetKeys backs key suggestions and remains literal. The internal multi-key
-	// lookup expands only trace selectors so query builders see stored family members.
-	expandedTraceSelectors := make([]*telemetrytypes.FieldKeySelector, 0, len(tracesSelectors))
-	for _, selector := range tracesSelectors {
-		for _, member := range traceSemconvMembers(selector.Name, selector.FieldContext) {
-			memberSelector := *selector
-			memberSelector.Name = member
-			expandedTraceSelectors = append(expandedTraceSelectors, &memberSelector)
-		}
-	}
-	tracesSelectors = expandedTraceSelectors
 	tracesKeys, tracesComplete, err := t.getTracesKeys(ctx, tracesSelectors)
 	if err != nil {
 		return nil, false, err
@@ -1661,7 +1693,12 @@ func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSe
 	sb := sqlbuilder.Select("DISTINCT string_value, number_value").From(t.logsDBName + "." + t.logsFieldsTblName)
 
 	if fieldValueSelector.Name != "" {
-		sb.Where(sb.E("tag_key", fieldValueSelector.Name))
+		members := attributeSemconvMembers(fieldValueSelector.Name, telemetrytypes.SignalLogs, fieldValueSelector.FieldContext)
+		memberValues := make([]any, 0, len(members))
+		for _, member := range members {
+			memberValues = append(memberValues, member)
+		}
+		sb.Where(sb.In("tag_key", memberValues...))
 	}
 
 	if fieldValueSelector.FieldContext != telemetrytypes.FieldContextUnspecified {
@@ -1859,7 +1896,9 @@ func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, orgID val
 		From(t.metricsDBName + "." + t.metricsFieldsTblName)
 
 	if fieldValueSelector.Name != "" {
-		sb.Where(sb.E("attr_name", fieldValueSelector.Name))
+		sb.Where(inStrings(sb, "attr_name", attributeSemconvMembers(
+			fieldValueSelector.Name, telemetrytypes.SignalMetrics, fieldValueSelector.FieldContext,
+		)))
 	}
 
 	if fieldValueSelector.FieldContext != telemetrytypes.FieldContextUnspecified {
@@ -1871,7 +1910,7 @@ func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, orgID val
 	}
 
 	if fieldValueSelector.MetricContext != nil && fieldValueSelector.MetricContext.MetricName != "" {
-		sb.Where(sb.E("metric_name", fieldValueSelector.MetricContext.MetricName))
+		sb.Where(inStrings(sb, "metric_name", semconv.MetricNames(fieldValueSelector.MetricContext.MetricName)))
 	}
 	if fieldValueSelector.MetricContext != nil && fieldValueSelector.MetricContext.MetricNamespace != "" {
 		sb.Where(sb.Like("metric_name", escapeForLike(fieldValueSelector.MetricContext.MetricNamespace)+"%"))
@@ -2005,7 +2044,7 @@ func (t *telemetryMetaStore) getIntrinsicMetricFieldValuesForTable(ctx context.C
 		From(t.metricsDBName + "." + tableName)
 
 	if fieldValueSelector.MetricContext != nil && fieldValueSelector.MetricContext.MetricName != "" {
-		sb.Where(sb.E("metric_name", fieldValueSelector.MetricContext.MetricName))
+		sb.Where(inStrings(sb, "metric_name", semconv.MetricNames(fieldValueSelector.MetricContext.MetricName)))
 	}
 	if fieldValueSelector.MetricContext != nil && fieldValueSelector.MetricContext.MetricNamespace != "" {
 		sb.Where(sb.Like("metric_name", escapeForLike(fieldValueSelector.MetricContext.MetricNamespace)+"%"))
@@ -2067,13 +2106,18 @@ func (t *telemetryMetaStore) getMeterSourceMetricFieldValues(ctx context.Context
 	sb := sqlbuilder.Select("DISTINCT arrayJoin(JSONExtractKeysAndValues(labels, 'String')) AS attr").
 		From(t.meterDBName + "." + t.meterFieldsTblName)
 
+	duplicateFactor := 1
 	if fieldValueSelector.Name != "" {
-		sb.Where(sb.E("attr.1", fieldValueSelector.Name))
+		members := attributeSemconvMembers(fieldValueSelector.Name, telemetrytypes.SignalMetrics, fieldValueSelector.FieldContext)
+		duplicateFactor *= len(members)
+		sb.Where(inStrings(sb, "attr.1", members))
 	}
 	sb.Where(sb.NotLike("attr.1", "\\_\\_%"))
 
 	if fieldValueSelector.MetricContext != nil && fieldValueSelector.MetricContext.MetricName != "" {
-		sb.Where(sb.E("metric_name", fieldValueSelector.MetricContext.MetricName))
+		metricNames := semconv.MetricNames(fieldValueSelector.MetricContext.MetricName)
+		duplicateFactor *= len(metricNames)
+		sb.Where(inStrings(sb, "metric_name", metricNames))
 	}
 	if fieldValueSelector.MetricContext != nil && fieldValueSelector.MetricContext.MetricNamespace != "" {
 		sb.Where(sb.Like("metric_name", escapeForLike(fieldValueSelector.MetricContext.MetricNamespace)+"%"))
@@ -2092,8 +2136,10 @@ func (t *telemetryMetaStore) getMeterSourceMetricFieldValues(ctx context.Context
 	if limit == 0 {
 		limit = 50
 	}
-	// query one extra to check if we hit the limit
-	sb.Limit(limit + 1)
+	// A value can be present under several physical spellings; over-fetch and
+	// de-duplicate after scanning so one family cannot consume the result limit.
+	dbLimit := limit * duplicateFactor
+	sb.Limit(dbLimit + 1)
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
@@ -2103,11 +2149,13 @@ func (t *telemetryMetaStore) getMeterSourceMetricFieldValues(ctx context.Context
 	defer rows.Close()
 
 	values := &telemetrytypes.TelemetryFieldValues{}
+	seen := make(map[string]bool)
 	rowCount := 0
+	uniqueCount := 0
 	for rows.Next() {
 		rowCount++
 		// reached the limit, we know there are more results
-		if rowCount > limit {
+		if rowCount > dbLimit {
 			break
 		}
 
@@ -2116,12 +2164,16 @@ func (t *telemetryMetaStore) getMeterSourceMetricFieldValues(ctx context.Context
 			return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetMeterValues.Error())
 		}
 		if len(attribute) > 1 {
-			values.StringValues = append(values.StringValues, attribute[1])
+			if !seen[attribute[1]] && uniqueCount < limit {
+				values.StringValues = append(values.StringValues, attribute[1])
+				seen[attribute[1]] = true
+				uniqueCount++
+			}
 		}
 	}
 
 	// hit the limit?
-	complete := rowCount <= limit
+	complete := rowCount <= dbLimit && uniqueCount < limit
 	return values, complete, nil
 }
 

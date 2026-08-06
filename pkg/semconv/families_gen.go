@@ -2,21 +2,47 @@
 
 package semconv
 
+import "github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+
 var families = []Family{
+	{
+		Current:        "container.cpu.usage",
+		Old:            []string{"container.cpu.utilization"},
+		Kind:           KindMetric,
+		Contexts:       []telemetrytypes.FieldContext{telemetrytypes.FieldContextMetric},
+		Signals:        []telemetrytypes.Signal{telemetrytypes.SignalMetrics},
+		ApplyToMetrics: nil,
+	},
 	{
 		Current:        "db.system.name",
 		Old:            []string{"db.system"},
 		Kind:           KindAttribute,
-		Contexts:       nil,
-		Signals:        nil,
+		Contexts:       []telemetrytypes.FieldContext{telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextResource},
+		Signals:        []telemetrytypes.Signal{telemetrytypes.SignalLogs, telemetrytypes.SignalMetrics, telemetrytypes.SignalTraces},
 		ApplyToMetrics: nil,
 	},
 	{
 		Current:        "deployment.environment.name",
 		Old:            []string{"deployment.environment"},
 		Kind:           KindAttribute,
-		Contexts:       nil,
-		Signals:        nil,
+		Contexts:       []telemetrytypes.FieldContext{telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextResource},
+		Signals:        []telemetrytypes.Signal{telemetrytypes.SignalLogs, telemetrytypes.SignalMetrics, telemetrytypes.SignalTraces},
+		ApplyToMetrics: nil,
+	},
+	{
+		Current:        "k8s.node.cpu.usage",
+		Old:            []string{"k8s.node.cpu.utilization"},
+		Kind:           KindMetric,
+		Contexts:       []telemetrytypes.FieldContext{telemetrytypes.FieldContextMetric},
+		Signals:        []telemetrytypes.Signal{telemetrytypes.SignalMetrics},
+		ApplyToMetrics: nil,
+	},
+	{
+		Current:        "k8s.pod.cpu.usage",
+		Old:            []string{"k8s.pod.cpu.utilization"},
+		Kind:           KindMetric,
+		Contexts:       []telemetrytypes.FieldContext{telemetrytypes.FieldContextMetric},
+		Signals:        []telemetrytypes.Signal{telemetrytypes.SignalMetrics},
 		ApplyToMetrics: nil,
 	},
 }

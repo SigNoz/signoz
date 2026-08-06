@@ -453,6 +453,9 @@ func (c *conditionBuilder) ConditionFor(
 	sb *sqlbuilder.SelectBuilder,
 ) ([]string, []string, error) {
 	matches := querybuilder.MatchingFieldKeys(key, fieldKeys)
+	if options.ExactSemconv {
+		matches = querybuilder.MatchingFieldKeysExact(key, fieldKeys)
+	}
 	skipResourceFilter := options.SkipResourceFilter
 
 	// search() resolves its own (optional) scope; handle it before key resolution.
@@ -498,6 +501,9 @@ func (c *conditionBuilder) ConditionFor(
 			synthesized = true
 			warnings = append(warnings, querybuilder.NewKeyNotFoundWarning(key.Name))
 		}
+	}
+	if options.ExactSemconv {
+		keys = querybuilder.ExactSemconvKeys(keys)
 	}
 
 	if skipResourceFilter && !synthesized {

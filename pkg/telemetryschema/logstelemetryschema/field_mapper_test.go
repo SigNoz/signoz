@@ -2,6 +2,7 @@ package logstelemetryschema
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -13,6 +14,32 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestFieldForSemconvFamily(t *testing.T) {
+	ctx := context.Background()
+	fm := NewFieldMapper(flaggertest.New(t)).(*fieldMapper)
+	key := &telemetrytypes.TelemetryFieldKey{
+		Name:          "db.system.name",
+		Signal:        telemetrytypes.SignalLogs,
+		FieldContext:  telemetrytypes.FieldContextAttribute,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	}
+
+	expression, err := fm.FieldFor(ctx, valuer.UUID{}, 0, 0, key)
+	require.NoError(t, err)
+	assert.Equal(t, "COALESCE(NULLIF(attributes_string['db.system.name'], ''), NULLIF(attributes_string['db.system'], ''), '')", expression)
+	assert.Less(t, strings.Index(expression, "db.system.name"), strings.Index(expression, "db.system']"), "current spelling must win")
+
+	exists, err := fm.existsExpressionFor(ctx, valuer.UUID{}, 0, 0, key, true)
+	require.NoError(t, err)
+	assert.Equal(t, "(mapContains(attributes_string, 'db.system.name') OR mapContains(attributes_string, 'db.system'))", exists)
+
+	exact := *key
+	exact.SemconvMembers = []string{"db.system"}
+	expression, err = fm.FieldFor(ctx, valuer.UUID{}, 0, 0, &exact)
+	require.NoError(t, err)
+	assert.Equal(t, "attributes_string['db.system']", expression)
+}
 
 func TestGetColumn(t *testing.T) {
 	ctx := context.Background()

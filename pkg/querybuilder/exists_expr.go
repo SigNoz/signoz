@@ -2,12 +2,28 @@ package querybuilder
 
 import (
 	"fmt"
+	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/semconv"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
+
+func physicalSemconvMembers(key *telemetrytypes.TelemetryFieldKey) []string {
+	if len(key.SemconvMembers) > 0 {
+		return key.SemconvMembers
+	}
+	if key.FieldContext != telemetrytypes.FieldContextResource && key.FieldContext != telemetrytypes.FieldContextAttribute {
+		return []string{key.Name}
+	}
+	return semconv.AttributeMembers(telemetrytypes.FieldKeySelector{
+		Name:         key.Name,
+		Signal:       key.Signal,
+		FieldContext: key.FieldContext,
+	})
+}
 
 // ExistsExpression renders the existence predicate for a key resolved to the given
 // columns (negated when exists is false). Comparisons are against constants rendered
@@ -43,11 +59,26 @@ func ExistsExpression(columns []*schema.Column, key *telemetrytypes.TelemetryFie
 		if len(evolutionsEntries) > 0 && evolutionsEntries[0] != nil {
 			columnName = evolutionsEntries[0].ColumnName
 		}
-		rawPath := fmt.Sprintf("%s.`%s`", columnName, key.Name)
-		if exists {
-			return rawPath + " IS NOT NULL", nil
+		members := physicalSemconvMembers(key)
+		paths := make([]string, 0, len(members))
+		for _, member := range members {
+			paths = append(paths, fmt.Sprintf("%s.`%s`", columnName, member))
 		}
-		return rawPath + " IS NULL", nil
+		if len(paths) == 1 {
+			if exists {
+				return paths[0] + " IS NOT NULL", nil
+			}
+			return paths[0] + " IS NULL", nil
+		}
+		guards := make([]string, 0, len(paths))
+		for _, path := range paths {
+			guards = append(guards, path+" IS NOT NULL")
+		}
+		rawPath := "(" + strings.Join(guards, " OR ") + ")"
+		if exists {
+			return rawPath, nil
+		}
+		return "NOT " + rawPath, nil
 	case schema.ColumnTypeEnumString,
 		schema.ColumnTypeEnumFixedString:
 		if exists {
@@ -88,8 +119,16 @@ func ExistsExpression(columns []*schema.Column, key *telemetrytypes.TelemetryFie
 
 		switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
 		case schema.ColumnTypeEnumString, schema.ColumnTypeEnumBool, schema.ColumnTypeEnumFloat64:
-			leftOperand := fmt.Sprintf("mapContains(%s, '%s')", column.Name, key.Name)
-			if key.Materialized {
+			members := physicalSemconvMembers(key)
+			operands := make([]string, 0, len(members))
+			for _, member := range members {
+				operands = append(operands, fmt.Sprintf("mapContains(%s, '%s')", column.Name, member))
+			}
+			leftOperand := strings.Join(operands, " OR ")
+			if len(operands) > 1 {
+				leftOperand = "(" + leftOperand + ")"
+			}
+			if key.Materialized && (len(members) == 1 || key.MaterializedSemconv) {
 				leftOperand = telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
 			}
 			if exists {

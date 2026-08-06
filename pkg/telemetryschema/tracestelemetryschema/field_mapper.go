@@ -376,7 +376,10 @@ func (m *fieldMapper) resolveColumnExprs(
 			switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
 			case schema.ColumnTypeEnumString, schema.ColumnTypeEnumFloat64, schema.ColumnTypeEnumBool:
 				members := traceSemconvMembers(key)
-				if len(members) > 1 {
+				if key.Materialized && (len(members) == 1 || key.MaterializedSemconv) {
+					exprs = append(exprs, telemetrytypes.FieldKeyToMaterializedColumnName(key))
+					existExprs = append(existExprs, telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key))
+				} else if len(members) > 1 {
 					guards := make([]string, 0, len(members))
 					memberValues := make([]string, 0, len(members))
 					for _, member := range members {
@@ -400,12 +403,6 @@ func (m *fieldMapper) resolveColumnExprs(
 						exprs = append(exprs, "multiIf("+strings.Join(branches, ", ")+", NULL)")
 					}
 					existExprs = append(existExprs, "("+strings.Join(guards, " OR ")+")")
-				} else if key.Materialized {
-					// a key could have been materialized, if so return the materialized column name
-					physicalKey := *key
-					physicalKey.Name = members[0]
-					exprs = append(exprs, telemetrytypes.FieldKeyToMaterializedColumnName(&physicalKey))
-					existExprs = append(existExprs, telemetrytypes.FieldKeyToMaterializedColumnNameForExists(&physicalKey))
 				} else {
 					exprs = append(exprs, fmt.Sprintf("%s['%s']", columnName, members[0]))
 					existExprs = append(existExprs, fmt.Sprintf("mapContains(%s, '%s')", columnName, members[0]))

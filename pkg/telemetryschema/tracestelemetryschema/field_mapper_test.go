@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -359,4 +361,28 @@ func TestColumnExpressionForTimestampAttributeCollision(t *testing.T) {
 		require.NoError(t, err)
 		assert.Contains(t, result, "attributes_number['timestamp']")
 	})
+}
+
+func TestDBSystemFamilyUsesSemconvAwareMaterializedColumn(t *testing.T) {
+	fm := NewFieldMapper()
+	key := &telemetrytypes.TelemetryFieldKey{
+		Name:                   "db.system.name",
+		Signal:                 telemetrytypes.SignalTraces,
+		FieldContext:           telemetrytypes.FieldContextAttribute,
+		FieldDataType:          telemetrytypes.FieldDataTypeString,
+		Materialized:           true,
+		MaterializedColumnName: "attribute_string_db$$system",
+		MaterializedSemconv:    true,
+		SemconvMembers:         []string{"db.system.name", "db.system"},
+	}
+
+	expression, err := fm.FieldFor(context.Background(), valuer.UUID{}, 0, 0, key)
+	require.NoError(t, err)
+	assert.Equal(t, "`attribute_string_db$$system`", expression)
+
+	exists, err := querybuilder.ExistsExpression(
+		[]*schema.Column{indexV3Columns["attributes_string"]}, key, 0, 0, expression, true,
+	)
+	require.NoError(t, err)
+	assert.Equal(t, "`attribute_string_db$$system_exists`", exists)
 }

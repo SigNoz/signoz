@@ -740,7 +740,7 @@ func TestMatchingFieldKeysUsesCurrentTraceMetadataForOldName(t *testing.T) {
 	assert.Equal(t, []string{current.Name, old.Name}, matches[0].SemconvMembers)
 }
 
-func TestMatchingFieldKeysKeepsLogSemconvNamesLiteral(t *testing.T) {
+func TestMatchingFieldKeysResolvesLogSemconvFamily(t *testing.T) {
 	current := &telemetrytypes.TelemetryFieldKey{
 		Name:          "deployment.environment.name",
 		Signal:        telemetrytypes.SignalLogs,
@@ -764,26 +764,26 @@ func TestMatchingFieldKeysKeepsLogSemconvNamesLiteral(t *testing.T) {
 		old.Name:     {old},
 	})
 
-	require.Len(t, matches, 1, "log lookup must keep the requested spelling literal")
+	require.Len(t, matches, 1, "log family lookup must resolve before inspecting metadata")
 	assert.Equal(t, current.Name, matches[0].Name)
-	assert.Empty(t, matches[0].SemconvMembers)
+	assert.Equal(t, []string{current.Name, old.Name}, matches[0].SemconvMembers)
 }
 
-func TestMatchingFieldKeysKeepsMetricSemconvNamesLiteral(t *testing.T) {
+func TestMatchingFieldKeysResolvesMetricStorageSpellings(t *testing.T) {
 	current := &telemetrytypes.TelemetryFieldKey{
-		Name:          "deployment.environment.name",
+		Name:          "resource_deployment_environment_name",
 		Signal:        telemetrytypes.SignalMetrics,
 		FieldContext:  telemetrytypes.FieldContextResource,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
 	}
 	old := &telemetrytypes.TelemetryFieldKey{
-		Name:          "deployment.environment",
+		Name:          "resource_deployment_environment",
 		Signal:        telemetrytypes.SignalMetrics,
 		FieldContext:  telemetrytypes.FieldContextResource,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
 	}
 	requested := telemetrytypes.NewTelemetryFieldKey(
-		current.Name,
+		"deployment.environment.name",
 		telemetrytypes.FieldContextResource,
 		telemetrytypes.FieldDataTypeString,
 	)
@@ -793,9 +793,38 @@ func TestMatchingFieldKeysKeepsMetricSemconvNamesLiteral(t *testing.T) {
 		old.Name:     {old},
 	})
 
-	require.Len(t, matches, 1, "metric lookup must keep the requested spelling literal")
+	require.Len(t, matches, 1, "metric family lookup must resolve storage spellings")
+	assert.Equal(t, requested.Name, matches[0].Name)
+	assert.Equal(t, []string{current.Name, old.Name}, matches[0].SemconvMembers)
+}
+
+func TestMatchingFieldKeysExactKeepsRequestedPhysicalName(t *testing.T) {
+	current := &telemetrytypes.TelemetryFieldKey{
+		Name:          "deployment.environment.name",
+		Signal:        telemetrytypes.SignalTraces,
+		FieldContext:  telemetrytypes.FieldContextResource,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	}
+	old := &telemetrytypes.TelemetryFieldKey{
+		Name:          "deployment.environment",
+		Signal:        telemetrytypes.SignalTraces,
+		FieldContext:  telemetrytypes.FieldContextResource,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	}
+	requested := telemetrytypes.NewTelemetryFieldKey(
+		current.Name,
+		telemetrytypes.FieldContextResource,
+		telemetrytypes.FieldDataTypeString,
+	)
+
+	matches := MatchingFieldKeysExact(requested, map[string][]*telemetrytypes.TelemetryFieldKey{
+		current.Name: {current},
+		old.Name:     {old},
+	})
+
+	require.Len(t, matches, 1, "exact lookup must return the requested physical field")
 	assert.Equal(t, current.Name, matches[0].Name)
-	assert.Empty(t, matches[0].SemconvMembers)
+	assert.Equal(t, []string{current.Name}, matches[0].SemconvMembers)
 }
 
 // ---------------------------------------------------------------------------

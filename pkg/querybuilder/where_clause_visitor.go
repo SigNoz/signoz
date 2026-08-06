@@ -40,6 +40,7 @@ type filterExpressionVisitor struct {
 	fullTextColumn     *telemetrytypes.TelemetryFieldKey
 	skipResourceFilter bool
 	skipFullTextFilter bool
+	exactSemconv       bool
 	variables          map[string]qbtypes.VariableItem
 
 	keysWithWarnings map[string]bool
@@ -60,6 +61,7 @@ type FilterExprVisitorOpts struct {
 	FullTextColumn     *telemetrytypes.TelemetryFieldKey
 	SkipResourceFilter bool
 	SkipFullTextFilter bool
+	ExactSemconv       bool
 	Variables          map[string]qbtypes.VariableItem
 	StartNs            uint64
 	EndNs              uint64
@@ -77,6 +79,7 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 		fullTextColumn:     opts.FullTextColumn,
 		skipResourceFilter: opts.SkipResourceFilter,
 		skipFullTextFilter: opts.SkipFullTextFilter,
+		exactSemconv:       opts.ExactSemconv,
 		variables:          opts.Variables,
 		keysWithWarnings:   make(map[string]bool),
 		startNs:            opts.StartNs,
@@ -381,7 +384,7 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 // VisitComparison handles all comparison operators.
 func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext) any {
 	key := v.Visit(ctx.Key()).(*telemetrytypes.TelemetryFieldKey)
-	matching := MatchingFieldKeys(key, v.fieldKeys)
+	matching := v.matchingFieldKeys(key)
 
 	// Handle EXISTS specially
 	if ctx.EXISTS() != nil {
@@ -732,7 +735,7 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 		return ErrorConditionLiteral
 	}
 
-	conds, ok := v.buildConditions(key, MatchingFieldKeys(key, v.fieldKeys), operator, value)
+	conds, ok := v.buildConditions(key, v.matchingFieldKeys(key), operator, value)
 	if !ok {
 		return ErrorConditionLiteral
 	}
@@ -925,7 +928,7 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 // buildConditions invokes the condition builder for a filter term, folding its
 // warnings/errors into visitor state; returns false if an error was recorded.
 func (v *filterExpressionVisitor) buildConditions(key *telemetrytypes.TelemetryFieldKey, matching []*telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOperator, value any) ([]string, bool) {
-	conds, warns, err := v.conditionBuilder.ConditionFor(v.context, v.orgID, v.startNs, v.endNs, key, v.fieldKeys, qbtypes.ConditionBuilderOptions{SkipResourceFilter: v.skipResourceFilter}, op, value, v.builder)
+	conds, warns, err := v.conditionBuilder.ConditionFor(v.context, v.orgID, v.startNs, v.endNs, key, v.fieldKeys, qbtypes.ConditionBuilderOptions{SkipResourceFilter: v.skipResourceFilter, ExactSemconv: v.exactSemconv}, op, value, v.builder)
 	if err != nil {
 		_, _, _, _, errURL, _ := errors.Unwrapb(err)
 		assignIfEmpty(&v.mainErrorURL, errURL)
@@ -984,18 +987,42 @@ func assignIfEmpty(s *string, value string) {
 // MatchingFieldKeys returns the field keys from the map that match the given key,
 // honoring any context/data type the user specified.
 func MatchingFieldKeys(field *telemetrytypes.TelemetryFieldKey, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
-	selector := telemetrytypes.FieldKeySelector{
-		Name:         field.Name,
-		Signal:       telemetrytypes.SignalTraces,
-		FieldContext: field.FieldContext,
-	}
+	return matchingFieldKeys(field, fieldKeys, true)
+}
+
+// MatchingFieldKeysExact matches only the requested physical spelling.
+func MatchingFieldKeysExact(field *telemetrytypes.TelemetryFieldKey, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
+	return matchingFieldKeys(field, fieldKeys, false)
+}
+
+func matchingFieldKeys(field *telemetrytypes.TelemetryFieldKey, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey, resolveSemconv bool) []*telemetrytypes.TelemetryFieldKey {
 	members := []string{field.Name}
-	// Only trace field mappers understand semantic-convention families today.
-	// Logs and metrics must keep using the requested spelling until theirs land.
-	if field.Signal == telemetrytypes.SignalUnspecified || field.Signal == telemetrytypes.SignalTraces {
-		members = semconv.Members(semconv.KindAttribute, selector)
+	if resolveSemconv {
+		signals := []telemetrytypes.Signal{field.Signal}
+		if field.Signal == telemetrytypes.SignalUnspecified {
+			signals = []telemetrytypes.Signal{
+				telemetrytypes.SignalTraces,
+				telemetrytypes.SignalLogs,
+				telemetrytypes.SignalMetrics,
+			}
+		}
+		members = nil
+		for _, signal := range signals {
+			selector := telemetrytypes.FieldKeySelector{
+				Name:         field.Name,
+				Signal:       signal,
+				FieldContext: field.FieldContext,
+			}
+			for _, member := range semconv.AttributeMembers(selector) {
+				if !slices.Contains(members, member) {
+					members = append(members, member)
+				}
+			}
+		}
+		if len(members) == 0 {
+			members = []string{field.Name}
+		}
 	}
-	isFamily := len(members) > 1
 	fieldKeysForName := make([]*telemetrytypes.TelemetryFieldKey, 0)
 	indexByIdentity := make(map[string]int)
 
@@ -1008,22 +1035,19 @@ func MatchingFieldKeys(field *telemetrytypes.TelemetryFieldKey, fieldKeys map[st
 				continue
 			}
 
-			// A wildcard lookup may have found a same-named field in a scope where
-			// this family does not apply. Keep exact names, but reject cross-member
-			// matches outside the generated family scope.
-			traceFamilyMatch := isFamily && item.Signal == telemetrytypes.SignalTraces
-			if memberName != field.Name {
-				if !traceFamilyMatch {
-					continue
-				}
-				itemSelector := telemetrytypes.FieldKeySelector{
+			itemMembers := []string{field.Name}
+			if resolveSemconv {
+				itemMembers = semconv.AttributeMembers(telemetrytypes.FieldKeySelector{
 					Name:         field.Name,
-					Signal:       telemetrytypes.SignalTraces,
+					Signal:       item.Signal,
 					FieldContext: item.FieldContext,
-				}
-				if !slices.Contains(semconv.Members(semconv.KindAttribute, itemSelector), memberName) {
-					continue
-				}
+				})
+			}
+			familyMatch := resolveSemconv && len(itemMembers) > 1
+			// A wildcard lookup may find the same name in a signal or context where
+			// the family does not apply. Exact names remain valid there; aliases do not.
+			if memberName != field.Name && (!familyMatch || !slices.Contains(itemMembers, memberName)) {
+				continue
 			}
 
 			physicalMembers := item.SemconvMembers
@@ -1040,7 +1064,7 @@ func MatchingFieldKeys(field *telemetrytypes.TelemetryFieldKey, fieldKeys map[st
 				materializedColumns[memberName] = strings.Trim(telemetrytypes.FieldKeyToMaterializedColumnName(&physicalKey), "`")
 			}
 			identity := item.Signal.StringValue() + ";" + item.FieldContext.StringValue() + ";" + item.FieldDataType.StringValue()
-			if traceFamilyMatch {
+			if familyMatch {
 				if index, found := indexByIdentity[identity]; found {
 					for _, physicalMember := range physicalMembers {
 						if !slices.Contains(fieldKeysForName[index].SemconvMembers, physicalMember) {
@@ -1053,6 +1077,11 @@ func MatchingFieldKeys(field *telemetrytypes.TelemetryFieldKey, fieldKeys map[st
 						}
 						maps.Copy(fieldKeysForName[index].SemconvMaterializedColumns, materializedColumns)
 					}
+					if item.Materialized && item.MaterializedSemconv {
+						fieldKeysForName[index].Materialized = true
+						fieldKeysForName[index].MaterializedColumnName = item.MaterializedColumnName
+						fieldKeysForName[index].MaterializedSemconv = true
+					}
 					continue
 				}
 				indexByIdentity[identity] = len(fieldKeysForName)
@@ -1060,12 +1089,16 @@ func MatchingFieldKeys(field *telemetrytypes.TelemetryFieldKey, fieldKeys map[st
 			resolved := *item
 			// The requested spelling is the response identity. Field mappers use
 			// it to resolve the available family members current-first.
-			if traceFamilyMatch {
+			if familyMatch {
 				resolved.Name = field.Name
 				resolved.SemconvMembers = slices.Clone(physicalMembers)
 				resolved.SemconvMaterializedColumns = materializedColumns
-				// Materialization is member-specific after family keys are merged.
-				resolved.Materialized = false
+				if !resolved.MaterializedSemconv {
+					// Materialization is member-specific after family keys are merged.
+					resolved.Materialized = false
+				}
+			} else if !resolveSemconv {
+				resolved.SemconvMembers = []string{field.Name}
 			}
 			fieldKeysForName = append(fieldKeysForName, &resolved)
 		}
@@ -1087,4 +1120,26 @@ func MatchingFieldKeys(field *telemetrytypes.TelemetryFieldKey, fieldKeys map[st
 	}
 
 	return fieldKeysForName
+}
+
+func (v *filterExpressionVisitor) matchingFieldKeys(field *telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
+	if v.exactSemconv {
+		return MatchingFieldKeysExact(field, v.fieldKeys)
+	}
+	return MatchingFieldKeys(field, v.fieldKeys)
+}
+
+// ExactSemconvKeys returns copies pinned to their physical names, preventing a
+// field mapper from expanding a synthesized or metadata-free key into a family.
+func ExactSemconvKeys(keys []*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
+	result := make([]*telemetrytypes.TelemetryFieldKey, 0, len(keys))
+	for _, key := range keys {
+		if key == nil {
+			continue
+		}
+		resolved := *key
+		resolved.SemconvMembers = []string{key.Name}
+		result = append(result, &resolved)
+	}
+	return result
 }

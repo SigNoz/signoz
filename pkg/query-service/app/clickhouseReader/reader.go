@@ -52,10 +52,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 
 	chErrors "github.com/SigNoz/signoz/pkg/query-service/errors"
-	"github.com/SigNoz/signoz/pkg/query-service/metrics"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/semconv"
 )
 
 const (
@@ -3190,11 +3190,6 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, orgID v
 	var rows driver.Rows
 	var attributeValues v3.FilterAttributeValueResponse
 
-	normalized := true
-	if constants.IsDotMetricsEnabled {
-		normalized = false
-	}
-
 	reductionEnabled := r.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableMetricsReduction, featuretypes.NewFlaggerEvaluationContext(orgID))
 
 	if reductionEnabled {
@@ -3205,8 +3200,7 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, orgID v
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
-	names := []string{req.AggregateAttribute}
-	names = append(names, metrics.GetTransitionedMetric(req.AggregateAttribute, normalized))
+	names := semconv.MetricNames(req.AggregateAttribute)
 
 	rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, names, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), common.PastDayRoundOff())
 

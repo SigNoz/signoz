@@ -2,6 +2,7 @@ package semconv
 
 import (
 	"slices"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -25,6 +26,13 @@ type Family struct {
 	ApplyToMetrics []string
 	ValueMap       map[string]string
 }
+
+type metricSpelling uint8
+
+const (
+	metricSpellingDotted metricSpelling = iota
+	metricSpellingNormalized
+)
 
 var (
 	KindAttribute = Kind{String: valuer.NewString("attribute")}
@@ -57,6 +65,88 @@ func Members(kind Kind, selector telemetrytypes.FieldKeySelector) []string {
 		return []string{selector.Name}
 	}
 	return familyMembers[idx]
+}
+
+// AttributeMembers returns the physical attribute spellings that may represent
+// selector.Name. Metrics have used both dotted and normalized label layouts;
+// resource labels have additionally used a resource_ prefix. Keeping that
+// storage detail here prevents metrics readers from maintaining local
+// transition tables.
+func AttributeMembers(selector telemetrytypes.FieldKeySelector) []string {
+	if selector.Signal != telemetrytypes.SignalMetrics {
+		return Members(KindAttribute, selector)
+	}
+
+	lookupSelector := selector
+	lookupSelector.Name = strings.TrimPrefix(selector.Name, "resource_")
+	family, style, ok := lookupMetricSpelling(KindAttribute, lookupSelector)
+	if !ok {
+		return []string{selector.Name}
+	}
+
+	logicalMembers := familyMembers[family]
+	result := make([]string, 0, len(logicalMembers)*4)
+	for _, member := range logicalMembers {
+		dotted := member
+		normalized := normalizeMetricSpelling(member)
+		variants := []string{dotted, normalized}
+		if style == metricSpellingNormalized {
+			variants[0], variants[1] = variants[1], variants[0]
+		}
+
+		if selector.FieldContext == telemetrytypes.FieldContextResource ||
+			selector.FieldContext == telemetrytypes.FieldContextUnspecified ||
+			strings.HasPrefix(selector.Name, "resource_") {
+			for _, variant := range variants {
+				result = appendUniqueString(result, "resource_"+variant)
+			}
+		}
+		for _, variant := range variants {
+			result = appendUniqueString(result, variant)
+		}
+	}
+	return result
+}
+
+// MetricNames returns the current and historical storage names for a metric.
+// The input's dotted or normalized style is preserved because both layouts are
+// valid metric identities and must not be mixed in one query.
+func MetricNames(name string) []string {
+	selector := telemetrytypes.FieldKeySelector{
+		Name:         name,
+		Signal:       telemetrytypes.SignalMetrics,
+		FieldContext: telemetrytypes.FieldContextMetric,
+	}
+	family, style, ok := lookupMetricSpelling(KindMetric, selector)
+	if !ok {
+		return []string{name}
+	}
+
+	logicalMembers := familyMembers[family]
+	result := make([]string, 0, len(logicalMembers))
+	for _, member := range logicalMembers {
+		if style == metricSpellingNormalized {
+			member = normalizeMetricSpelling(member)
+		}
+		result = appendUniqueString(result, member)
+	}
+	return result
+}
+
+// CurrentAttribute returns the canonical dotted name for an attribute
+// spelling, or selector.Name if no enabled family matches.
+func CurrentAttribute(selector telemetrytypes.FieldKeySelector) string {
+	if selector.Signal != telemetrytypes.SignalMetrics {
+		return Current(KindAttribute, selector)
+	}
+
+	lookupSelector := selector
+	lookupSelector.Name = strings.TrimPrefix(selector.Name, "resource_")
+	family, _, ok := lookupMetricSpelling(KindAttribute, lookupSelector)
+	if !ok {
+		return selector.Name
+	}
+	return families[family].Current
 }
 
 // Current returns the current name for selector.Name, or the input name when
@@ -97,6 +187,35 @@ func lookupIndex(kind Kind, selector telemetrytypes.FieldKeySelector) (int, bool
 		}
 	}
 	return 0, false
+}
+
+func lookupMetricSpelling(kind Kind, selector telemetrytypes.FieldKeySelector) (int, metricSpelling, bool) {
+	if idx, ok := lookupIndex(kind, selector); ok {
+		return idx, metricSpellingDotted, true
+	}
+
+	for idx, family := range families {
+		if !matchesSelector(family, kind, selector) {
+			continue
+		}
+		for _, member := range familyMembers[idx] {
+			if normalizeMetricSpelling(member) == selector.Name {
+				return idx, metricSpellingNormalized, true
+			}
+		}
+	}
+	return 0, metricSpellingDotted, false
+}
+
+func normalizeMetricSpelling(name string) string {
+	return strings.ReplaceAll(name, ".", "_")
+}
+
+func appendUniqueString(values []string, value string) []string {
+	if value == "" || slices.Contains(values, value) {
+		return values
+	}
+	return append(values, value)
 }
 
 func matchesSelector(family Family, kind Kind, selector telemetrytypes.FieldKeySelector) bool {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -135,10 +136,22 @@ func (c *conditionBuilder) conditionFor(
 			return "true", nil
 		}
 
-		if operator == qbtypes.FilterOperatorExists {
-			return fmt.Sprintf("has(JSONExtractKeys(labels), '%s')", key.Name), nil
+		members := metricAttributeMembers(key)
+		guards := make([]string, 0, len(members))
+		for _, member := range members {
+			guards = append(guards, fmt.Sprintf("has(JSONExtractKeys(labels), '%s')", member))
 		}
-		return fmt.Sprintf("not has(JSONExtractKeys(labels), '%s')", key.Name), nil
+		guard := strings.Join(guards, " OR ")
+		if len(guards) > 1 {
+			guard = "(" + guard + ")"
+		}
+		if operator == qbtypes.FilterOperatorExists {
+			return guard, nil
+		}
+		if len(guards) == 1 {
+			return "not " + guard, nil
+		}
+		return "NOT " + guard, nil
 	}
 	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator: %v", operator)
 }
@@ -151,7 +164,7 @@ func (c *conditionBuilder) ConditionFor(
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
-	_ qbtypes.ConditionBuilderOptions,
+	options qbtypes.ConditionBuilderOptions,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
@@ -162,7 +175,15 @@ func (c *conditionBuilder) ConditionFor(
 		return nil, nil, err
 	}
 
+	requestedKey := *key
+	if requestedKey.Signal == telemetrytypes.SignalUnspecified {
+		requestedKey.Signal = telemetrytypes.SignalMetrics
+	}
+	key = &requestedKey
 	keys := querybuilder.MatchingFieldKeys(key, fieldKeys)
+	if options.ExactSemconv {
+		keys = querybuilder.MatchingFieldKeysExact(key, fieldKeys)
+	}
 	var warnings []string
 	if len(keys) == 0 {
 		if _, isColumn := timeSeriesV4Columns[key.Name]; isColumn {
@@ -179,6 +200,9 @@ func (c *conditionBuilder) ConditionFor(
 					key.FieldContext.StringValue()+"."+key.Name, telemetrytypes.FieldContextAttribute, key.FieldDataType))
 			}
 		}
+	}
+	if options.ExactSemconv {
+		keys = querybuilder.ExactSemconvKeys(keys)
 	}
 
 	conds := make([]string, 0, len(keys))

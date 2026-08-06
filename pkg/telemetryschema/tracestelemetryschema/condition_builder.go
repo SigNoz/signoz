@@ -222,6 +222,9 @@ func (c *conditionBuilder) ConditionFor(
 	}
 
 	matches := querybuilder.MatchingFieldKeys(key, fieldKeys)
+	if options.ExactSemconv {
+		matches = querybuilder.MatchingFieldKeysExact(key, fieldKeys)
+	}
 	skipResourceFilter := options.SkipResourceFilter
 
 	keys, warning := querybuilder.ResolveKeys(key, matches)
@@ -266,6 +269,9 @@ func (c *conditionBuilder) ConditionFor(
 		}
 		synthesized = true
 		warnings = append(warnings, querybuilder.NewKeyNotFoundWarning(key.Name))
+	}
+	if options.ExactSemconv {
+		keys = querybuilder.ExactSemconvKeys(keys)
 	}
 
 	// When a resource sub-query already covers the term, drop resource keys from the main

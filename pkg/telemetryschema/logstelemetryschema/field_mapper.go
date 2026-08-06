@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/semconv"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -65,6 +66,20 @@ var (
 
 type fieldMapper struct {
 	fl flagger.Flagger
+}
+
+func logSemconvMembers(key *telemetrytypes.TelemetryFieldKey) []string {
+	if key.FieldContext != telemetrytypes.FieldContextResource && key.FieldContext != telemetrytypes.FieldContextAttribute {
+		return []string{key.Name}
+	}
+	if len(key.SemconvMembers) > 0 {
+		return key.SemconvMembers
+	}
+	return semconv.AttributeMembers(telemetrytypes.FieldKeySelector{
+		Name:         key.Name,
+		Signal:       telemetrytypes.SignalLogs,
+		FieldContext: key.FieldContext,
+	})
 }
 
 func NewFieldMapper(fl flagger.Flagger) qbtypes.FieldMapper {
@@ -141,8 +156,22 @@ func (m *fieldMapper) FieldFor(ctx context.Context, orgID valuer.UUID, tsStart, 
 		case schema.ColumnTypeEnumJSON:
 			switch key.FieldContext {
 			case telemetrytypes.FieldContextResource:
-				exprs = append(exprs, fmt.Sprintf("%s.`%s`::String", columnName, key.Name))
-				existExpr = append(existExpr, fmt.Sprintf("%s.`%s` IS NOT NULL", columnName, key.Name))
+				members := logSemconvMembers(key)
+				if len(members) > 1 {
+					values := make([]string, 0, len(members))
+					guards := make([]string, 0, len(members))
+					for _, member := range members {
+						values = append(values, fmt.Sprintf("NULLIF(%s.`%s`::String, '')", columnName, member))
+						guards = append(guards, fmt.Sprintf("%s.`%s` IS NOT NULL", columnName, member))
+					}
+					// Missing Dynamic paths are NULL, so this family expression must
+					// retain the same NULL result as a single JSON-path lookup.
+					exprs = append(exprs, "COALESCE("+strings.Join(values, ", ")+")")
+					existExpr = append(existExpr, "("+strings.Join(guards, " OR ")+")")
+				} else {
+					exprs = append(exprs, fmt.Sprintf("%s.`%s`::String", columnName, members[0]))
+					existExpr = append(existExpr, fmt.Sprintf("%s.`%s` IS NOT NULL", columnName, members[0]))
+				}
 			case telemetrytypes.FieldContextBody:
 				if key.Name == messageSubField {
 					exprs = append(exprs, messageSubColumn)
@@ -181,13 +210,34 @@ func (m *fieldMapper) FieldFor(ctx context.Context, orgID valuer.UUID, tsStart, 
 
 			switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
 			case schema.ColumnTypeEnumString, schema.ColumnTypeEnumBool, schema.ColumnTypeEnumFloat64:
-				// a key could have been materialized, if so return the materialized column name
-				if key.Materialized {
+				members := logSemconvMembers(key)
+				if key.Materialized && (len(members) == 1 || key.MaterializedSemconv) {
 					exprs = append(exprs, telemetrytypes.FieldKeyToMaterializedColumnName(key))
 					existExpr = append(existExpr, telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key))
+				} else if len(members) > 1 {
+					guards := make([]string, 0, len(members))
+					for _, member := range members {
+						guards = append(guards, fmt.Sprintf("mapContains(%s, '%s')", columnName, member))
+					}
+					if valueType.GetType() == schema.ColumnTypeEnumString {
+						values := make([]string, 0, len(members))
+						for _, member := range members {
+							values = append(values, fmt.Sprintf("NULLIF(%s['%s'], '')", columnName, member))
+						}
+						exprs = append(exprs, "COALESCE("+strings.Join(values, ", ")+", '')")
+					} else {
+						branches := make([]string, 0, len(members)*2+1)
+						for i, member := range members {
+							branches = append(branches, guards[i], fmt.Sprintf("%s['%s']", columnName, member))
+						}
+						// Numeric and boolean maps return zero for an absent key. If a
+						// family of either type is enabled, this tail must become zero too.
+						exprs = append(exprs, "multiIf("+strings.Join(branches, ", ")+", NULL)")
+					}
+					existExpr = append(existExpr, "("+strings.Join(guards, " OR ")+")")
 				} else {
-					exprs = append(exprs, fmt.Sprintf("%s['%s']", columnName, key.Name))
-					existExpr = append(existExpr, fmt.Sprintf("mapContains(%s, '%s')", columnName, key.Name))
+					exprs = append(exprs, fmt.Sprintf("%s['%s']", columnName, members[0]))
+					existExpr = append(existExpr, fmt.Sprintf("mapContains(%s, '%s')", columnName, members[0]))
 				}
 			default:
 				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for map column type %s", valueType)
