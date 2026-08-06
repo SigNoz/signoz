@@ -303,8 +303,11 @@ export * from './useTableParams';
  * - `page < 1` → jump to page 1, even while fetching or disabled. Such a page usually maps to a
  *   negative offset the API rejects (400 `offset cannot be negative`), so the response can never
  *   confirm the page is empty — deferring to it would strand the user on a permanent error.
- * - Page is empty and not page 1 → go to `min(ceil(total / pageSize), page - 1)`, i.e. the last
- *   page that has data, or one page back when `total` is unknown/zero.
+ * - Page is empty and not page 1 → go to `min(ceil(total / pageSize), page - 1)`. When `total`
+ *   is trustworthy that lands on the last page holding data; when `total` is unknown or zero it
+ *   lands on page 1; and when `total` claims this page should have had rows it steps back a
+ *   single page. Repeated step-backs give up and jump to page 1 after the second one, so a
+ *   badly inflated `total` cannot walk the user down one request at a time.
  * - Page has rows, or the user is already on page 1 → do nothing (an empty page 1 means there
  *   is genuinely nothing to show).
  *

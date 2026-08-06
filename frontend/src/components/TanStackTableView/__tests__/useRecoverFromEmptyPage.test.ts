@@ -147,4 +147,134 @@ describe('useRecoverFromEmptyPage', () => {
 
 		expect(setPage).not.toHaveBeenCalled();
 	});
+
+	it('clamps a page below the first one exactly once while the request settles', () => {
+		// The clamp runs ahead of both gates, so a request settling underneath an
+		// uncorrected page must not re-issue the same history rewrite.
+		const { setPage, rerender } = renderRecovery({
+			page: 0,
+			rowCount: 0,
+			total: 0,
+			isFetching: true,
+		});
+
+		expect(setPage).toHaveBeenCalledTimes(1);
+
+		rerender({ page: 0, rowCount: 0, total: 0, isFetching: false });
+
+		expect(setPage).toHaveBeenCalledTimes(1);
+	});
+
+	it('stops correcting once the corrected page comes back with rows', () => {
+		const { setPage, rerender } = renderRecovery({
+			page: 7,
+			pageSize: 10,
+			rowCount: 0,
+			total: 25,
+		});
+
+		expect(setPage).toHaveBeenCalledWith(3, REPLACE);
+
+		// The correction lands: the query refetches, then resolves with the rows page 3 holds.
+		rerender({ page: 3, pageSize: 10, rowCount: 0, total: 25, isFetching: true });
+		rerender({
+			page: 3,
+			pageSize: 10,
+			rowCount: 5,
+			total: 25,
+			isFetching: false,
+		});
+
+		expect(setPage).toHaveBeenCalledTimes(1);
+	});
+
+	it('does not correct again while the same page is still being observed', () => {
+		const { setPage, rerender } = renderRecovery({
+			page: 5,
+			pageSize: 10,
+			rowCount: 0,
+			total: 100,
+		});
+
+		expect(setPage).toHaveBeenCalledTimes(1);
+
+		// A refetch cycle that leaves the page untouched — the correction is already in flight.
+		rerender({
+			page: 5,
+			pageSize: 10,
+			rowCount: 0,
+			total: 100,
+			isFetching: true,
+		});
+		rerender({
+			page: 5,
+			pageSize: 10,
+			rowCount: 0,
+			total: 100,
+			isFetching: false,
+		});
+
+		expect(setPage).toHaveBeenCalledTimes(1);
+	});
+
+	it('gives up on step-backs and jumps to page 1 when the total keeps lying', () => {
+		// `total` claims 400 rows exist, but every page comes back empty. Walking back one
+		// page at a time would cost a request per hop, so bail out to page 1 instead.
+		const { setPage, rerender } = renderRecovery({
+			page: 40,
+			pageSize: 10,
+			rowCount: 0,
+			total: 400,
+		});
+
+		expect(setPage).toHaveBeenNthCalledWith(1, 39, REPLACE);
+
+		rerender({ page: 39, pageSize: 10, rowCount: 0, total: 400 });
+
+		expect(setPage).toHaveBeenNthCalledWith(2, 38, REPLACE);
+
+		rerender({ page: 38, pageSize: 10, rowCount: 0, total: 400 });
+
+		expect(setPage).toHaveBeenNthCalledWith(3, 1, REPLACE);
+		expect(setPage).toHaveBeenCalledTimes(3);
+	});
+
+	it('corrects again when the user returns to a page that is still empty', () => {
+		const { setPage, rerender } = renderRecovery({
+			page: 3,
+			pageSize: 10,
+			rowCount: 0,
+			total: 10,
+		});
+
+		expect(setPage).toHaveBeenNthCalledWith(1, 1, REPLACE);
+
+		rerender({ page: 1, pageSize: 10, rowCount: 10, total: 10 });
+		rerender({ page: 3, pageSize: 10, rowCount: 0, total: 10 });
+
+		expect(setPage).toHaveBeenNthCalledWith(2, 1, REPLACE);
+	});
+
+	it('does not re-run the correction when setPage is a fresh function each render', () => {
+		// The hook reads setPage through a ref, so an inline arrow must not turn the
+		// ungated `page < 1` clamp into a per-render history rewrite.
+		const setPage = jest.fn();
+		const { rerender } = renderHook(
+			() =>
+				useRecoverFromEmptyPage({
+					page: 0,
+					pageSize: 10,
+					rowCount: 0,
+					total: 0,
+					isFetching: false,
+					setPage: (nextPage, options): void => setPage(nextPage, options),
+				}),
+			{ initialProps: undefined },
+		);
+
+		rerender(undefined);
+		rerender(undefined);
+
+		expect(setPage).toHaveBeenCalledTimes(1);
+	});
 });
