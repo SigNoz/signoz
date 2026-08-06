@@ -104,8 +104,9 @@ func TestErrIfStatementIsNotValid_Fail(t *testing.T) {
 		{"CreateTable", "CREATE TABLE evil (a Int) ENGINE = Memory", CodeClickHouseSQLNotSelect},
 		{"Grant", "GRANT ALL ON *.* TO admin", CodeClickHouseSQLNotSelect},
 		{"Set", "SET readonly = 0", CodeClickHouseSQLNotSelect},
-		// The parser still dereferences nil on a DEFAULT expression it cannot read, so the recover is what turns this into a rejection rather than a crash.
-		{"UnparseableDefaultExpression", "CREATE TABLE t (a String DEFAULT foo(b FROM 2)) ENGINE = Memory", CodeClickHouseSQLParserPanic},
+		// Both panicked before v0.5.5. https://github.com/AfterShip/clickhouse-sql-parser/pull/306
+		{"UnparseableDefaultExpression", "CREATE TABLE t (a String DEFAULT foo(b FROM 2)) ENGINE = Memory", CodeClickHouseSQLUnparseable},
+		{"TrailingOperatorInDefaultExpression", "CREATE TABLE t (a String DEFAULT 1 +) ENGINE = Memory", CodeClickHouseSQLUnparseable},
 		// These the parser rejects outright rather than classifying.
 		{"ShowGrants", "SHOW GRANTS", CodeClickHouseSQLUnparseable},
 		{"IntoOutfile", "SELECT * FROM t INTO OUTFILE '/tmp/x.csv'", CodeClickHouseSQLUnparseable},
