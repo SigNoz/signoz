@@ -49,8 +49,14 @@ function PanelEditorPage(): JSX.Element {
 		useDashboardFetch(dashboardId);
 	// Derived here (not from the store) because the editor route doesn't mount
 	// DashboardContainer, so the store's edit context may be cold on a direct URL.
-	const { isEditable, isLocked, canEditDashboard, editDisabledReason } =
-		useDashboardEditGuard(dashboard);
+	const {
+		isEditable,
+		isLocked,
+		canEditDashboard,
+		canDeleteDashboard,
+		isPermissionLoading,
+		editDisabledReason,
+	} = useDashboardEditGuard(dashboard);
 
 	// On a refresh/direct URL this route is the only mount, so seed the edit
 	// context the way DashboardContainer does — during render, so the subtree's
@@ -61,6 +67,8 @@ function PanelEditorPage(): JSX.Element {
 			dashboardId: dashboard.id,
 			isLocked,
 			canEditDashboard,
+			canDeleteDashboard,
+			isPermissionLoading,
 			refetch,
 		});
 	}

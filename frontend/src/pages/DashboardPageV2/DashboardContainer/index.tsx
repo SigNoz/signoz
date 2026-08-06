@@ -40,7 +40,8 @@ function DashboardContainer({
 
 	const fullScreenHandle = useFullScreenHandle();
 
-	const { isLocked, canEditDashboard } = useDashboardEditGuard(dashboard);
+	const { isLocked, canEditDashboard, canDeleteDashboard, isPermissionLoading } =
+		useDashboardEditGuard(dashboard);
 
 	// Seed during render (not an effect) so the first Panel render already sees the id —
 	// useDashboardFetchRequired throws on a missing id. setEditContext self-guards.
@@ -49,6 +50,8 @@ function DashboardContainer({
 		dashboardId: dashboard.id,
 		isLocked,
 		canEditDashboard,
+		canDeleteDashboard,
+		isPermissionLoading,
 		refetch,
 	});
 
