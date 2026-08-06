@@ -10,8 +10,11 @@ import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import PermissionDeniedCallout from 'lib/authz/components/PermissionDeniedCallout/PermissionDeniedCallout';
+import { buildDashboardReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
 
 import { useDashboardFetch } from '../DashboardContainer/hooks/useDashboardFetch';
+import { useDashboardReadDenied } from '../DashboardContainer/hooks/useDashboardReadDenied';
 import { useDashboardEditGuard } from '../DashboardContainer/hooks/useDashboardEditGuard';
 import { useResolvedVariables } from '../DashboardContainer/hooks/useResolvedVariables';
 import PanelEditorContainer from '../DashboardContainer/PanelEditor';
@@ -47,6 +50,7 @@ function PanelEditorPage(): JSX.Element {
 
 	const { dashboard, isLoading, isError, error, refetch } =
 		useDashboardFetch(dashboardId);
+	const isReadDenied = useDashboardReadDenied(isError, error);
 	// Derived here (not from the store) because the editor route doesn't mount
 	// DashboardContainer, so the store's edit context may be cold on a direct URL.
 	const {
@@ -123,6 +127,16 @@ function PanelEditorPage(): JSX.Element {
 
 	if (isLoading) {
 		return <Spinner tip="Loading dashboard..." />;
+	}
+
+	if (isReadDenied) {
+		return (
+			<div className={styles.errorState}>
+				<PermissionDeniedCallout
+					deniedPermissions={[buildDashboardReadPermission(dashboardId)]}
+				/>
+			</div>
+		);
 	}
 
 	if (isError || !dashboard) {
