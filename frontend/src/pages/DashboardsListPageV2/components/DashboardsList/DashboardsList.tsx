@@ -331,7 +331,6 @@ function DashboardsList(): JSX.Element {
 				onReset={handleResetView}
 				onDelete={handleRemoveView}
 				onRename={renameView}
-				canEdit={canEdit}
 			/>
 			<div className={styles.main}>
 				<div className={styles.mainScroll}>
