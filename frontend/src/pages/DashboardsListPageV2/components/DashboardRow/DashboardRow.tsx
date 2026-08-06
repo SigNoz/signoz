@@ -28,7 +28,6 @@ import styles from './DashboardRow.module.scss';
 interface Props {
 	dashboard: DashboardListItem;
 	index: number;
-	canEdit: boolean;
 	showUpdatedAt: boolean;
 	showUpdatedBy: boolean;
 }
@@ -36,7 +35,6 @@ interface Props {
 function DashboardRow({
 	dashboard,
 	index,
-	canEdit,
 	showUpdatedAt,
 	showUpdatedBy,
 }: Props): JSX.Element {
@@ -203,7 +201,6 @@ function DashboardRow({
 						createdBy={createdBy}
 						isLocked={isLocked}
 						tags={tags}
-						canEdit={canEdit}
 						onView={onClickHandler}
 						isLegacy={isLegacy}
 					/>
@@ -252,7 +249,6 @@ function DashboardRow({
 					open={isLegacyDialogOpen}
 					dashboardId={id}
 					dashboardName={name}
-					canEdit={canEdit}
 					onClose={(): void => setIsLegacyDialogOpen(false)}
 				/>
 			)}

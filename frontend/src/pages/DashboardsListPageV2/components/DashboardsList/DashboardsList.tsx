@@ -6,7 +6,6 @@ import {
 	DashboardtypesListSortDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { useDashboardCollectionPermissions } from 'hooks/dashboards/useDashboardCollectionPermissions';
-import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
 import { DashboardListPermission } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
@@ -52,8 +51,6 @@ function DashboardsList(): JSX.Element {
 	const { isCloudUser } = useGetTenantLicense();
 
 	const { user } = useAppContext();
-	const [editDashboard] = useComponentPermission(['edit_dashboard'], user.role);
-	const canEdit = !!editDashboard;
 	// `list` also authorizes pinning and saved views, so it gates the table only.
 	const { canList, isLoading: isPermissionLoading } =
 		useDashboardCollectionPermissions();
@@ -308,7 +305,6 @@ function DashboardsList(): JSX.Element {
 			pageSize={clientView ? CLIENT_VIEW_LIMIT : PAGE_SIZE}
 			total={total}
 			onPageChange={setPage}
-			canEdit={canEdit}
 			showUpdatedAt={visibleColumns.updatedAt}
 			showUpdatedBy={visibleColumns.updatedBy}
 			loading={isFetching}

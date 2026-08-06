@@ -15,8 +15,6 @@ interface Props {
 	isLocked: boolean;
 	// Current tags as `key:value` strings, for the inline tag editor.
 	tags: string[];
-	// Edit permission (edit_dashboard). Read actions show regardless; edit actions are hidden without it.
-	canEdit: boolean;
 	onView: (event: React.MouseEvent<HTMLElement>) => void;
 	// A legacy (pre-v2) dashboard has no v2 spec, so the actions that operate on
 	// one (view, open, copy link, rename, edit tags, duplicate, lock) don't apply —
@@ -31,7 +29,6 @@ function ActionsPopover({
 	createdBy,
 	isLocked,
 	tags,
-	canEdit,
 	onView,
 	isLegacy = false,
 }: Props): JSX.Element {
@@ -55,7 +52,6 @@ function ActionsPopover({
 						createdBy={createdBy}
 						isLocked={isLocked}
 						tags={tags}
-						canEdit={canEdit}
 						isLegacy={isLegacy}
 						onView={onView}
 						onOpenRename={(): void => {

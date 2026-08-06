@@ -1,4 +1,3 @@
-import { Tooltip } from 'antd';
 import { Button } from '@signozhq/ui/button';
 import {
 	Copy,
@@ -11,12 +10,20 @@ import {
 } from '@signozhq/icons';
 import { useCopyToClipboard } from 'react-use';
 import logEvent from 'api/common/logEvent';
+import {
+	DASHBOARD_CLONE_DENIED_REASON,
+	DASHBOARD_LOCKED_REASON,
+	DASHBOARD_NO_EDIT_PERMISSION_REASON,
+} from 'hooks/dashboards/dashboardPermissionReasons';
+import { useDashboardCollectionPermissions } from 'hooks/dashboards/useDashboardCollectionPermissions';
+import { useDashboardLockPermission } from 'hooks/dashboards/useDashboardLockPermission';
+import { useDashboardPermissions } from 'hooks/dashboards/useDashboardPermissions';
+import { DashboardCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
 import { DashboardListEvents } from 'pages/DashboardsListPageV2/constants/events';
-import { useAppContext } from 'providers/App/App';
-import { USER_ROLES } from 'types/roles';
 import { getAbsoluteUrl } from 'utils/basePath';
 import { openInNewTab } from 'utils/navigation';
 
+import ActionsMenuItem from './ActionsMenuItem';
 import DeleteActionItem from './DeleteActionItem';
 import { useCloneDashboardAction } from './useCloneDashboardAction';
 import { useLockToggleAction } from './useLockToggleAction';
@@ -29,8 +36,6 @@ interface Props {
 	createdBy: string;
 	isLocked: boolean;
 	tags: string[];
-	// Edit permission (edit_dashboard). Read actions show regardless; edit actions are hidden without it.
-	canEdit: boolean;
 	isLegacy: boolean;
 	onView: (event: React.MouseEvent<HTMLElement>) => void;
 	onOpenRename: () => void;
@@ -38,7 +43,7 @@ interface Props {
 }
 
 // The popover body. Mounted only while the popover is open, so a page of rows
-// doesn't pay for 20 copies of the menu and its mutations.
+// doesn't pay for 20 copies of the menu, its mutations or its permission checks.
 function ActionsPopoverContent({
 	link,
 	dashboardId,
@@ -46,14 +51,26 @@ function ActionsPopoverContent({
 	createdBy,
 	isLocked,
 	tags,
-	canEdit,
 	isLegacy,
 	onView,
 	onOpenRename,
 	onOpenEditTags,
 }: Props): JSX.Element {
 	const [, setCopy] = useCopyToClipboard();
-	const { user } = useAppContext();
+
+	const {
+		canEdit,
+		canRead,
+		isLoading: isPermissionLoading,
+		editChecks,
+		readPermission,
+	} = useDashboardPermissions(dashboardId);
+	const { canCreate } = useDashboardCollectionPermissions();
+	const {
+		canToggleLock,
+		isLoading: isLockPermissionLoading,
+		disabledReason: lockDisabledReason,
+	} = useDashboardLockPermission({ dashboardId, createdBy });
 
 	const { clone, isCloning } = useCloneDashboardAction({
 		dashboardId,
@@ -64,31 +81,23 @@ function ActionsPopoverContent({
 		isLocked,
 	});
 
-	const isAuthor = user?.email === createdBy;
-	// Author/admin can lock-unlock (mirrors the detail-page gate); integration-owned
-	// dashboards are never toggleable.
-	const canToggleLock =
-		(isAuthor || user.role === USER_ROLES.ADMIN) && createdBy !== 'integration';
+	// Lock wins over permission: an editor looking at a locked dashboard should be
+	// told about the lock, which is the thing they can act on.
+	const editDisabled = isPermissionLoading || isLocked || !canEdit;
+	let editReason = '';
+	if (!isPermissionLoading) {
+		if (isLocked) {
+			editReason = DASHBOARD_LOCKED_REASON;
+		} else if (!canEdit) {
+			editReason = DASHBOARD_NO_EDIT_PERMISSION_REASON;
+		}
+	}
+	const editDenied = !isPermissionLoading && !isLocked && !canEdit;
 
-	const handleOpenInNewTab = (e: React.MouseEvent<HTMLElement>): void => {
-		e.stopPropagation();
-		e.preventDefault();
-		openInNewTab(link);
-		void logEvent(DashboardListEvents.RowAction, {
-			action: 'openNewTab',
-			dashboardId,
-		});
-	};
-
-	const handleCopyLink = (e: React.MouseEvent<HTMLElement>): void => {
-		e.stopPropagation();
-		e.preventDefault();
-		setCopy(getAbsoluteUrl(link));
-		void logEvent(DashboardListEvents.RowAction, {
-			action: 'copyLink',
-			dashboardId,
-		});
-	};
+	// Clone reads the source and creates a new dashboard, so it needs both — and
+	// it is not lock-gated, since the copy is a fresh unlocked dashboard.
+	const canClone = canRead && canCreate;
+	const cloneDenied = !isPermissionLoading && !canClone;
 
 	return (
 		// Stop clicks inside the menu (incl. disabled items) from bubbling to the
@@ -110,7 +119,15 @@ function ActionsPopoverContent({
 						color="secondary"
 						className={styles.menuItem}
 						prefix={<SquareArrowOutUpRight size={14} />}
-						onClick={handleOpenInNewTab}
+						onClick={(e): void => {
+							e.stopPropagation();
+							e.preventDefault();
+							openInNewTab(link);
+							void logEvent(DashboardListEvents.RowAction, {
+								action: 'openNewTab',
+								dashboardId,
+							});
+						}}
 						testId="dashboard-action-open-new-tab"
 					>
 						Open in New Tab
@@ -119,110 +136,66 @@ function ActionsPopoverContent({
 						color="secondary"
 						className={styles.menuItem}
 						prefix={<Link2 size={14} />}
-						onClick={handleCopyLink}
+						onClick={(e): void => {
+							e.stopPropagation();
+							e.preventDefault();
+							setCopy(getAbsoluteUrl(link));
+							void logEvent(DashboardListEvents.RowAction, {
+								action: 'copyLink',
+								dashboardId,
+							});
+						}}
 						testId="dashboard-action-copy-link"
 					>
 						Copy Link
 					</Button>
-					{canEdit && (
-						<Tooltip
-							placement="left"
-							title={
-								isLocked ? 'This dashboard is locked, so it cannot be renamed.' : ''
-							}
-						>
-							<span className={styles.menuItemWrap}>
-								<Button
-									color="secondary"
-									className={styles.menuItem}
-									prefix={<PenLine size={14} />}
-									disabled={isLocked}
-									onClick={(e): void => {
-										e.stopPropagation();
-										e.preventDefault();
-										if (!isLocked) {
-											onOpenRename();
-										}
-									}}
-									testId="dashboard-action-rename"
-								>
-									Rename
-								</Button>
-							</span>
-						</Tooltip>
-					)}
-					{canEdit && (
-						<Tooltip
-							placement="left"
-							title={
-								isLocked
-									? 'This dashboard is locked, so its tags cannot be edited.'
-									: ''
-							}
-						>
-							<span className={styles.menuItemWrap}>
-								<Button
-									color="secondary"
-									className={styles.menuItem}
-									prefix={<Tag size={14} />}
-									disabled={isLocked}
-									onClick={(e): void => {
-										e.stopPropagation();
-										e.preventDefault();
-										if (!isLocked) {
-											onOpenEditTags();
-										}
-									}}
-									testId="dashboard-action-edit-tags"
-								>
-									{tags.length > 0 ? 'Edit Tags' : 'Add Tags'}
-								</Button>
-							</span>
-						</Tooltip>
-					)}
-					{canEdit && (
-						<Button
-							color="secondary"
-							className={styles.menuItem}
-							prefix={<Copy size={14} />}
-							loading={isCloning}
-							onClick={(e): void => {
-								e.stopPropagation();
-								e.preventDefault();
-								clone();
-							}}
-							testId="dashboard-action-duplicate"
-						>
-							Duplicate
-						</Button>
-					)}
-					{canToggleLock && (
-						<Button
-							color="secondary"
-							className={styles.menuItem}
-							prefix={<LockKeyhole size={14} />}
-							loading={isTogglingLock}
-							onClick={(e): void => {
-								e.stopPropagation();
-								e.preventDefault();
-								toggleLock();
-							}}
-							testId="dashboard-action-lock"
-						>
-							{isLocked ? 'Unlock Dashboard' : 'Lock Dashboard'}
-						</Button>
-					)}
+					<ActionsMenuItem
+						label="Rename"
+						icon={<PenLine size={14} />}
+						testId="dashboard-action-rename"
+						disabled={editDisabled}
+						reason={editReason}
+						deniedPermissions={editDenied ? editChecks : undefined}
+						onClick={onOpenRename}
+					/>
+					<ActionsMenuItem
+						label={tags.length > 0 ? 'Edit Tags' : 'Add Tags'}
+						icon={<Tag size={14} />}
+						testId="dashboard-action-edit-tags"
+						disabled={editDisabled}
+						reason={editReason}
+						deniedPermissions={editDenied ? editChecks : undefined}
+						onClick={onOpenEditTags}
+					/>
+					<ActionsMenuItem
+						label="Duplicate"
+						icon={<Copy size={14} />}
+						testId="dashboard-action-duplicate"
+						disabled={isPermissionLoading || !canClone}
+						reason={cloneDenied ? DASHBOARD_CLONE_DENIED_REASON : ''}
+						deniedPermissions={
+							cloneDenied ? [readPermission, DashboardCreatePermission] : undefined
+						}
+						loading={isCloning}
+						onClick={clone}
+					/>
+					<ActionsMenuItem
+						label={isLocked ? 'Unlock Dashboard' : 'Lock Dashboard'}
+						icon={<LockKeyhole size={14} />}
+						testId="dashboard-action-lock"
+						disabled={isLockPermissionLoading || !canToggleLock}
+						reason={lockDisabledReason}
+						loading={isTogglingLock}
+						onClick={toggleLock}
+					/>
 				</>
 			)}
-			{canEdit && (
-				<DeleteActionItem
-					dashboardId={dashboardId}
-					dashboardName={dashboardName}
-					createdBy={createdBy}
-					isLocked={isLocked}
-					showDivider={!isLegacy}
-				/>
-			)}
+			<DeleteActionItem
+				dashboardId={dashboardId}
+				dashboardName={dashboardName}
+				isLocked={isLocked}
+				showDivider={!isLegacy}
+			/>
 		</div>
 	);
 }
