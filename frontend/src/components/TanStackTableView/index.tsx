@@ -9,6 +9,7 @@ export * from './useCalculatedPageSize';
 export * from './useColumnState';
 export * from './useColumnStore';
 export * from './usePreferredPageSize.store';
+export * from './useRecoverFromEmptyPage';
 export * from './useTableParams';
 
 /**
@@ -285,6 +286,48 @@ export * from './useTableParams';
  *
  * **Pagination shows "Auto" option** when `calculatedPageSize` is passed, allowing users
  * to reset to auto-calculated size.
+ *
+ * **`setPage` accepts history options**: `setPage(page, { history: 'replace' })` rewrites the
+ * current history entry instead of pushing a new one. Use `replace` for corrections the user
+ * did not ask for — otherwise the back button walks straight back into the state that was just
+ * corrected. Only applies when the page is synced to the URL; local (non-URL) pages ignore it.
+ *
+ * @example useRecoverFromEmptyPage — send the user back to a page that has data
+ *
+ * When rows disappear underneath the current page (filters narrowed, time range moved, items
+ * deleted), the user is stranded on an empty page they cannot leave by scrolling. This hook
+ * watches the fetched result and corrects the page with `history: 'replace'`, so the back
+ * button does not return to the empty page.
+ *
+ * Correction rules:
+ * - `page < 1` → jump to page 1, even while fetching or disabled. Such a page usually maps to a
+ *   negative offset the API rejects (400 `offset cannot be negative`), so the response can never
+ *   confirm the page is empty — deferring to it would strand the user on a permanent error.
+ * - Page is empty and not page 1 → go to `min(ceil(total / pageSize), page - 1)`, i.e. the last
+ *   page that has data, or one page back when `total` is unknown/zero.
+ * - Page has rows, or the user is already on page 1 → do nothing (an empty page 1 means there
+ *   is genuinely nothing to show).
+ *
+ * Pass `isFetching` so the hook waits for the request to settle, and `isDisabled` so a failed
+ * request is not mistaken for an empty page. Neither gate suppresses the `page < 1` clamp.
+ *
+ * ```tsx
+ * import { useRecoverFromEmptyPage, useTableParams } from 'components/TanStackTableView';
+ *
+ * const { page, limit, setPage } = useTableParams(QUERY_PARAMS, { page: 1, limit: 20 });
+ * const { data, isLoading, isFetching, isError } = useListQuery({ page, limit });
+ *
+ * useRecoverFromEmptyPage({
+ *   page,
+ *   pageSize: limit,
+ *   rowCount: data?.rows.length ?? 0,
+ *   total: data?.total ?? 0,
+ *   isFetching: isLoading || isFetching,
+ *   // Skip correction on errors — no rows there means "request failed", not "page is empty".
+ *   isDisabled: isError,
+ *   setPage,
+ * });
+ * ```
  */
 const TanStackTable = Object.assign(TanStackTableBase, {
 	Text: TanStackTableText,
