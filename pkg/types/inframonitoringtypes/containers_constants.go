@@ -35,9 +35,9 @@ var (
 	ContainerStatusNoData = ContainerStatus{valuer.NewString("no_data")}
 )
 
-// IsFilterableContainerStatus reports whether c is a concrete, user-filterable
+// IsFilterable reports whether c is a concrete, user-filterable
 // container status: any Enum() member except the no_data sentinel.
-func IsFilterableContainerStatus(c ContainerStatus) bool {
+func (c ContainerStatus) IsFilterable() bool {
 	return c != ContainerStatusNoData && slices.Contains((ContainerStatus{}).Enum(), any(c))
 }
 

@@ -24,9 +24,9 @@ func (NodeCondition) Enum() []any {
 	}
 }
 
-// IsFilterableNodeCondition reports whether c is a concrete, user-filterable
+// IsFilterable reports whether c is a concrete, user-filterable
 // node readiness: any Enum() member except the no_data sentinel.
-func IsFilterableNodeCondition(c NodeCondition) bool {
+func (c NodeCondition) IsFilterable() bool {
 	return c != NodeConditionNoData && slices.Contains((NodeCondition{}).Enum(), any(c))
 }
 

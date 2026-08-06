@@ -91,7 +91,7 @@ func (req *PostableDaemonSets) Validate() error {
 
 	if req.Filter != nil {
 		for _, s := range req.Filter.FilterByPodStatus {
-			if !IsFilterablePodStatus(s) {
+			if !s.IsFilterable() {
 				return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid filter by pod status: %s", s)
 			}
 		}

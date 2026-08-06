@@ -70,9 +70,9 @@ func (PodStatus) Enum() []any {
 	}
 }
 
-// IsFilterablePodStatus reports whether s is a concrete, user-filterable pod
+// IsFilterable reports whether s is a concrete, user-filterable pod
 // status: any Enum() member except the no_data sentinel.
-func IsFilterablePodStatus(s PodStatus) bool {
+func (s PodStatus) IsFilterable() bool {
 	return s != PodStatusNoData && slices.Contains((PodStatus{}).Enum(), any(s))
 }
 

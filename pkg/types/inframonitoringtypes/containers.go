@@ -131,7 +131,7 @@ func (req *PostableContainers) Validate() error {
 
 	if req.Filter != nil {
 		for _, c := range req.Filter.FilterByContainerStatus {
-			if !IsFilterableContainerStatus(c) {
+			if !c.IsFilterable() {
 				return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid filter by container status: %s", c)
 			}
 		}

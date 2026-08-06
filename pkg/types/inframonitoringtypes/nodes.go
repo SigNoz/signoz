@@ -96,15 +96,12 @@ func (req *PostableNodes) Validate() error {
 
 	if req.Filter != nil {
 		for _, s := range req.Filter.FilterByPodStatus {
-			if !IsFilterablePodStatus(s) {
+			if !s.IsFilterable() {
 				return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid filter by pod status: %s", s)
 			}
 		}
-	}
-
-	if req.Filter != nil {
 		for _, c := range req.Filter.FilterByNodeReadiness {
-			if !IsFilterableNodeCondition(c) {
+			if !c.IsFilterable() {
 				return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid filter by node readiness: %s", c)
 			}
 		}
