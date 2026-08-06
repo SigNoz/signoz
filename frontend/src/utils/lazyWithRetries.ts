@@ -16,24 +16,17 @@ export const lazyRetry = (componentImport: ComponentImport): Promise<any> =>
 				resolve(component);
 			})
 			.catch((error: Error) => {
-				// A stale chunk reference right after a deploy is expected and self-healing:
-				// one reload pulls a fresh index.html with the new hashed asset names. That
-				// reload can only be once-only if the flag persists, so a storage write that
-				// fails (sessionStorage blocked) has to report rather than reload forever.
-				const canReload =
+				// A stale chunk reference right after a deploy self-heals: one reload pulls a
+				// fresh index.html with the new hashed asset names. That reload is only
+				// once-only if the flag persists, so a failed write (sessionStorage blocked in
+				// an iframe, storage disabled) must not reload at all — it would loop forever.
+				if (
 					!hasRefreshed &&
-					setSessionStorageApi(SESSIONSTORAGE.RETRY_LAZY_REFRESHED, 'true');
-
-				if (!canReload) {
-					reject(error);
-
-					return;
+					setSessionStorageApi(SESSIONSTORAGE.RETRY_LAZY_REFRESHED, 'true')
+				) {
+					window.location.reload();
 				}
 
-				window.location.reload();
-
-				// Deliberately settle nothing here: the Suspense fallback stays on screen
-				// until the page unloads, where rejecting would flash the error boundary for a
-				// failure that recovers on its own.
+				reject(error);
 			});
 	});

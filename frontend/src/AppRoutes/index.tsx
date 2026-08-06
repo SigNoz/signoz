@@ -355,12 +355,14 @@ function App(): JSX.Element {
 					environment: process.env.ENVIRONMENT,
 					release: process.env.VERSION,
 					// A tab that outlived a deploy requests hashed assets the new build no longer
-					// has. `lazyRetry` already swallows the first of these by reloading, so
-					// anything reaching here survived that reload — dropping the class outright
-					// is intentional: stale-asset failures are not reported at all.
+					// has. `lazyRetry` recovers by reloading once, so this class is not worth
+					// reporting. The stylesheet message is Vite's own; the module ones are the
+					// same failure worded differently by Chromium, Firefox and Safari.
 					ignoreErrors: [
 						/Unable to preload CSS for/,
 						/Failed to fetch dynamically imported module/,
+						/error loading dynamically imported module/,
+						/Importing a module script failed/,
 					],
 					integrations: [
 						// Kept for the `transaction` tag used in routing, even though
