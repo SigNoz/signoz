@@ -4,9 +4,27 @@ export default {
 	data: {
 		resources: [
 			{
+				kind: 'dashboard',
+				type: 'metaresource',
+				allowedVerbs: ['create', 'delete', 'list', 'read', 'update'],
+			},
+			{
 				kind: 'factor-api-key',
 				type: 'metaresource',
 				allowedVerbs: ['create', 'delete', 'list', 'read', 'update'],
+			},
+			{
+				kind: 'public-dashboard',
+				type: 'metaresource',
+				allowedVerbs: [
+					'attach',
+					'create',
+					'delete',
+					'detach',
+					'list',
+					'read',
+					'update',
+				],
 			},
 			{
 				kind: 'role',
