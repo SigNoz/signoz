@@ -14,26 +14,22 @@ import (
 )
 
 // traceHaving is the resolved trace-level filter part: a HAVING predicate over the
-// per-trace column aliases (args bound into the scan's builder) plus the aliases it
-// references (so scans select only what the predicate needs).
+// per-trace aliases plus the aliases it references (so scans select only those).
 type traceHaving struct {
 	pred string
 	used map[string]struct{}
 }
 
-// resolveTraceHaving resolves a trace-level filter expression through the standard
-// filter pipeline (PrepareWhereClause) against the per-trace column aliases, so
-// operators and bound args behave exactly as in span-level filters. Query variables
-// are resolved by the canonical replacement (pkg/variables) first — a dynamic
-// variable set to __all__ drops its condition for any operator. Returns nil when the
-// expression is empty or every condition was dropped. Args bind into sb.
+// resolveTraceHaving resolves a trace-level filter through the standard pipeline
+// (variable replacement, then PrepareWhereClause against the per-trace aliases), so
+// operators, bound args, and __all__ behave exactly as in span filters. Returns nil
+// when the expression is empty or every condition was dropped; args bind into sb.
 func (b *scopedTraceStatementBuilder) resolveTraceHaving(ctx context.Context, expr string, variables map[string]qbtypes.VariableItem, sb *sqlbuilder.SelectBuilder) (*traceHaving, error) {
 	if strings.TrimSpace(expr) == "" {
 		return nil, nil
 	}
 	allowed := b.orderableColumnSet()
-	// upfront targeted errors: the visitor folds condition errors into a combined
-	// "Found N errors" whose details are not part of the error message
+	// upfront targeted errors; the visitor folds them into a combined "Found N errors"
 	if err := validateAggregateFilter(expr, allowed); err != nil {
 		return nil, err
 	}
@@ -51,8 +47,8 @@ func (b *scopedTraceStatementBuilder) resolveTraceHaving(ctx context.Context, ex
 		}
 	}
 
-	// every user-facing spelling resolves here: the key parser strips the trace./
-	// tracefield. prefix into FieldContextTrace, which matches this entry's context
+	// both spellings resolve here: the key parser strips the trace. prefix into
+	// FieldContextTrace, which matches this entry's context
 	fieldKeys := make(map[string][]*telemetrytypes.TelemetryFieldKey, len(allowed))
 	for alias := range allowed {
 		key := &telemetrytypes.TelemetryFieldKey{Name: alias, FieldContext: telemetrytypes.FieldContextTrace}
@@ -78,8 +74,7 @@ func (b *scopedTraceStatementBuilder) resolveTraceHaving(ctx context.Context, ex
 }
 
 // aliasConditionBuilder renders filter conditions directly against the per-trace
-// column aliases. It records the aliases it touches; a key that resolves to no alias
-// is an unknown/unfilterable aggregate.
+// aliases, recording the ones it touches; a key resolving to no alias is an error.
 type aliasConditionBuilder struct {
 	allowed map[string]struct{}
 	used    map[string]struct{}

@@ -21,7 +21,7 @@ func TestRewriteTraceAggregation(t *testing.T) {
 		wantErr string
 	}{
 		{name: "avg trace col", expr: "avg(trace.output_tokens)", isTrace: true, want: "avg(output_tokens)", used: []string{"output_tokens"}},
-		{name: "tracefield prefix", expr: "sum(tracefield.total_tokens)", isTrace: true, want: "sum(total_tokens)", used: []string{"total_tokens"}},
+		{name: "sum trace col", expr: "sum(trace.total_tokens)", isTrace: true, want: "sum(total_tokens)", used: []string{"total_tokens"}},
 		{name: "count traces", expr: "count(trace.trace_id)", isTrace: true, want: "count(trace_id)"},
 		{name: "p90 trace col", expr: "p90(trace.max_llm_latency_ns)", isTrace: true, want: "quantile(0.90)(max_llm_latency_ns)", used: []string{"max_llm_latency_ns"}},
 		{name: "arithmetic between trace cols", expr: "avg(trace.output_tokens + trace.input_tokens)", isTrace: true, want: "avg(output_tokens + input_tokens)", used: []string{"output_tokens", "input_tokens"}},

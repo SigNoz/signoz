@@ -35,7 +35,7 @@ func TestValidateVariablesInExpr(t *testing.T) {
 	require.NoError(t, ValidateVariablesInExpr("x > threshold", vars))
 	require.NoError(t, ValidateVariablesInExpr("x IN $all", vars))
 	require.NoError(t, ValidateVariablesInExpr("m = 'cost$usd'", vars)) // quoted literals are not references
-	require.NoError(t, ValidateVariablesInExpr("x > bare_word", vars)) // bare non-variable means itself
+	require.NoError(t, ValidateVariablesInExpr("x > bare_word", vars))  // bare non-variable means itself
 	require.ErrorContains(t, ValidateVariablesInExpr("x > $bogus", vars), `unknown variable "$bogus"`)
 	require.ErrorContains(t, ValidateVariablesInExpr("x IN $empty", vars), "empty list")
 }

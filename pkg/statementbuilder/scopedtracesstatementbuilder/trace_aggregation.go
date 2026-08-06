@@ -16,26 +16,18 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
-// This file implements scalar / time-series for scoped-trace queries
-// (builder_ai_query being the current consumer).
+// Scalar / time-series for scoped-trace queries. The `trace.` prefix picks the
+// domain per expression: span-level (bare keys) delegates to the standard trace
+// builder with the gate ANDed in; trace-level aggregates window-clipped per-trace
+// values through the native pipeline (buildTraceAggregationQuery):
 //
-// Aggregations come in two domains, chosen per expression by the `trace.` prefix:
-//   - span-level (bare keys): aggregate over individual in-scope spans. Delegated to the
-//     standard trace builder with the gate ANDed in; a trace-level filter part becomes
-//     a __trace_scope qualification (see buildDelegated).
-//   - trace-level (`trace.` prefix): aggregate over window-clipped per-trace values
-//     (avg(trace.output_tokens) = average per trace). Runs the native pipeline below.
-//
-// Native pipeline (buildTraceAggregationQuery):
-//
-//	__qualified   traces whose window-clipped aggregates satisfy the trace-level
-//	   │          filter — whole-window values, so a trace qualifies once. Only
-//	   ▼          present when the filter has a trace-level part.
+//	__qualified       traces whose whole-window aggregates satisfy the trace-level
+//	   │              filter part; present only when the filter has one.
+//	   ▼
 //	__scoped_traces   per-trace values: windowed, mask-pruned GROUP BY trace_id
-//	   │          (+ time bucket for time series → per-bucket clipping, + group-by
-//	   ▼          columns), spans filtered by gate AND span-level filter; rows with
-//	main          no LLM activity are dropped (activity gate). Outer aggregation over
-//	              the per-trace rows → __result_i.
+//	   │              (+ ts bucket for time series, + group-by columns), activity-
+//	   ▼              gated rows only.
+//	main              outer aggregation over the per-trace rows → __result_i.
 
 // traceAggregation is one aggregation rewritten to run over the per-trace scan.
 type traceAggregation struct {
@@ -66,9 +58,8 @@ func (b *scopedTraceStatementBuilder) buildAggregation(
 	return b.buildTraceAggregationQuery(ctx, orgID, querybuilder.ToNanoSecs(start), querybuilder.ToNanoSecs(end), requestType, query, variables, traceAggs)
 }
 
-// classifyAggregations splits the aggregations into span-domain (delegated) vs
-// trace-domain (over per-trace values). Returns the rewritten trace-domain
-// aggregations, nil when all are span-domain; mixing the two domains is rejected.
+// classifyAggregations returns the rewritten trace-domain aggregations, nil when all
+// are span-domain; mixing the two domains is rejected.
 func (b *scopedTraceStatementBuilder) classifyAggregations(aggs []qbtypes.TraceAggregation) ([]traceAggregation, error) {
 	traceCols := b.orderableColumnSet()
 	var out []traceAggregation
@@ -91,8 +82,8 @@ func (b *scopedTraceStatementBuilder) classifyAggregations(aggs []qbtypes.TraceA
 	return out, nil
 }
 
-// orderableColumnSet is the scope's per-trace column set (static) usable in
-// trace-level aggregations and filters.
+// orderableColumnSet is the static per-trace column set usable in trace-level
+// aggregations and filters.
 func (b *scopedTraceStatementBuilder) orderableColumnSet() map[string]struct{} {
 	set := make(map[string]struct{})
 	for _, c := range b.scope.Columns {
@@ -103,11 +94,9 @@ func (b *scopedTraceStatementBuilder) orderableColumnSet() map[string]struct{} {
 	return set
 }
 
-// validateGroupByAndOrder rejects trace-level (trace.) per-trace columns used as a
-// group-by key or an order key with a targeted error, instead of the generic "field
-// not found" the field mapper would raise. An order key that names an aggregation
-// (alias / expression / index) is exempt — that is the way to order by a trace-level
-// aggregation's result.
+// validateGroupByAndOrder rejects trace-level columns as group-by / order keys with a
+// targeted error (not the field mapper's generic "field not found"); order keys naming
+// an aggregation (alias / expression / index) are exempt.
 func (b *scopedTraceStatementBuilder) validateGroupByAndOrder(requestType qbtypes.RequestType, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) error {
 	aliases := b.aggregateAliasSet()
 	for _, gb := range query.GroupBy {
@@ -133,23 +122,20 @@ func (b *scopedTraceStatementBuilder) validateGroupByAndOrder(requestType qbtype
 	return nil
 }
 
-// isTraceLevelKey reports whether a group-by / order key explicitly names a
-// trace-level per-trace aggregate (trace./tracefield. prefix or trace field context).
-// Bare names pass through: they may legitimately be span columns that share a name
-// with an aggregate alias (duration_nano, timestamp).
+// isTraceLevelKey reports whether a group-by / order key explicitly (trace. prefix or
+// trace context) names a per-trace aggregate; bare names pass through since they may
+// be span columns sharing an alias name (duration_nano, timestamp).
 func isTraceLevelKey(name string, fieldContext telemetrytypes.FieldContext, aliases map[string]struct{}) bool {
-	stripped := strings.TrimPrefix(strings.TrimPrefix(name, "tracefield."), "trace.")
+	stripped := strings.TrimPrefix(name, "trace.")
 	if _, ok := aliases[stripped]; !ok {
 		return false
 	}
 	return stripped != name || fieldContext == telemetrytypes.FieldContextTrace
 }
 
-// rewriteTraceAggregation parses one aggregation expression. When it references
-// trace.-prefixed per-trace columns it returns the expression rewritten to run over
-// the per-trace scan (trace.output_tokens → output_tokens, arithmetic between
-// trace. columns allowed, function names mapped via AggreFuncMap) with isTrace=true;
-// a pure span-level expression returns isTrace=false and is left for the delegate.
+// rewriteTraceAggregation rewrites an aggregation over trace.-prefixed columns to run
+// on the per-trace scan (trace.output_tokens → output_tokens, functions mapped via
+// AggreFuncMap); a pure span-level expression returns isTrace=false for the delegate.
 func rewriteTraceAggregation(expr string, traceCols map[string]struct{}) (*traceAggregation, bool, error) {
 	p := chparser.NewParser("SELECT " + expr)
 	stmts, err := p.ParseStmts()
@@ -178,11 +164,9 @@ func rewriteTraceAggregation(expr string, traceCols map[string]struct{}) (*trace
 	return &traceAggregation{expr: chparser.Format(sel.SelectItems[0]), used: v.used, isRate: v.isRate}, true, nil
 }
 
-// traceAggVisitor walks the aggregation AST, classifying column references and
-// rewriting trace.-prefixed ones (bare paths, backquoted identifiers, and either
-// nested in arithmetic) to the per-trace column aliases in place. It keeps an
-// ancestor stack (Enter/Leave) to tell a column identifier from a path segment,
-// function name, or alias, and to reject trace. columns inside *If combinators.
+// traceAggVisitor classifies column references and rewrites trace.-prefixed ones in
+// place; the ancestor stack tells a column identifier from a path segment, function
+// name, or alias, and rejects trace. columns inside *If combinators.
 type traceAggVisitor struct {
 	chparser.DefaultASTVisitor
 	traceCols map[string]struct{}
@@ -236,9 +220,8 @@ func (v *traceAggVisitor) VisitPath(p *chparser.Path) error {
 	return nil
 }
 
-// VisitIdent classifies a plain identifier: a backquoted `trace.output_tokens` is a
-// trace-level reference (rewritten in place); any other column identifier is
-// span-level. Path segments, function names, and aliases are structural, not columns.
+// VisitIdent classifies a plain identifier (a backquoted `trace.output_tokens` is
+// trace-level); path segments, function names, and aliases are structural, not columns.
 func (v *traceAggVisitor) VisitIdent(i *chparser.Ident) error {
 	switch parent := v.parent().(type) {
 	case *chparser.Path:
@@ -304,15 +287,11 @@ func (v *traceAggVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 }
 
 // traceColumnRef reports whether text is a pure trace.-prefixed column reference
-// (trace.output_tokens / tracefield.output_tokens) and returns the bare column name.
+// (trace.output_tokens) and returns the bare column name.
 func traceColumnRef(text string) (string, bool) {
 	text = strings.TrimSpace(text)
-	var rest string
-	if r, ok := strings.CutPrefix(text, "trace."); ok {
-		rest = r
-	} else if r, ok := strings.CutPrefix(text, "tracefield."); ok {
-		rest = r
-	} else {
+	rest, ok := strings.CutPrefix(text, "trace.")
+	if !ok {
 		return "", false
 	}
 	if rest == "" || strings.ContainsAny(rest, " ()'\"`,+-*/<>=!") {
@@ -334,12 +313,10 @@ func sortedAliases(set map[string]struct{}) []string {
 // Qualification + per-trace scan
 // ---------------------------------------------------------------------------
 
-// buildQualifiedStatement builds the qualification statement — trace ids whose
-// window-clipped per-trace aggregates satisfy the trace-level filter — used as the
-// delegate's __trace_scope. When the query's filter references resource attributes,
-// the scan is pruned to matching resource fingerprints (inlined, since the caller
-// embeds this statement standalone). start/end are ns. Returns nil when every
-// trace-level condition was dropped by variable resolution.
+// buildQualifiedStatement builds the delegate's __trace_scope: trace ids whose
+// window-clipped aggregates satisfy the trace-level filter, resource-pruned inline
+// (the caller embeds it standalone). start/end are ns; nil when every condition was
+// dropped by variable resolution.
 func (b *scopedTraceStatementBuilder) buildQualifiedStatement(
 	ctx context.Context,
 	orgID valuer.UUID,
@@ -383,9 +360,8 @@ func (b *scopedTraceStatementBuilder) buildQualifiedStatement(
 	return &qbtypes.Statement{Query: sql, Args: args}, nil
 }
 
-// embedExpr inlines a pre-built statement into sb, replacing each `?` placeholder
-// with a builder Var so the args are tracked in appearance order. A count mismatch
-// would silently shift args into the wrong slots — error out instead.
+// embedExpr inlines a pre-built statement into sb, replacing each `?` with a builder
+// Var; a count mismatch would silently shift args into the wrong slots, so error out.
 func embedExpr(sb *sqlbuilder.SelectBuilder, expr string, args []any) (string, error) {
 	if n := strings.Count(expr, "?"); n != len(args) {
 		return "", errors.NewInternalf(errors.CodeInternal,
@@ -690,9 +666,8 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 		spanPred:     msc.spanPred,
 		resourcePred: resourcePred,
 		qualified:    qualified,
-		// LLM-activity gate: per-trace rows with no in-scope activity in their
-		// window/bucket slice are dropped, so e.g. count(trace.trace_id) and
-		// avg(trace.output_tokens) agree on the set of traces they see.
+		// drop rows with no gated activity in their window/bucket slice, so all
+		// aggregations see the same trace set (see TraceScope.ActivityGateAlias)
 		activityExpr: activityGate(b.scope, msc.resolved),
 	})
 	cteFragments = append(cteFragments, fmt.Sprintf("__scoped_traces AS (%s)", perTraceSQL))
@@ -775,9 +750,8 @@ func (ta traceAggregation) rendered(rateInterval uint64) string {
 	return ta.expr
 }
 
-// outerLimitSQL renders the top-N group selection for a grouped, limited time
-// series: the outer aggregations over whole-window per-trace values, ranked and
-// limited.
+// outerLimitSQL renders the top-N group selection for a grouped, limited time series:
+// outer aggregations over whole-window per-trace values, ranked and limited.
 func outerLimitSQL(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], traceAggs []traceAggregation, groupNames []string, windowSeconds uint64) (string, []any) {
 	sb := sqlbuilder.NewSelectBuilder()
 	selects := append([]string{}, groupNames...)

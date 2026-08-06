@@ -77,8 +77,8 @@ def test_ai_list_having_aggregate_filter(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """Span + aggregate condition in one filter box splits into WHERE + HAVING; bare
-    and `trace.` spellings behave identically; an output-only aggregate is rejected."""
+    """One filter box splits into WHERE + HAVING; bare and `trace.` spellings behave
+    identically; an output-only aggregate is rejected."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-having"
 
@@ -361,9 +361,8 @@ def test_ai_list_nested_group_span_or_and_aggregate(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """service.name = X AND (has_error = true OR gen_ai.request.model = 'gpt-4o') AND
-    total_tokens > 100: the nested OR group must not flatten, span predicates go to
-    WHERE, the aggregate to HAVING."""
+    """A nested (span OR span) group ANDed with an aggregate must not flatten: span
+    predicates go to WHERE, the aggregate to HAVING."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-nested"
 

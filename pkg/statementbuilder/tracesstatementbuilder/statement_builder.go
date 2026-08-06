@@ -32,9 +32,8 @@ type traceQueryStatementBuilder struct {
 	resourceFilterResolver         *resourcefilter.ResourceFingerprintResolver[qbtypes.TraceAggregation]
 	aggExprRewriter                qbtypes.AggExprRewriter
 	skipResourceFingerprintEnabled bool
-	// traceScope, when set (only on the per-call copy made by BuildTraceScoped),
-	// constrains raw/scalar/time-series queries to spans whose trace_id is in the
-	// scope statement, attached as a __trace_scope CTE.
+	// traceScope, set only on the per-call copy made by BuildTraceScoped, constrains
+	// queries to spans whose trace_id is in the __trace_scope CTE.
 	traceScope *qbtypes.Statement
 }
 
@@ -99,9 +98,8 @@ func NewTraceQueryStatementBuilder(
 	}
 }
 
-// BuildTraceScoped is Build with the query additionally constrained to spans whose
-// trace_id is selected by traceScope. The receiver is copied so the shared builder
-// stays stateless.
+// BuildTraceScoped is Build constrained to trace_ids selected by traceScope; the
+// receiver is copied so the shared builder stays stateless.
 func (b *traceQueryStatementBuilder) BuildTraceScoped(
 	ctx context.Context,
 	orgID valuer.UUID,

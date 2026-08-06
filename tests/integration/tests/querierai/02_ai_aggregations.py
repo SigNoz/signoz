@@ -1,15 +1,8 @@
 """
-Integration tests for query_type="builder_ai_query" scalar / time-series aggregations.
-
-Aggregations come in two domains, chosen per expression by the `trace.` prefix:
-  - span-level (bare keys): over individual gen_ai spans (count(), sum(gen_ai.*))
-  - trace-level (trace.*): over window-clipped per-trace values (avg(trace.output_tokens))
-A trace-level condition in the filter (trace.output_tokens > N) qualifies traces by
-their window-clipped per-trace values in every request type — the span-list variant
-of this is covered in 01_ai_traces.py (test_ai_span_list_trace_level_filter).
-
-Each test tags its spans with a unique service.name and filters on it, so tests do
-not interfere with each other's data.
+builder_ai_query scalar / time-series aggregations. The `trace.` prefix picks the
+domain per expression: bare keys aggregate over gen_ai spans, trace.* over
+window-clipped per-trace values; a trace-level filter condition qualifies whole
+traces in every request type. Tests isolate their data via unique service.name.
 """
 
 from collections.abc import Callable
@@ -86,11 +79,8 @@ def test_ai_scalar_trace_level_aggregations(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """
-    Trace-level (trace.) scalar aggregations over per-trace values: two traces with
-    out-tokens 100 / 300 give avg(trace.output_tokens)=200 and count(trace.trace_id)=2,
-    while the span-level count() sees the two LLM spans (root spans are gated out).
-    """
+    """Trace-level scalars over per-trace values: out-tokens 100/300 give avg=200 and
+    count=2, while the span-level count() sees the two LLM spans (roots gated out)."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-agg-scalar"
     insert_traces(ai_trace(now=now, service=service, in_tokens=10, out_tokens=100) + ai_trace(now=now, service=service, in_tokens=30, out_tokens=300))
@@ -132,11 +122,8 @@ def test_ai_scalar_trace_level_filter_qualifies_traces(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """
-    A trace-level condition in the filter qualifies whole traces before aggregation:
-    with out-tokens 100 / 300, `trace.output_tokens > 100` keeps only the 300 trace
-    for both trace-level and span-level aggregations.
-    """
+    """`trace.output_tokens > 100` qualifies whole traces before aggregation: with
+    out-tokens 100/300 only the 300 trace survives, on both aggregation domains."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-agg-qualify"
     insert_traces(ai_trace(now=now, service=service, in_tokens=10, out_tokens=100) + ai_trace(now=now, service=service, in_tokens=30, out_tokens=300))
@@ -245,11 +232,8 @@ def test_ai_timeseries_top_n_groups(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """
-    Grouped, limited time series ranks groups on whole-window per-trace values
-    (__scoped_traces_total -> __limit_cte) and returns only the top-N: gpt-4o sums to
-    400 across two traces vs gpt-4o-mini's 50, so limit=1 keeps only gpt-4o.
-    """
+    """Grouped, limited time series ranks groups on whole-window per-trace values:
+    gpt-4o sums to 400 vs gpt-4o-mini's 50, so limit=1 keeps only gpt-4o."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-agg-topn"
     insert_traces(ai_trace(now=now, service=service, in_tokens=10, out_tokens=300, model="gpt-4o") + ai_trace(now=now, service=service, in_tokens=10, out_tokens=100, model="gpt-4o") + ai_trace(now=now, service=service, in_tokens=10, out_tokens=50, model="gpt-4o-mini"))
@@ -282,11 +266,8 @@ def test_ai_timeseries_span_time_bucketing(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """
-    Per-trace values are clipped per (bucket, trace): one trace with two LLM calls
-    two minutes apart contributes each call's tokens to its own bucket, not the
-    whole-trace total to both.
-    """
+    """Per-trace values are clipped per (bucket, trace): two LLM calls two minutes
+    apart contribute each call's tokens to its own bucket, not the total to both."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-agg-buckets"
 
@@ -347,10 +328,8 @@ def test_ai_scalar_variables_in_trace_level_filter(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """
-    Query variables resolve inside trace-level conditions with span-filter semantics;
-    an unresolvable $var is a 400, not a silent literal comparison.
-    """
+    """Variables resolve inside trace-level conditions with span-filter semantics;
+    an unresolvable $var is a 400, not a silent literal comparison."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-agg-vars"
     insert_traces(ai_trace(now=now, service=service, in_tokens=10, out_tokens=100) + ai_trace(now=now, service=service, in_tokens=30, out_tokens=300))
@@ -404,11 +383,8 @@ def test_ai_scalar_activity_gate_excludes_tool_only_traces(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """
-    A tool-only trace (in the gen_ai gate, no LLM span) must not feed trace-level
-    aggregations: count(trace.trace_id) sees only the LLM trace, while the span-level
-    count() still sees both gen_ai spans (LLM + tool).
-    """
+    """A tool-only trace (in the gate, no LLM span) must not feed trace-level
+    aggregations: count(trace.trace_id) skips it, span-level count() still sees it."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-agg-gate"
     insert_traces(ai_trace(now=now, service=service, in_tokens=10, out_tokens=100) + tool_only_trace(now=now, service=service))

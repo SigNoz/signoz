@@ -13,11 +13,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Scalar / time-series (trace-level aggregation) Build tests. The
-// rewriteTraceAggregation unit tests live in scopedtracesstatementbuilder; these
-// exercise the full builder through the gen_ai scope.
+// Build tests for scalar / time-series through the gen_ai scope; the
+// rewriteTraceAggregation unit tests live in scopedtracesstatementbuilder.
 
-// Mixing domains across separate aggregations of one query is rejected.
+// Mixing span- and trace-level aggregations across one query is rejected.
 func TestBuild_Aggregation_MixedDomainsRejected(t *testing.T) {
 	b := newTestBuilder(t)
 	_, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeScalar,
@@ -31,23 +30,21 @@ func TestBuild_Aggregation_MixedDomainsRejected(t *testing.T) {
 	require.ErrorContains(t, err, "cannot be mixed")
 }
 
-// A trace-level filter over an output-only aggregate is rejected on the
-// aggregation paths too (it is not computable in the mask-pruned scan).
+// Output-only aggregates are rejected in trace-level filters on the aggregation
+// path too (the raw and trace-list paths are covered elsewhere).
 func TestBuild_Aggregation_OutputOnlyFilterRejected(t *testing.T) {
 	b := newTestBuilder(t)
-	for _, rt := range []qbtypes.RequestType{qbtypes.RequestTypeScalar, qbtypes.RequestTypeRaw} {
-		_, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, rt,
-			qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-				Signal:       telemetrytypes.SignalTraces,
-				Aggregations: []qbtypes.TraceAggregation{{Expression: "count()"}},
-				Filter:       &qbtypes.Filter{Expression: "trace.span_count > 3"},
-			}, nil)
-		require.ErrorContains(t, err, `aggregate "span_count" cannot be used`)
-	}
+	_, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeScalar,
+		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Signal:       telemetrytypes.SignalTraces,
+			Aggregations: []qbtypes.TraceAggregation{{Expression: "count()"}},
+			Filter:       &qbtypes.Filter{Expression: "trace.span_count > 3"},
+		}, nil)
+	require.ErrorContains(t, err, `aggregate "span_count" cannot be used`)
 }
 
-// Trace-level per-trace columns are rejected as group-by / order keys with a
-// targeted error (not the field mapper's generic "field not found").
+// Trace-level columns are rejected as group-by / order keys with a targeted error;
+// ordering by the aggregation's own alias stays valid.
 func TestBuild_Aggregation_GroupByOrderValidation(t *testing.T) {
 	b := newTestBuilder(t)
 	ctx := context.Background()
@@ -60,13 +57,6 @@ func TestBuild_Aggregation_GroupByOrderValidation(t *testing.T) {
 		}, nil)
 	require.ErrorContains(t, err, `grouping by trace-level aggregate "trace.llm_call_count" is not supported`)
 
-	_, err = b.Build(ctx, valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeRaw,
-		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-			Signal: telemetrytypes.SignalTraces,
-			Order:  []qbtypes.OrderBy{{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "trace.output_tokens"}}}},
-		}, nil)
-	require.ErrorContains(t, err, `ordering the span list by trace-level aggregate "trace.output_tokens" is not supported`)
-
 	_, err = b.Build(ctx, valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeScalar,
 		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 			Signal:       telemetrytypes.SignalTraces,
@@ -75,7 +65,6 @@ func TestBuild_Aggregation_GroupByOrderValidation(t *testing.T) {
 		}, nil)
 	require.ErrorContains(t, err, `ordering by trace-level aggregate "trace.total_tokens" is not supported`)
 
-	// ordering by the aggregation itself (expression or alias) stays valid
 	_, err = b.Build(ctx, valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeScalar,
 		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 			Signal:       telemetrytypes.SignalTraces,
@@ -85,43 +74,28 @@ func TestBuild_Aggregation_GroupByOrderValidation(t *testing.T) {
 	require.NoError(t, err)
 }
 
-// Query variables resolve inside trace-level filter conditions on every request type,
-// as bound args via the standard filter pipeline; unknown $vars fail with a variable
-// error, not an "unknown aggregate" one.
+// Variables in trace-level conditions bind as args on the aggregation path;
+// unknown $vars fail with a variable error, __all__ drops the condition.
 func TestBuild_Aggregation_VariablesInTraceFilter(t *testing.T) {
 	b := newTestBuilder(t)
 	ctx := context.Background()
-	vars := map[string]qbtypes.VariableItem{
-		"threshold": {Type: qbtypes.TextBoxVariableType, Value: float64(1000)},
+
+	q := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+		Signal:       telemetrytypes.SignalTraces,
+		Aggregations: []qbtypes.TraceAggregation{{Expression: "avg(trace.output_tokens)"}},
+		Filter:       &qbtypes.Filter{Expression: "trace.output_tokens > $threshold"},
 	}
+	stmt, err := b.Build(ctx, valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeScalar, q,
+		map[string]qbtypes.VariableItem{"threshold": {Type: qbtypes.TextBoxVariableType, Value: float64(1000)}})
+	require.NoError(t, err)
+	assert.Contains(t, stmt.Query, "HAVING output_tokens > ?")
+	assert.Contains(t, stmt.Args, float64(1000))
 
-	for _, rt := range []qbtypes.RequestType{qbtypes.RequestTypeScalar, qbtypes.RequestTypeRaw, qbtypes.RequestTypeTrace} {
-		q := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-			Signal: telemetrytypes.SignalTraces,
-			Filter: &qbtypes.Filter{Expression: "trace.output_tokens > $threshold"},
-		}
-		if rt == qbtypes.RequestTypeScalar {
-			q.Aggregations = []qbtypes.TraceAggregation{{Expression: "avg(trace.output_tokens)"}}
-		}
-		stmt, err := b.Build(ctx, valuer.UUID{}, testStartMs, testEndMs, rt, q, vars)
-		require.NoError(t, err, rt.StringValue())
-		assert.Contains(t, stmt.Query, "HAVING output_tokens > ?", rt.StringValue())
-		assert.Contains(t, stmt.Args, float64(1000), rt.StringValue())
+	_, err = b.Build(ctx, valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeScalar, q, nil)
+	require.ErrorContains(t, err, `unknown variable "$threshold"`)
 
-		_, err = b.Build(ctx, valuer.UUID{}, testStartMs, testEndMs, rt, q, nil)
-		require.ErrorContains(t, err, `unknown variable "$threshold"`, rt.StringValue())
-	}
-
-	// a dynamic variable resolved to __all__ skips the trace-level condition, exactly
-	// like span filters — no qualification CTE is built
-	stmt, err := b.Build(ctx, valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeScalar,
-		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-			Signal:       telemetrytypes.SignalTraces,
-			Aggregations: []qbtypes.TraceAggregation{{Expression: "avg(trace.output_tokens)"}},
-			Filter:       &qbtypes.Filter{Expression: "trace.output_tokens IN $models"},
-		}, map[string]qbtypes.VariableItem{
-			"models": {Type: qbtypes.DynamicVariableType, Value: "__all__"},
-		})
+	stmt, err = b.Build(ctx, valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeScalar, q,
+		map[string]qbtypes.VariableItem{"threshold": {Type: qbtypes.DynamicVariableType, Value: "__all__"}})
 	require.NoError(t, err)
 	assert.NotContains(t, stmt.Query, "__qualified")
 
@@ -138,9 +112,8 @@ func TestBuild_Aggregation_VariablesInTraceFilter(t *testing.T) {
 	assert.Contains(t, stmt.Query, "HAVING llm_call_count IN (?, ?)")
 }
 
-// A resource-attribute condition prunes the qualification scan the same way it prunes
-// the trace list's matched pass: __qualified references the __resource_filter CTE, the
-// delegated __trace_scope inlines the fingerprint subquery.
+// Resource conditions prune the qualification scan: __qualified references the
+// __resource_filter CTE, the delegated __trace_scope inlines the fingerprint subquery.
 func TestBuild_Aggregation_QualificationResourcePruned(t *testing.T) {
 	b := newTestBuilder(t)
 	ctx := context.Background()
@@ -171,8 +144,7 @@ func TestBuild_Aggregation_QualificationResourcePruned(t *testing.T) {
 // Full-query goldens — native trace-domain pipeline
 // ---------------------------------------------------------------------------
 
-// Scalar over per-trace values, no filter: one window-clipped per-trace scan, outer
-// avg across traces.
+// Scalar over per-trace values: one window-clipped per-trace scan, outer avg.
 func TestBuild_FullSQL_Scalar_TraceAgg(t *testing.T) {
 	b := newTestBuilder(t)
 	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeScalar,
@@ -202,8 +174,7 @@ SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 `, stmt)
 }
 
-// Time series over per-trace values: the per-trace scan buckets by span time
-// (per-bucket clipping), the outer aggregation is per bucket.
+// Time series: the per-trace scan buckets by span time, the outer aggregation per bucket.
 func TestBuild_FullSQL_TimeSeries_TraceAgg(t *testing.T) {
 	b := newTestBuilder(t)
 	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTimeSeries,
@@ -235,8 +206,7 @@ SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 `, stmt)
 }
 
-// Span-level scalar with a trace-level filter: delegated to the trace builder with
-// the gate ANDed, constrained by the __trace_scope qualification.
+// Span-level scalar with a trace-level filter: delegated, constrained by __trace_scope.
 func TestBuild_FullSQL_Scalar_SpanAgg_TraceScoped(t *testing.T) {
 	b := newTestBuilder(t)
 	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeScalar,

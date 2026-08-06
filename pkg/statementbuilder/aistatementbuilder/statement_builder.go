@@ -74,8 +74,9 @@ func Scope() scopedtraces.TraceScope {
 		FieldKeys:         gateKeys,
 		Columns:           columns,
 		DefaultOrderAlias: "last_activity_time",
-		// a tool/agent-only window slice contributes NULL tokens but would still count
-		// as a trace, making count(trace.trace_id) and avg(trace.output_tokens) disagree
+		// A trace whose only in-scope spans are tool/agent spans has NULL output_tokens,
+		// so avg(trace.output_tokens) skips it while count(trace.trace_id) counts it.
+		// Gating on llm_call_count > 0 keeps both looking at the same trace set.
 		ActivityGateAlias: "llm_call_count",
 	}
 }

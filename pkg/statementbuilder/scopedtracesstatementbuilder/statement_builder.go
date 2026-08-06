@@ -129,10 +129,9 @@ type traceScopedStatementBuilder interface {
 	BuildTraceScoped(ctx context.Context, orgID valuer.UUID, start, end uint64, requestType qbtypes.RequestType, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], variables map[string]qbtypes.VariableItem, traceScope *qbtypes.Statement) (*qbtypes.Statement, error)
 }
 
-// buildDelegated splits the user filter, ANDs the base gate into its span-level part,
-// and delegates to the standard trace builder. A trace-level part (trace.output_tokens
-// > 1000) becomes a window-clipped qualification the delegate constrains trace_id by.
-// Serves the span list (raw) and span-level scalar/time-series.
+// buildDelegated (span list + span-level scalar/time-series) ANDs the gate into the
+// filter's span-level part and delegates to the standard trace builder; a trace-level
+// part becomes a qualification the delegate constrains trace_id by.
 func (b *scopedTraceStatementBuilder) buildDelegated(
 	ctx context.Context,
 	orgID valuer.UUID,
@@ -414,9 +413,8 @@ func (b *scopedTraceStatementBuilder) resolveListOrders(order []qbtypes.OrderBy,
 	return orders, nil
 }
 
-// filterParts is the user filter split into a span-level predicate (widens the
-// matched WHERE prune and becomes a countIf existence check in HAVING) and the
-// resolved trace-level HAVING (nil when there is none).
+// filterParts is the user filter split into a span-level predicate and the resolved
+// trace-level HAVING (nil when there is none).
 type filterParts struct {
 	spanPred      string
 	hasSpanFilter bool
@@ -622,11 +620,9 @@ func neededMatchedAliases(orders []listOrder, having *traceHaving) map[string]st
 	return needed
 }
 
-// validateAggregateFilter rejects a trace-level filter referencing an aggregate not
-// computable in the matched pass (e.g. span_count, duration_nano) with a targeted
-// top-level error — the same check inside the where-clause visitor would surface only
-// as a detail of a combined error. Key positions only: `x > $threshold` references x;
-// context prefixes (trace./tracefield.) are already stripped by the key parser.
+// validateAggregateFilter rejects trace-level filters on aggregates not computable in
+// the matched pass (e.g. span_count) with a targeted top-level error; inside the
+// where-clause visitor it would surface only as a detail of a combined error.
 func validateAggregateFilter(havingExpr string, orderableSet map[string]struct{}) error {
 	if strings.TrimSpace(havingExpr) == "" {
 		return nil

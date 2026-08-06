@@ -10,10 +10,8 @@ import (
 	"github.com/antlr4-go/antlr/v4"
 )
 
-// ExprKeys returns the field keys referenced in *key positions* of a filter
-// expression. Unlike QueryStringToKeysSelectors (which scans raw KEY tokens and so
-// also picks up unquoted values — in `x > $threshold` it reports `$threshold`), this
-// walks the parse tree and collects only KeyContext nodes.
+// ExprKeys returns the field keys in key positions of a filter expression; unlike
+// QueryStringToKeysSelectors it does not pick up unquoted values like `$threshold`.
 func ExprKeys(query string) []*telemetrytypes.TelemetryFieldKey {
 	var keys []*telemetrytypes.TelemetryFieldKey
 	var walk func(node antlr.Tree)
@@ -33,13 +31,9 @@ func ExprKeys(query string) []*telemetrytypes.TelemetryFieldKey {
 	return keys
 }
 
-// ValidateVariablesInExpr checks the variable references in an expression's value
-// positions upfront, so a broken reference fails with a targeted error instead of
-// the where-clause visitor's combined "Found N errors" (whose details ride in the
-// error's additionals). Lookup mirrors the visitor: verbatim, then with a leading
-// `$` stripped. A `$`-prefixed token that resolves to nothing is an error — it can
-// never be a valid literal; a bare token that resolves to nothing is left to mean
-// itself.
+// ValidateVariablesInExpr checks variable references in value positions upfront, so a
+// broken one fails with a targeted error instead of the visitor's combined "Found N
+// errors". A `$`-prefixed token resolving to nothing is an error; a bare one means itself.
 func ValidateVariablesInExpr(query string, variables map[string]qbtypes.VariableItem) error {
 	var err error
 	var walk func(node antlr.Tree)

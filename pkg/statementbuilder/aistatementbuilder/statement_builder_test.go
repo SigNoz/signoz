@@ -993,8 +993,8 @@ func TestBuild_TraceList_MultiVariantGateKey(t *testing.T) {
 	assert.Contains(t, got, "mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_number, 'gen_ai.tool.name')")
 }
 
-// `trace.` and `tracefield.` are equivalent spellings of a trace-level aggregate:
-// both resolve through the same synthetic key.
+// A `trace.`-prefixed aggregate in the filter box and the same condition in the
+// explicit Having box build the same query; output-only aggregates are rejected.
 func TestBuild_TraceList_TraceContextPrefix(t *testing.T) {
 	b := newTestBuilder(t)
 	build := func(q qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) (*qbtypes.Statement, error) {
@@ -1006,13 +1006,8 @@ func TestBuild_TraceList_TraceContextPrefix(t *testing.T) {
 		Filter: &qbtypes.Filter{Expression: "trace.output_tokens > 1000"}})
 	require.NoError(t, err)
 
-	viaTracefield, err := build(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-		Filter: &qbtypes.Filter{Expression: "tracefield.output_tokens > 1000"}})
-	require.NoError(t, err)
-	assert.Equal(t, viaTrace.Query, viaTracefield.Query)
-
 	viaHaving, err := build(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-		Having: &qbtypes.Having{Expression: "tracefield.output_tokens > 1000"}})
+		Having: &qbtypes.Having{Expression: "trace.output_tokens > 1000"}})
 	require.NoError(t, err)
 	assert.Equal(t, viaTrace.Query, viaHaving.Query)
 
@@ -1022,9 +1017,8 @@ func TestBuild_TraceList_TraceContextPrefix(t *testing.T) {
 	assert.Contains(t, err.Error(), "cannot be used")
 }
 
-// Query variables in a trace-level condition resolve through the standard filter
-// pipeline, exactly like span-level filters: bound args, list/IN handling, dynamic
-// __all__ dropping the condition.
+// Query variables in a trace-level condition resolve like span filters: bound args,
+// list/IN handling, dynamic __all__ dropping the condition.
 func TestBuild_TraceList_VariableInAggregateFilter(t *testing.T) {
 	b := newTestBuilder(t)
 	build := func(expr string, vars map[string]qbtypes.VariableItem) (*qbtypes.Statement, error) {
@@ -1036,8 +1030,7 @@ func TestBuild_TraceList_VariableInAggregateFilter(t *testing.T) {
 			}, vars)
 	}
 
-	// scalar variable -> replaced to a literal (canonical pkg/variables semantics),
-	// then parsed and bound as an arg by the filter pipeline
+	// scalar variable -> bound arg via the filter pipeline
 	stmt, err := build("trace.output_tokens > $threshold",
 		map[string]qbtypes.VariableItem{"threshold": {Value: 700}})
 	require.NoError(t, err)

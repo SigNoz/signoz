@@ -11,9 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Span list with a mixed filter: gen_ai spans matching the span-level part, in
-// traces whose window-clipped aggregates satisfy the trace-level part (the
-// __trace_scope qualification on the delegated path).
+// Span list with a mixed filter: spans matching the span-level part, in traces whose
+// window-clipped aggregates satisfy the trace-level part (__trace_scope).
 func TestBuild_SpanList_TraceScoped(t *testing.T) {
 	b := newTestBuilder(t)
 	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeRaw,
@@ -46,9 +45,8 @@ func TestBuild_SpanList_NoTraceFilter_NoScope(t *testing.T) {
 }
 
 // The span-list trace-level filter shares the trace list's rules: output-only
-// aggregates are rejected, OR-mixing the two classes is rejected, and explicitly
-// trace-level order keys get a targeted error — while bare span columns that happen
-// to share a name with an aggregate alias (duration_nano) stay orderable.
+// aggregates, OR-mixing, and trace-level order keys are rejected — while bare span
+// columns sharing an aggregate alias name (duration_nano) stay orderable.
 func TestBuild_SpanList_TraceFilter_Validation(t *testing.T) {
 	b := newTestBuilder(t)
 	build := func(q qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) error {
@@ -80,8 +78,7 @@ func TestBuild_SpanList_TraceFilter_Validation(t *testing.T) {
 }
 
 // Variables in a trace-level condition on the span list get the trace list's
-// treatment: resolved and bound as args, __all__ drops the condition (no scope CTE),
-// tracefield. spelling behaves like trace..
+// treatment: resolved and bound as args, __all__ drops the condition (no scope CTE).
 func TestBuild_SpanList_TraceFilter_Variables(t *testing.T) {
 	b := newTestBuilder(t)
 	build := func(expr string, vars map[string]qbtypes.VariableItem) (*qbtypes.Statement, error) {
@@ -103,10 +100,4 @@ func TestBuild_SpanList_TraceFilter_Variables(t *testing.T) {
 		map[string]qbtypes.VariableItem{"threshold": {Type: qbtypes.DynamicVariableType, Value: "__all__"}})
 	require.NoError(t, err)
 	assert.NotContains(t, stmt.Query, "__trace_scope")
-
-	viaTrace, err := build("trace.output_tokens > 1000", nil)
-	require.NoError(t, err)
-	viaTracefield, err := build("tracefield.output_tokens > 1000", nil)
-	require.NoError(t, err)
-	assert.Equal(t, viaTrace.Query, viaTracefield.Query)
 }
