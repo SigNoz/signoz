@@ -354,12 +354,14 @@ function App(): JSX.Element {
 					tunnel: window.signozBootData.settings.sentry.tunnel,
 					environment: process.env.ENVIRONMENT,
 					release: process.env.VERSION,
-					// Vite reports a CSS preload failure when a tab's index.html points at a
-					// stylesheet the new build replaced. `lazyRetry` already swallows the first
-					// one by reloading, so anything reaching here survived that reload — this
-					// drops the class outright, which is intentional: we do not want CSS
-					// preload failures reported at all.
-					ignoreErrors: [/Unable to preload CSS for/],
+					// A tab that outlived a deploy requests hashed assets the new build no longer
+					// has. `lazyRetry` already swallows the first of these by reloading, so
+					// anything reaching here survived that reload — dropping the class outright
+					// is intentional: stale-asset failures are not reported at all.
+					ignoreErrors: [
+						/Unable to preload CSS for/,
+						/Failed to fetch dynamically imported module/,
+					],
 					integrations: [
 						// Kept for the `transaction` tag used in routing, even though
 						// tracing is disabled. Ref: https://github.com/SigNoz/platform-pod/issues/2393#issuecomment-4603658055

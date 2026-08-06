@@ -4,10 +4,6 @@ import { SESSIONSTORAGE } from 'constants/sessionStorage';
 
 type ComponentImport = () => Promise<any>;
 
-// How long to wait for the recovery reload to replace the document before giving
-// up on it. Generous, so a slow reload is never mistaken for a failed one.
-const RELOAD_GRACE_MS = 10 * 1000;
-
 export const lazyRetry = (componentImport: ComponentImport): Promise<any> =>
 	new Promise((resolve, reject) => {
 		const hasRefreshed: boolean = JSON.parse(
@@ -37,10 +33,7 @@ export const lazyRetry = (componentImport: ComponentImport): Promise<any> =>
 				window.location.reload();
 
 				// Deliberately settle nothing here: the Suspense fallback stays on screen
-				// until the page unloads, where rejecting would flash the error boundary and
-				// report a failure that recovers on its own. The timer only ever fires when
-				// the reload did not land — a `beforeunload` prompt the user dismissed — so
-				// the error boundary still offers a way out instead of spinning forever.
-				setTimeout(() => reject(error), RELOAD_GRACE_MS);
+				// until the page unloads, where rejecting would flash the error boundary for a
+				// failure that recovers on its own.
 			});
 	});
