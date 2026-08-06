@@ -47,7 +47,11 @@ type TelemetryFieldKey struct {
 	Indexes      []TelemetryFieldKeySkipIndex `json:"-"`
 	Materialized bool                         `json:"-"` // refers to promoted in case of body.... fields
 
-	Evolutions []*EvolutionEntry `json:"-"`
+	Evolutions     []*EvolutionEntry `json:"-"`
+	SemconvMembers []string          `json:"-"`
+	// SemconvMaterializedColumns maps a physical family spelling to its
+	// materialized column name. It is populated only on resolved query keys.
+	SemconvMaterializedColumns map[string]string `json:"-"`
 }
 
 func (f *TelemetryFieldKey) KeyNameContainsArray() bool {
@@ -128,6 +132,8 @@ func (f *TelemetryFieldKey) OverrideMetadataFrom(src *TelemetryFieldKey) {
 	f.Materialized = src.Materialized
 	f.JSONPlan = src.JSONPlan
 	f.Evolutions = src.Evolutions
+	f.SemconvMembers = src.SemconvMembers
+	f.SemconvMaterializedColumns = src.SemconvMaterializedColumns
 }
 
 func (f *TelemetryFieldKey) Equal(key *TelemetryFieldKey) bool {

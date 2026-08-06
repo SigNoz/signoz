@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -82,4 +83,39 @@ func TestGetFirstSeenFromMetricMetadata(t *testing.T) {
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
+}
+
+func TestGetAllValuesReturnsValuesFromEveryTraceSemconvFamilyMember(t *testing.T) {
+	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
+	mock := mockTelemetryStore.Mock()
+
+	metadata := NewTelemetryMetaStore(
+		instrumentationtest.New().ToProviderSettings(),
+		mockTelemetryStore,
+		flaggertest.New(t),
+	)
+
+	mock.ExpectQuery(`SELECT DISTINCT string_value, number_value FROM signoz_traces\.distributed_tag_attributes_v2 WHERE tag_key IN \(\?, \?\) AND tag_type = \? AND tag_data_type = \? LIMIT \?`).
+		WithArgs("deployment.environment.name", "deployment.environment", "resource", "string", 51).
+		WillReturnRows(cmock.NewRows([]cmock.ColumnType{
+			{Name: "string_value", Type: "String"},
+			{Name: "number_value", Type: "Float64"},
+		}, [][]any{
+			{"production", float64(0)},
+			{"staging", float64(0)},
+			{"production", float64(0)},
+		}))
+
+	values, complete, err := metadata.GetAllValues(context.Background(), valuer.UUID{}, &telemetrytypes.FieldValueSelector{
+		FieldKeySelector: &telemetrytypes.FieldKeySelector{
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextResource,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+			Name:          "deployment.environment",
+		},
+	})
+	require.NoError(t, err)
+	assert.True(t, complete)
+	assert.Equal(t, []string{"production", "staging"}, values.StringValues)
+	assert.NoError(t, mock.ExpectationsWereMet(), "all expected metadata queries should be executed")
 }

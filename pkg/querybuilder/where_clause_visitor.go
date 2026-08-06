@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"maps"
 	"slices"
 	"strconv"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
+	"github.com/SigNoz/signoz/pkg/semconv"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -982,25 +984,105 @@ func assignIfEmpty(s *string, value string) {
 // MatchingFieldKeys returns the field keys from the map that match the given key,
 // honoring any context/data type the user specified.
 func MatchingFieldKeys(field *telemetrytypes.TelemetryFieldKey, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
-	fieldKeysForName := []*telemetrytypes.TelemetryFieldKey{}
+	selector := telemetrytypes.FieldKeySelector{
+		Name:         field.Name,
+		Signal:       telemetrytypes.SignalTraces,
+		FieldContext: field.FieldContext,
+	}
+	members := []string{field.Name}
+	// Only trace field mappers understand semantic-convention families today.
+	// Logs and metrics must keep using the requested spelling until theirs land.
+	if field.Signal == telemetrytypes.SignalUnspecified || field.Signal == telemetrytypes.SignalTraces {
+		members = semconv.Members(semconv.KindAttribute, selector)
+	}
+	isFamily := len(members) > 1
+	fieldKeysForName := make([]*telemetrytypes.TelemetryFieldKey, 0)
+	indexByIdentity := make(map[string]int)
 
-	// match by name; keep items whose context and data type match (unspecified matches any)
-	for _, item := range fieldKeys[field.Name] {
-		if (field.FieldContext == telemetrytypes.FieldContextUnspecified || field.FieldContext == item.FieldContext) &&
-			(field.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || field.FieldDataType == item.FieldDataType) {
-			fieldKeysForName = append(fieldKeysForName, item)
+	appendMatches := func(lookupName string, memberName string, contextAlreadyMatched bool) {
+		for _, item := range fieldKeys[lookupName] {
+			if !contextAlreadyMatched && field.FieldContext != telemetrytypes.FieldContextUnspecified && field.FieldContext != item.FieldContext {
+				continue
+			}
+			if field.FieldDataType != telemetrytypes.FieldDataTypeUnspecified && field.FieldDataType != item.FieldDataType {
+				continue
+			}
+
+			// A wildcard lookup may have found a same-named field in a scope where
+			// this family does not apply. Keep exact names, but reject cross-member
+			// matches outside the generated family scope.
+			traceFamilyMatch := isFamily && item.Signal == telemetrytypes.SignalTraces
+			if memberName != field.Name {
+				if !traceFamilyMatch {
+					continue
+				}
+				itemSelector := telemetrytypes.FieldKeySelector{
+					Name:         field.Name,
+					Signal:       telemetrytypes.SignalTraces,
+					FieldContext: item.FieldContext,
+				}
+				if !slices.Contains(semconv.Members(semconv.KindAttribute, itemSelector), memberName) {
+					continue
+				}
+			}
+
+			physicalMembers := item.SemconvMembers
+			if len(physicalMembers) == 0 {
+				physicalMembers = []string{memberName}
+			}
+			materializedColumns := maps.Clone(item.SemconvMaterializedColumns)
+			if item.Materialized {
+				if materializedColumns == nil {
+					materializedColumns = make(map[string]string)
+				}
+				physicalKey := *item
+				physicalKey.Name = memberName
+				materializedColumns[memberName] = strings.Trim(telemetrytypes.FieldKeyToMaterializedColumnName(&physicalKey), "`")
+			}
+			identity := item.Signal.StringValue() + ";" + item.FieldContext.StringValue() + ";" + item.FieldDataType.StringValue()
+			if traceFamilyMatch {
+				if index, found := indexByIdentity[identity]; found {
+					for _, physicalMember := range physicalMembers {
+						if !slices.Contains(fieldKeysForName[index].SemconvMembers, physicalMember) {
+							fieldKeysForName[index].SemconvMembers = append(fieldKeysForName[index].SemconvMembers, physicalMember)
+						}
+					}
+					if len(materializedColumns) > 0 {
+						if fieldKeysForName[index].SemconvMaterializedColumns == nil {
+							fieldKeysForName[index].SemconvMaterializedColumns = make(map[string]string)
+						}
+						maps.Copy(fieldKeysForName[index].SemconvMaterializedColumns, materializedColumns)
+					}
+					continue
+				}
+				indexByIdentity[identity] = len(fieldKeysForName)
+			}
+			resolved := *item
+			// The requested spelling is the response identity. Field mappers use
+			// it to resolve the available family members current-first.
+			if traceFamilyMatch {
+				resolved.Name = field.Name
+				resolved.SemconvMembers = slices.Clone(physicalMembers)
+				resolved.SemconvMaterializedColumns = materializedColumns
+				// Materialization is member-specific after family keys are merged.
+				resolved.Materialized = false
+			}
+			fieldKeysForName = append(fieldKeysForName, &resolved)
 		}
 	}
 
-	// A context may have been split off a name that legitimately contained it (e.g.
-	// `attribute.key`); also look up the context-prefixed name so both readings resolve.
+	// Members are current-first, so metadata from the current key wins when
+	// both spellings describe the same signal/context/type.
+	for _, member := range members {
+		appendMatches(member, member, false)
+	}
+
+	// A context may have been split off a name that legitimately contained it
+	// (e.g. `attribute.key`); preserve that historical alternate reading for
+	// every family member.
 	if field.FieldContext != telemetrytypes.FieldContextUnspecified {
-		contextPrefixedFieldName := fmt.Sprintf("%s.%s", field.FieldContext.StringValue(), field.Name)
-		for _, item := range fieldKeys[contextPrefixedFieldName] {
-			// Context already matched via the lookup key; only data type needs checking.
-			if field.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || item.FieldDataType == field.FieldDataType {
-				fieldKeysForName = append(fieldKeysForName, item)
-			}
+		for _, member := range members {
+			appendMatches(fmt.Sprintf("%s.%s", field.FieldContext.StringValue(), member), member, true)
 		}
 	}
 

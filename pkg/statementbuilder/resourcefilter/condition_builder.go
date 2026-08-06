@@ -44,6 +44,73 @@ func keyIndexFilter(key *telemetrytypes.TelemetryFieldKey) any {
 	return fmt.Sprintf(`%%%s%%`, key.Name)
 }
 
+func memberKey(key *telemetrytypes.TelemetryFieldKey, name string) *telemetrytypes.TelemetryFieldKey {
+	member := *key
+	member.Name = name
+	return &member
+}
+
+func keyIndexCondition(sb *sqlbuilder.SelectBuilder, column string, key *telemetrytypes.TelemetryFieldKey, members []string) string {
+	conditions := make([]string, 0, len(members))
+	for _, member := range members {
+		conditions = append(conditions, sb.Like(column, keyIndexFilter(memberKey(key, member))))
+	}
+	if len(conditions) == 1 {
+		return conditions[0]
+	}
+	return sb.Or(conditions...)
+}
+
+func valueIndexCondition(
+	sb *sqlbuilder.SelectBuilder,
+	column string,
+	key *telemetrytypes.TelemetryFieldKey,
+	members []string,
+	op qbtypes.FilterOperator,
+	value any,
+	caseInsensitive bool,
+) string {
+	conditions := make([]string, 0, len(members))
+	for _, member := range members {
+		patterns := valueForIndexFilter(op, memberKey(key, member), value)
+		switch values := patterns.(type) {
+		case []string:
+			for _, pattern := range values {
+				conditions = append(conditions, sb.Like(column, pattern))
+			}
+		default:
+			if caseInsensitive {
+				conditions = append(conditions, sb.ILike(column, values))
+			} else {
+				conditions = append(conditions, sb.Like(column, values))
+			}
+		}
+	}
+	if len(conditions) == 1 {
+		return conditions[0]
+	}
+	return sb.Or(conditions...)
+}
+
+func memberPresenceCondition(sb *sqlbuilder.SelectBuilder, column string, members []string, exists bool) string {
+	conditions := make([]string, 0, len(members))
+	for _, member := range members {
+		field := fmt.Sprintf("simpleJSONHas(%s, '%s')", column, member)
+		if exists {
+			conditions = append(conditions, sb.E(field, true))
+		} else {
+			conditions = append(conditions, sb.NE(field, true))
+		}
+	}
+	if exists {
+		if len(conditions) == 1 {
+			return conditions[0]
+		}
+		return sb.Or(conditions...)
+	}
+	return sb.And(conditions...)
+}
+
 // SkipResourceFilter is not applicable here: the fingerprint table only stores resource attributes.
 func (b *defaultConditionBuilder) ConditionFor(
 	ctx context.Context,
@@ -115,8 +182,10 @@ func (b *defaultConditionBuilder) conditionForKey(
 	// as we have not changed the resource column in the resource fingerprint table.
 	column := columns[0]
 
-	keyIdxFilter := sb.Like(column.Name, keyIndexFilter(key))
-	valueForIndexFilter := valueForIndexFilter(op, key, value)
+	members := resourceSemconvMembers(key)
+	isFamily := len(members) > 1
+	keyIdxFilter := keyIndexCondition(sb, column.Name, key, members)
+	singleValueIndexFilter := valueForIndexFilter(op, memberKey(key, members[0]), value)
 
 	fieldName, err := b.fm.FieldFor(ctx, valuer.UUID{}, startNs, endNs, key)
 	if err != nil {
@@ -128,12 +197,15 @@ func (b *defaultConditionBuilder) conditionForKey(
 		return sb.And(
 			sb.E(fieldName, formattedValue),
 			keyIdxFilter,
-			sb.Like(column.Name, valueForIndexFilter),
+			valueIndexCondition(sb, column.Name, key, members, op, value, false),
 		), nil
 	case qbtypes.FilterOperatorNotEqual:
+		if isFamily {
+			return sb.NE(fieldName, formattedValue), nil
+		}
 		return sb.And(
 			sb.NE(fieldName, formattedValue),
-			sb.NotLike(column.Name, valueForIndexFilter),
+			sb.NotLike(column.Name, singleValueIndexFilter),
 		), nil
 	case qbtypes.FilterOperatorGreaterThan:
 		return sb.And(sb.GT(fieldName, formattedValue), keyIdxFilter), nil
@@ -148,7 +220,7 @@ func (b *defaultConditionBuilder) conditionForKey(
 		return sb.And(
 			sb.ILike(fieldName, formattedValue),
 			keyIdxFilter,
-			sb.ILike(column.Name, valueForIndexFilter),
+			valueIndexCondition(sb, column.Name, key, members, op, value, true),
 		), nil
 	case qbtypes.FilterOperatorNotLike, qbtypes.FilterOperatorNotILike:
 		// no index filter: as cannot apply `not contains x%y` as y can be somewhere else
@@ -185,13 +257,11 @@ func (b *defaultConditionBuilder) conditionForKey(
 			inConditions = append(inConditions, sb.E(fieldName, querybuilder.FormatValueForContains(v)))
 		}
 		mainCondition := sb.Or(inConditions...)
-		valConditions := make([]string, 0, len(values))
-		if valuesForIndexFilter, ok := valueForIndexFilter.([]string); ok {
-			for _, v := range valuesForIndexFilter {
-				valConditions = append(valConditions, sb.Like(column.Name, v))
-			}
-		}
-		mainCondition = sb.And(mainCondition, keyIdxFilter, sb.Or(valConditions...))
+		mainCondition = sb.And(
+			mainCondition,
+			keyIdxFilter,
+			valueIndexCondition(sb, column.Name, key, members, op, value, false),
+		)
 
 		return mainCondition, nil
 	case qbtypes.FilterOperatorNotIn:
@@ -204,8 +274,11 @@ func (b *defaultConditionBuilder) conditionForKey(
 			notInConditions = append(notInConditions, sb.NE(fieldName, querybuilder.FormatValueForContains(v)))
 		}
 		mainCondition := sb.And(notInConditions...)
+		if isFamily {
+			return mainCondition, nil
+		}
 		valConditions := make([]string, 0, len(values))
-		if valuesForIndexFilter, ok := valueForIndexFilter.([]string); ok {
+		if valuesForIndexFilter, ok := singleValueIndexFilter.([]string); ok {
 			for _, v := range valuesForIndexFilter {
 				valConditions = append(valConditions, sb.NotLike(column.Name, v))
 			}
@@ -215,13 +288,11 @@ func (b *defaultConditionBuilder) conditionForKey(
 
 	case qbtypes.FilterOperatorExists:
 		return sb.And(
-			sb.E(fmt.Sprintf("simpleJSONHas(%s, '%s')", column.Name, key.Name), true),
+			memberPresenceCondition(sb, column.Name, members, true),
 			keyIdxFilter,
 		), nil
 	case qbtypes.FilterOperatorNotExists:
-		return sb.And(
-			sb.NE(fmt.Sprintf("simpleJSONHas(%s, '%s')", column.Name, key.Name), true),
-		), nil
+		return memberPresenceCondition(sb, column.Name, members, false), nil
 
 	case qbtypes.FilterOperatorRegexp:
 		return sb.And(
@@ -237,7 +308,7 @@ func (b *defaultConditionBuilder) conditionForKey(
 		return sb.And(
 			sb.ILike(fieldName, fmt.Sprintf(`%%%s%%`, formattedValue)),
 			keyIdxFilter,
-			sb.ILike(column.Name, valueForIndexFilter),
+			valueIndexCondition(sb, column.Name, key, members, op, value, true),
 		), nil
 	case qbtypes.FilterOperatorNotContains:
 		// no index filter: as cannot apply `not contains x%y` as y can be somewhere else

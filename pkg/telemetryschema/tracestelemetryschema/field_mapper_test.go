@@ -80,7 +80,7 @@ func TestGetFieldKeyName(t *testing.T) {
 				Materialized:  true,
 				Evolutions:    mockEvolution,
 			},
-			expectedResult: "multiIf(resource.`deployment.environment` IS NOT NULL, resource.`deployment.environment`::String, `resource_string_deployment$$environment_exists`, `resource_string_deployment$$environment`, NULL)",
+			expectedResult: "multiIf((resource.`deployment.environment.name` IS NOT NULL OR resource.`deployment.environment` IS NOT NULL), COALESCE(NULLIF(resource.`deployment.environment.name`::String, ''), NULLIF(resource.`deployment.environment`::String, '')), (mapContains(resources_string, 'deployment.environment.name') OR `resource_string_deployment$$environment_exists`), COALESCE(NULLIF(resources_string['deployment.environment.name'], ''), NULLIF(`resource_string_deployment$$environment`, ''), ''), NULL)",
 			expectedError:  nil,
 		},
 		{
@@ -118,6 +118,63 @@ func TestGetFieldKeyName(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestFieldForResolvesCurrentTraceSemconvAttributeName(t *testing.T) {
+	key := telemetrytypes.TelemetryFieldKey{
+		Name:          "deployment.environment.name",
+		FieldContext:  telemetrytypes.FieldContextAttribute,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	}
+
+	expression, err := NewFieldMapper().FieldFor(context.Background(), valuer.UUID{}, 0, 0, &key)
+
+	require.NoError(t, err)
+	assert.Equal(t, "COALESCE(NULLIF(attributes_string['deployment.environment.name'], ''), NULLIF(attributes_string['deployment.environment'], ''), '')", expression)
+}
+
+func TestFieldForResolvesOldTraceSemconvAttributeName(t *testing.T) {
+	key := telemetrytypes.TelemetryFieldKey{
+		Name:          "deployment.environment",
+		FieldContext:  telemetrytypes.FieldContextAttribute,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	}
+
+	expression, err := NewFieldMapper().FieldFor(context.Background(), valuer.UUID{}, 0, 0, &key)
+
+	require.NoError(t, err)
+	assert.Equal(t, "COALESCE(NULLIF(attributes_string['deployment.environment.name'], ''), NULLIF(attributes_string['deployment.environment'], ''), '')", expression)
+}
+
+func TestFieldForPreservesResourceStorageDefaultsForSemconvFamily(t *testing.T) {
+	key := telemetrytypes.TelemetryFieldKey{
+		Name:          "deployment.environment.name",
+		FieldContext:  telemetrytypes.FieldContextResource,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+		Materialized:  true,
+		Evolutions:    MockEvolutionData(time.Date(2024, 6, 2, 0, 0, 0, 0, time.UTC)),
+	}
+	start := uint64(time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano())
+	end := uint64(time.Date(2024, 6, 5, 0, 0, 0, 0, time.UTC).UnixNano())
+
+	expression, err := NewFieldMapper().FieldFor(context.Background(), valuer.UUID{}, start, end, &key)
+
+	require.NoError(t, err)
+	assert.Equal(t, "multiIf((resource.`deployment.environment.name` IS NOT NULL OR resource.`deployment.environment` IS NOT NULL), COALESCE(NULLIF(resource.`deployment.environment.name`::String, ''), NULLIF(resource.`deployment.environment`::String, '')), (`resource_string_deployment$$environment$$name_exists` OR mapContains(resources_string, 'deployment.environment')), COALESCE(NULLIF(`resource_string_deployment$$environment$$name`, ''), NULLIF(resources_string['deployment.environment'], ''), ''), NULL)", expression)
+}
+
+func TestFieldForUsesAvailableTraceSemconvMember(t *testing.T) {
+	key := telemetrytypes.TelemetryFieldKey{
+		Name:           "deployment.environment",
+		FieldContext:   telemetrytypes.FieldContextAttribute,
+		FieldDataType:  telemetrytypes.FieldDataTypeString,
+		SemconvMembers: []string{"deployment.environment.name"},
+	}
+
+	expression, err := NewFieldMapper().FieldFor(context.Background(), valuer.UUID{}, 0, 0, &key)
+
+	require.NoError(t, err)
+	assert.Equal(t, "attributes_string['deployment.environment.name']", expression)
 }
 
 func TestFieldForResourceWithEvolution(t *testing.T) {
@@ -176,7 +233,7 @@ func TestFieldForResourceWithEvolution(t *testing.T) {
 			},
 			tsStart:        uint64(time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
 			tsEnd:          uint64(time.Date(2025, 7, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
-			expectedResult: "resource.`deployment.environment`::String",
+			expectedResult: "COALESCE(NULLIF(resource.`deployment.environment.name`::String, ''), NULLIF(resource.`deployment.environment`::String, ''))",
 		},
 		{
 			name: "Window straddles release - materialized resource",
@@ -189,7 +246,7 @@ func TestFieldForResourceWithEvolution(t *testing.T) {
 			},
 			tsStart:        uint64(time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
 			tsEnd:          uint64(time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
-			expectedResult: "multiIf(resource.`deployment.environment` IS NOT NULL, resource.`deployment.environment`::String, `resource_string_deployment$$environment_exists`, `resource_string_deployment$$environment`, NULL)",
+			expectedResult: "multiIf((resource.`deployment.environment.name` IS NOT NULL OR resource.`deployment.environment` IS NOT NULL), COALESCE(NULLIF(resource.`deployment.environment.name`::String, ''), NULLIF(resource.`deployment.environment`::String, '')), (mapContains(resources_string, 'deployment.environment.name') OR `resource_string_deployment$$environment_exists`), COALESCE(NULLIF(resources_string['deployment.environment.name'], ''), NULLIF(`resource_string_deployment$$environment`, ''), ''), NULL)",
 		},
 	}
 

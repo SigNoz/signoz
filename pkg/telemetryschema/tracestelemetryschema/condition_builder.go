@@ -18,12 +18,12 @@ import (
 )
 
 type conditionBuilder struct {
-	fm qbtypes.FieldMapper
+	fm *fieldMapper
 }
 
 var _ qbtypes.ConditionBuilder = (*conditionBuilder)(nil)
 
-func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
+func NewConditionBuilder(fm *fieldMapper) *conditionBuilder {
 	return &conditionBuilder{fm: fm}
 }
 
@@ -154,6 +154,17 @@ func (c *conditionBuilder) conditionFor(
 	// in the query builder, `exists` and `not exists` are used for
 	// key membership checks, so depending on the column type, the condition changes
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
+		// A semantic-convention family is represented by one current-first value
+		// expression, but presence still has to inspect every physical member. In
+		// particular, using ExistsExpression below with the requested key would add
+		// a mapContains check for only that spelling and reject fallback-only rows.
+		if isTraceSemconvFamily(key) {
+			pred, err := c.fm.existsExpressionFor(ctx, orgID, startNs, endNs, key, operator == qbtypes.FilterOperatorExists)
+			if err != nil {
+				return "", err
+			}
+			return sqlbuilder.Escape(pred), nil
+		}
 		columns, err := c.fm.ColumnFor(ctx, orgID, startNs, endNs, key)
 		if err != nil {
 			return "", err

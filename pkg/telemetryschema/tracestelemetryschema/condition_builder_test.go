@@ -308,6 +308,82 @@ func TestConditionFor(t *testing.T) {
 	}
 }
 
+func TestConditionForSemconvFamilyPositiveFilterChecksPresence(t *testing.T) {
+	key := &telemetrytypes.TelemetryFieldKey{
+		Name:           "deployment.environment.name",
+		Signal:         telemetrytypes.SignalTraces,
+		FieldContext:   telemetrytypes.FieldContextAttribute,
+		FieldDataType:  telemetrytypes.FieldDataTypeString,
+		SemconvMembers: []string{"deployment.environment.name", "deployment.environment"},
+	}
+	sb := sqlbuilder.NewSelectBuilder()
+
+	conditions, warnings, err := NewConditionBuilder(NewFieldMapper()).ConditionFor(
+		context.Background(), valuer.UUID{}, 0, 0, key,
+		map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}},
+		qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorEqual, "production", sb,
+	)
+	require.NoError(t, err)
+	sb.Where(conditions...)
+	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	assert.Empty(t, warnings)
+	assert.Contains(t, sql, "(COALESCE(NULLIF(attributes_string['deployment.environment.name'], ''), NULLIF(attributes_string['deployment.environment'], ''), '') = ? AND ((mapContains(attributes_string, 'deployment.environment.name') OR mapContains(attributes_string, 'deployment.environment'))))")
+	assert.Equal(t, []any{"production"}, args)
+}
+
+func TestConditionForSemconvFamilyPreservesMaterializedMemberExistsColumn(t *testing.T) {
+	key := &telemetrytypes.TelemetryFieldKey{
+		Name:           "deployment.environment.name",
+		Signal:         telemetrytypes.SignalTraces,
+		FieldContext:   telemetrytypes.FieldContextAttribute,
+		FieldDataType:  telemetrytypes.FieldDataTypeString,
+		SemconvMembers: []string{"deployment.environment.name", "deployment.environment"},
+		SemconvMaterializedColumns: map[string]string{
+			"deployment.environment": "attribute_string_deployment$$environment",
+		},
+	}
+	sb := sqlbuilder.NewSelectBuilder()
+
+	conditions, warnings, err := NewConditionBuilder(NewFieldMapper()).ConditionFor(
+		context.Background(), valuer.UUID{}, 0, 0, key,
+		map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}},
+		qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorEqual, "production", sb,
+	)
+	require.NoError(t, err)
+	sb.Where(conditions...)
+	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	assert.Empty(t, warnings)
+	assert.Contains(t, sql, "`attribute_string_deployment$$environment_exists`")
+	assert.NotContains(t, sql, "`attribute_string_deployment$environment_exists`")
+	assert.Equal(t, []any{"production"}, args)
+}
+
+func TestConditionForSemconvFamilyNotExistsChecksEveryMember(t *testing.T) {
+	key := &telemetrytypes.TelemetryFieldKey{
+		Name:           "deployment.environment.name",
+		Signal:         telemetrytypes.SignalTraces,
+		FieldContext:   telemetrytypes.FieldContextAttribute,
+		FieldDataType:  telemetrytypes.FieldDataTypeString,
+		SemconvMembers: []string{"deployment.environment.name", "deployment.environment"},
+	}
+	sb := sqlbuilder.NewSelectBuilder()
+
+	conditions, warnings, err := NewConditionBuilder(NewFieldMapper()).ConditionFor(
+		context.Background(), valuer.UUID{}, 0, 0, key,
+		map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}},
+		qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorNotExists, nil, sb,
+	)
+	require.NoError(t, err)
+	sb.Where(conditions...)
+	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	assert.Empty(t, warnings)
+	assert.Contains(t, sql, "NOT (((mapContains(attributes_string, 'deployment.environment.name') OR mapContains(attributes_string, 'deployment.environment'))))")
+	assert.Empty(t, args)
+}
+
 func TestConditionForResourceWithEvolution(t *testing.T) {
 	ctx := context.Background()
 	releaseTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
