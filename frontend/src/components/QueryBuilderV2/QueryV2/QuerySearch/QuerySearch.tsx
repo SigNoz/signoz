@@ -47,7 +47,10 @@ import { validateQuery } from 'utils/queryValidationUtils';
 import { unquote } from 'utils/stringUtils';
 
 import { getRecentQueries } from 'lib/recentQueries/getRecentQueries';
-import type { SignalType } from 'types/api/v5/queryRange';
+import type {
+	BuilderQueryEnvelopeType,
+	SignalType,
+} from 'types/api/v5/queryRange';
 
 import {
 	queryExamples,
@@ -111,6 +114,12 @@ interface QuerySearchProps {
 		numberValues: number[];
 		complete: boolean;
 	}>;
+	/**
+	 * Forwarded to `/fields/keys` as `type`, letting the backend scope the key set.
+	 * Not named `type`: `QueryKeyDataSuggestionsProps.type` already means something
+	 * else on the response side.
+	 */
+	fieldKeysQueryType?: BuilderQueryEnvelopeType;
 }
 
 function QuerySearch({
@@ -125,6 +134,7 @@ function QuerySearch({
 	initialExpression,
 	metricNamespace,
 	valueSuggestionsOverride,
+	fieldKeysQueryType,
 }: QuerySearchProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const [valueSuggestions, setValueSuggestions] = useState<any[]>([]);
@@ -326,6 +336,7 @@ function QuerySearch({
 				metricName: debouncedMetricName ?? undefined,
 				signalSource: signalSource as 'meter' | '',
 				metricNamespace,
+				type: fieldKeysQueryType,
 			});
 
 			if (response.data.data) {
@@ -363,6 +374,7 @@ function QuerySearch({
 			hardcodedAttributeKeys,
 			showFilterSuggestionsWithoutMetric,
 			metricNamespace,
+			fieldKeysQueryType,
 		],
 	);
 

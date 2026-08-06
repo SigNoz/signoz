@@ -23,6 +23,7 @@ import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import {
+	BuilderQueryEnvelopeType,
 	ExecStats,
 	MetricRangePayloadV5,
 	QueryRangeResponseV5,
@@ -399,4 +400,11 @@ export interface GetQueryResultsProps {
 	step?: number;
 	originalGraphType?: PANEL_TYPES;
 	dynamicVariables?: IDashboardVariable[];
+	/**
+	 * Envelope type stamped on every builder query in the composite query.
+	 * Defaults to `builder_query`; the AI Explorer passes `builder_ai_query` so the
+	 * backend routes to its gen_ai statement builder. A serialisation concern, not
+	 * part of the query — same category as `graphType` and `formatForWeb`.
+	 */
+	builderQueryType?: BuilderQueryEnvelopeType;
 }
