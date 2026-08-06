@@ -1,6 +1,7 @@
 import { Divider } from '@signozhq/ui/divider';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
+import { SemconvOldNameBadge } from 'components/Semconv';
 
 import { TagContainer, TagLabel, TagValue } from './FieldRenderer.styles';
 import { FieldRendererProps } from './LogDetailedView.types';
@@ -28,6 +29,7 @@ function FieldRenderer({ field }: FieldRendererProps): JSX.Element {
 						<Typography.Text truncate={1} className="label">
 							{newField}{' '}
 						</Typography.Text>
+						<SemconvOldNameBadge name={newField} />
 					</TooltipSimple>
 
 					<div className="tags">
@@ -47,7 +49,10 @@ function FieldRenderer({ field }: FieldRendererProps): JSX.Element {
 					</div>
 				</>
 			) : (
-				<span className="label">{field}</span>
+				<>
+					<span className="label">{field}</span>
+					<SemconvOldNameBadge name={field} />
+				</>
 			)}
 		</span>
 	);

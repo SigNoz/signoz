@@ -33,6 +33,31 @@ def test_semconv_phase1_mixed_sdk_generations(  # pylint: disable=too-many-state
     start_ms = int((now - timedelta(minutes=2)).timestamp() * 1000)
     end_ms = int((now + timedelta(minutes=1)).timestamp() * 1000)
 
+    # A builder response records the exact spelling that was resolved. Raw SQL
+    # and PromQL deliberately do not use this resolver.
+    resolution_response = querier.make_query_request(
+        signoz,
+        token,
+        start_ms=start_ms,
+        end_ms=end_ms,
+        request_type=querier.RequestType.RAW,
+        queries=[
+            querier.BuilderQuery(
+                signal="traces",
+                name="A",
+                limit=1,
+                filter_expression=f"resource.{OLD} EXISTS",
+            ).to_dict()
+        ],
+    )
+    assert resolution_response.status_code == HTTPStatus.OK, resolution_response.text
+    assert {
+        "requested": OLD,
+        "current": CURRENT,
+        "members": [CURRENT, OLD],
+        "kind": "attribute",
+    } in resolution_response.json()["data"]["meta"]["semconvResolutions"]
+
     # Resource and span-attribute paths share the same matrix. Run every
     # operator with both the saved-query (old) and current request spellings.
     for context in ("resource", "attribute"):
@@ -164,3 +189,16 @@ def test_semconv_phase1_mixed_sdk_generations(  # pylint: disable=too-many-state
         )
         assert map_response.status_code == HTTPStatus.OK, map_response.text
         assert {edge["parent"] for edge in map_response.json()} == {f"{PREFIX}-map-production"}
+
+    report_response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/fields/semconv-migration"),
+        timeout=30,
+        headers={"authorization": f"Bearer {token}"},
+        params={
+            "startUnixMilli": int((now - timedelta(minutes=2)).timestamp() * 1000),
+            "endUnixMilli": int((now + timedelta(minutes=1)).timestamp() * 1000),
+        },
+    )
+    assert report_response.status_code == HTTPStatus.OK, report_response.text
+    entry = next(item for item in report_response.json()["data"]["entries"] if item["current"] == CURRENT and item["old"] == OLD and item["signal"] == "traces")
+    assert set(entry["services"]) == {f"{PREFIX}-old", f"{PREFIX}-staging"}

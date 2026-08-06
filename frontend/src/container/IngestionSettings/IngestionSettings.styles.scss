@@ -2,6 +2,17 @@
 	color: white;
 }
 
+.semconv-migration-report {
+	margin-top: 32px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+
+	.ant-table-wrapper {
+		margin-top: 4px;
+	}
+}
+
 .ingestion-key-container {
 	margin-top: 24px;
 	display: flex;

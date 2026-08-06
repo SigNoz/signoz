@@ -15,7 +15,7 @@ export const SAMPLE_SPAN_JSON = `{
   },
   "resource": {
     "service.name": "llm-gateway",
-    "deployment.environment": "production"
+    "deployment.environment.name": "production"
   }
 }`;
 

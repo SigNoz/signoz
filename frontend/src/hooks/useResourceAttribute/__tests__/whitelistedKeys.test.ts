@@ -6,13 +6,13 @@ import { mappingWithRoutesAndKeys } from '../utils';
 describe('useResourceAttribute config', () => {
 	describe('whilelistedKeys', () => {
 		it('should include underscore-notation keys (DOT_METRICS_ENABLED=false)', () => {
-			expect(whilelistedKeys).toContain('resource_deployment_environment');
+			expect(whilelistedKeys).toContain('resource_deployment_environment_name');
 			expect(whilelistedKeys).toContain('resource_k8s_cluster_name');
 			expect(whilelistedKeys).toContain('resource_k8s_cluster_namespace');
 		});
 
 		it('should include dot-notation keys (DOT_METRICS_ENABLED=true)', () => {
-			expect(whilelistedKeys).toContain('resource_deployment.environment');
+			expect(whilelistedKeys).toContain('resource_deployment.environment.name');
 			expect(whilelistedKeys).toContain('resource_k8s.cluster.name');
 			expect(whilelistedKeys).toContain('resource_k8s.cluster.namespace');
 		});
@@ -21,8 +21,8 @@ describe('useResourceAttribute config', () => {
 	describe('mappingWithRoutesAndKeys', () => {
 		const dotNotationFilters = [
 			{
-				label: 'deployment.environment',
-				value: 'resource_deployment.environment',
+				label: 'deployment.environment.name',
+				value: 'resource_deployment.environment.name',
 			},
 			{ label: 'k8s.cluster.name', value: 'resource_k8s.cluster.name' },
 			{ label: 'k8s.cluster.namespace', value: 'resource_k8s.cluster.namespace' },
@@ -30,8 +30,8 @@ describe('useResourceAttribute config', () => {
 
 		const underscoreNotationFilters = [
 			{
-				label: 'deployment.environment',
-				value: 'resource_deployment_environment',
+				label: 'deployment.environment.name',
+				value: 'resource_deployment_environment_name',
 			},
 			{ label: 'k8s.cluster.name', value: 'resource_k8s_cluster_name' },
 			{ label: 'k8s.cluster.namespace', value: 'resource_k8s_cluster_namespace' },

@@ -1120,7 +1120,7 @@
           "plugin": {
             "kind": "signoz/QueryVariable",
             "spec": {
-              "queryValue": "SELECT DISTINCT resources_string['deployment.environment'] AS environment FROM signoz_traces.distributed_signoz_index_v3 WHERE mapContains(resources_string, 'deployment.environment') AND timestamp >= now() - INTERVAL 1 DAY"
+              "queryValue": "SELECT DISTINCT resources_string['deployment.environment.name'] AS environment FROM signoz_traces.distributed_signoz_index_v3 WHERE mapContains(resources_string, 'deployment.environment.name') AND timestamp >= now() - INTERVAL 1 DAY"
             }
           }
         }

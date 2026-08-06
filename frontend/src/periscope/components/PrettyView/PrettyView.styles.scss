@@ -223,6 +223,12 @@
 		padding-left: 6px !important;
 	}
 
+	&__label {
+		display: inline-flex;
+		align-items: baseline;
+		gap: 6px;
+	}
+
 	&__pinned-icon {
 		flex-shrink: 0;
 		color: var(--text-robin-400);

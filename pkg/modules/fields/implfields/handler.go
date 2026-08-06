@@ -2,6 +2,7 @@ package implfields
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/binding"
@@ -14,6 +15,43 @@ import (
 
 type handler struct {
 	telemetryMetadataStore telemetrytypes.MetadataStore
+}
+
+func (handler *handler) GetSemconvMigrationReport(rw http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+
+	var params telemetrytypes.PostableSemconvMigrationReportParams
+	if err := binding.Query.BindQuery(req.URL.Query(), &params); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	now := time.Now()
+	if params.EndUnixMilli == 0 {
+		params.EndUnixMilli = now.UnixMilli()
+	}
+	if params.StartUnixMilli == 0 {
+		params.StartUnixMilli = now.Add(-24 * time.Hour).UnixMilli()
+	}
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	report, err := handler.telemetryMetadataStore.GetSemconvMigrationReport(
+		ctx,
+		valuer.MustNewUUID(claims.OrgID),
+		params.StartUnixMilli,
+		params.EndUnixMilli,
+	)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, report)
 }
 
 func NewHandler(settings factory.ProviderSettings, telemetryMetadataStore telemetrytypes.MetadataStore) fields.Handler {

@@ -25,10 +25,22 @@ type Result struct {
 }
 
 type ExecStats struct {
-	RowsScanned   uint64            `json:"rowsScanned"`
-	BytesScanned  uint64            `json:"bytesScanned"`
-	DurationMS    uint64            `json:"durationMs"`
-	StepIntervals map[string]uint64 `json:"stepIntervals,omitempty"`
+	RowsScanned        uint64              `json:"rowsScanned"`
+	BytesScanned       uint64              `json:"bytesScanned"`
+	DurationMS         uint64              `json:"durationMs"`
+	StepIntervals      map[string]uint64   `json:"stepIntervals,omitempty"`
+	SemconvResolutions []SemconvResolution `json:"semconvResolutions,omitempty"`
+}
+
+// SemconvResolution records a semantic-convention family that the query
+// builder resolved. Requested preserves the spelling supplied by the caller so
+// agents and editors can update their next query without changing response
+// labels in the current response.
+type SemconvResolution struct {
+	Requested string   `json:"requested"`
+	Current   string   `json:"current"`
+	Members   []string `json:"members"`
+	Kind      string   `json:"kind"`
 }
 
 var _ jsonschema.Preparer = &ExecStats{}

@@ -112,7 +112,7 @@ export const INFRA_MONITORING_ATTR_KEYS = {
 	K8S_OBJECT_NAME: 'k8s.object.name',
 
 	// Environment
-	DEPLOYMENT_ENVIRONMENT: 'deployment.environment',
+	DEPLOYMENT_ENVIRONMENT: 'deployment.environment.name',
 
 	// Host System
 	OS_TYPE: 'os.type',
@@ -733,7 +733,7 @@ export const ENTITY_FILTER_PLACEHOLDERS: Record<InfraMonitoringEntity, string> =
 		[InfraMonitoringEntity.NAMESPACES]:
 			"Enter your filter query (e.g., k8s.namespace.name = 'production' AND k8s.cluster.name = 'prod-cluster')",
 		[InfraMonitoringEntity.CLUSTERS]:
-			"Enter your filter query (e.g., k8s.cluster.name = 'prod-cluster' AND deployment.environment = 'production')",
+			"Enter your filter query (e.g., k8s.cluster.name = 'prod-cluster' AND deployment.environment.name = 'production')",
 		[InfraMonitoringEntity.DEPLOYMENTS]:
 			"Enter your filter query (e.g., k8s.deployment.name = 'api-server' AND k8s.namespace.name = 'production')",
 		[InfraMonitoringEntity.STATEFULSETS]:

@@ -155,7 +155,7 @@ function DomainList(): JSX.Element {
 					dataSource={DataSource.TRACES}
 					queryData={query}
 					onChange={handleSearchChange}
-					placeholder="Enter your filter query (e.g., deployment.environment = 'otel-demo' AND service.name = 'frontend')"
+					placeholder="Enter your filter query (e.g., deployment.environment.name = 'otel-demo' AND service.name = 'frontend')"
 					hardcodedAttributeKeys={ApiMonitoringHardcodedAttributeKeys}
 				/>
 			</div>

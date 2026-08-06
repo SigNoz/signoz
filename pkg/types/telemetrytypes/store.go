@@ -26,6 +26,10 @@ type MetadataStore interface {
 	// GetAllValues returns a list of all values.
 	GetAllValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *FieldValueSelector) (*TelemetryFieldValues, bool, error)
 
+	// GetSemconvMigrationReport returns services whose metadata contains an old
+	// semantic-convention name but no current member of that family.
+	GetSemconvMigrationReport(ctx context.Context, orgID valuer.UUID, startUnixMilli, endUnixMilli int64) (*GettableSemconvMigrationReport, error)
+
 	// FetchTemporality fetches the temporality for metric
 	FetchTemporality(ctx context.Context, orgID valuer.UUID, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricName string) (metrictypes.Temporality, error)
 

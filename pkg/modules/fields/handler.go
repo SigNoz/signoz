@@ -8,4 +8,7 @@ type Handler interface {
 
 	// Gets the fields values for the given field value selector
 	GetFieldsValues(http.ResponseWriter, *http.Request)
+
+	// Gets services that still emit only historical semantic-convention names.
+	GetSemconvMigrationReport(http.ResponseWriter, *http.Request)
 }

@@ -424,7 +424,7 @@ describe('ResourceProvider', () => {
 			await waitFor(() => {
 				expect(result.current.queries).toHaveLength(1);
 				expect(result.current.queries[0]).toMatchObject({
-					tagKey: 'resource_deployment_environment',
+					tagKey: 'resource_deployment_environment_name',
 					operator: 'IN',
 					tagValue: ['production'],
 				});
@@ -435,7 +435,7 @@ describe('ResourceProvider', () => {
 			const seeded = [
 				{
 					id: 'env',
-					tagKey: 'resource_deployment_environment',
+					tagKey: 'resource_deployment_environment_name',
 					operator: 'IN',
 					tagValue: ['production'],
 				},
@@ -459,7 +459,7 @@ describe('ResourceProvider', () => {
 
 			await waitFor(() => {
 				const tagKeys = result.current.queries.map((q) => q.tagKey);
-				expect(tagKeys).not.toContain('resource_deployment_environment');
+				expect(tagKeys).not.toContain('resource_deployment_environment_name');
 				expect(tagKeys).toContain('resource_service_name');
 			});
 		});
@@ -468,7 +468,7 @@ describe('ResourceProvider', () => {
 			const seeded = [
 				{
 					id: 'env',
-					tagKey: 'resource_deployment_environment',
+					tagKey: 'resource_deployment_environment_name',
 					operator: 'IN',
 					tagValue: ['production'],
 				},
@@ -486,7 +486,7 @@ describe('ResourceProvider', () => {
 
 			await waitFor(() => {
 				const envQueries = result.current.queries.filter(
-					(q) => q.tagKey === 'resource_deployment_environment',
+					(q) => q.tagKey === 'resource_deployment_environment_name',
 				);
 				expect(envQueries).toHaveLength(1);
 				expect(envQueries[0].tagValue).toStrictEqual(['staging']);
@@ -518,7 +518,7 @@ describe('ResourceProvider', () => {
 
 			await waitFor(() => {
 				expect(result.current.queries[0].tagKey).toBe(
-					'resource_deployment.environment',
+					'resource_deployment.environment.name',
 				);
 			});
 		});

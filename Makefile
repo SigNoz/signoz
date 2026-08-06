@@ -228,6 +228,10 @@ py-test-semconv-phase1: py-test-setup ## Rebuild the shared stack and run the se
 py-test-semconv-phase2: py-test-setup ## Rebuild the shared stack and run the Phase 1-2 cross-signal matrices
 	@cd tests && uv run pytest --basetemp=./tmp/ -vv --reuse --capture=no integration/tests/queriertraces/13_semconv_evolution.py integration/tests/queriersemconv/02_cross_signal.py
 
+.PHONY: py-test-semconv-phase3
+py-test-semconv-phase3: py-test-setup ## Rebuild the shared stack and run the Phase 1-3 compatibility and migration-report matrices
+	@cd tests && uv run pytest --basetemp=./tmp/ -vv --reuse --capture=no integration/tests/queriertraces/13_semconv_evolution.py integration/tests/queriersemconv/02_cross_signal.py
+
 .PHONY: py-clean
 py-clean: ## Clear all pycache and pytest cache from tests directory recursively
 	@echo ">> cleaning python cache files from tests directory"

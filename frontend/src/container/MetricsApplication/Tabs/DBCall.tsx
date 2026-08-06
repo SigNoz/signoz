@@ -94,7 +94,7 @@ function DBCall(): JSX.Element {
 		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
 			?.active || false;
 
-	const legend = dotMetricsEnabled ? '{{db.system}}' : '{{db_system}}';
+	const legend = dotMetricsEnabled ? '{{db.system.name}}' : '{{db_system_name}}';
 
 	const databaseCallsRPSWidget = useMemo(
 		() =>
