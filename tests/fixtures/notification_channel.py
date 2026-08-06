@@ -156,7 +156,7 @@ def notification_channel(
         # chat.googleapis.com so Google Chat's validated webhook host routes here.
         container = WireMockContainer(image="wiremock/wiremock:2.35.1-1", secure=False)
         container.with_cli_arg("--https-port", "8443")
-        container.with_exposed_ports(8080, 8443)
+        container.with_exposed_ports(8080)  # 8443 reached in-network via the alias, no host mapping needed
         container.with_network(network)
         container.with_network_aliases(GOOGLE_CHAT_HOST)
         container.start()
