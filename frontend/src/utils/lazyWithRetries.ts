@@ -4,6 +4,10 @@ import { SESSIONSTORAGE } from 'constants/sessionStorage';
 
 type ComponentImport = () => Promise<any>;
 
+// How long to wait for the recovery reload to replace the document before giving
+// up on it. Generous, so a slow reload is never mistaken for a failed one.
+const RELOAD_GRACE_MS = 10 * 1000;
+
 export const lazyRetry = (componentImport: ComponentImport): Promise<any> =>
 	new Promise((resolve, reject) => {
 		const hasRefreshed: boolean = JSON.parse(
@@ -17,20 +21,26 @@ export const lazyRetry = (componentImport: ComponentImport): Promise<any> =>
 			})
 			.catch((error: Error) => {
 				// A stale chunk reference right after a deploy is expected and self-healing:
-				// the reload pulls a fresh index.html with the new hashed asset names.
-				// The promise is deliberately left unsettled so the Suspense fallback stays
-				// on screen until the page unloads — settling it would flash the error
-				// boundary and report a failure that recovers on its own.
-				if (!hasRefreshed) {
+				// one reload pulls a fresh index.html with the new hashed asset names. That
+				// reload can only be once-only if the flag persists, so a storage write that
+				// fails (sessionStorage blocked) has to report rather than reload forever.
+				const canReload =
+					!hasRefreshed &&
 					setSessionStorageApi(SESSIONSTORAGE.RETRY_LAZY_REFRESHED, 'true');
 
-					window.location.reload();
+				if (!canReload) {
+					reject(error);
 
 					return;
 				}
 
-				// The reload already happened and the chunk still will not load, so this is
-				// a real failure: surface it to the error boundary and report it.
-				reject(error);
+				window.location.reload();
+
+				// Deliberately settle nothing here: the Suspense fallback stays on screen
+				// until the page unloads, where rejecting would flash the error boundary and
+				// report a failure that recovers on its own. The timer only ever fires when
+				// the reload did not land — a `beforeunload` prompt the user dismissed — so
+				// the error boundary still offers a way out instead of spinning forever.
+				setTimeout(() => reject(error), RELOAD_GRACE_MS);
 			});
 	});

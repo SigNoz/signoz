@@ -355,8 +355,10 @@ function App(): JSX.Element {
 					environment: process.env.ENVIRONMENT,
 					release: process.env.VERSION,
 					// Vite reports a CSS preload failure when a tab's index.html points at a
-					// stylesheet the new build replaced. It is the same deploy race as a stale
-					// JS chunk and recovers through the reload in `lazyRetry`.
+					// stylesheet the new build replaced. `lazyRetry` already swallows the first
+					// one by reloading, so anything reaching here survived that reload — this
+					// drops the class outright, which is intentional: we do not want CSS
+					// preload failures reported at all.
 					ignoreErrors: [/Unable to preload CSS for/],
 					integrations: [
 						// Kept for the `transaction` tag used in routing, even though
