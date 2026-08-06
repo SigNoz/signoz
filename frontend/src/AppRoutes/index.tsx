@@ -372,16 +372,6 @@ function App(): JSX.Element {
 							return null;
 						}
 
-						const sessionReplayUrl = posthog.get_session_replay_url?.({
-							withTimestamp: true,
-						});
-						if (sessionReplayUrl) {
-							// eslint-disable-next-line no-param-reassign
-							event.contexts = {
-								...event.contexts,
-								posthog: { session_replay_url: sessionReplayUrl },
-							};
-						}
 						return event;
 					},
 				});
