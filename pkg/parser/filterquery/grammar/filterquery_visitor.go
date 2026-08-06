@@ -1,4 +1,4 @@
-// Code generated from FilterQuery.g4 by ANTLR 4.13.2. DO NOT EDIT.
+// Code generated from grammar/FilterQuery.g4 by ANTLR 4.13.2. DO NOT EDIT.
 
 package parser // FilterQuery
 
@@ -61,4 +61,10 @@ type FilterQueryVisitor interface {
 
 	// Visit a parse tree produced by FilterQueryParser#key.
 	VisitKey(ctx *KeyContext) interface{}
+
+	// Visit a parse tree produced by FilterQueryParser#field.
+	VisitField(ctx *FieldContext) interface{}
+
+	// Visit a parse tree produced by FilterQueryParser#exactCall.
+	VisitExactCall(ctx *ExactCallContext) interface{}
 }

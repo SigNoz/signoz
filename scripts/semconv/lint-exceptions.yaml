@@ -1,4 +1,7 @@
 # Product-code old-name literals that cannot yet be removed. Every exception
 # is path/name specific, requires a reason, and fails the lint when it becomes
 # stale. Generated files, tests, fixtures, and comments are ignored instead.
-exceptions: []
+exceptions:
+  - path: pkg/telemetrymetadata/backward_compat_keys.go
+    name: http.url
+    reason: The fields/keys API must preserve its existing bidirectional trace-key suggestions.

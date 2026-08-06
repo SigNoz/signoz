@@ -46,8 +46,8 @@ type ConditionBuilderOptions struct {
 	// SkipResourceFilter drops the resource context from the candidate set.
 	SkipResourceFilter bool
 	// ExactSemconv disables semantic-convention family expansion. It is an
-	// internal escape hatch for diagnostics and migrations that must address one
-	// physical spelling only; public query APIs continue to resolve families.
+	// internal pipeline option derived from exact(key) or a TelemetryFieldKey
+	// whose fieldResolution is "exact".
 	ExactSemconv bool
 }
 type AggExprRewriter interface {

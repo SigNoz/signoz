@@ -69,6 +69,9 @@ type fieldMapper struct {
 }
 
 func logSemconvMembers(key *telemetrytypes.TelemetryFieldKey) []string {
+	if key.FieldResolution.IsExact() {
+		return []string{key.Name}
+	}
 	if key.FieldContext != telemetrytypes.FieldContextResource && key.FieldContext != telemetrytypes.FieldContextAttribute {
 		return []string{key.Name}
 	}
@@ -211,7 +214,8 @@ func (m *fieldMapper) FieldFor(ctx context.Context, orgID valuer.UUID, tsStart, 
 			switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
 			case schema.ColumnTypeEnumString, schema.ColumnTypeEnumBool, schema.ColumnTypeEnumFloat64:
 				members := logSemconvMembers(key)
-				if key.Materialized && (len(members) == 1 || key.MaterializedSemconv) {
+				if key.Materialized && (len(members) == 1 || key.MaterializedSemconv) &&
+					(!key.FieldResolution.IsExact() || !key.MaterializedSemconv) {
 					exprs = append(exprs, telemetrytypes.FieldKeyToMaterializedColumnName(key))
 					existExpr = append(existExpr, telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key))
 				} else if len(members) > 1 {

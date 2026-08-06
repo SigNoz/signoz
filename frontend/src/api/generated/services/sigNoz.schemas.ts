@@ -3482,6 +3482,10 @@ export enum TelemetrytypesFieldDataTypeDTO {
 	number = 'number',
 	'' = '',
 }
+export enum TelemetrytypesFieldResolutionDTO {
+	exact = 'exact',
+	'' = '',
+}
 export enum TelemetrytypesSignalDTO {
 	traces = 'traces',
 	logs = 'logs',
@@ -3495,6 +3499,7 @@ export interface Querybuildertypesv5GroupByKeyDTO {
 	description?: string;
 	fieldContext?: TelemetrytypesFieldContextDTO;
 	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
+	fieldResolution?: TelemetrytypesFieldResolutionDTO;
 	/**
 	 * @type string
 	 */
@@ -3535,6 +3540,7 @@ export interface Querybuildertypesv5OrderByKeyDTO {
 	description?: string;
 	fieldContext?: TelemetrytypesFieldContextDTO;
 	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
+	fieldResolution?: TelemetrytypesFieldResolutionDTO;
 	/**
 	 * @type string
 	 */
@@ -3588,6 +3594,7 @@ export interface TelemetrytypesTelemetryFieldKeyDTO {
 	description?: string;
 	fieldContext?: TelemetrytypesFieldContextDTO;
 	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
+	fieldResolution?: TelemetrytypesFieldResolutionDTO;
 	/**
 	 * @type string
 	 */
@@ -7936,6 +7943,7 @@ export interface Querybuildertypesv5ColumnDescriptorDTO {
 	description?: string;
 	fieldContext?: TelemetrytypesFieldContextDTO;
 	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
+	fieldResolution?: TelemetrytypesFieldResolutionDTO;
 	/**
 	 * @type object
 	 */
@@ -7959,6 +7967,25 @@ export type Querybuildertypesv5ExecStatsDTOStepIntervals = {
 	[key: string]: number;
 };
 
+export interface Querybuildertypesv5SemconvResolutionDTO {
+	/**
+	 * @type string
+	 */
+	current?: string;
+	/**
+	 * @type string
+	 */
+	kind?: string;
+	/**
+	 * @type array,null
+	 */
+	members?: string[] | null;
+	/**
+	 * @type string
+	 */
+	requested?: string;
+}
+
 /**
  * Execution statistics for the query, including rows scanned, bytes scanned, and duration.
  */
@@ -7978,6 +8005,10 @@ export interface Querybuildertypesv5ExecStatsDTO {
 	 * @minimum 0
 	 */
 	rowsScanned?: number;
+	/**
+	 * @type array
+	 */
+	semconvResolutions?: Querybuildertypesv5SemconvResolutionDTO[];
 	/**
 	 * @type object
 	 */
@@ -9816,6 +9847,52 @@ export interface TelemetrytypesGettableFieldValuesDTO {
 	values: TelemetrytypesTelemetryFieldValuesDTO;
 }
 
+export interface TelemetrytypesSemconvMigrationReportEntryDTO {
+	/**
+	 * @type string
+	 */
+	current?: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	lastSeenUnixMilli?: number;
+	/**
+	 * @type string
+	 */
+	old?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	resourceSets?: number;
+	/**
+	 * @type array,null
+	 */
+	services?: string[] | null;
+	/**
+	 * @type string
+	 */
+	signal?: string;
+}
+
+export interface TelemetrytypesGettableSemconvMigrationReportDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	endUnixMilli?: number;
+	/**
+	 * @type array,null
+	 */
+	entries: TelemetrytypesSemconvMigrationReportEntryDTO[] | null;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	startUnixMilli?: number;
+}
+
 export interface TypesChangePasswordRequestDTO {
 	/**
 	 * @type string
@@ -10576,6 +10653,29 @@ export type GetFieldsKeysParams = {
 
 export type GetFieldsKeys200 = {
 	data: TelemetrytypesGettableFieldKeysDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetSemconvMigrationReportParams = {
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	startUnixMilli?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	endUnixMilli?: number;
+};
+
+export type GetSemconvMigrationReport200 = {
+	data: TelemetrytypesGettableSemconvMigrationReportDTO;
 	/**
 	 * @type string
 	 */

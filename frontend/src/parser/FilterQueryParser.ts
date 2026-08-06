@@ -1,4 +1,4 @@
-// Generated from FilterQuery.g4 by ANTLR 4.13.1
+// Generated from grammar/FilterQuery.g4 by ANTLR 4.13.2
 // noinspection ES6UnusedImports,JSUnusedGlobalSymbols,JSUnusedLocalSymbols
 
 import {
@@ -45,13 +45,15 @@ export default class FilterQueryParser extends Parser {
 	public static readonly HAS = 24;
 	public static readonly HASANY = 25;
 	public static readonly HASALL = 26;
-	public static readonly BOOL = 27;
-	public static readonly NUMBER = 28;
-	public static readonly QUOTED_TEXT = 29;
-	public static readonly KEY = 30;
-	public static readonly WS = 31;
-	public static readonly FREETEXT = 32;
-	public static readonly EOF = Token.EOF;
+	public static readonly SEARCH = 27;
+	public static readonly EXACT = 28;
+	public static readonly BOOL = 29;
+	public static readonly NUMBER = 30;
+	public static readonly QUOTED_TEXT = 31;
+	public static readonly KEY = 32;
+	public static readonly WS = 33;
+	public static readonly FREETEXT = 34;
+	public static override readonly EOF = Token.EOF;
 	public static readonly RULE_query = 0;
 	public static readonly RULE_expression = 1;
 	public static readonly RULE_orExpression = 2;
@@ -64,11 +66,14 @@ export default class FilterQueryParser extends Parser {
 	public static readonly RULE_valueList = 9;
 	public static readonly RULE_fullText = 10;
 	public static readonly RULE_functionCall = 11;
-	public static readonly RULE_functionParamList = 12;
-	public static readonly RULE_functionParam = 13;
-	public static readonly RULE_array = 14;
-	public static readonly RULE_value = 15;
-	public static readonly RULE_key = 16;
+	public static readonly RULE_searchCall = 12;
+	public static readonly RULE_functionParamList = 13;
+	public static readonly RULE_functionParam = 14;
+	public static readonly RULE_array = 15;
+	public static readonly RULE_value = 16;
+	public static readonly RULE_key = 17;
+	public static readonly RULE_field = 18;
+	public static readonly RULE_exactCall = 19;
 	public static readonly literalNames: (string | null)[] = [ null, "'('", 
                                                             "')'", "'['", 
                                                             "']'", "','", 
@@ -90,7 +95,8 @@ export default class FilterQueryParser extends Parser {
                                                              "AND", "OR", 
                                                              "HASTOKEN", 
                                                              "HAS", "HASANY", 
-                                                             "HASALL", "BOOL", 
+	                                                             "HASALL", "SEARCH",
+	                                                             "EXACT", "BOOL",
                                                              "NUMBER", "QUOTED_TEXT", 
                                                              "KEY", "WS", 
                                                              "FREETEXT" ];
@@ -98,8 +104,8 @@ export default class FilterQueryParser extends Parser {
 	public static readonly ruleNames: string[] = [
 		"query", "expression", "orExpression", "andExpression", "unaryExpression", 
 		"primary", "comparison", "inClause", "notInClause", "valueList", "fullText", 
-		"functionCall", "functionParamList", "functionParam", "array", "value", 
-		"key",
+		"functionCall", "searchCall", "functionParamList", "functionParam", "array",
+		"value", "key", "field", "exactCall",
 	];
 	public get grammarFileName(): string { return "FilterQuery.g4"; }
 	public get literalNames(): (string | null)[] { return FilterQueryParser.literalNames; }
@@ -122,9 +128,9 @@ export default class FilterQueryParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 34;
+			this.state = 40;
 			this.expression();
-			this.state = 35;
+			this.state = 41;
 			this.match(FilterQueryParser.EOF);
 			}
 		}
@@ -149,7 +155,7 @@ export default class FilterQueryParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 37;
+			this.state = 43;
 			this.orExpression();
 			}
 		}
@@ -175,21 +181,21 @@ export default class FilterQueryParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 39;
+			this.state = 45;
 			this.andExpression();
-			this.state = 44;
+			this.state = 50;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
 			while (_la===22) {
 				{
 				{
-				this.state = 40;
+				this.state = 46;
 				this.match(FilterQueryParser.OR);
-				this.state = 41;
+				this.state = 47;
 				this.andExpression();
 				}
 				}
-				this.state = 46;
+				this.state = 52;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
@@ -217,21 +223,21 @@ export default class FilterQueryParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 47;
-			this.unaryExpression();
 			this.state = 53;
+			this.unaryExpression();
+			this.state = 59;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (((((_la - 1)) & ~0x1F) === 0 && ((1 << (_la - 1)) & 3218604033) !== 0)) {
+			while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4289724418) !== 0) || _la===32 || _la===34) {
 				{
-				this.state = 51;
+				this.state = 57;
 				this._errHandler.sync(this);
 				switch (this._input.LA(1)) {
 				case 21:
 					{
-					this.state = 48;
+					this.state = 54;
 					this.match(FilterQueryParser.AND);
-					this.state = 49;
+					this.state = 55;
 					this.unaryExpression();
 					}
 					break;
@@ -245,9 +251,11 @@ export default class FilterQueryParser extends Parser {
 				case 28:
 				case 29:
 				case 30:
+				case 31:
 				case 32:
+				case 34:
 					{
-					this.state = 50;
+					this.state = 56;
 					this.unaryExpression();
 					}
 					break;
@@ -255,7 +263,7 @@ export default class FilterQueryParser extends Parser {
 					throw new NoViableAltException(this);
 				}
 				}
-				this.state = 55;
+				this.state = 61;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
@@ -283,17 +291,17 @@ export default class FilterQueryParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 57;
+			this.state = 63;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
 			if (_la===20) {
 				{
-				this.state = 56;
+				this.state = 62;
 				this.match(FilterQueryParser.NOT);
 				}
 			}
 
-			this.state = 59;
+			this.state = 65;
 			this.primary();
 			}
 		}
@@ -316,52 +324,59 @@ export default class FilterQueryParser extends Parser {
 		let localctx: PrimaryContext = new PrimaryContext(this, this._ctx, this.state);
 		this.enterRule(localctx, 10, FilterQueryParser.RULE_primary);
 		try {
-			this.state = 70;
+			this.state = 77;
 			this._errHandler.sync(this);
 			switch ( this._interp.adaptivePredict(this._input, 4, this._ctx) ) {
 			case 1:
 				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 61;
+				this.state = 67;
 				this.match(FilterQueryParser.LPAREN);
-				this.state = 62;
+				this.state = 68;
 				this.orExpression();
-				this.state = 63;
+				this.state = 69;
 				this.match(FilterQueryParser.RPAREN);
 				}
 				break;
 			case 2:
 				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 65;
+				this.state = 71;
 				this.comparison();
 				}
 				break;
 			case 3:
 				this.enterOuterAlt(localctx, 3);
 				{
-				this.state = 66;
+				this.state = 72;
 				this.functionCall();
 				}
 				break;
 			case 4:
 				this.enterOuterAlt(localctx, 4);
 				{
-				this.state = 67;
-				this.fullText();
+				this.state = 73;
+				this.searchCall();
 				}
 				break;
 			case 5:
 				this.enterOuterAlt(localctx, 5);
 				{
-				this.state = 68;
-				this.key();
+				this.state = 74;
+				this.fullText();
 				}
 				break;
 			case 6:
 				this.enterOuterAlt(localctx, 6);
 				{
-				this.state = 69;
+				this.state = 75;
+				this.key();
+				}
+				break;
+			case 7:
+				this.enterOuterAlt(localctx, 7);
+				{
+				this.state = 76;
 				this.value();
 				}
 				break;
@@ -387,26 +402,26 @@ export default class FilterQueryParser extends Parser {
 		this.enterRule(localctx, 12, FilterQueryParser.RULE_comparison);
 		let _la: number;
 		try {
-			this.state = 149;
+			this.state = 156;
 			this._errHandler.sync(this);
 			switch ( this._interp.adaptivePredict(this._input, 5, this._ctx) ) {
 			case 1:
 				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 72;
-				this.key();
-				this.state = 73;
+				this.state = 79;
+				this.field();
+				this.state = 80;
 				this.match(FilterQueryParser.EQUALS);
-				this.state = 74;
+				this.state = 81;
 				this.value();
 				}
 				break;
 			case 2:
 				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 76;
-				this.key();
-				this.state = 77;
+				this.state = 83;
+				this.field();
+				this.state = 84;
 				_la = this._input.LA(1);
 				if(!(_la===7 || _la===8)) {
 				this._errHandler.recoverInline(this);
@@ -415,60 +430,60 @@ export default class FilterQueryParser extends Parser {
 					this._errHandler.reportMatch(this);
 				    this.consume();
 				}
-				this.state = 78;
+				this.state = 85;
 				this.value();
 				}
 				break;
 			case 3:
 				this.enterOuterAlt(localctx, 3);
 				{
-				this.state = 80;
-				this.key();
-				this.state = 81;
+				this.state = 87;
+				this.field();
+				this.state = 88;
 				this.match(FilterQueryParser.LT);
-				this.state = 82;
+				this.state = 89;
 				this.value();
 				}
 				break;
 			case 4:
 				this.enterOuterAlt(localctx, 4);
 				{
-				this.state = 84;
-				this.key();
-				this.state = 85;
+				this.state = 91;
+				this.field();
+				this.state = 92;
 				this.match(FilterQueryParser.LE);
-				this.state = 86;
+				this.state = 93;
 				this.value();
 				}
 				break;
 			case 5:
 				this.enterOuterAlt(localctx, 5);
 				{
-				this.state = 88;
-				this.key();
-				this.state = 89;
+				this.state = 95;
+				this.field();
+				this.state = 96;
 				this.match(FilterQueryParser.GT);
-				this.state = 90;
+				this.state = 97;
 				this.value();
 				}
 				break;
 			case 6:
 				this.enterOuterAlt(localctx, 6);
 				{
-				this.state = 92;
-				this.key();
-				this.state = 93;
+				this.state = 99;
+				this.field();
+				this.state = 100;
 				this.match(FilterQueryParser.GE);
-				this.state = 94;
+				this.state = 101;
 				this.value();
 				}
 				break;
 			case 7:
 				this.enterOuterAlt(localctx, 7);
 				{
-				this.state = 96;
-				this.key();
-				this.state = 97;
+				this.state = 103;
+				this.field();
+				this.state = 104;
 				_la = this._input.LA(1);
 				if(!(_la===13 || _la===14)) {
 				this._errHandler.recoverInline(this);
@@ -477,18 +492,18 @@ export default class FilterQueryParser extends Parser {
 					this._errHandler.reportMatch(this);
 				    this.consume();
 				}
-				this.state = 98;
+				this.state = 105;
 				this.value();
 				}
 				break;
 			case 8:
 				this.enterOuterAlt(localctx, 8);
 				{
-				this.state = 100;
-				this.key();
-				this.state = 101;
+				this.state = 107;
+				this.field();
+				this.state = 108;
 				this.match(FilterQueryParser.NOT);
-				this.state = 102;
+				this.state = 109;
 				_la = this._input.LA(1);
 				if(!(_la===13 || _la===14)) {
 				this._errHandler.recoverInline(this);
@@ -497,32 +512,15 @@ export default class FilterQueryParser extends Parser {
 					this._errHandler.reportMatch(this);
 				    this.consume();
 				}
-				this.state = 103;
+				this.state = 110;
 				this.value();
 				}
 				break;
 			case 9:
 				this.enterOuterAlt(localctx, 9);
 				{
-				this.state = 105;
-				this.key();
-				this.state = 106;
-				this.match(FilterQueryParser.BETWEEN);
-				this.state = 107;
-				this.value();
-				this.state = 108;
-				this.match(FilterQueryParser.AND);
-				this.state = 109;
-				this.value();
-				}
-				break;
-			case 10:
-				this.enterOuterAlt(localctx, 10);
-				{
-				this.state = 111;
-				this.key();
 				this.state = 112;
-				this.match(FilterQueryParser.NOT);
+				this.field();
 				this.state = 113;
 				this.match(FilterQueryParser.BETWEEN);
 				this.state = 114;
@@ -533,89 +531,106 @@ export default class FilterQueryParser extends Parser {
 				this.value();
 				}
 				break;
+			case 10:
+				this.enterOuterAlt(localctx, 10);
+				{
+				this.state = 118;
+				this.field();
+				this.state = 119;
+				this.match(FilterQueryParser.NOT);
+				this.state = 120;
+				this.match(FilterQueryParser.BETWEEN);
+				this.state = 121;
+				this.value();
+				this.state = 122;
+				this.match(FilterQueryParser.AND);
+				this.state = 123;
+				this.value();
+				}
+				break;
 			case 11:
 				this.enterOuterAlt(localctx, 11);
 				{
-				this.state = 118;
-				this.key();
-				this.state = 119;
+				this.state = 125;
+				this.field();
+				this.state = 126;
 				this.inClause();
 				}
 				break;
 			case 12:
 				this.enterOuterAlt(localctx, 12);
 				{
-				this.state = 121;
-				this.key();
-				this.state = 122;
+				this.state = 128;
+				this.field();
+				this.state = 129;
 				this.notInClause();
 				}
 				break;
 			case 13:
 				this.enterOuterAlt(localctx, 13);
 				{
-				this.state = 124;
-				this.key();
-				this.state = 125;
+				this.state = 131;
+				this.field();
+				this.state = 132;
 				this.match(FilterQueryParser.EXISTS);
 				}
 				break;
 			case 14:
 				this.enterOuterAlt(localctx, 14);
 				{
-				this.state = 127;
-				this.key();
-				this.state = 128;
+				this.state = 134;
+				this.field();
+				this.state = 135;
 				this.match(FilterQueryParser.NOT);
-				this.state = 129;
+				this.state = 136;
 				this.match(FilterQueryParser.EXISTS);
 				}
 				break;
 			case 15:
 				this.enterOuterAlt(localctx, 15);
 				{
-				this.state = 131;
-				this.key();
-				this.state = 132;
+				this.state = 138;
+				this.field();
+				this.state = 139;
 				this.match(FilterQueryParser.REGEXP);
-				this.state = 133;
+				this.state = 140;
 				this.value();
 				}
 				break;
 			case 16:
 				this.enterOuterAlt(localctx, 16);
 				{
-				this.state = 135;
-				this.key();
-				this.state = 136;
+				this.state = 142;
+				this.field();
+				this.state = 143;
 				this.match(FilterQueryParser.NOT);
-				this.state = 137;
+				this.state = 144;
 				this.match(FilterQueryParser.REGEXP);
-				this.state = 138;
+				this.state = 145;
 				this.value();
 				}
 				break;
 			case 17:
 				this.enterOuterAlt(localctx, 17);
 				{
-				this.state = 140;
-				this.key();
-				this.state = 141;
+				this.state = 147;
+				this.field();
+				this.state = 148;
 				this.match(FilterQueryParser.CONTAINS);
-				this.state = 142;
+				this.state = 149;
 				this.value();
 				}
 				break;
 			case 18:
 				this.enterOuterAlt(localctx, 18);
 				{
-				this.state = 144;
-				this.key();
-				this.state = 145;
+				this.state = 151;
+				this.field();
+				this.state = 152;
 				this.match(FilterQueryParser.NOT);
-				this.state = 146;
+				this.state = 153;
 				this.match(FilterQueryParser.CONTAINS);
-				this.state = 147;
+				this.state = 154;
 				this.value();
 				}
 				break;
@@ -640,41 +655,41 @@ export default class FilterQueryParser extends Parser {
 		let localctx: InClauseContext = new InClauseContext(this, this._ctx, this.state);
 		this.enterRule(localctx, 14, FilterQueryParser.RULE_inClause);
 		try {
-			this.state = 163;
+			this.state = 170;
 			this._errHandler.sync(this);
 			switch ( this._interp.adaptivePredict(this._input, 6, this._ctx) ) {
 			case 1:
 				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 151;
+				this.state = 158;
 				this.match(FilterQueryParser.IN);
-				this.state = 152;
+				this.state = 159;
 				this.match(FilterQueryParser.LPAREN);
-				this.state = 153;
+				this.state = 160;
 				this.valueList();
-				this.state = 154;
+				this.state = 161;
 				this.match(FilterQueryParser.RPAREN);
 				}
 				break;
 			case 2:
 				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 156;
+				this.state = 163;
 				this.match(FilterQueryParser.IN);
-				this.state = 157;
+				this.state = 164;
 				this.match(FilterQueryParser.LBRACK);
-				this.state = 158;
+				this.state = 165;
 				this.valueList();
-				this.state = 159;
+				this.state = 166;
 				this.match(FilterQueryParser.RBRACK);
 				}
 				break;
 			case 3:
 				this.enterOuterAlt(localctx, 3);
 				{
-				this.state = 161;
+				this.state = 168;
 				this.match(FilterQueryParser.IN);
-				this.state = 162;
+				this.state = 169;
 				this.value();
 				}
 				break;
@@ -699,47 +714,47 @@ export default class FilterQueryParser extends Parser {
 		let localctx: NotInClauseContext = new NotInClauseContext(this, this._ctx, this.state);
 		this.enterRule(localctx, 16, FilterQueryParser.RULE_notInClause);
 		try {
-			this.state = 180;
+			this.state = 187;
 			this._errHandler.sync(this);
 			switch ( this._interp.adaptivePredict(this._input, 7, this._ctx) ) {
 			case 1:
 				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 165;
+				this.state = 172;
 				this.match(FilterQueryParser.NOT);
-				this.state = 166;
+				this.state = 173;
 				this.match(FilterQueryParser.IN);
-				this.state = 167;
+				this.state = 174;
 				this.match(FilterQueryParser.LPAREN);
-				this.state = 168;
+				this.state = 175;
 				this.valueList();
-				this.state = 169;
+				this.state = 176;
 				this.match(FilterQueryParser.RPAREN);
 				}
 				break;
 			case 2:
 				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 171;
+				this.state = 178;
 				this.match(FilterQueryParser.NOT);
-				this.state = 172;
+				this.state = 179;
 				this.match(FilterQueryParser.IN);
-				this.state = 173;
+				this.state = 180;
 				this.match(FilterQueryParser.LBRACK);
-				this.state = 174;
+				this.state = 181;
 				this.valueList();
-				this.state = 175;
+				this.state = 182;
 				this.match(FilterQueryParser.RBRACK);
 				}
 				break;
 			case 3:
 				this.enterOuterAlt(localctx, 3);
 				{
-				this.state = 177;
+				this.state = 184;
 				this.match(FilterQueryParser.NOT);
-				this.state = 178;
+				this.state = 185;
 				this.match(FilterQueryParser.IN);
-				this.state = 179;
+				this.state = 186;
 				this.value();
 				}
 				break;
@@ -767,21 +782,21 @@ export default class FilterQueryParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 182;
+			this.state = 189;
 			this.value();
-			this.state = 187;
+			this.state = 194;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
 			while (_la===5) {
 				{
 				{
-				this.state = 183;
+				this.state = 190;
 				this.match(FilterQueryParser.COMMA);
-				this.state = 184;
+				this.state = 191;
 				this.value();
 				}
 				}
-				this.state = 189;
+				this.state = 196;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
@@ -809,9 +824,9 @@ export default class FilterQueryParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 190;
+			this.state = 197;
 			_la = this._input.LA(1);
-			if(!(_la===29 || _la===32)) {
+			if(!(_la===31 || _la===34)) {
 			this._errHandler.recoverInline(this);
 			}
 			else {
@@ -842,7 +857,7 @@ export default class FilterQueryParser extends Parser {
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 192;
+			this.state = 199;
 			_la = this._input.LA(1);
 			if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 125829120) !== 0))) {
 			this._errHandler.recoverInline(this);
@@ -851,11 +866,42 @@ export default class FilterQueryParser extends Parser {
 				this._errHandler.reportMatch(this);
 			    this.consume();
 			}
-			this.state = 193;
+			this.state = 200;
 			this.match(FilterQueryParser.LPAREN);
-			this.state = 194;
+			this.state = 201;
 			this.functionParamList();
-			this.state = 195;
+			this.state = 202;
+			this.match(FilterQueryParser.RPAREN);
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return localctx;
+	}
+	// @RuleVersion(0)
+	public searchCall(): SearchCallContext {
+		let localctx: SearchCallContext = new SearchCallContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 24, FilterQueryParser.RULE_searchCall);
+		try {
+			this.enterOuterAlt(localctx, 1);
+			{
+			this.state = 204;
+			this.match(FilterQueryParser.SEARCH);
+			this.state = 205;
+			this.match(FilterQueryParser.LPAREN);
+			this.state = 206;
+			this.valueList();
+			this.state = 207;
 			this.match(FilterQueryParser.RPAREN);
 			}
 		}
@@ -876,26 +922,26 @@ export default class FilterQueryParser extends Parser {
 	// @RuleVersion(0)
 	public functionParamList(): FunctionParamListContext {
 		let localctx: FunctionParamListContext = new FunctionParamListContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 24, FilterQueryParser.RULE_functionParamList);
+		this.enterRule(localctx, 26, FilterQueryParser.RULE_functionParamList);
 		let _la: number;
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 197;
+			this.state = 209;
 			this.functionParam();
-			this.state = 202;
+			this.state = 214;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
 			while (_la===5) {
 				{
 				{
-				this.state = 198;
+				this.state = 210;
 				this.match(FilterQueryParser.COMMA);
-				this.state = 199;
+				this.state = 211;
 				this.functionParam();
 				}
 				}
-				this.state = 204;
+				this.state = 216;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
@@ -918,29 +964,29 @@ export default class FilterQueryParser extends Parser {
 	// @RuleVersion(0)
 	public functionParam(): FunctionParamContext {
 		let localctx: FunctionParamContext = new FunctionParamContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 26, FilterQueryParser.RULE_functionParam);
+		this.enterRule(localctx, 28, FilterQueryParser.RULE_functionParam);
 		try {
-			this.state = 208;
+			this.state = 220;
 			this._errHandler.sync(this);
 			switch ( this._interp.adaptivePredict(this._input, 10, this._ctx) ) {
 			case 1:
 				this.enterOuterAlt(localctx, 1);
 				{
-				this.state = 205;
-				this.key();
+				this.state = 217;
+				this.field();
 				}
 				break;
 			case 2:
 				this.enterOuterAlt(localctx, 2);
 				{
-				this.state = 206;
+				this.state = 218;
 				this.value();
 				}
 				break;
 			case 3:
 				this.enterOuterAlt(localctx, 3);
 				{
-				this.state = 207;
+				this.state = 219;
 				this.array();
 				}
 				break;
@@ -963,15 +1009,15 @@ export default class FilterQueryParser extends Parser {
 	// @RuleVersion(0)
 	public array(): ArrayContext {
 		let localctx: ArrayContext = new ArrayContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 28, FilterQueryParser.RULE_array);
+		this.enterRule(localctx, 30, FilterQueryParser.RULE_array);
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 210;
+			this.state = 222;
 			this.match(FilterQueryParser.LBRACK);
-			this.state = 211;
+			this.state = 223;
 			this.valueList();
-			this.state = 212;
+			this.state = 224;
 			this.match(FilterQueryParser.RBRACK);
 			}
 		}
@@ -992,14 +1038,14 @@ export default class FilterQueryParser extends Parser {
 	// @RuleVersion(0)
 	public value(): ValueContext {
 		let localctx: ValueContext = new ValueContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 30, FilterQueryParser.RULE_value);
+		this.enterRule(localctx, 32, FilterQueryParser.RULE_value);
 		let _la: number;
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 214;
+			this.state = 226;
 			_la = this._input.LA(1);
-			if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 2013265920) !== 0))) {
+			if(!(((((_la - 29)) & ~0x1F) === 0 && ((1 << (_la - 29)) & 15) !== 0))) {
 			this._errHandler.recoverInline(this);
 			}
 			else {
@@ -1025,11 +1071,11 @@ export default class FilterQueryParser extends Parser {
 	// @RuleVersion(0)
 	public key(): KeyContext {
 		let localctx: KeyContext = new KeyContext(this, this._ctx, this.state);
-		this.enterRule(localctx, 32, FilterQueryParser.RULE_key);
+		this.enterRule(localctx, 34, FilterQueryParser.RULE_key);
 		try {
 			this.enterOuterAlt(localctx, 1);
 			{
-			this.state = 216;
+			this.state = 228;
 			this.match(FilterQueryParser.KEY);
 			}
 		}
@@ -1047,75 +1093,153 @@ export default class FilterQueryParser extends Parser {
 		}
 		return localctx;
 	}
+	// @RuleVersion(0)
+	public field(): FieldContext {
+		let localctx: FieldContext = new FieldContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 36, FilterQueryParser.RULE_field);
+		try {
+			this.state = 232;
+			this._errHandler.sync(this);
+			switch (this._input.LA(1)) {
+			case 32:
+				this.enterOuterAlt(localctx, 1);
+				{
+				this.state = 230;
+				this.key();
+				}
+				break;
+			case 28:
+				this.enterOuterAlt(localctx, 2);
+				{
+				this.state = 231;
+				this.exactCall();
+				}
+				break;
+			default:
+				throw new NoViableAltException(this);
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return localctx;
+	}
+	// @RuleVersion(0)
+	public exactCall(): ExactCallContext {
+		let localctx: ExactCallContext = new ExactCallContext(this, this._ctx, this.state);
+		this.enterRule(localctx, 38, FilterQueryParser.RULE_exactCall);
+		try {
+			this.enterOuterAlt(localctx, 1);
+			{
+			this.state = 234;
+			this.match(FilterQueryParser.EXACT);
+			this.state = 235;
+			this.match(FilterQueryParser.LPAREN);
+			this.state = 236;
+			this.key();
+			this.state = 237;
+			this.match(FilterQueryParser.RPAREN);
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return localctx;
+	}
 
-	public static readonly _serializedATN: number[] = [4,1,32,219,2,0,7,0,2,
+	public static readonly _serializedATN: number[] = [4,1,34,240,2,0,7,0,2,
 	1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,6,2,7,7,7,2,8,7,8,2,9,7,9,2,
-	10,7,10,2,11,7,11,2,12,7,12,2,13,7,13,2,14,7,14,2,15,7,15,2,16,7,16,1,0,
-	1,0,1,0,1,1,1,1,1,2,1,2,1,2,5,2,43,8,2,10,2,12,2,46,9,2,1,3,1,3,1,3,1,3,
-	5,3,52,8,3,10,3,12,3,55,9,3,1,4,3,4,58,8,4,1,4,1,4,1,5,1,5,1,5,1,5,1,5,
-	1,5,1,5,1,5,1,5,3,5,71,8,5,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,
-	1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,
-	1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,
-	1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,
-	1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,3,6,150,8,6,1,7,1,7,1,7,
-	1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,3,7,164,8,7,1,8,1,8,1,8,1,8,1,8,1,8,
-	1,8,1,8,1,8,1,8,1,8,1,8,1,8,1,8,1,8,3,8,181,8,8,1,9,1,9,1,9,5,9,186,8,9,
-	10,9,12,9,189,9,9,1,10,1,10,1,11,1,11,1,11,1,11,1,11,1,12,1,12,1,12,5,12,
-	201,8,12,10,12,12,12,204,9,12,1,13,1,13,1,13,3,13,209,8,13,1,14,1,14,1,
-	14,1,14,1,15,1,15,1,16,1,16,1,16,0,0,17,0,2,4,6,8,10,12,14,16,18,20,22,
-	24,26,28,30,32,0,5,1,0,7,8,1,0,13,14,2,0,29,29,32,32,1,0,23,26,1,0,27,30,
-	235,0,34,1,0,0,0,2,37,1,0,0,0,4,39,1,0,0,0,6,47,1,0,0,0,8,57,1,0,0,0,10,
-	70,1,0,0,0,12,149,1,0,0,0,14,163,1,0,0,0,16,180,1,0,0,0,18,182,1,0,0,0,
-	20,190,1,0,0,0,22,192,1,0,0,0,24,197,1,0,0,0,26,208,1,0,0,0,28,210,1,0,
-	0,0,30,214,1,0,0,0,32,216,1,0,0,0,34,35,3,2,1,0,35,36,5,0,0,1,36,1,1,0,
-	0,0,37,38,3,4,2,0,38,3,1,0,0,0,39,44,3,6,3,0,40,41,5,22,0,0,41,43,3,6,3,
-	0,42,40,1,0,0,0,43,46,1,0,0,0,44,42,1,0,0,0,44,45,1,0,0,0,45,5,1,0,0,0,
-	46,44,1,0,0,0,47,53,3,8,4,0,48,49,5,21,0,0,49,52,3,8,4,0,50,52,3,8,4,0,
-	51,48,1,0,0,0,51,50,1,0,0,0,52,55,1,0,0,0,53,51,1,0,0,0,53,54,1,0,0,0,54,
-	7,1,0,0,0,55,53,1,0,0,0,56,58,5,20,0,0,57,56,1,0,0,0,57,58,1,0,0,0,58,59,
-	1,0,0,0,59,60,3,10,5,0,60,9,1,0,0,0,61,62,5,1,0,0,62,63,3,4,2,0,63,64,5,
-	2,0,0,64,71,1,0,0,0,65,71,3,12,6,0,66,71,3,22,11,0,67,71,3,20,10,0,68,71,
-	3,32,16,0,69,71,3,30,15,0,70,61,1,0,0,0,70,65,1,0,0,0,70,66,1,0,0,0,70,
-	67,1,0,0,0,70,68,1,0,0,0,70,69,1,0,0,0,71,11,1,0,0,0,72,73,3,32,16,0,73,
-	74,5,6,0,0,74,75,3,30,15,0,75,150,1,0,0,0,76,77,3,32,16,0,77,78,7,0,0,0,
-	78,79,3,30,15,0,79,150,1,0,0,0,80,81,3,32,16,0,81,82,5,9,0,0,82,83,3,30,
-	15,0,83,150,1,0,0,0,84,85,3,32,16,0,85,86,5,10,0,0,86,87,3,30,15,0,87,150,
-	1,0,0,0,88,89,3,32,16,0,89,90,5,11,0,0,90,91,3,30,15,0,91,150,1,0,0,0,92,
-	93,3,32,16,0,93,94,5,12,0,0,94,95,3,30,15,0,95,150,1,0,0,0,96,97,3,32,16,
-	0,97,98,7,1,0,0,98,99,3,30,15,0,99,150,1,0,0,0,100,101,3,32,16,0,101,102,
-	5,20,0,0,102,103,7,1,0,0,103,104,3,30,15,0,104,150,1,0,0,0,105,106,3,32,
-	16,0,106,107,5,15,0,0,107,108,3,30,15,0,108,109,5,21,0,0,109,110,3,30,15,
-	0,110,150,1,0,0,0,111,112,3,32,16,0,112,113,5,20,0,0,113,114,5,15,0,0,114,
-	115,3,30,15,0,115,116,5,21,0,0,116,117,3,30,15,0,117,150,1,0,0,0,118,119,
-	3,32,16,0,119,120,3,14,7,0,120,150,1,0,0,0,121,122,3,32,16,0,122,123,3,
-	16,8,0,123,150,1,0,0,0,124,125,3,32,16,0,125,126,5,16,0,0,126,150,1,0,0,
-	0,127,128,3,32,16,0,128,129,5,20,0,0,129,130,5,16,0,0,130,150,1,0,0,0,131,
-	132,3,32,16,0,132,133,5,17,0,0,133,134,3,30,15,0,134,150,1,0,0,0,135,136,
-	3,32,16,0,136,137,5,20,0,0,137,138,5,17,0,0,138,139,3,30,15,0,139,150,1,
-	0,0,0,140,141,3,32,16,0,141,142,5,18,0,0,142,143,3,30,15,0,143,150,1,0,
-	0,0,144,145,3,32,16,0,145,146,5,20,0,0,146,147,5,18,0,0,147,148,3,30,15,
-	0,148,150,1,0,0,0,149,72,1,0,0,0,149,76,1,0,0,0,149,80,1,0,0,0,149,84,1,
-	0,0,0,149,88,1,0,0,0,149,92,1,0,0,0,149,96,1,0,0,0,149,100,1,0,0,0,149,
-	105,1,0,0,0,149,111,1,0,0,0,149,118,1,0,0,0,149,121,1,0,0,0,149,124,1,0,
-	0,0,149,127,1,0,0,0,149,131,1,0,0,0,149,135,1,0,0,0,149,140,1,0,0,0,149,
-	144,1,0,0,0,150,13,1,0,0,0,151,152,5,19,0,0,152,153,5,1,0,0,153,154,3,18,
-	9,0,154,155,5,2,0,0,155,164,1,0,0,0,156,157,5,19,0,0,157,158,5,3,0,0,158,
-	159,3,18,9,0,159,160,5,4,0,0,160,164,1,0,0,0,161,162,5,19,0,0,162,164,3,
-	30,15,0,163,151,1,0,0,0,163,156,1,0,0,0,163,161,1,0,0,0,164,15,1,0,0,0,
-	165,166,5,20,0,0,166,167,5,19,0,0,167,168,5,1,0,0,168,169,3,18,9,0,169,
-	170,5,2,0,0,170,181,1,0,0,0,171,172,5,20,0,0,172,173,5,19,0,0,173,174,5,
-	3,0,0,174,175,3,18,9,0,175,176,5,4,0,0,176,181,1,0,0,0,177,178,5,20,0,0,
-	178,179,5,19,0,0,179,181,3,30,15,0,180,165,1,0,0,0,180,171,1,0,0,0,180,
-	177,1,0,0,0,181,17,1,0,0,0,182,187,3,30,15,0,183,184,5,5,0,0,184,186,3,
-	30,15,0,185,183,1,0,0,0,186,189,1,0,0,0,187,185,1,0,0,0,187,188,1,0,0,0,
-	188,19,1,0,0,0,189,187,1,0,0,0,190,191,7,2,0,0,191,21,1,0,0,0,192,193,7,
-	3,0,0,193,194,5,1,0,0,194,195,3,24,12,0,195,196,5,2,0,0,196,23,1,0,0,0,
-	197,202,3,26,13,0,198,199,5,5,0,0,199,201,3,26,13,0,200,198,1,0,0,0,201,
-	204,1,0,0,0,202,200,1,0,0,0,202,203,1,0,0,0,203,25,1,0,0,0,204,202,1,0,
-	0,0,205,209,3,32,16,0,206,209,3,30,15,0,207,209,3,28,14,0,208,205,1,0,0,
-	0,208,206,1,0,0,0,208,207,1,0,0,0,209,27,1,0,0,0,210,211,5,3,0,0,211,212,
-	3,18,9,0,212,213,5,4,0,0,213,29,1,0,0,0,214,215,7,4,0,0,215,31,1,0,0,0,
-	216,217,5,30,0,0,217,33,1,0,0,0,11,44,51,53,57,70,149,163,180,187,202,208];
+	10,7,10,2,11,7,11,2,12,7,12,2,13,7,13,2,14,7,14,2,15,7,15,2,16,7,16,2,17,
+	7,17,2,18,7,18,2,19,7,19,1,0,1,0,1,0,1,1,1,1,1,2,1,2,1,2,5,2,49,8,2,10,
+	2,12,2,52,9,2,1,3,1,3,1,3,1,3,5,3,58,8,3,10,3,12,3,61,9,3,1,4,3,4,64,8,
+	4,1,4,1,4,1,5,1,5,1,5,1,5,1,5,1,5,1,5,1,5,1,5,1,5,3,5,78,8,5,1,6,1,6,1,
+	6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,
+	6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,
+	6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,
+	6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,
+	6,1,6,1,6,3,6,157,8,6,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,1,7,3,
+	7,171,8,7,1,8,1,8,1,8,1,8,1,8,1,8,1,8,1,8,1,8,1,8,1,8,1,8,1,8,1,8,1,8,3,
+	8,188,8,8,1,9,1,9,1,9,5,9,193,8,9,10,9,12,9,196,9,9,1,10,1,10,1,11,1,11,
+	1,11,1,11,1,11,1,12,1,12,1,12,1,12,1,12,1,13,1,13,1,13,5,13,213,8,13,10,
+	13,12,13,216,9,13,1,14,1,14,1,14,3,14,221,8,14,1,15,1,15,1,15,1,15,1,16,
+	1,16,1,17,1,17,1,18,1,18,3,18,233,8,18,1,19,1,19,1,19,1,19,1,19,1,19,0,
+	0,20,0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,0,5,1,0,7,8,
+	1,0,13,14,2,0,31,31,34,34,1,0,23,26,1,0,29,32,255,0,40,1,0,0,0,2,43,1,0,
+	0,0,4,45,1,0,0,0,6,53,1,0,0,0,8,63,1,0,0,0,10,77,1,0,0,0,12,156,1,0,0,0,
+	14,170,1,0,0,0,16,187,1,0,0,0,18,189,1,0,0,0,20,197,1,0,0,0,22,199,1,0,
+	0,0,24,204,1,0,0,0,26,209,1,0,0,0,28,220,1,0,0,0,30,222,1,0,0,0,32,226,
+	1,0,0,0,34,228,1,0,0,0,36,232,1,0,0,0,38,234,1,0,0,0,40,41,3,2,1,0,41,42,
+	5,0,0,1,42,1,1,0,0,0,43,44,3,4,2,0,44,3,1,0,0,0,45,50,3,6,3,0,46,47,5,22,
+	0,0,47,49,3,6,3,0,48,46,1,0,0,0,49,52,1,0,0,0,50,48,1,0,0,0,50,51,1,0,0,
+	0,51,5,1,0,0,0,52,50,1,0,0,0,53,59,3,8,4,0,54,55,5,21,0,0,55,58,3,8,4,0,
+	56,58,3,8,4,0,57,54,1,0,0,0,57,56,1,0,0,0,58,61,1,0,0,0,59,57,1,0,0,0,59,
+	60,1,0,0,0,60,7,1,0,0,0,61,59,1,0,0,0,62,64,5,20,0,0,63,62,1,0,0,0,63,64,
+	1,0,0,0,64,65,1,0,0,0,65,66,3,10,5,0,66,9,1,0,0,0,67,68,5,1,0,0,68,69,3,
+	4,2,0,69,70,5,2,0,0,70,78,1,0,0,0,71,78,3,12,6,0,72,78,3,22,11,0,73,78,
+	3,24,12,0,74,78,3,20,10,0,75,78,3,34,17,0,76,78,3,32,16,0,77,67,1,0,0,0,
+	77,71,1,0,0,0,77,72,1,0,0,0,77,73,1,0,0,0,77,74,1,0,0,0,77,75,1,0,0,0,77,
+	76,1,0,0,0,78,11,1,0,0,0,79,80,3,36,18,0,80,81,5,6,0,0,81,82,3,32,16,0,
+	82,157,1,0,0,0,83,84,3,36,18,0,84,85,7,0,0,0,85,86,3,32,16,0,86,157,1,0,
+	0,0,87,88,3,36,18,0,88,89,5,9,0,0,89,90,3,32,16,0,90,157,1,0,0,0,91,92,
+	3,36,18,0,92,93,5,10,0,0,93,94,3,32,16,0,94,157,1,0,0,0,95,96,3,36,18,0,
+	96,97,5,11,0,0,97,98,3,32,16,0,98,157,1,0,0,0,99,100,3,36,18,0,100,101,
+	5,12,0,0,101,102,3,32,16,0,102,157,1,0,0,0,103,104,3,36,18,0,104,105,7,
+	1,0,0,105,106,3,32,16,0,106,157,1,0,0,0,107,108,3,36,18,0,108,109,5,20,
+	0,0,109,110,7,1,0,0,110,111,3,32,16,0,111,157,1,0,0,0,112,113,3,36,18,0,
+	113,114,5,15,0,0,114,115,3,32,16,0,115,116,5,21,0,0,116,117,3,32,16,0,117,
+	157,1,0,0,0,118,119,3,36,18,0,119,120,5,20,0,0,120,121,5,15,0,0,121,122,
+	3,32,16,0,122,123,5,21,0,0,123,124,3,32,16,0,124,157,1,0,0,0,125,126,3,
+	36,18,0,126,127,3,14,7,0,127,157,1,0,0,0,128,129,3,36,18,0,129,130,3,16,
+	8,0,130,157,1,0,0,0,131,132,3,36,18,0,132,133,5,16,0,0,133,157,1,0,0,0,
+	134,135,3,36,18,0,135,136,5,20,0,0,136,137,5,16,0,0,137,157,1,0,0,0,138,
+	139,3,36,18,0,139,140,5,17,0,0,140,141,3,32,16,0,141,157,1,0,0,0,142,143,
+	3,36,18,0,143,144,5,20,0,0,144,145,5,17,0,0,145,146,3,32,16,0,146,157,1,
+	0,0,0,147,148,3,36,18,0,148,149,5,18,0,0,149,150,3,32,16,0,150,157,1,0,
+	0,0,151,152,3,36,18,0,152,153,5,20,0,0,153,154,5,18,0,0,154,155,3,32,16,
+	0,155,157,1,0,0,0,156,79,1,0,0,0,156,83,1,0,0,0,156,87,1,0,0,0,156,91,1,
+	0,0,0,156,95,1,0,0,0,156,99,1,0,0,0,156,103,1,0,0,0,156,107,1,0,0,0,156,
+	112,1,0,0,0,156,118,1,0,0,0,156,125,1,0,0,0,156,128,1,0,0,0,156,131,1,0,
+	0,0,156,134,1,0,0,0,156,138,1,0,0,0,156,142,1,0,0,0,156,147,1,0,0,0,156,
+	151,1,0,0,0,157,13,1,0,0,0,158,159,5,19,0,0,159,160,5,1,0,0,160,161,3,18,
+	9,0,161,162,5,2,0,0,162,171,1,0,0,0,163,164,5,19,0,0,164,165,5,3,0,0,165,
+	166,3,18,9,0,166,167,5,4,0,0,167,171,1,0,0,0,168,169,5,19,0,0,169,171,3,
+	32,16,0,170,158,1,0,0,0,170,163,1,0,0,0,170,168,1,0,0,0,171,15,1,0,0,0,
+	172,173,5,20,0,0,173,174,5,19,0,0,174,175,5,1,0,0,175,176,3,18,9,0,176,
+	177,5,2,0,0,177,188,1,0,0,0,178,179,5,20,0,0,179,180,5,19,0,0,180,181,5,
+	3,0,0,181,182,3,18,9,0,182,183,5,4,0,0,183,188,1,0,0,0,184,185,5,20,0,0,
+	185,186,5,19,0,0,186,188,3,32,16,0,187,172,1,0,0,0,187,178,1,0,0,0,187,
+	184,1,0,0,0,188,17,1,0,0,0,189,194,3,32,16,0,190,191,5,5,0,0,191,193,3,
+	32,16,0,192,190,1,0,0,0,193,196,1,0,0,0,194,192,1,0,0,0,194,195,1,0,0,0,
+	195,19,1,0,0,0,196,194,1,0,0,0,197,198,7,2,0,0,198,21,1,0,0,0,199,200,7,
+	3,0,0,200,201,5,1,0,0,201,202,3,26,13,0,202,203,5,2,0,0,203,23,1,0,0,0,
+	204,205,5,27,0,0,205,206,5,1,0,0,206,207,3,18,9,0,207,208,5,2,0,0,208,25,
+	1,0,0,0,209,214,3,28,14,0,210,211,5,5,0,0,211,213,3,28,14,0,212,210,1,0,
+	0,0,213,216,1,0,0,0,214,212,1,0,0,0,214,215,1,0,0,0,215,27,1,0,0,0,216,
+	214,1,0,0,0,217,221,3,36,18,0,218,221,3,32,16,0,219,221,3,30,15,0,220,217,
+	1,0,0,0,220,218,1,0,0,0,220,219,1,0,0,0,221,29,1,0,0,0,222,223,5,3,0,0,
+	223,224,3,18,9,0,224,225,5,4,0,0,225,31,1,0,0,0,226,227,7,4,0,0,227,33,
+	1,0,0,0,228,229,5,32,0,0,229,35,1,0,0,0,230,233,3,34,17,0,231,233,3,38,
+	19,0,232,230,1,0,0,0,232,231,1,0,0,0,233,37,1,0,0,0,234,235,5,28,0,0,235,
+	236,5,1,0,0,236,237,3,34,17,0,237,238,5,2,0,0,238,39,1,0,0,0,12,50,57,59,
+	63,77,156,170,187,194,214,220,232];
 
 	private static __ATN: ATN;
 	public static get _ATN(): ATN {
@@ -1134,7 +1258,7 @@ export default class FilterQueryParser extends Parser {
 export class QueryContext extends ParserRuleContext {
 	constructor(parser?: FilterQueryParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
-    	this.parser = parser;
+		this.parser = parser;
 	}
 	public expression(): ExpressionContext {
 		return this.getTypedRuleContext(ExpressionContext, 0) as ExpressionContext;
@@ -1169,7 +1293,7 @@ export class QueryContext extends ParserRuleContext {
 export class ExpressionContext extends ParserRuleContext {
 	constructor(parser?: FilterQueryParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
-    	this.parser = parser;
+		this.parser = parser;
 	}
 	public orExpression(): OrExpressionContext {
 		return this.getTypedRuleContext(OrExpressionContext, 0) as OrExpressionContext;
@@ -1335,6 +1459,9 @@ export class PrimaryContext extends ParserRuleContext {
 	public functionCall(): FunctionCallContext {
 		return this.getTypedRuleContext(FunctionCallContext, 0) as FunctionCallContext;
 	}
+	public searchCall(): SearchCallContext {
+		return this.getTypedRuleContext(SearchCallContext, 0) as SearchCallContext;
+	}
 	public fullText(): FullTextContext {
 		return this.getTypedRuleContext(FullTextContext, 0) as FullTextContext;
 	}
@@ -1373,8 +1500,8 @@ export class ComparisonContext extends ParserRuleContext {
 		super(parent, invokingState);
     	this.parser = parser;
 	}
-	public key(): KeyContext {
-		return this.getTypedRuleContext(KeyContext, 0) as KeyContext;
+	public field(): FieldContext {
+		return this.getTypedRuleContext(FieldContext, 0) as FieldContext;
 	}
 	public EQUALS(): TerminalNode {
 		return this.getToken(FilterQueryParser.EQUALS, 0);
@@ -1686,10 +1813,51 @@ export class FunctionCallContext extends ParserRuleContext {
 }
 
 
-export class FunctionParamListContext extends ParserRuleContext {
+export class SearchCallContext extends ParserRuleContext {
 	constructor(parser?: FilterQueryParser, parent?: ParserRuleContext, invokingState?: number) {
 		super(parent, invokingState);
     	this.parser = parser;
+	}
+	public SEARCH(): TerminalNode {
+		return this.getToken(FilterQueryParser.SEARCH, 0);
+	}
+	public LPAREN(): TerminalNode {
+		return this.getToken(FilterQueryParser.LPAREN, 0);
+	}
+	public valueList(): ValueListContext {
+		return this.getTypedRuleContext(ValueListContext, 0) as ValueListContext;
+	}
+	public RPAREN(): TerminalNode {
+		return this.getToken(FilterQueryParser.RPAREN, 0);
+	}
+	public get ruleIndex(): number {
+		return FilterQueryParser.RULE_searchCall;
+	}
+	public enterRule(listener: FilterQueryListener): void {
+	    if(listener.enterSearchCall) {
+			listener.enterSearchCall(this);
+		}
+	}
+	public exitRule(listener: FilterQueryListener): void {
+	    if(listener.exitSearchCall) {
+			listener.exitSearchCall(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: FilterQueryVisitor<Result>): Result {
+		if (visitor.visitSearchCall) {
+			return visitor.visitSearchCall(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class FunctionParamListContext extends ParserRuleContext {
+	constructor(parser?: FilterQueryParser, parent?: ParserRuleContext, invokingState?: number) {
+		super(parent, invokingState);
+		this.parser = parser;
 	}
 	public functionParam_list(): FunctionParamContext[] {
 		return this.getTypedRuleContexts(FunctionParamContext) as FunctionParamContext[];
@@ -1732,8 +1900,8 @@ export class FunctionParamContext extends ParserRuleContext {
 		super(parent, invokingState);
     	this.parser = parser;
 	}
-	public key(): KeyContext {
-		return this.getTypedRuleContext(KeyContext, 0) as KeyContext;
+	public field(): FieldContext {
+		return this.getTypedRuleContext(FieldContext, 0) as FieldContext;
 	}
 	public value(): ValueContext {
 		return this.getTypedRuleContext(ValueContext, 0) as ValueContext;
@@ -1869,6 +2037,82 @@ export class KeyContext extends ParserRuleContext {
 	public accept<Result>(visitor: FilterQueryVisitor<Result>): Result {
 		if (visitor.visitKey) {
 			return visitor.visitKey(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class FieldContext extends ParserRuleContext {
+	constructor(parser?: FilterQueryParser, parent?: ParserRuleContext, invokingState?: number) {
+		super(parent, invokingState);
+		this.parser = parser;
+	}
+	public key(): KeyContext {
+		return this.getTypedRuleContext(KeyContext, 0) as KeyContext;
+	}
+	public exactCall(): ExactCallContext {
+		return this.getTypedRuleContext(ExactCallContext, 0) as ExactCallContext;
+	}
+	public get ruleIndex(): number {
+		return FilterQueryParser.RULE_field;
+	}
+	public enterRule(listener: FilterQueryListener): void {
+	    if(listener.enterField) {
+			listener.enterField(this);
+		}
+	}
+	public exitRule(listener: FilterQueryListener): void {
+	    if(listener.exitField) {
+			listener.exitField(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: FilterQueryVisitor<Result>): Result {
+		if (visitor.visitField) {
+			return visitor.visitField(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class ExactCallContext extends ParserRuleContext {
+	constructor(parser?: FilterQueryParser, parent?: ParserRuleContext, invokingState?: number) {
+		super(parent, invokingState);
+		this.parser = parser;
+	}
+	public EXACT(): TerminalNode {
+		return this.getToken(FilterQueryParser.EXACT, 0);
+	}
+	public LPAREN(): TerminalNode {
+		return this.getToken(FilterQueryParser.LPAREN, 0);
+	}
+	public key(): KeyContext {
+		return this.getTypedRuleContext(KeyContext, 0) as KeyContext;
+	}
+	public RPAREN(): TerminalNode {
+		return this.getToken(FilterQueryParser.RPAREN, 0);
+	}
+	public get ruleIndex(): number {
+		return FilterQueryParser.RULE_exactCall;
+	}
+	public enterRule(listener: FilterQueryListener): void {
+	    if(listener.enterExactCall) {
+			listener.enterExactCall(this);
+		}
+	}
+	public exitRule(listener: FilterQueryListener): void {
+	    if(listener.exitExactCall) {
+			listener.exitExactCall(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: FilterQueryVisitor<Result>): Result {
+		if (visitor.visitExactCall) {
+			return visitor.visitExactCall(this);
 		} else {
 			return visitor.visitChildren(this);
 		}

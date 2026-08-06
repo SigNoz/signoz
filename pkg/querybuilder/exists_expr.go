@@ -12,6 +12,9 @@ import (
 )
 
 func physicalSemconvMembers(key *telemetrytypes.TelemetryFieldKey) []string {
+	if key.FieldResolution.IsExact() {
+		return []string{key.Name}
+	}
 	if len(key.SemconvMembers) > 0 {
 		return key.SemconvMembers
 	}
@@ -128,7 +131,8 @@ func ExistsExpression(columns []*schema.Column, key *telemetrytypes.TelemetryFie
 			if len(operands) > 1 {
 				leftOperand = "(" + leftOperand + ")"
 			}
-			if key.Materialized && (len(members) == 1 || key.MaterializedSemconv) {
+			if key.Materialized && (len(members) == 1 || key.MaterializedSemconv) &&
+				(!key.FieldResolution.IsExact() || !key.MaterializedSemconv) {
 				leftOperand = telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
 			}
 			if exists {

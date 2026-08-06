@@ -6,7 +6,10 @@ import (
 	"github.com/antlr4-go/antlr/v4"
 )
 
-// QueryStringToKeysSelectors converts a query string to a list of field key selectors
+// QueryStringToKeysSelectors converts a query string to a list of field key selectors.
+// The shared grammar's lexer also accepts aggregation expressions that the
+// filter parser does not; retaining token extraction keeps those call sites
+// working while exact(key) carries its per-field resolution into metadata.
 //
 //	e.g. "service.name="query-service" AND http.status_code=200 AND resource.k8s.namespace.name="application"" -> []*telemetrytypes.FieldKeySelector{
 //		{
@@ -26,38 +29,54 @@ import (
 //		},
 //	}
 func QueryStringToKeysSelectors(query string) []*telemetrytypes.FieldKeySelector {
-	lexer := grammar.NewFilterQueryLexer(antlr.NewInputStream(query))
+	fields := QueryStringToFieldKeys(query)
 	keys := []*telemetrytypes.FieldKeySelector{}
-	for {
-		tok := lexer.NextToken()
-		if tok.GetTokenType() == antlr.TokenEOF {
-			break
-		}
+	for _, key := range fields {
+		keys = append(keys, &telemetrytypes.FieldKeySelector{
+			Name:            key.Name,
+			Signal:          key.Signal,
+			FieldContext:    key.FieldContext,
+			FieldDataType:   key.FieldDataType,
+			FieldResolution: key.FieldResolution,
+		})
 
-		if tok.GetTokenType() == grammar.FilterQueryLexerKEY {
-			key := telemetrytypes.GetFieldKeyFromKeyText(tok.GetText())
+		if key.FieldContext == telemetrytypes.FieldContextLog ||
+			key.FieldContext == telemetrytypes.FieldContextSpan ||
+			key.FieldContext == telemetrytypes.FieldContextMetric ||
+			key.FieldContext == telemetrytypes.FieldContextTrace {
+			// span.kind in metrics or metric.max_count in span etc.. should get the search on span.kind
+			// see note in where_clause_visitor.go in VisitKey(...)
 			keys = append(keys, &telemetrytypes.FieldKeySelector{
-				Name:          key.Name,
-				Signal:        key.Signal,
-				FieldContext:  key.FieldContext,
-				FieldDataType: key.FieldDataType,
+				Name:            key.FieldContext.StringValue() + "." + key.Name,
+				Signal:          key.Signal,
+				FieldContext:    telemetrytypes.FieldContextAttribute, // do not keep the original context because this is attribute
+				FieldDataType:   key.FieldDataType,
+				FieldResolution: key.FieldResolution,
 			})
-
-			if key.FieldContext == telemetrytypes.FieldContextLog ||
-				key.FieldContext == telemetrytypes.FieldContextSpan ||
-				key.FieldContext == telemetrytypes.FieldContextMetric ||
-				key.FieldContext == telemetrytypes.FieldContextTrace {
-				// span.kind in metrics or metric.max_count in span etc.. should get the search on span.kind
-				// see note in where_clause_visitor.go in VisitKey(...)
-				keys = append(keys, &telemetrytypes.FieldKeySelector{
-					Name:          key.FieldContext.StringValue() + "." + key.Name,
-					Signal:        key.Signal,
-					FieldContext:  telemetrytypes.FieldContextAttribute, // do not keep the original context because this is attribute
-					FieldDataType: key.FieldDataType,
-				})
-			}
 		}
 	}
 
 	return keys
+}
+
+// QueryStringToFieldKeys parses the fields referenced by a filter expression.
+func QueryStringToFieldKeys(query string) []telemetrytypes.TelemetryFieldKey {
+	lexer := grammar.NewFilterQueryLexer(antlr.NewInputStream(query))
+	tokens := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
+	tokens.Fill()
+	allTokens := tokens.GetAllTokens()
+	fields := make([]telemetrytypes.TelemetryFieldKey, 0)
+	for index, token := range allTokens {
+		if token.GetTokenType() != grammar.FilterQueryLexerKEY {
+			continue
+		}
+		key := telemetrytypes.GetFieldKeyFromKeyText(token.GetText())
+		if index >= 2 &&
+			allTokens[index-1].GetTokenType() == grammar.FilterQueryLexerLPAREN &&
+			allTokens[index-2].GetTokenType() == grammar.FilterQueryLexerEXACT {
+			key.FieldResolution = telemetrytypes.FieldResolutionExact
+		}
+		fields = append(fields, key)
+	}
+	return fields
 }

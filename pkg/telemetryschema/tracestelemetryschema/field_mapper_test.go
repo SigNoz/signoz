@@ -386,3 +386,47 @@ func TestDBSystemFamilyUsesSemconvAwareMaterializedColumn(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "`attribute_string_db$$system_exists`", exists)
 }
+
+func TestDBSystemExactResolutionBypassesSemconvMaterializedColumn(t *testing.T) {
+	fm := NewFieldMapper()
+	exact := &telemetrytypes.TelemetryFieldKey{
+		Name:                   "db.system",
+		Signal:                 telemetrytypes.SignalTraces,
+		FieldContext:           telemetrytypes.FieldContextAttribute,
+		FieldDataType:          telemetrytypes.FieldDataTypeString,
+		FieldResolution:        telemetrytypes.FieldResolutionExact,
+		Materialized:           true,
+		MaterializedColumnName: "attribute_string_db$$system",
+		MaterializedSemconv:    true,
+		SemconvMembers:         []string{"db.system.name", "db.system"},
+	}
+
+	expression, err := fm.FieldFor(context.Background(), valuer.UUID{}, 0, 0, exact)
+	require.NoError(t, err, "exact trace attribute should map to a field expression")
+	assert.Equal(t, "attributes_string['db.system']", expression, "exact resolution should bypass a family-aware materialized column")
+
+	exists, err := querybuilder.ExistsExpression(
+		[]*schema.Column{indexV3Columns["attributes_string"]}, exact, 0, 0, expression, true,
+	)
+	require.NoError(t, err, "exact trace attribute should map to an existence expression")
+	assert.Equal(t, "mapContains(attributes_string, 'db.system')", exists, "exact existence check should address only the requested map key")
+}
+
+func TestNumericSemconvFamilyPreservesMissingMapDefault(t *testing.T) {
+	key := &telemetrytypes.TelemetryFieldKey{
+		Name:           "http.response.status_code",
+		Signal:         telemetrytypes.SignalTraces,
+		FieldContext:   telemetrytypes.FieldContextAttribute,
+		FieldDataType:  telemetrytypes.FieldDataTypeFloat64,
+		SemconvMembers: []string{"http.response.status_code", "http.status_code"},
+	}
+
+	expression, err := NewFieldMapper().FieldFor(context.Background(), valuer.UUID{}, 0, 0, key)
+	require.NoError(t, err)
+
+	assert.Equal(
+		t,
+		"multiIf(mapContains(attributes_number, 'http.response.status_code'), attributes_number['http.response.status_code'], mapContains(attributes_number, 'http.status_code'), attributes_number['http.status_code'], 0)",
+		expression,
+	)
+}

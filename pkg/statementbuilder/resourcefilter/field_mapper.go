@@ -35,6 +35,9 @@ func NewFieldMapper() *defaultFieldMapper {
 }
 
 func resourceSemconvMembers(key *telemetrytypes.TelemetryFieldKey) []string {
+	if key.FieldResolution.IsExact() {
+		return []string{key.Name}
+	}
 	if (key.Signal != telemetrytypes.SignalTraces && key.Signal != telemetrytypes.SignalLogs) ||
 		key.FieldContext != telemetrytypes.FieldContextResource {
 		return []string{key.Name}
@@ -44,7 +47,7 @@ func resourceSemconvMembers(key *telemetrytypes.TelemetryFieldKey) []string {
 	}
 	return semconv.Members(semconv.KindAttribute, telemetrytypes.FieldKeySelector{
 		Name:         key.Name,
-		Signal:       telemetrytypes.SignalTraces,
+		Signal:       key.Signal,
 		FieldContext: telemetrytypes.FieldContextResource,
 	})
 }

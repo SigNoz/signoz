@@ -73,6 +73,9 @@ func Members(kind Kind, selector telemetrytypes.FieldKeySelector) []string {
 // storage detail here prevents metrics readers from maintaining local
 // transition tables.
 func AttributeMembers(selector telemetrytypes.FieldKeySelector) []string {
+	if selector.FieldResolution.IsExact() {
+		return []string{selector.Name}
+	}
 	if selector.Signal != telemetrytypes.SignalMetrics {
 		return Members(KindAttribute, selector)
 	}
@@ -136,6 +139,9 @@ func MetricNames(name string) []string {
 // CurrentAttribute returns the canonical dotted name for an attribute
 // spelling, or selector.Name if no enabled family matches.
 func CurrentAttribute(selector telemetrytypes.FieldKeySelector) string {
+	if selector.FieldResolution.IsExact() {
+		return selector.Name
+	}
 	if selector.Signal != telemetrytypes.SignalMetrics {
 		return Current(KindAttribute, selector)
 	}
@@ -181,6 +187,9 @@ func buildIndexes() (map[string][]int, [][]string) {
 }
 
 func lookupIndex(kind Kind, selector telemetrytypes.FieldKeySelector) (int, bool) {
+	if selector.FieldResolution.IsExact() {
+		return 0, false
+	}
 	for _, idx := range memberToFamilies[selector.Name] {
 		if matchesSelector(families[idx], kind, selector) {
 			return idx, true
@@ -190,6 +199,9 @@ func lookupIndex(kind Kind, selector telemetrytypes.FieldKeySelector) (int, bool
 }
 
 func lookupMetricSpelling(kind Kind, selector telemetrytypes.FieldKeySelector) (int, metricSpelling, bool) {
+	if selector.FieldResolution.IsExact() {
+		return 0, metricSpellingDotted, false
+	}
 	if idx, ok := lookupIndex(kind, selector); ok {
 		return idx, metricSpellingDotted, true
 	}

@@ -41,6 +41,9 @@ var (
 type fieldMapper struct{}
 
 func metricAttributeMembers(key *telemetrytypes.TelemetryFieldKey) []string {
+	if key.FieldResolution.IsExact() {
+		return []string{key.Name}
+	}
 	if key.FieldContext != telemetrytypes.FieldContextResource &&
 		key.FieldContext != telemetrytypes.FieldContextScope &&
 		key.FieldContext != telemetrytypes.FieldContextAttribute &&

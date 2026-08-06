@@ -204,11 +204,13 @@ func (d *LogicalContradictionDetector) VisitPrimary(ctx *grammar.PrimaryContext)
 
 // VisitComparison extracts constraints from comparisons.
 func (d *LogicalContradictionDetector) VisitComparison(ctx *grammar.ComparisonContext) any {
-	if ctx.Key() == nil {
+	if ctx.Field() == nil {
 		return nil
 	}
 
-	field := ctx.Key().GetText()
+	// Keep exact(key) distinct from normally resolved key. They can be
+	// simultaneously satisfiable when current and historical spellings coexist.
+	field := ctx.Field().GetText()
 	notContext := d.inNotContext()
 
 	// Handle EXISTS

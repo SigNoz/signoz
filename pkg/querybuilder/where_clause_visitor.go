@@ -40,7 +40,6 @@ type filterExpressionVisitor struct {
 	fullTextColumn     *telemetrytypes.TelemetryFieldKey
 	skipResourceFilter bool
 	skipFullTextFilter bool
-	exactSemconv       bool
 	variables          map[string]qbtypes.VariableItem
 
 	keysWithWarnings map[string]bool
@@ -61,7 +60,6 @@ type FilterExprVisitorOpts struct {
 	FullTextColumn     *telemetrytypes.TelemetryFieldKey
 	SkipResourceFilter bool
 	SkipFullTextFilter bool
-	ExactSemconv       bool
 	Variables          map[string]qbtypes.VariableItem
 	StartNs            uint64
 	EndNs              uint64
@@ -79,7 +77,6 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 		fullTextColumn:     opts.FullTextColumn,
 		skipResourceFilter: opts.SkipResourceFilter,
 		skipFullTextFilter: opts.SkipFullTextFilter,
-		exactSemconv:       opts.ExactSemconv,
 		variables:          opts.Variables,
 		keysWithWarnings:   make(map[string]bool),
 		startNs:            opts.StartNs,
@@ -228,6 +225,10 @@ func (v *filterExpressionVisitor) Visit(tree antlr.ParseTree) any {
 		return v.VisitValue(t)
 	case *grammar.KeyContext:
 		return v.VisitKey(t)
+	case *grammar.FieldContext:
+		return v.VisitField(t)
+	case *grammar.ExactCallContext:
+		return v.VisitExactCall(t)
 	default:
 		return ErrorConditionLiteral
 	}
@@ -383,7 +384,7 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 
 // VisitComparison handles all comparison operators.
 func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext) any {
-	key := v.Visit(ctx.Key()).(*telemetrytypes.TelemetryFieldKey)
+	key := v.Visit(ctx.Field()).(*telemetrytypes.TelemetryFieldKey)
 	matching := v.matchingFieldKeys(key)
 
 	// Handle EXISTS specially
@@ -874,8 +875,8 @@ func (v *filterExpressionVisitor) VisitFunctionParamList(ctx *grammar.FunctionPa
 
 // VisitFunctionParam handles individual parameters in function calls.
 func (v *filterExpressionVisitor) VisitFunctionParam(ctx *grammar.FunctionParamContext) any {
-	if ctx.Key() != nil {
-		return v.Visit(ctx.Key())
+	if ctx.Field() != nil {
+		return v.Visit(ctx.Field())
 	} else if ctx.Value() != nil {
 		return v.Visit(ctx.Value())
 	} else if ctx.Array() != nil {
@@ -925,10 +926,26 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	return &fieldKey
 }
 
+// VisitField returns either a normally resolved key or an exact key wrapper.
+func (v *filterExpressionVisitor) VisitField(ctx *grammar.FieldContext) any {
+	if ctx.ExactCall() != nil {
+		return v.Visit(ctx.ExactCall())
+	}
+	return v.Visit(ctx.Key())
+}
+
+// VisitExactCall marks the wrapped key so every downstream field mapper uses
+// only its physical spelling instead of expanding a semantic-convention family.
+func (v *filterExpressionVisitor) VisitExactCall(ctx *grammar.ExactCallContext) any {
+	fieldKey := v.Visit(ctx.Key()).(*telemetrytypes.TelemetryFieldKey)
+	fieldKey.FieldResolution = telemetrytypes.FieldResolutionExact
+	return fieldKey
+}
+
 // buildConditions invokes the condition builder for a filter term, folding its
 // warnings/errors into visitor state; returns false if an error was recorded.
 func (v *filterExpressionVisitor) buildConditions(key *telemetrytypes.TelemetryFieldKey, matching []*telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOperator, value any) ([]string, bool) {
-	conds, warns, err := v.conditionBuilder.ConditionFor(v.context, v.orgID, v.startNs, v.endNs, key, v.fieldKeys, qbtypes.ConditionBuilderOptions{SkipResourceFilter: v.skipResourceFilter, ExactSemconv: v.exactSemconv}, op, value, v.builder)
+	conds, warns, err := v.conditionBuilder.ConditionFor(v.context, v.orgID, v.startNs, v.endNs, key, v.fieldKeys, qbtypes.ConditionBuilderOptions{SkipResourceFilter: v.skipResourceFilter, ExactSemconv: key.FieldResolution.IsExact()}, op, value, v.builder)
 	if err != nil {
 		_, _, _, _, errURL, _ := errors.Unwrapb(err)
 		assignIfEmpty(&v.mainErrorURL, errURL)
@@ -987,6 +1004,9 @@ func assignIfEmpty(s *string, value string) {
 // MatchingFieldKeys returns the field keys from the map that match the given key,
 // honoring any context/data type the user specified.
 func MatchingFieldKeys(field *telemetrytypes.TelemetryFieldKey, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
+	if field.FieldResolution.IsExact() {
+		return matchingFieldKeys(field, fieldKeys, false)
+	}
 	return matchingFieldKeys(field, fieldKeys, true)
 }
 
@@ -1087,6 +1107,7 @@ func matchingFieldKeys(field *telemetrytypes.TelemetryFieldKey, fieldKeys map[st
 				indexByIdentity[identity] = len(fieldKeysForName)
 			}
 			resolved := *item
+			resolved.FieldResolution = field.FieldResolution
 			// The requested spelling is the response identity. Field mappers use
 			// it to resolve the available family members current-first.
 			if familyMatch {
@@ -1123,7 +1144,7 @@ func matchingFieldKeys(field *telemetrytypes.TelemetryFieldKey, fieldKeys map[st
 }
 
 func (v *filterExpressionVisitor) matchingFieldKeys(field *telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
-	if v.exactSemconv {
+	if field.FieldResolution.IsExact() {
 		return MatchingFieldKeysExact(field, v.fieldKeys)
 	}
 	return MatchingFieldKeys(field, v.fieldKeys)
@@ -1139,6 +1160,7 @@ func ExactSemconvKeys(keys []*telemetrytypes.TelemetryFieldKey) []*telemetrytype
 		}
 		resolved := *key
 		resolved.SemconvMembers = []string{key.Name}
+		resolved.FieldResolution = telemetrytypes.FieldResolutionExact
 		result = append(result, &resolved)
 	}
 	return result

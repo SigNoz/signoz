@@ -78,6 +78,39 @@ func TestMembersReturnsInputWhenKindDoesNotMatch(t *testing.T) {
 		"an attribute family must not match a metric-name lookup",
 	)
 }
+func TestMembersReturnsOnlyRequestedNameForExactResolution(t *testing.T) {
+	selector := telemetrytypes.FieldKeySelector{
+		Name:            "deployment.environment",
+		Signal:          telemetrytypes.SignalTraces,
+		FieldContext:    telemetrytypes.FieldContextResource,
+		FieldResolution: telemetrytypes.FieldResolutionExact,
+	}
+
+	assert.Equal(t, []string{"deployment.environment"}, Members(KindAttribute, selector), "exact resolution must not expand the semantic-convention family")
+}
+
+func TestCurrentReturnsRequestedNameForExactResolution(t *testing.T) {
+	selector := telemetrytypes.FieldKeySelector{
+		Name:            "deployment.environment",
+		Signal:          telemetrytypes.SignalTraces,
+		FieldContext:    telemetrytypes.FieldContextResource,
+		FieldResolution: telemetrytypes.FieldResolutionExact,
+	}
+
+	assert.Equal(t, "deployment.environment", Current(KindAttribute, selector), "exact resolution must not canonicalize the requested name")
+}
+
+func TestAttributeMembersReturnsPhysicalNameForExactResolution(t *testing.T) {
+	selector := telemetrytypes.FieldKeySelector{
+		Name:            "resource_db_system",
+		Signal:          telemetrytypes.SignalMetrics,
+		FieldContext:    telemetrytypes.FieldContextResource,
+		FieldResolution: telemetrytypes.FieldResolutionExact,
+	}
+
+	assert.Equal(t, []string{"resource_db_system"}, AttributeMembers(selector), "exact metric attribute resolution must not add storage variants")
+}
+
 func TestAttributeMembersIncludesMetricResourceStorageSpellings(t *testing.T) {
 	selector := telemetrytypes.FieldKeySelector{
 		Name:         "db.system.name",

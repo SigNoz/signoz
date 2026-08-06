@@ -106,7 +106,7 @@ func parseKeyContext(keyText string) *grammar.KeyContext {
 				if unaryExprs := andExprs[0].AllUnaryExpression(); len(unaryExprs) > 0 {
 					if primary := unaryExprs[0].Primary(); primary != nil {
 						if comparison := primary.Comparison(); comparison != nil {
-							if keyCtx, ok := comparison.Key().(*grammar.KeyContext); ok {
+							if keyCtx, ok := comparison.Field().Key().(*grammar.KeyContext); ok {
 								return keyCtx
 							}
 						}
@@ -798,8 +798,9 @@ func TestMatchingFieldKeysResolvesMetricStorageSpellings(t *testing.T) {
 	assert.Equal(t, []string{current.Name, old.Name}, matches[0].SemconvMembers)
 }
 
-func TestMatchingFieldKeysExactKeepsRequestedPhysicalName(t *testing.T) {
+func TestMatchingFieldKeysHonorsExactResolution(t *testing.T) {
 	current := &telemetrytypes.TelemetryFieldKey{
+		Description:   "current metadata",
 		Name:          "deployment.environment.name",
 		Signal:        telemetrytypes.SignalTraces,
 		FieldContext:  telemetrytypes.FieldContextResource,
@@ -807,24 +808,29 @@ func TestMatchingFieldKeysExactKeepsRequestedPhysicalName(t *testing.T) {
 	}
 	old := &telemetrytypes.TelemetryFieldKey{
 		Name:          "deployment.environment",
+		Description:   "old metadata",
 		Signal:        telemetrytypes.SignalTraces,
 		FieldContext:  telemetrytypes.FieldContextResource,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
 	}
-	requested := telemetrytypes.NewTelemetryFieldKey(
-		current.Name,
+	exactRequested := telemetrytypes.NewTelemetryFieldKey(
+		old.Name,
 		telemetrytypes.FieldContextResource,
 		telemetrytypes.FieldDataTypeString,
 	)
-
-	matches := MatchingFieldKeysExact(requested, map[string][]*telemetrytypes.TelemetryFieldKey{
+	exactRequested.FieldResolution = telemetrytypes.FieldResolutionExact
+	fieldKeys := map[string][]*telemetrytypes.TelemetryFieldKey{
 		current.Name: {current},
 		old.Name:     {old},
-	})
+	}
 
-	require.Len(t, matches, 1, "exact lookup must return the requested physical field")
-	assert.Equal(t, current.Name, matches[0].Name)
-	assert.Equal(t, []string{current.Name}, matches[0].SemconvMembers)
+	exactMatches := MatchingFieldKeys(exactRequested, fieldKeys)
+
+	require.Len(t, exactMatches, 1, "exact request should match one physical key")
+	assert.Equal(t, old.Name, exactMatches[0].Name, "exact request should retain its physical name")
+	assert.Equal(t, "old metadata", exactMatches[0].Description, "exact request should use metadata from its physical name")
+	assert.Equal(t, []string{old.Name}, exactMatches[0].SemconvMembers, "exact request should expose only its physical name")
+	assert.Equal(t, telemetrytypes.FieldResolutionExact, exactMatches[0].FieldResolution, "exact resolution should survive metadata matching")
 }
 
 // ---------------------------------------------------------------------------
@@ -979,6 +985,64 @@ func (b *conditionBuilder) ConditionFor(
 		conds = append(conds, fmt.Sprintf("%s_cond", k.Name))
 	}
 	return conds, warnings, nil
+}
+
+type recordingConditionBuilder struct {
+	key     *telemetrytypes.TelemetryFieldKey
+	options qbtypes.ConditionBuilderOptions
+}
+
+func (b *recordingConditionBuilder) ConditionFor(
+	_ context.Context,
+	_ valuer.UUID,
+	_ uint64,
+	_ uint64,
+	key *telemetrytypes.TelemetryFieldKey,
+	_ map[string][]*telemetrytypes.TelemetryFieldKey,
+	options qbtypes.ConditionBuilderOptions,
+	_ qbtypes.FilterOperator,
+	_ any,
+	_ *sqlbuilder.SelectBuilder,
+) ([]string, []string, error) {
+	copy := *key
+	b.key = &copy
+	b.options = options
+	return []string{"recorded_cond"}, nil, nil
+}
+
+func TestPrepareWhereClauseExactFieldResolution(t *testing.T) {
+	builder := &recordingConditionBuilder{}
+	result, err := PrepareWhereClause(
+		"exact(resource.deployment.environment) EXISTS",
+		FilterExprVisitorOpts{
+			Context:          t.Context(),
+			ConditionBuilder: builder,
+			FieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
+				"deployment.environment": {{
+					Name:          "deployment.environment",
+					Signal:        telemetrytypes.SignalTraces,
+					FieldContext:  telemetrytypes.FieldContextResource,
+					FieldDataType: telemetrytypes.FieldDataTypeString,
+				}},
+				"deployment.environment.name": {{
+					Name:          "deployment.environment.name",
+					Signal:        telemetrytypes.SignalTraces,
+					FieldContext:  telemetrytypes.FieldContextResource,
+					FieldDataType: telemetrytypes.FieldDataTypeString,
+				}},
+			},
+		},
+	)
+	require.NoError(t, err, "valid exact expression should build a where clause")
+	require.NotNil(t, builder.key, "condition builder should receive the parsed field")
+	assert.Equal(t, "deployment.environment", builder.key.Name, "exact wrapper should preserve the requested key name")
+	assert.Equal(t, telemetrytypes.FieldContextResource, builder.key.FieldContext, "exact wrapper should preserve field context")
+	assert.Equal(t, telemetrytypes.FieldResolutionExact, builder.key.FieldResolution, "condition builder should receive exact field resolution")
+	assert.True(t, builder.options.ExactSemconv, "condition builder option should disable semantic-convention expansion")
+
+	query, args := result.WhereClause.Build()
+	assert.Equal(t, "WHERE recorded_cond", query, "condition builder output should reach the where clause")
+	assert.Empty(t, args, "recorded condition should not add bind arguments")
 }
 
 // visitComparisonCase is a single test case for the TestVisitComparison_* family.
