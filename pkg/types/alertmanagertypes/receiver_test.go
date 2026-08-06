@@ -46,6 +46,31 @@ func TestNewReceiver(t *testing.T) {
 	}
 }
 
+func TestNewReceiverStripsEmailTransport(t *testing.T) {
+	receiver, err := NewReceiver(`{"name":"email","email_configs":[{"to":"team@example.com","from":"attacker@example.com","hello":"example.com","smarthost":"smtp.example.com:587","auth_username":"user","auth_password":"supersecret","auth_secret":"alsosecret","auth_identity":"id","require_tls":false,"headers":{"Subject":"custom"}}]}`)
+	require.NoError(t, err)
+	require.Len(t, receiver.EmailConfigs, 1)
+
+	got := receiver.EmailConfigs[0]
+	assert.Equal(t, "team@example.com", got.To)
+	assert.Equal(t, map[string]string{"Subject": "custom"}, got.Headers)
+
+	assert.Empty(t, got.From)
+	assert.Empty(t, got.Hello)
+	assert.Empty(t, got.Smarthost.String())
+	assert.Empty(t, got.AuthUsername)
+	assert.Empty(t, string(got.AuthPassword))
+	assert.Empty(t, string(got.AuthSecret))
+	assert.Empty(t, got.AuthIdentity)
+	assert.Nil(t, got.RequireTLS)
+	assert.Nil(t, got.TLSConfig)
+
+	bytes, err := json.Marshal(receiver)
+	require.NoError(t, err)
+	assert.NotContains(t, string(bytes), "supersecret")
+	assert.NotContains(t, string(bytes), "smtp.example.com")
+}
+
 // Omitted fields fall back to DefaultGoogleChatReceiverConfig.
 func TestNewReceiverGoogleChatAppliesDefaults(t *testing.T) {
 	receiver, err := NewReceiver(`{"name":"googlechat","googlechat_configs":[{"webhook_url":"https://chat.googleapis.com/v1/spaces/test/messages"}]}`)

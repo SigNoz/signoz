@@ -252,6 +252,7 @@ function DashboardRow({
 					open={isLegacyDialogOpen}
 					dashboardId={id}
 					dashboardName={name}
+					canEdit={canEdit}
 					onClose={(): void => setIsLegacyDialogOpen(false)}
 				/>
 			)}

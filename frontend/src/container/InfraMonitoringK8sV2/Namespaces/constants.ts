@@ -111,7 +111,8 @@ export const namespaceWidgetInfo = [
 	{
 		title: 'CPU Usage (cores)',
 		yAxisUnit: '',
-		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#cpu-usage-cores',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/namespaces/#cpu-usage-cores-1',
 	},
 	{
 		title: 'Memory Usage (bytes)',

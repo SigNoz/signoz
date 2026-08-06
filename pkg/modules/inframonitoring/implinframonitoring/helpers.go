@@ -403,7 +403,7 @@ func (m *module) buildSamplesTblFingerprintSubQuery(metricNames []string, sample
 func (m *module) buildReducedSamplesTblFingerprintSubQuery(metricNames []string, flooredStart, flooredEnd uint64) *sqlbuilder.SelectBuilder {
 	lastSB := sqlbuilder.NewSelectBuilder()
 	lastSB.Select("reduced_fingerprint")
-	lastSB.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, metricstelemetryschema.SamplesV4ReducedLastTableName))
+	lastSB.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, metricstelemetryschema.SamplesV4ReducedLastLocalTableName))
 	lastSB.Where(
 		lastSB.In("metric_name", sqlbuilder.List(metricNames)),
 		lastSB.GE("unix_milli", flooredStart),
@@ -412,7 +412,7 @@ func (m *module) buildReducedSamplesTblFingerprintSubQuery(metricNames []string,
 
 	sumSB := sqlbuilder.NewSelectBuilder()
 	sumSB.Select("reduced_fingerprint")
-	sumSB.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, metricstelemetryschema.SamplesV4ReducedSumTableName))
+	sumSB.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, metricstelemetryschema.SamplesV4ReducedSumLocalTableName))
 	sumSB.Where(
 		sumSB.In("metric_name", sqlbuilder.List(metricNames)),
 		sumSB.GE("unix_milli", flooredStart),
