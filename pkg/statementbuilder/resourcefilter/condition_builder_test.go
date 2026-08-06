@@ -220,3 +220,216 @@ func TestConditionBuilder(t *testing.T) {
 		})
 	}
 }
+
+func TestFamilyPositiveFilterExcludesKeylessRows(t *testing.T) {
+	key := &telemetrytypes.TelemetryFieldKey{
+		Name:           "deployment.environment.name",
+		Signal:         telemetrytypes.SignalTraces,
+		FieldContext:   telemetrytypes.FieldContextResource,
+		FieldDataType:  telemetrytypes.FieldDataTypeString,
+		SemconvMembers: []string{"deployment.environment.name", "deployment.environment"},
+	}
+	sb := sqlbuilder.NewSelectBuilder()
+
+	conditions, _, err := NewConditionBuilder(NewFieldMapper()).ConditionFor(
+		context.Background(), valuer.UUID{}, 0, 0, key,
+		map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}},
+		qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorEqual, "production", sb,
+	)
+	require.NoError(t, err)
+	sb.Where(conditions...)
+	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	assert.Contains(t, sql, "COALESCE(NULLIF(simpleJSONExtractString(labels, 'deployment.environment.name'), ''), NULLIF(simpleJSONExtractString(labels, 'deployment.environment'), ''), '') = ? AND (labels LIKE ? OR labels LIKE ?) AND (labels LIKE ? OR labels LIKE ?)")
+	assert.Equal(t, []any{
+		"production",
+		"%deployment.environment.name%",
+		"%deployment.environment%",
+		`%deployment.environment.name":"production%`,
+		`%deployment.environment":"production%`,
+	}, args)
+}
+
+func TestFamilyNotEqualIncludesKeylessRows(t *testing.T) {
+	key := &telemetrytypes.TelemetryFieldKey{
+		Name:           "deployment.environment.name",
+		Signal:         telemetrytypes.SignalTraces,
+		FieldContext:   telemetrytypes.FieldContextResource,
+		FieldDataType:  telemetrytypes.FieldDataTypeString,
+		SemconvMembers: []string{"deployment.environment.name", "deployment.environment"},
+	}
+	sb := sqlbuilder.NewSelectBuilder()
+
+	conditions, _, err := NewConditionBuilder(NewFieldMapper()).ConditionFor(
+		context.Background(), valuer.UUID{}, 0, 0, key,
+		map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}},
+		qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorNotEqual, "staging", sb,
+	)
+	require.NoError(t, err)
+	sb.Where(conditions...)
+	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	assert.Contains(t, sql, "COALESCE(NULLIF(simpleJSONExtractString(labels, 'deployment.environment.name'), ''), NULLIF(simpleJSONExtractString(labels, 'deployment.environment'), ''), '') <> ?")
+	assert.Equal(t, []any{"staging"}, args)
+}
+
+func TestFamilyNotInIncludesKeylessRows(t *testing.T) {
+	key := &telemetrytypes.TelemetryFieldKey{
+		Name:           "deployment.environment.name",
+		Signal:         telemetrytypes.SignalTraces,
+		FieldContext:   telemetrytypes.FieldContextResource,
+		FieldDataType:  telemetrytypes.FieldDataTypeString,
+		SemconvMembers: []string{"deployment.environment.name", "deployment.environment"},
+	}
+	sb := sqlbuilder.NewSelectBuilder()
+
+	conditions, _, err := NewConditionBuilder(NewFieldMapper()).ConditionFor(
+		context.Background(), valuer.UUID{}, 0, 0, key,
+		map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}},
+		qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorNotIn, []any{"staging", "dev"}, sb,
+	)
+	require.NoError(t, err)
+	sb.Where(conditions...)
+	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	assert.Contains(t, sql, "(COALESCE(NULLIF(simpleJSONExtractString(labels, 'deployment.environment.name'), ''), NULLIF(simpleJSONExtractString(labels, 'deployment.environment'), ''), '') <> ? AND COALESCE(NULLIF(simpleJSONExtractString(labels, 'deployment.environment.name'), ''), NULLIF(simpleJSONExtractString(labels, 'deployment.environment'), ''), '') <> ?)")
+	assert.Equal(t, []any{"staging", "dev"}, args)
+}
+
+func TestFamilyNotLikeIncludesKeylessRows(t *testing.T) {
+	key := &telemetrytypes.TelemetryFieldKey{
+		Name:           "deployment.environment.name",
+		Signal:         telemetrytypes.SignalTraces,
+		FieldContext:   telemetrytypes.FieldContextResource,
+		FieldDataType:  telemetrytypes.FieldDataTypeString,
+		SemconvMembers: []string{"deployment.environment.name", "deployment.environment"},
+	}
+	sb := sqlbuilder.NewSelectBuilder()
+
+	conditions, _, err := NewConditionBuilder(NewFieldMapper()).ConditionFor(
+		context.Background(), valuer.UUID{}, 0, 0, key,
+		map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}},
+		qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorNotLike, "%stag%", sb,
+	)
+	require.NoError(t, err)
+	sb.Where(conditions...)
+	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	assert.Contains(t, sql, "LOWER(COALESCE(NULLIF(simpleJSONExtractString(labels, 'deployment.environment.name'), ''), NULLIF(simpleJSONExtractString(labels, 'deployment.environment'), ''), '')) NOT LIKE LOWER(?)")
+	assert.Equal(t, []any{"%stag%"}, args)
+}
+
+func TestFamilyNotContainsIncludesKeylessRows(t *testing.T) {
+	key := &telemetrytypes.TelemetryFieldKey{
+		Name:           "deployment.environment.name",
+		Signal:         telemetrytypes.SignalTraces,
+		FieldContext:   telemetrytypes.FieldContextResource,
+		FieldDataType:  telemetrytypes.FieldDataTypeString,
+		SemconvMembers: []string{"deployment.environment.name", "deployment.environment"},
+	}
+	sb := sqlbuilder.NewSelectBuilder()
+
+	conditions, _, err := NewConditionBuilder(NewFieldMapper()).ConditionFor(
+		context.Background(), valuer.UUID{}, 0, 0, key,
+		map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}},
+		qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorNotContains, "stag", sb,
+	)
+	require.NoError(t, err)
+	sb.Where(conditions...)
+	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	assert.Contains(t, sql, "LOWER(COALESCE(NULLIF(simpleJSONExtractString(labels, 'deployment.environment.name'), ''), NULLIF(simpleJSONExtractString(labels, 'deployment.environment'), ''), '')) NOT LIKE LOWER(?)")
+	assert.Equal(t, []any{"%stag%"}, args)
+}
+
+func TestFamilyNotRegexpIncludesKeylessRows(t *testing.T) {
+	key := &telemetrytypes.TelemetryFieldKey{
+		Name:           "deployment.environment.name",
+		Signal:         telemetrytypes.SignalTraces,
+		FieldContext:   telemetrytypes.FieldContextResource,
+		FieldDataType:  telemetrytypes.FieldDataTypeString,
+		SemconvMembers: []string{"deployment.environment.name", "deployment.environment"},
+	}
+	sb := sqlbuilder.NewSelectBuilder()
+
+	conditions, _, err := NewConditionBuilder(NewFieldMapper()).ConditionFor(
+		context.Background(), valuer.UUID{}, 0, 0, key,
+		map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}},
+		qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorNotRegexp, "stag.*", sb,
+	)
+	require.NoError(t, err)
+	sb.Where(conditions...)
+	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	assert.Contains(t, sql, "NOT match(COALESCE(NULLIF(simpleJSONExtractString(labels, 'deployment.environment.name'), ''), NULLIF(simpleJSONExtractString(labels, 'deployment.environment'), ''), ''), ?)")
+	assert.Equal(t, []any{"stag.*"}, args)
+}
+
+func TestFamilyExistsChecksEveryMember(t *testing.T) {
+	key := &telemetrytypes.TelemetryFieldKey{
+		Name:           "deployment.environment.name",
+		Signal:         telemetrytypes.SignalTraces,
+		FieldContext:   telemetrytypes.FieldContextResource,
+		FieldDataType:  telemetrytypes.FieldDataTypeString,
+		SemconvMembers: []string{"deployment.environment.name", "deployment.environment"},
+	}
+	sb := sqlbuilder.NewSelectBuilder()
+
+	conditions, _, err := NewConditionBuilder(NewFieldMapper()).ConditionFor(
+		context.Background(), valuer.UUID{}, 0, 0, key,
+		map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}},
+		qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorExists, nil, sb,
+	)
+	require.NoError(t, err)
+	sb.Where(conditions...)
+	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	assert.Contains(t, sql, "(simpleJSONHas(labels, 'deployment.environment.name') = ? OR simpleJSONHas(labels, 'deployment.environment') = ?) AND (labels LIKE ? OR labels LIKE ?)")
+	assert.Equal(t, []any{true, true, "%deployment.environment.name%", "%deployment.environment%"}, args)
+}
+
+func TestFamilyNotExistsChecksEveryMember(t *testing.T) {
+	key := &telemetrytypes.TelemetryFieldKey{
+		Name:           "deployment.environment.name",
+		Signal:         telemetrytypes.SignalTraces,
+		FieldContext:   telemetrytypes.FieldContextResource,
+		FieldDataType:  telemetrytypes.FieldDataTypeString,
+		SemconvMembers: []string{"deployment.environment.name", "deployment.environment"},
+	}
+	sb := sqlbuilder.NewSelectBuilder()
+
+	conditions, _, err := NewConditionBuilder(NewFieldMapper()).ConditionFor(
+		context.Background(), valuer.UUID{}, 0, 0, key,
+		map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}},
+		qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorNotExists, nil, sb,
+	)
+	require.NoError(t, err)
+	sb.Where(conditions...)
+	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	assert.Contains(t, sql, "simpleJSONHas(labels, 'deployment.environment.name') <> ? AND simpleJSONHas(labels, 'deployment.environment') <> ?")
+	assert.Equal(t, []any{true, true}, args)
+}
+
+func TestLogSemconvNameStaysLiteral(t *testing.T) {
+	key := &telemetrytypes.TelemetryFieldKey{
+		Name:          "deployment.environment.name",
+		Signal:        telemetrytypes.SignalLogs,
+		FieldContext:  telemetrytypes.FieldContextResource,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	}
+	sb := sqlbuilder.NewSelectBuilder()
+
+	conditions, _, err := NewConditionBuilder(NewFieldMapper()).ConditionFor(
+		context.Background(), valuer.UUID{}, 0, 0, key,
+		map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}},
+		qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorEqual, "production", sb,
+	)
+	require.NoError(t, err)
+	sb.Where(conditions...)
+	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	assert.Contains(t, sql, "simpleJSONExtractString(labels, 'deployment.environment.name') = ? AND labels LIKE ? AND labels LIKE ?")
+	assert.NotContains(t, sql, "deployment.environment')")
+	assert.Equal(t, []any{"production", "%deployment.environment.name%", `%deployment.environment.name":"production%`}, args)
+}

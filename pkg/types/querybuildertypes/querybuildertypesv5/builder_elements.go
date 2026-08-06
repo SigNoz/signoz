@@ -155,6 +155,8 @@ var operatorInverseMapping = map[FilterOperator]FilterOperator{
 // doesn't have value "redis"
 // Since we don't know the intent, we don't add the exists filter. They are expected
 // to add exists filter themselves if exclusion is desired.
+// Negative predicates therefore include rows where the key is absent; value
+// expressions must preserve the storage column's absent-key default.
 //
 // For the positive predicates, the key existence is implied.
 func (f FilterOperator) AddDefaultExistsFilter() bool {
