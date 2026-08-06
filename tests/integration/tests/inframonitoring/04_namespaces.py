@@ -354,6 +354,32 @@ _GROUPBY_FLOAT_FIELDS = {
             },
             id="cluster",
         ),
+        # groupBy on a counted attr: regression guard for the counts-query
+        # alias collision (CH error 179).
+        pytest.param(
+            {
+                "fixture": "namespaces_groupby.jsonl",
+                "group_by": "k8s.deployment.name",
+                "filter": None,
+                "group_meta_keys": ["k8s.deployment.name"],
+                "expected_type": "grouped_list",
+                "groups": {
+                    "gb-dep-shared": {
+                        "namespaceName": "",
+                        "counts": {"deployments": 2, "daemonSets": 0, "jobs": 0, "statefulSets": 0},
+                    },
+                    "gb-dep-b3": {
+                        "namespaceName": "",
+                        "counts": {"deployments": 1, "daemonSets": 0, "jobs": 0, "statefulSets": 0},
+                    },
+                    "gb-dep-b4": {
+                        "namespaceName": "",
+                        "counts": {"deployments": 1, "daemonSets": 0, "jobs": 0, "statefulSets": 0},
+                    },
+                },
+            },
+            id="deployment_name_counted_attr",
+        ),
         # Default groupBy (no groupBy in request) => [k8s.namespace.name,
         # k8s.cluster.name] (module.go ListNamespaces), response list. Namespaces
         # are cluster-scoped, so a same-named namespace must NOT collapse across

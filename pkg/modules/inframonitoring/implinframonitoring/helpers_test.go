@@ -1,10 +1,26 @@
 package implinframonitoring
 
 import (
+	"context"
+	"fmt"
+	"strings"
 	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
+	cmock "github.com/SigNoz/clickhouse-go-mock"
+	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/flagger/configflagger"
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
+	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
+	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func groupByKey(name string) qbtypes.GroupByKey {
@@ -380,6 +396,121 @@ func TestCompositeKeyFromLabels(t *testing.T) {
 				t.Errorf("compositeKeyFromLabels(%v, %v) = %q, want %q",
 					tt.labels, tt.groupBy, got, tt.expected)
 			}
+		})
+	}
+}
+
+func TestGetPerGroupDistinctCounts(t *testing.T) {
+	tests := []struct {
+		name       string
+		groupByCol string
+		groupValue string
+		wantCounts map[string]int64
+	}{
+		{
+			// clusters API grouped by a counted attr: the groupBy alias and the
+			// count alias would collide without the __count_ prefix (CH error 179).
+			name:       "group-by overlaps counted attr",
+			groupByCol: inframonitoringtypes.NodeNameAttrKey,
+			groupValue: "node-1",
+		},
+		{
+			name:       "group-by disjoint from counted attrs",
+			groupByCol: inframonitoringtypes.ClusterNameAttrKey,
+			groupValue: "cluster-a",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var (
+				capturedSQL string
+				orgID       = valuer.GenerateUUID()
+			)
+
+			matcher := sqlmock.QueryMatcherFunc(func(_, actualSQL string) error {
+				capturedSQL = actualSQL
+				return nil
+			})
+			ts := telemetrystoretest.New(telemetrystore.Config{}, matcher)
+
+			md := telemetrytypestest.NewMockMetadataStore()
+			md.KeysMap[tt.groupByCol] = []*telemetrytypes.TelemetryFieldKey{
+				{
+					Name:          tt.groupByCol,
+					Signal:        telemetrytypes.SignalMetrics,
+					FieldContext:  telemetrytypes.FieldContextAttribute,
+					FieldDataType: telemetrytypes.FieldDataTypeString,
+				},
+			}
+
+			registry := flagger.MustNewRegistry()
+			fl, err := flagger.New(
+				context.Background(),
+				instrumentationtest.New().ToProviderSettings(),
+				flagger.Config{},
+				registry,
+				configflagger.NewFactory(registry),
+			)
+			require.NoError(t, err)
+
+			fieldMapper := metricstelemetryschema.NewFieldMapper()
+			m := &module{
+				telemetryStore:         ts,
+				telemetryMetadataStore: md,
+				fieldMapper:            fieldMapper,
+				condBuilder:            metricstelemetryschema.NewConditionBuilder(fieldMapper),
+				logger:                 instrumentationtest.New().Logger(),
+				fl:                     fl,
+			}
+
+			cols := []cmock.ColumnType{{Name: tt.groupByCol, Type: "String"}}
+			row := []any{tt.groupValue}
+			wantCounts := make(map[string]int64, len(clusterCountAttrKeys))
+			for i, attr := range clusterCountAttrKeys {
+				cols = append(cols, cmock.ColumnType{Name: fmt.Sprintf("__count_%s", attr), Type: "UInt64"})
+				row = append(row, uint64(i+1))
+				wantCounts[attr] = int64(i + 1)
+			}
+			// cmock enforces the bound-arg count even with nil wildcards; mirror
+			// the builder's placeholder count: groupBy extract + per-attr tuple
+			// vars + the != '' guard + metric IN lists (outer + fingerprint
+			// subquery) + 4 time bounds + the one page-group IN value.
+			argCount := 1
+			for _, attr := range clusterCountAttrKeys {
+				if tuple, ok := countAttrIdentityTuples[attr]; ok {
+					argCount += len(tuple) + 1
+				} else {
+					argCount += 2
+				}
+			}
+			argCount += 2*len(clusterMetricNamesListForCounts) + 4 + 1
+
+			ts.Mock().ExpectQuery("").
+				WithArgs(make([]any, argCount)...).
+				WillReturnRows(cmock.NewRows(cols, [][]any{row}))
+
+			result, err := m.getPerGroupDistinctCounts(
+				context.Background(),
+				orgID,
+				1700000000000,
+				1700003600000,
+				nil,
+				[]qbtypes.GroupByKey{groupByKey(tt.groupByCol)},
+				[]map[string]string{{tt.groupByCol: tt.groupValue}},
+				clusterCountAttrKeys,
+				clusterMetricNamesListForCounts,
+			)
+			require.NoError(t, err)
+
+			// Every counted attr must be aliased into the __count_ namespace, and
+			// the groupBy alias must stay unique in the SELECT list.
+			for _, attr := range clusterCountAttrKeys {
+				assert.Contains(t, capturedSQL, fmt.Sprintf("AS `__count_%s`", attr))
+			}
+			assert.Equal(t, 1, strings.Count(capturedSQL, fmt.Sprintf("AS `%s`", tt.groupByCol)))
+			assert.Equal(t, map[string]map[string]int64{tt.groupValue: wantCounts}, result)
+			assert.NoError(t, ts.Mock().ExpectationsWereMet())
 		})
 	}
 }

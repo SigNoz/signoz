@@ -10,7 +10,7 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.fs import get_testdata_file_path
-from fixtures.inframonitoring import expected_status_counts
+from fixtures.inframonitoring import expected_resource_counts, expected_status_counts
 from fixtures.metrics import Metrics
 from fixtures.querier import compare_values, get_all_warnings
 
@@ -406,17 +406,18 @@ def test_clusters_pod_status_aggregation(
 
 
 @pytest.mark.parametrize(
-    "group_key,expected",
+    "group_key,flt,expected",
     [
         # groupBy=[k8s.cluster.name]: one record per cluster, clusterName
         # populated (clusters.go:29-32). Each cluster has 1 ready node, 1 pod.
         pytest.param(
             "k8s.cluster.name",
+            None,
             {
-                "gb-gcp-1": {"readiness": {"ready": 1, "notReady": 0}},
-                "gb-gcp-2": {"readiness": {"ready": 1, "notReady": 0}},
-                "gb-aws-1": {"readiness": {"ready": 1, "notReady": 0}},
-                "gb-aws-2": {"readiness": {"ready": 1, "notReady": 0}},
+                "gb-gcp-1": {"readiness": {"ready": 1, "notReady": 0}, "counts": expected_resource_counts(nodes=1, namespaces=1)},
+                "gb-gcp-2": {"readiness": {"ready": 1, "notReady": 0}, "counts": expected_resource_counts(nodes=1, namespaces=1)},
+                "gb-aws-1": {"readiness": {"ready": 1, "notReady": 0}, "counts": expected_resource_counts(nodes=1, namespaces=1)},
+                "gb-aws-2": {"readiness": {"ready": 1, "notReady": 0}, "counts": expected_resource_counts(nodes=1, namespaces=1)},
             },
             id="cluster_name",
         ),
@@ -424,25 +425,38 @@ def test_clusters_pod_status_aggregation(
         # clusterName empty (custom-groupBy branch).
         pytest.param(
             "cloud.provider",
+            None,
             {
-                "gcp": {"readiness": {"ready": 2, "notReady": 0}},
-                "aws": {"readiness": {"ready": 2, "notReady": 0}},
+                "gcp": {"readiness": {"ready": 2, "notReady": 0}, "counts": expected_resource_counts(nodes=2, namespaces=2)},
+                "aws": {"readiness": {"ready": 2, "notReady": 0}, "counts": expected_resource_counts(nodes=2, namespaces=2)},
             },
             id="cloud_provider",
         ),
+        # groupBy on a counted attr: regression guard for the counts-query
+        # alias collision (CH error 179).
+        pytest.param(
+            "k8s.namespace.name",
+            "k8s.namespace.name = 'ns-x'",
+            {
+                "ns-x": {"readiness": {"ready": 0, "notReady": 0}, "counts": expected_resource_counts(nodes=4, namespaces=4)},
+            },
+            id="namespace_name_counted_attr",
+        ),
     ],
 )
-def test_clusters_groupby(
+def test_clusters_groupby(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
     group_key: str,
+    flt,
     expected: dict,
 ) -> None:
-    """groupBy returns one record per distinct group with aggregated readiness.
-    clusterName is populated only when grouping by k8s.cluster.name
-    (clusters.go:29-32 list-vs-grouped branch); meta surfaces the groupBy key."""
+    """groupBy returns one record per distinct group with aggregated readiness
+    and resource counts. clusterName is populated only when grouping by
+    k8s.cluster.name (clusters.go:29-32 list-vs-grouped branch); meta surfaces
+    the groupBy key."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -452,21 +466,24 @@ def test_clusters_groupby(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    body: dict = {
+        "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+        "end": int(now.timestamp() * 1000),
+        "limit": 50,
+        "groupBy": [
+            {
+                "name": group_key,
+                "fieldDataType": "string",
+                "fieldContext": "resource",
+            }
+        ],
+    }
+    if flt is not None:
+        body["filter"] = {"expression": flt}
     response = requests.post(
         signoz.self.host_configs["8080"].get(ENDPOINT),
         headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "groupBy": [
-                {
-                    "name": group_key,
-                    "fieldDataType": "string",
-                    "fieldContext": "resource",
-                }
-            ],
-        },
+        json=body,
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
@@ -483,6 +500,7 @@ def test_clusters_groupby(
         # empty otherwise.
         assert rec["clusterName"] == (group if group_key == "k8s.cluster.name" else "")
         assert rec["nodeCountsByReadiness"] == exp["readiness"]
+        assert rec["counts"] == exp["counts"], f"{group}: got {rec['counts']}, expected {exp['counts']}"
         assert group_key in rec["meta"], rec["meta"]
 
 
