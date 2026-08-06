@@ -3,7 +3,6 @@
 	"specs": [
 		"**/tests/dashboards/list.spec.ts",
 		"**/tests/dashboards/details/03-viewing.spec.ts",
-		"**/tests/dashboards/details/12-sections.spec.ts",
 		"**/tests/dashboards/details/21-panel-actions.spec.ts",
 		"**/tests/dashboards/details/35-add-panel.spec.ts",
 		"**/tests/dashboards/details/44-edit-panel.spec.ts",
