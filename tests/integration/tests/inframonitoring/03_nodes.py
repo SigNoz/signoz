@@ -373,6 +373,54 @@ def test_nodes_filter_by_pod_status(
         assert absent.status_code == HTTPStatus.OK, absent.text
         assert absent.json()["data"]["total"] == 0, f"node must be dropped by filterByPodStatus={fbps!r}"
 
+    # Combined filterByPodStatus + filterByNodeReadiness = AND. pp-node is Ready
+    # and runs pods -> kept when both match; dropped if either side has no match.
+    both_match = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"filterByPodStatus": ["running"], "filterByNodeReadiness": ["ready"]},
+        },
+        timeout=5,
+    )
+    assert both_match.status_code == HTTPStatus.OK, both_match.text
+    bdata = both_match.json()["data"]
+    assert bdata["total"] == 1
+    assert bdata["records"][0]["nodeName"] == "pp-node"
+
+    # readiness side fails (pp-node is not not_ready) -> dropped.
+    readiness_fails = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"filterByPodStatus": ["running"], "filterByNodeReadiness": ["not_ready"]},
+        },
+        timeout=5,
+    )
+    assert readiness_fails.status_code == HTTPStatus.OK, readiness_fails.text
+    assert readiness_fails.json()["data"]["total"] == 0
+
+    # pod-status side fails (no completed pod) -> dropped.
+    status_fails = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"filterByPodStatus": ["completed"], "filterByNodeReadiness": ["ready"]},
+        },
+        timeout=5,
+    )
+    assert status_fails.status_code == HTTPStatus.OK, status_fails.text
+    assert status_fails.json()["data"]["total"] == 0
+
 
 @pytest.mark.parametrize(
     "node_name,expected_condition",
@@ -421,6 +469,56 @@ def test_nodes_condition_list_mode(
         assert rec["nodeCountsByReadiness"] == {"ready": 1, "notReady": 0}
     else:
         assert rec["nodeCountsByReadiness"] == {"ready": 0, "notReady": 1}
+
+    # filterByNodeReadiness (secondary filter): matching readiness keeps the node,
+    # the opposite readiness filters it out.
+    matched = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": f"k8s.node.name = '{node_name}'", "filterByNodeReadiness": [expected_condition]},
+        },
+        timeout=5,
+    )
+    assert matched.status_code == HTTPStatus.OK, matched.text
+    mdata = matched.json()["data"]
+    assert mdata["total"] == 1
+    assert mdata["records"][0]["nodeName"] == node_name
+
+    opposite = "not_ready" if expected_condition == "ready" else "ready"
+
+    # Multi-select is OR: a set containing the node's condition keeps it even
+    # alongside the opposite readiness.
+    or_keep = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": f"k8s.node.name = '{node_name}'", "filterByNodeReadiness": [expected_condition, opposite]},
+        },
+        timeout=5,
+    )
+    assert or_keep.status_code == HTTPStatus.OK, or_keep.text
+    assert or_keep.json()["data"]["total"] == 1, f"multi-select should keep {node_name}"
+
+    dropped = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": f"k8s.node.name = '{node_name}'", "filterByNodeReadiness": [opposite]},
+        },
+        timeout=5,
+    )
+    assert dropped.status_code == HTTPStatus.OK, dropped.text
+    assert dropped.json()["data"]["total"] == 0
 
 
 def test_nodes_condition_latest_wins(
@@ -512,6 +610,60 @@ def test_nodes_condition_grouped_mode(
     assert rec["nodeCountsByReadiness"] == {"ready": 2, "notReady": 1}
     # meta surfaces the groupBy key.
     assert rec["meta"].get("k8s.cluster.name") == "cluster-mixed"
+
+    # filterByNodeReadiness in grouped mode: the group is kept (>=1 matching
+    # node) and only the filtered bucket is populated.
+    ready = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "groupBy": [{"name": "k8s.cluster.name", "fieldDataType": "string", "fieldContext": "resource"}],
+            "filter": {"filterByNodeReadiness": ["ready"]},
+        },
+        timeout=5,
+    )
+    assert ready.status_code == HTTPStatus.OK, ready.text
+    rdata = ready.json()["data"]
+    assert rdata["total"] == 1
+    assert rdata["records"][0]["nodeCountsByReadiness"] == {"ready": 2, "notReady": 0}
+
+    not_ready = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "groupBy": [{"name": "k8s.cluster.name", "fieldDataType": "string", "fieldContext": "resource"}],
+            "filter": {"filterByNodeReadiness": ["not_ready"]},
+        },
+        timeout=5,
+    )
+    assert not_ready.status_code == HTTPStatus.OK, not_ready.text
+    ndata = not_ready.json()["data"]
+    assert ndata["total"] == 1
+    assert ndata["records"][0]["nodeCountsByReadiness"] == {"ready": 0, "notReady": 1}
+
+    # Multi-select is OR: both buckets populated (union) for the kept group.
+    both = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "groupBy": [{"name": "k8s.cluster.name", "fieldDataType": "string", "fieldContext": "resource"}],
+            "filter": {"filterByNodeReadiness": ["ready", "not_ready"]},
+        },
+        timeout=5,
+    )
+    assert both.status_code == HTTPStatus.OK, both.text
+    bdata = both.json()["data"]
+    assert bdata["total"] == 1
+    assert bdata["records"][0]["nodeCountsByReadiness"] == {"ready": 2, "notReady": 1}
 
 
 @pytest.mark.parametrize(
@@ -643,6 +795,95 @@ def test_nodes_pagination(
     assert set(seen_nodes) == {f"page-n{i}" for i in range(1, K + 1)}
 
 
+def test_nodes_filter_readiness_pagination_and_ordering(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """filterByNodeReadiness composed with pagination + name ordering. The full-scope
+    readiness keyset is resolved before slicing, so total reflects the full matched
+    set and pages stay disjoint + complete on both the metric-ordering branch
+    (paginateWithBackfill) and the name-ordering branch (PaginateMetadataByName).
+    ready matches 4 nodes in nodes_conditions.jsonl: ready-n, ready-n2, ready-n3, ready-n4."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/nodes_conditions.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    start = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end = int(now.timestamp() * 1000)
+    matched = {"ready-n", "ready-n2", "ready-n3", "ready-n4"}
+
+    # Metric-ordering branch (default cpu order): total is invariant across a paged
+    # walk and the pages are disjoint + cover the full matched set.
+    seen: list[str] = []
+    totals: set[int] = set()
+    for offset in (0, 2, 4):
+        resp = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
+                "start": start,
+                "end": end,
+                "limit": 2,
+                "offset": offset,
+                "filter": {"filterByNodeReadiness": ["ready"]},
+            },
+            timeout=5,
+        )
+        assert resp.status_code == HTTPStatus.OK, resp.text
+        data = resp.json()["data"]
+        totals.add(data["total"])
+        assert len(data["records"]) == max(0, min(2, 4 - offset)), f"offset={offset}: {data['records']!r}"
+        seen.extend(r["meta"]["k8s.node.name"] for r in data["records"])
+    assert totals == {4}, f"total not invariant under filter+pagination: {totals}"
+    assert len(seen) == 4, f"pages overlapped: {seen}"
+    assert set(seen) == matched
+
+    # Name-ordering branch (orderBy k8s.node.name asc, groupBy empty): the filtered
+    # set is returned in name order; total is the full matched count.
+    ordered = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": start,
+            "end": end,
+            "limit": 50,
+            "filter": {"filterByNodeReadiness": ["ready"]},
+            "orderBy": {"key": {"name": "k8s.node.name"}, "direction": "asc"},
+        },
+        timeout=5,
+    )
+    assert ordered.status_code == HTTPStatus.OK, ordered.text
+    odata = ordered.json()["data"]
+    assert odata["total"] == 4
+    assert [r["meta"]["k8s.node.name"] for r in odata["records"]] == ["ready-n", "ready-n2", "ready-n3", "ready-n4"]
+
+    # Second page of the name branch: PaginateMetadataByName slices the filtered set
+    # correctly (offset past the first 2 matched -> the last 2), total unchanged.
+    page2 = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": start,
+            "end": end,
+            "limit": 2,
+            "offset": 2,
+            "filter": {"filterByNodeReadiness": ["ready"]},
+            "orderBy": {"key": {"name": "k8s.node.name"}, "direction": "asc"},
+        },
+        timeout=5,
+    )
+    assert page2.status_code == HTTPStatus.OK, page2.text
+    p2 = page2.json()["data"]
+    assert p2["total"] == 4
+    assert [r["meta"]["k8s.node.name"] for r in p2["records"]] == ["ready-n3", "ready-n4"]
+
+
 # orderBy keys per nodes_constants.go:33-37 (snake_case request keys,
 # camelCase response fields). k8s.node.name sorts via the metadata-name branch
 # (PaginateMetadataByName) and is only allowed when groupBy is empty.
@@ -748,6 +989,16 @@ def test_nodes_orderby(  # pylint: disable=too-many-arguments,too-many-positiona
             {"filter": {"filterByPodStatus": ["Bogus"]}},
             "invalid filter by pod status",
             id="filter_by_pod_status_invalid",
+        ),
+        pytest.param(
+            {"filter": {"filterByNodeReadiness": ["bogus"]}},
+            "invalid filter by node readiness",
+            id="filter_by_node_readiness_invalid",
+        ),
+        pytest.param(
+            {"filter": {"filterByNodeReadiness": ["notready"]}},
+            "invalid filter by node readiness",
+            id="filter_by_node_readiness_missing_underscore",
         ),
     ],
 )

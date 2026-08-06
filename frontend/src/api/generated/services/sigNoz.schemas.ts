@@ -5635,6 +5635,11 @@ export interface InframonitoringtypesChecksDTO {
 	type: InframonitoringtypesCheckTypeDTO;
 }
 
+export enum InframonitoringtypesNodeConditionDTO {
+	ready = 'ready',
+	not_ready = 'not_ready',
+	no_data = 'no_data',
+}
 export enum InframonitoringtypesPodStatusDTO {
 	pending = 'pending',
 	running = 'running',
@@ -5661,6 +5666,10 @@ export interface InframonitoringtypesClusterFilterDTO {
 	 * @type string
 	 */
 	expression?: string;
+	/**
+	 * @type array,null
+	 */
+	filterByNodeReadiness?: InframonitoringtypesNodeConditionDTO[] | null;
 	/**
 	 * @type array,null
 	 */
@@ -5942,21 +5951,6 @@ export interface InframonitoringtypesContainerCountsByStatusDTO {
 	waiting: number;
 }
 
-export enum InframonitoringtypesContainerReadyDTO {
-	ready = 'ready',
-	not_ready = 'not_ready',
-	no_data = 'no_data',
-}
-export type InframonitoringtypesContainerRecordDTOMetaAnyOf = {
-	[key: string]: string;
-};
-
-/**
- * @nullable
- */
-export type InframonitoringtypesContainerRecordDTOMeta =
-	InframonitoringtypesContainerRecordDTOMetaAnyOf | null;
-
 export enum InframonitoringtypesContainerStatusDTO {
 	running = 'running',
 	waiting = 'waiting',
@@ -5973,6 +5967,32 @@ export enum InframonitoringtypesContainerStatusDTO {
 	unknown = 'unknown',
 	no_data = 'no_data',
 }
+export interface InframonitoringtypesContainerFilterDTO {
+	/**
+	 * @type string
+	 */
+	expression?: string;
+	/**
+	 * @type array,null
+	 */
+	filterByContainerStatus?: InframonitoringtypesContainerStatusDTO[] | null;
+}
+
+export enum InframonitoringtypesContainerReadyDTO {
+	ready = 'ready',
+	not_ready = 'not_ready',
+	no_data = 'no_data',
+}
+export type InframonitoringtypesContainerRecordDTOMetaAnyOf = {
+	[key: string]: string;
+};
+
+/**
+ * @nullable
+ */
+export type InframonitoringtypesContainerRecordDTOMeta =
+	InframonitoringtypesContainerRecordDTOMetaAnyOf | null;
+
 export interface InframonitoringtypesContainerRecordDTO {
 	containerCountsByReady: InframonitoringtypesContainerCountsByReadyDTO;
 	containerCountsByStatus: InframonitoringtypesContainerCountsByStatusDTO;
@@ -6496,16 +6516,15 @@ export interface InframonitoringtypesNamespacesDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
-export enum InframonitoringtypesNodeConditionDTO {
-	ready = 'ready',
-	not_ready = 'not_ready',
-	no_data = 'no_data',
-}
 export interface InframonitoringtypesNodeFilterDTO {
 	/**
 	 * @type string
 	 */
 	expression?: string;
+	/**
+	 * @type array,null
+	 */
+	filterByNodeReadiness?: InframonitoringtypesNodeConditionDTO[] | null;
 	/**
 	 * @type array,null
 	 */
@@ -6697,7 +6716,7 @@ export interface InframonitoringtypesPostableContainersDTO {
 	 * @format int64
 	 */
 	end: number;
-	filter?: Querybuildertypesv5FilterDTO;
+	filter?: InframonitoringtypesContainerFilterDTO;
 	/**
 	 * @type array,null
 	 */

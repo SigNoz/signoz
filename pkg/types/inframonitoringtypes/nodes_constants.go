@@ -1,6 +1,10 @@
 package inframonitoringtypes
 
-import "github.com/SigNoz/signoz/pkg/valuer"
+import (
+	"slices"
+
+	"github.com/SigNoz/signoz/pkg/valuer"
+)
 
 type NodeCondition struct {
 	valuer.String
@@ -18,6 +22,12 @@ func (NodeCondition) Enum() []any {
 		NodeConditionNotReady,
 		NodeConditionNoData,
 	}
+}
+
+// IsFilterableNodeCondition reports whether c is a concrete, user-filterable
+// node readiness: any Enum() member except the no_data sentinel.
+func IsFilterableNodeCondition(c NodeCondition) bool {
+	return c != NodeConditionNoData && slices.Contains((NodeCondition{}).Enum(), any(c))
 }
 
 // Numeric values emitted by the k8s.node.condition_ready metric

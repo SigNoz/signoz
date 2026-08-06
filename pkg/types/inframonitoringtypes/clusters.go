@@ -49,11 +49,13 @@ type PostableClusters struct {
 	Limit   int                  `json:"limit" required:"true"`
 }
 
-// ClusterFilter is the attribute filter plus an optional secondary filter on the
-// derived pod display status(es) (see PodStatus); matches any listed (OR). Empty = off.
+// ClusterFilter is the attribute filter plus optional secondary filters on the
+// derived pod display status(es) (see PodStatus; matches any listed, OR) and node
+// readiness (see NodeCondition; matches any listed, OR). Empty FilterByPodStatus / FilterByNodeReadiness = off.
 type ClusterFilter struct {
-	qbtypes.Filter    `json:",inline"`
-	FilterByPodStatus []PodStatus `json:"filterByPodStatus"`
+	qbtypes.Filter        `json:",inline"`
+	FilterByPodStatus     []PodStatus     `json:"filterByPodStatus"`
+	FilterByNodeReadiness []NodeCondition `json:"filterByNodeReadiness"`
 }
 
 // Validate ensures PostableClusters contains acceptable values.
@@ -99,6 +101,14 @@ func (req *PostableClusters) Validate() error {
 		for _, s := range req.Filter.FilterByPodStatus {
 			if !IsFilterablePodStatus(s) {
 				return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid filter by pod status: %s", s)
+			}
+		}
+	}
+
+	if req.Filter != nil {
+		for _, c := range req.Filter.FilterByNodeReadiness {
+			if !IsFilterableNodeCondition(c) {
+				return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid filter by node readiness: %s", c)
 			}
 		}
 	}

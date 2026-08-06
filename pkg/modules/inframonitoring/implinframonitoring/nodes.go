@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"strings"
 
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
@@ -93,31 +92,35 @@ func buildNodeRecords(
 }
 
 // getTopNodeGroupsAndMetadata concurrently fetches metadata + the ordering-metric
-// ranking (plus the full-scope pod-status keyset when filtering, to intersect both).
+// ranking (plus the full-scope pod-status / node-readiness keysets when filtering,
+// to intersect all).
 func (m *module) getTopNodeGroupsAndMetadata(
 	ctx context.Context,
 	orgID valuer.UUID,
 	req *inframonitoringtypes.PostableNodes,
-) ([]map[string]string, map[string]map[string]string, map[string]podStatusCounts, *qbtypes.QueryWarnData, error) {
+) ([]map[string]string, map[string]map[string]string, map[string]podStatusCounts, *qbtypes.QueryWarnData, map[string]nodeConditionCounts, error) {
 
 	var (
-		orderByKey        string
-		metadataMap       map[string]map[string]string
-		allMetricGroups   []rankedGroup
-		statusCounts      map[string]podStatusCounts
-		statusWarning     *qbtypes.QueryWarnData
-		filter            *qbtypes.Filter
-		filterByPodStatus []inframonitoringtypes.PodStatus
+		orderByKey            string
+		metadataMap           map[string]map[string]string
+		allMetricGroups       []rankedGroup
+		statusCounts          map[string]podStatusCounts
+		statusWarning         *qbtypes.QueryWarnData
+		nodeConditionCounts   map[string]nodeConditionCounts
+		filter                *qbtypes.Filter
+		filterByPodStatus     []inframonitoringtypes.PodStatus
+		filterByNodeReadiness []inframonitoringtypes.NodeCondition
 	)
 
 	orderByKey = req.OrderBy.Key.Name
 
-	// When filtering by pod status, resolve the full-scope status keyset
-	// concurrently (pageGroups=nil spans all groups under the user filter) so it
-	// can intersect metadata + ranked groups below.
+	// When filtering by pod status / node readiness, resolve the full-scope
+	// keyset(s) concurrently (pageGroups=nil spans all groups under the user
+	// filter) to intersect metadata + ranked groups below. Filters compose as AND.
 	if req.Filter != nil {
 		filter = &req.Filter.Filter
 		filterByPodStatus = req.Filter.FilterByPodStatus
+		filterByNodeReadiness = req.Filter.FilterByNodeReadiness
 	}
 
 	g, gCtx := errgroup.WithContext(ctx)
@@ -136,18 +139,29 @@ func (m *module) getTopNodeGroupsAndMetadata(
 		})
 	}
 
+	if len(filterByNodeReadiness) != 0 {
+		g.Go(func() error {
+			var err error
+			nodeConditionCounts, err = m.getPerGroupNodeConditionCounts(gCtx, orgID, req.Start, req.End, filter, req.GroupBy, nil, filterByNodeReadiness)
+			return err
+		})
+	}
+
 	if orderByKey == inframonitoringtypes.NodeNameAttrKey {
 		if err := g.Wait(); err != nil {
-			return nil, nil, nil, nil, err
+			return nil, nil, nil, nil, nil, err
 		}
-		// Secondary filter: keep only status-matching groups. A missing metric
-		// yields an empty statusCounts, so this correctly empties the result
-		// (the caller also surfaces the warning).
+		// Secondary filter: keep only status/readiness-matching groups. A missing
+		// metric yields an empty statusCounts, so this correctly empties the result
+		// (the caller also surfaces the warning). Filters compose as AND.
 		if len(filterByPodStatus) != 0 {
 			metadataMap = intersectMap(metadataMap, statusCounts)
 		}
+		if len(filterByNodeReadiness) != 0 {
+			metadataMap = intersectMap(metadataMap, nodeConditionCounts)
+		}
 		pageGroups := inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.NodeNameAttrKey)
-		return pageGroups, metadataMap, statusCounts, statusWarning, nil
+		return pageGroups, metadataMap, statusCounts, statusWarning, nodeConditionCounts, nil
 	}
 
 	queryNamesForOrderBy := orderByToNodesQueryNames[orderByKey]
@@ -193,19 +207,23 @@ func (m *module) getTopNodeGroupsAndMetadata(
 	})
 
 	if err := g.Wait(); err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 
-	// Secondary filter: intersect ranked groups + metadata with the status keyset.
-	// A missing metric yields an empty statusCounts, correctly emptying the result
-	// (the caller also surfaces the warning).
+	// Secondary filter: intersect ranked groups + metadata with the status/readiness
+	// keyset. A missing metric yields an empty keyset, correctly emptying the result
+	// (the caller also surfaces the warning). Filters compose as AND.
 	if len(filterByPodStatus) != 0 {
 		allMetricGroups = intersectRankedGroups(allMetricGroups, statusCounts)
 		metadataMap = intersectMap(metadataMap, statusCounts)
 	}
+	if len(filterByNodeReadiness) != 0 {
+		allMetricGroups = intersectRankedGroups(allMetricGroups, nodeConditionCounts)
+		metadataMap = intersectMap(metadataMap, nodeConditionCounts)
+	}
 
 	pageGroups := paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit)
-	return pageGroups, metadataMap, statusCounts, statusWarning, nil
+	return pageGroups, metadataMap, statusCounts, statusWarning, nodeConditionCounts, nil
 }
 
 func (m *module) getNodesTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableNodes) (map[string]map[string]string, error) {
@@ -233,6 +251,24 @@ func (m *module) getNodesTableMetadata(ctx context.Context, orgID valuer.UUID, r
 //	countNodesPerCondition:  per-group uniqExactIf into ready/not_ready buckets.
 //
 // Groups absent from the result map have implicit zero counts (caller default).
+// applyNodeReadinessFilter adds the readiness push-down (condition_value IN (...))
+// to the outer count builder. condition_value is numeric (1=Ready, 0=NotReady), so
+// we map each requested enum to its int. No-op when the requested set is empty.
+func applyNodeReadinessFilter(cb *sqlbuilder.SelectBuilder, filterByNodeReadiness []inframonitoringtypes.NodeCondition) {
+	if len(filterByNodeReadiness) == 0 {
+		return
+	}
+	nums := make([]int, len(filterByNodeReadiness))
+	for i, c := range filterByNodeReadiness {
+		v := inframonitoringtypes.NodeConditionNumNotReady
+		if c == inframonitoringtypes.NodeConditionReady {
+			v = inframonitoringtypes.NodeConditionNumReady
+		}
+		nums[i] = v
+	}
+	cb.Where(cb.In("condition_value", sqlbuilder.List(nums)))
+}
+
 func (m *module) getPerGroupNodeConditionCounts(
 	ctx context.Context,
 	orgID valuer.UUID,
@@ -240,8 +276,11 @@ func (m *module) getPerGroupNodeConditionCounts(
 	filter *qbtypes.Filter,
 	groupBy []qbtypes.GroupByKey,
 	pageGroups []map[string]string,
+	filterByNodeReadiness []inframonitoringtypes.NodeCondition,
 ) (map[string]nodeConditionCounts, error) {
-	if len(pageGroups) == 0 || len(groupBy) == 0 {
+	// Empty pageGroups means "span all under user filter", allowed only in
+	// full-scope mode (filtering by readiness). Otherwise it's an empty page.
+	if len(groupBy) == 0 || (len(pageGroups) == 0 && len(filterByNodeReadiness) == 0) {
 		return map[string]nodeConditionCounts{}, nil
 	}
 
@@ -329,11 +368,14 @@ func (m *module) getPerGroupNodeConditionCounts(
 		fmt.Sprintf("uniqExactIf(node_name, condition_value = %d) AS ready_count", inframonitoringtypes.NodeConditionNumReady),
 		fmt.Sprintf("uniqExactIf(node_name, condition_value = %d) AS not_ready_count", inframonitoringtypes.NodeConditionNumNotReady),
 	)
-	countNodesPerConditionSQL := fmt.Sprintf(
-		"SELECT %s FROM latest_condition_per_node GROUP BY %s",
-		strings.Join(countNodesPerConditionSelectCols, ", "),
-		strings.Join(countNodesPerConditionGroupBy, ", "),
-	)
+	// Outer count query. Built with sqlbuilder so the readiness push-down uses a
+	// proper IN (keep only nodes whose readiness is in the requested set).
+	countBuilder := sqlbuilder.NewSelectBuilder()
+	countBuilder.Select(countNodesPerConditionSelectCols...)
+	countBuilder.From("latest_condition_per_node")
+	applyNodeReadinessFilter(countBuilder, filterByNodeReadiness)
+	countBuilder.GroupBy(countNodesPerConditionGroupBy...)
+	countNodesPerConditionSQL, countArgs := countBuilder.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	// Combine CTEs + outer.
 	cteFragments := []string{
@@ -341,7 +383,7 @@ func (m *module) getPerGroupNodeConditionCounts(
 		fmt.Sprintf("latest_condition_per_node AS (%s)", latestConditionPerNodeSQL),
 	}
 	finalSQL := querybuilder.CombineCTEs(cteFragments) + countNodesPerConditionSQL
-	finalArgs := querybuilder.PrependArgs([][]any{timeSeriesFPsArgs, latestConditionPerNodeArgs}, nil)
+	finalArgs := querybuilder.PrependArgs([][]any{timeSeriesFPsArgs, latestConditionPerNodeArgs}, countArgs)
 
 	rows, err := m.telemetryStore.ClickhouseDB().Query(ctx, finalSQL, finalArgs...)
 	if err != nil {

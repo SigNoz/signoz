@@ -85,31 +85,35 @@ func buildClusterRecords(
 }
 
 // getTopClusterGroupsAndMetadata concurrently fetches metadata + the ordering-metric
-// ranking (plus the full-scope pod-status keyset when filtering, to intersect both).
+// ranking (plus the full-scope pod-status / node-readiness keysets when filtering,
+// to intersect all).
 func (m *module) getTopClusterGroupsAndMetadata(
 	ctx context.Context,
 	orgID valuer.UUID,
 	req *inframonitoringtypes.PostableClusters,
-) ([]map[string]string, map[string]map[string]string, map[string]podStatusCounts, *qbtypes.QueryWarnData, error) {
+) ([]map[string]string, map[string]map[string]string, map[string]podStatusCounts, *qbtypes.QueryWarnData, map[string]nodeConditionCounts, error) {
 
 	var (
-		orderByKey        string
-		metadataMap       map[string]map[string]string
-		allMetricGroups   []rankedGroup
-		statusCounts      map[string]podStatusCounts
-		statusWarning     *qbtypes.QueryWarnData
-		filter            *qbtypes.Filter
-		filterByPodStatus []inframonitoringtypes.PodStatus
+		orderByKey            string
+		metadataMap           map[string]map[string]string
+		allMetricGroups       []rankedGroup
+		statusCounts          map[string]podStatusCounts
+		statusWarning         *qbtypes.QueryWarnData
+		nodeConditionCounts   map[string]nodeConditionCounts
+		filter                *qbtypes.Filter
+		filterByPodStatus     []inframonitoringtypes.PodStatus
+		filterByNodeReadiness []inframonitoringtypes.NodeCondition
 	)
 
 	orderByKey = req.OrderBy.Key.Name
 
-	// When filtering by pod status, resolve the full-scope status keyset
-	// concurrently (pageGroups=nil spans all groups under the user filter) so it
-	// can intersect metadata + ranked groups below.
+	// When filtering by pod status / node readiness, resolve the full-scope
+	// keyset(s) concurrently (pageGroups=nil spans all groups under the user
+	// filter) to intersect metadata + ranked groups below. Filters compose as AND.
 	if req.Filter != nil {
 		filter = &req.Filter.Filter
 		filterByPodStatus = req.Filter.FilterByPodStatus
+		filterByNodeReadiness = req.Filter.FilterByNodeReadiness
 	}
 
 	g, gCtx := errgroup.WithContext(ctx)
@@ -128,18 +132,29 @@ func (m *module) getTopClusterGroupsAndMetadata(
 		})
 	}
 
+	if len(filterByNodeReadiness) != 0 {
+		g.Go(func() error {
+			var err error
+			nodeConditionCounts, err = m.getPerGroupNodeConditionCounts(gCtx, orgID, req.Start, req.End, filter, req.GroupBy, nil, filterByNodeReadiness)
+			return err
+		})
+	}
+
 	if orderByKey == inframonitoringtypes.ClusterNameAttrKey {
 		if err := g.Wait(); err != nil {
-			return nil, nil, nil, nil, err
+			return nil, nil, nil, nil, nil, err
 		}
-		// Secondary filter: keep only status-matching groups. A missing metric
-		// yields an empty statusCounts, so this correctly empties the result
-		// (the caller also surfaces the warning).
+		// Secondary filter: keep only status/readiness-matching groups. A missing
+		// metric yields an empty statusCounts, so this correctly empties the result
+		// (the caller also surfaces the warning). Filters compose as AND.
 		if len(filterByPodStatus) != 0 {
 			metadataMap = intersectMap(metadataMap, statusCounts)
 		}
+		if len(filterByNodeReadiness) != 0 {
+			metadataMap = intersectMap(metadataMap, nodeConditionCounts)
+		}
 		pageGroups := inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.ClusterNameAttrKey)
-		return pageGroups, metadataMap, statusCounts, statusWarning, nil
+		return pageGroups, metadataMap, statusCounts, statusWarning, nodeConditionCounts, nil
 	}
 
 	queryNamesForOrderBy := orderByToClustersQueryNames[orderByKey]
@@ -185,19 +200,23 @@ func (m *module) getTopClusterGroupsAndMetadata(
 	})
 
 	if err := g.Wait(); err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, nil, nil, err
 	}
 
-	// Secondary filter: intersect ranked groups + metadata with the status keyset.
-	// A missing metric yields an empty statusCounts, correctly emptying the result
-	// (the caller also surfaces the warning).
+	// Secondary filter: intersect ranked groups + metadata with the status/readiness
+	// keyset. A missing metric yields an empty keyset, correctly emptying the result
+	// (the caller also surfaces the warning). Filters compose as AND.
 	if len(filterByPodStatus) != 0 {
 		allMetricGroups = intersectRankedGroups(allMetricGroups, statusCounts)
 		metadataMap = intersectMap(metadataMap, statusCounts)
 	}
+	if len(filterByNodeReadiness) != 0 {
+		allMetricGroups = intersectRankedGroups(allMetricGroups, nodeConditionCounts)
+		metadataMap = intersectMap(metadataMap, nodeConditionCounts)
+	}
 
 	pageGroups := paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit)
-	return pageGroups, metadataMap, statusCounts, statusWarning, nil
+	return pageGroups, metadataMap, statusCounts, statusWarning, nodeConditionCounts, nil
 }
 
 func (m *module) getClustersTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableClusters) (map[string]map[string]string, error) {

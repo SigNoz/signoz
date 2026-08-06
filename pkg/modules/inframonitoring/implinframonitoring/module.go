@@ -396,9 +396,35 @@ func (m *module) ListContainers(ctx context.Context, orgID valuer.UUID, req *inf
 		return resp, nil
 	}
 
-	pageGroups, metadataMap, err := m.getTopContainerGroupsAndMetadata(ctx, orgID, req)
+	var (
+		filterExpr              string
+		containerFilter         *qbtypes.Filter
+		filterByContainerStatus []inframonitoringtypes.ContainerStatus
+		queryResp               *qbtypes.QueryRangeResponse
+		restartCounts           map[string]int64
+		readyCounts             map[string]containerReadyCounts
+	)
+
+	if req.Filter != nil {
+		filterExpr = req.Filter.Expression
+		containerFilter = &req.Filter.Filter
+		filterByContainerStatus = req.Filter.FilterByContainerStatus
+	}
+
+	// getTopContainerGroupsAndMetadata fetches metadata + ranking (+ full-scope
+	// container status when filtering) concurrently, intersecting metadata/ranked
+	// groups against the status keyset. It returns the keyset + its warning.
+	pageGroups, metadataMap, statusCounts, statusWarning, err := m.getTopContainerGroupsAndMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
+	}
+
+	// Required metric missing while filtering: surface the warning + empty result.
+	if len(filterByContainerStatus) != 0 && statusWarning != nil {
+		resp.Warning = statusWarning
+		resp.Records = []inframonitoringtypes.ContainerRecord{}
+		resp.Total = 0
+		return resp, nil
 	}
 
 	resp.Total = len(metadataMap)
@@ -408,20 +434,7 @@ func (m *module) ListContainers(ctx context.Context, orgID valuer.UUID, req *inf
 		return resp, nil
 	}
 
-	filterExpr := ""
-	if req.Filter != nil {
-		filterExpr = req.Filter.Expression
-	}
-
 	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newContainersTableListQuery())
-
-	var (
-		queryResp     *qbtypes.QueryRangeResponse
-		statusCounts  map[string]containerStatusCounts
-		statusWarning *qbtypes.QueryWarnData
-		restartCounts map[string]int64
-		readyCounts   map[string]containerReadyCounts
-	)
 
 	g, gCtx := errgroup.WithContext(ctx)
 
@@ -432,19 +445,23 @@ func (m *module) ListContainers(ctx context.Context, orgID valuer.UUID, req *inf
 	})
 	g.Go(func() error {
 		var err error
-		statusCounts, statusWarning, err = m.getPerGroupContainerStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		restartCounts, err = m.getPerGroupContainerRestartCounts(gCtx, orgID, req.Start, req.End, containerFilter, req.GroupBy, pageGroups)
 		return err
 	})
 	g.Go(func() error {
 		var err error
-		restartCounts, err = m.getPerGroupContainerRestartCounts(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
+		readyCounts, err = m.getPerGroupContainerReadyCounts(gCtx, orgID, req.Start, req.End, containerFilter, req.GroupBy, pageGroups)
 		return err
 	})
-	g.Go(func() error {
-		var err error
-		readyCounts, err = m.getPerGroupContainerReadyCounts(gCtx, orgID, req.Start, req.End, req.Filter, req.GroupBy, pageGroups)
-		return err
-	})
+	// When filtering, statusCounts already holds the full-scope map (a superset
+	// of the page); otherwise compute it page-scoped here.
+	if len(filterByContainerStatus) == 0 {
+		g.Go(func() error {
+			var err error
+			statusCounts, statusWarning, err = m.getPerGroupContainerStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, containerFilter, req.GroupBy, pageGroups, nil)
+			return err
+		})
+	}
 
 	if err := g.Wait(); err != nil {
 		return nil, err
@@ -496,23 +513,24 @@ func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframon
 	}
 
 	var (
-		filterExpr          string
-		nodeFilter          *qbtypes.Filter
-		filterByPodStatus   []inframonitoringtypes.PodStatus
-		queryResp           *qbtypes.QueryRangeResponse
-		nodeConditionCounts map[string]nodeConditionCounts
+		filterExpr            string
+		nodeFilter            *qbtypes.Filter
+		filterByPodStatus     []inframonitoringtypes.PodStatus
+		filterByNodeReadiness []inframonitoringtypes.NodeCondition
+		queryResp             *qbtypes.QueryRangeResponse
 	)
 
 	if req.Filter != nil {
 		filterExpr = req.Filter.Expression
 		nodeFilter = &req.Filter.Filter
 		filterByPodStatus = req.Filter.FilterByPodStatus
+		filterByNodeReadiness = req.Filter.FilterByNodeReadiness
 	}
 
 	// getTopNodeGroupsAndMetadata fetches metadata + ranking (+ full-scope pod
-	// status when filtering) concurrently, intersecting metadata/ranked groups
-	// against the status keyset. It returns the keyset + its warning.
-	pageGroups, metadataMap, podStatusCounts, podStatusWarning, err := m.getTopNodeGroupsAndMetadata(ctx, orgID, req)
+	// status / node readiness when filtering) concurrently, intersecting
+	// metadata/ranked groups against the keysets. It returns the keysets + warning.
+	pageGroups, metadataMap, podStatusCounts, podStatusWarning, nodeConditionCounts, err := m.getTopNodeGroupsAndMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
@@ -541,13 +559,17 @@ func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframon
 		queryResp, err = m.querier.QueryRange(gCtx, orgID, fullQueryReq)
 		return err
 	})
-	g.Go(func() error {
-		var err error
-		nodeConditionCounts, err = m.getPerGroupNodeConditionCounts(gCtx, orgID, req.Start, req.End, nodeFilter, req.GroupBy, pageGroups)
-		return err
-	})
-	// When filtering, podStatusCounts already holds the full-scope map (a superset
-	// of the page); otherwise compute it page-scoped here.
+	// When filtering by readiness, nodeConditionCounts already holds the full-scope
+	// map (a superset of the page); otherwise compute it page-scoped here.
+	if len(filterByNodeReadiness) == 0 {
+		g.Go(func() error {
+			var err error
+			nodeConditionCounts, err = m.getPerGroupNodeConditionCounts(gCtx, orgID, req.Start, req.End, nodeFilter, req.GroupBy, pageGroups, nil)
+			return err
+		})
+	}
+	// When filtering by pod status, podStatusCounts already holds the full-scope
+	// map; otherwise compute it page-scoped here.
 	if len(filterByPodStatus) == 0 {
 		g.Go(func() error {
 			var err error
@@ -718,6 +740,7 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 		filterExpr             string
 		clusterFilter          *qbtypes.Filter
 		filterByPodStatus      []inframonitoringtypes.PodStatus
+		filterByNodeReadiness  []inframonitoringtypes.NodeCondition
 		queryResp              *qbtypes.QueryRangeResponse
 		nodeConditionCountsMap map[string]nodeConditionCounts
 		resourceCounts         map[string]map[string]int64
@@ -727,12 +750,13 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 		filterExpr = req.Filter.Expression
 		clusterFilter = &req.Filter.Filter
 		filterByPodStatus = req.Filter.FilterByPodStatus
+		filterByNodeReadiness = req.Filter.FilterByNodeReadiness
 	}
 
 	// getTopClusterGroupsAndMetadata fetches metadata + ranking (+ full-scope pod
-	// status when filtering) concurrently, intersecting metadata/ranked groups
-	// against the status keyset. It returns the keyset + its warning.
-	pageGroups, metadataMap, podStatusCounts, podStatusWarning, err := m.getTopClusterGroupsAndMetadata(ctx, orgID, req)
+	// status / node readiness when filtering) concurrently, intersecting
+	// metadata/ranked groups against the keysets. It returns the keysets + warning.
+	pageGroups, metadataMap, podStatusCounts, podStatusWarning, nodeConditionCountsMap, err := m.getTopClusterGroupsAndMetadata(ctx, orgID, req)
 	if err != nil {
 		return nil, err
 	}
@@ -761,18 +785,22 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 		queryResp, err = m.querier.QueryRange(gCtx, orgID, fullQueryReq)
 		return err
 	})
-	g.Go(func() error {
-		var err error
-		nodeConditionCountsMap, err = m.getPerGroupNodeConditionCounts(gCtx, orgID, req.Start, req.End, clusterFilter, req.GroupBy, pageGroups)
-		return err
-	})
+	// When filtering by readiness, nodeConditionCountsMap already holds the
+	// full-scope map (a superset of the page); otherwise compute it page-scoped here.
+	if len(filterByNodeReadiness) == 0 {
+		g.Go(func() error {
+			var err error
+			nodeConditionCountsMap, err = m.getPerGroupNodeConditionCounts(gCtx, orgID, req.Start, req.End, clusterFilter, req.GroupBy, pageGroups, nil)
+			return err
+		})
+	}
 	g.Go(func() error {
 		var err error
 		resourceCounts, err = m.getPerGroupDistinctCounts(gCtx, orgID, req.Start, req.End, clusterFilter, req.GroupBy, pageGroups, clusterCountAttrKeys, clusterMetricNamesListForCounts)
 		return err
 	})
-	// When filtering, podStatusCounts already holds the full-scope map (a superset
-	// of the page); otherwise compute it page-scoped here.
+	// When filtering by pod status, podStatusCounts already holds the full-scope
+	// map; otherwise compute it page-scoped here.
 	if len(filterByPodStatus) == 0 {
 		g.Go(func() error {
 			var err error
