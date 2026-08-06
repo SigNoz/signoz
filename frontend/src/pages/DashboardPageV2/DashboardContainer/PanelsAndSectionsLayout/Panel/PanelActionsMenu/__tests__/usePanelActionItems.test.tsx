@@ -1,7 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import type { PanelQueryData } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
-import type { ROLES } from 'types/roles';
 
 import type { DashboardSection } from '../../../../utils';
 import { useDashboardStore } from '../../../../store/useDashboardStore';
@@ -64,15 +63,6 @@ jest.mock('../../hooks/useDownloadPanelImage', () => ({
 	}),
 }));
 
-// Role is the only thing read off the app context; useComponentPermission runs
-// for real so the tests exercise the actual role → permission mapping.
-let mockRole: ROLES = 'ADMIN';
-jest.mock('providers/App/App', () => ({
-	useAppContext: (): { user: { role: ROLES } } => ({
-		user: { role: mockRole },
-	}),
-}));
-
 function section(
 	layoutIndex: number,
 	title: string | undefined,
@@ -130,14 +120,30 @@ function itemKeys(result: ReturnType<typeof usePanelActionItems>): unknown[] {
 	);
 }
 
+// Panels have no authz kind of their own, so every mutating action follows the
+// dashboard's edit rights. Seed through setEditContext so the derived isEditable
+// and reason stay consistent.
+function seedEditContext(overrides?: {
+	canEditDashboard?: boolean;
+	isLocked?: boolean;
+}): void {
+	useDashboardStore.getState().setEditContext({
+		dashboardId: 'dash-1',
+		isLocked: overrides?.isLocked ?? false,
+		canEditDashboard: overrides?.canEditDashboard ?? true,
+		canDeleteDashboard: overrides?.canEditDashboard ?? true,
+		isPermissionLoading: false,
+		refetch: (): void => undefined,
+	});
+}
+
 describe('usePanelActionItems', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
-		mockRole = 'ADMIN';
-		useDashboardStore.setState({ canEditDashboard: true, isLocked: false });
+		seedEditContext();
 	});
 
-	it('ADMIN on an editable dashboard with a known kind gets the full V1-parity set, divider-separated', () => {
+	it('an editable dashboard with a known kind gets the full set, divider-separated', () => {
 		const { result } = renderHook(() => usePanelActionItems(baseArgs));
 		expect(itemKeys(result.current)).toStrictEqual([
 			'view-panel',
@@ -155,11 +161,16 @@ describe('usePanelActionItems', () => {
 		// it's present for every renderable kind.
 	});
 
-	it('AUTHOR loses edit and clone (edit_widget excludes AUTHOR) but keeps the rest', () => {
-		mockRole = 'AUTHOR';
-		const { result } = renderHook(() => usePanelActionItems(baseArgs));
+	// These used to be dropped from the menu, leaving no trace of why.
+	it('without edit rights keeps the edit actions visible but disabled', () => {
+		seedEditContext({ canEditDashboard: false });
+		const { result } = renderHook(() =>
+			usePanelActionItems({ ...baseArgs, panelActions: undefined }),
+		);
 		expect(itemKeys(result.current)).toStrictEqual([
 			'view-panel',
+			'edit-panel',
+			'clone-panel',
 			'divider',
 			'download',
 			'create-alert',
@@ -168,34 +179,16 @@ describe('usePanelActionItems', () => {
 			'divider',
 			'delete-panel',
 		]);
-	});
-
-	it('VIEWER keeps only the role-ungated actions (view, download, create-alert)', () => {
-		mockRole = 'VIEWER';
-		const { result } = renderHook(() => usePanelActionItems(baseArgs));
-		expect(itemKeys(result.current)).toStrictEqual([
-			'view-panel',
-			'divider',
-			'download',
-			'create-alert',
-		]);
-	});
-
-	it('no edit permission (view mode) hides the edit actions entirely', () => {
-		useDashboardStore.setState({ canEditDashboard: false });
-		const { result } = renderHook(() =>
-			usePanelActionItems({ ...baseArgs, panelActions: undefined }),
-		);
-		expect(itemKeys(result.current)).toStrictEqual([
-			'view-panel',
-			'divider',
-			'download',
-			'create-alert',
+		expect(disabledKeys(result.current)).toStrictEqual([
+			'edit-panel',
+			'clone-panel',
+			'move',
+			'delete-panel',
 		]);
 	});
 
 	it('locked (edit mode) keeps the edit actions visible but disabled', () => {
-		useDashboardStore.setState({ canEditDashboard: true, isLocked: true });
+		seedEditContext({ isLocked: true });
 		// A locked dashboard mounts panels without layout context (no panelActions).
 		const { result } = renderHook(() =>
 			usePanelActionItems({ ...baseArgs, panelActions: undefined }),

@@ -7,11 +7,14 @@ import Section from './Section/Section';
 interface SortableSectionProps {
 	section: DashboardSection;
 	sections: DashboardSection[];
+	/** Reordering needs edit rights; the section still renders without them. */
+	disabled?: boolean;
 }
 
 function SortableSection({
 	section,
 	sections,
+	disabled = false,
 }: SortableSectionProps): JSX.Element {
 	const {
 		attributes,
@@ -21,7 +24,7 @@ function SortableSection({
 		transform,
 		transition,
 		isDragging,
-	} = useSortable({ id: section.id });
+	} = useSortable({ id: section.id, disabled });
 
 	// dnd-kit drives the drag transform per-frame, so this must be an inline
 	// style — there is no static-stylesheet equivalent for a live transform.
@@ -38,7 +41,9 @@ function SortableSection({
 			<Section
 				section={section}
 				sections={sections}
-				dragHandle={{ attributes, listeners, setActivatorNodeRef }}
+				dragHandle={
+					disabled ? undefined : { attributes, listeners, setActivatorNodeRef }
+				}
 			/>
 		</div>
 	);
