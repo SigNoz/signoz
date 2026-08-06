@@ -220,6 +220,10 @@ py-test-teardown: ## Tear down the shared SigNoz backend
 py-test: ## Runs integration tests
 	@cd tests && uv run pytest --basetemp=./tmp/ -vv --capture=no integration/tests/
 
+.PHONY: py-test-semconv-phase1
+py-test-semconv-phase1: py-test-setup ## Rebuild the shared stack and run the semantic-convention Phase 1 matrix
+	@cd tests && uv run pytest --basetemp=./tmp/ -vv --reuse --capture=no integration/tests/queriertraces/13_semconv_evolution.py
+
 .PHONY: py-clean
 py-clean: ## Clear all pycache and pytest cache from tests directory recursively
 	@echo ">> cleaning python cache files from tests directory"
