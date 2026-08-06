@@ -5,7 +5,7 @@ import {
 	opsGenieMessageDefaultValue,
 	opsGeniePriorityDefaultValue,
 	pagerDutyAdditionalDetailsDefaultValue,
-	pagerDutyDescriptionDefaultVaule,
+	pagerDutyDescriptionDefaultValue,
 	pagerDutySeverityTextDefaultValue,
 	slackDescriptionDefaultValue,
 	slackTitleDefaultValue,
@@ -150,7 +150,7 @@ describe('Create Alert Channel (Normal User)', () => {
 				);
 
 				expect(descriptionTextArea).toHaveTextContent(
-					pagerDutyDescriptionDefaultVaule,
+					pagerDutyDescriptionDefaultValue,
 				);
 			});
 			it('Should check if Severity label, info (help_pager_severity), and textbox are displayed properly', () => {
