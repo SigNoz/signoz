@@ -268,11 +268,23 @@ export async function typeVariableValue(
 
 // ─── Panels and sections ──────────────────────────────────────────────────
 
-export const panelByTitle = (page: Page, title: string): Locator =>
-	page.locator('[data-panel-id]').filter({ hasText: title });
+// A section's id is derived from its first panel's key, e.g. panel `p-timeseries` gives
+// section `sec-p-timeseries` — stable for a seeded fixture, since the keys are ours.
+export const sectionId = (firstPanelKey: string): string =>
+	`sec-${firstPanelKey}`;
 
-export const sectionByName = (page: Page, name: string): Locator =>
-	page.locator('[data-section-id]').filter({ hasText: name });
+export const section = (page: Page, firstPanelKey: string): Locator =>
+	page.getByTestId(`dashboard-section-${sectionId(firstPanelKey)}`);
+
+export const sectionToggle = (page: Page, firstPanelKey: string): Locator =>
+	page.getByTestId(`dashboard-section-toggle-${sectionId(firstPanelKey)}`);
+
+export const panelActions = (page: Page, panelKey: string): Locator =>
+	page.getByTestId(`panel-actions-${panelKey}`);
+
+/** A panel by its display name — panels carry no per-panel testid on the card itself. */
+export const panelByTitle = (page: Page, title: string): Locator =>
+	page.getByText(title, { exact: true });
 
 /** Resolved when no panel on the page is still fetching. */
 export async function awaitPanelsSettled(page: Page): Promise<void> {
