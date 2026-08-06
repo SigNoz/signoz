@@ -21,6 +21,7 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import NoLogs from 'container/NoLogs/NoLogs';
 import { getListViewQuery } from 'container/TracesExplorer/explorerUtils';
+import { useIsAIQueryDemo } from 'container/TracesExplorer/useIsAIQueryDemo';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination } from 'hooks/queryPagination';
@@ -51,6 +52,7 @@ function TracesView({
 	queryKeyRef,
 }: TracesViewProps): JSX.Element {
 	const { stagedQuery, panelType } = useQueryBuilder();
+	const isAIQueryDemo = useIsAIQueryDemo();
 
 	const {
 		selectedTime: globalSelectedTime,
@@ -97,6 +99,7 @@ function TracesView({
 			graphType: panelType || PANEL_TYPES.TRACE,
 			selectedTime: 'GLOBAL_TIME',
 			globalSelectedInterval: globalSelectedTime,
+			builderQueryType: isAIQueryDemo ? 'builder_ai_query' : undefined,
 			params: {
 				dataSource: 'traces',
 			},
@@ -106,7 +109,7 @@ function TracesView({
 		},
 		ENTITY_VERSION_V5,
 		{
-			queryKey,
+			queryKey: [...queryKey, isAIQueryDemo],
 			enabled: !!stagedQuery && panelType === PANEL_TYPES.TRACE,
 		},
 	);
