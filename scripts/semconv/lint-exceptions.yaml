@@ -1,0 +1,4 @@
+# Product-code old-name literals that cannot yet be removed. Every exception
+# is path/name specific, requires a reason, and fails the lint when it becomes
+# stale. Generated files, tests, fixtures, and comments are ignored instead.
+exceptions: []

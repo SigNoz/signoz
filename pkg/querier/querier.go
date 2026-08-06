@@ -136,6 +136,10 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	// safely assume ms regardless of the resolution the caller sent.
 	req.Start = querybuilder.ToMilliSecs(req.Start)
 	req.End = querybuilder.ToMilliSecs(req.End)
+	// Key resolution mutates parts of builder queries while compiling them.
+	// Capture the caller's spelling before that happens so response metadata
+	// can identify the exact old/current name supplied in the request.
+	semconvResolutions := semconvResolutionsForRequest(req)
 
 	event := &qbtypes.QBEvent{
 		Version:         "v5",
@@ -188,6 +192,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	qbResp, qbErr := q.run(ctx, orgID, queries, req, steps, event, preseededResults)
 	if qbResp != nil {
 		qbResp.QBEvent = event
+		qbResp.Meta.SemconvResolutions = semconvResolutions
 		if len(intervalWarnings) != 0 && req.RequestType == qbtypes.RequestTypeTimeSeries {
 			if qbResp.Warning == nil {
 				qbResp.Warning = &qbtypes.QueryWarnData{
@@ -786,11 +791,10 @@ func (q *querier) run(
 			Results: maps.Values(processedResults),
 		},
 		Meta: qbtypes.ExecStats{
-			RowsScanned:        stats.RowsScanned,
-			BytesScanned:       stats.BytesScanned,
-			DurationMS:         stats.DurationMS,
-			StepIntervals:      stepIntervals,
-			SemconvResolutions: semconvResolutionsForRequest(req),
+			RowsScanned:   stats.RowsScanned,
+			BytesScanned:  stats.BytesScanned,
+			DurationMS:    stats.DurationMS,
+			StepIntervals: stepIntervals,
 		},
 	}
 

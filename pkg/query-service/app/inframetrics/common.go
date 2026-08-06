@@ -203,7 +203,7 @@ var dotMetricMap = map[string]string{
 	"k8s_hpa_scaletargetref_apiversion":           "k8s.hpa.scaletargetref.apiversion",
 	"k8s_job_uid":                                 "k8s.job.uid",
 	"k8s_kubelet_version":                         "k8s.kubelet.version",
-	"container_runtime":                           "container.runtime",
+	"container_runtime":                           "container.runtime.name",
 	"container_runtime_version":                   "container.runtime.version",
 	"os_description":                              "os.description",
 	"openshift_clusterquota_uid":                  "openshift.clusterquota.uid",

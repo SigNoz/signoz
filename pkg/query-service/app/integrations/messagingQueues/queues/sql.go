@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/semconvsql"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	format "github.com/SigNoz/signoz/pkg/query-service/utils"
 )
@@ -59,10 +60,7 @@ WITH
                 ELSE 'undefined'
             END AS messaging_system,
             kind_string,
-            COALESCE(
-                NULLIF(attributes_string['messaging.destination.name'], ''),
-                NULLIF(attributes_string['messaging.destination'], '')
-            ) AS destination,
+			attributes_string['messaging.destination.name'] AS destination,
             durationNano,
             status_code
         FROM signoz_traces.distributed_signoz_index_v3
@@ -113,5 +111,5 @@ ORDER BY
 		whereSQL, timeRangeSecs,
 	)
 
-	return query
+	return semconvsql.ResolveTraceStringAttributes(query, "messaging.destination.name")
 }

@@ -238,6 +238,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewRestructureSavedViewSpecFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddSavedViewTuplesFactory(sqlstore),
 		sqlmigration.NewMigrateDeploymentEnvironmentQuickFilterFactory(),
+		sqlmigration.NewMigrateHTTPMethodQuickFilterFactory(),
 	)
 }
 

@@ -97,3 +97,19 @@ func TestSemconvResolutionsRequiresNameBoundary(t *testing.T) {
 
 	assert.Empty(t, semconvResolutionsForRequest(req), "a family name embedded in a larger custom key must not match")
 }
+
+func TestSemconvResolutionsForDecodedRequest(t *testing.T) {
+	var req qbtypes.QueryRangeRequest
+	require.NoError(t, json.Unmarshal([]byte(`{
+		"requestType":"raw",
+		"compositeQuery":{"queries":[{"type":"builder_query","spec":{
+			"signal":"traces","name":"A","filter":{"expression":"resource.deployment.environment EXISTS"}
+		}}]}
+	}`), &req))
+	assert.Equal(t, []qbtypes.SemconvResolution{{
+		Requested: "deployment.environment",
+		Current:   "deployment.environment.name",
+		Members:   []string{"deployment.environment.name", "deployment.environment"},
+		Kind:      "attribute",
+	}}, semconvResolutionsForRequest(&req))
+}

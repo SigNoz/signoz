@@ -617,6 +617,12 @@ func (m *fieldMapper) existsExpressionFor(
 		if len(existExprs) == 0 {
 			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "no existence expression found for field %s", key.Name)
 		}
+		if len(existExprs) == 1 {
+			if exists {
+				return existExprs[0], nil
+			}
+			return "NOT (" + existExprs[0] + ")", nil
+		}
 		parts := make([]string, 0, len(existExprs))
 		for _, expression := range existExprs {
 			parts = append(parts, "("+expression+")")

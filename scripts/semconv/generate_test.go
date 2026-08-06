@@ -257,6 +257,19 @@ func TestRenderTypeScriptIsDeterministic(t *testing.T) {
 	assert.Equal(t, renderTypeScript(families), renderTypeScript(families), "TypeScript generation must not depend on map iteration order")
 }
 
+func TestRenderTypeScriptWrapsLongSlices(t *testing.T) {
+	families := []generatedFamily{{
+		Current: "current",
+		Old:     []string{"a.very.long.legacy.attribute.name", "another.long.legacy.attribute.name"},
+		Kind:    kindAttribute,
+	}}
+
+	output := string(renderTypeScript(families))
+
+	assert.Contains(t, output, "\t\told: [\n\t\t\t'a.very.long.legacy.attribute.name',\n", "long TypeScript slices should start on their own line")
+	assert.Contains(t, output, "\t\t\t'another.long.legacy.attribute.name',\n\t\t],\n", "long TypeScript slices should retain every member before closing")
+}
+
 func TestBuildFamiliesHandlesRenameRollback(t *testing.T) {
 	var schema schemaFile
 	require.NoError(t, decodeKnownFields([]byte(`

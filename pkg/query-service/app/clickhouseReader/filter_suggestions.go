@@ -12,6 +12,8 @@ import (
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/semconv"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
@@ -248,17 +250,24 @@ func newRankingStrategy() attribRankingStrategy {
 
 	// Synonyms of interesting attributes should come next
 	resourceHierarchy := fingerprint.ResourceHierarchy()
-	for _, attr := range []string{
+	for _, current := range []string{
 		"service.name",
-		"deployment.environment",
+		"deployment.environment.name",
 		"k8s.namespace.name",
 		"k8s.pod.name",
 		"k8s.container.name",
 		"k8s.node.name",
 	} {
-		interestingResourceAttrsInDescRank = append(
-			interestingResourceAttrsInDescRank, resourceHierarchy.Synonyms(attr)...,
-		)
+		members := semconv.Members(semconv.KindAttribute, telemetrytypes.FieldKeySelector{
+			Name:         current,
+			FieldContext: telemetrytypes.FieldContextResource,
+		})
+		for _, member := range members {
+			interestingResourceAttrsInDescRank = append(interestingResourceAttrsInDescRank, member)
+			interestingResourceAttrsInDescRank = append(
+				interestingResourceAttrsInDescRank, resourceHierarchy.Synonyms(member)...,
+			)
+		}
 	}
 
 	interestingResourceAttrsInAscRank := interestingResourceAttrsInDescRank[:]

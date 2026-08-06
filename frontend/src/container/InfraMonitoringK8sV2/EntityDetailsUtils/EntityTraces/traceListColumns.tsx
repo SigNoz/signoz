@@ -11,6 +11,7 @@ import {
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { FormatTimezoneAdjustedTimestamp } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
+import { getSemconvMembers } from 'utils/semconv';
 import styles from './traceListColumns.module.scss';
 
 const keyToLabelMap: Record<string, string> = {
@@ -27,7 +28,12 @@ const keyToLabelMap: Record<string, string> = {
 const keyAliases: Record<string, string[]> = {
 	serviceName: ['serviceName', 'service.name', 'service_name'],
 	durationNano: ['durationNano', 'duration.nano', 'duration_nano'],
-	httpMethod: ['httpMethod', 'http.method', 'http_method'],
+	httpMethod: [
+		'httpMethod',
+		...getSemconvMembers('http.request.method'),
+		'http_request_method',
+		'http_method',
+	],
 	responseStatusCode: [
 		'response_status_code',
 		'response.status.code',

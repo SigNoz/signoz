@@ -42,7 +42,7 @@ func semconvResolutionsForRequest(req *qbtypes.QueryRangeRequest) []qbtypes.Semc
 			}
 
 			for _, requested := range semconvRequestSpellings(family, signal) {
-				if !containsSemconvName(text, requested) {
+				if !containsSemconvRequestName(text, requested) {
 					continue
 				}
 				identity := family.Kind.StringValue() + "\x00" + requested + "\x00" + family.Current
@@ -104,6 +104,22 @@ func semconvRequestSpellings(family semconv.Family, signal telemetrytypes.Signal
 		}
 	}
 	return spellings
+}
+
+func containsSemconvRequestName(text, name string) bool {
+	if containsSemconvName(text, name) {
+		return true
+	}
+	// Filter expressions qualify attributes with their field context. A dot is
+	// otherwise part of a semantic-convention name, so check the two contexts
+	// that can contain schema attribute families explicitly. This still rejects
+	// larger custom names such as custom.deployment.environment.
+	for _, context := range []string{"attribute.", "resource."} {
+		if containsSemconvName(text, context+name) {
+			return true
+		}
+	}
+	return false
 }
 
 func containsSemconvName(text, name string) bool {

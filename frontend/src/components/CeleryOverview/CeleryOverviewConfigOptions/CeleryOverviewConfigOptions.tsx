@@ -145,7 +145,7 @@ function CeleryOverviewConfigOptions(): JSX.Element {
 		{
 			placeholder: 'Destination',
 			queryParam: QueryParams.destination,
-			filterType: ['messaging.destination.name', 'messaging.destination'],
+			filterType: ['messaging.destination.name'],
 		},
 		{
 			placeholder: 'Kind',

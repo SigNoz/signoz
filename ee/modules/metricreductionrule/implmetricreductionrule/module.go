@@ -176,7 +176,7 @@ func (m *module) Create(ctx context.Context, orgID valuer.UUID, userEmail string
 	if err := m.checkAccess(ctx, orgID); err != nil {
 		return nil, err
 	}
-	if err := req.Validate(); err != nil {
+	if err := metricreductionrule.ValidatePostableReductionRule(req); err != nil {
 		return nil, err
 	}
 	if err := m.validateMetricForReduction(ctx, orgID, req.MetricName); err != nil {
@@ -218,7 +218,7 @@ func (m *module) UpdateByID(ctx context.Context, orgID valuer.UUID, userEmail st
 	if err != nil {
 		return nil, err
 	}
-	if err := req.Validate(); err != nil {
+	if err := metricreductionrule.ValidateUpdatableReductionRule(req); err != nil {
 		return nil, err
 	}
 
@@ -543,7 +543,7 @@ func resolveDroppedKept(matchType metricreductionruletypes.MatchType, ruleLabels
 	}
 
 	for _, k := range keys {
-		if metricreductionruletypes.IsProtectedLabel(k) {
+		if metricreductionrule.IsProtectedLabel(k) {
 			kept = append(kept, k)
 			continue
 		}

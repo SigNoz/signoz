@@ -95,15 +95,15 @@ type GettableReductionRule struct {
 	types.TimeAuditable
 	types.UserAuditable
 
-	MetricName       string    `json:"metricName" required:"true"`
-	MatchType        MatchType `json:"matchType" required:"true"`
-	Labels           []string  `json:"labels" required:"true" nullable:"true"`
-	EffectiveFrom    time.Time `json:"effectiveFrom" required:"true"`
-	Active           bool      `json:"active" required:"true"`
-	IngestedSeries   uint64    `json:"ingestedSeries" required:"true"`
-	RetainedSeries   uint64    `json:"retainedSeries" required:"true"`
-	IngestedSamples  uint64    `json:"ingestedSamples" required:"true"`
-	RetainedSamples  uint64    `json:"retainedSamples" required:"true"`
+	MetricName      string    `json:"metricName" required:"true"`
+	MatchType       MatchType `json:"matchType" required:"true"`
+	Labels          []string  `json:"labels" required:"true" nullable:"true"`
+	EffectiveFrom   time.Time `json:"effectiveFrom" required:"true"`
+	Active          bool      `json:"active" required:"true"`
+	IngestedSeries  uint64    `json:"ingestedSeries" required:"true"`
+	RetainedSeries  uint64    `json:"retainedSeries" required:"true"`
+	IngestedSamples uint64    `json:"ingestedSamples" required:"true"`
+	RetainedSamples uint64    `json:"retainedSamples" required:"true"`
 }
 
 type GettableReductionRules struct {
@@ -121,20 +121,6 @@ type PostableReductionRule struct {
 	UpdatableReductionRule
 }
 
-var protectedLabels = map[string]struct{}{
-	"le":                     {},
-	"quantile":               {},
-	"__name__":               {},
-	"__temporality__":        {},
-	"deployment.environment": {},
-}
-
-// IsProtectedLabel reports whether a label is always retained regardless of a reduction rule.
-func IsProtectedLabel(label string) bool {
-	_, ok := protectedLabels[label]
-	return ok
-}
-
 func (req *UpdatableReductionRule) Validate() error {
 	if req == nil {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
@@ -146,14 +132,6 @@ func (req *UpdatableReductionRule) Validate() error {
 	if len(req.Labels) == 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"labels must not be empty; to allow all attributes, delete the rule instead")
-	}
-	if req.MatchType == MatchTypeDrop {
-		for _, label := range req.Labels {
-			if IsProtectedLabel(label) {
-				return errors.Newf(errors.TypeInvalidInput, ErrCodeMetricReductionRuleProtectedLabel,
-					"label %q is protected and cannot be dropped", label)
-			}
-		}
 	}
 	return nil
 }
