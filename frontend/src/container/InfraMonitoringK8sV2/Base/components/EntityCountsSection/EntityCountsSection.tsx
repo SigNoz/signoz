@@ -3,7 +3,6 @@ import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import { Compass } from '@signozhq/icons';
 import { TextNoData } from '../../../components/TextNoData';
-import { logInfraExplorerNavigatedEvent } from 'constants/events';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -17,6 +16,7 @@ import {
 } from '../../../constants';
 import { getDrawerDurationMs } from '../../useDrawerLifecycleStore';
 import styles from './EntityCountsSection.module.scss';
+import { logInfraExplorerNavigatedEvent } from 'container/InfraMonitoringK8sV2/Base/events';
 
 export interface EntityCountConfig<T> {
 	label: string;

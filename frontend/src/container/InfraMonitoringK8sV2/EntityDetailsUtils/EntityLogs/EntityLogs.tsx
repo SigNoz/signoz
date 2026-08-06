@@ -20,10 +20,7 @@ import {
 	combineInitialAndUserExpression,
 	getUserExpressionFromCombined,
 } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
-import {
-	InfraMonitoringEvents,
-	logInfraDrawerFilterCustomizedEvent,
-} from 'constants/events';
+import { InfraMonitoringEvents } from 'constants/events';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { FontSize } from 'container/OptionsMenu/types';
@@ -53,6 +50,7 @@ import { isModifierKeyPressed } from 'utils/app';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { logInfraDrawerFilterCustomizedEvent } from 'container/InfraMonitoringK8sV2/EntityDetailsUtils/events';
 
 interface Props {
 	eventEntity: string;

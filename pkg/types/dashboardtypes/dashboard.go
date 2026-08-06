@@ -176,69 +176,6 @@ func NewGettableDashboardFromDashboard(dashboard *Dashboard) (*GettableDashboard
 	}, nil
 }
 
-func NewStatsFromStorableDashboards(dashboards []*StorableDashboard) map[string]any {
-	stats := make(map[string]any)
-	stats["dashboard.panels.count"] = int64(0)
-	stats["dashboard.panels.traces.count"] = int64(0)
-	stats["dashboard.panels.metrics.count"] = int64(0)
-	stats["dashboard.panels.logs.count"] = int64(0)
-	for _, dashboard := range dashboards {
-		addStatsFromStorableDashboard(dashboard, stats)
-	}
-
-	stats["dashboard.count"] = int64(len(dashboards))
-	return stats
-}
-
-func addStatsFromStorableDashboard(dashboard *StorableDashboard, stats map[string]any) {
-	if dashboard.Data == nil {
-		return
-	}
-
-	if dashboard.Data["widgets"] == nil {
-		return
-	}
-
-	widgets, ok := dashboard.Data["widgets"]
-	if !ok {
-		return
-	}
-
-	data, ok := widgets.([]interface{})
-	if !ok {
-		return
-	}
-
-	for _, widget := range data {
-		sData, ok := widget.(map[string]interface{})
-		if ok && sData["query"] != nil {
-			stats["dashboard.panels.count"] = stats["dashboard.panels.count"].(int64) + 1
-			query, ok := sData["query"].(map[string]interface{})
-			if ok && query["queryType"] == "builder" && query["builder"] != nil {
-				builderData, ok := query["builder"].(map[string]interface{})
-				if ok && builderData["queryData"] != nil {
-					builderQueryData, ok := builderData["queryData"].([]interface{})
-					if ok {
-						for _, queryData := range builderQueryData {
-							data, ok := queryData.(map[string]interface{})
-							if ok {
-								switch data["dataSource"] {
-								case "traces":
-									stats["dashboard.panels.traces.count"] = stats["dashboard.panels.traces.count"].(int64) + 1
-								case "metrics":
-									stats["dashboard.panels.metrics.count"] = stats["dashboard.panels.metrics.count"].(int64) + 1
-								case "logs":
-									stats["dashboard.panels.logs.count"] = stats["dashboard.panels.logs.count"].(int64) + 1
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-}
-
 func (storableDashboardData *StorableDashboardData) GetWidgetIds() []string {
 	data := *storableDashboardData
 	widgetIds := []string{}

@@ -64,7 +64,7 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 		},
 	},
 	{
-		id: 'pvcName',
+		id: INFRA_MONITORING_ATTR_KEYS.K8S_PERSISTENT_VOLUME_CLAIM_NAME,
 		header: (): React.ReactNode => (
 			<EntityGroupHeader
 				title="PVC Name"
@@ -74,7 +74,7 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 		),
 		accessorFn: (row): string => row.persistentVolumeClaimName || '',
 		width: { min: 290 },
-		enableSort: false,
+		enableSort: true,
 		enableRemove: false,
 		enableMove: false,
 		pin: 'left',
@@ -195,7 +195,7 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 		},
 	},
 	{
-		id: 'inodesUsed',
+		id: 'inodes_used',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/volumes#volume-inodes-used">
 				Inodes Used
@@ -219,7 +219,7 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 		},
 	},
 	{
-		id: 'inodesFree',
+		id: 'inodes_free',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/volumes#volume-inodes-free">
 				Inodes Free

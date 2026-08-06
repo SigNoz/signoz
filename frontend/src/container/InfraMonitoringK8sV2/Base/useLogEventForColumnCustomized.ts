@@ -4,7 +4,6 @@ import {
 	useColumnOrder,
 	useHiddenColumnIds,
 } from 'components/TanStackTableView';
-import { logInfraColumnCustomizedEvent } from 'constants/events';
 
 import { InfraMonitoringEntity } from '../constants';
 
@@ -13,6 +12,7 @@ import {
 	useInfraMonitoringLineClamp,
 } from './useInfraMonitoringTablePreferencesStore';
 import { sortByColumnOrder } from './utils';
+import { logInfraColumnCustomizedEvent } from 'container/InfraMonitoringK8sV2/Base/events';
 
 interface UseEmitColumnCustomizedParams<TData> {
 	entity: InfraMonitoringEntity;
