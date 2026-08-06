@@ -8886,6 +8886,10 @@ export enum SavedviewtypesPanelTypeDTO {
 }
 export interface SavedviewtypesSavedViewSpecDTO {
 	display: SavedviewtypesDisplayDTO;
+	/**
+	 * @type string
+	 */
+	displayName: string;
 	panelType: SavedviewtypesPanelTypeDTO;
 	/**
 	 * @type array
@@ -8916,7 +8920,7 @@ export interface SavedviewtypesPostableSavedViewDTO {
 	/**
 	 * @type string
 	 */
-	name: string;
+	name?: string;
 	source: SavedviewtypesSourceDTO;
 }
 
@@ -8949,6 +8953,11 @@ export interface SavedviewtypesSavedViewDTO {
 	 * @type string
 	 */
 	updatedBy?: string;
+}
+
+export interface SavedviewtypesUpdatableSavedViewDTO {
+	data: SavedviewtypesSavedViewDataDTO;
+	source: SavedviewtypesSourceDTO;
 }
 
 export interface ServiceaccounttypesDeprecatedPostableServiceAccountRoleDTO {

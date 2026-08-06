@@ -56,22 +56,28 @@ func TestSavedViewSpecValidate(t *testing.T) {
 	}{
 		{
 			name:        "valid spec",
-			spec:        SavedViewSpec{PanelType: PanelTypeGraph, Queries: validQueries()},
+			spec:        SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, Queries: validQueries()},
 			expectError: false,
 		},
 		{
+			name:        "empty display name is rejected",
+			spec:        SavedViewSpec{PanelType: PanelTypeGraph, Queries: validQueries()},
+			expectError: true,
+		},
+		{
 			name:        "invalid panel type is rejected before queries are checked",
-			spec:        SavedViewSpec{PanelType: PanelType{valuer.NewString("bogus")}, Queries: validQueries()},
+			spec:        SavedViewSpec{DisplayName: "My View", PanelType: PanelType{valuer.NewString("bogus")}, Queries: validQueries()},
 			expectError: true,
 		},
 		{
 			name:        "no queries is rejected",
-			spec:        SavedViewSpec{PanelType: PanelTypeGraph},
+			spec:        SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph},
 			expectError: true,
 		},
 		{
 			name: "selected fields and display are not required",
 			spec: SavedViewSpec{
+				DisplayName:    "My View",
 				PanelType:      PanelTypeTable,
 				Queries:        validQueries(),
 				SelectedFields: []telemetrytypes.TelemetryFieldKey{{Name: "service.name"}},
@@ -101,22 +107,22 @@ func TestSavedViewDataValidate(t *testing.T) {
 	}{
 		{
 			name:        "valid data",
-			data:        SavedViewData{SchemaVersion: SavedViewSchemaVersion, Spec: SavedViewSpec{PanelType: PanelTypeGraph, Queries: validQueries()}},
+			data:        SavedViewData{SchemaVersion: SavedViewSchemaVersion, Spec: SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, Queries: validQueries()}},
 			expectError: false,
 		},
 		{
 			name:        "wrong schema version is rejected",
-			data:        SavedViewData{SchemaVersion: "v1", Spec: SavedViewSpec{PanelType: PanelTypeGraph, Queries: validQueries()}},
+			data:        SavedViewData{SchemaVersion: "v1", Spec: SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, Queries: validQueries()}},
 			expectError: true,
 		},
 		{
 			name:        "empty schema version is rejected",
-			data:        SavedViewData{Spec: SavedViewSpec{PanelType: PanelTypeGraph, Queries: validQueries()}},
+			data:        SavedViewData{Spec: SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, Queries: validQueries()}},
 			expectError: true,
 		},
 		{
 			name:        "invalid spec is rejected",
-			data:        SavedViewData{SchemaVersion: SavedViewSchemaVersion, Spec: SavedViewSpec{PanelType: PanelTypeGraph}},
+			data:        SavedViewData{SchemaVersion: SavedViewSchemaVersion, Spec: SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph}},
 			expectError: true,
 		},
 	}

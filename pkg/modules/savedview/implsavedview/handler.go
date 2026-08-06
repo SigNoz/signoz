@@ -35,6 +35,10 @@ type legacyExtraData struct {
 	FontSize      string                             `json:"fontSize,omitempty"`
 }
 
+// newPostableSavedViewFromLegacyView builds a create payload for a v1 request.
+// v1 has no concept of the v2 slug Name, so it always leaves Name empty and
+// lets NewSavedView generate one from Data.Spec.DisplayName (the legacy Name
+// field) -- v1 callers never see or supply a slug.
 func newPostableSavedViewFromLegacyView(v *v3.SavedView) savedviewtypes.PostableSavedView {
 	var legacy legacyExtraData
 	if v.ExtraData != "" {
@@ -43,11 +47,11 @@ func newPostableSavedViewFromLegacyView(v *v3.SavedView) savedviewtypes.Postable
 	}
 
 	return savedviewtypes.PostableSavedView{
-		Name:   v.Name,
 		Source: savedviewtypes.Source{String: valuer.NewString(v.SourcePage)},
 		Data: savedviewtypes.SavedViewData{
 			SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
 			Spec: savedviewtypes.SavedViewSpec{
+				DisplayName:    v.Name,
 				PanelType:      savedviewtypes.PanelType{String: valuer.NewString(string(v.CompositeQuery.PanelType))},
 				Queries:        v.CompositeQuery.Queries,
 				SelectedFields: legacy.SelectColumns,
@@ -62,6 +66,40 @@ func newPostableSavedViewFromLegacyView(v *v3.SavedView) savedviewtypes.Postable
 	}
 }
 
+// newUpdatableSavedViewFromLegacyView builds an update payload for a v1
+// request. Name has no setter on UpdatableSavedView at all -- it's immutable
+// by omission -- so v1 only ever changes Data.Spec.DisplayName (the legacy
+// Name field) and the rest of the spec.
+func newUpdatableSavedViewFromLegacyView(v *v3.SavedView) savedviewtypes.UpdatableSavedView {
+	var legacy legacyExtraData
+	if v.ExtraData != "" {
+		// Best-effort: malformed/older extraData shapes never fail the request
+		_ = json.Unmarshal([]byte(v.ExtraData), &legacy)
+	}
+
+	return savedviewtypes.UpdatableSavedView{
+		Source: savedviewtypes.Source{String: valuer.NewString(v.SourcePage)},
+		Data: savedviewtypes.SavedViewData{
+			SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
+			Spec: savedviewtypes.SavedViewSpec{
+				DisplayName:    v.Name,
+				PanelType:      savedviewtypes.PanelType{String: valuer.NewString(string(v.CompositeQuery.PanelType))},
+				Queries:        v.CompositeQuery.Queries,
+				SelectedFields: legacy.SelectColumns,
+				Display: savedviewtypes.Display{
+					MaxLines: legacy.MaxLines,
+					FontSize: legacy.FontSize,
+					Format:   legacy.Format,
+					Color:    legacy.Color,
+				},
+			},
+		},
+	}
+}
+
+// newLegacyViewFromSavedView renders a v2 SavedView back into the v1 shape.
+// The legacy Name field maps to Data.Spec.DisplayName, not the internal slug
+// -- v1 clients only ever see the free-text name they originally saved.
 func newLegacyViewFromSavedView(v *savedviewtypes.SavedView) (*v3.SavedView, error) {
 	extraData, err := json.Marshal(legacyExtraData{
 		Color:         v.Data.Spec.Display.Color,
@@ -76,7 +114,7 @@ func newLegacyViewFromSavedView(v *savedviewtypes.SavedView) (*v3.SavedView, err
 
 	return &v3.SavedView{
 		ID:         v.ID,
-		Name:       v.Name,
+		Name:       v.Data.Spec.DisplayName,
 		CreatedAt:  v.CreatedAt,
 		CreatedBy:  v.CreatedBy,
 		UpdatedAt:  v.UpdatedAt,
@@ -193,7 +231,7 @@ func (handler *handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.module.UpdateView(ctx, claims.OrgID, viewUUID, newPostableSavedViewFromLegacyView(&view))
+	err = handler.module.UpdateView(ctx, claims.OrgID, viewUUID, newUpdatableSavedViewFromLegacyView(&view))
 	if err != nil {
 		render.Error(w, err)
 		return

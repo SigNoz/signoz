@@ -111,11 +111,11 @@ def test_write_forbidden_without_grant(
     resp = requests.put(
         signoz.self.host_configs["8080"].get(f"{SAVED_VIEW_BASE}/{target_id}"),
         json={
-            "name": _SAVED_VIEW_FGA_TARGET_NAME,
             "source": "logs",
             "data": {
                 "schemaVersion": "v2",
                 "spec": {
+                    "displayName": _SAVED_VIEW_FGA_TARGET_NAME,
                     "panelType": "table",
                     "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
                     "selectedFields": [],
@@ -136,6 +136,7 @@ def test_write_forbidden_without_grant(
             "data": {
                 "schemaVersion": "v2",
                 "spec": {
+                    "displayName": "saved-view-fga-create-attempt",
                     "panelType": "table",
                     "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
                     "selectedFields": [],
@@ -210,11 +211,11 @@ def test_update_scoped_to_granted_view(
 
     token = get_token(_SAVED_VIEW_FGA_CUSTOM_USER_EMAIL, _SAVED_VIEW_FGA_CUSTOM_USER_PASSWORD)
     updated_body = {
-        "name": _SAVED_VIEW_FGA_TARGET_NAME,
         "source": "logs",
         "data": {
             "schemaVersion": "v2",
             "spec": {
+                "displayName": _SAVED_VIEW_FGA_TARGET_NAME,
                 "panelType": "graph",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
                 "selectedFields": [],

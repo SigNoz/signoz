@@ -235,7 +235,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewFillDashboardSpecCollectionsFactory(sqlstore, dashboardStore),
 		sqlmigration.NewScrubEmailChannelTransportFactory(sqlstore),
 		sqlmigration.NewAddDashboardTuplesFactory(sqlstore),
-		sqlmigration.NewRestructureSavedViewSpecFactory(sqlstore),
+		sqlmigration.NewRestructureSavedViewSpecFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddSavedViewTuplesFactory(sqlstore),
 	)
 }

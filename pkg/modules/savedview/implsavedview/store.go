@@ -21,7 +21,7 @@ func NewStore(sqlstore sqlstore.SQLStore) savedviewtypes.Store {
 func (store *store) Create(ctx context.Context, view *savedviewtypes.SavedView) error {
 	_, err := store.sqlstore.BunDB().NewInsert().Model(view).Exec(ctx)
 	if err != nil {
-		return errors.WrapInternalf(err, errors.CodeInternal, "error in creating saved view")
+		return store.sqlstore.WrapAlreadyExistsErrf(err, errors.CodeAlreadyExists, "saved view with name %s already exists", view.Name)
 	}
 	return nil
 }
@@ -40,8 +40,8 @@ func (store *store) Get(ctx context.Context, orgID string, id valuer.UUID) (*sav
 func (store *store) Update(ctx context.Context, view *savedviewtypes.SavedView) error {
 	res, err := store.sqlstore.BunDB().NewUpdate().
 		Model(&savedviewtypes.SavedView{}).
-		Set("updated_at = ?, updated_by = ?, name = ?, source = ?, data = ?",
-			view.UpdatedAt, view.UpdatedBy, view.Name, view.Source, view.Data).
+		Set("updated_at = ?, updated_by = ?, source = ?, data = ?",
+			view.UpdatedAt, view.UpdatedBy, view.Source, view.Data).
 		Where("id = ?", view.ID.StringValue()).
 		Where("org_id = ?", view.OrgID).
 		Exec(ctx)

@@ -1,19 +1,31 @@
 package savedviewtypes
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/util/validation"
 )
 
 func validPostableSavedView() PostableSavedView {
 	return PostableSavedView{
-		Name:   "my view",
+		Name:   "my-view",
 		Source: SourceLogs,
 		Data: SavedViewData{
 			SchemaVersion: SavedViewSchemaVersion,
-			Spec:          SavedViewSpec{PanelType: PanelTypeGraph, Queries: validQueries()},
+			Spec:          SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, Queries: validQueries()},
+		},
+	}
+}
+
+func validUpdatableSavedView() UpdatableSavedView {
+	return UpdatableSavedView{
+		Source: SourceLogs,
+		Data: SavedViewData{
+			SchemaVersion: SavedViewSchemaVersion,
+			Spec:          SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, Queries: validQueries()},
 		},
 	}
 }
@@ -60,6 +72,43 @@ func TestPostableSavedViewValidate(t *testing.T) {
 		view.Data.SchemaVersion = "v1"
 		assert.Error(t, view.Validate())
 	})
+
+	t.Run("invalid name is rejected", func(t *testing.T) {
+		view := validPostableSavedView()
+		view.Name = "My View"
+		assert.Error(t, view.Validate())
+	})
+
+	t.Run("empty name is allowed -- generated at NewSavedView time", func(t *testing.T) {
+		view := validPostableSavedView()
+		view.Name = ""
+		assert.NoError(t, view.Validate())
+	})
+
+	t.Run("empty displayName is rejected", func(t *testing.T) {
+		view := validPostableSavedView()
+		view.Data.Spec.DisplayName = ""
+		assert.ErrorContains(t, view.Validate(), "displayName is required")
+	})
+}
+
+func TestUpdatableSavedViewValidate(t *testing.T) {
+	t.Run("valid view", func(t *testing.T) {
+		view := validUpdatableSavedView()
+		assert.NoError(t, view.Validate())
+	})
+
+	t.Run("invalid source is rejected", func(t *testing.T) {
+		view := validUpdatableSavedView()
+		view.Source = Source{valuer.NewString("bogus")}
+		assert.Error(t, view.Validate())
+	})
+
+	t.Run("empty displayName is rejected", func(t *testing.T) {
+		view := validUpdatableSavedView()
+		view.Data.Spec.DisplayName = ""
+		assert.ErrorContains(t, view.Validate(), "displayName is required")
+	})
 }
 
 func TestListSavedViewsParamsValidate(t *testing.T) {
@@ -83,17 +132,86 @@ func TestNewSavedView(t *testing.T) {
 	orgID := valuer.GenerateUUID().StringValue()
 	view := validPostableSavedView()
 
-	savedView := NewSavedView(orgID, "creator@signoz.io", "updater@signoz.io", view)
+	savedView := view.NewSavedView(orgID, "creator@signoz.io")
 
 	assert.False(t, savedView.ID.IsZero())
 	assert.Equal(t, orgID, savedView.OrgID)
 	assert.Equal(t, "creator@signoz.io", savedView.CreatedBy)
-	assert.Equal(t, "updater@signoz.io", savedView.UpdatedBy)
+	assert.Equal(t, "creator@signoz.io", savedView.UpdatedBy)
 	assert.Equal(t, view.Name, savedView.Name)
 	assert.Equal(t, view.Source, savedView.Source)
 	assert.Equal(t, view.Data, savedView.Data)
 	assert.False(t, savedView.CreatedAt.IsZero())
 	assert.Equal(t, savedView.CreatedAt, savedView.UpdatedAt)
+}
+
+func TestNewSavedView_GeneratesNameWhenEmpty(t *testing.T) {
+	orgID := valuer.GenerateUUID().StringValue()
+	view := validPostableSavedView()
+	view.Name = ""
+	view.Data.Spec.DisplayName = "My View!"
+
+	savedView := view.NewSavedView(orgID, "creator@signoz.io")
+
+	assert.NotEmpty(t, savedView.Name)
+	assert.Empty(t, validation.IsDNS1123Label(savedView.Name), "generated name must be a valid DNS-1123 label")
+	assert.True(t, strings.HasPrefix(savedView.Name, "my-view-"))
+	assert.Equal(t, "My View!", savedView.Data.Spec.DisplayName)
+}
+
+func TestSavedView_Update(t *testing.T) {
+	existing := validPostableSavedView().NewSavedView(valuer.GenerateUUID().StringValue(), "creator@signoz.io")
+	originalName := existing.Name
+
+	updatable := validUpdatableSavedView()
+	updatable.Data.Spec.DisplayName = "Renamed"
+	updatable.Source = SourceTraces
+
+	existing.Update(updatable, "updater@signoz.io")
+
+	assert.Equal(t, originalName, existing.Name, "Name has no setter on UpdatableSavedView -- it must be untouched")
+	assert.Equal(t, "Renamed", existing.Data.Spec.DisplayName)
+	assert.Equal(t, SourceTraces, existing.Source)
+	assert.Equal(t, "updater@signoz.io", existing.UpdatedBy)
+}
+
+func TestGenerateSavedViewName(t *testing.T) {
+	tests := []struct {
+		scenario   string
+		input      string
+		wantPrefix string
+	}{
+		{scenario: "simple words with spaces", input: "My View", wantPrefix: "my-view"},
+		{scenario: "punctuation collapses", input: "Hello, World!", wantPrefix: "hello-world"},
+		{scenario: "leading and trailing whitespace", input: "  hello  ", wantPrefix: "hello"},
+		{scenario: "leading and trailing hyphens", input: "---abc---", wantPrefix: "abc"},
+		{scenario: "consecutive non-alphanumerics collapse", input: "a___b...c", wantPrefix: "a-b-c"},
+		{scenario: "digits are preserved", input: "Region us-east-1", wantPrefix: "region-us-east-1"},
+		{scenario: "no alphanumerics drops prefix and returns suffix only", input: "!!! ???", wantPrefix: ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.scenario, func(t *testing.T) {
+			got := generateSavedViewName(tt.input)
+			assert.NotEmpty(t, got)
+			assert.LessOrEqual(t, len(got), 63)
+			assert.Empty(t, validation.IsDNS1123Label(got), "result must be a valid DNS-1123 label")
+
+			if tt.wantPrefix == "" {
+				assert.Len(t, got, savedViewNameSuffixLen, "expected the bare random suffix")
+				return
+			}
+			expectedPrefix := tt.wantPrefix + "-"
+			assert.True(t, strings.HasPrefix(got, expectedPrefix), "expected prefix %q, got %q", expectedPrefix, got)
+			assert.Len(t, got, len(expectedPrefix)+savedViewNameSuffixLen)
+		})
+	}
+
+	t.Run("suffix differs across calls", func(t *testing.T) {
+		first := generateSavedViewName("collision-test")
+		second := generateSavedViewName("collision-test")
+		assert.NotEqual(t, first, second, "expected the random suffix to differ across calls")
+	})
 }
 
 func TestNewStatsFromSavedViews(t *testing.T) {

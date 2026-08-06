@@ -28,7 +28,7 @@ func (module *module) CreateView(ctx context.Context, orgID string, view savedvi
 		return valuer.UUID{}, errors.NewInternalf(errors.CodeInternal, "error in getting email from context")
 	}
 
-	dbView := savedviewtypes.NewSavedView(orgID, claims.Email, claims.Email, view)
+	dbView := view.NewSavedView(orgID, claims.Email)
 
 	if err := module.store.Create(ctx, dbView); err != nil {
 		return valuer.UUID{}, err
@@ -46,10 +46,14 @@ func (module *module) UpdateView(ctx context.Context, orgID string, uuid valuer.
 		return errors.NewInternalf(errors.CodeInternal, "error in getting email from context")
 	}
 
-	dbView := savedviewtypes.NewSavedView(orgID, claims.Email, claims.Email, view)
-	dbView.ID = uuid
+	existing, err := module.store.Get(ctx, orgID, uuid)
+	if err != nil {
+		return err
+	}
 
-	return module.store.Update(ctx, dbView)
+	existing.Update(view, claims.Email)
+
+	return module.store.Update(ctx, existing)
 }
 
 func (module *module) DeleteView(ctx context.Context, orgID string, uuid valuer.UUID) error {

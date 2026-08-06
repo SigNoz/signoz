@@ -27,7 +27,11 @@ type Display struct {
 }
 
 // SavedViewSpec is the typed content of a saved view, mirroring the dashboardtypes v2 spec pattern.
+// DisplayName is the free-text human-readable label; it's distinct from the
+// view's slug Name (an immutable identifier, see SavedView) and from Display
+// (view-rendering preferences).
 type SavedViewSpec struct {
+	DisplayName    string                             `json:"displayName" required:"true"`
 	PanelType      PanelType                          `json:"panelType" required:"true"`
 	Queries        []qbtypes.QueryEnvelope            `json:"queries" required:"true" nullable:"false"`
 	SelectedFields []telemetrytypes.TelemetryFieldKey `json:"selectedFields" required:"true" nullable:"false"`
@@ -65,6 +69,9 @@ func (p PanelType) Validate() error {
 }
 
 func (s *SavedViewSpec) Validate() error {
+	if s.DisplayName == "" {
+		return errors.NewInvalidInputf(ErrCodeSavedViewInvalidInput, "displayName is required")
+	}
 	if err := s.PanelType.Validate(); err != nil {
 		return err
 	}

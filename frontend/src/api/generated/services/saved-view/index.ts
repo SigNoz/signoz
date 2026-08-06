@@ -26,6 +26,7 @@ import type {
 	ListSavedViewsParams,
 	RenderErrorResponseDTO,
 	SavedviewtypesPostableSavedViewDTO,
+	SavedviewtypesUpdatableSavedViewDTO,
 	UpdateSavedViewPathParameters,
 } from '../sigNoz.schemas';
 
@@ -394,14 +395,14 @@ export const invalidateGetSavedView = async (
  */
 export const updateSavedView = (
 	{ id }: UpdateSavedViewPathParameters,
-	savedviewtypesPostableSavedViewDTO?: BodyType<SavedviewtypesPostableSavedViewDTO>,
+	savedviewtypesUpdatableSavedViewDTO?: BodyType<SavedviewtypesUpdatableSavedViewDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v2/saved_views/${id}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
-		data: savedviewtypesPostableSavedViewDTO,
+		data: savedviewtypesUpdatableSavedViewDTO,
 		signal,
 	});
 };
@@ -415,7 +416,7 @@ export const getUpdateSavedViewMutationOptions = <
 		TError,
 		{
 			pathParams: UpdateSavedViewPathParameters;
-			data?: BodyType<SavedviewtypesPostableSavedViewDTO>;
+			data?: BodyType<SavedviewtypesUpdatableSavedViewDTO>;
 		},
 		TContext
 	>;
@@ -424,7 +425,7 @@ export const getUpdateSavedViewMutationOptions = <
 	TError,
 	{
 		pathParams: UpdateSavedViewPathParameters;
-		data?: BodyType<SavedviewtypesPostableSavedViewDTO>;
+		data?: BodyType<SavedviewtypesUpdatableSavedViewDTO>;
 	},
 	TContext
 > => {
@@ -441,7 +442,7 @@ export const getUpdateSavedViewMutationOptions = <
 		Awaited<ReturnType<typeof updateSavedView>>,
 		{
 			pathParams: UpdateSavedViewPathParameters;
-			data?: BodyType<SavedviewtypesPostableSavedViewDTO>;
+			data?: BodyType<SavedviewtypesUpdatableSavedViewDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -456,7 +457,7 @@ export type UpdateSavedViewMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateSavedView>>
 >;
 export type UpdateSavedViewMutationBody =
-	| BodyType<SavedviewtypesPostableSavedViewDTO>
+	| BodyType<SavedviewtypesUpdatableSavedViewDTO>
 	| undefined;
 export type UpdateSavedViewMutationError = ErrorType<RenderErrorResponseDTO>;
 
@@ -472,7 +473,7 @@ export const useUpdateSavedView = <
 		TError,
 		{
 			pathParams: UpdateSavedViewPathParameters;
-			data?: BodyType<SavedviewtypesPostableSavedViewDTO>;
+			data?: BodyType<SavedviewtypesUpdatableSavedViewDTO>;
 		},
 		TContext
 	>;
@@ -481,7 +482,7 @@ export const useUpdateSavedView = <
 	TError,
 	{
 		pathParams: UpdateSavedViewPathParameters;
-		data?: BodyType<SavedviewtypesPostableSavedViewDTO>;
+		data?: BodyType<SavedviewtypesUpdatableSavedViewDTO>;
 	},
 	TContext
 > => {

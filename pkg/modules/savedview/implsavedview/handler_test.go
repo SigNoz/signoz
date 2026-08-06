@@ -40,7 +40,8 @@ func TestNewPostableSavedViewFromLegacyView(t *testing.T) {
 
 		postable := newPostableSavedViewFromLegacyView(legacy)
 
-		assert.Equal(t, "my view", postable.Name)
+		assert.Empty(t, postable.Name, "v1 has no slug concept -- name must always be generated")
+		assert.Equal(t, "my view", postable.Data.Spec.DisplayName)
 		assert.Equal(t, savedviewtypes.SourceLogs, postable.Source)
 		assert.Equal(t, savedviewtypes.SavedViewSchemaVersion, postable.Data.SchemaVersion)
 		assert.Equal(t, savedviewtypes.PanelTypeGraph, postable.Data.Spec.PanelType)
@@ -79,19 +80,37 @@ func TestNewPostableSavedViewFromLegacyView(t *testing.T) {
 
 		postable := newPostableSavedViewFromLegacyView(legacy)
 
-		assert.Equal(t, "malformed extra data", postable.Name)
+		assert.Equal(t, "malformed extra data", postable.Data.Spec.DisplayName)
 		assert.Equal(t, savedviewtypes.Display{}, postable.Data.Spec.Display)
 	})
+}
+
+func TestNewUpdatableSavedViewFromLegacyView(t *testing.T) {
+	legacy := &v3.SavedView{
+		Name:       "renamed view",
+		SourcePage: "traces",
+		CompositeQuery: &v3.CompositeQuery{
+			PanelType: v3.PanelTypeTable,
+			Queries:   testQueries(),
+		},
+		ExtraData: `{"color":"red"}`,
+	}
+
+	updatable := newUpdatableSavedViewFromLegacyView(legacy)
+
+	assert.Equal(t, "renamed view", updatable.Data.Spec.DisplayName)
+	assert.Equal(t, savedviewtypes.SourceTraces, updatable.Source)
 }
 
 func TestNewLegacyViewFromSavedView(t *testing.T) {
 	now := time.Now()
 	savedView := &savedviewtypes.SavedView{
-		Name:   "my view",
+		Name:   "my-view-abc123ef",
 		Source: savedviewtypes.SourceLogs,
 		Data: savedviewtypes.SavedViewData{
 			SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
 			Spec: savedviewtypes.SavedViewSpec{
+				DisplayName:    "my view",
 				PanelType:      savedviewtypes.PanelTypeGraph,
 				Queries:        testQueries(),
 				SelectedFields: []telemetrytypes.TelemetryFieldKey{{Name: "service.name"}},
@@ -109,7 +128,7 @@ func TestNewLegacyViewFromSavedView(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, savedView.ID, legacy.ID)
-	assert.Equal(t, savedView.Name, legacy.Name)
+	assert.Equal(t, savedView.Data.Spec.DisplayName, legacy.Name)
 	assert.Equal(t, savedView.CreatedAt, legacy.CreatedAt)
 	assert.Equal(t, savedView.CreatedBy, legacy.CreatedBy)
 	assert.Equal(t, savedView.UpdatedAt, legacy.UpdatedAt)
@@ -129,8 +148,8 @@ func TestNewLegacyViewFromSavedView(t *testing.T) {
 }
 
 func TestNewLegacyViewsFromSavedViews(t *testing.T) {
-	a := &savedviewtypes.SavedView{Name: "a", Source: savedviewtypes.SourceLogs, Data: savedviewtypes.SavedViewData{Spec: savedviewtypes.SavedViewSpec{PanelType: savedviewtypes.PanelTypeGraph, Queries: testQueries()}}}
-	b := &savedviewtypes.SavedView{Name: "b", Source: savedviewtypes.SourceTraces, Data: savedviewtypes.SavedViewData{Spec: savedviewtypes.SavedViewSpec{PanelType: savedviewtypes.PanelTypeTable, Queries: testQueries()}}}
+	a := &savedviewtypes.SavedView{Name: "a-slug", Source: savedviewtypes.SourceLogs, Data: savedviewtypes.SavedViewData{Spec: savedviewtypes.SavedViewSpec{DisplayName: "a", PanelType: savedviewtypes.PanelTypeGraph, Queries: testQueries()}}}
+	b := &savedviewtypes.SavedView{Name: "b-slug", Source: savedviewtypes.SourceTraces, Data: savedviewtypes.SavedViewData{Spec: savedviewtypes.SavedViewSpec{DisplayName: "b", PanelType: savedviewtypes.PanelTypeTable, Queries: testQueries()}}}
 
 	legacyViews, err := newLegacyViewsFromSavedViews([]*savedviewtypes.SavedView{a, b})
 	require.NoError(t, err)
@@ -141,16 +160,18 @@ func TestNewLegacyViewsFromSavedViews(t *testing.T) {
 
 // TestLegacyViewRoundTrip guards the whole v1<->v2 bridge: converting a
 // SavedView to its legacy shape and back must recover the fields the legacy
-// frontend round-trips through (name, source, panelType, queries,
+// frontend round-trips through (displayName, source, panelType, queries,
 // selectedFields, display) -- these two functions are each other's inverse
-// on the API surface, so a regression in either should fail this.
+// on the API surface, so a regression in either should fail this. The internal
+// slug (Name) is deliberately NOT part of this contract -- v1 never sees it.
 func TestLegacyViewRoundTrip(t *testing.T) {
 	original := &savedviewtypes.SavedView{
-		Name:   "round trip",
+		Name:   "round-trip-abc123ef",
 		Source: savedviewtypes.SourceMetrics,
 		Data: savedviewtypes.SavedViewData{
 			SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
 			Spec: savedviewtypes.SavedViewSpec{
+				DisplayName:    "round trip",
 				PanelType:      savedviewtypes.PanelTypeTable,
 				Queries:        testQueries(),
 				SelectedFields: []telemetrytypes.TelemetryFieldKey{{Name: "service.name"}},
@@ -164,7 +185,8 @@ func TestLegacyViewRoundTrip(t *testing.T) {
 
 	roundTripped := newPostableSavedViewFromLegacyView(legacy)
 
-	assert.Equal(t, original.Name, roundTripped.Name)
+	assert.Empty(t, roundTripped.Name)
+	assert.Equal(t, original.Data.Spec.DisplayName, roundTripped.Data.Spec.DisplayName)
 	assert.Equal(t, original.Source, roundTripped.Source)
 	assert.Equal(t, original.Data.Spec.PanelType, roundTripped.Data.Spec.PanelType)
 	assert.Equal(t, original.Data.Spec.Queries, roundTripped.Data.Spec.Queries)

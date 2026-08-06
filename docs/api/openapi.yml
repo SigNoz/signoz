@@ -7787,7 +7787,6 @@ components:
         source:
           $ref: '#/components/schemas/SavedviewtypesSource'
       required:
-      - name
       - source
       - data
       type: object
@@ -7828,6 +7827,8 @@ components:
       properties:
         display:
           $ref: '#/components/schemas/SavedviewtypesDisplay'
+        displayName:
+          type: string
         panelType:
           $ref: '#/components/schemas/SavedviewtypesPanelType'
         queries:
@@ -7839,6 +7840,7 @@ components:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
           type: array
       required:
+      - displayName
       - panelType
       - queries
       - selectedFields
@@ -7851,6 +7853,16 @@ components:
       - metrics
       - meter
       type: string
+    SavedviewtypesUpdatableSavedView:
+      properties:
+        data:
+          $ref: '#/components/schemas/SavedviewtypesSavedViewData'
+        source:
+          $ref: '#/components/schemas/SavedviewtypesSource'
+      required:
+      - source
+      - data
+      type: object
     ServiceaccounttypesDeprecatedPostableServiceAccountRole:
       properties:
         id:
@@ -23001,7 +23013,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SavedviewtypesPostableSavedView'
+              $ref: '#/components/schemas/SavedviewtypesUpdatableSavedView'
       responses:
         "200":
           description: OK

@@ -33,7 +33,8 @@ func testPostableSavedView(name string, source savedviewtypes.Source) savedviewt
 		Data: savedviewtypes.SavedViewData{
 			SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
 			Spec: savedviewtypes.SavedViewSpec{
-				PanelType: savedviewtypes.PanelTypeGraph,
+				DisplayName: name,
+				PanelType:   savedviewtypes.PanelTypeGraph,
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeBuilder,
@@ -49,9 +50,18 @@ func testPostableSavedView(name string, source savedviewtypes.Source) savedviewt
 	}
 }
 
+func testUpdatableSavedView(displayName string, source savedviewtypes.Source) savedviewtypes.UpdatableSavedView {
+	postable := testPostableSavedView(displayName, source)
+	return savedviewtypes.UpdatableSavedView{
+		Source: postable.Source,
+		Data:   postable.Data,
+	}
+}
+
 func testSavedView(orgID string, id valuer.UUID, updatedBy string, view savedviewtypes.PostableSavedView) *savedviewtypes.SavedView {
-	savedView := savedviewtypes.NewSavedView(orgID, "creator@signoz.io", updatedBy, view)
+	savedView := view.NewSavedView(orgID, "creator@signoz.io")
 	savedView.ID = id
+	savedView.UpdatedBy = updatedBy
 	return savedView
 }
 
@@ -124,17 +134,24 @@ func TestModule_UpdateView(t *testing.T) {
 	orgID := valuer.GenerateUUID().StringValue()
 	id := valuer.GenerateUUID()
 
-	updated := testPostableSavedView("renamed", savedviewtypes.SourceTraces)
+	existing := testSavedView(orgID, id, "creator@signoz.io", testPostableSavedView("my-view", savedviewtypes.SourceLogs))
+	existingName := existing.Name
+
+	updated := testUpdatableSavedView("renamed", savedviewtypes.SourceTraces)
 	updated.Data.Spec.PanelType = savedviewtypes.PanelTypeTable
 
+	st.ExpectGet(orgID, id, existing)
 	st.ExpectUpdate(orgID, id, 1)
 	require.NoError(t, m.UpdateView(contextWithClaims(orgID, "updater@signoz.io"), orgID, id, updated))
 
-	stored := testSavedView(orgID, id, "updater@signoz.io", updated)
+	stored := testSavedView(orgID, id, "updater@signoz.io", testPostableSavedView("renamed", savedviewtypes.SourceTraces))
+	stored.Name = existingName
+	stored.Data.Spec.PanelType = savedviewtypes.PanelTypeTable
 	st.ExpectGet(orgID, id, stored)
 	got, err := m.GetView(contextWithClaims(orgID, "creator@signoz.io"), orgID, id)
 	require.NoError(t, err)
-	assert.Equal(t, "renamed", got.Name)
+	assert.Equal(t, existingName, got.Name, "name must not change on update")
+	assert.Equal(t, "renamed", got.Data.Spec.DisplayName)
 	assert.Equal(t, savedviewtypes.SourceTraces, got.Source)
 	assert.Equal(t, savedviewtypes.PanelTypeTable, got.Data.Spec.PanelType)
 	assert.Equal(t, "updater@signoz.io", got.UpdatedBy)
@@ -149,8 +166,8 @@ func TestModule_UpdateView_NotFound(t *testing.T) {
 	ctx := contextWithClaims(orgID, "someone@signoz.io")
 	id := valuer.GenerateUUID()
 
-	st.ExpectUpdate(orgID, id, 0)
-	err := m.UpdateView(ctx, orgID, id, testPostableSavedView("does not exist", savedviewtypes.SourceLogs))
+	st.ExpectGet(orgID, id, nil)
+	err := m.UpdateView(ctx, orgID, id, testUpdatableSavedView("does-not-exist", savedviewtypes.SourceLogs))
 	require.Error(t, err)
 	assert.True(t, errors.Ast(err, errors.TypeNotFound), "expected a not-found error, got %v", err)
 
@@ -163,10 +180,10 @@ func TestModule_UpdateView_ScopedToOrg(t *testing.T) {
 	orgB := valuer.GenerateUUID().StringValue()
 	id := valuer.GenerateUUID()
 
-	// Only an update scoped to orgB's WHERE clause is registered; updating
-	// org A's view while authenticated as org B must not match it.
-	st.ExpectUpdate(orgB, id, 0)
-	err := m.UpdateView(contextWithClaims(orgB, "b@signoz.io"), orgB, id, testPostableSavedView("hijacked", savedviewtypes.SourceLogs))
+	// Only a Get scoped to orgB's WHERE clause is registered; updating org
+	// A's view while authenticated as org B must not match it.
+	st.ExpectGet(orgB, id, nil)
+	err := m.UpdateView(contextWithClaims(orgB, "b@signoz.io"), orgB, id, testUpdatableSavedView("hijacked", savedviewtypes.SourceLogs))
 	require.Error(t, err, "org B must not be able to update org A's view")
 	assert.True(t, errors.Ast(err, errors.TypeNotFound))
 
