@@ -17,7 +17,7 @@
 		border-bottom: 1px solid var(--l2-border) !important;
 		border-radius: 0 !important;
 		font-family: 'SF Mono', 'Geist Mono', 'Fira Code', monospace !important;
-		font-size: 12px !important;
+		font-size: var(--data-viewer-font-size, 12px) !important;
 		line-height: 18px !important;
 		background: var(--l1-background) !important;
 		outline: none !important;
@@ -33,7 +33,7 @@
 
 	// Font spec: SF Mono, 12px, 400, 18px line-height, -0.5% letter-spacing
 	font-family: 'SF Mono', 'Geist Mono', 'Fira Code', monospace;
-	font-size: 12px;
+	font-size: var(--data-viewer-font-size, 12px);
 	font-weight: 400;
 	line-height: 18px;
 	letter-spacing: -0.06px;

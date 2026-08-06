@@ -82,6 +82,7 @@ function Overview({
 				<DataViewer
 					data={prettyData}
 					drawerKey="logs-details"
+					fontSize={13}
 					prettyViewProps={{
 						actions,
 						visibleActions,
