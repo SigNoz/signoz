@@ -16,9 +16,6 @@ type TraceScope struct {
 	Columns   []TraceColumn
 	// DefaultOrderAlias is sorted by (desc) when the query gives no order.
 	DefaultOrderAlias string
-	// ActivityGateAlias names the column that must be > 0 for a per-trace row to feed
-	// trace-level (trace.) aggregations; empty disables the gate.
-	ActivityGateAlias string
 }
 
 // TraceColumn is one per-trace output column.

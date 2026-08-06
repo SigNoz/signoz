@@ -2,7 +2,7 @@
 builder_ai_query scalar / time-series aggregations. The `trace.` prefix picks the
 domain per expression: bare keys aggregate over gen_ai spans, trace.* over
 window-clipped per-trace values; a trace-level filter condition qualifies whole
-traces in every request type. Tests isolate their data via unique service.name.
+traces on both domains. Tests isolate their data via unique service.name.
 """
 
 from collections.abc import Callable
@@ -34,6 +34,7 @@ def scalar_query(
     group_by: list[TelemetryFieldKey] | None = None,
     alias: str | None = None,
     having: str | None = None,
+    order: list[OrderBy] | None = None,
     limit: int | None = None,
 ) -> dict:
     filter_expression = f"service.name = '{service}'"
@@ -47,18 +48,19 @@ def scalar_query(
         aggregations=[Aggregation(expression=expression, alias=alias)],
         group_by=group_by,
         having_expression=having,
+        order=order,
         limit=limit,
     ).to_dict()
 
 
-def scalar_value(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, service: str, expression: str) -> float:
+def scalar_value(signoz: types.SigNoz, token: str, start_ms: int, end_ms: int, service: str, expression: str, filter_extra: str = "") -> float:
     """Run one single-aggregation scalar query and return its value."""
     resp = make_query_request(
         signoz,
         token,
         start_ms,
         end_ms,
-        [scalar_query(service, expression)],
+        [scalar_query(service, expression, filter_extra=filter_extra)],
         request_type=RequestType.SCALAR,
     )
     assert resp.status_code == HTTPStatus.OK, f"{expression}: {resp.text}"
@@ -131,21 +133,12 @@ def test_ai_scalar_trace_level_filter_qualifies_traces(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     start_ms, end_ms = query_window(now)
 
-    for expression, expected in (
-        ("sum(trace.output_tokens)", 300),  # native trace-domain path
-        ("sum(gen_ai.usage.output_tokens)", 300),  # delegated span-domain path (__trace_scope)
+    for expression in (
+        "sum(trace.output_tokens)",  # native trace-domain path
+        "sum(gen_ai.usage.output_tokens)",  # delegated span-domain path (__trace_scope)
     ):
-        resp = make_query_request(
-            signoz,
-            token,
-            start_ms,
-            end_ms,
-            [scalar_query(service, expression, filter_extra="trace.output_tokens > 100")],
-            request_type=RequestType.SCALAR,
-        )
-        assert resp.status_code == HTTPStatus.OK, resp.text
-        data = get_scalar_table_data(resp.json())
-        assert len(data) == 1 and float(data[0][-1]) == pytest.approx(expected), f"{expression}: {data}"
+        got = scalar_value(signoz, token, start_ms, end_ms, service, expression, filter_extra="trace.output_tokens > 100")
+        assert got == pytest.approx(300), expression
 
     # the qualification also constrains delegated (span-domain) time series
     ts = BuilderQuery(
@@ -158,8 +151,7 @@ def test_ai_scalar_trace_level_filter_qualifies_traces(
     )
     resp = make_query_request(signoz, token, start_ms, end_ms, [ts.to_dict()], request_type=RequestType.TIME_SERIES)
     assert resp.status_code == HTTPStatus.OK, resp.text
-    values = series_values(resp.json())
-    assert values == [[pytest.approx(300)]], values
+    assert series_values(resp.json()) == [[pytest.approx(300)]]
 
 
 def test_ai_scalar_group_by_model(
@@ -212,18 +204,9 @@ def test_ai_timeseries_trace_level_aggregation(
         aggregations=[Aggregation(expression="avg(trace.output_tokens)")],
         step_interval=60,
     )
-    resp = make_query_request(
-        signoz,
-        token,
-        start_ms,
-        end_ms,
-        [query.to_dict()],
-        request_type=RequestType.TIME_SERIES,
-    )
+    resp = make_query_request(signoz, token, start_ms, end_ms, [query.to_dict()], request_type=RequestType.TIME_SERIES)
     assert resp.status_code == HTTPStatus.OK, resp.text
-
-    values = series_values(resp.json())
-    assert values == [[pytest.approx(200)]], values
+    assert series_values(resp.json()) == [[pytest.approx(200)]]
 
 
 def test_ai_timeseries_top_n_groups(
@@ -232,11 +215,54 @@ def test_ai_timeseries_top_n_groups(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """Grouped, limited time series ranks groups on whole-window per-trace values:
-    gpt-4o sums to 400 vs gpt-4o-mini's 50, so limit=1 keeps only gpt-4o."""
+    """Grouped, limited time series ranks groups on whole-window per-trace values in
+    the requested order: gpt-4o sums to 400 vs gpt-4o-mini's 50, so limit=1 keeps
+    gpt-4o for the default/desc ranking and gpt-4o-mini when ranking asc."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-agg-topn"
     insert_traces(ai_trace(now=now, service=service, in_tokens=10, out_tokens=300, model="gpt-4o") + ai_trace(now=now, service=service, in_tokens=10, out_tokens=100, model="gpt-4o") + ai_trace(now=now, service=service, in_tokens=10, out_tokens=50, model="gpt-4o-mini"))
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    start_ms, end_ms = query_window(now)
+
+    def top_series(order: list[OrderBy] | None) -> dict:
+        query = BuilderQuery(
+            signal="traces",
+            query_type="builder_ai_query",
+            name="A",
+            filter_expression=f"service.name = '{service}'",
+            aggregations=[Aggregation(expression="sum(trace.output_tokens)", alias="total_out")],
+            group_by=[TelemetryFieldKey(name="gen_ai.request.model")],
+            order=order,
+            step_interval=60,
+            limit=1,
+        )
+        resp = make_query_request(signoz, token, start_ms, end_ms, [query.to_dict()], request_type=RequestType.TIME_SERIES)
+        assert resp.status_code == HTTPStatus.OK, resp.text
+        series = resp.json()["data"]["data"]["results"][0]["aggregations"][0]["series"]
+        assert len(series) == 1, f"limit=1 must keep exactly one group, got {len(series)} series"
+        return series[0]
+
+    top = top_series(None)  # default ranking: first aggregation desc
+    assert top["labels"][0]["value"] == "gpt-4o", top["labels"]
+    assert [v["value"] for v in top["values"]] == [pytest.approx(400)]
+
+    bottom = top_series([OrderBy(key=TelemetryFieldKey(name="total_out"), direction="asc")])
+    assert bottom["labels"][0]["value"] == "gpt-4o-mini", bottom["labels"]
+    assert [v["value"] for v in bottom["values"]] == [pytest.approx(50)]
+
+
+def test_ai_timeseries_limit_without_group_by(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+) -> None:
+    """A time-series limit without group-by has nothing to rank and is ignored:
+    the single series comes back complete."""
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    service = "ai-it-agg-limit-nogroup"
+    insert_traces(ai_trace(now=now, service=service, in_tokens=10, out_tokens=100) + ai_trace(now=now, service=service, in_tokens=10, out_tokens=300))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     start_ms, end_ms = query_window(now)
@@ -246,18 +272,55 @@ def test_ai_timeseries_top_n_groups(
         query_type="builder_ai_query",
         name="A",
         filter_expression=f"service.name = '{service}'",
-        aggregations=[Aggregation(expression="sum(trace.output_tokens)")],
-        group_by=[TelemetryFieldKey(name="gen_ai.request.model")],
+        aggregations=[Aggregation(expression="avg(trace.output_tokens)")],
         step_interval=60,
         limit=1,
     )
     resp = make_query_request(signoz, token, start_ms, end_ms, [query.to_dict()], request_type=RequestType.TIME_SERIES)
     assert resp.status_code == HTTPStatus.OK, resp.text
+    assert series_values(resp.json()) == [[pytest.approx(200)]]
 
-    series = resp.json()["data"]["data"]["results"][0]["aggregations"][0]["series"]
-    assert len(series) == 1, f"limit=1 must keep only the top group, got {len(series)} series"
-    assert series[0]["labels"][0]["value"] == "gpt-4o", series[0]["labels"]
-    assert [v["value"] for v in series[0]["values"]] == [pytest.approx(400)]
+
+def test_ai_scalar_group_order_limit(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+) -> None:
+    """Scalar limit is a plain top-N over the grouped rows: sums 400/50/10 with
+    order by the aggregation alias desc and limit=2 keep the two largest models."""
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    service = "ai-it-agg-scalar-limit"
+    insert_traces(
+        ai_trace(now=now, service=service, in_tokens=10, out_tokens=300, model="gpt-4o")
+        + ai_trace(now=now, service=service, in_tokens=10, out_tokens=100, model="gpt-4o")
+        + ai_trace(now=now, service=service, in_tokens=10, out_tokens=50, model="gpt-4o-mini")
+        + ai_trace(now=now, service=service, in_tokens=10, out_tokens=10, model="gpt-4")
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    start_ms, end_ms = query_window(now)
+
+    resp = make_query_request(
+        signoz,
+        token,
+        start_ms,
+        end_ms,
+        [
+            scalar_query(
+                service,
+                "sum(trace.output_tokens)",
+                group_by=[TelemetryFieldKey(name="gen_ai.request.model")],
+                alias="total_out",
+                order=[OrderBy(key=TelemetryFieldKey(name="total_out"), direction="desc")],
+                limit=2,
+            )
+        ],
+        request_type=RequestType.SCALAR,
+    )
+    assert resp.status_code == HTTPStatus.OK, resp.text
+    data = get_scalar_table_data(resp.json())
+    assert [(row[0], float(row[-1])) for row in data] == [("gpt-4o", pytest.approx(400)), ("gpt-4o-mini", pytest.approx(50))], data
 
 
 def test_ai_timeseries_span_time_bucketing(
@@ -352,16 +415,10 @@ def test_ai_scalar_variables_in_trace_level_filter(
     data = get_scalar_table_data(resp.json())
     assert len(data) == 1 and float(data[0][-1]) == pytest.approx(300), data
 
-    resp = make_query_request(
-        signoz,
-        token,
-        start_ms,
-        end_ms,
-        [query],
-        request_type=RequestType.SCALAR,
-    )
+    resp = make_query_request(signoz, token, start_ms, end_ms, [query], request_type=RequestType.SCALAR)
     assert resp.status_code == HTTPStatus.BAD_REQUEST, resp.text
-    assert '"$threshold" cannot be used' in resp.text
+    # quotes in the message are JSON-escaped, so match the halves separately
+    assert "$threshold" in resp.text and "cannot be used in a trace-level filter" in resp.text, resp.text
 
     # a dynamic variable resolved to __all__ drops the condition (both traces count)
     resp = make_query_request(
@@ -378,28 +435,32 @@ def test_ai_scalar_variables_in_trace_level_filter(
     assert len(data) == 1 and float(data[0][-1]) == pytest.approx(400), data
 
 
-def test_ai_scalar_activity_gate_excludes_tool_only_traces(
+def test_ai_scalar_tool_only_trace_null_semantics(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """A tool-only trace (in the gate, no LLM span) must not feed trace-level
-    aggregations: count(trace.trace_id) skips it, span-level count() still sees it."""
+    """A tool-only trace (in the gate, no LLM span) follows plain SQL NULL semantics:
+    count(trace.trace_id) counts it (consistent with the trace list), avg over its
+    NULL tokens skips it, and `trace.llm_call_count > 0` is the explicit opt-out."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    service = "ai-it-agg-gate"
+    service = "ai-it-agg-toolonly"
     insert_traces(ai_trace(now=now, service=service, in_tokens=10, out_tokens=100) + tool_only_trace(now=now, service=service))
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     start_ms, end_ms = query_window(now)
 
-    def value(expression: str) -> float:
-        return scalar_value(signoz, token, start_ms, end_ms, service, expression)
+    def value(expression: str, filter_extra: str = "") -> float:
+        return scalar_value(signoz, token, start_ms, end_ms, service, expression, filter_extra)
 
-    # count and avg agree on the trace set — the gate's purpose
-    assert value("count(trace.trace_id)") == 1, "tool-only trace must be dropped by the LLM-activity gate"
-    assert value("avg(trace.output_tokens)") == pytest.approx(100), "avg over the same gated trace set"
-    assert value("count()") == 2, "span-level count still sees the tool span"
+    assert value("count(trace.trace_id)") == 2, "tool-only trace is an AI trace and must be counted"
+    assert value("avg(trace.output_tokens)") == pytest.approx(100), "NULL tokens are skipped by avg"
+    assert value("avg(trace.tool_call_count)") == pytest.approx(0.5), "tool-only trace feeds tool aggregates (1 and 0 calls)"
+    assert value("count()") == 2, "span-level count sees the LLM and the tool span"
+
+    # filtering on LLM activity is explicit, not implicit
+    assert value("count(trace.trace_id)", filter_extra="trace.llm_call_count > 0") == 1
 
 
 def test_ai_scalar_having_on_aggregation(
@@ -443,12 +504,19 @@ def test_ai_aggregation_rejections(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """Targeted 400s: mixed domains, group-by on a trace column, raw order by a trace column."""
+    """Targeted 400s: mixed domains and group-by on a trace column come from the
+    builder; order-by is stopped earlier by request validation (only group keys and
+    aggregation aliases/expressions are admitted)."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-agg-reject"
     insert_traces(ai_trace(now=now, service=service, in_tokens=10, out_tokens=100))
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     start_ms, end_ms = query_window(now)
+
+    def expect_bad_request(query: dict, message: str) -> None:
+        resp = make_query_request(signoz, token, start_ms, end_ms, [query], request_type=RequestType.SCALAR)
+        assert resp.status_code == HTTPStatus.BAD_REQUEST, resp.text
+        assert message in resp.text, resp.text
 
     # span-level and trace-level aggregations cannot be mixed in one query
     mixed = BuilderQuery(
@@ -458,32 +526,14 @@ def test_ai_aggregation_rejections(
         filter_expression=f"service.name = '{service}'",
         aggregations=[Aggregation(expression="avg(trace.output_tokens)"), Aggregation(expression="count()")],
     )
-    resp = make_query_request(signoz, token, start_ms, end_ms, [mixed.to_dict()], request_type=RequestType.SCALAR)
-    assert resp.status_code == HTTPStatus.BAD_REQUEST, resp.text
-    assert "cannot be mixed" in resp.text
+    expect_bad_request(mixed.to_dict(), "cannot be mixed")
 
-    # grouping by a trace-level per-trace column is rejected with a targeted error
-    bad_group = BuilderQuery(
-        signal="traces",
-        query_type="builder_ai_query",
-        name="A",
-        filter_expression=f"service.name = '{service}'",
-        aggregations=[Aggregation(expression="avg(trace.output_tokens)")],
-        group_by=[TelemetryFieldKey(name="trace.llm_call_count")],
+    expect_bad_request(
+        scalar_query(service, "avg(trace.output_tokens)", group_by=[TelemetryFieldKey(name="trace.llm_call_count")]),
+        "grouping by trace-level aggregate",
     )
-    resp = make_query_request(signoz, token, start_ms, end_ms, [bad_group.to_dict()], request_type=RequestType.SCALAR)
-    assert resp.status_code == HTTPStatus.BAD_REQUEST, resp.text
-    assert "grouping by trace-level aggregate" in resp.text
 
-    # ordering the span list by a trace-level column is rejected with a targeted error
-    bad_order = BuilderQuery(
-        signal="traces",
-        query_type="builder_ai_query",
-        name="A",
-        filter_expression=f"service.name = '{service}'",
-        order=[OrderBy(key=TelemetryFieldKey(name="trace.output_tokens"), direction="desc")],
-        limit=10,
+    expect_bad_request(
+        scalar_query(service, "avg(trace.output_tokens)", order=[OrderBy(key=TelemetryFieldKey(name="trace.total_tokens"), direction="desc")]),
+        "invalid order by key",
     )
-    resp = make_query_request(signoz, token, start_ms, end_ms, [bad_order.to_dict()], request_type=RequestType.RAW)
-    assert resp.status_code == HTTPStatus.BAD_REQUEST, resp.text
-    assert "ordering the span list by trace-level aggregate" in resp.text

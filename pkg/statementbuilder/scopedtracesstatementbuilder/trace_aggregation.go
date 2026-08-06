@@ -25,8 +25,8 @@ import (
 //	   │              filter part; present only when the filter has one.
 //	   ▼
 //	__scoped_traces   per-trace values: windowed, mask-pruned GROUP BY trace_id
-//	   │              (+ ts bucket for time series, + group-by columns), activity-
-//	   ▼              gated rows only.
+//	   │              (+ ts bucket for time series, + group-by columns). Columns
+//	   ▼              off a trace slice are NULL and skipped by outer aggregates.
 //	main              outer aggregation over the per-trace rows → __result_i.
 
 // traceAggregation is one aggregation rewritten to run over the per-trace scan.
@@ -49,11 +49,11 @@ func (b *scopedTraceStatementBuilder) buildAggregation(
 	if err != nil {
 		return nil, err
 	}
-	if err := b.validateGroupByAndOrder(requestType, query); err != nil {
+	if err := b.validateGroupBy(query); err != nil {
 		return nil, err
 	}
 	if len(traceAggs) == 0 {
-		return b.buildDelegated(ctx, orgID, start, end, requestType, query, variables)
+		return b.buildDelegatedAggregation(ctx, orgID, start, end, requestType, query, variables)
 	}
 	return b.buildTraceAggregationQuery(ctx, orgID, querybuilder.ToNanoSecs(start), querybuilder.ToNanoSecs(end), requestType, query, variables, traceAggs)
 }
@@ -94,30 +94,16 @@ func (b *scopedTraceStatementBuilder) orderableColumnSet() map[string]struct{} {
 	return set
 }
 
-// validateGroupByAndOrder rejects trace-level columns as group-by / order keys with a
-// targeted error (not the field mapper's generic "field not found"); order keys naming
-// an aggregation (alias / expression / index) are exempt.
-func (b *scopedTraceStatementBuilder) validateGroupByAndOrder(requestType qbtypes.RequestType, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) error {
+// validateGroupBy rejects trace-level columns as group-by keys with a targeted error
+// (not the field mapper's generic "field not found"). Order keys need no check here:
+// request validation only admits group keys and aggregation aliases/expressions.
+func (b *scopedTraceStatementBuilder) validateGroupBy(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) error {
 	aliases := b.aggregateAliasSet()
 	for _, gb := range query.GroupBy {
 		if isTraceLevelKey(gb.Name, gb.FieldContext, aliases) {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput,
 				"grouping by trace-level aggregate %q is not supported; group by span attributes instead (e.g. service.name)", gb.Name)
 		}
-	}
-	for _, o := range query.Order {
-		if _, isAgg := traceAggOrderIndex(o, query); isAgg {
-			continue
-		}
-		if !isTraceLevelKey(o.Key.Name, o.Key.FieldContext, aliases) {
-			continue
-		}
-		if requestType == qbtypes.RequestTypeRaw {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput,
-				"ordering the span list by trace-level aggregate %q is not supported; order by span columns instead (e.g. timestamp, duration_nano)", o.Key.Name)
-		}
-		return errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"ordering by trace-level aggregate %q is not supported; order by the aggregation itself (its alias or expression) or a group-by key", o.Key.Name)
 	}
 	return nil
 }
@@ -395,8 +381,8 @@ type perTraceScanOpts struct {
 	spanPred     string              // resolved span-level filter, ANDed per span
 	resourcePred string              // resource-fingerprint prune (CTE reference or inline subquery)
 	qualified    bool                // constrain to __qualified
+	limitPred    string              // top-N group prune (GLOBAL IN __limit_cte)
 	havingPred   string              // resolved HAVING predicate over the selected aliases
-	activityExpr string              // aggregate expr that must be > 0 for a row to survive
 }
 
 // buildPerTraceScan renders the scan: window + gate mask (+ span filter, resource
@@ -437,6 +423,9 @@ func (b *scopedTraceStatementBuilder) buildPerTraceScan(sb *sqlbuilder.SelectBui
 	if o.qualified {
 		where = append(where, "trace_id GLOBAL IN (SELECT trace_id FROM __qualified)")
 	}
+	if o.limitPred != "" {
+		where = append(where, o.limitPred)
+	}
 	sb.Where(where...)
 
 	groupBy := []string{"trace_id"}
@@ -447,15 +436,8 @@ func (b *scopedTraceStatementBuilder) buildPerTraceScan(sb *sqlbuilder.SelectBui
 		groupBy = append(groupBy, "`"+gc.name+"`")
 	}
 	sb.GroupBy(groupBy...)
-	var having []string
-	if strings.TrimSpace(o.activityExpr) != "" {
-		having = append(having, "("+o.activityExpr+") > 0")
-	}
 	if strings.TrimSpace(o.havingPred) != "" {
-		having = append(having, o.havingPred)
-	}
-	if len(having) > 0 {
-		sb.Having(strings.Join(having, " AND "))
+		sb.Having(o.havingPred)
 	}
 	return sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 }
@@ -630,7 +612,8 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 	sb.From("__scoped_traces")
 
 	// grouped, limited time series → rank groups on whole-window per-trace values
-	// (exact for non-composable aggregates) and constrain the main query to the top-N.
+	// (exact for non-composable aggregates) and prune the main scan to the top-N.
+	limitPred := ""
 	if requestType == qbtypes.RequestTypeTimeSeries && query.Limit > 0 && len(groupCols) > 0 {
 		tsc, err := b.newScanContext(ctx, orgID, start, end, keys, spanExpr, "", variables)
 		if err != nil {
@@ -642,7 +625,6 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 			spanPred:     tsc.spanPred,
 			resourcePred: resourcePred,
 			qualified:    qualified,
-			activityExpr: activityGate(b.scope, tsc.resolved),
 		})
 		cteFragments = append(cteFragments, fmt.Sprintf("__scoped_traces_total AS (%s)", totalSQL))
 		cteArgs = append(cteArgs, totalArgs)
@@ -651,8 +633,12 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 		cteFragments = append(cteFragments, fmt.Sprintf("__limit_cte AS (%s)", limitSQL))
 		cteArgs = append(cteArgs, limitArgs)
 
-		tuple := "(" + strings.Join(groupNames, ", ") + ")"
-		sb.Where(fmt.Sprintf("%s IN (SELECT %s FROM __limit_cte)", tuple, strings.Join(groupNames, ", ")))
+		exprs := make([]string, 0, len(groupCols))
+		for _, gc := range groupCols {
+			exprs = append(exprs, "toString("+gc.expr+")")
+		}
+		limitPred = fmt.Sprintf("(%s) GLOBAL IN (SELECT %s FROM __limit_cte)",
+			strings.Join(exprs, ", "), strings.Join(groupNames, ", "))
 	}
 
 	msc, err := b.newScanContext(ctx, orgID, start, end, keys, spanExpr, "", variables)
@@ -666,9 +652,7 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 		spanPred:     msc.spanPred,
 		resourcePred: resourcePred,
 		qualified:    qualified,
-		// drop rows with no gated activity in their window/bucket slice, so all
-		// aggregations see the same trace set (see TraceScope.ActivityGateAlias)
-		activityExpr: activityGate(b.scope, msc.resolved),
+		limitPred:    limitPred,
 	})
 	cteFragments = append(cteFragments, fmt.Sprintf("__scoped_traces AS (%s)", perTraceSQL))
 	cteArgs = append(cteArgs, perTraceArgs)
@@ -725,20 +709,6 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 		Warnings:       msc.warnings,
 		WarningsDocURL: msc.warnURL,
 	}, nil
-}
-
-// activityGate resolves the scope's activity-gate column to its aggregate expression;
-// empty when the scope declares none.
-func activityGate(scope TraceScope, resolved []resolvedColumn) string {
-	if scope.ActivityGateAlias == "" {
-		return ""
-	}
-	for _, rc := range resolved {
-		if rc.alias == scope.ActivityGateAlias {
-			return rc.expr
-		}
-	}
-	return ""
 }
 
 // rendered returns the outer aggregation SQL, dividing rate aggregations by the

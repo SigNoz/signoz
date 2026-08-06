@@ -112,9 +112,6 @@ func (b *scopedTraceStatementBuilder) Build(
 	case qbtypes.RequestTypeTrace:
 		return b.buildTraceListQuery(ctx, orgID, querybuilder.ToNanoSecs(start), querybuilder.ToNanoSecs(end), query, variables)
 	case qbtypes.RequestTypeRaw:
-		if err := b.validateGroupByAndOrder(requestType, query); err != nil {
-			return nil, err
-		}
 		return b.buildDelegated(ctx, orgID, start, end, requestType, query, variables)
 	case qbtypes.RequestTypeScalar, qbtypes.RequestTypeTimeSeries:
 		return b.buildAggregation(ctx, orgID, start, end, requestType, query, variables)
@@ -123,16 +120,40 @@ func (b *scopedTraceStatementBuilder) Build(
 	}
 }
 
+// buildDelegated ANDs the base gate into the user filter and delegates to the
+// standard trace builder (the span-list / raw path).
+func (b *scopedTraceStatementBuilder) buildDelegated(
+	ctx context.Context,
+	orgID valuer.UUID,
+	start, end uint64,
+	requestType qbtypes.RequestType,
+	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
+	variables map[string]qbtypes.VariableItem,
+) (*qbtypes.Statement, error) {
+	gate := b.scope.FilterExpression
+	expr := gate
+	if query.Filter != nil && strings.TrimSpace(query.Filter.Expression) != "" {
+		expr = fmt.Sprintf("(%s) AND (%s)", gate, query.Filter.Expression)
+	}
+
+	// shallow copy; only Filter is replaced, caller's query untouched
+	gated := query
+	gated.Filter = &qbtypes.Filter{Expression: expr}
+
+	return b.traceStmtBuilder.Build(ctx, orgID, start, end, requestType, gated, variables)
+}
+
 // traceScopedStatementBuilder is the delegate's optional capability of constraining a
 // query to a set of trace ids (implemented by the traces statement builder).
 type traceScopedStatementBuilder interface {
 	BuildTraceScoped(ctx context.Context, orgID valuer.UUID, start, end uint64, requestType qbtypes.RequestType, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], variables map[string]qbtypes.VariableItem, traceScope *qbtypes.Statement) (*qbtypes.Statement, error)
 }
 
-// buildDelegated (span list + span-level scalar/time-series) ANDs the gate into the
-// filter's span-level part and delegates to the standard trace builder; a trace-level
-// part becomes a qualification the delegate constrains trace_id by.
-func (b *scopedTraceStatementBuilder) buildDelegated(
+// buildDelegatedAggregation serves span-level scalar/time-series: the gate is ANDed
+// into the filter's span-level part and the query delegates to the standard trace
+// builder; a trace-level part becomes a qualification the delegate constrains
+// trace_id by.
+func (b *scopedTraceStatementBuilder) buildDelegatedAggregation(
 	ctx context.Context,
 	orgID valuer.UUID,
 	start, end uint64,
