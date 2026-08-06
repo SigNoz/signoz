@@ -18,7 +18,7 @@ func (provider *provider) addSavedViewRoutes(router *mux.Router) error {
 			ID:                  "ListSavedViews",
 			Tags:                []string{"saved_view"},
 			Summary:             "List saved views",
-			Description:         "Returns saved views, optionally filtered by source page and name.",
+			Description:         "Returns saved views, optionally filtered by source and name.",
 			Request:             nil,
 			RequestQuery:        new(savedviewtypes.ListSavedViewsParams),
 			RequestContentType:  "",

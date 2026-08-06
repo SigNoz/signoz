@@ -43,8 +43,8 @@ func newPostableSavedViewFromLegacyView(v *v3.SavedView) savedviewtypes.Postable
 	}
 
 	return savedviewtypes.PostableSavedView{
-		Name:       v.Name,
-		SourcePage: savedviewtypes.SourcePage{String: valuer.NewString(v.SourcePage)},
+		Name:   v.Name,
+		Source: savedviewtypes.Source{String: valuer.NewString(v.SourcePage)},
 		Data: savedviewtypes.SavedViewData{
 			SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
 			Spec: savedviewtypes.SavedViewSpec{
@@ -81,7 +81,7 @@ func newLegacyViewFromSavedView(v *savedviewtypes.SavedView) (*v3.SavedView, err
 		CreatedBy:  v.CreatedBy,
 		UpdatedAt:  v.UpdatedAt,
 		UpdatedBy:  v.UpdatedBy,
-		SourcePage: v.SourcePage.StringValue(),
+		SourcePage: v.Source.StringValue(),
 		CompositeQuery: &v3.CompositeQuery{
 			PanelType: v3.PanelType(v.Data.Spec.PanelType.StringValue()),
 			// Saved views are only ever created from the explorer's builder mode.
@@ -241,7 +241,7 @@ func (handler *handler) List(w http.ResponseWriter, r *http.Request) {
 	sourcePage := r.URL.Query().Get("sourcePage")
 	name := r.URL.Query().Get("name")
 
-	views, err := handler.module.GetViewsForFilters(r.Context(), claims.OrgID, savedviewtypes.SourcePage{String: valuer.NewString(sourcePage)}, name)
+	views, err := handler.module.GetViewsForFilters(r.Context(), claims.OrgID, savedviewtypes.Source{String: valuer.NewString(sourcePage)}, name)
 	if err != nil {
 		render.Error(w, err)
 		return

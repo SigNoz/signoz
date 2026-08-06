@@ -112,7 +112,7 @@ def test_write_forbidden_without_grant(
         signoz.self.host_configs["8080"].get(f"{SAVED_VIEW_BASE}/{target_id}"),
         json={
             "name": _SAVED_VIEW_FGA_TARGET_NAME,
-            "sourcePage": "logs",
+            "source": "logs",
             "data": {
                 "schemaVersion": "v2",
                 "spec": {
@@ -132,7 +132,7 @@ def test_write_forbidden_without_grant(
         signoz.self.host_configs["8080"].get(SAVED_VIEW_BASE),
         json={
             "name": "saved-view-fga-create-attempt",
-            "sourcePage": "logs",
+            "source": "logs",
             "data": {
                 "schemaVersion": "v2",
                 "spec": {
@@ -211,7 +211,7 @@ def test_update_scoped_to_granted_view(
     token = get_token(_SAVED_VIEW_FGA_CUSTOM_USER_EMAIL, _SAVED_VIEW_FGA_CUSTOM_USER_PASSWORD)
     updated_body = {
         "name": _SAVED_VIEW_FGA_TARGET_NAME,
-        "sourcePage": "logs",
+        "source": "logs",
         "data": {
             "schemaVersion": "v2",
             "spec": {

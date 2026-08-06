@@ -41,7 +41,7 @@ func TestNewPostableSavedViewFromLegacyView(t *testing.T) {
 		postable := newPostableSavedViewFromLegacyView(legacy)
 
 		assert.Equal(t, "my view", postable.Name)
-		assert.Equal(t, savedviewtypes.SourcePageLogs, postable.SourcePage)
+		assert.Equal(t, savedviewtypes.SourceLogs, postable.Source)
 		assert.Equal(t, savedviewtypes.SavedViewSchemaVersion, postable.Data.SchemaVersion)
 		assert.Equal(t, savedviewtypes.PanelTypeGraph, postable.Data.Spec.PanelType)
 		assert.Equal(t, legacy.CompositeQuery.Queries, postable.Data.Spec.Queries)
@@ -87,8 +87,8 @@ func TestNewPostableSavedViewFromLegacyView(t *testing.T) {
 func TestNewLegacyViewFromSavedView(t *testing.T) {
 	now := time.Now()
 	savedView := &savedviewtypes.SavedView{
-		Name:       "my view",
-		SourcePage: savedviewtypes.SourcePageLogs,
+		Name:   "my view",
+		Source: savedviewtypes.SourceLogs,
 		Data: savedviewtypes.SavedViewData{
 			SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
 			Spec: savedviewtypes.SavedViewSpec{
@@ -129,8 +129,8 @@ func TestNewLegacyViewFromSavedView(t *testing.T) {
 }
 
 func TestNewLegacyViewsFromSavedViews(t *testing.T) {
-	a := &savedviewtypes.SavedView{Name: "a", SourcePage: savedviewtypes.SourcePageLogs, Data: savedviewtypes.SavedViewData{Spec: savedviewtypes.SavedViewSpec{PanelType: savedviewtypes.PanelTypeGraph, Queries: testQueries()}}}
-	b := &savedviewtypes.SavedView{Name: "b", SourcePage: savedviewtypes.SourcePageTraces, Data: savedviewtypes.SavedViewData{Spec: savedviewtypes.SavedViewSpec{PanelType: savedviewtypes.PanelTypeTable, Queries: testQueries()}}}
+	a := &savedviewtypes.SavedView{Name: "a", Source: savedviewtypes.SourceLogs, Data: savedviewtypes.SavedViewData{Spec: savedviewtypes.SavedViewSpec{PanelType: savedviewtypes.PanelTypeGraph, Queries: testQueries()}}}
+	b := &savedviewtypes.SavedView{Name: "b", Source: savedviewtypes.SourceTraces, Data: savedviewtypes.SavedViewData{Spec: savedviewtypes.SavedViewSpec{PanelType: savedviewtypes.PanelTypeTable, Queries: testQueries()}}}
 
 	legacyViews, err := newLegacyViewsFromSavedViews([]*savedviewtypes.SavedView{a, b})
 	require.NoError(t, err)
@@ -141,13 +141,13 @@ func TestNewLegacyViewsFromSavedViews(t *testing.T) {
 
 // TestLegacyViewRoundTrip guards the whole v1<->v2 bridge: converting a
 // SavedView to its legacy shape and back must recover the fields the legacy
-// frontend round-trips through (name, sourcePage, panelType, queries,
+// frontend round-trips through (name, source, panelType, queries,
 // selectedFields, display) -- these two functions are each other's inverse
 // on the API surface, so a regression in either should fail this.
 func TestLegacyViewRoundTrip(t *testing.T) {
 	original := &savedviewtypes.SavedView{
-		Name:       "round trip",
-		SourcePage: savedviewtypes.SourcePageMetrics,
+		Name:   "round trip",
+		Source: savedviewtypes.SourceMetrics,
 		Data: savedviewtypes.SavedViewData{
 			SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
 			Spec: savedviewtypes.SavedViewSpec{
@@ -165,7 +165,7 @@ func TestLegacyViewRoundTrip(t *testing.T) {
 	roundTripped := newPostableSavedViewFromLegacyView(legacy)
 
 	assert.Equal(t, original.Name, roundTripped.Name)
-	assert.Equal(t, original.SourcePage, roundTripped.SourcePage)
+	assert.Equal(t, original.Source, roundTripped.Source)
 	assert.Equal(t, original.Data.Spec.PanelType, roundTripped.Data.Spec.PanelType)
 	assert.Equal(t, original.Data.Spec.Queries, roundTripped.Data.Spec.Queries)
 	assert.Equal(t, original.Data.Spec.SelectedFields, roundTripped.Data.Spec.SelectedFields)

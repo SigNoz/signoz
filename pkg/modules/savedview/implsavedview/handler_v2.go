@@ -125,7 +125,7 @@ func (handler *handler) ListV2(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries, err := handler.module.GetViewsForFilters(r.Context(), claims.OrgID, params.SourcePage, params.Name)
+	queries, err := handler.module.GetViewsForFilters(r.Context(), claims.OrgID, params.Source, params.Name)
 	if err != nil {
 		render.Error(w, err)
 		return

@@ -26,10 +26,10 @@ func newTestStore() (savedview.Module, *savedviewtypestest.StoreTest) {
 	return implsavedview.NewModule(store), savedviewtypestest.New(store, sqlStore.Mock())
 }
 
-func testPostableSavedView(name string, sourcePage savedviewtypes.SourcePage) savedviewtypes.PostableSavedView {
+func testPostableSavedView(name string, source savedviewtypes.Source) savedviewtypes.PostableSavedView {
 	return savedviewtypes.PostableSavedView{
-		Name:       name,
-		SourcePage: sourcePage,
+		Name:   name,
+		Source: source,
 		Data: savedviewtypes.SavedViewData{
 			SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
 			Spec: savedviewtypes.SavedViewSpec{
@@ -67,7 +67,7 @@ func TestModule_CreateAndGetView(t *testing.T) {
 
 	orgID := valuer.GenerateUUID().StringValue()
 	ctx := contextWithClaims(orgID, "creator@signoz.io")
-	view := testPostableSavedView("my view", savedviewtypes.SourcePageLogs)
+	view := testPostableSavedView("my view", savedviewtypes.SourceLogs)
 
 	st.ExpectCreate()
 	id, err := m.CreateView(ctx, orgID, view)
@@ -80,7 +80,7 @@ func TestModule_CreateAndGetView(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, id, got.ID)
 	assert.Equal(t, "my view", got.Name)
-	assert.Equal(t, savedviewtypes.SourcePageLogs, got.SourcePage)
+	assert.Equal(t, savedviewtypes.SourceLogs, got.Source)
 	assert.Equal(t, "creator@signoz.io", got.CreatedBy)
 	assert.Equal(t, "creator@signoz.io", got.UpdatedBy)
 	assert.Equal(t, savedviewtypes.PanelTypeGraph, got.Data.Spec.PanelType)
@@ -124,7 +124,7 @@ func TestModule_UpdateView(t *testing.T) {
 	orgID := valuer.GenerateUUID().StringValue()
 	id := valuer.GenerateUUID()
 
-	updated := testPostableSavedView("renamed", savedviewtypes.SourcePageTraces)
+	updated := testPostableSavedView("renamed", savedviewtypes.SourceTraces)
 	updated.Data.Spec.PanelType = savedviewtypes.PanelTypeTable
 
 	st.ExpectUpdate(orgID, id, 1)
@@ -135,7 +135,7 @@ func TestModule_UpdateView(t *testing.T) {
 	got, err := m.GetView(contextWithClaims(orgID, "creator@signoz.io"), orgID, id)
 	require.NoError(t, err)
 	assert.Equal(t, "renamed", got.Name)
-	assert.Equal(t, savedviewtypes.SourcePageTraces, got.SourcePage)
+	assert.Equal(t, savedviewtypes.SourceTraces, got.Source)
 	assert.Equal(t, savedviewtypes.PanelTypeTable, got.Data.Spec.PanelType)
 	assert.Equal(t, "updater@signoz.io", got.UpdatedBy)
 
@@ -150,7 +150,7 @@ func TestModule_UpdateView_NotFound(t *testing.T) {
 	id := valuer.GenerateUUID()
 
 	st.ExpectUpdate(orgID, id, 0)
-	err := m.UpdateView(ctx, orgID, id, testPostableSavedView("does not exist", savedviewtypes.SourcePageLogs))
+	err := m.UpdateView(ctx, orgID, id, testPostableSavedView("does not exist", savedviewtypes.SourceLogs))
 	require.Error(t, err)
 	assert.True(t, errors.Ast(err, errors.TypeNotFound), "expected a not-found error, got %v", err)
 
@@ -166,7 +166,7 @@ func TestModule_UpdateView_ScopedToOrg(t *testing.T) {
 	// Only an update scoped to orgB's WHERE clause is registered; updating
 	// org A's view while authenticated as org B must not match it.
 	st.ExpectUpdate(orgB, id, 0)
-	err := m.UpdateView(contextWithClaims(orgB, "b@signoz.io"), orgB, id, testPostableSavedView("hijacked", savedviewtypes.SourcePageLogs))
+	err := m.UpdateView(contextWithClaims(orgB, "b@signoz.io"), orgB, id, testPostableSavedView("hijacked", savedviewtypes.SourceLogs))
 	require.Error(t, err, "org B must not be able to update org A's view")
 	assert.True(t, errors.Ast(err, errors.TypeNotFound))
 
@@ -221,33 +221,33 @@ func TestModule_GetViewsForFilters(t *testing.T) {
 	orgID := valuer.GenerateUUID().StringValue()
 	ctx := contextWithClaims(orgID, "creator@signoz.io")
 
-	logsOverview := testSavedView(orgID, valuer.GenerateUUID(), "creator@signoz.io", testPostableSavedView("logs overview", savedviewtypes.SourcePageLogs))
-	logsErrors := testSavedView(orgID, valuer.GenerateUUID(), "creator@signoz.io", testPostableSavedView("logs errors", savedviewtypes.SourcePageLogs))
-	tracesOverview := testSavedView(orgID, valuer.GenerateUUID(), "creator@signoz.io", testPostableSavedView("traces overview", savedviewtypes.SourcePageTraces))
+	logsOverview := testSavedView(orgID, valuer.GenerateUUID(), "creator@signoz.io", testPostableSavedView("logs overview", savedviewtypes.SourceLogs))
+	logsErrors := testSavedView(orgID, valuer.GenerateUUID(), "creator@signoz.io", testPostableSavedView("logs errors", savedviewtypes.SourceLogs))
+	tracesOverview := testSavedView(orgID, valuer.GenerateUUID(), "creator@signoz.io", testPostableSavedView("traces overview", savedviewtypes.SourceTraces))
 
 	t.Run("filters by source page", func(t *testing.T) {
 		st.ExpectList(orgID, []*savedviewtypes.SavedView{logsOverview, logsErrors})
-		views, err := m.GetViewsForFilters(ctx, orgID, savedviewtypes.SourcePageLogs, "")
+		views, err := m.GetViewsForFilters(ctx, orgID, savedviewtypes.SourceLogs, "")
 		require.NoError(t, err)
 		assert.Len(t, views, 2)
 	})
 
 	t.Run("filters by name substring", func(t *testing.T) {
 		st.ExpectList(orgID, []*savedviewtypes.SavedView{logsErrors})
-		views, err := m.GetViewsForFilters(ctx, orgID, savedviewtypes.SourcePageLogs, "errors")
+		views, err := m.GetViewsForFilters(ctx, orgID, savedviewtypes.SourceLogs, "errors")
 		require.NoError(t, err)
 		require.Len(t, views, 1)
 		assert.Equal(t, "logs errors", views[0].Name)
 	})
 
 	t.Run("omitted source page returns everything, not nothing", func(t *testing.T) {
-		// Fixes a bug: source_page used to be an unconditional exact-match
-		// clause, so a zero-value sourcePage matched zero rows -- even though
-		// ListSavedViewsParams.Validate() treats a zero SourcePage as valid
-		// ("no filter"). Store.List now only applies the source_page clause
+		// Fixes a bug: source used to be an unconditional exact-match
+		// clause, so a zero-value source matched zero rows -- even though
+		// ListSavedViewsParams.Validate() treats a zero Source as valid
+		// ("no filter"). Store.List now only applies the source clause
 		// when it's non-zero.
 		st.ExpectList(orgID, []*savedviewtypes.SavedView{logsOverview, logsErrors, tracesOverview})
-		views, err := m.GetViewsForFilters(ctx, orgID, savedviewtypes.SourcePage{}, "")
+		views, err := m.GetViewsForFilters(ctx, orgID, savedviewtypes.Source{}, "")
 		require.NoError(t, err)
 		assert.Len(t, views, 3)
 	})
@@ -255,7 +255,7 @@ func TestModule_GetViewsForFilters(t *testing.T) {
 	t.Run("scoped to org", func(t *testing.T) {
 		otherOrgID := valuer.GenerateUUID().StringValue()
 		st.ExpectList(otherOrgID, nil)
-		views, err := m.GetViewsForFilters(ctx, otherOrgID, savedviewtypes.SourcePageLogs, "")
+		views, err := m.GetViewsForFilters(ctx, otherOrgID, savedviewtypes.SourceLogs, "")
 		require.NoError(t, err)
 		assert.Empty(t, views)
 	})
@@ -268,9 +268,9 @@ func TestModule_Collect(t *testing.T) {
 
 	orgID := valuer.GenerateUUID()
 
-	logsA := testSavedView(orgID.StringValue(), valuer.GenerateUUID(), "creator@signoz.io", testPostableSavedView("logs a", savedviewtypes.SourcePageLogs))
-	logsB := testSavedView(orgID.StringValue(), valuer.GenerateUUID(), "creator@signoz.io", testPostableSavedView("logs b", savedviewtypes.SourcePageLogs))
-	tracesA := testSavedView(orgID.StringValue(), valuer.GenerateUUID(), "creator@signoz.io", testPostableSavedView("traces a", savedviewtypes.SourcePageTraces))
+	logsA := testSavedView(orgID.StringValue(), valuer.GenerateUUID(), "creator@signoz.io", testPostableSavedView("logs a", savedviewtypes.SourceLogs))
+	logsB := testSavedView(orgID.StringValue(), valuer.GenerateUUID(), "creator@signoz.io", testPostableSavedView("logs b", savedviewtypes.SourceLogs))
+	tracesA := testSavedView(orgID.StringValue(), valuer.GenerateUUID(), "creator@signoz.io", testPostableSavedView("traces a", savedviewtypes.SourceTraces))
 
 	st.ExpectList(orgID.StringValue(), []*savedviewtypes.SavedView{logsA, logsB, tracesA})
 	stats, err := m.Collect(context.Background(), orgID)

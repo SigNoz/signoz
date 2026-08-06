@@ -8905,7 +8905,7 @@ export interface SavedviewtypesSavedViewDataDTO {
 	spec: SavedviewtypesSavedViewSpecDTO;
 }
 
-export enum SavedviewtypesSourcePageDTO {
+export enum SavedviewtypesSourceDTO {
 	traces = 'traces',
 	logs = 'logs',
 	metrics = 'metrics',
@@ -8917,7 +8917,7 @@ export interface SavedviewtypesPostableSavedViewDTO {
 	 * @type string
 	 */
 	name: string;
-	sourcePage: SavedviewtypesSourcePageDTO;
+	source: SavedviewtypesSourceDTO;
 }
 
 export interface SavedviewtypesSavedViewDTO {
@@ -8939,7 +8939,7 @@ export interface SavedviewtypesSavedViewDTO {
 	 * @type string
 	 */
 	name?: string;
-	sourcePage?: SavedviewtypesSourcePageDTO;
+	source?: SavedviewtypesSourceDTO;
 	/**
 	 * @type string
 	 * @format date-time
@@ -12153,7 +12153,7 @@ export type ListSavedViewsParams = {
 	/**
 	 * @description undefined
 	 */
-	sourcePage?: SavedviewtypesSourcePageDTO;
+	source?: SavedviewtypesSourceDTO;
 	/**
 	 * @type string
 	 * @description undefined

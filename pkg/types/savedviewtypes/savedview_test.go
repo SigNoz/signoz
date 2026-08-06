@@ -9,8 +9,8 @@ import (
 
 func validPostableSavedView() PostableSavedView {
 	return PostableSavedView{
-		Name:       "my view",
-		SourcePage: SourcePageLogs,
+		Name:   "my view",
+		Source: SourceLogs,
 		Data: SavedViewData{
 			SchemaVersion: SavedViewSchemaVersion,
 			Spec:          SavedViewSpec{PanelType: PanelTypeGraph, Queries: validQueries()},
@@ -18,22 +18,22 @@ func validPostableSavedView() PostableSavedView {
 	}
 }
 
-func TestSourcePageValidate(t *testing.T) {
+func TestSourceValidate(t *testing.T) {
 	cases := []struct {
 		name        string
-		sourcePage  SourcePage
+		source      Source
 		expectError bool
 	}{
-		{name: "traces", sourcePage: SourcePageTraces},
-		{name: "logs", sourcePage: SourcePageLogs},
-		{name: "metrics", sourcePage: SourcePageMetrics},
-		{name: "meter", sourcePage: SourcePageMeter},
-		{name: "unknown is rejected", sourcePage: SourcePage{valuer.NewString("bogus")}, expectError: true},
+		{name: "traces", source: SourceTraces},
+		{name: "logs", source: SourceLogs},
+		{name: "metrics", source: SourceMetrics},
+		{name: "meter", source: SourceMeter},
+		{name: "unknown is rejected", source: Source{valuer.NewString("bogus")}, expectError: true},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			err := c.sourcePage.Validate()
+			err := c.source.Validate()
 			if c.expectError {
 				assert.Error(t, err)
 			} else {
@@ -49,9 +49,9 @@ func TestPostableSavedViewValidate(t *testing.T) {
 		assert.NoError(t, view.Validate())
 	})
 
-	t.Run("invalid source page is rejected", func(t *testing.T) {
+	t.Run("invalid source is rejected", func(t *testing.T) {
 		view := validPostableSavedView()
-		view.SourcePage = SourcePage{valuer.NewString("bogus")}
+		view.Source = Source{valuer.NewString("bogus")}
 		assert.Error(t, view.Validate())
 	})
 
@@ -63,18 +63,18 @@ func TestPostableSavedViewValidate(t *testing.T) {
 }
 
 func TestListSavedViewsParamsValidate(t *testing.T) {
-	t.Run("zero source page is allowed", func(t *testing.T) {
+	t.Run("zero source is allowed", func(t *testing.T) {
 		params := ListSavedViewsParams{}
 		assert.NoError(t, params.Validate())
 	})
 
-	t.Run("valid source page is allowed", func(t *testing.T) {
-		params := ListSavedViewsParams{SourcePage: SourcePageLogs}
+	t.Run("valid source is allowed", func(t *testing.T) {
+		params := ListSavedViewsParams{Source: SourceLogs}
 		assert.NoError(t, params.Validate())
 	})
 
-	t.Run("invalid source page is rejected", func(t *testing.T) {
-		params := ListSavedViewsParams{SourcePage: SourcePage{valuer.NewString("bogus")}}
+	t.Run("invalid source is rejected", func(t *testing.T) {
+		params := ListSavedViewsParams{Source: Source{valuer.NewString("bogus")}}
 		assert.Error(t, params.Validate())
 	})
 }
@@ -90,7 +90,7 @@ func TestNewSavedView(t *testing.T) {
 	assert.Equal(t, "creator@signoz.io", savedView.CreatedBy)
 	assert.Equal(t, "updater@signoz.io", savedView.UpdatedBy)
 	assert.Equal(t, view.Name, savedView.Name)
-	assert.Equal(t, view.SourcePage, savedView.SourcePage)
+	assert.Equal(t, view.Source, savedView.Source)
 	assert.Equal(t, view.Data, savedView.Data)
 	assert.False(t, savedView.CreatedAt.IsZero())
 	assert.Equal(t, savedView.CreatedAt, savedView.UpdatedAt)
@@ -98,9 +98,9 @@ func TestNewSavedView(t *testing.T) {
 
 func TestNewStatsFromSavedViews(t *testing.T) {
 	views := []*SavedView{
-		{SourcePage: SourcePageLogs},
-		{SourcePage: SourcePageLogs},
-		{SourcePage: SourcePageTraces},
+		{Source: SourceLogs},
+		{Source: SourceLogs},
+		{Source: SourceTraces},
 	}
 
 	stats := NewStatsFromSavedViews(views)

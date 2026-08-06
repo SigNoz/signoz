@@ -33,7 +33,7 @@ import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
 /**
- * Returns saved views, optionally filtered by source page and name.
+ * Returns saved views, optionally filtered by source and name.
  * @summary List saved views
  */
 export const listSavedViews = (

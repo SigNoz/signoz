@@ -10,7 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-var savedViewColumns = []string{"id", "created_at", "updated_at", "created_by", "updated_by", "org_id", "name", "source_page", "data"}
+var savedViewColumns = []string{"id", "created_at", "updated_at", "created_by", "updated_by", "org_id", "name", "source", "data"}
 
 type StoreTest struct {
 	store savedviewtypes.Store
@@ -37,7 +37,7 @@ func savedViewRow(view *savedviewtypes.SavedView) []driver.Value {
 		view.UpdatedBy,
 		view.OrgID,
 		view.Name,
-		view.SourcePage.StringValue(),
+		view.Source.StringValue(),
 		string(data),
 	}
 }

@@ -26,7 +26,7 @@ def _query(*, disabled: bool = False, legend: str = "") -> dict:
 def _body(
     *,
     name: str = "my-view",
-    source_page: str = "logs",
+    source: str = "logs",
     panel_type: str = "table",
     max_lines: int = 0,
     font_size: str = "",
@@ -38,7 +38,7 @@ def _body(
 ) -> dict:
     return {
         "name": name,
-        "sourcePage": source_page,
+        "source": source,
         "data": {
             "schemaVersion": "v2",
             "spec": {
@@ -114,12 +114,12 @@ def test_create_rejects_empty_queries(
     assert response.status_code == HTTPStatus.BAD_REQUEST
     # CompositeQuery.Validate() (querybuildertypesv5) raises this with the generic
     # invalid_input code, not saved_view_invalid_input -- unlike schemaVersion/
-    # panelType/sourcePage, which are validated directly by savedviewtypes.
+    # panelType/source, which are validated directly by savedviewtypes.
     assert response.json()["error"]["code"] == "invalid_input"
     assert "at least one query is required" in response.json()["error"]["message"]
 
 
-def test_create_rejects_invalid_source_page(
+def test_create_rejects_invalid_source(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -127,7 +127,7 @@ def test_create_rejects_invalid_source_page(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     body = _body()
-    body["sourcePage"] = "bogus"
+    body["source"] = "bogus"
     response = requests.post(
         signoz.self.host_configs["8080"].get(BASE_URL),
         json=body,
@@ -249,7 +249,7 @@ def test_saved_view_lifecycle(
     # ── create ────────────────────────────────────────────────────────────────
     response = requests.post(
         signoz.self.host_configs["8080"].get(BASE_URL),
-        json=_body(name="lc-logs-overview", source_page="logs"),
+        json=_body(name="lc-logs-overview", source="logs"),
         headers=headers,
         timeout=5,
     )
@@ -258,7 +258,7 @@ def test_saved_view_lifecycle(
 
     response = requests.post(
         signoz.self.host_configs["8080"].get(BASE_URL),
-        json=_body(name="lc-traces-overview", source_page="traces"),
+        json=_body(name="lc-traces-overview", source="traces"),
         headers=headers,
         timeout=5,
     )
@@ -275,13 +275,13 @@ def test_saved_view_lifecycle(
         got = response.json()["data"]
         assert got["id"] == view_id
         assert got["name"] == "lc-logs-overview"
-        assert got["sourcePage"] == "logs"
+        assert got["source"] == "logs"
         assert got["data"]["spec"]["panelType"] == "table"
 
-        # ── list filters by sourcePage and name ──────────────────────────────
+        # ── list filters by source and name ──────────────────────────────
         response = requests.get(
             signoz.self.host_configs["8080"].get(BASE_URL),
-            params={"sourcePage": "logs"},
+            params={"source": "logs"},
             headers=headers,
             timeout=5,
         )
@@ -290,17 +290,17 @@ def test_saved_view_lifecycle(
 
         response = requests.get(
             signoz.self.host_configs["8080"].get(BASE_URL),
-            params={"sourcePage": "logs", "name": "overview"},
+            params={"source": "logs", "name": "overview"},
             headers=headers,
             timeout=5,
         )
         assert response.status_code == HTTPStatus.OK, response.text
         assert {v["name"] for v in response.json()["data"]} == {"lc-logs-overview"}
 
-        # ── update mutates name, sourcePage and spec ─────────────────────────
+        # ── update mutates name, source and spec ─────────────────────────
         response = requests.put(
             signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
-            json=_body(name="lc-logs-renamed", source_page="metrics", panel_type="graph"),
+            json=_body(name="lc-logs-renamed", source="metrics", panel_type="graph"),
             headers=headers,
             timeout=5,
         )
@@ -314,7 +314,7 @@ def test_saved_view_lifecycle(
         assert response.status_code == HTTPStatus.OK, response.text
         updated = response.json()["data"]
         assert updated["name"] == "lc-logs-renamed"
-        assert updated["sourcePage"] == "metrics"
+        assert updated["source"] == "metrics"
         assert updated["data"]["spec"]["panelType"] == "graph"
     finally:
         requests.delete(

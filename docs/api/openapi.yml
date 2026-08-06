@@ -7784,11 +7784,11 @@ components:
           $ref: '#/components/schemas/SavedviewtypesSavedViewData'
         name:
           type: string
-        sourcePage:
-          $ref: '#/components/schemas/SavedviewtypesSourcePage'
+        source:
+          $ref: '#/components/schemas/SavedviewtypesSource'
       required:
       - name
-      - sourcePage
+      - source
       - data
       type: object
     SavedviewtypesSavedView:
@@ -7804,8 +7804,8 @@ components:
           type: string
         name:
           type: string
-        sourcePage:
-          $ref: '#/components/schemas/SavedviewtypesSourcePage'
+        source:
+          $ref: '#/components/schemas/SavedviewtypesSource'
         updatedAt:
           format: date-time
           type: string
@@ -7844,7 +7844,7 @@ components:
       - selectedFields
       - display
       type: object
-    SavedviewtypesSourcePage:
+    SavedviewtypesSource:
       enum:
       - traces
       - logs
@@ -22754,13 +22754,13 @@ paths:
   /api/v2/saved_views:
     get:
       deprecated: false
-      description: Returns saved views, optionally filtered by source page and name.
+      description: Returns saved views, optionally filtered by source and name.
       operationId: ListSavedViews
       parameters:
       - in: query
-        name: sourcePage
+        name: source
         schema:
-          $ref: '#/components/schemas/SavedviewtypesSourcePage'
+          $ref: '#/components/schemas/SavedviewtypesSource'
       - in: query
         name: name
         schema:

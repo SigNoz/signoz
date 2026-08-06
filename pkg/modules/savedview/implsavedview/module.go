@@ -18,8 +18,8 @@ func NewModule(store savedviewtypes.Store) savedview.Module {
 	return &module{store: store}
 }
 
-func (module *module) GetViewsForFilters(ctx context.Context, orgID string, sourcePage savedviewtypes.SourcePage, name string) ([]*savedviewtypes.SavedView, error) {
-	return module.store.List(ctx, orgID, sourcePage, name)
+func (module *module) GetViewsForFilters(ctx context.Context, orgID string, source savedviewtypes.Source, name string) ([]*savedviewtypes.SavedView, error) {
+	return module.store.List(ctx, orgID, source, name)
 }
 
 func (module *module) CreateView(ctx context.Context, orgID string, view savedviewtypes.PostableSavedView) (valuer.UUID, error) {
@@ -57,7 +57,7 @@ func (module *module) DeleteView(ctx context.Context, orgID string, uuid valuer.
 }
 
 func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
-	savedViews, err := module.store.List(ctx, orgID.StringValue(), savedviewtypes.SourcePage{}, "")
+	savedViews, err := module.store.List(ctx, orgID.StringValue(), savedviewtypes.Source{}, "")
 	if err != nil {
 		return nil, err
 	}

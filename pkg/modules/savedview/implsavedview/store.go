@@ -40,8 +40,8 @@ func (store *store) Get(ctx context.Context, orgID string, id valuer.UUID) (*sav
 func (store *store) Update(ctx context.Context, view *savedviewtypes.SavedView) error {
 	res, err := store.sqlstore.BunDB().NewUpdate().
 		Model(&savedviewtypes.SavedView{}).
-		Set("updated_at = ?, updated_by = ?, name = ?, source_page = ?, data = ?",
-			view.UpdatedAt, view.UpdatedBy, view.Name, view.SourcePage, view.Data).
+		Set("updated_at = ?, updated_by = ?, name = ?, source = ?, data = ?",
+			view.UpdatedAt, view.UpdatedBy, view.Name, view.Source, view.Data).
 		Where("id = ?", view.ID.StringValue()).
 		Where("org_id = ?", view.OrgID).
 		Exec(ctx)
@@ -81,13 +81,13 @@ func (store *store) Delete(ctx context.Context, orgID string, id valuer.UUID) er
 	return nil
 }
 
-func (store *store) List(ctx context.Context, orgID string, sourcePage savedviewtypes.SourcePage, name string) ([]*savedviewtypes.SavedView, error) {
+func (store *store) List(ctx context.Context, orgID string, source savedviewtypes.Source, name string) ([]*savedviewtypes.SavedView, error) {
 	var views []*savedviewtypes.SavedView
 	q := store.sqlstore.BunDB().NewSelect().Model(&views).
 		Where("org_id = ?", orgID).
 		Where("name LIKE ?", "%"+name+"%")
-	if !sourcePage.IsZero() {
-		q = q.Where("source_page = ?", sourcePage)
+	if !source.IsZero() {
+		q = q.Where("source = ?", source)
 	}
 
 	if err := q.Scan(ctx); err != nil {

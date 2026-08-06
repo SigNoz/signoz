@@ -9,10 +9,10 @@ from fixtures import types
 SAVED_VIEW_BASE = "/api/v2/saved_views"
 
 
-def _body(name: str, source_page: str = "logs") -> dict:
+def _body(name: str, source: str = "logs") -> dict:
     return {
         "name": name,
-        "sourcePage": source_page,
+        "source": source,
         "data": {
             "schemaVersion": "v2",
             "spec": {
@@ -25,11 +25,11 @@ def _body(name: str, source_page: str = "logs") -> dict:
     }
 
 
-def create_saved_view(signoz: types.SigNoz, token: str, name: str, source_page: str = "logs") -> str:
+def create_saved_view(signoz: types.SigNoz, token: str, name: str, source: str = "logs") -> str:
     """Create a saved view and return its ID."""
     resp = requests.post(
         signoz.self.host_configs["8080"].get(SAVED_VIEW_BASE),
-        json=_body(name, source_page),
+        json=_body(name, source),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )

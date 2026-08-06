@@ -130,6 +130,10 @@ func (migration *restructureSavedViewSpec) Up(ctx context.Context, db *bun.DB) e
 		}
 	}
 
+	if _, err := migration.store.Dialect().RenameColumn(ctx, tx, "saved_views", "source_page", "source"); err != nil {
+		return err
+	}
+
 	// matching the singular table-name convention.
 	if _, err := tx.ExecContext(ctx, "ALTER TABLE saved_views RENAME TO saved_view"); err != nil {
 		return err
