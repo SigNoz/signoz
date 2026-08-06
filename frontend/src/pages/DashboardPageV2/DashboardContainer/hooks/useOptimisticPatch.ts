@@ -38,6 +38,9 @@ export function useOptimisticPatch(
 ): UseOptimisticPatch {
 	const storeDashboardId = useDashboardStore((s) => s.dashboardId);
 	const storeIsEditable = useDashboardStore((s) => s.isEditable);
+	const storeIsPermissionLoading = useDashboardStore(
+		(s) => s.isPermissionLoading,
+	);
 	const dashboardId = dashboardIdOverride ?? storeDashboardId;
 	const queryClient = useQueryClient();
 	const queryKey = getGetDashboardV2QueryKey({ id: dashboardId });
@@ -74,16 +77,28 @@ export function useOptimisticPatch(
 
 	// Defense-in-depth: block edits when the store is warm for this dashboard and it
 	// isn't editable. Skipped when the store isn't seeded for this id (panel editor
-	// via direct URL), where that surface gates its own save.
+	// via direct URL), where that surface gates its own save, and while the
+	// permission check is still in flight — otherwise a legitimate edit fired in
+	// the first moments after mount would be silently swallowed.
 	const { mutateAsync } = mutation;
 	const patchAsync = useCallback(
 		(ops: DashboardtypesJSONPatchOperationDTO[]): Promise<unknown> => {
-			if (storeDashboardId === dashboardId && !storeIsEditable) {
+			if (
+				storeDashboardId === dashboardId &&
+				!storeIsPermissionLoading &&
+				!storeIsEditable
+			) {
 				return Promise.reject(new Error(DASHBOARD_LOCKED_REASON));
 			}
 			return mutateAsync(ops);
 		},
-		[storeDashboardId, dashboardId, storeIsEditable, mutateAsync],
+		[
+			storeDashboardId,
+			dashboardId,
+			storeIsEditable,
+			storeIsPermissionLoading,
+			mutateAsync,
+		],
 	);
 
 	return {

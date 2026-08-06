@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
+import { useDashboardPermissions } from 'hooks/dashboards/useDashboardPermissions';
 import { toast } from '@signozhq/ui/sonner';
 import logEvent from 'api/common/logEvent';
 import {
@@ -11,10 +12,8 @@ import {
 } from 'api/generated/services/dashboard';
 import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
-import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
-import { USER_ROLES } from 'types/roles';
 import { getAbsoluteUrl } from 'utils/basePath';
 import { openInNewTab } from 'utils/navigation';
 
@@ -22,7 +21,8 @@ import { usePublicDashboardMeta } from './usePublicDashboardMeta';
 
 export interface UsePublicDashboardReturn {
 	isPublic: boolean;
-	isAdmin: boolean;
+	/** read + update on this dashboard — publishing is a dashboard update. */
+	canManage: boolean;
 	isLoading: boolean;
 	isPublishing: boolean;
 	isUpdating: boolean;
@@ -49,8 +49,9 @@ export function usePublicDashboard(
 ): UsePublicDashboardReturn {
 	const queryClient = useQueryClient();
 	const { showErrorModal } = useErrorModal();
-	const { user } = useAppContext();
-	const isAdmin = user?.role === USER_ROLES.ADMIN;
+	// The backend gates the public-config writes on dashboard:update, not on the
+	// admin role, so a licensed editor can publish.
+	const { canEdit: canManage } = useDashboardPermissions(dashboardId);
 	const [, copyToClipboard] = useCopyToClipboard();
 
 	const [timeRangeEnabled, setTimeRangeEnabled] = useState<boolean>(true);
@@ -196,7 +197,7 @@ export function usePublicDashboard(
 
 	return {
 		isPublic,
-		isAdmin,
+		canManage,
 		isLoading,
 		isPublishing,
 		isUpdating,

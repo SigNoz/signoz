@@ -13,6 +13,10 @@ function DisabledMenuItemLabel({
 	reason,
 	children,
 }: DisabledMenuItemLabelProps): JSX.Element {
+	// No reason means the check is still in flight — no empty tooltip.
+	if (!reason) {
+		return <>{children}</>;
+	}
 	return (
 		<TooltipSimple
 			title={reason}
