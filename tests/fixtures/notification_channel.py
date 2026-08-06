@@ -18,6 +18,10 @@ from fixtures.maildev import MAILDEV_INCOMING_PASS, SMTP_TEST_FROM
 
 logger = setup_logger(__name__)
 
+# Google Chat validates the webhook host, so the WireMock container is aliased as
+# this hostname on the docker network and channels point at https://<host>:8443/...
+GOOGLE_CHAT_HOST = "chat.googleapis.com"
+
 
 EMAIL_TRANSPORT_KEYS = [
     "from",
@@ -124,6 +128,19 @@ email_default_config = {
 }
 
 
+def googlechat_config(space: str) -> dict:
+    """Google Chat channel config for a per-test WireMock space path. Title/text are
+    omitted so the backend applies its default templates. The host + tls-skip are
+    injected at runtime by update_raw_channel_config."""
+    return {
+        "googlechat_configs": [
+            {
+                "webhook_url": f"/v1/spaces/{space}/messages",  # host set on runtime
+            }
+        ],
+    }
+
+
 @pytest.fixture(name="notification_channel", scope="package")
 def notification_channel(
     network: Network,
@@ -135,8 +152,13 @@ def notification_channel(
     """
 
     def create() -> types.TestContainerDocker:
+        # http:8080 admin/webhook delivery, plus https:8443 aliased as
+        # chat.googleapis.com so Google Chat's validated webhook host routes here.
         container = WireMockContainer(image="wiremock/wiremock:2.35.1-1", secure=False)
+        container.with_cli_arg("--https-port", "8443")
+        container.with_exposed_ports(8080, 8443)
         container.with_network(network)
+        container.with_network_aliases(GOOGLE_CHAT_HOST)
         container.start()
 
         return types.TestContainerDocker(
@@ -148,7 +170,11 @@ def notification_channel(
                     container.get_exposed_port(8080),
                 )
             },
-            container_configs={"8080": types.TestContainerUrlConfig("http", container.get_wrapped_container().name, 8080)},
+            container_configs={
+                "8080": types.TestContainerUrlConfig("http", container.get_wrapped_container().name, 8080),
+                # Google Chat delivery: https to the validated host via the network alias.
+                "8443": types.TestContainerUrlConfig("https", GOOGLE_CHAT_HOST, 8443),
+            },
         )
 
     def delete(container: types.TestContainerDocker):
