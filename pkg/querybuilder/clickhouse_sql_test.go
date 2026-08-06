@@ -14,13 +14,12 @@ func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
 		name  string
 		query string
 	}{
-		// Shapes a telemetry read is allowed to take.
 		{"Select", "SELECT region AS r, zone FROM metrics WHERE metric_name = 'cpu' GROUP BY region, zone"},
 		{"TrailingSemicolon", "SELECT count() FROM signoz_logs.distributed_logs_v2;"},
 		{"CommonTableExpression", "WITH t AS (SELECT fingerprint FROM signoz_metrics.time_series_v4) SELECT * FROM t"},
 		{"Join", "SELECT * FROM t1 LEFT JOIN t2 ON t1.a = t2.b"},
 		{"GlobalIn", "SELECT a FROM t WHERE a GLOBAL IN (SELECT b FROM t2)"},
-		// GLOBAL parsed only when the join type was omitted, and only before IN. https://github.com/AfterShip/clickhouse-sql-parser/pull/293
+		// https://github.com/AfterShip/clickhouse-sql-parser/pull/293
 		{"GlobalLeftJoin", "SELECT * FROM t1 GLOBAL LEFT JOIN t2 ON t1.a = t2.a"},
 		{"GlobalNotIn", "SELECT a FROM t WHERE a GLOBAL NOT IN (SELECT b FROM t2)"},
 		{"Union", "SELECT * FROM t UNION ALL SELECT * FROM t2"},
@@ -29,32 +28,34 @@ func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
 		{"UnrelatedSetting", "SELECT * FROM t SETTINGS max_threads = 4"},
 		{"TerminatedBlockComment", "SELECT /* keep me */ count() FROM t"},
 		{"BlockCommentMarkerInsideStringLiteral", "SELECT count() FROM t WHERE body = '/* not a comment'"},
-		// The parser used to loop forever on this; it now reads the comment to the end of
-		// the input, so this doubles as a canary for that regression.
+		// Looped forever before v0.5.2.
 		{"TrailingUnterminatedBlockComment", "SELECT count() FROM t /* unterminated"},
-		// The rule keys on the database, not on the table name.
+		// Keyed on the database, not on the table name.
 		{"TableNamedSystemInTelemetryDatabase", "SELECT * FROM signoz_logs.system"},
 		{"SignedLiteralAfterClosingParenSpaced", "SELECT (toUnixTimestamp(now()) - 3600)*1000000000"},
-		// order by interval
 		{"OrderByInterval", "SELECT toStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS interval ORDER BY interval"},
 		{"OrderByIntervalAndDirection", "SELECT toStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS `interval` ORDER BY `interval` ASC"},
-		// `interval` is a unit keyword, so unquoting it was rejected everywhere the parser
-		// expected a plain identifier. https://github.com/AfterShip/clickhouse-sql-parser/pull/296
+		// https://github.com/AfterShip/clickhouse-sql-parser/pull/296
 		{"OrderByUnquotedIntervalAsc", "SELECT toStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS interval FROM t GROUP BY interval ORDER BY interval ASC"},
 		{"OrderByUnquotedIntervalDesc", "SELECT toStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS interval FROM t GROUP BY interval ORDER BY interval DESC"},
 		{"UnquotedIntervalInGroupByTuple", "SELECT a FROM t GROUP BY (`service.name`, `service.version`, interval)"},
 		{"UnquotedIntervalProductionQuery", "SELECT toStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS interval, resource_string_service$$name AS `service.name`, attributes_string['http.route'] AS `http.route`, quantile(0.95)(duration_nano) / 1000000000 AS value FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_string_service$$name = 'svc-a' AND resources_string['deployment.environment'] = 'dev' AND attributes_string['http.route'] = '/v1' AND http_method = 'POST' AND timestamp BETWEEN toDateTime(1784601720) AND toDateTime(1784602620) AND ts_bucket_start BETWEEN 1784601720 - 1800 AND 1784602620 GROUP BY `service.name`, `http.route`, interval ORDER BY interval ASC"},
-		// Separating the two readings of INTERVAL needs backtracking as per the current implementation which could have performance regressions.
-		// https://github.com/AfterShip/clickhouse-sql-parser/pull/296#issuecomment-5150316367
+		// The fix backtracks, so this bounds the cost. https://github.com/AfterShip/clickhouse-sql-parser/pull/296#issuecomment-5150316367
 		{"UnquotedIntervalRepeatedThirtyTimes", "SELECT interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval + interval AS total FROM t WHERE interval > 0 ORDER BY interval ASC"},
+		// `interval` was one of 37 such keywords. https://github.com/AfterShip/clickhouse-sql-parser/pull/305
+		{"UnquotedLimitInFunctionArgument", "SELECT sum(limit) FROM t"},
+		{"UnquotedLimitInArithmetic", "SELECT limit + 1 FROM t"},
+		{"UnquotedLimitInNegation", "SELECT abs(-limit) FROM t"},
+		{"UnquotedKeywordOperands", "SELECT sum(offset) + sum(format) + sum(settings) FROM t"},
+		{"UnquotedLimitProductionQuery", "WITH limit_value AS (SELECT cluster, region, value AS limit FROM t) SELECT region AS `Region`, sum(limit) AS `Capacity` FROM limit_value GROUP BY Region"},
 		{"SignedLiteralAfterClosingParenUnspaced", "SELECT now() AS ts, toFloat64(count()) AS value FROM ( SELECT attributes_string['TableName'] AS T, attributes_string['MissingId'] AS M, max(fromUnixTimestamp64Nano(timestamp)) AS last_seen, dateDiff('minute', min(fromUnixTimestamp64Nano(timestamp)), max(fromUnixTimestamp64Nano(timestamp))) AS age_min FROM signoz_logs.distributed_logs_v2 WHERE body='missing_map_record' AND timestamp >= (toUnixTimestamp(now())-3600)*1000000000 GROUP BY T, M ) WHERE age_min >= 20 AND last_seen >= now() - toIntervalMinute(8)"},
 		{"SignedLiteralAfterClosingParenMinimal", "SELECT (1)-1"},
 		{"TrimFunction", "SELECT trimBoth('/api/endpoint/', '/');"},
-		// The SQL-standard keyword-separated argument forms, which took commas only. https://github.com/AfterShip/clickhouse-sql-parser/pull/290
+		// https://github.com/AfterShip/clickhouse-sql-parser/pull/290
 		{"StandardTrimSyntax", "SELECT trim(BOTH ' ' FROM body) FROM t"},
 		{"StandardSubstringSyntax", "SELECT substring(body FROM 2 FOR 3) FROM t"},
 		{"StandardOverlaySyntax", "SELECT overlay(body PLACING 'x' FROM 2) FROM t"},
-		// Row generators compute their rows from their arguments, so they read through nothing. This is the shape they get used for: a dense interval axis to CROSS JOIN a sparse series against.
+		// The shape row generators get used for: a dense interval axis to CROSS JOIN a sparse series against.
 		{"NumbersTableFunction", "SELECT intervals.interval AS interval, active.cluster AS cluster, toFloat64(if(ts_data.has_data = 0, 0, 1)) AS value FROM ( SELECT DISTINCT JSONExtractString(labels, 'k8s.cluster.name') AS cluster FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name = 'my_metric' AND unix_milli >= toUnixTimestamp(now() - INTERVAL 30 DAY) * 1000 HAVING cluster != '' ) AS active CROSS JOIN ( SELECT toStartOfInterval( toDateTime(toUnixTimestamp(now() - INTERVAL 30 MINUTE) + number * 60), INTERVAL 1 MINUTE ) AS interval FROM numbers(31) ) AS intervals LEFT JOIN ( SELECT toStartOfInterval( toDateTime(intDiv(s.unix_milli, 1000)), INTERVAL 1 MINUTE ) AS interval, JSONExtractString(ts.labels, 'k8s.cluster.name') AS cluster, 1 AS has_data FROM signoz_metrics.distributed_samples_v4 s INNER JOIN ( SELECT DISTINCT fingerprint, labels FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name = 'my_metric' ) AS ts ON s.fingerprint = ts.fingerprint WHERE s.metric_name = 'my_metric' AND s.unix_milli >= toUnixTimestamp(now() - INTERVAL 30 MINUTE) * 1000 GROUP BY interval, cluster ) AS ts_data ON active.cluster = ts_data.cluster AND intervals.interval = ts_data.interval ORDER BY interval ASC"},
 		{"NumbersMtTableFunction", "SELECT * FROM numbers_mt(31)"},
 		{"ZerosTableFunction", "SELECT * FROM zeros(31)"},
@@ -63,6 +64,8 @@ func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
 		{"GenerateSeriesSnakeCaseTableFunction", "SELECT * FROM generate_series(1, 10)"},
 		{"GeneratorTableFunctionUppercase", "SELECT * FROM NUMBERS(31)"},
 		{"GeneratorTableFunctionParenthesisedArgument", "SELECT * FROM NUMBERS((31))"},
+		// CAST in an argument was itself read as a table function. https://github.com/AfterShip/clickhouse-sql-parser/pull/307
+		{"CastInGeneratorTableFunctionArgument", "SELECT * FROM numbers(CAST(10 AS UInt64))"},
 		{"GeneratorTableFunctionInJoin", "SELECT * FROM signoz_logs.distributed_logs_v2 AS l CROSS JOIN numbers(31) AS n"},
 		{"GeneratorTableFunctionInCommonTableExpression", "WITH axis AS (SELECT number FROM numbers(31)) SELECT * FROM axis"},
 		{"GeneratorTableFunctionInWhereSubquery", "SELECT * FROM t WHERE a IN (SELECT number FROM numbers(31))"},
@@ -71,8 +74,7 @@ func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			// Bounded rather than called directly: a parser that backtracks without memoising
-			// hangs instead of returning. Every case here parses in well under a millisecond.
+			// Bounded because a parser that backtracks without memoising hangs rather than returning.
 			errC := make(chan error, 1)
 			go func() { errC <- ErrIfStatementIsNotValid(testCase.query) }()
 
@@ -92,12 +94,10 @@ func TestErrIfStatementIsNotValid_Fail(t *testing.T) {
 		query        string
 		expectedCode errors.Code
 	}{
-		// Not a single statement, or not a statement at all.
 		{"Empty", "", CodeClickHouseSQLNotSingleStatement},
 		{"UnterminatedBlockCommentOnly", "/* x", CodeClickHouseSQLUnparseable},
 		{"Unparseable", "SELECT FROM WHERE", CodeClickHouseSQLUnparseable},
 		{"MultipleStatements", "SELECT 1; DROP TABLE signoz_logs.logs_v2", CodeClickHouseSQLNotSingleStatement},
-		// Parses, but is not a SELECT.
 		{"Drop", "DROP TABLE signoz_logs.logs_v2", CodeClickHouseSQLNotSelect},
 		{"Insert", "INSERT INTO signoz_logs.logs_v2 SELECT * FROM signoz_logs.logs_v2", CodeClickHouseSQLNotSelect},
 		{"AlterDelete", "ALTER TABLE signoz_logs.logs_v2 DELETE WHERE 1 = 1", CodeClickHouseSQLNotSelect},
@@ -107,10 +107,9 @@ func TestErrIfStatementIsNotValid_Fail(t *testing.T) {
 		// Both panicked before v0.5.5. https://github.com/AfterShip/clickhouse-sql-parser/pull/306
 		{"UnparseableDefaultExpression", "CREATE TABLE t (a String DEFAULT foo(b FROM 2)) ENGINE = Memory", CodeClickHouseSQLUnparseable},
 		{"TrailingOperatorInDefaultExpression", "CREATE TABLE t (a String DEFAULT 1 +) ENGINE = Memory", CodeClickHouseSQLUnparseable},
-		// These the parser rejects outright rather than classifying.
+		// Rejected outright rather than classified.
 		{"ShowGrants", "SHOW GRANTS", CodeClickHouseSQLUnparseable},
 		{"IntoOutfile", "SELECT * FROM t INTO OUTFILE '/tmp/x.csv'", CodeClickHouseSQLUnparseable},
-		// Table functions, which read through something other than a telemetry table.
 		{"UrlTableFunction", "SELECT * FROM url('http://attacker.example/x', CSV, 'a String')", CodeClickHouseSQLTableFunction},
 		{"FileTableFunction", "SELECT * FROM file('/etc/passwd', CSV, 'a String')", CodeClickHouseSQLTableFunction},
 		{"ExecutableTableFunction", "SELECT * FROM executable('script.sh', CSV, 'a String')", CodeClickHouseSQLTableFunction},
@@ -118,21 +117,20 @@ func TestErrIfStatementIsNotValid_Fail(t *testing.T) {
 		{"TableFunctionInCommonTableExpression", "WITH c AS (SELECT * FROM url('http://x', CSV, 'a String')) SELECT * FROM c", CodeClickHouseSQLTableFunction},
 		{"TableFunctionInWhereSubquery", "SELECT * FROM t WHERE a IN (SELECT * FROM file('/etc/passwd', CSV, 'a String'))", CodeClickHouseSQLTableFunction},
 		{"TableFunctionInUnion", "SELECT * FROM t UNION ALL SELECT * FROM url('http://x', CSV, 'a String')", CodeClickHouseSQLTableFunction},
-		// These reach the internal databases without ever naming one, so the table-function rule is the only thing that sees them.
+		// Reach an internal database without naming one, so only the table-function rule sees them.
 		{"MergeTableFunction", "SELECT * FROM merge('system', '.*')", CodeClickHouseSQLTableFunction},
 		{"RemoteTableFunction", "SELECT * FROM remote('other-host', 'system.users')", CodeClickHouseSQLTableFunction},
 		{"ClusterTableFunction", "SELECT * FROM cluster('c', 'system.users')", CodeClickHouseSQLTableFunction},
-		// Pure, but excluded: generateRandom streams rows the arguments do not bound, and values has no use here that an array literal does not already cover.
+		// Pure, but excluded: generateRandom is unbounded, and values adds nothing over an array literal.
 		{"GenerateRandomTableFunction", "SELECT * FROM generateRandom('a UInt64')", CodeClickHouseSQLTableFunction},
 		{"ValuesTableFunction", "SELECT * FROM values('a UInt64', 1, 2)", CodeClickHouseSQLTableFunction},
-		// Arguments are visited before the table function itself, so allowing a generator does not give anyone a wrapper to smuggle a read through.
+		// Arguments are visited first, so an allowed generator is not a wrapper to smuggle a read through.
 		{"InternalDatabaseInsideAllowedTableFunction", "SELECT * FROM numbers((SELECT count() FROM system.users))", CodeClickHouseSQLInternalDatabase},
 		{"InternalDatabaseJoinedOntoAllowedTableFunction", "SELECT * FROM numbers(31) AS n JOIN system.users AS u ON 1 = 1", CodeClickHouseSQLInternalDatabase},
 		{"InternalDatabaseUnionedWithAllowedTableFunction", "SELECT number FROM numbers(31) UNION ALL SELECT name FROM system.users", CodeClickHouseSQLInternalDatabase},
 		{"RefusedTableFunctionJoinedOntoAllowedTableFunction", "SELECT * FROM numbers(31) AS n JOIN url('http://x', CSV, 'a String') AS u ON 1 = 1", CodeClickHouseSQLTableFunction},
 		{"RefusedTableFunctionInsideAllowedTableFunction", "SELECT * FROM numbers((SELECT count() FROM file('/etc/passwd', CSV, 'a String')))", CodeClickHouseSQLTableFunction},
 		{"InternalDatabaseInsideAllowedTableFunctionCommonTableExpression", "WITH axis AS (SELECT * FROM numbers((SELECT count() FROM system.users))) SELECT * FROM axis", CodeClickHouseSQLInternalDatabase},
-		// Internal databases, which hold grants and server metadata rather than telemetry.
 		{"SystemUsers", "SELECT * FROM system.users", CodeClickHouseSQLInternalDatabase},
 		{"SystemUppercase", "SELECT * FROM SYSTEM.USERS", CodeClickHouseSQLInternalDatabase},
 		{"SystemQuoted", "SELECT count() FROM `system`.`tables`", CodeClickHouseSQLInternalDatabase},
@@ -140,9 +138,36 @@ func TestErrIfStatementIsNotValid_Fail(t *testing.T) {
 		{"SystemInJoin", "SELECT * FROM signoz_logs.distributed_logs_v2 AS l JOIN system.users AS u ON 1 = 1", CodeClickHouseSQLInternalDatabase},
 		{"SystemInIntersect", "SELECT * FROM t INTERSECT SELECT * FROM system.users", CodeClickHouseSQLInternalDatabase},
 		{"InformationSchema", "SELECT * FROM information_schema.tables", CodeClickHouseSQLInternalDatabase},
-		// A query-level setting takes precedence over the one the caller applies.
+		// Takes precedence over the setting the caller applies.
 		{"ReadonlySettingOverride", "SELECT * FROM t SETTINGS readonly = 0", CodeClickHouseSQLReadonlyOverride},
 		{"ReadonlySettingOverrideAmongOthers", "SELECT * FROM t SETTINGS max_threads = 4, readonly = 0", CodeClickHouseSQLReadonlyOverride},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			err := ErrIfStatementIsNotValid(testCase.query)
+
+			assert.Error(t, err)
+			assert.True(t, errors.Asc(err, testCase.expectedCode), "expected code %s, got %v", testCase.expectedCode, err)
+		})
+	}
+}
+
+func TestErrIfStatementIsNotValid_ShouldPassButFails(t *testing.T) {
+	testCases := []struct {
+		name         string
+		query        string
+		expectedCode errors.Code
+	}{
+		// The left operand commits the parser to a subquery, leaving the operator nowhere to bind. Parenthesising only the right operand is fine.
+		{"ParenthesisedUnionLeftOperand", "SELECT a FROM ((SELECT 1 AS a) UNION ALL (SELECT 2 AS a))", CodeClickHouseSQLUnparseable},
+		{"ParenthesisedExceptLeftOperand", "SELECT a FROM ((SELECT 1 AS a) EXCEPT (SELECT 2 AS a))", CodeClickHouseSQLUnparseable},
+		{"ParenthesisedUnionLeftOperandAtStatementLevel", "(SELECT 1 AS a) UNION ALL (SELECT 2 AS a)", CodeClickHouseSQLUnparseable},
+		// The one keyword PR 305 left behind, because ON also opens a join condition.
+		{"UnquotedOnAsColumnName", "SELECT on + 1 FROM t", CodeClickHouseSQLUnparseable},
+		// Ours, not the parser's: a call in an argument list is itself typed TableFunctionExpr, so the allow list only clears a generator whose argument is a literal.
+		{"ScalarCallInGeneratorTableFunctionArgument", "SELECT * FROM numbers(intDiv(100, 2))", CodeClickHouseSQLTableFunction},
+		{"NestedScalarCallInGeneratorTableFunctionArgument", "SELECT * FROM numbers(greatest(1, intDiv(100, 2) + 1))", CodeClickHouseSQLTableFunction},
 	}
 
 	for _, testCase := range testCases {
