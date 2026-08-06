@@ -34,14 +34,16 @@ const (
 
 	// The buffer holds raw points for ~24h; the reduced tables hold 60s
 	// aggregates of dropped-label series.
-	SamplesV4BufferTableName          = "distributed_samples_v4_buffer"
-	SamplesV4BufferLocalTableName     = "samples_v4_buffer"
-	TimeseriesV4BufferTableName       = "distributed_time_series_v4_buffer"
-	TimeseriesV4BufferLocalTableName  = "time_series_v4_buffer"
-	SamplesV4ReducedLastTableName     = "distributed_samples_v4_reduced_last_60s"
-	SamplesV4ReducedSumTableName      = "distributed_samples_v4_reduced_sum_60s"
-	TimeseriesV4ReducedTableName      = "distributed_time_series_v4_reduced"
-	TimeseriesV4ReducedLocalTableName = "time_series_v4_reduced"
+	SamplesV4BufferTableName           = "distributed_samples_v4_buffer"
+	SamplesV4BufferLocalTableName      = "samples_v4_buffer"
+	TimeseriesV4BufferTableName        = "distributed_time_series_v4_buffer"
+	TimeseriesV4BufferLocalTableName   = "time_series_v4_buffer"
+	SamplesV4ReducedLastTableName      = "distributed_samples_v4_reduced_last_60s"
+	SamplesV4ReducedLastLocalTableName = "samples_v4_reduced_last_60s"
+	SamplesV4ReducedSumTableName       = "distributed_samples_v4_reduced_sum_60s"
+	SamplesV4ReducedSumLocalTableName  = "samples_v4_reduced_sum_60s"
+	TimeseriesV4ReducedTableName       = "distributed_time_series_v4_reduced"
+	TimeseriesV4ReducedLocalTableName  = "time_series_v4_reduced"
 
 	ReductionRulesTableName = "distributed_metric_reduction_rules"
 )

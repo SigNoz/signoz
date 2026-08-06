@@ -10339,9 +10339,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - dashboard:update
       - tokenizer:
-        - ADMIN
+        - dashboard:update
       summary: Delete public dashboard
       tags:
       - dashboard
@@ -10390,9 +10390,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - dashboard:read
       - tokenizer:
-        - ADMIN
+        - dashboard:read
       summary: Get public dashboard
       tags:
       - dashboard
@@ -10447,9 +10447,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - dashboard:update
       - tokenizer:
-        - ADMIN
+        - dashboard:update
       summary: Create public dashboard
       tags:
       - dashboard
@@ -10491,9 +10491,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - dashboard:update
       - tokenizer:
-        - ADMIN
+        - dashboard:update
       summary: Update public dashboard
       tags:
       - dashboard
@@ -14831,9 +14831,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - dashboard:list
       - tokenizer:
-        - VIEWER
+        - dashboard:list
       summary: List dashboard saved views
       tags:
       - dashboard
@@ -14888,9 +14888,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - dashboard:list
       - tokenizer:
-        - EDITOR
+        - dashboard:list
       summary: Create dashboard saved view
       tags:
       - dashboard
@@ -14941,9 +14941,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - dashboard:list
       - tokenizer:
-        - EDITOR
+        - dashboard:list
       summary: Delete dashboard saved view
       tags:
       - dashboard
@@ -15009,9 +15009,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - dashboard:list
       - tokenizer:
-        - EDITOR
+        - dashboard:list
       summary: Update dashboard saved view
       tags:
       - dashboard
@@ -15086,9 +15086,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - dashboard:list
       - tokenizer:
-        - VIEWER
+        - dashboard:list
       summary: List dashboards (v2)
       tags:
       - dashboard
@@ -15143,9 +15143,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - dashboard:create
       - tokenizer:
-        - EDITOR
+        - dashboard:create
       summary: Create dashboard (v2)
       tags:
       - dashboard
@@ -15196,9 +15196,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - dashboard:delete
       - tokenizer:
-        - EDITOR
+        - dashboard:delete
       summary: Delete dashboard (v2)
       tags:
       - dashboard
@@ -15259,9 +15259,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - dashboard:read
       - tokenizer:
-        - VIEWER
+        - dashboard:read
       summary: Get dashboard (v2)
       tags:
       - dashboard
@@ -15333,9 +15333,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - dashboard:update
       - tokenizer:
-        - EDITOR
+        - dashboard:update
       summary: Patch dashboard (v2)
       tags:
       - dashboard
@@ -15402,9 +15402,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - dashboard:update
       - tokenizer:
-        - EDITOR
+        - dashboard:update
       summary: Update dashboard (v2)
       tags:
       - dashboard
@@ -15470,9 +15470,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - dashboard:read
+        - dashboard:create
       - tokenizer:
-        - EDITOR
+        - dashboard:read
+        - dashboard:create
       summary: Clone dashboard (v2)
       tags:
       - dashboard
@@ -15523,9 +15525,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - dashboard:update
       - tokenizer:
-        - EDITOR
+        - dashboard:update
       summary: Unlock dashboard (v2)
       tags:
       - dashboard
@@ -15575,9 +15577,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - dashboard:update
       - tokenizer:
-        - EDITOR
+        - dashboard:update
       summary: Lock dashboard (v2)
       tags:
       - dashboard
@@ -15641,9 +15643,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - dashboard:update
       - tokenizer:
-        - EDITOR
+        - dashboard:update
       summary: Migrate dashboard to v2
       tags:
       - dashboard
@@ -24079,9 +24081,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - dashboard:list
       - tokenizer:
-        - VIEWER
+        - dashboard:list
       summary: List dashboards for the current user (v2)
       tags:
       - dashboard
@@ -24126,9 +24128,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - dashboard:list
       - tokenizer:
-        - VIEWER
+        - dashboard:list
       summary: Unpin a dashboard for the current user (v2)
       tags:
       - dashboard
@@ -24185,9 +24187,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - dashboard:list
       - tokenizer:
-        - VIEWER
+        - dashboard:list
       summary: Pin a dashboard for the current user (v2)
       tags:
       - dashboard
