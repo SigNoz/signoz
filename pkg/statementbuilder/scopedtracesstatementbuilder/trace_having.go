@@ -26,7 +26,7 @@ type traceHaving struct {
 // when the expression is empty or every condition was dropped; args bind into sb.
 func (b *scopedTraceStatementBuilder) resolveTraceHaving(ctx context.Context, expr string, variables map[string]qbtypes.VariableItem, sb *sqlbuilder.SelectBuilder) (*traceHaving, error) {
 	if strings.TrimSpace(expr) == "" {
-		return nil, nil
+		return nil, nil //nolint:nilnil
 	}
 	// variables are replaced before validation so their literals are not mistaken for
 	// aggregate names; an unresolved $var is left in place and fails validation below
@@ -38,7 +38,7 @@ func (b *scopedTraceStatementBuilder) resolveTraceHaving(ctx context.Context, ex
 		}
 		expr = replaced
 		if strings.TrimSpace(expr) == "" {
-			return nil, nil
+			return nil, nil //nolint:nilnil
 		}
 	}
 	allowed := b.orderableColumnSet()
@@ -68,7 +68,7 @@ func (b *scopedTraceStatementBuilder) resolveTraceHaving(ctx context.Context, ex
 		return nil, err
 	}
 	if prepared.IsEmpty() {
-		return nil, nil
+		return nil, nil //nolint:nilnil
 	}
 	return &traceHaving{pred: prepared.Expr, used: cb.used}, nil
 }

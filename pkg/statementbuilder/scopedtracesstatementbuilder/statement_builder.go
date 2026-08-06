@@ -250,10 +250,7 @@ func (b *scopedTraceStatementBuilder) buildTraceListQuery(
 		return nil, err
 	}
 
-	matchedFrag, matchedArgs, err := b.buildMatchedCTE(matchedSB, start, end, startBucket, endBucket, resolved, orders, maskExpr, fp, resourcePred, limit, query.Offset)
-	if err != nil {
-		return nil, err
-	}
+	matchedFrag, matchedArgs := b.buildMatchedCTE(matchedSB, start, end, startBucket, endBucket, resolved, orders, maskExpr, fp, resourcePred, limit, query.Offset)
 	rankedFrag, rankedArgs := b.buildRankedCTE(start, end)
 
 	adj := querybuilder.BucketAdjustment // 30-min bucket width in seconds
@@ -521,7 +518,7 @@ func (b *scopedTraceStatementBuilder) resolveSpanPredicate(ctx context.Context, 
 // span filter + HAVING + ORDER BY + LIMIT/OFFSET, selecting only the aliases ORDER BY
 // / HAVING reference. Expressions carry $n markers bound to sb, so each can appear
 // several times and every occurrence resolves to the same arg.
-func (b *scopedTraceStatementBuilder) buildMatchedCTE(sb *sqlbuilder.SelectBuilder, start, end, startBucket, endBucket uint64, resolved []resolvedColumn, orders []listOrder, maskExpr string, fp filterParts, resourcePred string, limit, offset int) (string, []any, error) {
+func (b *scopedTraceStatementBuilder) buildMatchedCTE(sb *sqlbuilder.SelectBuilder, start, end, startBucket, endBucket uint64, resolved []resolvedColumn, orders []listOrder, maskExpr string, fp filterParts, resourcePred string, limit, offset int) (string, []any) {
 	needed := neededMatchedAliases(orders, fp.having)
 	selects := []string{"trace_id"}
 	for _, rc := range resolved {
@@ -573,7 +570,7 @@ func (b *scopedTraceStatementBuilder) buildMatchedCTE(sb *sqlbuilder.SelectBuild
 	}
 
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	return fmt.Sprintf("matched AS (%s)", sql), args, nil
+	return fmt.Sprintf("matched AS (%s)", sql), args
 }
 
 // buildRankedCTE builds `ranked`: [start,end] bounds per matched trace from the

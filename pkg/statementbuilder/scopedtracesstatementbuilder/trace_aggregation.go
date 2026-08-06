@@ -325,7 +325,7 @@ func (b *scopedTraceStatementBuilder) buildQualifiedStatement(
 		return nil, err
 	}
 	if having == nil {
-		return nil, nil
+		return nil, nil //nolint:nilnil
 	}
 	var resourcePred string
 	// nil when the filter has no resource-attribute conditions
