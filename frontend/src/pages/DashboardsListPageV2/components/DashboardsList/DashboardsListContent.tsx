@@ -14,7 +14,6 @@ interface Props {
 	pageSize: number;
 	total: number;
 	onPageChange: (page: number) => void;
-	canEdit: boolean;
 	showUpdatedAt: boolean;
 	showUpdatedBy: boolean;
 	loading: boolean;
@@ -26,7 +25,6 @@ function DashboardsListContent({
 	pageSize,
 	total,
 	onPageChange,
-	canEdit,
 	showUpdatedAt,
 	showUpdatedBy,
 	loading,
@@ -40,14 +38,13 @@ function DashboardsListContent({
 					<DashboardRow
 						dashboard={dashboard}
 						index={index}
-						canEdit={canEdit}
 						showUpdatedAt={showUpdatedAt}
 						showUpdatedBy={showUpdatedBy}
 					/>
 				),
 			},
 		],
-		[canEdit, showUpdatedAt, showUpdatedBy],
+		[showUpdatedAt, showUpdatedBy],
 	);
 
 	const paginationConfig = total > pageSize && {

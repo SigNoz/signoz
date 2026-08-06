@@ -34,6 +34,9 @@ interface Props {
 	onQueryChange: (value: string) => void;
 	// Rendered at the end of the search row (e.g. the New Dashboard action).
 	rightSlot?: ReactNode;
+	// Non-interactive when the user cannot list dashboards — the chrome stays,
+	// the denial itself is explained where the table would be.
+	disabled?: boolean;
 }
 
 // The filter command zone. The query box is a DRAFT: typing and the Created-by /
@@ -47,6 +50,7 @@ function FilterZone({
 	source,
 	onQueryChange,
 	rightSlot,
+	disabled = false,
 }: Props): JSX.Element {
 	const [draft, setDraft] = useState(query);
 
@@ -120,6 +124,7 @@ function FilterZone({
 						placeholder="DSL Filter — e.g. name CONTAINS 'api' AND env IN ['prod','staging']"
 						source={source}
 						dirty={dirty}
+						disabled={disabled}
 						onChange={setDraft}
 						onSubmit={run}
 					/>
@@ -136,6 +141,7 @@ function FilterZone({
 					onUpdatedChange={handleUpdatedChange}
 					onApply={run}
 					onClearCreatedBy={handleClearCreatedBy}
+					disabled={disabled}
 				/>
 				{!isEmpty && (
 					<Button
@@ -144,6 +150,7 @@ function FilterZone({
 						size="sm"
 						prefix={<X size={12} />}
 						onClick={handleClear}
+						disabled={disabled}
 						testId="dashboards-filter-clear"
 					>
 						Clear

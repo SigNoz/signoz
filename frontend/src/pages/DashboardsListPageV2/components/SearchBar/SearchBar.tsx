@@ -32,6 +32,7 @@ interface Props {
 	source?: SuggestionSource;
 	// The draft differs from the last-run query — shows a "run to apply" hint.
 	dirty?: boolean;
+	disabled?: boolean;
 }
 
 const EMPTY_SOURCE: SuggestionSource = {
@@ -78,6 +79,7 @@ function SearchBar({
 	placeholder = "Filter with DSL (e.g. name CONTAINS 'foo')",
 	source = EMPTY_SOURCE,
 	dirty = false,
+	disabled = false,
 }: Props): JSX.Element {
 	const isMac = getUserOperatingSystem() === UserOperatingSystem.MACOS;
 	const editorRef = useRef<ReactCodeMirrorRef>(null);
@@ -157,6 +159,7 @@ function SearchBar({
 					extensions={extensions}
 					basicSetup={BASIC_SETUP}
 					indentWithTab={false}
+					editable={!disabled}
 					data-testid="dashboards-list-search"
 					onChange={(next): void => onChange(next.replace(/\n/g, ' '))}
 				/>
@@ -166,6 +169,7 @@ function SearchBar({
 					size="sm"
 					className={styles.submit}
 					aria-label="Run search"
+					disabled={disabled}
 					testId="dashboards-list-search-submit"
 					onMouseDown={(e: MouseEvent<HTMLButtonElement>): void => {
 						e.preventDefault();
