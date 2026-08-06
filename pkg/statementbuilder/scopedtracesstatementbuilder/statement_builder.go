@@ -622,15 +622,19 @@ func neededMatchedAliases(orders []listOrder, having *traceHaving) map[string]st
 
 // validateAggregateFilter rejects trace-level filters on aggregates not computable in
 // the matched pass (e.g. span_count) with a targeted top-level error; inside the
-// where-clause visitor it would surface only as a detail of a combined error.
+// where-clause visitor it would surface only as a detail of a combined error. Only
+// unspecified- and trace-context selectors name aggregates.
 func validateAggregateFilter(havingExpr string, orderableSet map[string]struct{}) error {
 	if strings.TrimSpace(havingExpr) == "" {
 		return nil
 	}
-	for _, key := range querybuilder.ExprKeys(havingExpr) {
-		if _, ok := orderableSet[key.Name]; !ok {
+	for _, sel := range querybuilder.QueryStringToKeysSelectors(havingExpr) {
+		if sel.FieldContext != telemetrytypes.FieldContextUnspecified && sel.FieldContext != telemetrytypes.FieldContextTrace {
+			continue
+		}
+		if _, ok := orderableSet[sel.Name]; !ok {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput,
-				"aggregate %q cannot be used in a trace-level filter; filterable aggregates: %s", key.Name, strings.Join(sortedAliases(orderableSet), ", "))
+				"aggregate %q cannot be used in a trace-level filter; filterable aggregates: %s", sel.Name, strings.Join(sortedAliases(orderableSet), ", "))
 		}
 	}
 	return nil

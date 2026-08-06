@@ -91,8 +91,10 @@ func TestBuild_Aggregation_VariablesInTraceFilter(t *testing.T) {
 	assert.Contains(t, stmt.Query, "HAVING output_tokens > ?")
 	assert.Contains(t, stmt.Args, float64(1000))
 
+	// an unresolved $var is only rejected as an unknown aggregate today; a targeted
+	// "unknown variable" error is a separate concern
 	_, err = b.Build(ctx, valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeScalar, q, nil)
-	require.ErrorContains(t, err, `unknown variable "$threshold"`)
+	require.ErrorContains(t, err, `aggregate "$threshold" cannot be used`)
 
 	stmt, err = b.Build(ctx, valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeScalar, q,
 		map[string]qbtypes.VariableItem{"threshold": {Type: qbtypes.DynamicVariableType, Value: "__all__"}})

@@ -28,14 +28,9 @@ func (b *scopedTraceStatementBuilder) resolveTraceHaving(ctx context.Context, ex
 	if strings.TrimSpace(expr) == "" {
 		return nil, nil
 	}
-	allowed := b.orderableColumnSet()
-	// upfront targeted errors; the visitor folds them into a combined "Found N errors"
-	if err := validateAggregateFilter(expr, allowed); err != nil {
-		return nil, err
-	}
-	if err := querybuilder.ValidateVariablesInExpr(expr, variables); err != nil {
-		return nil, err
-	}
+	// variables are replaced before validation so their literals are not mistaken for
+	// aggregate names; an unresolved $var is left in place and fails validation below
+	// (as an unknown aggregate — targeted variable errors are a separate concern)
 	if len(variables) > 0 {
 		replaced, err := qbvariables.ReplaceVariablesInExpression(expr, variables)
 		if err != nil {
@@ -45,6 +40,11 @@ func (b *scopedTraceStatementBuilder) resolveTraceHaving(ctx context.Context, ex
 		if strings.TrimSpace(expr) == "" {
 			return nil, nil
 		}
+	}
+	allowed := b.orderableColumnSet()
+	// upfront targeted errors; the visitor folds them into a combined "Found N errors"
+	if err := validateAggregateFilter(expr, allowed); err != nil {
+		return nil, err
 	}
 
 	// both spellings resolve here: the key parser strips the trace. prefix into

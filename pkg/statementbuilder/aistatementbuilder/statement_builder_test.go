@@ -1049,7 +1049,7 @@ func TestBuild_TraceList_VariableInAggregateFilter(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotContains(t, stmt.Query, "HAVING")
 
-	// unresolved variable -> rejected, not compared as a literal
+	// unresolved variable -> rejected, though only as an unknown aggregate today
 	_, err = build("trace.output_tokens > $missing", map[string]qbtypes.VariableItem{"other": {Value: 1}})
 	require.Error(t, err)
 }

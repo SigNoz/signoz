@@ -329,7 +329,8 @@ def test_ai_scalar_variables_in_trace_level_filter(
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     """Variables resolve inside trace-level conditions with span-filter semantics;
-    an unresolvable $var is a 400, not a silent literal comparison."""
+    an unresolvable $var is a 400 (today via aggregate validation — a targeted
+    unknown-variable error is a separate concern)."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-agg-vars"
     insert_traces(ai_trace(now=now, service=service, in_tokens=10, out_tokens=100) + ai_trace(now=now, service=service, in_tokens=30, out_tokens=300))
@@ -360,7 +361,7 @@ def test_ai_scalar_variables_in_trace_level_filter(
         request_type=RequestType.SCALAR,
     )
     assert resp.status_code == HTTPStatus.BAD_REQUEST, resp.text
-    assert "unknown variable" in resp.text
+    assert '"$threshold" cannot be used' in resp.text
 
     # a dynamic variable resolved to __all__ drops the condition (both traces count)
     resp = make_query_request(
