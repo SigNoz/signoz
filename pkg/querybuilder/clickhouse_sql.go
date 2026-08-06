@@ -17,6 +17,7 @@ var (
 	CodeClickHouseSQLNotSingleStatement = errors.MustNewCode("clickhouse_sql_not_single_statement")
 	CodeClickHouseSQLNotSelect          = errors.MustNewCode("clickhouse_sql_not_select")
 	CodeClickHouseSQLTableFunction      = errors.MustNewCode("clickhouse_sql_table_function")
+	CodeClickHouseSQLReadingFunction    = errors.MustNewCode("clickhouse_sql_reading_function")
 	CodeClickHouseSQLInternalDatabase   = errors.MustNewCode("clickhouse_sql_internal_database")
 	CodeClickHouseSQLReadonlyOverride   = errors.MustNewCode("clickhouse_sql_readonly_override")
 )
@@ -42,6 +43,44 @@ var generatorTableFunctions = map[string]string{
 }
 
 var generatorTableFunctionsMessage = "allowed table functions are " + strings.Join(slices.Sorted(maps.Values(generatorTableFunctions)), ", ")
+
+// readingFunctions reach a file, a model or the server binary while looking like ordinary
+// scalar functions. They name no table and no database, so neither of the rules above sees
+// them, and a wrapper that returns a number leaks what they read through the row count alone:
+// numbers(length(file(x))) yields one row per byte.
+//
+// Keyed by the lowercased name, since ClickHouse resolves function names case-insensitively.
+var readingFunctions = map[string]struct{}{
+	"file":                     {},
+	"catboostevaluate":         {},
+	"demangle":                 {},
+	"addresstoline":            {},
+	"addresstolinewithinlines": {},
+	"addresstosymbol":          {},
+}
+
+// A dictionary can be backed by HTTP, ODBC or another database, and every one of the 42
+// accessors carries this prefix.
+const dictionaryFunctionPrefix = "dict"
+
+func errIfFunctionReads(name string) error {
+	lowered := strings.ToLower(name)
+	if _, ok := readingFunctions[lowered]; !ok && !strings.HasPrefix(lowered, dictionaryFunctionPrefix) {
+		return nil
+	}
+
+	return errors.NewInvalidInputf(CodeClickHouseSQLReadingFunction, "ClickHouse functions that read outside the telemetry tables are not allowed in SQL queries: %s", name)
+}
+
+// The parser spells a call's name as an Ident everywhere it can. Reading the field rather than
+// formatting the node keeps the quoting out, so `numbers`(1) matches numbers.
+func functionName(expr chparser.Expr) string {
+	if ident, ok := expr.(*chparser.Ident); ok {
+		return ident.Name
+	}
+
+	return chparser.Format(expr)
+}
 
 // The parser's grammar has gaps against SQL that ClickHouse itself accepts.
 func ErrIfStatementIsNotValid(query string) (err error) {
@@ -70,19 +109,13 @@ func ErrIfStatementIsNotValid(query string) (err error) {
 	visitor := &chparser.DefaultASTVisitor{Visit: func(node chparser.Expr) error {
 		switch expr := node.(type) {
 		case *chparser.TableExpr:
-			// Source table functions remain usable in ClickHouse read-only mode.
-			//
-			// Only a table position is checked. The parser types a call in a table function's
-			// argument list as a TableFunctionExpr too, so checking those refuses every
-			// numbers(intDiv(...)) a dashboard writes. Nothing can read from there: the allowed
-			// generators all take numeric arguments, and ClickHouse rejects anything else before
-			// it runs. Revisit if a generator that takes a string or a table is ever allowed.
+			// Source table functions remain usable in ClickHouse read-only mode, and only a
+			// table position can be one. The parser also types a call inside a table function's
+			// argument list as a TableFunctionExpr, so asking every one of those refuses the
+			// numbers(intDiv(...)) that every dashboard writes. What can read from an argument
+			// is caught by name below instead.
 			source := expr.Expr
-			for {
-				alias, ok := source.(*chparser.AliasExpr)
-				if !ok {
-					break
-				}
+			if alias, ok := source.(*chparser.AliasExpr); ok {
 				source = alias.Expr
 			}
 
@@ -91,7 +124,7 @@ func ErrIfStatementIsNotValid(query string) (err error) {
 				return nil
 			}
 
-			name := chparser.Format(tableFunction.Name)
+			name := functionName(tableFunction.Name)
 			if _, ok := generatorTableFunctions[strings.ToLower(name)]; ok {
 				return nil
 			}
@@ -99,6 +132,25 @@ func ErrIfStatementIsNotValid(query string) (err error) {
 			return errors.
 				NewInvalidInputf(CodeClickHouseSQLTableFunction, "ClickHouse table functions are not allowed in SQL queries: %s", name).
 				WithAdditional(generatorTableFunctionsMessage)
+
+		case *chparser.FunctionExpr:
+			return errIfFunctionReads(expr.Name.Name)
+
+		case *chparser.TableFunctionExpr:
+			// Reached for a call in an argument list, and for a table position ahead of the
+			// TableExpr above, since a node is visited after its children.
+			return errIfFunctionReads(functionName(expr.Name))
+
+		case *chparser.Path:
+			// ClickHouse reads `x IN db.table` as a select from that table, and a qualified name
+			// on the right of IN is a Path rather than a TableIdentifier.
+			if len(expr.Fields) < 2 {
+				return nil
+			}
+
+			if _, ok := internalDatabases[strings.ToLower(expr.Fields[0].Name)]; ok {
+				return errors.NewInvalidInputf(CodeClickHouseSQLInternalDatabase, "the ClickHouse %s database is not allowed in SQL queries", expr.Fields[0].Name)
+			}
 
 		case *chparser.TableIdentifier:
 			// Reading these is unaffected by ClickHouse read-only mode.

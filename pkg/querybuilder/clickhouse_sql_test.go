@@ -10,6 +10,34 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type refusalTestCase struct {
+	name         string
+	query        string
+	expectedCode errors.Code
+}
+
+func assertRefused(t *testing.T, testCases []refusalTestCase) {
+	t.Helper()
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			errC := make(chan error, 1)
+			go func() { errC <- ErrIfStatementIsNotValid(testCase.query) }()
+
+			var err error
+			select {
+			case err = <-errC:
+			case <-time.After(10 * time.Second):
+				require.Fail(t, "timed out, which means the parser is no longer bounding its backtracking")
+			}
+
+			// Required rather than asserted: errors.Asc dereferences the error it is given.
+			require.Error(t, err)
+			assert.True(t, errors.Asc(err, testCase.expectedCode), "expected code %s, got %v", testCase.expectedCode, err)
+		})
+	}
+}
+
 func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
 	testCases := []struct {
 		name  string
@@ -70,8 +98,11 @@ func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
 		{"ScalarCallInGeneratorTableFunctionArgument", "SELECT * FROM numbers(intDiv(100, 2))"},
 		{"NestedScalarCallInGeneratorTableFunctionArgument", "SELECT * FROM numbers(greatest(1, intDiv(100, 2) + 1))"},
 		{"GeneratorTableFunctionProductionQuery", "WITH toInt64(1786029960000000000) AS start_ns, toInt64(1786031760000000000) AS end_ns, 300000000000 AS step_ns SELECT ts, toFloat64(sum(value)) AS value FROM (SELECT fromUnixTimestamp64Nano(start_ns + toInt64(number) * step_ns) AS ts, 0 AS value FROM numbers(greatest(1, intDiv(end_ns - start_ns, step_ns) + 1)) UNION ALL SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 5 minute) AS ts, count() AS value FROM signoz_logs.distributed_logs_v2 WHERE timestamp >= 1786029960000000000 AND timestamp <= 1786031760000000000 GROUP BY ts) GROUP BY ts ORDER BY ts"},
-		// Not checked, because argument position is not a table position. ClickHouse refuses it on the argument's type before anything is read.
-		{"RefusedTableFunctionInGeneratorTableFunctionArgument", "SELECT * FROM numbers(url('http://x', CSV, 'a String'))"},
+		// The allow list keys on the bare name, so quoting must not hide a generator from it.
+		{"BacktickQuotedGeneratorTableFunction", "SELECT * FROM `numbers`(31)"},
+		{"DoubleQuotedGeneratorTableFunction", "SELECT * FROM \"numbers\"(31)"},
+		// Reads nothing: format builds a string, and shares its name with a table function.
+		{"ScalarFunctionNamedAfterATableFunction", "SELECT format('{} {}', a, b) FROM t"},
 		{"GeneratorTableFunctionInJoin", "SELECT * FROM signoz_logs.distributed_logs_v2 AS l CROSS JOIN numbers(31) AS n"},
 		{"GeneratorTableFunctionInCommonTableExpression", "WITH axis AS (SELECT number FROM numbers(31)) SELECT * FROM axis"},
 		{"GeneratorTableFunctionInWhereSubquery", "SELECT * FROM t WHERE a IN (SELECT number FROM numbers(31))"},
@@ -95,11 +126,7 @@ func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
 }
 
 func TestErrIfStatementIsNotValid_Fail(t *testing.T) {
-	testCases := []struct {
-		name         string
-		query        string
-		expectedCode errors.Code
-	}{
+	testCases := []refusalTestCase{
 		{"Empty", "", CodeClickHouseSQLNotSingleStatement},
 		{"UnterminatedBlockCommentOnly", "/* x", CodeClickHouseSQLUnparseable},
 		{"Unparseable", "SELECT FROM WHERE", CodeClickHouseSQLUnparseable},
@@ -117,11 +144,12 @@ func TestErrIfStatementIsNotValid_Fail(t *testing.T) {
 		{"ShowGrants", "SHOW GRANTS", CodeClickHouseSQLUnparseable},
 		{"IntoOutfile", "SELECT * FROM t INTO OUTFILE '/tmp/x.csv'", CodeClickHouseSQLUnparseable},
 		{"UrlTableFunction", "SELECT * FROM url('http://attacker.example/x', CSV, 'a String')", CodeClickHouseSQLTableFunction},
-		{"FileTableFunction", "SELECT * FROM file('/etc/passwd', CSV, 'a String')", CodeClickHouseSQLTableFunction},
+		// file is also a scalar function, so the reading rule reaches it before the table rule does.
+		{"FileTableFunction", "SELECT * FROM file('/etc/passwd', CSV, 'a String')", CodeClickHouseSQLReadingFunction},
 		{"ExecutableTableFunction", "SELECT * FROM executable('script.sh', CSV, 'a String')", CodeClickHouseSQLTableFunction},
 		{"TableFunctionInJoin", "SELECT * FROM t1 JOIN url('http://x', CSV, 'a String') u ON 1 = 1", CodeClickHouseSQLTableFunction},
 		{"TableFunctionInCommonTableExpression", "WITH c AS (SELECT * FROM url('http://x', CSV, 'a String')) SELECT * FROM c", CodeClickHouseSQLTableFunction},
-		{"TableFunctionInWhereSubquery", "SELECT * FROM t WHERE a IN (SELECT * FROM file('/etc/passwd', CSV, 'a String'))", CodeClickHouseSQLTableFunction},
+		{"TableFunctionInWhereSubquery", "SELECT * FROM t WHERE a IN (SELECT * FROM url('http://x', CSV, 'a String'))", CodeClickHouseSQLTableFunction},
 		{"TableFunctionInUnion", "SELECT * FROM t UNION ALL SELECT * FROM url('http://x', CSV, 'a String')", CodeClickHouseSQLTableFunction},
 		// Reach an internal database without naming one, so only the table-function rule sees them.
 		{"MergeTableFunction", "SELECT * FROM merge('system', '.*')", CodeClickHouseSQLTableFunction},
@@ -135,8 +163,21 @@ func TestErrIfStatementIsNotValid_Fail(t *testing.T) {
 		{"InternalDatabaseJoinedOntoAllowedTableFunction", "SELECT * FROM numbers(31) AS n JOIN system.users AS u ON 1 = 1", CodeClickHouseSQLInternalDatabase},
 		{"InternalDatabaseUnionedWithAllowedTableFunction", "SELECT number FROM numbers(31) UNION ALL SELECT name FROM system.users", CodeClickHouseSQLInternalDatabase},
 		{"RefusedTableFunctionJoinedOntoAllowedTableFunction", "SELECT * FROM numbers(31) AS n JOIN url('http://x', CSV, 'a String') AS u ON 1 = 1", CodeClickHouseSQLTableFunction},
-		{"RefusedTableFunctionInsideAllowedTableFunction", "SELECT * FROM numbers((SELECT count() FROM file('/etc/passwd', CSV, 'a String')))", CodeClickHouseSQLTableFunction},
+		{"RefusedTableFunctionInsideAllowedTableFunction", "SELECT * FROM numbers((SELECT count() FROM url('http://x', CSV, 'a String')))", CodeClickHouseSQLTableFunction},
 		{"InternalDatabaseInsideAllowedTableFunctionCommonTableExpression", "WITH axis AS (SELECT * FROM numbers((SELECT count() FROM system.users))) SELECT * FROM axis", CodeClickHouseSQLInternalDatabase},
+		// Read a file, a dictionary or the server binary without naming a table, so neither the table rule nor the database rule sees them. The row count alone is an oracle: numbers(length(file(x))) returns one row per byte.
+		{"ScalarFileFunction", "SELECT file('/etc/passwd')", CodeClickHouseSQLReadingFunction},
+		{"ScalarFileFunctionInWhere", "SELECT * FROM t WHERE length(file('/etc/passwd')) > 0", CodeClickHouseSQLReadingFunction},
+		{"ScalarFileFunctionInGeneratorTableFunctionArgument", "SELECT * FROM numbers(length(file('/etc/passwd')))", CodeClickHouseSQLReadingFunction},
+		{"DictionaryFunction", "SELECT dictGetUInt64('d', 'k', toUInt64(1))", CodeClickHouseSQLReadingFunction},
+		{"DictionaryFunctionUppercase", "SELECT DICTGETSTRING('d', 'k', toUInt64(1))", CodeClickHouseSQLReadingFunction},
+		{"DictionaryFunctionInGeneratorTableFunctionArgument", "SELECT * FROM numbers(dictGetUInt64('d', 'k', toUInt64(1)))", CodeClickHouseSQLReadingFunction},
+		{"IntrospectionFunction", "SELECT demangle(addressToSymbol(toUInt64(1)))", CodeClickHouseSQLReadingFunction},
+		{"ModelEvaluationFunction", "SELECT catboostEvaluate('/model.bin', 1)", CodeClickHouseSQLReadingFunction},
+		// ClickHouse reads `x IN table` as `x IN (SELECT * FROM table)`, and a qualified name there is a Path rather than a TableIdentifier.
+		{"InternalDatabaseInInOperator", "SELECT * FROM t WHERE a IN system.users", CodeClickHouseSQLInternalDatabase},
+		{"InternalDatabaseInGlobalInOperator", "SELECT * FROM t WHERE a GLOBAL IN system.users", CodeClickHouseSQLInternalDatabase},
+		{"InternalDatabaseInNotInOperator", "SELECT * FROM t WHERE a NOT IN system.users", CodeClickHouseSQLInternalDatabase},
 		{"SystemUsers", "SELECT * FROM system.users", CodeClickHouseSQLInternalDatabase},
 		{"SystemUppercase", "SELECT * FROM SYSTEM.USERS", CodeClickHouseSQLInternalDatabase},
 		{"SystemQuoted", "SELECT count() FROM `system`.`tables`", CodeClickHouseSQLInternalDatabase},
@@ -149,23 +190,11 @@ func TestErrIfStatementIsNotValid_Fail(t *testing.T) {
 		{"ReadonlySettingOverrideAmongOthers", "SELECT * FROM t SETTINGS max_threads = 4, readonly = 0", CodeClickHouseSQLReadonlyOverride},
 	}
 
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			err := ErrIfStatementIsNotValid(testCase.query)
-
-			// Required rather than asserted: errors.Asc dereferences the error it is given.
-			require.Error(t, err)
-			assert.True(t, errors.Asc(err, testCase.expectedCode), "expected code %s, got %v", testCase.expectedCode, err)
-		})
-	}
+	assertRefused(t, testCases)
 }
 
 func TestErrIfStatementIsNotValid_ShouldPassButFails(t *testing.T) {
-	testCases := []struct {
-		name         string
-		query        string
-		expectedCode errors.Code
-	}{
+	testCases := []refusalTestCase{
 		// The left operand commits the parser to a subquery, leaving the operator nowhere to bind. Parenthesising only the right operand is fine.
 		{"ParenthesisedUnionLeftOperand", "SELECT a FROM ((SELECT 1 AS a) UNION ALL (SELECT 2 AS a))", CodeClickHouseSQLUnparseable},
 		{"ParenthesisedExceptLeftOperand", "SELECT a FROM ((SELECT 1 AS a) EXCEPT (SELECT 2 AS a))", CodeClickHouseSQLUnparseable},
@@ -174,13 +203,5 @@ func TestErrIfStatementIsNotValid_ShouldPassButFails(t *testing.T) {
 		{"UnquotedOnAsColumnName", "SELECT on + 1 FROM t", CodeClickHouseSQLUnparseable},
 	}
 
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			err := ErrIfStatementIsNotValid(testCase.query)
-
-			// Required rather than asserted: errors.Asc dereferences the error it is given.
-			require.Error(t, err)
-			assert.True(t, errors.Asc(err, testCase.expectedCode), "expected code %s, got %v", testCase.expectedCode, err)
-		})
-	}
+	assertRefused(t, testCases)
 }
