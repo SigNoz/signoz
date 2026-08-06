@@ -370,7 +370,6 @@ func (m *module) getPerGroupPodStatusCounts(
 	)
 
 	// Merge user filter with page-groups IN clauses.
-	userFilterExpr = ""
 	if filter != nil {
 		userFilterExpr = filter.Expression
 	}

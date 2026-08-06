@@ -1,11 +1,11 @@
 package implinframonitoring
 
 import (
-	"reflect"
 	"testing"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/stretchr/testify/assert"
 )
 
 func groupByKey(name string) qbtypes.GroupByKey {
@@ -89,10 +89,7 @@ func TestIsKeyInGroupByAttrs(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := isKeyInGroupByAttrs(tt.groupByAttrs, tt.key)
-			if got != tt.expectedFound {
-				t.Errorf("isKeyInGroupByAttrs(%v, %q) = %v, want %v",
-					tt.groupByAttrs, tt.key, got, tt.expectedFound)
-			}
+			assert.Equal(t, tt.expectedFound, got)
 		})
 	}
 }
@@ -157,10 +154,7 @@ func TestMergeFilterExpressions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := mergeFilterExpressions(tt.queryFilterExpr, tt.reqFilterExpr)
-			if got != tt.expected {
-				t.Errorf("mergeFilterExpressions(%q, %q) = %q, want %q",
-					tt.queryFilterExpr, tt.reqFilterExpr, got, tt.expected)
-			}
+			assert.Equal(t, tt.expected, got)
 		})
 	}
 }
@@ -206,10 +200,7 @@ func TestCompositeKeyFromList(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := compositeKeyFromList(tt.parts)
-			if got != tt.expected {
-				t.Errorf("compositeKeyFromList(%v) = %q, want %q",
-					tt.parts, got, tt.expected)
-			}
+			assert.Equal(t, tt.expected, got)
 		})
 	}
 }
@@ -377,10 +368,7 @@ func TestCompositeKeyFromLabels(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := compositeKeyFromLabels(tt.labels, tt.groupBy)
-			if got != tt.expected {
-				t.Errorf("compositeKeyFromLabels(%v, %v) = %q, want %q",
-					tt.labels, tt.groupBy, got, tt.expected)
-			}
+			assert.Equal(t, tt.expected, got)
 		})
 	}
 }
@@ -415,9 +403,7 @@ func TestIntersectMap(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := intersectMap(tt.m, tt.keep)
-			if !reflect.DeepEqual(got, tt.expected) {
-				t.Errorf("intersectMap(%v, keys=%v) = %v, want %v", tt.m, tt.keep, got, tt.expected)
-			}
+			assert.Equal(t, tt.expected, got)
 		})
 	}
 }
@@ -456,9 +442,7 @@ func TestIntersectRankedGroups(t *testing.T) {
 			for _, g := range got {
 				gotKeys = append(gotKeys, g.compositeKey)
 			}
-			if !reflect.DeepEqual(gotKeys, tt.expected) {
-				t.Errorf("intersectRankedGroups keys = %v, want %v", gotKeys, tt.expected)
-			}
+			assert.Equal(t, tt.expected, gotKeys)
 		})
 	}
 }

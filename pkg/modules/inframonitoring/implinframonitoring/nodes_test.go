@@ -1,12 +1,12 @@
 package implinframonitoring
 
 import (
-	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 	"github.com/huandu/go-sqlbuilder"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestApplyNodeReadinessFilter(t *testing.T) {
@@ -54,15 +54,11 @@ func TestApplyNodeReadinessFilter(t *testing.T) {
 			sql, args := cb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 			hasWhere := strings.Contains(sql, "condition_value IN (")
-			if hasWhere != tt.wantWhere {
-				t.Errorf("applyNodeReadinessFilter(%v) sql = %q, wantWhere = %v", tt.readiness, sql, tt.wantWhere)
-			}
+			assert.Equal(t, tt.wantWhere, hasWhere)
 			if len(tt.wantArgs) == 0 {
-				if len(args) != 0 {
-					t.Errorf("applyNodeReadinessFilter(%v) args = %v, want none", tt.readiness, args)
-				}
-			} else if !reflect.DeepEqual(args, tt.wantArgs) {
-				t.Errorf("applyNodeReadinessFilter(%v) args = %v, want %v", tt.readiness, args, tt.wantArgs)
+				assert.Empty(t, args)
+			} else {
+				assert.Equal(t, tt.wantArgs, args)
 			}
 		})
 	}

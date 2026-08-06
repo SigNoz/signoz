@@ -1,12 +1,12 @@
 package implinframonitoring
 
 import (
-	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 	"github.com/huandu/go-sqlbuilder"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestApplyContainerStatusFilter(t *testing.T) {
@@ -48,15 +48,11 @@ func TestApplyContainerStatusFilter(t *testing.T) {
 			sql, args := cb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 			hasWhere := strings.Contains(sql, "lower(display_status) IN (")
-			if hasWhere != tt.wantWhere {
-				t.Errorf("applyContainerStatusFilter(%v) sql = %q, wantWhere = %v", tt.statuses, sql, tt.wantWhere)
-			}
+			assert.Equal(t, tt.wantWhere, hasWhere)
 			if len(tt.wantArgs) == 0 {
-				if len(args) != 0 {
-					t.Errorf("applyContainerStatusFilter(%v) args = %v, want none", tt.statuses, args)
-				}
-			} else if !reflect.DeepEqual(args, tt.wantArgs) {
-				t.Errorf("applyContainerStatusFilter(%v) args = %v, want %v", tt.statuses, args, tt.wantArgs)
+				assert.Empty(t, args)
+			} else {
+				assert.Equal(t, tt.wantArgs, args)
 			}
 		})
 	}
