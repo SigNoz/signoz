@@ -151,6 +151,19 @@ def notification_channel(
     Package-scoped fixture for WireMock container to receive notifications for Alert rules.
     """
 
+    # A --reuse cache from before the https:8443 alias was added lacks the "8443"
+    # config that Google Chat delivery needs (and its container lacks the port/alias).
+    # Drop such a stale cache + container so the fixture recreates a correct one,
+    # instead of raising KeyError on container_configs["8443"].
+    cached = pytestconfig.cache.get("notification_channel", None)
+    if cached and "8443" not in (cached.get("container_configs") or {}):
+        logger.info("Recreating stale notification_channel (cache missing https:8443)")
+        try:
+            docker.from_env().containers.get(cached["id"]).remove(force=True)
+        except docker.errors.NotFound:
+            pass
+        pytestconfig.cache.set("notification_channel", None)
+
     def create() -> types.TestContainerDocker:
         # http:8080 admin/webhook delivery, plus https:8443 aliased as
         # chat.googleapis.com so Google Chat's validated webhook host routes here.
