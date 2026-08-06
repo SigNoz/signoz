@@ -139,19 +139,33 @@ func buildContainerRecords(
 	return records
 }
 
+// getTopContainerGroupsAndMetadata concurrently fetches metadata + the ordering-metric
+// ranking (plus the full-scope container-status keyset when filtering, to intersect both).
 func (m *module) getTopContainerGroupsAndMetadata(
 	ctx context.Context,
 	orgID valuer.UUID,
 	req *inframonitoringtypes.PostableContainers,
-) ([]map[string]string, map[string]map[string]string, error) {
+) ([]map[string]string, map[string]map[string]string, map[string]containerStatusCounts, *qbtypes.QueryWarnData, error) {
 
 	var (
-		orderByKey      string
-		metadataMap     map[string]map[string]string
-		allMetricGroups []rankedGroup
+		orderByKey              string
+		metadataMap             map[string]map[string]string
+		allMetricGroups         []rankedGroup
+		statusCounts            map[string]containerStatusCounts
+		statusWarning           *qbtypes.QueryWarnData
+		filter                  *qbtypes.Filter
+		filterByContainerStatus []inframonitoringtypes.ContainerStatus
 	)
 
 	orderByKey = req.OrderBy.Key.Name
+
+	// When filtering by container status, resolve the full-scope status keyset
+	// concurrently (pageGroups=nil spans all groups under the user filter) so it
+	// can intersect metadata + ranked groups below.
+	if req.Filter != nil {
+		filter = &req.Filter.Filter
+		filterByContainerStatus = req.Filter.FilterByContainerStatus
+	}
 
 	g, gCtx := errgroup.WithContext(ctx)
 
@@ -161,12 +175,26 @@ func (m *module) getTopContainerGroupsAndMetadata(
 		return err
 	})
 
+	if len(filterByContainerStatus) != 0 {
+		g.Go(func() error {
+			var err error
+			statusCounts, statusWarning, err = m.getPerGroupContainerStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, filter, req.GroupBy, nil, filterByContainerStatus)
+			return err
+		})
+	}
+
 	if orderByKey == inframonitoringtypes.ContainerNameAttrKey {
 		if err := g.Wait(); err != nil {
-			return nil, nil, err
+			return nil, nil, nil, nil, err
+		}
+		// Secondary filter: keep only status-matching groups. A missing metric
+		// yields an empty statusCounts, so this correctly empties the result
+		// (the caller also surfaces the warning).
+		if len(filterByContainerStatus) != 0 {
+			metadataMap = intersectMap(metadataMap, statusCounts)
 		}
 		pageGroups := inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.ContainerNameAttrKey)
-		return pageGroups, metadataMap, nil
+		return pageGroups, metadataMap, statusCounts, statusWarning, nil
 	}
 
 	queryNamesForOrderBy := orderByToContainersQueryNames[orderByKey]
@@ -212,10 +240,19 @@ func (m *module) getTopContainerGroupsAndMetadata(
 	})
 
 	if err := g.Wait(); err != nil {
-		return nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
-	return paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit), metadataMap, nil
+	// Secondary filter: intersect ranked groups + metadata with the status keyset.
+	// A missing metric yields an empty statusCounts, correctly emptying the result
+	// (the caller also surfaces the warning).
+	if len(filterByContainerStatus) != 0 {
+		allMetricGroups = intersectRankedGroups(allMetricGroups, statusCounts)
+		metadataMap = intersectMap(metadataMap, statusCounts)
+	}
+
+	pageGroups := paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit)
+	return pageGroups, metadataMap, statusCounts, statusWarning, nil
 }
 
 func (m *module) getContainersTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableContainers) (map[string]map[string]string, error) {
@@ -225,7 +262,11 @@ func (m *module) getContainersTableMetadata(ctx context.Context, orgID valuer.UU
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}
 	}
-	return m.getMetadata(ctx, orgID, containersTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
+	var filter *qbtypes.Filter
+	if req.Filter != nil {
+		filter = &req.Filter.Filter
+	}
+	return m.getMetadata(ctx, orgID, containersTableMetricNamesList, req.GroupBy, nonGroupByAttrs, filter, req.Start, req.End)
 }
 
 // getPerGroupContainerStatusCountsWithReqMetricChecks gates
@@ -241,6 +282,7 @@ func (m *module) getPerGroupContainerStatusCountsWithReqMetricChecks(
 	filter *qbtypes.Filter,
 	groupBy []qbtypes.GroupByKey,
 	pageGroups []map[string]string,
+	filterByContainerStatus []inframonitoringtypes.ContainerStatus,
 ) (map[string]containerStatusCounts, *qbtypes.QueryWarnData, error) {
 	present, err := m.getMetricsExistence(ctx, containerStatusMetricNamesList)
 	if err != nil {
@@ -266,11 +308,26 @@ func (m *module) getPerGroupContainerStatusCountsWithReqMetricChecks(
 		return map[string]containerStatusCounts{}, warning, nil
 	}
 
-	counts, err := m.getPerGroupContainerStatusCounts(ctx, orgID, start, end, filter, groupBy, pageGroups)
+	counts, err := m.getPerGroupContainerStatusCounts(ctx, orgID, start, end, filter, groupBy, pageGroups, filterByContainerStatus)
 	if err != nil {
 		return nil, nil, err
 	}
 	return counts, nil, nil
+}
+
+// applyContainerStatusFilter adds the display-status push-down (lower(display_status)
+// IN (...)) to the outer count builder. valuer lowercases the wire value while
+// display_status is kubectl-cased, so we compare lower() on both. No-op when the
+// requested set is empty.
+func applyContainerStatusFilter(cb *sqlbuilder.SelectBuilder, filterByContainerStatus []inframonitoringtypes.ContainerStatus) {
+	if len(filterByContainerStatus) == 0 {
+		return
+	}
+	vals := make([]string, len(filterByContainerStatus))
+	for i, c := range filterByContainerStatus {
+		vals[i] = c.StringValue()
+	}
+	cb.Where(cb.In("lower(display_status)", sqlbuilder.List(vals)))
 }
 
 // getPerGroupContainerStatusCounts computes per-group counts of distinct
@@ -297,8 +354,11 @@ func (m *module) getPerGroupContainerStatusCounts(
 	filter *qbtypes.Filter,
 	groupBy []qbtypes.GroupByKey,
 	pageGroups []map[string]string,
+	filterByContainerStatus []inframonitoringtypes.ContainerStatus,
 ) (map[string]containerStatusCounts, error) {
-	if len(pageGroups) == 0 || len(groupBy) == 0 {
+	// Empty pageGroups means "span all under user filter", allowed only in
+	// full-scope mode (filtering by status). Otherwise it's an empty page.
+	if len(groupBy) == 0 || (len(pageGroups) == 0 && len(filterByContainerStatus) == 0) {
 		return map[string]containerStatusCounts{}, nil
 	}
 
@@ -482,11 +542,15 @@ func (m *module) getPerGroupContainerStatusCounts(
 		countGroupBy = append(countGroupBy, col)
 	}
 	countSelectCols = append(countSelectCols, statusCountCols...)
-	countSQL := fmt.Sprintf(
-		"SELECT %s FROM container_status GROUP BY %s",
-		strings.Join(countSelectCols, ", "),
-		strings.Join(countGroupBy, ", "),
-	)
+
+	// Outer count query. Built with sqlbuilder so the status push-down uses a
+	// proper IN (keep only containers whose display status is in the requested set).
+	countBuilder := sqlbuilder.NewSelectBuilder()
+	countBuilder.Select(countSelectCols...)
+	countBuilder.From("container_status")
+	applyContainerStatusFilter(countBuilder, filterByContainerStatus)
+	countBuilder.GroupBy(countGroupBy...)
+	countSQL, countArgs := countBuilder.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	// Combine CTEs + outer. Arg order mirrors CTE declaration order.
 	cteFragments := []string{
@@ -499,7 +563,7 @@ func (m *module) getPerGroupContainerStatusCounts(
 	finalSQL := querybuilder.CombineCTEs(cteFragments) + countSQL
 	finalArgs := querybuilder.PrependArgs([][]any{
 		stateFpsArgs, containerStateArgs, reasonFpsArgs, reasonInnerArgs,
-	}, nil)
+	}, countArgs)
 
 	rows, err := m.telemetryStore.ClickhouseDB().Query(ctx, finalSQL, finalArgs...)
 	if err != nil {

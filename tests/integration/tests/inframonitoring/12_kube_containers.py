@@ -122,6 +122,84 @@ def test_kube_containers_status_health_and_base_set(
         else:
             assert rec["cpu"] == -1, f"{pod}: expected cpu -1 sentinel (base-set-only), got {rec['cpu']}"
 
+    # filterByContainerStatus (secondary filter): matching status keeps the
+    # container; a mismatched status filters it out. Wire value is
+    # case-insensitive (valuer lowercases): "running" == "Running".
+    crun_running = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.pod.name = 'crun'", "filterByContainerStatus": ["running"]},
+        },
+        timeout=5,
+    )
+    assert crun_running.status_code == HTTPStatus.OK, crun_running.text
+    cr = crun_running.json()["data"]
+    assert cr["total"] == 1
+    assert cr["records"][0]["meta"]["k8s.pod.name"] == "crun"
+
+    cclo_clbo = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.pod.name = 'cclo'", "filterByContainerStatus": ["CrashLoopBackOff"]},
+        },
+        timeout=5,
+    )
+    assert cclo_clbo.status_code == HTTPStatus.OK, cclo_clbo.text
+    assert cclo_clbo.json()["data"]["total"] == 1
+
+    # crun is Running, not CrashLoopBackOff -> filtered out.
+    crun_mismatch = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.pod.name = 'crun'", "filterByContainerStatus": ["CrashLoopBackOff"]},
+        },
+        timeout=5,
+    )
+    assert crun_mismatch.status_code == HTTPStatus.OK, crun_mismatch.text
+    assert crun_mismatch.json()["data"]["total"] == 0
+
+    # Multi-select is OR: a set containing the container's status keeps it; a set
+    # with none of its statuses drops it.
+    crun_or_keep = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.pod.name = 'crun'", "filterByContainerStatus": ["running", "CrashLoopBackOff"]},
+        },
+        timeout=5,
+    )
+    assert crun_or_keep.status_code == HTTPStatus.OK, crun_or_keep.text
+    assert crun_or_keep.json()["data"]["total"] == 1
+
+    crun_all_mismatch = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.pod.name = 'crun'", "filterByContainerStatus": ["CrashLoopBackOff", "OOMKilled"]},
+        },
+        timeout=5,
+    )
+    assert crun_all_mismatch.status_code == HTTPStatus.OK, crun_all_mismatch.text
+    assert crun_all_mismatch.json()["data"]["total"] == 0
+
 
 def test_kube_containers_status_counts_grouped_mode(
     signoz: types.SigNoz,
@@ -166,6 +244,95 @@ def test_kube_containers_status_counts_grouped_mode(
     assert ns_b["completed"] == 1
     assert ns_b["oomKilled"] == 1
     assert by_ns["ns-b"]["containerCountsByReady"] == {"ready": 0, "notReady": 2}
+
+    # filterByContainerStatus in grouped mode: keep only groups with a matching
+    # container, only that bucket populated; a group with none is dropped.
+    running = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "groupBy": [{"name": "k8s.namespace.name", "fieldDataType": "string", "fieldContext": "resource"}],
+            "limit": 50,
+            "filter": {"filterByContainerStatus": ["running"]},
+        },
+        timeout=5,
+    )
+    assert running.status_code == HTTPStatus.OK, running.text
+    rdata = running.json()["data"]
+    # ns-a has running containers, ns-b has none -> only ns-a.
+    assert {r["meta"]["k8s.namespace.name"] for r in rdata["records"]} == {"ns-a"}
+    assert rdata["records"][0]["containerCountsByStatus"]["running"] == 2
+
+    oom = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "groupBy": [{"name": "k8s.namespace.name", "fieldDataType": "string", "fieldContext": "resource"}],
+            "limit": 50,
+            "filter": {"filterByContainerStatus": ["OOMKilled"]},
+        },
+        timeout=5,
+    )
+    assert oom.status_code == HTTPStatus.OK, oom.text
+    odata = oom.json()["data"]
+    assert {r["meta"]["k8s.namespace.name"] for r in odata["records"]} == {"ns-b"}
+    assert odata["records"][0]["containerCountsByStatus"]["oomKilled"] == 1
+
+    # A status absent from every group -> empty page.
+    absent = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "groupBy": [{"name": "k8s.namespace.name", "fieldDataType": "string", "fieldContext": "resource"}],
+            "limit": 50,
+            "filter": {"filterByContainerStatus": ["Terminated"]},
+        },
+        timeout=5,
+    )
+    assert absent.status_code == HTTPStatus.OK, absent.text
+    assert absent.json()["data"]["total"] == 0
+
+    # Multi-select is OR: keeps every group with any matching container (union
+    # across groups); a fully-absent set drops all.
+    union = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "groupBy": [{"name": "k8s.namespace.name", "fieldDataType": "string", "fieldContext": "resource"}],
+            "limit": 50,
+            "filter": {"filterByContainerStatus": ["running", "OOMKilled"]},
+        },
+        timeout=5,
+    )
+    assert union.status_code == HTTPStatus.OK, union.text
+    udata = union.json()["data"]
+    u_by_ns = {r["meta"]["k8s.namespace.name"]: r for r in udata["records"]}
+    assert set(u_by_ns) == {"ns-a", "ns-b"}
+    assert u_by_ns["ns-a"]["containerCountsByStatus"]["running"] == 2
+    assert u_by_ns["ns-b"]["containerCountsByStatus"]["oomKilled"] == 1
+
+    absent_multi = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "groupBy": [{"name": "k8s.namespace.name", "fieldDataType": "string", "fieldContext": "resource"}],
+            "limit": 50,
+            "filter": {"filterByContainerStatus": ["Terminated", "Waiting"]},
+        },
+        timeout=5,
+    )
+    assert absent_multi.status_code == HTTPStatus.OK, absent_multi.text
+    assert absent_multi.json()["data"]["total"] == 0
 
 
 def test_kube_containers_status_recency(
@@ -285,6 +452,31 @@ def test_kube_containers_status_warning_missing_metrics(
     warnings = get_all_warnings(body)
     assert any("status.state" in w["message"] and "status.reason" in w["message"] for w in warnings), f"status warning naming the missing metrics not surfaced: {warnings!r}"
 
+    # filterByContainerStatus + missing status metrics: the up-front gate returns
+    # the warning and an empty page (Total 0) rather than silently filtering
+    # everything out.
+    filtered = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"filterByContainerStatus": ["Running"]},
+        },
+        timeout=5,
+    )
+    assert filtered.status_code == HTTPStatus.OK, filtered.text
+    fdata = filtered.json()["data"]
+    assert fdata["total"] == 0
+    assert fdata["records"] == []
+    # The gate warning on the filtered path is surfaced at the top-level
+    # warning.message (the up-front early return sets it directly); collect both
+    # that and any nested warnings.
+    fwarn = fdata.get("warning") or {}
+    fmsgs = ([fwarn["message"]] if fwarn.get("message") else []) + [w["message"] for w in fwarn.get("warnings", [])]
+    assert any("status.state" in m and "status.reason" in m for m in fmsgs), f"gate warning missing on filtered call: {fmsgs!r}"
+
 
 def test_kube_containers_filter(
     signoz: types.SigNoz,
@@ -376,6 +568,107 @@ def test_kube_containers_orderby_and_pagination(
     assert seen == order, f"paginated sequence {seen} != full-page order {order}"
 
 
+def test_kube_containers_filter_pagination_and_ordering(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """filterByContainerStatus (multi-select) composed with pagination + name
+    ordering. The full-scope status keyset is resolved before slicing, so total
+    reflects the full matched set and pages stay disjoint + complete on both the
+    metric-ordering branch (paginateWithBackfill -- including its metadata-only
+    backfill arm, since coom has no cpu metric) and the name-ordering branch
+    (PaginateMetadataByName). ['running','crashloopbackoff','oomkilled'] matches 4
+    containers in kube_containers_dataset.jsonl: crun, cnr, cclo, coom.
+
+    Name-branch order is not asserted: every container shares k8s.container.name
+    ('app'), so the sort ties -- we assert the filtered set + disjoint/complete pages."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/kube_containers_dataset.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    start = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end = int(now.timestamp() * 1000)
+    statuses = ["running", "crashloopbackoff", "oomkilled"]
+    matched = {"crun", "cnr", "cclo", "coom"}
+
+    # Metric-ordering branch (default cpu order): total is invariant across a paged
+    # walk and the pages are disjoint + cover the full matched set (coom arrives via
+    # the metadata-only backfill arm). Non-matching containers never appear.
+    seen: list[str] = []
+    totals: set[int] = set()
+    for offset in (0, 2, 4):
+        resp = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
+                "start": start,
+                "end": end,
+                "limit": 2,
+                "offset": offset,
+                "filter": {"filterByContainerStatus": statuses},
+            },
+            timeout=5,
+        )
+        assert resp.status_code == HTTPStatus.OK, resp.text
+        data = resp.json()["data"]
+        totals.add(data["total"])
+        assert len(data["records"]) == max(0, min(2, 4 - offset)), f"offset={offset}: {data['records']!r}"
+        seen.extend(r["meta"]["k8s.pod.name"] for r in data["records"])
+    assert totals == {4}, f"total not invariant under filter+pagination: {totals}"
+    assert len(seen) == 4, f"pages overlapped: {seen}"
+    assert set(seen) == matched
+
+    # Name-ordering branch (orderBy k8s.container.name asc, groupBy empty): the
+    # filtered set is returned and total is the full matched count.
+    ordered = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": start,
+            "end": end,
+            "limit": 50,
+            "filter": {"filterByContainerStatus": statuses},
+            "orderBy": {"key": {"name": "k8s.container.name"}, "direction": "asc"},
+        },
+        timeout=5,
+    )
+    assert ordered.status_code == HTTPStatus.OK, ordered.text
+    odata = ordered.json()["data"]
+    assert odata["total"] == 4
+    assert {r["meta"]["k8s.pod.name"] for r in odata["records"]} == matched
+
+    # Name branch paginated: PaginateMetadataByName slices the filtered set into
+    # disjoint pages that together cover it, with total unchanged.
+    name_seen: list[str] = []
+    for offset in (0, 2):
+        resp = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
+                "start": start,
+                "end": end,
+                "limit": 2,
+                "offset": offset,
+                "filter": {"filterByContainerStatus": statuses},
+                "orderBy": {"key": {"name": "k8s.container.name"}, "direction": "asc"},
+            },
+            timeout=5,
+        )
+        assert resp.status_code == HTTPStatus.OK, resp.text
+        data = resp.json()["data"]
+        assert data["total"] == 4
+        assert len(data["records"]) == 2, f"offset={offset}: {data['records']!r}"
+        name_seen.extend(r["meta"]["k8s.pod.name"] for r in data["records"])
+    assert len(name_seen) == 4, f"name-branch pages overlapped: {name_seen}"
+    assert set(name_seen) == matched
+
+
 @pytest.mark.parametrize(
     ("payload_override", "err_substr"),
     [
@@ -399,6 +692,16 @@ def test_kube_containers_orderby_and_pagination(
             },
             "is only allowed when groupBy is empty",
             id="orderby_container_name_with_groupby",
+        ),
+        pytest.param(
+            {"filter": {"filterByContainerStatus": ["bogus"]}},
+            "invalid filter by container status",
+            id="filter_by_container_status_invalid",
+        ),
+        pytest.param(
+            {"filter": {"filterByContainerStatus": ["no_data"]}},
+            "invalid filter by container status",
+            id="filter_by_container_status_no_data",
         ),
     ],
 )

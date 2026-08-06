@@ -5951,21 +5951,6 @@ export interface InframonitoringtypesContainerCountsByStatusDTO {
 	waiting: number;
 }
 
-export enum InframonitoringtypesContainerReadyDTO {
-	ready = 'ready',
-	not_ready = 'not_ready',
-	no_data = 'no_data',
-}
-export type InframonitoringtypesContainerRecordDTOMetaAnyOf = {
-	[key: string]: string;
-};
-
-/**
- * @nullable
- */
-export type InframonitoringtypesContainerRecordDTOMeta =
-	InframonitoringtypesContainerRecordDTOMetaAnyOf | null;
-
 export enum InframonitoringtypesContainerStatusDTO {
 	running = 'running',
 	waiting = 'waiting',
@@ -5982,6 +5967,32 @@ export enum InframonitoringtypesContainerStatusDTO {
 	unknown = 'unknown',
 	no_data = 'no_data',
 }
+export interface InframonitoringtypesContainerFilterDTO {
+	/**
+	 * @type string
+	 */
+	expression?: string;
+	/**
+	 * @type array,null
+	 */
+	filterByContainerStatus?: InframonitoringtypesContainerStatusDTO[] | null;
+}
+
+export enum InframonitoringtypesContainerReadyDTO {
+	ready = 'ready',
+	not_ready = 'not_ready',
+	no_data = 'no_data',
+}
+export type InframonitoringtypesContainerRecordDTOMetaAnyOf = {
+	[key: string]: string;
+};
+
+/**
+ * @nullable
+ */
+export type InframonitoringtypesContainerRecordDTOMeta =
+	InframonitoringtypesContainerRecordDTOMetaAnyOf | null;
+
 export interface InframonitoringtypesContainerRecordDTO {
 	containerCountsByReady: InframonitoringtypesContainerCountsByReadyDTO;
 	containerCountsByStatus: InframonitoringtypesContainerCountsByStatusDTO;
@@ -6705,7 +6716,7 @@ export interface InframonitoringtypesPostableContainersDTO {
 	 * @format int64
 	 */
 	end: number;
-	filter?: Querybuildertypesv5FilterDTO;
+	filter?: InframonitoringtypesContainerFilterDTO;
 	/**
 	 * @type array,null
 	 */
