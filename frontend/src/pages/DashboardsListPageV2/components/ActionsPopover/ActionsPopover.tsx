@@ -1,43 +1,11 @@
 import { useState } from 'react';
-import { useMutation, useQueryClient } from 'react-query';
-import { generatePath } from 'react-router-dom';
-import { Popover, Tooltip } from 'antd';
+import { Popover } from 'antd';
 import { Button } from '@signozhq/ui/button';
-import { toast } from '@signozhq/ui/sonner';
-import {
-	Copy,
-	Expand,
-	EllipsisVertical,
-	Link2,
-	LockKeyhole,
-	PenLine,
-	SquareArrowOutUpRight,
-	Tag,
-} from '@signozhq/icons';
-import { useCopyToClipboard } from 'react-use';
-import logEvent from 'api/common/logEvent';
-import {
-	cloneDashboardV2,
-	getGetDashboardV2QueryKey,
-	invalidateListDashboardsForUserV2,
-	lockDashboardV2,
-	unlockDashboardV2,
-} from 'api/generated/services/dashboard';
-import type { GetDashboardV2200 } from 'api/generated/services/sigNoz.schemas';
-import ROUTES from 'constants/routes';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { DashboardListEvents } from 'pages/DashboardsListPageV2/constants/events';
-import { useAppContext } from 'providers/App/App';
-import { useErrorModal } from 'providers/ErrorModalProvider';
-import APIError from 'types/api/error';
-import { USER_ROLES } from 'types/roles';
-import { getAbsoluteUrl } from 'utils/basePath';
-import { openInNewTab } from 'utils/navigation';
+import { EllipsisVertical } from '@signozhq/icons';
 
-import DeleteActionItem from './DeleteActionItem';
+import ActionsPopoverContent from './ActionsPopoverContent';
 import EditTagsModal from './EditTagsModal';
 import RenameDashboardModal from './RenameDashboardModal';
-import styles from './ActionsPopover.module.scss';
 
 interface Props {
 	link: string;
@@ -67,226 +35,40 @@ function ActionsPopover({
 	onView,
 	isLegacy = false,
 }: Props): JSX.Element {
-	const [, setCopy] = useCopyToClipboard();
-	const { safeNavigate } = useSafeNavigate();
-	const { showErrorModal } = useErrorModal();
+	const [isOpen, setIsOpen] = useState(false);
 	const [isRenameOpen, setIsRenameOpen] = useState(false);
 	const [isEditTagsOpen, setIsEditTagsOpen] = useState(false);
-
-	// Clone keeps the source's name/panels/tags as a new unlocked dashboard owned
-	// by the caller; open the copy so it can be tweaked right away.
-	const { mutate: runClone, isLoading: isCloning } = useMutation({
-		mutationFn: () => cloneDashboardV2({ id: dashboardId }),
-		onSuccess: (response) => {
-			toast.success(`Duplicated "${dashboardName}"`);
-			void logEvent(DashboardListEvents.RowAction, {
-				action: 'duplicate',
-				dashboardId,
-			});
-			safeNavigate(
-				generatePath(ROUTES.DASHBOARD, { dashboardId: response.data.id }),
-			);
-		},
-		onError: (error: APIError) => {
-			showErrorModal(error);
-		},
-	});
-
-	const queryClient = useQueryClient();
-	const { user } = useAppContext();
-	const isAuthor = user?.email === createdBy;
-	// Author/admin can lock-unlock (mirrors the detail-page gate); integration-owned
-	// dashboards are never toggleable.
-	const canToggleLock =
-		(isAuthor || user.role === USER_ROLES.ADMIN) && createdBy !== 'integration';
-
-	const { mutate: runLockToggle, isLoading: isTogglingLock } = useMutation({
-		mutationFn: () =>
-			isLocked
-				? unlockDashboardV2({ id: dashboardId })
-				: lockDashboardV2({ id: dashboardId }),
-		onSuccess: async () => {
-			toast.success(isLocked ? 'Dashboard unlocked' : 'Dashboard locked');
-			void logEvent(DashboardListEvents.RowAction, {
-				action: isLocked ? 'unlock' : 'lock',
-				dashboardId,
-			});
-			// Patch the detail-page cache too: it uses staleTime:Infinity +
-			// refetchOnMount:false, so without this, returning to the dashboard would
-			// still show the stale (pre-toggle) lock state.
-			const key = getGetDashboardV2QueryKey({ id: dashboardId });
-			const cached = queryClient.getQueryData<GetDashboardV2200>(key);
-			if (cached) {
-				queryClient.setQueryData<GetDashboardV2200>(key, {
-					...cached,
-					data: { ...cached.data, locked: !isLocked },
-				});
-			}
-			await invalidateListDashboardsForUserV2(queryClient);
-		},
-		onError: (error: APIError) => {
-			showErrorModal(error);
-		},
-	});
-
-	const handleOpenInNewTab = (e: React.MouseEvent<HTMLElement>): void => {
-		e.stopPropagation();
-		e.preventDefault();
-		openInNewTab(link);
-		void logEvent(DashboardListEvents.RowAction, {
-			action: 'openNewTab',
-			dashboardId,
-		});
-	};
-
-	const handleCopyLink = (e: React.MouseEvent<HTMLElement>): void => {
-		e.stopPropagation();
-		e.preventDefault();
-		setCopy(getAbsoluteUrl(link));
-		void logEvent(DashboardListEvents.RowAction, {
-			action: 'copyLink',
-			dashboardId,
-		});
-	};
 
 	return (
 		<>
 			<Popover
-				content={
-					// Stop clicks inside the menu (incl. disabled items) from bubbling to the
-					// row's onClick, which would navigate to the dashboard.
-					// eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events -- wrapper only guards propagation, not an interactive control
-					<div className={styles.content} onClick={(e): void => e.stopPropagation()}>
-						{!isLegacy && (
-							<>
-								<Button
-									color="secondary"
-									className={styles.menuItem}
-									prefix={<Expand size={14} />}
-									onClick={onView}
-									testId="dashboard-action-view"
-								>
-									View
-								</Button>
-								<Button
-									color="secondary"
-									className={styles.menuItem}
-									prefix={<SquareArrowOutUpRight size={14} />}
-									onClick={handleOpenInNewTab}
-									testId="dashboard-action-open-new-tab"
-								>
-									Open in New Tab
-								</Button>
-								<Button
-									color="secondary"
-									className={styles.menuItem}
-									prefix={<Link2 size={14} />}
-									onClick={handleCopyLink}
-									testId="dashboard-action-copy-link"
-								>
-									Copy Link
-								</Button>
-								{canEdit && (
-									<Tooltip
-										placement="left"
-										title={
-											isLocked ? 'This dashboard is locked, so it cannot be renamed.' : ''
-										}
-									>
-										<span className={styles.menuItemWrap}>
-											<Button
-												color="secondary"
-												className={styles.menuItem}
-												prefix={<PenLine size={14} />}
-												disabled={isLocked}
-												onClick={(e): void => {
-													e.stopPropagation();
-													e.preventDefault();
-													if (!isLocked) {
-														setIsRenameOpen(true);
-													}
-												}}
-												testId="dashboard-action-rename"
-											>
-												Rename
-											</Button>
-										</span>
-									</Tooltip>
-								)}
-								{canEdit && (
-									<Tooltip
-										placement="left"
-										title={
-											isLocked
-												? 'This dashboard is locked, so its tags cannot be edited.'
-												: ''
-										}
-									>
-										<span className={styles.menuItemWrap}>
-											<Button
-												color="secondary"
-												className={styles.menuItem}
-												prefix={<Tag size={14} />}
-												disabled={isLocked}
-												onClick={(e): void => {
-													e.stopPropagation();
-													e.preventDefault();
-													if (!isLocked) {
-														setIsEditTagsOpen(true);
-													}
-												}}
-												testId="dashboard-action-edit-tags"
-											>
-												{tags.length > 0 ? 'Edit Tags' : 'Add Tags'}
-											</Button>
-										</span>
-									</Tooltip>
-								)}
-								{canEdit && (
-									<Button
-										color="secondary"
-										className={styles.menuItem}
-										prefix={<Copy size={14} />}
-										loading={isCloning}
-										onClick={(e): void => {
-											e.stopPropagation();
-											e.preventDefault();
-											runClone();
-										}}
-										testId="dashboard-action-duplicate"
-									>
-										Duplicate
-									</Button>
-								)}
-								{canToggleLock && (
-									<Button
-										color="secondary"
-										className={styles.menuItem}
-										prefix={<LockKeyhole size={14} />}
-										loading={isTogglingLock}
-										onClick={(e): void => {
-											e.stopPropagation();
-											e.preventDefault();
-											runLockToggle();
-										}}
-										testId="dashboard-action-lock"
-									>
-										{isLocked ? 'Unlock Dashboard' : 'Lock Dashboard'}
-									</Button>
-								)}
-							</>
-						)}
-						{canEdit && (
-							<DeleteActionItem
-								dashboardId={dashboardId}
-								dashboardName={dashboardName}
-								createdBy={createdBy}
-								isLocked={isLocked}
-								showDivider={!isLegacy}
-							/>
-						)}
-					</div>
-				}
+				open={isOpen}
+				onOpenChange={setIsOpen}
+				// A render function, so the menu's mutations and permission checks are
+				// paid for only by the row whose menu is actually open. Paired with
+				// destroyTooltipOnHide, they are released again on close.
+				content={(): JSX.Element => (
+					<ActionsPopoverContent
+						link={link}
+						dashboardId={dashboardId}
+						dashboardName={dashboardName}
+						createdBy={createdBy}
+						isLocked={isLocked}
+						tags={tags}
+						canEdit={canEdit}
+						isLegacy={isLegacy}
+						onView={onView}
+						onOpenRename={(): void => {
+							setIsOpen(false);
+							setIsRenameOpen(true);
+						}}
+						onOpenEditTags={(): void => {
+							setIsOpen(false);
+							setIsEditTagsOpen(true);
+						}}
+					/>
+				)}
+				destroyTooltipOnHide
 				placement="bottomRight"
 				arrow={false}
 				rootClassName="dashboardActionsPopover"
