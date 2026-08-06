@@ -96,10 +96,7 @@ def _card_subset(alertname: str, buttons: list[tuple[str, str]]) -> dict:
                         # rendered alert body mentions the alertname
                         {"widgets": [{"textParagraph": {"text": re.compile(re.escape(alertname))}}]},
                     ]
-                    + [
-                        {"widgets": [{"buttonList": {"buttons": [{"text": text, "onClick": {"openLink": {"url": re.compile(url)}}}]}}]}
-                        for text, url in buttons
-                    ],
+                    + [{"widgets": [{"buttonList": {"buttons": [{"text": text, "onClick": {"openLink": {"url": re.compile(url)}}}]}}]} for text, url in buttons],
                 },
             }
         ],
