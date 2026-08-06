@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { CSSProperties, useMemo, useState } from 'react';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import logEvent from 'api/common/logEvent';
 import CopyButton from 'periscope/components/CopyButton/CopyButton';
@@ -28,6 +28,9 @@ export interface DataViewerProps {
 	// verbatim (e.g. the raw record, body unparsed); otherwise `data` is
 	// stringified as before. Pretty view always renders `data`.
 	jsonString?: string;
+	// Font size (px) for both views; defaults to the component's 12px. PrettyView reads
+	// it via the --data-viewer-font-size CSS var; JsonView (Monaco) via editor options.
+	fontSize?: number;
 }
 
 function DataViewer({
@@ -35,6 +38,7 @@ function DataViewer({
 	drawerKey = 'default',
 	prettyViewProps,
 	jsonString,
+	fontSize,
 }: DataViewerProps): JSX.Element {
 	const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Pretty);
 
@@ -61,7 +65,14 @@ function DataViewer({
 	};
 
 	return (
-		<div className="data-viewer">
+		<div
+			className="data-viewer"
+			style={
+				fontSize
+					? ({ '--data-viewer-font-size': `${fontSize}px` } as CSSProperties)
+					: undefined
+			}
+		>
 			<div className="data-viewer__toolbar">
 				<ToggleGroupSimple
 					type="single"
@@ -78,7 +89,7 @@ function DataViewer({
 				{viewMode === ViewMode.Pretty && (
 					<PrettyView data={data} drawerKey={drawerKey} {...prettyViewProps} />
 				)}
-				{viewMode === ViewMode.Json && <JsonView data={json} />}
+				{viewMode === ViewMode.Json && <JsonView data={json} fontSize={fontSize} />}
 			</div>
 		</div>
 	);
