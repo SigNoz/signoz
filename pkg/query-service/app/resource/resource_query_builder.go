@@ -6,6 +6,8 @@ import (
 
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/semconv"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 var resourceLogOperators = map[v3.FilterOperator]string{
@@ -29,13 +31,61 @@ var resourceLogOperators = map[v3.FilterOperator]string{
 	v3.FilterOperatorNotILike:        "NOT ILIKE",
 }
 
+func resourceSemconvMembers(key string) []string {
+	return semconv.Members(semconv.KindAttribute, telemetrytypes.FieldKeySelector{
+		Name:         key,
+		Signal:       telemetrytypes.SignalTraces,
+		FieldContext: telemetrytypes.FieldContextResource,
+	})
+}
+
+func resourceValueExpression(key string) string {
+	members := resourceSemconvMembers(key)
+	if len(members) == 1 {
+		return fmt.Sprintf("simpleJSONExtractString(labels, '%s')", key)
+	}
+
+	values := make([]string, 0, len(members))
+	for _, member := range members {
+		values = append(values, fmt.Sprintf("NULLIF(simpleJSONExtractString(labels, '%s'), '')", member))
+	}
+	return "COALESCE(" + strings.Join(values, ", ") + ")"
+}
+
+func resourcePresenceExpression(key string, exists bool) string {
+	members := resourceSemconvMembers(key)
+	if len(members) == 1 {
+		if exists {
+			return fmt.Sprintf("simpleJSONHas(labels, '%s')", key)
+		}
+		return fmt.Sprintf("not simpleJSONHas(labels, '%s')", key)
+	}
+
+	conditions := make([]string, 0, len(members))
+	for _, member := range members {
+		if exists {
+			conditions = append(conditions, fmt.Sprintf("simpleJSONHas(labels, '%s')", member))
+		} else {
+			conditions = append(conditions, fmt.Sprintf("not simpleJSONHas(labels, '%s')", member))
+		}
+	}
+	separator := " OR "
+	if !exists {
+		separator = " AND "
+	}
+	return "(" + strings.Join(conditions, separator) + ")"
+}
+
 // buildResourceFilter builds a clickhouse filter string for resource labels
 func buildResourceFilter(logsOp string, key string, op v3.FilterOperator, value interface{}) string {
 	// for all operators except contains and like
-	searchKey := fmt.Sprintf("simpleJSONExtractString(labels, '%s')", key)
+	searchKey := resourceValueExpression(key)
 
 	// for contains and like it will be case insensitive
 	lowerSearchKey := fmt.Sprintf("simpleJSONExtractString(lower(labels), '%s')", key)
+	if len(resourceSemconvMembers(key)) > 1 {
+		lowerSearchKey = "lower(" + searchKey + ")"
+	}
 
 	chFmtVal := utils.ClickHouseFormattedValue(value)
 
@@ -43,9 +93,9 @@ func buildResourceFilter(logsOp string, key string, op v3.FilterOperator, value 
 
 	switch op {
 	case v3.FilterOperatorExists:
-		return fmt.Sprintf("simpleJSONHas(labels, '%s')", key)
+		return resourcePresenceExpression(key, true)
 	case v3.FilterOperatorNotExists:
-		return fmt.Sprintf("not simpleJSONHas(labels, '%s')", key)
+		return resourcePresenceExpression(key, false)
 	case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex:
 		return fmt.Sprintf(logsOp, searchKey, chFmtVal)
 	case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
@@ -110,6 +160,38 @@ func buildIndexFilterForInOperator(key string, op v3.FilterOperator, value inter
 // we can use lower index for =, in etc but it's difficult to do it for !=, NIN etc
 // if as x != "ABC" we cannot predict something like "not lower(labels) like '%%x%%abc%%'". It has it be "not lower(labels) like '%%x%%ABC%%'"
 func buildResourceIndexFilter(key string, op v3.FilterOperator, value interface{}) string {
+	return buildResourceIndexFilterForKey(key, op, value, true)
+}
+
+func buildResourceIndexFilterForKey(key string, op v3.FilterOperator, value interface{}, resolveFamily bool) string {
+	members := []string{key}
+	if resolveFamily {
+		members = resourceSemconvMembers(key)
+	}
+	if len(members) > 1 {
+		switch op {
+		case v3.FilterOperatorNotEqual,
+			v3.FilterOperatorNotLike,
+			v3.FilterOperatorNotILike,
+			v3.FilterOperatorNotContains,
+			v3.FilterOperatorNotExists,
+			v3.FilterOperatorNotRegex,
+			v3.FilterOperatorNotIn:
+			return ""
+		}
+
+		conditions := make([]string, 0, len(members))
+		for _, member := range members {
+			if condition := buildResourceIndexFilterForKey(member, op, value, false); condition != "" {
+				conditions = append(conditions, condition)
+			}
+		}
+		if len(conditions) == 0 {
+			return ""
+		}
+		return "(" + strings.Join(conditions, " OR ") + ")"
+	}
+
 	// not using clickhouseFormattedValue as we don't wan't the quotes
 	strVal := fmt.Sprintf("%s", value)
 	fmtValEscapedForContains := utils.QuoteEscapedStringForContains(strVal, true)
@@ -206,14 +288,31 @@ func buildResourceFiltersFromGroupBy(groupBy []v3.AttributeKey) []string {
 		if attr.Type != v3.AttributeKeyTypeResource {
 			continue
 		}
-		conditions = append(conditions, fmt.Sprintf("(simpleJSONHas(labels, '%s') AND labels like '%%%s%%')", attr.Key, attr.Key))
+		members := resourceSemconvMembers(attr.Key)
+		if len(members) == 1 {
+			conditions = append(conditions, fmt.Sprintf("(simpleJSONHas(labels, '%s') AND labels like '%%%s%%')", attr.Key, attr.Key))
+			continue
+		}
+		indexConditions := make([]string, 0, len(members))
+		for _, member := range members {
+			indexConditions = append(indexConditions, fmt.Sprintf("labels like '%%%s%%'", member))
+		}
+		conditions = append(conditions, fmt.Sprintf("(%s AND (%s))", resourcePresenceExpression(attr.Key, true), strings.Join(indexConditions, " OR ")))
 	}
 	return conditions
 }
 
 func buildResourceFiltersFromAggregateAttribute(aggregateAttribute v3.AttributeKey) string {
 	if aggregateAttribute.Key != "" && aggregateAttribute.Type == v3.AttributeKeyTypeResource {
-		return fmt.Sprintf("(simpleJSONHas(labels, '%s') AND labels like '%%%s%%')", aggregateAttribute.Key, aggregateAttribute.Key)
+		members := resourceSemconvMembers(aggregateAttribute.Key)
+		if len(members) == 1 {
+			return fmt.Sprintf("(simpleJSONHas(labels, '%s') AND labels like '%%%s%%')", aggregateAttribute.Key, aggregateAttribute.Key)
+		}
+		indexConditions := make([]string, 0, len(members))
+		for _, member := range members {
+			indexConditions = append(indexConditions, fmt.Sprintf("labels like '%%%s%%'", member))
+		}
+		return fmt.Sprintf("(%s AND (%s))", resourcePresenceExpression(aggregateAttribute.Key, true), strings.Join(indexConditions, " OR "))
 	}
 
 	return ""

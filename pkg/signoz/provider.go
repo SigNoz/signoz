@@ -237,6 +237,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddDashboardTuplesFactory(sqlstore),
 		sqlmigration.NewRestructureSavedViewSpecFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddSavedViewTuplesFactory(sqlstore),
+		sqlmigration.NewMigrateDeploymentEnvironmentQuickFilterFactory(),
 	)
 }
 
