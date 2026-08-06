@@ -3,6 +3,7 @@ import {
 	ChartLine,
 	DraftingCompass,
 	Gauge,
+	Grid3X3,
 	Key,
 	Logs,
 	Shield,
@@ -36,9 +37,19 @@ export interface ResourcePanelConfig {
 /**
  * Do not use CoretypesTypeDTO to represent this,
  * we want to add resource panel configs for only types we actually are using,
- * not all of them
+ * not all of them. Unmapped resources fall back in `getResourcePanel`.
  */
-export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
+export const RESOURCE_PANELS: Partial<
+	Record<AuthZResource, ResourcePanelConfig>
+> = {
+	dashboard: {
+		label: 'Dashboards',
+		description: 'Dashboards and their panels across the workspace.',
+		icon: Grid3X3,
+		selectorPlaceholder:
+			'Type dashboard ID, separate multiple with comma or space',
+		docsAnchor: 'dashboard',
+	},
 	'factor-api-key': {
 		label: 'API Keys',
 		description: 'Programmatic access tokens for the workspace.',
