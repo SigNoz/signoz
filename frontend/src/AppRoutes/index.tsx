@@ -354,6 +354,10 @@ function App(): JSX.Element {
 					tunnel: window.signozBootData.settings.sentry.tunnel,
 					environment: process.env.ENVIRONMENT,
 					release: process.env.VERSION,
+					// Vite reports a CSS preload failure when a tab's index.html points at a
+					// stylesheet the new build replaced. It is the same deploy race as a stale
+					// JS chunk and recovers through the reload in `lazyRetry`.
+					ignoreErrors: [/Unable to preload CSS for/],
 					integrations: [
 						// Kept for the `transaction` tag used in routing, even though
 						// tracing is disabled. Ref: https://github.com/SigNoz/platform-pod/issues/2393#issuecomment-4603658055

@@ -16,12 +16,21 @@ export const lazyRetry = (componentImport: ComponentImport): Promise<any> =>
 				resolve(component);
 			})
 			.catch((error: Error) => {
+				// A stale chunk reference right after a deploy is expected and self-healing:
+				// the reload pulls a fresh index.html with the new hashed asset names.
+				// The promise is deliberately left unsettled so the Suspense fallback stays
+				// on screen until the page unloads — settling it would flash the error
+				// boundary and report a failure that recovers on its own.
 				if (!hasRefreshed) {
 					setSessionStorageApi(SESSIONSTORAGE.RETRY_LAZY_REFRESHED, 'true');
 
 					window.location.reload();
+
+					return;
 				}
 
+				// The reload already happened and the chunk still will not load, so this is
+				// a real failure: surface it to the error boundary and report it.
 				reject(error);
 			});
 	});
