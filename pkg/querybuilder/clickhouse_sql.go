@@ -69,11 +69,29 @@ func ErrIfStatementIsNotValid(query string) (err error) {
 
 	visitor := &chparser.DefaultASTVisitor{Visit: func(node chparser.Expr) error {
 		switch expr := node.(type) {
-		case *chparser.TableFunctionExpr:
-			// Source table functions remain usable in ClickHouse read-only mode. Arguments are
-			// visited before this, so a read smuggled into one is already refused by the time
-			// an allowed generator gets here.
-			name := chparser.Format(expr.Name)
+		case *chparser.TableExpr:
+			// Source table functions remain usable in ClickHouse read-only mode.
+			//
+			// Only a table position is checked. The parser types a call in a table function's
+			// argument list as a TableFunctionExpr too, so checking those refuses every
+			// numbers(intDiv(...)) a dashboard writes. Nothing can read from there: the allowed
+			// generators all take numeric arguments, and ClickHouse rejects anything else before
+			// it runs. Revisit if a generator that takes a string or a table is ever allowed.
+			source := expr.Expr
+			for {
+				alias, ok := source.(*chparser.AliasExpr)
+				if !ok {
+					break
+				}
+				source = alias.Expr
+			}
+
+			tableFunction, ok := source.(*chparser.TableFunctionExpr)
+			if !ok {
+				return nil
+			}
+
+			name := chparser.Format(tableFunction.Name)
 			if _, ok := generatorTableFunctions[strings.ToLower(name)]; ok {
 				return nil
 			}

@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
@@ -66,6 +67,11 @@ func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
 		{"GeneratorTableFunctionParenthesisedArgument", "SELECT * FROM NUMBERS((31))"},
 		// CAST in an argument was itself read as a table function. https://github.com/AfterShip/clickhouse-sql-parser/pull/307
 		{"CastInGeneratorTableFunctionArgument", "SELECT * FROM numbers(CAST(10 AS UInt64))"},
+		{"ScalarCallInGeneratorTableFunctionArgument", "SELECT * FROM numbers(intDiv(100, 2))"},
+		{"NestedScalarCallInGeneratorTableFunctionArgument", "SELECT * FROM numbers(greatest(1, intDiv(100, 2) + 1))"},
+		{"GeneratorTableFunctionProductionQuery", "WITH toInt64(1786029960000000000) AS start_ns, toInt64(1786031760000000000) AS end_ns, 300000000000 AS step_ns SELECT ts, toFloat64(sum(value)) AS value FROM (SELECT fromUnixTimestamp64Nano(start_ns + toInt64(number) * step_ns) AS ts, 0 AS value FROM numbers(greatest(1, intDiv(end_ns - start_ns, step_ns) + 1)) UNION ALL SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 5 minute) AS ts, count() AS value FROM signoz_logs.distributed_logs_v2 WHERE timestamp >= 1786029960000000000 AND timestamp <= 1786031760000000000 GROUP BY ts) GROUP BY ts ORDER BY ts"},
+		// Not checked, because argument position is not a table position. ClickHouse refuses it on the argument's type before anything is read.
+		{"RefusedTableFunctionInGeneratorTableFunctionArgument", "SELECT * FROM numbers(url('http://x', CSV, 'a String'))"},
 		{"GeneratorTableFunctionInJoin", "SELECT * FROM signoz_logs.distributed_logs_v2 AS l CROSS JOIN numbers(31) AS n"},
 		{"GeneratorTableFunctionInCommonTableExpression", "WITH axis AS (SELECT number FROM numbers(31)) SELECT * FROM axis"},
 		{"GeneratorTableFunctionInWhereSubquery", "SELECT * FROM t WHERE a IN (SELECT number FROM numbers(31))"},
@@ -147,7 +153,8 @@ func TestErrIfStatementIsNotValid_Fail(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			err := ErrIfStatementIsNotValid(testCase.query)
 
-			assert.Error(t, err)
+			// Required rather than asserted: errors.Asc dereferences the error it is given.
+			require.Error(t, err)
 			assert.True(t, errors.Asc(err, testCase.expectedCode), "expected code %s, got %v", testCase.expectedCode, err)
 		})
 	}
@@ -165,16 +172,14 @@ func TestErrIfStatementIsNotValid_ShouldPassButFails(t *testing.T) {
 		{"ParenthesisedUnionLeftOperandAtStatementLevel", "(SELECT 1 AS a) UNION ALL (SELECT 2 AS a)", CodeClickHouseSQLUnparseable},
 		// The one keyword PR 305 left behind, because ON also opens a join condition.
 		{"UnquotedOnAsColumnName", "SELECT on + 1 FROM t", CodeClickHouseSQLUnparseable},
-		// Ours, not the parser's: a call in an argument list is itself typed TableFunctionExpr, so the allow list only clears a generator whose argument is a literal.
-		{"ScalarCallInGeneratorTableFunctionArgument", "SELECT * FROM numbers(intDiv(100, 2))", CodeClickHouseSQLTableFunction},
-		{"NestedScalarCallInGeneratorTableFunctionArgument", "SELECT * FROM numbers(greatest(1, intDiv(100, 2) + 1))", CodeClickHouseSQLTableFunction},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			err := ErrIfStatementIsNotValid(testCase.query)
 
-			assert.Error(t, err)
+			// Required rather than asserted: errors.Asc dereferences the error it is given.
+			require.Error(t, err)
 			assert.True(t, errors.Asc(err, testCase.expectedCode), "expected code %s, got %v", testCase.expectedCode, err)
 		})
 	}
