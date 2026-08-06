@@ -11,6 +11,13 @@ jest.mock('@signozhq/ui/sonner', () => ({
 	toast: { success: jest.fn(), error: jest.fn() },
 }));
 
+// DataViewer pulls in react-json-tree (ESM) + Monaco; mock it (as trace's tests
+// do). These drawer tests assert the header/highlights, not the Overview body.
+jest.mock('periscope/components/DataViewer', () => ({
+	__esModule: true,
+	DataViewer: (): JSX.Element => <div data-testid="overview-data-viewer" />,
+}));
+
 // The flag to be removed later
 jest.mock('../constants', () => ({
 	...jest.requireActual('../constants'),
@@ -66,6 +73,12 @@ describe('LogDetail drawer — header (isLogDetailsV2)', () => {
 		expect(screen.getByTestId('log-details-header-menu')).toBeInTheDocument();
 		expect(screen.getByTestId('log-details-header-prev')).toBeInTheDocument();
 		expect(screen.getByTestId('log-details-header-next')).toBeInTheDocument();
+	});
+
+	it('renders the DataViewer in the Overview tab', () => {
+		renderDrawer();
+
+		expect(screen.getByTestId('overview-data-viewer')).toBeInTheDocument();
 	});
 
 	it('shows the log timestamp formatted (DASH_DATETIME) in the header', () => {

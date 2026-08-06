@@ -262,7 +262,13 @@ export const filterKeyForField = (field: string): string => {
 	return fieldAttribs?.newField || field;
 };
 
-export const aggregateAttributesResourcesToString = (logData: ILog): string => {
+// Reshapes a raw log into a single nested object: merges the flat
+// attributes_*/resources_*/scope_string* maps into `attributes`/`resources`/
+// `scope`, keeping the top-level scalars (body, ids, timestamp, severity, …).
+// The DataViewer consumes this directly; `…ToString` stringifies it.
+export const aggregateAttributesResourcesToObject = (
+	logData: ILog,
+): ILogAggregateAttributesResources => {
 	const outputJson: ILogAggregateAttributesResources = {
 		body: logData.body,
 		date: logData.date,
@@ -291,12 +297,39 @@ export const aggregateAttributesResourcesToString = (logData: ILog): string => {
 			outputJson.scope = outputJson.scope || {};
 			Object.assign(outputJson.scope, logData[key as keyof ILog]);
 		} else {
-			// @ts-expect-error
+			// @ts-expect-error dynamic top-level copy
 			outputJson[key] = logData[key as keyof ILog];
 		}
 	});
 
-	return JSON.stringify(outputJson, null, 2);
+	return outputJson;
+};
+
+export const aggregateAttributesResourcesToString = (logData: ILog): string =>
+	JSON.stringify(aggregateAttributesResourcesToObject(logData), null, 2);
+
+const MAX_JSON_BODY_PARSE_BYTES = 128 * 1024;
+
+// A JSON-encoded object/array `body` is parsed so DataViewer renders it as a
+// tree instead of one escaped string; plain-text bodies are returned unchanged.
+// Guarded against very large payloads.
+export const parseJsonStringBody = (body: ILog['body']): ILog['body'] => {
+	if (typeof body !== 'string') {
+		return body;
+	}
+	const trimmed = body.trim();
+	const looksLikeJson = trimmed.startsWith('{') || trimmed.startsWith('[');
+	if (!looksLikeJson || trimmed.length > MAX_JSON_BODY_PARSE_BYTES) {
+		return body;
+	}
+	try {
+		const parsed = JSON.parse(trimmed);
+		return parsed !== null && typeof parsed === 'object'
+			? (parsed as ILogBody)
+			: body;
+	} catch {
+		return body;
+	}
 };
 
 const isFloat = (num: number): boolean => num % 1 !== 0;
