@@ -25,7 +25,6 @@ def test_create_account(
     get_token: Callable[[str, str], str],
     create_cloud_integration_account: Callable,
 ) -> None:
-    """Test creating a new cloud integration account for AWS."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     cloud_provider = "aws"
 
@@ -54,7 +53,6 @@ def test_create_account_unsupported_provider(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
-    """Test that creating an account with an unsupported cloud provider returns 400."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     cloud_provider = "unknown"
     endpoint = f"/api/v1/cloud_integrations/{cloud_provider}/accounts"

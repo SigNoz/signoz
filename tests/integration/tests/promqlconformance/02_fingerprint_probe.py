@@ -1,18 +1,3 @@
-"""
-Regression tests for series identity in the PromQL serving path (PR #8563).
-
-#8563 fixed a real duplicate-labelset collision by injecting a synthetic
-per-series "fingerprint" label, which silently broke without() grouping and
-unaggregated vector matching; the adapter now merges fingerprints sharing a
-labelset instead. Pinned here:
-
-  1. Clean data: without() yields exactly the grouped series with correct
-     sums; "fingerprint" behaves as any absent label.
-  2. The #8563 incident: one series under two fingerprints (empty-valued vs
-     absent label). Both must come back as ONE merged series — not a
-     "duplicate series" error, not duplicate identical-labeled output.
-"""
-
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
@@ -33,6 +18,14 @@ def _value_at(view_entry: tuple[dict, list], ts_ms: int) -> float:
     raise AssertionError(f"no point at {ts_ms} in {view_entry}")
 
 
+# PR #8563 fixed a real duplicate-labelset collision by injecting a synthetic
+# per-series "fingerprint" label, which silently broke without() grouping and
+# unaggregated vector matching; the adapter now merges fingerprints sharing a
+# labelset. Pinned here: on clean data, without() yields exactly the grouped
+# series with correct sums and "fingerprint" behaves as any absent label; and the
+# #8563 incident shape — one series under two fingerprints (empty-valued vs absent
+# label) — comes back as ONE merged series, not a "duplicate series" error, not
+# duplicate identical-labeled output.
 def test_identical_labelsets_merge_and_grouping(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument

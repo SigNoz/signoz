@@ -1,13 +1,3 @@
-"""Infra-monitoring v2 list endpoints on the metrics-reduction path.
-
-With reduction enabled, every list endpoint unions raw and reduced series and
-restricts each side with a fingerprint IN (samples) subquery. Those subqueries
-must read local tables: a distributed subquery inside the distributed outer
-query is rejected by ClickHouse with error 288 (distributed_product_mode =
-'deny'), which only ever fires on a multi-shard cluster — exactly what this
-package's fixtures provide. Seed raw-only and reduced-only entities and assert
-each endpoint returns the union of both."""
-
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
@@ -102,7 +92,9 @@ def test_list_merges_raw_and_reduced_entities(  # pylint: disable=too-many-argum
     """One set of entities exists only in the raw tables, another only in the
     reduced tables. The list response must contain both sets: pre-fix, the
     reduced branch's fingerprint subquery on distributed tables made every one
-    of these endpoints fail with ClickHouse error 288."""
+    of these endpoints fail with ClickHouse error 288 (distributed_product_mode =
+    'deny') — which only ever fires on a multi-shard cluster, exactly what this
+    package's fixtures provide."""
     base_epoch = aligned_epoch(timedelta(hours=30), step_seconds=300)
     raw_names = [f"{prefix}-raw-{i}" for i in range(COUNT_PER_SOURCE)]
     reduced_names = [f"{prefix}-red-{i}" for i in range(COUNT_PER_SOURCE)]

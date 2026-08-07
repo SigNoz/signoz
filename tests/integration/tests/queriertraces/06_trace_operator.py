@@ -1,27 +1,3 @@
-"""
-Integration tests for TraceOperatorQuery (builder_trace_operator) through the
-/api/v5/query_range endpoint.
-
-Covers:
-1. Order-by variants (A -> B, A => B) with returnSpansFrom="A".
-   Guards against the NOT_FOUND_COLUMN_IN_BLOCK regression where ordering by a
-   column absent from an outer SELECT caused a query failure.
-2. Expression operators (=>, ->, &&, ||, A NOT B) with and without returnSpansFrom.
-
-returnSpansFrom semantics
---------------------------
-returnSpansFrom="" (default)
-    The final rows come from the expression's root CTE.  Only spans that
-    directly satisfy the structural predicate are returned.
-
-returnSpansFrom="A"
-    The expression is still evaluated in full (the structural relationship
-    must hold), but the final rows are drawn from the A sub-query CTE,
-    filtered to traces that appeared in the expression result.  Concretely:
-    the query returns every A span whose trace_id belongs to a trace that
-    matched the expression.
-"""
-
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
@@ -90,7 +66,9 @@ def _names(response: requests.Response) -> set:
 #   A || B              A=http.method EXISTS  B=messaging.system='kafka' T1✓ T2✓ T3✓ T4✓
 #   A NOT B             A=http.method EXISTS  B=db.system='redis'       T1✗ T2✗ T3✓ T4✗
 #
-# Order-by cases (all use returnSpansFrom=A, 3 rows expected):
+# Order-by cases (all use returnSpansFrom=A, 3 rows expected). Guards against the
+# NOT_FOUND_COLUMN_IN_BLOCK regression: ordering by a column absent from an outer
+# SELECT caused a query failure.
 #   ob.indirect  A->B order http.method DESC  → POST(checkout+proxy), GET(catalog)
 #   ob.duration  A=>B order duration_nano DESC → POST/checkout(5s), api-proxy(3s), GET/catalog(1s)
 #   ob.select    A=>B order http.method DESC  → POST, POST, GET

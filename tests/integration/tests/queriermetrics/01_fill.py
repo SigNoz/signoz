@@ -50,9 +50,6 @@ def test_metrics_fill_no_group_by(
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[list[Metrics]], None],
 ) -> None:
-    """
-    Test that gaps in time series are filled with zeros (no groupBy).
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     metric_name = f"test_{fill_mode}_metric"
 
@@ -141,9 +138,6 @@ def test_metrics_fill_with_group_by(
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[list[Metrics]], None],
 ) -> None:
-    """
-    Test that gaps are filled per group when using groupBy.
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     metric_name = f"test_{fill_mode}_grouped_metric"
 
@@ -259,9 +253,6 @@ def test_metrics_fill_formula(
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[list[Metrics]], None],
 ) -> None:
-    """
-    Test that formula results have gaps filled.
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     metric_name_a = f"test_{fill_mode}_formula_a"
     metric_name_b = f"test_{fill_mode}_formula_b"
@@ -394,9 +385,6 @@ def test_metrics_fill_formula_with_group_by(
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[list[Metrics]], None],
 ) -> None:
-    """
-    Test that formula results with groupBy have gaps filled per group.
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     metric_name_a = f"test_{fill_mode}_formula_grp_a"
     metric_name_b = f"test_{fill_mode}_formula_grp_b"

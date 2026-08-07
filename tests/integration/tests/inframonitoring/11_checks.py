@@ -1,22 +1,3 @@
-"""Integration tests for the v2 infra-monitoring checks endpoint.
-
-GET /api/v2/infra_monitoring/checks?type=<t> reports per-tab readiness:
-for each collector component it lists which required/optional metrics and
-required attributes are present vs missing. `ready` is true iff every missing
-list is empty (optional gaps DO block).
-
-Presence is checked against distributed_metadata with NO time window
-(pkg/modules/inframonitoring/implinframonitoring/helpers.go:423,:479): a metric
-is present iff it was ever ingested; an attribute is present iff it appears as a
-label on any of that type's spec metrics. So seeding here is purely "make these
-(metric, label) rows exist" — no start/end, no value math. insert_metrics is
-function-scoped and truncates metadata on teardown, so (serial suite) each test
-sees only its own seeds.
-
-SPECS mirrors pkg/modules/inframonitoring/implinframonitoring/checks_constants.go
-and is the contract lock: if a Go spec changes, the matching assertion fails.
-"""
-
 from datetime import UTC, datetime
 from http import HTTPStatus
 
@@ -53,6 +34,8 @@ _POD_STATUS_OPT = [
 ]
 
 # Mirror of checkSpecs: type -> {default|optional: {component: [metrics]}, attrs: {component: [attrs]}}.
+# Mirrors pkg/modules/inframonitoring/implinframonitoring/checks_constants.go and is
+# the contract lock: if a Go spec changes, the matching assertion fails.
 SPECS = {
     "hosts": {
         "default": {HMR: ["system.cpu.time", "system.memory.usage", "system.cpu.load_average.15m", "system.filesystem.usage"]},
@@ -148,11 +131,21 @@ def _attr_labels(t: str, drop: str | None = None) -> dict:
 _SEED_MARKER = {"test.seed.marker": "1"}
 
 
+# Presence is checked against distributed_metadata with NO time window
+# (pkg/modules/inframonitoring/implinframonitoring/helpers.go:423,:479): a metric is
+# present iff it was ever ingested; an attribute is present iff it appears as a label
+# on any of that type's spec metrics. So seeding is purely "make these (metric, label)
+# rows exist" — no start/end, no value math. insert_metrics is function-scoped and
+# truncates metadata on teardown, so (serial suite) each test sees only its own seeds.
 def _seed(insert_metrics, metric_names: list, labels: dict) -> None:
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics([Metrics(metric_name=m, labels={**_SEED_MARKER, **labels}, timestamp=now, value=1.0) for m in metric_names])
 
 
+# GET /api/v2/infra_monitoring/checks?type=<t> reports per-tab readiness: for each
+# collector component it lists which required/optional metrics and required
+# attributes are present vs missing. `ready` is true iff every missing list is
+# empty (optional gaps DO block).
 def _request(signoz: types.SigNoz, token: str, type_: str | None):
     params = {} if type_ is None else {"type": type_}
     return requests.get(

@@ -216,9 +216,6 @@ def test_saml_role_mapping_single_group_admin(
     get_token: Callable[[str, str], str],
     get_session_context: Callable[[str], str],
 ) -> None:
-    """
-    Test: User in 'signoz-admins' group gets ADMIN role.
-    """
     email = "admin-group-user@saml.integration.test"
     create_user_idp_with_groups(email, "password", True, ["signoz-admins"])
 
@@ -239,9 +236,6 @@ def test_saml_role_mapping_single_group_editor(
     get_token: Callable[[str, str], str],
     get_session_context: Callable[[str], str],
 ) -> None:
-    """
-    Test: User in 'signoz-editors' group gets EDITOR role.
-    """
     email = "editor-group-user@saml.integration.test"
     create_user_idp_with_groups(email, "password", True, ["signoz-editors"])
 
@@ -311,9 +305,6 @@ def test_saml_role_mapping_unmapped_group_uses_default(
     get_token: Callable[[str, str], str],
     get_session_context: Callable[[str], str],
 ) -> None:
-    """
-    Test: User in unmapped group falls back to default role (VIEWER).
-    """
     email = "unmapped-group-user@saml.integration.test"
     create_user_idp_with_groups(email, "password", True, ["some-other-group"])
 
@@ -462,7 +453,6 @@ def test_saml_name_mapping(
     get_token: Callable[[str, str], str],
     get_session_context: Callable[[str], str],
 ) -> None:
-    """Test that user's display name is mapped from SAML displayName attribute."""
     email = "named-user@saml.integration.test"
 
     create_user_idp(email, "password", True, "Jane", "Smith")
@@ -485,7 +475,6 @@ def test_saml_empty_name_fallback(
     get_token: Callable[[str, str], str],
     get_session_context: Callable[[str], str],
 ) -> None:
-    """Test that user without displayName in IDP still gets created."""
     email = "no-name@saml.integration.test"
 
     create_user_idp(email, "password", True)
