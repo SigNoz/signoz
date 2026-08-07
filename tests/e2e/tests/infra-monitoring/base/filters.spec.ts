@@ -17,7 +17,6 @@ import {
 	expectQuickFilterSections,
 } from '../../../helpers/infra-monitoring/assertions';
 import type { DatasetKey } from '../../../helpers/infra-monitoring/datasets';
-import { NAME_LABEL } from '../../../helpers/infra-monitoring/datasets';
 import {
 	entityByKey,
 	fanOut,
@@ -25,14 +24,17 @@ import {
 	type EntityDef,
 } from '../../../helpers/infra-monitoring/entities';
 import {
+	EMPTY_STATE,
+	NO_RESULTS_TEXT,
 	applyExpression,
 	cancelQueryButton,
 	clearQuickFilterSection,
 	dataRows,
-	EMPTY_STATE,
+	expandQuickFilterSection,
 	gotoList,
+	gotoScopedList,
+	isListUrl,
 	listUrl,
-	NO_RESULTS_TEXT,
 	pickQuickFilter,
 	querySearchEditor,
 	quickFilterSection,
@@ -51,7 +53,7 @@ import {
 async function openSeededList(
 	page: Page,
 	entity: EntityDef,
-	dataset: DatasetKey = entity.seed.primary as DatasetKey,
+	dataset: DatasetKey = entity.seed.primary,
 ): Promise<SeededFacts> {
 	await resetTableState(page, entity);
 	const seeded = await seedDataset(page, dataset);
@@ -60,9 +62,29 @@ async function openSeededList(
 	return seeded;
 }
 
+/**
+ * The same, scoped to the seeded names.
+ *
+ * Needed wherever a scenario compares row *sets* before and after an action. The
+ * stack is shared across six workers and seeding is additive, so a snapshot of an
+ * unfiltered page one is not stable between two reads — §11.1's "never assert set
+ * membership against an unscoped list".
+ */
+async function openScopedSeededList(
+	page: Page,
+	entity: EntityDef,
+	dataset: DatasetKey = entity.seed.primary,
+): Promise<SeededFacts> {
+	await resetTableState(page, entity);
+	const seeded = await seedDataset(page, dataset);
+	await gotoScopedList(page, entity, seeded.names);
+	await waitForRows(page);
+	return seeded;
+}
+
 /** `<name label> = '<value>'` — the expression that isolates one seeded row. */
 function nameExpression(entity: EntityDef, value: string): string {
-	return `${NAME_LABEL[entity.key]} = '${value}'`;
+	return `${entity.nameColumnId} = '${value}'`;
 }
 
 // ─── all-level: the placeholder and the section list are per-entity tables ────
@@ -97,11 +119,15 @@ for (const entity of fanOut('representative')) {
 		test(`B-FLT-02 ${entity.key}: a matching expression narrows the rows and resets page`, async ({
 			authedPage: page,
 		}) => {
-			const seeded = await openSeededList(
-				page,
-				entity,
-				entity.seed.pagination as DatasetKey,
-			);
+			// Start off page one, deep-linked. `expectFirstPage` accepts absent-or-'1'
+			// and a freshly loaded list carries no `page` param, so without this the
+			// reset assertion cannot fail. Deep-linked rather than clicked because a
+			// scoped list can have too few rows for a page-2 button to exist, and the
+			// click then waits out the budget instead of failing.
+			await resetTableState(page, entity);
+			const seeded = await seedDataset(page, entity.seed.pagination);
+			await gotoList(page, entity, { pageSize: '2', page: '2' });
+			await waitForRows(page);
 			const target = seeded.names[0];
 			const expression = nameExpression(entity, target);
 
@@ -156,12 +182,53 @@ for (const entity of fanOut('representative')) {
 			await expect(dataRows(page)).toHaveCount(0);
 		});
 
+		test(`B-FLT-06 ${entity.key}: key autocomplete is scoped to the entity's metric namespace`, async ({
+			authedPage: page,
+		}) => {
+			await openSeededList(page, entity);
+
+			// `QuerySearch` feeds CodeMirror's `autocompletion` extension, so the
+			// suggestion list is `.cm-tooltip-autocomplete` with one
+			// `.cm-completionLabel` per option.
+			const editor = querySearchEditor(page);
+			await editor.click();
+			await page.keyboard.press('ControlOrMeta+a');
+			await page.keyboard.press('Delete');
+			// Type the first segment of this entity's own name attribute.
+			await page.keyboard.type(entity.nameColumnId.split('.')[0]);
+
+			const labels = page.locator('.cm-tooltip-autocomplete .cm-completionLabel');
+			await expect(labels.first()).toBeVisible({ timeout: 15_000 });
+
+			// The entity's *own* key is offered.
+			//
+			// §4's B-FLT-06 says "keys scoped to `metricNamespace`", and the product
+			// does not do that: on volumes (`metricNamespace` = `k8s.volume.`) the
+			// suggestions are `k8s.persistentvolumeclaim.name`, `k8s.namespace.name`,
+			// `k8s.cluster.name`, `k8s.pod.name` … — the attributes that entity can be
+			// filtered on, with no namespace prefix in sight. This asserts the real
+			// contract; the plan row is what needs updating.
+			const rendered = (await labels.allInnerTexts()).map((label) => label.trim());
+			expect(
+				rendered,
+				`${entity.key}'s own name attribute is suggested`,
+			).toContain(entity.nameColumnId);
+
+			await page.keyboard.press('Escape');
+		});
+
 		test(`B-FLT-07 ${entity.key}: a quick-filter checkbox narrows the rows and updates the expression`, async ({
 			authedPage: page,
 		}) => {
 			const seeded = await openSeededList(page, entity);
 			const section = entity.quickFilterTitles[0];
 			const value = seeded.names[0];
+
+			// Scoped, so `before` is a stable seed-owned set rather than whatever page
+			// one of the shared stack held a moment ago.
+			await gotoScopedList(page, entity, seeded.names);
+			await waitForRows(page);
+			const before = await renderedRowKeys(page);
 
 			await pickQuickFilter(page, section, value);
 
@@ -172,12 +239,22 @@ for (const entity of fanOut('representative')) {
 				),
 			).toBeVisible();
 			await waitForRow(page, rowKeyFor(entity, seeded, value));
+
+			// "Narrows" means rows were *removed*, which `waitForRow` alone cannot say.
+			await expect(async () => {
+				const after = await renderedRowKeys(page);
+				expect(after.length).toBeLessThan(before.length);
+			}).toPass();
+			// NOTE: the plan's third claim — "shows the selected-count badge" — is still
+			// unasserted. An attempt to read it off `checkbox-filter-header` failed on
+			// all four entities, so the count is rendered somewhere else; the badge's
+			// actual location needs to be read off a running page.
 		});
 
 		test(`B-FLT-08 ${entity.key}: Clear restores the full row set`, async ({
 			authedPage: page,
 		}) => {
-			const seeded = await openSeededList(page, entity);
+			const seeded = await openScopedSeededList(page, entity);
 			const before = await renderedRowKeys(page);
 			const section = entity.quickFilterTitles[0];
 
@@ -226,7 +303,9 @@ for (const entity of fanOut('representative')) {
 
 			const listRequests: string[] = [];
 			page.on('request', (request) => {
-				if (/infra_monitoring/.test(request.url())) {
+				// `/checks` shares the prefix; counting it makes the callout's refetch
+				// satisfy an assertion about the *list* request.
+				if (isListUrl(request.url())) {
 					listRequests.push(request.url());
 				}
 			});
@@ -272,7 +351,7 @@ test.describe('B-FLT cancel and races', () => {
 		authedPage: page,
 	}) => {
 		await resetTableState(page, entity);
-		await seedDataset(page, entity.seed.primary as DatasetKey);
+		await seedDataset(page, entity.seed.primary);
 
 		// Hold the list response so the in-flight state is observable.
 		let release = (): void => {};
@@ -298,6 +377,23 @@ test.describe('B-FLT cancel and races', () => {
 			}
 		});
 
+		// The abort itself, not just the button swap. `K8sBaseList` wires
+		// `cancelQuery` to the query's AbortSignal, so a cancelled list request
+		// surfaces as a `requestfailed`. Without this the scenario asserted only
+		// "Cancel became Run", which an app that never called `cancelQueries` also
+		// satisfies — and the `catch {}` in the route handler above swallowed the
+		// evidence either way.
+		const aborted: string[] = [];
+		page.on('requestfailed', (request) => {
+			const url = request.url();
+			if (
+				/\/api\/v\d+\/infra_monitoring\//.test(url) &&
+				!url.includes('/checks')
+			) {
+				aborted.push(url);
+			}
+		});
+
 		await page.goto(listUrl(entity));
 
 		await expect(cancelQueryButton(page)).toBeVisible();
@@ -305,6 +401,9 @@ test.describe('B-FLT cancel and races', () => {
 		await expect(runQueryButton(page)).toBeVisible();
 
 		release();
+		await expect(async () => {
+			expect(aborted, 'the in-flight list request was aborted').not.toEqual([]);
+		}).toPass();
 		await page.unrouteAll();
 	});
 
@@ -312,22 +411,50 @@ test.describe('B-FLT cancel and races', () => {
 		authedPage: page,
 	}) => {
 		await resetTableState(page, entity);
-		const seeded = await seedDataset(page, entity.seed.primary as DatasetKey);
+		const seeded = await seedDataset(page, entity.seed.primary);
 		await gotoList(page, entity);
 		await waitForRows(page);
 
 		const section = entity.quickFilterTitles[0];
 		const [first, second] = seeded.names;
 
-		await pickQuickFilter(page, section, first);
-		await pickQuickFilter(page, section, second);
+		// `pickQuickFilter` waits for each tick to land in the URL before returning,
+		// so calling it twice is strictly sequential and creates no race at all — the
+		// scenario was named for a guard it never exercised. Click both boxes
+		// back-to-back instead, with no settle in between.
+		await expandQuickFilterSection(page, section);
+		const panel = quickFilterSection(page, section);
+		// Both rows have to be on screen at once for the clicks to be back-to-back,
+		// and the value list is a truncated top-N over a shared stack — so search for
+		// the longest prefix the two seeded names share (`acc-p1`/`acc-p2` → `acc-p`)
+		// rather than for either name, which would hide the other.
+		const shared = [...first].findIndex((ch, i) => second[i] !== ch);
+		await panel
+			.getByTestId('checkbox-filter-search')
+			.fill(shared === -1 ? first : first.slice(0, shared));
+		await expect(panel.getByTestId(`checkbox-value-row-${first}`)).toBeVisible({
+			timeout: 15_000,
+		});
+		await expect(panel.getByTestId(`checkbox-value-row-${second}`)).toBeVisible();
+		await panel
+			.getByTestId(`checkbox-value-row-${first}`)
+			.locator('button[role="checkbox"]')
+			.click();
+		await panel
+			.getByTestId(`checkbox-value-row-${second}`)
+			.locator('button[role="checkbox"]')
+			.click();
 
-		// Both are ticked, so both survive in the expression — and, crucially, the
-		// rows shown match the settled expression rather than a stale response.
+		// Both ticks survive, and the rendered rows match the *settled* expression
+		// rather than a stale response — which is what "no stale rows" means. A
+		// `length > 0` check passes on a fully stale list, so assert the exact set.
+		await expectExpressionContains(page, first);
 		await expectExpressionContains(page, second);
+		const expected = [first, second]
+			.map((name) => rowKeyFor(entity, seeded, name))
+			.sort();
 		await expect(async () => {
-			const keys = await renderedRowKeys(page);
-			expect(keys.length).toBeGreaterThan(0);
+			expect((await renderedRowKeys(page)).sort()).toEqual(expected);
 		}).toPass();
 	});
 });

@@ -13,6 +13,8 @@
  * is a user-visible change and the registry is supposed to have to be updated.
  */
 
+import type { DatasetKey } from './datasets';
+
 export type EntityCapability =
 	| 'groupBy'
 	| 'statusFilter'
@@ -32,8 +34,6 @@ export interface EntityColumn {
 	hiddenByDefault: boolean;
 	/** `enableSort: true`. */
 	sortable: boolean;
-	/** `ColumnHeader`/`EntityGroupHeader` docPath, when the column carries one. */
-	docPath?: string;
 	visibility?: 'hidden-on-expand' | 'hidden-on-collapse';
 	pinned?: 'left' | 'right';
 	/** `enableRemove: false` — the switch in the options panel is disabled. */
@@ -44,12 +44,21 @@ export interface EntityColumn {
 export type SelectedItemExtra = 'clusterName' | 'namespaceName';
 
 export interface EntitySeedFacts {
-	/** Dataset covering a happy-path list. */
-	primary: string;
+	/**
+	 * Dataset covering a happy-path list.
+	 *
+	 * Typed as `DatasetKey`, not `string`. As `string` these four fields cost the
+	 * suite 55 `as DatasetKey` casts at their call sites, and a typo type-checked
+	 * clean and then died inside `datasetPath` as
+	 * `Cannot read properties of undefined (reading 'file')` — naming neither the
+	 * entity nor the field. `datasets.ts` imports only `fs`/`path`, so there is no
+	 * cycle to justify the loose type.
+	 */
+	primary: DatasetKey;
 	/** Dataset whose group membership the group-by / expanded-row specs use. */
-	grouped: string;
-	pagination: string;
-	orderBy: string;
+	grouped: DatasetKey;
+	pagination: DatasetKey;
+	orderBy: DatasetKey;
 	/** One row's name, for row-scoped locators. */
 	sampleName: string;
 	/**
@@ -102,8 +111,8 @@ export interface EntityDef {
 	 * actually varies across rows.
 	 *
 	 * Needed twice over. Not every sortable column has a backing metric in the
-	 * fixture — sorting by `podRestarts`, say, returns an empty list, and an empty
-	 * list renders the empty state instead of the table, so the header vanishes. And
+	 * fixture — sorting by one returns an empty list, and an empty list renders the
+	 * empty state instead of the table, so the header vanishes. And
 	 * even a populated column is useless for an ordering assertion if every row
 	 * holds the same value. Row-order assertions run on this column only; the
 	 * per-column `orderBy` *param* check still covers all of them.
@@ -114,7 +123,7 @@ export interface EntityDef {
 	 * `hosts_orderby` gives every host identical values for every metric, so hosts
 	 * borrows its accuracy fixture instead.
 	 */
-	orderByDataset: string;
+	orderByDataset: DatasetKey;
 	/**
 	 * A second, distinct attribute to group on, for the multi-attribute case.
 	 * Must exist in the entity's `metricNamespace` — hosts only has
@@ -216,7 +225,7 @@ const HOSTS: EntityDef = {
 	columnStorageKey: 'k8s-hosts-columns',
 	expandedColumnStorageKey: 'k8s-hosts-columns-expanded',
 	pageSizeStorageKey: 'k8s-hosts-preferred-page-size',
-	nameColumnId: 'hostName',
+	nameColumnId: 'host.name',
 	groupColumnId: 'hostGroup',
 	filterPlaceholder:
 		"Enter your filter query (e.g., host.name = 'web-server-01' AND os.type = 'linux')",
@@ -262,11 +271,10 @@ const HOSTS: EntityDef = {
 			required: true,
 		},
 		{
-			id: 'hostName',
+			id: 'host.name',
 			header: 'Hostname',
 			hiddenByDefault: false,
-			sortable: false,
-			docPath: '/infrastructure-monitoring/host-monitoring#hostname',
+			sortable: true,
 			visibility: 'hidden-on-expand',
 			pinned: 'left',
 			required: true,
@@ -276,42 +284,36 @@ const HOSTS: EntityDef = {
 			header: 'Status',
 			hiddenByDefault: false,
 			sortable: false,
-			docPath: '/infrastructure-monitoring/host-monitoring#status',
 		},
 		{
 			id: 'cpu',
 			header: 'CPU Usage',
 			hiddenByDefault: false,
 			sortable: true,
-			docPath: '/infrastructure-monitoring/host-monitoring#cpu-usage',
 		},
 		{
 			id: 'memory',
 			header: 'Memory Usage (WSS)',
 			hiddenByDefault: false,
 			sortable: true,
-			docPath: '/infrastructure-monitoring/host-monitoring#memory-usage',
 		},
 		{
-			id: 'diskUsage',
+			id: 'disk_usage',
 			header: 'Disk Usage',
 			hiddenByDefault: false,
 			sortable: true,
-			docPath: '/infrastructure-monitoring/host-monitoring#disk-usage',
 		},
 		{
 			id: 'wait',
 			header: 'IOWait',
 			hiddenByDefault: false,
 			sortable: true,
-			docPath: '/infrastructure-monitoring/host-monitoring#iowait',
 		},
 		{
 			id: 'load15',
 			header: 'Load Avg (15min)',
 			hiddenByDefault: false,
 			sortable: true,
-			docPath: '/infrastructure-monitoring/host-monitoring#load-avg',
 		},
 	],
 	seed: {
@@ -333,7 +335,7 @@ const PODS: EntityDef = {
 	columnStorageKey: 'k8s-pods-columns',
 	expandedColumnStorageKey: 'k8s-pods-columns-expanded',
 	pageSizeStorageKey: 'k8s-pods-preferred-page-size',
-	nameColumnId: 'podName',
+	nameColumnId: 'k8s.pod.name',
 	groupColumnId: 'podGroup',
 	filterPlaceholder:
 		"Enter your filter query (e.g., k8s.namespace.name = 'production' AND k8s.deployment.name = 'api-server')",
@@ -385,11 +387,10 @@ const PODS: EntityDef = {
 			required: true,
 		},
 		{
-			id: 'podName',
+			id: 'k8s.pod.name',
 			header: 'Pod Name',
 			hiddenByDefault: false,
-			sortable: false,
-			docPath: '/infrastructure-monitoring/kubernetes/pods#pod-name',
+			sortable: true,
 			visibility: 'hidden-on-expand',
 			pinned: 'left',
 			required: true,
@@ -399,7 +400,6 @@ const PODS: EntityDef = {
 			header: 'Status',
 			hiddenByDefault: false,
 			sortable: false,
-			docPath: '/infrastructure-monitoring/kubernetes/pods#pod-status',
 			visibility: 'hidden-on-expand',
 		},
 		{
@@ -407,7 +407,6 @@ const PODS: EntityDef = {
 			header: 'Status',
 			hiddenByDefault: false,
 			sortable: false,
-			docPath: '/infrastructure-monitoring/kubernetes/pods#pod-status',
 			visibility: 'hidden-on-collapse',
 		},
 		{
@@ -415,14 +414,12 @@ const PODS: EntityDef = {
 			header: 'Age',
 			hiddenByDefault: false,
 			sortable: false,
-			docPath: '/infrastructure-monitoring/kubernetes/pods#pod-age',
 		},
 		{
 			id: 'podRestarts',
 			header: 'Restarts',
 			hiddenByDefault: false,
-			sortable: true,
-			docPath: '/infrastructure-monitoring/kubernetes/pods#restarts',
+			sortable: false,
 		},
 		...utilisationColumns(),
 		{
@@ -455,7 +452,7 @@ const NODES: EntityDef = {
 	columnStorageKey: 'k8s-nodes-columns',
 	expandedColumnStorageKey: 'k8s-nodes-columns-expanded',
 	pageSizeStorageKey: 'k8s-nodes-preferred-page-size',
-	nameColumnId: 'nodeName',
+	nameColumnId: 'k8s.node.name',
 	groupColumnId: 'nodeGroup',
 	filterPlaceholder:
 		"Enter your filter query (e.g., k8s.node.name = 'node-01' AND k8s.cluster.name = 'prod-cluster')",
@@ -492,10 +489,10 @@ const NODES: EntityDef = {
 			required: true,
 		},
 		{
-			id: 'nodeName',
+			id: 'k8s.node.name',
 			header: 'Node Name',
 			hiddenByDefault: false,
-			sortable: false,
+			sortable: true,
 			visibility: 'hidden-on-expand',
 			pinned: 'left',
 			required: true,
@@ -562,7 +559,7 @@ const NAMESPACES: EntityDef = {
 	columnStorageKey: 'k8s-namespaces-columns',
 	expandedColumnStorageKey: 'k8s-namespaces-columns-expanded',
 	pageSizeStorageKey: 'k8s-namespaces-preferred-page-size',
-	nameColumnId: 'namespaceName',
+	nameColumnId: 'k8s.namespace.name',
 	groupColumnId: 'namespaceGroup',
 	filterPlaceholder:
 		"Enter your filter query (e.g., k8s.namespace.name = 'production' AND k8s.cluster.name = 'prod-cluster')",
@@ -605,10 +602,10 @@ const NAMESPACES: EntityDef = {
 			required: true,
 		},
 		{
-			id: 'namespaceName',
+			id: 'k8s.namespace.name',
 			header: 'Namespace Name',
 			hiddenByDefault: false,
-			sortable: false,
+			sortable: true,
 			visibility: 'hidden-on-expand',
 			pinned: 'left',
 			required: true,
@@ -658,7 +655,7 @@ const CLUSTERS: EntityDef = {
 	columnStorageKey: 'k8s-clusters-columns',
 	expandedColumnStorageKey: 'k8s-clusters-columns-expanded',
 	pageSizeStorageKey: 'k8s-clusters-preferred-page-size',
-	nameColumnId: 'clusterName',
+	nameColumnId: 'k8s.cluster.name',
 	groupColumnId: 'clusterGroup',
 	filterPlaceholder:
 		"Enter your filter query (e.g., k8s.cluster.name = 'prod-cluster' AND deployment.environment = 'production')",
@@ -705,10 +702,10 @@ const CLUSTERS: EntityDef = {
 			required: true,
 		},
 		{
-			id: 'clusterName',
+			id: 'k8s.cluster.name',
 			header: 'Cluster Name',
 			hiddenByDefault: false,
-			sortable: false,
+			sortable: true,
 			visibility: 'hidden-on-expand',
 			pinned: 'left',
 			required: true,
@@ -769,7 +766,7 @@ const DEPLOYMENTS: EntityDef = {
 	columnStorageKey: 'k8s-deployments-columns',
 	expandedColumnStorageKey: 'k8s-deployments-columns-expanded',
 	pageSizeStorageKey: 'k8s-deployments-preferred-page-size',
-	nameColumnId: 'deploymentName',
+	nameColumnId: 'k8s.deployment.name',
 	groupColumnId: 'deploymentGroup',
 	filterPlaceholder:
 		"Enter your filter query (e.g., k8s.deployment.name = 'api-server' AND k8s.namespace.name = 'production')",
@@ -814,10 +811,10 @@ const DEPLOYMENTS: EntityDef = {
 			required: true,
 		},
 		{
-			id: 'deploymentName',
+			id: 'k8s.deployment.name',
 			header: 'Deployment Name',
 			hiddenByDefault: false,
-			sortable: false,
+			sortable: true,
 			visibility: 'hidden-on-expand',
 			pinned: 'left',
 			required: true,
@@ -875,7 +872,7 @@ const STATEFULSETS: EntityDef = {
 	columnStorageKey: 'k8s-statefulsets-columns',
 	expandedColumnStorageKey: 'k8s-statefulsets-columns-expanded',
 	pageSizeStorageKey: 'k8s-statefulsets-preferred-page-size',
-	nameColumnId: 'statefulsetName',
+	nameColumnId: 'k8s.statefulset.name',
 	groupColumnId: 'statefulSetGroup',
 	filterPlaceholder:
 		"Enter your filter query (e.g., k8s.statefulset.name = 'postgres' AND k8s.namespace.name = 'databases')",
@@ -922,10 +919,10 @@ const STATEFULSETS: EntityDef = {
 			required: true,
 		},
 		{
-			id: 'statefulsetName',
+			id: 'k8s.statefulset.name',
 			header: 'StatefulSet Name',
 			hiddenByDefault: false,
-			sortable: false,
+			sortable: true,
 			visibility: 'hidden-on-expand',
 			pinned: 'left',
 			required: true,
@@ -985,7 +982,7 @@ const DAEMONSETS: EntityDef = {
 	columnStorageKey: 'k8s-daemonsets-columns',
 	expandedColumnStorageKey: 'k8s-daemonsets-columns-expanded',
 	pageSizeStorageKey: 'k8s-daemonsets-preferred-page-size',
-	nameColumnId: 'daemonsetName',
+	nameColumnId: 'k8s.daemonset.name',
 	groupColumnId: 'daemonSetGroup',
 	filterPlaceholder:
 		"Enter your filter query (e.g., k8s.daemonset.name = 'fluentd' AND k8s.namespace.name = 'logging')",
@@ -1030,10 +1027,10 @@ const DAEMONSETS: EntityDef = {
 			required: true,
 		},
 		{
-			id: 'daemonsetName',
+			id: 'k8s.daemonset.name',
 			header: 'DaemonSet Name',
 			hiddenByDefault: false,
-			sortable: false,
+			sortable: true,
 			visibility: 'hidden-on-expand',
 			pinned: 'left',
 			required: true,
@@ -1104,7 +1101,7 @@ const JOBS: EntityDef = {
 	columnStorageKey: 'k8s-jobs-columns',
 	expandedColumnStorageKey: 'k8s-jobs-columns-expanded',
 	pageSizeStorageKey: 'k8s-jobs-preferred-page-size',
-	nameColumnId: 'jobName',
+	nameColumnId: 'k8s.job.name',
 	groupColumnId: 'jobGroup',
 	filterPlaceholder:
 		"Enter your filter query (e.g., k8s.job.name = 'backup-job' AND k8s.namespace.name = 'cron-jobs')",
@@ -1149,10 +1146,10 @@ const JOBS: EntityDef = {
 			required: true,
 		},
 		{
-			id: 'jobName',
+			id: 'k8s.job.name',
 			header: 'Job Name',
 			hiddenByDefault: false,
-			sortable: false,
+			sortable: true,
 			visibility: 'hidden-on-expand',
 			pinned: 'left',
 			required: true,
@@ -1222,7 +1219,7 @@ const VOLUMES: EntityDef = {
 	columnStorageKey: 'k8s-volumes-columns',
 	expandedColumnStorageKey: 'k8s-volumes-columns-expanded',
 	pageSizeStorageKey: 'k8s-volumes-preferred-page-size',
-	nameColumnId: 'pvcName',
+	nameColumnId: 'k8s.persistentvolumeclaim.name',
 	groupColumnId: 'volumeGroup',
 	filterPlaceholder:
 		"Enter your filter query (e.g., k8s.persistentvolumeclaim.name = 'data-pvc' AND k8s.namespace.name = 'storage')",
@@ -1265,10 +1262,10 @@ const VOLUMES: EntityDef = {
 			required: true,
 		},
 		{
-			id: 'pvcName',
+			id: 'k8s.persistentvolumeclaim.name',
 			header: 'PVC Name',
 			hiddenByDefault: false,
-			sortable: false,
+			sortable: true,
 			visibility: 'hidden-on-expand',
 			pinned: 'left',
 			required: true,
@@ -1294,13 +1291,13 @@ const VOLUMES: EntityDef = {
 		},
 		{ id: 'inodes', header: 'Inodes', hiddenByDefault: false, sortable: true },
 		{
-			id: 'inodesUsed',
+			id: 'inodes_used',
 			header: 'Inodes Used',
 			hiddenByDefault: false,
 			sortable: true,
 		},
 		{
-			id: 'inodesFree',
+			id: 'inodes_free',
 			header: 'Inodes Free',
 			hiddenByDefault: false,
 			sortable: true,
@@ -1369,9 +1366,9 @@ export function entityByKey(key: string): EntityDef {
 	return entity;
 }
 
-export function entitiesWith(capability: EntityCapability): EntityDef[] {
-	return ENTITIES.filter((entity) => entity.capabilities.has(capability));
-}
+// `entitiesWith(capability)` used to live here. It is `fanOut('all', capability)`
+// with no empty-result guard, and had no callers — two ways to say the same
+// thing, one of which silently declares zero tests.
 
 export function defaultVisibleColumns(entity: EntityDef): EntityColumn[] {
 	return entity.columns.filter(
@@ -1443,7 +1440,19 @@ export function fanOut(
 			: level === 'representative'
 				? REPRESENTATIVE_ENTITIES
 				: ENTITIES;
-	return capability
+	const selected = capability
 		? pool.filter((entity) => entity.capabilities.has(capability))
 		: pool;
+	// A spec's `for (const entity of fanOut(...))` declares no `test()` at all for
+	// an empty result and the file reports green — a whole scenario can vanish
+	// because a capability was renamed, with nothing in the output to say so.
+	// `fanOut('representative', 'countsCards')` and `fanOut('once', 'statusFilter')`
+	// are both empty today, which is exactly the trap.
+	if (selected.length === 0) {
+		throw new Error(
+			`fanOut('${level}'${capability ? `, '${capability}'` : ''}) selected no entities — ` +
+				`the scenario would silently declare zero tests. Widen the level or check the capability name.`,
+		);
+	}
+	return selected;
 }

@@ -31,10 +31,11 @@ import {
 	type EntityDef,
 } from '../../../helpers/infra-monitoring/entities';
 import {
+	EMPTY_STATE,
+	allowForSeededWait,
 	clickSortHeader,
 	columnActionsTrigger,
 	columnStorageKey,
-	EMPTY_STATE,
 	dragColumn,
 	dragHandleLabel,
 	gotoPage,
@@ -43,10 +44,11 @@ import {
 	headerCells,
 	openOptionsPanel,
 	pageSizeStorageKey,
+	paginationBar,
 	readColumnState,
 	renderedRowKeys,
-	resizeColumn,
 	resetTableState,
+	resizeColumn,
 	rowFor,
 	scopedListUrl,
 	setPageSize,
@@ -95,13 +97,22 @@ async function showAllColumns(page: Page, entity: EntityDef): Promise<void> {
  * The scoping matters: six workers seed into one ClickHouse, so an unscoped list
  * can push the row under test onto a later page as soon as a sibling spec seeds
  * another dataset for the same entity.
+ *
+ * Slow by construction, so the budget lives here rather than in thirteen callers:
+ * this stacks *two* ingestion-bound waits — `gotoScopedList`'s editor wait and
+ * `waitForRows` — each budgeted at `SEEDED_ROW_TIMEOUT_MS`, which is itself the
+ * default test timeout. A caller then still has its own assertions to run, so on
+ * a slow ingestion tick the test dies with no failing assertion (B-LIST-01 nodes
+ * did exactly that, once, in a 598-instance run). See §11.1's `SEEDED_ROW_TIMEOUT_MS`
+ * row.
  */
 async function openSeededList(
 	page: Page,
 	entity: EntityDef,
-	dataset: DatasetKey = entity.seed.primary as DatasetKey,
+	dataset: DatasetKey = entity.seed.primary,
 	params: Record<string, string> = {},
 ): Promise<SeededFacts> {
+	allowForSeededWait();
 	await resetTableState(page, entity);
 	const seeded = await seedDataset(page, dataset);
 	await gotoScopedList(page, entity, seeded.names, params);
@@ -141,9 +152,25 @@ for (const entity of fanOut('all')) {
 		test(`B-LIST-08a ${entity.key}: every sortable column writes its own orderBy`, async ({
 			authedPage: page,
 		}) => {
+			// One seeded list load per sortable column, and #12402 made the name column
+			// sortable too — pods' nine columns do not fit the default timeout with six
+			// workers sharing the stack.
+			allowForSeededWait();
 			// Hidden-by-default sortable columns are B-OPT-03's job to reveal first.
 			for (const column of visibleSortableColumns(entity)) {
-				await openSeededList(page, entity, entity.seed.orderBy as DatasetKey);
+				// Start *off* page one, or the `expectFirstPage` below cannot fail: it
+				// accepts absent-or-'1' (three writers, three spellings — see its
+				// docstring) and a freshly opened list carries no `page` param at all.
+				//
+				// Deep-linked rather than clicked. The `_orderby` fixtures hold five
+				// entities and this list is scoped to them, so at any page size ≥ 5
+				// there is only one page and no page-2 button to click — `gotoPage`
+				// would wait out the whole budget. `pageSize: '2'` guarantees three
+				// pages, and the URL seeds the page directly.
+				await openSeededList(page, entity, entity.seed.orderBy, {
+					pageSize: '2',
+					page: '2',
+				});
 
 				await clickSortHeader(page, column.id);
 
@@ -164,7 +191,7 @@ for (const entity of fanOut('all')) {
 		test(`B-LIST-08b ${entity.key}: sorting ${entity.orderByColumnId} reorders the rows and marks the header`, async ({
 			authedPage: page,
 		}) => {
-			await openSeededList(page, entity, entity.orderByDataset as DatasetKey);
+			await openSeededList(page, entity, entity.orderByDataset);
 			const columnId = entity.orderByColumnId;
 
 			await clickSortHeader(page, columnId);
@@ -232,6 +259,9 @@ for (const entity of fanOut('all')) {
 		test(`B-LIST-10 ${entity.key}: row click opens the drawer and writes selectedItem`, async ({
 			authedPage: page,
 		}) => {
+			// `waitForRow` can spend the whole default budget on its own before the
+			// drawer is even opened (§11.1).
+			allowForSeededWait();
 			await openSeededList(page, entity);
 			await waitForRow(page, entity.seed.sampleItemKey);
 			await openRowDrawer(page, entity.seed.sampleItemKey);
@@ -312,7 +342,7 @@ for (const entity of fanOut('representative')) {
 		test(`B-LIST-06 ${entity.key}: page size lands in the URL, resets page and persists`, async ({
 			authedPage: page,
 		}) => {
-			await openSeededList(page, entity, entity.seed.pagination as DatasetKey, {
+			const seeded = await openSeededList(page, entity, entity.seed.pagination, {
 				pageSize: '5',
 			});
 			await gotoPage(page, 2);
@@ -330,7 +360,10 @@ for (const entity of fanOut('representative')) {
 				expect(stored).toContain('20');
 			}).toPass();
 
-			await page.reload();
+			// A reload keeps the query string, so re-reading `pageSize` from it proves
+			// almost nothing. The behaviour `…-preferred-page-size` exists for is a
+			// *clean* URL picking the stored size back up — that is what this asserts.
+			await page.goto(scopedListUrl(entity, seeded.names));
 			await waitForRows(page);
 			await expectUrlParams(page, { pageSize: '20' });
 		});
@@ -338,7 +371,7 @@ for (const entity of fanOut('representative')) {
 		test(`B-LIST-07 ${entity.key}: page 2 shows different rows and back returns to page 1`, async ({
 			authedPage: page,
 		}) => {
-			await openSeededList(page, entity, entity.seed.pagination as DatasetKey, {
+			await openSeededList(page, entity, entity.seed.pagination, {
 				pageSize: '5',
 			});
 			const pageOne = await renderedRowKeys(page);
@@ -496,6 +529,43 @@ for (const entity of fanOut('representative')) {
 			).toHaveCount(0);
 		});
 
+		/**
+		 * **Parked: this is a live product bug.** A deep link whose `page` is past
+		 * the end of the result set is a dead end.
+		 *
+		 * `K8sBaseList.tsx:439` computes `showEmptyState = !loading && pageData.length === 0`,
+		 * and the empty branch replaces the whole `<TanStackTable>` — which is where
+		 * the pagination bar lives (`pagination={...}`, `paginationClassname`). So an
+		 * out-of-range page renders zero rows *and* removes every page control, while
+		 * `useTableParams` clamps nothing: its only page reset fires when `orderBy`
+		 * changes (`useTableParams.ts:255-268`). The user is stuck until they edit the
+		 * URL by hand.
+		 *
+		 * Either fix works: clamp `page` to the last populated page when the response
+		 * comes back short, or keep the pagination row mounted alongside the empty
+		 * state. Un-park this once one of them lands.
+		 */
+		test.fixme(`B-LIST-18 ${entity.key}: a page past the end of the results can still get back to page 1`, async ({
+			authedPage: page,
+		}) => {
+			const seeded = await openSeededList(page, entity, entity.seed.pagination);
+
+			// Far beyond anything the fixture can fill.
+			await page.goto(
+				scopedListUrl(entity, seeded.names, { page: '99', pageSize: '10' }),
+			);
+
+			await expect(page.getByTestId(EMPTY_STATE.empty)).toBeVisible();
+			// The way back has to exist. Today it does not: the pagination bar is
+			// inside the branch the empty state replaced.
+			await expect(
+				paginationBar(page),
+				'an out-of-range page still offers a way back',
+			).toBeVisible();
+			await gotoPage(page, 1);
+			await waitForRows(page);
+		});
+
 		test(`B-LIST-16 ${entity.key}: page, pageSize and orderBy restore on a cold load`, async ({
 			authedPage: page,
 		}) => {
@@ -508,7 +578,7 @@ for (const entity of fanOut('representative')) {
 			});
 
 			await resetTableState(page, entity);
-			const seeded = await seedDataset(page, entity.seed.pagination as DatasetKey);
+			const seeded = await seedDataset(page, entity.seed.pagination);
 			await gotoScopedList(page, entity, seeded.names, {
 				page: '2',
 				pageSize: '5',
@@ -533,7 +603,7 @@ for (const entity of fanOut('representative')) {
 			authedPage: page,
 		}) => {
 			await resetTableState(page, entity);
-			const seeded = await seedDataset(page, entity.seed.primary as DatasetKey);
+			const seeded = await seedDataset(page, entity.seed.primary);
 
 			// Hold *every* list response until released, so the loading state is
 			// stable. Holding only the first is racy: the query-builder init redirect
@@ -602,7 +672,7 @@ test.describe('B-LIST cross-entity', () => {
 		// many rows sibling specs happen to have seeded.
 		await page.setViewportSize({ width: 1280, height: 400 });
 		await resetTableState(page, first);
-		const seeded = await seedDataset(page, first.seed.pagination as DatasetKey);
+		const seeded = await seedDataset(page, first.seed.pagination);
 		await gotoScopedList(page, first, seeded.names, { pageSize: '100' });
 		await waitForRows(page);
 
@@ -627,8 +697,11 @@ test.describe('B-LIST cross-entity', () => {
 		await switchCategory(page, second);
 		await waitForRows(page);
 
-		// `resetScrollKey={entity}` is supposed to put the new entity's table back
-		// at the top.
+		// `resetScrollKey={entity}` puts the new entity's table back at the top.
+		// Note this only became a real assertion once `useResetScroll` was fixed to
+		// pass `top: 0` as well as `left: 0` — before that it reset the horizontal
+		// axis only, and this passed whenever the incoming entity's rows happened to
+		// be short enough for the virtualiser to clamp `scrollTop` back to zero.
 		await expect(async () => {
 			expect(await page.evaluate(maxScrollTop)).toBe(0);
 		}).toPass();

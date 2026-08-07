@@ -12,11 +12,11 @@ import type { Page } from '@playwright/test';
 
 import { expect, test } from '../../../fixtures/auth';
 import { expectUrlParams } from '../../../helpers/infra-monitoring/assertions';
-import type { DatasetKey } from '../../../helpers/infra-monitoring/datasets';
 import {
-	expectDrawerVisible,
 	drawerTimeParams,
 	drawerTimePicker,
+	expectDrawerBodyReady,
+	expectDrawerVisible,
 	metricsExplorerLinkTestId,
 	resetDrawerTimeToList,
 	resetToListTimeButton,
@@ -54,7 +54,7 @@ async function openDrawer(
 	overrides: Record<string, string> = {},
 ): Promise<void> {
 	await resetTableState(page, entity);
-	await seedDataset(page, entity.seed.primary as DatasetKey);
+	await seedDataset(page, entity.seed.primary);
 	await page.goto(
 		listUrl(entity, {
 			relativeTime: LIST_DEFAULT_RELATIVE_TIME,
@@ -98,7 +98,7 @@ for (const entity of fanOut('representative')) {
 			authedPage: page,
 		}) => {
 			await resetTableState(page, entity);
-			const seeded = await seedDataset(page, entity.seed.primary as DatasetKey);
+			const seeded = await seedDataset(page, entity.seed.primary);
 			await gotoScopedList(page, entity, seeded.names);
 			await waitForRows(page);
 
@@ -152,6 +152,12 @@ for (const entity of fanOut('representative')) {
 			await openDrawer(page, entity);
 
 			// `hasTimeChanged` is false while the drawer inherits the list's range.
+			// The body must have mounted before this can mean anything: the drawer shell
+			// renders from `selectedItem` alone, while `EntityDateTimeSelector` — which
+			// owns the reset button and gates it on `hasTimeChanged` — waits on the
+			// entity-details query. Without this wait the assertion resolved on its first
+			// poll and would have passed with the guard deleted.
+			await expectDrawerBodyReady(page);
 			await expect(resetToListTimeButton(page)).toHaveCount(0);
 
 			await setDrawerTime(page, 'Last 6 hours 6h');
@@ -169,7 +175,7 @@ for (const entity of fanOut('representative')) {
 			authedPage: page,
 		}) => {
 			await resetTableState(page, entity);
-			const seeded = await seedDataset(page, entity.seed.primary as DatasetKey);
+			const seeded = await seedDataset(page, entity.seed.primary);
 			await gotoScopedList(page, entity, seeded.names);
 			await waitForRows(page);
 
@@ -197,7 +203,9 @@ for (const entity of fanOut('representative')) {
 // ─── once-level: the drawer range reaches every tab, and the explorer link ────
 
 test.describe('B-TIME drawer range propagation', () => {
-	test.describe.configure({ mode: 'serial' });
+	// Deliberately *not* serial. `authedPage` builds a fresh BrowserContext per
+	// test, so the drawer's time params are per-test already — and serial mode
+	// would make one failure skip the rest, hiding independent regressions.
 
 	const entity = fanOut('once')[0];
 
@@ -240,4 +248,13 @@ test.describe('B-TIME drawer range propagation', () => {
 			expect(drawerTimeParams(page).relativeTime, `${view} keeps 6h`).toBe('6h');
 		}
 	});
+});
+
+// Unimplemented, and parked visibly rather than silently absent (§10 claimed
+// "nothing is parked"). The scenario needs to observe list requests across at
+// least two ticks of the auto-refresh interval, and the shortest selectable
+// interval makes the test longer than the whole B-TIME file — it belongs on the
+// nightly tier with an explicit long budget rather than in the PR tier.
+test.fixme('B-TIME-06 list auto-refresh refetches on its interval and stops when disabled', () => {
+	expect(false, 'not implemented — see the comment above').toBe(true);
 });

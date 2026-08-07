@@ -10,7 +10,10 @@ import {
 	expectDefaultColumns,
 	expectTotalCountLabel,
 } from '../../helpers/infra-monitoring/assertions';
-import type { DatasetKey } from '../../helpers/infra-monitoring/datasets';
+import {
+	DATASETS,
+	type DatasetKey,
+} from '../../helpers/infra-monitoring/datasets';
 import { ENTITIES } from '../../helpers/infra-monitoring/entities';
 import {
 	gotoScopedList,
@@ -23,17 +26,31 @@ import {
 	seedDataset,
 } from '../../helpers/infra-monitoring/seed';
 
+/**
+ * Every dataset's declared facts still match its fixture.
+ *
+ * The per-entity check below only ever reached `entity.seed.primary` — ten of the
+ * eighty-odd datasets, and all ten of them `*_value_accuracy` files that declare
+ * no `groups`, so the group half of `assertDatasetFacts` had no caller at all.
+ * This is pure filesystem work: no browser, no seeding, ~1 s for the corpus.
+ */
+test.describe('smoke datasets', () => {
+	test('SMOKE-00 every dataset’s declared facts match its fixture', () => {
+		const keys = Object.keys(DATASETS) as DatasetKey[];
+		expect(keys.length).toBeGreaterThan(0);
+		for (const key of keys) {
+			assertDatasetFacts(key);
+		}
+	});
+});
+
 for (const entity of ENTITIES) {
 	test.describe(`smoke ${entity.key}`, () => {
 		test(`SMOKE-01 ${entity.key}: seeded rows render with the registry's default columns`, async ({
 			authedPage: page,
 		}) => {
-			// Fails loudly here if the integration fixture drifted from what the
-			// registry claims about it.
-			assertDatasetFacts(entity.seed.primary as DatasetKey);
-
 			await resetTableState(page, entity);
-			const seeded = await seedDataset(page, entity.seed.primary as DatasetKey);
+			const seeded = await seedDataset(page, entity.seed.primary);
 			expect(seeded.names).toContain(entity.seed.sampleName);
 
 			// Scoped, not `gotoList`: the stack accumulates every other spec's entities,

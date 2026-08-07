@@ -620,28 +620,128 @@ export function datasetPath(key: DatasetKey): string {
 }
 
 /**
+ * One row of a `*_value_accuracy_expected.json`.
+ *
+ * Deliberately open: each entity's file uses its own field names
+ * (`podCPU`, `volumeUsage`, `namespaceCPU` …) and namespaces nests a `counts`
+ * object. Callers reach for the field they are asserting and
+ * {@link expectedRecord} does the "is it actually there" check.
+ */
+export interface ExpectedRecord {
+	[field: string]: string | number | Record<string, number> | undefined;
+}
+
+export interface ExpectedValues {
+	records: ExpectedRecord[];
+}
+
+/**
  * The integration suite's `*_value_accuracy_expected.json`, when one exists —
  * the assertion source for value-accuracy scenarios, so expected numbers are
  * read rather than invented.
+ *
+ * Returns `null` when the dataset has no expectation file; use
+ * {@link expectedRecord} when the scenario requires one.
  */
-export function expectedValues(key: DatasetKey): unknown {
+export function expectedValues(key: DatasetKey): ExpectedValues | null {
 	const file = path.join(TESTDATA_DIR, `${DATASETS[key].file}_expected.json`);
 	if (!fs.existsSync(file)) {
 		return null;
 	}
-	return JSON.parse(fs.readFileSync(file, 'utf8'));
+	return JSON.parse(fs.readFileSync(file, 'utf8')) as ExpectedValues;
 }
 
-/** Which label carries the entity name, per entity kind. */
-export const NAME_LABEL: Record<string, string> = {
-	hosts: 'host.name',
-	pods: 'k8s.pod.name',
-	nodes: 'k8s.node.name',
-	namespaces: 'k8s.namespace.name',
-	clusters: 'k8s.cluster.name',
-	deployments: 'k8s.deployment.name',
-	statefulsets: 'k8s.statefulset.name',
-	daemonsets: 'k8s.daemonset.name',
-	jobs: 'k8s.job.name',
-	volumes: 'k8s.persistentvolumeclaim.name',
-};
+/**
+ * One named record from a dataset's expectation file, or a failure that says
+ * which dataset and which record.
+ *
+ * This is the entry point value-accuracy scenarios should use. Reading the
+ * expected number rather than hardcoding it is what keeps a fixture edit from
+ * silently invalidating an assertion — and what stops a scenario settling for
+ * `not.toHaveText('')`, which passes on the `-` that means "no data".
+ */
+export function expectedRecord(
+	key: DatasetKey,
+	nameField: string,
+	name: string,
+): ExpectedRecord {
+	const expected = expectedValues(key);
+	if (!expected) {
+		throw new Error(
+			`dataset ${key} has no *_expected.json — value-accuracy assertions need one`,
+		);
+	}
+	const record = expected.records.find((row) => row[nameField] === name);
+	if (!record) {
+		const found = expected.records.map((row) => String(row[nameField]));
+		throw new Error(
+			`dataset ${key}: no expected record with ${nameField}='${name}' (found ${found.join(', ')})`,
+		);
+	}
+	return record;
+}
+
+/**
+ * A metric's value for one named entity, read straight out of the fixture.
+ *
+ * The companion to {@link expectedRecord}, and needed because the two do not
+ * cover the same ground: `*_expected.json` exists only for the ten
+ * `*_value_accuracy` datasets, while most value-accuracy *scenarios* seed a
+ * different fixture (`deployments_desired_available`, `jobs_lifecycle`,
+ * `volumes_usage_formula`, …) that has no expectation file. Those still must not
+ * hardcode a magic number — §6's rule is "read it, don't invent it", and a
+ * fixture edit should fail the assertion rather than silently invalidate it.
+ *
+ * Also the right source when the expectation file records a *different* quantity
+ * than the column under test: `pods_value_accuracy_expected.json` carries
+ * `podCPULimit` (the limit, in cores) while the `cpu_limit` column renders
+ * `k8s.pod.cpu_limit_utilization` (a ratio).
+ */
+export function fixtureMetric(
+	key: DatasetKey,
+	nameLabel: string,
+	name: string,
+	metricName: string,
+): number {
+	const file = datasetPath(key);
+	const rows = fs
+		.readFileSync(file, 'utf8')
+		.split('\n')
+		.filter((line) => line.trim() !== '')
+		.map(
+			(line) =>
+				JSON.parse(line) as {
+					metric_name?: string;
+					labels?: Record<string, string>;
+					value?: number;
+				},
+		);
+	const match = rows.find(
+		(row) => row.metric_name === metricName && row.labels?.[nameLabel] === name,
+	);
+	if (match?.value === undefined) {
+		const available = [
+			...new Set(
+				rows
+					.filter((row) => row.labels?.[nameLabel] === name)
+					.map((row) => row.metric_name ?? '?'),
+			),
+		];
+		throw new Error(
+			`dataset ${key}: no '${metricName}' for ${nameLabel}='${name}' ` +
+				`(that entity has ${available.join(', ') || 'no rows'})`,
+		);
+	}
+	return match.value;
+}
+
+/** A numeric field from an expected record, checked rather than coerced. */
+export function expectedNumber(record: ExpectedRecord, field: string): number {
+	const value = record[field];
+	if (typeof value !== 'number') {
+		throw new Error(
+			`expected record has no numeric '${field}' (got ${JSON.stringify(value)})`,
+		);
+	}
+	return value;
+}

@@ -10,9 +10,29 @@
  *   quick-filter checkbox in the left rail; clicking that only applies a filter.
  */
 
-import { expect, type Locator, type Page } from '@playwright/test';
+import { expect, type Locator, type Page, test } from '@playwright/test';
 
 import type { EntityDef } from './entities';
+
+/**
+ * Raise the current test's timeout to fit a seeded wait, idempotently.
+ *
+ * **Not `test.slow()`.** That multiplies the budget by three *every* call
+ * (`slot.timeout = slot.timeout * 3`), so a helper that carries it and is called
+ * in a loop compounds: B-LIST-08a calls the helper once per sortable column, and
+ * with `test.slow()` inside it volumes' nine columns reached 30 s × 3¹⁰ ≈ seven
+ * days. A test that never times out is strictly worse than one that fails fast —
+ * it wedges a worker until the whole run is killed.
+ *
+ * Absolute and monotonic instead: raise to `floor`, never lower, so repeated
+ * calls and a caller's own `test.setTimeout` both settle on the largest budget.
+ */
+export function allowForSeededWait(floor = 90_000): void {
+	const info = test.info();
+	if (info.timeout < floor) {
+		info.setTimeout(floor);
+	}
+}
 
 // ─── Selectors ───────────────────────────────────────────────────────────────
 
@@ -215,11 +235,24 @@ interface CompositeQuery {
 	};
 }
 
-/** The filter expression currently encoded in the URL, or `''` when unset. */
-export function readExpression(page: Page): string {
+/**
+ * The filter expression currently encoded in the URL.
+ *
+ * Three outcomes, kept distinct: `absent` (no param), `ok` (parsed), and
+ * `malformed`. Collapsing malformed into `''` would make `expectExpression(page,
+ * '')` — the way "the filter was cleared" is asserted — pass against a URL
+ * carrying garbage, so the suite's only interpretation layer over the expression
+ * could not tell *cleared* from *corrupt*.
+ */
+export type ExpressionState =
+	| { kind: 'absent'; expression: '' }
+	| { kind: 'ok'; expression: string }
+	| { kind: 'malformed'; expression: ''; raw: string };
+
+export function readExpressionState(page: Page): ExpressionState {
 	const raw = new URL(page.url()).searchParams.get(EXPRESSION_PARAM);
 	if (!raw) {
-		return '';
+		return { kind: 'absent', expression: '' };
 	}
 	// The app writes `encodeURIComponent(JSON.stringify(query))` into a
 	// URLSearchParams value, so one decode remains after `searchParams.get`.
@@ -231,10 +264,31 @@ export function readExpression(page: Page): string {
 	}
 	try {
 		const parsed = JSON.parse(json) as CompositeQuery;
-		return parsed.builder?.queryData?.[0]?.filter?.expression ?? '';
+		return {
+			kind: 'ok',
+			expression: parsed.builder?.queryData?.[0]?.filter?.expression ?? '',
+		};
 	} catch {
-		return '';
+		return { kind: 'malformed', expression: '', raw };
 	}
+}
+
+/**
+ * The filter expression, or `''` when unset.
+ *
+ * Throws on a malformed param rather than reporting `''`: a corrupt
+ * `compositeQuery` is a suite or product bug, and silently reading it as "no
+ * filter" is how an assertion stops meaning anything. Use
+ * {@link readExpressionState} where malformed is a legitimate expectation.
+ */
+export function readExpression(page: Page): string {
+	const state = readExpressionState(page);
+	if (state.kind === 'malformed') {
+		throw new Error(
+			`${EXPRESSION_PARAM} is not decodable JSON — got \`${state.raw.slice(0, 200)}\``,
+		);
+	}
+	return state.expression;
 }
 
 /** Type an expression into the search box and press Run. */
@@ -308,6 +362,10 @@ export async function gotoList(
 	entity: EntityDef,
 	params: Record<string, string> = {},
 ): Promise<void> {
+	// The budget goes where the wait is: this spends up to SEEDED_ROW_TIMEOUT_MS,
+	// which is itself the default test timeout, so a caller that then does any
+	// work of its own can die with no failing assertion.
+	allowForSeededWait();
 	await page.goto(listUrl(entity, params));
 	// Same ingestion-bound wait as the rows: the editor mounts with the list's first
 	// response, not with the shell.
@@ -335,6 +393,23 @@ export function expressionParam(expression: string): string {
 }
 
 /**
+ * A filter expression as URL params, key included.
+ *
+ * Prefer this to {@link expressionParam} at every call site. `expressionParam`
+ * returns only the encoded *value*, which left `compositeQuery:` spelled out in
+ * seven places — so the flat-leaf-param migration this indirection exists for
+ * would have been a one-file change *plus* seven spec edits. Spread this instead
+ * and the key never appears outside this module:
+ *
+ * ```ts
+ * page.goto(listUrl(entity, { ...expressionParams(`k8s.namespace.name = 'ns-x'`) }))
+ * ```
+ */
+export function expressionParams(expression: string): Record<string, string> {
+	return { [EXPRESSION_PARAM]: expressionParam(expression) };
+}
+
+/**
  * A list URL scoped to `names` through the entity's name attribute.
  *
  * Seeding is additive and the stack is shared across six workers, so an
@@ -350,35 +425,59 @@ export function scopedListUrl(
 	const values = names.map((name) => `'${name}'`).join(', ');
 	return listUrl(entity, {
 		...params,
-		compositeQuery: expressionParam(
-			`${ENTITY_NAME_ATTR[entity.key]} IN (${values})`,
-		),
+		// `nameColumnId` doubles as the filter attribute for all ten entities, and
+		// the drift guard checks it against the product's table config — so this
+		// mapping cannot silently rot the way a hand-maintained copy of it did.
+		...expressionParams(`${entity.nameColumnId} IN (${values})`),
 	});
 }
 
-/** Attribute each entity's list filters its name on. */
-export const ENTITY_NAME_ATTR: Record<string, string> = {
-	hosts: 'host.name',
-	pods: 'k8s.pod.name',
-	nodes: 'k8s.node.name',
-	namespaces: 'k8s.namespace.name',
-	clusters: 'k8s.cluster.name',
-	deployments: 'k8s.deployment.name',
-	statefulsets: 'k8s.statefulset.name',
-	daemonsets: 'k8s.daemonset.name',
-	jobs: 'k8s.job.name',
-	volumes: 'k8s.persistentvolumeclaim.name',
-};
-
-/** Open `entity`'s list showing only `names`. */
+/**
+ * Open `entity`'s list showing only `names`.
+ *
+ * Note what this does **not** prove: the backend filter guarantees every
+ * rendered row key is one of `names`, so `expect(renderedRowKeys).toContain…`
+ * against `names` is a tautology here. Scope by something orthogonal (a
+ * namespace, a group label) when the scenario is "these rows and not those".
+ */
 export async function gotoScopedList(
 	page: Page,
 	entity: EntityDef,
 	names: string[],
 	params: Record<string, string> = {},
 ): Promise<void> {
+	allowForSeededWait();
 	await page.goto(scopedListUrl(entity, names, params));
-	await expect(page.locator(QUERY_EDITOR).first()).toBeVisible();
+	// Same ingestion-bound wait as `gotoList`: the editor mounts with the list's
+	// first response, not with the shell, so the default 15 s is a coin flip under
+	// six workers.
+	await expect(page.locator(QUERY_EDITOR).first()).toBeVisible({
+		timeout: SEEDED_ROW_TIMEOUT_MS,
+	});
+}
+
+/**
+ * Open `entity`'s list scoped to one group label.
+ *
+ * The grouped page size is viewport-derived and the shared stack accumulates
+ * every worker's entities, so on an unscoped grouped list the group under test is
+ * regularly not on page one of the group rows — the expand then never finds its
+ * row and the scenario dies on a timeout that says nothing about grouping.
+ */
+export async function gotoGroupScopedList(
+	page: Page,
+	entity: EntityDef,
+	groupLabel: string,
+	params: Record<string, string> = {},
+): Promise<void> {
+	allowForSeededWait();
+	await page.goto(
+		listUrl(entity, {
+			...params,
+			...expressionParams(`${entity.groupByAttribute} = '${groupLabel}'`),
+		}),
+	);
+	await waitForRows(page);
 }
 
 /** Click a left-rail category button and wait for the switch to land. */
@@ -398,6 +497,24 @@ export async function switchCategory(
 	} else {
 		await expect(page).toHaveURL(new RegExp(`category=${entity.key}\\b`));
 	}
+	// The URL is not enough on the pods branch: "no `category` param" is already
+	// true on a fresh `/kubernetes` load, so that assertion alone passes whether
+	// or not the click did anything. The rail's pressed state is the evidence.
+	await expectCategoryActive(page, entity);
+}
+
+/** Assert the left-rail tab for `entity` is the selected one. */
+export async function expectCategoryActive(
+	page: Page,
+	entity: EntityDef,
+): Promise<void> {
+	if (!entity.categoryTestId) {
+		throw new Error(`${entity.key} has no category rail button`);
+	}
+	await expect(page.getByTestId(entity.categoryTestId)).toHaveAttribute(
+		'aria-pressed',
+		'true',
+	);
 }
 
 // ─── The table ───────────────────────────────────────────────────────────────
@@ -419,8 +536,16 @@ export async function visibleColumnHeaders(page: Page): Promise<string[]> {
 	return titles.map((title) => title.trim()).filter(Boolean);
 }
 
+/**
+ * The list's own data rows.
+ *
+ * Scoped to the outer table's direct `tbody` on purpose: `K8sBaseList` passes
+ * `getRowTestId` down into `K8sExpandedRow`, so an expanded group's member rows
+ * carry the same `row-<key>` pattern. An unscoped `[data-testid^="row-"]` mixes
+ * outer and nested keys the moment any group is expanded.
+ */
 export function dataRows(page: Page): Locator {
-	return page.locator('[data-testid^="row-"]');
+	return table(page).locator('> tbody > tr[data-testid^="row-"]');
 }
 
 /**
@@ -453,16 +578,22 @@ export function rowFor(page: Page, rowKey: string): Locator {
 const SEEDED_ROW_TIMEOUT_MS = 30_000;
 
 export async function waitForRows(page: Page): Promise<void> {
+	allowForSeededWait();
 	await expect(dataRows(page).first()).toBeVisible({
 		timeout: SEEDED_ROW_TIMEOUT_MS,
 	});
 	// Skeleton rows carry the same testids as real ones, so a spec that reads row
-	// keys while they are up gets `row-unknown` back.
-	await expect(table(page).locator('.ant-skeleton')).toHaveCount(0);
+	// keys while they are up gets `row-unknown` back. Short budget: by this point
+	// the data has arrived and the skeletons are one render away, so a long wait
+	// here only eats into the caller's own budget.
+	await expect(table(page).locator('.ant-skeleton')).toHaveCount(0, {
+		timeout: 10_000,
+	});
 }
 
 /** Wait until `name`'s row is present — i.e. the seeded data has landed. */
 export async function waitForRow(page: Page, rowKey: string): Promise<void> {
+	allowForSeededWait();
 	await expect(rowFor(page, rowKey)).toBeVisible({
 		timeout: SEEDED_ROW_TIMEOUT_MS,
 	});
@@ -514,6 +645,26 @@ export async function clickSortHeader(
 }
 
 /**
+ * A locator's bounding box, or a failure that names what was missing.
+ *
+ * The bare `(await x.boundingBox())!` these gestures used reports as
+ * `Cannot read properties of null (reading 'x')`, which says nothing about which
+ * element never rendered.
+ */
+async function boxOf(
+	locator: Locator,
+	what: string,
+): Promise<{ x: number; y: number; width: number; height: number }> {
+	const box = await locator.boundingBox();
+	if (!box) {
+		throw new Error(
+			`${what} has no bounding box — it is not rendered or visible`,
+		);
+	}
+	return box;
+}
+
+/**
  * Drag `columnId`'s grip onto `targetColumnId`'s header to reorder it.
  *
  * dnd-kit only starts a drag once the pointer has moved past its activation
@@ -527,8 +678,11 @@ export async function dragColumn(
 ): Promise<void> {
 	const grip = page.getByRole('button', { name: dragHandleLabel(columnId) });
 	await grip.scrollIntoViewIfNeeded();
-	const from = (await grip.boundingBox())!;
-	const to = (await headerCell(page, targetColumnId).boundingBox())!;
+	const from = await boxOf(grip, `${columnId} drag grip`);
+	const to = await boxOf(
+		headerCell(page, targetColumnId),
+		`${targetColumnId} header`,
+	);
 
 	await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
 	await page.mouse.down();
@@ -547,8 +701,12 @@ export async function dragColumn(
 }
 
 /**
- * Drag `columnId`'s resize handle right by `deltaX` and return the width it
- * settled on.
+ * Drag `columnId`'s resize handle by `deltaX` and return the width it settled on.
+ *
+ * The post-condition is direction-aware. Asserting `after > before + deltaX / 4`
+ * unconditionally degenerates for a negative `deltaX` into "the column ended up
+ * wider than something narrower than it started", which is nearly always true —
+ * so a shrink gesture that did nothing at all would still pass.
  */
 export async function resizeColumn(
 	page: Page,
@@ -556,7 +714,7 @@ export async function resizeColumn(
 	deltaX: number,
 ): Promise<number> {
 	const cell = headerCell(page, columnId);
-	const before = (await cell.boundingBox())!;
+	const before = await boxOf(cell, `${columnId} header`);
 	const handle = cell.locator('[title="Drag to resize column"]');
 	await handle.hover();
 	await page.mouse.down();
@@ -567,11 +725,18 @@ export async function resizeColumn(
 	);
 	await page.mouse.up();
 
+	// A quarter of the requested travel: the table clamps to a min width and
+	// rounds, so demanding the full delta is flaky, but demanding a quarter of it
+	// in the requested direction still fails a no-op.
 	await expect(async () => {
-		const after = (await cell.boundingBox())!;
-		expect(after.width).toBeGreaterThan(before.width + deltaX / 4);
+		const after = await boxOf(cell, `${columnId} header`);
+		if (deltaX >= 0) {
+			expect(after.width).toBeGreaterThan(before.width + deltaX / 4);
+		} else {
+			expect(after.width).toBeLessThan(before.width + deltaX / 4);
+		}
 	}).toPass();
-	return (await cell.boundingBox())!.width;
+	return (await boxOf(cell, `${columnId} header`)).width;
 }
 
 // There is deliberately no `removeColumn` helper. `TanStackHeaderRow` gates the
@@ -581,18 +746,37 @@ export async function resizeColumn(
 // (`toggleColumn`); `columnActionsTrigger` stays so B-LIST-14 can assert the
 // absence.
 
-export function sortStateFromUrl(
-	page: Page,
-): { columnName: string; order: string } | null {
-	const raw = new URL(page.url()).searchParams.get('orderBy');
+export interface SortState {
+	columnName: string;
+	order: string;
+}
+
+/**
+ * The `orderBy` param, or `null` when unsorted.
+ *
+ * Throws on a malformed value rather than returning `null`: "unsorted" and
+ * "the app wrote something unparseable" are different outcomes, and B-URL
+ * deep-links a deliberately malformed `orderBy` — a helper that reports both as
+ * `null` cannot tell that scenario from a passing one. Use
+ * {@link rawOrderByParam} where malformed is the expectation.
+ */
+export function sortStateFromUrl(page: Page): SortState | null {
+	const raw = rawOrderByParam(page);
 	if (!raw) {
 		return null;
 	}
 	try {
-		return JSON.parse(raw) as { columnName: string; order: string };
+		return JSON.parse(raw) as SortState;
 	} catch {
-		return null;
+		throw new Error(
+			`orderBy is not decodable JSON — got \`${raw.slice(0, 200)}\``,
+		);
 	}
+}
+
+/** The `orderBy` param verbatim, for scenarios that assert a malformed value. */
+export function rawOrderByParam(page: Page): string | null {
+	return new URL(page.url()).searchParams.get('orderBy');
 }
 
 // ─── Pagination ──────────────────────────────────────────────────────────────
@@ -613,11 +797,30 @@ export async function setPageSize(page: Page, size: number): Promise<void> {
 
 export async function gotoPage(page: Page, pageNumber: number): Promise<void> {
 	// `@signozhq/ui/pagination` exposes no testids of its own; the page buttons
-	// are reachable by their accessible name.
-	await page
+	// are reachable by their accessible name. Scoped to the pagination row so a
+	// numeric button anywhere else on the page (a count cell, a chart legend)
+	// cannot resolve into a strict-mode violation.
+	await paginationBar(page)
 		.getByRole('button', { name: String(pageNumber), exact: true })
 		.click();
 	await expect(page).toHaveURL(new RegExp(`page=${pageNumber}\\b`));
+}
+
+/**
+ * Whether a URL is the entity *list* request.
+ *
+ * `/api/v1/infra_monitoring/checks` shares the prefix and fires alongside every
+ * list load, so a bare `/infra_monitoring/` match counts the instrumentation
+ * callout's request as the list's — enough to satisfy "a list request fired" and
+ * to break "no list request fired".
+ */
+export function isListUrl(url: string): boolean {
+	return /\/api\/v\d+\/infra_monitoring\//.test(url) && !url.includes('/checks');
+}
+
+/** The pagination row that holds the total count, page size and page buttons. */
+export function paginationBar(page: Page): Locator {
+	return page.locator('[class*="paginationContainer"]').first();
 }
 
 /** The row keys currently rendered, in order — for "page 2 differs from page 1". */
@@ -675,8 +878,20 @@ export function groupByFromUrl(page: Page): string[] {
 	return parsed.map((entry) => (typeof entry === 'string' ? entry : entry.key));
 }
 
+/**
+ * The grouped list's row for `groupLabel`.
+ *
+ * Exact-matched against the group cell's badge, and scoped to the outer table's
+ * own rows. `filter({ hasText })` is a substring match over every row on the
+ * page, so the loose version also matched the header row, any expanded member
+ * row, and — for hosts, whose sample group is `linux` — every row whose hostname
+ * merely contained the label. `getGroupByEl` renders each group value as its own
+ * `Badge`, so an exact text match resolves one cell and one row.
+ */
 export function groupRowFor(page: Page, groupLabel: string): Locator {
-	return page.getByRole('row').filter({ hasText: groupLabel }).first();
+	return table(page)
+		.locator('> tbody > tr')
+		.filter({ has: page.getByText(groupLabel, { exact: true }) });
 }
 
 /**
@@ -751,16 +966,44 @@ export async function expandGroupRow(
 	return container;
 }
 
+/**
+ * Collapse an expanded group row.
+ *
+ * Guarded on `aria-expanded` for the same reason {@link expandGroupRow} is: the
+ * chevron is a toggle, so calling this on an already-collapsed row *expands* it
+ * and then fails on a confusing `toBeHidden`.
+ */
 export async function collapseGroupRow(
 	page: Page,
 	groupLabel: string,
 ): Promise<void> {
-	await groupRowFor(page, groupLabel).getByTestId('expand-row-button').click();
-	await expect(page.getByTestId('expanded-table-container')).toBeHidden();
+	const row = groupRowFor(page, groupLabel);
+	const button = row.getByTestId('expand-row-button');
+	if ((await button.getAttribute('aria-expanded')) === 'true') {
+		await scrollToCentre(button);
+		await button.click({ timeout: 5_000 });
+	}
+	await expect(button).toHaveAttribute('aria-expanded', 'false');
+	await expect(page.getByTestId('expanded-table-container')).toHaveCount(0);
 }
 
 export function expandedTable(page: Page): Locator {
 	return page.getByTestId('expanded-table');
+}
+
+/**
+ * Wait for an already-requested expansion to render its container.
+ *
+ * The container mounts with the expanded fetch, not with the click or with the
+ * reload that restores `expanded` from the URL, so it inherits the same
+ * ingestion-bound budget as the rows themselves. Use this instead of a bare
+ * `toBeVisible()` on the testid.
+ */
+export async function expectExpandedRowVisible(page: Page): Promise<void> {
+	allowForSeededWait();
+	await expect(page.getByTestId('expanded-table-container')).toBeVisible({
+		timeout: SEEDED_ROW_TIMEOUT_MS,
+	});
 }
 
 export function expandedRows(page: Page): Locator {
@@ -857,7 +1100,14 @@ export const LINE_CLAMP = {
 
 // ─── Quick filters ───────────────────────────────────────────────────────────
 
-export function quickFilterRail(page: Page): Locator {
+/**
+ * Every quick-filter section in the left rail.
+ *
+ * Plural on purpose: `checkbox-filter-v2` is per *section*, not the rail as a
+ * whole, which is why callers previously had to write `quickFilterRail(page).first()`
+ * to avoid a strict-mode violation and the name misled about what it returned.
+ */
+export function quickFilterSections(page: Page): Locator {
 	return page.getByTestId('checkbox-filter-v2');
 }
 
@@ -911,8 +1161,15 @@ export async function expandQuickFilterSection(
 }
 
 /**
- * Tick a value in a quick-filter section. Retried: the value list refetches as
- * the time range and list requests settle, so a row can detach mid-click.
+ * Tick a value in a quick-filter section.
+ *
+ * Retried, because the value list refetches as the time range and list requests
+ * settle and a row can detach mid-click — but the retry **guards on state**. A
+ * checkbox is a toggle: an unconditional re-click unticks what the previous
+ * attempt ticked, and the assertion can then be satisfied by the *stale* URL
+ * from that earlier tick, so the helper returns with the filter off and the
+ * expression about to lose the value. `CheckboxFilterV2ValueRow` puts the
+ * checked state on the row as `data-state`, so there is no need to guess.
  */
 export async function pickQuickFilter(
 	page: Page,
@@ -925,26 +1182,47 @@ export async function pickQuickFilter(
 	// shared stack accumulates every worker's seeded entities, so a freshly seeded
 	// name is usually not in the first page of it. The section's own search box is
 	// how a user finds it, and it is the only reliable way to reach the row.
+	//
+	// A wait, not a presence check: `CheckboxFilterV2` renders the search input
+	// only once `!isLoading || hasLoadedOnce`, and `expandQuickFilterSection`
+	// returns as soon as the section is open — i.e. while it is still a skeleton.
+	// The `count() > 0` version skipped the fill on every cold section without
+	// saying so, then spun for 30 s hunting the truncated list.
 	const search = panel.getByTestId('checkbox-filter-search');
-	if ((await search.count()) > 0) {
-		await search.fill(value);
-	}
+	await expect(search).toBeVisible({ timeout: 15_000 });
+	await search.fill(value);
 
 	const row = panel.getByTestId(`checkbox-value-row-${value}`);
 	await expect(async () => {
 		await expect(row).toBeVisible({ timeout: 5_000 });
-		await row.locator('button[role="checkbox"]').click();
+		// The guard is the whole point: without it a retry re-clicks and *unticks*
+		// what the previous attempt ticked, while the assertion below is satisfied by
+		// the stale URL from that earlier tick — so the helper returns with the
+		// filter off. `CheckboxFilterV2ValueRow` puts the checked state on the row.
+		//
+		// Guard only. Asserting `data-state` again *after* the click is not reliable:
+		// ticking refetches the section, and the row that comes back is a new node,
+		// so the assertion races the re-render. The URL is the durable signal, and it
+		// is the thing every caller actually depends on.
+		if ((await row.getAttribute('data-state')) !== 'true') {
+			await row.locator('button[role="checkbox"]').click({ timeout: 5_000 });
+		}
 		expect(readExpression(page)).toContain(value);
-	}).toPass({ timeout: 30_000 });
+	}).toPass({ timeout: 20_000 });
 }
 
 export async function clearQuickFilterSection(
 	page: Page,
 	section: string,
 ): Promise<void> {
-	await quickFilterSection(page, section)
-		.getByTestId('checkbox-filter-clear-all')
-		.click();
+	const panel = quickFilterSection(page, section);
+	await panel.getByTestId('checkbox-filter-clear-all').click();
+	// Post-condition in the helper rather than in each caller: "cleared" means no
+	// row in this section is still ticked, which is what the next assertion in
+	// every caller depends on.
+	await expect(
+		panel.locator('[data-testid^="checkbox-value-row-"][data-state="true"]'),
+	).toHaveCount(0);
 }
 
 export function quickFiltersToggle(page: Page): Locator {
@@ -953,17 +1231,33 @@ export function quickFiltersToggle(page: Page): Locator {
 
 // ─── Hosts-only: the status filter ───────────────────────────────────────────
 
+/**
+ * Set the hosts list's status filter.
+ *
+ * Retries the click, because the toggle group re-renders as each list request
+ * settles and a click during that window lands on a detaching element — but
+ * **guards on state first**. `StatusFilter` is a radix `ToggleGroup type="single"`,
+ * whose root calls `onItemDeactivate: () => setValue("")` when the pressed item
+ * is clicked again. So an unconditional retry *clears* the filter, while the
+ * assertion reads the URL the previous attempt already wrote and passes — the
+ * helper then returns with no filter applied and the caller asserts
+ * "active-only rows" against an unfiltered list. Cheap to get wrong, invisible
+ * when it happens, and the reason this is a state check rather than a re-click.
+ */
 export async function setStatusFilter(
 	page: Page,
 	value: 'all' | 'active' | 'inactive',
 ): Promise<void> {
-	// Retry the click, not just the assertion: the toggle group re-renders as each
-	// list request settles, so a click during that window lands on a detaching
-	// element and is swallowed — leaving the previous filter in the URL.
+	const item = page.getByTestId(`status-filter-${value}`);
+	const expected = value === 'all' ? '' : value;
 	await expect(async () => {
-		await page.getByTestId(`status-filter-${value}`).click();
-		const param = new URL(page.url()).searchParams.get('statusFilter');
-		expect(param ?? '').toBe(value === 'all' ? '' : value);
+		if ((await item.getAttribute('data-state')) !== 'on') {
+			await item.click({ timeout: 5_000 });
+		}
+		await expect(item).toHaveAttribute('data-state', 'on', { timeout: 3_000 });
+		expect(new URL(page.url()).searchParams.get('statusFilter') ?? '').toBe(
+			expected,
+		);
 	}).toPass();
 }
 

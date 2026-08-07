@@ -12,10 +12,11 @@ import {
 	expectExpression,
 	expectFirstPage,
 	expectUrlParams,
+	expectedCategoryParam,
 } from '../../../helpers/infra-monitoring/assertions';
-import type { DatasetKey } from '../../../helpers/infra-monitoring/datasets';
 import {
 	drawer,
+	drawerTitle,
 	expectDrawerVisible,
 	selectedItemParams,
 } from '../../../helpers/infra-monitoring/drawer';
@@ -25,8 +26,10 @@ import {
 	type EntityDef,
 } from '../../../helpers/infra-monitoring/entities';
 import {
-	ENTITY_NAME_ATTR,
+	clickSortHeader,
 	expressionParam,
+	expressionParams,
+	goBackUntil,
 	gotoScopedList,
 	groupByFromUrl,
 	groupListBy,
@@ -38,7 +41,6 @@ import {
 	rowFor,
 	setPageSize,
 	sortStateFromUrl,
-	clickSortHeader,
 	waitForRow,
 	waitForRows,
 } from '../../../helpers/infra-monitoring/list';
@@ -47,14 +49,16 @@ import { seedDataset } from '../../../helpers/infra-monitoring/seed';
 const PODS = entityByKey('pods');
 
 /**
- * The `category` value the URL should carry — absent for hosts (its own route)
- * and for pods (the k8s default, which the app drops rather than writes).
+ * `statusFilter` for the one entity that has it.
+ *
+ * A helper rather than a ternary in the test body: `playwright/no-conditional-in-test`
+ * (rightly) rejects branching inside a test, because a branch that never runs is
+ * coverage nobody notices is missing.
  */
-function expectedCategoryParam(entity: EntityDef): string | null {
-	if (!entity.categoryTestId || entity.key === 'pods') {
-		return null;
-	}
-	return entity.key;
+function statusFilterParam(entity: EntityDef): Record<string, string> {
+	return entity.capabilities.has('statusFilter')
+		? { statusFilter: 'active' }
+		: {};
 }
 
 // ─── all-level: one deep link restoring everything ───────────────────────────
@@ -65,7 +69,7 @@ for (const entity of fanOut('all')) {
 			authedPage: page,
 		}) => {
 			await resetTableState(page, entity);
-			const seeded = await seedDataset(page, entity.seed.primary as DatasetKey);
+			await seedDataset(page, entity.seed.primary);
 
 			const orderBy = JSON.stringify({
 				columnName: entity.orderByColumnId,
@@ -73,13 +77,21 @@ for (const entity of fanOut('all')) {
 			});
 			// Any attribute that exists for the entity; the point is that the
 			// expression survives the round trip, not what it selects.
-			const expression = `${ENTITY_NAME_ATTR[entity.key]} != 'nothing-matches-this'`;
+			const expression = `${entity.nameColumnId} != 'nothing-matches-this'`;
+			const groupBy = JSON.stringify([entity.groupByAttribute]);
+			// All eleven params the plan lists, not the six this used to carry:
+			// `page`, `groupBy`, `expanded`, `statusFilter` and `view` were missing.
+			// `statusFilter` is hosts-only, so it is added conditionally.
 			const params: Record<string, string> = {
+				page: '1',
 				pageSize: '5',
 				orderBy,
+				groupBy,
 				relativeTime: '6h',
+				view: 'logs',
+				...statusFilterParam(entity),
 				...selectedItemParams(entity),
-				compositeQuery: expressionParam(expression),
+				...expressionParams(expression),
 			};
 
 			await page.goto(listUrl(entity, params));
@@ -90,15 +102,24 @@ for (const entity of fanOut('all')) {
 				category: expectedCategoryParam(entity),
 				pageSize: '5',
 				orderBy,
+				groupBy,
 				relativeTime: '6h',
+				...statusFilterParam(entity),
 				...selectedItemParams(entity),
 			});
 			await expectExpression(page, expression);
-			expect(sortStateFromUrl(page)).toEqual({
-				columnName: entity.orderByColumnId,
-				order: 'desc',
-			});
-			expect(seeded.names.length).toBeGreaterThan(0);
+
+			// …and, more importantly, that they took *effect*. Re-reading `orderBy`
+			// through `sortStateFromUrl` only restated the param `expectUrlParams` had
+			// just checked; nothing here proved the app consumed any of them.
+			await expect(headerCell(page, entity.groupColumnId)).toHaveCount(1);
+			await expect(headerCell(page, entity.nameColumnId)).toHaveCount(0);
+			await expect(async () => {
+				expect((await renderedRowKeys(page)).length).toBeLessThanOrEqual(5);
+			}).toPass();
+			// The drawer is the seeded entity's, not an empty shell from a bad param —
+			// a nonexistent `selectedItem` opens a drawer titled `-`.
+			await expect(drawerTitle(page)).toContainText(entity.seed.sampleName);
 		});
 	});
 }
@@ -111,7 +132,7 @@ for (const entity of fanOut('representative')) {
 			authedPage: page,
 		}) => {
 			await resetTableState(page, entity);
-			const seeded = await seedDataset(page, entity.seed.primary as DatasetKey);
+			const seeded = await seedDataset(page, entity.seed.primary);
 			await gotoScopedList(page, entity, seeded.names, {
 				relativeTime: '6h',
 				foreignKey: 'keepme',
@@ -134,7 +155,7 @@ for (const entity of fanOut('representative')) {
 			authedPage: page,
 		}) => {
 			await resetTableState(page, entity);
-			const seeded = await seedDataset(page, entity.seed.primary as DatasetKey);
+			const seeded = await seedDataset(page, entity.seed.primary);
 			await gotoScopedList(page, entity, seeded.names, { pageSize: '5' });
 			await waitForRows(page);
 
@@ -146,12 +167,19 @@ for (const entity of fanOut('representative')) {
 			await setPageSize(page, 20);
 			await expectUrlParams(page, { pageSize: '20' });
 
-			await page.goBack();
+			// `goBackUntil`, not a bare `goBack()`. A `toPass`-wrapped URL read after a
+			// single Back recovers from a destination that settles *late*, but not from
+			// landing one history entry short — it re-reads without pressing Back again.
+			await goBackUntil(page, /pageSize=5\b/);
 			await expectUrlParams(page, { pageSize: '5' });
+			// The intermediate state is intact: paging back did not also undo the sort.
 			expect(sortStateFromUrl(page)).toEqual(afterSort);
 
-			await page.goBack();
+			await goBackUntil(page, /^(?!.*orderBy=).*$/);
 			await expectUrlParams(page, { orderBy: null });
+			// …and we are back at the URL we started from, which is the actual claim:
+			// N mutations, N pushes, N steps home.
+			await expectUrlParams(page, { pageSize: '5' });
 		});
 	});
 }
@@ -163,7 +191,7 @@ test.describe('B-URL cross-cutting', () => {
 		authedPage: page,
 	}) => {
 		await resetTableState(page, PODS);
-		const seeded = await seedDataset(page, PODS.seed.grouped as DatasetKey);
+		await seedDataset(page, PODS.seed.grouped);
 
 		// Land on another category so the switch to pods happens client-side, the way
 		// a user does it — that is what leaves the react-router snapshot stale.
@@ -189,14 +217,13 @@ test.describe('B-URL cross-cutting', () => {
 			pageSize: '20',
 		});
 		expect(groupByFromUrl(page)).toEqual([PODS.groupByAttribute]);
-		expect(seeded.names.length).toBeGreaterThan(0);
 	});
 
 	test('B-URL-05 a ctrl+click URL cold-loads to the same visible state', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, PODS);
-		const seeded = await seedDataset(page, PODS.seed.primary as DatasetKey);
+		const seeded = await seedDataset(page, PODS.seed.primary);
 		await gotoScopedList(page, PODS, seeded.names);
 		await waitForRow(page, PODS.seed.sampleItemKey);
 
@@ -221,7 +248,7 @@ test.describe('B-URL cross-cutting', () => {
 		authedPage: page,
 	}) => {
 		await resetTableState(page, PODS);
-		const seeded = await seedDataset(page, PODS.seed.primary as DatasetKey);
+		const seeded = await seedDataset(page, PODS.seed.primary);
 
 		// `orderBy` is zod-validated, so garbage must not take the page down.
 		await page.goto(

@@ -11,6 +11,8 @@
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
     "test:chromium": "playwright test --project=chromium",
+    "test:pr": "playwright test --project=chromium --grep-invert @wide",
+    "test:wide": "playwright test --project=chromium --grep @wide",
     "test:firefox": "playwright test --project=firefox",
     "test:webkit": "playwright test --project=webkit",
     "report": "playwright show-report artifacts/html",

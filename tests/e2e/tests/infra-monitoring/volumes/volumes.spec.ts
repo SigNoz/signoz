@@ -13,13 +13,14 @@ import {
 } from '../../../helpers/infra-monitoring/drawer';
 import { entityByKey } from '../../../helpers/infra-monitoring/entities';
 import {
+	expressionParams,
 	gotoScopedList,
 	headerCell,
 	listUrl,
 	renderedRowKeys,
 	resetTableState,
-	rowFor,
 	resizeColumn,
+	rowFor,
 	waitForRow,
 	waitForRows,
 } from '../../../helpers/infra-monitoring/list';
@@ -28,7 +29,7 @@ import { seedDataset } from '../../../helpers/infra-monitoring/seed';
 const VOLUMES = entityByKey('volumes');
 
 /** The three inode columns, all default-visible and sortable. */
-const INODE_COLUMNS = ['inodes', 'inodesUsed', 'inodesFree'];
+const INODE_COLUMNS = ['inodes', 'inodes_used', 'inodes_free'];
 
 test.describe('volumes', () => {
 	test('V-01 the Used column renders a progress bar from the usage formula', async ({
@@ -96,14 +97,23 @@ test.describe('volumes', () => {
 
 	test('V-05 non-PVC volumes are excluded', async ({ authedPage: page }) => {
 		await resetTableState(page, VOLUMES);
-		const seeded = await seedDataset(page, 'volumes_non_pvc_volume');
-		await gotoScopedList(page, VOLUMES, seeded.names);
+		await seedDataset(page, 'volumes_non_pvc_volume');
+
+		// Scoped by **namespace**, not by name. `gotoScopedList` writes a backend
+		// filter on the very names being asserted, so "every rendered key is one of
+		// the seeded names" was guaranteed by the query — a non-PVC volume that
+		// wrongly surfaced would have been filtered out before reaching the table.
+		await page.goto(
+			listUrl(VOLUMES, { ...expressionParams(`k8s.namespace.name = 'ns-np'`) }),
+		);
 		await waitForRows(page);
 
-		// Only rows carrying a PVC name can appear.
-		for (const key of await renderedRowKeys(page)) {
-			expect(seeded.names).toContain(key);
-		}
+		// `ns-np` holds one real PVC (`np-real-pvc`) and one non-PVC volume, whose
+		// `k8s.persistentvolumeclaim.name` is the empty string. So the correct row
+		// set here is exactly one row — asserting the *set* is what catches the
+		// empty-named volume leaking through as a row.
+		const keys = await renderedRowKeys(page);
+		expect(keys, 'only the real PVC is listed').toEqual(['np-real-pvc']);
 	});
 
 	test('V-06 a formula with a missing operand renders a dash, not a crash', async ({
@@ -114,9 +124,15 @@ test.describe('volumes', () => {
 		await gotoScopedList(page, VOLUMES, seeded.names);
 		await waitForRows(page);
 
-		// The row still renders, with the uncomputable cell showing the no-data marker.
+		// The *uncomputable* cell, matched exactly. `getByText('-')` is a
+		// case-insensitive substring match and the seeded PVC is called `fop-pvc`, so
+		// the old assertion was satisfied by the name cell and could not fail.
+		// `usage` is the formula cell: the fixture gives this PVC a capacity but no
+		// `k8s.volume.available`, so the subtraction has no operand.
 		await expect(headerCell(page, 'usage')).toBeVisible();
-		await expect(page.locator('table').getByText('-').first()).toBeVisible();
+		await expect(
+			rowFor(page, seeded.names[0]).locator('td.tanstack-cell-usage'),
+		).toHaveText('-');
 
 		// And the table is still interactive afterwards.
 		await waitForRow(page, seeded.names[0]);

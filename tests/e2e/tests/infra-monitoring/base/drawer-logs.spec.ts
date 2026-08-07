@@ -9,23 +9,24 @@
 import type { Page } from '@playwright/test';
 
 import { expect, test } from '../../../fixtures/auth';
-import type { DatasetKey } from '../../../helpers/infra-monitoring/datasets';
 import {
-	expectDrawerVisible,
-	emptyState,
-	errorState,
 	EXPLORER_LINK,
+	SCOPE_CHIP,
+	TAB_USER_EXPRESSION_PARAM,
+	emptyState,
+	entityRunQueryButton,
+	errorState,
+	expectDrawerVisible,
 	runEntityQuery,
 	selectedItemParams,
-	SCOPE_CHIP,
 	switchDrawerTab,
-	TAB_USER_EXPRESSION_PARAM,
 } from '../../../helpers/infra-monitoring/drawer';
 import {
 	fanOut,
 	type EntityDef,
 } from '../../../helpers/infra-monitoring/entities';
 import {
+	allowForSeededWait,
 	listUrl,
 	resetTableState,
 } from '../../../helpers/infra-monitoring/list';
@@ -40,7 +41,7 @@ async function openLogsTab(
 	overrides: Record<string, string> = {},
 ): Promise<void> {
 	await resetTableState(page, entity);
-	await seedDataset(page, entity.seed.primary as DatasetKey);
+	await seedDataset(page, entity.seed.primary);
 	await page.goto(
 		listUrl(entity, {
 			...selectedItemParams(entity),
@@ -119,8 +120,11 @@ for (const entity of fanOut('representative', 'logsTab')) {
 		test(`B-LOG-07 ${entity.key}: a list error renders the error state`, async ({
 			authedPage: page,
 		}) => {
+			// Same budget problem as B-TRC-07: the drawer wait can consume the default
+			// timeout on its own before the error state is even asserted.
+			allowForSeededWait();
 			await resetTableState(page, entity);
-			await seedDataset(page, entity.seed.primary as DatasetKey);
+			await seedDataset(page, entity.seed.primary);
 
 			await page.route(/\/api\/v\d+\/query_range/, async (route) => {
 				const body = route.request().postData() ?? '';
@@ -150,19 +154,22 @@ for (const entity of fanOut('representative', 'logsTab')) {
 		}) => {
 			await openLogsTab(page, entity);
 
-			const logsRequests: string[] = [];
-			page.on('request', (request) => {
-				if (/query_range/.test(request.url())) {
-					logsRequests.push(request.url());
-				}
-			});
-			const before = logsRequests.length;
+			// Wait for the tab *body* before arming the listener. `openLogsTab` returns
+			// once the drawer shell is up, which is before the tab's own initial
+			// `query_range` fires — so that request landed in the counter while the Run
+			// button was still mounting, and `length > before` was satisfied by page
+			// load. Deleting the `runEntityQuery` call below left the test green.
+			await expect(page.locator(SCOPE_CHIP)).toBeVisible({ timeout: 30_000 });
+			await expect(entityRunQueryButton(page, 'logs')).toBeVisible();
 
+			// Tie the assertion to the click: wait for a request that starts *after*
+			// it, rather than counting ones that may predate it.
+			const refetch = page.waitForRequest(
+				(request) => /query_range/.test(request.url()),
+				{ timeout: 15_000 },
+			);
 			await runEntityQuery(page, 'logs');
-
-			await expect(async () => {
-				expect(logsRequests.length).toBeGreaterThan(before);
-			}).toPass();
+			await refetch;
 			// The scope chip is still there — Run cannot edit it away.
 			await expect(page.locator(SCOPE_CHIP)).toBeVisible();
 		});

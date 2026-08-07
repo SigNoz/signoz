@@ -19,6 +19,7 @@ import {
 	POD_METRICS_WIDGET_TITLES,
 } from '../../../helpers/infra-monitoring/entities';
 import {
+	expressionParams,
 	gotoScopedList,
 	headerCell,
 	listUrl,
@@ -116,12 +117,28 @@ test.describe('statefulsets', () => {
 		authedPage: page,
 	}) => {
 		await resetTableState(page, STATEFULSETS);
-		const seeded = await seedDataset(page, 'statefulsets_non_ss_pods');
-		await gotoScopedList(page, STATEFULSETS, seeded.names);
+		await seedDataset(page, 'statefulsets_non_ss_pods');
+
+		// Scoped by **namespace**, not by name. `gotoScopedList` writes a backend
+		// filter on the very names being asserted, so `keys ⊆ seeded.names` was
+		// guaranteed by the query — a pod that wrongly surfaced as a statefulset row
+		// would have been filtered out before reaching the table. Scoping by the
+		// fixture's namespace keeps the excluded pods inside the query window, which
+		// is the only way the exclusion is observable.
+		await page.goto(
+			listUrl(STATEFULSETS, {
+				...expressionParams(`k8s.namespace.name = 'ns-nd'`),
+			}),
+		);
 		await waitForRows(page);
 
-		for (const key of await renderedRowKeys(page)) {
-			expect(seeded.names).toContain(key);
-		}
+		// `ns-nd` holds one statefulset (`ns-ss`), one deployment (`nd-dep`) and three
+		// pods, two of which belong to neither. Only the statefulset is a row here.
+		const keys = await renderedRowKeys(page);
+		expect(keys, 'the real statefulset is listed').toContain('ns-ss');
+		expect(keys, 'a loose pod is not a statefulset row').not.toContain(
+			'nd-standalone',
+		);
+		expect(keys, 'a deployment is not a statefulset row').not.toContain('nd-dep');
 	});
 });

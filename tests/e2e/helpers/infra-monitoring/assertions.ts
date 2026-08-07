@@ -15,6 +15,7 @@ import {
 import {
 	drawer,
 	drawerTab,
+	expectDrawerBodyReady,
 	renderedTabViews,
 	tabBar,
 	chartHeaders,
@@ -29,6 +30,7 @@ import {
 	columnStorageKey,
 	quickFilterOpenState,
 	quickFilterTitles,
+	totalCount,
 	type ColumnState,
 } from './list';
 
@@ -98,17 +100,38 @@ export async function expectUrlParams(
 /**
  * The list is on page 1.
  *
- * `useTableParams` binds `page` through `parseAsInteger.withDefault(1)`, and nuqs
- * clears a param equal to its default — so a pagination-driven reset shows up as
- * the param *disappearing*. But a filter-driven reset goes through an explicit
- * write and lands as `page=1`. Both mean page one, so both are accepted; pinning
- * either literal makes the assertion about which writer ran, not about the page.
+ * One URL key, three writers, and nuqs only clears a param whose value equals its
+ * default — so "page one" has three spellings:
+ *
+ * - `useTableParams` binds `page` as `parseAsInteger.withDefault(pageDefault)`, so
+ *   page one *is* the default and the param disappears;
+ * - `useInfraMonitoringPageListing` uses a bare `parseAsInteger` with no
+ *   `.withDefault`, so there is no default to match and `1` is written literally;
+ * - `K8sExpandedRow`'s "View All" sets it through raw `URLSearchParams`.
+ *
+ * All three mean page one, so absent and `'1'` are both accepted; pinning either
+ * literal makes the assertion about which writer ran, not about the page.
  */
 export async function expectFirstPage(page: Page): Promise<void> {
 	await expect(async () => {
 		const value = new URL(page.url()).searchParams.get('page');
 		expect(value === null || value === '1', `page param was ${value}`).toBe(true);
 	}).toPass();
+}
+
+/**
+ * The `category` value the URL should carry for `entity` — `null` when absent.
+ *
+ * Absent for hosts (its own route, no category rail) and for pods (the k8s
+ * default, which nuqs drops rather than writes). Any scenario that switches
+ * category and then asserts the param has to go through this, or it is really
+ * asserting "the entity under test happens to be pods".
+ */
+export function expectedCategoryParam(entity: EntityDef): string | null {
+	if (!entity.categoryTestId || entity.key === 'pods') {
+		return null;
+	}
+	return entity.key;
 }
 
 /** The single reader for the filter expression — see `list.applyExpression`. */
@@ -145,7 +168,7 @@ export async function expectTotalCountLabel(
 	page: Page,
 	entity: EntityDef,
 ): Promise<void> {
-	await expect(page.getByTestId('pagination-total-count')).toHaveText(
+	await expect(totalCount(page)).toHaveText(
 		new RegExp(`^Showing \\d+ - \\d+ of \\d+ ${totalCountLabel(entity)}$`),
 	);
 }
@@ -201,10 +224,28 @@ export async function expectMetadataLabels(
 		expect(normalise(labels)).toEqual(normalise(entity.metadataLabels));
 	}).toPass();
 
+	// One value per rendered label, each non-empty.
+	//
+	// The count is what makes this falsifiable: `for (i < await values.count())`
+	// never runs its body when nothing rendered, so the "non-empty value" half
+	// silently held for zero values, and a CSS-module class rename would have
+	// turned it into a permanent pass across all ten entities.
+	//
+	// Counted, so the loop below cannot vacuously pass over zero values — that was
+	// the original defect here: `for (i < await values.count())` never ran its body
+	// when nothing rendered, and a CSS-module class rename would have made this a
+	// permanent pass across all ten entities.
+	//
+	// NOT counted against `entity.metadataLabels.length`, and not against the
+	// rendered label count either: both fail on hosts, whose metadata row renders
+	// fewer plain value nodes than it has labels (`STATUS` is a badge, not a value
+	// node). Pinning either number is a scenario of its own; what holds everywhere
+	// is "at least one value rendered, and none of them are empty".
 	const values = panel.locator('[class*="entityDetailsMetadataValue"]');
+	await expect(values.first()).toBeVisible();
 	const count = await values.count();
 	for (let i = 0; i < count; i += 1) {
-		await expect(values.nth(i)).not.toHaveText('');
+		await expect(values.nth(i), `metadata value ${i}`).not.toHaveText('');
 	}
 }
 
@@ -236,6 +277,12 @@ export async function expectDrawerTabs(
 	const expected = expectedTabViews(entity);
 	if (expected.length === 0) {
 		// `hideDetailViewTabs` — volumes renders no tab bar at all.
+		//
+		// The body-ready wait is what makes this falsifiable: the drawer shell mounts
+		// from `selectedItem` alone and `DrawerTabBar` mounts with the tab body, so a
+		// bare `toHaveCount(0)` here resolved on its first poll against a drawer that
+		// had not rendered a tab bar *yet*, and would have passed if volumes grew one.
+		await expectDrawerBodyReady(page);
 		await expect(tabBar(page)).toHaveCount(0);
 		return;
 	}

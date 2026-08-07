@@ -14,7 +14,6 @@ import {
 	expectQuickFilterSections,
 	expectUrlParams,
 } from '../../../helpers/infra-monitoring/assertions';
-import type { DatasetKey } from '../../../helpers/infra-monitoring/datasets';
 import {
 	entityByKey,
 	K8S_CATEGORY_TAB_ORDER,
@@ -22,14 +21,18 @@ import {
 	K8S_PATH,
 } from '../../../helpers/infra-monitoring/entities';
 import {
+	allowForSeededWait,
 	applyExpression,
+	clickSortHeader,
+	expectCategoryActive,
+	goBackUntil,
 	gotoList,
 	groupListBy,
 	listUrl,
-	quickFilterRail,
+	quickFilterSections,
 	quickFiltersToggle,
 	resetTableState,
-	clickSortHeader,
+	scopedListUrl,
 	switchCategory,
 	waitForRow,
 	waitForRows,
@@ -48,13 +51,15 @@ test.describe('B-NAV', () => {
 		authedPage: page,
 	}) => {
 		await resetTableState(page, PODS);
-		await seedDataset(page, PODS.seed.primary as DatasetKey);
+		await seedDataset(page, PODS.seed.primary);
 		await page.goto(K8S_PATH);
 		await waitForRows(page);
 
 		// pods is the default, and the app drops the param rather than writing it.
 		await expectUrlParams(page, { category: null });
-		await expect(page.getByTestId(PODS.categoryTestId!)).toBeVisible();
+		// "pods **active**", which `toBeVisible` cannot say — the rail renders all
+		// nine buttons on every category. The pressed state is the evidence.
+		await expectCategoryActive(page, PODS);
 		await expectDefaultColumns(page, PODS);
 	});
 
@@ -92,11 +97,11 @@ test.describe('B-NAV', () => {
 		// Five settle-and-navigate steps in one scenario (filter, drawer, sort, group,
 		// switch). That is the point of the test, and it does not fit the default
 		// timeout once six workers are sharing the stack.
-		test.slow();
+		allowForSeededWait();
 		const nodes = entityByKey('nodes');
 		await resetTableState(page, PODS);
-		await seedDataset(page, PODS.seed.grouped as DatasetKey);
-		await seedDataset(page, PODS.seed.primary as DatasetKey);
+		await seedDataset(page, PODS.seed.grouped);
+		await seedDataset(page, PODS.seed.primary);
 		await gotoList(page, PODS);
 		await waitForRows(page);
 
@@ -110,12 +115,49 @@ test.describe('B-NAV', () => {
 		await waitForRow(page, PODS.seed.sampleItemKey);
 		await clickSortHeader(page, PODS.orderByColumnId);
 		await groupListBy(page, PODS.groupByAttribute);
-
 		await switchCategory(page, nodes);
 
 		await expectUrlParams(page, { orderBy: null, groupBy: null });
-		await expectFirstPage(page);
 		await expectExpression(page, '');
+		// The `page` half of this scenario is B-NAV-04b — it is a live product bug,
+		// so it is parked separately rather than taking the other three claims red.
+	});
+
+	/**
+	 * **Parked: this is a live product bug.** A category switch does not reset the
+	 * page, so switching while on page 3 lands on page 3 of the new entity — which,
+	 * if that entity has fewer rows, is the dead end B-LIST-18 describes.
+	 *
+	 * `handleCategorySelect` (`InfraMonitoringK8s.tsx:216-236`) clears `orderBy`,
+	 * `groupBy`, `selectedItem*` and the expression, and never touches `page`. The
+	 * three writers that do reset it — `K8sTableToolbar` (group-by),
+	 * `K8sExpandedRow` (View All) and `K8sHeader` (Run) — do not include the rail.
+	 * Nor does an unmount save it: `K8sDynamicList` renders `<K8sBaseList>` unkeyed,
+	 * so a switch re-renders the same instance and `useTableParams`'
+	 * `cleanupOnUnmount` never fires.
+	 *
+	 * §4's B-NAV-04 has always claimed this reset. It read as covered because the
+	 * scenario never left page one and `expectFirstPage` accepts absent-or-`'1'`.
+	 *
+	 * Driven from a **deep link** rather than a click, because that is the reported
+	 * repro (refresh on `page=3`, then switch) and it also exercises the URL-seeded
+	 * path through `useTableParams` that a click does not.
+	 */
+	test.fixme('B-NAV-04b a category switch resets the page, including from a deep link', async ({
+		authedPage: page,
+	}) => {
+		const nodes = entityByKey('nodes');
+		await resetTableState(page, PODS);
+		const seeded = await seedDataset(page, PODS.seed.pagination);
+		await page.goto(
+			scopedListUrl(PODS, seeded.names, { page: '3', pageSize: '5' }),
+		);
+		await waitForRows(page);
+		await expectUrlParams(page, { page: '3' });
+
+		await switchCategory(page, nodes);
+
+		await expectFirstPage(page);
 	});
 
 	test('B-NAV-10 a category switch from a drawer deep link clears selectedItem*', async ({
@@ -123,7 +165,7 @@ test.describe('B-NAV', () => {
 	}) => {
 		const nodes = entityByKey('nodes');
 		await resetTableState(page, PODS);
-		await seedDataset(page, PODS.seed.primary as DatasetKey);
+		await seedDataset(page, PODS.seed.primary);
 		await page.goto(
 			listUrl(PODS, {
 				selectedItem: PODS.seed.sampleItemKey,
@@ -158,7 +200,11 @@ test.describe('B-NAV', () => {
 		await switchCategory(page, entityByKey('volumes'));
 		await expectUrlParams(page, { category: 'volumes' });
 
-		await page.goBack();
+		// `goBackUntil`, not a bare `goBack()`. A destination that rewrites its own
+		// URL on arrival pushes a second history entry, so one Back lands on the
+		// destination's *first* URL rather than on the previous category — and a
+		// `toPass`-wrapped URL read never presses Back again, it just re-reads.
+		await goBackUntil(page, /category=clusters\b/);
 		await expectUrlParams(page, { category: 'clusters' });
 	});
 
@@ -172,6 +218,11 @@ test.describe('B-NAV', () => {
 		await expect(page.getByTestId(PODS.categoryTestId!)).toBeVisible();
 		await expect(page.locator('table')).toHaveCount(0);
 
+		// `watch.errors` / `watch.failedResponses` are plain arrays that fill
+		// asynchronously, and `toHaveCount(0)` above is satisfied instantly (zero is
+		// the initial state) — so reading them here sampled while the shell's requests
+		// were still in flight. Wait for the network to go quiet first.
+		await page.waitForLoadState('networkidle');
 		expect(watch.errors, 'console errors').toEqual([]);
 		expect(watch.failedResponses, 'failed requests').toEqual([]);
 	});
@@ -182,10 +233,10 @@ test.describe('B-NAV', () => {
 		// Seed first so the table is guaranteed present and its width measurable —
 		// otherwise the widening assertion would need a runtime guard.
 		await resetTableState(page, PODS);
-		await seedDataset(page, PODS.seed.primary as DatasetKey);
+		await seedDataset(page, PODS.seed.primary);
 		await page.goto(K8S_PATH);
 		await waitForRows(page);
-		await expect(quickFilterRail(page).first()).toBeVisible();
+		await expect(quickFilterSections(page).first()).toBeVisible();
 
 		// The `table` element's own width is driven by its columns' sizes, not by the
 		// space available, so it is *unchanged* by collapsing the rail — measure the
@@ -196,7 +247,7 @@ test.describe('B-NAV', () => {
 		);
 
 		await quickFiltersToggle(page).click();
-		await expect(quickFilterRail(page)).toHaveCount(0);
+		await expect(quickFilterSections(page)).toHaveCount(0);
 		await expect(async () => {
 			const collapsed = await scroller.evaluate(
 				(el) => el.getBoundingClientRect().width,
@@ -204,10 +255,18 @@ test.describe('B-NAV', () => {
 			expect(collapsed).toBeGreaterThan(widthWithRail);
 		}).toPass();
 
-		// The collapse is component-local state, so it does not survive a reload —
-		// re-opening restores the rail within the same page.
+		// Re-opening restores the rail within the same page …
 		await quickFiltersToggle(page).click();
-		await expect(quickFilterRail(page).first()).toBeVisible();
+		await expect(quickFilterSections(page).first()).toBeVisible();
+
+		// … and because the collapse is component-local state rather than a param or
+		// a storage key, a reload comes back with the rail open. The comment used to
+		// claim this without a reload to back it up.
+		await quickFiltersToggle(page).click();
+		await expect(quickFilterSections(page)).toHaveCount(0);
+		await page.reload();
+		await waitForRows(page);
+		await expect(quickFilterSections(page).first()).toBeVisible();
 	});
 });
 
@@ -219,7 +278,7 @@ for (const entity of K8S_ENTITIES) {
 			authedPage: page,
 		}) => {
 			await resetTableState(page, entity);
-			await seedDataset(page, entity.seed.primary as DatasetKey);
+			await seedDataset(page, entity.seed.primary);
 			await page.goto(K8S_PATH);
 			await waitForRows(page);
 
@@ -234,7 +293,7 @@ for (const entity of K8S_ENTITIES) {
 			authedPage: page,
 		}) => {
 			await resetTableState(page, entity);
-			await seedDataset(page, entity.seed.primary as DatasetKey);
+			await seedDataset(page, entity.seed.primary);
 			await page.goto(listUrl(entity));
 			await waitForRows(page);
 

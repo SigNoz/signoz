@@ -5,6 +5,7 @@
  */
 
 import { expect, test } from '../../../fixtures/auth';
+import { fixtureMetric } from '../../../helpers/infra-monitoring/datasets';
 import {
 	expectUrlParams,
 	expectWidgetTitles,
@@ -30,7 +31,10 @@ import {
 	waitForRow,
 	waitForRows,
 } from '../../../helpers/infra-monitoring/list';
-import { seedDataset } from '../../../helpers/infra-monitoring/seed';
+import {
+	itemKeyFor,
+	seedDataset,
+} from '../../../helpers/infra-monitoring/seed';
 
 const PODS = entityByKey('pods');
 
@@ -94,7 +98,7 @@ test.describe('pods', () => {
 		await expect(ageCell).not.toHaveText('');
 	});
 
-	test('P-04 the Restarts column renders and is sortable', async ({
+	test('P-04 the Restarts column renders, and is not sortable', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, PODS);
@@ -103,8 +107,14 @@ test.describe('pods', () => {
 		await waitForRows(page);
 
 		await expect(headerCell(page, 'podRestarts')).toBeVisible();
+		// `enableSort: false` since #12127 — the plan's "and is sortable" was written
+		// against an older config. The header is a plain span, so there is no `orderBy`
+		// this column can produce.
 		await expect(
 			headerCell(page, 'podRestarts').locator('button.tanstack-header-title'),
+		).toHaveCount(0);
+		await expect(
+			headerCell(page, 'podRestarts').locator('span.tanstack-header-title'),
 		).toHaveCount(1);
 	});
 
@@ -118,9 +128,40 @@ test.describe('pods', () => {
 
 		// `cpu_limit` is visible by default and rendered as a progress bar.
 		await expect(headerCell(page, 'cpu_limit')).toBeVisible();
+
+		// The *value*, read from the fixture rather than invented — and the two
+		// seeded pods deliberately land in different threshold bands, which is the
+		// half §5's P-05 actually asks for. `EntityProgressBar` renders the
+		// percentage as visible text, so the band boundary (limit: ≤60 healthy,
+		// >95 at-limit) is observable without reading a stroke colour.
+		//
+		// Note the expectation comes from the JSONL, not from
+		// `pods_value_accuracy_expected.json`: that file records `podCPULimit`, the
+		// limit in cores, while this column renders `k8s.pod.cpu_limit_utilization`.
+		const band = (name: string): number =>
+			Math.round(
+				fixtureMetric(
+					'pods_value_accuracy',
+					PODS.nameColumnId,
+					name,
+					'k8s.pod.cpu_limit_utilization',
+				) * 100,
+			);
+
 		await expect(
-			rowFor(page, PODS.seed.sampleItemKey).getByRole('progressbar').first(),
-		).toBeVisible();
+			rowFor(page, itemKeyFor(PODS, 'acc-p1')).locator(
+				'td.tanstack-cell-cpu_limit',
+			),
+		).toContainText(`${band('acc-p1')}%`);
+		await expect(
+			rowFor(page, itemKeyFor(PODS, 'acc-p2')).locator(
+				'td.tanstack-cell-cpu_limit',
+			),
+		).toContainText(`${band('acc-p2')}%`);
+		// …and the two really are in different bands, or this asserts one band twice.
+		expect(band('acc-p1'), 'the two pods span a threshold boundary').toBeLessThan(
+			band('acc-p2'),
+		);
 	});
 
 	test(`P-06 the Metrics tab shows all ${PODS.widgetTitles.length} pod widgets`, async ({
@@ -165,8 +206,17 @@ test.describe('pods', () => {
 		await gotoScopedList(page, PODS, seeded.names);
 		await waitForRows(page);
 
-		// At least one cell renders the no-data marker rather than `0`.
-		await expect(page.locator('table').getByText('-').first()).toBeVisible();
+		// The *specific* cell, matched exactly. `getByText('-')` is a
+		// case-insensitive **substring** match, and the seeded pod is called
+		// `miss-p1` — so the old assertion was satisfied by the name cell and could
+		// not fail whether the app rendered `-`, `0`, or nothing at all.
+		// `pods_missing_metrics` seeds only `k8s.pod.cpu.usage`, so memory is
+		// guaranteed absent.
+		const memoryCell = rowFor(page, itemKeyFor(PODS, seeded.names[0])).locator(
+			'td.tanstack-cell-memory',
+		);
+		await expect(memoryCell).toHaveText('-');
+		await expect(memoryCell, 'a missing metric is not zero').not.toHaveText('0');
 	});
 
 	test('P-09 namespace, node and cluster are addable from the options panel', async ({

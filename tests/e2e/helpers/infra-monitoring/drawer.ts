@@ -57,8 +57,21 @@ export const EXPLORER_LINK = {
 
 // ─── Locators ────────────────────────────────────────────────────────────────
 
+/**
+ * The **live** drawer panel.
+ *
+ * An exiting drawer keeps its node mounted for the slide-out animation, marked
+ * `aria-hidden="true"`, so during a transition two `drawer-wrapper` dialogs are in
+ * the DOM at once and a bare `getByTestId` is a strict-mode violation rather than a
+ * missing element. That happens on Back out of the metrics explorer (B-MET-04),
+ * where the drawer being restored mounts while the previous one is still leaving.
+ * Excluding `aria-hidden` is also the semantically right filter: the hidden node is
+ * out of the accessibility tree, so it is not the drawer a user is looking at.
+ */
 export function drawer(page: Page): Locator {
-	return page.getByTestId(DRAWER.wrapper);
+	return page.locator(
+		`[data-testid="${DRAWER.wrapper}"]:not([aria-hidden="true"])`,
+	);
 }
 
 export function drawerTitle(page: Page): Locator {
@@ -105,10 +118,18 @@ export async function openRowDrawer(
 	const row = rowFor(page, rowKey);
 	await expect(row).toBeVisible();
 
+	// Two things the obvious retry gets wrong. The click needs its own timeout:
+	// `toPass` awaits the callback to completion before checking its deadline, so
+	// an unbounded `click()` cannot be interrupted — and if the drawer opened just
+	// after the 3 s check, the retry's click is now behind the drawer's modal mask
+	// and blocks on actionability forever, killing the test with no useful output.
+	// And the retry has to be a no-op once the drawer is up, for the same reason.
 	await expect(async () => {
-		await row.click();
+		if (!(await drawer(page).isVisible())) {
+			await row.click({ timeout: 5_000 });
+		}
 		await expect(page.getByTestId(DRAWER.close)).toBeVisible({ timeout: 3_000 });
-	}).toPass({ timeout: 30_000 });
+	}).toPass({ timeout: 20_000 });
 
 	const panel = drawer(page);
 	await expect(panel).toBeVisible();
@@ -129,17 +150,43 @@ export async function openRowInNewTab(
 }
 
 /**
- * Wait for the drawer to be open.
+ * Wait for the drawer **shell** to be open.
  *
- * The shell renders once `selectedItem` is set, but on a cold deep link that is
- * gated behind the entity-details query — an *ingestion*-bound wait under six
- * workers, not a render one. The default expect budget loses that race often
- * enough to be the suite's last remaining flake, so this is the one place the
- * longer budget lives.
+ * `K8sBaseDetails` renders `<DrawerWrapper open={!!selectedItem}>` with a
+ * `<LoadingContainer/>` inside, so the shell appears the instant `selectedItem`
+ * is in the URL — it is *not* gated behind the entity-details query, whatever
+ * the plan says. The long budget stays because a deep link still has to load the
+ * app, but be clear about what this proves: only that the drawer opened.
+ *
+ * **This is not evidence that any tab body rendered.** The tab bar, metadata
+ * row, time picker and every tab body mount later, when the entity query
+ * resolves. An absence assertion fired right after this one passes on its first
+ * poll and can never fail — use {@link expectDrawerBodyReady} first.
  */
 export async function expectDrawerVisible(page: Page): Promise<Locator> {
 	const panel = drawer(page);
 	await expect(panel).toBeVisible({ timeout: 30_000 });
+	return panel;
+}
+
+/**
+ * Wait for the drawer's **body** — the part gated behind the entity-details
+ * query — to have rendered.
+ *
+ * Required before any `toHaveCount(0)` / `toBeHidden` assertion about drawer
+ * content, and before reading the tab bar or the metadata row. Without it those
+ * assertions resolve against a still-loading drawer and pass unconditionally:
+ * "hosts has no Events tab" and "volumes has no tab bar" were both green because
+ * the tab bar had not mounted yet, not because it was absent.
+ *
+ * `drawer-time-selection` is the signal because `EntityDateTimeSelector` is
+ * rendered by all four tab bodies (Metrics, Logs, Traces, Events) and by nothing
+ * in the shell — including on volumes, which has no tab bar but still renders the
+ * Metrics body.
+ */
+export async function expectDrawerBodyReady(page: Page): Promise<Locator> {
+	const panel = await expectDrawerVisible(page);
+	await expect(drawerTimePicker(page)).toBeVisible({ timeout: 30_000 });
 	return panel;
 }
 
@@ -150,16 +197,33 @@ export async function closeDrawer(page: Page): Promise<void> {
 	}).toPass();
 }
 
-/** The `selectedItem*` params `entity` writes for `sampleName`. */
+/**
+ * The `selectedItem*` params `entity` writes for its sample row.
+ *
+ * Throws rather than defaulting a missing registry value to `''`. A deep link
+ * with an empty extra opens a drawer titled `-` with empty panels — which is
+ * indistinguishable from a slow one, so the scenario fails somewhere else
+ * entirely. An incomplete registry entry is a suite bug and should say so here.
+ */
 export function selectedItemParams(entity: EntityDef): Record<string, string> {
 	const params: Record<string, string> = {
 		selectedItem: entity.seed.sampleItemKey,
 	};
+	const require = (value: string | undefined, field: string): string => {
+		if (!value) {
+			throw new Error(
+				`${entity.key}: seed.${field} is required because selectedItemExtraParams asks for it`,
+			);
+		}
+		return value;
+	};
 	if (entity.selectedItemExtraParams.includes('clusterName')) {
-		params.selectedItemClusterName = entity.seed.sampleClusterName ?? '';
+		params.selectedItemClusterName = require(entity.seed
+			.sampleClusterName, 'sampleClusterName');
 	}
 	if (entity.selectedItemExtraParams.includes('namespaceName')) {
-		params.selectedItemNamespaceName = entity.seed.sampleNamespaceName ?? '';
+		params.selectedItemNamespaceName = require(entity.seed
+			.sampleNamespaceName, 'sampleNamespaceName');
 	}
 	return params;
 }
@@ -185,10 +249,12 @@ export async function renderedTabViews(page: Page): Promise<string[]> {
 }
 
 /**
- * `useInfraMonitoringView` defaults to `metrics` and the shared nuqs options set
- * `clearOnDefault`, so switching *to* Metrics deletes the param instead of writing
- * `view=metrics`. Asserting the literal makes every "…and back to Metrics" step
- * hang for the full expect timeout against a perfectly correct app.
+ * `useInfraMonitoringView` is `parseAsString.withDefault(VIEWS.METRICS)`, and nuqs
+ * clears a param whose value equals its default (`clearOnDefault` is on unless a
+ * parser opts out — the shared options only set `history: 'push'`). So switching
+ * *to* Metrics deletes the param instead of writing `view=metrics`, while every
+ * other tab writes its value normally. Asserting the literal makes every "…and
+ * back to Metrics" step hang for the full expect timeout against a correct app.
  */
 export const DEFAULT_DRAWER_VIEW: DrawerView = DRAWER_TAB.metrics;
 
@@ -235,8 +301,20 @@ export async function setDrawerTime(page: Page, option: string): Promise<void> {
 	// outside the default expect timeout, so wait for it explicitly rather than
 	// failing with "element(s) not found" on a drawer that is merely still loading.
 	await expect(picker).toBeVisible({ timeout: 30_000 });
+	const before = new URL(page.url()).searchParams.get('detailRelativeTime');
 	await picker.getByRole('textbox', { name: /Last / }).first().click();
+	// The option list renders in a portal attached to `body`, so it is genuinely
+	// out of the picker's subtree and cannot be scoped to it. Only the *trigger*
+	// above is drawer-scoped; the list's names are unique enough that this is safe.
 	await page.getByRole('button', { name: option }).click();
+	// Post-condition, so a caller cannot mistake "the option was clicked" for "the
+	// drawer's range changed". Every current caller asserts this itself; folding it
+	// in means the next one inherits it. `resetDrawerTimeToList` already does this.
+	await expect(async () => {
+		expect(new URL(page.url()).searchParams.get('detailRelativeTime')).not.toBe(
+			before,
+		);
+	}).toPass();
 }
 
 export function resetToListTimeButton(page: Page): Locator {
@@ -292,7 +370,17 @@ export const TAB_EXPRESSION_PARAMS = [
 export const TAB_USER_EXPRESSION_PARAM = {
 	logs: 'k8sEntityLogsExpression',
 	traces: 'k8sEntityTracesExpression',
+	events: 'k8sEntityEventsExpression',
 } as const;
+
+/**
+ * Not to be confused with {@link TAB_USER_EXPRESSION_PARAM}. `eventsFilters` and
+ * its two siblings are *write-only-null*: `K8sBaseDetailsContent` clears them on
+ * every tab change and nothing in the product ever sets them to a value. They are
+ * worth asserting as "cleared on tab switch" (B-DRW-09) and worth nothing at all
+ * as a stand-in for a user expression.
+ */
+export type TabWithUserExpression = keyof typeof TAB_USER_EXPRESSION_PARAM;
 
 /**
  * Read back what a copy button put on the clipboard, by pasting.
@@ -318,9 +406,16 @@ export async function readClipboardViaPaste(page: Page): Promise<string> {
 			scratch.style.top = '0';
 			// antd's Drawer traps focus: a textarea appended to `body` is yanked back
 			// into the drawer before the paste lands, and the read comes back empty.
-			// Mounting it *inside* the drawer keeps the focus the paste needs.
-			const host =
-				document.querySelector(`[data-testid="${drawerTestId}"]`) ?? document.body;
+			// Mounting it *inside* the drawer keeps the focus the paste needs — so
+			// falling back to `body` would silently reproduce the exact bug this
+			// placement exists to avoid. Fail instead.
+			const host = document.querySelector(`[data-testid="${drawerTestId}"]`);
+			if (!host) {
+				throw new Error(
+					'readClipboardViaPaste: no drawer to mount the scratch textarea in — ' +
+						'a textarea on `body` loses focus to antd’s focus trap and reads empty',
+				);
+			}
 			host.append(scratch);
 			scratch.focus();
 		},
@@ -328,10 +423,14 @@ export async function readClipboardViaPaste(page: Page): Promise<string> {
 	);
 
 	await page.keyboard.press('ControlOrMeta+v');
+	// The paste is asynchronous: reading straight after the keypress races it and
+	// returns '' — which reads as "the copy button copied nothing".
+	const scratch = page.locator(`#${SCRATCH_ID}`);
+	await expect(scratch).not.toHaveValue('');
 	const value = await page.evaluate((id) => {
-		const scratch = document.getElementById(id) as HTMLTextAreaElement | null;
-		const text = scratch?.value ?? '';
-		scratch?.remove();
+		const element = document.getElementById(id) as HTMLTextAreaElement | null;
+		const text = element?.value ?? '';
+		element?.remove();
 		return text;
 	}, SCRATCH_ID);
 	return value;
@@ -383,5 +482,16 @@ export function paginationFromUrl(
 	tab: PaginatedTab,
 ): { offset: number; limit: number } | null {
 	const raw = new URL(page.url()).searchParams.get(PAGINATION_PARAM[tab]);
-	return raw ? (JSON.parse(raw) as { offset: number; limit: number }) : null;
+	if (!raw) {
+		return null;
+	}
+	try {
+		return JSON.parse(raw) as { offset: number; limit: number };
+	} catch {
+		// Named rather than retried: inside a `toPass` a bare SyntaxError re-throws
+		// every 100 ms until the deadline and reports as a timeout.
+		throw new Error(
+			`${PAGINATION_PARAM[tab]} is not decodable JSON — got \`${raw.slice(0, 200)}\``,
+		);
+	}
 }
