@@ -242,6 +242,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewRestructureAuthDomainConfigFactory(sqlstore),
 		sqlmigration.NewFixSavedViewSelectFieldsFactory(sqlstore),
 		sqlmigration.NewDeleteOrphanUserRolesFactory(),
+		sqlmigration.NewAddUserTuplesFactory(sqlstore),
 	)
 }
 
@@ -314,6 +315,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			authz,
 			implorganization.NewHandler(modules.OrgGetter, modules.OrgSetter),
 			impluser.NewHandler(modules.UserSetter, modules.UserGetter),
+			modules.UserGetter,
 			implsession.NewHandler(modules.Session, globalConfig),
 			implauthdomain.NewHandler(modules.AuthDomain),
 			implpreference.NewHandler(modules.Preference),
