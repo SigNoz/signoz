@@ -11,6 +11,7 @@ interface PlannedDowntimeDeleteModalProps {
 	onDeleteHandler: () => void;
 	isDeleteLoading: boolean;
 	downtimeSchedule: string;
+	hasAssociatedRules: boolean;
 }
 
 export function PlannedDowntimeDeleteModal(
@@ -22,6 +23,7 @@ export function PlannedDowntimeDeleteModal(
 		isDeleteLoading,
 		onDeleteHandler,
 		downtimeSchedule,
+		hasAssociatedRules,
 	} = props;
 	const hideDeleteScheduleModal = (): void => {
 		setIsDeleteModalOpen(false);
@@ -54,7 +56,9 @@ export function PlannedDowntimeDeleteModal(
 			]}
 		>
 			<Typography.Text className="delete-text">
-				{`Are you sure you want to delete - ${downtimeSchedule} schedule? Deleting a schedule is irreversible and cannot be undone.`}
+				{hasAssociatedRules
+					? `Are you sure you want to delete - ${downtimeSchedule} schedule? The rule associations will be removed, and any rule that belongs only to this schedule will no longer be suppressed. Deleting is irreversible and cannot be undone.`
+					: `Are you sure you want to delete - ${downtimeSchedule} schedule? Deleting a schedule is irreversible and cannot be undone.`}
 			</Typography.Text>
 		</Modal>
 	);
