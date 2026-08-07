@@ -1,0 +1,11 @@
+{
+	"something_went_wrong": "문제가 발생했습니다",
+	"already_logged_in": "이미 로그인되어 있습니다",
+	"success": "성공",
+	"cancel": "취소",
+	"share": "공유",
+	"save": "저장",
+	"edit": "편집",
+	"logged_in": "로그인됨",
+	"pending_data_placeholder": "{{dataSource}}을(를) 가져오는 중입니다!"
+}

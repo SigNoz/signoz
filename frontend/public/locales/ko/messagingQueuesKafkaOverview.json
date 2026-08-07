@@ -1,0 +1,54 @@
+{
+	"breadcrumb": "메시징 큐",
+	"header": "Kafka / 개요",
+	"overview": {
+		"title": "20분 만에 데이터 전송 시작하기",
+		"subtitle": "데이터 스트림을 연결하고 모니터링하세요"
+	},
+	"configureConsumer": {
+		"title": "컨슈머 설정",
+		"description": "인사이트를 얻고 모니터링을 강화하려면 컨슈머 데이터 소스를 추가하세요.",
+		"button": "시작하기"
+	},
+	"configureProducer": {
+		"title": "프로듀서 설정",
+		"description": "인사이트를 얻고 모니터링을 강화하려면 프로듀서 데이터 소스를 추가하세요.",
+		"button": "시작하기"
+	},
+	"monitorKafka": {
+		"title": "Kafka 모니터링",
+		"description": "인사이트를 얻고 활동 추적을 강화하려면 Kafka 소스를 추가하세요.",
+		"button": "시작하기"
+	},
+	"summarySection": {
+		"viewDetailsButton": "상세 보기",
+		"consumer": {
+			"title": "컨슈머 지연 보기",
+			"description": "데이터 스트림을 연결하고 모니터링하세요"
+		},
+		"producer": {
+			"title": "프로듀서 지연 시간 보기",
+			"description": "데이터 스트림을 연결하고 모니터링하세요"
+		},
+		"partition": {
+			"title": "파티션 지연 시간 보기",
+			"description": "데이터 스트림을 연결하고 모니터링하세요"
+		},
+		"dropRate": {
+			"title": "드롭률 보기",
+			"description": "데이터 스트림을 연결하고 모니터링하세요"
+		},
+		"metricPage": {
+			"title": "메트릭 보기",
+			"description": "데이터 스트림을 연결하고 모니터링하세요"
+		}
+	},
+	"confirmModal": {
+		"content": "상세 페이지로 이동하기 전에, 올바른 데이터 모니터링을 위해 필요한 설정을 모두 완료했는지 확인해 주세요.",
+		"okText": "계속 진행"
+	},
+	"overviewSummarySection": {
+		"title": "데이터 스트림 모니터링",
+		"subtitle": "효율적인 데이터 흐름을 보장하고 실시간으로 문제를 해결하려면 컨슈머 지연 및 지연 시간과 같은 주요 Kafka 메트릭을 모니터링하세요."
+	}
+}
