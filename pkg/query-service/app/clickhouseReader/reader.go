@@ -2638,25 +2638,37 @@ func (r *ClickHouseReader) GetLogFieldsFromNames(ctx context.Context, fieldNames
 		Interesting: []model.Field{},
 	}
 
-	// get attribute keys
 	attributes := []model.Field{}
-	query := fmt.Sprintf("SELECT DISTINCT name, datatype from %s.%s where name in ('%s') group by name, datatype", r.logsDB, r.logsAttributeKeys, strings.Join(fieldNames, "','"))
-	err := r.db.Select(ctx, &attributes, query)
-	if err != nil {
-		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
-	}
-
-	// get resource keys
 	resources := []model.Field{}
-	query = fmt.Sprintf("SELECT DISTINCT name, datatype from %s.%s where name in ('%s') group by name, datatype", r.logsDB, r.logsResourceKeys, strings.Join(fieldNames, "','"))
-	err = r.db.Select(ctx, &resources, query)
-	if err != nil {
-		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
+
+	// fieldNames is derived from request-supplied query keys. Bind them as query
+	// parameters instead of interpolating into the SQL string; a raw `IN ('...')`
+	// interpolation would be SQL-injectable.
+	if len(fieldNames) > 0 {
+		placeholders := make([]string, len(fieldNames))
+		nameArgs := make([]interface{}, len(fieldNames))
+		for i, name := range fieldNames {
+			placeholders[i] = "?"
+			nameArgs[i] = name
+		}
+		inClause := strings.Join(placeholders, ", ")
+
+		// get attribute keys
+		attrQuery := fmt.Sprintf("SELECT DISTINCT name, datatype from %s.%s where name in (%s) group by name, datatype", r.logsDB, r.logsAttributeKeys, inClause)
+		if err := r.db.Select(ctx, &attributes, attrQuery, nameArgs...); err != nil {
+			return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
+		}
+
+		// get resource keys
+		resQuery := fmt.Sprintf("SELECT DISTINCT name, datatype from %s.%s where name in (%s) group by name, datatype", r.logsDB, r.logsResourceKeys, inClause)
+		if err := r.db.Select(ctx, &resources, resQuery, nameArgs...); err != nil {
+			return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
+		}
 	}
 
 	statements := []model.ShowCreateTableStatement{}
-	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsLocalTableName)
-	err = r.db.Select(ctx, &statements, query)
+	query := fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsLocalTableName)
+	err := r.db.Select(ctx, &statements, query)
 	if err != nil {
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
 	}
