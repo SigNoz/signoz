@@ -231,4 +231,5 @@ cython_debug/
 # LSP config files
 pyrightconfig.json
 
-
+# agents
+.claude/settings.local.json
