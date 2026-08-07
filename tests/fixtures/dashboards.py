@@ -10,7 +10,7 @@ DASHBOARDS_BASE_URL = "/api/v2/dashboards"
 MAX_LIST_LIMIT = 200
 
 
-def wipe_all_dashboards(signoz: types.SigNoz, token: str) -> None:
+def delete_all_dashboards(signoz: types.SigNoz, token: str) -> None:
     while True:
         response = requests.get(
             signoz.self.host_configs["8080"].get(f"{DASHBOARDS_BASE_URL}?limit={MAX_LIST_LIMIT}"),

@@ -6,7 +6,7 @@ import pytest
 import requests
 
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.dashboards import wipe_all_dashboards
+from fixtures.dashboards import delete_all_dashboards
 from fixtures.metrics import Metrics
 from fixtures.types import Operation, SigNoz
 
@@ -610,7 +610,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     # runs, so start from a clean slate: delete every dashboard (which also clears
     # pins via the delete cascade). This test then owns the whole dashboard space
     # and asserts on global counts.
-    wipe_all_dashboards(signoz, token)
+    delete_all_dashboards(signoz, token)
 
     dashboard_requests = [
         (
@@ -1254,7 +1254,7 @@ def test_dashboard_v2_pin_limit(
 
     # Wipe the dashboard space (see lifecycle) so the per-user pin cap this test
     # asserts against starts empty — deleting dashboards clears their pins.
-    wipe_all_dashboards(signoz, token)
+    delete_all_dashboards(signoz, token)
 
     ids: list[str] = []
     for i in range(max_pinned + 1):
@@ -1347,7 +1347,7 @@ def test_dashboard_v2_like_escaping(
 
     # Wipe the dashboard space (see lifecycle) so the filter assertions run
     # against only the dashboards this test creates.
-    wipe_all_dashboards(signoz, token)
+    delete_all_dashboards(signoz, token)
 
     dashboard_requests = [
         ("esc-pct", "Cost 50% Report"),
@@ -1425,7 +1425,7 @@ def test_dashboard_v2_get_by_metric_name(
     the metric appears only in panel names (the prefilter matches but the parse
     rejects it)."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    wipe_all_dashboards(signoz, token)
+    delete_all_dashboards(signoz, token)
 
     target_metric = "system.network.dropped"
     decoy_metric = "system.network.io"
