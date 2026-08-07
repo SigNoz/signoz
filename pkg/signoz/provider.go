@@ -335,6 +335,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.TraceDetail,
 			handlers.RulerHandler,
 			handlers.StatsHandler,
+			handlers.SavedView,
 		),
 	)
 }

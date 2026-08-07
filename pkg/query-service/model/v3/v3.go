@@ -14,7 +14,6 @@ import (
 	"github.com/pkg/errors"
 
 	signozerrors "github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/valuer"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
@@ -1421,34 +1420,6 @@ func (p *Point) UnmarshalJSON(data []byte) error {
 	var err error
 	p.Value, err = strconv.ParseFloat(v.Value, 64)
 	return err
-}
-
-// SavedView is a saved query for the explore page
-// It is a composite query with a source page name and user defined tags
-// The source page name is used to identify the page that initiated the query
-// The source page could be "traces", "logs", "metrics".
-type SavedView struct {
-	ID             valuer.UUID     `json:"id,omitempty"`
-	Name           string          `json:"name"`
-	Category       string          `json:"category"`
-	CreatedAt      time.Time       `json:"createdAt"`
-	CreatedBy      string          `json:"createdBy"`
-	UpdatedAt      time.Time       `json:"updatedAt"`
-	UpdatedBy      string          `json:"updatedBy"`
-	SourcePage     string          `json:"sourcePage"`
-	Tags           []string        `json:"tags"`
-	CompositeQuery *CompositeQuery `json:"compositeQuery"`
-	// ExtraData is JSON encoded data used by frontend to store additional data
-	ExtraData string `json:"extraData"`
-}
-
-func (eq *SavedView) Validate() error {
-
-	if eq.CompositeQuery == nil {
-		return fmt.Errorf("composite query is required")
-	}
-
-	return eq.CompositeQuery.Validate()
 }
 
 type LatencyMetricMetadataResponse struct {
