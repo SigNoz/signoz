@@ -8858,6 +8858,112 @@ export interface RuletypesRuleDTO {
 export enum RuletypesThresholdKindDTO {
 	basic = 'basic',
 }
+export interface SavedviewtypesDisplayDTO {
+	/**
+	 * @type string
+	 */
+	color?: string;
+	/**
+	 * @type string
+	 */
+	fontSize?: string;
+	/**
+	 * @type string
+	 */
+	format?: string;
+	/**
+	 * @type integer
+	 */
+	maxLines?: number;
+}
+
+export enum SavedviewtypesPanelTypeDTO {
+	value = 'value',
+	graph = 'graph',
+	table = 'table',
+	list = 'list',
+	trace = 'trace',
+}
+export interface SavedviewtypesSavedViewSpecDTO {
+	display: SavedviewtypesDisplayDTO;
+	/**
+	 * @type string
+	 */
+	displayName: string;
+	panelType: SavedviewtypesPanelTypeDTO;
+	/**
+	 * @type array
+	 */
+	queries: Querybuildertypesv5QueryEnvelopeDTO[];
+	/**
+	 * @type array
+	 */
+	selectedFields: TelemetrytypesTelemetryFieldKeyDTO[];
+}
+
+export interface SavedviewtypesSavedViewDataDTO {
+	/**
+	 * @type string
+	 */
+	schemaVersion: string;
+	spec: SavedviewtypesSavedViewSpecDTO;
+}
+
+export enum SavedviewtypesSourceDTO {
+	traces = 'traces',
+	logs = 'logs',
+	metrics = 'metrics',
+	meter = 'meter',
+}
+export interface SavedviewtypesPostableSavedViewDTO {
+	data: SavedviewtypesSavedViewDataDTO;
+	/**
+	 * @type boolean
+	 */
+	generateName?: boolean;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	source: SavedviewtypesSourceDTO;
+}
+
+export interface SavedviewtypesSavedViewDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	data?: SavedviewtypesSavedViewDataDTO;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	source?: SavedviewtypesSourceDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
+export interface SavedviewtypesUpdatableSavedViewDTO {
+	data: SavedviewtypesSavedViewDataDTO;
+	source: SavedviewtypesSourceDTO;
+}
+
 export interface ServiceaccounttypesDeprecatedPostableServiceAccountRoleDTO {
 	/**
 	 * @type string
@@ -12056,6 +12162,54 @@ export type TestRule200 = {
 	status: string;
 };
 
+export type ListSavedViewsParams = {
+	/**
+	 * @description undefined
+	 */
+	source?: SavedviewtypesSourceDTO;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	name?: string;
+};
+
+export type ListSavedViews200 = {
+	/**
+	 * @type array,null
+	 */
+	data: SavedviewtypesSavedViewDTO[] | null;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateSavedView201 = {
+	data: TypesIdentifiableDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteSavedViewPathParameters = {
+	id: string;
+};
+export type GetSavedViewPathParameters = {
+	id: string;
+};
+export type GetSavedView200 = {
+	data: SavedviewtypesSavedViewDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateSavedViewPathParameters = {
+	id: string;
+};
 export type GetSessionContext200 = {
 	data: AuthtypesSessionContextDTO;
 	/**
