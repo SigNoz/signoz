@@ -300,6 +300,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 																: ''
 														}`}
 														onClick={(): void => handleCategorySelect(category.key)}
+														aria-pressed={selectedCategory === category.key}
 														data-testid={`category-${category.key}`}
 													>
 														{category.icon}

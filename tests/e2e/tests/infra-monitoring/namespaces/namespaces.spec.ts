@@ -4,6 +4,7 @@
  */
 
 import { expect, test } from '../../../fixtures/auth';
+import { expectedRecord } from '../../../helpers/infra-monitoring/datasets';
 import {
 	expectExpressionContains,
 	expectWidgetTitles,
@@ -39,8 +40,33 @@ test.describe('namespaces', () => {
 		await page.goto(listUrl(NAMESPACES, selectedItemParams(NAMESPACES)));
 		await expectDrawerVisible(page);
 
+		// The seeded counts, not just "a card rendered". The integration suite's own
+		// `namespaces_value_accuracy_expected.json` is the source, which is what §6
+		// means by reusing it "instead of inventing numbers" — and it records a zero
+		// (`statefulSets`), so the plan's "a zero count renders TextNoData" branch is
+		// covered too.
+		const counts = expectedRecord(
+			'namespaces_value_accuracy',
+			'namespaceName',
+			NAMESPACES.seed.sampleName,
+		).counts as Record<string, number>;
+		const FIELD: Record<string, string> = {
+			Deployments: 'deployments',
+			StatefulSets: 'statefulSets',
+			DaemonSets: 'daemonSets',
+			Jobs: 'jobs',
+		};
+
 		for (const label of NAMESPACES.countsCards!) {
-			await expect(countCard(page, label), `${label} card`).toBeVisible();
+			const card = countCard(page, label);
+			await expect(card, `${label} card`).toBeVisible();
+			// A zero renders `TextNoData` (a dash), not the digit — which is the
+			// plan's own "a zero count renders TextNoData" clause, and `acc-ns-1`
+			// seeds exactly one (`statefulSets: 0`) so the branch is covered.
+			const expected = counts[FIELD[label]];
+			await expect(card, `${label} count`).toContainText(
+				expected === 0 ? '-' : String(expected),
+			);
 		}
 	});
 

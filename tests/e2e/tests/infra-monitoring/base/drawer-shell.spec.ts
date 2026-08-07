@@ -16,7 +16,6 @@ import {
 	expectMetadataLabels,
 	expectUrlParams,
 } from '../../../helpers/infra-monitoring/assertions';
-import type { DatasetKey } from '../../../helpers/infra-monitoring/datasets';
 import {
 	closeDrawer,
 	drawer,
@@ -48,7 +47,7 @@ import { seedDataset } from '../../../helpers/infra-monitoring/seed';
 /** Seed, open the entity's list, and click its sample row's drawer open. */
 async function openSampleDrawer(page: Page, entity: EntityDef): Promise<void> {
 	await resetTableState(page, entity);
-	const seeded = await seedDataset(page, entity.seed.primary as DatasetKey);
+	const seeded = await seedDataset(page, entity.seed.primary);
 	await gotoScopedList(page, entity, seeded.names);
 	await waitForRow(page, entity.seed.sampleItemKey);
 	await openRowDrawer(page, entity.seed.sampleItemKey);
@@ -61,7 +60,7 @@ async function gotoDrawerDeepLink(
 	overrides: Record<string, string> = {},
 ): Promise<void> {
 	await resetTableState(page, entity);
-	await seedDataset(page, entity.seed.primary as DatasetKey);
+	await seedDataset(page, entity.seed.primary);
 	await page.goto(
 		listUrl(entity, { ...selectedItemParams(entity), ...overrides }),
 	);
@@ -146,7 +145,7 @@ for (const entity of fanOut('representative')) {
 			authedPage: page,
 		}) => {
 			await resetTableState(page, entity);
-			await seedDataset(page, entity.seed.primary as DatasetKey);
+			await seedDataset(page, entity.seed.primary);
 			await page.goto(
 				listUrl(entity, {
 					...selectedItemParams(entity),

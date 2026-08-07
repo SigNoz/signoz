@@ -9,7 +9,6 @@ import type { Page, Route } from '@playwright/test';
 
 import { expect, test } from '../../../fixtures/auth';
 import { watchConsole } from '../../../helpers/common';
-import type { DatasetKey } from '../../../helpers/infra-monitoring/datasets';
 import {
 	closeDrawer,
 	drawer,
@@ -79,6 +78,12 @@ for (const entity of fanOut('representative')) {
 			await gotoStubbedList(page, entity);
 
 			await expect(page.getByTestId(EMPTY_STATE.error)).toBeVisible();
+			// NOTE: the plan says "error text rendered", and this only asserts the
+			// container. Asserting the stubbed string (`list exploded`) was tried and
+			// reverted — it does not reach the DOM, so either the component renders a
+			// generic message or the stub's error field is not the one it reads. Worth
+			// settling, because as written a component that swallowed the message and
+			// drew an empty error box still passes.
 			await page.unrouteAll();
 		});
 
@@ -103,7 +108,7 @@ for (const entity of fanOut('representative')) {
 			authedPage: page,
 		}) => {
 			await resetTableState(page, entity);
-			const seeded = await seedDataset(page, entity.seed.primary as DatasetKey);
+			const seeded = await seedDataset(page, entity.seed.primary);
 
 			// Pass the real rows through but graft a warning onto the payload.
 			await page.route(/\/api\/v\d+\/infra_monitoring\//, async (route) => {
@@ -136,6 +141,11 @@ for (const entity of fanOut('representative')) {
 			await waitForRows(page);
 
 			await expect(paginationWarning(page)).toBeVisible();
+			// …and its popover lists the warning. Asserting only that the trigger
+			// rendered leaves a component that shows an empty popover, or a hardcoded
+			// message, passing — and the warning text is the entire payload here.
+			await paginationWarning(page).click();
+			await expect(page.getByText('a shard was unavailable')).toBeVisible();
 			await page.unrouteAll();
 		});
 
@@ -143,12 +153,21 @@ for (const entity of fanOut('representative')) {
 			authedPage: page,
 		}) => {
 			await resetTableState(page, entity);
-			const seeded = await seedDataset(page, entity.seed.primary as DatasetKey);
+			const seeded = await seedDataset(page, entity.seed.primary);
 
 			// The callout self-hides unless `ready` is falsy *and* `hasAnyEntries` finds
 			// at least one present/missing entry, so the stub has to carry a real
 			// `InframonitoringtypesChecksDTO` entry rather than a plausible-looking flag.
+			// Two different bodies: the first call reports one missing metric, the
+			// refetch reports a second. A constant stub makes the plan's "and updates
+			// the callout" half unassertable — the callout *cannot* change.
+			let checksServed = 0;
 			await page.route(/\/api\/v\d+\/infra_monitoring\/checks/, async (route) => {
+				checksServed += 1;
+				const metrics =
+					checksServed === 1
+						? ['k8s.pod.cpu.usage']
+						: ['k8s.pod.cpu.usage', 'k8s.pod.memory.usage'];
 				await route.fulfill({
 					status: 200,
 					contentType: 'application/json',
@@ -158,10 +177,10 @@ for (const entity of fanOut('representative')) {
 							ready: false,
 							missingDefaultEnabledMetrics: [
 								{
-									associatedComponent: 'k8s-infra',
+									associatedComponent: { name: 'k8s-infra', type: 'receiver' },
 									documentationLink: 'https://signoz.io/docs',
 									message: 'metrics are not being collected',
-									metrics: ['k8s.pod.cpu.usage'],
+									metrics,
 								},
 							],
 							missingOptionalMetrics: null,
@@ -193,6 +212,10 @@ for (const entity of fanOut('representative')) {
 			await expect(async () => {
 				expect(checkRequests.length).toBeGreaterThan(before);
 			}).toPass();
+			// …and the callout re-rendered from the new response. The plan asks for
+			// this half explicitly, and it is the only part that proves the recheck
+			// feeds the UI rather than merely firing.
+			await expect(page.getByText('k8s.pod.memory.usage')).toBeVisible();
 			await page.unrouteAll();
 		});
 	});
@@ -210,8 +233,8 @@ test.describe('B-EMP console walk', () => {
 		const watch = watchConsole(page);
 
 		await resetTableState(page, entity);
-		const seeded = await seedDataset(page, entity.seed.grouped as DatasetKey);
-		const primary = await seedDataset(page, entity.seed.primary as DatasetKey);
+		const seeded = await seedDataset(page, entity.seed.grouped);
+		const primary = await seedDataset(page, entity.seed.primary);
 
 		await gotoScopedList(page, entity, [...seeded.names, ...primary.names]);
 		await waitForRows(page);
@@ -236,6 +259,10 @@ test.describe('B-EMP console walk', () => {
 		await closeDrawer(page);
 		await expect(drawer(page)).toHaveCount(0);
 
+		// Settle before sampling: `watch.errors` and `watch.failedResponses` are
+		// plain arrays that fill asynchronously, so reading them the instant the walk
+		// finishes misses anything still in flight.
+		await page.waitForLoadState('networkidle');
 		expect(watch.errors, 'console errors').toEqual([]);
 		expect(watch.failedResponses, 'unexpected 4xx/5xx').toEqual([]);
 	});

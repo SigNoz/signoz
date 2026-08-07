@@ -6,25 +6,26 @@
 import type { Page } from '@playwright/test';
 
 import { expect, test } from '../../../fixtures/auth';
-import type { DatasetKey } from '../../../helpers/infra-monitoring/datasets';
 import {
-	expectDrawerVisible,
-	emptyState,
-	errorState,
 	EXPLORER_LINK,
 	PAGINATION_PARAM,
-	paginationFromUrl,
 	SCOPE_CHIP,
+	TAB_USER_EXPRESSION_PARAM,
+	emptyState,
+	entityRunQueryButton,
+	errorState,
+	expectDrawerVisible,
+	paginationFromUrl,
 	runEntityQuery,
 	selectedItemParams,
 	switchDrawerTab,
-	TAB_USER_EXPRESSION_PARAM,
 } from '../../../helpers/infra-monitoring/drawer';
 import {
 	fanOut,
 	type EntityDef,
 } from '../../../helpers/infra-monitoring/entities';
 import {
+	allowForSeededWait,
 	listUrl,
 	resetTableState,
 } from '../../../helpers/infra-monitoring/list';
@@ -38,7 +39,7 @@ async function openTracesTab(
 	overrides: Record<string, string> = {},
 ): Promise<void> {
 	await resetTableState(page, entity);
-	await seedDataset(page, entity.seed.primary as DatasetKey);
+	await seedDataset(page, entity.seed.primary);
 	await page.goto(
 		listUrl(entity, {
 			...selectedItemParams(entity),
@@ -110,8 +111,11 @@ for (const entity of fanOut('representative', 'tracesTab')) {
 		test(`B-TRC-07 ${entity.key}: a list error renders the error state`, async ({
 			authedPage: page,
 		}) => {
+			// `expectDrawerVisible` alone may spend the whole default budget on a cold
+			// deep link (§11.1), and this scenario needs the error state on top of it.
+			allowForSeededWait();
 			await resetTableState(page, entity);
-			await seedDataset(page, entity.seed.primary as DatasetKey);
+			await seedDataset(page, entity.seed.primary);
 
 			await page.route(/\/api\/v\d+\/query_range/, async (route) => {
 				const body = route.request().postData() ?? '';
@@ -140,19 +144,22 @@ for (const entity of fanOut('representative', 'tracesTab')) {
 		}) => {
 			await openTracesTab(page, entity);
 
-			const requests: string[] = [];
-			page.on('request', (request) => {
-				if (/query_range/.test(request.url())) {
-					requests.push(request.url());
-				}
-			});
-			const before = requests.length;
+			// Wait for the tab *body* before arming anything. `openTracesTab` returns
+			// once the drawer shell is up, which is before the tab's own initial
+			// `query_range` fires — so that request satisfied `length > before` while
+			// the Run button was still mounting, and deleting the `runEntityQuery`
+			// call below left the test green.
+			await expect(page.locator(SCOPE_CHIP)).toBeVisible({ timeout: 30_000 });
+			await expect(entityRunQueryButton(page, 'traces')).toBeVisible();
 
+			// Tie the assertion to the click: wait for a request that starts *after*
+			// it, rather than counting ones that may predate it.
+			const refetch = page.waitForRequest(
+				(request) => /query_range/.test(request.url()),
+				{ timeout: 15_000 },
+			);
 			await runEntityQuery(page, 'traces');
-
-			await expect(async () => {
-				expect(requests.length).toBeGreaterThan(before);
-			}).toPass();
+			await refetch;
 			await expect(page.locator(SCOPE_CHIP)).toBeVisible();
 		});
 
@@ -174,6 +181,70 @@ for (const entity of fanOut('representative', 'tracesTab')) {
 			expect(new URL(page.url()).searchParams.get(TRACES_EXPRESSION_PARAM)).toBe(
 				"name = 'GET /health'",
 			);
+		});
+
+		test(`B-TRC-09 ${entity.key}: the trace columns render and a row opens the trace detail page`, async ({
+			authedPage: page,
+		}) => {
+			// Nothing seeds traces — `seed.ts` posts only `/telemetry/metrics` — so the
+			// row comes from a stub. Discriminate on the traces signal the way B-TRC-07
+			// does; a blanket stub would also answer the list page's own query_range.
+			await page.route(/\/api\/v\d+\/query_range/, async (route) => {
+				const body = route.request().postData() ?? '';
+				if (body.includes('"traces"')) {
+					await route.fulfill({
+						status: 200,
+						contentType: 'application/json',
+						body: JSON.stringify(stubbedTracesResponse()),
+					});
+					return;
+				}
+				await route.continue();
+			});
+
+			await openTracesTab(page, entity);
+
+			const cell = page.getByTestId('serviceName').first();
+			await expect(cell).toHaveText(STUB_TRACE.serviceName, { timeout: 30_000 });
+
+			// `getTraceListColumns` builds one column per `selectedEntityTracesColumns`
+			// entry; all six are `responsive: ['md']`, which the 1280px project viewport
+			// clears.
+			const headers = await page
+				.getByRole('columnheader')
+				.allInnerTexts()
+				.then((texts) => texts.map((text) => text.trim()));
+			expect(headers).toEqual(
+				expect.arrayContaining([
+					'Timestamp',
+					'Service Name',
+					'Name',
+					'Duration',
+					'HTTP Method',
+					'Status Code',
+				]),
+			);
+			await expect(page.getByTestId('name').first()).toHaveText(STUB_TRACE.name);
+			await expect(page.getByTestId('durationNano').first()).toHaveText('5.00ms');
+			await expect(page.getByTestId('httpMethod').first()).toHaveText(
+				STUB_TRACE.httpMethod,
+			);
+
+			// The navigation is the cell, not the row: every cell is wrapped in
+			// `BlockLink to={getTraceLink(...)} openInNewTab`, i.e. an `<a
+			// target="_blank">`. `onRow.onClick` only logs the analytics event, so the
+			// trace detail page arrives as a *new tab*, like B-TRC-06's compass.
+			const [opened] = await Promise.all([
+				page.context().waitForEvent('page'),
+				cell.click(),
+			]);
+			await opened.waitForLoadState('domcontentloaded');
+
+			const openedUrl = new URL(opened.url());
+			expect(openedUrl.pathname).toBe(`/trace/${STUB_TRACE.traceID}`);
+			expect(openedUrl.searchParams.get('spanId')).toBe(STUB_TRACE.spanID);
+			await opened.close();
+			await page.unrouteAll();
 		});
 
 		test(`B-TRC-08 ${entity.key}: pagination is per-visit — the tab clears it on the way out`, async ({
@@ -198,4 +269,38 @@ for (const entity of fanOut('representative', 'tracesTab')) {
 			expect(paginationFromUrl(page, 'traces')?.offset ?? 0).toBe(0);
 		});
 	});
+}
+
+const STUB_TRACE = {
+	serviceName: 'checkout-service',
+	name: 'GET /api/checkout',
+	durationNano: 5_000_000,
+	httpMethod: 'GET',
+	responseStatusCode: '200',
+	traceID: 'e2e-trace-id-0',
+	spanID: 'e2e-span-id-0',
+} as const;
+
+/**
+ * The raw v5 `query_range` shape — `data.data.results[].rows` — which
+ * `GetMetricQueryRange` folds into the `newResult…list` `useEntityTraces` reads.
+ * Not the `data.result[].list` shape the older stubs in this suite use; the
+ * traces tab is v5 (`ENTITY_VERSION_V5`) and ignores it.
+ */
+function stubbedTracesResponse(): unknown {
+	return {
+		data: {
+			type: 'raw',
+			data: {
+				results: [
+					{
+						queryName: 'A',
+						nextCursor: '',
+						rows: [{ timestamp: new Date().toISOString(), data: { ...STUB_TRACE } }],
+					},
+				],
+			},
+			meta: { bytesScanned: 0, durationMs: 10, rowsScanned: 1, stepIntervals: {} },
+		},
+	};
 }

@@ -19,13 +19,8 @@ import fs from 'fs';
 import type { Page } from '@playwright/test';
 
 import { seederUrl } from '../common';
-import {
-	datasetFacts,
-	datasetPath,
-	NAME_LABEL,
-	type DatasetKey,
-} from './datasets';
-import type { EntityDef } from './entities';
+import { datasetFacts, datasetPath, type DatasetKey } from './datasets';
+import { ENTITIES, entityByKey, type EntityDef } from './entities';
 
 const START_TIME_PLACEHOLDER = '__START_TIME__';
 
@@ -73,9 +68,22 @@ const LATEST_SAMPLE_LAG_MS = 30_000;
 const START_TIME_AGE_MS = 10 * 60 * 1000;
 
 function rebaseToNow(rows: MetricRow[]): MetricRow[] {
+	if (rows.length === 0) {
+		// `Math.max()` of nothing is -Infinity, which makes every rebased timestamp
+		// `new Date(NaN).toISOString()` — a RangeError from deep inside the map, with
+		// nothing pointing at the empty fixture that caused it.
+		throw new Error('rebaseToNow: no rows — the fixture is empty or unparsed');
+	}
 	const now = Date.now();
 	const startTime = new Date(now - START_TIME_AGE_MS).toISOString();
-	const latest = Math.max(...rows.map((row) => Date.parse(row.timestamp)));
+	const timestamps = rows.map((row) => Date.parse(row.timestamp));
+	const unparsed = timestamps.findIndex(Number.isNaN);
+	if (unparsed !== -1) {
+		throw new Error(
+			`rebaseToNow: row ${unparsed} has an unparseable timestamp \`${rows[unparsed].timestamp}\``,
+		);
+	}
+	const latest = Math.max(...timestamps);
 	const offset = now - LATEST_SAMPLE_LAG_MS - latest;
 
 	return rows.map((row) => {
@@ -93,16 +101,29 @@ function rebaseToNow(rows: MetricRow[]): MetricRow[] {
 
 // ─── Facts ───────────────────────────────────────────────────────────────────
 
+/**
+ * Every attribute any entity can group by, derived rather than hand-listed — the
+ * literal version silently omitted `host.name` (hosts' `secondGroupByAttribute`),
+ * so `SeededFacts.groups` had no entry for it and any scenario grouping on it got
+ * `undefined` back.
+ */
 const GROUP_ATTRS = [
-	'k8s.namespace.name',
-	'k8s.cluster.name',
-	'k8s.node.name',
-	'os.type',
+	...new Set(
+		ENTITIES.flatMap((entity) =>
+			[entity.groupByAttribute, entity.secondGroupByAttribute].filter(
+				(attr): attr is string => Boolean(attr),
+			),
+		),
+	),
 ];
 
 function factsFor(dataset: DatasetKey, rows: MetricRow[]): SeededFacts {
 	const { entity } = datasetFacts(dataset);
-	const nameLabel = NAME_LABEL[entity];
+	// The registry's `nameColumnId` doubles as the name *label* for all ten
+	// entities, and the drift guard checks it against the product's table config.
+	// `datasets.NAME_LABEL` used to hold a third hand-maintained copy of the same
+	// mapping, which #12402 renamed all ten values of in one commit.
+	const nameLabel = entityByKey(entity).nameColumnId;
 
 	const names = new Set<string>();
 	const groups: Record<string, Record<string, Set<string>>> = {};
@@ -172,21 +193,36 @@ export function assertDatasetFacts(dataset: DatasetKey): SeededFacts {
 
 // ─── Seeder transport ────────────────────────────────────────────────────────
 
-const SEED_TIMEOUT_MS = 60_000;
 /**
- * The seeder rejects very large single POSTs, and a 150 k-row fixture rebased in
- * one payload is slow to serialise. Chunking keeps both bounded.
+ * Per-attempt budget, sized so all {@link SEED_ATTEMPTS} fit inside one test.
+ *
+ * Was 60 s, which with three attempts meant a worst case of 180 s against a 30 s
+ * (local) / 60 s (CI) test timeout — so a genuinely dead seeder reported as a
+ * bare "Test timeout exceeded" with no failing assertion, which is the least
+ * debuggable failure the runner can emit.
+ */
+const SEED_TIMEOUT_MS = 15_000;
+
+/**
+ * The seeder rejects very large single POSTs, so chunking keeps each one bounded.
+ * The largest fixture in the corpus is ~430 rows, i.e. always a single chunk —
+ * this is headroom for a future fixture, not something the suite exercises today.
  */
 const SEED_CHUNK_SIZE = 2_000;
 
 /**
  * Six workers hammering one uvicorn worker occasionally drops a connection
  * mid-POST ("socket hang up") — a transport failure, not a rejected payload.
- * Insertion is additive and idempotent enough to retry: a duplicated chunk adds
- * rows the assertions already tolerate (no spec counts absolute rows), whereas a
- * lost chunk fails the scenario for a reason that has nothing to do with it.
+ * Insertion is additive and idempotent enough to retry that: a duplicated chunk
+ * adds rows the assertions already tolerate (no spec counts absolute rows),
+ * whereas a lost chunk fails the scenario for a reason that has nothing to do
+ * with it.
  */
 const SEED_ATTEMPTS = 3;
+
+/** Backoff between attempts. Three retries in the same millisecond against a
+ *  seeder that just dropped a connection under load all fail the same way. */
+const SEED_BACKOFF_MS = 250;
 
 async function postChunk(page: Page, chunk: MetricRow[]): Promise<void> {
 	let lastError = '';
@@ -199,9 +235,30 @@ async function postChunk(page: Page, chunk: MetricRow[]): Promise<void> {
 			if (res.ok()) {
 				return;
 			}
-			lastError = `${res.status()}: ${await res.text()}`;
+			const body = await res.text();
+			// Only 5xx and transport faults are worth another try. A 4xx is the
+			// seeder telling us the payload is wrong — retrying it twice more burns
+			// the test's budget to arrive at the same answer, and buries the message
+			// that would have explained it.
+			if (res.status() < 500) {
+				throw new Error(
+					`seeder POST /telemetry/metrics rejected the payload — ${res.status()}: ${body}`,
+				);
+			}
+			lastError = `${res.status()}: ${body}`;
 		} catch (error) {
+			if (
+				error instanceof Error &&
+				error.message.includes('rejected the payload')
+			) {
+				throw error;
+			}
 			lastError = String(error);
+		}
+		if (attempt < SEED_ATTEMPTS) {
+			await new Promise((resolve) => {
+				setTimeout(resolve, SEED_BACKOFF_MS * attempt);
+			});
 		}
 	}
 	throw new Error(
@@ -247,6 +304,15 @@ export interface SeedGroupedOptions {
 	namePrefix?: string;
 	/** Group label the clones land under. Defaults to `viewall-<entity.key>`. */
 	groupLabel?: string;
+	/**
+	 * Attribute the clones are grouped under. Defaults to `entity.groupByAttribute`.
+	 *
+	 * Needed for clusters, whose group attribute *is* its name attribute — grouping
+	 * clusters by cluster name makes every group a singleton, so a >10-member group
+	 * is not constructible that way. `clusters_groupby.jsonl` also carries
+	 * `cloud.provider`, which is the usable alternative.
+	 */
+	groupAttribute?: string;
 }
 
 /**
@@ -264,12 +330,27 @@ export async function seedGroupedDataset(
 	entity: EntityDef,
 	options: SeedGroupedOptions = {},
 ): Promise<SeededFacts> {
-	const dataset = entity.seed.grouped as DatasetKey;
-	const members = options.members ?? EXPANDED_ROW_LIMIT + 2;
-	const namePrefix = options.namePrefix ?? `viewall-${entity.key}-`;
-	const groupLabel = options.groupLabel ?? `viewall-${entity.key}`;
-	const groupAttr = entity.groupByAttribute;
-	const nameLabel = NAME_LABEL[entity.key];
+	const dataset = entity.seed.grouped;
+	const { members, namePrefix, groupLabel } = resolveGroupedOptions(
+		entity,
+		options,
+	);
+	const groupAttr = options.groupAttribute ?? entity.groupByAttribute;
+	const nameLabel = entity.nameColumnId;
+
+	// For clusters the name label *is* the group attribute, so the two label writes
+	// below collide: every clone would be renamed to `groupLabel` and the twelve
+	// members would collapse into one row, while `groupedCloneNames` still promised
+	// twelve. That is a real property of the entity, not a fixture gap — grouping
+	// clusters by cluster name makes every group a singleton. Fail loudly rather
+	// than seeding one row and letting the caller time out on "row not visible".
+	if (nameLabel === groupAttr) {
+		throw new Error(
+			`${entity.key}: groupByAttribute '${groupAttr}' is also its name attribute, so ` +
+				`every group holds exactly one member and grouped clones cannot be distinct. ` +
+				`Pass { groupAttribute } explicitly — '${dataset}' carries cloud.provider.`,
+		);
+	}
 
 	const all = readRows(dataset);
 	// Clone one entity's whole series so the clones carry every metric the list
@@ -302,15 +383,48 @@ export async function seedGroupedDataset(
 	return factsFor(dataset, rows);
 }
 
+/**
+ * The one place the grouped-clone defaults live.
+ *
+ * {@link seedGroupedDataset} and {@link groupedCloneNames} each used to re-derive
+ * these, so changing a default in one made specs address names that were never
+ * seeded — and the failure would have been a 30 s "row not visible".
+ */
+function resolveGroupedOptions(
+	entity: EntityDef,
+	options: SeedGroupedOptions,
+): { members: number; namePrefix: string; groupLabel: string } {
+	return {
+		members: options.members ?? EXPANDED_ROW_LIMIT + 2,
+		namePrefix: options.namePrefix ?? `viewall-${entity.key}-`,
+		groupLabel: options.groupLabel ?? `viewall-${entity.key}`,
+	};
+}
+
+/**
+ * The row key / `selectedItem` value for a seeded entity called `name`.
+ *
+ * The two differ only for pods, which `getK8sPodRowKey` identifies by UID — and
+ * {@link seedGroupedDataset} mints clone UIDs as `<name>-uid`, the same shape the
+ * `*_value_accuracy` fixtures use (`acc-p1` → `acc-p1-uid`). Addressing a pod row
+ * by its *name* builds `row-acc-p1`, which matches nothing whether the behaviour
+ * under test works or not — a silent pass, not a failure.
+ */
+export function itemKeyFor(entity: EntityDef, name: string): string {
+	return entity.key === 'pods' ? `${name}-uid` : name;
+}
+
 /** Names {@link seedGroupedDataset} produces, without seeding. */
 export function groupedCloneNames(
 	entity: EntityDef,
 	options: SeedGroupedOptions = {},
 ): { groupLabel: string; names: string[] } {
-	const members = options.members ?? EXPANDED_ROW_LIMIT + 2;
-	const namePrefix = options.namePrefix ?? `viewall-${entity.key}-`;
+	const { members, namePrefix, groupLabel } = resolveGroupedOptions(
+		entity,
+		options,
+	);
 	return {
-		groupLabel: options.groupLabel ?? `viewall-${entity.key}`,
+		groupLabel,
 		names: Array.from({ length: members }, (_, i) => `${namePrefix}${i + 1}`),
 	};
 }

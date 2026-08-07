@@ -12,22 +12,23 @@ import type { Page } from '@playwright/test';
 
 import { expect, test } from '../../../fixtures/auth';
 import { expectDefaultColumns } from '../../../helpers/infra-monitoring/assertions';
-import type { DatasetKey } from '../../../helpers/infra-monitoring/datasets';
 import {
 	entityByKey,
 	fanOut,
 	hiddenByDefaultColumns,
 	optionsPanelColumns,
 	WIDE_TAG,
+	type EntityColumn,
 	type EntityDef,
 } from '../../../helpers/infra-monitoring/entities';
 import {
+	LINE_CLAMP,
 	columnStorageKey,
 	columnToggle,
+	dataRows,
 	fontSizeOption,
 	gotoList,
 	headerCell,
-	LINE_CLAMP,
 	openOptionsPanel,
 	readColumnState,
 	readTablePreferences,
@@ -42,9 +43,26 @@ import { seedDataset } from '../../../helpers/infra-monitoring/seed';
 
 async function openSeededList(page: Page, entity: EntityDef): Promise<void> {
 	await resetTableState(page, entity);
-	await seedDataset(page, entity.seed.primary as DatasetKey);
+	await seedDataset(page, entity.seed.primary);
 	await gotoList(page, entity);
 	await waitForRows(page);
+}
+
+/**
+ * The first column a user could actually hide.
+ *
+ * Named rather than positional. `pods.columns[2].id` silently retargeted these
+ * scenarios at a different column the moment anyone inserted one into the
+ * registry, and read as an arbitrary constant.
+ */
+function firstToggleableColumn(entity: EntityDef): EntityColumn {
+	const column = optionsPanelColumns(entity).find(
+		(candidate) => !candidate.required && !candidate.hiddenByDefault,
+	);
+	if (!column) {
+		throw new Error(`${entity.key} has no hideable default-visible column`);
+	}
+	return column;
 }
 
 // ─── all-level: expected values come from the registry's column matrix ────────
@@ -177,8 +195,13 @@ for (const entity of fanOut('representative')) {
 							node.getAttribute('data-testid')?.replace('toggle-column-', '') ?? '',
 					),
 				);
-			const expected = [...ids].reverse().filter((id) => rendered.includes(id));
-			expect(rendered).toEqual(expected);
+			// Completeness first: filtering the expectation by the observation (which
+			// `.filter((id) => rendered.includes(id))` does on its own) means a panel
+			// that silently *drops* columns still matches.
+			expect(rendered.length, 'the panel lists every toggleable column').toBe(
+				ids.length,
+			);
+			expect(rendered).toEqual([...ids].reverse());
 		});
 
 		test(`B-OPT-09 ${entity.key}: clearing the column key restores the registry defaults`, async ({
@@ -226,7 +249,7 @@ test.describe('B-OPT global preferences', () => {
 		}).toPass();
 
 		// The key is global, not per entity — assert the leak deliberately.
-		await seedDataset(page, nodes.seed.primary as DatasetKey);
+		await seedDataset(page, nodes.seed.primary);
 		await gotoList(page, nodes);
 		await waitForRows(page);
 		await openOptionsPanel(page);
@@ -264,14 +287,32 @@ test.describe('B-OPT global preferences', () => {
 		await expect(increase).toBeDisabled();
 
 		// A typed out-of-range value clamps rather than being accepted.
+		//
+		// `toBe(10)`, not `toBeLessThanOrEqual(10)`. The stored value is *already* 10
+		// from the fill above, and `setLineClamp` silently ignores out-of-range input
+		// — so the loose bound passed even if `fill('42')` had done nothing at all,
+		// which is precisely the regression it is supposed to catch.
 		await input.fill('42');
 		await expect(async () => {
-			expect((await readTablePreferences(page)).lineClamp).toBeLessThanOrEqual(10);
+			expect((await readTablePreferences(page)).lineClamp).toBe(10);
 		}).toPass();
+		// The controlled input snaps back too, which is what a user sees.
+		await expect(input).toHaveValue('10');
 
 		await page.reload();
 		await waitForRows(page);
-		expect((await readTablePreferences(page)).lineClamp).toBeLessThanOrEqual(10);
+		expect((await readTablePreferences(page)).lineClamp).toBe(10);
+
+		// The plan's remaining half: the *rendered* rows pick the clamp up. Store
+		// state alone says nothing about whether the table ever consumed it.
+		await expect(async () => {
+			const clamp = await dataRows(page)
+				.first()
+				.locator('td')
+				.first()
+				.evaluate((cell) => getComputedStyle(cell).webkitLineClamp);
+			expect(clamp).toBe('10');
+		}).toPass();
 	});
 
 	test('B-OPT-11 a partial persisted column state does not take the route down', async ({
@@ -286,7 +327,7 @@ test.describe('B-OPT global preferences', () => {
 		await writeRawColumnState(
 			page,
 			columnStorageKey(pods),
-			JSON.stringify({ hiddenColumnIds: [pods.columns[2].id] }),
+			JSON.stringify({ hiddenColumnIds: [firstToggleableColumn(pods).id] }),
 		);
 		await page.reload();
 
@@ -301,7 +342,10 @@ test.describe('B-OPT global preferences', () => {
 		await openSeededList(page, pods);
 
 		await writeColumnState(page, columnStorageKey(pods), {
-			hiddenColumnIds: ['this-column-does-not-exist', pods.columns[2].id],
+			hiddenColumnIds: [
+				'this-column-does-not-exist',
+				firstToggleableColumn(pods).id,
+			],
 		});
 		await page.reload();
 		await waitForRows(page);
@@ -312,7 +356,9 @@ test.describe('B-OPT global preferences', () => {
 				'this-column-does-not-exist',
 			);
 			// A real id is kept — pruning is targeted, not a reset.
-			expect(stored.hiddenColumnIds ?? []).toContain(pods.columns[2].id);
+			expect(stored.hiddenColumnIds ?? []).toContain(
+				firstToggleableColumn(pods).id,
+			);
 		}).toPass();
 	});
 });
