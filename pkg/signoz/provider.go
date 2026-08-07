@@ -235,6 +235,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewFillDashboardSpecCollectionsFactory(sqlstore, dashboardStore),
 		sqlmigration.NewScrubEmailChannelTransportFactory(sqlstore),
 		sqlmigration.NewAddDashboardTuplesFactory(sqlstore),
+		sqlmigration.NewAddUserTuplesFactory(sqlstore),
 	)
 }
 
@@ -307,6 +308,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			authz,
 			implorganization.NewHandler(modules.OrgGetter, modules.OrgSetter),
 			impluser.NewHandler(modules.UserSetter, modules.UserGetter),
+			modules.UserGetter,
 			implsession.NewHandler(modules.Session, globalConfig),
 			implauthdomain.NewHandler(modules.AuthDomain),
 			implpreference.NewHandler(modules.Preference),
