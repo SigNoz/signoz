@@ -33,11 +33,10 @@ import pytest
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.querier import (
-    BuilderQuery,
-    OrderBy,
     RequestType,
-    TelemetryFieldKey,
     build_builder_query,
+    build_order_by,
+    build_raw_query,
     get_all_series,
     get_column_data_from_response,
     make_query_request,
@@ -78,17 +77,6 @@ SIGNALS = [
 ]
 
 
-def _raw_query(signal: str, identity_field: str, expression: str) -> dict:
-    return BuilderQuery(
-        signal=signal,
-        name="A",
-        limit=100,
-        filter_expression=expression,
-        select_fields=[TelemetryFieldKey(identity_field)],
-        order=[OrderBy(TelemetryFieldKey("timestamp"), "asc")],
-    ).to_dict()
-
-
 @pytest.mark.parametrize("expression_template,expected", STRING_MATRIX)
 @pytest.mark.parametrize("context", ["resource", "attribute"])
 @pytest.mark.parametrize("signal,identity_field,identity_column", SIGNALS)
@@ -116,7 +104,16 @@ def test_negative_operators_include_keyless_rows(
         start_ms=int((keyless_rows - timedelta(minutes=2)).timestamp() * 1000),
         end_ms=int((keyless_rows + timedelta(minutes=1)).timestamp() * 1000),
         request_type=RequestType.RAW,
-        queries=[_raw_query(signal, identity_field, expression)],
+        queries=[
+            build_raw_query(
+                "A",
+                signal,
+                limit=100,
+                filter_expression=expression,
+                order=[build_order_by("timestamp", "asc")],
+                select_fields=[{"name": identity_field}],
+            )
+        ],
     )
     assert response.status_code == HTTPStatus.OK, response.text
 
@@ -155,7 +152,16 @@ def test_numeric_sentinel_semantics(
         start_ms=int((keyless_rows - timedelta(minutes=2)).timestamp() * 1000),
         end_ms=int((keyless_rows + timedelta(minutes=1)).timestamp() * 1000),
         request_type=RequestType.RAW,
-        queries=[_raw_query(signal, identity_field, expression)],
+        queries=[
+            build_raw_query(
+                "A",
+                signal,
+                limit=100,
+                filter_expression=expression,
+                order=[build_order_by("timestamp", "asc")],
+                select_fields=[{"name": identity_field}],
+            )
+        ],
     )
     assert response.status_code == HTTPStatus.OK, response.text
 
