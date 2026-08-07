@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/json"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -19,11 +20,12 @@ import (
 type restructureSavedViewSpec struct {
 	store     sqlstore.SQLStore
 	sqlschema sqlschema.SQLSchema
+	settings  factory.ProviderSettings
 }
 
 func NewRestructureSavedViewSpecFactory(store sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(factory.MustNewName("restructure_saved_view_spec"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
-		return &restructureSavedViewSpec{store: store, sqlschema: sqlschema}, nil
+		return &restructureSavedViewSpec{store: store, sqlschema: sqlschema, settings: ps}, nil
 	})
 }
 
@@ -201,13 +203,17 @@ func (migration *restructureSavedViewSpec) Up(ctx context.Context, db *bun.DB) e
 
 	// convert old saved views to the new shape
 	newSavedViews := make([]*storableSavedView, 0, len(oldSavedViews))
+	var skipped, failed int
 	for _, old := range oldSavedViews {
 		if old.OrgID == "" {
+			skipped++
 			continue // orphaned row from a pre-existing org_id backfill gap; nothing sane to attach it to
 		}
 
 		var compositeQuery legacySavedViewCompositeQuery
 		if err := json.Unmarshal([]byte(old.Data), &compositeQuery); err != nil {
+			failed++
+			migration.settings.Logger.WarnContext(ctx, "failed to unmarshal saved view data, skipping", slog.String("org_id", old.OrgID), slog.String("saved_view_id", old.ID), slog.Any("error", err))
 			continue // skip the row on error rather than fail the whole migration
 		}
 
@@ -259,6 +265,8 @@ func (migration *restructureSavedViewSpec) Up(ctx context.Context, db *bun.DB) e
 			return err
 		}
 	}
+
+	migration.settings.Logger.InfoContext(ctx, "restructured saved views", slog.Int("total", len(oldSavedViews)), slog.Int("migrated", len(newSavedViews)), slog.Int("skipped", skipped), slog.Int("failed", failed))
 
 	// add unique index on (org_id, name)
 	for _, sql := range migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{
