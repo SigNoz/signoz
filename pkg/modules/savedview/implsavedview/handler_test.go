@@ -41,6 +41,7 @@ func TestNewPostableSavedViewFromLegacyView(t *testing.T) {
 		postable := newPostableSavedViewFromLegacyView(legacy)
 
 		assert.Empty(t, postable.Name, "v1 has no slug concept -- name must always be generated")
+		assert.True(t, postable.GenerateName, "v1 has no slug concept -- name must always be generated")
 		assert.Equal(t, "my view", postable.Data.Spec.DisplayName)
 		assert.Equal(t, savedviewtypes.SourceLogs, postable.Source)
 		assert.Equal(t, savedviewtypes.SavedViewSchemaVersion, postable.Data.SchemaVersion)
@@ -186,6 +187,7 @@ func TestLegacyViewRoundTrip(t *testing.T) {
 	roundTripped := newPostableSavedViewFromLegacyView(legacy)
 
 	assert.Empty(t, roundTripped.Name)
+	assert.True(t, roundTripped.GenerateName)
 	assert.Equal(t, original.Data.Spec.DisplayName, roundTripped.Data.Spec.DisplayName)
 	assert.Equal(t, original.Source, roundTripped.Source)
 	assert.Equal(t, original.Data.Spec.PanelType, roundTripped.Data.Spec.PanelType)

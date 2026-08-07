@@ -44,7 +44,8 @@ func newPostableSavedViewFromLegacyView(v *v3.SavedView) savedviewtypes.Postable
 	}
 
 	return savedviewtypes.PostableSavedView{
-		Source: savedviewtypes.Source{String: valuer.NewString(v.SourcePage)},
+		GenerateName: true,
+		Source:       savedviewtypes.Source{String: valuer.NewString(v.SourcePage)},
 		Data: savedviewtypes.SavedViewData{
 			SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
 			Spec: savedviewtypes.SavedViewSpec{

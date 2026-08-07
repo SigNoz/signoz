@@ -48,9 +48,10 @@ func (v *SavedView) Update(updatable UpdatableSavedView, updatedBy string) {
 }
 
 type PostableSavedView struct {
-	Name   string        `json:"name"` // auto generated slug
-	Source Source        `json:"source" required:"true"`
-	Data   SavedViewData `json:"data" required:"true"`
+	Name         string        `json:"name"`
+	GenerateName bool          `json:"generateName"`
+	Source       Source        `json:"source" required:"true"`
+	Data         SavedViewData `json:"data" required:"true"`
 }
 
 type UpdatableSavedView struct {
@@ -89,7 +90,7 @@ func (postable PostableSavedView) ToSavedView(orgID string, createdBy string) *S
 	now := time.Now()
 
 	name := postable.Name
-	if name == "" {
+	if postable.GenerateName {
 		name = generateSavedViewName(postable.Data.Spec.DisplayName)
 	}
 
@@ -105,16 +106,24 @@ func (postable PostableSavedView) ToSavedView(orgID string, createdBy string) *S
 }
 
 func (p *PostableSavedView) Validate() error {
-	if p.Name != "" {
-		if err := validateSavedViewName(p.Name); err != nil {
-			return err
-		}
+	if err := p.validateName(); err != nil {
+		return err
 	}
 	if err := p.Source.Validate(); err != nil {
 		return err
 	}
 
 	return p.Data.Validate()
+}
+
+func (p *PostableSavedView) validateName() error {
+	if !p.GenerateName {
+		return validateSavedViewName(p.Name)
+	}
+	if p.Name != "" {
+		return errors.NewInvalidInputf(ErrCodeSavedViewInvalidInput, "name must be empty when generateName is true, got %q", p.Name)
+	}
+	return nil
 }
 
 func (u *UpdatableSavedView) Validate() error {

@@ -47,10 +47,12 @@ def _data(
     }
 
 
-def _create_body(*, name: str = "my-view", display_name: str = "My View", source: str = "logs", **data_kwargs) -> dict:
-    """name is the immutable slug -- pass name="" to have the server generate
-    one from display_name instead."""
-    return {"name": name, "source": source, "data": _data(display_name=display_name, **data_kwargs)}
+def _create_body(
+    *, name: str = "my-view", generate_name: bool = False, display_name: str = "My View", source: str = "logs", **data_kwargs
+) -> dict:
+    """name is the immutable slug. Pass generate_name=True (and leave name
+    empty) to have the server generate one from display_name instead."""
+    return {"name": name, "generateName": generate_name, "source": source, "data": _data(display_name=display_name, **data_kwargs)}
 
 
 def _update_body(*, display_name: str = "My View", source: str = "logs", **data_kwargs) -> dict:
@@ -185,6 +187,48 @@ def test_create_rejects_invalid_name(
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
     assert response.json()["error"]["code"] == "saved_view_invalid_input"
+
+
+def test_create_rejects_empty_name_without_generate_name(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    """Guards against a round-trip bug: an empty name must never silently
+    generate one -- generateName has to be explicitly set."""
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    body = _create_body(name="")
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json=body,
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json()["error"]["code"] == "saved_view_invalid_input"
+    assert "name is required" in response.json()["error"]["message"]
+
+
+def test_create_rejects_name_when_generate_name_is_true(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    body = _create_body(name="explicit-name", generate_name=True)
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json=body,
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json()["error"]["code"] == "saved_view_invalid_input"
+    assert "name must be empty when generateName is true" in response.json()["error"]["message"]
 
 
 def test_create_rejects_unknown_field(
@@ -433,11 +477,11 @@ def test_empty_name_derives_a_slug_from_display_name(
 
     response = requests.post(
         signoz.self.host_configs["8080"].get(BASE_URL),
-        json=_create_body(name="", display_name="My Generated View!"),
+        json=_create_body(name="", generate_name=True, display_name="My Generated View!"),
         headers=headers,
         timeout=5,
     )
-    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.status_code == HTTPStatus.CREATED, response.text
     view_id = response.json()["data"]["id"]
 
     try:

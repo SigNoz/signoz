@@ -79,10 +79,23 @@ func TestPostableSavedViewValidate(t *testing.T) {
 		assert.Error(t, view.Validate())
 	})
 
-	t.Run("empty name is allowed -- generated at NewSavedView time", func(t *testing.T) {
+	t.Run("empty name without generateName is rejected", func(t *testing.T) {
 		view := validPostableSavedView()
 		view.Name = ""
+		assert.ErrorContains(t, view.Validate(), "name is required")
+	})
+
+	t.Run("generateName true with empty name is allowed -- generated at ToSavedView time", func(t *testing.T) {
+		view := validPostableSavedView()
+		view.Name = ""
+		view.GenerateName = true
 		assert.NoError(t, view.Validate())
+	})
+
+	t.Run("generateName true with a non-empty name is rejected", func(t *testing.T) {
+		view := validPostableSavedView()
+		view.GenerateName = true
+		assert.ErrorContains(t, view.Validate(), "name must be empty when generateName is true")
 	})
 
 	t.Run("empty displayName is rejected", func(t *testing.T) {
@@ -149,6 +162,7 @@ func TestNewSavedView_GeneratesNameWhenEmpty(t *testing.T) {
 	orgID := valuer.GenerateUUID().StringValue()
 	view := validPostableSavedView()
 	view.Name = ""
+	view.GenerateName = true
 	view.Data.Spec.DisplayName = "My View!"
 
 	savedView := view.ToSavedView(orgID, "creator@signoz.io")
