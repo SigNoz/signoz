@@ -16,6 +16,7 @@
     "lint:generated": "oxlint ./src/api/generated --fix",
     "lint:fix": "oxlint ./src --fix",
     "lint:styles": "stylelint \"src/**/*.scss\"",
+    "test:plugins": "node --test \"plugins/__tests__/*.test.mjs\"",
     "jest": "jest",
     "jest:coverage": "jest --coverage",
     "jest:watch": "jest --watch",
