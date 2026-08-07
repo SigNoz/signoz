@@ -181,6 +181,17 @@ In the linked benchmark, SigNoz indexed all keys in the test setup, while Loki h
 
 We ❤️ contributions big or small. Please read [CONTRIBUTING.md](CONTRIBUTING.md) to get started with making contributions to SigNoz.
 
+**Get the code:** [Fork the repository](https://github.com/SigNoz/signoz/fork), clone your fork, and add the upstream remote:
+
+```bash
+git clone https://github.com/<your-username>/signoz.git
+cd signoz
+git remote add upstream https://github.com/SigNoz/signoz.git
+git fetch upstream
+```
+
+For local setup, follow the [development guide](docs/contributing/development.md).
+
 Not sure how to get started? **Just ping us on `#contributing` in our [slack community](https://signoz.io/slack).**
 
 As always, thanks to our amazing contributors!
