@@ -2,6 +2,7 @@ import {
 	getResourceAttributesTagKeys,
 	getResourceAttributesTagValues,
 } from 'api/metrics/getResourceAttributes';
+import { FieldKeyResponse } from 'types/api/dynamicVariables/getFieldKeys';
 import {
 	CompositeQueryOperatorsConfig,
 	OperatorConversions,
@@ -153,6 +154,45 @@ export const getResourceDeploymentKeys = (
 	return 'resource_deployment_environment';
 };
 
+const ENVIRONMENT_TRACE_KEYS = new Set([
+	'deployment.environment',
+	'deployment_environment',
+	'env',
+	'environment',
+]);
+
+export const isEnvironmentMetricResourceKey = (
+	tagKey: string,
+	knownEnvMetricKeys: string[] = [],
+): boolean => {
+	if (knownEnvMetricKeys.includes(tagKey)) {
+		return true;
+	}
+	return ENVIRONMENT_TRACE_KEYS.has(convertMetricKeyToTrace(tagKey));
+};
+
+export const extractTracesResourceFieldKeyNames = (
+	fieldKeysResponse: FieldKeyResponse | undefined,
+): Set<string> => {
+	const names = new Set<string>();
+	if (!fieldKeysResponse?.keys) {
+		return names;
+	}
+	Object.keys(fieldKeysResponse.keys).forEach((name) => names.add(name));
+	return names;
+};
+
+export const filterSelectedTagsForTracesServices = (
+	selectedTags: Tags[],
+	tracesResourceKeys: Set<string>,
+): Tags[] =>
+	selectedTags.filter((tag) => {
+		if (tag.TagType !== 'ResourceAttribute') {
+			return true;
+		}
+		return tracesResourceKeys.has(tag.Key);
+	});
+
 export const GetTagKeys = async (
 	dotMetricsEnabled: boolean,
 ): Promise<IOption[]> => {
@@ -196,9 +236,11 @@ export const getEnvironmentTagKeys = async (
 
 export const getEnvironmentTagValues = async (
 	dotMetricsEnabled: boolean,
+	resourceKey?: string,
 ): Promise<IOption[]> => {
+	const tagKey = resourceKey ?? getResourceDeploymentKeys(dotMetricsEnabled);
 	const { payload } = await getResourceAttributesTagValues({
-		tagKey: getResourceDeploymentKeys(dotMetricsEnabled),
+		tagKey,
 		metricName: 'signoz_calls_total',
 	});
 

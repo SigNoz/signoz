@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useMemo, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Link, useParams } from 'react-router-dom';
@@ -9,11 +9,9 @@ import ROUTES from 'constants/routes';
 import { IServiceName } from 'container/MetricsApplication/Tabs/types';
 import useErrorNotification from 'hooks/useErrorNotification';
 import { useQueryService } from 'hooks/useQueryService';
-import useResourceAttribute from 'hooks/useResourceAttribute';
-import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
+import { useServicesListSelectedTags } from 'hooks/useServicesListSelectedTags';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { Tags } from 'types/reducer/trace';
 
 import './ServiceTopLevelOperations.styles.scss';
 
@@ -24,11 +22,7 @@ export default function ServiceTopLevelOperations(): JSX.Element {
 		GlobalReducer
 	>((state) => state.globalTime);
 	const servicename = decodeURIComponent(encodedServiceName);
-	const { queries } = useResourceAttribute();
-	const selectedTags = useMemo(
-		() => (convertRawQueriesToTraceSelectedTags(queries) as Tags[]) || [],
-		[queries],
-	);
+	const { selectedTags, isReady } = useServicesListSelectedTags();
 
 	const [topLevelOperations, setTopLevelOperations] = useState<string[]>([]);
 
@@ -37,6 +31,9 @@ export default function ServiceTopLevelOperations(): JSX.Element {
 		maxTime,
 		selectedTime,
 		selectedTags,
+		options: {
+			enabled: isReady,
+		},
 	});
 
 	useErrorNotification(error);
