@@ -119,11 +119,7 @@ def test_negative_operators_include_keyless_rows(
 
     # Sets keep the assertion stable when the shared stack is reused and
     # older rows with the same identities remain.
-    matched = {
-        name
-        for name in get_column_data_from_response(response.json(), identity_column)
-        if name.startswith(PREFIX)
-    }
+    matched = {name for name in get_column_data_from_response(response.json(), identity_column) if name.startswith(PREFIX)}
     assert matched == expected, expression
 
 
@@ -165,11 +161,7 @@ def test_numeric_sentinel_semantics(
     )
     assert response.status_code == HTTPStatus.OK, response.text
 
-    matched = {
-        name
-        for name in get_column_data_from_response(response.json(), identity_column)
-        if name.startswith(PREFIX)
-    }
+    matched = {name for name in get_column_data_from_response(response.json(), identity_column) if name.startswith(PREFIX)}
     assert matched == expected, expression
 
 
@@ -206,10 +198,5 @@ def test_metrics_negative_operators_include_keyless_series(
     )
     assert response.status_code == HTTPStatus.OK, response.text
 
-    matched = {
-        label["value"]
-        for series in get_all_series(response.json(), "A")
-        for label in series["labels"]
-        if label["key"]["name"] == "service" and label["value"].startswith(PREFIX)
-    }
+    matched = {label["value"] for series in get_all_series(response.json(), "A") for label in series["labels"] if label["key"]["name"] == "service" and label["value"].startswith(PREFIX)}
     assert matched == expected, expression
