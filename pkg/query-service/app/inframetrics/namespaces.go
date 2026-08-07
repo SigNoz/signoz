@@ -18,11 +18,11 @@ import (
 )
 
 var (
-	metricToUseForNamespaces = MetricKey("k8s_pod_cpu_usage")
+	metricToUseForNamespaces = "k8s.pod.cpu.usage"
 
 	namespaceAttrsToEnrich = []string{
-		MetricKey("k8s_namespace_name"),
-		MetricKey("k8s_cluster_name"),
+		"k8s.namespace.name",
+		"k8s.cluster.name",
 	}
 
 	queryNamesForNamespaces = map[string][]string{
@@ -33,11 +33,11 @@ var (
 	namespaceQueryNames = []string{"A", "D", "H", "I", "J", "K"}
 
 	attributesKeysForNamespaces = []v3.AttributeKey{
-		{Key: MetricKey("k8s_namespace_name")},
-		{Key: MetricKey("k8s_cluster_name")},
+		{Key: "k8s.namespace.name"},
+		{Key: "k8s.cluster.name"},
 	}
 
-	k8sNamespaceNameAttrKey = MetricKey("k8s_namespace_name")
+	k8sNamespaceNameAttrKey = "k8s.namespace.name"
 )
 
 type NamespacesRepo struct {

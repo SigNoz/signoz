@@ -4,13 +4,13 @@ import v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 
 var (
 	metricNamesForWorkloads = map[string]string{
-		"cpu":            MetricKey("k8s_pod_cpu_usage"),
-		"cpu_request":    MetricKey("k8s_pod_cpu_request_utilization"),
-		"cpu_limit":      MetricKey("k8s_pod_cpu_limit_utilization"),
-		"memory":         MetricKey("k8s_pod_memory_working_set"),
-		"memory_request": MetricKey("k8s_pod_memory_request_utilization"),
-		"memory_limit":   MetricKey("k8s_pod_memory_limit_utilization"),
-		"restarts":       MetricKey("k8s_container_restarts"),
+		"cpu":            "k8s.pod.cpu.usage",
+		"cpu_request":    "k8s.pod.cpu_request_utilization",
+		"cpu_limit":      "k8s.pod.cpu_limit_utilization",
+		"memory":         "k8s.pod.memory.working_set",
+		"memory_request": "k8s.pod.memory_request_utilization",
+		"memory_limit":   "k8s.pod.memory_limit_utilization",
+		"restarts":       "k8s.container.restarts",
 	}
 )
 

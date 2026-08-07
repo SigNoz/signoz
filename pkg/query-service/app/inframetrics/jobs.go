@@ -18,20 +18,20 @@ import (
 )
 
 var (
-	metricToUseForJobs = MetricKey("k8s_job_desired_successful_pods")
-	k8sJobNameAttrKey  = MetricKey("k8s_job_name")
+	metricToUseForJobs = "k8s.job.desired_successful_pods"
+	k8sJobNameAttrKey  = "k8s.job.name"
 
 	metricNamesForJobs = map[string]string{
-		"desired_successful_pods": MetricKey("k8s_job_desired_successful_pods"),
-		"active_pods":             MetricKey("k8s_job_active_pods"),
-		"failed_pods":             MetricKey("k8s_job_failed_pods"),
-		"successful_pods":         MetricKey("k8s_job_successful_pods"),
+		"desired_successful_pods": "k8s.job.desired_successful_pods",
+		"active_pods":             "k8s.job.active_pods",
+		"failed_pods":             "k8s.job.failed_pods",
+		"successful_pods":         "k8s.job.successful_pods",
 	}
 
 	jobAttrsToEnrich = []string{
-		MetricKey("k8s_job_name"),
-		MetricKey("k8s_namespace_name"),
-		MetricKey("k8s_cluster_name"),
+		"k8s.job.name",
+		"k8s.namespace.name",
+		"k8s.cluster.name",
 	}
 
 	queryNamesForJobs = map[string][]string{
@@ -54,7 +54,7 @@ var (
 			QueryName:  "H",
 			DataSource: v3.DataSourceMetrics,
 			AggregateAttribute: v3.AttributeKey{
-				Key:      MetricKey(metricNamesForJobs["desired_successful_pods"]),
+				Key:      metricNamesForJobs["desired_successful_pods"],
 				DataType: v3.AttributeKeyDataTypeFloat64,
 			},
 			Temporality: v3.Unspecified,
@@ -74,7 +74,7 @@ var (
 			QueryName:  "I",
 			DataSource: v3.DataSourceMetrics,
 			AggregateAttribute: v3.AttributeKey{
-				Key:      MetricKey(metricNamesForJobs["active_pods"]),
+				Key:      metricNamesForJobs["active_pods"],
 				DataType: v3.AttributeKeyDataTypeFloat64,
 			},
 			Temporality: v3.Unspecified,
@@ -94,7 +94,7 @@ var (
 			QueryName:  "J",
 			DataSource: v3.DataSourceMetrics,
 			AggregateAttribute: v3.AttributeKey{
-				Key:      MetricKey(metricNamesForJobs["failed_pods"]),
+				Key:      metricNamesForJobs["failed_pods"],
 				DataType: v3.AttributeKeyDataTypeFloat64,
 			},
 			Temporality: v3.Unspecified,
@@ -114,7 +114,7 @@ var (
 			QueryName:  "K",
 			DataSource: v3.DataSourceMetrics,
 			AggregateAttribute: v3.AttributeKey{
-				Key:      MetricKey(metricNamesForJobs["successful_pods"]),
+				Key:      metricNamesForJobs["successful_pods"],
 				DataType: v3.AttributeKeyDataTypeFloat64,
 			},
 			Temporality: v3.Unspecified,
@@ -327,7 +327,7 @@ func (d *JobsRepo) GetJobList(ctx context.Context, orgID valuer.UUID, req model.
 	}
 
 	if req.OrderBy == nil {
-		req.OrderBy = &v3.OrderBy{ColumnName: MetricKey("desired_pods"), Order: v3.DirectionDesc}
+		req.OrderBy = &v3.OrderBy{ColumnName: "desired_pods", Order: v3.DirectionDesc}
 	}
 
 	if req.GroupBy == nil {
