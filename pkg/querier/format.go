@@ -61,7 +61,7 @@ func getPointerValue(v any) any {
 
 	// Use reflection to check if the pointer is nil
 	rv := reflect.ValueOf(v)
-	if rv.Kind() == reflect.Ptr && rv.IsNil() {
+	if rv.Kind() == reflect.Pointer && rv.IsNil() {
 		return nil
 	}
 

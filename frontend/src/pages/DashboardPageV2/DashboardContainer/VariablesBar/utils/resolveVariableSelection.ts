@@ -37,7 +37,7 @@ function firstConfiguredDefault(model: VariableFormModel): string | undefined {
 }
 
 /** A TEXT variable's default: its configured default, else its textValue (always a string). */
-function textDefault(model: VariableFormModel): string {
+export function textDefault(model: VariableFormModel): string {
 	return firstConfiguredDefault(model) ?? model.textValue;
 }
 
@@ -53,28 +53,31 @@ function isAllDefault(
 	);
 }
 
-function isValidSingle(
-	value: SelectedVariableValue,
-	options: string[],
-): boolean {
-	return (
-		!Array.isArray(value) &&
-		value !== '' &&
-		value !== null &&
-		value !== undefined &&
-		options.includes(String(value))
-	);
-}
-
-/** The configured default (or first option) as a fresh selection. */
+/**
+ * The default selection for a variable with nothing usable selected: its configured
+ * default, else ALL for an ALL-enabled multi-select, else the first option.
+ */
 function fillDefault(
 	model: VariableFormModel,
 	options: string[],
 ): VariableSelection {
 	const fallback = firstConfiguredDefault(model);
-	const initial = fallback && options.includes(fallback) ? fallback : options[0];
+	if (fallback && options.includes(fallback)) {
+		return {
+			value: model.multiSelect ? [fallback] : fallback,
+			allSelected: false,
+		};
+	}
+
+	// No usable configured default: an ALL-enabled multi-select defaults to ALL, not
+	// to an arbitrary first option — the same default the seed applies (keep in sync
+	// with resolveDefaultSelection).
+	if (model.multiSelect && model.showAllOption) {
+		return materializeAll(model, options, null) ?? ALL_SELECTION;
+	}
+
 	return {
-		value: model.multiSelect ? [initial] : initial,
+		value: model.multiSelect ? [options[0]] : options[0],
 		allSelected: false,
 	};
 }
@@ -167,8 +170,17 @@ export function reconcileWithOptions(
 			: fillDefault(model, options);
 	}
 
-	if (!model.multiSelect && isValidSingle(current.value, options)) {
-		return null;
+	if (!model.multiSelect) {
+		// Preserve any non-empty single value across a refetch — including a user-typed
+		// value that isn't in the fetched options (freeform). Only fall back to the
+		// default/first option when there is no value yet, so e.g. a time-range change
+		// (which refetches options) never wipes a value the user didn't change.
+		const hasValue =
+			!Array.isArray(current.value) &&
+			current.value !== '' &&
+			current.value !== null &&
+			current.value !== undefined;
+		return hasValue ? null : fillDefault(model, options);
 	}
 	return fillDefault(model, options);
 }
@@ -187,4 +199,21 @@ export function configuredDefaultValue(
 		return textDefault(model);
 	}
 	return configuredDefault(model.defaultValue);
+}
+
+/** Normalize a selection's value to an order-independent key of its members. */
+function valueSetKey(value: SelectedVariableValue): string {
+	const list = Array.isArray(value) ? value : value == null ? [] : [value];
+	return list.map(String).sort().join('||');
+}
+
+/** True when two selections carry the same ALL flag and the same value set. */
+export function areSelectionsEqual(
+	a: VariableSelection,
+	b: VariableSelection,
+): boolean {
+	return (
+		!!a.allSelected === !!b.allSelected &&
+		valueSetKey(a.value) === valueSetKey(b.value)
+	);
 }

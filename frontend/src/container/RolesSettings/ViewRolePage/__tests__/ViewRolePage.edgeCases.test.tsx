@@ -78,8 +78,9 @@ describe('ViewRolePage - Edge Cases', () => {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
+		// Wait for content to render (not just page wrapper)
 		await expect(
-			screen.findByTestId('view-role-page'),
+			screen.findByTestId('permission-view-mode'),
 		).resolves.toBeInTheDocument();
 		const dashes = screen.getAllByText('—');
 		expect(dashes.length).toBeGreaterThanOrEqual(2);
@@ -111,8 +112,9 @@ describe('ViewRolePage - Edge Cases', () => {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
+		// Wait for content to render (not just page wrapper)
 		await expect(
-			screen.findByTestId('view-role-page'),
+			screen.findByTestId('permission-view-mode'),
 		).resolves.toBeInTheDocument();
 		const dashes = screen.getAllByText('—');
 		expect(dashes.length).toBeGreaterThanOrEqual(2);

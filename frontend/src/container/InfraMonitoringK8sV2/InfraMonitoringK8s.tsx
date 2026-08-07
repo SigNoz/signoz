@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as Sentry from '@sentry/react';
-import { Button, Tooltip } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import {
+	QuickFilterChangeEventData,
 	QuickFilterCheckboxUseFieldApis,
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
@@ -26,9 +28,7 @@ import {
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { FeatureKeys } from '../../constants/features';
-import { useAppContext } from '../../providers/App/App';
-import K8sClustersList from './Clusters/K8sClustersList';
+import { K8sDynamicList } from './Base/K8sDynamicList';
 import {
 	GetClustersQuickFiltersConfig,
 	GetDaemonsetsQuickFiltersConfig,
@@ -43,25 +43,22 @@ import {
 	K8sCategories,
 	METRIC_NAMESPACE_BY_ENTITY,
 } from './constants';
-import K8sDaemonSetsList from './DaemonSets/K8sDaemonSetsList';
-import K8sDeploymentsList from './Deployments/K8sDeploymentsList';
 import {
 	useInfraMonitoringCategory,
 	useInfraMonitoringGroupBy,
 	useInfraMonitoringOrderBy,
 	useInfraMonitoringSelectedItemParams,
 } from './hooks';
-import K8sJobsList from './Jobs/K8sJobsList';
-import K8sNamespacesList from './Namespaces/K8sNamespacesList';
-import K8sNodesList from './Nodes/K8sNodesList';
-import K8sPodLists from './Pods/K8sPodLists';
-import K8sStatefulSetsList from './StatefulSets/K8sStatefulSetsList';
-import K8sVolumesList from './Volumes/K8sVolumesList';
 
 import styles from './InfraMonitoringK8s.module.scss';
 import { InfraMonitoringEvents } from 'constants/events';
 import logEvent from 'api/common/logEvent';
 import { NANO_SECOND_MULTIPLIER, useGlobalTimeStore } from 'store/globalTime';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
+import {
+	logInfraFilterCustomizedEvent,
+	logInfraMonitoringListViewedEvent,
+} from 'container/InfraMonitoringK8sV2/Base/events';
 
 export default function InfraMonitoringK8s(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
@@ -129,16 +126,27 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			category: selectedCategory,
 			view: InfraMonitoringEvents.QuickFiltersView,
 		});
+
+		// The category query param is a plain string; entities are validated by
+		// getEntityConfig before rendering
+		logInfraMonitoringListViewedEvent(selectedCategory as InfraMonitoringEntity);
 	}, [selectedCategory]);
 
 	const handleFilterVisibilityChange = useCallback((): void => {
 		setShowFilters((show) => !show);
 	}, []);
 
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
+	const handleQuickFilterChange = useCallback(
+		(data: QuickFilterChangeEventData): void => {
+			logInfraFilterCustomizedEvent(
+				selectedCategory as InfraMonitoringEntity,
+				'quick_filter',
+				data.expression,
+				data.filterItemKeys,
+			);
+		},
+		[selectedCategory],
+	);
 
 	const categories = useMemo(
 		() => [
@@ -146,58 +154,58 @@ export default function InfraMonitoringK8s(): JSX.Element {
 				key: K8sCategories.PODS,
 				label: 'Pods',
 				icon: <Container size={14} />,
-				config: GetPodsQuickFiltersConfig(dotMetricsEnabled),
+				config: GetPodsQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.NODES,
 				label: 'Nodes',
 				icon: <Workflow size={14} />,
-				config: GetNodesQuickFiltersConfig(dotMetricsEnabled),
+				config: GetNodesQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.NAMESPACES,
 				label: 'Namespaces',
 				icon: <FilePenLine size={14} />,
-				config: GetNamespaceQuickFiltersConfig(dotMetricsEnabled),
+				config: GetNamespaceQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.CLUSTERS,
 				label: 'Clusters',
 				icon: <Boxes size={14} />,
-				config: GetClustersQuickFiltersConfig(dotMetricsEnabled),
+				config: GetClustersQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.DEPLOYMENTS,
 				label: 'Deployments',
 				icon: <Computer size={14} />,
-				config: GetDeploymentsQuickFiltersConfig(dotMetricsEnabled),
+				config: GetDeploymentsQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.JOBS,
 				label: 'Jobs',
 				icon: <Bolt size={14} />,
-				config: GetJobsQuickFiltersConfig(dotMetricsEnabled),
+				config: GetJobsQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.DAEMONSETS,
 				label: 'DaemonSets',
 				icon: <Group size={14} />,
-				config: GetDaemonsetsQuickFiltersConfig(dotMetricsEnabled),
+				config: GetDaemonsetsQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.STATEFULSETS,
 				label: 'StatefulSets',
 				icon: <ArrowUpDown size={14} />,
-				config: GetStatefulsetsQuickFiltersConfig(dotMetricsEnabled),
+				config: GetStatefulsetsQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.VOLUMES,
 				label: 'Volumes',
 				icon: <HardDrive size={14} />,
-				config: GetVolumesQuickFiltersConfig(dotMetricsEnabled),
+				config: GetVolumesQuickFiltersConfig(),
 			},
 		],
-		[dotMetricsEnabled],
+		[],
 	);
 
 	const selectedCategoryConfig = useMemo(
@@ -232,14 +240,15 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			<>
 				{!showFilters && (
 					<div className={styles.k8SOpenQuickFilters}>
-						<Button
-							className="periscope-btn ghost"
-							type="text"
-							size="small"
-							onClick={handleFilterVisibilityChange}
-						>
-							<Filter size={14} />
-						</Button>
+						<TooltipSimple title="Open Filters" arrow side="left">
+							<Button
+								variant="ghost"
+								size="icon"
+								color="secondary"
+								onClick={handleFilterVisibilityChange}
+								prefix={<Filter size={14} />}
+							/>
+						</TooltipSimple>
 					</div>
 				)}
 			</>
@@ -252,58 +261,63 @@ export default function InfraMonitoringK8s(): JSX.Element {
 				<div className={styles.infraContentRow}>
 					{showFilters && (
 						<div className={styles.quickFiltersContainer}>
-							<div className={styles.categorySelectorSection}>
-								<div className={styles.sectionHeader} data-type="resource">
-									<Typography.Text className={styles.sectionLabel}>
-										Viewing · Resource
-									</Typography.Text>
-									<div className={styles.sectionLine} />
-									<Tooltip title="Collapse Filters">
-										<ArrowUpToLine
-											style={{ transform: 'rotate(270deg)' }}
-											onClick={handleFilterVisibilityChange}
-											size="md"
-										/>
-									</Tooltip>
-								</div>
-								<div className={styles.categoryCard}>
-									<div className={styles.categoryList}>
-										{categories.map((category) => (
-											<button
-												key={category.key}
-												type="button"
-												className={`${styles.categoryItem} ${
-													selectedCategory === category.key
-														? styles.categoryItemSelected
-														: ''
-												}`}
-												onClick={(): void => handleCategorySelect(category.key)}
-												data-testid={`category-${category.key}`}
-											>
-												{category.icon}
-												<Typography.Text>{category.label}</Typography.Text>
-											</button>
-										))}
+							<OverlayScrollbar>
+								<>
+									<div className={styles.categorySelectorSection}>
+										<div className={styles.sectionHeader} data-type="resource">
+											<Typography.Text className={styles.sectionLabel}>
+												Viewing · Resource
+											</Typography.Text>
+											<div className={styles.sectionLine} />
+											<TooltipSimple title="Collapse Filters" arrow>
+												<ArrowUpToLine
+													style={{ transform: 'rotate(270deg)' }}
+													onClick={handleFilterVisibilityChange}
+													size="md"
+												/>
+											</TooltipSimple>
+										</div>
+										<div className={styles.categoryCard}>
+											<div className={styles.categoryList}>
+												{categories.map((category) => (
+													<button
+														key={category.key}
+														type="button"
+														className={`${styles.categoryItem} ${
+															selectedCategory === category.key
+																? styles.categoryItemSelected
+																: ''
+														}`}
+														onClick={(): void => handleCategorySelect(category.key)}
+														data-testid={`category-${category.key}`}
+													>
+														{category.icon}
+														<Typography.Text>{category.label}</Typography.Text>
+													</button>
+												))}
+											</div>
+										</div>
 									</div>
-								</div>
-							</div>
 
-							<div className={styles.quickFiltersSection}>
-								<div className={styles.sectionHeader} data-type="filter">
-									<Typography.Text className={styles.sectionLabel}>
-										Filter by
-									</Typography.Text>
-									<div className={styles.sectionLine} />
-								</div>
-								{selectedCategoryConfig && (
-									<QuickFilters
-										source={QuickFiltersSource.INFRA_MONITORING}
-										config={selectedCategoryConfig}
-										handleFilterVisibilityChange={handleFilterVisibilityChange}
-										useFieldApis={selectedCategoryUseFieldApis}
-									/>
-								)}
-							</div>
+									<div className={styles.quickFiltersSection}>
+										<div className={styles.sectionHeader} data-type="filter">
+											<Typography.Text className={styles.sectionLabel}>
+												Filter by
+											</Typography.Text>
+											<div className={styles.sectionLine} />
+										</div>
+										{selectedCategoryConfig && (
+											<QuickFilters
+												source={QuickFiltersSource.INFRA_MONITORING}
+												config={selectedCategoryConfig}
+												handleFilterVisibilityChange={handleFilterVisibilityChange}
+												useFieldApis={selectedCategoryUseFieldApis}
+												onQuickFilterChange={handleQuickFilterChange}
+											/>
+										)}
+									</div>
+								</>
+							</OverlayScrollbar>
 						</div>
 					)}
 
@@ -312,41 +326,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 							showFilters ? styles.listContainerFiltersVisible : ''
 						}`}
 					>
-						{selectedCategory === K8sCategories.PODS && (
-							<K8sPodLists controlListPrefix={showFiltersComp} />
-						)}
-
-						{selectedCategory === K8sCategories.NODES && (
-							<K8sNodesList controlListPrefix={showFiltersComp} />
-						)}
-
-						{selectedCategory === K8sCategories.CLUSTERS && (
-							<K8sClustersList controlListPrefix={showFiltersComp} />
-						)}
-
-						{selectedCategory === K8sCategories.DEPLOYMENTS && (
-							<K8sDeploymentsList controlListPrefix={showFiltersComp} />
-						)}
-
-						{selectedCategory === K8sCategories.NAMESPACES && (
-							<K8sNamespacesList controlListPrefix={showFiltersComp} />
-						)}
-
-						{selectedCategory === K8sCategories.STATEFULSETS && (
-							<K8sStatefulSetsList controlListPrefix={showFiltersComp} />
-						)}
-
-						{selectedCategory === K8sCategories.JOBS && (
-							<K8sJobsList controlListPrefix={showFiltersComp} />
-						)}
-
-						{selectedCategory === K8sCategories.DAEMONSETS && (
-							<K8sDaemonSetsList controlListPrefix={showFiltersComp} />
-						)}
-
-						{selectedCategory === K8sCategories.VOLUMES && (
-							<K8sVolumesList controlListPrefix={showFiltersComp} />
-						)}
+						<K8sDynamicList controlListPrefix={showFiltersComp} />
 					</div>
 				</div>
 			</div>

@@ -2814,6 +2814,10 @@ export enum CloudintegrationtypesServiceIDDTO {
 	cassandradb = 'cassandradb',
 	redis = 'redis',
 	cloudsql_postgres = 'cloudsql_postgres',
+	memorystore_redis = 'memorystore_redis',
+	computeengine = 'computeengine',
+	gke = 'gke',
+	cloudstorage = 'cloudstorage',
 }
 export type CloudintegrationtypesCloudIntegrationServiceDTOAnyOf = {
 	/**
@@ -3233,17 +3237,6 @@ export interface CloudintegrationtypesUpdatableAccountDTO {
 
 export interface CloudintegrationtypesUpdatableServiceDTO {
 	config: CloudintegrationtypesServiceConfigDTO;
-}
-
-export interface CommonDisplayDTO {
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
 }
 
 export interface CommonJSONRefDTO {
@@ -3989,44 +3982,6 @@ export interface DashboardtypesDashboardPanelRefDTO {
 	panelName: string;
 }
 
-export enum DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpecDTOKind {
-	'signoz/Datasource' = 'signoz/Datasource',
-}
-export interface DashboardtypesSigNozDatasourceSpecDTO {
-	[key: string]: unknown;
-}
-
-export interface DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpecDTO {
-	/**
-	 * @enum signoz/Datasource
-	 * @type string
-	 */
-	kind: DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpecDTOKind;
-	spec: DashboardtypesSigNozDatasourceSpecDTO;
-}
-
-export type DashboardtypesDatasourcePluginDTO =
-	DashboardtypesDatasourcePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesSigNozDatasourceSpecDTO;
-
-export interface DashboardtypesDatasourceSpecDTO {
-	/**
-	 * @type boolean
-	 */
-	default?: boolean;
-	display?: CommonDisplayDTO;
-	plugin?: DashboardtypesDatasourcePluginDTO;
-}
-
-export type DashboardtypesDashboardSpecDTODatasourcesAnyOf = {
-	[key: string]: DashboardtypesDatasourceSpecDTO;
-};
-
-/**
- * @nullable
- */
-export type DashboardtypesDashboardSpecDTODatasources =
-	DashboardtypesDashboardSpecDTODatasourcesAnyOf | null;
-
 export enum DashboardtypesPanelKindDTO {
 	Panel = 'Panel',
 }
@@ -4680,12 +4635,18 @@ export type DashboardtypesVariableDefaultValueDTO = string | string[];
 export enum DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpecDTOKind {
 	'signoz/DynamicVariable' = 'signoz/DynamicVariable',
 }
+export enum DashboardtypesDynamicVariableSignalDTO {
+	traces = 'traces',
+	logs = 'logs',
+	metrics = 'metrics',
+	all = 'all',
+}
 export interface DashboardtypesDynamicVariableSpecDTO {
 	/**
 	 * @type string
 	 */
 	name: string;
-	signal?: TelemetrytypesSignalDTO;
+	signal: DashboardtypesDynamicVariableSignalDTO;
 }
 
 export interface DashboardtypesVariablePluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDynamicVariableSpecDTO {
@@ -4813,10 +4774,6 @@ export type DashboardtypesVariableDTO =
 	| DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTO;
 
 export interface DashboardtypesDashboardSpecDTO {
-	/**
-	 * @type object,null
-	 */
-	datasources?: DashboardtypesDashboardSpecDTODatasources;
 	display: DashboardtypesDisplayDTO;
 	/**
 	 * @type string
@@ -4892,9 +4849,6 @@ export interface DashboardtypesDashboardViewDTO {
 	updatedAt?: string;
 }
 
-export enum DashboardtypesDatasourcePluginKindDTO {
-	'signoz/Datasource' = 'signoz/Datasource',
-}
 export interface TagtypesGettableTagDTO {
 	/**
 	 * @type string
@@ -5748,29 +5702,6 @@ export interface InframonitoringtypesNodeCountsByReadinessDTO {
 	ready: number;
 }
 
-export interface InframonitoringtypesPodCountsByPhaseDTO {
-	/**
-	 * @type integer
-	 */
-	failed: number;
-	/**
-	 * @type integer
-	 */
-	pending: number;
-	/**
-	 * @type integer
-	 */
-	running: number;
-	/**
-	 * @type integer
-	 */
-	succeeded: number;
-	/**
-	 * @type integer
-	 */
-	unknown: number;
-}
-
 export interface InframonitoringtypesPodCountsByStatusDTO {
 	/**
 	 * @type integer
@@ -5880,7 +5811,6 @@ export interface InframonitoringtypesClusterRecordDTO {
 	 */
 	meta: InframonitoringtypesClusterRecordDTOMeta;
 	nodeCountsByReadiness: InframonitoringtypesNodeCountsByReadinessDTO;
-	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 	podCountsByStatus: InframonitoringtypesPodCountsByStatusDTO;
 }
 
@@ -6156,7 +6086,6 @@ export interface InframonitoringtypesDaemonSetRecordDTO {
 	 * @type integer
 	 */
 	misscheduledNodes: number;
-	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 	podCountsByStatus: InframonitoringtypesPodCountsByStatusDTO;
 	/**
 	 * @type integer
@@ -6238,7 +6167,6 @@ export interface InframonitoringtypesDeploymentRecordDTO {
 	 * @type object,null
 	 */
 	meta: InframonitoringtypesDeploymentRecordDTOMeta;
-	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 	podCountsByStatus: InframonitoringtypesPodCountsByStatusDTO;
 }
 
@@ -6405,7 +6333,6 @@ export interface InframonitoringtypesJobRecordDTO {
 	 * @type object,null
 	 */
 	meta: InframonitoringtypesJobRecordDTOMeta;
-	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 	podCountsByStatus: InframonitoringtypesPodCountsByStatusDTO;
 	/**
 	 * @type integer
@@ -6486,7 +6413,6 @@ export interface InframonitoringtypesNamespaceRecordDTO {
 	 * @type string
 	 */
 	namespaceName: string;
-	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 	podCountsByStatus: InframonitoringtypesPodCountsByStatusDTO;
 }
 
@@ -6553,7 +6479,6 @@ export interface InframonitoringtypesNodeRecordDTO {
 	 * @type string
 	 */
 	nodeName: string;
-	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 	podCountsByStatus: InframonitoringtypesPodCountsByStatusDTO;
 }
 
@@ -6574,14 +6499,6 @@ export interface InframonitoringtypesNodesDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
-export enum InframonitoringtypesPodPhaseDTO {
-	pending = 'pending',
-	running = 'running',
-	succeeded = 'succeeded',
-	failed = 'failed',
-	unknown = 'unknown',
-	no_data = 'no_data',
-}
 export type InframonitoringtypesPodRecordDTOMetaAnyOf = {
 	[key: string]: string;
 };
@@ -6638,7 +6555,6 @@ export interface InframonitoringtypesPodRecordDTO {
 	 * @format double
 	 */
 	podCPURequest: number;
-	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 	podCountsByStatus: InframonitoringtypesPodCountsByStatusDTO;
 	/**
 	 * @type number
@@ -6655,7 +6571,6 @@ export interface InframonitoringtypesPodRecordDTO {
 	 * @format double
 	 */
 	podMemoryRequest: number;
-	podPhase: InframonitoringtypesPodPhaseDTO;
 	/**
 	 * @type integer
 	 * @format int64
@@ -7005,7 +6920,6 @@ export interface InframonitoringtypesStatefulSetRecordDTO {
 	 * @type object,null
 	 */
 	meta: InframonitoringtypesStatefulSetRecordDTOMeta;
-	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
 	podCountsByStatus: InframonitoringtypesPodCountsByStatusDTO;
 	/**
 	 * @type number
@@ -8426,6 +8340,14 @@ export interface RulestatehistorytypesGettableRuleStateHistoryDTO {
 	/**
 	 * @type string
 	 */
+	relatedLogsLink?: string;
+	/**
+	 * @type string
+	 */
+	relatedTracesLink?: string;
+	/**
+	 * @type string
+	 */
 	ruleId: string;
 	/**
 	 * @type string
@@ -8571,6 +8493,8 @@ export enum RuletypesCompareOperatorDTO {
 	below = 'below',
 	equal = 'equal',
 	not_equal = 'not_equal',
+	above_or_equal = 'above_or_equal',
+	below_or_equal = 'below_or_equal',
 	outside_bounds = 'outside_bounds',
 }
 export interface RuletypesBasicRuleThresholdDTO {
@@ -9284,6 +9208,48 @@ export interface SpantypesGettableSpanMapperGroupsDTO {
 	items: SpantypesSpanMapperGroupDTO[];
 }
 
+export type SpantypesSpanMapperTestSpanDTOAttributesAnyOf = {
+	[key: string]: unknown;
+};
+
+/**
+ * @nullable
+ */
+export type SpantypesSpanMapperTestSpanDTOAttributes =
+	SpantypesSpanMapperTestSpanDTOAttributesAnyOf | null;
+
+export type SpantypesSpanMapperTestSpanDTOResourceAnyOf = {
+	[key: string]: unknown;
+};
+
+/**
+ * @nullable
+ */
+export type SpantypesSpanMapperTestSpanDTOResource =
+	SpantypesSpanMapperTestSpanDTOResourceAnyOf | null;
+
+export interface SpantypesSpanMapperTestSpanDTO {
+	/**
+	 * @type object,null
+	 */
+	attributes?: SpantypesSpanMapperTestSpanDTOAttributes;
+	/**
+	 * @type object,null
+	 */
+	resource?: SpantypesSpanMapperTestSpanDTOResource;
+}
+
+export interface SpantypesGettableSpanMapperTestDTO {
+	/**
+	 * @type array,null
+	 */
+	collectorLogs?: string[] | null;
+	/**
+	 * @type array,null
+	 */
+	spans?: SpantypesSpanMapperTestSpanDTO[] | null;
+}
+
 export enum SpantypesSpanMapperOperationDTO {
 	move = 'move',
 	copy = 'copy',
@@ -9623,6 +9589,33 @@ export interface SpantypesPostableSpanMapperGroupDTO {
 	 * @type string
 	 */
 	name: string;
+}
+
+export interface SpantypesPostableSpanMapperTestGroupDTO {
+	condition: SpantypesSpanMapperGroupConditionDTO | null;
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+	/**
+	 * @type array,null
+	 */
+	mappers?: SpantypesPostableSpanMapperDTO[] | null;
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
+export interface SpantypesPostableSpanMapperTestDTO {
+	/**
+	 * @type array,null
+	 */
+	groups: SpantypesPostableSpanMapperTestGroupDTO[] | null;
+	/**
+	 * @type array,null
+	 */
+	spans: SpantypesSpanMapperTestSpanDTO[] | null;
 }
 
 export interface SpantypesSpanAggregationDTO {
@@ -10230,14 +10223,6 @@ export type GetConnectionCredentials200 = {
 export type ListServicesMetadataPathParameters = {
 	cloudProvider: string;
 };
-export type ListServicesMetadataParams = {
-	/**
-	 * @type string
-	 * @description undefined
-	 */
-	cloud_integration_id?: string;
-};
-
 export type ListServicesMetadata200 = {
 	data: CloudintegrationtypesGettableServicesMetadataDTO;
 	/**
@@ -10250,14 +10235,6 @@ export type GetServicePathParameters = {
 	cloudProvider: string;
 	serviceId: string;
 };
-export type GetServiceParams = {
-	/**
-	 * @type string
-	 * @description undefined
-	 */
-	cloud_integration_id?: string;
-};
-
 export type GetService200 = {
 	data: CloudintegrationtypesServiceDTO;
 	/**
@@ -10975,6 +10952,14 @@ export type UpdateSpanMapperPathParameters = {
 	groupId: string;
 	mapperId: string;
 };
+export type TestSpanMappers200 = {
+	data: SpantypesGettableSpanMapperTestDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetStats200Data = { [key: string]: unknown };
 
 export type GetStats200 = {
@@ -11193,6 +11178,17 @@ export type UnlockDashboardV2PathParameters = {
 export type LockDashboardV2PathParameters = {
 	id: string;
 };
+export type MigrateDashboardV2PathParameters = {
+	id: string;
+};
+export type MigrateDashboardV2200 = {
+	data: DashboardtypesGettableDashboardV2DTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetFeatures200 = {
 	/**
 	 * @type array

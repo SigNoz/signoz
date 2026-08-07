@@ -1,6 +1,9 @@
 import { useCallback } from 'react';
+import logEvent from 'api/common/logEvent';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import { getTableCsvRows } from 'pages/DashboardPageV2/DashboardContainer/Panels/kinds/TablePanel/tableCsv';
+import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 import type { PanelOfKind } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/rendererProps';
 import { downloadCsv } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/downloadCsv';
 import type { PanelQueryData } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
@@ -37,5 +40,9 @@ export function useDownloadPanelCsv({
 			return;
 		}
 		downloadCsv(rows, fileName);
+		void logEvent(DashboardDetailEvents.PanelExported, {
+			format: 'csv',
+			panelType: PANEL_KIND_TO_PANEL_TYPE[panel.spec.plugin.kind],
+		});
 	}, [canDownloadCsv, fileName, panel, data]);
 }

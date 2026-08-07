@@ -83,8 +83,7 @@ func resourcesForQuery(query gjson.Result, variables map[string]qbtypes.Variable
 	case qbtypes.QueryTypeBuilder.StringValue(), qbtypes.QueryTypeSubQuery.StringValue():
 		return resourcesForBuilderQuery(queryType, query.Get("spec"), variables)
 	case qbtypes.QueryTypeBuilderAI.StringValue():
-		// An AI builder query is always a traces query; the signal is implied by the
-		// type (and may be absent from the payload), so pin the resource directly.
+		// always a traces query; the signal may be absent from the payload
 		return builderQueryResourceRefs(queryType, coretypes.ResourceTelemetryResourceTraces, query.Get("spec"), variables)
 	case qbtypes.QueryTypePromQL.StringValue():
 		return []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceMetrics, ID: typeWildcard}}, nil

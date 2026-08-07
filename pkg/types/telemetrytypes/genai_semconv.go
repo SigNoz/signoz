@@ -16,16 +16,14 @@ const (
 	GenAIInputMessages  = "gen_ai.input.messages"
 	GenAIOutputMessages = "gen_ai.output.messages"
 
-	// SignozGenAITotalCost is not OTel semconv: it is the per-span total cost the
-	// SigNoz LLM pricing processor computes and attaches (see llmpricingruletypes).
+	// SignozGenAITotalCost is not OTel semconv: it is the per-span cost the SigNoz
+	// LLM pricing processor attaches.
 	SignozGenAITotalCost = "_signoz.gen_ai.total_cost"
 )
 
-// GenAIFieldDefinitions are the gen_ai semantic-convention span attributes the AI
-// query builder relies on. They are surfaced by the metadata store for trace
-// queries regardless of whether they have been ingested yet, so the AI gate/columns
-// resolve on a fresh install (mirrors intrinsic metric keys). String keys are the
-// gate; the usage keys are numeric.
+// GenAIFieldDefinitions are the gen_ai span attributes the AI query builder relies
+// on, surfaced by the metadata store even before ingestion so the AI gate/columns
+// resolve on a fresh install.
 var GenAIFieldDefinitions = map[string]TelemetryFieldKey{
 	GenAIRequestModel: {Name: GenAIRequestModel, Signal: SignalTraces, FieldContext: FieldContextAttribute, FieldDataType: FieldDataTypeString},
 	GenAIToolName:     {Name: GenAIToolName, Signal: SignalTraces, FieldContext: FieldContextAttribute, FieldDataType: FieldDataTypeString},

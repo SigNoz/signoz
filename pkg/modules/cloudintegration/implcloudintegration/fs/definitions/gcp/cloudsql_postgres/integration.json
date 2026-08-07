@@ -54,13 +54,13 @@
       {
         "name": "cloudsql.googleapis.com/database/postgresql/transaction_count",
         "unit": "Count",
-        "type": "Gauge",
+        "type": "Sum",
         "description": ""
       },
       {
         "name": "cloudsql.googleapis.com/database/postgresql/deadlock_count",
         "unit": "Count",
-        "type": "Gauge",
+        "type": "Sum",
         "description": ""
       },
       {

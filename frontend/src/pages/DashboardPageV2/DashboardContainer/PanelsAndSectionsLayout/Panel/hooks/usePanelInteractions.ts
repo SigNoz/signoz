@@ -9,6 +9,8 @@ import { useDashboardCursorSyncMode } from 'hooks/dashboard/useDashboardCursorSy
 import { useSyncTooltipFilterMode } from 'hooks/dashboard/useSyncTooltipFilterMode';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
+import logEvent from 'api/common/logEvent';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import { UpdateTimeInterval } from 'store/actions';
 
 export interface PanelInteractions {
@@ -51,6 +53,7 @@ export function usePanelInteractions(): PanelInteractions {
 
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+				void logEvent(DashboardDetailEvents.PanelZoomed, { context: 'panel' });
 			}
 		},
 		[dispatch, pathname, safeNavigate, urlQuery],

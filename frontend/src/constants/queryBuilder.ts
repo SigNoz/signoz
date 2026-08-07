@@ -1,5 +1,8 @@
 // ** Helpers
-import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	MetrictypesTemporalityDTO,
+	MetrictypesTypeDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { defaultTraceSelectedColumns } from 'container/OptionsMenu/constants';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
@@ -389,11 +392,17 @@ const METRIC_TYPE_TO_ATTRIBUTE_TYPE: Record<
 export function toAttributeType(
 	metricType: MetrictypesTypeDTO | undefined,
 	isMonotonic?: boolean,
+	temporality?: MetrictypesTemporalityDTO,
 ): ATTRIBUTE_TYPES | '' {
 	if (!metricType) {
 		return '';
 	}
-	if (metricType === MetrictypesTypeDTO.sum && isMonotonic === false) {
+	// Only non-monotonic cumulative sums are treated as gauges; delta sums stay Sum
+	if (
+		metricType === MetrictypesTypeDTO.sum &&
+		isMonotonic === false &&
+		temporality === MetrictypesTemporalityDTO.cumulative
+	) {
 		return ATTRIBUTE_TYPES.GAUGE;
 	}
 	return METRIC_TYPE_TO_ATTRIBUTE_TYPE[metricType] || '';

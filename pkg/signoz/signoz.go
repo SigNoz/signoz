@@ -27,6 +27,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/authdomain/implauthdomain"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
+	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/metricreductionrule"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
@@ -39,6 +40,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/tag/impltag"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheusv2"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/ruler"
@@ -47,16 +49,18 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlmigrator"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/statementbuilder/aistatementbuilder"
+	"github.com/SigNoz/signoz/pkg/statementbuilder/auditstatementbuilder"
+	"github.com/SigNoz/signoz/pkg/statementbuilder/logsstatementbuilder"
+	"github.com/SigNoz/signoz/pkg/statementbuilder/meterstatementbuilder"
+	"github.com/SigNoz/signoz/pkg/statementbuilder/metricsstatementbuilder"
+	"github.com/SigNoz/signoz/pkg/statementbuilder/tracesstatementbuilder"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
-	"github.com/SigNoz/signoz/pkg/telemetryaudit"
-	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
-	"github.com/SigNoz/signoz/pkg/telemetrymeter"
-	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	pkgtokenizer "github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
@@ -93,6 +97,67 @@ type SigNoz struct {
 	Gateway                gateway.Gateway
 	Auditor                auditor.Auditor
 	MeterReporter          meterreporter.Reporter
+}
+
+// newQueryStack assembles the query stack once and returns, in order: the shared
+// telemetry metadata store (reused elsewhere in signoz.New), the per-signal
+// statement builders (trace, ai-trace, log, audit, metric, meter, trace-operator),
+// and the bucket cache. It is the only place that imports the concrete
+// statement-builder sub-packages.
+func newQueryStack(
+	ctx context.Context,
+	settings factory.ProviderSettings,
+	config Config,
+	telemetryStore telemetrystore.TelemetryStore,
+	cache cache.Cache,
+	fl flagger.Flagger,
+) (
+	telemetrytypes.MetadataStore,
+	qbtypes.StatementBuilder[qbtypes.TraceAggregation],
+	qbtypes.StatementBuilder[qbtypes.TraceAggregation],
+	qbtypes.StatementBuilder[qbtypes.LogAggregation],
+	qbtypes.StatementBuilder[qbtypes.LogAggregation],
+	qbtypes.StatementBuilder[qbtypes.MetricAggregation],
+	qbtypes.StatementBuilder[qbtypes.MetricAggregation],
+	qbtypes.TraceOperatorStatementBuilder,
+	querier.BucketCache,
+	error,
+) {
+	metadataStore := telemetrymetadata.NewTelemetryMetaStore(settings, telemetryStore, fl)
+
+	cfg := config.Querier.Config
+	traceStmtBuilder, err := tracesstatementbuilder.NewFactory(telemetryStore, metadataStore, fl).New(ctx, settings, cfg)
+	if err != nil {
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+	}
+	aiTraceStmtBuilder, err := aistatementbuilder.NewFactory(telemetryStore, metadataStore, fl).New(ctx, settings, cfg)
+	if err != nil {
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+	}
+	traceOperatorStmtBuilder, err := tracesstatementbuilder.NewOperatorFactory(telemetryStore, metadataStore, fl).New(ctx, settings, cfg)
+	if err != nil {
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+	}
+	logStmtBuilder, err := logsstatementbuilder.NewFactory(telemetryStore, metadataStore, fl).New(ctx, settings, cfg)
+	if err != nil {
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+	}
+	auditStmtBuilder, err := auditstatementbuilder.NewFactory(metadataStore, fl).New(ctx, settings, cfg)
+	if err != nil {
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+	}
+	metricStmtBuilder, err := metricsstatementbuilder.NewFactory(metadataStore, fl).New(ctx, settings, cfg)
+	if err != nil {
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+	}
+	meterStmtBuilder, err := meterstatementbuilder.NewFactory(metadataStore, fl).New(ctx, settings, cfg)
+	if err != nil {
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+	}
+
+	bucketCache := querier.NewBucketCache(settings, cache, config.Querier.CacheTTL, config.Querier.FluxInterval)
+
+	return metadataStore, traceStmtBuilder, aiTraceStmtBuilder, logStmtBuilder, auditStmtBuilder, metricStmtBuilder, meterStmtBuilder, traceOperatorStmtBuilder, bucketCache, nil
 }
 
 func New(
@@ -241,6 +306,11 @@ func New(
 
 	retentionGetter := implretention.NewGetter(implretention.NewStore(sqlstore))
 
+	// promV2 is the clickhousev2 provider handed to the querier for shadow
+	// comparison and pinned serving (declared before the serving provider,
+	// whose variable shadows the package name below).
+	var promV2 prometheus.Prometheus
+
 	// Initialize prometheus from the available prometheus provider factories
 	prometheus, err := factory.NewProviderFromNamedMap(
 		ctx,
@@ -253,12 +323,36 @@ func New(
 		return nil, err
 	}
 
+	// With the default provider, also stand up the clickhousev2 provider for
+	// the querier: PromQL queries shadow-compare against it behind the
+	// use_prometheus_clickhouse_v2 flag (see pkg/querier/promql_shadow.go).
+	// It never serves by default. An explicit
+	// prometheus::provider: clickhousev2 makes v2 the serving provider
+	// outright, so there is nothing to compare against.
+	if config.Prometheus.Provider() == "clickhouse" {
+		v2Config := config.Prometheus
+		// The v2 engine only evaluates shadow and pinned queries; disable its
+		// active query tracker so two trackers never share a file.
+		v2Config.ActiveQueryTrackerConfig.Enabled = false
+		promV2, err = clickhouseprometheusv2.New(ctx, providerSettings, v2Config, telemetrystore)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Assemble the query stack (metadata store, statement builders, bucket cache) once,
+	// and reuse the single metadata store everywhere downstream.
+	telemetryMetadataStore, traceStmtBuilder, aiTraceStmtBuilder, logStmtBuilder, auditStmtBuilder, metricStmtBuilder, meterStmtBuilder, traceOperatorStmtBuilder, bucketCache, err := newQueryStack(ctx, providerSettings, config, telemetrystore, cache, flagger)
+	if err != nil {
+		return nil, err
+	}
+
 	// Initialize querier from the available querier provider factories
 	querier, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
 		config.Querier,
-		NewQuerierProviderFactories(telemetrystore, prometheus, cache, flagger),
+		NewQuerierProviderFactories(telemetrystore, prometheus, promV2, telemetryMetadataStore, traceStmtBuilder, aiTraceStmtBuilder, logStmtBuilder, auditStmtBuilder, metricStmtBuilder, meterStmtBuilder, traceOperatorStmtBuilder, bucketCache, flagger),
 		config.Querier.Provider(),
 	)
 	if err != nil {
@@ -276,12 +370,20 @@ func New(
 		return nil, err
 	}
 
+	// Initialize tag module — shared across modules that link entities to tags
+	// (currently dashboard; future: alerts, RBAC). Built once here and injected
+	// where needed.
+	tagModule := impltag.NewModule(impltag.NewStore(sqlstore))
+
+	// Dashboard store, injected into the migrations that reshape stored dashboards.
+	dashboardStore := impldashboard.NewStore(sqlstore)
+
 	// Run migrations on the sqlstore
 	sqlmigrations, err := sqlmigration.New(
 		ctx,
 		providerSettings,
 		config.SQLMigration,
-		NewSQLMigrationProviderFactories(sqlstore, sqlschema, telemetrystore, providerSettings),
+		NewSQLMigrationProviderFactories(sqlstore, sqlschema, telemetrystore, providerSettings, dashboardStore, tagModule),
 	)
 	if err != nil {
 		return nil, err
@@ -337,11 +439,6 @@ func New(
 
 	// Initialize query parser (needed for dashboard module)
 	queryParser := queryparser.New(providerSettings)
-
-	// Initialize tag module — shared across modules that link entities to tags
-	// (currently dashboard; future: alerts, RBAC). Built once here and injected
-	// where needed.
-	tagModule := impltag.NewModule(impltag.NewStore(sqlstore))
 
 	// Initialize dashboard module
 	dashboard := dashboardModuleCallback(sqlstore, providerSettings, analytics, orgGetter, queryParser, querier, licensing, tagModule)
@@ -422,35 +519,6 @@ func New(
 	if err != nil {
 		return nil, err
 	}
-
-	// Initialize telemetry metadata store
-	// TODO: consolidate other telemetrymetadata.NewTelemetryMetaStore initializations to reuse this instance instead.
-	telemetryMetadataStore := telemetrymetadata.NewTelemetryMetaStore(
-		providerSettings,
-		telemetrystore,
-		telemetrytraces.DBName,
-		telemetrytraces.TagAttributesV2TableName,
-		telemetrytraces.SpanAttributesKeysTblName,
-		telemetrytraces.SpanIndexV3TableName,
-		telemetrymetrics.DBName,
-		telemetrymetrics.AttributesMetadataTableName,
-		telemetrymeter.DBName,
-		telemetrymeter.SamplesAgg1dTableName,
-		telemetrylogs.DBName,
-		telemetrylogs.LogsV2TableName,
-		telemetrylogs.TagAttributesV2TableName,
-		telemetrylogs.LogAttributeKeysTblName,
-		telemetrylogs.LogResourceKeysTblName,
-		telemetryaudit.DBName,
-		telemetryaudit.AuditLogsTableName,
-		telemetryaudit.TagAttributesTableName,
-		telemetryaudit.LogAttributeKeysTblName,
-		telemetryaudit.LogResourceKeysTblName,
-		telemetrymetadata.DBName,
-		telemetrymetadata.AttributesMetadataLocalTableName,
-		telemetrymetadata.ColumnEvolutionMetadataTableName,
-		flagger,
-	)
 
 	global, err := factory.NewProviderFromNamedMap(
 		ctx,

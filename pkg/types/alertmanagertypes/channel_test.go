@@ -35,12 +35,8 @@ func TestNewConfigFromChannels(t *testing.T) {
 					"email_configs": []any{map[string]any{
 						"send_resolved": false,
 						"to":            "test@example.com",
-						"from":          "alerts@example.com",
-						"hello":         "localhost",
-						"smarthost":     "smtp.example.com:587",
-						"require_tls":   true,
+						"smarthost":     "",
 						"html":          "{{ template \"email.default.html\" . }}",
-						"tls_config":    map[string]any{"insecure_skip_verify": false},
 						"threading":     map[string]any{},
 					}},
 				},
@@ -63,7 +59,6 @@ func TestNewConfigFromChannels(t *testing.T) {
 					"slack_configs": []any{map[string]any{
 						"send_resolved": true,
 						"api_url":       "https://slack.com/api/test",
-						"app_url":       "https://slack.com/api/chat.postMessage",
 						"channel":       "#alerts",
 						"callback_id":   "{{ template \"slack.default.callbackid\" . }}",
 						"color":         "{{ if eq .Status \"firing\" }}danger{{ else }}good{{ end }}",
@@ -77,12 +72,6 @@ func TestNewConfigFromChannels(t *testing.T) {
 						"title":         "{{ template \"slack.default.title\" . }}",
 						"title_link":    "{{ template \"slack.default.titlelink\" . }}",
 						"username":      "{{ template \"slack.default.username\" . }}",
-						"http_config": map[string]any{
-							"tls_config":       map[string]any{"insecure_skip_verify": false},
-							"follow_redirects": true,
-							"enable_http2":     true,
-							"proxy_url":        nil,
-						},
 					}},
 				},
 			},
@@ -104,7 +93,6 @@ func TestNewConfigFromChannels(t *testing.T) {
 					"pagerduty_configs": []any{map[string]any{
 						"send_resolved": false,
 						"service_key":   "test",
-						"url":           "https://events.pagerduty.com/v2/enqueue",
 						"client":        "{{ template \"pagerduty.default.client\" . }}",
 						"client_url":    "{{ template \"pagerduty.default.clientURL\" . }}",
 						"description":   "{{ template \"pagerduty.default.description\" .}}",
@@ -115,12 +103,6 @@ func TestNewConfigFromChannels(t *testing.T) {
 							"num_firing":   "{{ .Alerts.Firing | len }}",
 							"num_resolved": "{{ .Alerts.Resolved | len }}",
 							"resolved":     "{{ .Alerts.Resolved | toJson }}",
-						},
-						"http_config": map[string]any{
-							"tls_config":       map[string]any{"insecure_skip_verify": false},
-							"follow_redirects": true,
-							"enable_http2":     true,
-							"proxy_url":        nil,
 						},
 					}},
 				},
@@ -148,7 +130,6 @@ func TestNewConfigFromChannels(t *testing.T) {
 					"pagerduty_configs": []any{map[string]any{
 						"send_resolved": false,
 						"service_key":   "test",
-						"url":           "https://events.pagerduty.com/v2/enqueue",
 						"client":        "{{ template \"pagerduty.default.client\" . }}",
 						"client_url":    "{{ template \"pagerduty.default.clientURL\" . }}",
 						"description":   "{{ template \"pagerduty.default.description\" .}}",
@@ -160,12 +141,6 @@ func TestNewConfigFromChannels(t *testing.T) {
 							"num_resolved": "{{ .Alerts.Resolved | len }}",
 							"resolved":     "{{ .Alerts.Resolved | toJson }}",
 						},
-						"http_config": map[string]any{
-							"tls_config":       map[string]any{"insecure_skip_verify": false},
-							"follow_redirects": true,
-							"enable_http2":     true,
-							"proxy_url":        nil,
-						},
 					}},
 				},
 				{
@@ -173,7 +148,6 @@ func TestNewConfigFromChannels(t *testing.T) {
 					"slack_configs": []any{map[string]any{
 						"send_resolved": true,
 						"api_url":       "https://slack.com/api/test",
-						"app_url":       "https://slack.com/api/chat.postMessage",
 						"channel":       "#alerts",
 						"callback_id":   "{{ template \"slack.default.callbackid\" . }}",
 						"color":         "{{ if eq .Status \"firing\" }}danger{{ else }}good{{ end }}",
@@ -187,12 +161,6 @@ func TestNewConfigFromChannels(t *testing.T) {
 						"title":         "{{ template \"slack.default.title\" . }}",
 						"title_link":    "{{ template \"slack.default.titlelink\" . }}",
 						"username":      "{{ template \"slack.default.username\" . }}",
-						"http_config": map[string]any{
-							"tls_config":       map[string]any{"insecure_skip_verify": false},
-							"follow_redirects": true,
-							"enable_http2":     true,
-							"proxy_url":        nil,
-						},
 					}},
 				},
 			},

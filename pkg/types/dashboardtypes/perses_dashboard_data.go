@@ -17,16 +17,17 @@ import (
 // DashboardSpec is the SigNoz dashboard v2 spec shape. It mirrors
 // dashboard.Spec (Perses) field-for-field, except every common.Plugin
 // occurrence is replaced with a typed SigNoz plugin whose OpenAPI schema is a
-// per-site discriminated oneOf.
+// per-site discriminated oneOf. Perses's datasources field is deliberately
+// dropped: SigNoz never reads it (queries carry their own signal/source), so
+// the drift test allowlists it as an intentional omission.
 type DashboardSpec struct {
-	Display         Display                    `json:"display" required:"true"`
-	Datasources     map[string]*DatasourceSpec `json:"datasources,omitzero"`
-	Variables       []Variable                 `json:"variables" required:"true" nullable:"false"`
-	Panels          map[string]*Panel          `json:"panels" required:"true" nullable:"false"`
-	Layouts         []Layout                   `json:"layouts" required:"true" nullable:"false"`
-	Duration        common.DurationString      `json:"duration"`
-	RefreshInterval common.DurationString      `json:"refreshInterval"`
-	Links           []Link                     `json:"links,omitzero"`
+	Display         Display               `json:"display" required:"true"`
+	Variables       []Variable            `json:"variables" required:"true" nullable:"false"`
+	Panels          map[string]*Panel     `json:"panels" required:"true" nullable:"false"`
+	Layouts         []Layout              `json:"layouts" required:"true" nullable:"false"`
+	Duration        common.DurationString `json:"duration"`
+	RefreshInterval common.DurationString `json:"refreshInterval"`
+	Links           []Link                `json:"links,omitzero"`
 }
 
 // ══════════════════════════════════════════════
@@ -62,8 +63,13 @@ func (d *DashboardSpec) Validate() error {
 	return d.validateLayouts()
 }
 
-// validateVariables rejects two variables sharing the same name.
+// validateVariables rejects an absent or null list, and duplicate variable names.
 func (d *DashboardSpec) validateVariables() error {
+	// Nil is an absent or explicitly null field; `[]` decodes non-nil. The schema
+	// declares it required and non-nullable, so both are rejected.
+	if d.Variables == nil {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.variables: is required and must not be null; use [] for a dashboard with no variables")
+	}
 	seen := make(map[string]struct{}, len(d.Variables))
 	for i, v := range d.Variables {
 		var name string
@@ -93,6 +99,9 @@ func (d *DashboardSpec) validateVariables() error {
 }
 
 func (d *DashboardSpec) validatePanels() error {
+	if d.Panels == nil {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.panels: is required and must not be null; use {} for a dashboard with no panels")
+	}
 	for key, panel := range d.Panels {
 		if err := common.ValidateID(key); err != nil {
 			return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "spec.panels: %s", err.Error())
@@ -106,7 +115,7 @@ func (d *DashboardSpec) validatePanels() error {
 		}
 		panelKind := panel.Spec.Plugin.Kind
 		if len(panel.Spec.Queries) != 1 {
-			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.spec.queries: panel must have one query", path)
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.spec.queries: panel must have one query, found %d", path, len(panel.Spec.Queries))
 		}
 		allowed := allowedQueryKinds[panelKind]
 		for qi, q := range panel.Spec.Queries {
@@ -251,6 +260,9 @@ const maxLayoutsPerDashboard = 500
 // Geometry (validateGridLayoutGeometry) needs only each layout's own data but
 // runs here so its errors can name the layout by index.
 func (d *DashboardSpec) validateLayouts() error {
+	if d.Layouts == nil {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts: is required and must not be null; use [] for a dashboard with no layouts")
+	}
 	if len(d.Layouts) > maxLayoutsPerDashboard {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts: dashboard has %d layouts; maximum is %d", len(d.Layouts), maxLayoutsPerDashboard)
 	}
@@ -269,8 +281,8 @@ func (d *DashboardSpec) validateLayouts() error {
 			return errors.NewInternalf(errors.CodeInternal, "spec.layouts[%d].spec: unexpected layout spec type %T", li, layout.Spec)
 		}
 		if grid.Display != nil {
-			if n := utf8.RuneCountInString(grid.Display.Title); n > MaxDisplayNameLen {
-				return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts[%d].spec.display.title: layout name must be at most %d characters, got %d", li, MaxDisplayNameLen, n)
+			if n := utf8.RuneCountInString(grid.Display.Title); n > MaxLayoutTitleLen {
+				return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts[%d].spec.display.title: layout name must be at most %d characters, got %d", li, MaxLayoutTitleLen, n)
 			}
 		}
 		if err := validateGridLayoutGeometry(grid, li); err != nil {

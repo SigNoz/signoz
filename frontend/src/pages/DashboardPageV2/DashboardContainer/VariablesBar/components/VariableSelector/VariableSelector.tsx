@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { SolidInfoCircle } from '@signozhq/icons';
+import { Info } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
 // eslint-disable-next-line signoz/no-antd-components -- lightweight description tooltip, matches V1
 import { Tooltip } from 'antd';
@@ -9,6 +9,7 @@ import type {
 	VariableSelection,
 	VariableSelectionMap,
 } from '../../selectionTypes';
+import { textDefault } from '../../utils/resolveVariableSelection';
 import { computeVariableDependencies } from '../../utils/variableDependencies';
 import TextSelector from '../selectors/TextSelector';
 import VariableValueControl from '../selectors/VariableValueControl';
@@ -65,7 +66,7 @@ function VariableSelector({
 		variable.type === 'TEXT' ? (
 			<TextSelector
 				selection={selection}
-				defaultValue={variable.textValue}
+				defaultValue={textDefault(variable)}
 				onChange={onChange}
 				testId={`variable-input-${variable.name}`}
 			/>
@@ -99,7 +100,7 @@ function VariableSelector({
 							/>
 						}
 					>
-						<SolidInfoCircle className={styles.infoIcon} size={12} />
+						<Info className={styles.infoIcon} size={12} />
 					</Tooltip>
 				) : null}
 			</Typography.Text>

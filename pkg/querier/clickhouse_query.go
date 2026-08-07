@@ -100,9 +100,20 @@ func (q *chSQLQuery) renderVars(query string, vars map[string]qbtypes.VariableIt
 	return newQuery.String(), nil
 }
 
-// Statement renders the SQL without executing it, for the preview path.
-func (q *chSQLQuery) Statement(_ context.Context) (*qbtypes.Statement, error) {
+func (q *chSQLQuery) render(ctx context.Context) (string, error) {
 	rendered, err := q.renderVars(q.query.Query, q.vars, q.fromMS, q.toMS)
+	if err != nil {
+		return "", err
+	}
+
+	querybuilder.LogIfStatementIsNotValid(ctx, q.logger, rendered)
+
+	return rendered, nil
+}
+
+// Statement renders the SQL without executing it, for the preview path.
+func (q *chSQLQuery) Statement(ctx context.Context) (*qbtypes.Statement, error) {
+	rendered, err := q.render(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +135,7 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 		elapsed += p.Elapsed
 	}))
 
-	query, err := q.renderVars(q.query.Query, q.vars, q.fromMS, q.toMS)
+	query, err := q.render(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -135,11 +146,11 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 	}
 	defer rows.Close()
 
-	// TODO: map the errors from ClickHouse to our error types
 	payload, err := consume(rows, q.kind, nil, qbtypes.Step{}, q.query.Name)
 	if err != nil {
 		return nil, err
 	}
+
 	return &qbtypes.Result{
 		Type:  q.kind,
 		Value: payload,

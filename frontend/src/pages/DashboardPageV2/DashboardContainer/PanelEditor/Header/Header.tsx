@@ -1,15 +1,20 @@
 import { useCallback } from 'react';
 import { SolidAlertTriangle, X } from '@signozhq/icons';
+import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { DialogWrapper } from '@signozhq/ui/dialog';
 import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
+import logEvent from 'api/common/logEvent';
+import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import { useConfirmableAction } from 'hooks/useConfirmableAction';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 
 import DisabledControlTooltip from '../../components/DisabledControlTooltip/DisabledControlTooltip';
 import styles from './Header.module.scss';
 
 interface HeaderProps {
+	/** Unsaved edits exist — shows the "Unsaved Changes" badge and gates the discard confirmation on close (not the Save button). */
 	isDirty: boolean;
 	isSaving: boolean;
 	showSwitchToView?: boolean;
@@ -32,7 +37,13 @@ function Header({
 	onClose,
 }: HeaderProps): JSX.Element {
 	const discard = useConfirmableAction(
-		useCallback(async (): Promise<void> => onClose(), [onClose]),
+		useCallback(async (): Promise<void> => {
+			// Only reachable after confirming a discard, which is gated on unsaved edits.
+			void logEvent(DashboardDetailEvents.PanelEditorDiscarded, {
+				wasDirty: true,
+			});
+			onClose();
+		}, [onClose]),
 	);
 
 	// Confirm before closing with unsaved edits; a pristine panel closes straight away.
@@ -57,8 +68,18 @@ function Header({
 				/>
 				<Divider type="vertical" />
 				<Typography.Text>Configure panel</Typography.Text>
+				{isDirty && (
+					<Badge color="warning" data-testid="panel-editor-v2-unsaved-badge">
+						Unsaved Changes
+					</Badge>
+				)}
 			</div>
 			<div className={styles.actions}>
+				<HeaderRightSection
+					enableAnnouncements={false}
+					enableShare={false}
+					enableFeedback={false}
+				/>
 				{showSwitchToView && (
 					<Button
 						variant="outlined"
@@ -74,7 +95,7 @@ function Header({
 						variant="solid"
 						color="primary"
 						data-testid="panel-editor-v2-save"
-						disabled={readOnly || !isDirty || isSaving}
+						disabled={readOnly || isSaving}
 						loading={!readOnly && isSaving}
 						onClick={readOnly ? undefined : onSave}
 					>

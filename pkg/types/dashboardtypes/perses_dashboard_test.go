@@ -44,17 +44,20 @@ func TestInvalidateNotAJSON(t *testing.T) {
 // TestUnmarshalErrorPreservesNestedMessage guards the wrap on dec.Decode in
 // DashboardSpec.UnmarshalJSON. The wrap stamps a consistent type/code on
 // decode failures, but must not smother the rich messages produced by nested
-// UnmarshalJSON methods (panel/query/variable/datasource plugin envelopes).
+// UnmarshalJSON methods (panel/query/variable plugin envelopes).
 func TestUnmarshalErrorPreservesNestedMessage(t *testing.T) {
 	data := []byte(`{
+		"variables": [],
 		"panels": {
 			"p1": {
 				"kind": "Panel",
 				"spec": {
+					"links": [],
 					"plugin": {"kind": "NonExistentPanel", "spec": {}}
 				}
 			}
 		},
+		"links": [],
 		"layouts": []
 	}`)
 
@@ -75,21 +78,22 @@ func TestUnmarshalErrorPreservesNestedMessage(t *testing.T) {
 }
 
 func TestValidateEmptySpec(t *testing.T) {
-	// no variables no panels
-	data := []byte(`{}`)
+	// The three required collections must be present, but may be empty.
+	data := []byte(`{"variables": [], "panels": {}, "layouts": []}`)
 	_, err := unmarshalDashboard(data)
 	assert.NoError(t, err, "expected valid")
 }
 
 func TestValidateOnlyVariables(t *testing.T) {
 	data := []byte(`{
+		"panels": {},
 		"variables": [
 			{
 				"kind": "ListVariable",
 				"spec": {
 					"name": "service",
 					"allowAllValue": true,
-					"allowMultiple": false,
+					"allowMultiple": true,
 					"plugin": {
 						"kind": "signoz/DynamicVariable",
 						"spec": {
@@ -107,14 +111,67 @@ func TestValidateOnlyVariables(t *testing.T) {
 				}
 			}
 		],
+		"links": [],
 		"layouts": []
 	}`)
 	_, err := unmarshalDashboard(data)
 	assert.NoError(t, err, "expected valid")
 }
 
+// TestInvalidateAbsentOrNullRequiredCollections pins the strict reading of the
+// schema on the three required, non-nullable collections: an absent key breaks
+// `required`, an explicit null breaks the array/object type, and both are
+// rejected. Only the empty collection is accepted.
+func TestInvalidateAbsentOrNullRequiredCollections(t *testing.T) {
+	cases := []struct {
+		description  string
+		specJSON     string
+		expectedPath string
+	}{
+		{
+			description:  "variables absent",
+			specJSON:     `{"panels": {}, "layouts": []}`,
+			expectedPath: "spec.variables",
+		},
+		{
+			description:  "variables null",
+			specJSON:     `{"variables": null, "panels": {}, "layouts": []}`,
+			expectedPath: "spec.variables",
+		},
+		{
+			description:  "panels absent",
+			specJSON:     `{"variables": [], "layouts": []}`,
+			expectedPath: "spec.panels",
+		},
+		{
+			description:  "panels null",
+			specJSON:     `{"variables": [], "panels": null, "layouts": []}`,
+			expectedPath: "spec.panels",
+		},
+		{
+			description:  "layouts absent",
+			specJSON:     `{"variables": [], "panels": {}}`,
+			expectedPath: "spec.layouts",
+		},
+		{
+			description:  "layouts null",
+			specJSON:     `{"variables": [], "panels": {}, "layouts": null}`,
+			expectedPath: "spec.layouts",
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.description, func(t *testing.T) {
+			_, err := unmarshalDashboard([]byte(c.specJSON))
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), c.expectedPath+": is required and must not be null")
+		})
+	}
+}
+
 func TestInvalidateDuplicateVariableNames(t *testing.T) {
 	data := []byte(`{
+		"panels": {},
 		"variables": [
 			{
 				"kind": "TextVariable",
@@ -133,6 +190,7 @@ func TestInvalidateDuplicateVariableNames(t *testing.T) {
 				}
 			}
 		],
+		"links": [],
 		"layouts": []
 	}`)
 	_, err := unmarshalDashboard(data)
@@ -143,6 +201,7 @@ func TestInvalidateDuplicateVariableNames(t *testing.T) {
 func TestInvalidateVariableNameWithInvalidChars(t *testing.T) {
 	listVarWithName := func(name string) []byte {
 		return []byte(`{
+			"panels": {},
 			"variables": [
 				{
 					"kind": "ListVariable",
@@ -157,6 +216,7 @@ func TestInvalidateVariableNameWithInvalidChars(t *testing.T) {
 					}
 				}
 			],
+			"links": [],
 			"layouts": []
 		}`)
 	}
@@ -182,10 +242,12 @@ func TestInvalidateVariableNameWithInvalidChars(t *testing.T) {
 
 func TestInvalidatePanelKey(t *testing.T) {
 	data := []byte(`{
+		"variables": [],
 		"panels": {
 			"bad key!": {
 				"kind": "Panel",
 				"spec": {
+					"links": [],
 					"plugin": {"kind": "signoz/TablePanel", "spec": {}},
 					"queries": [{
 						"kind": "time_series",
@@ -196,6 +258,7 @@ func TestInvalidatePanelKey(t *testing.T) {
 				}
 			}
 		},
+		"links": [],
 		"layouts": []
 	}`)
 	_, err := unmarshalDashboard(data)
@@ -206,6 +269,7 @@ func TestInvalidatePanelKey(t *testing.T) {
 func TestInvalidateListVariableCrossFields(t *testing.T) {
 	listVar := func(specFields string) []byte {
 		return []byte(`{
+			"panels": {},
 			"variables": [
 				{
 					"kind": "ListVariable",
@@ -219,6 +283,7 @@ func TestInvalidateListVariableCrossFields(t *testing.T) {
 					}
 				}
 			],
+			"links": [],
 			"layouts": []
 		}`)
 	}
@@ -227,6 +292,12 @@ func TestInvalidateListVariableCrossFields(t *testing.T) {
 		_, err := unmarshalDashboard(listVar(`"allowAllValue": false, "allowMultiple": false, "customAllValue": "*",`))
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "customAllValue cannot be set")
+	})
+
+	t.Run("allowAllValue without allowMultiple", func(t *testing.T) {
+		_, err := unmarshalDashboard(listVar(`"allowAllValue": true, "allowMultiple": false,`))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "allowAllValue cannot be set")
 	})
 
 	t.Run("list defaultValue without allowMultiple", func(t *testing.T) {
@@ -241,9 +312,34 @@ func TestInvalidateListVariableCrossFields(t *testing.T) {
 		assert.Contains(t, err.Error(), "allowMultiple")
 	})
 
+	extractVariableSort := func(t *testing.T, d *DashboardSpec) ListVariableSpecSort {
+		require.Len(t, d.Variables, 1)
+		spec, ok := d.Variables[0].Spec.(*ListVariableSpec)
+		require.True(t, ok, "variable spec should be a *ListVariableSpec")
+		return spec.Sort
+	}
+
 	t.Run("valid sort is accepted", func(t *testing.T) {
-		_, err := unmarshalDashboard(listVar(`"sort": "alphabetical-asc",`))
-		assert.NoError(t, err)
+		d, err := unmarshalDashboard(listVar(`"sort": "alphabetical-asc",`))
+		require.NoError(t, err)
+		assert.Equal(t, SortAlphabeticalAsc, extractVariableSort(t, d))
+	})
+
+	t.Run("explicit empty sort is rejected", func(t *testing.T) {
+		_, err := unmarshalDashboard(listVar(`"sort": "",`))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "unknown sort")
+	})
+
+	t.Run("omitted sort defaults to none", func(t *testing.T) {
+		d, err := unmarshalDashboard(listVar(``))
+		require.NoError(t, err)
+		assert.Equal(t, "none", extractVariableSort(t, d).ValueOrDefault())
+
+		// Re-marshal (what we'd store / return): the default surfaces explicitly.
+		out, err := json.Marshal(d)
+		require.NoError(t, err)
+		assert.Contains(t, string(out), `"sort":"none"`)
 	})
 
 	t.Run("unknown sort is rejected", func(t *testing.T) {
@@ -256,10 +352,13 @@ func TestInvalidateListVariableCrossFields(t *testing.T) {
 func TestInvalidateEmptyVariableName(t *testing.T) {
 	cases := map[string][]byte{
 		"text variable": []byte(`{
+			"panels": {},
 			"variables": [{"kind": "TextVariable", "spec": {"name": "", "value": "x"}}],
+			"links": [],
 			"layouts": []
 		}`),
 		"list variable": []byte(`{
+			"panels": {},
 			"variables": [{
 				"kind": "ListVariable",
 				"spec": {
@@ -269,6 +368,7 @@ func TestInvalidateEmptyVariableName(t *testing.T) {
 					"plugin": {"kind": "signoz/DynamicVariable", "spec": {"name": "service.name", "signal": "metrics"}}
 				}
 			}],
+			"links": [],
 			"layouts": []
 		}`),
 	}
@@ -290,14 +390,17 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 		{
 			name: "unknown panel plugin",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
 						"spec": {
+							"links": [],
 							"plugin": {"kind": "NonExistentPanel", "spec": {}}
 						}
 					}
 				},
+				"links": [],
 				"layouts": []
 			}`,
 			wantContain: "NonExistentPanel",
@@ -305,6 +408,7 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 		{
 			name: "unknown panel envelope kind",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Row",
@@ -313,6 +417,7 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 						}
 					}
 				},
+				"links": [],
 				"layouts": []
 			}`,
 			wantContain: "unknown panel kind",
@@ -320,10 +425,12 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 		{
 			name: "unknown query plugin",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
 						"spec": {
+							"links": [],
 							"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
 							"queries": [{
 								"kind": "time_series",
@@ -334,6 +441,7 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 						}
 					}
 				},
+				"links": [],
 				"layouts": []
 			}`,
 			wantContain: "FakeQueryPlugin",
@@ -341,10 +449,12 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 		{
 			name: "unknown query envelope kind",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
 						"spec": {
+							"links": [],
 							"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
 							"queries": [{
 								"kind": "TimeSeriesQuery",
@@ -355,6 +465,7 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 						}
 					}
 				},
+				"links": [],
 				"layouts": []
 			}`,
 			wantContain: "unknown request type",
@@ -362,10 +473,12 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 		{
 			name: "empty query envelope kind",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
 						"spec": {
+							"links": [],
 							"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
 							"queries": [{
 								"kind": "",
@@ -376,6 +489,7 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 						}
 					}
 				},
+				"links": [],
 				"layouts": []
 			}`,
 			wantContain: "unknown request type",
@@ -383,6 +497,7 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 		{
 			name: "unknown variable plugin",
 			data: `{
+				"panels": {},
 				"variables": [{
 					"kind": "ListVariable",
 					"spec": {
@@ -392,22 +507,10 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 						"plugin": {"kind": "FakeVariable", "spec": {}}
 					}
 				}],
+				"links": [],
 				"layouts": []
 			}`,
 			wantContain: "FakeVariable",
-		},
-		{
-			name: "unknown datasource plugin",
-			data: `{
-				"datasources": {
-					"ds1": {
-						"default": true,
-						"plugin": {"kind": "FakeDatasource", "spec": {}}
-					}
-				},
-				"layouts": []
-			}`,
-			wantContain: "FakeDatasource",
 		},
 	}
 
@@ -422,16 +525,18 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 
 func TestInvalidateOneInvalidPanel(t *testing.T) {
 	data := []byte(`{
+		"variables": [],
 		"panels": {
 			"good": {
 				"kind": "Panel",
-				"spec": {"plugin": {"kind": "signoz/NumberPanel", "spec": {}}}
+				"spec": {"links": [],"plugin": {"kind": "signoz/NumberPanel", "spec": {}}}
 			},
 			"bad": {
 				"kind": "Panel",
-				"spec": {"plugin": {"kind": "FakePanel", "spec": {}}}
+				"spec": {"links": [],"plugin": {"kind": "FakePanel", "spec": {}}}
 			}
 		},
+		"links": [],
 		"layouts": []
 	}`)
 	_, err := unmarshalDashboard(data)
@@ -444,6 +549,7 @@ func TestInvalidateLayoutPanelReferences(t *testing.T) {
 		"p1": {
 			"kind": "Panel",
 			"spec": {
+				"links": [],
 				"plugin": {"kind": "signoz/TablePanel", "spec": {}},
 				"queries": [{
 					"kind": "time_series",
@@ -455,7 +561,7 @@ func TestInvalidateLayoutPanelReferences(t *testing.T) {
 		}
 	}`
 	layout := func(items string) []byte {
-		return []byte(`{` + validPanels + `, "layouts": [{"kind": "Grid", "spec": {"items": [` + items + `]}}]}`)
+		return []byte(`{"variables": [], ` + validPanels + `, "links": [], "layouts": [{"kind": "Grid", "spec": {"items": [` + items + `]}}]}`)
 	}
 
 	tests := []struct {
@@ -507,10 +613,12 @@ func TestRejectUnknownFieldsInPluginSpec(t *testing.T) {
 		{
 			name: "unknown field in panel spec",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
 						"spec": {
+							"links": [],
 							"plugin": {
 								"kind": "signoz/TimeSeriesPanel",
 								"spec": {"bogusField": true}
@@ -518,6 +626,7 @@ func TestRejectUnknownFieldsInPluginSpec(t *testing.T) {
 						}
 					}
 				},
+				"links": [],
 				"layouts": []
 			}`,
 			wantContain: "bogusField",
@@ -525,10 +634,12 @@ func TestRejectUnknownFieldsInPluginSpec(t *testing.T) {
 		{
 			name: "unknown field in query spec",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
 						"spec": {
+							"links": [],
 							"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
 							"queries": [{
 								"kind": "time_series",
@@ -542,6 +653,7 @@ func TestRejectUnknownFieldsInPluginSpec(t *testing.T) {
 						}
 					}
 				},
+				"links": [],
 				"layouts": []
 			}`,
 			wantContain: "unknownThing",
@@ -549,6 +661,7 @@ func TestRejectUnknownFieldsInPluginSpec(t *testing.T) {
 		{
 			name: "unknown field in variable spec",
 			data: `{
+				"panels": {},
 				"variables": [{
 					"kind": "ListVariable",
 					"spec": {
@@ -561,6 +674,7 @@ func TestRejectUnknownFieldsInPluginSpec(t *testing.T) {
 						}
 					}
 				}],
+				"links": [],
 				"layouts": []
 			}`,
 			wantContain: "extraField",
@@ -585,10 +699,12 @@ func TestInvalidateWrongFieldTypeInPluginSpec(t *testing.T) {
 		{
 			name: "wrong type on panel plugin field",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
 						"spec": {
+							"links": [],
 							"plugin": {
 								"kind": "signoz/TimeSeriesPanel",
 								"spec": {"visualization": {"fillSpans": "notabool"}}
@@ -596,6 +712,7 @@ func TestInvalidateWrongFieldTypeInPluginSpec(t *testing.T) {
 						}
 					}
 				},
+				"links": [],
 				"layouts": []
 			}`,
 			wantContain: "fillSpans",
@@ -603,10 +720,12 @@ func TestInvalidateWrongFieldTypeInPluginSpec(t *testing.T) {
 		{
 			name: "wrong type on query plugin field",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
 						"spec": {
+							"links": [],
 							"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
 							"queries": [{
 								"kind": "time_series",
@@ -620,6 +739,7 @@ func TestInvalidateWrongFieldTypeInPluginSpec(t *testing.T) {
 						}
 					}
 				},
+				"links": [],
 				"layouts": []
 			}`,
 			wantContain: "",
@@ -627,6 +747,7 @@ func TestInvalidateWrongFieldTypeInPluginSpec(t *testing.T) {
 		{
 			name: "wrong type on variable plugin field",
 			data: `{
+				"panels": {},
 				"variables": [{
 					"kind": "ListVariable",
 					"spec": {
@@ -639,6 +760,7 @@ func TestInvalidateWrongFieldTypeInPluginSpec(t *testing.T) {
 						}
 					}
 				}],
+				"links": [],
 				"layouts": []
 			}`,
 			wantContain: "",
@@ -665,10 +787,12 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 		{
 			name: "bad signal in builder query",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
 						"spec": {
+							"links": [],
 							"plugin": {
 								"kind": "signoz/TimeSeriesPanel",
 								"spec": {}
@@ -685,6 +809,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 						}
 					}
 				},
+				"links": [],
 				"layouts": []
 			}`,
 			wantContain: "signal",
@@ -692,10 +817,12 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 		{
 			name: "bad line interpolation",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
 						"spec": {
+							"links": [],
 							"plugin": {
 								"kind": "signoz/TimeSeriesPanel",
 								"spec": {"chartAppearance": {"lineInterpolation": "cubic"}}
@@ -703,6 +830,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 						}
 					}
 				},
+				"links": [],
 				"layouts": []
 			}`,
 			wantContain: "line interpolation",
@@ -710,10 +838,12 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 		{
 			name: "bad line style",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
 						"spec": {
+							"links": [],
 							"plugin": {
 								"kind": "signoz/TimeSeriesPanel",
 								"spec": {"chartAppearance": {"lineStyle": "dotted"}}
@@ -721,6 +851,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 						}
 					}
 				},
+				"links": [],
 				"layouts": []
 			}`,
 			wantContain: "line style",
@@ -728,10 +859,12 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 		{
 			name: "bad fill mode",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
 						"spec": {
+							"links": [],
 							"plugin": {
 								"kind": "signoz/TimeSeriesPanel",
 								"spec": {"chartAppearance": {"fillMode": "striped"}}
@@ -739,6 +872,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 						}
 					}
 				},
+				"links": [],
 				"layouts": []
 			}`,
 			wantContain: "fill mode",
@@ -746,10 +880,12 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 		{
 			name: "bad spanGaps fillLessThan",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
 						"spec": {
+							"links": [],
 							"plugin": {
 								"kind": "signoz/TimeSeriesPanel",
 								"spec": {"chartAppearance": {"spanGaps": {"fillOnlyBelow": true, "fillLessThan": "notaduration"}}}
@@ -757,6 +893,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 						}
 					}
 				},
+				"links": [],
 				"layouts": []
 			}`,
 			wantContain: "duration",
@@ -764,10 +901,12 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 		{
 			name: "bad time preference",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
 						"spec": {
+							"links": [],
 							"plugin": {
 								"kind": "signoz/TimeSeriesPanel",
 								"spec": {"visualization": {"timePreference": "last2Hr"}}
@@ -775,6 +914,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 						}
 					}
 				},
+				"links": [],
 				"layouts": []
 			}`,
 			wantContain: "timePreference",
@@ -782,10 +922,12 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 		{
 			name: "bad legend position",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
 						"spec": {
+							"links": [],
 							"plugin": {
 								"kind": "signoz/BarChartPanel",
 								"spec": {"legend": {"position": "top"}}
@@ -793,6 +935,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 						}
 					}
 				},
+				"links": [],
 				"layouts": []
 			}`,
 			wantContain: "legend position",
@@ -800,10 +943,12 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 		{
 			name: "bad legend mode",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
 						"spec": {
+							"links": [],
 							"plugin": {
 								"kind": "signoz/BarChartPanel",
 								"spec": {"legend": {"mode": "grid"}}
@@ -811,6 +956,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 						}
 					}
 				},
+				"links": [],
 				"layouts": []
 			}`,
 			wantContain: "legend mode",
@@ -818,10 +964,12 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 		{
 			name: "bad threshold format",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
 						"spec": {
+							"links": [],
 							"plugin": {
 								"kind": "signoz/NumberPanel",
 								"spec": {"thresholds": [{"value": 100, "operator": "above", "color": "Red", "format": "Color"}]}
@@ -829,6 +977,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 						}
 					}
 				},
+				"links": [],
 				"layouts": []
 			}`,
 			wantContain: "threshold format",
@@ -836,10 +985,12 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 		{
 			name: "bad comparison operator",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
 						"spec": {
+							"links": [],
 							"plugin": {
 								"kind": "signoz/NumberPanel",
 								"spec": {"thresholds": [{"value": 100, "operator": "!=", "color": "Red", "format": "text"}]}
@@ -847,6 +998,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 						}
 					}
 				},
+				"links": [],
 				"layouts": []
 			}`,
 			wantContain: "comparison operator",
@@ -854,10 +1006,12 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 		{
 			name: "bad precision",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
 						"spec": {
+							"links": [],
 							"plugin": {
 								"kind": "signoz/TimeSeriesPanel",
 								"spec": {"formatting": {"decimalPrecision": "9"}}
@@ -865,6 +1019,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 						}
 					}
 				},
+				"links": [],
 				"layouts": []
 			}`,
 			wantContain: "precision",
@@ -892,15 +1047,18 @@ func TestThresholdLabelOptional(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			data := []byte(`{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
 						"spec": {
+							"links": [],
 							"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {"thresholds": [` + tt.threshold + `]}},
 							"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
 						}
 					}
 				},
+				"links": [],
 				"layouts": []
 			}`)
 			d, err := unmarshalDashboard(data)
@@ -915,12 +1073,14 @@ func TestThresholdLabelOptional(t *testing.T) {
 
 func TestInvalidatePanelWithoutQueries(t *testing.T) {
 	data := []byte(`{
+		"variables": [],
 		"panels": {
 			"p1": {
 				"kind": "Panel",
-				"spec": {"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}}}
+				"spec": {"links": [],"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}}}
 			}
 		},
+		"links": [],
 		"layouts": []
 	}`)
 	_, err := unmarshalDashboard(data)
@@ -930,15 +1090,18 @@ func TestInvalidatePanelWithoutQueries(t *testing.T) {
 
 func TestInvalidatePanelWithEmptyQueriesArray(t *testing.T) {
 	data := []byte(`{
+		"variables": [],
 		"panels": {
 			"p1": {
 				"kind": "Panel",
 				"spec": {
+					"links": [],
 					"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
 					"queries": []
 				}
 			}
 		},
+		"links": [],
 		"layouts": []
 	}`)
 	_, err := unmarshalDashboard(data)
@@ -950,10 +1113,12 @@ func TestInvalidatePanelWithEmptyQueriesArray(t *testing.T) {
 // signoz/CompositeQuery, not by listing multiple top-level queries.
 func TestInvalidatePanelWithMultipleDirectQueries(t *testing.T) {
 	data := []byte(`{
+		"variables": [],
 		"panels": {
 			"p1": {
 				"kind": "Panel",
 				"spec": {
+					"links": [],
 					"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
 					"queries": [
 						{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "metrics"}}}},
@@ -962,6 +1127,7 @@ func TestInvalidatePanelWithMultipleDirectQueries(t *testing.T) {
 				}
 			}
 		},
+		"links": [],
 		"layouts": []
 	}`)
 	_, err := unmarshalDashboard(data)
@@ -981,6 +1147,7 @@ func TestValidateRequiredFields(t *testing.T) {
 					"plugin": {"kind": "` + pluginKind + `", "spec": ` + pluginSpec + `}
 				}
 			}],
+			"links": [],
 			"layouts": []
 		}`
 	}
@@ -990,10 +1157,12 @@ func TestValidateRequiredFields(t *testing.T) {
 				"p1": {
 					"kind": "Panel",
 					"spec": {
+						"links": [],
 						"plugin": {"kind": "` + panelKind + `", "spec": ` + panelSpec + `}
 					}
 				}
 			},
+			"links": [],
 			"layouts": []
 		}`
 	}
@@ -1054,10 +1223,12 @@ func TestValidateRequiredFields(t *testing.T) {
 
 func TestTimeSeriesPanelDefaults(t *testing.T) {
 	data := []byte(`{
+		"variables": [],
 		"panels": {
 			"p1": {
 				"kind": "Panel",
 				"spec": {
+					"links": [],
 					"plugin": {
 						"kind": "signoz/TimeSeriesPanel",
 						"spec": {}
@@ -1066,6 +1237,7 @@ func TestTimeSeriesPanelDefaults(t *testing.T) {
 				}
 			}
 		},
+		"links": [],
 		"layouts": []
 	}`)
 	d, err := unmarshalDashboard(data)
@@ -1104,10 +1276,12 @@ func TestTimeSeriesPanelDefaults(t *testing.T) {
 
 func TestNumberPanelDefaults(t *testing.T) {
 	data := []byte(`{
+		"variables": [],
 		"panels": {
 			"p1": {
 				"kind": "Panel",
 				"spec": {
+					"links": [],
 					"plugin": {
 						"kind": "signoz/NumberPanel",
 						"spec": {"thresholds": [{"value": 100, "color": "Red"}]}
@@ -1116,6 +1290,7 @@ func TestNumberPanelDefaults(t *testing.T) {
 				}
 			}
 		},
+		"links": [],
 		"layouts": []
 	}`)
 	d, err := unmarshalDashboard(data)
@@ -1165,10 +1340,12 @@ func TestPersesFixtureStorageRoundTrip(t *testing.T) {
 // then unmarshal it back (what would be read from DB), and verify defaults survive.
 func TestStorageRoundTrip(t *testing.T) {
 	input := []byte(`{
+		"variables": [],
 		"panels": {
 			"p1": {
 				"kind": "Panel",
 				"spec": {
+					"links": [],
 					"plugin": {
 						"kind": "signoz/TimeSeriesPanel",
 						"spec": {}
@@ -1179,6 +1356,7 @@ func TestStorageRoundTrip(t *testing.T) {
 			"p2": {
 				"kind": "Panel",
 				"spec": {
+					"links": [],
 					"plugin": {
 						"kind": "signoz/NumberPanel",
 						"spec": {"thresholds": [{"value": 100, "color": "Red"}]}
@@ -1187,6 +1365,7 @@ func TestStorageRoundTrip(t *testing.T) {
 				}
 			}
 		},
+		"links": [],
 		"layouts": []
 	}`)
 
@@ -1247,7 +1426,7 @@ func TestStorageRoundTrip(t *testing.T) {
 }
 
 func TestPostableDashboardV2GenerateNameFlag(t *testing.T) {
-	const validSpec = `"spec": {"panels": {}, "layouts": []}`
+	const validSpec = `"spec": {"variables": [], "panels": {}, "layouts": [], "links": []}`
 
 	tests := []struct {
 		scenario     string
@@ -1259,13 +1438,13 @@ func TestPostableDashboardV2GenerateNameFlag(t *testing.T) {
 	}{
 		{
 			scenario:    "flag true with display.name derives name on conversion",
-			body:        `{"schemaVersion":"` + SchemaVersion + `","generateName":true,"spec":{"display":{"name":"My Dashboard!"},"panels":{},"layouts":[]}}`,
+			body:        `{"schemaVersion":"` + SchemaVersion + `","generateName":true,"spec":{"display":{"name":"My Dashboard!"},"variables":[],"panels":{},"layouts":[],"links":[]}}`,
 			wantName:    "",
 			wantDisplay: "My Dashboard!",
 		},
 		{
 			scenario:     "flag true with non-empty name is rejected",
-			body:         `{"schemaVersion":"` + SchemaVersion + `","name":"already-set","generateName":true,"spec":{"display":{"name":"My Dashboard"},"panels":{},"layouts":[]}}`,
+			body:         `{"schemaVersion":"` + SchemaVersion + `","name":"already-set","generateName":true,"spec":{"display":{"name":"My Dashboard"},"variables":[],"panels":{},"layouts":[],"links":[]}}`,
 			wantErr:      true,
 			wantErrMatch: "name must be empty when generateName is true",
 		},
@@ -1424,21 +1603,27 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 	}
 	mkQuery := func(panelKind, queryKind, querySpec string) []byte {
 		return []byte(`{
+			"variables": [],
 			"panels": {"p1": {"kind": "Panel", "spec": {
+				"links": [],
 				"plugin": {"kind": "` + panelKind + `", "spec": {}},
 				"queries": [{"kind": "` + requestKind(panelKind) + `", "spec": {"plugin": {"kind": "` + queryKind + `", "spec": ` + querySpec + `}}}]
 			}}},
+			"links": [],
 			"layouts": []
 		}`)
 	}
 	mkComposite := func(panelKind, subType, subSpec string) []byte {
 		return []byte(`{
+			"variables": [],
 			"panels": {"p1": {"kind": "Panel", "spec": {
+				"links": [],
 				"plugin": {"kind": "` + panelKind + `", "spec": {}},
 				"queries": [{"kind": "` + requestKind(panelKind) + `", "spec": {"plugin": {"kind": "signoz/CompositeQuery", "spec": {
 					"queries": [{"type": "` + subType + `", "spec": ` + subSpec + `}]
 				}}}}]
 			}}},
+			"links": [],
 			"layouts": []
 		}`)
 	}
@@ -1481,12 +1666,15 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 func TestCommaSeparatedAggregationRejectedOnWrite(t *testing.T) {
 	buildDashboardWithLogsAggregation := func(aggregationsJSON string) []byte {
 		return []byte(`{
+		"variables": [],
 		"panels": {"p1": {"kind": "Panel", "spec": {
+			"links": [],
 			"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
 			"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {
 				"name": "A", "signal": "logs", "aggregations": ` + aggregationsJSON + `
 			}}}}]
 		}}},
+		"links": [],
 		"layouts": []
 	}`)
 	}
@@ -1599,10 +1787,12 @@ func TestValidateGridItemLimit(t *testing.T) {
 // the unmarshal path — it does, via DashboardSpec.Validate -> validateLayouts.
 func TestInvalidateLayoutOverlapViaUnmarshal(t *testing.T) {
 	data := []byte(`{
+		"variables": [],
 		"panels": {
-			"p1": {"kind": "Panel", "spec": {"plugin": {"kind": "signoz/TablePanel", "spec": {}}, "queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}}}]}},
-			"p2": {"kind": "Panel", "spec": {"plugin": {"kind": "signoz/TablePanel", "spec": {}}, "queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}}}]}}
+			"p1": {"kind": "Panel", "spec": {"links": [],"plugin": {"kind": "signoz/TablePanel", "spec": {}}, "queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}}}]}},
+			"p2": {"kind": "Panel", "spec": {"links": [],"plugin": {"kind": "signoz/TablePanel", "spec": {}}, "queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}}}]}}
 		},
+		"links": [],
 		"layouts": [{"kind": "Grid", "spec": {"items": [
 			{"x": 0, "y": 0, "width": 6, "height": 6, "content": {"$ref": "#/spec/panels/p1"}},
 			{"x": 3, "y": 3, "width": 6, "height": 6, "content": {"$ref": "#/spec/panels/p2"}}
@@ -1618,9 +1808,11 @@ func TestInvalidateLayoutOverlapViaUnmarshal(t *testing.T) {
 // two items are side by side so they clear the overlap check first.
 func TestInvalidateDuplicatePanelReference(t *testing.T) {
 	data := []byte(`{
+		"variables": [],
 		"panels": {
-			"p1": {"kind": "Panel", "spec": {"plugin": {"kind": "signoz/TablePanel", "spec": {}}, "queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}}}]}}
+			"p1": {"kind": "Panel", "spec": {"links": [],"plugin": {"kind": "signoz/TablePanel", "spec": {}}, "queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}}}]}}
 		},
+		"links": [],
 		"layouts": [{"kind": "Grid", "spec": {"items": [
 			{"x": 0, "y": 0, "width": 6, "height": 6, "content": {"$ref": "#/spec/panels/p1"}},
 			{"x": 6, "y": 0, "width": 6, "height": 6, "content": {"$ref": "#/spec/panels/p1"}}
@@ -1634,47 +1826,55 @@ func TestInvalidateDuplicatePanelReference(t *testing.T) {
 	assert.Contains(t, err.Error(), "spec.layouts[0].spec.items[1].content")
 }
 
-// Every display name — dashboard, panel, variable — and the grid layout title is
-// bounded at MaxDisplayNameLen. The name is one over the limit in each case, and
-// the message reads "<json path>: <field> name must be at most ...", pairing the
-// locatable path (like the other spec errors) with a human field label.
+// Every display name — dashboard, panel, variable — is bounded at MaxDisplayNameLen,
+// while the grid layout title has its own, larger bound (MaxLayoutTitleLen). The name
+// is one over the relevant limit in each case, and the message reads "<json path>:
+// <field> name must be at most ...", pairing the locatable path (like the other spec
+// errors) with a human field label.
 func TestInvalidateDisplayNameTooLong(t *testing.T) {
-	tooLong := strings.Repeat("x", MaxDisplayNameLen+1)
-	lengthMsg := fmt.Sprintf("must be at most %d characters, got %d", MaxDisplayNameLen, MaxDisplayNameLen+1)
-
 	testCases := []struct {
-		scenario      string
-		dashboardJSON string
-		expectedPath  string
-		expectedLabel string
+		scenario         string
+		limit            int
+		dashboardJSONFmt string
+		expectedPath     string
+		expectedLabel    string
 	}{
 		{
-			scenario:      "dashboard display name",
-			dashboardJSON: `{"display": {"name": "` + tooLong + `"}, "layouts": []}`,
+			scenario: "dashboard display name",
+			limit:    MaxDisplayNameLen,
+			dashboardJSONFmt: `{
+		"variables": [],
+		"panels": {},"display": {"name": "%s"}, "links": [], "layouts": []}`,
 			expectedLabel: "dashboard",
 			expectedPath:  "spec.display.name",
 		},
 		{
-			scenario:      "panel display name",
-			dashboardJSON: `{"panels": {"p1": {"kind": "Panel", "spec": {"display": {"name": "` + tooLong + `"}, "plugin": {"kind": "signoz/TablePanel", "spec": {}}, "queries": []}}}, "layouts": []}`,
-			expectedLabel: "panel",
-			expectedPath:  "spec.panels.p1.spec.display.name",
+			scenario:         "panel display name",
+			limit:            MaxDisplayNameLen,
+			dashboardJSONFmt: `{"variables": [], "panels": {"p1": {"kind": "Panel", "spec": {"links": [], "display": {"name": "%s"}, "plugin": {"kind": "signoz/TablePanel", "spec": {}}, "queries": []}}}, "links": [], "layouts": []}`,
+			expectedLabel:    "panel",
+			expectedPath:     "spec.panels.p1.spec.display.name",
 		},
 		{
-			scenario:      "list variable display name",
-			dashboardJSON: `{"variables": [{"kind": "ListVariable", "spec": {"name": "svc", "display": {"name": "` + tooLong + `"}, "plugin": {"kind": "signoz/DynamicVariable", "spec": {"name": "service.name", "signal": "metrics"}}}}], "layouts": []}`,
-			expectedLabel: "variable",
-			expectedPath:  "spec.variables[0].spec.display.name",
+			scenario:         "list variable display name",
+			limit:            MaxDisplayNameLen,
+			dashboardJSONFmt: `{"panels": {}, "variables": [{"kind": "ListVariable", "spec": {"name": "svc", "display": {"name": "%s"}, "plugin": {"kind": "signoz/DynamicVariable", "spec": {"name": "service.name", "signal": "metrics"}}}}], "links": [], "layouts": []}`,
+			expectedLabel:    "variable",
+			expectedPath:     "spec.variables[0].spec.display.name",
 		},
 		{
-			scenario:      "text variable display name",
-			dashboardJSON: `{"variables": [{"kind": "TextVariable", "spec": {"name": "mytext", "value": "v", "display": {"name": "` + tooLong + `"}}}], "layouts": []}`,
-			expectedLabel: "variable",
-			expectedPath:  "spec.variables[0].spec.display.name",
+			scenario:         "text variable display name",
+			limit:            MaxDisplayNameLen,
+			dashboardJSONFmt: `{"panels": {}, "variables": [{"kind": "TextVariable", "spec": {"name": "mytext", "value": "v", "display": {"name": "%s"}}}], "links": [], "layouts": []}`,
+			expectedLabel:    "variable",
+			expectedPath:     "spec.variables[0].spec.display.name",
 		},
 		{
-			scenario:      "layout title",
-			dashboardJSON: `{"layouts": [{"kind": "Grid", "spec": {"display": {"title": "` + tooLong + `"}, "items": []}}]}`,
+			scenario: "layout title",
+			limit:    MaxLayoutTitleLen,
+			dashboardJSONFmt: `{
+		"variables": [],
+		"panels": {},"links": [], "layouts": [{"kind": "Grid", "spec": {"display": {"title": "%s"}, "items": []}}]}`,
 			expectedLabel: "layout",
 			expectedPath:  "spec.layouts[0].spec.display.title",
 		},
@@ -1682,7 +1882,9 @@ func TestInvalidateDisplayNameTooLong(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.scenario, func(t *testing.T) {
-			_, err := unmarshalDashboard([]byte(testCase.dashboardJSON))
+			tooLong := strings.Repeat("x", testCase.limit+1)
+			lengthMsg := fmt.Sprintf("must be at most %d characters, got %d", testCase.limit, testCase.limit+1)
+			_, err := unmarshalDashboard(fmt.Appendf(nil, testCase.dashboardJSONFmt, tooLong))
 			require.Error(t, err)
 			// Message is "<path>: <label> name must be at most N characters, got M".
 			want := testCase.expectedPath + ": " + testCase.expectedLabel + " name " + lengthMsg
@@ -1694,7 +1896,9 @@ func TestInvalidateDisplayNameTooLong(t *testing.T) {
 // A display name at exactly the limit is accepted.
 func TestValidateDisplayNameAtMaxLength(t *testing.T) {
 	atLimit := strings.Repeat("x", MaxDisplayNameLen)
-	_, err := unmarshalDashboard([]byte(`{"display": {"name": "` + atLimit + `"}, "layouts": []}`))
+	_, err := unmarshalDashboard([]byte(`{
+		"variables": [],
+		"panels": {},"display": {"name": "` + atLimit + `"}, "links": [], "layouts": []}`))
 	assert.NoError(t, err)
 }
 

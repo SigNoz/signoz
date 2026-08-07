@@ -19,6 +19,7 @@ import {
 	SectionKind,
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 import { getBuilderQueries } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getBuilderQueries';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 
 import { getExecStats } from '../queryV5/v5ResponseData';
 import { usePanelInteractions } from '../PanelsAndSectionsLayout/Panel/hooks/usePanelInteractions';
@@ -159,11 +160,13 @@ function PanelEditorContainer({
 		return section?.controls;
 	}, [panelDefinition]);
 
-	// A new panel is savable once it has a query to run — List auto-seeds one; other
-	// kinds open query-less, so there's nothing to save until the user builds one.
+	// Unsaved-edits flag driving the discard confirmation on close (Save is always
+	// enabled). Read the seed `panel`, not the live `draft` — the staged-query sync
+	// commits the seed into the draft on open, which would falsely dirty an untouched
+	// query-less new panel.
 	const isDirty = useMemo(
-		() => isSpecDirty || isQueryDirty || (isNew && draft.spec.queries.length > 0),
-		[isSpecDirty, isQueryDirty, isNew, draft.spec.queries.length],
+		() => isSpecDirty || isQueryDirty || (isNew && panel.spec.queries.length > 0),
+		[isSpecDirty, isQueryDirty, isNew, panel.spec.queries.length],
 	);
 
 	const isListPanel = panelKind === 'signoz/ListPanel';
@@ -225,6 +228,7 @@ function PanelEditorContainer({
 	});
 
 	const setScrollTargetId = useScrollIntoViewStore((s) => s.setScrollTargetId);
+	const { showErrorModal } = useErrorModal();
 
 	const onSave = useCallback(async (): Promise<void> => {
 		if (!isEditable) {
@@ -235,12 +239,22 @@ function PanelEditorContainer({
 			const savedPanelId = await save(buildSaveSpec(draft.spec));
 			// Reveal the saved panel once the dashboard re-renders.
 			setScrollTargetId(savedPanelId);
-			toast.success('Panel saved');
+			toast.success('Panel saved', {
+				position: 'top-center',
+			});
 			onSaved();
-		} catch {
-			toast.error('Failed to save panel');
+		} catch (err) {
+			showErrorModal(err);
 		}
-	}, [isEditable, save, buildSaveSpec, draft.spec, setScrollTargetId, onSaved]);
+	}, [
+		isEditable,
+		save,
+		buildSaveSpec,
+		draft.spec,
+		setScrollTargetId,
+		onSaved,
+		showErrorModal,
+	]);
 
 	// Leaving an existing panel's editor (without saving) still returns to it, so
 	// the dashboard lands on that panel rather than scrolled to the top. A new,

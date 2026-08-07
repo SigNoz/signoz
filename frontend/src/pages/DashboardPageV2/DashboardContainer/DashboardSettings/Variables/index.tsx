@@ -1,15 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { toast } from '@signozhq/ui/sonner';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
 
 import settingsStyles from '../DashboardSettings.module.scss';
 import { useOptimisticPatch } from '../../hooks/useOptimisticPatch';
 import { useDashboardStore } from '../../store/useDashboardStore';
-import {
-	buildApplyVariableToPanelsPatch,
-	getPanelIdsReferencingVariable,
-} from './utils/applyVariableToPanelsPatch';
+import { getPanelIdsReferencingVariable } from './utils/applyVariableToPanelsPatch';
 import { useSaveVariables } from './hooks/useSaveVariables';
 import { useVariableListActions } from './hooks/useVariableListActions';
 import { dtoToFormModel } from './variableAdapters';
@@ -22,7 +18,6 @@ import VariableImpactDialog from './VariableImpactDialog/VariableImpactDialog';
 import VariablesList from './components/VariablesList/VariablesList';
 import styles from './Variables.module.scss';
 import AddVariableButton from './components/AddVariableButton';
-import ApplyToAllDialog from './components/ApplyToAllDialog/ApplyToAllDialog';
 import NoVariablesCard from './components/NoVariablesCard/NoVariablesCard';
 import { EditingState } from './types';
 
@@ -56,7 +51,6 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 	const [isEditing, setIsEditing] = useState<EditingState>(
 		openAddOnMount && isEditable ? { type: 'new' } : null,
 	);
-	const [applyToAllIndex, setApplyToAllIndex] = useState<number | null>(null);
 
 	const {
 		confirmDeleteIndex,
@@ -67,6 +61,8 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 		handleMove,
 		requestDelete,
 		handleConfirmDelete,
+		requestApplyToAll,
+		appliedToAllNames,
 		handleImpactConfirm,
 	} = useVariableListActions({
 		dashboard,
@@ -113,32 +109,6 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 		);
 	}, [editingFormModel, dashboard.spec.panels]);
 
-	const applyToAllVariable =
-		applyToAllIndex === null ? null : variables[applyToAllIndex];
-
-	const handleConfirmApplyToAll = async (): Promise<void> => {
-		if (!applyToAllVariable) {
-			return;
-		}
-		const ops = buildApplyVariableToPanelsPatch(
-			dashboard.spec.panels,
-			applyToAllVariable.dynamicAttribute,
-			applyToAllVariable.name,
-		);
-		if (ops.length === 0) {
-			toast.info('No panels needed this filter.');
-			setApplyToAllIndex(null);
-			return;
-		}
-		try {
-			await patchAsync(ops);
-			toast.success(`Applied $${applyToAllVariable.name} to all panels`);
-		} catch {
-			toast.error('Could not apply the variable to panels');
-		}
-		setApplyToAllIndex(null);
-	};
-
 	if (editingFormModel) {
 		return (
 			<VariableForm
@@ -169,20 +139,14 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 						onConfirmDelete={handleConfirmDelete}
 						onCancelDelete={(): void => setConfirmDeleteIndex(null)}
 						onMove={handleMove}
-						onApplyToAll={(index): void => setApplyToAllIndex(index)}
+						onApplyToAll={requestApplyToAll}
+						appliedToAllNames={appliedToAllNames}
 					/>
 					<div className={styles.footer}>
 						<AddVariableButton isEditable={isEditable} setIsEditing={setIsEditing} />
 					</div>
 				</>
 			)}
-			<ApplyToAllDialog
-				open={applyToAllVariable !== null}
-				variableName={applyToAllVariable?.name ?? ''}
-				isLoading={isPatching}
-				onConfirm={(): void => void handleConfirmApplyToAll()}
-				onClose={(): void => setApplyToAllIndex(null)}
-			/>
 			<VariableImpactDialog
 				open={impact !== null}
 				mode={impact?.mode ?? 'delete'}
