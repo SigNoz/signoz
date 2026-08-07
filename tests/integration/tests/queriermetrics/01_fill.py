@@ -42,7 +42,7 @@ def _maybe_add_formula_functions(spec: dict[str, Any], fill_mode: str) -> None:
         spec["functions"] = [{"name": "fillZero"}]
 
 
-@pytest.mark.parametrize("fill_mode", [FILL_GAPS, FILL_ZERO], ids=["fillGaps", "fillZero"])
+@pytest.mark.parametrize("fill_mode", [FILL_GAPS, FILL_ZERO], ids=["fill_gaps", "fill_zero"])
 def test_metrics_fill_no_group_by(
     fill_mode: str,
     signoz: types.SigNoz,
@@ -133,7 +133,7 @@ def test_metrics_fill_no_group_by(
     )
 
 
-@pytest.mark.parametrize("fill_mode", [FILL_GAPS, FILL_ZERO], ids=["fillGaps", "fillZero"])
+@pytest.mark.parametrize("fill_mode", [FILL_GAPS, FILL_ZERO], ids=["fill_gaps", "fill_zero"])
 def test_metrics_fill_with_group_by(
     fill_mode: str,
     signoz: types.SigNoz,
@@ -251,7 +251,7 @@ def test_metrics_fill_with_group_by(
         )
 
 
-@pytest.mark.parametrize("fill_mode", [FILL_GAPS, FILL_ZERO], ids=["fillGaps", "fillZero"])
+@pytest.mark.parametrize("fill_mode", [FILL_GAPS, FILL_ZERO], ids=["fill_gaps", "fill_zero"])
 def test_metrics_fill_formula(
     fill_mode: str,
     signoz: types.SigNoz,
@@ -386,7 +386,7 @@ def test_metrics_fill_formula(
     )
 
 
-@pytest.mark.parametrize("fill_mode", [FILL_GAPS, FILL_ZERO], ids=["fillGaps", "fillZero"])
+@pytest.mark.parametrize("fill_mode", [FILL_GAPS, FILL_ZERO], ids=["fill_gaps", "fill_zero"])
 def test_metrics_fill_formula_with_group_by(
     fill_mode: str,
     signoz: types.SigNoz,
