@@ -1,4 +1,17 @@
 {
-  "note": "Divergences of the clickhousev2 provider (pinned via X-SigNoz-PromQL-Provider) from the upstream reference engine, enforced exactly by 01_upstream_corpus.py in both directions. This ledger is the rollout scorecard for the provider swap: the default provider cannot be replaced by clickhousev2 while anything is listed here. Entries must carry the defect's cause and be REMOVED as the provider is fixed.",
-  "divergences": {}
+  "note": "Divergences of the clickhousev2 provider (pinned via X-SigNoz-PromQL-Provider) from the upstream reference engine, enforced exactly by 01_upstream_corpus.py in both directions. This ledger is the rollout scorecard for the provider swap: the default provider cannot be replaced by clickhousev2 while anything is listed here. Entries must carry the defect's cause and be REMOVED as the provider is fixed. Current class: the engine aggregates floats with Kahan compensated summation (sum, sum_over_time) and an overflow-free incremental mean (avg); ClickHouse's sumForEach/avgForEach/arraySum are naive, so extreme-magnitude corpus data (±1e100 cancellation, ±1.8e308 overflow) diverges on transpiled plans. Burn-down candidates: sumKahanForEach for the cancellation class; the overflow class needs an incremental-mean aggregate ClickHouse does not have.",
+  "divergences": {
+    "aggregators.test:651[base]": "avg over near-max-float64 values: engine's incremental mean never forms the overflowing sum; avgForEach sums then divides, overflowing to +Inf",
+    "aggregators.test:651[instant-coarse]": "same as aggregators.test:651[base] on the coarse-step grid variant",
+    "aggregators.test:654[base]": "avg over near-min-float64 values: engine's incremental mean never forms the overflowing sum; avgForEach overflows to -Inf",
+    "aggregators.test:654[instant-coarse]": "same as aggregators.test:654[base] on the coarse-step grid variant",
+    "aggregators.test:687[base]": "sum over {1e100, -1e100, small}: engine uses Kahan compensated summation; sumForEach's naive summation loses the small terms to cancellation and returns 0",
+    "aggregators.test:687[instant-coarse]": "same as aggregators.test:687[base] on the coarse-step grid variant",
+    "aggregators.test:695[base]": "avg over {1e100, -1e100, small}: same Kahan-vs-naive cancellation as aggregators.test:687, divided by count",
+    "aggregators.test:695[instant-coarse]": "same as aggregators.test:695[base] on the coarse-step grid variant",
+    "functions.test:1084[instant-coarse]": "sum_over_time over a window containing ±1e100: the disjoint coarse-step form's arraySum slide is naive summation, cancelling to 0 (the base variant's W>64 shape falls back to the engine and is exact)",
+    "functions.test:1087[instant-coarse]": "avg_over_time, same window and cancellation as functions.test:1084[instant-coarse]",
+    "functions.test:1149[base]": "avg_over_time over ±2.258e220-magnitude samples: engine's Kahan-compensated incremental mean cancels exactly to 0; the bucketed form's naive slide summation leaves a ~1e202 residue",
+    "functions.test:1149[instant-coarse]": "same as functions.test:1149[base] through the disjoint coarse-step form"
+  }
 }
