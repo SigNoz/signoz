@@ -8,12 +8,10 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.fs import get_testdata_file_path
-from fixtures.inframonitoring import STATUS_BUCKETS, STATUS_TO_BUCKET
+from fixtures.inframonitoring import STATUS_BUCKETS, STATUS_TO_BUCKET, load_pods_metrics
 from fixtures.querier import compare_values, get_all_warnings
 
 ENDPOINT = "/api/v2/infra_monitoring/pods"
-
-# Placeholder in JSONL labels that gets substituted with a runtime ISO string.
 
 
 def test_pods_accuracy(
@@ -21,7 +19,6 @@ def test_pods_accuracy(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    load_pods_metrics,
 ) -> None:
     """Seed 2 pods x 7 metrics; assert response shape/contract + exact per-pod
     metric values, podAge, and podCountsByStatus against precomputed expected
@@ -150,7 +147,6 @@ def test_pods_warnings(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    load_pods_metrics,
     case: dict,
 ) -> None:
     """A never-ingested metric surfaces a non-blocking warning (200 + data), not a
@@ -249,7 +245,6 @@ def test_pods_filter(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    load_pods_metrics,
     expression: str,
     expected_pods: set,
 ) -> None:
@@ -310,7 +305,6 @@ def test_pods_filter_invalid(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    load_pods_metrics,
     expression: str,
     err_substr,
 ) -> None:
@@ -357,7 +351,6 @@ def test_pods_groupby(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    load_pods_metrics,
     group_key: str,
     expected_groups: set,
 ) -> None:
@@ -412,7 +405,6 @@ def test_pods_pagination(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    load_pods_metrics,
 ) -> None:
     """Pagination: per-page len matches min(limit, total-offset), total invariant,
     pages cover the full set with no overlap. The final offset is beyond total:
@@ -475,7 +467,6 @@ def test_pods_orderby(  # pylint: disable=too-many-arguments,too-many-positional
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    load_pods_metrics,
     column: str,
     record_field,
     direction: str,
@@ -610,7 +601,6 @@ def test_pods_status_list_mode(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    load_pods_metrics,
     pod_name: str,
     expected_status: str,
 ) -> None:
@@ -679,7 +669,6 @@ def test_pods_restarts_list_mode(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    load_pods_metrics,
     pod_name: str,
     expected_restarts: int,
 ) -> None:
@@ -719,7 +708,6 @@ def test_pods_status_latest_wins(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    load_pods_metrics,
 ) -> None:
     """A stale container reason from an old incarnation must not win. trans-p's
     first incarnation (container.id=aaa) reported CrashLoopBackOff, then it
@@ -758,7 +746,6 @@ def test_pods_restarts_latest_wins(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    load_pods_metrics,
 ) -> None:
     """restartCount is cumulative per container. Across incarnations
     (container.id=aaa reported 1, then container.id=bbb reported 5) podRestarts
@@ -796,7 +783,6 @@ def test_pods_status_grouped_mode(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    load_pods_metrics,
 ) -> None:
     """groupBy=[k8s.namespace.name] aggregates each pod's display status across
     ns-mixed. podStatus is no-data (no single pod identifies the group). Seeded
@@ -853,7 +839,6 @@ def test_pods_restarts_grouped_mode(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    load_pods_metrics,
 ) -> None:
     """Grouped podRestarts is the sum of restarts across all pods in the group.
     In ns-mixed only g-run-2 has restarts (3); all others 0 -> group total 3."""
@@ -896,7 +881,6 @@ def test_pods_status_missing_metric_warning(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    load_pods_metrics,
 ) -> None:
     """When the status metrics were never ingested, the status query is gated
     off: a warning naming the missing metric(s) is surfaced, podStatus is the
