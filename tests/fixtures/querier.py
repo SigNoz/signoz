@@ -1,8 +1,10 @@
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 from typing import Any
 
+import pytest
 import requests
 
 from fixtures import types
@@ -1109,3 +1111,51 @@ def make_scalar_query_request(
             "formatOptions": {"formatTableResultForUI": True, "fillGaps": False},
         },
     )
+
+
+@pytest.fixture(name="run_query_case", scope="function")
+def run_query_case(signoz: types.SigNoz) -> Callable[[str, datetime, dict[str, Any]], None]:
+    def _run_query_case(token: str, now: datetime, case: dict[str, Any]) -> None:
+        start_ms = case.get("startMs", int((now - timedelta(seconds=10)).timestamp() * 1000))
+        end_ms = case.get("endMs", int(now.timestamp() * 1000))
+
+        if case["requestType"] == "raw":
+            query = build_raw_query(
+                name=case["name"],
+                signal="logs",
+                filter_expression=case.get("expression"),
+                order=case.get("order") or [build_order_by("timestamp", "desc")],
+                limit=case.get("limit", 100),
+                step_interval=case.get("stepInterval") or 60,
+            )
+        else:
+            aggregation = case.get("aggregation")
+            if aggregation and not isinstance(aggregation, list):
+                aggregations = [build_aggregation(aggregation)]
+            elif aggregation:
+                aggregations = aggregation
+            else:
+                aggregations = []
+            query = build_scalar_query(
+                name=case["name"],
+                signal="logs",
+                aggregations=aggregations,
+                group_by=case.get("groupBy"),
+                order=case.get("order"),
+                limit=case.get("limit", 100),
+                filter_expression=case.get("expression"),
+                step_interval=case.get("stepInterval") or 60,
+            )
+
+        response = make_query_request(
+            signoz=signoz,
+            token=token,
+            start_ms=start_ms,
+            end_ms=end_ms,
+            queries=[query],
+            request_type=case["requestType"],
+        )
+        assert response.status_code == 200, f"HTTP {response.status_code} for case '{case['name']}': {response.text}"
+        assert case["validate"](response), f"Validation failed for case '{case['name']}': {response.json()}"
+
+    return _run_query_case

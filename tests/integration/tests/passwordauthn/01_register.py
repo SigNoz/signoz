@@ -20,11 +20,6 @@ logger = setup_logger(__name__)
 
 
 def test_register_with_invalid_input(signoz: types.SigNoz) -> None:
-    """
-    Test the register endpoint with invalid input.
-    1. Invalid Password
-    2. Invalid Email
-    """
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/register"),
         json={

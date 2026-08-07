@@ -1,9 +1,3 @@
-"""Aggregations over the intrinsic `timestamp` column.
-
-`timestamp` is DateTime64(9), so a numeric coercion rescales it to seconds — the #5824
-regression. Order-based aggregations answer with an instant; sum/avg have no time meaning.
-"""
-
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
@@ -61,6 +55,9 @@ def query_timestamp_aggregation(signoz: types.SigNoz, token: str, expression: st
     )
 
 
+# `timestamp` is DateTime64(9), so a numeric coercion rescales it to seconds — the
+# #5824 regression. Order-based aggregations answer with an instant; sum/avg have
+# no time meaning.
 @pytest.mark.parametrize("expression,bound", [("max(timestamp)", "newest"), ("min(timestamp)", "oldest")])
 def test_timestamp_order_aggregations_return_the_instant(
     signoz: types.SigNoz,

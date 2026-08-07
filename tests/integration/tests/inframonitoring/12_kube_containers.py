@@ -1,5 +1,3 @@
-"""Integration tests for the v2 infra-monitoring kube_containers endpoint."""
-
 import json
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus

@@ -24,9 +24,6 @@ def zeus(
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
 ) -> types.TestContainerDocker:
-    """
-    Package-scoped fixture for running zeus
-    """
 
     def create() -> types.TestContainerDocker:
         container = WireMockContainer(image="wiremock/wiremock:2.35.1-1", secure=False)
@@ -76,9 +73,6 @@ def gateway(
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
 ) -> types.TestContainerDocker:
-    """
-    Package-scoped fixture for running gateway
-    """
 
     def create() -> types.TestContainerDocker:
         container = WireMockContainer(image="wiremock/wiremock:2.35.1-1", secure=False)

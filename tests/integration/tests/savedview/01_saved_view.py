@@ -10,55 +10,6 @@ from fixtures.types import Operation, SigNoz
 BASE_URL = "/api/v2/saved_views"
 
 
-def _query(*, disabled: bool = False, legend: str = "") -> dict:
-    return {
-        "type": "builder_query",
-        "spec": {
-            "name": "A",
-            "signal": "logs",
-            "aggregations": [{"expression": "count()"}],
-            "disabled": disabled,
-            "legend": legend,
-        },
-    }
-
-
-def _data(
-    *,
-    display_name: str = "My View",
-    panel_type: str = "table",
-    max_lines: int = 0,
-    font_size: str = "",
-    fmt: str = "",
-    color: str = "",
-    selected_fields: list | None = None,
-    disabled: bool = False,
-    legend: str = "",
-) -> dict:
-    return {
-        "schemaVersion": "v2",
-        "spec": {
-            "displayName": display_name,
-            "panelType": panel_type,
-            "queries": [_query(disabled=disabled, legend=legend)],
-            "selectedFields": [] if selected_fields is None else selected_fields,
-            "display": {"maxLines": max_lines, "fontSize": font_size, "format": fmt, "color": color},
-        },
-    }
-
-
-def _create_body(*, name: str = "my-view", generate_name: bool = False, display_name: str = "My View", source: str = "logs", **data_kwargs) -> dict:
-    """name is the immutable slug. Pass generate_name=True (and leave name
-    empty) to have the server generate one from display_name instead."""
-    return {"name": name, "generateName": generate_name, "source": source, "data": _data(display_name=display_name, **data_kwargs)}
-
-
-def _update_body(*, display_name: str = "My View", source: str = "logs", **data_kwargs) -> dict:
-    """Deliberately has no name field at all -- name is immutable and not
-    part of the update payload."""
-    return {"source": source, "data": _data(display_name=display_name, **data_kwargs)}
-
-
 # ─── failure cases (create no saved views) ───────────────────────────────────
 
 
@@ -69,11 +20,23 @@ def test_create_rejects_wrong_schema_version(
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    body = _create_body()
-    body["data"]["schemaVersion"] = "v9"
     response = requests.post(
         signoz.self.host_configs["8080"].get(BASE_URL),
-        json=body,
+        json={
+            "name": "my-view",
+            "generateName": False,
+            "source": "logs",
+            "data": {
+                "schemaVersion": "v9",
+                "spec": {
+                    "displayName": "My View",
+                    "panelType": "table",
+                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                    "selectedFields": [],
+                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                },
+            },
+        },
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -90,11 +53,23 @@ def test_create_rejects_invalid_panel_type(
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    body = _create_body()
-    body["data"]["spec"]["panelType"] = "bogus"
     response = requests.post(
         signoz.self.host_configs["8080"].get(BASE_URL),
-        json=body,
+        json={
+            "name": "my-view",
+            "generateName": False,
+            "source": "logs",
+            "data": {
+                "schemaVersion": "v2",
+                "spec": {
+                    "displayName": "My View",
+                    "panelType": "bogus",
+                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                    "selectedFields": [],
+                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                },
+            },
+        },
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -110,11 +85,23 @@ def test_create_rejects_empty_queries(
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    body = _create_body()
-    body["data"]["spec"]["queries"] = []
     response = requests.post(
         signoz.self.host_configs["8080"].get(BASE_URL),
-        json=body,
+        json={
+            "name": "my-view",
+            "generateName": False,
+            "source": "logs",
+            "data": {
+                "schemaVersion": "v2",
+                "spec": {
+                    "displayName": "My View",
+                    "panelType": "table",
+                    "queries": [],
+                    "selectedFields": [],
+                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                },
+            },
+        },
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -134,11 +121,23 @@ def test_create_rejects_empty_display_name(
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    body = _create_body()
-    body["data"]["spec"]["displayName"] = ""
     response = requests.post(
         signoz.self.host_configs["8080"].get(BASE_URL),
-        json=body,
+        json={
+            "name": "my-view",
+            "generateName": False,
+            "source": "logs",
+            "data": {
+                "schemaVersion": "v2",
+                "spec": {
+                    "displayName": "",
+                    "panelType": "table",
+                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                    "selectedFields": [],
+                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                },
+            },
+        },
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -155,11 +154,23 @@ def test_create_rejects_invalid_source(
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    body = _create_body()
-    body["source"] = "bogus"
     response = requests.post(
         signoz.self.host_configs["8080"].get(BASE_URL),
-        json=body,
+        json={
+            "name": "my-view",
+            "generateName": False,
+            "source": "bogus",
+            "data": {
+                "schemaVersion": "v2",
+                "spec": {
+                    "displayName": "My View",
+                    "panelType": "table",
+                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                    "selectedFields": [],
+                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                },
+            },
+        },
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -175,10 +186,23 @@ def test_create_rejects_invalid_name(
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    body = _create_body(name="Not A Valid Slug")
     response = requests.post(
         signoz.self.host_configs["8080"].get(BASE_URL),
-        json=body,
+        json={
+            "name": "Not A Valid Slug",
+            "generateName": False,
+            "source": "logs",
+            "data": {
+                "schemaVersion": "v2",
+                "spec": {
+                    "displayName": "My View",
+                    "panelType": "table",
+                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                    "selectedFields": [],
+                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                },
+            },
+        },
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -196,10 +220,23 @@ def test_create_rejects_empty_name_without_generate_name(
     generate one -- generateName has to be explicitly set."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    body = _create_body(name="")
     response = requests.post(
         signoz.self.host_configs["8080"].get(BASE_URL),
-        json=body,
+        json={
+            "name": "",
+            "generateName": False,
+            "source": "logs",
+            "data": {
+                "schemaVersion": "v2",
+                "spec": {
+                    "displayName": "My View",
+                    "panelType": "table",
+                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                    "selectedFields": [],
+                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                },
+            },
+        },
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -216,10 +253,25 @@ def test_create_rejects_name_when_generate_name_is_true(
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    body = _create_body(name="explicit-name", generate_name=True)
+    # name is the immutable slug. Pass generateName=true (and leave name empty)
+    # to have the server generate one from displayName instead.
     response = requests.post(
         signoz.self.host_configs["8080"].get(BASE_URL),
-        json=body,
+        json={
+            "name": "explicit-name",
+            "generateName": True,
+            "source": "logs",
+            "data": {
+                "schemaVersion": "v2",
+                "spec": {
+                    "displayName": "My View",
+                    "panelType": "table",
+                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                    "selectedFields": [],
+                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                },
+            },
+        },
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -240,11 +292,24 @@ def test_create_rejects_unknown_field(
     # that rewraps this as its own dashboard_invalid_input code), PostableSavedView
     # relies solely on binding.WithDisallowUnknownFields, so this surfaces as the
     # generic invalid_input code rather than saved_view_invalid_input.
-    body = _create_body()
-    body["unknownfield"] = "boom"
     response = requests.post(
         signoz.self.host_configs["8080"].get(BASE_URL),
-        json=body,
+        json={
+            "name": "my-view",
+            "generateName": False,
+            "source": "logs",
+            "data": {
+                "schemaVersion": "v2",
+                "spec": {
+                    "displayName": "My View",
+                    "panelType": "table",
+                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                    "selectedFields": [],
+                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                },
+            },
+            "unknownfield": "boom",
+        },
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -299,7 +364,19 @@ def test_update_missing_view_returns_not_found(
 
     response = requests.put(
         signoz.self.host_configs["8080"].get(f"{BASE_URL}/{uuid.uuid4()}"),
-        json=_update_body(),
+        json={
+            "source": "logs",
+            "data": {
+                "schemaVersion": "v2",
+                "spec": {
+                    "displayName": "My View",
+                    "panelType": "table",
+                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                    "selectedFields": [],
+                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                },
+            },
+        },
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -321,7 +398,21 @@ def test_update_rejects_name_field(
 
     response = requests.post(
         signoz.self.host_configs["8080"].get(BASE_URL),
-        json=_create_body(name="update-rejects-name-field"),
+        json={
+            "name": "update-rejects-name-field",
+            "generateName": False,
+            "source": "logs",
+            "data": {
+                "schemaVersion": "v2",
+                "spec": {
+                    "displayName": "My View",
+                    "panelType": "table",
+                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                    "selectedFields": [],
+                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                },
+            },
+        },
         headers=headers,
         timeout=5,
     )
@@ -329,11 +420,22 @@ def test_update_rejects_name_field(
     view_id = response.json()["data"]["id"]
 
     try:
-        body = _update_body()
-        body["name"] = "update-rejects-name-field"
         response = requests.put(
             signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
-            json=body,
+            json={
+                "source": "logs",
+                "data": {
+                    "schemaVersion": "v2",
+                    "spec": {
+                        "displayName": "My View",
+                        "panelType": "table",
+                        "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                        "selectedFields": [],
+                        "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                    },
+                },
+                "name": "update-rejects-name-field",
+            },
             headers=headers,
             timeout=5,
         )
@@ -379,7 +481,21 @@ def test_saved_view_lifecycle(
     # ── create ────────────────────────────────────────────────────────────────
     response = requests.post(
         signoz.self.host_configs["8080"].get(BASE_URL),
-        json=_create_body(name="lc-logs-overview", display_name="lc-logs-overview", source="logs"),
+        json={
+            "name": "lc-logs-overview",
+            "generateName": False,
+            "source": "logs",
+            "data": {
+                "schemaVersion": "v2",
+                "spec": {
+                    "displayName": "lc-logs-overview",
+                    "panelType": "table",
+                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                    "selectedFields": [],
+                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                },
+            },
+        },
         headers=headers,
         timeout=5,
     )
@@ -388,7 +504,21 @@ def test_saved_view_lifecycle(
 
     response = requests.post(
         signoz.self.host_configs["8080"].get(BASE_URL),
-        json=_create_body(name="lc-traces-overview", display_name="lc-traces-overview", source="traces"),
+        json={
+            "name": "lc-traces-overview",
+            "generateName": False,
+            "source": "traces",
+            "data": {
+                "schemaVersion": "v2",
+                "spec": {
+                    "displayName": "lc-traces-overview",
+                    "panelType": "table",
+                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                    "selectedFields": [],
+                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                },
+            },
+        },
         headers=headers,
         timeout=5,
     )
@@ -432,7 +562,19 @@ def test_saved_view_lifecycle(
         # since it isn't even part of the update payload ─────────────────
         response = requests.put(
             signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
-            json=_update_body(display_name="lc-logs-overview-renamed", source="metrics", panel_type="graph"),
+            json={
+                "source": "metrics",
+                "data": {
+                    "schemaVersion": "v2",
+                    "spec": {
+                        "displayName": "lc-logs-overview-renamed",
+                        "panelType": "graph",
+                        "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                        "selectedFields": [],
+                        "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                    },
+                },
+            },
             headers=headers,
             timeout=5,
         )
@@ -475,7 +617,21 @@ def test_empty_name_derives_a_slug_from_display_name(
 
     response = requests.post(
         signoz.self.host_configs["8080"].get(BASE_URL),
-        json=_create_body(name="", generate_name=True, display_name="My Generated View!"),
+        json={
+            "name": "",
+            "generateName": True,
+            "source": "logs",
+            "data": {
+                "schemaVersion": "v2",
+                "spec": {
+                    "displayName": "My Generated View!",
+                    "panelType": "table",
+                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                    "selectedFields": [],
+                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                },
+            },
+        },
         headers=headers,
         timeout=5,
     )
@@ -521,17 +677,21 @@ def test_create_roundtrip_preserves_zero_values(
 
     response = requests.post(
         signoz.self.host_configs["8080"].get(BASE_URL),
-        json=_create_body(
-            name="create-zero-values",
-            display_name="create-zero-values",
-            max_lines=0,
-            font_size="",
-            fmt="",
-            color="",
-            selected_fields=[],
-            disabled=False,
-            legend="",
-        ),
+        json={
+            "name": "create-zero-values",
+            "generateName": False,
+            "source": "logs",
+            "data": {
+                "schemaVersion": "v2",
+                "spec": {
+                    "displayName": "create-zero-values",
+                    "panelType": "table",
+                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                    "selectedFields": [],
+                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                },
+            },
+        },
         headers=headers,
         timeout=5,
     )
@@ -575,11 +735,22 @@ def test_selected_fields_omitted_on_create_reads_back_as_empty_list_not_null(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     headers = {"Authorization": f"Bearer {token}"}
 
-    body = _create_body(name="omitted-selected-fields", display_name="omitted-selected-fields")
-    del body["data"]["spec"]["selectedFields"]
     response = requests.post(
         signoz.self.host_configs["8080"].get(BASE_URL),
-        json=body,
+        json={
+            "name": "omitted-selected-fields",
+            "generateName": False,
+            "source": "logs",
+            "data": {
+                "schemaVersion": "v2",
+                "spec": {
+                    "displayName": "omitted-selected-fields",
+                    "panelType": "table",
+                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                },
+            },
+        },
         headers=headers,
         timeout=5,
     )
@@ -618,17 +789,21 @@ def test_update_does_not_corrupt_zero_values(
     # ── create with deliberately non-zero values everywhere ──────────────────
     response = requests.post(
         signoz.self.host_configs["8080"].get(BASE_URL),
-        json=_create_body(
-            name="update-zero-values",
-            display_name="update-zero-values",
-            max_lines=25,
-            font_size="large",
-            fmt="table",
-            color="blue",
-            selected_fields=[{"name": "service.name"}],
-            disabled=True,
-            legend="Custom Legend",
-        ),
+        json={
+            "name": "update-zero-values",
+            "generateName": False,
+            "source": "logs",
+            "data": {
+                "schemaVersion": "v2",
+                "spec": {
+                    "displayName": "update-zero-values",
+                    "panelType": "table",
+                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": True, "legend": "Custom Legend"}}],
+                    "selectedFields": [{"name": "service.name"}],
+                    "display": {"maxLines": 25, "fontSize": "large", "format": "table", "color": "blue"},
+                },
+            },
+        },
         headers=headers,
         timeout=5,
     )
@@ -653,16 +828,19 @@ def test_update_does_not_corrupt_zero_values(
         # ── update overwrites every one of those fields down to its zero value ──
         response = requests.put(
             signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
-            json=_update_body(
-                display_name="update-zero-values",
-                max_lines=0,
-                font_size="",
-                fmt="",
-                color="",
-                selected_fields=[],
-                disabled=False,
-                legend="",
-            ),
+            json={
+                "source": "logs",
+                "data": {
+                    "schemaVersion": "v2",
+                    "spec": {
+                        "displayName": "update-zero-values",
+                        "panelType": "table",
+                        "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                        "selectedFields": [],
+                        "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                    },
+                },
+            },
             headers=headers,
             timeout=5,
         )
