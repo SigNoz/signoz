@@ -36,9 +36,6 @@ type legacyExtraData struct {
 }
 
 // newPostableSavedViewFromLegacyView builds a create payload for a v1 request.
-// v1 has no concept of the v2 slug Name, so it always leaves Name empty and
-// lets NewSavedView generate one from Data.Spec.DisplayName (the legacy Name
-// field) -- v1 callers never see or supply a slug.
 func newPostableSavedViewFromLegacyView(v *v3.SavedView) savedviewtypes.PostableSavedView {
 	var legacy legacyExtraData
 	if v.ExtraData != "" {
@@ -66,10 +63,7 @@ func newPostableSavedViewFromLegacyView(v *v3.SavedView) savedviewtypes.Postable
 	}
 }
 
-// newUpdatableSavedViewFromLegacyView builds an update payload for a v1
-// request. Name has no setter on UpdatableSavedView at all -- it's immutable
-// by omission -- so v1 only ever changes Data.Spec.DisplayName (the legacy
-// Name field) and the rest of the spec.
+// newUpdatableSavedViewFromLegacyView builds an update payload for a v1 request.
 func newUpdatableSavedViewFromLegacyView(v *v3.SavedView) savedviewtypes.UpdatableSavedView {
 	var legacy legacyExtraData
 	if v.ExtraData != "" {
@@ -98,8 +92,6 @@ func newUpdatableSavedViewFromLegacyView(v *v3.SavedView) savedviewtypes.Updatab
 }
 
 // newLegacyViewFromSavedView renders a v2 SavedView back into the v1 shape.
-// The legacy Name field maps to Data.Spec.DisplayName, not the internal slug
-// -- v1 clients only ever see the free-text name they originally saved.
 func newLegacyViewFromSavedView(v *savedviewtypes.SavedView) (*v3.SavedView, error) {
 	extraData, err := json.Marshal(legacyExtraData{
 		Color:         v.Data.Spec.Display.Color,

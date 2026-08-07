@@ -132,7 +132,7 @@ func TestNewSavedView(t *testing.T) {
 	orgID := valuer.GenerateUUID().StringValue()
 	view := validPostableSavedView()
 
-	savedView := view.NewSavedView(orgID, "creator@signoz.io")
+	savedView := view.ToSavedView(orgID, "creator@signoz.io")
 
 	assert.False(t, savedView.ID.IsZero())
 	assert.Equal(t, orgID, savedView.OrgID)
@@ -151,7 +151,7 @@ func TestNewSavedView_GeneratesNameWhenEmpty(t *testing.T) {
 	view.Name = ""
 	view.Data.Spec.DisplayName = "My View!"
 
-	savedView := view.NewSavedView(orgID, "creator@signoz.io")
+	savedView := view.ToSavedView(orgID, "creator@signoz.io")
 
 	assert.NotEmpty(t, savedView.Name)
 	assert.Empty(t, validation.IsDNS1123Label(savedView.Name), "generated name must be a valid DNS-1123 label")
@@ -160,7 +160,7 @@ func TestNewSavedView_GeneratesNameWhenEmpty(t *testing.T) {
 }
 
 func TestSavedView_Update(t *testing.T) {
-	existing := validPostableSavedView().NewSavedView(valuer.GenerateUUID().StringValue(), "creator@signoz.io")
+	existing := validPostableSavedView().ToSavedView(valuer.GenerateUUID().StringValue(), "creator@signoz.io")
 	originalName := existing.Name
 
 	updatable := validUpdatableSavedView()

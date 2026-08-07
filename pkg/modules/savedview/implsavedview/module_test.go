@@ -59,7 +59,7 @@ func testUpdatableSavedView(displayName string, source savedviewtypes.Source) sa
 }
 
 func testSavedView(orgID string, id valuer.UUID, updatedBy string, view savedviewtypes.PostableSavedView) *savedviewtypes.SavedView {
-	savedView := view.NewSavedView(orgID, "creator@signoz.io")
+	savedView := view.ToSavedView(orgID, "creator@signoz.io")
 	savedView.ID = id
 	savedView.UpdatedBy = updatedBy
 	return savedView

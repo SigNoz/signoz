@@ -28,7 +28,7 @@ func (module *module) CreateView(ctx context.Context, orgID string, view savedvi
 		return valuer.UUID{}, errors.NewInternalf(errors.CodeInternal, "error in getting email from context")
 	}
 
-	dbView := view.NewSavedView(orgID, claims.Email)
+	dbView := view.ToSavedView(orgID, claims.Email)
 
 	if err := module.store.Create(ctx, dbView); err != nil {
 		return valuer.UUID{}, err

@@ -17,7 +17,7 @@ var (
 	ErrCodeSavedViewNotFound     = errors.MustNewCode("saved_view_not_found")
 )
 
-// savedViewNameSuffixLen mirrors dashboardtypes' generated-name suffix length.
+// savedViewNameSuffixLen mirrors dashboardtypes' generated-name logic.
 const savedViewNameSuffixLen = 8
 
 var (
@@ -39,11 +39,7 @@ type SavedView struct {
 	Data   SavedViewData `json:"data" bun:"data,type:text,notnull"`
 }
 
-// Update applies an UpdatableSavedView onto an existing view. Name has no
-// setter here -- it's immutable by omission, not by a checked comparison:
-// UpdatableSavedView simply has no Name field for a caller to send. The
-// human-readable display name lives inside Data.Spec, so it's replaced along
-// with the rest of the spec.
+// Update applies an UpdatableSavedView onto an existing view. Name is immutable.
 func (v *SavedView) Update(updatable UpdatableSavedView, updatedBy string) {
 	v.Source = updatable.Source
 	v.Data = updatable.Data
@@ -51,34 +47,10 @@ func (v *SavedView) Update(updatable UpdatableSavedView, updatedBy string) {
 	v.UpdatedAt = time.Now()
 }
 
-// PostableSavedView's Name is the immutable slug identifier. It's optional --
-// an empty Name generates one from Data.Spec.DisplayName, mirroring how an
-// empty dashboard name works with dashboardtypes' generateName flag, minus
-// the flag: there's no ambiguity here since Name and DisplayName are already
-// two different fields.
 type PostableSavedView struct {
-	Name   string        `json:"name"`
+	Name   string        `json:"name"` // auto generated slug
 	Source Source        `json:"source" required:"true"`
 	Data   SavedViewData `json:"data" required:"true"`
-}
-
-func (postable PostableSavedView) NewSavedView(orgID string, createdBy string) *SavedView {
-	now := time.Now()
-
-	name := postable.Name
-	if name == "" {
-		name = generateSavedViewName(postable.Data.Spec.DisplayName)
-	}
-
-	return &SavedView{
-		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
-		TimeAuditable: types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
-		UserAuditable: types.UserAuditable{CreatedBy: createdBy, UpdatedBy: createdBy},
-		OrgID:         orgID,
-		Name:          name,
-		Source:        postable.Source,
-		Data:          postable.Data,
-	}
 }
 
 type UpdatableSavedView struct {
@@ -113,6 +85,25 @@ func (s Source) Validate() error {
 	}
 }
 
+func (postable PostableSavedView) ToSavedView(orgID string, createdBy string) *SavedView {
+	now := time.Now()
+
+	name := postable.Name
+	if name == "" {
+		name = generateSavedViewName(postable.Data.Spec.DisplayName)
+	}
+
+	return &SavedView{
+		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
+		TimeAuditable: types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
+		UserAuditable: types.UserAuditable{CreatedBy: createdBy, UpdatedBy: createdBy},
+		OrgID:         orgID,
+		Name:          name,
+		Source:        postable.Source,
+		Data:          postable.Data,
+	}
+}
+
 func (p *PostableSavedView) Validate() error {
 	if p.Name != "" {
 		if err := validateSavedViewName(p.Name); err != nil {
@@ -142,8 +133,22 @@ func (p *ListSavedViewsParams) Validate() error {
 	return p.Source.Validate()
 }
 
-// Matches https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-label-names,
-// mirroring dashboardtypes.validateDashboardName.
+func NewStatsFromSavedViews(savedViews []*SavedView) map[string]any {
+	stats := make(map[string]any)
+	for _, savedView := range savedViews {
+		key := "savedview.source." + strings.ToLower(savedView.Source.StringValue()) + ".count"
+		if _, ok := stats[key]; !ok {
+			stats[key] = int64(1)
+		} else {
+			stats[key] = stats[key].(int64) + 1
+		}
+	}
+
+	stats["savedview.count"] = int64(len(savedViews))
+	return stats
+}
+
+// Matches https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-label-names.
 func validateSavedViewName(name string) error {
 	if name == "" {
 		return errors.NewInvalidInputf(ErrCodeSavedViewInvalidInput, "name is required")
@@ -154,7 +159,7 @@ func validateSavedViewName(name string) error {
 	return nil
 }
 
-// generateSavedViewName mirrors dashboardtypes.generateDashboardName: slugify
+// generateSavedViewName is a copy of dashboardtypes.generateDashboardName: slugify
 // the display name and append a random suffix for practical collision avoidance
 // (the DB unique index on (org_id, name) is what actually guarantees uniqueness).
 func generateSavedViewName(displayName string) string {
@@ -192,19 +197,4 @@ func generateSavedViewName(displayName string) string {
 		return string(suffix)
 	}
 	return prefix + "-" + string(suffix)
-}
-
-func NewStatsFromSavedViews(savedViews []*SavedView) map[string]any {
-	stats := make(map[string]any)
-	for _, savedView := range savedViews {
-		key := "savedview.source." + strings.ToLower(savedView.Source.StringValue()) + ".count"
-		if _, ok := stats[key]; !ok {
-			stats[key] = int64(1)
-		} else {
-			stats[key] = stats[key].(int64) + 1
-		}
-	}
-
-	stats["savedview.count"] = int64(len(savedViews))
-	return stats
 }

@@ -67,16 +67,10 @@ type savedViewData struct {
 	Spec          savedViewSpec `json:"spec"`
 }
 
-// migrationSavedViewNameSuffixLen mirrors savedviewtypes' generated-name suffix
-// length. Deliberately not imported from savedviewtypes -- migrations must stay
-// frozen even if the application-level slug algorithm later changes.
 const migrationSavedViewNameSuffixLen = 8
 
-// slugifySavedViewName turns a pre-existing free-text saved view name (which
-// had no slug format constraints) into a DNS-1123-label-compatible slug, so
-// existing rows satisfy the new name column's validation and uniqueness rules.
-// The original free-text value is preserved verbatim as data.spec.displayName.
-// Mirrors dashboardtypes.generateDashboardName.
+// slugifySavedViewName turns a pre-existing free-text saved view name and is copy of
+// dashboardtypes.generateDashboardName.
 func slugifySavedViewName(displayName string) string {
 	const dns1123LabelMaxLen = 63
 	suffixAlphabet := []byte("abcdefghijklmnopqrstuvwxyz0123456789")

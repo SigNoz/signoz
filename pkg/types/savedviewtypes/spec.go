@@ -26,10 +26,7 @@ type Display struct {
 	Color    string `json:"color"`
 }
 
-// SavedViewSpec is the typed content of a saved view, mirroring the dashboardtypes v2 spec pattern.
-// DisplayName is the free-text human-readable label; it's distinct from the
-// view's slug Name (an immutable identifier, see SavedView) and from Display
-// (view-rendering preferences).
+// SavedViewSpec is the typed content of a saved view.
 type SavedViewSpec struct {
 	DisplayName    string                             `json:"displayName" required:"true"`
 	PanelType      PanelType                          `json:"panelType" required:"true"`
