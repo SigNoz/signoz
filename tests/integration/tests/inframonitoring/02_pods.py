@@ -9,11 +9,14 @@ from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.fs import get_testdata_file_path
 from fixtures.inframonitoring import STATUS_BUCKETS, STATUS_TO_BUCKET
+from fixtures.metrics import Metrics
 from fixtures.querier import compare_values, get_all_warnings
 
 ENDPOINT = "/api/v2/infra_monitoring/pods"
 
-# Placeholder in JSONL labels that gets substituted with a runtime ISO string.
+# Placeholder in JSONL labels that gets substituted with a runtime ISO string,
+# keeping podAge deterministic across runs.
+START_TIME_PLACEHOLDER = "__START_TIME__"
 
 
 def test_pods_accuracy(
@@ -21,7 +24,6 @@ def test_pods_accuracy(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    load_pods_metrics,
 ) -> None:
     """Seed 2 pods x 7 metrics; assert response shape/contract + exact per-pod
     metric values, podAge, and podCountsByStatus against precomputed expected
@@ -29,10 +31,10 @@ def test_pods_accuracy(
     now = datetime.now(tz=UTC).replace(microsecond=0)
     start_time = now - timedelta(minutes=10)
     insert_metrics(
-        load_pods_metrics(
-            "inframonitoring/pods_value_accuracy.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_value_accuracy.jsonl"),
             base_time=now - timedelta(minutes=4),
-            start_time=start_time,
+            label_substitutions={START_TIME_PLACEHOLDER: start_time.isoformat()},
         )
     )
 
@@ -150,7 +152,6 @@ def test_pods_warnings(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    load_pods_metrics,
     case: dict,
 ) -> None:
     """A never-ingested metric surfaces a non-blocking warning (200 + data), not a
@@ -160,8 +161,8 @@ def test_pods_warnings(
     once, for hosts, in 01_hosts.py.)"""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        load_pods_metrics(
-            f"inframonitoring/{case['dataset']}",
+        Metrics.load_from_file(
+            get_testdata_file_path(f"inframonitoring/{case['dataset']}"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -249,7 +250,6 @@ def test_pods_filter(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    load_pods_metrics,
     expression: str,
     expected_pods: set,
 ) -> None:
@@ -269,8 +269,8 @@ def test_pods_filter(
     }
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        load_pods_metrics(
-            "inframonitoring/pods_filter_dataset.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_filter_dataset.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -310,7 +310,6 @@ def test_pods_filter_invalid(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    load_pods_metrics,
     expression: str,
     err_substr,
 ) -> None:
@@ -318,8 +317,8 @@ def test_pods_filter_invalid(
     400 invalid_input with structured errors."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        load_pods_metrics(
-            "inframonitoring/pods_filter_dataset.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_filter_dataset.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -357,7 +356,6 @@ def test_pods_groupby(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    load_pods_metrics,
     group_key: str,
     expected_groups: set,
 ) -> None:
@@ -367,8 +365,8 @@ def test_pods_groupby(
     """
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        load_pods_metrics(
-            "inframonitoring/pods_groupby.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_groupby.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -412,15 +410,14 @@ def test_pods_pagination(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    load_pods_metrics,
 ) -> None:
     """Pagination: per-page len matches min(limit, total-offset), total invariant,
     pages cover the full set with no overlap. The final offset is beyond total:
     it returns empty records while total still reflects dataset size."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        load_pods_metrics(
-            "inframonitoring/pods_pagination.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_pagination.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -475,7 +472,6 @@ def test_pods_orderby(  # pylint: disable=too-many-arguments,too-many-positional
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    load_pods_metrics,
     column: str,
     record_field,
     direction: str,
@@ -484,8 +480,8 @@ def test_pods_orderby(  # pylint: disable=too-many-arguments,too-many-positional
     sort) and records come back sorted by the requested column."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        load_pods_metrics(
-            "inframonitoring/pods_orderby.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_orderby.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -610,7 +606,6 @@ def test_pods_status_list_mode(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    load_pods_metrics,
     pod_name: str,
     expected_status: str,
 ) -> None:
@@ -631,8 +626,8 @@ def test_pods_status_list_mode(
     """
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        load_pods_metrics(
-            "inframonitoring/pods_phases.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_phases.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -679,7 +674,6 @@ def test_pods_restarts_list_mode(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    load_pods_metrics,
     pod_name: str,
     expected_restarts: int,
 ) -> None:
@@ -688,8 +682,8 @@ def test_pods_restarts_list_mode(
     series -> -1 no-data sentinel (kubectl would show 0)."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        load_pods_metrics(
-            "inframonitoring/pods_phases.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_phases.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -719,7 +713,6 @@ def test_pods_status_latest_wins(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    load_pods_metrics,
 ) -> None:
     """A stale container reason from an old incarnation must not win. trans-p's
     first incarnation (container.id=aaa) reported CrashLoopBackOff, then it
@@ -728,8 +721,8 @@ def test_pods_status_latest_wins(
     ignored via argMax-by-latest-timestamp per (pod, container, reason)."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        load_pods_metrics(
-            "inframonitoring/pods_phases_transition.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_phases_transition.jsonl"),
             base_time=now - timedelta(minutes=8),
         )
     )
@@ -758,7 +751,6 @@ def test_pods_restarts_latest_wins(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    load_pods_metrics,
 ) -> None:
     """restartCount is cumulative per container. Across incarnations
     (container.id=aaa reported 1, then container.id=bbb reported 5) podRestarts
@@ -766,8 +758,8 @@ def test_pods_restarts_latest_wins(
     not be double-counted."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        load_pods_metrics(
-            "inframonitoring/pods_phases_transition.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_phases_transition.jsonl"),
             base_time=now - timedelta(minutes=8),
         )
     )
@@ -796,7 +788,6 @@ def test_pods_status_grouped_mode(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    load_pods_metrics,
 ) -> None:
     """groupBy=[k8s.namespace.name] aggregates each pod's display status across
     ns-mixed. podStatus is no-data (no single pod identifies the group). Seeded
@@ -804,8 +795,8 @@ def test_pods_status_grouped_mode(
     g-fail-1 Error, g-fail-2 Evicted, g-pend-1 Pending."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        load_pods_metrics(
-            "inframonitoring/pods_phases_grouped.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_phases_grouped.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -853,14 +844,13 @@ def test_pods_restarts_grouped_mode(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    load_pods_metrics,
 ) -> None:
     """Grouped podRestarts is the sum of restarts across all pods in the group.
     In ns-mixed only g-run-2 has restarts (3); all others 0 -> group total 3."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        load_pods_metrics(
-            "inframonitoring/pods_phases_grouped.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_phases_grouped.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -896,7 +886,6 @@ def test_pods_status_missing_metric_warning(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
-    load_pods_metrics,
 ) -> None:
     """When the status metrics were never ingested, the status query is gated
     off: a warning naming the missing metric(s) is surfaced, podStatus is the
@@ -904,8 +893,8 @@ def test_pods_status_missing_metric_warning(
     seeds only k8s.pod.cpu.usage.)"""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        load_pods_metrics(
-            "inframonitoring/pods_missing_metrics.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_missing_metrics.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )

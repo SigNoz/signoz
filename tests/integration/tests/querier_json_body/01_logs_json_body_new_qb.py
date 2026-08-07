@@ -15,6 +15,7 @@ from fixtures.querier import (
     get_rows,
     get_scalar_table_data,
     make_query_request,
+    run_query_case,
 )
 
 # ============================================================================
@@ -37,11 +38,11 @@ from fixtures.querier import (
 
 
 def test_primitive_path_operations(
+    signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
     export_json_types: Callable[[list[Logs]], None],
-    run_query_case: Callable[[str, datetime, dict[str, Any]], None],
 ) -> None:
     now = datetime.now(tz=UTC)
 
@@ -323,7 +324,7 @@ def test_primitive_path_operations(
     for case in cases:
         case.setdefault("groupBy", None)
         case.setdefault("stepInterval", None)
-        run_query_case(token, now, case)
+        run_query_case(signoz, token, now, case)
 
 
 # ============================================================================
@@ -335,13 +336,13 @@ def test_primitive_path_operations(
 
 
 def test_indexed_paths(
+    signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
     export_json_types: Callable[[list[Logs]], None],
     create_json_index: Callable[[str, list[dict[str, Any]]], None],
     check_query_log: Callable[[datetime, str, Callable[[str], bool]], None],
-    run_query_case: Callable[[str, datetime, dict[str, Any]], None],
 ) -> None:
     now = datetime.now(tz=UTC)
 
@@ -494,7 +495,7 @@ def test_indexed_paths(
         case.setdefault("groupBy", None)
         case.setdefault("stepInterval", None)
         before = datetime.now(tz=UTC)
-        run_query_case(token, now, case)
+        run_query_case(signoz, token, now, case)
         if "check_query" in case:
             check_query_log(
                 before,
@@ -665,11 +666,11 @@ def test_select_order_by(
 
 
 def test_array_path_operations(
+    signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
     export_json_types: Callable[[list[Logs]], None],
-    run_query_case: Callable[[str, datetime, dict[str, Any]], None],
 ) -> None:
     now = datetime.now(tz=UTC)
 
@@ -939,7 +940,7 @@ def test_array_path_operations(
     for case in cases:
         case.setdefault("groupBy", None)
         case.setdefault("stepInterval", None)
-        run_query_case(token, now, case)
+        run_query_case(signoz, token, now, case)
 
 
 # ============================================================================
@@ -948,11 +949,11 @@ def test_array_path_operations(
 
 
 def test_array_membership_operations(
+    signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
     export_json_types: Callable[[list[Logs]], None],
-    run_query_case: Callable[[str, datetime, dict[str, Any]], None],
 ) -> None:
     now = datetime.now(tz=UTC)
 
@@ -1085,7 +1086,7 @@ def test_array_membership_operations(
     for case in cases:
         case.setdefault("groupBy", None)
         case.setdefault("stepInterval", None)
-        run_query_case(token, now, case)
+        run_query_case(signoz, token, now, case)
 
 
 # ============================================================================
@@ -1094,11 +1095,11 @@ def test_array_membership_operations(
 
 
 def test_message_searches(
+    signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
     export_json_types: Callable[[list[Logs]], None],
-    run_query_case: Callable[[str, datetime, dict[str, Any]], None],
 ) -> None:
     now = datetime.now(tz=UTC)
 
@@ -1215,7 +1216,7 @@ def test_message_searches(
     for case in cases:
         case.setdefault("groupBy", None)
         case.setdefault("stepInterval", None)
-        run_query_case(token, now, case)
+        run_query_case(signoz, token, now, case)
 
 
 # ============================================================================
@@ -1224,11 +1225,11 @@ def test_message_searches(
 
 
 def test_polluted_data(
+    signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
     export_json_types: Callable[[list[Logs]], None],
-    run_query_case: Callable[[str, datetime, dict[str, Any]], None],
 ) -> None:
     now = datetime.now(tz=UTC)
 
@@ -1342,7 +1343,7 @@ def test_polluted_data(
     for case in cases:
         case.setdefault("groupBy", None)
         case.setdefault("stepInterval", None)
-        run_query_case(token, now, case)
+        run_query_case(signoz, token, now, case)
 
 
 # ============================================================================
@@ -1365,11 +1366,11 @@ def test_polluted_data(
 
 
 def test_groupby_scalar(
+    signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
     export_json_types: Callable[[list[Logs]], None],
-    run_query_case: Callable[[str, datetime, dict[str, Any]], None],
 ) -> None:
     now = datetime.now(tz=UTC)
 
@@ -1429,4 +1430,4 @@ def test_groupby_scalar(
     ]
 
     for case in cases:
-        run_query_case(token, now, case)
+        run_query_case(signoz, token, now, case)
