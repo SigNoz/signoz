@@ -6,6 +6,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+
+	"github.com/swaggest/jsonschema-go"
 )
 
 type Hosts struct {
@@ -17,16 +19,16 @@ type Hosts struct {
 }
 
 type HostRecord struct {
-	HostName          string            `json:"hostName" required:"true"`
-	Status            HostStatus        `json:"status" required:"true"`
-	ActiveHostCount   int               `json:"activeHostCount" required:"true"`
-	InactiveHostCount int               `json:"inactiveHostCount" required:"true"`
-	CPU               float64           `json:"cpu" required:"true"`
-	Memory            float64           `json:"memory" required:"true"`
-	Wait              float64           `json:"wait" required:"true"`
-	Load15            float64           `json:"load15" required:"true"`
-	DiskUsage         float64           `json:"diskUsage" required:"true"`
-	Meta              map[string]string `json:"meta" required:"true"`
+	HostName          string     `json:"hostName" required:"true"`
+	Status            HostStatus `json:"status" required:"true"`
+	ActiveHostCount   int        `json:"activeHostCount" required:"true"`
+	InactiveHostCount int        `json:"inactiveHostCount" required:"true"`
+	CPU               float64    `json:"cpu" required:"true"`
+	Memory            float64    `json:"memory" required:"true"`
+	Wait              float64    `json:"wait" required:"true"`
+	Load15            float64    `json:"load15" required:"true"`
+	DiskUsage         float64    `json:"diskUsage" required:"true"`
+	Meta              HostMeta   `json:"meta" required:"true"`
 }
 
 type PostableHosts struct {
@@ -112,4 +114,38 @@ func (req *PostableHosts) UnmarshalJSON(data []byte) error {
 	}
 	*req = PostableHosts(decoded)
 	return req.Validate()
+}
+
+// HostMeta carries the guaranteed host metadata keys as typed fields plus any
+// dynamic group-by keys in Extra.
+type HostMeta struct {
+	OSType   string            `json:"os.type" required:"true"`
+	HostName string            `json:"host.name" required:"true"`
+	Extra    map[string]string `json:"-"`
+}
+
+var HostMetaKeys = getMetaKeys(&HostMeta{})
+
+func NewHostMeta(attrs map[string]string) HostMeta {
+	var m HostMeta
+	m.Extra = populateMeta(&m, attrs)
+	return m
+}
+
+func (m HostMeta) MarshalJSON() ([]byte, error) {
+	return marshalMeta(&m, m.Extra)
+}
+
+func (m *HostMeta) UnmarshalJSON(data []byte) error {
+	raw, err := splitMeta(data)
+	if err != nil {
+		return err
+	}
+	m.Extra = populateMeta(m, raw)
+	return nil
+}
+
+func (HostMeta) PrepareJSONSchema(s *jsonschema.Schema) error {
+	addStringAdditionalProps(s)
+	return nil
 }

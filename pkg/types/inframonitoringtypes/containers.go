@@ -6,6 +6,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+
+	"github.com/swaggest/jsonschema-go"
 )
 
 type Containers struct {
@@ -68,7 +70,7 @@ type ContainerRecord struct {
 	MemoryRequestUtilization float64 `json:"memoryRequestUtilization" required:"true"` // k8s.container.memory_request_utilization
 	MemoryLimitUtilization   float64 `json:"memoryLimitUtilization" required:"true"`   // k8s.container.memory_limit_utilization
 
-	Meta map[string]string `json:"meta" required:"true"`
+	Meta ContainerMeta `json:"meta" required:"true"`
 }
 
 // PostableContainers is the request body for the v2 containers list API.
@@ -145,4 +147,49 @@ func (req *PostableContainers) UnmarshalJSON(data []byte) error {
 	}
 	*req = PostableContainers(decoded)
 	return req.Validate()
+}
+
+// ContainerMeta carries the guaranteed container metadata keys as typed fields
+// plus any dynamic group-by keys in Extra.
+type ContainerMeta struct {
+	PodUID          string            `json:"k8s.pod.uid" required:"true"`
+	ContainerName   string            `json:"k8s.container.name" required:"true"`
+	PodName         string            `json:"k8s.pod.name" required:"true"`
+	ImageName       string            `json:"container.image.name" required:"true"`
+	ImageTag        string            `json:"container.image.tag" required:"true"`
+	NamespaceName   string            `json:"k8s.namespace.name" required:"true"`
+	NodeName        string            `json:"k8s.node.name" required:"true"`
+	DeploymentName  string            `json:"k8s.deployment.name" required:"true"`
+	StatefulSetName string            `json:"k8s.statefulset.name" required:"true"`
+	DaemonSetName   string            `json:"k8s.daemonset.name" required:"true"`
+	JobName         string            `json:"k8s.job.name" required:"true"`
+	CronJobName     string            `json:"k8s.cronjob.name" required:"true"`
+	ClusterName     string            `json:"k8s.cluster.name" required:"true"`
+	Extra           map[string]string `json:"-"`
+}
+
+var ContainerMetaKeys = getMetaKeys(&ContainerMeta{})
+
+func NewContainerMeta(attrs map[string]string) ContainerMeta {
+	var m ContainerMeta
+	m.Extra = populateMeta(&m, attrs)
+	return m
+}
+
+func (m ContainerMeta) MarshalJSON() ([]byte, error) {
+	return marshalMeta(&m, m.Extra)
+}
+
+func (m *ContainerMeta) UnmarshalJSON(data []byte) error {
+	raw, err := splitMeta(data)
+	if err != nil {
+		return err
+	}
+	m.Extra = populateMeta(m, raw)
+	return nil
+}
+
+func (ContainerMeta) PrepareJSONSchema(s *jsonschema.Schema) error {
+	addStringAdditionalProps(s)
+	return nil
 }

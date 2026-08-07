@@ -37,7 +37,7 @@ func buildDeploymentRecords(
 			DeploymentMemoryLimit:   -1,
 			DesiredPods:             -1,
 			AvailablePods:           -1,
-			Meta:                    map[string]string{},
+			Meta:                    inframonitoringtypes.NewDeploymentMeta(nil),
 		}
 
 		if metrics, ok := metricsMap[compositeKey]; ok {
@@ -72,9 +72,7 @@ func buildDeploymentRecords(
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {
-			for k, v := range attrs {
-				record.Meta[k] = v
-			}
+			record.Meta = inframonitoringtypes.NewDeploymentMeta(attrs)
 		}
 
 		records = append(records, record)
@@ -163,7 +161,7 @@ func (m *module) getTopDeploymentGroupsAndMetadata(
 
 func (m *module) getDeploymentsTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableDeployments) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
-	for _, key := range deploymentAttrKeysForMetadata {
+	for _, key := range inframonitoringtypes.DeploymentMetaKeys {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}

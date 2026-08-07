@@ -39,7 +39,7 @@ func buildJobRecords(
 			ActivePods:            -1,
 			FailedPods:            -1,
 			SuccessfulPods:        -1,
-			Meta:                  map[string]string{},
+			Meta:                  inframonitoringtypes.NewJobMeta(nil),
 		}
 
 		if metrics, ok := metricsMap[compositeKey]; ok {
@@ -80,9 +80,7 @@ func buildJobRecords(
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {
-			for k, v := range attrs {
-				record.Meta[k] = v
-			}
+			record.Meta = inframonitoringtypes.NewJobMeta(attrs)
 		}
 
 		records = append(records, record)
@@ -171,7 +169,7 @@ func (m *module) getTopJobGroupsAndMetadata(
 
 func (m *module) getJobsTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableJobs) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
-	for _, key := range jobAttrKeysForMetadata {
+	for _, key := range inframonitoringtypes.JobMetaKeys {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}

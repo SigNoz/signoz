@@ -23,10 +23,6 @@ var hostsTableMetricNamesList = []string{
 	"system.filesystem.usage",
 }
 
-var hostAttrKeysForMetadata = []string{
-	"os.type",
-}
-
 // orderByToHostsQueryNames maps the orderBy column to the query/formula names
 // from HostsTableListQuery used for ranking host groups.
 var orderByToHostsQueryNames = map[string][]string{

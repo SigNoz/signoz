@@ -4212,6 +4212,15 @@ components:
       - missingOptionalMetrics
       - missingRequiredAttributes
       type: object
+    InframonitoringtypesClusterMeta:
+      additionalProperties:
+        type: string
+      properties:
+        k8s.cluster.name:
+          type: string
+      required:
+      - k8s.cluster.name
+      type: object
     InframonitoringtypesClusterRecord:
       properties:
         clusterCPU:
@@ -4257,10 +4266,7 @@ components:
           - statefulSets
           type: object
         meta:
-          additionalProperties:
-            type: string
-          nullable: true
-          type: object
+          $ref: '#/components/schemas/InframonitoringtypesClusterMeta'
         nodeCountsByReadiness:
           $ref: '#/components/schemas/InframonitoringtypesNodeCountsByReadiness'
         podCountsByStatus:
@@ -4349,6 +4355,51 @@ components:
       - containerCannotRun
       - unknown
       type: object
+    InframonitoringtypesContainerMeta:
+      additionalProperties:
+        type: string
+      properties:
+        container.image.name:
+          type: string
+        container.image.tag:
+          type: string
+        k8s.cluster.name:
+          type: string
+        k8s.container.name:
+          type: string
+        k8s.cronjob.name:
+          type: string
+        k8s.daemonset.name:
+          type: string
+        k8s.deployment.name:
+          type: string
+        k8s.job.name:
+          type: string
+        k8s.namespace.name:
+          type: string
+        k8s.node.name:
+          type: string
+        k8s.pod.name:
+          type: string
+        k8s.pod.uid:
+          type: string
+        k8s.statefulset.name:
+          type: string
+      required:
+      - k8s.pod.uid
+      - k8s.container.name
+      - k8s.pod.name
+      - container.image.name
+      - container.image.tag
+      - k8s.namespace.name
+      - k8s.node.name
+      - k8s.deployment.name
+      - k8s.statefulset.name
+      - k8s.daemonset.name
+      - k8s.job.name
+      - k8s.cronjob.name
+      - k8s.cluster.name
+      type: object
     InframonitoringtypesContainerReady:
       enum:
       - ready
@@ -4382,10 +4433,7 @@ components:
           format: double
           type: number
         meta:
-          additionalProperties:
-            type: string
-          nullable: true
-          type: object
+          $ref: '#/components/schemas/InframonitoringtypesContainerMeta'
         podUID:
           type: string
         ready:
@@ -4448,6 +4496,21 @@ components:
       - total
       - endTimeBeforeRetention
       type: object
+    InframonitoringtypesDaemonSetMeta:
+      additionalProperties:
+        type: string
+      properties:
+        k8s.cluster.name:
+          type: string
+        k8s.daemonset.name:
+          type: string
+        k8s.namespace.name:
+          type: string
+      required:
+      - k8s.daemonset.name
+      - k8s.namespace.name
+      - k8s.cluster.name
+      type: object
     InframonitoringtypesDaemonSetRecord:
       properties:
         currentNodes:
@@ -4475,10 +4538,7 @@ components:
         desiredNodes:
           type: integer
         meta:
-          additionalProperties:
-            type: string
-          nullable: true
-          type: object
+          $ref: '#/components/schemas/InframonitoringtypesDaemonSetMeta'
         misscheduledNodes:
           type: integer
         podCountsByStatus:
@@ -4520,6 +4580,21 @@ components:
       - total
       - endTimeBeforeRetention
       type: object
+    InframonitoringtypesDeploymentMeta:
+      additionalProperties:
+        type: string
+      properties:
+        k8s.cluster.name:
+          type: string
+        k8s.deployment.name:
+          type: string
+        k8s.namespace.name:
+          type: string
+      required:
+      - k8s.deployment.name
+      - k8s.namespace.name
+      - k8s.cluster.name
+      type: object
     InframonitoringtypesDeploymentRecord:
       properties:
         availablePods:
@@ -4547,10 +4622,7 @@ components:
         desiredPods:
           type: integer
         meta:
-          additionalProperties:
-            type: string
-          nullable: true
-          type: object
+          $ref: '#/components/schemas/InframonitoringtypesDeploymentMeta'
         podCountsByStatus:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
       required:
@@ -4593,6 +4665,18 @@ components:
         filterByStatus:
           $ref: '#/components/schemas/InframonitoringtypesHostStatus'
       type: object
+    InframonitoringtypesHostMeta:
+      additionalProperties:
+        type: string
+      properties:
+        host.name:
+          type: string
+        os.type:
+          type: string
+      required:
+      - os.type
+      - host.name
+      type: object
     InframonitoringtypesHostRecord:
       properties:
         activeHostCount:
@@ -4614,10 +4698,7 @@ components:
           format: double
           type: number
         meta:
-          additionalProperties:
-            type: string
-          nullable: true
-          type: object
+          $ref: '#/components/schemas/InframonitoringtypesHostMeta'
         status:
           $ref: '#/components/schemas/InframonitoringtypesHostStatus'
         wait:
@@ -4661,6 +4742,21 @@ components:
       - total
       - endTimeBeforeRetention
       type: object
+    InframonitoringtypesJobMeta:
+      additionalProperties:
+        type: string
+      properties:
+        k8s.cluster.name:
+          type: string
+        k8s.job.name:
+          type: string
+        k8s.namespace.name:
+          type: string
+      required:
+      - k8s.job.name
+      - k8s.namespace.name
+      - k8s.cluster.name
+      type: object
     InframonitoringtypesJobRecord:
       properties:
         activePods:
@@ -4690,10 +4786,7 @@ components:
         jobName:
           type: string
         meta:
-          additionalProperties:
-            type: string
-          nullable: true
-          type: object
+          $ref: '#/components/schemas/InframonitoringtypesJobMeta'
         podCountsByStatus:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
         successfulPods:
@@ -4784,6 +4877,18 @@ components:
       - message
       - documentationLink
       type: object
+    InframonitoringtypesNamespaceMeta:
+      additionalProperties:
+        type: string
+      properties:
+        k8s.cluster.name:
+          type: string
+        k8s.namespace.name:
+          type: string
+      required:
+      - k8s.namespace.name
+      - k8s.cluster.name
+      type: object
     InframonitoringtypesNamespaceRecord:
       properties:
         counts:
@@ -4807,10 +4912,7 @@ components:
           - statefulSets
           type: object
         meta:
-          additionalProperties:
-            type: string
-          nullable: true
-          type: object
+          $ref: '#/components/schemas/InframonitoringtypesNamespaceMeta'
         namespaceCPU:
           format: double
           type: number
@@ -4865,15 +4967,27 @@ components:
       - ready
       - notReady
       type: object
+    InframonitoringtypesNodeMeta:
+      additionalProperties:
+        type: string
+      properties:
+        k8s.cluster.name:
+          type: string
+        k8s.node.name:
+          type: string
+        k8s.node.uid:
+          type: string
+      required:
+      - k8s.node.uid
+      - k8s.cluster.name
+      - k8s.node.name
+      type: object
     InframonitoringtypesNodeRecord:
       properties:
         condition:
           $ref: '#/components/schemas/InframonitoringtypesNodeCondition'
         meta:
-          additionalProperties:
-            type: string
-          nullable: true
-          type: object
+          $ref: '#/components/schemas/InframonitoringtypesNodeMeta'
         nodeCPU:
           format: double
           type: number
@@ -4981,13 +5095,49 @@ components:
       - shutdown
       - unexpectedAdmissionError
       type: object
+    InframonitoringtypesPodMeta:
+      additionalProperties:
+        type: string
+      properties:
+        k8s.cluster.name:
+          type: string
+        k8s.cronjob.name:
+          type: string
+        k8s.daemonset.name:
+          type: string
+        k8s.deployment.name:
+          type: string
+        k8s.job.name:
+          type: string
+        k8s.namespace.name:
+          type: string
+        k8s.node.name:
+          type: string
+        k8s.pod.name:
+          type: string
+        k8s.pod.start_time:
+          type: string
+        k8s.pod.uid:
+          type: string
+        k8s.statefulset.name:
+          type: string
+      required:
+      - k8s.pod.uid
+      - k8s.pod.name
+      - k8s.namespace.name
+      - k8s.node.name
+      - k8s.deployment.name
+      - k8s.statefulset.name
+      - k8s.daemonset.name
+      - k8s.job.name
+      - k8s.cronjob.name
+      - k8s.cluster.name
+      - k8s.pod.start_time
+      type: object
     InframonitoringtypesPodRecord:
       properties:
         meta:
-          additionalProperties:
-            type: string
-          nullable: true
-          type: object
+          $ref: '#/components/schemas/InframonitoringtypesPodMeta'
         podAge:
           format: int64
           type: integer
@@ -5365,6 +5515,21 @@ components:
       - list
       - grouped_list
       type: string
+    InframonitoringtypesStatefulSetMeta:
+      additionalProperties:
+        type: string
+      properties:
+        k8s.cluster.name:
+          type: string
+        k8s.namespace.name:
+          type: string
+        k8s.statefulset.name:
+          type: string
+      required:
+      - k8s.statefulset.name
+      - k8s.namespace.name
+      - k8s.cluster.name
+      type: object
     InframonitoringtypesStatefulSetRecord:
       properties:
         currentPods:
@@ -5372,10 +5537,7 @@ components:
         desiredPods:
           type: integer
         meta:
-          additionalProperties:
-            type: string
-          nullable: true
-          type: object
+          $ref: '#/components/schemas/InframonitoringtypesStatefulSetMeta'
         podCountsByStatus:
           $ref: '#/components/schemas/InframonitoringtypesPodCountsByStatus'
         statefulSetCPU:
@@ -5431,13 +5593,37 @@ components:
       - total
       - endTimeBeforeRetention
       type: object
+    InframonitoringtypesVolumeMeta:
+      additionalProperties:
+        type: string
+      properties:
+        k8s.cluster.name:
+          type: string
+        k8s.namespace.name:
+          type: string
+        k8s.node.name:
+          type: string
+        k8s.persistentvolumeclaim.name:
+          type: string
+        k8s.pod.name:
+          type: string
+        k8s.pod.uid:
+          type: string
+        k8s.statefulset.name:
+          type: string
+      required:
+      - k8s.persistentvolumeclaim.name
+      - k8s.pod.uid
+      - k8s.pod.name
+      - k8s.namespace.name
+      - k8s.node.name
+      - k8s.statefulset.name
+      - k8s.cluster.name
+      type: object
     InframonitoringtypesVolumeRecord:
       properties:
         meta:
-          additionalProperties:
-            type: string
-          nullable: true
-          type: object
+          $ref: '#/components/schemas/InframonitoringtypesVolumeMeta'
         persistentVolumeClaimName:
           type: string
         volumeAvailable:

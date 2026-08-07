@@ -34,7 +34,7 @@ func buildVolumeRecords(
 			VolumeInodes:              -1,
 			VolumeInodesFree:          -1,
 			VolumeInodesUsed:          -1,
-			Meta:                      map[string]string{},
+			Meta:                      inframonitoringtypes.NewVolumeMeta(nil),
 		}
 
 		if metrics, ok := metricsMap[compositeKey]; ok {
@@ -59,9 +59,7 @@ func buildVolumeRecords(
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {
-			for k, v := range attrs {
-				record.Meta[k] = v
-			}
+			record.Meta = inframonitoringtypes.NewVolumeMeta(attrs)
 		}
 
 		records = append(records, record)
@@ -150,7 +148,7 @@ func (m *module) getTopVolumeGroupsAndMetadata(
 
 func (m *module) getVolumesTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableVolumes) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
-	for _, key := range volumeAttrKeysForMetadata {
+	for _, key := range inframonitoringtypes.VolumeMetaKeys {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}

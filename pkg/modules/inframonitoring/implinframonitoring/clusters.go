@@ -35,7 +35,7 @@ func buildClusterRecords(
 			ClusterCPUAllocatable:    -1,
 			ClusterMemory:            -1,
 			ClusterMemoryAllocatable: -1,
-			Meta:                     map[string]string{},
+			Meta:                     inframonitoringtypes.NewClusterMeta(nil),
 		}
 
 		if metrics, ok := metricsMap[compositeKey]; ok {
@@ -74,9 +74,7 @@ func buildClusterRecords(
 		}
 
 		if attrs, ok := metadataMap[compositeKey]; ok {
-			for k, v := range attrs {
-				record.Meta[k] = v
-			}
+			record.Meta = inframonitoringtypes.NewClusterMeta(attrs)
 		}
 
 		records = append(records, record)
@@ -165,7 +163,7 @@ func (m *module) getTopClusterGroupsAndMetadata(
 
 func (m *module) getClustersTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableClusters) (map[string]map[string]string, error) {
 	var nonGroupByAttrs []string
-	for _, key := range clusterAttrKeysForMetadata {
+	for _, key := range inframonitoringtypes.ClusterMetaKeys {
 		if !isKeyInGroupByAttrs(req.GroupBy, key) {
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}

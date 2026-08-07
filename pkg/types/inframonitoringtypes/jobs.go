@@ -6,6 +6,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+
+	"github.com/swaggest/jsonschema-go"
 )
 
 type Jobs struct {
@@ -29,7 +31,7 @@ type JobRecord struct {
 	FailedPods            int               `json:"failedPods" required:"true"`
 	SuccessfulPods        int               `json:"successfulPods" required:"true"`
 	PodCountsByStatus     PodCountsByStatus `json:"podCountsByStatus" required:"true"`
-	Meta                  map[string]string `json:"meta" required:"true"`
+	Meta                  JobMeta           `json:"meta" required:"true"`
 }
 
 // PostableJobs is the request body for the v2 jobs list API.
@@ -106,4 +108,39 @@ func (req *PostableJobs) UnmarshalJSON(data []byte) error {
 	}
 	*req = PostableJobs(decoded)
 	return req.Validate()
+}
+
+// JobMeta carries the guaranteed job metadata keys as typed fields plus any
+// dynamic group-by keys in Extra.
+type JobMeta struct {
+	JobName       string            `json:"k8s.job.name" required:"true"`
+	NamespaceName string            `json:"k8s.namespace.name" required:"true"`
+	ClusterName   string            `json:"k8s.cluster.name" required:"true"`
+	Extra         map[string]string `json:"-"`
+}
+
+var JobMetaKeys = getMetaKeys(&JobMeta{})
+
+func NewJobMeta(attrs map[string]string) JobMeta {
+	var m JobMeta
+	m.Extra = populateMeta(&m, attrs)
+	return m
+}
+
+func (m JobMeta) MarshalJSON() ([]byte, error) {
+	return marshalMeta(&m, m.Extra)
+}
+
+func (m *JobMeta) UnmarshalJSON(data []byte) error {
+	raw, err := splitMeta(data)
+	if err != nil {
+		return err
+	}
+	m.Extra = populateMeta(m, raw)
+	return nil
+}
+
+func (JobMeta) PrepareJSONSchema(s *jsonschema.Schema) error {
+	addStringAdditionalProps(s)
+	return nil
 }
