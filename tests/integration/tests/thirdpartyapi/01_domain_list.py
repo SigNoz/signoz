@@ -1,9 +1,3 @@
-"""Integration tests for the third-party (external) API monitoring domain list.
-
-A translator over v5 builder queries, so these cover the contract it exposes (columns,
-grouping, base filter, IP masking) plus the `max(timestamp)` Last Seen from #5824.
-"""
-
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
@@ -40,7 +34,7 @@ def test_domain_list_last_seen_is_the_span_instant(
     Two client spans to api.stripe.com, 3 and 1 minutes ago.
 
     Tests:
-    Last Seen resolves to the newer span's instant. A numeric coercion of the
+    Last Seen resolves to the newer span's instant (#5824). A numeric coercion of the
     DateTime64 column would yield seconds since epoch (~1.7e9), which lands in
     January 1970 once read as milliseconds.
     """

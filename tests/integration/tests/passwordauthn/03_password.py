@@ -306,9 +306,6 @@ def test_forgot_password_creates_reset_token(signoz: types.SigNoz, get_token: Ca
 
 
 def test_reset_password_with_expired_token(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
-    """
-    Test that resetting password with an expired token fails.
-    """
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     forgot_email = "forgot@integration.test"

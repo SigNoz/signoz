@@ -1,5 +1,3 @@
-"""Shared constants/helpers for v2 infra-monitoring pod-status tests."""
-
 # All 18 PodCountsByStatus buckets (camelCase, matches inframonitoringtypes.PodCountsByStatus / the API response).
 STATUS_BUCKETS = (
     "pending",

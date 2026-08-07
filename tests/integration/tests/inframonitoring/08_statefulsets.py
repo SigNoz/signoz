@@ -1,5 +1,3 @@
-"""Integration tests for v2 infra-monitoring statefulsets endpoint."""
-
 import json
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus

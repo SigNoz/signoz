@@ -1,7 +1,3 @@
-"""
-Look at the histogram_data_1h.jsonl file for the relevant data
-"""
-
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus

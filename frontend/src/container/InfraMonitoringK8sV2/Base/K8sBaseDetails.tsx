@@ -40,6 +40,9 @@ export type {
 
 // TODO(H4ad): Improve this on component level
 const DRAWER_TRANSITION = { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] };
+// Be careful when changing these props, this must be animated with transform but later
+// replaced with none, otherwise, the tooltip of the chart will be not positioned correctly
+// due to how the tooltip positioning calculation works
 const DRAWER_MOTION_PROPS = {
 	onOpenAutoFocus: (e: Event): void => e.preventDefault(),
 	initial: { opacity: 0, transform: 'translateX(100%)' },
@@ -47,6 +50,7 @@ const DRAWER_MOTION_PROPS = {
 		opacity: 1,
 		transform: 'translateX(0%)',
 		transition: DRAWER_TRANSITION,
+		transitionEnd: { transform: 'none' },
 	},
 	exit: {
 		opacity: 0,

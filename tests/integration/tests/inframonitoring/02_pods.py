@@ -1,5 +1,3 @@
-"""Integration tests for v2 infra-monitoring pod endpoints."""
-
 import json
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
@@ -13,49 +11,12 @@ from fixtures.fs import get_testdata_file_path
 from fixtures.inframonitoring import STATUS_BUCKETS, STATUS_TO_BUCKET
 from fixtures.metrics import Metrics
 from fixtures.querier import compare_values, get_all_warnings
-from fixtures.time import parse_timestamp
 
 ENDPOINT = "/api/v2/infra_monitoring/pods"
 
-# Placeholder in JSONL labels that gets substituted with a runtime ISO string.
+# Placeholder in JSONL labels that gets substituted with a runtime ISO string,
+# keeping podAge deterministic across runs.
 START_TIME_PLACEHOLDER = "__START_TIME__"
-
-
-def _load_pods_metrics(
-    file_relpath: str,
-    base_time: datetime,
-    start_time: datetime | None = None,
-) -> list[Metrics]:
-    """Load pod metrics JSONL with optional k8s.pod.start_time substitution.
-
-    Mirrors Metrics.load_from_file's base_time rebase logic but adds a hook
-    for the start_time label. Lines carrying ``k8s.pod.start_time =
-    __START_TIME__`` get rewritten to ``start_time.isoformat()`` before
-    construction, ensuring podAge is deterministic across runs.
-    """
-    path = get_testdata_file_path(file_relpath)
-    start_time_iso = start_time.isoformat() if start_time else None
-    rows = []
-    with open(path, encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            data = json.loads(line)
-            labels = data.get("labels", {})
-            if start_time_iso and labels.get("k8s.pod.start_time") == START_TIME_PLACEHOLDER:
-                labels["k8s.pod.start_time"] = start_time_iso
-            rows.append(data)
-    if not rows:
-        return []
-    earliest = min(parse_timestamp(r["timestamp"]) for r in rows)
-    offset = base_time - earliest
-    metrics = []
-    for r in rows:
-        ts = parse_timestamp(r["timestamp"]) + offset
-        r["timestamp"] = ts.isoformat()
-        metrics.append(Metrics.from_dict(r))
-    return metrics
 
 
 def test_pods_accuracy(
@@ -70,10 +31,10 @@ def test_pods_accuracy(
     now = datetime.now(tz=UTC).replace(microsecond=0)
     start_time = now - timedelta(minutes=10)
     insert_metrics(
-        _load_pods_metrics(
-            "inframonitoring/pods_value_accuracy.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_value_accuracy.jsonl"),
             base_time=now - timedelta(minutes=4),
-            start_time=start_time,
+            label_substitutions={START_TIME_PLACEHOLDER: start_time.isoformat()},
         )
     )
 
@@ -200,8 +161,8 @@ def test_pods_warnings(
     once, for hosts, in 01_hosts.py.)"""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        _load_pods_metrics(
-            f"inframonitoring/{case['dataset']}",
+        Metrics.load_from_file(
+            get_testdata_file_path(f"inframonitoring/{case['dataset']}"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -308,8 +269,8 @@ def test_pods_filter(
     }
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        _load_pods_metrics(
-            "inframonitoring/pods_filter_dataset.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_filter_dataset.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -356,8 +317,8 @@ def test_pods_filter_invalid(
     400 invalid_input with structured errors."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        _load_pods_metrics(
-            "inframonitoring/pods_filter_dataset.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_filter_dataset.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -404,8 +365,8 @@ def test_pods_groupby(
     """
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        _load_pods_metrics(
-            "inframonitoring/pods_groupby.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_groupby.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -455,8 +416,8 @@ def test_pods_pagination(
     it returns empty records while total still reflects dataset size."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        _load_pods_metrics(
-            "inframonitoring/pods_pagination.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_pagination.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -519,8 +480,8 @@ def test_pods_orderby(  # pylint: disable=too-many-arguments,too-many-positional
     sort) and records come back sorted by the requested column."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        _load_pods_metrics(
-            "inframonitoring/pods_orderby.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_orderby.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -665,8 +626,8 @@ def test_pods_status_list_mode(
     """
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        _load_pods_metrics(
-            "inframonitoring/pods_phases.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_phases.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -721,8 +682,8 @@ def test_pods_restarts_list_mode(
     series -> -1 no-data sentinel (kubectl would show 0)."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        _load_pods_metrics(
-            "inframonitoring/pods_phases.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_phases.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -760,8 +721,8 @@ def test_pods_status_latest_wins(
     ignored via argMax-by-latest-timestamp per (pod, container, reason)."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        _load_pods_metrics(
-            "inframonitoring/pods_phases_transition.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_phases_transition.jsonl"),
             base_time=now - timedelta(minutes=8),
         )
     )
@@ -797,8 +758,8 @@ def test_pods_restarts_latest_wins(
     not be double-counted."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        _load_pods_metrics(
-            "inframonitoring/pods_phases_transition.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_phases_transition.jsonl"),
             base_time=now - timedelta(minutes=8),
         )
     )
@@ -834,8 +795,8 @@ def test_pods_status_grouped_mode(
     g-fail-1 Error, g-fail-2 Evicted, g-pend-1 Pending."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        _load_pods_metrics(
-            "inframonitoring/pods_phases_grouped.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_phases_grouped.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -888,8 +849,8 @@ def test_pods_restarts_grouped_mode(
     In ns-mixed only g-run-2 has restarts (3); all others 0 -> group total 3."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        _load_pods_metrics(
-            "inframonitoring/pods_phases_grouped.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_phases_grouped.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -932,8 +893,8 @@ def test_pods_status_missing_metric_warning(
     seeds only k8s.pod.cpu.usage.)"""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        _load_pods_metrics(
-            "inframonitoring/pods_missing_metrics.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_missing_metrics.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )

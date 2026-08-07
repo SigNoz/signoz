@@ -66,7 +66,7 @@ export const k8sNamespacesColumnsConfig: NamespaceTableColumnConfig[] = [
 		},
 	},
 	{
-		id: 'namespaceName',
+		id: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 		header: (): React.ReactNode => (
 			<EntityGroupHeader
 				title="Namespace Name"
@@ -76,7 +76,7 @@ export const k8sNamespacesColumnsConfig: NamespaceTableColumnConfig[] = [
 		),
 		accessorFn: (row): string => row.namespaceName || '',
 		width: { min: 290 },
-		enableSort: false,
+		enableSort: true,
 		enableRemove: false,
 		enableMove: false,
 		pin: 'left',
