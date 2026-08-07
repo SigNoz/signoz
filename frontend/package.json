@@ -126,6 +126,7 @@
     "rrule": "2.8.1",
     "styled-components": "^5.3.11",
     "timestamp-nano": "^1.0.0",
+    "translation-resilience": "^0.2.0",
     "typescript": "5.9.3",
     "uplot": "1.6.31",
     "uuid": "14.0.1",
