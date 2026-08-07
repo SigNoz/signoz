@@ -7759,6 +7759,112 @@ components:
       enum:
       - basic
       type: string
+    SavedviewtypesDisplay:
+      properties:
+        color:
+          type: string
+        fontSize:
+          type: string
+        format:
+          type: string
+        maxLines:
+          type: integer
+      type: object
+    SavedviewtypesPanelType:
+      enum:
+      - value
+      - graph
+      - table
+      - list
+      - trace
+      type: string
+    SavedviewtypesPostableSavedView:
+      properties:
+        data:
+          $ref: '#/components/schemas/SavedviewtypesSavedViewData'
+        generateName:
+          type: boolean
+        name:
+          type: string
+        source:
+          $ref: '#/components/schemas/SavedviewtypesSource'
+      required:
+      - source
+      - data
+      type: object
+    SavedviewtypesSavedView:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        data:
+          $ref: '#/components/schemas/SavedviewtypesSavedViewData'
+        id:
+          type: string
+        name:
+          type: string
+        source:
+          $ref: '#/components/schemas/SavedviewtypesSource'
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - id
+      type: object
+    SavedviewtypesSavedViewData:
+      properties:
+        schemaVersion:
+          type: string
+        spec:
+          $ref: '#/components/schemas/SavedviewtypesSavedViewSpec'
+      required:
+      - schemaVersion
+      - spec
+      type: object
+    SavedviewtypesSavedViewSpec:
+      properties:
+        display:
+          $ref: '#/components/schemas/SavedviewtypesDisplay'
+        displayName:
+          type: string
+        panelType:
+          $ref: '#/components/schemas/SavedviewtypesPanelType'
+        queries:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelope'
+          type: array
+        selectedFields:
+          items:
+            $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          type: array
+      required:
+      - displayName
+      - panelType
+      - queries
+      - selectedFields
+      - display
+      type: object
+    SavedviewtypesSource:
+      enum:
+      - traces
+      - logs
+      - metrics
+      - meter
+      type: string
+    SavedviewtypesUpdatableSavedView:
+      properties:
+        data:
+          $ref: '#/components/schemas/SavedviewtypesSavedViewData'
+        source:
+          $ref: '#/components/schemas/SavedviewtypesSource'
+      required:
+      - source
+      - data
+      type: object
     ServiceaccounttypesDeprecatedPostableServiceAccountRole:
       properties:
         id:
@@ -22659,6 +22765,298 @@ paths:
       summary: Test alert rule
       tags:
       - rules
+  /api/v2/saved_views:
+    get:
+      deprecated: false
+      description: Returns saved views, optionally filtered by source and name.
+      operationId: ListSavedViews
+      parameters:
+      - in: query
+        name: source
+        schema:
+          $ref: '#/components/schemas/SavedviewtypesSource'
+      - in: query
+        name: name
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/SavedviewtypesSavedView'
+                    nullable: true
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - saved-view:list
+      - tokenizer:
+        - saved-view:list
+      summary: List saved views
+      tags:
+      - saved_view
+    post:
+      deprecated: false
+      description: Persists a saved view for the explore page. Returns the id of the
+        created view.
+      operationId: CreateSavedView
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SavedviewtypesPostableSavedView'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesIdentifiable'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - saved-view:create
+      - tokenizer:
+        - saved-view:create
+      summary: Create saved view
+      tags:
+      - saved_view
+  /api/v2/saved_views/{id}:
+    delete:
+      deprecated: false
+      description: Deletes a saved view by id.
+      operationId: DeleteSavedView
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - saved-view:delete
+      - tokenizer:
+        - saved-view:delete
+      summary: Delete saved view
+      tags:
+      - saved_view
+    get:
+      deprecated: false
+      description: Returns a saved view by id.
+      operationId: GetSavedView
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SavedviewtypesSavedView'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - saved-view:read
+      - tokenizer:
+        - saved-view:read
+      summary: Get saved view
+      tags:
+      - saved_view
+    put:
+      deprecated: false
+      description: Replaces a saved view's name and query.
+      operationId: UpdateSavedView
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SavedviewtypesUpdatableSavedView'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - saved-view:update
+      - tokenizer:
+        - saved-view:update
+      summary: Update saved view
+      tags:
+      - saved_view
   /api/v2/sessions:
     delete:
       deprecated: false
