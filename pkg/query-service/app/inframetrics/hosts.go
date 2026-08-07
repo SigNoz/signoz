@@ -45,15 +45,15 @@ var (
 		"mode",
 		"mountpoint",
 		"type",
-		GetDotMetrics("os_type"),
-		GetDotMetrics("process_cgroup"),
-		GetDotMetrics("process_command"),
-		GetDotMetrics("process_command_line"),
-		GetDotMetrics("process_executable_name"),
-		GetDotMetrics("process_executable_path"),
-		GetDotMetrics("process_owner"),
-		GetDotMetrics("process_parent_pid"),
-		GetDotMetrics("process_pid"),
+		MetricKey("os_type"),
+		MetricKey("process_cgroup"),
+		MetricKey("process_command"),
+		MetricKey("process_command_line"),
+		MetricKey("process_executable_name"),
+		MetricKey("process_executable_path"),
+		MetricKey("process_owner"),
+		MetricKey("process_parent_pid"),
+		MetricKey("process_pid"),
 	}
 
 	queryNamesForTopHosts = map[string][]string{
@@ -64,65 +64,65 @@ var (
 	}
 
 	// TODO(srikanthccv): remove hardcoded metric name and support keys from any system metric
-	metricToUseForHostAttributes = GetDotMetrics("system_cpu_load_average_15m")
-	hostNameAttrKey              = GetDotMetrics("host_name")
+	metricToUseForHostAttributes = MetricKey("system_cpu_load_average_15m")
+	hostNameAttrKey              = MetricKey("host_name")
 	agentNameToIgnore            = "k8s-infra-otel-agent"
 	hostAttrsToEnrich            = []string{
-		GetDotMetrics("os_type"),
+		MetricKey("os_type"),
 	}
 	metricNamesForHosts = map[string]string{
-		"filesystem": GetDotMetrics("system_filesystem_usage"),
-		"cpu":        GetDotMetrics("system_cpu_time"),
-		"memory":     GetDotMetrics("system_memory_usage"),
-		"load15":     GetDotMetrics("system_cpu_load_average_15m"),
-		"wait":       GetDotMetrics("system_cpu_time"),
+		"filesystem": MetricKey("system_filesystem_usage"),
+		"cpu":        MetricKey("system_cpu_time"),
+		"memory":     MetricKey("system_memory_usage"),
+		"load15":     MetricKey("system_cpu_load_average_15m"),
+		"wait":       MetricKey("system_cpu_time"),
 	}
 	uniqueMetricNamesForHosts = []string{
-		GetDotMetrics("system_uptime"),
-		GetDotMetrics("system_cpu_time"),
-		GetDotMetrics("system_cpu_load_average_1m"),
-		GetDotMetrics("system_cpu_load_average_5m"),
-		GetDotMetrics("system_cpu_load_average_15m"),
-		GetDotMetrics("system_memory_usage"),
-		GetDotMetrics("system_paging_usage"),
-		GetDotMetrics("system_paging_faults"),
-		GetDotMetrics("system_paging_operations"),
-		GetDotMetrics("system_disk_io"),
-		GetDotMetrics("system_disk_operations"),
-		GetDotMetrics("system_disk_io_time"),
-		GetDotMetrics("system_disk_operation_time"),
-		GetDotMetrics("system_disk_merged"),
-		GetDotMetrics("system_disk_pending_operations"),
-		GetDotMetrics("system_disk_weighted_io_time"),
-		GetDotMetrics("system_filesystem_usage"),
-		GetDotMetrics("system_filesystem_inodes_usage"),
-		GetDotMetrics("system_network_io"),
-		GetDotMetrics("system_network_errors"),
-		GetDotMetrics("system_network_connections"),
-		GetDotMetrics("system_network_dropped"),
-		GetDotMetrics("system_network_packets"),
-		GetDotMetrics("system_processes_count"),
-		GetDotMetrics("system_processes_created"),
-		GetDotMetrics("process_cpu_time"),
-		GetDotMetrics("process_disk_io"),
-		GetDotMetrics("process_memory_usage"),
-		GetDotMetrics("process_memory_virtual"),
-		GetDotMetrics("nfs_client_net_count"),
-		GetDotMetrics("nfs_client_net_tcp_connection_accepted"),
-		GetDotMetrics("nfs_client_operation_count"),
-		GetDotMetrics("nfs_client_procedure_count"),
-		GetDotMetrics("nfs_client_rpc_authrefresh_count"),
-		GetDotMetrics("nfs_client_rpc_count"),
-		GetDotMetrics("nfs_client_rpc_retransmit_count"),
-		GetDotMetrics("nfs_server_fh_stale_count"),
-		GetDotMetrics("nfs_server_io"),
-		GetDotMetrics("nfs_server_net_count"),
-		GetDotMetrics("nfs_server_net_tcp_connection_accepted"),
-		GetDotMetrics("nfs_server_operation_count"),
-		GetDotMetrics("nfs_server_procedure_count"),
-		GetDotMetrics("nfs_server_repcache_requests"),
-		GetDotMetrics("nfs_server_rpc_count"),
-		GetDotMetrics("nfs_server_thread_count"),
+		MetricKey("system_uptime"),
+		MetricKey("system_cpu_time"),
+		MetricKey("system_cpu_load_average_1m"),
+		MetricKey("system_cpu_load_average_5m"),
+		MetricKey("system_cpu_load_average_15m"),
+		MetricKey("system_memory_usage"),
+		MetricKey("system_paging_usage"),
+		MetricKey("system_paging_faults"),
+		MetricKey("system_paging_operations"),
+		MetricKey("system_disk_io"),
+		MetricKey("system_disk_operations"),
+		MetricKey("system_disk_io_time"),
+		MetricKey("system_disk_operation_time"),
+		MetricKey("system_disk_merged"),
+		MetricKey("system_disk_pending_operations"),
+		MetricKey("system_disk_weighted_io_time"),
+		MetricKey("system_filesystem_usage"),
+		MetricKey("system_filesystem_inodes_usage"),
+		MetricKey("system_network_io"),
+		MetricKey("system_network_errors"),
+		MetricKey("system_network_connections"),
+		MetricKey("system_network_dropped"),
+		MetricKey("system_network_packets"),
+		MetricKey("system_processes_count"),
+		MetricKey("system_processes_created"),
+		MetricKey("process_cpu_time"),
+		MetricKey("process_disk_io"),
+		MetricKey("process_memory_usage"),
+		MetricKey("process_memory_virtual"),
+		MetricKey("nfs_client_net_count"),
+		MetricKey("nfs_client_net_tcp_connection_accepted"),
+		MetricKey("nfs_client_operation_count"),
+		MetricKey("nfs_client_procedure_count"),
+		MetricKey("nfs_client_rpc_authrefresh_count"),
+		MetricKey("nfs_client_rpc_count"),
+		MetricKey("nfs_client_rpc_retransmit_count"),
+		MetricKey("nfs_server_fh_stale_count"),
+		MetricKey("nfs_server_io"),
+		MetricKey("nfs_server_net_count"),
+		MetricKey("nfs_server_net_tcp_connection_accepted"),
+		MetricKey("nfs_server_operation_count"),
+		MetricKey("nfs_server_procedure_count"),
+		MetricKey("nfs_server_repcache_requests"),
+		MetricKey("nfs_server_rpc_count"),
+		MetricKey("nfs_server_thread_count"),
 	}
 )
 
@@ -351,8 +351,8 @@ func (h *HostsRepo) IsSendingK8SAgentMetrics(ctx context.Context, req model.Host
 		AND unix_milli >= toUnixTimestamp(now() - INTERVAL 60 MINUTE) * 1000
 		AND JSONExtractString(labels, '%s') LIKE '%%-otel-agent%%'
 		AND fingerprint GLOBAL IN (%s)`,
-		GetDotMetrics("k8s_cluster_name"), GetDotMetrics("k8s_node_name"),
-		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_V4_TABLENAME, namesStr, GetDotMetrics("host_name"), queryForRecentFingerprints)
+		MetricKey("k8s_cluster_name"), MetricKey("k8s_node_name"),
+		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_V4_TABLENAME, namesStr, MetricKey("host_name"), queryForRecentFingerprints)
 
 	result, err := h.reader.GetListResultV3(ctx, query)
 	if err != nil {
@@ -363,13 +363,13 @@ func (h *HostsRepo) IsSendingK8SAgentMetrics(ctx context.Context, req model.Host
 	nodeNames := make(map[string]struct{})
 
 	for _, row := range result {
-		switch v := row.Data[GetDotMetrics("k8s_cluster_name")].(type) {
+		switch v := row.Data[MetricKey("k8s_cluster_name")].(type) {
 		case string:
 			clusterNames[v] = struct{}{}
 		case *string:
 			clusterNames[*v] = struct{}{}
 		}
-		switch v := row.Data[GetDotMetrics("k8s_node_name")].(type) {
+		switch v := row.Data[MetricKey("k8s_node_name")].(type) {
 		case string:
 			nodeNames[v] = struct{}{}
 		case *string:
@@ -535,7 +535,7 @@ func (h *HostsRepo) GetHostList(ctx context.Context, orgID valuer.UUID, req mode
 			if _, ok := hostAttrs[record.HostName]; ok {
 				record.Meta = hostAttrs[record.HostName]
 			}
-			if osType, ok := record.Meta[GetDotMetrics("os_type")]; ok {
+			if osType, ok := record.Meta[MetricKey("os_type")]; ok {
 				record.OS = osType
 			}
 			record.Active = activeHosts[record.HostName]
