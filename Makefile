@@ -233,6 +233,10 @@ py-clean: ## Clear all pycache and pytest cache from tests directory recursively
 ##############################################################
 # generate commands
 ##############################################################
+.PHONY: semconv-generate
+semconv-generate: ## Regenerate semantic-convention families for Go and TypeScript
+	@go run ./scripts/semconv
+
 .PHONY: gen-mocks
 gen-mocks:
 	@echo ">> Generating mocks"
