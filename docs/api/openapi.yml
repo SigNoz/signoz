@@ -7782,6 +7782,8 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/SavedviewtypesSavedViewData'
+        generateName:
+          type: boolean
         name:
           type: string
         source:
@@ -22838,7 +22840,7 @@ paths:
             schema:
               $ref: '#/components/schemas/SavedviewtypesPostableSavedView'
       responses:
-        "200":
+        "201":
           content:
             application/json:
               schema:
@@ -22851,7 +22853,7 @@ paths:
                 - status
                 - data
                 type: object
-          description: OK
+          description: Created
         "400":
           content:
             application/json:
@@ -22896,8 +22898,8 @@ paths:
         schema:
           type: string
       responses:
-        "200":
-          description: OK
+        "204":
+          description: No Content
         "400":
           content:
             application/json:
@@ -23015,8 +23017,8 @@ paths:
             schema:
               $ref: '#/components/schemas/SavedviewtypesUpdatableSavedView'
       responses:
-        "200":
-          description: OK
+        "204":
+          description: No Content
         "400":
           content:
             application/json:

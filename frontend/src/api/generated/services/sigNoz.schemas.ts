@@ -8918,6 +8918,10 @@ export enum SavedviewtypesSourceDTO {
 export interface SavedviewtypesPostableSavedViewDTO {
 	data: SavedviewtypesSavedViewDataDTO;
 	/**
+	 * @type boolean
+	 */
+	generateName?: boolean;
+	/**
 	 * @type string
 	 */
 	name?: string;
@@ -12181,7 +12185,7 @@ export type ListSavedViews200 = {
 	status: string;
 };
 
-export type CreateSavedView200 = {
+export type CreateSavedView201 = {
 	data: TypesIdentifiableDTO;
 	/**
 	 * @type string

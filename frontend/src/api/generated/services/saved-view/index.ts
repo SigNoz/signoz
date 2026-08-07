@@ -18,7 +18,7 @@ import type {
 } from 'react-query';
 
 import type {
-	CreateSavedView200,
+	CreateSavedView201,
 	DeleteSavedViewPathParameters,
 	GetSavedView200,
 	GetSavedViewPathParameters,
@@ -136,7 +136,7 @@ export const createSavedView = (
 	savedviewtypesPostableSavedViewDTO?: BodyType<SavedviewtypesPostableSavedViewDTO>,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<CreateSavedView200>({
+	return GeneratedAPIInstance<CreateSavedView201>({
 		url: `/api/v2/saved_views`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
