@@ -47,9 +47,7 @@ def _data(
     }
 
 
-def _create_body(
-    *, name: str = "my-view", generate_name: bool = False, display_name: str = "My View", source: str = "logs", **data_kwargs
-) -> dict:
+def _create_body(*, name: str = "my-view", generate_name: bool = False, display_name: str = "My View", source: str = "logs", **data_kwargs) -> dict:
     """name is the immutable slug. Pass generate_name=True (and leave name
     empty) to have the server generate one from display_name instead."""
     return {"name": name, "generateName": generate_name, "source": source, "data": _data(display_name=display_name, **data_kwargs)}
