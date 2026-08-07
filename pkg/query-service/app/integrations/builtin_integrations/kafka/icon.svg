@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title>Kafka</title>
+  <defs>
+    <linearGradient id="kafka-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#111827" />
+      <stop offset="100%" stop-color="#ea580c" />
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="#fff7ed" />
+  <circle cx="64" cy="23" r="11" fill="url(#kafka-bg)" />
+  <circle cx="32" cy="79" r="11" fill="url(#kafka-bg)" />
+  <circle cx="96" cy="79" r="11" fill="url(#kafka-bg)" />
+  <path
+    d="M64 34v31M41.5 73l14.2-9.2M86.5 73 72.3 63.8"
+    fill="none"
+    stroke="#1f2937"
+    stroke-linecap="round"
+    stroke-width="8"
+  />
+</svg>
