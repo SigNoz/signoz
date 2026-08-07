@@ -10,34 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type refusalTestCase struct {
-	name         string
-	query        string
-	expectedCode errors.Code
-}
-
-func assertRefused(t *testing.T, testCases []refusalTestCase) {
-	t.Helper()
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			errC := make(chan error, 1)
-			go func() { errC <- ErrIfStatementIsNotValid(testCase.query) }()
-
-			var err error
-			select {
-			case err = <-errC:
-			case <-time.After(10 * time.Second):
-				require.Fail(t, "timed out, which means the parser is no longer bounding its backtracking")
-			}
-
-			// Required rather than asserted: errors.Asc dereferences the error it is given.
-			require.Error(t, err)
-			assert.True(t, errors.Asc(err, testCase.expectedCode), "expected code %s, got %v", testCase.expectedCode, err)
-		})
-	}
-}
-
 func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
 	testCases := []struct {
 		name  string
@@ -126,7 +98,11 @@ func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
 }
 
 func TestErrIfStatementIsNotValid_Fail(t *testing.T) {
-	testCases := []refusalTestCase{
+	testCases := []struct {
+		name         string
+		query        string
+		expectedCode errors.Code
+	}{
 		{"Empty", "", CodeClickHouseSQLNotSingleStatement},
 		{"UnterminatedBlockCommentOnly", "/* x", CodeClickHouseSQLUnparseable},
 		{"Unparseable", "SELECT FROM WHERE", CodeClickHouseSQLUnparseable},
@@ -190,11 +166,23 @@ func TestErrIfStatementIsNotValid_Fail(t *testing.T) {
 		{"ReadonlySettingOverrideAmongOthers", "SELECT * FROM t SETTINGS max_threads = 4, readonly = 0", CodeClickHouseSQLReadonlyOverride},
 	}
 
-	assertRefused(t, testCases)
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			err := ErrIfStatementIsNotValid(testCase.query)
+
+			// Required rather than asserted: errors.Asc dereferences the error it is given.
+			require.Error(t, err)
+			assert.True(t, errors.Asc(err, testCase.expectedCode), "expected code %s, got %v", testCase.expectedCode, err)
+		})
+	}
 }
 
 func TestErrIfStatementIsNotValid_ShouldPassButFails(t *testing.T) {
-	testCases := []refusalTestCase{
+	testCases := []struct {
+		name         string
+		query        string
+		expectedCode errors.Code
+	}{
 		// The left operand commits the parser to a subquery, leaving the operator nowhere to bind. Parenthesising only the right operand is fine.
 		{"ParenthesisedUnionLeftOperand", "SELECT a FROM ((SELECT 1 AS a) UNION ALL (SELECT 2 AS a))", CodeClickHouseSQLUnparseable},
 		{"ParenthesisedExceptLeftOperand", "SELECT a FROM ((SELECT 1 AS a) EXCEPT (SELECT 2 AS a))", CodeClickHouseSQLUnparseable},
@@ -203,5 +191,13 @@ func TestErrIfStatementIsNotValid_ShouldPassButFails(t *testing.T) {
 		{"UnquotedOnAsColumnName", "SELECT on + 1 FROM t", CodeClickHouseSQLUnparseable},
 	}
 
-	assertRefused(t, testCases)
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			err := ErrIfStatementIsNotValid(testCase.query)
+
+			// Required rather than asserted: errors.Asc dereferences the error it is given.
+			require.Error(t, err)
+			assert.True(t, errors.Asc(err, testCase.expectedCode), "expected code %s, got %v", testCase.expectedCode, err)
+		})
+	}
 }

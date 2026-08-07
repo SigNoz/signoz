@@ -63,25 +63,6 @@ var readingFunctions = map[string]struct{}{
 // accessors carries this prefix.
 const dictionaryFunctionPrefix = "dict"
 
-func errIfFunctionReads(name string) error {
-	lowered := strings.ToLower(name)
-	if _, ok := readingFunctions[lowered]; !ok && !strings.HasPrefix(lowered, dictionaryFunctionPrefix) {
-		return nil
-	}
-
-	return errors.NewInvalidInputf(CodeClickHouseSQLReadingFunction, "ClickHouse functions that read outside the telemetry tables are not allowed in SQL queries: %s", name)
-}
-
-// The parser spells a call's name as an Ident everywhere it can. Reading the field rather than
-// formatting the node keeps the quoting out, so `numbers`(1) matches numbers.
-func functionName(expr chparser.Expr) string {
-	if ident, ok := expr.(*chparser.Ident); ok {
-		return ident.Name
-	}
-
-	return chparser.Format(expr)
-}
-
 // The parser's grammar has gaps against SQL that ClickHouse itself accepts.
 func ErrIfStatementIsNotValid(query string) (err error) {
 	defer func() {
@@ -180,4 +161,23 @@ func LogIfStatementIsNotValid(ctx context.Context, logger *slog.Logger, query st
 	if err := ErrIfStatementIsNotValid(query); err != nil {
 		logger.WarnContext(ctx, "clickhouse sql is not valid", errors.Attr(err), slog.String("query", query))
 	}
+}
+
+func errIfFunctionReads(name string) error {
+	lowered := strings.ToLower(name)
+	if _, ok := readingFunctions[lowered]; !ok && !strings.HasPrefix(lowered, dictionaryFunctionPrefix) {
+		return nil
+	}
+
+	return errors.NewInvalidInputf(CodeClickHouseSQLReadingFunction, "ClickHouse functions that read outside the telemetry tables are not allowed in SQL queries: %s", name)
+}
+
+// The parser spells a call's name as an Ident everywhere it can. Reading the field rather than
+// formatting the node keeps the quoting out, so `numbers`(1) matches numbers.
+func functionName(expr chparser.Expr) string {
+	if ident, ok := expr.(*chparser.Ident); ok {
+		return ident.Name
+	}
+
+	return chparser.Format(expr)
 }
