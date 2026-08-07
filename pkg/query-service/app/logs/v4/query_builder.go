@@ -457,7 +457,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	query := queryTmplPrefix + selectLabels + aggClause
 
 	// for limit query this is the first query,
-	// we don't the the aggregation value here as we are just concerned with the names of group by
+	// we don't the aggregation value here as we are just concerned with the names of group by
 	// for applying the limit
 	if graphLimitQtype == constants.FirstQueryGraphLimit {
 		query = "SELECT " + logsV3.GetSelectKeys(mq.AggregateOperator, mq.GroupBy) + " from (" + query + ")"
