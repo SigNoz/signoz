@@ -255,7 +255,7 @@ func (handler *handler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(w, http.StatusOK, nil)
+	render.Success(w, http.StatusNoContent, nil)
 }
 
 func (handler *handler) List(w http.ResponseWriter, r *http.Request) {

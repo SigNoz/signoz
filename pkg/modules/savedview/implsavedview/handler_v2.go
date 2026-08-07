@@ -41,7 +41,7 @@ func (handler *handler) CreateV2(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(w, http.StatusOK, types.Identifiable{ID: uuid})
+	render.Success(w, http.StatusCreated, types.Identifiable{ID: uuid})
 }
 
 func (handler *handler) GetV2(w http.ResponseWriter, r *http.Request) {
@@ -102,7 +102,7 @@ func (handler *handler) UpdateV2(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(w, http.StatusOK, nil)
+	render.Success(w, http.StatusNoContent, nil)
 }
 
 func (handler *handler) ListV2(w http.ResponseWriter, r *http.Request) {

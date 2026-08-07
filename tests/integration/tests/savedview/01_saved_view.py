@@ -283,7 +283,7 @@ def test_update_rejects_name_field(
         headers=headers,
         timeout=5,
     )
-    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.status_code == HTTPStatus.CREATED, response.text
     view_id = response.json()["data"]["id"]
 
     try:
@@ -341,7 +341,7 @@ def test_saved_view_lifecycle(
         headers=headers,
         timeout=5,
     )
-    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.status_code == HTTPStatus.CREATED, response.text
     view_id = response.json()["data"]["id"]
 
     response = requests.post(
@@ -350,7 +350,7 @@ def test_saved_view_lifecycle(
         headers=headers,
         timeout=5,
     )
-    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.status_code == HTTPStatus.CREATED, response.text
 
     try:
         # ── get echoes back the created shape ────────────────────────────────
@@ -394,7 +394,7 @@ def test_saved_view_lifecycle(
             headers=headers,
             timeout=5,
         )
-        assert response.status_code == HTTPStatus.OK, response.text
+        assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
         response = requests.get(
             signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
@@ -493,7 +493,7 @@ def test_create_roundtrip_preserves_zero_values(
         headers=headers,
         timeout=5,
     )
-    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.status_code == HTTPStatus.CREATED, response.text
     view_id = response.json()["data"]["id"]
 
     try:
@@ -541,7 +541,7 @@ def test_selected_fields_omitted_on_create_reads_back_as_empty_list_not_null(
         headers=headers,
         timeout=5,
     )
-    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.status_code == HTTPStatus.CREATED, response.text
     view_id = response.json()["data"]["id"]
 
     try:
@@ -590,7 +590,7 @@ def test_update_does_not_corrupt_zero_values(
         headers=headers,
         timeout=5,
     )
-    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.status_code == HTTPStatus.CREATED, response.text
     view_id = response.json()["data"]["id"]
 
     try:
@@ -624,7 +624,7 @@ def test_update_does_not_corrupt_zero_values(
             headers=headers,
             timeout=5,
         )
-        assert response.status_code == HTTPStatus.OK, response.text
+        assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
         # ── the zero values took effect -- not retained, not dropped, not null ──
         response = requests.get(

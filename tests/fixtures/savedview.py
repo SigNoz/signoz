@@ -34,7 +34,7 @@ def create_saved_view(signoz: types.SigNoz, token: str, name: str, source: str =
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
-    assert resp.status_code == HTTPStatus.OK, resp.text
+    assert resp.status_code == HTTPStatus.CREATED, resp.text
     return resp.json()["data"]["id"]
 
 

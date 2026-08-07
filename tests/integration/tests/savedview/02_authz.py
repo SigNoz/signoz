@@ -179,7 +179,7 @@ def test_create_is_collection_scoped(
     created_id = create_saved_view(signoz, token, _SAVED_VIEW_FGA_CREATED_NAME)
 
     resp = requests.delete(signoz.self.host_configs["8080"].get(f"{SAVED_VIEW_BASE}/{created_id}"), headers={"Authorization": f"Bearer {admin_token}"}, timeout=5)
-    assert resp.status_code == HTTPStatus.OK, f"cleanup {_SAVED_VIEW_FGA_CREATED_NAME}: {resp.text}"
+    assert resp.status_code == HTTPStatus.NO_CONTENT, f"cleanup {_SAVED_VIEW_FGA_CREATED_NAME}: {resp.text}"
 
 
 def test_update_scoped_to_granted_view(
@@ -230,7 +230,7 @@ def test_update_scoped_to_granted_view(
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
-    assert resp.status_code == HTTPStatus.OK, f"update granted saved view: {resp.text}"
+    assert resp.status_code == HTTPStatus.NO_CONTENT, f"update granted saved view: {resp.text}"
 
     resp = requests.put(
         signoz.self.host_configs["8080"].get(f"{SAVED_VIEW_BASE}/{other_id}"),
@@ -275,7 +275,7 @@ def test_delete_scoped_to_granted_view(
     assert resp.status_code == HTTPStatus.FORBIDDEN, f"delete other saved view: expected 403, got {resp.status_code}: {resp.text}"
 
     resp = requests.delete(signoz.self.host_configs["8080"].get(f"{SAVED_VIEW_BASE}/{target_id}"), headers={"Authorization": f"Bearer {token}"}, timeout=5)
-    assert resp.status_code == HTTPStatus.OK, f"delete granted saved view: {resp.text}"
+    assert resp.status_code == HTTPStatus.NO_CONTENT, f"delete granted saved view: {resp.text}"
 
 
 def test_revoke_read_scoped(
@@ -347,4 +347,4 @@ def test_saved_view_fga_cleanup(
 
     other_id = find_saved_view_by_name(signoz, admin_token, _SAVED_VIEW_FGA_OTHER_NAME)["id"]
     resp = requests.delete(signoz.self.host_configs["8080"].get(f"{SAVED_VIEW_BASE}/{other_id}"), headers={"Authorization": f"Bearer {admin_token}"}, timeout=5)
-    assert resp.status_code == HTTPStatus.OK, f"delete {_SAVED_VIEW_FGA_OTHER_NAME}: {resp.text}"
+    assert resp.status_code == HTTPStatus.NO_CONTENT, f"delete {_SAVED_VIEW_FGA_OTHER_NAME}: {resp.text}"
