@@ -39,14 +39,6 @@ type SavedView struct {
 	Data   SavedViewData `json:"data" bun:"data,type:text,notnull"`
 }
 
-// Update applies an UpdatableSavedView onto an existing view. Name is immutable.
-func (v *SavedView) Update(updatable UpdatableSavedView, updatedBy string) {
-	v.Source = updatable.Source
-	v.Data = updatable.Data
-	v.UpdatedBy = updatedBy
-	v.UpdatedAt = time.Now()
-}
-
 type PostableSavedView struct {
 	Name         string        `json:"name"`
 	GenerateName bool          `json:"generateName"`
@@ -102,6 +94,19 @@ func (postable PostableSavedView) ToSavedView(orgID string, createdBy string) *S
 		Name:          name,
 		Source:        postable.Source,
 		Data:          postable.Data,
+	}
+}
+
+// ToSavedView builds the row to write for an update. Name is immutable and
+// deliberately absent -- the caller identifies the row by id/orgID alone.
+func (updatable UpdatableSavedView) ToSavedView(id valuer.UUID, orgID string, updatedBy string) *SavedView {
+	return &SavedView{
+		Identifiable:  types.Identifiable{ID: id},
+		TimeAuditable: types.TimeAuditable{UpdatedAt: time.Now()},
+		UserAuditable: types.UserAuditable{UpdatedBy: updatedBy},
+		OrgID:         orgID,
+		Source:        updatable.Source,
+		Data:          updatable.Data,
 	}
 }
 

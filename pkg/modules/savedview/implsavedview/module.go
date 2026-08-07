@@ -46,14 +46,7 @@ func (module *module) UpdateView(ctx context.Context, orgID string, uuid valuer.
 		return errors.NewInternalf(errors.CodeInternal, "error in getting email from context")
 	}
 
-	existing, err := module.store.Get(ctx, orgID, uuid)
-	if err != nil {
-		return err
-	}
-
-	existing.Update(view, claims.Email)
-
-	return module.store.Update(ctx, existing)
+	return module.store.Update(ctx, view.ToSavedView(uuid, orgID, claims.Email))
 }
 
 func (module *module) DeleteView(ctx context.Context, orgID string, uuid valuer.UUID) error {

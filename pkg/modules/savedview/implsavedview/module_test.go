@@ -140,7 +140,6 @@ func TestModule_UpdateView(t *testing.T) {
 	updated := testUpdatableSavedView("renamed", savedviewtypes.SourceTraces)
 	updated.Data.Spec.PanelType = savedviewtypes.PanelTypeTable
 
-	st.ExpectGet(orgID, id, existing)
 	st.ExpectUpdate(orgID, id, 1)
 	require.NoError(t, m.UpdateView(contextWithClaims(orgID, "updater@signoz.io"), orgID, id, updated))
 
@@ -166,7 +165,7 @@ func TestModule_UpdateView_NotFound(t *testing.T) {
 	ctx := contextWithClaims(orgID, "someone@signoz.io")
 	id := valuer.GenerateUUID()
 
-	st.ExpectGet(orgID, id, nil)
+	st.ExpectUpdate(orgID, id, 0)
 	err := m.UpdateView(ctx, orgID, id, testUpdatableSavedView("does-not-exist", savedviewtypes.SourceLogs))
 	require.Error(t, err)
 	assert.True(t, errors.Ast(err, errors.TypeNotFound), "expected a not-found error, got %v", err)
@@ -180,9 +179,9 @@ func TestModule_UpdateView_ScopedToOrg(t *testing.T) {
 	orgB := valuer.GenerateUUID().StringValue()
 	id := valuer.GenerateUUID()
 
-	// Only a Get scoped to orgB's WHERE clause is registered; updating org
+	// Only an Update scoped to orgB's WHERE clause is registered; updating org
 	// A's view while authenticated as org B must not match it.
-	st.ExpectGet(orgB, id, nil)
+	st.ExpectUpdate(orgB, id, 0)
 	err := m.UpdateView(contextWithClaims(orgB, "b@signoz.io"), orgB, id, testUpdatableSavedView("hijacked", savedviewtypes.SourceLogs))
 	require.Error(t, err, "org B must not be able to update org A's view")
 	assert.True(t, errors.Ast(err, errors.TypeNotFound))

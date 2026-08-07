@@ -173,22 +173,6 @@ func TestNewSavedView_GeneratesNameWhenEmpty(t *testing.T) {
 	assert.Equal(t, "My View!", savedView.Data.Spec.DisplayName)
 }
 
-func TestSavedView_Update(t *testing.T) {
-	existing := validPostableSavedView().ToSavedView(valuer.GenerateUUID().StringValue(), "creator@signoz.io")
-	originalName := existing.Name
-
-	updatable := validUpdatableSavedView()
-	updatable.Data.Spec.DisplayName = "Renamed"
-	updatable.Source = SourceTraces
-
-	existing.Update(updatable, "updater@signoz.io")
-
-	assert.Equal(t, originalName, existing.Name, "Name has no setter on UpdatableSavedView -- it must be untouched")
-	assert.Equal(t, "Renamed", existing.Data.Spec.DisplayName)
-	assert.Equal(t, SourceTraces, existing.Source)
-	assert.Equal(t, "updater@signoz.io", existing.UpdatedBy)
-}
-
 func TestGenerateSavedViewName(t *testing.T) {
 	tests := []struct {
 		scenario   string
