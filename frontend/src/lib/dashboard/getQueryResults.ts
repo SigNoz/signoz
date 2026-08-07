@@ -33,6 +33,23 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import { prepareQueryRangePayload } from './prepareQueryRangePayload';
 
+export const FORMULA_MISSING_DATA_LEGEND_TOOLTIP =
+	'No data is available from one or more formula components.';
+
+export const hasMissingFormulaComponentLabel = (labelName: string): boolean =>
+	labelName.trim() === '' || /\bundefined\b/.test(labelName);
+
+export const shouldShowFormulaMissingDataLegendInfo = (
+	queryData: QueryData,
+	payloadQuery: Query | undefined,
+	labelName: string,
+): boolean =>
+	payloadQuery?.queryType === EQueryType.QUERY_BUILDER &&
+	payloadQuery.builder?.queryFormulas?.some(
+		(formula) => formula.queryName === queryData.queryName,
+	) &&
+	hasMissingFormulaComponentLabel(labelName);
+
 /**
  * Validates if metric name is available for METRICS data source
  */
@@ -127,6 +144,12 @@ export const getLegend = (
 	// For non-query builder queries, return the label name directly
 	if (payloadQuery.queryType !== EQueryType.QUERY_BUILDER) {
 		return labelName;
+	}
+
+	if (
+		shouldShowFormulaMissingDataLegendInfo(queryData, payloadQuery, labelName)
+	) {
+		return queryData.queryName;
 	}
 
 	// Combine queryData and queryTraceOperator
