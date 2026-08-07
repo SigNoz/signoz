@@ -359,14 +359,27 @@ def test_preview_logs_pipelines_success(
 ) -> None:
     """
     Setup:
-    Create a preview request with a pipeline and sample logs.
+    Preview a json_parser pipeline with one JSON log and one plain-text log.
 
     Tests:
-    1. Send preview request with valid pipeline configuration
-    2. Verify the preview processes logs correctly
-    3. Verify the response contains processed logs
+    1. JSON body gets parsed into attributes
+    2. Non-JSON body passes through unchanged instead of being dropped
     """
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    empty_log_fields = {
+        "id": "",
+        "trace_id": "",
+        "span_id": "",
+        "trace_flags": 0,
+        "severity_text": "",
+        "severity_number": 0,
+        "attributes_string": {},
+        "attributes_int": {},
+        "attributes_float": {},
+        "attributes_bool": {},
+        "resources_string": {},
+    }
 
     preview_payload = {
         "pipelines": [
@@ -396,29 +409,25 @@ def test_preview_logs_pipelines_success(
                     {
                         "type": "json_parser",
                         "id": "json-parser-preview",
+                        "orderId": 1,
+                        "enabled": True,
                         "parse_from": "body",
                         "parse_to": "attributes",
-                        "on_error": "send",
                     }
                 ],
             }
         ],
         "logs": [
             {
-                "body": '{"level": "info", "message": "Test log message", "timestamp": "2024-01-01T00:00:00Z"}',
+                "body": '{"level": "info", "message": "json log"}',
                 "timestamp": 1704067200000000000,  # nanoseconds, not milliseconds
-                "id": "",
-                "trace_id": "",
-                "span_id": "",
-                "trace_flags": 0,
-                "severity_text": "",
-                "severity_number": 0,
-                "attributes_string": {},
-                "attributes_int": {},
-                "attributes_float": {},
-                "attributes_bool": {},
-                "resources_string": {"service.name": "test-service"},
-            }
+                **empty_log_fields,
+            },
+            {
+                "body": "plain text log that is not json",
+                "timestamp": 1704067201000000000,
+                **empty_log_fields,
+            },
         ],
     }
 
@@ -435,13 +444,16 @@ def test_preview_logs_pipelines_success(
     assert response.status_code == HTTPStatus.OK
     response_data = response.json()
     assert response_data["status"] == "success"
-    assert "data" in response_data
-    assert "logs" in response_data["data"]
-    assert len(response_data["data"]["logs"]) == 1
+    logs = response_data["data"]["logs"]
+    assert len(logs) == 2
 
-    # Verify the log was processed
-    processed_log = response_data["data"]["logs"][0]
-    assert "attributes_string" in processed_log or "attributes" in processed_log
+    json_log = next(log for log in logs if log["body"].startswith("{"))
+    assert json_log["attributes_string"]["level"] == "info"
+    assert json_log["attributes_string"]["message"] == "json log"
+
+    plain_log = next(log for log in logs if not log["body"].startswith("{"))
+    assert plain_log["body"] == "plain text log that is not json"
+    assert plain_log["attributes_string"] == {}
 
 
 def test_create_multiple_pipelines_success(

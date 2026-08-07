@@ -1,14 +1,14 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Skeleton } from 'antd';
 import cx from 'classnames';
-import {
-	InfraMonitoringEvents,
-	logInfraExplorerNavigatedEvent,
-} from 'constants/events';
+import { InfraMonitoringEvents } from 'constants/events';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import TimeSeries from 'container/DashboardContainer/visualization/charts/TimeSeries/TimeSeries';
-import { LegendPosition } from 'lib/uPlotV2/components/types';
+import {
+	IRenderTooltipFooterArgs,
+	LegendPosition,
+} from 'lib/uPlotV2/components/types';
 import {
 	InfraMonitoringEntity,
 	VIEW_TYPES,
@@ -35,6 +35,8 @@ import { isKeyNotFoundError } from '../utils';
 
 import styles from './EntityMetrics.module.scss';
 import { MetricsTable } from './MetricsTable';
+import { logInfraExplorerNavigatedEvent } from 'container/InfraMonitoringK8sV2/Base/events';
+import ChartTooltipFooter from './ChartTooltipFooter';
 
 interface EntityMetricsProps<T> {
 	entity: T;
@@ -79,6 +81,10 @@ function EntityMetrics<T>({
 		visibilities,
 		category,
 	});
+
+	const [tooltipPortalEl, setTooltipPortalEl] = useState<HTMLDivElement | null>(
+		null,
+	);
 
 	const isDarkMode = useIsDarkMode();
 	const { timezone } = useTimezone();
@@ -173,6 +179,18 @@ function EntityMetrics<T>({
 							height={dimensions.height}
 							timezone={timezone}
 							yAxisUnit={entityWidgetInfo[idx].yAxisUnit}
+							canPinTooltip
+							tooltipPortalRoot={tooltipPortalEl ?? undefined}
+							renderTooltipFooter={({
+								isPinned,
+								dismiss,
+							}: IRenderTooltipFooterArgs) => (
+								<ChartTooltipFooter
+									id={configs[idx]?.getId() || idx.toString()}
+									isPinned={isPinned}
+									dismiss={dismiss}
+								/>
+							)}
 						/>
 					)
 				)}
@@ -182,6 +200,8 @@ function EntityMetrics<T>({
 
 	return (
 		<>
+			<div ref={setTooltipPortalEl} style={{ display: 'contents' }} />
+
 			<div className={styles.metricsHeader}>
 				<EntityDateTimeSelector
 					eventEntity={eventEntity}

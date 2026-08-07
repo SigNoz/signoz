@@ -4301,6 +4301,18 @@ export interface Querybuildertypesv5QueryEnvelopeBuilderDTO {
 	type: Querybuildertypesv5QueryEnvelopeBuilderDTOType;
 }
 
+export enum Querybuildertypesv5QueryEnvelopeBuilderAIDTOType {
+	builder_ai_query = 'builder_ai_query',
+}
+export interface Querybuildertypesv5QueryEnvelopeBuilderAIDTO {
+	spec?: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO;
+	/**
+	 * @type string
+	 * @enum builder_ai_query
+	 */
+	type: Querybuildertypesv5QueryEnvelopeBuilderAIDTOType;
+}
+
 export interface Querybuildertypesv5QueryBuilderFormulaDTO {
 	/**
 	 * @type boolean
@@ -4484,6 +4496,7 @@ export interface Querybuildertypesv5QueryEnvelopeClickHouseSQLDTO {
 
 export type Querybuildertypesv5QueryEnvelopeDTO =
 	| Querybuildertypesv5QueryEnvelopeBuilderDTO
+	| Querybuildertypesv5QueryEnvelopeBuilderAIDTO
 	| Querybuildertypesv5QueryEnvelopeFormulaDTO
 	| Querybuildertypesv5QueryEnvelopeTraceOperatorDTO
 	| Querybuildertypesv5QueryEnvelopePromQLDTO
@@ -8287,6 +8300,7 @@ export interface Querybuildertypesv5QueryRangeResponseDTO {
 
 export enum Querybuildertypesv5QueryTypeDTO {
 	builder_query = 'builder_query',
+	builder_ai_query = 'builder_ai_query',
 	builder_formula = 'builder_formula',
 	builder_trace_operator = 'builder_trace_operator',
 	clickhouse_sql = 'clickhouse_sql',
@@ -11164,6 +11178,17 @@ export type UnlockDashboardV2PathParameters = {
 export type LockDashboardV2PathParameters = {
 	id: string;
 };
+export type MigrateDashboardV2PathParameters = {
+	id: string;
+};
+export type MigrateDashboardV2200 = {
+	data: DashboardtypesGettableDashboardV2DTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetFeatures200 = {
 	/**
 	 * @type array

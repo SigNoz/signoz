@@ -54,7 +54,7 @@ var (
 	ResourceMetaResourceCloudIntegration                 = NewResourceMetaResource(KindCloudIntegration)
 	ResourceMetaResourceCloudIntegrationService          = NewResourceMetaResource(KindCloudIntegrationService)
 	ResourceMetaResourceIntegration                      = NewResourceMetaResource(KindIntegration)
-	ResourceMetaResourceDashboard                        = NewResourceMetaResource(KindDashboard)
+	ResourceMetaResourceDashboard                        = NewResourceMetaResource(KindDashboard, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)
 	ResourceMetaResourcePublicDashboard                  = NewResourceMetaResource(KindPublicDashboard)
 	ResourceMetaResourceIngestionKey                     = NewResourceMetaResource(KindIngestionKey)
 	ResourceMetaResourceIngestionLimit                   = NewResourceMetaResource(KindIngestionLimit)

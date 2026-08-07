@@ -39,6 +39,8 @@ jobs:
       matrix:
         suite:
           - alerts
+          - alertmanager
+          - alertmanagerrotation
           - basepath
           - callbackauthn
           - cloudintegrations
@@ -53,6 +55,7 @@ jobs:
           - queriermetrics
           - querierscalar
           - queriercommon
+          - querierai
           - rawexportdata
           - promqlconformance
           - querierauthz
