@@ -279,7 +279,7 @@ export async function expectDrawerTabs(
 		// `hideDetailViewTabs` — volumes renders no tab bar at all.
 		//
 		// The body-ready wait is what makes this falsifiable: the drawer shell mounts
-		// from `selectedItem` alone and `DrawerTabBar` mounts with the tab body, so a
+		// from `selectedItem` alone and the tab bar mounts with the tab body, so a
 		// bare `toHaveCount(0)` here resolved on its first poll against a drawer that
 		// had not rendered a tab bar *yet*, and would have passed if volumes grew one.
 		await expectDrawerBodyReady(page);
