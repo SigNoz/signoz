@@ -19,29 +19,6 @@ FILL_GAPS = "fillGaps"
 FILL_ZERO = "fillZero"
 
 
-def _build_format_options(fill_mode: str) -> dict[str, Any]:
-    return {
-        "formatTableResultForUI": False,
-        "fillGaps": fill_mode == FILL_GAPS,
-    }
-
-
-def _maybe_add_functions(spec: dict[str, Any], fill_mode: str, is_formula: bool = False) -> None:
-    """Add fillZero function to the spec when using fillZero mode.
-
-    For builder_query: functions go on the query spec.
-    For builder_formula: functions go on the formula spec.
-    fillGaps mode uses formatOptions instead, so nothing is added.
-    """
-    if fill_mode == FILL_ZERO and not is_formula:
-        spec["functions"] = [{"name": "fillZero"}]
-
-
-def _maybe_add_formula_functions(spec: dict[str, Any], fill_mode: str) -> None:
-    if fill_mode == FILL_ZERO:
-        spec["functions"] = [{"name": "fillZero"}]
-
-
 @pytest.mark.parametrize("fill_mode", [FILL_GAPS, FILL_ZERO], ids=["fill_gaps", "fill_zero"])
 def test_metrics_fill_no_group_by(
     fill_mode: str,
@@ -94,7 +71,9 @@ def test_metrics_fill_no_group_by(
         "stepInterval": 60,
         "disabled": False,
     }
-    _maybe_add_functions(query_spec, fill_mode)
+    # fillZero goes on the query spec as a function; fillGaps uses formatOptions instead.
+    if fill_mode == FILL_ZERO:
+        query_spec["functions"] = [{"name": "fillZero"}]
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
@@ -106,7 +85,10 @@ def test_metrics_fill_no_group_by(
             "end": end_ms,
             "requestType": "time_series",
             "compositeQuery": {"queries": [{"type": "builder_query", "spec": query_spec}]},
-            "formatOptions": _build_format_options(fill_mode),
+            "formatOptions": {
+                "formatTableResultForUI": False,
+                "fillGaps": fill_mode == FILL_GAPS,
+            },
         },
     )
 
@@ -198,7 +180,9 @@ def test_metrics_fill_with_group_by(
             }
         ],
     }
-    _maybe_add_functions(query_spec, fill_mode)
+    # fillZero goes on the query spec as a function; fillGaps uses formatOptions instead.
+    if fill_mode == FILL_ZERO:
+        query_spec["functions"] = [{"name": "fillZero"}]
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
@@ -210,7 +194,10 @@ def test_metrics_fill_with_group_by(
             "end": end_ms,
             "requestType": "time_series",
             "compositeQuery": {"queries": [{"type": "builder_query", "spec": query_spec}]},
-            "formatOptions": _build_format_options(fill_mode),
+            "formatOptions": {
+                "formatTableResultForUI": False,
+                "fillGaps": fill_mode == FILL_GAPS,
+            },
         },
     )
 
@@ -298,7 +285,9 @@ def test_metrics_fill_formula(
         "expression": "A + B",
         "disabled": False,
     }
-    _maybe_add_formula_functions(formula_spec, fill_mode)
+    # fillZero goes on the formula spec as a function; fillGaps uses formatOptions instead.
+    if fill_mode == FILL_ZERO:
+        formula_spec["functions"] = [{"name": "fillZero"}]
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
@@ -348,7 +337,10 @@ def test_metrics_fill_formula(
                     {"type": "builder_formula", "spec": formula_spec},
                 ]
             },
-            "formatOptions": _build_format_options(fill_mode),
+            "formatOptions": {
+                "formatTableResultForUI": False,
+                "fillGaps": fill_mode == FILL_GAPS,
+            },
         },
     )
 
@@ -466,7 +458,9 @@ def test_metrics_fill_formula_with_group_by(
         "expression": "A + B",
         "disabled": False,
     }
-    _maybe_add_formula_functions(formula_spec, fill_mode)
+    # fillZero goes on the formula spec as a function; fillGaps uses formatOptions instead.
+    if fill_mode == FILL_ZERO:
+        formula_spec["functions"] = [{"name": "fillZero"}]
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
@@ -518,7 +512,10 @@ def test_metrics_fill_formula_with_group_by(
                     {"type": "builder_formula", "spec": formula_spec},
                 ]
             },
-            "formatOptions": _build_format_options(fill_mode),
+            "formatOptions": {
+                "formatTableResultForUI": False,
+                "fillGaps": fill_mode == FILL_GAPS,
+            },
         },
     )
 

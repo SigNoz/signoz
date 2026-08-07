@@ -10,29 +10,6 @@ from fixtures.metrics import Metrics
 from fixtures.types import Operation, SigNoz
 
 BASE_URL = "/api/v2/dashboards"
-# MaxListLimit caps a single list page, so wiping a shared DB has to drain pages
-# until the list comes back empty.
-MAX_LIST_LIMIT = 200
-
-
-def _wipe_all_dashboards(signoz: SigNoz, token: str) -> None:
-    while True:
-        response = requests.get(
-            signoz.self.host_configs["8080"].get(f"{BASE_URL}?limit={MAX_LIST_LIMIT}"),
-            headers={"Authorization": f"Bearer {token}"},
-            timeout=5,
-        )
-        assert response.status_code == HTTPStatus.OK, response.text
-        dashboards = response.json()["data"]["dashboards"]
-        if not dashboards:
-            return
-        for dashboard in dashboards:
-            del_res = requests.delete(
-                signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard['id']}"),
-                headers={"Authorization": f"Bearer {token}"},
-                timeout=5,
-            )
-            assert del_res.status_code == HTTPStatus.NO_CONTENT, del_res.text
 
 
 # ─── failure cases (create no dashboards) ────────────────────────────────────
@@ -625,6 +602,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
+    wipe_all_dashboards: Callable[[str], None],
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
@@ -632,7 +610,7 @@ def test_dashboard_v2_lifecycle(  # pylint: disable=too-many-locals,too-many-sta
     # runs, so start from a clean slate: delete every dashboard (which also clears
     # pins via the delete cascade). This test then owns the whole dashboard space
     # and asserts on global counts.
-    _wipe_all_dashboards(signoz, token)
+    wipe_all_dashboards(token)
 
     dashboard_requests = [
         (
@@ -1269,6 +1247,7 @@ def test_dashboard_v2_pin_limit(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
+    wipe_all_dashboards: Callable[[str], None],
 ):
     max_pinned = 10
 
@@ -1276,7 +1255,7 @@ def test_dashboard_v2_pin_limit(
 
     # Wipe the dashboard space (see lifecycle) so the per-user pin cap this test
     # asserts against starts empty — deleting dashboards clears their pins.
-    _wipe_all_dashboards(signoz, token)
+    wipe_all_dashboards(token)
 
     ids: list[str] = []
     for i in range(max_pinned + 1):
@@ -1364,12 +1343,13 @@ def test_dashboard_v2_like_escaping(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
+    wipe_all_dashboards: Callable[[str], None],
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Wipe the dashboard space (see lifecycle) so the filter assertions run
     # against only the dashboards this test creates.
-    _wipe_all_dashboards(signoz, token)
+    wipe_all_dashboards(token)
 
     dashboard_requests = [
         ("esc-pct", "Cost 50% Report"),
@@ -1440,6 +1420,7 @@ def test_dashboard_v2_get_by_metric_name(
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[list[Metrics]], None],
+    wipe_all_dashboards: Callable[[str], None],
 ) -> None:
     """The v3 endpoint shortlists dashboards via a coarse data prefilter, then
     confirms matches by parsing the typed v2 panels. It must find the metric in
@@ -1447,7 +1428,7 @@ def test_dashboard_v2_get_by_metric_name(
     the metric appears only in panel names (the prefilter matches but the parse
     rejects it)."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    _wipe_all_dashboards(signoz, token)
+    wipe_all_dashboards(token)
 
     target_metric = "system.network.dropped"
     decoy_metric = "system.network.io"

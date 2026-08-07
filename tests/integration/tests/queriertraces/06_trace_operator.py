@@ -30,11 +30,6 @@ from fixtures.traces import (
     TracesStatusCode,
 )
 
-
-def _names(response: requests.Response) -> set:
-    return {r["data"]["name"] for r in get_rows(response)}
-
-
 # ============================================================================
 # Dataset — 4 traces using real OTel semantic-convention attributes
 #
@@ -137,7 +132,7 @@ def _names(response: requests.Response) -> set:
                 "filter_b": "db.system = 'redis'",
                 "expression": "A => B",
                 "return_spans_from": "",
-                "validate": lambda r: len(get_rows(r)) == 2 and _names(r) == {"POST /checkout", "GET /catalog"},
+                "validate": lambda r: len(get_rows(r)) == 2 and {row["data"]["name"] for row in get_rows(r)} == {"POST /checkout", "GET /catalog"},
             },
             id="ex.direct_child.default",
         ),
@@ -149,7 +144,7 @@ def _names(response: requests.Response) -> set:
                 "filter_b": "db.system = 'redis'",
                 "expression": "A => B",
                 "return_spans_from": "A",
-                "validate": lambda r: len(get_rows(r)) == 3 and _names(r) == {"POST /checkout", "GET /catalog", "api-proxy"},
+                "validate": lambda r: len(get_rows(r)) == 3 and {row["data"]["name"] for row in get_rows(r)} == {"POST /checkout", "GET /catalog", "api-proxy"},
             },
             id="ex.direct_child.return_A",
         ),
@@ -162,7 +157,7 @@ def _names(response: requests.Response) -> set:
                 "filter_b": "db.system = 'postgresql'",
                 "expression": "A -> B",
                 "return_spans_from": "",
-                "validate": lambda r: len(get_rows(r)) == 2 and _names(r) == {"POST /checkout", "GET /catalog"},
+                "validate": lambda r: len(get_rows(r)) == 2 and {row["data"]["name"] for row in get_rows(r)} == {"POST /checkout", "GET /catalog"},
             },
             id="ex.indirect_descendant.default",
         ),
@@ -174,7 +169,7 @@ def _names(response: requests.Response) -> set:
                 "filter_b": "db.system = 'postgresql'",
                 "expression": "A -> B",
                 "return_spans_from": "A",
-                "validate": lambda r: len(get_rows(r)) == 3 and _names(r) == {"POST /checkout", "GET /catalog", "api-proxy"},
+                "validate": lambda r: len(get_rows(r)) == 3 and {row["data"]["name"] for row in get_rows(r)} == {"POST /checkout", "GET /catalog", "api-proxy"},
             },
             id="ex.indirect_descendant.return_A",
         ),
@@ -189,7 +184,7 @@ def _names(response: requests.Response) -> set:
                 "filter_b": "db.system = 'redis'",
                 "expression": "A && B",
                 "return_spans_from": "",
-                "validate": lambda r: len(get_rows(r)) == 3 and _names(r) == {"POST /checkout", "GET /catalog", "api-proxy"},
+                "validate": lambda r: len(get_rows(r)) == 3 and {row["data"]["name"] for row in get_rows(r)} == {"POST /checkout", "GET /catalog", "api-proxy"},
             },
             id="ex.and.default",
         ),
@@ -202,7 +197,7 @@ def _names(response: requests.Response) -> set:
                 "filter_b": "messaging.system = 'kafka'",
                 "expression": "A || B",
                 "return_spans_from": "",
-                "validate": lambda r: len(get_rows(r)) == 5 and _names(r) == {"POST /checkout", "GET /catalog", "api-proxy", "standalone-server", "isolated-worker"},
+                "validate": lambda r: len(get_rows(r)) == 5 and {row["data"]["name"] for row in get_rows(r)} == {"POST /checkout", "GET /catalog", "api-proxy", "standalone-server", "isolated-worker"},
             },
             id="ex.or.default",
         ),
@@ -215,7 +210,7 @@ def _names(response: requests.Response) -> set:
                 "filter_b": "messaging.system = 'kafka'",
                 "expression": "A || B",
                 "return_spans_from": "A",
-                "validate": lambda r: len(get_rows(r)) == 4 and _names(r) == {"POST /checkout", "GET /catalog", "api-proxy", "standalone-server"},
+                "validate": lambda r: len(get_rows(r)) == 4 and {row["data"]["name"] for row in get_rows(r)} == {"POST /checkout", "GET /catalog", "api-proxy", "standalone-server"},
             },
             id="ex.or.return_A",
         ),
@@ -230,7 +225,7 @@ def _names(response: requests.Response) -> set:
                 "filter_b": "db.system = 'redis'",
                 "expression": "A NOT B",
                 "return_spans_from": "",
-                "validate": lambda r: len(get_rows(r)) == 1 and _names(r) == {"standalone-server"},
+                "validate": lambda r: len(get_rows(r)) == 1 and {row["data"]["name"] for row in get_rows(r)} == {"standalone-server"},
             },
             id="ex.not.default",
         ),
@@ -427,17 +422,6 @@ def test_trace_operator(
     assert case["validate"](response), f"validation failed: {response.json()}"
 
 
-def _expected_trace_subset(trace: Traces) -> dict[str, Any]:
-    return {
-        "duration_nano": trace.duration_nano,
-        "name": trace.name,
-        "parent_span_id": trace.parent_span_id,
-        "span_id": trace.span_id,
-        "timestamp": format_timestamp(trace.timestamp),
-        "trace_id": trace.trace_id,
-    }
-
-
 @pytest.mark.parametrize(
     "payload_factory,request_type,assert_result",
     [
@@ -470,7 +454,18 @@ def _expected_trace_subset(trace: Traces) -> dict[str, Any]:
                 },
             ],
             RequestType.RAW,
-            lambda response, traces: assert_raw_row_subset(response, "C", _expected_trace_subset(traces[0])),
+            lambda response, traces: assert_raw_row_subset(
+                response,
+                "C",
+                {
+                    "duration_nano": traces[0].duration_nano,
+                    "name": traces[0].name,
+                    "parent_span_id": traces[0].parent_span_id,
+                    "span_id": traces[0].span_id,
+                    "timestamp": format_timestamp(traces[0].timestamp),
+                    "trace_id": traces[0].trace_id,
+                },
+            ),
             id="deprecated-intrinsic-filter",
         ),
         # Case 2: CTE filter uses the deprecated calculated field `responseStatusCode`.
@@ -502,7 +497,18 @@ def _expected_trace_subset(trace: Traces) -> dict[str, Any]:
                 },
             ],
             RequestType.RAW,
-            lambda response, traces: assert_raw_row_subset(response, "C", _expected_trace_subset(traces[0])),
+            lambda response, traces: assert_raw_row_subset(
+                response,
+                "C",
+                {
+                    "duration_nano": traces[0].duration_nano,
+                    "name": traces[0].name,
+                    "parent_span_id": traces[0].parent_span_id,
+                    "span_id": traces[0].span_id,
+                    "timestamp": format_timestamp(traces[0].timestamp),
+                    "trace_id": traces[0].trace_id,
+                },
+            ),
             id="deprecated-calculated-filter",
         ),
         # Case 3: order by uses `count_` with fieldContext `span`, which has
@@ -609,38 +615,13 @@ TRACE_OPERATOR_CORE_FIELDS = [
 ]
 
 
-def _verify_full_expansion(rows: list[dict], parent_trace: Traces) -> None:
-    """Empty-selectFields case: every column from the builder_query parity set
-    arrives, and events/links are parsed into structured form (refType is
-    dropped at the consume layer).
-    """
-    assert len(rows) == 1
-    parent_row = rows[0]["data"]
-    assert set(parent_row.keys()) == set(ALL_SELECT_FIELDS)
-    assert parent_row["events"] == parent_trace.events
-    assert parent_row["links"] == parent_trace.links
-    for link in parent_row["links"]:
-        assert "refType" not in link
-
-
-def _verify_explicit_projection(rows: list[dict], parent_trace: Traces) -> None:  # pylint: disable=unused-argument
-    """Explicit-selectFields case: only the 6 hardcoded core fields plus the
-    user-supplied resource.service.name come back. Contextual columns
-    (events/links/attributes/resource) and the rest of the intrinsics never
-    appear because the consume-layer merge isn't triggered.
-    """
-    assert len(rows) == 1
-    parent_row = rows[0]["data"]
-    assert set(parent_row.keys()) == set(TRACE_OPERATOR_CORE_FIELDS + ["service.name"])
-
-
 @pytest.mark.parametrize(
-    "select_fields,verify_values",
+    "select_fields,expansion",
     [
-        pytest.param([], _verify_full_expansion, id="empty-select-fields"),
+        pytest.param([], "full", id="empty-select-fields"),
         pytest.param(
             [{"name": "service.name", "fieldContext": "resource"}],
-            _verify_explicit_projection,
+            "explicit",
             id="explicit-service-name",
         ),
     ],
@@ -651,7 +632,7 @@ def test_trace_operator_select_fields(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
     select_fields: list[dict[str, Any]],
-    verify_values: Callable[[list[dict], Traces], None],
+    expansion: str,
 ) -> None:
     """
     Setup:
@@ -770,4 +751,21 @@ def test_trace_operator_select_fields(
     trace_operator_result = find_named_result(results, "C")
     assert trace_operator_result is not None, "trace_operator result C not found"
     rows = trace_operator_result["rows"]
-    verify_values(rows, parent_trace)
+
+    assert len(rows) == 1
+    parent_row = rows[0]["data"]
+    if expansion == "full":
+        # Empty-selectFields case: every column from the builder_query parity set
+        # arrives, and events/links are parsed into structured form (refType is
+        # dropped at the consume layer).
+        assert set(parent_row.keys()) == set(ALL_SELECT_FIELDS)
+        assert parent_row["events"] == parent_trace.events
+        assert parent_row["links"] == parent_trace.links
+        for link in parent_row["links"]:
+            assert "refType" not in link
+    else:
+        # Explicit-selectFields case: only the 6 hardcoded core fields plus the
+        # user-supplied resource.service.name come back. Contextual columns
+        # (events/links/attributes/resource) and the rest of the intrinsics never
+        # appear because the consume-layer merge isn't triggered.
+        assert set(parent_row.keys()) == set(TRACE_OPERATOR_CORE_FIELDS + ["service.name"])

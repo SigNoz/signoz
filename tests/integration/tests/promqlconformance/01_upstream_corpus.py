@@ -46,112 +46,6 @@ ISOLATION_GAP_MS = 2 * 3600 * 1000
 SPECIALS = {"NaN": math.nan, "Inf": math.inf, "-Inf": -math.inf}
 
 
-def _decode(v: float | str) -> float:
-    if isinstance(v, str):
-        return SPECIALS[v]
-    return float(v)
-
-
-def _values_close(a: float, b: float) -> bool:
-    if math.isnan(a) or math.isnan(b):
-        return math.isnan(a) and math.isnan(b)
-    if math.isinf(a) or math.isinf(b):
-        return a == b
-    if a == b:
-        return True
-    # Both sides carry the API's rounding (>=1: three decimal places; <1:
-    # three significant digits). A true value sitting exactly on a rounding
-    # boundary can round either way when the two computations differ at ULP
-    # level (float aggregation order over series is storage-iteration
-    # dependent), so allow one rounding quantum.
-    scale = max(abs(a), abs(b))
-    if scale >= 1:
-        # Values too large to round pass through unrounded; give those an
-        # ULP-class relative grace on top of the rounding quantum.
-        quantum = max(1e-3, scale * 1e-9)
-    else:
-        quantum = 10 ** (math.floor(math.log10(scale)) - 2)
-    return abs(a - b) <= quantum + 1e-12
-
-
-def _labelset(labels: dict[str, str]) -> tuple:
-    return tuple(sorted(labels.items()))
-
-
-def _response_series(data: dict) -> tuple[dict[tuple, dict[int, float]], list[tuple]]:
-    """Returns (series map, duplicate labelsets). A response carrying several
-    series with identical visible labels is itself a defect signal (e.g. a
-    hidden grouping label stripped on the way out) and must not be silently
-    collapsed into one entry."""
-    out: dict[tuple, dict[int, float]] = {}
-    duplicates: list[tuple] = []
-    # Empty results serialize with null aggregations/series/values fields.
-    for series in get_all_series(data, "A") or []:
-        lbls = {l["key"]["name"]: str(l["value"]) for l in series.get("labels") or []}
-        points = {int(v["timestamp"]): _decode(v["value"]) for v in series.get("values") or []}
-        key = _labelset(lbls)
-        if key in out:
-            duplicates.append(key)
-        out[key] = points
-    return out, duplicates
-
-
-def _case_failure(
-    signoz: types.SigNoz,
-    token: str,
-    case: dict,
-    base: int,
-    headers: dict | None,
-) -> str | None:
-    """Replays one corpus case on one leg; returns a failure line or None."""
-    start_ms = base + case["start_ms"]
-    end_ms = base + case["end_ms"]
-    step_s = max(1, case["step_ms"] // 1000)
-    req_start_ms = start_ms
-    if case["instant"]:
-        # The API rejects start == end; ask for one extra step backward
-        # and compare only at the instant timestamp. Nudging the start
-        # earlier instead of the end later keeps every window that the
-        # expected values were computed from untouched.
-        req_start_ms = start_ms - step_s * 1000
-    query = {
-        "type": "promql",
-        "spec": {"name": "A", "query": case["expr"], "step": step_s},
-    }
-
-    case_id = f"{case['source']}[{case['variant']}]"
-    response = make_query_request(signoz, token, req_start_ms, end_ms, [query], headers=headers)
-    if response.status_code != HTTPStatus.OK:
-        return f"{case_id}: HTTP {response.status_code} for {case['expr']!r}: {response.text[:200]}"
-
-    actual, duplicates = _response_series(response.json())
-    if duplicates:
-        return f"{case_id}: response carries multiple series with identical labels for {case['expr']!r}: {[dict(d) for d in duplicates[:3]]}"
-    if case["instant"]:
-        # Keep only the instant point; the extra grid step is a request
-        # encoding byproduct, not part of the assertion.
-        actual = {lset: {ts: v for ts, v in pts.items() if ts == end_ms} for lset, pts in actual.items()}
-        actual = {lset: pts for lset, pts in actual.items() if pts}
-    expected: dict[tuple, dict[int, float]] = {}
-    for res in case["expected"]:
-        points = {base + off_ms: _decode(v) for off_ms, v in res["points"]}
-        expected[_labelset(res["labels"])] = points
-
-    if set(actual) != set(expected):
-        missing = set(expected) - set(actual)
-        extra = set(actual) - set(expected)
-        return f"{case_id}: series mismatch for {case['expr']!r} (missing={sorted(missing)[:3]} extra={sorted(extra)[:3]}) actual={[(dict(k), {t - base: v for t, v in pts.items()}) for k, pts in actual.items()]}"
-
-    for lset, exp_points in expected.items():
-        act_points = actual[lset]
-        if set(act_points) != set(exp_points):
-            return f"{case_id}: timestamp mismatch for {case['expr']!r} series {dict(lset)} (expected {len(exp_points)} points, got {len(act_points)})"
-        for ts, exp_v in exp_points.items():
-            if not _values_close(act_points[ts], exp_v):
-                return f"{case_id}: value mismatch for {case['expr']!r} series {dict(lset)} at {ts}: expected {exp_v}, got {act_points[ts]}"
-    return None
-
-
 def test_upstream_promqltest_corpus(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
@@ -196,7 +90,7 @@ def test_upstream_promqltest_corpus(
                         metric_name=metric_name,
                         labels=labels,
                         timestamp=datetime.fromtimestamp((cursor + off_ms) / 1000, tz=UTC),
-                        value=0.0 if stale else _decode(raw),
+                        value=0.0 if stale else (SPECIALS[raw] if isinstance(raw, str) else float(raw)),
                         flags=1 if stale else 0,
                     )
                 )
@@ -207,10 +101,97 @@ def test_upstream_promqltest_corpus(
 
     failures: dict[str, list[str]] = {leg: [] for leg, _ in LEGS}
     for case in corpus["cases"]:
+        base = bases[case["dataset"]]
+        start_ms = base + case["start_ms"]
+        end_ms = base + case["end_ms"]
+        step_s = max(1, case["step_ms"] // 1000)
+        req_start_ms = start_ms
+        if case["instant"]:
+            # The API rejects start == end; ask for one extra step backward
+            # and compare only at the instant timestamp. Nudging the start
+            # earlier instead of the end later keeps every window that the
+            # expected values were computed from untouched.
+            req_start_ms = start_ms - step_s * 1000
+        query = {
+            "type": "promql",
+            "spec": {"name": "A", "query": case["expr"], "step": step_s},
+        }
+        case_id = f"{case['source']}[{case['variant']}]"
+
         for leg, headers in LEGS:
-            f_line = _case_failure(signoz, token, case, bases[case["dataset"]], headers)
-            if f_line:
-                failures[leg].append(f_line)
+            response = make_query_request(signoz, token, req_start_ms, end_ms, [query], headers=headers)
+            if response.status_code != HTTPStatus.OK:
+                failures[leg].append(f"{case_id}: HTTP {response.status_code} for {case['expr']!r}: {response.text[:200]}")
+                continue
+
+            # A response carrying several series with identical visible labels
+            # is itself a defect signal (e.g. a hidden grouping label stripped
+            # on the way out) and must not be silently collapsed into one entry.
+            actual: dict[tuple, dict[int, float]] = {}
+            duplicates: list[tuple] = []
+            # Empty results serialize with null aggregations/series/values fields.
+            for series in get_all_series(response.json(), "A") or []:
+                lbls = {l["key"]["name"]: str(l["value"]) for l in series.get("labels") or []}
+                points = {int(v["timestamp"]): SPECIALS[v["value"]] if isinstance(v["value"], str) else float(v["value"]) for v in series.get("values") or []}
+                key = tuple(sorted(lbls.items()))
+                if key in actual:
+                    duplicates.append(key)
+                actual[key] = points
+            if duplicates:
+                failures[leg].append(f"{case_id}: response carries multiple series with identical labels for {case['expr']!r}: {[dict(d) for d in duplicates[:3]]}")
+                continue
+
+            if case["instant"]:
+                # Keep only the instant point; the extra grid step is a request
+                # encoding byproduct, not part of the assertion.
+                actual = {lset: {ts: v for ts, v in pts.items() if ts == end_ms} for lset, pts in actual.items()}
+                actual = {lset: pts for lset, pts in actual.items() if pts}
+            expected: dict[tuple, dict[int, float]] = {}
+            for res in case["expected"]:
+                points = {base + off_ms: SPECIALS[v] if isinstance(v, str) else float(v) for off_ms, v in res["points"]}
+                expected[tuple(sorted(res["labels"].items()))] = points
+
+            if set(actual) != set(expected):
+                missing = set(expected) - set(actual)
+                extra = set(actual) - set(expected)
+                failures[leg].append(f"{case_id}: series mismatch for {case['expr']!r} (missing={sorted(missing)[:3]} extra={sorted(extra)[:3]}) actual={[(dict(k), {t - base: v for t, v in pts.items()}) for k, pts in actual.items()]}")
+                continue
+
+            mismatch = None
+            for lset, exp_points in expected.items():
+                act_points = actual[lset]
+                if set(act_points) != set(exp_points):
+                    mismatch = f"{case_id}: timestamp mismatch for {case['expr']!r} series {dict(lset)} (expected {len(exp_points)} points, got {len(act_points)})"
+                    break
+                for ts, exp_v in exp_points.items():
+                    act_v = act_points[ts]
+                    if math.isnan(act_v) or math.isnan(exp_v):
+                        close = math.isnan(act_v) and math.isnan(exp_v)
+                    elif math.isinf(act_v) or math.isinf(exp_v):
+                        close = act_v == exp_v
+                    elif act_v == exp_v:
+                        close = True
+                    else:
+                        # Both sides carry the API's rounding (>=1: three decimal places; <1:
+                        # three significant digits). A true value sitting exactly on a rounding
+                        # boundary can round either way when the two computations differ at ULP
+                        # level (float aggregation order over series is storage-iteration
+                        # dependent), so allow one rounding quantum.
+                        scale = max(abs(act_v), abs(exp_v))
+                        if scale >= 1:
+                            # Values too large to round pass through unrounded; give those an
+                            # ULP-class relative grace on top of the rounding quantum.
+                            quantum = max(1e-3, scale * 1e-9)
+                        else:
+                            quantum = 10 ** (math.floor(math.log10(scale)) - 2)
+                        close = abs(act_v - exp_v) <= quantum + 1e-12
+                    if not close:
+                        mismatch = f"{case_id}: value mismatch for {case['expr']!r} series {dict(lset)} at {ts}: expected {exp_v}, got {act_v}"
+                        break
+                if mismatch:
+                    break
+            if mismatch:
+                failures[leg].append(mismatch)
 
     for leg, _ in LEGS:
         for f_line in failures[leg]:
