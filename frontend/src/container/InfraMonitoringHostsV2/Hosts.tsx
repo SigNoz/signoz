@@ -140,6 +140,7 @@ function Hosts(): JSX.Element {
 					records: data.records,
 					total: data.total,
 					endTimeBeforeRetention: data.endTimeBeforeRetention,
+					warning: data.warning,
 				};
 			} catch (error) {
 				return {
