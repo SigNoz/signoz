@@ -106,6 +106,7 @@ export type TooltipProps =
 export enum LegendPosition {
 	BOTTOM = 'bottom',
 	RIGHT = 'right',
+	NONE = 'none',
 }
 export interface LegendConfig {
 	position: LegendPosition;
