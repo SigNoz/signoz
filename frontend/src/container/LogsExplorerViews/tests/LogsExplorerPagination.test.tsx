@@ -388,6 +388,8 @@ function LogsExplorerWithMockContext({
 
 	const contextValue = React.useMemo(
 		() => ({
+			mode: 'url' as const,
+			committedQuery: stagedQuery,
 			isDefaultQuery: (): boolean => false,
 			currentQuery,
 			stagedQuery,

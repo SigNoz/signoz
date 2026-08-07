@@ -106,6 +106,8 @@ describe('MetricsSelect - signal source switching (standalone)', () => {
 		};
 
 		(mockedUseQueryBuilder as any).mockReturnValue({
+			mode: 'url',
+			committedQuery: null,
 			currentQuery: currentQueryObj,
 			stagedQuery: null,
 			lastUsedQuery: null,
@@ -263,6 +265,8 @@ describe('DataSource change - Logs to Traces', () => {
 
 		mockedUseQueryBuilder.mockReset();
 		mockedUseQueryBuilder.mockReturnValue({
+			mode: 'url',
+			committedQuery: null,
 			currentQuery: logsCurrentQuery,
 			stagedQuery: null,
 			lastUsedQuery: null,

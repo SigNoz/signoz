@@ -10,7 +10,6 @@ import {
 } from 'react';
 import { useLocation } from 'react-router-dom';
 import { isQueryUpdatedInView } from 'components/ExplorerCard/utils';
-import { QueryParams } from 'constants/query';
 import {
 	alphabet,
 	baseAutoCompleteIdKeysOrder,
@@ -21,7 +20,6 @@ import {
 	initialQueryBuilderFormTraceOperatorValues,
 	initialQueryBuilderFormValuesMap,
 	initialQueryPromQLData,
-	initialQueryState,
 	initialSingleQueryMap,
 	MAX_FORMULAS,
 	MAX_QUERIES,
@@ -34,10 +32,10 @@ import {
 	PartialPanelTypes,
 } from 'container/NewWidget/utils';
 import { OptionsQuery } from 'container/OptionsMenu/types';
-import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
+import { useMemoryCompositeQueryStore } from 'hooks/queryBuilder/compositeQueryStore/useMemoryCompositeQueryStore';
+import { useUrlCompositeQueryStore } from 'hooks/queryBuilder/compositeQueryStore/useUrlCompositeQueryStore';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import useUrlQuery from 'hooks/useUrlQuery';
+import { normalizeCompositeQuery } from 'lib/compositeQuery/normalizeCompositeQuery';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
@@ -65,9 +63,10 @@ import {
 	ReduceOperators,
 } from 'types/common/queryBuilder';
 import { sanitizeOrderByForExplorer } from 'utils/sanitizeOrderBy';
-import { v4 as uuid } from 'uuid';
 
 export const QueryBuilderContext = createContext<QueryBuilderContextType>({
+	mode: 'url',
+	committedQuery: null,
 	currentQuery: initialQueriesMap.metrics,
 	supersetQuery: initialQueriesMap.metrics,
 	lastUsedQuery: null,
@@ -102,10 +101,28 @@ export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	isDefaultQuery: () => false,
 });
 
-export function QueryBuilderProvider({
-	children,
-}: PropsWithChildren): JSX.Element {
-	const urlQuery = useUrlQuery();
+export type QueryBuilderProviderProps = PropsWithChildren<
+	| {
+			/** Default: the staged query is stored in the `compositeQuery` URL param. */
+			mode?: 'url';
+	  }
+	| {
+			/** The staged query is kept in memory — the URL is never touched. */
+			mode: 'memory';
+			/** Seed for the staged query; runs the same legacy-format migration as URL parsing. */
+			initialQuery?: Query;
+			initialPanelType?: PANEL_TYPES;
+			/** Fired with the normalized query every time it is staged (Stage & Run). */
+			onStagedQueryChange?: (query: Query) => void;
+	  }
+>;
+
+export function QueryBuilderProvider(
+	props: QueryBuilderProviderProps,
+): JSX.Element {
+	const { children } = props;
+	const memoryModeProps = props.mode === 'memory' ? props : null;
+
 	const location = useLocation();
 
 	const currentPathnameRef = useRef<string | null>(location.pathname);
@@ -114,7 +131,18 @@ export function QueryBuilderProvider({
 	const [calledFromHandleRunQuery, setCalledFromHandleRunQuery] =
 		useState<boolean>(false);
 
-	const compositeQueryParam = useGetCompositeQueryParam();
+	// Rules of hooks: both store hooks always run; only the selected one is used.
+	const urlCompositeQueryStore = useUrlCompositeQueryStore();
+	const memoryCompositeQueryStore = useMemoryCompositeQueryStore({
+		initialQuery: memoryModeProps?.initialQuery,
+		initialPanelType: memoryModeProps?.initialPanelType,
+		onCommit: memoryModeProps?.onStagedQueryChange,
+	});
+	const compositeQueryStore = memoryModeProps
+		? memoryCompositeQueryStore
+		: urlCompositeQueryStore;
+
+	const compositeQueryParam = compositeQueryStore.query;
 	const { queryType: queryTypeParam, ...queryState } =
 		compositeQueryParam || initialQueriesMap.metrics;
 
@@ -122,12 +150,8 @@ export function QueryBuilderProvider({
 		null,
 	);
 
-	const panelTypeQueryParams = urlQuery.get(
-		QueryParams.panelTypes,
-	) as PANEL_TYPES | null;
-
 	const [panelType, setPanelType] = useState<PANEL_TYPES | null>(
-		panelTypeQueryParams,
+		compositeQueryStore.panelType,
 	);
 
 	const [currentQuery, setCurrentQuery] = useState<QueryState>(queryState);
@@ -935,9 +959,7 @@ export function QueryBuilderProvider({
 		[panelType, stagedQuery],
 	);
 
-	const { safeNavigate } = useSafeNavigate({
-		preventSameUrlNavigation: false,
-	});
+	const { commit: commitCompositeQuery } = compositeQueryStore;
 
 	const redirectWithQueryBuilderData = useCallback(
 		(
@@ -947,74 +969,14 @@ export function QueryBuilderProvider({
 			shouldNotStringify?: boolean,
 			newTab?: boolean,
 		) => {
-			const queryType =
-				!query.queryType || !Object.values(EQueryType).includes(query.queryType)
-					? EQueryType.QUERY_BUILDER
-					: query.queryType;
-
-			const builder =
-				!query.builder || query.builder.queryData?.length === 0
-					? initialQueryState.builder
-					: query.builder;
-
-			const promql =
-				!query.promql || query.promql.length === 0
-					? initialQueryState.promql
-					: query.promql;
-
-			const clickhouseSql =
-				!query.clickhouse_sql || query.clickhouse_sql.length === 0
-					? initialQueryState.clickhouse_sql
-					: query.clickhouse_sql;
-
-			const currentGeneratedQuery: Query = {
-				queryType,
-				builder,
-				promql,
-				clickhouse_sql: clickhouseSql,
-				id: uuid(),
-				unit: query.unit || initialQueryState.unit,
-			};
-
-			const pagination = urlQuery.get(QueryParams.pagination);
-
-			if (pagination) {
-				const parsedPagination = JSON.parse(pagination);
-
-				urlQuery.set(
-					QueryParams.pagination,
-					JSON.stringify({
-						limit: parsedPagination.limit,
-						offset: 0,
-					}),
-				);
-			}
-
-			urlQuery.set(
-				QueryParams.compositeQuery,
-				encodeURIComponent(JSON.stringify(currentGeneratedQuery)),
-			);
-
-			if (searchParams) {
-				Object.keys(searchParams).forEach((param) =>
-					urlQuery.set(
-						param,
-						shouldNotStringify
-							? (searchParams[param] as string)
-							: JSON.stringify(searchParams[param]),
-					),
-				);
-			}
-			// Remove Hidden Filters from URL query parameters on query change
-			urlQuery.delete(QueryParams.activeLogId);
-
-			const generatedUrl = redirectingUrl
-				? `${redirectingUrl}?${urlQuery}`
-				: `${location.pathname}?${urlQuery}`;
-
-			safeNavigate(generatedUrl, { newTab });
+			commitCompositeQuery(normalizeCompositeQuery(query), {
+				searchParams,
+				redirectingUrl,
+				shouldNotStringify,
+				newTab,
+			});
 		},
-		[location.pathname, safeNavigate, urlQuery],
+		[commitCompositeQuery],
 	);
 
 	const handleSetConfig = useCallback(
@@ -1075,12 +1037,16 @@ export function QueryBuilderProvider({
 		if (location.pathname !== currentPathnameRef.current) {
 			currentPathnameRef.current = location.pathname;
 
-			setStagedQuery(null);
-			// reset the last used query to 0 when navigating away from the page
-			setLastUsedQuery(0);
-			setCalledFromHandleRunQuery(false);
+			// In memory mode the store lives and dies with the provider mount,
+			// so navigation must not clear the staged query.
+			if (compositeQueryStore.mode === 'url') {
+				setStagedQuery(null);
+				// reset the last used query to 0 when navigating away from the page
+				setLastUsedQuery(0);
+				setCalledFromHandleRunQuery(false);
+			}
 		}
-	}, [location.pathname]);
+	}, [location.pathname, compositeQueryStore.mode]);
 
 	// Separate useEffect to handle initQueryBuilderData after pathname changes
 	useEffect(() => {
@@ -1159,6 +1125,8 @@ export function QueryBuilderProvider({
 
 	const contextValues: QueryBuilderContextType = useMemo(
 		() => ({
+			mode: compositeQueryStore.mode,
+			committedQuery: compositeQueryStore.query,
 			currentQuery: query,
 			supersetQuery: superQuery,
 			lastUsedQuery,
@@ -1193,6 +1161,8 @@ export function QueryBuilderProvider({
 			isStagedQueryUpdated,
 		}),
 		[
+			compositeQueryStore.mode,
+			compositeQueryStore.query,
 			query,
 			superQuery,
 			lastUsedQuery,
