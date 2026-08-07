@@ -56,6 +56,16 @@ func maxTimestamp(series []*v3.Series) int64 {
 	return max
 }
 
+func TestExecUserClickHouseQueryValidatesUserSQL(t *testing.T) {
+	querier := &querier{testingMode: true}
+
+	_, err := querier.execUserClickHouseQuery(context.Background(), "SELECT 1")
+	assert.NoError(t, err)
+
+	_, err = querier.execUserClickHouseQuery(context.Background(), "DROP TABLE signoz_logs.logs_v2")
+	assert.Error(t, err)
+}
+
 func TestFindMissingTimeRangesZeroFreshNess(t *testing.T) {
 	// There are five scenarios:
 	// 1. Cached time range is a subset of the requested time range

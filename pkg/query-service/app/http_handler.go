@@ -1093,9 +1093,13 @@ func (aH *APIHandler) queryDashboardVarsV2(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	querybuilder.LogIfStatementIsNotValid(r.Context(), aH.logger, query)
+	if err := querybuilder.ErrIfStatementIsNotValid(query); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
 
-	dashboardVars, err := aH.reader.QueryDashboardVars(r.Context(), query)
+	ctx := ctxtypes.SetClickhouseReadOnly(r.Context())
+	dashboardVars, err := aH.reader.QueryDashboardVars(ctx, query)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return

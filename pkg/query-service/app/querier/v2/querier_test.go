@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	cmock "github.com/SigNoz/clickhouse-go-mock"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/cache/cachetest"
 	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
@@ -27,7 +28,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	cmock "github.com/SigNoz/clickhouse-go-mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -54,6 +54,16 @@ func maxTimestamp(series []*v3.Series) int64 {
 		}
 	}
 	return max
+}
+
+func TestExecUserClickHouseQueryValidatesUserSQL(t *testing.T) {
+	querier := &querier{testingMode: true}
+
+	_, err := querier.execUserClickHouseQuery(context.Background(), "SELECT 1")
+	assert.NoError(t, err)
+
+	_, err = querier.execUserClickHouseQuery(context.Background(), "DROP TABLE signoz_logs.logs_v2")
+	assert.Error(t, err)
 }
 
 func TestV2FindMissingTimeRangesZeroFreshNess(t *testing.T) {
