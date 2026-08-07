@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"strings"
+	"time"
 
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
@@ -108,45 +109,119 @@ func slugifySavedViewName(displayName string) string {
 	return prefix + "-" + string(suffix)
 }
 
+// storableLegacySavedView is the shape of the `saved_views` table before this migration.
+type storableLegacySavedView struct {
+	bun.BaseModel `bun:"table:saved_views"`
+
+	ID         string    `bun:"id"`
+	Name       string    `bun:"name"`
+	SourcePage string    `bun:"source_page"`
+	Data       string    `bun:"data"`
+	ExtraData  string    `bun:"extra_data"`
+	OrgID      string    `bun:"org_id"`
+	CreatedAt  time.Time `bun:"created_at"`
+	UpdatedAt  time.Time `bun:"updated_at"`
+	CreatedBy  string    `bun:"created_by"`
+	UpdatedBy  string    `bun:"updated_by"`
+}
+
+// storableSavedView is the shape of the `saved_view` table this migration creates.
+type storableSavedView struct {
+	bun.BaseModel `bun:"table:saved_view"`
+
+	ID        string    `bun:"id,pk,type:text"`
+	OrgID     string    `bun:"org_id,type:text,notnull"`
+	Name      string    `bun:"name,type:text,notnull"`
+	Source    string    `bun:"source,type:text,notnull"`
+	Data      string    `bun:"data,type:text,notnull"`
+	CreatedAt time.Time `bun:"created_at,notnull"`
+	UpdatedAt time.Time `bun:"updated_at,notnull"`
+	CreatedBy string    `bun:"created_by,type:text,notnull"`
+	UpdatedBy string    `bun:"updated_by,type:text,notnull"`
+}
+
 func (migration *restructureSavedViewSpec) Up(ctx context.Context, db *bun.DB) error {
+	// check if the `saved_view` table already exists
+	if _, _, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("saved_view")); err == nil {
+		return nil
+	}
+
+	savedViewsTable, _, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("saved_views"))
+	if err != nil {
+		return err
+	}
+
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	var savedViews []struct {
-		ID        string `bun:"id"`
-		Name      string `bun:"name"`
-		Data      string `bun:"data"`
-		ExtraData string `bun:"extra_data"`
-	}
-
-	err = tx.NewSelect().
-		Table("saved_views").
-		Column("id", "name", "data", "extra_data").
-		Scan(ctx, &savedViews)
-	if err != nil && err != sql.ErrNoRows {
+	var oldSavedViews []*storableLegacySavedView
+	if err := tx.NewSelect().Model(&oldSavedViews).Scan(ctx); err != nil && err != sql.ErrNoRows {
 		return err
 	}
 
-	for _, savedView := range savedViews {
+	// drop table `saved_views`
+	for _, sql := range migration.sqlschema.Operator().DropTable(savedViewsTable) {
+		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
+			return err
+		}
+	}
+
+	// create table `saved_view` with the final required schema
+	for _, sql := range migration.sqlschema.Operator().CreateTable(&sqlschema.Table{
+		Name: "saved_view",
+		Columns: []*sqlschema.Column{
+			{Name: "id", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "name", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "source", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "data", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+			{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+			{Name: "created_by", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "updated_by", DataType: sqlschema.DataTypeText, Nullable: false},
+		},
+		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{
+			ColumnNames: []sqlschema.ColumnName{"id"},
+		},
+		ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
+			{
+				ReferencingColumnName: sqlschema.ColumnName("org_id"),
+				ReferencedTableName:   sqlschema.TableName("organizations"),
+				ReferencedColumnName:  sqlschema.ColumnName("id"),
+			},
+		},
+	}) {
+		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
+			return err
+		}
+	}
+
+	// convert old saved views to the new shape
+	newSavedViews := make([]*storableSavedView, 0, len(oldSavedViews))
+	for _, old := range oldSavedViews {
+		if old.OrgID == "" {
+			continue // orphaned row from a pre-existing org_id backfill gap; nothing sane to attach it to
+		}
+
 		var compositeQuery legacySavedViewCompositeQuery
-		if err := json.Unmarshal([]byte(savedView.Data), &compositeQuery); err != nil {
+		if err := json.Unmarshal([]byte(old.Data), &compositeQuery); err != nil {
 			continue // skip the row on error rather than fail the whole migration
 		}
 
 		var extraData legacySavedViewExtraData
-		if savedView.ExtraData != "" {
+		if old.ExtraData != "" {
 			// best-effort: malformed/older extraData shapes never fail the migration,
 			// they just leave selectedFields/display empty.
-			_ = json.Unmarshal([]byte(savedView.ExtraData), &extraData)
+			_ = json.Unmarshal([]byte(old.ExtraData), &extraData)
 		}
 
 		dataJSON, err := json.Marshal(savedViewData{
 			SchemaVersion: "v2",
 			Spec: savedViewSpec{
-				DisplayName:    savedView.Name,
+				DisplayName:    old.Name,
 				PanelType:      compositeQuery.PanelType,
 				Queries:        compositeQuery.Queries,
 				SelectedFields: extraData.SelectColumns,
@@ -165,32 +240,27 @@ func (migration *restructureSavedViewSpec) Up(ctx context.Context, db *bun.DB) e
 		// Existing names were free text (no slug constraints); the free-text
 		// value is preserved verbatim as data.spec.displayName above, and name is
 		// replaced with a fresh slug so it satisfies the new DNS-1123 + (org_id,
-		// name) uniqueness rules below.
-		_, err = tx.NewUpdate().
-			Table("saved_views").
-			Set("data = ?, name = ?", string(dataJSON), slugifySavedViewName(savedView.Name)).
-			Where("id = ?", savedView.ID).
-			Exec(ctx)
-		if err != nil {
+		// name) uniqueness rules.
+		newSavedViews = append(newSavedViews, &storableSavedView{
+			ID:        old.ID,
+			OrgID:     old.OrgID,
+			Name:      slugifySavedViewName(old.Name),
+			Source:    old.SourcePage,
+			Data:      string(dataJSON),
+			CreatedAt: old.CreatedAt,
+			UpdatedAt: old.UpdatedAt,
+			CreatedBy: old.CreatedBy,
+			UpdatedBy: old.UpdatedBy,
+		})
+	}
+
+	if len(newSavedViews) > 0 {
+		if _, err := tx.NewInsert().Model(&newSavedViews).Exec(ctx); err != nil {
 			return err
 		}
 	}
 
-	for _, column := range []string{"category", "tags"} {
-		if err := migration.store.Dialect().DropColumn(ctx, tx, "saved_views", column); err != nil {
-			return err
-		}
-	}
-
-	if _, err := migration.store.Dialect().RenameColumn(ctx, tx, "saved_views", "source_page", "source"); err != nil {
-		return err
-	}
-
-	// matching the singular table-name convention.
-	if _, err := tx.ExecContext(ctx, "ALTER TABLE saved_views RENAME TO saved_view"); err != nil {
-		return err
-	}
-
+	// add unique index on (org_id, name)
 	for _, sql := range migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{
 		TableName:   "saved_view",
 		ColumnNames: []sqlschema.ColumnName{"org_id", "name"},
