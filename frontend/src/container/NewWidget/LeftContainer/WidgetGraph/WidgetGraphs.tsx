@@ -38,6 +38,7 @@ function WidgetGraph({
 	setRequestData,
 	selectedGraph,
 	enableDrillDown = false,
+	onColumnWidthsChange,
 }: WidgetGraphProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 	const lineChartRef = useRef<ToggleGraphProps>();
@@ -194,6 +195,7 @@ function WidgetGraph({
 				graphVisibility={graphVisibility}
 				setGraphVisibility={setGraphVisibility}
 				enableDrillDown={enableDrillDown}
+				onColumnWidthsChange={onColumnWidthsChange}
 			/>
 		</div>
 	);
@@ -205,6 +207,7 @@ interface WidgetGraphProps {
 	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
 	selectedGraph: PANEL_TYPES;
 	enableDrillDown?: boolean;
+	onColumnWidthsChange?: (widths: Record<string, number>) => void;
 }
 
 export default WidgetGraph;

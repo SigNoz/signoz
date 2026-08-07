@@ -1,6 +1,9 @@
 .query-table {
 	position: relative;
 	height: inherit;
+	min-width: 0;
+	overflow: hidden;
+
 	.query-table--download {
 		position: absolute;
 		top: 15px;
@@ -9,9 +12,24 @@
 	}
 
 	.ant-table {
+		min-width: 0;
+		overflow-x: hidden;
+		overflow-y: auto;
+
 		&::-webkit-scrollbar {
 			width: 0.1rem;
 		}
+	}
+
+	.ant-table-wrapper,
+	.ant-spin-nested-loading,
+	.ant-spin-container,
+	.ant-table-container {
+		min-width: 0;
+	}
+
+	.ant-table-content {
+		overflow-x: auto !important;
 	}
 
 	.clickable-cell {
