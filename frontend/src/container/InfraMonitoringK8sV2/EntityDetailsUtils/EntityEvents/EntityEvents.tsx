@@ -240,6 +240,7 @@ function EntityEventsContent({
 						isLoadingQueries={isFetching}
 						onStageRunQuery={(): void => handleRunQuery()}
 						handleCancelQuery={cancel}
+						testId="entity-events-run-query-btn"
 					/>
 				</div>
 

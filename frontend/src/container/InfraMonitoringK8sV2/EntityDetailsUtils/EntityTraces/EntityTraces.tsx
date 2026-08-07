@@ -179,6 +179,7 @@ function EntityTracesContent({
 						isLoadingQueries={isFetching}
 						onStageRunQuery={(): void => handleRunQuery()}
 						handleCancelQuery={cancel}
+						testId="entity-traces-run-query-btn"
 					/>
 				</div>
 

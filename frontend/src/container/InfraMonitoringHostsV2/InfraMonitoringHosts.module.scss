@@ -72,6 +72,20 @@
 	justify-content: space-between;
 }
 
+/**
+ * The icon used to be the click target directly; it is wrapped in a button so
+ * the control is keyboard reachable. The reset keeps the previous appearance.
+ */
+.collapseFiltersButton {
+	display: flex;
+	align-items: center;
+	padding: 0;
+	border: none;
+	background: none;
+	color: inherit;
+	cursor: pointer;
+}
+
 .listContainer {
 	flex: 1;
 	max-width: 100%;
