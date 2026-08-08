@@ -4212,6 +4212,21 @@ components:
       - missingOptionalMetrics
       - missingRequiredAttributes
       type: object
+    InframonitoringtypesClusterFilter:
+      properties:
+        expression:
+          type: string
+        filterByNodeReadiness:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesNodeCondition'
+          nullable: true
+          type: array
+        filterByPodStatus:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          nullable: true
+          type: array
+      type: object
     InframonitoringtypesClusterRecord:
       properties:
         clusterCPU:
@@ -4349,6 +4364,16 @@ components:
       - containerCannotRun
       - unknown
       type: object
+    InframonitoringtypesContainerFilter:
+      properties:
+        expression:
+          type: string
+        filterByContainerStatus:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesContainerStatus'
+          nullable: true
+          type: array
+      type: object
     InframonitoringtypesContainerReady:
       enum:
       - ready
@@ -4448,6 +4473,16 @@ components:
       - total
       - endTimeBeforeRetention
       type: object
+    InframonitoringtypesDaemonSetFilter:
+      properties:
+        expression:
+          type: string
+        filterByPodStatus:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          nullable: true
+          type: array
+      type: object
     InframonitoringtypesDaemonSetRecord:
       properties:
         currentNodes:
@@ -4519,6 +4554,16 @@ components:
       - records
       - total
       - endTimeBeforeRetention
+      type: object
+    InframonitoringtypesDeploymentFilter:
+      properties:
+        expression:
+          type: string
+        filterByPodStatus:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          nullable: true
+          type: array
       type: object
     InframonitoringtypesDeploymentRecord:
       properties:
@@ -4661,6 +4706,16 @@ components:
       - total
       - endTimeBeforeRetention
       type: object
+    InframonitoringtypesJobFilter:
+      properties:
+        expression:
+          type: string
+        filterByPodStatus:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          nullable: true
+          type: array
+      type: object
     InframonitoringtypesJobRecord:
       properties:
         activePods:
@@ -4784,6 +4839,16 @@ components:
       - message
       - documentationLink
       type: object
+    InframonitoringtypesNamespaceFilter:
+      properties:
+        expression:
+          type: string
+        filterByPodStatus:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          nullable: true
+          type: array
+      type: object
     InframonitoringtypesNamespaceRecord:
       properties:
         counts:
@@ -4864,6 +4929,21 @@ components:
       required:
       - ready
       - notReady
+      type: object
+    InframonitoringtypesNodeFilter:
+      properties:
+        expression:
+          type: string
+        filterByNodeReadiness:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesNodeCondition'
+          nullable: true
+          type: array
+        filterByPodStatus:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          nullable: true
+          type: array
       type: object
     InframonitoringtypesNodeRecord:
       properties:
@@ -4981,6 +5061,16 @@ components:
       - shutdown
       - unexpectedAdmissionError
       type: object
+    InframonitoringtypesPodFilter:
+      properties:
+        expression:
+          type: string
+        filterByPodStatus:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          nullable: true
+          type: array
+      type: object
     InframonitoringtypesPodRecord:
       properties:
         meta:
@@ -5080,7 +5170,7 @@ components:
           format: int64
           type: integer
         filter:
-          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+          $ref: '#/components/schemas/InframonitoringtypesClusterFilter'
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
@@ -5106,7 +5196,7 @@ components:
           format: int64
           type: integer
         filter:
-          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+          $ref: '#/components/schemas/InframonitoringtypesContainerFilter'
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
@@ -5132,7 +5222,7 @@ components:
           format: int64
           type: integer
         filter:
-          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+          $ref: '#/components/schemas/InframonitoringtypesDaemonSetFilter'
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
@@ -5158,7 +5248,7 @@ components:
           format: int64
           type: integer
         filter:
-          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+          $ref: '#/components/schemas/InframonitoringtypesDeploymentFilter'
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
@@ -5210,7 +5300,7 @@ components:
           format: int64
           type: integer
         filter:
-          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+          $ref: '#/components/schemas/InframonitoringtypesJobFilter'
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
@@ -5236,7 +5326,7 @@ components:
           format: int64
           type: integer
         filter:
-          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+          $ref: '#/components/schemas/InframonitoringtypesNamespaceFilter'
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
@@ -5262,7 +5352,7 @@ components:
           format: int64
           type: integer
         filter:
-          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+          $ref: '#/components/schemas/InframonitoringtypesNodeFilter'
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
@@ -5288,7 +5378,7 @@ components:
           format: int64
           type: integer
         filter:
-          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+          $ref: '#/components/schemas/InframonitoringtypesPodFilter'
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
@@ -5314,7 +5404,7 @@ components:
           format: int64
           type: integer
         filter:
-          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+          $ref: '#/components/schemas/InframonitoringtypesStatefulSetFilter'
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
@@ -5365,6 +5455,16 @@ components:
       - list
       - grouped_list
       type: string
+    InframonitoringtypesStatefulSetFilter:
+      properties:
+        expression:
+          type: string
+        filterByPodStatus:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          nullable: true
+          type: array
+      type: object
     InframonitoringtypesStatefulSetRecord:
       properties:
         currentPods:

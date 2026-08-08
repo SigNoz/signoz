@@ -146,23 +146,33 @@ func buildPodRecords(
 	return records
 }
 
-// getTopPodGroupsAndMetadata fetches the group metadata and the ordering-metric
-// ranking concurrently, then pages the ranked groups, backfilling from metadata
-// when the page extends past the metric-ranked groups. Returns the page of
-// groups and the metadata map (needed by the caller for Total and records).
+// getTopPodGroupsAndMetadata concurrently fetches metadata + the ordering-metric
+// ranking (plus the full-scope pod-status keyset when filtering, to intersect both).
 func (m *module) getTopPodGroupsAndMetadata(
 	ctx context.Context,
 	orgID valuer.UUID,
 	req *inframonitoringtypes.PostablePods,
-) ([]map[string]string, map[string]map[string]string, error) {
+) ([]map[string]string, map[string]map[string]string, map[string]podStatusCounts, *qbtypes.QueryWarnData, error) {
 
 	var (
-		orderByKey      string
-		metadataMap     map[string]map[string]string
-		allMetricGroups []rankedGroup
+		orderByKey        string
+		metadataMap       map[string]map[string]string
+		allMetricGroups   []rankedGroup
+		statusCounts      map[string]podStatusCounts
+		statusWarning     *qbtypes.QueryWarnData
+		filter            *qbtypes.Filter
+		filterByPodStatus []inframonitoringtypes.PodStatus
 	)
 
 	orderByKey = req.OrderBy.Key.Name
+
+	// When filtering by pod status, resolve the full-scope status keyset
+	// concurrently (pageGroups=nil spans all groups under the user filter) so it
+	// can intersect metadata + ranked groups below.
+	if req.Filter != nil {
+		filter = &req.Filter.Filter
+		filterByPodStatus = req.Filter.FilterByPodStatus
+	}
 
 	g, gCtx := errgroup.WithContext(ctx)
 
@@ -172,12 +182,26 @@ func (m *module) getTopPodGroupsAndMetadata(
 		return err
 	})
 
+	if len(filterByPodStatus) != 0 {
+		g.Go(func() error {
+			var err error
+			statusCounts, statusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, filter, req.GroupBy, nil, filterByPodStatus)
+			return err
+		})
+	}
+
 	if orderByKey == inframonitoringtypes.PodNameAttrKey {
 		if err := g.Wait(); err != nil {
-			return nil, nil, err
+			return nil, nil, nil, nil, err
+		}
+		// Secondary filter: keep only status-matching groups. A missing metric
+		// yields an empty statusCounts, so this correctly empties the result
+		// (the caller also surfaces the warning).
+		if len(filterByPodStatus) != 0 {
+			metadataMap = intersectMap(metadataMap, statusCounts)
 		}
 		pageGroups := inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.PodNameAttrKey)
-		return pageGroups, metadataMap, nil
+		return pageGroups, metadataMap, statusCounts, statusWarning, nil
 	}
 
 	queryNamesForOrderBy := orderByToPodsQueryNames[orderByKey]
@@ -223,10 +247,19 @@ func (m *module) getTopPodGroupsAndMetadata(
 	})
 
 	if err := g.Wait(); err != nil {
-		return nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
-	return paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit), metadataMap, nil
+	// Secondary filter: intersect ranked groups + metadata with the status keyset.
+	// A missing metric yields an empty statusCounts, correctly emptying the result
+	// (the caller also surfaces the warning).
+	if len(filterByPodStatus) != 0 {
+		allMetricGroups = intersectRankedGroups(allMetricGroups, statusCounts)
+		metadataMap = intersectMap(metadataMap, statusCounts)
+	}
+
+	pageGroups := paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit)
+	return pageGroups, metadataMap, statusCounts, statusWarning, nil
 }
 
 func (m *module) getPodsTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostablePods) (map[string]map[string]string, error) {
@@ -236,7 +269,11 @@ func (m *module) getPodsTableMetadata(ctx context.Context, orgID valuer.UUID, re
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}
 	}
-	return m.getMetadata(ctx, orgID, podsTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
+	var filter *qbtypes.Filter
+	if req.Filter != nil {
+		filter = &req.Filter.Filter
+	}
+	return m.getMetadata(ctx, orgID, podsTableMetricNamesList, req.GroupBy, nonGroupByAttrs, filter, req.Start, req.End)
 }
 
 // getPerGroupPodStatusCountsWithReqMetricChecks gates getPerGroupPodStatusCounts
@@ -251,6 +288,7 @@ func (m *module) getPerGroupPodStatusCountsWithReqMetricChecks(
 	filter *qbtypes.Filter,
 	groupBy []qbtypes.GroupByKey,
 	pageGroups []map[string]string,
+	filterByPodStatus []inframonitoringtypes.PodStatus,
 ) (map[string]podStatusCounts, *qbtypes.QueryWarnData, error) {
 	present, err := m.getMetricsExistence(ctx, podStatusMetricNamesList)
 	if err != nil {
@@ -276,11 +314,26 @@ func (m *module) getPerGroupPodStatusCountsWithReqMetricChecks(
 		return map[string]podStatusCounts{}, warning, nil
 	}
 
-	counts, err := m.getPerGroupPodStatusCounts(ctx, orgID, start, end, filter, groupBy, pageGroups)
+	counts, err := m.getPerGroupPodStatusCounts(ctx, orgID, start, end, filter, groupBy, pageGroups, filterByPodStatus)
 	if err != nil {
 		return nil, nil, err
 	}
 	return counts, nil, nil
+}
+
+// applyPodStatusFilter adds the display-status push-down (lower(display_status)
+// IN (...)) to the outer count builder. valuer lowercases the wire value while
+// display_status is kubectl-cased, so we compare lower() on both. No-op when the
+// requested set is empty.
+func applyPodStatusFilter(cb *sqlbuilder.SelectBuilder, filterByPodStatus []inframonitoringtypes.PodStatus) {
+	if len(filterByPodStatus) == 0 {
+		return
+	}
+	vals := make([]string, len(filterByPodStatus))
+	for i, s := range filterByPodStatus {
+		vals[i] = s.StringValue()
+	}
+	cb.Where(cb.In("lower(display_status)", sqlbuilder.List(vals)))
 }
 
 // getPerGroupPodStatusCounts computes per-group pod counts bucketed by each
@@ -303,13 +356,20 @@ func (m *module) getPerGroupPodStatusCounts(
 	filter *qbtypes.Filter,
 	groupBy []qbtypes.GroupByKey,
 	pageGroups []map[string]string,
+	filterByPodStatus []inframonitoringtypes.PodStatus,
 ) (map[string]podStatusCounts, error) {
-	if len(pageGroups) == 0 || len(groupBy) == 0 {
+	// return early if no group by or (no pagegroups provided plus no filterBystatus given for a full scan)
+	if len(groupBy) == 0 || (len(pageGroups) == 0 && len(filterByPodStatus) == 0) {
 		return map[string]podStatusCounts{}, nil
 	}
 
+	var (
+		filterClause   *sqlbuilder.WhereClause
+		err            error
+		userFilterExpr string
+	)
+
 	// Merge user filter with page-groups IN clauses.
-	userFilterExpr := ""
 	if filter != nil {
 		userFilterExpr = filter.Expression
 	}
@@ -322,10 +382,7 @@ func (m *module) getPerGroupPodStatusCounts(
 	// CTEs, and buildFilterClause hits the metadata store + parses the
 	// expression, so we don't want to repeat it per CTE. AddWhereClause only
 	// reads the clause, so the same instance is safe to attach to each builder.
-	var (
-		filterClause *sqlbuilder.WhereClause
-		err          error
-	)
+
 	if mergedFilterExpr != "" {
 		filterClause, err = m.buildFilterClause(ctx, orgID, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
 		if err != nil {
@@ -540,11 +597,15 @@ func (m *module) getPerGroupPodStatusCounts(
 		countGroupBy = append(countGroupBy, col)
 	}
 	countSelectCols = append(countSelectCols, statusCountCols...)
-	countSQL := fmt.Sprintf(
-		"SELECT %s FROM pod_status GROUP BY %s",
-		strings.Join(countSelectCols, ", "),
-		strings.Join(countGroupBy, ", "),
-	)
+
+	// Outer count query. Built with sqlbuilder so the status push-down uses a
+	// proper IN (keep only pods whose display status is in the requested set).
+	countBuilder := sqlbuilder.NewSelectBuilder()
+	countBuilder.Select(countSelectCols...)
+	countBuilder.From("pod_status")
+	applyPodStatusFilter(countBuilder, filterByPodStatus)
+	countBuilder.GroupBy(countGroupBy...)
+	countSQL, countArgs := countBuilder.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	// Combine CTEs + outer. Arg order mirrors CTE declaration order.
 	cteFragments := []string{
@@ -561,7 +622,7 @@ func (m *module) getPerGroupPodStatusCounts(
 		phaseFpsArgs, phasePerPodArgs,
 		podReasonFpsArgs, podReasonPerPodArgs,
 		containerReasonFpsArgs, containerInnerArgs,
-	}, nil)
+	}, countArgs)
 
 	rows, err := m.telemetryStore.ClickhouseDB().Query(ctx, finalSQL, finalArgs...)
 	if err != nil {

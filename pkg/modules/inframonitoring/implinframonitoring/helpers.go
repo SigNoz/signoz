@@ -63,6 +63,33 @@ func compositeKeyFromLabels(labels map[string]string, groupBy []qbtypes.GroupByK
 	return compositeKeyFromList(parts)
 }
 
+// intersectMap returns the entries of m whose key is present in keep (a new
+// map). keep's value type is irrelevant — only its keys are read — so a
+// per-group counts map (already filtered by the SQL push-down) can be passed
+// directly. Used to trim metadataMap to the status-matching groups.
+func intersectMap[V any, K any](m map[string]V, keep map[string]K) map[string]V {
+	out := make(map[string]V, len(m))
+	for k, v := range m {
+		if _, ok := keep[k]; ok {
+			out[k] = v
+		}
+	}
+	return out
+}
+
+// intersectRankedGroups returns the ranked groups whose compositeKey is present
+// in keep, preserving order. Keeps status-unmatched groups out of the ranked
+// page slots.
+func intersectRankedGroups[K any](groups []rankedGroup, keep map[string]K) []rankedGroup {
+	out := make([]rankedGroup, 0, len(groups))
+	for _, g := range groups {
+		if _, ok := keep[g.compositeKey]; ok {
+			out = append(out, g)
+		}
+	}
+	return out
+}
+
 // parseAndSortGroups extracts group label maps from a ScalarData response and
 // sorts them by the ranking query's aggregation value.
 func parseAndSortGroups(
