@@ -6,6 +6,33 @@
 	margin-left: var(--spacing-2);
 	--tab-text-color: var(--l1-foreground);
 	--tab-active-text-color: var(--l1-foreground);
+	.tabBar {
+		// Anchors the header actions to the tab row. The Tabs component renders
+		// its triggers and its panels together, so the actions are positioned
+		// against this wrapper rather than laid out beside them.
+		position: relative;
+	}
+
+	.headerActions {
+		position: absolute;
+		top: 0;
+		right: var(--spacing-4);
+		display: flex;
+		align-items: center;
+	}
+
+	[role='tab'] {
+		// The Tabs icon wrapper is an inline span, so the SVG sits on the text
+		// baseline and reads as riding high next to the label. Lay the trigger out
+		// as a centred flex row instead.
+		display: inline-flex;
+		align-items: center;
+
+		svg {
+			display: block;
+		}
+	}
+
 	[role='tabpanel'] {
 		margin: 0;
 		padding: var(--spacing-0) var(--spacing-4);

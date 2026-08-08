@@ -93,6 +93,7 @@ const ROUTES = {
 	AI_OBSERVABILITY_BASE: '/ai-observability',
 	AI_OBSERVABILITY_OVERVIEW: '/ai-observability/overview',
 	AI_OBSERVABILITY_CONFIGURATION: '/ai-observability/configuration',
+	AI_OBSERVABILITY_EXPLORER: '/ai-observability/explorer',
 } as const;
 
 export default ROUTES;

@@ -1,14 +1,17 @@
 import { useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
+import { Compass, LayoutGrid, ReceiptText, Waypoints } from '@signozhq/icons';
 import { type TabItemProps } from '@signozhq/ui/tabs';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 
 import LLMObservabilityAttributeMapping from '../AttributeMapping/LLMObservabilityAttributeMapping';
+import Explorer from '../Explorer/Explorer';
 import Overview from '../Overview/Overview';
 import LLMObservabilityModelPricing from '../Settings/ModelPricing/LLMObservabilityModelPricing';
 
 const OVERVIEW_KEY = ROUTES.AI_OBSERVABILITY_OVERVIEW;
+const EXPLORER_KEY = ROUTES.AI_OBSERVABILITY_EXPLORER;
 const CONFIGURATION_KEY = ROUTES.AI_OBSERVABILITY_CONFIGURATION;
 const ATTRIBUTE_MAPPING_KEY = ROUTES.AI_OBSERVABILITY_ATTRIBUTE_MAPPING;
 
@@ -27,7 +30,9 @@ export function useLLMObservabilityTabs(): UseLLMObservabilityTabsResult {
 	const { safeNavigate } = useSafeNavigate();
 
 	let activeTab: string = OVERVIEW_KEY;
-	if (pathname.startsWith(CONFIGURATION_KEY)) {
+	if (pathname.startsWith(EXPLORER_KEY)) {
+		activeTab = EXPLORER_KEY;
+	} else if (pathname.startsWith(CONFIGURATION_KEY)) {
 		activeTab = CONFIGURATION_KEY;
 	} else if (pathname.startsWith(ATTRIBUTE_MAPPING_KEY)) {
 		activeTab = ATTRIBUTE_MAPPING_KEY;
@@ -44,16 +49,25 @@ export function useLLMObservabilityTabs(): UseLLMObservabilityTabsResult {
 		{
 			key: OVERVIEW_KEY,
 			label: 'Overview',
+			prefixIcon: <LayoutGrid size={16} />,
 			children: <Overview />,
+		},
+		{
+			key: EXPLORER_KEY,
+			label: 'Explorer',
+			prefixIcon: <Compass size={16} />,
+			children: <Explorer />,
 		},
 		{
 			key: CONFIGURATION_KEY,
 			label: 'Model pricing',
+			prefixIcon: <ReceiptText size={16} />,
 			children: <LLMObservabilityModelPricing />,
 		},
 		{
 			key: ATTRIBUTE_MAPPING_KEY,
 			label: 'Attribute Mapping',
+			prefixIcon: <Waypoints size={16} />,
 			children: <LLMObservabilityAttributeMapping />,
 		},
 	];

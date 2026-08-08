@@ -206,6 +206,9 @@ export const routesToSkip = [
 	ROUTES.AI_OBSERVABILITY_OVERVIEW,
 	ROUTES.AI_OBSERVABILITY_CONFIGURATION,
 	ROUTES.AI_OBSERVABILITY_ATTRIBUTE_MAPPING,
+	// The explorer carries its own time picker in the Toolbar, like the traces
+	// and logs explorers, so the global one would be a duplicate.
+	ROUTES.AI_OBSERVABILITY_EXPLORER,
 ];
 
 export const routesToDisable = [ROUTES.LOGS_EXPLORER, ROUTES.LIVE_LOGS];

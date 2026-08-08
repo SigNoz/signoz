@@ -1,0 +1,51 @@
+.ai-explorer-page {
+	display: flex;
+
+	// Meant to fix the query builder colors
+	--input-background: var(--l2-background);
+	--input-hover-background: var(--l2-background);
+	--input-focus-background: var(--l2-background);
+	--input-border-color: var(--l2-border);
+	--input-hover-border-color: var(--internal-ant-border-color-hover);
+	--input-focus-border-color: var(--internal-ant-border-color-hover);
+
+	.ai-explorer-filter {
+		width: 260px;
+		height: 100%;
+		min-height: 100vh;
+
+		border-right: 0px;
+		border: 1px solid var(--l1-border);
+		background-color: var(--l1-background);
+
+		> .ant-card-body {
+			padding: 0;
+			width: 258px;
+		}
+	}
+
+	.ai-explorer {
+		width: 100%;
+		background: var(--l1-background);
+
+		border-color: var(--l1-border);
+
+		> .ant-card-body {
+			padding: 0;
+		}
+	}
+
+	.ai-explorer.filters-expanded {
+		width: calc(100% - 260px);
+	}
+
+	.ai-explorer-views {
+		padding: 8px;
+		padding-bottom: 60px;
+		margin-bottom: 24px;
+
+		> div {
+			flex: 1;
+		}
+	}
+}
