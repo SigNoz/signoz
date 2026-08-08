@@ -9,7 +9,6 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/huandu/go-sqlbuilder"
 )
 
 var (
@@ -97,19 +96,15 @@ func (m *fieldMapper) ColumnFor(ctx context.Context, _ valuer.UUID, tsStart, tsE
 	return m.getColumn(ctx, tsStart, tsEnd, key)
 }
 
+// ColumnExpressionFor returns the bare (unaliased) expression, like the logs and traces
+// mappers: callers embed it in an aggregation or alias it themselves.
 func (m *fieldMapper) ColumnExpressionFor(
 	ctx context.Context,
 	orgID valuer.UUID,
 	startNs, endNs uint64,
 	field *telemetrytypes.TelemetryFieldKey,
 	_ telemetrytypes.FieldDataType,
-	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	_ map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
-
-	fieldExpression, err := m.FieldFor(ctx, orgID, startNs, endNs, field)
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(fieldExpression), field.Name), nil
+	return m.FieldFor(ctx, orgID, startNs, endNs, field)
 }
