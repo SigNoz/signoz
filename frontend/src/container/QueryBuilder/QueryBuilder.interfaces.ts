@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { WhereClauseConfig } from 'hooks/queryBuilder/useAutoComplete';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { BuilderQueryEnvelopeType } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { OrderByFilterProps } from './filters/OrderByFilter/OrderByFilter.interfaces';
@@ -33,6 +34,17 @@ export type QueryBuilderProps = {
 	showOnlyTraceOperator?: boolean;
 	showTraceViewSelector?: boolean;
 	showTraceOperator?: boolean;
+	/**
+	 * Traces only. Default `true`. Set `false` to hide the
+	 * All / Root / Entrypoint span-scope select — e.g. on views that render a
+	 * single query as a bare filter, where a scope sub-filter is noise.
+	 */
+	showSpanScopeSelector?: boolean;
+	/**
+	 * Forwarded verbatim to `/fields/keys` as `type` so the backend can scope the
+	 * suggested key set. Never interpreted by the builder.
+	 */
+	fieldKeysQueryType?: BuilderQueryEnvelopeType;
 	version: string;
 	onChangeTraceView?: (view: TraceView) => void;
 	onSignalSourceChange?: (value: string) => void;

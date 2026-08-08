@@ -13,6 +13,7 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	BaseBuilderQuery,
+	BuilderQueryEnvelopeType,
 	FieldContext,
 	FieldDataType,
 	Filter,
@@ -322,6 +323,7 @@ export function convertBuilderQueriesToV5(
 	builderQueries: Record<string, any>,
 	requestType: RequestType,
 	panelType?: PANEL_TYPES,
+	builderQueryType: BuilderQueryEnvelopeType = 'builder_query',
 ): QueryEnvelope[] {
 	return Object.entries(builderQueries).map(
 		([queryName, queryData]): QueryEnvelope => {
@@ -363,10 +365,7 @@ export function convertBuilderQueriesToV5(
 					break;
 			}
 
-			return {
-				type: 'builder_query' as QueryType,
-				spec,
-			};
+			return { type: builderQueryType, spec };
 		},
 	);
 }
@@ -558,6 +557,7 @@ export const prepareQueryRangePayloadV5 = ({
 	originalGraphType,
 	fillGaps,
 	dynamicVariables,
+	builderQueryType = 'builder_query',
 }: GetQueryResultsProps): PrepareQueryRangePayloadV5Result => {
 	let legendMap: Record<string, string> = {};
 	const requestType = mapPanelTypeToRequestType(graphType);
@@ -594,6 +594,7 @@ export const prepareQueryRangePayloadV5 = ({
 				currentQueryData.data,
 				requestType,
 				graphType,
+				builderQueryType,
 			);
 
 			// Convert formulas as separate query type

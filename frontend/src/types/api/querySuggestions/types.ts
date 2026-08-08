@@ -1,4 +1,7 @@
-import { FieldDataType } from 'types/api/v5/queryRange';
+import {
+	BuilderQueryEnvelopeType,
+	FieldDataType,
+} from 'types/api/v5/queryRange';
 
 export interface QueryKeyDataSuggestionsProps {
 	label: string;
@@ -35,6 +38,11 @@ export interface QueryKeyRequestProps {
 	metricName?: string;
 	metricNamespace?: string;
 	signalSource?: 'meter' | '';
+	/**
+	 * Scopes the returned key set to a query-type sub-variant of the signal.
+	 * `builder_ai_query` narrows `signal=traces` to the gen_ai attribute keys.
+	 */
+	type?: BuilderQueryEnvelopeType;
 }
 
 export interface QueryKeyValueSuggestionsProps {
