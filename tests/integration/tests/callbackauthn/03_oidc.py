@@ -48,7 +48,7 @@ def test_create_auth_domain(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
         json={
             "name": "oidc.integration.test",
             "enabled": True,
@@ -121,7 +121,7 @@ def test_oidc_update_domain_with_group_mappings(
     settings = get_oidc_settings(client_id)
 
     response = requests.put(
-        signoz.self.host_configs["8080"].get(f"/api/v1/domains/{domain['id']}"),
+        signoz.self.host_configs["8080"].get(f"/api/v2/auth_domains/{domain['id']}"),
         json={
             "enabled": True,
             "config": {
@@ -278,7 +278,7 @@ def test_oidc_update_domain_with_use_role_claim(
     settings = get_oidc_settings(client_id)
 
     response = requests.put(
-        signoz.self.host_configs["8080"].get(f"/api/v1/domains/{domain['id']}"),
+        signoz.self.host_configs["8080"].get(f"/api/v2/auth_domains/{domain['id']}"),
         json={
             "enabled": True,
             "config": {

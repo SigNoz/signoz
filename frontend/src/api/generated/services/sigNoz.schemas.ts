@@ -10446,42 +10446,6 @@ export type CreatePublicDashboard201 = {
 export type UpdatePublicDashboardPathParameters = {
 	id: string;
 };
-export type ListAuthDomains200 = {
-	/**
-	 * @type array
-	 */
-	data: AuthtypesGettableAuthDomainDTO[];
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type CreateAuthDomain201 = {
-	data: TypesIdentifiableDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type DeleteAuthDomainPathParameters = {
-	id: string;
-};
-export type GetAuthDomainPathParameters = {
-	id: string;
-};
-export type GetAuthDomain200 = {
-	data: AuthtypesGettableAuthDomainDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type UpdateAuthDomainPathParameters = {
-	id: string;
-};
 export type ListDowntimeSchedulesParams = {
 	/**
 	 * @type boolean,null
@@ -11179,6 +11143,42 @@ export type GetUserPreference200 = {
 
 export type UpdateUserPreferencePathParameters = {
 	name: string;
+};
+export type ListAuthDomains200 = {
+	/**
+	 * @type array
+	 */
+	data: AuthtypesGettableAuthDomainDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateAuthDomain201 = {
+	data: TypesIdentifiableDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteAuthDomainPathParameters = {
+	id: string;
+};
+export type GetAuthDomainPathParameters = {
+	id: string;
+};
+export type GetAuthDomain200 = {
+	data: AuthtypesGettableAuthDomainDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateAuthDomainPathParameters = {
+	id: string;
 };
 export type ListDashboardViews200 = {
 	data: DashboardtypesListableDashboardViewDTO;
