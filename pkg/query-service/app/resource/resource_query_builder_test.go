@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_buildResourceFilter(t *testing.T) {
@@ -551,4 +553,39 @@ func Test_buildResourceSubQuery(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSemanticConventionResourceFamily(t *testing.T) {
+	const resolvedValue = "COALESCE(NULLIF(simpleJSONExtractString(labels, 'deployment.environment.name'), ''), NULLIF(simpleJSONExtractString(labels, 'deployment.environment'), ''))"
+
+	for _, requestedName := range []string{"deployment.environment.name", "deployment.environment"} {
+		t.Run(requestedName, func(t *testing.T) {
+			assert.Equal(t, resolvedValue+" = 'production'", buildResourceFilter("=", requestedName, v3.FilterOperatorEqual, "production"))
+			assert.Equal(t, "(simpleJSONHas(labels, 'deployment.environment.name') OR simpleJSONHas(labels, 'deployment.environment'))", buildResourceFilter("", requestedName, v3.FilterOperatorExists, nil))
+			assert.Equal(t, "(not simpleJSONHas(labels, 'deployment.environment.name') AND not simpleJSONHas(labels, 'deployment.environment'))", buildResourceFilter("", requestedName, v3.FilterOperatorNotExists, nil))
+			assert.Equal(t, "(labels like '%deployment.environment.name\":\"production%' OR labels like '%deployment.environment\":\"production%')", buildResourceIndexFilter(requestedName, v3.FilterOperatorEqual, "production"))
+			assert.Empty(t, buildResourceIndexFilter(requestedName, v3.FilterOperatorNotEqual, "production"), "negative family filter must not use a rejecting index hint")
+		})
+	}
+
+	filters, err := buildResourceFiltersFromFilterItems(&v3.FilterSet{Items: []v3.FilterItem{{
+		Key: v3.AttributeKey{
+			Key:      "deployment.environment.name",
+			DataType: v3.AttributeKeyDataTypeString,
+			Type:     v3.AttributeKeyTypeResource,
+		},
+		Operator: v3.FilterOperatorEqual,
+		Value:    "production",
+	}}})
+	require.NoError(t, err, "family filter items must build before their output is inspected")
+	wantFilters := []string{
+		resolvedValue + " = 'production'",
+		"(labels like '%deployment.environment.name\":\"production%' OR labels like '%deployment.environment\":\"production%')",
+	}
+	assert.Equal(t, wantFilters, filters)
+
+	wantPresence := "((simpleJSONHas(labels, 'deployment.environment.name') OR simpleJSONHas(labels, 'deployment.environment')) AND (labels like '%deployment.environment.name%' OR labels like '%deployment.environment%'))"
+	groupBy := buildResourceFiltersFromGroupBy([]v3.AttributeKey{{Key: "deployment.environment", Type: v3.AttributeKeyTypeResource}})
+	assert.Equal(t, []string{wantPresence}, groupBy)
+	assert.Equal(t, wantPresence, buildResourceFiltersFromAggregateAttribute(v3.AttributeKey{Key: "deployment.environment.name", Type: v3.AttributeKeyTypeResource}))
 }
