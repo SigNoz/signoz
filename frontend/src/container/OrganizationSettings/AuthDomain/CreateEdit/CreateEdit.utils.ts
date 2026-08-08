@@ -1,4 +1,7 @@
 import {
+	AuthtypesAuthDomainConfigGoogleAuthDTOKind,
+	AuthtypesAuthDomainConfigOIDCDTOKind,
+	AuthtypesAuthDomainConfigSAMLDTOKind,
 	AuthtypesGettableAuthDomainDTO,
 	AuthtypesGoogleConfigDTO,
 	AuthtypesOIDCConfigDTO,
@@ -9,8 +12,7 @@ import {
 // Form values interface for internal use (includes array-based fields for UI)
 export interface FormValues {
 	name?: string;
-	ssoEnabled?: boolean;
-	ssoType?: string;
+	enabled?: boolean;
 	googleAuthConfig?: AuthtypesGoogleConfigDTO & {
 		domainToAdminEmailList?: Array<{ domain?: string; adminEmail?: string }>;
 	};
@@ -107,31 +109,36 @@ export function prepareInitialValues(
 	if (!record) {
 		return {
 			name: '',
-			ssoEnabled: false,
-			ssoType: '',
+			enabled: false,
 		};
 	}
 
-	const config = record.config ?? {};
+	const { config } = record;
 	return {
 		name: record.name,
-		ssoEnabled: config.ssoEnabled,
-		ssoType: config.ssoType,
-		samlConfig: config.samlConfig ?? undefined,
-		oidcConfig: config.oidcConfig ?? undefined,
-		googleAuthConfig: config.googleAuthConfig
+		enabled: record.enabled,
+		samlConfig:
+			config?.kind === AuthtypesAuthDomainConfigSAMLDTOKind.saml
+				? config.spec
+				: undefined,
+		oidcConfig:
+			config?.kind === AuthtypesAuthDomainConfigOIDCDTOKind.oidc
+				? config.spec
+				: undefined,
+		googleAuthConfig:
+			config?.kind === AuthtypesAuthDomainConfigGoogleAuthDTOKind.google_auth
+				? {
+						...config.spec,
+						domainToAdminEmailList: convertDomainMappingsToList(
+							config.spec.domainToAdminEmail,
+						),
+					}
+				: undefined,
+		roleMapping: record.roleMapping
 			? {
-					...config.googleAuthConfig,
-					domainToAdminEmailList: convertDomainMappingsToList(
-						config.googleAuthConfig.domainToAdminEmail,
-					),
-				}
-			: undefined,
-		roleMapping: config.roleMapping
-			? {
-					...config.roleMapping,
+					...record.roleMapping,
 					groupMappingsList: convertGroupMappingsToList(
-						config.roleMapping.groupMappings,
+						record.roleMapping.groupMappings,
 					),
 				}
 			: undefined,

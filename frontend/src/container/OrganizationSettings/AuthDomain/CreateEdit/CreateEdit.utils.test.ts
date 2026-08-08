@@ -1,4 +1,8 @@
-import { AuthtypesAuthNProviderDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	AuthtypesAuthDomainConfigGoogleAuthDTOKind,
+	AuthtypesAuthDomainConfigOIDCDTOKind,
+	AuthtypesAuthDomainConfigSAMLDTOKind,
+} from 'api/generated/services/sigNoz.schemas';
 
 import {
 	convertDomainMappingsToList,
@@ -82,8 +86,7 @@ describe('prepareInitialValues', () => {
 	it('returns empty defaults when no record is provided', () => {
 		expect(prepareInitialValues(undefined)).toStrictEqual({
 			name: '',
-			ssoEnabled: false,
-			ssoType: '',
+			enabled: false,
 		});
 	});
 
@@ -91,14 +94,19 @@ describe('prepareInitialValues', () => {
 		const result = prepareInitialValues({
 			id: 'domain-1',
 			name: 'example.com',
+			enabled: true,
 			config: {
-				ssoEnabled: true,
-				ssoType: AuthtypesAuthNProviderDTO.saml,
-				roleMapping: {
-					defaultRole: 'VIEWER',
-					useRoleAttribute: false,
-					groupMappings: { admins: 'ADMIN', viewers: 'VIEWER' },
+				kind: AuthtypesAuthDomainConfigSAMLDTOKind.saml,
+				spec: {
+					ssoUrl: 'https://idp.example.com/sso',
+					entityId: 'urn:example:idp',
+					certificate: 'CERT',
 				},
+			},
+			roleMapping: {
+				defaultRole: 'VIEWER',
+				useRoleAttribute: false,
+				groupMappings: { admins: 'ADMIN', viewers: 'VIEWER' },
 			},
 		});
 
@@ -112,10 +120,10 @@ describe('prepareInitialValues', () => {
 		const result = prepareInitialValues({
 			id: 'domain-1',
 			name: 'example.com',
+			enabled: true,
 			config: {
-				ssoEnabled: true,
-				ssoType: AuthtypesAuthNProviderDTO.google_auth,
-				googleAuthConfig: {
+				kind: AuthtypesAuthDomainConfigGoogleAuthDTOKind.google_auth,
+				spec: {
 					clientId: 'id',
 					clientSecret: 'secret',
 					domainToAdminEmail: { 'example.com': 'admin@example.com' },
@@ -132,11 +140,16 @@ describe('prepareInitialValues', () => {
 		const result = prepareInitialValues({
 			id: 'domain-1',
 			name: 'example.com',
+			enabled: true,
 			config: {
-				ssoEnabled: true,
-				ssoType: AuthtypesAuthNProviderDTO.oidc,
-				roleMapping: { defaultRole: 'VIEWER', useRoleAttribute: true },
+				kind: AuthtypesAuthDomainConfigOIDCDTOKind.oidc,
+				spec: {
+					issuer: 'https://oidc.example.com',
+					clientId: 'id',
+					clientSecret: 'secret',
+				},
 			},
+			roleMapping: { defaultRole: 'VIEWER', useRoleAttribute: true },
 		});
 
 		expect(result.roleMapping?.groupMappingsList).toStrictEqual([]);

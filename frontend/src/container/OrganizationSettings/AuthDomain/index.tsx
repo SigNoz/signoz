@@ -121,8 +121,8 @@ function AuthDomain(): JSX.Element {
 			},
 			{
 				title: 'Enforce SSO',
-				dataIndex: ['config', 'ssoEnabled'],
-				key: 'ssoEnabled',
+				dataIndex: 'enabled',
+				key: 'enabled',
 				width: 80,
 				render: (
 					value: boolean,
@@ -158,7 +158,7 @@ function AuthDomain(): JSX.Element {
 							onClick={(): void => setRecord(record)}
 							variant="link"
 						>
-							Configure {SSOType.get(record.config?.ssoType || '')}
+							Configure {SSOType.get(record.config?.kind || '')}
 						</Button>
 						<Button
 							className="auth-domain-list-action-link delete"

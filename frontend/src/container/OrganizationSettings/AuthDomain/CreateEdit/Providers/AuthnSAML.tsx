@@ -76,7 +76,7 @@ function ConfigureSAMLAuthnProvider({
 							</Tooltip>
 						</label>
 						<Form.Item
-							name={['samlConfig', 'samlIdp']}
+							name={['samlConfig', 'ssoUrl']}
 							className="authn-provider__form-item"
 							rules={[
 								{
@@ -98,7 +98,7 @@ function ConfigureSAMLAuthnProvider({
 							</Tooltip>
 						</label>
 						<Form.Item
-							name={['samlConfig', 'samlEntity']}
+							name={['samlConfig', 'entityId']}
 							className="authn-provider__form-item"
 							rules={[
 								{
@@ -120,7 +120,7 @@ function ConfigureSAMLAuthnProvider({
 							</Tooltip>
 						</label>
 						<Form.Item
-							name={['samlConfig', 'samlCert']}
+							name={['samlConfig', 'certificate']}
 							className="authn-provider__form-item"
 							rules={[
 								{
