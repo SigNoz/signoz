@@ -1625,13 +1625,13 @@ export const getNamespaceMetricsQueryPayload = (
 							reduceTo: ReduceOperators.LAST,
 							spaceAggregation: 'max',
 							stepInterval: 60,
-							timeAggregation: 'avg',
+							timeAggregation: 'latest',
 						},
 					],
 					queryFormulas: [
 						{
 							disabled: false,
-							expression: 'A/B',
+							expression: '(B/A) * 100',
 							legend: 'util %',
 							queryName: 'F1',
 						},
