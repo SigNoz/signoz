@@ -5,6 +5,7 @@ import {
 } from 'constants/queryBuilder';
 import {
 	metricsEmptyTimeAggregateOperatorOptions,
+	metricsGaugeAggregateOperatorOptions,
 	metricsUnknownTimeAggregateOperatorOptions,
 } from 'constants/queryBuilderOperators';
 import { isEmpty } from 'lodash-es';
@@ -19,6 +20,7 @@ type GetQueryOperatorsParams = {
 
 export const getMetricsOperatorsByAttributeType = ({
 	dataSource,
+	panelType,
 	aggregateAttributeType,
 }: GetQueryOperatorsParams): SelectOption<string, string>[] => {
 	if (dataSource === DataSource.METRICS && aggregateAttributeType) {
@@ -28,6 +30,15 @@ export const getMetricsOperatorsByAttributeType = ({
 
 		if (aggregateAttributeType === ATTRIBUTE_TYPES.GAUGE) {
 			return metricsOperatorsByType.Gauge;
+		}
+
+		if (
+			aggregateAttributeType === ATTRIBUTE_TYPES.HISTOGRAM ||
+			aggregateAttributeType === ATTRIBUTE_TYPES.EXPONENTIAL_HISTOGRAM
+		) {
+			return panelType === PANEL_TYPES.HEATMAP
+				? metricsOperatorsByType.Sum
+				: metricsGaugeAggregateOperatorOptions;
 		}
 	}
 
