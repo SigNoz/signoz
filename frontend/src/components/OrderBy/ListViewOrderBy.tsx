@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { Select, Spin } from 'antd';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
-import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
+import {
+	QueryKeyDataSuggestionsProps,
+	QueryKeyRequestProps,
+} from 'types/api/querySuggestions/types';
 import { DataSource } from 'types/common/queryBuilder';
 
 import './ListViewOrderBy.styles.scss';
@@ -11,6 +14,21 @@ interface ListViewOrderByProps {
 	value: string;
 	onChange: (value: string) => void;
 	dataSource: DataSource;
+	/**
+	 * Narrows the key suggestions to one context, e.g. `trace` to offer only
+	 * trace-level aggregates. Omit to offer every key for `dataSource`.
+	 */
+	fieldContext?: QueryKeyRequestProps['fieldContext'];
+	/**
+	 * Key prepended to the options when the search box is empty, so the caller's
+	 * primary sort field is reachable in one click. Defaults to `timestamp`.
+	 */
+	seedKey?: string;
+	/**
+	 * Query type the keys must be valid for, e.g. `builder_ai_query`. Omit for the
+	 * default builder query.
+	 */
+	queryType?: string;
 }
 
 // Loader component for the dropdown when loading or no results
@@ -26,6 +44,9 @@ function ListViewOrderBy({
 	value,
 	onChange,
 	dataSource,
+	fieldContext,
+	seedKey = 'timestamp',
+	queryType,
 }: ListViewOrderByProps): JSX.Element {
 	const [searchInput, setSearchInput] = useState('');
 	const [debouncedInput, setDebouncedInput] = useState('');
@@ -36,11 +57,19 @@ function ListViewOrderBy({
 
 	// Fetch key suggestions based on debounced input
 	const { data, isLoading } = useQuery({
-		queryKey: ['orderByKeySuggestions', dataSource, debouncedInput],
+		queryKey: [
+			'orderByKeySuggestions',
+			dataSource,
+			debouncedInput,
+			fieldContext,
+			queryType,
+		],
 		queryFn: async () => {
 			const response = await getKeySuggestions({
 				signal: dataSource,
 				searchText: debouncedInput,
+				fieldContext,
+				type: queryType,
 			});
 			return response.data;
 		},
@@ -63,7 +92,7 @@ function ListViewOrderBy({
 
 		const keyNames = rawKeys.map((key) => key.name);
 		const uniqueKeys = [
-			...new Set(searchInput ? keyNames : ['timestamp', ...keyNames]),
+			...new Set(searchInput ? keyNames : [seedKey, ...keyNames]),
 		];
 
 		const updatedOptions = uniqueKeys.flatMap((key) => [
@@ -72,7 +101,7 @@ function ListViewOrderBy({
 		]);
 
 		setSelectOptions(updatedOptions);
-	}, [data, searchInput]);
+	}, [data, searchInput, seedKey]);
 
 	// Handle search input with debounce
 	const handleSearch = (input: string): void => {

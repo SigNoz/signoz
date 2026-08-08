@@ -31,6 +31,13 @@ interface FieldsSelectorProps {
 	width?: number;
 	height?: number;
 	defaultPosition?: { x: number; y: number };
+	/**
+	 * Caller-supplied field list. When provided, Other Fields offers exactly
+	 * these and key discovery is skipped — use it when the set of selectable
+	 * fields is known up front rather than fetched. Omit to discover keys from
+	 * the API for `signal`.
+	 */
+	availableFields?: TelemetryFieldKey[];
 }
 
 type FieldsSelectorContentProps = Omit<FieldsSelectorProps, 'isOpen'>;
@@ -49,6 +56,7 @@ function FieldsSelectorContent({
 	width = DEFAULT_PANEL_WIDTH,
 	height,
 	defaultPosition,
+	availableFields,
 }: FieldsSelectorContentProps): JSX.Element {
 	const resolvedHeight =
 		height ?? window.innerHeight - DEFAULT_PANEL_HEIGHT_OFFSET;
@@ -153,6 +161,7 @@ function FieldsSelectorContent({
 					addedFields={draftFields}
 					onAdd={handleAdd}
 					isAtLimit={isAtLimit}
+					availableFields={availableFields}
 				/>
 
 				{hasUnsavedChanges && (

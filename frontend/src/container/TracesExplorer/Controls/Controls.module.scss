@@ -11,4 +11,12 @@
 	align-items: center;
 	gap: 4px;
 	cursor: pointer;
+
+	// Rendered as a <button> for keyboard access — strip the native chrome so it
+	// still reads as the inline text trigger it was.
+	padding: 0;
+	border: none;
+	background: none;
+	color: inherit;
+	font: inherit;
 }
