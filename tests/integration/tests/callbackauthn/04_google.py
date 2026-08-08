@@ -11,9 +11,10 @@ from fixtures.auth import (
     assert_user_has_role,
     find_user_with_roles_by_email,
 )
-from fixtures.googleidp import GOOGLE_DOMAIN, get_google_domain, google_oidc_mappings, perform_google_login
+from fixtures.googleidp import google_oidc_mappings, perform_google_login
 from fixtures.types import Operation, SigNoz
 
+GOOGLE_DOMAIN = "google.integration.test"
 GOOGLE_CLIENT_ID = "google-client-id.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET = "google-client-secret"
 
@@ -27,23 +28,29 @@ def test_create_auth_domain(
 
     # Reruns against a reused stack find the domain from the previous run;
     # drop it so creation always starts from a clean slate.
-    domain = get_google_domain(signoz, admin_token)
-    if domain:
-        response = requests.delete(
-            signoz.self.host_configs["8080"].get(f"/api/v1/domains/{domain['id']}"),
-            headers={"Authorization": f"Bearer {admin_token}"},
-            timeout=2,
-        )
-        assert response.status_code == HTTPStatus.NO_CONTENT
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.OK
+    for domain in response.json()["data"]:
+        if domain["name"] == GOOGLE_DOMAIN:
+            response = requests.delete(
+                signoz.self.host_configs["8080"].get(f"/api/v2/auth_domains/{domain['id']}"),
+                headers={"Authorization": f"Bearer {admin_token}"},
+                timeout=2,
+            )
+            assert response.status_code == HTTPStatus.NO_CONTENT
 
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
         json={
             "name": GOOGLE_DOMAIN,
+            "enabled": True,
             "config": {
-                "ssoEnabled": True,
-                "ssoType": "google_auth",
-                "googleAuthConfig": {
+                "kind": "google",
+                "spec": {
                     "clientId": GOOGLE_CLIENT_ID,
                     "clientSecret": GOOGLE_CLIENT_SECRET,
                 },
@@ -118,15 +125,21 @@ def test_google_authn_unverified_email(
     # Opting the domain into insecureSkipEmailVerified must let the same
     # unverified identity through.
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    domain = get_google_domain(signoz, admin_token)
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.OK
+    domain = next(domain for domain in response.json()["data"] if domain["name"] == GOOGLE_DOMAIN)
 
     response = requests.put(
-        signoz.self.host_configs["8080"].get(f"/api/v1/domains/{domain['id']}"),
+        signoz.self.host_configs["8080"].get(f"/api/v2/auth_domains/{domain['id']}"),
         json={
+            "enabled": True,
             "config": {
-                "ssoEnabled": True,
-                "ssoType": "google_auth",
-                "googleAuthConfig": {
+                "kind": "google",
+                "spec": {
                     "clientId": GOOGLE_CLIENT_ID,
                     "clientSecret": GOOGLE_CLIENT_SECRET,
                     "insecureSkipEmailVerified": True,
@@ -153,21 +166,28 @@ def test_google_role_mapping_default_role(
     get_session_context: Callable[[str], dict],
 ) -> None:
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    domain = get_google_domain(signoz, admin_token)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.OK
+    domain = next(domain for domain in response.json()["data"] if domain["name"] == GOOGLE_DOMAIN)
 
     response = requests.put(
-        signoz.self.host_configs["8080"].get(f"/api/v1/domains/{domain['id']}"),
+        signoz.self.host_configs["8080"].get(f"/api/v2/auth_domains/{domain['id']}"),
         json={
+            "enabled": True,
             "config": {
-                "ssoEnabled": True,
-                "ssoType": "google_auth",
-                "googleAuthConfig": {
+                "kind": "google",
+                "spec": {
                     "clientId": GOOGLE_CLIENT_ID,
                     "clientSecret": GOOGLE_CLIENT_SECRET,
                 },
-                "roleMapping": {
-                    "defaultRole": "EDITOR",
-                },
+            },
+            "roleMapping": {
+                "defaultRole": "EDITOR",
             },
         },
         headers={"Authorization": f"Bearer {admin_token}"},
