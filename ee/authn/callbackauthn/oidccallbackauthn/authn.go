@@ -53,7 +53,7 @@ func New(store authtypes.AuthNStore, licensing licensing.Licensing, providerSett
 }
 
 func (a *AuthN) LoginURL(ctx context.Context, siteURL *url.URL, authDomain *authtypes.AuthDomain) (string, error) {
-	if authDomain.AuthDomainConfig().AuthNProvider != authtypes.AuthNProviderOIDC {
+	if authDomain.StorableAuthDomainConfig().AuthNProvider != authtypes.AuthNProviderOIDC {
 		return "", errors.Newf(errors.TypeInternal, authtypes.ErrCodeAuthDomainMismatch, "domain type is not oidc")
 	}
 
@@ -106,14 +106,14 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 		return nil, err
 	}
 
-	if claims == nil && authDomain.AuthDomainConfig().OIDC.GetUserInfo {
+	if claims == nil && authDomain.StorableAuthDomainConfig().OIDC.GetUserInfo {
 		claims, err = a.claimsFromUserInfo(ctx, oidcProvider, token)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	emailClaim, ok := claims[authDomain.AuthDomainConfig().OIDC.ClaimMapping.Email].(string)
+	emailClaim, ok := claims[authDomain.StorableAuthDomainConfig().OIDC.ClaimMapping.Email].(string)
 	if !ok {
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "oidc: missing email in claims")
 	}
@@ -123,7 +123,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "oidc: failed to parse email").WithAdditional(err.Error())
 	}
 
-	if !authDomain.AuthDomainConfig().OIDC.InsecureSkipEmailVerified {
+	if !authDomain.StorableAuthDomainConfig().OIDC.InsecureSkipEmailVerified {
 		emailVerifiedClaim, ok := claims["email_verified"].(bool)
 		if !ok {
 			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "oidc: missing email_verified in claims")
@@ -135,14 +135,14 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 	}
 
 	name := ""
-	if nameClaim := authDomain.AuthDomainConfig().OIDC.ClaimMapping.Name; nameClaim != "" {
+	if nameClaim := authDomain.StorableAuthDomainConfig().OIDC.ClaimMapping.Name; nameClaim != "" {
 		if n, ok := claims[nameClaim].(string); ok {
 			name = n
 		}
 	}
 
 	var groups []string
-	if groupsClaim := authDomain.AuthDomainConfig().OIDC.ClaimMapping.Groups; groupsClaim != "" {
+	if groupsClaim := authDomain.StorableAuthDomainConfig().OIDC.ClaimMapping.Groups; groupsClaim != "" {
 		if claimValue, exists := claims[groupsClaim]; exists {
 			switch g := claimValue.(type) {
 			case []any:
@@ -161,7 +161,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 	}
 
 	role := ""
-	if roleClaim := authDomain.AuthDomainConfig().OIDC.ClaimMapping.Role; roleClaim != "" {
+	if roleClaim := authDomain.StorableAuthDomainConfig().OIDC.ClaimMapping.Role; roleClaim != "" {
 		if r, ok := claims[roleClaim].(string); ok {
 			role = r
 		}
@@ -177,11 +177,11 @@ func (a *AuthN) ProviderInfo(ctx context.Context, authDomain *authtypes.AuthDoma
 }
 
 func (a *AuthN) oidcProviderAndoauth2Config(ctx context.Context, siteURL *url.URL, authDomain *authtypes.AuthDomain) (*oidc.Provider, *oauth2.Config, error) {
-	if authDomain.AuthDomainConfig().OIDC.IssuerAlias != "" {
-		ctx = oidc.InsecureIssuerURLContext(ctx, authDomain.AuthDomainConfig().OIDC.IssuerAlias)
+	if authDomain.StorableAuthDomainConfig().OIDC.IssuerAlias != "" {
+		ctx = oidc.InsecureIssuerURLContext(ctx, authDomain.StorableAuthDomainConfig().OIDC.IssuerAlias)
 	}
 
-	oidcProvider, err := oidc.NewProvider(ctx, authDomain.AuthDomainConfig().OIDC.Issuer)
+	oidcProvider, err := oidc.NewProvider(ctx, authDomain.StorableAuthDomainConfig().OIDC.Issuer)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -189,13 +189,13 @@ func (a *AuthN) oidcProviderAndoauth2Config(ctx context.Context, siteURL *url.UR
 	scopes := make([]string, len(defaultScopes))
 	copy(scopes, defaultScopes)
 
-	if authDomain.AuthDomainConfig().RoleMapping != nil && len(authDomain.AuthDomainConfig().RoleMapping.GroupMappings) > 0 {
+	if authDomain.StorableAuthDomainConfig().RoleMapping != nil && len(authDomain.StorableAuthDomainConfig().RoleMapping.GroupMappings) > 0 {
 		scopes = append(scopes, "groups")
 	}
 
 	return oidcProvider, &oauth2.Config{
-		ClientID:     authDomain.AuthDomainConfig().OIDC.ClientID,
-		ClientSecret: authDomain.AuthDomainConfig().OIDC.ClientSecret,
+		ClientID:     authDomain.StorableAuthDomainConfig().OIDC.ClientID,
+		ClientSecret: authDomain.StorableAuthDomainConfig().OIDC.ClientSecret,
 		Endpoint:     oidcProvider.Endpoint(),
 		Scopes:       scopes,
 		RedirectURL: (&url.URL{
@@ -212,7 +212,7 @@ func (a *AuthN) claimsFromIDToken(ctx context.Context, authDomain *authtypes.Aut
 		return nil, errors.New(errors.TypeNotFound, errors.CodeNotFound, "oidc: no id_token in token response")
 	}
 
-	verifier := provider.Verifier(&oidc.Config{ClientID: authDomain.AuthDomainConfig().OIDC.ClientID})
+	verifier := provider.Verifier(&oidc.Config{ClientID: authDomain.StorableAuthDomainConfig().OIDC.ClientID})
 	idToken, err := verifier.Verify(ctx, rawIDToken)
 	if err != nil {
 		return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "oidc: failed to verify token").WithAdditional(err.Error())
