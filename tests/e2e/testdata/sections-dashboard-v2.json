@@ -1,0 +1,363 @@
+{
+	"$comment": "Three grid sections with two panels each, trimmed from a real V2 dashboard so the structure (sections, panels, layout refs, collapse state, plugin kinds) is faithful without depending on any particular telemetry. Panel queries target signals this stack may hold nothing for — that is fine: these specs assert on structure and chrome, never on chart values. Variables are text + custom, whose options come from the definition.",
+	"spec": {
+		"display": { "name": "sections-v2", "description": "" },
+		"variables": [
+			{
+				"kind": "TextVariable",
+				"spec": {
+					"name": "textbox.environment",
+					"display": { "name": "textbox.environment", "description": "" },
+					"value": "prod",
+					"constant": false
+				}
+			},
+			{
+				"kind": "ListVariable",
+				"spec": {
+					"name": "custom.service.name",
+					"display": { "name": "custom.service.name", "description": "" },
+					"allowMultiple": true,
+					"allowAllValue": true,
+					"sort": "alphabetical-asc",
+					"plugin": {
+						"kind": "signoz/CustomVariable",
+						"spec": { "customValue": "checkout,payments,cart" }
+					}
+				}
+			}
+		],
+		"panels": {
+			"p-timeseries": {
+				"kind": "Panel",
+				"spec": {
+					"display": { "name": "Requests over time", "description": "" },
+					"plugin": {
+						"kind": "signoz/TimeSeriesPanel",
+						"spec": {
+							"visualization": { "timePreference": "global_time", "fillSpans": false },
+							"formatting": { "unit": "none", "decimalPrecision": "2" },
+							"legend": { "position": "bottom", "mode": "list", "customColors": null }
+						}
+					},
+					"queries": [
+						{
+							"kind": "time_series",
+							"spec": {
+								"name": "A",
+								"plugin": {
+									"kind": "signoz/BuilderQuery",
+									"spec": {
+										"name": "A",
+										"signal": "logs",
+										"source": "",
+										"aggregations": [{ "expression": "count()" }],
+										"disabled": false,
+										"filter": { "expression": "service.name IN $custom.service.name" },
+										"groupBy": [
+											{
+												"name": "service.name",
+												"signal": "",
+												"fieldContext": "resource",
+												"fieldDataType": "string"
+											}
+										],
+										"order": [],
+										"having": { "expression": "" },
+										"functions": [],
+										"legend": ""
+									}
+								}
+							}
+						}
+					],
+					"links": []
+				}
+			},
+			"p-table": {
+				"kind": "Panel",
+				"spec": {
+					"display": { "name": "Requests by pod", "description": "" },
+					"plugin": {
+						"kind": "signoz/TablePanel",
+						"spec": {
+							"visualization": { "timePreference": "global_time" },
+							"formatting": { "columnUnits": { "A": "" }, "decimalPrecision": "2" },
+							"thresholds": null
+						}
+					},
+					"queries": [
+						{
+							"kind": "scalar",
+							"spec": {
+								"name": "A",
+								"plugin": {
+									"kind": "signoz/BuilderQuery",
+									"spec": {
+										"name": "A",
+										"signal": "logs",
+										"source": "",
+										"aggregations": [{ "expression": "count()" }],
+										"disabled": false,
+										"filter": { "expression": "service.name IN $custom.service.name" },
+										"groupBy": [
+											{
+												"name": "k8s.pod.name",
+												"signal": "",
+												"fieldContext": "resource",
+												"fieldDataType": "string"
+											}
+										],
+										"order": [],
+										"having": { "expression": "" },
+										"functions": [],
+										"legend": ""
+									}
+								}
+							}
+						}
+					],
+					"links": []
+				}
+			},
+			"p-promql": {
+				"kind": "Panel",
+				"spec": {
+					"display": { "name": "Duration rate (PromQL)", "description": "" },
+					"plugin": {
+						"kind": "signoz/TimeSeriesPanel",
+						"spec": {
+							"visualization": { "timePreference": "global_time", "fillSpans": false },
+							"formatting": { "unit": "none", "decimalPrecision": "2" },
+							"legend": { "position": "bottom", "mode": "list", "customColors": null }
+						}
+					},
+					"queries": [
+						{
+							"kind": "time_series",
+							"spec": {
+								"name": "A",
+								"plugin": {
+									"kind": "signoz/PromQLQuery",
+									"spec": {
+										"name": "A",
+										"query": "sum by (\"service.name\") (rate({\"http.server.duration.count\"}[5m]))",
+										"disabled": false,
+										"step": 0,
+										"stats": false,
+										"legend": ""
+									}
+								}
+							}
+						}
+					],
+					"links": []
+				}
+			},
+			"p-number": {
+				"kind": "Panel",
+				"spec": {
+					"display": { "name": "Total requests", "description": "" },
+					"plugin": {
+						"kind": "signoz/NumberPanel",
+						"spec": {
+							"visualization": { "timePreference": "global_time" },
+							"formatting": { "unit": "none", "decimalPrecision": "2" },
+							"thresholds": null
+						}
+					},
+					"queries": [
+						{
+							"kind": "scalar",
+							"spec": {
+								"name": "A",
+								"plugin": {
+									"kind": "signoz/PromQLQuery",
+									"spec": {
+										"name": "A",
+										"query": "sum(rate({\"http.server.duration.count\"}[5m]))",
+										"disabled": false,
+										"step": 0,
+										"stats": false,
+										"legend": ""
+									}
+								}
+							}
+						}
+					],
+					"links": []
+				}
+			},
+			"p-pie": {
+				"kind": "Panel",
+				"spec": {
+					"display": { "name": "Split by environment", "description": "" },
+					"plugin": {
+						"kind": "signoz/PieChartPanel",
+						"spec": {
+							"visualization": { "timePreference": "global_time" },
+							"formatting": { "unit": "none", "decimalPrecision": "2" },
+							"legend": { "position": "bottom", "mode": "list", "customColors": null }
+						}
+					},
+					"queries": [
+						{
+							"kind": "scalar",
+							"spec": {
+								"name": "A",
+								"plugin": {
+									"kind": "signoz/BuilderQuery",
+									"spec": {
+										"name": "A",
+										"signal": "logs",
+										"source": "",
+										"aggregations": [{ "expression": "count()" }],
+										"disabled": false,
+										"filter": {
+											"expression": "deployment.environment = $textbox.environment"
+										},
+										"groupBy": [
+											{
+												"name": "service.name",
+												"signal": "",
+												"fieldContext": "resource",
+												"fieldDataType": "string"
+											}
+										],
+										"order": [],
+										"having": { "expression": "" },
+										"functions": [],
+										"legend": ""
+									}
+								}
+							}
+						}
+					],
+					"links": []
+				}
+			},
+			"p-bar": {
+				"kind": "Panel",
+				"spec": {
+					"display": { "name": "Stacked by pod", "description": "" },
+					"plugin": {
+						"kind": "signoz/BarChartPanel",
+						"spec": {
+							"visualization": {
+								"timePreference": "global_time",
+								"fillSpans": false,
+								"stackedBarChart": true
+							},
+							"formatting": { "unit": "none", "decimalPrecision": "2" },
+							"legend": { "position": "bottom", "mode": "list", "customColors": null },
+							"thresholds": null
+						}
+					},
+					"queries": [
+						{
+							"kind": "time_series",
+							"spec": {
+								"name": "A",
+								"plugin": {
+									"kind": "signoz/BuilderQuery",
+									"spec": {
+										"name": "A",
+										"signal": "logs",
+										"source": "",
+										"aggregations": [{ "expression": "count()" }],
+										"disabled": false,
+										"filter": { "expression": "" },
+										"groupBy": [
+											{
+												"name": "k8s.pod.name",
+												"signal": "",
+												"fieldContext": "resource",
+												"fieldDataType": "string"
+											}
+										],
+										"order": [],
+										"having": { "expression": "" },
+										"functions": [],
+										"legend": ""
+									}
+								}
+							}
+						}
+					],
+					"links": []
+				}
+			}
+		},
+		"layouts": [
+			{
+				"kind": "Grid",
+				"spec": {
+					"display": { "title": "Query Builder", "collapse": { "open": true } },
+					"items": [
+						{
+							"x": 0,
+							"y": 0,
+							"width": 6,
+							"height": 6,
+							"content": { "$ref": "#/spec/panels/p-timeseries" }
+						},
+						{
+							"x": 6,
+							"y": 0,
+							"width": 6,
+							"height": 6,
+							"content": { "$ref": "#/spec/panels/p-table" }
+						}
+					]
+				}
+			},
+			{
+				"kind": "Grid",
+				"spec": {
+					"display": { "title": "PromQL", "collapse": { "open": true } },
+					"items": [
+						{
+							"x": 0,
+							"y": 0,
+							"width": 6,
+							"height": 6,
+							"content": { "$ref": "#/spec/panels/p-promql" }
+						},
+						{
+							"x": 6,
+							"y": 0,
+							"width": 6,
+							"height": 6,
+							"content": { "$ref": "#/spec/panels/p-number" }
+						}
+					]
+				}
+			},
+			{
+				"kind": "Grid",
+				"spec": {
+					"display": { "title": "Mixed", "collapse": { "open": true } },
+					"items": [
+						{
+							"x": 0,
+							"y": 0,
+							"width": 6,
+							"height": 6,
+							"content": { "$ref": "#/spec/panels/p-pie" }
+						},
+						{
+							"x": 6,
+							"y": 0,
+							"width": 6,
+							"height": 6,
+							"content": { "$ref": "#/spec/panels/p-bar" }
+						}
+					]
+				}
+			}
+		],
+		"duration": "",
+		"refreshInterval": "",
+		"links": []
+	}
+}

@@ -1,0 +1,48 @@
+{
+	"$comment": "V2 (Perses-shape) dashboard spec seeded through POST /api/v2/dashboards. Only text and custom variables, so it resolves without telemetry: option lists are fixed by the definition, which keeps assertions on them deterministic. Query and dynamic variables are seeded per-spec alongside the telemetry they need.",
+	"spec": {
+		"display": { "name": "variables-v2", "description": "" },
+		"layouts": [],
+		"panels": {},
+		"variables": [
+			{
+				"kind": "TextVariable",
+				"spec": {
+					"name": "tb_env",
+					"display": { "name": "tb_env", "description": "Free-text environment" },
+					"value": "prod",
+					"constant": false
+				}
+			},
+			{
+				"kind": "ListVariable",
+				"spec": {
+					"name": "cu_service",
+					"display": { "name": "cu_service", "description": "Multi-select with ALL" },
+					"allowMultiple": true,
+					"allowAllValue": true,
+					"sort": "none",
+					"plugin": {
+						"kind": "signoz/CustomVariable",
+						"spec": { "customValue": "checkout,payments,cart" }
+					}
+				}
+			},
+			{
+				"kind": "ListVariable",
+				"spec": {
+					"name": "cu_region",
+					"display": { "name": "cu_region", "description": "Single-select with a default" },
+					"allowMultiple": false,
+					"allowAllValue": false,
+					"sort": "none",
+					"defaultValue": "eu-west",
+					"plugin": {
+						"kind": "signoz/CustomVariable",
+						"spec": { "customValue": "us-east,eu-west" }
+					}
+				}
+			}
+		]
+	}
+}

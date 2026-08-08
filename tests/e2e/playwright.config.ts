@@ -2,22 +2,23 @@ import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
 import path from 'path';
 
-// .env holds user-provided defaults (staging creds).
-// .env.local is written by tests/e2e/bootstrap/setup.py when the pytest
-// lifecycle brings the backend up locally; override=true so local-backend
-// coordinates win over any stale .env values. Subprocess-injected env
-// (e.g. when pytest shells out to `pnpm test`) still takes priority —
-// dotenv doesn't touch vars that are already set in process.env.
+import parkedSpecs from './parked-specs.json';
+
+// Precedence: real env > .env.local > .env. dotenv never overwrites a var that is
+// already set, so loading in that order gives local-backend coordinates (.env.local,
+// written by bootstrap/setup.py) priority over the staging defaults in .env, while an
+// explicitly exported var still wins over both — which is what lets a run be pointed
+// at another environment without editing a generated file.
+dotenv.config({ path: path.resolve(__dirname, '.env.local') });
 dotenv.config({ path: path.resolve(__dirname, '.env') });
-dotenv.config({ path: path.resolve(__dirname, '.env.local'), override: true });
 
 export default defineConfig({
 	testDir: './tests',
 
-	// Temporarily excluded: the V1 -> V2 dashboard migration changes the
-	// behaviour the dashboards specs assert against, so they fail as written.
-	// Remove this once they are updated for the V2 dashboard.
-	testIgnore: ['**/tests/dashboards/**'],
+	// Parked specs, listed one by one with a reason in parked-specs.json — not a
+	// blanket glob, so nothing new can land inside an excluded directory unnoticed.
+	// `pnpm guard:specs` keeps this list and the suite honest.
+	testIgnore: parkedSpecs.specs,
 
 	// All Playwright output lands under artifacts/. One subdir per reporter
 	// plus results/ for per-test artifacts (traces/screenshots/videos).
