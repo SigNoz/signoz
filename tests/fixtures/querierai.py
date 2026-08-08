@@ -32,10 +32,10 @@ def ai_trace(
     *,
     now: datetime,
     service: str,
-    user: str,
     in_tokens: int | None,
     out_tokens: int,
-    cost: float,
+    user: str = "user",
+    cost: float = 0.1,
     model: str = "gpt-4o-mini",
     environment: str = "production",
 ) -> list[Traces]:
@@ -71,6 +71,28 @@ def ai_trace(
     return [
         root_span(now=now, trace_id=trace_id, span_id=root_id, resources=resources, duration_s=1.1),
         llm,
+    ]
+
+
+def tool_only_trace(*, now: datetime, service: str) -> list[Traces]:
+    """Root + one tool span: passes the gen_ai gate but has NO LLM span."""
+    trace_id = TraceIdGenerator.trace_id()
+    root_id = TraceIdGenerator.span_id()
+    resources = {"service.name": service}
+    return [
+        root_span(now=now, trace_id=trace_id, span_id=root_id, resources=resources, duration_s=2),
+        Traces(
+            timestamp=now - timedelta(seconds=4),
+            duration=timedelta(seconds=0.5),
+            trace_id=trace_id,
+            span_id=TraceIdGenerator.span_id(),
+            parent_span_id=root_id,
+            name="execute_tool",
+            kind=TracesKind.SPAN_KIND_INTERNAL,
+            status_code=TracesStatusCode.STATUS_CODE_OK,
+            resources=resources,
+            attributes={"gen_ai.tool.name": "get_weather", "gen_ai.tool.type": "function"},
+        ),
     ]
 
 

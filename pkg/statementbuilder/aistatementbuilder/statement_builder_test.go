@@ -993,8 +993,8 @@ func TestBuild_TraceList_MultiVariantGateKey(t *testing.T) {
 	assert.Contains(t, got, "mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_number, 'gen_ai.tool.name')")
 }
 
-// `trace.` marks a trace-level aggregate; `tracefield.` routes trace-level too but is
-// not a rewritable alias, so the HAVING rewriter rejects it.
+// A `trace.`-prefixed aggregate in the filter box and the same condition in the
+// explicit Having box build the same query; output-only aggregates are rejected.
 func TestBuild_TraceList_TraceContextPrefix(t *testing.T) {
 	b := newTestBuilder(t)
 	build := func(q qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) (*qbtypes.Statement, error) {
@@ -1002,19 +1002,14 @@ func TestBuild_TraceList_TraceContextPrefix(t *testing.T) {
 		return b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTrace, q, nil)
 	}
 
-	_, err := build(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+	viaTrace, err := build(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 		Filter: &qbtypes.Filter{Expression: "trace.output_tokens > 1000"}})
 	require.NoError(t, err)
 
-	_, err = build(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-		Filter: &qbtypes.Filter{Expression: "tracefield.output_tokens > 1000"}})
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "Invalid references in `Having` expression: [tracefield.output_tokens]")
-
-	_, err = build(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-		Having: &qbtypes.Having{Expression: "tracefield.output_tokens > 1000"}})
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "Invalid references in `Having` expression: [tracefield.output_tokens]")
+	viaHaving, err := build(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+		Having: &qbtypes.Having{Expression: "trace.output_tokens > 1000"}})
+	require.NoError(t, err)
+	assert.Equal(t, viaTrace.Query, viaHaving.Query)
 
 	_, err = build(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 		Filter: &qbtypes.Filter{Expression: "trace.span_count > 3"}})
@@ -1022,7 +1017,8 @@ func TestBuild_TraceList_TraceContextPrefix(t *testing.T) {
 	assert.Contains(t, err.Error(), "cannot be used")
 }
 
-// Query variables in a trace-level condition are substituted into the HAVING.
+// Query variables in a trace-level condition resolve like span filters: bound args,
+// list/IN handling, dynamic __all__ dropping the condition.
 func TestBuild_TraceList_VariableInAggregateFilter(t *testing.T) {
 	b := newTestBuilder(t)
 	build := func(expr string, vars map[string]qbtypes.VariableItem) (*qbtypes.Statement, error) {
@@ -1034,17 +1030,18 @@ func TestBuild_TraceList_VariableInAggregateFilter(t *testing.T) {
 			}, vars)
 	}
 
-	// scalar variable -> literal in HAVING
+	// scalar variable -> bound arg via the filter pipeline
 	stmt, err := build("trace.output_tokens > $threshold",
 		map[string]qbtypes.VariableItem{"threshold": {Value: 700}})
 	require.NoError(t, err)
-	assert.Contains(t, stmt.Query, "HAVING output_tokens > 700")
+	assert.Contains(t, stmt.Query, "HAVING output_tokens > ?")
+	assert.Contains(t, stmt.Args, float64(700))
 
 	// list variable with IN
 	stmt, err = build("trace.llm_call_count IN $counts",
 		map[string]qbtypes.VariableItem{"counts": {Value: []any{1, 2}}})
 	require.NoError(t, err)
-	assert.Contains(t, stmt.Query, "HAVING llm_call_count IN")
+	assert.Contains(t, stmt.Query, "HAVING llm_call_count IN (?, ?)")
 
 	// dynamic __all__ -> condition dropped, no HAVING at all
 	stmt, err = build("trace.output_tokens > $threshold",
@@ -1052,7 +1049,7 @@ func TestBuild_TraceList_VariableInAggregateFilter(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotContains(t, stmt.Query, "HAVING")
 
-	// unresolved variable -> rejected, not compared as a literal
+	// unresolved variable -> rejected, though only as an unknown aggregate today
 	_, err = build("trace.output_tokens > $missing", map[string]qbtypes.VariableItem{"other": {Value: 1}})
 	require.Error(t, err)
 }
