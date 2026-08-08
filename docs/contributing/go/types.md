@@ -61,31 +61,37 @@ type Channel struct {
 
 ```go
 type AuthDomain struct {
-    storableAuthDomain *StorableAuthDomain
-    authDomainConfig   *AuthDomainConfig
+    storableAuthDomain       *StorableAuthDomain
+    storableAuthDomainConfig *StorableAuthDomainConfig
 }
 
 type StorableAuthDomain struct {
     bun.BaseModel `bun:"table:auth_domain"`
     types.Identifiable
     Name  string      `bun:"name"`
-    Data  string      `bun:"data"`  // AuthDomainConfig serialized as JSON
+    Data  string      `bun:"data"`  // StorableAuthDomainConfig serialized as JSON
     OrgID valuer.UUID `bun:"org_id"`
     types.TimeAuditable
 }
 
 type PostableAuthDomain struct {
-    Config AuthDomainConfig `json:"config"`
-    Name   string           `json:"name"`
+    Name        string           `json:"name" required:"true"`
+    Enabled     bool             `json:"enabled"`
+    Config      AuthDomainConfig `json:"config" required:"true"`
+    RoleMapping *RoleMapping     `json:"roleMapping"`
 }
 
-type UpdateableAuthDomain struct {
-    Config AuthDomainConfig `json:"config"` // Name intentionally absent
+type UpdatableAuthDomain struct {
+    Enabled     bool             `json:"enabled"` // Name intentionally absent
+    Config      AuthDomainConfig `json:"config" required:"true"`
+    RoleMapping *RoleMapping     `json:"roleMapping"`
 }
 
 type GettableAuthDomain struct {
-    *StorableAuthDomain
-    *AuthDomainConfig
+    StorableAuthDomain
+    Enabled           bool               `json:"enabled"`
+    Config            AuthDomainConfig   `json:"config"`
+    RoleMapping       *RoleMapping       `json:"roleMapping"`
     AuthNProviderInfo *AuthNProviderInfo `json:"authNProviderInfo"`
 }
 ```
@@ -93,11 +99,11 @@ type GettableAuthDomain struct {
 Each flavor exists for a concrete reason:
 
 - `StorableAuthDomain` stores the typed config as an opaque `Data string` column, so the schema does not need to migrate every time a config field is added.
-- `PostableAuthDomain` carries the config as a structured object (not a string) for the request.
-- `UpdateableAuthDomain` excludes `Name` because a domain's name cannot change after creation.
+- `PostableAuthDomain` carries the config as a structured object (not a string) for the request. `AuthDomainConfig` is a kind/spec envelope — see the next section.
+- `UpdatableAuthDomain` excludes `Name` because a domain's name cannot change after creation.
 - `GettableAuthDomain` adds `AuthNProviderInfo`, which is derived at read time and never persisted.
 
-The core `AuthDomain` holds the two live halves — `storableAuthDomain` and `authDomainConfig` — and owns business methods such as `Update(config)`. Conversions use the `New<Output>From<Input>` form: `NewAuthDomainFromConfig`, `NewAuthDomainFromStorableAuthDomain`, `NewGettableAuthDomainFromAuthDomain`.
+The core `AuthDomain` holds the two live halves — `storableAuthDomain` and `storableAuthDomainConfig` — and owns business methods such as `Update(updatable)`. Conversions use the `New<Output>From<Input>` form: `NewAuthDomainFromPostableAuthDomain`, `NewAuthDomainFromStorableAuthDomain`, `NewGettableAuthDomainFromAuthDomain`.
 
 ## Sum types: the kind/spec envelope
 
