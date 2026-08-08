@@ -407,6 +407,61 @@ identn:
   impersonation:
     # toggle impersonation identN, when enabled, all requests will impersonate the root user
     enabled: false
+  trusted_header:
+    # toggle trusted-header identN. When enabled, identity comes from a fronting
+    # identity-aware proxy. Cannot be enabled together with impersonation.
+    # The API port must not be reachable except through that proxy: the
+    # provider trusts the header on any request that passes the trust check
+    # below, direct access bypasses the proxy's authentication entirely.
+    # An organization must already exist. Identity is resolved within the
+    # existing organizations, so finish first-time setup before enabling this.
+    enabled: false
+    trust:
+      # how proxy provenance is established. Required when enabled.
+      # "jwt": verify a signed assertion against a JWKS endpoint. Recommended:
+      #   it is the only mode an attacker with network access cannot forge.
+      # "secret": require a secret header, compared in constant time. Weaker,
+      #   because anything that can read the pod spec can read the secret.
+      mode: ""
+      jwt:
+        # the proxy must be configured to overwrite this header, not merely
+        # add to it. Teleport in particular passes through any header not
+        # named in that application's rewrite.headers, so an unlisted
+        # assertion header lets a client set its own.
+        assertion_header: Teleport-Jwt-Assertion
+        jwks_url: ""
+        issuer: ""
+        audience: ""
+        identity_claim: sub
+      secret:
+        # a wrong secret here produces no log line on the SigNoz side: the
+        # check runs in the trust checker's Test, before identity resolution,
+        # so the request never reaches anything that logs. Diagnose a
+        # mismatch from the proxy's own logs, not this service's.
+        header: ""
+        value: ""
+    # headers carrying the authenticated user's email. Ignored in jwt mode.
+    # The proxy must overwrite or strip every header named here on inbound
+    # requests. Teleport passes through any header not named in that
+    # application's rewrite.headers, and in secret mode a passed-through
+    # header lets anyone already authenticated at the proxy assert someone
+    # else's email. The provider refuses a header sent more than once, which
+    # catches a proxy that appends but not one that passes through.
+    email_headers:
+      - X-Forwarded-Email
+    # optional headers setting a display name when provisioning
+    name_headers: []
+    # create a Viewer for an unknown email. Note that Viewer can run raw
+    # ClickHouse SQL, so this is not a small grant. In secret mode nothing
+    # vouches for the email beyond the secret itself, so anyone holding the
+    # secret can mint Viewers without limit.
+    auto_provision: false
+    # optional peer CIDR allowlist. Defence in depth only: in Kubernetes every
+    # pod shares the pod CIDR, so this cannot distinguish the proxy from any
+    # other pod. Never rely on it as the only control.
+    trusted_proxies: []
+    # where the UI sends a user on logout, so the proxy session ends too
+    logout_redirect_url: ""
 
 ##################### Service Account #####################
 serviceaccount:

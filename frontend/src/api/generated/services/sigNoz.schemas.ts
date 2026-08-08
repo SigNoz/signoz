@@ -5506,10 +5506,22 @@ export interface GlobaltypesTokenizerConfigDTO {
 	enabled?: boolean;
 }
 
+export interface GlobaltypesTrustedHeaderConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+	/**
+	 * @type string
+	 */
+	logoutRedirectUrl?: string;
+}
+
 export interface GlobaltypesIdentNConfigDTO {
 	apikey?: GlobaltypesAPIKeyConfigDTO;
 	impersonation?: GlobaltypesImpersonationConfigDTO;
 	tokenizer?: GlobaltypesTokenizerConfigDTO;
+	trustedHeader?: GlobaltypesTrustedHeaderConfigDTO;
 }
 
 export interface GlobaltypesConfigDTO {

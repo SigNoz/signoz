@@ -2,6 +2,7 @@ import deleteLocalStorageKey from 'api/browser/localstorage/remove';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
+import { getIsProxyAuthMode, getProxyLogoutUrl } from 'utils/proxyAuthMode';
 
 import deleteSession from './v2/sessions/delete';
 
@@ -22,6 +23,17 @@ export const Logout = async (): Promise<void> => {
 	deleteLocalStorageKey(LOCALSTORAGE.USER_ID);
 	deleteLocalStorageKey(LOCALSTORAGE.QUICK_FILTERS_SETTINGS_ANNOUNCEMENT);
 	window.dispatchEvent(new CustomEvent('LOGOUT'));
+
+	// Clearing local state is not enough under proxy auth: the next request
+	// carries the same proxy assertion and re-authenticates immediately, so only
+	// the proxy can end the session. Hand off to its sign-out endpoint when one
+	// is configured, and otherwise behave exactly as before.
+	const proxyLogoutUrl = getProxyLogoutUrl();
+	if (getIsProxyAuthMode() && proxyLogoutUrl) {
+		window.location.assign(proxyLogoutUrl);
+		return;
+	}
+
 	history.push(ROUTES.LOGIN);
 };
 
