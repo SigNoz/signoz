@@ -232,11 +232,14 @@ cd tests/e2e
 # Single feature dir
 npx playwright test tests/alerts/ --project=chromium
 
+# Single sub-area
+npx playwright test tests/alerts/history/ --project=chromium
+
 # Single file
-npx playwright test tests/alerts/alerts.spec.ts --project=chromium
+npx playwright test tests/alerts/page.spec.ts --project=chromium
 
 # Single test by title grep
-npx playwright test --project=chromium -g "TC-01"
+npx playwright test --project=chromium -g "AL-01"
 ```
 
 ### Iterative modes
@@ -270,7 +273,14 @@ yarn test:staging
 | `SIGNOZ_E2E_PASSWORD` | Admin password. Bootstrap writes the integration-test default. |
 | `SIGNOZ_E2E_SEEDER_URL` | Seeder HTTP base URL — hit by specs that need per-test telemetry. |
 
-Loading order in `playwright.config.ts`: `.env` first (user-provided, staging), then `.env.local` with `override: true` (bootstrap-generated, local mode). Anything already set in `process.env` at yarn-test time wins because dotenv doesn't touch vars that are already present.
+Precedence in `playwright.config.ts`, lowest to highest: `.env` (user-provided, staging) → `.env.local` (bootstrap-generated, local mode) → whatever is already in `process.env`. The config parses both files itself and only fills in keys the environment does not already define, so exporting a variable always wins:
+
+```bash
+# runs against a locally served frontend, not whatever .env.local points at
+SIGNOZ_E2E_BASE_URL=http://127.0.0.1:3301 pnpm test tests/alerts
+```
+
+This is deliberately not `dotenv.config({ override: true })`. That flag makes the *file* beat `process.env`, which silently discarded exported values — including the `SIGNOZ_E2E_BASE_URL` in `pnpm test:staging`, whenever a `.env.local` happened to exist.
 
 ### Playwright options
 
