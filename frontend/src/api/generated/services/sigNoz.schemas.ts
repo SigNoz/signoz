@@ -1869,11 +1869,11 @@ export interface AuthtypesSamlConfigDTO {
 	/**
 	 * @type string
 	 */
-	certificate?: string;
+	certificate: string;
 	/**
 	 * @type string
 	 */
-	entityId?: string;
+	entityId: string;
 	/**
 	 * @type boolean
 	 */
@@ -1881,7 +1881,7 @@ export interface AuthtypesSamlConfigDTO {
 	/**
 	 * @type string
 	 */
-	location?: string;
+	location: string;
 }
 
 export interface AuthtypesAuthDomainConfigSAMLDTO {
@@ -1908,11 +1908,11 @@ export interface AuthtypesGoogleConfigDTO {
 	/**
 	 * @type string
 	 */
-	clientId?: string;
+	clientId: string;
 	/**
 	 * @type string
 	 */
-	clientSecret?: string;
+	clientSecret: string;
 	/**
 	 * @type object
 	 */
@@ -1956,11 +1956,11 @@ export interface AuthtypesOIDCConfigDTO {
 	/**
 	 * @type string
 	 */
-	clientId?: string;
+	clientId: string;
 	/**
 	 * @type string
 	 */
-	clientSecret?: string;
+	clientSecret: string;
 	/**
 	 * @type boolean
 	 */
@@ -1972,7 +1972,7 @@ export interface AuthtypesOIDCConfigDTO {
 	/**
 	 * @type string
 	 */
-	issuer?: string;
+	issuer: string;
 	/**
 	 * @type string
 	 */

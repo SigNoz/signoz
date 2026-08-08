@@ -12,10 +12,10 @@ const wildCardDomain = "*"
 
 type GoogleConfig struct {
 	// ClientID is the application's ID. For example, 292085223830.apps.googleusercontent.com.
-	ClientID string `json:"clientId"`
+	ClientID string `json:"clientId" required:"true"`
 
 	// It is the application's secret.
-	ClientSecret string `json:"clientSecret"`
+	ClientSecret string `json:"clientSecret" required:"true"`
 
 	// What is the meaning of this? Should we remove this?
 	RedirectURI string `json:"redirectURI"`

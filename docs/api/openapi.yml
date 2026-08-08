@@ -643,6 +643,9 @@ components:
           type: string
         serviceAccountJson:
           type: string
+      required:
+      - clientId
+      - clientSecret
       type: object
     AuthtypesOIDCConfig:
       properties:
@@ -660,6 +663,10 @@ components:
           type: string
         issuerAlias:
           type: string
+      required:
+      - issuer
+      - clientId
+      - clientSecret
       type: object
     AuthtypesOrgSessionContext:
       properties:
@@ -804,6 +811,10 @@ components:
           type: boolean
         location:
           type: string
+      required:
+      - entityId
+      - location
+      - certificate
       type: object
     AuthtypesSessionContext:
       properties:
