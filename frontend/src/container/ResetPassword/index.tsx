@@ -82,6 +82,10 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 	const handleValuesChange = useDebouncedFn((): void => {
 		const { password, confirmPassword } = form.getFieldsValue();
 
+		if (errorMessage) {
+			setErrorMessage(null);
+		}
+
 		if (!password || !confirmPassword) {
 			setIsValidPassword(false);
 		}
