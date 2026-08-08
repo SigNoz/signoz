@@ -142,6 +142,26 @@ The existing domains already follow this placement:
 
 Of the union encodings in common use, the envelope is the *adjacently tagged* one — tag and payload side by side. Variant payloads stay collision-free, and each kind maps to a named wrapper schema that carries the discriminator, which is exactly what OpenAPI generators need. The alternatives lose on those points: *internally tagged* (`{"kind": "bar", ...fields flattened}`) mixes common and variant fields, admits cross-variant key collisions, and forces every variant schema to redeclare the discriminator; *sibling optional fields* (`{"kind": "bar", "barConfig": {}, "bazConfig": {}}`) is the anti-pattern the first rule below exists to prevent.
 
+### The envelope goes at the point of variance, not the resource root
+
+Put the envelope on the field that actually varies. The resource root is almost never a sum type — an auth domain always has a `name`, `enabled`, and `roleMapping` regardless of provider; only its provider configuration varies, so the envelope is the `config` field:
+
+```json
+{ "name": "signoz.io", "enabled": true, "config": { "kind": "saml", "spec": { "..." : "..." } }, "roleMapping": null }
+```
+
+Hoisting `kind`/`spec` to the root would turn the whole resource into a `oneOf`: every flavor (`PostableX`, `UpdatableX`, `GettableX`) then needs one variant schema per kind, each repeating the common fields; every new common field has to be added to all of them; and generated clients get unions of large objects instead of one small union that narrows on `config.kind`. A root-level `kind` also collides with the resource-model meaning of the word — in the Kubernetes/Perses model, root `kind` answers "what resource is this" (`Dashboard`), never "which flavor of config does it hold".
+
+The other domains already follow this placement:
+
+- **Rules** — plain root; envelopes on the varying fields: `thresholds: {kind, spec}` and `evaluation: {kind, spec}`.
+- **Dashboards** — Perses resource model: metadata at the root plus one typed `spec`; the unions sit deep inside, at each panel/query/variable plugin (`{kind, spec}` in `perses_plugin_wrappers.go`).
+- **Saved views** — root `{schemaVersion, spec}`, where `spec` is a *versioning* envelope holding one fixed type, not a union; the unions are inside it (`spec.queries: [{type, spec}]`). Same word, different job — a versioned body is not a discriminated union.
+
+### Why this tagging style
+
+Of the union encodings in common use, the envelope is the *adjacently tagged* one — tag and payload side by side — as used by the Kubernetes resource model, Perses plugins, CloudFormation (`Type` + `Properties`), and Grafana provisioning (`type` + `settings`). Variant payloads stay collision-free, and each kind maps to a named wrapper schema that carries the discriminator, which is exactly what OpenAPI generators need. The alternatives lose on those points: *internally tagged* (`{"type": "saml", ...fields flattened}` — Stripe, GitHub webhooks) mixes common and variant fields, admits cross-variant key collisions, and forces every variant schema to redeclare the discriminator; *sibling optional fields* (`{"type": "saml", "samlConfig": {}, "oidcConfig": {}}` — classic Kubernetes `VolumeSource`, and the pre-envelope auth domain) is the anti-pattern the first rule below exists to prevent.
+
 The rules that make the envelope work:
 
 - **Never model variants as sibling fields.** A struct with `Bar *BarSpec`, `Baz *BazSpec` next to a discriminator cannot be expressed as an OpenAPI discriminated union, forces nilability checks on every consumer, and silently admits contradictory payloads (kind=bar with a baz spec). The chosen variant *is* the payload.
