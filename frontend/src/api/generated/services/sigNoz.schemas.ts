@@ -8991,8 +8991,17 @@ export enum SavedviewtypesPanelTypeDTO {
 	list = 'list',
 	trace = 'trace',
 }
+export enum SavedviewtypesPostableSavedViewDTOSchemaVersion {
+	v2 = 'v2',
+}
+export enum SavedviewtypesSourceDTO {
+	traces = 'traces',
+	logs = 'logs',
+	metrics = 'metrics',
+	meter = 'meter',
+}
 export interface SavedviewtypesSavedViewSpecDTO {
-	display: SavedviewtypesDisplayDTO;
+	display?: SavedviewtypesDisplayDTO;
 	/**
 	 * @type string
 	 */
@@ -9005,25 +9014,10 @@ export interface SavedviewtypesSavedViewSpecDTO {
 	/**
 	 * @type array
 	 */
-	selectedFields: TelemetrytypesTelemetryFieldKeyDTO[];
+	selectedFields?: TelemetrytypesTelemetryFieldKeyDTO[];
 }
 
-export interface SavedviewtypesSavedViewDataDTO {
-	/**
-	 * @type string
-	 */
-	schemaVersion: string;
-	spec: SavedviewtypesSavedViewSpecDTO;
-}
-
-export enum SavedviewtypesSourceDTO {
-	traces = 'traces',
-	logs = 'logs',
-	metrics = 'metrics',
-	meter = 'meter',
-}
 export interface SavedviewtypesPostableSavedViewDTO {
-	data: SavedviewtypesSavedViewDataDTO;
 	/**
 	 * @type boolean
 	 */
@@ -9032,9 +9026,18 @@ export interface SavedviewtypesPostableSavedViewDTO {
 	 * @type string
 	 */
 	name?: string;
+	/**
+	 * @enum v2
+	 * @type string
+	 */
+	schemaVersion: SavedviewtypesPostableSavedViewDTOSchemaVersion;
 	source: SavedviewtypesSourceDTO;
+	spec: SavedviewtypesSavedViewSpecDTO;
 }
 
+export enum SavedviewtypesSavedViewDTOSchemaVersion {
+	v2 = 'v2',
+}
 export interface SavedviewtypesSavedViewDTO {
 	/**
 	 * @type string
@@ -9045,7 +9048,6 @@ export interface SavedviewtypesSavedViewDTO {
 	 * @type string
 	 */
 	createdBy?: string;
-	data?: SavedviewtypesSavedViewDataDTO;
 	/**
 	 * @type string
 	 */
@@ -9054,7 +9056,13 @@ export interface SavedviewtypesSavedViewDTO {
 	 * @type string
 	 */
 	name?: string;
+	/**
+	 * @enum v2
+	 * @type string
+	 */
+	schemaVersion: SavedviewtypesSavedViewDTOSchemaVersion;
 	source?: SavedviewtypesSourceDTO;
+	spec: SavedviewtypesSavedViewSpecDTO;
 	/**
 	 * @type string
 	 * @format date-time
@@ -9066,9 +9074,17 @@ export interface SavedviewtypesSavedViewDTO {
 	updatedBy?: string;
 }
 
+export enum SavedviewtypesUpdatableSavedViewDTOSchemaVersion {
+	v2 = 'v2',
+}
 export interface SavedviewtypesUpdatableSavedViewDTO {
-	data: SavedviewtypesSavedViewDataDTO;
+	/**
+	 * @enum v2
+	 * @type string
+	 */
+	schemaVersion: SavedviewtypesUpdatableSavedViewDTOSchemaVersion;
 	source: SavedviewtypesSourceDTO;
+	spec: SavedviewtypesSavedViewSpecDTO;
 }
 
 export interface ServiceaccounttypesDeprecatedPostableServiceAccountRoleDTO {
