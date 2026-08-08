@@ -32,7 +32,7 @@ type Display struct {
 type SavedViewSpec struct {
 	DisplayName    string                             `json:"displayName" required:"true"`
 	PanelType      PanelType                          `json:"panelType" required:"true"`
-	Queries        []qbtypes.QueryEnvelope            `json:"queries" required:"true" nullable:"false"`
+	Queries        []qbtypes.QueryEnvelope            `json:"queries" required:"true" nullable:"false" minItems:"1"`
 	SelectedFields []telemetrytypes.TelemetryFieldKey `json:"selectedFields" nullable:"false"`
 	Display        Display                            `json:"display"`
 }
