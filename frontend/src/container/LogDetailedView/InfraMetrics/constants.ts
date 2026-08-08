@@ -2894,8 +2894,8 @@ export const hostWidgetInfo = [
 		docPath: '/infrastructure-monitoring/host-monitoring/#system-load-average',
 	},
 	{
-		title: 'Network usage (bytes)',
-		yAxisUnit: 'bytes',
+		title: 'Network usage',
+		yAxisUnit: 'binBps',
 		docPath: '/infrastructure-monitoring/host-monitoring/#network-usage-bytes',
 	},
 	{
@@ -2919,8 +2919,8 @@ export const hostWidgetInfo = [
 		docPath: '/infrastructure-monitoring/host-monitoring/#network-connections',
 	},
 	{
-		title: 'System disk io (bytes transferred)',
-		yAxisUnit: 'bytes',
+		title: 'System disk IO',
+		yAxisUnit: 'binBps',
 		docPath: '/infrastructure-monitoring/host-monitoring/#system-disk-io-bytes',
 	},
 	{
