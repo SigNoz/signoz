@@ -11201,31 +11201,6 @@ export type ListUsersDeprecated200 = {
 	status: string;
 };
 
-export type DeleteUserDeprecatedPathParameters = {
-	id: string;
-};
-export type GetUserDeprecatedPathParameters = {
-	id: string;
-};
-export type GetUserDeprecated200 = {
-	data: TypesDeprecatedUserDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type UpdateUserDeprecatedPathParameters = {
-	id: string;
-};
-export type UpdateUserDeprecated200 = {
-	data: TypesDeprecatedUserDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type GetMyUserDeprecated200 = {
 	data: TypesDeprecatedUserDTO;
 	/**
