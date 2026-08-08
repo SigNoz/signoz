@@ -1,0 +1,62 @@
+apiVersion: reliability/v1
+kind: TelemetryProfile
+
+metadata:
+  name: support-agent
+  service: support-agent
+  environment: local
+
+spec:
+  data_kind: ai_agent
+  source:
+    adapter: signoz
+    endpoint: http://localhost:8080
+
+  signals:
+    traces:
+      root_span: agent.run
+      spans:
+        - name: model.chat
+          fields:
+            - path: gen_ai.provider.name
+              type: string
+              required: true
+            - path: gen_ai.request.model
+              type: string
+              required: true
+            - path: gen_ai.usage.input_tokens
+              type: integer
+              required: true
+            - path: gen_ai.usage.output_tokens
+              type: integer
+              required: true
+        - name: evaluation.groundedness
+          fields:
+            - path: evaluation.grounded
+              type: boolean
+              required: true
+
+  audit_rules:
+    - id: model-name
+      type: required_field
+      signal: traces
+      applies_to: model.chat
+      field: gen_ai.request.model
+      severity: warning
+      recommendation: Record the requested model on every model span.
+
+    - id: model-token-usage
+      type: required_field
+      signal: traces
+      applies_to: model.chat
+      field: gen_ai.usage.input_tokens
+      severity: warning
+      recommendation: Record input token usage on every model span.
+
+    - id: groundedness-verdict
+      type: required_field
+      signal: traces
+      applies_to: evaluation.groundedness
+      field: evaluation.grounded
+      severity: blocker
+      recommendation: Record a structured grounding verdict.
