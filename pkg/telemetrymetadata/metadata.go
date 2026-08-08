@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/statementbuilder/aistatementbuilder"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/audittelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/logstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/metertelemetryschema"
@@ -157,6 +159,13 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
 		instrumentationtypes.CodeNamespace:    "metadata",
 		instrumentationtypes.CodeFunctionName: "getTracesKeys",
+	})
+
+	// The trace field context never matches ingested keys — it names the computed
+	// per-trace aggregates, which enrichWithAITraceAggregateKeys serves. Without this
+	// the tagType condition below has no branch for it and the scan returns every key.
+	fieldKeySelectors = slices.DeleteFunc(slices.Clone(fieldKeySelectors), func(s *telemetrytypes.FieldKeySelector) bool {
+		return s.FieldContext == telemetrytypes.FieldContextTrace
 	})
 
 	if len(fieldKeySelectors) == 0 {
@@ -1168,6 +1177,31 @@ func enrichWithIntrinsicMetricKeys(keys map[string][]*telemetrytypes.TelemetryFi
 	return keys
 }
 
+// enrichWithAITraceAggregateKeys adds the computed per-trace aggregate keys for
+// builder_ai_query selectors; they are never ingested, so the scan cannot serve them.
+func enrichWithAITraceAggregateKeys(keys map[string][]*telemetrytypes.TelemetryFieldKey, selectors []*telemetrytypes.FieldKeySelector) map[string][]*telemetrytypes.TelemetryFieldKey {
+	defs := aistatementbuilder.MetadataFieldKeys()
+	matched := make(map[string]*telemetrytypes.TelemetryFieldKey)
+	for _, selector := range selectors {
+		if selector.QueryType != qbtypes.QueryTypeBuilderAI.StringValue() {
+			continue
+		}
+		if selector.Signal != telemetrytypes.SignalTraces && selector.Signal != telemetrytypes.SignalUnspecified {
+			continue
+		}
+		for _, def := range defs {
+			if selectorMatchesIntrinsicField(selector, *def) {
+				matched[def.Name] = def
+			}
+		}
+	}
+
+	for name, def := range matched {
+		keys[name] = append(keys[name], def)
+	}
+	return keys
+}
+
 // enrichWithGenAIKeys adds keys that can be queried for GenAI signals, even though they have not been ingested yet.
 func enrichWithGenAIKeys(keys map[string][]*telemetrytypes.TelemetryFieldKey, selectors []*telemetrytypes.FieldKeySelector) map[string][]*telemetrytypes.TelemetryFieldKey {
 	for _, selector := range selectors {
@@ -1276,6 +1310,7 @@ func (t *telemetryMetaStore) GetKeys(ctx context.Context, orgID valuer.UUID, fie
 	mapOfKeys = enrichWithIntrinsicMetricKeys(mapOfKeys, selectors)
 	if t.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableAIObservability, featuretypes.NewFlaggerEvaluationContext(orgID)) {
 		mapOfKeys = enrichWithGenAIKeys(mapOfKeys, selectors)
+		mapOfKeys = enrichWithAITraceAggregateKeys(mapOfKeys, selectors)
 	}
 
 	return mapOfKeys, complete, nil
@@ -1357,6 +1392,7 @@ func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID
 	mapOfKeys = enrichWithIntrinsicMetricKeys(mapOfKeys, fieldKeySelectors)
 	if t.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableAIObservability, featuretypes.NewFlaggerEvaluationContext(orgID)) {
 		mapOfKeys = enrichWithGenAIKeys(mapOfKeys, fieldKeySelectors)
+		mapOfKeys = enrichWithAITraceAggregateKeys(mapOfKeys, fieldKeySelectors)
 	}
 
 	return mapOfKeys, complete, nil

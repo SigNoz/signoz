@@ -185,18 +185,19 @@ func (b *scopedTraceStatementBuilder) buildTraceListQuery(
 		return nil, err
 	}
 	orderableSet := orderableAliasSet(resolved)
+	filterableSet := filterableAliasSet(resolved)
 
 	resourceFrag, resourceArgs, resourcePred, err := b.maybeAttachResourceFilter(ctx, orgID, query, start, end, variables)
 	if err != nil {
 		return nil, err
 	}
 
-	fp, err := b.splitFilter(ctx, orgID, query, b.aggregateAliasSet(), orderableSet, start, end, variables, matchedSB)
+	fp, err := b.splitFilter(ctx, orgID, query, b.aggregateAliasSet(), filterableSet, start, end, variables, matchedSB)
 	if err != nil {
 		return nil, err
 	}
 
-	matchedFrag, matchedArgs, err := b.buildMatchedCTE(matchedSB, start, end, startBucket, endBucket, resolved, orders, orderableSet, maskExpr, fp, resourcePred, limit, query.Offset)
+	matchedFrag, matchedArgs, err := b.buildMatchedCTE(matchedSB, start, end, startBucket, endBucket, resolved, orders, orderableSet, filterableSet, maskExpr, fp, resourcePred, limit, query.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -326,9 +327,10 @@ func (b *scopedTraceStatementBuilder) resolveMask(ctx context.Context, orgID val
 }
 
 type resolvedColumn struct {
-	alias     string
-	expr      string
-	orderable bool
+	alias      string
+	expr       string
+	orderable  bool
+	filterable bool
 }
 
 func (b *scopedTraceStatementBuilder) resolveColumns(ctx context.Context, orgID valuer.UUID, start, end uint64, cols *columnResolver, preds *predicateResolver) ([]resolvedColumn, error) {
@@ -338,7 +340,7 @@ func (b *scopedTraceStatementBuilder) resolveColumns(ctx context.Context, orgID 
 		if err != nil {
 			return nil, err
 		}
-		out = append(out, resolvedColumn{alias: c.Alias, expr: expr, orderable: c.Orderable})
+		out = append(out, resolvedColumn{alias: c.Alias, expr: expr, orderable: c.Orderable, filterable: c.Filterable})
 	}
 	return out, nil
 }
@@ -393,7 +395,7 @@ type filterParts struct {
 // splitFilter splits query.Filter into a span-level predicate (args bound into sb)
 // and a trace-level HAVING (explicit query.Having ANDed on), then validates the
 // trace-level part against the matched-pass aggregates.
-func (b *scopedTraceStatementBuilder) splitFilter(ctx context.Context, orgID valuer.UUID, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], classifySet, orderableSet map[string]struct{}, start, end uint64, variables map[string]qbtypes.VariableItem, sb *sqlbuilder.SelectBuilder) (filterParts, error) {
+func (b *scopedTraceStatementBuilder) splitFilter(ctx context.Context, orgID valuer.UUID, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], classifySet, filterableSet map[string]struct{}, start, end uint64, variables map[string]qbtypes.VariableItem, sb *sqlbuilder.SelectBuilder) (filterParts, error) {
 	var fp filterParts
 	if query.Filter != nil && strings.TrimSpace(query.Filter.Expression) != "" {
 		spanExpr, traceExpr, err := querybuilder.SplitFilterForAggregates(query.Filter.Expression, classifySet)
@@ -429,7 +431,7 @@ func (b *scopedTraceStatementBuilder) splitFilter(ctx context.Context, orgID val
 		}
 		fp.havingExpr = replaced
 	}
-	if err := validateAggregateFilter(fp.havingExpr, orderableSet); err != nil {
+	if err := validateAggregateFilter(fp.havingExpr, filterableSet); err != nil {
 		return fp, err
 	}
 	return fp, nil
@@ -473,7 +475,7 @@ func (b *scopedTraceStatementBuilder) resolveSpanPredicate(ctx context.Context, 
 // span filter + HAVING + ORDER BY + LIMIT/OFFSET, selecting only the aliases ORDER BY
 // / HAVING reference. Expressions carry $n markers bound to sb, so each can appear
 // several times and every occurrence resolves to the same arg.
-func (b *scopedTraceStatementBuilder) buildMatchedCTE(sb *sqlbuilder.SelectBuilder, start, end, startBucket, endBucket uint64, resolved []resolvedColumn, orders []listOrder, orderableSet map[string]struct{}, maskExpr string, fp filterParts, resourcePred string, limit, offset int) (string, []any, error) {
+func (b *scopedTraceStatementBuilder) buildMatchedCTE(sb *sqlbuilder.SelectBuilder, start, end, startBucket, endBucket uint64, resolved []resolvedColumn, orders []listOrder, orderableSet, filterableSet map[string]struct{}, maskExpr string, fp filterParts, resourcePred string, limit, offset int) (string, []any, error) {
 	needed := neededMatchedAliases(orders, fp.havingExpr, orderableSet)
 	selects := []string{"trace_id"}
 	for _, rc := range resolved {
@@ -513,8 +515,8 @@ func (b *scopedTraceStatementBuilder) buildMatchedCTE(sb *sqlbuilder.SelectBuild
 	}
 	if strings.TrimSpace(fp.havingExpr) != "" {
 		// the rewriter matches raw key text, so map the trace. form alongside the bare name
-		columnMap := make(map[string]string, len(orderableSet)*2)
-		for a := range orderableSet {
+		columnMap := make(map[string]string, len(filterableSet)*2)
+		for a := range filterableSet {
 			columnMap[a] = quoteAlias(a)
 			columnMap[telemetrytypes.FieldContextTrace.StringValue()+"."+a] = quoteAlias(a)
 		}
@@ -603,6 +605,17 @@ func orderableAliasSet(resolved []resolvedColumn) map[string]struct{} {
 	return set
 }
 
+// filterableAliasSet is the subset of aliases usable in the trace-level filter.
+func filterableAliasSet(resolved []resolvedColumn) map[string]struct{} {
+	set := make(map[string]struct{})
+	for _, rc := range resolved {
+		if rc.filterable {
+			set[rc.alias] = struct{}{}
+		}
+	}
+	return set
+}
+
 // neededMatchedAliases is the minimal alias set the matched pass must select: those
 // in ORDER BY plus those in the aggregate HAVING.
 func neededMatchedAliases(orders []listOrder, havingExpr string, orderableSet map[string]struct{}) map[string]struct{} {
@@ -630,19 +643,19 @@ func traceAggregateNames(havingExpr string) []string {
 	return names
 }
 
-// validateAggregateFilter rejects a trace-level filter referencing an aggregate not
-// computable in the matched pass.
-func validateAggregateFilter(havingExpr string, orderableSet map[string]struct{}) error {
+// validateAggregateFilter rejects a trace-level filter referencing an aggregate that
+// is not filterable.
+func validateAggregateFilter(havingExpr string, filterableSet map[string]struct{}) error {
 	if strings.TrimSpace(havingExpr) == "" {
 		return nil
 	}
-	allowed := make([]string, 0, len(orderableSet))
-	for a := range orderableSet {
+	allowed := make([]string, 0, len(filterableSet))
+	for a := range filterableSet {
 		allowed = append(allowed, a)
 	}
 	sort.Strings(allowed)
 	for _, name := range traceAggregateNames(havingExpr) {
-		if _, ok := orderableSet[name]; !ok {
+		if _, ok := filterableSet[name]; !ok {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput,
 				"aggregate %q cannot be used in the trace-list filter; filterable aggregates: %s", name, strings.Join(allowed, ", "))
 		}

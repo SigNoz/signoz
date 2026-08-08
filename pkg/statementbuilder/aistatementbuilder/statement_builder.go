@@ -49,20 +49,21 @@ func Scope() scopedtraces.TraceScope {
 	str := telemetrytypes.FieldDataTypeString
 	columns := append(scopedtraces.CommonTraceColumns(),
 		// LLM calls only (request model present), not the full gate.
-		scopedtraces.TraceColumn{Alias: "llm_call_count", Orderable: true, Expr: scopedtraces.CountExists(&reqModel)},
-		scopedtraces.TraceColumn{Alias: "tool_call_count", Orderable: true, Expr: scopedtraces.CountExists(&toolName)},
-		scopedtraces.TraceColumn{Alias: "distinct_tool_count", Orderable: true, Expr: scopedtraces.UniqCount(&toolName, str)},
+		scopedtraces.TraceColumn{Alias: "llm_call_count", Orderable: true, Filterable: true, Expr: scopedtraces.CountExists(&reqModel)},
+		scopedtraces.TraceColumn{Alias: "tool_call_count", Orderable: true, Filterable: true, Expr: scopedtraces.CountExists(&toolName)},
+		scopedtraces.TraceColumn{Alias: "distinct_tool_count", Orderable: true, Filterable: true, Expr: scopedtraces.UniqCount(&toolName, str)},
 		// tokens live only on LLM spans, so a plain sum needs no gate scoping.
-		scopedtraces.TraceColumn{Alias: "input_tokens", Orderable: true, Expr: scopedtraces.Reduce(scopedtraces.AggSum, &inTok)},
-		scopedtraces.TraceColumn{Alias: "output_tokens", Orderable: true, Expr: scopedtraces.Reduce(scopedtraces.AggSum, &outTok)},
-		scopedtraces.TraceColumn{Alias: "total_tokens", Orderable: true, Expr: scopedtraces.SumOfKeys(telemetrytypes.FieldDataTypeFloat64, &inTok, &outTok)},
+		scopedtraces.TraceColumn{Alias: "input_tokens", Orderable: true, Filterable: true, Expr: scopedtraces.Reduce(scopedtraces.AggSum, &inTok)},
+		scopedtraces.TraceColumn{Alias: "output_tokens", Orderable: true, Filterable: true, Expr: scopedtraces.Reduce(scopedtraces.AggSum, &outTok)},
+		scopedtraces.TraceColumn{Alias: "total_tokens", Orderable: true, Filterable: true, Expr: scopedtraces.SumOfKeys(telemetrytypes.FieldDataTypeFloat64, &inTok, &outTok)},
 		// per-span cost attached by the SigNoz LLM pricing processor.
-		scopedtraces.TraceColumn{Alias: "estimated_total_cost", Orderable: true, Expr: scopedtraces.Reduce(scopedtraces.AggSum, &cost)},
+		scopedtraces.TraceColumn{Alias: "estimated_total_cost", Orderable: true, Filterable: true, Expr: scopedtraces.Reduce(scopedtraces.AggSum, &cost)},
 		// slowest single LLM call in the trace.
-		scopedtraces.TraceColumn{Alias: "max_llm_duration_nano", Orderable: true, Expr: scopedtraces.ScopedToKeyColumn(scopedtraces.AggMax, scopedtraces.IntrinsicSpanKey("duration_nano"), &reqModel)},
+		scopedtraces.TraceColumn{Alias: "max_llm_duration_nano", Orderable: true, Filterable: true, Expr: scopedtraces.ScopedToKeyColumn(scopedtraces.AggMax, scopedtraces.IntrinsicSpanKey("duration_nano"), &reqModel)},
 		// errors across the whole trace (any span), so display-only.
 		scopedtraces.TraceColumn{Alias: "error_count", Expr: scopedtraces.CondCount(scopedtraces.IntrinsicSpanKey("has_error"), qbtypes.FilterOperatorEqual, true)},
-		// timestamp of the last gen_ai span (LLM/tool/agent), hence gate-scoped.
+		// timestamp of the last gen_ai span (LLM/tool/agent), hence gate-scoped;
+		// order-only: a raw-nanos threshold makes no sense in the filter bar.
 		scopedtraces.TraceColumn{Alias: "last_activity_time", Orderable: true, Expr: scopedtraces.ScopedReduce(scopedtraces.AggMax, scopedtraces.IntrinsicSpanKey("timestamp"))},
 		// previews: first call's input (the prompt), last call's output (the answer).
 		scopedtraces.TraceColumn{Alias: "input", SpanLevel: true, Expr: scopedtraces.PickBy(&inMsg, str, scopedtraces.IntrinsicSpanKey("timestamp"), scopedtraces.PickEarliest)},
@@ -75,4 +76,23 @@ func Scope() scopedtraces.TraceScope {
 		Columns:           columns,
 		DefaultOrderAlias: "last_activity_time",
 	}
+}
+
+// MetadataFieldKeys returns the aggregates the metadata store surfaces as trace-context
+// keys for builder_ai_query suggestions; only filterable columns qualify.
+func MetadataFieldKeys() []*telemetrytypes.TelemetryFieldKey {
+	cols := Scope().Columns
+	keys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(cols))
+	for _, c := range cols {
+		if !c.Orderable || !c.Filterable {
+			continue
+		}
+		keys = append(keys, &telemetrytypes.TelemetryFieldKey{
+			Name:          c.Alias,
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextTrace,
+			FieldDataType: telemetrytypes.FieldDataTypeFloat64,
+		})
+	}
+	return keys
 }

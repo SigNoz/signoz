@@ -238,6 +238,7 @@ type FieldKeySelector struct {
 	EndUnixMilli      int64                  `json:"endUnixMilli"`
 	Signal            Signal                 `json:"signal"`
 	Source            Source                 `json:"source"`
+	QueryType         string                 `json:"queryType"`
 	FieldContext      FieldContext           `json:"fieldContext"`
 	FieldDataType     FieldDataType          `json:"fieldDataType"`
 	Name              string                 `json:"name"`
@@ -261,6 +262,7 @@ type GettableFieldKeys struct {
 type PostableFieldKeysParams struct {
 	Signal          Signal        `query:"signal"`
 	Source          Source        `query:"source"`
+	Type            string        `query:"type"`
 	Limit           int           `query:"limit"`
 	StartUnixMilli  int64         `query:"startUnixMilli"`
 	EndUnixMilli    int64         `query:"endUnixMilli"`
@@ -297,6 +299,7 @@ func NewFieldKeySelectorFromPostableFieldKeysParams(params PostableFieldKeysPara
 
 	req.Signal = params.Signal
 	req.Source = params.Source
+	req.QueryType = params.Type
 	req.FieldContext = params.FieldContext
 	req.FieldDataType = params.FieldDataType
 	req.SelectorMatchType = FieldSelectorMatchTypeFuzzy
