@@ -34,6 +34,7 @@ pytest_plugins = [
     "fixtures.role",
     "fixtures.savedview",
     "fixtures.seed_golden_dataset",
+    "fixtures.semconv",
 ]
 
 
