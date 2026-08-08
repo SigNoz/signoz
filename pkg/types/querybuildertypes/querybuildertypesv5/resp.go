@@ -492,6 +492,75 @@ func (t TimeSeriesValue) MarshalJSON() ([]byte, error) {
 	})
 }
 
+// UnmarshalJSON inverts MarshalJSON, which renders non-finite floats as the
+// strings "NaN"/"Inf"/"-Inf". The bucket cache serializes through this type,
+// so a value it cannot read back costs it the whole cached entry.
+func (t *TimeSeriesValue) UnmarshalJSON(data []byte) error {
+	type Alias TimeSeriesValue
+
+	aux := &struct {
+		*Alias
+		Value  json.RawMessage   `json:"value"`
+		Values []json.RawMessage `json:"values,omitempty"`
+	}{
+		Alias: (*Alias)(t),
+	}
+	if err := json.Unmarshal(data, aux); err != nil {
+		return err
+	}
+
+	var err error
+	if t.Value, err = parseFloatOrNonFinite(aux.Value); err != nil {
+		return err
+	}
+	t.Values, err = parseFloatsOrNonFinite(aux.Values)
+	return err
+}
+
+// parseFloatOrNonFinite inverts sanitizeValue for one float: a JSON number, or
+// a sentinel string standing in for a value JSON cannot represent.
+func parseFloatOrNonFinite(raw json.RawMessage) (float64, error) {
+	if len(raw) == 0 || string(raw) == "null" {
+		return 0, nil
+	}
+
+	var f float64
+	if err := json.Unmarshal(raw, &f); err == nil {
+		return f, nil
+	}
+
+	var s string
+	if err := json.Unmarshal(raw, &s); err != nil {
+		return 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "value %s is neither a number nor a non-finite sentinel", raw)
+	}
+	switch s {
+	case "NaN":
+		return math.NaN(), nil
+	case "Inf", "+Inf":
+		return math.Inf(1), nil
+	case "-Inf":
+		return math.Inf(-1), nil
+	default:
+		return 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "unrecognized non-finite value %q", s)
+	}
+}
+
+// parseFloatsOrNonFinite does the same for Values, keeping the nil/empty
+// distinction MarshalJSON preserves.
+func parseFloatsOrNonFinite(raw []json.RawMessage) ([]float64, error) {
+	if raw == nil {
+		return nil, nil
+	}
+	values := make([]float64, len(raw))
+	for idx := range raw {
+		var err error
+		if values[idx], err = parseFloatOrNonFinite(raw[idx]); err != nil {
+			return nil, err
+		}
+	}
+	return values, nil
+}
+
 func (r RawData) MarshalJSON() ([]byte, error) {
 	type Alias RawData
 	return json.Marshal((*Alias)(&r))
