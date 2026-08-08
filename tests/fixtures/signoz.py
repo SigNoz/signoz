@@ -11,7 +11,7 @@ import pytest
 import requests
 from testcontainers.core.container import DockerContainer, Network
 
-from fixtures import reuse, types
+from fixtures import reuse, tls, types
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -114,6 +114,13 @@ def create_signoz(
                 dir_path,
                 "rw",
             )
+
+        # Trust the integration CA so tests can stand in for real TLS hosts
+        # (e.g. the fake accounts.google.com); SSL_CERT_FILE replaces the Go
+        # root pool, which is fine here since every other mocked upstream is
+        # plain http.
+        container.with_env("SSL_CERT_FILE", tls.CA_CONTAINER_PATH)
+        container.with_volume_mapping(str(tls.ensure_ca(pytestconfig) / "ca.pem"), tls.CA_CONTAINER_PATH, "ro")
 
         container.start()
 

@@ -14,7 +14,8 @@ def test_create_and_get_domain(
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    # Get domains which should be an empty list
+    # Reruns against a reused stack find domains from previous runs; drop them
+    # all so the suite starts from a clean slate.
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
         headers={"Authorization": f"Bearer {admin_token}"},
@@ -23,8 +24,13 @@ def test_create_and_get_domain(
 
     assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
-    data = response.json()["data"]
-    assert len(data) == 0
+    for domain in response.json()["data"]:
+        response = requests.delete(
+            signoz.self.host_configs["8080"].get(f"/api/v2/auth_domains/{domain['id']}"),
+            headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=2,
+        )
+        assert response.status_code == HTTPStatus.NO_CONTENT
 
     # Create a domain with google auth config
     response = requests.post(
