@@ -110,7 +110,7 @@ func (q *querier) runBuilderQuery(
 			ch <- channelResult{Err: err, Name: queryName, Query: query, Series: series}
 			return
 		}
-		misses := q.queryCache.FindMissingTimeRangesV2(orgID, start, end, builderQuery.StepInterval, cacheKeys[queryName])
+		misses := q.queryCache.FindMissingTimeRangesV2(ctx, orgID, start, end, builderQuery.StepInterval, cacheKeys[queryName])
 		q.logger.InfoContext(ctx, "cache misses for logs query", "misses", misses)
 		missedSeries := make([]querycache.CachedSeriesData, 0)
 		filteredMissedSeries := make([]querycache.CachedSeriesData, 0)
@@ -151,10 +151,10 @@ func (q *querier) runBuilderQuery(
 			})
 		}
 
-		filteredMergedSeries := q.queryCache.MergeWithCachedSeriesDataV2(orgID, cacheKeys[queryName], filteredMissedSeries)
-		q.queryCache.StoreSeriesInCache(orgID, cacheKeys[queryName], filteredMergedSeries)
+		filteredMergedSeries := q.queryCache.MergeWithCachedSeriesDataV2(ctx, orgID, cacheKeys[queryName], filteredMissedSeries)
+		q.queryCache.StoreSeriesInCache(ctx, orgID, cacheKeys[queryName], filteredMergedSeries)
 
-		mergedSeries := q.queryCache.MergeWithCachedSeriesDataV2(orgID, cacheKeys[queryName], missedSeries)
+		mergedSeries := q.queryCache.MergeWithCachedSeriesDataV2(ctx, orgID, cacheKeys[queryName], missedSeries)
 
 		resultSeries := common.GetSeriesFromCachedDataV2(mergedSeries, start, end, builderQuery.StepInterval)
 
@@ -231,7 +231,7 @@ func (q *querier) runBuilderQuery(
 		return
 	}
 
-	misses := q.queryCache.FindMissingTimeRanges(orgID, start, end, builderQuery.StepInterval, cacheKeys[queryName])
+	misses := q.queryCache.FindMissingTimeRanges(ctx, orgID, start, end, builderQuery.StepInterval, cacheKeys[queryName])
 	q.logger.InfoContext(ctx, "cache misses for metrics query", "misses", misses)
 	missedSeries := make([]querycache.CachedSeriesData, 0)
 	for _, miss := range misses {
@@ -268,7 +268,7 @@ func (q *querier) runBuilderQuery(
 			End:   miss.End,
 		})
 	}
-	mergedSeries := q.queryCache.MergeWithCachedSeriesData(orgID, cacheKeys[queryName], missedSeries)
+	mergedSeries := q.queryCache.MergeWithCachedSeriesData(ctx, orgID, cacheKeys[queryName], missedSeries)
 
 	resultSeries := common.GetSeriesFromCachedData(mergedSeries, start, end)
 
