@@ -142,7 +142,7 @@ func (a *AuthN) serviceProvider(siteURL *url.URL, authDomain *authtypes.AuthDoma
 	// The ServiceProviderIssuer is the client id in case of keycloak. Since we set it to the host here, we need to set the client id == host in keycloak.
 	// For AWSSSO, this is the value of Application SAML audience.
 	return &saml2.SAMLServiceProvider{
-		IdentityProviderSSOURL:      authDomain.StorableAuthDomainConfig().SAML.SSOURL,
+		IdentityProviderSSOURL:      authDomain.StorableAuthDomainConfig().SAML.Location,
 		IdentityProviderIssuer:      authDomain.StorableAuthDomainConfig().SAML.EntityID,
 		ServiceProviderIssuer:       siteURL.Host,
 		AssertionConsumerServiceURL: acsURL.String(),

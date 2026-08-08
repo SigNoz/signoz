@@ -117,7 +117,7 @@ type AuthDomainConfig struct {
 ```
 
 ```json
-{ "kind": "saml", "spec": { "entityId": "...", "ssoUrl": "...", "certificate": "..." } }
+{ "kind": "saml", "spec": { "entityId": "...", "location": "...", "certificate": "..." } }
 ```
 
 `Kind` is a `valuer.String` enum implementing `Enum()`; `Spec` holds exactly one concrete variant type. `RuleThresholdData` and `EvaluationEnvelope` in `pkg/types/ruletypes/` and `AuthDomainConfig` in `pkg/types/authtypes/` are the canonical examples. (`QueryEnvelope` in querybuildertypes uses `type` as the discriminator key for historical reasons; new envelopes use `kind`.)

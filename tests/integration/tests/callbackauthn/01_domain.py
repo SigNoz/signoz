@@ -33,7 +33,7 @@ def test_create_and_get_domain(
             "name": "domain-google.integration.test",
             "enabled": True,
             "config": {
-                "kind": "google_auth",
+                "kind": "google",
                 "spec": {
                     "clientId": "client-id",
                     "clientSecret": "client-secret",
@@ -57,7 +57,7 @@ def test_create_and_get_domain(
                 "kind": "saml",
                 "spec": {
                     "entityId": "saml-entity",
-                    "ssoUrl": "saml-idp",
+                    "location": "saml-idp",
                     "certificate": "saml-cert",
                 },
             },
@@ -86,7 +86,7 @@ def test_create_and_get_domain(
             "domain-google.integration.test",
             "domain-saml.integration.test",
         ]
-        assert domain["config"]["kind"] in ["google_auth", "saml"]
+        assert domain["config"]["kind"] in ["google", "saml"]
 
 
 def test_create_invalid(
@@ -143,7 +143,7 @@ def test_create_invalid(
                 "kind": "saml",
                 "spec": {
                     "entityId": "saml-entity",
-                    "ssoUrl": "saml-idp",
+                    "location": "saml-idp",
                     "certificate": "saml-cert",
                 },
             },
@@ -163,7 +163,7 @@ def test_create_invalid(
                 "kind": "saml",
                 "spec": {
                     "entityId": "saml-entity",
-                    "ssoUrl": "saml-idp",
+                    "location": "saml-idp",
                     "certificate": "saml-cert",
                 },
             },
@@ -204,7 +204,7 @@ def test_create_invalid_role_mapping(
                 "kind": "saml",
                 "spec": {
                     "entityId": "saml-entity",
-                    "ssoUrl": "saml-idp",
+                    "location": "saml-idp",
                     "certificate": "saml-cert",
                 },
             },
@@ -228,7 +228,7 @@ def test_create_invalid_role_mapping(
                 "kind": "saml",
                 "spec": {
                     "entityId": "saml-entity",
-                    "ssoUrl": "saml-idp",
+                    "location": "saml-idp",
                     "certificate": "saml-cert",
                 },
             },
@@ -255,7 +255,7 @@ def test_create_invalid_role_mapping(
                 "kind": "saml",
                 "spec": {
                     "entityId": "saml-entity",
-                    "ssoUrl": "saml-idp",
+                    "location": "saml-idp",
                     "certificate": "saml-cert",
                 },
             },

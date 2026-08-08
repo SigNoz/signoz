@@ -58,7 +58,7 @@ def test_create_auth_domain(
                 "kind": "saml",
                 "spec": {
                     "entityId": settings["entityID"],
-                    "ssoUrl": settings["singleSignOnServiceLocation"],
+                    "location": settings["singleSignOnServiceLocation"],
                     "certificate": settings["certificate"],
                 },
             },
@@ -181,7 +181,7 @@ def test_saml_update_domain_with_group_mappings(
                 "kind": "saml",
                 "spec": {
                     "entityId": settings["entityID"],
-                    "ssoUrl": settings["singleSignOnServiceLocation"],
+                    "location": settings["singleSignOnServiceLocation"],
                     "certificate": settings["certificate"],
                     "attributeMapping": {
                         "name": "givenName",
@@ -336,7 +336,7 @@ def test_saml_update_domain_with_use_role_claim(
                 "kind": "saml",
                 "spec": {
                     "entityId": settings["entityID"],
-                    "ssoUrl": settings["singleSignOnServiceLocation"],
+                    "location": settings["singleSignOnServiceLocation"],
                     "certificate": settings["certificate"],
                     "attributeMapping": {
                         "name": "displayName",

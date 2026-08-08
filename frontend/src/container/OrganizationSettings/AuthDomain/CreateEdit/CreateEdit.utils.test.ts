@@ -1,5 +1,5 @@
 import {
-	AuthtypesAuthDomainConfigGoogleAuthDTOKind,
+	AuthtypesAuthDomainConfigGoogleDTOKind,
 	AuthtypesAuthDomainConfigOIDCDTOKind,
 	AuthtypesAuthDomainConfigSAMLDTOKind,
 } from 'api/generated/services/sigNoz.schemas';
@@ -98,7 +98,7 @@ describe('prepareInitialValues', () => {
 			config: {
 				kind: AuthtypesAuthDomainConfigSAMLDTOKind.saml,
 				spec: {
-					ssoUrl: 'https://idp.example.com/sso',
+					location: 'https://idp.example.com/sso',
 					entityId: 'urn:example:idp',
 					certificate: 'CERT',
 				},
@@ -122,7 +122,7 @@ describe('prepareInitialValues', () => {
 			name: 'example.com',
 			enabled: true,
 			config: {
-				kind: AuthtypesAuthDomainConfigGoogleAuthDTOKind.google_auth,
+				kind: AuthtypesAuthDomainConfigGoogleDTOKind.google,
 				spec: {
 					clientId: 'id',
 					clientSecret: 'secret',
