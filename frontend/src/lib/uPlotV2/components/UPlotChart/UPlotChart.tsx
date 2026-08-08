@@ -32,6 +32,36 @@ function sameConfig(prev: UPlotChartProps, next: UPlotChartProps): boolean {
 }
 
 /**
+ * The live uPlot instance, hung off its own container element.
+ *
+ * Charts render to a canvas, so from the outside there is nothing to assert on
+ * beyond pixels — an E2E test can see that a chart exists but not that a series
+ * was hidden, an axis bound applied, or a line turned dashed. Exposing the
+ * instance on its container gives those tests (and anyone debugging in the
+ * console) the real chart state to read.
+ *
+ * On the container rather than a global: it is naturally scoped per panel, it
+ * needs no registry keyed by id, and it is collected along with the node.
+ */
+export interface UPlotHostElement extends HTMLDivElement {
+	__uplot?: uPlot;
+}
+
+function setInstanceHandle(
+	node: HTMLDivElement | null,
+	plot: uPlot | null,
+): void {
+	if (!node) {
+		return;
+	}
+	if (plot) {
+		(node as UPlotHostElement).__uplot = plot;
+	} else {
+		delete (node as UPlotHostElement).__uplot;
+	}
+}
+
+/**
  * Plot component for rendering uPlot charts using the builder pattern
  * Manages uPlot instance lifecycle and handles updates efficiently
  */
@@ -58,6 +88,7 @@ export default function UPlotChart({
 			onDestroy?.(plotInstanceRef.current);
 			plotInstanceRef.current.destroy();
 			plotInstanceRef.current = null;
+			setInstanceHandle(containerRef.current, null);
 			setPlotContextInitialState({ uPlotInstance: null });
 			plotRef?.(null);
 		}
@@ -101,6 +132,7 @@ export default function UPlotChart({
 		});
 
 		plotInstanceRef.current = plot;
+		setInstanceHandle(containerRef.current, plot);
 	}, [
 		config,
 		data,
