@@ -76,10 +76,3 @@ func (s *SavedViewSpec) Validate() error {
 	return (&qbtypes.CompositeQuery{Queries: s.Queries}).Validate()
 }
 
-func (d *SavedViewData) Validate() error {
-	if d.SchemaVersion != SavedViewSchemaVersion {
-		return errors.NewInvalidInputf(ErrCodeSavedViewInvalidInput, "schemaVersion must be %q, got %q", SavedViewSchemaVersion, d.SchemaVersion)
-	}
-
-	return d.Spec.Validate()
-}

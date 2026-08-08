@@ -99,37 +99,20 @@ func TestSavedViewSpecValidate(t *testing.T) {
 	}
 }
 
-func TestSavedViewDataValidate(t *testing.T) {
+func TestSavedViewMetadataBaseValidate(t *testing.T) {
 	cases := []struct {
 		name        string
-		data        SavedViewData
+		metadata    SavedViewMetadataBase
 		expectError bool
 	}{
-		{
-			name:        "valid data",
-			data:        SavedViewData{SchemaVersion: SavedViewSchemaVersion, Spec: SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, Queries: validQueries()}},
-			expectError: false,
-		},
-		{
-			name:        "wrong schema version is rejected",
-			data:        SavedViewData{SchemaVersion: "v1", Spec: SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, Queries: validQueries()}},
-			expectError: true,
-		},
-		{
-			name:        "empty schema version is rejected",
-			data:        SavedViewData{Spec: SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, Queries: validQueries()}},
-			expectError: true,
-		},
-		{
-			name:        "invalid spec is rejected",
-			data:        SavedViewData{SchemaVersion: SavedViewSchemaVersion, Spec: SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph}},
-			expectError: true,
-		},
+		{name: "valid schema version", metadata: SavedViewMetadataBase{SchemaVersion: SavedViewSchemaVersion}, expectError: false},
+		{name: "wrong schema version is rejected", metadata: SavedViewMetadataBase{SchemaVersion: "v1"}, expectError: true},
+		{name: "empty schema version is rejected", metadata: SavedViewMetadataBase{}, expectError: true},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			err := c.data.Validate()
+			err := c.metadata.Validate()
 			if c.expectError {
 				assert.Error(t, err)
 			} else {

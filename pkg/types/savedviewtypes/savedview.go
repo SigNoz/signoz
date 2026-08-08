@@ -27,28 +27,91 @@ var (
 	SourceMeter   = Source{valuer.NewString("meter")}
 )
 
+// SavedViewMetadataBase holds the schemaVersion field shared by every
+// saved-view wire shape (SavedView, PostableSavedView, UpdatableSavedView).
+type SavedViewMetadataBase struct {
+	SchemaVersion string `json:"schemaVersion" required:"true"`
+}
+
+func (m SavedViewMetadataBase) Validate() error {
+	if m.SchemaVersion != SavedViewSchemaVersion {
+		return errors.NewInvalidInputf(ErrCodeSavedViewInvalidInput, "schemaVersion must be %q, got %q", SavedViewSchemaVersion, m.SchemaVersion)
+	}
+	return nil
+}
+
+// SavedView is the domain/wire shape -- schemaVersion and spec are promoted
+// to the top level, matching dashboardtypes.DashboardV2 and ruletypes'
+// v2alpha1 rules. StorableSavedView is the distinct bun-mapped row shape;
+// the two diverge because bun maps Data to a single opaque `data` column,
+// which is incompatible with promoting its fields to the top level for JSON.
 type SavedView struct {
+	types.Identifiable
+	types.TimeAuditable
+	types.UserAuditable
+	OrgID  string `json:"-"`
+	Name   string `json:"name"`
+	Source Source `json:"source"`
+
+	SavedViewMetadataBase
+	Spec SavedViewSpec `json:"spec" required:"true"`
+}
+
+// StorableSavedView is the row shape bun maps to the saved_view table.
+type StorableSavedView struct {
 	bun.BaseModel `bun:"table:saved_view"`
 
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
-	OrgID  string        `json:"-" bun:"org_id,notnull"`
-	Name   string        `json:"name" bun:"name,type:text,notnull"`
-	Source Source        `json:"source" bun:"source,type:text,notnull"`
-	Data   SavedViewData `json:"data" bun:"data,type:text,notnull"`
+	OrgID  string        `bun:"org_id,notnull"`
+	Name   string        `bun:"name,type:text,notnull"`
+	Source Source        `bun:"source,type:text,notnull"`
+	Data   SavedViewData `bun:"data,type:text,notnull"`
+}
+
+func (s *StorableSavedView) ToSavedView() *SavedView {
+	return &SavedView{
+		Identifiable:          s.Identifiable,
+		TimeAuditable:         s.TimeAuditable,
+		UserAuditable:         s.UserAuditable,
+		OrgID:                 s.OrgID,
+		Name:                  s.Name,
+		Source:                s.Source,
+		SavedViewMetadataBase: SavedViewMetadataBase{SchemaVersion: s.Data.SchemaVersion},
+		Spec:                  s.Data.Spec,
+	}
+}
+
+func NewStorableSavedView(view *SavedView) *StorableSavedView {
+	return &StorableSavedView{
+		Identifiable:  view.Identifiable,
+		TimeAuditable: view.TimeAuditable,
+		UserAuditable: view.UserAuditable,
+		OrgID:         view.OrgID,
+		Name:          view.Name,
+		Source:        view.Source,
+		Data: SavedViewData{
+			SchemaVersion: view.SchemaVersion,
+			Spec:          view.Spec,
+		},
+	}
 }
 
 type PostableSavedView struct {
-	Name         string        `json:"name"`
-	GenerateName bool          `json:"generateName"`
-	Source       Source        `json:"source" required:"true"`
-	Data         SavedViewData `json:"data" required:"true"`
+	Name         string `json:"name"`
+	GenerateName bool   `json:"generateName"`
+	Source       Source `json:"source" required:"true"`
+
+	SavedViewMetadataBase
+	Spec SavedViewSpec `json:"spec" required:"true"`
 }
 
 type UpdatableSavedView struct {
-	Source Source        `json:"source" required:"true"`
-	Data   SavedViewData `json:"data" required:"true"`
+	Source Source `json:"source" required:"true"`
+
+	SavedViewMetadataBase
+	Spec SavedViewSpec `json:"spec" required:"true"`
 }
 
 type ListSavedViewsParams struct {
@@ -83,17 +146,18 @@ func (postable PostableSavedView) ToSavedView(orgID string, createdBy string) *S
 
 	name := postable.Name
 	if postable.GenerateName {
-		name = generateSavedViewName(postable.Data.Spec.DisplayName)
+		name = generateSavedViewName(postable.Spec.DisplayName)
 	}
 
 	return &SavedView{
-		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
-		TimeAuditable: types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
-		UserAuditable: types.UserAuditable{CreatedBy: createdBy, UpdatedBy: createdBy},
-		OrgID:         orgID,
-		Name:          name,
-		Source:        postable.Source,
-		Data:          postable.Data,
+		Identifiable:          types.Identifiable{ID: valuer.GenerateUUID()},
+		TimeAuditable:         types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
+		UserAuditable:         types.UserAuditable{CreatedBy: createdBy, UpdatedBy: createdBy},
+		OrgID:                 orgID,
+		Name:                  name,
+		Source:                postable.Source,
+		SavedViewMetadataBase: postable.SavedViewMetadataBase,
+		Spec:                  postable.Spec,
 	}
 }
 
@@ -101,12 +165,13 @@ func (postable PostableSavedView) ToSavedView(orgID string, createdBy string) *S
 // deliberately absent -- the caller identifies the row by id/orgID alone.
 func (updatable UpdatableSavedView) ToSavedView(id valuer.UUID, orgID string, updatedBy string) *SavedView {
 	return &SavedView{
-		Identifiable:  types.Identifiable{ID: id},
-		TimeAuditable: types.TimeAuditable{UpdatedAt: time.Now()},
-		UserAuditable: types.UserAuditable{UpdatedBy: updatedBy},
-		OrgID:         orgID,
-		Source:        updatable.Source,
-		Data:          updatable.Data,
+		Identifiable:          types.Identifiable{ID: id},
+		TimeAuditable:         types.TimeAuditable{UpdatedAt: time.Now()},
+		UserAuditable:         types.UserAuditable{UpdatedBy: updatedBy},
+		OrgID:                 orgID,
+		Source:                updatable.Source,
+		SavedViewMetadataBase: updatable.SavedViewMetadataBase,
+		Spec:                  updatable.Spec,
 	}
 }
 
@@ -117,8 +182,11 @@ func (p *PostableSavedView) Validate() error {
 	if err := p.Source.Validate(); err != nil {
 		return err
 	}
+	if err := p.SavedViewMetadataBase.Validate(); err != nil {
+		return err
+	}
 
-	return p.Data.Validate()
+	return p.Spec.Validate()
 }
 
 func (p *PostableSavedView) validateName() error {
@@ -135,8 +203,11 @@ func (u *UpdatableSavedView) Validate() error {
 	if err := u.Source.Validate(); err != nil {
 		return err
 	}
+	if err := u.SavedViewMetadataBase.Validate(); err != nil {
+		return err
+	}
 
-	return u.Data.Validate()
+	return u.Spec.Validate()
 }
 
 func (p *ListSavedViewsParams) Validate() error {

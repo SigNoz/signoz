@@ -28,7 +28,7 @@ func (t *StoreTest) Store() savedviewtypes.Store { return t.store }
 func (t *StoreTest) Mock() sqlmock.Sqlmock { return t.mock }
 
 func savedViewRow(view *savedviewtypes.SavedView) []driver.Value {
-	data, _ := json.Marshal(view.Data)
+	data, _ := json.Marshal(savedviewtypes.NewStorableSavedView(view).Data)
 	return []driver.Value{
 		view.ID.StringValue(),
 		view.CreatedAt,

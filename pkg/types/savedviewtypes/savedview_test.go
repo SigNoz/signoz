@@ -11,22 +11,18 @@ import (
 
 func validPostableSavedView() PostableSavedView {
 	return PostableSavedView{
-		Name:   "my-view",
-		Source: SourceLogs,
-		Data: SavedViewData{
-			SchemaVersion: SavedViewSchemaVersion,
-			Spec:          SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, Queries: validQueries()},
-		},
+		Name:                  "my-view",
+		Source:                SourceLogs,
+		SavedViewMetadataBase: SavedViewMetadataBase{SchemaVersion: SavedViewSchemaVersion},
+		Spec:                  SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, Queries: validQueries()},
 	}
 }
 
 func validUpdatableSavedView() UpdatableSavedView {
 	return UpdatableSavedView{
-		Source: SourceLogs,
-		Data: SavedViewData{
-			SchemaVersion: SavedViewSchemaVersion,
-			Spec:          SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, Queries: validQueries()},
-		},
+		Source:                SourceLogs,
+		SavedViewMetadataBase: SavedViewMetadataBase{SchemaVersion: SavedViewSchemaVersion},
+		Spec:                  SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, Queries: validQueries()},
 	}
 }
 
@@ -69,7 +65,7 @@ func TestPostableSavedViewValidate(t *testing.T) {
 
 	t.Run("invalid saved view data is rejected", func(t *testing.T) {
 		view := validPostableSavedView()
-		view.Data.SchemaVersion = "v1"
+		view.SchemaVersion = "v1"
 		assert.Error(t, view.Validate())
 	})
 
@@ -100,7 +96,7 @@ func TestPostableSavedViewValidate(t *testing.T) {
 
 	t.Run("empty displayName is rejected", func(t *testing.T) {
 		view := validPostableSavedView()
-		view.Data.Spec.DisplayName = ""
+		view.Spec.DisplayName = ""
 		assert.ErrorContains(t, view.Validate(), "displayName is required")
 	})
 }
@@ -119,7 +115,7 @@ func TestUpdatableSavedViewValidate(t *testing.T) {
 
 	t.Run("empty displayName is rejected", func(t *testing.T) {
 		view := validUpdatableSavedView()
-		view.Data.Spec.DisplayName = ""
+		view.Spec.DisplayName = ""
 		assert.ErrorContains(t, view.Validate(), "displayName is required")
 	})
 }
@@ -153,7 +149,8 @@ func TestNewSavedView(t *testing.T) {
 	assert.Equal(t, "creator@signoz.io", savedView.UpdatedBy)
 	assert.Equal(t, view.Name, savedView.Name)
 	assert.Equal(t, view.Source, savedView.Source)
-	assert.Equal(t, view.Data, savedView.Data)
+	assert.Equal(t, view.SchemaVersion, savedView.SchemaVersion)
+	assert.Equal(t, view.Spec, savedView.Spec)
 	assert.False(t, savedView.CreatedAt.IsZero())
 	assert.Equal(t, savedView.CreatedAt, savedView.UpdatedAt)
 }
@@ -163,14 +160,14 @@ func TestNewSavedView_GeneratesNameWhenEmpty(t *testing.T) {
 	view := validPostableSavedView()
 	view.Name = ""
 	view.GenerateName = true
-	view.Data.Spec.DisplayName = "My View!"
+	view.Spec.DisplayName = "My View!"
 
 	savedView := view.ToSavedView(orgID, "creator@signoz.io")
 
 	assert.NotEmpty(t, savedView.Name)
 	assert.Empty(t, validation.IsDNS1123Label(savedView.Name), "generated name must be a valid DNS-1123 label")
 	assert.True(t, strings.HasPrefix(savedView.Name, "my-view-"))
-	assert.Equal(t, "My View!", savedView.Data.Spec.DisplayName)
+	assert.Equal(t, "My View!", savedView.Spec.DisplayName)
 }
 
 func TestGenerateSavedViewName(t *testing.T) {
