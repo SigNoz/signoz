@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -774,19 +775,19 @@ func TestBaseRule_GeneratorURL(t *testing.T) {
 			name:        "configured external URL",
 			ruleID:      "abc",
 			externalURL: mustParseURL(t, "https://signoz.example.com"),
-			want:        "https://signoz.example.com/alerts/overview?ruleId=abc",
+			want:        "https://signoz.example.com/alerts/edit?ruleId=abc",
 		},
 		{
 			name:        "default external URL is used as-is",
 			ruleID:      "abc",
 			externalURL: mustParseURL(t, "http://localhost:8080"),
-			want:        "http://localhost:8080/alerts/overview?ruleId=abc",
+			want:        "http://localhost:8080/alerts/edit?ruleId=abc",
 		},
 		{
 			name:        "external URL with base path is preserved",
 			ruleID:      "abc",
 			externalURL: mustParseURL(t, "https://signoz.example.com/signoz"),
-			want:        "https://signoz.example.com/signoz/alerts/overview?ruleId=abc",
+			want:        "https://signoz.example.com/signoz/alerts/edit?ruleId=abc",
 		},
 	}
 
@@ -800,6 +801,23 @@ func TestBaseRule_GeneratorURL(t *testing.T) {
 			require.Equal(t, tc.want, r.GeneratorURL())
 		})
 	}
+
+	// Regression: GeneratorURL must point to the canonical rule edit route
+	// and must not surface the full compositeQuery in the webhook's
+	// `rule_source` label. See #10940.
+	t.Run("url targets the edit route, not overview", func(t *testing.T) {
+		p := createPostableRule(&ruletypes.AlertCompositeQuery{})
+		r, err := NewBaseRule("abc", valuer.GenerateUUID(), &p, mustParseURL(t, "https://signoz.example.com"))
+		require.NoError(t, err)
+
+		got := r.GeneratorURL()
+		require.True(t, strings.HasPrefix(got, "https://signoz.example.com/alerts/edit?ruleId="),
+			"expected GeneratorURL to target /alerts/edit, got %q", got)
+		require.NotContains(t, got, "compositeQuery",
+			"GeneratorURL must not embed the full compositeQuery — webhook receivers should see a stable, short URL (issue #10940)")
+		require.NotContains(t, got, "search=",
+			"GeneratorURL must not embed frontend search state (issue #10940)")
+	})
 }
 
 // labelsKey creates a deterministic string key from a labels map
