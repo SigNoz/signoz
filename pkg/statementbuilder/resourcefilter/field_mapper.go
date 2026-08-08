@@ -3,8 +3,11 @@ package resourcefilter
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/semconv"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -30,6 +33,20 @@ func (m *defaultFieldMapper) CandidateKeys(_ context.Context, _ valuer.UUID, _ *
 
 func NewFieldMapper() *defaultFieldMapper {
 	return &defaultFieldMapper{}
+}
+
+func resourceSemconvMembers(key *telemetrytypes.TelemetryFieldKey) []string {
+	if key.Signal != telemetrytypes.SignalTraces || key.FieldContext != telemetrytypes.FieldContextResource {
+		return []string{key.Name}
+	}
+	if len(key.SemconvMembers) > 0 {
+		return key.SemconvMembers
+	}
+	return semconv.Members(semconv.KindAttribute, telemetrytypes.FieldKeySelector{
+		Name:         key.Name,
+		Signal:       telemetrytypes.SignalTraces,
+		FieldContext: telemetrytypes.FieldContextResource,
+	})
 }
 
 func (m *defaultFieldMapper) getColumn(
@@ -66,7 +83,15 @@ func (m *defaultFieldMapper) FieldFor(
 		return "", err
 	}
 	if key.FieldContext == telemetrytypes.FieldContextResource {
-		return fmt.Sprintf("simpleJSONExtractString(%s, '%s')", columns[0].Name, key.Name), nil
+		members := resourceSemconvMembers(key)
+		if len(members) > 1 {
+			values := make([]string, 0, len(members))
+			for _, member := range members {
+				values = append(values, fmt.Sprintf("NULLIF(simpleJSONExtractString(%s, %s), '')", columns[0].Name, querybuilder.ClickHouseStringLiteral(member)))
+			}
+			return "COALESCE(" + strings.Join(values, ", ") + ", '')", nil
+		}
+		return fmt.Sprintf("simpleJSONExtractString(%s, %s)", columns[0].Name, querybuilder.ClickHouseStringLiteral(members[0])), nil
 	}
 	return columns[0].Name, nil
 }

@@ -2,6 +2,8 @@ package telemetrytypes
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -47,7 +49,81 @@ type TelemetryFieldKey struct {
 	Indexes      []TelemetryFieldKeySkipIndex `json:"-"`
 	Materialized bool                         `json:"-"` // refers to promoted in case of body.... fields
 
-	Evolutions []*EvolutionEntry `json:"-"`
+	Evolutions     []*EvolutionEntry `json:"-"`
+	SemconvMembers []string          `json:"-"`
+	// SemconvMaterializedColumns maps a physical family spelling to its
+	// materialized column name. It is populated only on resolved query keys.
+	SemconvMaterializedColumns map[string]string `json:"-"`
+}
+
+// Copy returns an independent copy of f.
+func (f *TelemetryFieldKey) Copy() *TelemetryFieldKey {
+	if f == nil {
+		return nil
+	}
+
+	copied := *f
+	copied.Indexes = slices.Clone(f.Indexes)
+	if f.Evolutions != nil {
+		copied.Evolutions = make([]*EvolutionEntry, len(f.Evolutions))
+		for index, evolution := range f.Evolutions {
+			if evolution != nil {
+				copiedEvolution := *evolution
+				copied.Evolutions[index] = &copiedEvolution
+			}
+		}
+	}
+	copied.SemconvMembers = slices.Clone(f.SemconvMembers)
+	copied.SemconvMaterializedColumns = maps.Clone(f.SemconvMaterializedColumns)
+	copied.JSONPlan = copyJSONAccessPlan(f.JSONPlan, f, &copied)
+
+	return &copied
+}
+
+func copyJSONAccessPlan(plan JSONAccessPlan, sourceKey, copiedKey *TelemetryFieldKey) JSONAccessPlan {
+	if plan == nil {
+		return nil
+	}
+
+	nodes := make(map[*JSONAccessNode]*JSONAccessNode)
+	var copyNode func(*JSONAccessNode) *JSONAccessNode
+	copyNode = func(node *JSONAccessNode) *JSONAccessNode {
+		if node == nil {
+			return nil
+		}
+		if copiedNode, ok := nodes[node]; ok {
+			return copiedNode
+		}
+
+		copiedNode := *node
+		nodes[node] = &copiedNode
+		copiedNode.Parent = copyNode(node.Parent)
+		if node.Branches != nil {
+			copiedNode.Branches = make(map[JSONAccessBranchType]*JSONAccessNode, len(node.Branches))
+			for branchType, branch := range node.Branches {
+				copiedNode.Branches[branchType] = copyNode(branch)
+			}
+		}
+		if node.TerminalConfig != nil {
+			copiedTerminal := *node.TerminalConfig
+			switch node.TerminalConfig.Key {
+			case nil:
+			case sourceKey:
+				copiedTerminal.Key = copiedKey
+			default:
+				copiedTerminal.Key = node.TerminalConfig.Key.Copy()
+			}
+			copiedNode.TerminalConfig = &copiedTerminal
+		}
+
+		return &copiedNode
+	}
+
+	copied := make(JSONAccessPlan, len(plan))
+	for index, node := range plan {
+		copied[index] = copyNode(node)
+	}
+	return copied
 }
 
 func (f *TelemetryFieldKey) KeyNameContainsArray() bool {
@@ -128,6 +204,8 @@ func (f *TelemetryFieldKey) OverrideMetadataFrom(src *TelemetryFieldKey) {
 	f.Materialized = src.Materialized
 	f.JSONPlan = src.JSONPlan
 	f.Evolutions = src.Evolutions
+	f.SemconvMembers = src.SemconvMembers
+	f.SemconvMaterializedColumns = src.SemconvMaterializedColumns
 }
 
 func (f *TelemetryFieldKey) Equal(key *TelemetryFieldKey) bool {
@@ -233,6 +311,15 @@ type MetricContext struct {
 	MetricNamespace string `json:"metricNamespace,omitempty"`
 }
 
+// Copy returns an independent copy of m.
+func (m *MetricContext) Copy() *MetricContext {
+	if m == nil {
+		return nil
+	}
+	copied := *m
+	return &copied
+}
+
 type FieldKeySelector struct {
 	StartUnixMilli    int64                  `json:"startUnixMilli"`
 	EndUnixMilli      int64                  `json:"endUnixMilli"`
@@ -244,6 +331,16 @@ type FieldKeySelector struct {
 	SelectorMatchType FieldSelectorMatchType `json:"selectorMatchType"`
 	Limit             int                    `json:"limit"`
 	MetricContext     *MetricContext         `json:"metricContext,omitempty"`
+}
+
+// Copy returns an independent copy of s.
+func (s *FieldKeySelector) Copy() *FieldKeySelector {
+	if s == nil {
+		return nil
+	}
+	copied := *s
+	copied.MetricContext = s.MetricContext.Copy()
+	return &copied
 }
 
 type FieldValueSelector struct {

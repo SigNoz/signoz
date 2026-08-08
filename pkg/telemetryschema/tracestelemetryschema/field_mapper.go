@@ -8,6 +8,7 @@ import (
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/semconv"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -167,6 +168,32 @@ func NewFieldMapper() *fieldMapper {
 	return &fieldMapper{}
 }
 
+func traceSemconvMembers(key *telemetrytypes.TelemetryFieldKey) []string {
+	if key.FieldContext != telemetrytypes.FieldContextResource && key.FieldContext != telemetrytypes.FieldContextAttribute {
+		return []string{key.Name}
+	}
+	if len(key.SemconvMembers) > 0 {
+		return key.SemconvMembers
+	}
+	return semconv.Members(semconv.KindAttribute, telemetrytypes.FieldKeySelector{
+		Name:         key.Name,
+		Signal:       telemetrytypes.SignalTraces,
+		FieldContext: key.FieldContext,
+	})
+}
+
+func traceSemconvMapMemberExpressions(columnName string, key *telemetrytypes.TelemetryFieldKey, member string) (string, string) {
+	if materializedColumn, ok := key.SemconvMaterializedColumns[member]; ok {
+		return querybuilder.ClickHouseIdentifier(materializedColumn), querybuilder.ClickHouseIdentifier(materializedColumn + "_exists")
+	}
+	if key.Materialized && key.Name == member {
+		physicalKey := key.Copy()
+		physicalKey.Name = member
+		return telemetrytypes.FieldKeyToMaterializedColumnName(physicalKey), telemetrytypes.FieldKeyToMaterializedColumnNameForExists(physicalKey)
+	}
+	return fmt.Sprintf("%s[%s]", columnName, querybuilder.ClickHouseStringLiteral(member)), fmt.Sprintf("mapContains(%s, %s)", columnName, querybuilder.ClickHouseStringLiteral(member))
+}
+
 func (m *fieldMapper) getColumn(
 	_ context.Context,
 	_, _ uint64,
@@ -291,10 +318,27 @@ func (m *fieldMapper) resolveColumnExprs(
 			if key.FieldContext != telemetrytypes.FieldContextResource {
 				return nil, nil, nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource context fields are supported for json columns, got %s", key.FieldContext.String)
 			}
-			// have to add ::string as clickHouse throws an error :- data types Variant/Dynamic are not allowed in GROUP BY
-			// once clickHouse dependency is updated, we need to check if we can remove it.
-			exprs = append(exprs, fmt.Sprintf("%s.`%s`::String", columnName, key.Name))
-			existExprs = append(existExprs, fmt.Sprintf("%s.`%s` IS NOT NULL", columnName, key.Name))
+			members := traceSemconvMembers(key)
+			if len(members) > 1 {
+				values := make([]string, 0, len(members))
+				guards := make([]string, 0, len(members))
+				for _, member := range members {
+					// The String cast is required because ClickHouse does not allow
+					// Variant/Dynamic values in GROUP BY.
+					value := fmt.Sprintf("%s.%s::String", columnName, querybuilder.ClickHouseIdentifier(member))
+					values = append(values, fmt.Sprintf("NULLIF(%s, '')", value))
+					guards = append(guards, fmt.Sprintf("%s.%s IS NOT NULL", columnName, querybuilder.ClickHouseIdentifier(member)))
+				}
+				// Missing Dynamic paths are NULL, so this family expression must
+				// retain the same NULL result as a single JSON-path lookup.
+				exprs = append(exprs, "COALESCE("+strings.Join(values, ", ")+")")
+				existExprs = append(existExprs, "("+strings.Join(guards, " OR ")+")")
+			} else {
+				// have to add ::string as clickHouse throws an error :- data types Variant/Dynamic are not allowed in GROUP BY
+				// once ClickHouse is updated, check whether this cast can be removed.
+				exprs = append(exprs, fmt.Sprintf("%s.%s::String", columnName, querybuilder.ClickHouseIdentifier(members[0])))
+				existExprs = append(existExprs, fmt.Sprintf("%s.%s IS NOT NULL", columnName, querybuilder.ClickHouseIdentifier(members[0])))
+			}
 		case schema.ColumnTypeEnumString,
 			schema.ColumnTypeEnumUInt64,
 			schema.ColumnTypeEnumUInt32,
@@ -319,13 +363,40 @@ func (m *fieldMapper) resolveColumnExprs(
 
 			switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
 			case schema.ColumnTypeEnumString, schema.ColumnTypeEnumFloat64, schema.ColumnTypeEnumBool:
-				// a key could have been materialized, if so return the materialized column name
-				if key.Materialized {
-					exprs = append(exprs, telemetrytypes.FieldKeyToMaterializedColumnName(key))
-					existExprs = append(existExprs, telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key))
+				members := traceSemconvMembers(key)
+				if len(members) > 1 {
+					guards := make([]string, 0, len(members))
+					memberValues := make([]string, 0, len(members))
+					for _, member := range members {
+						valueExpression, existsExpression := traceSemconvMapMemberExpressions(columnName, key, member)
+						memberValues = append(memberValues, valueExpression)
+						guards = append(guards, existsExpression)
+					}
+					if valueType.GetType() == schema.ColumnTypeEnumString {
+						values := make([]string, 0, len(members))
+						for _, memberValue := range memberValues {
+							values = append(values, fmt.Sprintf("NULLIF(%s, '')", memberValue))
+						}
+						exprs = append(exprs, "COALESCE("+strings.Join(values, ", ")+", '')")
+					} else {
+						branches := make([]string, 0, len(members)*2)
+						for i, memberValue := range memberValues {
+							branches = append(branches, guards[i], memberValue)
+						}
+						// Numeric and boolean maps return zero for an absent key. If a
+						// family of either type is enabled, this tail must become zero too.
+						exprs = append(exprs, "multiIf("+strings.Join(branches, ", ")+", NULL)")
+					}
+					existExprs = append(existExprs, "("+strings.Join(guards, " OR ")+")")
+				} else if key.Materialized {
+					// a key could have been materialized, if so return the materialized column name
+					physicalKey := key.Copy()
+					physicalKey.Name = members[0]
+					exprs = append(exprs, telemetrytypes.FieldKeyToMaterializedColumnName(physicalKey))
+					existExprs = append(existExprs, telemetrytypes.FieldKeyToMaterializedColumnNameForExists(physicalKey))
 				} else {
-					exprs = append(exprs, fmt.Sprintf("%s['%s']", columnName, key.Name))
-					existExprs = append(existExprs, fmt.Sprintf("mapContains(%s, '%s')", columnName, key.Name))
+					exprs = append(exprs, fmt.Sprintf("%s[%s]", columnName, querybuilder.ClickHouseStringLiteral(members[0])))
+					existExprs = append(existExprs, fmt.Sprintf("mapContains(%s, %s)", columnName, querybuilder.ClickHouseStringLiteral(members[0])))
 				}
 			default:
 				return nil, nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "value type %s is not supported for map column type %s", valueType, column.Type)

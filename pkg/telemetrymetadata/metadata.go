@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/semconv"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/audittelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/logstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/metertelemetryschema"
@@ -149,6 +150,14 @@ func (t *telemetryMetaStore) tracesTblStatementToFieldKeys(ctx context.Context) 
 	}
 
 	return materialisedKeys, nil
+}
+
+func traceSemconvMembers(name string, fieldContext telemetrytypes.FieldContext) []string {
+	return semconv.Members(semconv.KindAttribute, telemetrytypes.FieldKeySelector{
+		Name:         name,
+		Signal:       telemetrytypes.SignalTraces,
+		FieldContext: fieldContext,
+	})
 }
 
 // getTracesKeys returns the keys from the spans that match the field selection criteria.
@@ -1320,6 +1329,17 @@ func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID
 	if err != nil {
 		return nil, false, err
 	}
+	// GetKeys backs key suggestions and remains literal. The internal multi-key
+	// lookup expands only trace selectors so query builders see stored family members.
+	expandedTraceSelectors := make([]*telemetrytypes.FieldKeySelector, 0, len(tracesSelectors))
+	for _, selector := range tracesSelectors {
+		for _, member := range traceSemconvMembers(selector.Name, selector.FieldContext) {
+			memberSelector := selector.Copy()
+			memberSelector.Name = member
+			expandedTraceSelectors = append(expandedTraceSelectors, memberSelector)
+		}
+	}
+	tracesSelectors = expandedTraceSelectors
 	tracesKeys, tracesComplete, err := t.getTracesKeys(ctx, tracesSelectors)
 	if err != nil {
 		return nil, false, err
@@ -1542,7 +1562,16 @@ func (t *telemetryMetaStore) getSpanFieldValues(ctx context.Context, fieldValueS
 	sb := sqlbuilder.Select("DISTINCT string_value, number_value").From(t.tracesDBName + "." + t.tracesFieldsTblName)
 
 	if fieldValueSelector.Name != "" {
-		sb.Where(sb.E("tag_key", fieldValueSelector.Name))
+		members := traceSemconvMembers(fieldValueSelector.Name, fieldValueSelector.FieldContext)
+		if len(members) == 1 {
+			sb.Where(sb.E("tag_key", members[0]))
+		} else {
+			memberValues := make([]any, 0, len(members))
+			for _, member := range members {
+				memberValues = append(memberValues, member)
+			}
+			sb.Where(sb.In("tag_key", memberValues...))
+		}
 	}
 
 	// now look at the field context
