@@ -9,6 +9,7 @@ export const useGetQueryKeyValueSuggestions = ({
 	searchText,
 	signalSource,
 	metricName,
+	type,
 	options,
 }: {
 	key: string;
@@ -20,6 +21,8 @@ export const useGetQueryKeyValueSuggestions = ({
 		AxiosError
 	>;
 	metricName?: string;
+	/** POC / AI O11y: forwarded as `type` on /fields/values */
+	type?: string;
 }): UseQueryResult<
 	AxiosResponse<QueryKeyValueSuggestionsResponseProps>,
 	AxiosError
@@ -32,6 +35,7 @@ export const useGetQueryKeyValueSuggestions = ({
 			searchText,
 			signalSource,
 			metricName,
+			type,
 		],
 		queryFn: () =>
 			getValueSuggestions({
@@ -40,6 +44,7 @@ export const useGetQueryKeyValueSuggestions = ({
 				searchText: searchText || '',
 				signalSource: signalSource as 'meter' | '',
 				metricName: metricName || '',
+				type,
 			}),
 		...options,
 	});

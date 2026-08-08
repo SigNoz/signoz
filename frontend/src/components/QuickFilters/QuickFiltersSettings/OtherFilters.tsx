@@ -48,6 +48,11 @@ function OtherFilters({
 		() => signal && signal === SignalType.METER_EXPLORER,
 		[signal],
 	);
+	// POC: AI O11y quick-filter settings fetch keys with type=builder_ai_query
+	const isAiObservability = useMemo(
+		() => signal === SignalType.AI_OBSERVABILITY,
+		[signal],
+	);
 
 	const { data: suggestionsData, isFetching: isFetchingSuggestions } =
 		useGetAttributeSuggestions(
@@ -73,7 +78,8 @@ function OtherFilters({
 			},
 			{
 				queryKey: [REACT_QUERY_KEY.GET_OTHER_FILTERS, inputValue],
-				enabled: !!signal && !isLogDataSource && !isMeterDataSource,
+				enabled:
+					!!signal && !isLogDataSource && !isMeterDataSource && !isAiObservability,
 			},
 		);
 
@@ -82,11 +88,17 @@ function OtherFilters({
 			{
 				searchText: inputValue,
 				signal: SIGNAL_DATA_SOURCE_MAP[signal as SignalType],
-				signalSource: 'meter',
+				signalSource: isMeterDataSource ? 'meter' : '',
+				// POC: AI keys API — type=builder_ai_query&signal=traces
+				type: isAiObservability ? 'builder_ai_query' : undefined,
 			},
 			{
-				queryKey: [REACT_QUERY_KEY.GET_OTHER_FILTERS, inputValue],
-				enabled: !!signal && isMeterDataSource,
+				queryKey: [
+					REACT_QUERY_KEY.GET_OTHER_FILTERS,
+					inputValue,
+					isAiObservability ? 'builder_ai_query' : undefined,
+				],
+				enabled: !!signal && (isMeterDataSource || isAiObservability),
 			},
 		);
 
@@ -94,7 +106,7 @@ function OtherFilters({
 		let filterAttributes;
 		if (isLogDataSource) {
 			filterAttributes = suggestionsData?.payload?.attributes || [];
-		} else if (isMeterDataSource) {
+		} else if (isMeterDataSource || isAiObservability) {
 			const fieldKeys: QueryKeyDataSuggestionsProps[] = Object.values(
 				fieldKeysData?.data?.data?.keys || {},
 			)?.flat();
@@ -120,6 +132,7 @@ function OtherFilters({
 		isLogDataSource,
 		fieldKeysData,
 		isMeterDataSource,
+		isAiObservability,
 	]);
 
 	const handleAddFilter = (filter: FilterType): void => {
