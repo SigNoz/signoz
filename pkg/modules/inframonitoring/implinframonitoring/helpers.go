@@ -850,8 +850,10 @@ func (m *module) getPerGroupDistinctCounts(
 			valueExpr = fmt.Sprintf("(%s)", strings.Join(parts, ", "))
 		}
 
+		// Prefix the alias so it never collides with a groupBy col alias
+		// (e.g. clusters grouped by k8s.node.name, which is also counted).
 		selectCols = append(selectCols,
-			fmt.Sprintf("uniqExactIf(%s, %s != '') AS %s", valueExpr, extract, quoteIdentifier(attr)),
+			fmt.Sprintf("uniqExactIf(%s, %s != '') AS %s", valueExpr, extract, quoteIdentifier(fmt.Sprintf("__count_%s", attr))),
 		)
 	}
 	sb.Select(selectCols...)
