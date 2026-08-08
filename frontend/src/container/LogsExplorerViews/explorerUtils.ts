@@ -13,6 +13,7 @@ import {
 import { Filter } from 'types/api/v5/queryRange';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
+import { DEFAULT_LIST_ORDER_BY } from 'utils/explorerUtils';
 
 export const getListQuery = (
 	stagedQuery: Query | null,
@@ -117,7 +118,7 @@ export const getQueryByPanelType = (
 	}));
 
 	if (selectedPanelType === PANEL_TYPES.LIST) {
-		const { activeLogId = null, orderBy = 'timestamp:desc' } = params;
+		const { activeLogId = null, orderBy = DEFAULT_LIST_ORDER_BY } = params;
 
 		const paginateData = getPaginationQueryDataV2({
 			page: params.page ?? 1,
