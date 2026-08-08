@@ -5,3 +5,15 @@
 		text-decoration: underline;
 	}
 }
+
+.clickhouse-query-editor-toolbar {
+	display: flex;
+	justify-content: flex-end;
+	margin-bottom: 8px;
+}
+
+.clickhouse-query-editor-modal {
+	.ant-modal-body {
+		padding-top: 8px;
+	}
+}
