@@ -26,13 +26,15 @@ type Display struct {
 	Color    string `json:"color"`
 }
 
-// SavedViewSpec is the typed content of a saved view.
+// SavedViewSpec is the typed content of a saved view. selectedFields and
+// display are not marked required: neither is actually validated
+// server-side, so requiring them in the schema would over-constrain callers.
 type SavedViewSpec struct {
 	DisplayName    string                             `json:"displayName" required:"true"`
 	PanelType      PanelType                          `json:"panelType" required:"true"`
 	Queries        []qbtypes.QueryEnvelope            `json:"queries" required:"true" nullable:"false"`
-	SelectedFields []telemetrytypes.TelemetryFieldKey `json:"selectedFields" required:"true" nullable:"false"`
-	Display        Display                            `json:"display" required:"true"`
+	SelectedFields []telemetrytypes.TelemetryFieldKey `json:"selectedFields" nullable:"false"`
+	Display        Display                            `json:"display"`
 }
 
 // SavedViewData is what's persisted as saved view data.
