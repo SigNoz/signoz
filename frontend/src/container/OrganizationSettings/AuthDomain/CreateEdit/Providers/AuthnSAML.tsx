@@ -76,7 +76,7 @@ function ConfigureSAMLAuthnProvider({
 							</Tooltip>
 						</label>
 						<Form.Item
-							name={['samlConfig', 'ssoUrl']}
+							name={['samlConfig', 'location']}
 							className="authn-provider__form-item"
 							rules={[
 								{

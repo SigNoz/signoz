@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
 import { rest, server } from 'mocks-server/server';
 import {
-	AuthtypesAuthDomainConfigGoogleAuthDTO,
+	AuthtypesAuthDomainConfigGoogleDTO,
 	AuthtypesGettableAuthDomainDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
@@ -94,7 +94,7 @@ describe('CreateEdit — payload sanitization', () => {
 
 		it('strips workspace fields when fetchGroups is false', async () => {
 			const googleConfig =
-				mockGoogleAuthWithWorkspaceGroups.config as AuthtypesAuthDomainConfigGoogleAuthDTO;
+				mockGoogleAuthWithWorkspaceGroups.config as AuthtypesAuthDomainConfigGoogleDTO;
 			const payload = await submitForm({
 				...mockGoogleAuthWithWorkspaceGroups,
 				config: {
@@ -136,7 +136,7 @@ describe('CreateEdit — payload sanitization', () => {
 			const payload = await submitForm(mockSamlWithAttributeMapping);
 
 			const s = payload.config.spec;
-			expect(s?.ssoUrl).toBe('https://idp.saml-attrs.com/sso');
+			expect(s?.location).toBe('https://idp.saml-attrs.com/sso');
 			expect(s?.entityId).toBe('urn:saml-attrs:idp');
 			expect(s?.certificate).toBe('MOCK_CERTIFICATE_ATTRS');
 			expect(s?.insecureSkipAuthNRequestsSigned).toBe(true);

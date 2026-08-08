@@ -75,8 +75,8 @@ type authDomainConfigSAML struct {
 	Spec SamlConfig    `json:"spec" description:"The saml configuration." required:"true"`
 }
 
-// authDomainConfigGoogleAuth is the OpenAPI schema for an AuthDomainConfig with kind=google_auth.
-type authDomainConfigGoogleAuth struct {
+// authDomainConfigGoogle is the OpenAPI schema for an AuthDomainConfig with kind=google.
+type authDomainConfigGoogle struct {
 	Kind AuthNProvider `json:"kind" description:"The kind of authn provider." required:"true"`
 	Spec GoogleConfig  `json:"spec" description:"The google auth configuration." required:"true"`
 }
@@ -97,7 +97,7 @@ var (
 func (AuthDomainConfig) JSONSchemaOneOf() []any {
 	return []any{
 		authDomainConfigSAML{},
-		authDomainConfigGoogleAuth{},
+		authDomainConfigGoogle{},
 		authDomainConfigOIDC{},
 	}
 }
@@ -113,9 +113,9 @@ func (AuthDomainConfig) PrepareJSONSchema(schema *jsonschema.Schema) error {
 	schema.ExtraProperties["x-signoz-discriminator"] = map[string]any{
 		"propertyName": "kind",
 		"mapping": map[string]string{
-			AuthNProviderSAML.StringValue():       "#/components/schemas/AuthtypesAuthDomainConfigSAML",
-			AuthNProviderGoogleAuth.StringValue(): "#/components/schemas/AuthtypesAuthDomainConfigGoogleAuth",
-			AuthNProviderOIDC.StringValue():       "#/components/schemas/AuthtypesAuthDomainConfigOIDC",
+			AuthNProviderSAML.StringValue():   "#/components/schemas/AuthtypesAuthDomainConfigSAML",
+			AuthNProviderGoogle.StringValue(): "#/components/schemas/AuthtypesAuthDomainConfigGoogle",
+			AuthNProviderOIDC.StringValue():   "#/components/schemas/AuthtypesAuthDomainConfigOIDC",
 		},
 	}
 
@@ -132,6 +132,10 @@ type StorableAuthDomainConfig struct {
 	OIDC          *OIDCConfig         `json:"oidcConfig"`
 	RoleMapping   *RoleMapping        `json:"roleMapping"`
 }
+
+// storableAuthNProviderGoogle is the value persisted in ssoType for google domains,
+// kept for compatibility with rows written before the provider was renamed.
+var storableAuthNProviderGoogle = AuthNProvider{valuer.NewString("google_auth")}
 
 type AuthDomain struct {
 	storableAuthDomain       *StorableAuthDomain
@@ -213,7 +217,7 @@ func newStorableAuthDomainConfig(enabled bool, config AuthDomainConfig, roleMapp
 		samlConfig := StorableSamlConfig(spec)
 		storableAuthDomainConfig.SAML = &samlConfig
 
-	case AuthNProviderGoogleAuth:
+	case AuthNProviderGoogle:
 		spec, ok := config.Spec.(GoogleConfig)
 		if !ok {
 			return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "google auth config is required")
@@ -241,8 +245,8 @@ func newAuthDomainConfigFromStorableAuthDomainConfig(storableAuthDomainConfig *S
 	case AuthNProviderSAML:
 		return AuthDomainConfig{Kind: AuthNProviderSAML, Spec: SamlConfig(*storableAuthDomainConfig.SAML)}, nil
 
-	case AuthNProviderGoogleAuth:
-		return AuthDomainConfig{Kind: AuthNProviderGoogleAuth, Spec: *storableAuthDomainConfig.Google}, nil
+	case AuthNProviderGoogle:
+		return AuthDomainConfig{Kind: AuthNProviderGoogle, Spec: *storableAuthDomainConfig.Google}, nil
 
 	case AuthNProviderOIDC:
 		return AuthDomainConfig{Kind: AuthNProviderOIDC, Spec: *storableAuthDomainConfig.OIDC}, nil
@@ -323,7 +327,7 @@ func (typ *AuthDomainConfig) UnmarshalJSON(data []byte) error {
 
 		typ.Spec = spec
 
-	case AuthNProviderGoogleAuth:
+	case AuthNProviderGoogle:
 		spec := GoogleConfig{}
 		if err := json.Unmarshal(specData, &spec); err != nil {
 			return err
@@ -347,6 +351,17 @@ func (typ *AuthDomainConfig) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (typ StorableAuthDomainConfig) MarshalJSON() ([]byte, error) {
+	type Alias StorableAuthDomainConfig
+
+	temp := Alias(typ)
+	if temp.AuthNProvider == AuthNProviderGoogle {
+		temp.AuthNProvider = storableAuthNProviderGoogle
+	}
+
+	return json.Marshal(temp)
+}
+
 func (typ *StorableAuthDomainConfig) UnmarshalJSON(data []byte) error {
 	type Alias StorableAuthDomainConfig
 
@@ -355,8 +370,12 @@ func (typ *StorableAuthDomainConfig) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
+	if temp.AuthNProvider == storableAuthNProviderGoogle {
+		temp.AuthNProvider = AuthNProviderGoogle
+	}
+
 	switch temp.AuthNProvider {
-	case AuthNProviderGoogleAuth:
+	case AuthNProviderGoogle:
 		if temp.Google == nil {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "google auth config is required")
 		}

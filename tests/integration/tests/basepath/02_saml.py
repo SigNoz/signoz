@@ -56,7 +56,7 @@ def test_create_auth_domain(
                 "kind": "saml",
                 "spec": {
                     "entityId": settings["entityID"],
-                    "ssoUrl": settings["singleSignOnServiceLocation"],
+                    "location": settings["singleSignOnServiceLocation"],
                     "certificate": settings["certificate"],
                 },
             },

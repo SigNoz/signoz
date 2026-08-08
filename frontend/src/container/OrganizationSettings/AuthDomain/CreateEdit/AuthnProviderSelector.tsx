@@ -16,7 +16,7 @@ interface AuthNProvider {
 function getAuthNProviders(samlEnabled: boolean): AuthNProvider[] {
 	return [
 		{
-			key: AuthtypesAuthNProviderDTO.google_auth,
+			key: AuthtypesAuthNProviderDTO.google,
 			title: 'Google Apps Authentication',
 			description: 'Let members sign-in with a Google workspace account',
 			icon: <SolidGoogle size={37} />,

@@ -1,5 +1,5 @@
 import {
-	AuthtypesAuthDomainConfigGoogleAuthDTOKind,
+	AuthtypesAuthDomainConfigGoogleDTOKind,
 	AuthtypesAuthDomainConfigOIDCDTOKind,
 	AuthtypesAuthDomainConfigSAMLDTOKind,
 	AuthtypesGettableAuthDomainDTO,
@@ -126,7 +126,7 @@ export function prepareInitialValues(
 				? config.spec
 				: undefined,
 		googleAuthConfig:
-			config?.kind === AuthtypesAuthDomainConfigGoogleAuthDTOKind.google_auth
+			config?.kind === AuthtypesAuthDomainConfigGoogleDTOKind.google
 				? {
 						...config.spec,
 						domainToAdminEmailList: convertDomainMappingsToList(

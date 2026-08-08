@@ -10,8 +10,8 @@ type SamlConfig struct {
 	// The entityID of the SAML identity provider. It can typically be found in the EntityID attribute of the EntityDescriptor element in the SAML metadata of the identity provider. Example: <md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" entityID="{entityId}">
 	EntityID string `json:"entityId"`
 
-	// The SSO endpoint of the SAML identity provider. It can typically be found in the SingleSignOnService element in the SAML metadata of the identity provider. Example: <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="{ssoUrl}"/>
-	SSOURL string `json:"ssoUrl"`
+	// The SSO endpoint of the SAML identity provider. It can typically be found in the Location attribute of the SingleSignOnService element in the SAML metadata of the identity provider. Example: <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="{location}"/>
+	Location string `json:"location"`
 
 	// The certificate of the SAML identity provider. It can typically be found in the X509Certificate element in the SAML metadata of the identity provider. Example: <ds:X509Certificate><ds:X509Certificate>{certificate}</ds:X509Certificate></ds:X509Certificate>
 	Certificate string `json:"certificate"`
@@ -30,7 +30,7 @@ type SamlConfig struct {
 // keys were renamed.
 type StorableSamlConfig struct {
 	EntityID                        string           `json:"samlEntity"`
-	SSOURL                          string           `json:"samlIdp"`
+	Location                        string           `json:"samlIdp"`
 	Certificate                     string           `json:"samlCert"`
 	InsecureSkipAuthNRequestsSigned bool             `json:"insecureSkipAuthNRequestsSigned"`
 	AttributeMapping                AttributeMapping `json:"attributeMapping"`
@@ -76,8 +76,8 @@ func (config *SamlConfig) validate() error {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "entityId is required")
 	}
 
-	if config.SSOURL == "" {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "ssoUrl is required")
+	if config.Location == "" {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "location is required")
 	}
 
 	if config.Certificate == "" {

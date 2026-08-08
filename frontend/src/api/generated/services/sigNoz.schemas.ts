@@ -1881,7 +1881,7 @@ export interface AuthtypesSamlConfigDTO {
 	/**
 	 * @type string
 	 */
-	ssoUrl?: string;
+	location?: string;
 }
 
 export interface AuthtypesAuthDomainConfigSAMLDTO {
@@ -1893,8 +1893,8 @@ export interface AuthtypesAuthDomainConfigSAMLDTO {
 	spec: AuthtypesSamlConfigDTO;
 }
 
-export enum AuthtypesAuthDomainConfigGoogleAuthDTOKind {
-	google_auth = 'google_auth',
+export enum AuthtypesAuthDomainConfigGoogleDTOKind {
+	google = 'google',
 }
 export type AuthtypesGoogleConfigDTODomainToAdminEmail = {
 	[key: string]: string;
@@ -1939,12 +1939,12 @@ export interface AuthtypesGoogleConfigDTO {
 	serviceAccountJson?: string;
 }
 
-export interface AuthtypesAuthDomainConfigGoogleAuthDTO {
+export interface AuthtypesAuthDomainConfigGoogleDTO {
 	/**
 	 * @type string
-	 * @enum google_auth
+	 * @enum google
 	 */
-	kind: AuthtypesAuthDomainConfigGoogleAuthDTOKind;
+	kind: AuthtypesAuthDomainConfigGoogleDTOKind;
 	spec: AuthtypesGoogleConfigDTO;
 }
 
@@ -1990,11 +1990,11 @@ export interface AuthtypesAuthDomainConfigOIDCDTO {
 
 export type AuthtypesAuthDomainConfigDTO =
 	| AuthtypesAuthDomainConfigSAMLDTO
-	| AuthtypesAuthDomainConfigGoogleAuthDTO
+	| AuthtypesAuthDomainConfigGoogleDTO
 	| AuthtypesAuthDomainConfigOIDCDTO;
 
 export enum AuthtypesAuthNProviderDTO {
-	google_auth = 'google_auth',
+	google = 'google',
 	saml = 'saml',
 	email_password = 'email_password',
 	oidc = 'oidc',

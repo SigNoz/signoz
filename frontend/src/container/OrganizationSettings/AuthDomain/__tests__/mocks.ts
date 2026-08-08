@@ -1,5 +1,5 @@
 import {
-	AuthtypesAuthDomainConfigGoogleAuthDTOKind,
+	AuthtypesAuthDomainConfigGoogleDTOKind,
 	AuthtypesAuthDomainConfigOIDCDTOKind,
 	AuthtypesAuthDomainConfigSAMLDTOKind,
 	AuthtypesGettableAuthDomainDTO,
@@ -17,7 +17,7 @@ export const mockGoogleAuthDomain: AuthtypesGettableAuthDomainDTO = {
 	name: 'signoz.io',
 	enabled: true,
 	config: {
-		kind: AuthtypesAuthDomainConfigGoogleAuthDTOKind.google_auth,
+		kind: AuthtypesAuthDomainConfigGoogleDTOKind.google,
 		spec: {
 			clientId: 'test-client-id',
 			clientSecret: 'test-client-secret',
@@ -36,7 +36,7 @@ export const mockSamlAuthDomain: AuthtypesGettableAuthDomainDTO = {
 	config: {
 		kind: AuthtypesAuthDomainConfigSAMLDTOKind.saml,
 		spec: {
-			ssoUrl: 'https://idp.example.com/sso',
+			location: 'https://idp.example.com/sso',
 			entityId: 'urn:example:idp',
 			certificate: 'MOCK_CERTIFICATE',
 		},
@@ -72,7 +72,7 @@ export const mockDomainWithRoleMapping: AuthtypesGettableAuthDomainDTO = {
 	config: {
 		kind: AuthtypesAuthDomainConfigSAMLDTOKind.saml,
 		spec: {
-			ssoUrl: 'https://idp.enterprise.com/sso',
+			location: 'https://idp.enterprise.com/sso',
 			entityId: 'urn:enterprise:idp',
 			certificate: 'MOCK_CERTIFICATE',
 		},
@@ -149,7 +149,7 @@ export const mockSamlWithAttributeMapping: AuthtypesGettableAuthDomainDTO = {
 	config: {
 		kind: AuthtypesAuthDomainConfigSAMLDTOKind.saml,
 		spec: {
-			ssoUrl: 'https://idp.saml-attrs.com/sso',
+			location: 'https://idp.saml-attrs.com/sso',
 			entityId: 'urn:saml-attrs:idp',
 			certificate: 'MOCK_CERTIFICATE_ATTRS',
 			insecureSkipAuthNRequestsSigned: true,
@@ -172,7 +172,7 @@ export const mockGoogleAuthWithWorkspaceGroups: AuthtypesGettableAuthDomainDTO =
 		name: 'google-groups.com',
 		enabled: true,
 		config: {
-			kind: AuthtypesAuthDomainConfigGoogleAuthDTOKind.google_auth,
+			kind: AuthtypesAuthDomainConfigGoogleDTOKind.google,
 			spec: {
 				clientId: 'google-groups-client-id',
 				clientSecret: 'google-groups-client-secret',

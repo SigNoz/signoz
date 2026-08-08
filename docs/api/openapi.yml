@@ -466,16 +466,16 @@ components:
     AuthtypesAuthDomainConfig:
       discriminator:
         mapping:
-          google_auth: '#/components/schemas/AuthtypesAuthDomainConfigGoogleAuth'
+          google: '#/components/schemas/AuthtypesAuthDomainConfigGoogle'
           oidc: '#/components/schemas/AuthtypesAuthDomainConfigOIDC'
           saml: '#/components/schemas/AuthtypesAuthDomainConfigSAML'
         propertyName: kind
       oneOf:
       - $ref: '#/components/schemas/AuthtypesAuthDomainConfigSAML'
-      - $ref: '#/components/schemas/AuthtypesAuthDomainConfigGoogleAuth'
+      - $ref: '#/components/schemas/AuthtypesAuthDomainConfigGoogle'
       - $ref: '#/components/schemas/AuthtypesAuthDomainConfigOIDC'
       type: object
-    AuthtypesAuthDomainConfigGoogleAuth:
+    AuthtypesAuthDomainConfigGoogle:
       properties:
         kind:
           $ref: '#/components/schemas/AuthtypesAuthNProvider'
@@ -507,7 +507,7 @@ components:
       type: object
     AuthtypesAuthNProvider:
       enum:
-      - google_auth
+      - google
       - saml
       - email_password
       - oidc
@@ -802,7 +802,7 @@ components:
           type: string
         insecureSkipAuthNRequestsSigned:
           type: boolean
-        ssoUrl:
+        location:
           type: string
       type: object
     AuthtypesSessionContext:

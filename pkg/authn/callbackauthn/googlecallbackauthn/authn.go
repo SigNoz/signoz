@@ -59,7 +59,7 @@ func (a *AuthN) LoginURL(ctx context.Context, siteURL *url.URL, authDomain *auth
 		return "", err
 	}
 
-	if authDomain.StorableAuthDomainConfig().AuthNProvider != authtypes.AuthNProviderGoogleAuth {
+	if authDomain.StorableAuthDomainConfig().AuthNProvider != authtypes.AuthNProviderGoogle {
 		return "", errors.Newf(errors.TypeInternal, authtypes.ErrCodeAuthDomainMismatch, "domain type is not google")
 	}
 

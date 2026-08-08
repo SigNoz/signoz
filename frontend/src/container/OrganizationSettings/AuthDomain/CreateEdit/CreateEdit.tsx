@@ -9,7 +9,7 @@ import {
 } from 'api/generated/services/authdomains';
 import {
 	AuthtypesAuthDomainConfigDTO,
-	AuthtypesAuthDomainConfigGoogleAuthDTOKind,
+	AuthtypesAuthDomainConfigGoogleDTOKind,
 	AuthtypesAuthDomainConfigOIDCDTOKind,
 	AuthtypesAuthDomainConfigSAMLDTOKind,
 	AuthtypesAuthNProviderDTO,
@@ -45,7 +45,7 @@ function configureAuthnProvider(
 	switch (authnProvider) {
 		case 'saml':
 			return <ConfigureSAMLAuthnProvider isCreate={isCreate} />;
-		case 'google_auth':
+		case 'google':
 			return <ConfigureGoogleAuthAuthnProvider isCreate={isCreate} />;
 		case 'oidc':
 			return <ConfigureOIDCAuthnProvider isCreate={isCreate} />;
@@ -159,11 +159,11 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 					kind: AuthtypesAuthDomainConfigSAMLDTOKind.saml,
 					spec: form.getFieldValue('samlConfig'),
 				};
-			case AuthtypesAuthNProviderDTO.google_auth: {
+			case AuthtypesAuthNProviderDTO.google: {
 				const spec = getGoogleAuthConfig();
 				return spec
 					? {
-							kind: AuthtypesAuthDomainConfigGoogleAuthDTOKind.google_auth,
+							kind: AuthtypesAuthDomainConfigGoogleDTOKind.google,
 							spec,
 						}
 					: undefined;
