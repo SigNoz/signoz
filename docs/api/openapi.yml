@@ -464,23 +464,46 @@ components:
           type: string
       type: object
     AuthtypesAuthDomainConfig:
+      discriminator:
+        mapping:
+          google_auth: '#/components/schemas/AuthtypesAuthDomainConfigGoogleAuth'
+          oidc: '#/components/schemas/AuthtypesAuthDomainConfigOIDC'
+          saml: '#/components/schemas/AuthtypesAuthDomainConfigSAML'
+        propertyName: kind
       oneOf:
-      - $ref: '#/components/schemas/AuthtypesSamlConfig'
-      - $ref: '#/components/schemas/AuthtypesGoogleConfig'
-      - $ref: '#/components/schemas/AuthtypesOIDCConfig'
+      - $ref: '#/components/schemas/AuthtypesAuthDomainConfigSAML'
+      - $ref: '#/components/schemas/AuthtypesAuthDomainConfigGoogleAuth'
+      - $ref: '#/components/schemas/AuthtypesAuthDomainConfigOIDC'
+      type: object
+    AuthtypesAuthDomainConfigGoogleAuth:
       properties:
-        googleAuthConfig:
-          $ref: '#/components/schemas/AuthtypesGoogleConfig'
-        oidcConfig:
-          $ref: '#/components/schemas/AuthtypesOIDCConfig'
-        roleMapping:
-          $ref: '#/components/schemas/AuthtypesRoleMapping'
-        samlConfig:
-          $ref: '#/components/schemas/AuthtypesSamlConfig'
-        ssoEnabled:
-          type: boolean
-        ssoType:
+        kind:
           $ref: '#/components/schemas/AuthtypesAuthNProvider'
+        spec:
+          $ref: '#/components/schemas/AuthtypesGoogleConfig'
+      required:
+      - kind
+      - spec
+      type: object
+    AuthtypesAuthDomainConfigOIDC:
+      properties:
+        kind:
+          $ref: '#/components/schemas/AuthtypesAuthNProvider'
+        spec:
+          $ref: '#/components/schemas/AuthtypesOIDCConfig'
+      required:
+      - kind
+      - spec
+      type: object
+    AuthtypesAuthDomainConfigSAML:
+      properties:
+        kind:
+          $ref: '#/components/schemas/AuthtypesAuthNProvider'
+        spec:
+          $ref: '#/components/schemas/AuthtypesSamlConfig'
+      required:
+      - kind
+      - spec
       type: object
     AuthtypesAuthNProvider:
       enum:
@@ -531,12 +554,16 @@ components:
         createdAt:
           format: date-time
           type: string
+        enabled:
+          type: boolean
         id:
           type: string
         name:
           type: string
         orgId:
           type: string
+        roleMapping:
+          $ref: '#/components/schemas/AuthtypesRoleMapping'
         updatedAt:
           format: date-time
           type: string
@@ -654,8 +681,15 @@ components:
       properties:
         config:
           $ref: '#/components/schemas/AuthtypesAuthDomainConfig'
+        enabled:
+          type: boolean
         name:
           type: string
+        roleMapping:
+          $ref: '#/components/schemas/AuthtypesRoleMapping'
+      required:
+      - name
+      - config
       type: object
     AuthtypesPostableEmailPasswordSession:
       properties:
@@ -762,13 +796,13 @@ components:
       properties:
         attributeMapping:
           $ref: '#/components/schemas/AuthtypesAttributeMapping'
+        certificate:
+          type: string
+        entityId:
+          type: string
         insecureSkipAuthNRequestsSigned:
           type: boolean
-        samlCert:
-          type: string
-        samlEntity:
-          type: string
-        samlIdp:
+        ssoUrl:
           type: string
       type: object
     AuthtypesSessionContext:
@@ -809,6 +843,12 @@ components:
       properties:
         config:
           $ref: '#/components/schemas/AuthtypesAuthDomainConfig'
+        enabled:
+          type: boolean
+        roleMapping:
+          $ref: '#/components/schemas/AuthtypesRoleMapping'
+      required:
+      - config
       type: object
     AuthtypesUpdatableRole:
       properties:
