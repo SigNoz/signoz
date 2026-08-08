@@ -27,22 +27,6 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/invite/bulk", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.CreateBulkInvite), handler.OpenAPIDef{
-		ID:                 "CreateBulkInvite",
-		Tags:               []string{"users"},
-		Summary:            "Create bulk invite",
-		Description:        "This endpoint creates a bulk invite for a user",
-		Request:            new(types.PostableBulkInviteRequest),
-		RequestContentType: "application/json",
-		Response:           nil,
-		SuccessStatusCode:  http.StatusCreated,
-		ErrorStatusCodes:   []int{http.StatusBadRequest, http.StatusConflict},
-		Deprecated:         true,
-		SecuritySchemes:    newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPost).GetError(); err != nil {
-		return err
-	}
-
 	if err := router.Handle("/api/v1/user", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.ListUsersDeprecated), handler.OpenAPIDef{
 		ID:                  "ListUsersDeprecated",
 		Tags:                []string{"users"},
