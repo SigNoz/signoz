@@ -52,7 +52,7 @@ def test_create_auth_domain(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
         json={
             "name": "saml.integration.test",
             "enabled": True,
@@ -73,7 +73,7 @@ def test_create_auth_domain(
 
     # Get the domains from signoz
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -176,7 +176,7 @@ def test_saml_update_domain_with_group_mappings(
 
     # update the existing saml domain to have role mappings also
     response = requests.put(
-        signoz.self.host_configs["8080"].get(f"/api/v1/domains/{domain['id']}"),
+        signoz.self.host_configs["8080"].get(f"/api/v2/auth_domains/{domain['id']}"),
         json={
             "enabled": True,
             "config": {
@@ -331,7 +331,7 @@ def test_saml_update_domain_with_use_role_claim(
     settings = get_saml_settings()
 
     response = requests.put(
-        signoz.self.host_configs["8080"].get(f"/api/v1/domains/{domain['id']}"),
+        signoz.self.host_configs["8080"].get(f"/api/v2/auth_domains/{domain['id']}"),
         json={
             "enabled": True,
             "config": {

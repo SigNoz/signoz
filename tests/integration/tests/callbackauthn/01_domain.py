@@ -16,7 +16,7 @@ def test_create_and_get_domain(
 
     # Get domains which should be an empty list
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -28,7 +28,7 @@ def test_create_and_get_domain(
 
     # Create a domain with google auth config
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
         json={
             "name": "domain-google.integration.test",
             "enabled": True,
@@ -49,7 +49,7 @@ def test_create_and_get_domain(
 
     # Create a domain with saml config
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
         json={
             "name": "domain-saml.integration.test",
             "enabled": True,
@@ -70,7 +70,7 @@ def test_create_and_get_domain(
 
     # List the domains
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -98,7 +98,7 @@ def test_create_invalid(
 
     # Create a domain with kind saml and a spec for oidc, this should fail because the spec does not match the kind
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
         json={
             "name": "domain.integration.test",
             "enabled": True,
@@ -119,7 +119,7 @@ def test_create_invalid(
 
     # Create a domain with a kind but no spec
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
         json={
             "name": "domain.integration.test",
             "enabled": True,
@@ -135,7 +135,7 @@ def test_create_invalid(
 
     # Create a domain with invalid name
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
         json={
             "name": "$%^invalid",
             "enabled": True,
@@ -156,7 +156,7 @@ def test_create_invalid(
 
     # Create a domain with no name
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
         json={
             "enabled": True,
             "config": {
@@ -176,7 +176,7 @@ def test_create_invalid(
 
     # Create a domain with no config
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
         json={
             "name": "domain.integration.test",
         },
@@ -196,7 +196,7 @@ def test_create_invalid_role_mapping(
 
     # Create domain with invalid defaultRole
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
         json={
             "name": "invalid-role-test.integration.test",
             "enabled": True,
@@ -220,7 +220,7 @@ def test_create_invalid_role_mapping(
 
     # Create domain with invalid role in groupMappings
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
         json={
             "name": "invalid-group-role.integration.test",
             "enabled": True,
@@ -247,7 +247,7 @@ def test_create_invalid_role_mapping(
 
     # Valid role mapping should succeed
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
         json={
             "name": "valid-role-mapping.integration.test",
             "enabled": True,
