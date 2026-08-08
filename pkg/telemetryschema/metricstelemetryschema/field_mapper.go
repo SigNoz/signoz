@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz/pkg/semconv"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -37,6 +39,23 @@ var (
 )
 
 type fieldMapper struct{}
+
+func metricAttributeMembers(key *telemetrytypes.TelemetryFieldKey) []string {
+	if key.FieldContext != telemetrytypes.FieldContextResource &&
+		key.FieldContext != telemetrytypes.FieldContextScope &&
+		key.FieldContext != telemetrytypes.FieldContextAttribute &&
+		key.FieldContext != telemetrytypes.FieldContextUnspecified {
+		return []string{key.Name}
+	}
+	if len(key.SemconvMembers) > 0 {
+		return key.SemconvMembers
+	}
+	return semconv.AttributeMembers(telemetrytypes.FieldKeySelector{
+		Name:         key.Name,
+		Signal:       telemetrytypes.SignalMetrics,
+		FieldContext: key.FieldContext,
+	})
+}
 
 // CandidateKeys returns nil: metrics has no attribute-map fallback, so a context-missing
 // key stays unresolved and the caller errors.
@@ -80,17 +99,28 @@ func (m *fieldMapper) FieldFor(ctx context.Context, _ valuer.UUID, startNs, endN
 
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource, telemetrytypes.FieldContextScope, telemetrytypes.FieldContextAttribute:
-		return fmt.Sprintf("JSONExtractString(%s, '%s')", columns[0].Name, key.Name), nil
+		return metricLabelExpression(columns[0].Name, metricAttributeMembers(key)), nil
 	case telemetrytypes.FieldContextMetric:
 		return columns[0].Name, nil
 	case telemetrytypes.FieldContextUnspecified:
 		if slices.Contains(IntrinsicFields, key.Name) {
 			return columns[0].Name, nil
 		}
-		return fmt.Sprintf("JSONExtractString(%s, '%s')", columns[0].Name, key.Name), nil
+		return metricLabelExpression(columns[0].Name, metricAttributeMembers(key)), nil
 	}
 
 	return columns[0].Name, nil
+}
+
+func metricLabelExpression(columnName string, members []string) string {
+	if len(members) == 1 {
+		return fmt.Sprintf("JSONExtractString(%s, '%s')", columnName, members[0])
+	}
+	values := make([]string, 0, len(members))
+	for _, member := range members {
+		values = append(values, fmt.Sprintf("NULLIF(JSONExtractString(%s, '%s'), '')", columnName, member))
+	}
+	return "COALESCE(" + strings.Join(values, ", ") + ", '')"
 }
 
 func (m *fieldMapper) ColumnFor(ctx context.Context, _ valuer.UUID, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {

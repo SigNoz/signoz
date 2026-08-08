@@ -7,5 +7,31 @@ default_enabled: false
 families:
   deployment.environment.name:
     enabled: true
+    contexts: [resource, attribute]
+    signals: [traces, logs, metrics]
   db.system.name:
     enabled: true
+    contexts: [resource, attribute]
+    signals: [traces, logs, metrics]
+
+  # These metric renames predate the schema history vendored above. Keep them
+  # in the same generated registry so every v5 metric query uses one source of
+  # truth instead of the legacy hand-written transition table.
+  k8s.pod.cpu.usage:
+    enabled: true
+    kind: metric
+    old: [k8s.pod.cpu.utilization]
+    contexts: [metric]
+    signals: [metrics]
+  k8s.node.cpu.usage:
+    enabled: true
+    kind: metric
+    old: [k8s.node.cpu.utilization]
+    contexts: [metric]
+    signals: [metrics]
+  container.cpu.usage:
+    enabled: true
+    kind: metric
+    old: [container.cpu.utilization]
+    contexts: [metric]
+    signals: [metrics]

@@ -390,3 +390,45 @@ func TestConditionForKeyNotInMetadata(t *testing.T) {
 		})
 	}
 }
+
+func TestConditionForSemconvMetricLabels(t *testing.T) {
+	ctx := context.Background()
+	fm := NewFieldMapper()
+	conditionBuilder := NewConditionBuilder(fm)
+	requested := telemetrytypes.TelemetryFieldKey{
+		Name:          "db.system.name",
+		Signal:        telemetrytypes.SignalMetrics,
+		FieldContext:  telemetrytypes.FieldContextResource,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	}
+	current := requested
+	legacyNormalized := requested
+	legacyNormalized.Name = "resource_db_system"
+	fieldKeys := map[string][]*telemetrytypes.TelemetryFieldKey{
+		current.Name:          {&current},
+		legacyNormalized.Name: {&legacyNormalized},
+	}
+
+	sb := sqlbuilder.NewSelectBuilder()
+	conditions, warnings, err := conditionBuilder.ConditionFor(
+		ctx, valuer.UUID{}, 0, 0, &requested, fieldKeys, qbtypes.ConditionBuilderOptions{},
+		qbtypes.FilterOperatorEqual, "postgresql", sb,
+	)
+	require.NoError(t, err)
+	assert.Empty(t, warnings)
+	sb.Where(conditions...)
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	assert.Contains(t, query, "COALESCE(NULLIF(JSONExtractString(labels, 'db.system.name'), ''), NULLIF(JSONExtractString(labels, 'resource_db_system'), ''), '') = ?")
+	assert.Equal(t, []any{"postgresql"}, args)
+
+	sb = sqlbuilder.NewSelectBuilder()
+	conditions, _, err = conditionBuilder.ConditionFor(
+		ctx, valuer.UUID{}, 0, 0, &requested, fieldKeys, qbtypes.ConditionBuilderOptions{ExactSemconv: true},
+		qbtypes.FilterOperatorExists, nil, sb,
+	)
+	require.NoError(t, err)
+	sb.Where(conditions...)
+	query, _ = sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	assert.Contains(t, query, "has(JSONExtractKeys(labels), 'db.system.name')")
+	assert.NotContains(t, query, "resource_db_system")
+}

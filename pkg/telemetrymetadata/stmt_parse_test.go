@@ -5,7 +5,24 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func TestExtractFieldKeyPreservesHistoricalMaterializedColumnName(t *testing.T) {
+	statement := `CREATE TABLE signoz_traces.signoz_index_v3
+	(
+		attributes_string Map(LowCardinality(String), String),
+		` + "`attribute_string_db$$system`" + ` LowCardinality(String)
+			DEFAULT if(mapContains(attributes_string, 'db.system.name'), attributes_string['db.system.name'], attributes_string['db.system'])
+	) ENGINE = MergeTree ORDER BY tuple()`
+	keys, err := ExtractFieldKeysFromTblStatement(statement)
+	require.NoError(t, err, "table statement should parse")
+	require.Len(t, keys, 1, "table statement should contain one materialized key")
+	assert.Equal(t, "db.system.name", keys[0].Name)
+	assert.Equal(t, "attribute_string_db$$system", keys[0].MaterializedColumnName)
+	assert.True(t, keys[0].MaterializedSemconv)
+}
 
 func TestExtractFieldKeysFromTblStatement(t *testing.T) {
 

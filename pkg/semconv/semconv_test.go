@@ -78,3 +78,57 @@ func TestMembersReturnsInputWhenKindDoesNotMatch(t *testing.T) {
 		"an attribute family must not match a metric-name lookup",
 	)
 }
+func TestAttributeMembersIncludesMetricResourceStorageSpellings(t *testing.T) {
+	selector := telemetrytypes.FieldKeySelector{
+		Name:         "db.system.name",
+		Signal:       telemetrytypes.SignalMetrics,
+		FieldContext: telemetrytypes.FieldContextResource,
+	}
+
+	assert.Equal(t, []string{
+		"resource_db.system.name", "resource_db_system_name", "db.system.name", "db_system_name",
+		"resource_db.system", "resource_db_system", "db.system", "db_system",
+	}, AttributeMembers(selector), "resource metric attributes should cover every historical storage layout")
+}
+
+func TestCurrentAttributeResolvesNormalizedMetricResourceSpelling(t *testing.T) {
+	selector := telemetrytypes.FieldKeySelector{
+		Name:         "resource_db_system",
+		Signal:       telemetrytypes.SignalMetrics,
+		FieldContext: telemetrytypes.FieldContextResource,
+	}
+
+	assert.Equal(t, "db.system.name", CurrentAttribute(selector), "normalized resource spelling should resolve to the dotted current name")
+}
+
+func TestAttributeMembersPreservesNormalizedMetricPointStyle(t *testing.T) {
+	selector := telemetrytypes.FieldKeySelector{
+		Name:         "db_system",
+		Signal:       telemetrytypes.SignalMetrics,
+		FieldContext: telemetrytypes.FieldContextAttribute,
+	}
+
+	assert.Equal(t, []string{
+		"db_system_name", "db.system.name", "db_system", "db.system",
+	}, AttributeMembers(selector), "normalized point attribute should remain the preferred storage spelling")
+}
+
+func TestMetricNamesPreservesDottedStyle(t *testing.T) {
+	assert.Equal(t,
+		[]string{"k8s.pod.cpu.usage", "k8s.pod.cpu.utilization"},
+		MetricNames("k8s.pod.cpu.usage"),
+		"dotted metric input should produce dotted family names",
+	)
+}
+
+func TestMetricNamesPreservesNormalizedStyle(t *testing.T) {
+	assert.Equal(t,
+		[]string{"k8s_pod_cpu_usage", "k8s_pod_cpu_utilization"},
+		MetricNames("k8s_pod_cpu_utilization"),
+		"normalized metric input should produce normalized family names",
+	)
+}
+
+func TestMetricNamesReturnsUnknownNameUnchanged(t *testing.T) {
+	assert.Equal(t, []string{"custom_metric"}, MetricNames("custom_metric"), "unknown metrics should not be expanded")
+}

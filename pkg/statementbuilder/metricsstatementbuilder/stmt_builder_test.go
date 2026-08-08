@@ -13,8 +13,20 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestMetricNameValuesResolveFamily(t *testing.T) {
+	assert.Equal(t,
+		[]any{"k8s.pod.cpu.usage", "k8s.pod.cpu.utilization"},
+		metricNameValues("k8s.pod.cpu.usage"),
+	)
+	assert.Equal(t,
+		[]any{"container_cpu_usage", "container_cpu_utilization"},
+		metricNameValues("container_cpu_utilization"),
+	)
+}
 
 func TestStatementBuilder(t *testing.T) {
 	cases := []struct {

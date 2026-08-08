@@ -47,3 +47,36 @@ func TestTraceFamilyUsesMaterializedHistoricalMember(t *testing.T) {
 		"family expression should retain the promoted historical member",
 	)
 }
+
+func TestTraceFamilyUsesFamilyAwareMaterializedColumn(t *testing.T) {
+	current := &telemetrytypes.TelemetryFieldKey{
+		Name:                   "db.system.name",
+		Signal:                 telemetrytypes.SignalTraces,
+		FieldContext:           telemetrytypes.FieldContextAttribute,
+		FieldDataType:          telemetrytypes.FieldDataTypeString,
+		Materialized:           true,
+		MaterializedColumnName: "attribute_string_db$$system",
+		MaterializedSemconv:    true,
+	}
+	historical := &telemetrytypes.TelemetryFieldKey{
+		Name:          "db.system",
+		Signal:        telemetrytypes.SignalTraces,
+		FieldContext:  telemetrytypes.FieldContextAttribute,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	}
+	requested := telemetrytypes.NewTelemetryFieldKey(
+		current.Name,
+		telemetrytypes.FieldContextAttribute,
+		telemetrytypes.FieldDataTypeString,
+	)
+
+	matches := querybuilder.MatchingFieldKeys(requested, map[string][]*telemetrytypes.TelemetryFieldKey{
+		current.Name:    {current},
+		historical.Name: {historical},
+	})
+	require.Len(t, matches, 1, "family metadata should resolve to one logical field")
+	expression, err := tracestelemetryschema.NewFieldMapper().FieldFor(context.Background(), valuer.UUID{}, 0, 0, matches[0])
+	require.NoError(t, err, "resolved trace family should map to a value expression")
+
+	assert.Equal(t, "`attribute_string_db$$system`", expression, "family-aware promoted column should serve the complete family")
+}

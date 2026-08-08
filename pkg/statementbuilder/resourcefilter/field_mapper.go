@@ -35,7 +35,8 @@ func NewFieldMapper() *defaultFieldMapper {
 }
 
 func resourceSemconvMembers(key *telemetrytypes.TelemetryFieldKey) []string {
-	if key.Signal != telemetrytypes.SignalTraces || key.FieldContext != telemetrytypes.FieldContextResource {
+	if (key.Signal != telemetrytypes.SignalTraces && key.Signal != telemetrytypes.SignalLogs) ||
+		key.FieldContext != telemetrytypes.FieldContextResource {
 		return []string{key.Name}
 	}
 	if len(key.SemconvMembers) > 0 {

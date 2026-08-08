@@ -45,6 +45,10 @@ type ConditionBuilder interface {
 type ConditionBuilderOptions struct {
 	// SkipResourceFilter drops the resource context from the candidate set.
 	SkipResourceFilter bool
+	// ExactSemconv disables semantic-convention family expansion. It is an
+	// internal escape hatch for diagnostics and migrations that must address one
+	// physical spelling only; public query APIs continue to resolve families.
+	ExactSemconv bool
 }
 type AggExprRewriter interface {
 	// Rewrite rewrites the aggregation expression to be used in the query.

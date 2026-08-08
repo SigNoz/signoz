@@ -411,9 +411,15 @@ func TestFamilyNotExistsChecksEveryMember(t *testing.T) {
 	assert.Equal(t, []any{true, true}, args)
 }
 
-func TestLogSemconvNameStaysLiteral(t *testing.T) {
-	key := &telemetrytypes.TelemetryFieldKey{
+func TestLogSemconvFamilyResolvesEveryStoredMember(t *testing.T) {
+	current := &telemetrytypes.TelemetryFieldKey{
 		Name:          "deployment.environment.name",
+		Signal:        telemetrytypes.SignalLogs,
+		FieldContext:  telemetrytypes.FieldContextResource,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	}
+	old := &telemetrytypes.TelemetryFieldKey{
+		Name:          "deployment.environment",
 		Signal:        telemetrytypes.SignalLogs,
 		FieldContext:  telemetrytypes.FieldContextResource,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
@@ -421,15 +427,23 @@ func TestLogSemconvNameStaysLiteral(t *testing.T) {
 	sb := sqlbuilder.NewSelectBuilder()
 
 	conditions, _, err := NewConditionBuilder(NewFieldMapper()).ConditionFor(
-		context.Background(), valuer.UUID{}, 0, 0, key,
-		map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}},
+		context.Background(), valuer.UUID{}, 0, 0, current,
+		map[string][]*telemetrytypes.TelemetryFieldKey{
+			current.Name: {current},
+			old.Name:     {old},
+		},
 		qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorEqual, "production", sb,
 	)
 	require.NoError(t, err)
 	sb.Where(conditions...)
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	assert.Contains(t, sql, "simpleJSONExtractString(labels, 'deployment.environment.name') = ? AND labels LIKE ? AND labels LIKE ?")
-	assert.NotContains(t, sql, "deployment.environment')")
-	assert.Equal(t, []any{"production", "%deployment.environment.name%", `%deployment.environment.name":"production%`}, args)
+	assert.Contains(t, sql, "COALESCE(NULLIF(simpleJSONExtractString(labels, 'deployment.environment.name'), ''), NULLIF(simpleJSONExtractString(labels, 'deployment.environment'), ''), '') = ? AND (labels LIKE ? OR labels LIKE ?) AND (labels LIKE ? OR labels LIKE ?)")
+	assert.Equal(t, []any{
+		"production",
+		"%deployment.environment.name%",
+		"%deployment.environment%",
+		`%deployment.environment.name":"production%`,
+		`%deployment.environment":"production%`,
+	}, args)
 }

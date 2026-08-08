@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/semconv"
 	"github.com/SigNoz/signoz/pkg/statementbuilder"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
@@ -30,6 +31,15 @@ const (
 
 	OthersMultiTemporality = `IF(LOWER(temporality) LIKE LOWER('delta'), %s, %s) AS per_series_value`
 )
+
+func metricNameValues(name string) []any {
+	members := semconv.MetricNames(name)
+	values := make([]any, 0, len(members))
+	for _, member := range members {
+		values = append(values, member)
+	}
+	return values
+}
 
 type StatementBuilder struct {
 	logger        *slog.Logger
@@ -341,7 +351,7 @@ func (b *StatementBuilder) buildReducedTimeSeriesCTE(
 		sb.SelectMore(col)
 	}
 	sb.Where(
-		sb.In("metric_name", query.Aggregations[0].MetricName),
+		sb.In("metric_name", metricNameValues(query.Aggregations[0].MetricName)...),
 		sb.GTE("unix_milli", start),
 		sb.LTE("unix_milli", end),
 	)
@@ -385,7 +395,7 @@ func (b *StatementBuilder) buildReducedSpatialAggFastPath(
 	sb.From(fmt.Sprintf("%s.%s AS points FINAL", metricstelemetryschema.DBName, metricstelemetryschema.WhichReducedSamplesTableToUse(agg.Type)))
 	sb.JoinWithOption(sqlbuilder.InnerJoin, timeSeriesCTE, "points.reduced_fingerprint = filtered_time_series.fingerprint")
 	sb.Where(
-		sb.In("metric_name", agg.MetricName),
+		sb.In("metric_name", metricNameValues(agg.MetricName)...),
 		sb.GTE("unix_milli", start),
 		sb.LT("unix_milli", end),
 	)
@@ -427,7 +437,7 @@ func (b *StatementBuilder) buildReducedTemporalAggregationCTE(
 	sb.From(fmt.Sprintf("%s.%s AS points FINAL", metricstelemetryschema.DBName, metricstelemetryschema.WhichReducedSamplesTableToUse(agg.Type)))
 	sb.JoinWithOption(sqlbuilder.InnerJoin, timeSeriesCTE, "points.reduced_fingerprint = filtered_time_series.fingerprint")
 	sb.Where(
-		sb.In("metric_name", agg.MetricName),
+		sb.In("metric_name", metricNameValues(agg.MetricName)...),
 		sb.GTE("unix_milli", start),
 		sb.LT("unix_milli", end),
 	)
@@ -505,7 +515,7 @@ func (b *StatementBuilder) buildTemporalAggDeltaFastPath(
 	sb.From(fmt.Sprintf("%s.%s AS points", metricstelemetryschema.DBName, samplesTable))
 	sb.JoinWithOption(sqlbuilder.InnerJoin, timeSeriesCTE, "points.fingerprint = filtered_time_series.fingerprint")
 	sb.Where(
-		sb.In("metric_name", query.Aggregations[0].MetricName),
+		sb.In("metric_name", metricNameValues(query.Aggregations[0].MetricName)...),
 		sb.GTE("unix_milli", start),
 		sb.LT("unix_milli", end),
 	)
@@ -560,7 +570,7 @@ func (b *StatementBuilder) buildTimeSeriesCTE(
 	}
 
 	sb.Where(
-		sb.In("metric_name", query.Aggregations[0].MetricName),
+		sb.In("metric_name", metricNameValues(query.Aggregations[0].MetricName)...),
 		sb.GTE("unix_milli", start),
 		sb.LTE("unix_milli", end),
 	)
@@ -638,7 +648,7 @@ func (b *StatementBuilder) buildTemporalAggDelta(
 	sb.From(fmt.Sprintf("%s.%s AS points", metricstelemetryschema.DBName, samplesTable))
 	sb.JoinWithOption(sqlbuilder.InnerJoin, timeSeriesCTE, "points.fingerprint = filtered_time_series.fingerprint")
 	sb.Where(
-		sb.In("metric_name", query.Aggregations[0].MetricName),
+		sb.In("metric_name", metricNameValues(query.Aggregations[0].MetricName)...),
 		sb.GTE("unix_milli", start),
 		sb.LT("unix_milli", end),
 	)
@@ -679,7 +689,7 @@ func (b *StatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 	baseSb.From(fmt.Sprintf("%s.%s AS points", metricstelemetryschema.DBName, samplesTable))
 	baseSb.JoinWithOption(sqlbuilder.InnerJoin, timeSeriesCTE, "points.fingerprint = filtered_time_series.fingerprint")
 	baseSb.Where(
-		baseSb.In("metric_name", query.Aggregations[0].MetricName),
+		baseSb.In("metric_name", metricNameValues(query.Aggregations[0].MetricName)...),
 		baseSb.GTE("unix_milli", start),
 		baseSb.LT("unix_milli", end),
 	)
@@ -770,7 +780,7 @@ func (b *StatementBuilder) buildTemporalAggForMultipleTemporalities(
 	sb.From(fmt.Sprintf("%s.%s AS points", metricstelemetryschema.DBName, samplesTable))
 	sb.JoinWithOption(sqlbuilder.InnerJoin, timeSeriesCTE, "points.fingerprint = filtered_time_series.fingerprint")
 	sb.Where(
-		sb.In("metric_name", query.Aggregations[0].MetricName),
+		sb.In("metric_name", metricNameValues(query.Aggregations[0].MetricName)...),
 		sb.GTE("unix_milli", start),
 		sb.LT("unix_milli", end),
 	)
