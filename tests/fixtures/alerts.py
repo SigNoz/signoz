@@ -335,27 +335,69 @@ def _is_json_subset(subset, superset) -> bool:
     return subset == superset
 
 
+def _match_query_params(expected: dict, req: dict) -> bool:
+    """Match a wiremock request's query params. Each expected value may be a string
+    (exact), an re.Pattern (search), or None (presence only, e.g. a dynamic hash)."""
+    query_params = req.get("queryParams", {})
+    for name, want in expected.items():
+        if name not in query_params:
+            return False
+        values = query_params[name].get("values", [])
+        if want is None:
+            if not values:
+                return False
+        elif isinstance(want, re.Pattern):
+            if not any(want.search(v) for v in values):
+                return False
+        elif want not in values:
+            return False
+    return True
+
+
 def verify_webhook_notification_expectation(
     notification_channel: types.TestContainerDocker,
     validation_data: dict,
 ) -> bool:
-    """Check if wiremock received a request at the given path
-    whose JSON body is a superset of the expected json_body."""
+    """Check that wiremock received the expected request(s) at the given path.
+
+    validation_data supports (all optional except path):
+      - path: request url path (matched as urlPath, so query strings are ignored)
+      - json_body: expected JSON subset of the request body
+      - query_params: {name: str|re.Pattern|None} matched against the request query
+      - count: exact number of requests required at the path
+      - min_count: minimum number of requests required (e.g. retries)
+    Body/query constraints must be satisfied by a single request; count constraints
+    apply to the total at the path."""
     path = validation_data["path"]
-    json_body = validation_data["json_body"]
+    json_body = validation_data.get("json_body")
+    query_params = validation_data.get("query_params")
 
     url = notification_channel.host_configs["8080"].get("__admin/requests/find")
     try:
-        res = requests.post(url, json={"method": "POST", "url": path}, timeout=10)
+        # urlPath matches the path only; the notifier appends a dynamic threadKey.
+        res = requests.post(url, json={"method": "POST", "urlPath": path}, timeout=10)
     except requests.exceptions.RequestException:
         return False
     if res.status_code != HTTPStatus.OK:
         return False
 
-    for req in res.json()["requests"]:
-        body = json.loads(base64.b64decode(req["bodyAsBase64"]).decode("utf-8"))
-        if _is_json_subset(json_body, body):
-            return True
+    reqs = res.json()["requests"]
+    if "count" in validation_data and len(reqs) != validation_data["count"]:
+        return False
+    if "min_count" in validation_data and len(reqs) < validation_data["min_count"]:
+        return False
+
+    if json_body is None and query_params is None:
+        return True
+
+    for req in reqs:
+        if json_body is not None:
+            body = json.loads(base64.b64decode(req["bodyAsBase64"]).decode("utf-8"))
+            if not _is_json_subset(json_body, body):
+                continue
+        if query_params is not None and not _match_query_params(query_params, req):
+            continue
+        return True
     return False
 
 
@@ -416,7 +458,7 @@ def _received_notifications(
                 continue
             url = notification_channel.host_configs["8080"].get("__admin/requests/find")
             try:
-                res = requests.post(url, json={"method": "POST", "url": validation.validation_data["path"]}, timeout=10)
+                res = requests.post(url, json={"method": "POST", "urlPath": validation.validation_data["path"]}, timeout=10)
                 webhook_bodies.extend(json.loads(base64.b64decode(req["bodyAsBase64"]).decode("utf-8")) for req in res.json()["requests"])
             except requests.exceptions.RequestException as exc:
                 webhook_bodies.append(f"<failed to fetch wiremock journal: {exc}>")
@@ -454,5 +496,12 @@ def update_raw_channel_config(
                     original_url = entry[url_field]
                     path = urlparse(original_url).path
                     entry[url_field] = notification_channel.container_configs["8080"].get(path)
+
+    # Google Chat validates the webhook host, so route via the https alias config
+    # (chat.googleapis.com:8443) keeping the path, and skip tls for wiremock's cert.
+    for entry in config.get("googlechat_configs", []):
+        path = urlparse(entry["webhook_url"]).path
+        entry["webhook_url"] = notification_channel.container_configs["8443"].get(path)
+        entry.setdefault("http_config", {}).setdefault("tls_config", {})["insecure_skip_verify"] = True
 
     return config
