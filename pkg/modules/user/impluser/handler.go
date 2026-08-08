@@ -119,27 +119,6 @@ func (handler *handler) CreateBulkInvite(rw http.ResponseWriter, r *http.Request
 	render.Success(rw, http.StatusCreated, nil)
 }
 
-func (handler *handler) GetUserDeprecated(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
-
-	id := mux.Vars(r)["id"]
-
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	user, err := handler.getter.GetDeprecatedUserByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(id))
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	render.Success(w, http.StatusOK, user)
-}
-
 func (handler *handler) GetUser(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -282,33 +261,6 @@ func (handler *handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(w, http.StatusOK, users)
-}
-
-func (handler *handler) UpdateUserDeprecated(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
-
-	id := mux.Vars(r)["id"]
-
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	user := types.DeprecatedUser{User: &types.User{}}
-	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	updatedUser, err := handler.setter.UpdateUserDeprecated(ctx, valuer.MustNewUUID(claims.OrgID), id, &user)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	render.Success(w, http.StatusOK, updatedUser)
 }
 
 func (handler *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
