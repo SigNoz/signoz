@@ -349,7 +349,7 @@ func (Step) JSONSchema() (jsonschema.Schema, error) {
 
 ### `oneOf` with a discriminator
 
-For a sum type whose variants are keyed by a property (e.g. `kind`), expose the variants via `JSONSchemaOneOf()` and add a discriminator. Without it, code generators intersect the variants (`A & B & C`) instead of producing a clean discriminated union (`A | B | C`).
+For a sum type whose variants are keyed by a property (e.g. `kind`), expose the variants via `JSONSchemaOneOf()` and add a discriminator. Without it, code generators intersect the variants (`A & B & C`) instead of producing a clean discriminated union (`A | B | C`). How to model the sum type itself is covered in [types.md](types.md#sum-types-the-kindspec-envelope) — this section is only about its schema.
 
 The parent keeps its `JSONSchemaOneOf()` (the `oneOf` itself) and *additionally* tags it via `PrepareJSONSchema` with the `x-signoz-discriminator` extension; `signoz.attachDiscriminators` then promotes that marker to a real OpenAPI 3 `discriminator` (and strips the duplicate parent properties) after reflection.
 

@@ -61,31 +61,37 @@ type Channel struct {
 
 ```go
 type AuthDomain struct {
-    storableAuthDomain *StorableAuthDomain
-    authDomainConfig   *AuthDomainConfig
+    storableAuthDomain       *StorableAuthDomain
+    storableAuthDomainConfig *StorableAuthDomainConfig
 }
 
 type StorableAuthDomain struct {
     bun.BaseModel `bun:"table:auth_domain"`
     types.Identifiable
     Name  string      `bun:"name"`
-    Data  string      `bun:"data"`  // AuthDomainConfig serialized as JSON
+    Data  string      `bun:"data"`  // StorableAuthDomainConfig serialized as JSON
     OrgID valuer.UUID `bun:"org_id"`
     types.TimeAuditable
 }
 
 type PostableAuthDomain struct {
-    Config AuthDomainConfig `json:"config"`
-    Name   string           `json:"name"`
+    Name        string           `json:"name" required:"true"`
+    Enabled     bool             `json:"enabled"`
+    Config      AuthDomainConfig `json:"config" required:"true"`
+    RoleMapping *RoleMapping     `json:"roleMapping"`
 }
 
-type UpdateableAuthDomain struct {
-    Config AuthDomainConfig `json:"config"` // Name intentionally absent
+type UpdatableAuthDomain struct {
+    Enabled     bool             `json:"enabled"` // Name intentionally absent
+    Config      AuthDomainConfig `json:"config" required:"true"`
+    RoleMapping *RoleMapping     `json:"roleMapping"`
 }
 
 type GettableAuthDomain struct {
-    *StorableAuthDomain
-    *AuthDomainConfig
+    StorableAuthDomain
+    Enabled           bool               `json:"enabled"`
+    Config            AuthDomainConfig   `json:"config"`
+    RoleMapping       *RoleMapping       `json:"roleMapping"`
     AuthNProviderInfo *AuthNProviderInfo `json:"authNProviderInfo"`
 }
 ```
@@ -93,11 +99,54 @@ type GettableAuthDomain struct {
 Each flavor exists for a concrete reason:
 
 - `StorableAuthDomain` stores the typed config as an opaque `Data string` column, so the schema does not need to migrate every time a config field is added.
-- `PostableAuthDomain` carries the config as a structured object (not a string) for the request.
-- `UpdateableAuthDomain` excludes `Name` because a domain's name cannot change after creation.
+- `PostableAuthDomain` carries the config as a structured object (not a string) for the request. `AuthDomainConfig` is a kind/spec envelope — see the next section.
+- `UpdatableAuthDomain` excludes `Name` because a domain's name cannot change after creation.
 - `GettableAuthDomain` adds `AuthNProviderInfo`, which is derived at read time and never persisted.
 
-The core `AuthDomain` holds the two live halves — `storableAuthDomain` and `authDomainConfig` — and owns business methods such as `Update(config)`. Conversions use the `New<Output>From<Input>` form: `NewAuthDomainFromConfig`, `NewAuthDomainFromStorableAuthDomain`, `NewGettableAuthDomainFromAuthDomain`.
+The core `AuthDomain` holds the two live halves — `storableAuthDomain` and `storableAuthDomainConfig` — and owns business methods such as `Update(updatable)`. Conversions use the `New<Output>From<Input>` form: `NewAuthDomainFromPostableAuthDomain`, `NewAuthDomainFromStorableAuthDomain`, `NewGettableAuthDomainFromAuthDomain`.
+
+## Sum types: the kind/spec envelope
+
+When a domain type is a *sum type* — exactly one of several variants, selected by a discriminator — model it as an envelope with a `kind` and a `spec`:
+
+```go
+type AuthDomainConfig struct {
+    Kind AuthNProvider `json:"kind" required:"true"`
+    Spec any           `json:"spec" required:"true"`
+}
+```
+
+```json
+{ "kind": "saml", "spec": { "entityId": "...", "ssoUrl": "...", "certificate": "..." } }
+```
+
+`Kind` is a `valuer.String` enum implementing `Enum()`; `Spec` holds exactly one concrete variant type. `RuleThresholdData` and `EvaluationEnvelope` in `pkg/types/ruletypes/` and `AuthDomainConfig` in `pkg/types/authtypes/` are the canonical examples. (`QueryEnvelope` in querybuildertypes uses `type` as the discriminator key for historical reasons; new envelopes use `kind`.)
+
+The rules that make the envelope work:
+
+- **Never model variants as sibling fields.** A struct with `SAML *SamlConfig`, `Google *GoogleConfig`, `OIDC *OIDCConfig` next to a discriminator cannot be expressed as an OpenAPI discriminated union, forces nilability checks on every consumer, and silently admits contradictory payloads (kind=saml with a google config). The chosen variant *is* the payload.
+- **The envelope owns `UnmarshalJSON`.** Decode `kind` first, then switch on it to decode and validate the matching concrete type into `Spec`. Unknown kinds and missing specs are rejected at the boundary:
+
+    ```go
+    func (typ *AuthDomainConfig) UnmarshalJSON(data []byte) error {
+        var raw map[string]json.RawMessage
+        // ... unmarshal raw, decode raw["kind"] ...
+        switch kind {
+        case AuthNProviderSAML:
+            spec := SamlConfig{}
+            if err := json.Unmarshal(raw["spec"], &spec); err != nil {
+                return err
+            }
+            typ.Spec = spec
+        // ... one case per kind, default rejects ...
+        }
+        typ.Kind = kind
+        return nil
+    }
+    ```
+- **Consumers type-assert on `Spec`** (`config.Spec.(SamlConfig)`) after switching on `Kind`. If assertion sites multiply, add typed accessors on the envelope (see `EvaluationEnvelope.GetEvaluation()`).
+- **OpenAPI needs one unexported variant struct per kind** (`authDomainConfigSAML{Kind; Spec SamlConfig}`), exposed via `JSONSchemaOneOf()` and mapped via `PrepareJSONSchema` with the `x-signoz-discriminator` extension. The schema mechanics are covered in [handler.md](handler.md#oneof-with-a-discriminator).
+- **A persisted legacy shape stays in a `StorableX`.** If rows were written before the envelope existed, keep the old JSON shape in a storable type (`StorableAuthDomainConfig` keeps `ssoType` + sibling configs) and convert to/from the envelope at the type boundary — the data layer never changes shape retroactively.
 
 ## Conventions that tie the flavors together
 
@@ -139,6 +188,7 @@ Both are optional. Do not introduce them if `PostableX` already covers the case.
 
 - Every domain package defines the core type `X`. Only `X` is mandatory.
 - Add `PostableX` / `GettableX` / `UpdatableX` / `StorableX` one at a time, only when the shape actually diverges from `X`.
+- Model sum types as a `{kind, spec}` envelope with a validating `UnmarshalJSON` — never as sibling variant fields next to a discriminator.
 - Domain logic lives on `X`, not on the flavor types.
 - Conversions can be a `New<Output>From<Input>` constructor or a receiver-style `ToY()` method — pick whichever reads best at the call site.
 - Use a type alias when two shapes are truly identical.
