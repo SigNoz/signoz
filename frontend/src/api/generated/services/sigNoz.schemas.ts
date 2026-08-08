@@ -10057,6 +10057,21 @@ export interface TypesOrganizationDTO {
 	updatedAt?: string;
 }
 
+export interface TypesPostableForgotPasswordDTO {
+	/**
+	 * @type string
+	 */
+	email: string;
+	/**
+	 * @type string
+	 */
+	frontendBaseURL?: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+}
+
 export interface TypesPostableInviteDTO {
 	/**
 	 * @type string
@@ -10074,28 +10089,6 @@ export interface TypesPostableInviteDTO {
 	 * @type string
 	 */
 	role?: string;
-}
-
-export interface TypesPostableBulkInviteRequestDTO {
-	/**
-	 * @type array
-	 */
-	invites: TypesPostableInviteDTO[];
-}
-
-export interface TypesPostableForgotPasswordDTO {
-	/**
-	 * @type string
-	 */
-	email: string;
-	/**
-	 * @type string
-	 */
-	frontendBaseURL?: string;
-	/**
-	 * @type string
-	 */
-	orgId: string;
 }
 
 export interface TypesPostableResetPasswordDTO {
