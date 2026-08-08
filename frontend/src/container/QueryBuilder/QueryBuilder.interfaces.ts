@@ -38,6 +38,11 @@ export type QueryBuilderProps = {
 	onSignalSourceChange?: (value: string) => void;
 	signalSourceChangeEnabled?: boolean;
 	savePreviousQuery?: boolean;
+	/**
+	 * POC / AI O11y: forwarded to QuerySearch for key/value suggestions
+	 * (e.g. 'builder_ai_query'). Optional — existing callers unchanged.
+	 */
+	queryType?: string;
 };
 
 export enum TraceView {

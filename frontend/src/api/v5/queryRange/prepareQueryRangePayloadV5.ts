@@ -364,7 +364,9 @@ export function convertBuilderQueriesToV5(
 			}
 
 			return {
-				type: 'builder_query' as QueryType,
+				type: (queryData.source === 'ai'
+					? 'builder_ai_query'
+					: 'builder_query') as QueryType,
 				spec,
 			};
 		},
