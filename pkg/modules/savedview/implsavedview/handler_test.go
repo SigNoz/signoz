@@ -38,7 +38,8 @@ func TestNewPostableSavedViewFromLegacyView(t *testing.T) {
 			ExtraData: `{"color":"blue","selectColumns":[{"name":"service.name"}],"format":"table","maxLines":10,"fontSize":"large"}`,
 		}
 
-		postable := newPostableSavedViewFromLegacyView(legacy)
+		postable, err := newPostableSavedViewFromLegacyView(legacy)
+		require.NoError(t, err)
 
 		assert.Empty(t, postable.Name, "v1 has no slug concept -- name must always be generated")
 		assert.True(t, postable.GenerateName, "v1 has no slug concept -- name must always be generated")
@@ -62,13 +63,14 @@ func TestNewPostableSavedViewFromLegacyView(t *testing.T) {
 			ExtraData: "",
 		}
 
-		postable := newPostableSavedViewFromLegacyView(legacy)
+		postable, err := newPostableSavedViewFromLegacyView(legacy)
+		require.NoError(t, err)
 
 		assert.Equal(t, savedviewtypes.Display{}, postable.Data.Spec.Display)
 		assert.Nil(t, postable.Data.Spec.SelectedFields)
 	})
 
-	t.Run("malformed extra data is ignored, not an error", func(t *testing.T) {
+	t.Run("malformed extra data is rejected", func(t *testing.T) {
 		legacy := &v3.SavedView{
 			Name:       "malformed extra data",
 			SourcePage: "metrics",
@@ -79,10 +81,8 @@ func TestNewPostableSavedViewFromLegacyView(t *testing.T) {
 			ExtraData: `{not valid json`,
 		}
 
-		postable := newPostableSavedViewFromLegacyView(legacy)
-
-		assert.Equal(t, "malformed extra data", postable.Data.Spec.DisplayName)
-		assert.Equal(t, savedviewtypes.Display{}, postable.Data.Spec.Display)
+		_, err := newPostableSavedViewFromLegacyView(legacy)
+		assert.Error(t, err)
 	})
 }
 
@@ -97,7 +97,8 @@ func TestNewUpdatableSavedViewFromLegacyView(t *testing.T) {
 		ExtraData: `{"color":"red"}`,
 	}
 
-	updatable := newUpdatableSavedViewFromLegacyView(legacy)
+	updatable, err := newUpdatableSavedViewFromLegacyView(legacy)
+	require.NoError(t, err)
 
 	assert.Equal(t, "renamed view", updatable.Data.Spec.DisplayName)
 	assert.Equal(t, savedviewtypes.SourceTraces, updatable.Source)
@@ -184,7 +185,8 @@ func TestLegacyViewRoundTrip(t *testing.T) {
 	legacy, err := newLegacyViewFromSavedView(original)
 	require.NoError(t, err)
 
-	roundTripped := newPostableSavedViewFromLegacyView(legacy)
+	roundTripped, err := newPostableSavedViewFromLegacyView(legacy)
+	require.NoError(t, err)
 
 	assert.Empty(t, roundTripped.Name)
 	assert.True(t, roundTripped.GenerateName)

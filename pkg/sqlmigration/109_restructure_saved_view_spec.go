@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 type restructureSavedViewSpec struct {
@@ -44,11 +45,11 @@ type legacySavedViewCompositeQuery struct {
 
 // legacySavedViewExtraData mirrors the frontend defined extraData JSON shape.
 type legacySavedViewExtraData struct {
-	Color         string          `json:"color,omitempty"`
-	SelectColumns json.RawMessage `json:"selectColumns,omitempty"`
-	Format        string          `json:"format,omitempty"`
-	MaxLines      int             `json:"maxLines,omitempty"`
-	FontSize      string          `json:"fontSize,omitempty"`
+	Color         string                             `json:"color,omitempty"`
+	SelectColumns []telemetrytypes.TelemetryFieldKey `json:"selectColumns,omitempty"`
+	Format        string                             `json:"format,omitempty"`
+	MaxLines      int                                `json:"maxLines,omitempty"`
+	FontSize      string                             `json:"fontSize,omitempty"`
 }
 
 type savedViewDisplay struct {
@@ -59,11 +60,11 @@ type savedViewDisplay struct {
 }
 
 type savedViewSpec struct {
-	DisplayName    string           `json:"displayName"`
-	PanelType      string           `json:"panelType"`
-	Queries        json.RawMessage  `json:"queries"`
-	SelectedFields json.RawMessage  `json:"selectedFields"`
-	Display        savedViewDisplay `json:"display"`
+	DisplayName    string                             `json:"displayName"`
+	PanelType      string                             `json:"panelType"`
+	Queries        json.RawMessage                    `json:"queries"`
+	SelectedFields []telemetrytypes.TelemetryFieldKey `json:"selectedFields"`
+	Display        savedViewDisplay                   `json:"display"`
 }
 
 type savedViewData struct {
@@ -238,7 +239,9 @@ func (migration *restructureSavedViewSpec) Up(ctx context.Context, db *bun.DB) e
 		if old.ExtraData != "" {
 			// best-effort: malformed/older extraData shapes never fail the migration,
 			// they just leave selectedFields/display empty.
-			_ = json.Unmarshal([]byte(old.ExtraData), &extraData)
+			if err := json.Unmarshal([]byte(old.ExtraData), &extraData); err != nil {
+				migration.settings.Logger.WarnContext(ctx, "failed to unmarshal saved view extra data, continuing with empty selectedFields/display", slog.String("org_id", old.OrgID), slog.String("saved_view_id", old.ID), slog.Any("error", err))
+			}
 		}
 
 		dataJSON, err := json.Marshal(savedViewData{
