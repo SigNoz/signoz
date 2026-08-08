@@ -624,7 +624,7 @@ def _ensure_groups_client_scope(client: KeycloakAdmin) -> None:
 
 def get_oidc_domain(signoz: types.SigNoz, admin_token: str) -> dict:
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -665,7 +665,7 @@ def perform_oidc_login(
 
 def get_saml_domain(signoz: types.SigNoz, admin_token: str) -> dict:
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )

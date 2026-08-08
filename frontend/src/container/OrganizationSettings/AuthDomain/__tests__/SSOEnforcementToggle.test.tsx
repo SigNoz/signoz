@@ -57,7 +57,7 @@ describe('SSOEnforcementToggle', () => {
 				isDefaultChecked={false}
 				record={{
 					...mockGoogleAuthDomain,
-					config: { ...mockGoogleAuthDomain.config, ssoEnabled: false },
+					enabled: false,
 				}}
 			/>,
 		);
@@ -95,9 +95,7 @@ describe('SSOEnforcementToggle', () => {
 		expect(mockUpdateAPI).toHaveBeenCalledTimes(1);
 		expect(mockUpdateAPI).toHaveBeenCalledWith(
 			expect.objectContaining({
-				config: expect.objectContaining({
-					ssoEnabled: false,
-				}),
+				enabled: false,
 			}),
 		);
 	});

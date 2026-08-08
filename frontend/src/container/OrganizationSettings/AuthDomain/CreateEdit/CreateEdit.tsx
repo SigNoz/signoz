@@ -8,6 +8,10 @@ import {
 	useUpdateAuthDomain,
 } from 'api/generated/services/authdomains';
 import {
+	AuthtypesAuthDomainConfigDTO,
+	AuthtypesAuthDomainConfigGoogleDTOKind,
+	AuthtypesAuthDomainConfigOIDCDTOKind,
+	AuthtypesAuthDomainConfigSAMLDTOKind,
 	AuthtypesAuthNProviderDTO,
 	AuthtypesGettableAuthDomainDTO,
 	AuthtypesGoogleConfigDTO,
@@ -41,7 +45,7 @@ function configureAuthnProvider(
 	switch (authnProvider) {
 		case 'saml':
 			return <ConfigureSAMLAuthnProvider isCreate={isCreate} />;
-		case 'google_auth':
+		case 'google':
 			return <ConfigureGoogleAuthAuthnProvider isCreate={isCreate} />;
 		case 'oidc':
 			return <ConfigureOIDCAuthnProvider isCreate={isCreate} />;
@@ -61,7 +65,7 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 	const [form] = Form.useForm<FormValues>();
 	const [authnProvider, setAuthnProvider] = useState<
 		AuthtypesAuthNProviderDTO | ''
-	>(record?.config?.ssoType || '');
+	>((record?.config?.kind as unknown as AuthtypesAuthNProviderDTO) ?? '');
 
 	const { showErrorModal } = useErrorModal();
 	const { featureFlags } = useAppContext();
@@ -147,6 +151,33 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 		};
 	}, [form]);
 
+	// Prepares the kind/spec config envelope for API payload
+	const getConfig = useCallback((): AuthtypesAuthDomainConfigDTO | undefined => {
+		switch (authnProvider) {
+			case AuthtypesAuthNProviderDTO.saml:
+				return {
+					kind: AuthtypesAuthDomainConfigSAMLDTOKind.saml,
+					spec: form.getFieldValue('samlConfig'),
+				};
+			case AuthtypesAuthNProviderDTO.google: {
+				const spec = getGoogleAuthConfig();
+				return spec
+					? {
+							kind: AuthtypesAuthDomainConfigGoogleDTOKind.google,
+							spec,
+						}
+					: undefined;
+			}
+			case AuthtypesAuthNProviderDTO.oidc:
+				return {
+					kind: AuthtypesAuthDomainConfigOIDCDTOKind.oidc,
+					spec: form.getFieldValue('oidcConfig'),
+				};
+			default:
+				return undefined;
+		}
+	}, [authnProvider, form, getGoogleAuthConfig]);
+
 	const onSubmitHandler = useCallback(async (): Promise<void> => {
 		try {
 			await form.validateFields();
@@ -159,24 +190,21 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 		}
 
 		const name = form.getFieldValue('name');
-		const googleAuthConfig = getGoogleAuthConfig();
-		const samlConfig = form.getFieldValue('samlConfig');
-		const oidcConfig = form.getFieldValue('oidcConfig');
+		const config = getConfig();
 		const roleMapping = getRoleMapping();
+
+		if (!config) {
+			return;
+		}
 
 		if (isCreate) {
 			createAuthDomain(
 				{
 					data: {
 						name,
-						config: {
-							ssoEnabled: true,
-							ssoType: authnProvider,
-							googleAuthConfig,
-							samlConfig,
-							oidcConfig,
-							roleMapping,
-						},
+						enabled: true,
+						config,
+						roleMapping,
 					},
 				},
 				{
@@ -196,14 +224,9 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 				{
 					pathParams: { id: record.id },
 					data: {
-						config: {
-							ssoEnabled: form.getFieldValue('ssoEnabled'),
-							ssoType: authnProvider,
-							googleAuthConfig,
-							samlConfig,
-							oidcConfig,
-							roleMapping,
-						},
+						enabled: form.getFieldValue('enabled'),
+						config,
+						roleMapping,
 					},
 				},
 				{
@@ -219,7 +242,7 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 		authnProvider,
 		createAuthDomain,
 		form,
-		getGoogleAuthConfig,
+		getConfig,
 		getRoleMapping,
 		handleError,
 		isCreate,
@@ -245,8 +268,7 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 				name="auth-domain"
 				initialValues={defaultTo(prepareInitialValues(record), {
 					name: '',
-					ssoEnabled: false,
-					ssoType: '',
+					enabled: false,
 				})}
 				form={form}
 				layout="vertical"
