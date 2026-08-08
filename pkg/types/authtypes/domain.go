@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/swaggest/jsonschema-go"
 	"github.com/uptrace/bun"
 )
 
@@ -30,7 +31,9 @@ var (
 
 type GettableAuthDomain struct {
 	StorableAuthDomain
+	Enabled           bool               `json:"enabled"`
 	Config            AuthDomainConfig   `json:"config"`
+	RoleMapping       *RoleMapping       `json:"roleMapping"`
 	AuthNProviderInfo *AuthNProviderInfo `json:"authNProviderInfo"`
 }
 
@@ -39,12 +42,16 @@ type AuthNProviderInfo struct {
 }
 
 type PostableAuthDomain struct {
-	Config AuthDomainConfig `json:"config"`
-	Name   string           `json:"name"`
+	Name        string           `json:"name" required:"true"`
+	Enabled     bool             `json:"enabled"`
+	Config      AuthDomainConfig `json:"config" required:"true"`
+	RoleMapping *RoleMapping     `json:"roleMapping"`
 }
 
 type UpdatableAuthDomain struct {
-	Config AuthDomainConfig `json:"config"`
+	Enabled     bool             `json:"enabled"`
+	Config      AuthDomainConfig `json:"config" required:"true"`
+	RoleMapping *RoleMapping     `json:"roleMapping"`
 }
 
 type StorableAuthDomain struct {
@@ -57,36 +64,92 @@ type StorableAuthDomain struct {
 	types.TimeAuditable
 }
 
-// TODO: the oneOf emitted by JSONSchemaOneOf is not the shape OpenAPI wants
-// for a discriminated union. OpenAPI's discriminator requires every oneOf
-// branch to be a $ref to a named component and a sibling property whose value
-// selects the variant. ssoType is already discriminator-shaped, but the
-// variant payload lives in a sibling field (samlConfig / googleAuthConfig /
-// oidcConfig) instead of being the payload itself, so no discriminator can
-// be attached. Refactor AuthDomainConfig into an envelope (see
-// ruletypes.RuleThresholdData for the pattern) where the chosen config is
-// the payload and ssoType is the discriminator.
 type AuthDomainConfig struct {
-	SSOEnabled    bool          `json:"ssoEnabled"`
-	AuthNProvider AuthNProvider `json:"ssoType"`
-	SAML          *SamlConfig   `json:"samlConfig"`
-	Google        *GoogleConfig `json:"googleAuthConfig"`
-	OIDC          *OIDCConfig   `json:"oidcConfig"`
-	RoleMapping   *RoleMapping  `json:"roleMapping"`
+	Kind AuthNProvider `json:"kind" required:"true"`
+	Spec any           `json:"spec" required:"true"`
+}
+
+// authDomainConfigSAML is the OpenAPI schema for an AuthDomainConfig with kind=saml.
+type authDomainConfigSAML struct {
+	Kind AuthNProvider `json:"kind" description:"The kind of authn provider." required:"true"`
+	Spec SamlConfig    `json:"spec" description:"The saml configuration." required:"true"`
+}
+
+// authDomainConfigGoogleAuth is the OpenAPI schema for an AuthDomainConfig with kind=google_auth.
+type authDomainConfigGoogleAuth struct {
+	Kind AuthNProvider `json:"kind" description:"The kind of authn provider." required:"true"`
+	Spec GoogleConfig  `json:"spec" description:"The google auth configuration." required:"true"`
+}
+
+// authDomainConfigOIDC is the OpenAPI schema for an AuthDomainConfig with kind=oidc.
+type authDomainConfigOIDC struct {
+	Kind AuthNProvider `json:"kind" description:"The kind of authn provider." required:"true"`
+	Spec OIDCConfig    `json:"spec" description:"The oidc configuration." required:"true"`
+}
+
+var (
+	_ jsonschema.OneOfExposer = AuthDomainConfig{}
+	_ jsonschema.Preparer     = AuthDomainConfig{}
+)
+
+// JSONSchemaOneOf returns the oneOf variants for the AuthDomainConfig discriminated union.
+// Each variant represents a different authn provider kind with its corresponding spec schema.
+func (AuthDomainConfig) JSONSchemaOneOf() []any {
+	return []any{
+		authDomainConfigSAML{},
+		authDomainConfigGoogleAuth{},
+		authDomainConfigOIDC{},
+	}
+}
+
+// PrepareJSONSchema marks the schema with x-signoz-discriminator;
+// signoz.attachDiscriminators promotes it to a real OpenAPI 3
+// discriminator after reflection.
+func (AuthDomainConfig) PrepareJSONSchema(schema *jsonschema.Schema) error {
+	if schema.ExtraProperties == nil {
+		schema.ExtraProperties = map[string]any{}
+	}
+
+	schema.ExtraProperties["x-signoz-discriminator"] = map[string]any{
+		"propertyName": "kind",
+		"mapping": map[string]string{
+			AuthNProviderSAML.StringValue():       "#/components/schemas/AuthtypesAuthDomainConfigSAML",
+			AuthNProviderGoogleAuth.StringValue(): "#/components/schemas/AuthtypesAuthDomainConfigGoogleAuth",
+			AuthNProviderOIDC.StringValue():       "#/components/schemas/AuthtypesAuthDomainConfigOIDC",
+		},
+	}
+
+	return nil
+}
+
+// StorableAuthDomainConfig is the JSON document persisted in StorableAuthDomain.Data.
+// Its shape (and the shapes it nests) must stay backward compatible with existing rows.
+type StorableAuthDomainConfig struct {
+	SSOEnabled    bool                `json:"ssoEnabled"`
+	AuthNProvider AuthNProvider       `json:"ssoType"`
+	SAML          *StorableSamlConfig `json:"samlConfig"`
+	Google        *GoogleConfig       `json:"googleAuthConfig"`
+	OIDC          *OIDCConfig         `json:"oidcConfig"`
+	RoleMapping   *RoleMapping        `json:"roleMapping"`
 }
 
 type AuthDomain struct {
-	storableAuthDomain *StorableAuthDomain
-	authDomainConfig   *AuthDomainConfig
+	storableAuthDomain       *StorableAuthDomain
+	storableAuthDomainConfig *StorableAuthDomainConfig
 }
 
-func NewAuthDomainFromConfig(name string, config *AuthDomainConfig, orgID valuer.UUID) (*AuthDomain, error) {
-	data, err := json.Marshal(config)
+func NewAuthDomainFromPostableAuthDomain(postableAuthDomain *PostableAuthDomain, orgID valuer.UUID) (*AuthDomain, error) {
+	storableAuthDomainConfig, err := newStorableAuthDomainConfig(postableAuthDomain.Enabled, postableAuthDomain.Config, postableAuthDomain.RoleMapping)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewAuthDomain(name, string(data), orgID)
+	data, err := json.Marshal(storableAuthDomainConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewAuthDomain(postableAuthDomain.Name, string(data), orgID)
 }
 
 func NewAuthDomain(name string, data string, orgID valuer.UUID) (*AuthDomain, error) {
@@ -107,22 +170,85 @@ func NewAuthDomain(name string, data string, orgID valuer.UUID) (*AuthDomain, er
 }
 
 func NewAuthDomainFromStorableAuthDomain(storableAuthDomain *StorableAuthDomain) (*AuthDomain, error) {
-	authDomainConfig := new(AuthDomainConfig)
-	if err := json.Unmarshal([]byte(storableAuthDomain.Data), authDomainConfig); err != nil {
+	storableAuthDomainConfig := new(StorableAuthDomainConfig)
+	if err := json.Unmarshal([]byte(storableAuthDomain.Data), storableAuthDomainConfig); err != nil {
 		return nil, err
 	}
 
 	return &AuthDomain{
-		storableAuthDomain: storableAuthDomain,
-		authDomainConfig:   authDomainConfig,
+		storableAuthDomain:       storableAuthDomain,
+		storableAuthDomainConfig: storableAuthDomainConfig,
 	}, nil
 }
 
-func NewGettableAuthDomainFromAuthDomain(authDomain *AuthDomain, authNProviderInfo *AuthNProviderInfo) *GettableAuthDomain {
+func NewGettableAuthDomainFromAuthDomain(authDomain *AuthDomain, authNProviderInfo *AuthNProviderInfo) (*GettableAuthDomain, error) {
+	config, err := newAuthDomainConfigFromStorableAuthDomainConfig(authDomain.StorableAuthDomainConfig())
+	if err != nil {
+		return nil, err
+	}
+
 	return &GettableAuthDomain{
 		StorableAuthDomain: *authDomain.StorableAuthDomain(),
-		Config:             *authDomain.AuthDomainConfig(),
+		Enabled:            authDomain.StorableAuthDomainConfig().SSOEnabled,
+		Config:             config,
+		RoleMapping:        authDomain.StorableAuthDomainConfig().RoleMapping,
 		AuthNProviderInfo:  authNProviderInfo,
+	}, nil
+}
+
+func newStorableAuthDomainConfig(enabled bool, config AuthDomainConfig, roleMapping *RoleMapping) (*StorableAuthDomainConfig, error) {
+	storableAuthDomainConfig := &StorableAuthDomainConfig{
+		SSOEnabled:    enabled,
+		AuthNProvider: config.Kind,
+		RoleMapping:   roleMapping,
+	}
+
+	switch config.Kind {
+	case AuthNProviderSAML:
+		spec, ok := config.Spec.(SamlConfig)
+		if !ok {
+			return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "saml config is required")
+		}
+
+		samlConfig := StorableSamlConfig(spec)
+		storableAuthDomainConfig.SAML = &samlConfig
+
+	case AuthNProviderGoogleAuth:
+		spec, ok := config.Spec.(GoogleConfig)
+		if !ok {
+			return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "google auth config is required")
+		}
+
+		storableAuthDomainConfig.Google = &spec
+
+	case AuthNProviderOIDC:
+		spec, ok := config.Spec.(OIDCConfig)
+		if !ok {
+			return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "oidc config is required")
+		}
+
+		storableAuthDomainConfig.OIDC = &spec
+
+	default:
+		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "invalid authn provider %q", config.Kind.StringValue())
+	}
+
+	return storableAuthDomainConfig, nil
+}
+
+func newAuthDomainConfigFromStorableAuthDomainConfig(storableAuthDomainConfig *StorableAuthDomainConfig) (AuthDomainConfig, error) {
+	switch storableAuthDomainConfig.AuthNProvider {
+	case AuthNProviderSAML:
+		return AuthDomainConfig{Kind: AuthNProviderSAML, Spec: SamlConfig(*storableAuthDomainConfig.SAML)}, nil
+
+	case AuthNProviderGoogleAuth:
+		return AuthDomainConfig{Kind: AuthNProviderGoogleAuth, Spec: *storableAuthDomainConfig.Google}, nil
+
+	case AuthNProviderOIDC:
+		return AuthDomainConfig{Kind: AuthNProviderOIDC, Spec: *storableAuthDomainConfig.OIDC}, nil
+
+	default:
+		return AuthDomainConfig{}, errors.Newf(errors.TypeInternal, ErrCodeAuthDomainInvalidConfig, "invalid authn provider %q", storableAuthDomainConfig.AuthNProvider.StringValue())
 	}
 }
 
@@ -130,17 +256,22 @@ func (typ *AuthDomain) StorableAuthDomain() *StorableAuthDomain {
 	return typ.storableAuthDomain
 }
 
-func (typ *AuthDomain) AuthDomainConfig() *AuthDomainConfig {
-	return typ.authDomainConfig
+func (typ *AuthDomain) StorableAuthDomainConfig() *StorableAuthDomainConfig {
+	return typ.storableAuthDomainConfig
 }
 
-func (typ *AuthDomain) Update(config *AuthDomainConfig) error {
-	data, err := json.Marshal(config)
+func (typ *AuthDomain) Update(updatableAuthDomain *UpdatableAuthDomain) error {
+	storableAuthDomainConfig, err := newStorableAuthDomainConfig(updatableAuthDomain.Enabled, updatableAuthDomain.Config, updatableAuthDomain.RoleMapping)
 	if err != nil {
 		return err
 	}
 
-	typ.authDomainConfig = config
+	data, err := json.Marshal(storableAuthDomainConfig)
+	if err != nil {
+		return err
+	}
+
+	typ.storableAuthDomainConfig = storableAuthDomainConfig
 	typ.storableAuthDomain.Data = string(data)
 	typ.storableAuthDomain.UpdatedAt = time.Now()
 	return nil
@@ -163,7 +294,61 @@ func (typ *PostableAuthDomain) UnmarshalJSON(data []byte) error {
 }
 
 func (typ *AuthDomainConfig) UnmarshalJSON(data []byte) error {
-	type Alias AuthDomainConfig
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return errors.Wrapf(err, errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "failed to unmarshal auth domain config")
+	}
+
+	kindData, ok := raw["kind"]
+	if !ok {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "kind is required")
+	}
+
+	var kind AuthNProvider
+	if err := json.Unmarshal(kindData, &kind); err != nil {
+		return errors.Wrapf(err, errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "failed to unmarshal kind")
+	}
+
+	specData, ok := raw["spec"]
+	if !ok {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "spec is required")
+	}
+
+	switch kind {
+	case AuthNProviderSAML:
+		spec := SamlConfig{}
+		if err := json.Unmarshal(specData, &spec); err != nil {
+			return err
+		}
+
+		typ.Spec = spec
+
+	case AuthNProviderGoogleAuth:
+		spec := GoogleConfig{}
+		if err := json.Unmarshal(specData, &spec); err != nil {
+			return err
+		}
+
+		typ.Spec = spec
+
+	case AuthNProviderOIDC:
+		spec := OIDCConfig{}
+		if err := json.Unmarshal(specData, &spec); err != nil {
+			return err
+		}
+
+		typ.Spec = spec
+
+	default:
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "invalid authn provider %q", kind.StringValue())
+	}
+
+	typ.Kind = kind
+	return nil
+}
+
+func (typ *StorableAuthDomainConfig) UnmarshalJSON(data []byte) error {
+	type Alias StorableAuthDomainConfig
 
 	var temp Alias
 	if err := json.Unmarshal(data, &temp); err != nil {
@@ -190,17 +375,8 @@ func (typ *AuthDomainConfig) UnmarshalJSON(data []byte) error {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "invalid authn provider %q", temp.AuthNProvider.StringValue())
 	}
 
-	*typ = AuthDomainConfig(temp)
+	*typ = StorableAuthDomainConfig(temp)
 	return nil
-
-}
-
-func (AuthDomainConfig) JSONSchemaOneOf() []any {
-	return []any{
-		SamlConfig{},
-		GoogleConfig{},
-		OIDCConfig{},
-	}
 }
 
 type AuthDomainStore interface {

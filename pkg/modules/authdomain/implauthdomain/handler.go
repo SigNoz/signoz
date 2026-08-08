@@ -38,7 +38,7 @@ func (handler *handler) Create(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	authDomain, err := authtypes.NewAuthDomainFromConfig(body.Name, &body.Config, valuer.MustNewUUID(claims.OrgID))
+	authDomain, err := authtypes.NewAuthDomainFromPostableAuthDomain(body, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -99,7 +99,13 @@ func (handler *handler) Get(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, authtypes.NewGettableAuthDomainFromAuthDomain(authDomain, handler.module.GetAuthNProviderInfo(ctx, authDomain)))
+	gettableAuthDomain, err := authtypes.NewGettableAuthDomainFromAuthDomain(authDomain, handler.module.GetAuthNProviderInfo(ctx, authDomain))
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, gettableAuthDomain)
 }
 
 func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
@@ -120,7 +126,13 @@ func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
 
 	authDomains := make([]*authtypes.GettableAuthDomain, len(domains))
 	for i, domain := range domains {
-		authDomains[i] = authtypes.NewGettableAuthDomainFromAuthDomain(domain, handler.module.GetAuthNProviderInfo(ctx, domain))
+		gettableAuthDomain, err := authtypes.NewGettableAuthDomainFromAuthDomain(domain, handler.module.GetAuthNProviderInfo(ctx, domain))
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
+		authDomains[i] = gettableAuthDomain
 	}
 
 	render.Success(rw, http.StatusOK, authDomains)
@@ -154,7 +166,7 @@ func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = authDomain.Update(&body.Config)
+	err = authDomain.Update(body)
 	if err != nil {
 		render.Error(rw, err)
 		return
