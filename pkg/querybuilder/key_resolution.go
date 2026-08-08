@@ -92,13 +92,17 @@ func SynthesizeKeys(field *telemetrytypes.TelemetryFieldKey, value any) []*telem
 
 	// A set data type needs only one synthesized key.
 	if fieldDataType != telemetrytypes.FieldDataTypeUnspecified {
-		return []*telemetrytypes.TelemetryFieldKey{telemetrytypes.NewTelemetryFieldKey(field.Name, fieldContext, fieldDataType)}
+		key := telemetrytypes.NewTelemetryFieldKey(field.Name, fieldContext, fieldDataType)
+		key.FieldResolution = field.FieldResolution
+		return []*telemetrytypes.TelemetryFieldKey{key}
 	}
 
 	dataTypes := inferDataTypesFromOperand(value)
 	keys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(dataTypes))
 	for _, dt := range dataTypes {
-		keys = append(keys, telemetrytypes.NewTelemetryFieldKey(field.Name, fieldContext, dt))
+		key := telemetrytypes.NewTelemetryFieldKey(field.Name, fieldContext, dt)
+		key.FieldResolution = field.FieldResolution
+		keys = append(keys, key)
 	}
 	return keys
 }

@@ -234,6 +234,18 @@ func TestPrepareFiltersV5(t *testing.T) {
 			expected:    "(error_details EXISTS) AND service.name='serviceA'",
 			description: "Should preserve EXISTS operator",
 		},
+		{
+			name: "exact_field_label_replacement",
+			labels: map[string]string{
+				"deployment.environment": "production",
+			},
+			whereClause: "exact(resource.deployment.environment) = 'staging'",
+			groupByItems: []qbtypes.GroupByKey{
+				{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "deployment.environment"}},
+			},
+			expected:    "exact(resource.deployment.environment)='production'",
+			description: "Should keep the exact wrapper when replacing a grouped label",
+		},
 
 		{
 			name: "empty_where_clause_with_labels",

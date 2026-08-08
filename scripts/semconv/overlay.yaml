@@ -13,6 +13,68 @@ families:
     enabled: true
     contexts: [resource, attribute]
     signals: [traces, logs, metrics]
+  db.namespace:
+    enabled: true
+  db.operation.name:
+    enabled: true
+  db.query.text:
+    enabled: true
+
+  rpc.system.name:
+    enabled: true
+  service.peer.name:
+    enabled: true
+
+  messaging.destination.name:
+    enabled: true
+  messaging.operation.type:
+    enabled: true
+  messaging.consumer.group.name:
+    enabled: true
+  messaging.client.id:
+    enabled: true
+
+  container.runtime.name:
+    enabled: true
+  code.file.path:
+    enabled: true
+  code.function.name:
+    enabled: true
+  code.line.number:
+    enabled: true
+
+  # The HTTP renames were published for spans, but the same attributes are
+  # routinely copied onto correlated logs. Widening them here makes trace and
+  # log queries behave consistently during mixed-SDK migrations.
+  http.request.method:
+    enabled: true
+    add_signals: [logs]
+  http.response.status_code:
+    enabled: true
+    add_signals: [logs]
+  url.full:
+    enabled: true
+    add_signals: [logs]
+  url.scheme:
+    enabled: true
+    add_signals: [logs]
+  user_agent.original:
+    enabled: true
+    contexts: [attribute]
+    signals: [traces, logs]
+
+  # Disabled audit-priority families. These are not safe name-only aliases:
+  # protocol-specific RPC status fields use different value domains, while
+  # the older network peer/host names are role-dependent and can map to
+  # client, server, or socket addresses. Their collector-specific fallbacks
+  # remain in place until they have an explicit value/role migration.
+  rpc.response.status_code:
+    enabled: false
+  server.address:
+    enabled: false
+  # network.peer.address is intentionally not declared as a family: the
+  # schema history explicitly says net.sock.peer.addr cannot be mapped by
+  # name alone because its client/server role is ambiguous.
 
   # These metric renames predate the schema history vendored above. Keep them
   # in the same generated registry so every v5 metric query uses one source of

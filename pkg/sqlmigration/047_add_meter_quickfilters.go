@@ -43,7 +43,7 @@ func (migration *addMeterQuickFilters) Register(migrations *migrate.Migrations) 
 
 func (migration *addMeterQuickFilters) Up(ctx context.Context, db *bun.DB) error {
 	meterFilters := []map[string]interface{}{
-		{"key": "deployment.environment", "dataType": "float64", "type": "Sum"},
+		{"key": "deployment.environment.name", "dataType": "float64", "type": "Sum"},
 		{"key": "service.name", "dataType": "float64", "type": "Sum"},
 		{"key": "host.name", "dataType": "float64", "type": "Sum"},
 	}

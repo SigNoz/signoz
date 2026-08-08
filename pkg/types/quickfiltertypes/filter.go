@@ -148,7 +148,7 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 		{"key": "rpc.method", "dataType": "string", "type": "tag"},
 		{"key": "response_status_code", "dataType": "string", "type": "tag"},
 		{"key": "http_host", "dataType": "string", "type": "tag"},
-		{"key": "http.method", "dataType": "string", "type": "tag"},
+		{"key": "http.request.method", "dataType": "string", "type": "tag"},
 		{"key": "http.route", "dataType": "string", "type": "tag"},
 		{"key": "http_url", "dataType": "string", "type": "tag"},
 		{"key": "trace_id", "dataType": "string", "type": "tag"},
@@ -156,7 +156,7 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 
 	logsFilters := []map[string]interface{}{
 		{"key": "severity_text", "dataType": "string", "type": "resource"},
-		{"key": "deployment.environment", "dataType": "string", "type": "resource"},
+		{"key": "deployment.environment.name", "dataType": "string", "type": "resource"},
 		{"key": "service.name", "dataType": "string", "type": "resource"},
 		{"key": "host.name", "dataType": "string", "type": "resource"},
 		{"key": "k8s.cluster.name", "dataType": "string", "type": "resource"},
@@ -182,7 +182,7 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 	}
 
 	meterFilters := []map[string]interface{}{
-		{"key": "deployment.environment", "dataType": "float64", "type": "Sum"},
+		{"key": "deployment.environment.name", "dataType": "float64", "type": "Sum"},
 		{"key": "service.name", "dataType": "float64", "type": "Sum"},
 		{"key": "host.name", "dataType": "float64", "type": "Sum"},
 	}

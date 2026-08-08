@@ -6401,6 +6401,8 @@ components:
           $ref: '#/components/schemas/TelemetrytypesFieldContext'
         fieldDataType:
           $ref: '#/components/schemas/TelemetrytypesFieldDataType'
+        fieldResolution:
+          $ref: '#/components/schemas/TelemetrytypesFieldResolution'
         meta:
           properties:
             unit:
@@ -6445,6 +6447,10 @@ components:
         rowsScanned:
           minimum: 0
           type: integer
+        semconvResolutions:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5SemconvResolution'
+          type: array
         stepIntervals:
           additionalProperties:
             minimum: 0
@@ -6511,6 +6517,8 @@ components:
           $ref: '#/components/schemas/TelemetrytypesFieldContext'
         fieldDataType:
           $ref: '#/components/schemas/TelemetrytypesFieldDataType'
+        fieldResolution:
+          $ref: '#/components/schemas/TelemetrytypesFieldResolution'
         name:
           type: string
         signal:
@@ -6582,6 +6590,8 @@ components:
           $ref: '#/components/schemas/TelemetrytypesFieldContext'
         fieldDataType:
           $ref: '#/components/schemas/TelemetrytypesFieldDataType'
+        fieldResolution:
+          $ref: '#/components/schemas/TelemetrytypesFieldResolution'
         name:
           type: string
         signal:
@@ -7148,6 +7158,20 @@ components:
           type: array
         stepInterval:
           $ref: '#/components/schemas/Querybuildertypesv5Step'
+      type: object
+    Querybuildertypesv5SemconvResolution:
+      properties:
+        current:
+          type: string
+        kind:
+          type: string
+        members:
+          items:
+            type: string
+          nullable: true
+          type: array
+        requested:
+          type: string
       type: object
     Querybuildertypesv5Step:
       description: Step interval. Accepts a Go duration string (e.g., "60s", "1m",
@@ -8660,6 +8684,11 @@ components:
       - number
       - ""
       type: string
+    TelemetrytypesFieldResolution:
+      enum:
+      - exact
+      - ""
+      type: string
     TelemetrytypesGettableFieldKeys:
       properties:
         complete:
@@ -8685,6 +8714,42 @@ components:
       - values
       - complete
       type: object
+    TelemetrytypesGettableSemconvMigrationReport:
+      properties:
+        endUnixMilli:
+          format: int64
+          type: integer
+        entries:
+          items:
+            $ref: '#/components/schemas/TelemetrytypesSemconvMigrationReportEntry'
+          nullable: true
+          type: array
+        startUnixMilli:
+          format: int64
+          type: integer
+      required:
+      - entries
+      type: object
+    TelemetrytypesSemconvMigrationReportEntry:
+      properties:
+        current:
+          type: string
+        lastSeenUnixMilli:
+          format: int64
+          type: integer
+        old:
+          type: string
+        resourceSets:
+          minimum: 0
+          type: integer
+        services:
+          items:
+            type: string
+          nullable: true
+          type: array
+        signal:
+          type: string
+      type: object
     TelemetrytypesSignal:
       enum:
       - traces
@@ -8705,6 +8770,8 @@ components:
           $ref: '#/components/schemas/TelemetrytypesFieldContext'
         fieldDataType:
           $ref: '#/components/schemas/TelemetrytypesFieldDataType'
+        fieldResolution:
+          $ref: '#/components/schemas/TelemetrytypesFieldResolution'
         name:
           type: string
         signal:
@@ -11199,6 +11266,64 @@ paths:
       - tokenizer:
         - VIEWER
       summary: Get field keys
+      tags:
+      - fields
+  /api/v1/fields/semconv-migration:
+    get:
+      deprecated: false
+      description: Returns services that still emit old semantic-convention names
+        without the current family name
+      operationId: GetSemconvMigrationReport
+      parameters:
+      - in: query
+        name: startUnixMilli
+        schema:
+          format: int64
+          type: integer
+      - in: query
+        name: endUnixMilli
+        schema:
+          format: int64
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TelemetrytypesGettableSemconvMigrationReport'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get semantic-convention migration report
       tags:
       - fields
   /api/v1/fields/values:
@@ -18786,8 +18911,8 @@ paths:
                   alert: Payments-api error log rate above 1%
                   alertType: LOGS_BASED_ALERT
                   annotations:
-                    description: Error log rate in {{$deployment.environment}} is
-                      {{$value}}%
+                    description: Error log rate in {{$deployment.environment.name}}
+                      is {{$value}}%
                     summary: Payments-api error rate above {{$threshold}}%
                   condition:
                     compositeQuery:
@@ -18803,7 +18928,7 @@ paths:
                           groupBy:
                           - fieldContext: resource
                             fieldDataType: string
-                            name: deployment.environment
+                            name: deployment.environment.name
                           name: A
                           signal: logs
                           stepInterval: 60
@@ -18817,14 +18942,14 @@ paths:
                           groupBy:
                           - fieldContext: resource
                             fieldDataType: string
-                            name: deployment.environment
+                            name: deployment.environment.name
                           name: B
                           signal: logs
                           stepInterval: 60
                         type: builder_query
                       - spec:
                           expression: (A / B) * 100
-                          legend: '{{deployment.environment}}'
+                          legend: '{{deployment.environment.name}}'
                           name: F1
                         type: builder_formula
                       queryType: builder
@@ -18850,7 +18975,7 @@ paths:
                     team: payments
                   notificationSettings:
                     groupBy:
-                    - deployment.environment
+                    - deployment.environment.name
                     renotify:
                       alertStates:
                       - firing
@@ -18869,7 +18994,7 @@ paths:
                   alertType: LOGS_BASED_ALERT
                   annotations:
                     description: '{{$k8s.pod.name}} emitted {{$value}} panic log(s)
-                      in {{$deployment.environment}}.'
+                      in {{$deployment.environment.name}}.'
                     summary: Payments service panic
                   condition:
                     compositeQuery:
@@ -18887,8 +19012,8 @@ paths:
                             name: k8s.pod.name
                           - fieldContext: resource
                             fieldDataType: string
-                            name: deployment.environment
-                          legend: '{{k8s.pod.name}} ({{deployment.environment}})'
+                            name: deployment.environment.name
+                          legend: '{{k8s.pod.name}} ({{deployment.environment.name}})'
                           name: A
                           signal: logs
                           stepInterval: 60
@@ -18917,7 +19042,7 @@ paths:
                   notificationSettings:
                     groupBy:
                     - k8s.pod.name
-                    - deployment.environment
+                    - deployment.environment.name
                     renotify:
                       alertStates:
                       - firing
@@ -18987,8 +19112,9 @@ paths:
                   version: v5
               metric_promql:
                 description: PromQL expression instead of the builder. Dotted OTEL
-                  resource attributes are quoted ("deployment.environment"). Useful
-                  for queries that combine series with group_right or other Prom operators.
+                  resource attributes are quoted ("deployment.environment.name").
+                  Useful for queries that combine series with group_right or other
+                  Prom operators.
                 summary: Metric threshold PromQL rule
                 value:
                   alert: Kafka consumer group lag above 1000
@@ -19004,9 +19130,9 @@ paths:
                       - spec:
                           legend: '{{topic}}/{{partition}} ({{group}})'
                           name: A
-                          query: (max by(topic, partition, "deployment.environment")(kafka_log_end_offset)
-                            - on(topic, partition, "deployment.environment") group_right
-                            max by(group, topic, partition, "deployment.environment")(kafka_consumer_committed_offset))
+                          query: (max by(topic, partition, "deployment.environment.name")(kafka_log_end_offset)
+                            - on(topic, partition, "deployment.environment.name")
+                            group_right max by(group, topic, partition, "deployment.environment.name")(kafka_consumer_committed_offset))
                             > 0
                         type: promql
                       queryType: promql
@@ -19142,7 +19268,7 @@ paths:
                   alertType: METRIC_BASED_ALERT
                   annotations:
                     description: Pod {{$k8s.pod.name}} CPU is at {{$value}} of request
-                      in {{$deployment.environment}}.
+                      in {{$deployment.environment.name}}.
                     summary: Pod CPU above {{$threshold}} of request
                   condition:
                     compositeQuery:
@@ -19161,8 +19287,8 @@ paths:
                             name: k8s.pod.name
                           - fieldContext: resource
                             fieldDataType: string
-                            name: deployment.environment
-                          legend: '{{k8s.pod.name}} ({{deployment.environment}})'
+                            name: deployment.environment.name
+                          legend: '{{k8s.pod.name}} ({{deployment.environment.name}})'
                           name: A
                           signal: metrics
                           stepInterval: 60
@@ -19193,7 +19319,7 @@ paths:
                   notificationSettings:
                     groupBy:
                     - k8s.pod.name
-                    - deployment.environment
+                    - deployment.environment.name
                     renotify:
                       alertStates:
                       - firing
@@ -19217,7 +19343,7 @@ paths:
                   alert: API 5xx error rate above 1%
                   alertType: TRACES_BASED_ALERT
                   annotations:
-                    description: '{{$service.name}} 5xx rate in {{$deployment.environment}}
+                    description: '{{$service.name}} 5xx rate in {{$deployment.environment.name}}
                       is {{$value}}%.'
                     summary: API service error rate elevated
                   condition:
@@ -19229,7 +19355,7 @@ paths:
                           - expression: count()
                           disabled: true
                           filter:
-                            expression: service.name CONTAINS 'api' AND http.status_code
+                            expression: service.name CONTAINS 'api' AND http.response.status_code
                               >= 500
                           groupBy:
                           - fieldContext: resource
@@ -19237,7 +19363,7 @@ paths:
                             name: service.name
                           - fieldContext: resource
                             fieldDataType: string
-                            name: deployment.environment
+                            name: deployment.environment.name
                           name: A
                           signal: traces
                           stepInterval: 60
@@ -19254,14 +19380,14 @@ paths:
                             name: service.name
                           - fieldContext: resource
                             fieldDataType: string
-                            name: deployment.environment
+                            name: deployment.environment.name
                           name: B
                           signal: traces
                           stepInterval: 60
                         type: builder_query
                       - spec:
                           expression: (A / B) * 100
-                          legend: '{{service.name}} ({{deployment.environment}})'
+                          legend: '{{service.name}} ({{deployment.environment.name}})'
                           name: F1
                         type: builder_formula
                       queryType: builder
@@ -19289,7 +19415,7 @@ paths:
                   notificationSettings:
                     groupBy:
                     - service.name
-                    - deployment.environment
+                    - deployment.environment.name
                     newGroupEvalDelay: 2m
                     renotify:
                       alertStates:
@@ -19735,8 +19861,8 @@ paths:
                   alert: Payments-api error log rate above 1%
                   alertType: LOGS_BASED_ALERT
                   annotations:
-                    description: Error log rate in {{$deployment.environment}} is
-                      {{$value}}%
+                    description: Error log rate in {{$deployment.environment.name}}
+                      is {{$value}}%
                     summary: Payments-api error rate above {{$threshold}}%
                   condition:
                     compositeQuery:
@@ -19752,7 +19878,7 @@ paths:
                           groupBy:
                           - fieldContext: resource
                             fieldDataType: string
-                            name: deployment.environment
+                            name: deployment.environment.name
                           name: A
                           signal: logs
                           stepInterval: 60
@@ -19766,14 +19892,14 @@ paths:
                           groupBy:
                           - fieldContext: resource
                             fieldDataType: string
-                            name: deployment.environment
+                            name: deployment.environment.name
                           name: B
                           signal: logs
                           stepInterval: 60
                         type: builder_query
                       - spec:
                           expression: (A / B) * 100
-                          legend: '{{deployment.environment}}'
+                          legend: '{{deployment.environment.name}}'
                           name: F1
                         type: builder_formula
                       queryType: builder
@@ -19799,7 +19925,7 @@ paths:
                     team: payments
                   notificationSettings:
                     groupBy:
-                    - deployment.environment
+                    - deployment.environment.name
                     renotify:
                       alertStates:
                       - firing
@@ -19818,7 +19944,7 @@ paths:
                   alertType: LOGS_BASED_ALERT
                   annotations:
                     description: '{{$k8s.pod.name}} emitted {{$value}} panic log(s)
-                      in {{$deployment.environment}}.'
+                      in {{$deployment.environment.name}}.'
                     summary: Payments service panic
                   condition:
                     compositeQuery:
@@ -19836,8 +19962,8 @@ paths:
                             name: k8s.pod.name
                           - fieldContext: resource
                             fieldDataType: string
-                            name: deployment.environment
-                          legend: '{{k8s.pod.name}} ({{deployment.environment}})'
+                            name: deployment.environment.name
+                          legend: '{{k8s.pod.name}} ({{deployment.environment.name}})'
                           name: A
                           signal: logs
                           stepInterval: 60
@@ -19866,7 +19992,7 @@ paths:
                   notificationSettings:
                     groupBy:
                     - k8s.pod.name
-                    - deployment.environment
+                    - deployment.environment.name
                     renotify:
                       alertStates:
                       - firing
@@ -19936,8 +20062,9 @@ paths:
                   version: v5
               metric_promql:
                 description: PromQL expression instead of the builder. Dotted OTEL
-                  resource attributes are quoted ("deployment.environment"). Useful
-                  for queries that combine series with group_right or other Prom operators.
+                  resource attributes are quoted ("deployment.environment.name").
+                  Useful for queries that combine series with group_right or other
+                  Prom operators.
                 summary: Metric threshold PromQL rule
                 value:
                   alert: Kafka consumer group lag above 1000
@@ -19953,9 +20080,9 @@ paths:
                       - spec:
                           legend: '{{topic}}/{{partition}} ({{group}})'
                           name: A
-                          query: (max by(topic, partition, "deployment.environment")(kafka_log_end_offset)
-                            - on(topic, partition, "deployment.environment") group_right
-                            max by(group, topic, partition, "deployment.environment")(kafka_consumer_committed_offset))
+                          query: (max by(topic, partition, "deployment.environment.name")(kafka_log_end_offset)
+                            - on(topic, partition, "deployment.environment.name")
+                            group_right max by(group, topic, partition, "deployment.environment.name")(kafka_consumer_committed_offset))
                             > 0
                         type: promql
                       queryType: promql
@@ -20091,7 +20218,7 @@ paths:
                   alertType: METRIC_BASED_ALERT
                   annotations:
                     description: Pod {{$k8s.pod.name}} CPU is at {{$value}} of request
-                      in {{$deployment.environment}}.
+                      in {{$deployment.environment.name}}.
                     summary: Pod CPU above {{$threshold}} of request
                   condition:
                     compositeQuery:
@@ -20110,8 +20237,8 @@ paths:
                             name: k8s.pod.name
                           - fieldContext: resource
                             fieldDataType: string
-                            name: deployment.environment
-                          legend: '{{k8s.pod.name}} ({{deployment.environment}})'
+                            name: deployment.environment.name
+                          legend: '{{k8s.pod.name}} ({{deployment.environment.name}})'
                           name: A
                           signal: metrics
                           stepInterval: 60
@@ -20142,7 +20269,7 @@ paths:
                   notificationSettings:
                     groupBy:
                     - k8s.pod.name
-                    - deployment.environment
+                    - deployment.environment.name
                     renotify:
                       alertStates:
                       - firing
@@ -20166,7 +20293,7 @@ paths:
                   alert: API 5xx error rate above 1%
                   alertType: TRACES_BASED_ALERT
                   annotations:
-                    description: '{{$service.name}} 5xx rate in {{$deployment.environment}}
+                    description: '{{$service.name}} 5xx rate in {{$deployment.environment.name}}
                       is {{$value}}%.'
                     summary: API service error rate elevated
                   condition:
@@ -20178,7 +20305,7 @@ paths:
                           - expression: count()
                           disabled: true
                           filter:
-                            expression: service.name CONTAINS 'api' AND http.status_code
+                            expression: service.name CONTAINS 'api' AND http.response.status_code
                               >= 500
                           groupBy:
                           - fieldContext: resource
@@ -20186,7 +20313,7 @@ paths:
                             name: service.name
                           - fieldContext: resource
                             fieldDataType: string
-                            name: deployment.environment
+                            name: deployment.environment.name
                           name: A
                           signal: traces
                           stepInterval: 60
@@ -20203,14 +20330,14 @@ paths:
                             name: service.name
                           - fieldContext: resource
                             fieldDataType: string
-                            name: deployment.environment
+                            name: deployment.environment.name
                           name: B
                           signal: traces
                           stepInterval: 60
                         type: builder_query
                       - spec:
                           expression: (A / B) * 100
-                          legend: '{{service.name}} ({{deployment.environment}})'
+                          legend: '{{service.name}} ({{deployment.environment.name}})'
                           name: F1
                         type: builder_formula
                       queryType: builder
@@ -20238,7 +20365,7 @@ paths:
                   notificationSettings:
                     groupBy:
                     - service.name
-                    - deployment.environment
+                    - deployment.environment.name
                     newGroupEvalDelay: 2m
                     renotify:
                       alertStates:
@@ -20587,8 +20714,8 @@ paths:
                   alert: Payments-api error log rate above 1%
                   alertType: LOGS_BASED_ALERT
                   annotations:
-                    description: Error log rate in {{$deployment.environment}} is
-                      {{$value}}%
+                    description: Error log rate in {{$deployment.environment.name}}
+                      is {{$value}}%
                     summary: Payments-api error rate above {{$threshold}}%
                   condition:
                     compositeQuery:
@@ -20604,7 +20731,7 @@ paths:
                           groupBy:
                           - fieldContext: resource
                             fieldDataType: string
-                            name: deployment.environment
+                            name: deployment.environment.name
                           name: A
                           signal: logs
                           stepInterval: 60
@@ -20618,14 +20745,14 @@ paths:
                           groupBy:
                           - fieldContext: resource
                             fieldDataType: string
-                            name: deployment.environment
+                            name: deployment.environment.name
                           name: B
                           signal: logs
                           stepInterval: 60
                         type: builder_query
                       - spec:
                           expression: (A / B) * 100
-                          legend: '{{deployment.environment}}'
+                          legend: '{{deployment.environment.name}}'
                           name: F1
                         type: builder_formula
                       queryType: builder
@@ -20651,7 +20778,7 @@ paths:
                     team: payments
                   notificationSettings:
                     groupBy:
-                    - deployment.environment
+                    - deployment.environment.name
                     renotify:
                       alertStates:
                       - firing
@@ -20670,7 +20797,7 @@ paths:
                   alertType: LOGS_BASED_ALERT
                   annotations:
                     description: '{{$k8s.pod.name}} emitted {{$value}} panic log(s)
-                      in {{$deployment.environment}}.'
+                      in {{$deployment.environment.name}}.'
                     summary: Payments service panic
                   condition:
                     compositeQuery:
@@ -20688,8 +20815,8 @@ paths:
                             name: k8s.pod.name
                           - fieldContext: resource
                             fieldDataType: string
-                            name: deployment.environment
-                          legend: '{{k8s.pod.name}} ({{deployment.environment}})'
+                            name: deployment.environment.name
+                          legend: '{{k8s.pod.name}} ({{deployment.environment.name}})'
                           name: A
                           signal: logs
                           stepInterval: 60
@@ -20718,7 +20845,7 @@ paths:
                   notificationSettings:
                     groupBy:
                     - k8s.pod.name
-                    - deployment.environment
+                    - deployment.environment.name
                     renotify:
                       alertStates:
                       - firing
@@ -20788,8 +20915,9 @@ paths:
                   version: v5
               metric_promql:
                 description: PromQL expression instead of the builder. Dotted OTEL
-                  resource attributes are quoted ("deployment.environment"). Useful
-                  for queries that combine series with group_right or other Prom operators.
+                  resource attributes are quoted ("deployment.environment.name").
+                  Useful for queries that combine series with group_right or other
+                  Prom operators.
                 summary: Metric threshold PromQL rule
                 value:
                   alert: Kafka consumer group lag above 1000
@@ -20805,9 +20933,9 @@ paths:
                       - spec:
                           legend: '{{topic}}/{{partition}} ({{group}})'
                           name: A
-                          query: (max by(topic, partition, "deployment.environment")(kafka_log_end_offset)
-                            - on(topic, partition, "deployment.environment") group_right
-                            max by(group, topic, partition, "deployment.environment")(kafka_consumer_committed_offset))
+                          query: (max by(topic, partition, "deployment.environment.name")(kafka_log_end_offset)
+                            - on(topic, partition, "deployment.environment.name")
+                            group_right max by(group, topic, partition, "deployment.environment.name")(kafka_consumer_committed_offset))
                             > 0
                         type: promql
                       queryType: promql
@@ -20943,7 +21071,7 @@ paths:
                   alertType: METRIC_BASED_ALERT
                   annotations:
                     description: Pod {{$k8s.pod.name}} CPU is at {{$value}} of request
-                      in {{$deployment.environment}}.
+                      in {{$deployment.environment.name}}.
                     summary: Pod CPU above {{$threshold}} of request
                   condition:
                     compositeQuery:
@@ -20962,8 +21090,8 @@ paths:
                             name: k8s.pod.name
                           - fieldContext: resource
                             fieldDataType: string
-                            name: deployment.environment
-                          legend: '{{k8s.pod.name}} ({{deployment.environment}})'
+                            name: deployment.environment.name
+                          legend: '{{k8s.pod.name}} ({{deployment.environment.name}})'
                           name: A
                           signal: metrics
                           stepInterval: 60
@@ -20994,7 +21122,7 @@ paths:
                   notificationSettings:
                     groupBy:
                     - k8s.pod.name
-                    - deployment.environment
+                    - deployment.environment.name
                     renotify:
                       alertStates:
                       - firing
@@ -21018,7 +21146,7 @@ paths:
                   alert: API 5xx error rate above 1%
                   alertType: TRACES_BASED_ALERT
                   annotations:
-                    description: '{{$service.name}} 5xx rate in {{$deployment.environment}}
+                    description: '{{$service.name}} 5xx rate in {{$deployment.environment.name}}
                       is {{$value}}%.'
                     summary: API service error rate elevated
                   condition:
@@ -21030,7 +21158,7 @@ paths:
                           - expression: count()
                           disabled: true
                           filter:
-                            expression: service.name CONTAINS 'api' AND http.status_code
+                            expression: service.name CONTAINS 'api' AND http.response.status_code
                               >= 500
                           groupBy:
                           - fieldContext: resource
@@ -21038,7 +21166,7 @@ paths:
                             name: service.name
                           - fieldContext: resource
                             fieldDataType: string
-                            name: deployment.environment
+                            name: deployment.environment.name
                           name: A
                           signal: traces
                           stepInterval: 60
@@ -21055,14 +21183,14 @@ paths:
                             name: service.name
                           - fieldContext: resource
                             fieldDataType: string
-                            name: deployment.environment
+                            name: deployment.environment.name
                           name: B
                           signal: traces
                           stepInterval: 60
                         type: builder_query
                       - spec:
                           expression: (A / B) * 100
-                          legend: '{{service.name}} ({{deployment.environment}})'
+                          legend: '{{service.name}} ({{deployment.environment.name}})'
                           name: F1
                         type: builder_formula
                       queryType: builder
@@ -21090,7 +21218,7 @@ paths:
                   notificationSettings:
                     groupBy:
                     - service.name
-                    - deployment.environment
+                    - deployment.environment.name
                     newGroupEvalDelay: 2m
                     renotify:
                       alertStates:
@@ -21942,8 +22070,8 @@ paths:
                   alert: Payments-api error log rate above 1%
                   alertType: LOGS_BASED_ALERT
                   annotations:
-                    description: Error log rate in {{$deployment.environment}} is
-                      {{$value}}%
+                    description: Error log rate in {{$deployment.environment.name}}
+                      is {{$value}}%
                     summary: Payments-api error rate above {{$threshold}}%
                   condition:
                     compositeQuery:
@@ -21959,7 +22087,7 @@ paths:
                           groupBy:
                           - fieldContext: resource
                             fieldDataType: string
-                            name: deployment.environment
+                            name: deployment.environment.name
                           name: A
                           signal: logs
                           stepInterval: 60
@@ -21973,14 +22101,14 @@ paths:
                           groupBy:
                           - fieldContext: resource
                             fieldDataType: string
-                            name: deployment.environment
+                            name: deployment.environment.name
                           name: B
                           signal: logs
                           stepInterval: 60
                         type: builder_query
                       - spec:
                           expression: (A / B) * 100
-                          legend: '{{deployment.environment}}'
+                          legend: '{{deployment.environment.name}}'
                           name: F1
                         type: builder_formula
                       queryType: builder
@@ -22006,7 +22134,7 @@ paths:
                     team: payments
                   notificationSettings:
                     groupBy:
-                    - deployment.environment
+                    - deployment.environment.name
                     renotify:
                       alertStates:
                       - firing
@@ -22025,7 +22153,7 @@ paths:
                   alertType: LOGS_BASED_ALERT
                   annotations:
                     description: '{{$k8s.pod.name}} emitted {{$value}} panic log(s)
-                      in {{$deployment.environment}}.'
+                      in {{$deployment.environment.name}}.'
                     summary: Payments service panic
                   condition:
                     compositeQuery:
@@ -22043,8 +22171,8 @@ paths:
                             name: k8s.pod.name
                           - fieldContext: resource
                             fieldDataType: string
-                            name: deployment.environment
-                          legend: '{{k8s.pod.name}} ({{deployment.environment}})'
+                            name: deployment.environment.name
+                          legend: '{{k8s.pod.name}} ({{deployment.environment.name}})'
                           name: A
                           signal: logs
                           stepInterval: 60
@@ -22073,7 +22201,7 @@ paths:
                   notificationSettings:
                     groupBy:
                     - k8s.pod.name
-                    - deployment.environment
+                    - deployment.environment.name
                     renotify:
                       alertStates:
                       - firing
@@ -22143,8 +22271,9 @@ paths:
                   version: v5
               metric_promql:
                 description: PromQL expression instead of the builder. Dotted OTEL
-                  resource attributes are quoted ("deployment.environment"). Useful
-                  for queries that combine series with group_right or other Prom operators.
+                  resource attributes are quoted ("deployment.environment.name").
+                  Useful for queries that combine series with group_right or other
+                  Prom operators.
                 summary: Metric threshold PromQL rule
                 value:
                   alert: Kafka consumer group lag above 1000
@@ -22160,9 +22289,9 @@ paths:
                       - spec:
                           legend: '{{topic}}/{{partition}} ({{group}})'
                           name: A
-                          query: (max by(topic, partition, "deployment.environment")(kafka_log_end_offset)
-                            - on(topic, partition, "deployment.environment") group_right
-                            max by(group, topic, partition, "deployment.environment")(kafka_consumer_committed_offset))
+                          query: (max by(topic, partition, "deployment.environment.name")(kafka_log_end_offset)
+                            - on(topic, partition, "deployment.environment.name")
+                            group_right max by(group, topic, partition, "deployment.environment.name")(kafka_consumer_committed_offset))
                             > 0
                         type: promql
                       queryType: promql
@@ -22298,7 +22427,7 @@ paths:
                   alertType: METRIC_BASED_ALERT
                   annotations:
                     description: Pod {{$k8s.pod.name}} CPU is at {{$value}} of request
-                      in {{$deployment.environment}}.
+                      in {{$deployment.environment.name}}.
                     summary: Pod CPU above {{$threshold}} of request
                   condition:
                     compositeQuery:
@@ -22317,8 +22446,8 @@ paths:
                             name: k8s.pod.name
                           - fieldContext: resource
                             fieldDataType: string
-                            name: deployment.environment
-                          legend: '{{k8s.pod.name}} ({{deployment.environment}})'
+                            name: deployment.environment.name
+                          legend: '{{k8s.pod.name}} ({{deployment.environment.name}})'
                           name: A
                           signal: metrics
                           stepInterval: 60
@@ -22349,7 +22478,7 @@ paths:
                   notificationSettings:
                     groupBy:
                     - k8s.pod.name
-                    - deployment.environment
+                    - deployment.environment.name
                     renotify:
                       alertStates:
                       - firing
@@ -22373,7 +22502,7 @@ paths:
                   alert: API 5xx error rate above 1%
                   alertType: TRACES_BASED_ALERT
                   annotations:
-                    description: '{{$service.name}} 5xx rate in {{$deployment.environment}}
+                    description: '{{$service.name}} 5xx rate in {{$deployment.environment.name}}
                       is {{$value}}%.'
                     summary: API service error rate elevated
                   condition:
@@ -22385,7 +22514,7 @@ paths:
                           - expression: count()
                           disabled: true
                           filter:
-                            expression: service.name CONTAINS 'api' AND http.status_code
+                            expression: service.name CONTAINS 'api' AND http.response.status_code
                               >= 500
                           groupBy:
                           - fieldContext: resource
@@ -22393,7 +22522,7 @@ paths:
                             name: service.name
                           - fieldContext: resource
                             fieldDataType: string
-                            name: deployment.environment
+                            name: deployment.environment.name
                           name: A
                           signal: traces
                           stepInterval: 60
@@ -22410,14 +22539,14 @@ paths:
                             name: service.name
                           - fieldContext: resource
                             fieldDataType: string
-                            name: deployment.environment
+                            name: deployment.environment.name
                           name: B
                           signal: traces
                           stepInterval: 60
                         type: builder_query
                       - spec:
                           expression: (A / B) * 100
-                          legend: '{{service.name}} ({{deployment.environment}})'
+                          legend: '{{service.name}} ({{deployment.environment.name}})'
                           name: F1
                         type: builder_formula
                       queryType: builder
@@ -22445,7 +22574,7 @@ paths:
                   notificationSettings:
                     groupBy:
                     - service.name
-                    - deployment.environment
+                    - deployment.environment.name
                     newGroupEvalDelay: 2m
                     renotify:
                       alertStates:

@@ -51,9 +51,9 @@ func postableRuleExamples() []handler.OpenAPIExample {
 									"filter":       map[string]any{"expression": "k8s.deployment.name = 'api-service'"},
 									"groupBy": []any{
 										map[string]any{"name": "k8s.pod.name", "fieldContext": "resource", "fieldDataType": "string"},
-										map[string]any{"name": "deployment.environment", "fieldContext": "resource", "fieldDataType": "string"},
+										map[string]any{"name": "deployment.environment.name", "fieldContext": "resource", "fieldDataType": "string"},
 									},
-									"legend": "{{k8s.pod.name}} ({{deployment.environment}})",
+									"legend": "{{k8s.pod.name}} ({{deployment.environment.name}})",
 								},
 							},
 						},
@@ -74,12 +74,12 @@ func postableRuleExamples() []handler.OpenAPIExample {
 				},
 				"evaluation": rolling("15m", "1m"),
 				"notificationSettings": map[string]any{
-					"groupBy":  []any{"k8s.pod.name", "deployment.environment"},
+					"groupBy":  []any{"k8s.pod.name", "deployment.environment.name"},
 					"renotify": renotify("4h", "firing"),
 				},
 				"labels": map[string]any{"severity": "critical", "team": "platform"},
 				"annotations": map[string]any{
-					"description": "Pod {{$k8s.pod.name}} CPU is at {{$value}} of request in {{$deployment.environment}}.",
+					"description": "Pod {{$k8s.pod.name}} CPU is at {{$value}} of request in {{$deployment.environment.name}}.",
 					"summary":     "Pod CPU above {{$threshold}} of request",
 				},
 			},
@@ -170,7 +170,7 @@ func postableRuleExamples() []handler.OpenAPIExample {
 		{
 			Name:        "metric_promql",
 			Summary:     "Metric threshold PromQL rule",
-			Description: "PromQL expression instead of the builder. Dotted OTEL resource attributes are quoted (\"deployment.environment\"). Useful for queries that combine series with group_right or other Prom operators.",
+			Description: "PromQL expression instead of the builder. Dotted OTEL resource attributes are quoted (\"deployment.environment.name\"). Useful for queries that combine series with group_right or other Prom operators.",
 			Value: map[string]any{
 				"alert":         "Kafka consumer group lag above 1000",
 				"alertType":     "METRIC_BASED_ALERT",
@@ -187,7 +187,7 @@ func postableRuleExamples() []handler.OpenAPIExample {
 								"type": "promql",
 								"spec": map[string]any{
 									"name":   "A",
-									"query":  "(max by(topic, partition, \"deployment.environment\")(kafka_log_end_offset) - on(topic, partition, \"deployment.environment\") group_right max by(group, topic, partition, \"deployment.environment\")(kafka_consumer_committed_offset)) > 0",
+									"query":  "(max by(topic, partition, \"deployment.environment.name\")(kafka_log_end_offset) - on(topic, partition, \"deployment.environment.name\") group_right max by(group, topic, partition, \"deployment.environment.name\")(kafka_consumer_committed_offset)) > 0",
 									"legend": "{{topic}}/{{partition}} ({{group}})",
 								},
 							},
@@ -299,9 +299,9 @@ func postableRuleExamples() []handler.OpenAPIExample {
 									"filter":       map[string]any{"expression": "service.name = 'payments-api' AND severity_text = 'ERROR' AND body CONTAINS 'panic'"},
 									"groupBy": []any{
 										map[string]any{"name": "k8s.pod.name", "fieldContext": "resource", "fieldDataType": "string"},
-										map[string]any{"name": "deployment.environment", "fieldContext": "resource", "fieldDataType": "string"},
+										map[string]any{"name": "deployment.environment.name", "fieldContext": "resource", "fieldDataType": "string"},
 									},
-									"legend": "{{k8s.pod.name}} ({{deployment.environment}})",
+									"legend": "{{k8s.pod.name}} ({{deployment.environment.name}})",
 								},
 							},
 						},
@@ -322,12 +322,12 @@ func postableRuleExamples() []handler.OpenAPIExample {
 				},
 				"evaluation": rolling("5m", "1m"),
 				"notificationSettings": map[string]any{
-					"groupBy":  []any{"k8s.pod.name", "deployment.environment"},
+					"groupBy":  []any{"k8s.pod.name", "deployment.environment.name"},
 					"renotify": renotify("15m", "firing"),
 				},
 				"labels": map[string]any{"severity": "critical", "team": "payments"},
 				"annotations": map[string]any{
-					"description": "{{$k8s.pod.name}} emitted {{$value}} panic log(s) in {{$deployment.environment}}.",
+					"description": "{{$k8s.pod.name}} emitted {{$value}} panic log(s) in {{$deployment.environment.name}}.",
 					"summary":     "Payments service panic",
 				},
 			},
@@ -358,7 +358,7 @@ func postableRuleExamples() []handler.OpenAPIExample {
 									"disabled":     true,
 									"aggregations": []any{map[string]any{"expression": "count()"}},
 									"filter":       map[string]any{"expression": "service.name = 'payments-api' AND severity_text IN ['ERROR', 'FATAL']"},
-									"groupBy":      []any{map[string]any{"name": "deployment.environment", "fieldContext": "resource", "fieldDataType": "string"}},
+									"groupBy":      []any{map[string]any{"name": "deployment.environment.name", "fieldContext": "resource", "fieldDataType": "string"}},
 								},
 							},
 							map[string]any{
@@ -370,7 +370,7 @@ func postableRuleExamples() []handler.OpenAPIExample {
 									"disabled":     true,
 									"aggregations": []any{map[string]any{"expression": "count()"}},
 									"filter":       map[string]any{"expression": "service.name = 'payments-api'"},
-									"groupBy":      []any{map[string]any{"name": "deployment.environment", "fieldContext": "resource", "fieldDataType": "string"}},
+									"groupBy":      []any{map[string]any{"name": "deployment.environment.name", "fieldContext": "resource", "fieldDataType": "string"}},
 								},
 							},
 							map[string]any{
@@ -378,7 +378,7 @@ func postableRuleExamples() []handler.OpenAPIExample {
 								"spec": map[string]any{
 									"name":       "F1",
 									"expression": "(A / B) * 100",
-									"legend":     "{{deployment.environment}}",
+									"legend":     "{{deployment.environment.name}}",
 								},
 							},
 						},
@@ -399,12 +399,12 @@ func postableRuleExamples() []handler.OpenAPIExample {
 				},
 				"evaluation": rolling("5m", "1m"),
 				"notificationSettings": map[string]any{
-					"groupBy":  []any{"deployment.environment"},
+					"groupBy":  []any{"deployment.environment.name"},
 					"renotify": renotify("30m", "firing"),
 				},
 				"labels": map[string]any{"severity": "critical", "team": "payments"},
 				"annotations": map[string]any{
-					"description": "Error log rate in {{$deployment.environment}} is {{$value}}%",
+					"description": "Error log rate in {{$deployment.environment.name}} is {{$value}}%",
 					"summary":     "Payments-api error rate above {{$threshold}}%",
 				},
 			},
@@ -669,10 +669,10 @@ func postableRuleExamples() []handler.OpenAPIExample {
 									"stepInterval": 60,
 									"disabled":     true,
 									"aggregations": []any{map[string]any{"expression": "count()"}},
-									"filter":       map[string]any{"expression": "service.name CONTAINS 'api' AND http.status_code >= 500"},
+									"filter":       map[string]any{"expression": "service.name CONTAINS 'api' AND http.response.status_code >= 500"},
 									"groupBy": []any{
 										map[string]any{"name": "service.name", "fieldContext": "resource", "fieldDataType": "string"},
-										map[string]any{"name": "deployment.environment", "fieldContext": "resource", "fieldDataType": "string"},
+										map[string]any{"name": "deployment.environment.name", "fieldContext": "resource", "fieldDataType": "string"},
 									},
 								},
 							},
@@ -687,7 +687,7 @@ func postableRuleExamples() []handler.OpenAPIExample {
 									"filter":       map[string]any{"expression": "service.name CONTAINS 'api'"},
 									"groupBy": []any{
 										map[string]any{"name": "service.name", "fieldContext": "resource", "fieldDataType": "string"},
-										map[string]any{"name": "deployment.environment", "fieldContext": "resource", "fieldDataType": "string"},
+										map[string]any{"name": "deployment.environment.name", "fieldContext": "resource", "fieldDataType": "string"},
 									},
 								},
 							},
@@ -696,7 +696,7 @@ func postableRuleExamples() []handler.OpenAPIExample {
 								"spec": map[string]any{
 									"name":       "F1",
 									"expression": "(A / B) * 100",
-									"legend":     "{{service.name}} ({{deployment.environment}})",
+									"legend":     "{{service.name}} ({{deployment.environment.name}})",
 								},
 							},
 						},
@@ -717,14 +717,14 @@ func postableRuleExamples() []handler.OpenAPIExample {
 				},
 				"evaluation": rolling("5m", "1m"),
 				"notificationSettings": map[string]any{
-					"groupBy":           []any{"service.name", "deployment.environment"},
+					"groupBy":           []any{"service.name", "deployment.environment.name"},
 					"newGroupEvalDelay": "2m",
 					"usePolicy":         false,
 					"renotify":          renotify("30m", "firing", "nodata"),
 				},
 				"labels": map[string]any{"team": "platform"},
 				"annotations": map[string]any{
-					"description": "{{$service.name}} 5xx rate in {{$deployment.environment}} is {{$value}}%.",
+					"description": "{{$service.name}} 5xx rate in {{$deployment.environment.name}} is {{$value}}%.",
 					"summary":     "API service error rate elevated",
 				},
 			},

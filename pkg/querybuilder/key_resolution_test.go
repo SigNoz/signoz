@@ -52,8 +52,12 @@ func TestSynthesizeKeys(t *testing.T) {
 			wantDataTypes: []telemetrytypes.FieldDataType{telemetrytypes.FieldDataTypeString},
 		},
 		{
-			name:          "qualified resource context honored as single string key",
-			field:         telemetrytypes.TelemetryFieldKey{Name: "k8s.cluster.name", FieldContext: telemetrytypes.FieldContextResource},
+			name: "qualified exact resource context honored as single string key",
+			field: telemetrytypes.TelemetryFieldKey{
+				Name:            "k8s.cluster.name",
+				FieldContext:    telemetrytypes.FieldContextResource,
+				FieldResolution: telemetrytypes.FieldResolutionExact,
+			},
 			value:         nil,
 			wantContexts:  []telemetrytypes.FieldContext{telemetrytypes.FieldContextResource},
 			wantDataTypes: []telemetrytypes.FieldDataType{telemetrytypes.FieldDataTypeString},
@@ -83,6 +87,7 @@ func TestSynthesizeKeys(t *testing.T) {
 				assert.Equal(t, tt.field.Name, k.Name, "name preserved")
 				assert.Equal(t, tt.wantContexts[i], k.FieldContext)
 				assert.Equal(t, tt.wantDataTypes[i], k.FieldDataType)
+				assert.Equal(t, tt.field.FieldResolution, k.FieldResolution, "field resolution should be preserved")
 			}
 		})
 	}

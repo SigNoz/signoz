@@ -6,9 +6,11 @@ import (
 	"strings"
 	"unicode"
 
+	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
 	"github.com/SigNoz/signoz/pkg/semconv"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/antlr4-go/antlr/v4"
 )
 
 // semconvResolutionsForRequest reports only query-builder resolutions. Raw
@@ -27,7 +29,7 @@ func semconvResolutionsForRequest(req *qbtypes.QueryRangeRequest) []qbtypes.Semc
 			continue
 		}
 
-		payload, err := json.Marshal(envelope.Spec)
+		payload, err := semconvResolutionPayload(envelope.Spec)
 		if err != nil {
 			continue
 		}
@@ -42,7 +44,7 @@ func semconvResolutionsForRequest(req *qbtypes.QueryRangeRequest) []qbtypes.Semc
 			}
 
 			for _, requested := range semconvRequestSpellings(family, signal) {
-				if !containsSemconvName(text, requested) {
+				if !containsSemconvRequestName(text, requested) {
 					continue
 				}
 				identity := family.Kind.StringValue() + "\x00" + requested + "\x00" + family.Current
@@ -64,6 +66,68 @@ func semconvResolutionsForRequest(req *qbtypes.QueryRangeRequest) []qbtypes.Semc
 		return nil
 	}
 	return resolutions
+}
+
+// semconvResolutionPayload removes fields that explicitly selected exact
+// resolution before the generic family-name scan. This keeps response metadata
+// aligned with execution for both exact(key) filter syntax and structured
+// TelemetryFieldKey objects with fieldResolution:"exact".
+func semconvResolutionPayload(spec any) ([]byte, error) {
+	payload, err := json.Marshal(spec)
+	if err != nil {
+		return nil, err
+	}
+
+	var document any
+	if err := json.Unmarshal(payload, &document); err != nil {
+		return nil, err
+	}
+	scrubExactFields(document)
+	return json.Marshal(document)
+}
+
+func scrubExactFields(value any) {
+	switch typed := value.(type) {
+	case map[string]any:
+		if resolution, ok := typed["fieldResolution"].(string); ok && strings.EqualFold(resolution, "exact") {
+			delete(typed, "name")
+		}
+		for key, child := range typed {
+			if text, ok := child.(string); ok {
+				typed[key] = scrubExactCalls(text)
+				continue
+			}
+			scrubExactFields(child)
+		}
+	case []any:
+		for _, child := range typed {
+			scrubExactFields(child)
+		}
+	}
+}
+
+func scrubExactCalls(input string) string {
+	lexer := grammar.NewFilterQueryLexer(antlr.NewInputStream(input))
+	tokens := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
+	tokens.Fill()
+	allTokens := tokens.GetAllTokens()
+	result := []rune(input)
+	for index := 0; index+3 < len(allTokens); index++ {
+		if allTokens[index].GetTokenType() != grammar.FilterQueryLexerEXACT ||
+			allTokens[index+1].GetTokenType() != grammar.FilterQueryLexerLPAREN ||
+			allTokens[index+2].GetTokenType() != grammar.FilterQueryLexerKEY ||
+			allTokens[index+3].GetTokenType() != grammar.FilterQueryLexerRPAREN {
+			continue
+		}
+		start, stop := allTokens[index].GetStart(), allTokens[index+3].GetStop()
+		if start < 0 || stop >= len(result) {
+			continue
+		}
+		for position := start; position <= stop; position++ {
+			result[position] = ' '
+		}
+	}
+	return string(result)
 }
 
 func semconvResolutionSignal(spec any) (telemetrytypes.Signal, bool) {
@@ -104,6 +168,22 @@ func semconvRequestSpellings(family semconv.Family, signal telemetrytypes.Signal
 		}
 	}
 	return spellings
+}
+
+func containsSemconvRequestName(text, name string) bool {
+	if containsSemconvName(text, name) {
+		return true
+	}
+	// Filter expressions qualify attributes with their field context. A dot is
+	// otherwise part of a semantic-convention name, so check the two contexts
+	// that can contain schema attribute families explicitly. This still rejects
+	// larger custom names such as custom.deployment.environment.
+	for _, context := range []string{"attribute.", "resource."} {
+		if containsSemconvName(text, context+name) {
+			return true
+		}
+	}
+	return false
 }
 
 func containsSemconvName(text, name string) bool {

@@ -652,7 +652,16 @@ export const removeKeysFromExpression = (
 	}
 
 	function visitComparison(ctx: ComparisonContext): string | null {
-		const keyText = ctx.key().getText().trim().toLowerCase();
+		const field = ctx.field();
+		// The runtime returns null for the inactive field alternative even though
+		// the generated TypeScript signature is non-nullable.
+		const exactCall = field.exactCall() as unknown as ReturnType<
+			typeof field.exactCall
+		> | null;
+		const keyText = (exactCall ? exactCall.key() : field.key())
+			.getText()
+			.trim()
+			.toLowerCase();
 
 		if (!keysSet.has(keyText)) {
 			return src(ctx);

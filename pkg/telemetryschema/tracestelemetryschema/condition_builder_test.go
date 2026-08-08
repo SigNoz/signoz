@@ -328,7 +328,7 @@ func TestConditionForSemconvFamilyPositiveFilterChecksPresence(t *testing.T) {
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	assert.Empty(t, warnings)
-	assert.Contains(t, sql, "(COALESCE(NULLIF(attributes_string['deployment.environment.name'], ''), NULLIF(attributes_string['deployment.environment'], ''), '') = ? AND ((mapContains(attributes_string, 'deployment.environment.name') OR mapContains(attributes_string, 'deployment.environment'))))")
+	assert.Contains(t, sql, "(COALESCE(NULLIF(attributes_string['deployment.environment.name'], ''), NULLIF(attributes_string['deployment.environment'], ''), '') = ? AND (mapContains(attributes_string, 'deployment.environment.name') OR mapContains(attributes_string, 'deployment.environment')))")
 	assert.Equal(t, []any{"production"}, args)
 }
 
@@ -380,7 +380,7 @@ func TestConditionForSemconvFamilyNotExistsChecksEveryMember(t *testing.T) {
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	assert.Empty(t, warnings)
-	assert.Contains(t, sql, "NOT (((mapContains(attributes_string, 'deployment.environment.name') OR mapContains(attributes_string, 'deployment.environment'))))")
+	assert.Contains(t, sql, "NOT ((mapContains(attributes_string, 'deployment.environment.name') OR mapContains(attributes_string, 'deployment.environment')))")
 	assert.Empty(t, args)
 }
 

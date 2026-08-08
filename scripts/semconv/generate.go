@@ -114,6 +114,8 @@ func main() {
 	goOutput := flag.String("go-out", filepath.Join(root, "pkg/semconv/families_gen.go"), "generated Go output")
 	tsOutput := flag.String("ts-out", filepath.Join(root, "frontend/src/constants/generated/semconvFamilies.gen.ts"), "generated TypeScript output")
 	check := flag.Bool("check", false, "fail if generated files are stale")
+	lint := flag.Bool("lint", false, "fail on old-name literals in backend or frontend product code")
+	lintExceptions := flag.String("lint-exceptions", filepath.Join(root, "scripts/semconv/lint-exceptions.yaml"), "old-name literal lint exceptions")
 	flag.Parse()
 
 	if len(schemaPaths) == 0 {
@@ -137,6 +139,13 @@ func main() {
 		if err := checkFile(*tsOutput, tsBytes); err != nil {
 			fatal(err)
 		}
+	}
+	if *lint {
+		if err := lintRepository(root, families, *lintExceptions); err != nil {
+			fatal(err)
+		}
+	}
+	if *check || *lint {
 		return
 	}
 
@@ -669,11 +678,11 @@ func renderTypeScript(families []generatedFamily) []byte {
 	for _, family := range families {
 		out.WriteString("\t{\n")
 		fmt.Fprintf(&out, "\t\tcurrent: %s,\n", tsString(family.Current))
-		fmt.Fprintf(&out, "\t\told: %s,\n", tsStringSlice(family.Old))
+		writeTypeScriptSlice(&out, "old", family.Old)
 		fmt.Fprintf(&out, "\t\tkind: %s,\n", tsString(family.Kind))
-		fmt.Fprintf(&out, "\t\tcontexts: %s,\n", tsStringSlice(family.Contexts))
-		fmt.Fprintf(&out, "\t\tsignals: %s,\n", tsStringSlice(family.Signals))
-		fmt.Fprintf(&out, "\t\tapplyToMetrics: %s,\n", tsStringSlice(family.ApplyToMetrics))
+		writeTypeScriptSlice(&out, "contexts", family.Contexts)
+		writeTypeScriptSlice(&out, "signals", family.Signals)
+		writeTypeScriptSlice(&out, "applyToMetrics", family.ApplyToMetrics)
 		out.WriteString("\t\tvalueMap: {")
 		keys := sortedMapKeys(family.ValueMap)
 		for i, key := range keys {
@@ -698,6 +707,21 @@ func tsStringSlice(values []string) string {
 		quoted[i] = tsString(value)
 	}
 	return "[" + strings.Join(quoted, ", ") + "]"
+}
+
+func writeTypeScriptSlice(out *bytes.Buffer, name string, values []string) {
+	const indent = "\t\t"
+	inline := fmt.Sprintf("%s%s: %s,", indent, name, tsStringSlice(values))
+	if len(inline) <= 80 {
+		out.WriteString(inline + "\n")
+		return
+	}
+
+	fmt.Fprintf(out, "%s%s: [\n", indent, name)
+	for _, value := range values {
+		fmt.Fprintf(out, "%s\t%s,\n", indent, tsString(value))
+	}
+	fmt.Fprintf(out, "%s],\n", indent)
 }
 
 func sortedMapKeys[T any](values map[string]T) []string {

@@ -4,37 +4,82 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/types/metricreductionruletypes"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestUpdatableReductionRuleValidate(t *testing.T) {
-	cases := []struct {
-		name    string
-		req     *metricreductionruletypes.UpdatableReductionRule
-		wantErr bool
-	}{
-		{"nil", nil, true},
-		{"invalid match type", &metricreductionruletypes.UpdatableReductionRule{Labels: []string{"host"}}, true},
-		{"empty labels", &metricreductionruletypes.UpdatableReductionRule{MatchType: metricreductionruletypes.MatchTypeDrop}, true},
-		{"drop protected label", &metricreductionruletypes.UpdatableReductionRule{MatchType: metricreductionruletypes.MatchTypeDrop, Labels: []string{"host", "le"}}, true},
-		{"keep protected label is allowed", &metricreductionruletypes.UpdatableReductionRule{MatchType: metricreductionruletypes.MatchTypeKeep, Labels: []string{"le"}}, false},
-		{"valid drop", &metricreductionruletypes.UpdatableReductionRule{MatchType: metricreductionruletypes.MatchTypeDrop, Labels: []string{"host"}}, false},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			if tc.wantErr {
-				require.Error(t, tc.req.Validate())
-				return
-			}
-			require.NoError(t, tc.req.Validate())
-		})
-	}
+func TestNilUpdatableReductionRuleReturnsError(t *testing.T) {
+	err := (*metricreductionruletypes.UpdatableReductionRule)(nil).Validate()
+
+	assert.Error(t, err, "nil update request should be rejected")
 }
 
-func TestPostableReductionRuleValidate(t *testing.T) {
-	valid := metricreductionruletypes.UpdatableReductionRule{MatchType: metricreductionruletypes.MatchTypeKeep, Labels: []string{"host"}}
+func TestUpdatableReductionRuleRejectsInvalidMatchType(t *testing.T) {
+	req := &metricreductionruletypes.UpdatableReductionRule{Labels: []string{"host"}}
 
-	require.Error(t, (*metricreductionruletypes.PostableReductionRule)(nil).Validate(), "nil request")
-	require.Error(t, (&metricreductionruletypes.PostableReductionRule{UpdatableReductionRule: valid}).Validate(), "metricName required")
-	require.NoError(t, (&metricreductionruletypes.PostableReductionRule{MetricName: "m", UpdatableReductionRule: valid}).Validate())
+	err := req.Validate()
+
+	assert.Error(t, err, "unknown match type should be rejected")
+}
+
+func TestUpdatableReductionRuleRejectsEmptyLabels(t *testing.T) {
+	req := &metricreductionruletypes.UpdatableReductionRule{MatchType: metricreductionruletypes.MatchTypeDrop}
+
+	err := req.Validate()
+
+	assert.Error(t, err, "empty label list should be rejected")
+}
+
+func TestUpdatableReductionRuleAcceptsKeepRule(t *testing.T) {
+	req := &metricreductionruletypes.UpdatableReductionRule{
+		MatchType: metricreductionruletypes.MatchTypeKeep,
+		Labels:    []string{"le"},
+	}
+
+	err := req.Validate()
+
+	assert.NoError(t, err, "structurally valid keep rule should be accepted")
+}
+
+func TestUpdatableReductionRuleAcceptsDropRule(t *testing.T) {
+	req := &metricreductionruletypes.UpdatableReductionRule{
+		MatchType: metricreductionruletypes.MatchTypeDrop,
+		Labels:    []string{"host"},
+	}
+
+	err := req.Validate()
+
+	assert.NoError(t, err, "structurally valid drop rule should be accepted")
+}
+
+func TestNilPostableReductionRuleReturnsError(t *testing.T) {
+	err := (*metricreductionruletypes.PostableReductionRule)(nil).Validate()
+
+	assert.Error(t, err, "nil create request should be rejected")
+}
+
+func TestPostableReductionRuleRequiresMetricName(t *testing.T) {
+	req := &metricreductionruletypes.PostableReductionRule{
+		UpdatableReductionRule: metricreductionruletypes.UpdatableReductionRule{
+			MatchType: metricreductionruletypes.MatchTypeKeep,
+			Labels:    []string{"host"},
+		},
+	}
+
+	err := req.Validate()
+
+	assert.Error(t, err, "metric name should be required")
+}
+
+func TestPostableReductionRuleAcceptsValidRequest(t *testing.T) {
+	req := &metricreductionruletypes.PostableReductionRule{
+		MetricName: "m",
+		UpdatableReductionRule: metricreductionruletypes.UpdatableReductionRule{
+			MatchType: metricreductionruletypes.MatchTypeKeep,
+			Labels:    []string{"host"},
+		},
+	}
+
+	err := req.Validate()
+
+	assert.NoError(t, err, "complete create request should be accepted")
 }

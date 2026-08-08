@@ -141,29 +141,32 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) []
 	for idx := range query.GroupBy {
 		groupBy := query.GroupBy[idx]
 		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
-			Name:          groupBy.Name,
-			Signal:        telemetrytypes.SignalLogs,
-			FieldContext:  groupBy.FieldContext,
-			FieldDataType: groupBy.FieldDataType,
+			Name:            groupBy.Name,
+			Signal:          telemetrytypes.SignalLogs,
+			FieldContext:    groupBy.FieldContext,
+			FieldDataType:   groupBy.FieldDataType,
+			FieldResolution: groupBy.FieldResolution,
 		})
 	}
 
 	for idx := range query.SelectFields {
 		selectField := query.SelectFields[idx]
 		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
-			Name:          selectField.Name,
-			Signal:        telemetrytypes.SignalLogs,
-			FieldContext:  selectField.FieldContext,
-			FieldDataType: selectField.FieldDataType,
+			Name:            selectField.Name,
+			Signal:          telemetrytypes.SignalLogs,
+			FieldContext:    selectField.FieldContext,
+			FieldDataType:   selectField.FieldDataType,
+			FieldResolution: selectField.FieldResolution,
 		})
 	}
 
 	for idx := range query.Order {
 		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
-			Name:          query.Order[idx].Key.Name,
-			Signal:        telemetrytypes.SignalLogs,
-			FieldContext:  query.Order[idx].Key.FieldContext,
-			FieldDataType: query.Order[idx].Key.FieldDataType,
+			Name:            query.Order[idx].Key.Name,
+			Signal:          telemetrytypes.SignalLogs,
+			FieldContext:    query.Order[idx].Key.FieldContext,
+			FieldDataType:   query.Order[idx].Key.FieldDataType,
+			FieldResolution: query.Order[idx].Key.FieldResolution,
 		})
 	}
 

@@ -1,4 +1,8 @@
-import { findOldSemconvNames, getSemconvRename } from 'utils/semconv';
+import {
+	findOldSemconvNames,
+	getSemconvMembers,
+	getSemconvRename,
+} from 'utils/semconv';
 
 describe('semantic convention helpers', () => {
 	it('returns the current name for an old attribute', () => {
@@ -25,5 +29,12 @@ describe('semantic convention helpers', () => {
 		expect(
 			findOldSemconvNames('deployment.environment.name = prod'),
 		).toStrictEqual([]);
+	});
+
+	it('returns current-first members for compatibility readers', () => {
+		expect(getSemconvMembers('http.request.method')).toStrictEqual([
+			'http.request.method',
+			'http.method',
+		]);
 	});
 });

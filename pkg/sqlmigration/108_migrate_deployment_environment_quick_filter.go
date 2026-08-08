@@ -85,7 +85,7 @@ func (migration *migrateDeploymentEnvironmentQuickFilter) migrate(ctx context.Co
 	rows := make([]*semconvQuickFilterRow, 0)
 	if err := tx.NewSelect().
 		Model(&rows).
-		Where("signal IN (?)", bun.In([]string{"traces", "api_monitoring", "exceptions"})).
+		Where("signal IN (?)", bun.In([]string{"traces", "logs", "api_monitoring", "exceptions", "meter"})).
 		Scan(ctx); err != nil {
 		return err
 	}

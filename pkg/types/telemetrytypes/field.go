@@ -42,6 +42,9 @@ type TelemetryFieldKey struct {
 	Signal        Signal        `json:"signal"`
 	FieldContext  FieldContext  `json:"fieldContext"`
 	FieldDataType FieldDataType `json:"fieldDataType"`
+	// FieldResolutionExact addresses only Name as physically stored. The zero
+	// value resolves every enabled semantic-convention member for Name.
+	FieldResolution FieldResolution `json:"fieldResolution,omitzero"`
 
 	JSONPlan     JSONAccessPlan               `json:"-"`
 	Indexes      []TelemetryFieldKeySkipIndex `json:"-"`
@@ -89,6 +92,7 @@ func (f *TelemetryFieldKey) ArrayParentSelectors() []*FieldKeySelector {
 			SelectorMatchType: FieldSelectorMatchTypeExact,
 			Signal:            f.Signal,
 			FieldContext:      f.FieldContext,
+			FieldResolution:   f.FieldResolution,
 			Limit:             1,
 		})
 	}
@@ -112,6 +116,9 @@ func (f TelemetryFieldKey) String() string {
 	}
 	if f.Materialized {
 		sb.WriteString(",materialized=true")
+	}
+	if f.FieldResolution == FieldResolutionExact {
+		sb.WriteString(",resolution=exact")
 	}
 	if len(f.Indexes) > 0 {
 		sb.WriteString(",indexes=[")
@@ -261,6 +268,7 @@ type FieldKeySelector struct {
 	Source            Source                 `json:"source"`
 	FieldContext      FieldContext           `json:"fieldContext"`
 	FieldDataType     FieldDataType          `json:"fieldDataType"`
+	FieldResolution   FieldResolution        `json:"fieldResolution,omitzero"`
 	Name              string                 `json:"name"`
 	SelectorMatchType FieldSelectorMatchType `json:"selectorMatchType"`
 	Limit             int                    `json:"limit"`

@@ -995,6 +995,16 @@ describe('removeKeysFromExpression', () => {
 			expect(result).toBe("status = 'success'");
 		});
 
+		it('should remove a comparison that uses the exact field wrapper', () => {
+			const expression =
+				"exact(resource.deployment.environment) EXISTS AND service.name = 'api-gateway'";
+			const result = removeKeysFromExpression(expression, [
+				'resource.deployment.environment',
+			]);
+
+			expect(result).toBe("service.name = 'api-gateway'");
+		});
+
 		it('should remove multiple keys from expression', () => {
 			const expression =
 				"service.name = 'api-gateway' AND status = 'success' AND region = 'us-east-1'";

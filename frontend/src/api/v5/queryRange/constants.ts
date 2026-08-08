@@ -64,12 +64,12 @@ export const COMMON_FILTERS = {
 	SERVER_SPANS: "kind_string = 'Server'",
 	CLIENT_SPANS: "kind_string = 'Client'",
 	INTERNAL_SPANS: "kind_string = 'Internal'",
-	ERROR_SPANS: 'http.status_code >= 400',
-	SUCCESS_SPANS: 'http.status_code < 400',
+	ERROR_SPANS: 'http.response.status_code >= 400',
+	SUCCESS_SPANS: 'http.response.status_code < 400',
 
 	// Common service filters
 	EXCLUDE_HEALTH_CHECKS: "http.route != '/health' AND http.route != '/ping'",
-	HTTP_REQUESTS: "http.method != ''",
+	HTTP_REQUESTS: "http.request.method != ''",
 
 	// Log filters
 	ERROR_LOGS: "severity_text = 'ERROR'",
@@ -87,7 +87,7 @@ export const COMMON_GROUP_BY_FIELDS = {
 		fieldContext: 'resource' as const,
 	},
 	HTTP_METHOD: {
-		name: 'http.method',
+		name: 'http.request.method',
 		fieldDataType: 'string' as const,
 		fieldContext: 'attribute' as const,
 	},
@@ -97,7 +97,7 @@ export const COMMON_GROUP_BY_FIELDS = {
 		fieldContext: 'attribute' as const,
 	},
 	HTTP_STATUS_CODE: {
-		name: 'http.status_code',
+		name: 'http.response.status_code',
 		fieldDataType: 'int64' as const,
 		fieldContext: 'attribute' as const,
 	},

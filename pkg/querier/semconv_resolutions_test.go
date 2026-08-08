@@ -75,6 +75,53 @@ func TestSemconvResolutionsReportsCurrentLogAttribute(t *testing.T) {
 	}}, semconvResolutionsForRequest(req), "current log attribute should identify its complete family")
 }
 
+func TestSemconvResolutionsIgnoresExactFilterField(t *testing.T) {
+	req := &qbtypes.QueryRangeRequest{
+		CompositeQuery: qbtypes.CompositeQuery{Queries: []qbtypes.QueryEnvelope{{
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal: telemetrytypes.SignalTraces,
+				Filter: &qbtypes.Filter{Expression: "exact(resource.deployment.environment) = 'prod'"},
+			},
+		}}},
+	}
+
+	assert.Empty(t, semconvResolutionsForRequest(req), "an exact filter field should not be reported as a family resolution")
+}
+
+func TestSemconvResolutionsIgnoresExactStructuredField(t *testing.T) {
+	req := &qbtypes.QueryRangeRequest{
+		CompositeQuery: qbtypes.CompositeQuery{Queries: []qbtypes.QueryEnvelope{{
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalLogs,
+				SelectFields: []telemetrytypes.TelemetryFieldKey{{
+					Name:            "db.system.name",
+					FieldResolution: telemetrytypes.FieldResolutionExact,
+				}},
+			},
+		}}},
+	}
+
+	assert.Empty(t, semconvResolutionsForRequest(req), "an exact structured field should not be reported as a family resolution")
+}
+
+func TestSemconvResolutionsReportsOnlyResolvedFieldFromMixedFilter(t *testing.T) {
+	req := &qbtypes.QueryRangeRequest{
+		CompositeQuery: qbtypes.CompositeQuery{Queries: []qbtypes.QueryEnvelope{{
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal: telemetrytypes.SignalTraces,
+				Filter: &qbtypes.Filter{Expression: "exact(resource.deployment.environment) = 'old' AND resource.deployment.environment.name = 'current'"},
+			},
+		}}},
+	}
+
+	assert.Equal(t, []qbtypes.SemconvResolution{{
+		Requested: "deployment.environment.name",
+		Current:   "deployment.environment.name",
+		Members:   []string{"deployment.environment.name", "deployment.environment"},
+		Kind:      "attribute",
+	}}, semconvResolutionsForRequest(req), "mixed filter should report only the family-resolved field")
+}
+
 func TestSemconvResolutionsIgnoresRawSQL(t *testing.T) {
 	req := &qbtypes.QueryRangeRequest{
 		CompositeQuery: qbtypes.CompositeQuery{Queries: []qbtypes.QueryEnvelope{{
@@ -96,4 +143,37 @@ func TestSemconvResolutionsRequiresNameBoundary(t *testing.T) {
 	}
 
 	assert.Empty(t, semconvResolutionsForRequest(req), "a family name embedded in a larger custom key must not match")
+}
+
+func TestSemconvResolutionsForDecodedRequest(t *testing.T) {
+	var req qbtypes.QueryRangeRequest
+	require.NoError(t, json.Unmarshal([]byte(`{
+		"requestType":"raw",
+		"compositeQuery":{"queries":[{"type":"builder_query","spec":{
+			"signal":"traces","name":"A","filter":{"expression":"resource.deployment.environment EXISTS"}
+		}}]}
+	}`), &req), "query request fixture should decode")
+	assert.Equal(t, []qbtypes.SemconvResolution{{
+		Requested: "deployment.environment",
+		Current:   "deployment.environment.name",
+		Members:   []string{"deployment.environment.name", "deployment.environment"},
+		Kind:      "attribute",
+	}}, semconvResolutionsForRequest(&req), "decoded field should report its semantic-convention family")
+}
+
+func TestSemconvResolutionsForDecodedExactField(t *testing.T) {
+	var req qbtypes.QueryRangeRequest
+	require.NoError(t, json.Unmarshal([]byte(`{
+		"requestType":"raw",
+		"compositeQuery":{"queries":[{"type":"builder_query","spec":{
+			"signal":"traces","name":"A",
+			"selectFields":[{
+				"name":"deployment.environment",
+				"fieldContext":"resource",
+				"fieldDataType":"string",
+				"fieldResolution":"exact"
+			}]
+		}}]}
+	}`), &req), "exact field request fixture should decode")
+	assert.Nil(t, semconvResolutionsForRequest(&req), "decoded exact field should not report a family resolution")
 }

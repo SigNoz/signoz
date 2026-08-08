@@ -241,7 +241,7 @@ func (visitor *whereClauseNormalizer) visitPrimary(ctx grammar.IPrimaryContext) 
 }
 
 func (visitor *whereClauseNormalizer) visitComparison(ctx grammar.IComparisonContext) normalizedPart {
-	key := normalizeKeyText(ctx.Key().GetText())
+	key := normalizeFieldText(ctx.Field())
 
 	if ctx.EXISTS() != nil {
 		operator := "EXISTS"
@@ -361,8 +361,8 @@ func (visitor *whereClauseNormalizer) visitFunctionCall(ctx grammar.IFunctionCal
 	raws := make([]string, 0)
 	for index, param := range ctx.FunctionParamList().AllFunctionParam() {
 		switch {
-		case param.Key() != nil:
-			keyText := normalizeKeyText(param.Key().GetText())
+		case param.Field() != nil:
+			keyText := normalizeFieldText(param.Field())
 			if index == 0 {
 				key = keyText
 			} else {
@@ -535,6 +535,13 @@ func formatVariableValue(value any) normalizedValue {
 func normalizeKeyText(keyText string) string {
 	fieldKey := telemetrytypes.GetFieldKeyFromKeyText(keyText)
 	return telemetrytypes.TelemetryFieldKeyToText(&fieldKey)
+}
+
+func normalizeFieldText(field grammar.IFieldContext) string {
+	if exactCall := field.ExactCall(); exactCall != nil {
+		return "exact(" + normalizeKeyText(exactCall.Key().GetText()) + ")"
+	}
+	return normalizeKeyText(field.Key().GetText())
 }
 
 func quoteValue(value string) string {

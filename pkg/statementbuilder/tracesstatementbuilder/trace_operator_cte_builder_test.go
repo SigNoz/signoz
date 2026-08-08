@@ -13,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -737,6 +738,6 @@ func TestTraceOperatorStatementBuilderDeduplicatesKeys(t *testing.T) {
 
 	require.NoError(t, err)
 
-	require.Contains(t, q.Query,
-		"SELECT toString(multiIf(mapContains(attributes_string, 'http.method'), attributes_string['http.method'], NULL)) AS `http.method`, count() AS __result_0 FROM A GROUP BY `http.method` ORDER BY __result_0 DESC")
+	assert.Contains(t, q.Query,
+		"SELECT toString(multiIf((mapContains(attributes_string, 'http.request.method') OR mapContains(attributes_string, 'http.method')), COALESCE(NULLIF(attributes_string['http.request.method'], ''), NULLIF(attributes_string['http.method'], ''), ''), NULL)) AS `http.method`, count() AS __result_0 FROM A GROUP BY `http.method` ORDER BY __result_0 DESC")
 }

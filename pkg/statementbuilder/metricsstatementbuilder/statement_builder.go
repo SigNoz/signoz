@@ -94,16 +94,22 @@ func GetKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation])
 
 	for idx := range query.GroupBy {
 		groupBy := query.GroupBy[idx]
-		selectors := querybuilder.QueryStringToKeysSelectors(groupBy.Name)
-		keySelectors = append(keySelectors, selectors...)
+		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
+			Name:            groupBy.Name,
+			Signal:          telemetrytypes.SignalMetrics,
+			FieldContext:    groupBy.FieldContext,
+			FieldDataType:   groupBy.FieldDataType,
+			FieldResolution: groupBy.FieldResolution,
+		})
 	}
 
 	for idx := range query.Order {
 		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
-			Name:          query.Order[idx].Key.Name,
-			Signal:        telemetrytypes.SignalMetrics,
-			FieldContext:  query.Order[idx].Key.FieldContext,
-			FieldDataType: query.Order[idx].Key.FieldDataType,
+			Name:            query.Order[idx].Key.Name,
+			Signal:          telemetrytypes.SignalMetrics,
+			FieldContext:    query.Order[idx].Key.FieldContext,
+			FieldDataType:   query.Order[idx].Key.FieldDataType,
+			FieldResolution: query.Order[idx].Key.FieldResolution,
 		})
 	}
 
@@ -142,10 +148,11 @@ func (b *StatementBuilder) Build(
 	for _, sel := range keySelectors {
 		if _, ok := keys[sel.Name]; !ok {
 			keys[sel.Name] = []*telemetrytypes.TelemetryFieldKey{{
-				Name:          sel.Name,
-				FieldContext:  telemetrytypes.FieldContextAttribute,
-				FieldDataType: telemetrytypes.FieldDataTypeString,
-				Signal:        telemetrytypes.SignalMetrics,
+				Name:            sel.Name,
+				FieldContext:    telemetrytypes.FieldContextAttribute,
+				FieldDataType:   telemetrytypes.FieldDataTypeString,
+				FieldResolution: sel.FieldResolution,
+				Signal:          telemetrytypes.SignalMetrics,
 			}}
 		}
 	}

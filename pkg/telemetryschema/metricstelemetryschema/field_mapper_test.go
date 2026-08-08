@@ -31,12 +31,23 @@ func TestMetricLabelSemconvSpellings(t *testing.T) {
 		assert.Contains(t, expression, "'"+member+"'")
 	}
 	assert.Less(t, strings.Index(expression, "resource_db.system.name"), strings.Index(expression, "resource_db.system'"))
+}
 
-	exact := *key
-	exact.SemconvMembers = []string{"resource_db_system"}
-	expression, err = fm.FieldFor(context.Background(), valuer.UUID{}, 0, 0, &exact)
-	require.NoError(t, err)
-	assert.Equal(t, "JSONExtractString(labels, 'resource_db_system')", expression)
+func TestMetricFieldForExactSemconvNameUsesOnlyRequestedLabel(t *testing.T) {
+	fm := NewFieldMapper()
+	exact := &telemetrytypes.TelemetryFieldKey{
+		Name:            "resource_db_system",
+		Signal:          telemetrytypes.SignalMetrics,
+		FieldContext:    telemetrytypes.FieldContextResource,
+		FieldDataType:   telemetrytypes.FieldDataTypeString,
+		FieldResolution: telemetrytypes.FieldResolutionExact,
+		SemconvMembers:  []string{"db.system.name", "db.system"},
+	}
+
+	expression, err := fm.FieldFor(context.Background(), valuer.UUID{}, 0, 0, exact)
+	require.NoError(t, err, "exact metric label should map to a field expression")
+
+	assert.Equal(t, "JSONExtractString(labels, 'resource_db_system')", expression, "exact resolution should ignore logical family members carried by metadata")
 }
 
 func TestGetColumn(t *testing.T) {

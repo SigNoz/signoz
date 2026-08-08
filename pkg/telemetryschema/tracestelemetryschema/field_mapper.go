@@ -169,6 +169,9 @@ func NewFieldMapper() *fieldMapper {
 }
 
 func traceSemconvMembers(key *telemetrytypes.TelemetryFieldKey) []string {
+	if key.FieldResolution.IsExact() {
+		return []string{key.Name}
+	}
 	if key.FieldContext != telemetrytypes.FieldContextResource && key.FieldContext != telemetrytypes.FieldContextAttribute {
 		return []string{key.Name}
 	}
@@ -376,7 +379,8 @@ func (m *fieldMapper) resolveColumnExprs(
 			switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
 			case schema.ColumnTypeEnumString, schema.ColumnTypeEnumFloat64, schema.ColumnTypeEnumBool:
 				members := traceSemconvMembers(key)
-				if key.Materialized && (len(members) == 1 || key.MaterializedSemconv) {
+				if key.Materialized && (len(members) == 1 || key.MaterializedSemconv) &&
+					(!key.FieldResolution.IsExact() || !key.MaterializedSemconv) {
 					exprs = append(exprs, telemetrytypes.FieldKeyToMaterializedColumnName(key))
 					existExprs = append(existExprs, telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key))
 				} else if len(members) > 1 {
@@ -398,9 +402,12 @@ func (m *fieldMapper) resolveColumnExprs(
 						for i, memberValue := range memberValues {
 							branches = append(branches, guards[i], memberValue)
 						}
-						// Numeric and boolean maps return zero for an absent key. If a
-						// family of either type is enabled, this tail must become zero too.
-						exprs = append(exprs, "multiIf("+strings.Join(branches, ", ")+", NULL)")
+						defaultValue := "0"
+						if valueType.GetType() == schema.ColumnTypeEnumBool {
+							defaultValue = "false"
+						}
+						// Preserve the default returned by a single missing map key.
+						exprs = append(exprs, "multiIf("+strings.Join(branches, ", ")+", "+defaultValue+")")
 					}
 					existExprs = append(existExprs, "("+strings.Join(guards, " OR ")+")")
 				} else {
@@ -616,6 +623,12 @@ func (m *fieldMapper) existsExpressionFor(
 		}
 		if len(existExprs) == 0 {
 			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "no existence expression found for field %s", key.Name)
+		}
+		if len(existExprs) == 1 {
+			if exists {
+				return existExprs[0], nil
+			}
+			return "NOT (" + existExprs[0] + ")", nil
 		}
 		parts := make([]string, 0, len(existExprs))
 		for _, expression := range existExprs {

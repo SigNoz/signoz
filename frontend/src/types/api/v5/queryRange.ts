@@ -117,6 +117,8 @@ export type SpaceAggregation =
 
 export type ColumnType = 'group' | 'aggregation';
 
+export type FieldResolution = 'exact';
+
 // ===================== Variable Types =====================
 
 export type VariableType = 'query' | 'dynamic' | 'custom' | 'text';
@@ -136,6 +138,7 @@ export interface TelemetryFieldKey {
 	signal?: SignalType;
 	fieldContext?: FieldContext;
 	fieldDataType?: FieldDataType;
+	fieldResolution?: FieldResolution;
 	materialized?: boolean;
 	isIndexed?: boolean;
 }

@@ -1746,7 +1746,7 @@ QuerySearch.defaultProps = {
 	signalSource: '',
 	hardcodedAttributeKeys: undefined,
 	placeholder:
-		"Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')",
+		"Enter your filter query (e.g., http.response.status_code >= 500 AND service.name = 'frontend')",
 	showFilterSuggestionsWithoutMetric: false,
 	initialExpression: undefined,
 };

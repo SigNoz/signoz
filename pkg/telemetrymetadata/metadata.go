@@ -160,6 +160,13 @@ func attributeSemconvMembers(name string, signal telemetrytypes.Signal, fieldCon
 	})
 }
 
+func selectorAttributeSemconvMembers(selector *telemetrytypes.FieldKeySelector, signal telemetrytypes.Signal, fieldContext telemetrytypes.FieldContext) []string {
+	resolvedSelector := *selector
+	resolvedSelector.Signal = signal
+	resolvedSelector.FieldContext = fieldContext
+	return semconv.AttributeMembers(resolvedSelector)
+}
+
 func traceSemconvMembers(name string, fieldContext telemetrytypes.FieldContext) []string {
 	return attributeSemconvMembers(name, telemetrytypes.SignalTraces, fieldContext)
 }
@@ -1342,7 +1349,7 @@ func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID
 			if signal == telemetrytypes.SignalMetrics && selector.MetricContext != nil && selector.MetricContext.MetricName != "" {
 				metricNames = semconv.MetricNames(selector.MetricContext.MetricName)
 			}
-			for _, member := range attributeSemconvMembers(selector.Name, signal, selector.FieldContext) {
+			for _, member := range selectorAttributeSemconvMembers(selector, signal, selector.FieldContext) {
 				for _, metricName := range metricNames {
 					memberSelector := *selector
 					memberSelector.Name = member

@@ -58,6 +58,66 @@ def test_semconv_phase1_mixed_sdk_generations(  # pylint: disable=too-many-state
         "kind": "attribute",
     } in resolution_response.json()["data"]["meta"]["semconvResolutions"]
 
+    # exact(key) addresses only the physical spelling and therefore does not
+    # report an applied family resolution.
+    exact_response = querier.make_query_request(
+        signoz,
+        token,
+        start_ms=start_ms,
+        end_ms=end_ms,
+        request_type=querier.RequestType.RAW,
+        queries=[
+            querier.BuilderQuery(
+                signal="traces",
+                name="A",
+                limit=100,
+                filter_expression=f"exact(resource.{OLD}) EXISTS AND exact(resource.{CURRENT}) NOT EXISTS",
+                select_fields=[querier.TelemetryFieldKey("span.name")],
+            ).to_dict()
+        ],
+    )
+    assert exact_response.status_code == HTTPStatus.OK, exact_response.text
+    exact_result = querier.find_named_result(
+        exact_response.json()["data"]["data"]["results"],
+        "A",
+    )
+    assert exact_result is not None
+    exact_names = {row["data"]["name"] for row in (exact_result.get("rows") or [])}
+    assert exact_names == {f"{PREFIX}-old", f"{PREFIX}-staging"}
+    assert not (exact_response.json()["data"]["meta"].get("semconvResolutions") or [])
+
+    # Structured fields use the equivalent per-field representation.
+    exact_grouped = querier.make_query_request(
+        signoz,
+        token,
+        start_ms=start_ms,
+        end_ms=end_ms,
+        request_type=querier.RequestType.SCALAR,
+        queries=[
+            querier.BuilderQuery(
+                signal="traces",
+                name="A",
+                filter_expression=f"exact(resource.{OLD}) EXISTS",
+                aggregations=[querier.Aggregation("count()")],
+                group_by=[querier.TelemetryFieldKey(OLD, "string", "resource", "exact")],
+                order=[
+                    querier.OrderBy(
+                        querier.TelemetryFieldKey(OLD, "string", "resource", "exact"),
+                        "asc",
+                    )
+                ],
+            ).to_dict()
+        ],
+    )
+    assert exact_grouped.status_code == HTTPStatus.OK, exact_grouped.text
+    exact_grouped_result = querier.find_named_result(
+        exact_grouped.json()["data"]["data"]["results"],
+        "A",
+    )
+    assert exact_grouped_result is not None
+    assert exact_grouped_result["columns"][0]["name"] == OLD
+    assert exact_grouped_result["data"] == [["production", 2], ["staging", 2]]
+
     # Resource and span-attribute paths share the same matrix. Run every
     # operator with both the saved-query (old) and current request spellings.
     for context in ("resource", "attribute"):

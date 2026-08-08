@@ -1945,10 +1945,10 @@ func (aH *APIHandler) onboardConsumers(
 					status = "1"
 				}
 			} else if key == "cgroup" {
-				attribute = "messaging.kafka.consumer.group"
+				attribute = "messaging.consumer.group.name"
 				if intValue != 0 {
 					status = "0"
-					message = "messaging.kafka.consumer.group attribute is not present in your spans"
+					message = "messaging.consumer.group.name attribute is not present in your spans"
 				} else {
 					status = "1"
 				}
@@ -1961,10 +1961,10 @@ func (aH *APIHandler) onboardConsumers(
 					status = "1"
 				}
 			} else if key == "clientid" {
-				attribute = "messaging.client_id"
+				attribute = "messaging.client.id"
 				if intValue != 0 {
 					status = "0"
-					message = "messaging.client_id attribute is not present in your spans"
+					message = "messaging.client.id attribute is not present in your spans"
 				} else {
 					status = "1"
 				}

@@ -123,6 +123,10 @@ func (v *variableReplacementVisitor) Visit(tree antlr.ParseTree) any {
 		return v.VisitValue(t)
 	case *grammar.KeyContext:
 		return v.VisitKey(t)
+	case *grammar.FieldContext:
+		return v.VisitField(t)
+	case *grammar.ExactCallContext:
+		return v.VisitExactCall(t)
 	default:
 		// For unknown types, return the original text
 		return tree.GetText()
@@ -251,8 +255,9 @@ func (v *variableReplacementVisitor) VisitComparison(ctx *grammar.ComparisonCont
 
 	var parts []string
 
-	// Add key
-	parts = append(parts, v.Visit(ctx.Key()).(string))
+	// Add field, preserving an exact(key) wrapper and existing key-variable
+	// substitution behavior.
+	parts = append(parts, v.Visit(ctx.Field()).(string))
 
 	// Handle EXISTS
 	if ctx.EXISTS() != nil {
@@ -438,14 +443,29 @@ func (v *variableReplacementVisitor) VisitFunctionParamList(ctx *grammar.Functio
 }
 
 func (v *variableReplacementVisitor) VisitFunctionParam(ctx *grammar.FunctionParamContext) any {
-	if ctx.Key() != nil {
-		return v.Visit(ctx.Key())
+	if ctx.Field() != nil {
+		return v.Visit(ctx.Field())
 	} else if ctx.Value() != nil {
 		return v.Visit(ctx.Value())
 	} else if ctx.Array() != nil {
 		return v.Visit(ctx.Array())
 	}
 	return ""
+}
+
+func (v *variableReplacementVisitor) VisitField(ctx *grammar.FieldContext) any {
+	if ctx.ExactCall() != nil {
+		return v.Visit(ctx.ExactCall())
+	}
+	return v.Visit(ctx.Key())
+}
+
+func (v *variableReplacementVisitor) VisitExactCall(ctx *grammar.ExactCallContext) any {
+	key := v.Visit(ctx.Key()).(string)
+	if key == specialSkipMarker {
+		return specialSkipMarker
+	}
+	return "exact(" + key + ")"
 }
 
 func (v *variableReplacementVisitor) VisitArray(ctx *grammar.ArrayContext) any {

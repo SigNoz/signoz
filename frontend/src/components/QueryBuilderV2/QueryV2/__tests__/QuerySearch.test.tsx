@@ -152,15 +152,18 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 			/>,
 		);
 
-		// Wait for debounced API call (300ms debounce + some buffer)
-		await waitFor(() => expect(mockedGetKeysOnMount).toHaveBeenCalled(), {
-			timeout: 2000,
-		});
-
-		const lastArgs = mockedGetKeysOnMount.mock.calls[
-			mockedGetKeysOnMount.mock.calls.length - 1
-		]?.[0] as { signal: unknown; searchText: string };
-		expect(lastArgs).toMatchObject({ signal: DataSource.LOGS, searchText: '' });
+		// Wait for this mount's debounced call. A debounce from the preceding
+		// real-CodeMirror test can finish after mockClear(), so do not assume the
+		// first or last recorded call belongs to this render.
+		await waitFor(
+			() =>
+				expect(
+					mockedGetKeysOnMount.mock.calls.some(
+						([args]) => args.signal === DataSource.LOGS && args.searchText === '',
+					),
+				).toBe(true),
+			{ timeout: 2000 },
+		);
 	});
 
 	it('calls provided onRun on Mod-Enter', async () => {

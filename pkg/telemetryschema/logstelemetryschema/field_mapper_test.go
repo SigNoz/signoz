@@ -33,12 +33,23 @@ func TestFieldForSemconvFamily(t *testing.T) {
 	exists, err := fm.existsExpressionFor(ctx, valuer.UUID{}, 0, 0, key, true)
 	require.NoError(t, err)
 	assert.Equal(t, "(mapContains(attributes_string, 'db.system.name') OR mapContains(attributes_string, 'db.system'))", exists)
+}
 
-	exact := *key
-	exact.SemconvMembers = []string{"db.system"}
-	expression, err = fm.FieldFor(ctx, valuer.UUID{}, 0, 0, &exact)
-	require.NoError(t, err)
-	assert.Equal(t, "attributes_string['db.system']", expression)
+func TestFieldForExactSemconvNameUsesOnlyRequestedLogAttribute(t *testing.T) {
+	fm := NewFieldMapper(flaggertest.New(t)).(*fieldMapper)
+	exact := &telemetrytypes.TelemetryFieldKey{
+		Name:            "db.system",
+		Signal:          telemetrytypes.SignalLogs,
+		FieldContext:    telemetrytypes.FieldContextAttribute,
+		FieldDataType:   telemetrytypes.FieldDataTypeString,
+		FieldResolution: telemetrytypes.FieldResolutionExact,
+		SemconvMembers:  []string{"db.system.name", "db.system"},
+	}
+
+	expression, err := fm.FieldFor(context.Background(), valuer.UUID{}, 0, 0, exact)
+	require.NoError(t, err, "exact log attribute should map to a field expression")
+
+	assert.Equal(t, "attributes_string['db.system']", expression, "exact resolution should ignore family members carried by metadata")
 }
 
 func TestGetColumn(t *testing.T) {

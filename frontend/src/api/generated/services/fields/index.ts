@@ -19,6 +19,8 @@ import type {
 	GetFieldsKeysParams,
 	GetFieldsValues200,
 	GetFieldsValuesParams,
+	GetSemconvMigrationReport200,
+	GetSemconvMigrationReportParams,
 	RenderErrorResponseDTO,
 } from '../sigNoz.schemas';
 
@@ -114,6 +116,108 @@ export const invalidateGetFieldsKeys = async (
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
 		{ queryKey: getGetFieldsKeysQueryKey(params) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * Returns services that still emit old semantic-convention names without the current family name
+ * @summary Get semantic-convention migration report
+ */
+export const getSemconvMigrationReport = (
+	params?: GetSemconvMigrationReportParams,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetSemconvMigrationReport200>({
+		url: `/api/v1/fields/semconv-migration`,
+		method: 'GET',
+		params,
+		signal,
+	});
+};
+
+export const getGetSemconvMigrationReportQueryKey = (
+	params?: GetSemconvMigrationReportParams,
+) => {
+	return [
+		`/api/v1/fields/semconv-migration`,
+		...(params ? [params] : []),
+	] as const;
+};
+
+export const getGetSemconvMigrationReportQueryOptions = <
+	TData = Awaited<ReturnType<typeof getSemconvMigrationReport>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	params?: GetSemconvMigrationReportParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getSemconvMigrationReport>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getGetSemconvMigrationReportQueryKey(params);
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getSemconvMigrationReport>>
+	> = ({ signal }) => getSemconvMigrationReport(params, signal);
+
+	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+		Awaited<ReturnType<typeof getSemconvMigrationReport>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetSemconvMigrationReportQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getSemconvMigrationReport>>
+>;
+export type GetSemconvMigrationReportQueryError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get semantic-convention migration report
+ */
+
+export function useGetSemconvMigrationReport<
+	TData = Awaited<ReturnType<typeof getSemconvMigrationReport>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	params?: GetSemconvMigrationReportParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getSemconvMigrationReport>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetSemconvMigrationReportQueryOptions(params, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get semantic-convention migration report
+ */
+export const invalidateGetSemconvMigrationReport = async (
+	queryClient: QueryClient,
+	params?: GetSemconvMigrationReportParams,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetSemconvMigrationReportQueryKey(params) },
 		options,
 	);
 

@@ -136,7 +136,12 @@ func (v *visitor) VisitPrimary(ctx *grammar.PrimaryContext) any {
 // predicate; any other identifier is treated as a tag key — the operator
 // applies to the tag's value, with a case-insensitive match on the tag's key.
 func (v *visitor) VisitComparison(ctx *grammar.ComparisonContext) any {
-	key := strings.ToLower(strings.TrimSpace(ctx.Key().GetText()))
+	field := ctx.Field()
+	keyText := field.GetText()
+	if exactCall := field.ExactCall(); exactCall != nil {
+		keyText = exactCall.Key().GetText()
+	}
+	key := strings.ToLower(strings.TrimSpace(keyText))
 
 	operation, ok := v.extractOperation(ctx)
 	if !ok {
@@ -427,7 +432,7 @@ func (v *visitor) buildFreeTextTerm(value string) string {
 }
 
 // buildFreeTextContains emits a case-insensitive contains as
-// LOWER(COALESCE(col, '')) LIKE LOWER(?), identical on SQLite and Postgres.
+// LOWER(COALESCE(col, ”)) LIKE LOWER(?), identical on SQLite and Postgres.
 // COALESCE keeps a NULL column (an absent description) false rather than NULL —
 // otherwise `NOT (…)` goes NULL and drops every description-less dashboard. The
 // value's % and _ are escaped, and ESCAPE pins backslash as the escape char.

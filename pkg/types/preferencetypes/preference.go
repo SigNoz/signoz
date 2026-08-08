@@ -185,7 +185,7 @@ func NewAvailablePreference() map[Name]Preference {
 			Name:          NameSpanPercentileResourceAttributes,
 			Description:   "Additional resource attributes for span percentile filtering (beyond mandatory name and service.name).",
 			ValueType:     ValueTypeArray,
-			DefaultValue:  MustNewValue([]any{"deployment.environment"}, ValueTypeArray),
+			DefaultValue:  MustNewValue([]any{"deployment.environment.name"}, ValueTypeArray),
 			AllowedScopes: []Scope{ScopeUser},
 			AllowedValues: []string{},
 			Value:         MustNewValue([]any{}, ValueTypeArray),
