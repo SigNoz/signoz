@@ -129,23 +129,6 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/user/{id}", handler.New(provider.authzMiddleware.SelfAccess(provider.userHandler.GetUserDeprecated), handler.OpenAPIDef{
-		ID:                  "GetUserDeprecated",
-		Tags:                []string{"users"},
-		Summary:             "Get user",
-		Description:         "This endpoint returns the user by id",
-		Request:             nil,
-		RequestContentType:  "",
-		Response:            new(types.DeprecatedUser),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusNotFound},
-		Deprecated:          true,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodGet).GetError(); err != nil {
-		return err
-	}
-
 	if err := router.Handle("/api/v2/users/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.GetUser), handler.OpenAPIDef{
 		ID:                  "GetUser",
 		Tags:                []string{"users"},
@@ -163,23 +146,6 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/user/{id}", handler.New(provider.authzMiddleware.SelfAccess(provider.userHandler.UpdateUserDeprecated), handler.OpenAPIDef{
-		ID:                  "UpdateUserDeprecated",
-		Tags:                []string{"users"},
-		Summary:             "Update user",
-		Description:         "This endpoint updates the user by id",
-		Request:             new(types.DeprecatedUser),
-		RequestContentType:  "application/json",
-		Response:            new(types.DeprecatedUser),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
-		Deprecated:          true,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPut).GetError(); err != nil {
-		return err
-	}
-
 	if err := router.Handle("/api/v2/users/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.UpdateUser), handler.OpenAPIDef{
 		ID:                  "UpdateUser",
 		Tags:                []string{"users"},
@@ -194,23 +160,6 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 	})).Methods(http.MethodPut).GetError(); err != nil {
-		return err
-	}
-
-	if err := router.Handle("/api/v1/user/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.DeleteUser), handler.OpenAPIDef{
-		ID:                  "DeleteUserDeprecated",
-		Tags:                []string{"users"},
-		Summary:             "Delete user",
-		Description:         "This endpoint deletes the user by id",
-		Request:             nil,
-		RequestContentType:  "",
-		Response:            nil,
-		ResponseContentType: "",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusNotFound},
-		Deprecated:          true,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
 

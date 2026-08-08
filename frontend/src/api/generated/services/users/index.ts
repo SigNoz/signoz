@@ -25,7 +25,6 @@ import type {
 	CreateResetPasswordTokenPathParameters,
 	CreateUser201,
 	CreateUserRole201,
-	DeleteUserDeprecatedPathParameters,
 	DeleteUserPathParameters,
 	DeleteUserRolePathParameters,
 	GetMyUser200,
@@ -37,8 +36,6 @@ import type {
 	GetRolesByUserID200,
 	GetRolesByUserIDPathParameters,
 	GetUser200,
-	GetUserDeprecated200,
-	GetUserDeprecatedPathParameters,
 	GetUserPathParameters,
 	GetUserRole200,
 	GetUserRolePathParameters,
@@ -50,15 +47,12 @@ import type {
 	RenderErrorResponseDTO,
 	SetRoleByUserIDPathParameters,
 	TypesChangePasswordRequestDTO,
-	TypesDeprecatedUserDTO,
 	TypesPostableForgotPasswordDTO,
 	TypesPostableInviteDTO,
 	TypesPostableResetPasswordDTO,
 	TypesPostableRoleDTO,
 	TypesPostableVerifyResetPasswordTokenDTO,
 	TypesUpdatableUserDTO,
-	UpdateUserDeprecated200,
-	UpdateUserDeprecatedPathParameters,
 	UpdateUserPathParameters,
 } from '../sigNoz.schemas';
 
@@ -429,295 +423,6 @@ export const invalidateListUsersDeprecated = async (
 	return queryClient;
 };
 
-/**
- * This endpoint deletes the user by id
- * @deprecated
- * @summary Delete user
- */
-export const deleteUserDeprecated = (
-	{ id }: DeleteUserDeprecatedPathParameters,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<void>({
-		url: `/api/v1/user/${id}`,
-		method: 'DELETE',
-		signal,
-	});
-};
-
-export const getDeleteUserDeprecatedMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof deleteUserDeprecated>>,
-		TError,
-		{ pathParams: DeleteUserDeprecatedPathParameters },
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof deleteUserDeprecated>>,
-	TError,
-	{ pathParams: DeleteUserDeprecatedPathParameters },
-	TContext
-> => {
-	const mutationKey = ['deleteUserDeprecated'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-			'mutationKey' in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof deleteUserDeprecated>>,
-		{ pathParams: DeleteUserDeprecatedPathParameters }
-	> = (props) => {
-		const { pathParams } = props ?? {};
-
-		return deleteUserDeprecated(pathParams);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type DeleteUserDeprecatedMutationResult = NonNullable<
-	Awaited<ReturnType<typeof deleteUserDeprecated>>
->;
-
-export type DeleteUserDeprecatedMutationError =
-	ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @deprecated
- * @summary Delete user
- */
-export const useDeleteUserDeprecated = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof deleteUserDeprecated>>,
-		TError,
-		{ pathParams: DeleteUserDeprecatedPathParameters },
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof deleteUserDeprecated>>,
-	TError,
-	{ pathParams: DeleteUserDeprecatedPathParameters },
-	TContext
-> => {
-	return useMutation(getDeleteUserDeprecatedMutationOptions(options));
-};
-/**
- * This endpoint returns the user by id
- * @deprecated
- * @summary Get user
- */
-export const getUserDeprecated = (
-	{ id }: GetUserDeprecatedPathParameters,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<GetUserDeprecated200>({
-		url: `/api/v1/user/${id}`,
-		method: 'GET',
-		signal,
-	});
-};
-
-export const getGetUserDeprecatedQueryKey = ({
-	id,
-}: GetUserDeprecatedPathParameters) => {
-	return [`/api/v1/user/${id}`] as const;
-};
-
-export const getGetUserDeprecatedQueryOptions = <
-	TData = Awaited<ReturnType<typeof getUserDeprecated>>,
-	TError = ErrorType<RenderErrorResponseDTO>,
->(
-	{ id }: GetUserDeprecatedPathParameters,
-	options?: {
-		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof getUserDeprecated>>,
-			TError,
-			TData
-		>;
-	},
-) => {
-	const { query: queryOptions } = options ?? {};
-
-	const queryKey =
-		queryOptions?.queryKey ?? getGetUserDeprecatedQueryKey({ id });
-
-	const queryFn: QueryFunction<
-		Awaited<ReturnType<typeof getUserDeprecated>>
-	> = ({ signal }) => getUserDeprecated({ id }, signal);
-
-	return {
-		queryKey,
-		queryFn,
-		enabled: !!id,
-		...queryOptions,
-	} as UseQueryOptions<
-		Awaited<ReturnType<typeof getUserDeprecated>>,
-		TError,
-		TData
-	> & { queryKey: QueryKey };
-};
-
-export type GetUserDeprecatedQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getUserDeprecated>>
->;
-export type GetUserDeprecatedQueryError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @deprecated
- * @summary Get user
- */
-
-export function useGetUserDeprecated<
-	TData = Awaited<ReturnType<typeof getUserDeprecated>>,
-	TError = ErrorType<RenderErrorResponseDTO>,
->(
-	{ id }: GetUserDeprecatedPathParameters,
-	options?: {
-		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof getUserDeprecated>>,
-			TError,
-			TData
-		>;
-	},
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getGetUserDeprecatedQueryOptions({ id }, options);
-
-	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-		queryKey: QueryKey;
-	};
-
-	return { ...query, queryKey: queryOptions.queryKey };
-}
-
-/**
- * @deprecated
- * @summary Get user
- */
-export const invalidateGetUserDeprecated = async (
-	queryClient: QueryClient,
-	{ id }: GetUserDeprecatedPathParameters,
-	options?: InvalidateOptions,
-): Promise<QueryClient> => {
-	await queryClient.invalidateQueries(
-		{ queryKey: getGetUserDeprecatedQueryKey({ id }) },
-		options,
-	);
-
-	return queryClient;
-};
-
-/**
- * This endpoint updates the user by id
- * @deprecated
- * @summary Update user
- */
-export const updateUserDeprecated = (
-	{ id }: UpdateUserDeprecatedPathParameters,
-	typesDeprecatedUserDTO?: BodyType<TypesDeprecatedUserDTO>,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<UpdateUserDeprecated200>({
-		url: `/api/v1/user/${id}`,
-		method: 'PUT',
-		headers: { 'Content-Type': 'application/json' },
-		data: typesDeprecatedUserDTO,
-		signal,
-	});
-};
-
-export const getUpdateUserDeprecatedMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof updateUserDeprecated>>,
-		TError,
-		{
-			pathParams: UpdateUserDeprecatedPathParameters;
-			data?: BodyType<TypesDeprecatedUserDTO>;
-		},
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof updateUserDeprecated>>,
-	TError,
-	{
-		pathParams: UpdateUserDeprecatedPathParameters;
-		data?: BodyType<TypesDeprecatedUserDTO>;
-	},
-	TContext
-> => {
-	const mutationKey = ['updateUserDeprecated'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-			'mutationKey' in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof updateUserDeprecated>>,
-		{
-			pathParams: UpdateUserDeprecatedPathParameters;
-			data?: BodyType<TypesDeprecatedUserDTO>;
-		}
-	> = (props) => {
-		const { pathParams, data } = props ?? {};
-
-		return updateUserDeprecated(pathParams, data);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type UpdateUserDeprecatedMutationResult = NonNullable<
-	Awaited<ReturnType<typeof updateUserDeprecated>>
->;
-export type UpdateUserDeprecatedMutationBody =
-	| BodyType<TypesDeprecatedUserDTO>
-	| undefined;
-export type UpdateUserDeprecatedMutationError =
-	ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @deprecated
- * @summary Update user
- */
-export const useUpdateUserDeprecated = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof updateUserDeprecated>>,
-		TError,
-		{
-			pathParams: UpdateUserDeprecatedPathParameters;
-			data?: BodyType<TypesDeprecatedUserDTO>;
-		},
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof updateUserDeprecated>>,
-	TError,
-	{
-		pathParams: UpdateUserDeprecatedPathParameters;
-		data?: BodyType<TypesDeprecatedUserDTO>;
-	},
-	TContext
-> => {
-	return useMutation(getUpdateUserDeprecatedMutationOptions(options));
-};
 /**
  * This endpoint returns the user I belong to
  * @deprecated

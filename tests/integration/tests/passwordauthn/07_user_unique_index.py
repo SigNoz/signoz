@@ -54,7 +54,7 @@ def test_unique_index_allows_multiple_deleted_rows(
     first_user_id = resp.json()["data"]["id"]
 
     resp = requests.delete(
-        signoz.self.host_configs["8080"].get(f"/api/v1/user/{first_user_id}"),
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{first_user_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -76,7 +76,7 @@ def test_unique_index_allows_multiple_deleted_rows(
     assert second_user_id != first_user_id
 
     resp = requests.delete(
-        signoz.self.host_configs["8080"].get(f"/api/v1/user/{second_user_id}"),
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{second_user_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
