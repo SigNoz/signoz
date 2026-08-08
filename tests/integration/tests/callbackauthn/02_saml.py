@@ -566,7 +566,7 @@ def test_saml_sso_deleted_user_gets_new_user_on_login(
 
     # --- Step 2: Soft delete via DB using API
     response = requests.delete(
-        signoz.self.host_configs["8080"].get(f"/api/v1/user/{user_id}"),
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{user_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )

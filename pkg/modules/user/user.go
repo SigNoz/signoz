@@ -34,11 +34,9 @@ type Setter interface {
 	// Initiate forgot password flow for a user
 	ForgotPassword(ctx context.Context, orgID valuer.UUID, email valuer.Email, frontendBaseURL string) error
 
-	UpdateUserDeprecated(ctx context.Context, orgID valuer.UUID, id string, user *types.DeprecatedUser) (*types.DeprecatedUser, error)
 	UpdateUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, updatable *types.UpdatableUser) (*types.User, error)
 
 	// UpdateAnyUser updates a user and persists the changes to the database along with the analytics and identity deletion.
-	UpdateAnyUserDeprecated(ctx context.Context, orgID valuer.UUID, deprecateUser *types.DeprecatedUser) error
 	UpdateAnyUser(ctx context.Context, orgID valuer.UUID, user *types.User) error
 	DeleteUser(ctx context.Context, orgID valuer.UUID, id string, deletedBy string) error
 
@@ -115,10 +113,8 @@ type Handler interface {
 	ListUsersDeprecated(http.ResponseWriter, *http.Request)
 	ListUsers(http.ResponseWriter, *http.Request)
 	CreateUser(http.ResponseWriter, *http.Request)
-	UpdateUserDeprecated(http.ResponseWriter, *http.Request)
 	UpdateUser(http.ResponseWriter, *http.Request)
 	DeleteUser(http.ResponseWriter, *http.Request)
-	GetUserDeprecated(http.ResponseWriter, *http.Request)
 	GetUser(http.ResponseWriter, *http.Request)
 	GetMyUserDeprecated(http.ResponseWriter, *http.Request)
 	GetMyUser(http.ResponseWriter, *http.Request)

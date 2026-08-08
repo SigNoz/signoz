@@ -51,7 +51,7 @@ def test_reinvite_deleted_user(
 
     # call the delete api which now soft deletes the user
     response = requests.delete(
-        signoz.self.host_configs["8080"].get(f"/api/v1/user/{invited_user['id']}"),
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{invited_user['id']}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -154,7 +154,7 @@ def test_delete_user(
 
     # delete the user
     response = requests.delete(
-        signoz.self.host_configs["8080"].get(f"/api/v1/user/{user_id}"),
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{user_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
