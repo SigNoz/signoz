@@ -5,6 +5,8 @@ import getIngestionData from 'api/settings/getIngestionData';
 import { useAppContext } from 'providers/App/App';
 import { IngestionDataType } from 'types/api/settings/ingestion';
 
+import SemconvMigrationReport from './SemconvMigrationReport';
+
 import './IngestionSettings.styles.scss';
 
 export default function IngestionSettings(): JSX.Element {
@@ -84,6 +86,7 @@ export default function IngestionSettings(): JSX.Element {
 				dataSource={data}
 				bordered
 			/>
+			<SemconvMigrationReport />
 		</div>
 	);
 }

@@ -2,6 +2,7 @@ import { ChangeEvent, useCallback } from 'react';
 import MEditor, { Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
 import { Input } from 'antd';
+import { SemconvEditorWarning } from 'components/Semconv';
 import { LEGEND } from 'constants/global';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -118,6 +119,7 @@ function ClickHouseQueryBuilder({
 				theme={isDarkMode ? 'my-theme' : 'light'}
 				beforeMount={setEditorTheme}
 			/>
+			<SemconvEditorWarning value={queryData?.query} editor="ClickHouse SQL" />
 			<Input
 				onChange={handleUpdateInput}
 				name="legend"

@@ -6,9 +6,9 @@ import { SPAN_ATTRIBUTES } from './Explorer/Domains/DomainDetails/constants';
 export const ApiMonitoringHardcodedAttributeKeys: QueryKeyDataSuggestionsProps[] =
 	[
 		{
-			label: 'deployment.environment',
+			label: 'deployment.environment.name',
 			type: 'resource',
-			name: 'deployment.environment',
+			name: 'deployment.environment.name',
 			signal: 'traces',
 			fieldDataType: QUERY_BUILDER_KEY_TYPES.STRING,
 		},

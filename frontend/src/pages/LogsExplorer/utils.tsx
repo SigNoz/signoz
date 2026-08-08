@@ -40,7 +40,7 @@ export const LogsQuickFiltersConfig: IQuickFiltersConfig[] = [
 		type: FiltersType.CHECKBOX,
 		title: 'Environment',
 		attributeKey: {
-			key: 'deployment.environment',
+			key: 'deployment.environment.name',
 			dataType: DataTypes.String,
 			type: 'resource',
 		},

@@ -786,10 +786,11 @@ func (q *querier) run(
 			Results: maps.Values(processedResults),
 		},
 		Meta: qbtypes.ExecStats{
-			RowsScanned:   stats.RowsScanned,
-			BytesScanned:  stats.BytesScanned,
-			DurationMS:    stats.DurationMS,
-			StepIntervals: stepIntervals,
+			RowsScanned:        stats.RowsScanned,
+			BytesScanned:       stats.BytesScanned,
+			DurationMS:         stats.DurationMS,
+			StepIntervals:      stepIntervals,
+			SemconvResolutions: semconvResolutionsForRequest(req),
 		},
 	}
 

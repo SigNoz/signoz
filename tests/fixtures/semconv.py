@@ -4,6 +4,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 from fixtures import types
+from fixtures.metadata import AttributesMetadata
 from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
 
 SEMCONV_PHASE1_CURRENT = "deployment.environment.name"
@@ -14,6 +15,7 @@ SEMCONV_PHASE1_PREFIX = "semconv-phase1"
 @pytest.fixture(name="semconv_phase1_data")
 def semconv_phase1_data(
     insert_traces: Callable[[list[Traces]], None],
+    insert_attributes_metadata: Callable[[list[AttributesMetadata]], None],
     clickhouse: types.TestContainerClickhouse,
 ) -> Generator[datetime]:
     now = datetime.now(tz=UTC).replace(microsecond=0) - timedelta(minutes=2)
@@ -42,6 +44,21 @@ def semconv_phase1_data(
             )
         )
     insert_traces(traces)
+
+    # The production collector writes this deduplicated metadata table. Trace
+    # fixtures insert storage rows directly, so mirror that write explicitly
+    # to exercise the migration report against the same mixed-generation data.
+    insert_attributes_metadata(
+        [
+            AttributesMetadata(
+                data_source="traces",
+                resource_attributes={"service.name": f"{SEMCONV_PHASE1_PREFIX}-{suffix}", **environment},
+                attributes=environment,
+                timestamp=timestamp,
+            )
+            for timestamp, suffix, environment in records
+        ]
+    )
 
     # Service-map rows are derived by the collector in production. Seed the
     # derived table directly so this test isolates the backend alias allowlist;

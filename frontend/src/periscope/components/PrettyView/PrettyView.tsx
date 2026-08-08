@@ -67,6 +67,7 @@ export interface PrettyViewProps {
 	 */
 	pinnedFieldsValue?: string[];
 	onPinnedFieldsChange?: (next: string[]) => void;
+	labelSuffixRenderer?: (fieldKey: string) => React.ReactNode;
 }
 
 function PrettyView({
@@ -78,6 +79,7 @@ function PrettyView({
 	drawerKey = 'default',
 	pinnedFieldsValue,
 	onPinnedFieldsChange,
+	labelSuffixRenderer,
 }: PrettyViewProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const [, setCopy] = useCopyToClipboard();
@@ -305,10 +307,24 @@ function PrettyView({
 						}}
 					/>
 					<span>{displayKey}</span>
+					{labelSuffixRenderer?.(displayKey)}
 				</span>
 			);
 		},
-		[togglePin, pinnedEntries],
+		[togglePin, pinnedEntries, labelSuffixRenderer],
+	);
+
+	const labelRenderer = useCallback(
+		(keyPath: KeyPath): React.ReactNode => {
+			const displayKey = String(keyPath[0]);
+			return (
+				<span className="pretty-view__label">
+					<span>{displayKey}</span>
+					{labelSuffixRenderer?.(displayKey)}
+				</span>
+			);
+		},
+		[labelSuffixRenderer],
 	);
 
 	return (
@@ -351,6 +367,7 @@ function PrettyView({
 				shouldExpandNodeInitially={shouldExpandNodeInitially}
 				valueRenderer={valueRenderer}
 				getItemString={getItemString}
+				labelRenderer={labelRenderer}
 			/>
 		</div>
 	);

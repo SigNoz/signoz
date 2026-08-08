@@ -1,6 +1,7 @@
 import { ChangeEvent, useCallback } from 'react';
 import { Input } from 'antd';
 import { LEGEND } from 'constants/global';
+import { SemconvEditorWarning } from 'components/Semconv';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { IPromQLQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
@@ -66,6 +67,7 @@ function PromQLQueryBuilder({
 				style={{ marginBottom: '0.5rem' }}
 				data-testid="promql-query-input"
 			/>
+			<SemconvEditorWarning value={queryData?.query} editor="PromQL" />
 
 			<Input
 				onChange={handleUpdateQuery}

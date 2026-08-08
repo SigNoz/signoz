@@ -38,7 +38,7 @@ export function Section(props: SectionProps): JSX.Element {
 					'hasError',
 					'durationNano',
 					'serviceName',
-					'deployment.environment',
+					'deployment.environment.name',
 				]),
 			),
 		[selectedFilters],

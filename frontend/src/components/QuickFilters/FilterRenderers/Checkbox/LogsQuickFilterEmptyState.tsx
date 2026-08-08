@@ -5,7 +5,7 @@ import { ArrowUpRight } from '@signozhq/icons';
 
 const QUICK_FILTER_DOC_PATHS: Record<string, string> = {
 	severity_text: 'severity-text',
-	'deployment.environment': 'environment',
+	'deployment.environment.name': 'environment',
 	'service.name': 'service-name',
 	'host.name': 'hostname',
 	'k8s.cluster.name': 'k8s-cluster-name',

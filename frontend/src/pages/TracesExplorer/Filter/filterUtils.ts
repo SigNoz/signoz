@@ -14,7 +14,7 @@ export const AllTraceFilterKeyValue: Record<string, string> = {
 	durationNano: 'Duration',
 	duration_nano: 'Duration',
 	durationNanoMax: 'Duration',
-	'deployment.environment': 'Environment',
+	'deployment.environment.name': 'Environment',
 	hasError: 'Status',
 	has_error: 'Status',
 	serviceName: 'Service Name',
@@ -208,11 +208,11 @@ export const traceFilterKeys: Record<AllTraceFilterKeys, BaseAutocompleteData> =
 			id: 'serviceName--string--tag--true',
 		},
 
-		'deployment.environment': {
-			key: 'deployment.environment',
+		'deployment.environment.name': {
+			key: 'deployment.environment.name',
 			dataType: DataTypes.String,
 			type: 'resource',
-			id: 'deployment.environment--string--resource--false',
+			id: 'deployment.environment.name--string--resource--false',
 		},
 		name: {
 			key: 'name',

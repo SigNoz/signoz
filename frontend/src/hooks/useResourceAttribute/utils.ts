@@ -148,9 +148,9 @@ export const getResourceDeploymentKeys = (
 	dotMetricsEnabled: boolean,
 ): string => {
 	if (dotMetricsEnabled) {
-		return 'resource_deployment.environment';
+		return 'resource_deployment.environment.name';
 	}
-	return 'resource_deployment_environment';
+	return 'resource_deployment_environment_name';
 };
 
 export const GetTagKeys = async (

@@ -297,6 +297,28 @@ type GettableFieldValues struct {
 	Complete bool                  `json:"complete" required:"true"`
 }
 
+// PostableSemconvMigrationReportParams selects the metadata window used to
+// find services that still emit only historical semantic-convention names.
+type PostableSemconvMigrationReportParams struct {
+	StartUnixMilli int64 `query:"startUnixMilli"`
+	EndUnixMilli   int64 `query:"endUnixMilli"`
+}
+
+type SemconvMigrationReportEntry struct {
+	Current           string   `json:"current"`
+	Old               string   `json:"old"`
+	Signal            string   `json:"signal"`
+	Services          []string `json:"services"`
+	ResourceSets      uint64   `json:"resourceSets"`
+	LastSeenUnixMilli int64    `json:"lastSeenUnixMilli"`
+}
+
+type GettableSemconvMigrationReport struct {
+	StartUnixMilli int64                          `json:"startUnixMilli"`
+	EndUnixMilli   int64                          `json:"endUnixMilli"`
+	Entries        []*SemconvMigrationReportEntry `json:"entries" required:"true"`
+}
+
 type PostableFieldValueParams struct {
 	PostableFieldKeysParams
 	Name          string `query:"name"`
