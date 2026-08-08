@@ -88,37 +88,6 @@ func (handler *handler) CreateInvite(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusCreated, invites[0])
 }
 
-func (handler *handler) CreateBulkInvite(rw http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
-
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	var req types.PostableBulkInviteRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	// Validate that the request contains users
-	if len(req.Invites) == 0 {
-		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "no invites provided for invitation"))
-		return
-	}
-
-	_, err = handler.setter.CreateBulkInvite(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.IdentityID()), valuer.MustNewEmail(claims.Email), &req)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	render.Success(rw, http.StatusCreated, nil)
-}
-
 func (handler *handler) GetUserDeprecated(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()

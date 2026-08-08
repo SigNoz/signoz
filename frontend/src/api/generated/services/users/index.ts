@@ -51,7 +51,6 @@ import type {
 	SetRoleByUserIDPathParameters,
 	TypesChangePasswordRequestDTO,
 	TypesDeprecatedUserDTO,
-	TypesPostableBulkInviteRequestDTO,
 	TypesPostableForgotPasswordDTO,
 	TypesPostableInviteDTO,
 	TypesPostableResetPasswordDTO,
@@ -259,91 +258,6 @@ export const useCreateInvite = <
 	TContext
 > => {
 	return useMutation(getCreateInviteMutationOptions(options));
-};
-/**
- * This endpoint creates a bulk invite for a user
- * @deprecated
- * @summary Create bulk invite
- */
-export const createBulkInvite = (
-	typesPostableBulkInviteRequestDTO?: BodyType<TypesPostableBulkInviteRequestDTO>,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<void>({
-		url: `/api/v1/invite/bulk`,
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		data: typesPostableBulkInviteRequestDTO,
-		signal,
-	});
-};
-
-export const getCreateBulkInviteMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof createBulkInvite>>,
-		TError,
-		{ data?: BodyType<TypesPostableBulkInviteRequestDTO> },
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof createBulkInvite>>,
-	TError,
-	{ data?: BodyType<TypesPostableBulkInviteRequestDTO> },
-	TContext
-> => {
-	const mutationKey = ['createBulkInvite'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-			'mutationKey' in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof createBulkInvite>>,
-		{ data?: BodyType<TypesPostableBulkInviteRequestDTO> }
-	> = (props) => {
-		const { data } = props ?? {};
-
-		return createBulkInvite(data);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type CreateBulkInviteMutationResult = NonNullable<
-	Awaited<ReturnType<typeof createBulkInvite>>
->;
-export type CreateBulkInviteMutationBody =
-	| BodyType<TypesPostableBulkInviteRequestDTO>
-	| undefined;
-export type CreateBulkInviteMutationError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @deprecated
- * @summary Create bulk invite
- */
-export const useCreateBulkInvite = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof createBulkInvite>>,
-		TError,
-		{ data?: BodyType<TypesPostableBulkInviteRequestDTO> },
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof createBulkInvite>>,
-	TError,
-	{ data?: BodyType<TypesPostableBulkInviteRequestDTO> },
-	TContext
-> => {
-	return useMutation(getCreateBulkInviteMutationOptions(options));
 };
 /**
  * This endpoint resets the password by token

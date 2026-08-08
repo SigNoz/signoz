@@ -109,7 +109,6 @@ type Getter interface {
 type Handler interface {
 	// invite
 	CreateInvite(http.ResponseWriter, *http.Request)
-	CreateBulkInvite(http.ResponseWriter, *http.Request)
 
 	// users
 	ListUsersDeprecated(http.ResponseWriter, *http.Request)
