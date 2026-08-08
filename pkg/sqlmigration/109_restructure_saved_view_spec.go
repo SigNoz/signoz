@@ -15,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
 )
 
 type restructureSavedViewSpec struct {
@@ -164,6 +165,15 @@ func (migration *restructureSavedViewSpec) Up(ctx context.Context, db *bun.DB) e
 		return err
 	}
 
+	var orgIDs []string
+	if err := tx.NewSelect().Model((*types.Organization)(nil)).Column("id").Scan(ctx, &orgIDs); err != nil {
+		return err
+	}
+	validOrgIDs := make(map[string]struct{}, len(orgIDs))
+	for _, id := range orgIDs {
+		validOrgIDs[id] = struct{}{}
+	}
+
 	// drop table `saved_views`
 	for _, sql := range migration.sqlschema.Operator().DropTable(savedViewsTable) {
 		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
@@ -208,6 +218,13 @@ func (migration *restructureSavedViewSpec) Up(ctx context.Context, db *bun.DB) e
 		if old.OrgID == "" {
 			skipped++
 			continue // orphaned row from a pre-existing org_id backfill gap; nothing sane to attach it to
+		}
+
+		// to avoid foreign key constraint issues
+		if _, ok := validOrgIDs[old.OrgID]; !ok {
+			skipped++
+			migration.settings.Logger.WarnContext(ctx, "saved view references an org that no longer exists, skipping", slog.String("org_id", old.OrgID), slog.String("saved_view_id", old.ID))
+			continue
 		}
 
 		var compositeQuery legacySavedViewCompositeQuery
