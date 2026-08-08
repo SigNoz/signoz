@@ -1,0 +1,12 @@
+{
+  "note": "Divergences of the /prometheus/api/v1 endpoints, served by the clickhousev2 provider, from the upstream reference engine. 01_prometheus_api_corpus.py enforces this set exactly in both directions. All current entries are the Kahan class recorded in known_divergences_v2.json: the engine sums with Kahan compensation and an overflow-free incremental mean, ClickHouse's aggregates are naive. Only the [instant-coarse] variants appear here: they are range-encoded, so they serve transpiled; the [base] instant evals go through /prometheus/api/v1/query on the exact engine path.",
+  "divergences": {
+    "aggregators.test:651[instant-coarse]": "avg over near-max-float64 values: avgForEach overflows to +Inf where the engine's incremental mean does not",
+    "aggregators.test:654[instant-coarse]": "avg over near-min-float64 values: avgForEach overflows to -Inf",
+    "aggregators.test:687[instant-coarse]": "sum over {1e100, -1e100, small}: naive summation cancels to 0 where the engine's Kahan sum keeps 10",
+    "aggregators.test:695[instant-coarse]": "avg over {1e100, -1e100, small}: same cancellation divided by count",
+    "functions.test:1084[instant-coarse]": "sum_over_time over a ±1e100 window: the disjoint coarse-step form's arraySum cancels to 0",
+    "functions.test:1087[instant-coarse]": "avg_over_time, same window and cancellation as functions.test:1084",
+    "functions.test:1149[instant-coarse]": "avg_over_time over ±2.258e220 samples: naive slide summation leaves a ~1e202 residue where the engine cancels to 0"
+  }
+}
