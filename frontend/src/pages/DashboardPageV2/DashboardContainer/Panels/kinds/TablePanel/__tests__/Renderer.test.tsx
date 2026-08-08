@@ -93,6 +93,15 @@ describe('TablePanelRenderer', () => {
 		expect(getByText('cartservice')).toBeInTheDocument();
 	});
 
+	// Value cells share `formatPanelValue`, so they group like the Number panel.
+	it('groups large value cells into thousands', () => {
+		const { getByText } = renderPanel({
+			data: dataWith([['frontend', 1234567]]),
+		});
+
+		expect(getByText('1,234,567')).toBeInTheDocument();
+	});
+
 	it('renders No Data when the response has no scalar results', () => {
 		const { getByTestId } = renderPanel({ data: emptyData });
 
