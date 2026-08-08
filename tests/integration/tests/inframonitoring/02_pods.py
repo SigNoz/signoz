@@ -468,8 +468,8 @@ def test_pods_filter_pagination_and_ordering(
     crashloopbackoff matches 4 pods in pods_phases.jsonl: clbo-a, clbo-b, run-p, unk-p."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        _load_pods_metrics(
-            "inframonitoring/pods_phases.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_phases.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )
