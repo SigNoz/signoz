@@ -254,6 +254,8 @@ func TestNotifyRichDescriptionPanelAndLinks(t *testing.T) {
 	assert.Contains(t, s, "Open in SigNoz")                           // rule deep-link
 	assert.Contains(t, s, "https://app.signoz.io/alerts?ruleId=1")    // rule url
 	assert.Contains(t, s, "View Related Logs")                        // related-logs deep-link
+	assert.Contains(t, s, "Summary:")                                 // labeled body section
+	assert.Contains(t, s, "cpu high")                                 // rendered annotation
 }
 
 func TestSelectTransition(t *testing.T) {

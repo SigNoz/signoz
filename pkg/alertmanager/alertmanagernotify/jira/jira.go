@@ -36,9 +36,13 @@ const (
 	defaultSummaryTmpl = `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`
 
 	defaultDescriptionTmpl = `{{ range .Alerts -}}
-{{ if .Annotations.summary }}{{ .Annotations.summary }}
-{{ end }}{{ if .Annotations.description }}{{ .Annotations.description }}
-{{ end }}{{ end }}`
+**Alert:** {{ .Labels.alertname }}{{ if .Labels.severity }} ({{ .Labels.severity }}){{ end }}
+{{ if .Annotations.summary }}
+**Summary:** {{ .Annotations.summary }}
+{{ end }}{{ if .Annotations.description }}
+**Description:** {{ .Annotations.description }}
+{{ end }}
+{{ end }}`
 )
 
 // Notifier implements notify.Notifier for Jira.
