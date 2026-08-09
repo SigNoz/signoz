@@ -77,12 +77,12 @@ func (m *mockJira) handle(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (m *mockJira) count(method, suffix string) int {
+func (m *mockJira) countPost(suffix string) int {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	c := 0
 	for _, r := range m.reqs {
-		if r.method == method && strings.HasSuffix(r.path, suffix) {
+		if r.method == http.MethodPost && strings.HasSuffix(r.path, suffix) {
 			c++
 		}
 	}
@@ -155,9 +155,9 @@ func TestNotifyCreatesWhenNoExistingIssue(t *testing.T) {
 	retry, err := newNotifier(t, m).Notify(ctx(), alert(true))
 	require.NoError(t, err)
 	assert.False(t, retry)
-	assert.Equal(t, 1, m.count(http.MethodPost, "/issue"))
-	assert.Equal(t, 0, m.count(http.MethodPost, "/comment")) // no comment on create
-	assert.Equal(t, 0, m.countMethod(http.MethodPut))        // no update
+	assert.Equal(t, 1, m.countPost("/issue"))
+	assert.Equal(t, 0, m.countPost("/comment"))       // no comment on create
+	assert.Equal(t, 0, m.countMethod(http.MethodPut)) // no update
 }
 
 func TestNotifyResolvedOnlyWithNoIssueIsNoop(t *testing.T) {
@@ -165,8 +165,8 @@ func TestNotifyResolvedOnlyWithNoIssueIsNoop(t *testing.T) {
 	retry, err := newNotifier(t, m).Notify(ctx(), alert(false))
 	require.NoError(t, err)
 	assert.False(t, retry)
-	assert.Equal(t, 1, m.count(http.MethodPost, "/search/jql"))
-	assert.Equal(t, 0, m.count(http.MethodPost, "/issue"))
+	assert.Equal(t, 1, m.countPost("/search/jql"))
+	assert.Equal(t, 0, m.countPost("/issue"))
 }
 
 func TestNotifyStillFiringUpdatesAndComments(t *testing.T) {
@@ -175,10 +175,10 @@ func TestNotifyStillFiringUpdatesAndComments(t *testing.T) {
 	retry, err := newNotifier(t, m).Notify(ctx(), alert(true))
 	require.NoError(t, err)
 	assert.False(t, retry)
-	assert.Equal(t, 0, m.count(http.MethodPost, "/issue")) // no create
-	assert.Equal(t, 1, m.countMethod(http.MethodPut))      // update
-	assert.Equal(t, 1, m.count(http.MethodPost, "/comment"))
-	assert.Equal(t, 0, m.count(http.MethodPost, "/transitions")) // still open, no transition
+	assert.Equal(t, 0, m.countPost("/issue"))         // no create
+	assert.Equal(t, 1, m.countMethod(http.MethodPut)) // update
+	assert.Equal(t, 1, m.countPost("/comment"))
+	assert.Equal(t, 0, m.countPost("/transitions")) // still open, no transition
 
 	// comment carries the full rich snapshot (panel + labeled body), not a one-liner.
 	cjs, err := json.Marshal(m.lastBody(t, http.MethodPost, "/comment"))
@@ -194,9 +194,9 @@ func TestNotifyResolveTransitionsToDoneAndComments(t *testing.T) {
 	retry, err := newNotifier(t, m).Notify(ctx(), alert(false))
 	require.NoError(t, err)
 	assert.False(t, retry)
-	assert.Equal(t, 1, m.countMethod(http.MethodPut))            // update
-	assert.Equal(t, 1, m.count(http.MethodPost, "/transitions")) // resolve transition
-	assert.Equal(t, 1, m.count(http.MethodPost, "/comment"))
+	assert.Equal(t, 1, m.countMethod(http.MethodPut)) // update
+	assert.Equal(t, 1, m.countPost("/transitions"))   // resolve transition
+	assert.Equal(t, 1, m.countPost("/comment"))
 }
 
 func TestNotifyReopensDoneIssue(t *testing.T) {
@@ -206,8 +206,8 @@ func TestNotifyReopensDoneIssue(t *testing.T) {
 	retry, err := newNotifier(t, m).Notify(ctx(), alert(true))
 	require.NoError(t, err)
 	assert.False(t, retry)
-	assert.Equal(t, 1, m.count(http.MethodPost, "/transitions")) // reopen transition
-	assert.Equal(t, 1, m.count(http.MethodPost, "/comment"))
+	assert.Equal(t, 1, m.countPost("/transitions")) // reopen transition
+	assert.Equal(t, 1, m.countPost("/comment"))
 }
 
 func TestNotifySafeSkipsWhenNoMatchingTransition(t *testing.T) {
@@ -217,8 +217,8 @@ func TestNotifySafeSkipsWhenNoMatchingTransition(t *testing.T) {
 	retry, err := newNotifier(t, m).Notify(ctx(), alert(false))
 	require.NoError(t, err) // must not error
 	assert.False(t, retry)
-	assert.Equal(t, 0, m.count(http.MethodPost, "/transitions")) // skipped
-	assert.Equal(t, 1, m.count(http.MethodPost, "/comment"))     // comment still posted
+	assert.Equal(t, 0, m.countPost("/transitions")) // skipped
+	assert.Equal(t, 1, m.countPost("/comment"))     // comment still posted
 }
 
 func TestNotifyRetriesOn429(t *testing.T) {
@@ -255,13 +255,13 @@ func TestNotifyRichDescriptionPanelAndLinks(t *testing.T) {
 	js, err := json.Marshal(body)
 	require.NoError(t, err)
 	s := string(js)
-	assert.Contains(t, s, `"panel"`)                                  // status panel present
-	assert.Contains(t, s, `"error"`)                                  // firing → error panel
-	assert.Contains(t, s, "Open in SigNoz")                           // rule deep-link
-	assert.Contains(t, s, "https://app.signoz.io/alerts?ruleId=1")    // rule url
-	assert.Contains(t, s, "View Related Logs")                        // related-logs deep-link
-	assert.Contains(t, s, "Summary:")                                 // labeled body section
-	assert.Contains(t, s, "cpu high")                                 // rendered annotation
+	assert.Contains(t, s, `"panel"`)                               // status panel present
+	assert.Contains(t, s, `"error"`)                               // firing → error panel
+	assert.Contains(t, s, "Open in SigNoz")                        // rule deep-link
+	assert.Contains(t, s, "https://app.signoz.io/alerts?ruleId=1") // rule url
+	assert.Contains(t, s, "View Related Logs")                     // related-logs deep-link
+	assert.Contains(t, s, "Summary:")                              // labeled body section
+	assert.Contains(t, s, "cpu high")                              // rendered annotation
 }
 
 func TestSelectTransition(t *testing.T) {
@@ -270,9 +270,9 @@ func TestSelectTransition(t *testing.T) {
 		transition("51", "Won't Do", "done"),
 		transition("11", "To Do", "new"),
 	}
-	assert.Equal(t, "41", selectTransition(ts, true, ""))            // first done-category
-	assert.Equal(t, "51", selectTransition(ts, true, "Won't Do"))    // named override
-	assert.Equal(t, "11", selectTransition(ts, false, ""))           // first non-done
-	assert.Equal(t, "41", selectTransition(ts, true, "Nonexistent")) // bad override → fallback
+	assert.Equal(t, "41", selectTransition(ts, true, ""))                                               // first done-category
+	assert.Equal(t, "51", selectTransition(ts, true, "Won't Do"))                                       // named override
+	assert.Equal(t, "11", selectTransition(ts, false, ""))                                              // first non-done
+	assert.Equal(t, "41", selectTransition(ts, true, "Nonexistent"))                                    // bad override → fallback
 	assert.Equal(t, "", selectTransition([]jiraTransition{transition("11", "To Do", "new")}, true, "")) // none → skip
 }

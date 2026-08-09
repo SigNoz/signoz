@@ -304,7 +304,7 @@ func (n *Notifier) callAPI(ctx context.Context, method, url string, reqBody any)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 
-	resp, err := n.client.Do(req)
+	resp, err := n.client.Do(req) //nolint:bodyclose // notify.Drain closes the body
 	if err != nil {
 		return nil, true, notify.RedactURL(err)
 	}
