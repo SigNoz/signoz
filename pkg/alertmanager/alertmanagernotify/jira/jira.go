@@ -17,7 +17,9 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer/adf"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -88,7 +90,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		return retry, err
 	}
 
-	fields := n.buildFields(groupID, summary, descText)
+	fields := n.buildFields(groupID, summary, descText, as, firing)
 
 	// No existing issue: create for firing groups; never create for resolved-only.
 	if existing == nil {
@@ -119,20 +121,74 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	}
 }
 
-func (n *Notifier) buildFields(groupID, summary, descText string) *issueFields {
+func (n *Notifier) buildFields(groupID, summary, descText string, alerts []*types.Alert, firing bool) *issueFields {
 	f := &issueFields{
-		Project:   &idKey{Key: n.conf.Project},
-		Issuetype: &idName{Name: n.conf.IssueType},
-		Summary:   summary,
-		Labels:    n.labels(groupID),
-	}
-	if strings.TrimSpace(descText) != "" {
-		f.Description = adfDocument(descText)
+		Project:     &idKey{Key: n.conf.Project},
+		Issuetype:   &idName{Name: n.conf.IssueType},
+		Summary:     summary,
+		Labels:      n.labels(groupID),
+		Description: n.buildDescription(descText, alerts, firing),
 	}
 	if n.conf.Priority != "" {
 		f.Priority = &idName{Name: n.conf.Priority}
 	}
 	return f
+}
+
+// buildDescription assembles the ADF issue body: a firing/resolved status panel,
+// the rendered markdown body, and SigNoz deep-links.
+func (n *Notifier) buildDescription(descText string, alerts []*types.Alert, firing bool) map[string]any {
+	content := []any{statusPanel(firing)}
+	content = append(content, adf.Render(descText)...)
+	if links := deepLinks(alerts); links != nil {
+		content = append(content, links)
+	}
+	return map[string]any{"type": "doc", "version": 1, "content": content}
+}
+
+func statusPanel(firing bool) map[string]any {
+	panelType, label := "success", "🟢 RESOLVED"
+	if firing {
+		panelType, label = "error", "🔴 FIRING"
+	}
+	return map[string]any{
+		"type":  "panel",
+		"attrs": map[string]any{"panelType": panelType},
+		"content": []any{map[string]any{
+			"type":    "paragraph",
+			"content": []any{map[string]any{"type": "text", "text": label, "marks": []any{map[string]any{"type": "strong"}}}},
+		}},
+	}
+}
+
+// deepLinks builds a paragraph of SigNoz links from the per-rule ruleSource label
+// and the related-logs/traces annotations. Returns nil when none are present.
+func deepLinks(alerts []*types.Alert) map[string]any {
+	if len(alerts) == 0 {
+		return nil
+	}
+	a := alerts[0]
+	var parts []any
+	add := func(label, url string) {
+		if url == "" {
+			return
+		}
+		if len(parts) > 0 {
+			parts = append(parts, map[string]any{"type": "text", "text": " · "})
+		}
+		parts = append(parts, map[string]any{
+			"type":  "text",
+			"text":  label,
+			"marks": []any{map[string]any{"type": "link", "attrs": map[string]any{"href": url}}},
+		})
+	}
+	add("Open in SigNoz", string(a.Labels[ruletypes.LabelRuleSource]))
+	add("View Related Logs", string(a.Annotations[ruletypes.AnnotationRelatedLogs]))
+	add("View Related Traces", string(a.Annotations[ruletypes.AnnotationRelatedTraces]))
+	if len(parts) == 0 {
+		return nil
+	}
+	return map[string]any{"type": "paragraph", "content": parts}
 }
 
 func (n *Notifier) labels(groupID string) []string {
@@ -215,7 +271,7 @@ func (n *Notifier) getTransitions(ctx context.Context, key string) ([]jiraTransi
 }
 
 func (n *Notifier) addComment(ctx context.Context, key, text string) (bool, error) {
-	_, retry, err := n.callAPI(ctx, http.MethodPost, n.issueURL(key, "comment"), comment{Body: adfDocument(text)})
+	_, retry, err := n.callAPI(ctx, http.MethodPost, n.issueURL(key, "comment"), comment{Body: adf.Doc(text)})
 	return retry, err
 }
 
@@ -340,22 +396,6 @@ type jiraTransition struct {
 
 type comment struct {
 	Body any `json:"body"`
-}
-
-// adfDocument wraps plain text into an Atlassian Document Format doc, one paragraph per line.
-func adfDocument(text string) map[string]any {
-	content := make([]any, 0)
-	for line := range strings.SplitSeq(text, "\n") {
-		paragraph := map[string]any{"type": "paragraph"}
-		if line != "" {
-			paragraph["content"] = []any{map[string]any{"type": "text", "text": line}}
-		}
-		content = append(content, paragraph)
-	}
-	if len(content) == 0 {
-		content = append(content, map[string]any{"type": "paragraph"})
-	}
-	return map[string]any{"type": "doc", "version": 1, "content": content}
 }
 
 func truncateRunes(s string, max int) string {

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/notify/test"
 	"github.com/prometheus/alertmanager/types"
@@ -220,6 +221,39 @@ func TestNotifyRetriesOn429(t *testing.T) {
 	retry, err := newNotifier(t, m).Notify(ctx(), alert(true))
 	require.Error(t, err)
 	assert.True(t, retry)
+}
+
+func (m *mockJira) lastBody(t *testing.T, method, suffix string) map[string]any {
+	t.Helper()
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for i := len(m.reqs) - 1; i >= 0; i-- {
+		if m.reqs[i].method == method && strings.HasSuffix(m.reqs[i].path, suffix) {
+			return m.reqs[i].body
+		}
+	}
+	t.Fatalf("no %s request to %s", method, suffix)
+	return nil
+}
+
+func TestNotifyRichDescriptionPanelAndLinks(t *testing.T) {
+	m := newMockJira(t)
+	a := alert(true)
+	a.Labels[ruletypes.LabelRuleSource] = model.LabelValue("https://app.signoz.io/alerts?ruleId=1")
+	a.Annotations[ruletypes.AnnotationRelatedLogs] = model.LabelValue("https://app.signoz.io/logs")
+
+	_, err := newNotifier(t, m).Notify(ctx(), a)
+	require.NoError(t, err)
+
+	body := m.lastBody(t, http.MethodPost, "/issue")
+	js, err := json.Marshal(body)
+	require.NoError(t, err)
+	s := string(js)
+	assert.Contains(t, s, `"panel"`)                                  // status panel present
+	assert.Contains(t, s, `"error"`)                                  // firing → error panel
+	assert.Contains(t, s, "Open in SigNoz")                           // rule deep-link
+	assert.Contains(t, s, "https://app.signoz.io/alerts?ruleId=1")    // rule url
+	assert.Contains(t, s, "View Related Logs")                        // related-logs deep-link
 }
 
 func TestSelectTransition(t *testing.T) {
