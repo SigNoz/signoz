@@ -7,7 +7,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/savedviewtypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -47,9 +46,7 @@ func (module *module) GetView(ctx context.Context, orgID string, uuid valuer.UUI
 		return nil, err
 	}
 
-	view := storable.ToSavedView()
-	normalizeSelectedFields(view)
-	return view, nil
+	return storable.ToSavedView(), nil
 }
 
 func (module *module) UpdateView(ctx context.Context, orgID string, uuid valuer.UUID, view savedviewtypes.UpdatableSavedView) error {
@@ -75,20 +72,11 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 	return savedviewtypes.NewStatsFromSavedViews(toSavedViews(storables)), nil
 }
 
-// toSavedViews converts scanned rows to their domain shape, normalizing each.
+// toSavedViews converts scanned rows to their domain shape.
 func toSavedViews(storables []*savedviewtypes.StorableSavedView) []*savedviewtypes.SavedView {
 	views := make([]*savedviewtypes.SavedView, 0, len(storables))
 	for _, storable := range storables {
-		view := storable.ToSavedView()
-		normalizeSelectedFields(view)
-		views = append(views, view)
+		views = append(views, storable.ToSavedView())
 	}
 	return views
-}
-
-// normalizeSelectedFields fixes up a scanned row's nil SelectedFields.
-func normalizeSelectedFields(view *savedviewtypes.SavedView) {
-	if view.Spec.SelectedFields == nil {
-		view.Spec.SelectedFields = []telemetrytypes.TelemetryFieldKey{}
-	}
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -27,11 +28,6 @@ var (
 	SourceMeter   = Source{valuer.NewString("meter")}
 )
 
-// SavedView is the domain/wire shape -- schemaVersion and spec are promoted
-// to the top level, matching dashboardtypes.DashboardV2 and ruletypes'
-// v2alpha1 rules. StorableSavedView is the distinct bun-mapped row shape;
-// the two diverge because bun maps Data to a single opaque `data` column,
-// which is incompatible with promoting its fields to the top level for JSON.
 type SavedView struct {
 	types.Identifiable
 	types.TimeAuditable
@@ -43,7 +39,6 @@ type SavedView struct {
 	Spec          SavedViewSpec `json:"spec" required:"true"`
 }
 
-// StorableSavedView is the row shape bun maps to the saved_view table.
 type StorableSavedView struct {
 	bun.BaseModel `bun:"table:saved_view"`
 
@@ -57,6 +52,14 @@ type StorableSavedView struct {
 }
 
 func (s *StorableSavedView) ToSavedView() *SavedView {
+	spec := s.Data.Spec
+	// a row written before selectedFields was optional, or one whose
+	// omitempty-tagged legacy round trip dropped it, scans back as nil --
+	// callers should never have to special-case nil vs. an empty list.
+	if spec.SelectedFields == nil {
+		spec.SelectedFields = []telemetrytypes.TelemetryFieldKey{}
+	}
+
 	return &SavedView{
 		Identifiable:  s.Identifiable,
 		TimeAuditable: s.TimeAuditable,
@@ -65,7 +68,7 @@ func (s *StorableSavedView) ToSavedView() *SavedView {
 		Name:          s.Name,
 		Source:        s.Source,
 		SchemaVersion: SchemaVersion{valuer.NewString(s.Data.SchemaVersion)},
-		Spec:          s.Data.Spec,
+		Spec:          spec,
 	}
 }
 

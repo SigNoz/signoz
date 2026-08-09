@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -206,6 +207,50 @@ func TestGenerateSavedViewName(t *testing.T) {
 		first := generateSavedViewName("collision-test")
 		second := generateSavedViewName("collision-test")
 		assert.NotEqual(t, first, second, "expected the random suffix to differ across calls")
+	})
+}
+
+func TestStorableSavedView_ToSavedView(t *testing.T) {
+	t.Run("round trip preserves populated fields", func(t *testing.T) {
+		view := &SavedView{
+			Name:          "my-view",
+			Source:        SourceLogs,
+			SchemaVersion: SavedViewSchemaVersion,
+			Spec: SavedViewSpec{
+				DisplayName:    "My View",
+				PanelType:      PanelTypeGraph,
+				Queries:        validQueries(),
+				SelectedFields: []telemetrytypes.TelemetryFieldKey{{Name: "service.name"}},
+			},
+		}
+		view.OrgID = valuer.GenerateUUID().StringValue()
+
+		roundTripped := NewStorableSavedView(view).ToSavedView()
+
+		assert.Equal(t, view.OrgID, roundTripped.OrgID)
+		assert.Equal(t, view.Name, roundTripped.Name)
+		assert.Equal(t, view.Source, roundTripped.Source)
+		assert.Equal(t, view.SchemaVersion, roundTripped.SchemaVersion)
+		assert.Equal(t, view.Spec, roundTripped.Spec)
+	})
+
+	t.Run("nil selectedFields normalizes to an empty slice, not nil", func(t *testing.T) {
+		storable := &StorableSavedView{
+			Data: SavedViewData{
+				SchemaVersion: SavedViewSchemaVersion.StringValue(),
+				Spec: SavedViewSpec{
+					DisplayName:    "My View",
+					PanelType:      PanelTypeGraph,
+					Queries:        validQueries(),
+					SelectedFields: nil,
+				},
+			},
+		}
+
+		view := storable.ToSavedView()
+
+		assert.NotNil(t, view.Spec.SelectedFields)
+		assert.Empty(t, view.Spec.SelectedFields)
 	})
 }
 
