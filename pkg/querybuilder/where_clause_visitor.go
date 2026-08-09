@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"maps"
 	"slices"
 	"strconv"
 	"strings"
@@ -362,7 +361,7 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 				return ErrorConditionLiteral
 			}
 		}
-		conds, ok := v.buildConditions(v.fullTextColumn, []*telemetrytypes.TelemetryFieldKey{v.fullTextColumn}, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(searchText))
+		conds, ok := v.buildConditions(v.fullTextColumn, []*telemetrytypes.LogicalField{telemetrytypes.SingleLogicalField(v.fullTextColumn.Name, v.fullTextColumn)}, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(searchText))
 		if !ok {
 			return ErrorConditionLiteral
 		}
@@ -381,7 +380,7 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 // VisitComparison handles all comparison operators.
 func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext) any {
 	key := v.Visit(ctx.Key()).(*telemetrytypes.TelemetryFieldKey)
-	matching := MatchingFieldKeys(key, v.fieldKeys)
+	matching := MatchingLogicalFields(key, v.fieldKeys)
 
 	// Handle EXISTS specially
 	if ctx.EXISTS() != nil {
@@ -677,7 +676,7 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 		v.errors = append(v.errors, "full text search is not supported")
 		return ErrorConditionLiteral
 	}
-	conds, ok := v.buildConditions(v.fullTextColumn, []*telemetrytypes.TelemetryFieldKey{v.fullTextColumn}, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text))
+	conds, ok := v.buildConditions(v.fullTextColumn, []*telemetrytypes.LogicalField{telemetrytypes.SingleLogicalField(v.fullTextColumn.Name, v.fullTextColumn)}, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text))
 	if !ok {
 		return ErrorConditionLiteral
 	}
@@ -732,7 +731,7 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 		return ErrorConditionLiteral
 	}
 
-	conds, ok := v.buildConditions(key, MatchingFieldKeys(key, v.fieldKeys), operator, value)
+	conds, ok := v.buildConditions(key, MatchingLogicalFields(key, v.fieldKeys), operator, value)
 	if !ok {
 		return ErrorConditionLiteral
 	}
@@ -924,7 +923,7 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 
 // buildConditions invokes the condition builder for a filter term, folding its
 // warnings/errors into visitor state; returns false if an error was recorded.
-func (v *filterExpressionVisitor) buildConditions(key *telemetrytypes.TelemetryFieldKey, matching []*telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOperator, value any) ([]string, bool) {
+func (v *filterExpressionVisitor) buildConditions(key *telemetrytypes.TelemetryFieldKey, matching []*telemetrytypes.LogicalField, op qbtypes.FilterOperator, value any) ([]string, bool) {
 	conds, warns, err := v.conditionBuilder.ConditionFor(v.context, v.orgID, v.startNs, v.endNs, key, v.fieldKeys, qbtypes.ConditionBuilderOptions{SkipResourceFilter: v.skipResourceFilter}, op, value, v.builder)
 	if err != nil {
 		_, _, _, _, errURL, _ := errors.Unwrapb(err)
@@ -981,23 +980,43 @@ func assignIfEmpty(s *string, value string) {
 	}
 }
 
-// MatchingFieldKeys returns the field keys from the map that match the given key,
-// honoring any context/data type the user specified.
-func MatchingFieldKeys(field *telemetrytypes.TelemetryFieldKey, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
-	selector := telemetrytypes.FieldKeySelector{
+// familyMemberNames returns the physical spellings to look up for the
+// referenced key: the semantic-convention family members (current-first) when
+// the key can resolve to traces, else just the requested name. Only trace
+// field mappers understand families today; logs and metrics keep the
+// requested spelling until theirs land.
+func familyMemberNames(field *telemetrytypes.TelemetryFieldKey) []string {
+	if field.Signal != telemetrytypes.SignalUnspecified && field.Signal != telemetrytypes.SignalTraces {
+		return []string{field.Name}
+	}
+	return semconv.Members(semconv.KindAttribute, telemetrytypes.FieldKeySelector{
 		Name:         field.Name,
 		Signal:       telemetrytypes.SignalTraces,
 		FieldContext: field.FieldContext,
+	})
+}
+
+// MatchingLogicalFields resolves the referenced key against the metadata map
+// into logical fields, honoring any context/data type the user specified.
+//
+// Physical keys that are members of one semantic-convention family (traces
+// only today) group into a single logical field per (signal, context, data
+// type) identity, members ordered current-first. Every other matching key
+// becomes its own single-member logical field. Ambiguity is therefore the
+// length of the returned slice, and a family is never ambiguous with itself.
+// Members alias the metadata map entries; nothing is copied or mutated.
+func MatchingLogicalFields(field *telemetrytypes.TelemetryFieldKey, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.LogicalField {
+	members := familyMemberNames(field)
+	memberRank := make(map[string]int, len(members))
+	for i, member := range members {
+		memberRank[member] = i
 	}
-	members := []string{field.Name}
-	// Only trace field mappers understand semantic-convention families today.
-	// Logs and metrics must keep using the requested spelling until theirs land.
-	if field.Signal == telemetrytypes.SignalUnspecified || field.Signal == telemetrytypes.SignalTraces {
-		members = semconv.Members(semconv.KindAttribute, selector)
-	}
-	isFamily := len(members) > 1
-	fieldKeysForName := make([]*telemetrytypes.TelemetryFieldKey, 0)
+
+	fields := make([]*telemetrytypes.LogicalField, 0)
 	indexByIdentity := make(map[string]int)
+	// rank of the family member each physical key matched under; the stored
+	// name of a context-prefixed match differs from the member name.
+	ranks := make(map[*telemetrytypes.TelemetryFieldKey]int)
 
 	appendMatches := func(lookupName string, memberName string, contextAlreadyMatched bool) {
 		for _, item := range fieldKeys[lookupName] {
@@ -1011,7 +1030,7 @@ func MatchingFieldKeys(field *telemetrytypes.TelemetryFieldKey, fieldKeys map[st
 			// A wildcard lookup may have found a same-named field in a scope where
 			// this family does not apply. Keep exact names, but reject cross-member
 			// matches outside the generated family scope.
-			traceFamilyMatch := isFamily && item.Signal == telemetrytypes.SignalTraces
+			traceFamilyMatch := len(members) > 1 && item.Signal == telemetrytypes.SignalTraces
 			if memberName != field.Name {
 				if !traceFamilyMatch {
 					continue
@@ -1026,53 +1045,38 @@ func MatchingFieldKeys(field *telemetrytypes.TelemetryFieldKey, fieldKeys map[st
 				}
 			}
 
-			physicalMembers := item.SemconvMembers
-			if len(physicalMembers) == 0 {
-				physicalMembers = []string{memberName}
+			if !traceFamilyMatch {
+				fields = append(fields, telemetrytypes.SingleLogicalField(field.Name, item))
+				continue
 			}
-			materializedColumns := maps.Clone(item.SemconvMaterializedColumns)
-			if item.Materialized {
-				if materializedColumns == nil {
-					materializedColumns = make(map[string]string)
-				}
-				physicalKey := item.Copy()
-				physicalKey.Name = memberName
-				materializedColumns[memberName] = strings.Trim(telemetrytypes.FieldKeyToMaterializedColumnName(physicalKey), "`")
-			}
+
 			identity := item.Signal.StringValue() + ";" + item.FieldContext.StringValue() + ";" + item.FieldDataType.StringValue()
-			if traceFamilyMatch {
-				if index, found := indexByIdentity[identity]; found {
-					for _, physicalMember := range physicalMembers {
-						if !slices.Contains(fieldKeysForName[index].SemconvMembers, physicalMember) {
-							fieldKeysForName[index].SemconvMembers = append(fieldKeysForName[index].SemconvMembers, physicalMember)
-						}
-					}
-					if len(materializedColumns) > 0 {
-						if fieldKeysForName[index].SemconvMaterializedColumns == nil {
-							fieldKeysForName[index].SemconvMaterializedColumns = make(map[string]string)
-						}
-						maps.Copy(fieldKeysForName[index].SemconvMaterializedColumns, materializedColumns)
-					}
-					continue
+			index, found := indexByIdentity[identity]
+			if !found {
+				index = len(fields)
+				indexByIdentity[identity] = index
+				fields = append(fields, &telemetrytypes.LogicalField{
+					Name:          field.Name,
+					Signal:        item.Signal,
+					FieldContext:  item.FieldContext,
+					FieldDataType: item.FieldDataType,
+				})
+			}
+			logical := fields[index]
+			duplicate := false
+			for _, existing := range logical.Members {
+				if existing.Name == item.Name {
+					duplicate = true
+					break
 				}
-				indexByIdentity[identity] = len(fieldKeysForName)
 			}
-			resolved := item.Copy()
-			// The requested spelling is the response identity. Field mappers use
-			// it to resolve the available family members current-first.
-			if traceFamilyMatch {
-				resolved.Name = field.Name
-				resolved.SemconvMembers = slices.Clone(physicalMembers)
-				resolved.SemconvMaterializedColumns = materializedColumns
-				// Materialization is member-specific after family keys are merged.
-				resolved.Materialized = false
+			if !duplicate {
+				ranks[item] = memberRank[memberName]
+				logical.Members = append(logical.Members, item)
 			}
-			fieldKeysForName = append(fieldKeysForName, resolved)
 		}
 	}
 
-	// Members are current-first, so metadata from the current key wins when
-	// both spellings describe the same signal/context/type.
 	for _, member := range members {
 		appendMatches(member, member, false)
 	}
@@ -1086,5 +1090,13 @@ func MatchingFieldKeys(field *telemetrytypes.TelemetryFieldKey, fieldKeys map[st
 		}
 	}
 
-	return fieldKeysForName
+	// Precedence is a property of the family, not of arrival order: members
+	// sort current-first no matter which lookup pass found them.
+	for _, logical := range fields {
+		slices.SortStableFunc(logical.Members, func(a, b *telemetrytypes.TelemetryFieldKey) int {
+			return ranks[a] - ranks[b]
+		})
+	}
+
+	return fields
 }

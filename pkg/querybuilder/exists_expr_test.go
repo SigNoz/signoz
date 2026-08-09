@@ -9,19 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestExistsExpressionUsesEveryPhysicalSemconvMember(t *testing.T) {
-	key := &telemetrytypes.TelemetryFieldKey{
-		Name:          "deployment.environment.name",
-		FieldContext:  telemetrytypes.FieldContextAttribute,
-		FieldDataType: telemetrytypes.FieldDataTypeString,
-		SemconvMembers: []string{
-			"deployment.environment.name",
-			"deployment.environment",
-		},
-		SemconvMaterializedColumns: map[string]string{
-			"deployment.environment": "attribute_string_deployment$$environment",
-		},
-	}
+// ExistsExpression is a per-physical-key primitive: family composition happens
+// at the logical-field layer, so this only ever sees one spelling.
+func TestExistsExpressionIsPerKey(t *testing.T) {
 	columns := []*schema.Column{{
 		Name: "attributes_string",
 		Type: schema.MapColumnType{
@@ -30,12 +20,22 @@ func TestExistsExpressionUsesEveryPhysicalSemconvMember(t *testing.T) {
 		},
 	}}
 
-	expression, err := ExistsExpression(columns, key, 0, 0, "unused", true)
+	plain := &telemetrytypes.TelemetryFieldKey{
+		Name:          "deployment.environment",
+		FieldContext:  telemetrytypes.FieldContextAttribute,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	}
+	expression, err := ExistsExpression(columns, plain, 0, 0, "unused", true)
 	require.NoError(t, err)
+	assert.Equal(t, "mapContains(attributes_string, 'deployment.environment')", expression)
 
-	assert.Equal(
-		t,
-		"(mapContains(attributes_string, 'deployment.environment.name') OR `attribute_string_deployment$$environment_exists`)",
-		expression,
-	)
+	materialized := &telemetrytypes.TelemetryFieldKey{
+		Name:          "deployment.environment",
+		FieldContext:  telemetrytypes.FieldContextAttribute,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+		Materialized:  true,
+	}
+	expression, err = ExistsExpression(columns, materialized, 0, 0, "unused", false)
+	require.NoError(t, err)
+	assert.Equal(t, "NOT `attribute_string_deployment$$environment_exists`", expression)
 }

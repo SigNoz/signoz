@@ -221,24 +221,40 @@ func TestConditionBuilder(t *testing.T) {
 	}
 }
 
-func TestFamilyPositiveFilterExcludesKeylessRows(t *testing.T) {
-	key := &telemetrytypes.TelemetryFieldKey{
-		Name:           "deployment.environment.name",
-		Signal:         telemetrytypes.SignalTraces,
-		FieldContext:   telemetrytypes.FieldContextResource,
-		FieldDataType:  telemetrytypes.FieldDataTypeString,
-		SemconvMembers: []string{"deployment.environment.name", "deployment.environment"},
+// The family tests drive resolution through the metadata map, exactly as
+// production does: two plain member keys in the map, one requested spelling.
+// The keys carry no family bookkeeping — grouping is the resolver's job.
+func familyConditionSQL(t *testing.T, requestedName string, memberNames []string, op qbtypes.FilterOperator, value any) (string, []any) {
+	t.Helper()
+	fieldKeys := map[string][]*telemetrytypes.TelemetryFieldKey{}
+	for _, name := range memberNames {
+		fieldKeys[name] = []*telemetrytypes.TelemetryFieldKey{{
+			Name:          name,
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextResource,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		}}
 	}
+	requested := telemetrytypes.NewTelemetryFieldKey(
+		requestedName,
+		telemetrytypes.FieldContextResource,
+		telemetrytypes.FieldDataTypeString,
+	)
 	sb := sqlbuilder.NewSelectBuilder()
-
 	conditions, _, err := NewConditionBuilder(NewFieldMapper()).ConditionFor(
-		context.Background(), valuer.UUID{}, 0, 0, key,
-		map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}},
-		qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorEqual, "production", sb,
+		context.Background(), valuer.UUID{}, 0, 0, requested,
+		fieldKeys,
+		qbtypes.ConditionBuilderOptions{}, op, value, sb,
 	)
 	require.NoError(t, err)
 	sb.Where(conditions...)
-	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	return sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+}
+
+var deploymentFamilyMembers = []string{"deployment.environment.name", "deployment.environment"}
+
+func TestFamilyPositiveFilterExcludesKeylessRows(t *testing.T) {
+	sql, args := familyConditionSQL(t, "deployment.environment.name", deploymentFamilyMembers, qbtypes.FilterOperatorEqual, "production")
 
 	assert.Contains(t, sql, "COALESCE(NULLIF(simpleJSONExtractString(labels, 'deployment.environment.name'), ''), NULLIF(simpleJSONExtractString(labels, 'deployment.environment'), ''), '') = ? AND (labels LIKE ? OR labels LIKE ?) AND (labels LIKE ? OR labels LIKE ?)")
 	assert.Equal(t, []any{
@@ -251,164 +267,61 @@ func TestFamilyPositiveFilterExcludesKeylessRows(t *testing.T) {
 }
 
 func TestFamilyNotEqualIncludesKeylessRows(t *testing.T) {
-	key := &telemetrytypes.TelemetryFieldKey{
-		Name:           "deployment.environment.name",
-		Signal:         telemetrytypes.SignalTraces,
-		FieldContext:   telemetrytypes.FieldContextResource,
-		FieldDataType:  telemetrytypes.FieldDataTypeString,
-		SemconvMembers: []string{"deployment.environment.name", "deployment.environment"},
-	}
-	sb := sqlbuilder.NewSelectBuilder()
-
-	conditions, _, err := NewConditionBuilder(NewFieldMapper()).ConditionFor(
-		context.Background(), valuer.UUID{}, 0, 0, key,
-		map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}},
-		qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorNotEqual, "staging", sb,
-	)
-	require.NoError(t, err)
-	sb.Where(conditions...)
-	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	sql, args := familyConditionSQL(t, "deployment.environment.name", deploymentFamilyMembers, qbtypes.FilterOperatorNotEqual, "staging")
 
 	assert.Contains(t, sql, "COALESCE(NULLIF(simpleJSONExtractString(labels, 'deployment.environment.name'), ''), NULLIF(simpleJSONExtractString(labels, 'deployment.environment'), ''), '') <> ?")
 	assert.Equal(t, []any{"staging"}, args)
 }
 
 func TestFamilyNotInIncludesKeylessRows(t *testing.T) {
-	key := &telemetrytypes.TelemetryFieldKey{
-		Name:           "deployment.environment.name",
-		Signal:         telemetrytypes.SignalTraces,
-		FieldContext:   telemetrytypes.FieldContextResource,
-		FieldDataType:  telemetrytypes.FieldDataTypeString,
-		SemconvMembers: []string{"deployment.environment.name", "deployment.environment"},
-	}
-	sb := sqlbuilder.NewSelectBuilder()
-
-	conditions, _, err := NewConditionBuilder(NewFieldMapper()).ConditionFor(
-		context.Background(), valuer.UUID{}, 0, 0, key,
-		map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}},
-		qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorNotIn, []any{"staging", "dev"}, sb,
-	)
-	require.NoError(t, err)
-	sb.Where(conditions...)
-	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	sql, args := familyConditionSQL(t, "deployment.environment.name", deploymentFamilyMembers, qbtypes.FilterOperatorNotIn, []any{"staging", "dev"})
 
 	assert.Contains(t, sql, "(COALESCE(NULLIF(simpleJSONExtractString(labels, 'deployment.environment.name'), ''), NULLIF(simpleJSONExtractString(labels, 'deployment.environment'), ''), '') <> ? AND COALESCE(NULLIF(simpleJSONExtractString(labels, 'deployment.environment.name'), ''), NULLIF(simpleJSONExtractString(labels, 'deployment.environment'), ''), '') <> ?)")
 	assert.Equal(t, []any{"staging", "dev"}, args)
 }
 
 func TestFamilyNotLikeIncludesKeylessRows(t *testing.T) {
-	key := &telemetrytypes.TelemetryFieldKey{
-		Name:           "deployment.environment.name",
-		Signal:         telemetrytypes.SignalTraces,
-		FieldContext:   telemetrytypes.FieldContextResource,
-		FieldDataType:  telemetrytypes.FieldDataTypeString,
-		SemconvMembers: []string{"deployment.environment.name", "deployment.environment"},
-	}
-	sb := sqlbuilder.NewSelectBuilder()
-
-	conditions, _, err := NewConditionBuilder(NewFieldMapper()).ConditionFor(
-		context.Background(), valuer.UUID{}, 0, 0, key,
-		map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}},
-		qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorNotLike, "%stag%", sb,
-	)
-	require.NoError(t, err)
-	sb.Where(conditions...)
-	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	sql, args := familyConditionSQL(t, "deployment.environment.name", deploymentFamilyMembers, qbtypes.FilterOperatorNotLike, "%stag%")
 
 	assert.Contains(t, sql, "LOWER(COALESCE(NULLIF(simpleJSONExtractString(labels, 'deployment.environment.name'), ''), NULLIF(simpleJSONExtractString(labels, 'deployment.environment'), ''), '')) NOT LIKE LOWER(?)")
 	assert.Equal(t, []any{"%stag%"}, args)
 }
 
 func TestFamilyNotContainsIncludesKeylessRows(t *testing.T) {
-	key := &telemetrytypes.TelemetryFieldKey{
-		Name:           "deployment.environment.name",
-		Signal:         telemetrytypes.SignalTraces,
-		FieldContext:   telemetrytypes.FieldContextResource,
-		FieldDataType:  telemetrytypes.FieldDataTypeString,
-		SemconvMembers: []string{"deployment.environment.name", "deployment.environment"},
-	}
-	sb := sqlbuilder.NewSelectBuilder()
-
-	conditions, _, err := NewConditionBuilder(NewFieldMapper()).ConditionFor(
-		context.Background(), valuer.UUID{}, 0, 0, key,
-		map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}},
-		qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorNotContains, "stag", sb,
-	)
-	require.NoError(t, err)
-	sb.Where(conditions...)
-	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	sql, args := familyConditionSQL(t, "deployment.environment.name", deploymentFamilyMembers, qbtypes.FilterOperatorNotContains, "stag")
 
 	assert.Contains(t, sql, "LOWER(COALESCE(NULLIF(simpleJSONExtractString(labels, 'deployment.environment.name'), ''), NULLIF(simpleJSONExtractString(labels, 'deployment.environment'), ''), '')) NOT LIKE LOWER(?)")
 	assert.Equal(t, []any{"%stag%"}, args)
 }
 
 func TestFamilyNotRegexpIncludesKeylessRows(t *testing.T) {
-	key := &telemetrytypes.TelemetryFieldKey{
-		Name:           "deployment.environment.name",
-		Signal:         telemetrytypes.SignalTraces,
-		FieldContext:   telemetrytypes.FieldContextResource,
-		FieldDataType:  telemetrytypes.FieldDataTypeString,
-		SemconvMembers: []string{"deployment.environment.name", "deployment.environment"},
-	}
-	sb := sqlbuilder.NewSelectBuilder()
-
-	conditions, _, err := NewConditionBuilder(NewFieldMapper()).ConditionFor(
-		context.Background(), valuer.UUID{}, 0, 0, key,
-		map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}},
-		qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorNotRegexp, "stag.*", sb,
-	)
-	require.NoError(t, err)
-	sb.Where(conditions...)
-	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	sql, args := familyConditionSQL(t, "deployment.environment.name", deploymentFamilyMembers, qbtypes.FilterOperatorNotRegexp, "stag.*")
 
 	assert.Contains(t, sql, "NOT match(COALESCE(NULLIF(simpleJSONExtractString(labels, 'deployment.environment.name'), ''), NULLIF(simpleJSONExtractString(labels, 'deployment.environment'), ''), ''), ?)")
 	assert.Equal(t, []any{"stag.*"}, args)
 }
 
 func TestFamilyExistsChecksEveryMember(t *testing.T) {
-	key := &telemetrytypes.TelemetryFieldKey{
-		Name:           "deployment.environment.name",
-		Signal:         telemetrytypes.SignalTraces,
-		FieldContext:   telemetrytypes.FieldContextResource,
-		FieldDataType:  telemetrytypes.FieldDataTypeString,
-		SemconvMembers: []string{"deployment.environment.name", "deployment.environment"},
-	}
-	sb := sqlbuilder.NewSelectBuilder()
-
-	conditions, _, err := NewConditionBuilder(NewFieldMapper()).ConditionFor(
-		context.Background(), valuer.UUID{}, 0, 0, key,
-		map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}},
-		qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorExists, nil, sb,
-	)
-	require.NoError(t, err)
-	sb.Where(conditions...)
-	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	sql, args := familyConditionSQL(t, "deployment.environment.name", deploymentFamilyMembers, qbtypes.FilterOperatorExists, nil)
 
 	assert.Contains(t, sql, "(simpleJSONHas(labels, 'deployment.environment.name') = ? OR simpleJSONHas(labels, 'deployment.environment') = ?) AND (labels LIKE ? OR labels LIKE ?)")
 	assert.Equal(t, []any{true, true, "%deployment.environment.name%", "%deployment.environment%"}, args)
 }
 
 func TestFamilyNotExistsChecksEveryMember(t *testing.T) {
-	key := &telemetrytypes.TelemetryFieldKey{
-		Name:           "deployment.environment.name",
-		Signal:         telemetrytypes.SignalTraces,
-		FieldContext:   telemetrytypes.FieldContextResource,
-		FieldDataType:  telemetrytypes.FieldDataTypeString,
-		SemconvMembers: []string{"deployment.environment.name", "deployment.environment"},
-	}
-	sb := sqlbuilder.NewSelectBuilder()
-
-	conditions, _, err := NewConditionBuilder(NewFieldMapper()).ConditionFor(
-		context.Background(), valuer.UUID{}, 0, 0, key,
-		map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}},
-		qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorNotExists, nil, sb,
-	)
-	require.NoError(t, err)
-	sb.Where(conditions...)
-	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	sql, args := familyConditionSQL(t, "deployment.environment.name", deploymentFamilyMembers, qbtypes.FilterOperatorNotExists, nil)
 
 	assert.Contains(t, sql, "simpleJSONHas(labels, 'deployment.environment.name') <> ? AND simpleJSONHas(labels, 'deployment.environment') <> ?")
 	assert.Equal(t, []any{true, true}, args)
+}
+
+// The old-name request with only the current spelling in metadata prunes to a
+// single member: plain single-key SQL, no coalesce.
+func TestFamilyPrunesToPresentMembers(t *testing.T) {
+	sql, args := familyConditionSQL(t, "deployment.environment", []string{"deployment.environment.name"}, qbtypes.FilterOperatorEqual, "production")
+
+	assert.Contains(t, sql, "simpleJSONExtractString(labels, 'deployment.environment.name') = ? AND labels LIKE ? AND labels LIKE ?")
+	assert.Equal(t, []any{"production", "%deployment.environment.name%", `%deployment.environment.name":"production%`}, args)
 }
 
 func TestLogSemconvNameStaysLiteral(t *testing.T) {

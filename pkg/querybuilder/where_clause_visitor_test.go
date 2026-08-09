@@ -590,8 +590,8 @@ func TestVisitKey(t *testing.T) {
 			// VisitKey only parses; the condition builder matches, resolves ambiguity
 			// and decides not-found handling. Replay that here against the generic
 			// builder behavior (error unless the key is ignored).
-			matching := MatchingFieldKeys(key, tt.fieldKeys)
-			keys, warning := ResolveKeys(key, matching)
+			matching := MatchingLogicalFields(key, tt.fieldKeys)
+			keys, warning := ResolveLogicalFields(key, matching)
 
 			var gotErrors []string
 			var gotMainErrURL, gotMainWrnURL string
@@ -613,15 +613,19 @@ func TestVisitKey(t *testing.T) {
 				t.Errorf("expected %d keys, got %d", len(tt.expectedKeys), len(keys))
 			}
 
-			// Check each expected key matches name, field context, and data type
+			// Check each expected key matches a member's stored name plus the
+			// logical field's context and data type (the logical Name is the
+			// requested spelling, members keep the stored spellings).
 			for _, expectedKey := range tt.expectedKeys {
 				found := false
-				for _, key := range keys {
-					if key.Name == expectedKey.Name &&
-						key.FieldContext == expectedKey.FieldContext &&
-						key.FieldDataType == expectedKey.FieldDataType {
-						found = true
-						break
+				for _, logical := range keys {
+					for _, member := range logical.Members {
+						if member.Name == expectedKey.Name &&
+							logical.FieldContext == expectedKey.FieldContext &&
+							logical.FieldDataType == expectedKey.FieldDataType {
+							found = true
+							break
+						}
 					}
 				}
 				if !found {
@@ -686,7 +690,15 @@ func TestVisitKey(t *testing.T) {
 	}
 }
 
-func TestMatchingFieldKeysResolvesCurrentTraceNameFromOldMetadata(t *testing.T) {
+func memberNames(logical *telemetrytypes.LogicalField) []string {
+	names := make([]string, 0, len(logical.Members))
+	for _, member := range logical.Members {
+		names = append(names, member.Name)
+	}
+	return names
+}
+
+func TestMatchingLogicalFieldsResolvesCurrentTraceNameFromOldMetadata(t *testing.T) {
 	old := &telemetrytypes.TelemetryFieldKey{
 		Name:          "deployment.environment",
 		Description:   "old metadata",
@@ -700,25 +712,23 @@ func TestMatchingFieldKeysResolvesCurrentTraceNameFromOldMetadata(t *testing.T) 
 		telemetrytypes.FieldDataTypeString,
 	)
 
-	matches := MatchingFieldKeys(requested, map[string][]*telemetrytypes.TelemetryFieldKey{old.Name: {old}})
+	matches := MatchingLogicalFields(requested, map[string][]*telemetrytypes.TelemetryFieldKey{old.Name: {old}})
 
-	require.Len(t, matches, 1, "trace family lookup must resolve before inspecting metadata")
-	assert.Equal(t, "deployment.environment.name", matches[0].Name)
-	assert.Equal(t, "old metadata", matches[0].Description)
-	assert.Equal(t, []string{"deployment.environment"}, matches[0].SemconvMembers)
+	require.Len(t, matches, 1, "a family is one logical field, not an ambiguity")
+	assert.Equal(t, "deployment.environment.name", matches[0].Name, "the requested spelling is the response identity")
+	assert.Equal(t, []string{"deployment.environment"}, memberNames(matches[0]))
+	assert.Same(t, old, matches[0].Members[0], "members alias metadata entries; nothing is copied")
 }
 
-func TestMatchingFieldKeysUsesCurrentTraceMetadataForOldName(t *testing.T) {
+func TestMatchingLogicalFieldsGroupsFamilyMembersCurrentFirst(t *testing.T) {
 	current := &telemetrytypes.TelemetryFieldKey{
 		Name:          "deployment.environment.name",
-		Description:   "current metadata",
 		Signal:        telemetrytypes.SignalTraces,
 		FieldContext:  telemetrytypes.FieldContextResource,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
 	}
 	old := &telemetrytypes.TelemetryFieldKey{
 		Name:          "deployment.environment",
-		Description:   "old metadata",
 		Signal:        telemetrytypes.SignalTraces,
 		FieldContext:  telemetrytypes.FieldContextResource,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
@@ -729,18 +739,50 @@ func TestMatchingFieldKeysUsesCurrentTraceMetadataForOldName(t *testing.T) {
 		telemetrytypes.FieldDataTypeString,
 	)
 
-	matches := MatchingFieldKeys(requested, map[string][]*telemetrytypes.TelemetryFieldKey{
+	matches := MatchingLogicalFields(requested, map[string][]*telemetrytypes.TelemetryFieldKey{
 		current.Name: {current},
 		old.Name:     {old},
 	})
 
-	require.Len(t, matches, 1, "trace family lookup must resolve before inspecting metadata")
-	assert.Equal(t, old.Name, matches[0].Name)
-	assert.Equal(t, "current metadata", matches[0].Description)
-	assert.Equal(t, []string{current.Name, old.Name}, matches[0].SemconvMembers)
+	require.Len(t, matches, 1, "a family is one logical field, not an ambiguity")
+	assert.Equal(t, old.Name, matches[0].Name, "the requested spelling is the response identity")
+	assert.True(t, matches[0].IsFamily())
+	assert.Equal(t, []string{current.Name, old.Name}, memberNames(matches[0]), "members order current-first")
 }
 
-func TestMatchingFieldKeysKeepsLogSemconvNamesLiteral(t *testing.T) {
+// Precedence is a property of the family, not of arrival order: a member that
+// only exists under its context-prefixed stored spelling still sorts by its
+// family rank.
+func TestMatchingLogicalFieldsOrdersMembersByFamilyRank(t *testing.T) {
+	old := &telemetrytypes.TelemetryFieldKey{
+		Name:          "deployment.environment",
+		Signal:        telemetrytypes.SignalTraces,
+		FieldContext:  telemetrytypes.FieldContextResource,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	}
+	prefixedCurrent := &telemetrytypes.TelemetryFieldKey{
+		Name:          "resource.deployment.environment.name",
+		Signal:        telemetrytypes.SignalTraces,
+		FieldContext:  telemetrytypes.FieldContextResource,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	}
+	requested := telemetrytypes.NewTelemetryFieldKey(
+		"deployment.environment.name",
+		telemetrytypes.FieldContextResource,
+		telemetrytypes.FieldDataTypeString,
+	)
+
+	matches := MatchingLogicalFields(requested, map[string][]*telemetrytypes.TelemetryFieldKey{
+		old.Name:             {old},
+		prefixedCurrent.Name: {prefixedCurrent},
+	})
+
+	require.Len(t, matches, 1)
+	assert.Equal(t, []string{prefixedCurrent.Name, old.Name}, memberNames(matches[0]),
+		"the current-spelling member must coalesce before the old one")
+}
+
+func TestMatchingLogicalFieldsKeepsLogSemconvNamesLiteral(t *testing.T) {
 	current := &telemetrytypes.TelemetryFieldKey{
 		Name:          "deployment.environment.name",
 		Signal:        telemetrytypes.SignalLogs,
@@ -759,17 +801,17 @@ func TestMatchingFieldKeysKeepsLogSemconvNamesLiteral(t *testing.T) {
 		telemetrytypes.FieldDataTypeString,
 	)
 
-	matches := MatchingFieldKeys(requested, map[string][]*telemetrytypes.TelemetryFieldKey{
+	matches := MatchingLogicalFields(requested, map[string][]*telemetrytypes.TelemetryFieldKey{
 		current.Name: {current},
 		old.Name:     {old},
 	})
 
 	require.Len(t, matches, 1, "log lookup must keep the requested spelling literal")
-	assert.Equal(t, current.Name, matches[0].Name)
-	assert.Empty(t, matches[0].SemconvMembers)
+	assert.False(t, matches[0].IsFamily())
+	assert.Equal(t, current.Name, matches[0].Single().Name)
 }
 
-func TestMatchingFieldKeysKeepsMetricSemconvNamesLiteral(t *testing.T) {
+func TestMatchingLogicalFieldsKeepsMetricSemconvNamesLiteral(t *testing.T) {
 	current := &telemetrytypes.TelemetryFieldKey{
 		Name:          "deployment.environment.name",
 		Signal:        telemetrytypes.SignalMetrics,
@@ -788,14 +830,14 @@ func TestMatchingFieldKeysKeepsMetricSemconvNamesLiteral(t *testing.T) {
 		telemetrytypes.FieldDataTypeString,
 	)
 
-	matches := MatchingFieldKeys(requested, map[string][]*telemetrytypes.TelemetryFieldKey{
+	matches := MatchingLogicalFields(requested, map[string][]*telemetrytypes.TelemetryFieldKey{
 		current.Name: {current},
 		old.Name:     {old},
 	})
 
 	require.Len(t, matches, 1, "metric lookup must keep the requested spelling literal")
-	assert.Equal(t, current.Name, matches[0].Name)
-	assert.Empty(t, matches[0].SemconvMembers)
+	assert.False(t, matches[0].IsFamily())
+	assert.Equal(t, current.Name, matches[0].Single().Name)
 }
 
 // ---------------------------------------------------------------------------
@@ -879,7 +921,7 @@ func (b *resourceConditionBuilder) ConditionFor(
 		return nil, nil, nil
 	}
 
-	keys, warning := ResolveKeys(key, MatchingFieldKeys(key, fieldKeys))
+	keys, warning := ResolveLogicalFields(key, MatchingLogicalFields(key, fieldKeys))
 	var warnings []string
 	if warning != "" {
 		warnings = append(warnings, warning)
@@ -887,11 +929,11 @@ func (b *resourceConditionBuilder) ConditionFor(
 
 	var conds []string
 	for _, k := range keys {
-		// only resource keys contribute; others (and unknown keys) are ignored
+		// only resource fields contribute; others (and unknown keys) are ignored
 		if k.FieldContext != telemetrytypes.FieldContextResource {
 			continue
 		}
-		conds = append(conds, fmt.Sprintf("%s_cond", k.Name))
+		conds = append(conds, fmt.Sprintf("%s_cond", k.Single().Name))
 	}
 	return conds, warnings, nil
 }
@@ -921,7 +963,7 @@ func (b *conditionBuilder) ConditionFor(
 		return []string{fmt.Sprintf("%s_cond", key.Name)}, nil, nil
 	}
 
-	keys, warning := ResolveKeys(key, MatchingFieldKeys(key, fieldKeys))
+	keys, warning := ResolveLogicalFields(key, MatchingLogicalFields(key, fieldKeys))
 	var warnings []string
 	if warning != "" {
 		warnings = append(warnings, warning)
@@ -933,7 +975,7 @@ func (b *conditionBuilder) ConditionFor(
 
 	// A resource sub-query already covers the term; drop resource keys from the main query.
 	if options.SkipResourceFilter {
-		filtered := make([]*telemetrytypes.TelemetryFieldKey, 0, len(keys))
+		filtered := make([]*telemetrytypes.LogicalField, 0, len(keys))
 		for _, k := range keys {
 			if k.FieldContext != telemetrytypes.FieldContextResource {
 				filtered = append(filtered, k)

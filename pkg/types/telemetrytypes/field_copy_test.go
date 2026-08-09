@@ -18,10 +18,6 @@ func TestTelemetryFieldKeyCopyOwnsMutableState(t *testing.T) {
 		Evolutions: []*EvolutionEntry{
 			{FieldName: "items.name"},
 		},
-		SemconvMembers: []string{"items.name", "item.name"},
-		SemconvMaterializedColumns: map[string]string{
-			"item.name": "body_string_item$$name",
-		},
 	}
 	require.NoError(t, original.SetJSONAccessPlan(JSONColumnMetadata{BaseColumn: "body_v2"}, nil))
 	require.Len(t, original.JSONPlan, 1)
@@ -41,16 +37,12 @@ func TestTelemetryFieldKeyCopyOwnsMutableState(t *testing.T) {
 	copied.Name = "changed"
 	copied.Indexes[0].Name = "changed"
 	copied.Evolutions[0].FieldName = "changed"
-	copied.SemconvMembers[0] = "changed"
-	copied.SemconvMaterializedColumns["item.name"] = "changed"
 	copied.JSONPlan[0].Name = "changed"
 	copied.JSONPlan[0].Parent.Name = "changed"
 
 	assert.Equal(t, "items.name", original.Name)
 	assert.Equal(t, "items.name", original.Indexes[0].Name)
 	assert.Equal(t, "items.name", original.Evolutions[0].FieldName)
-	assert.Equal(t, "items.name", original.SemconvMembers[0])
-	assert.Equal(t, "body_string_item$$name", original.SemconvMaterializedColumns["item.name"])
 	assert.Equal(t, "items.name", original.JSONPlan[0].Name)
 	assert.Equal(t, "body_v2", original.JSONPlan[0].Parent.Name)
 }

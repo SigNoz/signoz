@@ -95,7 +95,7 @@ func TestGetFieldKeyName(t *testing.T) {
 				Materialized:  true,
 				Evolutions:    mockEvolution,
 			},
-			expectedResult: "multiIf((resource.`deployment.environment.name` IS NOT NULL OR resource.`deployment.environment` IS NOT NULL), COALESCE(NULLIF(resource.`deployment.environment.name`::String, ''), NULLIF(resource.`deployment.environment`::String, '')), (mapContains(resources_string, 'deployment.environment.name') OR `resource_string_deployment$$environment_exists`), COALESCE(NULLIF(resources_string['deployment.environment.name'], ''), NULLIF(`resource_string_deployment$$environment`, ''), ''), NULL)",
+			expectedResult: "multiIf(resource.`deployment.environment` IS NOT NULL, resource.`deployment.environment`::String, `resource_string_deployment$$environment_exists`, `resource_string_deployment$$environment`, NULL)",
 			expectedError:  nil,
 		},
 		{
@@ -135,61 +135,116 @@ func TestGetFieldKeyName(t *testing.T) {
 	}
 }
 
-func TestFieldForResolvesCurrentTraceSemconvAttributeName(t *testing.T) {
+// FieldFor is a per-physical-key primitive: it never consults the family
+// table. Family composition is FieldForLogical's job.
+func TestFieldForIsPerKey(t *testing.T) {
 	key := telemetrytypes.TelemetryFieldKey{
 		Name:          "deployment.environment.name",
 		FieldContext:  telemetrytypes.FieldContextAttribute,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
-	}
-
-	expression, err := NewFieldMapper().FieldFor(context.Background(), valuer.UUID{}, 0, 0, &key)
-
-	require.NoError(t, err)
-	assert.Equal(t, "COALESCE(NULLIF(attributes_string['deployment.environment.name'], ''), NULLIF(attributes_string['deployment.environment'], ''), '')", expression)
-}
-
-func TestFieldForResolvesOldTraceSemconvAttributeName(t *testing.T) {
-	key := telemetrytypes.TelemetryFieldKey{
-		Name:          "deployment.environment",
-		FieldContext:  telemetrytypes.FieldContextAttribute,
-		FieldDataType: telemetrytypes.FieldDataTypeString,
-	}
-
-	expression, err := NewFieldMapper().FieldFor(context.Background(), valuer.UUID{}, 0, 0, &key)
-
-	require.NoError(t, err)
-	assert.Equal(t, "COALESCE(NULLIF(attributes_string['deployment.environment.name'], ''), NULLIF(attributes_string['deployment.environment'], ''), '')", expression)
-}
-
-func TestFieldForPreservesResourceStorageDefaultsForSemconvFamily(t *testing.T) {
-	key := telemetrytypes.TelemetryFieldKey{
-		Name:          "deployment.environment.name",
-		FieldContext:  telemetrytypes.FieldContextResource,
-		FieldDataType: telemetrytypes.FieldDataTypeString,
-		Materialized:  true,
-		Evolutions:    MockEvolutionData(time.Date(2024, 6, 2, 0, 0, 0, 0, time.UTC)),
-	}
-	start := uint64(time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano())
-	end := uint64(time.Date(2024, 6, 5, 0, 0, 0, 0, time.UTC).UnixNano())
-
-	expression, err := NewFieldMapper().FieldFor(context.Background(), valuer.UUID{}, start, end, &key)
-
-	require.NoError(t, err)
-	assert.Equal(t, "multiIf((resource.`deployment.environment.name` IS NOT NULL OR resource.`deployment.environment` IS NOT NULL), COALESCE(NULLIF(resource.`deployment.environment.name`::String, ''), NULLIF(resource.`deployment.environment`::String, '')), (`resource_string_deployment$$environment$$name_exists` OR mapContains(resources_string, 'deployment.environment')), COALESCE(NULLIF(`resource_string_deployment$$environment$$name`, ''), NULLIF(resources_string['deployment.environment'], ''), ''), NULL)", expression)
-}
-
-func TestFieldForUsesAvailableTraceSemconvMember(t *testing.T) {
-	key := telemetrytypes.TelemetryFieldKey{
-		Name:           "deployment.environment",
-		FieldContext:   telemetrytypes.FieldContextAttribute,
-		FieldDataType:  telemetrytypes.FieldDataTypeString,
-		SemconvMembers: []string{"deployment.environment.name"},
 	}
 
 	expression, err := NewFieldMapper().FieldFor(context.Background(), valuer.UUID{}, 0, 0, &key)
 
 	require.NoError(t, err)
 	assert.Equal(t, "attributes_string['deployment.environment.name']", expression)
+}
+
+func traceFamilyLogicalField(t *testing.T, requestedName string, members ...*telemetrytypes.TelemetryFieldKey) *telemetrytypes.LogicalField {
+	t.Helper()
+	fieldKeys := map[string][]*telemetrytypes.TelemetryFieldKey{}
+	for _, member := range members {
+		fieldKeys[member.Name] = []*telemetrytypes.TelemetryFieldKey{member}
+	}
+	requested := telemetrytypes.NewTelemetryFieldKey(requestedName, members[0].FieldContext, members[0].FieldDataType)
+	matches := querybuilder.MatchingLogicalFields(requested, fieldKeys)
+	require.Len(t, matches, 1)
+	return matches[0]
+}
+
+func TestFieldForLogicalMergesFamilyMembersCurrentFirst(t *testing.T) {
+	current := &telemetrytypes.TelemetryFieldKey{
+		Name:          "deployment.environment.name",
+		Signal:        telemetrytypes.SignalTraces,
+		FieldContext:  telemetrytypes.FieldContextAttribute,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	}
+	old := &telemetrytypes.TelemetryFieldKey{
+		Name:          "deployment.environment",
+		Signal:        telemetrytypes.SignalTraces,
+		FieldContext:  telemetrytypes.FieldContextAttribute,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	}
+
+	for _, requestedName := range []string{current.Name, old.Name} {
+		logical := traceFamilyLogicalField(t, requestedName, current, old)
+		expression, err := NewFieldMapper().FieldForLogical(context.Background(), valuer.UUID{}, 0, 0, logical)
+		require.NoError(t, err)
+		assert.Equal(t,
+			"COALESCE(NULLIF(attributes_string['deployment.environment.name'], ''), NULLIF(attributes_string['deployment.environment'], ''), '')",
+			expression,
+			"both request spellings address one logical field",
+		)
+	}
+}
+
+// The old-name request with only the current spelling in metadata prunes to a
+// single member: plain single-key SQL, no coalesce.
+func TestFieldForLogicalPrunesToPresentMembers(t *testing.T) {
+	current := &telemetrytypes.TelemetryFieldKey{
+		Name:          "deployment.environment.name",
+		Signal:        telemetrytypes.SignalTraces,
+		FieldContext:  telemetrytypes.FieldContextAttribute,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	}
+
+	logical := traceFamilyLogicalField(t, "deployment.environment", current)
+	expression, err := NewFieldMapper().FieldForLogical(context.Background(), valuer.UUID{}, 0, 0, logical)
+
+	require.NoError(t, err)
+	assert.Equal(t, "attributes_string['deployment.environment.name']", expression)
+}
+
+// Every member brings its own storage state: the merge composes each member's
+// FieldFor output, so a materialized-with-evolutions member keeps its column
+// history inside the family expression with no sibling bookkeeping anywhere.
+func TestFieldForLogicalComposesResourceMembersFromTheirOwnStorage(t *testing.T) {
+	ctx := context.Background()
+	fm := NewFieldMapper()
+	start := uint64(time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano())
+	end := uint64(time.Date(2024, 6, 5, 0, 0, 0, 0, time.UTC).UnixNano())
+
+	current := &telemetrytypes.TelemetryFieldKey{
+		Name:          "deployment.environment.name",
+		Signal:        telemetrytypes.SignalTraces,
+		FieldContext:  telemetrytypes.FieldContextResource,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	}
+	old := &telemetrytypes.TelemetryFieldKey{
+		Name:          "deployment.environment",
+		Signal:        telemetrytypes.SignalTraces,
+		FieldContext:  telemetrytypes.FieldContextResource,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+		Materialized:  true,
+		Evolutions:    MockEvolutionData(time.Date(2024, 6, 2, 0, 0, 0, 0, time.UTC)),
+	}
+
+	currentExpr, err := fm.FieldFor(ctx, valuer.UUID{}, start, end, current)
+	require.NoError(t, err)
+	oldExpr, err := fm.FieldFor(ctx, valuer.UUID{}, start, end, old)
+	require.NoError(t, err)
+
+	logical := traceFamilyLogicalField(t, current.Name, current, old)
+	expression, err := fm.FieldForLogical(ctx, valuer.UUID{}, start, end, logical)
+	require.NoError(t, err)
+
+	assert.Equal(t,
+		"COALESCE(NULLIF("+currentExpr+", ''), NULLIF("+oldExpr+", ''), '')",
+		expression,
+		"the family merge is exactly the members' own expressions, current-first, with the keyless tail",
+	)
+	assert.Contains(t, expression, "`resource_string_deployment$$environment`",
+		"the promoted member keeps its materialized column")
 }
 
 func TestFieldForResourceWithEvolution(t *testing.T) {
@@ -248,7 +303,7 @@ func TestFieldForResourceWithEvolution(t *testing.T) {
 			},
 			tsStart:        uint64(time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
 			tsEnd:          uint64(time.Date(2025, 7, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
-			expectedResult: "COALESCE(NULLIF(resource.`deployment.environment.name`::String, ''), NULLIF(resource.`deployment.environment`::String, ''))",
+			expectedResult: "resource.`deployment.environment`::String",
 		},
 		{
 			name: "Window straddles release - materialized resource",
@@ -261,7 +316,7 @@ func TestFieldForResourceWithEvolution(t *testing.T) {
 			},
 			tsStart:        uint64(time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
 			tsEnd:          uint64(time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
-			expectedResult: "multiIf((resource.`deployment.environment.name` IS NOT NULL OR resource.`deployment.environment` IS NOT NULL), COALESCE(NULLIF(resource.`deployment.environment.name`::String, ''), NULLIF(resource.`deployment.environment`::String, '')), (mapContains(resources_string, 'deployment.environment.name') OR `resource_string_deployment$$environment_exists`), COALESCE(NULLIF(resources_string['deployment.environment.name'], ''), NULLIF(`resource_string_deployment$$environment`, ''), ''), NULL)",
+			expectedResult: "multiIf(resource.`deployment.environment` IS NOT NULL, resource.`deployment.environment`::String, `resource_string_deployment$$environment_exists`, `resource_string_deployment$$environment`, NULL)",
 		},
 	}
 

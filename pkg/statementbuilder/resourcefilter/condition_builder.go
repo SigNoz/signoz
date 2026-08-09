@@ -13,12 +13,14 @@ import (
 )
 
 type defaultConditionBuilder struct {
-	fm qbtypes.FieldMapper
+	// The builder composes family expressions, so it needs this package's
+	// mapper, not the narrower qbtypes.FieldMapper.
+	fm *defaultFieldMapper
 }
 
 var _ qbtypes.ConditionBuilder = (*defaultConditionBuilder)(nil)
 
-func NewConditionBuilder(fm qbtypes.FieldMapper) *defaultConditionBuilder {
+func NewConditionBuilder(fm *defaultFieldMapper) *defaultConditionBuilder {
 	return &defaultConditionBuilder{fm: fm}
 }
 
@@ -44,16 +46,10 @@ func keyIndexFilter(key *telemetrytypes.TelemetryFieldKey) any {
 	return fmt.Sprintf(`%%%s%%`, key.Name)
 }
 
-func memberKey(key *telemetrytypes.TelemetryFieldKey, name string) *telemetrytypes.TelemetryFieldKey {
-	member := key.Copy()
-	member.Name = name
-	return member
-}
-
-func keyIndexCondition(sb *sqlbuilder.SelectBuilder, column string, key *telemetrytypes.TelemetryFieldKey, members []string) string {
+func keyIndexCondition(sb *sqlbuilder.SelectBuilder, column string, members []*telemetrytypes.TelemetryFieldKey) string {
 	conditions := make([]string, 0, len(members))
 	for _, member := range members {
-		conditions = append(conditions, sb.Like(column, keyIndexFilter(memberKey(key, member))))
+		conditions = append(conditions, sb.Like(column, keyIndexFilter(member)))
 	}
 	if len(conditions) == 1 {
 		return conditions[0]
@@ -64,15 +60,14 @@ func keyIndexCondition(sb *sqlbuilder.SelectBuilder, column string, key *telemet
 func valueIndexCondition(
 	sb *sqlbuilder.SelectBuilder,
 	column string,
-	key *telemetrytypes.TelemetryFieldKey,
-	members []string,
+	members []*telemetrytypes.TelemetryFieldKey,
 	op qbtypes.FilterOperator,
 	value any,
 	caseInsensitive bool,
 ) string {
 	conditions := make([]string, 0, len(members))
 	for _, member := range members {
-		patterns := valueForIndexFilter(op, memberKey(key, member), value)
+		patterns := valueForIndexFilter(op, member, value)
 		switch values := patterns.(type) {
 		case []string:
 			for _, pattern := range values {
@@ -92,10 +87,10 @@ func valueIndexCondition(
 	return sb.Or(conditions...)
 }
 
-func memberPresenceCondition(sb *sqlbuilder.SelectBuilder, column string, members []string, exists bool) string {
+func memberPresenceCondition(sb *sqlbuilder.SelectBuilder, column string, members []*telemetrytypes.TelemetryFieldKey, exists bool) string {
 	conditions := make([]string, 0, len(members))
 	for _, member := range members {
-		field := fmt.Sprintf("simpleJSONHas(%s, %s)", column, querybuilder.ClickHouseStringLiteral(member))
+		field := fmt.Sprintf("simpleJSONHas(%s, %s)", column, querybuilder.ClickHouseStringLiteral(member.Name))
 		if exists {
 			conditions = append(conditions, sb.E(field, true))
 		} else {
@@ -124,7 +119,7 @@ func (b *defaultConditionBuilder) ConditionFor(
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) ([]string, []string, error) {
-	matches := querybuilder.MatchingFieldKeys(key, fieldKeys)
+	matches := querybuilder.MatchingLogicalFields(key, fieldKeys)
 
 	// has/hasAny/hasAll/hasToken are logs-body-only functions; they never apply to the
 	// resource fingerprint table, so skip them (the main query still evaluates them).
@@ -132,21 +127,21 @@ func (b *defaultConditionBuilder) ConditionFor(
 		return nil, nil, nil
 	}
 
-	keys, warning := querybuilder.ResolveKeys(key, matches)
+	logicalFields, warning := querybuilder.ResolveLogicalFields(key, matches)
 	var warnings []string
 	if warning != "" {
 		warnings = append(warnings, warning)
 	}
 
-	conds := make([]string, 0, len(keys))
-	for _, k := range keys {
-		// the resource fingerprint table only stores resource attributes; keys from
+	conds := make([]string, 0, len(logicalFields))
+	for _, logical := range logicalFields {
+		// the resource fingerprint table only stores resource attributes; fields from
 		// any other context contribute no condition and are omitted. An empty result
 		// (including an unknown key) lets the caller skip this filter entirely.
-		if k.FieldContext != telemetrytypes.FieldContextResource {
+		if logical.FieldContext != telemetrytypes.FieldContextResource {
 			continue
 		}
-		cond, err := b.conditionForKey(ctx, startNs, endNs, k, op, value, sb)
+		cond, err := b.conditionForLogicalField(ctx, startNs, endNs, logical, op, value, sb)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -155,11 +150,11 @@ func (b *defaultConditionBuilder) ConditionFor(
 	return conds, warnings, nil
 }
 
-func (b *defaultConditionBuilder) conditionForKey(
+func (b *defaultConditionBuilder) conditionForLogicalField(
 	ctx context.Context,
 	startNs uint64,
 	endNs uint64,
-	key *telemetrytypes.TelemetryFieldKey,
+	logical *telemetrytypes.LogicalField,
 	op qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
@@ -169,7 +164,7 @@ func (b *defaultConditionBuilder) conditionForKey(
 	// as we store resource values as string
 	formattedValue := querybuilder.FormatValueForContains(value)
 
-	columns, err := b.fm.ColumnFor(ctx, valuer.UUID{}, startNs, endNs, key)
+	columns, err := b.fm.ColumnFor(ctx, valuer.UUID{}, startNs, endNs, logical.Single())
 	if err != nil {
 		return "", err
 	}
@@ -182,12 +177,12 @@ func (b *defaultConditionBuilder) conditionForKey(
 	// as we have not changed the resource column in the resource fingerprint table.
 	column := columns[0]
 
-	members := resourceSemconvMembers(key)
-	isFamily := len(members) > 1
-	keyIdxFilter := keyIndexCondition(sb, column.Name, key, members)
-	singleValueIndexFilter := valueForIndexFilter(op, memberKey(key, members[0]), value)
+	members := logical.Members
+	isFamily := logical.IsFamily()
+	keyIdxFilter := keyIndexCondition(sb, column.Name, members)
+	singleValueIndexFilter := valueForIndexFilter(op, members[0], value)
 
-	fieldName, err := b.fm.FieldFor(ctx, valuer.UUID{}, startNs, endNs, key)
+	fieldName, err := b.fm.FieldForLogical(ctx, valuer.UUID{}, startNs, endNs, logical)
 	if err != nil {
 		return "", err
 	}
@@ -197,7 +192,7 @@ func (b *defaultConditionBuilder) conditionForKey(
 		return sb.And(
 			sb.E(fieldName, formattedValue),
 			keyIdxFilter,
-			valueIndexCondition(sb, column.Name, key, members, op, value, false),
+			valueIndexCondition(sb, column.Name, members, op, value, false),
 		), nil
 	case qbtypes.FilterOperatorNotEqual:
 		if isFamily {
@@ -220,7 +215,7 @@ func (b *defaultConditionBuilder) conditionForKey(
 		return sb.And(
 			sb.ILike(fieldName, formattedValue),
 			keyIdxFilter,
-			valueIndexCondition(sb, column.Name, key, members, op, value, true),
+			valueIndexCondition(sb, column.Name, members, op, value, true),
 		), nil
 	case qbtypes.FilterOperatorNotLike, qbtypes.FilterOperatorNotILike:
 		// no index filter: as cannot apply `not contains x%y` as y can be somewhere else
@@ -260,7 +255,7 @@ func (b *defaultConditionBuilder) conditionForKey(
 		mainCondition = sb.And(
 			mainCondition,
 			keyIdxFilter,
-			valueIndexCondition(sb, column.Name, key, members, op, value, false),
+			valueIndexCondition(sb, column.Name, members, op, value, false),
 		)
 
 		return mainCondition, nil
@@ -308,7 +303,7 @@ func (b *defaultConditionBuilder) conditionForKey(
 		return sb.And(
 			sb.ILike(fieldName, fmt.Sprintf(`%%%s%%`, formattedValue)),
 			keyIdxFilter,
-			valueIndexCondition(sb, column.Name, key, members, op, value, true),
+			valueIndexCondition(sb, column.Name, members, op, value, true),
 		), nil
 	case qbtypes.FilterOperatorNotContains:
 		// no index filter: as cannot apply `not contains x%y` as y can be somewhere else

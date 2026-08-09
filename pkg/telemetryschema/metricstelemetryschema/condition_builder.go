@@ -162,7 +162,7 @@ func (c *conditionBuilder) ConditionFor(
 		return nil, nil, err
 	}
 
-	keys := querybuilder.MatchingFieldKeys(key, fieldKeys)
+	keys := querybuilder.SingleKeys(querybuilder.MatchingLogicalFields(key, fieldKeys))
 	var warnings []string
 	if len(keys) == 0 {
 		if _, isColumn := timeSeriesV4Columns[key.Name]; isColumn {

@@ -7,7 +7,6 @@ import (
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/semconv"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -35,18 +34,29 @@ func NewFieldMapper() *defaultFieldMapper {
 	return &defaultFieldMapper{}
 }
 
-func resourceSemconvMembers(key *telemetrytypes.TelemetryFieldKey) []string {
-	if key.Signal != telemetrytypes.SignalTraces || key.FieldContext != telemetrytypes.FieldContextResource {
-		return []string{key.Name}
+// FieldForLogical returns the value expression for a resolved logical field:
+// the member's own expression for a single-member field, and a current-first
+// merge for a family. Resource label values are strings, so the merge is a
+// coalesce with a trailing '' that keeps single-key semantics for rows
+// without any member (see AddDefaultExistsFilter).
+func (m *defaultFieldMapper) FieldForLogical(
+	ctx context.Context,
+	orgID valuer.UUID,
+	tsStart, tsEnd uint64,
+	logical *telemetrytypes.LogicalField,
+) (string, error) {
+	if !logical.IsFamily() {
+		return m.FieldFor(ctx, orgID, tsStart, tsEnd, logical.Single())
 	}
-	if len(key.SemconvMembers) > 0 {
-		return key.SemconvMembers
+	values := make([]string, 0, len(logical.Members))
+	for _, member := range logical.Members {
+		expr, err := m.FieldFor(ctx, orgID, tsStart, tsEnd, member)
+		if err != nil {
+			return "", err
+		}
+		values = append(values, fmt.Sprintf("NULLIF(%s, '')", expr))
 	}
-	return semconv.Members(semconv.KindAttribute, telemetrytypes.FieldKeySelector{
-		Name:         key.Name,
-		Signal:       telemetrytypes.SignalTraces,
-		FieldContext: telemetrytypes.FieldContextResource,
-	})
+	return "COALESCE(" + strings.Join(values, ", ") + ", '')", nil
 }
 
 func (m *defaultFieldMapper) getColumn(
@@ -83,15 +93,7 @@ func (m *defaultFieldMapper) FieldFor(
 		return "", err
 	}
 	if key.FieldContext == telemetrytypes.FieldContextResource {
-		members := resourceSemconvMembers(key)
-		if len(members) > 1 {
-			values := make([]string, 0, len(members))
-			for _, member := range members {
-				values = append(values, fmt.Sprintf("NULLIF(simpleJSONExtractString(%s, %s), '')", columns[0].Name, querybuilder.ClickHouseStringLiteral(member)))
-			}
-			return "COALESCE(" + strings.Join(values, ", ") + ", '')", nil
-		}
-		return fmt.Sprintf("simpleJSONExtractString(%s, %s)", columns[0].Name, querybuilder.ClickHouseStringLiteral(members[0])), nil
+		return fmt.Sprintf("simpleJSONExtractString(%s, %s)", columns[0].Name, querybuilder.ClickHouseStringLiteral(key.Name)), nil
 	}
 	return columns[0].Name, nil
 }

@@ -2,7 +2,6 @@ package telemetrytypes
 
 import (
 	"fmt"
-	"maps"
 	"slices"
 	"strings"
 
@@ -49,11 +48,7 @@ type TelemetryFieldKey struct {
 	Indexes      []TelemetryFieldKeySkipIndex `json:"-"`
 	Materialized bool                         `json:"-"` // refers to promoted in case of body.... fields
 
-	Evolutions     []*EvolutionEntry `json:"-"`
-	SemconvMembers []string          `json:"-"`
-	// SemconvMaterializedColumns maps a physical family spelling to its
-	// materialized column name. It is populated only on resolved query keys.
-	SemconvMaterializedColumns map[string]string `json:"-"`
+	Evolutions []*EvolutionEntry `json:"-"`
 }
 
 // Copy returns an independent copy of f.
@@ -73,8 +68,6 @@ func (f *TelemetryFieldKey) Copy() *TelemetryFieldKey {
 			}
 		}
 	}
-	copied.SemconvMembers = slices.Clone(f.SemconvMembers)
-	copied.SemconvMaterializedColumns = maps.Clone(f.SemconvMaterializedColumns)
 	copied.JSONPlan = copyJSONAccessPlan(f.JSONPlan, f, &copied)
 
 	return &copied
@@ -204,8 +197,6 @@ func (f *TelemetryFieldKey) OverrideMetadataFrom(src *TelemetryFieldKey) {
 	f.Materialized = src.Materialized
 	f.JSONPlan = src.JSONPlan
 	f.Evolutions = src.Evolutions
-	f.SemconvMembers = src.SemconvMembers
-	f.SemconvMaterializedColumns = src.SemconvMaterializedColumns
 }
 
 func (f *TelemetryFieldKey) Equal(key *TelemetryFieldKey) bool {

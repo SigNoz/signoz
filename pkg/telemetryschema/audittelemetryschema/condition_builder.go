@@ -139,7 +139,8 @@ func (c *conditionBuilder) ConditionFor(
 		return nil, nil, err
 	}
 
-	keys, warning := querybuilder.ResolveKeys(key, querybuilder.MatchingFieldKeys(key, fieldKeys))
+	logicalFields, warning := querybuilder.ResolveLogicalFields(key, querybuilder.MatchingLogicalFields(key, fieldKeys))
+	keys := querybuilder.SingleKeys(logicalFields)
 	var warnings []string
 	if warning != "" {
 		warnings = append(warnings, warning)

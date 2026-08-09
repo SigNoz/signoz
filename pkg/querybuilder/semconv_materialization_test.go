@@ -12,6 +12,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// A promoted historical member keeps its materialized column inside the family
+// expression: the member key carries its own Materialized state, so the
+// logical-field merge needs no sibling bookkeeping.
 func TestTraceFamilyUsesMaterializedHistoricalMember(t *testing.T) {
 	current := &telemetrytypes.TelemetryFieldKey{
 		Name:          "deployment.environment.name",
@@ -32,12 +35,13 @@ func TestTraceFamilyUsesMaterializedHistoricalMember(t *testing.T) {
 		telemetrytypes.FieldDataTypeString,
 	)
 
-	matches := querybuilder.MatchingFieldKeys(requested, map[string][]*telemetrytypes.TelemetryFieldKey{
+	matches := querybuilder.MatchingLogicalFields(requested, map[string][]*telemetrytypes.TelemetryFieldKey{
 		current.Name:    {current},
 		historical.Name: {historical},
 	})
 	require.Len(t, matches, 1, "family metadata should resolve to one logical field")
-	expression, err := tracestelemetryschema.NewFieldMapper().FieldFor(context.Background(), valuer.UUID{}, 0, 0, matches[0])
+
+	expression, err := tracestelemetryschema.NewFieldMapper().FieldForLogical(context.Background(), valuer.UUID{}, 0, 0, matches[0])
 	require.NoError(t, err, "resolved trace family should map to a value expression")
 
 	assert.Equal(
