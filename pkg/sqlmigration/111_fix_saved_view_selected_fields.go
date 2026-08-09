@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 
 	"github.com/uptrace/bun"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/savedviewtypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -31,17 +33,112 @@ func (migration *fixSavedViewSelectedFields) Register(migrations *migrate.Migrat
 }
 
 // storableSavedViewData is the shape of the `saved_view` table this migration repairs.
-// data is decoded generically (map[string]json.RawMessage) rather than into
-// savedviewtypes.SavedViewData directly: a row written by the 109 migration may
-// hold an incompatible (pre-telemetrytypes.TelemetryFieldKey) selectedFields shape
-// -- 109 forwarded that field as raw legacy JSON, which the real type (and thus
-// every later read of the row) fails to scan. Every other key is left byte-for-byte
-// untouched; this migration only repairs selectedFields.
 type storableSavedViewData struct {
 	bun.BaseModel `bun:"table:saved_view"`
 
 	ID   string `bun:"id,pk,type:text"`
 	Data string `bun:"data,type:text"`
+}
+
+// specFieldUnmarshalsCleanly reports whether value can be unmarshalled into
+// the real type of the given savedviewtypes.SavedViewSpec JSON key.
+func specFieldUnmarshalsCleanly(key string, value json.RawMessage) bool {
+	switch key {
+	case "displayName", "panelType":
+		var s string
+		return json.Unmarshal(value, &s) == nil
+	case "queries":
+		var q []qbtypes.QueryEnvelope
+		return json.Unmarshal(value, &q) == nil
+	case "selectedFields":
+		var f []telemetrytypes.TelemetryFieldKey
+		return json.Unmarshal(value, &f) == nil
+	case "display":
+		var d savedviewtypes.Display
+		return json.Unmarshal(value, &d) == nil
+	default:
+		return true
+	}
+}
+
+// specFieldZeroValueJSON is the JSON to substitute for a spec key that fails
+// to unmarshal into its real type.
+var specFieldZeroValueJSON = map[string]string{
+	"displayName":    `""`,
+	"panelType":      `""`,
+	"queries":        `[]`,
+	"selectedFields": `[]`,
+	"display":        `{}`,
+}
+
+// repairSavedViewData tries to make data unmarshal cleanly into
+// savedviewtypes.SavedViewData by blanking, one key at a time, whichever
+// top-level spec fields fail to unmarshal into their real type -- e.g. a
+// selectedFields shape the 109 migration forwarded verbatim from a
+// pre-telemetrytypes.TelemetryFieldKey install, or a queries shape that
+// predates the current discriminated-union QueryEnvelope. Every other key is
+// left byte-for-byte untouched. Returns ok=false if data/spec aren't even
+// JSON objects, or the result still doesn't unmarshal cleanly afterward.
+func repairSavedViewData(data string) (fixed string, blanked []string, ok bool) {
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(data), &raw); err != nil {
+		return "", nil, false
+	}
+
+	var spec map[string]json.RawMessage
+	if err := json.Unmarshal(raw["spec"], &spec); err != nil {
+		return "", nil, false
+	}
+
+	for key, value := range spec {
+		if specFieldUnmarshalsCleanly(key, value) {
+			continue
+		}
+		zero, known := specFieldZeroValueJSON[key]
+		if !known {
+			continue
+		}
+		spec[key] = json.RawMessage(zero)
+		blanked = append(blanked, key)
+	}
+
+	fixedSpec, err := json.Marshal(spec)
+	if err != nil {
+		return "", nil, false
+	}
+	raw["spec"] = fixedSpec
+
+	fixedData, err := json.Marshal(raw)
+	if err != nil {
+		return "", nil, false
+	}
+
+	// verify the fix actually round-trips through the real type before writing it.
+	if err := json.Unmarshal(fixedData, new(savedviewtypes.SavedViewData)); err != nil {
+		return "", nil, false
+	}
+
+	return string(fixedData), blanked, true
+}
+
+// placeholderSavedViewData is substituted whole when a row can't be repaired
+// field-by-field (data/spec aren't JSON objects at all, or repair still
+// doesn't unmarshal cleanly). It must itself always unmarshal cleanly, since
+// every Get/List reads saved_view.data straight into savedviewtypes.SavedViewData
+// -- leaving genuinely-unrepairable data in place would 500 on every future read.
+func placeholderSavedViewData(id string) string {
+	data, err := json.Marshal(savedviewtypes.SavedViewData{
+		SchemaVersion: savedviewtypes.SavedViewSchemaVersion.StringValue(),
+		Spec: savedviewtypes.SavedViewSpec{
+			DisplayName: fmt.Sprintf("corrupted saved view %s", id),
+			PanelType:   savedviewtypes.PanelTypeTable,
+		},
+	})
+	if err != nil {
+		// marshalling a static, well-formed literal cannot fail.
+		panic(err)
+	}
+	return string(data)
 }
 
 func (migration *fixSavedViewSelectedFields) Up(ctx context.Context, db *bun.DB) error {
@@ -56,75 +153,29 @@ func (migration *fixSavedViewSelectedFields) Up(ctx context.Context, db *bun.DB)
 		return err
 	}
 
-	var repaired, failed int
+	var repaired, replaced int
 	for _, row := range rows {
 		// already scans cleanly as-is -- nothing to repair.
 		if err := json.Unmarshal([]byte(row.Data), new(savedviewtypes.SavedViewData)); err == nil {
 			continue
 		}
 
-		var raw map[string]json.RawMessage
-		if err := json.Unmarshal([]byte(row.Data), &raw); err != nil {
-			failed++
-			migration.settings.Logger.WarnContext(ctx, "saved view data is not valid JSON, leaving as-is", slog.String("saved_view_id", row.ID), slog.Any("error", err))
-			continue
+		fixedData, blanked, ok := repairSavedViewData(row.Data)
+		if !ok {
+			fixedData = placeholderSavedViewData(row.ID)
+			replaced++
+			migration.settings.Logger.WarnContext(ctx, "saved view data could not be repaired field-by-field, replacing with a placeholder view", slog.String("saved_view_id", row.ID))
+		} else {
+			repaired++
+			migration.settings.Logger.WarnContext(ctx, "repaired saved view data by blanking fields that failed to unmarshal", slog.String("saved_view_id", row.ID), slog.Any("fields_blanked", blanked))
 		}
 
-		var specRaw map[string]json.RawMessage
-		if err := json.Unmarshal(raw["spec"], &specRaw); err != nil {
-			failed++
-			migration.settings.Logger.WarnContext(ctx, "saved view spec is not valid JSON, leaving as-is", slog.String("saved_view_id", row.ID), slog.Any("error", err))
-			continue
-		}
-
-		// selectedFields is the only field the 109 migration could have written in an incompatible shape
-		if _, ok := specRaw["selectedFields"]; !ok {
-			// nothing to fix on this row.
-			failed++
-			migration.settings.Logger.WarnContext(ctx, "saved view data failed to scan for a reason other than selectedFields, leaving as-is", slog.String("saved_view_id", row.ID))
-			continue
-		}
-
-		var selectedFields []telemetrytypes.TelemetryFieldKey
-		if err := json.Unmarshal(specRaw["selectedFields"], &selectedFields); err == nil {
-			// it actually decodes fine on its own; the scan failure must have been
-			// something else -- leave the row alone rather than guess.
-			failed++
-			migration.settings.Logger.WarnContext(ctx, "saved view data failed to scan for a reason other than selectedFields, leaving as-is", slog.String("saved_view_id", row.ID))
-			continue
-		}
-
-		emptyFields, err := json.Marshal([]telemetrytypes.TelemetryFieldKey{})
-		if err != nil {
+		if _, err := tx.NewUpdate().Model((*storableSavedViewData)(nil)).Set("data = ?", fixedData).Where("id = ?", row.ID).Exec(ctx); err != nil {
 			return err
 		}
-		specRaw["selectedFields"] = emptyFields
-
-		fixedSpec, err := json.Marshal(specRaw)
-		if err != nil {
-			return err
-		}
-		raw["spec"] = fixedSpec
-
-		fixedData, err := json.Marshal(raw)
-		if err != nil {
-			return err
-		}
-
-		// verify the fix actually round-trips through the real type before writing it.
-		if err := json.Unmarshal(fixedData, new(savedviewtypes.SavedViewData)); err != nil {
-			failed++
-			migration.settings.Logger.WarnContext(ctx, "repaired saved view data still fails to scan, leaving original as-is", slog.String("saved_view_id", row.ID), slog.Any("error", err))
-			continue
-		}
-
-		if _, err := tx.NewUpdate().Model((*storableSavedViewData)(nil)).Set("data = ?", string(fixedData)).Where("id = ?", row.ID).Exec(ctx); err != nil {
-			return err
-		}
-		repaired++
 	}
 
-	migration.settings.Logger.InfoContext(ctx, "checked saved views for unreadable selectedFields", slog.Int("total", len(rows)), slog.Int("repaired", repaired), slog.Int("failed", failed))
+	migration.settings.Logger.InfoContext(ctx, "checked saved views for unreadable data", slog.Int("total", len(rows)), slog.Int("repaired", repaired), slog.Int("replaced", replaced))
 
 	return tx.Commit()
 }
