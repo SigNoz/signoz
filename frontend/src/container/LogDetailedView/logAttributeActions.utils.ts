@@ -9,6 +9,11 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { generateFieldKeyForArray, getDataTypes } from './utils';
 
+export const toTypedFilterValue = (value: unknown): string =>
+	typeof value === 'number' || typeof value === 'boolean'
+		? (value as unknown as string)
+		: String(value);
+
 export interface LogFilterTarget {
 	fieldKey: string;
 	filterInOperator: string;

@@ -1,6 +1,9 @@
 import { MetricsType } from 'container/MetricsApplication/constant';
 
-import { buildLogFilterTarget } from './logAttributeActions.utils';
+import {
+	buildLogFilterTarget,
+	toTypedFilterValue,
+} from './logAttributeActions.utils';
 
 describe('buildLogFilterTarget', () => {
 	describe('attributes / resources / scope / top-level scalars', () => {
@@ -148,5 +151,22 @@ describe('buildLogFilterTarget', () => {
 				buildLogFilterTarget(['body', 'items', 2, 'sku'], 'ABC', false),
 			).toMatchObject({ fieldKey: 'body.items[*].sku', filterInOperator: '=' });
 		});
+	});
+});
+
+describe('toTypedFilterValue', () => {
+	const run = (value: unknown): unknown => toTypedFilterValue(value);
+
+	it('keeps numbers/booleans as their JS type (so the expression stays unquoted)', () => {
+		expect(run(848)).toBe(848);
+		expect(typeof run(848)).toBe('number');
+		expect(run(1.1)).toBe(1.1);
+		expect(run(true)).toBe(true);
+		expect(typeof run(true)).toBe('boolean');
+	});
+
+	it('passes strings through unchanged (no numeric inference)', () => {
+		expect(run('unknown_service')).toBe('unknown_service');
+		expect(typeof run('12345')).toBe('string');
 	});
 });

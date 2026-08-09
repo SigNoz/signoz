@@ -25,7 +25,10 @@ import {
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { ActionItemProps } from '../ActionItem';
-import { buildLogFilterTarget } from '../logAttributeActions.utils';
+import {
+	buildLogFilterTarget,
+	toTypedFilterValue,
+} from '../logAttributeActions.utils';
 
 type ResolutionStatus = 'loading' | 'ready';
 
@@ -132,7 +135,7 @@ export function useLogAttributeActions({
 			);
 			onClickActionItem?.(
 				target.fieldKey,
-				String(context.fieldValue),
+				toTypedFilterValue(context.fieldValue),
 				isFilterIn ? target.filterInOperator : target.filterOutOperator,
 				target.dataType,
 				target.metricsType,
@@ -218,7 +221,7 @@ export function useLogAttributeActions({
 										id: '',
 										key: newFilterItem,
 										op: OPERATORS.IN,
-										value: [String(context.fieldValue)],
+										value: [toTypedFilterValue(context.fieldValue)],
 									},
 								],
 								op: 'AND',
