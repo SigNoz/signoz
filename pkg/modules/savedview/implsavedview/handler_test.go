@@ -38,8 +38,7 @@ func TestNewPostableSavedViewFromLegacyView(t *testing.T) {
 			ExtraData: `{"color":"blue","selectColumns":[{"name":"service.name"}],"format":"table","maxLines":10,"fontSize":"large"}`,
 		}
 
-		postable, err := newPostableSavedViewFromLegacyView(legacy)
-		require.NoError(t, err)
+		postable := newPostableSavedViewFromLegacyView(legacy)
 
 		assert.Empty(t, postable.Name, "v1 has no slug concept -- name must always be generated")
 		assert.True(t, postable.GenerateName, "v1 has no slug concept -- name must always be generated")
@@ -63,14 +62,13 @@ func TestNewPostableSavedViewFromLegacyView(t *testing.T) {
 			ExtraData: "",
 		}
 
-		postable, err := newPostableSavedViewFromLegacyView(legacy)
-		require.NoError(t, err)
+		postable := newPostableSavedViewFromLegacyView(legacy)
 
 		assert.Equal(t, savedviewtypes.Display{}, postable.Spec.Display)
 		assert.Nil(t, postable.Spec.SelectedFields)
 	})
 
-	t.Run("malformed extra data is rejected", func(t *testing.T) {
+	t.Run("malformed extra data is ignored, not an error", func(t *testing.T) {
 		legacy := &v3.SavedView{
 			Name:       "malformed extra data",
 			SourcePage: "metrics",
@@ -81,8 +79,10 @@ func TestNewPostableSavedViewFromLegacyView(t *testing.T) {
 			ExtraData: `{not valid json`,
 		}
 
-		_, err := newPostableSavedViewFromLegacyView(legacy)
-		assert.Error(t, err)
+		postable := newPostableSavedViewFromLegacyView(legacy)
+
+		assert.Equal(t, "malformed extra data", postable.Spec.DisplayName)
+		assert.Equal(t, savedviewtypes.Display{}, postable.Spec.Display)
 	})
 
 	t.Run("legacy validation gap: empty builderQueries map with no queries", func(t *testing.T) {
@@ -98,8 +98,7 @@ func TestNewPostableSavedViewFromLegacyView(t *testing.T) {
 
 		require.NoError(t, legacy.Validate(), "the legacy CompositeQuery check is expected to miss this")
 
-		postable, err := newPostableSavedViewFromLegacyView(legacy)
-		require.NoError(t, err)
+		postable := newPostableSavedViewFromLegacyView(legacy)
 		assert.Error(t, postable.Validate(), "the converted postable must catch what the legacy check missed")
 	})
 }
@@ -115,8 +114,7 @@ func TestNewUpdatableSavedViewFromLegacyView(t *testing.T) {
 		ExtraData: `{"color":"red"}`,
 	}
 
-	updatable, err := newUpdatableSavedViewFromLegacyView(legacy)
-	require.NoError(t, err)
+	updatable := newUpdatableSavedViewFromLegacyView(legacy)
 
 	assert.Equal(t, "renamed view", updatable.Spec.DisplayName)
 	assert.Equal(t, savedviewtypes.SourceTraces, updatable.Source)
@@ -199,8 +197,7 @@ func TestLegacyViewRoundTrip(t *testing.T) {
 	legacy, err := newLegacyViewFromSavedView(original)
 	require.NoError(t, err)
 
-	roundTripped, err := newPostableSavedViewFromLegacyView(legacy)
-	require.NoError(t, err)
+	roundTripped := newPostableSavedViewFromLegacyView(legacy)
 
 	assert.Empty(t, roundTripped.Name)
 	assert.True(t, roundTripped.GenerateName)
@@ -233,8 +230,7 @@ func TestLegacyViewRoundTrip_EmptySelectedFieldsAndDisplay(t *testing.T) {
 	require.NoError(t, json.Unmarshal([]byte(legacy.ExtraData), &extra))
 	assert.Nil(t, extra.SelectColumns, "omitempty drops an empty selectColumns from extraData entirely")
 
-	roundTripped, err := newPostableSavedViewFromLegacyView(legacy)
-	require.NoError(t, err)
+	roundTripped := newPostableSavedViewFromLegacyView(legacy)
 
 	assert.Empty(t, roundTripped.Spec.SelectedFields, "empty, not necessarily non-nil, on this leg of the round trip")
 	assert.Equal(t, savedviewtypes.Display{}, roundTripped.Spec.Display)

@@ -36,15 +36,11 @@ type legacyExtraData struct {
 }
 
 // newPostableSavedViewFromLegacyView builds a create payload for a v1 request.
-// Unlike migration 109 (which processes historical rows it can't ask anyone
-// about), this is a live request with a caller on the other end -- malformed
-// extraData is rejected outright rather than silently written as a partial row.
-func newPostableSavedViewFromLegacyView(v *v3.SavedView) (savedviewtypes.PostableSavedView, error) {
+func newPostableSavedViewFromLegacyView(v *v3.SavedView) savedviewtypes.PostableSavedView {
 	var legacy legacyExtraData
 	if v.ExtraData != "" {
-		if err := json.Unmarshal([]byte(v.ExtraData), &legacy); err != nil {
-			return savedviewtypes.PostableSavedView{}, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to parse extraData")
-		}
+		// Best-effort: malformed/older extraData shapes never fail the request.
+		_ = json.Unmarshal([]byte(v.ExtraData), &legacy)
 	}
 
 	return savedviewtypes.PostableSavedView{
@@ -63,18 +59,15 @@ func newPostableSavedViewFromLegacyView(v *v3.SavedView) (savedviewtypes.Postabl
 				Color:    legacy.Color,
 			},
 		},
-	}, nil
+	}
 }
 
 // newUpdatableSavedViewFromLegacyView builds an update payload for a v1 request.
-// See newPostableSavedViewFromLegacyView -- same reasoning for rejecting rather
-// than swallowing a malformed extraData.
-func newUpdatableSavedViewFromLegacyView(v *v3.SavedView) (savedviewtypes.UpdatableSavedView, error) {
+func newUpdatableSavedViewFromLegacyView(v *v3.SavedView) savedviewtypes.UpdatableSavedView {
 	var legacy legacyExtraData
 	if v.ExtraData != "" {
-		if err := json.Unmarshal([]byte(v.ExtraData), &legacy); err != nil {
-			return savedviewtypes.UpdatableSavedView{}, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to parse extraData")
-		}
+		// Best-effort: malformed/older extraData shapes never fail the request.
+		_ = json.Unmarshal([]byte(v.ExtraData), &legacy)
 	}
 
 	return savedviewtypes.UpdatableSavedView{
@@ -92,7 +85,7 @@ func newUpdatableSavedViewFromLegacyView(v *v3.SavedView) (savedviewtypes.Updata
 				Color:    legacy.Color,
 			},
 		},
-	}, nil
+	}
 }
 
 // newLegacyViewFromSavedView renders a v2 SavedView back into the v1 shape.
@@ -159,11 +152,7 @@ func (handler *handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	postable, err := newPostableSavedViewFromLegacyView(&view)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
+	postable := newPostableSavedViewFromLegacyView(&view)
 
 	if err := postable.Validate(); err != nil {
 		render.Error(w, err)
@@ -238,11 +227,7 @@ func (handler *handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updatable, err := newUpdatableSavedViewFromLegacyView(&view)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
+	updatable := newUpdatableSavedViewFromLegacyView(&view)
 
 	if err := updatable.Validate(); err != nil {
 		render.Error(w, err)
