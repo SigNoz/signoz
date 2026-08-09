@@ -1,0 +1,68 @@
+package alertmanagertypes
+
+import (
+	"net/url"
+	"strings"
+	"time"
+
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/prometheus/alertmanager/config"
+	commoncfg "github.com/prometheus/common/config"
+	"github.com/prometheus/common/model"
+)
+
+const defaultJiraReopenDuration = model.Duration(3 * 24 * time.Hour)
+
+// JiraReceiverConfig is the SigNoz Jira receiver. Fields are declared explicitly
+// instead of embedding upstream config.JiraConfig because that type's own
+// UnmarshalYAML would reset our defaults and drop sibling fields on the yaml
+// round-trip. Only Jira Cloud (v3/ADF) is supported, so api_url is derived from Site.
+type JiraReceiverConfig struct {
+	config.NotifierConfig `yaml:",inline"`
+
+	Site              string                      `json:"site,omitempty" yaml:"site,omitempty"`
+	Project           string                      `json:"project,omitempty" yaml:"project,omitempty"`
+	IssueType         string                      `json:"issue_type,omitempty" yaml:"issue_type,omitempty"`
+	Priority          string                      `json:"priority,omitempty" yaml:"priority,omitempty"`
+	Labels            []string                    `json:"labels,omitempty" yaml:"labels,omitempty"`
+	ResolveTransition string                      `json:"resolve_transition,omitempty" yaml:"resolve_transition,omitempty"`
+	ReopenTransition  string                      `json:"reopen_transition,omitempty" yaml:"reopen_transition,omitempty"`
+	ReopenDuration    model.Duration              `json:"reopen_duration" yaml:"reopen_duration"`
+	WontFixResolution string                      `json:"wont_fix_resolution,omitempty" yaml:"wont_fix_resolution,omitempty"`
+	CustomFields      map[string]any              `json:"custom_fields,omitempty" yaml:"custom_fields,omitempty"`
+	HTTPConfig        *commoncfg.HTTPClientConfig `json:"http_config,omitempty" yaml:"http_config,omitempty"`
+}
+
+func (c *JiraReceiverConfig) UnmarshalYAML(unmarshal func(any) error) error {
+	type plain JiraReceiverConfig
+	if err := unmarshal((*plain)(c)); err != nil {
+		return err
+	}
+
+	if c.ReopenDuration <= 0 {
+		c.ReopenDuration = defaultJiraReopenDuration
+	}
+
+	site := strings.TrimRight(strings.TrimSpace(c.Site), "/")
+	u, err := url.Parse(site)
+	if site == "" || err != nil || u.Scheme != "https" || !strings.HasSuffix(strings.ToLower(u.Hostname()), "atlassian.net") {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "jira site must be a Jira Cloud URL (https://<site>.atlassian.net)")
+	}
+	c.Site = site
+
+	if c.Project == "" {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "jira project is required")
+	}
+	if c.IssueType == "" {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "jira issue_type is required")
+	}
+	if c.HTTPConfig == nil || c.HTTPConfig.BasicAuth == nil {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "jira requires basic auth (email + API token)")
+	}
+	return nil
+}
+
+// APIBaseURL returns the Jira Cloud REST v3 base URL derived from Site.
+func (c *JiraReceiverConfig) APIBaseURL() string {
+	return strings.TrimRight(c.Site, "/") + "/rest/api/3"
+}

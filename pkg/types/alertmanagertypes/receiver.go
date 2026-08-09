@@ -23,6 +23,9 @@ import (
 type Receiver struct {
 	*config.Receiver
 	GoogleChatConfigs []*GoogleChatReceiverConfig `json:"googlechat_configs,omitempty" yaml:"googlechat_configs,omitempty"`
+	// Shadows upstream's jira_configs so our custom notifier (rich ADF, deep-links,
+	// lifecycle comments) handles it instead of upstream's plain Jira notifier.
+	JiraConfigs []*JiraReceiverConfig `json:"jira_configs,omitempty" yaml:"jira_configs,omitempty"`
 }
 
 // NewReceiver builds a Receiver from its JSON input, applying each notifier
@@ -49,6 +52,14 @@ func NewReceiver(input string) (*Receiver, error) {
 			return nil, err
 		}
 		receiver.GoogleChatConfigs[i] = defaulted
+	}
+
+	for i, jc := range receiver.JiraConfigs {
+		defaulted, err := defaultedNotifierConfig(jc)
+		if err != nil {
+			return nil, err
+		}
+		receiver.JiraConfigs[i] = defaulted
 	}
 
 	return receiver, nil
