@@ -103,7 +103,9 @@ function Overview({
 									className="log-body-value"
 									// Safe: getSanitizedLogBody runs the value through dompurify.
 									// eslint-disable-next-line react/no-danger
-									dangerouslySetInnerHTML={{ __html: getSanitizedLogBody(value) }}
+									dangerouslySetInnerHTML={{
+										__html: getSanitizedLogBody(value, { shouldEscapeHtml: true }),
+									}}
 								/>
 							);
 						},
