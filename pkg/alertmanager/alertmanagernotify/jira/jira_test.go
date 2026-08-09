@@ -179,6 +179,12 @@ func TestNotifyStillFiringUpdatesAndComments(t *testing.T) {
 	assert.Equal(t, 1, m.countMethod(http.MethodPut))      // update
 	assert.Equal(t, 1, m.count(http.MethodPost, "/comment"))
 	assert.Equal(t, 0, m.count(http.MethodPost, "/transitions")) // still open, no transition
+
+	// comment carries the full rich snapshot (panel + labeled body), not a one-liner.
+	cjs, err := json.Marshal(m.lastBody(t, http.MethodPost, "/comment"))
+	require.NoError(t, err)
+	assert.Contains(t, string(cjs), `"panel"`)
+	assert.Contains(t, string(cjs), "Summary:")
 }
 
 func TestNotifyResolveTransitionsToDoneAndComments(t *testing.T) {

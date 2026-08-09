@@ -109,20 +109,21 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		return retry, err
 	}
 
+	// Each state-change comment carries the same rich snapshot as the description
+	// (panel + details + deep-links), so the comment timeline mirrors the card
+	// Google Chat re-posts on every notification.
 	switch {
 	case firing && existing.isDone(): // re-fired after resolution → reopen
 		if retry, err := n.applyTransition(ctx, existing.Key, false, n.conf.ReopenTransition); err != nil {
 			return retry, err
 		}
-		return n.addComment(ctx, existing.Key, "🔴 Alert re-fired — issue reopened.")
-	case firing: // still firing
-		return n.addComment(ctx, existing.Key, "🔴 Alert still firing.")
-	default: // resolved (search excludes done issues, so this one is open)
+	case !firing: // resolved (search returns only open issues, so this one is open)
 		if retry, err := n.applyTransition(ctx, existing.Key, true, n.conf.ResolveTransition); err != nil {
 			return retry, err
 		}
-		return n.addComment(ctx, existing.Key, "🟢 Alert resolved.")
 	}
+	// firing && !isDone (still firing) needs no transition.
+	return n.addComment(ctx, existing.Key, fields.Description)
 }
 
 func (n *Notifier) buildFields(groupID, summary, descText string, alerts []*types.Alert, firing bool) *issueFields {
@@ -274,8 +275,8 @@ func (n *Notifier) getTransitions(ctx context.Context, key string) ([]jiraTransi
 	return tr.Transitions, false, nil
 }
 
-func (n *Notifier) addComment(ctx context.Context, key, text string) (bool, error) {
-	_, retry, err := n.callAPI(ctx, http.MethodPost, n.issueURL(key, "comment"), comment{Body: adf.Doc(text)})
+func (n *Notifier) addComment(ctx context.Context, key string, body any) (bool, error) {
+	_, retry, err := n.callAPI(ctx, http.MethodPost, n.issueURL(key, "comment"), comment{Body: body})
 	return retry, err
 }
 
