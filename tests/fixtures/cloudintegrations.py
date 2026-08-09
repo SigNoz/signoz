@@ -1,5 +1,3 @@
-"""Fixtures for cloud integration tests."""
-
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from http import HTTPStatus

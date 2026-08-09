@@ -194,14 +194,6 @@ export const handlers = [
 			}),
 		),
 	),
-	rest.put('http://localhost/api/v1/user/:id', (_, res, ctx) =>
-		res(
-			ctx.status(200),
-			ctx.json({
-				data: 'user updated successfully',
-			}),
-		),
-	),
 	rest.get(
 		'http://localhost/api/v3/autocomplete/aggregate_attributes',
 		(req, res, ctx) =>

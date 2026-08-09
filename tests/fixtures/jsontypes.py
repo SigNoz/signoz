@@ -1,9 +1,3 @@
-"""
-Simpler version of metadataexporter for exporting jsontypes for test fixtures.
-This exports JSON type metadata to the path_types table by parsing JSON bodies
-and extracting all paths with their types, similar to how the real metadataexporter works.
-"""
-
 import datetime
 import json
 from abc import ABC
@@ -21,8 +15,6 @@ from fixtures import types
 
 
 class JSONPathType(ABC):
-    """Represents a JSON path with its type information"""
-
     field_name: str
     field_data_type: str
     last_seen: np.uint64
@@ -44,7 +36,6 @@ class JSONPathType(ABC):
         self.last_seen = np.uint64(int(last_seen.timestamp() * 1e9))
 
     def np_arr(self) -> np.array:
-        """Return path type data as numpy array for database insertion"""
         return np.array([self.signal, self.field_context, self.field_name, self.field_data_type, self.last_seen])
 
 
@@ -145,7 +136,7 @@ def _python_type_to_clickhouse_type(value: Any) -> str:
     elif isinstance(value, dict):
         return "json"
     else:
-        return "string"  # Default fallback
+        return "string"
 
 
 def _extract_json_paths(
@@ -154,19 +145,7 @@ def _extract_json_paths(
     path_types: dict[str, set[str]] | None = None,
     level: int = 0,
 ) -> dict[str, set[str]]:
-    """
-    Recursively extract all paths and their types from a JSON object.
-    Matches metadataexporter's analyzePValue logic.
-
-    Args:
-        obj: The JSON object to traverse
-        current_path: Current path being built (e.g., "user.name")
-        path_types: Dictionary mapping paths to sets of types found
-        level: Current nesting level (for depth limiting)
-
-    Returns:
-        Dictionary mapping paths to sets of type strings
-    """
+    """Matches metadataexporter's analyzePValue logic."""
     if path_types is None:
         path_types = {}
 
@@ -179,17 +158,14 @@ def _extract_json_paths(
         # Matches Go walkMap which recurses without calling ta.record on the map node.
 
         for key, value in obj.items():
-            # Build the path for this key
             if current_path:
                 new_path = f"{current_path}.{key}"
             else:
                 new_path = key
 
-            # Recurse into the value
             _extract_json_paths(value, new_path, path_types, level + 1)
 
     elif isinstance(obj, list):
-        # Skip empty arrays
         if len(obj) == 0:
             return path_types
 
@@ -246,17 +222,6 @@ def _parse_json_bodies_and_extract_paths(
     json_bodies: list[str],
     timestamp: datetime.datetime | None = None,
 ) -> list[JSONPathType]:
-    """
-    Parse JSON bodies and extract all paths with their types.
-    This mimics the behavior of metadataexporter.
-
-    Args:
-        json_bodies: List of JSON body strings to parse
-        timestamp: Timestamp to use for last_seen (defaults to now)
-
-    Returns:
-        List of JSONPathType objects with all discovered paths and types
-    """
     if timestamp is None:
         timestamp = datetime.datetime.now()
 
@@ -268,11 +233,9 @@ def _parse_json_bodies_and_extract_paths(
             parsed = json.loads(json_body)
             _extract_json_paths(parsed, "", all_path_types, level=0)
         except (json.JSONDecodeError, TypeError):
-            # Skip invalid JSON
             continue
 
-    # Convert to list of JSONPathType objects
-    # Each path can have multiple types, so we create one JSONPathType per type
+    # Each path can have multiple types -> one JSONPathType per type
     path_type_objects: list[JSONPathType] = []
     for path, types_set in all_path_types.items():
         for type_str in types_set:
@@ -285,64 +248,34 @@ def _parse_json_bodies_and_extract_paths(
 def export_json_types(
     clickhouse: types.TestContainerClickhouse,
 ) -> Generator[Callable[[list[JSONPathType] | list[str] | list[Any]], None], Any]:
-    """
-    Fixture for exporting JSON type metadata to the path_types table.
-    This is a simpler version of metadataexporter for test fixtures.
+    """Write JSON path/type metadata the way the real metadataexporter would.
 
-    The function can accept:
-    1. List of JSONPathType objects (manual specification)
-    2. List of JSON body strings (auto-extract paths)
-    3. List of Logs objects (extract from body_json field)
-
-    Usage examples:
-        # Manual specification
-        export_json_types([
-            JSONPathType(field_name="user.name", field_data_type="string"),
-            JSONPathType(field_name="user.age", field_data_type="int64"),
-        ])
-
-        # Auto-extract from JSON strings
-        export_json_types([
-            '{"user": {"name": "alice", "age": 25}}',
-            '{"user": {"name": "bob", "age": 30}}',
-        ])
-
-        # Auto-extract from Logs objects
-        export_json_types(logs_list)
+    Accepts JSONPathType objects (manual specification), raw JSON body strings,
+    or Logs objects (paths auto-extracted from the JSON body).
     """
 
     def _export_json_types(
         data: list[JSONPathType] | list[str] | list[Any],  # List[Logs] but avoiding circular import
     ) -> None:
-        """
-        Export JSON type metadata to signoz_metadata.distributed_field_keys table.
-        This table stores signal, context, path, and type information for body JSON fields.
-        """
         path_types: list[JSONPathType] = []
 
         if len(data) == 0:
             return
 
-        # Determine input type and convert to JSONPathType list
         first_item = data[0]
 
         if isinstance(first_item, JSONPathType):
-            # Already JSONPathType objects
             path_types = data  # type: ignore
         elif isinstance(first_item, str):
-            # List of JSON strings - parse and extract paths
             path_types = _parse_json_bodies_and_extract_paths(data)  # type: ignore
         else:
             # Assume it's a list of Logs objects - extract body_v2
             json_bodies: list[str] = []
             for log in data:  # type: ignore
-                # Try to get body_v2 attribute
                 if hasattr(log, "body_v2") and log.body_v2:
                     json_bodies.append(log.body_v2)
                 elif hasattr(log, "body") and log.body:
-                    # Fallback to body if body_v2 not available
                     try:
-                        # Try to parse as JSON
                         json.loads(log.body)
                         json_bodies.append(log.body)
                     except (json.JSONDecodeError, TypeError):
@@ -369,7 +302,6 @@ def export_json_types(
 
     yield _export_json_types
 
-    # Cleanup - truncate the local table after tests (following pattern from logs fixture)
     clickhouse.conn.query(f"TRUNCATE TABLE signoz_metadata.field_keys ON CLUSTER '{clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' SYNC")
 
 

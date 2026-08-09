@@ -5,7 +5,7 @@
   "overview": "file://overview.md",
   "supportedSignals": {
     "metrics": true,
-    "logs": true
+    "logs": false
   },
   "dataCollected": {
     "metrics": [

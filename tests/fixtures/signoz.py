@@ -225,9 +225,6 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
 ) -> types.SigNoz:
-    """
-    Package-scoped fixture for setting up SigNoz.
-    """
     return create_signoz(
         network=network,
         zeus=zeus,

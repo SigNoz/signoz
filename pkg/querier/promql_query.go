@@ -344,8 +344,8 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 	}
 
 	// Accumulate ClickHouse-side scan stats across every storage query this
-	// evaluation issues: progress options propagate to each ClickHouse query
-	// through the context.
+	// evaluation issues (engine selectors or the compiled executor): progress
+	// options propagate to each ClickHouse query through the context.
 	var statsMu sync.Mutex
 	var rowsScanned, bytesScanned uint64
 	ctx = clickhouse.Context(ctx, clickhouse.WithProgress(func(p *clickhouse.Progress) {
@@ -369,6 +369,23 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 			return nil, err
 		}
 		return q.toResult(matrix, nil, began, &statsMu, &rowsScanned, &bytesScanned), nil
+	}
+
+	// When the serving provider has the RangeExecutor capability
+	// (prometheus::provider: clickhousev2), serve the way the provider is
+	// designed to serve: transpiled when the shape allows. Without this the
+	// override would silently run the engine path only.
+	if re, ok := q.promEngine.(prometheus.RangeExecutor); ok {
+		matrix, served, err := re.TryExecuteRange(ctx, query, time.Unix(0, start), time.Unix(0, end), q.query.Step.Duration)
+		if err != nil {
+			if enhanced := tryEnhancePromQLExecError(err); enhanced != nil {
+				return nil, enhanced
+			}
+			return nil, err
+		}
+		if served {
+			return q.toResult(matrix, nil, began, &statsMu, &rowsScanned, &bytesScanned), nil
+		}
 	}
 
 	qry, err := q.promEngine.Engine().NewRangeQuery(

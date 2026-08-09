@@ -329,9 +329,6 @@ def clickhouse(
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
 ) -> types.TestContainerClickhouse:
-    """
-    Package-scoped fixture for Clickhouse TestContainer.
-    """
     return create_clickhouse(
         tmpfs=tmpfs,
         network=network,

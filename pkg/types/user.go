@@ -128,33 +128,11 @@ func NewDeprecatedUserFromUserAndRole(user *User, role Role) *DeprecatedUser {
 	}
 }
 
-func NewUserFromDeprecatedUser(deprecatedUser *DeprecatedUser) *User {
-	return &User{
-		Identifiable:  deprecatedUser.Identifiable,
-		DisplayName:   deprecatedUser.DisplayName,
-		Email:         deprecatedUser.Email,
-		OrgID:         deprecatedUser.OrgID,
-		IsRoot:        deprecatedUser.IsRoot,
-		Status:        deprecatedUser.Status,
-		TimeAuditable: deprecatedUser.TimeAuditable,
-	}
-}
-
 // Update applies mutable fields from the input to the user. Immutable fields
 // (email, is_root, org_id, id) are preserved. Only non-zero input fields are applied.
 func (u *User) Update(displayName string) {
 	if displayName != "" {
 		u.DisplayName = displayName
-	}
-	u.UpdatedAt = time.Now()
-}
-
-func (u *DeprecatedUser) Update(displayName string, role Role) {
-	if displayName != "" {
-		u.DisplayName = displayName
-	}
-	if role != "" {
-		u.Role = role
 	}
 	u.UpdatedAt = time.Now()
 }
@@ -227,17 +205,6 @@ func (u *User) ErrIfNotPending() error {
 func NewTraitsFromUser(user *User) map[string]any {
 	return map[string]any{
 		"name":         user.DisplayName,
-		"email":        user.Email.String(),
-		"display_name": user.DisplayName,
-		"status":       user.Status,
-		"created_at":   user.CreatedAt,
-	}
-}
-
-func NewTraitsFromDeprecatedUser(user *DeprecatedUser) map[string]any {
-	return map[string]any{
-		"name":         user.DisplayName,
-		"role":         user.Role,
 		"email":        user.Email.String(),
 		"display_name": user.DisplayName,
 		"status":       user.Status,
