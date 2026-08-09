@@ -7885,9 +7885,7 @@ components:
         name:
           type: string
         schemaVersion:
-          enum:
-          - v2
-          type: string
+          $ref: '#/components/schemas/SavedviewtypesSchemaVersion'
         source:
           $ref: '#/components/schemas/SavedviewtypesSource'
         spec:
@@ -7909,9 +7907,7 @@ components:
         name:
           type: string
         schemaVersion:
-          enum:
-          - v2
-          type: string
+          $ref: '#/components/schemas/SavedviewtypesSchemaVersion'
         source:
           $ref: '#/components/schemas/SavedviewtypesSource'
         spec:
@@ -7948,6 +7944,10 @@ components:
       - panelType
       - queries
       type: object
+    SavedviewtypesSchemaVersion:
+      enum:
+      - v2
+      type: string
     SavedviewtypesSource:
       enum:
       - traces
@@ -7958,9 +7958,7 @@ components:
     SavedviewtypesUpdatableSavedView:
       properties:
         schemaVersion:
-          enum:
-          - v2
-          type: string
+          $ref: '#/components/schemas/SavedviewtypesSchemaVersion'
         source:
           $ref: '#/components/schemas/SavedviewtypesSource'
         spec:

@@ -8991,7 +8991,7 @@ export enum SavedviewtypesPanelTypeDTO {
 	list = 'list',
 	trace = 'trace',
 }
-export enum SavedviewtypesPostableSavedViewDTOSchemaVersion {
+export enum SavedviewtypesSchemaVersionDTO {
 	v2 = 'v2',
 }
 export enum SavedviewtypesSourceDTO {
@@ -9026,18 +9026,11 @@ export interface SavedviewtypesPostableSavedViewDTO {
 	 * @type string
 	 */
 	name?: string;
-	/**
-	 * @enum v2
-	 * @type string
-	 */
-	schemaVersion: SavedviewtypesPostableSavedViewDTOSchemaVersion;
+	schemaVersion: SavedviewtypesSchemaVersionDTO;
 	source: SavedviewtypesSourceDTO;
 	spec: SavedviewtypesSavedViewSpecDTO;
 }
 
-export enum SavedviewtypesSavedViewDTOSchemaVersion {
-	v2 = 'v2',
-}
 export interface SavedviewtypesSavedViewDTO {
 	/**
 	 * @type string
@@ -9056,11 +9049,7 @@ export interface SavedviewtypesSavedViewDTO {
 	 * @type string
 	 */
 	name?: string;
-	/**
-	 * @enum v2
-	 * @type string
-	 */
-	schemaVersion: SavedviewtypesSavedViewDTOSchemaVersion;
+	schemaVersion: SavedviewtypesSchemaVersionDTO;
 	source?: SavedviewtypesSourceDTO;
 	spec: SavedviewtypesSavedViewSpecDTO;
 	/**
@@ -9074,15 +9063,8 @@ export interface SavedviewtypesSavedViewDTO {
 	updatedBy?: string;
 }
 
-export enum SavedviewtypesUpdatableSavedViewDTOSchemaVersion {
-	v2 = 'v2',
-}
 export interface SavedviewtypesUpdatableSavedViewDTO {
-	/**
-	 * @enum v2
-	 * @type string
-	 */
-	schemaVersion: SavedviewtypesUpdatableSavedViewDTOSchemaVersion;
+	schemaVersion: SavedviewtypesSchemaVersionDTO;
 	source: SavedviewtypesSourceDTO;
 	spec: SavedviewtypesSavedViewSpecDTO;
 }
