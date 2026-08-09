@@ -48,9 +48,9 @@ func newPostableSavedViewFromLegacyView(v *v3.SavedView) (savedviewtypes.Postabl
 	}
 
 	return savedviewtypes.PostableSavedView{
-		GenerateName:          true,
-		Source:                savedviewtypes.Source{String: valuer.NewString(v.SourcePage)},
-		SavedViewMetadataBase: savedviewtypes.SavedViewMetadataBase{SchemaVersion: savedviewtypes.SavedViewSchemaVersion},
+		GenerateName:  true,
+		Source:        savedviewtypes.Source{String: valuer.NewString(v.SourcePage)},
+		SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
 		Spec: savedviewtypes.SavedViewSpec{
 			DisplayName:    v.Name,
 			PanelType:      savedviewtypes.PanelType{String: valuer.NewString(string(v.CompositeQuery.PanelType))},
@@ -78,8 +78,8 @@ func newUpdatableSavedViewFromLegacyView(v *v3.SavedView) (savedviewtypes.Updata
 	}
 
 	return savedviewtypes.UpdatableSavedView{
-		Source:                savedviewtypes.Source{String: valuer.NewString(v.SourcePage)},
-		SavedViewMetadataBase: savedviewtypes.SavedViewMetadataBase{SchemaVersion: savedviewtypes.SavedViewSchemaVersion},
+		Source:        savedviewtypes.Source{String: valuer.NewString(v.SourcePage)},
+		SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
 		Spec: savedviewtypes.SavedViewSpec{
 			DisplayName:    v.Name,
 			PanelType:      savedviewtypes.PanelType{String: valuer.NewString(string(v.CompositeQuery.PanelType))},
@@ -165,6 +165,11 @@ func (handler *handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := postable.Validate(); err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	uuid, err := handler.module.CreateView(ctx, claims.OrgID, postable)
 	if err != nil {
 		render.Error(w, err)
@@ -235,6 +240,11 @@ func (handler *handler) Update(w http.ResponseWriter, r *http.Request) {
 
 	updatable, err := newUpdatableSavedViewFromLegacyView(&view)
 	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	if err := updatable.Validate(); err != nil {
 		render.Error(w, err)
 		return
 	}

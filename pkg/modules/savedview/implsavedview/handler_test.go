@@ -84,6 +84,24 @@ func TestNewPostableSavedViewFromLegacyView(t *testing.T) {
 		_, err := newPostableSavedViewFromLegacyView(legacy)
 		assert.Error(t, err)
 	})
+
+	t.Run("legacy validation gap: empty builderQueries map with no queries", func(t *testing.T) {
+		legacy := &v3.SavedView{
+			Name:       "no real queries",
+			SourcePage: "logs",
+			CompositeQuery: &v3.CompositeQuery{
+				PanelType:      v3.PanelTypeGraph,
+				QueryType:      v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{},
+			},
+		}
+
+		require.NoError(t, legacy.Validate(), "the legacy CompositeQuery check is expected to miss this")
+
+		postable, err := newPostableSavedViewFromLegacyView(legacy)
+		require.NoError(t, err)
+		assert.Error(t, postable.Validate(), "the converted postable must catch what the legacy check missed")
+	})
 }
 
 func TestNewUpdatableSavedViewFromLegacyView(t *testing.T) {
@@ -107,9 +125,9 @@ func TestNewUpdatableSavedViewFromLegacyView(t *testing.T) {
 func TestNewLegacyViewFromSavedView(t *testing.T) {
 	now := time.Now()
 	savedView := &savedviewtypes.SavedView{
-		Name:                  "my-view-abc123ef",
-		Source:                savedviewtypes.SourceLogs,
-		SavedViewMetadataBase: savedviewtypes.SavedViewMetadataBase{SchemaVersion: savedviewtypes.SavedViewSchemaVersion},
+		Name:          "my-view-abc123ef",
+		Source:        savedviewtypes.SourceLogs,
+		SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
 		Spec: savedviewtypes.SavedViewSpec{
 			DisplayName:    "my view",
 			PanelType:      savedviewtypes.PanelTypeGraph,
@@ -166,9 +184,9 @@ func TestNewLegacyViewsFromSavedViews(t *testing.T) {
 // slug (Name) is deliberately NOT part of this contract -- v1 never sees it.
 func TestLegacyViewRoundTrip(t *testing.T) {
 	original := &savedviewtypes.SavedView{
-		Name:                  "round-trip-abc123ef",
-		Source:                savedviewtypes.SourceMetrics,
-		SavedViewMetadataBase: savedviewtypes.SavedViewMetadataBase{SchemaVersion: savedviewtypes.SavedViewSchemaVersion},
+		Name:          "round-trip-abc123ef",
+		Source:        savedviewtypes.SourceMetrics,
+		SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
 		Spec: savedviewtypes.SavedViewSpec{
 			DisplayName:    "round trip",
 			PanelType:      savedviewtypes.PanelTypeTable,
@@ -192,4 +210,32 @@ func TestLegacyViewRoundTrip(t *testing.T) {
 	assert.Equal(t, original.Spec.Queries, roundTripped.Spec.Queries)
 	assert.Equal(t, original.Spec.SelectedFields, roundTripped.Spec.SelectedFields)
 	assert.Equal(t, original.Spec.Display, roundTripped.Spec.Display)
+}
+
+func TestLegacyViewRoundTrip_EmptySelectedFieldsAndDisplay(t *testing.T) {
+	original := &savedviewtypes.SavedView{
+		Name:          "round-trip-empty-abc123ef",
+		Source:        savedviewtypes.SourceMetrics,
+		SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
+		Spec: savedviewtypes.SavedViewSpec{
+			DisplayName:    "round trip empty",
+			PanelType:      savedviewtypes.PanelTypeTable,
+			Queries:        testQueries(),
+			SelectedFields: []telemetrytypes.TelemetryFieldKey{},
+			Display:        savedviewtypes.Display{},
+		},
+	}
+
+	legacy, err := newLegacyViewFromSavedView(original)
+	require.NoError(t, err)
+
+	var extra legacyExtraData
+	require.NoError(t, json.Unmarshal([]byte(legacy.ExtraData), &extra))
+	assert.Nil(t, extra.SelectColumns, "omitempty drops an empty selectColumns from extraData entirely")
+
+	roundTripped, err := newPostableSavedViewFromLegacyView(legacy)
+	require.NoError(t, err)
+
+	assert.Empty(t, roundTripped.Spec.SelectedFields, "empty, not necessarily non-nil, on this leg of the round trip")
+	assert.Equal(t, savedviewtypes.Display{}, roundTripped.Spec.Display)
 }

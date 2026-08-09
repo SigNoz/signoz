@@ -27,19 +27,6 @@ var (
 	SourceMeter   = Source{valuer.NewString("meter")}
 )
 
-// SavedViewMetadataBase holds the schemaVersion field shared by every
-// saved-view wire shape (SavedView, PostableSavedView, UpdatableSavedView).
-type SavedViewMetadataBase struct {
-	SchemaVersion string `json:"schemaVersion" required:"true"`
-}
-
-func (m SavedViewMetadataBase) Validate() error {
-	if m.SchemaVersion != SavedViewSchemaVersion {
-		return errors.NewInvalidInputf(ErrCodeSavedViewInvalidInput, "schemaVersion must be %q, got %q", SavedViewSchemaVersion, m.SchemaVersion)
-	}
-	return nil
-}
-
 // SavedView is the domain/wire shape -- schemaVersion and spec are promoted
 // to the top level, matching dashboardtypes.DashboardV2 and ruletypes'
 // v2alpha1 rules. StorableSavedView is the distinct bun-mapped row shape;
@@ -49,12 +36,11 @@ type SavedView struct {
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
-	OrgID  string `json:"-"`
-	Name   string `json:"name"`
-	Source Source `json:"source"`
-
-	SavedViewMetadataBase
-	Spec SavedViewSpec `json:"spec" required:"true"`
+	OrgID         string        `json:"-"`
+	Name          string        `json:"name"`
+	Source        Source        `json:"source"`
+	SchemaVersion SchemaVersion `json:"schemaVersion" required:"true"`
+	Spec          SavedViewSpec `json:"spec" required:"true"`
 }
 
 // StorableSavedView is the row shape bun maps to the saved_view table.
@@ -72,14 +58,14 @@ type StorableSavedView struct {
 
 func (s *StorableSavedView) ToSavedView() *SavedView {
 	return &SavedView{
-		Identifiable:          s.Identifiable,
-		TimeAuditable:         s.TimeAuditable,
-		UserAuditable:         s.UserAuditable,
-		OrgID:                 s.OrgID,
-		Name:                  s.Name,
-		Source:                s.Source,
-		SavedViewMetadataBase: SavedViewMetadataBase{SchemaVersion: s.Data.SchemaVersion},
-		Spec:                  s.Data.Spec,
+		Identifiable:  s.Identifiable,
+		TimeAuditable: s.TimeAuditable,
+		UserAuditable: s.UserAuditable,
+		OrgID:         s.OrgID,
+		Name:          s.Name,
+		Source:        s.Source,
+		SchemaVersion: SchemaVersion{valuer.NewString(s.Data.SchemaVersion)},
+		Spec:          s.Data.Spec,
 	}
 }
 
@@ -92,26 +78,24 @@ func NewStorableSavedView(view *SavedView) *StorableSavedView {
 		Name:          view.Name,
 		Source:        view.Source,
 		Data: SavedViewData{
-			SchemaVersion: view.SchemaVersion,
+			SchemaVersion: view.SchemaVersion.StringValue(),
 			Spec:          view.Spec,
 		},
 	}
 }
 
 type PostableSavedView struct {
-	Name         string `json:"name"`
-	GenerateName bool   `json:"generateName"`
-	Source       Source `json:"source" required:"true"`
-
-	SavedViewMetadataBase
-	Spec SavedViewSpec `json:"spec" required:"true"`
+	Name          string        `json:"name"`
+	GenerateName  bool          `json:"generateName"`
+	Source        Source        `json:"source" required:"true"`
+	SchemaVersion SchemaVersion `json:"schemaVersion" required:"true"`
+	Spec          SavedViewSpec `json:"spec" required:"true"`
 }
 
 type UpdatableSavedView struct {
-	Source Source `json:"source" required:"true"`
-
-	SavedViewMetadataBase
-	Spec SavedViewSpec `json:"spec" required:"true"`
+	Source        Source        `json:"source" required:"true"`
+	SchemaVersion SchemaVersion `json:"schemaVersion" required:"true"`
+	Spec          SavedViewSpec `json:"spec" required:"true"`
 }
 
 type ListSavedViewsParams struct {
@@ -150,14 +134,14 @@ func (postable PostableSavedView) ToSavedView(orgID string, createdBy string) *S
 	}
 
 	return &SavedView{
-		Identifiable:          types.Identifiable{ID: valuer.GenerateUUID()},
-		TimeAuditable:         types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
-		UserAuditable:         types.UserAuditable{CreatedBy: createdBy, UpdatedBy: createdBy},
-		OrgID:                 orgID,
-		Name:                  name,
-		Source:                postable.Source,
-		SavedViewMetadataBase: postable.SavedViewMetadataBase,
-		Spec:                  postable.Spec,
+		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
+		TimeAuditable: types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
+		UserAuditable: types.UserAuditable{CreatedBy: createdBy, UpdatedBy: createdBy},
+		OrgID:         orgID,
+		Name:          name,
+		Source:        postable.Source,
+		SchemaVersion: postable.SchemaVersion,
+		Spec:          postable.Spec,
 	}
 }
 
@@ -165,13 +149,13 @@ func (postable PostableSavedView) ToSavedView(orgID string, createdBy string) *S
 // deliberately absent -- the caller identifies the row by id/orgID alone.
 func (updatable UpdatableSavedView) ToSavedView(id valuer.UUID, orgID string, updatedBy string) *SavedView {
 	return &SavedView{
-		Identifiable:          types.Identifiable{ID: id},
-		TimeAuditable:         types.TimeAuditable{UpdatedAt: time.Now()},
-		UserAuditable:         types.UserAuditable{UpdatedBy: updatedBy},
-		OrgID:                 orgID,
-		Source:                updatable.Source,
-		SavedViewMetadataBase: updatable.SavedViewMetadataBase,
-		Spec:                  updatable.Spec,
+		Identifiable:  types.Identifiable{ID: id},
+		TimeAuditable: types.TimeAuditable{UpdatedAt: time.Now()},
+		UserAuditable: types.UserAuditable{UpdatedBy: updatedBy},
+		OrgID:         orgID,
+		Source:        updatable.Source,
+		SchemaVersion: updatable.SchemaVersion,
+		Spec:          updatable.Spec,
 	}
 }
 
@@ -182,7 +166,7 @@ func (p *PostableSavedView) Validate() error {
 	if err := p.Source.Validate(); err != nil {
 		return err
 	}
-	if err := p.SavedViewMetadataBase.Validate(); err != nil {
+	if err := p.SchemaVersion.Validate(); err != nil {
 		return err
 	}
 
@@ -203,7 +187,7 @@ func (u *UpdatableSavedView) Validate() error {
 	if err := u.Source.Validate(); err != nil {
 		return err
 	}
-	if err := u.SavedViewMetadataBase.Validate(); err != nil {
+	if err := u.SchemaVersion.Validate(); err != nil {
 		return err
 	}
 

@@ -8,7 +8,7 @@ import (
 )
 
 // SavedViewSchemaVersion is the only schemaVersion currently.
-const SavedViewSchemaVersion = "v2"
+var SavedViewSchemaVersion = SchemaVersion{valuer.NewString("v2")}
 
 var (
 	PanelTypeValue = PanelType{valuer.NewString("value")}
@@ -26,9 +26,7 @@ type Display struct {
 	Color    string `json:"color"`
 }
 
-// SavedViewSpec is the typed content of a saved view. selectedFields and
-// display are not marked required: neither is actually validated
-// server-side, so requiring them in the schema would over-constrain callers.
+// SavedViewSpec is the typed content of a saved view.
 type SavedViewSpec struct {
 	DisplayName    string                             `json:"displayName" required:"true"`
 	PanelType      PanelType                          `json:"panelType" required:"true"`
@@ -41,6 +39,11 @@ type SavedViewSpec struct {
 type SavedViewData struct {
 	SchemaVersion string        `json:"schemaVersion" required:"true"`
 	Spec          SavedViewSpec `json:"spec" required:"true"`
+}
+
+// SchemaVersion has v2 as the only value currently.
+type SchemaVersion struct {
+	valuer.String
 }
 
 // PanelType is the explore-page panel a saved view renders as.
@@ -67,6 +70,17 @@ func (p PanelType) Validate() error {
 	}
 }
 
+func (SchemaVersion) Enum() []any {
+	return []any{SavedViewSchemaVersion}
+}
+
+func (s SchemaVersion) Validate() error {
+	if s != SavedViewSchemaVersion {
+		return errors.NewInvalidInputf(ErrCodeSavedViewInvalidInput, "schemaVersion must be %q, got %q", SavedViewSchemaVersion.StringValue(), s.StringValue())
+	}
+	return nil
+}
+
 func (s *SavedViewSpec) Validate() error {
 	if s.DisplayName == "" {
 		return errors.NewInvalidInputf(ErrCodeSavedViewInvalidInput, "displayName is required")
@@ -77,4 +91,3 @@ func (s *SavedViewSpec) Validate() error {
 
 	return (&qbtypes.CompositeQuery{Queries: s.Queries}).Validate()
 }
-

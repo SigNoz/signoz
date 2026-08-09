@@ -1,12 +1,15 @@
 package savedviewtypes
 
 import (
+	"encoding/json"
+	"testing"
+
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func validQueries() []qbtypes.QueryEnvelope {
@@ -75,13 +78,43 @@ func TestSavedViewSpecValidate(t *testing.T) {
 			expectError: true,
 		},
 		{
-			name: "selected fields and display are not required",
+			name: "selectedFields and display populated is still valid",
 			spec: SavedViewSpec{
 				DisplayName:    "My View",
 				PanelType:      PanelTypeTable,
 				Queries:        validQueries(),
 				SelectedFields: []telemetrytypes.TelemetryFieldKey{{Name: "service.name"}},
 				Display:        Display{MaxLines: 3, FontSize: "small", Format: "table", Color: "blue"},
+			},
+			expectError: false,
+		},
+		{
+			name: "nil selectedFields is valid -- neither field is actually required",
+			spec: SavedViewSpec{
+				DisplayName:    "My View",
+				PanelType:      PanelTypeTable,
+				Queries:        validQueries(),
+				SelectedFields: nil,
+			},
+			expectError: false,
+		},
+		{
+			name: "empty (non-nil) selectedFields is valid",
+			spec: SavedViewSpec{
+				DisplayName:    "My View",
+				PanelType:      PanelTypeTable,
+				Queries:        validQueries(),
+				SelectedFields: []telemetrytypes.TelemetryFieldKey{},
+			},
+			expectError: false,
+		},
+		{
+			name: "zero-value display is valid",
+			spec: SavedViewSpec{
+				DisplayName: "My View",
+				PanelType:   PanelTypeTable,
+				Queries:     validQueries(),
+				Display:     Display{},
 			},
 			expectError: false,
 		},
@@ -99,20 +132,44 @@ func TestSavedViewSpecValidate(t *testing.T) {
 	}
 }
 
-func TestSavedViewMetadataBaseValidate(t *testing.T) {
+func TestSavedViewSpecJSONUnmarshal_OptionalFields(t *testing.T) {
+	base := `"displayName":"My View","panelType":"table","queries":[{"type":"builder_query","spec":{"signal":"logs","aggregations":[{"expression":"count()"}]}}]`
+
 	cases := []struct {
-		name        string
-		metadata    SavedViewMetadataBase
-		expectError bool
+		name string
+		json string
 	}{
-		{name: "valid schema version", metadata: SavedViewMetadataBase{SchemaVersion: SavedViewSchemaVersion}, expectError: false},
-		{name: "wrong schema version is rejected", metadata: SavedViewMetadataBase{SchemaVersion: "v1"}, expectError: true},
-		{name: "empty schema version is rejected", metadata: SavedViewMetadataBase{}, expectError: true},
+		{name: "selectedFields and display omitted entirely", json: `{` + base + `}`},
+		{name: "selectedFields and display explicitly null", json: `{` + base + `,"selectedFields":null,"display":null}`},
+		{name: "selectedFields empty array, display empty object", json: `{` + base + `,"selectedFields":[],"display":{}}`},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			err := c.metadata.Validate()
+			var spec SavedViewSpec
+			err := json.Unmarshal([]byte(c.json), &spec)
+			require.NoError(t, err)
+			assert.NoError(t, spec.Validate())
+			assert.Empty(t, spec.SelectedFields)
+			assert.Equal(t, Display{}, spec.Display)
+		})
+	}
+}
+
+func TestSchemaVersionValidate(t *testing.T) {
+	cases := []struct {
+		name          string
+		schemaVersion SchemaVersion
+		expectError   bool
+	}{
+		{name: "valid schema version", schemaVersion: SavedViewSchemaVersion, expectError: false},
+		{name: "wrong schema version is rejected", schemaVersion: SchemaVersion{valuer.NewString("v1")}, expectError: true},
+		{name: "empty schema version is rejected", schemaVersion: SchemaVersion{}, expectError: true},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			err := c.schemaVersion.Validate()
 			if c.expectError {
 				assert.Error(t, err)
 			} else {

@@ -13,7 +13,7 @@ func validPostableSavedView() PostableSavedView {
 	return PostableSavedView{
 		Name:                  "my-view",
 		Source:                SourceLogs,
-		SavedViewMetadataBase: SavedViewMetadataBase{SchemaVersion: SavedViewSchemaVersion},
+		SchemaVersion:         SavedViewSchemaVersion,
 		Spec:                  SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, Queries: validQueries()},
 	}
 }
@@ -21,7 +21,7 @@ func validPostableSavedView() PostableSavedView {
 func validUpdatableSavedView() UpdatableSavedView {
 	return UpdatableSavedView{
 		Source:                SourceLogs,
-		SavedViewMetadataBase: SavedViewMetadataBase{SchemaVersion: SavedViewSchemaVersion},
+		SchemaVersion:         SavedViewSchemaVersion,
 		Spec:                  SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, Queries: validQueries()},
 	}
 }
@@ -65,7 +65,7 @@ func TestPostableSavedViewValidate(t *testing.T) {
 
 	t.Run("invalid saved view data is rejected", func(t *testing.T) {
 		view := validPostableSavedView()
-		view.SchemaVersion = "v1"
+		view.SchemaVersion = SchemaVersion{valuer.NewString("v1")}
 		assert.Error(t, view.Validate())
 	})
 

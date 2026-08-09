@@ -30,7 +30,7 @@ func testPostableSavedView(name string, source savedviewtypes.Source) savedviewt
 	return savedviewtypes.PostableSavedView{
 		Name:                  name,
 		Source:                source,
-		SavedViewMetadataBase: savedviewtypes.SavedViewMetadataBase{SchemaVersion: savedviewtypes.SavedViewSchemaVersion},
+		SchemaVersion:         savedviewtypes.SavedViewSchemaVersion,
 		Spec: savedviewtypes.SavedViewSpec{
 			DisplayName: name,
 			PanelType:   savedviewtypes.PanelTypeGraph,
@@ -52,7 +52,7 @@ func testUpdatableSavedView(displayName string, source savedviewtypes.Source) sa
 	postable := testPostableSavedView(displayName, source)
 	return savedviewtypes.UpdatableSavedView{
 		Source:                postable.Source,
-		SavedViewMetadataBase: postable.SavedViewMetadataBase,
+		SchemaVersion:         postable.SchemaVersion,
 		Spec:                  postable.Spec,
 	}
 }
