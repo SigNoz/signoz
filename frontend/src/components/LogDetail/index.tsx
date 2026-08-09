@@ -420,15 +420,21 @@ function LogDetailInner({
 									</div>
 								),
 							},
-							{
-								value: VIEW_TYPES.JSON,
-								label: (
-									<div className="view-title">
-										<Braces size={14} />
-										JSON
-									</div>
-								),
-							},
+							// V2's DataViewer has its own Pretty/JSON toggle, so the separate
+							// JSON tab is redundant.
+							...(isLogDetailsV2
+								? []
+								: [
+										{
+											value: VIEW_TYPES.JSON,
+											label: (
+												<div className="view-title">
+													<Braces size={14} />
+													JSON
+												</div>
+											),
+										},
+									]),
 							{
 								value: VIEW_TYPES.CONTEXT,
 								label: (
@@ -511,7 +517,7 @@ function LogDetailInner({
 						handleChangeSelectedView={handleChangeSelectedView}
 					/>
 				)}
-				{selectedView === VIEW_TYPES.JSON && (
+				{!isLogDetailsV2 && selectedView === VIEW_TYPES.JSON && (
 					<JsonView data={LogJsonData} height="68vh" />
 				)}
 
