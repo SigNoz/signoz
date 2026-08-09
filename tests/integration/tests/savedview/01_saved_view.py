@@ -737,6 +737,150 @@ def test_selected_fields_omitted_on_create_reads_back_as_empty_list_not_null(
         )
 
 
+def test_display_omitted_on_create_reads_back_as_zero_value(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    """display's counterpart to test_selected_fields_omitted_on_create_reads_back_as_empty_list_not_null:
+    neither field is required, so omitting display entirely must not 400 or
+    leave it null -- it reads back as the zero-value Display object."""
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "name": "omitted-display",
+            "generateName": False,
+            "source": "logs",
+            "schemaVersion": "v2",
+            "spec": {
+                "displayName": "omitted-display",
+                "panelType": "table",
+                "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
+                "selectedFields": [],
+            },
+        },
+        headers=headers,
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    view_id = response.json()["data"]["id"]
+
+    try:
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
+            headers=headers,
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.OK, response.text
+        assert response.json()["data"]["spec"]["display"] == {"maxLines": 0, "fontSize": "", "format": "", "color": ""}
+    finally:
+        requests.delete(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
+            headers=headers,
+            timeout=5,
+        )
+
+
+def test_selected_fields_and_display_explicit_null_on_create(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    """JSON null decodes as a no-op onto a non-pointer Go field (struct/slice), so
+    an explicit null is expected to behave identically to omitting the field."""
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "name": "null-selected-fields-and-display",
+            "generateName": False,
+            "source": "logs",
+            "schemaVersion": "v2",
+            "spec": {
+                "displayName": "null-selected-fields-and-display",
+                "panelType": "table",
+                "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
+                "selectedFields": None,
+                "display": None,
+            },
+        },
+        headers=headers,
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    view_id = response.json()["data"]["id"]
+
+    try:
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
+            headers=headers,
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.OK, response.text
+        spec = response.json()["data"]["spec"]
+        assert spec["selectedFields"] == []
+        assert spec["display"] == {"maxLines": 0, "fontSize": "", "format": "", "color": ""}
+    finally:
+        requests.delete(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
+            headers=headers,
+            timeout=5,
+        )
+
+
+def test_create_with_partial_display_defaults_missing_fields(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    """display's fields are each independently optional -- sending only one
+    (color) must not 400, and the fields left unset must default to their own
+    zero value rather than being rejected or dropped."""
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "name": "partial-display-color-only",
+            "generateName": False,
+            "source": "logs",
+            "schemaVersion": "v2",
+            "spec": {
+                "displayName": "partial-display-color-only",
+                "panelType": "table",
+                "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
+                "selectedFields": [],
+                "display": {"color": "test"},
+            },
+        },
+        headers=headers,
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    view_id = response.json()["data"]["id"]
+
+    try:
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
+            headers=headers,
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.OK, response.text
+        assert response.json()["data"]["spec"]["display"] == {"maxLines": 0, "fontSize": "", "format": "", "color": "test"}
+    finally:
+        requests.delete(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
+            headers=headers,
+            timeout=5,
+        )
+
+
 def test_update_does_not_corrupt_zero_values(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -835,3 +979,67 @@ def test_update_does_not_corrupt_zero_values(
         )
 
 
+def test_update_with_partial_display_replaces_whole_object(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    """Update is a whole-object replace, not a merge: sending only "color" on
+    update must not preserve the previous fontSize/format/maxLines -- those
+    reset to their zero value exactly as if display had been sent in full."""
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "name": "update-partial-display",
+            "generateName": False,
+            "source": "logs",
+            "schemaVersion": "v2",
+            "spec": {
+                "displayName": "update-partial-display",
+                "panelType": "table",
+                "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
+                "selectedFields": [],
+                "display": {"maxLines": 10, "fontSize": "large", "format": "table", "color": "blue"},
+            },
+        },
+        headers=headers,
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    view_id = response.json()["data"]["id"]
+
+    try:
+        response = requests.put(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
+            json={
+                "source": "logs",
+                "schemaVersion": "v2",
+                "spec": {
+                    "displayName": "update-partial-display",
+                    "panelType": "table",
+                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
+                    "selectedFields": [],
+                    "display": {"color": "green"},
+                },
+            },
+            headers=headers,
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
+            headers=headers,
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.OK, response.text
+        assert response.json()["data"]["spec"]["display"] == {"maxLines": 0, "fontSize": "", "format": "", "color": "green"}
+    finally:
+        requests.delete(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
+            headers=headers,
+            timeout=5,
+        )
