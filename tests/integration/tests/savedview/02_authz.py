@@ -112,15 +112,13 @@ def test_write_forbidden_without_grant(
         signoz.self.host_configs["8080"].get(f"{SAVED_VIEW_BASE}/{target_id}"),
         json={
             "source": "logs",
-            "data": {
-                "schemaVersion": "v2",
-                "spec": {
-                    "displayName": _SAVED_VIEW_FGA_TARGET_NAME,
-                    "panelType": "table",
-                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
-                    "selectedFields": [],
-                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
-                },
+            "schemaVersion": "v2",
+            "spec": {
+                "displayName": _SAVED_VIEW_FGA_TARGET_NAME,
+                "panelType": "table",
+                "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
+                "selectedFields": [],
+                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers={"Authorization": f"Bearer {token}"},
@@ -133,15 +131,13 @@ def test_write_forbidden_without_grant(
         json={
             "name": "saved-view-fga-create-attempt",
             "source": "logs",
-            "data": {
-                "schemaVersion": "v2",
-                "spec": {
-                    "displayName": "saved-view-fga-create-attempt",
-                    "panelType": "table",
-                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
-                    "selectedFields": [],
-                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
-                },
+            "schemaVersion": "v2",
+            "spec": {
+                "displayName": "saved-view-fga-create-attempt",
+                "panelType": "table",
+                "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
+                "selectedFields": [],
+                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers={"Authorization": f"Bearer {token}"},
@@ -212,15 +208,13 @@ def test_update_scoped_to_granted_view(
     token = get_token(_SAVED_VIEW_FGA_CUSTOM_USER_EMAIL, _SAVED_VIEW_FGA_CUSTOM_USER_PASSWORD)
     updated_body = {
         "source": "logs",
-        "data": {
-            "schemaVersion": "v2",
-            "spec": {
-                "displayName": _SAVED_VIEW_FGA_TARGET_NAME,
-                "panelType": "graph",
-                "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
-                "selectedFields": [],
-                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
-            },
+        "schemaVersion": "v2",
+        "spec": {
+            "displayName": _SAVED_VIEW_FGA_TARGET_NAME,
+            "panelType": "graph",
+            "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
+            "selectedFields": [],
+            "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
         },
     }
 
