@@ -6,7 +6,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/savedviewtypes"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -18,29 +17,25 @@ func NewStore(sqlstore sqlstore.SQLStore) savedviewtypes.Store {
 	return &store{sqlstore: sqlstore}
 }
 
-func (store *store) Create(ctx context.Context, view *savedviewtypes.SavedView) error {
-	storable := savedviewtypes.NewStorableSavedView(view)
+func (store *store) Create(ctx context.Context, storable *savedviewtypes.StorableSavedView) error {
 	_, err := store.sqlstore.BunDB().NewInsert().Model(storable).Exec(ctx)
 	if err != nil {
-		return store.sqlstore.WrapAlreadyExistsErrf(err, errors.CodeAlreadyExists, "saved view with name %s already exists", view.Name)
+		return store.sqlstore.WrapAlreadyExistsErrf(err, errors.CodeAlreadyExists, "saved view with name %s already exists", storable.Name)
 	}
 	return nil
 }
 
-func (store *store) Get(ctx context.Context, orgID string, id valuer.UUID) (*savedviewtypes.SavedView, error) {
+func (store *store) Get(ctx context.Context, orgID string, id valuer.UUID) (*savedviewtypes.StorableSavedView, error) {
 	var storable savedviewtypes.StorableSavedView
 	err := store.sqlstore.BunDB().NewSelect().Model(&storable).Where("org_id = ? AND id = ?", orgID, id.StringValue()).Scan(ctx)
 	if err != nil {
 		return nil, store.sqlstore.WrapNotFoundErrf(err, savedviewtypes.ErrCodeSavedViewNotFound, "saved view %s not found", id.StringValue())
 	}
 
-	view := storable.ToSavedView()
-	normalizeSelectedFields(view)
-	return view, nil
+	return &storable, nil
 }
 
-func (store *store) Update(ctx context.Context, view *savedviewtypes.SavedView) error {
-	storable := savedviewtypes.NewStorableSavedView(view)
+func (store *store) Update(ctx context.Context, storable *savedviewtypes.StorableSavedView) error {
 	res, err := store.sqlstore.BunDB().NewUpdate().
 		Model((*savedviewtypes.StorableSavedView)(nil)).
 		Set("updated_at = ?, updated_by = ?, source = ?, data = ?",
@@ -57,7 +52,7 @@ func (store *store) Update(ctx context.Context, view *savedviewtypes.SavedView) 
 		return errors.WrapInternalf(err, errors.CodeInternal, "error in verifying the updated saved view")
 	}
 	if rowsAffected == 0 {
-		return errors.NewNotFoundf(savedviewtypes.ErrCodeSavedViewNotFound, "saved view %s not found", view.ID.StringValue())
+		return errors.NewNotFoundf(savedviewtypes.ErrCodeSavedViewNotFound, "saved view %s not found", storable.ID.StringValue())
 	}
 
 	return nil
@@ -84,7 +79,7 @@ func (store *store) Delete(ctx context.Context, orgID string, id valuer.UUID) er
 	return nil
 }
 
-func (store *store) List(ctx context.Context, orgID string, source savedviewtypes.Source, name string) ([]*savedviewtypes.SavedView, error) {
+func (store *store) List(ctx context.Context, orgID string, source savedviewtypes.Source, name string) ([]*savedviewtypes.StorableSavedView, error) {
 	var storables []*savedviewtypes.StorableSavedView
 	q := store.sqlstore.BunDB().NewSelect().Model(&storables).
 		Where("org_id = ?", orgID).
@@ -97,19 +92,5 @@ func (store *store) List(ctx context.Context, orgID string, source savedviewtype
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error in getting saved views")
 	}
 
-	views := make([]*savedviewtypes.SavedView, 0, len(storables))
-	for _, storable := range storables {
-		view := storable.ToSavedView()
-		normalizeSelectedFields(view)
-		views = append(views, view)
-	}
-
-	return views, nil
-}
-
-// normalizeSelectedFields fixes up a scanned row's nil SelectedFields.
-func normalizeSelectedFields(view *savedviewtypes.SavedView) {
-	if view.Spec.SelectedFields == nil {
-		view.Spec.SelectedFields = []telemetrytypes.TelemetryFieldKey{}
-	}
+	return storables, nil
 }
