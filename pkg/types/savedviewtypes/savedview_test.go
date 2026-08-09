@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/util/validation"
 )
 
@@ -254,17 +255,32 @@ func TestStorableSavedView_ToSavedView(t *testing.T) {
 	})
 }
 
-func TestNewStatsFromSavedViews(t *testing.T) {
-	views := []*SavedView{
+func TestNewStatsFromStorableSavedViews(t *testing.T) {
+	storables := []*StorableSavedView{
 		{Source: SourceLogs},
 		{Source: SourceLogs},
 		{Source: SourceTraces},
 	}
 
-	stats := NewStatsFromSavedViews(views)
+	stats := NewStatsFromStorableSavedViews(storables)
 
 	assert.Equal(t, int64(3), stats["savedview.count"])
 	assert.Equal(t, int64(2), stats["savedview.source.logs.count"])
 	assert.Equal(t, int64(1), stats["savedview.source.traces.count"])
 	assert.NotContains(t, stats, "savedview.source.metrics.count")
+}
+
+func TestNewSavedViewsFromStorableSavedViews(t *testing.T) {
+	storables := []*StorableSavedView{
+		{Name: "a", Source: SourceLogs, Data: SavedViewData{SchemaVersion: SavedViewSchemaVersion.StringValue(), Spec: SavedViewSpec{DisplayName: "a", PanelType: PanelTypeGraph, Queries: validQueries()}}},
+		{Name: "b", Source: SourceTraces, Data: SavedViewData{SchemaVersion: SavedViewSchemaVersion.StringValue(), Spec: SavedViewSpec{DisplayName: "b", PanelType: PanelTypeTable, Queries: validQueries()}}},
+	}
+
+	views := NewSavedViewsFromStorableSavedViews(storables)
+
+	require.Len(t, views, 2)
+	assert.Equal(t, "a", views[0].Name)
+	assert.Equal(t, SourceLogs, views[0].Source)
+	assert.Equal(t, "b", views[1].Name)
+	assert.Equal(t, SourceTraces, views[1].Source)
 }

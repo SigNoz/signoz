@@ -23,7 +23,7 @@ func (module *module) GetViewsForFilters(ctx context.Context, orgID string, sour
 	if err != nil {
 		return nil, err
 	}
-	return toSavedViews(storables), nil
+	return savedviewtypes.NewSavedViewsFromStorableSavedViews(storables), nil
 }
 
 func (module *module) CreateView(ctx context.Context, orgID string, view savedviewtypes.PostableSavedView) (valuer.UUID, error) {
@@ -69,14 +69,5 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 		return nil, err
 	}
 
-	return savedviewtypes.NewStatsFromSavedViews(toSavedViews(storables)), nil
-}
-
-// toSavedViews converts scanned rows to their domain shape.
-func toSavedViews(storables []*savedviewtypes.StorableSavedView) []*savedviewtypes.SavedView {
-	views := make([]*savedviewtypes.SavedView, 0, len(storables))
-	for _, storable := range storables {
-		views = append(views, storable.ToSavedView())
-	}
-	return views
+	return savedviewtypes.NewStatsFromStorableSavedViews(storables), nil
 }

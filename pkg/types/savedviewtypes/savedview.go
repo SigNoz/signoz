@@ -53,9 +53,6 @@ type StorableSavedView struct {
 
 func (s *StorableSavedView) ToSavedView() *SavedView {
 	spec := s.Data.Spec
-	// a row written before selectedFields was optional, or one whose
-	// omitempty-tagged legacy round trip dropped it, scans back as nil --
-	// callers should never have to special-case nil vs. an empty list.
 	if spec.SelectedFields == nil {
 		spec.SelectedFields = []telemetrytypes.TelemetryFieldKey{}
 	}
@@ -205,7 +202,17 @@ func (p *ListSavedViewsParams) Validate() error {
 	return p.Source.Validate()
 }
 
-func NewStatsFromSavedViews(savedViews []*SavedView) map[string]any {
+// NewSavedViewsFromStorableSavedViews converts scanned rows to their domain shape.
+func NewSavedViewsFromStorableSavedViews(storableSavedViews []*StorableSavedView) []*SavedView {
+	savedViews := make([]*SavedView, len(storableSavedViews))
+	for idx, storableSavedView := range storableSavedViews {
+		savedViews[idx] = storableSavedView.ToSavedView()
+	}
+
+	return savedViews
+}
+
+func NewStatsFromStorableSavedViews(savedViews []*StorableSavedView) map[string]any {
 	stats := make(map[string]any)
 	for _, savedView := range savedViews {
 		key := "savedview.source." + strings.ToLower(savedView.Source.StringValue()) + ".count"
