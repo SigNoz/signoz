@@ -168,9 +168,9 @@ func TestConditionFor(t *testing.T) {
 				FieldContext: telemetrytypes.FieldContextLog,
 			},
 			operator:      qbtypes.FilterOperatorEqual,
-			value:         "error message",
-			expectedSQL:   "body = ?",
-			expectedArgs:  []any{"error message"},
+			value:         "Error Message",
+			expectedSQL:   "(body = ? AND LOWER(body) = LOWER(?))",
+			expectedArgs:  []any{"Error Message", "Error Message"},
 			expectedError: nil,
 		},
 		{
@@ -619,8 +619,8 @@ func TestConditionForMultipleKeys(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorEqual,
 			value:         "error message",
-			expectedSQL:   "body = ? AND severity_text = ?",
-			expectedArgs:  []any{"error message", "error message"},
+			expectedSQL:   "(body = ? AND LOWER(body) = LOWER(?)) AND severity_text = ?",
+			expectedArgs:  []any{"error message", "error message", "error message"},
 			expectedError: nil,
 		},
 	}
@@ -906,8 +906,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 	}
 }
 
-// IN on the body column routes each value back through the `=` path; the SQL it produces
-// must stay what the shared IN handling produced before, including for a mixed-type list.
+// IN on the body column routes each value back through the `=` path, so every arm picks up
+// the lower(body) companion — including the values a mixed-type list stringifies.
 func TestConditionForBodyIn(t *testing.T) {
 	testCases := []struct {
 		name         string
@@ -918,14 +918,14 @@ func TestConditionForBodyIn(t *testing.T) {
 		{
 			name:         "strings",
 			values:       []any{"alpha", "beta"},
-			expectedSQL:  "(body = ? OR body = ?)",
-			expectedArgs: []any{"alpha", "beta"},
+			expectedSQL:  "((body = ? AND LOWER(body) = LOWER(?)) OR (body = ? AND LOWER(body) = LOWER(?)))",
+			expectedArgs: []any{"alpha", "alpha", "beta", "beta"},
 		},
 		{
 			name:         "mixed types are stringified before they reach the column",
 			values:       []any{"alpha", float64(1), true},
-			expectedSQL:  "(body = ? OR body = ? OR body = ?)",
-			expectedArgs: []any{"alpha", "1", "true"},
+			expectedSQL:  "((body = ? AND LOWER(body) = LOWER(?)) OR (body = ? AND LOWER(body) = LOWER(?)) OR (body = ? AND LOWER(body) = LOWER(?)))",
+			expectedArgs: []any{"alpha", "alpha", "1", "1", "true", "true"},
 		},
 	}
 

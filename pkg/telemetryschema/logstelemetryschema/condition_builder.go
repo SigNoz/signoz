@@ -314,6 +314,14 @@ func (c *conditionBuilder) conditionForResolvedKey(
 	// make use of case insensitive index for body
 	if fieldExpression == "body" || fieldExpression == messageSubColumn {
 		switch operator {
+		case qbtypes.FilterOperatorEqual:
+			// Bloom filters index lower(body), not the column; `=` still decides the row.
+			if _, ok := value.(string); ok && fieldExpression == LogsV2BodyColumn {
+				return sb.And(
+					sb.E(fieldExpression, value),
+					fmt.Sprintf("LOWER(%s) = LOWER(%s)", fieldExpression, sb.Var(value)),
+				), nil
+			}
 		case qbtypes.FilterOperatorLike:
 			return sb.ILike(fieldExpression, value), nil
 		case qbtypes.FilterOperatorNotLike:
