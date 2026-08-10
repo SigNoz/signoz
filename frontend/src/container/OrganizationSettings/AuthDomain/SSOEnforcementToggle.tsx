@@ -60,7 +60,12 @@ function SSOEnforcementToggle({
 	};
 
 	return (
-		<Switch disabled={isLoading} value={isChecked} onChange={onChangeHandler} />
+		<Switch
+			disabled={isLoading}
+			value={isChecked}
+			onChange={onChangeHandler}
+			testId="auth-domain-enforce-sso"
+		/>
 	);
 }
 

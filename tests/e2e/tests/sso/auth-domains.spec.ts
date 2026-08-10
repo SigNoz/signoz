@@ -22,10 +22,8 @@ test('TC-01 org settings shows the authenticated domains section', async ({
 	authedPage: page,
 }) => {
 	await page.goto(ORG_SETTINGS_PATH);
-	await expect(
-		page.getByRole('heading', { name: 'Authenticated Domains' }),
-	).toBeVisible();
-	await expect(page.getByRole('button', { name: 'Add Domain' })).toBeVisible();
+	await expect(page.getByTestId('auth-domain-title')).toBeVisible();
+	await expect(page.getByTestId('auth-domain-add')).toBeVisible();
 });
 
 test('TC-02 create a google auth domain via the UI', async ({
@@ -36,26 +34,22 @@ test('TC-02 create a google auth domain via the UI', async ({
 	await deleteAuthDomainByNameViaApi(page, domain);
 
 	await gotoAuthDomains(page);
-	await page.getByRole('button', { name: 'Add Domain' }).click();
-	await page
-		.locator('.provider')
-		.filter({ hasText: 'Google Apps Authentication' })
-		.getByRole('button', { name: 'Configure' })
-		.click();
+	await page.getByTestId('auth-domain-add').click();
+	await page.getByTestId('authn-provider-configure-google').click();
 
-	await page.locator('#google-domain').fill(domain);
+	await page.getByTestId('google-auth-domain').fill(domain);
 	await page
-		.locator('#google-client-id')
+		.getByTestId('google-auth-client-id')
 		.fill('e2e-client-id.apps.googleusercontent.com');
-	await page.locator('#google-client-secret').fill('e2e-client-secret');
-	await page.getByRole('button', { name: 'Save Changes' }).click();
+	await page.getByTestId('google-auth-client-secret').fill('e2e-client-secret');
+	await page.getByTestId('auth-domain-save').click();
 
 	await expect(page.getByText('Domain created successfully')).toBeVisible();
-	const row = page.getByRole('row', { name: domain });
+	const row = page.getByTestId(`auth-domain-row-${domain}`);
 	await expect(row).toBeVisible();
-	await expect(
-		row.getByRole('button', { name: 'Configure Google Auth' }),
-	).toBeVisible();
+	await expect(row.getByTestId('auth-domain-configure')).toHaveText(
+		'Configure Google Auth',
+	);
 });
 
 test('TC-03 editing the client id persists across reopen', async ({
@@ -68,18 +62,18 @@ test('TC-03 editing the client id persists across reopen', async ({
 
 	await gotoAuthDomains(page);
 	await openConfigureAuthDomain(page, domain);
-	await expect(page.locator('#google-client-id')).toHaveValue(
+	await expect(page.getByTestId('google-auth-client-id')).toHaveValue(
 		'e2e-client-id.apps.googleusercontent.com',
 	);
 	await page
-		.locator('#google-client-id')
+		.getByTestId('google-auth-client-id')
 		.fill('rotated-client-id.apps.googleusercontent.com');
-	await page.getByRole('button', { name: 'Save Changes' }).click();
+	await page.getByTestId('auth-domain-save').click();
 	await expect(page.getByText('Domain updated successfully')).toBeVisible();
-	await expect(page.getByRole('dialog')).toBeHidden();
+	await expect(page.getByTestId('auth-domain-form')).toBeHidden();
 
 	await openConfigureAuthDomain(page, domain);
-	await expect(page.locator('#google-client-id')).toHaveValue(
+	await expect(page.getByTestId('google-auth-client-id')).toHaveValue(
 		'rotated-client-id.apps.googleusercontent.com',
 	);
 });
@@ -103,17 +97,15 @@ test('TC-04 removing a group mapping persists after save', async ({
 
 	await gotoAuthDomains(page);
 	await openConfigureAuthDomain(page, domain);
-	// The collapse header nests two elements with the same button role, so
-	// target the unique heading inside it.
-	await page.getByRole('heading', { name: 'Role Mapping (Advanced)' }).click();
+	await page.getByTestId('role-mapping-header').click();
 
-	const rows = page.locator('.role-mapping-section__row');
+	const rows = page.getByTestId('role-mapping-row');
 	await expect(rows).toHaveCount(2);
 	// Go marshals map keys sorted, so "engineers" is always the first row.
-	await expect(rows.nth(0).getByPlaceholder('IDP Group Name')).toHaveValue(
+	await expect(rows.nth(0).getByTestId('role-mapping-group-name')).toHaveValue(
 		'engineers',
 	);
-	await rows.nth(0).getByRole('button', { name: 'Remove mapping' }).click();
+	await rows.nth(0).getByTestId('role-mapping-remove').click();
 	await expect(rows).toHaveCount(1);
 
 	// The PUT body is the #2402 contract: the removed mapping must be gone
@@ -122,18 +114,20 @@ test('TC-04 removing a group mapping persists after save', async ({
 		(req) =>
 			req.method() === 'PUT' && req.url().includes('/api/v2/auth_domains/'),
 	);
-	await page.getByRole('button', { name: 'Save Changes' }).click();
+	await page.getByTestId('auth-domain-save').click();
 	const body = JSON.parse((await putRequest).postData() ?? '{}');
 	expect(body.roleMapping?.groupMappings).toEqual({
 		support: 'signoz-viewer',
 	});
 	await expect(page.getByText('Domain updated successfully')).toBeVisible();
-	await expect(page.getByRole('dialog')).toBeHidden();
+	await expect(page.getByTestId('auth-domain-form')).toBeHidden();
 
 	await openConfigureAuthDomain(page, domain);
-	await page.getByRole('heading', { name: 'Role Mapping (Advanced)' }).click();
+	await page.getByTestId('role-mapping-header').click();
 	await expect(rows).toHaveCount(1);
-	await expect(rows.getByPlaceholder('IDP Group Name')).toHaveValue('support');
+	await expect(rows.getByTestId('role-mapping-group-name')).toHaveValue(
+		'support',
+	);
 });
 
 test('TC-05 disabling fetch groups clears the allowed groups', async ({
@@ -152,12 +146,16 @@ test('TC-05 disabling fetch groups clears the allowed groups', async ({
 
 	await gotoAuthDomains(page);
 	await openConfigureAuthDomain(page, domain);
-	await page.getByText('Google Workspace Groups (Advanced)').click();
+	await page.getByTestId('google-auth-workspace-groups-header').click();
 
-	const fetchGroups = page.getByRole('checkbox', { name: 'Fetch Groups' });
+	const fetchGroups = page
+		.getByTestId('google-auth-fetch-groups')
+		.getByRole('checkbox');
 	await expect(fetchGroups).toBeChecked();
 	await expect(
-		page.locator('.email-tag-input .ant-select-selection-item'),
+		page
+			.getByTestId('google-auth-allowed-groups')
+			.locator('.ant-select-selection-item'),
 	).toHaveCount(1);
 	await fetchGroups.click();
 	await expect(fetchGroups).not.toBeChecked();
@@ -168,22 +166,24 @@ test('TC-05 disabling fetch groups clears the allowed groups', async ({
 		(req) =>
 			req.method() === 'PUT' && req.url().includes('/api/v2/auth_domains/'),
 	);
-	await page.getByRole('button', { name: 'Save Changes' }).click();
+	await page.getByTestId('auth-domain-save').click();
 	const spec = JSON.parse((await putRequest).postData() ?? '{}').config?.spec;
 	expect(spec?.fetchGroups).toBeFalsy();
 	expect(spec?.allowedGroups).toBeUndefined();
 	expect(spec?.domainToAdminEmail).toEqual({});
 	await expect(page.getByText('Domain updated successfully')).toBeVisible();
-	await expect(page.getByRole('dialog')).toBeHidden();
+	await expect(page.getByTestId('auth-domain-form')).toBeHidden();
 
 	await openConfigureAuthDomain(page, domain);
-	await page.getByText('Google Workspace Groups (Advanced)').click();
+	await page.getByTestId('google-auth-workspace-groups-header').click();
 	await expect(fetchGroups).not.toBeChecked();
 	// Re-enable to reveal the group fields: the allowed-groups list must be
 	// empty, not repopulated from the pre-disable state.
 	await fetchGroups.click();
 	await expect(
-		page.locator('.email-tag-input .ant-select-selection-item'),
+		page
+			.getByTestId('google-auth-allowed-groups')
+			.locator('.ant-select-selection-item'),
 	).toHaveCount(0);
 });
 
@@ -196,7 +196,9 @@ test('TC-06 enforce sso toggle persists across reload', async ({
 	await createGoogleAuthDomainViaApi(page, { name: domain, enabled: false });
 
 	await gotoAuthDomains(page);
-	const toggle = page.getByRole('row', { name: domain }).getByRole('switch');
+	const toggle = page
+		.getByTestId(`auth-domain-row-${domain}`)
+		.getByTestId('auth-domain-enforce-sso');
 	await expect(toggle).not.toBeChecked();
 
 	const putResponse = page.waitForResponse(
@@ -209,7 +211,9 @@ test('TC-06 enforce sso toggle persists across reload', async ({
 
 	await page.reload();
 	await expect(
-		page.getByRole('row', { name: domain }).getByRole('switch'),
+		page
+			.getByTestId(`auth-domain-row-${domain}`)
+			.getByTestId('auth-domain-enforce-sso'),
 	).toBeChecked();
 });
 
@@ -221,14 +225,11 @@ test('TC-07 delete a domain via the UI', async ({ authedPage: page }) => {
 
 	await gotoAuthDomains(page);
 	await page
-		.getByRole('row', { name: domain })
-		.getByRole('button', { name: 'Delete' })
+		.getByTestId(`auth-domain-row-${domain}`)
+		.getByTestId('auth-domain-delete')
 		.click();
-	await page
-		.getByRole('dialog')
-		.getByRole('button', { name: 'Delete Domain' })
-		.click();
+	await page.getByTestId('auth-domain-delete-confirm').click();
 
 	await expect(page.getByText('Domain deleted successfully')).toBeVisible();
-	await expect(page.getByRole('cell', { name: domain })).toHaveCount(0);
+	await expect(page.getByTestId(`auth-domain-row-${domain}`)).toHaveCount(0);
 });

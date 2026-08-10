@@ -120,9 +120,7 @@ export async function deleteAuthDomainByNameViaApi(
 /** Open org settings and wait for the Authenticated Domains section. */
 export async function gotoAuthDomains(page: Page): Promise<void> {
 	await page.goto(ORG_SETTINGS_PATH);
-	await expect(
-		page.getByRole('heading', { name: 'Authenticated Domains' }),
-	).toBeVisible();
+	await expect(page.getByTestId('auth-domain-title')).toBeVisible();
 }
 
 /** Open the Configure (edit) modal for the domain row named `name`. */
@@ -131,8 +129,8 @@ export async function openConfigureAuthDomain(
 	name: string,
 ): Promise<void> {
 	await page
-		.getByRole('row', { name })
-		.getByRole('button', { name: /^Configure/ })
+		.getByTestId(`auth-domain-row-${name}`)
+		.getByTestId('auth-domain-configure')
 		.click();
-	await expect(page.getByRole('dialog')).toBeVisible();
+	await expect(page.getByTestId('auth-domain-form')).toBeVisible();
 }

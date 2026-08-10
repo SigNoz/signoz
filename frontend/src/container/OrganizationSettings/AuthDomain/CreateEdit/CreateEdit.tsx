@@ -171,6 +171,7 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 		>
 			<Form
 				name="auth-domain"
+				data-testid="auth-domain-form"
 				initialValues={defaultTo(prepareInitialValues(record), {
 					name: '',
 					enabled: false,
@@ -189,12 +190,22 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 						{configureAuthnProvider(authnProvider, isCreate)}
 						<section className="action-buttons">
 							{isCreate && (
-								<Button onClick={onBackHandler} variant="solid" color="secondary">
+								<Button
+									onClick={onBackHandler}
+									variant="solid"
+									color="secondary"
+									testId="auth-domain-back"
+								>
 									Back
 								</Button>
 							)}
 							{!isCreate && (
-								<Button onClick={onClose} variant="solid" color="secondary">
+								<Button
+									onClick={onClose}
+									variant="solid"
+									color="secondary"
+									testId="auth-domain-cancel"
+								>
 									Cancel
 								</Button>
 							)}
@@ -203,6 +214,7 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 								variant="solid"
 								color="primary"
 								loading={isCreating || isUpdating}
+								testId="auth-domain-save"
 							>
 								Save Changes
 							</Button>

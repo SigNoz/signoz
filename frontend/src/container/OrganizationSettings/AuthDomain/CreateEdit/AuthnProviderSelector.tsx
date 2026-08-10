@@ -78,6 +78,7 @@ function AuthnProviderSelector({
 								<Button
 									onClick={(): void => setAuthnProvider(provider.key)}
 									type="primary"
+									data-testid={`authn-provider-configure-${provider.key}`}
 								>
 									Configure
 								</Button>
