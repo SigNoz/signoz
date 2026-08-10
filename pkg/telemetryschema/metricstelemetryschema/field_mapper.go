@@ -97,6 +97,18 @@ func (m *fieldMapper) ColumnFor(ctx context.Context, _ valuer.UUID, tsStart, tsE
 	return m.getColumn(ctx, tsStart, tsEnd, key)
 }
 
+// ExistsFor implements the per-key existence primitive of qbtypes.FieldMapper.
+// Intrinsic fields always exist; labels are checked for key membership.
+func (m *fieldMapper) ExistsFor(_ context.Context, _ valuer.UUID, _, _ uint64, key *telemetrytypes.TelemetryFieldKey, exists bool) (string, error) {
+	if slices.Contains(IntrinsicFields, key.Name) {
+		return "true", nil
+	}
+	if exists {
+		return fmt.Sprintf("has(JSONExtractKeys(labels), '%s')", key.Name), nil
+	}
+	return fmt.Sprintf("not has(JSONExtractKeys(labels), '%s')", key.Name), nil
+}
+
 func (m *fieldMapper) ColumnExpressionFor(
 	ctx context.Context,
 	orgID valuer.UUID,
