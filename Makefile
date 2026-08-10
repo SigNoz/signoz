@@ -81,8 +81,8 @@ devenv-clickhouse-clean: ## Clean all ClickHouse data from filesystem
 ##############################################################
 # go commands
 ##############################################################
-SQLITE_PATH             ?= signoz.db
-HTTP_HOST_PORT          ?= 0.0.0.0:8080
+SQLITE_PATH               ?= signoz.db
+SIGNOZ_APISERVER_ADDRESS  ?= 0.0.0.0:8080
 
 .PHONY: go-run-enterprise
 go-run-enterprise: ## Runs the enterprise go backend server
@@ -94,7 +94,7 @@ go-run-enterprise: ## Runs the enterprise go backend server
 	SIGNOZ_TELEMETRYSTORE_PROVIDER=clickhouse \
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://127.0.0.1:9000 \
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER=cluster \
-	SIGNOZ_APISERVER_ADDRESS=$(HTTP_HOST_PORT) \
+	SIGNOZ_APISERVER_ADDRESS=$(SIGNOZ_APISERVER_ADDRESS) \
 	go run -race \
 		$(GO_BUILD_CONTEXT_ENTERPRISE)/*.go server
 
@@ -112,13 +112,13 @@ go-run-community: ## Runs the community go backend server
 	SIGNOZ_TELEMETRYSTORE_PROVIDER=clickhouse \
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://127.0.0.1:9000 \
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER=cluster \
-	SIGNOZ_APISERVER_ADDRESS=$(HTTP_HOST_PORT) \
+	SIGNOZ_APISERVER_ADDRESS=$(SIGNOZ_APISERVER_ADDRESS) \
 	go run -race \
 		$(GO_BUILD_CONTEXT_COMMUNITY)/*.go server
 
 .PHONY: go-stop
-go-stop: ## Stops the go backend server listening on HTTP_HOST_PORT
-	@PORT=$(lastword $(subst :, ,$(HTTP_HOST_PORT))); \
+go-stop: ## Stops the go backend server listening on SIGNOZ_APISERVER_ADDRESS
+	@PORT=$(lastword $(subst :, ,$(SIGNOZ_APISERVER_ADDRESS))); \
 	PIDS=$$(lsof -ti tcp:$$PORT); \
 	if [ -n "$$PIDS" ]; then \
 		kill $$PIDS; \
