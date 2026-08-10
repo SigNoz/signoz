@@ -1,5 +1,8 @@
+import contextlib
 import datetime
+import hashlib
 import os
+import uuid
 from pathlib import Path
 
 import pytest
@@ -14,12 +17,22 @@ from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
 
-# The integration CA is mounted into every signoz container and trusted via
-# SSL_CERT_FILE (which replaces the Go root pool), so mocks that must be
+# The integration CA is mounted into the directory Go scans for system roots,
+# so signoz containers trust it in addition to the bundled Debian roots (not
+# instead of them, which is what SSL_CERT_FILE would do) and mocks that must be
 # reached over TLS under a real hostname (e.g. accounts.google.com) can serve
 # certificates issued by it via issue_server_keystore.
-CA_CONTAINER_PATH = "/etc/signoz-integration/ca.pem"
+CA_CONTAINER_PATH = "/etc/ssl/certs/signoz-integration-ca.pem"
 KEYSTORE_PASSWORD = "password"  # noqa: S105
+
+# Containers chained to the CA carry its id as this label; comparing it against
+# the current CA spots reused containers built against a rotated CA (or before
+# the CA existed) so they can be recreated instead of failing TLS opaquely.
+CA_ID_LABEL = "signoz.integration.ca"
+
+
+def ca_id(tls: types.TLS) -> str:
+    return hashlib.sha256(Path(tls.ca_cert_path).read_bytes()).hexdigest()[:12]
 
 
 @pytest.fixture(name="tls", scope="package")
@@ -36,7 +49,10 @@ def tls(
     the cross-session store, like the reuse metadata itself."""
 
     def create() -> types.TLS:
-        ca_dir = pytestconfig.cache.mkdir("tls")
+        # Each CA gets a fresh directory: a run without --reuse must never
+        # rotate the files that a parked stack's containers bind-mount.
+        ca_dir = pytestconfig.cache.mkdir("tls") / uuid.uuid4().hex
+        ca_dir.mkdir()
 
         now = datetime.datetime.now(datetime.UTC)
         ca_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
@@ -70,9 +86,14 @@ def tls(
                 os.remove(path)
             except FileNotFoundError:
                 logger.info("CA file %s already gone", path)
+        with contextlib.suppress(OSError):
+            os.rmdir(Path(tls.ca_cert_path).parent)
 
     def restore(cache: dict) -> types.TLS:
         return types.TLS.from_cache(cache)
+
+    def stale(tls: types.TLS) -> bool:
+        return not (Path(tls.ca_cert_path).is_file() and Path(tls.ca_key_path).is_file())
 
     return reuse.wrap(
         request,
@@ -82,6 +103,7 @@ def tls(
         create,
         delete,
         restore,
+        stale=stale,
     )
 
 

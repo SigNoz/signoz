@@ -1070,8 +1070,10 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "clickhouse-connect" },
+    { name = "cryptography" },
     { name = "fastapi" },
     { name = "isodate" },
+    { name = "jwcrypto" },
     { name = "numpy" },
     { name = "psycopg2" },
     { name = "py" },
@@ -1093,8 +1095,10 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "clickhouse-connect", specifier = ">=0.8.18" },
+    { name = "cryptography", specifier = ">=50.0.0" },
     { name = "fastapi", specifier = ">=0.115" },
     { name = "isodate", specifier = ">=0.7.2" },
+    { name = "jwcrypto", specifier = ">=1.5.8" },
     { name = "numpy", specifier = ">=2.3.2" },
     { name = "psycopg2", specifier = ">=2.9.10" },
     { name = "py", specifier = ">=1.11" },

@@ -1,5 +1,4 @@
-import base64
-import json
+import functools
 import time
 from collections.abc import Callable
 from http import HTTPStatus
@@ -10,14 +9,14 @@ import docker
 import docker.errors
 import pytest
 import requests
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import padding, rsa
-from testcontainers.core.container import DockerContainer, Network
+from jwcrypto import jwk, jwt
+from testcontainers.core.container import Network
 from wiremock.resources.mappings import HttpMethods, Mapping, MappingRequest, MappingResponse
+from wiremock.testing.testcontainer import WireMockContainer
 
 from fixtures import reuse, types
 from fixtures.logger import setup_logger
-from fixtures.tls import KEYSTORE_PASSWORD, issue_server_keystore
+from fixtures.tls import CA_ID_LABEL, KEYSTORE_PASSWORD, ca_id, issue_server_keystore
 
 logger = setup_logger(__name__)
 
@@ -28,9 +27,14 @@ logger = setup_logger(__name__)
 ISSUER = "https://accounts.google.com"
 ISSUER_HOST = "accounts.google.com"
 
+GOOGLE_DOMAIN = "google.integration.test"
+
+
 # One signing key for the whole session: the token and JWKS stubs are always
 # installed together, so per-call keys would only add RSA keygen latency.
-signing_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+@functools.cache
+def signing_key() -> jwk.JWK:
+    return jwk.JWK.generate(kty="RSA", size=2048, kid="googleidp-integration", use="sig", alg="RS256")
 
 
 def perform_google_login(
@@ -68,31 +72,39 @@ def perform_google_login(
     return response.headers["Location"]
 
 
+def get_google_domain(signoz: types.SigNoz, admin_token: str) -> dict:
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    return next(
+        (domain for domain in response.json()["data"] if domain["name"] == GOOGLE_DOMAIN),
+        None,
+    )
+
+
 def google_oidc_mappings(email: str, name: str, hd: str, audience: str, email_verified: bool = True) -> list[Mapping]:
     """Wiremock mappings for one Google OIDC login: discovery, an auto-approving
     authorize redirect, a token response with an RS256 id_token for the given
     identity, and the JWKS the signoz container verifies it against."""
-
-    def base64url(data: bytes) -> str:
-        return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
-
     now = int(time.time())
-    claims = {
-        "iss": ISSUER,
-        "aud": audience,
-        "sub": f"google-oauth2|{email}",
-        "email": email,
-        "email_verified": email_verified,
-        "name": name,
-        "hd": hd,
-        "iat": now,
-        "exp": now + 3600,
-    }
-    signing_input = base64url(json.dumps({"alg": "RS256", "kid": "googleidp-integration", "typ": "JWT"}).encode()) + "." + base64url(json.dumps(claims).encode())
-    signature = signing_key.sign(signing_input.encode(), padding.PKCS1v15(), hashes.SHA256())
-    id_token = signing_input + "." + base64url(signature)
-
-    public_numbers = signing_key.public_key().public_numbers()
+    token = jwt.JWT(
+        header={"alg": "RS256", "kid": signing_key()["kid"], "typ": "JWT"},
+        claims={
+            "iss": ISSUER,
+            "aud": audience,
+            "sub": f"google-oauth2|{email}",
+            "email": email,
+            "email_verified": email_verified,
+            "name": name,
+            "hd": hd,
+            "iat": now,
+            "exp": now + 3600,
+        },
+    )
+    token.make_signed_token(signing_key())
+    id_token = token.serialize()
 
     return [
         Mapping(
@@ -119,7 +131,9 @@ def google_oidc_mappings(email: str, name: str, hd: str, audience: str, email_ve
                 headers={
                     # Triple-stache: redirect_uri and state are URLs; handlebars
                     # would otherwise HTML-escape their special characters.
-                    "Location": "{{{request.query.redirect_uri}}}?code=integration-test-code&state={{{request.query.state}}}",
+                    # request.query values arrive URL-decoded, so the state is
+                    # re-encoded into the redirect exactly as google does.
+                    "Location": "{{{request.query.redirect_uri}}}?code=integration-test-code&state={{{urlEncode request.query.state}}}",
                 },
                 transformers=["response-template"],
             ),
@@ -140,18 +154,7 @@ def google_oidc_mappings(email: str, name: str, hd: str, audience: str, email_ve
             request=MappingRequest(method=HttpMethods.GET, url_path="/jwks"),
             response=MappingResponse(
                 status=200,
-                json_body={
-                    "keys": [
-                        {
-                            "kty": "RSA",
-                            "use": "sig",
-                            "alg": "RS256",
-                            "kid": "googleidp-integration",
-                            "n": base64url(public_numbers.n.to_bytes((public_numbers.n.bit_length() + 7) // 8, "big")),
-                            "e": base64url(public_numbers.e.to_bytes((public_numbers.e.bit_length() + 7) // 8, "big")),
-                        }
-                    ]
-                },
+                json_body={"keys": [signing_key().export_public(as_dict=True)]},
             ),
         ),
     ]
@@ -172,32 +175,25 @@ def googleidp(  # pylint: disable=too-many-arguments,too-many-positional-argumen
     def create() -> types.TestContainerDocker:
         keystore_path = issue_server_keystore(tls, tmpfs("googleidp-certs"), ISSUER_HOST)
 
-        container = DockerContainer("wiremock/wiremock:2.35.1-1")
-        container.with_command(f"--https-port 443 --https-keystore /certs/keystore.p12 --keystore-type PKCS12 --keystore-password {KEYSTORE_PASSWORD} --local-response-templating")
+        container = WireMockContainer(image="wiremock/wiremock:2.35.1-1", secure=False)
         container.with_volume_mapping(str(keystore_path.parent), "/certs", "ro")
-        container.with_exposed_ports(8080)
         container.with_network(network)
         container.with_network_aliases(ISSUER_HOST)
-        container.start()
+        container.with_kwargs(labels={CA_ID_LABEL: ca_id(tls)})
 
-        host = container.get_container_host_ip()
-        host_port = container.get_exposed_port(8080)
-
-        for attempt in range(20):
-            try:
-                response = requests.get(f"http://{host}:{host_port}/__admin/mappings", timeout=2)
-                if response.status_code == HTTPStatus.OK:
-                    break
-            except Exception as e:  # pylint: disable=broad-exception-caught
-                logger.info("googleidp attempt %d: %s", attempt + 1, e)
-            time.sleep(1)
-        else:
-            raise TimeoutError("googleidp container did not become ready")
+        try:
+            container.start(f"--port 8080 --https-port 443 --https-keystore /certs/keystore.p12 --keystore-type PKCS12 --keystore-password {KEYSTORE_PASSWORD} --local-response-templating")
+        except Exception:
+            # Ryuk is disabled: a started-but-unready container would survive
+            # and keep squatting on the accounts.google.com alias, poisoning
+            # DNS for any replacement on the shared network.
+            container.stop()
+            raise
 
         return types.TestContainerDocker(
             id=container.get_wrapped_container().id,
             host_configs={
-                "8080": types.TestContainerUrlConfig("http", host, host_port),
+                "8080": types.TestContainerUrlConfig("http", container.get_container_host_ip(), container.get_exposed_port(8080)),
             },
             container_configs={
                 "443": types.TestContainerUrlConfig("https", ISSUER_HOST, 443),
@@ -215,6 +211,14 @@ def googleidp(  # pylint: disable=too-many-arguments,too-many-positional-argumen
     def restore(cache: dict) -> types.TestContainerDocker:
         return types.TestContainerDocker.from_cache(cache)
 
+    def stale(container: types.TestContainerDocker) -> bool:
+        client = docker.from_env()
+        try:
+            labels = client.containers.get(container_id=container.id).attrs["Config"]["Labels"]
+        except docker.errors.NotFound:
+            return True
+        return labels.get(CA_ID_LABEL) != ca_id(tls)
+
     return reuse.wrap(
         request,
         pytestconfig,
@@ -223,4 +227,5 @@ def googleidp(  # pylint: disable=too-many-arguments,too-many-positional-argumen
         create,
         delete,
         restore,
+        stale=stale,
     )

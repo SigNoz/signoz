@@ -13,7 +13,7 @@ from testcontainers.core.container import DockerContainer, Network
 
 from fixtures import reuse, types
 from fixtures.logger import setup_logger
-from fixtures.tls import CA_CONTAINER_PATH
+from fixtures.tls import CA_CONTAINER_PATH, CA_ID_LABEL, ca_id
 
 logger = setup_logger(__name__)
 
@@ -33,7 +33,7 @@ def create_signoz(
     """
     Factory function for creating a SigNoz container.
     Accepts optional env_overrides to customize the container environment, and
-    an optional integration CA (tls) to trust via SSL_CERT_FILE.
+    an optional integration CA (tls) to trust in addition to the system roots.
     """
 
     def create() -> types.SigNoz:
@@ -118,13 +118,12 @@ def create_signoz(
                 "rw",
             )
 
-        # Trust the integration CA so tests can stand in for real TLS hosts
-        # (e.g. the fake accounts.google.com); SSL_CERT_FILE replaces the Go
-        # root pool, which is fine here since every other mocked upstream is
-        # plain http.
+        # The CA lands in the directory Go scans for system roots, so tests can
+        # stand in for real TLS hosts (e.g. the fake accounts.google.com) while
+        # the bundled roots keep working for everything else.
         if tls:
-            container.with_env("SSL_CERT_FILE", CA_CONTAINER_PATH)
             container.with_volume_mapping(tls.ca_cert_path, CA_CONTAINER_PATH, "ro")
+            container.with_kwargs(labels={CA_ID_LABEL: ca_id(tls)})
 
         container.start()
 
@@ -204,6 +203,16 @@ def create_signoz(
             gateway=gateway,
         )
 
+    def stale(container: types.SigNoz) -> bool:
+        if not tls:
+            return False
+        client = docker.from_env()
+        try:
+            labels = client.containers.get(container_id=container.self.id).attrs["Config"]["Labels"]
+        except docker.errors.NotFound:
+            return True
+        return labels.get(CA_ID_LABEL) != ca_id(tls)
+
     return reuse.wrap(
         request,
         pytestconfig,
@@ -223,6 +232,7 @@ def create_signoz(
         delete=delete,
         restore=restore,
         rebuild=pytestconfig.getoption("--rebuild"),
+        stale=stale,
     )
 
 
