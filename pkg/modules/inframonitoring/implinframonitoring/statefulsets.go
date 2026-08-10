@@ -82,19 +82,33 @@ func buildStatefulSetRecords(
 	return records
 }
 
+// getTopStatefulSetGroupsAndMetadata concurrently fetches metadata + the ordering-metric
+// ranking (plus the full-scope pod-status keyset when filtering, to intersect both).
 func (m *module) getTopStatefulSetGroupsAndMetadata(
 	ctx context.Context,
 	orgID valuer.UUID,
 	req *inframonitoringtypes.PostableStatefulSets,
-) ([]map[string]string, map[string]map[string]string, error) {
+) ([]map[string]string, map[string]map[string]string, map[string]podStatusCounts, *qbtypes.QueryWarnData, error) {
 
 	var (
-		orderByKey      string
-		metadataMap     map[string]map[string]string
-		allMetricGroups []rankedGroup
+		orderByKey        string
+		metadataMap       map[string]map[string]string
+		allMetricGroups   []rankedGroup
+		statusCounts      map[string]podStatusCounts
+		statusWarning     *qbtypes.QueryWarnData
+		filter            *qbtypes.Filter
+		filterByPodStatus []inframonitoringtypes.PodStatus
 	)
 
 	orderByKey = req.OrderBy.Key.Name
+
+	// When filtering by pod status, resolve the full-scope status keyset
+	// concurrently (pageGroups=nil spans all groups under the user filter) so it
+	// can intersect metadata + ranked groups below.
+	if req.Filter != nil {
+		filter = &req.Filter.Filter
+		filterByPodStatus = req.Filter.FilterByPodStatus
+	}
 
 	g, gCtx := errgroup.WithContext(ctx)
 
@@ -104,12 +118,26 @@ func (m *module) getTopStatefulSetGroupsAndMetadata(
 		return err
 	})
 
+	if len(filterByPodStatus) != 0 {
+		g.Go(func() error {
+			var err error
+			statusCounts, statusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, filter, req.GroupBy, nil, filterByPodStatus)
+			return err
+		})
+	}
+
 	if orderByKey == inframonitoringtypes.StatefulSetNameAttrKey {
 		if err := g.Wait(); err != nil {
-			return nil, nil, err
+			return nil, nil, nil, nil, err
+		}
+		// Secondary filter: keep only status-matching groups. A missing metric
+		// yields an empty statusCounts, so this correctly empties the result
+		// (the caller also surfaces the warning).
+		if len(filterByPodStatus) != 0 {
+			metadataMap = intersectMap(metadataMap, statusCounts)
 		}
 		pageGroups := inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.StatefulSetNameAttrKey)
-		return pageGroups, metadataMap, nil
+		return pageGroups, metadataMap, statusCounts, statusWarning, nil
 	}
 
 	queryNamesForOrderBy := orderByToStatefulSetsQueryNames[orderByKey]
@@ -155,10 +183,19 @@ func (m *module) getTopStatefulSetGroupsAndMetadata(
 	})
 
 	if err := g.Wait(); err != nil {
-		return nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
-	return paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit), metadataMap, nil
+	// Secondary filter: intersect ranked groups + metadata with the status keyset.
+	// A missing metric yields an empty statusCounts, correctly emptying the result
+	// (the caller also surfaces the warning).
+	if len(filterByPodStatus) != 0 {
+		allMetricGroups = intersectRankedGroups(allMetricGroups, statusCounts)
+		metadataMap = intersectMap(metadataMap, statusCounts)
+	}
+
+	pageGroups := paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit)
+	return pageGroups, metadataMap, statusCounts, statusWarning, nil
 }
 
 func (m *module) getStatefulSetsTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableStatefulSets) (map[string]map[string]string, error) {
@@ -168,5 +205,9 @@ func (m *module) getStatefulSetsTableMetadata(ctx context.Context, orgID valuer.
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}
 	}
-	return m.getMetadata(ctx, orgID, statefulSetsTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
+	var filter *qbtypes.Filter
+	if req.Filter != nil {
+		filter = &req.Filter.Filter
+	}
+	return m.getMetadata(ctx, orgID, statefulSetsTableMetricNamesList, req.GroupBy, nonGroupByAttrs, filter, req.Start, req.End)
 }

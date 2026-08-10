@@ -528,6 +528,13 @@ const routes: AppRoutes[] = [
 		isPrivate: true,
 	},
 	{
+		path: ROUTES.AI_OBSERVABILITY_EXPLORER,
+		exact: true,
+		component: LLMObservabilityPage,
+		key: 'AI_OBSERVABILITY_EXPLORER',
+		isPrivate: true,
+	},
+	{
 		path: ROUTES.AI_OBSERVABILITY_CONFIGURATION,
 		exact: true,
 		component: LLMObservabilityPage,

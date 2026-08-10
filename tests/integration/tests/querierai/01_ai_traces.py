@@ -1,10 +1,3 @@
-"""
-Integration tests for query_type="builder_ai_query" over the traces signal.
-
-Each test tags its spans with a unique service.name and filters on it, so tests do
-not interfere with each other's data. Shared builders live in fixtures/querierai.py.
-"""
-
 import json
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
@@ -30,6 +23,8 @@ from fixtures.querierai import (
 from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
 
 
+# Each test tags its spans with a unique service.name and filters on it, so tests
+# do not interfere with each other's data.
 def test_ai_list_excludes_non_ai(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
