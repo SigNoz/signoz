@@ -12232,9 +12232,9 @@ paths:
       - dashboard
   /api/v1/resetPassword:
     post:
-      deprecated: false
+      deprecated: true
       description: This endpoint resets the password by token
-      operationId: ResetPassword
+      operationId: ResetPasswordDeprecated
       requestBody:
         content:
           application/json:
@@ -15599,6 +15599,41 @@ paths:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
       summary: Forgot password
+      tags:
+      - users
+  /api/v2/factor_password/reset:
+    post:
+      deprecated: false
+      description: This endpoint resets the password using a single use reset password
+        token
+      operationId: ResetPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypesPostableResetPassword'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Reset password
       tags:
       - users
   /api/v2/features:

@@ -249,7 +249,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v1/resetPassword", handler.New(provider.authzMiddleware.OpenAccess(provider.userHandler.ResetPassword), handler.OpenAPIDef{
-		ID:                  "ResetPassword",
+		ID:                  "ResetPasswordDeprecated",
 		Tags:                []string{"users"},
 		Summary:             "Reset password",
 		Description:         "This endpoint resets the password by token",
@@ -259,7 +259,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		ResponseContentType: "",
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusConflict},
-		Deprecated:          false,
+		Deprecated:          true,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
@@ -293,6 +293,23 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		ResponseContentType: "",
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnprocessableEntity},
+		Deprecated:          false,
+		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
+	})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/factor_password/reset", handler.New(provider.authzMiddleware.OpenAccess(provider.userHandler.ResetPassword), handler.OpenAPIDef{
+		ID:                  "ResetPassword",
+		Tags:                []string{"users"},
+		Summary:             "Reset password",
+		Description:         "This endpoint resets the password using a single use reset password token",
+		Request:             new(types.PostableResetPassword),
+		RequestContentType:  "application/json",
+		Response:            nil,
+		ResponseContentType: "",
+		SuccessStatusCode:   http.StatusNoContent,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
 	})).Methods(http.MethodPost).GetError(); err != nil {
