@@ -169,15 +169,14 @@ function QuerySearch({
 				isProgrammaticChangeRef.current = true;
 			}
 
+			const changes = view.state.changes({
+				from: 0,
+				to: currentValue.length,
+				insert: value,
+			});
 			view.dispatch({
-				changes: {
-					from: 0,
-					to: currentValue.length,
-					insert: value,
-				},
-				selection: {
-					anchor: value.length,
-				},
+				changes,
+				selection: { anchor: changes.newLength },
 			});
 		},
 		[],
