@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
@@ -16,6 +17,7 @@ func validPostableSavedView() PostableSavedView {
 		Name:          "my-view",
 		Source:        SourceLogs,
 		SchemaVersion: SavedViewSchemaVersion,
+		RequestType:   qbtypes.RequestTypeTimeSeries,
 		Spec:          SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, Queries: validQueries()},
 	}
 }
@@ -24,6 +26,7 @@ func validUpdatableSavedView() UpdatableSavedView {
 	return UpdatableSavedView{
 		Source:        SourceLogs,
 		SchemaVersion: SavedViewSchemaVersion,
+		RequestType:   qbtypes.RequestTypeTimeSeries,
 		Spec:          SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, Queries: validQueries()},
 	}
 }
@@ -101,6 +104,23 @@ func TestPostableSavedViewValidate(t *testing.T) {
 		view.Spec.DisplayName = ""
 		assert.ErrorContains(t, view.Validate(), "displayName is required")
 	})
+
+	t.Run("missing requestType is rejected", func(t *testing.T) {
+		view := validPostableSavedView()
+		view.RequestType = qbtypes.RequestType{}
+		assert.ErrorContains(t, view.Validate(), "requestType is required")
+	})
+
+	t.Run("requestType is honored over the panelType-derived guess", func(t *testing.T) {
+		view := validPostableSavedView()
+		view.Spec.PanelType = PanelTypeList
+		view.Spec.Queries = []qbtypes.QueryEnvelope{{
+			Type: qbtypes.QueryTypeBuilder,
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{Signal: telemetrytypes.SignalTraces},
+		}}
+		view.RequestType = qbtypes.RequestTypeRaw
+		assert.NoError(t, view.Validate())
+	})
 }
 
 func TestUpdatableSavedViewValidate(t *testing.T) {
@@ -119,6 +139,12 @@ func TestUpdatableSavedViewValidate(t *testing.T) {
 		view := validUpdatableSavedView()
 		view.Spec.DisplayName = ""
 		assert.ErrorContains(t, view.Validate(), "displayName is required")
+	})
+
+	t.Run("missing requestType is rejected", func(t *testing.T) {
+		view := validUpdatableSavedView()
+		view.RequestType = qbtypes.RequestType{}
+		assert.ErrorContains(t, view.Validate(), "requestType is required")
 	})
 }
 

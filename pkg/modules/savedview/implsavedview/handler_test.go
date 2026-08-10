@@ -46,6 +46,7 @@ func TestNewPostableSavedViewFromLegacyView(t *testing.T) {
 		assert.Equal(t, savedviewtypes.SourceLogs, postable.Source)
 		assert.Equal(t, savedviewtypes.SavedViewSchemaVersion, postable.SchemaVersion)
 		assert.Equal(t, savedviewtypes.PanelTypeGraph, postable.Spec.PanelType)
+		assert.Equal(t, qbtypes.RequestTypeTimeSeries, postable.RequestType, "graph panel type must map to the time_series request type")
 		assert.Equal(t, legacy.CompositeQuery.Queries, postable.Spec.Queries)
 		assert.Equal(t, []telemetrytypes.TelemetryFieldKey{{Name: "service.name"}}, postable.Spec.SelectedFields)
 		assert.Equal(t, savedviewtypes.Display{MaxLines: 10, FontSize: "large", Format: "table", Color: "blue"}, postable.Spec.Display)
@@ -101,6 +102,28 @@ func TestNewPostableSavedViewFromLegacyView(t *testing.T) {
 		postable := newPostableSavedViewFromLegacyView(legacy)
 		assert.Error(t, postable.Validate(), "the converted postable must catch what the legacy check missed")
 	})
+
+	t.Run("list panel query with no aggregation is valid", func(t *testing.T) {
+		legacy := &v3.SavedView{
+			Name:       "raw list view",
+			SourcePage: "traces",
+			CompositeQuery: &v3.CompositeQuery{
+				PanelType: v3.PanelTypeList,
+				Queries: []qbtypes.QueryEnvelope{{
+					Type: qbtypes.QueryTypeBuilder,
+					Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+						Signal: telemetrytypes.SignalTraces,
+						Filter: &qbtypes.Filter{Expression: "db_name = 'two'"},
+					},
+				}},
+			},
+		}
+
+		postable := newPostableSavedViewFromLegacyView(legacy)
+
+		assert.Equal(t, qbtypes.RequestTypeRaw, postable.RequestType, "list panel type must map to the raw request type")
+		assert.NoError(t, postable.Validate(), "a raw list query must not be required to carry an aggregation")
+	})
 }
 
 func TestNewUpdatableSavedViewFromLegacyView(t *testing.T) {
@@ -118,6 +141,7 @@ func TestNewUpdatableSavedViewFromLegacyView(t *testing.T) {
 
 	assert.Equal(t, "renamed view", updatable.Spec.DisplayName)
 	assert.Equal(t, savedviewtypes.SourceTraces, updatable.Source)
+	assert.Equal(t, qbtypes.RequestTypeScalar, updatable.RequestType, "table panel type must map to the scalar request type")
 }
 
 func TestNewLegacyViewFromSavedView(t *testing.T) {

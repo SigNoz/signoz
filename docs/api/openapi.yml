@@ -7884,6 +7884,8 @@ components:
           type: boolean
         name:
           type: string
+        requestType:
+          $ref: '#/components/schemas/Querybuildertypesv5RequestType'
         schemaVersion:
           $ref: '#/components/schemas/SavedviewtypesSchemaVersion'
         source:
@@ -7893,6 +7895,7 @@ components:
       required:
       - source
       - schemaVersion
+      - requestType
       - spec
       type: object
     SavedviewtypesSavedView:
@@ -7957,6 +7960,8 @@ components:
       type: string
     SavedviewtypesUpdatableSavedView:
       properties:
+        requestType:
+          $ref: '#/components/schemas/Querybuildertypesv5RequestType'
         schemaVersion:
           $ref: '#/components/schemas/SavedviewtypesSchemaVersion'
         source:
@@ -7966,6 +7971,7 @@ components:
       required:
       - source
       - schemaVersion
+      - requestType
       - spec
       type: object
     ServiceaccounttypesDeprecatedPostableServiceAccountRole:

@@ -81,7 +81,13 @@ func (s SchemaVersion) Validate() error {
 	return nil
 }
 
-func (s *SavedViewSpec) Validate() error {
+// Validate checks the spec's own fields and validates Queries against the
+// validation rules for requestType -- the shape of result the queries must
+// produce (e.g. a raw/list request must not carry an aggregation, a scalar
+// request must). requestType is not persisted as part of the spec: it's
+// fully derivable from PanelType, so callers with no better source (the v1
+// legacy conversion) can fall back to LegacyRequestTypeForPanelType.
+func (s *SavedViewSpec) Validate(requestType qbtypes.RequestType) error {
 	if s.DisplayName == "" {
 		return errors.NewInvalidInputf(ErrCodeSavedViewInvalidInput, "displayName is required")
 	}
@@ -89,13 +95,14 @@ func (s *SavedViewSpec) Validate() error {
 		return err
 	}
 
-	return (&qbtypes.CompositeQuery{Queries: s.Queries}).Validate(qbtypes.GetValidationOptions(s.PanelType.requestType())...)
+	return (&qbtypes.CompositeQuery{Queries: s.Queries}).Validate(qbtypes.GetValidationOptions(requestType)...)
 }
 
-// requestType maps a panel type to the qbtypes.RequestType whose validation rules
-// apply to its queries -- e.g. list/trace panels are raw queries and must not be
-// forced to carry an aggregation the way graph/value/table panels are.
-func (p PanelType) requestType() qbtypes.RequestType {
+// LegacyRequestTypeForPanelType maps a panel type to the qbtypes.RequestType
+// whose validation rules apply to its queries. It exists only for the v1
+// legacy API, which has no requestType concept of its own to send; v2
+// callers must supply requestType explicitly rather than have it guessed.
+func LegacyRequestTypeForPanelType(p PanelType) qbtypes.RequestType {
 	switch p {
 	case PanelTypeList:
 		return qbtypes.RequestTypeRaw

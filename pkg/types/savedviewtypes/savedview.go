@@ -88,18 +88,28 @@ func NewStorableSavedView(view *SavedView) *StorableSavedView {
 	}
 }
 
+// PostableSavedView's RequestType is not part of SavedViewSpec: it's not
+// persisted, only used to select which validation rules apply to Spec.Queries
+// (e.g. a raw/list request must not carry an aggregation). It's fully
+// derivable from Spec.PanelType, so it would be redundant, write-only data
+// if stored -- callers must supply it explicitly instead of having the
+// server guess it from PanelType.
 type PostableSavedView struct {
-	Name          string        `json:"name"`
-	GenerateName  bool          `json:"generateName"`
-	Source        Source        `json:"source" required:"true"`
-	SchemaVersion SchemaVersion `json:"schemaVersion" required:"true"`
-	Spec          SavedViewSpec `json:"spec" required:"true"`
+	Name          string              `json:"name"`
+	GenerateName  bool                `json:"generateName"`
+	Source        Source              `json:"source" required:"true"`
+	SchemaVersion SchemaVersion       `json:"schemaVersion" required:"true"`
+	RequestType   qbtypes.RequestType `json:"requestType" required:"true"`
+	Spec          SavedViewSpec       `json:"spec" required:"true"`
 }
 
+// UpdatableSavedView's RequestType has the same not-persisted, not-derived
+// meaning as PostableSavedView's -- see its doc comment.
 type UpdatableSavedView struct {
-	Source        Source        `json:"source" required:"true"`
-	SchemaVersion SchemaVersion `json:"schemaVersion" required:"true"`
-	Spec          SavedViewSpec `json:"spec" required:"true"`
+	Source        Source              `json:"source" required:"true"`
+	SchemaVersion SchemaVersion       `json:"schemaVersion" required:"true"`
+	RequestType   qbtypes.RequestType `json:"requestType" required:"true"`
+	Spec          SavedViewSpec       `json:"spec" required:"true"`
 }
 
 type ListSavedViewsParams struct {
@@ -173,8 +183,11 @@ func (p *PostableSavedView) Validate() error {
 	if err := p.SchemaVersion.Validate(); err != nil {
 		return err
 	}
+	if p.RequestType.IsZero() {
+		return errors.NewInvalidInputf(ErrCodeSavedViewInvalidInput, "requestType is required")
+	}
 
-	return p.Spec.Validate()
+	return p.Spec.Validate(p.RequestType)
 }
 
 func (p *PostableSavedView) validateName() error {
@@ -194,8 +207,11 @@ func (u *UpdatableSavedView) Validate() error {
 	if err := u.SchemaVersion.Validate(); err != nil {
 		return err
 	}
+	if u.RequestType.IsZero() {
+		return errors.NewInvalidInputf(ErrCodeSavedViewInvalidInput, "requestType is required")
+	}
 
-	return u.Spec.Validate()
+	return u.Spec.Validate(u.RequestType)
 }
 
 func (p *ListSavedViewsParams) Validate() error {

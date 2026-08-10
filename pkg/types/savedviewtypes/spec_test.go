@@ -164,7 +164,7 @@ func TestSavedViewSpecValidate(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			err := c.spec.Validate()
+			err := c.spec.Validate(LegacyRequestTypeForPanelType(c.spec.PanelType))
 			if c.expectError {
 				assert.Error(t, err)
 			} else {
@@ -172,6 +172,25 @@ func TestSavedViewSpecValidate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSavedViewSpecValidate_HonorsExplicitRequestType(t *testing.T) {
+	// requestType is a caller-supplied validation input, not derived from PanelType --
+	// a raw query without aggregations must pass under RequestTypeRaw even though its
+	// PanelType is graph (which LegacyRequestTypeForPanelType would map to time_series).
+	spec := SavedViewSpec{
+		DisplayName: "My View",
+		PanelType:   PanelTypeGraph,
+		Queries: []qbtypes.QueryEnvelope{{
+			Type: qbtypes.QueryTypeBuilder,
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal: telemetrytypes.SignalTraces,
+			},
+		}},
+	}
+
+	assert.NoError(t, spec.Validate(qbtypes.RequestTypeRaw))
+	assert.Error(t, spec.Validate(qbtypes.RequestTypeTimeSeries))
 }
 
 func TestSavedViewSpecJSONUnmarshal_OptionalFields(t *testing.T) {
@@ -191,7 +210,7 @@ func TestSavedViewSpecJSONUnmarshal_OptionalFields(t *testing.T) {
 			var spec SavedViewSpec
 			err := json.Unmarshal([]byte(c.json), &spec)
 			require.NoError(t, err)
-			assert.NoError(t, spec.Validate())
+			assert.NoError(t, spec.Validate(LegacyRequestTypeForPanelType(spec.PanelType)))
 			assert.Empty(t, spec.SelectedFields)
 			assert.Equal(t, Display{}, spec.Display)
 		})
