@@ -81,16 +81,24 @@ devenv-clickhouse-clean: ## Clean all ClickHouse data from filesystem
 ##############################################################
 # go commands
 ##############################################################
+SQLITE_PATH             ?= signoz.db
+HTTP_HOST_PORT          ?= 0.0.0.0:8080
+PRIVATE_HOST_PORT       ?= 0.0.0.0:8085
+OPAMP_WS_ENDPOINT       ?= 0.0.0.0:4320
+
 .PHONY: go-run-enterprise
 go-run-enterprise: ## Runs the enterprise go backend server
 	@SIGNOZ_INSTRUMENTATION_LOGS_LEVEL=debug \
-	SIGNOZ_SQLSTORE_SQLITE_PATH=signoz.db \
+	SIGNOZ_SQLSTORE_SQLITE_PATH=$(SQLITE_PATH) \
 	SIGNOZ_WEB_ENABLED=false \
 	SIGNOZ_TOKENIZER_JWT_SECRET=secret \
 	SIGNOZ_ALERTMANAGER_PROVIDER=signoz \
 	SIGNOZ_TELEMETRYSTORE_PROVIDER=clickhouse \
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://127.0.0.1:9000 \
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER=cluster \
+	SIGNOZ_HTTP_HOST_PORT=$(HTTP_HOST_PORT) \
+	SIGNOZ_PRIVATE_HOST_PORT=$(PRIVATE_HOST_PORT) \
+	SIGNOZ_OPAMP_WS_ENDPOINT=$(OPAMP_WS_ENDPOINT) \
 	go run -race \
 		$(GO_BUILD_CONTEXT_ENTERPRISE)/*.go server
 
@@ -101,15 +109,29 @@ go-test: ## Runs go unit tests
 .PHONY: go-run-community
 go-run-community: ## Runs the community go backend server
 	@SIGNOZ_INSTRUMENTATION_LOGS_LEVEL=debug \
-	SIGNOZ_SQLSTORE_SQLITE_PATH=signoz.db \
+	SIGNOZ_SQLSTORE_SQLITE_PATH=$(SQLITE_PATH) \
 	SIGNOZ_WEB_ENABLED=false \
 	SIGNOZ_TOKENIZER_JWT_SECRET=secret \
 	SIGNOZ_ALERTMANAGER_PROVIDER=signoz \
 	SIGNOZ_TELEMETRYSTORE_PROVIDER=clickhouse \
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://127.0.0.1:9000 \
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER=cluster \
+	SIGNOZ_HTTP_HOST_PORT=$(HTTP_HOST_PORT) \
+	SIGNOZ_PRIVATE_HOST_PORT=$(PRIVATE_HOST_PORT) \
+	SIGNOZ_OPAMP_WS_ENDPOINT=$(OPAMP_WS_ENDPOINT) \
 	go run -race \
 		$(GO_BUILD_CONTEXT_COMMUNITY)/*.go server
+
+.PHONY: go-stop
+go-stop: ## Stops the go backend server listening on HTTP_HOST_PORT
+	@PORT=$(lastword $(subst :, ,$(HTTP_HOST_PORT))); \
+	PIDS=$$(lsof -ti tcp:$$PORT); \
+	if [ -n "$$PIDS" ]; then \
+		kill $$PIDS; \
+		echo "Stopped signoz server on port $$PORT (pid $$PIDS)"; \
+	else \
+		echo "No signoz server running on port $$PORT"; \
+	fi
 
 .PHONY: go-build-community $(GO_BUILD_ARCHS_COMMUNITY)
 go-build-community: ## Builds the go backend server for community

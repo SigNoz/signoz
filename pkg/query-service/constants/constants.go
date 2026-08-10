@@ -10,10 +10,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-const (
-	HTTPHostPort    = "0.0.0.0:8080" // Address to serve http (query service)
-	PrivateHostPort = "0.0.0.0:8085" // Address to server internal services like alert manager
-	OpAmpWsEndpoint = "0.0.0.0:4320" // address for opamp websocket
+var (
+	HTTPHostPort    = GetOrDefaultEnv("SIGNOZ_HTTP_HOST_PORT", "0.0.0.0:8080")    // Address to serve http (query service)
+	PrivateHostPort = GetOrDefaultEnv("SIGNOZ_PRIVATE_HOST_PORT", "0.0.0.0:8085") // Address to server internal services like alert manager
+	OpAmpWsEndpoint = GetOrDefaultEnv("SIGNOZ_OPAMP_WS_ENDPOINT", "0.0.0.0:4320") // address for opamp websocket
 )
 
 const MaxAllowedPointsInTimeSeries = 300
