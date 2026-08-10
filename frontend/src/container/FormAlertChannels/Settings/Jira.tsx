@@ -43,7 +43,7 @@ function JiraSettings({ setSelectedConfig }: JiraProps): JSX.Element {
 			<Form.Item
 				name="resolve_transition"
 				label={t('field_jira_resolve_transition')}
-				help={t('help_jira_transition')}
+				help={t('help_jira_resolve_transition')}
 			>
 				<Input
 					placeholder={t('placeholder_jira_resolve_transition')}
@@ -57,7 +57,7 @@ function JiraSettings({ setSelectedConfig }: JiraProps): JSX.Element {
 			<Form.Item
 				name="reopen_transition"
 				label={t('field_jira_reopen_transition')}
-				help={t('help_jira_transition')}
+				help={t('help_jira_reopen_transition')}
 			>
 				<Input
 					placeholder={t('placeholder_jira_reopen_transition')}
