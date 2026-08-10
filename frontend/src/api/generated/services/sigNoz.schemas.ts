@@ -8965,6 +8965,13 @@ export interface RuletypesRuleDTO {
 export enum RuletypesThresholdKindDTO {
 	basic = 'basic',
 }
+export enum SavedviewtypesPanelTypeDTO {
+	value = 'value',
+	graph = 'graph',
+	table = 'table',
+	list = 'list',
+	trace = 'trace',
+}
 export interface SavedviewtypesDisplayDTO {
 	/**
 	 * @type string
@@ -8982,15 +8989,9 @@ export interface SavedviewtypesDisplayDTO {
 	 * @type integer
 	 */
 	maxLines?: number;
+	panelType?: SavedviewtypesPanelTypeDTO;
 }
 
-export enum SavedviewtypesPanelTypeDTO {
-	value = 'value',
-	graph = 'graph',
-	table = 'table',
-	list = 'list',
-	trace = 'trace',
-}
 export enum SavedviewtypesSchemaVersionDTO {
 	v2 = 'v2',
 }
@@ -9006,7 +9007,6 @@ export interface SavedviewtypesSavedViewSpecDTO {
 	 * @type string
 	 */
 	displayName: string;
-	panelType: SavedviewtypesPanelTypeDTO;
 	/**
 	 * @type array
 	 */

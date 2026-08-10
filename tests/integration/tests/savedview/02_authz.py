@@ -115,11 +115,10 @@ def test_write_forbidden_without_grant(
             "schemaVersion": "v2",
             "spec": {
                 "displayName": _SAVED_VIEW_FGA_TARGET_NAME,
-                "panelType": "table",
                 "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
                 "selectedFields": [],
-                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                "display": {"panelType": "table", "maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers={"Authorization": f"Bearer {token}"},
@@ -135,11 +134,10 @@ def test_write_forbidden_without_grant(
             "schemaVersion": "v2",
             "spec": {
                 "displayName": "saved-view-fga-create-attempt",
-                "panelType": "table",
                 "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
                 "selectedFields": [],
-                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                "display": {"panelType": "table", "maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers={"Authorization": f"Bearer {token}"},
@@ -213,11 +211,10 @@ def test_update_scoped_to_granted_view(
         "schemaVersion": "v2",
         "spec": {
             "displayName": _SAVED_VIEW_FGA_TARGET_NAME,
-            "panelType": "graph",
             "requestType": "time_series",
             "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
             "selectedFields": [],
-            "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+            "display": {"panelType": "graph", "maxLines": 0, "fontSize": "", "format": "", "color": ""},
         },
     }
 

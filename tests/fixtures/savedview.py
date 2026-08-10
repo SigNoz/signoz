@@ -16,11 +16,10 @@ def _body(name: str, source: str = "logs") -> dict:
         "schemaVersion": "v2",
         "spec": {
             "displayName": name,
-            "panelType": "table",
             "requestType": "scalar",
             "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
             "selectedFields": [],
-            "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+            "display": {"panelType": "table", "maxLines": 0, "fontSize": "", "format": "", "color": ""},
         },
     }
 

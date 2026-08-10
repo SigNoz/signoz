@@ -17,7 +17,7 @@ func validPostableSavedView() PostableSavedView {
 		Name:          "my-view",
 		Source:        SourceLogs,
 		SchemaVersion: SavedViewSchemaVersion,
-		Spec:          SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, RequestType: qbtypes.RequestTypeTimeSeries, Queries: validQueries()},
+		Spec:          SavedViewSpec{DisplayName: "My View", RequestType: qbtypes.RequestTypeTimeSeries, Queries: validQueries(), Display: Display{PanelType: PanelTypeGraph}},
 	}
 }
 
@@ -25,7 +25,7 @@ func validUpdatableSavedView() UpdatableSavedView {
 	return UpdatableSavedView{
 		Source:        SourceLogs,
 		SchemaVersion: SavedViewSchemaVersion,
-		Spec:          SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, RequestType: qbtypes.RequestTypeTimeSeries, Queries: validQueries()},
+		Spec:          SavedViewSpec{DisplayName: "My View", RequestType: qbtypes.RequestTypeTimeSeries, Queries: validQueries(), Display: Display{PanelType: PanelTypeGraph}},
 	}
 }
 
@@ -232,10 +232,10 @@ func TestStorableSavedView_ToSavedView(t *testing.T) {
 			SchemaVersion: SavedViewSchemaVersion,
 			Spec: SavedViewSpec{
 				DisplayName:    "My View",
-				PanelType:      PanelTypeGraph,
 				RequestType:    qbtypes.RequestTypeTimeSeries,
 				Queries:        validQueries(),
 				SelectedFields: []telemetrytypes.TelemetryFieldKey{{Name: "service.name"}},
+				Display:        Display{PanelType: PanelTypeGraph},
 			},
 		}
 		view.OrgID = valuer.GenerateUUID().StringValue()
@@ -255,9 +255,9 @@ func TestStorableSavedView_ToSavedView(t *testing.T) {
 				SchemaVersion: SavedViewSchemaVersion.StringValue(),
 				Spec: SavedViewSpec{
 					DisplayName:    "My View",
-					PanelType:      PanelTypeGraph,
 					Queries:        validQueries(),
 					SelectedFields: nil,
+					Display:        Display{PanelType: PanelTypeGraph},
 				},
 			},
 		}
@@ -274,8 +274,8 @@ func TestStorableSavedView_ToSavedView(t *testing.T) {
 				SchemaVersion: SavedViewSchemaVersion.StringValue(),
 				Spec: SavedViewSpec{
 					DisplayName: "My View",
-					PanelType:   PanelTypeGraph,
 					Queries:     nil,
+					Display:     Display{PanelType: PanelTypeGraph},
 				},
 			},
 		}
@@ -284,23 +284,6 @@ func TestStorableSavedView_ToSavedView(t *testing.T) {
 
 		assert.NotNil(t, view.Spec.Queries)
 		assert.Empty(t, view.Spec.Queries)
-	})
-
-	t.Run("missing requestType backfills from panelType", func(t *testing.T) {
-		storable := &StorableSavedView{
-			Data: SavedViewData{
-				SchemaVersion: SavedViewSchemaVersion.StringValue(),
-				Spec: SavedViewSpec{
-					DisplayName: "My View",
-					PanelType:   PanelTypeList,
-					Queries:     validQueries(),
-				},
-			},
-		}
-
-		view := storable.ToSavedView()
-
-		assert.Equal(t, qbtypes.RequestTypeRaw, view.Spec.RequestType)
 	})
 }
 
@@ -321,8 +304,8 @@ func TestNewStatsFromStorableSavedViews(t *testing.T) {
 
 func TestNewSavedViewsFromStorableSavedViews(t *testing.T) {
 	storables := []*StorableSavedView{
-		{Name: "a", Source: SourceLogs, Data: SavedViewData{SchemaVersion: SavedViewSchemaVersion.StringValue(), Spec: SavedViewSpec{DisplayName: "a", PanelType: PanelTypeGraph, Queries: validQueries()}}},
-		{Name: "b", Source: SourceTraces, Data: SavedViewData{SchemaVersion: SavedViewSchemaVersion.StringValue(), Spec: SavedViewSpec{DisplayName: "b", PanelType: PanelTypeTable, Queries: validQueries()}}},
+		{Name: "a", Source: SourceLogs, Data: SavedViewData{SchemaVersion: SavedViewSchemaVersion.StringValue(), Spec: SavedViewSpec{DisplayName: "a", Queries: validQueries(), Display: Display{PanelType: PanelTypeGraph}}}},
+		{Name: "b", Source: SourceTraces, Data: SavedViewData{SchemaVersion: SavedViewSchemaVersion.StringValue(), Spec: SavedViewSpec{DisplayName: "b", Queries: validQueries(), Display: Display{PanelType: PanelTypeTable}}}},
 	}
 
 	views := NewSavedViewsFromStorableSavedViews(storables)

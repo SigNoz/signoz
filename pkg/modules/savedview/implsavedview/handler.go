@@ -51,16 +51,16 @@ func newPostableSavedViewFromLegacyView(v *v3.SavedView) savedviewtypes.Postable
 		SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
 		Spec: savedviewtypes.SavedViewSpec{
 			DisplayName: v.Name,
-			PanelType:   panelType,
 			// v1 has no requestType concept of its own -- fall back to the panelType-derived guess.
 			RequestType:    savedviewtypes.LegacyRequestTypeForPanelType(panelType),
 			Queries:        v.CompositeQuery.Queries,
 			SelectedFields: legacy.SelectColumns,
 			Display: savedviewtypes.Display{
-				MaxLines: legacy.MaxLines,
-				FontSize: legacy.FontSize,
-				Format:   legacy.Format,
-				Color:    legacy.Color,
+				PanelType: panelType,
+				MaxLines:  legacy.MaxLines,
+				FontSize:  legacy.FontSize,
+				Format:    legacy.Format,
+				Color:     legacy.Color,
 			},
 		},
 	}
@@ -81,16 +81,16 @@ func newUpdatableSavedViewFromLegacyView(v *v3.SavedView) savedviewtypes.Updatab
 		SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
 		Spec: savedviewtypes.SavedViewSpec{
 			DisplayName: v.Name,
-			PanelType:   panelType,
 			// v1 has no requestType concept of its own -- fall back to the panelType-derived guess.
 			RequestType:    savedviewtypes.LegacyRequestTypeForPanelType(panelType),
 			Queries:        v.CompositeQuery.Queries,
 			SelectedFields: legacy.SelectColumns,
 			Display: savedviewtypes.Display{
-				MaxLines: legacy.MaxLines,
-				FontSize: legacy.FontSize,
-				Format:   legacy.Format,
-				Color:    legacy.Color,
+				PanelType: panelType,
+				MaxLines:  legacy.MaxLines,
+				FontSize:  legacy.FontSize,
+				Format:    legacy.Format,
+				Color:     legacy.Color,
 			},
 		},
 	}
@@ -118,7 +118,7 @@ func newLegacyViewFromSavedView(v *savedviewtypes.SavedView) (*v3.SavedView, err
 		UpdatedBy:  v.UpdatedBy,
 		SourcePage: v.Source.StringValue(),
 		CompositeQuery: &v3.CompositeQuery{
-			PanelType: v3.PanelType(v.Spec.PanelType.StringValue()),
+			PanelType: v3.PanelType(v.Spec.Display.PanelType.StringValue()),
 			// Saved views are only ever created from the explorer's builder mode.
 			QueryType: v3.QueryTypeBuilder,
 			Queries:   v.Spec.Queries,

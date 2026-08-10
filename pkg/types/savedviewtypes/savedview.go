@@ -60,10 +60,6 @@ func (s *StorableSavedView) ToSavedView() *SavedView {
 	if spec.SelectedFields == nil {
 		spec.SelectedFields = []telemetrytypes.TelemetryFieldKey{}
 	}
-	if spec.RequestType.IsZero() {
-		// Rows written before requestType existed have none stored; backfill from panelType.
-		spec.RequestType = LegacyRequestTypeForPanelType(spec.PanelType)
-	}
 
 	return &SavedView{
 		Identifiable:  s.Identifiable,

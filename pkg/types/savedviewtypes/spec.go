@@ -18,18 +18,19 @@ var (
 	PanelTypeTrace = PanelType{valuer.NewString("trace")}
 )
 
-// Display holds view-rendering preferences.
+// Display holds view-rendering preferences. PanelType lives here since it's a
+// rendering choice, not something query validation depends on.
 type Display struct {
-	MaxLines int    `json:"maxLines"`
-	FontSize string `json:"fontSize"`
-	Format   string `json:"format"`
-	Color    string `json:"color"`
+	PanelType PanelType `json:"panelType"`
+	MaxLines  int       `json:"maxLines"`
+	FontSize  string    `json:"fontSize"`
+	Format    string    `json:"format"`
+	Color     string    `json:"color"`
 }
 
 // SavedViewSpec is the typed content of a saved view.
 type SavedViewSpec struct {
 	DisplayName    string                             `json:"displayName" required:"true"`
-	PanelType      PanelType                          `json:"panelType" required:"true"`
 	RequestType    qbtypes.RequestType                `json:"requestType" required:"true"`
 	Queries        []qbtypes.QueryEnvelope            `json:"queries" required:"true" nullable:"false" minItems:"1"`
 	SelectedFields []telemetrytypes.TelemetryFieldKey `json:"selectedFields" nullable:"false"`
@@ -86,8 +87,10 @@ func (s *SavedViewSpec) Validate() error {
 	if s.DisplayName == "" {
 		return errors.NewInvalidInputf(ErrCodeSavedViewInvalidInput, "displayName is required")
 	}
-	if err := s.PanelType.Validate(); err != nil {
-		return err
+	if !s.Display.PanelType.IsZero() {
+		if err := s.Display.PanelType.Validate(); err != nil {
+			return err
+		}
 	}
 	if s.RequestType.IsZero() {
 		return errors.NewInvalidInputf(ErrCodeSavedViewInvalidInput, "requestType is required")

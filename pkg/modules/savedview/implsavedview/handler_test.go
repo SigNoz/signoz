@@ -45,11 +45,11 @@ func TestNewPostableSavedViewFromLegacyView(t *testing.T) {
 		assert.Equal(t, "my view", postable.Spec.DisplayName)
 		assert.Equal(t, savedviewtypes.SourceLogs, postable.Source)
 		assert.Equal(t, savedviewtypes.SavedViewSchemaVersion, postable.SchemaVersion)
-		assert.Equal(t, savedviewtypes.PanelTypeGraph, postable.Spec.PanelType)
+		assert.Equal(t, savedviewtypes.PanelTypeGraph, postable.Spec.Display.PanelType)
 		assert.Equal(t, qbtypes.RequestTypeTimeSeries, postable.Spec.RequestType, "graph panel type must map to the time_series request type")
 		assert.Equal(t, legacy.CompositeQuery.Queries, postable.Spec.Queries)
 		assert.Equal(t, []telemetrytypes.TelemetryFieldKey{{Name: "service.name"}}, postable.Spec.SelectedFields)
-		assert.Equal(t, savedviewtypes.Display{MaxLines: 10, FontSize: "large", Format: "table", Color: "blue"}, postable.Spec.Display)
+		assert.Equal(t, savedviewtypes.Display{PanelType: savedviewtypes.PanelTypeGraph, MaxLines: 10, FontSize: "large", Format: "table", Color: "blue"}, postable.Spec.Display)
 	})
 
 	t.Run("empty extra data leaves display and selected fields zero-valued", func(t *testing.T) {
@@ -65,7 +65,7 @@ func TestNewPostableSavedViewFromLegacyView(t *testing.T) {
 
 		postable := newPostableSavedViewFromLegacyView(legacy)
 
-		assert.Equal(t, savedviewtypes.Display{}, postable.Spec.Display)
+		assert.Equal(t, savedviewtypes.Display{PanelType: savedviewtypes.PanelTypeTable}, postable.Spec.Display)
 		assert.Nil(t, postable.Spec.SelectedFields)
 	})
 
@@ -83,7 +83,7 @@ func TestNewPostableSavedViewFromLegacyView(t *testing.T) {
 		postable := newPostableSavedViewFromLegacyView(legacy)
 
 		assert.Equal(t, "malformed extra data", postable.Spec.DisplayName)
-		assert.Equal(t, savedviewtypes.Display{}, postable.Spec.Display)
+		assert.Equal(t, savedviewtypes.Display{PanelType: savedviewtypes.PanelTypeList}, postable.Spec.Display)
 	})
 
 	t.Run("legacy validation gap: empty builderQueries map with no queries", func(t *testing.T) {
@@ -152,10 +152,9 @@ func TestNewLegacyViewFromSavedView(t *testing.T) {
 		SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
 		Spec: savedviewtypes.SavedViewSpec{
 			DisplayName:    "my view",
-			PanelType:      savedviewtypes.PanelTypeGraph,
 			Queries:        testQueries(),
 			SelectedFields: []telemetrytypes.TelemetryFieldKey{{Name: "service.name"}},
-			Display:        savedviewtypes.Display{MaxLines: 10, FontSize: "large", Format: "table", Color: "blue"},
+			Display:        savedviewtypes.Display{PanelType: savedviewtypes.PanelTypeGraph, MaxLines: 10, FontSize: "large", Format: "table", Color: "blue"},
 		},
 	}
 	savedView.ID = valuer.GenerateUUID()
@@ -188,8 +187,8 @@ func TestNewLegacyViewFromSavedView(t *testing.T) {
 }
 
 func TestNewLegacyViewsFromSavedViews(t *testing.T) {
-	a := &savedviewtypes.SavedView{Name: "a-slug", Source: savedviewtypes.SourceLogs, Spec: savedviewtypes.SavedViewSpec{DisplayName: "a", PanelType: savedviewtypes.PanelTypeGraph, Queries: testQueries()}}
-	b := &savedviewtypes.SavedView{Name: "b-slug", Source: savedviewtypes.SourceTraces, Spec: savedviewtypes.SavedViewSpec{DisplayName: "b", PanelType: savedviewtypes.PanelTypeTable, Queries: testQueries()}}
+	a := &savedviewtypes.SavedView{Name: "a-slug", Source: savedviewtypes.SourceLogs, Spec: savedviewtypes.SavedViewSpec{DisplayName: "a", Queries: testQueries(), Display: savedviewtypes.Display{PanelType: savedviewtypes.PanelTypeGraph}}}
+	b := &savedviewtypes.SavedView{Name: "b-slug", Source: savedviewtypes.SourceTraces, Spec: savedviewtypes.SavedViewSpec{DisplayName: "b", Queries: testQueries(), Display: savedviewtypes.Display{PanelType: savedviewtypes.PanelTypeTable}}}
 
 	legacyViews, err := newLegacyViewsFromSavedViews([]*savedviewtypes.SavedView{a, b})
 	require.NoError(t, err)
@@ -211,10 +210,9 @@ func TestLegacyViewRoundTrip(t *testing.T) {
 		SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
 		Spec: savedviewtypes.SavedViewSpec{
 			DisplayName:    "round trip",
-			PanelType:      savedviewtypes.PanelTypeTable,
 			Queries:        testQueries(),
 			SelectedFields: []telemetrytypes.TelemetryFieldKey{{Name: "service.name"}},
-			Display:        savedviewtypes.Display{MaxLines: 5, FontSize: "small", Format: "list", Color: "red"},
+			Display:        savedviewtypes.Display{PanelType: savedviewtypes.PanelTypeTable, MaxLines: 5, FontSize: "small", Format: "list", Color: "red"},
 		},
 	}
 
@@ -227,7 +225,6 @@ func TestLegacyViewRoundTrip(t *testing.T) {
 	assert.True(t, roundTripped.GenerateName)
 	assert.Equal(t, original.Spec.DisplayName, roundTripped.Spec.DisplayName)
 	assert.Equal(t, original.Source, roundTripped.Source)
-	assert.Equal(t, original.Spec.PanelType, roundTripped.Spec.PanelType)
 	assert.Equal(t, original.Spec.Queries, roundTripped.Spec.Queries)
 	assert.Equal(t, original.Spec.SelectedFields, roundTripped.Spec.SelectedFields)
 	assert.Equal(t, original.Spec.Display, roundTripped.Spec.Display)
@@ -240,10 +237,9 @@ func TestLegacyViewRoundTrip_EmptySelectedFieldsAndDisplay(t *testing.T) {
 		SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
 		Spec: savedviewtypes.SavedViewSpec{
 			DisplayName:    "round trip empty",
-			PanelType:      savedviewtypes.PanelTypeTable,
 			Queries:        testQueries(),
 			SelectedFields: []telemetrytypes.TelemetryFieldKey{},
-			Display:        savedviewtypes.Display{},
+			Display:        savedviewtypes.Display{PanelType: savedviewtypes.PanelTypeTable},
 		},
 	}
 
@@ -257,5 +253,5 @@ func TestLegacyViewRoundTrip_EmptySelectedFieldsAndDisplay(t *testing.T) {
 	roundTripped := newPostableSavedViewFromLegacyView(legacy)
 
 	assert.Empty(t, roundTripped.Spec.SelectedFields, "empty, not necessarily non-nil, on this leg of the round trip")
-	assert.Equal(t, savedviewtypes.Display{}, roundTripped.Spec.Display)
+	assert.Equal(t, savedviewtypes.Display{PanelType: savedviewtypes.PanelTypeTable}, roundTripped.Spec.Display)
 }

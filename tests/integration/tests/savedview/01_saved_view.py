@@ -29,11 +29,10 @@ def test_create_rejects_wrong_schema_version(
             "schemaVersion": "v9",
             "spec": {
                 "displayName": "My View",
-                "panelType": "table",
                 "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                 "selectedFields": [],
-                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                "display": {"panelType": "table", "maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers={"Authorization": f"Bearer {token}"},
@@ -61,11 +60,10 @@ def test_create_rejects_invalid_panel_type(
             "schemaVersion": "v2",
             "spec": {
                 "displayName": "My View",
-                "panelType": "bogus",
                 "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                 "selectedFields": [],
-                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                "display": {"panelType": "bogus", "maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers={"Authorization": f"Bearer {token}"},
@@ -92,11 +90,10 @@ def test_create_rejects_empty_queries(
             "schemaVersion": "v2",
             "spec": {
                 "displayName": "My View",
-                "panelType": "table",
                 "requestType": "scalar",
                 "queries": [],
                 "selectedFields": [],
-                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                "display": {"panelType": "table", "maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers={"Authorization": f"Bearer {token}"},
@@ -127,11 +124,10 @@ def test_create_rejects_empty_display_name(
             "schemaVersion": "v2",
             "spec": {
                 "displayName": "",
-                "panelType": "table",
                 "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                 "selectedFields": [],
-                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                "display": {"panelType": "table", "maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers={"Authorization": f"Bearer {token}"},
@@ -159,11 +155,10 @@ def test_create_rejects_invalid_source(
             "schemaVersion": "v2",
             "spec": {
                 "displayName": "My View",
-                "panelType": "table",
                 "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                 "selectedFields": [],
-                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                "display": {"panelType": "table", "maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers={"Authorization": f"Bearer {token}"},
@@ -190,11 +185,10 @@ def test_create_rejects_invalid_name(
             "schemaVersion": "v2",
             "spec": {
                 "displayName": "My View",
-                "panelType": "table",
                 "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                 "selectedFields": [],
-                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                "display": {"panelType": "table", "maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers={"Authorization": f"Bearer {token}"},
@@ -223,11 +217,10 @@ def test_create_rejects_empty_name_without_generate_name(
             "schemaVersion": "v2",
             "spec": {
                 "displayName": "My View",
-                "panelType": "table",
                 "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                 "selectedFields": [],
-                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                "display": {"panelType": "table", "maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers={"Authorization": f"Bearer {token}"},
@@ -257,11 +250,10 @@ def test_create_rejects_name_when_generate_name_is_true(
             "schemaVersion": "v2",
             "spec": {
                 "displayName": "My View",
-                "panelType": "table",
                 "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                 "selectedFields": [],
-                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                "display": {"panelType": "table", "maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers={"Authorization": f"Bearer {token}"},
@@ -293,11 +285,10 @@ def test_create_rejects_unknown_field(
             "schemaVersion": "v2",
             "spec": {
                 "displayName": "My View",
-                "panelType": "table",
                 "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                 "selectedFields": [],
-                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                "display": {"panelType": "table", "maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
             "unknownfield": "boom",
         },
@@ -360,11 +351,10 @@ def test_update_missing_view_returns_not_found(
             "schemaVersion": "v2",
             "spec": {
                 "displayName": "My View",
-                "panelType": "table",
                 "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                 "selectedFields": [],
-                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                "display": {"panelType": "table", "maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers={"Authorization": f"Bearer {token}"},
@@ -395,11 +385,10 @@ def test_update_rejects_name_field(
             "schemaVersion": "v2",
             "spec": {
                 "displayName": "My View",
-                "panelType": "table",
                 "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                 "selectedFields": [],
-                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                "display": {"panelType": "table", "maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers=headers,
@@ -416,11 +405,10 @@ def test_update_rejects_name_field(
                 "schemaVersion": "v2",
                 "spec": {
                     "displayName": "My View",
-                    "panelType": "table",
                     "requestType": "scalar",
                     "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                     "selectedFields": [],
-                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                    "display": {"panelType": "table", "maxLines": 0, "fontSize": "", "format": "", "color": ""},
                 },
                 "name": "update-rejects-name-field",
             },
@@ -476,11 +464,10 @@ def test_saved_view_lifecycle(
             "schemaVersion": "v2",
             "spec": {
                 "displayName": "lc-logs-overview",
-                "panelType": "table",
                 "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                 "selectedFields": [],
-                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                "display": {"panelType": "table", "maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers=headers,
@@ -498,11 +485,10 @@ def test_saved_view_lifecycle(
             "schemaVersion": "v2",
             "spec": {
                 "displayName": "lc-traces-overview",
-                "panelType": "table",
                 "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                 "selectedFields": [],
-                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                "display": {"panelType": "table", "maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers=headers,
@@ -523,7 +509,7 @@ def test_saved_view_lifecycle(
         assert got["name"] == "lc-logs-overview"
         assert got["spec"]["displayName"] == "lc-logs-overview"
         assert got["source"] == "logs"
-        assert got["spec"]["panelType"] == "table"
+        assert got["spec"]["display"]["panelType"] == "table"
 
         # ── list filters by source and name ──────────────────────────────
         response = requests.get(
@@ -553,11 +539,10 @@ def test_saved_view_lifecycle(
                 "schemaVersion": "v2",
                 "spec": {
                     "displayName": "lc-logs-overview-renamed",
-                    "panelType": "graph",
                     "requestType": "time_series",
                     "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                     "selectedFields": [],
-                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                    "display": {"panelType": "graph", "maxLines": 0, "fontSize": "", "format": "", "color": ""},
                 },
             },
             headers=headers,
@@ -575,7 +560,7 @@ def test_saved_view_lifecycle(
         assert updated["name"] == "lc-logs-overview", "name is immutable"
         assert updated["spec"]["displayName"] == "lc-logs-overview-renamed"
         assert updated["source"] == "metrics"
-        assert updated["spec"]["panelType"] == "graph"
+        assert updated["spec"]["display"]["panelType"] == "graph"
     finally:
         requests.delete(
             signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
@@ -609,11 +594,10 @@ def test_empty_name_derives_a_slug_from_display_name(
             "schemaVersion": "v2",
             "spec": {
                 "displayName": "My Generated View!",
-                "panelType": "table",
                 "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                 "selectedFields": [],
-                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                "display": {"panelType": "table", "maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers=headers,
@@ -668,11 +652,10 @@ def test_create_roundtrip_preserves_zero_values(
             "schemaVersion": "v2",
             "spec": {
                 "displayName": "create-zero-values",
-                "panelType": "table",
                 "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                 "selectedFields": [],
-                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                "display": {"panelType": "table", "maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers=headers,
@@ -692,6 +675,7 @@ def test_create_roundtrip_preserves_zero_values(
         query = spec["queries"][0]["spec"]
 
         cases = [
+            ("panelType preserved", spec["display"]["panelType"], "table"),
             ("maxLines 0", spec["display"]["maxLines"], 0),
             ("fontSize empty", spec["display"]["fontSize"], ""),
             ("format empty", spec["display"]["format"], ""),
@@ -727,10 +711,9 @@ def test_selected_fields_omitted_on_create_reads_back_as_empty_list_not_null(
             "schemaVersion": "v2",
             "spec": {
                 "displayName": "omitted-selected-fields",
-                "panelType": "table",
                 "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
-                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                "display": {"panelType": "table", "maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers=headers,
@@ -761,8 +744,9 @@ def test_display_omitted_on_create_reads_back_as_zero_value(
     get_token: Callable[[str, str], str],
 ):
     """display's counterpart to test_selected_fields_omitted_on_create_reads_back_as_empty_list_not_null:
-    neither field is required, so omitting display entirely must not 400 or
-    leave it null -- it reads back as the zero-value Display object."""
+    neither field is required, so omitting display entirely (which now carries
+    panelType too) must not 400 or leave it null -- it reads back as the
+    zero-value Display object."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     headers = {"Authorization": f"Bearer {token}"}
 
@@ -775,7 +759,6 @@ def test_display_omitted_on_create_reads_back_as_zero_value(
             "schemaVersion": "v2",
             "spec": {
                 "displayName": "omitted-display",
-                "panelType": "table",
                 "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
                 "selectedFields": [],
@@ -794,7 +777,7 @@ def test_display_omitted_on_create_reads_back_as_zero_value(
             timeout=5,
         )
         assert response.status_code == HTTPStatus.OK, response.text
-        assert response.json()["data"]["spec"]["display"] == {"maxLines": 0, "fontSize": "", "format": "", "color": ""}
+        assert response.json()["data"]["spec"]["display"] == {"panelType": "", "maxLines": 0, "fontSize": "", "format": "", "color": ""}
     finally:
         requests.delete(
             signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
@@ -822,7 +805,6 @@ def test_selected_fields_and_display_explicit_null_on_create(
             "schemaVersion": "v2",
             "spec": {
                 "displayName": "null-selected-fields-and-display",
-                "panelType": "table",
                 "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
                 "selectedFields": None,
@@ -844,7 +826,7 @@ def test_selected_fields_and_display_explicit_null_on_create(
         assert response.status_code == HTTPStatus.OK, response.text
         spec = response.json()["data"]["spec"]
         assert spec["selectedFields"] == []
-        assert spec["display"] == {"maxLines": 0, "fontSize": "", "format": "", "color": ""}
+        assert spec["display"] == {"panelType": "", "maxLines": 0, "fontSize": "", "format": "", "color": ""}
     finally:
         requests.delete(
             signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
@@ -873,7 +855,6 @@ def test_create_with_partial_display_defaults_missing_fields(
             "schemaVersion": "v2",
             "spec": {
                 "displayName": "partial-display-color-only",
-                "panelType": "table",
                 "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
                 "selectedFields": [],
@@ -893,7 +874,7 @@ def test_create_with_partial_display_defaults_missing_fields(
             timeout=5,
         )
         assert response.status_code == HTTPStatus.OK, response.text
-        assert response.json()["data"]["spec"]["display"] == {"maxLines": 0, "fontSize": "", "format": "", "color": "test"}
+        assert response.json()["data"]["spec"]["display"] == {"panelType": "", "maxLines": 0, "fontSize": "", "format": "", "color": "test"}
     finally:
         requests.delete(
             signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
@@ -925,11 +906,10 @@ def test_update_does_not_corrupt_zero_values(
             "schemaVersion": "v2",
             "spec": {
                 "displayName": "update-zero-values",
-                "panelType": "table",
                 "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": True, "legend": "Custom Legend"}}],
                 "selectedFields": [{"name": "service.name"}],
-                "display": {"maxLines": 25, "fontSize": "large", "format": "table", "color": "blue"},
+                "display": {"panelType": "table", "maxLines": 25, "fontSize": "large", "format": "table", "color": "blue"},
             },
         },
         headers=headers,
@@ -961,11 +941,10 @@ def test_update_does_not_corrupt_zero_values(
                 "schemaVersion": "v2",
                 "spec": {
                     "displayName": "update-zero-values",
-                    "panelType": "table",
                     "requestType": "scalar",
                     "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                     "selectedFields": [],
-                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+                    "display": {"panelType": "table", "maxLines": 0, "fontSize": "", "format": "", "color": ""},
                 },
             },
             headers=headers,
@@ -1022,11 +1001,10 @@ def test_update_with_partial_display_replaces_whole_object(
             "schemaVersion": "v2",
             "spec": {
                 "displayName": "update-partial-display",
-                "panelType": "table",
                 "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
                 "selectedFields": [],
-                "display": {"maxLines": 10, "fontSize": "large", "format": "table", "color": "blue"},
+                "display": {"panelType": "table", "maxLines": 10, "fontSize": "large", "format": "table", "color": "blue"},
             },
         },
         headers=headers,
@@ -1043,7 +1021,6 @@ def test_update_with_partial_display_replaces_whole_object(
                 "schemaVersion": "v2",
                 "spec": {
                     "displayName": "update-partial-display",
-                    "panelType": "table",
                     "requestType": "scalar",
                     "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
                     "selectedFields": [],
@@ -1061,7 +1038,7 @@ def test_update_with_partial_display_replaces_whole_object(
             timeout=5,
         )
         assert response.status_code == HTTPStatus.OK, response.text
-        assert response.json()["data"]["spec"]["display"] == {"maxLines": 0, "fontSize": "", "format": "", "color": "green"}
+        assert response.json()["data"]["spec"]["display"] == {"panelType": "", "maxLines": 0, "fontSize": "", "format": "", "color": "green"}
     finally:
         requests.delete(
             signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),

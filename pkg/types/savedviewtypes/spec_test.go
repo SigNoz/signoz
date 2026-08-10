@@ -59,38 +59,42 @@ func TestSavedViewSpecValidate(t *testing.T) {
 	}{
 		{
 			name:        "valid spec",
-			spec:        SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, RequestType: qbtypes.RequestTypeTimeSeries, Queries: validQueries()},
+			spec:        SavedViewSpec{DisplayName: "My View", RequestType: qbtypes.RequestTypeTimeSeries, Queries: validQueries(), Display: Display{PanelType: PanelTypeGraph}},
 			expectError: false,
 		},
 		{
 			name:        "empty display name is rejected",
-			spec:        SavedViewSpec{PanelType: PanelTypeGraph, RequestType: qbtypes.RequestTypeTimeSeries, Queries: validQueries()},
+			spec:        SavedViewSpec{RequestType: qbtypes.RequestTypeTimeSeries, Queries: validQueries()},
 			expectError: true,
 		},
 		{
-			name:        "invalid panel type is rejected before queries are checked",
-			spec:        SavedViewSpec{DisplayName: "My View", PanelType: PanelType{valuer.NewString("bogus")}, RequestType: qbtypes.RequestTypeTimeSeries, Queries: validQueries()},
+			name:        "invalid panel type in display is rejected",
+			spec:        SavedViewSpec{DisplayName: "My View", RequestType: qbtypes.RequestTypeTimeSeries, Queries: validQueries(), Display: Display{PanelType: PanelType{valuer.NewString("bogus")}}},
 			expectError: true,
+		},
+		{
+			name:        "unset panel type is valid -- it's a display preference, not required",
+			spec:        SavedViewSpec{DisplayName: "My View", RequestType: qbtypes.RequestTypeTimeSeries, Queries: validQueries()},
+			expectError: false,
 		},
 		{
 			name:        "missing requestType is rejected",
-			spec:        SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, Queries: validQueries()},
+			spec:        SavedViewSpec{DisplayName: "My View", Queries: validQueries()},
 			expectError: true,
 		},
 		{
 			name:        "no queries is rejected",
-			spec:        SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, RequestType: qbtypes.RequestTypeTimeSeries},
+			spec:        SavedViewSpec{DisplayName: "My View", RequestType: qbtypes.RequestTypeTimeSeries},
 			expectError: true,
 		},
 		{
 			name: "selectedFields and display populated is still valid",
 			spec: SavedViewSpec{
 				DisplayName:    "My View",
-				PanelType:      PanelTypeTable,
 				RequestType:    qbtypes.RequestTypeScalar,
 				Queries:        validQueries(),
 				SelectedFields: []telemetrytypes.TelemetryFieldKey{{Name: "service.name"}},
-				Display:        Display{MaxLines: 3, FontSize: "small", Format: "table", Color: "blue"},
+				Display:        Display{PanelType: PanelTypeTable, MaxLines: 3, FontSize: "small", Format: "table", Color: "blue"},
 			},
 			expectError: false,
 		},
@@ -98,7 +102,6 @@ func TestSavedViewSpecValidate(t *testing.T) {
 			name: "nil selectedFields is valid -- neither field is actually required",
 			spec: SavedViewSpec{
 				DisplayName:    "My View",
-				PanelType:      PanelTypeTable,
 				RequestType:    qbtypes.RequestTypeScalar,
 				Queries:        validQueries(),
 				SelectedFields: nil,
@@ -109,7 +112,6 @@ func TestSavedViewSpecValidate(t *testing.T) {
 			name: "empty (non-nil) selectedFields is valid",
 			spec: SavedViewSpec{
 				DisplayName:    "My View",
-				PanelType:      PanelTypeTable,
 				RequestType:    qbtypes.RequestTypeScalar,
 				Queries:        validQueries(),
 				SelectedFields: []telemetrytypes.TelemetryFieldKey{},
@@ -120,7 +122,6 @@ func TestSavedViewSpecValidate(t *testing.T) {
 			name: "zero-value display is valid",
 			spec: SavedViewSpec{
 				DisplayName: "My View",
-				PanelType:   PanelTypeTable,
 				RequestType: qbtypes.RequestTypeScalar,
 				Queries:     validQueries(),
 				Display:     Display{},
@@ -131,7 +132,6 @@ func TestSavedViewSpecValidate(t *testing.T) {
 			name: "list panel query with no aggregation is valid",
 			spec: SavedViewSpec{
 				DisplayName: "My View",
-				PanelType:   PanelTypeList,
 				RequestType: qbtypes.RequestTypeRaw,
 				Queries: []qbtypes.QueryEnvelope{{
 					Type: qbtypes.QueryTypeBuilder,
@@ -139,6 +139,7 @@ func TestSavedViewSpecValidate(t *testing.T) {
 						Signal: telemetrytypes.SignalTraces,
 					},
 				}},
+				Display: Display{PanelType: PanelTypeList},
 			},
 			expectError: false,
 		},
@@ -146,7 +147,6 @@ func TestSavedViewSpecValidate(t *testing.T) {
 			name: "trace panel query with no aggregation is valid",
 			spec: SavedViewSpec{
 				DisplayName: "My View",
-				PanelType:   PanelTypeTrace,
 				RequestType: qbtypes.RequestTypeTrace,
 				Queries: []qbtypes.QueryEnvelope{{
 					Type: qbtypes.QueryTypeBuilder,
@@ -154,6 +154,7 @@ func TestSavedViewSpecValidate(t *testing.T) {
 						Signal: telemetrytypes.SignalTraces,
 					},
 				}},
+				Display: Display{PanelType: PanelTypeTrace},
 			},
 			expectError: false,
 		},
@@ -161,7 +162,6 @@ func TestSavedViewSpecValidate(t *testing.T) {
 			name: "graph panel query with no aggregation is still rejected",
 			spec: SavedViewSpec{
 				DisplayName: "My View",
-				PanelType:   PanelTypeGraph,
 				RequestType: qbtypes.RequestTypeTimeSeries,
 				Queries: []qbtypes.QueryEnvelope{{
 					Type: qbtypes.QueryTypeBuilder,
@@ -169,6 +169,7 @@ func TestSavedViewSpecValidate(t *testing.T) {
 						Signal: telemetrytypes.SignalTraces,
 					},
 				}},
+				Display: Display{PanelType: PanelTypeGraph},
 			},
 			expectError: true,
 		},
@@ -191,7 +192,6 @@ func TestSavedViewSpecValidate_RequestTypeIsIndependentOfPanelType(t *testing.T)
 	// derives one from the other inside Validate.
 	spec := SavedViewSpec{
 		DisplayName: "My View",
-		PanelType:   PanelTypeGraph,
 		RequestType: qbtypes.RequestTypeRaw,
 		Queries: []qbtypes.QueryEnvelope{{
 			Type: qbtypes.QueryTypeBuilder,
@@ -199,6 +199,7 @@ func TestSavedViewSpecValidate_RequestTypeIsIndependentOfPanelType(t *testing.T)
 				Signal: telemetrytypes.SignalTraces,
 			},
 		}},
+		Display: Display{PanelType: PanelTypeGraph},
 	}
 
 	assert.NoError(t, spec.Validate())
@@ -208,7 +209,7 @@ func TestSavedViewSpecValidate_RequestTypeIsIndependentOfPanelType(t *testing.T)
 }
 
 func TestSavedViewSpecJSONUnmarshal_OptionalFields(t *testing.T) {
-	base := `"displayName":"My View","panelType":"table","requestType":"scalar","queries":[{"type":"builder_query","spec":{"signal":"logs","aggregations":[{"expression":"count()"}]}}]`
+	base := `"displayName":"My View","requestType":"scalar","queries":[{"type":"builder_query","spec":{"signal":"logs","aggregations":[{"expression":"count()"}]}}]`
 
 	cases := []struct {
 		name string
