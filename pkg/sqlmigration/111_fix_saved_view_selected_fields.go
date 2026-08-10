@@ -14,6 +14,69 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 )
 
+// knownQueryTypes mirrors the discriminator values qbtypes.QueryType currently defines.
+var knownQueryTypes = map[string]bool{
+	"builder_query":          true,
+	"builder_ai_query":       true,
+	"builder_formula":        true,
+	"builder_sub_query":      true,
+	"builder_join":           true,
+	"builder_trace_operator": true,
+	"clickhouse_sql":         true,
+	"promql":                 true,
+}
+
+// specFieldZeroValueJSON is the JSON to substitute for a spec key that fails to unmarshal.
+var specFieldZeroValueJSON = map[string]string{
+	"displayName":    `""`,
+	"panelType":      `""`,
+	"queries":        `[]`,
+	"selectedFields": `[]`,
+	"display":        `{}`,
+}
+
+// storableSavedViewData is the shape of the `saved_view` table this migration repairs.
+type storableSavedViewData struct {
+	bun.BaseModel `bun:"table:saved_view"`
+
+	ID   string `bun:"id,pk,type:text"`
+	Data string `bun:"data,type:text"`
+}
+
+// queryEnvelope mirrors minimal requied qbtypes.QueryEnvelope.
+type queryEnvelope struct {
+	Type string          `json:"type"`
+	Spec json.RawMessage `json:"spec"`
+}
+
+// telemetryFieldKey mirrors required fields from telemetrytypes.TelemetryFieldKey.
+type telemetryFieldKey struct {
+	Name string `json:"name"`
+}
+
+// fixDisplay mirrors savedviewtypes.Display.
+type fixDisplay struct {
+	MaxLines int    `json:"maxLines"`
+	FontSize string `json:"fontSize"`
+	Format   string `json:"format"`
+	Color    string `json:"color"`
+}
+
+// fixSpec mirrors savedviewtypes.SavedViewSpec.
+type fixSpec struct {
+	DisplayName    string              `json:"displayName"`
+	PanelType      string              `json:"panelType"`
+	Queries        []queryEnvelope     `json:"queries"`
+	SelectedFields []telemetryFieldKey `json:"selectedFields"`
+	Display        fixDisplay          `json:"display"`
+}
+
+// fixData mirror SavedViewData
+type fixData struct {
+	SchemaVersion string  `json:"schemaVersion"`
+	Spec          fixSpec `json:"spec"`
+}
+
 type fixSavedViewSelectedFields struct {
 	sqlstore sqlstore.SQLStore
 	settings factory.ProviderSettings
@@ -29,68 +92,47 @@ func (migration *fixSavedViewSelectedFields) Register(migrations *migrate.Migrat
 	return migrations.Register(migration.Up, migration.Down)
 }
 
-// storableSavedViewData is the shape of the `saved_view` table this migration repairs.
-type storableSavedViewData struct {
-	bun.BaseModel `bun:"table:saved_view"`
+func (migration *fixSavedViewSelectedFields) Up(ctx context.Context, db *bun.DB) error {
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
 
-	ID   string `bun:"id,pk,type:text"`
-	Data string `bun:"data,type:text"`
+	var rows []*storableSavedViewData
+	if err := tx.NewSelect().Model(&rows).Scan(ctx); err != nil && err != sql.ErrNoRows {
+		return err
+	}
+
+	var repaired, replaced int
+	for _, row := range rows {
+		// already scans cleanly as-is -- nothing to repair.
+		if err := json.Unmarshal([]byte(row.Data), new(fixData)); err == nil {
+			continue
+		}
+
+		fixedData, blanked, ok := repairSavedViewData(row.Data)
+		if !ok {
+			fixedData = placeholderSavedViewData(row.ID)
+			replaced++
+			migration.settings.Logger.WarnContext(ctx, "saved view data could not be repaired field-by-field, replacing with a placeholder view", slog.String("saved_view_id", row.ID))
+		} else {
+			repaired++
+			migration.settings.Logger.WarnContext(ctx, "repaired saved view data by blanking fields that failed to unmarshal", slog.String("saved_view_id", row.ID), slog.Any("fields_blanked", blanked))
+		}
+
+		if _, err := tx.NewUpdate().Model((*storableSavedViewData)(nil)).Set("data = ?", fixedData).Where("id = ?", row.ID).Exec(ctx); err != nil {
+			return err
+		}
+	}
+
+	migration.settings.Logger.InfoContext(ctx, "checked saved views for unreadable data", slog.Int("total", len(rows)), slog.Int("repaired", repaired), slog.Int("replaced", replaced))
+
+	return tx.Commit()
 }
 
-// queryEnvelope mirrors just enough of qbtypes.QueryEnvelope's on-disk shape
-// to tell a current-format query apart from one that predates it. Duplicated
-// here rather than imported: a migration has to stay pinned to the shape it
-// repairs, independent of how the live query type evolves afterward.
-type queryEnvelope struct {
-	Type string          `json:"type"`
-	Spec json.RawMessage `json:"spec"`
-}
-
-// knownQueryTypes mirrors the discriminator values qbtypes.QueryType
-// currently defines.
-var knownQueryTypes = map[string]bool{
-	"builder_query":          true,
-	"builder_ai_query":       true,
-	"builder_formula":        true,
-	"builder_sub_query":      true,
-	"builder_join":           true,
-	"builder_trace_operator": true,
-	"clickhouse_sql":         true,
-	"promql":                 true,
-}
-
-// telemetryFieldKey mirrors just enough of telemetrytypes.TelemetryFieldKey's
-// on-disk shape (an object with at least a name) to tell it apart from the
-// pre-typed shape (a bare list of strings). Duplicated here, not imported --
-// see queryEnvelope.
-type telemetryFieldKey struct {
-	Name string `json:"name"`
-}
-
-// fixDisplay mirrors just enough of savedviewtypes.Display's on-disk shape.
-// Duplicated here, not imported -- see queryEnvelope.
-type fixDisplay struct {
-	MaxLines int    `json:"maxLines"`
-	FontSize string `json:"fontSize"`
-	Format   string `json:"format"`
-	Color    string `json:"color"`
-}
-
-// fixSpec and fixData mirror just enough of savedviewtypes.SavedViewSpec /
-// SavedViewData's on-disk shape to check whether a row unmarshals cleanly
-// and to build a guaranteed-valid placeholder. Duplicated here, not imported
-// -- see queryEnvelope.
-type fixSpec struct {
-	DisplayName    string              `json:"displayName"`
-	PanelType      string              `json:"panelType"`
-	Queries        []queryEnvelope     `json:"queries"`
-	SelectedFields []telemetryFieldKey `json:"selectedFields"`
-	Display        fixDisplay          `json:"display"`
-}
-
-type fixData struct {
-	SchemaVersion string  `json:"schemaVersion"`
-	Spec          fixSpec `json:"spec"`
+func (migration *fixSavedViewSelectedFields) Down(context.Context, *bun.DB) error {
+	return nil
 }
 
 // specFieldUnmarshalsCleanly reports whether value can be unmarshalled into
@@ -122,23 +164,8 @@ func specFieldUnmarshalsCleanly(key string, value json.RawMessage) bool {
 	}
 }
 
-// specFieldZeroValueJSON is the JSON to substitute for a spec key that fails
-// to unmarshal into its expected shape.
-var specFieldZeroValueJSON = map[string]string{
-	"displayName":    `""`,
-	"panelType":      `""`,
-	"queries":        `[]`,
-	"selectedFields": `[]`,
-	"display":        `{}`,
-}
-
-// repairSavedViewData tries to make data unmarshal cleanly by blanking, one
-// key at a time, whichever top-level spec fields fail to unmarshal into
-// their expected shape -- e.g. a selectedFields shape the 109 migration
-// forwarded verbatim from a pre-TelemetryFieldKey install, or a queries shape
-// that predates the current discriminated-union QueryEnvelope. Every other
-// key is left byte-for-byte untouched. Returns ok=false if data/spec aren't
-// even JSON objects, or the result still doesn't unmarshal cleanly afterward.
+// repairSavedViewData tries to make data unmarshal cleanly by blanking, one key at a time,
+// whichever top-level spec fields fail to unmarshal into their expected shape.
 func repairSavedViewData(data string) (fixed string, blanked []string, ok bool) {
 	var raw map[string]json.RawMessage
 	if err := json.Unmarshal([]byte(data), &raw); err != nil {
@@ -199,47 +226,4 @@ func placeholderSavedViewData(id string) string {
 		panic(err)
 	}
 	return string(data)
-}
-
-func (migration *fixSavedViewSelectedFields) Up(ctx context.Context, db *bun.DB) error {
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer func() { _ = tx.Rollback() }()
-
-	var rows []*storableSavedViewData
-	if err := tx.NewSelect().Model(&rows).Scan(ctx); err != nil && err != sql.ErrNoRows {
-		return err
-	}
-
-	var repaired, replaced int
-	for _, row := range rows {
-		// already scans cleanly as-is -- nothing to repair.
-		if err := json.Unmarshal([]byte(row.Data), new(fixData)); err == nil {
-			continue
-		}
-
-		fixedData, blanked, ok := repairSavedViewData(row.Data)
-		if !ok {
-			fixedData = placeholderSavedViewData(row.ID)
-			replaced++
-			migration.settings.Logger.WarnContext(ctx, "saved view data could not be repaired field-by-field, replacing with a placeholder view", slog.String("saved_view_id", row.ID))
-		} else {
-			repaired++
-			migration.settings.Logger.WarnContext(ctx, "repaired saved view data by blanking fields that failed to unmarshal", slog.String("saved_view_id", row.ID), slog.Any("fields_blanked", blanked))
-		}
-
-		if _, err := tx.NewUpdate().Model((*storableSavedViewData)(nil)).Set("data = ?", fixedData).Where("id = ?", row.ID).Exec(ctx); err != nil {
-			return err
-		}
-	}
-
-	migration.settings.Logger.InfoContext(ctx, "checked saved views for unreadable data", slog.Int("total", len(rows)), slog.Int("repaired", repaired), slog.Int("replaced", replaced))
-
-	return tx.Commit()
-}
-
-func (migration *fixSavedViewSelectedFields) Down(context.Context, *bun.DB) error {
-	return nil
 }
