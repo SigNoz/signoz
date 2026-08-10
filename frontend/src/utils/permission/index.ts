@@ -23,6 +23,11 @@ export type ComponentTypes =
 	| 'add_panel_locked_dashboard'
 	| 'manage_llm_pricing';
 
+/**
+ * @deprecated Before adding a new value here, check if what you want to add permission is supported by authz.
+ * If so, read AuthZ Guidelines on how to add permission check via AuthZ.
+ * If not, you can keep adding to this record.
+ */
 export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 	current_org_settings: ['ADMIN'],
 	invite_members: ['ADMIN'],
@@ -46,11 +51,16 @@ export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 	manage_llm_pricing: ['ADMIN'],
 };
 
+/**
+ * @deprecated You can still add new permissions/routes here but be aware if this page/module supports authz.
+ * If so, also implement the correct authz checks in the page itself, and here you can add ADMIN/EDITOR/VIEWER,
+ * and also update/include the route at {@link routeWithInitialAuthZSupport}
+ */
 export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	HOME: ['ADMIN', 'EDITOR', 'VIEWER'],
 	ALERTS_NEW: ['ADMIN', 'EDITOR'],
 	ORG_SETTINGS: ['ADMIN'],
-	MY_SETTINGS: ['ADMIN', 'EDITOR', 'VIEWER', 'ANONYMOUS'],
+	MY_SETTINGS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	SERVICE_MAP: ['ADMIN', 'EDITOR', 'VIEWER'],
 	ALL_CHANNELS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	INGESTION_SETTINGS: ['ADMIN', 'EDITOR', 'VIEWER'],
@@ -75,13 +85,15 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	NOT_FOUND: ['ADMIN', 'VIEWER', 'EDITOR', 'ANONYMOUS'],
 	PASSWORD_RESET: ['ADMIN', 'EDITOR', 'VIEWER'],
 	SERVICE_METRICS: ['ADMIN', 'EDITOR', 'VIEWER'],
-	SETTINGS: ['ADMIN', 'EDITOR', 'VIEWER', 'ANONYMOUS'],
+	SETTINGS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	SIGN_UP: ['ADMIN', 'EDITOR', 'VIEWER'],
 	TRACES_EXPLORER: ['ADMIN', 'EDITOR', 'VIEWER'],
 	TRACE: ['ADMIN', 'EDITOR', 'VIEWER'],
 	TRACE_DETAIL: ['ADMIN', 'EDITOR', 'VIEWER'],
 	TRACE_DETAIL_OLD: ['ADMIN', 'EDITOR', 'VIEWER'],
-	UN_AUTHORIZED: ['ADMIN', 'EDITOR', 'VIEWER', 'ANONYMOUS'],
+	// Every role must be able to land here - a role missing from this list is
+	// redirected to /un-authorized and then redirected off it again, looping.
+	UN_AUTHORIZED: ['ADMIN', 'EDITOR', 'VIEWER', 'ANONYMOUS', 'AUTHOR'],
 	USAGE_EXPLORER: ['ADMIN', 'EDITOR', 'VIEWER'],
 	VERSION: ['ADMIN', 'EDITOR', 'VIEWER'],
 	LOGS: ['ADMIN', 'EDITOR', 'VIEWER'],
@@ -95,12 +107,12 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	GET_STARTED_WITH_CLOUD: ['ADMIN', 'EDITOR'],
 	WORKSPACE_LOCKED: ['ADMIN', 'EDITOR', 'VIEWER'],
 	WORKSPACE_SUSPENDED: ['ADMIN', 'EDITOR', 'VIEWER'],
-	ROLES_SETTINGS: ['ADMIN', 'EDITOR', 'VIEWER', 'ANONYMOUS'],
-	ROLE_CREATE: ['ADMIN', 'EDITOR', 'VIEWER', 'ANONYMOUS'],
-	ROLE_DETAILS: ['ADMIN', 'EDITOR', 'VIEWER', 'ANONYMOUS'],
-	ROLE_EDIT: ['ADMIN', 'EDITOR', 'VIEWER', 'ANONYMOUS'],
+	ROLES_SETTINGS: ['ADMIN', 'EDITOR', 'VIEWER'],
+	ROLE_CREATE: ['ADMIN', 'EDITOR', 'VIEWER'],
+	ROLE_DETAILS: ['ADMIN', 'EDITOR', 'VIEWER'],
+	ROLE_EDIT: ['ADMIN', 'EDITOR', 'VIEWER'],
 	MEMBERS_SETTINGS: ['ADMIN'],
-	SERVICE_ACCOUNTS_SETTINGS: ['ADMIN', 'EDITOR', 'VIEWER', 'ANONYMOUS'],
+	SERVICE_ACCOUNTS_SETTINGS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	BILLING: ['ADMIN'],
 	SUPPORT: ['ADMIN', 'EDITOR', 'VIEWER', 'ANONYMOUS'],
 	SOMETHING_WENT_WRONG: ['ADMIN', 'EDITOR', 'VIEWER'],
@@ -141,3 +153,34 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	AI_OBSERVABILITY_OVERVIEW: ['ADMIN', 'EDITOR', 'VIEWER'],
 	AI_OBSERVABILITY_CONFIGURATION: ['ADMIN', 'EDITOR', 'VIEWER'],
 };
+
+/**
+ * Any route that will start be supported under AuthZ should be added here.
+ * This will help correctly identify when fallback to show the page
+ * or just return unauthorized.
+ *
+ * This prevents us from adding `ANONYMOUS` on the `routePermission`
+ */
+export const routeWithInitialAuthZSupport = {
+	MY_SETTINGS: true,
+	SETTINGS: true,
+	TRACES_EXPLORER: true,
+	TRACE: true,
+	TRACE_DETAIL: true,
+	TRACE_DETAIL_OLD: true,
+	LOGS: true,
+	LOGS_EXPLORER: true,
+	LIVE_LOGS: true,
+	ROLES_SETTINGS: true,
+	ROLE_CREATE: true,
+	ROLE_DETAILS: true,
+	ROLE_EDIT: true,
+	SERVICE_ACCOUNTS_SETTINGS: true,
+	SUPPORT: true,
+	OLD_LOGS_EXPLORER: true,
+	METRICS_EXPLORER: true,
+	METRICS_EXPLORER_EXPLORER: true,
+	METRICS_EXPLORER_VOLUME_CONTROL: true,
+	METER_EXPLORER: true,
+	METER: true,
+} as const satisfies Partial<Record<keyof typeof ROUTES, true>>;

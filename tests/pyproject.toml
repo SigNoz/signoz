@@ -57,6 +57,7 @@ ignore = [
     "PLR0912", # too-many-branches
     "PLR0913", # too-many-arguments
     "PLR0915", # too-many-statements
+    "PLR0917", # too-many-positional-arguments (newly enforced by ruff 0.16)
     # magic-value-comparison — noisy in assertion-heavy test code
     "PLR2004",
     # ruff flags mutable-argument-default (B006) where pylint ignored
@@ -75,3 +76,7 @@ ignore = [
 
 [tool.ruff.format]
 # Defaults align with black (double quotes, 4-space indent).
+
+[tool.ruff.lint.per-file-ignores]
+"fixtures/notification_channel.py" = ["E501"]
+"integration/tests/alertmanager/*" = ["E501"]

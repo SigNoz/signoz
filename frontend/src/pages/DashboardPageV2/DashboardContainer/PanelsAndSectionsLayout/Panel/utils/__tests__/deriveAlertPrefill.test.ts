@@ -167,9 +167,9 @@ describe('deriveAlertPrefill', () => {
 
 		it.each([
 			['above', AlertThresholdOperator.IS_ABOVE],
-			['above_or_equal', AlertThresholdOperator.IS_ABOVE],
+			['above_or_equal', AlertThresholdOperator.IS_ABOVE_OR_EQUAL_TO],
 			['below', AlertThresholdOperator.IS_BELOW],
-			['below_or_equal', AlertThresholdOperator.IS_BELOW],
+			['below_or_equal', AlertThresholdOperator.IS_BELOW_OR_EQUAL_TO],
 			['equal', AlertThresholdOperator.IS_EQUAL_TO],
 			['not_equal', AlertThresholdOperator.IS_NOT_EQUAL_TO],
 		])('maps panel operator %s → %s', (op, expected) => {

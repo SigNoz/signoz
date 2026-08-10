@@ -197,3 +197,40 @@ class AlertTestCase:
     alert_data: list[AlertData]
     # list of alert expectations for the test case
     alert_expectation: AlertExpectation
+
+
+@dataclass(frozen=True)
+class NotificationValidation:
+    # destination type of the notification, either webhook or email
+    # slack, msteams, pagerduty, opsgenie, webhook channels send notifications through webhook
+    # email channels send notifications through email
+    destination_type: Literal["webhook", "email"]
+    # validation data for validating the received notification payload
+    validation_data: dict[str, any]
+
+
+@dataclass(frozen=True)
+class AMNotificationExpectation:
+    # whether we expect any notifications to be fired or not, false when testing downtime scenarios
+    # or don't expect any notifications to be fired in given time period
+    should_notify: bool
+    # seconds to wait for the notifications to be fired, if no
+    # notifications are fired in the expected time, the test will fail
+    wait_time_seconds: int
+    # list of notifications to expect, as a single rule can trigger multiple notifications
+    # spanning across different notifiers
+    notification_validations: list[NotificationValidation]
+
+
+@dataclass(frozen=True)
+class AlertManagerNotificationTestCase:
+    # name of the test case
+    name: str
+    # path to the rule file in testdata directory
+    rule_path: str
+    # list of alert data that will be inserted into the database for the rule to be triggered
+    alert_data: list[AlertData]
+    # configuration for the notification channel
+    channel_config: dict[str, any]
+    # notification expectations for the test case
+    notification_expectation: AMNotificationExpectation

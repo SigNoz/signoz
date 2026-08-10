@@ -6,7 +6,7 @@ import ColumnHeader from '../Base/ColumnHeader';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatBytes } from '../commonUtils';
-import { CellValueTooltip, ValidateColumnValueWrapper } from '../components';
+import { ValidateColumnValueWrapper } from '../components';
 import {
 	INFRA_MONITORING_ATTR_KEYS,
 	InfraMonitoringEntity,
@@ -64,7 +64,7 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 		},
 	},
 	{
-		id: 'pvcName',
+		id: INFRA_MONITORING_ATTR_KEYS.K8S_PERSISTENT_VOLUME_CLAIM_NAME,
 		header: (): React.ReactNode => (
 			<EntityGroupHeader
 				title="PVC Name"
@@ -74,15 +74,14 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 		),
 		accessorFn: (row): string => row.persistentVolumeClaimName || '',
 		width: { min: 290 },
-		enableSort: false,
+		enableSort: true,
 		enableRemove: false,
 		enableMove: false,
 		pin: 'left',
 		visibilityBehavior: 'hidden-on-expand',
-		cell: ({ value }): React.ReactNode => {
-			const pvcName = value as string;
-			return <CellValueTooltip value={pvcName} />;
-		},
+		cell: ({ value }): React.ReactNode => (
+			<TanStackTable.Text>{value}</TanStackTable.Text>
+		),
 	},
 	{
 		id: 'namespaceName',
@@ -95,10 +94,9 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 		width: { min: 220 },
 		enableSort: false,
-		cell: ({ value }): React.ReactNode => {
-			const namespaceName = value as string;
-			return <CellValueTooltip value={namespaceName} />;
-		},
+		cell: ({ value }): React.ReactNode => (
+			<TanStackTable.Text>{value}</TanStackTable.Text>
+		),
 	},
 	{
 		id: 'capacity',
@@ -110,10 +108,11 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 		accessorFn: (row): number => row.volumeCapacity,
 		width: { min: 140 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const capacity = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={capacity}
 					entity={InfraMonitoringEntity.VOLUMES}
 					attribute="capacity metric"
@@ -133,10 +132,11 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 		accessorFn: (row): number => row.volumeUsage,
 		width: { min: 140 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const usage = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={usage}
 					entity={InfraMonitoringEntity.VOLUMES}
 					attribute="utilization metric"
@@ -156,10 +156,11 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 		accessorFn: (row): number => row.volumeAvailable,
 		width: { min: 140 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const available = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={available}
 					entity={InfraMonitoringEntity.VOLUMES}
 					attribute="available metric"
@@ -179,10 +180,11 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 		accessorFn: (row): number => row.volumeInodes,
 		width: { min: 140 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const inodes = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={inodes}
 					entity={InfraMonitoringEntity.VOLUMES}
 					attribute="inodes metric"
@@ -193,7 +195,7 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 		},
 	},
 	{
-		id: 'inodesUsed',
+		id: 'inodes_used',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/volumes#volume-inodes-used">
 				Inodes Used
@@ -202,10 +204,11 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 		accessorFn: (row): number => row.volumeInodesUsed,
 		width: { min: 160 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const inodesUsed = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={inodesUsed}
 					entity={InfraMonitoringEntity.VOLUMES}
 					attribute="inodes used metric"
@@ -216,7 +219,7 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 		},
 	},
 	{
-		id: 'inodesFree',
+		id: 'inodes_free',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/volumes#volume-inodes-free">
 				Inodes Free
@@ -225,10 +228,11 @@ export const k8sVolumesColumnsConfig: VolumeTableColumnConfig[] = [
 		accessorFn: (row): number => row.volumeInodesFree,
 		width: { min: 160 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const inodesFree = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={inodesFree}
 					entity={InfraMonitoringEntity.VOLUMES}
 					attribute="inodes free metric"

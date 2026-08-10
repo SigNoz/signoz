@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { InputRef } from 'antd';
 // eslint-disable-next-line signoz/no-antd-components -- match V1 textbox behaviour (commit on blur/Enter, borderless)
 import { Input } from 'antd';
@@ -30,6 +30,17 @@ function TextSelector({
 	const [value, setValue] = useState<string>(
 		typeof selection.value === 'string' ? selection.value : (defaultValue ?? ''),
 	);
+
+	// The committed value can land after this input mounts — the seed resolves the
+	// definition's default one tick later, and a share link or a reset can replace it
+	// at any point. Without following it the box would keep showing its first render
+	// (empty, since nothing is seeded yet) until the user focused and blurred it.
+	// Typing never touches the selection, so an edit in progress cannot be interrupted.
+	useEffect(() => {
+		setValue(
+			typeof selection.value === 'string' ? selection.value : (defaultValue ?? ''),
+		);
+	}, [selection.value, defaultValue]);
 
 	const commit = useCallback(
 		(next: string): void => {

@@ -9,6 +9,22 @@ import {
 import { SelectedItemParams } from 'container/InfraMonitoringK8sV2/hooks';
 import { INFRA_MONITORING_ATTR_KEYS } from 'container/InfraMonitoringK8sV2/constants';
 
+export function sortByColumnOrder<T>(
+	items: T[],
+	getId: (item: T) => string,
+	columnOrder: string[],
+): T[] {
+	if (columnOrder.length === 0) {
+		return items;
+	}
+	const orderIndex = new Map(columnOrder.map((id, index) => [id, index]));
+	return [...items].sort(
+		(a, b) =>
+			(orderIndex.get(getId(a)) ?? Number.MAX_SAFE_INTEGER) -
+			(orderIndex.get(getId(b)) ?? Number.MAX_SAFE_INTEGER),
+	);
+}
+
 export function getGroupedByMeta<
 	T extends { meta?: Record<string, string> | null },
 >(itemData: T, groupBy: string[]): Record<string, string> {

@@ -172,7 +172,6 @@ function ServiceDetails({
 			cloudProvider: type,
 			serviceId: serviceId || '',
 		},
-		undefined,
 		{
 			query: {
 				enabled: !!serviceId && !cloudAccountId,
