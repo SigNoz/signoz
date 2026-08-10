@@ -18,6 +18,7 @@ import type {
 } from 'react-query';
 
 import type {
+	AuthtypesPatchableAuthDomainDTO,
 	AuthtypesPostableAuthDomainDTO,
 	AuthtypesUpdatableAuthDomainDTO,
 	CreateAuthDomain201,
@@ -25,6 +26,7 @@ import type {
 	GetAuthDomain200,
 	GetAuthDomainPathParameters,
 	ListAuthDomains200,
+	PatchAuthDomainPathParameters,
 	RenderErrorResponseDTO,
 	UpdateAuthDomainPathParameters,
 } from '../sigNoz.schemas';
@@ -379,6 +381,105 @@ export const invalidateGetAuthDomain = async (
 	return queryClient;
 };
 
+/**
+ * This endpoint patches an auth domain, toggling whether SSO is enforced without rewriting the provider configuration
+ * @summary Patch auth domain
+ */
+export const patchAuthDomain = (
+	{ id }: PatchAuthDomainPathParameters,
+	authtypesPatchableAuthDomainDTO?: BodyType<AuthtypesPatchableAuthDomainDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v2/auth_domains/${id}`,
+		method: 'PATCH',
+		headers: { 'Content-Type': 'application/json' },
+		data: authtypesPatchableAuthDomainDTO,
+		signal,
+	});
+};
+
+export const getPatchAuthDomainMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof patchAuthDomain>>,
+		TError,
+		{
+			pathParams: PatchAuthDomainPathParameters;
+			data?: BodyType<AuthtypesPatchableAuthDomainDTO>;
+		},
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof patchAuthDomain>>,
+	TError,
+	{
+		pathParams: PatchAuthDomainPathParameters;
+		data?: BodyType<AuthtypesPatchableAuthDomainDTO>;
+	},
+	TContext
+> => {
+	const mutationKey = ['patchAuthDomain'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof patchAuthDomain>>,
+		{
+			pathParams: PatchAuthDomainPathParameters;
+			data?: BodyType<AuthtypesPatchableAuthDomainDTO>;
+		}
+	> = (props) => {
+		const { pathParams, data } = props ?? {};
+
+		return patchAuthDomain(pathParams, data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type PatchAuthDomainMutationResult = NonNullable<
+	Awaited<ReturnType<typeof patchAuthDomain>>
+>;
+export type PatchAuthDomainMutationBody =
+	| BodyType<AuthtypesPatchableAuthDomainDTO>
+	| undefined;
+export type PatchAuthDomainMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Patch auth domain
+ */
+export const usePatchAuthDomain = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof patchAuthDomain>>,
+		TError,
+		{
+			pathParams: PatchAuthDomainPathParameters;
+			data?: BodyType<AuthtypesPatchableAuthDomainDTO>;
+		},
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof patchAuthDomain>>,
+	TError,
+	{
+		pathParams: PatchAuthDomainPathParameters;
+		data?: BodyType<AuthtypesPatchableAuthDomainDTO>;
+	},
+	TContext
+> => {
+	return useMutation(getPatchAuthDomainMutationOptions(options));
+};
 /**
  * This endpoint updates an auth domain
  * @summary Update auth domain

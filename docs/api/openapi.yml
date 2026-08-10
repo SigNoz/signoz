@@ -628,6 +628,7 @@ components:
         clientId:
           type: string
         clientSecret:
+          format: password
           type: string
         domainToAdminEmail:
           additionalProperties:
@@ -642,6 +643,7 @@ components:
         redirectURI:
           type: string
         serviceAccountJson:
+          format: password
           type: string
       required:
       - clientId
@@ -654,6 +656,7 @@ components:
         clientId:
           type: string
         clientSecret:
+          format: password
           type: string
         getUserInfo:
           type: boolean
@@ -683,6 +686,13 @@ components:
       properties:
         provider:
           $ref: '#/components/schemas/AuthtypesAuthNProvider'
+      type: object
+    AuthtypesPatchableAuthDomain:
+      properties:
+        enabled:
+          type: boolean
+      required:
+      - enabled
       type: object
     AuthtypesPostableAuthDomain:
       properties:
@@ -14391,6 +14401,63 @@ paths:
       - tokenizer:
         - ADMIN
       summary: Get auth domain by ID
+      tags:
+      - authdomains
+    patch:
+      deprecated: false
+      description: This endpoint patches an auth domain, toggling whether SSO is enforced
+        without rewriting the provider configuration
+      operationId: PatchAuthDomain
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthtypesPatchableAuthDomain'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Patch auth domain
       tags:
       - authdomains
     put:

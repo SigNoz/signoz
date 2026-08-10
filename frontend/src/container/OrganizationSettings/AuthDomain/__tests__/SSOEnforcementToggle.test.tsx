@@ -66,12 +66,12 @@ describe('SSOEnforcementToggle', () => {
 		expect(switchElement).not.toBeChecked();
 	});
 
-	it('calls update API when toggle is clicked', async () => {
+	it('calls patch API when toggle is clicked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const mockUpdateAPI = jest.fn();
 
 		server.use(
-			rest.put(AUTH_DOMAINS_UPDATE_ENDPOINT, async (req, res, ctx) => {
+			rest.patch(AUTH_DOMAINS_UPDATE_ENDPOINT, async (req, res, ctx) => {
 				const body = await req.json();
 				mockUpdateAPI(body);
 				return res(ctx.status(200), ctx.json(mockUpdateSuccessResponse));
@@ -93,18 +93,14 @@ describe('SSOEnforcementToggle', () => {
 		});
 
 		expect(mockUpdateAPI).toHaveBeenCalledTimes(1);
-		expect(mockUpdateAPI).toHaveBeenCalledWith(
-			expect.objectContaining({
-				enabled: false,
-			}),
-		);
+		expect(mockUpdateAPI).toHaveBeenCalledWith({ enabled: false });
 	});
 
 	it('shows error modal when update fails', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		server.use(
-			rest.put(AUTH_DOMAINS_UPDATE_ENDPOINT, (_, res, ctx) =>
+			rest.patch(AUTH_DOMAINS_UPDATE_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(500), ctx.json(mockErrorResponse)),
 			),
 		);
@@ -129,7 +125,7 @@ describe('SSOEnforcementToggle', () => {
 		let apiCalled = false;
 
 		server.use(
-			rest.put(AUTH_DOMAINS_UPDATE_ENDPOINT, (_, res, ctx) => {
+			rest.patch(AUTH_DOMAINS_UPDATE_ENDPOINT, (_, res, ctx) => {
 				apiCalled = true;
 				return res(ctx.status(200), ctx.json(mockUpdateSuccessResponse));
 			}),

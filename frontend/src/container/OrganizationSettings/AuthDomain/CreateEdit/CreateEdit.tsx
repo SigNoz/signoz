@@ -8,14 +8,8 @@ import {
 	useUpdateAuthDomain,
 } from 'api/generated/services/authdomains';
 import {
-	AuthtypesAuthDomainConfigDTO,
-	AuthtypesAuthDomainConfigGoogleDTOKind,
-	AuthtypesAuthDomainConfigOIDCDTOKind,
-	AuthtypesAuthDomainConfigSAMLDTOKind,
 	AuthtypesAuthNProviderDTO,
 	AuthtypesGettableAuthDomainDTO,
-	AuthtypesGoogleConfigDTO,
-	AuthtypesRoleMappingDTO,
 	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
@@ -28,10 +22,11 @@ import APIError from 'types/api/error';
 
 import AuthnProviderSelector from './AuthnProviderSelector';
 import {
-	convertDomainMappingsToRecord,
-	convertGroupMappingsToRecord,
 	FormValues,
+	kindToProvider,
+	prepareConfig,
 	prepareInitialValues,
+	prepareRoleMapping,
 } from './CreateEdit.utils';
 import ConfigureGoogleAuthAuthnProvider from './Providers/AuthnGoogleAuth';
 import ConfigureOIDCAuthnProvider from './Providers/AuthnOIDC';
@@ -65,7 +60,7 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 	const [form] = Form.useForm<FormValues>();
 	const [authnProvider, setAuthnProvider] = useState<
 		AuthtypesAuthNProviderDTO | ''
-	>((record?.config?.kind as unknown as AuthtypesAuthNProviderDTO) ?? '');
+	>(kindToProvider(record?.config?.kind));
 
 	const { showErrorModal } = useErrorModal();
 	const { featureFlags } = useAppContext();
@@ -89,95 +84,6 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 	const { mutate: updateAuthDomain, isLoading: isUpdating } =
 		useUpdateAuthDomain<AxiosError<RenderErrorResponseDTO>>();
 
-	/**
-	 * Prepares Google Auth config for API payload
-	 */
-	const getGoogleAuthConfig = useCallback(():
-		| AuthtypesGoogleConfigDTO
-		| undefined => {
-		const config = form.getFieldValue('googleAuthConfig');
-		if (!config) {
-			return undefined;
-		}
-
-		const {
-			domainToAdminEmailList,
-			allowedGroups,
-			serviceAccountJson,
-			domainToAdminEmail: _domainToAdminEmail,
-			fetchTransitiveGroupMembership,
-			...rest
-		} = config;
-		const domainToAdminEmail = convertDomainMappingsToRecord(
-			domainToAdminEmailList,
-		);
-
-		return {
-			...rest,
-			...(rest.fetchGroups
-				? {
-						allowedGroups,
-						serviceAccountJson,
-						domainToAdminEmail: domainToAdminEmail ?? {},
-						fetchTransitiveGroupMembership,
-					}
-				: { domainToAdminEmail: {} }),
-		};
-	}, [form]);
-
-	// Prepares role mapping for API payload
-	const getRoleMapping = useCallback((): AuthtypesRoleMappingDTO | undefined => {
-		const roleMapping = form.getFieldValue('roleMapping');
-		if (!roleMapping) {
-			return undefined;
-		}
-
-		const { groupMappingsList, ...rest } = roleMapping;
-		const groupMappings = convertGroupMappingsToRecord(groupMappingsList);
-
-		// Only return roleMapping if there's meaningful content
-		const hasDefaultRole = !!rest.defaultRole;
-		const hasUseRoleAttribute = rest.useRoleAttribute === true;
-		const hasGroupMappings =
-			groupMappings && Object.keys(groupMappings).length > 0;
-
-		if (!hasDefaultRole && !hasUseRoleAttribute && !hasGroupMappings) {
-			return undefined;
-		}
-
-		return {
-			...rest,
-			groupMappings: rest.useRoleAttribute ? undefined : (groupMappings ?? {}),
-		};
-	}, [form]);
-
-	// Prepares the kind/spec config envelope for API payload
-	const getConfig = useCallback((): AuthtypesAuthDomainConfigDTO | undefined => {
-		switch (authnProvider) {
-			case AuthtypesAuthNProviderDTO.saml:
-				return {
-					kind: AuthtypesAuthDomainConfigSAMLDTOKind.saml,
-					spec: form.getFieldValue('samlConfig'),
-				};
-			case AuthtypesAuthNProviderDTO.google: {
-				const spec = getGoogleAuthConfig();
-				return spec
-					? {
-							kind: AuthtypesAuthDomainConfigGoogleDTOKind.google,
-							spec,
-						}
-					: undefined;
-			}
-			case AuthtypesAuthNProviderDTO.oidc:
-				return {
-					kind: AuthtypesAuthDomainConfigOIDCDTOKind.oidc,
-					spec: form.getFieldValue('oidcConfig'),
-				};
-			default:
-				return undefined;
-		}
-	}, [authnProvider, form, getGoogleAuthConfig]);
-
 	const onSubmitHandler = useCallback(async (): Promise<void> => {
 		try {
 			await form.validateFields();
@@ -189,9 +95,10 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 			return;
 		}
 
-		const name = form.getFieldValue('name');
-		const config = getConfig();
-		const roleMapping = getRoleMapping();
+		const values = form.getFieldsValue(true) as FormValues;
+		const name = values.name ?? '';
+		const config = prepareConfig(values, authnProvider);
+		const roleMapping = prepareRoleMapping(values);
 
 		if (!config) {
 			return;
@@ -224,7 +131,7 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 				{
 					pathParams: { id: record.id },
 					data: {
-						enabled: form.getFieldValue('enabled'),
+						enabled: values.enabled ?? false,
 						config,
 						roleMapping,
 					},
@@ -242,8 +149,6 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 		authnProvider,
 		createAuthDomain,
 		form,
-		getConfig,
-		getRoleMapping,
 		handleError,
 		isCreate,
 

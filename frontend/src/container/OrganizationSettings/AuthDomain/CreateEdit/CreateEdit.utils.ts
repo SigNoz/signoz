@@ -1,13 +1,34 @@
 import {
+	AuthtypesAuthDomainConfigDTO,
 	AuthtypesAuthDomainConfigGoogleDTOKind,
 	AuthtypesAuthDomainConfigOIDCDTOKind,
 	AuthtypesAuthDomainConfigSAMLDTOKind,
+	AuthtypesAuthNProviderDTO,
 	AuthtypesGettableAuthDomainDTO,
 	AuthtypesGoogleConfigDTO,
 	AuthtypesOIDCConfigDTO,
 	AuthtypesRoleMappingDTO,
 	AuthtypesSamlConfigDTO,
 } from 'api/generated/services/sigNoz.schemas';
+
+/**
+ * Maps the config envelope's per-variant kind to the provider enum driving the
+ * create/edit UI.
+ */
+export function kindToProvider(
+	kind?: AuthtypesAuthDomainConfigDTO['kind'],
+): AuthtypesAuthNProviderDTO | '' {
+	switch (kind) {
+		case AuthtypesAuthDomainConfigSAMLDTOKind.saml:
+			return AuthtypesAuthNProviderDTO.saml;
+		case AuthtypesAuthDomainConfigGoogleDTOKind.google:
+			return AuthtypesAuthNProviderDTO.google;
+		case AuthtypesAuthDomainConfigOIDCDTOKind.oidc:
+			return AuthtypesAuthNProviderDTO.oidc;
+		default:
+			return '';
+	}
+}
 
 // Form values interface for internal use (includes array-based fields for UI)
 export interface FormValues {
@@ -143,4 +164,107 @@ export function prepareInitialValues(
 				}
 			: undefined,
 	};
+}
+
+/**
+ * Prepares Google Auth config for API payload
+ */
+export function prepareGoogleAuthConfig(
+	values: FormValues,
+): AuthtypesGoogleConfigDTO | undefined {
+	const config = values.googleAuthConfig;
+	if (!config) {
+		return undefined;
+	}
+
+	const {
+		domainToAdminEmailList,
+		allowedGroups,
+		serviceAccountJson,
+		domainToAdminEmail: _domainToAdminEmail,
+		fetchTransitiveGroupMembership,
+		...rest
+	} = config;
+	const domainToAdminEmail = convertDomainMappingsToRecord(
+		domainToAdminEmailList,
+	);
+
+	return {
+		...rest,
+		...(rest.fetchGroups
+			? {
+					allowedGroups,
+					serviceAccountJson,
+					domainToAdminEmail: domainToAdminEmail ?? {},
+					fetchTransitiveGroupMembership,
+				}
+			: { domainToAdminEmail: {} }),
+	};
+}
+
+/**
+ * Prepares role mapping for API payload; only returned when there is
+ * meaningful content.
+ */
+export function prepareRoleMapping(
+	values: FormValues,
+): AuthtypesRoleMappingDTO | undefined {
+	const roleMapping = values.roleMapping;
+	if (!roleMapping) {
+		return undefined;
+	}
+
+	const { groupMappingsList, ...rest } = roleMapping;
+	const groupMappings = convertGroupMappingsToRecord(groupMappingsList);
+
+	const hasDefaultRole = !!rest.defaultRole;
+	const hasUseRoleAttribute = rest.useRoleAttribute === true;
+	const hasGroupMappings =
+		groupMappings && Object.keys(groupMappings).length > 0;
+
+	if (!hasDefaultRole && !hasUseRoleAttribute && !hasGroupMappings) {
+		return undefined;
+	}
+
+	return {
+		...rest,
+		groupMappings: rest.useRoleAttribute ? undefined : (groupMappings ?? {}),
+	};
+}
+
+/**
+ * Prepares the kind/spec config envelope for API payload; the inverse of
+ * prepareInitialValues.
+ */
+export function prepareConfig(
+	values: FormValues,
+	provider: AuthtypesAuthNProviderDTO | '',
+): AuthtypesAuthDomainConfigDTO | undefined {
+	switch (provider) {
+		case AuthtypesAuthNProviderDTO.saml:
+			return values.samlConfig
+				? {
+						kind: AuthtypesAuthDomainConfigSAMLDTOKind.saml,
+						spec: values.samlConfig,
+					}
+				: undefined;
+		case AuthtypesAuthNProviderDTO.google: {
+			const spec = prepareGoogleAuthConfig(values);
+			return spec
+				? {
+						kind: AuthtypesAuthDomainConfigGoogleDTOKind.google,
+						spec,
+					}
+				: undefined;
+		}
+		case AuthtypesAuthNProviderDTO.oidc:
+			return values.oidcConfig
+				? {
+						kind: AuthtypesAuthDomainConfigOIDCDTOKind.oidc,
+						spec: values.oidcConfig,
+					}
+				: undefined;
+		default:
+			return undefined;
+	}
 }
