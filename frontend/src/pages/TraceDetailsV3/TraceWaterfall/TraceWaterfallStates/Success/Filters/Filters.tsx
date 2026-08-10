@@ -17,7 +17,6 @@ import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
-import { saveRecentQueryByExpression } from 'lib/recentQueries/saveRecentQuery';
 import { uniqBy } from 'lodash-es';
 import NozButton from 'pages/TraceDetailsV3/TraceDetailsHeader/NozButton';
 import CopyButton from 'periscope/components/CopyButton/CopyButton';
@@ -134,7 +133,6 @@ function Filters({
 	// onRun fires on Ctrl+Enter
 	const handleRunQuery = useCallback(
 		(value: string): void => {
-			saveRecentQueryByExpression(DataSource.TRACES, value);
 			runQuery(value);
 		},
 		[runQuery],
@@ -142,7 +140,6 @@ function Filters({
 
 	// Run query on blur (click outside the filter input)
 	const handleBlur = useCallback((): void => {
-		saveRecentQueryByExpression(DataSource.TRACES, expressionRef.current);
 		runQuery(expressionRef.current);
 	}, [runQuery]);
 
