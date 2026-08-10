@@ -41,7 +41,7 @@ function FlowSelector({ value, onChange }: FlowSelectorProps): JSX.Element {
 						color="muted"
 						className={styles.flowRadioDesc}
 					>
-						Deploy your own OTel Collector and configure log sinks.
+						Deploy your own OTel Collector.
 					</Typography.Text>
 				</RadioGroupItem>
 
