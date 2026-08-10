@@ -1,5 +1,3 @@
-"""Fixtures and helpers for role tests."""
-
 import json
 from collections.abc import Callable
 from http import HTTPStatus

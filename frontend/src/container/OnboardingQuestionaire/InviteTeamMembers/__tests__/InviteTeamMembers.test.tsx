@@ -166,8 +166,8 @@ describe('InviteTeamMembers', () => {
 				{ email: 'user2@test.com', success: true },
 			];
 			const mockRows: InviteMemberRow[] = [
-				{ id: 'row-1', email: 'user1@test.com', roleId: 'role-viewer-id' },
-				{ id: 'row-2', email: 'user2@test.com', roleId: 'role-editor-id' },
+				{ id: 'row-1', email: 'user1@test.com', roleIds: ['role-viewer-id'] },
+				{ id: 'row-2', email: 'user2@test.com', roleIds: ['role-editor-id'] },
 			];
 			mockInviteMembersProps?.onSuccess?.(mockResults, mockRows);
 
@@ -177,14 +177,14 @@ describe('InviteTeamMembers', () => {
 					teamMembers: [
 						{
 							email: 'user1@test.com',
-							role: 'VIEWER',
+							roles: ['VIEWER'],
 							name: '',
 							frontendBaseUrl: 'http://localhost:3301',
 							id: 'row-1',
 						},
 						{
 							email: 'user2@test.com',
-							role: 'EDITOR',
+							roles: ['EDITOR'],
 							name: '',
 							frontendBaseUrl: 'http://localhost:3301',
 							id: 'row-2',
@@ -211,8 +211,8 @@ describe('InviteTeamMembers', () => {
 				{ email: 'user2@test.com', success: false, error: 'Already exists' },
 			];
 			const mockRows: InviteMemberRow[] = [
-				{ id: 'row-1', email: 'user1@test.com', roleId: 'role-viewer-id' },
-				{ id: 'row-2', email: 'user2@test.com', roleId: 'role-admin-id' },
+				{ id: 'row-1', email: 'user1@test.com', roleIds: ['role-viewer-id'] },
+				{ id: 'row-2', email: 'user2@test.com', roleIds: ['role-admin-id'] },
 			];
 			mockInviteMembersProps?.onPartialSuccess?.(mockResults, mockRows);
 
@@ -222,14 +222,14 @@ describe('InviteTeamMembers', () => {
 					teamMembers: [
 						{
 							email: 'user1@test.com',
-							role: 'VIEWER',
+							roles: ['VIEWER'],
 							name: '',
 							frontendBaseUrl: 'http://localhost:3301',
 							id: 'row-1',
 						},
 						{
 							email: 'user2@test.com',
-							role: 'ADMIN',
+							roles: ['ADMIN'],
 							name: '',
 							frontendBaseUrl: 'http://localhost:3301',
 							id: 'row-2',
@@ -252,8 +252,8 @@ describe('InviteTeamMembers', () => {
 				{ email: 'user2@test.com', success: false, error: 'Error 2' },
 			];
 			const mockRows: InviteMemberRow[] = [
-				{ id: 'row-1', email: 'user1@test.com', roleId: 'role-editor-id' },
-				{ id: 'row-2', email: 'user2@test.com', roleId: 'role-viewer-id' },
+				{ id: 'row-1', email: 'user1@test.com', roleIds: ['role-editor-id'] },
+				{ id: 'row-2', email: 'user2@test.com', roleIds: ['role-viewer-id'] },
 			];
 			mockInviteMembersProps?.onAllFailed?.(mockResults, mockRows);
 
@@ -263,14 +263,14 @@ describe('InviteTeamMembers', () => {
 					teamMembers: [
 						{
 							email: 'user1@test.com',
-							role: 'EDITOR',
+							roles: ['EDITOR'],
 							name: '',
 							frontendBaseUrl: 'http://localhost:3301',
 							id: 'row-1',
 						},
 						{
 							email: 'user2@test.com',
-							role: 'VIEWER',
+							roles: ['VIEWER'],
 							name: '',
 							frontendBaseUrl: 'http://localhost:3301',
 							id: 'row-2',
