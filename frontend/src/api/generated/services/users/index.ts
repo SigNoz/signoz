@@ -255,9 +255,10 @@ export const useCreateInvite = <
 };
 /**
  * This endpoint resets the password by token
+ * @deprecated
  * @summary Reset password
  */
-export const resetPassword = (
+export const resetPasswordDeprecated = (
 	typesPostableResetPasswordDTO?: BodyType<TypesPostableResetPasswordDTO>,
 	signal?: AbortSignal,
 ) => {
@@ -270,23 +271,23 @@ export const resetPassword = (
 	});
 };
 
-export const getResetPasswordMutationOptions = <
+export const getResetPasswordDeprecatedMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof resetPassword>>,
+		Awaited<ReturnType<typeof resetPasswordDeprecated>>,
 		TError,
 		{ data?: BodyType<TypesPostableResetPasswordDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
-	Awaited<ReturnType<typeof resetPassword>>,
+	Awaited<ReturnType<typeof resetPasswordDeprecated>>,
 	TError,
 	{ data?: BodyType<TypesPostableResetPasswordDTO> },
 	TContext
 > => {
-	const mutationKey = ['resetPassword'];
+	const mutationKey = ['resetPasswordDeprecated'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -296,45 +297,47 @@ export const getResetPasswordMutationOptions = <
 		: { mutation: { mutationKey } };
 
 	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof resetPassword>>,
+		Awaited<ReturnType<typeof resetPasswordDeprecated>>,
 		{ data?: BodyType<TypesPostableResetPasswordDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
-		return resetPassword(data);
+		return resetPasswordDeprecated(data);
 	};
 
 	return { mutationFn, ...mutationOptions };
 };
 
-export type ResetPasswordMutationResult = NonNullable<
-	Awaited<ReturnType<typeof resetPassword>>
+export type ResetPasswordDeprecatedMutationResult = NonNullable<
+	Awaited<ReturnType<typeof resetPasswordDeprecated>>
 >;
-export type ResetPasswordMutationBody =
+export type ResetPasswordDeprecatedMutationBody =
 	| BodyType<TypesPostableResetPasswordDTO>
 	| undefined;
-export type ResetPasswordMutationError = ErrorType<RenderErrorResponseDTO>;
+export type ResetPasswordDeprecatedMutationError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
+ * @deprecated
  * @summary Reset password
  */
-export const useResetPassword = <
+export const useResetPasswordDeprecated = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof resetPassword>>,
+		Awaited<ReturnType<typeof resetPasswordDeprecated>>,
 		TError,
 		{ data?: BodyType<TypesPostableResetPasswordDTO> },
 		TContext
 	>;
 }): UseMutationResult<
-	Awaited<ReturnType<typeof resetPassword>>,
+	Awaited<ReturnType<typeof resetPasswordDeprecated>>,
 	TError,
 	{ data?: BodyType<TypesPostableResetPasswordDTO> },
 	TContext
 > => {
-	return useMutation(getResetPasswordMutationOptions(options));
+	return useMutation(getResetPasswordDeprecatedMutationOptions(options));
 };
 /**
  * This endpoint lists all users
@@ -592,6 +595,89 @@ export const useForgotPassword = <
 	TContext
 > => {
 	return useMutation(getForgotPasswordMutationOptions(options));
+};
+/**
+ * This endpoint resets the password using a single use reset password token
+ * @summary Reset password
+ */
+export const resetPassword = (
+	typesPostableResetPasswordDTO?: BodyType<TypesPostableResetPasswordDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v2/factor_password/reset`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: typesPostableResetPasswordDTO,
+		signal,
+	});
+};
+
+export const getResetPasswordMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof resetPassword>>,
+		TError,
+		{ data?: BodyType<TypesPostableResetPasswordDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof resetPassword>>,
+	TError,
+	{ data?: BodyType<TypesPostableResetPasswordDTO> },
+	TContext
+> => {
+	const mutationKey = ['resetPassword'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof resetPassword>>,
+		{ data?: BodyType<TypesPostableResetPasswordDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return resetPassword(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type ResetPasswordMutationResult = NonNullable<
+	Awaited<ReturnType<typeof resetPassword>>
+>;
+export type ResetPasswordMutationBody =
+	| BodyType<TypesPostableResetPasswordDTO>
+	| undefined;
+export type ResetPasswordMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Reset password
+ */
+export const useResetPassword = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof resetPassword>>,
+		TError,
+		{ data?: BodyType<TypesPostableResetPasswordDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof resetPassword>>,
+	TError,
+	{ data?: BodyType<TypesPostableResetPasswordDTO> },
+	TContext
+> => {
+	return useMutation(getResetPasswordMutationOptions(options));
 };
 /**
  * This endpoint verifies whether a reset password token exists and is not expired
