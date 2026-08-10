@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"log/slog"
 
 	"github.com/uptrace/bun"
@@ -71,7 +70,7 @@ type fixSpec struct {
 	Display        fixDisplay          `json:"display"`
 }
 
-// fixData mirror SavedViewData
+// fixData mirrors savedviewtypes.SavedViewData.
 type fixData struct {
 	SchemaVersion string  `json:"schemaVersion"`
 	Spec          fixSpec `json:"spec"`
@@ -104,29 +103,40 @@ func (migration *fixSavedViewSelectedFields) Up(ctx context.Context, db *bun.DB)
 		return err
 	}
 
-	var repaired, replaced int
+	var repaired, deleted int
 	for _, row := range rows {
-		// already scans cleanly as-is -- nothing to repair.
-		if err := json.Unmarshal([]byte(row.Data), new(fixData)); err == nil {
+		fixedData, blanked, ok := repairSavedViewData(row.Data)
+		if ok && len(blanked) == 0 {
+			// already scans cleanly field-by-field -- nothing to repair. Note
+			// this must go through the same strict, per-field check repairSavedViewData
+			// uses, not a loose json.Unmarshal(row.Data, new(fixData)): Go's decoder
+			// happily accepts the legacy {"query":"select 1"} shape into queryEnvelope
+			// as a zero-valued {Type:"", Spec:nil} without erroring, which would make
+			// a loose top-level check skip exactly the rows this migration exists to fix.
+			continue
+		}
+		if !ok {
+			// unrepairable: the row already 500s on every read today, so there's
+			// nothing usable to preserve under a fake name. Log the raw bytes for
+			// forensics, then delete outright rather than leaving a placeholder
+			// row that would show up in ListSavedViews looking like a real view.
+			migration.settings.Logger.WarnContext(ctx, "saved view data could not be repaired field-by-field, deleting the row", slog.String("saved_view_id", row.ID), slog.String("raw_data", row.Data))
+			if _, err := tx.NewDelete().Model((*storableSavedViewData)(nil)).Where("id = ?", row.ID).Exec(ctx); err != nil {
+				return err
+			}
+			deleted++
 			continue
 		}
 
-		fixedData, blanked, ok := repairSavedViewData(row.Data)
-		if !ok {
-			fixedData = placeholderSavedViewData(row.ID)
-			replaced++
-			migration.settings.Logger.WarnContext(ctx, "saved view data could not be repaired field-by-field, replacing with a placeholder view", slog.String("saved_view_id", row.ID))
-		} else {
-			repaired++
-			migration.settings.Logger.WarnContext(ctx, "repaired saved view data by blanking fields that failed to unmarshal", slog.String("saved_view_id", row.ID), slog.Any("fields_blanked", blanked))
-		}
+		repaired++
+		migration.settings.Logger.WarnContext(ctx, "repaired saved view data by blanking fields that failed to unmarshal", slog.String("saved_view_id", row.ID), slog.Any("fields_blanked", blanked))
 
 		if _, err := tx.NewUpdate().Model((*storableSavedViewData)(nil)).Set("data = ?", fixedData).Where("id = ?", row.ID).Exec(ctx); err != nil {
 			return err
 		}
 	}
 
-	migration.settings.Logger.InfoContext(ctx, "checked saved views for unreadable data", slog.Int("total", len(rows)), slog.Int("repaired", repaired), slog.Int("replaced", replaced))
+	migration.settings.Logger.InfoContext(ctx, "checked saved views for unreadable data", slog.Int("total", len(rows)), slog.Int("repaired", repaired), slog.Int("deleted", deleted))
 
 	return tx.Commit()
 }
@@ -206,24 +216,4 @@ func repairSavedViewData(data string) (fixed string, blanked []string, ok bool) 
 	}
 
 	return string(fixedData), blanked, true
-}
-
-// placeholderSavedViewData is substituted whole when a row can't be repaired
-// field-by-field (data/spec aren't JSON objects at all, or repair still
-// doesn't unmarshal cleanly). It must itself always unmarshal cleanly, since
-// every Get/List reads saved_view.data straight into savedviewtypes.SavedViewData
-// -- leaving genuinely-unrepairable data in place would 500 on every future read.
-func placeholderSavedViewData(id string) string {
-	data, err := json.Marshal(fixData{
-		SchemaVersion: "v2",
-		Spec: fixSpec{
-			DisplayName: fmt.Sprintf("corrupted saved view %s", id),
-			PanelType:   "table",
-		},
-	})
-	if err != nil {
-		// marshalling a static, well-formed literal cannot fail.
-		panic(err)
-	}
-	return string(data)
 }
