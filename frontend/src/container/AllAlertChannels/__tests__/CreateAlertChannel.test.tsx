@@ -1,6 +1,9 @@
 import CreateAlertChannels from 'container/CreateAlertChannels';
 import { ChannelType } from 'container/CreateAlertChannels/config';
-import { GoogleChatInitialConfig } from 'container/CreateAlertChannels/defaults';
+import {
+	GoogleChatInitialConfig,
+	JiraInitialConfig,
+} from 'container/CreateAlertChannels/defaults';
 import {
 	googleChatDescriptionDefaultValue,
 	googleChatTitleDefaultValue,
@@ -602,6 +605,8 @@ describe('Create Alert Channel', () => {
 							site: validSite,
 							project: 'KAN',
 							issue_type: 'Task',
+							summary: JiraInitialConfig.summary,
+							description: JiraInitialConfig.description,
 							send_resolved: true,
 							http_config: {
 								basic_auth: { username: 'me@acme.com', password: 'tok123' },

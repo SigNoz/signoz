@@ -143,6 +143,10 @@ export interface JiraChannel extends Channel {
 	site?: string;
 	project?: string;
 	issue_type?: string;
+	// issue title template
+	summary?: string;
+	// issue body template, rendered to rich text server-side
+	description?: string;
 	// basic auth: username is the Atlassian account email, password is the API token
 	username?: string;
 	password?: string;

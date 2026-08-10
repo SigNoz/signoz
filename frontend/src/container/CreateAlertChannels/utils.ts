@@ -73,6 +73,12 @@ export const prepareJiraRequest = (
 		},
 	};
 
+	if (config.summary) {
+		jira.summary = config.summary;
+	}
+	if (config.description) {
+		jira.description = config.description;
+	}
 	if (config.priority) {
 		jira.priority = config.priority;
 	}

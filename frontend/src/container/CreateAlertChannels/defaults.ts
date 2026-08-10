@@ -48,10 +48,21 @@ export const GoogleChatInitialConfig: Partial<GoogleChatChannel> = {
 {{ end }}`,
 };
 
-// The Jira issue body (ADF) is built server-side, so there are no title / text
-// templates to prefill here; only the required issue type gets a sensible default.
+// mirrors DefaultJiraSummaryTemplate / DefaultJiraDescriptionTemplate in
+// pkg/types/alertmanagertypes/jira.go, which the backend applies when the
+// summary / description are left empty. The description is markdown here and is
+// wrapped in the ADF status panel + deep-links server-side.
 export const JiraInitialConfig: Partial<JiraChannel> = {
 	issue_type: 'Task',
+	summary: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`,
+	description: `{{ range .Alerts -}}
+**Alert:** {{ .Labels.alertname }}{{ if .Labels.severity }} ({{ .Labels.severity }}){{ end }}
+{{ if .Annotations.summary }}
+**Summary:** {{ .Annotations.summary }}
+{{ end }}{{ if .Annotations.description }}
+**Description:** {{ .Annotations.description }}
+{{ end }}
+{{ end }}`,
 };
 
 export const PagerInitialConfig: Partial<PagerChannel> = {

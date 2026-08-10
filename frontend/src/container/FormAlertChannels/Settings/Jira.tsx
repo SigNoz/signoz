@@ -159,6 +159,30 @@ function JiraSettings({ setSelectedConfig }: JiraProps): JSX.Element {
 				/>
 			</Form.Item>
 
+			<Form.Item
+				name="summary"
+				label={t('field_jira_summary')}
+				help={t('help_jira_summary')}
+			>
+				<Input.TextArea
+					rows={2}
+					onChange={(event): void => update({ summary: event.target.value })}
+					data-testid="jira-summary-textarea"
+				/>
+			</Form.Item>
+
+			<Form.Item
+				name="description"
+				label={t('field_jira_description')}
+				help={t('help_jira_description')}
+			>
+				<Input.TextArea
+					rows={6}
+					onChange={(event): void => update({ description: event.target.value })}
+					data-testid="jira-description-textarea"
+				/>
+			</Form.Item>
+
 			<Collapse
 				ghost
 				items={[
