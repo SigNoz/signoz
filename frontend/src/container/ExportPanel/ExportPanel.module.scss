@@ -1,0 +1,42 @@
+.body {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.label {
+	font-size: 12px;
+	color: var(--l2-foreground);
+}
+
+.dashboardSelect {
+	width: 100%;
+}
+
+.newDashboard {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding-top: 16px;
+	border-top: 1px solid var(--l2-border);
+}
+
+.hint {
+	font-size: 13px;
+	color: var(--l2-foreground);
+}
+
+.footer {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 8px;
+	width: 100%;
+}

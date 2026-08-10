@@ -1,7 +1,7 @@
 import * as roleApi from 'api/generated/services/role';
-import * as useAuthZModule from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { customRoleResponse } from 'mocks-server/__mockdata__/roles';
-import { mockUseAuthZGrantAll } from 'lib/authz/utils/authz-test-utils';
+import { server } from 'mocks-server/server';
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import userEvent from '@testing-library/user-event';
 import { render, screen, within } from 'tests/test-utils';
 
@@ -17,8 +17,16 @@ import {
 	mockPermissionsData,
 } from './testUtils';
 
+async function waitForPageReady(): Promise<void> {
+	// Wait for content to render (after authz check passes)
+	await expect(
+		screen.findByTestId('permission-view-mode'),
+	).resolves.toBeInTheDocument();
+}
+
 async function expandAllCards(): Promise<void> {
 	const user = userEvent.setup();
+	await waitForPageReady();
 	const expandButton = screen.getByTestId('expand-all-button');
 	await user.click(expandButton);
 }
@@ -30,6 +38,7 @@ describe('ViewRolePage - Permission Overview', () => {
 
 	afterEach(() => {
 		jest.restoreAllMocks();
+		server.resetHandlers();
 	});
 
 	it('renders Transaction Groups section label', async () => {
@@ -42,19 +51,21 @@ describe('ViewRolePage - Permission Overview', () => {
 		).resolves.toBeInTheDocument();
 	});
 
-	it('renders permission overview container', () => {
+	it('renders permission overview container', async () => {
 		render(<ViewRolePage />, undefined, {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
+		await waitForPageReady();
 		expect(screen.getByTestId('permission-overview')).toBeInTheDocument();
 	});
 
-	it('shows resource permission cards', () => {
+	it('shows resource permission cards', async () => {
 		render(<ViewRolePage />, undefined, {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
+		await waitForPageReady();
 		expect(
 			screen.getByTestId('resource-section-factor-api-key'),
 		).toBeInTheDocument();
@@ -64,11 +75,12 @@ describe('ViewRolePage - Permission Overview', () => {
 		).toBeInTheDocument();
 	});
 
-	it('displays granted count for each resource', () => {
+	it('displays granted count for each resource', async () => {
 		render(<ViewRolePage />, undefined, {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
+		await waitForPageReady();
 		expect(
 			screen.getByTestId('granted-count-factor-api-key'),
 		).toBeInTheDocument();
@@ -77,16 +89,15 @@ describe('ViewRolePage - Permission Overview', () => {
 
 describe('ViewRolePage - Permission Overview Loading State', () => {
 	beforeEach(() => {
-		jest
-			.spyOn(useAuthZModule, 'useAuthZ')
-			.mockImplementation(mockUseAuthZGrantAll);
+		server.use(setupAuthzAdmin());
 	});
 
 	afterEach(() => {
 		jest.restoreAllMocks();
+		server.resetHandlers();
 	});
 
-	it('shows skeleton when permissions are loading', () => {
+	it('shows skeleton when permissions are loading', async () => {
 		jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
 			data: customRoleResponse,
 			isLoading: false,
@@ -105,22 +116,22 @@ describe('ViewRolePage - Permission Overview Loading State', () => {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
+		await waitForPageReady();
 		expect(screen.getByTestId('permission-overview-loading')).toBeInTheDocument();
 	});
 });
 
 describe('ViewRolePage - Permission Overview Error State', () => {
 	beforeEach(() => {
-		jest
-			.spyOn(useAuthZModule, 'useAuthZ')
-			.mockImplementation(mockUseAuthZGrantAll);
+		server.use(setupAuthzAdmin());
 	});
 
 	afterEach(() => {
 		jest.restoreAllMocks();
+		server.resetHandlers();
 	});
 
-	it('shows error when permissions fail to load', () => {
+	it('shows error when permissions fail to load', async () => {
 		jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
 			data: customRoleResponse,
 			isLoading: false,
@@ -139,19 +150,19 @@ describe('ViewRolePage - Permission Overview Error State', () => {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
+		await waitForPageReady();
 		expect(screen.getByTestId('permission-overview-error')).toBeInTheDocument();
 	});
 });
 
 describe('ViewRolePage - Scope: ALL permissions', () => {
 	beforeEach(() => {
-		jest
-			.spyOn(useAuthZModule, 'useAuthZ')
-			.mockImplementation(mockUseAuthZGrantAll);
+		server.use(setupAuthzAdmin());
 	});
 
 	afterEach(() => {
 		jest.restoreAllMocks();
+		server.resetHandlers();
 	});
 
 	it('shows "All" badge for actions with ALL scope', async () => {
@@ -182,7 +193,7 @@ describe('ViewRolePage - Scope: ALL permissions', () => {
 		expect(screen.getByTestId('scope-badge-create')).toHaveTextContent('All');
 	});
 
-	it('shows full granted count when all actions are ALL', () => {
+	it('shows full granted count when all actions are ALL', async () => {
 		mockHooksWithPermissions({
 			...mockPermissionsData,
 			resources: [
@@ -205,6 +216,7 @@ describe('ViewRolePage - Scope: ALL permissions', () => {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
+		await waitForPageReady();
 		expect(screen.getByTestId('granted-count-role')).toHaveTextContent(
 			'3 / 3 granted',
 		);
@@ -212,8 +224,13 @@ describe('ViewRolePage - Scope: ALL permissions', () => {
 });
 
 describe('ViewRolePage - Scope: NONE permissions', () => {
+	beforeEach(() => {
+		server.use(setupAuthzAdmin());
+	});
+
 	afterEach(() => {
 		jest.restoreAllMocks();
+		server.resetHandlers();
 	});
 
 	it('shows "None" badge for actions with NONE scope', async () => {
@@ -244,7 +261,7 @@ describe('ViewRolePage - Scope: NONE permissions', () => {
 		expect(screen.getByTestId('scope-badge-delete')).toHaveTextContent('None');
 	});
 
-	it('shows zero granted count when all actions are NONE', () => {
+	it('shows zero granted count when all actions are NONE', async () => {
 		mockHooksWithPermissions({
 			...mockPermissionsData,
 			resources: [
@@ -268,6 +285,7 @@ describe('ViewRolePage - Scope: NONE permissions', () => {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
+		await waitForPageReady();
 		expect(screen.getByTestId('granted-count-factor-api-key')).toHaveTextContent(
 			'0 / 4 granted',
 		);
@@ -275,8 +293,13 @@ describe('ViewRolePage - Scope: NONE permissions', () => {
 });
 
 describe('ViewRolePage - Scope: ONLY_SELECTED permissions', () => {
+	beforeEach(() => {
+		server.use(setupAuthzAdmin());
+	});
+
 	afterEach(() => {
 		jest.restoreAllMocks();
+		server.resetHandlers();
 	});
 
 	it('shows "Only selected" badge with count', async () => {
@@ -340,7 +363,7 @@ describe('ViewRolePage - Scope: ONLY_SELECTED permissions', () => {
 		await expect(screen.findByText('key-def-456')).resolves.toBeInTheDocument();
 	});
 
-	it('counts ONLY_SELECTED as granted in count', () => {
+	it('counts ONLY_SELECTED as granted in count', async () => {
 		mockHooksWithPermissions({
 			...mockPermissionsData,
 			resources: [
@@ -362,6 +385,7 @@ describe('ViewRolePage - Scope: ONLY_SELECTED permissions', () => {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
+		await waitForPageReady();
 		expect(screen.getByTestId('granted-count-serviceaccount')).toHaveTextContent(
 			'1 / 2 granted',
 		);
@@ -408,8 +432,13 @@ describe('ViewRolePage - Scope: ONLY_SELECTED permissions', () => {
 });
 
 describe('ViewRolePage - Mixed permission scopes', () => {
+	beforeEach(() => {
+		server.use(setupAuthzAdmin());
+	});
+
 	afterEach(() => {
 		jest.restoreAllMocks();
+		server.resetHandlers();
 	});
 
 	it('renders all three scope types in single resource card', async () => {
@@ -458,7 +487,7 @@ describe('ViewRolePage - Mixed permission scopes', () => {
 		);
 	});
 
-	it('renders multiple resources with different scope combinations', () => {
+	it('renders multiple resources with different scope combinations', async () => {
 		mockHooksWithPermissions({
 			...mockPermissionsData,
 			resources: [
@@ -502,6 +531,7 @@ describe('ViewRolePage - Mixed permission scopes', () => {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
+		await waitForPageReady();
 		expect(screen.getByTestId('granted-count-factor-api-key')).toHaveTextContent(
 			'2 / 2 granted',
 		);
@@ -515,8 +545,13 @@ describe('ViewRolePage - Mixed permission scopes', () => {
 });
 
 describe('ViewRolePage - Unknown resources', () => {
+	beforeEach(() => {
+		server.use(setupAuthzAdmin());
+	});
+
 	afterEach(() => {
 		jest.restoreAllMocks();
+		server.resetHandlers();
 	});
 
 	it('renders unknown resource with fallback label', async () => {
@@ -540,6 +575,7 @@ describe('ViewRolePage - Unknown resources', () => {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
+		await waitForPageReady();
 		expect(
 			screen.getByTestId('resource-section-future-resource'),
 		).toBeInTheDocument();
@@ -576,7 +612,7 @@ describe('ViewRolePage - Unknown resources', () => {
 		).resolves.toBeInTheDocument();
 	});
 
-	it('handles resource with empty actions', () => {
+	it('handles resource with empty actions', async () => {
 		mockHooksWithPermissions({
 			...mockPermissionsData,
 			resources: [
@@ -595,6 +631,7 @@ describe('ViewRolePage - Unknown resources', () => {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
+		await waitForPageReady();
 		expect(
 			screen.getByTestId('resource-section-empty-resource'),
 		).toBeInTheDocument();
@@ -611,13 +648,15 @@ describe('ViewRolePage - View mode toggle', () => {
 
 	afterEach(() => {
 		jest.restoreAllMocks();
+		server.resetHandlers();
 	});
 
-	it('renders Interactive/JSON toggle', () => {
+	it('renders Interactive/JSON toggle', async () => {
 		render(<ViewRolePage />, undefined, {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
+		await waitForPageReady();
 		expect(screen.getByTestId('permission-view-mode-list')).toBeInTheDocument();
 		expect(screen.getByTestId('permission-view-mode-json')).toBeInTheDocument();
 	});
@@ -629,6 +668,7 @@ describe('ViewRolePage - View mode toggle', () => {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
+		await waitForPageReady();
 		expect(screen.getByTestId('permission-overview')).toBeInTheDocument();
 
 		const jsonToggle = screen.getByTestId('permission-view-mode-json');
@@ -645,6 +685,7 @@ describe('ViewRolePage - JSON Viewer Copy Button', () => {
 
 	afterEach(() => {
 		jest.restoreAllMocks();
+		server.resetHandlers();
 	});
 
 	it('renders copy button in JSON view', async () => {
@@ -654,6 +695,7 @@ describe('ViewRolePage - JSON Viewer Copy Button', () => {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
+		await waitForPageReady();
 		const jsonToggle = screen.getByTestId('permission-view-mode-json');
 		await user.click(jsonToggle);
 
@@ -669,6 +711,7 @@ describe('ViewRolePage - JSON Viewer Copy Button', () => {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
+		await waitForPageReady();
 		const jsonToggle = screen.getByTestId('permission-view-mode-json');
 		await user.click(jsonToggle);
 

@@ -19,7 +19,7 @@ import {
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
-import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
+import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import { getDataTypes } from 'container/LogDetailedView/utils';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import {
@@ -50,7 +50,7 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
-import { popupContainer } from 'utils/selectPopupContainer';
+import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 
 import { FeatureKeys } from '../../../../constants/features';
@@ -95,6 +95,7 @@ function QueryBuilderSearch({
 	disableNavigationShortcuts,
 	entity,
 }: QueryBuilderSearchProps): JSX.Element {
+	const getPopupContainer = useSelectPopupContainer();
 	const { pathname } = useLocation();
 	const isLogsExplorerPage = useMemo(
 		() => pathname === ROUTES.LOGS_EXPLORER,
@@ -397,7 +398,7 @@ function QueryBuilderSearch({
 			<Select
 				data-testid={'qb-search-select'}
 				ref={selectRef}
-				getPopupContainer={popupContainer}
+				getPopupContainer={getPopupContainer}
 				transitionName=""
 				choiceTransitionName=""
 				virtual={false}

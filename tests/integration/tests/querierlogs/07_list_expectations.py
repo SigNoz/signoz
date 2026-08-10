@@ -26,7 +26,23 @@ from fixtures.querier import (
         #         name="A",
         #         limit=1,
         #     ),
-        #     lambda x: _flatten_log(x[2]),
+        #     lambda x: [
+        #         x[2].attributes_bool,
+        #         x[2].attributes_number,
+        #         x[2].attributes_string,
+        #         x[2].body,
+        #         x[2].id,
+        #         x[2].resources_string,
+        #         x[2].scope_name,
+        #         x[2].scope_string,
+        #         x[2].scope_version,
+        #         x[2].severity_number,
+        #         x[2].severity_text,
+        #         x[2].span_id,
+        #         x[2].timestamp,
+        #         x[2].trace_flags,
+        #         x[2].trace_id,
+        #     ],
         #     id="no-select-no-order",
         #     # Behaviour:
         #     # Empty order results in consistent random order
@@ -141,7 +157,23 @@ from fixtures.querier import (
                 limit=1,
                 order=[OrderBy(TelemetryFieldKey("timestamp"), "desc")],
             ),
-            lambda x: _flatten_log(x[3]),
+            lambda x: [
+                x[3].attributes_bool,
+                x[3].attributes_number,
+                x[3].attributes_string,
+                x[3].body,
+                x[3].id,
+                x[3].resources_string,
+                x[3].scope_name,
+                x[3].scope_string,
+                x[3].scope_version,
+                x[3].severity_number,
+                x[3].severity_text,
+                x[3].span_id,
+                x[3].timestamp,
+                x[3].trace_flags,
+                x[3].trace_id,
+            ],
             id="no-select-order-timestamp-desc",
             # Behaviour:
             # AdjustKeys no-op
@@ -259,11 +291,28 @@ from fixtures.querier import (
                 limit=1,
                 order=[OrderBy(TelemetryFieldKey("attribute.timestamp"), "desc")],
             ),
-            lambda x: [],
+            lambda x: [
+                x[0].attributes_bool,
+                x[0].attributes_number,
+                x[0].attributes_string,
+                x[0].body,
+                x[0].id,
+                x[0].resources_string,
+                x[0].scope_name,
+                x[0].scope_string,
+                x[0].scope_version,
+                x[0].severity_number,
+                x[0].severity_text,
+                x[0].span_id,
+                x[0].timestamp,
+                x[0].trace_flags,
+                x[0].trace_id,
+            ],
             id="no-select-order-attr-timestamp-desc",
-            # Behaviour: [BUG]
-            # AdjustKeys logic adjusts key "attribute.timestamp" to "attribute.timestamp:string"
-            # Because of aliasing bug, result is empty
+            # Behaviour:
+            # Order by attribute.timestamp resolves to attributes_string['timestamp'].
+            # x[0] and x[3] share "corrupt_data" (x[1]/x[2] are unset -> ""); desc puts the
+            # "corrupt_data" rows first, x[0] returned by storage order.
         ),
         pytest.param(
             BuilderQuery(
@@ -304,12 +353,12 @@ from fixtures.querier import (
                 order=[OrderBy(TelemetryFieldKey("attribute.timestamp"), "desc")],
                 limit=1,
             ),
-            lambda x: [],  # Because of aliasing bug, this returns no data
+            lambda x: [x[0].id, x[0].timestamp],
             id="select-attr-timestamp-order-attr-timestamp-desc",
-            # Behaviour [BUG - user didn't get what they expected]:
-            # AdjustKeys logic adjusts key "attribute.timestamp" to "attribute.timestamp:string"
-            # Logs stmt builder by default adds timestamp field to select fields and ignores user input timestamp field
-            # Because of Logs stmt builder behaviour, we ran into aliasing bug, result is empty
+            # Behaviour:
+            # Order by attribute.timestamp uses attributes_string['timestamp']; x[0]/x[3] tie
+            # on "corrupt_data" and x[0] is returned. The attribute.timestamp select collapses
+            # to the intrinsic timestamp, so the row projects {id, timestamp}.
         ),
         pytest.param(
             BuilderQuery(
@@ -520,10 +569,24 @@ def test_logs_list_query_timestamp_expectations(
                 order=[OrderBy(TelemetryFieldKey("trace_id"), "desc")],
             ),
             lambda x: [
-                _flatten_log(x[0]),
-                _flatten_log(x[2]),
-                _flatten_log(x[1]),
-                _flatten_log(x[3]),
+                [
+                    log.attributes_bool,
+                    log.attributes_number,
+                    log.attributes_string,
+                    log.body,
+                    log.id,
+                    log.resources_string,
+                    log.scope_name,
+                    log.scope_string,
+                    log.scope_version,
+                    log.severity_number,
+                    log.severity_text,
+                    log.span_id,
+                    log.timestamp,
+                    log.trace_flags,
+                    log.trace_id,
+                ]
+                for log in (x[0], x[2], x[1], x[3])
             ],
             id="no-select-trace-id-order",
             # Justification (expected values and row order):
@@ -540,17 +603,30 @@ def test_logs_list_query_timestamp_expectations(
                 order=[OrderBy(TelemetryFieldKey("attribute.trace_id"), "desc")],
             ),
             lambda x: [
-                [*_flatten_log(x[1])[:14], x[1].attributes_string.get("trace_id", "")],
-                [*_flatten_log(x[2])[:14], x[2].attributes_string.get("trace_id", "")],
-                [*_flatten_log(x[0])[:14], x[0].attributes_string.get("trace_id", "")],
-                [*_flatten_log(x[3])[:14], x[3].attributes_string.get("trace_id", "")],
+                [
+                    log.attributes_bool,
+                    log.attributes_number,
+                    log.attributes_string,
+                    log.body,
+                    log.id,
+                    log.resources_string,
+                    log.scope_name,
+                    log.scope_string,
+                    log.scope_version,
+                    log.severity_number,
+                    log.severity_text,
+                    log.span_id,
+                    log.timestamp,
+                    log.trace_flags,
+                    log.trace_id,
+                ]
+                for log in (x[1], x[2], x[0], x[3])
             ],
             id="no-select-attribute-trace-id-order",
             # Justification (expected values and row order):
-            # attribute.trace_id values: x[0]="", x[1]="2", x[2]="", x[3]=""
-            # Behaviour: [BUG - user didn't get what they expected]
-            # AdjustKeys adjusts "attribute.trace_id" to "attribute.trace_id:string"
-            # Order by attribute.trace_id maps to attributes_string['trace_id']
+            # Order by attribute.trace_id -> attributes_string['trace_id']: x[1]="2" first,
+            # then x[2]/x[0]/x[3] (unset) in storage order. The projected 'trace_id' field is
+            # the intrinsic column (x[1]=""); the attribute "2" lives in attributes_string.
         ),
         pytest.param(
             BuilderQuery(
@@ -580,19 +656,17 @@ def test_logs_list_query_timestamp_expectations(
                 order=[OrderBy(TelemetryFieldKey("attribute.trace_id"), "desc")],
             ),
             lambda x: [
-                [x[1].id, x[1].timestamp, x[1].attributes_string.get("trace_id", "")],
-                [x[2].id, x[2].timestamp, x[2].attributes_string.get("trace_id", "")],
-                [x[0].id, x[0].timestamp, x[0].attributes_string.get("trace_id", "")],
-                [x[3].id, x[3].timestamp, x[3].attributes_string.get("trace_id", "")],
+                [x[1].id, x[1].timestamp, x[1].attributes_string.get("trace_id", None)],
+                [x[2].id, x[2].timestamp, x[2].attributes_string.get("trace_id", None)],
+                [x[0].id, x[0].timestamp, x[0].attributes_string.get("trace_id", None)],
+                [x[3].id, x[3].timestamp, x[3].attributes_string.get("trace_id", None)],
             ],
             id="select-attribute-trace-id-order-attribute-trace-id-desc",
             # Justification (expected values and row order):
             # AdjustKeys: no-op for both select and order, "attribute.trace_id" is a valid attribute key
-            # Field mapping: "attribute.trace_id" → attributes_string["trace_id"]
-            # Values: x[0]="", x[1]="2", x[2]="", x[3]="" (only x[1] has attribute.trace_id set)
-            # Order: attribute.trace_id DESC → x[1]("2") first, then x[2](""), x[0](""), x[3]("") in storage order
-            # Behaviour:
-            # AdjustKeys no-op
+            # Field mapping: attribute.trace_id → multiIf(mapContains(attributes_string,'trace_id'), attributes_string['trace_id'], NULL)
+            # Values: x[1]="2"; x[0]/x[2]/x[3] are absent → None (map-select exists-guard distinguishes absent from "")
+            # Order: attribute.trace_id DESC → x[1]("2") first, then x[2], x[0], x[3] (absent) in storage order
         ),
         pytest.param(
             BuilderQuery(
@@ -742,23 +816,3 @@ def test_logs_list_query_trace_id_expectations(
                 keys = list(data.keys())
                 for i, expected_value in enumerate(expected_row):
                     assert data[keys[i]] == expected_value, f"Row mismatch at key '{keys[i]}': expected {expected_value}, got {data[keys[i]]}"
-
-
-def _flatten_log(log: Logs) -> list[Any]:
-    return [
-        log.attributes_bool,
-        log.attributes_number,
-        log.attributes_string,
-        log.body,
-        log.id,
-        log.resources_string,
-        log.scope_name,
-        log.scope_string,
-        log.scope_version,
-        log.severity_number,
-        log.severity_text,
-        log.span_id,
-        log.timestamp,
-        log.trace_flags,
-        log.trace_id,
-    ]

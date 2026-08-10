@@ -4,7 +4,22 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 )
+
+func errorContains(err error, substr string) bool {
+	j := errors.AsJSON(err)
+	if strings.Contains(j.Message, substr) {
+		return true
+	}
+	for _, e := range j.Errors {
+		if strings.Contains(e.Message, substr) {
+			return true
+		}
+	}
+	return false
+}
 
 // validV1Builder returns a minimal valid v1 builder rule JSON.
 func validV1Builder() string {
@@ -154,12 +169,10 @@ func TestValidate_PostableRule_Common(t *testing.T) {
 			errSubstr: "alert",
 		},
 
-		// only "v5" is allowed
+		// only "v5" is allowed; missing/empty defaults to "v5"
 		{
-			name:      "missing version",
-			json:      removeField(validV1Builder(), "version"),
-			wantErr:   true,
-			errSubstr: "version",
+			name: "missing version defaults to v5",
+			json: removeField(validV1Builder(), "version"),
 		},
 		{
 			name:      "wrong version v4",
@@ -174,10 +187,8 @@ func TestValidate_PostableRule_Common(t *testing.T) {
 			errSubstr: "version",
 		},
 		{
-			name:      "empty version",
-			json:      patchJSON(validV1Builder(), `{"version": ""}`),
-			wantErr:   true,
-			errSubstr: "version",
+			name: "empty version defaults to v5",
+			json: patchJSON(validV1Builder(), `{"version": ""}`),
 		},
 
 		// alert type, capital case to avoid breaking changes
@@ -494,7 +505,7 @@ func TestValidate_PostableRule_Common(t *testing.T) {
 			if tt.wantErr {
 				if err == nil {
 					t.Errorf("expected error containing %q, got nil", tt.errSubstr)
-				} else if tt.errSubstr != "" && !strings.Contains(err.Error(), tt.errSubstr) {
+				} else if tt.errSubstr != "" && !errorContains(err, tt.errSubstr) {
 					t.Errorf("expected error containing %q, got: %v", tt.errSubstr, err)
 				}
 			} else {
@@ -687,7 +698,7 @@ func TestValidate_V1_ConditionFields(t *testing.T) {
 			if tt.wantErr {
 				if validateErr == nil {
 					t.Errorf("expected Validate() error containing %q, got nil", tt.errSubstr)
-				} else if tt.errSubstr != "" && !strings.Contains(validateErr.Error(), tt.errSubstr) {
+				} else if tt.errSubstr != "" && !errorContains(validateErr, tt.errSubstr) {
 					t.Errorf("expected error containing %q, got: %v", tt.errSubstr, validateErr)
 				}
 			} else {
@@ -1029,7 +1040,7 @@ func TestValidate_V2Alpha1(t *testing.T) {
 			if tt.wantErr {
 				if err == nil {
 					t.Errorf("expected error containing %q, got nil", tt.errSubstr)
-				} else if tt.errSubstr != "" && !strings.Contains(err.Error(), tt.errSubstr) {
+				} else if tt.errSubstr != "" && !errorContains(err, tt.errSubstr) {
 					t.Errorf("expected error containing %q, got: %v", tt.errSubstr, err)
 				}
 			} else {
@@ -1337,7 +1348,7 @@ func TestValidate_MultipleErrors(t *testing.T) {
 			t.Fatal("expected unmarshal error for wrong version")
 		}
 		// The error should mention version
-		if !strings.Contains(err.Error(), "version") {
+		if !errorContains(err, "version") {
 			t.Errorf("expected error to mention version, got: %v", err)
 		}
 	})
@@ -1355,10 +1366,9 @@ func TestValidate_MultipleErrors(t *testing.T) {
 		if validateErr == nil {
 			t.Fatal("expected Validate() error")
 		}
-		errStr := validateErr.Error()
 		// Should contain errors for thresholds, evaluation, notificationSettings
 		for _, substr := range []string{"evaluation", "notificationSettings"} {
-			if !strings.Contains(errStr, substr) {
+			if !errorContains(validateErr, substr) {
 				t.Errorf("expected error to mention %q, got: %v", substr, validateErr)
 			}
 		}
@@ -1469,7 +1479,7 @@ func TestValidate_V2Alpha1_CumulativeEvaluation(t *testing.T) {
 			if tt.wantErr {
 				if err == nil {
 					t.Errorf("expected error containing %q, got nil", tt.errSubstr)
-				} else if !strings.Contains(err.Error(), tt.errSubstr) {
+				} else if !errorContains(err, tt.errSubstr) {
 					t.Errorf("expected error containing %q, got: %v", tt.errSubstr, err)
 				}
 			} else if err != nil {

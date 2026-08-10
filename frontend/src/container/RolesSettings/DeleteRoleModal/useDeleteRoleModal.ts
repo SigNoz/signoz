@@ -13,7 +13,6 @@ import APIError from 'types/api/error';
 interface UseDeleteRoleModalProps {
 	roleId?: string | null;
 	isManaged: boolean;
-	hasDeletePermission: boolean;
 	onDeleteSuccess?: () => void;
 }
 
@@ -31,7 +30,7 @@ interface UseDeleteRoleModalResult {
 export function useDeleteRoleModal(
 	props: UseDeleteRoleModalProps,
 ): UseDeleteRoleModalResult {
-	const { roleId, isManaged, hasDeletePermission, onDeleteSuccess } = props;
+	const { roleId, isManaged, onDeleteSuccess } = props;
 	const queryClient = useQueryClient();
 
 	const [deleteTargetRoleId, setDeleteTargetRoleId] = useState<string | null>(
@@ -79,10 +78,8 @@ export function useDeleteRoleModal(
 
 	const isDeleteModalOpen = deleteTargetRoleId !== null;
 
-	const isDeleteDisabled = isManaged || !hasDeletePermission;
-	const deleteDisabledReason = isManaged
-		? 'Managed roles cannot be deleted'
-		: 'You do not have permission to delete this role';
+	const isDeleteDisabled = isManaged;
+	const deleteDisabledReason = 'Managed roles cannot be deleted';
 
 	return {
 		isDeleteModalOpen,

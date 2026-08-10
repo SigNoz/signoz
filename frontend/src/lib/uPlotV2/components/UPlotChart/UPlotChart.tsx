@@ -127,6 +127,15 @@ export default function UPlotChart({
 	}, [isDataEmpty, destroyPlot]);
 
 	/**
+	 * Destroy the plot on unmount. Without this, uPlot's window-level
+	 * `dppxchange` listener keeps the instance (and its whole detached DOM
+	 * subtree) alive after the component is gone.
+	 */
+	const destroyPlotRef = useRef(destroyPlot);
+	destroyPlotRef.current = destroyPlot;
+	useEffect(() => (): void => destroyPlotRef.current(), []);
+
+	/**
 	 * Handle initialization and prop changes
 	 */
 	useEffect(() => {

@@ -33,7 +33,8 @@
 		color: var(--foreground);
 		letter-spacing: -0.07px;
 		line-height: var(--paragraph-base-400-line-height);
-		margin: 0;
+		margin-bottom: var(--spacing-8);
+		margin-top: 0;
 	}
 
 	&__controls {

@@ -1,30 +1,57 @@
-import { Tooltip } from 'antd';
-import { TableColumnDef } from 'components/TanStackTableView';
-import TanStackTable from 'components/TanStackTableView';
+import { Container } from '@signozhq/icons';
+import { Badge } from '@signozhq/ui/badge';
+import {
+	InframonitoringtypesPodRecordDTO,
+	InframonitoringtypesPodStatusDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 
+import ColumnHeader from '../Base/ColumnHeader';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
-import { formatBytes } from '../commonUtils';
-import { EntityProgressBar, ValidateColumnValueWrapper } from '../components';
-import { InfraMonitoringEntity } from '../constants';
-import { K8sPodsData } from './api';
-import { Container } from '@signozhq/icons';
+import {
+	formatBytes,
+	getPodStatusItems,
+	POD_STATUS_COLORS,
+} from '../commonUtils';
+import {
+	EntityProgressBar,
+	EntityProgressThresholds,
+	GroupedStatusCounts,
+	TextNoData,
+	ValidateColumnValueWrapper,
+} from '../components';
+import {
+	INFRA_MONITORING_ATTR_KEYS,
+	InfraMonitoringEntity,
+} from '../constants';
+import { formatAge } from 'utils/timeUtils';
 
-export function getK8sPodRowKey(pod: K8sPodsData): string {
-	return pod.podUID || pod.meta.k8s_pod_uid || pod.meta.k8s_pod_name;
+export function getK8sPodRowKey(pod: InframonitoringtypesPodRecordDTO): string {
+	return (
+		pod.podUID ||
+		pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_UID] ||
+		pod.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] ||
+		''
+	);
 }
 
-export function getK8sPodItemKey(pod: K8sPodsData): string {
+export function getK8sPodItemKey(
+	pod: InframonitoringtypesPodRecordDTO,
+): string {
 	return pod.podUID;
 }
 
-export const k8sPodColumnsConfig: TableColumnDef<K8sPodsData>[] = [
+export type PodTableColumnConfig =
+	TableColumnDef<InframonitoringtypesPodRecordDTO>;
+export const k8sPodColumnsConfig: PodTableColumnConfig[] = [
 	{
 		id: 'podGroup',
-		header: (): React.ReactNode => <EntityGroupHeader title="POD GROUP" />,
-		accessorFn: (row): string => row.meta.k8s_pod_name || '',
-		width: { min: 300 },
+		header: (): React.ReactNode => <EntityGroupHeader title="Pod Group" />,
+		accessorFn: (row): string =>
+			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
+		width: { min: 290 },
 		enableSort: false,
 		enableRemove: false,
 		enableMove: false,
@@ -42,134 +69,277 @@ export const k8sPodColumnsConfig: TableColumnDef<K8sPodsData>[] = [
 		},
 	},
 	{
-		id: 'podName',
+		id: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME,
 		header: (): React.ReactNode => (
 			<EntityGroupHeader
 				title="Pod Name"
 				icon={<Container data-hide-expanded="true" size={14} />}
+				docPath="/infrastructure-monitoring/kubernetes/pods#pod-name"
 			/>
 		),
-		accessorFn: (row): string => row.meta.k8s_pod_name || '',
+		accessorFn: (row): string =>
+			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 		width: { min: 290 },
-		enableSort: false,
+		enableSort: true,
 		enableRemove: false,
 		enableMove: false,
 		pin: 'left',
 		visibilityBehavior: 'hidden-on-expand',
-		cell: ({ value }): React.ReactNode => {
-			const podName = value as string;
+		cell: ({ value }): React.ReactNode => (
+			<TanStackTable.Text>{value}</TanStackTable.Text>
+		),
+	},
+	{
+		id: 'podStatus',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#pod-status">
+				Status
+			</ColumnHeader>
+		),
+		accessorFn: (row): string => row.podStatus,
+		width: { min: 250 },
+		enableSort: false,
+		visibilityBehavior: 'hidden-on-expand',
+		cell: ({ row }): React.ReactNode => {
+			if (!row.podStatus) {
+				return <></>;
+			}
+
+			if (row.podStatus === InframonitoringtypesPodStatusDTO.no_data) {
+				return <TextNoData type="tanstack" />;
+			}
+
+			const color = POD_STATUS_COLORS[row.podStatus] || POD_STATUS_COLORS.unknown;
+			const label = row.podStatus.charAt(0).toUpperCase() + row.podStatus.slice(1);
 			return (
-				<Tooltip title={podName}>
-					<TanStackTable.Text>{podName}</TanStackTable.Text>
-				</Tooltip>
+				<Badge color={color} variant="outline">
+					{label}
+				</Badge>
+			);
+		},
+	},
+	{
+		id: 'podCountsByStatus',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#pod-status">
+				Status
+			</ColumnHeader>
+		),
+		accessorFn: (row): InframonitoringtypesPodRecordDTO['podCountsByStatus'] =>
+			row.podCountsByStatus,
+		width: { min: 250 },
+		enableSort: false,
+		visibilityBehavior: 'hidden-on-collapse',
+		cell: ({ row, rowId }): React.ReactNode => {
+			const podCountsByStatus = row.podCountsByStatus;
+			if (!podCountsByStatus) {
+				return <TextNoData type="tanstack" />;
+			}
+			return (
+				<GroupedStatusCounts
+					items={getPodStatusItems(row.podCountsByStatus)}
+					rowId={rowId}
+				/>
+			);
+		},
+	},
+	{
+		id: 'podAge',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#pod-age">
+				Age
+			</ColumnHeader>
+		),
+		accessorFn: (row): number => row.podAge,
+		width: { min: 100 },
+		enableSort: false,
+		cell: ({ value, rowId }): React.ReactNode => {
+			const age = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					rowId={rowId}
+					value={age}
+					entity={InfraMonitoringEntity.PODS}
+					attribute="age"
+				>
+					<TanStackTable.Text>{formatAge(age)}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
+	},
+	{
+		id: 'podRestarts',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#restarts">
+				Restarts
+			</ColumnHeader>
+		),
+		accessorFn: (row): number => row.podRestarts,
+		width: { min: 140 },
+		enableSort: false,
+		cell: ({ value, rowId }): React.ReactNode => {
+			const restarts = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					rowId={rowId}
+					value={restarts}
+					entity={InfraMonitoringEntity.PODS}
+					attribute="Restarts"
+				>
+					<TanStackTable.Text>{restarts}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
 			);
 		},
 	},
 	{
 		id: 'cpu_request',
-		header: 'CPU Req Usage (%)',
+		header: (): React.ReactNode => (
+			<ColumnHeader
+				docPath="/infrastructure-monitoring/kubernetes/pods#cpu-req-usage-"
+				tooltip={<EntityProgressThresholds type="cpu-request" />}
+			>
+				CPU Request Usage (%)
+			</ColumnHeader>
+		),
 		accessorFn: (row): number => row.podCPURequest,
 		width: { min: 210 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		defaultVisibility: false,
+		cell: ({ value, rowId }): React.ReactNode => {
 			const cpuRequest = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={cpuRequest}
 					entity={InfraMonitoringEntity.PODS}
 					attribute="CPU Request"
 				>
-					<EntityProgressBar value={cpuRequest} type="request" />
+					<EntityProgressBar value={cpuRequest} type="cpu-request" />
 				</ValidateColumnValueWrapper>
 			);
 		},
 	},
 	{
 		id: 'cpu_limit',
-		header: 'CPU Limit Usage (%)',
+		header: (): React.ReactNode => (
+			<ColumnHeader
+				docPath="/infrastructure-monitoring/kubernetes/pods#cpu-limit-usage-"
+				tooltip={<EntityProgressThresholds type="cpu-limit" />}
+			>
+				CPU Limit Usage (%)
+			</ColumnHeader>
+		),
 		accessorFn: (row): number => row.podCPULimit,
-		width: { min: 210 },
+		width: { min: 220 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const cpuLimit = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={cpuLimit}
 					entity={InfraMonitoringEntity.PODS}
 					attribute="CPU Limit"
 				>
-					<EntityProgressBar value={cpuLimit} type="limit" />
+					<EntityProgressBar value={cpuLimit} type="cpu-limit" />
 				</ValidateColumnValueWrapper>
 			);
 		},
 	},
 	{
 		id: 'cpu',
-		header: 'CPU Usage (cores)',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#cpu-usage-cores">
+				CPU Usage (cores)
+			</ColumnHeader>
+		),
 		accessorFn: (row): number => row.podCPU,
-		width: { min: 210 },
+		width: { min: 160 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
-			const cpu = value as number;
+		cell: ({ value, rowId }): React.ReactNode => {
+			const cpu = Number(value);
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={cpu}
 					entity={InfraMonitoringEntity.PODS}
 					attribute="CPU metric"
 				>
-					<TanStackTable.Text>{cpu}</TanStackTable.Text>
+					<TanStackTable.Text>{cpu.toFixed(2)}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
 		},
 	},
 	{
 		id: 'memory_request',
-		header: 'Mem Req Usage (%)',
+		header: (): React.ReactNode => (
+			<ColumnHeader
+				docPath="/infrastructure-monitoring/kubernetes/pods#mem-req-usage-"
+				tooltip={<EntityProgressThresholds type="memory-request" />}
+			>
+				Memory Request Usage (%)
+			</ColumnHeader>
+		),
 		accessorFn: (row): number => row.podMemoryRequest,
 		width: { min: 210 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		defaultVisibility: false,
+		cell: ({ value, rowId }): React.ReactNode => {
 			const memoryRequest = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={memoryRequest}
 					entity={InfraMonitoringEntity.PODS}
 					attribute="Memory Request"
 				>
-					<EntityProgressBar value={memoryRequest} type="request" />
+					<EntityProgressBar value={memoryRequest} type="memory-request" />
 				</ValidateColumnValueWrapper>
 			);
 		},
 	},
 	{
 		id: 'memory_limit',
-		header: 'Mem Limit Usage (%)',
+		header: (): React.ReactNode => (
+			<ColumnHeader
+				docPath="/infrastructure-monitoring/kubernetes/pods#mem-limit-usage-"
+				tooltip={<EntityProgressThresholds type="memory-limit" />}
+			>
+				Memory Limit Usage (%)
+			</ColumnHeader>
+		),
 		accessorFn: (row): number => row.podMemoryLimit,
-		width: { min: 210 },
+		width: { min: 220 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const memoryLimit = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={memoryLimit}
 					entity={InfraMonitoringEntity.PODS}
 					attribute="Memory Limit"
 				>
-					<EntityProgressBar value={memoryLimit} type="limit" />
+					<EntityProgressBar value={memoryLimit} type="memory-limit" />
 				</ValidateColumnValueWrapper>
 			);
 		},
 	},
 	{
 		id: 'memory',
-		header: 'Mem Usage (WSS)',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#mem-usage-wss">
+				Memory Usage (WSS)
+			</ColumnHeader>
+		),
 		accessorFn: (row): number => row.podMemory,
 		width: { min: 210, default: '100%' },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => {
+		cell: ({ value, rowId }): React.ReactNode => {
 			const memory = value as number;
 			return (
 				<ValidateColumnValueWrapper
+					rowId={rowId}
 					value={memory}
 					entity={InfraMonitoringEntity.PODS}
 					attribute="memory metric"
@@ -181,8 +351,13 @@ export const k8sPodColumnsConfig: TableColumnDef<K8sPodsData>[] = [
 	},
 	{
 		id: 'namespace',
-		header: 'Namespace',
-		accessorFn: (row): string => row.meta.k8s_namespace_name || '',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#additional-columns">
+				Namespace
+			</ColumnHeader>
+		),
+		accessorFn: (row): string =>
+			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 		width: { default: 100 },
 		enableSort: false,
 		defaultVisibility: false,
@@ -192,8 +367,13 @@ export const k8sPodColumnsConfig: TableColumnDef<K8sPodsData>[] = [
 	},
 	{
 		id: 'node',
-		header: 'Node',
-		accessorFn: (row): string => row.meta.k8s_node_name || '',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#additional-columns">
+				Node
+			</ColumnHeader>
+		),
+		accessorFn: (row): string =>
+			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME] || '',
 		width: { default: 100 },
 		enableSort: false,
 		defaultVisibility: false,
@@ -203,8 +383,13 @@ export const k8sPodColumnsConfig: TableColumnDef<K8sPodsData>[] = [
 	},
 	{
 		id: 'cluster',
-		header: 'Cluster',
-		accessorFn: (row): string => row.meta.k8s_cluster_name || '',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath="/infrastructure-monitoring/kubernetes/pods#additional-columns">
+				Cluster
+			</ColumnHeader>
+		),
+		accessorFn: (row): string =>
+			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] || '',
 		width: { default: 100 },
 		enableSort: false,
 		defaultVisibility: false,

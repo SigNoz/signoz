@@ -293,11 +293,6 @@ $max-recents-shown: 5;
 				var(--l2-background)
 			) !important;
 
-			&,
-			.ͼ1a {
-				color: var(--query-builder-v2-color, var(--l2-foreground));
-			}
-
 			::-moz-selection {
 				background: var(
 					--query-builder-v2-selection-background-color,

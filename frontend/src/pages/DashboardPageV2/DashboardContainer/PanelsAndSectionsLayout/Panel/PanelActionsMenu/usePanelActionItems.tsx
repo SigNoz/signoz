@@ -130,7 +130,7 @@ export function usePanelActionItems({
 				key: 'view-panel',
 				label: 'View',
 				icon: <Fullscreen size={14} />,
-				onClick: (): void => openView(panelId),
+				onClick: (): void => openView(panelId, panel),
 			});
 		}
 		if (canEdit && canEditWidget && panelCapabilities.edit) {
@@ -139,7 +139,7 @@ export function usePanelActionItems({
 				label: label('Edit panel'),
 				icon: <PenLine size={14} />,
 				disabled: isLocked,
-				onClick: (): void => openPanelEditor(panelId),
+				onClick: (): void => openPanelEditor(panelId, { panel }),
 			});
 		}
 		if (canEdit && canEditWidget && panelCapabilities.clone) {

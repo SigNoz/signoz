@@ -7,6 +7,7 @@ import { Input } from '@signozhq/ui/input';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { DatePicker } from 'antd';
 import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import {
 	buildAPIKeyDeletePermission,
@@ -59,6 +60,7 @@ function EditKeyForm({
 						<AuthZTooltip
 							checks={[buildAPIKeyUpdatePermission(keyItem?.id ?? '')]}
 							enabled={!!keyItem?.id}
+							withPortal={false}
 						>
 							<div className="edit-key-modal__key-display">
 								<span className="edit-key-modal__id-text">{keyItem?.name || '—'}</span>
@@ -158,38 +160,38 @@ function EditKeyForm({
 			</form>
 
 			<div className="edit-key-modal__footer">
-				<AuthZTooltip
+				<AuthZButton
 					checks={[
 						buildAPIKeyDeletePermission(keyItem?.id ?? ''),
 						buildSADetachPermission(accountId ?? ''),
 					]}
-					enabled={!!accountId && !!keyItem?.id}
+					authZEnabled={!!accountId && !!keyItem?.id}
+					variant="link"
+					color="destructive"
+					onClick={onRevokeClick}
+					withPortal={false}
 				>
-					<Button variant="link" color="destructive" onClick={onRevokeClick}>
-						<Trash2 size={12} />
-						Revoke Key
-					</Button>
-				</AuthZTooltip>
+					<Trash2 size={12} />
+					Revoke Key
+				</AuthZButton>
 				<div className="edit-key-modal__footer-right">
 					<Button variant="solid" color="secondary" onClick={onClose}>
 						<X size={12} />
 						Cancel
 					</Button>
-					<AuthZTooltip
+					<AuthZButton
 						checks={[buildAPIKeyUpdatePermission(keyItem?.id ?? '')]}
-						enabled={!!accountId && !!keyItem?.id}
+						authZEnabled={!!accountId && !!keyItem?.id}
+						type="submit"
+						form={FORM_ID}
+						variant="solid"
+						color="primary"
+						loading={isSaving}
+						disabled={!isDirty}
+						withPortal={false}
 					>
-						<Button
-							type="submit"
-							form={FORM_ID}
-							variant="solid"
-							color="primary"
-							loading={isSaving}
-							disabled={!isDirty}
-						>
-							Save Changes
-						</Button>
-					</AuthZTooltip>
+						Save Changes
+					</AuthZButton>
 				</div>
 			</div>
 		</>

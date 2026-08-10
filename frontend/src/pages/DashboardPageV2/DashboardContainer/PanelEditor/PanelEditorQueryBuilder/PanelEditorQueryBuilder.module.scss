@@ -26,12 +26,7 @@
 		background-color: var(--l1-background) !important;
 	}
 	:global(.ant-tabs-nav) {
-		// Pin the query-type tabs + Run Query button to the top of the
-		// `.container` scroll area while the query body scrolls underneath.
 		// `padding-top` owns the nav's top spacing (moved off `.scrollArea`).
-		position: sticky;
-		top: 0px;
-		z-index: 1100;
 		padding-top: 12px;
 		background-color: var(--l1-background);
 
@@ -39,6 +34,13 @@
 			border-color: var(--l2-border);
 		}
 	}
+}
+
+// Opt-in pin to the top of the scroll area; the View modal opts out (shares a scroll area with its own header).
+.stickyNav :global(.ant-tabs-nav) {
+	position: sticky;
+	top: 0px;
+	z-index: 1100;
 }
 .queryTypeTab {
 	display: flex;

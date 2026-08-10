@@ -1,3 +1,5 @@
+import subprocess
+
 import pytest
 
 pytest_plugins = [
@@ -10,25 +12,47 @@ pytest_plugins = [
     "fixtures.postgres",
     "fixtures.sql",
     "fixtures.sqlite",
-    "fixtures.zookeeper",
+    "fixtures.keeper",
     "fixtures.signoz",
     "fixtures.audit",
     "fixtures.logs",
     "fixtures.traces",
     "fixtures.metrics",
+    "fixtures.queriercommon",
+    "fixtures.metadata",
     "fixtures.meter",
     "fixtures.browser",
     "fixtures.keycloak",
     "fixtures.idp",
+    "fixtures.googleidp",
+    "fixtures.tls",
     "fixtures.notification_channel",
+    "fixtures.maildev",
     "fixtures.alerts",
     "fixtures.cloudintegrations",
     "fixtures.jsontypes",
     "fixtures.seeder",
     "fixtures.serviceaccount",
     "fixtures.role",
+    "fixtures.savedview",
     "fixtures.seed_golden_dataset",
 ]
+
+
+def pytest_configure(config: pytest.Config):
+    if config.getoption("--rebuild"):
+        if not config.getoption("--reuse"):
+            raise pytest.UsageError("--rebuild requires --reuse: it replaces the signoz container within an environment that is being reused.")
+        if config.getoption("--teardown"):
+            raise pytest.UsageError("--rebuild cannot be combined with --teardown.")
+        if config.getoption("--clean"):
+            raise pytest.UsageError("--rebuild cannot be combined with --clean: --clean forces a cold build, which defeats the purpose of --rebuild.")
+
+
+def pytest_sessionstart(session: pytest.Session):
+    if session.config.getoption("--clean"):
+        # The type filter removes only cache mounts, leaving images and layer cache intact.
+        subprocess.run(["docker", "builder", "prune", "--force", "--filter", "type=exec.cachemount"], check=True)
 
 
 def pytest_addoption(parser: pytest.Parser):
@@ -43,6 +67,18 @@ def pytest_addoption(parser: pytest.Parser):
         action="store_true",
         default=False,
         help="Teardown environment. Run pytest --basetemp=./tmp/ -vv --teardown src/bootstrap/setup::test_teardown to teardown your local dev environment.",
+    )
+    parser.addoption(
+        "--rebuild",
+        action="store_true",
+        default=False,
+        help="Rebuild the signoz container from the current sources while reusing the rest of the stack (databases, mocks, migrations). Only meaningful together with --reuse: pytest --basetemp=./tmp/ -vv --reuse --rebuild integration/bootstrap/setup.py::test_setup.",
+    )
+    parser.addoption(
+        "--clean",
+        action="store_true",
+        default=False,
+        help="Prune the BuildKit cache mounts (go build and module caches) used by the signoz image build, forcing the next build to start cold. Combine with --teardown to reset everything: pytest --basetemp=./tmp/ -vv --teardown --clean integration/bootstrap/setup.py::test_teardown.",
     )
     parser.addoption(
         "--with-web",
@@ -63,12 +99,6 @@ def pytest_addoption(parser: pytest.Parser):
         help="sqlite mode",
     )
     parser.addoption(
-        "--sqlite-transaction-mode",
-        action="store",
-        default="deferred",
-        help="sqlite transaction mode",
-    )
-    parser.addoption(
         "--postgres-version",
         action="store",
         default="15",
@@ -77,18 +107,12 @@ def pytest_addoption(parser: pytest.Parser):
     parser.addoption(
         "--clickhouse-version",
         action="store",
-        default="25.5.6",
+        default="25.12.5",
         help="clickhouse version",
-    )
-    parser.addoption(
-        "--zookeeper-version",
-        action="store",
-        default="3.7.1",
-        help="zookeeper version",
     )
     parser.addoption(
         "--schema-migrator-version",
         action="store",
-        default="v0.144.3",
+        default="v0.144.6",
         help="schema migrator version",
     )

@@ -1,167 +1,75 @@
-import React, {
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useQuery } from 'react-query';
-// eslint-disable-next-line no-restricted-imports
-import { Color, Spacing } from '@signozhq/design-tokens';
-import { Button, Drawer, Tooltip } from 'antd';
-import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { useCopyToClipboard } from 'react-use';
+import { Copy, X } from '@signozhq/icons';
 import { Divider } from '@signozhq/ui/divider';
+import { Button } from '@signozhq/ui/button';
+import { DrawerWrapper, DrawerWrapperProps } from '@signozhq/ui/drawer';
+import { toast } from '@signozhq/ui/sonner';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
-import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
+import ErrorContent from 'components/ErrorModal/components/ErrorContent';
+import APIError from 'types/api/error';
 import { InfraMonitoringEvents } from 'constants/events';
-import { QueryParams } from 'constants/query';
 import {
-	initialQueryBuilderFormValuesMap,
-	initialQueryState,
-} from 'constants/queryBuilder';
-import ROUTES from 'constants/routes';
-import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
-import {
-	CustomTimeType,
-	Time,
-} from 'container/TopNav/DateTimeSelectionV2/types';
-import { useIsDarkMode } from 'hooks/useDarkMode';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import GetMinMax from 'lib/getMinMax';
-import {
-	BarChart,
-	ChevronsLeftRight,
-	Compass,
-	DraftingCompass,
-	ScrollText,
-	X,
-} from '@signozhq/icons';
-import { isCustomTimeRange, useGlobalTimeStore } from 'store/globalTime';
-import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import {
-	TagFilter,
-	TagFilterItem,
-} from 'types/api/queryBuilder/queryBuilderData';
-import {
-	LogsAggregatorOperator,
-	TracesAggregatorOperator,
-} from 'types/common/queryBuilder';
-import { openInNewTab } from 'utils/navigation';
-import { v4 as uuidv4 } from 'uuid';
+	GlobalTimeProvider,
+	NANO_SECOND_MULTIPLIER,
+	useGlobalTimeStore,
+} from 'store/globalTime';
 
-import { InfraMonitoringEntity, VIEW_TYPES } from '../constants';
-import EntityEvents from '../EntityDetailsUtils/EntityEvents';
-import EntityLogs from '../EntityDetailsUtils/EntityLogs';
-import { K8S_ENTITY_LOGS_EXPRESSION_KEY } from '../EntityDetailsUtils/EntityLogs/hooks';
-import EntityMetrics from '../EntityDetailsUtils/EntityMetrics';
-import EntityTraces from '../EntityDetailsUtils/EntityTraces';
-import { K8S_ENTITY_TRACES_EXPRESSION_KEY } from '../EntityDetailsUtils/EntityTraces/hooks';
-import {
-	useInfraMonitoringEventsFilters,
-	useInfraMonitoringLogFilters,
-	useInfraMonitoringSelectedItem,
-	useInfraMonitoringTracesFilters,
-	useInfraMonitoringView,
-} from '../hooks';
+import { INFRA_MONITORING_K8S_PARAMS_KEYS } from '../constants';
+import { useInfraMonitoringSelectedItemParams } from '../hooks';
 import LoadingContainer from '../LoadingContainer';
 
-import '../EntityDetailsUtils/entityDetails.styles.scss';
-import { parseAsString, useQueryState } from 'nuqs';
+import K8sBaseDetailsContent from './K8sBaseDetailsContent';
+import { K8sBaseDetailsProps } from './types';
+import { useDrawerLifecycleStore } from './useDrawerLifecycleStore';
 
-const TimeRangeOffset = 1000000000;
+import styles from '../EntityDetailsUtils/entityDetails.module.scss';
+import { INFRA_MONITORING_DETAILS_CACHE_TIME } from 'constants/queryCacheTime';
 
-export interface K8sDetailsMetadataConfig<T> {
-	label: string;
-	getValue: (entity: T) => string | number;
-	render?: (value: string | number, entity: T) => React.ReactNode;
-}
+export type {
+	CustomTab,
+	CustomTabRenderProps,
+	K8sBaseDetailsProps,
+	K8sDetailsCountConfig,
+	K8sDetailsFilters,
+	K8sDetailsMetadataConfig,
+} from './types';
 
-export interface K8sDetailsFilters {
-	filters: TagFilter;
-	start: number;
-	end: number;
-}
+// TODO(H4ad): Improve this on component level
+const DRAWER_TRANSITION = { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] };
+// Be careful when changing these props, this must be animated with transform but later
+// replaced with none, otherwise, the tooltip of the chart will be not positioned correctly
+// due to how the tooltip positioning calculation works
+const DRAWER_MOTION_PROPS = {
+	onOpenAutoFocus: (e: Event): void => e.preventDefault(),
+	initial: { opacity: 0, transform: 'translateX(100%)' },
+	animate: {
+		opacity: 1,
+		transform: 'translateX(0%)',
+		transition: DRAWER_TRANSITION,
+		transitionEnd: { transform: 'none' },
+	},
+	exit: {
+		opacity: 0,
+		transform: 'translateX(100%)',
+		transition: DRAWER_TRANSITION,
+	},
+} as unknown as DrawerWrapperProps['drawerContentProps'];
 
-export interface K8sBaseDetailsProps<T> {
-	category: InfraMonitoringEntity;
-	eventCategory: string;
-	// Data fetching configuration
-	getSelectedItemFilters: (selectedItem: string) => TagFilter;
-	fetchEntityData: (
-		filters: K8sDetailsFilters,
-		signal?: AbortSignal,
-	) => Promise<{ data: T | null; error?: string | null }>;
-	// Entity configuration
-	getEntityName: (entity: T) => string;
-	getInitialLogTracesFilters: (entity: T) => TagFilterItem[];
-	getInitialEventsFilters: (entity: T) => TagFilterItem[];
-	metadataConfig: K8sDetailsMetadataConfig<T>[];
-	entityWidgetInfo: {
-		title: string;
-		yAxisUnit: string;
-	}[];
-	getEntityQueryPayload: (
-		entity: T,
-		start: number,
-		end: number,
-		dotMetricsEnabled: boolean,
-	) => GetQueryResultsProps[];
-	queryKeyPrefix: string;
-	/** When true, only metrics are shown and the Metrics/Logs/Traces/Events tab bar is hidden. */
-	hideDetailViewTabs?: boolean;
-	tabsConfig?: {
-		showMetrics?: boolean;
-		showLogs?: boolean;
-		showTraces?: boolean;
-		showEvents?: boolean;
-	};
-	customTabs?: Array<{
-		key: string;
-		label: string;
-		icon: React.ReactNode;
-		render: (props: {
-			entity: T;
-			timeRange: { startTime: number; endTime: number };
-			selectedInterval: Time;
-			handleTimeChange: (
-				interval: Time | CustomTimeType,
-				dateTimeRange?: [number, number],
-			) => void;
-		}) => React.ReactNode;
-	}>;
-}
-
-export function createFilterItem(
-	key: string,
-	value: string,
-	dataType: DataTypes = DataTypes.String,
-): TagFilterItem {
-	return {
-		id: uuidv4(),
-		key: {
-			key,
-			dataType,
-			type: 'resource',
-			id: `${key}--string--resource--false`,
-		},
-		op: '=',
-		value,
-	};
-}
-
-// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function K8sBaseDetails<T>({
 	category,
 	eventCategory,
-	getSelectedItemFilters,
+	getSelectedItemExpression,
 	fetchEntityData,
 	getEntityName,
-	getInitialLogTracesFilters,
-	getInitialEventsFilters,
+	getInitialLogTracesExpression,
+	getInitialEventsExpression,
 	metadataConfig,
+	countsConfig,
+	getCountsFilterExpression,
 	entityWidgetInfo,
 	getEntityQueryPayload,
 	queryKeyPrefix,
@@ -171,14 +79,13 @@ export default function K8sBaseDetails<T>({
 }: K8sBaseDetailsProps<T>): JSX.Element {
 	const selectedTime = useGlobalTimeStore((s) => s.selectedTime);
 	const getMinMaxTime = useGlobalTimeStore((s) => s.getMinMaxTime);
-	const lastComputedMinMax = useGlobalTimeStore((s) => s.lastComputedMinMax);
 	const getAutoRefreshQueryKey = useGlobalTimeStore(
 		(s) => s.getAutoRefreshQueryKey,
 	);
 
-	const isDarkMode = useIsDarkMode();
-
-	const [selectedItem, setSelectedItem] = useInfraMonitoringSelectedItem();
+	const [selectedItemParams, setSelectedItemParams] =
+		useInfraMonitoringSelectedItemParams();
+	const selectedItem = selectedItemParams.selectedItem;
 
 	const entityQueryKey = useMemo(
 		() =>
@@ -186,8 +93,17 @@ export default function K8sBaseDetails<T>({
 				selectedTime,
 				`${queryKeyPrefix}EntityDetails`,
 				selectedItem,
+				selectedItemParams.clusterName,
+				selectedItemParams.namespaceName,
 			),
-		[queryKeyPrefix, selectedItem, selectedTime, getAutoRefreshQueryKey],
+		[
+			queryKeyPrefix,
+			selectedItem,
+			selectedItemParams.clusterName,
+			selectedItemParams.namespaceName,
+			selectedTime,
+			getAutoRefreshQueryKey,
+		],
 	);
 
 	const {
@@ -201,18 +117,15 @@ export default function K8sBaseDetails<T>({
 			if (!selectedItem) {
 				return { data: null };
 			}
-			const filters = getSelectedItemFilters(selectedItem);
 			const { minTime, maxTime } = getMinMaxTime();
+			const start = Math.floor(minTime / NANO_SECOND_MULTIPLIER);
+			const end = Math.floor(maxTime / NANO_SECOND_MULTIPLIER);
+			const expression = getSelectedItemExpression(selectedItemParams);
 
-			return fetchEntityData(
-				{
-					filters,
-					start: Math.floor(minTime / NANO_SECOND_MULTIPLIER),
-					end: Math.floor(maxTime / NANO_SECOND_MULTIPLIER),
-				},
-				signal,
-			);
+			return fetchEntityData({ filter: { expression }, start, end }, signal);
 		},
+		cacheTime: INFRA_MONITORING_DETAILS_CACHE_TIME,
+		staleTime: INFRA_MONITORING_DETAILS_CACHE_TIME,
 		enabled: !!selectedItem,
 	});
 
@@ -223,83 +136,54 @@ export default function K8sBaseDetails<T>({
 		if (!entity) {
 			return '';
 		}
-		const primaryFiltersOnly = {
-			op: 'AND' as const,
-			items: getInitialLogTracesFilters(entity),
-		};
-		return convertFiltersToExpression(primaryFiltersOnly).expression;
-	}, [entity, getInitialLogTracesFilters]);
+		return getInitialLogTracesExpression(entity);
+	}, [entity, getInitialLogTracesExpression]);
 
 	const eventsInitialExpression = useMemo(() => {
 		if (!entity) {
 			return '';
 		}
-		const primaryFiltersOnly = {
-			op: 'AND' as const,
-			items: getInitialEventsFilters(entity),
-		};
-		return convertFiltersToExpression(primaryFiltersOnly).expression;
-	}, [entity, getInitialEventsFilters]);
+		return getInitialEventsExpression(entity);
+	}, [entity, getInitialEventsExpression]);
+
+	const markDrawerOpened = useDrawerLifecycleStore((s) => s.markOpened);
+	const markDrawerClosed = useDrawerLifecycleStore((s) => s.markClosed);
+
+	useEffect(() => {
+		if (selectedItem) {
+			markDrawerOpened();
+		} else {
+			markDrawerClosed();
+		}
+	}, [selectedItem, markDrawerOpened, markDrawerClosed]);
 
 	const handleClose = useCallback((): void => {
-		setSelectedItem(null);
-	}, [setSelectedItem]);
+		setSelectedItemParams(null);
+	}, [setSelectedItemParams]);
+
+	const handleOpenChange = useCallback(
+		(open: boolean): void => {
+			if (!open) {
+				handleClose();
+			}
+		},
+		[handleClose],
+	);
+
+	const [, copyToClipboard] = useCopyToClipboard();
+
+	const handleCopyId = useCallback((): void => {
+		if (selectedItem) {
+			copyToClipboard(selectedItem);
+			toast.success('ID copied to clipboard', { position: 'bottom-left' });
+		}
+	}, [copyToClipboard, selectedItem]);
 
 	const entityName = entity ? getEntityName(entity) : '';
 
-	// Content state (previously in K8sBaseDetailsContent)
-	const tabVisibility = useMemo(
-		() => ({
-			showMetrics: true,
-			showLogs: true,
-			showTraces: true,
-			showEvents: true,
-			...tabsConfig,
-		}),
-		[tabsConfig],
-	);
-
-	const { startMs, endMs } = useMemo(
-		() => ({
-			startMs: Math.floor(lastComputedMinMax.minTime / NANO_SECOND_MULTIPLIER),
-			endMs: Math.floor(lastComputedMinMax.maxTime / NANO_SECOND_MULTIPLIER),
-		}),
-		[lastComputedMinMax],
-	);
-
-	const [modalTimeRange, setModalTimeRange] = useState(() => ({
-		startTime: startMs,
-		endTime: endMs,
-	}));
-
-	// TODO(h4ad): Remove this and use context/zustand
-	const lastSelectedInterval = useRef<Time | null>(null);
-	const [selectedInterval, setSelectedInterval] = useState<Time>(
-		lastSelectedInterval.current
-			? lastSelectedInterval.current
-			: isCustomTimeRange(selectedTime)
-				? DEFAULT_TIME_RANGE
-				: selectedTime,
-	);
-
-	const [selectedView, setSelectedView] = useInfraMonitoringView();
-	const effectiveView = hideDetailViewTabs ? VIEW_TYPES.METRICS : selectedView;
-
-	const [, setLogFiltersParam] = useInfraMonitoringLogFilters();
-	const [, setTracesFiltersParam] = useInfraMonitoringTracesFilters();
-	const [, setEventsFiltersParam] = useInfraMonitoringEventsFilters();
-	const [userLogsExpression] = useQueryState(
-		K8S_ENTITY_LOGS_EXPRESSION_KEY,
-		parseAsString,
-	);
-	const [userTracesExpression] = useQueryState(
-		K8S_ENTITY_TRACES_EXPRESSION_KEY,
-		parseAsString,
-	);
-
 	useEffect(() => {
 		if (entity) {
-			logEvent(InfraMonitoringEvents.PageVisited, {
+			void logEvent(InfraMonitoringEvents.PageVisited, {
 				entity: InfraMonitoringEvents.K8sEntity,
 				page: InfraMonitoringEvents.DetailedPage,
 				category: eventCategory,
@@ -307,360 +191,97 @@ export default function K8sBaseDetails<T>({
 		}
 	}, [entity, eventCategory]);
 
-	useEffect(() => {
-		const currentSelectedInterval = lastSelectedInterval.current || selectedTime;
-		if (!isCustomTimeRange(currentSelectedInterval)) {
-			setSelectedInterval(currentSelectedInterval);
-			const { minTime, maxTime } = getMinMaxTime();
-
-			setModalTimeRange({
-				startTime: Math.floor(minTime / TimeRangeOffset),
-				endTime: Math.floor(maxTime / TimeRangeOffset),
-			});
-		}
-	}, [getMinMaxTime, selectedTime]);
-
-	const handleTabChange = (value: string): void => {
-		setSelectedView(value);
-		setLogFiltersParam(null);
-		setTracesFiltersParam(null);
-		setEventsFiltersParam(null);
-		logEvent(InfraMonitoringEvents.TabChanged, {
-			entity: InfraMonitoringEvents.K8sEntity,
-			page: InfraMonitoringEvents.DetailedPage,
-			category: eventCategory,
-			view: value,
-		});
-	};
-
-	const handleTimeChange = useCallback(
-		(interval: Time | CustomTimeType, dateTimeRange?: [number, number]): void => {
-			lastSelectedInterval.current = interval as Time;
-			setSelectedInterval(interval as Time);
-
-			if (interval === 'custom' && dateTimeRange) {
-				setModalTimeRange({
-					startTime: Math.floor(dateTimeRange[0] / 1000),
-					endTime: Math.floor(dateTimeRange[1] / 1000),
-				});
-			} else {
-				const { maxTime, minTime } = GetMinMax(interval);
-
-				setModalTimeRange({
-					startTime: Math.floor(minTime / TimeRangeOffset),
-					endTime: Math.floor(maxTime / TimeRangeOffset),
-				});
-			}
-
-			logEvent(InfraMonitoringEvents.TimeUpdated, {
-				entity: InfraMonitoringEvents.K8sEntity,
-				page: InfraMonitoringEvents.DetailedPage,
-				category: eventCategory,
-				interval,
-				view: effectiveView,
-			});
-		},
-		[eventCategory, effectiveView],
-	);
-
-	const handleExplorePagesRedirect = (): void => {
-		const urlQuery = new URLSearchParams();
-
-		if (selectedInterval !== 'custom') {
-			urlQuery.set(QueryParams.relativeTime, selectedInterval);
-		} else {
-			urlQuery.delete(QueryParams.relativeTime);
-			urlQuery.set(QueryParams.startTime, modalTimeRange.startTime.toString());
-			urlQuery.set(QueryParams.endTime, modalTimeRange.endTime.toString());
-		}
-
-		logEvent(InfraMonitoringEvents.ExploreClicked, {
-			entity: InfraMonitoringEvents.K8sEntity,
-			page: InfraMonitoringEvents.DetailedPage,
-			category: eventCategory,
-			view: selectedView,
-		});
-
-		if (selectedView === VIEW_TYPES.LOGS) {
-			const fullExpression = combineInitialAndUserExpression(
-				logsAndTracesInitialExpression,
-				userLogsExpression || '',
-			);
-
-			const compositeQuery = {
-				...initialQueryState,
-				queryType: 'builder',
-				builder: {
-					...initialQueryState.builder,
-					queryData: [
-						{
-							...initialQueryBuilderFormValuesMap.logs,
-							aggregateOperator: LogsAggregatorOperator.NOOP,
-							expression: fullExpression,
-							filter: { expression: fullExpression },
-						},
-					],
-				},
-			};
-
-			urlQuery.set('compositeQuery', JSON.stringify(compositeQuery));
-
-			openInNewTab(`${ROUTES.LOGS_EXPLORER}?${urlQuery.toString()}`);
-		} else if (selectedView === VIEW_TYPES.TRACES) {
-			const fullExpression = combineInitialAndUserExpression(
-				logsAndTracesInitialExpression,
-				userTracesExpression || '',
-			);
-
-			const compositeQuery = {
-				...initialQueryState,
-				queryType: 'builder',
-				builder: {
-					...initialQueryState.builder,
-					queryData: [
-						{
-							...initialQueryBuilderFormValuesMap.traces,
-							aggregateOperator: TracesAggregatorOperator.NOOP,
-							expression: fullExpression,
-							filter: { expression: fullExpression },
-						},
-					],
-				},
-			};
-
-			urlQuery.set('compositeQuery', JSON.stringify(compositeQuery));
-
-			openInNewTab(`${ROUTES.TRACES_EXPLORER}?${urlQuery.toString()}`);
-		}
-	};
+	// TODO(H4ad): Improve this on component level
+	// DrawerWrapper types `title` as string but renders any ReactNode.
+	const drawerTitle = (
+		<>
+			<Button
+				variant="ghost"
+				size="sm"
+				color="secondary"
+				onClick={handleClose}
+				data-testid="close-drawer-button"
+				className={styles.closeButton}
+				prefix={<X />}
+			/>
+			<Divider type="vertical" />
+			<Typography.Text className={styles.title}>
+				{entityName ||
+					((isEntityError || hasResponseError) && 'Failed to load entity details') ||
+					(isEntityLoading && 'Loading...') ||
+					'-'}
+			</Typography.Text>
+			<TooltipSimple title="Copy ID">
+				<Button
+					variant="ghost"
+					size="sm"
+					color="secondary"
+					onClick={handleCopyId}
+					data-testid="copy-id-button"
+				>
+					<Copy size={14} />
+				</Button>
+			</TooltipSimple>
+		</>
+	) as unknown as string;
 
 	return (
-		<Drawer
-			width="70%"
-			title={
-				<>
-					<Divider type="vertical" />
-					<Typography.Text className="title">
-						{entityName ||
-							((isEntityError || hasResponseError) &&
-								'Failed to load entity details') ||
-							(isEntityLoading && 'Loading...') ||
-							'-'}
-					</Typography.Text>
-				</>
-			}
-			placement="right"
-			onClose={handleClose}
+		<DrawerWrapper
 			open={!!selectedItem}
-			style={{
-				overscrollBehavior: 'contain',
-				background: isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100,
-			}}
-			className="entity-detail-drawer"
-			destroyOnClose
-			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
+			onOpenChange={handleOpenChange}
+			direction="right"
+			title={drawerTitle}
+			showCloseButton={false}
+			drawerContentProps={DRAWER_MOTION_PROPS}
+			className={styles.entityDetailDrawer}
 		>
-			{isEntityLoading && <LoadingContainer />}
-			{(isEntityError || hasResponseError) && (
+			{(isEntityLoading || !selectedItem) && <LoadingContainer />}
+
+			{selectedItem && (isEntityError || hasResponseError) && (
 				<div className="entity-error-container">
-					<Typography.Text color="danger">
-						{entityResponse?.error ||
-							(entityError instanceof Error
-								? entityError.message
-								: 'Failed to load entity details')}
-					</Typography.Text>
+					<ErrorContent
+						error={
+							entityResponse?.error ??
+							(entityError instanceof APIError ? entityError : null) ?? {
+								code: 500,
+								message:
+									entityError instanceof Error
+										? entityError.message
+										: 'Failed to load entity details',
+							}
+						}
+					/>
 				</div>
 			)}
-			{entity && !isEntityLoading && !hasResponseError && (
-				<>
-					<div className="entity-detail-drawer__entity">
-						<div className="entity-details-grid">
-							<div className="labels-row">
-								{metadataConfig.map((config) => (
-									<Typography.Text
-										key={config.label}
-										color="muted"
-										className="entity-details-metadata-label"
-									>
-										{config.label}
-									</Typography.Text>
-								))}
-							</div>
-
-							<div className="values-row">
-								{metadataConfig.map((config) => {
-									const value = config.getValue(entity);
-									const displayValue = String(value);
-									return (
-										<Typography.Text
-											key={config.label}
-											className="entity-details-metadata-value"
-										>
-											{config.render ? (
-												config.render(value, entity)
-											) : (
-												<Tooltip title={displayValue}>{displayValue}</Tooltip>
-											)}
-										</Typography.Text>
-									);
-								})}
-							</div>
-						</div>
-					</div>
-
-					{!hideDetailViewTabs && (
-						<div className="views-tabs-container">
-							<ToggleGroupSimple
-								type="single"
-								className="views-tabs"
-								onChange={handleTabChange}
-								value={selectedView}
-								items={[
-									...(tabVisibility.showMetrics
-										? [
-												{
-													value: VIEW_TYPES.METRICS,
-													label: (
-														<div className="view-title">
-															<BarChart size={14} />
-															Metrics
-														</div>
-													),
-												},
-											]
-										: []),
-									...(tabVisibility.showLogs
-										? [
-												{
-													value: VIEW_TYPES.LOGS,
-													label: (
-														<div className="view-title">
-															<ScrollText size={14} />
-															Logs
-														</div>
-													),
-												},
-											]
-										: []),
-									...(tabVisibility.showTraces
-										? [
-												{
-													value: VIEW_TYPES.TRACES,
-													label: (
-														<div className="view-title">
-															<DraftingCompass size={14} />
-															Traces
-														</div>
-													),
-												},
-											]
-										: []),
-									...(tabVisibility.showEvents
-										? [
-												{
-													value: VIEW_TYPES.EVENTS,
-													label: (
-														<div className="view-title">
-															<ChevronsLeftRight size={14} />
-															Events
-														</div>
-													),
-												},
-											]
-										: []),
-									...(customTabs?.map((tab) => ({
-										value: tab.key,
-										label: (
-											<div className="view-title">
-												{tab.icon}
-												{tab.label}
-											</div>
-										),
-									})) ?? []),
-								]}
-							/>
-
-							{selectedView === VIEW_TYPES.LOGS && (
-								<Tooltip title="Go to Logs Explorer" placement="left">
-									<Button
-										icon={<Compass size={18} />}
-										className="compass-button"
-										onClick={handleExplorePagesRedirect}
-									/>
-								</Tooltip>
-							)}
-							{selectedView === VIEW_TYPES.TRACES && (
-								<Tooltip title="Go to Traces Explorer" placement="left">
-									<Button
-										icon={<Compass size={18} />}
-										className="compass-button"
-										onClick={handleExplorePagesRedirect}
-									/>
-								</Tooltip>
-							)}
-						</div>
-					)}
-
-					{effectiveView === VIEW_TYPES.METRICS && (
-						<EntityMetrics<T>
-							entity={entity}
-							selectedInterval={selectedInterval}
-							timeRange={modalTimeRange}
-							handleTimeChange={handleTimeChange}
-							isModalTimeSelection
-							entityWidgetInfo={entityWidgetInfo}
-							getEntityQueryPayload={getEntityQueryPayload}
-							category={category}
-							queryKey={`${queryKeyPrefix}Metrics`}
-						/>
-					)}
-					{effectiveView === VIEW_TYPES.LOGS && (
-						<EntityLogs
-							timeRange={modalTimeRange}
-							isModalTimeSelection
-							handleTimeChange={handleTimeChange}
-							selectedInterval={selectedInterval}
-							queryKey={`${queryKeyPrefix}Logs`}
-							category={category}
-							initialExpression={logsAndTracesInitialExpression}
-						/>
-					)}
-					{effectiveView === VIEW_TYPES.TRACES && (
-						<EntityTraces
-							timeRange={modalTimeRange}
-							isModalTimeSelection
-							handleTimeChange={handleTimeChange}
-							selectedInterval={selectedInterval}
-							queryKey={`${queryKeyPrefix}Traces`}
-							category={category}
-							initialExpression={logsAndTracesInitialExpression}
-						/>
-					)}
-					{effectiveView === VIEW_TYPES.EVENTS && tabVisibility.showEvents && (
-						<EntityEvents
-							timeRange={modalTimeRange}
-							isModalTimeSelection
-							handleTimeChange={handleTimeChange}
-							selectedInterval={selectedInterval}
-							category={category}
-							queryKey={`${queryKeyPrefix}Events`}
-							initialExpression={eventsInitialExpression}
-						/>
-					)}
-					{customTabs?.map((tab) =>
-						selectedView === tab.key ? (
-							<React.Fragment key={tab.key}>
-								{tab.render({
-									entity,
-									timeRange: modalTimeRange,
-									selectedInterval,
-									handleTimeChange,
-								})}
-							</React.Fragment>
-						) : null,
-					)}
-				</>
+			{selectedItem && entity && !isEntityLoading && !hasResponseError && (
+				<GlobalTimeProvider
+					inheritGlobalTime
+					enableUrlParams={{
+						relativeTimeKey: INFRA_MONITORING_K8S_PARAMS_KEYS.DETAIL_RELATIVE_TIME,
+						startTimeKey: INFRA_MONITORING_K8S_PARAMS_KEYS.DETAIL_START_TIME,
+						endTimeKey: INFRA_MONITORING_K8S_PARAMS_KEYS.DETAIL_END_TIME,
+					}}
+				>
+					<K8sBaseDetailsContent<T>
+						entity={entity}
+						category={category}
+						eventCategory={eventCategory}
+						metadataConfig={metadataConfig}
+						countsConfig={countsConfig}
+						getCountsFilterExpression={getCountsFilterExpression}
+						selectedItem={selectedItem}
+						handleClose={handleClose}
+						entityWidgetInfo={entityWidgetInfo}
+						getEntityQueryPayload={getEntityQueryPayload}
+						queryKeyPrefix={queryKeyPrefix}
+						hideDetailViewTabs={hideDetailViewTabs}
+						tabsConfig={tabsConfig}
+						customTabs={customTabs}
+						logsAndTracesInitialExpression={logsAndTracesInitialExpression}
+						eventsInitialExpression={eventsInitialExpression}
+					/>
+				</GlobalTimeProvider>
 			)}
-		</Drawer>
+		</DrawerWrapper>
 	);
 }

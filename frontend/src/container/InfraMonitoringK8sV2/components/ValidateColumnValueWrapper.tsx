@@ -1,29 +1,33 @@
-import { Tooltip } from 'antd';
-import TanStackTable from 'components/TanStackTableView';
-
 import {
 	getInvalidValueTooltipText,
 	InfraMonitoringEntity,
 } from '../constants';
+import { TextNoData } from './TextNoData';
+import TanStackTable from 'components/TanStackTableView';
 
 export function ValidateColumnValueWrapper({
 	children,
 	value,
 	entity,
 	attribute,
+	rowId,
 }: {
 	children: React.ReactNode;
 	value: number;
 	entity?: InfraMonitoringEntity;
 	attribute?: string;
+	rowId: string;
 }): JSX.Element {
-	if (value === -1) {
-		let element = <TanStackTable.Text>-</TanStackTable.Text>;
+	if (value === -1 || Number.isNaN(value)) {
+		let element = <TextNoData type="tanstack" />;
 		if (entity && attribute) {
 			element = (
-				<Tooltip title={getInvalidValueTooltipText(entity, attribute)}>
+				<TanStackTable.HoverTooltip
+					rowId={rowId}
+					title={getInvalidValueTooltipText(entity, attribute)}
+				>
 					{element}
-				</Tooltip>
+				</TanStackTable.HoverTooltip>
 			);
 		}
 

@@ -1,6 +1,8 @@
+import { TanStackHoverTooltip } from './TanStackHoverTooltip';
 import { TanStackTableBase } from './TanStackTable';
 import TanStackTableText from './TanStackTableText';
 
+export * from './TanStackHoverTooltip';
 export * from './TanStackTableStateContext';
 export * from './types';
 export * from './useCalculatedPageSize';
@@ -114,12 +116,30 @@ export * from './useTableParams';
  *   getItemKey={(row) => row.id}
  *   isRowActive={(row) => row.id === selectedId}
  *   activeRowIndex={selectedIndex}
- *   onRowClick={(row, itemKey) => setSelectedId(itemKey)}
+ *   // The table reports the click + the row's active state; the consumer owns open/close.
+ *   onRowClick={(row, itemKey, { isActive }) =>
+ *     setSelectedId(isActive ? undefined : itemKey)
+ *   }
  *   onRowClickNewTab={(row, itemKey) => openInNewTab(itemKey)}
- *   onRowDeactivate={() => setSelectedId(undefined)}
  *   getRowClassName={(row) => (row.severity === 'error' ? 'row-error' : '')}
  *   getRowStyle={(row) => (row.dimmed ? { opacity: 0.5 } : {})}
  *   renderRowActions={(row) => <Button size="small">Open</Button>}
+ * />
+ * ```
+ *
+ * @example Object itemKey — use generic `TItemKey` when selection needs compound keys.
+ * ```tsx
+ * type SelectionParams = { id: string; cluster: string; namespace: string };
+ *
+ * <TanStackTable<Row, SelectionParams>
+ *   data={data}
+ *   columns={columns}
+ *   getRowKey={(row) => row.uid}
+ *   getItemKey={(row) => ({ id: row.name, cluster: row.cluster, namespace: row.namespace })}
+ *   onRowClick={(row, itemKey) => {
+ *     // itemKey is typed as SelectionParams
+ *     setSelection(itemKey);
+ *   }}
  * />
  * ```
  *
@@ -195,6 +215,16 @@ export * from './useTableParams';
  * />
  * ```
  *
+ * @example Reset scroll on context change — use `resetScrollKey` to scroll back to start
+ * when the data context changes (e.g., switching between categories or tabs).
+ * ```tsx
+ * <TanStackTable
+ *   data={data}
+ *   columns={columns}
+ *   resetScrollKey={selectedCategory}
+ * />
+ * ```
+ *
  * @example useTableParams — manages pagination state with URL sync and persistence
  *
  * The `useTableParams` hook handles page, limit, orderBy, and expanded state. It can sync
@@ -258,6 +288,7 @@ export * from './useTableParams';
  */
 const TanStackTable = Object.assign(TanStackTableBase, {
 	Text: TanStackTableText,
+	HoverTooltip: TanStackHoverTooltip,
 });
 
 export default TanStackTable;

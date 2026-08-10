@@ -11,6 +11,14 @@ import pytest
 from fixtures import types
 from fixtures.time import parse_timestamp
 
+_REDUCED_METRICS_TABLES_TO_TRUNCATE = [
+    "time_series_v4_reduced",
+    "samples_v4_reduced_last_60s",
+    "samples_v4_reduced_sum_60s",
+    "time_series_v4_buffer",
+    "samples_v4_buffer",
+]
+
 
 class MetricsTimeSeries(ABC):
     """Represents a row in the time_series_v4 table."""
@@ -28,7 +36,6 @@ class MetricsTimeSeries(ABC):
     attrs: dict[str, str]
     scope_attrs: dict[str, str]
     resource_attrs: dict[str, str]
-    __normalized: bool
 
     def __init__(
         self,
@@ -60,7 +67,6 @@ class MetricsTimeSeries(ABC):
         self.scope_attrs = scope_attrs
         self.resource_attrs = resource_attrs
         self.unix_milli = np.int64(int(timestamp.timestamp() * 1e3))
-        self.__normalized = False
 
         # Calculate fingerprint from metric_name + labels
         fingerprint_str = metric_name + self.labels
@@ -81,7 +87,6 @@ class MetricsTimeSeries(ABC):
             self.attrs,
             self.scope_attrs,
             self.resource_attrs,
-            self.__normalized,
         ]
 
 
@@ -369,6 +374,7 @@ class Metrics(ABC):
         file_path: str,
         base_time: datetime.datetime | None = None,
         metric_name_override: str | None = None,
+        label_substitutions: dict[str, str] | None = None,
     ) -> list["Metrics"]:
         """
         Load metrics from a JSONL file.
@@ -380,6 +386,9 @@ class Metrics(ABC):
             base_time: If provided, all timestamps are shifted so the earliest
                        timestamp in the file maps to base_time
             metric_name_override: If provided, overrides metric_name for all metrics
+            label_substitutions: If provided, any label whose value equals a key is
+                                 rewritten to that key's value (placeholder substitution,
+                                 e.g. {"__START_TIME__": start_time.isoformat()})
         """
         data_list = []
         with open(file_path, encoding="utf-8") as f:
@@ -387,7 +396,13 @@ class Metrics(ABC):
                 line = line.strip()
                 if not line:
                     continue
-                data_list.append(json.loads(line))
+                data = json.loads(line)
+                if label_substitutions:
+                    labels = data.get("labels", {})
+                    for key, value in labels.items():
+                        if value in label_substitutions:
+                            labels[key] = label_substitutions[value]
+                data_list.append(data)
 
         if not data_list:
             return []
@@ -414,6 +429,263 @@ class Metrics(ABC):
         return metrics
 
 
+class MetricsReducedTimeSeries(ABC):
+    """Represents a row in the time_series_v4_reduced table i.e what
+    the time_series_v4_reduced_mv materializes for a metric under a
+    reduction rule. One row per kept-label group. `fingerprint` holds the
+    reduced fingerprint and `labels` contains only the kept labels.
+
+    The fingerprint recipe (md5, like MetricsTimeSeries) does not match the
+    collector's real hash; it only needs to be consistent with the
+    reduced_fingerprint used in the reduced samples rows.
+    """
+
+    def __init__(  # pylint: disable=too-many-arguments
+        self,
+        metric_name: str,
+        kept_labels: dict[str, str],
+        timestamp: datetime.datetime,
+        temporality: str = "Unspecified",
+        description: str = "",
+        unit: str = "",
+        type_: str = "Gauge",
+        is_monotonic: bool = False,
+        env: str = "default",
+    ) -> None:
+        kept_labels = dict(kept_labels)
+        kept_labels["__name__"] = metric_name
+        self.env = env
+        # mirror time_series_v4_reduced_mv: monotonic cumulative counters are
+        # reduced as deltas
+        if temporality == "Cumulative" and is_monotonic:
+            temporality = "Delta"
+        self.temporality = temporality
+        self.metric_name = metric_name
+        self.description = description
+        self.unit = unit
+        self.type = type_
+        self.is_monotonic = is_monotonic
+        self.labels = json.dumps(kept_labels, separators=(",", ":"))
+        self.attrs = kept_labels
+        self.unix_milli = np.int64(int(timestamp.timestamp() * 1e3) // 3600000 * 3600000)
+
+        fingerprint_str = metric_name + self.labels
+        self.fingerprint = np.uint64(int(hashlib.md5(fingerprint_str.encode()).hexdigest()[:16], 16))
+
+    def to_row(self) -> list:
+        return [
+            self.env,
+            self.temporality,
+            self.metric_name,
+            self.description,
+            self.unit,
+            self.type,
+            self.is_monotonic,
+            self.fingerprint,
+            self.unix_milli,
+            self.labels,
+            self.attrs,
+            {},
+            {},
+        ]
+
+
+class MetricsReducedSampleLast60s(ABC):
+    """Represents a row in the samples_v4_reduced_last_60s table. One 60s
+    bucket per reduced group, as the samples_v4_reduced_last_60s_mv refresh
+    would emit it (gauges and non-monotonic cumulative sums)."""
+
+    def __init__(  # pylint: disable=too-many-arguments
+        self,
+        metric_name: str,
+        reduced_fingerprint: np.uint64,
+        timestamp: datetime.datetime,
+        sum_last: float,
+        min_value: float,
+        max_value: float,
+        sum_values: float,
+        count_series: int,
+        count_samples: int,
+        temporality: str = "Unspecified",
+        env: str = "default",
+        computed_at: datetime.datetime | None = None,
+    ) -> None:
+        self.env = env
+        self.temporality = temporality
+        self.metric_name = metric_name
+        self.reduced_fingerprint = reduced_fingerprint
+        # buckets are 60s-aligned: intDiv(unix_milli, 60000) * 60000
+        self.unix_milli = np.int64((int(timestamp.timestamp() * 1e3) // 60000) * 60000)
+        self.sum_last = np.float64(sum_last)
+        self.min = np.float64(min_value)
+        self.max = np.float64(max_value)
+        self.sum_values = np.float64(sum_values)
+        self.count_series = np.uint64(count_series)
+        self.count_samples = np.uint64(count_samples)
+        # the refresh stamps now(); default to shortly after the bucket closes
+        if computed_at is None:
+            computed_at = datetime.datetime.fromtimestamp(int(self.unix_milli) / 1e3, tz=datetime.UTC) + datetime.timedelta(seconds=180)
+        self.computed_at = computed_at
+
+    def to_row(self) -> list:
+        return [
+            self.env,
+            self.temporality,
+            self.metric_name,
+            self.reduced_fingerprint,
+            self.unix_milli,
+            self.sum_last,
+            self.min,
+            self.max,
+            self.sum_values,
+            self.count_series,
+            self.count_samples,
+            self.computed_at,
+        ]
+
+
+class MetricsReducedSampleSum60s(ABC):
+    """Represents a row in the samples_v4_reduced_sum_60s table. One 60s
+    bucket per reduced group for delta counters and histograms."""
+
+    def __init__(  # pylint: disable=too-many-arguments
+        self,
+        metric_name: str,
+        reduced_fingerprint: np.uint64,
+        timestamp: datetime.datetime,
+        sum_value: float,
+        count_series: int,
+        count_samples: int,
+        temporality: str = "Delta",
+        env: str = "default",
+        computed_at: datetime.datetime | None = None,
+    ) -> None:
+        self.env = env
+        self.temporality = temporality
+        self.metric_name = metric_name
+        self.reduced_fingerprint = reduced_fingerprint
+        self.unix_milli = np.int64((int(timestamp.timestamp() * 1e3) // 60000) * 60000)
+        self.sum = np.float64(sum_value)
+        self.count_series = np.uint64(count_series)
+        self.count_samples = np.uint64(count_samples)
+        if computed_at is None:
+            computed_at = datetime.datetime.fromtimestamp(int(self.unix_milli) / 1e3, tz=datetime.UTC) + datetime.timedelta(seconds=180)
+        self.computed_at = computed_at
+
+    def to_row(self) -> list:
+        return [
+            self.env,
+            self.temporality,
+            self.metric_name,
+            self.reduced_fingerprint,
+            self.unix_milli,
+            self.sum,
+            self.count_series,
+            self.count_samples,
+            self.computed_at,
+        ]
+
+
+class MetricsBufferTimeSeries(ABC):
+    """Represents a row in the time_series_v4_buffer table. This is the collector's
+    universal landing target under cardinality control. For a ruled metric the
+    collector writes two rows per series: the raw one (is_reduced=false, full
+    labels, reduced_fingerprint pointing at its group) and the group's reduced
+    one (is_reduced=true, kept labels, fingerprint = reduced fingerprint)."""
+
+    def __init__(  # pylint: disable=too-many-arguments
+        self,
+        metric_name: str,
+        labels: dict[str, str],
+        timestamp: datetime.datetime,
+        reduced_fingerprint: np.uint64 | int = 0,
+        is_reduced: bool = False,
+        temporality: str = "Unspecified",
+        description: str = "",
+        unit: str = "",
+        type_: str = "Gauge",
+        is_monotonic: bool = False,
+        env: str = "default",
+    ) -> None:
+        labels = dict(labels)
+        labels["__name__"] = metric_name
+        self.env = env
+        self.temporality = temporality
+        self.metric_name = metric_name
+        self.description = description
+        self.unit = unit
+        self.type = type_
+        self.is_monotonic = is_monotonic
+        self.reduced_fingerprint = np.uint64(reduced_fingerprint)
+        self.is_reduced = is_reduced
+        self.labels = json.dumps(labels, separators=(",", ":"))
+        self.attrs = labels
+        self.unix_milli = np.int64(int(timestamp.timestamp() * 1e3) // 3600000 * 3600000)
+
+        fingerprint_str = metric_name + self.labels
+        self.fingerprint = np.uint64(int(hashlib.md5(fingerprint_str.encode()).hexdigest()[:16], 16))
+
+    def to_row(self) -> list:
+        return [
+            self.env,
+            self.temporality,
+            self.metric_name,
+            self.description,
+            self.unit,
+            self.type,
+            self.is_monotonic,
+            self.fingerprint,
+            self.reduced_fingerprint,
+            self.is_reduced,
+            self.unix_milli,
+            self.labels,
+            self.attrs,
+            {},
+            {},
+        ]
+
+
+class MetricsBufferSample(ABC):
+    """Represents a row in the samples_v4_buffer table. Ruled samples carry
+    the raw fingerprint plus the group's reduced_fingerprint; unruled samples
+    have reduced_fingerprint = 0."""
+
+    def __init__(  # pylint: disable=too-many-arguments
+        self,
+        metric_name: str,
+        fingerprint: np.uint64,
+        timestamp: datetime.datetime,
+        value: float,
+        reduced_fingerprint: np.uint64 | int = 0,
+        is_monotonic: bool = False,
+        temporality: str = "Unspecified",
+        env: str = "default",
+        flags: int = 0,
+    ) -> None:
+        self.env = env
+        self.temporality = temporality
+        self.metric_name = metric_name
+        self.fingerprint = fingerprint
+        self.reduced_fingerprint = np.uint64(reduced_fingerprint)
+        self.is_monotonic = is_monotonic
+        self.unix_milli = np.int64(int(timestamp.timestamp() * 1e3))
+        self.value = np.float64(value)
+        self.flags = np.uint32(flags)
+
+    def to_row(self) -> list:
+        return [
+            self.env,
+            self.temporality,
+            self.metric_name,
+            self.fingerprint,
+            self.reduced_fingerprint,
+            self.is_monotonic,
+            self.unix_milli,
+            self.value,
+            self.flags,
+        ]
+
+
 def insert_metrics_to_clickhouse(conn, metrics: list[Metrics]) -> None:
     """
     Insert metrics into ClickHouse tables.
@@ -425,11 +697,17 @@ def insert_metrics_to_clickhouse(conn, metrics: list[Metrics]) -> None:
     Pure function so the seeder container can reuse the exact insert path
     used by the pytest fixture. `conn` is a clickhouse-connect Client.
     """
-    time_series_map: dict[int, MetricsTimeSeries] = {}
+    # One registration row per (series, hour bucket), unix_milli floored to
+    # the hour — the exporter's exact shape. Readers floor lookup windows to
+    # these buckets: skipping per-bucket re-registration or keeping raw
+    # mid-hour timestamps hides series in ways production never sees.
+    time_series_map: dict[tuple[int, int], MetricsTimeSeries] = {}
     for metric in metrics:
         fp = int(metric.time_series.fingerprint)
-        if fp not in time_series_map:
-            time_series_map[fp] = metric.time_series
+        hour_bucket = int(metric.time_series.unix_milli) // 3_600_000
+        if (fp, hour_bucket) not in time_series_map:
+            metric.time_series.unix_milli = np.int64(hour_bucket * 3_600_000)
+            time_series_map[(fp, hour_bucket)] = metric.time_series
 
     if len(time_series_map) > 0:
         conn.insert(
@@ -449,7 +727,6 @@ def insert_metrics_to_clickhouse(conn, metrics: list[Metrics]) -> None:
                 "attrs",
                 "scope_attrs",
                 "resource_attrs",
-                "__normalized",
             ],
             data=[ts.to_row() for ts in time_series_map.values()],
         )
@@ -574,6 +851,161 @@ def insert_metrics(
         clickhouse.conn,
         clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"],
     )
+
+
+def insert_reduced_metrics_to_clickhouse(
+    conn,
+    time_series: list[MetricsReducedTimeSeries],
+    last_samples: list[MetricsReducedSampleLast60s] | None = None,
+    sum_samples: list[MetricsReducedSampleSum60s] | None = None,
+) -> None:
+    """Insert reduced series into distributed_time_series_v4_reduced and 60s
+    buckets into the reduced samples tables. These tables exist only when
+    the schema migrator version includes the metrics cardinality-control
+    migration."""
+    if time_series:
+        conn.insert(
+            database="signoz_metrics",
+            table="distributed_time_series_v4_reduced",
+            column_names=[
+                "env",
+                "temporality",
+                "metric_name",
+                "description",
+                "unit",
+                "type",
+                "is_monotonic",
+                "fingerprint",
+                "unix_milli",
+                "labels",
+                "attrs",
+                "scope_attrs",
+                "resource_attrs",
+            ],
+            data=[ts.to_row() for ts in time_series],
+        )
+
+    if last_samples:
+        conn.insert(
+            database="signoz_metrics",
+            table="distributed_samples_v4_reduced_last_60s",
+            column_names=[
+                "env",
+                "temporality",
+                "metric_name",
+                "reduced_fingerprint",
+                "unix_milli",
+                "sum_last",
+                "min",
+                "max",
+                "sum_values",
+                "count_series",
+                "count_samples",
+                "computed_at",
+            ],
+            data=[sample.to_row() for sample in last_samples],
+        )
+
+    if sum_samples:
+        conn.insert(
+            database="signoz_metrics",
+            table="distributed_samples_v4_reduced_sum_60s",
+            column_names=[
+                "env",
+                "temporality",
+                "metric_name",
+                "reduced_fingerprint",
+                "unix_milli",
+                "sum",
+                "count_series",
+                "count_samples",
+                "computed_at",
+            ],
+            data=[sample.to_row() for sample in sum_samples],
+        )
+
+
+def insert_buffer_metrics_to_clickhouse(
+    conn,
+    time_series: list[MetricsBufferTimeSeries],
+    samples: list[MetricsBufferSample],
+) -> None:
+    if time_series:
+        conn.insert(
+            database="signoz_metrics",
+            table="distributed_time_series_v4_buffer",
+            column_names=[
+                "env",
+                "temporality",
+                "metric_name",
+                "description",
+                "unit",
+                "type",
+                "is_monotonic",
+                "fingerprint",
+                "reduced_fingerprint",
+                "is_reduced",
+                "unix_milli",
+                "labels",
+                "attrs",
+                "scope_attrs",
+                "resource_attrs",
+            ],
+            data=[ts.to_row() for ts in time_series],
+        )
+
+    if samples:
+        conn.insert(
+            database="signoz_metrics",
+            table="distributed_samples_v4_buffer",
+            column_names=[
+                "env",
+                "temporality",
+                "metric_name",
+                "fingerprint",
+                "reduced_fingerprint",
+                "is_monotonic",
+                "unix_milli",
+                "value",
+                "flags",
+            ],
+            data=[sample.to_row() for sample in samples],
+        )
+
+
+@pytest.fixture(name="insert_reduced_metrics", scope="function")
+def insert_reduced_metrics(
+    clickhouse: types.TestContainerClickhouse,
+) -> Generator[Callable[..., None], Any]:
+    def _insert_reduced_metrics(
+        time_series: list[MetricsReducedTimeSeries],
+        last_samples: list[MetricsReducedSampleLast60s] | None = None,
+        sum_samples: list[MetricsReducedSampleSum60s] | None = None,
+    ) -> None:
+        insert_reduced_metrics_to_clickhouse(clickhouse.conn, time_series, last_samples, sum_samples)
+
+    yield _insert_reduced_metrics
+
+    cluster = clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"]
+    for table in _REDUCED_METRICS_TABLES_TO_TRUNCATE:
+        clickhouse.conn.query(f"TRUNCATE TABLE signoz_metrics.{table} ON CLUSTER '{cluster}' SYNC")
+
+
+@pytest.fixture(name="insert_buffer_metrics", scope="function")
+def insert_buffer_metrics(
+    clickhouse: types.TestContainerClickhouse,
+) -> Generator[Callable[..., None], Any]:
+    def _insert_buffer_metrics(
+        time_series: list[MetricsBufferTimeSeries],
+        samples: list[MetricsBufferSample],
+    ) -> None:
+        insert_buffer_metrics_to_clickhouse(clickhouse.conn, time_series, samples)
+
+    yield _insert_buffer_metrics
+
+    cluster = clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"]
+    for table in _REDUCED_METRICS_TABLES_TO_TRUNCATE:
+        clickhouse.conn.query(f"TRUNCATE TABLE signoz_metrics.{table} ON CLUSTER '{cluster}' SYNC")
 
 
 @pytest.fixture(name="remove_metrics_ttl_and_storage_settings", scope="function")

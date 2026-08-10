@@ -176,7 +176,6 @@ def test_create_invalid_role_mapping(
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    """Test that invalid role mappings are rejected."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Create domain with invalid defaultRole

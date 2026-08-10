@@ -20,21 +20,21 @@ func (c Compiled) IsEmpty() bool {
 // Compile always returns a non-nil *Compiled. An empty query (or one that
 // produces no SQL) yields a Compiled with an empty SQL — callers gate on
 // SQL != "" rather than a nil check.
+//
+// A `key OP value` term compiles to a DSL predicate; a bare word is a
+// case-insensitive substring search over the dashboard name, description, and tag
+// keys/values. They compose through AND/OR/NOT, so `prod payment` matches both
+// words (implicit AND) and `prod OR name = 'x'` mixes free text with a filter. A
+// quoted token matches literally, e.g. `"prod payment"`.
 func Compile(query string, formatter sqlstore.SQLFormatter) (*Compiled, error) {
-	if len(query) == 0 {
+	if len(strings.TrimSpace(query)) == 0 {
 		return &Compiled{}, nil
 	}
 
-	queryVisitor := newVisitor(formatter)
-	sql, args, syntaxErrs := queryVisitor.compile(query)
-
-	if len(syntaxErrs) > 0 {
+	sql, args, errs := newVisitor(formatter).compile(query)
+	if len(errs) > 0 {
 		return nil, errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardListFilterInvalid,
-			"invalid filter query: %s", strings.Join(syntaxErrs, "; "))
-	}
-	if len(queryVisitor.errors) > 0 {
-		return nil, errors.NewInvalidInputf(dashboardtypes.ErrCodeDashboardListFilterInvalid,
-			"invalid filter query: %s", strings.Join(queryVisitor.errors, "; "))
+			"invalid filter query: %s", strings.Join(errs, "; "))
 	}
 
 	return &Compiled{

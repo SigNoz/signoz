@@ -1,9 +1,13 @@
 import {
 	LlmpricingruletypesLLMPricingRuleCacheModeDTO as CacheModeDTO,
 	type LlmpricingruletypesLLMPricingRuleDTO,
+	type LlmpricingruletypesUnmappedModelDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
 export type PricingRule = LlmpricingruletypesLLMPricingRuleDTO;
+
+// A model seen in trace data (gen_ai.request.model) that no pricing rule matches.
+export type UnpricedModel = LlmpricingruletypesUnmappedModelDTO;
 
 export interface ExtraBucket {
 	key: string;
@@ -29,6 +33,7 @@ export interface DrawerDraft {
 	provider: string;
 	patterns: string[];
 	isOverride: boolean;
+	enabled: boolean;
 	pricing: {
 		input: number | null;
 		output: number | null;

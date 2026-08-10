@@ -74,6 +74,7 @@ func (Temporality) Enum() []any {
 		Delta,
 		Cumulative,
 		Unspecified,
+		Unknown,
 	}
 }
 
@@ -187,6 +188,7 @@ func (TimeAggregation) Enum() []any {
 		TimeAggregationCountDistinct,
 		TimeAggregationRate,
 		TimeAggregationIncrease,
+		TimeAggregationUnspecified,
 	}
 }
 

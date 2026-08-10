@@ -1,5 +1,10 @@
 import { renderHook } from '@testing-library/react';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import {
+	clearViewPanelHandoff,
+	readViewPanelHandoff,
+} from 'pages/DashboardPageV2/DashboardContainer/PanelsAndSectionsLayout/Panel/ViewPanelModal/viewPanelHandoffStore';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { useSwitchToViewMode } from '../useSwitchToViewMode';
@@ -18,11 +23,16 @@ jest.mock('hooks/useUrlQuery', () => ({
 }));
 
 const query = { queryType: 'builder' } as unknown as Query;
+const spec = {
+	plugin: { kind: 'signoz/TimeSeriesPanel' },
+	display: { name: 'CPU' },
+} as unknown as DashboardtypesPanelSpecDTO;
 
 describe('useSwitchToViewMode', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		mockSearch = '';
+		clearViewPanelHandoff();
 	});
 
 	function invoke(): void {
@@ -32,6 +42,7 @@ describe('useSwitchToViewMode', () => {
 				panelId: 'panel-1',
 				panelType: PANEL_TYPES.TIME_SERIES,
 				query,
+				spec,
 			}),
 		);
 		result.current();
@@ -50,6 +61,21 @@ describe('useSwitchToViewMode', () => {
 				decodeURIComponent(target.searchParams.get('compositeQuery') || ''),
 			),
 		).toStrictEqual(query);
+	});
+
+	it('stashes the live draft spec in the sessionStorage handoff, not the URL', () => {
+		invoke();
+
+		expect(readViewPanelHandoff('dash-1', 'panel-1')).toStrictEqual(spec);
+		// The spec must not bloat the URL — the config-only display name never leaks into it.
+		expect(mockSafeNavigate.mock.calls[0][0]).not.toContain('CPU');
+	});
+
+	it('scopes the handoff to the exact dashboard + panel', () => {
+		invoke();
+
+		expect(readViewPanelHandoff('dash-1', 'other-panel')).toBeNull();
+		expect(readViewPanelHandoff('other-dash', 'panel-1')).toBeNull();
 	});
 
 	it('carries dashboard variables through and drops other editor URL state', () => {

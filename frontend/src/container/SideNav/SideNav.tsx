@@ -47,6 +47,7 @@ import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
+import { useIsAIObservabilityEnabled } from 'hooks/useIsAIObservabilityEnabled';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { isArray } from 'lodash-es';
@@ -143,6 +144,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		trialInfo,
 		isLoggedIn,
 		userPreferences,
+		isFetchingUserPreferences,
 		changelog,
 		toggleChangelogModal,
 		updateUserPreferenceInContext,
@@ -253,23 +255,24 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	const isAdmin = user.role === USER_ROLES.ADMIN;
 	const isEditor = user.role === USER_ROLES.EDITOR;
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
+	const isAIObservabilityEnabled = useIsAIObservabilityEnabled();
 	const aiAssistantActiveConversationId = useAIAssistantStore(
 		(s) => s.activeConversationId,
 	);
 
 	// Compute initial pinned items and secondary menu items synchronously to avoid flash
 	const computedPinnedMenuItems = useMemo(() => {
+		// While loading, return empty to avoid flash
+		if (isFetchingUserPreferences) {
+			return [];
+		}
+
 		const navShortcutsPreference = userPreferences?.find(
 			(preference) => preference.name === USER_PREFERENCES.NAV_SHORTCUTS,
 		);
 		const navShortcuts = navShortcutsPreference?.value as unknown as
 			| string[]
 			| undefined;
-
-		// If userPreferences not loaded yet, return empty to avoid showing defaults before preferences load
-		if (userPreferences === null) {
-			return [];
-		}
 
 		// If preference exists with non-empty array, use stored shortcuts
 		if (isArray(navShortcuts) && navShortcuts.length > 0) {
@@ -280,23 +283,30 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 				.filter((item): item is SidebarItem => item !== undefined);
 		}
 
-		// No preference, or empty array → use defaults
+		// No preference, or empty array, or error loading → use defaults
 		return defaultMoreMenuItems.filter((item) => item.isPinned);
-	}, [userPreferences]);
+	}, [isFetchingUserPreferences, userPreferences]);
 
 	const computedSecondaryMenuItems = useMemo(() => {
 		const shouldShowIntegrationsValue =
 			(isCloudUser || isEnterpriseSelfHostedUser) && (isAdmin || isEditor);
+
+		const isEnabledForItem = (item: SidebarItem): boolean | undefined => {
+			if (item.key === ROUTES.INTEGRATIONS) {
+				return shouldShowIntegrationsValue;
+			}
+			if (item.key === ROUTES.AI_OBSERVABILITY_OVERVIEW) {
+				return isAIObservabilityEnabled;
+			}
+			return item.isEnabled;
+		};
 
 		return defaultMoreMenuItems.map((item) => ({
 			...item,
 			isPinned: computedPinnedMenuItems.some(
 				(pinned) => pinned.itemKey === item.itemKey,
 			),
-			isEnabled:
-				item.key === ROUTES.INTEGRATIONS
-					? shouldShowIntegrationsValue
-					: item.isEnabled,
+			isEnabled: isEnabledForItem(item),
 		}));
 	}, [
 		computedPinnedMenuItems,
@@ -304,6 +314,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		isEnterpriseSelfHostedUser,
 		isAdmin,
 		isEditor,
+		isAIObservabilityEnabled,
 	]);
 
 	// Track if we've done the initial sync (to avoid overwriting user actions during session)
@@ -312,12 +323,16 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	// Sync state only on initial load when userPreferences first becomes available
 	useEffect(() => {
 		// Only sync once: when userPreferences loads for the first time
-		if (!hasInitializedRef.current && userPreferences !== null) {
+		if (!hasInitializedRef.current && isFetchingUserPreferences === false) {
 			setPinnedMenuItems(computedPinnedMenuItems);
 			setSecondaryMenuItems(computedSecondaryMenuItems);
 			hasInitializedRef.current = true;
 		}
-	}, [computedPinnedMenuItems, computedSecondaryMenuItems, userPreferences]);
+	}, [
+		computedPinnedMenuItems,
+		computedSecondaryMenuItems,
+		isFetchingUserPreferences,
+	]);
 
 	const isChatSupportEnabled = featureFlags?.find(
 		(flag) => flag.name === FeatureKeys.CHAT_SUPPORT,

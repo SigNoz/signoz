@@ -1,5 +1,3 @@
-"""Integration tests for v2 infra-monitoring jobs endpoint."""
-
 import json
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
@@ -10,6 +8,7 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.fs import get_testdata_file_path
+from fixtures.inframonitoring import expected_status_counts
 from fixtures.metrics import Metrics
 from fixtures.querier import compare_values, get_all_warnings
 
@@ -23,7 +22,7 @@ def test_jobs_accuracy(
     insert_metrics,
 ) -> None:
     """Assert response shape/contract + exact per-job metric values, all 4
-    lifecycle counts, and phase counts against precomputed expected output.
+    lifecycle counts against precomputed expected output.
 
     Locks in Sum vs Avg split across pod-level metrics
     (jobs_constants.go:81-198): A/D = SpaceAggregationSum across pods;
@@ -80,7 +79,6 @@ def test_jobs_accuracy(
             "activePods",
             "failedPods",
             "successfulPods",
-            "podCountsByPhase",
             "meta",
         ):
             assert field in record, f"missing {field} in {record!r}"
@@ -88,10 +86,6 @@ def test_jobs_accuracy(
         # All 4 lifecycle counts must be ints (not floats).
         for int_field in ("desiredSuccessfulPods", "activePods", "failedPods", "successfulPods"):
             assert isinstance(record[int_field], int), f"{int_field} should be int, got {type(record[int_field]).__name__}"
-
-        for bucket in ("pending", "running", "succeeded", "failed", "unknown"):
-            assert bucket in record["podCountsByPhase"]
-            assert isinstance(record["podCountsByPhase"][bucket], int)
 
         assert record["meta"].get("k8s.job.name") == record["jobName"]
         assert "k8s.namespace.name" in record["meta"]
@@ -110,7 +104,6 @@ def test_jobs_accuracy(
             assert compare_values(record[field], exp[field], 1e-6), f"{record['jobName']}.{field}: got {record[field]}, expected {exp[field]}"
         for int_field in ("desiredSuccessfulPods", "activePods", "failedPods", "successfulPods"):
             assert record[int_field] == exp[int_field], f"{record['jobName']}.{int_field}: got {record[int_field]}, expected {exp[int_field]}"
-        assert record["podCountsByPhase"] == exp["podCountsByPhase"]
 
 
 @pytest.mark.parametrize(
@@ -246,6 +239,7 @@ def test_jobs_warnings(
             {"etl-a-prod", "etl-b-prod"},
             id="in_contains",
         ),
+        pytest.param("k8s.job.namee = 'etl-a-prod'", set(), id="unresolved_key"),
     ],
 )
 def test_jobs_filter(
@@ -304,7 +298,6 @@ def test_jobs_filter(
 @pytest.mark.parametrize(
     "expression,err_substr",
     [
-        pytest.param("k8s.job.namee = 'etl-a-prod'", "k8s.job.namee", id="bad_attr_name"),
         pytest.param("k8s.job.name =", None, id="trailing_op"),
         pytest.param("(k8s.job.name = 'etl-a-prod'", None, id="unclosed_paren"),
     ],
@@ -317,8 +310,8 @@ def test_jobs_filter_invalid(
     expression: str,
     err_substr,
 ) -> None:
-    """Invalid filter expressions (typo'd attribute key, malformed grammar) return
-    400 invalid_input with structured errors; bad attribute keys are named in them."""
+    """Malformed filter grammar (trailing operator, unclosed paren) returns
+    400 invalid_input with structured errors."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -348,47 +341,6 @@ def test_jobs_filter_invalid(
         assert any(err_substr in e["message"] for e in body["error"]["errors"]), f"{err_substr!r} not surfaced: {body['error']['errors']!r}"
 
 
-def test_jobs_pod_phase_aggregation(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """Job with mixed pod phases: 2 Running + 3 Succeeded + 1 Failed (in-progress)."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/jobs_pod_phases.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "filter": {"expression": "k8s.job.name = 'pp-job'"},
-        },
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-    assert data["total"] == 1
-    rec = data["records"][0]
-    assert rec["jobName"] == "pp-job"
-    assert rec["podCountsByPhase"] == {
-        "pending": 0,
-        "running": 2,
-        "succeeded": 3,
-        "failed": 1,
-        "unknown": 0,
-    }
-
-
 def test_jobs_lifecycle_counts(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
@@ -396,9 +348,8 @@ def test_jobs_lifecycle_counts(
     insert_metrics,
 ) -> None:
     """Lifecycle counters (active=2, failed=1, successful=3, desired_successful=4)
-    are independent of pod phase counts. Seed deliberately mismatches: 1 Pending pod
-    only. Validates the 4 int counters come straight from k8s.job.* metrics, not
-    derived from observable pod phases (cumulative counters vs latest phase)."""
+    come straight from k8s.job.* metrics. Validates the 4 int counters are the
+    cumulative kube-state-metric values (not derived from pod state)."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -430,14 +381,6 @@ def test_jobs_lifecycle_counts(
     assert rec["activePods"] == 2
     assert rec["failedPods"] == 1
     assert rec["successfulPods"] == 3
-    # Pod phase counts deliberately disagree: only 1 Pending pod seeded.
-    assert rec["podCountsByPhase"] == {
-        "pending": 1,
-        "running": 0,
-        "succeeded": 0,
-        "failed": 0,
-        "unknown": 0,
-    }
 
 
 def test_jobs_completed_job(
@@ -478,7 +421,6 @@ def test_jobs_completed_job(
     assert rec["failedPods"] == 0, f"failedPods=0 leaked sentinel: {rec['failedPods']}"
     assert rec["successfulPods"] == 3
     assert rec["desiredSuccessfulPods"] == 3
-    assert rec["podCountsByPhase"]["succeeded"] == 3
 
 
 def test_jobs_base_filter_drops_non_job_pods(
@@ -517,6 +459,77 @@ def test_jobs_base_filter_drops_non_job_pods(
     assert rec["jobName"] == "nj-job"
     assert all(r["jobName"] != "" for r in data["records"])
 
+    # filterByPodStatus: nj-job (nj-job-p1 Running + nj-job-p1-clbo CrashLoopBackOff)
+    # is kept when >=1 pod matches; counts reflect only the filtered status; an
+    # absent status yields an empty page. Metric aggregation stays undistorted.
+    unfiltered_cpu = rec["jobCPU"]
+
+    running = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"filterByPodStatus": ["running"]},
+        },
+        timeout=5,
+    )
+    assert running.status_code == HTTPStatus.OK, running.text
+    rdata = running.json()["data"]
+    assert rdata["total"] == 1
+    rrec = rdata["records"][0]
+    assert rrec["jobName"] == "nj-job"
+    assert rrec["podCountsByStatus"] == expected_status_counts(running=1)
+    assert compare_values(rrec["jobCPU"], unfiltered_cpu, 1e-6), "filterByPodStatus distorted jobCPU"
+
+    clbo = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"filterByPodStatus": ["CrashLoopBackOff"]},
+        },
+        timeout=5,
+    )
+    assert clbo.status_code == HTTPStatus.OK, clbo.text
+    cdata = clbo.json()["data"]
+    assert cdata["total"] == 1
+    assert cdata["records"][0]["podCountsByStatus"] == expected_status_counts(crashLoopBackOff=1)
+
+    # Multi-select is OR: both requested buckets populated (union), others zeroed.
+    multi = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"filterByPodStatus": ["running", "CrashLoopBackOff"]},
+        },
+        timeout=5,
+    )
+    assert multi.status_code == HTTPStatus.OK, multi.text
+    assert multi.json()["data"]["records"][0]["podCountsByStatus"] == expected_status_counts(running=1, crashLoopBackOff=1)
+
+    # A set fully absent from the group -> empty page (single and multi-select).
+    for fbps in (["pending"], ["pending", "oomKilled"]):
+        absent = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
+                "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+                "end": int(now.timestamp() * 1000),
+                "limit": 50,
+                "filter": {"filterByPodStatus": fbps},
+            },
+            timeout=5,
+        )
+        assert absent.status_code == HTTPStatus.OK, absent.text
+        assert absent.json()["data"]["total"] == 0, f"group must be dropped by filterByPodStatus={fbps!r}"
+
 
 # Float record fields compared with tolerance; everything else compared with ==.
 _GROUPBY_FLOAT_FIELDS = {
@@ -527,10 +540,6 @@ _GROUPBY_FLOAT_FIELDS = {
     "jobMemoryRequest",
     "jobMemoryLimit",
 }
-
-
-def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
-    return {"pending": pending, "running": running, "succeeded": succeeded, "failed": failed, "unknown": unknown}
 
 
 @pytest.mark.parametrize(
@@ -546,10 +555,10 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                 "group_meta_keys": ["k8s.job.name"],
                 "expected_type": "grouped_list",
                 "groups": {
-                    "gb-job-a1": {"jobName": "gb-job-a1", "podCountsByPhase": _phase(running=1)},
-                    "gb-job-a2": {"jobName": "gb-job-a2", "podCountsByPhase": _phase(running=1)},
-                    "gb-job-b1": {"jobName": "gb-job-b1", "podCountsByPhase": _phase(running=1)},
-                    "gb-job-b2": {"jobName": "gb-job-b2", "podCountsByPhase": _phase(running=1)},
+                    "gb-job-a1": {"jobName": "gb-job-a1"},
+                    "gb-job-a2": {"jobName": "gb-job-a2"},
+                    "gb-job-b1": {"jobName": "gb-job-b1"},
+                    "gb-job-b2": {"jobName": "gb-job-b2"},
                 },
             },
             id="job_name",
@@ -564,8 +573,8 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                 "group_meta_keys": ["k8s.namespace.name"],
                 "expected_type": "grouped_list",
                 "groups": {
-                    "gb-ns-a": {"jobName": "", "podCountsByPhase": _phase(running=2)},
-                    "gb-ns-b": {"jobName": "", "podCountsByPhase": _phase(running=2)},
+                    "gb-ns-a": {"jobName": ""},
+                    "gb-ns-b": {"jobName": ""},
                 },
             },
             id="namespace",
@@ -598,7 +607,6 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                         "activePods": 2,
                         "failedPods": 0,
                         "successfulPods": 0,
-                        "podCountsByPhase": _phase(running=1),
                     },
                     ("dup-job", "ns-y", "cluster-a"): {
                         "jobName": "dup-job",
@@ -612,7 +620,6 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                         "activePods": 1,
                         "failedPods": 1,
                         "successfulPods": 1,
-                        "podCountsByPhase": _phase(failed=1),
                     },
                     ("dup-job", "ns-x", "cluster-b"): {
                         "jobName": "dup-job",
@@ -626,7 +633,6 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                         "activePods": 2,
                         "failedPods": 1,
                         "successfulPods": 1,
-                        "podCountsByPhase": _phase(running=1),
                     },
                     # empty-cluster group: k8s.cluster.name label absent on the source pods.
                     ("dup-job", "ns-x", ""): {
@@ -641,7 +647,6 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                         "activePods": 1,
                         "failedPods": 0,
                         "successfulPods": 0,
-                        "podCountsByPhase": _phase(pending=1),
                     },
                 },
             },
@@ -860,6 +865,11 @@ def test_jobs_orderby(  # pylint: disable=too-many-arguments,too-many-positional
             },
             "is only allowed when groupBy is empty",
             id="orderby_jobname_with_groupby",
+        ),
+        pytest.param(
+            {"filter": {"filterByPodStatus": ["Bogus"]}},
+            "invalid filter by pod status",
+            id="filter_by_pod_status_invalid",
         ),
     ],
 )

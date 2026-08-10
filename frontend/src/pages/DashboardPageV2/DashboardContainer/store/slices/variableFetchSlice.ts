@@ -1,23 +1,42 @@
 import type { StateCreator } from 'zustand';
 
-import type { VariableFetchContext } from '../../VariablesBar/variableDependencies';
+import { hasUsableValue } from '../../VariablesBar/utils/selectionUtils';
+import type { VariableSelectionMap } from '../../VariablesBar/selectionTypes';
+import type { VariableFetchContext } from '../../VariablesBar/utils/variableDependencies';
 import type { DashboardStore } from '../useDashboardStore';
+import { selectVariableValues } from './variableSelectionSlice';
 import {
-	areAllQueryVariablesSettled,
 	type FetchMaps,
-	isSettled,
 	isVariableInActiveFetchState,
 	resolveFetchState,
-	unlockWaitingDynamicVariables,
 	VariableFetchState,
 } from './variableFetchSlice.utils';
+
+/**
+ * Whether every QUERY parent of `name` holds a committed value. Gating a child on its
+ * parents' *values* (not their settled fetch state) makes it fetch once, after the
+ * values commit — not prematurely on fetch-complete and again on value-commit.
+ */
+function queryParentsHaveValues(
+	name: string,
+	context: VariableFetchContext,
+	selection: VariableSelectionMap,
+): boolean {
+	const parents = context.dependencyData.parentGraph[name] || [];
+	return parents.every(
+		(p) =>
+			context.variableTypes[p] !== 'QUERY' ||
+			hasUsableValue(selection[p], context.variableTypes[p]),
+	);
+}
 
 export { VariableFetchState } from './variableFetchSlice.utils';
 
 /**
  * Runtime fetch orchestration for dashboard variables — native port of V1's
  * `variableFetchStore`. Decides WHEN each variable's options fetch: query
- * variables in dependency order, dynamics together once query values exist,
+ * variables in dependency order, dynamics immediately (they are scoped only by
+ * sibling dynamic selections, never by query variables, so nothing gates them),
  * text/custom never. `cycleIds` is a per-variable request nonce keyed into each
  * selector's react-query key (bump = fresh fetch, auto-cancel stale). Transient.
  * `enqueueFetchAll` = load/time change; `enqueueDescendants` = one value changed.
@@ -26,13 +45,35 @@ export interface VariableFetchSlice {
 	variableFetchStates: Record<string, VariableFetchState>;
 	variableLastUpdated: Record<string, number>;
 	variableCycleIds: Record<string, number>;
+	/**
+	 * Whether a QUERY/DYNAMIC variable settled its fetch with zero options (so it
+	 * will never get a value). Lets a dependent panel fall through to "no data"
+	 * instead of waiting forever on a value that isn't coming.
+	 */
+	variableResolvedEmpty: Record<string, boolean>;
 	/** Static dependency context, set by `initVariableFetch` (null before init). */
 	variableFetchContext: VariableFetchContext | null;
+	/**
+	 * Signature (dashboard + time + variable order) of the last full fetch cycle.
+	 * A repeat `enqueueFetchAll` with the same signature is skipped, so a component
+	 * re-mount can't redo the cycle and double every variable's fetch.
+	 */
+	lastFetchAllKey: string | null;
 
 	/** Seed state entries for the current variable set and store the context. */
 	initVariableFetch: (names: string[], context: VariableFetchContext) => void;
-	/** Start a full fetch cycle for every fetchable variable (load / time change). */
-	enqueueFetchAll: (doAllQueryVariablesHaveValuesSelected: boolean) => void;
+	/**
+	 * Clear all transient fetch state on dashboard-page unmount, so a later visit
+	 * starts clean instead of inheriting stale state from this app-level store.
+	 */
+	resetVariableFetch: () => void;
+	/** Record whether a variable settled with no options (drives the panel gate). */
+	setVariableResolvedEmpty: (name: string, isEmpty: boolean) => void;
+	/**
+	 * Start a full fetch cycle for every fetchable variable (load / time change).
+	 * A repeat call with the same signature `key` is a no-op (idempotent re-mount).
+	 */
+	enqueueFetchAll: (key?: string) => void;
 	/** Mark a variable's fetch as done; unblock its waiting children / dynamics. */
 	onVariableFetchComplete: (name: string) => void;
 	/** Mark a variable's fetch as failed; idle its query descendants. */
@@ -65,34 +106,60 @@ export const createVariableFetchSlice: StateCreator<
 	variableFetchStates: {},
 	variableLastUpdated: {},
 	variableCycleIds: {},
+	variableResolvedEmpty: {},
 	variableFetchContext: null,
+	lastFetchAllKey: null,
+
+	resetVariableFetch: (): void => {
+		set({
+			variableFetchStates: {},
+			variableLastUpdated: {},
+			variableCycleIds: {},
+			variableResolvedEmpty: {},
+			variableFetchContext: null,
+			lastFetchAllKey: null,
+		});
+	},
+
+	setVariableResolvedEmpty: (name, isEmpty): void => {
+		const current = get().variableResolvedEmpty;
+		if ((current[name] ?? false) === isEmpty) {
+			return;
+		}
+		set({ variableResolvedEmpty: { ...current, [name]: isEmpty } });
+	},
 
 	initVariableFetch: (names, context): void => {
 		const maps = cloneMaps(get());
-		// Initialize new variables to idle, preserving existing states.
+		const resolvedEmpty = { ...get().variableResolvedEmpty };
 		names.forEach((name) => {
 			if (!maps.states[name]) {
 				maps.states[name] = VariableFetchState.Idle;
 			}
 		});
-		// Drop entries for variables that no longer exist.
 		const nameSet = new Set(names);
 		Object.keys(maps.states).forEach((name) => {
 			if (!nameSet.has(name)) {
 				delete maps.states[name];
 				delete maps.lastUpdated[name];
 				delete maps.cycleIds[name];
+				delete resolvedEmpty[name];
 			}
 		});
 		set({
 			variableFetchStates: maps.states,
 			variableLastUpdated: maps.lastUpdated,
 			variableCycleIds: maps.cycleIds,
+			variableResolvedEmpty: resolvedEmpty,
 			variableFetchContext: context,
 		});
 	},
 
-	enqueueFetchAll: (doAllQueryVariablesHaveValuesSelected): void => {
+	enqueueFetchAll: (key): void => {
+		// Skip a redundant re-run (re-mount with identical inputs) — else it doubles.
+		if (key && key === get().lastFetchAllKey) {
+			return;
+		}
 		const { variableFetchContext } = get();
 		if (!variableFetchContext) {
 			return;
@@ -105,7 +172,11 @@ export const createVariableFetchSlice: StateCreator<
 		} = variableFetchContext;
 		const maps = cloneMaps(get());
 
-		// Query variables: roots start immediately, dependents wait for parents.
+		// Query variables wait only for their QUERY parents. A DYNAMIC parent does not
+		// gate: its option fetch feeds only its own dropdown, while its selected value
+		// (ALL → `__all__`, or a concrete pick) is already in the selection, so a
+		// dependent query substitutes it immediately and refetches via the cascade if
+		// it later changes. Text/custom parents resolve synchronously, so nothing waits.
 		queryVariableOrder.forEach((name) => {
 			maps.cycleIds[name] = (maps.cycleIds[name] || 0) + 1;
 			const parents = dependencyData.parentGraph[name] || [];
@@ -116,8 +187,8 @@ export const createVariableFetchSlice: StateCreator<
 		});
 
 		// Query variables dropped from the dependency order (part of a cycle) would
-		// otherwise never fetch and would stall waiting dynamics — start them as
-		// best-effort roots so they surface data/an error instead of sitting empty.
+		// otherwise never fetch — start them as best-effort roots so they surface
+		// data/an error instead of sitting empty.
 		const orderedQuery = new Set(queryVariableOrder);
 		Object.keys(variableTypes).forEach((name) => {
 			if (variableTypes[name] === 'QUERY' && !orderedQuery.has(name)) {
@@ -126,19 +197,21 @@ export const createVariableFetchSlice: StateCreator<
 			}
 		});
 
-		// Dynamic variables: start now if query variables already have values,
-		// otherwise wait until the query variables settle.
+		// Dynamic variables fetch immediately, in parallel with the query variables:
+		// their options are scoped only by sibling dynamic selections (never by query
+		// variables), so there is nothing to wait for. Starting early lets them
+		// populate fast even when query variables are slow; a sibling selection change
+		// later refetches them via `enqueueDescendantsBatch`.
 		dynamicVariableOrder.forEach((name) => {
 			maps.cycleIds[name] = (maps.cycleIds[name] || 0) + 1;
-			maps.states[name] = doAllQueryVariablesHaveValuesSelected
-				? resolveFetchState(maps, name)
-				: VariableFetchState.Waiting;
+			maps.states[name] = resolveFetchState(maps, name);
 		});
 
 		set({
 			variableFetchStates: maps.states,
 			variableLastUpdated: maps.lastUpdated,
 			variableCycleIds: maps.cycleIds,
+			lastFetchAllKey: key ?? get().lastFetchAllKey,
 		});
 	},
 
@@ -154,10 +227,11 @@ export const createVariableFetchSlice: StateCreator<
 		maps.lastUpdated[name] = Date.now();
 
 		if (variableFetchContext) {
-			const { dependencyData, variableTypes, dynamicVariableOrder } =
-				variableFetchContext;
-			// Unblock a waiting query child only once ALL its parents are settled —
-			// otherwise it would fetch against a not-yet-resolved parent.
+			const { dependencyData, variableTypes } = variableFetchContext;
+			const selection = selectVariableValues(get().dashboardId)(get());
+			// Release a waiting child only if its parents are already valued (e.g. a
+			// persisted selection). For a just-fetched parent whose value hasn't committed
+			// yet, the value cascade (enqueueDescendantsBatch) unblocks it instead.
 			(dependencyData.graph[name] || []).forEach((child) => {
 				if (
 					variableTypes[child] !== 'QUERY' ||
@@ -165,18 +239,10 @@ export const createVariableFetchSlice: StateCreator<
 				) {
 					return;
 				}
-				const parents = dependencyData.parentGraph[child] || [];
-				if (parents.every((p) => isSettled(maps.states[p]))) {
+				if (queryParentsHaveValues(child, variableFetchContext, selection)) {
 					maps.states[child] = resolveFetchState(maps, child);
 				}
 			});
-			// Once all query variables settle, unlock any waiting dynamics.
-			if (
-				variableTypes[name] === 'QUERY' &&
-				areAllQueryVariablesSettled(maps.states, variableTypes)
-			) {
-				unlockWaitingDynamicVariables(maps, dynamicVariableOrder);
-			}
 		}
 
 		set({
@@ -195,20 +261,14 @@ export const createVariableFetchSlice: StateCreator<
 		maps.states[name] = VariableFetchState.Error;
 
 		if (variableFetchContext) {
-			const { dependencyData, variableTypes, dynamicVariableOrder } =
-				variableFetchContext;
-			// Query descendants can't proceed without this parent — idle them.
+			const { dependencyData, variableTypes } = variableFetchContext;
+			// Idle query descendants only when a QUERY parent fails (they need its
+			// value); a DYNAMIC failure doesn't block them (they used its selection).
 			(dependencyData.transitiveDescendants[name] || []).forEach((desc) => {
-				if (variableTypes[desc] === 'QUERY') {
+				if (variableTypes[name] === 'QUERY' && variableTypes[desc] === 'QUERY') {
 					maps.states[desc] = VariableFetchState.Idle;
 				}
 			});
-			if (
-				variableTypes[name] === 'QUERY' &&
-				areAllQueryVariablesSettled(maps.states, variableTypes)
-			) {
-				unlockWaitingDynamicVariables(maps, dynamicVariableOrder);
-			}
 		}
 
 		set({
@@ -231,9 +291,11 @@ export const createVariableFetchSlice: StateCreator<
 			variableFetchContext;
 		const maps = cloneMaps(get());
 		const changed = new Set(names);
+		// Callers commit values before this runs, so the gate sees the new parent values.
+		const selection = selectVariableValues(get().dashboardId)(get());
 
-		// Union of the changed variables' query descendants (never the changed ones
-		// themselves), refreshed once each: refetch when all parents are settled.
+		// Query descendants of the changed vars (not the changed ones): fetch once all
+		// their query parents have a value, else hold until the rest land.
 		const queryDescendants = new Set<string>();
 		names.forEach((name) => {
 			(dependencyData.transitiveDescendants[name] || []).forEach((desc) => {
@@ -244,27 +306,24 @@ export const createVariableFetchSlice: StateCreator<
 		});
 		queryDescendants.forEach((desc) => {
 			maps.cycleIds[desc] = (maps.cycleIds[desc] || 0) + 1;
-			const parents = dependencyData.parentGraph[desc] || [];
-			const allParentsSettled = parents.every((p) => isSettled(maps.states[p]));
-			maps.states[desc] = allParentsSettled
+			maps.states[desc] = queryParentsHaveValues(
+				desc,
+				variableFetchContext,
+				selection,
+			)
 				? resolveFetchState(maps, desc)
 				: VariableFetchState.Waiting;
 		});
 
 		// A dynamic's options depend only on its sibling DYNAMIC selections, so only a
-		// dynamic change affects them — refresh the *other* dynamics (never the one
-		// that changed, which would refetch its own identical options).
+		// dynamic change affects them — refresh the *other* dynamics immediately
+		// (never the one that changed, which would refetch its own identical options).
 		if (names.some((name) => variableTypes[name] === 'DYNAMIC')) {
 			dynamicVariableOrder
 				.filter((dynName) => !changed.has(dynName))
 				.forEach((dynName) => {
 					maps.cycleIds[dynName] = (maps.cycleIds[dynName] || 0) + 1;
-					maps.states[dynName] = areAllQueryVariablesSettled(
-						maps.states,
-						variableTypes,
-					)
-						? resolveFetchState(maps, dynName)
-						: VariableFetchState.Waiting;
+					maps.states[dynName] = resolveFetchState(maps, dynName);
 				});
 		}
 

@@ -34,6 +34,22 @@
 	min-width: 0;
 }
 
+// Logs-tab footer. Sibling of the scrolling .panelBody inside .panel, so it's
+// a true fixed footer flush with the panel's bottom edge — always visible
+// regardless of how the body is scrolled.
+.logsFooter {
+	flex-shrink: 0;
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	// Inset to match panelBody's 12px padding so the border-top aligns with
+	// the content edges instead of bleeding to the panel border.
+	margin: 0 12px;
+	padding: 8px 0 12px;
+	border-top: 1px solid var(--l2-border);
+	background: var(--l1-background);
+}
+
 // Single scroll: when the summary sits above (non-docked modes) it scrolls away
 // and the tab section pins to the top; tab content scrolls inside `.tabsScroll`.
 .tabsSection {

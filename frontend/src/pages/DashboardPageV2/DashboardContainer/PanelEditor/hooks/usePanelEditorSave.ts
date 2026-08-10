@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useQueryClient } from 'react-query';
 import { v4 as uuid } from 'uuid';
+import logEvent from 'api/common/logEvent';
 import { getGetDashboardV2QueryKey } from 'api/generated/services/dashboard';
 import {
 	type DashboardtypesJSONPatchOperationDTO,
@@ -9,6 +10,7 @@ import {
 	DashboardtypesPatchOpDTO,
 	type GetDashboardV2200,
 } from 'api/generated/services/sigNoz.schemas';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 
 import { useOptimisticPatch } from '../../hooks/useOptimisticPatch';
 import { createPanelOps } from '../../patchOps';
@@ -23,7 +25,8 @@ interface UsePanelEditorSaveArgs {
 }
 
 interface UsePanelEditorSaveApi {
-	save: (spec: DashboardtypesPanelSpecDTO) => Promise<void>;
+	/** Resolves with the saved panel's id (freshly minted when creating). */
+	save: (spec: DashboardtypesPanelSpecDTO) => Promise<string>;
 	isSaving: boolean;
 	error: Error | null;
 }
@@ -44,17 +47,20 @@ export function usePanelEditorSave({
 	const { patchAsync, isPatching, error } = useOptimisticPatch(dashboardId);
 
 	const save = useCallback(
-		async (spec: DashboardtypesPanelSpecDTO): Promise<void> => {
+		async (spec: DashboardtypesPanelSpecDTO): Promise<string> => {
 			let ops: DashboardtypesJSONPatchOperationDTO[];
+			// The id a new panel is persisted under (surfaced so the caller can reveal it).
+			let savedPanelId = panelId;
 			if (isNew) {
 				// Resolve the target section against the freshest dashboard we have.
 				const dashboardQueryKey = getGetDashboardV2QueryKey({ id: dashboardId });
 				const cached =
 					queryClient.getQueryData<GetDashboardV2200>(dashboardQueryKey);
+				savedPanelId = uuid();
 				ops = createPanelOps({
 					layouts: cached?.data.spec.layouts ?? [],
 					layoutIndex,
-					panelId: uuid(),
+					panelId: savedPanelId,
 					panel: { kind: DashboardtypesPanelKindDTO.Panel, spec },
 				});
 			} else {
@@ -69,6 +75,13 @@ export function usePanelEditorSave({
 
 			// Optimistic cache write + settle refetch (replaces the manual invalidate).
 			await patchAsync(ops);
+			void logEvent(DashboardDetailEvents.PanelEditorSaved, {
+				panelType: spec.plugin.kind,
+				isNew,
+				dashboardId,
+				panelId: savedPanelId,
+			});
+			return savedPanelId;
 		},
 		[dashboardId, panelId, isNew, layoutIndex, patchAsync, queryClient],
 	);

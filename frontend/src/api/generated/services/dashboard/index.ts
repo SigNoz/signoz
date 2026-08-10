@@ -41,6 +41,7 @@ import type {
 	GetPublicDashboardDataV2200,
 	GetPublicDashboardDataV2PathParameters,
 	GetPublicDashboardPanelQueryRangeV2200,
+	GetPublicDashboardPanelQueryRangeV2Params,
 	GetPublicDashboardPanelQueryRangeV2PathParameters,
 	GetPublicDashboardPathParameters,
 	GetPublicDashboardWidgetQueryRange200,
@@ -51,6 +52,8 @@ import type {
 	ListDashboardsV2200,
 	ListDashboardsV2Params,
 	LockDashboardV2PathParameters,
+	MigrateDashboardV2200,
+	MigrateDashboardV2PathParameters,
 	PatchDashboardV2200,
 	PatchDashboardV2PathParameters,
 	PinDashboardV2PathParameters,
@@ -1804,6 +1807,85 @@ export const useLockDashboardV2 = <
 	return useMutation(getLockDashboardV2MutationOptions(options));
 };
 /**
+ * This endpoint retries the v1→v2 (Perses) migration on a dashboard still stored in the v1 schema and returns the v2-shape result. It is idempotent: a dashboard already in the v2 schema is returned unchanged.
+ * @summary Migrate dashboard to v2
+ */
+export const migrateDashboardV2 = (
+	{ id }: MigrateDashboardV2PathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<MigrateDashboardV2200>({
+		url: `/api/v2/dashboards/${id}/migrate`,
+		method: 'POST',
+		signal,
+	});
+};
+
+export const getMigrateDashboardV2MutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof migrateDashboardV2>>,
+		TError,
+		{ pathParams: MigrateDashboardV2PathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof migrateDashboardV2>>,
+	TError,
+	{ pathParams: MigrateDashboardV2PathParameters },
+	TContext
+> => {
+	const mutationKey = ['migrateDashboardV2'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof migrateDashboardV2>>,
+		{ pathParams: MigrateDashboardV2PathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return migrateDashboardV2(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type MigrateDashboardV2MutationResult = NonNullable<
+	Awaited<ReturnType<typeof migrateDashboardV2>>
+>;
+
+export type MigrateDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Migrate dashboard to v2
+ */
+export const useMigrateDashboardV2 = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof migrateDashboardV2>>,
+		TError,
+		{ pathParams: MigrateDashboardV2PathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof migrateDashboardV2>>,
+	TError,
+	{ pathParams: MigrateDashboardV2PathParameters },
+	TContext
+> => {
+	return useMutation(getMigrateDashboardV2MutationOptions(options));
+};
+/**
  * This endpoint returns the sanitized v2-shape dashboard data for public access. Each panel query is reduced to a safe field subset, so filters and raw query strings are not exposed.
  * @summary Get public dashboard data (v2)
  */
@@ -1912,20 +1994,25 @@ export const invalidateGetPublicDashboardDataV2 = async (
  */
 export const getPublicDashboardPanelQueryRangeV2 = (
 	{ id, key }: GetPublicDashboardPanelQueryRangeV2PathParameters,
+	params?: GetPublicDashboardPanelQueryRangeV2Params,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<GetPublicDashboardPanelQueryRangeV2200>({
 		url: `/api/v2/public/dashboards/${id}/panels/${key}/query_range`,
 		method: 'GET',
+		params,
 		signal,
 	});
 };
 
-export const getGetPublicDashboardPanelQueryRangeV2QueryKey = ({
-	id,
-	key,
-}: GetPublicDashboardPanelQueryRangeV2PathParameters) => {
-	return [`/api/v2/public/dashboards/${id}/panels/${key}/query_range`] as const;
+export const getGetPublicDashboardPanelQueryRangeV2QueryKey = (
+	{ id, key }: GetPublicDashboardPanelQueryRangeV2PathParameters,
+	params?: GetPublicDashboardPanelQueryRangeV2Params,
+) => {
+	return [
+		`/api/v2/public/dashboards/${id}/panels/${key}/query_range`,
+		...(params ? [params] : []),
+	] as const;
 };
 
 export const getGetPublicDashboardPanelQueryRangeV2QueryOptions = <
@@ -1933,6 +2020,7 @@ export const getGetPublicDashboardPanelQueryRangeV2QueryOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id, key }: GetPublicDashboardPanelQueryRangeV2PathParameters,
+	params?: GetPublicDashboardPanelQueryRangeV2Params,
 	options?: {
 		query?: UseQueryOptions<
 			Awaited<ReturnType<typeof getPublicDashboardPanelQueryRangeV2>>,
@@ -1945,11 +2033,12 @@ export const getGetPublicDashboardPanelQueryRangeV2QueryOptions = <
 
 	const queryKey =
 		queryOptions?.queryKey ??
-		getGetPublicDashboardPanelQueryRangeV2QueryKey({ id, key });
+		getGetPublicDashboardPanelQueryRangeV2QueryKey({ id, key }, params);
 
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof getPublicDashboardPanelQueryRangeV2>>
-	> = ({ signal }) => getPublicDashboardPanelQueryRangeV2({ id, key }, signal);
+	> = ({ signal }) =>
+		getPublicDashboardPanelQueryRangeV2({ id, key }, params, signal);
 
 	return {
 		queryKey,
@@ -1978,6 +2067,7 @@ export function useGetPublicDashboardPanelQueryRangeV2<
 	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id, key }: GetPublicDashboardPanelQueryRangeV2PathParameters,
+	params?: GetPublicDashboardPanelQueryRangeV2Params,
 	options?: {
 		query?: UseQueryOptions<
 			Awaited<ReturnType<typeof getPublicDashboardPanelQueryRangeV2>>,
@@ -1988,6 +2078,7 @@ export function useGetPublicDashboardPanelQueryRangeV2<
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 	const queryOptions = getGetPublicDashboardPanelQueryRangeV2QueryOptions(
 		{ id, key },
+		params,
 		options,
 	);
 
@@ -2004,10 +2095,16 @@ export function useGetPublicDashboardPanelQueryRangeV2<
 export const invalidateGetPublicDashboardPanelQueryRangeV2 = async (
 	queryClient: QueryClient,
 	{ id, key }: GetPublicDashboardPanelQueryRangeV2PathParameters,
+	params?: GetPublicDashboardPanelQueryRangeV2Params,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
-		{ queryKey: getGetPublicDashboardPanelQueryRangeV2QueryKey({ id, key }) },
+		{
+			queryKey: getGetPublicDashboardPanelQueryRangeV2QueryKey(
+				{ id, key },
+				params,
+			),
+		},
 		options,
 	);
 

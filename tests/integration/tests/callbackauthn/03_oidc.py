@@ -26,9 +26,6 @@ def test_apply_license(
     make_http_mocks: Callable[[TestContainerDocker, list[Mapping]], None],
     get_token: Callable[[str, str], str],
 ) -> None:
-    """
-    This applies a license to the signoz instance.
-    """
     add_license(signoz, make_http_mocks, get_token)
 
 
@@ -40,9 +37,6 @@ def test_create_auth_domain(
     create_user_admin: Callable[[], None],  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
-    """
-    This creates an OIDC auth domain in signoz.
-    """
     client_id = f"oidc.integration.test.{signoz.self.host_configs['8080'].address}:{signoz.self.host_configs['8080'].port}"
     # Create a saml client in the idp.
     create_oidc_client(client_id, "/api/v1/complete/oidc")
@@ -121,9 +115,6 @@ def test_oidc_update_domain_with_group_mappings(
     get_token: Callable[[str, str], str],
     get_oidc_settings: Callable[[str], dict],
 ) -> None:
-    """
-    Updates OIDC domain to add role mapping with group mappings and claim mapping.
-    """
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     domain = get_oidc_domain(signoz, admin_token)
     client_id = f"oidc.integration.test.{signoz.self.host_configs['8080'].address}:{signoz.self.host_configs['8080'].port}"
@@ -175,9 +166,6 @@ def test_oidc_role_mapping_single_group_admin(
     get_token: Callable[[str, str], str],
     get_session_context: Callable[[str], str],
 ) -> None:
-    """
-    Test: OIDC user in 'signoz-admins' group gets ADMIN role.
-    """
     email = "admin-group-user@oidc.integration.test"
     create_user_idp_with_groups(email, "password123", True, ["signoz-admins"])
 
@@ -198,9 +186,6 @@ def test_oidc_role_mapping_single_group_editor(
     get_token: Callable[[str, str], str],
     get_session_context: Callable[[str], str],
 ) -> None:
-    """
-    Test: OIDC user in 'signoz-editors' group gets EDITOR role.
-    """
     email = "editor-group-user@oidc.integration.test"
     create_user_idp_with_groups(email, "password123", True, ["signoz-editors"])
 
@@ -270,9 +255,6 @@ def test_oidc_role_mapping_unmapped_group_uses_default(
     get_token: Callable[[str, str], str],
     get_session_context: Callable[[str], str],
 ) -> None:
-    """
-    Test: OIDC user in unmapped group falls back to default role.
-    """
     email = "unmapped-group-user@oidc.integration.test"
     create_user_idp_with_groups(email, "password123", True, ["some-other-group"])
 
@@ -290,9 +272,6 @@ def test_oidc_update_domain_with_use_role_claim(
     get_token: Callable[[str, str], str],
     get_oidc_settings: Callable[[str], dict],
 ) -> None:
-    """
-    Updates OIDC domain to enable useRoleClaim.
-    """
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     domain = get_oidc_domain(signoz, admin_token)
     client_id = f"oidc.integration.test.{signoz.self.host_configs['8080'].address}:{signoz.self.host_configs['8080'].port}"
@@ -424,7 +403,6 @@ def test_oidc_name_mapping(
     get_token: Callable[[str, str], str],
     get_session_context: Callable[[str], dict],
 ) -> None:
-    """Test that user's display name is mapped from IDP name claim."""
     email = "named-user@oidc.integration.test"
 
     # Create user with explicit first/last name
@@ -449,7 +427,6 @@ def test_oidc_empty_name_uses_fallback(
     get_token: Callable[[str, str], str],
     get_session_context: Callable[[str], dict],
 ) -> None:
-    """Test that user without name in IDP still gets created (may have empty displayName)."""
     email = "no-name@oidc.integration.test"
 
     # Create user without first/last name

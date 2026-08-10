@@ -1,5 +1,3 @@
-"""Fixtures and helpers for service account tests."""
-
 from http import HTTPStatus
 
 import requests

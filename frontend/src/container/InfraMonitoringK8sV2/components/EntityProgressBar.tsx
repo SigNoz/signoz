@@ -1,33 +1,11 @@
 import { Progress } from '@signozhq/ui/progress';
 import TanStackTable from 'components/TanStackTableView';
-import {
-	getMemoryProgressColor,
-	getProgressColor,
-} from 'container/InfraMonitoringHostsV2/constants';
-
-import {
-	getStrokeColorForLimitUtilization,
-	getStrokeColorForRequestUtilization,
-} from '../commonUtils';
 
 import styles from './EntityProgressBar.module.scss';
-
-type EntityProgressBarType = 'request' | 'limit' | 'cpu' | 'memory';
-
-function getStrokeColor(type: EntityProgressBarType, value: number): string {
-	switch (type) {
-		case 'limit':
-			return getStrokeColorForLimitUtilization(value);
-		case 'request':
-			return getStrokeColorForRequestUtilization(value);
-		case 'cpu':
-			return getProgressColor(Number((value * 100).toFixed(1)));
-		case 'memory':
-			return getMemoryProgressColor(Number((value * 100).toFixed(1)));
-		default:
-			return getStrokeColorForRequestUtilization(value);
-	}
-}
+import {
+	EntityProgressBarType,
+	getStrokeColor,
+} from './EntityProgressBar.utils';
 
 export function EntityProgressBar({
 	value,
@@ -36,9 +14,8 @@ export function EntityProgressBar({
 	value: number;
 	type: EntityProgressBarType;
 }): JSX.Element {
-	const percentage = Number.isNaN(+value)
-		? null
-		: Number((value * 100).toFixed(1));
+	const isNoData = value === -1 || Number.isNaN(+value);
+	const percentage = isNoData ? null : Number((value * 100).toFixed(1));
 
 	if (percentage === null) {
 		return (

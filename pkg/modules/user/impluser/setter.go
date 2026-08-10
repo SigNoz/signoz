@@ -276,92 +276,6 @@ func (module *setter) CreatePendingInviteUser(ctx context.Context, identityID va
 	return user, nil
 }
 
-func (module *setter) UpdateUserDeprecated(ctx context.Context, orgID valuer.UUID, id string, user *types.DeprecatedUser) (*types.DeprecatedUser, error) {
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	existingUser, err := module.getter.GetDeprecatedUserByOrgIDAndID(ctx, orgID, valuer.MustNewUUID(id))
-	if err != nil {
-		return nil, err
-	}
-
-	if err := existingUser.ErrIfRoot(); err != nil {
-		return nil, errors.WithAdditionalf(err, "cannot update root user")
-	}
-
-	if err := existingUser.ErrIfDeleted(); err != nil {
-		return nil, errors.WithAdditionalf(err, "cannot update deleted user")
-	}
-
-	roleChange := user.Role != "" && user.Role != existingUser.Role
-
-	if roleChange {
-		selectors := []coretypes.Selector{
-			coretypes.TypeRole.MustSelector(authtypes.SigNozAdminRoleName),
-		}
-		err = module.authz.CheckWithTupleCreation(
-			ctx,
-			claims,
-			valuer.MustNewUUID(claims.OrgID),
-			authtypes.Relation{Verb: coretypes.VerbAssignee},
-			coretypes.NewResourceRole(),
-			selectors,
-			selectors,
-		)
-
-		if err != nil {
-			return nil, errors.New(errors.TypeForbidden, errors.CodeForbidden, "only admins can change roles")
-		}
-	}
-
-	// make sure the user is not demoting self from admin
-	if roleChange && existingUser.ID == valuer.MustNewUUID(claims.IdentityID()) && existingUser.Role == types.RoleAdmin && user.Role != types.RoleAdmin {
-		return nil, errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot change self role")
-	}
-
-	if roleChange {
-		err = module.authz.ModifyGrant(ctx,
-			orgID,
-			[]string{authtypes.MustGetSigNozManagedRoleFromExistingRole(existingUser.Role)},
-			[]string{authtypes.MustGetSigNozManagedRoleFromExistingRole(user.Role)},
-			authtypes.MustNewSubject(coretypes.NewResourceUser(), id, orgID, nil),
-		)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	existingUser.Update(user.DisplayName, user.Role)
-
-	// update the user - idempotent (this does analytics too so keeping it outside txn)
-	if err := module.UpdateAnyUserDeprecated(ctx, orgID, existingUser); err != nil {
-		return nil, err
-	}
-
-	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
-		if roleChange {
-			// delete old role entries and create new ones
-			if err := module.userRoleStore.DeleteUserRoles(ctx, existingUser.ID); err != nil {
-				return err
-			}
-
-			// create new ones
-			if err := module.createUserRoleEntries(ctx, existingUser.OrgID, existingUser.ID, []string{authtypes.MustGetSigNozManagedRoleFromExistingRole(user.Role)}); err != nil {
-				return err
-			}
-		}
-
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return existingUser, nil
-}
-
 func (module *setter) UpdateUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, updatable *types.UpdatableUser) (*types.User, error) {
 	existingUser, err := module.getter.GetUserByOrgIDAndID(ctx, orgID, userID)
 	if err != nil {
@@ -397,23 +311,6 @@ func (module *setter) UpdateAnyUser(ctx context.Context, orgID valuer.UUID, user
 	traits := types.NewTraitsFromUser(user)
 	module.analytics.IdentifyUser(ctx, user.OrgID.String(), user.ID.String(), traits)
 	module.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Updated", traits)
-
-	return nil
-}
-
-func (module *setter) UpdateAnyUserDeprecated(ctx context.Context, orgID valuer.UUID, deprecateUser *types.DeprecatedUser) error {
-	user := types.NewUserFromDeprecatedUser(deprecateUser)
-	if err := module.store.UpdateUser(ctx, orgID, user); err != nil {
-		return err
-	}
-
-	traits := types.NewTraitsFromDeprecatedUser(deprecateUser)
-	module.analytics.IdentifyUser(ctx, user.OrgID.String(), user.ID.String(), traits)
-	module.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Updated", traits)
-
-	if err := module.tokenizer.DeleteIdentity(ctx, user.ID); err != nil {
-		return err
-	}
 
 	return nil
 }

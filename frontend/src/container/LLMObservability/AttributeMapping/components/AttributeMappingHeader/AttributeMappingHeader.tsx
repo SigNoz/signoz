@@ -1,5 +1,7 @@
 import { Button } from '@signozhq/ui/button';
+import { Typography } from '@signozhq/ui/typography';
 
+import { useCanManageAttributeMapping } from '../../hooks/useCanManageAttributeMapping';
 import styles from './AttributeMappingHeader.module.scss';
 
 interface AttributeMappingHeaderProps {
@@ -15,40 +17,38 @@ function AttributeMappingHeader({
 	onDiscard,
 	onSave,
 }: AttributeMappingHeaderProps): JSX.Element {
+	const canManage = useCanManageAttributeMapping();
 	return (
 		<header className={styles.pageHeader}>
-			<div className={styles.pageHeaderTitle}>
-				<h1 className={styles.title}>Attribute Mapping</h1>
-				<p className={styles.description}>
-					Configure source-to-target attribute remapping for LLM traces
-				</p>
-			</div>
-			<div className={styles.pageHeaderActions}>
-				{isDirty && (
+			<Typography.Text as="p" size="base" color="muted">
+				Configure source-to-target attribute remapping for LLM traces
+			</Typography.Text>
+			{canManage && isDirty && (
+				<div className={styles.pageHeaderActions}>
 					<span className={styles.unsavedChanges} data-testid="unsaved-changes">
 						Unsaved changes
 					</span>
-				)}
-				<Button
-					variant="outlined"
-					color="secondary"
-					onClick={onDiscard}
-					disabled={!isDirty || isSaving}
-					testId="discard-changes-btn"
-				>
-					Discard
-				</Button>
-				<Button
-					variant="solid"
-					color="primary"
-					onClick={onSave}
-					loading={isSaving}
-					disabled={!isDirty || isSaving}
-					testId="save-changes-btn"
-				>
-					{isSaving ? 'Saving…' : 'Save changes'}
-				</Button>
-			</div>
+					<Button
+						variant="outlined"
+						color="secondary"
+						onClick={onDiscard}
+						disabled={isSaving}
+						testId="discard-changes-btn"
+					>
+						Discard
+					</Button>
+					<Button
+						variant="solid"
+						color="primary"
+						onClick={onSave}
+						loading={isSaving}
+						disabled={isSaving}
+						testId="save-changes-btn"
+					>
+						{isSaving ? 'Saving…' : 'Save changes'}
+					</Button>
+				</div>
+			)}
 		</header>
 	);
 }

@@ -9,23 +9,8 @@
 	display: block;
 }
 
-.statusHeader {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--spacing-2);
-	width: 100%;
-}
-
 .columnHeaderRight {
 	text-align: right;
-}
-
-.memoryUsageHeader {
-	display: inline-flex;
-	align-items: center;
-	justify-content: flex-end;
-	gap: var(--spacing-2);
-	width: 100%;
 }
 
 .statusTag {

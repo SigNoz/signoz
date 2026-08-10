@@ -1,10 +1,9 @@
 import * as roleApi from 'api/generated/services/role';
-import { FeatureKeys } from 'constants/features';
-import * as useAuthZModule from 'lib/authz/hooks/useAuthZ/useAuthZ';
-import { defaultFeatureFlags, render, screen } from 'tests/test-utils';
+import { server } from 'mocks-server/server';
+import { render, screen, waitFor } from 'tests/test-utils';
 import {
 	invalidLicense,
-	mockUseAuthZGrantAll,
+	setupAuthzAdmin,
 } from 'lib/authz/utils/authz-test-utils';
 
 import ViewRolePage from '../ViewRolePage';
@@ -17,9 +16,7 @@ import {
 
 describe('ViewRolePage - Feature Gate', () => {
 	beforeEach(() => {
-		jest
-			.spyOn(useAuthZModule, 'useAuthZ')
-			.mockImplementation(mockUseAuthZGrantAll);
+		server.use(setupAuthzAdmin());
 
 		jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
 			data: undefined,
@@ -31,55 +28,44 @@ describe('ViewRolePage - Feature Gate', () => {
 
 	afterEach(() => {
 		jest.restoreAllMocks();
+		server.resetHandlers();
 	});
 
 	describe('feature disabled', () => {
-		it('shows error when fine-grained authz flag is inactive', async () => {
-			render(<ViewRolePage />, undefined, {
-				initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
-				appContextOverrides: {
-					featureFlags: defaultFeatureFlags.map((f) =>
-						f.name === FeatureKeys.USE_FINE_GRAINED_AUTHZ
-							? { ...f, active: false }
-							: f,
-					),
-				},
-			});
-
-			expect(screen.getByTestId('feature-gate-error-banner')).toBeInTheDocument();
-			await expect(
-				screen.findByText(/Custom roles feature is not available/i),
-			).resolves.toBeInTheDocument();
-		});
-
 		it('shows error when license is invalid', async () => {
 			render(<ViewRolePage />, undefined, {
 				initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 				appContextOverrides: { activeLicense: invalidLicense },
 			});
 
-			expect(screen.getByTestId('feature-gate-error-banner')).toBeInTheDocument();
+			await expect(
+				screen.findByTestId('feature-gate-error-banner'),
+			).resolves.toBeInTheDocument();
 			await expect(
 				screen.findByText(/Custom roles feature is not available/i),
 			).resolves.toBeInTheDocument();
 		});
 
-		it('shows back button when feature disabled', () => {
+		it('shows back button when feature disabled', async () => {
 			render(<ViewRolePage />, undefined, {
 				initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 				appContextOverrides: { activeLicense: invalidLicense },
 			});
 
-			expect(screen.getByTestId('cancel-button')).toBeInTheDocument();
+			await expect(
+				screen.findByTestId('cancel-button'),
+			).resolves.toBeInTheDocument();
 		});
 
-		it('back button is enabled when feature disabled', () => {
+		it('back button is enabled when feature disabled', async () => {
 			render(<ViewRolePage />, undefined, {
 				initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 				appContextOverrides: { activeLicense: invalidLicense },
 			});
 
-			expect(screen.getByTestId('cancel-button')).not.toBeDisabled();
+			await waitFor(() => {
+				expect(screen.getByTestId('cancel-button')).not.toBeDisabled();
+			});
 		});
 	});
 });

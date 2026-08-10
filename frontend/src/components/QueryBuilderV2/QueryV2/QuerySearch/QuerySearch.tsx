@@ -49,9 +49,15 @@ import { unquote } from 'utils/stringUtils';
 import { getRecentQueries } from 'lib/recentQueries/getRecentQueries';
 import type { SignalType } from 'types/api/v5/queryRange';
 
-import { queryExamples, SUGGESTIONS_SECTION } from './constants';
+import {
+	queryExamples,
+	SUGGESTION_FETCH_DEBOUNCE_MS,
+	SUGGESTIONS_SECTION,
+} from './constants';
 import {
 	combineInitialAndUserExpression,
+	dedupeOptionsByLabel,
+	getFieldContextPrefix,
 	getRecentOptions,
 	renderRecentDeleteButton,
 } from './utils';
@@ -89,12 +95,22 @@ interface QuerySearchProps {
 	onChange: (value: string) => void;
 	queryData: IBuilderQuery;
 	dataSource: DataSource;
+	metricNamespace?: string;
 	signalSource?: string;
 	hardcodedAttributeKeys?: QueryKeyDataSuggestionsProps[];
 	onRun?: (query: string) => void;
 	showFilterSuggestionsWithoutMetric?: boolean;
 	/** When set, the editor shows only the user expression; API/filter uses `initial AND (user)`. */
 	initialExpression?: string;
+	/** When set, replaces the generic value-suggestion API with a custom fetcher. */
+	valueSuggestionsOverride?: (
+		key: string,
+		searchText: string,
+	) => Promise<{
+		stringValues: string[];
+		numberValues: number[];
+		complete: boolean;
+	}>;
 }
 
 function QuerySearch({
@@ -107,6 +123,8 @@ function QuerySearch({
 	hardcodedAttributeKeys,
 	showFilterSuggestionsWithoutMetric,
 	initialExpression,
+	metricNamespace,
+	valueSuggestionsOverride,
 }: QuerySearchProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const [valueSuggestions, setValueSuggestions] = useState<any[]>([]);
@@ -220,6 +238,12 @@ function QuerySearch({
 		QueryKeyDataSuggestionsProps[] | null
 	>(null);
 
+	// dedupe keySuggestions by label/name
+	const dedupedKeySuggestions = useMemo(
+		() => dedupeOptionsByLabel(keySuggestions || []),
+		[keySuggestions],
+	);
+
 	const [showExamples] = useState(false);
 
 	const [cursorPos, setCursorPos] = useState({ line: 0, ch: 0 });
@@ -244,9 +268,11 @@ function QuerySearch({
 		[key: string]: QueryKeyDataSuggestionsProps[];
 	}): any[] =>
 		Object.values(keys).flatMap((items: QueryKeyDataSuggestionsProps[]) =>
-			items.map(({ name, fieldDataType }) => ({
+			items.map(({ name, fieldDataType, fieldContext }) => ({
 				label: name,
 				type: fieldDataType === 'string' ? 'keyword' : fieldDataType,
+				fieldContext,
+				fieldDataType,
 				info: '',
 				details: '',
 			})),
@@ -299,18 +325,23 @@ function QuerySearch({
 				searchText: searchText || '',
 				metricName: debouncedMetricName ?? undefined,
 				signalSource: signalSource as 'meter' | '',
+				metricNamespace,
 			});
 
 			if (response.data.data) {
 				const { keys } = response.data.data;
 				const options = generateOptions(keys);
-				// Use a Map to deduplicate by label and preserve order: new options take precedence
+				// Deduplicate by full variant identity (name + context + data type), NOT by
+				// label. deduping by label removes varient which is not expected. If we need
+				// to dedupe by label use dedupedKeySuggestions not dedupe the source itself
+				const variantId = (opt: QueryKeyDataSuggestionsProps): string =>
+					`${opt.label}|${opt.fieldContext ?? ''}|${opt.fieldDataType ?? ''}`;
 				const merged = new Map<string, QueryKeyDataSuggestionsProps>();
-				options.forEach((opt) => merged.set(opt.label, opt));
+				options.forEach((opt) => merged.set(variantId(opt), opt));
 				if (searchText && lastKeyRef.current !== searchText) {
 					(keySuggestions || []).forEach((opt) => {
-						if (!merged.has(opt.label)) {
-							merged.set(opt.label, opt);
+						if (!merged.has(variantId(opt))) {
+							merged.set(variantId(opt), opt);
 						}
 					});
 				}
@@ -331,11 +362,12 @@ function QuerySearch({
 			signalSource,
 			hardcodedAttributeKeys,
 			showFilterSuggestionsWithoutMetric,
+			metricNamespace,
 		],
 	);
 
 	const debouncedFetchKeySuggestions = useMemo(
-		() => debounce(fetchKeySuggestions, 300),
+		() => debounce(fetchKeySuggestions, SUGGESTION_FETCH_DEBOUNCE_MS),
 		[fetchKeySuggestions],
 	);
 
@@ -462,13 +494,24 @@ function QuerySearch({
 			const sanitizedSearchText = searchText ? searchText?.trim() : '';
 
 			try {
-				const response = await getValueSuggestions({
-					key,
-					searchText: sanitizedSearchText,
-					signal: dataSource,
-					signalSource: signalSource as 'meter' | '',
-					metricName: debouncedMetricName ?? undefined,
-				});
+				const values = valueSuggestionsOverride
+					? await valueSuggestionsOverride(key, sanitizedSearchText)
+					: await getValueSuggestions({
+							key,
+							searchText: sanitizedSearchText,
+							signal: dataSource,
+							signalSource: signalSource as 'meter' | '',
+							metricName: debouncedMetricName ?? undefined,
+						}).then((response) => {
+							const responseData = response.data as any;
+							const data = responseData.data || {};
+							const values = data.values || {};
+							return {
+								stringValues: values.stringValues || [],
+								numberValues: values.numberValues || [],
+								complete: data.complete ?? false,
+							};
+						});
 
 				// Skip updates if component unmounted or key changed
 				if (
@@ -480,8 +523,6 @@ function QuerySearch({
 				}
 
 				// Process the response data
-				const responseData = response.data as any;
-				const values = responseData.data?.values || {};
 				const stringValues = values.stringValues || [];
 				const numberValues = values.numberValues || [];
 
@@ -562,11 +603,12 @@ function QuerySearch({
 			debouncedMetricName,
 			signalSource,
 			toggleSuggestions,
+			valueSuggestionsOverride,
 		],
 	);
 
 	const debouncedFetchValueSuggestions = useMemo(
-		() => debounce(fetchValueSuggestions, 300),
+		() => debounce(fetchValueSuggestions, SUGGESTION_FETCH_DEBOUNCE_MS),
 		[fetchValueSuggestions],
 	);
 
@@ -915,8 +957,55 @@ function QuerySearch({
 
 		if (queryContext.isInKey) {
 			const searchText = word?.text.toLowerCase().trim() ?? '';
+			const fieldContextMatch = getFieldContextPrefix(searchText);
 
-			options = (keySuggestions || []).filter((option) =>
+			if (fieldContextMatch) {
+				const { context: fieldContext, remainder } = fieldContextMatch;
+
+				// Fetch the context's page when the prefix is typed exactly eg.("attribute.")
+				if (remainder === '' && lastFetchedKeyRef.current !== searchText) {
+					debouncedFetchKeySuggestions(searchText);
+				}
+
+				//suggestions that actually do start with <fieldContext>.
+				const nameMatches = (keySuggestions || [])
+					.filter((option) => option.label.toLowerCase().includes(searchText))
+					.map((option) => ({ ...option, boost: 100 }));
+
+				//suggestions which do not start with the prefix but qualifies for suggestion
+				const contextQualified = (keySuggestions || [])
+					.filter(
+						(option) =>
+							option.fieldContext === fieldContext &&
+							option.label.toLowerCase().includes(remainder),
+					)
+					.map((option) => ({
+						...option,
+						label: `${fieldContext}.${option.label}`,
+						boost: 0,
+					}));
+
+				const contextOptions = dedupeOptionsByLabel([
+					...nameMatches,
+					...contextQualified,
+				]);
+
+				// If contextOptions is empty fetch again.
+				if (
+					contextOptions.length === 0 &&
+					lastFetchedKeyRef.current !== searchText
+				) {
+					debouncedFetchKeySuggestions(searchText);
+				}
+
+				return {
+					from: word?.from ?? 0,
+					to: word?.to ?? cursorPos.ch,
+					options: addSpaceToOptions(contextOptions),
+				};
+			}
+
+			options = dedupedKeySuggestions.filter((option) =>
 				option.label.toLowerCase().includes(searchText),
 			);
 
@@ -965,9 +1054,26 @@ function QuerySearch({
 
 			// If we have a key context, add that info to the operator suggestions
 			if (keyName) {
-				// Find the key details from suggestions
-				const keyDetails = (keySuggestions || []).find((k) => k.label === keyName);
-				const keyType = keyDetails?.type || '';
+				const keyContextMatch = getFieldContextPrefix(keyName);
+				// key-suggestion can contain multiple variants of a single key
+				// In variants we capture ones that match the label to typed keyName exactly or,
+				// if it has a prefix fieldContext remove it and then match.
+				const variants = (keySuggestions || []).filter(
+					(k) =>
+						k.label === keyName ||
+						(keyContextMatch !== null &&
+							k.fieldContext === keyContextMatch.context &&
+							k.label === keyContextMatch.remainder),
+				);
+				const variantTypes = new Set(
+					variants
+						.map((k) =>
+							k.type === 'keyword' ? QUERY_BUILDER_KEY_TYPES.STRING : k.type,
+						)
+						.filter(Boolean),
+				);
+				//if there are multi-variant, show all suggestions else just the one
+				const keyType = variantTypes.size === 1 ? [...variantTypes][0] : '';
 
 				// Filter operators based on key type
 				if (keyType) {
@@ -1210,7 +1316,7 @@ function QuerySearch({
 				if (curChar === '(') {
 					// In expression context, suggest keys, functions, or nested parentheses
 					options = [
-						...(keySuggestions || []),
+						...dedupedKeySuggestions,
 						{ label: '(', type: 'parenthesis', info: 'Open nested group' },
 						{ label: 'NOT', type: 'operator', info: 'Negate expression' },
 						...options.filter((opt) => opt.type === 'function'),
