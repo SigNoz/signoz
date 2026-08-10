@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/types/savedviewtypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -18,10 +17,10 @@ func TestRepairSavedViewData(t *testing.T) {
 		require.True(t, ok)
 		assert.Empty(t, blanked)
 
-		var got savedviewtypes.SavedViewData
+		var got fixData
 		require.NoError(t, json.Unmarshal([]byte(fixed), &got))
 		assert.Equal(t, "My View", got.Spec.DisplayName)
-		assert.Equal(t, []string{"service.name"}, telemetryFieldKeyName(t, got))
+		assert.Equal(t, []string{"service.name"}, telemetryFieldKeyNames(got))
 	})
 
 	t.Run("selectedFields in the pre-TelemetryFieldKey bare-string shape is blanked, other fields untouched", func(t *testing.T) {
@@ -35,10 +34,10 @@ func TestRepairSavedViewData(t *testing.T) {
 		require.True(t, ok)
 		assert.Equal(t, []string{"selectedFields"}, blanked)
 
-		var got savedviewtypes.SavedViewData
+		var got fixData
 		require.NoError(t, json.Unmarshal([]byte(fixed), &got))
 		assert.Equal(t, "Corrupted Fields", got.Spec.DisplayName, "unrelated fields must survive untouched")
-		assert.Equal(t, "table", got.Spec.PanelType.StringValue())
+		assert.Equal(t, "table", got.Spec.PanelType)
 		assert.Len(t, got.Spec.Queries, 1, "unrelated fields must survive untouched")
 		assert.Empty(t, got.Spec.SelectedFields, "the corrupted field is blanked to an empty list, not left broken")
 	})
@@ -50,7 +49,7 @@ func TestRepairSavedViewData(t *testing.T) {
 		require.True(t, ok)
 		assert.Equal(t, []string{"queries"}, blanked)
 
-		var got savedviewtypes.SavedViewData
+		var got fixData
 		require.NoError(t, json.Unmarshal([]byte(fixed), &got))
 		assert.Equal(t, "Old Queries", got.Spec.DisplayName)
 		assert.Empty(t, got.Spec.Queries)
@@ -64,7 +63,7 @@ func TestRepairSavedViewData(t *testing.T) {
 		require.True(t, ok)
 		assert.ElementsMatch(t, []string{"queries", "selectedFields"}, blanked)
 
-		var got savedviewtypes.SavedViewData
+		var got fixData
 		require.NoError(t, json.Unmarshal([]byte(fixed), &got))
 		assert.Equal(t, "Double Trouble", got.Spec.DisplayName)
 		assert.Empty(t, got.Spec.Queries)
@@ -113,6 +112,7 @@ func TestSpecFieldUnmarshalsCleanly(t *testing.T) {
 		{name: "valid panelType", key: "panelType", value: `"table"`, want: true},
 		{name: "valid queries", key: "queries", value: `[{"type":"builder_query","spec":{"name":"A","signal":"logs","aggregations":[{"expression":"count()"}]}}]`, want: true},
 		{name: "queries missing the type discriminator fails", key: "queries", value: `[{"query":"select 1"}]`, want: false},
+		{name: "queries with an unknown type discriminator fails", key: "queries", value: `[{"type":"some_future_type","spec":{}}]`, want: false},
 		{name: "valid selectedFields", key: "selectedFields", value: `[{"name":"service.name"}]`, want: true},
 		{name: "selectedFields as bare strings fails", key: "selectedFields", value: `["service.name"]`, want: false},
 		{name: "valid display", key: "display", value: `{"maxLines":0,"fontSize":"","format":"","color":""}`, want: true},
@@ -131,17 +131,12 @@ func TestSpecFieldUnmarshalsCleanly(t *testing.T) {
 func TestPlaceholderSavedViewData(t *testing.T) {
 	placeholder := placeholderSavedViewData("019fe515-d981-7de7-a8c3-6137ae1200c2")
 
-	var got savedviewtypes.SavedViewData
+	var got fixData
 	require.NoError(t, json.Unmarshal([]byte(placeholder), &got), "the placeholder itself must always unmarshal cleanly")
 
-	assert.Equal(t, savedviewtypes.SavedViewSchemaVersion.StringValue(), got.SchemaVersion)
+	assert.Equal(t, "v2", got.SchemaVersion)
 	assert.Contains(t, got.Spec.DisplayName, "019fe515-d981-7de7-a8c3-6137ae1200c2")
-	assert.Equal(t, savedviewtypes.PanelTypeTable, got.Spec.PanelType)
-
-	// verify the full read path a Get/List would take doesn't panic or error.
-	storable := &savedviewtypes.StorableSavedView{Data: got}
-	view := storable.ToSavedView()
-	assert.NotNil(t, view.Spec.SelectedFields)
+	assert.Equal(t, "table", got.Spec.PanelType)
 }
 
 // TestUnrepairableDataGetsReplacedNotLeftBroken exercises the exact decision
@@ -160,12 +155,11 @@ func TestUnrepairableDataGetsReplacedNotLeftBroken(t *testing.T) {
 		require.False(t, ok, "expected %q to be unrepairable", data)
 
 		fixed := placeholderSavedViewData("some-id")
-		require.NoError(t, json.Unmarshal([]byte(fixed), new(savedviewtypes.SavedViewData)))
+		require.NoError(t, json.Unmarshal([]byte(fixed), new(fixData)))
 	}
 }
 
-func telemetryFieldKeyName(t *testing.T, data savedviewtypes.SavedViewData) []string {
-	t.Helper()
+func telemetryFieldKeyNames(data fixData) []string {
 	names := make([]string, 0, len(data.Spec.SelectedFields))
 	for _, f := range data.Spec.SelectedFields {
 		names = append(names, f.Name)
