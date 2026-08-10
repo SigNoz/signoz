@@ -44,6 +44,7 @@ import { ChannelInitialConfig } from './defaults';
 import {
 	isChannelType,
 	isValidGoogleChatWebhookURL,
+	isValidJiraReopenDuration,
 	isValidJiraSiteURL,
 	prepareGoogleChatRequest,
 	prepareJiraRequest,
@@ -457,6 +458,17 @@ function CreateAlertChannels({
 			notifications.error({
 				message: 'Error',
 				description: t('jira_site_invalid'),
+			});
+			return false;
+		}
+
+		if (
+			selectedConfig.reopen_duration &&
+			!isValidJiraReopenDuration(selectedConfig.reopen_duration)
+		) {
+			notifications.error({
+				message: 'Error',
+				description: t('jira_reopen_duration_invalid'),
 			});
 			return false;
 		}

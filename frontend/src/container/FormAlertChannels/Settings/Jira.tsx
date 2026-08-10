@@ -4,7 +4,10 @@ import { Collapse, Form, Input, Select } from 'antd';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 
 import { JiraChannel } from '../../CreateAlertChannels/config';
-import { isValidJiraSiteURL } from '../../CreateAlertChannels/utils';
+import {
+	isValidJiraReopenDuration,
+	isValidJiraSiteURL,
+} from '../../CreateAlertChannels/utils';
 
 function JiraSettings({ setSelectedConfig }: JiraProps): JSX.Element {
 	const { t } = useTranslation('channels');
@@ -72,6 +75,24 @@ function JiraSettings({ setSelectedConfig }: JiraProps): JSX.Element {
 				name="reopen_duration"
 				label={t('field_jira_reopen_duration')}
 				help={t('help_jira_reopen_duration')}
+				rules={[
+					{
+						validator: (_, value: string): Promise<void> =>
+							isValidJiraReopenDuration(value)
+								? Promise.resolve()
+								: Promise.reject(new Error(t('jira_reopen_duration_invalid'))),
+					},
+				]}
+				tooltip={{
+					title: (
+						<MarkdownRenderer
+							markdownContent={t('tooltip_jira_reopen_duration')}
+							variables={{}}
+						/>
+					),
+					overlayInnerStyle: { maxWidth: 400 },
+					placement: 'right',
+				}}
 			>
 				<Input
 					placeholder={t('placeholder_jira_reopen_duration')}

@@ -615,6 +615,23 @@ describe('Create Alert Channel', () => {
 					],
 				});
 			});
+
+			it('Should block save when the reopen window is below the 1m minimum', async () => {
+				const user = userEvent.setup();
+				await fillRequired(user, validSite);
+
+				await user.click(screen.getByText('jira_advanced_section'));
+				await user.type(screen.getByTestId('jira-reopen-duration-textbox'), '30s');
+
+				await user.click(screen.getByTestId('save-channel-button'));
+
+				await waitFor(() =>
+					expect(errorNotification).toHaveBeenCalledWith({
+						message: 'Error',
+						description: 'jira_reopen_duration_invalid',
+					}),
+				);
+			});
 		});
 		describe('Changing the channel type', () => {
 			async function selectType(
