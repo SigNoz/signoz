@@ -16,6 +16,7 @@ import { popupContainer } from 'utils/selectPopupContainer';
 import ConnectionSecretsFields from './ConnectionSecretsFields';
 import FieldLabel from './FieldLabel';
 import FlowSelector from './FlowSelector';
+import SetupGuideCallout from './SetupGuideCallout';
 import { GcpSetupFormValues, SetupFlow } from './types';
 
 import styles from './CloudAccountSetupDrawer.module.scss';
@@ -121,6 +122,7 @@ function CloudAccountSetupDrawer({
 			drawerHeaderProps={{ className: styles.title }}
 		>
 			<FlowSelector value={flow} onChange={setFlow} />
+			<SetupGuideCallout />
 			<div className={styles.drawerSection}>
 				<FieldLabel
 					htmlFor="gcp-account-name-input"
