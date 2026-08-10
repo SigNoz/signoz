@@ -19,17 +19,14 @@ def teardown(request: pytest.FixtureRequest) -> bool:
 
 
 def get_cached_resource(pytestconfig: pytest.Config, key: str):
-    """Get a resource from pytest cache by key."""
     return pytestconfig.cache.get(key, None)
 
 
 def set_cached_resource(pytestconfig: pytest.Config, key: str, value):
-    """Set a resource in pytest cache by key."""
     pytestconfig.cache.set(key, value)
 
 
 def remove_cached_resource(pytestconfig: pytest.Config, key: str):
-    """Remove a resource from pytest cache by key (set to None)."""
     pytestconfig.cache.set(key, None)
 
 
@@ -41,6 +38,7 @@ def wrap(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     create: Callable[[], T],
     delete: Callable[[T], None],
     restore: Callable[[dict], T],
+    rebuild: bool = False,
 ) -> T:
     """
     Wraps a resource creation and cleanup process with reuse and teardown options.
@@ -51,6 +49,7 @@ def wrap(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     - create: function to create the resource
     - delete: function to delete the resource
     - restore: function to restore resource from cache
+    - rebuild: under --reuse, delete the cached resource and recreate it instead of restoring it
     """
     resource = empty()
 
@@ -58,8 +57,13 @@ def wrap(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         existing_resource = pytestconfig.cache.get(key, None)
         if existing_resource:
             assert isinstance(existing_resource, dict)
-            logger.info("Reusing existing %s(%s)", key, existing_resource)
-            return restore(existing_resource)
+            if rebuild:
+                logger.info("Rebuilding %s(%s), removing the existing one", key, existing_resource)
+                delete(restore(existing_resource))
+                pytestconfig.cache.set(key, None)
+            else:
+                logger.info("Reusing existing %s(%s)", key, existing_resource)
+                return restore(existing_resource)
 
     if not teardown(request):
         resource = create()

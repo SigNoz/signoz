@@ -328,7 +328,7 @@ export const getCaretContext = (query: string, caret: number): CaretContext => {
 		fieldKey: scan.key ? scan.key.text : '',
 		operator: slot.operator,
 		partial: slot.partial,
-		replaceStart: term.start + slot.replaceStartRel,
+		replaceStart: Math.min(term.start + slot.replaceStartRel, pos),
 		replaceEnd: pos,
 	};
 };

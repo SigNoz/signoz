@@ -621,7 +621,7 @@
                       {
                         "metricName": "cloudsql.googleapis.com/database/postgresql/deadlock_count",
                         "temporality": "",
-                        "timeAggregation": "max",
+                        "timeAggregation": "rate",
                         "spaceAggregation": "sum",
                         "reduceTo": "avg"
                       }
@@ -882,7 +882,7 @@
                       {
                         "metricName": "cloudsql.googleapis.com/database/postgresql/transaction_count",
                         "temporality": "",
-                        "timeAggregation": "max",
+                        "timeAggregation": "rate",
                         "spaceAggregation": "sum",
                         "reduceTo": "avg"
                       }

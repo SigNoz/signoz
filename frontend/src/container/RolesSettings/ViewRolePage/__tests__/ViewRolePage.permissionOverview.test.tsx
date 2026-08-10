@@ -18,8 +18,9 @@ import {
 } from './testUtils';
 
 async function waitForPageReady(): Promise<void> {
+	// Wait for content to render (after authz check passes)
 	await expect(
-		screen.findByTestId('view-role-page'),
+		screen.findByTestId('permission-view-mode'),
 	).resolves.toBeInTheDocument();
 }
 

@@ -1168,6 +1168,27 @@ func enrichWithIntrinsicMetricKeys(keys map[string][]*telemetrytypes.TelemetryFi
 	return keys
 }
 
+// enrichWithGenAIKeys adds keys that can be queried for GenAI signals, even though they have not been ingested yet.
+func enrichWithGenAIKeys(keys map[string][]*telemetrytypes.TelemetryFieldKey, selectors []*telemetrytypes.FieldKeySelector) map[string][]*telemetrytypes.TelemetryFieldKey {
+	for _, selector := range selectors {
+		if selector.Signal != telemetrytypes.SignalTraces && selector.Signal != telemetrytypes.SignalUnspecified {
+			continue
+		}
+		for name, def := range telemetrytypes.GenAIFieldDefinitions {
+			if len(keys[name]) > 0 {
+				continue // already resolved from ingested data
+			}
+			if !selectorMatchesIntrinsicField(selector, def) {
+				continue
+			}
+			keyCopy := def
+			keys[name] = []*telemetrytypes.TelemetryFieldKey{&keyCopy}
+		}
+	}
+
+	return keys
+}
+
 func selectorMatchesIntrinsicField(selector *telemetrytypes.FieldKeySelector, definition telemetrytypes.TelemetryFieldKey) bool {
 	if selector.FieldContext != telemetrytypes.FieldContextUnspecified && selector.FieldContext != definition.FieldContext {
 		return false
@@ -1253,6 +1274,9 @@ func (t *telemetryMetaStore) GetKeys(ctx context.Context, orgID valuer.UUID, fie
 
 	applyBackwardCompatibleKeys(mapOfKeys)
 	mapOfKeys = enrichWithIntrinsicMetricKeys(mapOfKeys, selectors)
+	if t.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableAIObservability, featuretypes.NewFlaggerEvaluationContext(orgID)) {
+		mapOfKeys = enrichWithGenAIKeys(mapOfKeys, selectors)
+	}
 
 	return mapOfKeys, complete, nil
 }
@@ -1331,6 +1355,9 @@ func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID
 
 	applyBackwardCompatibleKeys(mapOfKeys)
 	mapOfKeys = enrichWithIntrinsicMetricKeys(mapOfKeys, fieldKeySelectors)
+	if t.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableAIObservability, featuretypes.NewFlaggerEvaluationContext(orgID)) {
+		mapOfKeys = enrichWithGenAIKeys(mapOfKeys, fieldKeySelectors)
+	}
 
 	return mapOfKeys, complete, nil
 }
@@ -2303,6 +2330,15 @@ func unionTemporalities(existing, additional []metrictypes.Temporality) []metric
 	return existing
 }
 
+// resolveMetricType applies the non-monotonic-cumulative-sum-as-gauge rule.
+// Monotonicity is only meaningful for cumulative sums; delta sums always stay Sum.
+func resolveMetricType(metricType metrictypes.Type, isMonotonic bool, temporality metrictypes.Temporality) metrictypes.Type {
+	if metricType == metrictypes.SumType && !isMonotonic && temporality == metrictypes.Cumulative {
+		return metrictypes.GaugeType
+	}
+	return metricType
+}
+
 func (t *telemetryMetaStore) fetchTemporalityTypeForTable(ctx context.Context, tableName string, adjustedStartTs, adjustedEndTs uint64, metricNames []string, extraConds ...string) (map[string][]metrictypes.Temporality, map[string]metrictypes.Type, error) {
 	temporalities := make(map[string][]metrictypes.Temporality)
 	types := make(map[string]metrictypes.Type)
@@ -2339,9 +2375,7 @@ func (t *telemetryMetaStore) fetchTemporalityTypeForTable(ctx context.Context, t
 		if temporality != metrictypes.Unknown {
 			temporalities[metricName] = append(temporalities[metricName], temporality)
 		}
-		if metricType == metrictypes.SumType && !isMonotonic {
-			metricType = metrictypes.GaugeType
-		}
+		metricType = resolveMetricType(metricType, isMonotonic, temporality)
 		types[metricName] = metricType
 	}
 	if err := rows.Err(); err != nil {
@@ -2392,9 +2426,7 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporalityAndType(ctx conte
 		if err := rows.Scan(&metricName, &temporality, &metricType, &isMonotonic); err != nil {
 			return nil, nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to scan temporality result")
 		}
-		if metricType == metrictypes.SumType && !isMonotonic {
-			metricType = metrictypes.GaugeType
-		}
+		metricType = resolveMetricType(metricType, isMonotonic, temporality)
 		temporalities[metricName] = temporality
 		types[metricName] = metricType
 	}

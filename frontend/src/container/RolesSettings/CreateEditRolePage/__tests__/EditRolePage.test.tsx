@@ -71,6 +71,20 @@ describe('EditRolePage', () => {
 
 			expect(document.querySelector('.ant-skeleton')).toBeInTheDocument();
 		});
+
+		it('shows loading title in header while fetching role data', async () => {
+			server.use(
+				rest.get(`${rolesApiBase}/:id`, (_req, res, ctx) =>
+					res(ctx.delay(200), ctx.status(200), ctx.json(roleWithTransactionGroups)),
+				),
+			);
+
+			renderEditPage();
+
+			await expect(
+				screen.findByText('Role - Loading role...'),
+			).resolves.toBeInTheDocument();
+		});
 	});
 
 	describe('load error state', () => {
@@ -83,12 +97,12 @@ describe('EditRolePage', () => {
 
 			renderEditPage();
 
-			await waitFor(() => {
-				expect(document.querySelector('.error-in-place')).toBeInTheDocument();
-			});
+			await expect(
+				screen.findByTestId('role-load-error-banner'),
+			).resolves.toBeInTheDocument();
 		});
 
-		it('shows Failed to load role title on load error', async () => {
+		it('shows failed to load title on load error', async () => {
 			server.use(
 				rest.get(`${rolesApiBase}/:id`, (_req, res, ctx) =>
 					res(ctx.status(404), ctx.json({ error: { message: 'Not found' } })),
@@ -98,7 +112,7 @@ describe('EditRolePage', () => {
 			renderEditPage();
 
 			await expect(
-				screen.findByText('Failed to load role'),
+				screen.findByText('Role - Failed to load role'),
 			).resolves.toBeInTheDocument();
 		});
 
