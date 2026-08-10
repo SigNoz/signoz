@@ -2,10 +2,10 @@ import { useCallback, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
 import type { AuthtypesGettableRoleDTO } from 'api/generated/services/sigNoz.schemas';
 import {
-	getGetRolesByUserIDQueryKey,
-	useGetRolesByUserID,
-	useRemoveUserRoleByUserIDAndRoleID,
-	useSetRoleByUserID,
+	getGetUserQueryKey,
+	useCreateUserRole,
+	useDeleteUserRole,
+	useGetUser,
 } from 'api/generated/services/users';
 import { retryOn429 } from 'utils/errorUtils';
 
@@ -35,26 +35,36 @@ export function useMemberRoleManager(
 ): UseMemberRoleManagerResult {
 	const queryClient = useQueryClient();
 
-	const { data, isLoading } = useGetRolesByUserID(
+	const { data, isLoading } = useGetUser(
 		{ id: userId },
 		{ query: { enabled: !!userId && enabled } },
 	);
 
-	const currentRoles = useMemo<AuthtypesGettableRoleDTO[]>(
-		() => data?.data ?? [],
-		[data?.data],
+	const userRoles = useMemo(
+		() => data?.data?.userRoles ?? [],
+		[data?.data?.userRoles],
 	);
 
-	const { mutateAsync: setRole } = useSetRoleByUserID({
+	const currentRoles = useMemo<AuthtypesGettableRoleDTO[]>(
+		() => userRoles.map((userRole) => userRole.role),
+		[userRoles],
+	);
+
+	// DELETE /api/v2/user_roles/{id} is keyed by the user_role join row, not the role.
+	const assignmentIdByRoleId = useMemo(
+		() => new Map(userRoles.map((userRole) => [userRole.roleId, userRole.id])),
+		[userRoles],
+	);
+
+	const { mutateAsync: createUserRole } = useCreateUserRole({
 		mutation: { retry: retryOn429 },
 	});
-	const { mutateAsync: removeRole } = useRemoveUserRoleByUserIDAndRoleID({
+	const { mutateAsync: deleteUserRole } = useDeleteUserRole({
 		mutation: { retry: retryOn429 },
 	});
 
 	const invalidateRoles = useCallback(
-		() =>
-			queryClient.invalidateQueries(getGetRolesByUserIDQueryKey({ id: userId })),
+		() => queryClient.invalidateQueries(getGetUserQueryKey({ id: userId })),
 		[userId, queryClient],
 	);
 
@@ -80,17 +90,27 @@ export function useMemberRoleManager(
 			const allOperations = [
 				...addedRoles.map((role) => ({
 					role,
-					run: (): ReturnType<typeof setRole> =>
-						setRole({
-							pathParams: { id: userId },
-							data: { name: role.name ?? '' },
-						}),
+					run: (): ReturnType<typeof createUserRole> =>
+						createUserRole({ data: { userId, roleId: role.id ?? '' } }),
 				})),
-				...removedRoles.map((role) => ({
-					role,
-					run: (): ReturnType<typeof removeRole> =>
-						removeRole({ pathParams: { id: userId, roleId: role.id ?? '' } }),
-				})),
+				...removedRoles
+					.map((role) => ({
+						role,
+						assignmentId: assignmentIdByRoleId.get(role.id ?? ''),
+					}))
+					.filter(
+						(
+							entry,
+						): entry is {
+							role: AuthtypesGettableRoleDTO;
+							assignmentId: string;
+						} => !!entry.assignmentId,
+					)
+					.map(({ role, assignmentId }) => ({
+						role,
+						run: (): ReturnType<typeof deleteUserRole> =>
+							deleteUserRole({ pathParams: { id: assignmentId } }),
+					})),
 			];
 
 			const results = await Promise.allSettled(
@@ -121,7 +141,14 @@ export function useMemberRoleManager(
 
 			return failures;
 		},
-		[userId, currentRoles, setRole, removeRole, invalidateRoles],
+		[
+			userId,
+			currentRoles,
+			assignmentIdByRoleId,
+			createUserRole,
+			deleteUserRole,
+			invalidateRoles,
+		],
 	);
 
 	return { currentRoles, isLoading, applyDiff };
