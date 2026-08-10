@@ -123,23 +123,6 @@ func (b *StatementBuilder) Build(
 		return nil, err
 	}
 
-	// TODO(srikanthccv): move the missing-key detection into the where clause
-	// visitor. Doing it here over the lexer-derived selectors can't tell a key
-	// from a value, so dashboard variables and bare literals in value position
-	// (e.g. `service.name = $service`) get flagged as missing keys. We still add
-	// a labels fallback for any unresolved selector so the query can be built,
-	// but we no longer emit a warning until the visitor can classify keys.
-	for _, sel := range keySelectors {
-		if _, ok := keys[sel.Name]; !ok {
-			keys[sel.Name] = []*telemetrytypes.TelemetryFieldKey{{
-				Name:          sel.Name,
-				FieldContext:  telemetrytypes.FieldContextAttribute,
-				FieldDataType: telemetrytypes.FieldDataTypeString,
-				Signal:        telemetrytypes.SignalMetrics,
-			}}
-		}
-	}
-
 	start, end = querybuilder.AdjustedMetricTimeRange(start, end, uint64(query.StepInterval.Seconds()), query)
 
 	return b.buildPipelineStatement(ctx, orgID, start, end, query, keys, variables)
@@ -215,9 +198,10 @@ func (b *StatementBuilder) buildPipelineStatement(
 
 	var timeSeriesCTE string
 	var timeSeriesCTEArgs []any
+	var filterWarnings []string
 	var err error
 
-	if timeSeriesCTE, timeSeriesCTEArgs, err = b.buildTimeSeriesCTE(ctx, orgID, tsStart, tsEnd, query, keys, variables, tsTable); err != nil {
+	if timeSeriesCTE, timeSeriesCTEArgs, filterWarnings, err = b.buildTimeSeriesCTE(ctx, orgID, tsStart, tsEnd, query, keys, variables, tsTable); err != nil {
 		return nil, err
 	}
 
@@ -277,6 +261,7 @@ func (b *StatementBuilder) buildPipelineStatement(
 	if err != nil {
 		return nil, err
 	}
+	mainStmt.Warnings = append(mainStmt.Warnings, filterWarnings...)
 	if reducedFragments == nil {
 		return mainStmt, nil
 	}
@@ -524,7 +509,7 @@ func (b *StatementBuilder) buildTimeSeriesCTE(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
 	tsTable string,
-) (string, []any, error) {
+) (string, []any, []string, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 
 	var preparedWhereClause querybuilder.PreparedWhereClause
@@ -544,7 +529,7 @@ func (b *StatementBuilder) buildTimeSeriesCTE(
 			EndNs:            end,
 		})
 		if err != nil {
-			return "", nil, err
+			return "", nil, nil, err
 		}
 	}
 
@@ -554,7 +539,7 @@ func (b *StatementBuilder) buildTimeSeriesCTE(
 	for _, g := range query.GroupBy {
 		col, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
-			return "", nil, err
+			return "", nil, nil, err
 		}
 		sb.SelectMore(col)
 	}
@@ -583,7 +568,7 @@ func (b *StatementBuilder) buildTimeSeriesCTE(
 	sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 
 	q, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	return fmt.Sprintf("(%s) AS filtered_time_series", q), args, nil
+	return fmt.Sprintf("(%s) AS filtered_time_series", q), args, preparedWhereClause.Warnings, nil
 }
 
 func (b *StatementBuilder) buildTemporalAggregationCTE(
