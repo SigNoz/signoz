@@ -32,7 +32,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
 	opAmpModel "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
-	baseconst "github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/healthcheck"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 )
@@ -130,7 +129,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 	s := &Server{
 		config:             config,
 		signoz:             signoz,
-		httpHostPort:       baseconst.HTTPHostPort,
+		httpHostPort:       config.APIServer.Address,
 		unavailableChannel: make(chan healthcheck.Status),
 		usageManager:       usageManager,
 	}
@@ -234,7 +233,7 @@ func (s *Server) initListeners() error {
 	var err error
 	publicHostPort := s.httpHostPort
 	if publicHostPort == "" {
-		return fmt.Errorf("baseconst.HTTPHostPort is required")
+		return fmt.Errorf("apiserver.address is required")
 	}
 
 	s.httpConn, err = net.Listen("tcp", publicHostPort)
@@ -272,8 +271,8 @@ func (s *Server) Start(ctx context.Context) error {
 	}()
 
 	go func() {
-		slog.Info("Starting OpAmp Websocket server", "addr", baseconst.OpAmpWsEndpoint)
-		err := s.opampServer.Start(baseconst.OpAmpWsEndpoint)
+		slog.Info("Starting OpAmp Websocket server", "addr", s.config.OpAmp.Address)
+		err := s.opampServer.Start(s.config.OpAmp.Address)
 		if err != nil {
 			slog.Error("opamp ws server failed to start", errors.Attr(err))
 			s.unavailableChannel <- healthcheck.Unavailable

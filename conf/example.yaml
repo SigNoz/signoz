@@ -138,6 +138,8 @@ sqlstore:
 
 ##################### APIServer #####################
 apiserver:
+  # The TCP address the API server listens on, in the form "host:port".
+  address: 0.0.0.0:8080
   timeout:
     # Default request timeout.
     default: 60s
@@ -153,6 +155,11 @@ apiserver:
       - /api/v1/health
       - /api/v1/version
       - /
+
+##################### OpAmp #####################
+opamp:
+  # The TCP address the opamp websocket server listens on, in the form "host:port".
+  address: 0.0.0.0:4320
 
 ##################### Querier #####################
 querier:

@@ -1,9 +1,8 @@
-package apiserver
+package opamp
 
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/config"
 	"github.com/SigNoz/signoz/pkg/config/envprovider"
@@ -13,11 +12,7 @@ import (
 )
 
 func TestNewWithEnvProvider(t *testing.T) {
-	t.Setenv("SIGNOZ_APISERVER_ADDRESS", "0.0.0.0:9090")
-	t.Setenv("SIGNOZ_APISERVER_TIMEOUT_DEFAULT", "70s")
-	t.Setenv("SIGNOZ_APISERVER_TIMEOUT_MAX", "700s")
-	t.Setenv("SIGNOZ_APISERVER_TIMEOUT_EXCLUDED__ROUTES", "/excluded1,/excluded2")
-	t.Setenv("SIGNOZ_APISERVER_LOGGING_EXCLUDED__ROUTES", "/api/v1/health1")
+	t.Setenv("SIGNOZ_OPAMP_ADDRESS", "0.0.0.0:9292")
 
 	conf, err := config.New(
 		context.Background(),
@@ -34,25 +29,12 @@ func TestNewWithEnvProvider(t *testing.T) {
 	require.NoError(t, err)
 
 	actual := &Config{}
-	err = conf.Unmarshal("apiserver", actual)
+	err = conf.Unmarshal("opamp", actual)
 
 	require.NoError(t, err)
 
 	expected := &Config{
-		Address: "0.0.0.0:9090",
-		Timeout: Timeout{
-			Default: 70 * time.Second,
-			Max:     700 * time.Second,
-			ExcludedRoutes: []string{
-				"/excluded1",
-				"/excluded2",
-			},
-		},
-		Logging: Logging{
-			ExcludedRoutes: []string{
-				"/api/v1/health1",
-			},
-		},
+		Address: "0.0.0.0:9292",
 	}
 
 	assert.Equal(t, expected, actual)
