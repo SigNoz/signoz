@@ -391,7 +391,7 @@ func (handler *handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	req := new(types.PostableResetPassword)
-	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(w, err)
 		return
 	}

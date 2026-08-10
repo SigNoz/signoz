@@ -39,6 +39,7 @@ def wrap(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     delete: Callable[[T], None],
     restore: Callable[[dict], T],
     rebuild: bool = False,
+    stale: Callable[[T], bool] | None = None,
 ) -> T:
     """
     Wraps a resource creation and cleanup process with reuse and teardown options.
@@ -50,6 +51,7 @@ def wrap(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     - delete: function to delete the resource
     - restore: function to restore resource from cache
     - rebuild: under --reuse, delete the cached resource and recreate it instead of restoring it
+    - stale: under --reuse, decides whether a restored resource is still usable; a stale resource is deleted and recreated
     """
     resource = empty()
 
@@ -62,8 +64,14 @@ def wrap(  # pylint: disable=too-many-arguments,too-many-positional-arguments
                 delete(restore(existing_resource))
                 pytestconfig.cache.set(key, None)
             else:
-                logger.info("Reusing existing %s(%s)", key, existing_resource)
-                return restore(existing_resource)
+                restored = restore(existing_resource)
+                if stale is not None and stale(restored):
+                    logger.info("Recreating stale %s(%s)", key, existing_resource)
+                    delete(restored)
+                    pytestconfig.cache.set(key, None)
+                else:
+                    logger.info("Reusing existing %s(%s)", key, existing_resource)
+                    return restored
 
     if not teardown(request):
         resource = create()
@@ -88,14 +96,22 @@ def wrap(  # pylint: disable=too-many-arguments,too-many-positional-arguments
                 return
 
             resource = restore(existing_resource)
+            logger.info(
+                "Removing %s",
+                resource.__log__() if hasattr(resource, "__log__") else resource,
+            )
+            delete(resource)
+            pytestconfig.cache.set(key, None)
+            return
 
+        # A run without --reuse owns only what it created this session: the
+        # cache key (and whatever a parked --reuse stack has under it) is left
+        # untouched.
         logger.info(
             "Removing %s",
             resource.__log__() if hasattr(resource, "__log__") else resource,
         )
         delete(resource)
-
-        pytestconfig.cache.set(key, None)
 
     request.addfinalizer(finalizer)
 
