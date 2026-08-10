@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -90,6 +91,12 @@ func (migration *restructureAuthDomainConfig) Up(ctx context.Context, db *bun.DB
 			migration.logger.WarnContext(ctx, "skipping auth domain with unreadable ssoType", slog.String("auth_domain_id", row.ID), errors.Attr(err))
 			continue
 		}
+
+		// Documents written before the provider enum became a valuer.String spell
+		// the discriminator uppercase ("SAML", "GOOGLE_AUTH"); reads lowercase it
+		// through valuer.NewString, so those rows still carry the original casing
+		// on disk. Every lookup and spec rewrite below keys off this value.
+		ssoType = strings.ToLower(strings.TrimSpace(ssoType))
 
 		kind, ok := legacySSOTypeToKind[ssoType]
 		if !ok {
