@@ -44,7 +44,6 @@ def test_create_and_get_domain(
                 "spec": {
                     "clientId": "client-id",
                     "clientSecret": "client-secret",
-                    "redirectURI": "redirect-uri",
                 },
             },
         },
@@ -295,7 +294,6 @@ def test_create_invalid_role_mapping(
                 "spec": {
                     "clientId": "client-id",
                     "clientSecret": "client-secret",
-                    "redirectURI": "",
                     "fetchGroups": False,
                     "insecureSkipEmailVerified": False,
                 },
@@ -309,7 +307,6 @@ def test_create_invalid_role_mapping(
                 "spec": {
                     "clientId": "client-id",
                     "clientSecret": "client-secret",
-                    "redirectURI": "https://redirect.integration.test",
                     "fetchGroups": True,
                     "serviceAccountJson": '{"type": "service_account"}',
                     "domainToAdminEmail": {
@@ -327,7 +324,6 @@ def test_create_invalid_role_mapping(
                 "spec": {
                     "clientId": "client-id",
                     "clientSecret": "client-secret",
-                    "redirectURI": "https://redirect.integration.test",
                     "fetchGroups": True,
                     "serviceAccountJson": '{"type": "service_account"}',
                     "domainToAdminEmail": {
@@ -566,7 +562,7 @@ def test_domain_roundtrip(  # pylint: disable=too-many-arguments,too-many-positi
     assert response.status_code == HTTPStatus.NO_CONTENT
 
 
-def test_patch_enabled(
+def test_update_enabled(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -581,7 +577,7 @@ def test_patch_enabled(
     )
     assert response.status_code == HTTPStatus.OK
     for domain in response.json()["data"]:
-        if domain["name"] == "patch.integration.test":
+        if domain["name"] == "update-enabled.integration.test":
             response = requests.delete(
                 signoz.self.host_configs["8080"].get(f"/api/v2/auth_domains/{domain['id']}"),
                 headers={"Authorization": f"Bearer {admin_token}"},
@@ -592,7 +588,7 @@ def test_patch_enabled(
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
         json={
-            "name": "patch.integration.test",
+            "name": "update-enabled.integration.test",
             "enabled": True,
             "config": {
                 "kind": "saml",
@@ -609,11 +605,21 @@ def test_patch_enabled(
     assert response.status_code == HTTPStatus.CREATED
     domain_id = response.json()["data"]["id"]
 
-    # Patching enforcement must flip only the enabled flag; the provider
-    # config stays untouched.
-    response = requests.patch(
+    # Flipping enforcement goes through the same full update as any other
+    # change; the echoed provider config must survive the round trip.
+    response = requests.put(
         signoz.self.host_configs["8080"].get(f"/api/v2/auth_domains/{domain_id}"),
-        json={"enabled": False},
+        json={
+            "enabled": False,
+            "config": {
+                "kind": "saml",
+                "spec": {
+                    "entityId": "saml-entity",
+                    "location": "saml-idp",
+                    "certificate": "saml-cert",
+                },
+            },
+        },
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )

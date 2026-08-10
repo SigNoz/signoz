@@ -1932,10 +1932,6 @@ export interface AuthtypesGoogleConfigDTO {
 	insecureSkipEmailVerified?: boolean;
 	/**
 	 * @type string
-	 */
-	redirectURI?: string;
-	/**
-	 * @type string
 	 * @format password
 	 */
 	serviceAccountJson?: string;
@@ -2282,13 +2278,6 @@ export interface AuthtypesOrgSessionContextDTO {
 	 */
 	name?: string;
 	warning?: ErrorsJSONDTO;
-}
-
-export interface AuthtypesPatchableAuthDomainDTO {
-	/**
-	 * @type boolean
-	 */
-	enabled: boolean;
 }
 
 export interface AuthtypesPostableAuthDomainDTO {
@@ -11116,9 +11105,6 @@ export type GetAuthDomain200 = {
 	status: string;
 };
 
-export type PatchAuthDomainPathParameters = {
-	id: string;
-};
 export type UpdateAuthDomainPathParameters = {
 	id: string;
 };

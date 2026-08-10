@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Switch } from '@signozhq/ui/switch';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
-import { usePatchAuthDomain } from 'api/generated/services/authdomains';
+import { useUpdateAuthDomain } from 'api/generated/services/authdomains';
 import {
 	AuthtypesGettableAuthDomainDTO,
 	RenderErrorResponseDTO,
@@ -27,20 +27,24 @@ function SSOEnforcementToggle({
 		setIsChecked(isDefaultChecked);
 	}, [isDefaultChecked]);
 
-	const { mutate: patchAuthDomain, isLoading } =
-		usePatchAuthDomain<AxiosError<RenderErrorResponseDTO>>();
+	const { mutate: updateAuthDomain, isLoading } =
+		useUpdateAuthDomain<AxiosError<RenderErrorResponseDTO>>();
 
 	const onChangeHandler = (checked: boolean): void => {
-		if (!record.id) {
+		if (!record.id || !record.config) {
 			return;
 		}
 
 		setIsChecked(checked);
 
-		patchAuthDomain(
+		updateAuthDomain(
 			{
 				pathParams: { id: record.id },
-				data: { enabled: checked },
+				data: {
+					enabled: checked,
+					config: record.config,
+					roleMapping: record.roleMapping,
+				},
 			},
 			{
 				onError: (error) => {

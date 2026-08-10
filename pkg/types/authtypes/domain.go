@@ -29,6 +29,53 @@ var (
 	ErrCodeAuthDomainAlreadyExists = errors.MustNewCode("auth_domain_already_exists")
 )
 
+// authDomainConfigVariants is the single registry of authn provider kinds:
+// UnmarshalJSON, JSONSchemaOneOf and the discriminator mapping all derive from
+// it, so a new provider is one entry here plus its authn registration.
+var authDomainConfigVariants = []authDomainConfigVariant{
+	{
+		kind: AuthNProviderSAML,
+		decodeSpec: func(data []byte) (any, error) {
+			spec := SamlConfig{}
+			if err := json.Unmarshal(data, &spec); err != nil {
+				return nil, err
+			}
+			return spec, nil
+		},
+		schema:    authDomainConfigSAML{},
+		schemaRef: "#/components/schemas/AuthtypesAuthDomainConfigSAML",
+	},
+	{
+		kind: AuthNProviderGoogle,
+		decodeSpec: func(data []byte) (any, error) {
+			spec := GoogleConfig{}
+			if err := json.Unmarshal(data, &spec); err != nil {
+				return nil, err
+			}
+			return spec, nil
+		},
+		schema:    authDomainConfigGoogle{},
+		schemaRef: "#/components/schemas/AuthtypesAuthDomainConfigGoogle",
+	},
+	{
+		kind: AuthNProviderOIDC,
+		decodeSpec: func(data []byte) (any, error) {
+			spec := OIDCConfig{}
+			if err := json.Unmarshal(data, &spec); err != nil {
+				return nil, err
+			}
+			return spec, nil
+		},
+		schema:    authDomainConfigOIDC{},
+		schemaRef: "#/components/schemas/AuthtypesAuthDomainConfigOIDC",
+	},
+}
+
+var (
+	_ jsonschema.OneOfExposer = AuthDomainConfig{}
+	_ jsonschema.Preparer     = AuthDomainConfig{}
+)
+
 type GettableAuthDomain struct {
 	StorableAuthDomain
 	Enabled           bool               `json:"enabled"`
@@ -52,12 +99,6 @@ type UpdatableAuthDomain struct {
 	Enabled     bool             `json:"enabled"`
 	Config      AuthDomainConfig `json:"config" required:"true"`
 	RoleMapping *RoleMapping     `json:"roleMapping"`
-}
-
-// PatchableAuthDomain carries the only patchable field: flipping SSO
-// enforcement never rewrites the provider configuration.
-type PatchableAuthDomain struct {
-	Enabled bool `json:"enabled" required:"true"`
 }
 
 type StorableAuthDomain struct {
@@ -107,52 +148,87 @@ type authDomainConfigVariant struct {
 	schemaRef  string
 }
 
-// authDomainConfigVariants is the single registry of authn provider kinds:
-// UnmarshalJSON, JSONSchemaOneOf and the discriminator mapping all derive from
-// it, so a new provider is one entry here plus its authn registration.
-var authDomainConfigVariants = []authDomainConfigVariant{
-	{
-		kind: AuthNProviderSAML,
-		decodeSpec: func(data []byte) (any, error) {
-			spec := SamlConfig{}
-			if err := json.Unmarshal(data, &spec); err != nil {
-				return nil, err
-			}
-			return spec, nil
-		},
-		schema:    authDomainConfigSAML{},
-		schemaRef: "#/components/schemas/AuthtypesAuthDomainConfigSAML",
-	},
-	{
-		kind: AuthNProviderGoogle,
-		decodeSpec: func(data []byte) (any, error) {
-			spec := GoogleConfig{}
-			if err := json.Unmarshal(data, &spec); err != nil {
-				return nil, err
-			}
-			return spec, nil
-		},
-		schema:    authDomainConfigGoogle{},
-		schemaRef: "#/components/schemas/AuthtypesAuthDomainConfigGoogle",
-	},
-	{
-		kind: AuthNProviderOIDC,
-		decodeSpec: func(data []byte) (any, error) {
-			spec := OIDCConfig{}
-			if err := json.Unmarshal(data, &spec); err != nil {
-				return nil, err
-			}
-			return spec, nil
-		},
-		schema:    authDomainConfigOIDC{},
-		schemaRef: "#/components/schemas/AuthtypesAuthDomainConfigOIDC",
-	},
+type AuthDomain struct {
+	storableAuthDomain       *StorableAuthDomain
+	storableAuthDomainConfig *StorableAuthDomainConfig
 }
 
-var (
-	_ jsonschema.OneOfExposer = AuthDomainConfig{}
-	_ jsonschema.Preparer     = AuthDomainConfig{}
-)
+type AuthDomainStore interface {
+	// Get by id.
+	Get(context.Context, valuer.UUID) (*AuthDomain, error)
+
+	// Get by orgID and id.
+	GetByOrgIDAndID(context.Context, valuer.UUID, valuer.UUID) (*AuthDomain, error)
+
+	// Get by name.
+	GetByName(context.Context, string) (*AuthDomain, error)
+
+	// Get by name and orgID.
+	GetByNameAndOrgID(context.Context, string, valuer.UUID) (*AuthDomain, error)
+
+	// List org domains by orgID.
+	ListByOrgID(context.Context, valuer.UUID) ([]*AuthDomain, error)
+
+	// Create auth domain.
+	Create(context.Context, *AuthDomain) error
+
+	// Update by orgID and id.
+	Update(context.Context, *AuthDomain) error
+
+	// Delete by orgID and id.
+	Delete(context.Context, valuer.UUID, valuer.UUID) error
+}
+
+func NewAuthDomainFromPostableAuthDomain(postableAuthDomain *PostableAuthDomain, orgID valuer.UUID) (*AuthDomain, error) {
+	storableAuthDomainConfig := &StorableAuthDomainConfig{
+		Enabled:     postableAuthDomain.Enabled,
+		Config:      postableAuthDomain.Config,
+		RoleMapping: postableAuthDomain.RoleMapping,
+	}
+
+	data, err := json.Marshal(storableAuthDomainConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return &AuthDomain{
+		storableAuthDomain: &StorableAuthDomain{
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
+			Name:  postableAuthDomain.Name,
+			Data:  string(data),
+			OrgID: orgID,
+			TimeAuditable: types.TimeAuditable{
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			},
+		},
+		storableAuthDomainConfig: storableAuthDomainConfig,
+	}, nil
+}
+
+func NewAuthDomainFromStorableAuthDomain(storableAuthDomain *StorableAuthDomain) (*AuthDomain, error) {
+	storableAuthDomainConfig := new(StorableAuthDomainConfig)
+	if err := json.Unmarshal([]byte(storableAuthDomain.Data), storableAuthDomainConfig); err != nil {
+		return nil, err
+	}
+
+	return &AuthDomain{
+		storableAuthDomain:       storableAuthDomain,
+		storableAuthDomainConfig: storableAuthDomainConfig,
+	}, nil
+}
+
+func NewGettableAuthDomainFromAuthDomain(authDomain *AuthDomain, authNProviderInfo *AuthNProviderInfo) *GettableAuthDomain {
+	return &GettableAuthDomain{
+		StorableAuthDomain: *authDomain.StorableAuthDomain(),
+		Enabled:            authDomain.Enabled(),
+		Config:             authDomain.Config(),
+		RoleMapping:        authDomain.RoleMapping(),
+		AuthNProviderInfo:  authNProviderInfo,
+	}
+}
 
 // JSONSchemaOneOf returns the oneOf variants for the AuthDomainConfig discriminated union.
 // Each variant represents a different authn provider kind with its corresponding spec schema.
@@ -252,62 +328,6 @@ func (config AuthDomainConfig) OIDCConfig() (OIDCConfig, error) {
 	return spec, nil
 }
 
-type AuthDomain struct {
-	storableAuthDomain       *StorableAuthDomain
-	storableAuthDomainConfig *StorableAuthDomainConfig
-}
-
-func NewAuthDomainFromPostableAuthDomain(postableAuthDomain *PostableAuthDomain, orgID valuer.UUID) (*AuthDomain, error) {
-	storableAuthDomainConfig := &StorableAuthDomainConfig{
-		Enabled:     postableAuthDomain.Enabled,
-		Config:      postableAuthDomain.Config,
-		RoleMapping: postableAuthDomain.RoleMapping,
-	}
-
-	data, err := json.Marshal(storableAuthDomainConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	return &AuthDomain{
-		storableAuthDomain: &StorableAuthDomain{
-			Identifiable: types.Identifiable{
-				ID: valuer.GenerateUUID(),
-			},
-			Name:  postableAuthDomain.Name,
-			Data:  string(data),
-			OrgID: orgID,
-			TimeAuditable: types.TimeAuditable{
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
-			},
-		},
-		storableAuthDomainConfig: storableAuthDomainConfig,
-	}, nil
-}
-
-func NewAuthDomainFromStorableAuthDomain(storableAuthDomain *StorableAuthDomain) (*AuthDomain, error) {
-	storableAuthDomainConfig := new(StorableAuthDomainConfig)
-	if err := json.Unmarshal([]byte(storableAuthDomain.Data), storableAuthDomainConfig); err != nil {
-		return nil, err
-	}
-
-	return &AuthDomain{
-		storableAuthDomain:       storableAuthDomain,
-		storableAuthDomainConfig: storableAuthDomainConfig,
-	}, nil
-}
-
-func NewGettableAuthDomainFromAuthDomain(authDomain *AuthDomain, authNProviderInfo *AuthNProviderInfo) *GettableAuthDomain {
-	return &GettableAuthDomain{
-		StorableAuthDomain: *authDomain.StorableAuthDomain(),
-		Enabled:            authDomain.Enabled(),
-		Config:             authDomain.Config(),
-		RoleMapping:        authDomain.RoleMapping(),
-		AuthNProviderInfo:  authNProviderInfo,
-	}
-}
-
 func (typ *AuthDomain) StorableAuthDomain() *StorableAuthDomain {
 	return typ.storableAuthDomain
 }
@@ -341,19 +361,6 @@ func (typ *AuthDomain) Update(updatableAuthDomain *UpdatableAuthDomain) error {
 	}
 
 	typ.storableAuthDomainConfig = storableAuthDomainConfig
-	typ.storableAuthDomain.Data = string(data)
-	typ.storableAuthDomain.UpdatedAt = time.Now()
-	return nil
-}
-
-func (typ *AuthDomain) Patch(patchableAuthDomain *PatchableAuthDomain) error {
-	typ.storableAuthDomainConfig.Enabled = patchableAuthDomain.Enabled
-
-	data, err := json.Marshal(typ.storableAuthDomainConfig)
-	if err != nil {
-		return err
-	}
-
 	typ.storableAuthDomain.Data = string(data)
 	typ.storableAuthDomain.UpdatedAt = time.Now()
 	return nil
@@ -397,30 +404,4 @@ func (typ *UpdatableAuthDomain) UnmarshalJSON(data []byte) error {
 
 	*typ = UpdatableAuthDomain(temp)
 	return nil
-}
-
-type AuthDomainStore interface {
-	// Get by id.
-	Get(context.Context, valuer.UUID) (*AuthDomain, error)
-
-	// Get by orgID and id.
-	GetByOrgIDAndID(context.Context, valuer.UUID, valuer.UUID) (*AuthDomain, error)
-
-	// Get by name.
-	GetByName(context.Context, string) (*AuthDomain, error)
-
-	// Get by name and orgID.
-	GetByNameAndOrgID(context.Context, string, valuer.UUID) (*AuthDomain, error)
-
-	// List org domains by orgID.
-	ListByOrgID(context.Context, valuer.UUID) ([]*AuthDomain, error)
-
-	// Create auth domain.
-	Create(context.Context, *AuthDomain) error
-
-	// Update by orgID and id.
-	Update(context.Context, *AuthDomain) error
-
-	// Delete by orgID and id.
-	Delete(context.Context, valuer.UUID, valuer.UUID) error
 }

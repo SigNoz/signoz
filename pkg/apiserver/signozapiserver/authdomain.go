@@ -78,23 +78,6 @@ func (provider *provider) addAuthDomainRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/auth_domains/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.authDomainHandler.Patch), handler.OpenAPIDef{
-		ID:                  "PatchAuthDomain",
-		Tags:                []string{"authdomains"},
-		Summary:             "Patch auth domain",
-		Description:         "This endpoint patches an auth domain, toggling whether SSO is enforced without rewriting the provider configuration",
-		Request:             new(authtypes.PatchableAuthDomain),
-		RequestContentType:  "application/json",
-		Response:            nil,
-		ResponseContentType: "",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPatch).GetError(); err != nil {
-		return err
-	}
-
 	if err := router.Handle("/api/v2/auth_domains/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.authDomainHandler.Delete), handler.OpenAPIDef{
 		ID:                  "DeleteAuthDomain",
 		Tags:                []string{"authdomains"},

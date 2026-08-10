@@ -17,9 +17,6 @@ type GoogleConfig struct {
 	// It is the application's secret.
 	ClientSecret string `json:"clientSecret" required:"true" format:"password"`
 
-	// What is the meaning of this? Should we remove this?
-	RedirectURI string `json:"redirectURI"`
-
 	// Whether to fetch the Google workspace groups (required additional API scopes)
 	FetchGroups bool `json:"fetchGroups"`
 

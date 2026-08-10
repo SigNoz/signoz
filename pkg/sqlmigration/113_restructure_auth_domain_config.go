@@ -122,6 +122,20 @@ func (migration *restructureAuthDomainConfig) Up(ctx context.Context, db *bun.DB
 			}
 		}
 
+		if ssoType == "google_auth" {
+			googleSpec := make(map[string]json.RawMessage)
+			if err := json.Unmarshal(spec, &googleSpec); err != nil {
+				migration.logger.WarnContext(ctx, "skipping auth domain with unreadable google config", slog.String("auth_domain_id", row.ID), errors.Attr(err))
+				continue
+			}
+
+			delete(googleSpec, "redirectURI")
+
+			if spec, err = json.Marshal(googleSpec); err != nil {
+				return err
+			}
+		}
+
 		kindRaw, err := json.Marshal(kind)
 		if err != nil {
 			return err
