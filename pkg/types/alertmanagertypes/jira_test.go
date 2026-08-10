@@ -3,7 +3,9 @@ package alertmanagertypes
 import (
 	"fmt"
 	"testing"
+	"time"
 
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -53,6 +55,21 @@ func TestJiraReceiverConfigSendResolved(t *testing.T) {
 	assert.False(t, off.JiraConfigs[0].SendResolved())
 }
 
+func TestJiraReceiverConfigReopenDurationMinimum(t *testing.T) {
+	withReopen := func(v string) string {
+		return fmt.Sprintf(
+			`{"name":"j","jira_configs":[{"site":"https://acme.atlassian.net","project":"KAN","issue_type":"Task","reopen_duration":%q,"http_config":{"basic_auth":{"username":"e","password":"t"}}}]}`,
+			v,
+		)
+	}
+	r, err := NewReceiver(withReopen("1m"))
+	require.NoError(t, err)
+	assert.Equal(t, model.Duration(time.Minute), r.JiraConfigs[0].ReopenDuration)
+
+	_, err = NewReceiver(withReopen("30s"))
+	assert.Error(t, err)
+}
+
 func TestJiraReceiverConfigTrailingSlashSite(t *testing.T) {
 	r, err := NewReceiver(jiraReceiverJSON("https://acme.atlassian.net/", "KAN", "Task", true))
 	require.NoError(t, err)
@@ -71,6 +88,8 @@ func TestJiraReceiverConfigValidation(t *testing.T) {
 		{"missing project", jiraReceiverJSON("https://acme.atlassian.net", "", "Task", true)},
 		{"missing issue_type", jiraReceiverJSON("https://acme.atlassian.net", "KAN", "", true)},
 		{"missing basic auth", jiraReceiverJSON("https://acme.atlassian.net", "KAN", "Task", false)},
+		{"invalid reopen_duration format", `{"name":"j","jira_configs":[{"site":"https://acme.atlassian.net","project":"KAN","issue_type":"Task","reopen_duration":"3days","http_config":{"basic_auth":{"username":"e","password":"t"}}}]}`},
+		{"sub-minute reopen_duration", `{"name":"j","jira_configs":[{"site":"https://acme.atlassian.net","project":"KAN","issue_type":"Task","reopen_duration":"30s","http_config":{"basic_auth":{"username":"e","password":"t"}}}]}`},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
