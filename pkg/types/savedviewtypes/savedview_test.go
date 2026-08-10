@@ -13,18 +13,18 @@ import (
 
 func validPostableSavedView() PostableSavedView {
 	return PostableSavedView{
-		Name:                  "my-view",
-		Source:                SourceLogs,
-		SchemaVersion:         SavedViewSchemaVersion,
-		Spec:                  SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, Queries: validQueries()},
+		Name:          "my-view",
+		Source:        SourceLogs,
+		SchemaVersion: SavedViewSchemaVersion,
+		Spec:          SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, Queries: validQueries()},
 	}
 }
 
 func validUpdatableSavedView() UpdatableSavedView {
 	return UpdatableSavedView{
-		Source:                SourceLogs,
-		SchemaVersion:         SavedViewSchemaVersion,
-		Spec:                  SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, Queries: validQueries()},
+		Source:        SourceLogs,
+		SchemaVersion: SavedViewSchemaVersion,
+		Spec:          SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, Queries: validQueries()},
 	}
 }
 
@@ -252,6 +252,24 @@ func TestStorableSavedView_ToSavedView(t *testing.T) {
 
 		assert.NotNil(t, view.Spec.SelectedFields)
 		assert.Empty(t, view.Spec.SelectedFields)
+	})
+
+	t.Run("nil queries normalizes to an empty slice, not nil", func(t *testing.T) {
+		storable := &StorableSavedView{
+			Data: SavedViewData{
+				SchemaVersion: SavedViewSchemaVersion.StringValue(),
+				Spec: SavedViewSpec{
+					DisplayName: "My View",
+					PanelType:   PanelTypeGraph,
+					Queries:     nil,
+				},
+			},
+		}
+
+		view := storable.ToSavedView()
+
+		assert.NotNil(t, view.Spec.Queries)
+		assert.Empty(t, view.Spec.Queries)
 	})
 }
 

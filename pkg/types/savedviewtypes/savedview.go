@@ -7,6 +7,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
@@ -53,6 +54,9 @@ type StorableSavedView struct {
 
 func (s *StorableSavedView) ToSavedView() *SavedView {
 	spec := s.Data.Spec
+	if spec.Queries == nil {
+		spec.Queries = []qbtypes.QueryEnvelope{}
+	}
 	if spec.SelectedFields == nil {
 		spec.SelectedFields = []telemetrytypes.TelemetryFieldKey{}
 	}

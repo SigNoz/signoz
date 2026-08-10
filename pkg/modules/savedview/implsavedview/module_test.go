@@ -28,9 +28,9 @@ func newTestStore() (savedview.Module, *savedviewtypestest.StoreTest) {
 
 func testPostableSavedView(name string, source savedviewtypes.Source) savedviewtypes.PostableSavedView {
 	return savedviewtypes.PostableSavedView{
-		Name:                  name,
-		Source:                source,
-		SchemaVersion:         savedviewtypes.SavedViewSchemaVersion,
+		Name:          name,
+		Source:        source,
+		SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
 		Spec: savedviewtypes.SavedViewSpec{
 			DisplayName: name,
 			PanelType:   savedviewtypes.PanelTypeGraph,
@@ -51,9 +51,9 @@ func testPostableSavedView(name string, source savedviewtypes.Source) savedviewt
 func testUpdatableSavedView(displayName string, source savedviewtypes.Source) savedviewtypes.UpdatableSavedView {
 	postable := testPostableSavedView(displayName, source)
 	return savedviewtypes.UpdatableSavedView{
-		Source:                postable.Source,
-		SchemaVersion:         postable.SchemaVersion,
-		Spec:                  postable.Spec,
+		Source:        postable.Source,
+		SchemaVersion: postable.SchemaVersion,
+		Spec:          postable.Spec,
 	}
 }
 

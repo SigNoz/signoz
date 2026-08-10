@@ -2,7 +2,6 @@ package sqlmigration
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"log/slog"
 
@@ -42,15 +41,21 @@ type storableSavedViewData struct {
 	Data string `bun:"data,type:text"`
 }
 
-// queryEnvelope mirrors minimal requied qbtypes.QueryEnvelope.
+// queryEnvelope mirrors minimal required qbtypes.QueryEnvelope.
 type queryEnvelope struct {
 	Type string          `json:"type"`
 	Spec json.RawMessage `json:"spec"`
 }
 
-// telemetryFieldKey mirrors required fields from telemetrytypes.TelemetryFieldKey.
+// telemetryFieldKey mirrors telemetrytypes.TelemetryFieldKey's JSON-visible fields.
+// Signal/FieldContext/FieldDataType are plain strings to test UnmarshalJSON.
 type telemetryFieldKey struct {
-	Name string `json:"name"`
+	Name          string `json:"name"`
+	Description   string `json:"description"`
+	Unit          string `json:"unit"`
+	Signal        string `json:"signal"`
+	FieldContext  string `json:"fieldContext"`
+	FieldDataType string `json:"fieldDataType"`
 }
 
 // fixDisplay mirrors savedviewtypes.Display.
@@ -99,7 +104,7 @@ func (migration *fixSavedViewSelectedFields) Up(ctx context.Context, db *bun.DB)
 	defer func() { _ = tx.Rollback() }()
 
 	var rows []*storableSavedViewData
-	if err := tx.NewSelect().Model(&rows).Scan(ctx); err != nil && err != sql.ErrNoRows {
+	if err := tx.NewSelect().Model(&rows).Scan(ctx); err != nil {
 		return err
 	}
 
@@ -148,6 +153,11 @@ func specFieldUnmarshalsCleanly(key string, value json.RawMessage) bool {
 		if err := json.Unmarshal(value, &q); err != nil {
 			return false
 		}
+		if q == nil {
+			// a JSON null unmarshals into a nil slice with no error; treat it as unclean so it
+			// gets blanked to [] rather than shipping "queries": null against a nullable:false schema.
+			return false
+		}
 		for _, e := range q {
 			if !knownQueryTypes[e.Type] || len(e.Spec) == 0 {
 				return false
@@ -156,7 +166,11 @@ func specFieldUnmarshalsCleanly(key string, value json.RawMessage) bool {
 		return true
 	case "selectedFields":
 		var f []telemetryFieldKey
-		return json.Unmarshal(value, &f) == nil
+		if err := json.Unmarshal(value, &f); err != nil {
+			return false
+		}
+		// same null-vs-[] gap as "queries" above: blank a JSON null to [] instead of leaving it.
+		return f != nil
 	case "display":
 		var d fixDisplay
 		return json.Unmarshal(value, &d) == nil
@@ -182,11 +196,7 @@ func repairSavedViewData(data string) (fixed string, blanked []string, ok bool) 
 		if specFieldUnmarshalsCleanly(key, value) {
 			continue
 		}
-		zero, known := specFieldZeroValueJSON[key]
-		if !known {
-			continue
-		}
-		spec[key] = json.RawMessage(zero)
+		spec[key] = json.RawMessage(specFieldZeroValueJSON[key])
 		blanked = append(blanked, key)
 	}
 
