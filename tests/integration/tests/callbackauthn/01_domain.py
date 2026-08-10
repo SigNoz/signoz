@@ -564,3 +564,84 @@ def test_domain_roundtrip(  # pylint: disable=too-many-arguments,too-many-positi
         timeout=2,
     )
     assert response.status_code == HTTPStatus.NO_CONTENT
+
+
+def test_patch_enabled(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    # Drop a same-named leftover so reruns against a reused stack stay green.
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.OK
+    for domain in response.json()["data"]:
+        if domain["name"] == "patch.integration.test":
+            response = requests.delete(
+                signoz.self.host_configs["8080"].get(f"/api/v2/auth_domains/{domain['id']}"),
+                headers={"Authorization": f"Bearer {admin_token}"},
+                timeout=2,
+            )
+            assert response.status_code == HTTPStatus.NO_CONTENT
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
+        json={
+            "name": "patch.integration.test",
+            "enabled": True,
+            "config": {
+                "kind": "saml",
+                "spec": {
+                    "entityId": "saml-entity",
+                    "location": "saml-idp",
+                    "certificate": "saml-cert",
+                },
+            },
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.CREATED
+    domain_id = response.json()["data"]["id"]
+
+    # Patching enforcement must flip only the enabled flag; the provider
+    # config stays untouched.
+    response = requests.patch(
+        signoz.self.host_configs["8080"].get(f"/api/v2/auth_domains/{domain_id}"),
+        json={"enabled": False},
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v2/auth_domains/{domain_id}"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()["data"]
+
+    assert data["enabled"] is False
+    assert data["config"] == {
+        "kind": "saml",
+        "spec": {
+            "entityId": "saml-entity",
+            "location": "saml-idp",
+            "certificate": "saml-cert",
+            "insecureSkipAuthNRequestsSigned": False,
+            "attributeMapping": {"email": "email", "name": "name", "groups": "groups", "role": "role"},
+        },
+    }
+
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"/api/v2/auth_domains/{domain_id}"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT
