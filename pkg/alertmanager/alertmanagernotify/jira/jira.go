@@ -32,19 +32,6 @@ const (
 	maxDescriptionLenRunes = 32767
 )
 
-const (
-	defaultSummaryTmpl = `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`
-
-	defaultDescriptionTmpl = `{{ range .Alerts -}}
-**Alert:** {{ .Labels.alertname }}{{ if .Labels.severity }} ({{ .Labels.severity }}){{ end }}
-{{ if .Annotations.summary }}
-**Summary:** {{ .Annotations.summary }}
-{{ end }}{{ if .Annotations.description }}
-**Description:** {{ .Annotations.description }}
-{{ end }}
-{{ end }}`
-)
-
 // Notifier implements notify.Notifier for Jira.
 type Notifier struct {
 	conf    *alertmanagertypes.JiraReceiverConfig
@@ -83,8 +70,8 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	var tmplErr error
 	data := notify.GetTemplateData(ctx, n.tmpl, as, n.logger)
 	tmplText := notify.TmplText(n.tmpl, data, &tmplErr)
-	summary := truncateRunes(tmplText(defaultSummaryTmpl), maxSummaryLenRunes)
-	descText := truncateRunes(tmplText(defaultDescriptionTmpl), maxDescriptionLenRunes)
+	summary := truncateRunes(tmplText(n.conf.Summary), maxSummaryLenRunes)
+	descText := truncateRunes(tmplText(n.conf.Description), maxDescriptionLenRunes)
 	if tmplErr != nil {
 		return false, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "jira template render: %v", tmplErr)
 	}

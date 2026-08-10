@@ -13,6 +13,21 @@ import (
 
 const defaultJiraReopenDuration = model.Duration(3 * 24 * time.Hour)
 
+// Default templates for the issue title and body. The body is rendered to
+// markdown and then wrapped in the ADF status panel + deep-links by the notifier.
+const (
+	DefaultJiraSummaryTemplate = `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`
+
+	DefaultJiraDescriptionTemplate = `{{ range .Alerts -}}
+**Alert:** {{ .Labels.alertname }}{{ if .Labels.severity }} ({{ .Labels.severity }}){{ end }}
+{{ if .Annotations.summary }}
+**Summary:** {{ .Annotations.summary }}
+{{ end }}{{ if .Annotations.description }}
+**Description:** {{ .Annotations.description }}
+{{ end }}
+{{ end }}`
+)
+
 // JiraReceiverConfig is the SigNoz Jira receiver. Fields are declared explicitly
 // instead of embedding upstream config.JiraConfig because that type's own
 // UnmarshalYAML would reset our defaults and drop sibling fields on the yaml
@@ -23,6 +38,8 @@ type JiraReceiverConfig struct {
 	Site              string                      `json:"site,omitempty" yaml:"site,omitempty"`
 	Project           string                      `json:"project,omitempty" yaml:"project,omitempty"`
 	IssueType         string                      `json:"issue_type,omitempty" yaml:"issue_type,omitempty"`
+	Summary           string                      `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Description       string                      `json:"description,omitempty" yaml:"description,omitempty"`
 	Priority          string                      `json:"priority,omitempty" yaml:"priority,omitempty"`
 	Labels            []string                    `json:"labels,omitempty" yaml:"labels,omitempty"`
 	ResolveTransition string                      `json:"resolve_transition,omitempty" yaml:"resolve_transition,omitempty"`
@@ -41,6 +58,12 @@ func (c *JiraReceiverConfig) UnmarshalYAML(unmarshal func(any) error) error {
 
 	if c.ReopenDuration <= 0 {
 		c.ReopenDuration = defaultJiraReopenDuration
+	}
+	if c.Summary == "" {
+		c.Summary = DefaultJiraSummaryTemplate
+	}
+	if c.Description == "" {
+		c.Description = DefaultJiraDescriptionTemplate
 	}
 
 	site := strings.TrimRight(strings.TrimSpace(c.Site), "/")
