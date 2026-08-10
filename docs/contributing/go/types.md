@@ -99,6 +99,69 @@ Each flavor exists for a concrete reason:
 
 The core `AuthDomain` holds the two live halves — `storableAuthDomain` and `authDomainConfig` — and owns business methods such as `Update(config)`. Conversions use the `New<Output>From<Input>` form: `NewAuthDomainFromConfig`, `NewAuthDomainFromStorableAuthDomain`, `NewGettableAuthDomainFromAuthDomain`.
 
+## Sum types: the kind/spec envelope
+
+When a domain type is a *sum type* — exactly one of several variants, selected by a discriminator — model it as an envelope with a `kind` and a `spec`:
+
+```go
+type FooConfig struct {
+    Kind FooKind `json:"kind" required:"true"`
+    Spec any     `json:"spec" required:"true"`
+}
+```
+
+```json
+{ "kind": "bar", "spec": { "url": "...", "timeout": "30s" } }
+```
+
+`Kind` is a `valuer.String` enum implementing `Enum()`; `Spec` holds exactly one concrete variant type (`BarSpec`, `BazSpec`, …). `RuleThresholdData` and `EvaluationEnvelope` in `pkg/types/ruletypes/` are the canonical in-tree examples; the dashboard panel/query/variable plugins in `pkg/types/dashboardtypes/` are the same pattern behind generics. (`QueryEnvelope` in querybuildertypes uses `type` as the discriminator key for historical reasons; new envelopes use `kind`.)
+
+### The envelope goes at the point of variance, not the resource root
+
+Put the envelope on the field that actually varies. The resource root is almost never a sum type — a `Foo` has a `name` and an `enabled` flag regardless of which kind it is configured with; only its configuration varies, so the envelope is the `config` field:
+
+```json
+{ "name": "my-foo", "enabled": true, "config": { "kind": "bar", "spec": { "...": "..." } } }
+```
+
+Hoisting `kind`/`spec` to the root would turn the whole resource into a `oneOf`: every flavor (`PostableFoo`, `UpdatableFoo`, `GettableFoo`) then needs one variant schema per kind, each repeating the common fields; every new common field has to be added to all of them; and generated clients get unions of large objects instead of one small union that narrows on `config.kind`. A root-level `kind` also collides with the resource-model meaning of the word — root `kind` conventionally answers "what resource is this" (`Dashboard`), never "which flavor of config does it hold".
+
+The existing domains already follow this placement:
+
+- **Rules** — plain root; envelopes on the varying fields: `thresholds: {kind, spec}` and `evaluation: {kind, spec}`.
+- **Dashboards** — metadata at the root plus one typed `spec`; the unions sit deep inside, at each panel/query/variable plugin (`{kind, spec}` in `perses_plugin_wrappers.go`).
+- **Saved views** — root `{schemaVersion, spec}`, where `spec` is a *versioning* envelope holding one fixed type, not a union; the unions are inside it (`spec.queries: [{type, spec}]`). Same word, different job — a versioned body is not a discriminated union.
+
+### Why this tagging style
+
+Of the union encodings in common use, the envelope is the *adjacently tagged* one — tag and payload side by side. Variant payloads stay collision-free, and each kind maps to a named wrapper schema that carries the discriminator, which is exactly what OpenAPI generators need. The alternatives lose on those points: *internally tagged* (`{"kind": "bar", ...fields flattened}`) mixes common and variant fields, admits cross-variant key collisions, and forces every variant schema to redeclare the discriminator; *sibling optional fields* (`{"kind": "bar", "barConfig": {}, "bazConfig": {}}`) is the anti-pattern the first rule below exists to prevent.
+
+The rules that make the envelope work:
+
+- **Never model variants as sibling fields.** A struct with `Bar *BarSpec`, `Baz *BazSpec` next to a discriminator cannot be expressed as an OpenAPI discriminated union, forces nilability checks on every consumer, and silently admits contradictory payloads (kind=bar with a baz spec). The chosen variant *is* the payload.
+- **The envelope owns `UnmarshalJSON`.** Decode `kind` first, then switch on it to decode and validate the matching concrete type into `Spec`. Unknown kinds and missing specs are rejected at the boundary:
+
+    ```go
+    func (typ *FooConfig) UnmarshalJSON(data []byte) error {
+        var raw map[string]json.RawMessage
+        // ... unmarshal raw, decode raw["kind"] ...
+        switch kind {
+        case FooKindBar:
+            spec := BarSpec{}
+            if err := json.Unmarshal(raw["spec"], &spec); err != nil {
+                return err
+            }
+            typ.Spec = spec
+        // ... one case per kind, default rejects ...
+        }
+        typ.Kind = kind
+        return nil
+    }
+    ```
+- **Consumers type-assert on `Spec`** (`config.Spec.(BarSpec)`) after switching on `Kind`. If assertion sites multiply, add typed accessors on the envelope (see `EvaluationEnvelope.GetEvaluation()`).
+- **OpenAPI needs one unexported variant struct per kind** (`fooConfigBar{Kind; Spec BarSpec}`), exposed via `JSONSchemaOneOf()` and mapped via `PrepareJSONSchema` with the `x-signoz-discriminator` extension. The schema mechanics are covered in [handler.md](handler.md#oneof-with-a-discriminator).
+- **A legacy persisted shape gets a data migration or a `StorableX`.** When rows were written before the envelope existed, prefer an idempotent `sqlmigration` that rewrites them into the new shape, so the storable type simply nests the envelope. Only when the old shape must keep being written (external writers, rollback windows) keep it in a storable twin and convert at the type boundary.
+
 ## Conventions that tie the flavors together
 
 - **Conversions** use either a `New<Output>From<Input>` constructor — e.g. `NewChannelFromReceiver`, `NewGettableAuthDomainFromAuthDomain` — or a receiver-style `ToY()` method. Both forms coexist in the codebase; use whichever fits the call site.
@@ -139,6 +202,8 @@ Both are optional. Do not introduce them if `PostableX` already covers the case.
 
 - Every domain package defines the core type `X`. Only `X` is mandatory.
 - Add `PostableX` / `GettableX` / `UpdatableX` / `StorableX` one at a time, only when the shape actually diverges from `X`.
+- Model sum types as a `{kind, spec}` envelope with a validating `UnmarshalJSON` — never as sibling variant fields next to a discriminator.
+- The envelope goes on the field that varies, never at the resource root — common fields stay on the resource, outside the union.
 - Domain logic lives on `X`, not on the flavor types.
 - Conversions can be a `New<Output>From<Input>` constructor or a receiver-style `ToY()` method — pick whichever reads best at the call site.
 - Use a type alias when two shapes are truly identical.
