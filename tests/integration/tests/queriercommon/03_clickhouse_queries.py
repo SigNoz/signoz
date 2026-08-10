@@ -1,7 +1,3 @@
-"""
-Integration tests for raw ClickHouse SQL queries in the querier.
-"""
-
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus

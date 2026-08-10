@@ -2,27 +2,27 @@ package clickhouseprometheusv2
 
 import (
 	"context"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/storage"
 )
 
-// provider ties the package together: its own engine and parser, and the
-// ClickHouse client behind the native storage.Querier. It stays unexported:
-// callers hold the prometheus.Prometheus interface, which is the boundary
-// between the two provider implementations.
 type provider struct {
 	settings factory.ScopedProviderSettings
 	engine   *prometheus.Engine
 	parser   prometheus.Parser
 	client   *client
+	executor *executor
 }
 
 var (
 	_ prometheus.Prometheus        = (*provider)(nil)
 	_ prometheus.StatementCapturer = (*provider)(nil)
+	_ prometheus.RangeExecutor     = (*provider)(nil)
 )
 
 func NewFactory(telemetryStore telemetrystore.TelemetryStore) factory.ProviderFactory[prometheus.Prometheus, prometheus.Config] {
@@ -43,7 +43,12 @@ func New(_ context.Context, providerSettings factory.ProviderSettings, config pr
 		engine:   engine,
 		parser:   parser,
 		client:   client,
+		executor: &executor{client: client, engine: engine, parser: parser},
 	}, nil
+}
+
+func (p *provider) TryExecuteRange(ctx context.Context, query string, start, end time.Time, step time.Duration) (promql.Matrix, bool, error) {
+	return p.executor.TryExecuteRange(ctx, query, start, end, step)
 }
 
 func (p *provider) Engine() *prometheus.Engine {

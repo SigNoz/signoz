@@ -36,54 +36,6 @@ from fixtures.traces import (
 # collision-robustness check.
 
 
-def _query_window(now: datetime) -> tuple[int, int]:
-    """[now-1min, now+1s) in epoch millis — the default window for list tests
-    that seed spans a few seconds in the past."""
-    return (
-        int((now - timedelta(minutes=1)).timestamp() * 1000),
-        int((now + timedelta(seconds=1)).timestamp() * 1000),
-    )
-
-
-def _expected_list_row(span: Traces) -> dict[str, Any]:
-    """The full empty-selectFields list row the API returns for `span`: every
-    intrinsic + calculated column (mirroring the fixture's OTel-derived
-    computation), the merged `attributes` map (the union of the typed attribute
-    dicts) and the `resource` map. Deriving it from the span object lets list
-    responses be asserted as an exact round-trip of the inserted span — which
-    holds for clean and corrupt spans alike, since the corrupt values live only
-    inside the `attributes` map."""
-    return {
-        "timestamp": format_timestamp(span.timestamp),
-        "trace_id": span.trace_id,
-        "span_id": span.span_id,
-        "trace_state": span.trace_state,
-        "parent_span_id": span.parent_span_id,
-        "flags": int(span.flags),
-        "name": span.name,
-        "kind": int(span.kind),
-        "kind_string": span.kind_string,
-        "duration_nano": int(span.duration_nano),
-        "status_code": int(span.status_code),
-        "status_message": span.status_message,
-        "status_code_string": span.status_code_string,
-        "events": span.events,
-        "links": span.links,
-        "response_status_code": span.response_status_code,
-        "external_http_url": span.external_http_url,
-        "http_url": span.http_url,
-        "external_http_method": span.external_http_method,
-        "http_method": span.http_method,
-        "http_host": span.http_host,
-        "db_name": span.db_name,
-        "db_operation": span.db_operation,
-        "has_error": span.has_error,
-        "is_remote": span.is_remote,
-        "attributes": {**span.attribute_string, **span.attributes_number, **span.attributes_bool},
-        "resource": span.resources_string,
-    }
-
-
 # ============================================================================
 # Basic list & row shape
 # ============================================================================
@@ -251,31 +203,14 @@ def test_traces_list(
     assert rows[1]["data"]["service.name"] == post_span.service_name
 
 
-def _verify_events_links_full(rows: list[dict], traces: list[Traces]) -> None:
-    """Empty-selectFields case: events/links arrive parsed into structured objects.
-    Every row's events/links should match the fixture's stored parsed shape
-    (the fixture's `.events`/`.links` mirror the API response shape directly).
-    """
-    for row, trace in zip(rows, traces, strict=True):
-        assert row["data"]["events"] == trace.events
-        assert row["data"]["links"] == trace.links
-        # Jaeger-era `refType` is dropped at the consume layer.
-        for link in row["data"]["links"]:
-            assert "refType" not in link
-
-
-def _verify_events_links_skip(rows: list[dict], traces: list[Traces]) -> None:
-    """Projected-selectFields case: nothing to verify beyond the key set."""
-
-
 @pytest.mark.parametrize(
-    "select_fields,expected_keys,verify_values",
+    "select_fields,expected_keys,events_links",
     [
-        pytest.param([], ALL_SELECT_FIELDS, _verify_events_links_full, id="empty_returns_all_fields"),
+        pytest.param([], ALL_SELECT_FIELDS, "full", id="empty_returns_all_fields"),
         pytest.param(
             [TelemetryFieldKey("service.name")],
             ["timestamp", "trace_id", "span_id", "service.name"],
-            _verify_events_links_skip,
+            "skip",
             id="projected_subset",
         ),
     ],
@@ -289,7 +224,7 @@ def test_traces_list_select_fields(
     noise: str,
     select_fields: list[TelemetryFieldKey],
     expected_keys: list[str],
-    verify_values: Callable[[list[dict], list[Traces]], None],
+    events_links: str,
 ) -> None:
     """
     Setup:
@@ -386,7 +321,17 @@ def test_traces_list_select_fields(
     for row in rows:
         assert set(row["data"].keys()) == set(expected_keys)
 
-    verify_values(rows, traces)
+    # Empty-selectFields case: events/links arrive parsed into structured objects.
+    # Every row's events/links should match the fixture's stored parsed shape
+    # (the fixture's `.events`/`.links` mirror the API response shape directly).
+    # Projected-selectFields case: nothing to verify beyond the key set.
+    if events_links == "full":
+        for row, trace in zip(rows, traces, strict=True):
+            assert row["data"]["events"] == trace.events
+            assert row["data"]["links"] == trace.links
+            # Jaeger-era `refType` is dropped at the consume layer.
+            for link in row["data"]["links"]:
+                assert "refType" not in link
 
 
 @pytest.mark.parametrize(
@@ -439,7 +384,8 @@ def test_traces_list_select_field_types(
     insert_traces([span])
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _query_window(now)
+    start_ms = int((now - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=1)).timestamp() * 1000)
 
     response = make_query_request(
         signoz,
@@ -491,7 +437,8 @@ def test_traces_list_select_field_dedup(
     insert_traces([span])
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _query_window(now)
+    start_ms = int((now - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=1)).timestamp() * 1000)
 
     response = make_query_request(
         signoz,
@@ -555,7 +502,8 @@ def test_traces_list_select_calculated_field_collision(
     insert_traces([span])
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _query_window(now)
+    start_ms = int((now - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=1)).timestamp() * 1000)
 
     response = make_query_request(
         signoz,
@@ -624,12 +572,14 @@ def test_traces_list_response_shape_values(
     insert_traces(spans)
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _query_window(now)
+    start_ms = int((now - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=1)).timestamp() * 1000)
 
     # Each span's full empty-selectFields row is derived from the span object:
     # intrinsic + calculated columns come from the fixture's own OTel-mirroring
     # computation, and the merged `attributes` map is exactly the union of the
-    # typed attribute dicts. This holds identically for clean and corrupt spans.
+    # typed attribute dicts. This holds identically for clean and corrupt spans,
+    # since the corrupt values live only inside the `attributes` map.
     for span_obj in spans:
         marker = span_obj.attribute_string["marker"]
         response = make_query_request(
@@ -644,7 +594,35 @@ def test_traces_list_response_shape_values(
         rows = get_rows(response)
         assert len(rows) == 1
         data = rows[0]["data"]
-        assert data == _expected_list_row(span_obj)
+        assert data == {
+            "timestamp": format_timestamp(span_obj.timestamp),
+            "trace_id": span_obj.trace_id,
+            "span_id": span_obj.span_id,
+            "trace_state": span_obj.trace_state,
+            "parent_span_id": span_obj.parent_span_id,
+            "flags": int(span_obj.flags),
+            "name": span_obj.name,
+            "kind": int(span_obj.kind),
+            "kind_string": span_obj.kind_string,
+            "duration_nano": int(span_obj.duration_nano),
+            "status_code": int(span_obj.status_code),
+            "status_message": span_obj.status_message,
+            "status_code_string": span_obj.status_code_string,
+            "events": span_obj.events,
+            "links": span_obj.links,
+            "response_status_code": span_obj.response_status_code,
+            "external_http_url": span_obj.external_http_url,
+            "http_url": span_obj.http_url,
+            "external_http_method": span_obj.external_http_method,
+            "http_method": span_obj.http_method,
+            "http_host": span_obj.http_host,
+            "db_name": span_obj.db_name,
+            "db_operation": span_obj.db_operation,
+            "has_error": span_obj.has_error,
+            "is_remote": span_obj.is_remote,
+            "attributes": {**span_obj.attribute_string, **span_obj.attributes_number, **span_obj.attributes_bool},
+            "resource": span_obj.resources_string,
+        }
         # `==` treats True/1 and 7.5/7.5 as equal regardless of type, so pin the
         # string/number/bool type preservation for the error span explicitly.
         if marker == "error":
@@ -719,7 +697,8 @@ def test_traces_list_ordering(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _query_window(now)
+    start_ms = int((now - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=1)).timestamp() * 1000)
 
     expected = [m["marker"] for m in sorted(metas, key=sort_value, reverse=(direction == "desc"))]
 
@@ -780,7 +759,8 @@ def test_traces_list_order_multi_key_tiebreak(
     by_duration_secs = {1: spans[0].span_id, 2: spans[1].span_id, 3: spans[2].span_id}
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _query_window(now)
+    start_ms = int((now - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=1)).timestamp() * 1000)
 
     def query(duration_direction: str) -> list[str]:
         response = make_query_request(
@@ -837,7 +817,8 @@ def test_traces_list_no_default_order(
     insert_traces(spans)
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _query_window(now)
+    start_ms = int((now - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=1)).timestamp() * 1000)
 
     response = make_query_request(
         signoz,
@@ -904,7 +885,8 @@ def test_traces_list_pagination(
     insert_traces(spans)
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _query_window(now)
+    start_ms = int((now - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=1)).timestamp() * 1000)
 
     # timestamp desc => newest span (i=4) first
     ordered_span_ids = [span.span_id for span in reversed(spans)]
@@ -1018,7 +1000,8 @@ def test_traces_list_empty_result(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _query_window(now)
+    start_ms = int((now - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=1)).timestamp() * 1000)
 
     # Filter matches nothing.
     response = make_query_request(
@@ -1109,7 +1092,8 @@ def test_traces_list_span_scope(
     insert_top_level_operations([("op-entry", "scope-svc")])
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _query_window(now)
+    start_ms = int((now - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=1)).timestamp() * 1000)
 
     def query_scope(expression: str) -> list[str]:
         response = make_query_request(
@@ -1137,11 +1121,40 @@ def test_traces_list_span_scope(
     [
         # Case 1: order by timestamp; empty selectFields returns the full
         # response shape (all intrinsic + calculated columns plus the merged
-        # `attributes` and `resource` maps). x[3] (topic-service) is latest.
+        # `attributes` and `resource` maps, every value derived from the inserted
+        # span object). x[3] (topic-service) is latest.
         pytest.param(
             BuilderQuery(signal="traces", name="A", order=[OrderBy(TelemetryFieldKey("timestamp"), "desc")], limit=1),
             HTTPStatus.OK,
-            lambda x: _expected_list_row(x[3]),
+            lambda x: {
+                "timestamp": format_timestamp(x[3].timestamp),
+                "trace_id": x[3].trace_id,
+                "span_id": x[3].span_id,
+                "trace_state": x[3].trace_state,
+                "parent_span_id": x[3].parent_span_id,
+                "flags": int(x[3].flags),
+                "name": x[3].name,
+                "kind": int(x[3].kind),
+                "kind_string": x[3].kind_string,
+                "duration_nano": int(x[3].duration_nano),
+                "status_code": int(x[3].status_code),
+                "status_message": x[3].status_message,
+                "status_code_string": x[3].status_code_string,
+                "events": x[3].events,
+                "links": x[3].links,
+                "response_status_code": x[3].response_status_code,
+                "external_http_url": x[3].external_http_url,
+                "http_url": x[3].http_url,
+                "external_http_method": x[3].external_http_method,
+                "http_method": x[3].http_method,
+                "http_host": x[3].http_host,
+                "db_name": x[3].db_name,
+                "db_operation": x[3].db_operation,
+                "has_error": x[3].has_error,
+                "is_remote": x[3].is_remote,
+                "attributes": {**x[3].attribute_string, **x[3].attributes_number, **x[3].attributes_bool},
+                "resource": x[3].resources_string,
+            },
             id="order_timestamp_full_shape",
         ),
         # Case 2: order by attribute.timestamp. The key resolves to the intrinsic
@@ -1150,7 +1163,35 @@ def test_traces_list_span_scope(
         pytest.param(
             BuilderQuery(signal="traces", name="A", order=[OrderBy(TelemetryFieldKey("attribute.timestamp"), "desc")], limit=1),
             HTTPStatus.OK,
-            lambda x: _expected_list_row(x[3]),
+            lambda x: {
+                "timestamp": format_timestamp(x[3].timestamp),
+                "trace_id": x[3].trace_id,
+                "span_id": x[3].span_id,
+                "trace_state": x[3].trace_state,
+                "parent_span_id": x[3].parent_span_id,
+                "flags": int(x[3].flags),
+                "name": x[3].name,
+                "kind": int(x[3].kind),
+                "kind_string": x[3].kind_string,
+                "duration_nano": int(x[3].duration_nano),
+                "status_code": int(x[3].status_code),
+                "status_message": x[3].status_message,
+                "status_code_string": x[3].status_code_string,
+                "events": x[3].events,
+                "links": x[3].links,
+                "response_status_code": x[3].response_status_code,
+                "external_http_url": x[3].external_http_url,
+                "http_url": x[3].http_url,
+                "external_http_method": x[3].external_http_method,
+                "http_method": x[3].http_method,
+                "http_host": x[3].http_host,
+                "db_name": x[3].db_name,
+                "db_operation": x[3].db_operation,
+                "has_error": x[3].has_error,
+                "is_remote": x[3].is_remote,
+                "attributes": {**x[3].attribute_string, **x[3].attributes_number, **x[3].attributes_bool},
+                "resource": x[3].resources_string,
+            },
             id="order_attribute_timestamp_full_shape",
         ),
         # Case 3: select timestamp with empty order by.
@@ -1432,7 +1473,8 @@ def test_traces_list_unknown_span_context_synthesizes(
     insert_traces([span])
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _query_window(now)
+    start_ms = int((now - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=1)).timestamp() * 1000)
     key = "span.does_not_exist"
     svc = "resource.service.name = 'forgiving-ctx-service'"
 
@@ -1503,7 +1545,8 @@ def test_traces_list_unknown_other_context_synthesizes(
     insert_traces(spans)
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _query_window(now)
+    start_ms = int((now - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=1)).timestamp() * 1000)
     key = f"{context}.does_not_exist"
     svc = "resource.service.name = 'synth-service'"
 
@@ -1566,7 +1609,8 @@ def test_traces_list_order_unknown_key_synthesizes(
     insert_traces(spans)
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _query_window(now)
+    start_ms = int((now - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=1)).timestamp() * 1000)
 
     response = make_query_request(
         signoz,

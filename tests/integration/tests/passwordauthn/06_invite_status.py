@@ -51,7 +51,7 @@ def test_reinvite_deleted_user(
 
     # call the delete api which now soft deletes the user
     response = requests.delete(
-        signoz.self.host_configs["8080"].get(f"/api/v1/user/{invited_user['id']}"),
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{invited_user['id']}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -90,37 +90,6 @@ def test_reinvite_deleted_user(
     assert user_token is not None
 
 
-def test_bulk_invite(
-    signoz: SigNoz,
-    get_token: Callable[[str, str], str],
-):
-    """
-    Verify the bulk invite endpoint creates multiple pending_invite users.
-    """
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/invite/bulk"),
-        json={
-            "invites": [
-                {
-                    "email": "bulk1@integration.test",
-                    "role": "EDITOR",
-                    "name": "bulk user 1",
-                },
-                {
-                    "email": "bulk2@integration.test",
-                    "role": "VIEWER",
-                    "name": "bulk user 2",
-                },
-            ]
-        },
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.CREATED, response.text
-
-
 def test_delete_user(
     signoz: SigNoz,
     get_token: Callable[[str, str], str],
@@ -154,7 +123,7 @@ def test_delete_user(
 
     # delete the user
     response = requests.delete(
-        signoz.self.host_configs["8080"].get(f"/api/v1/user/{user_id}"),
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{user_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )

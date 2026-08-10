@@ -88,58 +88,6 @@ func (handler *handler) CreateInvite(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusCreated, invites[0])
 }
 
-func (handler *handler) CreateBulkInvite(rw http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
-
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	var req types.PostableBulkInviteRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	// Validate that the request contains users
-	if len(req.Invites) == 0 {
-		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "no invites provided for invitation"))
-		return
-	}
-
-	_, err = handler.setter.CreateBulkInvite(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.IdentityID()), valuer.MustNewEmail(claims.Email), &req)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	render.Success(rw, http.StatusCreated, nil)
-}
-
-func (handler *handler) GetUserDeprecated(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
-
-	id := mux.Vars(r)["id"]
-
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	user, err := handler.getter.GetDeprecatedUserByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(id))
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	render.Success(w, http.StatusOK, user)
-}
-
 func (handler *handler) GetUser(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -282,33 +230,6 @@ func (handler *handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(w, http.StatusOK, users)
-}
-
-func (handler *handler) UpdateUserDeprecated(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
-
-	id := mux.Vars(r)["id"]
-
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	user := types.DeprecatedUser{User: &types.User{}}
-	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	updatedUser, err := handler.setter.UpdateUserDeprecated(ctx, valuer.MustNewUUID(claims.OrgID), id, &user)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	render.Success(w, http.StatusOK, updatedUser)
 }
 
 func (handler *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
@@ -470,7 +391,7 @@ func (handler *handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	req := new(types.PostableResetPassword)
-	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(w, err)
 		return
 	}

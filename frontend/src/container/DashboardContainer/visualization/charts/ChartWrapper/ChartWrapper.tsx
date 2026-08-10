@@ -37,6 +37,7 @@ export default function ChartWrapper({
 	groupByPerQuery,
 	customTooltip,
 	pinnedTooltipElement,
+	tooltipPortalRoot,
 	'data-testid': testId,
 }: ChartProps): JSX.Element {
 	const plotInstanceRef = useRef<uPlot | null>(null);
@@ -118,6 +119,7 @@ export default function ChartWrapper({
 								syncMetadata={syncMetadata}
 								render={renderTooltipCallback}
 								pinnedTooltipElement={pinnedTooltipElement}
+								portalRoot={tooltipPortalRoot}
 							/>
 						)}
 					</UPlotChart>

@@ -234,6 +234,9 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewUpdateRoleTransactionGroupsFactory(),
 		sqlmigration.NewFillDashboardSpecCollectionsFactory(sqlstore, dashboardStore),
 		sqlmigration.NewScrubEmailChannelTransportFactory(sqlstore),
+		sqlmigration.NewAddDashboardTuplesFactory(sqlstore),
+		sqlmigration.NewRestructureSavedViewSpecFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddSavedViewTuplesFactory(sqlstore),
 	)
 }
 
@@ -334,6 +337,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.TraceDetail,
 			handlers.RulerHandler,
 			handlers.StatsHandler,
+			handlers.SavedView,
 		),
 	)
 }

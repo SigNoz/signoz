@@ -654,7 +654,6 @@ class Traces(ABC):
             self.response_status_code = str_value
 
     def np_arr(self) -> np.array:
-        """Return span data as numpy array for database insertion"""
         return np.array(
             [
                 self.ts_bucket_start,
@@ -699,7 +698,6 @@ class Traces(ABC):
         cls,
         data: dict,
     ) -> "Traces":
-        """Create a Traces instance from a dict."""
         # parse timestamp from iso format
         timestamp = parse_timestamp(data["timestamp"])
         duration = parse_duration(data.get("duration", "PT1S"))
