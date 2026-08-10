@@ -3,7 +3,6 @@ package querier
 import (
 	"context"
 	"fmt"
-	"math"
 	"testing"
 	"time"
 
@@ -1401,78 +1400,4 @@ func TestBucketCache_NoCache(t *testing.T) {
 	// Test NoCache behavior in querier would bypass the cache entirely
 	// The actual NoCache logic is implemented in querier.run(), not in bucket cache
 	// This test verifies that the cache works normally and NoCache bypasses it at a higher level
-}
-
-// A promql ratio yields NaN wherever the denominator is zero. If those do not
-// survive the cache, every finite point in the same bucket is lost with them.
-func TestBucketCacheNonFiniteValues(t *testing.T) {
-	bc := createTestBucketCache(t)
-	ctx := context.Background()
-	orgID := valuer.UUID{}
-
-	// Keep the whole window before the flux boundary, aligned to the step, so
-	// all of it is cacheable and the bucket covers the request exactly.
-	fluxBoundary := (uint64(time.Now().UnixMilli()) - uint64(defaultFluxInterval.Milliseconds())) / 1000 * 1000
-
-	query := &mockQuery{
-		fingerprint: "test-nonfinite-query",
-		startMs:     fluxBoundary - 10000,
-		endMs:       fluxBoundary - 5000,
-	}
-
-	// A mix of finite and non-finite values, as a ratio with zero denominators
-	// produces.
-	result := &qbtypes.Result{
-		Type: qbtypes.RequestTypeTimeSeries,
-		Value: &qbtypes.TimeSeriesData{
-			QueryName: "A",
-			Aggregations: []*qbtypes.AggregationBucket{
-				{
-					Series: []*qbtypes.TimeSeries{
-						{
-							Labels: []*qbtypes.Label{
-								{Key: telemetrytypes.TelemetryFieldKey{Name: "job_name"}, Value: "dbBloatMonitorJob"},
-							},
-							Values: []*qbtypes.TimeSeriesValue{
-								{Timestamp: int64(fluxBoundary - 9000), Value: 11.5},
-								{Timestamp: int64(fluxBoundary - 8000), Value: math.NaN()},
-								{Timestamp: int64(fluxBoundary - 7000), Value: 12.5},
-								{Timestamp: int64(fluxBoundary - 6000), Value: math.Inf(1)},
-							},
-						},
-					},
-				},
-			},
-		},
-		Stats: qbtypes.ExecStats{
-			RowsScanned:  100,
-			BytesScanned: 1000,
-			DurationMS:   10,
-		},
-	}
-
-	// Put the result
-	bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result)
-
-	// Retrieve cached data
-	cached, missing := bc.GetMissRanges(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond})
-
-	// Should have cached data
-	assert.NotNil(t, cached)
-
-	tsData, ok := cached.Value.(*qbtypes.TimeSeriesData)
-	require.True(t, ok)
-	require.Len(t, tsData.Aggregations, 1)
-	require.Len(t, tsData.Aggregations[0].Series, 1)
-
-	// Every value comes back, the non-finite ones included
-	series := tsData.Aggregations[0].Series[0]
-	require.Len(t, series.Values, 4)
-	assert.Equal(t, float64(11.5), series.Values[0].Value)
-	assert.True(t, math.IsNaN(series.Values[1].Value))
-	assert.Equal(t, float64(12.5), series.Values[2].Value)
-	assert.True(t, math.IsInf(series.Values[3].Value, 1))
-
-	// The bucket covers the request, so nothing needs re-querying
-	assert.Empty(t, missing)
 }

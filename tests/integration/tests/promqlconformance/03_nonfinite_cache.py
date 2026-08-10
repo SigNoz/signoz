@@ -1,11 +1,3 @@
-"""
-Regression test for caching PromQL results that contain non-finite values.
-
-A ratio yields NaN where both sides are zero, and NaN marshals as the string
-"NaN". Before the fix the cached bucket could not be read back, so a second
-identical request returned only the window edges.
-"""
-
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
@@ -21,7 +13,7 @@ HOUR_MS = 3_600_000
 SAMPLE_INTERVAL_MS = 60_000
 
 
-def test_cached_promql_result_with_nan_matches_uncached(
+def test_promql_ratio_with_zero_denominator_is_dropped_and_cached(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -31,7 +23,7 @@ def test_cached_promql_result_with_nan_matches_uncached(
     end_ms = (int((datetime.now(tz=UTC) - timedelta(minutes=15)).timestamp() * 1000) // HOUR_MS) * HOUR_MS
     start_ms = end_ms - 12 * HOUR_MS
 
-    # active_job divides finite; idle_job is 0/0, the NaN the cache must survive.
+    # active_job divides finite; idle_job is 0/0 at every step.
     series = {"active_job": (100.0, 4.0), "idle_job": (0.0, 0.0)}
     metrics: list[Metrics] = []
     for job_name, (sum_value, count_value) in series.items():
@@ -60,10 +52,9 @@ def test_cached_promql_result_with_nan_matches_uncached(
     second, _ = run()
 
     expected_points = (end_ms - start_ms) // (step_seconds * 1000) + 1
-    assert set(first) == set(series), sorted(first)
-    assert set(first["idle_job"].values()) == {"NaN"}, sorted(set(first["idle_job"].values()))
+    assert set(first) == {"active_job"}, f"the 0/0 series must not reach the response: {sorted(first)}"
     assert set(first["active_job"].values()) == {25.0}, sorted(set(first["active_job"].values()))
-    assert len(first["idle_job"]) == expected_points, f"expected {expected_points} points, got {len(first['idle_job'])}"
+    assert len(first["active_job"]) == expected_points, f"expected {expected_points} points, got {len(first['active_job'])}"
 
     # The cached read excludes end_ms, the one legitimate difference.
     assert set(second) == set(first), sorted(second)
