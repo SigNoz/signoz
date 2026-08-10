@@ -125,7 +125,7 @@ go-stop: ## Stops the go backend server listening on SIGNOZ_APISERVER_ADDRESS
 		echo "Stopped signoz server on port $$PORT (pid $$PIDS)"; \
 	else \
 		echo "No signoz server running on port $$PORT."; \
-		echo "If it's running on a different port (e.g. via --config or a custom SIGNOZ_APISERVER_ADDRESS), rerun as: make go-stop SIGNOZ_APISERVER_ADDRESS=host:port"; \
+		echo "If it's running on a different port, rerun as: make go-stop SIGNOZ_APISERVER_ADDRESS=host:port"; \
 	fi
 
 .PHONY: go-build-community $(GO_BUILD_ARCHS_COMMUNITY)
