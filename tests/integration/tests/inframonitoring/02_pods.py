@@ -1,5 +1,3 @@
-"""Integration tests for v2 infra-monitoring pod endpoints."""
-
 import json
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
@@ -10,52 +8,19 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.fs import get_testdata_file_path
-from fixtures.inframonitoring import STATUS_BUCKETS, STATUS_TO_BUCKET
+from fixtures.inframonitoring import (
+    STATUS_BUCKETS,
+    STATUS_TO_BUCKET,
+    expected_status_counts,
+)
 from fixtures.metrics import Metrics
 from fixtures.querier import compare_values, get_all_warnings
-from fixtures.time import parse_timestamp
 
 ENDPOINT = "/api/v2/infra_monitoring/pods"
 
-# Placeholder in JSONL labels that gets substituted with a runtime ISO string.
+# Placeholder in JSONL labels that gets substituted with a runtime ISO string,
+# keeping podAge deterministic across runs.
 START_TIME_PLACEHOLDER = "__START_TIME__"
-
-
-def _load_pods_metrics(
-    file_relpath: str,
-    base_time: datetime,
-    start_time: datetime | None = None,
-) -> list[Metrics]:
-    """Load pod metrics JSONL with optional k8s.pod.start_time substitution.
-
-    Mirrors Metrics.load_from_file's base_time rebase logic but adds a hook
-    for the start_time label. Lines carrying ``k8s.pod.start_time =
-    __START_TIME__`` get rewritten to ``start_time.isoformat()`` before
-    construction, ensuring podAge is deterministic across runs.
-    """
-    path = get_testdata_file_path(file_relpath)
-    start_time_iso = start_time.isoformat() if start_time else None
-    rows = []
-    with open(path, encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            data = json.loads(line)
-            labels = data.get("labels", {})
-            if start_time_iso and labels.get("k8s.pod.start_time") == START_TIME_PLACEHOLDER:
-                labels["k8s.pod.start_time"] = start_time_iso
-            rows.append(data)
-    if not rows:
-        return []
-    earliest = min(parse_timestamp(r["timestamp"]) for r in rows)
-    offset = base_time - earliest
-    metrics = []
-    for r in rows:
-        ts = parse_timestamp(r["timestamp"]) + offset
-        r["timestamp"] = ts.isoformat()
-        metrics.append(Metrics.from_dict(r))
-    return metrics
 
 
 def test_pods_accuracy(
@@ -70,10 +35,10 @@ def test_pods_accuracy(
     now = datetime.now(tz=UTC).replace(microsecond=0)
     start_time = now - timedelta(minutes=10)
     insert_metrics(
-        _load_pods_metrics(
-            "inframonitoring/pods_value_accuracy.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_value_accuracy.jsonl"),
             base_time=now - timedelta(minutes=4),
-            start_time=start_time,
+            label_substitutions={START_TIME_PLACEHOLDER: start_time.isoformat()},
         )
     )
 
@@ -200,8 +165,8 @@ def test_pods_warnings(
     once, for hosts, in 01_hosts.py.)"""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        _load_pods_metrics(
-            f"inframonitoring/{case['dataset']}",
+        Metrics.load_from_file(
+            get_testdata_file_path(f"inframonitoring/{case['dataset']}"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -308,8 +273,8 @@ def test_pods_filter(
     }
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        _load_pods_metrics(
-            "inframonitoring/pods_filter_dataset.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_filter_dataset.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -356,8 +321,8 @@ def test_pods_filter_invalid(
     400 invalid_input with structured errors."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        _load_pods_metrics(
-            "inframonitoring/pods_filter_dataset.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_filter_dataset.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -404,8 +369,8 @@ def test_pods_groupby(
     """
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        _load_pods_metrics(
-            "inframonitoring/pods_groupby.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_groupby.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -455,8 +420,8 @@ def test_pods_pagination(
     it returns empty records while total still reflects dataset size."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        _load_pods_metrics(
-            "inframonitoring/pods_pagination.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_pagination.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -490,6 +455,95 @@ def test_pods_pagination(
     assert set(seen_pods) == {f"page-p{i}" for i in range(1, K + 1)}
 
 
+def test_pods_filter_pagination_and_ordering(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """filterByPodStatus composed with pagination + name ordering. The full-scope
+    status keyset is resolved before slicing, so total reflects the full matched
+    set and pages stay disjoint + complete on both the metric-ordering branch
+    (paginateWithBackfill) and the name-ordering branch (PaginateMetadataByName).
+    crashloopbackoff matches 4 pods in pods_phases.jsonl: clbo-a, clbo-b, run-p, unk-p."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_phases.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    start = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end = int(now.timestamp() * 1000)
+    matched = {"clbo-a", "clbo-b", "run-p", "unk-p"}
+
+    # Metric-ordering branch (default cpu order): total is invariant across a paged
+    # walk and the pages are disjoint + cover the full matched set.
+    seen: list[str] = []
+    totals: set[int] = set()
+    for offset in (0, 2, 4):
+        resp = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
+                "start": start,
+                "end": end,
+                "limit": 2,
+                "offset": offset,
+                "filter": {"filterByPodStatus": ["crashloopbackoff"]},
+            },
+            timeout=5,
+        )
+        assert resp.status_code == HTTPStatus.OK, resp.text
+        data = resp.json()["data"]
+        totals.add(data["total"])
+        assert len(data["records"]) == max(0, min(2, 4 - offset)), f"offset={offset}: {data['records']!r}"
+        seen.extend(r["meta"]["k8s.pod.name"] for r in data["records"])
+    assert totals == {4}, f"total not invariant under filter+pagination: {totals}"
+    assert len(seen) == 4, f"pages overlapped: {seen}"
+    assert set(seen) == matched
+
+    # Name-ordering branch (orderBy k8s.pod.name asc, groupBy empty): the filtered
+    # set is returned in name order; total is the full matched count.
+    ordered = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": start,
+            "end": end,
+            "limit": 50,
+            "filter": {"filterByPodStatus": ["crashloopbackoff"]},
+            "orderBy": {"key": {"name": "k8s.pod.name"}, "direction": "asc"},
+        },
+        timeout=5,
+    )
+    assert ordered.status_code == HTTPStatus.OK, ordered.text
+    odata = ordered.json()["data"]
+    assert odata["total"] == 4
+    assert [r["meta"]["k8s.pod.name"] for r in odata["records"]] == ["clbo-a", "clbo-b", "run-p", "unk-p"]
+
+    # Second page of the name branch: PaginateMetadataByName slices the filtered set
+    # correctly (offset past the first 2 matched -> the last 2), total unchanged.
+    page2 = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": start,
+            "end": end,
+            "limit": 2,
+            "offset": 2,
+            "filter": {"filterByPodStatus": ["crashloopbackoff"]},
+            "orderBy": {"key": {"name": "k8s.pod.name"}, "direction": "asc"},
+        },
+        timeout=5,
+    )
+    assert page2.status_code == HTTPStatus.OK, page2.text
+    p2 = page2.json()["data"]
+    assert p2["total"] == 4
+    assert [r["meta"]["k8s.pod.name"] for r in p2["records"]] == ["run-p", "unk-p"]
+
+
 # orderBy keys per pods_constants.go:42-48 (snake_case request keys, camelCase
 # response fields). k8s.pod.name sorts via the metadata-name branch
 # (PaginateMetadataByName) and is only allowed when groupBy is empty.
@@ -519,8 +573,8 @@ def test_pods_orderby(  # pylint: disable=too-many-arguments,too-many-positional
     sort) and records come back sorted by the requested column."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        _load_pods_metrics(
-            "inframonitoring/pods_orderby.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_orderby.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -591,6 +645,16 @@ def test_pods_orderby(  # pylint: disable=too-many-arguments,too-many-positional
             },
             "is only allowed when groupBy is empty",
             id="orderby_podname_with_groupby",
+        ),
+        pytest.param(
+            {"filter": {"filterByPodStatus": ["Bogus"]}},
+            "invalid filter by pod status",
+            id="filter_by_pod_status_invalid",
+        ),
+        pytest.param(
+            {"filter": {"filterByPodStatus": ["running", "Bogus"]}},
+            "invalid filter by pod status",
+            id="filter_by_pod_status_invalid_member",
         ),
     ],
 )
@@ -665,8 +729,8 @@ def test_pods_status_list_mode(
     """
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        _load_pods_metrics(
-            "inframonitoring/pods_phases.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_phases.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -697,6 +761,44 @@ def test_pods_status_list_mode(
         if other != bucket:
             assert rec["podCountsByStatus"][other] == 0, f"expected {other}=0 when status={expected_status}, got {rec['podCountsByStatus']}"
 
+    # filterByPodStatus (secondary filter, applied after status is assigned):
+    # a set containing the pod's status keeps it; a set without it filters it
+    # out. Wire value is case-insensitive (valuer lowercases). Multi-select is
+    # OR: [own_status, other] still keeps the pod.
+    for variant in ([expected_status], [expected_status.upper()], [expected_status, "running"]):
+        matched = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
+                "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+                "end": int(now.timestamp() * 1000),
+                "limit": 50,
+                "filter": {"expression": f"k8s.pod.name = '{pod_name}'", "filterByPodStatus": variant},
+            },
+            timeout=5,
+        )
+        assert matched.status_code == HTTPStatus.OK, matched.text
+        mdata = matched.json()["data"]
+        assert mdata["total"] == 1, f"filterByPodStatus={variant!r} should keep {pod_name}"
+        assert mdata["records"][0]["podCountsByStatus"][bucket] == 1
+
+    # None of the seeded pods resolves to Running or OOMKilled -> reliable
+    # mismatches, as a single value and as an all-absent multi-select set.
+    for fbps in (["running"], ["running", "oomKilled"]):
+        filtered_out = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
+                "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+                "end": int(now.timestamp() * 1000),
+                "limit": 50,
+                "filter": {"expression": f"k8s.pod.name = '{pod_name}'", "filterByPodStatus": fbps},
+            },
+            timeout=5,
+        )
+        assert filtered_out.status_code == HTTPStatus.OK, filtered_out.text
+        assert filtered_out.json()["data"]["total"] == 0, f"{pod_name} must be filtered out by filterByPodStatus={fbps!r}"
+
 
 @pytest.mark.parametrize(
     "pod_name,expected_restarts",
@@ -721,8 +823,8 @@ def test_pods_restarts_list_mode(
     series -> -1 no-data sentinel (kubectl would show 0)."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        _load_pods_metrics(
-            "inframonitoring/pods_phases.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_phases.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -760,8 +862,8 @@ def test_pods_status_latest_wins(
     ignored via argMax-by-latest-timestamp per (pod, container, reason)."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        _load_pods_metrics(
-            "inframonitoring/pods_phases_transition.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_phases_transition.jsonl"),
             base_time=now - timedelta(minutes=8),
         )
     )
@@ -797,8 +899,8 @@ def test_pods_restarts_latest_wins(
     not be double-counted."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        _load_pods_metrics(
-            "inframonitoring/pods_phases_transition.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_phases_transition.jsonl"),
             base_time=now - timedelta(minutes=8),
         )
     )
@@ -834,8 +936,8 @@ def test_pods_status_grouped_mode(
     g-fail-1 Error, g-fail-2 Evicted, g-pend-1 Pending."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        _load_pods_metrics(
-            "inframonitoring/pods_phases_grouped.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_phases_grouped.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -877,6 +979,61 @@ def test_pods_status_grouped_mode(
     )
     assert rec["podCountsByStatus"] == expected_counts
 
+    # filterByPodStatus in grouped mode: the group is kept because >=1 pod
+    # matches, and only the filtered buckets are populated (others zeroed).
+    running = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "groupBy": [{"name": "k8s.namespace.name", "fieldDataType": "string", "fieldContext": "resource"}],
+            "filter": {"filterByPodStatus": ["running"]},
+        },
+        timeout=5,
+    )
+    assert running.status_code == HTTPStatus.OK, running.text
+    rdata = running.json()["data"]
+    assert rdata["total"] == 1
+    assert rdata["records"][0]["podCountsByStatus"] == expected_status_counts(running=2)
+
+    # Multi-select is OR: both requested buckets populated (union), others zeroed.
+    multi = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "groupBy": [{"name": "k8s.namespace.name", "fieldDataType": "string", "fieldContext": "resource"}],
+            "filter": {"filterByPodStatus": ["running", "crashLoopBackOff"]},
+        },
+        timeout=5,
+    )
+    assert multi.status_code == HTTPStatus.OK, multi.text
+    mdata = multi.json()["data"]
+    assert mdata["total"] == 1
+    assert mdata["records"][0]["podCountsByStatus"] == expected_status_counts(running=2, crashLoopBackOff=1)
+
+    # A set fully absent from the group -> group dropped, empty page (single
+    # and multi-select both).
+    for fbps in (["oomKilled"], ["oomKilled", "unknown"]):
+        absent = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
+                "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+                "end": int(now.timestamp() * 1000),
+                "limit": 50,
+                "groupBy": [{"name": "k8s.namespace.name", "fieldDataType": "string", "fieldContext": "resource"}],
+                "filter": {"filterByPodStatus": fbps},
+            },
+            timeout=5,
+        )
+        assert absent.status_code == HTTPStatus.OK, absent.text
+        assert absent.json()["data"]["total"] == 0, f"group must be dropped by filterByPodStatus={fbps!r}"
+
 
 def test_pods_restarts_grouped_mode(
     signoz: types.SigNoz,
@@ -888,8 +1045,8 @@ def test_pods_restarts_grouped_mode(
     In ns-mixed only g-run-2 has restarts (3); all others 0 -> group total 3."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        _load_pods_metrics(
-            "inframonitoring/pods_phases_grouped.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_phases_grouped.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -932,8 +1089,8 @@ def test_pods_status_missing_metric_warning(
     seeds only k8s.pod.cpu.usage.)"""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
-        _load_pods_metrics(
-            "inframonitoring/pods_missing_metrics.jsonl",
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/pods_missing_metrics.jsonl"),
             base_time=now - timedelta(minutes=4),
         )
     )
@@ -966,3 +1123,25 @@ def test_pods_status_missing_metric_warning(
     for bucket in STATUS_BUCKETS:
         assert rec["podCountsByStatus"][bucket] == 0, f"expected {bucket}=0 when gated off, got {rec['podCountsByStatus']}"
     assert rec["podRestarts"] == -1
+
+    # filterByPodStatus + missing status metric: the up-front gate surfaces the
+    # warning and returns an empty page (Total 0) instead of silently filtering
+    # everything out.
+    filtered = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.pod.name = 'miss-p1'", "filterByPodStatus": ["running"]},
+        },
+        timeout=5,
+    )
+    assert filtered.status_code == HTTPStatus.OK, filtered.text
+    fdata = filtered.json()["data"]
+    assert fdata["total"] == 0
+    assert fdata["records"] == []
+    fwarn = fdata.get("warning") or {}
+    fmsgs = ([fwarn["message"]] if fwarn.get("message") else []) + [w["message"] for w in fwarn.get("warnings", [])]
+    assert any("Pod status could not be computed" in m for m in fmsgs), f"gate warning missing on filtered call: {fmsgs!r}"

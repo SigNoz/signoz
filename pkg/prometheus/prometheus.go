@@ -1,6 +1,9 @@
 package prometheus
 
 import (
+	"context"
+	"time"
+
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/promql/parser"
 	"github.com/prometheus/prometheus/storage"
@@ -41,3 +44,14 @@ type StatementCapturer interface {
 // X-SigNoz-PromQL-Provider request header all use it, so they cannot drift
 // apart.
 const ProviderClickhouseV2 = "clickhousev2"
+
+// RangeExecutor is the optional capability of a provider that can evaluate
+// some range queries entirely inside the datastore. ok=false means the
+// query is not evaluable that way. The caller then runs the engine over the
+// provider's Storage, which is always exact. Only the clickhousev2 provider
+// implements this capability. When that provider is the only one, the
+// capability folds into Prometheus itself, and the engine-vs-datastore
+// decision becomes internal.
+type RangeExecutor interface {
+	TryExecuteRange(ctx context.Context, query string, start, end time.Time, step time.Duration) (promql.Matrix, bool, error)
+}
