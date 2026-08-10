@@ -107,19 +107,10 @@ func (migration *fixSavedViewSelectedFields) Up(ctx context.Context, db *bun.DB)
 	for _, row := range rows {
 		fixedData, blanked, ok := repairSavedViewData(row.Data)
 		if ok && len(blanked) == 0 {
-			// already scans cleanly field-by-field -- nothing to repair. Note
-			// this must go through the same strict, per-field check repairSavedViewData
-			// uses, not a loose json.Unmarshal(row.Data, new(fixData)): Go's decoder
-			// happily accepts the legacy {"query":"select 1"} shape into queryEnvelope
-			// as a zero-valued {Type:"", Spec:nil} without erroring, which would make
-			// a loose top-level check skip exactly the rows this migration exists to fix.
+			// already scans cleanly field-by-field -- nothing to repair.
 			continue
 		}
 		if !ok {
-			// unrepairable: the row already 500s on every read today, so there's
-			// nothing usable to preserve under a fake name. Log the raw bytes for
-			// forensics, then delete outright rather than leaving a placeholder
-			// row that would show up in ListSavedViews looking like a real view.
 			migration.settings.Logger.WarnContext(ctx, "saved view data could not be repaired field-by-field, deleting the row", slog.String("saved_view_id", row.ID), slog.String("raw_data", row.Data))
 			if _, err := tx.NewDelete().Model((*storableSavedViewData)(nil)).Where("id = ?", row.ID).Exec(ctx); err != nil {
 				return err
