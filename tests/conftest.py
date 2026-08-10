@@ -25,6 +25,7 @@ pytest_plugins = [
     "fixtures.keycloak",
     "fixtures.idp",
     "fixtures.googleidp",
+    "fixtures.tls",
     "fixtures.notification_channel",
     "fixtures.maildev",
     "fixtures.alerts",

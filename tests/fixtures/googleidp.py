@@ -3,6 +3,7 @@ import json
 import time
 from collections.abc import Callable
 from http import HTTPStatus
+from pathlib import Path
 from urllib.parse import urlparse
 
 import docker
@@ -14,8 +15,9 @@ from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from testcontainers.core.container import DockerContainer, Network
 from wiremock.resources.mappings import HttpMethods, Mapping, MappingRequest, MappingResponse
 
-from fixtures import reuse, tls, types
+from fixtures import reuse, types
 from fixtures.logger import setup_logger
+from fixtures.tls import KEYSTORE_PASSWORD, issue_server_keystore
 
 logger = setup_logger(__name__)
 
@@ -156,8 +158,10 @@ def google_oidc_mappings(email: str, name: str, hd: str, audience: str, email_ve
 
 
 @pytest.fixture(name="googleidp", scope="package")
-def googleidp(
+def googleidp(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     network: Network,
+    tls: types.TLS,
+    tmpfs: Callable[[str], Path],
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
 ) -> types.TestContainerDocker:
@@ -166,11 +170,11 @@ def googleidp(
     admin API and the authorize redirect to the test process."""
 
     def create() -> types.TestContainerDocker:
-        keystore_dir = tls.ensure_server_keystore(pytestconfig, ISSUER_HOST)
+        keystore_path = issue_server_keystore(tls, tmpfs("googleidp-certs"), ISSUER_HOST)
 
         container = DockerContainer("wiremock/wiremock:2.35.1-1")
-        container.with_command(f"--https-port 443 --https-keystore /certs/keystore.p12 --keystore-type PKCS12 --keystore-password {tls.KEYSTORE_PASSWORD} --local-response-templating")
-        container.with_volume_mapping(str(keystore_dir), "/certs", "ro")
+        container.with_command(f"--https-port 443 --https-keystore /certs/keystore.p12 --keystore-type PKCS12 --keystore-password {KEYSTORE_PASSWORD} --local-response-templating")
+        container.with_volume_mapping(str(keystore_path.parent), "/certs", "ro")
         container.with_exposed_ports(8080)
         container.with_network(network)
         container.with_network_aliases(ISSUER_HOST)

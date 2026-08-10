@@ -11,8 +11,9 @@ import pytest
 import requests
 from testcontainers.core.container import DockerContainer, Network
 
-from fixtures import reuse, tls, types
+from fixtures import reuse, types
 from fixtures.logger import setup_logger
+from fixtures.tls import CA_CONTAINER_PATH
 
 logger = setup_logger(__name__)
 
@@ -27,10 +28,12 @@ def create_signoz(
     pytestconfig: pytest.Config,
     cache_key: str = "signoz",
     env_overrides: dict | None = None,
+    tls: types.TLS | None = None,
 ) -> types.SigNoz:
     """
     Factory function for creating a SigNoz container.
-    Accepts optional env_overrides to customize the container environment.
+    Accepts optional env_overrides to customize the container environment, and
+    an optional integration CA (tls) to trust via SSL_CERT_FILE.
     """
 
     def create() -> types.SigNoz:
@@ -119,8 +122,9 @@ def create_signoz(
         # (e.g. the fake accounts.google.com); SSL_CERT_FILE replaces the Go
         # root pool, which is fine here since every other mocked upstream is
         # plain http.
-        container.with_env("SSL_CERT_FILE", tls.CA_CONTAINER_PATH)
-        container.with_volume_mapping(str(tls.ensure_ca(pytestconfig) / "ca.pem"), tls.CA_CONTAINER_PATH, "ro")
+        if tls:
+            container.with_env("SSL_CERT_FILE", CA_CONTAINER_PATH)
+            container.with_volume_mapping(tls.ca_cert_path, CA_CONTAINER_PATH, "ro")
 
         container.start()
 
@@ -229,6 +233,7 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     gateway: types.TestContainerDocker,
     sqlstore: types.TestContainerSQL,
     clickhouse: types.TestContainerClickhouse,
+    tls: types.TLS,
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
 ) -> types.SigNoz:
@@ -240,4 +245,5 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         clickhouse=clickhouse,
         request=request,
         pytestconfig=pytestconfig,
+        tls=tls,
     )
