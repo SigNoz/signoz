@@ -623,6 +623,11 @@ describe('Create Alert Channel', () => {
 				await user.click(screen.getByText('jira_advanced_section'));
 				await user.type(screen.getByTestId('jira-reopen-duration-textbox'), '30s');
 
+				// the rule surfaces an inline message, not just a red border
+				await expect(
+					screen.findByText('jira_reopen_duration_invalid'),
+				).resolves.toBeInTheDocument();
+
 				await user.click(screen.getByTestId('save-channel-button'));
 
 				await waitFor(() =>

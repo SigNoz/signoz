@@ -74,7 +74,7 @@ function JiraSettings({ setSelectedConfig }: JiraProps): JSX.Element {
 			<Form.Item
 				name="reopen_duration"
 				label={t('field_jira_reopen_duration')}
-				help={t('help_jira_reopen_duration')}
+				extra={t('help_jira_reopen_duration')}
 				rules={[
 					{
 						validator: (_, value: string): Promise<void> =>
