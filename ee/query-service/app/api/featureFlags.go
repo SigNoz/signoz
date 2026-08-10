@@ -80,15 +80,6 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		Route:      "",
 	})
 
-	fineGrainedAuthz := ah.Signoz.Flagger.BooleanOrEmpty(ctx, flagger.FeatureUseFineGrainedAuthz, evalCtx)
-	featureSet = append(featureSet, &licensetypes.Feature{
-		Name:       valuer.NewString(flagger.FeatureUseFineGrainedAuthz.String()),
-		Active:     fineGrainedAuthz,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	})
-
 	aiObservability := ah.Signoz.Flagger.BooleanOrEmpty(ctx, flagger.FeatureEnableAIObservability, evalCtx)
 	featureSet = append(featureSet, &licensetypes.Feature{
 		Name:       valuer.NewString(flagger.FeatureEnableAIObservability.String()),

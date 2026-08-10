@@ -68,7 +68,7 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 		},
 	},
 	{
-		id: 'nodeName',
+		id: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME,
 		header: (): React.ReactNode => (
 			<EntityGroupHeader
 				title="Node Name"
@@ -78,7 +78,7 @@ export const k8sNodesColumnsConfig: NodeTableColumnConfig[] = [
 		),
 		accessorFn: (row): string => row.nodeName || '',
 		width: { min: 290 },
-		enableSort: false,
+		enableSort: true,
 		enableRemove: false,
 		enableMove: false,
 		pin: 'left',

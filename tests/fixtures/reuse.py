@@ -19,17 +19,14 @@ def teardown(request: pytest.FixtureRequest) -> bool:
 
 
 def get_cached_resource(pytestconfig: pytest.Config, key: str):
-    """Get a resource from pytest cache by key."""
     return pytestconfig.cache.get(key, None)
 
 
 def set_cached_resource(pytestconfig: pytest.Config, key: str, value):
-    """Set a resource in pytest cache by key."""
     pytestconfig.cache.set(key, value)
 
 
 def remove_cached_resource(pytestconfig: pytest.Config, key: str):
-    """Remove a resource from pytest cache by key (set to None)."""
     pytestconfig.cache.set(key, None)
 
 

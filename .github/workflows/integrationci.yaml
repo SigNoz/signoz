@@ -55,6 +55,7 @@ jobs:
           - queriermetrics
           - querierscalar
           - queriercommon
+          - querierai
           - rawexportdata
           - promqlconformance
           - querierauthz

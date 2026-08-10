@@ -14,10 +14,17 @@ import testPagerApi from 'api/channels/testPager';
 import testSlackApi from 'api/channels/testSlack';
 import testWebhookApi from 'api/channels/testWebhook';
 import logEvent from 'api/common/logEvent';
+import {
+	useTestChannel,
+	useUpdateChannelByID,
+} from 'api/generated/services/channels';
+import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { ErrorType } from 'api/generatedAPIInstance';
 import ROUTES from 'constants/routes';
 import {
 	ChannelType,
 	EmailChannel,
+	GoogleChatChannel,
 	MsTeamsChannel,
 	OpsgenieChannel,
 	PagerChannel,
@@ -25,10 +32,15 @@ import {
 	ValidatePagerChannel,
 	WebhookChannel,
 } from 'container/CreateAlertChannels/config';
+import {
+	isValidGoogleChatWebhookURL,
+	prepareGoogleChatRequest,
+} from 'container/CreateAlertChannels/utils';
 import FormAlertChannels from 'container/FormAlertChannels';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import APIError from 'types/api/error';
+import { toAPIError } from 'utils/errorUtils';
 
 function EditAlertChannels({
 	initialValue,
@@ -45,7 +57,8 @@ function EditAlertChannels({
 				PagerChannel &
 				MsTeamsChannel &
 				OpsgenieChannel &
-				EmailChannel
+				EmailChannel &
+				GoogleChatChannel
 		>
 	>({
 		...initialValue,
@@ -53,6 +66,26 @@ function EditAlertChannels({
 	const [savingState, setSavingState] = useState<boolean>(false);
 	const [testingState, setTestingState] = useState<boolean>(false);
 	const { notifications } = useNotifications();
+
+	const { mutateAsync: updateChannel } = useUpdateChannelByID();
+	const { mutateAsync: testChannel } = useTestChannel();
+
+	const notifyError = useCallback(
+		(error: unknown): APIError => {
+			const apiError =
+				error instanceof APIError
+					? error
+					: toAPIError(error as ErrorType<RenderErrorResponseDTO>);
+
+			notifications.error({
+				message: apiError.getErrorCode(),
+				description: apiError.getErrorMessage(),
+			});
+
+			return apiError;
+		},
+		[notifications],
+	);
 
 	const [type, setType] = useState<ChannelType>(
 		initialValue?.type ? (initialValue.type as ChannelType) : ChannelType.Slack,
@@ -364,6 +397,61 @@ function EditAlertChannels({
 		}
 	}, [prepareMsTeamsRequest, t, notifications, selectedConfig]);
 
+	const validateGoogleChatConfig = useCallback((): string => {
+		if (!selectedConfig?.webhook_url) {
+			return t('webhook_url_required');
+		}
+
+		if (!isValidGoogleChatWebhookURL(selectedConfig.webhook_url)) {
+			return t('google_chat_webhook_url_invalid');
+		}
+
+		return '';
+	}, [selectedConfig, t]);
+
+	const onGoogleChatEditHandler = useCallback(async () => {
+		const validationError = validateGoogleChatConfig();
+
+		if (validationError !== '') {
+			notifications.error({
+				message: 'Error',
+				description: validationError,
+			});
+			return { status: 'failed', statusMessage: validationError };
+		}
+
+		setSavingState(true);
+
+		try {
+			await updateChannel({
+				pathParams: { id },
+				data: prepareGoogleChatRequest(selectedConfig),
+			});
+			notifications.success({
+				message: 'Success',
+				description: t('channel_edit_done'),
+			});
+			history.replace(ROUTES.ALL_CHANNELS);
+			return { status: 'success', statusMessage: t('channel_edit_done') };
+		} catch (error) {
+			const apiError = notifyError(error);
+			return {
+				status: 'failed',
+				statusMessage: apiError.getErrorMessage() || t('channel_edit_failed'),
+			};
+		} finally {
+			setSavingState(false);
+		}
+	}, [
+		validateGoogleChatConfig,
+		updateChannel,
+		id,
+		selectedConfig,
+		notifications,
+		notifyError,
+		t,
+	]);
+
 	const onSaveHandler = useCallback(
 		async (value: ChannelType) => {
 			let result;
@@ -379,6 +467,8 @@ function EditAlertChannels({
 				result = await onOpsgenieEditHandler();
 			} else if (value === ChannelType.Email) {
 				result = await onEmailEditHandler();
+			} else if (value === ChannelType.GoogleChat) {
+				result = await onGoogleChatEditHandler();
 			}
 			logEvent('Alert Channel: Save channel', {
 				type: value,
@@ -397,6 +487,7 @@ function EditAlertChannels({
 			onMsTeamsEditHandler,
 			onOpsgenieEditHandler,
 			onEmailEditHandler,
+			onGoogleChatEditHandler,
 		],
 	);
 
@@ -438,6 +529,19 @@ function EditAlertChannels({
 							await testEmail(request);
 						}
 						break;
+					case ChannelType.GoogleChat: {
+						const validationError = validateGoogleChatConfig();
+						if (validationError !== '') {
+							notifications.error({
+								message: 'Error',
+								description: validationError,
+							});
+							setTestingState(false);
+							return;
+						}
+						await testChannel({ data: prepareGoogleChatRequest(selectedConfig) });
+						break;
+					}
 					default:
 						notifications.error({
 							message: 'Error',
@@ -459,10 +563,7 @@ function EditAlertChannels({
 					status: 'Test success',
 				});
 			} catch (error) {
-				notifications.error({
-					message: (error as APIError).getErrorCode(),
-					description: (error as APIError).getErrorMessage(),
-				});
+				notifyError(error);
 				logEvent('Alert Channel: Test notification', {
 					type: channelType,
 					sendResolvedAlert: selectedConfig?.send_resolved,
@@ -476,6 +577,9 @@ function EditAlertChannels({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
 			t,
+			notifyError,
+			validateGoogleChatConfig,
+			testChannel,
 			prepareWebhookRequest,
 			preparePagerRequest,
 			prepareSlackRequest,

@@ -5,6 +5,7 @@ import (
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/stretchr/testify/assert"
 )
 
 func groupByKey(name string) qbtypes.GroupByKey {
@@ -88,10 +89,7 @@ func TestIsKeyInGroupByAttrs(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := isKeyInGroupByAttrs(tt.groupByAttrs, tt.key)
-			if got != tt.expectedFound {
-				t.Errorf("isKeyInGroupByAttrs(%v, %q) = %v, want %v",
-					tt.groupByAttrs, tt.key, got, tt.expectedFound)
-			}
+			assert.Equal(t, tt.expectedFound, got)
 		})
 	}
 }
@@ -156,10 +154,7 @@ func TestMergeFilterExpressions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := mergeFilterExpressions(tt.queryFilterExpr, tt.reqFilterExpr)
-			if got != tt.expected {
-				t.Errorf("mergeFilterExpressions(%q, %q) = %q, want %q",
-					tt.queryFilterExpr, tt.reqFilterExpr, got, tt.expected)
-			}
+			assert.Equal(t, tt.expected, got)
 		})
 	}
 }
@@ -205,10 +200,7 @@ func TestCompositeKeyFromList(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := compositeKeyFromList(tt.parts)
-			if got != tt.expected {
-				t.Errorf("compositeKeyFromList(%v) = %q, want %q",
-					tt.parts, got, tt.expected)
-			}
+			assert.Equal(t, tt.expected, got)
 		})
 	}
 }
@@ -376,10 +368,81 @@ func TestCompositeKeyFromLabels(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := compositeKeyFromLabels(tt.labels, tt.groupBy)
-			if got != tt.expected {
-				t.Errorf("compositeKeyFromLabels(%v, %v) = %q, want %q",
-					tt.labels, tt.groupBy, got, tt.expected)
+			assert.Equal(t, tt.expected, got)
+		})
+	}
+}
+
+func TestIntersectMap(t *testing.T) {
+	tests := []struct {
+		name     string
+		m        map[string]int
+		keep     map[string]podStatusCounts
+		expected map[string]int
+	}{
+		{
+			name:     "keep subset",
+			m:        map[string]int{"a": 1, "b": 2, "c": 3},
+			keep:     map[string]podStatusCounts{"a": {}, "c": {}},
+			expected: map[string]int{"a": 1, "c": 3},
+		},
+		{
+			name:     "empty keep drops everything",
+			m:        map[string]int{"a": 1, "b": 2},
+			keep:     map[string]podStatusCounts{},
+			expected: map[string]int{},
+		},
+		{
+			name:     "keep key absent from m is ignored",
+			m:        map[string]int{"a": 1},
+			keep:     map[string]podStatusCounts{"a": {}, "z": {}},
+			expected: map[string]int{"a": 1},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := intersectMap(tt.m, tt.keep)
+			assert.Equal(t, tt.expected, got)
+		})
+	}
+}
+
+func TestIntersectRankedGroups(t *testing.T) {
+	groups := []rankedGroup{
+		{compositeKey: "a", value: 3},
+		{compositeKey: "b", value: 2},
+		{compositeKey: "c", value: 1},
+	}
+
+	tests := []struct {
+		name     string
+		groups   []rankedGroup
+		keep     map[string]podStatusCounts
+		expected []string // compositeKeys in order
+	}{
+		{
+			name:     "preserves order, drops non-matching",
+			groups:   groups,
+			keep:     map[string]podStatusCounts{"a": {}, "c": {}},
+			expected: []string{"a", "c"},
+		},
+		{
+			name:     "empty keep drops all",
+			groups:   groups,
+			keep:     map[string]podStatusCounts{},
+			expected: []string{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := intersectRankedGroups(tt.groups, tt.keep)
+			gotKeys := make([]string, 0, len(got))
+			for _, g := range got {
+				gotKeys = append(gotKeys, g.compositeKey)
 			}
+			assert.Equal(t, tt.expected, gotKeys)
 		})
 	}
 }

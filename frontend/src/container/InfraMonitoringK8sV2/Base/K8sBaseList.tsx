@@ -128,6 +128,8 @@ export function K8sBaseList<
 
 	const { containerRef, calculatedPageSize } = useCalculatedPageSize({
 		rowHeight: 42,
+		headerHeight: 58,
+		paginationHeight: 52,
 	});
 
 	const {
@@ -436,16 +438,17 @@ export function K8sBaseList<
 				isFetching={isFetching}
 				cancelQuery={cancelQuery}
 			/>
+
+			<K8sInstrumentationChecksCallout entity={entity} />
+
+			<K8sTableToolbar
+				entity={entity}
+				eventCategory={eventCategory}
+				leftFilters={leftFilters}
+				onOpenOptionsDrawer={handleOpenOptionsDrawer}
+			/>
+
 			<div ref={containerRef} className={styles.tableContainer}>
-				<K8sInstrumentationChecksCallout entity={entity} />
-
-				<K8sTableToolbar
-					entity={entity}
-					eventCategory={eventCategory}
-					leftFilters={leftFilters}
-					onOpenOptionsDrawer={handleOpenOptionsDrawer}
-				/>
-
 				{isError && (
 					<Typography>
 						{data?.error?.toString() || 'Something went wrong'}
