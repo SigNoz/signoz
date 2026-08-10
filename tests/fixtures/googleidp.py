@@ -27,6 +27,8 @@ logger = setup_logger(__name__)
 ISSUER = "https://accounts.google.com"
 ISSUER_HOST = "accounts.google.com"
 
+GOOGLE_DOMAIN = "google.integration.test"
+
 
 # One signing key for the whole session: the token and JWKS stubs are always
 # installed together, so per-call keys would only add RSA keygen latency.
@@ -68,6 +70,18 @@ def perform_google_login(
     assert response.status_code == HTTPStatus.SEE_OTHER
 
     return response.headers["Location"]
+
+
+def get_google_domain(signoz: types.SigNoz, admin_token: str) -> dict:
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    return next(
+        (domain for domain in response.json()["data"] if domain["name"] == GOOGLE_DOMAIN),
+        None,
+    )
 
 
 def google_oidc_mappings(email: str, name: str, hd: str, audience: str, email_verified: bool = True) -> list[Mapping]:
