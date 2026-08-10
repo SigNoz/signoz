@@ -52,6 +52,8 @@ import type {
 	ListDashboardsV2200,
 	ListDashboardsV2Params,
 	LockDashboardV2PathParameters,
+	MigrateDashboardV2200,
+	MigrateDashboardV2PathParameters,
 	PatchDashboardV2200,
 	PatchDashboardV2PathParameters,
 	PinDashboardV2PathParameters,
@@ -1803,6 +1805,85 @@ export const useLockDashboardV2 = <
 	TContext
 > => {
 	return useMutation(getLockDashboardV2MutationOptions(options));
+};
+/**
+ * This endpoint retries the v1→v2 (Perses) migration on a dashboard still stored in the v1 schema and returns the v2-shape result. It is idempotent: a dashboard already in the v2 schema is returned unchanged.
+ * @summary Migrate dashboard to v2
+ */
+export const migrateDashboardV2 = (
+	{ id }: MigrateDashboardV2PathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<MigrateDashboardV2200>({
+		url: `/api/v2/dashboards/${id}/migrate`,
+		method: 'POST',
+		signal,
+	});
+};
+
+export const getMigrateDashboardV2MutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof migrateDashboardV2>>,
+		TError,
+		{ pathParams: MigrateDashboardV2PathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof migrateDashboardV2>>,
+	TError,
+	{ pathParams: MigrateDashboardV2PathParameters },
+	TContext
+> => {
+	const mutationKey = ['migrateDashboardV2'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof migrateDashboardV2>>,
+		{ pathParams: MigrateDashboardV2PathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return migrateDashboardV2(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type MigrateDashboardV2MutationResult = NonNullable<
+	Awaited<ReturnType<typeof migrateDashboardV2>>
+>;
+
+export type MigrateDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Migrate dashboard to v2
+ */
+export const useMigrateDashboardV2 = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof migrateDashboardV2>>,
+		TError,
+		{ pathParams: MigrateDashboardV2PathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof migrateDashboardV2>>,
+	TError,
+	{ pathParams: MigrateDashboardV2PathParameters },
+	TContext
+> => {
+	return useMutation(getMigrateDashboardV2MutationOptions(options));
 };
 /**
  * This endpoint returns the sanitized v2-shape dashboard data for public access. Each panel query is reduced to a safe field subset, so filters and raw query strings are not exposed.

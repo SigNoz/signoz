@@ -9,6 +9,7 @@ import type {
 	VariableSelection,
 	VariableSelectionMap,
 } from '../../selectionTypes';
+import { textDefault } from '../../utils/resolveVariableSelection';
 import { computeVariableDependencies } from '../../utils/variableDependencies';
 import TextSelector from '../selectors/TextSelector';
 import VariableValueControl from '../selectors/VariableValueControl';
@@ -65,7 +66,7 @@ function VariableSelector({
 		variable.type === 'TEXT' ? (
 			<TextSelector
 				selection={selection}
-				defaultValue={variable.textValue}
+				defaultValue={textDefault(variable)}
 				onChange={onChange}
 				testId={`variable-input-${variable.name}`}
 			/>

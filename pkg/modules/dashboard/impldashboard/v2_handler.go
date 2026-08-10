@@ -207,6 +207,38 @@ func (handler *handler) GetV2(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusOK, dashboard.ToGettableDashboardV2())
 }
 
+func (handler *handler) MigrateV2(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	id := mux.Vars(r)["id"]
+	if id == "" {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is missing in the path"))
+		return
+	}
+	dashboardID, err := valuer.NewUUID(id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	dashboard, err := handler.module.MigrateV2(ctx, orgID, dashboardID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, dashboard.ToGettableDashboardV2())
+}
+
 func (handler *handler) LockV2(rw http.ResponseWriter, r *http.Request) {
 	handler.lockUnlockV2(rw, r, true)
 }

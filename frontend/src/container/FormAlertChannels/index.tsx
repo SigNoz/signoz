@@ -9,6 +9,7 @@ import ROUTES from 'constants/routes';
 import {
 	ChannelType,
 	EmailChannel,
+	GoogleChatChannel,
 	OpsgenieChannel,
 	PagerChannel,
 	SlackChannel,
@@ -17,6 +18,7 @@ import {
 import history from 'lib/history';
 
 import EmailSettings from './Settings/Email';
+import GoogleChatSettings from './Settings/GoogleChat';
 import MsTeamsSettings from './Settings/MsTeams';
 import OpsgenieSettings from './Settings/Opsgenie';
 import PagerSettings from './Settings/Pager';
@@ -49,6 +51,8 @@ function FormAlertChannels({
 				return <PagerSettings setSelectedConfig={setSelectedConfig} />;
 			case ChannelType.MsTeams:
 				return <MsTeamsSettings setSelectedConfig={setSelectedConfig} />;
+			case ChannelType.GoogleChat:
+				return <GoogleChatSettings setSelectedConfig={setSelectedConfig} />;
 			case ChannelType.Opsgenie:
 				return <OpsgenieSettings setSelectedConfig={setSelectedConfig} />;
 			case ChannelType.Email:
@@ -129,6 +133,14 @@ function FormAlertChannels({
 						<Select.Option value="msteams" key="msteams" data-testid="select-option">
 							Microsoft Teams
 						</Select.Option>
+
+						<Select.Option
+							value="googlechat"
+							key="googlechat"
+							data-testid="select-option"
+						>
+							Google Chat
+						</Select.Option>
 					</Select>
 				</Form.Item>
 
@@ -176,7 +188,8 @@ interface FormAlertChannelsProps {
 					WebhookChannel &
 					PagerChannel &
 					OpsgenieChannel &
-					EmailChannel
+					EmailChannel &
+					GoogleChatChannel
 			>
 		>
 	>;

@@ -35,6 +35,7 @@ export interface AllAttributesProps {
 	metricName: string;
 	metricType: MetrictypesTypeDTO | undefined;
 	isMonotonic?: boolean;
+	temporality?: MetrictypesTemporalityDTO;
 	minTime?: number;
 	maxTime?: number;
 }

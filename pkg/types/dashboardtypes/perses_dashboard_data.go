@@ -63,8 +63,13 @@ func (d *DashboardSpec) Validate() error {
 	return d.validateLayouts()
 }
 
-// validateVariables rejects two variables sharing the same name.
+// validateVariables rejects an absent or null list, and duplicate variable names.
 func (d *DashboardSpec) validateVariables() error {
+	// Nil is an absent or explicitly null field; `[]` decodes non-nil. The schema
+	// declares it required and non-nullable, so both are rejected.
+	if d.Variables == nil {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.variables: is required and must not be null; use [] for a dashboard with no variables")
+	}
 	seen := make(map[string]struct{}, len(d.Variables))
 	for i, v := range d.Variables {
 		var name string
@@ -94,6 +99,9 @@ func (d *DashboardSpec) validateVariables() error {
 }
 
 func (d *DashboardSpec) validatePanels() error {
+	if d.Panels == nil {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.panels: is required and must not be null; use {} for a dashboard with no panels")
+	}
 	for key, panel := range d.Panels {
 		if err := common.ValidateID(key); err != nil {
 			return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "spec.panels: %s", err.Error())
@@ -252,6 +260,9 @@ const maxLayoutsPerDashboard = 500
 // Geometry (validateGridLayoutGeometry) needs only each layout's own data but
 // runs here so its errors can name the layout by index.
 func (d *DashboardSpec) validateLayouts() error {
+	if d.Layouts == nil {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts: is required and must not be null; use [] for a dashboard with no layouts")
+	}
 	if len(d.Layouts) > maxLayoutsPerDashboard {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.layouts: dashboard has %d layouts; maximum is %d", len(d.Layouts), maxLayoutsPerDashboard)
 	}

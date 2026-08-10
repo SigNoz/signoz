@@ -28,7 +28,6 @@ def test_agent_check_in(
     get_token: Callable[[str, str], str],
     create_cloud_integration_account: Callable,
 ) -> None:
-    """Test agent check-in with new camelCase fields returns 200 with expected response shape."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER, regions=["us-east-1"])
@@ -71,7 +70,6 @@ def test_agent_check_in_account_not_found(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
-    """Test that check-in with an unknown cloudIntegrationId returns 404."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     fake_id = str(uuid.uuid4())
 

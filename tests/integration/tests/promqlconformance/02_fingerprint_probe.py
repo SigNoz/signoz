@@ -1,18 +1,3 @@
-"""
-Regression tests for series identity in the PromQL serving path (PR #8563).
-
-#8563 fixed a real duplicate-labelset collision by injecting a synthetic
-per-series "fingerprint" label, which silently broke without() grouping and
-unaggregated vector matching; the adapter now merges fingerprints sharing a
-labelset instead. Pinned here:
-
-  1. Clean data: without() yields exactly the grouped series with correct
-     sums; "fingerprint" behaves as any absent label.
-  2. The #8563 incident: one series under two fingerprints (empty-valued vs
-     absent label). Both must come back as ONE merged series — not a
-     "duplicate series" error, not duplicate identical-labeled output.
-"""
-
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
@@ -26,13 +11,14 @@ METRIC = "probe_requests"
 EVOLVED_METRIC = "probe_schema_evolution"
 
 
-def _value_at(view_entry: tuple[dict, list], ts_ms: int) -> float:
-    for ts, v in view_entry[1]:
-        if ts == ts_ms:
-            return float(v)
-    raise AssertionError(f"no point at {ts_ms} in {view_entry}")
-
-
+# PR #8563 fixed a real duplicate-labelset collision by injecting a synthetic
+# per-series "fingerprint" label, which silently broke without() grouping and
+# unaggregated vector matching; the adapter now merges fingerprints sharing a
+# labelset. Pinned here: on clean data, without() yields exactly the grouped
+# series with correct sums and "fingerprint" behaves as any absent label; and the
+# #8563 incident shape — one series under two fingerprints (empty-valued vs absent
+# label) — comes back as ONE merged series, not a "duplicate series" error, not
+# duplicate identical-labeled output.
 def test_identical_labelsets_merge_and_grouping(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
@@ -106,12 +92,12 @@ def test_identical_labelsets_merge_and_grouping(
     assert not any("fingerprint" in l for l, _ in raw), "no synthetic fingerprint label may appear in results"
 
     count = run(f"count({METRIC})", start_ms, end_ms)
-    assert count and _value_at(count[0], end_ms) == 4
+    assert count and next(float(v) for ts, v in count[0][1] if ts == end_ms) == 4
 
     # without(instance): exactly one series per group, with the group sums —
     # not per-fingerprint groups collapsing into duplicate labelsets.
     without = run(f"sum without (instance) ({METRIC})", start_ms, end_ms)
-    assert [(l.get("group"), _value_at((l, v), end_ms)) for l, v in without] == [
+    assert [(l.get("group"), next(float(v) for ts, v in vals if ts == end_ms)) for l, vals in without] == [
         ("canary", 304.0),
         ("production", 704.0),
     ], f"without(instance) must yield 2 correctly-summed groups: {without}"
@@ -119,13 +105,13 @@ def test_identical_labelsets_merge_and_grouping(
     # "fingerprint" is now just an absent label: adding it to without() must
     # not change the result, and grouping by it collapses everything.
     healed = run(f"sum without (instance, fingerprint) ({METRIC})", start_ms, end_ms)
-    assert [(l.get("group"), _value_at((l, v), end_ms)) for l, v in healed] == [
+    assert [(l.get("group"), next(float(v) for ts, v in vals if ts == end_ms)) for l, vals in healed] == [
         ("canary", 304.0),
         ("production", 704.0),
     ], f"without(instance, fingerprint) must equal without(instance): {healed}"
 
     by_fp = run(f"sum by (fingerprint) ({METRIC})", start_ms, end_ms)
-    assert len(by_fp) == 1 and _value_at(by_fp[0], end_ms) == 304.0 + 704.0, f"by(fingerprint) must collapse to one group (label absent): {by_fp}"
+    assert len(by_fp) == 1 and next(float(v) for ts, v in by_fp[0][1] if ts == end_ms) == 304.0 + 704.0, f"by(fingerprint) must collapse to one group (label absent): {by_fp}"
     assert "fingerprint" not in by_fp[0][0] or by_fp[0][0] == {}, by_fp
 
     # Scenario 2: both fingerprints must come back as ONE merged series
@@ -137,5 +123,5 @@ def test_identical_labelsets_merge_and_grouping(
     assert len(evolved) == 1, f"label-evolution fingerprints must merge into one series: {evolved}"
     lbls, _ = evolved[0]
     assert lbls == {"__name__": EVOLVED_METRIC, "job": "api"}, evolved
-    got = [_value_at(evolved[0], evo_start_ms + m * 60_000) for m in range(6)]
+    got = [next(float(v) for ts, v in evolved[0][1] if ts == evo_start_ms + m * 60_000) for m in range(6)]
     assert got == [1.0, 2.0, 3.0, 4.0, 5.0, 6.0], f"merged series must carry both fingerprints' samples in order: {got}"
