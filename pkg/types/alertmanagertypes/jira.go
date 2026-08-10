@@ -59,6 +59,11 @@ func (c *JiraReceiverConfig) UnmarshalYAML(unmarshal func(any) error) error {
 	if c.ReopenDuration <= 0 {
 		c.ReopenDuration = defaultJiraReopenDuration
 	}
+	// sub-minute windows truncate to 0 in the reopen JQL and silently disable
+	// reopening, so reject them.
+	if c.ReopenDuration < model.Duration(time.Minute) {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "jira reopen_duration must be at least 1m")
+	}
 	if c.Summary == "" {
 		c.Summary = DefaultJiraSummaryTemplate
 	}

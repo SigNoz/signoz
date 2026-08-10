@@ -266,6 +266,18 @@ func TestNotifyRichDescriptionPanelAndLinks(t *testing.T) {
 	assert.Contains(t, s, "cpu high")                              // rendered annotation
 }
 
+func TestFiringSearchJQLHasReopenWindow(t *testing.T) {
+	m := newMockJira(t)
+	_, err := newNotifier(t, m).Notify(ctx(), alert(true))
+	require.NoError(t, err)
+
+	body := m.lastBody(t, http.MethodPost, "/search/jql")
+	jql, ok := body["jql"].(string)
+	require.True(t, ok)
+	// newNotifier uses a 3d window → 4320 minutes.
+	assert.Contains(t, jql, "resolutiondate >= -4320m")
+}
+
 func TestSelectTransition(t *testing.T) {
 	ts := []jiraTransition{
 		transition("41", "Done", "done"),
