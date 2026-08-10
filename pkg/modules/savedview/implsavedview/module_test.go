@@ -97,6 +97,21 @@ func TestModule_CreateAndGetView(t *testing.T) {
 	require.NoError(t, st.AssertExpectations())
 }
 
+// A duplicate-name insert failure must surface as errors.TypeAlreadyExists, not a generic internal error.
+func TestModule_CreateView_DuplicateNameIsConflict(t *testing.T) {
+	m, st := newTestStore()
+
+	orgID := valuer.GenerateUUID().StringValue()
+	ctx := contextWithClaims(orgID, "creator@signoz.io")
+
+	st.ExpectCreateError(errors.Newf(errors.TypeInternal, errors.CodeInternal, "UNIQUE constraint failed: saved_view.org_id, saved_view.name"))
+	_, err := m.CreateView(ctx, orgID, testPostableSavedView("same-name", savedviewtypes.SourceLogs))
+	require.Error(t, err)
+	assert.True(t, errors.Ast(err, errors.TypeAlreadyExists), "expected an already-exists error, got %v", err)
+
+	require.NoError(t, st.AssertExpectations())
+}
+
 func TestModule_GetView_NotFound(t *testing.T) {
 	m, st := newTestStore()
 

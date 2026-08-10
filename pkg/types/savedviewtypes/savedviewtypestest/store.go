@@ -47,6 +47,12 @@ func (t *StoreTest) ExpectCreate() {
 	t.mock.ExpectExec(`INSERT INTO "saved_view"`).WillReturnResult(sqlmock.NewResult(1, 1))
 }
 
+// ExpectCreateError sets up the SQL expectation for a Create call whose insert
+// fails, e.g. on a UNIQUE(org_id, name) violation.
+func (t *StoreTest) ExpectCreateError(err error) {
+	t.mock.ExpectExec(`INSERT INTO "saved_view"`).WillReturnError(err)
+}
+
 // ExpectGet sets up the SQL expectation for a Get call. Pass view = nil to
 // simulate a not-found row.
 func (t *StoreTest) ExpectGet(orgID string, id valuer.UUID, view *savedviewtypes.SavedView) {
