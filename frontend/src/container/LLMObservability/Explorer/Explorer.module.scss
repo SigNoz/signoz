@@ -1,0 +1,11 @@
+.explorer {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	padding: var(--spacing-2) var(--spacing-0);
+}
+
+.placeholder {
+	color: var(--l2-foreground);
+	font-size: var(--periscope-font-size-base);
+}
