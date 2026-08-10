@@ -17,8 +17,7 @@ func validPostableSavedView() PostableSavedView {
 		Name:          "my-view",
 		Source:        SourceLogs,
 		SchemaVersion: SavedViewSchemaVersion,
-		RequestType:   qbtypes.RequestTypeTimeSeries,
-		Spec:          SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, Queries: validQueries()},
+		Spec:          SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, RequestType: qbtypes.RequestTypeTimeSeries, Queries: validQueries()},
 	}
 }
 
@@ -26,8 +25,7 @@ func validUpdatableSavedView() UpdatableSavedView {
 	return UpdatableSavedView{
 		Source:        SourceLogs,
 		SchemaVersion: SavedViewSchemaVersion,
-		RequestType:   qbtypes.RequestTypeTimeSeries,
-		Spec:          SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, Queries: validQueries()},
+		Spec:          SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, RequestType: qbtypes.RequestTypeTimeSeries, Queries: validQueries()},
 	}
 }
 
@@ -107,19 +105,8 @@ func TestPostableSavedViewValidate(t *testing.T) {
 
 	t.Run("missing requestType is rejected", func(t *testing.T) {
 		view := validPostableSavedView()
-		view.RequestType = qbtypes.RequestType{}
+		view.Spec.RequestType = qbtypes.RequestType{}
 		assert.ErrorContains(t, view.Validate(), "requestType is required")
-	})
-
-	t.Run("requestType is honored over the panelType-derived guess", func(t *testing.T) {
-		view := validPostableSavedView()
-		view.Spec.PanelType = PanelTypeList
-		view.Spec.Queries = []qbtypes.QueryEnvelope{{
-			Type: qbtypes.QueryTypeBuilder,
-			Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{Signal: telemetrytypes.SignalTraces},
-		}}
-		view.RequestType = qbtypes.RequestTypeRaw
-		assert.NoError(t, view.Validate())
 	})
 }
 
@@ -143,7 +130,7 @@ func TestUpdatableSavedViewValidate(t *testing.T) {
 
 	t.Run("missing requestType is rejected", func(t *testing.T) {
 		view := validUpdatableSavedView()
-		view.RequestType = qbtypes.RequestType{}
+		view.Spec.RequestType = qbtypes.RequestType{}
 		assert.ErrorContains(t, view.Validate(), "requestType is required")
 	})
 }
@@ -246,6 +233,7 @@ func TestStorableSavedView_ToSavedView(t *testing.T) {
 			Spec: SavedViewSpec{
 				DisplayName:    "My View",
 				PanelType:      PanelTypeGraph,
+				RequestType:    qbtypes.RequestTypeTimeSeries,
 				Queries:        validQueries(),
 				SelectedFields: []telemetrytypes.TelemetryFieldKey{{Name: "service.name"}},
 			},
@@ -296,6 +284,23 @@ func TestStorableSavedView_ToSavedView(t *testing.T) {
 
 		assert.NotNil(t, view.Spec.Queries)
 		assert.Empty(t, view.Spec.Queries)
+	})
+
+	t.Run("missing requestType backfills from panelType", func(t *testing.T) {
+		storable := &StorableSavedView{
+			Data: SavedViewData{
+				SchemaVersion: SavedViewSchemaVersion.StringValue(),
+				Spec: SavedViewSpec{
+					DisplayName: "My View",
+					PanelType:   PanelTypeList,
+					Queries:     validQueries(),
+				},
+			},
+		}
+
+		view := storable.ToSavedView()
+
+		assert.Equal(t, qbtypes.RequestTypeRaw, view.Spec.RequestType)
 	})
 }
 

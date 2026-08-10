@@ -46,7 +46,7 @@ func TestNewPostableSavedViewFromLegacyView(t *testing.T) {
 		assert.Equal(t, savedviewtypes.SourceLogs, postable.Source)
 		assert.Equal(t, savedviewtypes.SavedViewSchemaVersion, postable.SchemaVersion)
 		assert.Equal(t, savedviewtypes.PanelTypeGraph, postable.Spec.PanelType)
-		assert.Equal(t, qbtypes.RequestTypeTimeSeries, postable.RequestType, "graph panel type must map to the time_series request type")
+		assert.Equal(t, qbtypes.RequestTypeTimeSeries, postable.Spec.RequestType, "graph panel type must map to the time_series request type")
 		assert.Equal(t, legacy.CompositeQuery.Queries, postable.Spec.Queries)
 		assert.Equal(t, []telemetrytypes.TelemetryFieldKey{{Name: "service.name"}}, postable.Spec.SelectedFields)
 		assert.Equal(t, savedviewtypes.Display{MaxLines: 10, FontSize: "large", Format: "table", Color: "blue"}, postable.Spec.Display)
@@ -121,7 +121,7 @@ func TestNewPostableSavedViewFromLegacyView(t *testing.T) {
 
 		postable := newPostableSavedViewFromLegacyView(legacy)
 
-		assert.Equal(t, qbtypes.RequestTypeRaw, postable.RequestType, "list panel type must map to the raw request type")
+		assert.Equal(t, qbtypes.RequestTypeRaw, postable.Spec.RequestType, "list panel type must map to the raw request type")
 		assert.NoError(t, postable.Validate(), "a raw list query must not be required to carry an aggregation")
 	})
 }
@@ -141,7 +141,7 @@ func TestNewUpdatableSavedViewFromLegacyView(t *testing.T) {
 
 	assert.Equal(t, "renamed view", updatable.Spec.DisplayName)
 	assert.Equal(t, savedviewtypes.SourceTraces, updatable.Source)
-	assert.Equal(t, qbtypes.RequestTypeScalar, updatable.RequestType, "table panel type must map to the scalar request type")
+	assert.Equal(t, qbtypes.RequestTypeScalar, updatable.Spec.RequestType, "table panel type must map to the scalar request type")
 }
 
 func TestNewLegacyViewFromSavedView(t *testing.T) {

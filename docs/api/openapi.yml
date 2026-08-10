@@ -7884,8 +7884,6 @@ components:
           type: boolean
         name:
           type: string
-        requestType:
-          $ref: '#/components/schemas/Querybuildertypesv5RequestType'
         schemaVersion:
           $ref: '#/components/schemas/SavedviewtypesSchemaVersion'
         source:
@@ -7895,7 +7893,6 @@ components:
       required:
       - source
       - schemaVersion
-      - requestType
       - spec
       type: object
     SavedviewtypesSavedView:
@@ -7938,6 +7935,8 @@ components:
             $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelope'
           minItems: 1
           type: array
+        requestType:
+          $ref: '#/components/schemas/Querybuildertypesv5RequestType'
         selectedFields:
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
@@ -7945,6 +7944,7 @@ components:
       required:
       - displayName
       - panelType
+      - requestType
       - queries
       type: object
     SavedviewtypesSchemaVersion:
@@ -7960,8 +7960,6 @@ components:
       type: string
     SavedviewtypesUpdatableSavedView:
       properties:
-        requestType:
-          $ref: '#/components/schemas/Querybuildertypesv5RequestType'
         schemaVersion:
           $ref: '#/components/schemas/SavedviewtypesSchemaVersion'
         source:
@@ -7971,7 +7969,6 @@ components:
       required:
       - source
       - schemaVersion
-      - requestType
       - spec
       type: object
     ServiceaccounttypesDeprecatedPostableServiceAccountRole:

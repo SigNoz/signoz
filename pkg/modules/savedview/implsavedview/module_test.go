@@ -34,6 +34,7 @@ func testPostableSavedView(name string, source savedviewtypes.Source) savedviewt
 		Spec: savedviewtypes.SavedViewSpec{
 			DisplayName: name,
 			PanelType:   savedviewtypes.PanelTypeGraph,
+			RequestType: qbtypes.RequestTypeTimeSeries,
 			Queries: []qbtypes.QueryEnvelope{
 				{
 					Type: qbtypes.QueryTypeBuilder,

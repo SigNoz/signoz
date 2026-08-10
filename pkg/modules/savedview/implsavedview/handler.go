@@ -49,11 +49,11 @@ func newPostableSavedViewFromLegacyView(v *v3.SavedView) savedviewtypes.Postable
 		GenerateName:  true,
 		Source:        savedviewtypes.Source{String: valuer.NewString(v.SourcePage)},
 		SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
-		// v1 has no requestType concept of its own -- fall back to the panelType-derived guess.
-		RequestType: savedviewtypes.LegacyRequestTypeForPanelType(panelType),
 		Spec: savedviewtypes.SavedViewSpec{
-			DisplayName:    v.Name,
-			PanelType:      panelType,
+			DisplayName: v.Name,
+			PanelType:   panelType,
+			// v1 has no requestType concept of its own -- fall back to the panelType-derived guess.
+			RequestType:    savedviewtypes.LegacyRequestTypeForPanelType(panelType),
 			Queries:        v.CompositeQuery.Queries,
 			SelectedFields: legacy.SelectColumns,
 			Display: savedviewtypes.Display{
@@ -79,11 +79,11 @@ func newUpdatableSavedViewFromLegacyView(v *v3.SavedView) savedviewtypes.Updatab
 	return savedviewtypes.UpdatableSavedView{
 		Source:        savedviewtypes.Source{String: valuer.NewString(v.SourcePage)},
 		SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
-		// v1 has no requestType concept of its own -- fall back to the panelType-derived guess.
-		RequestType: savedviewtypes.LegacyRequestTypeForPanelType(panelType),
 		Spec: savedviewtypes.SavedViewSpec{
-			DisplayName:    v.Name,
-			PanelType:      panelType,
+			DisplayName: v.Name,
+			PanelType:   panelType,
+			// v1 has no requestType concept of its own -- fall back to the panelType-derived guess.
+			RequestType:    savedviewtypes.LegacyRequestTypeForPanelType(panelType),
 			Queries:        v.CompositeQuery.Queries,
 			SelectedFields: legacy.SelectColumns,
 			Display: savedviewtypes.Display{

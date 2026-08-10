@@ -60,6 +60,10 @@ func (s *StorableSavedView) ToSavedView() *SavedView {
 	if spec.SelectedFields == nil {
 		spec.SelectedFields = []telemetrytypes.TelemetryFieldKey{}
 	}
+	if spec.RequestType.IsZero() {
+		// Rows written before requestType existed have none stored; backfill from panelType.
+		spec.RequestType = LegacyRequestTypeForPanelType(spec.PanelType)
+	}
 
 	return &SavedView{
 		Identifiable:  s.Identifiable,
@@ -89,19 +93,17 @@ func NewStorableSavedView(view *SavedView) *StorableSavedView {
 }
 
 type PostableSavedView struct {
-	Name          string              `json:"name"`
-	GenerateName  bool                `json:"generateName"`
-	Source        Source              `json:"source" required:"true"`
-	SchemaVersion SchemaVersion       `json:"schemaVersion" required:"true"`
-	RequestType   qbtypes.RequestType `json:"requestType" required:"true"` // not a part of spec since it can be derived from panelType
-	Spec          SavedViewSpec       `json:"spec" required:"true"`
+	Name          string        `json:"name"`
+	GenerateName  bool          `json:"generateName"`
+	Source        Source        `json:"source" required:"true"`
+	SchemaVersion SchemaVersion `json:"schemaVersion" required:"true"`
+	Spec          SavedViewSpec `json:"spec" required:"true"`
 }
 
 type UpdatableSavedView struct {
-	Source        Source              `json:"source" required:"true"`
-	SchemaVersion SchemaVersion       `json:"schemaVersion" required:"true"`
-	RequestType   qbtypes.RequestType `json:"requestType" required:"true"`
-	Spec          SavedViewSpec       `json:"spec" required:"true"`
+	Source        Source        `json:"source" required:"true"`
+	SchemaVersion SchemaVersion `json:"schemaVersion" required:"true"`
+	Spec          SavedViewSpec `json:"spec" required:"true"`
 }
 
 type ListSavedViewsParams struct {
@@ -175,11 +177,8 @@ func (p *PostableSavedView) Validate() error {
 	if err := p.SchemaVersion.Validate(); err != nil {
 		return err
 	}
-	if p.RequestType.IsZero() {
-		return errors.NewInvalidInputf(ErrCodeSavedViewInvalidInput, "requestType is required")
-	}
 
-	return p.Spec.Validate(p.RequestType)
+	return p.Spec.Validate()
 }
 
 func (p *PostableSavedView) validateName() error {
@@ -199,11 +198,8 @@ func (u *UpdatableSavedView) Validate() error {
 	if err := u.SchemaVersion.Validate(); err != nil {
 		return err
 	}
-	if u.RequestType.IsZero() {
-		return errors.NewInvalidInputf(ErrCodeSavedViewInvalidInput, "requestType is required")
-	}
 
-	return u.Spec.Validate(u.RequestType)
+	return u.Spec.Validate()
 }
 
 func (p *ListSavedViewsParams) Validate() error {

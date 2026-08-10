@@ -59,22 +59,27 @@ func TestSavedViewSpecValidate(t *testing.T) {
 	}{
 		{
 			name:        "valid spec",
-			spec:        SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, Queries: validQueries()},
+			spec:        SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, RequestType: qbtypes.RequestTypeTimeSeries, Queries: validQueries()},
 			expectError: false,
 		},
 		{
 			name:        "empty display name is rejected",
-			spec:        SavedViewSpec{PanelType: PanelTypeGraph, Queries: validQueries()},
+			spec:        SavedViewSpec{PanelType: PanelTypeGraph, RequestType: qbtypes.RequestTypeTimeSeries, Queries: validQueries()},
 			expectError: true,
 		},
 		{
 			name:        "invalid panel type is rejected before queries are checked",
-			spec:        SavedViewSpec{DisplayName: "My View", PanelType: PanelType{valuer.NewString("bogus")}, Queries: validQueries()},
+			spec:        SavedViewSpec{DisplayName: "My View", PanelType: PanelType{valuer.NewString("bogus")}, RequestType: qbtypes.RequestTypeTimeSeries, Queries: validQueries()},
+			expectError: true,
+		},
+		{
+			name:        "missing requestType is rejected",
+			spec:        SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, Queries: validQueries()},
 			expectError: true,
 		},
 		{
 			name:        "no queries is rejected",
-			spec:        SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph},
+			spec:        SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, RequestType: qbtypes.RequestTypeTimeSeries},
 			expectError: true,
 		},
 		{
@@ -82,6 +87,7 @@ func TestSavedViewSpecValidate(t *testing.T) {
 			spec: SavedViewSpec{
 				DisplayName:    "My View",
 				PanelType:      PanelTypeTable,
+				RequestType:    qbtypes.RequestTypeScalar,
 				Queries:        validQueries(),
 				SelectedFields: []telemetrytypes.TelemetryFieldKey{{Name: "service.name"}},
 				Display:        Display{MaxLines: 3, FontSize: "small", Format: "table", Color: "blue"},
@@ -93,6 +99,7 @@ func TestSavedViewSpecValidate(t *testing.T) {
 			spec: SavedViewSpec{
 				DisplayName:    "My View",
 				PanelType:      PanelTypeTable,
+				RequestType:    qbtypes.RequestTypeScalar,
 				Queries:        validQueries(),
 				SelectedFields: nil,
 			},
@@ -103,6 +110,7 @@ func TestSavedViewSpecValidate(t *testing.T) {
 			spec: SavedViewSpec{
 				DisplayName:    "My View",
 				PanelType:      PanelTypeTable,
+				RequestType:    qbtypes.RequestTypeScalar,
 				Queries:        validQueries(),
 				SelectedFields: []telemetrytypes.TelemetryFieldKey{},
 			},
@@ -113,6 +121,7 @@ func TestSavedViewSpecValidate(t *testing.T) {
 			spec: SavedViewSpec{
 				DisplayName: "My View",
 				PanelType:   PanelTypeTable,
+				RequestType: qbtypes.RequestTypeScalar,
 				Queries:     validQueries(),
 				Display:     Display{},
 			},
@@ -123,6 +132,7 @@ func TestSavedViewSpecValidate(t *testing.T) {
 			spec: SavedViewSpec{
 				DisplayName: "My View",
 				PanelType:   PanelTypeList,
+				RequestType: qbtypes.RequestTypeRaw,
 				Queries: []qbtypes.QueryEnvelope{{
 					Type: qbtypes.QueryTypeBuilder,
 					Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -137,6 +147,7 @@ func TestSavedViewSpecValidate(t *testing.T) {
 			spec: SavedViewSpec{
 				DisplayName: "My View",
 				PanelType:   PanelTypeTrace,
+				RequestType: qbtypes.RequestTypeTrace,
 				Queries: []qbtypes.QueryEnvelope{{
 					Type: qbtypes.QueryTypeBuilder,
 					Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -151,6 +162,7 @@ func TestSavedViewSpecValidate(t *testing.T) {
 			spec: SavedViewSpec{
 				DisplayName: "My View",
 				PanelType:   PanelTypeGraph,
+				RequestType: qbtypes.RequestTypeTimeSeries,
 				Queries: []qbtypes.QueryEnvelope{{
 					Type: qbtypes.QueryTypeBuilder,
 					Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -164,7 +176,7 @@ func TestSavedViewSpecValidate(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			err := c.spec.Validate(LegacyRequestTypeForPanelType(c.spec.PanelType))
+			err := c.spec.Validate()
 			if c.expectError {
 				assert.Error(t, err)
 			} else {
@@ -174,13 +186,13 @@ func TestSavedViewSpecValidate(t *testing.T) {
 	}
 }
 
-func TestSavedViewSpecValidate_HonorsExplicitRequestType(t *testing.T) {
-	// requestType is a caller-supplied validation input, not derived from PanelType --
-	// a raw query without aggregations must pass under RequestTypeRaw even though its
-	// PanelType is graph (which LegacyRequestTypeForPanelType would map to time_series).
+func TestSavedViewSpecValidate_RequestTypeIsIndependentOfPanelType(t *testing.T) {
+	// RequestType, not PanelType, governs which aggregation rules apply -- nothing
+	// derives one from the other inside Validate.
 	spec := SavedViewSpec{
 		DisplayName: "My View",
 		PanelType:   PanelTypeGraph,
+		RequestType: qbtypes.RequestTypeRaw,
 		Queries: []qbtypes.QueryEnvelope{{
 			Type: qbtypes.QueryTypeBuilder,
 			Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
@@ -189,12 +201,14 @@ func TestSavedViewSpecValidate_HonorsExplicitRequestType(t *testing.T) {
 		}},
 	}
 
-	assert.NoError(t, spec.Validate(qbtypes.RequestTypeRaw))
-	assert.Error(t, spec.Validate(qbtypes.RequestTypeTimeSeries))
+	assert.NoError(t, spec.Validate())
+
+	spec.RequestType = qbtypes.RequestTypeTimeSeries
+	assert.Error(t, spec.Validate())
 }
 
 func TestSavedViewSpecJSONUnmarshal_OptionalFields(t *testing.T) {
-	base := `"displayName":"My View","panelType":"table","queries":[{"type":"builder_query","spec":{"signal":"logs","aggregations":[{"expression":"count()"}]}}]`
+	base := `"displayName":"My View","panelType":"table","requestType":"scalar","queries":[{"type":"builder_query","spec":{"signal":"logs","aggregations":[{"expression":"count()"}]}}]`
 
 	cases := []struct {
 		name string
@@ -210,7 +224,7 @@ func TestSavedViewSpecJSONUnmarshal_OptionalFields(t *testing.T) {
 			var spec SavedViewSpec
 			err := json.Unmarshal([]byte(c.json), &spec)
 			require.NoError(t, err)
-			assert.NoError(t, spec.Validate(LegacyRequestTypeForPanelType(spec.PanelType)))
+			assert.NoError(t, spec.Validate())
 			assert.Empty(t, spec.SelectedFields)
 			assert.Equal(t, Display{}, spec.Display)
 		})

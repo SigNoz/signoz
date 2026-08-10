@@ -30,6 +30,7 @@ type Display struct {
 type SavedViewSpec struct {
 	DisplayName    string                             `json:"displayName" required:"true"`
 	PanelType      PanelType                          `json:"panelType" required:"true"`
+	RequestType    qbtypes.RequestType                `json:"requestType" required:"true"`
 	Queries        []qbtypes.QueryEnvelope            `json:"queries" required:"true" nullable:"false" minItems:"1"`
 	SelectedFields []telemetrytypes.TelemetryFieldKey `json:"selectedFields" nullable:"false"`
 	Display        Display                            `json:"display"`
@@ -81,15 +82,18 @@ func (s SchemaVersion) Validate() error {
 	return nil
 }
 
-func (s *SavedViewSpec) Validate(requestType qbtypes.RequestType) error {
+func (s *SavedViewSpec) Validate() error {
 	if s.DisplayName == "" {
 		return errors.NewInvalidInputf(ErrCodeSavedViewInvalidInput, "displayName is required")
 	}
 	if err := s.PanelType.Validate(); err != nil {
 		return err
 	}
+	if s.RequestType.IsZero() {
+		return errors.NewInvalidInputf(ErrCodeSavedViewInvalidInput, "requestType is required")
+	}
 
-	return (&qbtypes.CompositeQuery{Queries: s.Queries}).Validate(qbtypes.GetValidationOptions(requestType)...)
+	return (&qbtypes.CompositeQuery{Queries: s.Queries}).Validate(qbtypes.GetValidationOptions(s.RequestType)...)
 }
 
 // LegacyRequestTypeForPanelType exists only for the v1 legacy API.

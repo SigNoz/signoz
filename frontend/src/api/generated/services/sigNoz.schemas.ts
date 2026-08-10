@@ -9011,6 +9011,7 @@ export interface SavedviewtypesSavedViewSpecDTO {
 	 * @type array
 	 */
 	queries: Querybuildertypesv5QueryEnvelopeDTO[];
+	requestType: Querybuildertypesv5RequestTypeDTO;
 	/**
 	 * @type array
 	 */
@@ -9026,7 +9027,6 @@ export interface SavedviewtypesPostableSavedViewDTO {
 	 * @type string
 	 */
 	name?: string;
-	requestType: Querybuildertypesv5RequestTypeDTO;
 	schemaVersion: SavedviewtypesSchemaVersionDTO;
 	source: SavedviewtypesSourceDTO;
 	spec: SavedviewtypesSavedViewSpecDTO;
@@ -9065,7 +9065,6 @@ export interface SavedviewtypesSavedViewDTO {
 }
 
 export interface SavedviewtypesUpdatableSavedViewDTO {
-	requestType: Querybuildertypesv5RequestTypeDTO;
 	schemaVersion: SavedviewtypesSchemaVersionDTO;
 	source: SavedviewtypesSourceDTO;
 	spec: SavedviewtypesSavedViewSpecDTO;
