@@ -160,7 +160,7 @@ The rules that make the envelope work:
     ```
 - **Consumers type-assert on `Spec`** (`config.Spec.(BarSpec)`) after switching on `Kind`. If assertion sites multiply, add typed accessors on the envelope (see `EvaluationEnvelope.GetEvaluation()`).
 - **OpenAPI needs one unexported variant struct per kind** (`fooConfigBar{Kind; Spec BarSpec}`), exposed via `JSONSchemaOneOf()` and mapped via `PrepareJSONSchema` with the `x-signoz-discriminator` extension. The schema mechanics are covered in [handler.md](handler.md#oneof-with-a-discriminator).
-- **A legacy persisted shape gets a data migration or a `StorableX`.** When rows were written before the envelope existed, prefer an idempotent `sqlmigration` that rewrites them into the new shape (`109_restructure_saved_view_spec` is the template for reshaping a persisted JSON document), so the storable type simply nests the envelope. Only when the old shape must keep being written (external writers, rollback windows) keep it in a storable twin and convert at the type boundary.
+- **A legacy persisted shape gets a data migration or a `StorableX`.** When rows were written before the envelope existed, prefer an idempotent `sqlmigration` that rewrites them into the new shape, so the storable type simply nests the envelope. Only when the old shape must keep being written (external writers, rollback windows) keep it in a storable twin and convert at the type boundary.
 
 ## Conventions that tie the flavors together
 
