@@ -1,3 +1,5 @@
+import { completionStatus } from '@codemirror/autocomplete';
+import { EditorView } from '@uiw/react-codemirror';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import * as recentQueriesStore from 'lib/recentQueries/recentQueriesStore';
 import { fireEvent, render, userEvent, waitFor } from 'tests/test-utils';
@@ -7,6 +9,7 @@ import { RECENTS_DISPLAY_CAP } from '../QuerySearch/constants';
 import QuerySearch from '../QuerySearch/QuerySearch';
 import { mockCodeMirrorDomApis } from './codemirrorDomMocks';
 
+const CM_ROOT_SELECTOR = '.cm-editor';
 const CM_EDITOR_SELECTOR = '.cm-editor .cm-content';
 const TOOLTIP_SELECTOR = '.cm-tooltip-autocomplete';
 const COMPLETION_LABEL_SELECTOR = '.cm-completionLabel';
@@ -82,6 +85,18 @@ function getCompletionLabels(): string[] {
 	);
 }
 
+function findCompletionOption(label: string): HTMLElement | undefined {
+	return Array.from(
+		document.querySelectorAll<HTMLElement>(COMPLETION_LABEL_SELECTOR),
+	).find((node) => node.textContent === label);
+}
+
+function isCompletionOpen(): boolean {
+	const root = document.querySelector<HTMLElement>(CM_ROOT_SELECTOR);
+	const view = root ? EditorView.findFromDOM(root) : null;
+	return !!view && completionStatus(view.state) === 'active';
+}
+
 async function focusEditor(): Promise<HTMLElement> {
 	const editor = await waitFor(
 		() => {
@@ -106,7 +121,7 @@ function waitForCompletionPopup<T>(
 ): Promise<T> {
 	return waitFor(
 		() => {
-			if (!document.querySelector(TOOLTIP_SELECTOR)) {
+			if (!isCompletionOpen()) {
 				fireEvent.keyDown(editor, {
 					key: ' ',
 					code: 'Space',
@@ -197,21 +212,18 @@ describe('QuerySearch recent searches', () => {
 		renderLogsSearch();
 		const editor = await focusEditor();
 
-		const option = await waitForCompletionPopup(editor, () => {
-			const label = Array.from(
-				document.querySelectorAll(COMPLETION_LABEL_SELECTOR),
-			).find((node) => node.textContent === FRONTEND_FILTER);
-			expect(label).toBeTruthy();
-			return label as HTMLElement;
+		await waitForCompletionPopup(editor, () => {
+			const option = findCompletionOption(FRONTEND_FILTER);
+			if (option && isCompletionOpen()) {
+				fireEvent.mouseDown(option);
+			}
+			expect(document.querySelector(CM_EDITOR_SELECTOR)?.textContent).toBe(
+				FRONTEND_FILTER,
+			);
 		});
-
-		await userEvent.click(option);
 
 		await waitFor(
 			() => {
-				expect(document.querySelector(CM_EDITOR_SELECTOR)?.textContent).toBe(
-					FRONTEND_FILTER,
-				);
 				expect(document.querySelector(TOOLTIP_SELECTOR)).not.toBeInTheDocument();
 			},
 			{ timeout: POPUP_TIMEOUT },
