@@ -123,6 +123,30 @@ def test_create_invalid(
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
+    # The reverse direction: an oidc spec under kind google satisfies google's
+    # required clientId and clientSecret, so only the foreign issuer and
+    # claimMapping fields distinguish it.
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
+        json={
+            "name": "domain.integration.test",
+            "enabled": True,
+            "config": {
+                "kind": "google",
+                "spec": {
+                    "issuer": "https://issuer.integration.test",
+                    "clientId": "client-id",
+                    "clientSecret": "client-secret",
+                    "claimMapping": {"email": "mail"},
+                },
+            },
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+
     # Create a domain with a kind but no spec
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
@@ -585,6 +609,12 @@ def test_update_enabled(
             )
             assert response.status_code == HTTPStatus.NO_CONTENT
 
+    role_mapping = {
+        "defaultRole": "signoz-editor",
+        "groupMappings": {"admin-group": "signoz-admin", "dev-team": "signoz-editor"},
+        "useRoleAttribute": False,
+    }
+
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
         json={
@@ -598,6 +628,7 @@ def test_update_enabled(
                     "certificate": "saml-cert",
                 },
             },
+            "roleMapping": role_mapping,
         },
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
@@ -606,7 +637,8 @@ def test_update_enabled(
     domain_id = response.json()["data"]["id"]
 
     # Flipping enforcement goes through the same full update as any other
-    # change; the echoed provider config must survive the round trip.
+    # change; the echoed provider config and role mapping must both survive the
+    # round trip, since the UI resends them verbatim on every toggle.
     response = requests.put(
         signoz.self.host_configs["8080"].get(f"/api/v2/auth_domains/{domain_id}"),
         json={
@@ -619,6 +651,7 @@ def test_update_enabled(
                     "certificate": "saml-cert",
                 },
             },
+            "roleMapping": role_mapping,
         },
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
@@ -644,6 +677,7 @@ def test_update_enabled(
             "attributeMapping": {"email": "email", "name": "name", "groups": "groups", "role": "role"},
         },
     }
+    assert data["roleMapping"] == role_mapping
 
     response = requests.delete(
         signoz.self.host_configs["8080"].get(f"/api/v2/auth_domains/{domain_id}"),

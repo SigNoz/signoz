@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 import { authToken } from './common';
 
@@ -77,6 +77,23 @@ export async function createGoogleAuthDomainViaApi(
 	return json.data.id;
 }
 
+/** Names of every auth domain in the org, across all list pages. */
+export async function listAuthDomainNamesViaApi(page: Page): Promise<string[]> {
+	const token = await authToken(page);
+	const res = await page.request.get('/api/v2/auth_domains', {
+		headers: { Authorization: `Bearer ${token}` },
+	});
+	if (!res.ok()) {
+		throw new Error(
+			`GET /api/v2/auth_domains ${res.status()}: ${await res.text()}`,
+		);
+	}
+	const json = (await res.json()) as {
+		data: Array<{ name: string }> | null;
+	};
+	return (json.data ?? []).map((domain) => domain.name);
+}
+
 /** Delete an auth domain by ID (best-effort cleanup). */
 export async function deleteAuthDomainViaApi(
 	page: Page,
@@ -123,14 +140,49 @@ export async function gotoAuthDomains(page: Page): Promise<void> {
 	await expect(page.getByTestId('auth-domain-title')).toBeVisible();
 }
 
+/**
+ * Locate the list row for `name`, advancing through the pager when needed. The
+ * table paginates, and a shared stack holds domains this suite did not seed, so
+ * a freshly created row is not necessarily on the page currently shown.
+ */
+export async function findAuthDomainRow(
+	page: Page,
+	name: string,
+): Promise<Locator> {
+	const row = page.getByTestId(`auth-domain-row-${name}`);
+	const nextPage = page.locator('.auth-domain-list .ant-pagination-next');
+
+	// Bounded: a pager that never reports itself disabled must not spin forever.
+	for (let visited = 0; visited < 25; visited += 1) {
+		try {
+			await row.waitFor({ state: 'attached', timeout: 2_000 });
+			return row;
+		} catch {
+			// Not on the page currently shown; fall through to the pager.
+		}
+
+		if (
+			(await nextPage.count()) === 0 ||
+			(await nextPage.getAttribute('aria-disabled')) === 'true' ||
+			(await nextPage.evaluate((node) =>
+				node.classList.contains('ant-pagination-disabled'),
+			))
+		) {
+			break;
+		}
+
+		await nextPage.click();
+	}
+
+	throw new Error(`auth domain row not found in the list: ${name}`);
+}
+
 /** Open the Configure (edit) modal for the domain row named `name`. */
 export async function openConfigureAuthDomain(
 	page: Page,
 	name: string,
 ): Promise<void> {
-	await page
-		.getByTestId(`auth-domain-row-${name}`)
-		.getByTestId('auth-domain-configure')
-		.click();
+	const row = await findAuthDomainRow(page, name);
+	await row.getByTestId('auth-domain-configure').click();
 	await expect(page.getByTestId('auth-domain-form')).toBeVisible();
 }

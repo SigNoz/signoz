@@ -25,6 +25,7 @@ jest.mock('@signozhq/ui/switch', () => ({
 import SSOEnforcementToggle from '../SSOEnforcementToggle';
 import {
 	AUTH_DOMAINS_UPDATE_ENDPOINT,
+	mockDomainWithRoleMapping,
 	mockErrorResponse,
 	mockGoogleAuthDomain,
 	mockUpdateSuccessResponse,
@@ -99,6 +100,36 @@ describe('SSOEnforcementToggle', () => {
 				config: mockGoogleAuthDomain.config,
 			}),
 		);
+	});
+
+	// The toggle sends a full replacement, so anything it fails to echo back is
+	// dropped from the domain — role mappings included.
+	it('echoes the existing role mapping when toggling enforcement', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const mockUpdateAPI = jest.fn();
+
+		server.use(
+			rest.put(AUTH_DOMAINS_UPDATE_ENDPOINT, async (req, res, ctx) => {
+				mockUpdateAPI(await req.json());
+				return res(ctx.status(200), ctx.json(mockUpdateSuccessResponse));
+			}),
+		);
+
+		render(
+			<SSOEnforcementToggle
+				isDefaultChecked={true}
+				record={mockDomainWithRoleMapping}
+			/>,
+		);
+
+		await user.click(screen.getByRole('switch'));
+
+		await waitFor(() => expect(mockUpdateAPI).toHaveBeenCalledTimes(1));
+		expect(mockUpdateAPI).toHaveBeenCalledWith({
+			enabled: false,
+			config: mockDomainWithRoleMapping.config,
+			roleMapping: mockDomainWithRoleMapping.roleMapping,
+		});
 	});
 
 	it('shows error modal when update fails', async () => {

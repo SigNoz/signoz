@@ -2,7 +2,9 @@ import { expect, test } from '../../fixtures/auth';
 import {
 	createGoogleAuthDomainViaApi,
 	deleteAuthDomainByNameViaApi,
+	findAuthDomainRow,
 	gotoAuthDomains,
+	listAuthDomainNamesViaApi,
 	openConfigureAuthDomain,
 	ORG_SETTINGS_PATH,
 } from '../../helpers/sso';
@@ -45,8 +47,7 @@ test('TC-02 create a google auth domain via the UI', async ({
 	await page.getByTestId('auth-domain-save').click();
 
 	await expect(page.getByText('Domain created successfully')).toBeVisible();
-	const row = page.getByTestId(`auth-domain-row-${domain}`);
-	await expect(row).toBeVisible();
+	const row = await findAuthDomainRow(page, domain);
 	await expect(row.getByTestId('auth-domain-configure')).toHaveText(
 		'Configure Google Auth',
 	);
@@ -196,9 +197,9 @@ test('TC-06 enforce sso toggle persists across reload', async ({
 	await createGoogleAuthDomainViaApi(page, { name: domain, enabled: false });
 
 	await gotoAuthDomains(page);
-	const toggle = page
-		.getByTestId(`auth-domain-row-${domain}`)
-		.getByTestId('auth-domain-enforce-sso');
+	const toggle = (await findAuthDomainRow(page, domain)).getByTestId(
+		'auth-domain-enforce-sso',
+	);
 	await expect(toggle).not.toBeChecked();
 
 	const putResponse = page.waitForResponse(
@@ -210,11 +211,8 @@ test('TC-06 enforce sso toggle persists across reload', async ({
 	expect((await putResponse).status()).toBe(204);
 
 	await page.reload();
-	await expect(
-		page
-			.getByTestId(`auth-domain-row-${domain}`)
-			.getByTestId('auth-domain-enforce-sso'),
-	).toBeChecked();
+	const reloadedRow = await findAuthDomainRow(page, domain);
+	await expect(reloadedRow.getByTestId('auth-domain-enforce-sso')).toBeChecked();
 });
 
 test('TC-07 delete a domain via the UI', async ({ authedPage: page }) => {
@@ -224,12 +222,54 @@ test('TC-07 delete a domain via the UI', async ({ authedPage: page }) => {
 	await createGoogleAuthDomainViaApi(page, { name: domain });
 
 	await gotoAuthDomains(page);
-	await page
-		.getByTestId(`auth-domain-row-${domain}`)
-		.getByTestId('auth-domain-delete')
-		.click();
+	const row = await findAuthDomainRow(page, domain);
+	await row.getByTestId('auth-domain-delete').click();
 	await page.getByTestId('auth-domain-delete-confirm').click();
 
 	await expect(page.getByText('Domain deleted successfully')).toBeVisible();
-	await expect(page.getByTestId(`auth-domain-row-${domain}`)).toHaveCount(0);
+	// Asserted against the list rather than the rendered page: an absent row
+	// proves nothing while the table paginates.
+	expect(await listAuthDomainNamesViaApi(page)).not.toContain(domain);
+});
+
+test('TC-08 enforce sso toggle preserves the role mapping', async ({
+	authedPage: page,
+}) => {
+	const domain = 'sso-toggle-rolemap.example.com';
+	cleanupNames.push(domain);
+	await deleteAuthDomainByNameViaApi(page, domain);
+	await createGoogleAuthDomainViaApi(page, {
+		name: domain,
+		enabled: false,
+		roleMapping: {
+			defaultRole: 'signoz-editor',
+			groupMappings: { engineers: 'signoz-editor', support: 'signoz-viewer' },
+		},
+	});
+
+	await gotoAuthDomains(page);
+
+	// The toggle PUTs a full replacement, so a role mapping it fails to echo
+	// back is silently dropped.
+	const putResponse = page.waitForResponse(
+		(res) =>
+			res.request().method() === 'PUT' &&
+			res.url().includes('/api/v2/auth_domains/'),
+	);
+	const row = await findAuthDomainRow(page, domain);
+	await row.getByTestId('auth-domain-enforce-sso').click();
+	expect((await putResponse).status()).toBe(204);
+
+	await page.reload();
+	await openConfigureAuthDomain(page, domain);
+	await page.getByTestId('role-mapping-header').click();
+
+	const rows = page.getByTestId('role-mapping-row');
+	await expect(rows).toHaveCount(2);
+	await expect(rows.nth(0).getByTestId('role-mapping-group-name')).toHaveValue(
+		'engineers',
+	);
+	await expect(rows.nth(1).getByTestId('role-mapping-group-name')).toHaveValue(
+		'support',
+	);
 });
