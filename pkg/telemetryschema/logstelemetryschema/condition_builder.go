@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -26,6 +27,83 @@ var _ qbtypes.ConditionBuilder = (*conditionBuilder)(nil)
 
 func NewConditionBuilder(fm qbtypes.FieldMapper, fl flagger.Flagger) *conditionBuilder {
 	return &conditionBuilder{fm: fm, fl: fl}
+}
+
+const (
+	// bodyV2NgramSize is the n of the body_v2 ngrambf_v1 index; a shorter needle yields no
+	// ngram for it to check.
+	bodyV2NgramSize = 4
+	loweredBodyV2   = "LOWER(toString(" + LogsV2BodyV2Column + "))"
+)
+
+// bodyIndexLike renders a LIKE on the body_v2 index expression asserting the serialized JSON
+// contains value. toJSONString escapes the value the same way the column stores it, and
+// replaceAll then escapes the LIKE metacharacters — backslash first, so the ones the later
+// steps add are not doubled again. The expression folds to a constant, which is what keeps
+// the bloom filters usable. anchored keeps toJSONString's quotes, pinning the needle to a
+// complete field value.
+func bodyIndexLike(value string, anchored bool, sb *sqlbuilder.SelectBuilder) string {
+	escaped := fmt.Sprintf("lower(toJSONString(%s))", sb.Var(value))
+	if !anchored {
+		quoted := fmt.Sprintf("toJSONString(%s)", sb.Var(value))
+		escaped = fmt.Sprintf("lower(substring(%s, 2, length(%s) - 2))", quoted, quoted)
+	}
+	return fmt.Sprintf(
+		`%s LIKE concat('%%', replaceAll(replaceAll(replaceAll(%s, '\\', '\\\\'), '%%', '\\%%'), '_', '\\_'), '%%')`,
+		loweredBodyV2, escaped,
+	)
+}
+
+// likePatternLiterals returns the runs of pattern between unescaped wildcards, with `\`
+// escapes resolved. Every value the pattern matches contains each run verbatim. ClickHouse
+// treats `\` as an escape only before `%`, `_` and itself; elsewhere it stands for a literal
+// backslash, so dropping it would yield a run the pattern does not require.
+func likePatternLiterals(pattern string) []string {
+	var (
+		literals []string
+		run      strings.Builder
+	)
+	for i := 0; i < len(pattern); i++ {
+		switch c := pattern[i]; c {
+		case '%', '_':
+			if run.Len() > 0 {
+				literals = append(literals, run.String())
+				run.Reset()
+			}
+		case '\\':
+			if i+1 >= len(pattern) {
+				run.WriteByte('\\')
+				continue
+			}
+			i++
+			if escaped := pattern[i]; escaped != '%' && escaped != '_' && escaped != '\\' {
+				run.WriteByte('\\')
+			}
+			run.WriteByte(pattern[i])
+		default:
+			run.WriteByte(c)
+		}
+	}
+	if run.Len() > 0 {
+		literals = append(literals, run.String())
+	}
+	return literals
+}
+
+// bodyV2SubstringPredicates returns predicates implied by body_v2.message matching pattern,
+// one per literal run long enough for the ngram index. The legacy body needs none: it already
+// queries LOWER(body), which is its own index expression.
+func bodyV2SubstringPredicates(fieldExpression, pattern string, sb *sqlbuilder.SelectBuilder) []string {
+	if fieldExpression != messageSubColumn {
+		return nil
+	}
+	var preds []string
+	for _, literal := range likePatternLiterals(pattern) {
+		if len(literal) >= bodyV2NgramSize {
+			preds = append(preds, bodyIndexLike(literal, false, sb))
+		}
+	}
+	return preds
 }
 
 // conditionForSearch ORs a case-insensitive match of the search term across the key
@@ -315,15 +393,30 @@ func (c *conditionBuilder) conditionForResolvedKey(
 	if fieldExpression == "body" || fieldExpression == messageSubColumn {
 		switch operator {
 		case qbtypes.FilterOperatorEqual:
-			// Bloom filters index lower(body), not the column; `=` still decides the row.
-			if _, ok := value.(string); ok && fieldExpression == LogsV2BodyColumn {
+			// Bloom filters index lower(body) and lower(toString(body_v2)), not the column
+			// being compared; `=` still decides the row.
+			str, isStr := value.(string)
+			if isStr && fieldExpression == LogsV2BodyColumn {
 				return sb.And(
 					sb.E(fieldExpression, value),
 					fmt.Sprintf("LOWER(%s) = LOWER(%s)", fieldExpression, sb.Var(value)),
 				), nil
 			}
-		case qbtypes.FilterOperatorLike:
-			return sb.ILike(fieldExpression, value), nil
+			if isStr && str != "" && fieldExpression == messageSubColumn {
+				return sb.And(sb.E(fieldExpression, value), bodyIndexLike(str, true, sb)), nil
+			}
+		case qbtypes.FilterOperatorLike, qbtypes.FilterOperatorILike, qbtypes.FilterOperatorContains:
+			pattern, isStr := value.(string)
+			if operator == qbtypes.FilterOperatorContains {
+				pattern, isStr = fmt.Sprintf("%%%s%%", value), true
+			}
+			if isStr {
+				cond := sb.ILike(fieldExpression, pattern)
+				if preds := bodyV2SubstringPredicates(fieldExpression, pattern, sb); len(preds) > 0 {
+					return sb.And(append([]string{cond}, preds...)...), nil
+				}
+				return cond, nil
+			}
 		case qbtypes.FilterOperatorNotLike:
 			return sb.NotILike(fieldExpression, value), nil
 		case qbtypes.FilterOperatorRegexp:

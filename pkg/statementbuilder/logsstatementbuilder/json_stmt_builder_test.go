@@ -197,8 +197,8 @@ func TestJSONStmtBuilder_PrimitivePaths(t *testing.T) {
 			name:   "message Contains 'Iron Award'",
 			filter: "message Contains 'Iron Award'",
 			expected: TestExpected{
-				WhereClause: "LOWER(body_v2.message) LIKE LOWER(?)",
-				Args:        []any{"%Iron Award%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				WhereClause: "(LOWER(body_v2.message) LIKE LOWER(?) AND LOWER(toString(body_v2)) LIKE " + jsonSubstringNeedle + ")",
+				Args:        []any{"%Iron Award%", "Iron Award", "Iron Award", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 

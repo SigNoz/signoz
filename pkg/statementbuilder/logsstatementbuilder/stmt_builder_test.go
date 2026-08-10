@@ -945,6 +945,9 @@ func TestAdjustKey(t *testing.T) {
 	}
 }
 
+// The needle ClickHouse builds for the body_v2 index expression.
+const jsonSubstringNeedle = `concat('%', replaceAll(replaceAll(replaceAll(lower(substring(toJSONString(?), 2, length(toJSONString(?)) - 2)), '\\', '\\\\'), '%', '\\%'), '_', '\\_'), '%')`
+
 func TestStmtBuilderBodyField(t *testing.T) {
 	cases := []struct {
 		name              string
@@ -1026,8 +1029,8 @@ func TestStmtBuilderBodyField(t *testing.T) {
 			},
 			enableUseJSONBody: true,
 			expected: qbtypes.Statement{
-				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE LOWER(body_v2.message) LIKE LOWER(?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:     []any{"%error%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE (LOWER(body_v2.message) LIKE LOWER(?) AND LOWER(toString(body_v2)) LIKE " + jsonSubstringNeedle + ") AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:     []any{"%error%", "error", "error", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 				Warnings: []string{bodySearchDefaultWarning},
 			},
 			expectedErr: nil,

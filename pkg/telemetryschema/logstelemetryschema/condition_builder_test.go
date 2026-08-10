@@ -954,3 +954,67 @@ func TestConditionForBodyIn(t *testing.T) {
 		})
 	}
 }
+
+// The escaping is ClickHouse's own toJSONString, verified end-to-end in
+// querier_json_body/07_body_contains.py; what matters here is that the needle stays a
+// constant expression the bloom filters can fold.
+func TestBodyIndexLike(t *testing.T) {
+	testCases := []struct {
+		name         string
+		value        string
+		anchored     bool
+		expected     string
+		expectedArgs []any
+	}{
+		{
+			name:         "anchored keeps the quotes toJSONString adds",
+			value:        "GET /api/v1/users",
+			anchored:     true,
+			expected:     `LOWER(toString(body_v2)) LIKE concat('%', replaceAll(replaceAll(replaceAll(lower(toJSONString(?)), '\\', '\\\\'), '%', '\\%'), '_', '\\_'), '%')`,
+			expectedArgs: []any{"GET /api/v1/users"},
+		},
+		{
+			name:         "substring strips them and binds the value twice",
+			value:        "/api/v1",
+			anchored:     false,
+			expected:     `LOWER(toString(body_v2)) LIKE concat('%', replaceAll(replaceAll(replaceAll(lower(substring(toJSONString(?), 2, length(toJSONString(?)) - 2)), '\\', '\\\\'), '%', '\\%'), '_', '\\_'), '%')`,
+			expectedArgs: []any{"/api/v1", "/api/v1"},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			sb := sqlbuilder.NewSelectBuilder()
+			sb.Select("1").From("t")
+			sb.Where(bodyIndexLike(tc.value, tc.anchored, sb))
+			query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+			assert.Contains(t, query, tc.expected)
+			assert.Equal(t, tc.expectedArgs, args)
+		})
+	}
+}
+
+// ClickHouse treats `\` as an escape only before `%`, `_` and itself — every expectation
+// here was checked against it, where the pattern matches the run and nothing shorter.
+func TestLikePatternLiterals(t *testing.T) {
+	testCases := []struct {
+		name     string
+		pattern  string
+		expected []string
+	}{
+		{"contains wraps a plain value", "%error%", []string{"error"}},
+		{"wildcards split runs", "%foo%bar%", []string{"foo", "bar"}},
+		{"underscore splits too", "a_b", []string{"a", "b"}},
+		{"escaped wildcards stay literal", `%100\%\_off%`, []string{`100%_off`}},
+		{"escaped backslash collapses", `%C:\\tmp%`, []string{`C:\tmp`}},
+		{"backslash before other chars is literal", `%C:\tmp%`, []string{`C:\tmp`}},
+		{"trailing backslash is literal", `%path\`, []string{`path\`}},
+		{"no literals at all", "%_%", nil},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expected, likePatternLiterals(tc.pattern))
+		})
+	}
+}
