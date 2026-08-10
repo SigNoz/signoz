@@ -1,8 +1,6 @@
 import { useCallback, useMemo } from 'react';
-import { useQueryClient } from 'react-query';
 import type { AuthtypesGettableRoleDTO } from 'api/generated/services/sigNoz.schemas';
 import {
-	getGetUserQueryKey,
 	useCreateUserRole,
 	useDeleteUserRole,
 	useGetUser,
@@ -10,7 +8,6 @@ import {
 import { retryOn429 } from 'utils/errorUtils';
 
 const enum PromiseStatus {
-	Fulfilled = 'fulfilled',
 	Rejected = 'rejected',
 }
 
@@ -33,8 +30,6 @@ export function useMemberRoleManager(
 	userId: string,
 	enabled: boolean,
 ): UseMemberRoleManagerResult {
-	const queryClient = useQueryClient();
-
 	const { data, isLoading } = useGetUser(
 		{ id: userId },
 		{ query: { enabled: !!userId && enabled } },
@@ -62,11 +57,6 @@ export function useMemberRoleManager(
 	const { mutateAsync: deleteUserRole } = useDeleteUserRole({
 		mutation: { retry: retryOn429 },
 	});
-
-	const invalidateRoles = useCallback(
-		() => queryClient.invalidateQueries(getGetUserQueryKey({ id: userId })),
-		[userId, queryClient],
-	);
 
 	const applyDiff = useCallback(
 		async (
@@ -117,13 +107,6 @@ export function useMemberRoleManager(
 				allOperations.map((op) => op.run()),
 			);
 
-			const successCount = results.filter(
-				(r) => r.status === PromiseStatus.Fulfilled,
-			).length;
-			if (successCount > 0) {
-				await invalidateRoles();
-			}
-
 			const failures: MemberRoleUpdateFailure[] = [];
 			results.forEach((result, index) => {
 				if (result.status === PromiseStatus.Rejected) {
@@ -133,7 +116,6 @@ export function useMemberRoleManager(
 						error: result.reason,
 						onRetry: async (): Promise<void> => {
 							await run();
-							await invalidateRoles();
 						},
 					});
 				}
@@ -141,14 +123,7 @@ export function useMemberRoleManager(
 
 			return failures;
 		},
-		[
-			userId,
-			currentRoles,
-			assignmentIdByRoleId,
-			createUserRole,
-			deleteUserRole,
-			invalidateRoles,
-		],
+		[userId, currentRoles, assignmentIdByRoleId, createUserRole, deleteUserRole],
 	);
 
 	return { currentRoles, isLoading, applyDiff };
