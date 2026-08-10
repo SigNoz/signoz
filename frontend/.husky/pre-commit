@@ -1,4 +1,10 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
+staged_go_files=$(git diff --cached --name-only --diff-filter=ACM -- '*.go')
+if [ -n "$staged_go_files" ]; then
+	echo "$staged_go_files" | xargs gofmt -l -w
+	echo "$staged_go_files" | xargs git add
+fi
+
 cd frontend && pnpm lint-staged
