@@ -32,6 +32,7 @@ import {
 	ChannelType,
 	EmailChannel,
 	GoogleChatChannel,
+	JiraChannel,
 	MsTeamsChannel,
 	OpsgenieChannel,
 	PagerChannel,
@@ -43,7 +44,9 @@ import { ChannelInitialConfig } from './defaults';
 import {
 	isChannelType,
 	isValidGoogleChatWebhookURL,
+	isValidJiraSiteURL,
 	prepareGoogleChatRequest,
+	prepareJiraRequest,
 } from './utils';
 
 import './CreateAlertChannels.styles.scss';
@@ -69,7 +72,8 @@ function CreateAlertChannels({
 				MsTeamsChannel &
 				OpsgenieChannel &
 				EmailChannel &
-				GoogleChatChannel
+				GoogleChatChannel &
+				JiraChannel
 		>
 	>(() => ({
 		send_resolved: true,
@@ -434,6 +438,62 @@ function CreateAlertChannels({
 		showErrorModal,
 	]);
 
+	const validateJiraConfig = useCallback((): boolean => {
+		if (
+			!selectedConfig.site ||
+			!selectedConfig.username ||
+			!selectedConfig.password ||
+			!selectedConfig.project ||
+			!selectedConfig.issue_type
+		) {
+			notifications.error({
+				message: 'Error',
+				description: t('jira_required_fields'),
+			});
+			return false;
+		}
+
+		if (!isValidJiraSiteURL(selectedConfig.site)) {
+			notifications.error({
+				message: 'Error',
+				description: t('jira_site_invalid'),
+			});
+			return false;
+		}
+
+		return true;
+	}, [selectedConfig, notifications, t]);
+
+	const onJiraHandler = useCallback(async () => {
+		if (!validateJiraConfig()) {
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
+		}
+
+		setSavingState(true);
+
+		try {
+			await createChannel({ data: prepareJiraRequest(selectedConfig) });
+			notifications.success({
+				message: 'Success',
+				description: t('channel_creation_done'),
+			});
+			history.replace(ROUTES.ALL_CHANNELS);
+			return { status: 'success', statusMessage: t('channel_creation_done') };
+		} catch (error) {
+			showErrorModal(toAPIError(error as ErrorType<RenderErrorResponseDTO>));
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
+		} finally {
+			setSavingState(false);
+		}
+	}, [
+		validateJiraConfig,
+		createChannel,
+		selectedConfig,
+		notifications,
+		t,
+		showErrorModal,
+	]);
+
 	const onSaveHandler = useCallback(
 		async (value: ChannelType) => {
 			if (!selectedConfig.name) {
@@ -452,6 +512,7 @@ function CreateAlertChannels({
 				[ChannelType.MsTeams]: onMsTeamsHandler,
 				[ChannelType.Email]: onEmailHandler,
 				[ChannelType.GoogleChat]: onGoogleChatHandler,
+				[ChannelType.Jira]: onJiraHandler,
 			};
 
 			if (isChannelType(value)) {
@@ -484,6 +545,7 @@ function CreateAlertChannels({
 			onMsTeamsHandler,
 			onEmailHandler,
 			onGoogleChatHandler,
+			onJiraHandler,
 			notifications,
 			t,
 		],
@@ -527,6 +589,13 @@ function CreateAlertChannels({
 							return;
 						}
 						await testChannel({ data: prepareGoogleChatRequest(selectedConfig) });
+						break;
+					case ChannelType.Jira:
+						if (!validateJiraConfig()) {
+							setTestingState(false);
+							return;
+						}
+						await testChannel({ data: prepareJiraRequest(selectedConfig) });
 						break;
 					default:
 						notifications.error({
@@ -576,6 +645,7 @@ function CreateAlertChannels({
 			prepareMsTeamsRequest,
 			prepareEmailRequest,
 			validateGoogleChatConfig,
+			validateJiraConfig,
 			testChannel,
 			notifications,
 		],

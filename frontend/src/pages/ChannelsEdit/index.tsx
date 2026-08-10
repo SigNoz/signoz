@@ -11,6 +11,7 @@ import ROUTES from 'constants/routes';
 import {
 	ChannelType,
 	GoogleChatChannel,
+	JiraChannel,
 	MsTeamsChannel,
 	PagerChannel,
 	SlackChannel,
@@ -64,13 +65,15 @@ function ChannelsEdit(): JSX.Element {
 			WebhookChannel &
 			PagerChannel &
 			MsTeamsChannel &
-			GoogleChatChannel;
+			GoogleChatChannel &
+			JiraChannel;
 	} => {
 		let channel: SlackChannel &
 			WebhookChannel &
 			PagerChannel &
 			MsTeamsChannel &
-			GoogleChatChannel = {
+			GoogleChatChannel &
+			JiraChannel = {
 			name: '',
 		};
 
@@ -97,6 +100,19 @@ function ChannelsEdit(): JSX.Element {
 			channel = googleChatConfig;
 			return {
 				type: ChannelType.GoogleChat,
+				channel,
+			};
+		}
+
+		if (value && 'jira_configs' in value) {
+			const [jiraConfig] = value.jira_configs;
+			channel = jiraConfig;
+			if (jiraConfig.http_config?.basic_auth) {
+				channel.username = jiraConfig.http_config.basic_auth.username;
+				channel.password = jiraConfig.http_config.basic_auth.password;
+			}
+			return {
+				type: ChannelType.Jira,
 				channel,
 			};
 		}

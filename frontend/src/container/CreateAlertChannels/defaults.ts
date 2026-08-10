@@ -2,6 +2,7 @@ import {
 	ChannelType,
 	EmailChannel,
 	GoogleChatChannel,
+	JiraChannel,
 	MsTeamsChannel,
 	OpsgenieChannel,
 	PagerChannel,
@@ -45,6 +46,12 @@ export const GoogleChatInitialConfig: Partial<GoogleChatChannel> = {
 **Summary:** {{ .Annotations.summary }}{{ end }}{{ if .Annotations.description }}
 **Description:** {{ .Annotations.description }}{{ end }}
 {{ end }}`,
+};
+
+// The Jira issue body (ADF) is built server-side, so there are no title / text
+// templates to prefill here; only the required issue type gets a sensible default.
+export const JiraInitialConfig: Partial<JiraChannel> = {
+	issue_type: 'Task',
 };
 
 export const PagerInitialConfig: Partial<PagerChannel> = {
@@ -505,12 +512,14 @@ export const ChannelInitialConfig: Record<
 			MsTeamsChannel &
 			OpsgenieChannel &
 			EmailChannel &
-			GoogleChatChannel
+			GoogleChatChannel &
+			JiraChannel
 	>
 > = {
 	[ChannelType.Slack]: SlackInitialConfig,
 	[ChannelType.MsTeams]: SlackInitialConfig,
 	[ChannelType.GoogleChat]: GoogleChatInitialConfig,
+	[ChannelType.Jira]: JiraInitialConfig,
 	[ChannelType.Pagerduty]: PagerInitialConfig,
 	[ChannelType.Opsgenie]: OpsgenieInitialConfig,
 	[ChannelType.Email]: EmailInitialConfig,

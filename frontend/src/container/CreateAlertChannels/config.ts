@@ -105,6 +105,7 @@ export enum ChannelType {
 	Opsgenie = 'opsgenie',
 	MsTeams = 'msteams',
 	GoogleChat = 'googlechat',
+	Jira = 'jira',
 }
 
 // LabelFilterStatement will be used for preparing filter conditions / matchers
@@ -133,4 +134,22 @@ export interface GoogleChatChannel extends Channel {
 	webhook_url?: string;
 	title?: string;
 	text?: string;
+}
+
+// JiraChannel configures the Jira Cloud alert channel. Auth is basic auth
+// (Atlassian account email + API token) carried in username / password.
+export interface JiraChannel extends Channel {
+	// Jira Cloud base URL, e.g. https://acme.atlassian.net
+	site?: string;
+	project?: string;
+	issue_type?: string;
+	// basic auth: username is the Atlassian account email, password is the API token
+	username?: string;
+	password?: string;
+	priority?: string;
+	labels?: string[];
+	resolve_transition?: string;
+	reopen_transition?: string;
+	// duration string, e.g. 72h or 3d
+	reopen_duration?: string;
 }
