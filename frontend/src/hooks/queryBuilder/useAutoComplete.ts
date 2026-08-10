@@ -1,6 +1,6 @@
 import { KeyboardEvent, useCallback, useState } from 'react';
 import { OPERATORS } from 'constants/queryBuilder';
-import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
+import type { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import {
 	getRemovePrefixFromKey,
 	getTagToken,
