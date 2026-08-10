@@ -1,6 +1,7 @@
 package authtypes
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"regexp"
@@ -32,6 +33,11 @@ var (
 // authDomainConfigVariants is the single registry of authn provider kinds:
 // UnmarshalJSON, JSONSchemaOneOf and the discriminator mapping all derive from
 // it, so a new provider is one entry here plus its authn registration.
+//
+// rejectUnknownSpecFields decodes into a method-less alias of the spec: a type
+// carrying its own UnmarshalJSON consumes the bytes itself, which would bypass
+// DisallowUnknownFields. It only sees the spec's own fields, not those of
+// nested objects that unmarshal themselves.
 var authDomainConfigVariants = []authDomainConfigVariant{
 	{
 		kind: AuthNProviderSAML,
@@ -41,6 +47,12 @@ var authDomainConfigVariants = []authDomainConfigVariant{
 				return nil, err
 			}
 			return spec, nil
+		},
+		rejectUnknownSpecFields: func(data []byte) error {
+			type alias SamlConfig
+			decoder := json.NewDecoder(bytes.NewReader(data))
+			decoder.DisallowUnknownFields()
+			return decoder.Decode(new(alias))
 		},
 		schema:    authDomainConfigSAML{},
 		schemaRef: "#/components/schemas/AuthtypesAuthDomainConfigSAML",
@@ -54,6 +66,12 @@ var authDomainConfigVariants = []authDomainConfigVariant{
 			}
 			return spec, nil
 		},
+		rejectUnknownSpecFields: func(data []byte) error {
+			type alias GoogleConfig
+			decoder := json.NewDecoder(bytes.NewReader(data))
+			decoder.DisallowUnknownFields()
+			return decoder.Decode(new(alias))
+		},
 		schema:    authDomainConfigGoogle{},
 		schemaRef: "#/components/schemas/AuthtypesAuthDomainConfigGoogle",
 	},
@@ -65,6 +83,12 @@ var authDomainConfigVariants = []authDomainConfigVariant{
 				return nil, err
 			}
 			return spec, nil
+		},
+		rejectUnknownSpecFields: func(data []byte) error {
+			type alias OIDCConfig
+			decoder := json.NewDecoder(bytes.NewReader(data))
+			decoder.DisallowUnknownFields()
+			return decoder.Decode(new(alias))
 		},
 		schema:    authDomainConfigOIDC{},
 		schemaRef: "#/components/schemas/AuthtypesAuthDomainConfigOIDC",
@@ -142,10 +166,11 @@ type authDomainConfigOIDC struct {
 }
 
 type authDomainConfigVariant struct {
-	kind       AuthNProvider
-	decodeSpec func(data []byte) (any, error)
-	schema     any
-	schemaRef  string
+	kind                    AuthNProvider
+	decodeSpec              func(data []byte) (any, error)
+	rejectUnknownSpecFields func(data []byte) error
+	schema                  any
+	schemaRef               string
 }
 
 type AuthDomain struct {
@@ -366,6 +391,38 @@ func (typ *AuthDomain) Update(updatableAuthDomain *UpdatableAuthDomain) error {
 	return nil
 }
 
+// rejectForeignSpecFields rejects a request whose config.spec carries fields the
+// declared kind does not define. Without it a spec belonging to another provider
+// decodes as a partial config of the declared kind whenever their required
+// fields overlap — an oidc spec sent as kind google loses its issuer and points
+// the domain at Google instead of the intended provider.
+//
+// This is a request-shape check by design: stored documents keep decoding
+// leniently so a rollback can still read a document a newer binary wrote, and so
+// removing a field later does not need a migration.
+func rejectForeignSpecFields(body []byte, kind AuthNProvider) error {
+	var raw struct {
+		Config struct {
+			Spec json.RawMessage `json:"spec"`
+		} `json:"config"`
+	}
+	if err := json.Unmarshal(body, &raw); err != nil {
+		return errors.Wrapf(err, errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "failed to unmarshal auth domain config")
+	}
+
+	for _, variant := range authDomainConfigVariants {
+		if variant.kind != kind {
+			continue
+		}
+
+		if err := variant.rejectUnknownSpecFields(raw.Config.Spec); err != nil {
+			return errors.Wrapf(err, errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "invalid %q spec", kind.StringValue())
+		}
+	}
+
+	return nil
+}
+
 func (typ *PostableAuthDomain) UnmarshalJSON(data []byte) error {
 	type Alias PostableAuthDomain
 
@@ -384,6 +441,10 @@ func (typ *PostableAuthDomain) UnmarshalJSON(data []byte) error {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "config is required")
 	}
 
+	if err := rejectForeignSpecFields(data, temp.Config.Kind); err != nil {
+		return err
+	}
+
 	*typ = PostableAuthDomain(temp)
 	return nil
 }
@@ -400,6 +461,10 @@ func (typ *UpdatableAuthDomain) UnmarshalJSON(data []byte) error {
 	// anything else), so a zero kind means the key was absent.
 	if temp.Config.Kind.IsZero() {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "config is required")
+	}
+
+	if err := rejectForeignSpecFields(data, temp.Config.Kind); err != nil {
+		return err
 	}
 
 	*typ = UpdatableAuthDomain(temp)
