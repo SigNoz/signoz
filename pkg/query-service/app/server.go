@@ -31,6 +31,7 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 	"go.opentelemetry.io/otel/propagation"
 
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/healthcheck"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 )
@@ -254,8 +255,8 @@ func (s *Server) Start(ctx context.Context) error {
 	}()
 
 	go func() {
-		slog.Info("Starting OpAmp Websocket server", "addr", s.config.OpAmp.Address)
-		err := s.opampServer.Start(s.config.OpAmp.Address)
+		slog.Info("Starting OpAmp Websocket server", "addr", constants.OpAmpWsEndpoint)
+		err := s.opampServer.Start(constants.OpAmpWsEndpoint)
 		if err != nil {
 			slog.Error("opamp ws server failed to start", errors.Attr(err))
 			s.unavailableChannel <- healthcheck.Unavailable

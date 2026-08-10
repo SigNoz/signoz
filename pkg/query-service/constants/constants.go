@@ -10,6 +10,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
+const OpAmpWsEndpoint = "0.0.0.0:4320" // address for opamp websocket
+
 const MaxAllowedPointsInTimeSeries = 300
 
 const SpanSearchScopeRoot = "isroot"

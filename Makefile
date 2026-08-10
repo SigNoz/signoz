@@ -83,7 +83,6 @@ devenv-clickhouse-clean: ## Clean all ClickHouse data from filesystem
 ##############################################################
 SQLITE_PATH             ?= signoz.db
 HTTP_HOST_PORT          ?= 0.0.0.0:8080
-OPAMP_WS_ENDPOINT       ?= 0.0.0.0:4320
 
 .PHONY: go-run-enterprise
 go-run-enterprise: ## Runs the enterprise go backend server
@@ -96,7 +95,6 @@ go-run-enterprise: ## Runs the enterprise go backend server
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://127.0.0.1:9000 \
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER=cluster \
 	SIGNOZ_APISERVER_ADDRESS=$(HTTP_HOST_PORT) \
-	SIGNOZ_OPAMP_ADDRESS=$(OPAMP_WS_ENDPOINT) \
 	go run -race \
 		$(GO_BUILD_CONTEXT_ENTERPRISE)/*.go server
 
@@ -115,7 +113,6 @@ go-run-community: ## Runs the community go backend server
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://127.0.0.1:9000 \
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER=cluster \
 	SIGNOZ_APISERVER_ADDRESS=$(HTTP_HOST_PORT) \
-	SIGNOZ_OPAMP_ADDRESS=$(OPAMP_WS_ENDPOINT) \
 	go run -race \
 		$(GO_BUILD_CONTEXT_COMMUNITY)/*.go server
 
