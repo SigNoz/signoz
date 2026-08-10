@@ -130,6 +130,45 @@ def test_reset_password(signoz: types.SigNoz, get_token: Callable[[str, str], st
     assert token is not None
 
 
+def test_reset_password_v2(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    found_user = find_user_by_email(signoz, admin_token, PASSWORD_USER_EMAIL)
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{found_user['id']}/reset_password_tokens"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    token = response.json()["data"]["token"]
+
+    # A password failing the strength policy is rejected without consuming the token
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v2/factor_password/reset"),
+        json={"password": "password", "token": token},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v2/factor_password/reset"),
+        json={"password": "resetV2Password123Z$", "token": token},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    assert get_token(PASSWORD_USER_EMAIL, "resetV2Password123Z$") is not None
+
+    # The token is single use, so replaying it no longer resolves
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v2/factor_password/reset"),
+        json={"password": "resetV2Password456Z$", "token": token},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.NOT_FOUND, response.text
+
+
 def test_reset_password_with_no_password(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
