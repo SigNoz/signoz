@@ -396,6 +396,10 @@ export interface AlertmanagertypesJiraReceiverConfigDTO {
 	 * @type object
 	 */
 	custom_fields?: AlertmanagertypesJiraReceiverConfigDTOCustomFields;
+	/**
+	 * @type string
+	 */
+	description?: string;
 	http_config?: ConfigHTTPClientConfigDTO;
 	/**
 	 * @type string
@@ -430,6 +434,10 @@ export interface AlertmanagertypesJiraReceiverConfigDTO {
 	 * @type string
 	 */
 	site?: string;
+	/**
+	 * @type string
+	 */
+	summary?: string;
 	/**
 	 * @type string
 	 */

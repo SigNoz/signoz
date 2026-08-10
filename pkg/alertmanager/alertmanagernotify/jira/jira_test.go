@@ -107,6 +107,8 @@ func newNotifier(t *testing.T, m *mockJira) *Notifier {
 		Site:           m.srv.URL,
 		Project:        "KAN",
 		IssueType:      "Task",
+		Summary:        alertmanagertypes.DefaultJiraSummaryTemplate,
+		Description:    alertmanagertypes.DefaultJiraDescriptionTemplate,
 		HTTPConfig:     &commoncfg.HTTPClientConfig{},
 		ReopenDuration: model.Duration(3 * 24 * time.Hour),
 	}, test.CreateTmpl(t), slog.New(slog.DiscardHandler), nil)

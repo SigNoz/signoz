@@ -29,6 +29,8 @@ func TestJiraReceiverConfigDefaults(t *testing.T) {
 	assert.Equal(t, "https://acme.atlassian.net/rest/api/3", jc.APIBaseURL())
 	assert.False(t, jc.SendResolved()) // default off when omitted, like other channels
 	assert.Equal(t, defaultJiraReopenDuration, jc.ReopenDuration)
+	assert.Equal(t, DefaultJiraSummaryTemplate, jc.Summary)
+	assert.Equal(t, DefaultJiraDescriptionTemplate, jc.Description)
 
 	ch, err := NewChannelFromReceiver(r, "org-1")
 	require.NoError(t, err)

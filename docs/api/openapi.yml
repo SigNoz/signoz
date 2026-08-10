@@ -114,6 +114,8 @@ components:
         custom_fields:
           additionalProperties: {}
           type: object
+        description:
+          type: string
         http_config:
           $ref: '#/components/schemas/ConfigHTTPClientConfig'
         issue_type:
@@ -135,6 +137,8 @@ components:
         send_resolved:
           type: boolean
         site:
+          type: string
+        summary:
           type: string
         wont_fix_resolution:
           type: string
