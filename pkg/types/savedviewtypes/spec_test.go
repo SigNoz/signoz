@@ -118,6 +118,48 @@ func TestSavedViewSpecValidate(t *testing.T) {
 			},
 			expectError: false,
 		},
+		{
+			name: "list panel query with no aggregation is valid",
+			spec: SavedViewSpec{
+				DisplayName: "My View",
+				PanelType:   PanelTypeList,
+				Queries: []qbtypes.QueryEnvelope{{
+					Type: qbtypes.QueryTypeBuilder,
+					Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+						Signal: telemetrytypes.SignalTraces,
+					},
+				}},
+			},
+			expectError: false,
+		},
+		{
+			name: "trace panel query with no aggregation is valid",
+			spec: SavedViewSpec{
+				DisplayName: "My View",
+				PanelType:   PanelTypeTrace,
+				Queries: []qbtypes.QueryEnvelope{{
+					Type: qbtypes.QueryTypeBuilder,
+					Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+						Signal: telemetrytypes.SignalTraces,
+					},
+				}},
+			},
+			expectError: false,
+		},
+		{
+			name: "graph panel query with no aggregation is still rejected",
+			spec: SavedViewSpec{
+				DisplayName: "My View",
+				PanelType:   PanelTypeGraph,
+				Queries: []qbtypes.QueryEnvelope{{
+					Type: qbtypes.QueryTypeBuilder,
+					Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+						Signal: telemetrytypes.SignalTraces,
+					},
+				}},
+			},
+			expectError: true,
+		},
 	}
 
 	for _, c := range cases {

@@ -89,5 +89,21 @@ func (s *SavedViewSpec) Validate() error {
 		return err
 	}
 
-	return (&qbtypes.CompositeQuery{Queries: s.Queries}).Validate()
+	return (&qbtypes.CompositeQuery{Queries: s.Queries}).Validate(qbtypes.GetValidationOptions(s.PanelType.requestType())...)
+}
+
+// requestType maps a panel type to the qbtypes.RequestType whose validation rules
+// apply to its queries -- e.g. list/trace panels are raw queries and must not be
+// forced to carry an aggregation the way graph/value/table panels are.
+func (p PanelType) requestType() qbtypes.RequestType {
+	switch p {
+	case PanelTypeList:
+		return qbtypes.RequestTypeRaw
+	case PanelTypeTrace:
+		return qbtypes.RequestTypeTrace
+	case PanelTypeGraph:
+		return qbtypes.RequestTypeTimeSeries
+	default:
+		return qbtypes.RequestTypeScalar
+	}
 }
