@@ -180,20 +180,16 @@ func (b *defaultConditionBuilder) conditionForKey(
 		if !ok {
 			return "", qbtypes.ErrInValues
 		}
+		// each value carries its own index filter, since `=` derives one from the value
 		inConditions := make([]string, 0, len(values))
 		for _, v := range values {
-			inConditions = append(inConditions, sb.E(fieldName, querybuilder.FormatValueForContains(v)))
-		}
-		mainCondition := sb.Or(inConditions...)
-		valConditions := make([]string, 0, len(values))
-		if valuesForIndexFilter, ok := valueForIndexFilter.([]string); ok {
-			for _, v := range valuesForIndexFilter {
-				valConditions = append(valConditions, sb.Like(column.Name, v))
+			cond, err := b.conditionForKey(ctx, startNs, endNs, key, qbtypes.FilterOperatorEqual, v, sb)
+			if err != nil {
+				return "", err
 			}
+			inConditions = append(inConditions, cond)
 		}
-		mainCondition = sb.And(mainCondition, keyIdxFilter, sb.Or(valConditions...))
-
-		return mainCondition, nil
+		return sb.Or(inConditions...), nil
 	case qbtypes.FilterOperatorNotIn:
 		values, ok := value.([]any)
 		if !ok {
@@ -201,17 +197,13 @@ func (b *defaultConditionBuilder) conditionForKey(
 		}
 		notInConditions := make([]string, 0, len(values))
 		for _, v := range values {
-			notInConditions = append(notInConditions, sb.NE(fieldName, querybuilder.FormatValueForContains(v)))
-		}
-		mainCondition := sb.And(notInConditions...)
-		valConditions := make([]string, 0, len(values))
-		if valuesForIndexFilter, ok := valueForIndexFilter.([]string); ok {
-			for _, v := range valuesForIndexFilter {
-				valConditions = append(valConditions, sb.NotLike(column.Name, v))
+			cond, err := b.conditionForKey(ctx, startNs, endNs, key, qbtypes.FilterOperatorNotEqual, v, sb)
+			if err != nil {
+				return "", err
 			}
+			notInConditions = append(notInConditions, cond)
 		}
-		mainCondition = sb.And(mainCondition, sb.And(valConditions...))
-		return mainCondition, nil
+		return sb.And(notInConditions...), nil
 
 	case qbtypes.FilterOperatorExists:
 		return sb.And(

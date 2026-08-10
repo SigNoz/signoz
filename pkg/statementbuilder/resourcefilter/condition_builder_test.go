@@ -109,8 +109,8 @@ func TestConditionBuilder(t *testing.T) {
 			},
 			op:           qbtypes.FilterOperatorIn,
 			value:        []any{"watch", "redis"},
-			expected:     "(simpleJSONExtractString(labels, 'k8s.namespace.name') = ? OR simpleJSONExtractString(labels, 'k8s.namespace.name') = ?) AND labels LIKE ? AND (labels LIKE ? OR labels LIKE ?)",
-			expectedArgs: []any{"watch", "redis", "%k8s.namespace.name%", "%k8s.namespace.name\":\"watch%", "%k8s.namespace.name\":\"redis%"},
+			expected:     "((simpleJSONExtractString(labels, 'k8s.namespace.name') = ? AND labels LIKE ? AND labels LIKE ?) OR (simpleJSONExtractString(labels, 'k8s.namespace.name') = ? AND labels LIKE ? AND labels LIKE ?))",
+			expectedArgs: []any{"watch", "%k8s.namespace.name%", "%k8s.namespace.name\":\"watch%", "redis", "%k8s.namespace.name%", "%k8s.namespace.name\":\"redis%"},
 		},
 		{
 			name: "string_not_in",
@@ -120,8 +120,8 @@ func TestConditionBuilder(t *testing.T) {
 			},
 			op:           qbtypes.FilterOperatorNotIn,
 			value:        []any{"watch", "redis"},
-			expected:     "(simpleJSONExtractString(labels, 'k8s.namespace.name') <> ? AND simpleJSONExtractString(labels, 'k8s.namespace.name') <> ?) AND (labels NOT LIKE ? AND labels NOT LIKE ?)",
-			expectedArgs: []any{"watch", "redis", "%k8s.namespace.name\":\"watch%", "%k8s.namespace.name\":\"redis%"},
+			expected:     "((simpleJSONExtractString(labels, 'k8s.namespace.name') <> ? AND labels NOT LIKE ?) AND (simpleJSONExtractString(labels, 'k8s.namespace.name') <> ? AND labels NOT LIKE ?))",
+			expectedArgs: []any{"watch", "%k8s.namespace.name\":\"watch%", "redis", "%k8s.namespace.name\":\"redis%"},
 		},
 		{
 			name: "string_exists",
@@ -173,8 +173,8 @@ func TestConditionBuilder(t *testing.T) {
 			},
 			op:           qbtypes.FilterOperatorIn,
 			value:        []any{1, 2},
-			expected:     "(simpleJSONExtractString(labels, 'test_num') = ? OR simpleJSONExtractString(labels, 'test_num') = ?) AND labels LIKE ? AND (labels LIKE ? OR labels LIKE ?)",
-			expectedArgs: []any{"1", "2", "%test_num%", "%test_num\":\"1%", "%test_num\":\"2%"},
+			expected:     "((simpleJSONExtractString(labels, 'test_num') = ? AND labels LIKE ? AND labels LIKE ?) OR (simpleJSONExtractString(labels, 'test_num') = ? AND labels LIKE ? AND labels LIKE ?))",
+			expectedArgs: []any{"1", "%test_num%", "%test_num\":\"1%", "2", "%test_num%", "%test_num\":\"2%"},
 		},
 		{
 			name: "number_between",
