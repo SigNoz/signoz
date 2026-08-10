@@ -17,6 +17,7 @@ def _body(name: str, source: str = "logs") -> dict:
         "spec": {
             "displayName": name,
             "panelType": "table",
+            "requestType": "scalar",
             "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
             "selectedFields": [],
             "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},

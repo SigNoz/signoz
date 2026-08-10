@@ -116,6 +116,7 @@ def test_write_forbidden_without_grant(
             "spec": {
                 "displayName": _SAVED_VIEW_FGA_TARGET_NAME,
                 "panelType": "table",
+                "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
                 "selectedFields": [],
                 "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
@@ -135,6 +136,7 @@ def test_write_forbidden_without_grant(
             "spec": {
                 "displayName": "saved-view-fga-create-attempt",
                 "panelType": "table",
+                "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
                 "selectedFields": [],
                 "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
@@ -212,6 +214,7 @@ def test_update_scoped_to_granted_view(
         "spec": {
             "displayName": _SAVED_VIEW_FGA_TARGET_NAME,
             "panelType": "graph",
+            "requestType": "time_series",
             "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
             "selectedFields": [],
             "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},

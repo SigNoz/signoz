@@ -30,6 +30,7 @@ def test_create_rejects_wrong_schema_version(
             "spec": {
                 "displayName": "My View",
                 "panelType": "table",
+                "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                 "selectedFields": [],
                 "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
@@ -61,6 +62,7 @@ def test_create_rejects_invalid_panel_type(
             "spec": {
                 "displayName": "My View",
                 "panelType": "bogus",
+                "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                 "selectedFields": [],
                 "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
@@ -91,6 +93,7 @@ def test_create_rejects_empty_queries(
             "spec": {
                 "displayName": "My View",
                 "panelType": "table",
+                "requestType": "scalar",
                 "queries": [],
                 "selectedFields": [],
                 "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
@@ -125,6 +128,7 @@ def test_create_rejects_empty_display_name(
             "spec": {
                 "displayName": "",
                 "panelType": "table",
+                "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                 "selectedFields": [],
                 "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
@@ -156,6 +160,7 @@ def test_create_rejects_invalid_source(
             "spec": {
                 "displayName": "My View",
                 "panelType": "table",
+                "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                 "selectedFields": [],
                 "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
@@ -186,6 +191,7 @@ def test_create_rejects_invalid_name(
             "spec": {
                 "displayName": "My View",
                 "panelType": "table",
+                "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                 "selectedFields": [],
                 "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
@@ -218,6 +224,7 @@ def test_create_rejects_empty_name_without_generate_name(
             "spec": {
                 "displayName": "My View",
                 "panelType": "table",
+                "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                 "selectedFields": [],
                 "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
@@ -251,6 +258,7 @@ def test_create_rejects_name_when_generate_name_is_true(
             "spec": {
                 "displayName": "My View",
                 "panelType": "table",
+                "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                 "selectedFields": [],
                 "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
@@ -286,6 +294,7 @@ def test_create_rejects_unknown_field(
             "spec": {
                 "displayName": "My View",
                 "panelType": "table",
+                "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                 "selectedFields": [],
                 "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
@@ -352,6 +361,7 @@ def test_update_missing_view_returns_not_found(
             "spec": {
                 "displayName": "My View",
                 "panelType": "table",
+                "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                 "selectedFields": [],
                 "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
@@ -386,6 +396,7 @@ def test_update_rejects_name_field(
             "spec": {
                 "displayName": "My View",
                 "panelType": "table",
+                "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                 "selectedFields": [],
                 "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
@@ -406,6 +417,7 @@ def test_update_rejects_name_field(
                 "spec": {
                     "displayName": "My View",
                     "panelType": "table",
+                    "requestType": "scalar",
                     "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                     "selectedFields": [],
                     "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
@@ -465,6 +477,7 @@ def test_saved_view_lifecycle(
             "spec": {
                 "displayName": "lc-logs-overview",
                 "panelType": "table",
+                "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                 "selectedFields": [],
                 "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
@@ -486,6 +499,7 @@ def test_saved_view_lifecycle(
             "spec": {
                 "displayName": "lc-traces-overview",
                 "panelType": "table",
+                "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                 "selectedFields": [],
                 "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
@@ -540,6 +554,7 @@ def test_saved_view_lifecycle(
                 "spec": {
                     "displayName": "lc-logs-overview-renamed",
                     "panelType": "graph",
+                    "requestType": "time_series",
                     "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                     "selectedFields": [],
                     "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
@@ -595,6 +610,7 @@ def test_empty_name_derives_a_slug_from_display_name(
             "spec": {
                 "displayName": "My Generated View!",
                 "panelType": "table",
+                "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                 "selectedFields": [],
                 "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
@@ -653,6 +669,7 @@ def test_create_roundtrip_preserves_zero_values(
             "spec": {
                 "displayName": "create-zero-values",
                 "panelType": "table",
+                "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                 "selectedFields": [],
                 "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
@@ -711,6 +728,7 @@ def test_selected_fields_omitted_on_create_reads_back_as_empty_list_not_null(
             "spec": {
                 "displayName": "omitted-selected-fields",
                 "panelType": "table",
+                "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                 "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
@@ -758,6 +776,7 @@ def test_display_omitted_on_create_reads_back_as_zero_value(
             "spec": {
                 "displayName": "omitted-display",
                 "panelType": "table",
+                "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
                 "selectedFields": [],
             },
@@ -804,6 +823,7 @@ def test_selected_fields_and_display_explicit_null_on_create(
             "spec": {
                 "displayName": "null-selected-fields-and-display",
                 "panelType": "table",
+                "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
                 "selectedFields": None,
                 "display": None,
@@ -854,6 +874,7 @@ def test_create_with_partial_display_defaults_missing_fields(
             "spec": {
                 "displayName": "partial-display-color-only",
                 "panelType": "table",
+                "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
                 "selectedFields": [],
                 "display": {"color": "test"},
@@ -905,6 +926,7 @@ def test_update_does_not_corrupt_zero_values(
             "spec": {
                 "displayName": "update-zero-values",
                 "panelType": "table",
+                "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": True, "legend": "Custom Legend"}}],
                 "selectedFields": [{"name": "service.name"}],
                 "display": {"maxLines": 25, "fontSize": "large", "format": "table", "color": "blue"},
@@ -940,6 +962,7 @@ def test_update_does_not_corrupt_zero_values(
                 "spec": {
                     "displayName": "update-zero-values",
                     "panelType": "table",
+                    "requestType": "scalar",
                     "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
                     "selectedFields": [],
                     "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
@@ -1000,6 +1023,7 @@ def test_update_with_partial_display_replaces_whole_object(
             "spec": {
                 "displayName": "update-partial-display",
                 "panelType": "table",
+                "requestType": "scalar",
                 "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
                 "selectedFields": [],
                 "display": {"maxLines": 10, "fontSize": "large", "format": "table", "color": "blue"},
@@ -1020,6 +1044,7 @@ def test_update_with_partial_display_replaces_whole_object(
                 "spec": {
                     "displayName": "update-partial-display",
                     "panelType": "table",
+                    "requestType": "scalar",
                     "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
                     "selectedFields": [],
                     "display": {"color": "green"},
