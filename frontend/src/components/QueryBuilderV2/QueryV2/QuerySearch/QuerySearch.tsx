@@ -49,7 +49,11 @@ import { unquote } from 'utils/stringUtils';
 import { getRecentQueries } from 'lib/recentQueries/getRecentQueries';
 import type { SignalType } from 'types/api/v5/queryRange';
 
-import { queryExamples, SUGGESTIONS_SECTION } from './constants';
+import {
+	queryExamples,
+	SUGGESTION_FETCH_DEBOUNCE_MS,
+	SUGGESTIONS_SECTION,
+} from './constants';
 import {
 	combineInitialAndUserExpression,
 	dedupeOptionsByLabel,
@@ -98,6 +102,15 @@ interface QuerySearchProps {
 	showFilterSuggestionsWithoutMetric?: boolean;
 	/** When set, the editor shows only the user expression; API/filter uses `initial AND (user)`. */
 	initialExpression?: string;
+	/** When set, replaces the generic value-suggestion API with a custom fetcher. */
+	valueSuggestionsOverride?: (
+		key: string,
+		searchText: string,
+	) => Promise<{
+		stringValues: string[];
+		numberValues: number[];
+		complete: boolean;
+	}>;
 }
 
 function QuerySearch({
@@ -111,6 +124,7 @@ function QuerySearch({
 	showFilterSuggestionsWithoutMetric,
 	initialExpression,
 	metricNamespace,
+	valueSuggestionsOverride,
 }: QuerySearchProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const [valueSuggestions, setValueSuggestions] = useState<any[]>([]);
@@ -169,15 +183,14 @@ function QuerySearch({
 				isProgrammaticChangeRef.current = true;
 			}
 
+			const changes = view.state.changes({
+				from: 0,
+				to: currentValue.length,
+				insert: value,
+			});
 			view.dispatch({
-				changes: {
-					from: 0,
-					to: currentValue.length,
-					insert: value,
-				},
-				selection: {
-					anchor: value.length,
-				},
+				changes,
+				selection: { anchor: changes.newLength },
 			});
 		},
 		[],
@@ -353,7 +366,7 @@ function QuerySearch({
 	);
 
 	const debouncedFetchKeySuggestions = useMemo(
-		() => debounce(fetchKeySuggestions, 300),
+		() => debounce(fetchKeySuggestions, SUGGESTION_FETCH_DEBOUNCE_MS),
 		[fetchKeySuggestions],
 	);
 
@@ -480,13 +493,24 @@ function QuerySearch({
 			const sanitizedSearchText = searchText ? searchText?.trim() : '';
 
 			try {
-				const response = await getValueSuggestions({
-					key,
-					searchText: sanitizedSearchText,
-					signal: dataSource,
-					signalSource: signalSource as 'meter' | '',
-					metricName: debouncedMetricName ?? undefined,
-				});
+				const values = valueSuggestionsOverride
+					? await valueSuggestionsOverride(key, sanitizedSearchText)
+					: await getValueSuggestions({
+							key,
+							searchText: sanitizedSearchText,
+							signal: dataSource,
+							signalSource: signalSource as 'meter' | '',
+							metricName: debouncedMetricName ?? undefined,
+						}).then((response) => {
+							const responseData = response.data as any;
+							const data = responseData.data || {};
+							const values = data.values || {};
+							return {
+								stringValues: values.stringValues || [],
+								numberValues: values.numberValues || [],
+								complete: data.complete ?? false,
+							};
+						});
 
 				// Skip updates if component unmounted or key changed
 				if (
@@ -498,8 +522,6 @@ function QuerySearch({
 				}
 
 				// Process the response data
-				const responseData = response.data as any;
-				const values = responseData.data?.values || {};
 				const stringValues = values.stringValues || [];
 				const numberValues = values.numberValues || [];
 
@@ -580,11 +602,12 @@ function QuerySearch({
 			debouncedMetricName,
 			signalSource,
 			toggleSuggestions,
+			valueSuggestionsOverride,
 		],
 	);
 
 	const debouncedFetchValueSuggestions = useMemo(
-		() => debounce(fetchValueSuggestions, 300),
+		() => debounce(fetchValueSuggestions, SUGGESTION_FETCH_DEBOUNCE_MS),
 		[fetchValueSuggestions],
 	);
 

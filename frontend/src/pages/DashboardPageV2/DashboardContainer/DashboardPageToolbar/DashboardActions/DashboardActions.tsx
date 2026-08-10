@@ -27,16 +27,13 @@ import logEvent from 'api/common/logEvent';
 import { cloneDashboardV2 } from 'api/generated/services/dashboard';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 import ROUTES from 'constants/routes';
-import { useDeleteDashboard } from 'hooks/dashboard/useDeleteDashboard';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import history from 'lib/history';
 import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 import { USER_ROLES } from 'types/roles';
 
-import ConfirmDeleteDialog from '../../components/ConfirmDeleteDialog/ConfirmDeleteDialog';
 import DisabledControlTooltip from '../../components/DisabledControlTooltip/DisabledControlTooltip';
 import DisabledMenuItemLabel from '../../components/DisabledMenuItemLabel/DisabledMenuItemLabel';
 import DashboardSettings from '../../DashboardSettings';
@@ -45,6 +42,7 @@ import SectionTitleModal from '../../PanelsAndSectionsLayout/Section/SectionTitl
 import JsonEditorDrawer from '../JsonEditorDrawer/JsonEditorDrawer';
 import SettingsDrawer from '../SettingsDrawer';
 import styles from './DashboardActions.module.scss';
+import { useDeleteDashboardAction } from './useDeleteDashboardAction';
 import { DASHBOARD_LOCKED_REASON } from '../../hooks/useDashboardEditGuard';
 import { useDashboardStore } from '../../store/useDashboardStore';
 
@@ -84,8 +82,12 @@ function DashboardActions({
 	const [isCloning, setIsCloning] = useState<boolean>(false);
 	const [isNewSectionOpen, setIsNewSectionOpen] = useState<boolean>(false);
 
-	const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
-	const deleteDashboardMutation = useDeleteDashboard(dashboard.id);
+	const { contextHolder: deleteConfirmHolder, confirmDeleteDashboard } =
+		useDeleteDashboardAction({
+			dashboardId: dashboard.id,
+			dashboardName: title,
+			panelCount: Object.keys(dashboard.spec.panels).length,
+		});
 
 	// Open the settings drawer when something in the tree requests it (e.g. the
 	// variables bar's "Add variable" button).
@@ -131,19 +133,6 @@ function DashboardActions({
 			setIsCloning(false);
 		}
 	}, [dashboard.id, title, safeNavigate, showErrorModal]);
-
-	const handleConfirmDelete = useCallback((): void => {
-		deleteDashboardMutation.mutate(undefined, {
-			onSuccess: () => {
-				void logEvent(DashboardDetailEvents.Deleted, {
-					dashboardId: dashboard.id,
-					panelCount: Object.keys(dashboard.spec.panels).length,
-				});
-				setIsDeleteOpen(false);
-				history.replace(ROUTES.ALL_DASHBOARD);
-			},
-		});
-	}, [deleteDashboardMutation, dashboard.id, dashboard.spec.panels]);
 
 	const handleOpenSettings = useCallback((): void => {
 		void logEvent(DashboardDetailEvents.SettingsOpened, {
@@ -248,7 +237,7 @@ function DashboardActions({
 					icon: <Trash2 size={14} />,
 					danger: true,
 					disabled: isLocked,
-					onClick: (): void => setIsDeleteOpen(true),
+					onClick: confirmDeleteDashboard,
 				},
 			);
 		}
@@ -266,6 +255,7 @@ function DashboardActions({
 		handleClone,
 		onLockToggle,
 		handleEnterFullScreen,
+		confirmDeleteDashboard,
 	]);
 
 	return (
@@ -348,14 +338,7 @@ function DashboardActions({
 				isOpen={isJsonEditorOpen}
 				onClose={(): void => setIsJsonEditorOpen(false)}
 			/>
-			<ConfirmDeleteDialog
-				open={isDeleteOpen}
-				title={`Delete dashboard"?`}
-				description={`Are you sure you want to delete this dashboard - "${title}"? This action cannot be undone.`}
-				isLoading={deleteDashboardMutation.isLoading}
-				onConfirm={handleConfirmDelete}
-				onClose={(): void => setIsDeleteOpen(false)}
-			/>
+			{deleteConfirmHolder}
 			<SectionTitleModal
 				open={isNewSectionOpen}
 				heading="New section"

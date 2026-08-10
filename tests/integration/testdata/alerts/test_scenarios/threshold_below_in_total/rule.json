@@ -9,8 +9,8 @@
         {
           "name": "critical",
           "target": 10,
-          "matchType": "4",
-          "op": "2",
+          "matchType": "in_total",
+          "op": "below",
           "channels": [
             "test channel"
           ]

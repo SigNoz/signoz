@@ -80,7 +80,7 @@ function InviteMembers({
 							weight="semibold"
 							className={styles.headerCellRole}
 						>
-							Role
+							Roles
 						</Typography.Text>
 						<div className={styles.headerCellAction} />
 					</div>
@@ -108,11 +108,10 @@ function InviteMembers({
 
 							<div className={styles.cellRole}>
 								<RolesSelect
-									mode="single"
-									value={row.roleId || undefined}
-									onChange={(roleId): void => updateRole(row.id, roleId)}
-									placeholder="Select role"
-									allowClear={false}
+									mode="multiple"
+									value={row.roleIds}
+									onChange={(roleIds): void => updateRole(row.id, roleIds)}
+									placeholder="Select roles"
 									id={`invite-role-${row.id}`}
 								/>
 							</div>

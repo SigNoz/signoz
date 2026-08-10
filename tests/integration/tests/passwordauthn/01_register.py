@@ -20,11 +20,6 @@ logger = setup_logger(__name__)
 
 
 def test_register_with_invalid_input(signoz: types.SigNoz) -> None:
-    """
-    Test the register endpoint with invalid input.
-    1. Invalid Password
-    2. Invalid Email
-    """
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/register"),
         json={
@@ -146,7 +141,7 @@ def test_revoke_invite(signoz: types.SigNoz, get_token: Callable[[str, str], str
 
     # Delete the pending invite user (revoke the invite)
     response = requests.delete(
-        signoz.self.host_configs["8080"].get(f"/api/v1/user/{invited_user['id']}"),
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{invited_user['id']}"),
         timeout=2,
         headers={"Authorization": f"Bearer {admin_token}"},
     )

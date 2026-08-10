@@ -89,6 +89,7 @@ export function useFetchedVariableOptions(
 			enabled: variable.type === 'QUERY' && canFetch,
 			refetchOnWindowFocus: false,
 			cacheTime,
+			keepPreviousData: true,
 			onSettled: (_, error) =>
 				error
 					? onVariableFetchFailure(variable.name)
@@ -124,6 +125,7 @@ export function useFetchedVariableOptions(
 				variable.type === 'DYNAMIC' && !!variable.dynamicAttribute && canFetch,
 			refetchOnWindowFocus: false,
 			cacheTime,
+			keepPreviousData: true,
 			onSettled: (_, error) =>
 				error
 					? onVariableFetchFailure(variable.name)

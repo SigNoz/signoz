@@ -13,6 +13,7 @@ import { toAPIError } from 'utils/errorUtils';
 import { dashboardToUpdatable } from './dashboardToUpdatable';
 import { findPanelLayoutIssues } from './danglingPanels';
 import { compactSpecLayouts } from '../../layoutCompaction';
+import { isValidDashboardImage } from '../../dashboardIcons';
 import { useDashboardStore } from '../../store/useDashboardStore';
 
 export interface JsonValidity {
@@ -108,9 +109,9 @@ export function useJsonEditor({
 
 	const validity = useMemo<JsonValidity>(() => {
 		const lineCount = draft.split('\n').length;
+		let parsed: { image?: unknown };
 		try {
-			JSON.parse(draft);
-			return { valid: true, lineCount };
+			parsed = JSON.parse(draft);
 		} catch (error) {
 			const message = error instanceof Error ? error.message : 'Invalid JSON';
 			return {
@@ -120,6 +121,21 @@ export function useJsonEditor({
 				message,
 			};
 		}
+		// `image` only renders for a system icon / logo path or a base64 image, so
+		// reject anything else (URLs, markup, …) at save rather than persist it.
+		const { image } = parsed;
+		if (
+			image !== undefined &&
+			(typeof image !== 'string' || !isValidDashboardImage(image))
+		) {
+			return {
+				valid: false,
+				lineCount,
+				message:
+					'"image" must be an /assets/Icons/<name> or /assets/Logos/<name> path, or a base64 image data URI',
+			};
+		}
+		return { valid: true, lineCount };
 	}, [draft]);
 
 	const isDirty = draft !== appliedText;

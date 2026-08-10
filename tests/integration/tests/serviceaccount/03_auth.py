@@ -25,7 +25,7 @@ def test_service_account_key_auth_on_dashboards(
     _, api_key = create_service_account_with_key(signoz, token, "sa-dashboard-test")
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
+        signoz.self.host_configs["8080"].get("/api/v2/dashboards"),
         headers={"SIGNOZ-API-KEY": api_key},
         timeout=5,
     )
@@ -90,11 +90,12 @@ def test_service_account_role_access_admin(
 
     # EditAccess: create a dashboard
     resp = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
+        signoz.self.host_configs["8080"].get("/api/v2/dashboards"),
         json={
-            "title": "admin-sa-dash",
-            "uploadedGrafana": False,
-            "version": "v4",
+            "schemaVersion": "v6",
+            "name": "admin-sa-dash",
+            "spec": {"variables": [], "panels": {}, "layouts": [], "display": {"name": "admin-sa-dash"}, "links": []},
+            "tags": [],
         },
         headers={"SIGNOZ-API-KEY": api_key},
         timeout=5,
@@ -103,7 +104,7 @@ def test_service_account_role_access_admin(
 
     # ViewAccess: list dashboards
     resp = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
+        signoz.self.host_configs["8080"].get("/api/v2/dashboards"),
         headers={"SIGNOZ-API-KEY": api_key},
         timeout=5,
     )
@@ -129,11 +130,12 @@ def test_service_account_role_access_editor(
 
     # EditAccess: create a dashboard
     resp = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
+        signoz.self.host_configs["8080"].get("/api/v2/dashboards"),
         json={
-            "title": "editor-sa-dash",
-            "uploadedGrafana": False,
-            "version": "v4",
+            "schemaVersion": "v6",
+            "name": "editor-sa-dash",
+            "spec": {"variables": [], "panels": {}, "layouts": [], "display": {"name": "editor-sa-dash"}, "links": []},
+            "tags": [],
         },
         headers={"SIGNOZ-API-KEY": api_key},
         timeout=5,
@@ -142,7 +144,7 @@ def test_service_account_role_access_editor(
 
     # ViewAccess: list dashboards
     resp = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
+        signoz.self.host_configs["8080"].get("/api/v2/dashboards"),
         headers={"SIGNOZ-API-KEY": api_key},
         timeout=5,
     )
@@ -168,11 +170,12 @@ def test_service_account_role_access_viewer(
 
     # EditAccess: should be forbidden
     resp = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
+        signoz.self.host_configs["8080"].get("/api/v2/dashboards"),
         json={
-            "title": "viewer-sa-dash",
-            "uploadedGrafana": False,
-            "version": "v4",
+            "schemaVersion": "v6",
+            "name": "viewer-sa-dash",
+            "spec": {"variables": [], "panels": {}, "layouts": [], "display": {"name": "viewer-sa-dash"}, "links": []},
+            "tags": [],
         },
         headers={"SIGNOZ-API-KEY": api_key},
         timeout=5,
@@ -181,7 +184,7 @@ def test_service_account_role_access_viewer(
 
     # ViewAccess: list dashboards
     resp = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
+        signoz.self.host_configs["8080"].get("/api/v2/dashboards"),
         headers={"SIGNOZ-API-KEY": api_key},
         timeout=5,
     )
@@ -199,7 +202,7 @@ def test_service_account_key_deleted_account_rejected(
 
     # verify the key works before deleting
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
+        signoz.self.host_configs["8080"].get("/api/v2/dashboards"),
         headers={"SIGNOZ-API-KEY": api_key},
         timeout=5,
     )
@@ -210,7 +213,7 @@ def test_service_account_key_deleted_account_rejected(
 
     # now the key should be rejected
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
+        signoz.self.host_configs["8080"].get("/api/v2/dashboards"),
         headers={"SIGNOZ-API-KEY": api_key},
         timeout=5,
     )
@@ -229,7 +232,7 @@ def test_service_account_key_revoked_key_rejected(
 
     # verify the key works first
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
+        signoz.self.host_configs["8080"].get("/api/v2/dashboards"),
         headers={"SIGNOZ-API-KEY": api_key},
         timeout=5,
     )
@@ -253,7 +256,7 @@ def test_service_account_key_revoked_key_rejected(
 
     # now the key should be rejected
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
+        signoz.self.host_configs["8080"].get("/api/v2/dashboards"),
         headers={"SIGNOZ-API-KEY": api_key},
         timeout=5,
     )

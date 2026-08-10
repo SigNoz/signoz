@@ -109,6 +109,21 @@ export const prioritizeOrAddOptionForMultiSelect = (
 	return [...flatOutSelectedOptions, ...filteredOptions];
 };
 
+export const findOptionLabelText = (
+	options: OptionData[],
+	value: string,
+): string => {
+	const match = options
+		.flatMap((option) =>
+			'options' in option && Array.isArray(option.options)
+				? option.options
+				: [option],
+		)
+		.find((option) => option.value === value);
+
+	return typeof match?.label === 'string' ? match.label : value;
+};
+
 /**
  * Filters options based on search text
  */

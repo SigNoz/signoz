@@ -42,11 +42,18 @@ export interface IQuickFiltersConfig {
 	defaultOpen: boolean;
 }
 
+export interface QuickFilterChangeEventData {
+	filterKey: string;
+	expression: string;
+	filterItemKeys: string[];
+}
+
 export interface IQuickFiltersProps {
 	config: IQuickFiltersConfig[];
 	handleFilterVisibilityChange: () => void;
 	source: QuickFiltersSource;
 	onFilterChange?: (query: Query) => void;
+	onQuickFilterChange?: (data: QuickFilterChangeEventData) => void;
 	signal?: SignalType;
 	className?: string;
 	showFilterCollapse?: boolean;

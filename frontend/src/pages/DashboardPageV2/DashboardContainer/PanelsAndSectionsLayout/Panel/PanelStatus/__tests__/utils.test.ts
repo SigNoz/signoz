@@ -51,7 +51,7 @@ describe('panelStatusFromError', () => {
 
 	it('falls back to the error message when there is no structured body', () => {
 		expect(panelStatusFromError(new Error('boom'))).toStrictEqual({
-			code: 'unknown_error',
+			code: 'UPSTREAM_UNAVAILABLE',
 			message: 'boom',
 			docsUrl: undefined,
 			messages: [],

@@ -30,6 +30,7 @@ interface BaseChartProps {
 	pinnedTooltipElement?: (clickData: ChartClickData) => React.ReactNode;
 	renderTooltipFooter?: (args: IRenderTooltipFooterArgs) => React.ReactNode;
 	customTooltip?: (props: TooltipRenderArgs) => React.ReactNode;
+	tooltipPortalRoot?: HTMLElement | null;
 	'data-testid'?: string;
 }
 interface UPlotBasedChartProps {

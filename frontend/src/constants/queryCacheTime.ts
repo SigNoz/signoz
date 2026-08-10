@@ -3,3 +3,7 @@ export const DASHBOARD_CACHE_TIME = 30_000;
 export const DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED = 0;
 
 export const FIELD_API_CACHE_TIME = 60_000;
+
+// intentionally lower since I only want to prevent refresh in background
+// after click in the row
+export const INFRA_MONITORING_DETAILS_CACHE_TIME = 1_000;

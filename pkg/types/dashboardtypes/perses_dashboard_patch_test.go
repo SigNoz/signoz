@@ -30,7 +30,7 @@ const basePostableJSON = `{
 				"spec": {
 					"name": "service",
 					"allowAllValue": true,
-					"allowMultiple": false,
+					"allowMultiple": true,
 					"plugin": {
 						"kind": "signoz/DynamicVariable",
 						"spec": {"name": "service.name", "signal": "metrics"}
@@ -152,10 +152,15 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 	})
 
 	t.Run("add metadata image", func(t *testing.T) {
-		out, err := decode(t, `[{"op": "add", "path": "/image", "value": "https://example.com/img.png"}]`).Apply(base)
+		out, err := decode(t, `[{"op": "add", "path": "/image", "value": "/assets/Icons/eight-ball"}]`).Apply(base)
 		require.NoError(t, err)
-		assert.Equal(t, "https://example.com/img.png", out.Image)
+		assert.Equal(t, "/assets/Icons/eight-ball", out.Image)
 		assert.Equal(t, SchemaVersion, out.SchemaVersion, "schemaVersion preserved")
+	})
+
+	t.Run("reject non-icon/logo image", func(t *testing.T) {
+		_, err := decode(t, `[{"op": "add", "path": "/image", "value": "https://example.com/img.png"}]`).Apply(base)
+		assert.Error(t, err, "a URL image must be rejected")
 	})
 
 	t.Run("replace display name", func(t *testing.T) {

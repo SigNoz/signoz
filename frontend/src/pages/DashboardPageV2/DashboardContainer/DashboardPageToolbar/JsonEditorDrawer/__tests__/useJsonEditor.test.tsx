@@ -34,7 +34,7 @@ const dashboard = {
 	id: 'dash-1',
 	name: 'My dashboard',
 	schemaVersion: 'v6',
-	image: 'icon.png',
+	image: '/assets/Icons/eight-ball',
 	tags: [{ key: 'env', value: 'prod' }],
 	spec: {
 		display: { name: 'My dashboard' },
@@ -77,7 +77,7 @@ describe('useJsonEditor', () => {
 		const parsed = JSON.parse(result.current.draft);
 		// Key order is intentional: spec, then tags, then image.
 		expect(Object.keys(parsed)).toStrictEqual(['spec', 'tags', 'image']);
-		expect(parsed.image).toBe('icon.png');
+		expect(parsed.image).toBe('/assets/Icons/eight-ball');
 		expect(parsed.id).toBeUndefined();
 		expect(parsed.name).toBeUndefined();
 		expect(parsed.schemaVersion).toBeUndefined();
@@ -167,7 +167,7 @@ describe('useJsonEditor', () => {
 				// preserved from the original dashboard (redacted from the editor)
 				name: 'My dashboard',
 				schemaVersion: 'v6',
-				image: 'icon.png',
+				image: '/assets/Icons/eight-ball',
 				// edited via the draft
 				spec: editedSpec,
 				tags: editedTags,

@@ -4,15 +4,6 @@
         "description": "Trying to cover as many concepts here as possible"
     },
     "duration": "1h",
-    "datasources": {
-        "SigNozDatasource": {
-            "default": true,
-            "plugin": {
-                "kind": "signoz/Datasource",
-                "spec": {}
-            }
-        }
-    },
     "variables": [
         {
             "kind": "ListVariable",
@@ -22,7 +13,7 @@
                     "name": "serviceName"
                 },
                 "allowAllValue": true,
-                "allowMultiple": false,
+                "allowMultiple": true,
                 "sort": "none",
                 "plugin": {
                     "kind": "signoz/DynamicVariable",
