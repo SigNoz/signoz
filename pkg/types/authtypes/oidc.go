@@ -19,7 +19,7 @@ type OIDCConfig struct {
 	ClientID string `json:"clientId" required:"true"`
 
 	// It is the application's secret.
-	ClientSecret string `json:"clientSecret" required:"true"`
+	ClientSecret string `json:"clientSecret" required:"true" format:"password"`
 
 	// Mapping of claims to the corresponding fields in the token.
 	ClaimMapping AttributeMapping `json:"claimMapping"`

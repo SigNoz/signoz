@@ -40,10 +40,6 @@ func New(ctx context.Context, store authtypes.AuthNStore, licensing licensing.Li
 }
 
 func (a *AuthN) LoginURL(ctx context.Context, siteURL *url.URL, authDomain *authtypes.AuthDomain) (string, error) {
-	if authDomain.StorableAuthDomainConfig().AuthNProvider != authtypes.AuthNProviderSAML {
-		return "", errors.Newf(errors.TypeInternal, authtypes.ErrCodeAuthDomainMismatch, "saml: domain type is not saml")
-	}
-
 	sp, err := a.serviceProvider(siteURL, authDomain)
 	if err != nil {
 		return "", err
@@ -71,6 +67,11 @@ func (a *AuthN) HandleCallback(ctx context.Context, formValues url.Values) (*aut
 	_, err = a.licensing.GetActive(ctx, authDomain.StorableAuthDomain().OrgID)
 	if err != nil {
 		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
+	samlConfig, err := authDomain.Config().SamlConfig()
+	if err != nil {
+		return nil, err
 	}
 
 	sp, err := a.serviceProvider(state.URL, authDomain)
@@ -101,19 +102,19 @@ func (a *AuthN) HandleCallback(ctx context.Context, formValues url.Values) (*aut
 	}
 
 	name := ""
-	if nameAttribute := authDomain.StorableAuthDomainConfig().SAML.AttributeMapping.Name; nameAttribute != "" {
+	if nameAttribute := samlConfig.AttributeMapping.Name; nameAttribute != "" {
 		if val := assertionInfo.Values.Get(nameAttribute); val != "" {
 			name = val
 		}
 	}
 
 	var groups []string
-	if groupAttribute := authDomain.StorableAuthDomainConfig().SAML.AttributeMapping.Groups; groupAttribute != "" {
+	if groupAttribute := samlConfig.AttributeMapping.Groups; groupAttribute != "" {
 		groups = assertionInfo.Values.GetAll(groupAttribute)
 	}
 
 	role := ""
-	if roleAttribute := authDomain.StorableAuthDomainConfig().SAML.AttributeMapping.Role; roleAttribute != "" {
+	if roleAttribute := samlConfig.AttributeMapping.Role; roleAttribute != "" {
 		if val := assertionInfo.Values.Get(roleAttribute); val != "" {
 			role = val
 		}
@@ -131,7 +132,12 @@ func (a *AuthN) ProviderInfo(ctx context.Context, authDomain *authtypes.AuthDoma
 }
 
 func (a *AuthN) serviceProvider(siteURL *url.URL, authDomain *authtypes.AuthDomain) (*saml2.SAMLServiceProvider, error) {
-	certStore, err := a.getCertificateStore(authDomain)
+	samlConfig, err := authDomain.Config().SamlConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	certStore, err := a.getCertificateStore(samlConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -142,32 +148,32 @@ func (a *AuthN) serviceProvider(siteURL *url.URL, authDomain *authtypes.AuthDoma
 	// The ServiceProviderIssuer is the client id in case of keycloak. Since we set it to the host here, we need to set the client id == host in keycloak.
 	// For AWSSSO, this is the value of Application SAML audience.
 	return &saml2.SAMLServiceProvider{
-		IdentityProviderSSOURL:      authDomain.StorableAuthDomainConfig().SAML.Location,
-		IdentityProviderIssuer:      authDomain.StorableAuthDomainConfig().SAML.EntityID,
+		IdentityProviderSSOURL:      samlConfig.Location,
+		IdentityProviderIssuer:      samlConfig.EntityID,
 		ServiceProviderIssuer:       siteURL.Host,
 		AssertionConsumerServiceURL: acsURL.String(),
-		SignAuthnRequests:           !authDomain.StorableAuthDomainConfig().SAML.InsecureSkipAuthNRequestsSigned,
+		SignAuthnRequests:           !samlConfig.InsecureSkipAuthNRequestsSigned,
 		AllowMissingAttributes:      true,
 		IDPCertificateStore:         certStore,
 		SPKeyStore:                  dsig.RandomKeyStoreForTest(),
 	}, nil
 }
 
-func (a *AuthN) getCertificateStore(authDomain *authtypes.AuthDomain) (dsig.X509CertificateStore, error) {
+func (a *AuthN) getCertificateStore(samlConfig authtypes.SamlConfig) (dsig.X509CertificateStore, error) {
 	certStore := &dsig.MemoryX509CertificateStore{
 		Roots: []*x509.Certificate{},
 	}
 
 	var certBytes []byte
-	if strings.Contains(authDomain.StorableAuthDomainConfig().SAML.Certificate, "-----BEGIN CERTIFICATE-----") {
-		block, _ := pem.Decode([]byte(authDomain.StorableAuthDomainConfig().SAML.Certificate))
+	if strings.Contains(samlConfig.Certificate, "-----BEGIN CERTIFICATE-----") {
+		block, _ := pem.Decode([]byte(samlConfig.Certificate))
 		if block == nil {
 			return certStore, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "no valid pem cert found")
 		}
 
 		certBytes = block.Bytes
 	} else {
-		certData, err := base64.StdEncoding.DecodeString(authDomain.StorableAuthDomainConfig().SAML.Certificate)
+		certData, err := base64.StdEncoding.DecodeString(samlConfig.Certificate)
 		if err != nil {
 			return certStore, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to read certificate: %s", err.Error())
 		}

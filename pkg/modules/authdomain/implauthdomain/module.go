@@ -33,7 +33,7 @@ func (module *module) Get(ctx context.Context, id valuer.UUID) (*authtypes.AuthD
 }
 
 func (module *module) GetAuthNProviderInfo(ctx context.Context, domain *authtypes.AuthDomain) *authtypes.AuthNProviderInfo {
-	if callbackAuthN, ok := module.authNs[domain.StorableAuthDomainConfig().AuthNProvider].(authn.CallbackAuthN); ok {
+	if callbackAuthN, ok := module.authNs[domain.Kind()].(authn.CallbackAuthN); ok {
 		return callbackAuthN.ProviderInfo(ctx, domain)
 	}
 	return &authtypes.AuthNProviderInfo{}
@@ -72,7 +72,7 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 	stats := make(map[string]any)
 
 	for _, domain := range domains {
-		key := "authdomain." + domain.StorableAuthDomainConfig().AuthNProvider.StringValue() + ".count"
+		key := "authdomain." + domain.Kind().StringValue() + ".count"
 		if value, ok := stats[key]; ok {
 			stats[key] = value.(int64) + 1
 		} else {
@@ -86,7 +86,7 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 }
 
 func (module *module) validateRoleMapping(ctx context.Context, domain *authtypes.AuthDomain) error {
-	roleNames := domain.StorableAuthDomainConfig().RoleMapping.RoleNames()
+	roleNames := domain.RoleMapping().RoleNames()
 	if len(roleNames) == 0 {
 		return nil
 	}

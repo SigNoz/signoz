@@ -59,11 +59,10 @@ func (a *AuthN) LoginURL(ctx context.Context, siteURL *url.URL, authDomain *auth
 		return "", err
 	}
 
-	if authDomain.StorableAuthDomainConfig().AuthNProvider != authtypes.AuthNProviderGoogle {
-		return "", errors.Newf(errors.TypeInternal, authtypes.ErrCodeAuthDomainMismatch, "domain type is not google")
+	oauth2Config, err := a.oauth2Config(siteURL, authDomain, oidcProvider)
+	if err != nil {
+		return "", err
 	}
-
-	oauth2Config := a.oauth2Config(siteURL, authDomain, oidcProvider)
 
 	return oauth2Config.AuthCodeURL(
 		authtypes.NewState(siteURL, authDomain.StorableAuthDomain().ID).URL.String(),
@@ -93,7 +92,16 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 		return nil, err
 	}
 
-	oauth2Config := a.oauth2Config(state.URL, authDomain, oidcProvider)
+	googleConfig, err := authDomain.Config().GoogleConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	oauth2Config, err := a.oauth2Config(state.URL, authDomain, oidcProvider)
+	if err != nil {
+		return nil, err
+	}
+
 	token, err := oauth2Config.Exchange(ctx, query.Get("code"))
 	if err != nil {
 		var retrieveError *oauth2.RetrieveError
@@ -111,7 +119,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "google: no id_token in token response")
 	}
 
-	verifier := oidcProvider.Verifier(&oidc.Config{ClientID: authDomain.StorableAuthDomainConfig().Google.ClientID})
+	verifier := oidcProvider.Verifier(&oidc.Config{ClientID: googleConfig.ClientID})
 	idToken, err := verifier.Verify(ctx, rawIDToken)
 	if err != nil {
 		a.settings.Logger().ErrorContext(ctx, "google: failed to verify token", errors.Attr(err))
@@ -135,7 +143,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 		return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: unexpected hd claim")
 	}
 
-	if !authDomain.StorableAuthDomainConfig().Google.InsecureSkipEmailVerified {
+	if !googleConfig.InsecureSkipEmailVerified {
 		if !claims.EmailVerified {
 			a.settings.Logger().ErrorContext(ctx, "google: email is not verified", slog.String("email", claims.Email))
 			return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: email is not verified")
@@ -148,14 +156,14 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 	}
 
 	var groups []string
-	if authDomain.StorableAuthDomainConfig().Google.FetchGroups {
-		groups, err = a.fetchGoogleWorkspaceGroups(ctx, claims.Email, authDomain.StorableAuthDomainConfig().Google)
+	if googleConfig.FetchGroups {
+		groups, err = a.fetchGoogleWorkspaceGroups(ctx, claims.Email, googleConfig)
 		if err != nil {
 			a.settings.Logger().ErrorContext(ctx, "google: could not fetch groups", errors.Attr(err))
 			return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "google: could not fetch groups").WithAdditional(err.Error())
 		}
 
-		allowedGroups := authDomain.StorableAuthDomainConfig().Google.AllowedGroups
+		allowedGroups := googleConfig.AllowedGroups
 		if len(allowedGroups) > 0 {
 			groups = filterGroups(groups, allowedGroups)
 			if len(groups) == 0 {
@@ -173,10 +181,15 @@ func (a *AuthN) ProviderInfo(ctx context.Context, authDomain *authtypes.AuthDoma
 	}
 }
 
-func (a *AuthN) oauth2Config(siteURL *url.URL, authDomain *authtypes.AuthDomain, provider *oidc.Provider) *oauth2.Config {
+func (a *AuthN) oauth2Config(siteURL *url.URL, authDomain *authtypes.AuthDomain, provider *oidc.Provider) (*oauth2.Config, error) {
+	googleConfig, err := authDomain.Config().GoogleConfig()
+	if err != nil {
+		return nil, err
+	}
+
 	return &oauth2.Config{
-		ClientID:     authDomain.StorableAuthDomainConfig().Google.ClientID,
-		ClientSecret: authDomain.StorableAuthDomainConfig().Google.ClientSecret,
+		ClientID:     googleConfig.ClientID,
+		ClientSecret: googleConfig.ClientSecret,
 		Endpoint:     provider.Endpoint(),
 		Scopes:       scopes,
 		RedirectURL: (&url.URL{
@@ -184,10 +197,10 @@ func (a *AuthN) oauth2Config(siteURL *url.URL, authDomain *authtypes.AuthDomain,
 			Host:   siteURL.Host,
 			Path:   path.Join(a.globalConfig.ExternalPath(), redirectPath),
 		}).String(),
-	}
+	}, nil
 }
 
-func (a *AuthN) fetchGoogleWorkspaceGroups(ctx context.Context, userEmail string, config *authtypes.GoogleConfig) ([]string, error) {
+func (a *AuthN) fetchGoogleWorkspaceGroups(ctx context.Context, userEmail string, config authtypes.GoogleConfig) ([]string, error) {
 	adminEmail := config.GetAdminEmailForDomain(userEmail)
 	if adminEmail == "" {
 		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "no admin email configured for domain of %s", userEmail)

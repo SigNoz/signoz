@@ -42,6 +42,7 @@ type Handler interface {
 	Get(http.ResponseWriter, *http.Request)
 	Create(http.ResponseWriter, *http.Request)
 	Update(http.ResponseWriter, *http.Request)
+	Patch(http.ResponseWriter, *http.Request)
 	Delete(http.ResponseWriter, *http.Request)
 }
 

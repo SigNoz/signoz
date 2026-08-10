@@ -26,7 +26,7 @@ func (getter *getter) OnBeforeRoleDelete(ctx context.Context, orgID valuer.UUID,
 
 	referencedBy := make([]string, 0)
 	for _, domain := range domains {
-		for _, mappedRole := range domain.StorableAuthDomainConfig().RoleMapping.RoleNames() {
+		for _, mappedRole := range domain.RoleMapping().RoleNames() {
 			if mappedRole == roleName {
 				referencedBy = append(referencedBy, domain.StorableAuthDomain().Name)
 				break

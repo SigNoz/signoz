@@ -99,13 +99,7 @@ func (handler *handler) Get(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	gettableAuthDomain, err := authtypes.NewGettableAuthDomainFromAuthDomain(authDomain, handler.module.GetAuthNProviderInfo(ctx, authDomain))
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	render.Success(rw, http.StatusOK, gettableAuthDomain)
+	render.Success(rw, http.StatusOK, authtypes.NewGettableAuthDomainFromAuthDomain(authDomain, handler.module.GetAuthNProviderInfo(ctx, authDomain)))
 }
 
 func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
@@ -126,13 +120,7 @@ func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
 
 	authDomains := make([]*authtypes.GettableAuthDomain, len(domains))
 	for i, domain := range domains {
-		gettableAuthDomain, err := authtypes.NewGettableAuthDomainFromAuthDomain(domain, handler.module.GetAuthNProviderInfo(ctx, domain))
-		if err != nil {
-			render.Error(rw, err)
-			return
-		}
-
-		authDomains[i] = gettableAuthDomain
+		authDomains[i] = authtypes.NewGettableAuthDomainFromAuthDomain(domain, handler.module.GetAuthNProviderInfo(ctx, domain))
 	}
 
 	render.Success(rw, http.StatusOK, authDomains)
@@ -167,6 +155,48 @@ func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	err = authDomain.Update(body)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	if err := handler.module.Update(ctx, authDomain); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusNoContent, nil)
+}
+
+func (handler *handler) Patch(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	domainID, err := valuer.NewUUID(mux.Vars(r)["id"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	body := new(authtypes.PatchableAuthDomain)
+	if err := binding.JSON.BindBody(r.Body, body); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	authDomain, err := handler.module.GetByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), domainID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	err = authDomain.Patch(body)
 	if err != nil {
 		render.Error(rw, err)
 		return

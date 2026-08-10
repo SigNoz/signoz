@@ -25,17 +25,6 @@ type SamlConfig struct {
 	AttributeMapping AttributeMapping `json:"attributeMapping"`
 }
 
-// StorableSamlConfig is SamlConfig in its persisted shape. It differs from SamlConfig
-// only in JSON keys, which are kept for compatibility with rows written before the
-// keys were renamed.
-type StorableSamlConfig struct {
-	EntityID                        string           `json:"samlEntity"`
-	Location                        string           `json:"samlIdp"`
-	Certificate                     string           `json:"samlCert"`
-	InsecureSkipAuthNRequestsSigned bool             `json:"insecureSkipAuthNRequestsSigned"`
-	AttributeMapping                AttributeMapping `json:"attributeMapping"`
-}
-
 func (config *SamlConfig) UnmarshalJSON(data []byte) error {
 	type Alias SamlConfig
 
@@ -50,23 +39,6 @@ func (config *SamlConfig) UnmarshalJSON(data []byte) error {
 	}
 
 	*config = samlConfig
-	return nil
-}
-
-func (config *StorableSamlConfig) UnmarshalJSON(data []byte) error {
-	type Alias StorableSamlConfig
-
-	var temp Alias
-	if err := json.Unmarshal(data, &temp); err != nil {
-		return err
-	}
-
-	samlConfig := SamlConfig(StorableSamlConfig(temp))
-	if err := samlConfig.validate(); err != nil {
-		return err
-	}
-
-	*config = StorableSamlConfig(samlConfig)
 	return nil
 }
 

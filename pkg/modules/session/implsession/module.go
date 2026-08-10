@@ -152,7 +152,7 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 		return "", err
 	}
 
-	roleMapping := authDomain.StorableAuthDomainConfig().RoleMapping
+	roleMapping := authDomain.RoleMapping()
 
 	roleAttributeExists := false
 	if roleMapping != nil && roleMapping.UseRoleAttribute && callbackIdentity.Role != "" {
@@ -215,11 +215,11 @@ func (module *module) getOrgSessionContext(ctx context.Context, org *types.Organ
 		return authtypes.NewOrgSessionContext(org.ID, org.Name).AddPasswordAuthNSupport(authtypes.AuthNProviderEmailPassword), nil
 	}
 
-	if !authDomain.StorableAuthDomainConfig().SSOEnabled {
+	if !authDomain.Enabled() {
 		return authtypes.NewOrgSessionContext(org.ID, org.Name).AddPasswordAuthNSupport(authtypes.AuthNProviderEmailPassword), nil
 	}
 
-	provider, err := getProvider[authn.CallbackAuthN](authDomain.StorableAuthDomainConfig().AuthNProvider, module.authNs)
+	provider, err := getProvider[authn.CallbackAuthN](authDomain.Kind(), module.authNs)
 	if err != nil {
 		return nil, err
 	}
@@ -233,7 +233,7 @@ func (module *module) getOrgSessionContext(ctx context.Context, org *types.Organ
 		return nil, err
 	}
 
-	return authtypes.NewOrgSessionContext(org.ID, org.Name).AddCallbackAuthNSupport(authDomain.StorableAuthDomainConfig().AuthNProvider, loginURL), nil
+	return authtypes.NewOrgSessionContext(org.ID, org.Name).AddCallbackAuthNSupport(authDomain.Kind(), loginURL), nil
 }
 
 func getProvider[T authn.AuthN](authNProvider authtypes.AuthNProvider, authNs map[authtypes.AuthNProvider]authn.AuthN) (T, error) {
