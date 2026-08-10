@@ -19,6 +19,8 @@ dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.34",
     "py>=1.11",
+    "cryptography>=50.0.0",
+    "jwcrypto>=1.5.8",
 ]
 
 [dependency-groups]

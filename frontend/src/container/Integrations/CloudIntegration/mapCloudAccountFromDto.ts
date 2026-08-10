@@ -47,3 +47,27 @@ export function mapAccountDtoToAzureCloudAccount(
 		providerAccountId: account.providerAccountId,
 	};
 }
+
+export function mapAccountDtoToGcpCloudAccount(
+	account: CloudintegrationtypesAccountDTO,
+): IntegrationCloudAccount | null {
+	if (!account.providerAccountId) {
+		return null;
+	}
+
+	return {
+		id: account.id,
+		cloud_account_id: account.id,
+		config: {
+			deployment_region: account.config?.gcp?.deploymentRegion ?? '',
+			deployment_project_id: account.config?.gcp?.deploymentProjectId ?? '',
+			project_ids: account.config?.gcp?.projectIds ?? [],
+		},
+		status: {
+			integration: {
+				last_heartbeat_ts_ms: account.agentReport?.timestampMillis ?? 0,
+			},
+		},
+		providerAccountId: account.providerAccountId,
+	};
+}
