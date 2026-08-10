@@ -1,5 +1,8 @@
 import { useCallback, useMemo } from 'react';
-import type { AuthtypesGettableRoleDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	AuthtypesGettableRoleDTO,
+	AuthtypesUserRoleDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import {
 	useCreateUserRole,
 	useDeleteUserRole,
@@ -10,6 +13,9 @@ import { retryOn429 } from 'utils/errorUtils';
 const enum PromiseStatus {
 	Rejected = 'rejected',
 }
+
+// Stable identity so the memos below do not recompute on every render.
+const EMPTY_USER_ROLES: AuthtypesUserRoleDTO[] = [];
 
 export interface MemberRoleUpdateFailure {
 	roleName: string;
@@ -35,10 +41,7 @@ export function useMemberRoleManager(
 		{ query: { enabled: !!userId && enabled } },
 	);
 
-	const userRoles = useMemo(
-		() => data?.data?.userRoles ?? [],
-		[data?.data?.userRoles],
-	);
+	const userRoles = data?.data?.userRoles ?? EMPTY_USER_ROLES;
 
 	const currentRoles = useMemo<AuthtypesGettableRoleDTO[]>(
 		() => userRoles.map((userRole) => userRole.role),
