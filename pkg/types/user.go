@@ -170,7 +170,7 @@ func (u *User) UpdateEmail(email valuer.Email) {
 // enrich the error with the specific operation using errors.WithAdditionalf.
 func (u *User) ErrIfRoot() error {
 	if u.IsRoot {
-		return errors.New(errors.TypeUnsupported, ErrCodeRootUserOperationUnsupported, "this operation is not supported for the root user")
+		return errors.New(errors.TypeInvalidInput, ErrCodeRootUserOperationUnsupported, "this operation is not supported for the root user")
 	}
 	return nil
 }
@@ -179,7 +179,7 @@ func (u *User) ErrIfRoot() error {
 // This error can be enriched with specific operation by the called using errors.WithAdditionalf.
 func (u *User) ErrIfDeleted() error {
 	if u.Status == UserStatusDeleted {
-		return errors.New(errors.TypeUnsupported, ErrCodeUserStatusDeleted, "unsupported operation for deleted user")
+		return errors.New(errors.TypeInvalidInput, ErrCodeUserStatusDeleted, "unsupported operation for deleted user")
 	}
 	return nil
 }
@@ -188,7 +188,7 @@ func (u *User) ErrIfDeleted() error {
 // This error can be enriched with specific operation by the called using errors.WithAdditionalf.
 func (u *User) ErrIfPending() error {
 	if u.Status == UserStatusPendingInvite {
-		return errors.New(errors.TypeUnsupported, ErrCodeUserStatusPendingInvite, "unsupported operation for pending user")
+		return errors.New(errors.TypeInvalidInput, ErrCodeUserStatusPendingInvite, "unsupported operation for pending user")
 	}
 	return nil
 }

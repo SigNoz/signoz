@@ -122,7 +122,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Response:            nil,
 		ResponseContentType: "",
 		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{},
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{{Name: authtypes.IdentNProviderTokenizer.StringValue()}},
 	})).Methods(http.MethodPut).GetError(); err != nil {
@@ -173,7 +173,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Response:            nil,
 		ResponseContentType: "",
 		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusNotFound},
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 	})).Methods(http.MethodDelete).GetError(); err != nil {
@@ -343,7 +343,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Response:            nil,
 		ResponseContentType: "",
 		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusNotFound},
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          true,
 		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 	})).Methods(http.MethodPost).GetError(); err != nil {
@@ -360,7 +360,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Response:            nil,
 		ResponseContentType: "",
 		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusNotFound},
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          true,
 		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 	})).Methods(http.MethodDelete).GetError(); err != nil {

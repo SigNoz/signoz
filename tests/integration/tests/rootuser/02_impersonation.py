@@ -55,3 +55,33 @@ def test_impersonated_user_is_admin(signoz: types.SigNoz) -> None:
     )
     assert root_detail.status_code == HTTPStatus.OK
     assert_user_has_role(root_detail.json()["data"], "signoz-admin")
+
+
+def test_mutating_root_user_is_rejected(signoz: types.SigNoz) -> None:
+    """
+    The root user is permanently protected, so mutating it is rejected with
+    400 and a machine readable code. ErrIfRoot runs before the self-delete
+    guard, so this holds even when the caller is the impersonated root
+    identity itself.
+    """
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/users"),
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.OK
+
+    root_user = next(
+        (u for u in response.json()["data"] if u.get("isRoot") is True),
+        None,
+    )
+    assert root_user is not None
+
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{root_user['id']}"),
+        timeout=2,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    error = response.json()["error"]
+    assert error["type"] == "invalid-input"
+    assert error["code"] == "root_user_operation_unsupported"
