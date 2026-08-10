@@ -18,16 +18,6 @@ import (
 // fragments plain text into word tokens while scanning for bare URLs.
 var parser = goldmark.New(goldmark.WithExtensions(extension.Strikethrough)).Parser()
 
-// Doc renders markdown into a complete ADF document. An empty input yields a
-// document with a single empty paragraph, since ADF requires non-empty content.
-func Doc(markdown string) map[string]any {
-	content := Render(markdown)
-	if len(content) == 0 {
-		content = []any{map[string]any{"type": "paragraph"}}
-	}
-	return map[string]any{"type": "doc", "version": 1, "content": content}
-}
-
 // Render returns the ADF block nodes for markdown (without the doc wrapper),
 // so callers can embed them alongside their own nodes (panels, links, …).
 func Render(markdown string) []any {

@@ -16,7 +16,7 @@ func toJSON(t *testing.T, v any) string {
 }
 
 func TestRenderInlineMarks(t *testing.T) {
-	js := toJSON(t, Doc("**bold** and *em* and `code` and [txt](https://x.io)"))
+	js := toJSON(t, Render("**bold** and *em* and `code` and [txt](https://x.io)"))
 	assert.Contains(t, js, `"type":"strong"`)
 	assert.Contains(t, js, `"type":"em"`)
 	assert.Contains(t, js, `"type":"code"`)
@@ -26,7 +26,7 @@ func TestRenderInlineMarks(t *testing.T) {
 }
 
 func TestRenderHeadingAndList(t *testing.T) {
-	js := toJSON(t, Doc("# Title\n\n- a\n- b"))
+	js := toJSON(t, Render("# Title\n\n- a\n- b"))
 	assert.Contains(t, js, `"type":"heading"`)
 	assert.Contains(t, js, `"level":1`)
 	assert.Contains(t, js, `"type":"bulletList"`)
@@ -34,27 +34,23 @@ func TestRenderHeadingAndList(t *testing.T) {
 }
 
 func TestRenderOrderedList(t *testing.T) {
-	js := toJSON(t, Doc("1. one\n2. two"))
+	js := toJSON(t, Render("1. one\n2. two"))
 	assert.Contains(t, js, `"type":"orderedList"`)
 }
 
 func TestRenderCodeBlock(t *testing.T) {
-	js := toJSON(t, Doc("```go\nx := 1\n```"))
+	js := toJSON(t, Render("```go\nx := 1\n```"))
 	assert.Contains(t, js, `"type":"codeBlock"`)
 	assert.Contains(t, js, `"language":"go"`)
 	assert.Contains(t, js, `x := 1`)
 }
 
 func TestRenderPlainText(t *testing.T) {
-	js := toJSON(t, Doc("just text"))
+	js := toJSON(t, Render("just text"))
 	assert.Contains(t, js, `"type":"paragraph"`)
 	assert.Contains(t, js, `"text":"just text"`)
 }
 
-func TestRenderEmptyIsValidDoc(t *testing.T) {
-	d := Doc("")
-	content, ok := d["content"].([]any)
-	require.True(t, ok)
-	require.Len(t, content, 1)
-	assert.Equal(t, "paragraph", content[0].(map[string]any)["type"])
+func TestRenderEmptyIsEmpty(t *testing.T) {
+	assert.Empty(t, Render(""))
 }

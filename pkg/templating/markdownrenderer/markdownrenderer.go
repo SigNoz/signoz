@@ -2,11 +2,9 @@ package markdownrenderer
 
 import (
 	"bytes"
-	"encoding/json"
 	"sync"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer/adf"
 	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer/blockkit"
 	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer/mrkdwn"
 	"github.com/yuin/goldmark"
@@ -53,15 +51,6 @@ func RenderSlackMrkdwn(markdown string) (string, error) {
 	md := mrkdwnPool.Get().(goldmark.Markdown)
 	defer mrkdwnPool.Put(md)
 	return render(md, markdown, "Slack mrkdwn")
-}
-
-// RenderJiraADF converts markdown to a Jira Atlassian Document Format JSON document.
-func RenderJiraADF(markdown string) (string, error) {
-	b, err := json.Marshal(adf.Doc(markdown))
-	if err != nil {
-		return "", errors.WrapInternalf(err, errors.CodeInternal, "failed to convert markdown to Jira ADF")
-	}
-	return string(b), nil
 }
 
 func render(md goldmark.Markdown, markdown string, format string) (string, error) {
