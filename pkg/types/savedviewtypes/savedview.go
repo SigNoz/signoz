@@ -88,18 +88,15 @@ func NewStorableSavedView(view *SavedView) *StorableSavedView {
 	}
 }
 
-// RequestType selects which query-validation rules apply (see SavedViewSpec.Validate);
-// it is not persisted and must not be added to SavedViewSpec.
 type PostableSavedView struct {
 	Name          string              `json:"name"`
 	GenerateName  bool                `json:"generateName"`
 	Source        Source              `json:"source" required:"true"`
 	SchemaVersion SchemaVersion       `json:"schemaVersion" required:"true"`
-	RequestType   qbtypes.RequestType `json:"requestType" required:"true"`
+	RequestType   qbtypes.RequestType `json:"requestType" required:"true"` // not a part of spec since it can be derived from panelType
 	Spec          SavedViewSpec       `json:"spec" required:"true"`
 }
 
-// RequestType has the same meaning as PostableSavedView.RequestType.
 type UpdatableSavedView struct {
 	Source        Source              `json:"source" required:"true"`
 	SchemaVersion SchemaVersion       `json:"schemaVersion" required:"true"`

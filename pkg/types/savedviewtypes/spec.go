@@ -81,9 +81,6 @@ func (s SchemaVersion) Validate() error {
 	return nil
 }
 
-// Validate validates Queries against the rules for requestType -- the shape
-// of result they must produce (e.g. a raw/list request must not carry an
-// aggregation, a scalar request must).
 func (s *SavedViewSpec) Validate(requestType qbtypes.RequestType) error {
 	if s.DisplayName == "" {
 		return errors.NewInvalidInputf(ErrCodeSavedViewInvalidInput, "displayName is required")
@@ -95,8 +92,7 @@ func (s *SavedViewSpec) Validate(requestType qbtypes.RequestType) error {
 	return (&qbtypes.CompositeQuery{Queries: s.Queries}).Validate(qbtypes.GetValidationOptions(requestType)...)
 }
 
-// LegacyRequestTypeForPanelType exists only for the v1 legacy API, which has
-// no requestType concept of its own to send.
+// LegacyRequestTypeForPanelType exists only for the v1 legacy API.
 func LegacyRequestTypeForPanelType(p PanelType) qbtypes.RequestType {
 	switch p {
 	case PanelTypeList:
