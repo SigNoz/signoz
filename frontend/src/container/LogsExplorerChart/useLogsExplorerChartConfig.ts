@@ -12,7 +12,6 @@ import { useTimezone } from 'providers/Timezone';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { QueryData } from 'types/api/widgets/getQuery';
 import uPlot from 'uplot';
-import { v4 } from 'uuid';
 
 import { getColorsForSeverityLabels } from './utils';
 
@@ -57,7 +56,7 @@ export function useLogsExplorerChartConfig({
 
 	const config = useMemo(() => {
 		const builder = buildBaseConfig({
-			id: v4(),
+			id: 'logs-explorer-frequency-chart',
 			isDarkMode,
 			onDragSelect,
 			timezone,
