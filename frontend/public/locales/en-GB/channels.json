@@ -30,6 +30,8 @@
   "tooltip_jira_site": "Your Jira Cloud base URL, e.g. https://your-domain.atlassian.net. Only Jira Cloud is supported.",
   "jira_site_invalid": "Site URL must be an https URL on an atlassian.net domain",
   "jira_required_fields": "Site URL, email, API token, project and issue type are required",
+  "jira_service_account_tip": "Recommended: use a Jira service account so alerts aren't reported under a personal name and the channel keeps working when someone leaves.",
+  "jira_service_account_tip_link": "Learn how",
   "field_jira_email": "Email",
   "help_jira_email": "The Atlassian account email used for authentication.",
   "field_jira_api_token": "API token",

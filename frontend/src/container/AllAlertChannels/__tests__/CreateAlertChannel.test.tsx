@@ -560,6 +560,16 @@ describe('Create Alert Channel', () => {
 				expect(screen.getByTestId('jira-issue-type-textbox')).toHaveValue('Task');
 			});
 
+			it('Should show the service-account recommendation tip linking to the docs', () => {
+				expect(screen.getByTestId('jira-service-account-tip')).toBeInTheDocument();
+				expect(
+					screen.getByRole('link', { name: 'jira_service_account_tip_link' }),
+				).toHaveAttribute(
+					'href',
+					'https://signoz.io/docs/alerts-management/notification-channel/jira/#use-a-service-account-recommended',
+				);
+			});
+
 			it('Should display an error when the site is not an atlassian.net URL', async () => {
 				const user = userEvent.setup();
 				await fillRequired(user, 'https://example.com');

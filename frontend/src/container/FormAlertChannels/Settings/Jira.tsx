@@ -1,6 +1,7 @@
 import { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Collapse, Form, Input, Select } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 
 import { JiraChannel } from '../../CreateAlertChannels/config';
@@ -105,6 +106,22 @@ function JiraSettings({ setSelectedConfig }: JiraProps): JSX.Element {
 
 	return (
 		<>
+			<Typography.Text
+				color="muted"
+				size="sm"
+				testId="jira-service-account-tip"
+				style={{ display: 'block', marginBottom: 16 }}
+			>
+				{t('jira_service_account_tip')}{' '}
+				<Typography.Link
+					href="https://signoz.io/docs/alerts-management/notification-channel/jira/#use-a-service-account-recommended"
+					target="_blank"
+					rel="noopener noreferrer"
+				>
+					{t('jira_service_account_tip_link')}
+				</Typography.Link>
+			</Typography.Text>
+
 			<Form.Item
 				name="site"
 				label={t('field_jira_site')}
