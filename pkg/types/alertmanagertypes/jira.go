@@ -1,6 +1,7 @@
 package alertmanagertypes
 
 import (
+	"fmt"
 	"net/url"
 	"strings"
 	"time"
@@ -12,6 +13,14 @@ import (
 )
 
 const defaultJiraReopenDuration = model.Duration(3 * 24 * time.Hour)
+
+// Service accounts authenticate against the api.atlassian.com gateway (keyed by
+// cloud id) instead of the site host; they are identified by their email domain.
+const (
+	jiraCloudHostSuffix           = "atlassian.net"
+	jiraServiceAccountEmailDomain = "@serviceaccount.atlassian.com"
+	jiraGatewayBaseURL            = "https://api.atlassian.com/ex/jira/"
+)
 
 // Default templates for the issue title and body. The body is rendered to
 // markdown and then wrapped in the ADF status panel + deep-links by the notifier.
@@ -48,6 +57,8 @@ type JiraReceiverConfig struct {
 	WontFixResolution string                      `json:"wont_fix_resolution,omitempty" yaml:"wont_fix_resolution,omitempty"`
 	CustomFields      map[string]any              `json:"custom_fields,omitempty" yaml:"custom_fields,omitempty"`
 	HTTPConfig        *commoncfg.HTTPClientConfig `json:"http_config,omitempty" yaml:"http_config,omitempty"`
+	CloudID           string                      `json:"cloud_id,omitempty" yaml:"cloud_id,omitempty"` // CloudID is resolved from the site at save/test time for service accounts and
+	// then read on every notification; empty for personal API tokens.
 }
 
 func (c *JiraReceiverConfig) UnmarshalYAML(unmarshal func(any) error) error {
@@ -73,8 +84,8 @@ func (c *JiraReceiverConfig) UnmarshalYAML(unmarshal func(any) error) error {
 
 	site := strings.TrimRight(strings.TrimSpace(c.Site), "/")
 	u, err := url.Parse(site)
-	if site == "" || err != nil || u.Scheme != "https" || !strings.HasSuffix(strings.ToLower(u.Hostname()), "atlassian.net") {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "jira site must be a Jira Cloud URL (https://<site>.atlassian.net)")
+	if site == "" || err != nil || u.Scheme != "https" || !strings.HasSuffix(strings.ToLower(u.Hostname()), jiraCloudHostSuffix) {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("jira site must be a Jira Cloud URL (https://<site>.%s)", jiraCloudHostSuffix))
 	}
 	c.Site = site
 
@@ -90,7 +101,21 @@ func (c *JiraReceiverConfig) UnmarshalYAML(unmarshal func(any) error) error {
 	return nil
 }
 
-// APIBaseURL returns the Jira Cloud REST v3 base URL derived from Site.
+// IsServiceAccount reports whether the basic-auth user is an Atlassian service
+// account, identified by its email domain. Service accounts must go through the
+// api.atlassian.com gateway; personal API tokens use the site host directly.
+func (c *JiraReceiverConfig) IsServiceAccount() bool {
+	if c.HTTPConfig == nil || c.HTTPConfig.BasicAuth == nil {
+		return false
+	}
+	return strings.HasSuffix(strings.ToLower(c.HTTPConfig.BasicAuth.Username), jiraServiceAccountEmailDomain)
+}
+
+// APIBaseURL returns the Jira Cloud REST v3 base URL: the api.atlassian.com
+// gateway (keyed by cloud id) for service accounts, else the site host.
 func (c *JiraReceiverConfig) APIBaseURL() string {
-	return strings.TrimRight(c.Site, "/") + "/rest/api/3"
+	if c.CloudID != "" {
+		return fmt.Sprintf("%s%s/rest/api/3", jiraGatewayBaseURL, c.CloudID)
+	}
+	return fmt.Sprintf("%s/rest/api/3", strings.TrimRight(c.Site, "/"))
 }
