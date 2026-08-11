@@ -53,8 +53,6 @@ import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
 import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 
-import { FeatureKeys } from '../../../../constants/features';
-import { useAppContext } from '../../../../providers/App/App';
 import { selectStyle } from './config';
 import { PLACEHOLDER } from './constant';
 import ExampleQueriesRendererForLogs from './ExampleQueriesRendererForLogs';
@@ -104,11 +102,6 @@ function QueryBuilderSearch({
 
 	const [isEditingTag, setIsEditingTag] = useState(false);
 
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
-
 	const {
 		updateTag,
 		handleClearTag,
@@ -128,7 +121,6 @@ function QueryBuilderSearch({
 		exampleQueries,
 	} = useAutoComplete(
 		query,
-		dotMetricsEnabled,
 		whereClauseConfig,
 		isLogsExplorerPage,
 		isInfraMonitoring,
@@ -146,7 +138,6 @@ function QueryBuilderSearch({
 	const { sourceKeys, handleRemoveSourceKey } = useFetchKeysAndValues(
 		searchValue,
 		query,
-		dotMetricsEnabled,
 		searchKey,
 		isLogsExplorerPage,
 		isInfraMonitoring,
