@@ -1,4 +1,5 @@
 import { rest } from 'msw';
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 
 import commonEnTranslation from '../../public/locales/en/common.json';
 import enTranslation from '../../public/locales/en/translation.json';
@@ -271,4 +272,7 @@ export const handlers = [
 	rest.get('http://localhost/locales/en-US/common.json', (_, res, ctx) =>
 		res(ctx.status(200), ctx.json(commonEnTranslation)),
 	),
+	// Grant-all default so suites that don't care about permissions behave as they
+	// did before their page was authz-gated. Override per test with server.use().
+	setupAuthzAdmin(),
 ];
