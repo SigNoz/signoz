@@ -1,8 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
 import { colors } from 'lib/getRandomColor';
-import { QueryData } from 'types/api/widgets/getQuery';
-
-const DEFAULT_STEP_INTERVAL_SECONDS = 60;
 
 // Function to determine if a color is "red-like" based on its RGB values
 export function isRedLike(hex: string): boolean {
@@ -124,32 +121,4 @@ export function getColorsForSeverityLabels(
 		SAFE_FALLBACK_COLORS[index % SAFE_FALLBACK_COLORS.length] ||
 		Color.BG_VANILLA_400
 	);
-}
-
-/**
- * The logs frequency series carry no step interval metadata, so the bar width is
- * derived from the smallest gap between consecutive timestamps (in seconds).
- */
-export function getMinStepIntervalFromSeries(seriesList: QueryData[]): number {
-	const timestamps = new Set<number>();
-
-	seriesList.forEach((series) => {
-		series?.values?.forEach(([timestamp]) => {
-			timestamps.add(timestamp);
-		});
-	});
-
-	const sorted = Array.from(timestamps).sort((a, b) => a - b);
-
-	let minInterval = Number.POSITIVE_INFINITY;
-	for (let index = 1; index < sorted.length; index++) {
-		const gap = sorted[index] - sorted[index - 1];
-		if (gap > 0 && gap < minInterval) {
-			minInterval = gap;
-		}
-	}
-
-	return Number.isFinite(minInterval)
-		? minInterval
-		: DEFAULT_STEP_INTERVAL_SECONDS;
 }

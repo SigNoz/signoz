@@ -14,10 +14,7 @@ import { QueryData } from 'types/api/widgets/getQuery';
 import uPlot from 'uplot';
 import { v4 } from 'uuid';
 
-import {
-	getColorsForSeverityLabels,
-	getMinStepIntervalFromSeries,
-} from './utils';
+import { getColorsForSeverityLabels } from './utils';
 
 export interface UseLogsExplorerChartConfigParams {
 	data: QueryData[];
@@ -67,7 +64,6 @@ export function useLogsExplorerChartConfig({
 			minTimeScale,
 			maxTimeScale,
 			yAxisUnit,
-			stepInterval: getMinStepIntervalFromSeries(data),
 			panelType: PANEL_TYPES.BAR,
 		});
 

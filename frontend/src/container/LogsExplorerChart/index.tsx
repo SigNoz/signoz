@@ -89,7 +89,8 @@ function LogsExplorerChart({
 		onDragSelect,
 		minTimeScale,
 		maxTimeScale,
-		yAxisUnit: '{count}',
+		// Match the previous Chart.js Graph default (yAxisUnit = 'short')
+		yAxisUnit: 'short',
 	});
 
 	return (
@@ -100,7 +101,6 @@ function LogsExplorerChart({
 				</div>
 			) : (
 				<div style={{ zIndex: 1000 }}>
-					{/* The bars are log-line counts, so the y axis is the dimensionless UCUM count unit */}
 					<BarChart
 						config={config}
 						data={chartData}
@@ -111,7 +111,7 @@ function LogsExplorerChart({
 						legendConfig={{ position: LegendPosition.BOTTOM }}
 						timezone={timezone}
 						data-testid="logs-frequency-chart"
-						yAxisUnit={'{count}'}
+						yAxisUnit="short"
 					/>
 				</div>
 			)}
