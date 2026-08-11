@@ -14,7 +14,6 @@ const CM_EDITOR_SELECTOR = '.cm-editor .cm-content';
 const TOOLTIP_SELECTOR = '.cm-tooltip-autocomplete';
 const COMPLETION_LABEL_SELECTOR = '.cm-completionLabel';
 const DELETE_BUTTON_SELECTOR = '.cm-recent-delete';
-const PLACEHOLDER_SELECTOR = '.cm-placeholder';
 
 const POPUP_TIMEOUT = 8000;
 
@@ -40,15 +39,6 @@ jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
 	}),
 }));
 
-jest.mock('hooks/queryBuilder/useQueryBuilder', () => {
-	const handleRunQuery = jest.fn();
-	return {
-		__esModule: true,
-		useQueryBuilder: (): { handleRunQuery: () => void } => ({ handleRunQuery }),
-		handleRunQuery,
-	};
-});
-
 jest.mock('api/querySuggestions/getKeySuggestions', () => ({
 	getKeySuggestions: jest.fn().mockResolvedValue({
 		data: { data: { keys: {} } },
@@ -61,10 +51,10 @@ jest.mock('api/querySuggestions/getValueSuggestion', () => ({
 	}),
 }));
 
-function renderLogsSearch(): void {
+function renderLogsSearch(onChange: (value: string) => void = jest.fn()): void {
 	render(
 		<QuerySearch
-			onChange={jest.fn()}
+			onChange={onChange}
 			queryData={initialQueriesMap.logs.builder.queryData[0]}
 			dataSource={DataSource.LOGS}
 		/>,
@@ -91,9 +81,17 @@ function findCompletionOption(label: string): HTMLElement | undefined {
 	).find((node) => node.textContent === label);
 }
 
-function isCompletionOpen(): boolean {
+function getEditorView(): EditorView | null {
 	const root = document.querySelector<HTMLElement>(CM_ROOT_SELECTOR);
-	const view = root ? EditorView.findFromDOM(root) : null;
+	return root ? EditorView.findFromDOM(root) : null;
+}
+
+function getDocText(): string {
+	return getEditorView()?.state.doc.toString() ?? '';
+}
+
+function isCompletionOpen(): boolean {
+	const view = getEditorView();
 	return !!view && completionStatus(view.state) === 'active';
 }
 
@@ -111,10 +109,6 @@ async function focusEditor(): Promise<HTMLElement> {
 	return editor;
 }
 
-// The component opens the completion popup from its own timers, and a
-// late-resolving suggestion fetch can close it again with nothing left to
-// reopen it. Ctrl-Space is bound to startCompletion, so nudge it back open
-// between retries — in the browser the next keystroke does this for us.
 function waitForCompletionPopup<T>(
 	editor: HTMLElement,
 	assertion: () => T,
@@ -172,8 +166,6 @@ describe('QuerySearch recent searches', () => {
 			signal: 'traces',
 			filter: { expression: TRACES_FILTER },
 		});
-		// The logs entry anchors the negative assertion below: it proves the popup
-		// opened and rendered recents at all.
 		saveLogsRecent(FRONTEND_FILTER);
 
 		renderLogsSearch();
@@ -190,8 +182,6 @@ describe('QuerySearch recent searches', () => {
 	it('excludes a recent that exactly matches the current editor text', async () => {
 		const supersetFilter = `${FRONTEND_FILTER} AND ${STATUS_CODE_FILTER}`;
 		saveLogsRecent(FRONTEND_FILTER);
-		// Contains the typed text, so it survives the substring filter and anchors
-		// the popup while only the exact match drops out.
 		saveLogsRecent(supersetFilter);
 
 		renderLogsSearch();
@@ -209,18 +199,26 @@ describe('QuerySearch recent searches', () => {
 	it('applies the full expression to the editor when a recent is clicked', async () => {
 		saveLogsRecent(FRONTEND_FILTER);
 
-		renderLogsSearch();
+		const onChange = jest.fn();
+		renderLogsSearch(onChange);
 		const editor = await focusEditor();
 
-		await waitForCompletionPopup(editor, () => {
-			const option = findCompletionOption(FRONTEND_FILTER);
-			if (option && isCompletionOpen()) {
-				fireEvent.mouseDown(option);
-			}
-			expect(document.querySelector(CM_EDITOR_SELECTOR)?.textContent).toBe(
-				FRONTEND_FILTER,
-			);
+		const option = await waitForCompletionPopup(editor, () => {
+			const target = findCompletionOption(FRONTEND_FILTER);
+			expect(target).toBeDefined();
+			return target as HTMLElement;
 		});
+
+		await userEvent.click(option);
+
+		await waitFor(
+			() => {
+				expect(getDocText()).toBe(FRONTEND_FILTER);
+			},
+			{ timeout: POPUP_TIMEOUT },
+		);
+
+		expect(onChange).toHaveBeenCalledWith(FRONTEND_FILTER);
 
 		await waitFor(
 			() => {
@@ -270,8 +268,6 @@ describe('QuerySearch recent searches', () => {
 			},
 			{ timeout: POPUP_TIMEOUT },
 		);
-		// An empty editor still renders the placeholder, and its sample text
-		// mentions service.name — so assert on the placeholder, not editor text.
-		expect(document.querySelector(PLACEHOLDER_SELECTOR)).toBeInTheDocument();
+		expect(getDocText()).toBe('');
 	});
 });
