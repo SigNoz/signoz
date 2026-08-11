@@ -8579,6 +8579,11 @@ components:
       - values
       - complete
       type: object
+    TelemetrytypesQueryType:
+      enum:
+      - ""
+      - builder_ai_query
+      type: string
     TelemetrytypesSignal:
       enum:
       - traces
@@ -11023,7 +11028,7 @@ paths:
       - in: query
         name: type
         schema:
-          type: string
+          $ref: '#/components/schemas/TelemetrytypesQueryType'
       - in: query
         name: limit
         schema:
@@ -11116,7 +11121,7 @@ paths:
       - in: query
         name: type
         schema:
-          type: string
+          $ref: '#/components/schemas/TelemetrytypesQueryType'
       - in: query
         name: limit
         schema:
@@ -21322,7 +21327,7 @@ paths:
       - in: query
         name: type
         schema:
-          type: string
+          $ref: '#/components/schemas/TelemetrytypesQueryType'
       - in: query
         name: limit
         schema:
@@ -21427,7 +21432,7 @@ paths:
       - in: query
         name: type
         schema:
-          type: string
+          $ref: '#/components/schemas/TelemetrytypesQueryType'
       - in: query
         name: limit
         schema:

@@ -6,6 +6,7 @@ from typing import Any
 
 import numpy as np
 import pytest
+import requests
 
 from fixtures import types
 from fixtures.fingerprint import LogsOrTracesFingerprint
@@ -104,6 +105,15 @@ def insert_attributes_metadata_to_clickhouse(conn, rows: list[AttributesMetadata
 
 def truncate_attributes_metadata_table(conn, cluster: str) -> None:
     conn.query(f"TRUNCATE TABLE signoz_metadata.attributes_metadata ON CLUSTER '{cluster}' SYNC")
+
+
+def get_field_keys(signoz: types.SigNoz, token: str, params: dict) -> requests.Response:
+    return requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/fields/keys"),
+        timeout=5,
+        headers={"authorization": f"Bearer {token}"},
+        params=params,
+    )
 
 
 @pytest.fixture(name="insert_attributes_metadata", scope="function")

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"slices"
 	"strings"
 	"time"
 
@@ -159,13 +158,6 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
 		instrumentationtypes.CodeNamespace:    "metadata",
 		instrumentationtypes.CodeFunctionName: "getTracesKeys",
-	})
-
-	// The trace field context never matches ingested keys — it names the computed
-	// per-trace aggregates, which enrichWithAITraceAggregateKeys serves. Without this
-	// the tagType condition below has no branch for it and the scan returns every key.
-	fieldKeySelectors = slices.DeleteFunc(slices.Clone(fieldKeySelectors), func(s *telemetrytypes.FieldKeySelector) bool {
-		return s.FieldContext == telemetrytypes.FieldContextTrace
 	})
 
 	if len(fieldKeySelectors) == 0 {
@@ -1183,7 +1175,7 @@ func enrichWithAITraceAggregateKeys(keys map[string][]*telemetrytypes.TelemetryF
 	defs := aistatementbuilder.MetadataFieldKeys()
 	matched := make(map[string]*telemetrytypes.TelemetryFieldKey)
 	for _, selector := range selectors {
-		if selector.QueryType != qbtypes.QueryTypeBuilderAI.StringValue() {
+		if selector.QueryType != telemetrytypes.QueryTypeBuilderAI {
 			continue
 		}
 		if selector.Signal != telemetrytypes.SignalTraces && selector.Signal != telemetrytypes.SignalUnspecified {

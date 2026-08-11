@@ -9710,6 +9710,10 @@ export interface TelemetrytypesGettableFieldValuesDTO {
 	values: TelemetrytypesTelemetryFieldValuesDTO;
 }
 
+export enum TelemetrytypesQueryTypeDTO {
+	'' = '',
+	builder_ai_query = 'builder_ai_query',
+}
 export interface TypesChangePasswordRequestDTO {
 	/**
 	 * @type string
@@ -10427,10 +10431,9 @@ export type GetFieldsKeysParams = {
 	 */
 	source?: TelemetrytypesSourceDTO;
 	/**
-	 * @type string
 	 * @description undefined
 	 */
-	type?: string;
+	type?: TelemetrytypesQueryTypeDTO;
 	/**
 	 * @type integer
 	 * @description undefined
@@ -10491,10 +10494,9 @@ export type GetFieldsValuesParams = {
 	 */
 	source?: TelemetrytypesSourceDTO;
 	/**
-	 * @type string
 	 * @description undefined
 	 */
-	type?: string;
+	type?: TelemetrytypesQueryTypeDTO;
 	/**
 	 * @type integer
 	 * @description undefined
@@ -11803,10 +11805,9 @@ export type GetRuleHistoryFilterKeysParams = {
 	 */
 	source?: TelemetrytypesSourceDTO;
 	/**
-	 * @type string
 	 * @description undefined
 	 */
-	type?: string;
+	type?: TelemetrytypesQueryTypeDTO;
 	/**
 	 * @type integer
 	 * @description undefined
@@ -11870,10 +11871,9 @@ export type GetRuleHistoryFilterValuesParams = {
 	 */
 	source?: TelemetrytypesSourceDTO;
 	/**
-	 * @type string
 	 * @description undefined
 	 */
-	type?: string;
+	type?: TelemetrytypesQueryTypeDTO;
 	/**
 	 * @type integer
 	 * @description undefined

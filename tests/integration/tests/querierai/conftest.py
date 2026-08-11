@@ -15,11 +15,7 @@ def signoz_ai(
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
 ) -> types.SigNoz:
-    """
-    Package-scoped SigNoz with AI observability enabled: the metadata store surfaces
-    the gen_ai semconv keys and the trace-aggregate suggestion keys only behind this
-    flag, so the querierai suite runs against a flag-enabled instance.
-    """
+    # the gen_ai and per-trace aggregate keys are only surfaced behind this flag
     return create_signoz(
         network=network,
         zeus=zeus,
