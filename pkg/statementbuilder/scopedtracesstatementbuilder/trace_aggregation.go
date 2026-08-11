@@ -16,21 +16,9 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
-// Scalar / time-series for scoped-trace queries. The `trace.` prefix picks the
-// domain per expression: span-level (bare keys) delegates to the standard trace
-// builder with the gate ANDed in; trace-level aggregates window-clipped per-trace
-// values through the native pipeline (buildTraceAggregationQuery):
-//
-//	__qualified       traces whose whole-window aggregates satisfy the trace-level
-//	   │              filter part; present only when the filter has one.
-//	   ▼
-//	__scoped_traces   per-trace values: windowed, mask-pruned GROUP BY trace_id
-//	   │              (+ ts bucket for time series, + group-by columns). Columns
-//	   ▼              off a trace slice are NULL and skipped by outer aggregates.
-//	main              outer aggregation over the per-trace rows → __result_i.
-//
-// These per-trace values are window-clipped and span-filtered, unlike the list's
-// enrichment pass over every span of the whole trace, so a column reads differently in each.
+// The per-trace values these aggregations read are window-clipped and span-filtered,
+// unlike the list's enrichment pass over every span of the whole trace, so the same
+// column reads differently in each.
 
 // traceAggregation is one aggregation rewritten to run over the per-trace scan.
 type traceAggregation struct {
@@ -39,7 +27,8 @@ type traceAggregation struct {
 	isRate bool
 }
 
-// buildAggregation routes scalar/time-series requests by aggregation domain.
+// buildAggregation routes by aggregation domain: bare keys delegate to the standard
+// trace builder, trace.-prefixed aggregates run over the per-trace scan.
 func (b *scopedTraceStatementBuilder) buildAggregation(
 	ctx context.Context,
 	orgID valuer.UUID,
@@ -183,7 +172,6 @@ func (v *traceAggVisitor) parent() chparser.Expr {
 	return v.stack[len(v.stack)-2]
 }
 
-// enclosingCombinator returns the name of a surrounding *If-combinator function, if any.
 func (v *traceAggVisitor) enclosingCombinator() (string, bool) {
 	for _, e := range v.stack {
 		fn, ok := e.(*chparser.FunctionExpr)
@@ -256,7 +244,6 @@ func (v *traceAggVisitor) VisitIdent(i *chparser.Ident) error {
 	return nil
 }
 
-// acceptTraceColumn validates one trace-level column reference and records it.
 func (v *traceAggVisitor) acceptTraceColumn(ref, col string) error {
 	if name, in := v.enclosingCombinator(); in {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput,
@@ -328,10 +315,9 @@ func sortedAliases(set map[string]struct{}) []string {
 // Qualification + per-trace scan
 // ---------------------------------------------------------------------------
 
-// buildQualifiedStatement builds the delegate's __trace_scope: trace ids whose
-// window-clipped aggregates satisfy the trace-level filter, resource-pruned inline
-// (the caller embeds it standalone). start/end are ns; nil when every condition was
-// dropped by variable resolution.
+// buildQualifiedStatement selects the trace ids whose window-clipped aggregates satisfy
+// the trace-level filter, with the resource prune inlined since the caller embeds this
+// standalone. start/end are ns; nil when variable resolution dropped every condition.
 func (b *scopedTraceStatementBuilder) buildQualifiedStatement(
 	ctx context.Context,
 	orgID valuer.UUID,
@@ -395,7 +381,7 @@ func embedExpr(sb *sqlbuilder.SelectBuilder, expr string, args []any) (string, e
 	return out.String(), nil
 }
 
-// groupColumn is a resolved span-attribute group-by column (arg-free expression).
+// groupColumn holds a resolved, arg-free span-attribute expression.
 type groupColumn struct {
 	alias string
 	expr  string
@@ -431,8 +417,6 @@ type perTraceScanOpts struct {
 	havingPred   string              // resolved HAVING predicate over the selected aliases
 }
 
-// buildPerTraceScan renders the scan: window + gate mask (+ span filter, resource
-// prune, qualification), grouped by trace_id (+ ts bucket, group-by columns).
 func (b *scopedTraceStatementBuilder) buildPerTraceScan(sb *sqlbuilder.SelectBuilder, start, end uint64, resolved []resolvedColumn, maskExpr string, o perTraceScanOpts) (string, []any) {
 	startBucket := start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
 	endBucket := end / querybuilder.NsToSeconds
@@ -488,8 +472,8 @@ func (b *scopedTraceStatementBuilder) buildPerTraceScan(sb *sqlbuilder.SelectBui
 	return sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 }
 
-// resolveGroupColumns resolves span-attribute group-by keys through the field mapper
-// (metadata-aware), for selection inside the per-trace scan.
+// resolveGroupColumns resolves group-by keys through the field mapper, which needs the
+// metadata keys, for selection inside the per-trace scan.
 func (b *scopedTraceStatementBuilder) resolveGroupColumns(ctx context.Context, orgID valuer.UUID, start, end uint64, groupBy []qbtypes.GroupByKey) ([]groupColumn, error) {
 	if len(groupBy) == 0 {
 		return nil, nil
@@ -535,7 +519,6 @@ type scanContext struct {
 	warnURL  string
 }
 
-// newScanContext resolves everything a per-trace scan embeds against a fresh builder.
 func (b *scopedTraceStatementBuilder) newScanContext(
 	ctx context.Context,
 	orgID valuer.UUID,
@@ -566,8 +549,8 @@ func (b *scopedTraceStatementBuilder) newScanContext(
 	return sc, nil
 }
 
-// buildTraceAggregationQuery builds the native pipeline (see the file comment).
-// start/end are ns.
+// buildTraceAggregationQuery aggregates over the per-trace scan: __qualified (when the
+// filter has a trace-level part) → __scoped_traces → outer aggregation. start/end are ns.
 func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 	ctx context.Context,
 	orgID valuer.UUID,
@@ -759,9 +742,9 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 	}, nil
 }
 
-// rendered returns the outer aggregation SQL, dividing rate aggregations by the
-// interval (step for time series, window length for scalar); the divisor applies to the
-// whole expression, which holds only because a rate must be the sole aggregation.
+// rendered divides a rate aggregation by the interval (step for time series, window
+// length for scalar); the divisor applies to the whole expression, which holds only
+// because a rate must be the sole aggregation.
 func (ta traceAggregation) rendered(rateInterval uint64) string {
 	if ta.isRate {
 		return fmt.Sprintf("%s/%d", ta.expr, rateInterval)
@@ -769,8 +752,8 @@ func (ta traceAggregation) rendered(rateInterval uint64) string {
 	return ta.expr
 }
 
-// outerLimitSQL renders the top-N group selection for a grouped, limited time series:
-// outer aggregations over whole-window per-trace values, ranked and limited.
+// outerLimitSQL ranks groups on whole-window per-trace values, so a non-composable
+// aggregate (avg) ranks exactly rather than over bucketed rows.
 func outerLimitSQL(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], traceAggs []traceAggregation, groupNames []string, windowSeconds uint64) (string, []any) {
 	sb := sqlbuilder.NewSelectBuilder()
 	selects := append([]string{}, groupNames...)

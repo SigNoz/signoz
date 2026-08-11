@@ -16,9 +16,7 @@ def signoz_ai_observability(
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
 ) -> types.SigNoz:
-    """Package-scoped SigNoz with AI observability enabled: the flag gates the static
-    gen_ai key definitions (enrichWithGenAIKeys) — without it the gate keys only
-    resolve once a span carrying them has been ingested."""
+    # without the flag the gate keys only resolve once a span carrying them is ingested
     return create_signoz(
         network=network,
         zeus=zeus,

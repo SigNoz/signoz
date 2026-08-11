@@ -12,14 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Build tests for scalar / time-series through the gen_ai scope; the
-// rewriteTraceAggregation unit tests live in scopedtracesstatementbuilder.
-// The goldens build up one dimension at a time: base → span filter → trace filter
-// → group by → everything combined; then the time-series variants.
-
-// The empty base case never reaches the builder: request validation rejects a
-// scalar / time-series builder_ai_query with no aggregations, so the builder
-// assumes at least one (internal calls are validated upstream).
+// The builder assumes at least one aggregation; request validation is what enforces it.
 func TestBuild_Aggregation_NoAggregations_RejectedByRequestValidation(t *testing.T) {
 	for _, rt := range []qbtypes.RequestType{qbtypes.RequestTypeScalar, qbtypes.RequestTypeTimeSeries} {
 		req := qbtypes.QueryRangeRequest{
@@ -41,8 +34,7 @@ func TestBuild_Aggregation_NoAggregations_RejectedByRequestValidation(t *testing
 	}
 }
 
-// Base scalar over per-trace values: one window-clipped per-trace scan, outer avg
-// across traces. Traces without token spans yield NULL, which avg skips.
+// Traces without token spans yield NULL, which the outer avg skips.
 func TestBuild_FullSQL_Scalar_TraceAgg(t *testing.T) {
 	b := newTestBuilder(t)
 	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeScalar,
@@ -71,8 +63,7 @@ SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 `, stmt)
 }
 
-// Span-level filter: resolved through the standard filter pipeline and ANDed into
-// the per-trace scan's WHERE, next to the gate mask.
+// A span-level filter is ANDed into the per-trace scan's WHERE, next to the gate mask.
 func TestBuild_FullSQL_Scalar_SpanFilter(t *testing.T) {
 	b := newTestBuilder(t)
 	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeScalar,
@@ -103,8 +94,8 @@ SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 `, stmt)
 }
 
-// Trace-level filter: qualification first — __qualified selects the trace ids whose
-// whole-window value passes, then the per-trace scan is constrained to them.
+// A trace-level filter qualifies first: __qualified holds the trace ids whose
+// whole-window value passes, and the per-trace scan is constrained to them.
 func TestBuild_FullSQL_Scalar_TraceFilter(t *testing.T) {
 	b := newTestBuilder(t)
 	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeScalar,
@@ -147,9 +138,8 @@ SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 `, stmt)
 }
 
-// Group by a span attribute: selected (stringified) and grouped in the per-trace
-// scan, then grouped again in the outer aggregation. A trace spanning two models
-// contributes one per-trace row per model.
+// A group-by column is grouped in the per-trace scan too, so a trace spanning two
+// models contributes one per-trace row per model.
 func TestBuild_FullSQL_Scalar_GroupBy(t *testing.T) {
 	b := newTestBuilder(t)
 	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeScalar,
@@ -215,9 +205,7 @@ SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 `, stmt)
 }
 
-// Everything combined: span + trace filter parts split (WHERE + __qualified), group
-// by, two aggregations, HAVING on the alias (rewritten to __result_0), explicit
-// order and limit.
+// Every dimension at once; the HAVING on the alias is rewritten to __result_0.
 func TestBuild_FullSQL_Scalar_FullCombo(t *testing.T) {
 	b := newTestBuilder(t)
 	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeScalar,
@@ -303,12 +291,8 @@ SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 `, stmt)
 }
 
-// Grouped, limited time series: groups are ranked on whole-window per-trace values
-// (__scoped_traces_total, no ts bucketing → exact for non-composable aggregates like
-// avg), __limit_cte keeps the top-N by the requested order, and the bucketed main
-// scan is pruned to those groups before aggregating. The alias HAVING applies to the
-// outer aggregation; the aggregation order key ranks __limit_cte, the series
-// themselves order by ts.
+// A grouped, limited time series ranks groups on unbucketed whole-window values
+// (__scoped_traces_total), so a non-composable aggregate like avg ranks exactly.
 func TestBuild_FullSQL_TimeSeries_GroupLimit(t *testing.T) {
 	b := newTestBuilder(t)
 	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTimeSeries,
@@ -366,9 +350,8 @@ SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 `, stmt)
 }
 
-// Span-level scalar with a trace-level filter: delegated to the trace builder,
-// constrained by the __trace_scope qualification (the delegate's own scalar shape,
-// hence no SETTINGS suffix).
+// A span-level scalar delegates to the trace builder, constrained by __trace_scope;
+// the shape is the delegate's own, hence no SETTINGS suffix.
 func TestBuild_FullSQL_Scalar_SpanAgg_TraceScoped(t *testing.T) {
 	b := newTestBuilder(t)
 	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeScalar,
@@ -404,10 +387,8 @@ ORDER BY __result_0 DESC
 `, stmt)
 }
 
-// Grouped, limited time series with two group keys and a split filter: the top-N
-// prune is a 2-tuple GLOBAL IN, the qualification and span predicate apply to the
-// ranking scan and the main scan alike, and with no explicit order the ranking
-// defaults to __result_0 DESC.
+// Two group keys make the top-N prune a 2-tuple GLOBAL IN, and the qualification plus
+// span predicate apply to the ranking scan and the main scan alike.
 func TestBuild_FullSQL_TimeSeries_GroupLimit_MultiKey(t *testing.T) {
 	b := newTestBuilder(t)
 	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTimeSeries,
@@ -535,9 +516,8 @@ func TestBuild_Aggregation_OutputOnlyFilterRejected(t *testing.T) {
 	require.ErrorContains(t, err, `aggregate "span_count" cannot be used`)
 }
 
-// Trace-level columns are rejected as group-by keys with a targeted builder error;
-// order keys never reach the builder — request validation only admits group keys and
-// aggregation aliases/expressions — and ordering by the alias stays valid.
+// Trace-level columns are rejected as group-by keys; order keys never reach the builder,
+// since request validation only admits group keys and aggregation aliases/expressions.
 func TestBuild_Aggregation_GroupByOrderValidation(t *testing.T) {
 	b := newTestBuilder(t)
 	ctx := context.Background()
@@ -577,10 +557,8 @@ func TestBuild_Aggregation_GroupByOrderValidation(t *testing.T) {
 	require.NoError(t, err)
 }
 
-// Variables in trace-level conditions resolve through the standard pipeline as bound
-// args; a dynamic __all__ drops the condition entirely; an unresolved $var is only
-// rejected as an unknown aggregate today (a targeted variable error is a separate
-// concern).
+// Variables in trace-level conditions resolve as bound args; a dynamic __all__ drops the
+// condition, and an unresolved $var is rejected only as an unknown aggregate today.
 func TestBuild_FullSQL_Aggregation_VariablesInTraceFilter(t *testing.T) {
 	b := newTestBuilder(t)
 	ctx := context.Background()
@@ -735,9 +713,8 @@ SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 `, stmt)
 }
 
-// Resource conditions on the delegated path: the standalone __trace_scope inlines its
-// fingerprint subquery (it is built without the delegate's CTEs), while the delegate
-// keeps its own __resource_filter CTE and inline resource predicate.
+// On the delegated path __trace_scope inlines its fingerprint subquery, since it is built
+// without the delegate's CTEs, while the delegate keeps its own __resource_filter CTE.
 func TestBuild_FullSQL_Aggregation_ResourceFilter_Delegated(t *testing.T) {
 	b := newTestBuilder(t)
 	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeScalar,
@@ -783,9 +760,8 @@ ORDER BY __result_0 DESC
 `, stmt)
 }
 
-// rate() over a trace-level column divides by the window (scalar) / step (series).
-// Note the AggreFuncMap semantics: it counts per-trace rows per second — it does not
-// sum the column.
+// rate() divides by the window (scalar) / step (series). Per AggreFuncMap it counts
+// per-trace rows per second; it does not sum the column.
 func TestBuild_Aggregation_RateDividesByInterval(t *testing.T) {
 	b := newTestBuilder(t)
 	ctx := context.Background()

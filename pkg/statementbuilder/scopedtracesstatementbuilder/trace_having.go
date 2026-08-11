@@ -20,17 +20,15 @@ type traceHaving struct {
 	used map[string]struct{}
 }
 
-// resolveTraceHaving resolves a trace-level filter through the standard pipeline
-// (variable replacement, then PrepareWhereClause against the per-trace aliases), so
-// operators, bound args, and __all__ behave exactly as in span filters. Returns nil
-// when the expression is empty or every condition was dropped; args bind into sb.
+// resolveTraceHaving runs a trace-level filter through the standard where-clause
+// pipeline against the per-trace aliases, so operators, bound args, and __all__ behave
+// as in span filters. Returns nil when nothing is left to filter; args bind into sb.
 func (b *scopedTraceStatementBuilder) resolveTraceHaving(ctx context.Context, expr string, variables map[string]qbtypes.VariableItem, sb *sqlbuilder.SelectBuilder) (*traceHaving, error) {
 	if strings.TrimSpace(expr) == "" {
 		return nil, nil //nolint:nilnil
 	}
-	// variables are replaced before validation so their literals are not mistaken for
-	// aggregate names; an unresolved $var is left in place and fails validation below
-	// (as an unknown aggregate — targeted variable errors are a separate concern)
+	// replaced before validation so variable literals are not mistaken for aggregate
+	// names; an unresolved $var is left in place and fails validation as an unknown one
 	if len(variables) > 0 {
 		replaced, err := qbvariables.ReplaceVariablesInExpression(expr, variables)
 		if err != nil {

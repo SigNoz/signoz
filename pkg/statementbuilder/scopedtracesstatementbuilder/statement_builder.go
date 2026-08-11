@@ -149,10 +149,9 @@ type traceScopedStatementBuilder interface {
 	BuildTraceScoped(ctx context.Context, orgID valuer.UUID, start, end uint64, requestType qbtypes.RequestType, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], variables map[string]qbtypes.VariableItem, traceScope *qbtypes.Statement) (*qbtypes.Statement, error)
 }
 
-// buildDelegatedAggregation serves span-level scalar/time-series: the gate is ANDed
-// into the filter's span-level part and the query delegates to the standard trace
-// builder; a trace-level part becomes a qualification the delegate constrains
-// trace_id by.
+// buildDelegatedAggregation serves span-level scalar/time-series through the standard
+// trace builder, with the gate ANDed into the span-level filter part; a trace-level
+// part becomes a qualification the delegate constrains trace_id by.
 func (b *scopedTraceStatementBuilder) buildDelegatedAggregation(
 	ctx context.Context,
 	orgID valuer.UUID,
@@ -611,9 +610,9 @@ func (b *scopedTraceStatementBuilder) buildEnrichmentSelect(sb *sqlbuilder.Selec
 	return sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 }
 
-// aggregateAliasSet recognises trace-level keys, display-only aliases included so one gets
-// a targeted error rather than falling through as a span attribute; orderableColumnSet is
-// what a predicate may actually use. SpanLevel columns are filtered span-level, so skip them.
+// aggregateAliasSet recognises trace-level keys — display-only aliases included, so one
+// gets a targeted error instead of falling through as a span attribute (what a predicate
+// may actually use is orderableColumnSet). SpanLevel columns are filtered span-level.
 func (b *scopedTraceStatementBuilder) aggregateAliasSet() map[string]struct{} {
 	set := make(map[string]struct{}, len(b.scope.Columns))
 	for _, c := range b.scope.Columns {
@@ -639,10 +638,10 @@ func neededMatchedAliases(orders []listOrder, having *traceHaving) map[string]st
 	return needed
 }
 
-// validateAggregateFilter rejects trace-level filters on aggregates not computable in
-// the matched pass (e.g. span_count) with a targeted top-level error; inside the
-// where-clause visitor it would surface only as a detail of a combined error. Only
-// unspecified- and trace-context selectors name aggregates.
+// validateAggregateFilter rejects filters on aggregates not computable in the matched
+// pass (e.g. span_count) upfront, since inside the where-clause visitor the error would
+// surface only as a detail of a combined one. Only unspecified- and trace-context
+// selectors name aggregates.
 func validateAggregateFilter(havingExpr string, orderableSet map[string]struct{}) error {
 	if strings.TrimSpace(havingExpr) == "" {
 		return nil
