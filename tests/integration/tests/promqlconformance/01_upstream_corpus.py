@@ -26,6 +26,11 @@ LEDGER_FILES = {
     "clickhousev2": os.path.join(TESTDATA_DIR, "promqltestcorpus", "known_divergences_v2.json"),
 }
 
+# Cases SigNoz intentionally does not match, on every leg — kept out of the
+# ledgers because those track defects to be burned down and these are a product
+# decision. Enforced in both directions all the same.
+NONFINITE_EXCLUSIONS_FILE = os.path.join(TESTDATA_DIR, "promqltestcorpus", "nonfinite_exclusions.json")
+
 # Every case replays on both legs, each asserted against the same frozen
 # expectations and its own ledger — deliberately never against each other: both
 # legs can sit within one rounding quantum of the expected value yet differ from
@@ -202,6 +207,11 @@ def test_upstream_promqltest_corpus(
     # divergence is a regression, and a known divergence that starts passing
     # must be removed from the file. Problems across both legs are collected
     # before asserting so one leg's failure never hides the other's.
+    nonfinite_exclusions: set[str] = set()
+    if os.path.exists(NONFINITE_EXCLUSIONS_FILE):
+        with open(NONFINITE_EXCLUSIONS_FILE, encoding="utf-8") as f:
+            nonfinite_exclusions = set(json.load(f)["cases"])
+
     problems: list[str] = []
     for leg, _ in LEGS:
         known: dict[str, str] = {}
@@ -210,12 +220,15 @@ def test_upstream_promqltest_corpus(
                 known = json.load(f)["divergences"]
 
         failed_ids = {f_line.split(": ", 1)[0] for f_line in failures[leg]}
-        unexpected = [f_line for f_line in failures[leg] if f_line.split(": ", 1)[0] not in known]
+        unexpected = [f_line for f_line in failures[leg] if f_line.split(": ", 1)[0] not in known and f_line.split(": ", 1)[0] not in nonfinite_exclusions]
         now_passing = sorted(set(known) - failed_ids)
+        stale_nonfinite_exclusions = sorted(nonfinite_exclusions - failed_ids)
 
         if unexpected:
             problems.append(f"[{leg}] {len(unexpected)} corpus cases diverged beyond the known set:\n" + "\n".join(unexpected[:25]))
         if now_passing:
             problems.append(f"[{leg}] {len(now_passing)} known divergences now pass — remove them from {os.path.basename(LEDGER_FILES[leg])}: {now_passing[:25]}")
+        if stale_nonfinite_exclusions:
+            problems.append(f"[{leg}] {len(stale_nonfinite_exclusions)} non-finite exclusions no longer diverge, so the promql path has stopped dropping them — remove them from {os.path.basename(NONFINITE_EXCLUSIONS_FILE)}: {stale_nonfinite_exclusions[:25]}")
 
     assert not problems, "\n\n".join(problems)
