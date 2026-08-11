@@ -238,7 +238,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewRestructureSavedViewSpecFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddSavedViewTuplesFactory(sqlstore),
 		sqlmigration.NewFixSavedViewSelectedFieldsFactory(sqlstore),
-		sqlmigration.NewMoveSavedViewPanelTypeToDisplayFactory(sqlstore),
+		sqlmigration.NewBackfillSavedViewRequestTypeFactory(sqlstore),
 	)
 }
 

@@ -7869,8 +7869,6 @@ components:
           type: string
         maxLines:
           type: integer
-        panelType:
-          $ref: '#/components/schemas/SavedviewtypesPanelType'
       type: object
     SavedviewtypesPanelType:
       enum:
@@ -7930,6 +7928,8 @@ components:
           $ref: '#/components/schemas/SavedviewtypesDisplay'
         displayName:
           type: string
+        panelType:
+          $ref: '#/components/schemas/SavedviewtypesPanelType'
         queries:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelope'
@@ -7943,6 +7943,7 @@ components:
           type: array
       required:
       - displayName
+      - panelType
       - requestType
       - queries
       type: object
