@@ -21,8 +21,6 @@ const FRONTEND_FILTER = "service.name = 'frontend'";
 const STATUS_CODE_FILTER = "http.status_code = '500'";
 const TRACES_FILTER = "name = 'HTTP GET'";
 
-// Driving the real CodeMirror editor through userEvent in jsdom is slow and
-// varies wildly by machine, so the waits below outlive Jest's 5s default.
 jest.setTimeout(30000);
 
 beforeAll(() => {
