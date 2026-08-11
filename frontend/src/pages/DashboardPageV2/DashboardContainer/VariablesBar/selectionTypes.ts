@@ -10,6 +10,11 @@ export interface VariableSelection {
 	value: SelectedVariableValue;
 	/** True when every option is selected ("ALL"); for dynamic vars value may be null. */
 	allSelected: boolean;
+	/**
+	 * Entries of `value` the user typed rather than picked. Never in any option list,
+	 * so the reconcile keeps them instead of reading them as invalid.
+	 */
+	customValues?: string[];
 }
 
 /** Selected values for a dashboard's variables, keyed by variable name. */

@@ -6,6 +6,7 @@ import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 
 import type { VariableSelection } from '../../selectionTypes';
 import { areSelectionsEqual } from '../../utils/resolveVariableSelection';
+import { selectionFromCommittedValues } from '../../utils/selectionUtils';
 import OverflowValuesTooltip from './OverflowValuesTooltip';
 import styles from '../../VariablesBar.module.scss';
 
@@ -75,13 +76,23 @@ function ValueSelector({
 		options.every((option) => draft.includes(option));
 
 	const commit = (values: string[]): void => {
-		// CustomMultiSelect emits the full value set when ALL is picked.
-		const isAll =
-			showAllOption &&
-			options.length > 0 &&
-			options.every((option) => values.includes(option));
-		const next: VariableSelection =
-			values.length === 0 ? emptyFallback : { value: values, allSelected: isAll };
+		// A close that left the list as it opened commits nothing — else a pick covering
+		// every option this window offers would be promoted to a standing ALL.
+		if (
+			areSelectionsEqual(
+				{ value: values, allSelected: false },
+				{ value: committedValues, allSelected: false },
+			)
+		) {
+			return;
+		}
+
+		const next = selectionFromCommittedValues({
+			values,
+			options,
+			showAllOption,
+			emptyFallback,
+		});
 
 		// Closing without actually changing the selection must not re-fire onChange —
 		// that would needlessly re-cascade to dependent variables/panels.

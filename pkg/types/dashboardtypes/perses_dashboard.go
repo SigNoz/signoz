@@ -129,16 +129,6 @@ func (d *DashboardV2) LockUnlock(lock bool, isAdmin bool, updatedBy string) erro
 	return nil
 }
 
-func (d *DashboardV2) ErrIfNotDeletable() error {
-	if d.Locked {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot delete a locked dashboard, please unlock the dashboard to delete")
-	}
-	if !d.Source.isUserDeletable() {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "%s dashboards cannot be deleted", d.Source)
-	}
-	return nil
-}
-
 func (d *DashboardV2) ErrIfNotClonable() error {
 	if !d.Source.isClonable() {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "%s dashboards cannot be cloned", d.Source)
