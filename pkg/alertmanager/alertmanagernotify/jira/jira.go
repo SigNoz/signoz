@@ -308,6 +308,43 @@ func (n *Notifier) callAPI(ctx context.Context, method, url string, reqBody any)
 	return respBody, false, nil
 }
 
+// ResolveCloudID fetches a Jira Cloud site's cloud id from its unauthenticated
+// tenant_info endpoint. Service accounts need it to address the
+// api.atlassian.com gateway; it is resolved once at channel save/test time.
+func ResolveCloudID(ctx context.Context, client *http.Client, site string) (string, error) {
+	url := strings.TrimRight(site, "/") + "/_edge/tenant_info"
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch jira cloud id")
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to resolve jira cloud id from %s: status %d", url, resp.StatusCode)
+	}
+
+	var out struct {
+		CloudID string `json:"cloudId"`
+	}
+	if err := json.Unmarshal(body, &out); err != nil {
+		return "", errors.WrapInternalf(err, errors.CodeInternal, "failed to parse jira tenant_info response")
+	}
+	if out.CloudID == "" {
+		return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "jira tenant_info returned an empty cloud id for %s", site)
+	}
+	return out.CloudID, nil
+}
+
 // selectTransition returns the id of the transition whose target status category
 // matches toDone, preferring one named override when present.
 func selectTransition(transitions []jiraTransition, toDone bool, override string) string {

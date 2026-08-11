@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -68,6 +69,24 @@ func TestJiraReceiverConfigReopenDurationMinimum(t *testing.T) {
 
 	_, err = NewReceiver(withReopen("30s"))
 	assert.Error(t, err)
+}
+
+func TestJiraAPIBaseURL(t *testing.T) {
+	c := &JiraReceiverConfig{Site: "https://acme.atlassian.net"}
+	assert.Equal(t, "https://acme.atlassian.net/rest/api/3", c.APIBaseURL())
+
+	c.CloudID = "09851b38-1a40-4c01-a36a-0a9336293200"
+	assert.Equal(t, "https://api.atlassian.com/ex/jira/09851b38-1a40-4c01-a36a-0a9336293200/rest/api/3", c.APIBaseURL())
+}
+
+func TestJiraIsServiceAccount(t *testing.T) {
+	withUser := func(username string) *JiraReceiverConfig {
+		return &JiraReceiverConfig{HTTPConfig: &commoncfg.HTTPClientConfig{BasicAuth: &commoncfg.BasicAuth{Username: username}}}
+	}
+	assert.True(t, withUser("bot@serviceaccount.atlassian.com").IsServiceAccount())
+	assert.True(t, withUser("Bot@ServiceAccount.Atlassian.Com").IsServiceAccount())
+	assert.False(t, withUser("temp@signoz.io").IsServiceAccount())
+	assert.False(t, (&JiraReceiverConfig{}).IsServiceAccount())
 }
 
 func TestJiraReceiverConfigTrailingSlashSite(t *testing.T) {

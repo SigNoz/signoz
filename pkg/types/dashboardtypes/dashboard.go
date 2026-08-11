@@ -201,6 +201,18 @@ func (storableDashboardData *StorableDashboardData) GetWidgetIds() []string {
 	return widgetIds
 }
 
+// ErrIfNotDeletable gates deletion on the columns alone, never on Data, so a
+// dashboard whose data is corrupt or stuck on the v1 schema stays deletable.
+func (storable StorableDashboard) ErrIfNotDeletable() error {
+	if storable.Locked {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot delete a locked dashboard, please unlock the dashboard to delete")
+	}
+	if !storable.Source.isUserDeletable() {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "%s dashboards cannot be deleted", storable.Source)
+	}
+	return nil
+}
+
 func (dashboard *Dashboard) ErrIfNotMutable() error {
 	if dashboard.Source == SourceIntegration {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "integration dashboards cannot be modified")
