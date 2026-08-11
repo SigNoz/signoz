@@ -7,6 +7,14 @@ export enum VariableFetchState {
 	Error = 'error',
 }
 
+/** Why a cycle was started — only a cascade may re-default a user's selection. */
+export enum VariableCycleReason {
+	/** `enqueueFetchAll`: load, time-range or variable-order change. */
+	FullCycle = 'full-cycle',
+	/** `enqueueDescendantsBatch`: a parent or sibling variable's value changed. */
+	ValueCascade = 'value-cascade',
+}
+
 /** Mutable clones a fetch action works over before committing back in one `set`. */
 export interface FetchMaps {
 	states: Record<string, VariableFetchState>;

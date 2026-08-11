@@ -34,6 +34,7 @@ function reset(names: string[], context: VariableFetchContext): void {
 		variableFetchStates: {},
 		variableLastUpdated: {},
 		variableCycleIds: {},
+		variableCycleReasons: {},
 		variableFetchContext: null,
 	});
 	store().initVariableFetch(names, context);
@@ -132,6 +133,33 @@ describe('variableFetchSlice', () => {
 		store().onVariableFetchFailure('q1');
 		expect(states().q1).toBe('error');
 		expect(states().q2).toBe('idle');
+	});
+
+	// The reason is what tells the post-fetch reconcile whether it may re-default a
+	// selection: a full cycle must not, a value cascade must.
+	it('tags a full cycle, then re-tags only the cascaded variables', () => {
+		store().enqueueFetchAll();
+		expect(store().variableCycleReasons).toStrictEqual({
+			q1: 'full-cycle',
+			q2: 'full-cycle',
+			d1: 'full-cycle',
+			d2: 'full-cycle',
+		});
+
+		resolve('q1');
+		store().enqueueDescendants('q1');
+		expect(store().variableCycleReasons).toStrictEqual({
+			q1: 'full-cycle',
+			q2: 'value-cascade',
+			d1: 'full-cycle',
+			d2: 'full-cycle',
+		});
+	});
+
+	it('drops the reason for a variable that no longer exists', () => {
+		store().enqueueFetchAll();
+		store().initVariableFetch(['q1'], context);
+		expect(store().variableCycleReasons).toStrictEqual({ q1: 'full-cycle' });
 	});
 });
 
