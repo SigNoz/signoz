@@ -28,6 +28,9 @@ import (
 //	   │              (+ ts bucket for time series, + group-by columns). Columns
 //	   ▼              off a trace slice are NULL and skipped by outer aggregates.
 //	main              outer aggregation over the per-trace rows → __result_i.
+//
+// These per-trace values are window-clipped and span-filtered, unlike the list's
+// enrichment pass over every span of the whole trace, so a column reads differently in each.
 
 // traceAggregation is one aggregation rewritten to run over the per-trace scan.
 type traceAggregation struct {
@@ -61,6 +64,7 @@ func (b *scopedTraceStatementBuilder) buildAggregation(
 // classifyAggregations returns the rewritten trace-domain aggregations, nil when all
 // are span-domain; mixing the two domains is rejected.
 func (b *scopedTraceStatementBuilder) classifyAggregations(aggs []qbtypes.TraceAggregation) ([]traceAggregation, error) {
+	// permission, not recognition: unknown names are reported against exactly this set
 	traceCols := b.orderableColumnSet()
 	var out []traceAggregation
 	spanCount := 0
@@ -82,8 +86,8 @@ func (b *scopedTraceStatementBuilder) classifyAggregations(aggs []qbtypes.TraceA
 	return out, nil
 }
 
-// orderableColumnSet is the static per-trace column set usable in trace-level
-// aggregations and filters.
+// orderableColumnSet is what a trace-level aggregation or filter predicate may use;
+// recognising a key as trace-level is aggregateAliasSet's job.
 func (b *scopedTraceStatementBuilder) orderableColumnSet() map[string]struct{} {
 	set := make(map[string]struct{})
 	for _, c := range b.scope.Columns {
@@ -98,25 +102,22 @@ func (b *scopedTraceStatementBuilder) orderableColumnSet() map[string]struct{} {
 // (not the field mapper's generic "field not found"). Order keys need no check here:
 // request validation only admits group keys and aggregation aliases/expressions.
 func (b *scopedTraceStatementBuilder) validateGroupBy(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) error {
+	// recognition, not permission: a display-only alias must be named here to be rejected
+	// rather than reaching the field mapper as a span attribute
 	aliases := b.aggregateAliasSet()
 	for _, gb := range query.GroupBy {
-		if isTraceLevelKey(gb.Name, gb.FieldContext, aliases) {
+		key := gb.TelemetryFieldKey
+		key.Normalize()
+		// a bare name may be a span column sharing the alias (duration_nano, timestamp)
+		if key.FieldContext != telemetrytypes.FieldContextTrace {
+			continue
+		}
+		if _, ok := aliases[key.Name]; ok {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput,
 				"grouping by trace-level aggregate %q is not supported; group by span attributes instead (e.g. service.name)", gb.Name)
 		}
 	}
 	return nil
-}
-
-// isTraceLevelKey reports whether a group-by / order key explicitly (trace. prefix or
-// trace context) names a per-trace aggregate; bare names pass through since they may
-// be span columns sharing an alias name (duration_nano, timestamp).
-func isTraceLevelKey(name string, fieldContext telemetrytypes.FieldContext, aliases map[string]struct{}) bool {
-	stripped := strings.TrimPrefix(name, "trace.")
-	if _, ok := aliases[stripped]; !ok {
-		return false
-	}
-	return stripped != name || fieldContext == telemetrytypes.FieldContextTrace
 }
 
 // rewriteTraceAggregation rewrites an aggregation over trace.-prefixed columns to run
@@ -147,6 +148,12 @@ func rewriteTraceAggregation(expr string, traceCols map[string]struct{}) (*trace
 		return nil, false, errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"aggregation %q mixes trace-level (trace.) and span-level columns; use one domain per aggregation", expr)
 	}
+	// the interval divides the rendered expression as a whole, so a second aggregation
+	// alongside the rate would be divided too
+	if v.isRate && v.aggCount > 1 {
+		return nil, false, errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"aggregation %q combines a rate with another aggregation; the rate interval would divide both, so give each its own aggregation", expr)
+	}
 	return &traceAggregation{expr: chparser.Format(sel.SelectItems[0]), used: v.used, isRate: v.isRate}, true, nil
 }
 
@@ -158,6 +165,7 @@ type traceAggVisitor struct {
 	traceCols map[string]struct{}
 	used      map[string]struct{}
 	stack     []chparser.Expr
+	aggCount  int
 	hasTrace  bool
 	hasSpan   bool
 	isRate    bool
@@ -189,16 +197,30 @@ func (v *traceAggVisitor) enclosingCombinator() (string, bool) {
 	return "", false
 }
 
+// enclosingAggregate walks the ancestor stack; AggreFuncMap holds only aggregates and
+// VisitFunctionExpr rejects any name missing from it, so a known name is enough.
+func (v *traceAggVisitor) enclosingAggregate() bool {
+	for _, e := range v.stack {
+		fn, ok := e.(*chparser.FunctionExpr)
+		if !ok {
+			continue
+		}
+		if _, known := querybuilder.AggreFuncMap[valuer.NewString(strings.ToLower(fn.Name.Name))]; known {
+			return true
+		}
+	}
+	return false
+}
+
 // VisitPath classifies a dotted reference (trace.output_tokens); trace-level ones are
 // rewritten in place to the bare per-trace alias.
 func (v *traceAggVisitor) VisitPath(p *chparser.Path) error {
-	ref := chparser.Format(p)
-	col, isTrace := traceColumnRef(ref)
+	col, isTrace := traceColumnFromPath(p)
 	if !isTrace {
 		v.hasSpan = true
 		return nil
 	}
-	if err := v.acceptTraceColumn(ref, col); err != nil {
+	if err := v.acceptTraceColumn(chparser.Format(p), col); err != nil {
 		return err
 	}
 	p.Fields = p.Fields[len(p.Fields)-1:]
@@ -221,8 +243,9 @@ func (v *traceAggVisitor) VisitIdent(i *chparser.Ident) error {
 			return nil
 		}
 	}
-	col, isTrace := traceColumnRef(i.Name)
-	if !isTrace {
+	// the parser hands us one identifier, so the prefix is the only text to cut here
+	col, isTrace := strings.CutPrefix(i.Name, telemetrytypes.FieldContextTrace.StringValue()+".")
+	if !isTrace || col == "" {
 		v.hasSpan = true
 		return nil
 	}
@@ -248,6 +271,12 @@ func (v *traceAggVisitor) acceptTraceColumn(ref, col string) error {
 		}
 		v.used[col] = struct{}{}
 	}
+	// ungrouped, a bare per-trace column would make the outer SELECT emit one row per
+	// trace instead of one aggregated row
+	if !v.enclosingAggregate() {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"trace-level column %q must be inside an aggregation function (e.g. avg(%s))", ref, ref)
+	}
 	v.hasTrace = true
 	return nil
 }
@@ -266,24 +295,24 @@ func (v *traceAggVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		return nil
 	}
 	fn.Name.Name = aggFunc.FuncName
+	v.aggCount++
 	if aggFunc.Rate {
 		v.isRate = true
 	}
 	return nil
 }
 
-// traceColumnRef reports whether text is a pure trace.-prefixed column reference
-// (trace.output_tokens) and returns the bare column name.
-func traceColumnRef(text string) (string, bool) {
-	text = strings.TrimSpace(text)
-	rest, ok := strings.CutPrefix(text, "trace.")
-	if !ok {
+// traceColumnFromPath returns the per-trace column a dotted reference names
+// (trace.output_tokens -> output_tokens, trace.a.b -> a.b).
+func traceColumnFromPath(p *chparser.Path) (string, bool) {
+	if len(p.Fields) < 2 || p.Fields[0].Name != telemetrytypes.FieldContextTrace.StringValue() {
 		return "", false
 	}
-	if rest == "" || strings.ContainsAny(rest, " ()'\"`,+-*/<>=!") {
-		return "", false
+	segments := make([]string, 0, len(p.Fields)-1)
+	for _, f := range p.Fields[1:] {
+		segments = append(segments, f.Name)
 	}
-	return rest, true
+	return strings.Join(segments, "."), true
 }
 
 func sortedAliases(set map[string]struct{}) []string {
@@ -368,8 +397,25 @@ func embedExpr(sb *sqlbuilder.SelectBuilder, expr string, args []any) (string, e
 
 // groupColumn is a resolved span-attribute group-by column (arg-free expression).
 type groupColumn struct {
-	name string
-	expr string
+	alias string
+	expr  string
+}
+
+// groupByColumnAlias prefixes the i-th group-by dimension so the alias cannot shadow the
+// span column its expression reads; the querier (stripKeyAlias) strips it back off.
+func groupByColumnAlias(i int, name string) string {
+	return fmt.Sprintf("__GROUP_BY_KEY_%d_%s", i, name)
+}
+
+// orderColumn is the SQL identifier a non-aggregation order key sorts by: the
+// positional alias when the key names a group-by dimension, else the key itself.
+func orderColumn(orderKey string, groupBy []qbtypes.GroupByKey) string {
+	for i := range groupBy {
+		if groupBy[i].Name == orderKey {
+			return groupByColumnAlias(i, groupBy[i].Name)
+		}
+	}
+	return orderKey
 }
 
 // perTraceScanOpts parametrize one windowed, mask-pruned GROUP BY trace_id scan.
@@ -396,7 +442,7 @@ func (b *scopedTraceStatementBuilder) buildPerTraceScan(sb *sqlbuilder.SelectBui
 		selects = append(selects, fmt.Sprintf("toStartOfInterval(timestamp, INTERVAL %d SECOND) AS ts", o.stepSeconds))
 	}
 	for _, gc := range o.groupCols {
-		selects = append(selects, fmt.Sprintf("toString(%s) AS `%s`", gc.expr, gc.name))
+		selects = append(selects, fmt.Sprintf("toString(%s) AS `%s`", gc.expr, gc.alias))
 	}
 	for _, rc := range resolved {
 		if _, ok := o.needed[rc.alias]; !ok {
@@ -433,7 +479,7 @@ func (b *scopedTraceStatementBuilder) buildPerTraceScan(sb *sqlbuilder.SelectBui
 		groupBy = append(groupBy, "ts")
 	}
 	for _, gc := range o.groupCols {
-		groupBy = append(groupBy, "`"+gc.name+"`")
+		groupBy = append(groupBy, "`"+gc.alias+"`")
 	}
 	sb.GroupBy(groupBy...)
 	if strings.TrimSpace(o.havingPred) != "" {
@@ -468,7 +514,7 @@ func (b *scopedTraceStatementBuilder) resolveGroupColumns(ctx context.Context, o
 		if err != nil {
 			return nil, err
 		}
-		out = append(out, groupColumn{name: groupBy[i].Name, expr: sqlbuilder.Escape(expr)})
+		out = append(out, groupColumn{alias: groupByColumnAlias(i, groupBy[i].Name), expr: sqlbuilder.Escape(expr)})
 	}
 	return out, nil
 }
@@ -538,6 +584,8 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 
 	var spanExpr, traceExpr string
 	if query.Filter != nil && strings.TrimSpace(query.Filter.Expression) != "" {
+		// the broad set so a condition on a display-only alias still lands in the
+		// trace-level part, where resolveTraceHaving rejects it by name
 		spanExpr, traceExpr, err = querybuilder.SplitFilterForAggregates(query.Filter.Expression, b.aggregateAliasSet())
 		if err != nil {
 			return nil, err
@@ -581,7 +629,7 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 	}
 	groupNames := make([]string, 0, len(groupCols))
 	for _, gc := range groupCols {
-		groupNames = append(groupNames, "`"+gc.name+"`")
+		groupNames = append(groupNames, "`"+gc.alias+"`")
 	}
 
 	needed := make(map[string]struct{})
@@ -678,7 +726,7 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 		if len(query.Order) != 0 {
 			for _, orderBy := range query.Order {
 				if _, ok := traceAggOrderIndex(orderBy, query); !ok {
-					sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+					sb.OrderBy(fmt.Sprintf("`%s` %s", orderColumn(orderBy.Key.Name, query.GroupBy), orderBy.Direction.StringValue()))
 				}
 			}
 			sb.OrderBy("ts desc")
@@ -688,7 +736,7 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 			if idx, ok := traceAggOrderIndex(orderBy, query); ok {
 				sb.OrderBy(fmt.Sprintf("__result_%d %s", idx, orderBy.Direction.StringValue()))
 			} else {
-				sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+				sb.OrderBy(fmt.Sprintf("`%s` %s", orderColumn(orderBy.Key.Name, query.GroupBy), orderBy.Direction.StringValue()))
 			}
 		}
 		if len(query.Order) == 0 {
@@ -712,7 +760,8 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 }
 
 // rendered returns the outer aggregation SQL, dividing rate aggregations by the
-// interval (step for time series, window length for scalar).
+// interval (step for time series, window length for scalar); the divisor applies to the
+// whole expression, which holds only because a rate must be the sole aggregation.
 func (ta traceAggregation) rendered(rateInterval uint64) string {
 	if ta.isRate {
 		return fmt.Sprintf("%s/%d", ta.expr, rateInterval)
@@ -735,7 +784,7 @@ func outerLimitSQL(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], tr
 		if idx, ok := traceAggOrderIndex(orderBy, query); ok {
 			sb.OrderBy(fmt.Sprintf("__result_%d %s", idx, orderBy.Direction.StringValue()))
 		} else {
-			sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+			sb.OrderBy(fmt.Sprintf("`%s` %s", orderColumn(orderBy.Key.Name, query.GroupBy), orderBy.Direction.StringValue()))
 		}
 	}
 	if len(query.Order) == 0 {

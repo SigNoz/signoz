@@ -163,7 +163,7 @@ func TestBuild_FullSQL_Scalar_GroupBy(t *testing.T) {
 	assertSQLEqual(t, `
 WITH __scoped_traces AS (
     SELECT trace_id,
-        toString(multiIf(mapContains(attributes_string, 'gen_ai.request.model'), attributes_string['gen_ai.request.model'], NULL)) AS gen_ai.request.model,
+        toString(multiIf(mapContains(attributes_string, 'gen_ai.request.model'), attributes_string['gen_ai.request.model'], NULL)) AS __GROUP_BY_KEY_0_gen_ai.request.model,
         sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens
     FROM signoz_traces.distributed_signoz_index_v3
     WHERE timestamp >= '1747947419000000000'
@@ -171,12 +171,46 @@ WITH __scoped_traces AS (
       AND ts_bucket_start >= 1747945619
       AND ts_bucket_start <= 1747983448
       AND (mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))
-    GROUP BY trace_id, gen_ai.request.model
+    GROUP BY trace_id, __GROUP_BY_KEY_0_gen_ai.request.model
 )
-SELECT gen_ai.request.model, avg(output_tokens) AS __result_0
+SELECT __GROUP_BY_KEY_0_gen_ai.request.model, avg(output_tokens) AS __result_0
 FROM __scoped_traces
-GROUP BY gen_ai.request.model
+GROUP BY __GROUP_BY_KEY_0_gen_ai.request.model
 ORDER BY __result_0 DESC
+SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
+`, stmt)
+}
+
+// Grouping by an intrinsic: the positional alias keeps `toString(name) AS name` (a cyclic
+// alias) from forming, and an order key on the dimension resolves to that alias.
+func TestBuild_FullSQL_Scalar_GroupByIntrinsic(t *testing.T) {
+	b := newTestBuilder(t)
+	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeScalar,
+		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+			Signal:       telemetrytypes.SignalTraces,
+			Aggregations: []qbtypes.TraceAggregation{{Expression: "avg(trace.output_tokens)"}},
+			GroupBy:      []qbtypes.GroupByKey{{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "name"}}},
+			Order:        []qbtypes.OrderBy{{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "name"}}, Direction: qbtypes.OrderDirectionAsc}},
+		}, nil)
+	require.NoError(t, err)
+
+	assertSQLEqual(t, `
+WITH __scoped_traces AS (
+    SELECT trace_id,
+        toString(multiIf(name <> '', toString(name), NULL)) AS __GROUP_BY_KEY_0_name,
+        sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens
+    FROM signoz_traces.distributed_signoz_index_v3
+    WHERE timestamp >= '1747947419000000000'
+      AND timestamp < '1747983448000000000'
+      AND ts_bucket_start >= 1747945619
+      AND ts_bucket_start <= 1747983448
+      AND (mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))
+    GROUP BY trace_id, __GROUP_BY_KEY_0_name
+)
+SELECT __GROUP_BY_KEY_0_name, avg(output_tokens) AS __result_0
+FROM __scoped_traces
+GROUP BY __GROUP_BY_KEY_0_name
+ORDER BY __GROUP_BY_KEY_0_name asc
 SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 `, stmt)
 }
@@ -216,7 +250,7 @@ WITH __qualified AS (
 ),
 __scoped_traces AS (
     SELECT trace_id,
-        toString(multiIf(mapContains(attributes_string, 'gen_ai.request.model'), attributes_string['gen_ai.request.model'], NULL)) AS gen_ai.request.model,
+        toString(multiIf(mapContains(attributes_string, 'gen_ai.request.model'), attributes_string['gen_ai.request.model'], NULL)) AS __GROUP_BY_KEY_0_gen_ai.request.model,
         sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens
     FROM signoz_traces.distributed_signoz_index_v3
     WHERE timestamp >= '1747947419000000000'
@@ -226,11 +260,11 @@ __scoped_traces AS (
       AND (mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))
       AND (attributes_string['gen_ai.request.model'] = 'gpt-4o-mini' AND mapContains(attributes_string, 'gen_ai.request.model'))
       AND trace_id GLOBAL IN (SELECT trace_id FROM __qualified)
-    GROUP BY trace_id, gen_ai.request.model
+    GROUP BY trace_id, __GROUP_BY_KEY_0_gen_ai.request.model
 )
-SELECT gen_ai.request.model, avg(output_tokens) AS __result_0, count(trace_id) AS __result_1
+SELECT __GROUP_BY_KEY_0_gen_ai.request.model, avg(output_tokens) AS __result_0, count(trace_id) AS __result_1
 FROM __scoped_traces
-GROUP BY gen_ai.request.model
+GROUP BY __GROUP_BY_KEY_0_gen_ai.request.model
 HAVING __result_0 > 50
 ORDER BY __result_0 desc
 LIMIT 5
@@ -292,7 +326,7 @@ func TestBuild_FullSQL_TimeSeries_GroupLimit(t *testing.T) {
 	assertSQLEqual(t, `
 WITH __scoped_traces_total AS (
     SELECT trace_id,
-        toString(multiIf(mapContains(attributes_string, 'gen_ai.request.model'), attributes_string['gen_ai.request.model'], NULL)) AS gen_ai.request.model,
+        toString(multiIf(mapContains(attributes_string, 'gen_ai.request.model'), attributes_string['gen_ai.request.model'], NULL)) AS __GROUP_BY_KEY_0_gen_ai.request.model,
         sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens
     FROM signoz_traces.distributed_signoz_index_v3
     WHERE timestamp >= '1747947419000000000'
@@ -300,19 +334,19 @@ WITH __scoped_traces_total AS (
       AND ts_bucket_start >= 1747945619
       AND ts_bucket_start <= 1747983448
       AND (mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))
-    GROUP BY trace_id, gen_ai.request.model
+    GROUP BY trace_id, __GROUP_BY_KEY_0_gen_ai.request.model
 ),
 __limit_cte AS (
-    SELECT gen_ai.request.model, sum(output_tokens) AS __result_0
+    SELECT __GROUP_BY_KEY_0_gen_ai.request.model, sum(output_tokens) AS __result_0
     FROM __scoped_traces_total
-    GROUP BY gen_ai.request.model
+    GROUP BY __GROUP_BY_KEY_0_gen_ai.request.model
     ORDER BY __result_0 desc
     LIMIT 3
 ),
 __scoped_traces AS (
     SELECT trace_id,
         toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts,
-        toString(multiIf(mapContains(attributes_string, 'gen_ai.request.model'), attributes_string['gen_ai.request.model'], NULL)) AS gen_ai.request.model,
+        toString(multiIf(mapContains(attributes_string, 'gen_ai.request.model'), attributes_string['gen_ai.request.model'], NULL)) AS __GROUP_BY_KEY_0_gen_ai.request.model,
         sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens
     FROM signoz_traces.distributed_signoz_index_v3
     WHERE timestamp >= '1747947419000000000'
@@ -320,12 +354,12 @@ __scoped_traces AS (
       AND ts_bucket_start >= 1747945619
       AND ts_bucket_start <= 1747983448
       AND (mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))
-      AND (toString(multiIf(mapContains(attributes_string, 'gen_ai.request.model'), attributes_string['gen_ai.request.model'], NULL))) GLOBAL IN (SELECT gen_ai.request.model FROM __limit_cte)
-    GROUP BY trace_id, ts, gen_ai.request.model
+      AND (toString(multiIf(mapContains(attributes_string, 'gen_ai.request.model'), attributes_string['gen_ai.request.model'], NULL))) GLOBAL IN (SELECT __GROUP_BY_KEY_0_gen_ai.request.model FROM __limit_cte)
+    GROUP BY trace_id, ts, __GROUP_BY_KEY_0_gen_ai.request.model
 )
-SELECT ts, gen_ai.request.model, sum(output_tokens) AS __result_0
+SELECT ts, __GROUP_BY_KEY_0_gen_ai.request.model, sum(output_tokens) AS __result_0
 FROM __scoped_traces
-GROUP BY ts, gen_ai.request.model
+GROUP BY ts, __GROUP_BY_KEY_0_gen_ai.request.model
 HAVING __result_0 > 500
 ORDER BY ts desc
 SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
@@ -408,8 +442,8 @@ WITH __qualified AS (
 ),
 __scoped_traces_total AS (
     SELECT trace_id,
-        toString(multiIf(mapContains(attributes_string, 'gen_ai.request.model'), attributes_string['gen_ai.request.model'], NULL)) AS gen_ai.request.model,
-        toString(multiIf(mapContains(attributes_string, 'gen_ai.user.id'), attributes_string['gen_ai.user.id'], NULL)) AS gen_ai.user.id,
+        toString(multiIf(mapContains(attributes_string, 'gen_ai.request.model'), attributes_string['gen_ai.request.model'], NULL)) AS __GROUP_BY_KEY_0_gen_ai.request.model,
+        toString(multiIf(mapContains(attributes_string, 'gen_ai.user.id'), attributes_string['gen_ai.user.id'], NULL)) AS __GROUP_BY_KEY_1_gen_ai.user.id,
         sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens
     FROM signoz_traces.distributed_signoz_index_v3
     WHERE timestamp >= '1747947419000000000'
@@ -419,20 +453,20 @@ __scoped_traces_total AS (
       AND (mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))
       AND (attributes_string['gen_ai.request.model'] = 'gpt-4o-mini' AND mapContains(attributes_string, 'gen_ai.request.model'))
       AND trace_id GLOBAL IN (SELECT trace_id FROM __qualified)
-    GROUP BY trace_id, gen_ai.request.model, gen_ai.user.id
+    GROUP BY trace_id, __GROUP_BY_KEY_0_gen_ai.request.model, __GROUP_BY_KEY_1_gen_ai.user.id
 ),
 __limit_cte AS (
-    SELECT gen_ai.request.model, gen_ai.user.id, sum(output_tokens) AS __result_0, count(trace_id) AS __result_1
+    SELECT __GROUP_BY_KEY_0_gen_ai.request.model, __GROUP_BY_KEY_1_gen_ai.user.id, sum(output_tokens) AS __result_0, count(trace_id) AS __result_1
     FROM __scoped_traces_total
-    GROUP BY gen_ai.request.model, gen_ai.user.id
+    GROUP BY __GROUP_BY_KEY_0_gen_ai.request.model, __GROUP_BY_KEY_1_gen_ai.user.id
     ORDER BY __result_0 DESC
     LIMIT 2
 ),
 __scoped_traces AS (
     SELECT trace_id,
         toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts,
-        toString(multiIf(mapContains(attributes_string, 'gen_ai.request.model'), attributes_string['gen_ai.request.model'], NULL)) AS gen_ai.request.model,
-        toString(multiIf(mapContains(attributes_string, 'gen_ai.user.id'), attributes_string['gen_ai.user.id'], NULL)) AS gen_ai.user.id,
+        toString(multiIf(mapContains(attributes_string, 'gen_ai.request.model'), attributes_string['gen_ai.request.model'], NULL)) AS __GROUP_BY_KEY_0_gen_ai.request.model,
+        toString(multiIf(mapContains(attributes_string, 'gen_ai.user.id'), attributes_string['gen_ai.user.id'], NULL)) AS __GROUP_BY_KEY_1_gen_ai.user.id,
         sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens
     FROM signoz_traces.distributed_signoz_index_v3
     WHERE timestamp >= '1747947419000000000'
@@ -442,12 +476,12 @@ __scoped_traces AS (
       AND (mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))
       AND (attributes_string['gen_ai.request.model'] = 'gpt-4o-mini' AND mapContains(attributes_string, 'gen_ai.request.model'))
       AND trace_id GLOBAL IN (SELECT trace_id FROM __qualified)
-      AND (toString(multiIf(mapContains(attributes_string, 'gen_ai.request.model'), attributes_string['gen_ai.request.model'], NULL)), toString(multiIf(mapContains(attributes_string, 'gen_ai.user.id'), attributes_string['gen_ai.user.id'], NULL))) GLOBAL IN (SELECT gen_ai.request.model, gen_ai.user.id FROM __limit_cte)
-    GROUP BY trace_id, ts, gen_ai.request.model, gen_ai.user.id
+      AND (toString(multiIf(mapContains(attributes_string, 'gen_ai.request.model'), attributes_string['gen_ai.request.model'], NULL)), toString(multiIf(mapContains(attributes_string, 'gen_ai.user.id'), attributes_string['gen_ai.user.id'], NULL))) GLOBAL IN (SELECT __GROUP_BY_KEY_0_gen_ai.request.model, __GROUP_BY_KEY_1_gen_ai.user.id FROM __limit_cte)
+    GROUP BY trace_id, ts, __GROUP_BY_KEY_0_gen_ai.request.model, __GROUP_BY_KEY_1_gen_ai.user.id
 )
-SELECT ts, gen_ai.request.model, gen_ai.user.id, sum(output_tokens) AS __result_0, count(trace_id) AS __result_1
+SELECT ts, __GROUP_BY_KEY_0_gen_ai.request.model, __GROUP_BY_KEY_1_gen_ai.user.id, sum(output_tokens) AS __result_0, count(trace_id) AS __result_1
 FROM __scoped_traces
-GROUP BY ts, gen_ai.request.model, gen_ai.user.id
+GROUP BY ts, __GROUP_BY_KEY_0_gen_ai.request.model, __GROUP_BY_KEY_1_gen_ai.user.id
 SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 `, stmt)
 }

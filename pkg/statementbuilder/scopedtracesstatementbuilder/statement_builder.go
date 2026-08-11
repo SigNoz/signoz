@@ -611,8 +611,9 @@ func (b *scopedTraceStatementBuilder) buildEnrichmentSelect(sb *sqlbuilder.Selec
 	return sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 }
 
-// aggregateAliasSet is every trace-level column alias, used to classify filter keys;
-// SpanLevel columns are filtered span-level, so skip them.
+// aggregateAliasSet recognises trace-level keys, display-only aliases included so one gets
+// a targeted error rather than falling through as a span attribute; orderableColumnSet is
+// what a predicate may actually use. SpanLevel columns are filtered span-level, so skip them.
 func (b *scopedTraceStatementBuilder) aggregateAliasSet() map[string]struct{} {
 	set := make(map[string]struct{}, len(b.scope.Columns))
 	for _, c := range b.scope.Columns {

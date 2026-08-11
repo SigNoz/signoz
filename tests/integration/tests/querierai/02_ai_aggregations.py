@@ -19,6 +19,7 @@ from fixtures.querier import (
     OrderBy,
     RequestType,
     TelemetryFieldKey,
+    get_scalar_columns,
     get_scalar_table_data,
     make_query_request,
 )
@@ -180,6 +181,48 @@ def test_ai_scalar_group_by_model(
     data = get_scalar_table_data(resp.json())
     by_model = {row[0]: float(row[-1]) for row in data}
     assert by_model == {"gpt-4o": pytest.approx(200), "gpt-4o-mini": pytest.approx(50)}, data
+
+
+def test_ai_scalar_group_by_intrinsic_span_column(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+) -> None:
+    """Grouping by an intrinsic must not alias the group column to the span column it reads
+    (`toString(name) AS name` is a cyclic alias ClickHouse rejects)."""
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    service = "ai-it-agg-groupby-intrinsic"
+    insert_traces(
+        ai_trace(now=now, service=service, in_tokens=10, out_tokens=100)
+        + ai_trace(now=now, service=service, in_tokens=10, out_tokens=300)
+        + tool_only_trace(now=now, service=service)
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    start_ms, end_ms = query_window(now)
+
+    resp = make_query_request(
+        signoz,
+        token,
+        start_ms,
+        end_ms,
+        [
+            scalar_query(
+                service,
+                "count(trace.trace_id)",
+                group_by=[TelemetryFieldKey(name="name")],
+                order=[OrderBy(key=TelemetryFieldKey(name="name"), direction="asc")],
+            )
+        ],
+        request_type=RequestType.SCALAR,
+    )
+    assert resp.status_code == HTTPStatus.OK, resp.text
+    columns = get_scalar_columns(resp.json())
+    assert columns[0]["name"] == "name", columns
+    data = get_scalar_table_data(resp.json())
+    # the root spans are gated out, so each trace groups under its gen_ai span name
+    assert [(row[0], int(row[-1])) for row in data] == [("chat gpt-4o-mini", 2), ("execute_tool", 1)], data
 
 
 def test_ai_timeseries_trace_level_aggregation(
@@ -532,6 +575,12 @@ def test_ai_aggregation_rejections(
         scalar_query(service, "avg(trace.output_tokens)", group_by=[TelemetryFieldKey(name="trace.llm_call_count")]),
         "grouping by trace-level aggregate",
     )
+
+    # a bare per-trace column would emit one row per trace instead of one aggregated row
+    expect_bad_request(scalar_query(service, "trace.output_tokens"), "must be inside an aggregation function")
+
+    # the rate interval divides the whole expression, so it may not carry a second aggregation
+    expect_bad_request(scalar_query(service, "rate(trace.trace_id) + avg(trace.output_tokens)"), "combines a rate with another aggregation")
 
     expect_bad_request(
         scalar_query(service, "avg(trace.output_tokens)", order=[OrderBy(key=TelemetryFieldKey(name="trace.total_tokens"), direction="desc")]),

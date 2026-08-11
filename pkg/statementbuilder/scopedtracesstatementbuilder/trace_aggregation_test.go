@@ -35,7 +35,22 @@ func TestRewriteTraceAggregation(t *testing.T) {
 		{name: "mixed domains in one function", expr: "sum(trace.output_tokens + gen_ai.usage.input_tokens)", wantErr: "mixes trace-level"},
 		{name: "output-only column rejected", expr: "avg(trace.span_count)", wantErr: "unknown trace-level aggregation column"},
 		{name: "unknown column rejected", expr: "avg(trace.bogus)", wantErr: "unknown trace-level aggregation column"},
+		// a dotted column keeps every segment after the prefix, so it is reported whole
+		{name: "multi segment column rejected by full name", expr: "avg(trace.service.name)", wantErr: `"trace.service.name"`},
+		{name: "bare trace identifier is span-level", expr: "avg(trace)", isTrace: false},
 		{name: "countIf over trace col rejected", expr: "countIf(trace.output_tokens > 1000)", wantErr: "not supported"},
+		{name: "bare trace col rejected", expr: "trace.output_tokens", wantErr: "must be inside an aggregation function"},
+		{name: "backquoted bare trace col rejected", expr: "`trace.output_tokens`", wantErr: "must be inside an aggregation function"},
+		{name: "bare trace_id rejected", expr: "trace.trace_id", wantErr: "must be inside an aggregation function"},
+		{name: "arithmetic outside an aggregation rejected", expr: "trace.output_tokens + trace.input_tokens", wantErr: "must be inside an aggregation function"},
+		{name: "trace col beside an aggregation rejected", expr: "sum(trace.output_tokens) + trace.input_tokens", wantErr: "must be inside an aggregation function"},
+		{name: "aggregation scaled by a constant", expr: "sum(trace.output_tokens) * 2", isTrace: true, want: "sum(output_tokens) * 2", used: []string{"output_tokens"}},
+		{name: "rate over traces", expr: "rate(trace.trace_id)", isTrace: true, want: "count(trace_id)"},
+		{name: "rate_sum trace col", expr: "rate_sum(trace.output_tokens)", isTrace: true, want: "sum(output_tokens)", used: []string{"output_tokens"}},
+		// the interval divides the whole rendered expression, so a second aggregation
+		// alongside a rate would be divided too
+		{name: "rate mixed with another aggregation rejected", expr: "rate(trace.trace_id) + avg(trace.output_tokens)", wantErr: "combines a rate with another aggregation"},
+		{name: "ratio of two rates rejected", expr: "rate_sum(trace.output_tokens)/rate_sum(trace.input_tokens)", wantErr: "combines a rate with another aggregation"},
 	}
 
 	for _, tc := range cases {
