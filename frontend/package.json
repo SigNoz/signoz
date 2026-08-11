@@ -87,6 +87,7 @@
     "jest": "30.2.0",
     "js-base64": "^3.7.2",
     "lodash-es": "^4.17.21",
+    "monaco-editor": "0.55.1",
     "motion": "12.4.13",
     "nuqs": "2.8.8",
     "overlayscrollbars": "^2.16.0",

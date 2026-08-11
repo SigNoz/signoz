@@ -14,6 +14,8 @@ import TimezoneProvider from 'providers/Timezone';
 import store from 'store';
 import APIError from 'types/api/error';
 
+import 'lib/monaco/setup';
+
 import './ReactI18';
 
 import 'styles.scss';
