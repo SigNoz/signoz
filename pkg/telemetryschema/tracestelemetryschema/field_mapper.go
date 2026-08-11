@@ -297,8 +297,9 @@ func (m *fieldMapper) resolveColumnExprs(
 			case telemetrytypes.FieldContextScope:
 				switch key.Name {
 				case "scope.name", "scope.version":
+					// declared String paths on the scope column reads '' for missing case
 					exprs = append(exprs, fmt.Sprintf("%s::String", key.Name))
-					existExprs = append(existExprs, fmt.Sprintf("%s IS NOT NULL", key.Name))
+					existExprs = append(existExprs, fmt.Sprintf("%s <> ''", key.Name))
 				default:
 					exprs = append(exprs, fmt.Sprintf("%s.attributes.`%s`::String", columnName, key.Name))
 					existExprs = append(existExprs, fmt.Sprintf("%s.attributes.`%s` IS NOT NULL", columnName, key.Name))
@@ -519,18 +520,24 @@ func (m *fieldMapper) CandidateKeys(ctx context.Context, _ valuer.UUID, field *t
 	// No metadata: synthesize per context.
 	switch field.FieldContext {
 	case telemetrytypes.FieldContextUnspecified:
-		return querybuilder.SynthesizeKeys(field, value)
+		return append(querybuilder.SynthesizeKeys(field, value), scopeAttributeCandidate(field))
 	case telemetrytypes.FieldContextSpan, telemetrytypes.FieldContextTrace:
-		// honored as-is: the stripped name lives in the attribute maps
+		// honored as-is: the stripped name lives in the attribute or scope attribute maps
 		stripped := telemetrytypes.NewTelemetryFieldKey(field.Name, telemetrytypes.FieldContextUnspecified, field.FieldDataType)
-		return querybuilder.SynthesizeKeys(stripped, value)
+		return append(querybuilder.SynthesizeKeys(stripped, value), scopeAttributeCandidate(stripped))
 	case telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextResource:
 		// strict context honored as-is: stripped interpretation first, literal spelling second
 		literal := telemetrytypes.NewTelemetryFieldKey(field.FieldContext.StringValue()+"."+field.Name, field.FieldContext, field.FieldDataType)
 		return append(querybuilder.SynthesizeKeys(field, value), querybuilder.SynthesizeKeys(literal, value)...)
+	case telemetrytypes.FieldContextScope:
+		return []*telemetrytypes.TelemetryFieldKey{scopeAttributeCandidate(field)}
 	}
-	// contexts that don't exist on spans (log, body, scope, …) have nothing to synthesize
+	// contexts that don't exist on spans (log, body, …) have nothing to synthesize
 	return nil
+}
+
+func scopeAttributeCandidate(field *telemetrytypes.TelemetryFieldKey) *telemetrytypes.TelemetryFieldKey {
+	return telemetrytypes.NewTelemetryFieldKey(field.Name, telemetrytypes.FieldContextScope, telemetrytypes.FieldDataTypeString)
 }
 
 func (m *fieldMapper) existsExpressionFor(

@@ -37,13 +37,22 @@ func ExistsExpression(columns []*schema.Column, key *telemetrytypes.TelemetryFie
 	column := newColumns[0]
 	switch column.Type.GetType() {
 	case schema.ColumnTypeEnumJSON:
-		// the ::String cast in the value expression folds NULL to '', so the
-		// presence check must address the raw JSON path
+		// scope.name/scope.version are *declared* String paths on the scope JSON column, so a
+		// row without them reads as '' rather than NULL: a NULL check would always hold.
+		if key.Name == "scope.name" || key.Name == "scope.version" {
+			if exists {
+				return comparison("<>", "''"), nil
+			}
+			return comparison("=", "''"), nil
+		}
 		columnName := column.Name
 		if len(evolutionsEntries) > 0 && evolutionsEntries[0] != nil {
 			columnName = evolutionsEntries[0].ColumnName
 		}
 		rawPath := fmt.Sprintf("%s.`%s`", columnName, key.Name)
+		if key.FieldContext == telemetrytypes.FieldContextScope {
+			rawPath = fmt.Sprintf("%s.attributes.`%s`", columnName, key.Name)
+		}
 		if exists {
 			return rawPath + " IS NOT NULL", nil
 		}
