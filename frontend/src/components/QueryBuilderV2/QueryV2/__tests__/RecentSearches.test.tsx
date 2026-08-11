@@ -93,6 +93,13 @@ function isCompletionOpen(): boolean {
 	return !!view && completionStatus(view.state) === 'active';
 }
 
+function mouseDownOnCompletion(label: string): void {
+	const option = findCompletionOption(label);
+	expect(option).toBeDefined();
+	expect(isCompletionOpen()).toBe(true);
+	fireEvent.mouseDown(option as HTMLElement);
+}
+
 async function focusEditor(): Promise<HTMLElement> {
 	const editor = await waitFor(
 		() => {
@@ -201,13 +208,9 @@ describe('QuerySearch recent searches', () => {
 		renderLogsSearch(onChange);
 		const editor = await focusEditor();
 
-		const option = await waitForCompletionPopup(editor, () => {
-			const target = findCompletionOption(FRONTEND_FILTER);
-			expect(target).toBeDefined();
-			return target as HTMLElement;
+		await waitForCompletionPopup(editor, () => {
+			mouseDownOnCompletion(FRONTEND_FILTER);
 		});
-
-		await userEvent.click(option);
 
 		await waitFor(
 			() => {
