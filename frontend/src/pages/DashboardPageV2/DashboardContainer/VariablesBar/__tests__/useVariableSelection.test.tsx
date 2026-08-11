@@ -13,11 +13,11 @@ jest.mock('nuqs', () => ({
 	useQueryState: (): unknown => [null, jest.fn()],
 }));
 
+const mockGlobalTime = { minTime: 1, maxTime: 2, selectedTime: '5m' };
+
 jest.mock('react-redux', () => ({
 	useSelector: (selector: (state: unknown) => unknown): unknown =>
-		selector({
-			globalTime: { minTime: 1, maxTime: 2, selectedTime: '5m' },
-		}),
+		selector({ globalTime: mockGlobalTime }),
 }));
 
 jest.mock('../../DashboardSettings/Variables/variableAdapters', () => ({
@@ -148,5 +148,59 @@ describe('useVariableSelection — setSelection', () => {
 			allSelected: false,
 		});
 		expect(svcCycleId()).toBe(before + 1);
+	});
+});
+
+describe('useVariableSelection — what a time-range change enqueues', () => {
+	// Longer than FETCH_CYCLE_DEBOUNCE_MS, which the hook keeps private.
+	const PAST_DEBOUNCE = 400;
+
+	function reasons(): Record<string, string> {
+		return useDashboardStore.getState().variableCycleReasons;
+	}
+
+	beforeEach(() => {
+		jest.useFakeTimers();
+		mockGlobalTime.selectedTime = '5m';
+		useDashboardStore.setState({
+			variableValues: {},
+			variableFetchStates: {},
+			variableLastUpdated: {},
+			variableCycleIds: {},
+			variableCycleReasons: {},
+			variableResolvedEmpty: {},
+			variableFetchContext: null,
+			lastFetchAllKey: null,
+		});
+	});
+
+	afterEach(() => {
+		jest.useRealTimers();
+	});
+
+	// The tag is what stops the reconcile re-defaulting a user's selection.
+	it('tags every variable as a full cycle, overriding an earlier cascade tag', () => {
+		const { result, rerender } = renderHook(() =>
+			useVariableSelection(dashboard),
+		);
+
+		act(() => {
+			jest.advanceTimersByTime(PAST_DEBOUNCE);
+		});
+		expect(reasons()).toStrictEqual({ env: 'full-cycle', svc: 'full-cycle' });
+
+		// A value change re-scopes the dependent's options: it may drop what no longer applies.
+		act(() => {
+			result.current.setSelection('env', { value: ['prod'], allSelected: false });
+		});
+		expect(reasons().svc).toBe('value-cascade');
+
+		mockGlobalTime.selectedTime = '30m';
+		rerender();
+		act(() => {
+			jest.advanceTimersByTime(PAST_DEBOUNCE);
+		});
+
+		expect(reasons()).toStrictEqual({ env: 'full-cycle', svc: 'full-cycle' });
 	});
 });
