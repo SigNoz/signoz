@@ -93,11 +93,11 @@ function isCompletionOpen(): boolean {
 	return !!view && completionStatus(view.state) === 'active';
 }
 
-function mouseDownOnCompletion(label: string): void {
+function getOpenCompletionOption(label: string): HTMLElement {
 	const option = findCompletionOption(label);
 	expect(option).toBeDefined();
 	expect(isCompletionOpen()).toBe(true);
-	fireEvent.mouseDown(option as HTMLElement);
+	return option as HTMLElement;
 }
 
 async function focusEditor(): Promise<HTMLElement> {
@@ -121,6 +121,7 @@ function waitForCompletionPopup<T>(
 	return waitFor(
 		() => {
 			if (!isCompletionOpen()) {
+				// fireEvent: retried on every waitFor tick, where awaiting userEvent nests act().
 				fireEvent.keyDown(editor, {
 					key: ' ',
 					code: 'Space',
@@ -208,9 +209,10 @@ describe('QuerySearch recent searches', () => {
 		renderLogsSearch(onChange);
 		const editor = await focusEditor();
 
-		await waitForCompletionPopup(editor, () => {
-			mouseDownOnCompletion(FRONTEND_FILTER);
-		});
+		const option = await waitForCompletionPopup(editor, () =>
+			getOpenCompletionOption(FRONTEND_FILTER),
+		);
+		await userEvent.click(option);
 
 		await waitFor(
 			() => {
@@ -260,6 +262,7 @@ describe('QuerySearch recent searches', () => {
 			return button as HTMLElement;
 		});
 
+		// fireEvent: the button preventDefaults pointerdown, which makes userEvent.click drop the mouse chain.
 		fireEvent.click(deleteButton);
 
 		await waitFor(
