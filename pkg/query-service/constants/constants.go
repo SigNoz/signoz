@@ -196,17 +196,13 @@ const (
 		"CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool," +
 		"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string," +
 		"CAST((scope_string_key, scope_string_value), 'Map(String, String)') as scope "
-	logsSQLSelectV2Head = "SELECT " +
-		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, "
-	logsSQLSelectV2Tail = "attributes_string, " +
+	LogsSQLSelectV2 = "SELECT " +
+		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, " +
+		"attributes_string, " +
 		"attributes_number, " +
 		"attributes_bool, " +
 		"resources_string, " +
 		"scope_string "
-	LogsSQLSelectV2 = logsSQLSelectV2Head + "body, " + logsSQLSelectV2Tail
-	// Orgs on JSON bodies keep the body in body_v2 and have the body column written empty.
-	// Selected as JSON so the response carries the same body object v5 returns.
-	LogsSQLSelectV2WithBodyJSON             = logsSQLSelectV2Head + "body_v2 as body, " + logsSQLSelectV2Tail
 	TracesExplorerViewSQLSelectWithSubQuery = "(SELECT traceID, durationNano, " +
 		"serviceName, name FROM %s.%s WHERE parentSpanID = '' AND %s ORDER BY durationNano DESC LIMIT 1 BY traceID"
 	TracesExplorerViewSQLSelectBeforeSubQuery = "SELECT subQuery.serviceName as `subQuery.serviceName`, subQuery.name as `subQuery.name`, count() AS " +

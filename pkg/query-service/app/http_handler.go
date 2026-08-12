@@ -3803,10 +3803,6 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queryRangeParams.UseJSONBody = aH.Signoz.Flagger.BooleanOrEmpty(
-		r.Context(), flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID),
-	)
-
 	// add temporality for each metric
 	temporalityErr := aH.PopulateTemporality(r.Context(), orgID, queryRangeParams)
 	if temporalityErr != nil {
