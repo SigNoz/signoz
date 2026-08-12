@@ -23,10 +23,6 @@ const FRONTEND_FILTER = "service.name = 'frontend'";
 const STATUS_CODE_FILTER = "http.status_code = '500'";
 const TRACES_FILTER = "name = 'HTTP GET'";
 
-// A test holds several sequential waits, which can outlast Jest's 5s default on a
-// loaded CI runner even when every individual wait passes.
-jest.setTimeout(20000);
-
 beforeAll(() => {
 	mockCodeMirrorDomApis();
 });
