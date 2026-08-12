@@ -12,7 +12,7 @@ from fixtures.auth import (
     create_active_user,
     find_user_by_email,
 )
-from fixtures.role import transaction_group
+from fixtures.role import find_role_by_name, transaction_group
 from fixtures.types import Operation, SigNoz, TestContainerDocker
 
 V2_BASE_URL = "/api/v2/dashboards"
@@ -64,8 +64,8 @@ def test_setup_managed_role_users(
     existing_emails = {user["email"] for user in response.json()["data"]}
 
     for email, role, password, name in (
-        (_EDITOR_EMAIL, "EDITOR", _EDITOR_PASSWORD, "dashboard authz editor"),
-        (_VIEWER_EMAIL, "VIEWER", _VIEWER_PASSWORD, "dashboard authz viewer"),
+        (_EDITOR_EMAIL, "signoz-editor", _EDITOR_PASSWORD, "dashboard authz editor"),
+        (_VIEWER_EMAIL, "signoz-viewer", _VIEWER_PASSWORD, "dashboard authz viewer"),
     ):
         if email not in existing_emails:
             create_active_user(signoz, admin_token, email=email, role=role, password=password, name=name)
@@ -411,7 +411,7 @@ def test_setup_scoped_actor(
         ],
     )
 
-    user_id = create_active_user(signoz, admin_token, email=_ACTOR_EMAIL, role="VIEWER", password=_ACTOR_PASSWORD, name="dashboard fga actor")
+    user_id = create_active_user(signoz, admin_token, email=_ACTOR_EMAIL, role="signoz-viewer", password=_ACTOR_PASSWORD, name="dashboard fga actor")
     change_user_role(signoz, admin_token, user_id, "signoz-viewer", _ACTOR_ROLE_NAME)
 
 
@@ -469,10 +469,9 @@ def test_publish_and_unpublish_require_update_on_the_dashboard(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    find_role_id: Callable[[str, str], str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    actor_role_id = find_role_id(admin_token, _ACTOR_ROLE_NAME)
+    actor_role_id = find_role_by_name(signoz, admin_token, _ACTOR_ROLE_NAME)
 
     response = requests.get(
         signoz.self.host_configs["8080"].get(f"{V2_BASE_URL}?limit={MAX_LIST_LIMIT}"),
@@ -579,7 +578,6 @@ def test_dashboard_authz_cleanup(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    find_role_id: Callable[[str, str], str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     actor = find_user_by_email(signoz, admin_token, _ACTOR_EMAIL)
@@ -600,7 +598,7 @@ def test_dashboard_authz_cleanup(
         assert response.status_code == HTTPStatus.NO_CONTENT, f"remove role from user: {response.text}"
 
     response = requests.delete(
-        signoz.self.host_configs["8080"].get(f"/api/v1/roles/{find_role_id(admin_token, _ACTOR_ROLE_NAME)}"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/roles/{find_role_by_name(signoz, admin_token, _ACTOR_ROLE_NAME)}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )

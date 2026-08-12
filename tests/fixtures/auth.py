@@ -16,6 +16,7 @@ from wiremock.resources.mappings import (
 
 from fixtures import reuse, types
 from fixtures.logger import setup_logger
+from fixtures.role import find_role_by_name
 
 logger = setup_logger(__name__)
 
@@ -344,24 +345,38 @@ def create_active_user(
     password: str,
     name: str = "",
 ) -> str:
-    """Invite a user and activate via resetPassword. Returns user ID."""
+    """Create a pending invite user and activate it by setting a password.
+
+    role is a managed role name, e.g. signoz-viewer. Returns the user ID.
+    """
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={"email": email, "role": role, "name": name},
+        signoz.self.host_configs["8080"].get(USERS_BASE),
+        json={
+            "email": email,
+            "displayName": name,
+            "userRoles": [{"id": find_role_by_name(signoz, admin_token, role)}],
+        },
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
     assert response.status_code == HTTPStatus.CREATED, response.text
-    invited_user = response.json()["data"]
+    user_id = response.json()["data"]["id"]
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{user_id}/reset_password_tokens"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
 
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
-        json={"password": password, "token": invited_user["token"]},
+        signoz.self.host_configs["8080"].get("/api/v2/factor_password/reset"),
+        json={"password": password, "token": response.json()["data"]["token"]},
         timeout=5,
     )
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
-    return invited_user["id"]
+    return user_id
 
 
 def find_user_by_email(signoz: types.SigNoz, token: str, email: str) -> dict:

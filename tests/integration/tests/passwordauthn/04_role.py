@@ -23,26 +23,13 @@ def test_change_role(
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    # Create a new user as VIEWER
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={"email": ROLECHANGE_USER_EMAIL, "role": "VIEWER"},
-        timeout=2,
-        headers={"Authorization": f"Bearer {admin_token}"},
+    create_active_user(
+        signoz,
+        admin_token,
+        email=ROLECHANGE_USER_EMAIL,
+        role="signoz-viewer",
+        password=ROLECHANGE_USER_PASSWORD,
     )
-
-    assert response.status_code == HTTPStatus.CREATED, response.text
-
-    invited_user = response.json()["data"]
-    reset_token = invited_user["token"]
-
-    # Activate user via reset password
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
-        json={"password": ROLECHANGE_USER_PASSWORD, "token": reset_token},
-        timeout=2,
-    )
-    assert response.status_code == HTTPStatus.NO_CONTENT
 
     # Make some API calls as new user
     new_user_token = get_token(ROLECHANGE_USER_EMAIL, ROLECHANGE_USER_PASSWORD)
@@ -359,7 +346,7 @@ def test_editor_cannot_manage_roles(
         signoz,
         admin_token,
         email="viewer+roleauth@integration.test",
-        role="VIEWER",
+        role="signoz-viewer",
         password=ROLECHANGE_USER_PASSWORD,
         name="viewer roleauth",
     )

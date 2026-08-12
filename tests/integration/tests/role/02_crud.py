@@ -12,7 +12,7 @@ from fixtures.auth import (
     create_active_user,
     find_user_by_email,
 )
-from fixtures.role import flatten_transaction_groups, transaction_group
+from fixtures.role import find_role_by_name, flatten_transaction_groups, transaction_group
 
 CRUD_ROLE_NAME = "crud-test-role"
 CRUD_ASSIGNEE_ROLE_NAME = "crud-assignee-role"
@@ -61,10 +61,9 @@ def test_declarative_update_adds_and_removes_transactions(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    find_role_id: Callable[[str, str], str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    role_id = find_role_id(admin_token, CRUD_ROLE_NAME)
+    role_id = find_role_by_name(signoz, admin_token, CRUD_ROLE_NAME)
 
     def put_transactions(groups: list[dict]) -> None:
         resp = requests.put(
@@ -208,10 +207,9 @@ def test_managed_role_is_immutable(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    find_role_id: Callable[[str, str], str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    admin_role_id = find_role_id(admin_token, "signoz-admin")
+    admin_role_id = find_role_by_name(signoz, admin_token, "signoz-admin")
 
     resp = requests.put(
         signoz.self.host_configs["8080"].get(f"/api/v1/roles/{admin_role_id}"),
@@ -239,7 +237,7 @@ def test_delete_role_with_assignee_guarded(
         signoz,
         admin_token,
         email=CRUD_ASSIGNEE_USER_EMAIL,
-        role="VIEWER",
+        role="signoz-viewer",
         password=CRUD_ASSIGNEE_USER_PASSWORD,
         name="crud-assignee-user",
     )
