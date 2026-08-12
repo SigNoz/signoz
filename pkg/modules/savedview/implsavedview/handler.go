@@ -39,26 +39,28 @@ type legacyExtraData struct {
 func newPostableSavedViewFromLegacyView(v *v3.SavedView) savedviewtypes.PostableSavedView {
 	var legacy legacyExtraData
 	if v.ExtraData != "" {
-		// Best-effort: malformed/older extraData shapes never fail the request
+		// Best-effort: malformed/older extraData shapes never fail the request.
 		_ = json.Unmarshal([]byte(v.ExtraData), &legacy)
 	}
 
+	panelType := savedviewtypes.PanelType{String: valuer.NewString(string(v.CompositeQuery.PanelType))}
+
 	return savedviewtypes.PostableSavedView{
-		GenerateName: true,
-		Source:       savedviewtypes.Source{String: valuer.NewString(v.SourcePage)},
-		Data: savedviewtypes.SavedViewData{
-			SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
-			Spec: savedviewtypes.SavedViewSpec{
-				DisplayName:    v.Name,
-				PanelType:      savedviewtypes.PanelType{String: valuer.NewString(string(v.CompositeQuery.PanelType))},
-				Queries:        v.CompositeQuery.Queries,
-				SelectedFields: legacy.SelectColumns,
-				Display: savedviewtypes.Display{
-					MaxLines: legacy.MaxLines,
-					FontSize: legacy.FontSize,
-					Format:   legacy.Format,
-					Color:    legacy.Color,
-				},
+		GenerateName:  true,
+		Source:        savedviewtypes.Source{String: valuer.NewString(v.SourcePage)},
+		SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
+		Spec: savedviewtypes.SavedViewSpec{
+			DisplayName: v.Name,
+			PanelType:   panelType,
+			// v1 has no requestType concept of its own -- fall back to the panelType-derived guess.
+			RequestType:    savedviewtypes.LegacyRequestTypeForPanelType(panelType),
+			Queries:        v.CompositeQuery.Queries,
+			SelectedFields: legacy.SelectColumns,
+			Display: savedviewtypes.Display{
+				MaxLines: legacy.MaxLines,
+				FontSize: legacy.FontSize,
+				Format:   legacy.Format,
+				Color:    legacy.Color,
 			},
 		},
 	}
@@ -68,25 +70,27 @@ func newPostableSavedViewFromLegacyView(v *v3.SavedView) savedviewtypes.Postable
 func newUpdatableSavedViewFromLegacyView(v *v3.SavedView) savedviewtypes.UpdatableSavedView {
 	var legacy legacyExtraData
 	if v.ExtraData != "" {
-		// Best-effort: malformed/older extraData shapes never fail the request
+		// Best-effort: malformed/older extraData shapes never fail the request.
 		_ = json.Unmarshal([]byte(v.ExtraData), &legacy)
 	}
 
+	panelType := savedviewtypes.PanelType{String: valuer.NewString(string(v.CompositeQuery.PanelType))}
+
 	return savedviewtypes.UpdatableSavedView{
-		Source: savedviewtypes.Source{String: valuer.NewString(v.SourcePage)},
-		Data: savedviewtypes.SavedViewData{
-			SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
-			Spec: savedviewtypes.SavedViewSpec{
-				DisplayName:    v.Name,
-				PanelType:      savedviewtypes.PanelType{String: valuer.NewString(string(v.CompositeQuery.PanelType))},
-				Queries:        v.CompositeQuery.Queries,
-				SelectedFields: legacy.SelectColumns,
-				Display: savedviewtypes.Display{
-					MaxLines: legacy.MaxLines,
-					FontSize: legacy.FontSize,
-					Format:   legacy.Format,
-					Color:    legacy.Color,
-				},
+		Source:        savedviewtypes.Source{String: valuer.NewString(v.SourcePage)},
+		SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
+		Spec: savedviewtypes.SavedViewSpec{
+			DisplayName: v.Name,
+			PanelType:   panelType,
+			// v1 has no requestType concept of its own -- fall back to the panelType-derived guess.
+			RequestType:    savedviewtypes.LegacyRequestTypeForPanelType(panelType),
+			Queries:        v.CompositeQuery.Queries,
+			SelectedFields: legacy.SelectColumns,
+			Display: savedviewtypes.Display{
+				MaxLines: legacy.MaxLines,
+				FontSize: legacy.FontSize,
+				Format:   legacy.Format,
+				Color:    legacy.Color,
 			},
 		},
 	}
@@ -95,11 +99,11 @@ func newUpdatableSavedViewFromLegacyView(v *v3.SavedView) savedviewtypes.Updatab
 // newLegacyViewFromSavedView renders a v2 SavedView back into the v1 shape.
 func newLegacyViewFromSavedView(v *savedviewtypes.SavedView) (*v3.SavedView, error) {
 	extraData, err := json.Marshal(legacyExtraData{
-		Color:         v.Data.Spec.Display.Color,
-		SelectColumns: v.Data.Spec.SelectedFields,
-		Format:        v.Data.Spec.Display.Format,
-		MaxLines:      v.Data.Spec.Display.MaxLines,
-		FontSize:      v.Data.Spec.Display.FontSize,
+		Color:         v.Spec.Display.Color,
+		SelectColumns: v.Spec.SelectedFields,
+		Format:        v.Spec.Display.Format,
+		MaxLines:      v.Spec.Display.MaxLines,
+		FontSize:      v.Spec.Display.FontSize,
 	})
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error in marshalling extra data")
@@ -107,17 +111,17 @@ func newLegacyViewFromSavedView(v *savedviewtypes.SavedView) (*v3.SavedView, err
 
 	return &v3.SavedView{
 		ID:         v.ID,
-		Name:       v.Data.Spec.DisplayName,
+		Name:       v.Spec.DisplayName,
 		CreatedAt:  v.CreatedAt,
 		CreatedBy:  v.CreatedBy,
 		UpdatedAt:  v.UpdatedAt,
 		UpdatedBy:  v.UpdatedBy,
 		SourcePage: v.Source.StringValue(),
 		CompositeQuery: &v3.CompositeQuery{
-			PanelType: v3.PanelType(v.Data.Spec.PanelType.StringValue()),
+			PanelType: v3.PanelType(v.Spec.PanelType.StringValue()),
 			// Saved views are only ever created from the explorer's builder mode.
 			QueryType: v3.QueryTypeBuilder,
-			Queries:   v.Data.Spec.Queries,
+			Queries:   v.Spec.Queries,
 		},
 		ExtraData: string(extraData),
 	}, nil
@@ -156,7 +160,14 @@ func (handler *handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uuid, err := handler.module.CreateView(ctx, claims.OrgID, newPostableSavedViewFromLegacyView(&view))
+	postable := newPostableSavedViewFromLegacyView(&view)
+
+	if err := postable.Validate(); err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	uuid, err := handler.module.CreateView(ctx, claims.OrgID, postable)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -224,8 +235,14 @@ func (handler *handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.module.UpdateView(ctx, claims.OrgID, viewUUID, newUpdatableSavedViewFromLegacyView(&view))
-	if err != nil {
+	updatable := newUpdatableSavedViewFromLegacyView(&view)
+
+	if err := updatable.Validate(); err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	if err := handler.module.UpdateView(ctx, claims.OrgID, viewUUID, updatable); err != nil {
 		render.Error(w, err)
 		return
 	}

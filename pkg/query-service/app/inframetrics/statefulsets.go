@@ -18,18 +18,18 @@ import (
 )
 
 var (
-	metricToUseForStatefulSets = GetDotMetrics("k8s_pod_cpu_usage")
-	k8sStatefulSetNameAttrKey  = GetDotMetrics("k8s_statefulset_name")
+	metricToUseForStatefulSets = "k8s.pod.cpu.usage"
+	k8sStatefulSetNameAttrKey  = "k8s.statefulset.name"
 
 	metricNamesForStatefulSets = map[string]string{
-		"desired_pods":   GetDotMetrics("k8s_statefulset_desired_pods"),
-		"available_pods": GetDotMetrics("k8s_statefulset_current_pods"),
+		"desired_pods":   "k8s.statefulset.desired_pods",
+		"available_pods": "k8s.statefulset.current_pods",
 	}
 
 	statefulSetAttrsToEnrich = []string{
-		GetDotMetrics("k8s_statefulset_name"),
-		GetDotMetrics("k8s_namespace_name"),
-		GetDotMetrics("k8s_cluster_name"),
+		"k8s.statefulset.name",
+		"k8s.namespace.name",
+		"k8s.cluster.name",
 	}
 
 	queryNamesForStatefulSets = map[string][]string{

@@ -7,9 +7,9 @@ import (
 )
 
 type Store interface {
-	Create(ctx context.Context, view *SavedView) error
-	Get(ctx context.Context, orgID string, id valuer.UUID) (*SavedView, error)
-	Update(ctx context.Context, view *SavedView) error
+	Create(ctx context.Context, view *StorableSavedView) error
+	Get(ctx context.Context, orgID string, id valuer.UUID) (*StorableSavedView, error)
+	Update(ctx context.Context, view *StorableSavedView) error
 	Delete(ctx context.Context, orgID string, id valuer.UUID) error
-	List(ctx context.Context, orgID string, source Source, name string) ([]*SavedView, error)
+	List(ctx context.Context, orgID string, source Source, name string) ([]*StorableSavedView, error)
 }

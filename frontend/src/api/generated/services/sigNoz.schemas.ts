@@ -8992,8 +8992,17 @@ export enum SavedviewtypesPanelTypeDTO {
 	list = 'list',
 	trace = 'trace',
 }
+export enum SavedviewtypesSchemaVersionDTO {
+	v2 = 'v2',
+}
+export enum SavedviewtypesSourceDTO {
+	traces = 'traces',
+	logs = 'logs',
+	metrics = 'metrics',
+	meter = 'meter',
+}
 export interface SavedviewtypesSavedViewSpecDTO {
-	display: SavedviewtypesDisplayDTO;
+	display?: SavedviewtypesDisplayDTO;
 	/**
 	 * @type string
 	 */
@@ -9003,28 +9012,14 @@ export interface SavedviewtypesSavedViewSpecDTO {
 	 * @type array
 	 */
 	queries: Querybuildertypesv5QueryEnvelopeDTO[];
+	requestType: Querybuildertypesv5RequestTypeDTO;
 	/**
 	 * @type array
 	 */
-	selectedFields: TelemetrytypesTelemetryFieldKeyDTO[];
+	selectedFields?: TelemetrytypesTelemetryFieldKeyDTO[];
 }
 
-export interface SavedviewtypesSavedViewDataDTO {
-	/**
-	 * @type string
-	 */
-	schemaVersion: string;
-	spec: SavedviewtypesSavedViewSpecDTO;
-}
-
-export enum SavedviewtypesSourceDTO {
-	traces = 'traces',
-	logs = 'logs',
-	metrics = 'metrics',
-	meter = 'meter',
-}
 export interface SavedviewtypesPostableSavedViewDTO {
-	data: SavedviewtypesSavedViewDataDTO;
 	/**
 	 * @type boolean
 	 */
@@ -9033,7 +9028,9 @@ export interface SavedviewtypesPostableSavedViewDTO {
 	 * @type string
 	 */
 	name?: string;
+	schemaVersion: SavedviewtypesSchemaVersionDTO;
 	source: SavedviewtypesSourceDTO;
+	spec: SavedviewtypesSavedViewSpecDTO;
 }
 
 export interface SavedviewtypesSavedViewDTO {
@@ -9046,7 +9043,6 @@ export interface SavedviewtypesSavedViewDTO {
 	 * @type string
 	 */
 	createdBy?: string;
-	data?: SavedviewtypesSavedViewDataDTO;
 	/**
 	 * @type string
 	 */
@@ -9055,7 +9051,9 @@ export interface SavedviewtypesSavedViewDTO {
 	 * @type string
 	 */
 	name?: string;
+	schemaVersion: SavedviewtypesSchemaVersionDTO;
 	source?: SavedviewtypesSourceDTO;
+	spec: SavedviewtypesSavedViewSpecDTO;
 	/**
 	 * @type string
 	 * @format date-time
@@ -9068,8 +9066,9 @@ export interface SavedviewtypesSavedViewDTO {
 }
 
 export interface SavedviewtypesUpdatableSavedViewDTO {
-	data: SavedviewtypesSavedViewDataDTO;
+	schemaVersion: SavedviewtypesSchemaVersionDTO;
 	source: SavedviewtypesSourceDTO;
+	spec: SavedviewtypesSavedViewSpecDTO;
 }
 
 export interface ServiceaccounttypesDeprecatedPostableServiceAccountRoleDTO {

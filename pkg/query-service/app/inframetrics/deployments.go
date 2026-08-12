@@ -18,18 +18,18 @@ import (
 )
 
 var (
-	metricToUseForDeployments = GetDotMetrics("k8s_pod_cpu_usage")
-	k8sDeploymentNameAttrKey  = GetDotMetrics("k8s_deployment_name")
+	metricToUseForDeployments = "k8s.pod.cpu.usage"
+	k8sDeploymentNameAttrKey  = "k8s.deployment.name"
 
 	metricNamesForDeployments = map[string]string{
-		"desired_pods":   GetDotMetrics("k8s_deployment_desired"),
-		"available_pods": GetDotMetrics("k8s_deployment_available"),
+		"desired_pods":   "k8s.deployment.desired",
+		"available_pods": "k8s.deployment.available",
 	}
 
 	deploymentAttrsToEnrich = []string{
-		GetDotMetrics("k8s_deployment_name"),
-		GetDotMetrics("k8s_namespace_name"),
-		GetDotMetrics("k8s_cluster_name"),
+		"k8s.deployment.name",
+		"k8s.namespace.name",
+		"k8s.cluster.name",
 	}
 
 	queryNamesForDeployments = map[string][]string{
