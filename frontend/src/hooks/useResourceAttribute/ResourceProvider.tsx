@@ -1,12 +1,10 @@
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { QueryParams } from 'constants/query';
-import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { encode } from 'js-base64';
 
-import { whilelistedKeys } from './config';
 import { ResourceContext } from './context';
 import {
 	IResourceAttribute,
@@ -195,16 +193,9 @@ function ResourceProvider({ children }: Props): JSX.Element {
 		setOptionsData({ mode: undefined, options: [] });
 	}, [dispatchQueries]);
 
-	const getVisibleQueries = useMemo(() => {
-		if (pathname === ROUTES.SERVICE_MAP) {
-			return queries.filter((query) => whilelistedKeys.includes(query.tagKey));
-		}
-		return queries;
-	}, [queries, pathname]);
-
 	const value: IResourceAttributeProps = useMemo(
 		() => ({
-			queries: getVisibleQueries,
+			queries,
 			staging,
 			handleClearAll,
 			handleClose,
@@ -227,7 +218,7 @@ function ResourceProvider({ children }: Props): JSX.Element {
 			staging,
 			selectedQuery,
 			optionsData,
-			getVisibleQueries,
+			queries,
 		],
 	);
 
