@@ -84,6 +84,11 @@
 		position: relative;
 		isolation: isolate; // own stacking context so ::before sits behind content, not the panel bg
 
+		// react-json-tree indents leaf values with a depth-dependent padding-left
+		// (2.125em when nested vs 1.25em at top); we indent via `ul`, so pin it flat
+		// to keep leaf and nested keys aligned at every depth.
+		padding-left: 1.25em !important;
+
 		// Keep actions visible on hover, or while this row's menu is open
 		&:hover .pretty-view__actions,
 		&:has(> span [data-state='open']) .pretty-view__actions {
