@@ -281,3 +281,8 @@ export const mappingWithRoutesAndKeys = (
 	}
 	return filters;
 };
+
+export const filterServiceMapSupportedQueries = (
+	queries: IResourceAttribute[],
+): IResourceAttribute[] =>
+	queries.filter((query) => whilelistedKeys.includes(query.tagKey));

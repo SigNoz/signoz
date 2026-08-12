@@ -80,7 +80,6 @@ function ResourceAttributesFilter({
 			<div className="environment-selector">
 				<Select
 					getPopupContainer={popupContainer}
-					key={selectedEnvironments.join('')}
 					showSearch
 					mode="multiple"
 					value={selectedEnvironments}
