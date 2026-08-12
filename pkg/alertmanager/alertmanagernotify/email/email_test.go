@@ -223,9 +223,7 @@ func TestEmailNotifyWithErrors(t *testing.T) {
 	}
 
 	c, err := loadEmailTestConfiguration(cfgFile)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	for _, tc := range []struct {
 		title     string
@@ -288,10 +286,7 @@ func TestEmailNotifyWithErrors(t *testing.T) {
 		},
 	} {
 		t.Run(tc.title, func(t *testing.T) {
-			if len(tc.errMsg) == 0 {
-				t.Fatal("please define the expected error message")
-				return
-			}
+			require.NotEmpty(t, tc.errMsg, "please define the expected error message")
 
 			emailCfg := &config.EmailConfig{
 				Smarthost: c.Smarthost,
@@ -309,15 +304,15 @@ func TestEmailNotifyWithErrors(t *testing.T) {
 
 			_, retry, err := notifyEmail(t, emailCfg, c.Server)
 			require.Error(t, err)
-			require.Contains(t, err.Error(), tc.errMsg)
-			require.False(t, retry)
+			assert.Contains(t, err.Error(), tc.errMsg)
+			assert.False(t, retry)
 
 			e, err := c.Server.getLastEmail(t)
 			require.NoError(t, err)
 			if tc.hasEmail {
-				require.NotNil(t, e)
+				assert.NotNil(t, e)
 			} else {
-				require.Nil(t, e)
+				assert.Nil(t, e)
 			}
 		})
 	}
@@ -331,9 +326,7 @@ func TestEmailNotifyWithDoneContext(t *testing.T) {
 	}
 
 	c, err := loadEmailTestConfiguration(cfgFile)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
@@ -350,7 +343,7 @@ func TestEmailNotifyWithDoneContext(t *testing.T) {
 		c.Server,
 	)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "establish connection to server")
+	assert.Contains(t, err.Error(), "establish connection to server")
 }
 
 // TestEmailNotifyWithoutAuthentication sends an email to an instance of
@@ -363,9 +356,7 @@ func TestEmailNotifyWithoutAuthentication(t *testing.T) {
 	}
 
 	c, err := loadEmailTestConfiguration(cfgFile)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	mail, _, err := notifyEmail(
 		t,
@@ -390,7 +381,7 @@ func TestEmailNotifyWithoutAuthentication(t *testing.T) {
 		}
 		headers = append(headers, k)
 	}
-	require.True(t, foundMsgID, "Couldn't find 'message-id' in %v", headers)
+	assert.True(t, foundMsgID, "Couldn't find 'message-id' in %v", headers)
 }
 
 // TestEmailNotifyWithSTARTTLS connects to the server, upgrades the connection
@@ -406,9 +397,7 @@ func TestEmailNotifyWithSTARTTLS(t *testing.T) {
 	}
 
 	c, err := loadEmailTestConfiguration(cfgFile)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	trueVar := true
 	_, _, err = notifyEmail(
@@ -437,9 +426,7 @@ func TestEmailNotifyWithAuthentication(t *testing.T) {
 	}
 
 	c, err := loadEmailTestConfiguration(cfgFile)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	td := t.TempDir()
 	fileWithCorrectPassword, err := os.CreateTemp(td, "smtp-password-correct")
@@ -583,13 +570,13 @@ func TestEmailNotifyWithAuthentication(t *testing.T) {
 			e, retry, err := notifyEmail(t, emailCfg, c.Server)
 			if len(tc.errMsg) > 0 {
 				require.Error(t, err)
-				require.Contains(t, err.Error(), tc.errMsg)
-				require.Equal(t, tc.retry, retry)
+				assert.Contains(t, err.Error(), tc.errMsg)
+				assert.Equal(t, tc.retry, retry)
 				return
 			}
 			require.NoError(t, err)
 
-			require.Equal(t, "1 firing alert(s)", e.Subject)
+			assert.Equal(t, "1 firing alert(s)", e.Subject)
 
 			getAddresses := func(addresses []map[string]string) []string {
 				res := make([]string, 0, len(addresses))
@@ -600,19 +587,21 @@ func TestEmailNotifyWithAuthentication(t *testing.T) {
 			}
 			to := getAddresses(e.To)
 			from := getAddresses(e.From)
-			require.Equal(t, strings.Split(emailCfg.To, ","), to)
-			require.Equal(t, strings.Split(emailCfg.From, ","), from)
+			assert.Equal(t, strings.Split(emailCfg.To, ","), to)
+			assert.Equal(t, strings.Split(emailCfg.From, ","), from)
 
 			if len(emailCfg.HTML) > 0 {
-				require.Equal(t, emailCfg.HTML, *e.HTML)
+				require.NotNil(t, e.HTML)
+				assert.Equal(t, emailCfg.HTML, *e.HTML)
 			} else {
-				require.Nil(t, e.HTML)
+				assert.Nil(t, e.HTML)
 			}
 
 			if len(emailCfg.Text) > 0 {
-				require.Equal(t, emailCfg.Text, *e.Text)
+				require.NotNil(t, e.Text)
+				assert.Equal(t, emailCfg.Text, *e.Text)
 			} else {
-				require.Nil(t, e.Text)
+				assert.Nil(t, e.Text)
 			}
 		})
 	}
@@ -624,7 +613,7 @@ func TestEmailConfigNoAuthMechs(t *testing.T) {
 	}
 	_, err := email.auth("")
 	require.Error(t, err)
-	require.Equal(t, "unknown auth mechanism: ", err.Error())
+	assert.Equal(t, "unknown auth mechanism: ", err.Error())
 }
 
 func TestEmailConfigMissingAuthParam(t *testing.T) {
@@ -634,19 +623,19 @@ func TestEmailConfigMissingAuthParam(t *testing.T) {
 	}
 	_, err := email.auth("CRAM-MD5")
 	require.Error(t, err)
-	require.Equal(t, "missing secret for CRAM-MD5 auth mechanism", err.Error())
+	assert.Equal(t, "missing secret for CRAM-MD5 auth mechanism", err.Error())
 
 	_, err = email.auth("PLAIN")
 	require.Error(t, err)
-	require.Equal(t, "missing password for PLAIN auth mechanism", err.Error())
+	assert.Equal(t, "missing password for PLAIN auth mechanism", err.Error())
 
 	_, err = email.auth("LOGIN")
 	require.Error(t, err)
-	require.Equal(t, "missing password for LOGIN auth mechanism", err.Error())
+	assert.Equal(t, "missing password for LOGIN auth mechanism", err.Error())
 
 	_, err = email.auth("PLAIN LOGIN")
 	require.Error(t, err)
-	require.Equal(t, "missing password for PLAIN auth mechanism\nmissing password for LOGIN auth mechanism", err.Error())
+	assert.Equal(t, "missing password for PLAIN auth mechanism\nmissing password for LOGIN auth mechanism", err.Error())
 }
 
 func TestEmailNoUsernameCustomError(t *testing.T) {
@@ -655,7 +644,7 @@ func TestEmailNoUsernameCustomError(t *testing.T) {
 	}
 	a, err := email.auth("CRAM-MD5")
 	require.ErrorIs(t, err, errNoAuthUsernameConfigured)
-	require.Nil(t, a)
+	assert.Nil(t, a)
 }
 
 // TestEmailRejected simulates the failure of an otherwise valid message submission which fails at a later point than
@@ -720,7 +709,7 @@ func TestEmailRejected(t *testing.T) {
 	// Send the alert to mock SMTP server.
 	retry, err := e.Notify(context.Background(), firingAlert)
 	require.ErrorContains(t, err, "501 5.5.4 Rejected!")
-	require.True(t, retry)
+	assert.True(t, retry)
 	require.NoError(t, srv.Shutdown(ctx))
 
 	require.Eventuallyf(t, func() bool {
@@ -789,9 +778,7 @@ func TestEmailNotifyWithThreading(t *testing.T) {
 	}
 
 	c, err := loadEmailTestConfiguration(cfgFile)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	for _, tc := range []struct {
 		name         string
@@ -836,22 +823,22 @@ func TestEmailNotifyWithThreading(t *testing.T) {
 			referencesValue := mail.Headers["references"]
 			inReplyToValue := mail.Headers["in-reply-to"]
 
-			require.NotEmpty(t, referencesValue, "References header not found in %v", mail.Headers)
-			require.NotEmpty(t, inReplyToValue, "In-Reply-To header not found in %v", mail.Headers)
+			assert.NotEmpty(t, referencesValue, "References header not found in %v", mail.Headers)
+			assert.NotEmpty(t, inReplyToValue, "In-Reply-To header not found in %v", mail.Headers)
 
-			require.Equal(t, referencesValue, inReplyToValue, "References and In-Reply-To should match")
+			assert.Equal(t, referencesValue, inReplyToValue, "References and In-Reply-To should match")
 
 			// Verify the format: <alert-HASH-DATE@alertmanager>
-			require.Contains(t, referencesValue, "<alert-")
-			require.Contains(t, referencesValue, "@alertmanager>")
+			assert.Contains(t, referencesValue, "<alert-")
+			assert.Contains(t, referencesValue, "@alertmanager>")
 
 			if tc.wantDatePart {
 				today := time.Now().Format("2006-01-02")
-				require.Contains(t, referencesValue, today, "threading header should contain today's date")
+				assert.Contains(t, referencesValue, today, "threading header should contain today's date")
 			} else {
 				// With thread_by_date: none, there should be no date
 				// (empty string between hash and @).
-				require.Contains(t, referencesValue, "-@alertmanager>", "threading header should have empty date part")
+				assert.Contains(t, referencesValue, "-@alertmanager>", "threading header should have empty date part")
 			}
 		})
 	}
@@ -904,14 +891,14 @@ func TestEmailGetPassword(t *testing.T) {
 				require.Error(t, err)
 				if errors.Asc(err, errors.CodeInternal) {
 					_, _, errMsg, _, _, _ := errors.Unwrapb(err)
-					require.Contains(t, errMsg, tc.errMsg)
+					assert.Contains(t, errMsg, tc.errMsg)
 				} else {
-					require.Contains(t, err.Error(), tc.errMsg)
+					assert.Contains(t, err.Error(), tc.errMsg)
 				}
-				require.Empty(t, password)
+				assert.Empty(t, password)
 			} else {
 				require.NoError(t, err)
-				require.Equal(t, "secret", password)
+				assert.Equal(t, "secret", password)
 			}
 		})
 	}
@@ -962,11 +949,11 @@ func TestEmailGetSecret(t *testing.T) {
 			secret, err := email.getAuthSecret()
 			if len(tc.errMsg) > 0 {
 				require.Error(t, err)
-				require.Contains(t, err.Error(), tc.errMsg)
-				require.Empty(t, secret)
+				assert.Contains(t, err.Error(), tc.errMsg)
+				assert.Empty(t, secret)
 			} else {
 				require.NoError(t, err)
-				require.Equal(t, "secret", secret)
+				assert.Equal(t, "secret", secret)
 			}
 		})
 	}
@@ -1032,7 +1019,7 @@ func TestEmailImplicitTLS(t *testing.T) {
 				useImplicitTLS = cfg.Smarthost.Port == "465"
 			}
 
-			require.Equal(t, tt.expectImplicit, useImplicitTLS,
+			assert.Equal(t, tt.expectImplicit, useImplicitTLS,
 				"Expected useImplicitTLS=%v for port=%s with forceImplicitTLS=%v",
 				tt.expectImplicit, tt.port, tt.forceImplicitTLS)
 		})
@@ -1074,8 +1061,8 @@ func TestPrepareContent(t *testing.T) {
 		ctx := context.Background()
 		subject, htmlBody, err := n.prepareContent(ctx, alerts)
 		require.NoError(t, err)
-		require.Equal(t, "subj", subject)
-		require.Equal(t, "<div><p>line one</p>\n</div><div><p>line two</p>\n</div>", htmlBody)
+		assert.Equal(t, "subj", subject)
+		assert.Equal(t, "<div><p>line one</p>\n</div><div><p>line two</p>\n</div>", htmlBody)
 	})
 
 	t.Run("custom title template; default body HTML template", func(t *testing.T) {
@@ -1103,8 +1090,8 @@ func TestPrepareContent(t *testing.T) {
 		ctx := context.Background()
 		subject, htmlBody, err := n.prepareContent(ctx, alerts)
 		require.NoError(t, err)
-		require.Equal(t, "Status: firing", htmlBody)
-		require.Equal(t, "fixed from firing", subject)
+		assert.Equal(t, "Status: firing", htmlBody)
+		assert.Equal(t, "fixed from firing", subject)
 	})
 
 	t.Run("default template without HTML", func(t *testing.T) {
@@ -1125,8 +1112,8 @@ func TestPrepareContent(t *testing.T) {
 		ctx := context.Background()
 		subject, htmlBody, err := n.prepareContent(ctx, alerts)
 		require.NoError(t, err)
-		require.Equal(t, "", htmlBody)
-		require.Equal(t, "the email subject", subject)
+		assert.Equal(t, "", htmlBody)
+		assert.Equal(t, "the email subject", subject)
 	})
 
 	t.Run("custom title template; custom body template", func(t *testing.T) {
@@ -1160,11 +1147,11 @@ func TestPrepareContent(t *testing.T) {
 		ctx := context.Background()
 		subject, htmlBody, err := n.prepareContent(ctx, alerts)
 		require.NoError(t, err)
-		require.Contains(t, htmlBody, "<!DOCTYPE html>")
-		require.Contains(t, htmlBody, "<p>line two</p>")
-		require.NotContains(t, htmlBody, "Well, what are you?")
-		require.Equal(t, subject, "fixed from firing")
-		require.NotContains(t, subject, "subject")
+		assert.Contains(t, htmlBody, "<!DOCTYPE html>")
+		assert.Contains(t, htmlBody, "<p>line two</p>")
+		assert.NotContains(t, htmlBody, "Well, what are you?")
+		assert.Equal(t, "fixed from firing", subject)
+		assert.NotContains(t, subject, "subject")
 	})
 }
 
