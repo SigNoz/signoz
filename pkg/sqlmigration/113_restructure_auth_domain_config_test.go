@@ -39,8 +39,8 @@ func TestRestructureAuthDomainConfig(t *testing.T) {
 		},
 		{
 			name:         "LowercaseSAML",
-			data:         `{"ssoEnabled":true,"ssoType":"saml","samlConfig":{"samlEntity":"entity","samlIdp":"location","samlCert":"cert","samlSkipSigning":true}}`,
-			expectedData: `{"enabled":true,"config":{"kind":"saml","spec":{"entityId":"entity","location":"location","certificate":"cert","samlSkipSigning":true}}}`,
+			data:         `{"ssoEnabled":true,"ssoType":"saml","samlConfig":{"samlEntity":"entity","samlIdp":"location","samlCert":"cert","fieldFromANewerVersion":true}}`,
+			expectedData: `{"enabled":true,"config":{"kind":"saml","spec":{"entityId":"entity","location":"location","certificate":"cert","fieldFromANewerVersion":true}}}`,
 		},
 		{
 			name:         "LowercaseGoogleAuthWithWorkspaceGroups",
