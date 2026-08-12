@@ -145,6 +145,10 @@ type StorableAuthDomainConfig struct {
 type AuthDomainConfig struct {
 	Kind AuthNProvider `json:"kind" required:"true"`
 	Spec any           `json:"spec" required:"true"`
+
+	// rawSpec retains the undecoded spec bytes from UnmarshalJSON so the
+	// request path can run its foreign-field check without re-parsing the body.
+	rawSpec json.RawMessage
 }
 
 // authDomainConfigSAML is the OpenAPI schema for an AuthDomainConfig with kind=saml.
@@ -320,6 +324,7 @@ func (typ *AuthDomainConfig) UnmarshalJSON(data []byte) error {
 
 		typ.Kind = kind
 		typ.Spec = spec
+		typ.rawSpec = specData
 		return nil
 	}
 
@@ -400,23 +405,14 @@ func (typ *AuthDomain) Update(updatableAuthDomain *UpdatableAuthDomain) error {
 // This is a request-shape check by design: stored documents keep decoding
 // leniently so a rollback can still read a document a newer binary wrote, and so
 // removing a field later does not need a migration.
-func rejectForeignSpecFields(body []byte, kind AuthNProvider) error {
-	var raw struct {
-		Config struct {
-			Spec json.RawMessage `json:"spec"`
-		} `json:"config"`
-	}
-	if err := json.Unmarshal(body, &raw); err != nil {
-		return errors.Wrapf(err, errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "failed to unmarshal auth domain config")
-	}
-
+func rejectForeignSpecFields(config AuthDomainConfig) error {
 	for _, variant := range authDomainConfigVariants {
-		if variant.kind != kind {
+		if variant.kind != config.Kind {
 			continue
 		}
 
-		if err := variant.rejectUnknownSpecFields(raw.Config.Spec); err != nil {
-			return errors.Wrapf(err, errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "invalid %q spec", kind.StringValue())
+		if err := variant.rejectUnknownSpecFields(config.rawSpec); err != nil {
+			return errors.Wrapf(err, errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "invalid %q spec", config.Kind.StringValue())
 		}
 	}
 
@@ -441,7 +437,7 @@ func (typ *PostableAuthDomain) UnmarshalJSON(data []byte) error {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "config is required")
 	}
 
-	if err := rejectForeignSpecFields(data, temp.Config.Kind); err != nil {
+	if err := rejectForeignSpecFields(temp.Config); err != nil {
 		return err
 	}
 
@@ -463,7 +459,7 @@ func (typ *UpdatableAuthDomain) UnmarshalJSON(data []byte) error {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthDomainInvalidConfig, "config is required")
 	}
 
-	if err := rejectForeignSpecFields(data, temp.Config.Kind); err != nil {
+	if err := rejectForeignSpecFields(temp.Config); err != nil {
 		return err
 	}
 
