@@ -27,6 +27,7 @@ export interface BaseConfigBuilderProps {
 	panelType: PANEL_TYPES;
 	minTimeScale?: number;
 	maxTimeScale?: number;
+	useExactTimeRange?: boolean;
 	stepInterval?: number;
 	isLogScale?: boolean;
 	yAxisUnit?: string;
@@ -46,6 +47,7 @@ export function buildBaseConfig({
 	thresholds,
 	minTimeScale,
 	maxTimeScale,
+	useExactTimeRange,
 	stepInterval,
 	isLogScale,
 	yAxisUnit,
@@ -88,6 +90,7 @@ export function buildBaseConfig({
 		time: true,
 		min: minTimeScale,
 		max: maxTimeScale,
+		useExactTimeRange,
 		logBase: isLogScale ? 10 : undefined,
 		distribution: isLogScale
 			? DistributionType.Logarithmic

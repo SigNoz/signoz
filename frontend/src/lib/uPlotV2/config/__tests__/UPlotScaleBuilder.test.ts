@@ -79,6 +79,44 @@ describe('UPlotScaleBuilder', () => {
 		expect(resolvedMax).toBe(expectedMax);
 	});
 
+	it('plots min/max as given when useExactTimeRange is set', () => {
+		const min = 1_700_000_000;
+		const max = 1_700_000_630;
+
+		const builder = new UPlotScaleBuilder(
+			createScaleProps({
+				scaleKey: 'x',
+				time: true,
+				min,
+				max,
+				useExactTimeRange: true,
+			}),
+		);
+
+		const config = builder.getConfig();
+
+		expect(config.x.range).toStrictEqual([min, max]);
+	});
+
+	it('keeps the requested end when the window is shorter than the trim', () => {
+		// 23 second window: trimming a minute off the end would put max before min.
+		const min = 1_786_527_160;
+		const max = 1_786_527_183;
+
+		const builder = new UPlotScaleBuilder(
+			createScaleProps({
+				scaleKey: 'x',
+				time: true,
+				min,
+				max,
+			}),
+		);
+
+		const config = builder.getConfig();
+
+		expect(config.x.range).toStrictEqual([min, max]);
+	});
+
 	it('falls back to getFallbackMinMaxTimeStamp when time scale has no min/max', () => {
 		getFallbackMinMaxSpy.mockReturnValue({
 			fallbackMin: 100,
