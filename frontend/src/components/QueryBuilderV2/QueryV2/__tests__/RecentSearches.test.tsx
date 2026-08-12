@@ -107,8 +107,6 @@ async function renderAndFocus(
 	return editor;
 }
 
-// The focus-driven open comes off a timer its own effect cleanup can cancel, so re-issue
-// CodeMirror's own trigger each tick. The first test covers that trigger without this.
 function openRecents(): Promise<void> {
 	return waitFor(
 		() => {
@@ -171,8 +169,6 @@ describe('QuerySearch recent searches', () => {
 		await renderAndFocus();
 		await openRecents();
 
-		// Exact equality rather than a negative match: an empty list would satisfy
-		// "does not contain the traces filter" without proving anything.
 		await waitFor(
 			() => {
 				expect(getRecentLabels()).toStrictEqual([FRONTEND_FILTER]);
@@ -190,8 +186,6 @@ describe('QuerySearch recent searches', () => {
 		await openRecents();
 		await userEvent.type(editor, FRONTEND_FILTER);
 
-		// The exact match drops out while the superset stays, proving the filter compares
-		// equality rather than substrings.
 		await waitFor(
 			() => {
 				expect(getRecentLabels()).toStrictEqual([supersetFilter]);
@@ -226,8 +220,6 @@ describe('QuerySearch recent searches', () => {
 		await renderAndFocus(onChange);
 		await openRecents();
 
-		// Clicks the rendered option, so this covers the tooltip wiring that the
-		// state-based tests above deliberately skip.
 		const option = await waitFor(
 			() => {
 				const node = Array.from(
