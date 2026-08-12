@@ -557,7 +557,7 @@ func (module *setter) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 		module.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Activated", traitsOrProperties)
 	}
 
-	return module.store.RunInTx(ctx, func(ctx context.Context) error {
+	if err := module.store.RunInTx(ctx, func(ctx context.Context) error {
 		if isPendingInviteUser {
 			err := module.store.UpdateUser(ctx, user.OrgID, user)
 			if err != nil {
@@ -574,7 +574,11 @@ func (module *setter) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 		}
 
 		return nil
-	})
+	}); err != nil {
+		return err
+	}
+
+	return module.tokenizer.DeleteTokensByUserID(ctx, user.ID)
 }
 
 func (module *setter) UpdatePassword(ctx context.Context, userID valuer.UUID, oldpasswd string, passwd string) error {
