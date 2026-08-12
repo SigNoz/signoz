@@ -262,10 +262,6 @@ export const filterKeyForField = (field: string): string => {
 	return fieldAttribs?.newField || field;
 };
 
-// Reshapes a raw log into a single nested object: merges the flat
-// attributes_*/resources_*/scope_string* maps into `attributes`/`resources`/
-// `scope`, keeping the top-level scalars (body, ids, timestamp, severity, …).
-// The DataViewer consumes this directly; `…ToString` stringifies it.
 export const aggregateAttributesResourcesToObject = (
 	logData: ILog,
 ): ILogAggregateAttributesResources => {

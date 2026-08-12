@@ -24,12 +24,9 @@ export interface DataViewerProps {
 	data: Record<string, any>;
 	drawerKey?: string;
 	prettyViewProps?: Omit<PrettyViewProps, 'data' | 'drawerKey'>;
-	// Optional override for the JSON view + Copy button. When provided it is used
-	// verbatim (e.g. the raw record, body unparsed); otherwise `data` is
-	// stringified as before. Pretty view always renders `data`.
+	// Optional override for the JSON view otherwise `data` is
+	// stringified and used.
 	jsonString?: string;
-	// Font size (px) for both views; defaults to the component's 12px. PrettyView reads
-	// it via the --data-viewer-font-size CSS var; JsonView (Monaco) via editor options.
 	fontSize?: number;
 }
 
