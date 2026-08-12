@@ -504,22 +504,23 @@ describe('ResourceProvider', () => {
 		});
 	});
 
-	describe('getVisibleQueries (SERVICE_MAP filtering)', () => {
-		it('filters queries down to whitelisted keys on SERVICE_MAP', () => {
-			const seeded = [
-				{
-					id: 'a',
-					tagKey: 'resource_service_name',
-					operator: 'IN',
-					tagValue: ['frontend'],
-				},
-				{
-					id: 'b',
-					tagKey: 'resource_k8s_cluster_name',
-					operator: 'IN',
-					tagValue: ['prod'],
-				},
-			];
+	describe('SERVICE_MAP', () => {
+		const seeded = [
+			{
+				id: 'a',
+				tagKey: 'resource_service_name',
+				operator: 'IN',
+				tagValue: ['frontend'],
+			},
+			{
+				id: 'b',
+				tagKey: 'resource_k8s_cluster_name',
+				operator: 'IN',
+				tagValue: ['prod'],
+			},
+		];
+
+		it('exposes every query from the URL, including ones the map cannot apply', () => {
 			mockLibHistory(
 				`?resourceAttribute=${encode(JSON.stringify(seeded))}`,
 				ROUTES.SERVICE_MAP,
@@ -532,24 +533,10 @@ describe('ResourceProvider', () => {
 				wrapper: createWrapper({ routerHistory }),
 			});
 
-			expect(result.current.queries).toStrictEqual([seeded[1]]);
+			expect(result.current.queries).toStrictEqual(seeded);
 		});
 
 		it('returns all queries on non-SERVICE_MAP routes', () => {
-			const seeded = [
-				{
-					id: 'a',
-					tagKey: 'resource_service_name',
-					operator: 'IN',
-					tagValue: ['frontend'],
-				},
-				{
-					id: 'b',
-					tagKey: 'resource_k8s_cluster_name',
-					operator: 'IN',
-					tagValue: ['prod'],
-				},
-			];
 			mockLibHistory(
 				`?resourceAttribute=${encode(JSON.stringify(seeded))}`,
 				'/services',
