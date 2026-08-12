@@ -64,8 +64,7 @@ function Overview({
 
 	const isDarkMode = useIsDarkMode();
 
-	const { actions, visibleActions, onActionMenuOpen } = useLogAttributeActions({
-		onClickActionItem,
+	const { actions, visibleActions } = useLogAttributeActions({
 		handleChangeSelectedView,
 		isListViewPanel,
 	});
@@ -86,7 +85,6 @@ function Overview({
 					prettyViewProps={{
 						actions,
 						visibleActions,
-						onActionMenuOpen,
 						renderLeafValue: (value, keyPath): ReactNode | undefined => {
 							// Sanitize (unescape + ANSI→color) string values under `body`.
 							// Skip huge ones (render raw, still safe) to avoid the sanitize

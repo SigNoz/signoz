@@ -1,11 +1,19 @@
+import { v4 as uuid } from 'uuid';
 import {
 	negateOperator,
 	OPERATORS,
 	QUERY_BUILDER_FUNCTIONS,
 } from 'constants/antlrQueryConstants';
+import { OPERATORS as QUERY_BUILDER_OPERATORS } from 'constants/queryBuilder';
 import { RESTRICTED_SELECTED_FIELDS } from 'container/LogsFilters/config';
 import { MetricsType } from 'container/MetricsApplication/constant';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
+import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
+import {
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import { generateFieldKeyForArray, getDataTypes } from './utils';
 
@@ -139,5 +147,82 @@ export const buildLogFilterTarget = (
 		groupBySupported,
 		groupByKey: groupBySupported ? fieldKey : undefined,
 		isRestricted,
+	};
+};
+
+const normalizeDataType = (
+	dataType: DataTypes | undefined,
+): DataTypes | undefined =>
+	dataType && Object.values(DataTypes).includes(dataType) ? dataType : undefined;
+
+// Append a filter item (filter-in / filter-out) to a query-data item. The autocomplete
+// key is fabricated locally (empty source list), so no click-time getAggregateKeys fetch.
+export const getFilterQueryData = (
+	item: IBuilderQuery,
+	target: LogFilterTarget,
+	value: unknown,
+	operator: string,
+): IBuilderQuery => {
+	const filterKey = chooseAutocompleteFromCustomValue(
+		[],
+		target.fieldKey,
+		target.dataType,
+		target.metricsType,
+	);
+	return {
+		...item,
+		filters: {
+			items: [
+				...(item.filters?.items || []),
+				{
+					id: uuid(),
+					key: filterKey,
+					op: getOperatorValue(operator),
+					value: toTypedFilterValue(value),
+				},
+			],
+			op: item.filters?.op || 'AND',
+		},
+	};
+};
+
+// Append a group-by. Caller guards groupBySupported / groupByKey.
+export const getGroupByQueryData = (
+	item: IBuilderQuery,
+	target: LogFilterTarget,
+): IBuilderQuery => {
+	const newGroupByItem: BaseAutocompleteData = {
+		key: target.groupByKey || '',
+		type: target.metricsType || '',
+		dataType: normalizeDataType(target.dataType),
+	};
+	return { ...item, groupBy: [...(item.groupBy || []), newGroupByItem] };
+};
+
+// Replace all filters with a single IN filter on this value.
+export const getReplaceFilterQueryData = (
+	item: IBuilderQuery,
+	target: LogFilterTarget,
+	value: unknown,
+): IBuilderQuery => {
+	const newFilterItem: BaseAutocompleteData = {
+		key: target.fieldKey,
+		type: target.metricsType || '',
+		dataType: normalizeDataType(target.dataType),
+	};
+	return {
+		...item,
+		filters: {
+			items: [
+				{
+					id: '',
+					key: newFilterItem,
+					op: QUERY_BUILDER_OPERATORS.IN,
+					value: [toTypedFilterValue(value)],
+				},
+			],
+			op: 'AND',
+		},
+		filter: { expression: '' },
 	};
 };
