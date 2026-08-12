@@ -59,6 +59,15 @@ func (migration *restructureAuthDomainConfig) Register(migrations *migrate.Migra
 	return migrations.Register(migration.Up, migration.Down)
 }
 
+// remove deletes a legacy row the migration cannot convert. Such rows never
+// carry the {kind, spec} envelope, so the reader would reject them; dropping
+// them here keeps the read path from failing on a document it cannot decode.
+func (migration *restructureAuthDomainConfig) remove(ctx context.Context, tx bun.Tx, id string, reason string, attrs ...any) error {
+	migration.logger.WarnContext(ctx, reason, append([]any{slog.String("auth_domain_id", id)}, attrs...)...)
+	_, err := tx.NewDelete().Model((*restructureAuthDomainRow)(nil)).Where("id = ?", id).Exec(ctx)
+	return err
+}
+
 func (migration *restructureAuthDomainConfig) Up(ctx context.Context, db *bun.DB) error {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
@@ -77,7 +86,9 @@ func (migration *restructureAuthDomainConfig) Up(ctx context.Context, db *bun.DB
 	for _, row := range rows {
 		legacy := make(map[string]json.RawMessage)
 		if err := json.Unmarshal([]byte(row.Data), &legacy); err != nil {
-			migration.logger.WarnContext(ctx, "skipping auth domain with unreadable data", slog.String("auth_domain_id", row.ID), errors.Attr(err))
+			if err := migration.remove(ctx, tx, row.ID, "removing auth domain with unreadable data", errors.Attr(err)); err != nil {
+				return err
+			}
 			continue
 		}
 
@@ -88,7 +99,9 @@ func (migration *restructureAuthDomainConfig) Up(ctx context.Context, db *bun.DB
 
 		var ssoType string
 		if err := json.Unmarshal(ssoTypeRaw, &ssoType); err != nil {
-			migration.logger.WarnContext(ctx, "skipping auth domain with unreadable ssoType", slog.String("auth_domain_id", row.ID), errors.Attr(err))
+			if err := migration.remove(ctx, tx, row.ID, "removing auth domain with unreadable ssoType", errors.Attr(err)); err != nil {
+				return err
+			}
 			continue
 		}
 
@@ -100,20 +113,26 @@ func (migration *restructureAuthDomainConfig) Up(ctx context.Context, db *bun.DB
 
 		kind, ok := legacySSOTypeToKind[ssoType]
 		if !ok {
-			migration.logger.WarnContext(ctx, "skipping auth domain with unknown ssoType", slog.String("auth_domain_id", row.ID), slog.String("sso_type", ssoType))
+			if err := migration.remove(ctx, tx, row.ID, "removing auth domain with unknown ssoType", slog.String("sso_type", ssoType)); err != nil {
+				return err
+			}
 			continue
 		}
 
 		spec, ok := legacy[legacySSOTypeToConfigKey[ssoType]]
 		if !ok || string(spec) == "null" {
-			migration.logger.WarnContext(ctx, "skipping auth domain with missing provider config", slog.String("auth_domain_id", row.ID), slog.String("sso_type", ssoType))
+			if err := migration.remove(ctx, tx, row.ID, "removing auth domain with missing provider config", slog.String("sso_type", ssoType)); err != nil {
+				return err
+			}
 			continue
 		}
 
 		if ssoType == "saml" {
 			samlSpec := make(map[string]json.RawMessage)
 			if err := json.Unmarshal(spec, &samlSpec); err != nil {
-				migration.logger.WarnContext(ctx, "skipping auth domain with unreadable saml config", slog.String("auth_domain_id", row.ID), errors.Attr(err))
+				if err := migration.remove(ctx, tx, row.ID, "removing auth domain with unreadable saml config", errors.Attr(err)); err != nil {
+					return err
+				}
 				continue
 			}
 
@@ -132,7 +151,9 @@ func (migration *restructureAuthDomainConfig) Up(ctx context.Context, db *bun.DB
 		if ssoType == "google_auth" {
 			googleSpec := make(map[string]json.RawMessage)
 			if err := json.Unmarshal(spec, &googleSpec); err != nil {
-				migration.logger.WarnContext(ctx, "skipping auth domain with unreadable google config", slog.String("auth_domain_id", row.ID), errors.Attr(err))
+				if err := migration.remove(ctx, tx, row.ID, "removing auth domain with unreadable google config", errors.Attr(err)); err != nil {
+					return err
+				}
 				continue
 			}
 

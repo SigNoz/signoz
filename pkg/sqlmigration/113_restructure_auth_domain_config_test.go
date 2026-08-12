@@ -16,9 +16,10 @@ import (
 
 func TestRestructureAuthDomainConfig(t *testing.T) {
 	testCases := []struct {
-		name         string
-		data         string
-		expectedData string
+		name            string
+		data            string
+		expectedData    string
+		expectedRemoved bool
 	}{
 		{
 			// Rows written before the provider enum became a valuer.String spell
@@ -68,19 +69,19 @@ func TestRestructureAuthDomainConfig(t *testing.T) {
 			expectedData: `{"enabled":true,"config":{"kind":"saml","spec":{"entityId":"entity","location":"location","certificate":"cert"}}}`,
 		},
 		{
-			name:         "UnknownSSOType",
-			data:         `{"ssoEnabled":true,"ssoType":"ldap","samlConfig":{"samlEntity":"entity"}}`,
-			expectedData: `{"ssoEnabled":true,"ssoType":"ldap","samlConfig":{"samlEntity":"entity"}}`,
+			name:            "UnknownSSOType",
+			data:            `{"ssoEnabled":true,"ssoType":"ldap","samlConfig":{"samlEntity":"entity"}}`,
+			expectedRemoved: true,
 		},
 		{
-			name:         "NullProviderConfig",
-			data:         `{"ssoEnabled":true,"ssoType":"saml","samlConfig":null}`,
-			expectedData: `{"ssoEnabled":true,"ssoType":"saml","samlConfig":null}`,
+			name:            "NullProviderConfig",
+			data:            `{"ssoEnabled":true,"ssoType":"saml","samlConfig":null}`,
+			expectedRemoved: true,
 		},
 		{
-			name:         "UnreadableData",
-			data:         `not json`,
-			expectedData: `not json`,
+			name:            "UnreadableData",
+			data:            `not json`,
+			expectedRemoved: true,
 		},
 	}
 
@@ -113,13 +114,14 @@ func TestRestructureAuthDomainConfig(t *testing.T) {
 		for _, testCase := range testCases {
 			t.Run(testCase.name, func(t *testing.T) {
 				row := new(restructureAuthDomainRow)
-				require.NoError(t, db.NewSelect().Model(row).Where("id = ?", testCase.name).Scan(ctx))
+				err := db.NewSelect().Model(row).Where("id = ?", testCase.name).Scan(ctx)
 
-				if testCase.name == "UnreadableData" {
-					assert.Equal(t, testCase.expectedData, row.Data)
+				if testCase.expectedRemoved {
+					assert.ErrorIs(t, err, sql.ErrNoRows)
 					return
 				}
 
+				require.NoError(t, err)
 				assert.JSONEq(t, testCase.expectedData, row.Data)
 			})
 		}
