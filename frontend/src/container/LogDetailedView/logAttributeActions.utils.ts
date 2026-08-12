@@ -123,9 +123,14 @@ export const buildLogFilterTarget = (
 	}
 
 	const fieldKey = `body.${collapsed}`;
+	// Restrict body leaves whose own key is a restricted field (e.g. a JSON body's own
+	// `timestamp`/`id`/`date`) — hides filter / group-by, same as top-level fields.
+	const leafKey = String(subpath[subpath.length - 1]);
+	const isRestricted = RESTRICTED_SELECTED_FIELDS.includes(leafKey);
 	// Group by only for plain body scalars (no array anywhere in the path) with json
 	// body on — mirrors isGroupBySupported in the old BodyTitleRenderer.
-	const groupBySupported = isBodyJsonQueryEnabled && !collapsed.includes('[]');
+	const groupBySupported =
+		isBodyJsonQueryEnabled && !collapsed.includes('[]') && !isRestricted;
 	return {
 		fieldKey,
 		filterInOperator: OPERATORS['='],
@@ -133,6 +138,6 @@ export const buildLogFilterTarget = (
 		dataType: getDataTypes(value),
 		groupBySupported,
 		groupByKey: groupBySupported ? fieldKey : undefined,
-		isRestricted: false,
+		isRestricted,
 	};
 };

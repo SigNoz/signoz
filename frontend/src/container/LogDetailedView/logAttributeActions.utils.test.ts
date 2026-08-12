@@ -102,6 +102,35 @@ describe('buildLogFilterTarget', () => {
 				groupBySupported: false,
 			});
 		});
+
+		it('restricts a body leaf named `timestamp` (no filter / group-by)', () => {
+			const t = buildLogFilterTarget(['body', 'timestamp'], '2026-01-01', true);
+			expect(t.fieldKey).toBe('body.timestamp');
+			expect(t.isRestricted).toBe(true);
+			expect(t.groupBySupported).toBe(false);
+			expect(t.groupByKey).toBeUndefined();
+		});
+
+		it('restricts a nested body leaf named `timestamp`', () => {
+			const t = buildLogFilterTarget(['body', 'obj', 'timestamp'], 'x', true);
+			expect(t.isRestricted).toBe(true);
+			expect(t.groupBySupported).toBe(false);
+		});
+
+		it('restricts body leaves named `id` and `date` too (uses RESTRICTED_SELECTED_FIELDS)', () => {
+			expect(buildLogFilterTarget(['body', 'id'], 'abc', true).isRestricted).toBe(
+				true,
+			);
+			expect(
+				buildLogFilterTarget(['body', 'date'], '2026-01-01', true).isRestricted,
+			).toBe(true);
+		});
+
+		it('does not restrict an ordinary body leaf', () => {
+			expect(
+				buildLogFilterTarget(['body', 'message'], 'hello', true).isRestricted,
+			).toBe(false);
+		});
 	});
 
 	describe('body arrays', () => {
