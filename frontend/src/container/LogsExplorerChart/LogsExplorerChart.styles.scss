@@ -3,10 +3,10 @@
 	min-height: 200px;
 	border-bottom: 1px solid var(--l1-border);
 
-	// Series without a label are still plotted, but a legend entry with no name is
-	// unreadable. The virtualized grid item is hidden rather than the legend item
-	// inside it, so the row closes up instead of leaving an empty cell.
-	.virtuoso-grid-item:has(.legend-label:empty) {
+	// Hides the legend row of a series whose label is blank, keeping it on the chart.
+	.virtuoso-grid-item:has(
+		.legend-copy-button[aria-label^='Copy '][aria-label$=' ']
+	) {
 		display: none;
 	}
 

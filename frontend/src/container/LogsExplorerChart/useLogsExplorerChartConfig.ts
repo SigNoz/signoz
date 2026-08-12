@@ -84,7 +84,7 @@ export function useLogsExplorerChartConfig({
 				// which is meaningless to the reader — the color alone identifies the
 				// series. A blank label has to be whitespace rather than '': uPlot
 				// replaces falsy labels with its own "Value" default.
-				label: isLabelEnabled ? label : ' ',
+				label: isLabelEnabled && label.trim() ? label : ' ',
 				lineColor: color,
 				colorMapping: {},
 				isDarkMode,
