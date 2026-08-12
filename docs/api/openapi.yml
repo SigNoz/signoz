@@ -1499,6 +1499,7 @@ components:
       - computeengine
       - gke
       - cloudstorage
+      - cloudsql_mysql
       type: string
     CloudintegrationtypesServiceMetadata:
       properties:

@@ -2818,6 +2818,7 @@ export enum CloudintegrationtypesServiceIDDTO {
 	computeengine = 'computeengine',
 	gke = 'gke',
 	cloudstorage = 'cloudstorage',
+	cloudsql_mysql = 'cloudsql_mysql',
 }
 export type CloudintegrationtypesCloudIntegrationServiceDTOAnyOf = {
 	/**
