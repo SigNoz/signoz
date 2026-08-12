@@ -243,21 +243,21 @@ def test_delete_role_with_assignee_guarded(
     )
 
     resp = requests.post(
-        signoz.self.host_configs["8080"].get(f"/api/v2/users/{user_id}/roles"),
-        json={"name": CRUD_ASSIGNEE_ROLE_NAME},
+        signoz.self.host_configs["8080"].get("/api/v2/user_roles"),
+        json={"userId": user_id, "roleId": role_id},
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
-    assert resp.status_code == HTTPStatus.OK, resp.text
+    assert resp.status_code == HTTPStatus.CREATED, resp.text
 
     resp = requests.delete(signoz.self.host_configs["8080"].get(f"/api/v1/roles/{role_id}"), headers={"Authorization": f"Bearer {admin_token}"}, timeout=5)
     assert resp.status_code == HTTPStatus.BAD_REQUEST, f"delete role with assignee: expected 400, got {resp.status_code}: {resp.text}"
 
-    resp = requests.get(signoz.self.host_configs["8080"].get(f"/api/v2/users/{user_id}/roles"), headers={"Authorization": f"Bearer {admin_token}"}, timeout=5)
+    resp = requests.get(signoz.self.host_configs["8080"].get(f"/api/v2/users/{user_id}"), headers={"Authorization": f"Bearer {admin_token}"}, timeout=5)
     assert resp.status_code == HTTPStatus.OK, resp.text
-    entry = next(r for r in resp.json()["data"] if r["name"] == CRUD_ASSIGNEE_ROLE_NAME)
+    entry = next(ur for ur in resp.json()["data"]["userRoles"] if ur["role"]["name"] == CRUD_ASSIGNEE_ROLE_NAME)
     resp = requests.delete(
-        signoz.self.host_configs["8080"].get(f"/api/v2/users/{user_id}/roles/{entry['id']}"),
+        signoz.self.host_configs["8080"].get(f"/api/v2/user_roles/{entry['id']}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )

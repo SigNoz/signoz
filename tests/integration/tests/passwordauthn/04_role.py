@@ -12,6 +12,7 @@ from fixtures.auth import (
     change_user_role,
     create_active_user,
 )
+from fixtures.role import find_role_by_name
 
 ROLECHANGE_USER_EMAIL = "admin+rolechange@integration.test"
 ROLECHANGE_USER_PASSWORD = "password123Z$"
@@ -120,7 +121,7 @@ def test_assign_role_is_additive(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
 ):
-    """Verify POST /api/v2/users/{id}/roles ADDS a role alongside existing ones and is idempotent."""
+    """Verify POST /api/v2/user_roles ADDS a role alongside existing ones and is idempotent."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v2/users/me"),
@@ -131,15 +132,17 @@ def test_assign_role_is_additive(
     me = response.json()["data"]
     user_id = me["id"]
 
+    editor_role_id = find_role_by_name(signoz, admin_token, "signoz-editor")
+
     # User currently has signoz-admin from test_change_role.
     # Assign signoz-editor — should be additive, admin stays.
     response = requests.post(
-        signoz.self.host_configs["8080"].get(f"/api/v2/users/{user_id}/roles"),
-        json={"name": "signoz-editor"},
+        signoz.self.host_configs["8080"].get("/api/v2/user_roles"),
+        json={"userId": user_id, "roleId": editor_role_id},
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.CREATED
 
     response = requests.get(
         signoz.self.host_configs["8080"].get(f"/api/v2/users/{user_id}/roles"),
@@ -155,12 +158,12 @@ def test_assign_role_is_additive(
 
     # Idempotency: assigning the same role again succeeds without duplicates
     response = requests.post(
-        signoz.self.host_configs["8080"].get(f"/api/v2/users/{user_id}/roles"),
-        json={"name": "signoz-editor"},
+        signoz.self.host_configs["8080"].get("/api/v2/user_roles"),
+        json={"userId": user_id, "roleId": editor_role_id},
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.CREATED
 
     response = requests.get(
         signoz.self.host_configs["8080"].get(f"/api/v2/users/{user_id}/roles"),
@@ -212,7 +215,7 @@ def test_remove_role(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
 ):
-    """Verify DELETE /api/v2/users/{id}/roles/{roleId} removes only the specified role."""
+    """Verify DELETE /api/v2/user_roles/{id} removes only the specified role."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v2/users/me"),
@@ -223,18 +226,11 @@ def test_remove_role(
     me = response.json()["data"]
     user_id = me["id"]
 
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v2/users/{user_id}/roles"),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK
-    roles = response.json()["data"]
-    editor_role_id = next((r for r in roles if r["name"] == "signoz-editor"), None)["id"]
-    assert editor_role_id is not None
+    editor_entry_id = next((ur["id"] for ur in me["userRoles"] if ur["role"]["name"] == "signoz-editor"), None)
+    assert editor_entry_id is not None
 
     response = requests.delete(
-        signoz.self.host_configs["8080"].get(f"/api/v2/users/{user_id}/roles/{editor_role_id}"),
+        signoz.self.host_configs["8080"].get(f"/api/v2/user_roles/{editor_entry_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
@@ -283,7 +279,7 @@ def test_admin_cannot_assign_role_to_self(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
 ):
-    """Verify POST /api/v2/users/{own_id}/roles is rejected (self-mutation guard)."""
+    """Verify POST /api/v2/user_roles for the caller's own user is rejected (self-mutation guard)."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v2/users/me"),
@@ -294,8 +290,8 @@ def test_admin_cannot_assign_role_to_self(
     admin_data = response.json()["data"]
 
     response = requests.post(
-        signoz.self.host_configs["8080"].get(f"/api/v2/users/{admin_data['id']}/roles"),
-        json={"name": "signoz-editor"},
+        signoz.self.host_configs["8080"].get("/api/v2/user_roles"),
+        json={"userId": admin_data["id"], "roleId": find_role_by_name(signoz, admin_token, "signoz-editor")},
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
@@ -306,7 +302,7 @@ def test_admin_cannot_remove_own_role(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
 ):
-    """Verify DELETE /api/v2/users/{own_id}/roles/{roleId} is rejected (self-mutation guard)."""
+    """Verify DELETE /api/v2/user_roles/{id} for the caller's own assignment is rejected (self-mutation guard)."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v2/users/me"),
@@ -316,18 +312,11 @@ def test_admin_cannot_remove_own_role(
     assert response.status_code == HTTPStatus.OK
     admin_data = response.json()["data"]
 
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v2/users/{admin_data['id']}/roles"),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK
-    roles = response.json()["data"]
-    admin_role_id = next((r for r in roles if r["name"] == "signoz-admin"), None)["id"]
-    assert admin_role_id is not None
+    admin_entry_id = next((ur["id"] for ur in admin_data["userRoles"] if ur["role"]["name"] == "signoz-admin"), None)
+    assert admin_entry_id is not None
 
     response = requests.delete(
-        signoz.self.host_configs["8080"].get(f"/api/v2/users/{admin_data['id']}/roles/{admin_role_id}"),
+        signoz.self.host_configs["8080"].get(f"/api/v2/user_roles/{admin_entry_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
@@ -363,8 +352,8 @@ def test_editor_cannot_manage_roles(
 
     # POST assign role — forbidden
     response = requests.post(
-        signoz.self.host_configs["8080"].get(f"/api/v2/users/{viewer_id}/roles"),
-        json={"name": "signoz-editor"},
+        signoz.self.host_configs["8080"].get("/api/v2/user_roles"),
+        json={"userId": viewer_id, "roleId": find_role_by_name(signoz, admin_token, "signoz-editor")},
         headers={"Authorization": f"Bearer {editor_token}"},
         timeout=5,
     )
@@ -372,16 +361,15 @@ def test_editor_cannot_manage_roles(
 
     # DELETE remove role — forbidden
     response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v2/users/{viewer_id}/roles"),
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{viewer_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK
-    viewer_roles = response.json()["data"]
-    viewer_role_id = next((r for r in viewer_roles if r["name"] == "signoz-viewer"), None)["id"]
+    viewer_entry_id = next(ur["id"] for ur in response.json()["data"]["userRoles"] if ur["role"]["name"] == "signoz-viewer")
 
     response = requests.delete(
-        signoz.self.host_configs["8080"].get(f"/api/v2/users/{viewer_id}/roles/{viewer_role_id}"),
+        signoz.self.host_configs["8080"].get(f"/api/v2/user_roles/{viewer_entry_id}"),
         headers={"Authorization": f"Bearer {editor_token}"},
         timeout=5,
     )

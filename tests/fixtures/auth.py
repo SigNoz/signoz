@@ -33,6 +33,7 @@ USER_VIEWER_EMAIL = "viewer@integration.test"
 USER_VIEWER_PASSWORD = "password123Z$"
 
 USERS_BASE = "/api/v2/users"
+USER_ROLES_BASE = "/api/v2/user_roles"
 
 
 def _login(signoz: types.SigNoz, email: str, password: str) -> str:
@@ -424,21 +425,21 @@ def change_user_role(
 
     Role names should be managed role names (e.g. signoz-editor).
     """
-    # Get current roles to find the old role's ID
+    # Get current roles to find the old role's user_role entry ID
     response = requests.get(
-        signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{user_id}/roles"),
+        signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{user_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
-    roles = response.json()["data"]
+    user_roles = response.json()["data"]["userRoles"]
 
-    old_role_entry = next((r for r in roles if r["name"] == old_role), None)
+    old_role_entry = next((ur for ur in user_roles if ur["role"]["name"] == old_role), None)
     assert old_role_entry is not None, f"User does not have role '{old_role}'"
 
     # Remove old role
     response = requests.delete(
-        signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{user_id}/roles/{old_role_entry['id']}"),
+        signoz.self.host_configs["8080"].get(f"{USER_ROLES_BASE}/{old_role_entry['id']}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
@@ -446,9 +447,9 @@ def change_user_role(
 
     # Assign new role
     response = requests.post(
-        signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{user_id}/roles"),
-        json={"name": new_role},
+        signoz.self.host_configs["8080"].get(USER_ROLES_BASE),
+        json={"userId": user_id, "roleId": find_role_by_name(signoz, admin_token, new_role)},
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
-    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.status_code == HTTPStatus.CREATED, response.text
