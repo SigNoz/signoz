@@ -4135,6 +4135,10 @@ func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query stri
 	return readRowsForTimeSeriesResult(rows, vars, columnNames, countOfNumberCols)
 }
 
+func isJSONColumn(columnType driver.ColumnType) bool {
+	return strings.HasPrefix(strings.ToUpper(columnType.DatabaseTypeName()), "JSON")
+}
+
 // GetListResultV3 runs the query and returns list of rows
 func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([]*v3.Row, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
@@ -4159,6 +4163,12 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 	for rows.Next() {
 		var vars = make([]interface{}, len(columnTypes))
 		for i := range columnTypes {
+			if isJSONColumn(columnTypes[i]) {
+				// the driver fails to decode JSON into native Go values, so it is read as raw bytes
+				var raw []byte
+				vars[i] = &raw
+				continue
+			}
 			vars[i] = reflect.New(columnTypes[i].ScanType()).Interface()
 		}
 		if err := rows.Scan(vars...); err != nil {
@@ -4167,7 +4177,17 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 		row := map[string]interface{}{}
 		var t time.Time
 		for idx, v := range vars {
-			if columnNames[idx] == "timestamp" {
+			if isJSONColumn(columnTypes[idx]) {
+				raw, ok := v.(*[]byte)
+				if !ok {
+					continue
+				}
+				var value map[string]interface{}
+				if err := json.Unmarshal(*raw, &value); err != nil {
+					return nil, errors.New(err.Error())
+				}
+				row[columnNames[idx]] = value
+			} else if columnNames[idx] == "timestamp" {
 				switch v := v.(type) {
 				case *uint64:
 					t = time.Unix(0, int64(*v))
