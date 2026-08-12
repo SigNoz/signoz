@@ -1,11 +1,15 @@
-import { completionStatus } from '@codemirror/autocomplete';
+import {
+	completionStatus,
+	currentCompletions,
+	startCompletion,
+} from '@codemirror/autocomplete';
 import { EditorView } from '@uiw/react-codemirror';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import * as recentQueriesStore from 'lib/recentQueries/recentQueriesStore';
 import { fireEvent, render, userEvent, waitFor } from 'tests/test-utils';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { RECENTS_DISPLAY_CAP } from '../QuerySearch/constants';
+import { RECENTS_DISPLAY_CAP, RECENTS_SECTION } from '../QuerySearch/constants';
 import QuerySearch from '../QuerySearch/QuerySearch';
 import { mockCodeMirrorDomApis } from './codemirrorDomMocks';
 
@@ -15,13 +19,13 @@ const TOOLTIP_SELECTOR = '.cm-tooltip-autocomplete';
 const COMPLETION_LABEL_SELECTOR = '.cm-completionLabel';
 const DELETE_BUTTON_SELECTOR = '.cm-recent-delete';
 
-const POPUP_TIMEOUT = 500;
-
 const FRONTEND_FILTER = "service.name = 'frontend'";
 const STATUS_CODE_FILTER = "http.status_code = '500'";
 const TRACES_FILTER = "name = 'HTTP GET'";
 
-jest.setTimeout(30000);
+// A test holds several sequential waits, which can outlast Jest's 5s default on a
+// loaded CI runner even when every individual wait passes.
+jest.setTimeout(20000);
 
 beforeAll(() => {
 	mockCodeMirrorDomApis();
@@ -63,22 +67,6 @@ function saveLogsRecent(expression: string): void {
 	recentQueriesStore.save({ signal: 'logs', filter: { expression } });
 }
 
-function getTooltipText(): string {
-	return document.querySelector(TOOLTIP_SELECTOR)?.textContent ?? '';
-}
-
-function getCompletionLabels(): string[] {
-	return Array.from(document.querySelectorAll(COMPLETION_LABEL_SELECTOR)).map(
-		(node) => node.textContent ?? '',
-	);
-}
-
-function findCompletionOption(label: string): HTMLElement | undefined {
-	return Array.from(
-		document.querySelectorAll<HTMLElement>(COMPLETION_LABEL_SELECTOR),
-	).find((node) => node.textContent === label);
-}
-
 function getEditorView(): EditorView | null {
 	const root = document.querySelector<HTMLElement>(CM_ROOT_SELECTOR);
 	return root ? EditorView.findFromDOM(root) : null;
@@ -93,37 +81,49 @@ function isCompletionOpen(): boolean {
 	return !!view && completionStatus(view.state) === 'active';
 }
 
-function getOpenCompletionOption(label: string): HTMLElement {
-	const option = findCompletionOption(label);
-	expect(option).toBeDefined();
-	expect(isCompletionOpen()).toBe(true);
-	return option as HTMLElement;
+// Reads recents from completion state, not the tooltip: the tooltip is a later render
+// pass over this same state, so going to the source drops a layer of timing.
+function getRecentLabels(): string[] {
+	const view = getEditorView();
+	if (!view) {
+		return [];
+	}
+	return currentCompletions(view.state)
+		.filter((completion) => completion.section === RECENTS_SECTION)
+		.map((completion) => completion.label);
 }
 
-async function focusEditor(): Promise<HTMLElement> {
+async function renderAndFocus(
+	onChange: (value: string) => void = jest.fn(),
+): Promise<HTMLElement> {
+	renderLogsSearch(onChange);
+
 	const editor = await waitFor(
 		() => {
 			const element = document.querySelector(CM_EDITOR_SELECTOR);
 			expect(element).toBeInTheDocument();
 			return element as HTMLElement;
 		},
-		{ timeout: POPUP_TIMEOUT },
+		{ timeout: 2000 },
 	);
 
 	await userEvent.click(editor);
-
-	await waitFor(
-		() => {
-			expect(isCompletionOpen()).toBe(true);
-		},
-		{ timeout: POPUP_TIMEOUT },
-	);
-
 	return editor;
 }
 
-function waitForCompletionPopup<T>(assertion: () => T): Promise<T> {
-	return waitFor(assertion, { timeout: POPUP_TIMEOUT });
+// The focus-driven open comes off a timer its own effect cleanup can cancel, so re-issue
+// CodeMirror's own trigger each tick. The first test covers that trigger without this.
+function openRecents(): Promise<void> {
+	return waitFor(
+		() => {
+			const view = getEditorView();
+			if (view && !isCompletionOpen()) {
+				startCompletion(view);
+			}
+			expect(getRecentLabels().length).toBeGreaterThan(0);
+		},
+		{ timeout: 3000 },
+	);
 }
 
 describe('QuerySearch recent searches', () => {
@@ -135,27 +135,34 @@ describe('QuerySearch recent searches', () => {
 	it('shows a saved recent query under "Recent searches" on focus', async () => {
 		saveLogsRecent(FRONTEND_FILTER);
 
-		renderLogsSearch();
-		await focusEditor();
+		await renderAndFocus();
 
-		await waitForCompletionPopup(() => {
-			expect(getTooltipText()).toContain('Recent searches');
-			expect(getTooltipText()).toContain(FRONTEND_FILTER);
-		});
+		await waitFor(
+			() => {
+				expect(getRecentLabels()).toStrictEqual([FRONTEND_FILTER]);
+			},
+			{ timeout: 3000 },
+		);
+
+		const view = getEditorView() as EditorView;
+		const [recent] = currentCompletions(view.state);
+		expect(recent.section).toBe(RECENTS_SECTION);
 	});
 
 	it('filters recents by substring as the user types', async () => {
 		saveLogsRecent(FRONTEND_FILTER);
 		saveLogsRecent(STATUS_CODE_FILTER);
 
-		renderLogsSearch();
-		const editor = await focusEditor();
+		const editor = await renderAndFocus();
+		await openRecents();
 		await userEvent.type(editor, 'status_code');
 
-		await waitForCompletionPopup(() => {
-			expect(getTooltipText()).toContain(STATUS_CODE_FILTER);
-			expect(getTooltipText()).not.toContain(FRONTEND_FILTER);
-		});
+		await waitFor(
+			() => {
+				expect(getRecentLabels()).toStrictEqual([STATUS_CODE_FILTER]);
+			},
+			{ timeout: 3000 },
+		);
 	});
 
 	it('does not surface recents saved under a different signal', async () => {
@@ -165,15 +172,17 @@ describe('QuerySearch recent searches', () => {
 		});
 		saveLogsRecent(FRONTEND_FILTER);
 
-		renderLogsSearch();
-		await focusEditor();
+		await renderAndFocus();
+		await openRecents();
 
-		await waitForCompletionPopup(() => {
-			expect(getTooltipText()).toContain('Recent searches');
-			expect(getTooltipText()).toContain(FRONTEND_FILTER);
-		});
-
-		expect(getTooltipText()).not.toContain(TRACES_FILTER);
+		// Exact equality rather than a negative match: an empty list would satisfy
+		// "does not contain the traces filter" without proving anything.
+		await waitFor(
+			() => {
+				expect(getRecentLabels()).toStrictEqual([FRONTEND_FILTER]);
+			},
+			{ timeout: 3000 },
+		);
 	});
 
 	it('excludes a recent that exactly matches the current editor text', async () => {
@@ -181,44 +190,17 @@ describe('QuerySearch recent searches', () => {
 		saveLogsRecent(FRONTEND_FILTER);
 		saveLogsRecent(supersetFilter);
 
-		renderLogsSearch();
-		const editor = await focusEditor();
+		const editor = await renderAndFocus();
+		await openRecents();
 		await userEvent.type(editor, FRONTEND_FILTER);
 
-		await waitForCompletionPopup(() => {
-			expect(getCompletionLabels()).toContain(supersetFilter);
-		});
-
-		// Exact equality, not substring — the superset label contains this one.
-		expect(getCompletionLabels()).not.toContain(FRONTEND_FILTER);
-	});
-
-	it('applies the full expression to the editor when a recent is clicked', async () => {
-		saveLogsRecent(FRONTEND_FILTER);
-
-		const onChange = jest.fn();
-		renderLogsSearch(onChange);
-		await focusEditor();
-
-		const option = await waitForCompletionPopup(() =>
-			getOpenCompletionOption(FRONTEND_FILTER),
-		);
-		await userEvent.click(option);
-
+		// The exact match drops out while the superset stays, proving the filter compares
+		// equality rather than substrings.
 		await waitFor(
 			() => {
-				expect(getDocText()).toBe(FRONTEND_FILTER);
+				expect(getRecentLabels()).toStrictEqual([supersetFilter]);
 			},
-			{ timeout: POPUP_TIMEOUT },
-		);
-
-		expect(onChange).toHaveBeenCalledWith(FRONTEND_FILTER);
-
-		await waitFor(
-			() => {
-				expect(document.querySelector(TOOLTIP_SELECTOR)).not.toBeInTheDocument();
-			},
-			{ timeout: POPUP_TIMEOUT },
+			{ timeout: 3000 },
 		);
 	});
 
@@ -230,28 +212,69 @@ describe('QuerySearch recent searches', () => {
 		filters.forEach((filter) => saveLogsRecent(filter));
 		const expectedLabels = [...filters].reverse().slice(0, RECENTS_DISPLAY_CAP);
 
-		renderLogsSearch();
-		await focusEditor();
+		await renderAndFocus();
+		await openRecents();
 
-		await waitForCompletionPopup(() => {
-			const recentLabels = getCompletionLabels().filter((label) =>
-				label.startsWith('attribute_'),
-			);
-			expect(recentLabels).toStrictEqual(expectedLabels);
-		});
+		await waitFor(
+			() => {
+				expect(getRecentLabels()).toStrictEqual(expectedLabels);
+			},
+			{ timeout: 3000 },
+		);
+	});
+
+	it('applies the full expression to the editor when a recent is clicked', async () => {
+		saveLogsRecent(FRONTEND_FILTER);
+
+		const onChange = jest.fn();
+		await renderAndFocus(onChange);
+		await openRecents();
+
+		// Clicks the rendered option, so this covers the tooltip wiring that the
+		// state-based tests above deliberately skip.
+		const option = await waitFor(
+			() => {
+				const node = Array.from(
+					document.querySelectorAll<HTMLElement>(COMPLETION_LABEL_SELECTOR),
+				).find((element) => element.textContent === FRONTEND_FILTER);
+				expect(node).toBeDefined();
+				return node as HTMLElement;
+			},
+			{ timeout: 3000 },
+		);
+		await userEvent.click(option);
+
+		await waitFor(
+			() => {
+				expect(getDocText()).toBe(FRONTEND_FILTER);
+			},
+			{ timeout: 2000 },
+		);
+
+		expect(onChange).toHaveBeenCalledWith(FRONTEND_FILTER);
+
+		await waitFor(
+			() => {
+				expect(document.querySelector(TOOLTIP_SELECTOR)).not.toBeInTheDocument();
+			},
+			{ timeout: 2000 },
+		);
 	});
 
 	it('removes a recent from the dropdown and the store when delete is clicked', async () => {
 		saveLogsRecent(FRONTEND_FILTER);
 
-		renderLogsSearch();
-		await focusEditor();
+		await renderAndFocus();
+		await openRecents();
 
-		const deleteButton = await waitForCompletionPopup(() => {
-			const button = document.querySelector(DELETE_BUTTON_SELECTOR);
-			expect(button).toBeInTheDocument();
-			return button as HTMLElement;
-		});
+		const deleteButton = await waitFor(
+			() => {
+				const button = document.querySelector(DELETE_BUTTON_SELECTOR);
+				expect(button).toBeInTheDocument();
+				return button as HTMLElement;
+			},
+			{ timeout: 3000 },
+		);
 
 		// fireEvent: the button preventDefaults pointerdown, which makes userEvent.click drop the mouse chain.
 		fireEvent.click(deleteButton);
@@ -259,9 +282,9 @@ describe('QuerySearch recent searches', () => {
 		await waitFor(
 			() => {
 				expect(recentQueriesStore.list('logs')).toHaveLength(0);
-				expect(getCompletionLabels()).not.toContain(FRONTEND_FILTER);
+				expect(getRecentLabels()).not.toContain(FRONTEND_FILTER);
 			},
-			{ timeout: POPUP_TIMEOUT },
+			{ timeout: 2000 },
 		);
 		expect(getDocText()).toBe('');
 	});
