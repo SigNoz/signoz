@@ -4,29 +4,28 @@ import (
 	"strings"
 	"testing"
 
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/util/validation"
 )
 
 func validPostableSavedView() PostableSavedView {
 	return PostableSavedView{
-		Name:   "my-view",
-		Source: SourceLogs,
-		Data: SavedViewData{
-			SchemaVersion: SavedViewSchemaVersion,
-			Spec:          SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, Queries: validQueries()},
-		},
+		Name:          "my-view",
+		Source:        SourceLogs,
+		SchemaVersion: SavedViewSchemaVersion,
+		Spec:          SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, RequestType: qbtypes.RequestTypeTimeSeries, Queries: validQueries()},
 	}
 }
 
 func validUpdatableSavedView() UpdatableSavedView {
 	return UpdatableSavedView{
-		Source: SourceLogs,
-		Data: SavedViewData{
-			SchemaVersion: SavedViewSchemaVersion,
-			Spec:          SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, Queries: validQueries()},
-		},
+		Source:        SourceLogs,
+		SchemaVersion: SavedViewSchemaVersion,
+		Spec:          SavedViewSpec{DisplayName: "My View", PanelType: PanelTypeGraph, RequestType: qbtypes.RequestTypeTimeSeries, Queries: validQueries()},
 	}
 }
 
@@ -69,7 +68,7 @@ func TestPostableSavedViewValidate(t *testing.T) {
 
 	t.Run("invalid saved view data is rejected", func(t *testing.T) {
 		view := validPostableSavedView()
-		view.Data.SchemaVersion = "v1"
+		view.SchemaVersion = SchemaVersion{valuer.NewString("v1")}
 		assert.Error(t, view.Validate())
 	})
 
@@ -100,8 +99,14 @@ func TestPostableSavedViewValidate(t *testing.T) {
 
 	t.Run("empty displayName is rejected", func(t *testing.T) {
 		view := validPostableSavedView()
-		view.Data.Spec.DisplayName = ""
+		view.Spec.DisplayName = ""
 		assert.ErrorContains(t, view.Validate(), "displayName is required")
+	})
+
+	t.Run("missing requestType is rejected", func(t *testing.T) {
+		view := validPostableSavedView()
+		view.Spec.RequestType = qbtypes.RequestType{}
+		assert.ErrorContains(t, view.Validate(), "requestType is required")
 	})
 }
 
@@ -119,8 +124,14 @@ func TestUpdatableSavedViewValidate(t *testing.T) {
 
 	t.Run("empty displayName is rejected", func(t *testing.T) {
 		view := validUpdatableSavedView()
-		view.Data.Spec.DisplayName = ""
+		view.Spec.DisplayName = ""
 		assert.ErrorContains(t, view.Validate(), "displayName is required")
+	})
+
+	t.Run("missing requestType is rejected", func(t *testing.T) {
+		view := validUpdatableSavedView()
+		view.Spec.RequestType = qbtypes.RequestType{}
+		assert.ErrorContains(t, view.Validate(), "requestType is required")
 	})
 }
 
@@ -153,7 +164,8 @@ func TestNewSavedView(t *testing.T) {
 	assert.Equal(t, "creator@signoz.io", savedView.UpdatedBy)
 	assert.Equal(t, view.Name, savedView.Name)
 	assert.Equal(t, view.Source, savedView.Source)
-	assert.Equal(t, view.Data, savedView.Data)
+	assert.Equal(t, view.SchemaVersion, savedView.SchemaVersion)
+	assert.Equal(t, view.Spec, savedView.Spec)
 	assert.False(t, savedView.CreatedAt.IsZero())
 	assert.Equal(t, savedView.CreatedAt, savedView.UpdatedAt)
 }
@@ -163,14 +175,14 @@ func TestNewSavedView_GeneratesNameWhenEmpty(t *testing.T) {
 	view := validPostableSavedView()
 	view.Name = ""
 	view.GenerateName = true
-	view.Data.Spec.DisplayName = "My View!"
+	view.Spec.DisplayName = "My View!"
 
 	savedView := view.ToSavedView(orgID, "creator@signoz.io")
 
 	assert.NotEmpty(t, savedView.Name)
 	assert.Empty(t, validation.IsDNS1123Label(savedView.Name), "generated name must be a valid DNS-1123 label")
 	assert.True(t, strings.HasPrefix(savedView.Name, "my-view-"))
-	assert.Equal(t, "My View!", savedView.Data.Spec.DisplayName)
+	assert.Equal(t, "My View!", savedView.Spec.DisplayName)
 }
 
 func TestGenerateSavedViewName(t *testing.T) {
@@ -212,17 +224,95 @@ func TestGenerateSavedViewName(t *testing.T) {
 	})
 }
 
-func TestNewStatsFromSavedViews(t *testing.T) {
-	views := []*SavedView{
+func TestStorableSavedView_ToSavedView(t *testing.T) {
+	t.Run("round trip preserves populated fields", func(t *testing.T) {
+		view := &SavedView{
+			Name:          "my-view",
+			Source:        SourceLogs,
+			SchemaVersion: SavedViewSchemaVersion,
+			Spec: SavedViewSpec{
+				DisplayName:    "My View",
+				PanelType:      PanelTypeGraph,
+				RequestType:    qbtypes.RequestTypeTimeSeries,
+				Queries:        validQueries(),
+				SelectedFields: []telemetrytypes.TelemetryFieldKey{{Name: "service.name"}},
+			},
+		}
+		view.OrgID = valuer.GenerateUUID().StringValue()
+
+		roundTripped := NewStorableSavedView(view).ToSavedView()
+
+		assert.Equal(t, view.OrgID, roundTripped.OrgID)
+		assert.Equal(t, view.Name, roundTripped.Name)
+		assert.Equal(t, view.Source, roundTripped.Source)
+		assert.Equal(t, view.SchemaVersion, roundTripped.SchemaVersion)
+		assert.Equal(t, view.Spec, roundTripped.Spec)
+	})
+
+	t.Run("nil selectedFields normalizes to an empty slice, not nil", func(t *testing.T) {
+		storable := &StorableSavedView{
+			Data: SavedViewData{
+				SchemaVersion: SavedViewSchemaVersion.StringValue(),
+				Spec: SavedViewSpec{
+					DisplayName:    "My View",
+					PanelType:      PanelTypeGraph,
+					Queries:        validQueries(),
+					SelectedFields: nil,
+				},
+			},
+		}
+
+		view := storable.ToSavedView()
+
+		assert.NotNil(t, view.Spec.SelectedFields)
+		assert.Empty(t, view.Spec.SelectedFields)
+	})
+
+	t.Run("nil queries normalizes to an empty slice, not nil", func(t *testing.T) {
+		storable := &StorableSavedView{
+			Data: SavedViewData{
+				SchemaVersion: SavedViewSchemaVersion.StringValue(),
+				Spec: SavedViewSpec{
+					DisplayName: "My View",
+					PanelType:   PanelTypeGraph,
+					Queries:     nil,
+				},
+			},
+		}
+
+		view := storable.ToSavedView()
+
+		assert.NotNil(t, view.Spec.Queries)
+		assert.Empty(t, view.Spec.Queries)
+	})
+}
+
+func TestNewStatsFromStorableSavedViews(t *testing.T) {
+	storables := []*StorableSavedView{
 		{Source: SourceLogs},
 		{Source: SourceLogs},
 		{Source: SourceTraces},
 	}
 
-	stats := NewStatsFromSavedViews(views)
+	stats := NewStatsFromStorableSavedViews(storables)
 
 	assert.Equal(t, int64(3), stats["savedview.count"])
 	assert.Equal(t, int64(2), stats["savedview.source.logs.count"])
 	assert.Equal(t, int64(1), stats["savedview.source.traces.count"])
 	assert.NotContains(t, stats, "savedview.source.metrics.count")
+}
+
+func TestNewSavedViewsFromStorableSavedViews(t *testing.T) {
+	storables := []*StorableSavedView{
+		{Name: "a", Source: SourceLogs, Data: SavedViewData{SchemaVersion: SavedViewSchemaVersion.StringValue(), Spec: SavedViewSpec{DisplayName: "a", PanelType: PanelTypeGraph, Queries: validQueries()}}},
+		{Name: "b", Source: SourceTraces, Data: SavedViewData{SchemaVersion: SavedViewSchemaVersion.StringValue(), Spec: SavedViewSpec{DisplayName: "b", PanelType: PanelTypeTable, Queries: validQueries()}}},
+	}
+
+	views := NewSavedViewsFromStorableSavedViews(storables)
+
+	require.Len(t, views, 2)
+	assert.Equal(t, "a", views[0].Name)
+	assert.Equal(t, SourceLogs, views[0].Source)
+	assert.Equal(t, "b", views[1].Name)
+	assert.Equal(t, SourceTraces, views[1].Source)
 }

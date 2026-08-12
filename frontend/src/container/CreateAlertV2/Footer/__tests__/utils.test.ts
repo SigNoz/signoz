@@ -130,6 +130,28 @@ describe('Footer utils', () => {
 			};
 			expect(validateCreateAlertState(currentArgs)).toBeNull();
 		});
+
+		it('when threshold channels are null', () => {
+			const currentArgs: BuildCreateAlertRulePayloadArgs = {
+				...args,
+				basicAlertState: {
+					...args.basicAlertState,
+					name: 'test name',
+				},
+				thresholdState: {
+					...args.thresholdState,
+					thresholds: [
+						{
+							...args.thresholdState.thresholds[0],
+							channels: null as unknown as string[],
+						},
+					],
+				},
+			};
+			expect(validateCreateAlertState(currentArgs)).toBe(
+				'Please select at least one channel for each threshold or enable routing policies',
+			);
+		});
 	});
 
 	describe('getNotificationSettingsProps', () => {

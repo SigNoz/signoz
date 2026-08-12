@@ -8,7 +8,7 @@ import (
 )
 
 // SavedViewSchemaVersion is the only schemaVersion currently.
-const SavedViewSchemaVersion = "v2"
+var SavedViewSchemaVersion = SchemaVersion{valuer.NewString("v2")}
 
 var (
 	PanelTypeValue = PanelType{valuer.NewString("value")}
@@ -30,15 +30,21 @@ type Display struct {
 type SavedViewSpec struct {
 	DisplayName    string                             `json:"displayName" required:"true"`
 	PanelType      PanelType                          `json:"panelType" required:"true"`
-	Queries        []qbtypes.QueryEnvelope            `json:"queries" required:"true" nullable:"false"`
-	SelectedFields []telemetrytypes.TelemetryFieldKey `json:"selectedFields" required:"true" nullable:"false"`
-	Display        Display                            `json:"display" required:"true"`
+	RequestType    qbtypes.RequestType                `json:"requestType" required:"true"`
+	Queries        []qbtypes.QueryEnvelope            `json:"queries" required:"true" nullable:"false" minItems:"1"`
+	SelectedFields []telemetrytypes.TelemetryFieldKey `json:"selectedFields" nullable:"false"`
+	Display        Display                            `json:"display"`
 }
 
 // SavedViewData is what's persisted as saved view data.
 type SavedViewData struct {
 	SchemaVersion string        `json:"schemaVersion" required:"true"`
 	Spec          SavedViewSpec `json:"spec" required:"true"`
+}
+
+// SchemaVersion has v2 as the only value currently.
+type SchemaVersion struct {
+	valuer.String
 }
 
 // PanelType is the explore-page panel a saved view renders as.
@@ -65,6 +71,17 @@ func (p PanelType) Validate() error {
 	}
 }
 
+func (SchemaVersion) Enum() []any {
+	return []any{SavedViewSchemaVersion}
+}
+
+func (s SchemaVersion) Validate() error {
+	if s != SavedViewSchemaVersion {
+		return errors.NewInvalidInputf(ErrCodeSavedViewInvalidInput, "schemaVersion must be %q, got %q", SavedViewSchemaVersion.StringValue(), s.StringValue())
+	}
+	return nil
+}
+
 func (s *SavedViewSpec) Validate() error {
 	if s.DisplayName == "" {
 		return errors.NewInvalidInputf(ErrCodeSavedViewInvalidInput, "displayName is required")
@@ -72,14 +89,23 @@ func (s *SavedViewSpec) Validate() error {
 	if err := s.PanelType.Validate(); err != nil {
 		return err
 	}
-
-	return (&qbtypes.CompositeQuery{Queries: s.Queries}).Validate()
-}
-
-func (d *SavedViewData) Validate() error {
-	if d.SchemaVersion != SavedViewSchemaVersion {
-		return errors.NewInvalidInputf(ErrCodeSavedViewInvalidInput, "schemaVersion must be %q, got %q", SavedViewSchemaVersion, d.SchemaVersion)
+	if s.RequestType.IsZero() {
+		return errors.NewInvalidInputf(ErrCodeSavedViewInvalidInput, "requestType is required")
 	}
 
-	return d.Spec.Validate()
+	return (&qbtypes.CompositeQuery{Queries: s.Queries}).Validate(qbtypes.GetValidationOptions(s.RequestType)...)
+}
+
+// LegacyRequestTypeForPanelType exists only for the v1 legacy API.
+func LegacyRequestTypeForPanelType(p PanelType) qbtypes.RequestType {
+	switch p {
+	case PanelTypeList:
+		return qbtypes.RequestTypeRaw
+	case PanelTypeTrace:
+		return qbtypes.RequestTypeTrace
+	case PanelTypeGraph:
+		return qbtypes.RequestTypeTimeSeries
+	default:
+		return qbtypes.RequestTypeScalar
+	}
 }

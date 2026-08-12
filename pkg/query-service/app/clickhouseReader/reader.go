@@ -3190,11 +3190,6 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, orgID v
 	var rows driver.Rows
 	var attributeValues v3.FilterAttributeValueResponse
 
-	normalized := true
-	if constants.IsDotMetricsEnabled {
-		normalized = false
-	}
-
 	reductionEnabled := r.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableMetricsReduction, featuretypes.NewFlaggerEvaluationContext(orgID))
 
 	if reductionEnabled {
@@ -3206,7 +3201,7 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, orgID v
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
 	names := []string{req.AggregateAttribute}
-	names = append(names, metrics.GetTransitionedMetric(req.AggregateAttribute, normalized))
+	names = append(names, metrics.GetTransitionedMetric(req.AggregateAttribute))
 
 	rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, names, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), common.PastDayRoundOff())
 
@@ -4140,6 +4135,10 @@ func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query stri
 	return readRowsForTimeSeriesResult(rows, vars, columnNames, countOfNumberCols)
 }
 
+func isJSONColumn(columnType driver.ColumnType) bool {
+	return strings.HasPrefix(strings.ToUpper(columnType.DatabaseTypeName()), "JSON")
+}
+
 // GetListResultV3 runs the query and returns list of rows
 func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([]*v3.Row, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
@@ -4164,6 +4163,12 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 	for rows.Next() {
 		var vars = make([]interface{}, len(columnTypes))
 		for i := range columnTypes {
+			if isJSONColumn(columnTypes[i]) {
+				// the driver fails to decode JSON into native Go values, so it is read as raw bytes
+				var raw []byte
+				vars[i] = &raw
+				continue
+			}
 			vars[i] = reflect.New(columnTypes[i].ScanType()).Interface()
 		}
 		if err := rows.Scan(vars...); err != nil {
@@ -4172,7 +4177,17 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 		row := map[string]interface{}{}
 		var t time.Time
 		for idx, v := range vars {
-			if columnNames[idx] == "timestamp" {
+			if isJSONColumn(columnTypes[idx]) {
+				raw, ok := v.(*[]byte)
+				if !ok {
+					continue
+				}
+				var value map[string]interface{}
+				if err := json.Unmarshal(*raw, &value); err != nil {
+					return nil, errors.New(err.Error())
+				}
+				row[columnNames[idx]] = value
+			} else if columnNames[idx] == "timestamp" {
 				switch v := v.(type) {
 				case *uint64:
 					t = time.Unix(0, int64(*v))
@@ -5447,113 +5462,4 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	searchSpansResult[0].EndTimestampMillis = endTime + (durationNano / 1000000)
 
 	return &searchSpansResult, nil
-}
-
-func (r *ClickHouseReader) GetNormalizedStatus(
-	ctx context.Context,
-	orgID valuer.UUID,
-	metricNames []string,
-) (map[string]bool, error) {
-
-	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
-		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
-		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
-		instrumentationtypes.CodeFunctionName: "GetNormalizedStatus",
-	})
-	if len(metricNames) == 0 {
-		return map[string]bool{}, nil
-	}
-
-	result := make(map[string]bool, len(metricNames))
-	buildKey := func(name string) string {
-		return constants.NormalizedMetricsMapCacheKey + ":" + name
-	}
-
-	uncached := make([]string, 0, len(metricNames))
-	for _, m := range metricNames {
-		var status model.MetricsNormalizedMap
-		if err := r.cache.Get(ctx, orgID, buildKey(m), &status); err == nil {
-			result[m] = status.IsUnNormalized
-		} else {
-			uncached = append(uncached, m)
-		}
-	}
-	if len(uncached) == 0 {
-		return result, nil
-	}
-
-	placeholders := "'" + strings.Join(uncached, "', '") + "'"
-
-	reductionEnabled := r.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableMetricsReduction, featuretypes.NewFlaggerEvaluationContext(orgID))
-
-	var q string
-	if reductionEnabled {
-		q = fmt.Sprintf(
-			`SELECT metric_name, toUInt8(__normalized)
-           FROM (
-               SELECT metric_name, __normalized FROM %s.%s WHERE metric_name IN (%s)
-               UNION ALL
-               SELECT metric_name, __normalized FROM %s.%s WHERE metric_name IN (%s)
-           )
-          GROUP BY metric_name, __normalized`,
-			signozMetricDBName, signozTSTableNameV41Day, placeholders,
-			signozMetricDBName, signozTSTableNameV4Reduced, placeholders,
-		)
-	} else {
-		q = fmt.Sprintf(
-			`SELECT metric_name, toUInt8(__normalized)
-           FROM %s.%s
-          WHERE metric_name IN (%s)
-          GROUP BY metric_name, __normalized`,
-			signozMetricDBName, signozTSTableNameV41Day, placeholders,
-		)
-	}
-
-	rows, err := r.db.Query(ctx, q)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	// tmp[m] collects the set {0,1} for a metric name, truth table
-	tmp := make(map[string]map[uint8]struct{}, len(uncached))
-
-	for rows.Next() {
-		var (
-			name       string
-			normalized uint8
-		)
-		if err := rows.Scan(&name, &normalized); err != nil {
-			return nil, err
-		}
-		if _, ok := tmp[name]; !ok {
-			tmp[name] = make(map[uint8]struct{}, 2)
-		}
-		tmp[name][normalized] = struct{}{}
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	for _, m := range uncached {
-		set := tmp[m]
-		switch {
-		case len(set) == 0:
-			return nil, fmt.Errorf("metric %q not found in ClickHouse", m)
-
-		case len(set) == 2:
-			result[m] = true
-
-		default:
-			_, hasUnnorm := set[0]
-			result[m] = hasUnnorm
-		}
-		status := model.MetricsNormalizedMap{
-			MetricName:     m,
-			IsUnNormalized: result[m],
-		}
-		_ = r.cache.Set(ctx, orgID, buildKey(m), &status, 0)
-	}
-
-	return result, nil
 }
