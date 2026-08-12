@@ -13,7 +13,7 @@ from fixtures.auth import (
     create_active_user,
     find_user_by_email,
 )
-from fixtures.role import transaction_group
+from fixtures.role import find_role_by_name, transaction_group
 from fixtures.savedview import SAVED_VIEW_BASE, create_saved_view, find_saved_view_by_name
 
 _SAVED_VIEW_FGA_CUSTOM_ROLE_NAME = "saved-view-fga-readonly"
@@ -57,7 +57,7 @@ def test_create_custom_role_readonly_view(
         signoz,
         admin_token,
         email=_SAVED_VIEW_FGA_CUSTOM_USER_EMAIL,
-        role="VIEWER",
+        role="signoz-viewer",
         password=_SAVED_VIEW_FGA_CUSTOM_USER_PASSWORD,
         name="saved-view-fga-test-user",
     )
@@ -152,10 +152,9 @@ def test_create_is_collection_scoped(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    find_role_id: Callable[[str, str], str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    role_id = find_role_id(admin_token, _SAVED_VIEW_FGA_CUSTOM_ROLE_NAME)
+    role_id = find_role_by_name(signoz, admin_token, _SAVED_VIEW_FGA_CUSTOM_ROLE_NAME)
     target_id = find_saved_view_by_name(signoz, admin_token, _SAVED_VIEW_FGA_TARGET_NAME)["id"]
 
     resp = requests.put(
@@ -184,10 +183,9 @@ def test_update_scoped_to_granted_view(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    find_role_id: Callable[[str, str], str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    role_id = find_role_id(admin_token, _SAVED_VIEW_FGA_CUSTOM_ROLE_NAME)
+    role_id = find_role_by_name(signoz, admin_token, _SAVED_VIEW_FGA_CUSTOM_ROLE_NAME)
     target_id = find_saved_view_by_name(signoz, admin_token, _SAVED_VIEW_FGA_TARGET_NAME)["id"]
     other_id = find_saved_view_by_name(signoz, admin_token, _SAVED_VIEW_FGA_OTHER_NAME)["id"]
 
@@ -242,10 +240,9 @@ def test_delete_scoped_to_granted_view(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    find_role_id: Callable[[str, str], str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    role_id = find_role_id(admin_token, _SAVED_VIEW_FGA_CUSTOM_ROLE_NAME)
+    role_id = find_role_by_name(signoz, admin_token, _SAVED_VIEW_FGA_CUSTOM_ROLE_NAME)
     target_id = find_saved_view_by_name(signoz, admin_token, _SAVED_VIEW_FGA_TARGET_NAME)["id"]
     other_id = find_saved_view_by_name(signoz, admin_token, _SAVED_VIEW_FGA_OTHER_NAME)["id"]
 
@@ -279,10 +276,9 @@ def test_revoke_read_scoped(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    find_role_id: Callable[[str, str], str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    role_id = find_role_id(admin_token, _SAVED_VIEW_FGA_CUSTOM_ROLE_NAME)
+    role_id = find_role_by_name(signoz, admin_token, _SAVED_VIEW_FGA_CUSTOM_ROLE_NAME)
     other_id = find_saved_view_by_name(signoz, admin_token, _SAVED_VIEW_FGA_OTHER_NAME)["id"]
 
     resp = requests.put(
@@ -319,7 +315,6 @@ def test_saved_view_fga_cleanup(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    find_role_id: Callable[[str, str], str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     user = find_user_by_email(signoz, admin_token, _SAVED_VIEW_FGA_CUSTOM_USER_EMAIL)
@@ -336,7 +331,7 @@ def test_saved_view_fga_cleanup(
         assert resp.status_code == HTTPStatus.NO_CONTENT, f"remove role from user: {resp.text}"
 
     resp = requests.delete(
-        signoz.self.host_configs["8080"].get(f"/api/v1/roles/{find_role_id(admin_token, _SAVED_VIEW_FGA_CUSTOM_ROLE_NAME)}"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/roles/{find_role_by_name(signoz, admin_token, _SAVED_VIEW_FGA_CUSTOM_ROLE_NAME)}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
