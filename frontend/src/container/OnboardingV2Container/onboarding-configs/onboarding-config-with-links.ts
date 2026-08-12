@@ -1521,9 +1521,9 @@ const onboardingConfigWithLinks = [
 	},
 	{
 		dataSource: 'nginx-tracing',
-		label: 'Nginx - Tracing',
+		label: 'Nginx - OpenTelemetry',
 		imgUrl: nginxUrl,
-		tags: ['apm/traces'],
+		tags: ['apm/traces', 'logs', 'metrics'],
 		module: 'apm',
 		relatedSearchKeywords: [
 			'apm',
@@ -1626,7 +1626,7 @@ const onboardingConfigWithLinks = [
 		dataSource: 'cloudflare-workers',
 		label: 'Cloudflare Workers',
 		imgUrl: cloudflareUrl,
-		tags: ['apm/traces'],
+		tags: ['apm/traces', 'logs'],
 		module: 'apm',
 		relatedSearchKeywords: [
 			'cloudflare',
@@ -5346,13 +5346,17 @@ const onboardingConfigWithLinks = [
 		dataSource: 'temporal',
 		label: 'Temporal',
 		imgUrl: temporalUrl,
-		tags: ['apm/traces'],
+		tags: ['apm/traces', 'logs', 'metrics'],
 		module: 'apm',
 		relatedSearchKeywords: [
 			'apm',
 			'application performance monitoring',
 			'integrations',
+			'logs',
+			'metrics',
 			'temporal',
+			'temporal logs',
+			'temporal metrics',
 			'temporal traces',
 			'traces',
 			'tracing',
@@ -5478,7 +5482,7 @@ const onboardingConfigWithLinks = [
 		dataSource: 'dbos',
 		label: 'DBOS',
 		imgUrl: dbosUrl,
-		tags: ['apm/traces'],
+		tags: ['apm/traces', 'logs'],
 		module: 'apm',
 		relatedSearchKeywords: [
 			'database oriented',
@@ -6622,7 +6626,7 @@ const onboardingConfigWithLinks = [
 		dataSource: 'opentelemetry-ebpf',
 		label: 'OpenTelemetry eBPF (OBI)',
 		imgUrl: opentelemetryUrl,
-		tags: ['apm/traces'],
+		tags: ['apm/traces', 'metrics'],
 		module: 'apm',
 		relatedSearchKeywords: [
 			'auto instrumentation',
