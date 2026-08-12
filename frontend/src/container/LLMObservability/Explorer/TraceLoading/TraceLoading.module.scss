@@ -1,0 +1,19 @@
+.loadingTraces {
+	padding: var(--spacing-12) 0;
+	height: 240px;
+
+	display: flex;
+	justify-content: center;
+	align-items: flex-start;
+}
+
+.content {
+	display: flex;
+	align-items: flex-start;
+	flex-direction: column;
+}
+
+.gif {
+	height: 72px;
+	margin-left: calc(var(--spacing-12) * -1);
+}

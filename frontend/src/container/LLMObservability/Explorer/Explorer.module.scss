@@ -1,11 +1,56 @@
-.explorer {
+.explorerPage {
 	display: flex;
-	flex-direction: column;
-	gap: var(--spacing-4);
-	padding: var(--spacing-2) var(--spacing-0);
+
+	// Meant to fix the query builder colors
+	--input-background: var(--l2-background);
+	--input-hover-background: var(--l2-background);
+	--input-focus-background: var(--l2-background);
+	--input-border-color: var(--l2-border);
+	--input-hover-border-color: var(--internal-ant-border-color-hover);
+	--input-focus-border-color: var(--internal-ant-border-color-hover);
 }
 
-.placeholder {
-	color: var(--l2-foreground);
-	font-size: var(--periscope-font-size-base);
+.filter {
+	width: 260px;
+	height: 100%;
+	min-height: 100vh;
+
+	border: 1px solid var(--l1-border);
+	border-right: 0px;
+	background-color: var(--l1-background);
+
+	> :global(.ant-card-body) {
+		padding: 0;
+		width: 258px;
+	}
+}
+
+.explorer {
+	width: 100%;
+	background: var(--l1-background);
+	border-color: var(--l1-border);
+
+	> :global(.ant-card-body) {
+		padding: 0;
+	}
+
+	&.isFiltersExpanded {
+		width: calc(100% - 260px);
+	}
+}
+
+.views {
+	padding: var(--spacing-4);
+	// Room the traces explorer reserves for its floating options bar, which this
+	// explorer doesn't render yet. No spacing token for 60px.
+	padding-bottom: 60px;
+	margin-bottom: var(--spacing-12);
+
+	:global(.ant-tabs-tabpane) {
+		padding: 0 var(--spacing-4);
+	}
+}
+
+.view {
+	flex: 1;
 }

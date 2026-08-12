@@ -1,0 +1,7 @@
+.header {
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	padding: var(--spacing-6);
+	flex-shrink: 0;
+}
