@@ -15,7 +15,7 @@ const TOOLTIP_SELECTOR = '.cm-tooltip-autocomplete';
 const COMPLETION_LABEL_SELECTOR = '.cm-completionLabel';
 const DELETE_BUTTON_SELECTOR = '.cm-recent-delete';
 
-const POPUP_TIMEOUT = 8000;
+const POPUP_TIMEOUT = 500;
 
 const FRONTEND_FILTER = "service.name = 'frontend'";
 const STATUS_CODE_FILTER = "http.status_code = '500'";
@@ -111,28 +111,22 @@ async function focusEditor(): Promise<HTMLElement> {
 	);
 
 	await userEvent.click(editor);
-	return editor;
-}
 
-function waitForCompletionPopup<T>(
-	editor: HTMLElement,
-	assertion: () => T,
-): Promise<T> {
-	return waitFor(
+	// The popup opens on focus via QuerySearch's isFocused effect. Waiting for it here
+	// matters: typing before that pending completion lands preempts it, and nothing
+	// re-triggers it afterwards.
+	await waitFor(
 		() => {
-			if (!isCompletionOpen()) {
-				// fireEvent: retried on every waitFor tick, where awaiting userEvent nests act().
-				fireEvent.keyDown(editor, {
-					key: ' ',
-					code: 'Space',
-					keyCode: 32,
-					ctrlKey: true,
-				});
-			}
-			return assertion();
+			expect(isCompletionOpen()).toBe(true);
 		},
 		{ timeout: POPUP_TIMEOUT },
 	);
+
+	return editor;
+}
+
+function waitForCompletionPopup<T>(assertion: () => T): Promise<T> {
+	return waitFor(assertion, { timeout: POPUP_TIMEOUT });
 }
 
 describe('QuerySearch recent searches', () => {
@@ -145,9 +139,9 @@ describe('QuerySearch recent searches', () => {
 		saveLogsRecent(FRONTEND_FILTER);
 
 		renderLogsSearch();
-		const editor = await focusEditor();
+		await focusEditor();
 
-		await waitForCompletionPopup(editor, () => {
+		await waitForCompletionPopup(() => {
 			expect(getTooltipText()).toContain('Recent searches');
 			expect(getTooltipText()).toContain(FRONTEND_FILTER);
 		});
@@ -161,7 +155,7 @@ describe('QuerySearch recent searches', () => {
 		const editor = await focusEditor();
 		await userEvent.type(editor, 'status_code');
 
-		await waitForCompletionPopup(editor, () => {
+		await waitForCompletionPopup(() => {
 			expect(getTooltipText()).toContain(STATUS_CODE_FILTER);
 			expect(getTooltipText()).not.toContain(FRONTEND_FILTER);
 		});
@@ -175,9 +169,9 @@ describe('QuerySearch recent searches', () => {
 		saveLogsRecent(FRONTEND_FILTER);
 
 		renderLogsSearch();
-		const editor = await focusEditor();
+		await focusEditor();
 
-		await waitForCompletionPopup(editor, () => {
+		await waitForCompletionPopup(() => {
 			expect(getTooltipText()).toContain('Recent searches');
 			expect(getTooltipText()).toContain(FRONTEND_FILTER);
 		});
@@ -194,7 +188,7 @@ describe('QuerySearch recent searches', () => {
 		const editor = await focusEditor();
 		await userEvent.type(editor, FRONTEND_FILTER);
 
-		await waitForCompletionPopup(editor, () => {
+		await waitForCompletionPopup(() => {
 			expect(getCompletionLabels()).toContain(supersetFilter);
 		});
 
@@ -207,9 +201,9 @@ describe('QuerySearch recent searches', () => {
 
 		const onChange = jest.fn();
 		renderLogsSearch(onChange);
-		const editor = await focusEditor();
+		await focusEditor();
 
-		const option = await waitForCompletionPopup(editor, () =>
+		const option = await waitForCompletionPopup(() =>
 			getOpenCompletionOption(FRONTEND_FILTER),
 		);
 		await userEvent.click(option);
@@ -240,9 +234,9 @@ describe('QuerySearch recent searches', () => {
 		const expectedLabels = [...filters].reverse().slice(0, RECENTS_DISPLAY_CAP);
 
 		renderLogsSearch();
-		const editor = await focusEditor();
+		await focusEditor();
 
-		await waitForCompletionPopup(editor, () => {
+		await waitForCompletionPopup(() => {
 			const recentLabels = getCompletionLabels().filter((label) =>
 				label.startsWith('attribute_'),
 			);
@@ -254,9 +248,9 @@ describe('QuerySearch recent searches', () => {
 		saveLogsRecent(FRONTEND_FILTER);
 
 		renderLogsSearch();
-		const editor = await focusEditor();
+		await focusEditor();
 
-		const deleteButton = await waitForCompletionPopup(editor, () => {
+		const deleteButton = await waitForCompletionPopup(() => {
 			const button = document.querySelector(DELETE_BUTTON_SELECTOR);
 			expect(button).toBeInTheDocument();
 			return button as HTMLElement;
