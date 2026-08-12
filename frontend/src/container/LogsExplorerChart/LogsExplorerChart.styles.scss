@@ -3,6 +3,13 @@
 	min-height: 200px;
 	border-bottom: 1px solid var(--l1-border);
 
+	// Series without a label are still plotted, but a legend entry with no name is
+	// unreadable. The virtualized grid item is hidden rather than the legend item
+	// inside it, so the row closes up instead of leaving an empty cell.
+	.virtuoso-grid-item:has(.legend-label:empty) {
+		display: none;
+	}
+
 	.logs-frequency-chart-loading {
 		height: 100%;
 		display: flex;
