@@ -8,8 +8,6 @@ import { createMemoryHistory, MemoryHistory } from 'history';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import { IResourceAttribute } from 'hooks/useResourceAttribute/types';
 import { encode } from 'js-base64';
-import { AppContext } from 'providers/App/App';
-import { getAppContextMock } from 'tests/test-utils';
 
 import ResourceAttributesFilter from '../ResourceAttributesFilter';
 
@@ -88,11 +86,9 @@ function renderFilter(pathname: string): MemoryHistory {
 	function Wrapper({ children }: { children: ReactNode }): JSX.Element {
 		return (
 			<QueryClientProvider client={queryClient}>
-				<AppContext.Provider value={getAppContextMock('ADMIN')}>
-					<Router history={routerHistory}>
-						<ResourceProvider>{children}</ResourceProvider>
-					</Router>
-				</AppContext.Provider>
+				<Router history={routerHistory}>
+					<ResourceProvider>{children}</ResourceProvider>
+				</Router>
 			</QueryClientProvider>
 		);
 	}
@@ -111,7 +107,7 @@ describe('ResourceAttributesFilter', () => {
 		mockTagKeys.mockReset();
 		mockTagValues.mockReset();
 		mockTagKeys.mockResolvedValue(
-			tagKeysPayload(['resource_deployment_environment']),
+			tagKeysPayload(['resource_deployment.environment']),
 		);
 		mockTagValues.mockResolvedValue(tagValuesPayload(['production', 'staging']));
 		seedUrl([], '/');
@@ -128,7 +124,7 @@ describe('ResourceAttributesFilter', () => {
 				},
 				{
 					id: 'env',
-					tagKey: 'resource_deployment_environment',
+					tagKey: 'resource_deployment.environment',
 					operator: 'IN',
 					tagValue: ['production'],
 				},
