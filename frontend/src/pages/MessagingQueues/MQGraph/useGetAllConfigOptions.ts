@@ -16,7 +16,6 @@ export interface GetAllConfigOptionsResponse {
 
 export function useGetAllConfigOptions(
 	props: ConfigOptions,
-	dotMetricsEnabled: boolean,
 ): GetAllConfigOptionsResponse {
 	const { attributeKey, searchText } = props;
 
@@ -26,9 +25,7 @@ export function useGetAllConfigOptions(
 			const { payload } = await getAttributesValues({
 				aggregateOperator: 'avg',
 				dataSource: DataSource.METRICS,
-				aggregateAttribute: dotMetricsEnabled
-					? 'kafka.consumer_group.lag'
-					: 'kafka_consumer_group_lag',
+				aggregateAttribute: 'kafka.consumer_group.lag',
 				attributeKey,
 				searchText: searchText ?? '',
 				filterAttributeKeyDataType: DataTypes.String,

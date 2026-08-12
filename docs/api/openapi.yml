@@ -7880,17 +7880,20 @@ components:
       type: string
     SavedviewtypesPostableSavedView:
       properties:
-        data:
-          $ref: '#/components/schemas/SavedviewtypesSavedViewData'
         generateName:
           type: boolean
         name:
           type: string
+        schemaVersion:
+          $ref: '#/components/schemas/SavedviewtypesSchemaVersion'
         source:
           $ref: '#/components/schemas/SavedviewtypesSource'
+        spec:
+          $ref: '#/components/schemas/SavedviewtypesSavedViewSpec'
       required:
       - source
-      - data
+      - schemaVersion
+      - spec
       type: object
     SavedviewtypesSavedView:
       properties:
@@ -7899,14 +7902,16 @@ components:
           type: string
         createdBy:
           type: string
-        data:
-          $ref: '#/components/schemas/SavedviewtypesSavedViewData'
         id:
           type: string
         name:
           type: string
+        schemaVersion:
+          $ref: '#/components/schemas/SavedviewtypesSchemaVersion'
         source:
           $ref: '#/components/schemas/SavedviewtypesSource'
+        spec:
+          $ref: '#/components/schemas/SavedviewtypesSavedViewSpec'
         updatedAt:
           format: date-time
           type: string
@@ -7914,14 +7919,6 @@ components:
           type: string
       required:
       - id
-      type: object
-    SavedviewtypesSavedViewData:
-      properties:
-        schemaVersion:
-          type: string
-        spec:
-          $ref: '#/components/schemas/SavedviewtypesSavedViewSpec'
-      required:
       - schemaVersion
       - spec
       type: object
@@ -7936,7 +7933,10 @@ components:
         queries:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelope'
+          minItems: 1
           type: array
+        requestType:
+          $ref: '#/components/schemas/Querybuildertypesv5RequestType'
         selectedFields:
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
@@ -7944,10 +7944,13 @@ components:
       required:
       - displayName
       - panelType
+      - requestType
       - queries
-      - selectedFields
-      - display
       type: object
+    SavedviewtypesSchemaVersion:
+      enum:
+      - v2
+      type: string
     SavedviewtypesSource:
       enum:
       - traces
@@ -7957,13 +7960,16 @@ components:
       type: string
     SavedviewtypesUpdatableSavedView:
       properties:
-        data:
-          $ref: '#/components/schemas/SavedviewtypesSavedViewData'
+        schemaVersion:
+          $ref: '#/components/schemas/SavedviewtypesSchemaVersion'
         source:
           $ref: '#/components/schemas/SavedviewtypesSource'
+        spec:
+          $ref: '#/components/schemas/SavedviewtypesSavedViewSpec'
       required:
       - source
-      - data
+      - schemaVersion
+      - spec
       type: object
     ServiceaccounttypesDeprecatedPostableServiceAccountRole:
       properties:
@@ -12198,9 +12204,9 @@ paths:
       - dashboard
   /api/v1/resetPassword:
     post:
-      deprecated: false
+      deprecated: true
       description: This endpoint resets the password by token
-      operationId: ResetPassword
+      operationId: ResetPasswordDeprecated
       requestBody:
         content:
           application/json:
@@ -15565,6 +15571,41 @@ paths:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
       summary: Forgot password
+      tags:
+      - users
+  /api/v2/factor_password/reset:
+    post:
+      deprecated: false
+      description: This endpoint resets the password using a single use reset password
+        token
+      operationId: ResetPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypesPostableResetPassword'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Reset password
       tags:
       - users
   /api/v2/features:
@@ -22741,6 +22782,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
         "500":
           content:
             application/json:

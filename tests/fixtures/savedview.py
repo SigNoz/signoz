@@ -13,15 +13,14 @@ def _body(name: str, source: str = "logs") -> dict:
     return {
         "name": name,
         "source": source,
-        "data": {
-            "schemaVersion": "v2",
-            "spec": {
-                "displayName": name,
-                "panelType": "table",
-                "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
-                "selectedFields": [],
-                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
-            },
+        "schemaVersion": "v2",
+        "spec": {
+            "displayName": name,
+            "panelType": "table",
+            "requestType": "scalar",
+            "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
+            "selectedFields": [],
+            "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
         },
     }
 

@@ -158,6 +158,26 @@ class Network:
         return f"Network(id={self.id}, name={self.name})"
 
 
+@dataclass
+class TLS:
+    __test__ = False
+    ca_cert_path: str
+    ca_key_path: str
+
+    @staticmethod
+    def from_cache(cache: dict) -> "TLS":
+        return TLS(ca_cert_path=cache["ca_cert_path"], ca_key_path=cache["ca_key_path"])
+
+    def __cache__(self) -> dict:
+        return {
+            "ca_cert_path": self.ca_cert_path,
+            "ca_key_path": self.ca_key_path,
+        }
+
+    def __log__(self) -> str:
+        return f"TLS(ca_cert_path={self.ca_cert_path}, ca_key_path={self.ca_key_path})"
+
+
 # Alerts related types
 
 

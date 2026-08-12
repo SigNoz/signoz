@@ -245,11 +245,13 @@ func (module *module) PatchV2(ctx context.Context, orgID valuer.UUID, id valuer.
 }
 
 func (module *module) DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
-	existing, err := module.GetV2(ctx, orgID, id)
+	// Read the storable, not the decoded v2 dashboard: deleting must work even
+	// when the stored data is corrupt or never migrated off the v1 schema.
+	storable, err := module.store.Get(ctx, orgID, id)
 	if err != nil {
 		return err
 	}
-	if err := existing.ErrIfNotDeletable(); err != nil {
+	if err := storable.ErrIfNotDeletable(); err != nil {
 		return err
 	}
 

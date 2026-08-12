@@ -2,13 +2,9 @@ import { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Router } from 'react-router-dom';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import { createMemoryHistory, MemoryHistory } from 'history';
 import { encode } from 'js-base64';
-import { AppContext } from 'providers/App/App';
-import { IAppContext } from 'providers/App/types';
-import { getAppContextMock } from 'tests/test-utils';
 
 import ResourceProvider from '../ResourceProvider';
 import useResourceAttribute from '../useResourceAttribute';
@@ -55,10 +51,8 @@ const mockTagValues = getResourceAttributesTagValues as jest.MockedFunction<
 
 function createWrapper({
 	routerHistory,
-	appContextOverrides,
 }: {
 	routerHistory: MemoryHistory;
-	appContextOverrides?: Partial<IAppContext>;
 }): ({ children }: { children: ReactNode }) => JSX.Element {
 	const queryClient = new QueryClient({
 		defaultOptions: { queries: { retry: false } },
@@ -66,13 +60,9 @@ function createWrapper({
 	return function Wrapper({ children }: { children: ReactNode }): JSX.Element {
 		return (
 			<QueryClientProvider client={queryClient}>
-				<AppContext.Provider
-					value={getAppContextMock('ADMIN', appContextOverrides)}
-				>
-					<Router history={routerHistory}>
-						<ResourceProvider>{children}</ResourceProvider>
-					</Router>
-				</AppContext.Provider>
+				<Router history={routerHistory}>
+					<ResourceProvider>{children}</ResourceProvider>
+				</Router>
 			</QueryClientProvider>
 		);
 	};
@@ -411,7 +401,7 @@ describe('ResourceProvider', () => {
 	});
 
 	describe('handleEnvironmentChange', () => {
-		it('adds an environment query when envs are provided', async () => {
+		it('adds a dotted environment query when envs are provided', async () => {
 			const routerHistory = createMemoryHistory({ initialEntries: ['/'] });
 			const { result } = renderHook(() => useResourceAttribute(), {
 				wrapper: createWrapper({ routerHistory }),
@@ -424,7 +414,7 @@ describe('ResourceProvider', () => {
 			await waitFor(() => {
 				expect(result.current.queries).toHaveLength(1);
 				expect(result.current.queries[0]).toMatchObject({
-					tagKey: 'resource_deployment_environment',
+					tagKey: 'resource_deployment.environment',
 					operator: 'IN',
 					tagValue: ['production'],
 				});
@@ -435,7 +425,7 @@ describe('ResourceProvider', () => {
 			const seeded = [
 				{
 					id: 'env',
-					tagKey: 'resource_deployment_environment',
+					tagKey: 'resource_deployment.environment',
 					operator: 'IN',
 					tagValue: ['production'],
 				},
@@ -459,7 +449,7 @@ describe('ResourceProvider', () => {
 
 			await waitFor(() => {
 				const tagKeys = result.current.queries.map((q) => q.tagKey);
-				expect(tagKeys).not.toContain('resource_deployment_environment');
+				expect(tagKeys).not.toContain('resource_deployment.environment');
 				expect(tagKeys).toContain('resource_service_name');
 			});
 		});
@@ -468,7 +458,7 @@ describe('ResourceProvider', () => {
 			const seeded = [
 				{
 					id: 'env',
-					tagKey: 'resource_deployment_environment',
+					tagKey: 'resource_deployment.environment',
 					operator: 'IN',
 					tagValue: ['production'],
 				},
@@ -486,40 +476,10 @@ describe('ResourceProvider', () => {
 
 			await waitFor(() => {
 				const envQueries = result.current.queries.filter(
-					(q) => q.tagKey === 'resource_deployment_environment',
+					(q) => q.tagKey === 'resource_deployment.environment',
 				);
 				expect(envQueries).toHaveLength(1);
 				expect(envQueries[0].tagValue).toStrictEqual(['staging']);
-			});
-		});
-
-		it('uses the dotted deployment env key when DOT_METRICS_ENABLED is active', async () => {
-			const routerHistory = createMemoryHistory({ initialEntries: ['/'] });
-			const { result } = renderHook(() => useResourceAttribute(), {
-				wrapper: createWrapper({
-					routerHistory,
-					appContextOverrides: {
-						featureFlags: [
-							{
-								name: FeatureKeys.DOT_METRICS_ENABLED,
-								active: true,
-								usage: 0,
-								usage_limit: -1,
-								route: '',
-							},
-						],
-					},
-				}),
-			});
-
-			act(() => {
-				result.current.handleEnvironmentChange(['production']);
-			});
-
-			await waitFor(() => {
-				expect(result.current.queries[0].tagKey).toBe(
-					'resource_deployment.environment',
-				);
 			});
 		});
 
