@@ -25,6 +25,10 @@ func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
 		{"GlobalNotIn", "SELECT a FROM t WHERE a GLOBAL NOT IN (SELECT b FROM t2)"},
 		{"Union", "SELECT * FROM t UNION ALL SELECT * FROM t2"},
 		{"Intersect", "SELECT * FROM t INTERSECT SELECT * FROM t2"},
+		// A parenthesised left operand of a set operator. https://github.com/AfterShip/clickhouse-sql-parser/pull/312
+		{"ParenthesisedUnionLeftOperand", "SELECT a FROM ((SELECT 1 AS a) UNION ALL (SELECT 2 AS a))"},
+		{"ParenthesisedExceptLeftOperand", "SELECT a FROM ((SELECT 1 AS a) EXCEPT (SELECT 2 AS a))"},
+		{"ParenthesisedUnionLeftOperandAtStatementLevel", "(SELECT 1 AS a) UNION ALL (SELECT 2 AS a)"},
 		{"WindowFunction", "SELECT sum(v) OVER (PARTITION BY a ORDER BY t) FROM t"},
 		{"UnrelatedSetting", "SELECT * FROM t SETTINGS max_threads = 4"},
 		{"TerminatedBlockComment", "SELECT /* keep me */ count() FROM t"},
@@ -183,12 +187,10 @@ func TestErrIfStatementIsNotValid_ShouldPassButFails(t *testing.T) {
 		query        string
 		expectedCode errors.Code
 	}{
-		// The left operand commits the parser to a subquery, leaving the operator nowhere to bind. Parenthesising only the right operand is fine.
-		{"ParenthesisedUnionLeftOperand", "SELECT a FROM ((SELECT 1 AS a) UNION ALL (SELECT 2 AS a))", CodeClickHouseSQLUnparseable},
-		{"ParenthesisedExceptLeftOperand", "SELECT a FROM ((SELECT 1 AS a) EXCEPT (SELECT 2 AS a))", CodeClickHouseSQLUnparseable},
-		{"ParenthesisedUnionLeftOperandAtStatementLevel", "(SELECT 1 AS a) UNION ALL (SELECT 2 AS a)", CodeClickHouseSQLUnparseable},
 		// The one keyword PR 305 left behind, because ON also opens a join condition.
 		{"UnquotedOnAsColumnName", "SELECT on + 1 FROM t", CodeClickHouseSQLUnparseable},
+		// ClickHouse accepts NULLS FIRST|LAST as an ORDER BY modifier; the parser's grammar has no rule for it.
+		{"OrderByNullsLast", "SELECT x FROM t ORDER BY x DESC NULLS LAST", CodeClickHouseSQLUnparseable},
 	}
 
 	for _, testCase := range testCases {
