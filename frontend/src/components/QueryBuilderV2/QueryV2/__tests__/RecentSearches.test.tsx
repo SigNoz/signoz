@@ -112,9 +112,6 @@ async function focusEditor(): Promise<HTMLElement> {
 
 	await userEvent.click(editor);
 
-	// The popup opens on focus via QuerySearch's isFocused effect. Waiting for it here
-	// matters: typing before that pending completion lands preempts it, and nothing
-	// re-triggers it afterwards.
 	await waitFor(
 		() => {
 			expect(isCompletionOpen()).toBe(true);
