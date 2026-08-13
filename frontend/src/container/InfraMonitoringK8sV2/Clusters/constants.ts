@@ -94,43 +94,59 @@ export const clusterWidgetInfo = [
 		yAxisUnit: '',
 		docPath:
 			'/infrastructure-monitoring/kubernetes/clusters/#cpu-usage-allocatable',
+		description:
+			'Avg, max and min pod CPU usage across the cluster against total allocatable CPU.',
 	},
 	{
 		title: 'Memory Usage, allocatable',
 		yAxisUnit: 'bytes',
 		docPath:
 			'/infrastructure-monitoring/kubernetes/clusters/#memory-usage-allocatable',
+		description:
+			'Avg, max and min pod memory usage against allocatable memory; usage closing in on it risks evictions.',
 	},
 	{
 		title: 'Ready Nodes',
 		yAxisUnit: '',
 		docPath: '/infrastructure-monitoring/kubernetes/clusters/#ready-nodes',
+		description:
+			'Nodes currently reporting Ready; a line dropping out means that node stopped accepting pods.',
 	},
 	{
 		title: 'NotReady Nodes',
 		yAxisUnit: '',
 		docPath: '/infrastructure-monitoring/kubernetes/clusters/#notready-nodes',
+		description:
+			'Nodes whose kubelet reports unhealthy; their pods are evicted after the toleration window.',
 	},
 	{
 		title: 'Deployments available and desired',
 		yAxisUnit: '',
 		docPath:
 			'/infrastructure-monitoring/kubernetes/clusters/#deployments-available-and-desired',
+		description:
+			'Desired replicas versus pods available past minReadySeconds; a persistent gap means a stuck rollout.',
 	},
 	{
 		title: 'Statefulset pods',
 		yAxisUnit: '',
 		docPath: '/infrastructure-monitoring/kubernetes/clusters/#statefulset-pods',
+		description:
+			'Desired, current, ready and updated pod counts per StatefulSet; ready below desired means readiness failures.',
 	},
 	{
 		title: 'Daemonset nodes',
 		yAxisUnit: '',
 		docPath: '/infrastructure-monitoring/kubernetes/clusters/#daemonset-nodes',
+		description:
+			'Desired, current and ready node counts per DaemonSet; gaps mean node agents are missing.',
 	},
 	{
 		title: 'Jobs',
 		yAxisUnit: '',
 		docPath: '/infrastructure-monitoring/kubernetes/clusters/#jobs',
+		description:
+			'Active, succeeded, failed and desired successful pod counts per Job; non-zero failed needs triage.',
 	},
 ];
 
