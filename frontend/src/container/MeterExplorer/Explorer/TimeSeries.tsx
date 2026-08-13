@@ -2,7 +2,7 @@ import { useMemo, useRef } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
-import BarChart from 'container/DashboardContainer/visualization/charts/BarChart/BarChart';
+import BarChart from 'container/Visualization/charts/BarChart/BarChart';
 import { BuilderUnitsFilter } from 'container/QueryBuilder/filters/BuilderUnitsFilter';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';

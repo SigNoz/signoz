@@ -1,7 +1,7 @@
 import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 
 import { useDashboardPreference } from './useDashboardPreference';
-import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
+import { PanelMode } from 'container/Visualization/panels/types';
 
 const NOOP = (): void => {};
 

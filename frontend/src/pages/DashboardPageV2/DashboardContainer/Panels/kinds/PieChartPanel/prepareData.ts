@@ -1,5 +1,5 @@
 import { themeColors } from 'constants/theme';
-import type { PieSlice } from 'container/DashboardContainer/visualization/charts/types';
+import type { PieSlice } from 'container/Visualization/charts/types';
 import getLabelName from 'lib/getLabelName';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import type { PanelTable } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';

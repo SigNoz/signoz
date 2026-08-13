@@ -1,4 +1,4 @@
-import type { PieSlice } from 'container/DashboardContainer/visualization/charts/types';
+import type { PieSlice } from 'container/Visualization/charts/types';
 import { isValidQueryName } from 'container/QueryTable/Drilldown/drilldownUtils';
 import type { BuilderQuery } from 'types/api/v5/queryRange';
 

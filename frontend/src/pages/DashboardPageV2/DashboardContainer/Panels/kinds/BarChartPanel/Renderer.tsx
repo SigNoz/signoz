@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useRef } from 'react';
 import type { DashboardtypesBarChartPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
-import BarChart from 'container/DashboardContainer/visualization/charts/BarChart/BarChart';
-import ChartManager from 'container/DashboardContainer/visualization/components/ChartManager/ChartManager';
-import TooltipFooter from 'container/DashboardContainer/visualization/panels/components/TooltipFooter';
-import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
+import BarChart from 'container/Visualization/charts/BarChart/BarChart';
+import ChartManager from 'container/Visualization/components/ChartManager/ChartManager';
+import TooltipFooter from 'container/Visualization/panels/components/TooltipFooter';
+import { PanelMode } from 'container/Visualization/panels/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { IRenderTooltipFooterArgs } from 'lib/uPlotV2/components/types';

@@ -9,12 +9,9 @@ import { DrawStyle, SelectionPreferencesSource } from '../types';
 import { UPlotConfigBuilder } from '../UPlotConfigBuilder';
 
 // Mock only the real boundary that hits localStorage
-jest.mock(
-	'container/DashboardContainer/visualization/panels/utils/legendVisibilityUtils',
-	() => ({
-		getStoredSeriesVisibility: jest.fn(),
-	}),
-);
+jest.mock('container/Visualization/panels/utils/legendVisibilityUtils', () => ({
+	getStoredSeriesVisibility: jest.fn(),
+}));
 
 jest.mock('lib/uPlotV2/utils', () => ({
 	calculateWidthBasedOnStepInterval: jest.fn(),
@@ -25,7 +22,7 @@ const calculateWidthBasedOnStepIntervalMock = jest.requireMock(
 ).calculateWidthBasedOnStepInterval as jest.Mock;
 
 const getStoredSeriesVisibilityMock = jest.requireMock(
-	'container/DashboardContainer/visualization/panels/utils/legendVisibilityUtils',
+	'container/Visualization/panels/utils/legendVisibilityUtils',
 ) as {
 	getStoredSeriesVisibility: jest.Mock;
 };

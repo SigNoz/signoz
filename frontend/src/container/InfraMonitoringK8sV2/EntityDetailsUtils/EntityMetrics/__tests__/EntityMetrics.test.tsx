@@ -50,15 +50,12 @@ jest.mock('../../EntityDateTimeSelector/useEntityDetailsTime', () => ({
 	}),
 }));
 
-jest.mock(
-	'container/DashboardContainer/visualization/charts/TimeSeries/TimeSeries',
-	() => ({
-		__esModule: true,
-		default: (): JSX.Element => (
-			<div data-testid="uplot-chart">TimeSeries Chart</div>
-		),
-	}),
-);
+jest.mock('container/Visualization/charts/TimeSeries/TimeSeries', () => ({
+	__esModule: true,
+	default: (): JSX.Element => (
+		<div data-testid="uplot-chart">TimeSeries Chart</div>
+	),
+}));
 
 jest.mock('providers/Timezone', () => ({
 	useTimezone: (): { timezone: { value: string } } => ({

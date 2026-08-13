@@ -1,7 +1,7 @@
 import {
 	buildDependencies,
 	buildDependencyGraph,
-} from 'container/DashboardContainer/DashboardVariablesSelection/util';
+} from 'container/DashboardVariables/util';
 import type { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import type { VariableFormModel } from '../variableFormModel';

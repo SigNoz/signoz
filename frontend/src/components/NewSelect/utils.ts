@@ -1,4 +1,4 @@
-import { uniqueOptions } from 'container/DashboardContainer/DashboardVariablesSelection/util';
+import { uniqueOptions } from 'container/DashboardVariables/util';
 
 import { OptionData } from './types';
 

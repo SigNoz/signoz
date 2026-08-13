@@ -11,7 +11,7 @@ import {
 	getStatusCodeBarChartWidgetData,
 	statusCodeWidgetInfo,
 } from 'container/ApiMonitoring/utils';
-import BarChart from 'container/DashboardContainer/visualization/charts/BarChart/BarChart';
+import BarChart from 'container/Visualization/charts/BarChart/BarChart';
 import { handleGraphClick } from 'container/GridCardLayout/GridCard/utils';
 import { useGraphClickToShowButton } from 'container/GridCardLayout/useGraphClickToShowButton';
 import useNavigateToExplorerPages from 'container/GridCardLayout/useNavigateToExplorerPages';

@@ -1,6 +1,6 @@
 import type { DashboardtypesTimeSeriesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import { UTC_TIMEZONE } from 'components/CustomTimePicker/timezoneUtils';
-import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
+import { PanelMode } from 'container/Visualization/panels/types';
 import type { PanelSeries } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
 
 import { buildTimeSeriesConfig } from '../buildConfig';

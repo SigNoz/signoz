@@ -10,13 +10,10 @@ import UPlotChart from '../UPlotChart/UPlotChart';
 // Mocks
 // ---------------------------------------------------------------------------
 
-jest.mock(
-	'container/DashboardContainer/visualization/panels/utils/legendVisibilityUtils',
-	() => ({
-		getStoredSeriesVisibility: jest.fn(),
-		updateSeriesVisibilityToLocalStorage: jest.fn(),
-	}),
-);
+jest.mock('container/Visualization/panels/utils/legendVisibilityUtils', () => ({
+	getStoredSeriesVisibility: jest.fn(),
+	updateSeriesVisibilityToLocalStorage: jest.fn(),
+}));
 
 jest.mock('@sentry/react', () => ({
 	ErrorBoundary: ({ children }: { children: ReactNode }): JSX.Element => (

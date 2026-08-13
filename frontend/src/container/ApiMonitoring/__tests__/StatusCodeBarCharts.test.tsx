@@ -21,15 +21,12 @@ interface MockQueryResult {
 }
 
 // Mocks
-jest.mock(
-	'container/DashboardContainer/visualization/charts/BarChart/BarChart',
-	() => ({
-		__esModule: true,
-		default: jest
-			.fn()
-			.mockImplementation(() => <div data-testid="bar-chart-mock" />),
-	}),
-);
+jest.mock('container/Visualization/charts/BarChart/BarChart', () => ({
+	__esModule: true,
+	default: jest
+		.fn()
+		.mockImplementation(() => <div data-testid="bar-chart-mock" />),
+}));
 
 jest.mock('components/CeleryTask/useGetGraphCustomSeries', () => ({
 	useGetGraphCustomSeries: (): { getCustomSeries: jest.Mock } => ({

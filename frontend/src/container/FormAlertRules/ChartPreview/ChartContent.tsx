@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import BarChart from 'container/DashboardContainer/visualization/charts/BarChart/BarChart';
-import TimeSeries from 'container/DashboardContainer/visualization/charts/TimeSeries/TimeSeries';
+import BarChart from 'container/Visualization/charts/BarChart/BarChart';
+import TimeSeries from 'container/Visualization/charts/TimeSeries/TimeSeries';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';

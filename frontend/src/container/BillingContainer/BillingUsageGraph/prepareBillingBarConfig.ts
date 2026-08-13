@@ -1,8 +1,8 @@
 import { Color } from '@signozhq/design-tokens';
 import type { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { getInitialStackedBands } from 'container/DashboardContainer/visualization/charts/utils/stackSeriesUtils';
-import { buildBaseConfig } from 'container/DashboardContainer/visualization/panels/utils/baseConfigBuilder';
+import { getInitialStackedBands } from 'container/Visualization/charts/utils/stackSeriesUtils';
+import { buildBaseConfig } from 'container/Visualization/panels/utils/baseConfigBuilder';
 import { DrawStyle } from 'lib/uPlotV2/config/types';
 import type { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';

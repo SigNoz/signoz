@@ -4,8 +4,8 @@ import {
 	type MouseEvent as ReactMouseEvent,
 } from 'react';
 import type { DashboardtypesPieChartPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
-import Pie from 'container/DashboardContainer/visualization/charts/Pie/Pie';
-import type { PieSlice } from 'container/DashboardContainer/visualization/charts/types';
+import Pie from 'container/Visualization/charts/Pie/Pie';
+import type { PieSlice } from 'container/Visualization/charts/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { prepareScalarTables } from 'pages/DashboardPageV2/DashboardContainer/queryV5/prepareScalarTables';
 import { getScalarResults } from 'pages/DashboardPageV2/DashboardContainer/queryV5/v5ResponseData';

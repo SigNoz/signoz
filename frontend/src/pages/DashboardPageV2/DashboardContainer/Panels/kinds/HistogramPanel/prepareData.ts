@@ -5,7 +5,7 @@ import {
 	mergeAlignedDataTables,
 	prependNullBinToFirstHistogramSeries,
 	replaceUndefinedWithNullInAlignedData,
-} from 'container/DashboardContainer/visualization/panels/utils/histogram';
+} from 'container/Visualization/panels/utils/histogram';
 import type { PanelSeries } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
 import { AlignedData } from 'uplot';
 import { incrRoundDn, roundDecimals } from 'utils/round';

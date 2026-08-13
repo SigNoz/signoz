@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
+import { PanelMode } from 'container/Visualization/panels/types';
 import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 
 import { useDashboardCursorSyncMode } from '../useDashboardCursorSyncMode';

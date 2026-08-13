@@ -8,8 +8,8 @@ import {
 	useMemo,
 	useRef,
 } from 'react';
-import type { SeriesVisibilityItem } from 'container/DashboardContainer/visualization/panels/types';
-import { updateSeriesVisibilityToLocalStorage } from 'container/DashboardContainer/visualization/panels/utils/legendVisibilityUtils';
+import type { SeriesVisibilityItem } from 'container/Visualization/panels/types';
+import { updateSeriesVisibilityToLocalStorage } from 'container/Visualization/panels/utils/legendVisibilityUtils';
 import type uPlot from 'uplot';
 export interface PlotContextInitialState {
 	uPlotInstance: uPlot | null;

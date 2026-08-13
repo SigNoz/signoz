@@ -3,8 +3,8 @@ import { ExecStats } from 'api/v5/v5';
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { Threshold } from 'container/CreateAlertV2/context/types';
-import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
-import { buildBaseConfig } from 'container/DashboardContainer/visualization/panels/utils/baseConfigBuilder';
+import { PanelMode } from 'container/Visualization/panels/types';
+import { buildBaseConfig } from 'container/Visualization/panels/utils/baseConfigBuilder';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import {
 	BooleanFormats,

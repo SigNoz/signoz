@@ -39,10 +39,9 @@ jest.mock('lib/uPlotLib/utils/getUplotChartData', () => ({
 	],
 }));
 
-jest.mock(
-	'container/DashboardContainer/visualization/charts/utils/stackSeriesUtils',
-	() => ({ stackSeries: (): unknown => ({ data: [], bands: [] }) }),
-);
+jest.mock('container/Visualization/charts/utils/stackSeriesUtils', () => ({
+	stackSeries: (): unknown => ({ data: [], bands: [] }),
+}));
 
 jest.mock('container/GridCardLayout/GridCard/utils', () => ({
 	getLocalStorageGraphVisibilityState: (): unknown => ({
