@@ -86,15 +86,27 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusCreated,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusConflict},
 			Deprecated:          false,
-			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceUser.Scope(coretypes.VerbCreate)}),
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceUser.Scope(coretypes.VerbCreate), coretypes.ResourceUser.Scope(coretypes.VerbAttach), coretypes.ResourceRole.Scope(coretypes.VerbAttach)}),
 		},
-		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceUser,
-			Verb:     coretypes.VerbCreate,
-			Category: coretypes.ActionCategoryAccessControl,
-			ID:       coretypes.ResponseJSONPath("data.id"),
-			Selector: coretypes.WildcardSelector,
-		}),
+		handler.WithResourceDefs(
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceUser,
+				Verb:     coretypes.VerbCreate,
+				Category: coretypes.ActionCategoryAccessControl,
+				ID:       coretypes.ResponseJSONPath("data.id"),
+				Selector: coretypes.WildcardSelector,
+			},
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbAttach,
+				Category:       coretypes.ActionCategoryAccessControl,
+				SourceResource: coretypes.ResourceUser,
+				SourceSelector: coretypes.WildcardSelector,
+				TargetResource: coretypes.ResourceRole,
+				TargetIDs:      coretypes.BodyJSONArray("userRoles.#.id"),
+				TargetSelector: provider.roleSelector,
+				SkipIfNoIDs:    true,
+			},
+		),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -211,14 +223,13 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusNotFound},
 			Deprecated:          false,
-			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceFactorPassword.Scope(coretypes.VerbRead)}),
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceFactorPassword.Scope(coretypes.VerbList)}),
 		},
 		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceMetaResourceFactorPassword,
-			Verb:     coretypes.VerbRead,
+			Verb:     coretypes.VerbList,
 			Category: coretypes.ActionCategoryAccessControl,
-			ID:       coretypes.PathParam("id"),
-			Selector: coretypes.IDSelector,
+			Selector: coretypes.WildcardSelector,
 		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err

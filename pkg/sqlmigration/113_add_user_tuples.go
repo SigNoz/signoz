@@ -2,6 +2,7 @@ package sqlmigration
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -41,17 +42,12 @@ func (migration *addUserTuples) Up(ctx context.Context, db *bun.DB) error {
 	}
 
 	var orgIDs []string
-	rows, err := tx.QueryContext(ctx, `SELECT id FROM organizations`)
-	if err != nil {
+	err = tx.NewSelect().
+		Table("organizations").
+		Column("id").
+		Scan(ctx, &orgIDs)
+	if err != nil && err != sql.ErrNoRows {
 		return err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var orgID string
-		if err := rows.Scan(&orgID); err != nil {
-			return err
-		}
-		orgIDs = append(orgIDs, orgID)
 	}
 
 	isPG := migration.sqlstore.BunDB().Dialect().Name() == dialect.PG

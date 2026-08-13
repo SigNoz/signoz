@@ -23342,8 +23342,12 @@ paths:
       security:
       - api_key:
         - user:create
+        - user:attach
+        - role:attach
       - tokenizer:
         - user:create
+        - user:attach
+        - role:attach
       summary: Create user
       tags:
       - users
@@ -23558,9 +23562,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - factor-password:read
+        - factor-password:list
       - tokenizer:
-        - factor-password:read
+        - factor-password:list
       summary: Get reset password token for a user
       tags:
       - users

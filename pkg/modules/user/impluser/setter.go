@@ -203,7 +203,7 @@ func (module *setter) UpdateAnyUser(ctx context.Context, orgID valuer.UUID, user
 }
 
 func (module *setter) DeleteUser(ctx context.Context, orgID valuer.UUID, id string, deletedBy string) error {
-	user, err := module.store.GetUser(ctx, valuer.MustNewUUID(id))
+	user, err := module.store.GetByOrgIDAndID(ctx, orgID, valuer.MustNewUUID(id))
 	if err != nil {
 		return err
 	}

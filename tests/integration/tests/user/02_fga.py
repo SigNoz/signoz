@@ -23,6 +23,9 @@ _TARGET_A_EMAIL = "userfga+target-a@integration.test"
 _TARGET_B_EMAIL = "userfga+target-b@integration.test"
 _TARGET_PASSWORD = "password123Z$"
 
+_CREATE_ROLE_NAME = "user-fga-creator"
+_CREATE_ACTOR_EMAIL = "userfga+creator@integration.test"
+
 
 def test_apply_license(
     signoz: types.SigNoz,
@@ -230,7 +233,7 @@ def test_factor_password_scoped(
             "description": "",
             "transactionGroups": [
                 transaction_group("list", "user", "user", ["*"]),
-                transaction_group("read", "metaresource", "factor-password", ["*"]),
+                transaction_group("list", "metaresource", "factor-password", ["*"]),
                 transaction_group("create", "metaresource", "factor-password", ["*"]),
             ],
         },
@@ -241,8 +244,6 @@ def test_factor_password_scoped(
 
     token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
 
-    # factor-password create alone is not enough: the route also requires
-    # attach on the target user.
     resp = requests.put(
         signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{target_a_id}/reset_password_tokens"),
         headers={"Authorization": f"Bearer {token}"},
@@ -257,7 +258,7 @@ def test_factor_password_scoped(
             "transactionGroups": [
                 transaction_group("list", "user", "user", ["*"]),
                 transaction_group("attach", "user", "user", [target_a_id]),
-                transaction_group("read", "metaresource", "factor-password", ["*"]),
+                transaction_group("list", "metaresource", "factor-password", ["*"]),
                 transaction_group("create", "metaresource", "factor-password", ["*"]),
             ],
         },
@@ -275,7 +276,6 @@ def test_factor_password_scoped(
     )
     assert resp.status_code == HTTPStatus.CREATED, f"create reset token: {resp.text}"
 
-    # user attach is scoped to target A only.
     resp = requests.put(
         signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{target_b_id}/reset_password_tokens"),
         headers={"Authorization": f"Bearer {token}"},
@@ -311,6 +311,96 @@ def test_revoke_read_scoped(
     token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
     resp = requests.get(signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{target_a_id}"), headers={"Authorization": f"Bearer {token}"}, timeout=5)
     assert resp.status_code == HTTPStatus.FORBIDDEN, f"get target A after revoke: expected 403, got {resp.status_code}: {resp.text}"
+
+
+def test_create_with_roles_requires_attach(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    create_role: Callable[..., str],
+) -> None:
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    viewer_role_id = find_role_by_name(signoz, admin_token, "signoz-viewer")
+    editor_role_id = find_role_by_name(signoz, admin_token, "signoz-editor")
+
+    create_role(
+        admin_token,
+        _CREATE_ROLE_NAME,
+        [
+            transaction_group("create", "user", "user", ["*"]),
+            transaction_group("list", "user", "user", ["*"]),
+        ],
+    )
+    actor_id = create_active_user(
+        signoz,
+        admin_token,
+        email=_CREATE_ACTOR_EMAIL,
+        role="signoz-viewer",
+        password=_ACTOR_PASSWORD,
+        name="user-fga-creator",
+    )
+    change_user_role(signoz, admin_token, actor_id, "signoz-viewer", _CREATE_ROLE_NAME)
+    token = get_token(_CREATE_ACTOR_EMAIL, _ACTOR_PASSWORD)
+
+    resp = requests.post(
+        signoz.self.host_configs["8080"].get(USERS_BASE),
+        json={"email": "userfga+created-noroles@integration.test", "displayName": "no roles"},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert resp.status_code == HTTPStatus.CREATED, f"create without roles needs only user:create: {resp.text}"
+    noroles_id = resp.json()["data"]["id"]
+
+    resp = requests.post(
+        signoz.self.host_configs["8080"].get(USERS_BASE),
+        json={"email": "userfga+created-escalated@integration.test", "displayName": "escalated", "userRoles": [{"id": viewer_role_id}]},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert resp.status_code == HTTPStatus.FORBIDDEN, f"create with roles but no attach grants: expected 403, got {resp.status_code}: {resp.text}"
+
+    role_id = find_role_by_name(signoz, admin_token, _CREATE_ROLE_NAME)
+    resp = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v1/roles/{role_id}"),
+        json={
+            "description": "",
+            "transactionGroups": [
+                transaction_group("create", "user", "user", ["*"]),
+                transaction_group("list", "user", "user", ["*"]),
+                transaction_group("attach", "user", "user", ["*"]),
+                transaction_group("attach", "role", "role", ["signoz-viewer"]),
+            ],
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert resp.status_code == HTTPStatus.NO_CONTENT, resp.text
+
+    token = get_token(_CREATE_ACTOR_EMAIL, _ACTOR_PASSWORD)
+
+    resp = requests.post(
+        signoz.self.host_configs["8080"].get(USERS_BASE),
+        json={"email": "userfga+created-granted@integration.test", "displayName": "granted", "userRoles": [{"id": viewer_role_id}]},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert resp.status_code == HTTPStatus.CREATED, f"create with granted role: {resp.text}"
+    granted_id = resp.json()["data"]["id"]
+
+    resp = requests.post(
+        signoz.self.host_configs["8080"].get(USERS_BASE),
+        json={"email": "userfga+created-editor@integration.test", "displayName": "editor", "userRoles": [{"id": editor_role_id}]},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert resp.status_code == HTTPStatus.FORBIDDEN, f"create with role outside attach grant: expected 403, got {resp.status_code}: {resp.text}"
+
+    for user_id in (noroles_id, granted_id, actor_id):
+        resp = requests.delete(signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{user_id}"), headers={"Authorization": f"Bearer {admin_token}"}, timeout=5)
+        assert resp.status_code == HTTPStatus.NO_CONTENT, f"delete {user_id}: {resp.text}"
+
+    resp = requests.delete(signoz.self.host_configs["8080"].get(f"/api/v1/roles/{role_id}"), headers={"Authorization": f"Bearer {admin_token}"}, timeout=5)
+    assert resp.status_code == HTTPStatus.NO_CONTENT, resp.text
 
 
 def test_cleanup(
