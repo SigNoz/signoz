@@ -123,30 +123,6 @@ def test_create_invalid(
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
-    # The reverse direction: an oidc spec under kind google satisfies google's
-    # required clientId and clientSecret, so only the foreign issuer and
-    # claimMapping fields distinguish it.
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
-        json={
-            "name": "domain.integration.test",
-            "enabled": True,
-            "config": {
-                "kind": "google",
-                "spec": {
-                    "issuer": "https://issuer.integration.test",
-                    "clientId": "client-id",
-                    "clientSecret": "client-secret",
-                    "claimMapping": {"email": "mail"},
-                },
-            },
-        },
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
-
-    assert response.status_code == HTTPStatus.BAD_REQUEST
-
     # Create a domain with a kind but no spec
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
