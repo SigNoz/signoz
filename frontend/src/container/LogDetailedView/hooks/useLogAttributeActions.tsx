@@ -16,6 +16,7 @@ import {
 } from 'periscope/components/PrettyView/PrettyView';
 import { useAppContext } from 'providers/App/App';
 
+import { LogDetailsAction } from '../constants';
 import {
 	buildLogFilterTarget,
 	getFilterQueryData,
@@ -32,6 +33,15 @@ interface UseLogAttributeActionsResult {
 	actions: PrettyViewAction[];
 	visibleActions: VisibleActionsConfig;
 }
+
+const COPY_ONLY_ACTIONS = [LogDetailsAction.COPY];
+const ALL_LEAF_ACTIONS = [
+	LogDetailsAction.COPY,
+	LogDetailsAction.FILTER_IN,
+	LogDetailsAction.FILTER_OUT,
+	LogDetailsAction.GROUP_BY,
+	LogDetailsAction.REPLACE_FILTER,
+];
 
 /**
  * PrettyView filter/group-by/replace actions for the log-details drawer (keys mapped via
@@ -171,21 +181,21 @@ export function useLogAttributeActions({
 
 		return [
 			{
-				key: 'filter-in',
+				key: LogDetailsAction.FILTER_IN,
 				label: 'Filter for value',
 				icon: <CirclePlus size={12} />,
 				onClick: (context): void => filterFor(context, true),
 				shouldHide: (_key, fieldKeyPath): boolean => isRestricted(fieldKeyPath),
 			},
 			{
-				key: 'filter-out',
+				key: LogDetailsAction.FILTER_OUT,
 				label: 'Filter out value',
 				icon: <CircleMinus size={12} />,
 				onClick: (context): void => filterFor(context, false),
 				shouldHide: (_key, fieldKeyPath): boolean => isRestricted(fieldKeyPath),
 			},
 			{
-				key: 'group-by',
+				key: LogDetailsAction.GROUP_BY,
 				label: 'Group by field',
 				icon: <Layers size={12} />,
 				onClick: groupBy,
@@ -194,7 +204,7 @@ export function useLogAttributeActions({
 						.groupBySupported || isOldExplorerOrLive,
 			},
 			{
-				key: 'replace-filter',
+				key: LogDetailsAction.REPLACE_FILTER,
 				label: 'Replace filters with this value',
 				icon: <RefreshCw size={12} />,
 				onClick: replaceFilter,
@@ -212,10 +222,8 @@ export function useLogAttributeActions({
 
 	const visibleActions = useMemo<VisibleActionsConfig>(
 		() => ({
-			leaf: isListViewPanel
-				? ['copy']
-				: ['copy', 'filter-in', 'filter-out', 'group-by', 'replace-filter'],
-			nested: ['copy'],
+			leaf: isListViewPanel ? COPY_ONLY_ACTIONS : ALL_LEAF_ACTIONS,
+			nested: COPY_ONLY_ACTIONS,
 		}),
 		[isListViewPanel],
 	);

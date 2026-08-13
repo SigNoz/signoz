@@ -15,6 +15,7 @@ import {
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
+import { LogAttributeBucket } from './constants';
 import { generateFieldKeyForArray, getDataTypes } from './utils';
 
 export const toTypedFilterValue = (value: unknown): string =>
@@ -54,13 +55,13 @@ const collapseBodyPath = (
 };
 
 const metricsTypeForRoot = (root: string | number): MetricsType | undefined => {
-	if (root === 'attributes') {
+	if (root === LogAttributeBucket.ATTRIBUTES) {
 		return MetricsType.Tag;
 	}
-	if (root === 'resources') {
+	if (root === LogAttributeBucket.RESOURCES) {
 		return MetricsType.Resource;
 	}
-	if (root === 'scope') {
+	if (root === LogAttributeBucket.SCOPE) {
 		return MetricsType.Scope;
 	}
 	return undefined;
