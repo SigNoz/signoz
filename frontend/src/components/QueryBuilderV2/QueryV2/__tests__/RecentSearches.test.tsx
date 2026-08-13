@@ -130,6 +130,7 @@ describe('QuerySearch recent searches', () => {
 		saveLogsRecent(FRONTEND_FILTER);
 
 		await renderAndFocus();
+		await openRecents();
 
 		await waitFor(
 			() => {
