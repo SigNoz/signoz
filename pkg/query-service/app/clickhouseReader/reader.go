@@ -3334,60 +3334,6 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, orgID valuer.U
 	}, nil
 }
 
-// GetCountOfThings returns the count of things in the query
-// This is a generic function that can be used to check if any data exists for a given query
-func (r *ClickHouseReader) GetCountOfThings(ctx context.Context, query string) (uint64, error) {
-	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
-		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
-		instrumentationtypes.CodeFunctionName: "GetCountOfThings",
-	})
-	var count uint64
-	err := r.db.QueryRow(ctx, query).Scan(&count)
-	if err != nil {
-		return 0, err
-	}
-	return count, nil
-}
-
-func (r *ClickHouseReader) GetActiveHostsFromMetricMetadata(ctx context.Context, metricNames []string, hostNameAttr string, sinceUnixMilli int64) (map[string]bool, error) {
-	activeHosts := map[string]bool{}
-
-	query := fmt.Sprintf(
-		`SELECT DISTINCT attr_string_value
-		FROM %s.%s
-		WHERE metric_name IN @metricNames
-		  AND attr_name = @attrName
-		  AND last_reported_unix_milli >= @sinceUnixMilli`,
-		signozMetricDBName,
-		constants.SIGNOZ_METADATA_TABLENAME,
-	)
-
-	rows, err := r.db.Query(ctx, query,
-		clickhouse.Named("metricNames", metricNames),
-		clickhouse.Named("attrName", hostNameAttr),
-		clickhouse.Named("sinceUnixMilli", sinceUnixMilli),
-	)
-	if err != nil {
-		return nil, errorsV2.WrapInternalf(err, errorsV2.CodeInternal, "error querying active hosts")
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var hostName string
-		if err := rows.Scan(&hostName); err != nil {
-			return nil, errorsV2.WrapInternalf(err, errorsV2.CodeInternal, "error scanning active host row")
-		}
-		if hostName != "" {
-			activeHosts[hostName] = true
-		}
-	}
-	if err := rows.Err(); err != nil {
-		return nil, errorsV2.WrapInternalf(err, errorsV2.CodeInternal, "error iterating active host rows")
-	}
-
-	return activeHosts, nil
-}
-
 func (r *ClickHouseReader) GetLatestReceivedMetric(
 	ctx context.Context, orgID valuer.UUID, metricNames []string, labelValues map[string]string,
 ) (*model.MetricStatus, *model.ApiError) {
@@ -4135,10 +4081,6 @@ func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query stri
 	return readRowsForTimeSeriesResult(rows, vars, columnNames, countOfNumberCols)
 }
 
-func isJSONColumn(columnType driver.ColumnType) bool {
-	return strings.HasPrefix(strings.ToUpper(columnType.DatabaseTypeName()), "JSON")
-}
-
 // GetListResultV3 runs the query and returns list of rows
 func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([]*v3.Row, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
@@ -4163,12 +4105,6 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 	for rows.Next() {
 		var vars = make([]interface{}, len(columnTypes))
 		for i := range columnTypes {
-			if isJSONColumn(columnTypes[i]) {
-				// the driver fails to decode JSON into native Go values, so it is read as raw bytes
-				var raw []byte
-				vars[i] = &raw
-				continue
-			}
 			vars[i] = reflect.New(columnTypes[i].ScanType()).Interface()
 		}
 		if err := rows.Scan(vars...); err != nil {
@@ -4177,17 +4113,7 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 		row := map[string]interface{}{}
 		var t time.Time
 		for idx, v := range vars {
-			if isJSONColumn(columnTypes[idx]) {
-				raw, ok := v.(*[]byte)
-				if !ok {
-					continue
-				}
-				var value map[string]interface{}
-				if err := json.Unmarshal(*raw, &value); err != nil {
-					return nil, errors.New(err.Error())
-				}
-				row[columnNames[idx]] = value
-			} else if columnNames[idx] == "timestamp" {
+			if columnNames[idx] == "timestamp" {
 				switch v := v.(type) {
 				case *uint64:
 					t = time.Unix(0, int64(*v))
@@ -4218,33 +4144,6 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 
 	return rowList, getPersonalisedError(rows.Err())
 
-}
-
-// GetHostMetricsExistenceAndEarliestTime returns (count, minFirstReportedUnixMilli, error) for the given host metric names
-// from distributed_metadata. When count is 0, minFirstReportedUnixMilli is 0.
-func (r *ClickHouseReader) GetMetricsExistenceAndEarliestTime(ctx context.Context, metricNames []string) (uint64, uint64, error) {
-	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
-		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
-		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
-		instrumentationtypes.CodeFunctionName: "GetMetricsExistenceAndEarliestTime",
-	})
-	if len(metricNames) == 0 {
-		return 0, 0, nil
-	}
-
-	query := fmt.Sprintf(
-		`SELECT count(*) AS cnt, min(first_reported_unix_milli) AS min_first_reported
-		FROM %s.%s
-		WHERE metric_name IN @metric_names`,
-		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_METADATA_TABLENAME)
-
-	var count, minFirstReported uint64
-	err := r.db.QueryRow(ctx, query, clickhouse.Named("metric_names", metricNames)).Scan(&count, &minFirstReported)
-	if err != nil {
-		r.logger.Error("error getting host metrics existence and earliest time", errorsV2.Attr(err))
-		return 0, 0, err
-	}
-	return count, minFirstReported, nil
 }
 
 func getPersonalisedError(err error) error {
