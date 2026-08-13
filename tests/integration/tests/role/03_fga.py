@@ -260,12 +260,12 @@ def test_role_fga_cleanup(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     user = find_user_by_email(signoz, admin_token, _ACTOR_USER_EMAIL)
 
-    resp = requests.get(signoz.self.host_configs["8080"].get(f"/api/v2/users/{user['id']}/roles"), headers={"Authorization": f"Bearer {admin_token}"}, timeout=5)
+    resp = requests.get(signoz.self.host_configs["8080"].get(f"/api/v2/users/{user['id']}"), headers={"Authorization": f"Bearer {admin_token}"}, timeout=5)
     assert resp.status_code == HTTPStatus.OK, resp.text
-    actor_entry = next((r for r in resp.json()["data"] if r["name"] == _ACTOR_ROLE_NAME), None)
+    actor_entry = next((ur for ur in resp.json()["data"]["userRoles"] if ur["role"]["name"] == _ACTOR_ROLE_NAME), None)
     if actor_entry is not None:
         resp = requests.delete(
-            signoz.self.host_configs["8080"].get(f"/api/v2/users/{user['id']}/roles/{actor_entry['id']}"),
+            signoz.self.host_configs["8080"].get(f"/api/v2/user_roles/{actor_entry['id']}"),
             headers={"Authorization": f"Bearer {admin_token}"},
             timeout=5,
         )
