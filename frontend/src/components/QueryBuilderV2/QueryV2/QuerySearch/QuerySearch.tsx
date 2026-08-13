@@ -59,6 +59,7 @@ import {
 	dedupeOptionsByLabel,
 	getFieldContextPrefix,
 	getRecentOptions,
+	isSupportedFunction,
 	renderRecentDeleteButton,
 } from './utils';
 
@@ -1275,11 +1276,13 @@ function QuerySearch({
 		}
 
 		if (queryContext.isInFunction) {
-			options = Object.values(QUERY_BUILDER_FUNCTIONS).map((option) => ({
-				label: option,
-				apply: `${option}()`,
-				type: 'function',
-			}));
+			options = Object.values(QUERY_BUILDER_FUNCTIONS)
+				.filter((option) => isSupportedFunction(option, dataSource))
+				.map((option) => ({
+					label: option,
+					apply: `${option}()`,
+					type: 'function',
+				}));
 
 			// Add space after selection for functions
 			const optionsWithSpace = addSpaceToOptions(options);

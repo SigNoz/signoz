@@ -9,6 +9,7 @@ import {
 	type FetchMaps,
 	isVariableInActiveFetchState,
 	resolveFetchState,
+	VariableCycleReason,
 	VariableFetchState,
 } from './variableFetchSlice.utils';
 
@@ -30,7 +31,10 @@ function queryParentsHaveValues(
 	);
 }
 
-export { VariableFetchState } from './variableFetchSlice.utils';
+export {
+	VariableCycleReason,
+	VariableFetchState,
+} from './variableFetchSlice.utils';
 
 /**
  * Runtime fetch orchestration for dashboard variables — native port of V1's
@@ -45,6 +49,8 @@ export interface VariableFetchSlice {
 	variableFetchStates: Record<string, VariableFetchState>;
 	variableLastUpdated: Record<string, number>;
 	variableCycleIds: Record<string, number>;
+	/** Why each variable's current cycle was enqueued, read by the post-fetch reconcile. */
+	variableCycleReasons: Record<string, VariableCycleReason>;
 	/**
 	 * Whether a QUERY/DYNAMIC variable settled its fetch with zero options (so it
 	 * will never get a value). Lets a dependent panel fall through to "no data"
@@ -106,6 +112,7 @@ export const createVariableFetchSlice: StateCreator<
 	variableFetchStates: {},
 	variableLastUpdated: {},
 	variableCycleIds: {},
+	variableCycleReasons: {},
 	variableResolvedEmpty: {},
 	variableFetchContext: null,
 	lastFetchAllKey: null,
@@ -115,6 +122,7 @@ export const createVariableFetchSlice: StateCreator<
 			variableFetchStates: {},
 			variableLastUpdated: {},
 			variableCycleIds: {},
+			variableCycleReasons: {},
 			variableResolvedEmpty: {},
 			variableFetchContext: null,
 			lastFetchAllKey: null,
@@ -132,6 +140,7 @@ export const createVariableFetchSlice: StateCreator<
 	initVariableFetch: (names, context): void => {
 		const maps = cloneMaps(get());
 		const resolvedEmpty = { ...get().variableResolvedEmpty };
+		const reasons = { ...get().variableCycleReasons };
 		names.forEach((name) => {
 			if (!maps.states[name]) {
 				maps.states[name] = VariableFetchState.Idle;
@@ -144,12 +153,14 @@ export const createVariableFetchSlice: StateCreator<
 				delete maps.lastUpdated[name];
 				delete maps.cycleIds[name];
 				delete resolvedEmpty[name];
+				delete reasons[name];
 			}
 		});
 		set({
 			variableFetchStates: maps.states,
 			variableLastUpdated: maps.lastUpdated,
 			variableCycleIds: maps.cycleIds,
+			variableCycleReasons: reasons,
 			variableResolvedEmpty: resolvedEmpty,
 			variableFetchContext: context,
 		});
@@ -171,6 +182,11 @@ export const createVariableFetchSlice: StateCreator<
 			dynamicVariableOrder,
 		} = variableFetchContext;
 		const maps = cloneMaps(get());
+		const reasons = { ...get().variableCycleReasons };
+		const bump = (name: string): void => {
+			maps.cycleIds[name] = (maps.cycleIds[name] || 0) + 1;
+			reasons[name] = VariableCycleReason.FullCycle;
+		};
 
 		// Query variables wait only for their QUERY parents. A DYNAMIC parent does not
 		// gate: its option fetch feeds only its own dropdown, while its selected value
@@ -178,7 +194,7 @@ export const createVariableFetchSlice: StateCreator<
 		// dependent query substitutes it immediately and refetches via the cascade if
 		// it later changes. Text/custom parents resolve synchronously, so nothing waits.
 		queryVariableOrder.forEach((name) => {
-			maps.cycleIds[name] = (maps.cycleIds[name] || 0) + 1;
+			bump(name);
 			const parents = dependencyData.parentGraph[name] || [];
 			const hasQueryParents = parents.some((p) => variableTypes[p] === 'QUERY');
 			maps.states[name] = hasQueryParents
@@ -192,7 +208,7 @@ export const createVariableFetchSlice: StateCreator<
 		const orderedQuery = new Set(queryVariableOrder);
 		Object.keys(variableTypes).forEach((name) => {
 			if (variableTypes[name] === 'QUERY' && !orderedQuery.has(name)) {
-				maps.cycleIds[name] = (maps.cycleIds[name] || 0) + 1;
+				bump(name);
 				maps.states[name] = resolveFetchState(maps, name);
 			}
 		});
@@ -203,7 +219,7 @@ export const createVariableFetchSlice: StateCreator<
 		// populate fast even when query variables are slow; a sibling selection change
 		// later refetches them via `enqueueDescendantsBatch`.
 		dynamicVariableOrder.forEach((name) => {
-			maps.cycleIds[name] = (maps.cycleIds[name] || 0) + 1;
+			bump(name);
 			maps.states[name] = resolveFetchState(maps, name);
 		});
 
@@ -211,6 +227,7 @@ export const createVariableFetchSlice: StateCreator<
 			variableFetchStates: maps.states,
 			variableLastUpdated: maps.lastUpdated,
 			variableCycleIds: maps.cycleIds,
+			variableCycleReasons: reasons,
 			lastFetchAllKey: key ?? get().lastFetchAllKey,
 		});
 	},
@@ -290,6 +307,11 @@ export const createVariableFetchSlice: StateCreator<
 		const { dependencyData, variableTypes, dynamicVariableOrder } =
 			variableFetchContext;
 		const maps = cloneMaps(get());
+		const reasons = { ...get().variableCycleReasons };
+		const bump = (name: string): void => {
+			maps.cycleIds[name] = (maps.cycleIds[name] || 0) + 1;
+			reasons[name] = VariableCycleReason.ValueCascade;
+		};
 		const changed = new Set(names);
 		// Callers commit values before this runs, so the gate sees the new parent values.
 		const selection = selectVariableValues(get().dashboardId)(get());
@@ -305,7 +327,7 @@ export const createVariableFetchSlice: StateCreator<
 			});
 		});
 		queryDescendants.forEach((desc) => {
-			maps.cycleIds[desc] = (maps.cycleIds[desc] || 0) + 1;
+			bump(desc);
 			maps.states[desc] = queryParentsHaveValues(
 				desc,
 				variableFetchContext,
@@ -322,7 +344,7 @@ export const createVariableFetchSlice: StateCreator<
 			dynamicVariableOrder
 				.filter((dynName) => !changed.has(dynName))
 				.forEach((dynName) => {
-					maps.cycleIds[dynName] = (maps.cycleIds[dynName] || 0) + 1;
+					bump(dynName);
 					maps.states[dynName] = resolveFetchState(maps, dynName);
 				});
 		}
@@ -331,6 +353,7 @@ export const createVariableFetchSlice: StateCreator<
 			variableFetchStates: maps.states,
 			variableLastUpdated: maps.lastUpdated,
 			variableCycleIds: maps.cycleIds,
+			variableCycleReasons: reasons,
 		});
 	},
 });
@@ -346,6 +369,12 @@ export const selectVariableCycleId =
 	(name: string) =>
 	(state: DashboardStore): number =>
 		state.variableCycleIds[name] ?? 0;
+
+/** Selector: why a variable's cycle was enqueued. Undefined for types that never fetch. */
+export const selectVariableCycleReason =
+	(name: string) =>
+	(state: DashboardStore): VariableCycleReason | undefined =>
+		state.variableCycleReasons[name];
 
 /** Selector: whether a variable has completed at least one fetch. */
 export const selectVariableFetchedOnce =

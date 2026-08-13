@@ -562,13 +562,9 @@ export const getClusterMetricsQueryPayload = (
 									type: 'tag',
 								},
 							],
-							having: [
-								{
-									columnName: `MAX(${INFRA_MONITORING_ATTR_KEYS.K8S_NODE_CONDITION_READY})`,
-									op: '=',
-									value: 1,
-								},
-							],
+							having: {
+								expression: `max(${INFRA_MONITORING_ATTR_KEYS.K8S_NODE_CONDITION_READY}) = 1`,
+							},
 							legend: `{{${INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME}}}`,
 							limit: null,
 							orderBy: [],
@@ -648,13 +644,9 @@ export const getClusterMetricsQueryPayload = (
 									type: 'tag',
 								},
 							],
-							having: [
-								{
-									columnName: `MAX(${INFRA_MONITORING_ATTR_KEYS.K8S_NODE_CONDITION_READY})`,
-									op: '=',
-									value: 0,
-								},
-							],
+							having: {
+								expression: `max(${INFRA_MONITORING_ATTR_KEYS.K8S_NODE_CONDITION_READY}) = 0`,
+							},
 							legend: `{{${INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME}}}`,
 							limit: null,
 							orderBy: [],

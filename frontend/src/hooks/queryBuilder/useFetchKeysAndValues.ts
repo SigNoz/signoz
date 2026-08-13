@@ -48,7 +48,6 @@ type IuseFetchKeysAndValues = {
 export const useFetchKeysAndValues = (
 	searchValue: string,
 	query: IBuilderQuery,
-	dotMetricsEnabled: boolean,
 	searchKey: string,
 	shouldUseSuggestions?: boolean,
 	isInfraMonitoring?: boolean,

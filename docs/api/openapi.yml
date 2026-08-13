@@ -1499,6 +1499,7 @@ components:
       - computeengine
       - gke
       - cloudstorage
+      - cloudsql_mysql
       type: string
     CloudintegrationtypesServiceMetadata:
       properties:
@@ -7880,17 +7881,20 @@ components:
       type: string
     SavedviewtypesPostableSavedView:
       properties:
-        data:
-          $ref: '#/components/schemas/SavedviewtypesSavedViewData'
         generateName:
           type: boolean
         name:
           type: string
+        schemaVersion:
+          $ref: '#/components/schemas/SavedviewtypesSchemaVersion'
         source:
           $ref: '#/components/schemas/SavedviewtypesSource'
+        spec:
+          $ref: '#/components/schemas/SavedviewtypesSavedViewSpec'
       required:
       - source
-      - data
+      - schemaVersion
+      - spec
       type: object
     SavedviewtypesSavedView:
       properties:
@@ -7899,14 +7903,16 @@ components:
           type: string
         createdBy:
           type: string
-        data:
-          $ref: '#/components/schemas/SavedviewtypesSavedViewData'
         id:
           type: string
         name:
           type: string
+        schemaVersion:
+          $ref: '#/components/schemas/SavedviewtypesSchemaVersion'
         source:
           $ref: '#/components/schemas/SavedviewtypesSource'
+        spec:
+          $ref: '#/components/schemas/SavedviewtypesSavedViewSpec'
         updatedAt:
           format: date-time
           type: string
@@ -7914,14 +7920,6 @@ components:
           type: string
       required:
       - id
-      type: object
-    SavedviewtypesSavedViewData:
-      properties:
-        schemaVersion:
-          type: string
-        spec:
-          $ref: '#/components/schemas/SavedviewtypesSavedViewSpec'
-      required:
       - schemaVersion
       - spec
       type: object
@@ -7936,7 +7934,10 @@ components:
         queries:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelope'
+          minItems: 1
           type: array
+        requestType:
+          $ref: '#/components/schemas/Querybuildertypesv5RequestType'
         selectedFields:
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
@@ -7944,10 +7945,13 @@ components:
       required:
       - displayName
       - panelType
+      - requestType
       - queries
-      - selectedFields
-      - display
       type: object
+    SavedviewtypesSchemaVersion:
+      enum:
+      - v2
+      type: string
     SavedviewtypesSource:
       enum:
       - traces
@@ -7957,13 +7961,16 @@ components:
       type: string
     SavedviewtypesUpdatableSavedView:
       properties:
-        data:
-          $ref: '#/components/schemas/SavedviewtypesSavedViewData'
+        schemaVersion:
+          $ref: '#/components/schemas/SavedviewtypesSchemaVersion'
         source:
           $ref: '#/components/schemas/SavedviewtypesSource'
+        spec:
+          $ref: '#/components/schemas/SavedviewtypesSavedViewSpec'
       required:
       - source
-      - data
+      - schemaVersion
+      - spec
       type: object
     ServiceaccounttypesDeprecatedPostableServiceAccountRole:
       properties:
@@ -22776,6 +22783,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
         "500":
           content:
             application/json:

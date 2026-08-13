@@ -19,7 +19,11 @@ func NewModule(store savedviewtypes.Store) savedview.Module {
 }
 
 func (module *module) GetViewsForFilters(ctx context.Context, orgID string, source savedviewtypes.Source, name string) ([]*savedviewtypes.SavedView, error) {
-	return module.store.List(ctx, orgID, source, name)
+	storables, err := module.store.List(ctx, orgID, source, name)
+	if err != nil {
+		return nil, err
+	}
+	return savedviewtypes.NewSavedViewsFromStorableSavedViews(storables), nil
 }
 
 func (module *module) CreateView(ctx context.Context, orgID string, view savedviewtypes.PostableSavedView) (valuer.UUID, error) {
@@ -30,14 +34,19 @@ func (module *module) CreateView(ctx context.Context, orgID string, view savedvi
 
 	dbView := view.ToSavedView(orgID, claims.Email)
 
-	if err := module.store.Create(ctx, dbView); err != nil {
+	if err := module.store.Create(ctx, savedviewtypes.NewStorableSavedView(dbView)); err != nil {
 		return valuer.UUID{}, err
 	}
 	return dbView.ID, nil
 }
 
 func (module *module) GetView(ctx context.Context, orgID string, uuid valuer.UUID) (*savedviewtypes.SavedView, error) {
-	return module.store.Get(ctx, orgID, uuid)
+	storable, err := module.store.Get(ctx, orgID, uuid)
+	if err != nil {
+		return nil, err
+	}
+
+	return storable.ToSavedView(), nil
 }
 
 func (module *module) UpdateView(ctx context.Context, orgID string, uuid valuer.UUID, view savedviewtypes.UpdatableSavedView) error {
@@ -46,7 +55,8 @@ func (module *module) UpdateView(ctx context.Context, orgID string, uuid valuer.
 		return errors.NewInternalf(errors.CodeInternal, "error in getting email from context")
 	}
 
-	return module.store.Update(ctx, view.ToSavedView(uuid, orgID, claims.Email))
+	dbView := view.ToSavedView(uuid, orgID, claims.Email)
+	return module.store.Update(ctx, savedviewtypes.NewStorableSavedView(dbView))
 }
 
 func (module *module) DeleteView(ctx context.Context, orgID string, uuid valuer.UUID) error {
@@ -54,10 +64,10 @@ func (module *module) DeleteView(ctx context.Context, orgID string, uuid valuer.
 }
 
 func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
-	savedViews, err := module.store.List(ctx, orgID.StringValue(), savedviewtypes.Source{}, "")
+	storables, err := module.store.List(ctx, orgID.StringValue(), savedviewtypes.Source{}, "")
 	if err != nil {
 		return nil, err
 	}
 
-	return savedviewtypes.NewStatsFromSavedViews(savedViews), nil
+	return savedviewtypes.NewStatsFromStorableSavedViews(storables), nil
 }

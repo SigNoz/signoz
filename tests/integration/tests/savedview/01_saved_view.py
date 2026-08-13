@@ -26,15 +26,14 @@ def test_create_rejects_wrong_schema_version(
             "name": "my-view",
             "generateName": False,
             "source": "logs",
-            "data": {
-                "schemaVersion": "v9",
-                "spec": {
-                    "displayName": "My View",
-                    "panelType": "table",
-                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
-                    "selectedFields": [],
-                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
-                },
+            "schemaVersion": "v9",
+            "spec": {
+                "displayName": "My View",
+                "requestType": "scalar",
+                "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                "selectedFields": [],
+                "panelType": "table",
+                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers={"Authorization": f"Bearer {token}"},
@@ -59,15 +58,14 @@ def test_create_rejects_invalid_panel_type(
             "name": "my-view",
             "generateName": False,
             "source": "logs",
-            "data": {
-                "schemaVersion": "v2",
-                "spec": {
-                    "displayName": "My View",
-                    "panelType": "bogus",
-                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
-                    "selectedFields": [],
-                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
-                },
+            "schemaVersion": "v2",
+            "spec": {
+                "displayName": "My View",
+                "requestType": "scalar",
+                "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                "selectedFields": [],
+                "panelType": "bogus",
+                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers={"Authorization": f"Bearer {token}"},
@@ -91,15 +89,14 @@ def test_create_rejects_empty_queries(
             "name": "my-view",
             "generateName": False,
             "source": "logs",
-            "data": {
-                "schemaVersion": "v2",
-                "spec": {
-                    "displayName": "My View",
-                    "panelType": "table",
-                    "queries": [],
-                    "selectedFields": [],
-                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
-                },
+            "schemaVersion": "v2",
+            "spec": {
+                "displayName": "My View",
+                "requestType": "scalar",
+                "queries": [],
+                "selectedFields": [],
+                "panelType": "table",
+                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers={"Authorization": f"Bearer {token}"},
@@ -127,15 +124,14 @@ def test_create_rejects_empty_display_name(
             "name": "my-view",
             "generateName": False,
             "source": "logs",
-            "data": {
-                "schemaVersion": "v2",
-                "spec": {
-                    "displayName": "",
-                    "panelType": "table",
-                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
-                    "selectedFields": [],
-                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
-                },
+            "schemaVersion": "v2",
+            "spec": {
+                "displayName": "",
+                "requestType": "scalar",
+                "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                "selectedFields": [],
+                "panelType": "table",
+                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers={"Authorization": f"Bearer {token}"},
@@ -160,15 +156,14 @@ def test_create_rejects_invalid_source(
             "name": "my-view",
             "generateName": False,
             "source": "bogus",
-            "data": {
-                "schemaVersion": "v2",
-                "spec": {
-                    "displayName": "My View",
-                    "panelType": "table",
-                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
-                    "selectedFields": [],
-                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
-                },
+            "schemaVersion": "v2",
+            "spec": {
+                "displayName": "My View",
+                "requestType": "scalar",
+                "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                "selectedFields": [],
+                "panelType": "table",
+                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers={"Authorization": f"Bearer {token}"},
@@ -192,15 +187,14 @@ def test_create_rejects_invalid_name(
             "name": "Not A Valid Slug",
             "generateName": False,
             "source": "logs",
-            "data": {
-                "schemaVersion": "v2",
-                "spec": {
-                    "displayName": "My View",
-                    "panelType": "table",
-                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
-                    "selectedFields": [],
-                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
-                },
+            "schemaVersion": "v2",
+            "spec": {
+                "displayName": "My View",
+                "requestType": "scalar",
+                "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                "selectedFields": [],
+                "panelType": "table",
+                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers={"Authorization": f"Bearer {token}"},
@@ -226,15 +220,14 @@ def test_create_rejects_empty_name_without_generate_name(
             "name": "",
             "generateName": False,
             "source": "logs",
-            "data": {
-                "schemaVersion": "v2",
-                "spec": {
-                    "displayName": "My View",
-                    "panelType": "table",
-                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
-                    "selectedFields": [],
-                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
-                },
+            "schemaVersion": "v2",
+            "spec": {
+                "displayName": "My View",
+                "requestType": "scalar",
+                "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                "selectedFields": [],
+                "panelType": "table",
+                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers={"Authorization": f"Bearer {token}"},
@@ -261,15 +254,14 @@ def test_create_rejects_name_when_generate_name_is_true(
             "name": "explicit-name",
             "generateName": True,
             "source": "logs",
-            "data": {
-                "schemaVersion": "v2",
-                "spec": {
-                    "displayName": "My View",
-                    "panelType": "table",
-                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
-                    "selectedFields": [],
-                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
-                },
+            "schemaVersion": "v2",
+            "spec": {
+                "displayName": "My View",
+                "requestType": "scalar",
+                "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                "selectedFields": [],
+                "panelType": "table",
+                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers={"Authorization": f"Bearer {token}"},
@@ -298,15 +290,14 @@ def test_create_rejects_unknown_field(
             "name": "my-view",
             "generateName": False,
             "source": "logs",
-            "data": {
-                "schemaVersion": "v2",
-                "spec": {
-                    "displayName": "My View",
-                    "panelType": "table",
-                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
-                    "selectedFields": [],
-                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
-                },
+            "schemaVersion": "v2",
+            "spec": {
+                "displayName": "My View",
+                "requestType": "scalar",
+                "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                "selectedFields": [],
+                "panelType": "table",
+                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
             "unknownfield": "boom",
         },
@@ -366,15 +357,14 @@ def test_update_missing_view_returns_not_found(
         signoz.self.host_configs["8080"].get(f"{BASE_URL}/{uuid.uuid4()}"),
         json={
             "source": "logs",
-            "data": {
-                "schemaVersion": "v2",
-                "spec": {
-                    "displayName": "My View",
-                    "panelType": "table",
-                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
-                    "selectedFields": [],
-                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
-                },
+            "schemaVersion": "v2",
+            "spec": {
+                "displayName": "My View",
+                "requestType": "scalar",
+                "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                "selectedFields": [],
+                "panelType": "table",
+                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers={"Authorization": f"Bearer {token}"},
@@ -402,15 +392,14 @@ def test_update_rejects_name_field(
             "name": "update-rejects-name-field",
             "generateName": False,
             "source": "logs",
-            "data": {
-                "schemaVersion": "v2",
-                "spec": {
-                    "displayName": "My View",
-                    "panelType": "table",
-                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
-                    "selectedFields": [],
-                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
-                },
+            "schemaVersion": "v2",
+            "spec": {
+                "displayName": "My View",
+                "requestType": "scalar",
+                "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                "selectedFields": [],
+                "panelType": "table",
+                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers=headers,
@@ -424,15 +413,14 @@ def test_update_rejects_name_field(
             signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
             json={
                 "source": "logs",
-                "data": {
-                    "schemaVersion": "v2",
-                    "spec": {
-                        "displayName": "My View",
-                        "panelType": "table",
-                        "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
-                        "selectedFields": [],
-                        "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
-                    },
+                "schemaVersion": "v2",
+                "spec": {
+                    "displayName": "My View",
+                    "requestType": "scalar",
+                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                    "selectedFields": [],
+                    "panelType": "table",
+                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
                 },
                 "name": "update-rejects-name-field",
             },
@@ -485,15 +473,14 @@ def test_saved_view_lifecycle(
             "name": "lc-logs-overview",
             "generateName": False,
             "source": "logs",
-            "data": {
-                "schemaVersion": "v2",
-                "spec": {
-                    "displayName": "lc-logs-overview",
-                    "panelType": "table",
-                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
-                    "selectedFields": [],
-                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
-                },
+            "schemaVersion": "v2",
+            "spec": {
+                "displayName": "lc-logs-overview",
+                "requestType": "scalar",
+                "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                "selectedFields": [],
+                "panelType": "table",
+                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers=headers,
@@ -508,15 +495,14 @@ def test_saved_view_lifecycle(
             "name": "lc-traces-overview",
             "generateName": False,
             "source": "traces",
-            "data": {
-                "schemaVersion": "v2",
-                "spec": {
-                    "displayName": "lc-traces-overview",
-                    "panelType": "table",
-                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
-                    "selectedFields": [],
-                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
-                },
+            "schemaVersion": "v2",
+            "spec": {
+                "displayName": "lc-traces-overview",
+                "requestType": "scalar",
+                "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                "selectedFields": [],
+                "panelType": "table",
+                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers=headers,
@@ -535,9 +521,9 @@ def test_saved_view_lifecycle(
         got = response.json()["data"]
         assert got["id"] == view_id
         assert got["name"] == "lc-logs-overview"
-        assert got["data"]["spec"]["displayName"] == "lc-logs-overview"
+        assert got["spec"]["displayName"] == "lc-logs-overview"
         assert got["source"] == "logs"
-        assert got["data"]["spec"]["panelType"] == "table"
+        assert got["spec"]["panelType"] == "table"
 
         # ── list filters by source and name ──────────────────────────────
         response = requests.get(
@@ -564,15 +550,14 @@ def test_saved_view_lifecycle(
             signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
             json={
                 "source": "metrics",
-                "data": {
-                    "schemaVersion": "v2",
-                    "spec": {
-                        "displayName": "lc-logs-overview-renamed",
-                        "panelType": "graph",
-                        "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
-                        "selectedFields": [],
-                        "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
-                    },
+                "schemaVersion": "v2",
+                "spec": {
+                    "displayName": "lc-logs-overview-renamed",
+                    "requestType": "time_series",
+                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                    "selectedFields": [],
+                    "panelType": "graph",
+                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
                 },
             },
             headers=headers,
@@ -588,9 +573,9 @@ def test_saved_view_lifecycle(
         assert response.status_code == HTTPStatus.OK, response.text
         updated = response.json()["data"]
         assert updated["name"] == "lc-logs-overview", "name is immutable"
-        assert updated["data"]["spec"]["displayName"] == "lc-logs-overview-renamed"
+        assert updated["spec"]["displayName"] == "lc-logs-overview-renamed"
         assert updated["source"] == "metrics"
-        assert updated["data"]["spec"]["panelType"] == "graph"
+        assert updated["spec"]["panelType"] == "graph"
     finally:
         requests.delete(
             signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
@@ -621,15 +606,14 @@ def test_empty_name_derives_a_slug_from_display_name(
             "name": "",
             "generateName": True,
             "source": "logs",
-            "data": {
-                "schemaVersion": "v2",
-                "spec": {
-                    "displayName": "My Generated View!",
-                    "panelType": "table",
-                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
-                    "selectedFields": [],
-                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
-                },
+            "schemaVersion": "v2",
+            "spec": {
+                "displayName": "My Generated View!",
+                "requestType": "scalar",
+                "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                "selectedFields": [],
+                "panelType": "table",
+                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers=headers,
@@ -646,7 +630,7 @@ def test_empty_name_derives_a_slug_from_display_name(
         )
         assert response.status_code == HTTPStatus.OK, response.text
         got = response.json()["data"]
-        assert got["data"]["spec"]["displayName"] == "My Generated View!"
+        assert got["spec"]["displayName"] == "My Generated View!"
         assert got["name"].startswith("my-generated-view-")
         assert got["name"] != "my-generated-view-", "expected a random suffix, not just the slugified prefix"
     finally:
@@ -681,15 +665,14 @@ def test_create_roundtrip_preserves_zero_values(
             "name": "create-zero-values",
             "generateName": False,
             "source": "logs",
-            "data": {
-                "schemaVersion": "v2",
-                "spec": {
-                    "displayName": "create-zero-values",
-                    "panelType": "table",
-                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
-                    "selectedFields": [],
-                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
-                },
+            "schemaVersion": "v2",
+            "spec": {
+                "displayName": "create-zero-values",
+                "requestType": "scalar",
+                "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                "selectedFields": [],
+                "panelType": "table",
+                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
             },
         },
         headers=headers,
@@ -705,10 +688,11 @@ def test_create_roundtrip_preserves_zero_values(
             timeout=5,
         )
         assert response.status_code == HTTPStatus.OK, response.text
-        spec = response.json()["data"]["data"]["spec"]
+        spec = response.json()["data"]["spec"]
         query = spec["queries"][0]["spec"]
 
         cases = [
+            ("panelType preserved", spec["panelType"], "table"),
             ("maxLines 0", spec["display"]["maxLines"], 0),
             ("fontSize empty", spec["display"]["fontSize"], ""),
             ("format empty", spec["display"]["format"], ""),
@@ -727,28 +711,30 @@ def test_create_roundtrip_preserves_zero_values(
         )
 
 
-def test_selected_fields_omitted_on_create_reads_back_as_empty_list_not_null(
+def test_selected_fields_and_display_omitted_on_create_read_back_as_empty_defaults(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
+    """Neither selectedFields nor display is required. Omitting both entirely
+    must not 400 or leave either null on read-back: selectedFields defaults to
+    an empty list, display to its zero-value object. panelType is a separate,
+    required, top-level field and is supplied here so the create succeeds."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     headers = {"Authorization": f"Bearer {token}"}
 
     response = requests.post(
         signoz.self.host_configs["8080"].get(BASE_URL),
         json={
-            "name": "omitted-selected-fields",
+            "name": "omitted-selected-fields-and-display",
             "generateName": False,
             "source": "logs",
-            "data": {
-                "schemaVersion": "v2",
-                "spec": {
-                    "displayName": "omitted-selected-fields",
-                    "panelType": "table",
-                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
-                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
-                },
+            "schemaVersion": "v2",
+            "spec": {
+                "displayName": "omitted-selected-fields-and-display",
+                "requestType": "scalar",
+                "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
+                "panelType": "table",
             },
         },
         headers=headers,
@@ -764,7 +750,108 @@ def test_selected_fields_omitted_on_create_reads_back_as_empty_list_not_null(
             timeout=5,
         )
         assert response.status_code == HTTPStatus.OK, response.text
-        assert response.json()["data"]["data"]["spec"]["selectedFields"] == []
+        spec = response.json()["data"]["spec"]
+        assert spec["selectedFields"] == []
+        assert spec["display"] == {"maxLines": 0, "fontSize": "", "format": "", "color": ""}
+    finally:
+        requests.delete(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
+            headers=headers,
+            timeout=5,
+        )
+
+
+def test_selected_fields_and_display_explicit_null_on_create(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    """JSON null decodes as a no-op onto a non-pointer Go field (struct/slice), so
+    an explicit null is expected to behave identically to omitting the field."""
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "name": "null-selected-fields-and-display",
+            "generateName": False,
+            "source": "logs",
+            "schemaVersion": "v2",
+            "spec": {
+                "displayName": "null-selected-fields-and-display",
+                "requestType": "scalar",
+                "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
+                "panelType": "table",
+                "selectedFields": None,
+                "display": None,
+            },
+        },
+        headers=headers,
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    view_id = response.json()["data"]["id"]
+
+    try:
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
+            headers=headers,
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.OK, response.text
+        spec = response.json()["data"]["spec"]
+        assert spec["selectedFields"] == []
+        assert spec["display"] == {"maxLines": 0, "fontSize": "", "format": "", "color": ""}
+    finally:
+        requests.delete(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
+            headers=headers,
+            timeout=5,
+        )
+
+
+def test_create_with_partial_display_defaults_missing_fields(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    """display's fields are each independently optional -- sending only one
+    (color) must not 400, and the fields left unset must default to their own
+    zero value rather than being rejected or dropped."""
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "name": "partial-display-color-only",
+            "generateName": False,
+            "source": "logs",
+            "schemaVersion": "v2",
+            "spec": {
+                "displayName": "partial-display-color-only",
+                "requestType": "scalar",
+                "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
+                "panelType": "table",
+                "selectedFields": [],
+                "display": {"color": "test"},
+            },
+        },
+        headers=headers,
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    view_id = response.json()["data"]["id"]
+
+    try:
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
+            headers=headers,
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.OK, response.text
+        assert response.json()["data"]["spec"]["display"] == {"maxLines": 0, "fontSize": "", "format": "", "color": "test"}
     finally:
         requests.delete(
             signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
@@ -793,15 +880,14 @@ def test_update_does_not_corrupt_zero_values(
             "name": "update-zero-values",
             "generateName": False,
             "source": "logs",
-            "data": {
-                "schemaVersion": "v2",
-                "spec": {
-                    "displayName": "update-zero-values",
-                    "panelType": "table",
-                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": True, "legend": "Custom Legend"}}],
-                    "selectedFields": [{"name": "service.name"}],
-                    "display": {"maxLines": 25, "fontSize": "large", "format": "table", "color": "blue"},
-                },
+            "schemaVersion": "v2",
+            "spec": {
+                "displayName": "update-zero-values",
+                "requestType": "scalar",
+                "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": True, "legend": "Custom Legend"}}],
+                "selectedFields": [{"name": "service.name"}],
+                "panelType": "table",
+                "display": {"maxLines": 25, "fontSize": "large", "format": "table", "color": "blue"},
             },
         },
         headers=headers,
@@ -817,7 +903,7 @@ def test_update_does_not_corrupt_zero_values(
             timeout=5,
         )
         assert response.status_code == HTTPStatus.OK, response.text
-        spec = response.json()["data"]["data"]["spec"]
+        spec = response.json()["data"]["spec"]
         assert spec["display"]["maxLines"] == 25
         # signal/fieldContext/fieldDataType always serialize on TelemetryFieldKey
         # (no omitempty -- see pkg/types/telemetrytypes/field.go), so an entry sent
@@ -830,15 +916,14 @@ def test_update_does_not_corrupt_zero_values(
             signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
             json={
                 "source": "logs",
-                "data": {
-                    "schemaVersion": "v2",
-                    "spec": {
-                        "displayName": "update-zero-values",
-                        "panelType": "table",
-                        "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
-                        "selectedFields": [],
-                        "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
-                    },
+                "schemaVersion": "v2",
+                "spec": {
+                    "displayName": "update-zero-values",
+                    "requestType": "scalar",
+                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                    "selectedFields": [],
+                    "panelType": "table",
+                    "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
                 },
             },
             headers=headers,
@@ -853,7 +938,7 @@ def test_update_does_not_corrupt_zero_values(
             timeout=5,
         )
         assert response.status_code == HTTPStatus.OK, response.text
-        spec = response.json()["data"]["data"]["spec"]
+        spec = response.json()["data"]["spec"]
         query = spec["queries"][0]["spec"]
 
         cases = [
@@ -867,6 +952,74 @@ def test_update_does_not_corrupt_zero_values(
         ]
         for description, actual, expected in cases:
             assert actual == expected, description
+    finally:
+        requests.delete(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
+            headers=headers,
+            timeout=5,
+        )
+
+
+def test_update_with_partial_display_replaces_whole_object(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    """Update is a whole-object replace, not a merge: sending only "color" on
+    update must not preserve the previous fontSize/format/maxLines -- those
+    reset to their zero value exactly as if display had been sent in full."""
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "name": "update-partial-display",
+            "generateName": False,
+            "source": "logs",
+            "schemaVersion": "v2",
+            "spec": {
+                "displayName": "update-partial-display",
+                "requestType": "scalar",
+                "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
+                "selectedFields": [],
+                "panelType": "table",
+                "display": {"maxLines": 10, "fontSize": "large", "format": "table", "color": "blue"},
+            },
+        },
+        headers=headers,
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    view_id = response.json()["data"]["id"]
+
+    try:
+        response = requests.put(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
+            json={
+                "source": "logs",
+                "schemaVersion": "v2",
+                "spec": {
+                    "displayName": "update-partial-display",
+                    "requestType": "scalar",
+                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}],
+                    "selectedFields": [],
+                    "panelType": "table",
+                    "display": {"color": "green"},
+                },
+            },
+            headers=headers,
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
+            headers=headers,
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.OK, response.text
+        assert response.json()["data"]["spec"]["display"] == {"maxLines": 0, "fontSize": "", "format": "", "color": "green"}
     finally:
         requests.delete(
             signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
