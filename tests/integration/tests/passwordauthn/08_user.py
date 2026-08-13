@@ -111,8 +111,8 @@ def test_update_my_user(signoz: types.SigNoz, get_token: Callable[[str, str], st
     assert response.json()["data"]["displayName"] == "self updated editor"
 
 
-def test_admin_cannot_update_self_via_id(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
-    """Verify PUT /api/v2/users/{own_id} is rejected (self-mutation guard)."""
+def test_root_user_cannot_be_updated_via_id(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
+    """Verify PUT /api/v2/users/{id} targeting the root user is rejected (root anchor guard)."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.get(
@@ -129,7 +129,7 @@ def test_admin_cannot_update_self_via_id(signoz: types.SigNoz, get_token: Callab
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
-    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.status_code == HTTPStatus.NOT_IMPLEMENTED, response.text
 
 
 def test_editor_cannot_list_users(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:

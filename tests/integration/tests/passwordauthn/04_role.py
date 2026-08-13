@@ -275,11 +275,11 @@ def test_user_with_roles_reflects_change(
     assert "signoz-admin" in role_names
 
 
-def test_admin_cannot_assign_role_to_self(
+def test_root_user_role_cannot_be_assigned(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
 ):
-    """Verify POST /api/v2/user_roles for the caller's own user is rejected (self-mutation guard)."""
+    """Verify POST /api/v2/user_roles targeting the root user is rejected (root anchor guard)."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v2/users/me"),
@@ -295,14 +295,14 @@ def test_admin_cannot_assign_role_to_self(
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
-    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.status_code == HTTPStatus.NOT_IMPLEMENTED, response.text
 
 
-def test_admin_cannot_remove_own_role(
+def test_root_user_role_cannot_be_removed(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
 ):
-    """Verify DELETE /api/v2/user_roles/{id} for the caller's own assignment is rejected (self-mutation guard)."""
+    """Verify DELETE /api/v2/user_roles/{id} targeting the root user's assignment is rejected (root anchor guard)."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v2/users/me"),
@@ -320,7 +320,7 @@ def test_admin_cannot_remove_own_role(
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
-    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.status_code == HTTPStatus.NOT_IMPLEMENTED, response.text
 
 
 def test_editor_cannot_manage_roles(
