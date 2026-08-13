@@ -10,40 +10,6 @@ import (
 )
 
 func (provider *provider) addUserRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v1/invite", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.CreateInvite), handler.OpenAPIDef{
-		ID:                  "CreateInvite",
-		Tags:                []string{"users"},
-		Summary:             "Create invite",
-		Description:         "This endpoint creates an invite for a user",
-		Request:             new(types.PostableInvite),
-		RequestContentType:  "application/json",
-		Response:            new(types.Invite),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusCreated,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusConflict},
-		Deprecated:          true,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPost).GetError(); err != nil {
-		return err
-	}
-
-	if err := router.Handle("/api/v1/user", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.ListUsersDeprecated), handler.OpenAPIDef{
-		ID:                  "ListUsersDeprecated",
-		Tags:                []string{"users"},
-		Summary:             "List users",
-		Description:         "This endpoint lists all users",
-		Request:             nil,
-		RequestContentType:  "",
-		Response:            make([]*types.DeprecatedUser, 0),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{},
-		Deprecated:          true,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodGet).GetError(); err != nil {
-		return err
-	}
-
 	if err := router.Handle("/api/v2/users", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.ListUsers), handler.OpenAPIDef{
 		ID:                  "ListUsers",
 		Tags:                []string{"users"},
@@ -65,13 +31,13 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		ID:                  "GetMyUserDeprecated",
 		Tags:                []string{"users"},
 		Summary:             "Get my user",
-		Description:         "This endpoint returns the user I belong to",
+		Description:         "This endpoint is deprecated and always fails. Use GET /api/v2/users/me instead.",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            new(types.DeprecatedUser),
-		ResponseContentType: "application/json",
+		Response:            nil,
+		ResponseContentType: "",
 		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{},
+		ErrorStatusCodes:    []int{http.StatusNotImplemented},
 		Deprecated:          true,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{{Name: authtypes.IdentNProviderTokenizer.StringValue()}},
 	})).Methods(http.MethodGet).GetError(); err != nil {
@@ -180,23 +146,6 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/getResetPasswordToken/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.GetResetPasswordTokenDeprecated), handler.OpenAPIDef{
-		ID:                  "GetResetPasswordTokenDeprecated",
-		Tags:                []string{"users"},
-		Summary:             "Get reset password token",
-		Description:         "This endpoint returns the reset password token by id",
-		Request:             nil,
-		RequestContentType:  "",
-		Response:            new(types.ResetPasswordToken),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
-		Deprecated:          true,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodGet).GetError(); err != nil {
-		return err
-	}
-
 	if err := router.Handle("/api/v2/users/{id}/reset_password_tokens", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.GetResetPasswordToken), handler.OpenAPIDef{
 		ID:                  "GetResetPasswordToken",
 		Tags:                []string{"users"},
@@ -243,23 +192,6 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
-	})).Methods(http.MethodPost).GetError(); err != nil {
-		return err
-	}
-
-	if err := router.Handle("/api/v1/resetPassword", handler.New(provider.authzMiddleware.OpenAccess(provider.userHandler.ResetPassword), handler.OpenAPIDef{
-		ID:                  "ResetPasswordDeprecated",
-		Tags:                []string{"users"},
-		Summary:             "Reset password",
-		Description:         "This endpoint resets the password by token",
-		Request:             new(types.PostableResetPassword),
-		RequestContentType:  "application/json",
-		Response:            nil,
-		ResponseContentType: "",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusConflict},
-		Deprecated:          true,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
@@ -330,40 +262,6 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 	})).Methods(http.MethodGet).GetError(); err != nil {
-		return err
-	}
-
-	if err := router.Handle("/api/v2/users/{id}/roles", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.SetRoleByUserID), handler.OpenAPIDef{
-		ID:                  "SetRoleByUserID",
-		Tags:                []string{"users"},
-		Summary:             "Set user roles",
-		Description:         "This endpoint assigns the role to the user roles by user id",
-		Request:             new(types.PostableRole),
-		RequestContentType:  "application/json",
-		Response:            nil,
-		ResponseContentType: "",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusNotFound},
-		Deprecated:          true,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPost).GetError(); err != nil {
-		return err
-	}
-
-	if err := router.Handle("/api/v2/users/{id}/roles/{roleId}", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.RemoveUserRoleByRoleID), handler.OpenAPIDef{
-		ID:                  "RemoveUserRoleByUserIDAndRoleID",
-		Tags:                []string{"users"},
-		Summary:             "Remove a role from user",
-		Description:         "This endpoint removes a role from the user by user id and role id",
-		Request:             nil,
-		RequestContentType:  "",
-		Response:            nil,
-		ResponseContentType: "",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusNotFound},
-		Deprecated:          true,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
 

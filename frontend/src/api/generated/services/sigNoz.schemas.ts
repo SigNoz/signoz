@@ -9934,93 +9934,11 @@ export interface TypesChangePasswordRequestDTO {
 	oldPassword?: string;
 }
 
-export interface TypesDeprecatedUserDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: string;
-	/**
-	 * @type string
-	 */
-	displayName?: string;
-	/**
-	 * @type string
-	 */
-	email?: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type boolean
-	 */
-	isRoot?: boolean;
-	/**
-	 * @type string
-	 */
-	orgId?: string;
-	/**
-	 * @type string
-	 */
-	role?: string;
-	/**
-	 * @type string
-	 */
-	status?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: string;
-}
-
 export interface TypesIdentifiableDTO {
 	/**
 	 * @type string
 	 */
 	id: string;
-}
-
-export interface TypesInviteDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: string;
-	/**
-	 * @type string
-	 */
-	email?: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	inviteLink?: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	orgId?: string;
-	/**
-	 * @type string
-	 */
-	role?: string;
-	/**
-	 * @type string
-	 */
-	token?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: string;
 }
 
 export interface TypesOrganizationDTO {
@@ -10072,25 +9990,6 @@ export interface TypesPostableForgotPasswordDTO {
 	orgId: string;
 }
 
-export interface TypesPostableInviteDTO {
-	/**
-	 * @type string
-	 */
-	email?: string;
-	/**
-	 * @type string
-	 */
-	frontendBaseUrl?: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	role?: string;
-}
-
 export interface TypesPostableResetPasswordDTO {
 	/**
 	 * @type string
@@ -10100,13 +9999,6 @@ export interface TypesPostableResetPasswordDTO {
 	 * @type string
 	 */
 	token?: string;
-}
-
-export interface TypesPostableRoleDTO {
-	/**
-	 * @type string
-	 */
-	name: string;
 }
 
 export interface TypesPostableVerifyResetPasswordTokenDTO {
@@ -10751,27 +10643,8 @@ export type GetFieldsValues200 = {
 	status: string;
 };
 
-export type GetResetPasswordTokenDeprecatedPathParameters = {
-	id: string;
-};
-export type GetResetPasswordTokenDeprecated200 = {
-	data: TypesResetPasswordTokenDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type GetGlobalConfig200 = {
 	data: GlobaltypesConfigDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type CreateInvite201 = {
-	data: TypesInviteDTO;
 	/**
 	 * @type string
 	 */
@@ -11184,25 +11057,6 @@ export type GetTraceAggregationsPathParameters = {
 };
 export type GetTraceAggregations200 = {
 	data: SpantypesGettableTraceAggregationsDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type ListUsersDeprecated200 = {
-	/**
-	 * @type array
-	 */
-	data: TypesDeprecatedUserDTO[];
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type GetMyUserDeprecated200 = {
-	data: TypesDeprecatedUserDTO;
 	/**
 	 * @type string
 	 */
@@ -12403,13 +12257,6 @@ export type GetRolesByUserID200 = {
 	status: string;
 };
 
-export type SetRoleByUserIDPathParameters = {
-	id: string;
-};
-export type RemoveUserRoleByUserIDAndRoleIDPathParameters = {
-	id: string;
-	roleId: string;
-};
 export type GetMyUser200 = {
 	data: AuthtypesUserWithRolesDTO;
 	/**
