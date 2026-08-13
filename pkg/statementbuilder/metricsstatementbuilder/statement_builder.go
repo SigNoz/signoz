@@ -165,7 +165,7 @@ func (b *StatementBuilder) buildPipelineStatement(
 	var filterWarnings []string
 	var err error
 
-	if timeSeriesCTE, timeSeriesCTEArgs, filterWarnings, err = b.buildTimeSeriesCTE(ctx, orgID, tsStart, tsEnd, query, keys, variables, tsTable); err != nil {
+	if timeSeriesCTE, timeSeriesCTEArgs, filterWarnings, err = b.buildTimeSeriesCTE(ctx, orgID, tsStart, tsEnd, cteQuery, keys, variables, tsTable); err != nil {
 		return nil, err
 	}
 
