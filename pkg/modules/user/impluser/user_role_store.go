@@ -7,7 +7,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/uptrace/bun"
 )
 
 type userRoleStore struct {
@@ -17,26 +16,6 @@ type userRoleStore struct {
 
 func NewUserRoleStore(sqlstore sqlstore.SQLStore, settings factory.ProviderSettings) authtypes.UserRoleStore {
 	return &userRoleStore{sqlstore: sqlstore, settings: settings}
-}
-
-func (store *userRoleStore) ListUserRolesByOrgIDAndUserIDs(ctx context.Context, orgID valuer.UUID, userIDs []valuer.UUID) ([]*authtypes.UserRole, error) {
-	userRoles := make([]*authtypes.UserRole, 0)
-
-	err := store.sqlstore.
-		BunDBCtx(ctx).
-		NewSelect().
-		Model(&userRoles).
-		Join("JOIN users").
-		JoinOn("users.id = user_role.user_id").
-		Where("users.org_id = ?", orgID).
-		Where("users.id IN (?)", bun.In(userIDs)).
-		Relation("Role").
-		Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return userRoles, nil
 }
 
 func (store *userRoleStore) GetUserRoleByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*authtypes.UserRole, error) {

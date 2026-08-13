@@ -380,6 +380,19 @@ describe('extractQueryPairs', () => {
 		consoleSpy.mockRestore();
 	});
 
+	it('does not turn a search() term into a pair', () => {
+		// The bare form lexes as a KEY; left in it becomes a phantom filter item.
+		expect(extractQueryPairs("search('err')")).toStrictEqual([]);
+		expect(extractQueryPairs('search(err)')).toStrictEqual([]);
+		expect(extractQueryPairs('search(')).toStrictEqual([]);
+
+		expect(
+			extractQueryPairs("search(err) AND service.name = 'api'").map(
+				(pair) => pair.key,
+			),
+		).toStrictEqual(['service.name']);
+	});
+
 	it('should treat lowercase exists as non-value operator', () => {
 		const input = 'body exists service.name contains "test"';
 		const result = extractQueryPairs(input);
@@ -820,4 +833,18 @@ describe('getQueryContextAtCursor - partial operator', () => {
 		expect(ctx.keyToken).toBe('c');
 		expect(ctx.operatorToken).toBe('k');
 	});
+});
+
+describe('getQueryContextAtCursor - function context', () => {
+	// Each function keyword gets its own lexer token, and every one has to be
+	// registered as a function token for the editor to offer the function list.
+	it.each(['has', 'hasAny', 'hasAll', 'hasToken', 'search'])(
+		'resolves %s to function context',
+		(functionName) => {
+			const ctx = getQueryContextAtCursor(functionName, functionName.length);
+
+			expect(ctx.isInFunction).toBe(true);
+			expect(ctx.isInKey).toBe(false);
+		},
+	);
 });

@@ -4,7 +4,7 @@ go 1.25.7
 
 require (
 	dario.cat/mergo v1.0.2
-	github.com/AfterShip/clickhouse-sql-parser v0.5.5
+	github.com/AfterShip/clickhouse-sql-parser v0.5.6
 	github.com/ClickHouse/clickhouse-go/v2 v2.44.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/SigNoz/clickhouse-go-mock v0.14.0
