@@ -71,16 +71,18 @@ type Config struct {
 type customReceiverConfigs struct {
 	GoogleChat []*GoogleChatReceiverConfig
 	Jira       []*JiraReceiverConfig
+	JSMOps     []*JSMOpsReceiverConfig
 }
 
 func (c customReceiverConfigs) isEmpty() bool {
-	return len(c.GoogleChat) == 0 && len(c.Jira) == 0
+	return len(c.GoogleChat) == 0 && len(c.Jira) == 0 && len(c.JSMOps) == 0
 }
 
 func customConfigsOf(receiver *Receiver) customReceiverConfigs {
 	return customReceiverConfigs{
 		GoogleChat: receiver.GoogleChatConfigs,
 		Jira:       receiver.JiraConfigs,
+		JSMOps:     receiver.JSMOpsConfigs,
 	}
 }
 
@@ -190,6 +192,7 @@ func extendedReceivers(c *config.Config, customConfigs map[string]customReceiver
 			Receiver:          &base,
 			GoogleChatConfigs: custom.GoogleChat,
 			JiraConfigs:       custom.Jira,
+			JSMOpsConfigs:     custom.JSMOps,
 		}
 	}
 
@@ -366,6 +369,7 @@ func (c *Config) GetReceiver(name string) (*Receiver, error) {
 				Receiver:          &base,
 				GoogleChatConfigs: custom.GoogleChat,
 				JiraConfigs:       custom.Jira,
+				JSMOpsConfigs:     custom.JSMOps,
 			}, nil
 		}
 	}
@@ -446,6 +450,11 @@ func (c *Config) applyNativeDefaults() {
 			}
 		}
 		for _, jc := range custom.Jira {
+			if jc.HTTPConfig == nil {
+				jc.HTTPConfig = httpDefault
+			}
+		}
+		for _, jc := range custom.JSMOps {
 			if jc.HTTPConfig == nil {
 				jc.HTTPConfig = httpDefault
 			}

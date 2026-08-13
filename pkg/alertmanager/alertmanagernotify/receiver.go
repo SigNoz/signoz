@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/email"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/googlechat"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/jira"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/jsmops"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/msteamsv2"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/opsgenie"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/pagerduty"
@@ -28,6 +29,7 @@ var customNotifierIntegrations = []string{
 	msteamsv2.Integration,
 	googlechat.Integration,
 	jira.Integration,
+	jsmops.Integration,
 }
 
 func NewReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger, templater alertmanagertypes.Templater) ([]notify.Integration, error) {
@@ -86,6 +88,11 @@ func NewReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Temp
 	for i, c := range nc.JiraConfigs {
 		add(jira.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) {
 			return jira.New(c, tmpl, l, templater)
+		})
+	}
+	for i, c := range nc.JSMOpsConfigs {
+		add(jsmops.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) {
+			return jsmops.New(c, tmpl, l, templater)
 		})
 	}
 

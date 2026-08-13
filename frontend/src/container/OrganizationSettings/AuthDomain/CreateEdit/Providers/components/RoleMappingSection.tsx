@@ -74,6 +74,7 @@ function RoleMappingSection({
 							role="button"
 							aria-expanded={expanded}
 							aria-controls="role-mapping-content"
+							data-testid="role-mapping-header"
 						>
 							{!expanded ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
 							<div className="role-mapping-section__collapse-header-text">
@@ -138,6 +139,7 @@ function RoleMappingSection({
 							>
 								<Checkbox
 									id="use-role-attribute"
+									testId="role-mapping-use-role-attribute"
 									onChange={(checked: boolean): void => {
 										form.setFieldValue([...fieldNamePrefix, 'useRoleAttribute'], checked);
 									}}
@@ -166,13 +168,20 @@ function RoleMappingSection({
 									{(fields, { add, remove }): JSX.Element => (
 										<div className="role-mapping-section__items">
 											{fields.map((field) => (
-												<div key={field.key} className="role-mapping-section__row">
+												<div
+													key={field.key}
+													className="role-mapping-section__row"
+													data-testid="role-mapping-row"
+												>
 													<Form.Item
 														name={[field.name, 'groupName']}
 														className="role-mapping-section__field role-mapping-section__field--group"
 														rules={[{ required: true, message: 'Group name is required' }]}
 													>
-														<Input placeholder="IDP Group Name" />
+														<Input
+															placeholder="IDP Group Name"
+															testId="role-mapping-group-name"
+														/>
 													</Form.Item>
 
 													<Form.Item
@@ -199,6 +208,7 @@ function RoleMappingSection({
 														className="role-mapping-section__remove-btn"
 														onClick={(): void => remove(field.name)}
 														aria-label="Remove mapping"
+														testId="role-mapping-remove"
 													>
 														<Trash2 size={12} />
 													</Button>
@@ -212,6 +222,7 @@ function RoleMappingSection({
 													add({ groupName: '', role: SIGNOZ_VIEWER_ROLE })
 												}
 												prefix={<Plus size={14} />}
+												testId="role-mapping-add"
 											>
 												Add Group Mapping
 											</Button>
