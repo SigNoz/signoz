@@ -17,7 +17,7 @@ export const columns: TableColumnDef<TraceListRow>[] = [
 		header: 'Root Service Name',
 		accessorFn: (row): unknown => row?.['service.name'],
 		enableRemove: false,
-		width: { min: 145 },
+		width: { min: 200 },
 		cell: ({ value }): ReactElement => (
 			<TanStackTable.Text>{formatCellValue(value)}</TanStackTable.Text>
 		),
@@ -27,7 +27,7 @@ export const columns: TableColumnDef<TraceListRow>[] = [
 		header: 'Root Operation Name',
 		accessorFn: (row): unknown => row?.name,
 		enableRemove: false,
-		width: { min: 145 },
+		width: { min: 260 },
 		cell: ({ value }): ReactElement => (
 			<TanStackTable.Text>{formatCellValue(value)}</TanStackTable.Text>
 		),
@@ -37,7 +37,7 @@ export const columns: TableColumnDef<TraceListRow>[] = [
 		header: 'Root Duration (in ms)',
 		accessorFn: (row): unknown => row?.duration_nano,
 		enableRemove: false,
-		width: { min: 145 },
+		width: { min: 170 },
 		cell: ({ value }): ReactElement => (
 			<TanStackTable.Text>
 				{value === undefined || value === null
@@ -51,7 +51,7 @@ export const columns: TableColumnDef<TraceListRow>[] = [
 		header: 'No of Spans',
 		accessorFn: (row): unknown => row?.span_count,
 		enableRemove: false,
-		width: { min: 145 },
+		width: { min: 120 },
 		cell: ({ value }): ReactElement => (
 			<TanStackTable.Text>{formatCellValue(value)}</TanStackTable.Text>
 		),
@@ -61,7 +61,7 @@ export const columns: TableColumnDef<TraceListRow>[] = [
 		header: 'TraceID',
 		accessorFn: (row): unknown => row?.trace_id,
 		enableRemove: false,
-		width: { min: 145 },
+		width: { min: 290 },
 		cell: ({ value }): ReactElement => {
 			const traceID = formatCellValue(value);
 			if (!traceID) {

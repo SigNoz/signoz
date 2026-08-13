@@ -284,6 +284,7 @@ function ListView({
 				<TanStackTable<TraceListRow>
 					data={transformedQueryTableData}
 					columns={columns}
+					className={styles.table}
 					columnStorageKey={LOCALSTORAGE.AI_OBSERVABILITY_LIST_COLUMNS}
 					respectColumnOrder={false}
 					onColumnOrderChange={handleColumnOrderChange}
@@ -292,8 +293,6 @@ function ListView({
 					getRowKey={getTraceRowKey}
 					onRowClick={handleRowClick}
 					onRowClickNewTab={handleRowClickNewTab}
-					// Rows are already page-sized by the query; virtualizing would need a
-					// fixed-height container this page doesn't provide.
 					disableVirtualScroll
 					testId="ai-observability-list-view-table"
 				/>

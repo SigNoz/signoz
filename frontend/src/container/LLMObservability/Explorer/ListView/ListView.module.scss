@@ -4,6 +4,12 @@
 	--typography-color: var(--l1-foreground);
 }
 
+// Offset clears the toolbar, query builder, and controls row above the table.
+.table {
+	max-height: calc(100vh - 360px);
+	overflow-y: auto;
+}
+
 .controls {
 	display: flex;
 	justify-content: flex-end;
