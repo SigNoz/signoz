@@ -42,9 +42,11 @@ type telemetryFieldKeyOutput struct {
 	FieldDataType string `json:"fieldDataType"`
 }
 
-// legacyTypeToFieldContext holds the legacy AttributeKeyType values with no matching
-// telemetrytypes.FieldContext alias.
+// legacyTypeToFieldContext holds the legacy AttributeKeyType values whose current
+// spelling differs. "tag" resolves to attribute through a telemetrytypes alias kept
+// only for old DB entries, so store the current spelling rather than rely on it.
 var legacyTypeToFieldContext = map[string]string{
+	"tag":             "attribute",
 	"spanSearchScope": "span",
 }
 
