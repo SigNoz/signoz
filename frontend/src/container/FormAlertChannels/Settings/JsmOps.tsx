@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Collapse, Form, Input } from 'antd';
+import { Collapse, Form, Input, Select } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 
 import { JsmOpsChannel } from '../../CreateAlertChannels/config';
@@ -30,10 +30,12 @@ function JsmOpsSettings({ setSelectedConfig }: JsmOpsProps): JSX.Element {
 				label={t('field_jsmops_tags')}
 				help={t('help_jsmops_tags')}
 			>
-				<Input
+				<Select
+					mode="tags"
+					open={false}
 					placeholder={t('placeholder_jsmops_tags')}
-					onChange={(event): void => update({ tags: event.target.value })}
-					data-testid="jsmops-tags-textbox"
+					onChange={(value): void => update({ tags: value as string[] })}
+					data-testid="jsmops-tags-select"
 				/>
 			</Form.Item>
 		</>

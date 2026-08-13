@@ -134,6 +134,13 @@ function ChannelsEdit(): JSX.Element {
 		if (value && 'jsmops_configs' in value) {
 			const [jsmopsConfig] = value.jsmops_configs;
 			channel = jsmopsConfig;
+			// backend stores tags as a comma-separated string; the form uses chips
+			channel.tags = jsmopsConfig.tags
+				? String(jsmopsConfig.tags)
+						.split(',')
+						.map((tag: string) => tag.trim())
+						.filter(Boolean)
+				: [];
 			return {
 				type: ChannelType.JsmOps,
 				channel,

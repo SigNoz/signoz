@@ -731,7 +731,7 @@ describe('Create Alert Channel', () => {
 							message: JsmOpsInitialConfig.message,
 							description: JsmOpsInitialConfig.description,
 							priority: JsmOpsInitialConfig.priority,
-							tags: JsmOpsInitialConfig.tags,
+							tags: JsmOpsInitialConfig.tags?.join(','),
 						},
 					],
 				});

@@ -169,6 +169,6 @@ export interface JsmOpsChannel extends Channel {
 	description?: string;
 	// priority template, resolves to P1-P5
 	priority?: string;
-	// comma-separated tags
-	tags?: string;
+	// tags, joined to a comma-separated string for the backend
+	tags?: string[];
 }

@@ -158,8 +158,9 @@ export const prepareJsmOpsRequest = (
 	if (config.priority) {
 		jsmops.priority = config.priority;
 	}
-	if (config.tags) {
-		jsmops.tags = config.tags;
+	if (config.tags?.length) {
+		// the backend takes a comma-separated string and splits it back
+		jsmops.tags = config.tags.join(',');
 	}
 
 	return {
