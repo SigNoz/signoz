@@ -14,6 +14,7 @@ import RightToolbarActions from 'container/QueryBuilder/components/ToolbarAction
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
 import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
+import { useGetExportToDashboardLink } from 'hooks/dashboard/useGetExportToDashboardLink';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -21,7 +22,6 @@ import { Filter } from '@signozhq/icons';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import { v4 as uuid } from 'uuid';
 
 import { MeterExplorerEventKeys, MeterExplorerEvents } from '../events';
@@ -38,6 +38,7 @@ function Explorer(): JSX.Element {
 		currentQuery,
 	} = useQueryBuilder();
 	const { safeNavigate } = useSafeNavigate();
+	const getExportToDashboardLink = useGetExportToDashboardLink();
 	const queryClient = useQueryClient();
 	const [isLoadingQueries, setIsLoadingQueries] = useState(false);
 	const [isCancelled, setIsCancelled] = useState(false);
@@ -91,16 +92,18 @@ function Explorer(): JSX.Element {
 
 			const widgetId = uuid();
 
-			const dashboardEditView = generateExportToDashboardLink({
+			const dashboardEditView = getExportToDashboardLink({
 				query: queryToExport || exportDefaultQuery,
 				panelType: PANEL_TYPES.BAR,
 				dashboardId: dashboard.id,
 				widgetId,
 			});
 
-			safeNavigate(dashboardEditView);
+			if (dashboardEditView) {
+				safeNavigate(dashboardEditView);
+			}
 		},
-		[exportDefaultQuery, safeNavigate],
+		[exportDefaultQuery, getExportToDashboardLink, safeNavigate],
 	);
 
 	const splitedQueries = useMemo(

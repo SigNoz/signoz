@@ -13,8 +13,7 @@ import {
 } from 'tests/test-utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
-import { v4 } from 'uuid';
+import { buildExportPanelLink } from 'pages/DashboardPageV2/DashboardContainer/PanelEditor/newPanelRoute';
 
 import ExplorerOptionWrapper from '../ExplorerOptionWrapper';
 import { getExplorerToolBarVisibility } from '../utils';
@@ -291,7 +290,7 @@ describe('ExplorerOptionWrapper', () => {
 			});
 		});
 
-		it('should test actual handleExport function with generateExportToDashboardLink and verify useUpdateDashboard is NOT called', async () => {
+		it('should test actual handleExport function with buildExportPanelLink and verify useUpdateDashboard is NOT called', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 			// Mock the safeNavigate function
@@ -303,7 +302,6 @@ describe('ExplorerOptionWrapper', () => {
 			>;
 
 			const panelTypeParam = PANEL_TYPES.TIME_SERIES;
-			const widgetId = v4();
 			const query = mockQuery;
 
 			// Create a real handleExport function similar to LogsExplorerViews
@@ -313,12 +311,11 @@ describe('ExplorerOptionWrapper', () => {
 					return;
 				}
 
-				// Call the actual generateExportToDashboardLink function (not mocked)
-				const dashboardEditView = generateExportToDashboardLink({
+				// Call the actual buildExportPanelLink function (not mocked)
+				const dashboardEditView = buildExportPanelLink({
 					query,
 					panelType: panelTypeParam,
 					dashboardId: dashboard.id,
-					widgetId,
 				});
 
 				// Simulate navigation
@@ -380,8 +377,8 @@ describe('ExplorerOptionWrapper', () => {
 			await waitFor(() => {
 				expect(mockSafeNavigate).toHaveBeenCalledTimes(1);
 				expect(mockSafeNavigate).toHaveBeenCalledWith(
-					`/dashboard/${TEST_DASHBOARD_ID}/new?graphType=${panelTypeParam}&widgetId=${widgetId}&compositeQuery=${encodeURIComponent(
-						JSON.stringify(query),
+					`/dashboard/${TEST_DASHBOARD_ID}/panel/new?panelKind=signoz%2FTimeSeriesPanel&compositeQuery=${encodeURIComponent(
+						encodeURIComponent(JSON.stringify(query)),
 					)}`,
 				);
 			});
