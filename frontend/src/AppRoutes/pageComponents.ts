@@ -102,11 +102,6 @@ export const DashboardPage = Loadable(
 	() => import(/* webpackChunkName: "DashboardPage" */ 'pages/DashboardPageV2'),
 );
 
-export const DashboardWidget = Loadable(
-	() =>
-		import(/* webpackChunkName: "DashboardWidgetPage" */ 'pages/DashboardWidget'),
-);
-
 export const DashboardPanelEditorPage = Loadable(
 	() =>
 		import(
