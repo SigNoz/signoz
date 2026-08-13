@@ -250,13 +250,17 @@ func TestStorableSavedView_ToSavedView(t *testing.T) {
 	})
 
 	t.Run("nil selectedFields normalizes to an empty slice, not nil", func(t *testing.T) {
-		storable := storableWithSpec(SavedViewSpec{
-			DisplayName:    "My View",
-			PanelType:      PanelTypeGraph,
-			RequestType:    qbtypes.RequestTypeTimeSeries,
-			Queries:        validQueries(),
-			SelectedFields: nil,
-		})
+		storable := &StorableSavedView{
+			Data: SavedViewData{
+				SchemaVersion: SavedViewSchemaVersion.StringValue(),
+				Spec: SavedViewSpec{
+					DisplayName:    "My View",
+					PanelType:      PanelTypeGraph,
+					Queries:        validQueries(),
+					SelectedFields: nil,
+				},
+			},
+		}
 
 		view := storable.ToSavedView()
 
@@ -265,12 +269,16 @@ func TestStorableSavedView_ToSavedView(t *testing.T) {
 	})
 
 	t.Run("nil queries normalizes to an empty slice, not nil", func(t *testing.T) {
-		storable := storableWithSpec(SavedViewSpec{
-			DisplayName: "My View",
-			PanelType:   PanelTypeGraph,
-			RequestType: qbtypes.RequestTypeTimeSeries,
-			Queries:     nil,
-		})
+		storable := &StorableSavedView{
+			Data: SavedViewData{
+				SchemaVersion: SavedViewSchemaVersion.StringValue(),
+				Spec: SavedViewSpec{
+					DisplayName: "My View",
+					PanelType:   PanelTypeGraph,
+					Queries:     nil,
+				},
+			},
+		}
 
 		view := storable.ToSavedView()
 
@@ -279,42 +287,8 @@ func TestStorableSavedView_ToSavedView(t *testing.T) {
 	})
 }
 
-func storableWithSpec(spec SavedViewSpec) *StorableSavedView {
-	return NewStorableSavedView(&SavedView{SchemaVersion: SavedViewSchemaVersion, Spec: spec})
-}
-
-// Stored data written by older builds can fail the strict spec decode. Such a
-// view must fail on its own rather than being served with a silently wrong spec.
-func TestRawStorableSavedView_ToSavedView_UndecodableData(t *testing.T) {
-	specWithQueries := func(queries string) string {
-		return `{"schemaVersion":"v2","spec":{"displayName":"My View","panelType":"list","requestType":"raw","queries":` + queries + `}}`
-	}
-
-	cases := []struct {
-		name string
-		data string
-	}{
-		{name: "unknown field in a builder spec", data: specWithQueries(`[{"type":"builder_query","spec":{"signal":"logs","sinceRemovedField":1}}]`)},
-		{name: "unknown query type", data: specWithQueries(`[{"type":"builder_query_v1","spec":{}}]`)},
-		{name: "v1-era compositeQuery shape", data: specWithQueries(`[{"queryName":"A","dataSource":"logs"}]`)},
-		{name: "requestType no longer accepted", data: `{"schemaVersion":"v2","spec":{"displayName":"My View","panelType":"list","requestType":""}}`},
-		{name: "data that is not a view", data: `not json at all`},
-	}
-
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			storable := &RawStorableSavedView{Name: "my-view", Source: SourceLogs, Data: c.data}
-
-			view, err := storable.ToSavedView()
-
-			require.Error(t, err)
-			assert.Nil(t, view)
-		})
-	}
-}
-
 func TestNewStatsFromStorableSavedViews(t *testing.T) {
-	storables := []*RawStorableSavedView{
+	storables := []*StorableSavedView{
 		{Source: SourceLogs},
 		{Source: SourceLogs},
 		{Source: SourceTraces},
@@ -328,3 +302,17 @@ func TestNewStatsFromStorableSavedViews(t *testing.T) {
 	assert.NotContains(t, stats, "savedview.source.metrics.count")
 }
 
+func TestNewSavedViewsFromStorableSavedViews(t *testing.T) {
+	storables := []*StorableSavedView{
+		{Name: "a", Source: SourceLogs, Data: SavedViewData{SchemaVersion: SavedViewSchemaVersion.StringValue(), Spec: SavedViewSpec{DisplayName: "a", PanelType: PanelTypeGraph, Queries: validQueries()}}},
+		{Name: "b", Source: SourceTraces, Data: SavedViewData{SchemaVersion: SavedViewSchemaVersion.StringValue(), Spec: SavedViewSpec{DisplayName: "b", PanelType: PanelTypeTable, Queries: validQueries()}}},
+	}
+
+	views := NewSavedViewsFromStorableSavedViews(storables)
+
+	require.Len(t, views, 2)
+	assert.Equal(t, "a", views[0].Name)
+	assert.Equal(t, SourceLogs, views[0].Source)
+	assert.Equal(t, "b", views[1].Name)
+	assert.Equal(t, SourceTraces, views[1].Source)
+}

@@ -79,8 +79,8 @@ func (store *store) Delete(ctx context.Context, orgID string, id valuer.UUID) er
 	return nil
 }
 
-func (store *store) List(ctx context.Context, orgID string, source savedviewtypes.Source, name string) ([]*savedviewtypes.RawStorableSavedView, error) {
-	var storables []*savedviewtypes.RawStorableSavedView
+func (store *store) List(ctx context.Context, orgID string, source savedviewtypes.Source, name string) ([]*savedviewtypes.StorableSavedView, error) {
+	var storables []*savedviewtypes.StorableSavedView
 	q := store.sqlstore.BunDB().NewSelect().Model(&storables).
 		Where("org_id = ?", orgID).
 		Where("name LIKE ?", "%"+name+"%")

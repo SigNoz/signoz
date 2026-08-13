@@ -27,21 +27,8 @@ func (t *StoreTest) Store() savedviewtypes.Store { return t.store }
 // Mock returns the sqlmock handle for setting query expectations.
 func (t *StoreTest) Mock() sqlmock.Sqlmock { return t.mock }
 
-// Row is a saved view as stored. Data overrides the data column derived from
-// View, so tests can inject stored data that no longer decodes.
-type Row struct {
-	View *savedviewtypes.SavedView
-	Data string
-}
-
-func savedViewRow(row Row) []driver.Value {
-	view := row.View
-	data := row.Data
-	if data == "" {
-		marshalled, _ := json.Marshal(savedviewtypes.NewStorableSavedView(view).Data)
-		data = string(marshalled)
-	}
-
+func savedViewRow(view *savedviewtypes.SavedView) []driver.Value {
+	data, _ := json.Marshal(savedviewtypes.NewStorableSavedView(view).Data)
 	return []driver.Value{
 		view.ID.StringValue(),
 		view.CreatedAt,
@@ -51,7 +38,7 @@ func savedViewRow(row Row) []driver.Value {
 		view.OrgID,
 		view.Name,
 		view.Source.StringValue(),
-		data,
+		string(data),
 	}
 }
 
@@ -69,19 +56,9 @@ func (t *StoreTest) ExpectCreateError(err error) {
 // ExpectGet sets up the SQL expectation for a Get call. Pass view = nil to
 // simulate a not-found row.
 func (t *StoreTest) ExpectGet(orgID string, id valuer.UUID, view *savedviewtypes.SavedView) {
-	if view == nil {
-		t.ExpectGetRows(orgID, id)
-		return
-	}
-
-	t.ExpectGetRows(orgID, id, Row{View: view})
-}
-
-// ExpectGetRows is ExpectGet with control over the stored data column.
-func (t *StoreTest) ExpectGetRows(orgID string, id valuer.UUID, returned ...Row) {
 	rows := sqlmock.NewRows(savedViewColumns)
-	for _, row := range returned {
-		rows.AddRow(savedViewRow(row)...)
+	if view != nil {
+		rows.AddRow(savedViewRow(view)...)
 	}
 
 	t.mock.ExpectQuery(`SELECT (.+) FROM "saved_view".+WHERE \(org_id = '` + regexp.QuoteMeta(orgID) + `' AND id = '` + regexp.QuoteMeta(id.StringValue()) + `'\)`).
@@ -104,19 +81,9 @@ func (t *StoreTest) ExpectDelete(orgID string, id valuer.UUID, rowsAffected int6
 
 // ExpectList sets up the SQL expectation for a List call scoped to orgID.
 func (t *StoreTest) ExpectList(orgID string, views []*savedviewtypes.SavedView) {
-	returned := make([]Row, len(views))
-	for idx, view := range views {
-		returned[idx] = Row{View: view}
-	}
-
-	t.ExpectListRows(orgID, returned...)
-}
-
-// ExpectListRows is ExpectList with control over each row's stored data column.
-func (t *StoreTest) ExpectListRows(orgID string, returned ...Row) {
 	rows := sqlmock.NewRows(savedViewColumns)
-	for _, row := range returned {
-		rows.AddRow(savedViewRow(row)...)
+	for _, view := range views {
+		rows.AddRow(savedViewRow(view)...)
 	}
 
 	t.mock.ExpectQuery(`SELECT (.+) FROM "saved_view".+WHERE \(org_id = '` + regexp.QuoteMeta(orgID) + `'\)`).WillReturnRows(rows)

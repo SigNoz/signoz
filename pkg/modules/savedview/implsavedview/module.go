@@ -2,10 +2,8 @@ package implsavedview
 
 import (
 	"context"
-	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/savedviewtypes"
@@ -13,15 +11,11 @@ import (
 )
 
 type module struct {
-	store    savedviewtypes.Store
-	settings factory.ScopedProviderSettings
+	store savedviewtypes.Store
 }
 
-func NewModule(store savedviewtypes.Store, settings factory.ProviderSettings) savedview.Module {
-	return &module{
-		store:    store,
-		settings: factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"),
-	}
+func NewModule(store savedviewtypes.Store) savedview.Module {
+	return &module{store: store}
 }
 
 func (module *module) GetViewsForFilters(ctx context.Context, orgID string, source savedviewtypes.Source, name string) ([]*savedviewtypes.SavedView, error) {
@@ -29,18 +23,7 @@ func (module *module) GetViewsForFilters(ctx context.Context, orgID string, sour
 	if err != nil {
 		return nil, err
 	}
-
-	views := make([]*savedviewtypes.SavedView, 0, len(storables))
-	for _, storable := range storables {
-		view, err := storable.ToSavedView()
-		if err != nil {
-			module.settings.Logger().WarnContext(ctx, "saved view data did not decode", slog.String("saved_view_id", storable.ID.StringValue()), slog.Any("error", err))
-			continue
-		}
-		views = append(views, view)
-	}
-
-	return views, nil
+	return savedviewtypes.NewSavedViewsFromStorableSavedViews(storables), nil
 }
 
 func (module *module) CreateView(ctx context.Context, orgID string, view savedviewtypes.PostableSavedView) (valuer.UUID, error) {

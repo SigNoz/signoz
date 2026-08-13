@@ -11,5 +11,5 @@ type Store interface {
 	Get(ctx context.Context, orgID string, id valuer.UUID) (*StorableSavedView, error)
 	Update(ctx context.Context, view *StorableSavedView) error
 	Delete(ctx context.Context, orgID string, id valuer.UUID) error
-	List(ctx context.Context, orgID string, source Source, name string) ([]*RawStorableSavedView, error)
+	List(ctx context.Context, orgID string, source Source, name string) ([]*StorableSavedView, error)
 }
