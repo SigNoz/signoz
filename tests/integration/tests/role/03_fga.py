@@ -13,7 +13,7 @@ from fixtures.auth import (
     create_active_user,
     find_user_by_email,
 )
-from fixtures.role import transaction_group
+from fixtures.role import find_role_by_name, transaction_group
 
 _ACTOR_ROLE_NAME = "role-fga-actor"
 _ACTOR_USER_EMAIL = "customrole+rolefga@integration.test"
@@ -57,7 +57,7 @@ def test_setup_actor_and_targets(
         signoz,
         admin_token,
         email=_ACTOR_USER_EMAIL,
-        role="VIEWER",
+        role="signoz-viewer",
         password=_ACTOR_USER_PASSWORD,
         name="role-fga-test-user",
     )
@@ -68,12 +68,11 @@ def test_read_scoped_to_granted_role(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    find_role_id: Callable[[str, str], str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     token = get_token(_ACTOR_USER_EMAIL, _ACTOR_USER_PASSWORD)
-    a_id = find_role_id(admin_token, _TARGET_A)
-    b_id = find_role_id(admin_token, _TARGET_B)
+    a_id = find_role_by_name(signoz, admin_token, _TARGET_A)
+    b_id = find_role_by_name(signoz, admin_token, _TARGET_B)
 
     resp = requests.get(signoz.self.host_configs["8080"].get(f"/api/v1/roles/{a_id}"), headers={"Authorization": f"Bearer {token}"}, timeout=5)
     assert resp.status_code == HTTPStatus.OK, f"read granted role: {resp.text}"
@@ -101,11 +100,10 @@ def test_create_is_collection_scoped(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    find_role_id: Callable[[str, str], str],
     create_role: Callable[..., str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    actor_id = find_role_id(admin_token, _ACTOR_ROLE_NAME)
+    actor_id = find_role_by_name(signoz, admin_token, _ACTOR_ROLE_NAME)
     token = get_token(_ACTOR_USER_EMAIL, _ACTOR_USER_PASSWORD)
 
     resp = requests.post(
@@ -138,12 +136,11 @@ def test_update_scoped_to_granted_role(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    find_role_id: Callable[[str, str], str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    actor_id = find_role_id(admin_token, _ACTOR_ROLE_NAME)
-    a_id = find_role_id(admin_token, _TARGET_A)
-    b_id = find_role_id(admin_token, _TARGET_B)
+    actor_id = find_role_by_name(signoz, admin_token, _ACTOR_ROLE_NAME)
+    a_id = find_role_by_name(signoz, admin_token, _TARGET_A)
+    b_id = find_role_by_name(signoz, admin_token, _TARGET_B)
 
     resp = requests.put(
         signoz.self.host_configs["8080"].get(f"/api/v1/roles/{actor_id}"),
@@ -184,12 +181,11 @@ def test_delete_scoped_to_granted_role(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    find_role_id: Callable[[str, str], str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    actor_id = find_role_id(admin_token, _ACTOR_ROLE_NAME)
-    a_id = find_role_id(admin_token, _TARGET_A)
-    b_id = find_role_id(admin_token, _TARGET_B)
+    actor_id = find_role_by_name(signoz, admin_token, _ACTOR_ROLE_NAME)
+    a_id = find_role_by_name(signoz, admin_token, _TARGET_A)
+    b_id = find_role_by_name(signoz, admin_token, _TARGET_B)
 
     resp = requests.put(
         signoz.self.host_configs["8080"].get(f"/api/v1/roles/{actor_id}"),
@@ -221,11 +217,10 @@ def test_revoke_read(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    find_role_id: Callable[[str, str], str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    actor_id = find_role_id(admin_token, _ACTOR_ROLE_NAME)
-    b_id = find_role_id(admin_token, _TARGET_B)
+    actor_id = find_role_by_name(signoz, admin_token, _ACTOR_ROLE_NAME)
+    b_id = find_role_by_name(signoz, admin_token, _TARGET_B)
     token = get_token(_ACTOR_USER_EMAIL, _ACTOR_USER_PASSWORD)
 
     resp = requests.put(
@@ -261,7 +256,6 @@ def test_role_fga_cleanup(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    find_role_id: Callable[[str, str], str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     user = find_user_by_email(signoz, admin_token, _ACTOR_USER_EMAIL)
@@ -279,7 +273,7 @@ def test_role_fga_cleanup(
 
     for name in (_ACTOR_ROLE_NAME, _TARGET_B, _CREATED_ROLE):
         resp = requests.delete(
-            signoz.self.host_configs["8080"].get(f"/api/v1/roles/{find_role_id(admin_token, name)}"),
+            signoz.self.host_configs["8080"].get(f"/api/v1/roles/{find_role_by_name(signoz, admin_token, name)}"),
             headers={"Authorization": f"Bearer {admin_token}"},
             timeout=5,
         )

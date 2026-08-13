@@ -2818,6 +2818,7 @@ export enum CloudintegrationtypesServiceIDDTO {
 	computeengine = 'computeengine',
 	gke = 'gke',
 	cloudstorage = 'cloudstorage',
+	cloudsql_mysql = 'cloudsql_mysql',
 }
 export type CloudintegrationtypesCloudIntegrationServiceDTOAnyOf = {
 	/**
@@ -4301,6 +4302,18 @@ export interface Querybuildertypesv5QueryEnvelopeBuilderDTO {
 	type: Querybuildertypesv5QueryEnvelopeBuilderDTOType;
 }
 
+export enum Querybuildertypesv5QueryEnvelopeBuilderAIDTOType {
+	builder_ai_query = 'builder_ai_query',
+}
+export interface Querybuildertypesv5QueryEnvelopeBuilderAIDTO {
+	spec?: Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO;
+	/**
+	 * @type string
+	 * @enum builder_ai_query
+	 */
+	type: Querybuildertypesv5QueryEnvelopeBuilderAIDTOType;
+}
+
 export interface Querybuildertypesv5QueryBuilderFormulaDTO {
 	/**
 	 * @type boolean
@@ -4484,6 +4497,7 @@ export interface Querybuildertypesv5QueryEnvelopeClickHouseSQLDTO {
 
 export type Querybuildertypesv5QueryEnvelopeDTO =
 	| Querybuildertypesv5QueryEnvelopeBuilderDTO
+	| Querybuildertypesv5QueryEnvelopeBuilderAIDTO
 	| Querybuildertypesv5QueryEnvelopeFormulaDTO
 	| Querybuildertypesv5QueryEnvelopeTraceOperatorDTO
 	| Querybuildertypesv5QueryEnvelopePromQLDTO
@@ -5635,6 +5649,47 @@ export interface InframonitoringtypesChecksDTO {
 	type: InframonitoringtypesCheckTypeDTO;
 }
 
+export enum InframonitoringtypesNodeConditionDTO {
+	ready = 'ready',
+	not_ready = 'not_ready',
+	no_data = 'no_data',
+}
+export enum InframonitoringtypesPodStatusDTO {
+	pending = 'pending',
+	running = 'running',
+	failed = 'failed',
+	unknown = 'unknown',
+	crashloopbackoff = 'crashloopbackoff',
+	imagepullbackoff = 'imagepullbackoff',
+	errimagepull = 'errimagepull',
+	createcontainerconfigerror = 'createcontainerconfigerror',
+	containercreating = 'containercreating',
+	oomkilled = 'oomkilled',
+	completed = 'completed',
+	error = 'error',
+	containercannotrun = 'containercannotrun',
+	evicted = 'evicted',
+	nodeaffinity = 'nodeaffinity',
+	nodelost = 'nodelost',
+	shutdown = 'shutdown',
+	unexpectedadmissionerror = 'unexpectedadmissionerror',
+	no_data = 'no_data',
+}
+export interface InframonitoringtypesClusterFilterDTO {
+	/**
+	 * @type string
+	 */
+	expression?: string;
+	/**
+	 * @type array,null
+	 */
+	filterByNodeReadiness?: InframonitoringtypesNodeConditionDTO[] | null;
+	/**
+	 * @type array,null
+	 */
+	filterByPodStatus?: InframonitoringtypesPodStatusDTO[] | null;
+}
+
 export type InframonitoringtypesClusterRecordDTOCounts = {
 	/**
 	 * @type integer
@@ -5910,21 +5965,6 @@ export interface InframonitoringtypesContainerCountsByStatusDTO {
 	waiting: number;
 }
 
-export enum InframonitoringtypesContainerReadyDTO {
-	ready = 'ready',
-	not_ready = 'not_ready',
-	no_data = 'no_data',
-}
-export type InframonitoringtypesContainerRecordDTOMetaAnyOf = {
-	[key: string]: string;
-};
-
-/**
- * @nullable
- */
-export type InframonitoringtypesContainerRecordDTOMeta =
-	InframonitoringtypesContainerRecordDTOMetaAnyOf | null;
-
 export enum InframonitoringtypesContainerStatusDTO {
 	running = 'running',
 	waiting = 'waiting',
@@ -5941,6 +5981,32 @@ export enum InframonitoringtypesContainerStatusDTO {
 	unknown = 'unknown',
 	no_data = 'no_data',
 }
+export interface InframonitoringtypesContainerFilterDTO {
+	/**
+	 * @type string
+	 */
+	expression?: string;
+	/**
+	 * @type array,null
+	 */
+	filterByContainerStatus?: InframonitoringtypesContainerStatusDTO[] | null;
+}
+
+export enum InframonitoringtypesContainerReadyDTO {
+	ready = 'ready',
+	not_ready = 'not_ready',
+	no_data = 'no_data',
+}
+export type InframonitoringtypesContainerRecordDTOMetaAnyOf = {
+	[key: string]: string;
+};
+
+/**
+ * @nullable
+ */
+export type InframonitoringtypesContainerRecordDTOMeta =
+	InframonitoringtypesContainerRecordDTOMetaAnyOf | null;
+
 export interface InframonitoringtypesContainerRecordDTO {
 	containerCountsByReady: InframonitoringtypesContainerCountsByReadyDTO;
 	containerCountsByStatus: InframonitoringtypesContainerCountsByStatusDTO;
@@ -6010,6 +6076,17 @@ export interface InframonitoringtypesContainersDTO {
 	total: number;
 	type: InframonitoringtypesResponseTypeDTO;
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
+export interface InframonitoringtypesDaemonSetFilterDTO {
+	/**
+	 * @type string
+	 */
+	expression?: string;
+	/**
+	 * @type array,null
+	 */
+	filterByPodStatus?: InframonitoringtypesPodStatusDTO[] | null;
 }
 
 export type InframonitoringtypesDaemonSetRecordDTOMetaAnyOf = {
@@ -6095,6 +6172,17 @@ export interface InframonitoringtypesDaemonSetsDTO {
 	total: number;
 	type: InframonitoringtypesResponseTypeDTO;
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
+export interface InframonitoringtypesDeploymentFilterDTO {
+	/**
+	 * @type string
+	 */
+	expression?: string;
+	/**
+	 * @type array,null
+	 */
+	filterByPodStatus?: InframonitoringtypesPodStatusDTO[] | null;
 }
 
 export type InframonitoringtypesDeploymentRecordDTOMetaAnyOf = {
@@ -6259,6 +6347,17 @@ export interface InframonitoringtypesHostsDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
+export interface InframonitoringtypesJobFilterDTO {
+	/**
+	 * @type string
+	 */
+	expression?: string;
+	/**
+	 * @type array,null
+	 */
+	filterByPodStatus?: InframonitoringtypesPodStatusDTO[] | null;
+}
+
 export type InframonitoringtypesJobRecordDTOMetaAnyOf = {
 	[key: string]: string;
 };
@@ -6344,6 +6443,17 @@ export interface InframonitoringtypesJobsDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
+export interface InframonitoringtypesNamespaceFilterDTO {
+	/**
+	 * @type string
+	 */
+	expression?: string;
+	/**
+	 * @type array,null
+	 */
+	filterByPodStatus?: InframonitoringtypesPodStatusDTO[] | null;
+}
+
 export type InframonitoringtypesNamespaceRecordDTOCounts = {
 	/**
 	 * @type integer
@@ -6420,11 +6530,21 @@ export interface InframonitoringtypesNamespacesDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
-export enum InframonitoringtypesNodeConditionDTO {
-	ready = 'ready',
-	not_ready = 'not_ready',
-	no_data = 'no_data',
+export interface InframonitoringtypesNodeFilterDTO {
+	/**
+	 * @type string
+	 */
+	expression?: string;
+	/**
+	 * @type array,null
+	 */
+	filterByNodeReadiness?: InframonitoringtypesNodeConditionDTO[] | null;
+	/**
+	 * @type array,null
+	 */
+	filterByPodStatus?: InframonitoringtypesPodStatusDTO[] | null;
 }
+
 export type InframonitoringtypesNodeRecordDTOMetaAnyOf = {
 	[key: string]: string;
 };
@@ -6486,6 +6606,17 @@ export interface InframonitoringtypesNodesDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
+export interface InframonitoringtypesPodFilterDTO {
+	/**
+	 * @type string
+	 */
+	expression?: string;
+	/**
+	 * @type array,null
+	 */
+	filterByPodStatus?: InframonitoringtypesPodStatusDTO[] | null;
+}
+
 export type InframonitoringtypesPodRecordDTOMetaAnyOf = {
 	[key: string]: string;
 };
@@ -6496,27 +6627,6 @@ export type InframonitoringtypesPodRecordDTOMetaAnyOf = {
 export type InframonitoringtypesPodRecordDTOMeta =
 	InframonitoringtypesPodRecordDTOMetaAnyOf | null;
 
-export enum InframonitoringtypesPodStatusDTO {
-	pending = 'pending',
-	running = 'running',
-	failed = 'failed',
-	unknown = 'unknown',
-	crashloopbackoff = 'crashloopbackoff',
-	imagepullbackoff = 'imagepullbackoff',
-	errimagepull = 'errimagepull',
-	createcontainerconfigerror = 'createcontainerconfigerror',
-	containercreating = 'containercreating',
-	oomkilled = 'oomkilled',
-	completed = 'completed',
-	error = 'error',
-	containercannotrun = 'containercannotrun',
-	evicted = 'evicted',
-	nodeaffinity = 'nodeaffinity',
-	nodelost = 'nodelost',
-	shutdown = 'shutdown',
-	unexpectedadmissionerror = 'unexpectedadmissionerror',
-	no_data = 'no_data',
-}
 export interface InframonitoringtypesPodRecordDTO {
 	/**
 	 * @type object,null
@@ -6593,7 +6703,7 @@ export interface InframonitoringtypesPostableClustersDTO {
 	 * @format int64
 	 */
 	end: number;
-	filter?: Querybuildertypesv5FilterDTO;
+	filter?: InframonitoringtypesClusterFilterDTO;
 	/**
 	 * @type array,null
 	 */
@@ -6620,7 +6730,7 @@ export interface InframonitoringtypesPostableContainersDTO {
 	 * @format int64
 	 */
 	end: number;
-	filter?: Querybuildertypesv5FilterDTO;
+	filter?: InframonitoringtypesContainerFilterDTO;
 	/**
 	 * @type array,null
 	 */
@@ -6647,7 +6757,7 @@ export interface InframonitoringtypesPostableDaemonSetsDTO {
 	 * @format int64
 	 */
 	end: number;
-	filter?: Querybuildertypesv5FilterDTO;
+	filter?: InframonitoringtypesDaemonSetFilterDTO;
 	/**
 	 * @type array,null
 	 */
@@ -6674,7 +6784,7 @@ export interface InframonitoringtypesPostableDeploymentsDTO {
 	 * @format int64
 	 */
 	end: number;
-	filter?: Querybuildertypesv5FilterDTO;
+	filter?: InframonitoringtypesDeploymentFilterDTO;
 	/**
 	 * @type array,null
 	 */
@@ -6728,7 +6838,7 @@ export interface InframonitoringtypesPostableJobsDTO {
 	 * @format int64
 	 */
 	end: number;
-	filter?: Querybuildertypesv5FilterDTO;
+	filter?: InframonitoringtypesJobFilterDTO;
 	/**
 	 * @type array,null
 	 */
@@ -6755,7 +6865,7 @@ export interface InframonitoringtypesPostableNamespacesDTO {
 	 * @format int64
 	 */
 	end: number;
-	filter?: Querybuildertypesv5FilterDTO;
+	filter?: InframonitoringtypesNamespaceFilterDTO;
 	/**
 	 * @type array,null
 	 */
@@ -6782,7 +6892,7 @@ export interface InframonitoringtypesPostableNodesDTO {
 	 * @format int64
 	 */
 	end: number;
-	filter?: Querybuildertypesv5FilterDTO;
+	filter?: InframonitoringtypesNodeFilterDTO;
 	/**
 	 * @type array,null
 	 */
@@ -6809,7 +6919,7 @@ export interface InframonitoringtypesPostablePodsDTO {
 	 * @format int64
 	 */
 	end: number;
-	filter?: Querybuildertypesv5FilterDTO;
+	filter?: InframonitoringtypesPodFilterDTO;
 	/**
 	 * @type array,null
 	 */
@@ -6830,13 +6940,24 @@ export interface InframonitoringtypesPostablePodsDTO {
 	start: number;
 }
 
+export interface InframonitoringtypesStatefulSetFilterDTO {
+	/**
+	 * @type string
+	 */
+	expression?: string;
+	/**
+	 * @type array,null
+	 */
+	filterByPodStatus?: InframonitoringtypesPodStatusDTO[] | null;
+}
+
 export interface InframonitoringtypesPostableStatefulSetsDTO {
 	/**
 	 * @type integer
 	 * @format int64
 	 */
 	end: number;
-	filter?: Querybuildertypesv5FilterDTO;
+	filter?: InframonitoringtypesStatefulSetFilterDTO;
 	/**
 	 * @type array,null
 	 */
@@ -8287,6 +8408,7 @@ export interface Querybuildertypesv5QueryRangeResponseDTO {
 
 export enum Querybuildertypesv5QueryTypeDTO {
 	builder_query = 'builder_query',
+	builder_ai_query = 'builder_ai_query',
 	builder_formula = 'builder_formula',
 	builder_trace_operator = 'builder_trace_operator',
 	clickhouse_sql = 'clickhouse_sql',
@@ -8479,6 +8601,8 @@ export enum RuletypesCompareOperatorDTO {
 	below = 'below',
 	equal = 'equal',
 	not_equal = 'not_equal',
+	above_or_equal = 'above_or_equal',
+	below_or_equal = 'below_or_equal',
 	outside_bounds = 'outside_bounds',
 }
 export interface RuletypesBasicRuleThresholdDTO {
@@ -8842,6 +8966,111 @@ export interface RuletypesRuleDTO {
 export enum RuletypesThresholdKindDTO {
 	basic = 'basic',
 }
+export interface SavedviewtypesDisplayDTO {
+	/**
+	 * @type string
+	 */
+	color?: string;
+	/**
+	 * @type string
+	 */
+	fontSize?: string;
+	/**
+	 * @type string
+	 */
+	format?: string;
+	/**
+	 * @type integer
+	 */
+	maxLines?: number;
+}
+
+export enum SavedviewtypesPanelTypeDTO {
+	value = 'value',
+	graph = 'graph',
+	table = 'table',
+	list = 'list',
+	trace = 'trace',
+}
+export enum SavedviewtypesSchemaVersionDTO {
+	v2 = 'v2',
+}
+export enum SavedviewtypesSourceDTO {
+	traces = 'traces',
+	logs = 'logs',
+	metrics = 'metrics',
+	meter = 'meter',
+}
+export interface SavedviewtypesSavedViewSpecDTO {
+	display?: SavedviewtypesDisplayDTO;
+	/**
+	 * @type string
+	 */
+	displayName: string;
+	panelType: SavedviewtypesPanelTypeDTO;
+	/**
+	 * @type array
+	 */
+	queries: Querybuildertypesv5QueryEnvelopeDTO[];
+	requestType: Querybuildertypesv5RequestTypeDTO;
+	/**
+	 * @type array
+	 */
+	selectedFields?: TelemetrytypesTelemetryFieldKeyDTO[];
+}
+
+export interface SavedviewtypesPostableSavedViewDTO {
+	/**
+	 * @type boolean
+	 */
+	generateName?: boolean;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	schemaVersion: SavedviewtypesSchemaVersionDTO;
+	source: SavedviewtypesSourceDTO;
+	spec: SavedviewtypesSavedViewSpecDTO;
+}
+
+export interface SavedviewtypesSavedViewDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	schemaVersion: SavedviewtypesSchemaVersionDTO;
+	source?: SavedviewtypesSourceDTO;
+	spec: SavedviewtypesSavedViewSpecDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
+export interface SavedviewtypesUpdatableSavedViewDTO {
+	schemaVersion: SavedviewtypesSchemaVersionDTO;
+	source: SavedviewtypesSourceDTO;
+	spec: SavedviewtypesSavedViewSpecDTO;
+}
+
 export interface ServiceaccounttypesDeprecatedPostableServiceAccountRoleDTO {
 	/**
 	 * @type string
@@ -9828,6 +10057,21 @@ export interface TypesOrganizationDTO {
 	updatedAt?: string;
 }
 
+export interface TypesPostableForgotPasswordDTO {
+	/**
+	 * @type string
+	 */
+	email: string;
+	/**
+	 * @type string
+	 */
+	frontendBaseURL?: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+}
+
 export interface TypesPostableInviteDTO {
 	/**
 	 * @type string
@@ -9845,28 +10089,6 @@ export interface TypesPostableInviteDTO {
 	 * @type string
 	 */
 	role?: string;
-}
-
-export interface TypesPostableBulkInviteRequestDTO {
-	/**
-	 * @type array
-	 */
-	invites: TypesPostableInviteDTO[];
-}
-
-export interface TypesPostableForgotPasswordDTO {
-	/**
-	 * @type string
-	 */
-	email: string;
-	/**
-	 * @type string
-	 */
-	frontendBaseURL?: string;
-	/**
-	 * @type string
-	 */
-	orgId: string;
 }
 
 export interface TypesPostableResetPasswordDTO {
@@ -10979,31 +11201,6 @@ export type ListUsersDeprecated200 = {
 	status: string;
 };
 
-export type DeleteUserDeprecatedPathParameters = {
-	id: string;
-};
-export type GetUserDeprecatedPathParameters = {
-	id: string;
-};
-export type GetUserDeprecated200 = {
-	data: TypesDeprecatedUserDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type UpdateUserDeprecatedPathParameters = {
-	id: string;
-};
-export type UpdateUserDeprecated200 = {
-	data: TypesDeprecatedUserDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type GetMyUserDeprecated200 = {
 	data: TypesDeprecatedUserDTO;
 	/**
@@ -11162,6 +11359,17 @@ export type UnlockDashboardV2PathParameters = {
 export type LockDashboardV2PathParameters = {
 	id: string;
 };
+export type MigrateDashboardV2PathParameters = {
+	id: string;
+};
+export type MigrateDashboardV2200 = {
+	data: DashboardtypesGettableDashboardV2DTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetFeatures200 = {
 	/**
 	 * @type array
@@ -12029,6 +12237,54 @@ export type TestRule200 = {
 	status: string;
 };
 
+export type ListSavedViewsParams = {
+	/**
+	 * @description undefined
+	 */
+	source?: SavedviewtypesSourceDTO;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	name?: string;
+};
+
+export type ListSavedViews200 = {
+	/**
+	 * @type array,null
+	 */
+	data: SavedviewtypesSavedViewDTO[] | null;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateSavedView201 = {
+	data: TypesIdentifiableDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteSavedViewPathParameters = {
+	id: string;
+};
+export type GetSavedViewPathParameters = {
+	id: string;
+};
+export type GetSavedView200 = {
+	data: SavedviewtypesSavedViewDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateSavedViewPathParameters = {
+	id: string;
+};
 export type GetSessionContext200 = {
 	data: AuthtypesSessionContextDTO;
 	/**

@@ -59,6 +59,7 @@ import {
 	dedupeOptionsByLabel,
 	getFieldContextPrefix,
 	getRecentOptions,
+	isSupportedFunction,
 	renderRecentDeleteButton,
 } from './utils';
 
@@ -102,6 +103,15 @@ interface QuerySearchProps {
 	showFilterSuggestionsWithoutMetric?: boolean;
 	/** When set, the editor shows only the user expression; API/filter uses `initial AND (user)`. */
 	initialExpression?: string;
+	/** When set, replaces the generic value-suggestion API with a custom fetcher. */
+	valueSuggestionsOverride?: (
+		key: string,
+		searchText: string,
+	) => Promise<{
+		stringValues: string[];
+		numberValues: number[];
+		complete: boolean;
+	}>;
 }
 
 function QuerySearch({
@@ -115,6 +125,7 @@ function QuerySearch({
 	showFilterSuggestionsWithoutMetric,
 	initialExpression,
 	metricNamespace,
+	valueSuggestionsOverride,
 }: QuerySearchProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const [valueSuggestions, setValueSuggestions] = useState<any[]>([]);
@@ -173,15 +184,14 @@ function QuerySearch({
 				isProgrammaticChangeRef.current = true;
 			}
 
+			const changes = view.state.changes({
+				from: 0,
+				to: currentValue.length,
+				insert: value,
+			});
 			view.dispatch({
-				changes: {
-					from: 0,
-					to: currentValue.length,
-					insert: value,
-				},
-				selection: {
-					anchor: value.length,
-				},
+				changes,
+				selection: { anchor: changes.newLength },
 			});
 		},
 		[],
@@ -484,13 +494,24 @@ function QuerySearch({
 			const sanitizedSearchText = searchText ? searchText?.trim() : '';
 
 			try {
-				const response = await getValueSuggestions({
-					key,
-					searchText: sanitizedSearchText,
-					signal: dataSource,
-					signalSource: signalSource as 'meter' | '',
-					metricName: debouncedMetricName ?? undefined,
-				});
+				const values = valueSuggestionsOverride
+					? await valueSuggestionsOverride(key, sanitizedSearchText)
+					: await getValueSuggestions({
+							key,
+							searchText: sanitizedSearchText,
+							signal: dataSource,
+							signalSource: signalSource as 'meter' | '',
+							metricName: debouncedMetricName ?? undefined,
+						}).then((response) => {
+							const responseData = response.data as any;
+							const data = responseData.data || {};
+							const values = data.values || {};
+							return {
+								stringValues: values.stringValues || [],
+								numberValues: values.numberValues || [],
+								complete: data.complete ?? false,
+							};
+						});
 
 				// Skip updates if component unmounted or key changed
 				if (
@@ -502,8 +523,6 @@ function QuerySearch({
 				}
 
 				// Process the response data
-				const responseData = response.data as any;
-				const values = responseData.data?.values || {};
 				const stringValues = values.stringValues || [];
 				const numberValues = values.numberValues || [];
 
@@ -584,6 +603,7 @@ function QuerySearch({
 			debouncedMetricName,
 			signalSource,
 			toggleSuggestions,
+			valueSuggestionsOverride,
 		],
 	);
 
@@ -1256,11 +1276,13 @@ function QuerySearch({
 		}
 
 		if (queryContext.isInFunction) {
-			options = Object.values(QUERY_BUILDER_FUNCTIONS).map((option) => ({
-				label: option,
-				apply: `${option}()`,
-				type: 'function',
-			}));
+			options = Object.values(QUERY_BUILDER_FUNCTIONS)
+				.filter((option) => isSupportedFunction(option, dataSource))
+				.map((option) => ({
+					label: option,
+					apply: `${option}()`,
+					type: 'function',
+				}));
 
 			// Add space after selection for functions
 			const optionsWithSpace = addSpaceToOptions(options);

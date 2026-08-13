@@ -25,6 +25,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/promote"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
+	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
@@ -75,6 +76,7 @@ type provider struct {
 	rulerHandler               ruler.Handler
 	llmPricingRuleHandler      llmpricingrule.Handler
 	statsHandler               statsreporter.Handler
+	savedViewHandler           savedview.Handler
 }
 
 func NewFactory(
@@ -110,6 +112,7 @@ func NewFactory(
 	traceDetailHandler tracedetail.Handler,
 	rulerHandler ruler.Handler,
 	statsHandler statsreporter.Handler,
+	savedViewHandler savedview.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
 		return newProvider(
@@ -148,6 +151,7 @@ func NewFactory(
 			traceDetailHandler,
 			rulerHandler,
 			statsHandler,
+			savedViewHandler,
 		)
 	})
 }
@@ -188,6 +192,7 @@ func newProvider(
 	traceDetailHandler tracedetail.Handler,
 	rulerHandler ruler.Handler,
 	statsHandler statsreporter.Handler,
+	savedViewHandler savedview.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
@@ -227,6 +232,7 @@ func newProvider(
 		rulerHandler:               rulerHandler,
 		llmPricingRuleHandler:      llmPricingRuleHandler,
 		statsHandler:               statsHandler,
+		savedViewHandler:           savedViewHandler,
 	}
 
 	provider.authzMiddleware = middleware.NewAuthZ(settings.Logger(), orgGetter, authzService)
@@ -356,6 +362,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addStatsReporterRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addSavedViewRoutes(router); err != nil {
 		return err
 	}
 

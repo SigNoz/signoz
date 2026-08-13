@@ -135,7 +135,11 @@ func (c *conditionBuilder) conditionFor(
 		// instead of using IN, we use `=` + `OR` to make use of index
 		conditions := []string{}
 		for _, value := range values {
-			conditions = append(conditions, sb.E(fieldExpression, value))
+			cond, err := c.conditionFor(ctx, orgID, startNs, endNs, key, qbtypes.FilterOperatorEqual, value, sb)
+			if err != nil {
+				return "", err
+			}
+			conditions = append(conditions, cond)
 		}
 		return sb.Or(conditions...), nil
 	case qbtypes.FilterOperatorNotIn:
@@ -146,7 +150,11 @@ func (c *conditionBuilder) conditionFor(
 		// instead of using NOT IN, we use `!=` + `AND` to make use of index
 		conditions := []string{}
 		for _, value := range values {
-			conditions = append(conditions, sb.NE(fieldExpression, value))
+			cond, err := c.conditionFor(ctx, orgID, startNs, endNs, key, qbtypes.FilterOperatorNotEqual, value, sb)
+			if err != nil {
+				return "", err
+			}
+			conditions = append(conditions, cond)
 		}
 		return sb.And(conditions...), nil
 
@@ -205,7 +213,7 @@ func (c *conditionBuilder) ConditionFor(
 	sb *sqlbuilder.SelectBuilder,
 ) ([]string, []string, error) {
 
-	// has/hasAny/hasAll/hasToken are logs-body-only; reject for traces.
+	// has/hasAny/hasAll/hasToken/search are logs-only functions; reject for traces.
 	if err := querybuilder.NewFunctionUnsupportedError(operator); err != nil {
 		return nil, nil, err
 	}

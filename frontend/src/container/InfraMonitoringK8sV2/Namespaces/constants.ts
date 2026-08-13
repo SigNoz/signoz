@@ -111,7 +111,8 @@ export const namespaceWidgetInfo = [
 	{
 		title: 'CPU Usage (cores)',
 		yAxisUnit: '',
-		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#cpu-usage-cores',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/namespaces/#cpu-usage-cores-1',
 	},
 	{
 		title: 'Memory Usage (bytes)',
@@ -1207,13 +1208,9 @@ export const getNamespaceMetricsQueryPayload = (
 									type: 'tag',
 								},
 							],
-							having: [
-								{
-									columnName: `MAX(${INFRA_MONITORING_ATTR_KEYS.K8S_REPLICASET_DESIRED})`,
-									op: '>',
-									value: 0,
-								},
-							],
+							having: {
+								expression: `max(${INFRA_MONITORING_ATTR_KEYS.K8S_REPLICASET_DESIRED}) > 0`,
+							},
 							legend: 'desired',
 							limit: null,
 							orderBy: [],
@@ -1260,13 +1257,9 @@ export const getNamespaceMetricsQueryPayload = (
 									type: 'tag',
 								},
 							],
-							having: [
-								{
-									columnName: `MAX(${INFRA_MONITORING_ATTR_KEYS.K8S_REPLICASET_DESIRED})`,
-									op: '>',
-									value: 0,
-								},
-							],
+							having: {
+								expression: `max(${INFRA_MONITORING_ATTR_KEYS.K8S_REPLICASET_AVAILABLE}) > 0`,
+							},
 							legend: 'available',
 							limit: null,
 							orderBy: [],
@@ -1624,13 +1617,13 @@ export const getNamespaceMetricsQueryPayload = (
 							reduceTo: ReduceOperators.LAST,
 							spaceAggregation: 'max',
 							stepInterval: 60,
-							timeAggregation: 'avg',
+							timeAggregation: 'latest',
 						},
 					],
 					queryFormulas: [
 						{
 							disabled: false,
-							expression: 'A/B',
+							expression: '(B/A) * 100',
 							legend: 'util %',
 							queryName: 'F1',
 						},

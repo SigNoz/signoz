@@ -34,7 +34,7 @@ export type MetricNameSelectorProps = {
 function getAttributeType(
 	metric: MetricsexplorertypesListMetricDTO,
 ): ATTRIBUTE_TYPES | '' {
-	return toAttributeType(metric.type, metric.isMonotonic);
+	return toAttributeType(metric.type, metric.isMonotonic, metric.temporality);
 }
 
 function createAutocompleteData(

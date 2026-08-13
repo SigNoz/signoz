@@ -1,7 +1,8 @@
-import { Tooltip } from 'antd';
 import { Button } from '@signozhq/ui/button';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import { Compass } from '@signozhq/icons';
+import { TextNoData } from '../../../components/TextNoData';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -13,7 +14,9 @@ import {
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	InfraMonitoringEntity,
 } from '../../../constants';
+import { getDrawerDurationMs } from '../../useDrawerLifecycleStore';
 import styles from './EntityCountsSection.module.scss';
+import { logInfraExplorerNavigatedEvent } from 'container/InfraMonitoringK8sV2/Base/events';
 
 export interface EntityCountConfig<T> {
 	label: string;
@@ -27,6 +30,8 @@ interface EntityCountsSectionProps<T> {
 	selectedItem: string;
 	filterExpression: string;
 	closeDrawer: () => void;
+	entityType: InfraMonitoringEntity;
+	activeTab: string;
 }
 
 export function EntityCountsSection<T>({
@@ -35,7 +40,21 @@ export function EntityCountsSection<T>({
 	selectedItem,
 	filterExpression,
 	closeDrawer,
+	entityType,
+	activeTab,
 }: EntityCountsSectionProps<T>): JSX.Element {
+	const handleCardNavigate = (cardLabel: string): void => {
+		logInfraExplorerNavigatedEvent({
+			entityType,
+			destination: 'k8s_list',
+			source: 'stats_card',
+			tab: activeTab,
+			sourceKey: cardLabel,
+			drawerDurationMsAtNavigation: getDrawerDurationMs(),
+		});
+		closeDrawer();
+	};
+
 	const buildNavigationUrl = (targetCategory: InfraMonitoringEntity): string => {
 		const defaultQuery = initialQueriesMap[DataSource.METRICS];
 
@@ -116,17 +135,26 @@ export function EntityCountsSection<T>({
 					>
 						{config.label}
 					</Typography.Text>
-					<Typography.Text className={styles.countValue} size="xl" weight="semibold">
-						{config.getValue(entity) || '-'}
-					</Typography.Text>
+					{config.getValue(entity) ? (
+						<Typography.Text
+							className={styles.countValue}
+							size="xl"
+							weight="semibold"
+						>
+							{config.getValue(entity)}
+						</Typography.Text>
+					) : (
+						<TextNoData type="typography" className={styles.countValue} />
+					)}
 					<Link
 						to={buildNavigationUrl(config.targetCategory)}
-						onClick={closeDrawer}
+						onClick={(): void => handleCardNavigate(config.label)}
 						data-testid={`navigate-${config.label.toLowerCase().replace(/\s+/g, '-')}`}
 					>
-						<Tooltip
+						<TooltipSimple
 							title={`View ${config.label.toLowerCase()} of '${selectedItem}'`}
-							placement="top"
+							side="top"
+							arrow
 						>
 							<Button
 								size="icon"
@@ -135,7 +163,7 @@ export function EntityCountsSection<T>({
 								className={styles.navigateButton}
 								prefix={<Compass size={14} />}
 							/>
-						</Tooltip>
+						</TooltipSimple>
 					</Link>
 				</div>
 			))}

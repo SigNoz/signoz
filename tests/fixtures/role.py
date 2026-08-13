@@ -1,5 +1,3 @@
-"""Fixtures and helpers for role tests."""
-
 import json
 from collections.abc import Callable
 from http import HTTPStatus
@@ -11,18 +9,14 @@ from fixtures import types
 from fixtures.fs import get_testdata_file_path
 
 
-@pytest.fixture(name="find_role_id", scope="function")
-def find_role_id(signoz: types.SigNoz) -> Callable[[str, str], str]:
-    def _find(token: str, name: str) -> str:
-        resp = requests.get(
-            signoz.self.host_configs["8080"].get("/api/v1/roles"),
-            headers={"Authorization": f"Bearer {token}"},
-            timeout=5,
-        )
-        assert resp.status_code == HTTPStatus.OK, resp.text
-        return next(r["id"] for r in resp.json()["data"] if r["name"] == name)
-
-    return _find
+def find_role_by_name(signoz: types.SigNoz, token: str, name: str) -> str:
+    resp = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/roles"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert resp.status_code == HTTPStatus.OK, resp.text
+    return next(r["id"] for r in resp.json()["data"] if r["name"] == name)
 
 
 @pytest.fixture(name="create_role", scope="function")

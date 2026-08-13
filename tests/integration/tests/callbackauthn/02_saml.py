@@ -13,12 +13,14 @@ from fixtures.auth import (
     USER_ADMIN_PASSWORD,
     add_license,
     assert_user_has_role,
+    create_active_user,
     find_user_with_roles_by_email,
 )
 from fixtures.idp import (
     get_saml_domain,
     perform_saml_login,
 )
+from fixtures.role import find_role_by_name
 from fixtures.types import Operation, SigNoz, TestContainerDocker, TestContainerIDP
 
 
@@ -216,9 +218,6 @@ def test_saml_role_mapping_single_group_admin(
     get_token: Callable[[str, str], str],
     get_session_context: Callable[[str], str],
 ) -> None:
-    """
-    Test: User in 'signoz-admins' group gets ADMIN role.
-    """
     email = "admin-group-user@saml.integration.test"
     create_user_idp_with_groups(email, "password", True, ["signoz-admins"])
 
@@ -239,9 +238,6 @@ def test_saml_role_mapping_single_group_editor(
     get_token: Callable[[str, str], str],
     get_session_context: Callable[[str], str],
 ) -> None:
-    """
-    Test: User in 'signoz-editors' group gets EDITOR role.
-    """
     email = "editor-group-user@saml.integration.test"
     create_user_idp_with_groups(email, "password", True, ["signoz-editors"])
 
@@ -311,9 +307,6 @@ def test_saml_role_mapping_unmapped_group_uses_default(
     get_token: Callable[[str, str], str],
     get_session_context: Callable[[str], str],
 ) -> None:
-    """
-    Test: User in unmapped group falls back to default role (VIEWER).
-    """
     email = "unmapped-group-user@saml.integration.test"
     create_user_idp_with_groups(email, "password", True, ["some-other-group"])
 
@@ -462,7 +455,6 @@ def test_saml_name_mapping(
     get_token: Callable[[str, str], str],
     get_session_context: Callable[[str], str],
 ) -> None:
-    """Test that user's display name is mapped from SAML displayName attribute."""
     email = "named-user@saml.integration.test"
 
     create_user_idp(email, "password", True, "Jane", "Smith")
@@ -485,7 +477,6 @@ def test_saml_empty_name_fallback(
     get_token: Callable[[str, str], str],
     get_session_context: Callable[[str], str],
 ) -> None:
-    """Test that user without displayName in IDP still gets created."""
     email = "no-name@saml.integration.test"
 
     create_user_idp(email, "password", True)
@@ -520,8 +511,12 @@ def test_saml_sso_login_activates_pending_invite_user(
 
     # Invite user as ADMIN
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={"email": email, "role": "ADMIN", "name": "SAML SSO Pending User"},
+        signoz.self.host_configs["8080"].get("/api/v2/users"),
+        json={
+            "email": email,
+            "displayName": "SAML SSO Pending User",
+            "userRoles": [{"id": find_role_by_name(signoz, admin_token, "signoz-admin")}],
+        },
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -558,26 +553,18 @@ def test_saml_sso_deleted_user_gets_new_user_on_login(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # --- Step 1: Invite and activate via password reset ---
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={"email": email, "role": "EDITOR", "name": "SAML SSO Lifecycle User"},
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
+    user_id = create_active_user(
+        signoz,
+        admin_token,
+        email=email,
+        role="signoz-editor",
+        password="password123Z$",
+        name="SAML SSO Lifecycle User",
     )
-    assert response.status_code == HTTPStatus.CREATED
-    user_id = response.json()["data"]["id"]
-    reset_token = response.json()["data"]["token"]
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
-        json={"password": "password123Z$", "token": reset_token},
-        timeout=2,
-    )
-    assert response.status_code == HTTPStatus.NO_CONTENT
 
     # --- Step 2: Soft delete via DB using API
     response = requests.delete(
-        signoz.self.host_configs["8080"].get(f"/api/v1/user/{user_id}"),
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{user_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )

@@ -10,7 +10,7 @@ from wiremock.client import (
 )
 
 from fixtures import types
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
+from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license, create_active_user
 from fixtures.gateway import (
     TEST_KEY_ID,
     common_gateway_headers,
@@ -43,21 +43,13 @@ def test_create_editor_user(
     """Invite and register an editor user for gateway API tests."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    invite_response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={"email": GATEWAY_APIS_EDITOR_EMAIL, "role": "EDITOR"},
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=5,
+    create_active_user(
+        signoz,
+        admin_token,
+        email=GATEWAY_APIS_EDITOR_EMAIL,
+        role="signoz-editor",
+        password=GATEWAY_APIS_EDITOR_PASSWORD,
     )
-    assert invite_response.status_code == HTTPStatus.CREATED
-    reset_token = invite_response.json()["data"]["token"]
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
-        json={"password": GATEWAY_APIS_EDITOR_PASSWORD, "token": reset_token},
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.NO_CONTENT
 
 
 # ---------------------------------------------------------------------------

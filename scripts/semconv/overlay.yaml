@@ -1,0 +1,11 @@
+# SigNoz semantic-convention rollout policy.
+#
+# Families are keyed by their current OpenTelemetry name. Schema-derived
+# families are disabled by default so rollout remains explicit and reversible.
+default_enabled: false
+
+families:
+  deployment.environment.name:
+    enabled: true
+  db.system.name:
+    enabled: true

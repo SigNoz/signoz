@@ -22,6 +22,7 @@ import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants'
 import LoadingContainer from 'container/InfraMonitoringK8sV2/LoadingContainer';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import { ChevronDown, ChevronRight } from '@signozhq/icons';
+import { saveRecentQueryByExpression } from 'lib/recentQueries/saveRecentQuery';
 import { useQueryState } from 'nuqs';
 import { DataSource } from 'types/common/queryBuilder';
 import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
@@ -38,6 +39,7 @@ import { getEntityEventsQueryPayload, isEventsKeyNotFoundError } from './utils';
 
 import styles from './EntityEvents.module.scss';
 import { useTimezone } from 'providers/Timezone';
+import { logInfraDrawerFilterCustomizedEvent } from 'container/InfraMonitoringK8sV2/EntityDetailsUtils/events';
 
 interface EventDataType {
 	key: string;
@@ -115,6 +117,7 @@ function EntityEventsContent({
 					: newUserExpression || '',
 			);
 			if (validation.isValid) {
+				saveRecentQueryByExpression(DataSource.LOGS, newUserExpression);
 				querySearchOnRun(newUserExpression || '');
 
 				void logEvent(InfraMonitoringEvents.FilterApplied, {
@@ -123,6 +126,13 @@ function EntityEventsContent({
 					category,
 					view: InfraMonitoringEvents.EventsView,
 				});
+
+				logInfraDrawerFilterCustomizedEvent(
+					category,
+					'events',
+					newUserExpression || '',
+					'search',
+				);
 
 				refetch();
 			}

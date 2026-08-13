@@ -114,6 +114,23 @@ describe('getCaretContext — stage detection', () => {
 		expect(ctx.partial).toBe('');
 	});
 
+	it('never replaces past the caret when it sits before the operator', () => {
+		const ctx = getCaretContext("env  = 'prod'", 4);
+		expect(ctx.stage).toBe('operator');
+		expect(ctx.partial).toBe('');
+		expect(ctx.replaceStart).toBe(4);
+		expect(ctx.replaceEnd).toBe(4);
+	});
+
+	it('never replaces past the caret when it sits before the value', () => {
+		const ctx = getCaretContext("env =  'prod'", 6);
+		expect(ctx.stage).toBe('value');
+		expect(ctx.operator).toBe('=');
+		expect(ctx.partial).toBe('');
+		expect(ctx.replaceStart).toBe(6);
+		expect(ctx.replaceEnd).toBe(6);
+	});
+
 	it('detects the stage of the term under a mid-string caret', () => {
 		const q = "env =  AND team = 'core'";
 		// caret right after the first `env ` (index 4) is the operator stage
@@ -140,6 +157,13 @@ describe('spliceAtCaret', () => {
 		const ctx = getCaretContext(q, q.length);
 		const { next } = spliceAtCaret(q, ctx, "'prod'");
 		expect(next).toBe("env = 'prod'");
+	});
+
+	it('inserts (without duplicating text) at a caret parked before a token', () => {
+		const q = "env  = 'prod'";
+		const ctx = getCaretContext(q, 4);
+		const { next } = spliceAtCaret(q, ctx, '!= ');
+		expect(next).toBe("env !=  = 'prod'");
 	});
 
 	it('preserves text after the caret', () => {

@@ -1,6 +1,10 @@
 package alertmanagertypes
 
 import (
+	"net/url"
+	"strings"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/prometheus/alertmanager/config"
 	commoncfg "github.com/prometheus/common/config"
 )
@@ -21,14 +25,30 @@ var DefaultGoogleChatReceiverConfig = GoogleChatReceiverConfig{
 	},
 	Title: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`,
 	Text: `{{ range .Alerts -}}
-*Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} ({{ .Labels.severity }}){{ end }}{{ if .Annotations.summary }}
-*Summary:* {{ .Annotations.summary }}{{ end }}{{ if .Annotations.description }}
-*Description:* {{ .Annotations.description }}{{ end }}
+**Alert:** {{ .Labels.alertname }}{{ if .Labels.severity }} ({{ .Labels.severity }}){{ end }}{{ if .Annotations.summary }}
+**Summary:** {{ .Annotations.summary }}{{ end }}{{ if .Annotations.description }}
+**Description:** {{ .Annotations.description }}{{ end }}
 {{ end }}`,
 }
 
 func (c *GoogleChatReceiverConfig) UnmarshalYAML(unmarshal func(any) error) error {
 	*c = DefaultGoogleChatReceiverConfig
 	type plain GoogleChatReceiverConfig
-	return unmarshal((*plain)(c))
+	if err := unmarshal((*plain)(c)); err != nil {
+		return err
+	}
+	if c.WebhookURL == nil {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "google chat webhook_url is required")
+	}
+	u, err := url.Parse(c.WebhookURL.String())
+	if err != nil {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid google chat webhook_url: %v", err)
+	}
+	if u.Scheme != "https" {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "google chat webhook_url must use https")
+	}
+	if strings.ToLower(u.Hostname()) != "chat.googleapis.com" {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "google chat webhook_url must use chat.googleapis.com")
+	}
+	return nil
 }

@@ -37,7 +37,7 @@ function firstConfiguredDefault(model: VariableFormModel): string | undefined {
 }
 
 /** A TEXT variable's default: its configured default, else its textValue (always a string). */
-function textDefault(model: VariableFormModel): string {
+export function textDefault(model: VariableFormModel): string {
 	return firstConfiguredDefault(model) ?? model.textValue;
 }
 
@@ -53,15 +53,31 @@ function isAllDefault(
 	);
 }
 
-/** The configured default (or first option) as a fresh selection. */
+/**
+ * The default selection for a variable with nothing usable selected: its configured
+ * default, else ALL for an ALL-enabled multi-select, else the first option.
+ */
 function fillDefault(
 	model: VariableFormModel,
 	options: string[],
 ): VariableSelection {
 	const fallback = firstConfiguredDefault(model);
-	const initial = fallback && options.includes(fallback) ? fallback : options[0];
+	if (fallback && options.includes(fallback)) {
+		return {
+			value: model.multiSelect ? [fallback] : fallback,
+			allSelected: false,
+		};
+	}
+
+	// No usable configured default: an ALL-enabled multi-select defaults to ALL, not
+	// to an arbitrary first option — the same default the seed applies (keep in sync
+	// with resolveDefaultSelection).
+	if (model.multiSelect && model.showAllOption) {
+		return materializeAll(model, options, null) ?? ALL_SELECTION;
+	}
+
 	return {
-		value: model.multiSelect ? [initial] : initial,
+		value: model.multiSelect ? [options[0]] : options[0],
 		allSelected: false,
 	};
 }
@@ -118,12 +134,23 @@ export function resolveDefaultSelection(
 	return { value: model.multiSelect ? [] : '', allSelected: false };
 }
 
+interface ReconcileOptions {
+	/**
+	 * Set when no other variable caused this refetch (time-range change, reload): the
+	 * selection then outranks the options and is kept as-is. Leave false for a
+	 * dependency cascade, where a selection that no longer applies must give way.
+	 */
+	preserveSelection?: boolean;
+}
+
 /**
  * Reconciles a variable's current selection against its freshly-fetched options.
  * Returns the next selection, or null when nothing should change (a valid pick is
  * left untouched — local-first). Behaviour, in order:
  * - materialize ALL to the full option set (query/custom);
- * - keep a still-valid multi-select subset, dropping only invalid entries;
+ * - keep a multi-select selection outright when `preserveSelection` is set;
+ * - keep a still-valid multi-select subset, dropping only entries the list no longer
+ *   offers and the user did not type in (`customValues`);
  * - otherwise auto-pick the default (or first option) so dependent variables and
  *   panels always resolve against a usable value.
  */
@@ -131,6 +158,7 @@ export function reconcileWithOptions(
 	model: VariableFormModel,
 	current: VariableSelection,
 	options: string[],
+	{ preserveSelection = false }: ReconcileOptions = {},
 ): VariableSelection | null {
 	if (options.length === 0) {
 		return null;
@@ -145,13 +173,31 @@ export function reconcileWithOptions(
 		Array.isArray(current.value) &&
 		current.value.length > 0
 	) {
-		const valid = current.value.map(String).filter((c) => options.includes(c));
+		// A pick this window has no data for is still the user's filter; re-defaulting it
+		// here is what widened a single pick to ALL on every time-range change.
+		if (preserveSelection) {
+			return null;
+		}
+
+		// A typed value is in no option list, so it is never "no longer offered".
+		const custom = new Set(current.customValues ?? []);
+		const valid = current.value
+			.map(String)
+			.filter((c) => options.includes(c) || custom.has(c));
+
 		if (valid.length === current.value.length) {
 			return null;
 		}
-		return valid.length > 0
-			? { value: valid, allSelected: false }
-			: fillDefault(model, options);
+		if (valid.length === 0) {
+			return fillDefault(model, options);
+		}
+
+		const customValues = valid.filter((v) => custom.has(v));
+		return {
+			value: valid,
+			allSelected: false,
+			...(customValues.length > 0 && { customValues }),
+		};
 	}
 
 	if (!model.multiSelect) {

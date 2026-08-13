@@ -56,7 +56,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
 	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -507,9 +506,9 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	router.HandleFunc("/api/v1/explorer/views", am.ViewAccess(aH.Signoz.Handlers.SavedView.List)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/explorer/views", am.EditAccess(aH.Signoz.Handlers.SavedView.Create)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.ViewAccess(aH.Signoz.Handlers.SavedView.Get)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.EditAccess(aH.Signoz.Handlers.SavedView.Update)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.EditAccess(aH.Signoz.Handlers.SavedView.Delete)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/explorer/views/{id}", am.ViewAccess(aH.Signoz.Handlers.SavedView.Get)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/explorer/views/{id}", am.EditAccess(aH.Signoz.Handlers.SavedView.Update)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/explorer/views/{id}", am.EditAccess(aH.Signoz.Handlers.SavedView.Delete)).Methods(http.MethodDelete)
 	router.HandleFunc("/api/v1/event", am.ViewAccess(aH.registerEvent)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/services", am.ViewAccess(aH.getServices)).Methods(http.MethodPost) // Deprecated Usage, use the below endpoint /v2/services
@@ -1050,10 +1049,6 @@ func prepareQuery(r *http.Request) (string, error) {
 	tmplErr = tmpl.Execute(&queryBuf, vars)
 	if tmplErr != nil {
 		return "", tmplErr
-	}
-
-	if !constants.IsDotMetricsEnabled {
-		return queryBuf.String(), nil
 	}
 
 	query = queryBuf.String()
@@ -1599,15 +1594,6 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		Route:      "",
 	})
 
-	fineGrainedAuthz := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureUseFineGrainedAuthz, evalCtx)
-	featureSet = append(featureSet, &licensetypes.Feature{
-		Name:       valuer.NewString(flagger.FeatureUseFineGrainedAuthz.String()),
-		Active:     fineGrainedAuthz,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	})
-
 	aiObservability := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureEnableAIObservability, evalCtx)
 	featureSet = append(featureSet, &licensetypes.Feature{
 		Name:       valuer.NewString(flagger.FeatureEnableAIObservability.String()),
@@ -1617,22 +1603,6 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		Route:      "",
 	})
 
-	infraMonitoringV2 := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureUseInfraMonitoringV2, evalCtx)
-	featureSet = append(featureSet, &licensetypes.Feature{
-		Name:       valuer.NewString(flagger.FeatureUseInfraMonitoringV2.String()),
-		Active:     infraMonitoringV2,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	})
-
-	if constants.IsDotMetricsEnabled {
-		for idx, feature := range featureSet {
-			if feature.Name == licensetypes.DotMetricsEnabled {
-				featureSet[idx].Active = true
-			}
-		}
-	}
 	aH.Respond(w, featureSet)
 }
 
@@ -2073,12 +2043,8 @@ func (aH *APIHandler) onboardKafka(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	var kafkaConsumerFetchLatencyAvg string = "kafka_consumer_fetch_latency_avg"
-	var kafkaConsumerLag string = "kafka_consumer_group_lag"
-	if constants.IsDotMetricsEnabled {
-		kafkaConsumerLag = "kafka.consumer_group.lag"
-		kafkaConsumerFetchLatencyAvg = "kafka.consumer.fetch_latency_avg"
-	}
+	var kafkaConsumerFetchLatencyAvg string = "kafka.consumer.fetch_latency_avg"
+	var kafkaConsumerLag string = "kafka.consumer_group.lag"
 
 	if !fetchLatencyState && !consumerLagState {
 		entries = append(entries, kafka.OnboardingResponse{
@@ -3836,6 +3802,10 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, apiErrorObj, nil)
 		return
 	}
+
+	queryRangeParams.UseJSONBody = aH.Signoz.Flagger.BooleanOrEmpty(
+		r.Context(), flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID),
+	)
 
 	// add temporality for each metric
 	temporalityErr := aH.PopulateTemporality(r.Context(), orgID, queryRangeParams)

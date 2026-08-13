@@ -63,6 +63,7 @@ export function createPodMetricsTab<T>({
 				getEntityQueryPayload={getQueryPayload}
 				queryKey={queryKey}
 				category={category}
+				view={VIEW_TYPES.POD_METRICS}
 			/>
 		),
 	};
