@@ -18,7 +18,7 @@ interface SpanMapperGroup {
 }
 
 /** List span-mapper groups via API (`GET /api/v1/span_mapper_groups`). */
-export async function listSpanMapperGroups(
+ async function listSpanMapperGroups(
 	request: APIRequestContext,
 	token: string,
 ): Promise<SpanMapperGroup[]> {

@@ -14,7 +14,7 @@ interface PricingRule {
 }
 
 /** List pricing rules via API (`GET /api/v1/llm_pricing_rules`). */
-export async function listPricingRules(
+async function listPricingRules(
 	request: APIRequestContext,
 	token: string,
 ): Promise<PricingRule[]> {

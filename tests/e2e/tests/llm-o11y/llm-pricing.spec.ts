@@ -4,7 +4,7 @@ import { authToken } from '../../helpers/common';
 import {
 	deletePricingRulesByModelName,
 	gotoLlmPricing,
-} from '../../helpers/llm-pricing';
+} from '../../helpers/llmobservability/llm-pricing';
 
 test.describe.configure({ mode: 'serial' });
 

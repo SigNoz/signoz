@@ -1,4 +1,4 @@
-# TODO: remove this file once ai-o11y goes live
+# TODO: remove this file once enable_ai_observability flag is removed or defaulted to True
 import pytest
 from testcontainers.core.container import Network
 
