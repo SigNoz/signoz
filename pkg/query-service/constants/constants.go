@@ -205,8 +205,9 @@ const (
 		"scope_string "
 	LogsSQLSelectV2 = logsSQLSelectV2Head + "body, " + logsSQLSelectV2Tail
 	// Orgs on JSON bodies keep the body in body_v2 and have the body column written empty.
-	// Selected as JSON so the response carries the same body object v5 returns.
-	LogsSQLSelectV2WithBodyJSON             = logsSQLSelectV2Head + "body_v2 as body, " + logsSQLSelectV2Tail
+	// Stringified because filters emit a bare `body`, which ClickHouse resolves to this alias:
+	// as JSON it fails every string comparison, as String it matches against the body text.
+	LogsSQLSelectV2WithBodyJSON             = logsSQLSelectV2Head + "toString(body_v2) as body, " + logsSQLSelectV2Tail
 	TracesExplorerViewSQLSelectWithSubQuery = "(SELECT traceID, durationNano, " +
 		"serviceName, name FROM %s.%s WHERE parentSpanID = '' AND %s ORDER BY durationNano DESC LIMIT 1 BY traceID"
 	TracesExplorerViewSQLSelectBeforeSubQuery = "SELECT subQuery.serviceName as `subQuery.serviceName`, subQuery.name as `subQuery.name`, count() AS " +
