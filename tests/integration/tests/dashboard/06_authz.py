@@ -583,15 +583,15 @@ def test_dashboard_authz_cleanup(
     actor = find_user_by_email(signoz, admin_token, _ACTOR_EMAIL)
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v2/users/{actor['id']}/roles"),
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{actor['id']}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
-    actor_entry = next((role for role in response.json()["data"] if role["name"] == _ACTOR_ROLE_NAME), None)
+    actor_entry = next((ur for ur in response.json()["data"]["userRoles"] if ur["role"]["name"] == _ACTOR_ROLE_NAME), None)
     if actor_entry is not None:
         response = requests.delete(
-            signoz.self.host_configs["8080"].get(f"/api/v2/users/{actor['id']}/roles/{actor_entry['id']}"),
+            signoz.self.host_configs["8080"].get(f"/api/v2/user_roles/{actor_entry['id']}"),
             headers={"Authorization": f"Bearer {admin_token}"},
             timeout=5,
         )
