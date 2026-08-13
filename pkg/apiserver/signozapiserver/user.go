@@ -27,6 +27,23 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v1/user/me", handler.New(provider.authzMiddleware.OpenAccess(provider.userHandler.GetMyUserDeprecated), handler.OpenAPIDef{
+		ID:                  "GetMyUserDeprecated",
+		Tags:                []string{"users"},
+		Summary:             "Get my user",
+		Description:         "This endpoint is deprecated and always fails. Use GET /api/v2/users/me instead.",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            nil,
+		ResponseContentType: "",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusNotImplemented},
+		Deprecated:          true,
+		SecuritySchemes:     []handler.OpenAPISecurityScheme{{Name: authtypes.IdentNProviderTokenizer.StringValue()}},
+	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v2/users/me", handler.New(provider.authzMiddleware.OpenAccess(provider.userHandler.GetMyUser), handler.OpenAPIDef{
 		ID:                  "GetMyUser",
 		Tags:                []string{"users"},

@@ -25,6 +25,7 @@ var (
 	ErrCodeUserStatusDeleted            = errors.MustNewCode("user_status_deleted")
 	ErrCodeUserStatusPendingInvite      = errors.MustNewCode("user_status_pending_invite")
 	ErrCodeUserStatusNotPendingInvite   = errors.MustNewCode("user_status_not_pending_invite")
+	ErrCodeUserDeprecated               = errors.MustNewCode("user_deprecated")
 )
 
 var (

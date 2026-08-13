@@ -93,6 +93,11 @@ func (handler *handler) GetUser(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, http.StatusOK, userWithRoles)
 }
 
+func (handler *handler) GetMyUserDeprecated(w http.ResponseWriter, r *http.Request) {
+	render.Error(w, errors.New(errors.TypeUnsupported, types.ErrCodeUserDeprecated,
+		"the v1 user API is deprecated; instead, get your user with GET /api/v2/users/me"))
+}
+
 func (handler *handler) GetMyUser(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()

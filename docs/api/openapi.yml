@@ -14198,6 +14198,44 @@ paths:
       summary: Get aggregations for a trace
       tags:
       - tracedetail
+  /api/v1/user/me:
+    get:
+      deprecated: true
+      description: This endpoint is deprecated and always fails. Use GET /api/v2/users/me
+        instead.
+      operationId: GetMyUserDeprecated
+      responses:
+        "200":
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
+      security:
+      - tokenizer: []
+      summary: Get my user
+      tags:
+      - users
   /api/v1/user/preferences:
     get:
       deprecated: false

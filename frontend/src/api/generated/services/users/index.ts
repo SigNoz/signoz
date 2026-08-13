@@ -51,6 +51,93 @@ import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
 /**
+ * This endpoint is deprecated and always fails. Use GET /api/v2/users/me instead.
+ * @deprecated
+ * @summary Get my user
+ */
+export const getMyUserDeprecated = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v1/user/me`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetMyUserDeprecatedQueryKey = () => {
+	return [`/api/v1/user/me`] as const;
+};
+
+export const getGetMyUserDeprecatedQueryOptions = <
+	TData = Awaited<ReturnType<typeof getMyUserDeprecated>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(options?: {
+	query?: UseQueryOptions<
+		Awaited<ReturnType<typeof getMyUserDeprecated>>,
+		TError,
+		TData
+	>;
+}) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getGetMyUserDeprecatedQueryKey();
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getMyUserDeprecated>>
+	> = ({ signal }) => getMyUserDeprecated(signal);
+
+	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+		Awaited<ReturnType<typeof getMyUserDeprecated>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetMyUserDeprecatedQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getMyUserDeprecated>>
+>;
+export type GetMyUserDeprecatedQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @deprecated
+ * @summary Get my user
+ */
+
+export function useGetMyUserDeprecated<
+	TData = Awaited<ReturnType<typeof getMyUserDeprecated>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(options?: {
+	query?: UseQueryOptions<
+		Awaited<ReturnType<typeof getMyUserDeprecated>>,
+		TError,
+		TData
+	>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetMyUserDeprecatedQueryOptions(options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @deprecated
+ * @summary Get my user
+ */
+export const invalidateGetMyUserDeprecated = async (
+	queryClient: QueryClient,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetMyUserDeprecatedQueryKey() },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
  * This endpoint initiates the forgot password flow by sending a reset password email
  * @summary Forgot password
  */
