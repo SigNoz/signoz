@@ -41,9 +41,7 @@ test.describe('SSO auth domains', () => {
 		await page
 			.getByTestId('google-auth-client-id')
 			.fill('e2e-client-id.apps.googleusercontent.com');
-		await page
-			.getByTestId('google-auth-client-secret')
-			.fill('e2e-client-secret');
+		await page.getByTestId('google-auth-client-secret').fill('e2e-client-secret');
 		await page.getByTestId('auth-domain-save').click();
 
 		await expect(page.getByText('Domain created successfully')).toBeVisible();

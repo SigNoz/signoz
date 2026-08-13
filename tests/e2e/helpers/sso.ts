@@ -78,10 +78,7 @@ export async function createGoogleAuthDomainViaApi(
 }
 
 /** Delete an auth domain by ID (best-effort cleanup). */
-async function deleteAuthDomainViaApi(
-	page: Page,
-	id: string,
-): Promise<void> {
+async function deleteAuthDomainViaApi(page: Page, id: string): Promise<void> {
 	const token = await authToken(page);
 	await page.request.delete(`/api/v2/auth_domains/${id}`, {
 		headers: { Authorization: `Bearer ${token}` },
