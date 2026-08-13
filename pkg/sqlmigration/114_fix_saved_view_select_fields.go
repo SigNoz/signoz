@@ -1,6 +1,7 @@
 package sqlmigration
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"log/slog"
@@ -124,6 +125,21 @@ func (migration *fixSavedViewSelectFields) Down(context.Context, *bun.DB) error 
 	return nil
 }
 
+// marshalUnescaped encodes without json.Marshal's HTML escaping, which would
+// otherwise rewrite <, > and & as \u003c, \u003e and \u0026 throughout the row --
+// json.RawMessage included, so it reaches query expressions this migration only
+// carries through.
+func marshalUnescaped(v any) ([]byte, error) {
+	var buf bytes.Buffer
+	encoder := json.NewEncoder(&buf)
+	encoder.SetEscapeHTML(false)
+	if err := encoder.Encode(v); err != nil {
+		return nil, err
+	}
+
+	return bytes.TrimRight(buf.Bytes(), "\n"), nil
+}
+
 // fixSelectFields recovers or drops entries in spec.selectedFields that never got
 // mapped from the legacy key/dataType/type shape to the current
 // name/fieldContext/fieldDataType shape. Entries that still carry a legacy key are
@@ -165,7 +181,7 @@ func fixSelectFields(data string) (fixed string, changed bool, ok bool) {
 			fixedFields = append(fixedFields, rawField)
 		case field.Key != "":
 			// legacy shape -- recover by renaming the fields.
-			recoveredJSON, err := json.Marshal(telemetryFieldKeyOutput{
+			recoveredJSON, err := marshalUnescaped(telemetryFieldKeyOutput{
 				Name:          field.Key,
 				FieldContext:  fieldContextFromLegacyType(field.Type),
 				FieldDataType: fieldDataTypeFromLegacyDataType(field.DataType),
@@ -185,19 +201,19 @@ func fixSelectFields(data string) (fixed string, changed bool, ok bool) {
 		return "", false, true
 	}
 
-	fixedFieldsJSON, err := json.Marshal(fixedFields)
+	fixedFieldsJSON, err := marshalUnescaped(fixedFields)
 	if err != nil {
 		return "", false, false
 	}
 	spec["selectedFields"] = fixedFieldsJSON
 
-	fixedSpec, err := json.Marshal(spec)
+	fixedSpec, err := marshalUnescaped(spec)
 	if err != nil {
 		return "", false, false
 	}
 	raw["spec"] = fixedSpec
 
-	fixedData, err := json.Marshal(raw)
+	fixedData, err := marshalUnescaped(raw)
 	if err != nil {
 		return "", false, false
 	}
