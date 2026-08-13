@@ -5,13 +5,7 @@ import set from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { mockUseAuthZGrantAll } from 'lib/authz/utils/authz-test-utils';
-import {
-	fireEvent,
-	render,
-	screen,
-	userEvent,
-	waitFor,
-} from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 jest.mock('@monaco-editor/react', () => ({
 	__esModule: true,
@@ -138,11 +132,11 @@ describe('TestTab — sample-span flow', () => {
 		await user.click(screen.getByRole('tab', { name: 'Test' }));
 		await screen.findByTestId('run-test-button');
 
-		expect(screen.getByTestId('monaco')).toHaveValue(SAMPLE_SPAN_JSON);
+		const editor = screen.getByTestId('monaco');
+		expect(editor).toHaveValue(SAMPLE_SPAN_JSON);
 
-		fireEvent.change(screen.getByTestId('monaco'), {
-			target: { value: EDITED_SPAN_JSON },
-		});
+		await user.clear(editor);
+		await user.paste(EDITED_SPAN_JSON);
 
 		await waitFor(() => expect(get(SPAN_INPUT_KEY)).toBe(EDITED_SPAN_JSON), {
 			timeout: 2000,
