@@ -365,19 +365,12 @@ def test_create_with_roles_requires_attach(
     )
     assert resp.status_code == HTTPStatus.FORBIDDEN, f"create with role outside attach grant: expected 403, got {resp.status_code}: {resp.text}"
 
-    resp = requests.get(signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{actor_id}"), headers={"Authorization": f"Bearer {admin_token}"}, timeout=5)
-    assert resp.status_code == HTTPStatus.OK, resp.text
-    custom_entry = next((ur for ur in resp.json()["data"]["userRoles"] if ur["role"]["name"] == _CREATE_ROLE_NAME), None)
-    if custom_entry is not None:
-        resp = requests.delete(signoz.self.host_configs["8080"].get(f"/api/v2/user_roles/{custom_entry['id']}"), headers={"Authorization": f"Bearer {admin_token}"}, timeout=5)
-        assert resp.status_code == HTTPStatus.NO_CONTENT, f"detach actor role: {resp.text}"
-
-    resp = requests.delete(signoz.self.host_configs["8080"].get(f"/api/v1/roles/{role_id}"), headers={"Authorization": f"Bearer {admin_token}"}, timeout=5)
-    assert resp.status_code == HTTPStatus.NO_CONTENT, resp.text
-
     for user_id in (noroles_id, granted_id, actor_id):
         resp = requests.delete(signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{user_id}"), headers={"Authorization": f"Bearer {admin_token}"}, timeout=5)
         assert resp.status_code == HTTPStatus.NO_CONTENT, f"delete {user_id}: {resp.text}"
+
+    resp = requests.delete(signoz.self.host_configs["8080"].get(f"/api/v1/roles/{role_id}"), headers={"Authorization": f"Bearer {admin_token}"}, timeout=5)
+    assert resp.status_code == HTTPStatus.NO_CONTENT, resp.text
 
 
 def test_cleanup(
