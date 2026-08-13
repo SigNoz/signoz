@@ -106,6 +106,7 @@ export enum ChannelType {
 	MsTeams = 'msteams',
 	GoogleChat = 'googlechat',
 	Jira = 'jira',
+	JsmOps = 'jsmops',
 }
 
 // LabelFilterStatement will be used for preparing filter conditions / matchers
@@ -156,4 +157,18 @@ export interface JiraChannel extends Channel {
 	reopen_transition?: string;
 	// duration string, e.g. 72h or 3d
 	reopen_duration?: string;
+}
+
+// JsmOpsChannel configures the Jira Service Management Ops alert channel
+// (ex-Opsgenie alert API). Auth is the JSM integration API key.
+export interface JsmOpsChannel extends Channel {
+	api_key?: string;
+	// alert title template
+	message?: string;
+	// alert body template (markdown, rendered to HTML server-side)
+	description?: string;
+	// priority template, resolves to P1-P5
+	priority?: string;
+	// comma-separated tags
+	tags?: string;
 }

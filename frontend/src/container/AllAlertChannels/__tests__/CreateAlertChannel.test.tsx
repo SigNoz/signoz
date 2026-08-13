@@ -3,6 +3,7 @@ import { ChannelType } from 'container/CreateAlertChannels/config';
 import {
 	GoogleChatInitialConfig,
 	JiraInitialConfig,
+	JsmOpsInitialConfig,
 } from 'container/CreateAlertChannels/defaults';
 import {
 	googleChatDescriptionDefaultValue,
@@ -648,6 +649,92 @@ describe('Create Alert Channel', () => {
 						description: 'jira_reopen_duration_invalid',
 					}),
 				);
+			});
+		});
+		describe('JSM Ops', () => {
+			beforeEach(() => {
+				render(<CreateAlertChannels preType={ChannelType.JsmOps} />);
+			});
+
+			it('Should show "Jira Service Management Ops" as the selected type', () => {
+				expect(screen.getByText('Jira Service Management Ops')).toBeInTheDocument();
+			});
+
+			it('Should display the API key field properly', () => {
+				testLabelInputAndHelpValue({
+					labelText: 'field_jsmops_api_key',
+					testId: 'jsmops-api-key-textbox',
+				});
+			});
+
+			it('Should show the tip linking to the JSM Ops docs', () => {
+				expect(screen.getByTestId('jsmops-tip')).toBeInTheDocument();
+				expect(
+					screen.getByRole('link', { name: 'jsmops_tip_link' }),
+				).toHaveAttribute(
+					'href',
+					'https://signoz.io/docs/alerts-management/notification-channel/jsm-ops/',
+				);
+			});
+
+			it('Should block save when the API key is missing', async () => {
+				const user = userEvent.setup();
+				await user.type(
+					screen.getByTestId('channel-name-textbox'),
+					'jsmops-channel',
+				);
+
+				await user.click(screen.getByTestId('save-channel-button'));
+
+				await waitFor(() =>
+					expect(errorNotification).toHaveBeenCalledWith({
+						message: 'Error',
+						description: 'api_key_required',
+					}),
+				);
+			});
+
+			it('Should send a jsmops_configs payload with prefilled defaults', async () => {
+				let requestBody: unknown;
+				server.use(
+					rest.post('http://localhost/api/v1/channels', async (req, res, ctx) => {
+						requestBody = await req.json();
+						return res(
+							ctx.status(201),
+							ctx.json({ status: 'success', data: 'channel created' }),
+						);
+					}),
+				);
+
+				const user = userEvent.setup();
+				await user.type(
+					screen.getByTestId('channel-name-textbox'),
+					'jsmops-channel',
+				);
+				await user.type(screen.getByTestId('jsmops-api-key-textbox'), 'key-abc');
+
+				await user.click(screen.getByTestId('save-channel-button'));
+
+				await waitFor(() =>
+					expect(successNotification).toHaveBeenCalledWith({
+						message: 'Success',
+						description: 'channel_creation_done',
+					}),
+				);
+
+				expect(requestBody).toStrictEqual({
+					name: 'jsmops-channel',
+					jsmops_configs: [
+						{
+							api_key: 'key-abc',
+							send_resolved: true,
+							message: JsmOpsInitialConfig.message,
+							description: JsmOpsInitialConfig.description,
+							priority: JsmOpsInitialConfig.priority,
+							tags: JsmOpsInitialConfig.tags,
+						},
+					],
+				});
 			});
 		});
 		describe('Changing the channel type', () => {

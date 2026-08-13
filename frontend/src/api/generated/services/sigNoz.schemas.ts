@@ -385,6 +385,34 @@ export interface AlertmanagertypesGoogleChatReceiverConfigDTO {
 	webhook_url?: ConfigSecretURLDTO;
 }
 
+export interface AlertmanagertypesJSMOpsReceiverConfigDTO {
+	/**
+	 * @type string
+	 */
+	api_key?: string;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	http_config?: ConfigHTTPClientConfigDTO;
+	/**
+	 * @type string
+	 */
+	message?: string;
+	/**
+	 * @type string
+	 */
+	priority?: string;
+	/**
+	 * @type boolean
+	 */
+	send_resolved?: boolean;
+	/**
+	 * @type string
+	 */
+	tags?: string;
+}
+
 export type AlertmanagertypesJiraReceiverConfigDTOCustomFields = {
 	[key: string]: unknown;
 };
@@ -1656,6 +1684,10 @@ export type AlertmanagertypesPostableChannelDTO = unknown & {
 	/**
 	 * @type array
 	 */
+	jsmops_configs?: AlertmanagertypesJSMOpsReceiverConfigDTO[];
+	/**
+	 * @type array
+	 */
 	mattermost_configs?: ConfigMattermostConfigDTO[];
 	/**
 	 * @type array
@@ -1780,6 +1812,10 @@ export interface AlertmanagertypesReceiverDTO {
 	 * @type array
 	 */
 	jira_configs?: AlertmanagertypesJiraReceiverConfigDTO[];
+	/**
+	 * @type array
+	 */
+	jsmops_configs?: AlertmanagertypesJSMOpsReceiverConfigDTO[];
 	/**
 	 * @type array
 	 */

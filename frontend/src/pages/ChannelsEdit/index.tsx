@@ -12,6 +12,7 @@ import {
 	ChannelType,
 	GoogleChatChannel,
 	JiraChannel,
+	JsmOpsChannel,
 	MsTeamsChannel,
 	PagerChannel,
 	SlackChannel,
@@ -66,14 +67,16 @@ function ChannelsEdit(): JSX.Element {
 			PagerChannel &
 			MsTeamsChannel &
 			GoogleChatChannel &
-			JiraChannel;
+			JiraChannel &
+			JsmOpsChannel;
 	} => {
 		let channel: SlackChannel &
 			WebhookChannel &
 			PagerChannel &
 			MsTeamsChannel &
 			GoogleChatChannel &
-			JiraChannel = {
+			JiraChannel &
+			JsmOpsChannel = {
 			name: '',
 		};
 
@@ -124,6 +127,15 @@ function ChannelsEdit(): JSX.Element {
 			channel.detailsArray = { ...pagerConfig.details };
 			return {
 				type: ChannelType.Pagerduty,
+				channel,
+			};
+		}
+
+		if (value && 'jsmops_configs' in value) {
+			const [jsmopsConfig] = value.jsmops_configs;
+			channel = jsmopsConfig;
+			return {
+				type: ChannelType.JsmOps,
 				channel,
 			};
 		}

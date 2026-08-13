@@ -3,6 +3,7 @@ import {
 	EmailChannel,
 	GoogleChatChannel,
 	JiraChannel,
+	JsmOpsChannel,
 	MsTeamsChannel,
 	OpsgenieChannel,
 	PagerChannel,
@@ -114,6 +115,24 @@ export const OpsgenieInitialConfig: Partial<OpsgenieChannel> = {
 	{{- end }}`,
 	priority:
 		'{{ if eq (index .Alerts 0).Labels.severity "critical" }}P1{{ else if eq (index .Alerts 0).Labels.severity "warning" }}P2{{ else if eq (index .Alerts 0).Labels.severity "info" }}P3{{ else }}P4{{ end }}',
+};
+
+// mirrors DefaultJSMOpsMessageTemplate / DefaultJSMOpsDescriptionTemplate in
+// pkg/types/alertmanagertypes/jsmops.go, applied by the backend when message /
+// description are left empty. send_resolved is seeded on so JSM alerts close on
+// resolve (the backend cannot default it, see jsmops.go). priority mirrors the
+// Opsgenie template mapping severity to P1-P5.
+export const JsmOpsInitialConfig: Partial<JsmOpsChannel> = {
+	send_resolved: true,
+	message: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`,
+	description: `{{ range .Alerts -}}
+**Alert:** {{ .Labels.alertname }}{{ if .Labels.severity }} ({{ .Labels.severity }}){{ end }}{{ if .Annotations.summary }}
+**Summary:** {{ .Annotations.summary }}{{ end }}{{ if .Annotations.description }}
+**Description:** {{ .Annotations.description }}{{ end }}
+{{ end }}`,
+	priority:
+		'{{ if eq (index .Alerts 0).Labels.severity "critical" }}P1{{ else if eq (index .Alerts 0).Labels.severity "warning" }}P2{{ else if eq (index .Alerts 0).Labels.severity "info" }}P3{{ else }}P4{{ end }}',
+	tags: 'signoz',
 };
 
 export const EmailInitialConfig: Partial<EmailChannel> = {
@@ -524,13 +543,15 @@ export const ChannelInitialConfig: Record<
 			OpsgenieChannel &
 			EmailChannel &
 			GoogleChatChannel &
-			JiraChannel
+			JiraChannel &
+			JsmOpsChannel
 	>
 > = {
 	[ChannelType.Slack]: SlackInitialConfig,
 	[ChannelType.MsTeams]: SlackInitialConfig,
 	[ChannelType.GoogleChat]: GoogleChatInitialConfig,
 	[ChannelType.Jira]: JiraInitialConfig,
+	[ChannelType.JsmOps]: JsmOpsInitialConfig,
 	[ChannelType.Pagerduty]: PagerInitialConfig,
 	[ChannelType.Opsgenie]: OpsgenieInitialConfig,
 	[ChannelType.Email]: EmailInitialConfig,

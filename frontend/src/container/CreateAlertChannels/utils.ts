@@ -1,11 +1,17 @@
 import {
 	AlertmanagertypesJiraReceiverConfigDTO,
+	AlertmanagertypesJSMOpsReceiverConfigDTO,
 	AlertmanagertypesPostableChannelDTO,
 	ConfigSecretURLDTO,
 	ModelDurationDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
-import { ChannelType, GoogleChatChannel, JiraChannel } from './config';
+import {
+	ChannelType,
+	GoogleChatChannel,
+	JiraChannel,
+	JsmOpsChannel,
+} from './config';
 
 export const isChannelType = (type: string): type is ChannelType =>
 	Object.values(ChannelType).includes(type as ChannelType);
@@ -130,5 +136,34 @@ export const prepareJiraRequest = (
 	return {
 		name: config.name || '',
 		jira_configs: [jira],
+	};
+};
+
+// create, update and test all send the same body shape. Optional fields are
+// omitted when empty so the backend applies its defaults.
+export const prepareJsmOpsRequest = (
+	config: Partial<JsmOpsChannel>,
+): AlertmanagertypesPostableChannelDTO => {
+	const jsmops: AlertmanagertypesJSMOpsReceiverConfigDTO = {
+		api_key: config.api_key || '',
+		send_resolved: config.send_resolved || false,
+	};
+
+	if (config.message) {
+		jsmops.message = config.message;
+	}
+	if (config.description) {
+		jsmops.description = config.description;
+	}
+	if (config.priority) {
+		jsmops.priority = config.priority;
+	}
+	if (config.tags) {
+		jsmops.tags = config.tags;
+	}
+
+	return {
+		name: config.name || '',
+		jsmops_configs: [jsmops],
 	};
 };
