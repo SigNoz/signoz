@@ -46,6 +46,9 @@ type Notifier struct {
 	client    *http.Client
 	retrier   *notify.Retrier
 	templater alertmanagertypes.Templater
+	// renderDefaultBodyAsHTML renders the default body template as HTML (markdown
+	// -> HTML) like a custom body, instead of OpsGenie's plain-text join.
+	renderDefaultBodyAsHTML bool
 }
 
 // New returns a new OpsGenie notifier.
@@ -62,6 +65,18 @@ func New(c *config.OpsGenieConfig, t *template.Template, l *slog.Logger, templat
 		retrier:   &notify.Retrier{RetryCodes: []int{http.StatusTooManyRequests}},
 		templater: templater,
 	}, nil
+}
+
+// NewWithHTMLBody returns an OpsGenie notifier that renders the default body
+// template as HTML (markdown -> HTML) instead of plain text. Used by JSM Ops,
+// whose alert descriptions render an HTML subset just like a custom body.
+func NewWithHTMLBody(c *config.OpsGenieConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
+	n, err := New(c, t, l, templater, httpOpts...)
+	if err != nil {
+		return nil, err
+	}
+	n.renderDefaultBodyAsHTML = true
+	return n, nil
 }
 
 type opsGenieCreateMessage struct {
@@ -148,7 +163,7 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) (s
 	}
 
 	var description string
-	if result.IsDefaultBody {
+	if result.IsDefaultBody && !n.renderDefaultBodyAsHTML {
 		description = strings.Join(result.Body, "\n")
 	} else {
 		var b strings.Builder
