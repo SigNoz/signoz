@@ -10,9 +10,13 @@ from fixtures.auth import (
     USER_EDITOR_EMAIL,
     USER_EDITOR_PASSWORD,
     assert_user_has_role,
+    create_active_user,
     find_user_by_email,
     find_user_with_roles_by_email,
 )
+
+_SELF_DELETE_ADMIN_EMAIL = "passwordauthn+selfdelete@integration.test"
+_SELF_DELETE_ADMIN_PASSWORD = "password123Z$"
 
 
 def test_list_users(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
@@ -185,3 +189,88 @@ def test_editor_cannot_update_other_user(signoz: types.SigNoz, get_token: Callab
         timeout=5,
     )
     assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+def test_editor_cannot_create_user(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
+    """Verify non-admin cannot call POST /api/v2/users."""
+    editor_token = get_token(USER_EDITOR_EMAIL, USER_EDITOR_PASSWORD)
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v2/users"),
+        json={"email": "passwordauthn+nope@integration.test", "displayName": "nope"},
+        headers={"Authorization": f"Bearer {editor_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+def test_editor_cannot_delete_user(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
+    """Verify non-admin cannot call DELETE /api/v2/users/{other_id}."""
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    editor_token = get_token(USER_EDITOR_EMAIL, USER_EDITOR_PASSWORD)
+    admin_id = find_user_by_email(signoz, admin_token, USER_ADMIN_EMAIL)["id"]
+
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{admin_id}"),
+        headers={"Authorization": f"Bearer {editor_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+def test_editor_cannot_manage_reset_password_tokens(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
+    """Verify non-admin cannot GET or PUT /api/v2/users/{id}/reset_password_tokens."""
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    editor_token = get_token(USER_EDITOR_EMAIL, USER_EDITOR_PASSWORD)
+    editor_id = find_user_by_email(signoz, admin_token, USER_EDITOR_EMAIL)["id"]
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{editor_id}/reset_password_tokens"),
+        headers={"Authorization": f"Bearer {editor_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{editor_id}/reset_password_tokens"),
+        headers={"Authorization": f"Bearer {editor_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN
+
+
+def test_self_delete_allowed_for_non_root(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
+    """Verify a non-root admin can delete their own account, but the root user cannot."""
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    second_admin_id = create_active_user(
+        signoz,
+        admin_token,
+        email=_SELF_DELETE_ADMIN_EMAIL,
+        role="signoz-admin",
+        password=_SELF_DELETE_ADMIN_PASSWORD,
+        name="passwordauthn self delete",
+    )
+    second_admin_token = get_token(_SELF_DELETE_ADMIN_EMAIL, _SELF_DELETE_ADMIN_PASSWORD)
+
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{second_admin_id}"),
+        headers={"Authorization": f"Bearer {second_admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/users/me"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK
+    root_id = response.json()["data"]["id"]
+
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{root_id}"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NOT_IMPLEMENTED, response.text
