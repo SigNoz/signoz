@@ -96,10 +96,7 @@ function ListView({
 		[stagedQuery, orderBy],
 	);
 
-	// TEMP — remove after traces moves to TanStack table.
-	// - Drag updates selectColumns; raw queryKey would churn on reorder.
-	// - Trace API fetches only listed columns → add/remove must refetch.
-	// - Sorted-name signature: stable on reorder, changes on add/remove.
+	// TEMP till traces uses TanStack: stable on reorder, changes on add/remove.
 	const selectColumnsSignature = useMemo(
 		() =>
 			(options?.selectColumns ?? [])

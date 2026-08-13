@@ -1,16 +1,7 @@
-/**
- * A table row: the span's flattened attributes. Which keys are present depends
- * on the query and the selected columns, so every field access has to tolerate
- * `undefined` — including the skeleton placeholder rows the table renders
- * before the first response lands.
- */
+/** Span attributes, flattened. Every field access must tolerate undefined. */
 export type TraceListRow = Record<string, unknown>;
 
-/**
- * Renders a dynamic row value as text. Values are whatever the span carried, so
- * objects (a JSON body, say) are serialised rather than left to stringify to
- * `[object Object]`.
- */
+/** Renders a row value as text; objects are JSON-serialised. */
 export const formatCellValue = (value: unknown): string => {
 	if (typeof value === 'string') {
 		return value;

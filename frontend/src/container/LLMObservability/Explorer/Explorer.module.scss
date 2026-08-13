@@ -41,8 +41,7 @@
 
 .views {
 	padding: var(--spacing-4);
-	// Room the traces explorer reserves for its floating options bar, which this
-	// explorer doesn't render yet. No spacing token for 60px.
+	// Room for the floating options bar this explorer doesn't render yet.
 	padding-bottom: 60px;
 	margin-bottom: var(--spacing-12);
 

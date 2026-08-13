@@ -7,10 +7,7 @@ import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 
 import { formatCellValue, TraceListRow } from '../tableUtils';
 
-/**
- * Root-span columns. Fixed set — unlike the list view there are no user-selected
- * columns here, so nothing can be removed (there'd be no preference to sync to).
- */
+/** Fixed root-span columns — no user selection, so nothing can be removed. */
 export const columns: TableColumnDef<TraceListRow>[] = [
 	{
 		id: 'serviceName',

@@ -18,8 +18,7 @@ jest.mock('pages/DashboardPageV2/DashboardContainer', () => ({
 	default: (): JSX.Element => <div data-testid="llm-overview-dashboard" />,
 }));
 
-// Same for the Explorer tab, which renders a full query-builder surface
-// (toolbar + date picker).
+// Same for the Explorer tab, which renders a full query-builder surface.
 jest.mock('container/LLMObservability/Explorer/Explorer', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="llm-observability-explorer" />,

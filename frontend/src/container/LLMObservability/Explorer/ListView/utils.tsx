@@ -18,10 +18,7 @@ export const getTraceLink = (record: TraceListRow): string =>
 		},
 	)}`;
 
-/**
- * Row identity for the table. Spans are unique per row; the trace id is the
- * fallback for root-only rows.
- */
+/** Row identity: span id per row, trace id as the root-only fallback. */
 export const getTraceRowKey = (record: TraceListRow): string =>
 	formatCellValue(
 		record?.spanID ?? record?.span_id ?? record?.traceID ?? record?.trace_id,
