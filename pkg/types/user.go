@@ -25,6 +25,7 @@ var (
 	ErrCodeUserStatusDeleted            = errors.MustNewCode("user_status_deleted")
 	ErrCodeUserStatusPendingInvite      = errors.MustNewCode("user_status_pending_invite")
 	ErrCodeUserStatusNotPendingInvite   = errors.MustNewCode("user_status_not_pending_invite")
+	ErrCodeUserDeprecated               = errors.MustNewCode("user_deprecated")
 )
 
 var (
@@ -46,17 +47,8 @@ type User struct {
 	TimeAuditable
 }
 
-type DeprecatedUser struct {
-	*User
-	Role Role `json:"role"`
-}
-
 type UpdatableUser struct {
 	DisplayName string `json:"displayName" required:"true"`
-}
-
-type PostableRole struct {
-	Name string `json:"name" required:"true"`
 }
 
 type PostableRegisterOrgAndAdmin struct {
@@ -119,13 +111,6 @@ func NewRootUser(displayName string, email valuer.Email, orgID valuer.UUID) (*Us
 			UpdatedAt: time.Now(),
 		},
 	}, nil
-}
-
-func NewDeprecatedUserFromUserAndRole(user *User, role Role) *DeprecatedUser {
-	return &DeprecatedUser{
-		user,
-		role,
-	}
 }
 
 // Update applies mutable fields from the input to the user. Immutable fields
