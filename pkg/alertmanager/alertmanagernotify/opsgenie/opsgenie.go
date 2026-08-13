@@ -32,8 +32,11 @@ const (
 	Integration = "opsgenie"
 )
 
-// https://docs.opsgenie.com/docs/alert-api - 130 characters meaning runes.
-const maxMessageLenRunes = 130
+// https://docs.opsgenie.com/docs/alert-api - message 130, description 15000 runes.
+const (
+	maxMessageLenRunes     = 130
+	maxDescriptionLenRunes = 15000
+)
 
 // Notifier implements a Notifier for OpsGenie notifications.
 type Notifier struct {
@@ -172,6 +175,13 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) (s
 	title, truncated := notify.TruncateInRunes(result.Title, maxMessageLenRunes)
 	if truncated {
 		n.logger.WarnContext(ctx, "Truncated message", slog.Int("max_runes", maxMessageLenRunes))
+	}
+
+	// The API silently truncates over-limit descriptions, which would drop the
+	// trailing SigNoz link; cap here with an ellipsis instead.
+	description, descTruncated := notify.TruncateInRunes(description, maxDescriptionLenRunes)
+	if descTruncated {
+		n.logger.WarnContext(ctx, "Truncated description", slog.Int("max_runes", maxDescriptionLenRunes))
 	}
 
 	return title, description, nil
