@@ -26,20 +26,43 @@ class ProviderAccountSpec:
     provider: str
     # params for the account created by default.
     initial_params: dict
-    # params for the config an update (PUT) test sends.
-    updated_params: dict
     # params -> the provider-keyed `config` block for a POST/PUT body.
     build_config: Callable[[dict], dict]
     # params -> the full config block the API is expected to return under
     # config[provider] on GET/list. This may differ from what build_config sends:
     # e.g. AWS accepts deploymentRegion on POST but the API does not echo it back.
     expected_config: Callable[[dict], dict]
+    # only the suites that exercise updates need to supply it.
+    updated_params: dict = field(default_factory=dict)
     # id shown in parametrized test names; defaults to the provider slug.
     id: str = field(default="")
 
     def __post_init__(self) -> None:
         if not self.id:
             object.__setattr__(self, "id", self.provider)
+
+
+# Per-provider service shape.
+@dataclass(frozen=True)
+class ProviderServiceSpec:
+    provider: str
+    service_id: str
+    # GCP ships every service with supportedSignals.logs false, so a logs block
+    # is neither required on write nor persisted.
+    supports_logs: bool
+    account_config: dict
+    # id shown in parametrized test names; defaults to the provider slug.
+    id: str = field(default="")
+
+    def __post_init__(self) -> None:
+        if not self.id:
+            object.__setattr__(self, "id", self.provider)
+
+    def build_service_config(self, metrics_enabled: bool, logs_enabled: bool | None = None) -> dict:
+        config: dict = {"metrics": {"enabled": metrics_enabled}}
+        if self.supports_logs:
+            config["logs"] = {"enabled": metrics_enabled if logs_enabled is None else logs_enabled}
+        return {self.provider: config}
 
 
 @pytest.fixture(scope="function")

@@ -800,26 +800,36 @@ export const podUtilizationByPodWidgetInfo = [
 		title: 'CPU Limit Utilization By Pod Name',
 		yAxisUnit: 'percentunit',
 		docPath: '#cpu-limit-utilization-by-pod-name',
+		description:
+			'CPU usage against the CPU limit for each pod; near 100% means the kernel is throttling that pod.',
 	},
 	{
 		title: 'CPU Request Utilization By Pod Name',
 		yAxisUnit: 'percentunit',
 		docPath: '#cpu-request-utilization-by-pod-name',
+		description:
+			'CPU usage against the CPU request for each pod; above 100% means the pod uses more than it reserved.',
 	},
 	{
 		title: 'Memory Limit Utilization By Pod Name',
 		yAxisUnit: 'percentunit',
 		docPath: '#memory-limit-utilization-by-pod-name',
+		description:
+			'Memory usage against the memory limit for each pod; near 100% means that pod is close to an OOMKill.',
 	},
 	{
 		title: 'Memory Request Utilization By Pod Name',
 		yAxisUnit: 'percentunit',
 		docPath: '#memory-request-utilization-by-pod-name',
+		description:
+			'Memory usage against the memory request for each pod; above 100% means the pod exceeds its reservation.',
 	},
 	{
 		title: 'FileSystem Usage Percentage By Pod Name',
 		yAxisUnit: 'percentunit',
 		docPath: '#filesystem-usage-percentage-by-pod-name',
+		description:
+			'Local and ephemeral filesystem fill level as a percentage of capacity for each pod.',
 	},
 ];
 

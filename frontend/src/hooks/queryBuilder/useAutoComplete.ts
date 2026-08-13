@@ -27,7 +27,6 @@ export type WhereClauseConfig = {
 
 export const useAutoComplete = (
 	query: IBuilderQuery,
-	dotMetricsEnabled: boolean,
 	whereClauseConfig?: WhereClauseConfig,
 	shouldUseSuggestions?: boolean,
 	isInfraMonitoring?: boolean,
@@ -40,7 +39,6 @@ export const useAutoComplete = (
 	const { keys, results, isFetching, exampleQueries } = useFetchKeysAndValues(
 		searchValue,
 		query,
-		dotMetricsEnabled,
 		searchKey,
 		shouldUseSuggestions,
 		isInfraMonitoring,

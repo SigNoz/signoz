@@ -1279,6 +1279,41 @@ export function getQueryContextAtCursor(
 	}
 }
 
+// The grammar skips whitespace outright, so hidden-channel tokens do not reach the
+// stream today -- but the rest of this file guards against them, so keep the
+// assumption in one place rather than spread across callers.
+function nextVisibleIndex(tokens: IToken[], start: number): number {
+	let index = start;
+	while (index < tokens.length && tokens[index].channel !== 0) {
+		index += 1;
+	}
+	return index;
+}
+
+// Returns the token index just past the parenthesised argument list at
+// argumentStart, or argumentStart when none follows (a call the user is still
+// typing). An unclosed list consumes the remainder.
+function indexPastArguments(tokens: IToken[], argumentStart: number): number {
+	let index = nextVisibleIndex(tokens, argumentStart);
+	if (index >= tokens.length || tokens[index].type !== FilterQueryLexer.LPAREN) {
+		return argumentStart;
+	}
+
+	let depth = 0;
+	for (; index < tokens.length; index++) {
+		if (tokens[index].type === FilterQueryLexer.LPAREN) {
+			depth += 1;
+		} else if (tokens[index].type === FilterQueryLexer.RPAREN) {
+			depth -= 1;
+			if (depth === 0) {
+				return index + 1;
+			}
+		}
+	}
+
+	return index;
+}
+
 /**
  * Extracts all key-operator-value triplets from a query string
  * This is useful for getting value suggestions based on the current key and operator
@@ -1321,6 +1356,14 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 
 			// Skip EOF and whitespace tokens
 			if (token.type === FilterQueryLexer.EOF || token.channel !== 0) {
+				continue;
+			}
+
+			// A search() term is free text, not a key: the bare form search(x) lexes
+			// as one, and left in it surfaces as a phantom filter item -- the log
+			// detail drawer rebuilds its filters from these pairs.
+			if (token.type === FilterQueryLexer.SEARCH) {
+				iterator = indexPastArguments(allTokens, iterator);
 				continue;
 			}
 

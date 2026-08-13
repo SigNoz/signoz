@@ -624,24 +624,12 @@ def _ensure_groups_client_scope(client: KeycloakAdmin) -> None:
 
 def get_oidc_domain(signoz: types.SigNoz, admin_token: str) -> dict:
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
     return next(
         (domain for domain in response.json()["data"] if domain["name"] == "oidc.integration.test"),
-        None,
-    )
-
-
-def get_user_by_email(signoz: types.SigNoz, admin_token: str, email: str) -> dict:
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user"),
-        timeout=2,
-        headers={"Authorization": f"Bearer {admin_token}"},
-    )
-    return next(
-        (user for user in response.json()["data"] if user["email"] == email),
         None,
     )
 
@@ -665,7 +653,7 @@ def perform_oidc_login(
 
 def get_saml_domain(signoz: types.SigNoz, admin_token: str) -> dict:
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )

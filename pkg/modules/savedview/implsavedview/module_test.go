@@ -28,24 +28,23 @@ func newTestStore() (savedview.Module, *savedviewtypestest.StoreTest) {
 
 func testPostableSavedView(name string, source savedviewtypes.Source) savedviewtypes.PostableSavedView {
 	return savedviewtypes.PostableSavedView{
-		Name:   name,
-		Source: source,
-		Data: savedviewtypes.SavedViewData{
-			SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
-			Spec: savedviewtypes.SavedViewSpec{
-				DisplayName: name,
-				PanelType:   savedviewtypes.PanelTypeGraph,
-				Queries: []qbtypes.QueryEnvelope{
-					{
-						Type: qbtypes.QueryTypeBuilder,
-						Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
-							Signal:       telemetrytypes.SignalLogs,
-							Aggregations: []qbtypes.LogAggregation{{Expression: "count()"}},
-						},
+		Name:          name,
+		Source:        source,
+		SchemaVersion: savedviewtypes.SavedViewSchemaVersion,
+		Spec: savedviewtypes.SavedViewSpec{
+			DisplayName: name,
+			PanelType:   savedviewtypes.PanelTypeGraph,
+			RequestType: qbtypes.RequestTypeTimeSeries,
+			Queries: []qbtypes.QueryEnvelope{
+				{
+					Type: qbtypes.QueryTypeBuilder,
+					Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+						Signal:       telemetrytypes.SignalLogs,
+						Aggregations: []qbtypes.LogAggregation{{Expression: "count()"}},
 					},
 				},
-				SelectedFields: []telemetrytypes.TelemetryFieldKey{},
 			},
+			SelectedFields: []telemetrytypes.TelemetryFieldKey{},
 		},
 	}
 }
@@ -53,8 +52,9 @@ func testPostableSavedView(name string, source savedviewtypes.Source) savedviewt
 func testUpdatableSavedView(displayName string, source savedviewtypes.Source) savedviewtypes.UpdatableSavedView {
 	postable := testPostableSavedView(displayName, source)
 	return savedviewtypes.UpdatableSavedView{
-		Source: postable.Source,
-		Data:   postable.Data,
+		Source:        postable.Source,
+		SchemaVersion: postable.SchemaVersion,
+		Spec:          postable.Spec,
 	}
 }
 
@@ -93,7 +93,22 @@ func TestModule_CreateAndGetView(t *testing.T) {
 	assert.Equal(t, savedviewtypes.SourceLogs, got.Source)
 	assert.Equal(t, "creator@signoz.io", got.CreatedBy)
 	assert.Equal(t, "creator@signoz.io", got.UpdatedBy)
-	assert.Equal(t, savedviewtypes.PanelTypeGraph, got.Data.Spec.PanelType)
+	assert.Equal(t, savedviewtypes.PanelTypeGraph, got.Spec.PanelType)
+
+	require.NoError(t, st.AssertExpectations())
+}
+
+// A duplicate-name insert failure must surface as errors.TypeAlreadyExists, not a generic internal error.
+func TestModule_CreateView_DuplicateNameIsConflict(t *testing.T) {
+	m, st := newTestStore()
+
+	orgID := valuer.GenerateUUID().StringValue()
+	ctx := contextWithClaims(orgID, "creator@signoz.io")
+
+	st.ExpectCreateError(errors.Newf(errors.TypeInternal, errors.CodeInternal, "UNIQUE constraint failed: saved_view.org_id, saved_view.name"))
+	_, err := m.CreateView(ctx, orgID, testPostableSavedView("same-name", savedviewtypes.SourceLogs))
+	require.Error(t, err)
+	assert.True(t, errors.Ast(err, errors.TypeAlreadyExists), "expected an already-exists error, got %v", err)
 
 	require.NoError(t, st.AssertExpectations())
 }
@@ -138,21 +153,21 @@ func TestModule_UpdateView(t *testing.T) {
 	existingName := existing.Name
 
 	updated := testUpdatableSavedView("renamed", savedviewtypes.SourceTraces)
-	updated.Data.Spec.PanelType = savedviewtypes.PanelTypeTable
+	updated.Spec.PanelType = savedviewtypes.PanelTypeTable
 
 	st.ExpectUpdate(orgID, id, 1)
 	require.NoError(t, m.UpdateView(contextWithClaims(orgID, "updater@signoz.io"), orgID, id, updated))
 
 	stored := testSavedView(orgID, id, "updater@signoz.io", testPostableSavedView("renamed", savedviewtypes.SourceTraces))
 	stored.Name = existingName
-	stored.Data.Spec.PanelType = savedviewtypes.PanelTypeTable
+	stored.Spec.PanelType = savedviewtypes.PanelTypeTable
 	st.ExpectGet(orgID, id, stored)
 	got, err := m.GetView(contextWithClaims(orgID, "creator@signoz.io"), orgID, id)
 	require.NoError(t, err)
 	assert.Equal(t, existingName, got.Name, "name must not change on update")
-	assert.Equal(t, "renamed", got.Data.Spec.DisplayName)
+	assert.Equal(t, "renamed", got.Spec.DisplayName)
 	assert.Equal(t, savedviewtypes.SourceTraces, got.Source)
-	assert.Equal(t, savedviewtypes.PanelTypeTable, got.Data.Spec.PanelType)
+	assert.Equal(t, savedviewtypes.PanelTypeTable, got.Spec.PanelType)
 	assert.Equal(t, "updater@signoz.io", got.UpdatedBy)
 
 	require.NoError(t, st.AssertExpectations())

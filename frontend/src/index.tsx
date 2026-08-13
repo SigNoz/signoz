@@ -13,11 +13,13 @@ import { AppProvider } from 'providers/App/App';
 import TimezoneProvider from 'providers/Timezone';
 import store from 'store';
 import APIError from 'types/api/error';
+import { installTranslationResilience } from 'translation-resilience';
 
 import './ReactI18';
 
 import 'styles.scss';
 
+installTranslationResilience();
 configureOverlayScrollbars();
 
 const queryClient = new QueryClient({

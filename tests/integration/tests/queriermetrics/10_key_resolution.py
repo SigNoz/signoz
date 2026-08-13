@@ -257,3 +257,46 @@ def test_metrics_full_text_filter_does_not_error(
         # the term matches no series, and metrics emits no key-not-found warning.
         assert querier.get_scalar_table_data(response.json()) == [], f"{expr}: {response.json()}"
         assert querier.get_all_warnings(response.json()) == [], f"{expr}: {querier.get_all_warnings(response.json())}"
+
+
+def test_metrics_group_by_label_named_value(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[list[Metrics]], None],
+) -> None:
+    """A label may be named after a column the query builds for itself. Grouping by a label
+    named `value` must alias it apart from the `value` the aggregation produces — selecting
+    both under that one name is rejected by ClickHouse."""
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    insert_metrics(
+        [
+            Metrics(
+                metric_name=METRIC,
+                labels={"value": tier},
+                timestamp=now - timedelta(seconds=1),
+                temporality="Unspecified",
+                type_="Gauge",
+                is_monotonic=False,
+                value=value,
+            )
+            for tier, value in [("high", 30.0), ("low", 10.0)]
+        ]
+    )
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = querier.make_scalar_query_request(
+        signoz,
+        token,
+        now,
+        [
+            querier.build_scalar_query(
+                name="A",
+                signal="metrics",
+                aggregations=[querier.build_metrics_aggregation(METRIC, "latest", "sum", "unspecified", reduce_to="last")],
+                group_by=[querier.build_group_by_field("value", "string", "attribute")],
+            )
+        ],
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert {row[0]: row[-1] for row in querier.get_scalar_table_data(response.json())} == {"high": 30.0, "low": 10.0}

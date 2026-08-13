@@ -119,9 +119,6 @@ type UserRoleStore interface {
 	// get a single user role entry by org id and its own id
 	GetUserRoleByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*UserRole, error)
 
-	// list all user_role entries for
-	ListUserRolesByOrgIDAndUserIDs(ctx context.Context, orgID valuer.UUID, userIDs []valuer.UUID) ([]*UserRole, error)
-
 	// delete user role entries by user id
 	DeleteUserRoles(ctx context.Context, userID valuer.UUID) error
 
