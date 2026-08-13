@@ -29,12 +29,7 @@ const DURATION_FIELDS = new Set(['durationNano', 'duration_nano']);
 
 const TIMESTAMP_COLUMN_ID = 'date';
 
-/**
- * Column definitions for the list view's TanStack table.
- *
- * Cell renderers must tolerate missing values: the table feeds skeleton
- * placeholder rows through them before the first response lands.
- */
+/** Cells must tolerate missing values: skeleton rows pass through them. */
 export function useListTableColumns(
 	selectedColumns: TelemetryFieldKey[],
 ): TableColumnDef<TraceListRow>[] {

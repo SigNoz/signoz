@@ -12,8 +12,7 @@
 	gap: var(--spacing-2);
 	cursor: pointer;
 
-	// Was a bare div in the traces explorer; a <button> for keyboard access
-	// needs its chrome reset back to the original look.
+	// Resets button chrome: this was a bare div in the traces explorer.
 	border: none;
 	background: none;
 	padding: 0;

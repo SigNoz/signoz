@@ -42,10 +42,7 @@ import TableView from './TableView/TableView';
 import TimeSeriesView from './TimeSeriesView/TimeSeriesView';
 import TracesView from './TracesView/TracesView';
 
-// AI Observability Explorer tab. Owns the /ai-observability/explorer route.
-// Forked from the Traces Explorer (GenAI spans are trace data) and diverges
-// from it as the GenAI query surface lands, so the two are deliberately not
-// sharing a component.
+// Forked from the Traces Explorer; diverges as the GenAI query surface lands.
 function Explorer(): JSX.Element {
 	const {
 		updateAllQueriesOperators,
@@ -54,8 +51,7 @@ function Explorer(): JSX.Element {
 		handleSetConfig,
 	} = useQueryBuilder();
 
-	// Return value unused: this seeds the URL `options` param on the views that
-	// don't mount ListView (which runs its own useOptionsMenu).
+	// Return value unused: seeds the URL options param for views without ListView.
 	useOptionsMenu({
 		storageKey: LOCALSTORAGE.TRACES_LIST_OPTIONS,
 		dataSource: DataSource.TRACES,
@@ -85,8 +81,7 @@ function Explorer(): JSX.Element {
 			void queryClient.cancelQueries(listQueryKeyRef.current);
 		}
 		setIsCancelled(true);
-		// Reset loading state — the active view unmounts when cancelled, so no
-		// child will call setIsLoadingQueries(false) otherwise.
+		// The active view unmounts on cancel, so no child will reset this.
 		setIsLoadingQueries(false);
 	}, [queryClient]);
 
