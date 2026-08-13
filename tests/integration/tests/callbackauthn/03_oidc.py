@@ -17,6 +17,7 @@ from fixtures.idp import (
     get_oidc_domain,
     perform_oidc_login,
 )
+from fixtures.role import find_role_by_name
 from fixtures.types import Operation, SigNoz, TestContainerDocker, TestContainerIDP
 
 
@@ -464,8 +465,12 @@ def test_oidc_sso_login_activates_pending_invite_user(
 
     # Invite user as ADMIN
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={"email": email, "role": "ADMIN", "name": "OIDC SSO Pending User"},
+        signoz.self.host_configs["8080"].get("/api/v2/users"),
+        json={
+            "email": email,
+            "displayName": "OIDC SSO Pending User",
+            "userRoles": [{"id": find_role_by_name(signoz, admin_token, "signoz-admin")}],
+        },
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )

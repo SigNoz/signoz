@@ -8,6 +8,7 @@ from sqlalchemy import sql
 from sqlalchemy.exc import IntegrityError
 
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.role import find_role_by_name
 from fixtures.types import SigNoz
 
 UNIQUE_INDEX_USER_EMAIL = "useruniqueindex@integration.test"
@@ -41,11 +42,11 @@ def test_unique_index_allows_multiple_deleted_rows(
 
     # Step 1: invite and delete the first user
     resp = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/invite"),
+        signoz.self.host_configs["8080"].get("/api/v2/users"),
         json={
             "email": UNIQUE_INDEX_USER_EMAIL,
-            "role": "EDITOR",
-            "name": "unique index user v1",
+            "displayName": "unique index user v1",
+            "userRoles": [{"id": find_role_by_name(signoz, admin_token, "signoz-editor")}],
         },
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
@@ -62,11 +63,11 @@ def test_unique_index_allows_multiple_deleted_rows(
 
     # Step 2: re-invite and delete the same email (second deleted row)
     resp = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/invite"),
+        signoz.self.host_configs["8080"].get("/api/v2/users"),
         json={
             "email": UNIQUE_INDEX_USER_EMAIL,
-            "role": "EDITOR",
-            "name": "unique index user v2",
+            "displayName": "unique index user v2",
+            "userRoles": [{"id": find_role_by_name(signoz, admin_token, "signoz-editor")}],
         },
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,

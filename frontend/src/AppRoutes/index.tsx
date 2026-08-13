@@ -388,6 +388,10 @@ function App(): JSX.Element {
 						if (error?.name === 'AbortError') {
 							return null;
 						}
+						// Ignore benign Monaco cancellation errors (name 'Canceled').
+						if (error?.name === 'Canceled') {
+							return null;
+						}
 
 						// Drop the event if its level is 'warning' or 'info'
 						if (event.level === 'warning' || event.level === 'info') {

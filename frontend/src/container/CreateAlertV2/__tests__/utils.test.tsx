@@ -316,6 +316,34 @@ describe('CreateAlertV2 utils', () => {
 		});
 	});
 
+	describe('getThresholdStateFromAlertDef null channels', () => {
+		it('falls back to an empty array so downstream consumers never see null', () => {
+			const def: PostableAlertRuleV2 = {
+				...defaultPostableAlertRuleV2,
+				condition: {
+					...defaultPostableAlertRuleV2.condition,
+					thresholds: {
+						kind: 'basic',
+						spec: [
+							{
+								name: 'critical',
+								target: 1,
+								targetUnit: UniversalYAxisUnit.MINUTES,
+								channels: null as unknown as string[],
+								matchType: AlertThresholdMatchType.AT_LEAST_ONCE,
+								op: AlertThresholdOperator.IS_ABOVE,
+							},
+						],
+					},
+				},
+			};
+
+			expect(
+				getThresholdStateFromAlertDef(def).thresholds[0].channels,
+			).toStrictEqual([]);
+		});
+	});
+
 	describe('normalizeOperator', () => {
 		it.each([
 			['1', AlertThresholdOperator.IS_ABOVE],

@@ -13,7 +13,7 @@ from fixtures.auth import (
     create_active_user,
     find_user_by_email,
 )
-from fixtures.role import transaction_group
+from fixtures.role import find_role_by_name, transaction_group
 from fixtures.serviceaccount import (
     SERVICE_ACCOUNT_BASE,
     create_service_account,
@@ -70,7 +70,7 @@ def test_create_custom_role_readonly_sa(
         signoz,
         admin_token,
         email=_SA_FGA_CUSTOM_USER_EMAIL,
-        role="VIEWER",
+        role="signoz-viewer",
         password=_SA_FGA_CUSTOM_USER_PASSWORD,
         name="sa-fga-test-user",
     )
@@ -116,12 +116,11 @@ def test_write_forbidden_without_grant(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    find_role_id: Callable[[str, str], str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     token = get_token(_SA_FGA_CUSTOM_USER_EMAIL, _SA_FGA_CUSTOM_USER_PASSWORD)
     target_id = find_service_account_by_name(signoz, admin_token, _SA_FGA_TARGET_SA_NAME)["id"]
-    viewer_role_id = find_role_id(admin_token, "signoz-viewer")
+    viewer_role_id = find_role_by_name(signoz, admin_token, "signoz-viewer")
 
     resp = requests.put(
         signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{target_id}"),
@@ -144,10 +143,9 @@ def test_update_scoped_to_granted_sa(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    find_role_id: Callable[[str, str], str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    role_id = find_role_id(admin_token, _SA_FGA_CUSTOM_ROLE_NAME)
+    role_id = find_role_by_name(signoz, admin_token, _SA_FGA_CUSTOM_ROLE_NAME)
     target_id = find_service_account_by_name(signoz, admin_token, _SA_FGA_TARGET_SA_NAME)["id"]
     other_id = find_service_account_by_name(signoz, admin_token, _SA_FGA_OTHER_SA_NAME)["id"]
 
@@ -191,14 +189,13 @@ def test_attach_detach_dual_scoped(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    find_role_id: Callable[[str, str], str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    role_id = find_role_id(admin_token, _SA_FGA_CUSTOM_ROLE_NAME)
+    role_id = find_role_by_name(signoz, admin_token, _SA_FGA_CUSTOM_ROLE_NAME)
     target_id = find_service_account_by_name(signoz, admin_token, _SA_FGA_TARGET_SA_NAME)["id"]
     other_id = find_service_account_by_name(signoz, admin_token, _SA_FGA_OTHER_SA_NAME)["id"]
-    editor_role_id = find_role_id(admin_token, "signoz-editor")
-    viewer_role_id = find_role_id(admin_token, "signoz-viewer")
+    editor_role_id = find_role_by_name(signoz, admin_token, "signoz-editor")
+    viewer_role_id = find_role_by_name(signoz, admin_token, "signoz-viewer")
 
     # attach/detach granted on the target SA id AND the signoz-editor role name only.
     resp = requests.put(
@@ -261,10 +258,9 @@ def test_revoke_read_scoped(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    find_role_id: Callable[[str, str], str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    role_id = find_role_id(admin_token, _SA_FGA_CUSTOM_ROLE_NAME)
+    role_id = find_role_by_name(signoz, admin_token, _SA_FGA_CUSTOM_ROLE_NAME)
     target_id = find_service_account_by_name(signoz, admin_token, _SA_FGA_TARGET_SA_NAME)["id"]
 
     resp = requests.put(
@@ -284,18 +280,17 @@ def test_delete_custom_role_cleanup(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    find_role_id: Callable[[str, str], str],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    role_id = find_role_id(admin_token, _SA_FGA_CUSTOM_ROLE_NAME)
+    role_id = find_role_by_name(signoz, admin_token, _SA_FGA_CUSTOM_ROLE_NAME)
     user = find_user_by_email(signoz, admin_token, _SA_FGA_CUSTOM_USER_EMAIL)
 
-    resp = requests.get(signoz.self.host_configs["8080"].get(f"/api/v2/users/{user['id']}/roles"), headers={"Authorization": f"Bearer {admin_token}"}, timeout=5)
+    resp = requests.get(signoz.self.host_configs["8080"].get(f"/api/v2/users/{user['id']}"), headers={"Authorization": f"Bearer {admin_token}"}, timeout=5)
     assert resp.status_code == HTTPStatus.OK, resp.text
-    custom_entry = next((r for r in resp.json()["data"] if r["name"] == _SA_FGA_CUSTOM_ROLE_NAME), None)
+    custom_entry = next((ur for ur in resp.json()["data"]["userRoles"] if ur["role"]["name"] == _SA_FGA_CUSTOM_ROLE_NAME), None)
     if custom_entry is not None:
         resp = requests.delete(
-            signoz.self.host_configs["8080"].get(f"/api/v2/users/{user['id']}/roles/{custom_entry['id']}"),
+            signoz.self.host_configs["8080"].get(f"/api/v2/user_roles/{custom_entry['id']}"),
             headers={"Authorization": f"Bearer {admin_token}"},
             timeout=5,
         )

@@ -437,6 +437,17 @@ describe('Create Alert Channel', () => {
 				render(<CreateAlertChannels preType={ChannelType.GoogleChat} />);
 			});
 
+			// paste instead of type: a per-keystroke re-render of the whole form
+			// pushes these tests past the 5s jest timeout on slower CI runners
+			async function fillField(
+				user: ReturnType<typeof userEvent.setup>,
+				testId: string,
+				value: string,
+			): Promise<void> {
+				await user.click(screen.getByTestId(testId));
+				await user.paste(value);
+			}
+
 			it('Should check if the selected item in the type dropdown has text "Google Chat"', () => {
 				expect(screen.getByText('Google Chat')).toBeInTheDocument();
 			});
@@ -463,14 +474,8 @@ describe('Create Alert Channel', () => {
 			it('Should check if saving with a webhook url outside chat.googleapis.com displays error notification', async () => {
 				const user = userEvent.setup();
 
-				await user.type(
-					screen.getByTestId('channel-name-textbox'),
-					'gchat-channel',
-				);
-				await user.type(
-					screen.getByTestId('webhook-url-textbox'),
-					'https://example.com/webhook',
-				);
+				await fillField(user, 'channel-name-textbox', 'gchat-channel');
+				await fillField(user, 'webhook-url-textbox', 'https://example.com/webhook');
 
 				await user.click(screen.getByTestId('save-channel-button'));
 
@@ -496,11 +501,8 @@ describe('Create Alert Channel', () => {
 
 				const user = userEvent.setup();
 
-				await user.type(
-					screen.getByTestId('channel-name-textbox'),
-					'gchat-channel',
-				);
-				await user.type(screen.getByTestId('webhook-url-textbox'), validWebhookUrl);
+				await fillField(user, 'channel-name-textbox', 'gchat-channel');
+				await fillField(user, 'webhook-url-textbox', validWebhookUrl);
 
 				await user.click(screen.getByTestId('save-channel-button'));
 

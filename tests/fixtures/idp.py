@@ -634,18 +634,6 @@ def get_oidc_domain(signoz: types.SigNoz, admin_token: str) -> dict:
     )
 
 
-def get_user_by_email(signoz: types.SigNoz, admin_token: str, email: str) -> dict:
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user"),
-        timeout=2,
-        headers={"Authorization": f"Bearer {admin_token}"},
-    )
-    return next(
-        (user for user in response.json()["data"] if user["email"] == email),
-        None,
-    )
-
-
 def perform_oidc_login(
     signoz: types.SigNoz,  # pylint: disable=unused-argument
     idp: types.TestContainerIDP,

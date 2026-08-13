@@ -2818,6 +2818,7 @@ export enum CloudintegrationtypesServiceIDDTO {
 	computeengine = 'computeengine',
 	gke = 'gke',
 	cloudstorage = 'cloudstorage',
+	cloudsql_mysql = 'cloudsql_mysql',
 }
 export type CloudintegrationtypesCloudIntegrationServiceDTOAnyOf = {
 	/**
@@ -9052,8 +9053,17 @@ export enum SavedviewtypesPanelTypeDTO {
 	list = 'list',
 	trace = 'trace',
 }
+export enum SavedviewtypesSchemaVersionDTO {
+	v2 = 'v2',
+}
+export enum SavedviewtypesSourceDTO {
+	traces = 'traces',
+	logs = 'logs',
+	metrics = 'metrics',
+	meter = 'meter',
+}
 export interface SavedviewtypesSavedViewSpecDTO {
-	display: SavedviewtypesDisplayDTO;
+	display?: SavedviewtypesDisplayDTO;
 	/**
 	 * @type string
 	 */
@@ -9063,28 +9073,14 @@ export interface SavedviewtypesSavedViewSpecDTO {
 	 * @type array
 	 */
 	queries: Querybuildertypesv5QueryEnvelopeDTO[];
+	requestType: Querybuildertypesv5RequestTypeDTO;
 	/**
 	 * @type array
 	 */
-	selectedFields: TelemetrytypesTelemetryFieldKeyDTO[];
+	selectedFields?: TelemetrytypesTelemetryFieldKeyDTO[];
 }
 
-export interface SavedviewtypesSavedViewDataDTO {
-	/**
-	 * @type string
-	 */
-	schemaVersion: string;
-	spec: SavedviewtypesSavedViewSpecDTO;
-}
-
-export enum SavedviewtypesSourceDTO {
-	traces = 'traces',
-	logs = 'logs',
-	metrics = 'metrics',
-	meter = 'meter',
-}
 export interface SavedviewtypesPostableSavedViewDTO {
-	data: SavedviewtypesSavedViewDataDTO;
 	/**
 	 * @type boolean
 	 */
@@ -9093,7 +9089,9 @@ export interface SavedviewtypesPostableSavedViewDTO {
 	 * @type string
 	 */
 	name?: string;
+	schemaVersion: SavedviewtypesSchemaVersionDTO;
 	source: SavedviewtypesSourceDTO;
+	spec: SavedviewtypesSavedViewSpecDTO;
 }
 
 export interface SavedviewtypesSavedViewDTO {
@@ -9106,7 +9104,6 @@ export interface SavedviewtypesSavedViewDTO {
 	 * @type string
 	 */
 	createdBy?: string;
-	data?: SavedviewtypesSavedViewDataDTO;
 	/**
 	 * @type string
 	 */
@@ -9115,7 +9112,9 @@ export interface SavedviewtypesSavedViewDTO {
 	 * @type string
 	 */
 	name?: string;
+	schemaVersion: SavedviewtypesSchemaVersionDTO;
 	source?: SavedviewtypesSourceDTO;
+	spec: SavedviewtypesSavedViewSpecDTO;
 	/**
 	 * @type string
 	 * @format date-time
@@ -9128,8 +9127,9 @@ export interface SavedviewtypesSavedViewDTO {
 }
 
 export interface SavedviewtypesUpdatableSavedViewDTO {
-	data: SavedviewtypesSavedViewDataDTO;
+	schemaVersion: SavedviewtypesSchemaVersionDTO;
 	source: SavedviewtypesSourceDTO;
+	spec: SavedviewtypesSavedViewSpecDTO;
 }
 
 export interface ServiceaccounttypesDeprecatedPostableServiceAccountRoleDTO {
@@ -9995,93 +9995,11 @@ export interface TypesChangePasswordRequestDTO {
 	oldPassword?: string;
 }
 
-export interface TypesDeprecatedUserDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: string;
-	/**
-	 * @type string
-	 */
-	displayName?: string;
-	/**
-	 * @type string
-	 */
-	email?: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type boolean
-	 */
-	isRoot?: boolean;
-	/**
-	 * @type string
-	 */
-	orgId?: string;
-	/**
-	 * @type string
-	 */
-	role?: string;
-	/**
-	 * @type string
-	 */
-	status?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: string;
-}
-
 export interface TypesIdentifiableDTO {
 	/**
 	 * @type string
 	 */
 	id: string;
-}
-
-export interface TypesInviteDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: string;
-	/**
-	 * @type string
-	 */
-	email?: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	inviteLink?: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	orgId?: string;
-	/**
-	 * @type string
-	 */
-	role?: string;
-	/**
-	 * @type string
-	 */
-	token?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: string;
 }
 
 export interface TypesOrganizationDTO {
@@ -10133,25 +10051,6 @@ export interface TypesPostableForgotPasswordDTO {
 	orgId: string;
 }
 
-export interface TypesPostableInviteDTO {
-	/**
-	 * @type string
-	 */
-	email?: string;
-	/**
-	 * @type string
-	 */
-	frontendBaseUrl?: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	role?: string;
-}
-
 export interface TypesPostableResetPasswordDTO {
 	/**
 	 * @type string
@@ -10161,13 +10060,6 @@ export interface TypesPostableResetPasswordDTO {
 	 * @type string
 	 */
 	token?: string;
-}
-
-export interface TypesPostableRoleDTO {
-	/**
-	 * @type string
-	 */
-	name: string;
 }
 
 export interface TypesPostableVerifyResetPasswordTokenDTO {
@@ -10812,27 +10704,8 @@ export type GetFieldsValues200 = {
 	status: string;
 };
 
-export type GetResetPasswordTokenDeprecatedPathParameters = {
-	id: string;
-};
-export type GetResetPasswordTokenDeprecated200 = {
-	data: TypesResetPasswordTokenDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type GetGlobalConfig200 = {
 	data: GlobaltypesConfigDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type CreateInvite201 = {
-	data: TypesInviteDTO;
 	/**
 	 * @type string
 	 */
@@ -11245,25 +11118,6 @@ export type GetTraceAggregationsPathParameters = {
 };
 export type GetTraceAggregations200 = {
 	data: SpantypesGettableTraceAggregationsDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type ListUsersDeprecated200 = {
-	/**
-	 * @type array
-	 */
-	data: TypesDeprecatedUserDTO[];
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type GetMyUserDeprecated200 = {
-	data: TypesDeprecatedUserDTO;
 	/**
 	 * @type string
 	 */
@@ -12464,13 +12318,6 @@ export type GetRolesByUserID200 = {
 	status: string;
 };
 
-export type SetRoleByUserIDPathParameters = {
-	id: string;
-};
-export type RemoveUserRoleByUserIDAndRoleIDPathParameters = {
-	id: string;
-	roleId: string;
-};
 export type GetMyUser200 = {
 	data: AuthtypesUserWithRolesDTO;
 	/**
