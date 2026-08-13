@@ -74,7 +74,7 @@ def perform_google_login(
 
 def get_google_domain(signoz: types.SigNoz, admin_token: str) -> dict:
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
