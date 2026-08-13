@@ -57,20 +57,6 @@ var legacyDataTypeToFieldDataType = map[string]string{
 	"array(bool)":    "[]bool",
 }
 
-func fieldContextFromLegacyType(legacyType string) string {
-	if mapped, ok := legacyTypeToFieldContext[legacyType]; ok {
-		return mapped
-	}
-	return legacyType
-}
-
-func fieldDataTypeFromLegacyDataType(legacyDataType string) string {
-	if mapped, ok := legacyDataTypeToFieldDataType[legacyDataType]; ok {
-		return mapped
-	}
-	return legacyDataType
-}
-
 type fixSavedViewSelectFields struct {
 	sqlstore sqlstore.SQLStore
 	settings factory.ProviderSettings
@@ -138,6 +124,20 @@ func marshalUnescaped(v any) ([]byte, error) {
 	}
 
 	return bytes.TrimRight(buf.Bytes(), "\n"), nil
+}
+
+func fieldContextFromLegacyType(legacyType string) string {
+	if mapped, ok := legacyTypeToFieldContext[legacyType]; ok {
+		return mapped
+	}
+	return legacyType
+}
+
+func fieldDataTypeFromLegacyDataType(legacyDataType string) string {
+	if mapped, ok := legacyDataTypeToFieldDataType[legacyDataType]; ok {
+		return mapped
+	}
+	return legacyDataType
 }
 
 // fixSelectFields recovers or drops entries in spec.selectedFields that never got
