@@ -3,7 +3,7 @@ import { newAdminContext } from '../../helpers/auth';
 import {
 	deleteSpanMapperGroupsByName,
 	gotoAttributeMapping,
-} from '../../helpers/llmobservability/attribute-mapping';
+} from '../../helpers/llm-o11y/attribute-mapping';
 import { authToken } from '../../helpers/common';
 
 test.describe.configure({ mode: 'serial' });
