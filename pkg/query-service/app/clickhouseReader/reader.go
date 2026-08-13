@@ -489,12 +489,16 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 				args...,
 			).ScanStruct(&serviceItem)
 
-			if serviceItem.NumCalls == 0 {
+			if err != nil {
+				// Check the ScanStruct error first. A zero-value serviceItem
+				// (NumCalls == 0) is the same shape the struct takes on a
+				// ClickHouse failure, so the zero-value guard below would
+				// otherwise swallow the error and the service.
+				r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 				return
 			}
 
-			if err != nil {
-				r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
+			if serviceItem.NumCalls == 0 {
 				return
 			}
 
