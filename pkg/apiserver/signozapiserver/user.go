@@ -238,15 +238,26 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusCreated,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 			Deprecated:          false,
-			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceFactorPassword.Scope(coretypes.VerbCreate)}),
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceFactorPassword.Scope(coretypes.VerbCreate), coretypes.ResourceUser.Scope(coretypes.VerbAttach)}),
 		},
-		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceMetaResourceFactorPassword,
-			Verb:     coretypes.VerbCreate,
-			Category: coretypes.ActionCategoryAccessControl,
-			ID:       coretypes.PathParam("id"),
-			Selector: coretypes.WildcardSelector,
-		}),
+		handler.WithResourceDefs(
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourceFactorPassword,
+				Verb:     coretypes.VerbCreate,
+				Category: coretypes.ActionCategoryAccessControl,
+				ID:       coretypes.ResponseJSONPath("data.id"),
+				Selector: coretypes.WildcardSelector,
+			},
+			handler.AttachDetachParentChildResourceDef{
+				Verb:           coretypes.VerbAttach,
+				Category:       coretypes.ActionCategoryAccessControl,
+				ParentResource: coretypes.ResourceUser,
+				ParentID:       coretypes.PathParam("id"),
+				ParentSelector: coretypes.IDSelector,
+				ChildResource:  coretypes.ResourceMetaResourceFactorPassword,
+				ChildIDs:       coretypes.OneID(coretypes.ResponseJSONPath("data.id")),
+			},
+		),
 	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}

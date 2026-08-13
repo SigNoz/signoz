@@ -222,6 +222,7 @@ def test_factor_password_scoped(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     role_id = find_role_by_name(signoz, admin_token, _ACTOR_ROLE_NAME)
     target_a_id = find_user_by_email(signoz, admin_token, _TARGET_A_EMAIL)["id"]
+    target_b_id = find_user_by_email(signoz, admin_token, _TARGET_B_EMAIL)["id"]
 
     resp = requests.put(
         signoz.self.host_configs["8080"].get(f"/api/v1/roles/{role_id}"),
@@ -240,12 +241,47 @@ def test_factor_password_scoped(
 
     token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
 
+    # factor-password create alone is not enough: the route also requires
+    # attach on the target user.
+    resp = requests.put(
+        signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{target_a_id}/reset_password_tokens"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert resp.status_code == HTTPStatus.FORBIDDEN, f"create reset token without user attach: expected 403, got {resp.status_code}: {resp.text}"
+
+    resp = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v1/roles/{role_id}"),
+        json={
+            "description": "",
+            "transactionGroups": [
+                transaction_group("list", "user", "user", ["*"]),
+                transaction_group("attach", "user", "user", [target_a_id]),
+                transaction_group("read", "metaresource", "factor-password", ["*"]),
+                transaction_group("create", "metaresource", "factor-password", ["*"]),
+            ],
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert resp.status_code == HTTPStatus.NO_CONTENT, resp.text
+
+    token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
+
     resp = requests.put(
         signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{target_a_id}/reset_password_tokens"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
     assert resp.status_code == HTTPStatus.CREATED, f"create reset token: {resp.text}"
+
+    # user attach is scoped to target A only.
+    resp = requests.put(
+        signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{target_b_id}/reset_password_tokens"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert resp.status_code == HTTPStatus.FORBIDDEN, f"create reset token for target B: expected 403, got {resp.status_code}: {resp.text}"
 
     resp = requests.get(
         signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{target_a_id}/reset_password_tokens"),

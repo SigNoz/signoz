@@ -23624,8 +23624,10 @@ paths:
       security:
       - api_key:
         - factor-password:create
+        - user:attach
       - tokenizer:
         - factor-password:create
+        - user:attach
       summary: Create or regenerate reset password token for a user
       tags:
       - users
