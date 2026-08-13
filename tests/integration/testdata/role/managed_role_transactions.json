@@ -96,10 +96,9 @@
     },
     {
       "type": "metaresource",
-      "kind": "factor-password",
+      "kind": "reset-password-token",
       "verbs": [
         "create",
-        "read",
         "list"
       ]
     },

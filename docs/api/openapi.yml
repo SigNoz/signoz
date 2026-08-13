@@ -2555,7 +2555,7 @@ components:
       - planned-maintenance
       - saved-view
       - trace-funnel
-      - factor-password
+      - reset-password-token
       - factor-api-key
       - license
       - subscription
@@ -23562,9 +23562,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - factor-password:list
+        - reset-password-token:list
       - tokenizer:
-        - factor-password:list
+        - reset-password-token:list
       summary: Get reset password token for a user
       tags:
       - users
@@ -23627,10 +23627,10 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - factor-password:create
+        - reset-password-token:create
         - user:attach
       - tokenizer:
-        - factor-password:create
+        - reset-password-token:create
         - user:attach
       summary: Create or regenerate reset password token for a user
       tags:

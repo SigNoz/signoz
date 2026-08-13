@@ -57,10 +57,9 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindFactorAPIKey}, WildCardSelectorString)},
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindFactorAPIKey}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindFactorAPIKey}, WildCardSelectorString)},
-		// factor-password — admin can issue and inspect reset tokens; users change their own password via OpenAccess
-		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindFactorPassword}, WildCardSelectorString)},
-		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindFactorPassword}, WildCardSelectorString)},
-		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindFactorPassword}, WildCardSelectorString)},
+		// reset-password-token — admin can issue and inspect reset tokens; users change their own password via OpenAccess
+		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindResetPasswordToken}, WildCardSelectorString)},
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindResetPasswordToken}, WildCardSelectorString)},
 		// license — admin only.
 		// Uniform LCRUD shape; actual ee routes are POST /api/v3/licenses (create
 		// = Activate), PUT /api/v3/licenses (update = Refresh), GET

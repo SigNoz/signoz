@@ -62,7 +62,7 @@
         "planned-maintenance",
         "saved-view",
         "trace-funnel",
-        "factor-password",
+        "reset-password-token",
         "factor-api-key",
         "license",
         "subscription",

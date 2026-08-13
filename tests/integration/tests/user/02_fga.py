@@ -233,8 +233,8 @@ def test_factor_password_scoped(
             "description": "",
             "transactionGroups": [
                 transaction_group("list", "user", "user", ["*"]),
-                transaction_group("list", "metaresource", "factor-password", ["*"]),
-                transaction_group("create", "metaresource", "factor-password", ["*"]),
+                transaction_group("list", "metaresource", "reset-password-token", ["*"]),
+                transaction_group("create", "metaresource", "reset-password-token", ["*"]),
             ],
         },
         headers={"Authorization": f"Bearer {admin_token}"},
@@ -258,8 +258,8 @@ def test_factor_password_scoped(
             "transactionGroups": [
                 transaction_group("list", "user", "user", ["*"]),
                 transaction_group("attach", "user", "user", [target_a_id]),
-                transaction_group("list", "metaresource", "factor-password", ["*"]),
-                transaction_group("create", "metaresource", "factor-password", ["*"]),
+                transaction_group("list", "metaresource", "reset-password-token", ["*"]),
+                transaction_group("create", "metaresource", "reset-password-token", ["*"]),
             ],
         },
         headers={"Authorization": f"Bearer {admin_token}"},

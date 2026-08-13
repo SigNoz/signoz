@@ -242,7 +242,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewRestructureAuthDomainConfigFactory(sqlstore),
 		sqlmigration.NewFixSavedViewSelectFieldsFactory(sqlstore),
 		sqlmigration.NewDeleteOrphanUserRolesFactory(),
-		sqlmigration.NewAddUserTuplesFactory(sqlstore),
+		sqlmigration.NewAddUserAuthzTuplesFactory(sqlstore),
 	)
 }
 

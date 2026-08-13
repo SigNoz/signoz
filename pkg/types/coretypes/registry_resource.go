@@ -27,7 +27,7 @@ var Resources = []Resource{
 	ResourceMetaResourcePlannedMaintenance,
 	ResourceMetaResourceSavedView,
 	ResourceMetaResourceTraceFunnel,
-	ResourceMetaResourceFactorPassword,
+	ResourceMetaResourceResetPasswordToken,
 	ResourceMetaResourceFactorAPIKey,
 	ResourceMetaResourceLicense,
 	ResourceMetaResourceSubscription,
@@ -67,7 +67,7 @@ var (
 	ResourceMetaResourcePlannedMaintenance               = NewResourceMetaResource(KindPlannedMaintenance)
 	ResourceMetaResourceSavedView                        = NewResourceMetaResource(KindSavedView, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)
 	ResourceMetaResourceTraceFunnel                      = NewResourceMetaResource(KindTraceFunnel)
-	ResourceMetaResourceFactorPassword                   = NewResourceMetaResource(KindFactorPassword)
+	ResourceMetaResourceResetPasswordToken               = NewResourceMetaResource(KindResetPasswordToken)
 	ResourceMetaResourceFactorAPIKey                     = NewResourceMetaResource(KindFactorAPIKey, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)
 	ResourceMetaResourceLicense                          = NewResourceMetaResource(KindLicense)
 	ResourceMetaResourceSubscription                     = NewResourceMetaResource(KindSubscription)

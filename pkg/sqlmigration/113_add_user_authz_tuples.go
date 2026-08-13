@@ -3,32 +3,34 @@ package sqlmigration
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/oklog/ulid/v2"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
 	"github.com/uptrace/bun/migrate"
 )
 
-type addUserTuples struct {
+type addUserAuthzTuples struct {
 	sqlstore sqlstore.SQLStore
 }
 
-func NewAddUserTuplesFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
-	return factory.NewProviderFactory(factory.MustNewName("add_user_tuples"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
-		return &addUserTuples{sqlstore: sqlstore}, nil
+func NewAddUserAuthzTuplesFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
+	return factory.NewProviderFactory(factory.MustNewName("add_user_authz_tuples"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
+		return &addUserAuthzTuples{sqlstore: sqlstore}, nil
 	})
 }
 
-func (migration *addUserTuples) Register(migrations *migrate.Migrations) error {
+func (migration *addUserAuthzTuples) Register(migrations *migrate.Migrations) error {
 	return migrations.Register(migration.Up, migration.Down)
 }
 
-func (migration *addUserTuples) Up(ctx context.Context, db *bun.DB) error {
+func (migration *addUserAuthzTuples) Up(ctx context.Context, db *bun.DB) error {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -38,6 +40,13 @@ func (migration *addUserTuples) Up(ctx context.Context, db *bun.DB) error {
 	var storeID string
 	err = tx.QueryRowContext(ctx, `SELECT id FROM store WHERE name = ? LIMIT 1`, "signoz").Scan(&storeID)
 	if err != nil {
+		return err
+	}
+
+	if _, err := tx.ExecContext(ctx, `DELETE FROM tuple WHERE store = ? AND object_type = ? AND object_id LIKE ?`, storeID, "metaresource", "%/factor-password/%"); err != nil {
+		return err
+	}
+	if _, err := tx.ExecContext(ctx, `DELETE FROM changelog WHERE store = ? AND object_type = ? AND object_id LIKE ?`, storeID, "metaresource", "%/factor-password/%"); err != nil {
 		return err
 	}
 
@@ -52,9 +61,6 @@ func (migration *addUserTuples) Up(ctx context.Context, db *bun.DB) error {
 
 	isPG := migration.sqlstore.BunDB().Dialect().Name() == dialect.PG
 
-	// The user routes now authorize per resource, so every org needs the
-	// managed-role user and factor-password tuples. Orgs bootstrapped before
-	// these entries landed in ManagedRoleToTransactions never got them.
 	tuples := []migrationTuple{
 		{authtypes.SigNozAdminRoleName, "user", "user", "create"},
 		{authtypes.SigNozAdminRoleName, "user", "user", "read"},
@@ -63,9 +69,8 @@ func (migration *addUserTuples) Up(ctx context.Context, db *bun.DB) error {
 		{authtypes.SigNozAdminRoleName, "user", "user", "list"},
 		{authtypes.SigNozAdminRoleName, "user", "user", "attach"},
 		{authtypes.SigNozAdminRoleName, "user", "user", "detach"},
-		{authtypes.SigNozAdminRoleName, "metaresource", "factor-password", "read"},
-		{authtypes.SigNozAdminRoleName, "metaresource", "factor-password", "create"},
-		{authtypes.SigNozAdminRoleName, "metaresource", "factor-password", "list"},
+		{authtypes.SigNozAdminRoleName, "metaresource", "reset-password-token", "create"},
+		{authtypes.SigNozAdminRoleName, "metaresource", "reset-password-token", "list"},
 	}
 
 	for _, orgID := range orgIDs {
@@ -134,9 +139,32 @@ func (migration *addUserTuples) Up(ctx context.Context, db *bun.DB) error {
 		}
 	}
 
+	managedRoleGroups := make(map[string]string, len(coretypes.ManagedRoleToTransactions))
+	for roleName, transactions := range coretypes.ManagedRoleToTransactions {
+		data, err := json.Marshal(authtypes.NewTransactionGroupsFromTransactions(transactions))
+		if err != nil {
+			return err
+		}
+		managedRoleGroups[roleName] = string(data)
+	}
+
+	for _, orgID := range orgIDs {
+		for roleName, data := range managedRoleGroups {
+			if _, err := tx.NewUpdate().
+				Model(new(roles)).
+				Set("transaction_groups = ?", data).
+				Where("org_id = ?", orgID).
+				Where("type = ?", authtypes.RoleTypeManaged.StringValue()).
+				Where("name = ?", roleName).
+				Exec(ctx); err != nil {
+				return err
+			}
+		}
+	}
+
 	return tx.Commit()
 }
 
-func (migration *addUserTuples) Down(context.Context, *bun.DB) error {
+func (migration *addUserAuthzTuples) Down(context.Context, *bun.DB) error {
 	return nil
 }
