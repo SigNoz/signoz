@@ -1,8 +1,11 @@
-// The traces explorer borrowed this rule from ListView's global stylesheet;
-// the fork keeps its own copy so the two can't drift into each other.
 .controls {
 	display: flex;
 	justify-content: flex-end;
 	align-items: center;
 	gap: var(--spacing-4);
+}
+
+.table {
+	max-height: calc(100vh - 330px);
+	overflow-y: auto;
 }

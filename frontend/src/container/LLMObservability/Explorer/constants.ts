@@ -46,4 +46,4 @@ export const defaultSelectedColumns: string[] = [
 	'timestamp',
 ];
 
-export const PER_PAGE_OPTIONS: number[] = [10, ...DEFAULT_PER_PAGE_OPTIONS];
+export const PER_PAGE_OPTIONS: number[] = DEFAULT_PER_PAGE_OPTIONS;

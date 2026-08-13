@@ -195,11 +195,10 @@ function TracesView({
 				<TanStackTable<TraceListRow>
 					data={tableData}
 					columns={columns}
+					className={styles.table}
 					columnStorageKey={LOCALSTORAGE.AI_OBSERVABILITY_TRACE_VIEW_COLUMNS}
 					isLoading={isLoading}
 					getRowKey={getRootSpanRowKey}
-					// Rows are already page-sized by the query; virtualizing would need a
-					// fixed-height container this page doesn't provide.
 					disableVirtualScroll
 					testId="ai-observability-traces-view-table"
 				/>

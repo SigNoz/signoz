@@ -47,7 +47,7 @@ export function useListTableColumns(
 			accessorFn: (row): unknown => row?.date,
 			canBeHidden: false,
 			enableRemove: false,
-			width: { default: 145, min: 145 },
+			width: { default: 180, min: 180 },
 			cell: ({ value }): ReactElement => {
 				const timestamp = value as string | number | undefined;
 				if (timestamp === undefined || timestamp === null) {
@@ -78,7 +78,7 @@ export function useListTableColumns(
 					header: name,
 					accessorFn: (row): unknown => row?.[name],
 					enableRemove: true,
-					width: { min: 145 },
+					width: { min: 192 },
 					cell: ({ value }): ReactElement => {
 						if (value === undefined || value === null || value === '') {
 							return <TanStackTable.Text data-testid={name}>N/A</TanStackTable.Text>;
