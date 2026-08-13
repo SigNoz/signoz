@@ -212,6 +212,42 @@ def test_editor_and_viewer_forbidden(
     assert resp.status_code == HTTPStatus.NO_CONTENT, resp.text
 
 
+def test_self_delete_allowed_for_non_root(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+) -> None:
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    second_admin_id = create_active_user(
+        signoz,
+        admin_token,
+        email="userauthz+selfdelete@integration.test",
+        role="signoz-admin",
+        password=_EDITOR_PASSWORD,
+        name="user-authz-self-delete",
+    )
+    second_admin_token = get_token("userauthz+selfdelete@integration.test", _EDITOR_PASSWORD)
+
+    resp = requests.delete(
+        signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{second_admin_id}"),
+        headers={"Authorization": f"Bearer {second_admin_token}"},
+        timeout=5,
+    )
+    assert resp.status_code == HTTPStatus.NO_CONTENT, f"non-root admin self delete: {resp.text}"
+
+    resp = requests.get(signoz.self.host_configs["8080"].get(f"{USERS_BASE}/me"), headers={"Authorization": f"Bearer {admin_token}"}, timeout=5)
+    assert resp.status_code == HTTPStatus.OK, resp.text
+    root_admin_id = resp.json()["data"]["id"]
+
+    resp = requests.delete(
+        signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{root_admin_id}"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert resp.status_code == HTTPStatus.NOT_IMPLEMENTED, f"root self delete: expected 501, got {resp.status_code}: {resp.text}"
+
+
 def test_me_routes_stay_open(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
