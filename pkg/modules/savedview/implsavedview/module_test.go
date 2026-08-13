@@ -6,6 +6,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -23,7 +24,7 @@ import (
 func newTestStore() (savedview.Module, *savedviewtypestest.StoreTest) {
 	sqlStore := sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherRegexp)
 	store := implsavedview.NewStore(sqlStore)
-	return implsavedview.NewModule(store), savedviewtypestest.New(store, sqlStore.Mock())
+	return implsavedview.NewModule(store, instrumentationtest.New().ToProviderSettings()), savedviewtypestest.New(store, sqlStore.Mock())
 }
 
 func testPostableSavedView(name string, source savedviewtypes.Source) savedviewtypes.PostableSavedView {
@@ -292,6 +293,50 @@ func TestModule_GetViewsForFilters(t *testing.T) {
 	})
 
 	require.NoError(t, st.AssertExpectations())
+}
+
+// A view whose stored data no longer decodes must not take the rest of the list
+// down with it.
+func TestModule_UndecodableViewIsSkippedFromList(t *testing.T) {
+	orgID := valuer.GenerateUUID().StringValue()
+	ctx := contextWithClaims(orgID, "creator@signoz.io")
+
+	const undecodableData = `{"schemaVersion":"v2","spec":{"displayName":"Broken View","panelType":"list","requestType":"raw",` +
+		`"queries":[{"type":"builder_query","spec":{"signal":"logs","sinceRemovedField":1}}]}}`
+
+	broken := testSavedView(orgID, valuer.GenerateUUID(), "creator@signoz.io", testPostableSavedView("broken-view", savedviewtypes.SourceLogs))
+	healthy := testSavedView(orgID, valuer.GenerateUUID(), "creator@signoz.io", testPostableSavedView("healthy-view", savedviewtypes.SourceLogs))
+
+	t.Run("list serves every view that still decodes", func(t *testing.T) {
+		m, st := newTestStore()
+
+		st.ExpectListRows(orgID,
+			savedviewtypestest.Row{View: broken, Data: undecodableData},
+			savedviewtypestest.Row{View: healthy},
+		)
+
+		views, err := m.GetViewsForFilters(ctx, orgID, savedviewtypes.SourceLogs, "")
+		require.NoError(t, err)
+		require.Len(t, views, 1)
+		assert.Equal(t, "healthy-view", views[0].Name)
+		assert.Len(t, views[0].Spec.Queries, 1)
+
+		require.NoError(t, st.AssertExpectations())
+	})
+
+	// Get still decodes during the scan, so it fails for the view itself. That is
+	// as far as the damage goes: nothing else in the org is affected.
+	t.Run("get fails for the view itself", func(t *testing.T) {
+		m, st := newTestStore()
+
+		st.ExpectGetRows(orgID, broken.ID, savedviewtypestest.Row{View: broken, Data: undecodableData})
+
+		_, err := m.GetView(ctx, orgID, broken.ID)
+		require.Error(t, err)
+		assert.True(t, errors.Ast(err, errors.TypeNotFound), "expected a not-found error, got %v", err)
+
+		require.NoError(t, st.AssertExpectations())
+	})
 }
 
 func TestModule_Collect(t *testing.T) {

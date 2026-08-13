@@ -139,7 +139,7 @@ func NewModules(
 		OrgGetter:           orgGetter,
 		OrgSetter:           orgSetter,
 		Preference:          implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewAvailablePreference()),
-		SavedView:           implsavedview.NewModule(implsavedview.NewStore(sqlstore)),
+		SavedView:           implsavedview.NewModule(implsavedview.NewStore(sqlstore), providerSettings),
 		Apdex:               implapdex.NewModule(sqlstore),
 		Dashboard:           dashboard,
 		UserSetter:          userSetter,

@@ -2,6 +2,7 @@ package savedviewtypes
 
 import (
 	"crypto/rand"
+	"encoding/json"
 	"strings"
 	"time"
 
@@ -53,7 +54,39 @@ type StorableSavedView struct {
 }
 
 func (s *StorableSavedView) ToSavedView() *SavedView {
-	spec := s.Data.Spec
+	return newSavedView(s.Identifiable, s.TimeAuditable, s.UserAuditable, s.OrgID, s.Name, s.Source, s.Data)
+}
+
+// RawStorableSavedView is a saved view row with its data left as text. Listing
+// scans into this instead of StorableSavedView because decoding a spec is strict
+// enough to reject data written by older builds, which would fail the whole
+// query over a single row.
+type RawStorableSavedView struct {
+	bun.BaseModel `bun:"table:saved_view"`
+
+	types.Identifiable
+	types.TimeAuditable
+	types.UserAuditable
+	OrgID  string `bun:"org_id,notnull"`
+	Name   string `bun:"name,type:text,notnull"`
+	Source Source `bun:"source,type:text,notnull"`
+	Data   string `bun:"data,type:text,notnull"`
+}
+
+// ToSavedView decodes the stored data. It fails for a view whose data is no
+// longer a valid spec, leaving it to the caller to skip that view rather than
+// give up on the rest.
+func (s *RawStorableSavedView) ToSavedView() (*SavedView, error) {
+	var data SavedViewData
+	if err := json.Unmarshal([]byte(s.Data), &data); err != nil {
+		return nil, errors.WrapInvalidInputf(err, ErrCodeSavedViewInvalidInput, "error in unmarshalling saved view data")
+	}
+
+	return newSavedView(s.Identifiable, s.TimeAuditable, s.UserAuditable, s.OrgID, s.Name, s.Source, data), nil
+}
+
+func newSavedView(identifiable types.Identifiable, timeAuditable types.TimeAuditable, userAuditable types.UserAuditable, orgID string, name string, source Source, data SavedViewData) *SavedView {
+	spec := data.Spec
 	if spec.Queries == nil {
 		spec.Queries = []qbtypes.QueryEnvelope{}
 	}
@@ -62,13 +95,13 @@ func (s *StorableSavedView) ToSavedView() *SavedView {
 	}
 
 	return &SavedView{
-		Identifiable:  s.Identifiable,
-		TimeAuditable: s.TimeAuditable,
-		UserAuditable: s.UserAuditable,
-		OrgID:         s.OrgID,
-		Name:          s.Name,
-		Source:        s.Source,
-		SchemaVersion: SchemaVersion{valuer.NewString(s.Data.SchemaVersion)},
+		Identifiable:  identifiable,
+		TimeAuditable: timeAuditable,
+		UserAuditable: userAuditable,
+		OrgID:         orgID,
+		Name:          name,
+		Source:        source,
+		SchemaVersion: SchemaVersion{valuer.NewString(data.SchemaVersion)},
 		Spec:          spec,
 	}
 }
@@ -206,17 +239,7 @@ func (p *ListSavedViewsParams) Validate() error {
 	return p.Source.Validate()
 }
 
-// NewSavedViewsFromStorableSavedViews converts scanned rows to their domain shape.
-func NewSavedViewsFromStorableSavedViews(storableSavedViews []*StorableSavedView) []*SavedView {
-	savedViews := make([]*SavedView, len(storableSavedViews))
-	for idx, storableSavedView := range storableSavedViews {
-		savedViews[idx] = storableSavedView.ToSavedView()
-	}
-
-	return savedViews
-}
-
-func NewStatsFromStorableSavedViews(savedViews []*StorableSavedView) map[string]any {
+func NewStatsFromStorableSavedViews(savedViews []*RawStorableSavedView) map[string]any {
 	stats := make(map[string]any)
 	for _, savedView := range savedViews {
 		key := "savedview.source." + strings.ToLower(savedView.Source.StringValue()) + ".count"
