@@ -92,6 +92,11 @@ func (s *SavedViewSpec) Validate() error {
 	if s.RequestType.IsZero() {
 		return errors.NewInvalidInputf(ErrCodeSavedViewInvalidInput, "requestType is required")
 	}
+	for i, field := range s.SelectedFields {
+		if field.Name == "" {
+			return errors.NewInvalidInputf(ErrCodeSavedViewInvalidInput, "selectedFields[%d].name is required", i)
+		}
+	}
 
 	return (&qbtypes.CompositeQuery{Queries: s.Queries}).Validate(qbtypes.GetValidationOptions(s.RequestType)...)
 }
