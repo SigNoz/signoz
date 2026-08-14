@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/contextlinks"
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/rulestatehistorytypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -19,8 +18,7 @@ import (
 type relatedLinkBuilder struct {
 	alertType  ruletypes.AlertType
 	evaluation ruletypes.Evaluation
-	filterExpr string
-	groupBy    []qbtypes.GroupByKey
+	pairs      []contextlinks.BuilderQueryPair
 }
 
 // relatedLinkBuilderForRule returns nil when the rule cannot be loaded or is
@@ -68,7 +66,7 @@ func (m *module) relatedLinkBuilderForRule(ctx context.Context, orgID valuer.UUI
 	}
 	// links are still built from the labels alone when the rule has no builder
 	// query for the signal (e.g. ClickHouse SQL alerts)
-	builder.filterExpr, builder.groupBy, _ = contextlinks.BuilderQueryForSignal(rule.RuleCondition.CompositeQuery.Queries, signal)
+	builder.pairs, _ = contextlinks.BuilderQueriesForSignal(rule.RuleCondition.CompositeQuery.Queries, signal)
 
 	return builder
 }
@@ -92,13 +90,11 @@ func (b *relatedLinkBuilder) links(labels rulestatehistorytypes.LabelsString, st
 		return "", ""
 	}
 
-	whereClause := contextlinks.PrepareFilterExpression(lbls, b.filterExpr, b.groupBy)
-
 	switch b.alertType {
 	case ruletypes.AlertTypeLogs:
-		return contextlinks.PrepareParamsForLogsV5(start, end, whereClause).Encode(), ""
+		return contextlinks.PrepareParamsForLogsV5(start, end, b.pairs, lbls).Encode(), ""
 	case ruletypes.AlertTypeTraces:
-		return "", contextlinks.PrepareParamsForTracesV5(start, end, whereClause).Encode()
+		return "", contextlinks.PrepareParamsForTracesV5(start, end, b.pairs, lbls).Encode()
 	}
 	return "", ""
 }
