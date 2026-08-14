@@ -1,7 +1,14 @@
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	Querybuildertypesv5RequestTypeDTO,
+	TelemetrytypesSignalDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { OPERATORS } from 'constants/queryBuilder';
 import { EQueryType } from 'types/common/dashboard';
 
+import { UNSUPPORTED_PANEL } from '../kinds/UnsupportedPanel/definition';
+import { getPanelDefinition, isPanelKindSupported } from '../registry';
+import type { PanelQueryCapabilities } from '../types/panelCapabilities';
+import { NO_PANEL_ACTIONS } from '../types/panelDefinition';
 import {
 	getHiddenQueryBuilderFields,
 	getSupportedQueryTypes,
@@ -15,6 +22,7 @@ import type { PanelKind } from '../types/panelKind';
 
 const { QUERY_BUILDER, CLICKHOUSE, PROM } = EQueryType;
 const { logs, traces, metrics } = TelemetrytypesSignalDTO;
+const { time_series, scalar, raw } = Querybuildertypesv5RequestTypeDTO;
 
 const EXPECTED_QUERY_TYPES: Record<PanelKind, EQueryType[]> = {
 	'signoz/TimeSeriesPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
@@ -37,9 +45,131 @@ const EXPECTED_SIGNALS: Record<PanelKind, TelemetrytypesSignalDTO[]> = {
 	'signoz/ListPanel': [logs, traces],
 };
 
+// Exhaustive over PanelKind, so a new kind can't ship without stating how its request is
+// shaped — the check that used to be implicit in a legacy PANEL_TYPES switch.
+const EXPECTED_QUERY_CAPABILITIES: Record<PanelKind, PanelQueryCapabilities> = {
+	'signoz/TimeSeriesPanel': {
+		requestType: time_series,
+		formatTableResultForUI: false,
+		bucketedStepInterval: false,
+		orderTiebreaker: false,
+		serverPaginated: false,
+		listView: false,
+		traceOperator: true,
+	},
+	// Bar bins client-side, so it asks for a widened step interval over a raw series.
+	'signoz/BarChartPanel': {
+		requestType: time_series,
+		formatTableResultForUI: false,
+		bucketedStepInterval: true,
+		orderTiebreaker: false,
+		serverPaginated: false,
+		listView: false,
+		traceOperator: true,
+	},
+	'signoz/HistogramPanel': {
+		requestType: time_series,
+		formatTableResultForUI: false,
+		bucketedStepInterval: false,
+		orderTiebreaker: false,
+		serverPaginated: false,
+		listView: false,
+		traceOperator: true,
+	},
+	'signoz/NumberPanel': {
+		requestType: scalar,
+		formatTableResultForUI: false,
+		bucketedStepInterval: false,
+		orderTiebreaker: false,
+		serverPaginated: false,
+		listView: false,
+		traceOperator: true,
+	},
+	'signoz/PieChartPanel': {
+		requestType: scalar,
+		formatTableResultForUI: false,
+		bucketedStepInterval: false,
+		orderTiebreaker: false,
+		serverPaginated: false,
+		listView: false,
+		traceOperator: true,
+	},
+	// Only Table asks the server to transpose its scalar result into UI rows.
+	'signoz/TablePanel': {
+		requestType: scalar,
+		formatTableResultForUI: true,
+		bucketedStepInterval: false,
+		orderTiebreaker: false,
+		serverPaginated: false,
+		listView: false,
+		traceOperator: true,
+	},
+	// Only List reads raw rows, pages them server-side, and needs an order tiebreaker.
+	'signoz/ListPanel': {
+		requestType: raw,
+		formatTableResultForUI: false,
+		bucketedStepInterval: false,
+		orderTiebreaker: true,
+		serverPaginated: true,
+		listView: true,
+		traceOperator: false,
+	},
+};
+
 const ALL_KINDS = Object.keys(EXPECTED_QUERY_TYPES) as PanelKind[];
 
 describe('panel capabilities guard', () => {
+	describe('query capabilities', () => {
+		it.each(ALL_KINDS)('declares how %s shapes its request', (kind) => {
+			expect(getPanelDefinition(kind).query).toStrictEqual(
+				EXPECTED_QUERY_CAPABILITIES[kind],
+			);
+		});
+	});
+
+	// A dashboard spec written by a newer SigNoz can name a kind this build has no
+	// definition for. The registry answers with UNSUPPORTED_PANEL rather than nothing, so
+	// every guard below reads it without first proving a definition exists.
+	describe('a kind this build cannot render', () => {
+		const unknownKind = 'signoz/SomeFutureKindPanel' as PanelKind;
+
+		it('is not reported as supported', () => {
+			expect(isPanelKindSupported(unknownKind)).toBe(false);
+			expect(isPanelKindSupported('signoz/TimeSeriesPanel')).toBe(true);
+		});
+
+		it('still resolves to a definition', () => {
+			expect(getPanelDefinition(unknownKind)).toBe(UNSUPPORTED_PANEL);
+		});
+
+		it('declares nothing, so it is never offered as authorable', () => {
+			expect(getSupportedSignals(unknownKind)).toStrictEqual([]);
+			expect(getSupportedQueryTypes(unknownKind)).toStrictEqual([]);
+			expect(isSignalSupported(unknownKind, logs)).toBe(false);
+			expect(
+				isPanelCombinationValid({ kind: unknownKind, queryType: QUERY_BUILDER }),
+			).toBe(false);
+			expect(getHiddenQueryBuilderFields(unknownKind, logs)).toStrictEqual({});
+			expect(getPanelDefinition(unknownKind).sections).toStrictEqual([]);
+		});
+
+		it('offers no actions', () => {
+			expect(getPanelDefinition(unknownKind).actions).toStrictEqual(
+				NO_PANEL_ACTIONS,
+			);
+			expect(NO_PANEL_ACTIONS.view).toBe(false);
+			expect(NO_PANEL_ACTIONS.edit).toBe(false);
+			expect(NO_PANEL_ACTIONS.drilldown).toBe(false);
+		});
+
+		it('carries an inert query shape, so a stray request can do no harm', () => {
+			const { query } = getPanelDefinition(unknownKind);
+			expect(query.requestType).toBe(time_series);
+			expect(query.serverPaginated).toBe(false);
+			expect(query.formatTableResultForUI).toBe(false);
+		});
+	});
+
 	describe('query type support', () => {
 		it.each(ALL_KINDS)('declares the expected query types for %s', (kind) => {
 			expect(getSupportedQueryTypes(kind)).toStrictEqual(
