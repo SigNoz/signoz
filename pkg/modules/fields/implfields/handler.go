@@ -1,7 +1,9 @@
 package implfields
 
 import (
+	"context"
 	"net/http"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/binding"
@@ -53,7 +55,8 @@ func (handler *handler) GetFieldsKeys(rw http.ResponseWriter, req *http.Request)
 }
 
 func (handler *handler) GetAIObservabilityFieldsKeys(rw http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
+	ctx, cancel := context.WithTimeout(req.Context(), 10*time.Second)
+	defer cancel()
 
 	var params telemetrytypes.PostableFieldKeysParams
 	if err := binding.Query.BindQuery(req.URL.Query(), &params); err != nil {

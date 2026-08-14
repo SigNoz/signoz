@@ -107,18 +107,9 @@ def truncate_attributes_metadata_table(conn, cluster: str) -> None:
     conn.query(f"TRUNCATE TABLE signoz_metadata.attributes_metadata ON CLUSTER '{cluster}' SYNC")
 
 
-def get_field_keys(signoz: types.SigNoz, token: str, params: dict) -> requests.Response:
+def get_field_keys(signoz: types.SigNoz, token: str, params: dict, path: str = "/api/v1/fields/keys") -> requests.Response:
     return requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/fields/keys"),
-        timeout=5,
-        headers={"authorization": f"Bearer {token}"},
-        params=params,
-    )
-
-
-def get_ai_observability_field_keys(signoz: types.SigNoz, token: str, params: dict) -> requests.Response:
-    return requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/fields/ai_observability/keys"),
+        signoz.self.host_configs["8080"].get(path),
         timeout=5,
         headers={"authorization": f"Bearer {token}"},
         params=params,

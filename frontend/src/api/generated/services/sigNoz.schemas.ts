@@ -10509,11 +10509,6 @@ export type GetAIObservabilityFieldsKeysParams = {
 	 */
 	source?: TelemetrytypesSourceDTO;
 	/**
-	 * @type string
-	 * @description undefined
-	 */
-	type?: string;
-	/**
 	 * @type integer
 	 * @description undefined
 	 */
@@ -10573,11 +10568,6 @@ export type GetFieldsKeysParams = {
 	 */
 	source?: TelemetrytypesSourceDTO;
 	/**
-	 * @type string
-	 * @description undefined
-	 */
-	type?: string;
-	/**
 	 * @type integer
 	 * @description undefined
 	 */
@@ -10636,11 +10626,6 @@ export type GetFieldsValuesParams = {
 	 * @description undefined
 	 */
 	source?: TelemetrytypesSourceDTO;
-	/**
-	 * @type string
-	 * @description undefined
-	 */
-	type?: string;
 	/**
 	 * @type integer
 	 * @description undefined
@@ -11922,11 +11907,6 @@ export type GetRuleHistoryFilterKeysParams = {
 	 */
 	source?: TelemetrytypesSourceDTO;
 	/**
-	 * @type string
-	 * @description undefined
-	 */
-	type?: string;
-	/**
 	 * @type integer
 	 * @description undefined
 	 */
@@ -11988,11 +11968,6 @@ export type GetRuleHistoryFilterValuesParams = {
 	 * @description undefined
 	 */
 	source?: TelemetrytypesSourceDTO;
-	/**
-	 * @type string
-	 * @description undefined
-	 */
-	type?: string;
 	/**
 	 * @type integer
 	 * @description undefined
