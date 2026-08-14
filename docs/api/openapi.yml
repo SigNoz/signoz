@@ -464,27 +464,50 @@ components:
           type: string
       type: object
     AuthtypesAuthDomainConfig:
+      discriminator:
+        mapping:
+          google: '#/components/schemas/AuthtypesAuthDomainConfigGoogle'
+          oidc: '#/components/schemas/AuthtypesAuthDomainConfigOIDC'
+          saml: '#/components/schemas/AuthtypesAuthDomainConfigSAML'
+        propertyName: kind
       oneOf:
-      - $ref: '#/components/schemas/AuthtypesSamlConfig'
-      - $ref: '#/components/schemas/AuthtypesGoogleConfig'
-      - $ref: '#/components/schemas/AuthtypesOIDCConfig'
+      - $ref: '#/components/schemas/AuthtypesAuthDomainConfigSAML'
+      - $ref: '#/components/schemas/AuthtypesAuthDomainConfigGoogle'
+      - $ref: '#/components/schemas/AuthtypesAuthDomainConfigOIDC'
+      type: object
+    AuthtypesAuthDomainConfigGoogle:
       properties:
-        googleAuthConfig:
-          $ref: '#/components/schemas/AuthtypesGoogleConfig'
-        oidcConfig:
-          $ref: '#/components/schemas/AuthtypesOIDCConfig'
-        roleMapping:
-          $ref: '#/components/schemas/AuthtypesRoleMapping'
-        samlConfig:
-          $ref: '#/components/schemas/AuthtypesSamlConfig'
-        ssoEnabled:
-          type: boolean
-        ssoType:
+        kind:
           $ref: '#/components/schemas/AuthtypesAuthNProvider'
+        spec:
+          $ref: '#/components/schemas/AuthtypesGoogleConfig'
+      required:
+      - kind
+      - spec
+      type: object
+    AuthtypesAuthDomainConfigOIDC:
+      properties:
+        kind:
+          $ref: '#/components/schemas/AuthtypesAuthNProvider'
+        spec:
+          $ref: '#/components/schemas/AuthtypesOIDCConfig'
+      required:
+      - kind
+      - spec
+      type: object
+    AuthtypesAuthDomainConfigSAML:
+      properties:
+        kind:
+          $ref: '#/components/schemas/AuthtypesAuthNProvider'
+        spec:
+          $ref: '#/components/schemas/AuthtypesSamlConfig'
+      required:
+      - kind
+      - spec
       type: object
     AuthtypesAuthNProvider:
       enum:
-      - google_auth
+      - google
       - saml
       - email_password
       - oidc
@@ -531,12 +554,16 @@ components:
         createdAt:
           format: date-time
           type: string
+        enabled:
+          type: boolean
         id:
           type: string
         name:
           type: string
         orgId:
           type: string
+        roleMapping:
+          $ref: '#/components/schemas/AuthtypesRoleMapping'
         updatedAt:
           format: date-time
           type: string
@@ -601,6 +628,7 @@ components:
         clientId:
           type: string
         clientSecret:
+          format: password
           type: string
         domainToAdminEmail:
           additionalProperties:
@@ -612,10 +640,12 @@ components:
           type: boolean
         insecureSkipEmailVerified:
           type: boolean
-        redirectURI:
-          type: string
         serviceAccountJson:
+          format: password
           type: string
+      required:
+      - clientId
+      - clientSecret
       type: object
     AuthtypesOIDCConfig:
       properties:
@@ -624,6 +654,7 @@ components:
         clientId:
           type: string
         clientSecret:
+          format: password
           type: string
         getUserInfo:
           type: boolean
@@ -633,6 +664,10 @@ components:
           type: string
         issuerAlias:
           type: string
+      required:
+      - issuer
+      - clientId
+      - clientSecret
       type: object
     AuthtypesOrgSessionContext:
       properties:
@@ -654,8 +689,15 @@ components:
       properties:
         config:
           $ref: '#/components/schemas/AuthtypesAuthDomainConfig'
+        enabled:
+          type: boolean
         name:
           type: string
+        roleMapping:
+          $ref: '#/components/schemas/AuthtypesRoleMapping'
+      required:
+      - name
+      - config
       type: object
     AuthtypesPostableEmailPasswordSession:
       properties:
@@ -762,14 +804,18 @@ components:
       properties:
         attributeMapping:
           $ref: '#/components/schemas/AuthtypesAttributeMapping'
+        certificate:
+          type: string
+        entityId:
+          type: string
         insecureSkipAuthNRequestsSigned:
           type: boolean
-        samlCert:
+        location:
           type: string
-        samlEntity:
-          type: string
-        samlIdp:
-          type: string
+      required:
+      - entityId
+      - location
+      - certificate
       type: object
     AuthtypesSessionContext:
       properties:
@@ -809,6 +855,12 @@ components:
       properties:
         config:
           $ref: '#/components/schemas/AuthtypesAuthDomainConfig'
+        enabled:
+          type: boolean
+        roleMapping:
+          $ref: '#/components/schemas/AuthtypesRoleMapping'
+      required:
+      - config
       type: object
     AuthtypesUpdatableRole:
       properties:
@@ -10541,275 +10593,6 @@ paths:
       summary: Update public dashboard
       tags:
       - dashboard
-  /api/v1/domains:
-    get:
-      deprecated: false
-      description: This endpoint lists all auth domains
-      operationId: ListAuthDomains
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    items:
-                      $ref: '#/components/schemas/AuthtypesGettableAuthDomain'
-                    type: array
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: List all auth domains
-      tags:
-      - authdomains
-    post:
-      deprecated: false
-      description: This endpoint creates an auth domain
-      operationId: CreateAuthDomain
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AuthtypesPostableAuthDomain'
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/TypesIdentifiable'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: Created
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "409":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Conflict
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Create auth domain
-      tags:
-      - authdomains
-  /api/v1/domains/{id}:
-    delete:
-      deprecated: false
-      description: This endpoint deletes an auth domain
-      operationId: DeleteAuthDomain
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      responses:
-        "204":
-          description: No Content
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Delete auth domain
-      tags:
-      - authdomains
-    get:
-      deprecated: false
-      description: This endpoint returns an auth domain by ID
-      operationId: GetAuthDomain
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/AuthtypesGettableAuthDomain'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Get auth domain by ID
-      tags:
-      - authdomains
-    put:
-      deprecated: false
-      description: This endpoint updates an auth domain
-      operationId: UpdateAuthDomain
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AuthtypesUpdatableAuthDomain'
-      responses:
-        "204":
-          description: No Content
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "409":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Conflict
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Update auth domain
-      tags:
-      - authdomains
   /api/v1/downtime_schedules:
     get:
       deprecated: false
@@ -14398,6 +14181,275 @@ paths:
       summary: Update user preference
       tags:
       - preferences
+  /api/v2/auth_domains:
+    get:
+      deprecated: false
+      description: This endpoint lists all auth domains
+      operationId: ListAuthDomains
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/AuthtypesGettableAuthDomain'
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: List all auth domains
+      tags:
+      - authdomains
+    post:
+      deprecated: false
+      description: This endpoint creates an auth domain
+      operationId: CreateAuthDomain
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthtypesPostableAuthDomain'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesIdentifiable'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Create auth domain
+      tags:
+      - authdomains
+  /api/v2/auth_domains/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint deletes an auth domain
+      operationId: DeleteAuthDomain
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Delete auth domain
+      tags:
+      - authdomains
+    get:
+      deprecated: false
+      description: This endpoint returns an auth domain by ID
+      operationId: GetAuthDomain
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuthtypesGettableAuthDomain'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get auth domain by ID
+      tags:
+      - authdomains
+    put:
+      deprecated: false
+      description: This endpoint updates an auth domain
+      operationId: UpdateAuthDomain
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthtypesUpdatableAuthDomain'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Update auth domain
+      tags:
+      - authdomains
   /api/v2/dashboard_views:
     get:
       deprecated: false

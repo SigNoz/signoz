@@ -91,7 +91,11 @@ function ConfigureGoogleAuthAuthnProvider({
 								{ required: true, message: 'Domain is required', whitespace: true },
 							]}
 						>
-							<Input id="google-domain" disabled={!isCreate} />
+							<Input
+								id="google-domain"
+								disabled={!isCreate}
+								testId="google-auth-domain"
+							/>
 						</Form.Item>
 					</div>
 
@@ -109,7 +113,7 @@ function ConfigureGoogleAuthAuthnProvider({
 								{ required: true, message: 'Client ID is required', whitespace: true },
 							]}
 						>
-							<Input id="google-client-id" />
+							<Input id="google-client-id" testId="google-auth-client-id" />
 						</Form.Item>
 					</div>
 
@@ -131,7 +135,7 @@ function ConfigureGoogleAuthAuthnProvider({
 								},
 							]}
 						>
-							<Input id="google-client-secret" />
+							<Input id="google-client-secret" testId="google-auth-client-secret" />
 						</Form.Item>
 					</div>
 
@@ -143,6 +147,7 @@ function ConfigureGoogleAuthAuthnProvider({
 						>
 							<Checkbox
 								id="google-skip-email-verification"
+								testId="google-auth-skip-email-verified"
 								onChange={(checked: boolean): void => {
 									form.setFieldValue(
 										['googleAuthConfig', 'insecureSkipEmailVerified'],
@@ -180,7 +185,10 @@ function ConfigureGoogleAuthAuthnProvider({
 						<Collapse.Panel
 							key="workspace-groups"
 							header={
-								<div className="authn-provider__collapse-header">
+								<div
+									className="authn-provider__collapse-header"
+									data-testid="google-auth-workspace-groups-header"
+								>
 									{expandedSection !== 'workspace-groups' ? (
 										<ChevronRight size={16} />
 									) : (
@@ -221,6 +229,7 @@ function ConfigureGoogleAuthAuthnProvider({
 									>
 										<Checkbox
 											id="google-fetch-groups"
+											testId="google-auth-fetch-groups"
 											onChange={(checked: boolean): void => {
 												form.setFieldValue(['googleAuthConfig', 'fetchGroups'], checked);
 											}}
@@ -251,6 +260,7 @@ function ConfigureGoogleAuthAuthnProvider({
 											>
 												<AntdInput.TextArea
 													id="google-service-account-json"
+													data-testid="google-auth-service-account-json"
 													rows={3}
 													placeholder="Paste service account JSON"
 													className="authn-provider__textarea"
@@ -270,6 +280,7 @@ function ConfigureGoogleAuthAuthnProvider({
 											>
 												<Checkbox
 													id="google-transitive-membership"
+													testId="google-auth-transitive-membership"
 													onChange={(checked: boolean): void => {
 														form.setFieldValue(
 															['googleAuthConfig', 'fetchTransitiveGroupMembership'],
@@ -299,7 +310,10 @@ function ConfigureGoogleAuthAuthnProvider({
 												name={['googleAuthConfig', 'allowedGroups']}
 												className="authn-provider__form-item"
 											>
-												<EmailTagInput placeholder="Type a group email and press Enter" />
+												<EmailTagInput
+													placeholder="Type a group email and press Enter"
+													testId="google-auth-allowed-groups"
+												/>
 											</Form.Item>
 										</div>
 									</div>

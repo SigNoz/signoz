@@ -15,6 +15,8 @@ import store from 'store';
 import APIError from 'types/api/error';
 import { installTranslationResilience } from 'translation-resilience';
 
+import 'lib/monaco/setup';
+
 import './ReactI18';
 
 import 'styles.scss';

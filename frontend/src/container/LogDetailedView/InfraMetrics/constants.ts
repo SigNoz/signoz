@@ -2780,68 +2780,94 @@ export const hostWidgetInfo = [
 		title: 'CPU Usage',
 		yAxisUnit: 'percentunit',
 		docPath: '/infrastructure-monitoring/host-monitoring/#cpu-usage-1',
+		description:
+			'CPU time share per state (user, system, wait, steal, idle); sustained wait points to disk I/O blocking.',
 	},
 	{
 		title: 'Memory Usage',
 		yAxisUnit: 'bytes',
 		docPath: '/infrastructure-monitoring/host-monitoring/#memory-usage-1',
+		description:
+			'Physical memory bytes per state (used, cached, buffers, free); a climbing used line suggests a leak.',
 	},
 	{
 		title: 'Disk Usage (%) by mountpoint',
 		yAxisUnit: 'percentunit',
 		docPath:
 			'/infrastructure-monitoring/host-monitoring/#disk-usage--by-mountpoint',
+		description:
+			'Used space as a percentage of capacity for each mountpoint, one line per mountpoint.',
 	},
 	{
 		title: 'System Load Average',
 		yAxisUnit: '',
 		docPath: '/infrastructure-monitoring/host-monitoring/#system-load-average',
+		description:
+			'The 1m, 5m and 15m load averages together; 1m above 15m means load is building.',
 	},
 	{
 		title: 'Network usage (bytes)',
 		yAxisUnit: 'bytes',
 		docPath: '/infrastructure-monitoring/host-monitoring/#network-usage-bytes',
+		description:
+			'Throughput in bytes/s per interface and direction, to spot NICs nearing rated bandwidth.',
 	},
 	{
 		title: 'Network usage (packet/s)',
 		yAxisUnit: 'pps',
 		docPath: '/infrastructure-monitoring/host-monitoring/#network-usage-packetss',
+		description:
+			'Packets per second per interface and direction; a NIC can saturate on packet rate before bytes.',
 	},
 	{
 		title: 'Network errors',
 		yAxisUnit: 'short',
 		docPath: '/infrastructure-monitoring/host-monitoring/#network-errors',
+		description:
+			'Rate of interface-level network errors per interface and direction; any sustained value needs attention.',
 	},
 	{
 		title: 'Network drops',
 		yAxisUnit: 'short',
 		docPath: '/infrastructure-monitoring/host-monitoring/#network-drops',
+		description:
+			'Rate of dropped packets per interface and direction, usually buffer overflow rather than link errors.',
 	},
 	{
 		title: 'Network connections',
 		yAxisUnit: 'short',
 		docPath: '/infrastructure-monitoring/host-monitoring/#network-connections',
+		description:
+			'Active connection counts per protocol and state (ESTABLISHED, TIME_WAIT, SYN_RECV) to spot leaks and churn.',
 	},
 	{
 		title: 'System disk io (bytes transferred)',
 		yAxisUnit: 'bytes',
 		docPath: '/infrastructure-monitoring/host-monitoring/#system-disk-io-bytes',
+		description:
+			'Disk throughput in bytes/s per device and direction, tracking heavy file I/O or database flushes.',
 	},
 	{
 		title: 'System disk operations/s',
 		yAxisUnit: 'short',
 		docPath:
 			'/infrastructure-monitoring/host-monitoring/#system-disk-operationss',
+		description:
+			'Rate of completed read and write operations per device; pair with disk io bytes to size each operation.',
 	},
 	{
 		title: 'Queue size',
 		yAxisUnit: 'short',
 		docPath: '/infrastructure-monitoring/host-monitoring/#queue-size',
+		description:
+			'Maximum disk request-queue depth per device; sustained high depth means the storage layer is saturated.',
 	},
 	{
 		title: 'System disk operation time/s',
 		yAxisUnit: 's',
 		docPath:
 			'/infrastructure-monitoring/host-monitoring/#system-disk-operation-times',
+		description:
+			'Rate of cumulative disk-busy time per device and direction; values near 1s/s mean the device is saturated.',
 	},
 ];
