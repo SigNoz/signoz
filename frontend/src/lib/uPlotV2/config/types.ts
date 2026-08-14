@@ -1,5 +1,4 @@
 import { PrecisionOption } from 'components/Graph/types';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import uPlot, { Series } from 'uplot';
 
 import { ThresholdsDrawHookOptions } from '../hooks/types';
@@ -77,7 +76,12 @@ export interface AxisProps {
 	isDarkMode?: boolean;
 	isLogScale?: boolean;
 	yAxisUnit?: string;
-	panelType?: PANEL_TYPES;
+	/**
+	 * X axis carries timestamps, so its ticks format as dates/times. Declared by the caller
+	 * rather than inferred from a panel type — a chart whose x axis is buckets or categories
+	 * (histogram) leaves it off.
+	 */
+	isTimeAxis?: boolean;
 	decimalPrecision?: PrecisionOption;
 }
 

@@ -1,5 +1,4 @@
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { uPlotXAxisValuesFormat } from 'lib/uPlotLib/utils/constants';
 import type uPlot from 'uplot';
 
@@ -137,11 +136,11 @@ describe('UPlotAxisBuilder', () => {
 		});
 	});
 
-	it('uses time-based X-axis values formatter for time-series like panels', () => {
+	it('uses time-based X-axis values formatter when the caller declares a time axis', () => {
 		const builder = new UPlotAxisBuilder(
 			createAxisProps({
 				scaleKey: 'x',
-				panelType: PANEL_TYPES.TIME_SERIES,
+				isTimeAxis: true,
 			}),
 		);
 
@@ -150,11 +149,11 @@ describe('UPlotAxisBuilder', () => {
 		expect(config.values).toBe(uPlotXAxisValuesFormat);
 	});
 
-	it('does not attach X-axis datetime formatter when panel type is not supported', () => {
+	it('does not attach X-axis datetime formatter for a non-time axis', () => {
 		const builder = new UPlotAxisBuilder(
 			createAxisProps({
 				scaleKey: 'x',
-				panelType: PANEL_TYPES.LIST, // not in PANEL_TYPES_WITH_X_AXIS_DATETIME_FORMAT
+				isTimeAxis: false,
 			}),
 		);
 
@@ -290,22 +289,9 @@ describe('UPlotAxisBuilder', () => {
 		expect(config.space).toBe(50);
 	});
 
-	it('includes PANEL_TYPES.BAR and PANEL_TYPES.TIME_SERIES in X-axis datetime formatter', () => {
-		const barBuilder = new UPlotAxisBuilder(
-			createAxisProps({
-				scaleKey: 'x',
-				panelType: PANEL_TYPES.BAR,
-			}),
-		);
-		expect(barBuilder.getConfig().values).toBe(uPlotXAxisValuesFormat);
-
-		const timeSeriesBuilder = new UPlotAxisBuilder(
-			createAxisProps({
-				scaleKey: 'x',
-				panelType: PANEL_TYPES.TIME_SERIES,
-			}),
-		);
-		expect(timeSeriesBuilder.getConfig().values).toBe(uPlotXAxisValuesFormat);
+	it('omits the X-axis datetime formatter when no time axis is declared', () => {
+		const builder = new UPlotAxisBuilder(createAxisProps({ scaleKey: 'x' }));
+		expect(builder.getConfig().values).toBeUndefined();
 	});
 
 	it('should return the existing size when cycleNum > 1', () => {

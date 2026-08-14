@@ -1,6 +1,5 @@
 import type { DashboardtypesHistogramPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 import { buildBaseConfig } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/baseConfigBuilder';
 import { resolveSeriesLabelV5 } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/resolveSeriesLabel';
@@ -44,7 +43,7 @@ export function buildHistogramConfig({
 }: BuildHistogramConfigArgs): UPlotConfigBuilder {
 	const builder = buildBaseConfig({
 		panelId,
-		panelType: PANEL_TYPES.HISTOGRAM,
+		isTimeAxis: false,
 		isDarkMode,
 		timezone,
 		panelMode,
