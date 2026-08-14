@@ -25,6 +25,7 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import NoLogs from 'container/NoLogs/NoLogs';
 import { useOptionsMenu } from 'container/OptionsMenu';
+import { buildCompositeKey } from 'container/OptionsMenu/utils';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -76,6 +77,7 @@ function ListView({
 		loading: timeRangeUpdateLoading,
 	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
+	// TODO: column edits leak to Traces Explorer; needs its own ai_o11y key.
 	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.TRACES_LIST_OPTIONS,
 		dataSource: DataSource.TRACES,
@@ -96,11 +98,12 @@ function ListView({
 		[stagedQuery, orderBy],
 	);
 
-	// TEMP till traces uses TanStack: stable on reorder, changes on add/remove.
+	// Query-key slice for selectColumns: stable on reorder, changes on
+	// add/remove/replace. Composite key so resource.foo ≠ attribute.foo.
 	const selectColumnsSignature = useMemo(
 		() =>
 			(options?.selectColumns ?? [])
-				.map((c) => c.name)
+				.map((c) => buildCompositeKey(c.name, c.fieldContext))
 				.sort()
 				.join(','),
 		[options?.selectColumns],

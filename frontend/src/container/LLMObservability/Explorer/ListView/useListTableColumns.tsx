@@ -42,6 +42,7 @@ export function useListTableColumns(
 			accessorFn: (row): unknown => row?.date,
 			canBeHidden: false,
 			enableRemove: false,
+			enableMove: false,
 			width: { default: 180, min: 180 },
 			cell: ({ value }): ReactElement => {
 				const timestamp = value as string | number | undefined;
