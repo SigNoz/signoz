@@ -56,6 +56,7 @@ export function useCreateAlertFromPanel(): (
 			void logEvent(DashboardDetailEvents.PanelAction, {
 				action: 'createAlerts',
 				panelType,
+				panelKind,
 				...eventMeta,
 				widgetId: panelId,
 				queryType: getPanelQueryType(panel),

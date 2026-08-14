@@ -55,6 +55,7 @@ export function useDeletePanel({
 					panelType: removed?.panel
 						? PANEL_KIND_TO_PANEL_TYPE[removed.panel.spec.plugin.kind]
 						: undefined,
+					panelKind: removed?.panel?.spec.plugin.kind,
 					panelId,
 					...eventMeta,
 				});

@@ -128,11 +128,14 @@ export function useDrilldown(
 
 	const onPanelClick = useCallback(
 		(payload: DrilldownClickPayload): void => {
-			void logEvent(DashboardDetailEvents.DrilldownOpened, { panelType });
+			void logEvent(DashboardDetailEvents.DrilldownOpened, {
+				panelType,
+				panelKind: kind,
+			});
 			setSubMenu(DrilldownSubMenu.Base);
 			onClick(payload.coordinates, payload.context);
 		},
-		[onClick, panelType],
+		[onClick, panelType, kind],
 	);
 
 	const handleClose = useCallback((): void => {

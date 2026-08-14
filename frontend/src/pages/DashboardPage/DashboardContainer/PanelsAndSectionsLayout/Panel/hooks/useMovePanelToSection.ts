@@ -76,6 +76,7 @@ export function useMovePanelToSection({
 					panelType: moved.panel
 						? PANEL_KIND_TO_PANEL_TYPE[moved.panel.spec.plugin.kind]
 						: undefined,
+					panelKind: moved.panel?.spec.plugin.kind,
 					panelId,
 					...eventMeta,
 				});

@@ -53,9 +53,10 @@ function NoData({
 		return <PanelLoader />;
 	}
 
-	const panelType = panel
-		? PANEL_KIND_TO_PANEL_TYPE[panel.spec.plugin.kind]
-		: undefined;
+	// `panelType` stays on the event so existing reports keep resolving; `panelKind` is the
+	// V2 identity, and the only one that can tell two kinds sharing a panel type apart.
+	const panelKind = panel?.spec.plugin.kind;
+	const panelType = panelKind ? PANEL_KIND_TO_PANEL_TYPE[panelKind] : undefined;
 
 	const extendAction: PanelMessageAction | undefined =
 		activeExtend?.canExtend && activeExtend.actionLabel
@@ -65,6 +66,7 @@ function NoData({
 						void logEvent(DashboardDetailEvents.NoDataAction, {
 							action: 'extendTime',
 							panelType,
+							panelKind,
 						});
 						activeExtend.extend();
 					},
@@ -79,6 +81,7 @@ function NoData({
 					void logEvent(DashboardDetailEvents.NoDataAction, {
 						action: 'retry',
 						panelType,
+						panelKind,
 					});
 					onRetry();
 				},
