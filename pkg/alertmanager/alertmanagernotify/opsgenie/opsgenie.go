@@ -32,10 +32,12 @@ const (
 	Integration = "opsgenie"
 )
 
-// https://docs.opsgenie.com/docs/alert-api - message 130, description 15000 runes.
+// https://support.atlassian.com/opsgenie/docs/alert-fields/ - message 130,
+// description 15000, note 25000 runes.
 const (
 	maxMessageLenRunes     = 130
 	maxDescriptionLenRunes = 15000
+	maxNoteLenRunes        = 25000
 )
 
 // Notifier implements a Notifier for OpsGenie notifications.
@@ -251,7 +253,10 @@ func (n *Notifier) prepareNote(ctx context.Context, alerts []*types.Alert) (stri
 		first = false
 	}
 
-	note, _ := notify.TruncateInRunes(b.String(), maxDescriptionLenRunes)
+	note, truncated := notify.TruncateInRunes(b.String(), maxNoteLenRunes)
+	if truncated {
+		n.logger.WarnContext(ctx, "Truncated note", slog.Int("max_runes", maxNoteLenRunes))
+	}
 	return note, nil
 }
 
