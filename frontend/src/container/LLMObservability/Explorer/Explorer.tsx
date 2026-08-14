@@ -54,6 +54,7 @@ function Explorer(): JSX.Element {
 	// TODO(ai-explorer): destructure `{ options }` when save-view / add-to-dashboard
 	// land (Traces Explorer passes it to getExportQueryData). Until then the call
 	// only seeds `?options=` for views that do not mount ListView.
+	// TODO: shares the Traces Explorer's saved columns; needs its own ai_o11y key.
 	useOptionsMenu({
 		storageKey: LOCALSTORAGE.TRACES_LIST_OPTIONS,
 		dataSource: DataSource.TRACES,
