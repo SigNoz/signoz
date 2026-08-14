@@ -24,16 +24,13 @@ const (
 )
 
 // New builds an Opsgenie notifier pointed at the JSM native endpoint.
-// advancedFeatures enables the rich treatment: HTML body, alert refresh on
-// refire, and a note timeline (per fire and on resolve).
+// advancedFeatures enables the rich treatment: HTML body and a note timeline
+// (per fire and on resolve).
 func New(c *alertmanagertypes.JSMOpsReceiverConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, advancedFeatures bool) (*opsgenie.Notifier, error) {
 	conf, err := toOpsGenieConfig(c)
 	if err != nil {
 		return nil, err
 	}
-	// Refresh the alert on refire so the top shows the latest datapoint; the note
-	// timeline keeps the full history.
-	conf.UpdateAlerts = advancedFeatures
 	return opsgenie.New(conf, t, l, templater, advancedFeatures)
 }
 
