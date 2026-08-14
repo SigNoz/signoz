@@ -53,6 +53,7 @@ export function useCreateAlertFromPanel(): (
 			void logEvent('Dashboard Detail: Panel action', {
 				action: 'createAlerts',
 				panelType,
+				panelKind,
 				dashboardId,
 				widgetId: panelId,
 				queryType: getPanelQueryType(panel),
