@@ -3,10 +3,9 @@ import type {
 	DashboardtypesPanelDTO,
 	GetPublicDashboardPanelQueryRangeV2200,
 } from 'api/generated/services/sigNoz.schemas';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { retryUnlessClientError } from 'pages/DashboardPage/DashboardContainer/hooks/useGetQueryRangeV5';
-import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
+import type { PanelQueryCapabilities } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelCapabilities';
 import {
 	buildQueryRangeRequest,
 	extractLegendMap,
@@ -21,6 +20,8 @@ import { useQuery, useQueryClient } from 'react-query';
 
 export interface UsePublicPanelQueryArgs {
 	panel: DashboardtypesPanelDTO;
+	/** The panel kind's declared query capabilities — `panelDefinition.query`. */
+	queryCapabilities: PanelQueryCapabilities;
 	/** Panel key in `spec.panels` — addresses the panel on the public endpoint. */
 	panelKey: string;
 	publicDashboardId: string;
@@ -52,15 +53,13 @@ export interface UsePublicPanelQueryResult {
  */
 export function usePublicPanelQuery({
 	panel,
+	queryCapabilities,
 	panelKey,
 	publicDashboardId,
 	startMs,
 	endMs,
 	enabled = true,
 }: UsePublicPanelQueryArgs): UsePublicPanelQueryResult {
-	const fullKind = panel.spec.plugin.kind;
-	const panelType =
-		(fullKind && PANEL_KIND_TO_PANEL_TYPE[fullKind]) ?? PANEL_TYPES.TIME_SERIES;
 	const { queries } = panel.spec;
 
 	const pluginSpec = panel.spec.plugin.spec;
@@ -77,13 +76,13 @@ export function usePublicPanelQuery({
 		() =>
 			buildQueryRangeRequest({
 				queries,
-				panelType,
+				queryCapabilities,
 				startMs,
 				endMs,
 				fillGaps,
 				variables: {},
 			}),
-		[queries, panelType, startMs, endMs, fillGaps],
+		[queries, queryCapabilities, startMs, endMs, fillGaps],
 	);
 
 	const legendMap = useMemo(() => extractLegendMap(queries), [queries]);
