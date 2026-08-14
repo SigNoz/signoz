@@ -239,6 +239,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddSavedViewTuplesFactory(sqlstore),
 		sqlmigration.NewFixSavedViewSelectedFieldsFactory(sqlstore),
 		sqlmigration.NewBackfillSavedViewRequestTypeFactory(sqlstore),
+		sqlmigration.NewRestructureAuthDomainConfigFactory(sqlstore),
 	)
 }
 

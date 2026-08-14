@@ -10,8 +10,6 @@ import {
 import {
 	AuthtypesAuthNProviderDTO,
 	AuthtypesGettableAuthDomainDTO,
-	AuthtypesGoogleConfigDTO,
-	AuthtypesRoleMappingDTO,
 	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
@@ -24,10 +22,11 @@ import APIError from 'types/api/error';
 
 import AuthnProviderSelector from './AuthnProviderSelector';
 import {
-	convertDomainMappingsToRecord,
-	convertGroupMappingsToRecord,
 	FormValues,
+	kindToProvider,
+	prepareConfig,
 	prepareInitialValues,
+	prepareRoleMapping,
 } from './CreateEdit.utils';
 import ConfigureGoogleAuthAuthnProvider from './Providers/AuthnGoogleAuth';
 import ConfigureOIDCAuthnProvider from './Providers/AuthnOIDC';
@@ -41,7 +40,7 @@ function configureAuthnProvider(
 	switch (authnProvider) {
 		case 'saml':
 			return <ConfigureSAMLAuthnProvider isCreate={isCreate} />;
-		case 'google_auth':
+		case 'google':
 			return <ConfigureGoogleAuthAuthnProvider isCreate={isCreate} />;
 		case 'oidc':
 			return <ConfigureOIDCAuthnProvider isCreate={isCreate} />;
@@ -61,7 +60,7 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 	const [form] = Form.useForm<FormValues>();
 	const [authnProvider, setAuthnProvider] = useState<
 		AuthtypesAuthNProviderDTO | ''
-	>(record?.config?.ssoType || '');
+	>(kindToProvider(record?.config?.kind));
 
 	const { showErrorModal } = useErrorModal();
 	const { featureFlags } = useAppContext();
@@ -85,68 +84,6 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 	const { mutate: updateAuthDomain, isLoading: isUpdating } =
 		useUpdateAuthDomain<AxiosError<RenderErrorResponseDTO>>();
 
-	/**
-	 * Prepares Google Auth config for API payload
-	 */
-	const getGoogleAuthConfig = useCallback(():
-		| AuthtypesGoogleConfigDTO
-		| undefined => {
-		const config = form.getFieldValue('googleAuthConfig');
-		if (!config) {
-			return undefined;
-		}
-
-		const {
-			domainToAdminEmailList,
-			allowedGroups,
-			serviceAccountJson,
-			domainToAdminEmail: _domainToAdminEmail,
-			fetchTransitiveGroupMembership,
-			...rest
-		} = config;
-		const domainToAdminEmail = convertDomainMappingsToRecord(
-			domainToAdminEmailList,
-		);
-
-		return {
-			...rest,
-			...(rest.fetchGroups
-				? {
-						allowedGroups,
-						serviceAccountJson,
-						domainToAdminEmail: domainToAdminEmail ?? {},
-						fetchTransitiveGroupMembership,
-					}
-				: { domainToAdminEmail: {} }),
-		};
-	}, [form]);
-
-	// Prepares role mapping for API payload
-	const getRoleMapping = useCallback((): AuthtypesRoleMappingDTO | undefined => {
-		const roleMapping = form.getFieldValue('roleMapping');
-		if (!roleMapping) {
-			return undefined;
-		}
-
-		const { groupMappingsList, ...rest } = roleMapping;
-		const groupMappings = convertGroupMappingsToRecord(groupMappingsList);
-
-		// Only return roleMapping if there's meaningful content
-		const hasDefaultRole = !!rest.defaultRole;
-		const hasUseRoleAttribute = rest.useRoleAttribute === true;
-		const hasGroupMappings =
-			groupMappings && Object.keys(groupMappings).length > 0;
-
-		if (!hasDefaultRole && !hasUseRoleAttribute && !hasGroupMappings) {
-			return undefined;
-		}
-
-		return {
-			...rest,
-			groupMappings: rest.useRoleAttribute ? undefined : (groupMappings ?? {}),
-		};
-	}, [form]);
-
 	const onSubmitHandler = useCallback(async (): Promise<void> => {
 		try {
 			await form.validateFields();
@@ -158,25 +95,23 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 			return;
 		}
 
-		const name = form.getFieldValue('name');
-		const googleAuthConfig = getGoogleAuthConfig();
-		const samlConfig = form.getFieldValue('samlConfig');
-		const oidcConfig = form.getFieldValue('oidcConfig');
-		const roleMapping = getRoleMapping();
+		const values = form.getFieldsValue(true) as FormValues;
+		const name = values.name ?? '';
+		const config = prepareConfig(values, authnProvider);
+		const roleMapping = prepareRoleMapping(values);
+
+		if (!config) {
+			return;
+		}
 
 		if (isCreate) {
 			createAuthDomain(
 				{
 					data: {
 						name,
-						config: {
-							ssoEnabled: true,
-							ssoType: authnProvider,
-							googleAuthConfig,
-							samlConfig,
-							oidcConfig,
-							roleMapping,
-						},
+						enabled: true,
+						config,
+						roleMapping,
 					},
 				},
 				{
@@ -196,14 +131,9 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 				{
 					pathParams: { id: record.id },
 					data: {
-						config: {
-							ssoEnabled: form.getFieldValue('ssoEnabled'),
-							ssoType: authnProvider,
-							googleAuthConfig,
-							samlConfig,
-							oidcConfig,
-							roleMapping,
-						},
+						enabled: values.enabled ?? false,
+						config,
+						roleMapping,
 					},
 				},
 				{
@@ -219,8 +149,6 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 		authnProvider,
 		createAuthDomain,
 		form,
-		getGoogleAuthConfig,
-		getRoleMapping,
 		handleError,
 		isCreate,
 
@@ -243,10 +171,10 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 		>
 			<Form
 				name="auth-domain"
+				data-testid="auth-domain-form"
 				initialValues={defaultTo(prepareInitialValues(record), {
 					name: '',
-					ssoEnabled: false,
-					ssoType: '',
+					enabled: false,
 				})}
 				form={form}
 				layout="vertical"
@@ -262,12 +190,22 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 						{configureAuthnProvider(authnProvider, isCreate)}
 						<section className="action-buttons">
 							{isCreate && (
-								<Button onClick={onBackHandler} variant="solid" color="secondary">
+								<Button
+									onClick={onBackHandler}
+									variant="solid"
+									color="secondary"
+									testId="auth-domain-back"
+								>
 									Back
 								</Button>
 							)}
 							{!isCreate && (
-								<Button onClick={onClose} variant="solid" color="secondary">
+								<Button
+									onClick={onClose}
+									variant="solid"
+									color="secondary"
+									testId="auth-domain-cancel"
+								>
 									Cancel
 								</Button>
 							)}
@@ -276,6 +214,7 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 								variant="solid"
 								color="primary"
 								loading={isCreating || isUpdating}
+								testId="auth-domain-save"
 							>
 								Save Changes
 							</Button>

@@ -12,13 +12,10 @@ const wildCardDomain = "*"
 
 type GoogleConfig struct {
 	// ClientID is the application's ID. For example, 292085223830.apps.googleusercontent.com.
-	ClientID string `json:"clientId"`
+	ClientID string `json:"clientId" required:"true"`
 
 	// It is the application's secret.
-	ClientSecret string `json:"clientSecret"`
-
-	// What is the meaning of this? Should we remove this?
-	RedirectURI string `json:"redirectURI"`
+	ClientSecret string `json:"clientSecret" required:"true" format:"password"`
 
 	// Whether to fetch the Google workspace groups (required additional API scopes)
 	FetchGroups bool `json:"fetchGroups"`
@@ -26,7 +23,7 @@ type GoogleConfig struct {
 	// Service Account creds JSON stored for Google Admin SDK access
 	// This is content of the JSON file stored directly into db as string
 	// Required if FetchGroups is true (unless running on GCE with default credentials)
-	ServiceAccountJSON string `json:"serviceAccountJson,omitempty"`
+	ServiceAccountJSON string `json:"serviceAccountJson,omitempty" format:"password"`
 
 	// Map of workspace domain to admin email for service account impersonation
 	// The service account will impersonate this admin to call the directory API
