@@ -1,18 +1,28 @@
 import CreateAlertChannels from 'container/CreateAlertChannels';
 import { ChannelType } from 'container/CreateAlertChannels/config';
+import { GoogleChatInitialConfig } from 'container/CreateAlertChannels/defaults';
 import {
+	googleChatDescriptionDefaultValue,
+	googleChatTitleDefaultValue,
 	opsGenieDescriptionDefaultValue,
 	opsGenieMessageDefaultValue,
 	opsGeniePriorityDefaultValue,
 	pagerDutyAdditionalDetailsDefaultValue,
-	pagerDutyDescriptionDefaultVaule,
+	pagerDutyDescriptionDefaultValue,
 	pagerDutySeverityTextDefaultValue,
 	slackDescriptionDefaultValue,
 	slackTitleDefaultValue,
 } from 'mocks-server/__mockdata__/alerts';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { act, fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import {
+	act,
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+} from 'tests/test-utils';
 
 import { testLabelInputAndHelpValue } from './testUtils';
 
@@ -225,7 +235,7 @@ describe('Create Alert Channel', () => {
 				);
 
 				expect(descriptionTextArea).toHaveTextContent(
-					pagerDutyDescriptionDefaultVaule,
+					pagerDutyDescriptionDefaultValue,
 				);
 			});
 			it('Should check if Severity label, info (help_pager_severity), and textbox are displayed properly', () => {
@@ -417,6 +427,153 @@ describe('Create Alert Channel', () => {
 				const descriptionTextArea = screen.getByTestId('description-textarea');
 
 				expect(descriptionTextArea).toHaveTextContent(slackDescriptionDefaultValue);
+			});
+		});
+		describe('Google Chat', () => {
+			const validWebhookUrl =
+				'https://chat.googleapis.com/v1/spaces/AAAA/messages?key=dummy_key&token=dummy_token';
+
+			beforeEach(() => {
+				render(<CreateAlertChannels preType={ChannelType.GoogleChat} />);
+			});
+
+			// paste instead of type: a per-keystroke re-render of the whole form
+			// pushes these tests past the 5s jest timeout on slower CI runners
+			async function fillField(
+				user: ReturnType<typeof userEvent.setup>,
+				testId: string,
+				value: string,
+			): Promise<void> {
+				await user.click(screen.getByTestId(testId));
+				await user.paste(value);
+			}
+
+			it('Should check if the selected item in the type dropdown has text "Google Chat"', () => {
+				expect(screen.getByText('Google Chat')).toBeInTheDocument();
+			});
+
+			it('Should check if Webhook URL label and input are displayed properly', () => {
+				testLabelInputAndHelpValue({
+					labelText: 'field_webhook_url',
+					testId: 'webhook-url-textbox',
+				});
+			});
+
+			it('Should check if Title contains the google chat template', () => {
+				expect(screen.getByTestId('title-textarea')).toHaveTextContent(
+					googleChatTitleDefaultValue,
+				);
+			});
+
+			it('Should check if Description contains the google chat template', () => {
+				expect(screen.getByTestId('description-textarea')).toHaveTextContent(
+					googleChatDescriptionDefaultValue,
+				);
+			});
+
+			it('Should check if saving with a webhook url outside chat.googleapis.com displays error notification', async () => {
+				const user = userEvent.setup();
+
+				await fillField(user, 'channel-name-textbox', 'gchat-channel');
+				await fillField(user, 'webhook-url-textbox', 'https://example.com/webhook');
+
+				await user.click(screen.getByTestId('save-channel-button'));
+
+				await waitFor(() =>
+					expect(errorNotification).toHaveBeenCalledWith({
+						message: 'Error',
+						description: 'google_chat_webhook_url_invalid',
+					}),
+				);
+			});
+
+			it('Should check if saving sends a googlechat_configs payload', async () => {
+				let requestBody: unknown;
+				server.use(
+					rest.post('http://localhost/api/v1/channels', async (req, res, ctx) => {
+						requestBody = await req.json();
+						return res(
+							ctx.status(201),
+							ctx.json({ status: 'success', data: 'channel created' }),
+						);
+					}),
+				);
+
+				const user = userEvent.setup();
+
+				await fillField(user, 'channel-name-textbox', 'gchat-channel');
+				await fillField(user, 'webhook-url-textbox', validWebhookUrl);
+
+				await user.click(screen.getByTestId('save-channel-button'));
+
+				await waitFor(() =>
+					expect(successNotification).toHaveBeenCalledWith({
+						message: 'Success',
+						description: 'channel_creation_done',
+					}),
+				);
+
+				expect(requestBody).toStrictEqual({
+					name: 'gchat-channel',
+					googlechat_configs: [
+						{
+							webhook_url: validWebhookUrl,
+							title: GoogleChatInitialConfig.title,
+							text: GoogleChatInitialConfig.text,
+							send_resolved: true,
+						},
+					],
+				});
+			});
+		});
+		describe('Changing the channel type', () => {
+			async function selectType(
+				user: ReturnType<typeof userEvent.setup>,
+				optionText: string,
+			): Promise<void> {
+				// the type dropdown opens on the inner search input of the antd select
+				await user.click(screen.getByRole('combobox'));
+				await user.click(await screen.findByTitle(optionText));
+			}
+
+			it('Should check if switching to Google Chat and back swaps the prefilled templates', async () => {
+				const user = userEvent.setup();
+				render(<CreateAlertChannels preType={ChannelType.Slack} />);
+
+				await selectType(user, 'Google Chat');
+
+				await waitFor(() =>
+					expect(screen.getByTestId('title-textarea')).toHaveTextContent(
+						googleChatTitleDefaultValue,
+					),
+				);
+				expect(screen.getByTestId('description-textarea')).toHaveTextContent(
+					googleChatDescriptionDefaultValue,
+				);
+
+				await selectType(user, 'Slack');
+
+				await waitFor(() =>
+					expect(screen.getByTestId('title-textarea')).toHaveTextContent(
+						slackTitleDefaultValue,
+					),
+				);
+				expect(screen.getByTestId('description-textarea')).toHaveTextContent(
+					slackDescriptionDefaultValue,
+				);
+			});
+
+			it('Should check if switching to Pagerduty prefills the pagerduty description and not the opsgenie one', async () => {
+				const user = userEvent.setup();
+				render(<CreateAlertChannels preType={ChannelType.Opsgenie} />);
+
+				await selectType(user, 'Pagerduty');
+
+				await waitFor(() =>
+					expect(screen.getByTestId('pager-description-textarea')).toHaveTextContent(
+						pagerDutyDescriptionDefaultValue,
+					),
+				);
 			});
 		});
 	});

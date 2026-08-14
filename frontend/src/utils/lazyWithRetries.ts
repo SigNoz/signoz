@@ -16,9 +16,14 @@ export const lazyRetry = (componentImport: ComponentImport): Promise<any> =>
 				resolve(component);
 			})
 			.catch((error: Error) => {
-				if (!hasRefreshed) {
-					setSessionStorageApi(SESSIONSTORAGE.RETRY_LAZY_REFRESHED, 'true');
-
+				// A stale chunk reference right after a deploy self-heals: one reload pulls a
+				// fresh index.html with the new hashed asset names. That reload is only
+				// once-only if the flag persists, so a failed write (sessionStorage blocked in
+				// an iframe, storage disabled) must not reload at all — it would loop forever.
+				if (
+					!hasRefreshed &&
+					setSessionStorageApi(SESSIONSTORAGE.RETRY_LAZY_REFRESHED, 'true')
+				) {
 					window.location.reload();
 				}
 

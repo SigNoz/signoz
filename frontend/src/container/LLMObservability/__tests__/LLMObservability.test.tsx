@@ -44,6 +44,7 @@ describe('LLMObservability (integration)', () => {
 		expect(screen.getByTestId('llm-observability-overview')).toBeInTheDocument();
 		expect(screen.getByTestId('llm-overview-dashboard')).toBeInTheDocument();
 		expect(screen.getByRole('tab', { name: 'Overview' })).toBeInTheDocument();
+		expect(screen.getByRole('tab', { name: 'Explorer' })).toBeInTheDocument();
 		expect(
 			screen.getByRole('tab', { name: 'Model pricing' }),
 		).toBeInTheDocument();
@@ -76,6 +77,27 @@ describe('LLMObservability (integration)', () => {
 		expect(safeNavigateMock).toHaveBeenCalledWith(
 			ROUTES.AI_OBSERVABILITY_ATTRIBUTE_MAPPING,
 		);
+	});
+
+	it('navigates to the explorer route when the Explorer tab is clicked', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(<LLMObservability />, undefined, {
+			initialRoute: ROUTES.AI_OBSERVABILITY_OVERVIEW,
+		});
+
+		await user.click(screen.getByRole('tab', { name: 'Explorer' }));
+
+		expect(safeNavigateMock).toHaveBeenCalledWith(
+			ROUTES.AI_OBSERVABILITY_EXPLORER,
+		);
+	});
+
+	it('renders the explorer panel on the explorer route', () => {
+		render(<LLMObservability />, undefined, {
+			initialRoute: ROUTES.AI_OBSERVABILITY_EXPLORER,
+		});
+
+		expect(screen.getByTestId('llm-observability-explorer')).toBeInTheDocument();
 	});
 
 	it('renders the attribute mapping page on the attribute mapping route', () => {

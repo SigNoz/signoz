@@ -113,53 +113,73 @@ export const namespaceWidgetInfo = [
 		yAxisUnit: '',
 		docPath:
 			'/infrastructure-monitoring/kubernetes/namespaces/#cpu-usage-cores-1',
+		description:
+			'Avg, max and min pod CPU usage in the namespace against the sum of container CPU requests.',
 	},
 	{
 		title: 'Memory Usage (bytes)',
 		yAxisUnit: 'bytes',
 		docPath:
 			'/infrastructure-monitoring/kubernetes/namespaces/#memory-usage-bytes',
+		description:
+			'Pod memory usage, working set and RSS in the namespace against the sum of container memory requests.',
 	},
 	{
 		title: 'Pods CPU (top 10)',
 		yAxisUnit: '',
 		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#pods-cpu-top-10',
+		description:
+			'CPU consumption in cores for the ten highest-consuming pods in the namespace.',
 	},
 	{
 		title: 'Pods Memory (top 10)',
 		yAxisUnit: 'bytes',
 		docPath:
 			'/infrastructure-monitoring/kubernetes/namespaces/#pods-memory-top-10',
+		description:
+			'Memory consumption in bytes for the ten highest-consuming pods in the namespace.',
 	},
 	{
 		title: 'Network rate',
 		yAxisUnit: 'binBps',
 		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#network-rate',
+		description:
+			'Transmit and receive throughput per interface across the pods of the namespace.',
 	},
 	{
 		title: 'Network errors',
 		yAxisUnit: '',
 		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#network-errors',
+		description:
+			'Per-pod-interface network error counts by direction and interface, reported by the kubelet.',
 	},
 	{
 		title: 'StatefulSets (pods)',
 		yAxisUnit: '',
 		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#statefulsets',
+		description:
+			'Desired, current and updated pod counts per StatefulSet in the namespace, revealing stalled rollouts.',
 	},
 	{
 		title: 'ReplicaSets (pods)',
 		yAxisUnit: '',
 		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#replicasets',
+		description:
+			'Desired versus available replicas per ReplicaSet in the namespace, revealing pods stuck pending.',
 	},
 	{
 		title: 'DaemonSets (nodes)',
 		yAxisUnit: '',
 		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#daemonsets',
+		description:
+			'Desired, current, ready and misscheduled node counts per DaemonSet in the namespace.',
 	},
 	{
 		title: 'Deployments (pods)',
 		yAxisUnit: '',
 		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#deployments',
+		description:
+			'Desired and available replicas with utilization percentage per Deployment in the namespace.',
 	},
 ];
 
@@ -1208,13 +1228,9 @@ export const getNamespaceMetricsQueryPayload = (
 									type: 'tag',
 								},
 							],
-							having: [
-								{
-									columnName: `MAX(${INFRA_MONITORING_ATTR_KEYS.K8S_REPLICASET_DESIRED})`,
-									op: '>',
-									value: 0,
-								},
-							],
+							having: {
+								expression: `max(${INFRA_MONITORING_ATTR_KEYS.K8S_REPLICASET_DESIRED}) > 0`,
+							},
 							legend: 'desired',
 							limit: null,
 							orderBy: [],
@@ -1261,13 +1277,9 @@ export const getNamespaceMetricsQueryPayload = (
 									type: 'tag',
 								},
 							],
-							having: [
-								{
-									columnName: `MAX(${INFRA_MONITORING_ATTR_KEYS.K8S_REPLICASET_DESIRED})`,
-									op: '>',
-									value: 0,
-								},
-							],
+							having: {
+								expression: `max(${INFRA_MONITORING_ATTR_KEYS.K8S_REPLICASET_AVAILABLE}) > 0`,
+							},
 							legend: 'available',
 							limit: null,
 							orderBy: [],
@@ -1625,13 +1637,13 @@ export const getNamespaceMetricsQueryPayload = (
 							reduceTo: ReduceOperators.LAST,
 							spaceAggregation: 'max',
 							stepInterval: 60,
-							timeAggregation: 'avg',
+							timeAggregation: 'latest',
 						},
 					],
 					queryFormulas: [
 						{
 							disabled: false,
-							expression: 'A/B',
+							expression: '(B/A) * 100',
 							legend: 'util %',
 							queryName: 'F1',
 						},

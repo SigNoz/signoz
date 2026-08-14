@@ -1,8 +1,3 @@
-"""
-Trace builders for the querierai suite. Every builder pins its spans a few seconds
-before the given `now` so `query_window(now)` covers them.
-"""
-
 from datetime import datetime, timedelta
 
 from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode

@@ -1,9 +1,6 @@
 import json
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
-from typing import Any
-
-import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
@@ -18,85 +15,6 @@ from fixtures.querier import (
     get_scalar_table_data,
     make_query_request,
 )
-
-
-def _raw(
-    signoz: types.SigNoz,
-    token: str,
-    start_ms: int,
-    end_ms: int,
-    name: str,
-    *,
-    expression: str | None = None,
-    order: list[dict] | None = None,
-    limit: int = 100,
-) -> requests.Response:
-    q = build_raw_query(
-        name=name,
-        signal="logs",
-        filter_expression=expression,
-        order=order or [build_order_by("timestamp", "desc")],
-        limit=limit,
-        step_interval=60,
-    )
-    r = make_query_request(signoz, token, start_ms, end_ms, queries=[q], request_type="raw")
-    assert r.status_code == 200, f"HTTP {r.status_code} for '{name}': {r.text}"
-    return r
-
-
-def _scalar(
-    signoz: types.SigNoz,
-    token: str,
-    start_ms: int,
-    end_ms: int,
-    name: str,
-    aggregation: str,
-    *,
-    expression: str | None = None,
-    group_by: list[dict] | None = None,
-) -> requests.Response:
-    q = build_scalar_query(
-        name=name,
-        signal="logs",
-        aggregations=[build_aggregation(aggregation)],
-        filter_expression=expression,
-        group_by=group_by,
-        step_interval=60,
-    )
-    r = make_query_request(signoz, token, start_ms, end_ms, queries=[q], request_type="scalar")
-    assert r.status_code == 200, f"HTTP {r.status_code} for '{name}': {r.text}"
-    return r
-
-
-def _body_users(response: requests.Response) -> set[str | None]:
-    return {row["data"]["body"].get("user") for row in get_rows(response)}
-
-
-def _body_scores(response: requests.Response) -> list[int | None]:
-    return [row["data"]["body"].get("score") for row in get_rows(response)]
-
-
-def _services(response: requests.Response) -> list[str]:
-    return [row["data"]["resources_string"].get("service.name", "") for row in get_rows(response)]
-
-
-def _counts(response: requests.Response) -> dict[str, Any]:
-    return {str(row[0]): row[-1] for row in get_scalar_table_data(response.json()) if row}
-
-
-def _run_case(
-    signoz: types.SigNoz,
-    token: str,
-    start_ms: int,
-    end_ms: int,
-    case: dict[str, Any],
-) -> None:
-    if case["requestType"] == "raw":
-        response = _raw(signoz, token, start_ms, end_ms, case["name"], expression=case.get("expression"), order=case.get("order"))
-    else:
-        response = _scalar(signoz, token, start_ms, end_ms, case["name"], case["aggregation"], expression=case.get("expression"), group_by=case.get("groupBy"))
-    assert case["validate"](response), f"Validation failed for '{case['name']}': {response.json()}"
-
 
 # ============================================================================
 # Filter · GroupBy · Aggregation — non-body fields across all three contexts
@@ -158,7 +76,7 @@ def test_non_body_filter_groupby_aggregation(
             "name": "filter.cross_context",
             "requestType": "raw",
             "expression": 'service.name = "auth-svc" AND http.method = "GET" AND severity_text = "INFO"',
-            "validate": lambda r: len(get_rows(r)) == 2 and _body_users(r) == {"alice", "carol"},
+            "validate": lambda r: len(get_rows(r)) == 2 and {row["data"]["body"].get("user") for row in get_rows(r)} == {"alice", "carol"},
         },
         # 2. GroupBy — resource × top-level multi-key, no filter
         #    Proves both contexts resolve correctly as simultaneous GROUP BY keys.
@@ -179,7 +97,7 @@ def test_non_body_filter_groupby_aggregation(
             "expression": None,
             "groupBy": [{"name": "severity_text"}],
             "aggregation": "count_distinct(http.method)",
-            "validate": lambda r: (rows := _counts(r)) and int(rows["INFO"]) == 1 and int(rows["ERROR"]) == 2 and int(rows["WARN"]) == 1,
+            "validate": lambda r: (rows := {str(row[0]): row[-1] for row in get_scalar_table_data(r.json()) if row}) and int(rows["INFO"]) == 1 and int(rows["ERROR"]) == 2 and int(rows["WARN"]) == 1,
         },
         # 4. Aggregation + body filter — count by resource WHERE body score >= 80
         #    Body field gates the logs; non-body field drives the GROUP BY.
@@ -190,7 +108,7 @@ def test_non_body_filter_groupby_aggregation(
             "groupBy": [build_group_by_field("service.name")],
             "aggregation": "count()",
             # score>=80: alice(80), bob(90), eve(100) → auth-svc: 2, worker: 1; api-gw excluded
-            "validate": lambda r: (rows := _counts(r)) and int(rows["auth-svc"]) == 2 and int(rows["worker"]) == 1 and "api-gw" not in rows,
+            "validate": lambda r: (rows := {str(row[0]): row[-1] for row in get_scalar_table_data(r.json()) if row}) and int(rows["auth-svc"]) == 2 and int(rows["worker"]) == 1 and "api-gw" not in rows,
         },
         # 5. Aggregation + top-level filter — count_distinct(resource) grouped by log attr
         #    Aggregates a resource attr, groups by a log attr, filtered by a top-level field.
@@ -201,13 +119,35 @@ def test_non_body_filter_groupby_aggregation(
             "groupBy": [{"name": "http.method"}],
             "aggregation": "count_distinct(service.name)",
             # INFO/WARN logs: GET(auth-svc×2, api-gw) → 2 distinct svcs; POST/DELETE excluded
-            "validate": lambda r: (rows := _counts(r)) and int(rows["GET"]) == 2 and "POST" not in rows and "DELETE" not in rows,
+            "validate": lambda r: (rows := {str(row[0]): row[-1] for row in get_scalar_table_data(r.json()) if row}) and int(rows["GET"]) == 2 and "POST" not in rows and "DELETE" not in rows,
         },
     ]
 
     for case in cases:
         case.setdefault("groupBy", None)
-        _run_case(signoz, token, start_ms, end_ms, case)
+
+        if case["requestType"] == "raw":
+            query = build_raw_query(
+                name=case["name"],
+                signal="logs",
+                filter_expression=case.get("expression"),
+                order=case.get("order") or [build_order_by("timestamp", "desc")],
+                limit=100,
+                step_interval=60,
+            )
+        else:
+            query = build_scalar_query(
+                name=case["name"],
+                signal="logs",
+                aggregations=[build_aggregation(case["aggregation"])],
+                filter_expression=case.get("expression"),
+                group_by=case.get("groupBy"),
+                step_interval=60,
+            )
+
+        response = make_query_request(signoz, token, start_ms, end_ms, queries=[query], request_type=case["requestType"])
+        assert response.status_code == 200, f"HTTP {response.status_code} for '{case['name']}': {response.text}"
+        assert case["validate"](response), f"Validation failed for '{case['name']}': {response.json()}"
 
 
 # ============================================================================
@@ -254,21 +194,21 @@ def test_non_body_orderby(
             "name": "orderby.service_asc",
             "requestType": "raw",
             "order": [build_order_by("service.name", "asc")],
-            "validate": lambda r: len(get_rows(r)) == 4 and _services(r)[:2] == ["svc-a", "svc-a"] and _services(r)[2:] == ["svc-b", "svc-b"],
+            "validate": lambda r: len(get_rows(r)) == 4 and (svcs := [row["data"]["resources_string"].get("service.name", "") for row in get_rows(r)])[:2] == ["svc-a", "svc-a"] and svcs[2:] == ["svc-b", "svc-b"],
         },
         # top-level timestamp DESC: ts-1s(svc-b/70), ts-2s(svc-b/60), ts-3s(svc-a/90), ts-4s(svc-a/80)
         {
             "name": "orderby.timestamp_desc",
             "requestType": "raw",
             "order": [build_order_by("timestamp", "desc")],
-            "validate": lambda r: len(get_rows(r)) == 4 and _body_scores(r) == [70, 60, 90, 80] and _services(r) == ["svc-b", "svc-b", "svc-a", "svc-a"],
+            "validate": lambda r: len(get_rows(r)) == 4 and [row["data"]["body"].get("score") for row in get_rows(r)] == [70, 60, 90, 80] and [row["data"]["resources_string"].get("service.name", "") for row in get_rows(r)] == ["svc-b", "svc-b", "svc-a", "svc-a"],
         },
         # top-level severity_text ASC: INFO(svc-a×2) before WARN(svc-b×2)
         {
             "name": "orderby.severity_asc",
             "requestType": "raw",
             "order": [build_order_by("severity_text", "asc")],
-            "validate": lambda r: len(get_rows(r)) == 4 and _services(r)[:2] == ["svc-a", "svc-a"] and _services(r)[2:] == ["svc-b", "svc-b"],
+            "validate": lambda r: len(get_rows(r)) == 4 and (svcs := [row["data"]["resources_string"].get("service.name", "") for row in get_rows(r)])[:2] == ["svc-a", "svc-a"] and svcs[2:] == ["svc-b", "svc-b"],
         },
         # multi-key: http.method ASC then score ASC — DELETE(70), GET(60,80), POST(90)
         {
@@ -276,10 +216,32 @@ def test_non_body_orderby(
             "requestType": "raw",
             "order": [build_order_by("http.method", "asc"), build_order_by("score", "asc")],
             # DELETE < GET < POST alphabetically; within GET scores go 60→80
-            "validate": lambda r: len(get_rows(r)) == 4 and _body_scores(r) == [70, 60, 80, 90],
+            "validate": lambda r: len(get_rows(r)) == 4 and [row["data"]["body"].get("score") for row in get_rows(r)] == [70, 60, 80, 90],
         },
     ]
 
     for case in cases:
         case.setdefault("groupBy", None)
-        _run_case(signoz, token, start_ms, end_ms, case)
+
+        if case["requestType"] == "raw":
+            query = build_raw_query(
+                name=case["name"],
+                signal="logs",
+                filter_expression=case.get("expression"),
+                order=case.get("order") or [build_order_by("timestamp", "desc")],
+                limit=100,
+                step_interval=60,
+            )
+        else:
+            query = build_scalar_query(
+                name=case["name"],
+                signal="logs",
+                aggregations=[build_aggregation(case["aggregation"])],
+                filter_expression=case.get("expression"),
+                group_by=case.get("groupBy"),
+                step_interval=60,
+            )
+
+        response = make_query_request(signoz, token, start_ms, end_ms, queries=[query], request_type=case["requestType"])
+        assert response.status_code == 200, f"HTTP {response.status_code} for '{case['name']}': {response.text}"
+        assert case["validate"](response), f"Validation failed for '{case['name']}': {response.json()}"

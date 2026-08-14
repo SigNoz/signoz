@@ -7,10 +7,11 @@ import (
 // OpenTelemetry gen_ai semantic-convention attribute keys. Single source of truth
 // shared by the AI query builder and the LLM pricing pipeline.
 const (
-	GenAIRequestModel = "gen_ai.request.model"
-	GenAIToolName     = "gen_ai.tool.name"
-	GenAIAgentName    = "gen_ai.agent.name"
-	GenAIProviderName = "gen_ai.provider.name"
+	GenAIRequestModel  = "gen_ai.request.model"
+	GenAIOperationName = "gen_ai.operation.name"
+	GenAIToolName      = "gen_ai.tool.name"
+	GenAIAgentName     = "gen_ai.agent.name"
+	GenAIProviderName  = "gen_ai.provider.name"
 
 	GenAIUsageInputTokens              = "gen_ai.usage.input_tokens"
 	GenAIUsageOutputTokens             = "gen_ai.usage.output_tokens"
@@ -29,10 +30,11 @@ var (
 	// GenAIFields are the gen_ai span attributes the AI query builder relies on,
 	// suggested before ingestion so the filter bar works on a fresh install.
 	GenAIFields = map[string]telemetrytypes.TelemetryFieldKey{
-		GenAIRequestModel: {Name: GenAIRequestModel, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
-		GenAIToolName:     {Name: GenAIToolName, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
-		GenAIAgentName:    {Name: GenAIAgentName, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
-		GenAIProviderName: {Name: GenAIProviderName, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
+		GenAIRequestModel:  {Name: GenAIRequestModel, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
+		GenAIOperationName: {Name: GenAIOperationName, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
+		GenAIToolName:      {Name: GenAIToolName, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
+		GenAIAgentName:     {Name: GenAIAgentName, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
+		GenAIProviderName:  {Name: GenAIProviderName, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
 
 		GenAIUsageInputTokens:              {Name: GenAIUsageInputTokens, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeFloat64},
 		GenAIUsageOutputTokens:             {Name: GenAIUsageOutputTokens, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeFloat64},

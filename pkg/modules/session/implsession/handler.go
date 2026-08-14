@@ -75,7 +75,7 @@ func (handler *handler) CreateSessionByGoogleCallback(rw http.ResponseWriter, re
 
 	values := req.URL.Query()
 
-	redirectURL, err := handler.module.CreateCallbackAuthNSession(ctx, authtypes.AuthNProviderGoogleAuth, values)
+	redirectURL, err := handler.module.CreateCallbackAuthNSession(ctx, authtypes.AuthNProviderGoogle, values)
 	if err != nil {
 		http.Redirect(rw, req, handler.getRedirectURLFromErr(err), http.StatusSeeOther)
 		return

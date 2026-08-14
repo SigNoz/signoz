@@ -20,7 +20,6 @@ func (m *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy stri
 	}
 
 	dashboard := postable.NewDashboardV2(orgID, createdBy, source)
-	var storableDashboard *dashboardtypes.StorableDashboard
 
 	err := m.store.RunInTx(ctx, func(ctx context.Context) error {
 		resolvedTags, err := m.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, dashboard.ID, postable.Tags)
@@ -33,14 +32,13 @@ func (m *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy stri
 		if err != nil {
 			return err
 		}
-		storableDashboard = storable
 		return m.store.Create(ctx, storable)
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	m.analytics.TrackUser(ctx, orgID.String(), creator.String(), "Dashboard Created", dashboardtypes.NewStatsFromStorableDashboards([]*dashboardtypes.StorableDashboard{storableDashboard}))
+	m.analytics.TrackUser(ctx, orgID.String(), creator.String(), "Dashboard Created", dashboardtypes.NewStatsFromPostableDashboardV2(postable))
 	return dashboard, nil
 }
 
@@ -247,11 +245,13 @@ func (module *module) PatchV2(ctx context.Context, orgID valuer.UUID, id valuer.
 }
 
 func (module *module) DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
-	existing, err := module.GetV2(ctx, orgID, id)
+	// Read the storable, not the decoded v2 dashboard: deleting must work even
+	// when the stored data is corrupt or never migrated off the v1 schema.
+	storable, err := module.store.Get(ctx, orgID, id)
 	if err != nil {
 		return err
 	}
-	if err := existing.ErrIfNotDeletable(); err != nil {
+	if err := storable.ErrIfNotDeletable(); err != nil {
 		return err
 	}
 

@@ -311,7 +311,6 @@ class Logs(ABC):
         self.attribute_keys.append(LogsResourceOrAttributeKeys(name="severity_number", datatype="float64"))
 
     def _get_severity_number(self, severity_text: str) -> np.uint8:
-        """Convert severity text to numeric value"""
         severity_map = {
             "TRACE": 1,
             "DEBUG": 5,
@@ -324,7 +323,6 @@ class Logs(ABC):
         return np.uint8(severity_map.get(severity_text.upper(), 9))  # Default to INFO
 
     def np_arr(self) -> np.array:
-        """Return log data as numpy array for database insertion"""
         return np.array(
             [
                 self.ts_bucket_start,
@@ -356,7 +354,6 @@ class Logs(ABC):
         cls,
         data: dict,
     ) -> "Logs":
-        """Create a Logs instance from a dict."""
         # parse timestamp from iso format
         timestamp = parse_timestamp(data["timestamp"])
         return cls(

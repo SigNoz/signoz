@@ -704,6 +704,7 @@ def build_raw_query(
     order: list[dict] | None = None,
     limit: int | None = None,
     filter_expression: str | None = None,
+    select_fields: list[dict] | None = None,
     step_interval: int = DEFAULT_STEP_INTERVAL,
     disabled: bool = False,
 ) -> dict:
@@ -722,6 +723,9 @@ def build_raw_query(
 
     if filter_expression:
         spec["filter"] = {"expression": filter_expression}
+
+    if select_fields:
+        spec["selectFields"] = select_fields
 
     return {"type": "builder_query", "spec": spec}
 
@@ -1105,3 +1109,47 @@ def make_scalar_query_request(
             "formatOptions": {"formatTableResultForUI": True, "fillGaps": False},
         },
     )
+
+
+def run_query_case(signoz: types.SigNoz, token: str, now: datetime, case: dict[str, Any]) -> None:
+    start_ms = case.get("startMs", int((now - timedelta(seconds=10)).timestamp() * 1000))
+    end_ms = case.get("endMs", int(now.timestamp() * 1000))
+
+    if case["requestType"] == "raw":
+        query = build_raw_query(
+            name=case["name"],
+            signal="logs",
+            filter_expression=case.get("expression"),
+            order=case.get("order") or [build_order_by("timestamp", "desc")],
+            limit=case.get("limit", 100),
+            step_interval=case.get("stepInterval") or 60,
+        )
+    else:
+        aggregation = case.get("aggregation")
+        if aggregation and not isinstance(aggregation, list):
+            aggregations = [build_aggregation(aggregation)]
+        elif aggregation:
+            aggregations = aggregation
+        else:
+            aggregations = []
+        query = build_scalar_query(
+            name=case["name"],
+            signal="logs",
+            aggregations=aggregations,
+            group_by=case.get("groupBy"),
+            order=case.get("order"),
+            limit=case.get("limit", 100),
+            filter_expression=case.get("expression"),
+            step_interval=case.get("stepInterval") or 60,
+        )
+
+    response = make_query_request(
+        signoz=signoz,
+        token=token,
+        start_ms=start_ms,
+        end_ms=end_ms,
+        queries=[query],
+        request_type=case["requestType"],
+    )
+    assert response.status_code == 200, f"HTTP {response.status_code} for case '{case['name']}': {response.text}"
+    assert case["validate"](response), f"Validation failed for case '{case['name']}': {response.json()}"

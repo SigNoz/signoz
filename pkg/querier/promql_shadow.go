@@ -19,11 +19,11 @@ import (
 const shadowTimeout = 2 * time.Minute
 
 // runShadowCompare executes the query on the clickhousev2 provider exactly
-// as it would serve (the engine over the v2 querier), compares against the
-// served result and logs the outcome. Serving is never affected: this runs
-// after the response, off the request context, and only logs. The mismatch
-// and failure logs are the rollout evidence — serving cuts over to v2 only
-// after they stay clean.
+// as it would serve (transpiled when the shape allows, engine over the v2
+// querier otherwise), compares against the served result and logs the
+// outcome. Serving is never affected: this runs after the response, off the
+// request context, and only logs. The mismatch and failure logs are the
+// rollout evidence — serving cuts over to v2 only after they stay clean.
 func (q *promqlQuery) runShadowCompare(ctx context.Context, query string, startNs, endNs int64, served promql.Matrix, servedIn time.Duration) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -45,7 +45,7 @@ func (q *promqlQuery) runShadowCompare(ctx context.Context, query string, startN
 
 	start, end := time.Unix(0, startNs), time.Unix(0, endNs)
 	began := time.Now()
-	shadow, err := executeOnProvider(ctx, q.opts.shadow, query, start, end, q.query.Step.Duration)
+	shadow, transpiled, err := executeOnProvider(ctx, q.opts.shadow, query, start, end, q.query.Step.Duration)
 	shadowIn := time.Since(began)
 
 	logAttrs := []any{
@@ -53,6 +53,7 @@ func (q *promqlQuery) runShadowCompare(ctx context.Context, query string, startN
 		slog.Int64("start_ms", startNs/int64(time.Millisecond)),
 		slog.Int64("end_ms", endNs/int64(time.Millisecond)),
 		slog.Duration("step", q.query.Step.Duration),
+		slog.Bool("transpiled", transpiled),
 		slog.Duration("served_in", servedIn),
 		slog.Duration("shadow_in", shadowIn),
 	}
@@ -79,32 +80,39 @@ func (q *promqlQuery) runShadowCompare(ctx context.Context, query string, startN
 	q.logger.DebugContext(ctx, "promql shadow comparison matched", logAttrs...)
 }
 
-// serveFromProvider evaluates the query the way the pinned provider would
-// serve it.
 func (q *promqlQuery) serveFromProvider(ctx context.Context, query string, startNs, endNs int64) (promql.Matrix, error) {
-	return executeOnProvider(ctx, q.opts.serve, query, time.Unix(0, startNs), time.Unix(0, endNs), q.query.Step.Duration)
+	matrix, _, err := executeOnProvider(ctx, q.opts.serve, query, time.Unix(0, startNs), time.Unix(0, endNs), q.query.Step.Duration)
+	return matrix, err
 }
 
-// executeOnProvider evaluates the query the way the provider would serve it:
-// the engine over the provider's storage. The returned matrix is an owned
-// copy.
-func executeOnProvider(ctx context.Context, prov prometheus.Prometheus, query string, start, end time.Time, step time.Duration) (promql.Matrix, error) {
+// The returned matrix is an owned copy.
+func executeOnProvider(ctx context.Context, prov prometheus.Prometheus, query string, start, end time.Time, step time.Duration) (promql.Matrix, bool, error) {
+	if re, ok := prov.(prometheus.RangeExecutor); ok {
+		matrix, served, err := re.TryExecuteRange(ctx, query, start, end, step)
+		if err != nil {
+			return nil, true, err
+		}
+		if served {
+			return matrix, true, nil
+		}
+	}
+
 	qry, err := prov.Engine().NewRangeQuery(ctx, prov.Storage(), nil, query, start, end, step)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	defer qry.Close()
 
 	res := qry.Exec(ctx)
 	if res.Err != nil {
-		return nil, res.Err
+		return nil, false, res.Err
 	}
 	matrix, err := res.Matrix()
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	// Close returns the result's sample slices to the engine pool.
-	return copyMatrix(matrix), nil
+	return copyMatrix(matrix), false, nil
 }
 
 func copyMatrix(matrix promql.Matrix) promql.Matrix {

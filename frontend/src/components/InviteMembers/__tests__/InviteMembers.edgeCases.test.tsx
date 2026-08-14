@@ -68,8 +68,8 @@ describe('InviteMembers - Edge Cases', () => {
 
 			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
 			await user.type(emailInputs[0], VALID_EMAIL);
-			await user.click(screen.getAllByText('Select role')[0]);
-			await user.click(await screen.findByText('Viewer'));
+			await user.click(screen.getAllByText('Select roles')[0]);
+			await user.click(await screen.findByTitle('Viewer'));
 
 			await user.click(screen.getByTestId('submit-btn'));
 			await expect(
@@ -100,8 +100,8 @@ describe('InviteMembers - Edge Cases', () => {
 
 			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
 			await user.type(emailInputs[0], VALID_EMAIL);
-			await user.click(screen.getAllByText('Select role')[0]);
-			await user.click(await screen.findByText('Viewer'));
+			await user.click(screen.getAllByText('Select roles')[0]);
+			await user.click(await screen.findByTitle('Viewer'));
 
 			await user.click(screen.getByTestId('submit-btn'));
 			await expect(
@@ -132,17 +132,17 @@ describe('InviteMembers - Edge Cases', () => {
 
 			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
 			await user.type(emailInputs[0], VALID_EMAIL);
-			await user.click(screen.getAllByText('Select role')[0]);
-			await user.click(await screen.findByText('Viewer'));
+			await user.click(screen.getAllByText('Select roles')[0]);
+			await user.click(await screen.findByTitle('Viewer'));
 
 			await user.click(screen.getByTestId('submit-btn'));
 			await expect(
 				screen.findByTestId('invite-api-error'),
 			).resolves.toBeInTheDocument();
 
-			const viewerElements = screen.getAllByText('Viewer');
+			const viewerElements = screen.getAllByTitle('Viewer');
 			await user.click(viewerElements[0]);
-			const editorOptions = await screen.findAllByText('Editor');
+			const editorOptions = await screen.findAllByTitle('Editor');
 			await user.click(editorOptions[editorOptions.length - 1]);
 
 			await waitFor(() => {
@@ -189,8 +189,8 @@ describe('InviteMembers - Edge Cases', () => {
 
 			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
 			await user.type(emailInputs[0], VALID_EMAIL);
-			await user.click(screen.getAllByText('Select role')[0]);
-			await user.click(await screen.findByText('Viewer'));
+			await user.click(screen.getAllByText('Select roles')[0]);
+			await user.click(await screen.findByTitle('Viewer'));
 
 			const submitBtn = screen.getByTestId('submit-btn');
 			await user.click(submitBtn);
@@ -226,8 +226,8 @@ describe('InviteMembers - Edge Cases', () => {
 
 			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
 			await user.type(emailInputs[0], '  alice@signoz.io  ');
-			await user.click(screen.getAllByText('Select role')[0]);
-			await user.click(await screen.findByText('Viewer'));
+			await user.click(screen.getAllByText('Select roles')[0]);
+			await user.click(await screen.findByTitle('Viewer'));
 
 			await user.click(screen.getByTestId('submit-btn'));
 

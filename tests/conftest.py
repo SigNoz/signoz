@@ -18,11 +18,14 @@ pytest_plugins = [
     "fixtures.logs",
     "fixtures.traces",
     "fixtures.metrics",
+    "fixtures.queriercommon",
     "fixtures.metadata",
     "fixtures.meter",
     "fixtures.browser",
     "fixtures.keycloak",
     "fixtures.idp",
+    "fixtures.googleidp",
+    "fixtures.tls",
     "fixtures.notification_channel",
     "fixtures.maildev",
     "fixtures.alerts",
@@ -31,6 +34,7 @@ pytest_plugins = [
     "fixtures.seeder",
     "fixtures.serviceaccount",
     "fixtures.role",
+    "fixtures.savedview",
     "fixtures.seed_golden_dataset",
 ]
 

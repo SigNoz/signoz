@@ -59,6 +59,7 @@ import {
 	dedupeOptionsByLabel,
 	getFieldContextPrefix,
 	getRecentOptions,
+	isSupportedFunction,
 	renderRecentDeleteButton,
 } from './utils';
 
@@ -183,15 +184,14 @@ function QuerySearch({
 				isProgrammaticChangeRef.current = true;
 			}
 
+			const changes = view.state.changes({
+				from: 0,
+				to: currentValue.length,
+				insert: value,
+			});
 			view.dispatch({
-				changes: {
-					from: 0,
-					to: currentValue.length,
-					insert: value,
-				},
-				selection: {
-					anchor: value.length,
-				},
+				changes,
+				selection: { anchor: changes.newLength },
 			});
 		},
 		[],
@@ -1276,11 +1276,13 @@ function QuerySearch({
 		}
 
 		if (queryContext.isInFunction) {
-			options = Object.values(QUERY_BUILDER_FUNCTIONS).map((option) => ({
-				label: option,
-				apply: `${option}()`,
-				type: 'function',
-			}));
+			options = Object.values(QUERY_BUILDER_FUNCTIONS)
+				.filter((option) => isSupportedFunction(option, dataSource))
+				.map((option) => ({
+					label: option,
+					apply: `${option}()`,
+					type: 'function',
+				}));
 
 			// Add space after selection for functions
 			const optionsWithSpace = addSpaceToOptions(options);

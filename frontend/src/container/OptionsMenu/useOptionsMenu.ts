@@ -399,7 +399,7 @@ const useOptionsMenu = ({
 				onReorder: reorderSelectColumns,
 			},
 			fieldsSelector: {
-				value: preferences?.columns ?? [],
+				value: preferences?.columns?.filter((item) => has(item, 'name')) ?? [],
 				onFieldsChange: updateColumns,
 			},
 			format: {
