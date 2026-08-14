@@ -441,11 +441,12 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 		}
 
 		if !errors.Is(err, context.Canceled) {
+			q.logger.ErrorContext(ctx, "failed to execute query", slog.String("query", query), slog.Any("args", args), errors.Attr(err))
 			return nil, errors.Newf(
 				errors.TypeInternal,
 				errors.CodeInternal,
 				"Something went wrong on our end. It's not you, it's us. Our team is notified about it. Reach out to support if issue persists.",
-			)
+			).WithAdditional(err.Error())
 		}
 
 		return nil, err
