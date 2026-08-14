@@ -1,6 +1,5 @@
 import type { DashboardtypesTimeSeriesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { PanelMode } from 'lib/visualization/panels/types';
 import {
 	buildBaseConfig,
@@ -66,7 +65,7 @@ export function buildTimeSeriesConfig({
 }: BuildTimeSeriesConfigArgs): UPlotConfigBuilder {
 	const builder = buildBaseConfig({
 		panelId,
-		panelType: PANEL_TYPES.TIME_SERIES,
+		isTimeAxis: true,
 		isDarkMode,
 		timezone,
 		panelMode,

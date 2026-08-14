@@ -1,6 +1,5 @@
 import type { DashboardtypesBarChartPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { PanelMode } from 'lib/visualization/panels/types';
 import { buildBaseConfig } from 'pages/DashboardPage/DashboardContainer/Panels/utils/baseConfigBuilder';
 import { resolveSeriesLabelV5 } from 'pages/DashboardPage/DashboardContainer/Panels/utils/resolveSeriesLabel';
@@ -47,7 +46,7 @@ export function buildBarChartConfig({
 }: BuildBarChartConfigArgs): UPlotConfigBuilder {
 	const builder = buildBaseConfig({
 		panelId,
-		panelType: PANEL_TYPES.BAR,
+		isTimeAxis: true,
 		isDarkMode,
 		timezone,
 		panelMode,
