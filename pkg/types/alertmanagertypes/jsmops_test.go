@@ -44,10 +44,12 @@ func TestJSMOpsReceiverConfigSendResolved(t *testing.T) {
 	}
 	on, err := NewReceiver(withSendResolved(true))
 	require.NoError(t, err)
+	require.Len(t, on.JSMOpsConfigs, 1)
 	assert.True(t, on.JSMOpsConfigs[0].SendResolved())
 
 	off, err := NewReceiver(withSendResolved(false))
 	require.NoError(t, err)
+	require.Len(t, off.JSMOpsConfigs, 1)
 	assert.False(t, off.JSMOpsConfigs[0].SendResolved())
 }
 

@@ -70,7 +70,7 @@ func NewReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Temp
 		add(pagerduty.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return pagerduty.New(c, tmpl, l, templater) })
 	}
 	for i, c := range nc.OpsGenieConfigs {
-		add(opsgenie.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return opsgenie.New(c, tmpl, l, templater) })
+		add(opsgenie.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return opsgenie.New(c, tmpl, l, templater, false) })
 	}
 	for i, c := range nc.SlackConfigs {
 		add(slack.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return slack.New(c, tmpl, l, templater) })
@@ -92,7 +92,7 @@ func NewReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Temp
 	}
 	for i, c := range nc.JSMOpsConfigs {
 		add(jsmops.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) {
-			return jsmops.New(c, tmpl, l, templater)
+			return jsmops.New(c, tmpl, l, templater, true)
 		})
 	}
 

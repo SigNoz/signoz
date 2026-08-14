@@ -21,6 +21,7 @@ import (
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/common/promslog"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/prometheus/alertmanager/config"
@@ -43,6 +44,7 @@ func TestOpsGenieRetry(t *testing.T) {
 		tmpl,
 		promslog.NewNopLogger(),
 		newTestTemplater(tmpl),
+		false,
 	)
 	require.NoError(t, err)
 
@@ -68,6 +70,7 @@ func TestOpsGenieRedactedURL(t *testing.T) {
 		tmpl,
 		promslog.NewNopLogger(),
 		newTestTemplater(tmpl),
+		false,
 	)
 	require.NoError(t, err)
 
@@ -95,6 +98,7 @@ func TestGettingOpsGegineApikeyFromFile(t *testing.T) {
 		tmpl,
 		promslog.NewNopLogger(),
 		newTestTemplater(tmpl),
+		false,
 	)
 	require.NoError(t, err)
 
@@ -217,7 +221,7 @@ func TestOpsGenie(t *testing.T) {
 		},
 	} {
 		t.Run(tc.title, func(t *testing.T) {
-			notifier, err := New(tc.cfg, tmpl, logger, newTestTemplater(tmpl))
+			notifier, err := New(tc.cfg, tmpl, logger, newTestTemplater(tmpl), false)
 			require.NoError(t, err)
 
 			ctx := context.Background()
@@ -293,7 +297,7 @@ func TestOpsGenieWithUpdate(t *testing.T) {
 		APIURL:       &config.URL{URL: u},
 		HTTPConfig:   &commoncfg.HTTPClientConfig{},
 	}
-	notifierWithUpdate, err := New(&opsGenieConfigWithUpdate, tmpl, promslog.NewNopLogger(), newTestTemplater(tmpl))
+	notifierWithUpdate, err := New(&opsGenieConfigWithUpdate, tmpl, promslog.NewNopLogger(), newTestTemplater(tmpl), false)
 	alert := &types.Alert{
 		Alert: model.Alert{
 			StartsAt: time.Now(),
@@ -325,6 +329,53 @@ func TestOpsGenieWithUpdate(t *testing.T) {
 	require.JSONEq(t, `{"description":"new description"}`, body2)
 }
 
+func TestOpsGenieAdvancedFeatures(t *testing.T) {
+	u, err := url.Parse("https://test-opsgenie-url")
+	require.NoError(t, err)
+	tmpl := test.CreateTmpl(t)
+	ctx := notify.WithGroupKey(context.Background(), "1")
+	key, _ := notify.ExtractGroupKey(ctx)
+	alias := key.Hash()
+
+	cfg := &config.OpsGenieConfig{
+		NotifierConfig: config.NotifierConfig{VSendResolved: true},
+		Message:        `{{ .CommonLabels.Message }}`,
+		Description:    `{{ .CommonLabels.Description }}`,
+		UpdateAlerts:   true,
+		APIKey:         "k",
+		APIURL:         &config.URL{URL: u},
+		HTTPConfig:     &commoncfg.HTTPClientConfig{},
+	}
+	notifier, err := New(cfg, tmpl, promslog.NewNopLogger(), newTestTemplater(tmpl), true)
+	require.NoError(t, err)
+
+	firing := &types.Alert{Alert: model.Alert{
+		StartsAt: time.Now(),
+		EndsAt:   time.Now().Add(time.Hour),
+		Labels:   model.LabelSet{"Message": "m", "Description": "d"},
+	}}
+
+	// Fire: create + update message + update description + a timeline note.
+	reqs, _, err := notifier.createRequests(ctx, firing)
+	require.NoError(t, err)
+	require.Len(t, reqs, 4)
+	assert.Equal(t, "https://test-opsgenie-url/v2/alerts", reqs[0].URL.String())
+	assert.Equal(t, fmt.Sprintf("https://test-opsgenie-url/v2/alerts/%s/notes?identifierType=alias", alias), reqs[3].URL.String())
+	assert.Equal(t, http.MethodPost, reqs[3].Method)
+
+	// Resolve: note posted before the close.
+	resolved := &types.Alert{Alert: model.Alert{
+		StartsAt: time.Now().Add(-time.Hour),
+		EndsAt:   time.Now().Add(-time.Minute),
+		Labels:   model.LabelSet{"Message": "m", "Description": "d"},
+	}}
+	reqs, _, err = notifier.createRequests(ctx, resolved)
+	require.NoError(t, err)
+	require.Len(t, reqs, 2)
+	assert.Equal(t, fmt.Sprintf("https://test-opsgenie-url/v2/alerts/%s/notes?identifierType=alias", alias), reqs[0].URL.String())
+	assert.Equal(t, fmt.Sprintf("https://test-opsgenie-url/v2/alerts/%s/close?identifierType=alias", alias), reqs[1].URL.String())
+}
+
 func TestOpsGenieApiKeyFile(t *testing.T) {
 	u, err := url.Parse("https://test-opsgenie-url")
 	require.NoError(t, err)
@@ -336,7 +387,7 @@ func TestOpsGenieApiKeyFile(t *testing.T) {
 		APIURL:     &config.URL{URL: u},
 		HTTPConfig: &commoncfg.HTTPClientConfig{},
 	}
-	notifierWithUpdate, err := New(&opsGenieConfigWithUpdate, tmpl, promslog.NewNopLogger(), newTestTemplater(tmpl))
+	notifierWithUpdate, err := New(&opsGenieConfigWithUpdate, tmpl, promslog.NewNopLogger(), newTestTemplater(tmpl), false)
 
 	require.NoError(t, err)
 	requests, _, err := notifierWithUpdate.createRequests(ctx)
