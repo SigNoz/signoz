@@ -14,9 +14,9 @@ import {
 	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
 	Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType,
 	Querybuildertypesv5QueryEnvelopePromQLDTOType,
-	Querybuildertypesv5RequestTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+
+import type { PanelQueryCapabilities } from '../Panels/types/panelCapabilities';
 
 // Narrow view over the envelope spec variants. Orval erases envelope `spec` to `unknown`, so
 // shared fields are read through this view with a localized cast at the envelope boundary.
@@ -27,31 +27,6 @@ interface QuerySpecView {
 	stepInterval?: number | string;
 	aggregations?: { metricName?: string }[];
 	order?: Querybuildertypesv5OrderByDTO[];
-}
-
-/**
- * Maps a V2 panel type to the V5 `requestType`. HISTOGRAM/BAR bin client-side from raw
- * time-series, so their request type is `time_series` (V1 parity).
- */
-export function panelTypeToRequestType(
-	panelType: PANEL_TYPES,
-): Querybuildertypesv5RequestTypeDTO {
-	switch (panelType) {
-		case PANEL_TYPES.TIME_SERIES:
-		case PANEL_TYPES.BAR:
-		case PANEL_TYPES.HISTOGRAM:
-			return Querybuildertypesv5RequestTypeDTO.time_series;
-		case PANEL_TYPES.TABLE:
-		case PANEL_TYPES.PIE:
-		case PANEL_TYPES.VALUE:
-			return Querybuildertypesv5RequestTypeDTO.scalar;
-		case PANEL_TYPES.LIST:
-			return Querybuildertypesv5RequestTypeDTO.raw;
-		case PANEL_TYPES.TRACE:
-			return Querybuildertypesv5RequestTypeDTO.trace;
-		default:
-			return Querybuildertypesv5RequestTypeDTO.time_series;
-	}
 }
 
 /**
@@ -239,7 +214,13 @@ function withPagination(
 
 export interface BuildQueryRangeRequestArgs {
 	queries: DashboardtypesQueryDTO[];
-	panelType: PANEL_TYPES;
+	/**
+	 * The panel kind's declared query capabilities (`PanelDefinition.query`): request type,
+	 * result formatting, and the step-interval/order treatment. Passed in rather than looked up
+	 * by kind so this stays a leaf of the query layer — the panel registry carries every
+	 * renderer with it, which has no business in the data path.
+	 */
+	queryCapabilities: PanelQueryCapabilities;
 	/** Epoch milliseconds. */
 	startMs: number;
 	/** Epoch milliseconds. */
@@ -258,7 +239,12 @@ export interface BuildQueryRangeRequestArgs {
  */
 export function buildQueryRangeRequest({
 	queries,
-	panelType,
+	queryCapabilities: {
+		requestType,
+		formatTableResultForUI,
+		bucketedStepInterval,
+		orderTiebreaker,
+	},
 	startMs,
 	endMs,
 	fillGaps = false,
@@ -266,10 +252,10 @@ export function buildQueryRangeRequest({
 	variables = {},
 }: BuildQueryRangeRequestArgs): Querybuildertypesv5QueryRangeRequestDTO {
 	let envelopes = toQueryEnvelopes(queries);
-	if (panelType === PANEL_TYPES.BAR) {
+	if (bucketedStepInterval) {
 		envelopes = withBarStepInterval(envelopes, startMs, endMs);
 	}
-	if (panelType === PANEL_TYPES.LIST) {
+	if (orderTiebreaker) {
 		envelopes = withListOrderTiebreaker(envelopes);
 	}
 	if (pagination) {
@@ -280,10 +266,10 @@ export function buildQueryRangeRequest({
 		schemaVersion: 'v1',
 		start: startMs,
 		end: endMs,
-		requestType: panelTypeToRequestType(panelType),
+		requestType,
 		compositeQuery: { queries: envelopes },
 		formatOptions: {
-			formatTableResultForUI: panelType === PANEL_TYPES.TABLE,
+			formatTableResultForUI,
 			fillGaps,
 		},
 		variables,

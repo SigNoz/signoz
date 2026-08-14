@@ -3,7 +3,11 @@ import { useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { useReplaceVariables } from 'api/generated/services/querier';
 import type { DashboardtypesQueryDTO } from 'api/generated/services/sigNoz.schemas';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PanelQueryCapabilities } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelCapabilities';
+import {
+	PANEL_KIND_TO_PANEL_TYPE,
+	type PanelKind,
+} from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 import { buildQueryRangeRequest } from 'pages/DashboardPageV2/DashboardContainer/queryV5/buildQueryRangeRequest';
 import { envelopesToQuery } from 'pages/DashboardPageV2/DashboardContainer/queryV5/persesQueryAdapters';
 import { selectResolvedVariables } from 'pages/DashboardPageV2/DashboardContainer/store/slices/variableSelectionSlice';
@@ -15,7 +19,9 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 interface UseResolvedDrilldownQueryArgs {
 	/** Panel's perses queries — the substitution source (carries the `$var` refs). */
 	queries: DashboardtypesQueryDTO[];
-	panelType: PANEL_TYPES;
+	panelKind: PanelKind;
+	/** The panel kind's declared query capabilities — shapes the substitution request. */
+	queryCapabilities: PanelQueryCapabilities;
 	/** The raw V5→V1 query; the fallback until substitution resolves / when no vars exist. */
 	v1Query: Query;
 	/** Resolve only while the aggregate menu is open (V1 parity: fires when it appears). */
@@ -38,7 +44,8 @@ interface UseResolvedDrilldownQueryResult {
  */
 export function useResolvedDrilldownQuery({
 	queries,
-	panelType,
+	panelKind,
+	queryCapabilities,
 	v1Query,
 	enabled,
 }: UseResolvedDrilldownQueryArgs): UseResolvedDrilldownQueryResult {
@@ -60,7 +67,7 @@ export function useResolvedDrilldownQuery({
 		substituteVars({
 			data: buildQueryRangeRequest({
 				queries,
-				panelType,
+				queryCapabilities,
 				startMs: Math.floor(minTime / 1e6),
 				endMs: Math.floor(maxTime / 1e6),
 				variables,
@@ -70,7 +77,7 @@ export function useResolvedDrilldownQuery({
 		enabled,
 		hasVariables,
 		queries,
-		panelType,
+		queryCapabilities,
 		minTime,
 		maxTime,
 		variables,
@@ -81,8 +88,13 @@ export function useResolvedDrilldownQuery({
 		if (!hasVariables || !data) {
 			return v1Query;
 		}
-		return envelopesToQuery(data.data.compositeQuery?.queries ?? [], panelType);
-	}, [hasVariables, data, v1Query, panelType]);
+		// View-in-X navigates to a V1 explorer, so the resolved query crosses back into the
+		// V1 `Query` shape — the one place this hook still needs a legacy panel type.
+		return envelopesToQuery(
+			data.data.compositeQuery?.queries ?? [],
+			PANEL_KIND_TO_PANEL_TYPE[panelKind],
+		);
+	}, [hasVariables, data, v1Query, panelKind]);
 
 	return { resolvedQuery, isResolving: enabled && hasVariables && isLoading };
 }

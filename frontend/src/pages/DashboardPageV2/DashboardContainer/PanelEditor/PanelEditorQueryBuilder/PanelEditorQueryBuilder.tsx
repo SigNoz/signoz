@@ -13,7 +13,6 @@ import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.sche
 import PromQLIcon from 'assets/Dashboard/PromQl';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import TextToolTip from 'components/TextToolTip';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import ClickHouseQueryContainer from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/ClickHouse';
 import PromQLQueryContainer from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/promQL';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
@@ -26,6 +25,7 @@ import {
 	getHiddenQueryBuilderFields,
 	getSupportedQueryTypes,
 } from '../../Panels/capabilities';
+import { getPanelDefinition } from '../../Panels/registry';
 import {
 	PANEL_KIND_TO_PANEL_TYPE,
 	type PanelKind,
@@ -64,8 +64,10 @@ function PanelEditorQueryBuilder({
 	footer,
 	stickyHeader = true,
 }: PanelEditorQueryBuilderProps): JSX.Element {
-	// The shared QueryBuilderV2 / list-view checks still speak the legacy PANEL_TYPES.
+	// The shared QueryBuilderV2 provider still speaks the legacy PANEL_TYPES; what the
+	// builder offers for this kind comes from the kind's own declaration.
 	const panelType = PANEL_KIND_TO_PANEL_TYPE[panelKind];
+	const { listView, traceOperator } = getPanelDefinition(panelKind).query;
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const isDarkMode = useIsDarkMode();
 
@@ -112,9 +114,9 @@ function PanelEditorQueryBuilder({
 						<QueryBuilderV2
 							panelType={panelType}
 							filterConfigs={filterConfigs}
-							showTraceOperator={panelType !== PANEL_TYPES.LIST}
+							showTraceOperator={traceOperator}
 							version="v3"
-							isListViewPanel={panelType === PANEL_TYPES.LIST}
+							isListViewPanel={listView}
 							queryComponents={{}}
 							signalSourceChangeEnabled
 							savePreviousQuery

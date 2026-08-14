@@ -7,7 +7,6 @@ import PanelBody from 'pages/DashboardPageV2/DashboardContainer/PanelsAndSection
 import PanelHeader from 'pages/DashboardPageV2/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelHeader/PanelHeader';
 import type { AnyPanelInteractionProps } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/interactions';
 import type { RenderablePanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelDefinition';
-import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 import type { DashboardPreference } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/rendererProps';
 import { getPanelQueryType } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getPanelQueryType';
 import type {
@@ -72,7 +71,6 @@ function PreviewPane({
 	onClick,
 	enableDrillDown,
 }: PreviewPaneProps): JSX.Element {
-	const panelType = PANEL_KIND_TO_PANEL_TYPE[panel.spec.plugin.kind];
 	const queryType = getPanelQueryType(panel);
 
 	// Search term is ephemeral preview state, threaded to header + renderer but
@@ -86,7 +84,7 @@ function PreviewPane({
 				<div className={styles.header}>
 					<PlotTag
 						queryType={queryType}
-						panelType={panelType}
+						isListView={panelDefinition.query.listView}
 						className={styles.queryType}
 					/>
 					<div className={styles.dateTimeSelector}>

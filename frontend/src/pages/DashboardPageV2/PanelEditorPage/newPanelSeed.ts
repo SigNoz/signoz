@@ -62,7 +62,10 @@ export function buildNewPanelSeed(
 	if (!isExplorerExport || !compositeQuery) {
 		return {
 			kind: requestedKind,
-			queries: buildDefaultQueries(requestedKind),
+			queries: buildDefaultQueries(
+				requestedKind,
+				getPanelDefinition(requestedKind).query,
+			),
 			pluginSpec: buildPluginSpec(getPanelDefinition(requestedKind).sections),
 		};
 	}
@@ -71,7 +74,10 @@ export function buildNewPanelSeed(
 	const pluginSpec = buildPluginSpec(getPanelDefinition(kind).sections);
 
 	const converted = toPerses(compositeQuery, PANEL_KIND_TO_PANEL_TYPE[kind]);
-	const queries = converted.length > 0 ? converted : buildDefaultQueries(kind);
+	const queries =
+		converted.length > 0
+			? converted
+			: buildDefaultQueries(kind, getPanelDefinition(kind).query);
 
 	// Explorers put the single `unit` on the query itself, not the panel spec.
 	if (compositeQuery.unit && kindSupportsUnit(kind)) {

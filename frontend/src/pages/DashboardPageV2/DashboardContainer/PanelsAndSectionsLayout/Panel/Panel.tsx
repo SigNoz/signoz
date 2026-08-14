@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import ContextMenu from 'periscope/components/ContextMenu';
-import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
+import {
+	getPanelDefinition,
+	isPanelKindSupported,
+} from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
 import {
 	getPanelTimePreference,
 	panelTimePreferenceLabel,
@@ -50,15 +53,17 @@ function Panel({
 
 	// Header search: only kinds that declare it render the box. The term is owned
 	// here and threaded to both the header (input) and renderer (filter).
-	const searchable = !!panelDefinition?.actions.search;
+	const searchable = panelDefinition.actions.search;
 	const [searchTerm, setSearchTerm] = useState('');
 
 	const { data, isFetching, isPreviousData, error, refetch, pagination } =
 		usePanelQuery({
 			panel,
 			panelId,
-			// Lazy: fetch only once on screen (undefined → visible) and a renderer exists.
-			enabled: !!panelDefinition && isVisible !== false,
+			queryCapabilities: panelDefinition.query,
+			// Lazy: fetch only once on screen (undefined → visible), and never for a kind
+			// this build can't render — the data would have nothing to render into.
+			enabled: isPanelKindSupported(panelKind) && isVisible !== false,
 		});
 
 	const { onDragSelect, dashboardPreference } = usePanelInteractions();
@@ -85,25 +90,23 @@ function Panel({
 				searchTerm={searchTerm}
 				onSearchChange={setSearchTerm}
 			/>
-			{panelDefinition && (
-				<PanelBody
-					panelDefinition={panelDefinition}
-					panel={panel}
-					panelId={panelId}
-					data={data}
-					isFetching={isFetching}
-					isVisible={isVisible}
-					isPreviousData={isPreviousData}
-					error={error}
-					refetch={refetch}
-					onDragSelect={onDragSelect}
-					dashboardPreference={dashboardPreference}
-					searchTerm={searchable ? searchTerm : undefined}
-					pagination={pagination}
-					onClick={drilldown.onPanelClick}
-					enableDrillDown={drilldown.enableDrillDown}
-				/>
-			)}
+			<PanelBody
+				panelDefinition={panelDefinition}
+				panel={panel}
+				panelId={panelId}
+				data={data}
+				isFetching={isFetching}
+				isVisible={isVisible}
+				isPreviousData={isPreviousData}
+				error={error}
+				refetch={refetch}
+				onDragSelect={onDragSelect}
+				dashboardPreference={dashboardPreference}
+				searchTerm={searchable ? searchTerm : undefined}
+				pagination={pagination}
+				onClick={drilldown.onPanelClick}
+				enableDrillDown={drilldown.enableDrillDown}
+			/>
 			<ContextMenu {...drilldown.contextMenuProps} />
 		</div>
 	);
