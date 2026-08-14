@@ -39,7 +39,6 @@ import { getListViewQuery } from '../explorerUtils';
 import { TraceListRow } from '../tableUtils';
 import { TracesLoading } from '../TraceLoading/TraceLoading';
 import { columns } from './configs';
-import { ActionsContainer, Container } from './styles';
 import styles from './TracesView.module.scss';
 import { getRootSpanRowKey } from './utils';
 
@@ -147,9 +146,9 @@ function TracesView({
 	}, [isLoading, isFetching, isError, panelType, tableData]);
 
 	return (
-		<Container>
+		<div className={styles.container}>
 			{tableData.length !== 0 && (
-				<ActionsContainer>
+				<div className={styles.actionsContainer}>
 					<Typography>
 						This tab only shows Root Spans. More details
 						<Typography.Link href={DOCLINKS.TRACES_DETAILS_LINK} target="_blank">
@@ -170,7 +169,7 @@ function TracesView({
 							perPageOptions={PER_PAGE_OPTIONS}
 						/>
 					</div>
-				</ActionsContainer>
+				</div>
 			)}
 
 			{isError && error && <ErrorInPlace error={error as APIError} />}
@@ -203,7 +202,7 @@ function TracesView({
 					testId="ai-observability-traces-view-table"
 				/>
 			)}
-		</Container>
+		</div>
 	);
 }
 

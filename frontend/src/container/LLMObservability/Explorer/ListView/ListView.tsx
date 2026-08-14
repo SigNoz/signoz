@@ -285,7 +285,6 @@ function ListView({
 					columnStorageKey={LOCALSTORAGE.AI_OBSERVABILITY_LIST_COLUMNS}
 					respectColumnOrder={false}
 					onColumnOrderChange={handleColumnOrderChange}
-					onColumnRemove={config?.addColumn?.onRemove}
 					isLoading={isFetching}
 					getRowKey={getTraceRowKey}
 					onRowClick={handleRowClick}
