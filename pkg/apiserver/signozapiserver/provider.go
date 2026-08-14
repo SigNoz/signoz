@@ -313,6 +313,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 		return err
 	}
 
+	if err := provider.addAIObservabilityRoutes(router); err != nil {
+		return err
+	}
+
 	if err := provider.addRawDataExportRoutes(router); err != nil {
 		return err
 	}

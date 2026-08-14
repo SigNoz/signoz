@@ -28,24 +28,6 @@ func (provider *provider) addFieldsRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/fields/ai_observability/keys", handler.New(provider.authzMiddleware.ViewAccess(provider.fieldsHandler.GetAIObservabilityFieldsKeys), handler.OpenAPIDef{
-		ID:                  "GetAIObservabilityFieldsKeys",
-		Tags:                []string{"fields"},
-		Summary:             "Get AI observability field keys",
-		Description:         "This endpoint returns the field keys the AI observability explorer can filter on, including the computed per-trace aggregates",
-		Request:             nil,
-		RequestQuery:        new(telemetrytypes.PostableFieldKeysParams),
-		RequestContentType:  "",
-		Response:            new(telemetrytypes.GettableFieldKeys),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-	})).Methods(http.MethodGet).GetError(); err != nil {
-		return err
-	}
-
 	if err := router.Handle("/api/v1/fields/values", handler.New(provider.authzMiddleware.ViewAccess(provider.fieldsHandler.GetFieldsValues), handler.OpenAPIDef{
 		ID:                  "GetFieldsValues",
 		Tags:                []string{"fields"},

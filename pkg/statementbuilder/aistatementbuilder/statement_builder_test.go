@@ -1060,8 +1060,7 @@ func TestBuild_TraceList_VariableInAggregateFilter(t *testing.T) {
 }
 
 // the schema declares the aggregates the API suggests, this Scope declares the SQL
-// that computes them; a filterable column with no definition is unreachable, and a
-// definition with no filterable column is a dead suggestion.
+// that computes them; either half alone is unusable.
 func TestScope_FilterableColumnsMatchSchemaAggregates(t *testing.T) {
 	var filterable []string
 	for _, c := range Scope().Columns {

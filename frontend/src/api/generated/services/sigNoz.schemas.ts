@@ -10175,6 +10175,65 @@ export interface ZeustypesPostableProfileDTO {
 	where_did_you_discover_signoz: string;
 }
 
+export type GetAIObservabilityFieldsKeysParams = {
+	/**
+	 * @description undefined
+	 */
+	signal?: TelemetrytypesSignalDTO;
+	/**
+	 * @description undefined
+	 */
+	source?: TelemetrytypesSourceDTO;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	startUnixMilli?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	endUnixMilli?: number;
+	/**
+	 * @description undefined
+	 */
+	fieldContext?: TelemetrytypesFieldContextDTO;
+	/**
+	 * @description undefined
+	 */
+	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	metricName?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	metricNamespace?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	searchText?: string;
+};
+
+export type GetAIObservabilityFieldsKeys200 = {
+	data: TelemetrytypesGettableFieldKeysDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetAlerts200 = {
 	/**
 	 * @type array
@@ -10499,65 +10558,6 @@ export enum HandleExportRawDataPOSTFormat {
 	csv = 'csv',
 	jsonl = 'jsonl',
 }
-export type GetAIObservabilityFieldsKeysParams = {
-	/**
-	 * @description undefined
-	 */
-	signal?: TelemetrytypesSignalDTO;
-	/**
-	 * @description undefined
-	 */
-	source?: TelemetrytypesSourceDTO;
-	/**
-	 * @type integer
-	 * @description undefined
-	 */
-	limit?: number;
-	/**
-	 * @type integer
-	 * @format int64
-	 * @description undefined
-	 */
-	startUnixMilli?: number;
-	/**
-	 * @type integer
-	 * @format int64
-	 * @description undefined
-	 */
-	endUnixMilli?: number;
-	/**
-	 * @description undefined
-	 */
-	fieldContext?: TelemetrytypesFieldContextDTO;
-	/**
-	 * @description undefined
-	 */
-	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
-	/**
-	 * @type string
-	 * @description undefined
-	 */
-	metricName?: string;
-	/**
-	 * @type string
-	 * @description undefined
-	 */
-	metricNamespace?: string;
-	/**
-	 * @type string
-	 * @description undefined
-	 */
-	searchText?: string;
-};
-
-export type GetAIObservabilityFieldsKeys200 = {
-	data: TelemetrytypesGettableFieldKeysDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type GetFieldsKeysParams = {
 	/**
 	 * @description undefined

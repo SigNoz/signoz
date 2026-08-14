@@ -4,9 +4,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-// FieldKeys merges in the keys the metadata store cannot serve: the per-trace
-// aggregates always, since they are computed, and the gen_ai attributes only where
-// ingested metadata has not already resolved them.
+// FieldKeys merges in the keys the metadata store cannot serve: the computed
+// aggregates always, the gen_ai attributes only where ingestion has not.
 func FieldKeys(keys map[string][]*telemetrytypes.TelemetryFieldKey, selector *telemetrytypes.FieldKeySelector) map[string][]*telemetrytypes.TelemetryFieldKey {
 	for name, def := range TraceAggregateFields {
 		if selector.MatchesKey(&def) {

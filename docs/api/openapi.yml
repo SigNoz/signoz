@@ -9115,6 +9115,96 @@ info:
   version: ""
 openapi: 3.0.3
 paths:
+  /api/v1/ai_observability/fields/keys:
+    get:
+      deprecated: false
+      description: This endpoint returns the field keys the AI observability explorer
+        can filter on, including the computed per-trace aggregates
+      operationId: GetAIObservabilityFieldsKeys
+      parameters:
+      - in: query
+        name: signal
+        schema:
+          $ref: '#/components/schemas/TelemetrytypesSignal'
+      - in: query
+        name: source
+        schema:
+          $ref: '#/components/schemas/TelemetrytypesSource'
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      - in: query
+        name: startUnixMilli
+        schema:
+          format: int64
+          type: integer
+      - in: query
+        name: endUnixMilli
+        schema:
+          format: int64
+          type: integer
+      - in: query
+        name: fieldContext
+        schema:
+          $ref: '#/components/schemas/TelemetrytypesFieldContext'
+      - in: query
+        name: fieldDataType
+        schema:
+          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
+      - in: query
+        name: metricName
+        schema:
+          type: string
+      - in: query
+        name: metricNamespace
+        schema:
+          type: string
+      - in: query
+        name: searchText
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TelemetrytypesGettableFieldKeys'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get AI observability field keys
+      tags:
+      - ai_observability
   /api/v1/alerts:
     get:
       deprecated: false
@@ -10925,96 +11015,6 @@ paths:
       tags:
       - logs
       - traces
-  /api/v1/fields/ai_observability/keys:
-    get:
-      deprecated: false
-      description: This endpoint returns the field keys the AI observability explorer
-        can filter on, including the computed per-trace aggregates
-      operationId: GetAIObservabilityFieldsKeys
-      parameters:
-      - in: query
-        name: signal
-        schema:
-          $ref: '#/components/schemas/TelemetrytypesSignal'
-      - in: query
-        name: source
-        schema:
-          $ref: '#/components/schemas/TelemetrytypesSource'
-      - in: query
-        name: limit
-        schema:
-          type: integer
-      - in: query
-        name: startUnixMilli
-        schema:
-          format: int64
-          type: integer
-      - in: query
-        name: endUnixMilli
-        schema:
-          format: int64
-          type: integer
-      - in: query
-        name: fieldContext
-        schema:
-          $ref: '#/components/schemas/TelemetrytypesFieldContext'
-      - in: query
-        name: fieldDataType
-        schema:
-          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
-      - in: query
-        name: metricName
-        schema:
-          type: string
-      - in: query
-        name: metricNamespace
-        schema:
-          type: string
-      - in: query
-        name: searchText
-        schema:
-          type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/TelemetrytypesGettableFieldKeys'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
-      summary: Get AI observability field keys
-      tags:
-      - fields
   /api/v1/fields/keys:
     get:
       deprecated: false

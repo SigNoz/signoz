@@ -46,9 +46,8 @@ var (
 		GenAIOutputMessages: {Name: GenAIOutputMessages, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
 	}
 
-	// TraceAggregateFields are the per-trace aggregates the AI trace list computes.
-	// They are never ingested, so only this definition can surface them; the query
-	// builder marks the matching columns filterable.
+	// TraceAggregateFields are the per-trace aggregates the AI trace list computes;
+	// they are never ingested, so only this definition can surface them.
 	TraceAggregateFields = map[string]telemetrytypes.TelemetryFieldKey{
 		"llm_call_count":        traceAggregate("llm_call_count"),
 		"tool_call_count":       traceAggregate("tool_call_count"),

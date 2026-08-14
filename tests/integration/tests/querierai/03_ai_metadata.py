@@ -5,7 +5,7 @@ from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.metadata import get_field_keys
 
-AI_KEYS_PATH = "/api/v1/fields/ai_observability/keys"
+AI_KEYS_PATH = "/api/v1/ai_observability/fields/keys"
 
 # The filterable per-trace aggregates; the display-only columns (error_count,
 # last_activity_time, span_count, input, output) must not be suggested.
