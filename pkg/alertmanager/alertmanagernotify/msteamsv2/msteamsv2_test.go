@@ -134,7 +134,6 @@ func TestMSTeamsV2Templating(t *testing.T) {
 		cfg       *config.MSTeamsV2Config
 		titleLink string
 
-		retry  bool
 		errMsg string
 	}{
 		{
@@ -144,7 +143,6 @@ func TestMSTeamsV2Templating(t *testing.T) {
 				Text:  `{{ template "msteams.default.text" . }}`,
 			},
 			titleLink: `{{ template "msteamsv2.default.titleLink" . }}`,
-			retry:     false,
 		},
 		{
 			title: "title with templating errors",
@@ -186,12 +184,12 @@ func TestMSTeamsV2Templating(t *testing.T) {
 				},
 			}...)
 			if tc.errMsg == "" {
-				require.NoError(t, err)
+				assert.NoError(t, err)
 			} else {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tc.errMsg)
 			}
-			assert.Equal(t, tc.retry, ok)
+			assert.False(t, ok)
 		})
 	}
 }

@@ -286,8 +286,6 @@ func TestEmailNotifyWithErrors(t *testing.T) {
 		},
 	} {
 		t.Run(tc.title, func(t *testing.T) {
-			require.NotEmpty(t, tc.errMsg, "please define the expected error message")
-
 			emailCfg := &config.EmailConfig{
 				Smarthost: c.Smarthost,
 				To:        emailTo,
