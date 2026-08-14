@@ -51,7 +51,9 @@ function Explorer(): JSX.Element {
 		handleSetConfig,
 	} = useQueryBuilder();
 
-	// Return value unused: seeds the URL options param for views without ListView.
+	// TODO(ai-explorer): destructure `{ options }` when save-view / add-to-dashboard
+	// land (Traces Explorer passes it to getExportQueryData). Until then the call
+	// only seeds `?options=` for views that do not mount ListView.
 	useOptionsMenu({
 		storageKey: LOCALSTORAGE.TRACES_LIST_OPTIONS,
 		dataSource: DataSource.TRACES,
@@ -197,47 +199,39 @@ function Explorer(): JSX.Element {
 						)}
 
 						{!isCancelled && selectedView === ExplorerViews.LIST && (
-							<div className={styles.view}>
-								<ListView
-									isFilterApplied={isFilterApplied}
-									setWarning={setWarning}
-									setIsLoadingQueries={setIsLoadingQueries}
-									queryKeyRef={listQueryKeyRef}
-								/>
-							</div>
+							<ListView
+								isFilterApplied={isFilterApplied}
+								setWarning={setWarning}
+								setIsLoadingQueries={setIsLoadingQueries}
+								queryKeyRef={listQueryKeyRef}
+							/>
 						)}
 
 						{!isCancelled && selectedView === ExplorerViews.TRACE && (
-							<div className={styles.view}>
-								<TracesView
-									isFilterApplied={isFilterApplied}
-									setWarning={setWarning}
-									setIsLoadingQueries={setIsLoadingQueries}
-									queryKeyRef={listQueryKeyRef}
-								/>
-							</div>
+							<TracesView
+								isFilterApplied={isFilterApplied}
+								setWarning={setWarning}
+								setIsLoadingQueries={setIsLoadingQueries}
+								queryKeyRef={listQueryKeyRef}
+							/>
 						)}
 
 						{!isCancelled && selectedView === ExplorerViews.TIMESERIES && (
-							<div className={styles.view}>
-								<TimeSeriesView
-									dataSource={DataSource.TRACES}
-									isFilterApplied={isFilterApplied}
-									setWarning={setWarning}
-									setIsLoadingQueries={setIsLoadingQueries}
-									queryKeyRef={listQueryKeyRef}
-								/>
-							</div>
+							<TimeSeriesView
+								dataSource={DataSource.TRACES}
+								isFilterApplied={isFilterApplied}
+								setWarning={setWarning}
+								setIsLoadingQueries={setIsLoadingQueries}
+								queryKeyRef={listQueryKeyRef}
+							/>
 						)}
 
 						{!isCancelled && selectedView === ExplorerViews.TABLE && (
-							<div className={styles.view}>
-								<TableView
-									setWarning={setWarning}
-									setIsLoadingQueries={setIsLoadingQueries}
-									queryKeyRef={listQueryKeyRef}
-								/>
-							</div>
+							<TableView
+								setWarning={setWarning}
+								setIsLoadingQueries={setIsLoadingQueries}
+								queryKeyRef={listQueryKeyRef}
+							/>
 						)}
 					</div>
 				</div>

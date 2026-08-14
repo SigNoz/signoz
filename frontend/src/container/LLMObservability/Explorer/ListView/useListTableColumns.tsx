@@ -72,7 +72,7 @@ export function useListTableColumns(
 					id: buildCompositeKey(name, fieldContext),
 					header: name,
 					accessorFn: (row): unknown => row?.[name],
-					enableRemove: true,
+					enableRemove: false,
 					width: { min: 192 },
 					cell: ({ value }): ReactElement => {
 						if (value === undefined || value === null || value === '') {

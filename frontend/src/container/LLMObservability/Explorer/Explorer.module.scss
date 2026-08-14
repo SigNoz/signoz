@@ -28,11 +28,6 @@
 .explorer {
 	width: 100%;
 	background: var(--l1-background);
-	border-color: var(--l1-border);
-
-	> :global(.ant-card-body) {
-		padding: 0;
-	}
 
 	&.isFiltersExpanded {
 		width: calc(100% - 260px);
@@ -44,12 +39,4 @@
 	// Room for the floating options bar this explorer doesn't render yet.
 	padding-bottom: 60px;
 	margin-bottom: var(--spacing-12);
-
-	:global(.ant-tabs-tabpane) {
-		padding: 0 var(--spacing-4);
-	}
-}
-
-.view {
-	flex: 1;
 }

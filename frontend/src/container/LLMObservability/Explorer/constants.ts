@@ -37,6 +37,7 @@ export const TOOLBAR_VIEWS = {
 	},
 };
 
+//TODO: Change this later
 export const defaultSelectedColumns: string[] = [
 	'service.name',
 	'name',

@@ -1,5 +1,4 @@
 import { memo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Settings } from '@signozhq/icons';
 import FieldsSelector from 'components/FieldsSelector';
 import Controls, { ControlsProps } from 'container/Controls';
@@ -16,7 +15,6 @@ function ExplorerControls({
 	config,
 	showSizeChanger = true,
 }: ExplorerControlsProps): JSX.Element | null {
-	const { t } = useTranslation(['trace']);
 	const [isFieldsSelectorOpen, setIsFieldsSelectorOpen] = useState(false);
 
 	const {
@@ -36,7 +34,7 @@ function ExplorerControls({
 						onClick={(): void => setIsFieldsSelectorOpen(true)}
 						data-testid="explorer-controls-options"
 					>
-						{t('options_menu.options')}
+						Options
 						<Settings size="md" />
 					</button>
 					<FieldsSelector
