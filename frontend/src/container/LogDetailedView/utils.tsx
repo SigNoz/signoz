@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react';
 import Convert from 'ansi-to-html';
 import type { DataNode } from 'antd/es/tree';
 import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
@@ -305,8 +306,14 @@ export const aggregateAttributesResourcesToObject = (
 	return { timestamp, ...rest, id };
 };
 
-export const aggregateAttributesResourcesToString = (logData: ILog): string =>
-	JSON.stringify(aggregateAttributesResourcesToObject(logData), null, 2);
+export const aggregateAttributesResourcesToString = (logData: ILog): string => {
+	try {
+		return JSON.stringify(aggregateAttributesResourcesToObject(logData), null, 2);
+	} catch (err) {
+		Sentry.captureException(err);
+		return '';
+	}
+};
 
 const MAX_JSON_BODY_PARSE_BYTES = 128 * 1024;
 
