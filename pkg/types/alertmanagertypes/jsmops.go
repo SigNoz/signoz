@@ -19,10 +19,19 @@ const (
 	DefaultJSMOpsMessageTemplate = `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`
 
 	DefaultJSMOpsDescriptionTemplate = `{{ range .Alerts -}}
-**Alert:** {{ .Labels.alertname }}{{ if .Labels.severity }} ({{ .Labels.severity }}){{ end }}{{ if .Annotations.summary }}
-**Summary:** {{ .Annotations.summary }}{{ end }}{{ if .Annotations.description }}
-**Description:** {{ .Annotations.description }}{{ end }}
-{{ end }}`
+**Alert:** {{ .Labels.alertname }}{{ if .Labels.severity }} ({{ .Labels.severity }}){{ end }}
+
+{{ if .Annotations.summary }}**Summary:** {{ .Annotations.summary }}
+
+{{ end }}{{ if .Annotations.description }}**Description:** {{ .Annotations.description }}
+
+{{ end }}{{ if .GeneratorURL }}[View in SigNoz]({{ .GeneratorURL }})
+
+{{ end }}{{ if .Annotations.related_logs }}[View related logs]({{ .Annotations.related_logs }})
+
+{{ end }}{{ if .Annotations.related_traces }}[View related traces]({{ .Annotations.related_traces }})
+
+{{ end }}{{ end }}`
 )
 
 // JSMOpsReceiverConfig is the SigNoz Jira Service Management Ops receiver. It is

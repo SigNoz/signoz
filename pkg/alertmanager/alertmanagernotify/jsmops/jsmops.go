@@ -29,7 +29,9 @@ func New(c *alertmanagertypes.JSMOpsReceiverConfig, t *template.Template, l *slo
 	if err != nil {
 		return nil, err
 	}
-	return opsgenie.New(conf, t, l, templater)
+	// JSM Ops renders an HTML subset in the description, so render the markdown
+	// default body as HTML like the other rich channels.
+	return opsgenie.NewWithHTMLBody(conf, t, l, templater)
 }
 
 // toOpsGenieConfig maps the JSM config onto config.OpsGenieConfig with APIURL
