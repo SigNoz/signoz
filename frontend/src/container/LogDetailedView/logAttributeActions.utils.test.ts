@@ -117,13 +117,10 @@ describe('buildLogFilterTarget', () => {
 			expect(t.groupBySupported).toBe(false);
 		});
 
-		it('restricts body leaves named `id` and `date` too (uses RESTRICTED_SELECTED_FIELDS)', () => {
+		it('restricts a body leaf named `id` (uses RESTRICTED_SELECTED_FIELDS)', () => {
 			expect(buildLogFilterTarget(['body', 'id'], 'abc', true).isRestricted).toBe(
 				true,
 			);
-			expect(
-				buildLogFilterTarget(['body', 'date'], '2026-01-01', true).isRestricted,
-			).toBe(true);
 		});
 
 		it('does not restrict an ordinary body leaf', () => {

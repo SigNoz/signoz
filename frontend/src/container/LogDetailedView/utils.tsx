@@ -267,7 +267,6 @@ export const aggregateAttributesResourcesToObject = (
 ): ILogAggregateAttributesResources => {
 	const outputJson: ILogAggregateAttributesResources = {
 		body: logData.body,
-		date: logData.date,
 		id: logData.id,
 		severityNumber: logData.severityNumber,
 		severityText: logData.severityText,
@@ -283,6 +282,9 @@ export const aggregateAttributesResourcesToObject = (
 	};
 
 	Object.keys(logData).forEach((key) => {
+		if (key === 'date') {
+			return;
+		}
 		if (key.startsWith('attributes_')) {
 			outputJson.attributes = outputJson.attributes || {};
 			Object.assign(outputJson.attributes, logData[key as keyof ILog]);
@@ -298,7 +300,9 @@ export const aggregateAttributesResourcesToObject = (
 		}
 	});
 
-	return outputJson;
+	// Show `timestamp` first and `id` last in the details view.
+	const { timestamp, id, ...rest } = outputJson;
+	return { timestamp, ...rest, id };
 };
 
 export const aggregateAttributesResourcesToString = (logData: ILog): string =>
