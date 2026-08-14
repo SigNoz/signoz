@@ -238,13 +238,34 @@ type FieldKeySelector struct {
 	EndUnixMilli      int64                  `json:"endUnixMilli"`
 	Signal            Signal                 `json:"signal"`
 	Source            Source                 `json:"source"`
-	QueryType         QueryType              `json:"queryType"`
+	QueryType         string                 `json:"queryType"`
 	FieldContext      FieldContext           `json:"fieldContext"`
 	FieldDataType     FieldDataType          `json:"fieldDataType"`
 	Name              string                 `json:"name"`
 	SelectorMatchType FieldSelectorMatchType `json:"selectorMatchType"`
 	Limit             int                    `json:"limit"`
 	MetricContext     *MetricContext         `json:"metricContext,omitempty"`
+}
+
+// MatchesKey reports whether a statically defined key satisfies the selector, so
+// callers can suggest keys that were never ingested.
+func (s *FieldKeySelector) MatchesKey(key *TelemetryFieldKey) bool {
+	if s.FieldContext != FieldContextUnspecified && s.FieldContext != key.FieldContext {
+		return false
+	}
+
+	if s.FieldDataType != FieldDataTypeUnspecified && s.FieldDataType != key.FieldDataType {
+		return false
+	}
+
+	if s.Name == "" {
+		return true
+	}
+
+	if s.SelectorMatchType == FieldSelectorMatchTypeExact {
+		return strings.EqualFold(s.Name, key.Name)
+	}
+	return strings.Contains(strings.ToLower(key.Name), strings.ToLower(s.Name))
 }
 
 type FieldValueSelector struct {
@@ -262,7 +283,7 @@ type GettableFieldKeys struct {
 type PostableFieldKeysParams struct {
 	Signal          Signal        `query:"signal"`
 	Source          Source        `query:"source"`
-	Type            QueryType     `query:"type"`
+	Type            string        `query:"type"`
 	Limit           int           `query:"limit"`
 	StartUnixMilli  int64         `query:"startUnixMilli"`
 	EndUnixMilli    int64         `query:"endUnixMilli"`

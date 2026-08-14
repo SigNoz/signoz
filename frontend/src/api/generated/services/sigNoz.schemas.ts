@@ -9710,10 +9710,6 @@ export interface TelemetrytypesGettableFieldValuesDTO {
 	values: TelemetrytypesTelemetryFieldValuesDTO;
 }
 
-export enum TelemetrytypesQueryTypeDTO {
-	'' = '',
-	builder_ai_query = 'builder_ai_query',
-}
 export interface TypesChangePasswordRequestDTO {
 	/**
 	 * @type string
@@ -10421,6 +10417,70 @@ export enum HandleExportRawDataPOSTFormat {
 	csv = 'csv',
 	jsonl = 'jsonl',
 }
+export type GetAIObservabilityFieldsKeysParams = {
+	/**
+	 * @description undefined
+	 */
+	signal?: TelemetrytypesSignalDTO;
+	/**
+	 * @description undefined
+	 */
+	source?: TelemetrytypesSourceDTO;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	type?: string;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	startUnixMilli?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	endUnixMilli?: number;
+	/**
+	 * @description undefined
+	 */
+	fieldContext?: TelemetrytypesFieldContextDTO;
+	/**
+	 * @description undefined
+	 */
+	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	metricName?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	metricNamespace?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	searchText?: string;
+};
+
+export type GetAIObservabilityFieldsKeys200 = {
+	data: TelemetrytypesGettableFieldKeysDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetFieldsKeysParams = {
 	/**
 	 * @description undefined
@@ -10431,9 +10491,10 @@ export type GetFieldsKeysParams = {
 	 */
 	source?: TelemetrytypesSourceDTO;
 	/**
+	 * @type string
 	 * @description undefined
 	 */
-	type?: TelemetrytypesQueryTypeDTO;
+	type?: string;
 	/**
 	 * @type integer
 	 * @description undefined
@@ -10494,9 +10555,10 @@ export type GetFieldsValuesParams = {
 	 */
 	source?: TelemetrytypesSourceDTO;
 	/**
+	 * @type string
 	 * @description undefined
 	 */
-	type?: TelemetrytypesQueryTypeDTO;
+	type?: string;
 	/**
 	 * @type integer
 	 * @description undefined
@@ -11805,9 +11867,10 @@ export type GetRuleHistoryFilterKeysParams = {
 	 */
 	source?: TelemetrytypesSourceDTO;
 	/**
+	 * @type string
 	 * @description undefined
 	 */
-	type?: TelemetrytypesQueryTypeDTO;
+	type?: string;
 	/**
 	 * @type integer
 	 * @description undefined
@@ -11871,9 +11934,10 @@ export type GetRuleHistoryFilterValuesParams = {
 	 */
 	source?: TelemetrytypesSourceDTO;
 	/**
+	 * @type string
 	 * @description undefined
 	 */
-	type?: TelemetrytypesQueryTypeDTO;
+	type?: string;
 	/**
 	 * @type integer
 	 * @description undefined

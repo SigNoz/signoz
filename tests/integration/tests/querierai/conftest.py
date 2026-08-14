@@ -15,7 +15,7 @@ def signoz_ai(
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
 ) -> types.SigNoz:
-    # the gen_ai and per-trace aggregate keys are only surfaced behind this flag
+    # AI observability ships behind this flag, so the suite runs with it on
     return create_signoz(
         network=network,
         zeus=zeus,

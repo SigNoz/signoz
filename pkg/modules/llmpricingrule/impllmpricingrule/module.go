@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/aitelemetryschema"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/llmpricingruletypes"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
@@ -213,18 +214,18 @@ func (module *module) discoverModels(ctx context.Context, orgID valuer.UUID) ([]
 					Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 						Name:   "A",
 						Signal: telemetrytypes.SignalTraces,
-						Filter: &qbtypes.Filter{Expression: fmt.Sprintf("%s EXISTS", telemetrytypes.GenAIRequestModel)},
+						Filter: &qbtypes.Filter{Expression: fmt.Sprintf("%s EXISTS", aitelemetryschema.GenAIRequestModel)},
 						Aggregations: []qbtypes.TraceAggregation{
 							{Expression: "count()", Alias: "spanCount"},
 						},
 						GroupBy: []qbtypes.GroupByKey{
 							{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-								Name:          telemetrytypes.GenAIRequestModel,
+								Name:          aitelemetryschema.GenAIRequestModel,
 								FieldContext:  telemetrytypes.FieldContextSpan,
 								FieldDataType: telemetrytypes.FieldDataTypeString,
 							}},
 							{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-								Name:          telemetrytypes.GenAIProviderName,
+								Name:          aitelemetryschema.GenAIProviderName,
 								FieldContext:  telemetrytypes.FieldContextSpan,
 								FieldDataType: telemetrytypes.FieldDataTypeString,
 							}},
@@ -254,9 +255,9 @@ func (module *module) discoverModels(ctx context.Context, orgID valuer.UUID) ([]
 		switch c.Type {
 		case qbtypes.ColumnTypeGroup:
 			switch c.Name {
-			case telemetrytypes.GenAIRequestModel:
+			case aitelemetryschema.GenAIRequestModel:
 				modelIdx = i
-			case telemetrytypes.GenAIProviderName:
+			case aitelemetryschema.GenAIProviderName:
 				providerIdx = i
 			}
 		case qbtypes.ColumnTypeAggregation:

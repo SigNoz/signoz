@@ -3,6 +3,8 @@ package aistatementbuilder
 import (
 	"context"
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -11,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/statementbuilder"
 	scopedtraces "github.com/SigNoz/signoz/pkg/statementbuilder/scopedtracesstatementbuilder"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/aitelemetryschema"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
@@ -40,8 +43,7 @@ func otelKeysMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 
 	m := make(map[string][]*telemetrytypes.TelemetryFieldKey)
 
-	// mirrors what enrichWithGenAIKeys surfaces in production
-	for name, def := range telemetrytypes.GenAIFieldDefinitions {
+	for name, def := range aitelemetryschema.GenAIFields {
 		keyCopy := def
 		m[name] = []*telemetrytypes.TelemetryFieldKey{&keyCopy}
 	}
@@ -976,8 +978,8 @@ func TestBuild_UnsupportedRequestType(t *testing.T) {
 // mask, OR-combined.
 func TestBuild_TraceList_MultiVariantGateKey(t *testing.T) {
 	keys := otelKeysMap()
-	keys[telemetrytypes.GenAIToolName] = append(keys[telemetrytypes.GenAIToolName], &telemetrytypes.TelemetryFieldKey{
-		Name:          telemetrytypes.GenAIToolName,
+	keys[aitelemetryschema.GenAIToolName] = append(keys[aitelemetryschema.GenAIToolName], &telemetrytypes.TelemetryFieldKey{
+		Name:          aitelemetryschema.GenAIToolName,
 		Signal:        telemetrytypes.SignalTraces,
 		FieldContext:  telemetrytypes.FieldContextAttribute,
 		FieldDataType: telemetrytypes.FieldDataTypeFloat64,
@@ -1055,4 +1057,18 @@ func TestBuild_TraceList_VariableInAggregateFilter(t *testing.T) {
 	// unresolved variable -> rejected, not compared as a literal
 	_, err = build("trace.output_tokens > $missing", map[string]qbtypes.VariableItem{"other": {Value: 1}})
 	require.Error(t, err)
+}
+
+// the schema declares the aggregates the API suggests, this Scope declares the SQL
+// that computes them; a filterable column with no definition is unreachable, and a
+// definition with no filterable column is a dead suggestion
+func TestScope_FilterableColumnsMatchSchemaAggregates(t *testing.T) {
+	var filterable []string
+	for _, c := range Scope().Columns {
+		if c.Orderable && c.Filterable {
+			filterable = append(filterable, c.Alias)
+		}
+	}
+
+	assert.ElementsMatch(t, slices.Collect(maps.Keys(aitelemetryschema.TraceAggregateFields)), filterable)
 }

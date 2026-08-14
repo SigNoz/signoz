@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/statementbuilder"
 	scopedtraces "github.com/SigNoz/signoz/pkg/statementbuilder/scopedtracesstatementbuilder"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/aitelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -25,7 +26,7 @@ func NewFactory(
 // Scope describes gen_ai for the scoped trace builder: an AI trace has >=1 gen_ai
 // LLM, tool, or agent span, and its list adds AI/LLM per-trace metrics.
 func Scope() scopedtraces.TraceScope {
-	gateKeyNames := []string{telemetrytypes.GenAIRequestModel, telemetrytypes.GenAIToolName, telemetrytypes.GenAIAgentName}
+	gateKeyNames := []string{aitelemetryschema.GenAIRequestModel, aitelemetryschema.GenAIToolName, aitelemetryschema.GenAIAgentName}
 	gateExprs := make([]string, 0, len(gateKeyNames))
 	gateKeys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(gateKeyNames))
 	for _, name := range gateKeyNames {
@@ -37,14 +38,14 @@ func Scope() scopedtraces.TraceScope {
 		})
 	}
 
-	defs := telemetrytypes.GenAIFieldDefinitions
-	reqModel := defs[telemetrytypes.GenAIRequestModel]
-	toolName := defs[telemetrytypes.GenAIToolName]
-	inTok := defs[telemetrytypes.GenAIUsageInputTokens]
-	outTok := defs[telemetrytypes.GenAIUsageOutputTokens]
-	cost := defs[telemetrytypes.SignozGenAITotalCost]
-	inMsg := defs[telemetrytypes.GenAIInputMessages]
-	outMsg := defs[telemetrytypes.GenAIOutputMessages]
+	defs := aitelemetryschema.GenAIFields
+	reqModel := defs[aitelemetryschema.GenAIRequestModel]
+	toolName := defs[aitelemetryschema.GenAIToolName]
+	inTok := defs[aitelemetryschema.GenAIUsageInputTokens]
+	outTok := defs[aitelemetryschema.GenAIUsageOutputTokens]
+	cost := defs[aitelemetryschema.SignozGenAITotalCost]
+	inMsg := defs[aitelemetryschema.GenAIInputMessages]
+	outMsg := defs[aitelemetryschema.GenAIOutputMessages]
 
 	str := telemetrytypes.FieldDataTypeString
 	columns := append(scopedtraces.CommonTraceColumns(),
@@ -76,23 +77,4 @@ func Scope() scopedtraces.TraceScope {
 		Columns:           columns,
 		DefaultOrderAlias: "last_activity_time",
 	}
-}
-
-// MetadataFieldKeys returns the aggregates the metadata store surfaces as trace-context
-// keys for builder_ai_query suggestions; only filterable columns qualify.
-func MetadataFieldKeys() []*telemetrytypes.TelemetryFieldKey {
-	cols := Scope().Columns
-	keys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(cols))
-	for _, c := range cols {
-		if !c.Orderable || !c.Filterable {
-			continue
-		}
-		keys = append(keys, &telemetrytypes.TelemetryFieldKey{
-			Name:          c.Alias,
-			Signal:        telemetrytypes.SignalTraces,
-			FieldContext:  telemetrytypes.FieldContextTrace,
-			FieldDataType: telemetrytypes.FieldDataTypeFloat64,
-		})
-	}
-	return keys
 }
