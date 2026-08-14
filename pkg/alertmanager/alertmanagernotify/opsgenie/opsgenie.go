@@ -46,37 +46,30 @@ type Notifier struct {
 	client    *http.Client
 	retrier   *notify.Retrier
 	templater alertmanagertypes.Templater
-	// renderDefaultBodyAsHTML renders the default body template as HTML (markdown
-	// -> HTML) like a custom body, instead of OpsGenie's plain-text join.
-	renderDefaultBodyAsHTML bool
+	// advancedFeatures bundles the JSM Ops enrichments: render the default body as
+	// HTML (markdown -> HTML), and post a note per fire and on resolve to build an
+	// immutable timeline. Off for plain OpsGenie. The alert-refresh-on-refire part
+	// rides on the upstream UpdateAlerts config flag, set alongside this.
+	advancedFeatures bool
 }
 
-// New returns a new OpsGenie notifier.
-func New(c *config.OpsGenieConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
+// New returns a new OpsGenie notifier. advancedFeatures enables the JSM Ops
+// enrichments (HTML default body + a note timeline per fire and on resolve);
+// pass false for plain OpsGenie.
+func New(c *config.OpsGenieConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, advancedFeatures bool, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
 	client, err := notify.NewClientWithTracing(*c.HTTPConfig, Integration, httpOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return &Notifier{
-		conf:      c,
-		tmpl:      t,
-		logger:    l,
-		client:    client,
-		retrier:   &notify.Retrier{RetryCodes: []int{http.StatusTooManyRequests}},
-		templater: templater,
+		conf:             c,
+		tmpl:             t,
+		logger:           l,
+		client:           client,
+		retrier:          &notify.Retrier{RetryCodes: []int{http.StatusTooManyRequests}},
+		templater:        templater,
+		advancedFeatures: advancedFeatures,
 	}, nil
-}
-
-// NewWithHTMLBody returns an OpsGenie notifier that renders the default body
-// template as HTML (markdown -> HTML) instead of plain text. Used by JSM Ops,
-// whose alert descriptions render an HTML subset just like a custom body.
-func NewWithHTMLBody(c *config.OpsGenieConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
-	n, err := New(c, t, l, templater, httpOpts...)
-	if err != nil {
-		return nil, err
-	}
-	n.renderDefaultBodyAsHTML = true
-	return n, nil
 }
 
 type opsGenieCreateMessage struct {
@@ -110,6 +103,30 @@ type opsGenieUpdateMessageMessage struct {
 
 type opsGenieUpdateDescriptionMessage struct {
 	Description string `json:"description,omitempty"`
+}
+
+type opsGenieAddNoteMessage struct {
+	Note   string `json:"note"`
+	Source string `json:"source"`
+}
+
+// noteRequest builds a POST to the alert's notes endpoint (append-only timeline).
+func (n *Notifier) noteRequest(ctx context.Context, alias, note, source string) (*http.Request, error) {
+	noteEndpointURL := n.conf.APIURL.Copy()
+	noteEndpointURL.Path += fmt.Sprintf("v2/alerts/%s/notes", alias)
+	q := noteEndpointURL.Query()
+	q.Set("identifierType", "alias")
+	noteEndpointURL.RawQuery = q.Encode()
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(&opsGenieAddNoteMessage{Note: note, Source: source}); err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("POST", noteEndpointURL.String(), &buf)
+	if err != nil {
+		return nil, err
+	}
+	return req.WithContext(ctx), nil
 }
 
 // Notify implements the Notifier interface.
@@ -163,7 +180,7 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) (s
 	}
 
 	var description string
-	if result.IsDefaultBody && !n.renderDefaultBodyAsHTML {
+	if result.IsDefaultBody && !n.advancedFeatures {
 		description = strings.Join(result.Body, "\n")
 	} else {
 		var b strings.Builder
@@ -231,6 +248,21 @@ func (n *Notifier) createRequests(ctx context.Context, as ...*types.Alert) ([]*h
 	)
 	switch alerts.Status() {
 	case model.AlertResolved:
+		// Post the resolved snapshot to the timeline before closing (closed alerts
+		// reject notes), so the note lands first.
+		if n.advancedFeatures {
+			_, description, err := n.prepareContent(ctx, as)
+			if err != nil {
+				n.logger.ErrorContext(ctx, "failed to prepare notification content", errors.Attr(err))
+				return nil, false, err
+			}
+			noteReq, err := n.noteRequest(ctx, alias, description, tmpl(n.conf.Source))
+			if err != nil {
+				return nil, true, err
+			}
+			requests = append(requests, noteReq)
+		}
+
 		resolvedEndpointURL := n.conf.APIURL.Copy()
 		resolvedEndpointURL.Path += fmt.Sprintf("v2/alerts/%s/close", alias)
 		q := resolvedEndpointURL.Query()
@@ -346,6 +378,16 @@ func (n *Notifier) createRequests(ctx context.Context, as ...*types.Alert) ([]*h
 				return nil, true, err
 			}
 			requests = append(requests, req.WithContext(ctx))
+		}
+
+		// Append this fire's snapshot to the timeline (every fire, including the
+		// first, so no datapoint is lost when the description is overwritten).
+		if n.advancedFeatures {
+			noteReq, err := n.noteRequest(ctx, alias, description, tmpl(n.conf.Source))
+			if err != nil {
+				return nil, true, err
+			}
+			requests = append(requests, noteReq)
 		}
 	}
 
