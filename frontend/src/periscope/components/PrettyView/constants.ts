@@ -59,4 +59,12 @@ export const themeExtension = {
 		style: { ...style },
 		className: 'pretty-view__nested-row',
 	}),
+	arrowContainer: ({
+		style,
+	}: {
+		style: Record<string, unknown>;
+	}): { style: Record<string, unknown>; className: string } => ({
+		style: { ...style },
+		className: 'pretty-view__arrow',
+	}),
 };

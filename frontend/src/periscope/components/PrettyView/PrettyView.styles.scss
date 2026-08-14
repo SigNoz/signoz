@@ -77,6 +77,17 @@
 		margin-right: 16px;
 	}
 
+	// Pin the caret to the leaf padding-left (1.25em) so nested keys align with leaf
+	// keys at every depth; inline-flex centers the glyph on the text line.
+	&__arrow {
+		box-sizing: border-box !important;
+		width: 1.25em !important;
+		padding-right: 0 !important;
+		display: inline-flex !important;
+		align-items: center !important;
+		height: 18px; // match the row line-height so the caret centers on the text
+	}
+
 	// Leaf node row — full-width hover highlight
 	&__row {
 		display: flex !important;
