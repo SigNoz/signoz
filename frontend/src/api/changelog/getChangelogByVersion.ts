@@ -26,7 +26,7 @@ const getChangelogByVersion = async (
 		}
 
 		const response = await axios.get(`
-			https://cms.staging.signoz.cloud/api/release-changelogs?${queryParams}
+			https://cms.signoz.cloud/api/release-changelogs?${queryParams}
         `);
 
 		if (!Array.isArray(response.data.data) || response.data.data.length === 0) {
