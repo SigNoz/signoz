@@ -219,6 +219,42 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) (s
 	return title, description, nil
 }
 
+// prepareNote renders the same body template as plain text for a timeline note.
+// JSM Ops notes render neither HTML nor markdown, so links flatten to
+// "text (url)" and all markers are stripped.
+func (n *Notifier) prepareNote(ctx context.Context, alerts []*types.Alert) (string, error) {
+	customTitle, customBody := alertmanagertemplate.ExtractTemplatesFromAnnotations(alerts)
+	result, err := n.templater.Expand(ctx, alertmanagertypes.ExpandRequest{
+		TitleTemplate:        customTitle,
+		BodyTemplate:         customBody,
+		DefaultTitleTemplate: n.conf.Message,
+		DefaultBodyTemplate:  n.conf.Description,
+	}, alerts)
+	if err != nil {
+		return "", err
+	}
+
+	var b strings.Builder
+	first := true
+	for _, part := range result.Body {
+		text, renderErr := markdownrenderer.RenderPlainText(part)
+		if renderErr != nil {
+			return "", renderErr
+		}
+		if text = strings.TrimSpace(text); text == "" {
+			continue
+		}
+		if !first {
+			b.WriteString("\n\n")
+		}
+		b.WriteString(text)
+		first = false
+	}
+
+	note, _ := notify.TruncateInRunes(b.String(), maxDescriptionLenRunes)
+	return note, nil
+}
+
 // Create requests for a list of alerts.
 func (n *Notifier) createRequests(ctx context.Context, as ...*types.Alert) ([]*http.Request, bool, error) {
 	key, err := notify.ExtractGroupKey(ctx)
@@ -251,12 +287,12 @@ func (n *Notifier) createRequests(ctx context.Context, as ...*types.Alert) ([]*h
 		// Post the resolved snapshot to the timeline before closing (closed alerts
 		// reject notes), so the note lands first.
 		if n.advancedFeatures {
-			_, description, err := n.prepareContent(ctx, as)
+			note, err := n.prepareNote(ctx, as)
 			if err != nil {
 				n.logger.ErrorContext(ctx, "failed to prepare notification content", errors.Attr(err))
 				return nil, false, err
 			}
-			noteReq, err := n.noteRequest(ctx, alias, description, tmpl(n.conf.Source))
+			noteReq, err := n.noteRequest(ctx, alias, note, tmpl(n.conf.Source))
 			if err != nil {
 				return nil, true, err
 			}
@@ -382,8 +418,13 @@ func (n *Notifier) createRequests(ctx context.Context, as ...*types.Alert) ([]*h
 
 		// Append this fire's snapshot to the timeline (every fire, including the
 		// first, so no datapoint is lost when the description is overwritten).
+		// Notes are plain text, so this uses the plain-text render, not the HTML body.
 		if n.advancedFeatures {
-			noteReq, err := n.noteRequest(ctx, alias, description, tmpl(n.conf.Source))
+			note, err := n.prepareNote(ctx, as)
+			if err != nil {
+				return nil, false, err
+			}
+			noteReq, err := n.noteRequest(ctx, alias, note, tmpl(n.conf.Source))
 			if err != nil {
 				return nil, true, err
 			}
