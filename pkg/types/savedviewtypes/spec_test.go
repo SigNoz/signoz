@@ -100,6 +100,17 @@ func TestSavedViewSpecValidate(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name: "selectedFields entry with no name is rejected",
+			spec: SavedViewSpec{
+				DisplayName:    "My View",
+				PanelType:      PanelTypeTable,
+				RequestType:    qbtypes.RequestTypeScalar,
+				Queries:        validQueries(),
+				SelectedFields: []telemetrytypes.TelemetryFieldKey{{Name: "service.name"}, {}},
+			},
+			expectError: true,
+		},
+		{
 			name: "nil selectedFields is valid -- selectedFields itself is not required",
 			spec: SavedViewSpec{
 				DisplayName:    "My View",
