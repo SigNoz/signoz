@@ -51,7 +51,7 @@ func TestOpsGenieRetry(t *testing.T) {
 	retryCodes := append(test.DefaultRetryCodes(), http.StatusTooManyRequests)
 	for statusCode, expected := range test.RetryTests(retryCodes) {
 		actual, _ := notifier.retrier.Check(statusCode, nil)
-		require.Equal(t, expected, actual, "error on status %d", statusCode)
+		assert.Equal(t, expected, actual, "error on status %d", statusCode)
 	}
 }
 
@@ -107,9 +107,7 @@ func TestGettingOpsGegineApikeyFromFile(t *testing.T) {
 
 func TestOpsGenie(t *testing.T) {
 	u, err := url.Parse("https://opsgenie/api")
-	if err != nil {
-		t.Fatalf("failed to parse URL: %v", err)
-	}
+	require.NoError(t, err)
 	logger := promslog.NewNopLogger()
 	tmpl := test.CreateTmpl(t)
 
@@ -240,10 +238,10 @@ func TestOpsGenie(t *testing.T) {
 			req, retry, err := notifier.createRequests(ctx, alert1)
 			require.NoError(t, err)
 			require.Len(t, req, 1)
-			require.True(t, retry)
-			require.Equal(t, expectedURL, req[0].URL)
-			require.Equal(t, "GenieKey http://am", req[0].Header.Get("Authorization"))
-			require.Equal(t, tc.expectedEmptyAlertBody, readBody(t, req[0]))
+			assert.True(t, retry)
+			assert.Equal(t, expectedURL, req[0].URL)
+			assert.Equal(t, "GenieKey http://am", req[0].Header.Get("Authorization"))
+			assert.Equal(t, tc.expectedEmptyAlertBody, readBody(t, req[0]))
 
 			// Fully defined alert.
 			alert2 := &types.Alert{
@@ -270,15 +268,15 @@ func TestOpsGenie(t *testing.T) {
 			}
 			req, retry, err = notifier.createRequests(ctx, alert2)
 			require.NoError(t, err)
-			require.True(t, retry)
+			assert.True(t, retry)
 			require.Len(t, req, 1)
-			require.Equal(t, tc.expectedBody, readBody(t, req[0]))
+			assert.Equal(t, tc.expectedBody, readBody(t, req[0]))
 
 			// Broken API Key Template.
 			tc.cfg.APIKey = "{{ kaput "
 			_, _, err = notifier.createRequests(ctx, alert2)
 			require.Error(t, err)
-			require.Equal(t, "template: :1: function \"kaput\" not defined", err.Error())
+			assert.Equal(t, "template: :1: function \"kaput\" not defined", err.Error())
 		})
 	}
 }
@@ -311,7 +309,7 @@ func TestOpsGenieWithUpdate(t *testing.T) {
 	require.NoError(t, err)
 	requests, retry, err := notifierWithUpdate.createRequests(ctx, alert)
 	require.NoError(t, err)
-	require.True(t, retry)
+	assert.True(t, retry)
 	require.Len(t, requests, 3)
 
 	body0 := readBody(t, requests[0])
@@ -320,13 +318,13 @@ func TestOpsGenieWithUpdate(t *testing.T) {
 	key, _ := notify.ExtractGroupKey(ctx)
 	alias := key.Hash()
 
-	require.Equal(t, "https://test-opsgenie-url/v2/alerts", requests[0].URL.String())
-	require.NotEmpty(t, body0)
+	assert.Equal(t, "https://test-opsgenie-url/v2/alerts", requests[0].URL.String())
+	assert.NotEmpty(t, body0)
 
-	require.Equal(t, requests[1].URL.String(), fmt.Sprintf("https://test-opsgenie-url/v2/alerts/%s/message?identifierType=alias", alias))
-	require.JSONEq(t, `{"message":"new message"}`, body1)
-	require.Equal(t, requests[2].URL.String(), fmt.Sprintf("https://test-opsgenie-url/v2/alerts/%s/description?identifierType=alias", alias))
-	require.JSONEq(t, `{"description":"new description"}`, body2)
+	assert.Equal(t, requests[1].URL.String(), fmt.Sprintf("https://test-opsgenie-url/v2/alerts/%s/message?identifierType=alias", alias))
+	assert.JSONEq(t, `{"message":"new message"}`, body1)
+	assert.Equal(t, requests[2].URL.String(), fmt.Sprintf("https://test-opsgenie-url/v2/alerts/%s/description?identifierType=alias", alias))
+	assert.JSONEq(t, `{"description":"new description"}`, body2)
 }
 
 func TestOpsGenieAdvancedFeatures(t *testing.T) {
@@ -392,7 +390,8 @@ func TestOpsGenieApiKeyFile(t *testing.T) {
 	require.NoError(t, err)
 	requests, _, err := notifierWithUpdate.createRequests(ctx)
 	require.NoError(t, err)
-	require.Equal(t, "GenieKey my_secret_api_key", requests[0].Header.Get("Authorization"))
+	require.Len(t, requests, 1)
+	assert.Equal(t, "GenieKey my_secret_api_key", requests[0].Header.Get("Authorization"))
 }
 
 func TestPrepareContent(t *testing.T) {
@@ -428,8 +427,8 @@ func TestPrepareContent(t *testing.T) {
 
 		title, desc, prepErr := notifier.prepareContent(ctx, alerts)
 		require.NoError(t, prepErr)
-		require.Equal(t, "Firing alert: test", title)
-		require.Equal(t, "Check runbook for more details", desc)
+		assert.Equal(t, "Firing alert: test", title)
+		assert.Equal(t, "Check runbook for more details", desc)
 	})
 
 	t.Run("custom template", func(t *testing.T) {
@@ -482,9 +481,9 @@ func TestPrepareContent(t *testing.T) {
 
 		title, desc, err := notifier.prepareContent(ctx, alerts)
 		require.NoError(t, err)
-		require.Equal(t, "High request throughput for payment", title)
+		assert.Equal(t, "High request throughput for payment", title)
 		// Each alert body wrapped in <div>, separated by <hr>
-		require.Equal(t, "<div><p>Alert firing in NS: potter-the-harry</p>\n</div><hr><div><p>Alert firing in NS: smart-the-rat</p>\n</div>", desc)
+		assert.Equal(t, "<div><p>Alert firing in NS: potter-the-harry</p>\n</div><hr><div><p>Alert firing in NS: smart-the-rat</p>\n</div>", desc)
 	})
 }
 
