@@ -1,11 +1,15 @@
 from collections.abc import Callable
+from datetime import UTC, datetime
 from http import HTTPStatus
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.metadata import get_field_keys
+from fixtures.metadata import get_field_keys, get_field_values
+from fixtures.querierai import ai_trace
+from fixtures.traces import Traces
 
 AI_KEYS_PATH = "/api/v1/ai_observability/fields/keys"
+AI_VALUES_PATH = "/api/v1/ai_observability/fields/values"
 
 # The filterable per-trace aggregates; the display-only columns (error_count,
 # last_activity_time, span_count, input, output) must not be suggested.
@@ -81,3 +85,53 @@ def test_ai_fields_are_not_served_by_the_generic_endpoint(
     keys = response.json()["data"]["keys"]
     assert "output_tokens" not in keys, keys
     assert "gen_ai.usage.output_tokens" not in keys, keys
+
+
+def test_ai_field_values_suggests_ingested_attribute_values(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+) -> None:
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    insert_traces(ai_trace(now=now, service="ai-it-values", user="alice", in_tokens=100, out_tokens=20, cost=0.5, model="gpt-it-values"))
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = get_field_values(signoz, token, {"name": "gen_ai.request.model", "searchText": "gpt-it-values"}, AI_VALUES_PATH)
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["status"] == "success"
+
+    values = response.json()["data"]["values"]
+    assert values["stringValues"] == ["gpt-it-values"], values
+
+
+def test_ai_field_values_reject_existing_query(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+) -> None:
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = get_field_values(
+        signoz,
+        token,
+        {"name": "gen_ai.request.model", "existingQuery": "service.name = 'ai-it-values'"},
+        AI_VALUES_PATH,
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+
+
+def test_ai_field_values_of_computed_aggregate_are_empty(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+) -> None:
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = get_field_values(signoz, token, {"name": "llm_call_count", "fieldContext": "trace"}, AI_VALUES_PATH)
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    values = response.json()["data"]["values"]
+    assert values.get("stringValues", []) == [], values
+    assert values.get("numberValues", []) == [], values

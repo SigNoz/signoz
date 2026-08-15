@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
@@ -88,6 +89,47 @@ func (handler *handler) GetAIObservabilityFieldsKeys(rw http.ResponseWriter, req
 
 	render.Success(rw, http.StatusOK, &telemetrytypes.GettableFieldKeys{
 		Keys:     aitelemetryschema.FieldKeys(keys, fieldKeySelector),
+		Complete: complete,
+	})
+}
+
+func (handler *handler) GetAIObservabilityFieldsValues(rw http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+
+	// binding ignores query params the struct does not declare, so an unsupported
+	// existingQuery would silently return values it did not narrow
+	if req.URL.Query().Has("existingQuery") {
+		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "existingQuery is not supported"))
+		return
+	}
+
+	var params telemetrytypes.PostableAIObservabilityFieldValueParams
+	if err := binding.Query.BindQuery(req.URL.Query(), &params); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	fieldValueSelector := telemetrytypes.NewFieldValueSelectorFromPostableAIObservabilityFieldValueParams(params)
+
+	values := &telemetrytypes.TelemetryFieldValues{}
+	complete := true
+	// the trace context names the computed per-trace aggregates, which are never ingested
+	if fieldValueSelector.FieldContext != telemetrytypes.FieldContextTrace {
+		values, complete, err = handler.telemetryMetadataStore.GetAllValues(ctx, valuer.MustNewUUID(claims.OrgID), fieldValueSelector)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+	}
+
+	render.Success(rw, http.StatusOK, &telemetrytypes.GettableFieldValues{
+		Values:   values,
 		Complete: complete,
 	})
 }

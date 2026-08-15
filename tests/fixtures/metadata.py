@@ -116,6 +116,15 @@ def get_field_keys(signoz: types.SigNoz, token: str, params: dict, path: str = "
     )
 
 
+def get_field_values(signoz: types.SigNoz, token: str, params: dict, path: str = "/api/v1/fields/values") -> requests.Response:
+    return requests.get(
+        signoz.self.host_configs["8080"].get(path),
+        timeout=5,
+        headers={"authorization": f"Bearer {token}"},
+        params=params,
+    )
+
+
 @pytest.fixture(name="insert_attributes_metadata", scope="function")
 def insert_attributes_metadata(
     clickhouse: types.TestContainerClickhouse,

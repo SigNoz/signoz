@@ -28,5 +28,23 @@ func (provider *provider) addAIObservabilityRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v1/ai_observability/fields/values", handler.New(provider.authzMiddleware.ViewAccess(provider.fieldsHandler.GetAIObservabilityFieldsValues), handler.OpenAPIDef{
+		ID:                  "GetAIObservabilityFieldsValues",
+		Tags:                []string{"ai_observability"},
+		Summary:             "Get AI observability field values",
+		Description:         "This endpoint returns the values the AI observability explorer can filter a field key on",
+		Request:             nil,
+		RequestQuery:        new(telemetrytypes.PostableAIObservabilityFieldValueParams),
+		RequestContentType:  "",
+		Response:            new(telemetrytypes.GettableFieldValues),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
 	return nil
 }

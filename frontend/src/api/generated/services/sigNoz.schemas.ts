@@ -10234,6 +10234,52 @@ export type GetAIObservabilityFieldsKeys200 = {
 	status: string;
 };
 
+export type GetAIObservabilityFieldsValuesParams = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	searchText?: string;
+	/**
+	 * @description undefined
+	 */
+	fieldContext?: TelemetrytypesFieldContextDTO;
+	/**
+	 * @description undefined
+	 */
+	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	startUnixMilli?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	endUnixMilli?: number;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+};
+
+export type GetAIObservabilityFieldsValues200 = {
+	data: TelemetrytypesGettableFieldValuesDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetAlerts200 = {
 	/**
 	 * @type array
