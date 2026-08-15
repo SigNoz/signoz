@@ -94,7 +94,8 @@ func (handler *handler) GetAIObservabilityFieldsKeys(rw http.ResponseWriter, req
 }
 
 func (handler *handler) GetAIObservabilityFieldsValues(rw http.ResponseWriter, req *http.Request) {
-	ctx := req.Context()
+	ctx, cancel := context.WithTimeout(req.Context(), 10*time.Second)
+	defer cancel()
 
 	// binding ignores query params the struct does not declare, so an unsupported
 	// existingQuery would silently return values it did not narrow
