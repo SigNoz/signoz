@@ -31,6 +31,9 @@ const ANOMALY_QUERY_SUPPORT_CLICKHOUSE_ISSUE =
 const ANOMALY_QUERY_SUPPORT_PROMQL_ISSUE =
 	'https://github.com/SigNoz/signoz/issues/11036';
 
+const EXCEPTIONS_QUERY_BUILDER_UNSUPPORTED_ISSUE =
+	'https://github.com/SigNoz/signoz/issues/4914';
+
 function QuerySection({
 	queryCategory,
 	setQueryCategory,
@@ -86,9 +89,9 @@ function QuerySection({
 		/>
 	);
 
-	const anomalyDisabledTooltip = (url: string): JSX.Element => (
+	const disabledTooltip = (message: string, url: string): JSX.Element => (
 		<span>
-			Coming soon for anomaly detection.{' '}
+			{message}{' '}
 			<Typography.Link
 				href={url}
 				target="_blank"
@@ -100,6 +103,15 @@ function QuerySection({
 			to help us prioritize!
 		</span>
 	);
+
+	const anomalyDisabledTooltip = (url: string): JSX.Element =>
+		disabledTooltip('Coming soon for anomaly detection.', url);
+
+	const exceptionsDisabledTooltip = (url: string): JSX.Element =>
+		disabledTooltip(
+			"Query Builder isn't supported for Exceptions-based alerts yet.",
+			url,
+		);
 
 	const tabs = [
 		{
@@ -139,6 +151,50 @@ function QuerySection({
 			setCurrentTab(EQueryType.QUERY_BUILDER);
 		}
 	}, [isAnomalyDetection, queryCategory, setQueryCategory]);
+
+	// Query Builder isn't backend-supported for Exceptions-based alerts today
+	// (it queries DataSource.TRACES instead of the exceptions index). Force
+	// ClickHouse for this alert type, including for pre-existing rules that
+	// were saved with Query Builder selected before this restriction existed.
+	useEffect(() => {
+		if (
+			alertType === AlertTypes.EXCEPTIONS_BASED_ALERT &&
+			queryCategory !== EQueryType.CLICKHOUSE
+		) {
+			setQueryCategory(EQueryType.CLICKHOUSE);
+			setCurrentTab(EQueryType.CLICKHOUSE);
+		}
+	}, [alertType, queryCategory, setQueryCategory]);
+
+	const exceptionsTabs = [
+		{
+			label: (
+				<Tooltip
+					title={exceptionsDisabledTooltip(
+						EXCEPTIONS_QUERY_BUILDER_UNSUPPORTED_ISSUE,
+					)}
+				>
+					<Button className="nav-btns" disabled>
+						<Atom size={14} />
+						<Typography.Text>Query Builder</Typography.Text>
+					</Button>
+				</Tooltip>
+			),
+			key: EQueryType.QUERY_BUILDER,
+			disabled: true,
+		},
+		{
+			label: (
+				<Tooltip title="ClickHouse">
+					<Button className="nav-btns">
+						<Terminal size={14} />
+						<Typography.Text>ClickHouse Query</Typography.Text>
+					</Button>
+				</Tooltip>
+			),
+			key: EQueryType.CLICKHOUSE,
+		},
+	];
 
 	const items = useMemo(
 		() => [
@@ -208,9 +264,38 @@ function QuerySection({
 
 	const renderTabs = (typ: AlertTypes): JSX.Element | null => {
 		switch (typ) {
+			case AlertTypes.EXCEPTIONS_BASED_ALERT:
+				return (
+					<div className="alert-tabs">
+						<Tabs
+							type="card"
+							style={{ width: '100%', padding: '0px 8px' }}
+							defaultActiveKey={currentTab}
+							activeKey={currentTab}
+							onChange={handleQueryCategoryChange}
+							tabBarExtraContent={
+								<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+									<RunQueryBtn
+										onStageRunQuery={(): void => {
+											runQuery();
+											logEvent('Alert: Stage and run query', {
+												dataSource: ALERTS_DATA_SOURCE_MAP[alertType],
+												isNewRule: !ruleId || isEmpty(ruleId),
+												ruleId,
+												queryType: queryCategory,
+											});
+										}}
+										handleCancelQuery={handleCancelQuery}
+										isLoadingQueries={isLoadingQueries}
+									/>
+								</span>
+							}
+							items={exceptionsTabs}
+						/>
+					</div>
+				);
 			case AlertTypes.TRACES_BASED_ALERT:
 			case AlertTypes.LOGS_BASED_ALERT:
-			case AlertTypes.EXCEPTIONS_BASED_ALERT:
 				return (
 					<div className="alert-tabs">
 						<Tabs
