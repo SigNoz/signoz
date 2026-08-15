@@ -240,6 +240,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewFixSavedViewSelectedFieldsFactory(sqlstore),
 		sqlmigration.NewBackfillSavedViewRequestTypeFactory(sqlstore),
 		sqlmigration.NewRestructureAuthDomainConfigFactory(sqlstore),
+		sqlmigration.NewFixSavedViewSelectFieldsFactory(sqlstore),
 	)
 }
 
