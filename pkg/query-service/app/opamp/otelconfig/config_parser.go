@@ -17,12 +17,27 @@ func NewConfigParser(agentConf *confmap.Conf) ConfigParser {
 	}
 }
 
+// The config being read here is the agent's own reported config, so its shape
+// is whatever the collector had rather than anything validated on this side. A
+// key can be present and still hold the wrong type: `processors: batch` gives a
+// string where a list is expected, and a pipeline block written as a list gives
+// a slice where a map is expected. Both used to panic on the assertion. They
+// now degrade to the same empty value an absent key produces, which callers
+// already handle.
 func toMap(i interface{}) map[string]interface{} {
-	return i.(map[string]interface{})
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return emptyMap()
+	}
+	return m
 }
 
 func toList(i interface{}) []interface{} {
-	return i.([]interface{})
+	l, ok := i.([]interface{})
+	if !ok {
+		return emptyList()
+	}
+	return l
 }
 
 // sent when key is not found in config
