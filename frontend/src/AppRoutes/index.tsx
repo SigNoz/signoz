@@ -368,10 +368,6 @@ function App(): JSX.Element {
 						// Kept for the `transaction` tag used in routing, even though
 						// tracing is disabled. Ref: https://github.com/SigNoz/platform-pod/issues/2393#issuecomment-4603658055
 						Sentry.browserTracingIntegration(),
-						Sentry.replayIntegration({
-							maskAllText: false,
-							blockAllMedia: false,
-						}),
 					],
 					tracesSampleRate: 0, // Ref: https://github.com/SigNoz/platform-pod/issues/2393#issuecomment-4603658055
 					replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
@@ -411,6 +407,15 @@ function App(): JSX.Element {
 						return event;
 					},
 				});
+				Sentry.lazyLoadIntegration('replayIntegration')
+					.then((replayIntegration) =>
+						Sentry.addIntegration(
+							replayIntegration({ maskAllText: false, blockAllMedia: false }),
+						),
+					)
+					.catch((err) => {
+						console.error('[Sentry_Lazy_load] sentry lazy load failed:', err);
+					});
 
 				setIsSentryInitialized(true);
 			}
