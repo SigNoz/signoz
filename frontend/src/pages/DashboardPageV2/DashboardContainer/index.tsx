@@ -21,9 +21,10 @@ interface DashboardContainerProps {
 	refetch: () => void;
 	/**
 	 * @deprecated
-	 * LLM Observability only. The only legal value is `false` (read-only embed).
-	 * Omitting the prop keeps permission-derived editability. Does not change `isLocked`.
-	 *  Temporary — TODO: @Ashwin / @Abhi — remove when embeds have their own surface.
+	 * `overrideCanEditDashboard` is a temporary solution to allow the dashboard to be view only.
+	 * This is only used for LLM Observability. that's why the type is `false`.
+	 * It will be removed in the future.
+	 *  TODO: @Ashwin / @Abhi — remove when the final solution is implemented.
 	 */
 	overrideCanEditDashboard?: false;
 }
