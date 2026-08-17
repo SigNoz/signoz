@@ -107,14 +107,30 @@ async function renderAndFocus(
 	return editor;
 }
 
+function ensureCompletionOpen(): void {
+	const view = getEditorView();
+	if (view && !isCompletionOpen()) {
+		startCompletion(view);
+	}
+}
+
 function openRecents(): Promise<void> {
 	return waitFor(
 		() => {
-			const view = getEditorView();
-			if (view && !isCompletionOpen()) {
-				startCompletion(view);
-			}
+			ensureCompletionOpen();
 			expect(getRecentLabels().length).toBeGreaterThan(0);
+		},
+		{ timeout: 3000 },
+	);
+}
+
+// userEvent.type can close the popup (jsdom blur / closeOnBlur). Re-open on each
+// retry so we assert filtered recents, not "dropdown still closed".
+function waitForRecentLabels(expected: string[]): Promise<void> {
+	return waitFor(
+		() => {
+			ensureCompletionOpen();
+			expect(getRecentLabels()).toStrictEqual(expected);
 		},
 		{ timeout: 3000 },
 	);
@@ -130,14 +146,7 @@ describe('QuerySearch recent searches', () => {
 		saveLogsRecent(FRONTEND_FILTER);
 
 		await renderAndFocus();
-		await openRecents();
-
-		await waitFor(
-			() => {
-				expect(getRecentLabels()).toStrictEqual([FRONTEND_FILTER]);
-			},
-			{ timeout: 3000 },
-		);
+		await waitForRecentLabels([FRONTEND_FILTER]);
 
 		const view = getEditorView() as EditorView;
 		const [recent] = currentCompletions(view.state);
@@ -151,13 +160,7 @@ describe('QuerySearch recent searches', () => {
 		const editor = await renderAndFocus();
 		await openRecents();
 		await userEvent.type(editor, 'status_code');
-
-		await waitFor(
-			() => {
-				expect(getRecentLabels()).toStrictEqual([STATUS_CODE_FILTER]);
-			},
-			{ timeout: 3000 },
-		);
+		await waitForRecentLabels([STATUS_CODE_FILTER]);
 	});
 
 	it('does not surface recents saved under a different signal', async () => {
@@ -168,14 +171,7 @@ describe('QuerySearch recent searches', () => {
 		saveLogsRecent(FRONTEND_FILTER);
 
 		await renderAndFocus();
-		await openRecents();
-
-		await waitFor(
-			() => {
-				expect(getRecentLabels()).toStrictEqual([FRONTEND_FILTER]);
-			},
-			{ timeout: 3000 },
-		);
+		await waitForRecentLabels([FRONTEND_FILTER]);
 	});
 
 	it('excludes a recent that exactly matches the current editor text', async () => {
@@ -186,13 +182,7 @@ describe('QuerySearch recent searches', () => {
 		const editor = await renderAndFocus();
 		await openRecents();
 		await userEvent.type(editor, FRONTEND_FILTER);
-
-		await waitFor(
-			() => {
-				expect(getRecentLabels()).toStrictEqual([supersetFilter]);
-			},
-			{ timeout: 3000 },
-		);
+		await waitForRecentLabels([supersetFilter]);
 	});
 
 	it('caps the dropdown at RECENTS_DISPLAY_CAP entries, newest first', async () => {
@@ -204,14 +194,7 @@ describe('QuerySearch recent searches', () => {
 		const expectedLabels = [...filters].reverse().slice(0, RECENTS_DISPLAY_CAP);
 
 		await renderAndFocus();
-		await openRecents();
-
-		await waitFor(
-			() => {
-				expect(getRecentLabels()).toStrictEqual(expectedLabels);
-			},
-			{ timeout: 3000 },
-		);
+		await waitForRecentLabels(expectedLabels);
 	});
 
 	it('applies the full expression to the editor when a recent is clicked', async () => {
@@ -221,17 +204,22 @@ describe('QuerySearch recent searches', () => {
 		await renderAndFocus(onChange);
 		await openRecents();
 
-		const option = await waitFor(
+		// Locate and mousedown in one synchronous waitFor pass. userEvent.click awaits
+		// between pointer events, leaving gaps where the completion can close (its
+		// tooltip mousedown handler then throws on a null `open`), and its selection
+		// handling needs Range APIs the CodeMirror DOM mocks don't provide. CodeMirror
+		// applies the completion on mousedown alone.
+		await waitFor(
 			() => {
+				ensureCompletionOpen();
 				const node = Array.from(
 					document.querySelectorAll<HTMLElement>(COMPLETION_LABEL_SELECTOR),
 				).find((element) => element.textContent === FRONTEND_FILTER);
 				expect(node).toBeDefined();
-				return node as HTMLElement;
+				fireEvent.mouseDown(node as HTMLElement);
 			},
 			{ timeout: 3000 },
 		);
-		await userEvent.click(option);
 
 		await waitFor(
 			() => {
