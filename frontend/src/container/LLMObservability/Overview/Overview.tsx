@@ -12,7 +12,7 @@ function Overview(): JSX.Element {
 			<DashboardContainer
 				dashboard={dashboard}
 				refetch={refetch}
-				OverrideCanEditDashboard={false}
+				overrideCanEditDashboard={false}
 			/>
 		</div>
 	);

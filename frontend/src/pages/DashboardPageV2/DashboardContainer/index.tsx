@@ -25,13 +25,13 @@ interface DashboardContainerProps {
 	 * Omitting the prop keeps permission-derived editability. Does not change `isLocked`.
 	 *  Temporary — TODO: @Ashwin / @Abhi — remove when embeds have their own surface.
 	 */
-	OverrideCanEditDashboard?: false;
+	overrideCanEditDashboard?: false;
 }
 
 function DashboardContainer({
 	dashboard,
 	refetch,
-	OverrideCanEditDashboard,
+	overrideCanEditDashboard,
 }: DashboardContainerProps): JSX.Element {
 	const spec = dashboard.spec;
 	const image = resolveDashboardImage(dashboard.image);
@@ -57,7 +57,7 @@ function DashboardContainer({
 	setEditContext({
 		dashboardId: dashboard.id,
 		isLocked,
-		canEditDashboard: OverrideCanEditDashboard ?? canEditDashboard,
+		canEditDashboard: overrideCanEditDashboard ?? canEditDashboard,
 		refetch,
 	});
 
