@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/modules/aiobservability"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
@@ -61,6 +62,7 @@ type provider struct {
 	infraMonitoringHandler     inframonitoring.Handler
 	gatewayHandler             gateway.Handler
 	fieldsHandler              fields.Handler
+	aiObservabilityHandler     aiobservability.Handler
 	authzHandler               authz.Handler
 	rawDataExportHandler       rawdataexport.Handler
 	zeusHandler                zeus.Handler
@@ -97,6 +99,7 @@ func NewFactory(
 	infraMonitoringHandler inframonitoring.Handler,
 	gatewayHandler gateway.Handler,
 	fieldsHandler fields.Handler,
+	aiObservabilityHandler aiobservability.Handler,
 	authzHandler authz.Handler,
 	rawDataExportHandler rawdataexport.Handler,
 	zeusHandler zeus.Handler,
@@ -136,6 +139,7 @@ func NewFactory(
 			infraMonitoringHandler,
 			gatewayHandler,
 			fieldsHandler,
+			aiObservabilityHandler,
 			authzHandler,
 			rawDataExportHandler,
 			zeusHandler,
@@ -177,6 +181,7 @@ func newProvider(
 	infraMonitoringHandler inframonitoring.Handler,
 	gatewayHandler gateway.Handler,
 	fieldsHandler fields.Handler,
+	aiObservabilityHandler aiobservability.Handler,
 	authzHandler authz.Handler,
 	rawDataExportHandler rawdataexport.Handler,
 	zeusHandler zeus.Handler,
@@ -217,6 +222,7 @@ func newProvider(
 		infraMonitoringHandler:     infraMonitoringHandler,
 		gatewayHandler:             gatewayHandler,
 		fieldsHandler:              fieldsHandler,
+		aiObservabilityHandler:     aiObservabilityHandler,
 		authzHandler:               authzHandler,
 		rawDataExportHandler:       rawDataExportHandler,
 		zeusHandler:                zeusHandler,
@@ -310,6 +316,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addFieldsRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addAIObservabilityRoutes(router); err != nil {
 		return err
 	}
 
