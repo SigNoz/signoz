@@ -2,14 +2,21 @@ package querier
 
 import (
 	"log/slog"
+	"math"
 	"strings"
+	"sync"
 	"testing"
+	"time"
+
+	"github.com/prometheus/prometheus/model/labels"
+	"github.com/prometheus/prometheus/promql"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
 	qbv5 "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRemoveAllVarMatchers(t *testing.T) {
@@ -452,4 +459,83 @@ func TestFingerprint_PinnedProviderBypassesCache(t *testing.T) {
 		opts:   promqlOptions{serve: &prometheustest.Provider{}},
 	}
 	assert.Empty(t, q.Fingerprint())
+}
+
+func TestToResultDropsNonFiniteValues(t *testing.T) {
+	tests := []struct {
+		description        string
+		floats             []promql.FPoint
+		expectedTimestamps []int64
+		expectedValues     []float64
+	}{
+		{
+			description:        "finite values pass through untouched",
+			floats:             []promql.FPoint{{T: 1000, F: 1.5}, {T: 2000, F: 2.5}},
+			expectedTimestamps: []int64{1000, 2000},
+			expectedValues:     []float64{1.5, 2.5},
+		},
+		{
+			description:        "a ratio's 0/0 points are dropped, the rest kept",
+			floats:             []promql.FPoint{{T: 1000, F: 1.5}, {T: 2000, F: math.NaN()}, {T: 3000, F: 2.5}},
+			expectedTimestamps: []int64{1000, 3000},
+			expectedValues:     []float64{1.5, 2.5},
+		},
+		{
+			description:        "both infinities are dropped",
+			floats:             []promql.FPoint{{T: 1000, F: math.Inf(1)}, {T: 2000, F: 4.5}, {T: 3000, F: math.Inf(-1)}},
+			expectedTimestamps: []int64{2000},
+			expectedValues:     []float64{4.5},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			q := &promqlQuery{query: qbv5.PromQuery{Name: "A"}, requestType: qbv5.RequestTypeTimeSeries}
+			matrix := promql.Matrix{{Metric: labels.FromStrings("job_name", "dbBloatMonitorJob"), Floats: test.floats}}
+
+			var mu sync.Mutex
+			var rows, bytes uint64
+			result := q.toResult(matrix, nil, time.Now(), &mu, &rows, &bytes)
+
+			tsData, ok := result.Value.(*qbv5.TimeSeriesData)
+			require.True(t, ok)
+			require.Len(t, tsData.Aggregations, 1)
+			require.Len(t, tsData.Aggregations[0].Series, 1)
+
+			timestamps := make([]int64, 0, len(test.expectedTimestamps))
+			values := make([]float64, 0, len(test.expectedValues))
+			for _, v := range tsData.Aggregations[0].Series[0].Values {
+				timestamps = append(timestamps, v.Timestamp)
+				values = append(values, v.Value)
+			}
+			assert.Equal(t, test.expectedTimestamps, timestamps)
+			assert.Equal(t, test.expectedValues, values)
+		})
+	}
+}
+
+// A series left with nothing must not surface as an empty series, and a result
+// left with no series must carry no aggregation bucket at all — the cache reads
+// a bucket holding no series as a real, filtered-to-empty result and stores it.
+func TestToResultDropsSeriesAndBucketLeftEmpty(t *testing.T) {
+	q := &promqlQuery{query: qbv5.PromQuery{Name: "A"}, requestType: qbv5.RequestTypeTimeSeries}
+	matrix := promql.Matrix{
+		{Metric: labels.FromStrings("job_name", "idleJob"), Floats: []promql.FPoint{{T: 1000, F: math.NaN()}}},
+		{Metric: labels.FromStrings("job_name", "activeJob"), Floats: []promql.FPoint{{T: 1000, F: 7.5}}},
+	}
+
+	var mu sync.Mutex
+	var rows, bytes uint64
+	tsData, ok := q.toResult(matrix, nil, time.Now(), &mu, &rows, &bytes).Value.(*qbv5.TimeSeriesData)
+	require.True(t, ok)
+	require.Len(t, tsData.Aggregations, 1)
+	require.Len(t, tsData.Aggregations[0].Series, 1, "the all-NaN series is gone")
+	assert.Equal(t, "activeJob", tsData.Aggregations[0].Series[0].Labels[0].Value)
+
+	allNaN := promql.Matrix{
+		{Metric: labels.FromStrings("job_name", "idleJob"), Floats: []promql.FPoint{{T: 1000, F: math.NaN()}}},
+	}
+	tsData, ok = q.toResult(allNaN, nil, time.Now(), &mu, &rows, &bytes).Value.(*qbv5.TimeSeriesData)
+	require.True(t, ok)
+	assert.Empty(t, tsData.Aggregations)
 }

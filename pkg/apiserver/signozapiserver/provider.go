@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/modules/aiobservability"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
@@ -25,6 +26,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/promote"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
+	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
@@ -60,6 +62,7 @@ type provider struct {
 	infraMonitoringHandler     inframonitoring.Handler
 	gatewayHandler             gateway.Handler
 	fieldsHandler              fields.Handler
+	aiObservabilityHandler     aiobservability.Handler
 	authzHandler               authz.Handler
 	rawDataExportHandler       rawdataexport.Handler
 	zeusHandler                zeus.Handler
@@ -75,6 +78,7 @@ type provider struct {
 	rulerHandler               ruler.Handler
 	llmPricingRuleHandler      llmpricingrule.Handler
 	statsHandler               statsreporter.Handler
+	savedViewHandler           savedview.Handler
 }
 
 func NewFactory(
@@ -95,6 +99,7 @@ func NewFactory(
 	infraMonitoringHandler inframonitoring.Handler,
 	gatewayHandler gateway.Handler,
 	fieldsHandler fields.Handler,
+	aiObservabilityHandler aiobservability.Handler,
 	authzHandler authz.Handler,
 	rawDataExportHandler rawdataexport.Handler,
 	zeusHandler zeus.Handler,
@@ -110,6 +115,7 @@ func NewFactory(
 	traceDetailHandler tracedetail.Handler,
 	rulerHandler ruler.Handler,
 	statsHandler statsreporter.Handler,
+	savedViewHandler savedview.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
 		return newProvider(
@@ -133,6 +139,7 @@ func NewFactory(
 			infraMonitoringHandler,
 			gatewayHandler,
 			fieldsHandler,
+			aiObservabilityHandler,
 			authzHandler,
 			rawDataExportHandler,
 			zeusHandler,
@@ -148,6 +155,7 @@ func NewFactory(
 			traceDetailHandler,
 			rulerHandler,
 			statsHandler,
+			savedViewHandler,
 		)
 	})
 }
@@ -173,6 +181,7 @@ func newProvider(
 	infraMonitoringHandler inframonitoring.Handler,
 	gatewayHandler gateway.Handler,
 	fieldsHandler fields.Handler,
+	aiObservabilityHandler aiobservability.Handler,
 	authzHandler authz.Handler,
 	rawDataExportHandler rawdataexport.Handler,
 	zeusHandler zeus.Handler,
@@ -188,6 +197,7 @@ func newProvider(
 	traceDetailHandler tracedetail.Handler,
 	rulerHandler ruler.Handler,
 	statsHandler statsreporter.Handler,
+	savedViewHandler savedview.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
@@ -212,6 +222,7 @@ func newProvider(
 		infraMonitoringHandler:     infraMonitoringHandler,
 		gatewayHandler:             gatewayHandler,
 		fieldsHandler:              fieldsHandler,
+		aiObservabilityHandler:     aiObservabilityHandler,
 		authzHandler:               authzHandler,
 		rawDataExportHandler:       rawDataExportHandler,
 		zeusHandler:                zeusHandler,
@@ -227,6 +238,7 @@ func newProvider(
 		rulerHandler:               rulerHandler,
 		llmPricingRuleHandler:      llmPricingRuleHandler,
 		statsHandler:               statsHandler,
+		savedViewHandler:           savedViewHandler,
 	}
 
 	provider.authzMiddleware = middleware.NewAuthZ(settings.Logger(), orgGetter, authzService)
@@ -307,6 +319,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 		return err
 	}
 
+	if err := provider.addAIObservabilityRoutes(router); err != nil {
+		return err
+	}
+
 	if err := provider.addRawDataExportRoutes(router); err != nil {
 		return err
 	}
@@ -356,6 +372,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addStatsReporterRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addSavedViewRoutes(router); err != nil {
 		return err
 	}
 

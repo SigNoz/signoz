@@ -235,6 +235,12 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewFillDashboardSpecCollectionsFactory(sqlstore, dashboardStore),
 		sqlmigration.NewScrubEmailChannelTransportFactory(sqlstore),
 		sqlmigration.NewAddDashboardTuplesFactory(sqlstore),
+		sqlmigration.NewRestructureSavedViewSpecFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddSavedViewTuplesFactory(sqlstore),
+		sqlmigration.NewFixSavedViewSelectedFieldsFactory(sqlstore),
+		sqlmigration.NewBackfillSavedViewRequestTypeFactory(sqlstore),
+		sqlmigration.NewRestructureAuthDomainConfigFactory(sqlstore),
+		sqlmigration.NewFixSavedViewSelectFieldsFactory(sqlstore),
 	)
 }
 
@@ -320,6 +326,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.InfraMonitoring,
 			handlers.GatewayHandler,
 			handlers.Fields,
+			handlers.AIObservability,
 			handlers.AuthzHandler,
 			handlers.RawDataExport,
 			handlers.ZeusHandler,
@@ -335,6 +342,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.TraceDetail,
 			handlers.RulerHandler,
 			handlers.StatsHandler,
+			handlers.SavedView,
 		),
 	)
 }

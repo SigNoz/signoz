@@ -435,6 +435,8 @@ type QueryRangeParamsV3 struct {
 	NoCache        bool                   `json:"noCache"`
 	Version        string                 `json:"-"`
 	FormatForWeb   bool                   `json:"formatForWeb,omitempty"`
+	// Resolved from the use_json_body feature flag by the handler, never sent by clients.
+	UseJSONBody bool `json:"-"`
 }
 
 func (q *QueryRangeParamsV3) Clone() *QueryRangeParamsV3 {
@@ -450,6 +452,7 @@ func (q *QueryRangeParamsV3) Clone() *QueryRangeParamsV3 {
 		NoCache:        q.NoCache,
 		Version:        q.Version,
 		FormatForWeb:   q.FormatForWeb,
+		UseJSONBody:    q.UseJSONBody,
 	}
 }
 
@@ -1469,4 +1472,5 @@ type MetricMetadataResponse struct {
 type QBOptions struct {
 	GraphLimitQtype string
 	IsLivetailQuery bool
+	UseJSONBody     bool
 }

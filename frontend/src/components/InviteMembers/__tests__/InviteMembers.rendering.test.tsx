@@ -32,14 +32,14 @@ describe('InviteMembers - Rendering', () => {
 		render(<InviteMembers />);
 
 		expect(screen.getByText('Email address')).toBeInTheDocument();
-		expect(screen.getByText('Role')).toBeInTheDocument();
+		expect(screen.getByText('Roles')).toBeInTheDocument();
 	});
 
 	it('hides header when showHeader is false', () => {
 		render(<InviteMembers showHeader={false} />);
 
 		expect(screen.queryByText('Email address')).not.toBeInTheDocument();
-		expect(screen.queryByText('Role')).not.toBeInTheDocument();
+		expect(screen.queryByText('Roles')).not.toBeInTheDocument();
 	});
 
 	it('renders add button by default', () => {
@@ -89,7 +89,7 @@ describe('InviteMembers - Rendering', () => {
 	it('renders role select for each row', () => {
 		render(<InviteMembers initialRowCount={2} />);
 
-		const roleSelects = screen.getAllByText('Select role');
+		const roleSelects = screen.getAllByText('Select roles');
 		expect(roleSelects).toHaveLength(2);
 	});
 });

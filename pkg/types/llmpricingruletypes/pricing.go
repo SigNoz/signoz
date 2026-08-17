@@ -15,11 +15,6 @@ import (
 
 const (
 	LLMCostFeatureType agentConf.AgentFeatureType = "llm_pricing"
-
-	SignozGenAICostInput      = "_signoz.gen_ai.cost_input"
-	SignozGenAICostOutput     = "_signoz.gen_ai.cost_output"
-	SignozGenAICostCacheRead  = "_signoz.gen_ai.cost_cache_read"
-	SignozGenAICostCacheWrite = "_signoz.gen_ai.cost_cache_write"
 )
 
 var (

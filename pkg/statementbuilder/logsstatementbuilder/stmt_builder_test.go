@@ -469,6 +469,8 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
+			// The `[*]` path is extracted per value, not as an Array(String) compared to a
+			// scalar — ClickHouse rejects that outright (code 130).
 			name:        "IN operator with json search",
 			requestType: qbtypes.RequestTypeRaw,
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
@@ -479,7 +481,7 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 				Limit: 10,
 			},
 			expected: qbtypes.Statement{
-				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE ((JSONExtract(JSON_QUERY(body, '$.\"user_names\"[*]'), 'Array(String)') = ?) AND JSON_EXISTS(body, '$.\"user_names\"[*]')) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE ((JSON_VALUE(body, '$.\"user_names\"[*]') = ?) AND JSON_EXISTS(body, '$.\"user_names\"[*]')) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:     []any{"john_doe", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 				Warnings: []string{querybuilder.NewKeyNotFoundWarning("user_names[*]")},
 			},

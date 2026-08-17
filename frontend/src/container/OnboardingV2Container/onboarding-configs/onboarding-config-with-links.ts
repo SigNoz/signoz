@@ -5,9 +5,11 @@ import androidJavaMonitoringUrl from '@/assets/Logos/android-java-monitoring.svg
 import androidKotlinMonitoringUrl from '@/assets/Logos/android-kotlin-monitoring.svg';
 import anthropicApiMonitoringUrl from '@/assets/Logos/anthropic-api-monitoring.svg';
 import apacheDruidUrl from '@/assets/Logos/apache-druid.svg';
+import apacheUrl from '@/assets/Logos/apache.svg';
 import apiGatewayUrl from '@/assets/Logos/api-gateway.svg';
 import argocdUrl from '@/assets/Logos/argocd.svg';
 import aspnetUrl from '@/assets/Logos/aspnet.svg';
+import auth0Url from '@/assets/Logos/auth0.svg';
 import autogenUrl from '@/assets/Logos/autogen.svg';
 import awsAlbUrl from '@/assets/Logos/aws-alb.svg';
 import azureAppServiceUrl from '@/assets/Logos/azure-app-service.svg';
@@ -27,6 +29,7 @@ import claudeCodeUrl from '@/assets/Logos/claude-code.svg';
 import clickhouseUrl from '@/assets/Logos/clickhouse.svg';
 import cloudflareUrl from '@/assets/Logos/cloudflare.svg';
 import cloudwatchLogsUrl from '@/assets/Logos/cloudwatch-logs.svg';
+import cohereUrl from '@/assets/Logos/cohere.svg';
 import confluentKafkaUrl from '@/assets/Logos/confluent-kafka.svg';
 import convexLogoUrl from '@/assets/Logos/convex-logo.svg';
 import cppUrl from '@/assets/Logos/cpp.svg';
@@ -39,11 +42,13 @@ import denoUrl from '@/assets/Logos/deno.svg';
 import dockerUrl from '@/assets/Logos/docker.svg';
 import documentLoadUrl from '@/assets/Logos/document-load.svg';
 import dotnetUrl from '@/assets/Logos/dotnet.svg';
+import dspyUrl from '@/assets/Logos/dspy.svg';
 import dynamodbUrl from '@/assets/Logos/dynamodb.svg';
 import ec2Url from '@/assets/Logos/ec2.svg';
 import ecsUrl from '@/assets/Logos/ecs.svg';
 import eksUrl from '@/assets/Logos/eks.svg';
 import elasticacheUrl from '@/assets/Logos/elasticache.svg';
+import elasticsearchUrl from '@/assets/Logos/elasticsearch.svg';
 import elbUrl from '@/assets/Logos/elb.svg';
 import elixirUrl from '@/assets/Logos/elixir.svg';
 import elkUrl from '@/assets/Logos/elk.svg';
@@ -73,8 +78,10 @@ import grafanaUrl from '@/assets/Logos/grafana.svg';
 import graphqlUrl from '@/assets/Logos/graphql.svg';
 import grokUrl from '@/assets/Logos/grok.svg';
 import groqUrl from '@/assets/Logos/groq.svg';
+import haproxyUrl from '@/assets/Logos/haproxy.svg';
 import hasuraUrl from '@/assets/Logos/hasura.svg';
 import haystackUrl from '@/assets/Logos/haystack.svg';
+import hcpVaultUrl from '@/assets/Logos/hcp-vault.svg';
 import herokuUrl from '@/assets/Logos/heroku.svg';
 import honeycombUrl from '@/assets/Logos/honeycomb.svg';
 import hostmetricsUrl from '@/assets/Logos/hostmetrics.svg';
@@ -92,6 +99,7 @@ import kafkaUrl from '@/assets/Logos/kafka.svg';
 import kubernetesUrl from '@/assets/Logos/kubernetes.svg';
 import lambdaUrl from '@/assets/Logos/lambda.svg';
 import langchainUrl from '@/assets/Logos/langchain.svg';
+import langflowUrl from '@/assets/Logos/langflow.svg';
 import langtraceUrl from '@/assets/Logos/langtrace.svg';
 import litellmUrl from '@/assets/Logos/litellm.svg';
 import livekitUrl from '@/assets/Logos/livekit.svg';
@@ -117,6 +125,7 @@ import ollamaUrl from '@/assets/Logos/ollama.svg';
 import openaiUrl from '@/assets/Logos/openai.svg';
 import openclawUrl from '@/assets/Logos/openclaw.svg';
 import opencodeUrl from '@/assets/Logos/opencode.svg';
+import openWebuiUrl from '@/assets/Logos/open-webui.svg';
 import openlitUrl from '@/assets/Logos/openlit.svg';
 import openrouterUrl from '@/assets/Logos/openrouter.svg';
 import opentelemetryUrl from '@/assets/Logos/opentelemetry.svg';
@@ -131,6 +140,7 @@ import pythonUrl from '@/assets/Logos/python.svg';
 import quarkusUrl from '@/assets/Logos/quarkus.svg';
 import quickstartUrl from '@/assets/Logos/quickstart.svg';
 import qwenUrl from '@/assets/Logos/qwen.svg';
+import rabbitmqUrl from '@/assets/Logos/rabbitmq.svg';
 import railwayUrl from '@/assets/Logos/railway.svg';
 import rdsUrl from '@/assets/Logos/rds.svg';
 import reactjsUrl from '@/assets/Logos/reactjs.svg';
@@ -1511,9 +1521,9 @@ const onboardingConfigWithLinks = [
 	},
 	{
 		dataSource: 'nginx-tracing',
-		label: 'Nginx - Tracing',
+		label: 'Nginx - OpenTelemetry',
 		imgUrl: nginxUrl,
-		tags: ['apm/traces'],
+		tags: ['apm/traces', 'logs', 'metrics'],
 		module: 'apm',
 		relatedSearchKeywords: [
 			'apm',
@@ -1616,7 +1626,7 @@ const onboardingConfigWithLinks = [
 		dataSource: 'cloudflare-workers',
 		label: 'Cloudflare Workers',
 		imgUrl: cloudflareUrl,
-		tags: ['apm/traces'],
+		tags: ['apm/traces', 'logs'],
 		module: 'apm',
 		relatedSearchKeywords: [
 			'cloudflare',
@@ -3938,6 +3948,58 @@ const onboardingConfigWithLinks = [
 		link: '/docs/claude-code-monitoring/',
 	},
 	{
+		dataSource: 'cohere',
+		label: 'Cohere',
+		imgUrl: cohereUrl,
+		tags: ['LLM Monitoring'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'cohere',
+			'cohere api',
+			'cohere logs',
+			'cohere metrics',
+			'cohere monitoring',
+			'cohere observability',
+			'cohere traces',
+			'llm',
+			'llm monitoring',
+			'logging',
+			'logs',
+			'metrics',
+			'monitoring',
+			'observability',
+			'otel cohere integration',
+			'telemetry',
+		],
+		link: '/docs/cohere-monitoring/',
+	},
+	{
+		dataSource: 'langflow',
+		label: 'Langflow',
+		imgUrl: langflowUrl,
+		tags: ['LLM Monitoring'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'langflow',
+			'langflow logs',
+			'langflow metrics',
+			'langflow monitoring',
+			'langflow observability',
+			'langflow traces',
+			'llm',
+			'llm monitoring',
+			'logging',
+			'logs',
+			'low code ai',
+			'metrics',
+			'monitoring',
+			'observability',
+			'otel langflow integration',
+			'telemetry',
+		],
+		link: '/docs/langflow-observability/',
+	},
+	{
 		dataSource: 'deepseek-api',
 		label: 'DeepSeek API',
 		imgUrl: deepseekUrl,
@@ -5284,13 +5346,17 @@ const onboardingConfigWithLinks = [
 		dataSource: 'temporal',
 		label: 'Temporal',
 		imgUrl: temporalUrl,
-		tags: ['apm/traces'],
+		tags: ['apm/traces', 'logs', 'metrics'],
 		module: 'apm',
 		relatedSearchKeywords: [
 			'apm',
 			'application performance monitoring',
 			'integrations',
+			'logs',
+			'metrics',
 			'temporal',
+			'temporal logs',
+			'temporal metrics',
 			'temporal traces',
 			'traces',
 			'tracing',
@@ -5416,7 +5482,7 @@ const onboardingConfigWithLinks = [
 		dataSource: 'dbos',
 		label: 'DBOS',
 		imgUrl: dbosUrl,
-		tags: ['apm/traces'],
+		tags: ['apm/traces', 'logs'],
 		module: 'apm',
 		relatedSearchKeywords: [
 			'database oriented',
@@ -5483,12 +5549,32 @@ const onboardingConfigWithLinks = [
 		relatedSearchKeywords: [
 			'infrastructure',
 			'traefik',
+			'traefik access logs',
+			'traefik logs',
 			'traefik metrics',
 			'traefik monitoring',
 			'traefik observability',
 			'traefik tracing',
 		],
 		link: '/docs/tutorial/traefik-observability/',
+		question: {
+			desc: 'Which Traefik signals do you want to send to SigNoz?',
+			type: 'select',
+			options: [
+				{
+					key: 'traefik-metrics-traces',
+					label: 'Metrics & Traces',
+					imgUrl: opentelemetryUrl,
+					link: '/docs/tutorial/traefik-observability/',
+				},
+				{
+					key: 'traefik-logs',
+					label: 'Access Logs',
+					imgUrl: opentelemetryUrl,
+					link: '/docs/integrations/opentelemetry-traefik/',
+				},
+			],
+		},
 	},
 	{
 		dataSource: 'mongodb-atlas',
@@ -5518,11 +5604,32 @@ const onboardingConfigWithLinks = [
 		relatedSearchKeywords: [
 			'database',
 			'mysql',
+			'mysql error log',
+			'mysql logs',
 			'mysql metrics',
 			'mysql monitoring',
 			'mysql observability',
+			'mysql slow query log',
 		],
 		link: '/docs/metrics-management/mysql-metrics/',
+		question: {
+			desc: 'Which MySQL signals do you want to send to SigNoz?',
+			type: 'select',
+			options: [
+				{
+					key: 'mysql-metrics',
+					label: 'Metrics',
+					imgUrl: opentelemetryUrl,
+					link: '/docs/metrics-management/mysql-metrics/',
+				},
+				{
+					key: 'mysql-logs',
+					label: 'Logs',
+					imgUrl: opentelemetryUrl,
+					link: '/docs/integrations/opentelemetry-mysql/',
+				},
+			],
+		},
 	},
 	{
 		dataSource: 'jmx',
@@ -6468,6 +6575,30 @@ const onboardingConfigWithLinks = [
 		link: '/docs/infrastructure-monitoring/cert-manager/',
 	},
 	{
+		dataSource: 'pgbouncer',
+		label: 'PgBouncer',
+		imgUrl: postgresqlUrl,
+		tags: ['infrastructure monitoring', 'metrics'],
+		module: 'metrics',
+		relatedSearchKeywords: [
+			'connection pooler',
+			'connection pooling',
+			'database',
+			'metrics',
+			'monitoring',
+			'observability',
+			'opentelemetry pgbouncer',
+			'pgbouncer',
+			'pgbouncer metrics',
+			'pgbouncer monitoring',
+			'pgbouncer observability',
+			'postgres',
+			'postgresql',
+		],
+		id: 'pgbouncer',
+		link: '/docs/metrics-management/opentelemetry-pgbouncer/',
+	},
+	{
 		dataSource: 'graphql',
 		label: 'GraphQL',
 		imgUrl: graphqlUrl,
@@ -6492,6 +6623,28 @@ const onboardingConfigWithLinks = [
 		link: '/docs/instrumentation/javascript/opentelemetry-graphql/',
 	},
 	{
+		dataSource: 'opentelemetry-ebpf',
+		label: 'OpenTelemetry eBPF (OBI)',
+		imgUrl: opentelemetryUrl,
+		tags: ['apm/traces', 'metrics'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'auto instrumentation',
+			'ebpf',
+			'obi',
+			'opentelemetry ebpf',
+			'opentelemetry obi',
+			'otel ebpf',
+			'zero code instrumentation',
+			'monitoring',
+			'observability',
+			'traces',
+			'tracing',
+		],
+		id: 'opentelemetry-ebpf',
+		link: '/docs/instrumentation/opentelemetry-ebpf/',
+	},
+	{
 		dataSource: 'railway',
 		label: 'Railway',
 		imgUrl: railwayUrl,
@@ -6512,6 +6665,54 @@ const onboardingConfigWithLinks = [
 		],
 		id: 'railway',
 		link: '/docs/integrations/outposts/railway/',
+	},
+	{
+		dataSource: 'hcp-vault',
+		label: 'HCP Vault',
+		imgUrl: hcpVaultUrl,
+		tags: ['logs'],
+		module: 'logs',
+		relatedSearchKeywords: [
+			'hashicorp',
+			'hashicorp vault',
+			'hcp',
+			'hcp vault',
+			'hcp vault logs',
+			'hcp vault monitoring',
+			'hcp vault observability',
+			'log forwarding',
+			'logging',
+			'logs',
+			'monitoring',
+			'observability',
+			'secrets management',
+			'vault',
+		],
+		id: 'hcp-vault',
+		link: '/docs/integrations/outposts/hcp-vault/',
+	},
+	{
+		dataSource: 'auth0',
+		label: 'Auth0',
+		imgUrl: auth0Url,
+		tags: ['logs'],
+		module: 'logs',
+		relatedSearchKeywords: [
+			'auth0',
+			'auth0 logs',
+			'auth0 monitoring',
+			'auth0 observability',
+			'authentication',
+			'authorization',
+			'identity',
+			'log forwarding',
+			'logging',
+			'logs',
+			'monitoring',
+			'observability',
+		],
+		id: 'auth0',
+		link: '/docs/integrations/outposts/auth0/',
 	},
 	{
 		dataSource: 'aspnet-core-metrics',
@@ -6631,6 +6832,165 @@ const onboardingConfigWithLinks = [
 		],
 		id: 'apache-druid',
 		link: '/docs/integrations/opentelemetry-apache-druid/',
+	},
+	{
+		dataSource: 'apache',
+		label: 'Apache HTTP Server',
+		imgUrl: apacheUrl,
+		tags: ['infrastructure monitoring', 'metrics', 'logs'],
+		module: 'metrics',
+		relatedSearchKeywords: [
+			'apache',
+			'apache access logs',
+			'apache error logs',
+			'apache http server',
+			'apache httpd',
+			'apache logs',
+			'apache metrics',
+			'apache monitoring',
+			'apache observability',
+			'httpd',
+			'infrastructure monitoring',
+			'logs',
+			'metrics',
+			'mod_status',
+			'monitoring',
+			'observability',
+			'opentelemetry apache',
+			'web server',
+		],
+		id: 'apache',
+		link: '/docs/integrations/opentelemetry-apache/',
+	},
+	{
+		dataSource: 'haproxy',
+		label: 'HAProxy',
+		imgUrl: haproxyUrl,
+		tags: ['infrastructure monitoring', 'metrics', 'logs'],
+		module: 'metrics',
+		relatedSearchKeywords: [
+			'haproxy',
+			'haproxy logs',
+			'haproxy metrics',
+			'haproxy monitoring',
+			'haproxy observability',
+			'infrastructure monitoring',
+			'load balancer',
+			'logs',
+			'metrics',
+			'monitoring',
+			'observability',
+			'opentelemetry haproxy',
+			'proxy',
+			'reverse proxy',
+			'syslog',
+		],
+		id: 'haproxy',
+		link: '/docs/integrations/opentelemetry-haproxy/',
+	},
+	{
+		dataSource: 'elasticsearch',
+		label: 'Elasticsearch',
+		imgUrl: elasticsearchUrl,
+		tags: ['database'],
+		module: 'metrics',
+		relatedSearchKeywords: [
+			'cluster health',
+			'database',
+			'elastic',
+			'elasticsearch',
+			'elasticsearch logs',
+			'elasticsearch metrics',
+			'elasticsearch monitoring',
+			'elasticsearch observability',
+			'logs',
+			'metrics',
+			'monitoring',
+			'observability',
+			'opentelemetry elasticsearch',
+			'search engine',
+		],
+		id: 'elasticsearch',
+		link: '/docs/integrations/opentelemetry-elasticsearch/',
+	},
+	{
+		dataSource: 'rabbitmq',
+		label: 'RabbitMQ',
+		imgUrl: rabbitmqUrl,
+		tags: ['Messaging Queues'],
+		module: 'metrics',
+		relatedSearchKeywords: [
+			'amqp',
+			'broker',
+			'logs',
+			'messaging',
+			'messaging queues',
+			'metrics',
+			'monitoring',
+			'observability',
+			'opentelemetry rabbitmq',
+			'queues',
+			'rabbitmq',
+			'rabbitmq logs',
+			'rabbitmq metrics',
+			'rabbitmq monitoring',
+			'rabbitmq observability',
+		],
+		id: 'rabbitmq',
+		link: '/docs/integrations/opentelemetry-rabbitmq/',
+	},
+	{
+		dataSource: 'open-webui',
+		label: 'Open WebUI',
+		imgUrl: openWebuiUrl,
+		tags: ['LLM Monitoring'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'llm',
+			'llm monitoring',
+			'logs',
+			'metrics',
+			'monitoring',
+			'observability',
+			'open webui',
+			'open webui logs',
+			'open webui metrics',
+			'open webui monitoring',
+			'open webui observability',
+			'open webui traces',
+			'openlit',
+			'openwebui',
+			'otel open webui integration',
+			'self hosted chat ui',
+			'traces',
+			'tracing',
+		],
+		id: 'open-webui',
+		link: '/docs/open-webui-monitoring/',
+	},
+	{
+		dataSource: 'dspy',
+		label: 'DSPy',
+		imgUrl: dspyUrl,
+		tags: ['LLM Monitoring'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'dspy',
+			'dspy monitoring',
+			'dspy observability',
+			'dspy traces',
+			'llm',
+			'llm monitoring',
+			'monitoring',
+			'observability',
+			'openinference',
+			'otel dspy integration',
+			'prompt optimization',
+			'traces',
+			'tracing',
+		],
+		id: 'dspy',
+		link: '/docs/dspy-observability/',
 	},
 ];
 export default onboardingConfigWithLinks;

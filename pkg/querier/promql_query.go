@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"math"
 	"regexp"
 	"sort"
 	"strings"
@@ -344,8 +345,8 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 	}
 
 	// Accumulate ClickHouse-side scan stats across every storage query this
-	// evaluation issues: progress options propagate to each ClickHouse query
-	// through the context.
+	// evaluation issues (engine selectors or the compiled executor): progress
+	// options propagate to each ClickHouse query through the context.
 	var statsMu sync.Mutex
 	var rowsScanned, bytesScanned uint64
 	ctx = clickhouse.Context(ctx, clickhouse.WithProgress(func(p *clickhouse.Progress) {
@@ -369,6 +370,23 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 			return nil, err
 		}
 		return q.toResult(matrix, nil, began, &statsMu, &rowsScanned, &bytesScanned), nil
+	}
+
+	// When the serving provider has the RangeExecutor capability
+	// (prometheus::provider: clickhousev2), serve the way the provider is
+	// designed to serve: transpiled when the shape allows. Without this the
+	// override would silently run the engine path only.
+	if re, ok := q.promEngine.(prometheus.RangeExecutor); ok {
+		matrix, served, err := re.TryExecuteRange(ctx, query, time.Unix(0, start), time.Unix(0, end), q.query.Step.Duration)
+		if err != nil {
+			if enhanced := tryEnhancePromQLExecError(err); enhanced != nil {
+				return nil, enhanced
+			}
+			return nil, err
+		}
+		if served {
+			return q.toResult(matrix, nil, began, &statsMu, &rowsScanned, &bytesScanned), nil
+		}
 	}
 
 	qry, err := q.promEngine.Engine().NewRangeQuery(
@@ -461,10 +479,18 @@ func (q *promqlQuery) toResult(matrix promql.Matrix, warnings []string, began ti
 
 		for idx := range v.Floats {
 			p := v.Floats[idx]
+			// NaN and +/-Inf have no JSON number form and nothing to plot; the
+			// builder path drops them while scanning rows (see consume.go).
+			if math.IsNaN(p.F) || math.IsInf(p.F, 0) {
+				continue
+			}
 			s.Values = append(s.Values, &qbv5.TimeSeriesValue{
 				Timestamp: p.T,
 				Value:     p.F,
 			})
+		}
+		if len(s.Values) == 0 {
+			continue
 		}
 		series = append(series, &s)
 	}
@@ -477,13 +503,11 @@ func (q *promqlQuery) toResult(matrix promql.Matrix, warnings []string, began ti
 	}
 	statsMu.Unlock()
 
-	tsData := &qbv5.TimeSeriesData{
-		QueryName: q.query.Name,
-		Aggregations: []*qbv5.AggregationBucket{
-			{
-				Series: series,
-			},
-		},
+	tsData := &qbv5.TimeSeriesData{QueryName: q.query.Name}
+	// No bucket at all when nothing survived: a bucket holding no series reads
+	// as "filtered to empty" to the cache, which stores it as a real result.
+	if len(series) > 0 {
+		tsData.Aggregations = []*qbv5.AggregationBucket{{Series: series}}
 	}
 
 	var payload any = tsData

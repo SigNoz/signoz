@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react';
 import Convert from 'ansi-to-html';
 import type { DataNode } from 'antd/es/tree';
 import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
@@ -262,10 +263,11 @@ export const filterKeyForField = (field: string): string => {
 	return fieldAttribs?.newField || field;
 };
 
-export const aggregateAttributesResourcesToString = (logData: ILog): string => {
+export const aggregateAttributesResourcesToObject = (
+	logData: ILog,
+): ILogAggregateAttributesResources => {
 	const outputJson: ILogAggregateAttributesResources = {
 		body: logData.body,
-		date: logData.date,
 		id: logData.id,
 		severityNumber: logData.severityNumber,
 		severityText: logData.severityText,
@@ -281,6 +283,9 @@ export const aggregateAttributesResourcesToString = (logData: ILog): string => {
 	};
 
 	Object.keys(logData).forEach((key) => {
+		if (key === 'date') {
+			return;
+		}
 		if (key.startsWith('attributes_')) {
 			outputJson.attributes = outputJson.attributes || {};
 			Object.assign(outputJson.attributes, logData[key as keyof ILog]);
@@ -291,12 +296,47 @@ export const aggregateAttributesResourcesToString = (logData: ILog): string => {
 			outputJson.scope = outputJson.scope || {};
 			Object.assign(outputJson.scope, logData[key as keyof ILog]);
 		} else {
-			// @ts-expect-error
+			// @ts-expect-error dynamic top-level copy
 			outputJson[key] = logData[key as keyof ILog];
 		}
 	});
 
-	return JSON.stringify(outputJson, null, 2);
+	// Show `timestamp` first and `id` last in the details view.
+	const { timestamp, id, ...rest } = outputJson;
+	return { timestamp, ...rest, id };
+};
+
+export const aggregateAttributesResourcesToString = (logData: ILog): string => {
+	try {
+		return JSON.stringify(aggregateAttributesResourcesToObject(logData), null, 2);
+	} catch (err) {
+		Sentry.captureException(err);
+		return '';
+	}
+};
+
+const MAX_JSON_BODY_PARSE_BYTES = 128 * 1024;
+
+// A JSON-encoded object/array `body` is parsed so DataViewer renders it as a
+// tree instead of one escaped string; plain-text bodies are returned unchanged.
+// Guarded against very large payloads.
+export const parseJsonStringBody = (body: ILog['body']): ILog['body'] => {
+	if (typeof body !== 'string') {
+		return body;
+	}
+	const trimmed = body.trim();
+	const looksLikeJson = trimmed.startsWith('{') || trimmed.startsWith('[');
+	if (!looksLikeJson || trimmed.length > MAX_JSON_BODY_PARSE_BYTES) {
+		return body;
+	}
+	try {
+		const parsed = JSON.parse(trimmed);
+		return parsed !== null && typeof parsed === 'object'
+			? (parsed as ILogBody)
+			: body;
+	} catch {
+		return body;
+	}
 };
 
 const isFloat = (num: number): boolean => num % 1 !== 0;

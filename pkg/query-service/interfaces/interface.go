@@ -95,11 +95,6 @@ type Reader interface {
 	ReportQueryStartForProgressTracking(queryId string) (reportQueryFinished func(), apiErr *model.ApiError)
 	SubscribeToQueryProgress(queryId string) (<-chan model.QueryProgress, func(), *model.ApiError)
 
-	GetCountOfThings(ctx context.Context, query string) (uint64, error)
-	GetActiveHostsFromMetricMetadata(ctx context.Context, metricNames []string, hostNameAttr string, sinceUnixMilli int64) (map[string]bool, error)
-
-	GetMetricsExistenceAndEarliestTime(ctx context.Context, metricNames []string) (uint64, uint64, error)
-
 	//trace
 	GetTraceFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError)
 	UpdateTraceField(ctx context.Context, field *model.UpdateField) *model.ApiError
@@ -108,7 +103,6 @@ type Reader interface {
 	GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUID, metricNames ...string) (map[string]*model.UpdateMetricsMetadata, *model.ApiError)
 
 	CheckForLabelsInMetric(ctx context.Context, orgID valuer.UUID, metricName string, labels []string) (bool, *model.ApiError)
-	GetNormalizedStatus(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]bool, error)
 }
 
 type Querier interface {

@@ -1,10 +1,3 @@
-"""
-Summary:
-This test file contains integration tests for log parsing pipelines in SigNoz's query service.
-It verifies the correct behavior of log pipeline CRUD operations, versioning, preview functionality,
-and pipeline processing.
-"""
-
 from collections.abc import Callable
 from http import HTTPStatus
 
