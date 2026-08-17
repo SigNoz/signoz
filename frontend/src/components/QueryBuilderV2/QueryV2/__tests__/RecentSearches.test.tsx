@@ -107,14 +107,38 @@ async function renderAndFocus(
 	return editor;
 }
 
-function openRecents(): Promise<void> {
+// Re-requests completions while waiting: typing and the async fetches can close the popup.
+function waitForRecents(
+	assertLabels: (labels: string[]) => void,
+): Promise<void> {
 	return waitFor(
 		() => {
 			const view = getEditorView();
 			if (view && !isCompletionOpen()) {
 				startCompletion(view);
 			}
-			expect(getRecentLabels().length).toBeGreaterThan(0);
+			assertLabels(getRecentLabels());
+		},
+		{ timeout: 3000 },
+	);
+}
+
+function openRecents(): Promise<void> {
+	return waitForRecents((labels) => expect(labels.length).toBeGreaterThan(0));
+}
+
+function waitForPopupElement(
+	find: () => HTMLElement | null | undefined,
+): Promise<HTMLElement> {
+	return waitFor(
+		() => {
+			const view = getEditorView();
+			if (view && !isCompletionOpen()) {
+				startCompletion(view);
+			}
+			const node = find();
+			expect(node).toBeTruthy();
+			return node as HTMLElement;
 		},
 		{ timeout: 3000 },
 	);
@@ -132,11 +156,8 @@ describe('QuerySearch recent searches', () => {
 		await renderAndFocus();
 		await openRecents();
 
-		await waitFor(
-			() => {
-				expect(getRecentLabels()).toStrictEqual([FRONTEND_FILTER]);
-			},
-			{ timeout: 3000 },
+		await waitForRecents((labels) =>
+			expect(labels).toStrictEqual([FRONTEND_FILTER]),
 		);
 
 		const view = getEditorView() as EditorView;
@@ -152,11 +173,8 @@ describe('QuerySearch recent searches', () => {
 		await openRecents();
 		await userEvent.type(editor, 'status_code');
 
-		await waitFor(
-			() => {
-				expect(getRecentLabels()).toStrictEqual([STATUS_CODE_FILTER]);
-			},
-			{ timeout: 3000 },
+		await waitForRecents((labels) =>
+			expect(labels).toStrictEqual([STATUS_CODE_FILTER]),
 		);
 	});
 
@@ -170,11 +188,8 @@ describe('QuerySearch recent searches', () => {
 		await renderAndFocus();
 		await openRecents();
 
-		await waitFor(
-			() => {
-				expect(getRecentLabels()).toStrictEqual([FRONTEND_FILTER]);
-			},
-			{ timeout: 3000 },
+		await waitForRecents((labels) =>
+			expect(labels).toStrictEqual([FRONTEND_FILTER]),
 		);
 	});
 
@@ -187,11 +202,8 @@ describe('QuerySearch recent searches', () => {
 		await openRecents();
 		await userEvent.type(editor, FRONTEND_FILTER);
 
-		await waitFor(
-			() => {
-				expect(getRecentLabels()).toStrictEqual([supersetFilter]);
-			},
-			{ timeout: 3000 },
+		await waitForRecents((labels) =>
+			expect(labels).toStrictEqual([supersetFilter]),
 		);
 	});
 
@@ -206,11 +218,8 @@ describe('QuerySearch recent searches', () => {
 		await renderAndFocus();
 		await openRecents();
 
-		await waitFor(
-			() => {
-				expect(getRecentLabels()).toStrictEqual(expectedLabels);
-			},
-			{ timeout: 3000 },
+		await waitForRecents((labels) =>
+			expect(labels).toStrictEqual(expectedLabels),
 		);
 	});
 
@@ -221,17 +230,13 @@ describe('QuerySearch recent searches', () => {
 		await renderAndFocus(onChange);
 		await openRecents();
 
-		const option = await waitFor(
-			() => {
-				const node = Array.from(
-					document.querySelectorAll<HTMLElement>(COMPLETION_LABEL_SELECTOR),
-				).find((element) => element.textContent === FRONTEND_FILTER);
-				expect(node).toBeDefined();
-				return node as HTMLElement;
-			},
-			{ timeout: 3000 },
+		const option = await waitForPopupElement(() =>
+			Array.from(
+				document.querySelectorAll<HTMLElement>(COMPLETION_LABEL_SELECTOR),
+			).find((element) => element.textContent === FRONTEND_FILTER),
 		);
-		await userEvent.click(option);
+		// fireEvent: userEvent's pointerdown blurs the editor, closing the popup before CM's mousedown apply.
+		fireEvent.mouseDown(option);
 
 		await waitFor(
 			() => {
@@ -256,13 +261,8 @@ describe('QuerySearch recent searches', () => {
 		await renderAndFocus();
 		await openRecents();
 
-		const deleteButton = await waitFor(
-			() => {
-				const button = document.querySelector(DELETE_BUTTON_SELECTOR);
-				expect(button).toBeInTheDocument();
-				return button as HTMLElement;
-			},
-			{ timeout: 3000 },
+		const deleteButton = await waitForPopupElement(() =>
+			document.querySelector<HTMLElement>(DELETE_BUTTON_SELECTOR),
 		);
 
 		// fireEvent: the button preventDefaults pointerdown, which makes userEvent.click drop the mouse chain.
