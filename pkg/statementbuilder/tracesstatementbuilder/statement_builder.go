@@ -35,6 +35,9 @@ type traceQueryStatementBuilder struct {
 	// traceScope, set only on the per-call copy made by BuildTraceScoped, constrains
 	// queries to spans whose trace_id is in the __trace_scope CTE.
 	traceScope *qbtypes.Statement
+	// traceScopeResource is the __resource_filter CTE traceScope's predicate references,
+	// emitted only when this builder's own resource filter did not already emit it.
+	traceScopeResource *qbtypes.Statement
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.TraceAggregation] = (*traceQueryStatementBuilder)(nil)
@@ -108,21 +111,29 @@ func (b *traceQueryStatementBuilder) BuildTraceScoped(
 	requestType qbtypes.RequestType,
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 	variables map[string]qbtypes.VariableItem,
-	traceScope *qbtypes.Statement,
+	traceScope, traceScopeResource *qbtypes.Statement,
 ) (*qbtypes.Statement, error) {
 	scoped := *b
 	scoped.traceScope = traceScope
+	scoped.traceScopeResource = traceScopeResource
 	return scoped.Build(ctx, orgID, start, end, requestType, query, variables)
 }
 
-// attachTraceScope adds the trace-scope condition to sb and returns the CTE fragment
-// + args to prepend; both empty when no scope is set.
-func (b *traceQueryStatementBuilder) attachTraceScope(sb *sqlbuilder.SelectBuilder) (string, []any) {
+// attachTraceScope adds the trace-scope condition to sb and returns the CTE fragments
+// + args to prepend; resourceEmitted reports whether the query already carries the
+// __resource_filter CTE, so the scope's copy is emitted only when it does not.
+func (b *traceQueryStatementBuilder) attachTraceScope(sb *sqlbuilder.SelectBuilder, resourceEmitted bool) ([]string, [][]any) {
 	if b.traceScope == nil {
-		return "", nil
+		return nil, nil
 	}
 	sb.Where("trace_id GLOBAL IN (SELECT trace_id FROM __trace_scope)")
-	return fmt.Sprintf("__trace_scope AS (%s)", b.traceScope.Query), b.traceScope.Args
+	var frags []string
+	var args [][]any
+	if b.traceScopeResource != nil && !resourceEmitted {
+		frags = append(frags, fmt.Sprintf("__resource_filter AS (%s)", b.traceScopeResource.Query))
+		args = append(args, b.traceScopeResource.Args)
+	}
+	return append(frags, fmt.Sprintf("__trace_scope AS (%s)", b.traceScope.Query)), append(args, b.traceScope.Args)
 }
 
 // Build builds a SQL query for traces based on the given parameters.
@@ -549,9 +560,9 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		cteArgs = append(cteArgs, args)
 	}
 
-	if scopeFrag, scopeArgs := b.attachTraceScope(sb); scopeFrag != "" {
-		cteFragments = append(cteFragments, scopeFrag)
-		cteArgs = append(cteArgs, scopeArgs)
+	if scopeFrags, scopeArgs := b.attachTraceScope(sb, frag != ""); len(scopeFrags) > 0 {
+		cteFragments = append(cteFragments, scopeFrags...)
+		cteArgs = append(cteArgs, scopeArgs...)
 	}
 
 	sb.SelectMore(fmt.Sprintf(
@@ -716,9 +727,9 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 
 	// skipResourceCTE means this scalar is embedded as a CTE of a time-series query,
 	// which has already emitted the __trace_scope fragment — add only the condition.
-	if scopeFrag, scopeArgs := b.attachTraceScope(sb); scopeFrag != "" && !skipResourceCTE {
-		cteFragments = append(cteFragments, scopeFrag)
-		cteArgs = append(cteArgs, scopeArgs)
+	if scopeFrags, scopeArgs := b.attachTraceScope(sb, frag != ""); len(scopeFrags) > 0 && !skipResourceCTE {
+		cteFragments = append(cteFragments, scopeFrags...)
+		cteArgs = append(cteArgs, scopeArgs...)
 	}
 
 	allAggChArgs := []any{}

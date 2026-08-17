@@ -242,16 +242,15 @@ func (v *traceAggVisitor) VisitIdent(i *chparser.Ident) error {
 			return nil
 		}
 	}
-	// the parser hands us one identifier, so the prefix is the only text to cut here
-	col, isTrace := strings.CutPrefix(i.Name, telemetrytypes.FieldContextTrace.StringValue()+".")
-	if !isTrace || col == "" {
+	key := telemetrytypes.GetFieldKeyFromKeyText(i.Name)
+	if key.FieldContext != telemetrytypes.FieldContextTrace || key.Name == "" {
 		v.hasSpan = true
 		return nil
 	}
-	if err := v.acceptTraceColumn(i.Name, col); err != nil {
+	if err := v.acceptTraceColumn(i.Name, key.Name); err != nil {
 		return err
 	}
-	i.Name = col
+	i.Name = key.Name
 	return nil
 }
 
@@ -303,14 +302,11 @@ func (v *traceAggVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 // traceColumnFromPath returns the per-trace column a dotted reference names
 // (trace.output_tokens -> output_tokens, trace.a.b -> a.b).
 func traceColumnFromPath(p *chparser.Path) (string, bool) {
-	if len(p.Fields) < 2 || p.Fields[0].Name != telemetrytypes.FieldContextTrace.StringValue() {
+	key := telemetrytypes.GetFieldKeyFromKeyText(chparser.Format(p))
+	if key.FieldContext != telemetrytypes.FieldContextTrace || key.Name == "" {
 		return "", false
 	}
-	segments := make([]string, 0, len(p.Fields)-1)
-	for _, f := range p.Fields[1:] {
-		segments = append(segments, f.Name)
-	}
-	return strings.Join(segments, "."), true
+	return key.Name, true
 }
 
 func sortedAliases(set map[string]struct{}) []string {
@@ -327,8 +323,10 @@ func sortedAliases(set map[string]struct{}) []string {
 // ---------------------------------------------------------------------------
 
 // buildQualifiedStatement selects the trace ids whose window-clipped aggregates satisfy
-// the trace-level filter, with the resource prune inlined since the caller embeds this
-// standalone. start/end are ns; nil when variable resolution dropped every condition.
+// the trace-level filter. The second statement (nil without resource conditions) is the
+// __resource_filter CTE the scope's predicate references; the embedder emits it exactly
+// once, shared with its own resource filter. start/end are ns; both statements are nil
+// when variable resolution dropped every condition.
 func (b *scopedTraceStatementBuilder) buildQualifiedStatement(
 	ctx context.Context,
 	orgID valuer.UUID,
@@ -336,60 +334,38 @@ func (b *scopedTraceStatementBuilder) buildQualifiedStatement(
 	traceExpr string,
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 	variables map[string]qbtypes.VariableItem,
-) (*qbtypes.Statement, error) {
+) (*qbtypes.Statement, *qbtypes.Statement, error) {
 	keys, err := b.fetchKeys(ctx, orgID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	sb := sqlbuilder.NewSelectBuilder()
 	maskExpr, resolved, err := b.resolveFor(ctx, orgID, start, end, keys, sb)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	having, err := b.resolveTraceHaving(ctx, traceExpr, variables, sb)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if having == nil {
-		return nil, nil //nolint:nilnil
+		return nil, nil, nil
+	}
+	// nil when the filter has no resource-attribute conditions
+	resourceStmt, err := b.resourceFilterStmtBuilder.Build(ctx, orgID, start, end, qbtypes.RequestTypeRaw, query, variables)
+	if err != nil {
+		return nil, nil, err
 	}
 	var resourcePred string
-	// nil when the filter has no resource-attribute conditions
-	if stmt, err := b.resourceFilterStmtBuilder.Build(ctx, orgID, start, end, qbtypes.RequestTypeRaw, query, variables); err != nil {
-		return nil, err
-	} else if stmt != nil {
-		inlined, err := embedExpr(sb, stmt.Query, stmt.Args)
-		if err != nil {
-			return nil, err
-		}
-		resourcePred = fmt.Sprintf("resource_fingerprint GLOBAL IN (SELECT fingerprint FROM (%s))", inlined)
+	if resourceStmt != nil {
+		resourcePred = "resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)"
 	}
 	sql, args := b.buildPerTraceScan(sb, start, end, resolved, maskExpr, perTraceScanOpts{
 		needed:       having.used,
 		havingPred:   having.pred,
 		resourcePred: resourcePred,
 	})
-	return &qbtypes.Statement{Query: sql, Args: args}, nil
-}
-
-// embedExpr inlines a pre-built statement into sb, replacing each `?` with a builder
-// Var; a count mismatch would silently shift args into the wrong slots, so error out.
-func embedExpr(sb *sqlbuilder.SelectBuilder, expr string, args []any) (string, error) {
-	if n := strings.Count(expr, "?"); n != len(args) {
-		return "", errors.NewInternalf(errors.CodeInternal,
-			"scoped trace builder: %d placeholders != %d args embedding %q", n, len(args), expr)
-	}
-	var out strings.Builder
-	ai := 0
-	for i := 0; i < len(expr); i++ {
-		if expr[i] == '?' {
-			out.WriteString(sb.Var(args[ai]))
-			ai++
-			continue
-		}
-		out.WriteByte(expr[i])
-	}
-	return out.String(), nil
+	return &qbtypes.Statement{Query: sql, Args: args}, resourceStmt, nil
 }
 
 // groupColumn holds a resolved, arg-free span-attribute expression.
@@ -429,8 +405,7 @@ type perTraceScanOpts struct {
 }
 
 func (b *scopedTraceStatementBuilder) buildPerTraceScan(sb *sqlbuilder.SelectBuilder, start, end uint64, resolved []resolvedColumn, maskExpr string, o perTraceScanOpts) (string, []any) {
-	startBucket := start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
-	endBucket := end / querybuilder.NsToSeconds
+	startBucket, endBucket := bucketBounds(start, end)
 
 	selects := []string{"trace_id"}
 	if o.stepSeconds > 0 {
@@ -483,12 +458,9 @@ func (b *scopedTraceStatementBuilder) buildPerTraceScan(sb *sqlbuilder.SelectBui
 	return sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 }
 
-// resolveGroupColumns resolves group-by keys through the field mapper, which needs the
-// metadata keys, for selection inside the per-trace scan.
-func (b *scopedTraceStatementBuilder) resolveGroupColumns(ctx context.Context, orgID valuer.UUID, start, end uint64, groupBy []qbtypes.GroupByKey) ([]groupColumn, error) {
-	if len(groupBy) == 0 {
-		return nil, nil
-	}
+// groupBySelectors are the metadata selectors for the group-by keys, for batching
+// into a single GetKeysMulti fetch.
+func groupBySelectors(groupBy []qbtypes.GroupByKey) []*telemetrytypes.FieldKeySelector {
 	selectors := make([]*telemetrytypes.FieldKeySelector, 0, len(groupBy))
 	for i := range groupBy {
 		selectors = append(selectors, &telemetrytypes.FieldKeySelector{
@@ -499,9 +471,14 @@ func (b *scopedTraceStatementBuilder) resolveGroupColumns(ctx context.Context, o
 			SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeExact,
 		})
 	}
-	keys, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, selectors)
-	if err != nil {
-		return nil, err
+	return selectors
+}
+
+// resolveGroupColumns resolves group-by keys through the field mapper for selection
+// inside the per-trace scan; keys must cover the group-by selectors.
+func (b *scopedTraceStatementBuilder) resolveGroupColumns(ctx context.Context, orgID valuer.UUID, start, end uint64, groupBy []qbtypes.GroupByKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) ([]groupColumn, error) {
+	if len(groupBy) == 0 {
+		return nil, nil
 	}
 	out := make([]groupColumn, 0, len(groupBy))
 	for i := range groupBy {
@@ -545,7 +522,7 @@ func (b *scopedTraceStatementBuilder) newScanContext(
 		return nil, err
 	}
 	if strings.TrimSpace(spanExpr) != "" {
-		pred, warns, url, err := b.resolveSpanPredicate(ctx, orgID, start, end, spanExpr, variables, sc.sb)
+		pred, warns, url, err := b.resolveSpanPredicate(ctx, orgID, start, end, spanExpr, keys, variables, sc.sb)
 		if err != nil {
 			return nil, err
 		}
@@ -571,12 +548,8 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 	variables map[string]qbtypes.VariableItem,
 	traceAggs []traceAggregation,
 ) (*qbtypes.Statement, error) {
-	keys, err := b.fetchKeys(ctx, orgID)
-	if err != nil {
-		return nil, err
-	}
-
 	var spanExpr, traceExpr string
+	var err error
 	if query.Filter != nil && strings.TrimSpace(query.Filter.Expression) != "" {
 		// the broad set so a condition on a display-only alias still lands in the
 		// trace-level part, where resolveTraceHaving rejects it by name
@@ -584,6 +557,11 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	keys, err := b.fetchKeys(ctx, orgID, append(spanFilterSelectors(spanExpr), groupBySelectors(query.GroupBy)...)...)
+	if err != nil {
+		return nil, err
 	}
 
 	resourceFrag, resourceArgs, resourcePred, err := b.maybeAttachResourceFilter(ctx, orgID, query, start, end, variables)
@@ -617,7 +595,7 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 		}
 	}
 
-	groupCols, err := b.resolveGroupColumns(ctx, orgID, start, end, query.GroupBy)
+	groupCols, err := b.resolveGroupColumns(ctx, orgID, start, end, query.GroupBy, keys)
 	if err != nil {
 		return nil, err
 	}
@@ -633,11 +611,13 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 		}
 	}
 
+	// a window or step under one second would truncate to a zero divisor
+	windowSeconds := max((end-start)/querybuilder.NsToSeconds, 1)
 	stepSeconds := int64(0)
-	rateInterval := (end - start) / querybuilder.NsToSeconds
+	rateInterval := windowSeconds
 	if requestType == qbtypes.RequestTypeTimeSeries {
 		stepSeconds = int64(query.StepInterval.Seconds())
-		rateInterval = uint64(stepSeconds)
+		rateInterval = max(uint64(stepSeconds), 1)
 	}
 
 	// outer aggregation over the per-trace rows
@@ -671,7 +651,7 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 		cteFragments = append(cteFragments, fmt.Sprintf("__scoped_traces_total AS (%s)", totalSQL))
 		cteArgs = append(cteArgs, totalArgs)
 
-		limitSQL, limitArgs := outerLimitSQL(query, traceAggs, groupNames, (end-start)/querybuilder.NsToSeconds)
+		limitSQL, limitArgs := outerLimitSQL(query, traceAggs, groupNames, windowSeconds)
 		cteFragments = append(cteFragments, fmt.Sprintf("__limit_cte AS (%s)", limitSQL))
 		cteArgs = append(cteArgs, limitArgs)
 

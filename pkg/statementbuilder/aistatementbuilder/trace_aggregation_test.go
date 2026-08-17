@@ -713,8 +713,8 @@ SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 `, stmt)
 }
 
-// On the delegated path __trace_scope inlines its fingerprint subquery, since it is built
-// without the delegate's CTEs, while the delegate keeps its own __resource_filter CTE.
+// On the delegated path __trace_scope and the main query share one __resource_filter
+// CTE, so the resource table is scanned once.
 func TestBuild_FullSQL_Aggregation_ResourceFilter_Delegated(t *testing.T) {
 	b := newTestBuilder(t)
 	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeScalar,
@@ -743,7 +743,7 @@ __trace_scope AS (
       AND ts_bucket_start >= 1747945619
       AND ts_bucket_start <= 1747983448
       AND (mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))
-      AND resource_fingerprint GLOBAL IN (SELECT fingerprint FROM (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = 'api' AND labels LIKE '%service.name%' AND labels LIKE '%service.name":"api%') AND seen_at_ts_bucket_start >= 1747945619 AND seen_at_ts_bucket_start <= 1747983448 GROUP BY fingerprint))
+      AND resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)
     GROUP BY trace_id
     HAVING output_tokens > 1000
 )
@@ -778,4 +778,27 @@ func TestBuild_Aggregation_RateDividesByInterval(t *testing.T) {
 	stmt, err = b.Build(ctx, valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeTimeSeries, q, nil)
 	require.NoError(t, err)
 	assert.Contains(t, stmt.Query, "count(llm_call_count)/60 AS __result_0")
+
+	// a sub-second window clamps the divisor instead of truncating it to zero
+	stmt, err = b.Build(ctx, valuer.UUID{}, testStartMs, testStartMs+500, qbtypes.RequestTypeScalar, q, nil)
+	require.NoError(t, err)
+	assert.Contains(t, stmt.Query, "count(llm_call_count)/1 AS __result_0")
+}
+
+// A window starting within the bucket-adjustment of the epoch clamps at bucket zero
+// instead of underflowing uint64.
+func TestBuild_Aggregation_EpochStartDoesNotUnderflowBucket(t *testing.T) {
+	b := newTestBuilder(t)
+	q := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+		Signal:       telemetrytypes.SignalTraces,
+		Aggregations: []qbtypes.TraceAggregation{{Expression: "sum(trace.output_tokens)"}},
+	}
+	stmt, err := b.Build(context.Background(), valuer.UUID{}, 0, testEndMs, qbtypes.RequestTypeScalar, q, nil)
+	require.NoError(t, err)
+	assert.Contains(t, renderSQL(t, stmt), "ts_bucket_start >= 0")
+
+	stmt, err = b.Build(context.Background(), valuer.UUID{}, 0, testEndMs, qbtypes.RequestTypeTrace,
+		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{Signal: telemetrytypes.SignalTraces, Limit: 10}, nil)
+	require.NoError(t, err)
+	assert.Contains(t, renderSQL(t, stmt), "ts_bucket_start >= 0")
 }
