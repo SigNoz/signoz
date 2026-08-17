@@ -9,9 +9,7 @@
 .patternBox {
 	display: flex;
 	flex-direction: column;
-	padding: var(--spacing-6);
-	border-radius: 6px;
-	border: 1px solid var(--l2-border);
+	gap: var(--spacing-4);
 }
 
 .patternChips {
@@ -45,4 +43,8 @@
 .patternAdd {
 	display: flex;
 	gap: var(--spacing-3);
+}
+
+.drawerLabel {
+	composes: drawerLabel from '../../shared.module.scss';
 }

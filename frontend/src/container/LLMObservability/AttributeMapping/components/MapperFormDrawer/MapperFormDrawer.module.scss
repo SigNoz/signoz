@@ -12,22 +12,14 @@
 }
 
 .label {
-	font-size: var(--font-size-xs);
-	font-weight: var(--font-weight-semibold);
-	text-transform: uppercase;
-	letter-spacing: 0.04em;
-	color: var(--l3-foreground);
-}
-
-.labelHint {
-	font-weight: var(--font-weight-normal);
-	text-transform: none;
-	letter-spacing: normal;
+	font-size: var(--font-size-sm);
+	font-weight: var(--font-weight-medium);
+	color: var(--l1-foreground);
 }
 
 .hint {
 	font-size: var(--font-size-xs);
-	color: var(--l3-foreground);
+	color: var(--l2-foreground);
 }
 
 .fieldContext {

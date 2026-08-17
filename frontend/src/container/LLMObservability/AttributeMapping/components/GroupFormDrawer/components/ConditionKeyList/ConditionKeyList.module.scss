@@ -6,25 +6,14 @@
 
 .label {
 	font-size: var(--font-size-xs);
-	font-weight: var(--font-weight-semibold);
-	text-transform: uppercase;
-	letter-spacing: 0.04em;
-	color: var(--l3-foreground);
-}
-
-.labelHint {
-	font-weight: var(--font-weight-normal);
-	text-transform: none;
-	letter-spacing: normal;
+	font-weight: var(--font-weight-medium);
+	color: var(--l1-foreground);
 }
 
 .keyBox {
 	display: flex;
 	flex-direction: column;
 	gap: var(--spacing-4);
-	padding: var(--spacing-6);
-	border-radius: 6px;
-	border: 1px solid var(--l2-border);
 }
 
 .keyChips {

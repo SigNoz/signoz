@@ -4,6 +4,7 @@ import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { X } from '@signozhq/icons';
 
+import FieldLabel from '../../../FieldLabel/FieldLabel';
 import styles from './ConditionKeyList.module.scss';
 
 interface ConditionKeyListProps {
@@ -45,10 +46,12 @@ function ConditionKeyList({
 
 	return (
 		<div className={styles.field}>
-			<span className={styles.label}>
-				{label}
-				{labelHint && <span className={styles.labelHint}> {labelHint}</span>}
-			</span>
+			<FieldLabel
+				label={label}
+				hint={labelHint}
+				className={styles.label}
+				testId={`${testIdPrefix}-hint`}
+			/>
 
 			<div className={styles.keyBox}>
 				{keys.length > 0 && (

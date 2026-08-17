@@ -22,11 +22,9 @@ function PricingFields({
 	onChange,
 }: PricingFieldsProps): JSX.Element {
 	return (
-		<div className={cx(styles.drawerSection, styles.drawerSurface)}>
-			<div className={styles.drawerSurfaceHead}>
-				<Typography.Text size="base" weight="bold">
-					Pricing (per 1M tokens, USD)
-				</Typography.Text>
+		<div className={cx(styles.drawerSection, styles.drawerFieldset)}>
+			<div className={styles.drawerFieldsetHead}>
+				<span className={styles.drawerLabel}>Pricing (per 1M tokens, USD)</span>
 
 				{isReadOnly && (
 					<span className={styles.managedLabel} data-testid="drawer-readonly-label">
@@ -38,7 +36,7 @@ function PricingFields({
 			</div>
 			<div className={styles.pricingGrid}>
 				<div className={styles.pricingField}>
-					<label htmlFor="input-cost">
+					<label htmlFor="input-cost" className={styles.drawerSubLabel}>
 						Input Cost{' '}
 						<span className={styles.required} aria-hidden="true">
 							*
@@ -58,7 +56,7 @@ function PricingFields({
 					/>
 				</div>
 				<div className={styles.pricingField}>
-					<label htmlFor="output-cost">
+					<label htmlFor="output-cost" className={styles.drawerSubLabel}>
 						Output Cost{' '}
 						<span className={styles.required} aria-hidden="true">
 							*
