@@ -1,49 +1,28 @@
 package aitelemetryschema
 
 import (
+	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-)
-
-// OpenTelemetry gen_ai semantic-convention attribute keys. Single source of truth
-// shared by the AI query builder and the LLM pricing pipeline.
-const (
-	GenAIRequestModel  = "gen_ai.request.model"
-	GenAIOperationName = "gen_ai.operation.name"
-	GenAIToolName      = "gen_ai.tool.name"
-	GenAIAgentName     = "gen_ai.agent.name"
-	GenAIProviderName  = "gen_ai.provider.name"
-
-	GenAIUsageInputTokens              = "gen_ai.usage.input_tokens"
-	GenAIUsageOutputTokens             = "gen_ai.usage.output_tokens"
-	GenAIUsageCacheReadInputTokens     = "gen_ai.usage.cache_read.input_tokens"
-	GenAIUsageCacheCreationInputTokens = "gen_ai.usage.cache_creation.input_tokens"
-
-	GenAIInputMessages  = "gen_ai.input.messages"
-	GenAIOutputMessages = "gen_ai.output.messages"
-
-	// SignozGenAITotalCost is not OTel semconv: it is the per-span cost the SigNoz
-	// LLM pricing processor attaches.
-	SignozGenAITotalCost = "_signoz.gen_ai.total_cost"
 )
 
 var (
 	// GenAIFields are the gen_ai span attributes the AI query builder relies on,
 	// suggested before ingestion so the filter bar works on a fresh install.
 	GenAIFields = map[string]telemetrytypes.TelemetryFieldKey{
-		GenAIRequestModel:  {Name: GenAIRequestModel, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
-		GenAIOperationName: {Name: GenAIOperationName, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
-		GenAIToolName:      {Name: GenAIToolName, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
-		GenAIAgentName:     {Name: GenAIAgentName, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
-		GenAIProviderName:  {Name: GenAIProviderName, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
+		aiobservabilitytypes.GenAIRequestModel:  genAIAttribute(aiobservabilitytypes.GenAIRequestModel, telemetrytypes.FieldDataTypeString),
+		aiobservabilitytypes.GenAIOperationName: genAIAttribute(aiobservabilitytypes.GenAIOperationName, telemetrytypes.FieldDataTypeString),
+		aiobservabilitytypes.GenAIToolName:      genAIAttribute(aiobservabilitytypes.GenAIToolName, telemetrytypes.FieldDataTypeString),
+		aiobservabilitytypes.GenAIAgentName:     genAIAttribute(aiobservabilitytypes.GenAIAgentName, telemetrytypes.FieldDataTypeString),
+		aiobservabilitytypes.GenAIProviderName:  genAIAttribute(aiobservabilitytypes.GenAIProviderName, telemetrytypes.FieldDataTypeString),
 
-		GenAIUsageInputTokens:              {Name: GenAIUsageInputTokens, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeFloat64},
-		GenAIUsageOutputTokens:             {Name: GenAIUsageOutputTokens, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeFloat64},
-		GenAIUsageCacheReadInputTokens:     {Name: GenAIUsageCacheReadInputTokens, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeFloat64},
-		GenAIUsageCacheCreationInputTokens: {Name: GenAIUsageCacheCreationInputTokens, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeFloat64},
-		SignozGenAITotalCost:               {Name: SignozGenAITotalCost, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeFloat64},
+		aiobservabilitytypes.GenAIUsageInputTokens:              genAIAttribute(aiobservabilitytypes.GenAIUsageInputTokens, telemetrytypes.FieldDataTypeFloat64),
+		aiobservabilitytypes.GenAIUsageOutputTokens:             genAIAttribute(aiobservabilitytypes.GenAIUsageOutputTokens, telemetrytypes.FieldDataTypeFloat64),
+		aiobservabilitytypes.GenAIUsageCacheReadInputTokens:     genAIAttribute(aiobservabilitytypes.GenAIUsageCacheReadInputTokens, telemetrytypes.FieldDataTypeFloat64),
+		aiobservabilitytypes.GenAIUsageCacheCreationInputTokens: genAIAttribute(aiobservabilitytypes.GenAIUsageCacheCreationInputTokens, telemetrytypes.FieldDataTypeFloat64),
+		aiobservabilitytypes.SignozGenAITotalCost:               genAIAttribute(aiobservabilitytypes.SignozGenAITotalCost, telemetrytypes.FieldDataTypeFloat64),
 
-		GenAIInputMessages:  {Name: GenAIInputMessages, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
-		GenAIOutputMessages: {Name: GenAIOutputMessages, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
+		aiobservabilitytypes.GenAIInputMessages:  genAIAttribute(aiobservabilitytypes.GenAIInputMessages, telemetrytypes.FieldDataTypeString),
+		aiobservabilitytypes.GenAIOutputMessages: genAIAttribute(aiobservabilitytypes.GenAIOutputMessages, telemetrytypes.FieldDataTypeString),
 	}
 
 	// TraceAggregateFields are the per-trace aggregates the AI trace list computes;
@@ -59,6 +38,15 @@ var (
 		"max_llm_duration_nano": traceAggregate("max_llm_duration_nano"),
 	}
 )
+
+func genAIAttribute(name string, dataType telemetrytypes.FieldDataType) telemetrytypes.TelemetryFieldKey {
+	return telemetrytypes.TelemetryFieldKey{
+		Name:          name,
+		Signal:        telemetrytypes.SignalTraces,
+		FieldContext:  telemetrytypes.FieldContextAttribute,
+		FieldDataType: dataType,
+	}
+}
 
 func traceAggregate(name string) telemetrytypes.TelemetryFieldKey {
 	return telemetrytypes.TelemetryFieldKey{

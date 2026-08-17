@@ -6,8 +6,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/telemetryschema/aitelemetryschema"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -195,12 +195,12 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 	// usage: env scoping, the LLM identity keys, then service and the rest.
 	aiObservabilityFilters := []map[string]interface{}{
 		{"key": "deployment.environment", "dataType": "string", "type": "resource"},
-		{"key": aitelemetryschema.GenAIOperationName, "dataType": "string", "type": "tag"},
-		{"key": aitelemetryschema.GenAIProviderName, "dataType": "string", "type": "tag"},
-		{"key": aitelemetryschema.GenAIRequestModel, "dataType": "string", "type": "tag"},
+		{"key": aiobservabilitytypes.GenAIOperationName, "dataType": "string", "type": "tag"},
+		{"key": aiobservabilitytypes.GenAIProviderName, "dataType": "string", "type": "tag"},
+		{"key": aiobservabilitytypes.GenAIRequestModel, "dataType": "string", "type": "tag"},
 		{"key": "service.name", "dataType": "string", "type": "resource"},
-		{"key": aitelemetryschema.GenAIToolName, "dataType": "string", "type": "tag"},
-		{"key": aitelemetryschema.GenAIAgentName, "dataType": "string", "type": "tag"},
+		{"key": aiobservabilitytypes.GenAIToolName, "dataType": "string", "type": "tag"},
+		{"key": aiobservabilitytypes.GenAIAgentName, "dataType": "string", "type": "tag"},
 	}
 
 	tracesJSON, err := json.Marshal(tracesFilters)

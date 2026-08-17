@@ -9,6 +9,7 @@ import (
 	scopedtraces "github.com/SigNoz/signoz/pkg/statementbuilder/scopedtracesstatementbuilder"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/aitelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -26,7 +27,7 @@ func NewFactory(
 // Scope describes gen_ai for the scoped trace builder: an AI trace has >=1 gen_ai
 // LLM, tool, or agent span, and its list adds AI/LLM per-trace metrics.
 func Scope() scopedtraces.TraceScope {
-	gateKeyNames := []string{aitelemetryschema.GenAIRequestModel, aitelemetryschema.GenAIToolName, aitelemetryschema.GenAIAgentName}
+	gateKeyNames := []string{aiobservabilitytypes.GenAIRequestModel, aiobservabilitytypes.GenAIToolName, aiobservabilitytypes.GenAIAgentName}
 	gateExprs := make([]string, 0, len(gateKeyNames))
 	gateKeys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(gateKeyNames))
 	for _, name := range gateKeyNames {
@@ -39,13 +40,13 @@ func Scope() scopedtraces.TraceScope {
 	}
 
 	defs := aitelemetryschema.GenAIFields
-	reqModel := defs[aitelemetryschema.GenAIRequestModel]
-	toolName := defs[aitelemetryschema.GenAIToolName]
-	inTok := defs[aitelemetryschema.GenAIUsageInputTokens]
-	outTok := defs[aitelemetryschema.GenAIUsageOutputTokens]
-	cost := defs[aitelemetryschema.SignozGenAITotalCost]
-	inMsg := defs[aitelemetryschema.GenAIInputMessages]
-	outMsg := defs[aitelemetryschema.GenAIOutputMessages]
+	reqModel := defs[aiobservabilitytypes.GenAIRequestModel]
+	toolName := defs[aiobservabilitytypes.GenAIToolName]
+	inTok := defs[aiobservabilitytypes.GenAIUsageInputTokens]
+	outTok := defs[aiobservabilitytypes.GenAIUsageOutputTokens]
+	cost := defs[aiobservabilitytypes.SignozGenAITotalCost]
+	inMsg := defs[aiobservabilitytypes.GenAIInputMessages]
+	outMsg := defs[aiobservabilitytypes.GenAIOutputMessages]
 
 	str := telemetrytypes.FieldDataTypeString
 	columns := append(scopedtraces.CommonTraceColumns(),

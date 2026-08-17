@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/statementbuilder"
 	scopedtraces "github.com/SigNoz/signoz/pkg/statementbuilder/scopedtracesstatementbuilder"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/aitelemetryschema"
+	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
@@ -976,8 +977,8 @@ func TestBuild_UnsupportedRequestType(t *testing.T) {
 // mask, OR-combined.
 func TestBuild_TraceList_MultiVariantGateKey(t *testing.T) {
 	keys := otelKeysMap()
-	keys[aitelemetryschema.GenAIToolName] = append(keys[aitelemetryschema.GenAIToolName], &telemetrytypes.TelemetryFieldKey{
-		Name:          aitelemetryschema.GenAIToolName,
+	keys[aiobservabilitytypes.GenAIToolName] = append(keys[aiobservabilitytypes.GenAIToolName], &telemetrytypes.TelemetryFieldKey{
+		Name:          aiobservabilitytypes.GenAIToolName,
 		Signal:        telemetrytypes.SignalTraces,
 		FieldContext:  telemetrytypes.FieldContextAttribute,
 		FieldDataType: telemetrytypes.FieldDataTypeFloat64,
