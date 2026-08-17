@@ -38,6 +38,7 @@ type scopedTraceStatementBuilder struct {
 	scope                     TraceScope
 	traceStmtBuilder          qbtypes.StatementBuilder[qbtypes.TraceAggregation]
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation]
+	fl                        flagger.Flagger
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.TraceAggregation] = (*scopedTraceStatementBuilder)(nil)
@@ -59,8 +60,8 @@ func NewFactory(
 			if err != nil {
 				return nil, err
 			}
-			fm := tracestelemetryschema.NewFieldMapper()
-			cb := tracestelemetryschema.NewConditionBuilder(fm)
+			fm := tracestelemetryschema.NewFieldMapper(fl)
+			cb := tracestelemetryschema.NewConditionBuilder(fm, fl)
 			return NewScopedTraceStatementBuilder(settings, metadataStore, fm, cb, scope, traceStmtBuilder, fl), nil
 		},
 	)
@@ -98,6 +99,7 @@ func NewScopedTraceStatementBuilder(
 		scope:                     scope,
 		traceStmtBuilder:          traceStmtBuilder,
 		resourceFilterStmtBuilder: resourceFilterStmtBuilder,
+		fl:                        fl,
 	}
 }
 
@@ -267,7 +269,7 @@ func (b *scopedTraceStatementBuilder) fetchKeys(ctx context.Context, orgID value
 			SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeExact,
 		})
 	}
-	keys, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, selectors)
+	keys, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, querybuilder.ExpandKeySelectorsForFamilies(ctx, orgID, b.fl, selectors))
 	return keys, err
 }
 
@@ -444,13 +446,14 @@ func (b *scopedTraceStatementBuilder) resolveSpanPredicate(ctx context.Context, 
 	for i := range selectors {
 		selectors[i].Signal = telemetrytypes.SignalTraces
 	}
-	keys, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, selectors)
+	keys, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, querybuilder.ExpandKeySelectorsForFamilies(ctx, orgID, b.fl, selectors))
 	if err != nil {
 		return "", nil, "", err
 	}
 	prepared, err := querybuilder.PrepareWhereClause(expr, querybuilder.FilterExprVisitorOpts{
 		Context:          ctx,
 		OrgID:            orgID,
+		Flagger:          b.fl,
 		Logger:           b.logger,
 		FieldMapper:      b.fm,
 		ConditionBuilder: b.cb,

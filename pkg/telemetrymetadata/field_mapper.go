@@ -58,6 +58,19 @@ func (m *fieldMapper) ColumnFor(ctx context.Context, _ valuer.UUID, tsStart, tsE
 	return columns, nil
 }
 
+// ExistsFor implements the per-key existence primitive of qbtypes.FieldMapper.
+func (m *fieldMapper) ExistsFor(ctx context.Context, _ valuer.UUID, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey, exists bool) (string, error) {
+	columns, err := m.getColumn(ctx, tsStart, tsEnd, key)
+	if err != nil {
+		return "", err
+	}
+	pred := fmt.Sprintf("mapContains(%s, '%s')", columns[0].Name, key.Name)
+	if exists {
+		return pred, nil
+	}
+	return "NOT " + pred, nil
+}
+
 func (m *fieldMapper) FieldFor(ctx context.Context, _ valuer.UUID, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
 	columns, err := m.getColumn(ctx, startNs, endNs, key)
 	if err != nil {

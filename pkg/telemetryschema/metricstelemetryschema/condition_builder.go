@@ -162,7 +162,9 @@ func (c *conditionBuilder) ConditionFor(
 		return nil, nil, err
 	}
 
-	keys := querybuilder.MatchingFieldKeys(key, fieldKeys)
+	// Metric labels have no family support, so every logical field is
+	// single-member and flattens losslessly to its physical key.
+	keys := querybuilder.SingleKeys(querybuilder.MatchingLogicalFields(ctx, orgID, nil, key, fieldKeys))
 	var warnings []string
 	if len(keys) == 0 {
 		if _, isColumn := timeSeriesV4Columns[key.Name]; isColumn {
