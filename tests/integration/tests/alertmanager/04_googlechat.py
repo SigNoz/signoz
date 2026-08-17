@@ -1,21 +1,11 @@
-"""Google Chat notifier integration tests driven through the real alerting path:
-create a rule pointing at a Google Chat channel, insert breaching telemetry, let
-the ruler fire, and assert on the cardsV2 payload WireMock received.
-
-WireMock stands in for chat.googleapis.com (network alias + https:8443, see the
-notification_channel fixture). Assertions check the actual card structure, deep
-links and threading query params so behavioural regressions are caught.
-"""
-
 import json
-import re
 import time
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from wiremock.client import HttpMethods, Mapping, MappingRequest, MappingResponse
+from wiremock.resources.mappings import Mapping
 
 from fixtures import types
 from fixtures.alerts import (
@@ -25,7 +15,12 @@ from fixtures.alerts import (
     verify_notification_expectation,
 )
 from fixtures.logger import setup_logger
-from fixtures.notification_channel import googlechat_config
+from fixtures.notification_channel import (
+    googlechat_card_subset,
+    googlechat_config,
+    googlechat_ok_mappings,
+    googlechat_retry_mappings,
+)
 
 logger = setup_logger(__name__)
 
@@ -43,66 +38,6 @@ THREAD_QUERY = {
 }
 
 
-def _path(space: str) -> str:
-    return f"/v1/spaces/{space}/messages"
-
-
-def _stub_200(path: str) -> list[Mapping]:
-    return [
-        Mapping(
-            request=MappingRequest(method=HttpMethods.POST, url_path=path),
-            response=MappingResponse(status=200, json_body={"name": "spaces/x/messages/x"}),
-            persistent=True,
-        )
-    ]
-
-
-def _stub_retry(path: str) -> list[Mapping]:
-    """429 on the first call then 200, via a wiremock scenario transition."""
-    scenario = f"gc-retry-{path}"
-    return [
-        Mapping(
-            request=MappingRequest(method=HttpMethods.POST, url_path=path),
-            response=MappingResponse(status=429, json_body={"error": {"code": 429, "status": "RESOURCE_EXHAUSTED"}}),
-            scenario_name=scenario,
-            required_scenario_state="Started",
-            new_scenario_state="ok",
-            persistent=True,
-        ),
-        Mapping(
-            request=MappingRequest(method=HttpMethods.POST, url_path=path),
-            response=MappingResponse(status=200, json_body={"name": "spaces/x/messages/x"}),
-            scenario_name=scenario,
-            required_scenario_state="ok",
-            persistent=True,
-        ),
-    ]
-
-
-def _card_subset(alertname: str, buttons: list[tuple[str, str]]) -> dict:
-    """A cardsV2 subset asserting title, firing banner, rendered body, and each
-    button's text AND deep-link url (as a regex), so a broken link is caught too.
-    buttons: list of (text, url_regex)."""
-    return {
-        "text": f"[FIRING:1] {alertname}",
-        "cardsV2": [
-            {
-                "cardId": "signoz-alert",
-                "card": {
-                    "header": {"title": f"[FIRING:1] {alertname}"},
-                    "sections": [
-                        # firing banner
-                        {"widgets": [{"textParagraph": {"text": re.compile("FIRING")}}]},
-                        # rendered alert body mentions the alertname
-                        {"widgets": [{"textParagraph": {"text": re.compile(re.escape(alertname))}}]},
-                    ]
-                    + [{"widgets": [{"buttonList": {"buttons": [{"text": text, "onClick": {"openLink": {"url": re.compile(url)}}}]}}]} for text, url in buttons],
-                },
-            }
-        ],
-    }
-
-
 GOOGLECHAT_CASES = [
     types.AlertManagerNotificationTestCase(
         name="googlechat_default_metrics_firing",
@@ -116,9 +51,9 @@ GOOGLECHAT_CASES = [
                 types.NotificationValidation(
                     destination_type="webhook",
                     validation_data={
-                        "path": _path("gc-metrics"),
+                        "path": "/v1/spaces/gc-metrics/messages",
                         "query_params": THREAD_QUERY,
-                        "json_body": _card_subset("threshold_above_at_least_once", [("Open in SigNoz", r"/alerts/overview\?ruleId=")]),
+                        "json_body": googlechat_card_subset("threshold_above_at_least_once", [("Open in SigNoz", r"/alerts/overview\?ruleId=")]),
                     },
                 ),
             ],
@@ -136,8 +71,8 @@ GOOGLECHAT_CASES = [
                 types.NotificationValidation(
                     destination_type="webhook",
                     validation_data={
-                        "path": _path("gc-logs"),
-                        "json_body": _card_subset(
+                        "path": "/v1/spaces/gc-logs/messages",
+                        "json_body": googlechat_card_subset(
                             "threshold_below_at_least_once",
                             [("View Related Logs", r"/logs/logs-explorer\?"), ("Open in SigNoz", r"/alerts/overview\?ruleId=")],
                         ),
@@ -158,8 +93,8 @@ GOOGLECHAT_CASES = [
                 types.NotificationValidation(
                     destination_type="webhook",
                     validation_data={
-                        "path": _path("gc-traces"),
-                        "json_body": _card_subset(
+                        "path": "/v1/spaces/gc-traces/messages",
+                        "json_body": googlechat_card_subset(
                             "threshold_above_average",
                             [("View Related Traces", r"traces-explorer\?"), ("Open in SigNoz", r"/alerts/overview\?ruleId=")],
                         ),
@@ -181,7 +116,7 @@ GOOGLECHAT_CASES = [
                     destination_type="webhook",
                     validation_data={
                         # a retryable 429 is followed by a successful re-POST => >=2 hits
-                        "path": _path("gc-retry"),
+                        "path": "/v1/spaces/gc-retry/messages",
                         "min_count": 2,
                         "json_body": {"cardsV2": [{"cardId": "signoz-alert"}]},
                     },
@@ -193,7 +128,7 @@ GOOGLECHAT_CASES = [
 
 # per-case wiremock stubs (retry needs a stateful scenario, the rest a plain 200)
 CASE_STUBS: dict[str, Callable[[str], list[Mapping]]] = {
-    "googlechat_retry_429_then_200": _stub_retry,
+    "googlechat_retry_429_then_200": googlechat_retry_mappings,
 }
 
 
@@ -216,7 +151,7 @@ def test_googlechat_notifier(  # pylint: disable=too-many-arguments,too-many-pos
 
     channel_config = update_raw_channel_config(gc_test_case.channel_config, channel_name, notification_channel)
 
-    stub_factory = CASE_STUBS.get(gc_test_case.name, _stub_200)
+    stub_factory = CASE_STUBS.get(gc_test_case.name, googlechat_ok_mappings)
     make_http_mocks(notification_channel, stub_factory(path))
 
     create_notification_channel(channel_config)

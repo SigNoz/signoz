@@ -497,11 +497,9 @@ def update_raw_channel_config(
                     path = urlparse(original_url).path
                     entry[url_field] = notification_channel.container_configs["8080"].get(path)
 
-    # Google Chat validates the webhook host, so route via the https alias config
-    # (chat.googleapis.com:8443) keeping the path, and skip tls for wiremock's cert.
+    # Google Chat validates the webhook host
     for entry in config.get("googlechat_configs", []):
-        path = urlparse(entry["webhook_url"]).path
-        entry["webhook_url"] = notification_channel.container_configs["8443"].get(path)
-        entry.setdefault("http_config", {}).setdefault("tls_config", {})["insecure_skip_verify"] = True
+        https = notification_channel.container_configs["443"]
+        entry["webhook_url"] = f"{https.scheme}://{https.address}{urlparse(entry['webhook_url']).path}"
 
     return config

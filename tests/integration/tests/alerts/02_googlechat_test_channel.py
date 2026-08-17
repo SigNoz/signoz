@@ -1,11 +1,3 @@
-"""Google Chat coverage for the testChannel API (POST /api/v1/testChannel).
-
-testChannel drives the notifier once, synchronously, with a hardcoded test alert
-and no retry. It is the button users click in the UI, and the deterministic place
-to assert permanent-failure / no-retry behaviour. Rich-card and retry behaviour is
-covered via the firing-rule path in alertmanager/04_googlechat.py.
-"""
-
 import base64
 import json
 import re
@@ -16,7 +8,7 @@ from http import HTTPStatus
 
 import pytest
 import requests
-from wiremock.client import HttpMethods, Mapping, MappingRequest, MappingResponse
+from wiremock.resources.mappings import HttpMethods, Mapping, MappingRequest, MappingResponse
 
 from fixtures import types
 from fixtures.alerts import update_raw_channel_config
@@ -26,11 +18,9 @@ from fixtures.notification_channel import googlechat_config
 
 logger = setup_logger(__name__)
 
-
-def _path(space: str) -> str:
-    return f"/v1/spaces/{space}/messages"
-
-
+# testChannel (POST /api/v1/testChannel) drives the notifier once, synchronously,
+# with a hardcoded test alert and no retry — the deterministic place to assert
+# permanent-failure behaviour. Rich cards + retry are covered in alertmanager/04_googlechat.py.
 # name, space, stub status, stub body, expect testChannel 204
 TEST_CHANNEL_CASES = [
     ("googlechat_test_channel_success", "gc-tc-ok", 200, {"name": "spaces/x/messages/x"}, True),
@@ -56,14 +46,13 @@ def test_googlechat_test_channel(  # pylint: disable=too-many-arguments,too-many
     body: dict,
     expect_delivered: bool,
 ) -> None:
-    path = _path(space)
+    path = f"/v1/spaces/{space}/messages"
     make_http_mocks(
         notification_channel,
         [
             Mapping(
                 request=MappingRequest(method=HttpMethods.POST, url_path=path),
                 response=MappingResponse(status=status, json_body=body),
-                persistent=True,
             )
         ],
     )
