@@ -77,35 +77,47 @@ export const statefulSetWidgetInfo = [
 		yAxisUnit: '',
 		docPath:
 			'/infrastructure-monitoring/kubernetes/statefulsets/#cpu-usage-request-limits',
+		description:
+			'Total CPU usage of the StatefulSet pods against their aggregate CPU requests and limits.',
 	},
 	{
 		title: 'CPU request, limit util (%)',
 		yAxisUnit: 'percentunit',
 		docPath:
 			'/infrastructure-monitoring/kubernetes/statefulsets/#cpu-request-limit-utilization-',
+		description:
+			'Average CPU usage of the StatefulSet as a percentage of its requests and of its limits.',
 	},
 	{
 		title: 'Memory usage, request, limits',
 		yAxisUnit: 'bytes',
 		docPath:
 			'/infrastructure-monitoring/kubernetes/statefulsets/#memory-usage-request-limits',
+		description:
+			'Total memory usage of the StatefulSet pods against their aggregate memory requests and limits.',
 	},
 	{
 		title: 'Memory request, limit util (%)',
 		yAxisUnit: 'percentunit',
 		docPath:
 			'/infrastructure-monitoring/kubernetes/statefulsets/#memory-request-limit-utilization-',
+		description:
+			'Average memory usage as a percentage of requests and limits; above 100% of request means it exceeds its reservation.',
 	},
 	{
 		title: 'Network IO',
 		yAxisUnit: 'binBps',
 		docPath: '/infrastructure-monitoring/kubernetes/statefulsets/#network-io',
+		description:
+			'Transmit and receive throughput per interface across all pods of the StatefulSet.',
 	},
 	{
 		title: 'Network errors count',
 		yAxisUnit: '',
 		docPath:
 			'/infrastructure-monitoring/kubernetes/statefulsets/#network-errors-count',
+		description:
+			'Per-pod-interface network error counts by direction and interface, reported by the kubelet.',
 	},
 ];
 

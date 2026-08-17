@@ -354,6 +354,16 @@ function App(): JSX.Element {
 					tunnel: window.signozBootData.settings.sentry.tunnel,
 					environment: process.env.ENVIRONMENT,
 					release: process.env.VERSION,
+					// A tab that outlived a deploy requests hashed assets the new build no longer
+					// has. `lazyRetry` recovers by reloading once, so this class is not worth
+					// reporting. The stylesheet message is Vite's own; the module ones are the
+					// same failure worded differently by Chromium, Firefox and Safari.
+					ignoreErrors: [
+						/Unable to preload CSS for/,
+						/Failed to fetch dynamically imported module/,
+						/error loading dynamically imported module/,
+						/Importing a module script failed/,
+					],
 					integrations: [
 						// Kept for the `transaction` tag used in routing, even though
 						// tracing is disabled. Ref: https://github.com/SigNoz/platform-pod/issues/2393#issuecomment-4603658055
@@ -366,7 +376,23 @@ function App(): JSX.Element {
 					tracesSampleRate: 0, // Ref: https://github.com/SigNoz/platform-pod/issues/2393#issuecomment-4603658055
 					replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
 					replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
-					beforeSend(event) {
+					beforeSend(event, hint) {
+						const error = hint?.originalException as
+							| { name?: string; code?: string | number }
+							| undefined;
+
+						// Ignore benign aborted/cancelled requests (axios + fetch).
+						if (error?.code === 'ERR_CANCELED' || error?.code === 'ECONNABORTED') {
+							return null;
+						}
+						if (error?.name === 'AbortError') {
+							return null;
+						}
+						// Ignore benign Monaco cancellation errors (name 'Canceled').
+						if (error?.name === 'Canceled') {
+							return null;
+						}
+
 						// Drop the event if its level is 'warning' or 'info'
 						if (event.level === 'warning' || event.level === 'info') {
 							return null;

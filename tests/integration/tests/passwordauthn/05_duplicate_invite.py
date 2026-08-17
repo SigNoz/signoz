@@ -4,6 +4,7 @@ from http import HTTPStatus
 import requests
 
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.role import find_role_by_name
 from fixtures.types import SigNoz
 
 DUPLICATE_USER_EMAIL = "duplicate@integration.test"
@@ -20,38 +21,49 @@ def test_duplicate_user_invite_rejected(
     """
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
+    viewer_role_id = find_role_by_name(signoz, admin_token, "signoz-viewer")
+
     # Invite a new user
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={"email": DUPLICATE_USER_EMAIL, "role": "EDITOR"},
+        signoz.self.host_configs["8080"].get("/api/v2/users"),
+        json={
+            "email": DUPLICATE_USER_EMAIL,
+            "userRoles": [{"id": find_role_by_name(signoz, admin_token, "signoz-editor")}],
+        },
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
     assert response.status_code == HTTPStatus.CREATED, response.text
-    invited_user = response.json()["data"]
-    reset_token = invited_user["token"]
+    user_id = response.json()["data"]["id"]
 
-    # Invite the same email again — should fail
+    # Invite the same email again while still pending — should fail
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={"email": DUPLICATE_USER_EMAIL, "role": "VIEWER"},
+        signoz.self.host_configs["8080"].get("/api/v2/users"),
+        json={"email": DUPLICATE_USER_EMAIL, "userRoles": [{"id": viewer_role_id}]},
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
     assert response.status_code == HTTPStatus.CONFLICT
 
     # activate the user
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{user_id}/reset_password_tokens"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
-        json={"password": "password123Z$", "token": reset_token},
+        signoz.self.host_configs["8080"].get("/api/v2/factor_password/reset"),
+        json={"password": "password123Z$", "token": response.json()["data"]["token"]},
         timeout=2,
     )
     assert response.status_code == HTTPStatus.NO_CONTENT
 
-    # Try to invite the same email again — should fail
+    # Try to invite the same email again once active — should fail
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={"email": DUPLICATE_USER_EMAIL, "role": "VIEWER"},
+        signoz.self.host_configs["8080"].get("/api/v2/users"),
+        json={"email": DUPLICATE_USER_EMAIL, "userRoles": [{"id": viewer_role_id}]},
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )

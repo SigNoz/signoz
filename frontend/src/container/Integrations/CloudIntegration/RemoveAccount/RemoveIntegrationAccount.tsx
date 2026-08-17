@@ -60,6 +60,44 @@ function RemoveIntegrationAccount({
 		setIsModalOpen(false);
 	};
 
+	let modalDescription: JSX.Element;
+	if (cloudProvider === INTEGRATION_TYPES.AWS) {
+		modalDescription = (
+			<>
+				Removing this account will remove all components created for sending
+				telemetry to SigNoz in your AWS account within the next ~15 minutes
+				(cloudformation stacks named signoz-integration-telemetry-collection in
+				enabled regions). <br />
+				<br />
+				After that, you can delete the cloudformation stack that was created
+				manually when connecting this account.
+			</>
+		);
+	} else if (cloudProvider === INTEGRATION_TYPES.GCP) {
+		modalDescription = (
+			<>
+				Removing this account will stop SigNoz from monitoring it. <br />
+				<br />
+				Since you manage the GCP resources yourself, remember to manually tear down
+				the OTel collector and Pub/Sub resources you created for this integration if
+				you no longer need them.
+			</>
+		);
+	} else {
+		modalDescription = (
+			<>
+				Removing this account will remove all components created for sending
+				telemetry to SigNoz in your Azure subscription within the next ~15 minutes
+				(deployment stack named signoz-integration-telemetry will be deleted
+				automatically). <br />
+				<br />
+				After that, you have to manually delete &apos;signoz-integration&apos;
+				deployment stack that was created while connecting this account (Takes ~20
+				minutes to delete).
+			</>
+		);
+	}
+
 	return (
 		<div className="remove-integration-account-container">
 			<Button
@@ -84,28 +122,7 @@ function RemoveIntegrationAccount({
 					loading: isRemoveIntegrationLoading,
 				}}
 			>
-				{cloudProvider === INTEGRATION_TYPES.AWS ? (
-					<>
-						Removing this account will remove all components created for sending
-						telemetry to SigNoz in your AWS account within the next ~15 minutes
-						(cloudformation stacks named signoz-integration-telemetry-collection in
-						enabled regions). <br />
-						<br />
-						After that, you can delete the cloudformation stack that was created
-						manually when connecting this account.
-					</>
-				) : (
-					<>
-						Removing this account will remove all components created for sending
-						telemetry to SigNoz in your Azure subscription within the next ~15 minutes
-						(deployment stack named signoz-integration-telemetry will be deleted
-						automatically). <br />
-						<br />
-						After that, you have to manually delete &apos;signoz-integration&apos;
-						deployment stack that was created while connecting this account (Takes ~20
-						minutes to delete).
-					</>
-				)}
+				{modalDescription}
 			</Modal>
 		</div>
 	);

@@ -19,9 +19,6 @@ def idp(
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
 ) -> types.TestContainerIDP:
-    """
-    Package-scoped fixture for running an idp for SSO/SAML
-    """
 
     def create() -> types.TestContainerIDP:
         container = KeycloakContainer(

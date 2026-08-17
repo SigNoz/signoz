@@ -1,0 +1,13 @@
+.guideLink {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	color: var(--callout-primary-title);
+	font-size: var(--periscope-font-size-base);
+	text-decoration: none;
+
+	&:hover {
+		color: var(--accent-primary);
+		text-decoration: underline;
+	}
+}

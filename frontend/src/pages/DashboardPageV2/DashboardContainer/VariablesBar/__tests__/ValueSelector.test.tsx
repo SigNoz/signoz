@@ -182,4 +182,56 @@ describe('ValueSelector', () => {
 			});
 		});
 	});
+
+	describe('opening and closing without touching the list', () => {
+		function renderWith(
+			selection: VariableSelection,
+			options: string[],
+		): jest.Mock {
+			const onChange = jest.fn();
+			render(
+				<TooltipProvider>
+					<ValueSelector
+						options={options}
+						variableType="dynamic"
+						multiSelect
+						showAllOption
+						selection={selection}
+						onChange={onChange}
+						emptyFallback={{ value: [], allSelected: false }}
+						testId="variable-select-env"
+					/>
+				</TooltipProvider>,
+			);
+			return onChange;
+		}
+
+		async function openThenClose(): Promise<void> {
+			const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+			const control = screen.getByTestId('variable-select-env');
+			await user.click(control.querySelector('input') as HTMLInputElement);
+			await user.keyboard('{Escape}');
+		}
+
+		it('does not promote a pick that covers every available option to ALL', async () => {
+			// A narrow time range can leave only the selected value in the list. That is
+			// still an explicit pick, not "everything, always".
+			const onChange = renderWith(
+				{ value: ['checkout-service-prod'], allSelected: false },
+				['checkout-service-prod'],
+			);
+
+			await openThenClose();
+
+			expect(onChange).not.toHaveBeenCalled();
+		});
+
+		it('does not rewrite a dynamic ALL into concrete values', async () => {
+			const onChange = renderWith({ value: null, allSelected: true }, OPTIONS);
+
+			await openThenClose();
+
+			expect(onChange).not.toHaveBeenCalled();
+		});
+	});
 });

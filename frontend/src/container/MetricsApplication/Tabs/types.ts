@@ -10,7 +10,6 @@ export interface IServiceName {
 
 export interface TopOperationQueryFactoryProps {
 	servicename: IServiceName['servicename'];
-	dotMetricsEnabled: boolean;
 }
 
 export interface ExternalCallDurationByAddressProps extends ExternalCallProps {
@@ -20,7 +19,6 @@ export interface ExternalCallDurationByAddressProps extends ExternalCallProps {
 export interface ExternalCallProps {
 	servicename: IServiceName['servicename'];
 	tagFilterItems: TagFilterItem[];
-	dotMetricsEnabled: boolean;
 }
 
 export interface BuilderQueriesProps {
@@ -52,7 +50,6 @@ export interface OperationPerSecProps {
 	servicename: IServiceName['servicename'];
 	tagFilterItems: TagFilterItem[];
 	topLevelOperations: string[];
-	dotMetricsEnabled: boolean;
 }
 
 export interface LatencyProps {
@@ -60,7 +57,6 @@ export interface LatencyProps {
 	tagFilterItems: TagFilterItem[];
 	isSpanMetricEnable?: boolean;
 	topLevelOperationsRoute: string[];
-	dotMetricsEnabled: boolean;
 }
 
 export interface ApDexProps {
@@ -78,5 +74,4 @@ export interface TableRendererProps {
 export interface ApDexMetricsQueryBuilderQueriesProps extends ApDexProps {
 	delta: boolean;
 	metricsBuckets: number[];
-	dotMetricsEnabled: boolean;
 }

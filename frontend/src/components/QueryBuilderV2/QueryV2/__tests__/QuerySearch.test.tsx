@@ -301,6 +301,66 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 		dispatchSpy.mockRestore();
 	});
 
+	it('does not crash when the expression contains CRLF line breaks (issue #5869)', async () => {
+		const dispatchSpy = jest.spyOn(EditorView.prototype, 'dispatch');
+		const onChange = jest.fn() as jest.MockedFunction<(v: string) => void>;
+		const initialExpression = "service.name = 'frontend'";
+		// Filtering on a multi-line log value (CRLF) used to throw
+		// "RangeError: Selection points outside of document".
+		const crlfExpression = "body CONTAINS 'line1\r\nline2\r\nline3'";
+
+		const baseQueryData = {
+			...initialQueriesMap.logs.builder.queryData[0],
+			filter: { expression: initialExpression },
+		};
+
+		const { rerender } = render(
+			<QuerySearch
+				onChange={onChange}
+				queryData={baseQueryData}
+				dataSource={DataSource.LOGS}
+			/>,
+		);
+
+		await waitFor(
+			() => {
+				const editorContent = document.querySelector(
+					CM_EDITOR_SELECTOR,
+				) as HTMLElement;
+				expect(editorContent.textContent || '').toBe(initialExpression);
+			},
+			{ timeout: 3000 },
+		);
+
+		rerender(
+			<QuerySearch
+				onChange={onChange}
+				queryData={{ ...baseQueryData, filter: { expression: crlfExpression } }}
+				dataSource={DataSource.LOGS}
+			/>,
+		);
+
+		// The programmatic replace dispatched without throwing, and the selection anchor
+		// stayed within the CRLF-normalized document (the bug set it past the end).
+		await waitFor(() => {
+			const spec = dispatchSpy.mock.calls
+				.map(
+					(call) =>
+						call[0] as {
+							selection?: { anchor?: number };
+							changes?: { newLength?: number };
+						},
+				)
+				.find((s) => s?.selection?.anchor != null && s?.changes?.newLength != null);
+			expect(spec).toBeDefined();
+			expect(spec?.selection?.anchor).toBeLessThanOrEqual(
+				spec?.changes?.newLength as number,
+			);
+		});
+
+		dispatchSpy.mockRestore();
+	});
+
 	it('fetches key suggestions for metrics even without aggregateAttribute.key when showFilterSuggestionsWithoutMetric is true', async () => {
 		const mockedGetKeys = getKeySuggestions as jest.MockedFunction<
 			typeof getKeySuggestions

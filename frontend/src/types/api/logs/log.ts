@@ -29,6 +29,7 @@ type OmitAttributesResources = Pick<
 	ILog,
 	Exclude<
 		keyof ILog,
+		| 'date'
 		| 'resources_string'
 		| 'scope_string'
 		| 'attributesString'
