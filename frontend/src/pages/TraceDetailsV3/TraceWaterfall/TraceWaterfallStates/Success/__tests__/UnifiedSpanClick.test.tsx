@@ -260,11 +260,13 @@ describe('Span Click User Flows', () => {
 		) as HTMLElement;
 		await user.click(spanElement);
 
-		// Verify URL was updated with spanId
 		expect(mockUrlQuery.get('spanId')).toBe('span-1');
-		expect(mockSafeNavigate).toHaveBeenCalledWith({
-			search: expect.stringContaining('spanId=span-1'),
-		});
+		expect(mockSafeNavigate).toHaveBeenCalledWith(
+			{
+				search: expect.stringContaining('spanId=span-1'),
+			},
+			{ replace: true },
+		);
 	});
 
 	it('clicking span duration visually selects the span', async () => {
@@ -430,10 +432,13 @@ describe('Span Click User Flows', () => {
 		expect(mockUrlQuery.get('anotherParam')).toBe('anotherValue');
 		expect(mockUrlQuery.get('spanId')).toBe('span-1');
 
-		expect(mockSafeNavigate).toHaveBeenCalledWith({
-			search: expect.stringMatching(
-				/existingParam=existingValue.*anotherParam=anotherValue.*spanId=span-1/,
-			),
-		});
+		expect(mockSafeNavigate).toHaveBeenCalledWith(
+			{
+				search: expect.stringMatching(
+					/existingParam=existingValue.*anotherParam=anotherValue.*spanId=span-1/,
+				),
+			},
+			{ replace: true },
+		);
 	});
 });
