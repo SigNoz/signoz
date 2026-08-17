@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { Input } from '@signozhq/ui/input';
 import { SelectSimple } from '@signozhq/ui/select';
 import {
 	closestCenter,
@@ -19,7 +20,6 @@ import {
 import { Plus, Trash2 } from '@signozhq/icons';
 import { v4 as uuid } from 'uuid';
 
-import KeySearchInput from '../KeySearchInput/KeySearchInput';
 import styles from './MapperFormDrawer.module.scss';
 import SourceAttributeRow from './components/SourceAttributeRow/SourceAttributeRow';
 import {
@@ -164,12 +164,14 @@ function MapperFormDrawer({
 			<div className={styles.form}>
 				<div className={styles.field}>
 					<span className={styles.label}>Target attribute</span>
-					<KeySearchInput
+					<Input
 						placeholder="e.g. gen_ai.content.prompt"
 						value={draft.name}
-						fieldContext={draft.fieldContext}
 						disabled={isEdit}
-						onChange={(name): void => setDraft({ ...draft, name })}
+						autoComplete="off"
+						onChange={(event): void =>
+							setDraft({ ...draft, name: event.target.value })
+						}
 						testId="mapper-form-target"
 					/>
 					{isEdit && (

@@ -5,7 +5,7 @@ import { Switch } from '@signozhq/ui/switch';
 
 import ConditionKeyList from './components/ConditionKeyList/ConditionKeyList';
 import styles from './GroupFormDrawer.module.scss';
-import { FieldContext, GroupDraft, MapperDraftMode } from '../../types';
+import { GroupDraft, MapperDraftMode } from '../../types';
 import { isGroupDraftValid } from '../../utils';
 
 interface GroupFormDrawerProps {
@@ -91,7 +91,6 @@ function GroupFormDrawer({
 					placeholder="e.g. gen_ai."
 					addLabel="Add attribute key"
 					testIdPrefix="group-form-attribute"
-					fieldContext={FieldContext.attribute}
 					onChange={(attributes): void => setDraft({ ...draft, attributes })}
 				/>
 
@@ -102,7 +101,6 @@ function GroupFormDrawer({
 					placeholder="e.g. service.name"
 					addLabel="Add resource key"
 					testIdPrefix="group-form-resource"
-					fieldContext={FieldContext.resource}
 					onChange={(resource): void => setDraft({ ...draft, resource })}
 				/>
 

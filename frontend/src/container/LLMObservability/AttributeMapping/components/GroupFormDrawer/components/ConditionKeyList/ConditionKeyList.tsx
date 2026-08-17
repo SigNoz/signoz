@@ -1,8 +1,9 @@
+import { useState } from 'react';
+import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
-import { Plus, X } from '@signozhq/icons';
+import { Input } from '@signozhq/ui/input';
+import { X } from '@signozhq/icons';
 
-import { FieldContextValue } from 'container/LLMObservability/AttributeMapping/types';
-import KeySearchInput from '../../../KeySearchInput/KeySearchInput';
 import styles from './ConditionKeyList.module.scss';
 
 interface ConditionKeyListProps {
@@ -12,10 +13,11 @@ interface ConditionKeyListProps {
 	placeholder: string;
 	addLabel: string;
 	testIdPrefix: string;
-	fieldContext: FieldContextValue;
 	onChange: (keys: string[]) => void;
 }
 
+// Condition keys as removable chips. Chips are starred on both sides because
+// the key is matched as a substring, not as a full key name.
 function ConditionKeyList({
 	label,
 	labelHint,
@@ -23,19 +25,22 @@ function ConditionKeyList({
 	placeholder,
 	addLabel,
 	testIdPrefix,
-	fieldContext,
 	onChange,
 }: ConditionKeyListProps): JSX.Element {
-	const updateKey = (index: number, value: string): void => {
-		onChange(keys.map((key, i) => (i === index ? value : key)));
-	};
+	const [keyInput, setKeyInput] = useState<string>('');
 
 	const addKey = (): void => {
-		onChange([...keys, '']);
+		const next = keyInput.trim();
+		if (!next || keys.includes(next)) {
+			setKeyInput('');
+			return;
+		}
+		onChange([...keys, next]);
+		setKeyInput('');
 	};
 
-	const removeKey = (index: number): void => {
-		onChange(keys.filter((_, i) => i !== index));
+	const removeKey = (key: string): void => {
+		onChange(keys.filter((existing) => existing !== key));
 	};
 
 	return (
@@ -45,43 +50,60 @@ function ConditionKeyList({
 				{labelHint && <span className={styles.labelHint}> {labelHint}</span>}
 			</span>
 
-			{keys.length > 0 && (
-				<div className={styles.keys}>
-					{keys.map((key, index) => (
-						// eslint-disable-next-line react/no-array-index-key
-						<div className={styles.keyRow} key={index}>
-							<KeySearchInput
-								className={styles.keyInput}
-								placeholder={placeholder}
-								value={key}
-								fieldContext={fieldContext}
-								onChange={(next): void => updateKey(index, next)}
-								testId={`${testIdPrefix}-${index}`}
-							/>
-							<Button
-								variant="ghost"
-								color="secondary"
-								size="icon"
-								aria-label="Remove key"
-								onClick={(): void => removeKey(index)}
-								testId={`${testIdPrefix}-remove-${index}`}
+			<div className={styles.keyBox}>
+				{keys.length > 0 && (
+					<div className={styles.keyChips} data-testid={`${testIdPrefix}-chips`}>
+						{keys.map((key) => (
+							<Badge
+								key={key}
+								color="vanilla"
+								variant="outline"
+								className={styles.keyChip}
+								testId={`${testIdPrefix}-chip-${key}`}
 							>
-								<X size={14} />
-							</Button>
-						</div>
-					))}
-				</div>
-			)}
+								<span className={styles.keyChipText} title={key}>
+									{`*${key}*`}
+								</span>
+								<button
+									type="button"
+									aria-label={`Remove ${key}`}
+									className={styles.keyChipRemove}
+									onClick={(): void => removeKey(key)}
+									data-testid={`${testIdPrefix}-remove-${key}`}
+								>
+									<X size={10} />
+								</button>
+							</Badge>
+						))}
+					</div>
+				)}
 
-			<Button
-				variant="dashed"
-				color="secondary"
-				prefix={<Plus size={14} />}
-				onClick={addKey}
-				testId={`${testIdPrefix}-add`}
-			>
-				{addLabel}
-			</Button>
+				<div className={styles.keyAdd}>
+					<Input
+						className={styles.keyInput}
+						placeholder={placeholder}
+						value={keyInput}
+						autoComplete="off"
+						onChange={(event): void => setKeyInput(event.target.value)}
+						onKeyDown={(event): void => {
+							if (event.key === 'Enter') {
+								event.preventDefault();
+								addKey();
+							}
+						}}
+						testId={`${testIdPrefix}-input`}
+					/>
+					<Button
+						variant="outlined"
+						color="secondary"
+						aria-label={addLabel}
+						onClick={addKey}
+						testId={`${testIdPrefix}-add`}
+					>
+						+ Add
+					</Button>
+				</div>
+			</div>
 		</div>
 	);
 }

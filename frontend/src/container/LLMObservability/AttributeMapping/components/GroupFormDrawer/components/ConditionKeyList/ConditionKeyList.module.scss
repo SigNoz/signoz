@@ -18,15 +18,52 @@
 	letter-spacing: normal;
 }
 
-.keys {
+.keyBox {
 	display: flex;
 	flex-direction: column;
 	gap: var(--spacing-4);
+	padding: var(--spacing-6);
+	border-radius: 6px;
+	border: 1px solid var(--l2-border);
 }
 
-.keyRow {
+.keyChips {
 	display: flex;
+	flex-wrap: wrap;
+	gap: var(--spacing-3);
+}
+
+.keyChip {
+	display: inline-flex;
 	align-items: center;
+	gap: var(--spacing-2);
+	font-family: var(--font-mono, monospace);
+}
+
+.keyChipText {
+	display: block;
+	max-width: 260px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.keyChipRemove {
+	display: inline-flex;
+	align-items: center;
+	padding: 0;
+	background: transparent;
+	border: none;
+	color: inherit;
+	cursor: pointer;
+
+	&:hover {
+		color: var(--accent-cherry);
+	}
+}
+
+.keyAdd {
+	display: flex;
 	gap: var(--spacing-3);
 }
 
