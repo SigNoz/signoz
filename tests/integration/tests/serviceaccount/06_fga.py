@@ -16,6 +16,7 @@ from fixtures.auth import (
 from fixtures.role import find_role_by_name, transaction_group
 from fixtures.serviceaccount import (
     SERVICE_ACCOUNT_BASE,
+    SERVICE_ACCOUNT_ROLES_BASE,
     create_service_account,
     find_service_account_by_name,
 )
@@ -131,8 +132,8 @@ def test_write_forbidden_without_grant(
     assert resp.status_code == HTTPStatus.FORBIDDEN, f"update SA: expected 403, got {resp.status_code}: {resp.text}"
 
     resp = requests.post(
-        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{target_id}/roles"),
-        json={"id": viewer_role_id},
+        signoz.self.host_configs["8080"].get(SERVICE_ACCOUNT_ROLES_BASE),
+        json={"serviceAccountId": target_id, "roleId": viewer_role_id},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -220,17 +221,18 @@ def test_attach_detach_dual_scoped(
 
     # Both SA-attach (target id) and role-attach (editor) present -> allowed.
     resp = requests.post(
-        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{target_id}/roles"),
-        json={"id": editor_role_id},
+        signoz.self.host_configs["8080"].get(SERVICE_ACCOUNT_ROLES_BASE),
+        json={"serviceAccountId": target_id, "roleId": editor_role_id},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
-    assert resp.status_code == HTTPStatus.NO_CONTENT, f"assign editor to target: {resp.text}"
+    assert resp.status_code == HTTPStatus.CREATED, f"assign editor to target: {resp.text}"
+    editor_entry_id = resp.json()["data"]["id"]
 
     # SA-attach not held for the other SA id -> forbidden.
     resp = requests.post(
-        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{other_id}/roles"),
-        json={"id": editor_role_id},
+        signoz.self.host_configs["8080"].get(SERVICE_ACCOUNT_ROLES_BASE),
+        json={"serviceAccountId": other_id, "roleId": editor_role_id},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -238,8 +240,8 @@ def test_attach_detach_dual_scoped(
 
     # role-attach not held for viewer -> forbidden even on the target SA.
     resp = requests.post(
-        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{target_id}/roles"),
-        json={"id": viewer_role_id},
+        signoz.self.host_configs["8080"].get(SERVICE_ACCOUNT_ROLES_BASE),
+        json={"serviceAccountId": target_id, "roleId": viewer_role_id},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -247,7 +249,7 @@ def test_attach_detach_dual_scoped(
 
     # Both SA-detach (target id) and role-detach (editor) present -> remove allowed.
     resp = requests.delete(
-        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{target_id}/roles/{editor_role_id}"),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_ROLES_BASE}/{editor_entry_id}"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
