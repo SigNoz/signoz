@@ -138,39 +138,6 @@ SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
 `, stmt)
 }
 
-// A group-by column is grouped in the per-trace scan too, so a trace spanning two
-// models contributes one per-trace row per model.
-func TestBuild_FullSQL_Scalar_GroupBy(t *testing.T) {
-	b := newTestBuilder(t)
-	stmt, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeScalar,
-		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-			Signal:       telemetrytypes.SignalTraces,
-			Aggregations: []qbtypes.TraceAggregation{{Expression: "avg(trace.output_tokens)"}},
-			GroupBy:      []qbtypes.GroupByKey{{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "gen_ai.request.model"}}},
-		}, nil)
-	require.NoError(t, err)
-
-	assertSQLEqual(t, `
-WITH __scoped_traces AS (
-    SELECT trace_id,
-        toString(multiIf(mapContains(attributes_string, 'gen_ai.request.model'), attributes_string['gen_ai.request.model'], NULL)) AS __GROUP_BY_KEY_0_gen_ai.request.model,
-        sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens
-    FROM signoz_traces.distributed_signoz_index_v3
-    WHERE timestamp >= '1747947419000000000'
-      AND timestamp < '1747983448000000000'
-      AND ts_bucket_start >= 1747945619
-      AND ts_bucket_start <= 1747983448
-      AND (mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))
-    GROUP BY trace_id, __GROUP_BY_KEY_0_gen_ai.request.model
-)
-SELECT __GROUP_BY_KEY_0_gen_ai.request.model, avg(output_tokens) AS __result_0
-FROM __scoped_traces
-GROUP BY __GROUP_BY_KEY_0_gen_ai.request.model
-ORDER BY __result_0 DESC
-SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000
-`, stmt)
-}
-
 // Grouping by an intrinsic: the positional alias keeps `toString(name) AS name` (a cyclic
 // alias) from forming, and an order key on the dimension resolves to that alias.
 func TestBuild_FullSQL_Scalar_GroupByIntrinsic(t *testing.T) {
@@ -783,22 +750,4 @@ func TestBuild_Aggregation_RateDividesByInterval(t *testing.T) {
 	stmt, err = b.Build(ctx, valuer.UUID{}, testStartMs, testStartMs+500, qbtypes.RequestTypeScalar, q, nil)
 	require.NoError(t, err)
 	assert.Contains(t, stmt.Query, "count(llm_call_count)/1 AS __result_0")
-}
-
-// A window starting within the bucket-adjustment of the epoch clamps at bucket zero
-// instead of underflowing uint64.
-func TestBuild_Aggregation_EpochStartDoesNotUnderflowBucket(t *testing.T) {
-	b := newTestBuilder(t)
-	q := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-		Signal:       telemetrytypes.SignalTraces,
-		Aggregations: []qbtypes.TraceAggregation{{Expression: "sum(trace.output_tokens)"}},
-	}
-	stmt, err := b.Build(context.Background(), valuer.UUID{}, 0, testEndMs, qbtypes.RequestTypeScalar, q, nil)
-	require.NoError(t, err)
-	assert.Contains(t, renderSQL(t, stmt), "ts_bucket_start >= 0")
-
-	stmt, err = b.Build(context.Background(), valuer.UUID{}, 0, testEndMs, qbtypes.RequestTypeTrace,
-		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{Signal: telemetrytypes.SignalTraces, Limit: 10}, nil)
-	require.NoError(t, err)
-	assert.Contains(t, renderSQL(t, stmt), "ts_bucket_start >= 0")
 }

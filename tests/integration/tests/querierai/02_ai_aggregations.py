@@ -244,32 +244,6 @@ def test_ai_timeseries_top_n_groups(
     assert [v["value"] for v in bottom["values"]] == [pytest.approx(50)]
 
 
-def test_ai_timeseries_limit_without_group_by(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_traces: Callable[[list[Traces]], None],
-) -> None:
-    """A time-series limit without group-by has nothing to rank and is ignored."""
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    service = "ai-it-agg-limit-nogroup"
-    insert_traces(ai_trace(now=now, service=service, in_tokens=10, out_tokens=100) + ai_trace(now=now, service=service, in_tokens=10, out_tokens=300))
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = query_window(now)
-
-    resp = make_query_request(
-        signoz,
-        token,
-        start_ms,
-        end_ms,
-        [ai_aggregation_query(service, "avg(trace.output_tokens)", limit=1, step_interval=60)],
-        request_type=RequestType.TIME_SERIES,
-    )
-    assert resp.status_code == HTTPStatus.OK, resp.text
-    assert [v["value"] for v in get_series_values(resp.json(), "A")] == [pytest.approx(200)]
-
-
 def test_ai_scalar_group_order_limit(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument

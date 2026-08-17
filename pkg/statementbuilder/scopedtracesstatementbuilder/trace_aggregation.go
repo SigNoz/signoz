@@ -405,7 +405,8 @@ type perTraceScanOpts struct {
 }
 
 func (b *scopedTraceStatementBuilder) buildPerTraceScan(sb *sqlbuilder.SelectBuilder, start, end uint64, resolved []resolvedColumn, maskExpr string, o perTraceScanOpts) (string, []any) {
-	startBucket, endBucket := bucketBounds(start, end)
+	startBucket := start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
+	endBucket := end / querybuilder.NsToSeconds
 
 	selects := []string{"trace_id"}
 	if o.stepSeconds > 0 {

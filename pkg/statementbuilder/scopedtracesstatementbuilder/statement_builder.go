@@ -213,7 +213,8 @@ func (b *scopedTraceStatementBuilder) buildTraceListQuery(
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
 
-	startBucket, endBucket := bucketBounds(start, end)
+	startBucket := start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
+	endBucket := end / querybuilder.NsToSeconds
 
 	limit := query.Limit
 	if limit <= 0 {
@@ -677,16 +678,6 @@ func spanFilterSelectors(expr string) []*telemetrytypes.FieldKeySelector {
 		selectors[i].Signal = telemetrytypes.SignalTraces
 	}
 	return selectors
-}
-
-// bucketBounds clamps the widened start bucket at zero so a window starting within
-// BucketAdjustment of the epoch cannot underflow.
-func bucketBounds(start, end uint64) (uint64, uint64) {
-	startBucket := uint64(0)
-	if s := start / querybuilder.NsToSeconds; s > querybuilder.BucketAdjustment {
-		startBucket = s - querybuilder.BucketAdjustment
-	}
-	return startBucket, end / querybuilder.NsToSeconds
 }
 
 // quoteAlias backticks an alias containing characters special to the SQL builder.

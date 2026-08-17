@@ -61,7 +61,7 @@ func TestRewriteTraceAggregation(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			assert.Equal(t, tc.isTrace, isTrace)
+			require.Equal(t, tc.isTrace, isTrace)
 			if !tc.isTrace {
 				return
 			}
