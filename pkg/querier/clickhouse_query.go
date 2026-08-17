@@ -106,7 +106,9 @@ func (q *chSQLQuery) render(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	querybuilder.LogIfStatementIsNotValid(ctx, q.logger, rendered)
+	if err := querybuilder.ErrIfStatementIsNotValid(rendered); err != nil {
+		return "", err
+	}
 
 	return rendered, nil
 }

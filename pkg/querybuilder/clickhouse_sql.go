@@ -1,8 +1,6 @@
 package querybuilder
 
 import (
-	"context"
-	"log/slog"
 	"maps"
 	"slices"
 	"strings"
@@ -155,14 +153,6 @@ func ErrIfStatementIsNotValid(query string) (err error) {
 
 	return selectQuery.Accept(visitor)
 }
-
-// TODO(@therealpandey): remove this and move to ErrIfStatementIsNotValid.
-func LogIfStatementIsNotValid(ctx context.Context, logger *slog.Logger, query string) {
-	if err := ErrIfStatementIsNotValid(query); err != nil {
-		logger.WarnContext(ctx, "clickhouse sql is not valid", errors.Attr(err), slog.String("query", query))
-	}
-}
-
 func errIfFunctionReads(name string) error {
 	lowered := strings.ToLower(name)
 	if _, ok := readingFunctions[lowered]; !ok && !strings.HasPrefix(lowered, dictionaryFunctionPrefix) {
