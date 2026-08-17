@@ -8,7 +8,6 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logger import setup_logger
 from fixtures.serviceaccount import (
     SERVICE_ACCOUNT_BASE,
-    SERVICE_ACCOUNT_ROLES_BASE,
     create_service_account,
     create_service_account_with_key,
     find_role_by_name,
@@ -54,7 +53,7 @@ def test_assign_role_to_service_account(
     # assign editor role (additive — viewer stays)
     editor_role_id = find_role_by_name(signoz, token, "signoz-editor")
     assign_resp = requests.post(
-        signoz.self.host_configs["8080"].get(SERVICE_ACCOUNT_ROLES_BASE),
+        signoz.self.host_configs["8080"].get("/api/v1/service_account_roles"),
         json={"serviceAccountId": service_account_id, "roleId": editor_role_id},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
@@ -77,7 +76,7 @@ def test_assign_role_to_service_account(
     # assign admin role — all three should be present
     admin_role_id = find_role_by_name(signoz, token, "signoz-admin")
     assign_resp = requests.post(
-        signoz.self.host_configs["8080"].get(SERVICE_ACCOUNT_ROLES_BASE),
+        signoz.self.host_configs["8080"].get("/api/v1/service_account_roles"),
         json={"serviceAccountId": service_account_id, "roleId": admin_role_id},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
@@ -110,7 +109,7 @@ def test_assign_role_idempotent(
 
     # assign the same role again
     resp = requests.post(
-        signoz.self.host_configs["8080"].get(SERVICE_ACCOUNT_ROLES_BASE),
+        signoz.self.host_configs["8080"].get("/api/v1/service_account_roles"),
         json={"serviceAccountId": service_account_id, "roleId": viewer_role_id},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
@@ -149,7 +148,7 @@ def test_assign_role_expands_access(
     # assign admin role (additive — viewer stays)
     admin_role_id = find_role_by_name(signoz, token, "signoz-admin")
     assign_resp = requests.post(
-        signoz.self.host_configs["8080"].get(SERVICE_ACCOUNT_ROLES_BASE),
+        signoz.self.host_configs["8080"].get("/api/v1/service_account_roles"),
         json={"serviceAccountId": service_account_id, "roleId": admin_role_id},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
@@ -189,7 +188,7 @@ def test_remove_role_from_service_account(
     # add admin role (now has editor + admin)
     admin_role_id = find_role_by_name(signoz, token, "signoz-admin")
     assign_resp = requests.post(
-        signoz.self.host_configs["8080"].get(SERVICE_ACCOUNT_ROLES_BASE),
+        signoz.self.host_configs["8080"].get("/api/v1/service_account_roles"),
         json={"serviceAccountId": service_account_id, "roleId": admin_role_id},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
@@ -207,7 +206,7 @@ def test_remove_role_from_service_account(
 
     # remove editor role
     resp = requests.delete(
-        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_ROLES_BASE}/{editor_entry_id}"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/service_account_roles/{editor_entry_id}"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -253,7 +252,7 @@ def test_remove_role_verify_access_lost(
 
     # remove admin role
     del_resp = requests.delete(
-        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_ROLES_BASE}/{admin_entry_id}"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/service_account_roles/{admin_entry_id}"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
