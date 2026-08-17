@@ -19,11 +19,19 @@ import { resolveDashboardImage } from 'pages/DashboardPageV2/DashboardContainer/
 interface DashboardContainerProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
 	refetch: () => void;
+	/**
+	 * @deprecated
+	 * LLM Observability only. The only legal value is `false` (read-only embed).
+	 * Omitting the prop keeps permission-derived editability. Does not change `isLocked`.
+	 *  Temporary — TODO: @Ashwin / @Abhi — remove when embeds have their own surface.
+	 */
+	OverrideCanEditDashboard?: false;
 }
 
 function DashboardContainer({
 	dashboard,
 	refetch,
+	OverrideCanEditDashboard,
 }: DashboardContainerProps): JSX.Element {
 	const spec = dashboard.spec;
 	const image = resolveDashboardImage(dashboard.image);
@@ -45,10 +53,11 @@ function DashboardContainer({
 	// Seed during render (not an effect) so the first Panel render already sees the id —
 	// useDashboardFetchRequired throws on a missing id. setEditContext self-guards.
 	const setEditContext = useDashboardStore((s) => s.setEditContext);
+
 	setEditContext({
 		dashboardId: dashboard.id,
 		isLocked,
-		canEditDashboard,
+		canEditDashboard: OverrideCanEditDashboard ?? canEditDashboard,
 		refetch,
 	});
 
