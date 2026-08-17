@@ -61,6 +61,8 @@ export const logsQueryRangeSuccessNewFormatResponse = {
 };
 
 export const mockQueryBuilderContextValue = {
+	mode: 'url' as const,
+	committedQuery: null,
 	isDefaultQuery: (): boolean => false,
 	currentQuery: {
 		...initialQueriesMap.logs,
