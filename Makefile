@@ -81,20 +81,19 @@ devenv-clickhouse-clean: ## Clean all ClickHouse data from filesystem
 ##############################################################
 # go commands
 ##############################################################
-SQLITE_PATH               ?= signoz.db
-SIGNOZ_APISERVER_ADDRESS  ?= 0.0.0.0:8080
+SIGNOZ_SQLSTORE_SQLITE_PATH ?= signoz.db
+SIGNOZ_APISERVER_ADDRESS    ?= 0.0.0.0:8080
 
 .PHONY: go-run-enterprise
 go-run-enterprise: ## Runs the enterprise go backend server
 	@SIGNOZ_INSTRUMENTATION_LOGS_LEVEL=debug \
-	SIGNOZ_SQLSTORE_SQLITE_PATH=$(SQLITE_PATH) \
+	SIGNOZ_SQLSTORE_SQLITE_PATH=$(SIGNOZ_SQLSTORE_SQLITE_PATH) \
 	SIGNOZ_WEB_ENABLED=false \
 	SIGNOZ_TOKENIZER_JWT_SECRET=secret \
 	SIGNOZ_ALERTMANAGER_PROVIDER=signoz \
 	SIGNOZ_TELEMETRYSTORE_PROVIDER=clickhouse \
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://127.0.0.1:9000 \
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER=cluster \
-	SIGNOZ_APISERVER_ADDRESS=$(SIGNOZ_APISERVER_ADDRESS) \
 	go run -race \
 		$(GO_BUILD_CONTEXT_ENTERPRISE)/*.go server
 
@@ -105,14 +104,13 @@ go-test: ## Runs go unit tests
 .PHONY: go-run-community
 go-run-community: ## Runs the community go backend server
 	@SIGNOZ_INSTRUMENTATION_LOGS_LEVEL=debug \
-	SIGNOZ_SQLSTORE_SQLITE_PATH=$(SQLITE_PATH) \
+	SIGNOZ_SQLSTORE_SQLITE_PATH=$(SIGNOZ_SQLSTORE_SQLITE_PATH) \
 	SIGNOZ_WEB_ENABLED=false \
 	SIGNOZ_TOKENIZER_JWT_SECRET=secret \
 	SIGNOZ_ALERTMANAGER_PROVIDER=signoz \
 	SIGNOZ_TELEMETRYSTORE_PROVIDER=clickhouse \
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://127.0.0.1:9000 \
 	SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER=cluster \
-	SIGNOZ_APISERVER_ADDRESS=$(SIGNOZ_APISERVER_ADDRESS) \
 	go run -race \
 		$(GO_BUILD_CONTEXT_COMMUNITY)/*.go server
 
