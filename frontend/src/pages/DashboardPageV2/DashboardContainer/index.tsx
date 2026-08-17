@@ -21,18 +21,18 @@ interface DashboardContainerProps {
 	refetch: () => void;
 	/**
 	 * @deprecated
-	 * `overrideCanEditDashboard` is a temporary solution to allow the dashboard to be view only.
-	 * This is only used for LLM Observability. that's why the type is `false`.
+	 * `canEditDashboardOverride` is a temporary solution to allow the dashboard to be view only.
+	 * This is only used for LLM Observability.
 	 * It will be removed in the future.
 	 *  TODO: @Ashwin / @Abhi — remove when the final solution is implemented.
 	 */
-	overrideCanEditDashboard?: false;
+	canEditDashboardOverride?: boolean;
 }
 
 function DashboardContainer({
 	dashboard,
 	refetch,
-	overrideCanEditDashboard,
+	canEditDashboardOverride,
 }: DashboardContainerProps): JSX.Element {
 	const spec = dashboard.spec;
 	const image = resolveDashboardImage(dashboard.image);
@@ -58,7 +58,7 @@ function DashboardContainer({
 	setEditContext({
 		dashboardId: dashboard.id,
 		isLocked,
-		canEditDashboard: overrideCanEditDashboard ?? canEditDashboard,
+		canEditDashboard: canEditDashboardOverride ?? canEditDashboard,
 		refetch,
 	});
 
