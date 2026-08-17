@@ -28,7 +28,7 @@ func NewFieldKeySelectorFromPostableFieldKeysParams(params PostableFieldKeysPara
 
 func NewFieldValueSelectorFromPostableFieldValueParams(params PostableFieldValueParams) *telemetrytypes.FieldValueSelector {
 	return telemetrytypes.NewFieldValueSelectorFromPostableFieldValueParams(telemetrytypes.PostableFieldValueParams{
-		PostableFieldKeysParams: params.PostableFieldKeysParams.telemetryParams(),
+		PostableFieldKeysParams: params.telemetryParams(),
 		Name:                    params.Name,
 	})
 }
