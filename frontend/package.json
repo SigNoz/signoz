@@ -197,7 +197,7 @@
     "oxfmt": "0.54.0",
     "oxlint": "1.69.0",
     "oxlint-tsgolint": "0.23.0",
-    "postcss": "8.5.14",
+    "postcss": "8.5.26",
     "postcss-scss": "4.0.9",
     "react-resizable": "3.0.4",
     "redux-mock-store": "1.5.4",
