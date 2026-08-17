@@ -8805,6 +8805,7 @@ components:
       - metric
       - log
       - span
+      - trace
       - resource
       - attribute
       - body
@@ -9123,17 +9124,17 @@ paths:
       operationId: GetAIObservabilityFieldsKeys
       parameters:
       - in: query
-        name: signal
+        name: searchText
         schema:
-          $ref: '#/components/schemas/TelemetrytypesSignal'
+          type: string
       - in: query
-        name: source
+        name: fieldContext
         schema:
-          $ref: '#/components/schemas/TelemetrytypesSource'
+          $ref: '#/components/schemas/TelemetrytypesFieldContext'
       - in: query
-        name: limit
+        name: fieldDataType
         schema:
-          type: integer
+          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
       - in: query
         name: startUnixMilli
         schema:
@@ -9145,25 +9146,9 @@ paths:
           format: int64
           type: integer
       - in: query
-        name: fieldContext
+        name: limit
         schema:
-          $ref: '#/components/schemas/TelemetrytypesFieldContext'
-      - in: query
-        name: fieldDataType
-        schema:
-          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
-      - in: query
-        name: metricName
-        schema:
-          type: string
-      - in: query
-        name: metricNamespace
-        schema:
-          type: string
-      - in: query
-        name: searchText
-        schema:
-          type: string
+          type: integer
       responses:
         "200":
           content:
@@ -9213,10 +9198,6 @@ paths:
       operationId: GetAIObservabilityFieldsValues
       parameters:
       - in: query
-        name: name
-        schema:
-          type: string
-      - in: query
         name: searchText
         schema:
           type: string
@@ -9242,6 +9223,10 @@ paths:
         name: limit
         schema:
           type: integer
+      - in: query
+        name: name
+        schema:
+          type: string
       responses:
         "200":
           content:

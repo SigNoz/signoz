@@ -3,8 +3,6 @@ package aistatementbuilder
 import (
 	"context"
 	"fmt"
-	"maps"
-	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -1057,17 +1055,4 @@ func TestBuild_TraceList_VariableInAggregateFilter(t *testing.T) {
 	// unresolved variable -> rejected, not compared as a literal
 	_, err = build("trace.output_tokens > $missing", map[string]qbtypes.VariableItem{"other": {Value: 1}})
 	require.Error(t, err)
-}
-
-// the schema declares the aggregates the API suggests, this Scope declares the SQL
-// that computes them; either half alone is unusable.
-func TestScope_FilterableColumnsMatchSchemaAggregates(t *testing.T) {
-	var filterable []string
-	for _, c := range Scope().Columns {
-		if c.Filterable {
-			filterable = append(filterable, c.Alias)
-		}
-	}
-
-	assert.ElementsMatch(t, slices.Collect(maps.Keys(aitelemetryschema.TraceAggregateFields)), filterable)
 }

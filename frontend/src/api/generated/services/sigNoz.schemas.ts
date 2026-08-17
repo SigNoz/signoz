@@ -3490,6 +3490,7 @@ export enum TelemetrytypesFieldContextDTO {
 	metric = 'metric',
 	log = 'log',
 	span = 'span',
+	trace = 'trace',
 	resource = 'resource',
 	attribute = 'attribute',
 	body = 'body',
@@ -10177,18 +10178,18 @@ export interface ZeustypesPostableProfileDTO {
 
 export type GetAIObservabilityFieldsKeysParams = {
 	/**
+	 * @type string
 	 * @description undefined
 	 */
-	signal?: TelemetrytypesSignalDTO;
+	searchText?: string;
 	/**
 	 * @description undefined
 	 */
-	source?: TelemetrytypesSourceDTO;
+	fieldContext?: TelemetrytypesFieldContextDTO;
 	/**
-	 * @type integer
 	 * @description undefined
 	 */
-	limit?: number;
+	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
 	/**
 	 * @type integer
 	 * @format int64
@@ -10202,28 +10203,10 @@ export type GetAIObservabilityFieldsKeysParams = {
 	 */
 	endUnixMilli?: number;
 	/**
+	 * @type integer
 	 * @description undefined
 	 */
-	fieldContext?: TelemetrytypesFieldContextDTO;
-	/**
-	 * @description undefined
-	 */
-	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
-	/**
-	 * @type string
-	 * @description undefined
-	 */
-	metricName?: string;
-	/**
-	 * @type string
-	 * @description undefined
-	 */
-	metricNamespace?: string;
-	/**
-	 * @type string
-	 * @description undefined
-	 */
-	searchText?: string;
+	limit?: number;
 };
 
 export type GetAIObservabilityFieldsKeys200 = {
@@ -10239,11 +10222,6 @@ export type GetAIObservabilityFieldsValuesParams = {
 	 * @type string
 	 * @description undefined
 	 */
-	name?: string;
-	/**
-	 * @type string
-	 * @description undefined
-	 */
 	searchText?: string;
 	/**
 	 * @description undefined
@@ -10270,6 +10248,11 @@ export type GetAIObservabilityFieldsValuesParams = {
 	 * @description undefined
 	 */
 	limit?: number;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	name?: string;
 };
 
 export type GetAIObservabilityFieldsValues200 = {

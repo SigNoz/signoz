@@ -303,18 +303,6 @@ type PostableFieldValueParams struct {
 	ExistingQuery string `query:"existingQuery"`
 }
 
-// existingQuery is unsupported until the computed per-trace aggregates it may
-// reference can be narrowed on; the signal is always traces.
-type PostableAIObservabilityFieldValueParams struct {
-	Name           string        `query:"name"`
-	SearchText     string        `query:"searchText"`
-	FieldContext   FieldContext  `query:"fieldContext"`
-	FieldDataType  FieldDataType `query:"fieldDataType"`
-	StartUnixMilli int64         `query:"startUnixMilli"`
-	EndUnixMilli   int64         `query:"endUnixMilli"`
-	Limit          int           `query:"limit"`
-}
-
 func NewFieldKeySelectorFromPostableFieldKeysParams(params PostableFieldKeysParams) *FieldKeySelector {
 	var req FieldKeySelector
 
@@ -393,21 +381,6 @@ func NewFieldValueSelectorFromPostableFieldValueParams(params PostableFieldValue
 	}
 
 	return fieldValueSelector
-}
-
-func NewFieldValueSelectorFromPostableAIObservabilityFieldValueParams(params PostableAIObservabilityFieldValueParams) *FieldValueSelector {
-	return NewFieldValueSelectorFromPostableFieldValueParams(PostableFieldValueParams{
-		PostableFieldKeysParams: PostableFieldKeysParams{
-			Signal:         SignalTraces,
-			Limit:          params.Limit,
-			StartUnixMilli: params.StartUnixMilli,
-			EndUnixMilli:   params.EndUnixMilli,
-			FieldContext:   params.FieldContext,
-			FieldDataType:  params.FieldDataType,
-			SearchText:     params.SearchText,
-		},
-		Name: params.Name,
-	})
 }
 
 func NewTelemetryFieldKey(name string, fieldContext FieldContext, fieldDataType FieldDataType) *TelemetryFieldKey {

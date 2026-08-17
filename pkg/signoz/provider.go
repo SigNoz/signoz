@@ -326,6 +326,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.InfraMonitoring,
 			handlers.GatewayHandler,
 			handlers.Fields,
+			handlers.AIObservability,
 			handlers.AuthzHandler,
 			handlers.RawDataExport,
 			handlers.ZeusHandler,
