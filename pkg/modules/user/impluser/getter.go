@@ -37,53 +37,6 @@ func (module *getter) GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID)
 	return rootUser, userRoles, nil
 }
 
-func (module *getter) ListDeprecatedUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*types.DeprecatedUser, error) {
-	users, err := module.store.ListUsersByOrgID(ctx, orgID)
-	if err != nil {
-		return nil, err
-	}
-
-	// filter root users if feature flag `hide_root_users` is true
-	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
-	hideRootUsers := module.flagger.BooleanOrEmpty(ctx, flagger.FeatureHideRootUser, evalCtx)
-
-	if hideRootUsers {
-		users = slices.DeleteFunc(users, func(user *types.User) bool { return user.IsRoot })
-	}
-
-	userIDs := make([]valuer.UUID, len(users))
-	for idx, user := range users {
-		userIDs[idx] = user.ID
-	}
-
-	userRoles, err := module.userRoleStore.ListUserRolesByOrgIDAndUserIDs(ctx, orgID, userIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	// Build userID → role name mapping directly from the joined Role
-	userIDToRoleNames := make(map[valuer.UUID][]string)
-	for _, ur := range userRoles {
-		if ur.Role != nil {
-			userIDToRoleNames[ur.UserID] = append(userIDToRoleNames[ur.UserID], ur.Role.Name)
-		}
-	}
-
-	deprecatedUsers := make([]*types.DeprecatedUser, 0, len(users))
-	for _, user := range users {
-		roleNames := userIDToRoleNames[user.ID]
-
-		if len(roleNames) == 0 {
-			return nil, errors.Newf(errors.TypeInternal, authtypes.ErrCodeUserRolesNotFound, "no user roles entries found for user: %s", user.ID.String())
-		}
-
-		role := authtypes.SigNozManagedRoleToExistingLegacyRole[roleNames[0]]
-		deprecatedUsers = append(deprecatedUsers, types.NewDeprecatedUserFromUserAndRole(user, role))
-	}
-
-	return deprecatedUsers, nil
-}
-
 func (module *getter) ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*types.User, error) {
 	users, err := module.store.ListUsersByOrgID(ctx, orgID)
 	if err != nil {
@@ -101,56 +54,8 @@ func (module *getter) ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) (
 	return users, nil
 }
 
-func (module *getter) GetDeprecatedUserByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*types.DeprecatedUser, error) {
-	user, err := module.store.GetByOrgIDAndID(ctx, orgID, id)
-	if err != nil {
-		return nil, err
-	}
-
-	userRoles, err := module.GetRolesByUserID(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(userRoles) == 0 {
-		return nil, errors.New(errors.TypeInternal, authtypes.ErrCodeUserRolesNotFound, "no user roles entries found")
-	}
-
-	if userRoles[0].Role == nil {
-		return nil, errors.New(errors.TypeInternal, authtypes.ErrCodeRoleNotFound, "role not found for user role entry")
-	}
-
-	role := authtypes.SigNozManagedRoleToExistingLegacyRole[userRoles[0].Role.Name]
-
-	return types.NewDeprecatedUserFromUserAndRole(user, role), nil
-}
-
 func (module *getter) GetUserByOrgIDAndID(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) (*types.User, error) {
 	return module.store.GetByOrgIDAndID(ctx, orgID, userID)
-}
-
-func (module *getter) Get(ctx context.Context, id valuer.UUID) (*types.DeprecatedUser, error) {
-	user, err := module.store.GetUser(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-
-	userRoles, err := module.GetRolesByUserID(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(userRoles) == 0 {
-		return nil, errors.New(errors.TypeInternal, authtypes.ErrCodeUserRolesNotFound, "no user roles entries found")
-	}
-
-	if userRoles[0].Role == nil {
-		return nil, errors.New(errors.TypeInternal, authtypes.ErrCodeRoleNotFound, "role not found for user role entry")
-	}
-
-	role := authtypes.SigNozManagedRoleToExistingLegacyRole[userRoles[0].Role.Name]
-
-	return types.NewDeprecatedUserFromUserAndRole(user, role), nil
 }
 
 func (module *getter) ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.Email, orgIDs []valuer.UUID) ([]*types.User, error) {

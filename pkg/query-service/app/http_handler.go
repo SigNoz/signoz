@@ -44,7 +44,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/contextlinks"
 	traceFunnelsModule "github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
-	"github.com/SigNoz/signoz/pkg/query-service/app/inframetrics"
 	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logs"
 	logsv3 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v3"
@@ -120,20 +119,6 @@ type APIHandler struct {
 	// Websocket connection upgrader
 	Upgrader *websocket.Upgrader
 
-	hostsRepo      *inframetrics.HostsRepo
-	processesRepo  *inframetrics.ProcessesRepo
-	podsRepo       *inframetrics.PodsRepo
-	nodesRepo      *inframetrics.NodesRepo
-	namespacesRepo *inframetrics.NamespacesRepo
-	clustersRepo   *inframetrics.ClustersRepo
-	// workloads
-	deploymentsRepo  *inframetrics.DeploymentsRepo
-	daemonsetsRepo   *inframetrics.DaemonSetsRepo
-	statefulsetsRepo *inframetrics.StatefulSetsRepo
-	jobsRepo         *inframetrics.JobsRepo
-
-	pvcsRepo *inframetrics.PvcsRepo
-
 	LicensingAPI licensing.API
 
 	QueryParserAPI *queryparser.API
@@ -180,17 +165,6 @@ func NewAPIHandler(opts APIHandlerOpts, config signoz.Config) (*APIHandler, erro
 	querier := querier.NewQuerier(querierOpts)
 	querierv2 := querierV2.NewQuerier(querierOptsV2)
 
-	hostsRepo := inframetrics.NewHostsRepo(opts.Reader, querierv2)
-	processesRepo := inframetrics.NewProcessesRepo(opts.Reader, querierv2)
-	podsRepo := inframetrics.NewPodsRepo(opts.Reader, querierv2)
-	nodesRepo := inframetrics.NewNodesRepo(opts.Reader, querierv2)
-	namespacesRepo := inframetrics.NewNamespacesRepo(opts.Reader, querierv2)
-	clustersRepo := inframetrics.NewClustersRepo(opts.Reader, querierv2)
-	deploymentsRepo := inframetrics.NewDeploymentsRepo(opts.Reader, querierv2)
-	daemonsetsRepo := inframetrics.NewDaemonSetsRepo(opts.Reader, querierv2)
-	statefulsetsRepo := inframetrics.NewStatefulSetsRepo(opts.Reader, querierv2)
-	jobsRepo := inframetrics.NewJobsRepo(opts.Reader, querierv2)
-	pvcsRepo := inframetrics.NewPvcsRepo(opts.Reader, querierv2)
 	//quickFilterModule := quickfilter.NewAPI(opts.QuickFilterModule)
 
 	aH := &APIHandler{
@@ -202,17 +176,6 @@ func NewAPIHandler(opts APIHandlerOpts, config signoz.Config) (*APIHandler, erro
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		querier:                       querier,
 		querierV2:                     querierv2,
-		hostsRepo:                     hostsRepo,
-		processesRepo:                 processesRepo,
-		podsRepo:                      podsRepo,
-		nodesRepo:                     nodesRepo,
-		namespacesRepo:                namespacesRepo,
-		clustersRepo:                  clustersRepo,
-		deploymentsRepo:               deploymentsRepo,
-		daemonsetsRepo:                daemonsetsRepo,
-		statefulsetsRepo:              statefulsetsRepo,
-		jobsRepo:                      jobsRepo,
-		pvcsRepo:                      pvcsRepo,
 		LicensingAPI:                  opts.LicensingAPI,
 		Signoz:                        opts.Signoz,
 		QueryParserAPI:                opts.QueryParserAPI,
@@ -402,66 +365,6 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *middlew
 
 	// live logs
 	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.Signoz.Handlers.QuerierHandler.QueryRawStream)).Methods(http.MethodGet)
-}
-
-func (aH *APIHandler) RegisterInfraMetricsRoutes(router *mux.Router, am *middleware.AuthZ) {
-	hostsSubRouter := router.PathPrefix("/api/v1/hosts").Subrouter()
-	hostsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getHostAttributeKeys)).Methods(http.MethodGet)
-	hostsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getHostAttributeValues)).Methods(http.MethodGet)
-	hostsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getHostList)).Methods(http.MethodPost)
-
-	processesSubRouter := router.PathPrefix("/api/v1/processes").Subrouter()
-	processesSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getProcessAttributeKeys)).Methods(http.MethodGet)
-	processesSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getProcessAttributeValues)).Methods(http.MethodGet)
-	processesSubRouter.HandleFunc("/list", am.ViewAccess(aH.getProcessList)).Methods(http.MethodPost)
-
-	podsSubRouter := router.PathPrefix("/api/v1/pods").Subrouter()
-	podsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getPodAttributeKeys)).Methods(http.MethodGet)
-	podsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getPodAttributeValues)).Methods(http.MethodGet)
-	podsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getPodList)).Methods(http.MethodPost)
-
-	pvcsSubRouter := router.PathPrefix("/api/v1/pvcs").Subrouter()
-	pvcsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getPvcAttributeKeys)).Methods(http.MethodGet)
-	pvcsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getPvcAttributeValues)).Methods(http.MethodGet)
-	pvcsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getPvcList)).Methods(http.MethodPost)
-
-	nodesSubRouter := router.PathPrefix("/api/v1/nodes").Subrouter()
-	nodesSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getNodeAttributeKeys)).Methods(http.MethodGet)
-	nodesSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getNodeAttributeValues)).Methods(http.MethodGet)
-	nodesSubRouter.HandleFunc("/list", am.ViewAccess(aH.getNodeList)).Methods(http.MethodPost)
-
-	namespacesSubRouter := router.PathPrefix("/api/v1/namespaces").Subrouter()
-	namespacesSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getNamespaceAttributeKeys)).Methods(http.MethodGet)
-	namespacesSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getNamespaceAttributeValues)).Methods(http.MethodGet)
-	namespacesSubRouter.HandleFunc("/list", am.ViewAccess(aH.getNamespaceList)).Methods(http.MethodPost)
-
-	clustersSubRouter := router.PathPrefix("/api/v1/clusters").Subrouter()
-	clustersSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getClusterAttributeKeys)).Methods(http.MethodGet)
-	clustersSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getClusterAttributeValues)).Methods(http.MethodGet)
-	clustersSubRouter.HandleFunc("/list", am.ViewAccess(aH.getClusterList)).Methods(http.MethodPost)
-
-	deploymentsSubRouter := router.PathPrefix("/api/v1/deployments").Subrouter()
-	deploymentsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getDeploymentAttributeKeys)).Methods(http.MethodGet)
-	deploymentsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getDeploymentAttributeValues)).Methods(http.MethodGet)
-	deploymentsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getDeploymentList)).Methods(http.MethodPost)
-
-	daemonsetsSubRouter := router.PathPrefix("/api/v1/daemonsets").Subrouter()
-	daemonsetsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getDaemonSetAttributeKeys)).Methods(http.MethodGet)
-	daemonsetsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getDaemonSetAttributeValues)).Methods(http.MethodGet)
-	daemonsetsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getDaemonSetList)).Methods(http.MethodPost)
-
-	statefulsetsSubRouter := router.PathPrefix("/api/v1/statefulsets").Subrouter()
-	statefulsetsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getStatefulSetAttributeKeys)).Methods(http.MethodGet)
-	statefulsetsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getStatefulSetAttributeValues)).Methods(http.MethodGet)
-	statefulsetsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getStatefulSetList)).Methods(http.MethodPost)
-
-	jobsSubRouter := router.PathPrefix("/api/v1/jobs").Subrouter()
-	jobsSubRouter.HandleFunc("/attribute_keys", am.ViewAccess(aH.getJobAttributeKeys)).Methods(http.MethodGet)
-	jobsSubRouter.HandleFunc("/attribute_values", am.ViewAccess(aH.getJobAttributeValues)).Methods(http.MethodGet)
-	jobsSubRouter.HandleFunc("/list", am.ViewAccess(aH.getJobList)).Methods(http.MethodPost)
-
-	infraOnboardingSubRouter := router.PathPrefix("/api/v1/infra_onboarding").Subrouter()
-	infraOnboardingSubRouter.HandleFunc("/k8s/status", am.ViewAccess(aH.getK8sInfraOnboardingStatus)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) RegisterWebSocketPaths(router *mux.Router, am *middleware.AuthZ) {
@@ -3201,7 +3104,19 @@ func (aH *APIHandler) PreviewLogsPipelinesHandler(w http.ResponseWriter, r *http
 		return
 	}
 
-	resultLogs, err := aH.LogsParsingPipelineController.PreviewLogsPipelines(r.Context(), &req)
+	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
+
+	orgID, errv2 := valuer.NewUUID(claims.OrgID)
+	if errv2 != nil {
+		render.Error(w, errv2)
+		return
+	}
+
+	resultLogs, err := aH.LogsParsingPipelineController.PreviewLogsPipelines(r.Context(), orgID, &req)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -3802,6 +3717,10 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, apiErrorObj, nil)
 		return
 	}
+
+	queryRangeParams.UseJSONBody = aH.Signoz.Flagger.BooleanOrEmpty(
+		r.Context(), flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID),
+	)
 
 	// add temporality for each metric
 	temporalityErr := aH.PopulateTemporality(r.Context(), orgID, queryRangeParams)

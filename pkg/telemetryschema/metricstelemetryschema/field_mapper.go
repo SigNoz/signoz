@@ -9,7 +9,6 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/huandu/go-sqlbuilder"
 )
 
 var (
@@ -103,13 +102,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 	startNs, endNs uint64,
 	field *telemetrytypes.TelemetryFieldKey,
 	_ telemetrytypes.FieldDataType,
-	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	_ map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
-
-	fieldExpression, err := m.FieldFor(ctx, orgID, startNs, endNs, field)
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(fieldExpression), field.Name), nil
+	return m.FieldFor(ctx, orgID, startNs, endNs, field)
 }

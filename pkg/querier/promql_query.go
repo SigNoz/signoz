@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"math"
 	"regexp"
 	"sort"
 	"strings"
@@ -478,10 +479,18 @@ func (q *promqlQuery) toResult(matrix promql.Matrix, warnings []string, began ti
 
 		for idx := range v.Floats {
 			p := v.Floats[idx]
+			// NaN and +/-Inf have no JSON number form and nothing to plot; the
+			// builder path drops them while scanning rows (see consume.go).
+			if math.IsNaN(p.F) || math.IsInf(p.F, 0) {
+				continue
+			}
 			s.Values = append(s.Values, &qbv5.TimeSeriesValue{
 				Timestamp: p.T,
 				Value:     p.F,
 			})
+		}
+		if len(s.Values) == 0 {
+			continue
 		}
 		series = append(series, &s)
 	}
@@ -494,13 +503,11 @@ func (q *promqlQuery) toResult(matrix promql.Matrix, warnings []string, began ti
 	}
 	statsMu.Unlock()
 
-	tsData := &qbv5.TimeSeriesData{
-		QueryName: q.query.Name,
-		Aggregations: []*qbv5.AggregationBucket{
-			{
-				Series: series,
-			},
-		},
+	tsData := &qbv5.TimeSeriesData{QueryName: q.query.Name}
+	// No bucket at all when nothing survived: a bucket holding no series reads
+	// as "filtered to empty" to the cache, which stores it as a real result.
+	if len(series) > 0 {
+		tsData.Aggregations = []*qbv5.AggregationBucket{{Series: series}}
 	}
 
 	var payload any = tsData

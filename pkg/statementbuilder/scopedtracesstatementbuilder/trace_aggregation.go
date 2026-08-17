@@ -75,12 +75,23 @@ func (b *scopedTraceStatementBuilder) classifyAggregations(aggs []qbtypes.TraceA
 	return out, nil
 }
 
-// orderableColumnSet is what a trace-level aggregation or filter predicate may use;
+// orderableColumnSet is what a trace-level aggregation may use;
 // recognising a key as trace-level is aggregateAliasSet's job.
 func (b *scopedTraceStatementBuilder) orderableColumnSet() map[string]struct{} {
 	set := make(map[string]struct{})
 	for _, c := range b.scope.Columns {
 		if c.Orderable {
+			set[c.Alias] = struct{}{}
+		}
+	}
+	return set
+}
+
+// filterableColumnSet is what a trace-level filter predicate may use.
+func (b *scopedTraceStatementBuilder) filterableColumnSet() map[string]struct{} {
+	set := make(map[string]struct{})
+	for _, c := range b.scope.Columns {
+		if c.Filterable {
 			set[c.Alias] = struct{}{}
 		}
 	}

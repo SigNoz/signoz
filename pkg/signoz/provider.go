@@ -239,6 +239,8 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddSavedViewTuplesFactory(sqlstore),
 		sqlmigration.NewFixSavedViewSelectedFieldsFactory(sqlstore),
 		sqlmigration.NewBackfillSavedViewRequestTypeFactory(sqlstore),
+		sqlmigration.NewRestructureAuthDomainConfigFactory(sqlstore),
+		sqlmigration.NewFixSavedViewSelectFieldsFactory(sqlstore),
 	)
 }
 
@@ -324,6 +326,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.InfraMonitoring,
 			handlers.GatewayHandler,
 			handlers.Fields,
+			handlers.AIObservability,
 			handlers.AuthzHandler,
 			handlers.RawDataExport,
 			handlers.ZeusHandler,

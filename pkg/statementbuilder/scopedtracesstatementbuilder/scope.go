@@ -24,9 +24,10 @@ type TraceColumn struct {
 	// ClickHouse resolves bare identifiers to same-SELECT aliases first, so any
 	// expression referencing that column would silently bind to the alias.
 	Alias string
-	// Orderable columns can be used in ORDER BY and the aggregate filter; all-span
-	// aggregates are display-only and set false.
-	Orderable bool
+	// Orderable columns can be used in ORDER BY, Filterable ones in the aggregate
+	// filter; all-span aggregates are display-only and set neither.
+	Orderable  bool
+	Filterable bool
 	// SpanLevel columns surface a real span/resource attribute; a filter on them is
 	// applied span-level, so they are excluded from the trace-level aliases.
 	SpanLevel bool

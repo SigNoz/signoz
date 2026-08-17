@@ -39,7 +39,7 @@ func (b *scopedTraceStatementBuilder) resolveTraceHaving(ctx context.Context, ex
 			return nil, nil //nolint:nilnil
 		}
 	}
-	allowed := b.orderableColumnSet()
+	allowed := b.filterableColumnSet()
 	// upfront targeted errors; the visitor folds them into a combined "Found N errors"
 	if err := validateAggregateFilter(expr, allowed); err != nil {
 		return nil, err

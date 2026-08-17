@@ -612,7 +612,7 @@ func (b *scopedTraceStatementBuilder) buildEnrichmentSelect(sb *sqlbuilder.Selec
 
 // aggregateAliasSet recognises trace-level keys — display-only aliases included, so one
 // gets a targeted error instead of falling through as a span attribute (what a predicate
-// may actually use is orderableColumnSet). SpanLevel columns are filtered span-level.
+// may actually use is filterableColumnSet). SpanLevel columns are filtered span-level.
 func (b *scopedTraceStatementBuilder) aggregateAliasSet() map[string]struct{} {
 	set := make(map[string]struct{}, len(b.scope.Columns))
 	for _, c := range b.scope.Columns {
@@ -638,11 +638,11 @@ func neededMatchedAliases(orders []listOrder, having *traceHaving) map[string]st
 	return needed
 }
 
-// validateAggregateFilter rejects filters on aggregates not computable in the matched
-// pass (e.g. span_count) upfront, since inside the where-clause visitor the error would
+// validateAggregateFilter rejects filters on aggregates that are not filterable
+// (e.g. span_count) upfront, since inside the where-clause visitor the error would
 // surface only as a detail of a combined one. Only unspecified- and trace-context
 // selectors name aggregates.
-func validateAggregateFilter(havingExpr string, orderableSet map[string]struct{}) error {
+func validateAggregateFilter(havingExpr string, filterableSet map[string]struct{}) error {
 	if strings.TrimSpace(havingExpr) == "" {
 		return nil
 	}
@@ -650,9 +650,9 @@ func validateAggregateFilter(havingExpr string, orderableSet map[string]struct{}
 		if sel.FieldContext != telemetrytypes.FieldContextUnspecified && sel.FieldContext != telemetrytypes.FieldContextTrace {
 			continue
 		}
-		if _, ok := orderableSet[sel.Name]; !ok {
+		if _, ok := filterableSet[sel.Name]; !ok {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput,
-				"aggregate %q cannot be used in a trace-level filter; filterable aggregates: %s", sel.Name, strings.Join(sortedAliases(orderableSet), ", "))
+				"aggregate %q cannot be used in a trace-level filter; filterable aggregates: %s", sel.Name, strings.Join(sortedAliases(filterableSet), ", "))
 		}
 	}
 	return nil

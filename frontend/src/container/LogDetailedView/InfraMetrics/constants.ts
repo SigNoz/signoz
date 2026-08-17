@@ -1,8 +1,18 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import type { Having } from 'types/api/queryBuilder/queryBuilderData';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { Having as HavingV5 } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
+
+const buildSumGreaterThanZeroHaving = (
+	metricKey: string,
+	useV5HavingFormat: boolean,
+): Having[] | HavingV5 =>
+	useV5HavingFormat
+		? { expression: `sum(${metricKey}) > 0` }
+		: [{ columnName: `SUM(${metricKey})`, op: '>', value: 0 }];
 
 export const getPodQueryPayload = (
 	clusterName: string,
@@ -1540,6 +1550,7 @@ export const getHostQueryPayload = (
 	hostName: string,
 	start: number,
 	end: number,
+	useV5HavingFormat = false,
 ): GetQueryResultsProps[] => {
 	const hostNameKey = 'host.name';
 	const cpuTimeKey = 'system.cpu.time';
@@ -1802,13 +1813,7 @@ export const getHostQueryPayload = (
 									type: 'tag',
 								},
 							],
-							having: [
-								{
-									columnName: `SUM(${fsUsageKey})`,
-									op: '>',
-									value: 0,
-								},
-							],
+							having: buildSumGreaterThanZeroHaving(fsUsageKey, useV5HavingFormat),
 							legend: '{{mountpoint}}',
 							limit: null,
 							orderBy: [],
@@ -1857,13 +1862,7 @@ export const getHostQueryPayload = (
 									type: 'tag',
 								},
 							],
-							having: [
-								{
-									columnName: `SUM(${fsUsageKey})`,
-									op: '>',
-									value: 0,
-								},
-							],
+							having: buildSumGreaterThanZeroHaving(fsUsageKey, useV5HavingFormat),
 							legend: '{{mountpoint}}',
 							limit: null,
 							orderBy: [],
@@ -2089,13 +2088,7 @@ export const getHostQueryPayload = (
 									type: 'tag',
 								},
 							],
-							having: [
-								{
-									columnName: `SUM(${netIoKey})`,
-									op: '>',
-									value: 0,
-								},
-							],
+							having: buildSumGreaterThanZeroHaving(netIoKey, useV5HavingFormat),
 							legend: '{{device}}::{{direction}}',
 							limit: 30,
 							orderBy: [],
@@ -2551,13 +2544,7 @@ export const getHostQueryPayload = (
 									type: 'tag',
 								},
 							],
-							having: [
-								{
-									columnName: `SUM(${diskOpsKey})`,
-									op: '>',
-									value: 0,
-								},
-							],
+							having: buildSumGreaterThanZeroHaving(diskOpsKey, useV5HavingFormat),
 							legend: '{{device}}::{{direction}}',
 							limit: null,
 							orderBy: [],
@@ -2626,13 +2613,7 @@ export const getHostQueryPayload = (
 									type: 'tag',
 								},
 							],
-							having: [
-								{
-									columnName: `SUM(${diskPendingKey})`,
-									op: '>',
-									value: 0,
-								},
-							],
+							having: buildSumGreaterThanZeroHaving(diskPendingKey, useV5HavingFormat),
 							legend: '{{device}}',
 							limit: null,
 							orderBy: [],
@@ -2708,13 +2689,7 @@ export const getHostQueryPayload = (
 									type: 'tag',
 								},
 							],
-							having: [
-								{
-									columnName: `SUM(${diskOpTimeKey})`,
-									op: '>',
-									value: 0,
-								},
-							],
+							having: buildSumGreaterThanZeroHaving(diskOpTimeKey, useV5HavingFormat),
 							legend: '{{device}}::{{direction}}',
 							limit: null,
 							orderBy: [],
@@ -2805,68 +2780,94 @@ export const hostWidgetInfo = [
 		title: 'CPU Usage',
 		yAxisUnit: 'percentunit',
 		docPath: '/infrastructure-monitoring/host-monitoring/#cpu-usage-1',
+		description:
+			'CPU time share per state (user, system, wait, steal, idle); sustained wait points to disk I/O blocking.',
 	},
 	{
 		title: 'Memory Usage',
 		yAxisUnit: 'bytes',
 		docPath: '/infrastructure-monitoring/host-monitoring/#memory-usage-1',
+		description:
+			'Physical memory bytes per state (used, cached, buffers, free); a climbing used line suggests a leak.',
 	},
 	{
 		title: 'Disk Usage (%) by mountpoint',
 		yAxisUnit: 'percentunit',
 		docPath:
 			'/infrastructure-monitoring/host-monitoring/#disk-usage--by-mountpoint',
+		description:
+			'Used space as a percentage of capacity for each mountpoint, one line per mountpoint.',
 	},
 	{
 		title: 'System Load Average',
 		yAxisUnit: '',
 		docPath: '/infrastructure-monitoring/host-monitoring/#system-load-average',
+		description:
+			'The 1m, 5m and 15m load averages together; 1m above 15m means load is building.',
 	},
 	{
 		title: 'Network usage (bytes)',
 		yAxisUnit: 'bytes',
 		docPath: '/infrastructure-monitoring/host-monitoring/#network-usage-bytes',
+		description:
+			'Throughput in bytes/s per interface and direction, to spot NICs nearing rated bandwidth.',
 	},
 	{
 		title: 'Network usage (packet/s)',
 		yAxisUnit: 'pps',
 		docPath: '/infrastructure-monitoring/host-monitoring/#network-usage-packetss',
+		description:
+			'Packets per second per interface and direction; a NIC can saturate on packet rate before bytes.',
 	},
 	{
 		title: 'Network errors',
 		yAxisUnit: 'short',
 		docPath: '/infrastructure-monitoring/host-monitoring/#network-errors',
+		description:
+			'Rate of interface-level network errors per interface and direction; any sustained value needs attention.',
 	},
 	{
 		title: 'Network drops',
 		yAxisUnit: 'short',
 		docPath: '/infrastructure-monitoring/host-monitoring/#network-drops',
+		description:
+			'Rate of dropped packets per interface and direction, usually buffer overflow rather than link errors.',
 	},
 	{
 		title: 'Network connections',
 		yAxisUnit: 'short',
 		docPath: '/infrastructure-monitoring/host-monitoring/#network-connections',
+		description:
+			'Active connection counts per protocol and state (ESTABLISHED, TIME_WAIT, SYN_RECV) to spot leaks and churn.',
 	},
 	{
 		title: 'System disk io (bytes transferred)',
 		yAxisUnit: 'bytes',
 		docPath: '/infrastructure-monitoring/host-monitoring/#system-disk-io-bytes',
+		description:
+			'Disk throughput in bytes/s per device and direction, tracking heavy file I/O or database flushes.',
 	},
 	{
 		title: 'System disk operations/s',
 		yAxisUnit: 'short',
 		docPath:
 			'/infrastructure-monitoring/host-monitoring/#system-disk-operationss',
+		description:
+			'Rate of completed read and write operations per device; pair with disk io bytes to size each operation.',
 	},
 	{
 		title: 'Queue size',
 		yAxisUnit: 'short',
 		docPath: '/infrastructure-monitoring/host-monitoring/#queue-size',
+		description:
+			'Maximum disk request-queue depth per device; sustained high depth means the storage layer is saturated.',
 	},
 	{
 		title: 'System disk operation time/s',
 		yAxisUnit: 's',
 		docPath:
 			'/infrastructure-monitoring/host-monitoring/#system-disk-operation-times',
+		description:
+			'Rate of cumulative disk-busy time per device and direction; values near 1s/s mean the device is saturated.',
 	},
 ];
