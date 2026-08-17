@@ -5,6 +5,7 @@ from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 
 import pytest
+import requests
 from wiremock.resources.mappings import Mapping
 
 from fixtures import types
@@ -52,6 +53,7 @@ GOOGLECHAT_CASES = [
                     destination_type="webhook",
                     validation_data={
                         "path": "/v1/spaces/gc-metrics/messages",
+                        "count": 1,
                         "query_params": THREAD_QUERY,
                         "json_body": googlechat_card_subset("threshold_above_at_least_once", [("Open in SigNoz", r"/alerts/overview\?ruleId=")]),
                     },
@@ -72,6 +74,7 @@ GOOGLECHAT_CASES = [
                     destination_type="webhook",
                     validation_data={
                         "path": "/v1/spaces/gc-logs/messages",
+                        "count": 1,
                         "json_body": googlechat_card_subset(
                             "threshold_below_at_least_once",
                             [("View Related Logs", r"/logs/logs-explorer\?"), ("Open in SigNoz", r"/alerts/overview\?ruleId=")],
@@ -94,6 +97,7 @@ GOOGLECHAT_CASES = [
                     destination_type="webhook",
                     validation_data={
                         "path": "/v1/spaces/gc-traces/messages",
+                        "count": 1,
                         "json_body": googlechat_card_subset(
                             "threshold_above_average",
                             [("View Related Traces", r"traces-explorer\?"), ("Open in SigNoz", r"/alerts/overview\?ruleId=")],
@@ -118,6 +122,7 @@ GOOGLECHAT_CASES = [
                         # a retryable 429 is followed by a successful re-POST => >=2 hits
                         "path": "/v1/spaces/gc-retry/messages",
                         "min_count": 2,
+                        "query_params": THREAD_QUERY,
                         "json_body": {"cardsV2": [{"cardId": "signoz-alert"}]},
                     },
                 ),
@@ -165,3 +170,13 @@ def test_googlechat_notifier(  # pylint: disable=too-many-arguments,too-many-pos
     create_alert_rule(rule_data)
 
     verify_notification_expectation(notification_channel, maildev, gc_test_case.notification_expectation)
+
+    if gc_test_case.name == "googlechat_retry_429_then_200":
+        find = requests.post(
+            notification_channel.host_configs["8080"].get("/__admin/requests/find"),
+            json={"method": "POST", "urlPath": path},
+            timeout=10,
+        )
+        # the retried POST must land in the same chat thread as the 429'd attempt
+        thread_keys = {req["queryParams"]["threadKey"]["values"][0] for req in find.json()["requests"]}
+        assert len(thread_keys) == 1 and "" not in thread_keys, f"expected one shared threadKey across retry attempts, got {thread_keys}"
