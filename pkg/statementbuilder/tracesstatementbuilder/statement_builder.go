@@ -283,6 +283,30 @@ func adjustTraceKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*te
 		intrinsicOrCalculatedField = tracestelemetryschema.CalculatedFieldsDeprecated[key.Name]
 	}
 
+	/*
+		The definition above was found under the bare name, so its context may disagree with the
+		one the user gave.
+	*/
+	if isIntrinsicOrCalculatedField &&
+		key.FieldContext != telemetrytypes.FieldContextUnspecified &&
+		key.FieldContext != intrinsicOrCalculatedField.FieldContext {
+
+		// metadata knows the context-qualified name, so the key does name a field in the context
+		// asked for: `scope.` + `name` is recorded as `scope.name`
+		_, knownInAskedContext := keys[key.FieldContext.StringValue()+"."+key.Name]
+
+		// the definition's own name carries a different context, making it addressable only as that context
+		definitionIsContextBound := strings.HasPrefix(
+			intrinsicOrCalculatedField.Name,
+			intrinsicOrCalculatedField.FieldContext.StringValue()+".",
+		)
+
+		if knownInAskedContext || definitionIsContextBound {
+			actions = append(actions, fmt.Sprintf("Keeping context %s on %s instead of %s", key.FieldContext.StringValue(), key, intrinsicOrCalculatedField))
+			isIntrinsicOrCalculatedField = false
+		}
+	}
+
 	if isIntrinsicOrCalculatedField {
 		actions = append(actions, querybuilder.AdjustKey(key, keys, &intrinsicOrCalculatedField)...)
 	} else {
