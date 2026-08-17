@@ -37,7 +37,6 @@ import { OptionsQuery } from 'container/OptionsMenu/types';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import useUrlQuery from 'hooks/useUrlQuery';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
@@ -66,6 +65,7 @@ import {
 } from 'types/common/queryBuilder';
 import { sanitizeOrderByForExplorer } from 'utils/sanitizeOrderBy';
 import { v4 as uuid } from 'uuid';
+import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 
 export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	currentQuery: initialQueriesMap.metrics,
@@ -105,7 +105,6 @@ export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 export function QueryBuilderProvider({
 	children,
 }: PropsWithChildren): JSX.Element {
-	const urlQuery = useUrlQuery();
 	const location = useLocation();
 
 	const currentPathnameRef = useRef<string | null>(location.pathname);
@@ -122,7 +121,7 @@ export function QueryBuilderProvider({
 		null,
 	);
 
-	const panelTypeQueryParams = urlQuery.get(
+	const panelTypeQueryParams = getUnstableCurrentSearchParams().get(
 		QueryParams.panelTypes,
 	) as PANEL_TYPES | null;
 
@@ -976,6 +975,7 @@ export function QueryBuilderProvider({
 				unit: query.unit || initialQueryState.unit,
 			};
 
+			const urlQuery = getUnstableCurrentSearchParams();
 			const pagination = urlQuery.get(QueryParams.pagination);
 
 			if (pagination) {
@@ -1014,7 +1014,7 @@ export function QueryBuilderProvider({
 
 			safeNavigate(generatedUrl, { newTab });
 		},
-		[location.pathname, safeNavigate, urlQuery],
+		[location.pathname, safeNavigate],
 	);
 
 	const handleSetConfig = useCallback(
