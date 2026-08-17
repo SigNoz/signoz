@@ -59,12 +59,12 @@ export const themeExtension = {
 		style: { ...style },
 		className: 'pretty-view__nested-row',
 	}),
-	arrowContainer: ({
-		style,
-	}: {
-		style: Record<string, unknown>;
-	}): { style: Record<string, unknown>; className: string } => ({
+	arrowContainer: (
+		{ style }: { style: Record<string, unknown> },
+		arrowStyle: string,
+	): { style: Record<string, unknown>; className?: string } => ({
 		style: { ...style },
-		className: 'pretty-view__arrow',
+		// Only pin the single caret's width (for key alignment).
+		className: arrowStyle === 'double' ? undefined : 'pretty-view__arrow',
 	}),
 };
