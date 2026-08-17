@@ -129,4 +129,4 @@ def test_delete_user(
     assert response.status_code == HTTPStatus.OK
     data = response.json()["data"]
     assert data["status"] == "deleted"
-    assert len(data["userRoles"]) == 1
+    assert len(data["userRoles"]) == 0

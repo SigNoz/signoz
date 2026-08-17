@@ -241,6 +241,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewBackfillSavedViewRequestTypeFactory(sqlstore),
 		sqlmigration.NewRestructureAuthDomainConfigFactory(sqlstore),
 		sqlmigration.NewFixSavedViewSelectFieldsFactory(sqlstore),
+		sqlmigration.NewDeleteOrphanUserRolesFactory(),
 	)
 }
 
