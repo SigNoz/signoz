@@ -88,5 +88,5 @@ func (m *fieldMapper) ColumnExpressionFor(ctx context.Context, orgID valuer.UUID
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(colName), field.Name), nil
+	return fmt.Sprintf("%s AS %s", sqlbuilder.Escape(colName), querybuilder.ClickHouseIdentifier(field.Name)), nil
 }

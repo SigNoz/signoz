@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -66,7 +67,7 @@ func (m *defaultFieldMapper) FieldFor(
 		return "", err
 	}
 	if key.FieldContext == telemetrytypes.FieldContextResource {
-		return fmt.Sprintf("simpleJSONExtractString(%s, '%s')", columns[0].Name, key.Name), nil
+		return fmt.Sprintf("simpleJSONExtractString(%s, %s)", columns[0].Name, querybuilder.ClickHouseStringLiteral(key.Name)), nil
 	}
 	return columns[0].Name, nil
 }
@@ -91,7 +92,7 @@ func (m *defaultFieldMapper) ExistsFor(
 		}
 		return "false", nil
 	}
-	pred := fmt.Sprintf("simpleJSONHas(%s, '%s')", columns[0].Name, key.Name)
+	pred := fmt.Sprintf("simpleJSONHas(%s, %s)", columns[0].Name, querybuilder.ClickHouseStringLiteral(key.Name))
 	if exists {
 		return pred, nil
 	}
@@ -110,5 +111,5 @@ func (m *defaultFieldMapper) ColumnExpressionFor(
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("%s AS `%s`", fieldExpression, key.Name), nil
+	return fmt.Sprintf("%s AS %s", fieldExpression, querybuilder.ClickHouseIdentifier(key.Name)), nil
 }

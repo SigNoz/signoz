@@ -298,8 +298,8 @@ func (m *fieldMapper) resolveColumnExprs(
 			}
 			// have to add ::string as clickHouse throws an error :- data types Variant/Dynamic are not allowed in GROUP BY
 			// once clickHouse dependency is updated, we need to check if we can remove it.
-			exprs = append(exprs, fmt.Sprintf("%s.`%s`::String", columnName, key.Name))
-			existExprs = append(existExprs, fmt.Sprintf("%s.`%s` IS NOT NULL", columnName, key.Name))
+			exprs = append(exprs, fmt.Sprintf("%s.%s::String", columnName, querybuilder.ClickHouseIdentifier(key.Name)))
+			existExprs = append(existExprs, fmt.Sprintf("%s.%s IS NOT NULL", columnName, querybuilder.ClickHouseIdentifier(key.Name)))
 		case schema.ColumnTypeEnumString,
 			schema.ColumnTypeEnumUInt64,
 			schema.ColumnTypeEnumUInt32,
@@ -329,8 +329,8 @@ func (m *fieldMapper) resolveColumnExprs(
 					exprs = append(exprs, telemetrytypes.FieldKeyToMaterializedColumnName(key))
 					existExprs = append(existExprs, telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key))
 				} else {
-					exprs = append(exprs, fmt.Sprintf("%s['%s']", columnName, key.Name))
-					existExprs = append(existExprs, fmt.Sprintf("mapContains(%s, '%s')", columnName, key.Name))
+					exprs = append(exprs, fmt.Sprintf("%s[%s]", columnName, querybuilder.ClickHouseStringLiteral(key.Name)))
+					existExprs = append(existExprs, fmt.Sprintf("mapContains(%s, %s)", columnName, querybuilder.ClickHouseStringLiteral(key.Name)))
 				}
 			default:
 				return nil, nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "value type %s is not supported for map column type %s", valueType, column.Type)

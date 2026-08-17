@@ -141,8 +141,8 @@ func (m *fieldMapper) FieldFor(ctx context.Context, orgID valuer.UUID, tsStart, 
 		case schema.ColumnTypeEnumJSON:
 			switch key.FieldContext {
 			case telemetrytypes.FieldContextResource:
-				exprs = append(exprs, fmt.Sprintf("%s.`%s`::String", columnName, key.Name))
-				existExpr = append(existExpr, fmt.Sprintf("%s.`%s` IS NOT NULL", columnName, key.Name))
+				exprs = append(exprs, fmt.Sprintf("%s.%s::String", columnName, querybuilder.ClickHouseIdentifier(key.Name)))
+				existExpr = append(existExpr, fmt.Sprintf("%s.%s IS NOT NULL", columnName, querybuilder.ClickHouseIdentifier(key.Name)))
 			case telemetrytypes.FieldContextBody:
 				if key.Name == messageSubField {
 					exprs = append(exprs, messageSubColumn)
@@ -186,8 +186,8 @@ func (m *fieldMapper) FieldFor(ctx context.Context, orgID valuer.UUID, tsStart, 
 					exprs = append(exprs, telemetrytypes.FieldKeyToMaterializedColumnName(key))
 					existExpr = append(existExpr, telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key))
 				} else {
-					exprs = append(exprs, fmt.Sprintf("%s['%s']", columnName, key.Name))
-					existExpr = append(existExpr, fmt.Sprintf("mapContains(%s, '%s')", columnName, key.Name))
+					exprs = append(exprs, fmt.Sprintf("%s[%s]", columnName, querybuilder.ClickHouseStringLiteral(key.Name)))
+					existExpr = append(existExpr, fmt.Sprintf("mapContains(%s, %s)", columnName, querybuilder.ClickHouseStringLiteral(key.Name)))
 				}
 			default:
 				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for map column type %s", valueType)
@@ -415,7 +415,7 @@ func (m *fieldMapper) buildFieldForJSON(key *telemetrytypes.TelemetryFieldKey) (
 			elemType = telemetrytypes.String
 		}
 
-		fieldPath := fmt.Sprintf("%s.`%s`", LogsV2BodyV2Column, key.Name)
+		fieldPath := fmt.Sprintf("%s.%s", LogsV2BodyV2Column, querybuilder.ClickHouseIdentifier(key.Name))
 		return fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, elemType.StringValue()), nil
 	}
 
