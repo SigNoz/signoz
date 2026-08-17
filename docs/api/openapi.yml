@@ -14376,9 +14376,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - auth-domain:list
       - tokenizer:
-        - ADMIN
+        - auth-domain:list
       summary: List all auth domains
       tags:
       - authdomains
@@ -14438,9 +14438,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - auth-domain:create
       - tokenizer:
-        - ADMIN
+        - auth-domain:create
       summary: Create auth domain
       tags:
       - authdomains
@@ -14484,9 +14484,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - auth-domain:delete
       - tokenizer:
-        - ADMIN
+        - auth-domain:delete
       summary: Delete auth domain
       tags:
       - authdomains
@@ -14541,9 +14541,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - auth-domain:read
       - tokenizer:
-        - ADMIN
+        - auth-domain:read
       summary: Get auth domain by ID
       tags:
       - authdomains
@@ -14597,9 +14597,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - auth-domain:update
       - tokenizer:
-        - ADMIN
+        - auth-domain:update
       summary: Update auth domain
       tags:
       - authdomains
