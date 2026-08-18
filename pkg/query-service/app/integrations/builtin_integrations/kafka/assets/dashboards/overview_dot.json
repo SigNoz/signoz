@@ -1,0 +1,575 @@
+{
+  "description": "Kafka Server overview built from the OpenTelemetry Kafka metrics receiver.",
+  "id": "kafka-overview",
+  "layout": [
+    {
+      "h": 3,
+      "i": "brokers",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "h": 3,
+      "i": "topic-partitions",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 0
+    },
+    {
+      "h": 3,
+      "i": "consumer-lag",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 3
+    },
+    {
+      "h": 3,
+      "i": "group-members",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 3
+    },
+    {
+      "h": 3,
+      "i": "offset-growth",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 6
+    },
+    {
+      "h": 3,
+      "i": "replicas-in-sync",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 6
+    }
+  ],
+  "tags": ["kafka", "messaging"],
+  "title": "Kafka overview",
+  "uploadedGrafana": false,
+  "uuid": "d997250d-e803-48f9-85e7-c8579816b7d2",
+  "variables": {
+    "cluster_alias": {
+      "allSelected": true,
+      "customValue": "",
+      "description": "Kafka cluster alias",
+      "id": "cluster_alias",
+      "key": "cluster_alias",
+      "modificationUUID": "cluster-alias-mod",
+      "multiSelect": true,
+      "name": "cluster_alias",
+      "order": 0,
+      "queryValue": "SELECT JSONExtractString(labels, 'kafka.cluster.alias') AS cluster_alias FROM signoz_metrics.distributed_time_series_v4_1day WHERE metric_name = 'kafka_brokers' GROUP BY cluster_alias",
+      "selectedValue": [],
+      "showALLOption": true,
+      "sort": "ASC",
+      "textboxValue": "",
+      "type": "QUERY"
+    },
+    "topic": {
+      "allSelected": true,
+      "customValue": "",
+      "description": "Kafka topic name",
+      "id": "topic",
+      "key": "topic",
+      "modificationUUID": "topic-mod",
+      "multiSelect": true,
+      "name": "topic",
+      "order": 1,
+      "queryValue": "SELECT JSONExtractString(labels, 'topic') AS topic FROM signoz_metrics.distributed_time_series_v4_1day WHERE metric_name = 'kafka_topic_partitions' GROUP BY topic",
+      "selectedValue": [],
+      "showALLOption": true,
+      "sort": "ASC",
+      "textboxValue": "",
+      "type": "QUERY"
+    },
+    "group": {
+      "allSelected": true,
+      "customValue": "",
+      "description": "Kafka consumer group",
+      "id": "group",
+      "key": "group",
+      "modificationUUID": "group-mod",
+      "multiSelect": true,
+      "name": "group",
+      "order": 2,
+      "queryValue": "SELECT JSONExtractString(labels, 'group') AS consumer_group FROM signoz_metrics.distributed_time_series_v4_1day WHERE metric_name = 'kafka_consumer_group_lag_sum' GROUP BY consumer_group",
+      "selectedValue": [],
+      "showALLOption": true,
+      "sort": "ASC",
+      "textboxValue": "",
+      "type": "QUERY"
+    }
+  },
+  "version": "v5",
+  "widgets": [
+    {
+      "description": "Broker count reported by the receiver.",
+      "fillSpans": false,
+      "id": "brokers",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "kafka_brokers",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "temporality": null,
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "kafka.cluster.alias IN $cluster_alias"
+              },
+              "functions": [],
+              "groupBy": [],
+              "having": {
+                "expression": ""
+              },
+              "legend": "Brokers",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "brokers-query",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "softMax": null,
+      "softMin": 0,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Broker count",
+      "yAxisUnit": "none"
+    },
+    {
+      "description": "Partition count per topic.",
+      "fillSpans": false,
+      "id": "topic-partitions",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "kafka_topic_partitions",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "temporality": null,
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "topic IN $topic"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "topic--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "topic",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{topic}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "topic-partitions-query",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "softMax": null,
+      "softMin": 0,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Topic partitions",
+      "yAxisUnit": "none"
+    },
+    {
+      "description": "Lag summed across partitions per consumer group and topic.",
+      "fillSpans": false,
+      "id": "consumer-lag",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "kafka_consumer_group_lag_sum",
+                  "reduceTo": "max",
+                  "spaceAggregation": "sum",
+                  "temporality": null,
+                  "timeAggregation": "max"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "group IN $group AND topic IN $topic"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "group--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "group",
+                  "type": "tag"
+                },
+                {
+                  "dataType": "string",
+                  "id": "topic--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "topic",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{group}} / {{topic}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "consumer-lag-query",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "softMax": null,
+      "softMin": 0,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Consumer lag",
+      "yAxisUnit": "none"
+    },
+    {
+      "description": "Member count per consumer group.",
+      "fillSpans": false,
+      "id": "group-members",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "kafka_consumer_group_members",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "temporality": null,
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "group IN $group"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "group--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "group",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{group}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "group-members-query",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "softMax": null,
+      "softMin": 0,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Consumer group members",
+      "yAxisUnit": "none"
+    },
+    {
+      "description": "Current partition offsets by topic.",
+      "fillSpans": false,
+      "id": "offset-growth",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "kafka_partition_current_offset",
+                  "reduceTo": "max",
+                  "spaceAggregation": "max",
+                  "temporality": null,
+                  "timeAggregation": "max"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "topic IN $topic"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "topic--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "topic",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{topic}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "offset-growth-query",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "softMax": null,
+      "softMin": 0,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Partition current offsets",
+      "yAxisUnit": "none"
+    },
+    {
+      "description": "In-sync replica count across topic partitions.",
+      "fillSpans": false,
+      "id": "replicas-in-sync",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "kafka_partition_replicas_in_sync",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "temporality": null,
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "topic IN $topic"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "topic--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "topic",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{topic}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "replicas-in-sync-query",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "softMax": null,
+      "softMin": 0,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Replicas in sync",
+      "yAxisUnit": "none"
+    }
+  ]
+}
