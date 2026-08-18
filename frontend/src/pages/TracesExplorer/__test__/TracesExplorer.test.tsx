@@ -51,7 +51,7 @@ jest.mock('hooks/queryBuilder/useGetPanelTypesQueryParam', () => ({
 	}),
 }));
 
-const historyPush = jest.fn();
+const mockNavigate = jest.fn();
 
 const BASE_URL = ENVIRONMENT.baseURL;
 const FILTER_SERVICE_NAME = 'Service Name';
@@ -69,10 +69,11 @@ jest.mock('react-router-dom', () => ({
 		hash: '',
 		state: null,
 	}),
-	useHistory: (): any => ({
-		...jest.requireActual('react-router-dom').useHistory(),
-		push: historyPush,
-	}),
+}));
+
+jest.mock('lib/router/navigation', () => ({
+	...jest.requireActual('lib/router/navigation'),
+	navigate: (...args: unknown[]): void => mockNavigate(...args),
 }));
 
 jest.mock(
@@ -354,7 +355,7 @@ describe('TracesExplorer -', () => {
 		);
 		fireEvent.click(createAlertBtn);
 
-		expect(historyPush).toHaveBeenCalledWith(
+		expect(mockNavigate).toHaveBeenCalledWith(
 			expect.stringContaining(`${ROUTES.ALERTS_NEW}`),
 		);
 	});

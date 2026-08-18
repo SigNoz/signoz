@@ -1,10 +1,11 @@
-import { Route, Switch } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import * as roleApi from 'api/generated/services/role';
+import ROUTES from 'constants/routes';
 import { customRoleResponse } from 'mocks-server/__mockdata__/roles';
 import { server } from 'mocks-server/server';
 import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
-import { render, screen } from 'tests/test-utils';
+import { render, screen, waitFor } from 'tests/test-utils';
+import { safeNavigateMock } from '__tests__/safeNavigateMock';
 
 import * as useRolePermissionsModule from '../../hooks/useRolePermissions';
 import ViewRolePage from '../ViewRolePage';
@@ -95,24 +96,15 @@ describe('ViewRolePage - Error State', () => {
 			error: new Error('Failed to fetch role'),
 		} as ReturnType<typeof roleApi.useGetRole>);
 
-		render(
-			<Switch>
-				<Route path="/settings/roles/:roleId">
-					<ViewRolePage />
-				</Route>
-				<Route path="/settings/roles">
-					<div data-testid="roles-list-target" />
-				</Route>
-			</Switch>,
-			undefined,
-			{ initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME) },
-		);
+		render(<ViewRolePage />, undefined, {
+			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
+		});
 
 		const cancelButton = await screen.findByTestId('cancel-button');
 		await user.click(cancelButton);
 
-		await expect(
-			screen.findByTestId('roles-list-target'),
-		).resolves.toBeInTheDocument();
+		await waitFor(() => {
+			expect(safeNavigateMock).toHaveBeenCalledWith(ROUTES.ROLES_SETTINGS);
+		});
 	});
 });
