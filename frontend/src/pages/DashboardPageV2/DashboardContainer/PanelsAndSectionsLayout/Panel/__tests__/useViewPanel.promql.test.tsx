@@ -16,23 +16,11 @@ import ViewPanelModal from '../ViewPanelModal/ViewPanelModal';
 import { useViewPanel } from '../hooks/useViewPanel';
 
 // jest.config maps the real hook to a no-op mock; this suite needs real navigation.
-jest.mock('hooks/useSafeNavigate', () => {
-	const { useHistory } = jest.requireActual('react-router-dom');
-	return {
-		useSafeNavigate: (): unknown => {
-			const history = useHistory();
-			return {
-				safeNavigate: (to: string, opts?: { replace?: boolean }): void => {
-					if (opts?.replace) {
-						history.replace(to);
-					} else {
-						history.push(to);
-					}
-				},
-			};
-		},
-	};
-});
+jest.mock('hooks/useSafeNavigate', () =>
+	jest
+		.requireActual('tests/browser-history-safe-navigate')
+		.createBrowserHistorySafeNavigateMock(),
+);
 
 jest.mock(
 	'pages/DashboardPageV2/DashboardContainer/hooks/usePanelQuery',
@@ -150,9 +138,12 @@ function Harness(): JSX.Element {
 	);
 }
 
+const INITIAL_ROUTE = '/dashboard/dash-1';
+
 const renderHarness = (): void => {
+	window.history.replaceState(null, '', INITIAL_ROUTE);
 	render(
-		<MemoryRouter initialEntries={['/dashboard/dash-1']}>
+		<MemoryRouter initialEntries={[INITIAL_ROUTE]}>
 			<CompatRouter>
 				<QueryClientProvider client={new QueryClient()}>
 					<ReduxProvider store={configureStore([])(appStore.getState())}>
