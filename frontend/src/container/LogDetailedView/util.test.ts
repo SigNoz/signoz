@@ -52,7 +52,7 @@ describe('buildPrettyViewData', () => {
 		timestamp: 1234,
 		body: 'hello',
 		attributes: {},
-		resources: {},
+		resource: {},
 		scope: {},
 	} as any;
 
@@ -99,7 +99,7 @@ describe('aggregateAttributesResourcesToObject', () => {
 			'http.method': 'GET',
 			retries: 3,
 		});
-		expect(result.resources).toStrictEqual({ 'service.name': 'cart' });
+		expect(result.resource).toStrictEqual({ 'service.name': 'cart' });
 		expect(result.scope).toStrictEqual({ lib: 'otel' });
 		expect(result.body).toBe('hello');
 		expect(result.id).toBe('log-1');

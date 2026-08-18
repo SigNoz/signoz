@@ -276,7 +276,7 @@ export const aggregateAttributesResourcesToObject = (
 		traceFlags: logData.traceFlags,
 		traceId: logData.traceId,
 		attributes: {},
-		resources: {},
+		resource: {},
 		scope: {},
 		severity_text: logData.severity_text,
 		severity_number: logData.severity_number,
@@ -290,8 +290,8 @@ export const aggregateAttributesResourcesToObject = (
 			outputJson.attributes = outputJson.attributes || {};
 			Object.assign(outputJson.attributes, logData[key as keyof ILog]);
 		} else if (key.startsWith('resources_')) {
-			outputJson.resources = outputJson.resources || {};
-			Object.assign(outputJson.resources, logData[key as keyof ILog]);
+			outputJson.resource = outputJson.resource || {};
+			Object.assign(outputJson.resource, logData[key as keyof ILog]);
 		} else if (key.startsWith('scope_string')) {
 			outputJson.scope = outputJson.scope || {};
 			Object.assign(outputJson.scope, logData[key as keyof ILog]);

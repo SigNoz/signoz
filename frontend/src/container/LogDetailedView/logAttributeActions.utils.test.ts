@@ -33,7 +33,7 @@ describe('buildLogFilterTarget', () => {
 
 		it('maps `resources` with Resource type', () => {
 			expect(
-				buildLogFilterTarget(['resources', 'service.name'], 'api', true),
+				buildLogFilterTarget(['resource', 'service.name'], 'api', true),
 			).toMatchObject({
 				fieldKey: 'service.name',
 				metricsType: MetricsType.Resource,
@@ -69,7 +69,7 @@ describe('buildLogFilterTarget', () => {
 
 		it('does not restrict nested resource/scope values', () => {
 			expect(
-				buildLogFilterTarget(['resources', 'k8s', 'pod'], 'p', true).isRestricted,
+				buildLogFilterTarget(['resource', 'k8s', 'pod'], 'p', true).isRestricted,
 			).toBe(false);
 			expect(
 				buildLogFilterTarget(['scope', 'a', 'b'], 'v', true).isRestricted,
