@@ -49,26 +49,25 @@ export function withState(
 /**
  * history@4 and history@5 both accept `(path, state)` or a partial-path object,
  * so this dispatch survives the Phase D bump unchanged.
+ *
+ * `state` is omitted rather than passed as `undefined`, so a stateless
+ * `navigate(path)` reaches the history as the bare `push(path)` the call sites
+ * used before the facade.
  */
 export function applyNavigate(
 	history: History,
 	to: To,
 	options?: NavigateOptions,
 ): void {
-	if (typeof to === 'string') {
-		if (options?.replace) {
-			history.replace(to, options.state);
-		} else {
-			history.push(to, options?.state);
-		}
-		return;
-	}
+	const { replace = false, state } = options ?? {};
 
-	const target = { ...to, state: options?.state };
-	if (options?.replace) {
-		history.replace(target);
+	const args: Parameters<History['push']> =
+		state === undefined ? [to] : [to, state];
+
+	if (replace) {
+		history.replace(...args);
 	} else {
-		history.push(target);
+		history.push(...args);
 	}
 }
 
