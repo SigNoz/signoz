@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { useSearchParams } from 'react-router-dom-v5-compat';
+import { useAppSearchParams } from 'lib/router/useAppSearchParams';
 import * as Sentry from '@sentry/react';
 import { Tooltip } from 'antd';
 import { Switch } from '@signozhq/ui/switch';
@@ -112,7 +112,7 @@ function Explorer(): JSX.Element {
 		[units, isMetricUnitsLoading, isMetricUnitsError],
 	);
 
-	const [searchParams, setSearchParams] = useSearchParams();
+	const [searchParams, setSearchParams] = useAppSearchParams();
 	const isOneChartPerQueryEnabled =
 		searchParams.get(ONE_CHART_PER_QUERY_ENABLED_KEY) === 'true';
 

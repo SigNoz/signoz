@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { useAppLocation } from 'lib/router/useAppLocation';
-import { useNavigationType } from 'react-router-dom-v5-compat';
+import { useAppNavigationType } from 'lib/router/useAppNavigationType';
 import { RefreshCw, Undo } from '@signozhq/icons';
 import { Button } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
@@ -78,7 +78,7 @@ function DateTimeSelection({
 	const location = useAppLocation();
 	const [formSelector] = Form.useForm();
 	const { safeNavigate } = useSafeNavigate();
-	const navigationType = useNavigationType(); // Returns 'POP' for back/forward navigation
+	const navigationType = useAppNavigationType(); // Returns 'POP' for back/forward navigation
 	const dispatch = useDispatch();
 
 	const { maxTime, minTime, selectedTime } = useSelector<
