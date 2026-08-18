@@ -230,6 +230,13 @@ func (n *Notifier) searchIssue(ctx context.Context, groupID string, firing bool)
 	if len(res.Issues) == 0 {
 		return nil, false, nil
 	}
+	// the JQL order is not category-aware, so prefer an open issue over a done
+	// one; all done falls back to the most recently resolved (resolutiondate DESC)
+	for i := range res.Issues {
+		if !res.Issues[i].isDone() {
+			return &res.Issues[i], false, nil
+		}
+	}
 	return &res.Issues[0], false, nil
 }
 

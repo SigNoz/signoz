@@ -225,6 +225,30 @@ func TestNotifySafeSkipsWhenNoMatchingTransition(t *testing.T) {
 	assert.Equal(t, 1, m.countPost("/comment"))     // comment still posted
 }
 
+func TestNotifyPrefersOpenIssueOverRecentlyDone(t *testing.T) {
+	m := newMockJira(t)
+	open := openIssue()
+	open.Key = "KAN-2"
+	// the JQL order can put a recently-done issue first; the open one must win
+	m.searchIssues = []issue{doneIssue(), open}
+
+	retry, err := newNotifier(t, m).Notify(ctx(), alert(true))
+	require.NoError(t, err)
+	assert.False(t, retry)
+	assert.Equal(t, 0, m.countPost("/issue"))       // no duplicate create
+	assert.Equal(t, 0, m.countPost("/transitions")) // open issue → no reopen
+	assert.Equal(t, 1, m.countMethod(http.MethodPut))
+	assert.Equal(t, 1, m.countPost("/comment"))
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, r := range m.reqs {
+		if r.method == http.MethodPut || strings.HasSuffix(r.path, "/comment") {
+			assert.Contains(t, r.path, "KAN-2")
+		}
+	}
+}
+
 func TestNotifyRetriesOn429(t *testing.T) {
 	m := newMockJira(t)
 	m.createStatus = http.StatusTooManyRequests
