@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { connect } from 'react-redux';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { Card } from 'antd';
 import Spinner from 'components/Spinner';
 import TextToolTip from 'components/TextToolTip';
@@ -39,7 +38,7 @@ const Container = styled.div`
 	}
 `;
 
-interface ServiceMapProps extends RouteComponentProps<any> {
+interface ServiceMapProps {
 	serviceMap: ServiceMapStore;
 	globalTime: GlobalTime;
 	getDetailedServiceMapItems: (
@@ -129,8 +128,6 @@ const mapStateToProps = (
 	globalTime: state.globalTime,
 });
 
-export default withRouter(
-	connect(mapStateToProps, {
-		getDetailedServiceMapItems,
-	})(ServiceMap),
-);
+export default connect(mapStateToProps, {
+	getDetailedServiceMapItems,
+})(ServiceMap);
