@@ -58,6 +58,38 @@ describe('EditAlertChannels save', () => {
 		expect(edit.calls[0].id).toBe('3');
 	});
 
+	it('blocks jira save when the reopen window is below the 1m minimum', async () => {
+		const edit = mockEditChannel();
+		const jiraInitialValue = {
+			type: 'jira',
+			name: 'jira-channel',
+			site: 'https://acme.atlassian.net',
+			username: 'user@acme.io',
+			password: 'token',
+			project: 'OPS',
+			issue_type: 'Task',
+			send_resolved: true,
+			reopen_duration: '30s',
+		};
+
+		const { unmount } = render(
+			<EditAlertChannels channelId="3" initialValue={jiraInitialValue} />,
+		);
+		const user = userEvent.setup();
+		await user.click(screen.getByTestId('save-channel-button'));
+		expect(edit.calls).toHaveLength(0);
+		unmount();
+
+		render(
+			<EditAlertChannels
+				channelId="3"
+				initialValue={{ ...jiraInitialValue, reopen_duration: '72h' }}
+			/>,
+		);
+		await user.click(screen.getByTestId('save-channel-button'));
+		await waitFor(() => expect(edit.calls).toHaveLength(1));
+	});
+
 	it('persists send_resolved toggle in the edit request', async () => {
 		const edit = mockEditChannel();
 		render(

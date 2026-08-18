@@ -36,6 +36,7 @@ import {
 } from 'container/CreateAlertChannels/config';
 import {
 	isValidGoogleChatWebhookURL,
+	isValidJiraReopenDuration,
 	isValidJiraSiteURL,
 	prepareGoogleChatRequest,
 	prepareJiraRequest,
@@ -472,6 +473,13 @@ function EditAlertChannels({
 
 		if (!isValidJiraSiteURL(selectedConfig.site)) {
 			return t('jira_site_invalid');
+		}
+
+		if (
+			selectedConfig.reopen_duration &&
+			!isValidJiraReopenDuration(selectedConfig.reopen_duration)
+		) {
+			return t('jira_reopen_duration_invalid');
 		}
 
 		return '';
