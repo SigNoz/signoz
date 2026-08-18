@@ -1,5 +1,4 @@
 import json
-import time
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
@@ -15,12 +14,14 @@ from fixtures.alerts import (
     update_rule_channel_name,
     verify_notification_expectation,
 )
+from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logger import setup_logger
 from fixtures.notification_channel import (
     googlechat_card_subset,
     googlechat_config,
     googlechat_ok_mappings,
     googlechat_retry_mappings,
+    wait_for_org_registration,
 )
 
 logger = setup_logger(__name__)
@@ -116,6 +117,8 @@ GOOGLECHAT_CASES = [
     ids=lambda c: c.name,
 )
 def test_googlechat_notifier(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
     notification_channel: types.TestContainerDocker,
     make_http_mocks: Callable[[types.TestContainerDocker, list[Mapping]], None],
     create_notification_channel: Callable[[dict], str],
@@ -132,7 +135,7 @@ def test_googlechat_notifier(  # pylint: disable=too-many-arguments,too-many-pos
     make_http_mocks(notification_channel, googlechat_ok_mappings(path))
 
     create_notification_channel(channel_config)
-    time.sleep(12)  # org registration in alertmanager
+    wait_for_org_registration(signoz, get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD), notification_channel)
 
     insert_alert_data(gc_test_case.alert_data, base_time=datetime.now(tz=UTC) - timedelta(minutes=5))
 
@@ -145,6 +148,8 @@ def test_googlechat_notifier(  # pylint: disable=too-many-arguments,too-many-pos
 
 
 def test_googlechat_retry_429_then_200(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
     notification_channel: types.TestContainerDocker,
     make_http_mocks: Callable[[types.TestContainerDocker, list[Mapping]], None],
     create_notification_channel: Callable[[dict], str],
@@ -160,7 +165,7 @@ def test_googlechat_retry_429_then_200(  # pylint: disable=too-many-arguments,to
     make_http_mocks(notification_channel, googlechat_retry_mappings(path))
 
     create_notification_channel(channel_config)
-    time.sleep(12)  # org registration in alertmanager
+    wait_for_org_registration(signoz, get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD), notification_channel)
 
     insert_alert_data([types.AlertData(type="metrics", data_path=METRICS_DATA)], base_time=datetime.now(tz=UTC) - timedelta(minutes=5))
 

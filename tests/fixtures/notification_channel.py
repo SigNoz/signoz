@@ -2,6 +2,7 @@
 import json
 import re
 import time
+import uuid
 from collections.abc import Callable
 from http import HTTPStatus
 from pathlib import Path
@@ -354,6 +355,31 @@ def create_webhook_notification_channel(
         return channel_id
 
     return _create_webhook_notification_channel
+
+
+def wait_for_org_registration(signoz: types.SigNoz, token: str, notification_channel: types.TestContainerDocker, wait_seconds: int = 60) -> None:
+    """Polls until the org's alertmanager server is registered (one poll tick).
+
+    channels/test 404s until then, before reaching any notifier. The sentinel
+    receiver posts to its own unstubbed wiremock path, so request journals
+    asserted by tests stay clean."""
+    sentinel = {
+        "name": str(uuid.uuid4()),
+        "webhook_configs": [{"url": notification_channel.container_configs["8080"].get("/org-registration-sentinel")}],
+    }
+    deadline = time.time() + wait_seconds
+    last = None
+    while time.time() < deadline:
+        last = requests.post(
+            signoz.self.host_configs["8080"].get("/api/v1/channels/test"),
+            json=sentinel,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=30,
+        )
+        if last.status_code != HTTPStatus.NOT_FOUND:
+            return
+        time.sleep(2)
+    raise AssertionError(f"org alertmanager did not register within {wait_seconds}s, last response: {last.status_code} {last.text}")
 
 
 def send_test_notification(signoz: types.SigNoz, token: str, receiver: dict, wait_seconds: int = 90) -> None:
