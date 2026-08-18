@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useMutation } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
+import { isEmpty } from 'lodash-es';
 import { getSubstituteVars } from 'api/dashboard/substitute_vars';
 import { prepareQueryRangePayloadV5 } from 'api/v5/v5';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -46,13 +47,21 @@ function useUpdatedQuery(): UseUpdatedQueryResult {
 			widgetConfig,
 			dashboardData,
 		}: UseUpdatedQueryOptions): Promise<Query> => {
+			const variables = getDashboardVariables(dashboardData?.data?.variables);
+
+			// `/substitute_vars` only rewrites `$variable` references, so on surfaces with no
+			// dashboard behind them (APM, Celery, API monitoring) the round-trip is a no-op.
+			if (isEmpty(variables) && isEmpty(dashboardDynamicVariables)) {
+				return widgetConfig.query;
+			}
+
 			// Prepare query payload with resolved variables
 			const { queryPayload } = prepareQueryRangePayloadV5({
 				query: widgetConfig.query,
 				graphType: getGraphType(widgetConfig.panelTypes),
 				selectedTime: widgetConfig.timePreferance,
 				globalSelectedInterval,
-				variables: getDashboardVariables(dashboardData?.data?.variables),
+				variables,
 				originalGraphType: widgetConfig.panelTypes,
 				dynamicVariables: dashboardDynamicVariables,
 			});
