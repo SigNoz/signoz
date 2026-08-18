@@ -4,14 +4,11 @@ import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { SIGNAL_DATA_SOURCE_MAP } from 'components/QuickFilters/QuickFiltersSettings/constants';
 import { SignalType } from 'components/QuickFilters/types';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
-import { useGetAttributeSuggestions } from 'hooks/queryBuilder/useGetAttributeSuggestions';
 import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
-import { DataSource } from 'types/common/queryBuilder';
+
+import { useOtherFilterKeys } from './hooks/useOtherFilterKeys';
 
 function OtherFiltersSkeleton(): JSX.Element {
 	return (
@@ -40,44 +37,19 @@ function OtherFilters({
 	addedFilters: FilterType[];
 	setAddedFilters: React.Dispatch<React.SetStateAction<FilterType[]>>;
 }): JSX.Element {
-	const isLogDataSource = useMemo(
-		() => SIGNAL_DATA_SOURCE_MAP[signal as SignalType] === DataSource.LOGS,
-		[signal],
-	);
 	const isMeterDataSource = useMemo(
 		() => signal && signal === SignalType.METER_EXPLORER,
 		[signal],
 	);
 
-	const { data: suggestionsData, isFetching: isFetchingSuggestions } =
-		useGetAttributeSuggestions(
-			{
-				searchText: inputValue,
-				dataSource: SIGNAL_DATA_SOURCE_MAP[signal as SignalType],
-				filters: {} as TagFilter,
-			},
-			{
-				queryKey: [REACT_QUERY_KEY.GET_OTHER_FILTERS, inputValue],
-				enabled: !!signal && isLogDataSource,
-			},
-		);
+	const { filters: fieldKeyFilters, isFetching: isFetchingFieldKeys } =
+		useOtherFilterKeys({
+			signal,
+			searchText: inputValue,
+			enabled: !!signal && !isMeterDataSource,
+		});
 
-	const { data: aggregateKeysData, isFetching: isFetchingAggregateKeys } =
-		useGetAggregateKeys(
-			{
-				searchText: inputValue,
-				dataSource: SIGNAL_DATA_SOURCE_MAP[signal as SignalType],
-				aggregateOperator: 'noop',
-				aggregateAttribute: '',
-				tagType: '',
-			},
-			{
-				queryKey: [REACT_QUERY_KEY.GET_OTHER_FILTERS, inputValue],
-				enabled: !!signal && !isLogDataSource && !isMeterDataSource,
-			},
-		);
-
-	const { data: fieldKeysData, isLoading: isLoadingFieldKeys } =
+	const { data: meterFieldKeysData, isLoading: isLoadingMeterFieldKeys } =
 		useGetQueryKeySuggestions(
 			{
 				searchText: inputValue,
@@ -91,36 +63,23 @@ function OtherFilters({
 		);
 
 	const otherFilters = useMemo(() => {
-		let filterAttributes;
-		if (isLogDataSource) {
-			filterAttributes = suggestionsData?.payload?.attributes || [];
-		} else if (isMeterDataSource) {
+		let filterAttributes: FilterType[];
+		if (isMeterDataSource) {
 			const fieldKeys: QueryKeyDataSuggestionsProps[] = Object.values(
-				fieldKeysData?.data?.data?.keys || {},
+				meterFieldKeysData?.data?.data?.keys || {},
 			)?.flat();
-			filterAttributes = fieldKeys.map(
-				(attr) =>
-					({
-						key: attr.name,
-						dataType: attr.fieldDataType,
-						type: attr.fieldContext,
-						signal: attr.signal,
-					}) as BaseAutocompleteData,
-			);
+			filterAttributes = fieldKeys.map((attr) => ({
+				key: attr.name,
+				dataType: attr.fieldDataType || '',
+				type: attr.fieldContext || '',
+			}));
 		} else {
-			filterAttributes = aggregateKeysData?.payload?.attributeKeys || [];
+			filterAttributes = fieldKeyFilters;
 		}
 		return filterAttributes?.filter(
 			(attr) => !addedFilters.some((filter) => filter.key === attr.key),
 		);
-	}, [
-		suggestionsData,
-		aggregateKeysData,
-		addedFilters,
-		isLogDataSource,
-		fieldKeysData,
-		isMeterDataSource,
-	]);
+	}, [addedFilters, fieldKeyFilters, isMeterDataSource, meterFieldKeysData]);
 
 	const handleAddFilter = (filter: FilterType): void => {
 		setAddedFilters((prev) => [
@@ -134,8 +93,7 @@ function OtherFilters({
 	};
 
 	const renderFilters = (): React.ReactNode => {
-		const isLoading =
-			isFetchingSuggestions || isFetchingAggregateKeys || isLoadingFieldKeys;
+		const isLoading = isFetchingFieldKeys || isLoadingMeterFieldKeys;
 		if (isLoading) {
 			return <OtherFiltersSkeleton />;
 		}
@@ -149,7 +107,7 @@ function OtherFilters({
 				<Button
 					className="add-filter-btn periscope-btn"
 					size="small"
-					onClick={(): void => handleAddFilter(filter as FilterType)}
+					onClick={(): void => handleAddFilter(filter)}
 				>
 					Add
 				</Button>

@@ -5,7 +5,7 @@ import {
 } from 'container/ApiMonitoring/queryParams';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import {
-	otherFiltersResponse,
+	otherFiltersFieldKeysResponse,
 	quickFiltersAttributeValuesResponse,
 	quickFiltersListResponse,
 } from 'mocks-server/__mockdata__/customQuickFilters';
@@ -36,7 +36,7 @@ const BASE_URL = ENVIRONMENT.baseURL;
 const SIGNAL = SignalType.LOGS;
 const quickFiltersListURL = `${BASE_URL}/api/v1/orgs/me/filters/${SIGNAL}`;
 const saveQuickFiltersURL = `${BASE_URL}/api/v1/orgs/me/filters`;
-const quickFiltersSuggestionsURL = `${BASE_URL}/api/v3/filter_suggestions`;
+const fieldsKeysURL = `${BASE_URL}/api/v1/fields/keys`;
 const quickFiltersAttributeValuesURL = `${BASE_URL}/api/v3/autocomplete/attribute_values`;
 const fieldsValuesURL = `${BASE_URL}/api/v1/fields/values`;
 
@@ -55,8 +55,8 @@ const setupServer = (): void => {
 		rest.get(quickFiltersListURL, (_, res, ctx) =>
 			res(ctx.status(200), ctx.json(quickFiltersListResponse)),
 		),
-		rest.get(quickFiltersSuggestionsURL, (_, res, ctx) =>
-			res(ctx.status(200), ctx.json(otherFiltersResponse)),
+		rest.get(fieldsKeysURL, (_, res, ctx) =>
+			res(ctx.status(200), ctx.json(otherFiltersFieldKeysResponse)),
 		),
 		rest.put(saveQuickFiltersURL, async (req, res, ctx) => {
 			putHandler(await req.json());
