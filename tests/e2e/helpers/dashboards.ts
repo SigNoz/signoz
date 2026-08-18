@@ -82,12 +82,39 @@ async function postDashboard(
 	return json.data.id;
 }
 
-/** Seed a minimally-named dashboard via API. Returns the new ID. */
+/**
+ * Seed a minimally-named dashboard via API. Returns the new ID.
+ *
+ * v2 (Perses spec) only: `POST /api/v1/dashboards` now answers 501
+ * `dashboard_deprecated`. Payload mirrors what the New-dashboard modal sends
+ * (`BlankDashboardPanel.tsx`), `schemaVersion` included.
+ */
 export async function createDashboardViaApi(
 	page: Page,
 	title: string,
 ): Promise<string> {
-	return postDashboard(page, { title, uploadedGrafana: false });
+	const token = await authToken(page);
+	const res = await page.request.post('/api/v2/dashboards', {
+		data: {
+			schemaVersion: 'v6',
+			generateName: true,
+			tags: null,
+			spec: {
+				display: { name: title },
+				layouts: [],
+				panels: {},
+				variables: [],
+			},
+		},
+		headers: { Authorization: `Bearer ${token}` },
+	});
+	if (!res.ok()) {
+		throw new Error(
+			`POST /api/v2/dashboards ${res.status()}: ${await res.text()}`,
+		);
+	}
+	const json = (await res.json()) as { data: { id: string } };
+	return json.data.id;
 }
 
 /**
@@ -342,7 +369,7 @@ export async function deleteDashboardViaApi(
 	token: string,
 ): Promise<void> {
 	await request
-		.delete(`/api/v1/dashboards/${id}`, {
+		.delete(`/api/v2/dashboards/${id}`, {
 			headers: { Authorization: `Bearer ${token}` },
 		})
 		.catch(() => undefined);

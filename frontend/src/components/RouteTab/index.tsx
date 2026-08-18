@@ -47,7 +47,7 @@ function RouteTab({
 	};
 
 	const items = routes.map(({ Component, name, route, key }) => ({
-		label: name,
+		label: <span data-testid={`route-tab-${key}`}>{name}</span>,
 		key,
 		tabKey: route,
 		children: <Component />,
