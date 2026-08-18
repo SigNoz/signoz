@@ -17,12 +17,12 @@ import (
 // searchFanOut returns the WHERE fragment search() fans out to; bodyExpr differs
 // between the legacy string body and the body_v2 JSON column.
 func searchFanOut(bodyExpr string) string {
-	return "(match(LOWER(severity_text), LOWER(?)) OR match(LOWER(trace_id), LOWER(?)) OR match(LOWER(span_id), LOWER(?)) OR " +
+	return "(LOWER(severity_text) LIKE LOWER(?) OR LOWER(trace_id) LIKE LOWER(?) OR LOWER(span_id) LIKE LOWER(?) OR " +
 		bodyExpr + " OR " +
-		"(arrayExists(x -> match(LOWER(x), LOWER(?)), mapKeys(attributes_string)) OR arrayExists(x -> match(LOWER(x), LOWER(?)), mapValues(attributes_string))) OR " +
-		"(arrayExists(x -> match(LOWER(x), LOWER(?)), mapKeys(attributes_number)) OR arrayExists(x -> match(LOWER(x), LOWER(?)), arrayMap(x -> toString(x), mapValues(attributes_number)))) OR " +
-		"(arrayExists(x -> match(LOWER(x), LOWER(?)), mapKeys(attributes_bool)) OR arrayExists(x -> match(LOWER(x), LOWER(?)), arrayMap(x -> toString(x), mapValues(attributes_bool)))) OR " +
-		"(arrayExists(x -> match(LOWER(x), LOWER(?)), mapKeys(resources_string)) OR arrayExists(x -> match(LOWER(x), LOWER(?)), mapValues(resources_string))))"
+		"(arrayExists(x -> LOWER(x) LIKE LOWER(?), mapKeys(attributes_string)) OR arrayExists(x -> LOWER(x) LIKE LOWER(?), mapValues(attributes_string))) OR " +
+		"(arrayExists(x -> LOWER(x) LIKE LOWER(?), mapKeys(attributes_number)) OR arrayExists(x -> LOWER(x) LIKE LOWER(?), arrayMap(x -> toString(x), mapValues(attributes_number)))) OR " +
+		"(arrayExists(x -> LOWER(x) LIKE LOWER(?), mapKeys(attributes_bool)) OR arrayExists(x -> LOWER(x) LIKE LOWER(?), arrayMap(x -> toString(x), mapValues(attributes_bool)))) OR " +
+		"(arrayExists(x -> LOWER(x) LIKE LOWER(?), mapKeys(resources_string)) OR arrayExists(x -> LOWER(x) LIKE LOWER(?), mapValues(resources_string))))"
 }
 
 // searchArgs returns v once per bound parameter search() emits — one per searchable
@@ -43,12 +43,12 @@ func TestFilterExprSearch(t *testing.T) {
 	inWindowStart := uint64(releaseTime.Add(-5 * time.Minute).UnixNano())
 	inWindowEnd := uint64(releaseTime.Add(5 * time.Minute).UnixNano())
 
-	legacyBody := "match(LOWER(body), LOWER(?))"
-	jsonBody := "match(LOWER(toString(body_v2)), LOWER(?))"
+	legacyBody := "LOWER(body) LIKE LOWER(?)"
+	jsonBody := "LOWER(toString(body_v2)) LIKE LOWER(?)"
 
 	// Single-context scope fragments (the fan-out narrowed to one context).
-	logScope := "(match(LOWER(severity_text), LOWER(?)) OR match(LOWER(trace_id), LOWER(?)) OR match(LOWER(span_id), LOWER(?)))"
-	resourceScope := "(arrayExists(x -> match(LOWER(x), LOWER(?)), mapKeys(resources_string)) OR arrayExists(x -> match(LOWER(x), LOWER(?)), mapValues(resources_string)))"
+	logScope := "(LOWER(severity_text) LIKE LOWER(?) OR LOWER(trace_id) LIKE LOWER(?) OR LOWER(span_id) LIKE LOWER(?))"
+	resourceScope := "(arrayExists(x -> LOWER(x) LIKE LOWER(?), mapKeys(resources_string)) OR arrayExists(x -> LOWER(x) LIKE LOWER(?), mapValues(resources_string)))"
 
 	serviceNameEq := "(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? " +
 		"AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)"
@@ -74,7 +74,7 @@ func TestFilterExprSearch(t *testing.T) {
 			endNs:          inWindowEnd,
 			shouldPass:     true,
 			expectedQuery:  "WHERE " + searchFanOut(legacyBody),
-			expectedArgs:   searchArgs("error"),
+			expectedArgs:   searchArgs("%error%"),
 			expectWarning:  true,
 		},
 		{
@@ -86,7 +86,7 @@ func TestFilterExprSearch(t *testing.T) {
 			endNs:           inWindowEnd,
 			shouldPass:      true,
 			expectedQuery:   "WHERE " + searchFanOut(jsonBody),
-			expectedArgs:    searchArgs("error"),
+			expectedArgs:    searchArgs("%error%"),
 			expectWarning:   true,
 		},
 		{
@@ -97,7 +97,7 @@ func TestFilterExprSearch(t *testing.T) {
 			endNs:          inWindowEnd,
 			shouldPass:     true,
 			expectedQuery:  "WHERE " + searchFanOut(legacyBody),
-			expectedArgs:   searchArgs("timeout"),
+			expectedArgs:   searchArgs("%timeout%"),
 			expectWarning:  true,
 		},
 		{
@@ -108,7 +108,7 @@ func TestFilterExprSearch(t *testing.T) {
 			endNs:          inWindowEnd,
 			shouldPass:     true,
 			expectedQuery:  "WHERE NOT (" + searchFanOut(legacyBody) + ")",
-			expectedArgs:   searchArgs("error"),
+			expectedArgs:   searchArgs("%error%"),
 			expectWarning:  true,
 		},
 		{
@@ -119,7 +119,7 @@ func TestFilterExprSearch(t *testing.T) {
 			endNs:          inWindowEnd,
 			shouldPass:     true,
 			expectedQuery:  "WHERE (" + searchFanOut(legacyBody) + " AND " + serviceNameEq + ")",
-			expectedArgs:   append(searchArgs("error"), "api"),
+			expectedArgs:   append(searchArgs("%error%"), "api"),
 			expectWarning:  true,
 		},
 		{
@@ -131,7 +131,7 @@ func TestFilterExprSearch(t *testing.T) {
 			endNs:          inWindowEnd,
 			shouldPass:     true,
 			expectedQuery:  "WHERE " + searchFanOut(legacyBody),
-			expectedArgs:   searchArgs("error"),
+			expectedArgs:   searchArgs("%error%"),
 			expectWarning:  true,
 		},
 		{
@@ -144,7 +144,7 @@ func TestFilterExprSearch(t *testing.T) {
 			endNs:          inWindowEnd,
 			shouldPass:     true,
 			expectedQuery:  "WHERE " + searchFanOut(legacyBody),
-			expectedArgs:   searchArgs("error"),
+			expectedArgs:   searchArgs("%error%"),
 			expectWarning:  true,
 		},
 		{
@@ -156,7 +156,7 @@ func TestFilterExprSearch(t *testing.T) {
 			endNs:          inWindowEnd,
 			shouldPass:     true,
 			expectedQuery:  "WHERE " + searchFanOut(legacyBody),
-			expectedArgs:   searchArgs("resource\\.deployment"),
+			expectedArgs:   searchArgs("%resource.deployment%"),
 			expectWarning:  true,
 		},
 		{
@@ -168,7 +168,7 @@ func TestFilterExprSearch(t *testing.T) {
 			endNs:          inWindowEnd,
 			shouldPass:     true,
 			expectedQuery:  "WHERE " + searchFanOut(legacyBody),
-			expectedArgs:   searchArgs("1000000"),
+			expectedArgs:   searchArgs("%1000000%"),
 			expectWarning:  true,
 		},
 		{
@@ -179,7 +179,7 @@ func TestFilterExprSearch(t *testing.T) {
 			endNs:          inWindowEnd,
 			shouldPass:     true,
 			expectedQuery:  "WHERE (" + legacyBody + ")",
-			expectedArgs:   []any{"error"},
+			expectedArgs:   []any{"%error%"},
 			expectWarning:  true,
 		},
 		{
@@ -191,7 +191,7 @@ func TestFilterExprSearch(t *testing.T) {
 			endNs:           inWindowEnd,
 			shouldPass:      true,
 			expectedQuery:   "WHERE (" + jsonBody + ")",
-			expectedArgs:    []any{"error"},
+			expectedArgs:    []any{"%error%"},
 			expectWarning:   true,
 		},
 		{
@@ -202,7 +202,7 @@ func TestFilterExprSearch(t *testing.T) {
 			endNs:          inWindowEnd,
 			shouldPass:     true,
 			expectedQuery:  "WHERE (" + resourceScope + ")",
-			expectedArgs:   []any{"error", "error"},
+			expectedArgs:   []any{"%error%", "%error%"},
 			expectWarning:  true,
 		},
 		{
@@ -213,7 +213,7 @@ func TestFilterExprSearch(t *testing.T) {
 			endNs:          inWindowEnd,
 			shouldPass:     true,
 			expectedQuery:  "WHERE " + logScope,
-			expectedArgs:   []any{"error", "error", "error"},
+			expectedArgs:   []any{"%error%", "%error%", "%error%"},
 			expectWarning:  true,
 		},
 		{
@@ -224,7 +224,7 @@ func TestFilterExprSearch(t *testing.T) {
 			endNs:          inWindowEnd,
 			shouldPass:     true,
 			expectedQuery:  "WHERE ((" + legacyBody + ") OR (" + resourceScope + "))",
-			expectedArgs:   []any{"error", "error", "error"},
+			expectedArgs:   []any{"%error%", "%error%", "%error%"},
 			expectWarning:  true,
 		},
 		{

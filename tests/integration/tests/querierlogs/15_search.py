@@ -8,7 +8,16 @@ import pytest
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
-from fixtures.querier import build_order_by, build_raw_query, get_column_data_from_response, get_rows, make_query_request
+from fixtures.querier import (
+    build_order_by,
+    build_raw_query,
+    get_column_data_from_response,
+    get_preview_selected_granules,
+    get_preview_skip_indexes,
+    get_rows,
+    make_preview_query_request,
+    make_query_request,
+)
 
 # search(): keyless fans across every field; scoped search('term', <ctx>...) narrows to
 # the named contexts (body/attribute/resource/log). Flag off here, so body matches the
@@ -210,3 +219,98 @@ def test_search_cost_guard_passes_with_narrower_time_range(
     narrow = run(15)
     assert narrow.status_code == HTTPStatus.OK, narrow.text
     assert len(get_rows(narrow)) > 0
+
+
+# search() matches its term as literal text: each case plants the literal beside a decoy only a
+# metacharacter reading would match - except the backslash, which unescaped misses the literal.
+@pytest.mark.parametrize(
+    "term,literal,decoy",
+    [
+        pytest.param("100% off", "sale 100% off today", "sale 100XX off today", id="percent_is_not_a_wildcard"),
+        pytest.param("id_42", "user id_42 seen", "user idX42 seen", id="underscore_is_not_a_wildcard"),
+        pytest.param("v1.2", "build v1.2 shipped", "build v1x2 shipped", id="dot_is_not_a_regex_wildcard"),
+        pytest.param("cart|payment", "route cart|payment ok", "route cart ok", id="pipe_is_not_a_regex_alternation"),
+        pytest.param(r"C:\\tmp", "path C:\\tmp here", "path C:tmp here", id="backslash_is_escaped_not_dropped"),
+    ],
+)
+def test_search_term_matches_literally(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[list[Logs]], None],
+    term: str,
+    literal: str,
+    decoy: str,
+) -> None:
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    insert_logs([Logs(timestamp=now - timedelta(seconds=i + 1), resources={"service.name": "api"}, body=body) for i, body in enumerate([literal, decoy])])
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((now - timedelta(minutes=5)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
+        request_type="raw",
+        queries=[
+            build_raw_query(
+                "A",
+                "logs",
+                filter_expression=f"search('{term}', body)",
+                order=[build_order_by("timestamp", "desc"), build_order_by("id", "desc")],
+                limit=100,
+            )
+        ],
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert set(get_column_data_from_response(response.json(), "body")) == {literal}
+
+
+# Scoped to body, search() is a single predicate over the indexed expression - the one search form
+# ClickHouse can prune on, since an unscoped OR arm that cannot prune forfeits the skip.
+@pytest.mark.parametrize(
+    "term,prunes_every_granule",
+    [
+        pytest.param("login", False, id="term_present_in_a_body"),
+        pytest.param("zz_no_seeded_body_holds_this", True, id="term_absent_from_every_body"),
+    ],
+)
+def test_search_scoped_to_body_prunes_granules(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[list[Logs]], None],
+    term: str,
+    prunes_every_granule: bool,
+) -> None:
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    insert_logs([Logs(timestamp=now - timedelta(seconds=i + 1), resources={"service.name": "api"}, body=body) for i, body in enumerate(["alpha checkout login ok", "bravo declined"])])
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = make_preview_query_request(
+        signoz,
+        token,
+        start_ms=int((now - timedelta(minutes=5)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
+        request_type="raw",
+        queries=[
+            build_raw_query(
+                "A",
+                "logs",
+                filter_expression=f"search('{term}', body)",
+                order=[build_order_by("timestamp", "desc"), build_order_by("id", "desc")],
+                limit=100,
+            )
+        ],
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    skip_indexes = get_preview_skip_indexes(response, "A")
+    assert "body_index_v2_ngram" in skip_indexes, f"body bloom filters not consulted, only: {sorted(skip_indexes)}"
+
+    selected = get_preview_selected_granules(response, "A")
+    if prunes_every_granule:
+        assert selected == 0, f"expected every granule pruned, {selected} survived"
+    else:
+        assert selected > 0, "the granule holding the match must survive"
