@@ -23,9 +23,9 @@ import { useLogAttributeActions } from './hooks/useLogAttributeActions';
 import TableView from './TableView';
 import {
 	aggregateAttributesResourcesToObject,
+	buildPrettyViewData,
 	getBodyDisplayString,
 	getSanitizedLogBody,
-	parseJsonStringBody,
 	removeEscapeCharacters,
 } from './utils';
 
@@ -71,11 +71,7 @@ function Overview({
 
 	if (isLogDetailsV2) {
 		const raw = aggregateAttributesResourcesToObject(logData);
-		const prettyData = Object.fromEntries(
-			Object.entries({ ...raw, body: parseJsonStringBody(raw.body) }).filter(
-				([, value]) => value !== undefined,
-			),
-		);
+		const prettyData = buildPrettyViewData(raw);
 		return (
 			<div className="overview-container">
 				<DataViewer

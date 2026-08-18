@@ -53,6 +53,30 @@ describe('buildLogFilterTarget', () => {
 		});
 	});
 
+	describe('nested attribute values (parsed JSON)', () => {
+		it('marks a sub-field of a parsed attribute copy-only (restricted, no group-by)', () => {
+			const t = buildLogFilterTarget(['attributes', 'payload', 'x'], 1, true);
+			expect(t.isRestricted).toBe(true);
+			expect(t.groupBySupported).toBe(false);
+			expect(t.groupByKey).toBeUndefined();
+		});
+
+		it('leaves a top-level attribute (depth 2) filterable', () => {
+			const t = buildLogFilterTarget(['attributes', 'payload'], 'v', true);
+			expect(t.isRestricted).toBe(false);
+			expect(t.groupBySupported).toBe(true);
+		});
+
+		it('does not restrict nested resource/scope values', () => {
+			expect(
+				buildLogFilterTarget(['resources', 'k8s', 'pod'], 'p', true).isRestricted,
+			).toBe(false);
+			expect(
+				buildLogFilterTarget(['scope', 'a', 'b'], 'v', true).isRestricted,
+			).toBe(false);
+		});
+	});
+
 	describe('restricted fields (timestamp / id)', () => {
 		it.each(['timestamp', 'id'])(
 			'marks %s restricted with no group-by',

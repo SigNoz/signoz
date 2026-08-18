@@ -3,45 +3,79 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import {
 	aggregateAttributesResourcesToObject,
+	buildPrettyViewData,
 	flattenObject,
 	getDataTypes,
 	getSanitizedLogBody,
-	parseJsonStringBody,
+	parseJsonStringValue,
 	recursiveParseJSON,
 } from './utils';
 
-describe('parseJsonStringBody', () => {
+describe('parseJsonStringValue', () => {
 	it('parses a JSON-object string into an object', () => {
-		expect(parseJsonStringBody('{"a":1,"b":{"c":2}}')).toStrictEqual({
+		expect(parseJsonStringValue('{"a":1,"b":{"c":2}}')).toStrictEqual({
 			a: 1,
 			b: { c: 2 },
 		});
 	});
 
 	it('parses a JSON-array string into an array', () => {
-		expect(parseJsonStringBody('[1,2,3]')).toStrictEqual([1, 2, 3]);
+		expect(parseJsonStringValue('[1,2,3]')).toStrictEqual([1, 2, 3]);
 	});
 
 	it('returns a plain (non-JSON) string unchanged', () => {
-		expect(parseJsonStringBody('plain log line')).toBe('plain log line');
+		expect(parseJsonStringValue('plain log line')).toBe('plain log line');
 	});
 
 	it('returns a string that is not object/array-looking unchanged', () => {
-		expect(parseJsonStringBody('42')).toBe('42');
+		expect(parseJsonStringValue('42')).toBe('42');
 	});
 
 	it('returns an invalid JSON string unchanged', () => {
-		expect(parseJsonStringBody('{not valid}')).toBe('{not valid}');
+		expect(parseJsonStringValue('{not valid}')).toBe('{not valid}');
 	});
 
-	it('returns an already-object body unchanged (same reference)', () => {
-		const body = { message: 'hi', a: 1 };
-		expect(parseJsonStringBody(body)).toBe(body);
+	it('returns an already-object value unchanged (same reference)', () => {
+		const value = { message: 'hi', a: 1 };
+		expect(parseJsonStringValue(value)).toBe(value);
 	});
 
-	it('leaves a body larger than the 128KB parse guard as a string', () => {
+	it('leaves a value larger than the 128KB parse guard as a string', () => {
 		const huge = `{"x":"${'a'.repeat(130 * 1024)}"}`;
-		expect(parseJsonStringBody(huge)).toBe(huge);
+		expect(parseJsonStringValue(huge)).toBe(huge);
+	});
+});
+
+describe('buildPrettyViewData', () => {
+	const baseRaw = {
+		id: 'log-1',
+		timestamp: 1234,
+		body: 'hello',
+		attributes: {},
+		resources: {},
+		scope: {},
+	} as any;
+
+	it('parses a JSON-string body into a tree', () => {
+		const result = buildPrettyViewData({ ...baseRaw, body: '{"a":1}' });
+		expect(result.body).toStrictEqual({ a: 1 });
+	});
+
+	it('parses attribute values that are JSON strings, leaves others as-is', () => {
+		const result = buildPrettyViewData({
+			...baseRaw,
+			attributes: { payload: '{"x":1}', name: 'cart', count: 3 },
+		});
+		expect(result.attributes).toStrictEqual({
+			payload: { x: 1 },
+			name: 'cart',
+			count: 3,
+		});
+	});
+
+	it('drops undefined fields so they do not render as empty rows', () => {
+		const result = buildPrettyViewData({ ...baseRaw, trace_id: undefined });
+		expect('trace_id' in result).toBe(false);
 	});
 });
 

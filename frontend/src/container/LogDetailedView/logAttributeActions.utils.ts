@@ -83,7 +83,13 @@ export const buildLogFilterTarget = (
 	if (root !== 'body') {
 		const fieldKey =
 			fieldKeyPath.length > 1 ? fieldKeyPath.slice(1).join('.') : String(root);
-		const isRestricted = RESTRICTED_SELECTED_FIELDS.includes(fieldKey);
+		// Temporarily removing filter/group-by support for nested attributes.
+		// This will be removed once backend starts to support these actions.
+		const isNestedAttributeValue =
+			root === LogAttributeBucket.ATTRIBUTES && fieldKeyPath.length > 2;
+
+		const isRestricted =
+			RESTRICTED_SELECTED_FIELDS.includes(fieldKey) || isNestedAttributeValue;
 		return {
 			fieldKey,
 			filterInOperator: OPERATORS['='],
