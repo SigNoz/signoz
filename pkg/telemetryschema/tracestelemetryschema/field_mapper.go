@@ -295,12 +295,11 @@ func (m *fieldMapper) resolveColumnExprs(
 				exprs = append(exprs, fmt.Sprintf("%s.`%s`::String", columnName, key.Name))
 				existExprs = append(existExprs, fmt.Sprintf("%s.`%s` IS NOT NULL", columnName, key.Name))
 			case telemetrytypes.FieldContextScope:
-				switch key.Name {
-				case "scope.name", "scope.version":
-					// declared String paths on the scope column reads '' for missing case
+				if isDeclaredScopePath(key.Name) {
+					// declared String paths on the scope column read '' for the missing case
 					exprs = append(exprs, fmt.Sprintf("%s::String", key.Name))
 					existExprs = append(existExprs, fmt.Sprintf("%s <> ''", key.Name))
-				default:
+				} else {
 					exprs = append(exprs, fmt.Sprintf("%s.attributes.`%s`::String", columnName, key.Name))
 					existExprs = append(existExprs, fmt.Sprintf("%s.attributes.`%s` IS NOT NULL", columnName, key.Name))
 				}
@@ -576,24 +575,71 @@ func (m *fieldMapper) CandidateKeys(ctx context.Context, _ valuer.UUID, field *t
 	// No metadata: synthesize per context.
 	switch field.FieldContext {
 	case telemetrytypes.FieldContextUnspecified:
-		return append(querybuilder.SynthesizeKeys(field, value), scopeAttributeCandidate(field))
+		return append(querybuilder.SynthesizeKeys(field, value), synthScopeAttributeKey(field))
 	case telemetrytypes.FieldContextSpan, telemetrytypes.FieldContextTrace:
 		// honored as-is: the stripped name lives in the attribute or scope attribute maps
 		stripped := telemetrytypes.NewTelemetryFieldKey(field.Name, telemetrytypes.FieldContextUnspecified, field.FieldDataType)
-		return append(querybuilder.SynthesizeKeys(stripped, value), scopeAttributeCandidate(stripped))
+		return append(querybuilder.SynthesizeKeys(stripped, value), synthScopeAttributeKey(stripped))
 	case telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextResource:
 		// strict context honored as-is: stripped interpretation first, literal spelling second
 		literal := telemetrytypes.NewTelemetryFieldKey(field.FieldContext.StringValue()+"."+field.Name, field.FieldContext, field.FieldDataType)
 		return append(querybuilder.SynthesizeKeys(field, value), querybuilder.SynthesizeKeys(literal, value)...)
 	case telemetrytypes.FieldContextScope:
-		return []*telemetrytypes.TelemetryFieldKey{scopeAttributeCandidate(field)}
+		return []*telemetrytypes.TelemetryFieldKey{synthScopeAttributeKey(field)}
 	}
 	// contexts that don't exist on spans (log, body, …) have nothing to synthesize
 	return nil
 }
 
-func scopeAttributeCandidate(field *telemetrytypes.TelemetryFieldKey) *telemetrytypes.TelemetryFieldKey {
+// synthScopeAttributeKey is the scope analog of querybuilder.SynthesizeKeys: for a name absent
+// from metadata it guesses a scope attribute (`scope.attributes.<name>`). Only user attributes
+// reach here — the declared scope paths are always in metadata, so they never need synthesizing.
+func synthScopeAttributeKey(field *telemetrytypes.TelemetryFieldKey) *telemetrytypes.TelemetryFieldKey {
 	return telemetrytypes.NewTelemetryFieldKey(field.Name, telemetrytypes.FieldContextScope, telemetrytypes.FieldDataTypeString)
+}
+
+// isDeclaredScopePath reports whether a name is a scope field the schema declares as a top-level
+// String path on the scope JSON column (scope.name, scope.version), as opposed to a user
+// attribute under scope.attributes. Read straight from the intrinsic registry so the two stay
+// in lockstep.
+func isDeclaredScopePath(name string) bool {
+	f, ok := IntrinsicFields[name]
+	return ok && f.FieldContext == telemetrytypes.FieldContextScope
+}
+
+// scopeJSONExistsExpression renders the existence predicate for the scope JSON column — the one
+// signal-specific case the generic querybuilder.ExistsExpression must not carry. Declared scope
+// String paths are non-Nullable (absent reads '' not NULL) so they guard on ''; user scope
+// attributes live under scope.attributes.<name> and guard on IS NOT NULL. ok is false for any
+// non-scope column, so callers fall through to the generic expression.
+func scopeJSONExistsExpression(columns []*schema.Column, key *telemetrytypes.TelemetryFieldKey, tsStart, tsEnd uint64, fieldExpression string, exists bool) (string, bool, error) {
+	if key.FieldContext != telemetrytypes.FieldContextScope {
+		return "", false, nil
+	}
+	newColumns, evolutionsEntries, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, tsStart, tsEnd)
+	if err != nil {
+		return "", false, err
+	}
+	if len(newColumns) != 1 || newColumns[0].Type.GetType() != schema.ColumnTypeEnumJSON {
+		return "", false, nil
+	}
+
+	if isDeclaredScopePath(key.Name) {
+		if exists {
+			return fieldExpression + " <> ''", true, nil
+		}
+		return fieldExpression + " = ''", true, nil
+	}
+
+	columnName := newColumns[0].Name
+	if len(evolutionsEntries) > 0 && evolutionsEntries[0] != nil {
+		columnName = evolutionsEntries[0].ColumnName
+	}
+	path := fmt.Sprintf("%s.attributes.`%s`", columnName, key.Name)
+	if exists {
+		return path + " IS NOT NULL", true, nil
+	}
+	return path + " IS NULL", true, nil
 }
 
 func (m *fieldMapper) existsExpressionFor(
@@ -610,6 +656,11 @@ func (m *fieldMapper) existsExpressionFor(
 	fieldExpression, err := m.FieldFor(ctx, orgID, tsStart, tsEnd, key)
 	if err != nil {
 		return "", err
+	}
+	if expr, ok, err := scopeJSONExistsExpression(columns, key, tsStart, tsEnd, fieldExpression, exists); err != nil {
+		return "", err
+	} else if ok {
+		return expr, nil
 	}
 	return querybuilder.ExistsExpression(columns, key, tsStart, tsEnd, fieldExpression, exists)
 }

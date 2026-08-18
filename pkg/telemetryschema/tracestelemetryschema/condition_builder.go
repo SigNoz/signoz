@@ -158,9 +158,16 @@ func (c *conditionBuilder) conditionFor(
 		if err != nil {
 			return "", err
 		}
-		pred, err := querybuilder.ExistsExpression(columns, key, startNs, endNs, fieldExpression, operator == qbtypes.FilterOperatorExists)
+		exists := operator == qbtypes.FilterOperatorExists
+		pred, ok, err := scopeJSONExistsExpression(columns, key, startNs, endNs, fieldExpression, exists)
 		if err != nil {
 			return "", err
+		}
+		if !ok {
+			pred, err = querybuilder.ExistsExpression(columns, key, startNs, endNs, fieldExpression, exists)
+			if err != nil {
+				return "", err
+			}
 		}
 		return sqlbuilder.Escape(pred), nil
 	}
