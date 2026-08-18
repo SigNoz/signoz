@@ -106,9 +106,8 @@ def test_googlechat_test_channel(  # pylint: disable=too-many-arguments,too-many
             timeout=10,
         )
         req = find.json()["requests"][0]
-        # threading query params are always appended
-        assert "messageReplyOption=REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD" in req["url"]
-        assert "threadKey=" in req["url"]
+        # the configured webhook url is posted verbatim, nothing appended
+        assert req["url"] == path, f"expected webhook url {path} posted verbatim, got {req['url']}"
         # cardsV2 shape with the hardcoded test alert
         card = json.loads(base64.b64decode(req["bodyAsBase64"]).decode("utf-8"))
         assert card["cardsV2"][0]["cardId"] == "signoz-alert"
