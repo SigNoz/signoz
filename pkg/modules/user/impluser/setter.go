@@ -203,7 +203,7 @@ func (module *setter) UpdateAnyUser(ctx context.Context, orgID valuer.UUID, user
 }
 
 func (module *setter) DeleteUser(ctx context.Context, orgID valuer.UUID, id string, deletedBy string) error {
-	user, err := module.store.GetUser(ctx, valuer.MustNewUUID(id))
+	user, err := module.store.GetByOrgIDAndID(ctx, orgID, valuer.MustNewUUID(id))
 	if err != nil {
 		return err
 	}
@@ -214,15 +214,6 @@ func (module *setter) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 
 	if err := user.ErrIfDeleted(); err != nil {
 		return errors.WithAdditionalf(err, "cannot delete already deleted user")
-	}
-
-	deleter, err := module.store.GetUser(ctx, valuer.MustNewUUID(deletedBy))
-	if err != nil {
-		return err
-	}
-
-	if deleter.ID == user.ID {
-		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot self delete")
 	}
 
 	err = user.UpdateStatus(types.UserStatusDeleted)

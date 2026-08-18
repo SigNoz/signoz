@@ -59,6 +59,10 @@ func (resolved *resolvedResource) fill(phase ExtractPhase, ec ExtractorContext) 
 	}
 }
 
+func (resolved *resolvedResource) Skip() bool {
+	return false
+}
+
 func (resolved *resolvedResource) Err() error {
 	return resolved.err
 }

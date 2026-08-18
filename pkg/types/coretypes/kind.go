@@ -67,7 +67,7 @@ func (name Kind) Enum() []any {
 		KindPlannedMaintenance,
 		KindSavedView,
 		KindTraceFunnel,
-		KindFactorPassword,
+		KindResetPasswordToken,
 		KindFactorAPIKey,
 		KindLicense,
 		KindSubscription,

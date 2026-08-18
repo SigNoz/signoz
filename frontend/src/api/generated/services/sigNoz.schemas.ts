@@ -2171,7 +2171,7 @@ export enum CoretypesKindDTO {
 	'planned-maintenance' = 'planned-maintenance',
 	'saved-view' = 'saved-view',
 	'trace-funnel' = 'trace-funnel',
-	'factor-password' = 'factor-password',
+	'reset-password-token' = 'reset-password-token',
 	'factor-api-key' = 'factor-api-key',
 	license = 'license',
 	subscription = 'subscription',
