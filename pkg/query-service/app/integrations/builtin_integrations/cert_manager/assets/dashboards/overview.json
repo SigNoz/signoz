@@ -1,0 +1,576 @@
+{
+  "description": "High-signal cert-manager dashboard covering certificate health, issuer readiness, challenge state, and ACME request flow.",
+  "id": "cert-manager-overview",
+  "layout": [
+    {
+      "h": 3,
+      "i": "certs-by-issuer",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "h": 3,
+      "i": "ready-certs",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 0
+    },
+    {
+      "h": 3,
+      "i": "issuer-ready",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 3
+    },
+    {
+      "h": 3,
+      "i": "clusterissuer-ready",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 3
+    },
+    {
+      "h": 3,
+      "i": "challenge-status",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 6
+    },
+    {
+      "h": 3,
+      "i": "acme-requests",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 6
+    }
+  ],
+  "tags": ["cert-manager", "kubernetes", "tls"],
+  "title": "cert-manager overview",
+  "uploadedGrafana": false,
+  "uuid": "b01bb0bb-6f6e-4de4-9ca6-bb0ba5f6d122",
+  "variables": {
+    "namespace": {
+      "allSelected": true,
+      "customValue": "",
+      "description": "Namespace running cert-manager resources",
+      "id": "namespace",
+      "key": "namespace",
+      "modificationUUID": "namespace-mod",
+      "multiSelect": true,
+      "name": "namespace",
+      "order": 0,
+      "queryValue": "SELECT JSONExtractString(labels, 'namespace') AS namespace FROM signoz_metrics.distributed_time_series_v4_1day WHERE metric_name = 'certmanager_certificate_expiration_timestamp_seconds' GROUP BY namespace",
+      "selectedValue": [],
+      "showALLOption": true,
+      "sort": "ASC",
+      "textboxValue": "",
+      "type": "QUERY"
+    },
+    "issuer_name": {
+      "allSelected": true,
+      "customValue": "",
+      "description": "Issuer backing the certificate",
+      "id": "issuer_name",
+      "key": "issuer_name",
+      "modificationUUID": "issuer-mod",
+      "multiSelect": true,
+      "name": "issuer_name",
+      "order": 1,
+      "queryValue": "SELECT JSONExtractString(labels, 'issuer_name') AS issuer_name FROM signoz_metrics.distributed_time_series_v4_1day WHERE metric_name = 'certmanager_certificate_expiration_timestamp_seconds' AND JSONExtractString(labels, 'namespace') IN {{.namespace}} GROUP BY issuer_name",
+      "selectedValue": [],
+      "showALLOption": true,
+      "sort": "ASC",
+      "textboxValue": "",
+      "type": "QUERY"
+    },
+    "certificate_name": {
+      "allSelected": true,
+      "customValue": "",
+      "description": "Certificate resource name",
+      "id": "certificate_name",
+      "key": "certificate_name",
+      "modificationUUID": "certificate-mod",
+      "multiSelect": true,
+      "name": "certificate_name",
+      "order": 2,
+      "queryValue": "SELECT JSONExtractString(labels, 'name') AS certificate_name FROM signoz_metrics.distributed_time_series_v4_1day WHERE metric_name = 'certmanager_certificate_expiration_timestamp_seconds' AND JSONExtractString(labels, 'namespace') IN {{.namespace}} AND JSONExtractString(labels, 'issuer_name') IN {{.issuer_name}} GROUP BY certificate_name",
+      "selectedValue": [],
+      "showALLOption": true,
+      "sort": "ASC",
+      "textboxValue": "",
+      "type": "QUERY"
+    }
+  },
+  "version": "v5",
+  "widgets": [
+    {
+      "description": "Number of active certificates grouped by issuer.",
+      "fillSpans": false,
+      "id": "certs-by-issuer",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "certmanager_certificate_expiration_timestamp_seconds",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "count",
+                  "temporality": null,
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "namespace IN $namespace AND issuer_name IN $issuer_name AND name IN $certificate_name"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "issuer_name--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "issuer_name",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{issuer_name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "certs-by-issuer-query",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "softMax": null,
+      "softMin": 0,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Certificates by issuer",
+      "yAxisUnit": "none"
+    },
+    {
+      "description": "Certificates that currently report a ready condition.",
+      "fillSpans": false,
+      "id": "ready-certs",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "certmanager_certificate_ready_status",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "temporality": null,
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "condition = 'True' AND namespace IN $namespace AND issuer_name IN $issuer_name AND name IN $certificate_name"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "ready-certs-query",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "softMax": null,
+      "softMin": 0,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Ready certificates",
+      "yAxisUnit": "none"
+    },
+    {
+      "description": "Ready status for namespaced issuers.",
+      "fillSpans": false,
+      "id": "issuer-ready",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "certmanager_issuer_ready_status",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "temporality": null,
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "condition = 'True' AND namespace IN $namespace AND name IN $issuer_name"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "issuer-ready-query",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "softMax": null,
+      "softMin": 0,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Issuer readiness",
+      "yAxisUnit": "none"
+    },
+    {
+      "description": "Ready status for cluster issuers.",
+      "fillSpans": false,
+      "id": "clusterissuer-ready",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "certmanager_clusterissuer_ready_status",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "temporality": null,
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "condition = 'True'"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "clusterissuer-ready-query",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "softMax": null,
+      "softMin": 0,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "ClusterIssuer readiness",
+      "yAxisUnit": "none"
+    },
+    {
+      "description": "Current challenge status split by ACME state.",
+      "fillSpans": false,
+      "id": "challenge-status",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "certmanager_certificate_challenge_status",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "temporality": null,
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "namespace IN $namespace"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "status--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "status",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{status}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "challenge-status-query",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "softMax": null,
+      "softMin": 0,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Challenge status",
+      "yAxisUnit": "none"
+    },
+    {
+      "description": "Outbound ACME request rate grouped by logical action.",
+      "fillSpans": false,
+      "id": "acme-requests",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "certmanager_http_acme_client_request_count",
+                  "reduceTo": "sum",
+                  "spaceAggregation": "sum",
+                  "temporality": null,
+                  "timeAggregation": "rate"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": ""
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "action--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "action",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{action}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "acme-requests-query",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "softMax": null,
+      "softMin": 0,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "ACME request rate",
+      "yAxisUnit": "none"
+    }
+  ]
+}
