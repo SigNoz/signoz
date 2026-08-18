@@ -17,6 +17,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
+	"github.com/SigNoz/signoz/pkg/modules/aiobservability"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
@@ -74,6 +75,7 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ inframonitoring.Handler }{},
 		struct{ gateway.Handler }{},
 		struct{ fields.Handler }{},
+		struct{ aiobservability.Handler }{},
 		struct{ authz.Handler }{},
 		struct{ rawdataexport.Handler }{},
 		struct{ zeus.Handler }{},

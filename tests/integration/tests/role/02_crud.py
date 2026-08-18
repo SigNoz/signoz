@@ -267,6 +267,40 @@ def test_delete_role_with_assignee_guarded(
     assert resp.status_code == HTTPStatus.NO_CONTENT, resp.text
 
 
+def test_delete_role_after_deleting_assigned_user(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    create_role: Callable[..., str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    role_id = create_role(admin_token, "crud-deleted-assignee-role", [transaction_group("read", "metaresource", "dashboard", ["*"])])
+
+    user_id = create_active_user(
+        signoz,
+        admin_token,
+        email="crud+deleted-assignee@integration.test",
+        role="signoz-viewer",
+        password=CRUD_ASSIGNEE_USER_PASSWORD,
+        name="crud-deleted-assignee-user",
+    )
+
+    resp = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v2/user_roles"),
+        json={"userId": user_id, "roleId": role_id},
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert resp.status_code == HTTPStatus.CREATED, resp.text
+
+    resp = requests.delete(signoz.self.host_configs["8080"].get(f"/api/v2/users/{user_id}"), headers={"Authorization": f"Bearer {admin_token}"}, timeout=5)
+    assert resp.status_code == HTTPStatus.NO_CONTENT, resp.text
+
+    resp = requests.delete(signoz.self.host_configs["8080"].get(f"/api/v1/roles/{role_id}"), headers={"Authorization": f"Bearer {admin_token}"}, timeout=5)
+    assert resp.status_code == HTTPStatus.NO_CONTENT, f"delete role after deleting its only assignee: {resp.text}"
+
+
 def test_delete_removes_role(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
