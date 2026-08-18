@@ -3,11 +3,13 @@ package sqlmigration
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/oklog/ulid/v2"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
@@ -61,6 +63,8 @@ func (migration *addAuthDomainTuples) Up(ctx context.Context, db *bun.DB) error 
 		{authtypes.SigNozAdminRoleName, "metaresource", "auth-domain", "update"},
 		{authtypes.SigNozAdminRoleName, "metaresource", "auth-domain", "delete"},
 		{authtypes.SigNozAdminRoleName, "metaresource", "auth-domain", "list"},
+		{authtypes.SigNozAdminRoleName, "metaresource", "auth-domain", "attach"},
+		{authtypes.SigNozAdminRoleName, "metaresource", "auth-domain", "detach"},
 	}
 
 	for _, orgID := range orgIDs {
@@ -125,6 +129,32 @@ func (migration *addAuthDomainTuples) Up(ctx context.Context, db *bun.DB) error 
 				if err != nil {
 					return err
 				}
+			}
+		}
+	}
+
+	// The auth-domain attach/detach transactions are new to the registry, so the
+	// managed-role transaction groups stored per org (served by the roles API)
+	// must be re-synced from it, like 105_update_role_transaction_groups did.
+	managedRoleGroups := make(map[string]string, len(coretypes.ManagedRoleToTransactions))
+	for roleName, transactions := range coretypes.ManagedRoleToTransactions {
+		data, err := json.Marshal(authtypes.NewTransactionGroupsFromTransactions(transactions))
+		if err != nil {
+			return err
+		}
+		managedRoleGroups[roleName] = string(data)
+	}
+
+	for _, orgID := range orgIDs {
+		for roleName, data := range managedRoleGroups {
+			if _, err := tx.NewUpdate().
+				Model(new(roles)).
+				Set("transaction_groups = ?", data).
+				Where("org_id = ?", orgID).
+				Where("type = ?", authtypes.RoleTypeManaged.StringValue()).
+				Where("name = ?", roleName).
+				Exec(ctx); err != nil {
+				return err
 			}
 		}
 	}

@@ -14439,8 +14439,12 @@ paths:
       security:
       - api_key:
         - auth-domain:create
+        - auth-domain:attach
+        - role:attach
       - tokenizer:
         - auth-domain:create
+        - auth-domain:attach
+        - role:attach
       summary: Create auth domain
       tags:
       - authdomains
@@ -14598,8 +14602,16 @@ paths:
       security:
       - api_key:
         - auth-domain:update
+        - auth-domain:attach
+        - auth-domain:detach
+        - role:attach
+        - role:detach
       - tokenizer:
         - auth-domain:update
+        - auth-domain:attach
+        - auth-domain:detach
+        - role:attach
+        - role:detach
       summary: Update auth domain
       tags:
       - authdomains
