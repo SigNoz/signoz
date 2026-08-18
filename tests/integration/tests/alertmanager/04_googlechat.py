@@ -48,7 +48,7 @@ GOOGLECHAT_CASES = [
         channel_config=googlechat_config("gc-metrics"),
         notification_expectation=types.AMNotificationExpectation(
             should_notify=True,
-            wait_time_seconds=150,
+            wait_time_seconds=60,
             notification_validations=[
                 types.NotificationValidation(
                     destination_type="webhook",
@@ -69,7 +69,7 @@ GOOGLECHAT_CASES = [
         channel_config=googlechat_config("gc-logs"),
         notification_expectation=types.AMNotificationExpectation(
             should_notify=True,
-            wait_time_seconds=150,
+            wait_time_seconds=60,
             notification_validations=[
                 types.NotificationValidation(
                     destination_type="webhook",
@@ -92,7 +92,7 @@ GOOGLECHAT_CASES = [
         channel_config=googlechat_config("gc-traces"),
         notification_expectation=types.AMNotificationExpectation(
             should_notify=True,
-            wait_time_seconds=150,
+            wait_time_seconds=60,
             notification_validations=[
                 types.NotificationValidation(
                     destination_type="webhook",
@@ -179,7 +179,7 @@ def test_googlechat_retry_429_then_200(  # pylint: disable=too-many-arguments,to
         maildev,
         types.AMNotificationExpectation(
             should_notify=True,
-            wait_time_seconds=150,
+            wait_time_seconds=60,
             notification_validations=[
                 types.NotificationValidation(
                     destination_type="webhook",
