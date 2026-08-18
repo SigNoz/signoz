@@ -31,6 +31,7 @@ type traceQueryStatementBuilder struct {
 	cb                             qbtypes.ConditionBuilder
 	resourceFilterResolver         *resourcefilter.ResourceFingerprintResolver[qbtypes.TraceAggregation]
 	aggExprRewriter                qbtypes.AggExprRewriter
+	fl                             flagger.Flagger
 	skipResourceFingerprintEnabled bool
 	// traceScope, set only on the per-call copy made by BuildTraceScoped, constrains
 	// queries to spans whose trace_id is in the __trace_scope CTE.
@@ -53,8 +54,8 @@ func NewFactory(
 	return factory.NewProviderFactory(
 		factory.MustNewName("traces"),
 		func(_ context.Context, settings factory.ProviderSettings, cfg statementbuilder.Config) (qbtypes.StatementBuilder[qbtypes.TraceAggregation], error) {
-			fm := tracestelemetryschema.NewFieldMapper()
-			cb := tracestelemetryschema.NewConditionBuilder(fm)
+			fm := tracestelemetryschema.NewFieldMapper(fl)
+			cb := tracestelemetryschema.NewConditionBuilder(fm, fl)
 			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, fm, cb, fl)
 			return NewTraceQueryStatementBuilder(
 				settings, metadataStore, fm, cb, aggExprRewriter, telemetryStore, fl,
@@ -97,6 +98,7 @@ func NewTraceQueryStatementBuilder(
 		cb:                             conditionBuilder,
 		resourceFilterResolver:         resourceFilterResolver,
 		aggExprRewriter:                aggExprRewriter,
+		fl:                             flagger,
 		skipResourceFingerprintEnabled: skipResourceFingerprintEnable,
 	}
 }
@@ -160,7 +162,7 @@ func (b *traceQueryStatementBuilder) Build(
 
 	// We modify SelectFields above (injecting default fields), and those default
 	// fields can carry keys that need evolutions, so fetch keys after that.
-	keySelectors := getKeySelectors(query)
+	keySelectors := querybuilder.ExpandKeySelectorsForFamilies(ctx, orgID, b.fl, getKeySelectors(query))
 
 	keys, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, keySelectors)
 	if err != nil {
@@ -848,6 +850,7 @@ func (b *traceQueryStatementBuilder) addFilterCondition(
 		preparedWhereClause, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
 			Context:            ctx,
 			OrgID:              orgID,
+			Flagger:            b.fl,
 			Logger:             b.logger,
 			FieldMapper:        b.fm,
 			ConditionBuilder:   b.cb,

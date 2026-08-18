@@ -113,6 +113,21 @@ func BuildCompleteFieldKeyMap(releaseTime time.Time) map[string][]*telemetrytype
 				FieldDataType: telemetrytypes.FieldDataTypeBool,
 			},
 		},
+		// both spellings of an enabled semantic-convention family
+		"deployment.environment.name": {
+			{
+				Name:          "deployment.environment.name",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
+		"deployment.environment": {
+			{
+				Name:          "deployment.environment",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
 	}
 	for _, keys := range keysMap {
 		for _, key := range keys {
