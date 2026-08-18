@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -19,12 +20,15 @@ import (
 
 type conditionBuilder struct {
 	fm qbtypes.FieldMapper
+	// fl evaluates the resolve_semconv_families flag during resolution.
+	// A nil flagger keeps resolution literal.
+	fl flagger.Flagger
 }
 
 var _ qbtypes.ConditionBuilder = (*conditionBuilder)(nil)
 
-func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
-	return &conditionBuilder{fm: fm}
+func NewConditionBuilder(fm qbtypes.FieldMapper, fl flagger.Flagger) *conditionBuilder {
+	return &conditionBuilder{fm: fm, fl: fl}
 }
 
 func (c *conditionBuilder) conditionFor(
@@ -32,7 +36,7 @@ func (c *conditionBuilder) conditionFor(
 	orgID valuer.UUID,
 	startNs uint64,
 	endNs uint64,
-	key *telemetrytypes.TelemetryFieldKey,
+	logical *telemetrytypes.LogicalField,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
@@ -42,13 +46,13 @@ func (c *conditionBuilder) conditionFor(
 		value = querybuilder.FormatValueForContains(value)
 	}
 
-	fieldExpression, err := c.fm.FieldFor(ctx, orgID, startNs, endNs, key)
+	fieldExpression, err := querybuilder.LogicalValueExpr(ctx, orgID, startNs, endNs, c.fm, logical)
 	if err != nil {
 		return "", err
 	}
 
 	// TODO(srikanthccv): maybe extend this to every possible attribute
-	if key.Name == "duration_nano" || key.Name == "durationNano" { // QoL improvement
+	if logical.Name == "duration_nano" || logical.Name == "durationNano" { // QoL improvement
 		switch v := value.(type) {
 		case string:
 			if duration, err := time.ParseDuration(v); err == nil {
@@ -65,7 +69,9 @@ func (c *conditionBuilder) conditionFor(
 		}
 	}
 
-	fieldExpression, value = querybuilder.DataTypeCollisionHandledFieldName(key, value, fieldExpression, operator)
+	// Coercion switches only on the data type, which every member shares, so
+	// the first member stands in for the field.
+	fieldExpression, value = querybuilder.DataTypeCollisionHandledFieldName(logical.Single(), value, fieldExpression, operator)
 
 	// regular operators
 	switch operator {
@@ -135,7 +141,11 @@ func (c *conditionBuilder) conditionFor(
 		// instead of using IN, we use `=` + `OR` to make use of index
 		conditions := []string{}
 		for _, value := range values {
-			conditions = append(conditions, sb.E(fieldExpression, value))
+			cond, err := c.conditionFor(ctx, orgID, startNs, endNs, logical, qbtypes.FilterOperatorEqual, value, sb)
+			if err != nil {
+				return "", err
+			}
+			conditions = append(conditions, cond)
 		}
 		return sb.Or(conditions...), nil
 	case qbtypes.FilterOperatorNotIn:
@@ -146,7 +156,11 @@ func (c *conditionBuilder) conditionFor(
 		// instead of using NOT IN, we use `!=` + `AND` to make use of index
 		conditions := []string{}
 		for _, value := range values {
-			conditions = append(conditions, sb.NE(fieldExpression, value))
+			cond, err := c.conditionFor(ctx, orgID, startNs, endNs, logical, qbtypes.FilterOperatorNotEqual, value, sb)
+			if err != nil {
+				return "", err
+			}
+			conditions = append(conditions, cond)
 		}
 		return sb.And(conditions...), nil
 
@@ -154,15 +168,8 @@ func (c *conditionBuilder) conditionFor(
 	// in the query builder, `exists` and `not exists` are used for
 	// key membership checks, so depending on the column type, the condition changes
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
-		exists := operator == qbtypes.FilterOperatorExists
-		if pred, ok := scopeJSONExistsExpression(key, fieldExpression, exists); ok {
-			return sqlbuilder.Escape(pred), nil
-		}
-		columns, err := c.fm.ColumnFor(ctx, orgID, startNs, endNs, key)
-		if err != nil {
-			return "", err
-		}
-		pred, err := querybuilder.ExistsExpression(columns, key, startNs, endNs, fieldExpression, exists)
+		// LogicalExistsExpr composes from ExistsFor, which carries the scope JSON quirk.
+		pred, err := querybuilder.LogicalExistsExpr(ctx, orgID, startNs, endNs, c.fm, logical, operator == qbtypes.FilterOperatorExists)
 		if err != nil {
 			return "", err
 		}
@@ -214,10 +221,10 @@ func (c *conditionBuilder) ConditionFor(
 		return nil, nil, err
 	}
 
-	matches := querybuilder.MatchingFieldKeys(key, fieldKeys)
+	matches := querybuilder.MatchingLogicalFields(ctx, orgID, c.fl, key, fieldKeys)
 	skipResourceFilter := options.SkipResourceFilter
 
-	keys, warning := querybuilder.ResolveKeys(key, matches)
+	logicalFields, warning := querybuilder.ResolveLogicalFields(key, matches)
 	var warnings []string
 	if warning != "" {
 		warnings = append(warnings, warning)
@@ -225,10 +232,10 @@ func (c *conditionBuilder) ConditionFor(
 	// A bare key that names a real column filters on the column too — first. When metadata
 	// only knows the name under other contexts, prepend the column and keep metadata matches
 	// only where their type is consistent with it (a corrupt entry can't degrade the column).
-	if key.FieldContext == telemetrytypes.FieldContextUnspecified && len(keys) > 0 {
+	if key.FieldContext == telemetrytypes.FieldContextUnspecified && len(logicalFields) > 0 {
 		hasColumn := false
-		for _, k := range keys {
-			if k.FieldContext == telemetrytypes.FieldContextSpan {
+		for _, logical := range logicalFields {
+			if logical.FieldContext == telemetrytypes.FieldContextSpan {
 				hasColumn = true
 				break
 			}
@@ -236,49 +243,49 @@ func (c *conditionBuilder) ConditionFor(
 		if !hasColumn {
 			probe := telemetrytypes.NewTelemetryFieldKey(key.Name, telemetrytypes.FieldContextSpan, key.FieldDataType)
 			if cols, colErr := c.fm.ColumnFor(ctx, orgID, startNs, endNs, probe); colErr == nil && len(cols) > 0 {
-				combined := make([]*telemetrytypes.TelemetryFieldKey, 0, len(keys)+1)
-				combined = append(combined, probe)
-				for _, k := range keys {
-					if columnMatchesDataType(cols[0], k.FieldDataType) {
-						combined = append(combined, k)
+				combined := make([]*telemetrytypes.LogicalField, 0, len(logicalFields)+1)
+				combined = append(combined, telemetrytypes.SingleLogicalField(key.Name, probe))
+				for _, logical := range logicalFields {
+					if columnMatchesDataType(cols[0], logical.FieldDataType) {
+						combined = append(combined, logical)
 					}
 				}
-				keys = combined
+				logicalFields = combined
 			}
 		}
 	}
 
 	synthesized := false
-	if len(keys) == 0 {
+	if len(logicalFields) == 0 {
 		// Not in metadata. CandidateKeys resolves it: fold contexts (span/trace) get the
 		// metadata map so it can honor a real column, correct to a stripped-name metadata
 		// match, or synthesize; strict contexts pass nil and keep their synthesize path.
-		keys = c.fm.CandidateKeys(ctx, orgID, key, value, candidateLookupKeys(key, fieldKeys))
-		if len(keys) == 0 {
+		logicalFields = querybuilder.WrapAsLogicalFields(key.Name, c.fm.CandidateKeys(ctx, orgID, key, value, candidateLookupKeys(key, fieldKeys)))
+		if len(logicalFields) == 0 {
 			return nil, warnings, querybuilder.NewKeyNotFoundError(key.Name)
 		}
 		synthesized = true
 		warnings = append(warnings, querybuilder.NewKeyNotFoundWarning(key.Name))
 	}
 
-	// When a resource sub-query already covers the term, drop resource keys from the main
+	// When a resource sub-query already covers the term, drop resource fields from the main
 	// query. Synthesized keys are exempt: the sub-query skips keys absent from metadata.
 	if skipResourceFilter && !synthesized {
-		filtered := make([]*telemetrytypes.TelemetryFieldKey, 0, len(keys))
-		for _, k := range keys {
-			if k.FieldContext != telemetrytypes.FieldContextResource {
-				filtered = append(filtered, k)
+		filtered := make([]*telemetrytypes.LogicalField, 0, len(logicalFields))
+		for _, logical := range logicalFields {
+			if logical.FieldContext != telemetrytypes.FieldContextResource {
+				filtered = append(filtered, logical)
 			}
 		}
 		if len(filtered) == 0 {
 			return nil, warnings, nil
 		}
-		keys = filtered
+		logicalFields = filtered
 	}
 
-	conds := make([]string, 0, len(keys))
-	for _, k := range keys {
-		cond, err := c.conditionForKey(ctx, orgID, startNs, endNs, k, operator, value, sb)
+	conds := make([]string, 0, len(logicalFields))
+	for _, logical := range logicalFields {
+		cond, err := c.conditionForLogicalField(ctx, orgID, startNs, endNs, logical, operator, value, sb)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -287,28 +294,28 @@ func (c *conditionBuilder) ConditionFor(
 	return conds, warnings, nil
 }
 
-func (c *conditionBuilder) conditionForKey(
+func (c *conditionBuilder) conditionForLogicalField(
 	ctx context.Context,
 	orgID valuer.UUID,
 	startNs uint64,
 	endNs uint64,
-	key *telemetrytypes.TelemetryFieldKey,
+	logical *telemetrytypes.LogicalField,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
-	if c.isSpanScopeField(key.Name) {
-		return c.buildSpanScopeCondition(key, operator, value, startNs)
+	if c.isSpanScopeField(logical.Name) {
+		return c.buildSpanScopeCondition(logical.Single(), operator, value, startNs)
 	}
 
-	condition, err := c.conditionFor(ctx, orgID, startNs, endNs, key, operator, value, sb)
+	condition, err := c.conditionFor(ctx, orgID, startNs, endNs, logical, operator, value, sb)
 	if err != nil {
 		return "", err
 	}
 
 	if operator.AddDefaultExistsFilter() {
 		// skip adding exists filter for intrinsic fields
-		field, _ := c.fm.FieldFor(ctx, orgID, startNs, endNs, key)
+		field, _ := c.fm.FieldFor(ctx, orgID, startNs, endNs, logical.Single())
 		if slices.Contains(maps.Keys(IntrinsicFields), field) ||
 			slices.Contains(maps.Keys(IntrinsicFieldsDeprecated), field) ||
 			slices.Contains(maps.Keys(CalculatedFields), field) ||
@@ -316,7 +323,7 @@ func (c *conditionBuilder) conditionForKey(
 			return condition, nil
 		}
 
-		existsCondition, err := c.conditionFor(ctx, orgID, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb)
+		existsCondition, err := c.conditionFor(ctx, orgID, startNs, endNs, logical, qbtypes.FilterOperatorExists, nil, sb)
 		if err != nil {
 			return "", err
 		}

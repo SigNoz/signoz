@@ -9,7 +9,6 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/huandu/go-sqlbuilder"
 )
 
 var (
@@ -97,19 +96,25 @@ func (m *fieldMapper) ColumnFor(ctx context.Context, _ valuer.UUID, tsStart, tsE
 	return m.getColumn(ctx, tsStart, tsEnd, key)
 }
 
+// ExistsFor implements the per-key existence primitive of qbtypes.FieldMapper.
+// Intrinsic fields always exist; labels are checked for key membership.
+func (m *fieldMapper) ExistsFor(_ context.Context, _ valuer.UUID, _, _ uint64, key *telemetrytypes.TelemetryFieldKey, exists bool) (string, error) {
+	if slices.Contains(IntrinsicFields, key.Name) {
+		return "true", nil
+	}
+	if exists {
+		return fmt.Sprintf("has(JSONExtractKeys(labels), '%s')", key.Name), nil
+	}
+	return fmt.Sprintf("not has(JSONExtractKeys(labels), '%s')", key.Name), nil
+}
+
 func (m *fieldMapper) ColumnExpressionFor(
 	ctx context.Context,
 	orgID valuer.UUID,
 	startNs, endNs uint64,
 	field *telemetrytypes.TelemetryFieldKey,
 	_ telemetrytypes.FieldDataType,
-	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	_ map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
-
-	fieldExpression, err := m.FieldFor(ctx, orgID, startNs, endNs, field)
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(fieldExpression), field.Name), nil
+	return m.FieldFor(ctx, orgID, startNs, endNs, field)
 }

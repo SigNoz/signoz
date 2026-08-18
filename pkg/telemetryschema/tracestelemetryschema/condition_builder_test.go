@@ -2,6 +2,7 @@ package tracestelemetryschema
 
 import (
 	"context"
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"testing"
 	"time"
 
@@ -288,8 +289,8 @@ func TestConditionFor(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
-	conditionBuilder := NewConditionBuilder(fm)
+	fm := NewFieldMapper(flaggertest.New(t))
+	conditionBuilder := NewConditionBuilder(fm, flaggertest.New(t))
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
@@ -375,8 +376,8 @@ func TestConditionForResourceWithEvolution(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
-	conditionBuilder := NewConditionBuilder(fm)
+	fm := NewFieldMapper(flaggertest.New(t))
+	conditionBuilder := NewConditionBuilder(fm, flaggertest.New(t))
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
@@ -392,14 +393,14 @@ func TestConditionForResourceWithEvolution(t *testing.T) {
 
 // TestConditionForScopeIntrinsicFields covers the scope.name/scope.version intrinsic
 // fields against the "scope" JSON column. These are *declared* String paths on that
-// column, so a row without a scope reads as '' and never NULL: presence must be an
+// column, so a row without a scope reads as ” and never NULL: presence must be an
 // empty-string check, since "IS NOT NULL" would hold for every row. That also rules
 // out treating them as nested attribute keys under scope.attributes, which are
 // undeclared (Dynamic) paths and genuinely NULL when absent.
 func TestConditionForScopeIntrinsicFields(t *testing.T) {
 	ctx := context.Background()
-	fm := NewFieldMapper()
-	conditionBuilder := NewConditionBuilder(fm)
+	fm := NewFieldMapper(flaggertest.New(t))
+	conditionBuilder := NewConditionBuilder(fm, flaggertest.New(t))
 
 	testCases := []struct {
 		name        string
@@ -472,8 +473,8 @@ func TestConditionForScopeIntrinsicFields(t *testing.T) {
 // user input and queries anyway, emitting a warning instead of failing.
 func TestConditionForSynthesizedKeys(t *testing.T) {
 	ctx := context.Background()
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
+	fm := NewFieldMapper(flaggertest.New(t))
+	cb := NewConditionBuilder(fm, flaggertest.New(t))
 
 	// no metadata matches -> the builder must synthesize from user input
 	var noMatches map[string][]*telemetrytypes.TelemetryFieldKey

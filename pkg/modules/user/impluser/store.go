@@ -274,6 +274,15 @@ func (store *store) SoftDeleteUser(ctx context.Context, orgID string, id string)
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete tokens")
 	}
 
+	// delete user_role assignments so the roles can be deleted later
+	_, err = tx.NewDelete().
+		Model(new(authtypes.UserRole)).
+		Where("user_id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete user roles")
+	}
+
 	// soft delete user
 	now := time.Now()
 	_, err = tx.NewUpdate().

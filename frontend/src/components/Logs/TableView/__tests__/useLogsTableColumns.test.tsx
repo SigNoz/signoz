@@ -10,6 +10,10 @@ jest.mock('providers/Timezone', () => ({
 	}),
 }));
 
+jest.mock('providers/App/App', () => ({
+	useAppContext: (): { featureFlags: [] } => ({ featureFlags: [] }),
+}));
+
 const field = (name: string, type = ''): IField => ({
 	name,
 	type,

@@ -12,7 +12,6 @@ import {
 } from './__mockdata__/dashboards';
 import { explorerView } from './__mockdata__/explorer_views';
 import { licensesSuccessResponse } from './__mockdata__/licenses';
-import { membersResponse } from './__mockdata__/members';
 import { queryRangeSuccessResponse } from './__mockdata__/query_range';
 import { serviceSuccessResponse } from './__mockdata__/services';
 import { topLevelOperationSuccessResponse } from './__mockdata__/top_level_operations';
@@ -40,9 +39,6 @@ export const handlers = [
 			res(ctx.status(200), ctx.json(topLevelOperationSuccessResponse)),
 	),
 
-	rest.get('http://localhost/api/v1/user', (req, res, ctx) =>
-		res(ctx.status(200), ctx.json({ status: '200', data: membersResponse })),
-	),
 	rest.get(
 		'http://localhost/api/v3/autocomplete/attribute_keys',
 		(req, res, ctx) => {
@@ -164,15 +160,6 @@ export const handlers = [
 		),
 	),
 
-	rest.post('http://localhost/api/v1/invite', (_, res, ctx) =>
-		res(
-			ctx.status(200),
-			ctx.json({
-				status: 'success',
-				data: 'invite sent successfully',
-			}),
-		),
-	),
 	rest.get(
 		'http://localhost/api/v3/autocomplete/aggregate_attributes',
 		(req, res, ctx) =>

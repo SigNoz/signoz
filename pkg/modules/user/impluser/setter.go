@@ -55,119 +55,6 @@ func NewSetter(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing em
 	}
 }
 
-// CreateBulk implements invite.Module.
-func (module *setter) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, identityID valuer.UUID, identityEmail valuer.Email, bulkInvites *types.PostableBulkInviteRequest) ([]*types.Invite, error) {
-	// validate all emails to be invited
-	emails := make([]string, len(bulkInvites.Invites))
-	for idx, invite := range bulkInvites.Invites {
-		emails[idx] = invite.Email.StringValue()
-	}
-	users, err := module.store.GetUsersByEmailsOrgIDAndStatuses(ctx, orgID, emails, []string{types.UserStatusActive.StringValue(), types.UserStatusPendingInvite.StringValue()})
-	if err != nil {
-		return nil, err
-	}
-
-	if len(users) > 0 {
-		if err := users[0].ErrIfRoot(); err != nil {
-			return nil, errors.WithAdditionalf(err, "Cannot send invite to root user")
-		}
-
-		if users[0].Status == types.UserStatusPendingInvite {
-			return nil, errors.Newf(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "An invite already exists for this email: %s", users[0].Email.StringValue())
-		}
-
-		return nil, errors.Newf(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "User already exists with this email: %s", users[0].Email.StringValue())
-	}
-
-	type userWithResetToken struct {
-		User               *types.User
-		ResetPasswordToken *types.ResetPasswordToken
-		Role               types.Role
-	}
-
-	newUsersWithResetToken := make([]*userWithResetToken, len(bulkInvites.Invites))
-
-	if err := module.store.RunInTx(ctx, func(ctx context.Context) error {
-		for idx, invite := range bulkInvites.Invites {
-			// create a new user with pending invite status
-			newUser, err := types.NewUser(invite.Name, invite.Email, orgID, types.UserStatusPendingInvite)
-			if err != nil {
-				return err
-			}
-
-			// store the user and password in db
-			err = module.createUserWithoutGrant(ctx, newUser, root.WithRoleNames([]string{authtypes.MustGetSigNozManagedRoleFromExistingRole(invite.Role)}))
-			if err != nil {
-				return err
-			}
-
-			// generate reset password token
-			resetPasswordToken, err := module.GetOrCreateResetPasswordToken(ctx, newUser.ID)
-			if err != nil {
-				module.settings.Logger().ErrorContext(ctx, "failed to create reset password token for invited user", errors.Attr(err))
-				return err
-			}
-
-			newUsersWithResetToken[idx] = &userWithResetToken{
-				User:               newUser,
-				ResetPasswordToken: resetPasswordToken,
-				Role:               invite.Role,
-			}
-		}
-		return nil
-	}); err != nil {
-		return nil, err
-	}
-
-	invites := make([]*types.Invite, len(bulkInvites.Invites))
-
-	// send password reset emails to all the invited users
-	for idx, userWithToken := range newUsersWithResetToken {
-		module.analytics.TrackUser(ctx, orgID.String(), identityID.String(), "Invite Sent", map[string]any{
-			"invitee_email": userWithToken.User.Email,
-			"invitee_role":  userWithToken.Role,
-		})
-
-		invite := &types.Invite{
-			Identifiable: types.Identifiable{
-				ID: userWithToken.User.ID,
-			},
-			Name:  userWithToken.User.DisplayName,
-			Email: userWithToken.User.Email,
-			Token: userWithToken.ResetPasswordToken.Token,
-			Role:  userWithToken.Role,
-			OrgID: userWithToken.User.OrgID,
-			TimeAuditable: types.TimeAuditable{
-				CreatedAt: userWithToken.User.CreatedAt,
-				UpdatedAt: userWithToken.User.UpdatedAt,
-			},
-		}
-
-		invites[idx] = invite
-
-		frontendBaseUrl := bulkInvites.Invites[idx].FrontendBaseUrl
-		if frontendBaseUrl == "" {
-			module.settings.Logger().InfoContext(ctx, "frontend base url is not provided, skipping email", slog.Any("invitee_email", userWithToken.User.Email))
-			continue
-		}
-
-		resetLink := userWithToken.ResetPasswordToken.FactorPasswordResetLink(frontendBaseUrl)
-
-		tokenLifetime := module.config.Password.Invite.MaxTokenLifetime
-		humanizedTokenLifetime := strings.TrimSpace(humanize.RelTime(time.Now(), time.Now().Add(tokenLifetime), "", ""))
-
-		if err := module.emailing.SendHTML(ctx, userWithToken.User.Email.String(), "You're Invited to Join SigNoz", emailtypes.TemplateNameInvitationEmail, map[string]any{
-			"inviter_email": identityEmail.StringValue(),
-			"link":          resetLink,
-			"Expiry":        humanizedTokenLifetime,
-		}); err != nil {
-			module.settings.Logger().ErrorContext(ctx, "failed to send invite email", errors.Attr(err))
-		}
-	}
-
-	return invites, nil
-}
-
 func (module *setter) CreateUser(ctx context.Context, user *types.User, opts ...root.CreateUserOption) error {
 	createUserOpts := root.NewCreateUserOptions(opts...)
 
@@ -557,7 +444,7 @@ func (module *setter) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 		module.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Activated", traitsOrProperties)
 	}
 
-	return module.store.RunInTx(ctx, func(ctx context.Context) error {
+	if err := module.store.RunInTx(ctx, func(ctx context.Context) error {
 		if isPendingInviteUser {
 			err := module.store.UpdateUser(ctx, user.OrgID, user)
 			if err != nil {
@@ -574,7 +461,11 @@ func (module *setter) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 		}
 
 		return nil
-	})
+	}); err != nil {
+		return err
+	}
+
+	return module.tokenizer.DeleteTokensByUserID(ctx, user.ID)
 }
 
 func (module *setter) UpdatePassword(ctx context.Context, userID valuer.UUID, oldpasswd string, passwd string) error {

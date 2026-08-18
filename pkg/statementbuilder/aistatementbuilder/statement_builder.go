@@ -7,7 +7,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/statementbuilder"
 	scopedtraces "github.com/SigNoz/signoz/pkg/statementbuilder/scopedtracesstatementbuilder"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/aitelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -25,7 +27,7 @@ func NewFactory(
 // Scope describes gen_ai for the scoped trace builder: an AI trace has >=1 gen_ai
 // LLM, tool, or agent span, and its list adds AI/LLM per-trace metrics.
 func Scope() scopedtraces.TraceScope {
-	gateKeyNames := []string{telemetrytypes.GenAIRequestModel, telemetrytypes.GenAIToolName, telemetrytypes.GenAIAgentName}
+	gateKeyNames := []string{aiobservabilitytypes.GenAIRequestModel, aiobservabilitytypes.GenAIToolName, aiobservabilitytypes.GenAIAgentName}
 	gateExprs := make([]string, 0, len(gateKeyNames))
 	gateKeys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(gateKeyNames))
 	for _, name := range gateKeyNames {
@@ -37,14 +39,14 @@ func Scope() scopedtraces.TraceScope {
 		})
 	}
 
-	defs := telemetrytypes.GenAIFieldDefinitions
-	reqModel := defs[telemetrytypes.GenAIRequestModel]
-	toolName := defs[telemetrytypes.GenAIToolName]
-	inTok := defs[telemetrytypes.GenAIUsageInputTokens]
-	outTok := defs[telemetrytypes.GenAIUsageOutputTokens]
-	cost := defs[telemetrytypes.SignozGenAITotalCost]
-	inMsg := defs[telemetrytypes.GenAIInputMessages]
-	outMsg := defs[telemetrytypes.GenAIOutputMessages]
+	defs := aitelemetryschema.GenAIFields
+	reqModel := defs[aiobservabilitytypes.GenAIRequestModel]
+	toolName := defs[aiobservabilitytypes.GenAIToolName]
+	inTok := defs[aiobservabilitytypes.GenAIUsageInputTokens]
+	outTok := defs[aiobservabilitytypes.GenAIUsageOutputTokens]
+	cost := defs[aiobservabilitytypes.SignozGenAITotalCost]
+	inMsg := defs[aiobservabilitytypes.GenAIInputMessages]
+	outMsg := defs[aiobservabilitytypes.GenAIOutputMessages]
 
 	str := telemetrytypes.FieldDataTypeString
 	columns := append(scopedtraces.CommonTraceColumns(),
@@ -62,12 +64,19 @@ func Scope() scopedtraces.TraceScope {
 		scopedtraces.TraceColumn{Alias: "max_llm_duration_nano", Orderable: true, Expr: scopedtraces.ScopedToKeyColumn(scopedtraces.AggMax, scopedtraces.IntrinsicSpanKey("duration_nano"), &reqModel)},
 		// errors across the whole trace (any span), so display-only.
 		scopedtraces.TraceColumn{Alias: "error_count", Expr: scopedtraces.CondCount(scopedtraces.IntrinsicSpanKey("has_error"), qbtypes.FilterOperatorEqual, true)},
-		// timestamp of the last gen_ai span (LLM/tool/agent), hence gate-scoped.
+		// timestamp of the last gen_ai span (LLM/tool/agent), hence gate-scoped;
+		// order-only: a raw-nanos threshold makes no sense in the filter bar.
 		scopedtraces.TraceColumn{Alias: "last_activity_time", Orderable: true, Expr: scopedtraces.ScopedReduce(scopedtraces.AggMax, scopedtraces.IntrinsicSpanKey("timestamp"))},
 		// previews: first call's input (the prompt), last call's output (the answer).
 		scopedtraces.TraceColumn{Alias: "input", SpanLevel: true, Expr: scopedtraces.PickBy(&inMsg, str, scopedtraces.IntrinsicSpanKey("timestamp"), scopedtraces.PickEarliest)},
 		scopedtraces.TraceColumn{Alias: "output", SpanLevel: true, Expr: scopedtraces.PickBy(&outMsg, str, scopedtraces.IntrinsicSpanKey("timestamp"), scopedtraces.PickLatest)},
 	)
+
+	for i, c := range columns {
+		if _, ok := aitelemetryschema.TraceAggregateFields[c.Alias]; ok {
+			columns[i].Filterable = true
+		}
+	}
 
 	return scopedtraces.TraceScope{
 		FilterExpression:  strings.Join(gateExprs, " OR "),

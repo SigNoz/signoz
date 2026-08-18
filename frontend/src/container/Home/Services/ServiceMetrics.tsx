@@ -35,7 +35,6 @@ import { openInNewTab } from 'utils/navigation';
 
 import triangleRulerUrl from '@/assets/Icons/triangle-ruler.svg';
 
-import { FeatureKeys } from '../../../constants/features';
 import { DOCS_LINKS } from '../constants';
 import { columns, TIME_PICKER_OPTIONS } from './constants';
 
@@ -212,19 +211,13 @@ function ServiceMetrics({
 
 	const topLevelOperations = useMemo(() => Object.entries(data || {}), [data]);
 
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
-
 	const queryRangeRequestData = useMemo(
 		() =>
 			getQueryRangeRequestData({
 				topLevelOperations,
 				globalSelectedInterval,
-				dotMetricsEnabled,
 			}),
-		[globalSelectedInterval, topLevelOperations, dotMetricsEnabled],
+		[globalSelectedInterval, topLevelOperations],
 	);
 
 	const dataQueries = useGetQueriesRange(

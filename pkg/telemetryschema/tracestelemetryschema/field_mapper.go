@@ -7,6 +7,7 @@ import (
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -160,12 +161,16 @@ var (
 	}
 )
 
-type fieldMapper struct{}
+type fieldMapper struct {
+	// fl evaluates the resolve_semconv_families flag during resolution.
+	// A nil flagger keeps resolution literal.
+	fl flagger.Flagger
+}
 
 var _ qbtypes.FieldMapper = (*fieldMapper)(nil)
 
-func NewFieldMapper() *fieldMapper {
-	return &fieldMapper{}
+func NewFieldMapper(fl flagger.Flagger) *fieldMapper {
+	return &fieldMapper{fl: fl}
 }
 
 func (m *fieldMapper) getColumn(
@@ -348,18 +353,21 @@ func (m *fieldMapper) resolveColumnExprs(
 }
 
 // resolveReferencedField resolves a referenced field to the candidate key(s) select / group by /
-// order by query for it, unioning every home the name maps to. Unlike the filter path it does not
-// narrow an attribute+resource collision to resource — select surfaces every home.
-func resolveReferencedField(
+// order by query for it, unioning every home the name maps to (MatchingLogicalFields, flattened to
+// members). Unlike the filter path it does not narrow an attribute+resource collision to resource —
+// select surfaces every home. Callers upgrade the result back to families via upgradeToFamilies.
+func (m *fieldMapper) resolveReferencedField(
 	ctx context.Context,
-	fm qbtypes.FieldMapper,
 	orgID valuer.UUID,
 	startNs, endNs uint64,
 	field *telemetrytypes.TelemetryFieldKey,
 	value any,
 	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) ([]*telemetrytypes.TelemetryFieldKey, error) {
-	resolved := querybuilder.MatchingFieldKeys(field, fieldKeys)
+	var resolved []*telemetrytypes.TelemetryFieldKey
+	for _, logical := range querybuilder.MatchingLogicalFields(ctx, orgID, m.fl, field, fieldKeys) {
+		resolved = append(resolved, logical.Members...)
+	}
 
 	// A bare key that names a real column resolves to the column first, keeping only same-named
 	// metadata keys whose type is consistent with it so a corrupt entry can't shadow the column.
@@ -368,7 +376,7 @@ func resolveReferencedField(
 		var columnKey *telemetrytypes.TelemetryFieldKey
 		for _, k := range resolved {
 			if k.FieldContext == telemetrytypes.FieldContextSpan {
-				if cols, err := fm.ColumnFor(ctx, orgID, startNs, endNs, k); err == nil && len(cols) > 0 {
+				if cols, err := m.ColumnFor(ctx, orgID, startNs, endNs, k); err == nil && len(cols) > 0 {
 					column, columnKey = cols[0], k
 				}
 				break
@@ -376,7 +384,7 @@ func resolveReferencedField(
 		}
 		if column == nil {
 			probe := telemetrytypes.NewTelemetryFieldKey(field.Name, telemetrytypes.FieldContextSpan, field.FieldDataType)
-			if cols, err := fm.ColumnFor(ctx, orgID, startNs, endNs, probe); err == nil && len(cols) > 0 {
+			if cols, err := m.ColumnFor(ctx, orgID, startNs, endNs, probe); err == nil && len(cols) > 0 {
 				column, columnKey = cols[0], probe
 			}
 		}
@@ -399,11 +407,59 @@ func resolveReferencedField(
 	}
 
 	// Not in metadata: synthesize.
-	synth := fm.CandidateKeys(ctx, orgID, field, value, candidateLookupKeys(field, fieldKeys))
+	synth := m.CandidateKeys(ctx, orgID, field, value, candidateLookupKeys(field, fieldKeys))
 	if len(synth) == 0 {
 		return nil, querybuilder.NewKeyNotFoundError(field.Name)
 	}
 	return synth, nil
+}
+
+// upgradeToFamilies swaps single-member candidates for their family when the
+// metadata map proves membership. Candidate order and every non-family
+// candidate stay exactly as the legacy flow produced them; sibling candidates
+// of an already-emitted family are dropped rather than duplicated.
+func (m *fieldMapper) upgradeToFamilies(ctx context.Context, orgID valuer.UUID, field *telemetrytypes.TelemetryFieldKey, candidates []*telemetrytypes.LogicalField, keys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.LogicalField {
+	var families []*telemetrytypes.LogicalField
+	for _, logical := range querybuilder.MatchingLogicalFields(ctx, orgID, m.fl, field, keys) {
+		if logical.IsFamily() {
+			families = append(families, logical)
+		}
+	}
+	if len(families) == 0 {
+		return candidates
+	}
+
+	out := make([]*telemetrytypes.LogicalField, 0, len(candidates))
+	emitted := make(map[*telemetrytypes.LogicalField]bool)
+	for _, candidate := range candidates {
+		var family *telemetrytypes.LogicalField
+		for _, fam := range families {
+			if fam.FieldContext != candidate.FieldContext || fam.FieldDataType != candidate.FieldDataType {
+				continue
+			}
+			memberOfFamily := candidate.Single().Name == field.Name
+			for _, member := range fam.Members {
+				if member.Name == candidate.Single().Name {
+					memberOfFamily = true
+					break
+				}
+			}
+			if memberOfFamily {
+				family = fam
+				break
+			}
+		}
+		if family == nil {
+			out = append(out, candidate)
+			continue
+		}
+		if emitted[family] {
+			continue
+		}
+		emitted[family] = true
+		out = append(out, family)
+	}
+	return out
 }
 
 // ColumnExpressionFor returns the bare (unaliased) SQL expression for the field, resolving
@@ -418,10 +474,14 @@ func (m *fieldMapper) ColumnExpressionFor(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
 
-	candidates, err := resolveReferencedField(ctx, m, orgID, startNs, endNs, field, nil, keys)
+	// Resolve the candidate key(s): union every physical home of the name (scope field + scope
+	// attribute, attribute + resource, ...), then upgrade members to their semantic-convention
+	// family. The family step never changes candidate order or non-family behavior.
+	raw, err := m.resolveReferencedField(ctx, orgID, startNs, endNs, field, nil, keys)
 	if err != nil {
 		return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
 	}
+	candidates := m.upgradeToFamilies(ctx, orgID, field, querybuilder.WrapAsLogicalFields(field.Name, raw), keys)
 
 	// Group-by/order (String) and aggregation (String/Float64): every candidate is
 	// exists-guarded and coerced to requiredDataType, in a single multiIf. Raw select
@@ -432,21 +492,21 @@ func (m *fieldMapper) ColumnExpressionFor(
 			dummyValue = 0.0
 		}
 		stmts := make([]string, 0, len(candidates)*2)
-		for _, key := range candidates {
-			value, err := m.FieldFor(ctx, orgID, startNs, endNs, key)
+		for _, logical := range candidates {
+			value, err := querybuilder.LogicalValueExpr(ctx, orgID, startNs, endNs, m, logical)
 			if err != nil {
 				return "", err
 			}
-			guard, err := m.existsExpressionFor(ctx, orgID, startNs, endNs, key, true)
+			guard, err := querybuilder.LogicalExistsExpr(ctx, orgID, startNs, endNs, m, logical, true)
 			if err != nil {
 				return "", err
 			}
 			coerced := value
 			// a time column keeps its native type; coercing it would yield seconds
-			if temporal, err := m.columnIsTemporal(ctx, startNs, endNs, key); err != nil {
+			if temporal, err := m.logicalIsTemporal(ctx, startNs, endNs, logical); err != nil {
 				return "", err
 			} else if !temporal {
-				coerced, _ = querybuilder.DataTypeCollisionHandledFieldName(key, dummyValue, value, qbtypes.FilterOperatorUnknown)
+				coerced, _ = querybuilder.DataTypeCollisionHandledFieldName(logical.Single(), dummyValue, value, qbtypes.FilterOperatorUnknown)
 			}
 			stmts = append(stmts, guard, coerced)
 		}
@@ -454,13 +514,14 @@ func (m *fieldMapper) ColumnExpressionFor(
 	}
 
 	if len(candidates) == 1 {
-		value, err := m.FieldFor(ctx, orgID, startNs, endNs, candidates[0])
+		logical := candidates[0]
+		value, err := querybuilder.LogicalValueExpr(ctx, orgID, startNs, endNs, m, logical)
 		if err != nil {
 			return "", err
 		}
-		exprs, existExprs, _, _ := m.resolveColumnExprs(ctx, startNs, endNs, candidates[0])
-		if len(exprs) == 1 && len(existExprs) == 1 {
-			guard, err := m.existsExpressionFor(ctx, orgID, startNs, endNs, candidates[0], true)
+		exprs, existExprs, _, _ := m.resolveColumnExprs(ctx, startNs, endNs, logical.Single())
+		if !logical.IsFamily() && len(exprs) == 1 && len(existExprs) == 1 {
+			guard, err := querybuilder.LogicalExistsExpr(ctx, orgID, startNs, endNs, m, logical, true)
 			if err != nil {
 				return "", err
 			}
@@ -472,18 +533,27 @@ func (m *fieldMapper) ColumnExpressionFor(
 	// Multiple candidates (collision / synth): multiIf picks the first that exists,
 	// stringified so branches share a type.
 	args := make([]string, 0, len(candidates))
-	for _, key := range candidates {
-		value, err := m.FieldFor(ctx, orgID, startNs, endNs, key)
+	for _, logical := range candidates {
+		value, err := querybuilder.LogicalValueExpr(ctx, orgID, startNs, endNs, m, logical)
 		if err != nil {
 			return "", err
 		}
-		guard, err := m.existsExpressionFor(ctx, orgID, startNs, endNs, key, true)
+		guard, err := querybuilder.LogicalExistsExpr(ctx, orgID, startNs, endNs, m, logical, true)
 		if err != nil {
 			return "", err
 		}
 		args = append(args, fmt.Sprintf("%s, toString(%s)", guard, value))
 	}
 	return fmt.Sprintf("multiIf(%s, NULL)", strings.Join(args, ", ")), nil
+}
+
+// logicalIsTemporal reports whether the logical field resolves to a single time
+// column. A family is attribute-backed and never temporal.
+func (m *fieldMapper) logicalIsTemporal(ctx context.Context, startNs, endNs uint64, logical *telemetrytypes.LogicalField) (bool, error) {
+	if logical.IsFamily() {
+		return false, nil
+	}
+	return m.columnIsTemporal(ctx, startNs, endNs, logical.Single())
 }
 
 // columnIsTemporal reports whether key resolves to a single time column, after evolution
@@ -616,7 +686,8 @@ func scopeJSONExistsExpression(key *telemetrytypes.TelemetryFieldKey, fieldExpre
 	return path + " IS NULL", true
 }
 
-func (m *fieldMapper) existsExpressionFor(
+// ExistsFor implements the per-key existence primitive of qbtypes.FieldMapper.
+func (m *fieldMapper) ExistsFor(
 	ctx context.Context,
 	orgID valuer.UUID,
 	tsStart, tsEnd uint64,

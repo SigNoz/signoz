@@ -410,7 +410,11 @@ func (c *conditionBuilder) conditionForResolvedKey(
 		// instead of using IN, we use `=` + `OR` to make use of index
 		conditions := []string{}
 		for _, value := range values {
-			conditions = append(conditions, sb.E(fieldExpression, value))
+			cond, err := c.conditionForResolvedKey(ctx, orgID, startNs, endNs, key, qbtypes.FilterOperatorEqual, value, sb)
+			if err != nil {
+				return "", err
+			}
+			conditions = append(conditions, cond)
 		}
 		return sb.Or(conditions...), nil
 	case qbtypes.FilterOperatorNotIn:
@@ -421,7 +425,11 @@ func (c *conditionBuilder) conditionForResolvedKey(
 		// instead of using NOT IN, we use `!=` + `AND` to make use of index
 		conditions := []string{}
 		for _, value := range values {
-			conditions = append(conditions, sb.NE(fieldExpression, value))
+			cond, err := c.conditionForResolvedKey(ctx, orgID, startNs, endNs, key, qbtypes.FilterOperatorNotEqual, value, sb)
+			if err != nil {
+				return "", err
+			}
+			conditions = append(conditions, cond)
 		}
 		return sb.And(conditions...), nil
 
@@ -452,7 +460,7 @@ func (c *conditionBuilder) ConditionFor(
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) ([]string, []string, error) {
-	matches := querybuilder.MatchingFieldKeys(key, fieldKeys)
+	matches := querybuilder.MatchingLogicalFields(ctx, orgID, nil, key, fieldKeys)
 	skipResourceFilter := options.SkipResourceFilter
 
 	// search() resolves its own (optional) scope; handle it before key resolution.
@@ -460,7 +468,10 @@ func (c *conditionBuilder) ConditionFor(
 		return c.conditionForSearch(ctx, orgID, key, value, sb)
 	}
 
-	keys, warning := querybuilder.ResolveKeys(key, matches)
+	// Logs fields have no family support yet, so every logical field is
+	// single-member and flattens losslessly to its physical key.
+	resolved, warning := querybuilder.ResolveLogicalFields(key, matches)
+	keys := querybuilder.SingleKeys(resolved)
 	var warnings []string
 	if warning != "" {
 		warnings = append(warnings, warning)

@@ -3,7 +3,12 @@ from http import HTTPStatus
 
 import requests
 
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, create_active_user
+from fixtures.auth import (
+    USER_ADMIN_EMAIL,
+    USER_ADMIN_PASSWORD,
+    assert_user_has_role,
+    create_active_user,
+)
 from fixtures.types import SigNoz
 
 
@@ -22,71 +27,45 @@ def test_reinvite_deleted_user(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     reinvite_user_email = "reinvite@integration.test"
-    reinvite_user_name = "reinvite user"
-    reinvite_user_role = "EDITOR"
-    reinvite_user_password = "password123Z$"
 
-    # invite the user
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={
-            "email": reinvite_user_email,
-            "role": reinvite_user_role,
-            "name": reinvite_user_name,
-        },
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
+    user_id = create_active_user(
+        signoz,
+        admin_token,
+        email=reinvite_user_email,
+        role="signoz-editor",
+        password="password123Z$",
+        name="reinvite user",
     )
-    assert response.status_code == HTTPStatus.CREATED, response.text
-    invited_user = response.json()["data"]
-    reset_token = invited_user["token"]
-
-    # reset the password to make it active
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
-        json={"password": reinvite_user_password, "token": reset_token},
-        timeout=2,
-    )
-    assert response.status_code == HTTPStatus.NO_CONTENT
 
     # call the delete api which now soft deletes the user
     response = requests.delete(
-        signoz.self.host_configs["8080"].get(f"/api/v2/users/{invited_user['id']}"),
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{user_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
     assert response.status_code == HTTPStatus.NO_CONTENT
 
-    # Re-invite the same email — should succeed
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={
-            "email": reinvite_user_email,
-            "role": "VIEWER",
-            "name": "reinvite user v2",
-        },
+    # Re-invite the same email — should succeed and create a different user
+    reinvited_user_id = create_active_user(
+        signoz,
+        admin_token,
+        email=reinvite_user_email,
+        role="signoz-viewer",
+        password="newPassword123Z$",
+        name="reinvite user v2",
+    )
+    assert reinvited_user_id != user_id
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{reinvited_user_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
-    assert response.status_code == HTTPStatus.CREATED, response.text
-    reinvited_user = response.json()["data"]
-    assert reinvited_user["role"] == "VIEWER"
-    assert reinvited_user["id"] != invited_user["id"]  # confirms a new user was created
-
-    reinvited_user_reset_password_token = reinvited_user["token"]
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
-        json={
-            "password": "newPassword123Z$",
-            "token": reinvited_user_reset_password_token,
-        },
-        timeout=2,
-    )
-    assert response.status_code == HTTPStatus.NO_CONTENT
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert_user_has_role(response.json()["data"], "signoz-viewer")
 
     # Verify user can log in with new password
-    user_token = get_token("reinvite@integration.test", "newPassword123Z$")
+    user_token = get_token(reinvite_user_email, "newPassword123Z$")
     assert user_token is not None
 
 
@@ -105,7 +84,7 @@ def test_delete_user(
         signoz,
         admin_token,
         email="delete-verify-v2@integration.test",
-        role="EDITOR",
+        role="signoz-editor",
         password="password123Z$",
         name="delete verify v2",
     )
@@ -150,4 +129,4 @@ def test_delete_user(
     assert response.status_code == HTTPStatus.OK
     data = response.json()["data"]
     assert data["status"] == "deleted"
-    assert len(data["userRoles"]) == 1
+    assert len(data["userRoles"]) == 0
