@@ -45,6 +45,9 @@ import './GeneralSettings.styles.scss';
 
 type NumberOrNull = number | null;
 
+const logsColdStorageDaysToHours = (days?: number): NumberOrNull =>
+	days != null && days > 0 ? days * 24 : null;
+
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function GeneralSettings({
 	metricsTtlValuesPayload,
@@ -129,9 +132,7 @@ function GeneralSettings({
 		if (logsCurrentTTLValues) {
 			setLogsTotalRetentionPeriod(logsCurrentTTLValues.default_ttl_days * 24);
 			setLogsS3RetentionPeriod(
-				logsCurrentTTLValues.cold_storage_ttl_days
-					? logsCurrentTTLValues.cold_storage_ttl_days * 24
-					: null,
+				logsColdStorageDaysToHours(logsCurrentTTLValues.cold_storage_ttl_days),
 			);
 		}
 	}, [logsCurrentTTLValues]);
@@ -299,10 +300,12 @@ function GeneralSettings({
 			isTracesSaveDisabled = true;
 		}
 
+		const logsColdStorageDays = logsCurrentTTLValues.cold_storage_ttl_days ?? 0;
 		if (
 			logsCurrentTTLValues.default_ttl_days * 24 === logsTotalRetentionPeriod &&
-			logsCurrentTTLValues.cold_storage_ttl_days &&
-			logsCurrentTTLValues.cold_storage_ttl_days * 24 === logsS3RetentionPeriod
+			((logsColdStorageDays <= 0 && !logsS3RetentionPeriod) ||
+				(logsColdStorageDays > 0 &&
+					logsColdStorageDays * 24 === logsS3RetentionPeriod))
 		) {
 			isLogsSaveDisabled = true;
 		}
@@ -427,9 +430,10 @@ function GeneralSettings({
 					// Updates the currentTTL Values in order to avoid pushing the same values.
 					setLogsCurrentTTLValues((prev) => ({
 						...prev,
-						cold_storage_ttl_days: logsS3RetentionPeriod
-							? logsS3RetentionPeriod / 24
-							: -1,
+						cold_storage_ttl_days:
+							logsS3RetentionPeriod && logsS3RetentionPeriod > 0
+								? logsS3RetentionPeriod / 24
+								: -1,
 						default_ttl_days: logsTotalRetentionPeriod
 							? logsTotalRetentionPeriod / 24 // convert Hours to days
 							: -1,
