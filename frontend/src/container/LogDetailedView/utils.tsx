@@ -276,7 +276,7 @@ export const aggregateAttributesResourcesToObject = (
 		traceFlags: logData.traceFlags,
 		traceId: logData.traceId,
 		attributes: {},
-		resources: {},
+		resource: {},
 		scope: {},
 		severity_text: logData.severity_text,
 		severity_number: logData.severity_number,
@@ -290,8 +290,8 @@ export const aggregateAttributesResourcesToObject = (
 			outputJson.attributes = outputJson.attributes || {};
 			Object.assign(outputJson.attributes, logData[key as keyof ILog]);
 		} else if (key.startsWith('resources_')) {
-			outputJson.resources = outputJson.resources || {};
-			Object.assign(outputJson.resources, logData[key as keyof ILog]);
+			outputJson.resource = outputJson.resource || {};
+			Object.assign(outputJson.resource, logData[key as keyof ILog]);
 		} else if (key.startsWith('scope_string')) {
 			outputJson.scope = outputJson.scope || {};
 			Object.assign(outputJson.scope, logData[key as keyof ILog]);
@@ -315,28 +315,55 @@ export const aggregateAttributesResourcesToString = (logData: ILog): string => {
 	}
 };
 
-const MAX_JSON_BODY_PARSE_BYTES = 128 * 1024;
+const MAX_JSON_PARSE_BYTES = 128 * 1024;
 
-// A JSON-encoded object/array `body` is parsed so DataViewer renders it as a
-// tree instead of one escaped string; plain-text bodies are returned unchanged.
+// A JSON-encoded object/array string is parsed so DataViewer renders it as a tree
+// instead of one escaped string; non-JSON / plain-text values are returned unchanged.
 // Guarded against very large payloads.
-export const parseJsonStringBody = (body: ILog['body']): ILog['body'] => {
-	if (typeof body !== 'string') {
-		return body;
+export const parseJsonStringValue = (value: unknown): unknown => {
+	if (typeof value !== 'string') {
+		return value;
 	}
-	const trimmed = body.trim();
+	const trimmed = value.trim();
 	const looksLikeJson = trimmed.startsWith('{') || trimmed.startsWith('[');
-	if (!looksLikeJson || trimmed.length > MAX_JSON_BODY_PARSE_BYTES) {
-		return body;
+	if (!looksLikeJson || trimmed.length > MAX_JSON_PARSE_BYTES) {
+		return value;
 	}
 	try {
 		const parsed = JSON.parse(trimmed);
-		return parsed !== null && typeof parsed === 'object'
-			? (parsed as ILogBody)
-			: body;
+		return parsed !== null && typeof parsed === 'object' ? parsed : value;
 	} catch {
-		return body;
+		return value;
 	}
+};
+
+// Parse each attribute value that's a stringified JSON string into an object
+// Non-JSON values are left unchanged.
+const parseAttributeJsonValues = (
+	attributes: Record<string, unknown>,
+): Record<string, unknown> => {
+	const parsed: Record<string, unknown> = {};
+	Object.keys(attributes).forEach((key) => {
+		parsed[key] = parseJsonStringValue(attributes[key]);
+	});
+	return parsed;
+};
+
+export const buildPrettyViewData = (
+	raw: ILogAggregateAttributesResources,
+): Record<string, unknown> => {
+	const prettyData: Record<string, unknown> = { ...raw };
+	prettyData.body = parseJsonStringValue(raw.body);
+	prettyData.attributes = parseAttributeJsonValues(raw.attributes);
+
+	// drop undefined fields so they don't render as empty rows
+	Object.keys(prettyData).forEach((key) => {
+		if (prettyData[key] === undefined) {
+			delete prettyData[key];
+		}
+	});
+
+	return prettyData;
 };
 
 const isFloat = (num: number): boolean => num % 1 !== 0;
