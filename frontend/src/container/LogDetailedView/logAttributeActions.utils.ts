@@ -5,7 +5,10 @@ import {
 	QUERY_BUILDER_FUNCTIONS,
 } from 'constants/antlrQueryConstants';
 import { OPERATORS as QUERY_BUILDER_OPERATORS } from 'constants/queryBuilder';
-import { RESTRICTED_SELECTED_FIELDS } from 'container/LogsFilters/config';
+import {
+	RESTRICTED_GROUP_BY_FIELDS,
+	RESTRICTED_SELECTED_FIELDS,
+} from 'container/LogsFilters/config';
 import { MetricsType } from 'container/MetricsApplication/constant';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
@@ -90,14 +93,17 @@ export const buildLogFilterTarget = (
 
 		const isRestricted =
 			RESTRICTED_SELECTED_FIELDS.includes(fieldKey) || isNestedAttributeValue;
+
+		const groupBySupported =
+			!isRestricted && !RESTRICTED_GROUP_BY_FIELDS.includes(fieldKey);
 		return {
 			fieldKey,
 			filterInOperator: OPERATORS['='],
 			filterOutOperator: OPERATORS['!='],
 			dataType: getDataTypes(value),
 			metricsType: metricsTypeForRoot(root),
-			groupBySupported: !isRestricted,
-			groupByKey: isRestricted ? undefined : fieldKey,
+			groupBySupported,
+			groupByKey: groupBySupported ? fieldKey : undefined,
 			isRestricted,
 		};
 	}

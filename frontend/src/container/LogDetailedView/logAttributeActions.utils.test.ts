@@ -89,6 +89,30 @@ describe('buildLogFilterTarget', () => {
 		);
 	});
 
+	describe('group-by-restricted fields (trace_id)', () => {
+		it('allows filtering but not group-by on top-level trace_id', () => {
+			const t = buildLogFilterTarget(['trace_id'], 'abc123', true);
+			expect(t.isRestricted).toBe(false);
+			expect(t.filterInOperator).toBe('=');
+			expect(t.groupBySupported).toBe(false);
+			expect(t.groupByKey).toBeUndefined();
+		});
+
+		it.each([
+			['resource', ['resource', 'trace_id']],
+			['attributes', ['attributes', 'trace_id']],
+		])(
+			'blocks group-by on a %s field named trace_id, keeping filter',
+			(_bucket, path) => {
+				const t = buildLogFilterTarget(path as string[], 'abc123', true);
+				expect(t.isRestricted).toBe(false);
+				expect(t.filterInOperator).toBe('=');
+				expect(t.groupBySupported).toBe(false);
+				expect(t.groupByKey).toBeUndefined();
+			},
+		);
+	});
+
 	describe('body scalars', () => {
 		it('maps a top-level body scalar to body.<key> with =/!=, groupable when json body on', () => {
 			const t = buildLogFilterTarget(['body', 'message'], 'hello', true);
