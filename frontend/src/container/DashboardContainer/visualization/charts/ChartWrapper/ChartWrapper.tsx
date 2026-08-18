@@ -42,9 +42,12 @@ export default function ChartWrapper({
 }: ChartProps): JSX.Element {
 	const plotInstanceRef = useRef<uPlot | null>(null);
 
+	const isLegendVisible =
+		showLegend && legendConfig.position !== LegendPosition.NONE;
+
 	const legendComponent = useCallback(
 		(averageLegendWidth: number): React.ReactNode => {
-			if (!showLegend) {
+			if (!isLegendVisible) {
 				return null;
 			}
 			return (
@@ -55,7 +58,7 @@ export default function ChartWrapper({
 				/>
 			);
 		},
-		[config, legendConfig.position, showLegend],
+		[config, legendConfig.position, isLegendVisible],
 	);
 
 	const renderTooltipCallback = useCallback(
@@ -80,7 +83,7 @@ export default function ChartWrapper({
 	return (
 		<PlotContextProvider>
 			<ChartLayout
-				showLegend={showLegend}
+				showLegend={isLegendVisible}
 				config={config}
 				containerWidth={containerWidth}
 				containerHeight={containerHeight}
