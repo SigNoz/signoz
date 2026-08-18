@@ -135,18 +135,6 @@ func AdjustKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemet
 			}
 		}
 
-		// The context may be a legitimate prefix of the recorded name. Treat
-		// that as a match too, so it is not force-overridden to a different-context intrinsic.
-		if !match && key.FieldContext != telemetrytypes.FieldContextUnspecified {
-			for _, mapKey := range keys[key.FieldContext.StringValue()+"."+key.Name] {
-				if (key.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || mapKey.FieldDataType == key.FieldDataType) &&
-					!mapKey.Equal(intrinsicOrCalculatedField) {
-					match = true
-					break
-				}
-			}
-		}
-
 		// NOTE: if a user is highly opinionated and use attribute.duration_nano:string
 		// It will be defaulted to intrinsic field duration_nano as the actual attribute might be attribute.duration_nano:number
 

@@ -271,18 +271,25 @@ func adjustTraceKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*te
 	*/
 	var isIntrinsicOrCalculatedField bool
 	var intrinsicOrCalculatedField telemetrytypes.TelemetryFieldKey
-	if _, ok := tracestelemetryschema.IntrinsicFields[key.Name]; ok {
+	// A scope-context key addresses the scope JSON column and must not bind to a non-scope
+	// intrinsic/calculated field that only shares its name (e.g. `{name, scope}` is the scope's
+	// name, not the span `name` column). The span<->attribute remapping of legacy fields is
+	// intentionally context-blind and left untouched.
+	boundToScopeMismatch := func(f telemetrytypes.TelemetryFieldKey) bool {
+		return key.FieldContext == telemetrytypes.FieldContextScope && f.FieldContext != telemetrytypes.FieldContextScope
+	}
+	if f, ok := tracestelemetryschema.IntrinsicFields[key.Name]; ok && !boundToScopeMismatch(f) {
 		isIntrinsicOrCalculatedField = true
-		intrinsicOrCalculatedField = tracestelemetryschema.IntrinsicFields[key.Name]
-	} else if _, ok := tracestelemetryschema.CalculatedFields[key.Name]; ok {
+		intrinsicOrCalculatedField = f
+	} else if f, ok := tracestelemetryschema.CalculatedFields[key.Name]; ok && !boundToScopeMismatch(f) {
 		isIntrinsicOrCalculatedField = true
-		intrinsicOrCalculatedField = tracestelemetryschema.CalculatedFields[key.Name]
-	} else if _, ok := tracestelemetryschema.IntrinsicFieldsDeprecated[key.Name]; ok {
+		intrinsicOrCalculatedField = f
+	} else if f, ok := tracestelemetryschema.IntrinsicFieldsDeprecated[key.Name]; ok && !boundToScopeMismatch(f) {
 		isIntrinsicOrCalculatedField = true
-		intrinsicOrCalculatedField = tracestelemetryschema.IntrinsicFieldsDeprecated[key.Name]
-	} else if _, ok := tracestelemetryschema.CalculatedFieldsDeprecated[key.Name]; ok {
+		intrinsicOrCalculatedField = f
+	} else if f, ok := tracestelemetryschema.CalculatedFieldsDeprecated[key.Name]; ok && !boundToScopeMismatch(f) {
 		isIntrinsicOrCalculatedField = true
-		intrinsicOrCalculatedField = tracestelemetryschema.CalculatedFieldsDeprecated[key.Name]
+		intrinsicOrCalculatedField = f
 	}
 
 	if isIntrinsicOrCalculatedField {
