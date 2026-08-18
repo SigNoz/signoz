@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
+import { navigate } from 'lib/router/navigation';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { ArrowRightFromLine, Search, X } from '@signozhq/icons';
 import { Switch } from '@signozhq/ui/switch';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
@@ -163,8 +164,7 @@ function Filters({
 	const { selectedCategory, categories, handleCategoryChange } =
 		useSpanCategoryFilter(filterProps);
 
-	const { search } = useLocation();
-	const history = useHistory();
+	const { search } = useAppLocation();
 
 	const handlePrevNext = useCallback(
 		(index: number, spanId?: string): void => {
@@ -175,9 +175,9 @@ function Filters({
 				searchParams.set('spanId', filteredSpanIds[index]);
 			}
 
-			history.replace({ search: searchParams.toString() });
+			navigate({ search: searchParams.toString() }, { replace: true });
 		},
-		[filteredSpanIds, history, search],
+		[filteredSpanIds, search],
 	);
 
 	const isFilterActive = committedExpression.trim().length > 0;

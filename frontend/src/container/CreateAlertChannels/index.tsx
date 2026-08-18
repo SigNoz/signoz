@@ -23,7 +23,7 @@ import { ErrorType } from 'api/generatedAPIInstance';
 import ROUTES from 'constants/routes';
 import FormAlertChannels from 'container/FormAlertChannels';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 import { toAPIError } from 'utils/errorUtils';
@@ -143,7 +143,7 @@ function CreateAlertChannels({
 				message: 'Success',
 				description: t('channel_creation_done'),
 			});
-			history.replace(ROUTES.ALL_CHANNELS);
+			navigate(ROUTES.ALL_CHANNELS, { replace: true });
 			return { status: 'success', statusMessage: t('channel_creation_done') };
 		} catch (error) {
 			showErrorModal(error as APIError);
@@ -205,7 +205,7 @@ function CreateAlertChannels({
 				message: 'Success',
 				description: t('channel_creation_done'),
 			});
-			history.replace(ROUTES.ALL_CHANNELS);
+			navigate(ROUTES.ALL_CHANNELS, { replace: true });
 			return { status: 'success', statusMessage: t('channel_creation_done') };
 		} catch (error) {
 			showErrorModal(error as APIError);
@@ -258,7 +258,7 @@ function CreateAlertChannels({
 					message: 'Success',
 					description: t('channel_creation_done'),
 				});
-				history.replace(ROUTES.ALL_CHANNELS);
+				navigate(ROUTES.ALL_CHANNELS, { replace: true });
 				return { status: 'success', statusMessage: t('channel_creation_done') };
 			}
 			return { status: 'failed', statusMessage: t('channel_creation_failed') };
@@ -298,7 +298,7 @@ function CreateAlertChannels({
 				message: 'Success',
 				description: t('channel_creation_done'),
 			});
-			history.replace(ROUTES.ALL_CHANNELS);
+			navigate(ROUTES.ALL_CHANNELS, { replace: true });
 			return { status: 'success', statusMessage: t('channel_creation_done') };
 		} catch (error) {
 			showErrorModal(error as APIError);
@@ -342,7 +342,7 @@ function CreateAlertChannels({
 				message: 'Success',
 				description: t('channel_creation_done'),
 			});
-			history.replace(ROUTES.ALL_CHANNELS);
+			navigate(ROUTES.ALL_CHANNELS, { replace: true });
 			return { status: 'success', statusMessage: t('channel_creation_done') };
 		} catch (error) {
 			showErrorModal(error as APIError);
@@ -380,7 +380,7 @@ function CreateAlertChannels({
 				message: 'Success',
 				description: t('channel_creation_done'),
 			});
-			history.replace(ROUTES.ALL_CHANNELS);
+			navigate(ROUTES.ALL_CHANNELS, { replace: true });
 			return { status: 'success', statusMessage: t('channel_creation_done') };
 		} catch (error) {
 			showErrorModal(error as APIError);
@@ -429,7 +429,7 @@ function CreateAlertChannels({
 				message: 'Success',
 				description: t('channel_creation_done'),
 			});
-			history.replace(ROUTES.ALL_CHANNELS);
+			navigate(ROUTES.ALL_CHANNELS, { replace: true });
 			return { status: 'success', statusMessage: t('channel_creation_done') };
 		} catch (error) {
 			showErrorModal(toAPIError(error as ErrorType<RenderErrorResponseDTO>));
@@ -496,7 +496,7 @@ function CreateAlertChannels({
 				message: 'Success',
 				description: t('channel_creation_done'),
 			});
-			history.replace(ROUTES.ALL_CHANNELS);
+			navigate(ROUTES.ALL_CHANNELS, { replace: true });
 			return { status: 'success', statusMessage: t('channel_creation_done') };
 		} catch (error) {
 			showErrorModal(toAPIError(error as ErrorType<RenderErrorResponseDTO>));
@@ -537,7 +537,7 @@ function CreateAlertChannels({
 				message: 'Success',
 				description: t('channel_creation_done'),
 			});
-			history.replace(ROUTES.ALL_CHANNELS);
+			navigate(ROUTES.ALL_CHANNELS, { replace: true });
 			return { status: 'success', statusMessage: t('channel_creation_done') };
 		} catch (error) {
 			showErrorModal(toAPIError(error as ErrorType<RenderErrorResponseDTO>));
@@ -587,7 +587,7 @@ function CreateAlertChannels({
 				message: 'Success',
 				description: t('channel_creation_done'),
 			});
-			history.replace(ROUTES.ALL_CHANNELS);
+			navigate(ROUTES.ALL_CHANNELS, { replace: true });
 			return { status: 'success', statusMessage: t('channel_creation_done') };
 		} catch (error) {
 			showErrorModal(toAPIError(error as ErrorType<RenderErrorResponseDTO>));

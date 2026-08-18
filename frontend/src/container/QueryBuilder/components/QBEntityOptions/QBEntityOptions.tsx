@@ -1,4 +1,4 @@
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Button, Col, Tooltip } from 'antd';
 import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
@@ -79,7 +79,7 @@ export default function QBEntityOptions({
 		}
 	};
 
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 
 	const isLogsExplorerPage = pathname === ROUTES.LOGS_EXPLORER;
 

@@ -1,6 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useAppParams } from 'lib/router/useAppParams';
 import {
 	ChartNoAxesGantt,
 	ChevronDown,
@@ -19,7 +19,7 @@ import { useTraceDetailsStripInfo } from './useTraceDetailsStripInfo';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { ResizableBox } from 'periscope/components/ResizableBox';
-import { SpanV3, TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
+import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import { TraceDetailEventKeys, TraceDetailEvents } from './events';
 import { useTraceDetailLogEvent } from './hooks/useTraceDetailLogEvent';
@@ -54,7 +54,7 @@ function renderPanelExpandIcon({
 }
 
 function TraceDetailsV3(): JSX.Element {
-	const { id: traceId } = useParams<TraceDetailV3URLProps>();
+	const { id: traceId } = useAppParams<'id'>();
 	const urlQuery = useUrlQuery();
 	const [interestedSpanId, setInterestedSpanId] = useState<IInterestedSpan>(
 		() => ({
@@ -139,7 +139,7 @@ function TraceDetailsV3(): JSX.Element {
 		isFetching: isFetchingTraceData,
 		error: errorFetchingTraceData,
 	} = useGetTraceV4({
-		traceId,
+		traceId: traceId || '',
 		uncollapsedSpans: queryParams.uncollapsedSpans,
 		selectedSpanId: queryParams.selectedSpanId,
 		isSelectedSpanIDUnCollapsed: queryParams.isSelectedSpanIDUnCollapsed,
