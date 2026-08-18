@@ -352,18 +352,19 @@ func (m *fieldMapper) resolveColumnExprs(
 	return exprs, existExprs, columns, nil
 }
 
-// resolveReferencedField resolves a referenced field to the candidate key(s) select / group by /
-// order by query for it, unioning every home the name maps to (MatchingLogicalFields, flattened to
-// members). Unlike the filter path it does not narrow an attribute+resource collision to resource —
-// select surfaces every home. Callers upgrade the result back to families via upgradeToFamilies.
+// resolveReferencedField resolves a referenced field to the candidate member key(s) a select /
+// group by / order by queries for it, unioning every home the name maps to (a scope field and a
+// same-named scope attribute, an attribute and a resource attribute, ...) flattened to members.
+// Unlike the filter path it does not narrow an attribute+resource collision to resource — select
+// surfaces every home. It returns empty when the name is absent from metadata; the caller
+// synthesizes and upgrades the result back to families.
 func (m *fieldMapper) resolveReferencedField(
 	ctx context.Context,
 	orgID valuer.UUID,
 	startNs, endNs uint64,
 	field *telemetrytypes.TelemetryFieldKey,
-	value any,
 	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
-) ([]*telemetrytypes.TelemetryFieldKey, error) {
+) []*telemetrytypes.TelemetryFieldKey {
 	var resolved []*telemetrytypes.TelemetryFieldKey
 	for _, logical := range querybuilder.MatchingLogicalFields(ctx, orgID, m.fl, field, fieldKeys) {
 		resolved = append(resolved, logical.Members...)
@@ -402,16 +403,7 @@ func (m *fieldMapper) resolveReferencedField(
 		}
 	}
 
-	if len(resolved) > 0 {
-		return resolved, nil
-	}
-
-	// Not in metadata: synthesize.
-	synth := m.CandidateKeys(ctx, orgID, field, value, candidateLookupKeys(field, fieldKeys))
-	if len(synth) == 0 {
-		return nil, querybuilder.NewKeyNotFoundError(field.Name)
-	}
-	return synth, nil
+	return resolved
 }
 
 // upgradeToFamilies swaps single-member candidates for their family when the
@@ -474,12 +466,16 @@ func (m *fieldMapper) ColumnExpressionFor(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
 
-	// Resolve the candidate key(s): union every physical home of the name (scope field + scope
-	// attribute, attribute + resource, ...), then upgrade members to their semantic-convention
-	// family. The family step never changes candidate order or non-family behavior.
-	raw, err := m.resolveReferencedField(ctx, orgID, startNs, endNs, field, nil, keys)
-	if err != nil {
-		return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
+	// Resolve the candidate member key(s): the metadata union, or synthesized type-variant keys
+	// when the name is absent. Then upgrade members to their semantic-convention family; the
+	// family step never changes candidate order or non-family behavior.
+	raw := m.resolveReferencedField(ctx, orgID, startNs, endNs, field, keys)
+	if len(raw) == 0 {
+		// Absent from metadata: synthesize the type-variant candidate key(s).
+		raw = m.CandidateKeys(ctx, orgID, field, nil, candidateLookupKeys(field, keys))
+	}
+	if len(raw) == 0 {
+		return "", errors.Wrapf(querybuilder.NewKeyNotFoundError(field.Name), errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
 	}
 	candidates := m.upgradeToFamilies(ctx, orgID, field, querybuilder.WrapAsLogicalFields(field.Name, raw), keys)
 

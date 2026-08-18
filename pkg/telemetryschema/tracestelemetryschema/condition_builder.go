@@ -168,7 +168,6 @@ func (c *conditionBuilder) conditionFor(
 	// in the query builder, `exists` and `not exists` are used for
 	// key membership checks, so depending on the column type, the condition changes
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
-		// LogicalExistsExpr composes from ExistsFor, which carries the scope JSON quirk.
 		pred, err := querybuilder.LogicalExistsExpr(ctx, orgID, startNs, endNs, c.fm, logical, operator == qbtypes.FilterOperatorExists)
 		if err != nil {
 			return "", err

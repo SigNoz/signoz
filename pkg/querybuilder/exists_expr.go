@@ -45,7 +45,6 @@ func ExistsExpression(columns []*schema.Column, key *telemetrytypes.TelemetryFie
 		}
 		rawPath := fmt.Sprintf("%s.`%s`", columnName, key.Name)
 		if exists {
-			// type hinted path must not reach here, they need to be compare with ''
 			return rawPath + " IS NOT NULL", nil
 		}
 		return rawPath + " IS NULL", nil
