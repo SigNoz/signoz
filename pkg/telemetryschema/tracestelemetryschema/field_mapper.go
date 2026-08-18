@@ -347,12 +347,9 @@ func (m *fieldMapper) resolveColumnExprs(
 	return exprs, existExprs, columns, nil
 }
 
-// resolveReferencedField resolves a referenced field to the candidate key(s) that select /
-// group by / order by query for it, unioning every physical home the name maps to (a scope
-// field and a same-named scope attribute, an attribute and a resource attribute, ...). Unlike
-// the filter path, it does not collapse an attribute+resource collision to the resource key:
-// select surfaces every home rather than narrowing. Returns the resolved candidates, or an
-// error when the name matches nothing.
+// resolveReferencedField resolves a referenced field to the candidate key(s) select / group by /
+// order by query for it, unioning every home the name maps to. Unlike the filter path it does not
+// narrow an attribute+resource collision to resource — select surfaces every home.
 func resolveReferencedField(
 	ctx context.Context,
 	fm qbtypes.FieldMapper,
@@ -364,10 +361,8 @@ func resolveReferencedField(
 ) ([]*telemetrytypes.TelemetryFieldKey, error) {
 	resolved := querybuilder.MatchingFieldKeys(field, fieldKeys)
 
-	// A bare key that names a real column resolves to the column — first — keeping same-named
-	// metadata keys under other contexts only where their type is consistent with the column, so
-	// a corrupt entry (a string attribute named `timestamp`) can't degrade the intrinsic. The
-	// column may already be among the matches (surfaced by metadata) or only reachable by probe.
+	// A bare key that names a real column resolves to the column first, keeping only same-named
+	// metadata keys whose type is consistent with it so a corrupt entry can't shadow the column.
 	if field.FieldContext == telemetrytypes.FieldContextUnspecified && len(resolved) > 0 {
 		var column *schema.Column
 		var columnKey *telemetrytypes.TelemetryFieldKey
@@ -403,8 +398,7 @@ func resolveReferencedField(
 		return resolved, nil
 	}
 
-	// Not in metadata: synthesize. Fold contexts (span/trace) get the map so a real column or a
-	// stripped-name metadata match can win; strict contexts pass nil and keep their synthesize path.
+	// Not in metadata: synthesize.
 	synth := fm.CandidateKeys(ctx, orgID, field, value, candidateLookupKeys(field, fieldKeys))
 	if len(synth) == 0 {
 		return nil, querybuilder.NewKeyNotFoundError(field.Name)
@@ -424,8 +418,6 @@ func (m *fieldMapper) ColumnExpressionFor(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
 
-	// Resolve the candidate column(s) the same way the filter path does, so select / group by /
-	// order by union every physical home of a name exactly as a filter on it would.
 	candidates, err := resolveReferencedField(ctx, m, orgID, startNs, endNs, field, nil, keys)
 	if err != nil {
 		return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
@@ -591,55 +583,37 @@ func (m *fieldMapper) CandidateKeys(ctx context.Context, _ valuer.UUID, field *t
 	return nil
 }
 
-// synthScopeAttributeKey is the scope analog of querybuilder.SynthesizeKeys: for a name absent
-// from metadata it guesses a scope attribute (`scope.attributes.<name>`). Only user attributes
-// reach here — the declared scope paths are always in metadata, so they never need synthesizing.
+// synthScopeAttributeKey guesses a scope attribute (scope.attributes.<name>) for a name absent
+// from metadata — the scope analog of querybuilder.SynthesizeKeys.
 func synthScopeAttributeKey(field *telemetrytypes.TelemetryFieldKey) *telemetrytypes.TelemetryFieldKey {
 	return telemetrytypes.NewTelemetryFieldKey(field.Name, telemetrytypes.FieldContextScope, telemetrytypes.FieldDataTypeString)
 }
 
-// isDeclaredScopePath reports whether a name is a scope field the schema declares as a top-level
-// String path on the scope JSON column (scope.name, scope.version), as opposed to a user
-// attribute under scope.attributes. Read straight from the intrinsic registry so the two stay
-// in lockstep.
 func isDeclaredScopePath(name string) bool {
 	f, ok := IntrinsicFields[name]
 	return ok && f.FieldContext == telemetrytypes.FieldContextScope
 }
 
-// scopeJSONExistsExpression renders the existence predicate for the scope JSON column — the one
-// signal-specific case the generic querybuilder.ExistsExpression must not carry. Declared scope
-// String paths are non-Nullable (absent reads '' not NULL) so they guard on ''; user scope
-// attributes live under scope.attributes.<name> and guard on IS NOT NULL. ok is false for any
-// non-scope column, so callers fall through to the generic expression.
-func scopeJSONExistsExpression(columns []*schema.Column, key *telemetrytypes.TelemetryFieldKey, tsStart, tsEnd uint64, fieldExpression string, exists bool) (string, bool, error) {
+// scopeJSONExistsExpression renders the existence predicate for the scope JSON column, the one
+// signal-specific case the generic querybuilder.ExistsExpression must not carry.
+func scopeJSONExistsExpression(key *telemetrytypes.TelemetryFieldKey, fieldExpression string, exists bool) (string, bool) {
 	if key.FieldContext != telemetrytypes.FieldContextScope {
-		return "", false, nil
+		return "", false
 	}
-	newColumns, evolutionsEntries, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, tsStart, tsEnd)
-	if err != nil {
-		return "", false, err
-	}
-	if len(newColumns) != 1 || newColumns[0].Type.GetType() != schema.ColumnTypeEnumJSON {
-		return "", false, nil
-	}
-
+	// Declared String paths are non-Nullable (absent reads '' not NULL).
 	if isDeclaredScopePath(key.Name) {
 		if exists {
-			return fieldExpression + " <> ''", true, nil
+			return fieldExpression + " <> ''", true
 		}
-		return fieldExpression + " = ''", true, nil
+		return fieldExpression + " = ''", true
 	}
-
-	columnName := newColumns[0].Name
-	if len(evolutionsEntries) > 0 && evolutionsEntries[0] != nil {
-		columnName = evolutionsEntries[0].ColumnName
-	}
-	path := fmt.Sprintf("%s.attributes.`%s`", columnName, key.Name)
+	// Scope attribute: the value expression casts the JSON path to String, which folds a missing
+	// key's NULL to '', so presence must test the raw path — drop the ::String cast.
+	path := strings.TrimSuffix(fieldExpression, "::String")
 	if exists {
-		return path + " IS NOT NULL", true, nil
+		return path + " IS NOT NULL", true
 	}
-	return path + " IS NULL", true, nil
+	return path + " IS NULL", true
 }
 
 func (m *fieldMapper) existsExpressionFor(
@@ -657,9 +631,7 @@ func (m *fieldMapper) existsExpressionFor(
 	if err != nil {
 		return "", err
 	}
-	if expr, ok, err := scopeJSONExistsExpression(columns, key, tsStart, tsEnd, fieldExpression, exists); err != nil {
-		return "", err
-	} else if ok {
+	if expr, ok := scopeJSONExistsExpression(key, fieldExpression, exists); ok {
 		return expr, nil
 	}
 	return querybuilder.ExistsExpression(columns, key, tsStart, tsEnd, fieldExpression, exists)

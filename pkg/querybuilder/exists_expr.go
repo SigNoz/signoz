@@ -37,6 +37,8 @@ func ExistsExpression(columns []*schema.Column, key *telemetrytypes.TelemetryFie
 	column := newColumns[0]
 	switch column.Type.GetType() {
 	case schema.ColumnTypeEnumJSON:
+		// the ::String cast in the value expression folds NULL to '', so the
+		// presence check must address the raw JSON path
 		columnName := column.Name
 		if len(evolutionsEntries) > 0 && evolutionsEntries[0] != nil {
 			columnName = evolutionsEntries[0].ColumnName

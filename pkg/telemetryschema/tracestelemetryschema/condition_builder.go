@@ -154,20 +154,17 @@ func (c *conditionBuilder) conditionFor(
 	// in the query builder, `exists` and `not exists` are used for
 	// key membership checks, so depending on the column type, the condition changes
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
+		exists := operator == qbtypes.FilterOperatorExists
+		if pred, ok := scopeJSONExistsExpression(key, fieldExpression, exists); ok {
+			return sqlbuilder.Escape(pred), nil
+		}
 		columns, err := c.fm.ColumnFor(ctx, orgID, startNs, endNs, key)
 		if err != nil {
 			return "", err
 		}
-		exists := operator == qbtypes.FilterOperatorExists
-		pred, ok, err := scopeJSONExistsExpression(columns, key, startNs, endNs, fieldExpression, exists)
+		pred, err := querybuilder.ExistsExpression(columns, key, startNs, endNs, fieldExpression, exists)
 		if err != nil {
 			return "", err
-		}
-		if !ok {
-			pred, err = querybuilder.ExistsExpression(columns, key, startNs, endNs, fieldExpression, exists)
-			if err != nil {
-				return "", err
-			}
 		}
 		return sqlbuilder.Escape(pred), nil
 	}
