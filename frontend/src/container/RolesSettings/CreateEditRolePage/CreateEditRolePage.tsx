@@ -308,7 +308,7 @@ function CreateEditRolePageContent(): JSX.Element {
 				cancelText="Keep editing"
 				onConfirm={confirmNavigation}
 				onCancel={cancelNavigation}
-				data-testid="discard-changes-dialog"
+				testId="discard-changes-dialog"
 			>
 				<Typography>
 					{isCreateMode
