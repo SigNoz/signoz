@@ -107,34 +107,7 @@ GOOGLECHAT_CASES = [
             ],
         ),
     ),
-    types.AlertManagerNotificationTestCase(
-        name="googlechat_retry_429_then_200",
-        rule_path=METRICS_RULE,
-        alert_data=[types.AlertData(type="metrics", data_path=METRICS_DATA)],
-        channel_config=googlechat_config("gc-retry"),
-        notification_expectation=types.AMNotificationExpectation(
-            should_notify=True,
-            wait_time_seconds=150,
-            notification_validations=[
-                types.NotificationValidation(
-                    destination_type="webhook",
-                    validation_data={
-                        # a retryable 429 is followed by a successful re-POST => >=2 hits
-                        "path": "/v1/spaces/gc-retry/messages",
-                        "min_count": 2,
-                        "query_params": THREAD_QUERY,
-                        "json_body": {"cardsV2": [{"cardId": "signoz-alert"}]},
-                    },
-                ),
-            ],
-        ),
-    ),
 ]
-
-# per-case wiremock stubs (retry needs a stateful scenario, the rest a plain 200)
-CASE_STUBS: dict[str, Callable[[str], list[Mapping]]] = {
-    "googlechat_retry_429_then_200": googlechat_retry_mappings,
-}
 
 
 @pytest.mark.parametrize(
@@ -156,8 +129,7 @@ def test_googlechat_notifier(  # pylint: disable=too-many-arguments,too-many-pos
 
     channel_config = update_raw_channel_config(gc_test_case.channel_config, channel_name, notification_channel)
 
-    stub_factory = CASE_STUBS.get(gc_test_case.name, googlechat_ok_mappings)
-    make_http_mocks(notification_channel, stub_factory(path))
+    make_http_mocks(notification_channel, googlechat_ok_mappings(path))
 
     create_notification_channel(channel_config)
     time.sleep(12)  # org registration in alertmanager
@@ -171,12 +143,58 @@ def test_googlechat_notifier(  # pylint: disable=too-many-arguments,too-many-pos
 
     verify_notification_expectation(notification_channel, maildev, gc_test_case.notification_expectation)
 
-    if gc_test_case.name == "googlechat_retry_429_then_200":
-        find = requests.post(
-            notification_channel.host_configs["8080"].get("/__admin/requests/find"),
-            json={"method": "POST", "urlPath": path},
-            timeout=10,
-        )
-        # the retried POST must land in the same chat thread as the 429'd attempt
-        thread_keys = {req["queryParams"]["threadKey"]["values"][0] for req in find.json()["requests"]}
-        assert len(thread_keys) == 1 and "" not in thread_keys, f"expected one shared threadKey across retry attempts, got {thread_keys}"
+
+def test_googlechat_retry_429_then_200(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    notification_channel: types.TestContainerDocker,
+    make_http_mocks: Callable[[types.TestContainerDocker, list[Mapping]], None],
+    create_notification_channel: Callable[[dict], str],
+    create_alert_rule: Callable[[dict], str],
+    insert_alert_data: Callable[[list[types.AlertData], datetime], None],
+    maildev: types.TestContainerDocker,
+) -> None:
+    channel_name = str(uuid.uuid4())
+    path = "/v1/spaces/gc-retry/messages"
+
+    channel_config = update_raw_channel_config(googlechat_config("gc-retry"), channel_name, notification_channel)
+
+    make_http_mocks(notification_channel, googlechat_retry_mappings(path))
+
+    create_notification_channel(channel_config)
+    time.sleep(12)  # org registration in alertmanager
+
+    insert_alert_data([types.AlertData(type="metrics", data_path=METRICS_DATA)], base_time=datetime.now(tz=UTC) - timedelta(minutes=5))
+
+    with open(get_testdata_file_path(METRICS_RULE), encoding="utf-8") as f:
+        rule_data = json.loads(f.read())
+    update_rule_channel_name(rule_data, channel_name)
+    create_alert_rule(rule_data)
+
+    verify_notification_expectation(
+        notification_channel,
+        maildev,
+        types.AMNotificationExpectation(
+            should_notify=True,
+            wait_time_seconds=150,
+            notification_validations=[
+                types.NotificationValidation(
+                    destination_type="webhook",
+                    validation_data={
+                        # a retryable 429 is followed by a successful re-POST => >=2 hits
+                        "path": path,
+                        "min_count": 2,
+                        "query_params": THREAD_QUERY,
+                        "json_body": {"cardsV2": [{"cardId": "signoz-alert"}]},
+                    },
+                ),
+            ],
+        ),
+    )
+
+    find = requests.post(
+        notification_channel.host_configs["8080"].get("/__admin/requests/find"),
+        json={"method": "POST", "urlPath": path},
+        timeout=10,
+    )
+    # the retried POST must land in the same chat thread as the 429'd attempt
+    thread_keys = {req["queryParams"]["threadKey"]["values"][0] for req in find.json()["requests"]}
+    assert len(thread_keys) == 1 and "" not in thread_keys, f"expected one shared threadKey across retry attempts, got {thread_keys}"
