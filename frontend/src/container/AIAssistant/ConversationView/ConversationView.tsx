@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import cx from 'classnames';
+import { useAppLocation } from 'lib/router/useAppLocation';
 
 import logEvent from 'api/common/logEvent';
 
@@ -26,7 +26,7 @@ export default function ConversationView({
 }: ConversationViewProps): JSX.Element {
 	const variant = useVariant();
 	const isCompact = variant === 'panel';
-	const location = useLocation();
+	const location = useAppLocation();
 
 	const conversation = useAIAssistantStore(
 		(s) => s.conversations[conversationId],

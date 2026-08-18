@@ -1,7 +1,9 @@
-import { Link, useRouteMatch } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { Button } from '@signozhq/ui/button';
 import { toast } from '@signozhq/ui/sonner';
+import { AppLink } from 'lib/router/AppLink';
+import { matchRoute } from 'lib/router/matchRoute';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import ROUTES from 'constants/routes';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
@@ -18,10 +20,8 @@ interface TraceIdFieldProps {
  * existing link to the trace detail page.
  */
 export function TraceIdField({ span }: TraceIdFieldProps): JSX.Element {
-	const match = useRouteMatch<{ id: string }>({
-		path: ROUTES.TRACE_DETAIL,
-		exact: true,
-	});
+	const { pathname } = useAppLocation();
+	const match = matchRoute<'id'>(pathname, ROUTES.TRACE_DETAIL, { exact: true });
 	const [, setCopy] = useCopyToClipboard();
 
 	const isCurrentTrace = match?.params.id === span.trace_id;
@@ -48,7 +48,7 @@ export function TraceIdField({ span }: TraceIdFieldProps): JSX.Element {
 	}
 
 	return (
-		<Link
+		<AppLink
 			to={{
 				pathname: `/trace/${span.trace_id}`,
 				search: window.location.search,
@@ -56,6 +56,6 @@ export function TraceIdField({ span }: TraceIdFieldProps): JSX.Element {
 			className={styles.traceId}
 		>
 			{span.trace_id}
-		</Link>
+		</AppLink>
 	);
 }

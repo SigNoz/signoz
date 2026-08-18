@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
-import { useHistory } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
+import { navigate } from 'lib/router/navigation';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Drawer } from 'antd';
 import ROUTES from 'constants/routes';
@@ -12,8 +12,6 @@ import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { VariantContext } from '../VariantContext';
 
 export default function AIAssistantDrawer(): JSX.Element {
-	const history = useHistory();
-
 	const isDrawerOpen = useAIAssistantStore((s) => s.isDrawerOpen);
 	const activeConversationId = useAIAssistantStore(
 		(s) => s.activeConversationId,
@@ -28,10 +26,10 @@ export default function AIAssistantDrawer(): JSX.Element {
 			return;
 		}
 		closeDrawer();
-		history.push(
+		navigate(
 			ROUTES.AI_ASSISTANT.replace(':conversationId', activeConversationId),
 		);
-	}, [activeConversationId, closeDrawer, history]);
+	}, [activeConversationId, closeDrawer]);
 
 	const handleNewConversation = useCallback(() => {
 		startNewConversation();

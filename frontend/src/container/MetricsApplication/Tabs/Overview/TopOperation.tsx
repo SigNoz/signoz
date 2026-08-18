@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useAppParams } from 'lib/router/useAppParams';
 import getTopOperations from 'api/metrics/getTopOperations';
 import TopOperationsTable from 'container/MetricsApplication/TopOperationsTable';
 import useResourceAttribute from 'hooks/useResourceAttribute';
@@ -16,7 +16,7 @@ function TopOperation(): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	const { servicename: encodedServiceName } = useParams<{
+	const { servicename: encodedServiceName } = useAppParams<{
 		servicename?: string;
 	}>();
 	const servicename = decodeURIComponent(encodedServiceName || '');

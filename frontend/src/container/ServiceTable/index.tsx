@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { ResizeTable } from 'components/ResizeTable';
 
 import { getColumns } from './Columns/ServiceColumn';
@@ -7,7 +7,7 @@ import { Container } from './styles';
 import ServiceTableProp from './types';
 
 function Services({ services, isLoading }: ServiceTableProp): JSX.Element {
-	const { search } = useLocation();
+	const { search } = useAppLocation();
 
 	const tableColumns = useMemo(() => getColumns(search), [search]);
 

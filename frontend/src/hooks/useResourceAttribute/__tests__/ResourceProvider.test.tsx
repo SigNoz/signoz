@@ -17,15 +17,12 @@ jest.mock('hooks/useSafeNavigate', () => ({
 	}),
 }));
 
-jest.mock('lib/history', () => ({
-	__esModule: true,
-	default: {
-		push: jest.fn(),
-		location: {
-			search: '',
-			pathname: '/',
-		},
-	},
+const mockNavigationLocation = { search: '', pathname: '/' };
+
+jest.mock('lib/router/navigation', () => ({
+	navigate: jest.fn(),
+	getCurrentLocation: (): { search: string; pathname: string } =>
+		mockNavigationLocation,
 }));
 
 jest.mock('api/metrics/getResourceAttributes', () => ({
@@ -37,10 +34,7 @@ jest.mock('api/metrics/getResourceAttributes', () => ({
 import {
 	getResourceAttributesTagKeys,
 	getResourceAttributesTagValues,
-	// eslint-disable-next-line import/newline-after-import
 } from 'api/metrics/getResourceAttributes';
-// eslint-disable-next-line import/first, import/order
-import history from 'lib/history';
 
 const mockTagKeys = getResourceAttributesTagKeys as jest.MockedFunction<
 	typeof getResourceAttributesTagKeys
@@ -69,8 +63,8 @@ function createWrapper({
 }
 
 function mockLibHistory(search = '', pathname = '/'): void {
-	(history.location as { search: string; pathname: string }).search = search;
-	(history.location as { search: string; pathname: string }).pathname = pathname;
+	mockNavigationLocation.search = search;
+	mockNavigationLocation.pathname = pathname;
 }
 
 type TagKeysPayload = Parameters<typeof mockTagKeys.mockResolvedValue>[0];

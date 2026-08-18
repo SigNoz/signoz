@@ -9,7 +9,7 @@ import {
 } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import logEvent from 'api/common/logEvent';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import Uplot from 'components/Uplot';
@@ -30,7 +30,7 @@ import { useResizeObserver } from 'hooks/useDimensions';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { stackSeries } from 'lib/visualization/charts/utils/stackSeriesUtils';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
@@ -71,7 +71,7 @@ function TimeSeriesView({
 
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
-	const location = useLocation();
+	const location = useAppLocation();
 	const { currentQuery } = useQueryBuilder();
 
 	const rawChartData = useMemo(
@@ -156,7 +156,7 @@ function TimeSeriesView({
 			urlQuery.set(QueryParams.endTime, maxTime.toString());
 			urlQuery.delete(QueryParams.relativeTime);
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			navigate(generatedUrl);
 		},
 		[dispatch, location.pathname, urlQuery],
 	);

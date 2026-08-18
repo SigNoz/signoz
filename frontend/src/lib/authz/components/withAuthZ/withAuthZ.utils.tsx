@@ -1,12 +1,10 @@
 import { ComponentType, ReactElement, createElement, useMemo } from 'react';
-import {
-	matchPath as reactRouterMatchPath,
-	useLocation,
-	useParams,
-} from 'react-router-dom';
 import type { AuthZGuardProps } from 'lib/authz/components/AuthZGuard/AuthZGuard';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { matchRoute } from 'lib/router/matchRoute';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { useAppParams } from 'lib/router/useAppParams';
 
 export type RouterContext = {
 	/**
@@ -64,14 +62,14 @@ export type WithAuthZOptions<P> = {
 };
 
 function useStableParams(): Record<string, string | undefined> {
-	const params = useParams();
+	const params = useAppParams();
 	const paramsJson = JSON.stringify(params);
 	return useMemo(() => JSON.parse(paramsJson), [paramsJson]);
 }
 
 function useRouterContext(): RouterContext {
 	const params = useStableParams();
-	const { pathname, search } = useLocation();
+	const { pathname, search } = useAppLocation();
 	const searchParams = useMemo(() => new URLSearchParams(search), [search]);
 
 	return useMemo(
@@ -82,11 +80,9 @@ function useRouterContext(): RouterContext {
 			matchPath: <Params extends Record<string, string>>(
 				pattern: string,
 			): Params | null => {
-				const match = reactRouterMatchPath<Params>(pathname, {
-					path: pattern,
-					exact: false,
-				});
-				return match?.params ?? null;
+				const match = matchRoute(pathname, pattern, { exact: false });
+				// Cast to satisfy the legacy Params type; v6 params may have undefined values
+				return (match?.params as Params) ?? null;
 			},
 		}),
 		[params, pathname, searchParams],

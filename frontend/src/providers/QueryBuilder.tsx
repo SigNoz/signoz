@@ -8,7 +8,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { isQueryUpdatedInView } from 'components/ExplorerCard/utils';
 import { QueryParams } from 'constants/query';
 import {
@@ -105,7 +105,7 @@ export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 export function QueryBuilderProvider({
 	children,
 }: PropsWithChildren): JSX.Element {
-	const location = useLocation();
+	const location = useAppLocation();
 
 	const currentPathnameRef = useRef<string | null>(location.pathname);
 

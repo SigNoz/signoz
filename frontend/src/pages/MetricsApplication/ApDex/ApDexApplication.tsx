@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
 import { Popover } from 'antd';
-import { IServiceName } from 'container/MetricsApplication/Tabs/types';
+import { useAppParams } from 'lib/router/useAppParams';
 import { useGetApDexSettings } from 'hooks/apDex/useGetApDexSettings';
 import { useNotifications } from 'hooks/useNotifications';
 
@@ -10,8 +9,8 @@ import ApDexSettings from './ApDexSettings';
 import { Settings } from '@signozhq/icons';
 
 function ApDexApplication(): JSX.Element {
-	const { servicename: encodedServiceName } = useParams<IServiceName>();
-	const servicename = decodeURIComponent(encodedServiceName);
+	const { servicename: encodedServiceName } = useAppParams<'servicename'>();
+	const servicename = decodeURIComponent(encodedServiceName || '');
 
 	const {
 		data,

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import Spinner from 'components/Spinner';
@@ -29,7 +29,7 @@ import { useResizeObserver } from 'hooks/useDimensions';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
@@ -226,7 +226,7 @@ function ChartPreview({
 
 	const isDarkMode = useIsDarkMode();
 	const urlQuery = useUrlQuery();
-	const location = useLocation();
+	const location = useAppLocation();
 
 	const optionName =
 		getFormatNameByOptionId(alertDef?.condition.targetUnit || '') || '';
@@ -248,7 +248,7 @@ function ChartPreview({
 			urlQuery.set(QueryParams.startTime, minTime.toString());
 			urlQuery.set(QueryParams.endTime, maxTime.toString());
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			navigate(generatedUrl);
 		},
 		[dispatch, location.pathname, urlQuery],
 	);

@@ -2,7 +2,7 @@ import { useLocation } from 'react-use';
 import RouteTab from 'components/RouteTab';
 import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 
 import { Explorer, Meter, Views } from './constants';
 
@@ -18,7 +18,7 @@ function MeterExplorerPage(): JSX.Element {
 			<RouteTab
 				routes={routes}
 				activeKey={pathname}
-				history={history}
+				history={{ push: navigate } as any}
 				defaultActiveKey={ROUTES.METER}
 			/>
 		</div>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { navigate } from 'lib/router/navigation';
 import { Check, ChevronDown, Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
@@ -19,7 +19,6 @@ import './MembersSettings.styles.scss';
 const PAGE_SIZE = 20;
 
 function MembersSettings(): JSX.Element {
-	const history = useHistory();
 	const urlQuery = useUrlQuery();
 	const pageParam = parseInt(urlQuery.get('page') ?? '1', 10);
 	const currentPage = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
@@ -72,9 +71,9 @@ function MembersSettings(): JSX.Element {
 	const setPage = useCallback(
 		(page: number): void => {
 			urlQuery.set('page', String(page));
-			history.replace({ search: urlQuery.toString() });
+			navigate({ search: urlQuery.toString() }, { replace: true });
 		},
-		[history, urlQuery],
+		[urlQuery],
 	);
 
 	useEffect(() => {

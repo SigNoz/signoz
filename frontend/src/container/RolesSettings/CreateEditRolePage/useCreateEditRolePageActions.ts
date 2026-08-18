@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useHistory } from 'react-router-dom';
 import { toast } from '@signozhq/ui/sonner';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import type { ErrorType } from 'api/generatedAPIInstance';
 import ROUTES from 'constants/routes';
@@ -48,7 +48,7 @@ export function useCreateEditRolePageActions(
 	roleId: string,
 	roleName: string,
 ): UseCreateEditRolePageCallbacksResult {
-	const history = useHistory();
+	const { safeNavigate } = useSafeNavigate();
 	const isCreateMode = roleId === 'new';
 
 	const [formData, setFormData] = useState<RoleFormData>({
@@ -215,12 +215,12 @@ export function useCreateEditRolePageActions(
 
 	const handleCancel = useCallback((): void => {
 		if (isCreateMode) {
-			history.push(ROUTES.ROLES_SETTINGS);
+			safeNavigate(ROUTES.ROLES_SETTINGS);
 		} else {
 			const viewUrl = `${ROUTES.ROLE_DETAILS.replace(':roleId', roleId)}?name=${encodeURIComponent(roleName)}`;
-			history.push(viewUrl);
+			safeNavigate(viewUrl);
 		}
-	}, [history, isCreateMode, roleId, roleName]);
+	}, [safeNavigate, isCreateMode, roleId, roleName]);
 
 	return {
 		formData,

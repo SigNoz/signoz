@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import { Button, Skeleton } from 'antd';
+import { AppLink } from 'lib/router/AppLink';
 import { Badge } from '@signozhq/ui/badge';
 import logEvent from 'api/common/logEvent';
 import { useListDashboardsForUserV2 } from 'api/generated/services/dashboard';
@@ -79,7 +79,7 @@ export default function Dashboards({
 
 				{user?.role !== USER_ROLES.VIEWER && (
 					<div className="empty-actions-container">
-						<Link to={ROUTES.ALL_DASHBOARD}>
+						<AppLink to={ROUTES.ALL_DASHBOARD}>
 							<Button
 								type="default"
 								className="periscope-btn secondary"
@@ -90,7 +90,7 @@ export default function Dashboards({
 							>
 								New Dashboard
 							</Button>
-						</Link>
+						</AppLink>
 
 						<Button
 							type="link"
@@ -207,7 +207,7 @@ export default function Dashboards({
 			{dashboardsExist && (
 				<Card.Footer>
 					<div className="dashboards-footer home-data-card-footer">
-						<Link to={ROUTES.ALL_DASHBOARD}>
+						<AppLink to={ROUTES.ALL_DASHBOARD}>
 							<Button
 								type="link"
 								className="periscope-btn link learn-more-link"
@@ -217,7 +217,7 @@ export default function Dashboards({
 							>
 								All Dashboards <ArrowRight size={12} />
 							</Button>
-						</Link>
+						</AppLink>
 					</div>
 				</Card.Footer>
 			)}

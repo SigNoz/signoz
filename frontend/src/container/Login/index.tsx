@@ -10,7 +10,7 @@ import afterLogin from 'AppRoutes/utils';
 import AuthError from 'components/AuthError/AuthError';
 import ROUTES from 'constants/routes';
 import useUrlQuery from 'hooks/useUrlQuery';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { ArrowRight } from '@signozhq/icons';
 import { ErrorV2 } from 'types/api';
 import APIError from 'types/api/error';
@@ -90,7 +90,7 @@ function Login(): JSX.Element {
 			!versionError &&
 			!versionData.data.setupCompleted
 		) {
-			history.push(ROUTES.SIGN_UP);
+			navigate(ROUTES.SIGN_UP);
 		}
 	}, [versionData, versionLoading, versionError]);
 
@@ -229,10 +229,12 @@ function Login(): JSX.Element {
 			return;
 		}
 
-		history.push(ROUTES.FORGOT_PASSWORD, {
-			email,
-			orgId: sessionsOrgId,
-			orgs: sessionsContext.orgs,
+		navigate(ROUTES.FORGOT_PASSWORD, {
+			state: {
+				email,
+				orgId: sessionsOrgId,
+				orgs: sessionsContext.orgs,
+			},
 		});
 	}, [form, sessionsContext, sessionsOrgId]);
 

@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
-import { generatePath, Link } from 'react-router-dom';
+import { AppLink } from 'lib/router/AppLink';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
 import { ChevronDown, ChevronRight } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import ROUTES from 'constants/routes';
@@ -78,7 +79,7 @@ export function LinkedSpansPanel({
 }): JSX.Element | null {
 	const getLink = useCallback(
 		(item: SpanReference): string =>
-			`${generatePath(ROUTES.TRACE_DETAIL, { id: item.traceId })}?spanId=${item.spanId}`,
+			`${buildRoutePath(ROUTES.TRACE_DETAIL, { id: item.traceId })}?spanId=${item.spanId}`,
 		[],
 	);
 
@@ -93,9 +94,9 @@ export function LinkedSpansPanel({
 					key={item.spanId}
 					badgeKey="Linked Span ID"
 					badgeValue={
-						<Link to={getLink(item)}>
+						<AppLink to={getLink(item)}>
 							<Badge color="vanilla">{item.spanId}</Badge>
-						</Link>
+						</AppLink>
 					}
 					direction="column"
 				/>

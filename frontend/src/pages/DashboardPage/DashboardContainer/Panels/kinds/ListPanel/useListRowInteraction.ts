@@ -3,7 +3,7 @@ import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { VIEW_TYPES, type VIEWS } from 'components/LogDetail/constants';
 import { getTraceLink } from 'container/TracesExplorer/ListView/utils';
 import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import type { RowData } from 'lib/query/createTableColumnsFromQuery';
 import type { ILog } from 'types/api/logs/log';
 import { openInNewTab } from 'utils/navigation';
@@ -70,7 +70,7 @@ export function useListRowInteraction({
 					if (event.metaKey || event.ctrlKey) {
 						openInNewTab(link);
 					} else {
-						history.push(link);
+						navigate(link);
 					}
 					return;
 				}

@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { AppLink } from 'lib/router/AppLink';
 
 import styles from './LogHighlights.module.scss';
 
@@ -8,7 +8,7 @@ interface TraceIdFieldProps {
 
 function TraceIdField({ traceId }: TraceIdFieldProps): JSX.Element {
 	return (
-		<Link
+		<AppLink
 			to={{ pathname: `/trace/${traceId}` }}
 			target="_blank"
 			rel="noreferrer"
@@ -16,7 +16,7 @@ function TraceIdField({ traceId }: TraceIdFieldProps): JSX.Element {
 			title={traceId}
 		>
 			{traceId}
-		</Link>
+		</AppLink>
 	);
 }
 

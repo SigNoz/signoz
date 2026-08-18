@@ -1,5 +1,5 @@
 import { ChangeEvent, KeyboardEvent, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { navigate } from 'lib/router/navigation';
 import { Button } from '@signozhq/ui/button';
 import { DialogWrapper } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
@@ -20,7 +20,6 @@ interface IntegrationsHeaderProps {
 }
 
 function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
-	const history = useHistory();
 	const { user } = useAppContext();
 
 	const { searchQuery, onSearchChange } = props;
@@ -148,7 +147,7 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 					<Button
 						variant="solid"
 						color="primary"
-						onClick={(): void => history.push(ROUTES.GET_STARTED_WITH_CLOUD)}
+						onClick={(): void => navigate(ROUTES.GET_STARTED_WITH_CLOUD)}
 					>
 						<span>View 150+ Data Sources</span>
 						<ArrowRight size={14} />

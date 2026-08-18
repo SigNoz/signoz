@@ -1,5 +1,4 @@
 import { useCallback, useState } from 'react';
-import { useParams } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
 import {
 	TooltipRoot,
@@ -12,10 +11,10 @@ import cx from 'classnames';
 import FieldsSelector from 'components/FieldsSelector';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
-import history, { hasInAppHistory } from 'lib/history';
+import { navigate, back, hasInAppHistory } from 'lib/router/navigation';
+import { useAppParams } from 'lib/router/useAppParams';
 import { ArrowLeft, ChartPie } from '@signozhq/icons';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
-import { TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { TraceDetailEventKeys, TraceDetailEvents } from '../events';
@@ -78,7 +77,7 @@ function TraceDetailsHeader({
 	isDataLoaded,
 	traceMetadata,
 }: TraceDetailsHeaderProps): JSX.Element {
-	const { id: traceID } = useParams<TraceDetailV3URLProps>();
+	const { id: traceID } = useAppParams<'id'>();
 	const [showTraceDetails, setShowTraceDetails] = useState(true);
 	const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 	const [isPreviewFieldsOpen, setIsPreviewFieldsOpen] = useState(false);
@@ -106,9 +105,9 @@ function TraceDetailsHeader({
 
 	const handlePreviousBtnClick = useCallback((): void => {
 		if (hasInAppHistory()) {
-			history.goBack();
+			back();
 		} else {
-			history.push(ROUTES.TRACES_EXPLORER);
+			navigate(ROUTES.TRACES_EXPLORER);
 		}
 	}, []);
 

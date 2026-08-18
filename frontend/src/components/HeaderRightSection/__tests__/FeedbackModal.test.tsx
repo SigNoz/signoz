@@ -1,5 +1,5 @@
 // Mock dependencies before imports
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { toast } from '@signozhq/ui/sonner';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -9,9 +9,8 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 
 import FeedbackModal from '../FeedbackModal';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: jest.fn(),
+jest.mock('lib/router/useAppLocation', () => ({
+	useAppLocation: jest.fn(),
 }));
 
 jest.mock('@signozhq/ui/sonner', () => ({
@@ -30,7 +29,7 @@ jest.mock('container/Integrations/utils', () => ({
 	handleContactSupport: jest.fn(),
 }));
 
-const mockUseLocation = useLocation as jest.Mock;
+const mockUseAppLocation = useAppLocation as jest.Mock;
 const mockUseGetTenantLicense = useGetTenantLicense as jest.Mock;
 const mockHandleContactSupport = handleContactSupport as jest.Mock;
 const mockToast = toast as jest.Mocked<typeof toast>;
@@ -45,7 +44,7 @@ describe('FeedbackModal', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		logEventMock.mockReturnValue(Promise.resolve() as never);
-		mockUseLocation.mockReturnValue(mockLocation);
+		mockUseAppLocation.mockReturnValue(mockLocation);
 		mockUseGetTenantLicense.mockReturnValue({
 			isCloudUser: false,
 		});

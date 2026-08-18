@@ -18,7 +18,7 @@ import {
 	SlackChannel,
 	WebhookChannel,
 } from 'container/CreateAlertChannels/config';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 
 import EmailSettings from './Settings/Email';
 import GoogleChatSettings from './Settings/GoogleChat';
@@ -200,7 +200,7 @@ function FormAlertChannels({
 					<Button
 						data-testid="return-button"
 						onClick={(): void => {
-							history.replace(ROUTES.ALL_CHANNELS);
+							navigate(ROUTES.ALL_CHANNELS, { replace: true });
 						}}
 					>
 						{t('button_return')}

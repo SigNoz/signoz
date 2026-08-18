@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Popover, Spin, Tooltip, Tree } from 'antd';
 import type { DataNode } from 'antd/es/tree';
@@ -137,7 +137,7 @@ export default function TableViewActions(
 		handleChangeSelectedView,
 	} = props;
 
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const { stagedQuery, updateQueriesData } = useQueryBuilder();
 	const { dataType, logType: fieldType } = getFieldAttributes(record.field);
 

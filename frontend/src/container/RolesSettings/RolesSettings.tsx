@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useHistory } from 'react-router-dom';
 import { Plus } from '@signozhq/icons';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Input } from '@signozhq/ui/input';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
@@ -17,7 +17,7 @@ import styles from './RolesSettings.module.scss';
 
 function RolesSettings(): JSX.Element {
 	const [searchQuery, setSearchQuery] = useState('');
-	const history = useHistory();
+	const { safeNavigate } = useSafeNavigate();
 	const { isRolesEnabled } = useRolesFeatureGate();
 
 	return (
@@ -54,7 +54,7 @@ function RolesSettings(): JSX.Element {
 							variant="solid"
 							color="primary"
 							className={styles.roleSettingsToolbarButton}
-							onClick={(): void => history.push(ROUTES.ROLE_CREATE)}
+							onClick={(): void => safeNavigate(ROUTES.ROLE_CREATE)}
 						>
 							<Plus size={14} />
 							Custom role

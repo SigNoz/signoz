@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Flex } from 'antd';
 import { SolidAlertTriangle } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
@@ -18,7 +18,7 @@ function ServiceTraceTable({
 	services,
 	loading,
 }: ServiceTableProps): JSX.Element {
-	const { search } = useLocation();
+	const { search } = useAppLocation();
 	const [RPS, setRPS] = useState(0);
 	const { t: getText } = useTranslation(['services']);
 

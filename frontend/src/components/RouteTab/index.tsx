@@ -1,11 +1,9 @@
-import {
-	generatePath,
-	matchPath,
-	useLocation,
-	useParams,
-} from 'react-router-dom';
 import { Tabs, TabsProps } from 'antd';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
+import { matchRoute } from 'lib/router/matchRoute';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { useAppParams } from 'lib/router/useAppParams';
 
 import { RouteTabProps } from './types';
 
@@ -21,16 +19,13 @@ function RouteTab({
 	showRightSection,
 	...rest
 }: RouteTabProps & TabsProps): JSX.Element {
-	const params = useParams<Params>();
-	const location = useLocation();
+	const params = useAppParams<Params>();
+	const location = useAppLocation();
 
 	// Find the matching route for the current pathname
 	const currentRoute = routes.find((route) => {
 		const routePath = route.route.split('?')[0];
-		return matchPath(location.pathname, {
-			path: routePath,
-			exact: true,
-		});
+		return matchRoute(location.pathname, routePath, { exact: true });
 	});
 
 	const onChange = (activeRoute: string): void => {
@@ -41,7 +36,12 @@ function RouteTab({
 		const selectedRoute = routes.find((e) => e.key === activeRoute);
 
 		if (selectedRoute) {
-			const resolvedRoute = generatePath(selectedRoute.route, params);
+			const resolvedRoute = buildRoutePath(
+				selectedRoute.route,
+				Object.fromEntries(
+					Object.entries(params).filter(([, v]) => v !== undefined),
+				) as Record<string, string>,
+			);
 			history.push(resolvedRoute);
 		}
 	};

@@ -1,6 +1,6 @@
 import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useHistory } from 'react-router-dom';
+import { navigate } from 'lib/router/navigation';
 import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
 import { Badge } from '@signozhq/ui/badge';
@@ -208,8 +208,6 @@ function MultiIngestionSettings(): JSX.Element {
 	});
 
 	const [totalIngestionKeys, setTotalIngestionKeys] = useState(0);
-
-	const history = useHistory();
 
 	const [
 		hasCreateLimitForIngestionKeyError,
@@ -922,7 +920,7 @@ function MultiIngestionSettings(): JSX.Element {
 			AlertThresholdMatchType.IN_TOTAL
 		}&${QueryParams.evaluationWindowPreset}=${EvaluationWindowPreset.METER}`;
 
-		history.push(URL);
+		navigate(URL);
 	};
 
 	const columns: AntDTableProps<GatewaytypesIngestionKeyDTO>['columns'] = [

@@ -4,7 +4,9 @@ import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider as ReduxProvider } from 'react-redux';
-import { MemoryRouter, Route, useHistory, useParams } from 'react-router-dom';
+import { MemoryRouter, Route } from 'react-router-dom';
+import { navigate } from 'lib/router/navigation';
+import { useAppParams } from 'lib/router/useAppParams';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 import {
@@ -71,8 +73,8 @@ const noop = (): void => {};
 
 /** Stands in for the editor route: the same draft + builder sync `PanelEditorContainer` runs. */
 function EditorRoute(): JSX.Element {
-	const { panelId } = useParams<{ panelId: string }>();
-	const [panel] = useState(PANELS[panelId]);
+	const { panelId } = useAppParams<'panelId'>();
+	const [panel] = useState(panelId ? PANELS[panelId] : PANELS['a']);
 
 	usePanelEditorQuerySync({
 		draft: panel,
@@ -95,7 +97,6 @@ function EditorRoute(): JSX.Element {
 
 function Harness(): JSX.Element {
 	const openPanelEditor = useOpenPanelEditor();
-	const history = useHistory();
 
 	return (
 		<>
@@ -116,7 +117,7 @@ function Harness(): JSX.Element {
 			<button
 				type="button"
 				data-testid="back"
-				onClick={(): void => history.push('/dashboard/dash-1')}
+				onClick={(): void => navigate('/dashboard/dash-1')}
 			>
 				back
 			</button>

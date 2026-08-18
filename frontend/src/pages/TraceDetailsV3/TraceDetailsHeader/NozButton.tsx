@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import logEvent from 'api/common/logEvent';
@@ -14,7 +14,7 @@ import { openAIAssistant } from 'container/AIAssistant/store/useAIAssistantStore
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 
 export default function NozButton(): JSX.Element | null {
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 
 	const handleOpenNoz = useCallback((): void => {

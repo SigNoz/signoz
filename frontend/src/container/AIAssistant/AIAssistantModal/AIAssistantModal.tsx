@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useHistory, useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
+import { navigate } from 'lib/router/navigation';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import ROUTES from 'constants/routes';
 import { History, Maximize2, Minus, Plus, X } from '@signozhq/icons';
@@ -31,8 +32,7 @@ import styles from './AIAssistantModal.module.scss';
  */
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function AIAssistantModal(): JSX.Element | null {
-	const history = useHistory();
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const [showHistory, setShowHistory] = useState(false);
 
 	const isOpen = useAIAssistantStore((s) => s.isModalOpen);
@@ -94,11 +94,11 @@ export default function AIAssistantModal(): JSX.Element | null {
 		// Router state tells AIAssistantPage to skip its mount-time Opened fire:
 		// the assistant was already open in the modal, so this is a surface
 		// switch, not a new open.
-		history.push(
+		navigate(
 			ROUTES.AI_ASSISTANT.replace(':conversationId', activeConversationId),
-			{ fromInApp: true },
+			{ state: { fromInApp: true } },
 		);
-	}, [activeConversationId, closeModal, history]);
+	}, [activeConversationId, closeModal]);
 
 	const handleNew = useCallback(() => {
 		void logEvent(AIAssistantEvents.NewChatClicked, {

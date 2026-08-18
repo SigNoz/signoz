@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Skeleton } from 'antd';
 import {
 	useListAccounts,
@@ -23,7 +23,7 @@ function ServicesList({
 	type,
 }: ServicesListProps): JSX.Element {
 	const urlQuery = useUrlQuery();
-	const navigate = useNavigate();
+	const { safeNavigate: navigate } = useSafeNavigate();
 	const isAccountConnected = Boolean(cloudAccountId);
 	const { data: listAccountsResponse, isLoading: isAccountsLoading } =
 		useListAccounts({ cloudProvider: type });

@@ -6,7 +6,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Button } from '@signozhq/ui/button';
 import { Input, InputRef, Popover, Tooltip } from 'antd';
 import cx from 'classnames';
@@ -109,7 +109,7 @@ function CustomTimePicker({
 	const [inputErrorDetails, setInputErrorDetails] = useState<
 		TimeRangeValidationResult['errorDetails'] | null
 	>(null);
-	const location = useLocation();
+	const location = useAppLocation();
 
 	const inputRef = useRef<InputRef>(null);
 	const initialInputValueOnOpenRef = useRef<string>('');

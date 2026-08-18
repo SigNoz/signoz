@@ -1,6 +1,8 @@
 import { useCallback, useState } from 'react';
-import { matchPath, useHistory, useLocation } from 'react-router-dom';
 import { ArrowLeft, SolidAlertTriangle } from '@signozhq/icons';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { matchRoute } from 'lib/router/matchRoute';
 import { Button } from '@signozhq/ui/button';
 import { ConfirmDialog } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
@@ -43,12 +45,10 @@ function authzCheckFn(
 }
 
 function CreateEditRolePageContent(): JSX.Element {
-	const history = useHistory();
-	const { pathname } = useLocation();
+	const { safeNavigate } = useSafeNavigate();
+	const { pathname } = useAppLocation();
 	const urlQuery = useUrlQuery();
-	const match = matchPath<{ roleId: string }>(pathname, {
-		path: ROUTES.ROLE_DETAILS,
-	});
+	const match = matchRoute<'roleId'>(pathname, ROUTES.ROLE_DETAILS);
 	const roleId = match?.params?.roleId ?? 'new';
 	const roleName = urlQuery.get('name') ?? '';
 	const [hasJsonError, setHasJsonError] = useState(false);
@@ -85,16 +85,16 @@ function CreateEditRolePageContent(): JSX.Element {
 		if (success) {
 			allowNextNavigation();
 			if (isCreateMode) {
-				history.push(ROUTES.ROLES_SETTINGS);
+				safeNavigate(ROUTES.ROLES_SETTINGS);
 			} else {
 				const viewUrl = `${ROUTES.ROLE_DETAILS.replace(':roleId', roleId)}?name=${encodeURIComponent(roleName)}`;
-				history.push(viewUrl);
+				safeNavigate(viewUrl);
 			}
 		}
 	}, [
 		handleSave,
 		allowNextNavigation,
-		history,
+		safeNavigate,
 		hasJsonError,
 		isCreateMode,
 		roleId,

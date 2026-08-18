@@ -1,7 +1,7 @@
 import { useLocation } from 'react-use';
 import RouteTab from 'components/RouteTab';
 import { TabRoutes } from 'components/RouteTab/types';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 
 import { Hosts, Kubernetes } from './constants';
 
@@ -14,7 +14,11 @@ export default function InfrastructureMonitoringPage(): JSX.Element {
 
 	return (
 		<div className="infra-monitoring-module-container">
-			<RouteTab routes={routes} activeKey={pathname} history={history} />
+			<RouteTab
+				routes={routes}
+				activeKey={pathname}
+				history={{ push: navigate } as any}
+			/>
 		</div>
 	);
 }

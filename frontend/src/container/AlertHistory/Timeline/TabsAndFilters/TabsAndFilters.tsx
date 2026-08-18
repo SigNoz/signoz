@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
 import { TimelineFilter, TimelineTab } from 'container/AlertHistory/types';
-import history from 'lib/history';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { navigate } from 'lib/router/navigation';
 import { Info } from '@signozhq/icons';
 import Tabs2 from 'periscope/components/Tabs2';
 
@@ -42,7 +42,7 @@ function TimelineTabs(): JSX.Element {
 }
 
 function TimelineFilters(): JSX.Element {
-	const { search } = useLocation();
+	const { search } = useAppLocation();
 	const searchParams = useMemo(() => new URLSearchParams(search), [search]);
 
 	const initialSelectedTab = useMemo(
@@ -52,7 +52,7 @@ function TimelineFilters(): JSX.Element {
 
 	const handleFilter = (value: TimelineFilter): void => {
 		searchParams.set('timelineFilter', value);
-		history.push({ search: searchParams.toString() });
+		navigate({ search: searchParams.toString() });
 	};
 
 	const tabs = [
