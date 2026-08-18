@@ -1,12 +1,7 @@
 #!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
 
-set -e
-
-if [ -d frontend/node_modules ] && command -v pnpm >/dev/null 2>&1; then
-	(cd frontend && pnpm run commitlint --edit "$1")
-else
-	echo "commit-msg: frontend dependencies not installed, skipping commitlint" >&2
-fi
+cd frontend && pnpm run commitlint --edit $1
 
 branch="$(git rev-parse --abbrev-ref HEAD)"
 
