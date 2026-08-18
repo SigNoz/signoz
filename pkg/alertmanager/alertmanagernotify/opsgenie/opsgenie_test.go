@@ -6,6 +6,7 @@ package opsgenie
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
@@ -352,7 +353,7 @@ func TestOpsGenieAdvancedFeatures(t *testing.T) {
 	firing := &types.Alert{Alert: model.Alert{
 		StartsAt: time.Now(),
 		EndsAt:   time.Now().Add(time.Hour),
-		Labels:   model.LabelSet{"Message": "m", "Description": "d"},
+		Labels:   model.LabelSet{"Message": "m", "Description": "**Alert:** d [View](https://s.io/a)"},
 	}}
 
 	// Fire: create + update message + update description + a timeline note.
@@ -362,6 +363,11 @@ func TestOpsGenieAdvancedFeatures(t *testing.T) {
 	assert.Equal(t, "https://test-opsgenie-url/v2/alerts", reqs[0].URL.String())
 	assert.Equal(t, fmt.Sprintf("https://test-opsgenie-url/v2/alerts/%s/notes?identifierType=alias", alias), reqs[3].URL.String())
 	assert.Equal(t, http.MethodPost, reqs[3].Method)
+
+	// the note body is the plain-text render: markers stripped, link flattened
+	var noteMsg opsGenieAddNoteMessage
+	require.NoError(t, json.Unmarshal([]byte(readBody(t, reqs[3])), &noteMsg))
+	assert.Equal(t, "Alert: d View (https://s.io/a)", noteMsg.Note)
 
 	// Resolve: note posted before the close.
 	resolved := &types.Alert{Alert: model.Alert{

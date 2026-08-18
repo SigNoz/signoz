@@ -45,6 +45,35 @@ func TestRenderCodeBlock(t *testing.T) {
 	assert.Contains(t, js, `x := 1`)
 }
 
+func TestRenderStrikethrough(t *testing.T) {
+	js := toJSON(t, Render("~~gone~~"))
+	assert.Contains(t, js, `"type":"strike"`)
+	assert.Contains(t, js, `"text":"gone"`)
+}
+
+func TestRenderBlockquote(t *testing.T) {
+	js := toJSON(t, Render("> quoted"))
+	assert.Contains(t, js, `"type":"blockquote"`)
+	assert.Contains(t, js, `"text":"quoted"`)
+}
+
+func TestRenderAutoLink(t *testing.T) {
+	js := toJSON(t, Render("see <https://signoz.io>"))
+	assert.Contains(t, js, `"type":"link"`)
+	assert.Contains(t, js, `"href":"https://signoz.io"`)
+	assert.Contains(t, js, `"text":"https://signoz.io"`)
+}
+
+func TestRenderLineBreaks(t *testing.T) {
+	js := toJSON(t, Render("one  \ntwo"))
+	assert.Contains(t, js, `"type":"hardBreak"`)
+
+	// a soft break renders as a space, keeping the paragraph intact
+	js = toJSON(t, Render("one\ntwo"))
+	assert.NotContains(t, js, `"type":"hardBreak"`)
+	assert.Contains(t, js, `"text":" "`)
+}
+
 func TestRenderPlainText(t *testing.T) {
 	js := toJSON(t, Render("just text"))
 	assert.Contains(t, js, `"type":"paragraph"`)

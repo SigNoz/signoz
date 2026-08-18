@@ -47,7 +47,7 @@ func (r *nodeRenderer) RegisterFuncs(reg renderer.NodeRendererFuncRegisterer) {
 	reg.Register(ast.KindBlockquote, r.renderBlock)
 	reg.Register(ast.KindCodeBlock, r.renderCodeBlock)
 	reg.Register(ast.KindFencedCodeBlock, r.renderCodeBlock)
-	reg.Register(ast.KindHTMLBlock, r.renderCodeBlock)
+	reg.Register(ast.KindHTMLBlock, r.renderHTMLBlock)
 	reg.Register(ast.KindList, r.renderList)
 	reg.Register(ast.KindListItem, r.renderListItem)
 	reg.Register(ast.KindParagraph, r.renderBlock)
@@ -244,6 +244,11 @@ func (r *nodeRenderer) renderString(w util.BufWriter, source []byte, node ast.No
 
 func (r *nodeRenderer) renderRawHTML(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	// Drop inline raw HTML tags; a plain-text note should never carry markup.
+	return ast.WalkSkipChildren, nil
+}
+
+func (r *nodeRenderer) renderHTMLBlock(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+	// Drop block-level raw HTML for the same reason as inline raw HTML.
 	return ast.WalkSkipChildren, nil
 }
 
