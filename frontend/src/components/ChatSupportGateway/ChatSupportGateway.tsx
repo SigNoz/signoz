@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Button } from 'antd';
 import AddCreditCardModal from 'components/AddCreditCardModal/AddCreditCardModal';
 import logEvent from 'api/common/logEvent';
@@ -8,7 +8,7 @@ import { MessageSquareText } from '@signozhq/icons';
 export default function ChatSupportGateway(): JSX.Element {
 	const [isAddCreditCardModalOpen, setIsAddCreditCardModalOpen] =
 		useState(false);
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 
 	return (
 		<>

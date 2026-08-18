@@ -8,7 +8,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useHistory } from 'react-router-dom';
+import { navigate } from 'lib/router/navigation';
 import {
 	Check,
 	ConciergeBell,
@@ -107,7 +107,6 @@ function ExplorerOptions({
 	const [newViewName, setNewViewName] = useState<string>('');
 	const [color, setColor] = useState(Color.BG_SIENNA_500);
 	const { notifications } = useNotifications();
-	const history = useHistory();
 	const ref = useRef<RefSelectProps>(null);
 	const isDarkMode = useIsDarkMode();
 	const [queryToExport, setQueryToExport] = useState<Query | null>(null);
@@ -240,14 +239,14 @@ function ExplorerOptions({
 
 			const stringifiedQuery = handleConditionalQueryModification(defaultQuery);
 
-			history.push(
+			navigate(
 				`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
 					stringifiedQuery,
 				)}`,
 			);
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[handleConditionalQueryModification, history],
+		[handleConditionalQueryModification],
 	);
 
 	const onCancel = (value: boolean) => (): void => {
@@ -566,7 +565,7 @@ function ExplorerOptions({
 		});
 
 		if (signalSource === 'meter') {
-			history.replace(ROUTES.METER_EXPLORER);
+			navigate(ROUTES.METER_EXPLORER, { replace: true });
 			return;
 		}
 
@@ -574,7 +573,7 @@ function ExplorerOptions({
 			handleChangeSelectedView(panelTypeToExplorerView[PANEL_TYPES.LIST]);
 		}
 
-		history.replace(DATASOURCE_VS_ROUTES[sourcepage]);
+		navigate(DATASOURCE_VS_ROUTES[sourcepage], { replace: true });
 	};
 
 	const isQueryUpdated = isStagedQueryUpdated(

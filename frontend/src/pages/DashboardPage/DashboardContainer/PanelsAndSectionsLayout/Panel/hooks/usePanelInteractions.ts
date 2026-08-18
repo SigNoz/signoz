@@ -1,7 +1,8 @@
 import { useCallback, useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports -- TODO: migrate global time dispatch off redux
 import { useDispatch } from 'react-redux';
-import { useLocation, useParams } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { useAppParams } from 'lib/router/useAppParams';
 import { QueryParams } from 'constants/query';
 import { PanelMode } from 'lib/visualization/panels/types';
 import type { DashboardPreference } from 'pages/DashboardPage/DashboardContainer/Panels/types/rendererProps';
@@ -26,10 +27,10 @@ export interface PanelInteractions {
  */
 export function usePanelInteractions(): PanelInteractions {
 	const dispatch = useDispatch();
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const { safeNavigate } = useSafeNavigate();
 	const urlQuery = useUrlQuery();
-	const { dashboardId } = useParams<{ dashboardId: string }>();
+	const { dashboardId } = useAppParams<{ dashboardId: string }>();
 
 	const [syncMode] = useDashboardCursorSyncMode(
 		dashboardId,

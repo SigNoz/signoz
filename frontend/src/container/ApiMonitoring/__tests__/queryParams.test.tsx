@@ -5,15 +5,11 @@ import {
 	setApiMonitoringParams,
 } from 'container/ApiMonitoring/queryParams';
 
-// Mock react-router-dom hooks
-jest.mock('react-router-dom', () => {
-	const originalModule = jest.requireActual('react-router-dom');
-	return {
-		...originalModule,
-		useLocation: jest.fn(),
-		useHistory: jest.fn(),
-	};
-});
+// Mock navigation module
+const mockNavigate = jest.fn();
+jest.mock('lib/router/navigation', () => ({
+	navigate: (...args: any[]) => mockNavigate(...args),
+}));
 
 describe('API Monitoring Query Params', () => {
 	describe('getApiMonitoringParams', () => {
@@ -57,26 +53,26 @@ describe('API Monitoring Query Params', () => {
 	});
 
 	describe('setApiMonitoringParams', () => {
+		beforeEach(() => {
+			mockNavigate.mockClear();
+		});
+
 		it('updates URL with new params (push mode)', () => {
-			const history = {
-				push: jest.fn(),
-				replace: jest.fn(),
-			};
 			const search = '';
 			const newParams: Partial<ApiMonitoringParams> = {
 				showIP: false,
 				selectedDomain: 'updated-domain',
 			};
 
-			setApiMonitoringParams(newParams, search, history as any, false);
+			setApiMonitoringParams(newParams, search, false);
 
-			expect(history.push).toHaveBeenCalledWith({
-				search: expect.stringContaining('apiMonitoringParams'),
-			});
-			expect(history.replace).not.toHaveBeenCalled();
+			expect(mockNavigate).toHaveBeenCalledWith(
+				{ search: expect.stringContaining('apiMonitoringParams') },
+				{ replace: false },
+			);
 
 			// Verify that the search string contains the expected encoded params
-			const searchArg = history.push.mock.calls[0][0].search;
+			const searchArg = mockNavigate.mock.calls[0][0].search;
 			const params = new URLSearchParams(searchArg);
 			const decoded = JSON.parse(
 				decodeURIComponent(params.get('apiMonitoringParams') || ''),
@@ -88,30 +84,21 @@ describe('API Monitoring Query Params', () => {
 		});
 
 		it('updates URL with new params (replace mode)', () => {
-			const history = {
-				push: jest.fn(),
-				replace: jest.fn(),
-			};
 			const search = '';
 			const newParams: Partial<ApiMonitoringParams> = {
 				showIP: false,
 				selectedDomain: 'updated-domain',
 			};
 
-			setApiMonitoringParams(newParams, search, history as any, true);
+			setApiMonitoringParams(newParams, search, true);
 
-			expect(history.replace).toHaveBeenCalledWith({
-				search: expect.stringContaining('apiMonitoringParams'),
-			});
-			expect(history.push).not.toHaveBeenCalled();
+			expect(mockNavigate).toHaveBeenCalledWith(
+				{ search: expect.stringContaining('apiMonitoringParams') },
+				{ replace: true },
+			);
 		});
 
 		it('merges new params with existing params', () => {
-			const history = {
-				push: jest.fn(),
-				replace: jest.fn(),
-			};
-
 			// Start with some existing params
 			const existingParams: Partial<ApiMonitoringParams> = {
 				showIP: true,
@@ -132,10 +119,10 @@ describe('API Monitoring Query Params', () => {
 				selectedEndPointName: '/api/test',
 			};
 
-			setApiMonitoringParams(newParams, search, history as any, false);
+			setApiMonitoringParams(newParams, search, false);
 
 			// Verify merged params
-			const searchArg = history.push.mock.calls[0][0].search;
+			const searchArg = mockNavigate.mock.calls[0][0].search;
 			const params = new URLSearchParams(searchArg);
 			const decoded = JSON.parse(
 				decodeURIComponent(params.get('apiMonitoringParams') || ''),

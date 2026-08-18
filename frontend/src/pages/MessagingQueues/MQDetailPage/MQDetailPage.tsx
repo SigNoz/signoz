@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useHistory } from 'react-router-dom';
 import { Select } from 'antd';
+import { getCurrentLocation, navigate } from 'lib/router/navigation';
 import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
@@ -24,7 +24,6 @@ import MessagingQueuesGraph from '../MQGraph/MQGraph';
 import '../MessagingQueues.styles.scss';
 
 function MQDetailPage(): JSX.Element {
-	const history = useHistory();
 	const [selectedView, setSelectedView] =
 		useState<MessagingQueuesViewTypeOptions>(
 			MessagingQueuesViewType.consumerLag.value,
@@ -48,11 +47,11 @@ function MQDetailPage(): JSX.Element {
 	}, [mqServiceView]);
 
 	const updateUrlQuery = (query: Record<string, string | number>): void => {
-		const searchParams = new URLSearchParams(history.location.search);
+		const searchParams = new URLSearchParams(getCurrentLocation().search);
 		Object.keys(query).forEach((key) => {
 			searchParams.set(key, query[key].toString());
 		});
-		history.push({
+		navigate({
 			search: searchParams.toString(),
 		});
 	};
@@ -67,7 +66,7 @@ function MQDetailPage(): JSX.Element {
 		if (event && isModifierKeyPressed(event as React.MouseEvent)) {
 			openInNewTab(ROUTES.MESSAGING_QUEUES_KAFKA);
 		} else {
-			history.push(ROUTES.MESSAGING_QUEUES_KAFKA);
+			navigate(ROUTES.MESSAGING_QUEUES_KAFKA);
 		}
 	};
 

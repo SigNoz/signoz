@@ -1,11 +1,9 @@
 import { memo, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useAppParams } from 'lib/router/useAppParams';
 import Spinner from 'components/Spinner';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
 import { useGetApDexSettings } from 'hooks/apDex/useGetApDexSettings';
 import { useNotifications } from 'hooks/useNotifications';
-
-import { IServiceName } from '../../types';
 import ApDexMetricsApplication from './ApDexMetricsApplication';
 import { ApDexApplicationProps } from './types';
 
@@ -15,8 +13,8 @@ function ApDexApplication({
 	topLevelOperationsRoute,
 	tagFilterItems,
 }: ApDexApplicationProps): JSX.Element {
-	const { servicename: encodedServiceName } = useParams<IServiceName>();
-	const servicename = decodeURIComponent(encodedServiceName);
+	const { servicename: encodedServiceName } = useAppParams<'servicename'>();
+	const servicename = decodeURIComponent(encodedServiceName || '');
 	const { notifications } = useNotifications();
 
 	const { data, isLoading, error, isRefetching } =

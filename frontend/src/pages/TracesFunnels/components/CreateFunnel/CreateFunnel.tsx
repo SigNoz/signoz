@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { generatePath, matchPath, useLocation } from 'react-router-dom';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
+import { matchRoute } from 'lib/router/matchRoute';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Input } from '@signozhq/ui/input';
 import logEvent from 'api/common/logEvent';
 import axios from 'axios';
@@ -31,7 +33,7 @@ function CreateFunnel({
 	const { notifications } = useNotifications();
 	const queryClient = useQueryClient();
 	const { safeNavigate } = useSafeNavigate();
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 
 	const handleCreate = (): void => {
 		createFunnelMutation.mutate(
@@ -45,7 +47,7 @@ function CreateFunnel({
 						message: 'Funnel created successfully',
 					});
 
-					const eventMessage = matchPath(pathname, ROUTES.TRACE_DETAIL)
+					const eventMessage = matchRoute(pathname, ROUTES.TRACE_DETAIL)
 						? 'Trace Funnels: Funnel created from trace details page'
 						: 'Trace Funnels: Funnel created from trace funnels list page';
 
@@ -60,7 +62,7 @@ function CreateFunnel({
 					onClose(funnelId);
 					if (funnelId && redirectToDetails) {
 						safeNavigate(
-							generatePath(ROUTES.TRACES_FUNNELS_DETAIL, {
+							buildRoutePath(ROUTES.TRACES_FUNNELS_DETAIL, {
 								funnelId,
 							}),
 						);

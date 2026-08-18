@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Button, Space } from 'antd';
 import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
@@ -13,7 +13,7 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { getNanoSeconds } from 'container/AllError/utils';
 import { useNotifications } from 'hooks/useNotifications';
 import createQueryParams from 'lib/createQueryParams';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { isUndefined } from 'lodash-es';
 import { urlKey } from 'pages/ErrorDetails/utils';
 import { useTimezone } from 'providers/Timezone';
@@ -29,7 +29,7 @@ import './styles.scss';
 function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 	const { idPayload } = props;
 	const { t } = useTranslation(['errorDetails', 'common']);
-	const { search, pathname } = useLocation();
+	const { search, pathname } = useAppLocation();
 
 	const params = useMemo(() => new URLSearchParams(search), [search]);
 
@@ -100,7 +100,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 				errorId: id,
 			};
 
-			history.replace(`${pathname}?${createQueryParams(queryParams)}`);
+			navigate(`${pathname}?${createQueryParams(queryParams)}`, { replace: true });
 		} catch (error) {
 			notifications.error({
 				message: t('something_went_wrong'),
@@ -126,7 +126,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 		if (isModifierKeyPressed(event)) {
 			openInNewTab(path);
 		} else {
-			history.push(path);
+			navigate(path);
 		}
 	};
 

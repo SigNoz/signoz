@@ -1,7 +1,7 @@
 import { useLocation } from 'react-use';
 import RouteTab from 'components/RouteTab';
 import { TabRoutes } from 'components/RouteTab/types';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 
 import { Explorer } from './constants';
 
@@ -17,7 +17,7 @@ function ApiMonitoringPage(): JSX.Element {
 			className="api-monitoring-page"
 			routes={routes}
 			activeKey={pathname}
-			history={history}
+			history={{ push: navigate } as any}
 		/>
 	);
 }

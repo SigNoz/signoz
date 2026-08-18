@@ -1,17 +1,17 @@
-import { useLocation } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';
 import RouteTab from 'components/RouteTab';
 import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
-import history from 'lib/history';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { navigate } from 'lib/router/navigation';
 
 import { tracesExplorer, tracesFunnel, tracesSaveView } from './constants';
 
 import './TracesModulePage.styles.scss';
 
 function TracesModulePage(): JSX.Element {
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const isSavedViewEnabled = useSavedViewEnabled();
 
 	const routes: TabRoutes[] = [
@@ -33,7 +33,7 @@ function TracesModulePage(): JSX.Element {
 			activeKey={
 				pathname.includes(ROUTES.TRACES_FUNNELS) ? ROUTES.TRACES_FUNNELS : pathname
 			}
-			history={history}
+			history={{ push: navigate } as any}
 			onChangeHandler={handleTabChange}
 		/>
 	);
