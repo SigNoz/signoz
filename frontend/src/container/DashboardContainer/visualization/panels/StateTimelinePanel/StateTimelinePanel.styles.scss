@@ -1,0 +1,193 @@
+.state-timeline-panel {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	font-family: var(--font-family);
+
+	// ===== Dark mode =====
+	&--dark {
+		background-color: var(--bg-ink-400, #121317);
+		color: var(--text-vanilla-400, #e0e0e0);
+
+		.state-timeline-panel__no-data {
+			color: var(--text-vanilla-300, #a0a0a0);
+		}
+
+		.state-timeline-panel__warning {
+			background-color: #78350f;
+			color: #fbbf24;
+		}
+
+		.state-timeline-panel__label-column {
+			border-right: 1px solid var(--border-ink-300, #2c2d33);
+		}
+
+		.state-timeline-panel__time-axis {
+			border-top: 1px solid var(--border-ink-300, #2c2d33);
+			color: var(--text-vanilla-300, #a0a0a0);
+		}
+	}
+
+	// ===== Light mode =====
+	&--light {
+		background-color: var(--bg-vanilla-100, #ffffff);
+		color: var(--text-ink-400, #1a1a1a);
+
+		.state-timeline-panel__no-data {
+			color: var(--text-ink-200, #6b7280);
+		}
+
+		.state-timeline-panel__warning {
+			background-color: #fef3c7;
+			color: #92400e;
+		}
+
+		.state-timeline-panel__label-column {
+			border-right: 1px solid var(--border-vanilla-300, #e5e7eb);
+		}
+
+		.state-timeline-panel__time-axis {
+			border-top: 1px solid var(--border-vanilla-300, #e5e7eb);
+			color: var(--text-ink-200, #6b7280);
+		}
+	}
+
+	// ===== No Data message =====
+	&__no-data {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 100%;
+		height: 100%;
+		font-size: 14px;
+	}
+
+	// ===== Warning banner =====
+	&__warning {
+		padding: 4px 8px;
+		font-size: 12px;
+		text-align: center;
+		flex-shrink: 0;
+	}
+
+	// ===== Body (labels + swim lanes) =====
+	&__body {
+		display: flex;
+		flex-direction: row;
+		flex: 1;
+		min-height: 0;
+		overflow: hidden;
+	}
+
+	// ===== Label column =====
+	&__label-column {
+		flex-shrink: 0;
+		overflow: hidden;
+		max-width: 200px;
+
+		&-item {
+			display: flex;
+			align-items: center;
+			padding: 0 8px;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			font-size: 12px;
+		}
+	}
+
+	// ===== Swim lane container =====
+	&__swim-lane-container {
+		flex: 1;
+		min-width: 0;
+		height: 100%;
+		overflow: hidden;
+	}
+
+	// ===== Swim lane row =====
+	&__swim-lane-row {
+		position: relative;
+		width: 100%;
+	}
+
+	// ===== State segment =====
+	&__segment {
+		position: absolute;
+		top: 1px;
+		bottom: 1px;
+		transition: opacity 0.15s ease;
+
+		&:hover {
+			opacity: 0.8;
+			outline: 1px solid rgba(255, 255, 255, 0.4);
+			outline-offset: -1px;
+			z-index: 1;
+		}
+	}
+
+	// ===== Time axis =====
+	&__time-axis {
+		flex-shrink: 0;
+		position: relative;
+		width: 100%;
+		height: 30px;
+		font-size: 11px;
+		overflow: hidden;
+
+		&-tick {
+			position: absolute;
+			top: 0;
+			transform: translateX(-50%);
+			text-align: center;
+			padding-top: 6px;
+		}
+	}
+
+	// ===== Tooltip =====
+	&__tooltip {
+		position: absolute;
+		z-index: 9999;
+		padding: 8px 12px;
+		border-radius: 4px;
+		box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+		background-color: var(--l2-background, #1f2029);
+		border: 1px solid var(--l2-border, #2c2d33);
+		font-size: 12px;
+		pointer-events: none;
+		white-space: nowrap;
+		transition: opacity 0.1s ease;
+
+		&--hidden {
+			opacity: 0;
+		}
+
+		&--visible {
+			opacity: 1;
+		}
+
+		&-row {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			padding: 2px 0;
+		}
+
+		&-label {
+			font-weight: 600;
+		}
+
+		&-value {
+			font-weight: 400;
+		}
+
+		&-color-indicator {
+			width: 10px;
+			height: 10px;
+			border-radius: 2px;
+			flex-shrink: 0;
+		}
+	}
+}
