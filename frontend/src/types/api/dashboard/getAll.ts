@@ -143,11 +143,18 @@ export interface IBaseWidget {
 	fillMode?: FillMode;
 	spanGaps?: boolean | number;
 }
+export interface RepeatConfig {
+	variable: string;
+	direction: 'vertical' | 'horizontal';
+	maxPerRow: number;
+}
+
 export interface Widgets extends IBaseWidget {
 	query: Query;
 	renderColumnCell?: QueryTableProps['renderColumnCell'];
 	customColTitles?: Record<string, string>;
 	hiddenColumns?: string[];
+	repeat?: RepeatConfig;
 }
 
 export interface PromQLWidgets extends IBaseWidget {

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/transition"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -21,8 +22,6 @@ var (
 	ErrCodeDashboardInvalidSource      = errors.MustNewCode("dashboard_invalid_source")
 	ErrCodeDashboardImmutable          = errors.MustNewCode("dashboard_immutable")
 	ErrCodeDashboardInvalidPatch       = errors.MustNewCode("dashboard_invalid_patch")
-	ErrCodeDashboardMigrationFailed    = errors.MustNewCode("dashboard_migration_failed")
-	ErrCodeDashboardV1Deprecated       = errors.MustNewCode("dashboard_deprecated")
 )
 
 type StorableDashboard struct {
@@ -64,13 +63,6 @@ type (
 
 	ListableDashboard []*GettableDashboard
 )
-
-// readString reads a string field from the untyped data blob, yielding "" when
-// the key is absent, null, or not a string.
-func (d StorableDashboardData) readString(key string) string {
-	s, _ := d[key].(string)
-	return s
-}
 
 func NewStorableDashboardFromDashboard(dashboard *Dashboard) (*StorableDashboard, error) {
 	dashboardID, err := valuer.NewUUID(dashboard.ID)
@@ -176,6 +168,69 @@ func NewGettableDashboardFromDashboard(dashboard *Dashboard) (*GettableDashboard
 	}, nil
 }
 
+func NewStatsFromStorableDashboards(dashboards []*StorableDashboard) map[string]any {
+	stats := make(map[string]any)
+	stats["dashboard.panels.count"] = int64(0)
+	stats["dashboard.panels.traces.count"] = int64(0)
+	stats["dashboard.panels.metrics.count"] = int64(0)
+	stats["dashboard.panels.logs.count"] = int64(0)
+	for _, dashboard := range dashboards {
+		addStatsFromStorableDashboard(dashboard, stats)
+	}
+
+	stats["dashboard.count"] = int64(len(dashboards))
+	return stats
+}
+
+func addStatsFromStorableDashboard(dashboard *StorableDashboard, stats map[string]any) {
+	if dashboard.Data == nil {
+		return
+	}
+
+	if dashboard.Data["widgets"] == nil {
+		return
+	}
+
+	widgets, ok := dashboard.Data["widgets"]
+	if !ok {
+		return
+	}
+
+	data, ok := widgets.([]interface{})
+	if !ok {
+		return
+	}
+
+	for _, widget := range data {
+		sData, ok := widget.(map[string]interface{})
+		if ok && sData["query"] != nil {
+			stats["dashboard.panels.count"] = stats["dashboard.panels.count"].(int64) + 1
+			query, ok := sData["query"].(map[string]interface{})
+			if ok && query["queryType"] == "builder" && query["builder"] != nil {
+				builderData, ok := query["builder"].(map[string]interface{})
+				if ok && builderData["queryData"] != nil {
+					builderQueryData, ok := builderData["queryData"].([]interface{})
+					if ok {
+						for _, queryData := range builderQueryData {
+							data, ok := queryData.(map[string]interface{})
+							if ok {
+								switch data["dataSource"] {
+								case "traces":
+									stats["dashboard.panels.traces.count"] = stats["dashboard.panels.traces.count"].(int64) + 1
+								case "metrics":
+									stats["dashboard.panels.metrics.count"] = stats["dashboard.panels.metrics.count"].(int64) + 1
+								case "logs":
+									stats["dashboard.panels.logs.count"] = stats["dashboard.panels.logs.count"].(int64) + 1
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 func (storableDashboardData *StorableDashboardData) GetWidgetIds() []string {
 	data := *storableDashboardData
 	widgetIds := []string{}
@@ -199,18 +254,6 @@ func (storableDashboardData *StorableDashboardData) GetWidgetIds() []string {
 		}
 	}
 	return widgetIds
-}
-
-// ErrIfNotDeletable gates deletion on the columns alone, never on Data, so a
-// dashboard whose data is corrupt or stuck on the v1 schema stays deletable.
-func (storable StorableDashboard) ErrIfNotDeletable() error {
-	if storable.Locked {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot delete a locked dashboard, please unlock the dashboard to delete")
-	}
-	if !storable.Source.isUserDeletable() {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "%s dashboards cannot be deleted", storable.Source)
-	}
-	return nil
 }
 
 func (dashboard *Dashboard) ErrIfNotMutable() error {
@@ -363,26 +406,27 @@ func (dashboard *Dashboard) GetWidgetQuery(startTime, endTime, widgetIndex uint6
 	widgetData := data.Widgets[widgetIndex]
 	switch widgetData.Query.QueryType {
 	case "builder":
+		migrate := transition.NewMigrateCommon(logger)
 		for _, query := range widgetData.Query.Builder.QueryData {
 			queryName, ok := query["queryName"].(string)
 			if !ok {
 				return nil, errors.New(errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "cannot type cast query name as string")
 			}
-			compositeQueries = append(compositeQueries, querybuildertypesv5.WrapInV5Envelope(queryName, query, "builder_query"))
+			compositeQueries = append(compositeQueries, migrate.WrapInV5Envelope(queryName, query, "builder_query"))
 		}
 		for _, query := range widgetData.Query.Builder.QueryFormulas {
 			queryName, ok := query["queryName"].(string)
 			if !ok {
 				return nil, errors.New(errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "cannot type cast query name as string")
 			}
-			compositeQueries = append(compositeQueries, querybuildertypesv5.WrapInV5Envelope(queryName, query, "builder_formula"))
+			compositeQueries = append(compositeQueries, migrate.WrapInV5Envelope(queryName, query, "builder_formula"))
 		}
 		for _, query := range widgetData.Query.Builder.QueryTraceOperator {
 			queryName, ok := query["queryName"].(string)
 			if !ok {
 				return nil, errors.New(errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "cannot type cast query name as string")
 			}
-			compositeQueries = append(compositeQueries, querybuildertypesv5.WrapInV5Envelope(queryName, query, "builder_trace_operator"))
+			compositeQueries = append(compositeQueries, migrate.WrapInV5Envelope(queryName, query, "builder_trace_operator"))
 		}
 	case "clickhouse_sql":
 		for _, query := range widgetData.Query.ClickhouseSQL {
@@ -442,7 +486,7 @@ func (dashboard *Dashboard) GetWidgetQuery(startTime, endTime, widgetIndex uint6
 
 func (dashboard *Dashboard) getQueryRequestTypeFromPanelType(panelType string) querybuildertypesv5.RequestType {
 	switch panelType {
-	case "graph", "bar":
+	case "graph", "bar", "state_timeline":
 		return querybuildertypesv5.RequestTypeTimeSeries
 	case "table", "pie", "value":
 		return querybuildertypesv5.RequestTypeScalar
