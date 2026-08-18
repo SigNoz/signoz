@@ -142,6 +142,8 @@ export interface IBaseWidget {
 	lineStyle?: LineStyle;
 	fillMode?: FillMode;
 	spanGaps?: boolean | number;
+	/** Markdown or plain text content for text panel type */
+	textContent?: string;
 }
 export interface Widgets extends IBaseWidget {
 	query: Query;
