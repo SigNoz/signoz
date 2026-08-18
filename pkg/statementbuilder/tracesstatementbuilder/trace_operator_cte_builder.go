@@ -212,7 +212,7 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, queryName s
 		return cteName, nil
 	}
 
-	keySelectors := getKeySelectors(*query)
+	keySelectors := querybuilder.ExpandKeySelectorsForFamilies(ctx, b.orgID, b.stmtBuilder.fl, getKeySelectors(*query))
 	b.stmtBuilder.logger.DebugContext(ctx, "Key selectors for query", slog.String("query_name", queryName), slog.Any("key_selectors", keySelectors))
 	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(ctx, b.orgID, keySelectors)
 	if err != nil {
@@ -265,6 +265,7 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, queryName s
 			querybuilder.FilterExprVisitorOpts{
 				Context:            ctx,
 				OrgID:              b.orgID,
+				Flagger:            b.stmtBuilder.fl,
 				Logger:             b.stmtBuilder.logger,
 				FieldMapper:        b.stmtBuilder.fm,
 				ConditionBuilder:   b.stmtBuilder.cb,
@@ -442,7 +443,7 @@ func (b *traceOperatorCTEBuilder) buildFinalQuery(ctx context.Context, selectFro
 		}
 	}
 
-	keySelectors := b.getKeySelectors()
+	keySelectors := querybuilder.ExpandKeySelectorsForFamilies(ctx, b.orgID, b.stmtBuilder.fl, b.getKeySelectors())
 	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(ctx, b.orgID, keySelectors)
 	if err != nil {
 		return nil, err

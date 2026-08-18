@@ -8,6 +8,7 @@ import (
 
 	cmock "github.com/SigNoz/clickhouse-go-mock"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -376,8 +377,8 @@ func TestStatementBuilder(t *testing.T) {
 	}
 
 	fl := flaggertest.New(t)
-	fm := tracestelemetryschema.NewFieldMapper()
-	cb := tracestelemetryschema.NewConditionBuilder(fm)
+	fm := tracestelemetryschema.NewFieldMapper(fl)
+	cb := tracestelemetryschema.NewConditionBuilder(fm, fl)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
@@ -677,8 +678,8 @@ func TestStatementBuilderListQuery(t *testing.T) {
 	}
 
 	fl := flaggertest.New(t)
-	fm := tracestelemetryschema.NewFieldMapper()
-	cb := tracestelemetryschema.NewConditionBuilder(fm)
+	fm := tracestelemetryschema.NewFieldMapper(fl)
+	cb := tracestelemetryschema.NewConditionBuilder(fm, fl)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
@@ -804,8 +805,8 @@ func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			fl := flaggertest.New(t)
-			fm := tracestelemetryschema.NewFieldMapper()
-			cb := tracestelemetryschema.NewConditionBuilder(fm)
+			fm := tracestelemetryschema.NewFieldMapper(fl)
+			cb := tracestelemetryschema.NewConditionBuilder(fm, fl)
 			mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 			mockMetadataStore.KeysMap = c.keysMap
 			if mockMetadataStore.KeysMap == nil {
@@ -879,8 +880,8 @@ func TestStatementBuilderGroupByResourceEvolution(t *testing.T) {
 	}
 
 	fl := flaggertest.New(t)
-	fm := tracestelemetryschema.NewFieldMapper()
-	cb := tracestelemetryschema.NewConditionBuilder(fm)
+	fm := tracestelemetryschema.NewFieldMapper(fl)
+	cb := tracestelemetryschema.NewConditionBuilder(fm, fl)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
@@ -1046,8 +1047,8 @@ func TestStatementBuilderTraceQuery(t *testing.T) {
 	}
 
 	fl := flaggertest.New(t)
-	fm := tracestelemetryschema.NewFieldMapper()
-	cb := tracestelemetryschema.NewConditionBuilder(fm)
+	fm := tracestelemetryschema.NewFieldMapper(fl)
+	cb := tracestelemetryschema.NewConditionBuilder(fm, fl)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
@@ -1684,8 +1685,8 @@ func newSkipResourceFingerprintBuilder(
 	t.Helper()
 
 	fl := flaggertest.New(t)
-	fm := tracestelemetryschema.NewFieldMapper()
-	cb := tracestelemetryschema.NewConditionBuilder(fm)
+	fm := tracestelemetryschema.NewFieldMapper(fl)
+	cb := tracestelemetryschema.NewConditionBuilder(fm, fl)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
@@ -1714,8 +1715,8 @@ func TestStatementBuilderGroupByUnseenKey(t *testing.T) {
 	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 
 	fl := flaggertest.New(t)
-	fm := tracestelemetryschema.NewFieldMapper()
-	cb := tracestelemetryschema.NewConditionBuilder(fm)
+	fm := tracestelemetryschema.NewFieldMapper(fl)
+	cb := tracestelemetryschema.NewConditionBuilder(fm, fl)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
@@ -1756,8 +1757,8 @@ func TestStatementBuilderAggregationUnseenKey(t *testing.T) {
 	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 
 	fl := flaggertest.New(t)
-	fm := tracestelemetryschema.NewFieldMapper()
-	cb := tracestelemetryschema.NewConditionBuilder(fm)
+	fm := tracestelemetryschema.NewFieldMapper(fl)
+	cb := tracestelemetryschema.NewConditionBuilder(fm, fl)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
@@ -1786,4 +1787,73 @@ func TestStatementBuilderAggregationUnseenKey(t *testing.T) {
 	assert.Contains(t, q.Query, "attributes_string['error.type']")
 	assert.Contains(t, q.Query, "attributes_number['error.type']")
 	assert.Contains(t, q.Query, "attributes_bool['error.type']")
+}
+
+// TestStatementBuilderSemconvFamilies builds the same family-member filter
+// with the resolve_semconv_families flag on and off. On: the resource filter
+// merges both spellings and widens the index hints to any member. Off: the
+// query uses only the requested spelling, so users see no change.
+func TestStatementBuilderSemconvFamilies(t *testing.T) {
+	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
+	query := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+		Signal:       telemetrytypes.SignalTraces,
+		StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+		Aggregations: []qbtypes.TraceAggregation{{Expression: "count()"}},
+		Filter: &qbtypes.Filter{
+			Expression: "deployment.environment.name = 'production'",
+		},
+	}
+
+	cases := []struct {
+		name     string
+		flag     bool
+		expected qbtypes.Statement
+	}{
+		{
+			name: "flag on merges both spellings",
+			flag: true,
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (COALESCE(NULLIF(simpleJSONExtractString(labels, 'deployment.environment.name'), ''), NULLIF(simpleJSONExtractString(labels, 'deployment.environment'), ''), '') = ? AND (labels LIKE ? OR labels LIKE ?) AND (labels LIKE ? OR labels LIKE ?)) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY __result_0 DESC",
+				Args:  []any{"production", "%deployment.environment.name%", "%deployment.environment%", "%deployment.environment.name\":\"production%", "%deployment.environment\":\"production%", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448)},
+			},
+		},
+		{
+			name: "flag off keeps the literal spelling",
+			flag: false,
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'deployment.environment.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY __result_0 DESC",
+				Args:  []any{"production", "%deployment.environment.name%", "%deployment.environment.name\":\"production%", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448)},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			fl := flaggertest.WithBooleanFlags(t, map[string]bool{
+				flagger.FeatureResolveSemconvFamilies.String(): c.flag,
+			})
+			fm := tracestelemetryschema.NewFieldMapper(fl)
+			cb := tracestelemetryschema.NewConditionBuilder(fm, fl)
+			mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+			mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
+			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+
+			statementBuilder := NewTraceQueryStatementBuilder(
+				instrumentationtest.New().ToProviderSettings(),
+				mockMetadataStore,
+				fm,
+				cb,
+				aggExprRewriter,
+				nil,
+				fl,
+				false,
+				100000,
+			)
+
+			q, err := statementBuilder.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, qbtypes.RequestTypeScalar, query, nil)
+			require.NoError(t, err)
+			require.Equal(t, c.expected.Query, q.Query)
+			require.Equal(t, c.expected.Args, q.Args)
+		})
+	}
 }

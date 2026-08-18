@@ -40,7 +40,10 @@ func (c *conditionBuilder) ConditionFor(
 		return nil, nil, err
 	}
 
-	keys, warning := querybuilder.ResolveKeys(key, querybuilder.MatchingFieldKeys(key, fieldKeys))
+	// Rule state history fields have no family support, so every logical field
+	// is single-member and flattens losslessly to its physical key.
+	resolved, warning := querybuilder.ResolveLogicalFields(key, querybuilder.MatchingLogicalFields(ctx, orgID, nil, key, fieldKeys))
+	keys := querybuilder.SingleKeys(resolved)
 	var warnings []string
 	if warning != "" {
 		warnings = append(warnings, warning)
@@ -138,9 +141,9 @@ func (c *conditionBuilder) conditionForKey(
 			return "true", nil
 		}
 		if operator == qbtypes.FilterOperatorExists {
-			return fmt.Sprintf("has(JSONExtractKeys(labels), %s)", sb.Var(key.Name)), nil
+			return fmt.Sprintf("JSONHas(labels, %s)", sb.Var(key.Name)), nil
 		}
-		return fmt.Sprintf("not has(JSONExtractKeys(labels), %s)", sb.Var(key.Name)), nil
+		return fmt.Sprintf("not JSONHas(labels, %s)", sb.Var(key.Name)), nil
 	}
 
 	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator: %v", operator)
