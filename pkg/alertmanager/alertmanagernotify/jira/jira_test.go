@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/prometheus/alertmanager/notify"
@@ -103,6 +104,7 @@ func (m *mockJira) countMethod(method string) int {
 
 func newNotifier(t *testing.T, m *mockJira) *Notifier {
 	t.Helper()
+	tmpl := test.CreateTmpl(t)
 	n, err := New(&alertmanagertypes.JiraReceiverConfig{
 		Site:           m.srv.URL,
 		Project:        "KAN",
@@ -111,7 +113,7 @@ func newNotifier(t *testing.T, m *mockJira) *Notifier {
 		Description:    alertmanagertypes.DefaultJiraDescriptionTemplate,
 		HTTPConfig:     &commoncfg.HTTPClientConfig{},
 		ReopenDuration: model.Duration(3 * 24 * time.Hour),
-	}, test.CreateTmpl(t), slog.New(slog.DiscardHandler), nil)
+	}, tmpl, slog.New(slog.DiscardHandler), alertmanagertemplate.New(tmpl, slog.New(slog.DiscardHandler)))
 	require.NoError(t, err)
 	return n
 }
@@ -223,6 +225,30 @@ func TestNotifySafeSkipsWhenNoMatchingTransition(t *testing.T) {
 	assert.Equal(t, 1, m.countPost("/comment"))     // comment still posted
 }
 
+func TestNotifyPrefersOpenIssueOverRecentlyDone(t *testing.T) {
+	m := newMockJira(t)
+	open := openIssue()
+	open.Key = "KAN-2"
+	// the JQL order can put a recently-done issue first; the open one must win
+	m.searchIssues = []issue{doneIssue(), open}
+
+	retry, err := newNotifier(t, m).Notify(ctx(), alert(true))
+	require.NoError(t, err)
+	assert.False(t, retry)
+	assert.Equal(t, 0, m.countPost("/issue"))       // no duplicate create
+	assert.Equal(t, 0, m.countPost("/transitions")) // open issue → no reopen
+	assert.Equal(t, 1, m.countMethod(http.MethodPut))
+	assert.Equal(t, 1, m.countPost("/comment"))
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, r := range m.reqs {
+		if r.method == http.MethodPut || strings.HasSuffix(r.path, "/comment") {
+			assert.Contains(t, r.path, "KAN-2")
+		}
+	}
+}
+
 func TestNotifyRetriesOn429(t *testing.T) {
 	m := newMockJira(t)
 	m.createStatus = http.StatusTooManyRequests
@@ -264,6 +290,37 @@ func TestNotifyRichDescriptionPanelAndLinks(t *testing.T) {
 	assert.Contains(t, s, "View Related Logs")                     // related-logs deep-link
 	assert.Contains(t, s, "Summary:")                              // labeled body section
 	assert.Contains(t, s, "cpu high")                              // rendered annotation
+}
+
+func TestNotifyCustomTemplateAnnotationsOverrideDefaults(t *testing.T) {
+	m := newMockJira(t)
+	a1 := alert(true)
+	a1.Labels["service"] = "payment"
+	a1.Labels["namespace"] = "ns-one"
+	a1.Annotations[ruletypes.AnnotationTitleTemplate] = "High throughput for $service"
+	a1.Annotations[ruletypes.AnnotationBodyTemplate] = "Firing in NS: $labels.namespace"
+	a2 := alert(true)
+	a2.Labels["service"] = "payment"
+	a2.Labels["namespace"] = "ns-two"
+	a2.Annotations[ruletypes.AnnotationTitleTemplate] = "High throughput for $service"
+	a2.Annotations[ruletypes.AnnotationBodyTemplate] = "Firing in NS: $labels.namespace"
+
+	_, err := newNotifier(t, m).Notify(ctx(), a1, a2)
+	require.NoError(t, err)
+
+	body := m.lastBody(t, http.MethodPost, "/issue")
+	fields, ok := body["fields"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, "High throughput for payment", fields["summary"])
+
+	js, err := json.Marshal(fields["description"])
+	require.NoError(t, err)
+	s := string(js)
+	assert.Contains(t, s, "Firing in NS: ns-one")
+	assert.Contains(t, s, "Firing in NS: ns-two")
+	// per-alert custom bodies are separated by an ADF rule divider
+	assert.Contains(t, s, `"rule"`)
+	assert.NotContains(t, s, "Summary:") // default body template not used
 }
 
 func TestFiringSearchJQLHasReopenWindow(t *testing.T) {

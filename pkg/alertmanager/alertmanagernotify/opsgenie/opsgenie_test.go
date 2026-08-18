@@ -6,12 +6,15 @@ package opsgenie
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -350,7 +353,7 @@ func TestOpsGenieAdvancedFeatures(t *testing.T) {
 	firing := &types.Alert{Alert: model.Alert{
 		StartsAt: time.Now(),
 		EndsAt:   time.Now().Add(time.Hour),
-		Labels:   model.LabelSet{"Message": "m", "Description": "d"},
+		Labels:   model.LabelSet{"Message": "m", "Description": "**Alert:** d [View](https://s.io/a)"},
 	}}
 
 	// Fire: create + update message + update description + a timeline note.
@@ -360,6 +363,11 @@ func TestOpsGenieAdvancedFeatures(t *testing.T) {
 	assert.Equal(t, "https://test-opsgenie-url/v2/alerts", reqs[0].URL.String())
 	assert.Equal(t, fmt.Sprintf("https://test-opsgenie-url/v2/alerts/%s/notes?identifierType=alias", alias), reqs[3].URL.String())
 	assert.Equal(t, http.MethodPost, reqs[3].Method)
+
+	// the note body is the plain-text render: markers stripped, link flattened
+	var noteMsg opsGenieAddNoteMessage
+	require.NoError(t, json.Unmarshal([]byte(readBody(t, reqs[3])), &noteMsg))
+	assert.Equal(t, "Alert: d View (https://s.io/a)", noteMsg.Note)
 
 	// Resolve: note posted before the close.
 	resolved := &types.Alert{Alert: model.Alert{
@@ -372,6 +380,59 @@ func TestOpsGenieAdvancedFeatures(t *testing.T) {
 	require.Len(t, reqs, 2)
 	assert.Equal(t, fmt.Sprintf("https://test-opsgenie-url/v2/alerts/%s/notes?identifierType=alias", alias), reqs[0].URL.String())
 	assert.Equal(t, fmt.Sprintf("https://test-opsgenie-url/v2/alerts/%s/close?identifierType=alias", alias), reqs[1].URL.String())
+}
+
+func TestOpsGenieNotifyBestEffortNote(t *testing.T) {
+	tmpl := test.CreateTmpl(t)
+	ctx := notify.WithGroupKey(context.Background(), "1")
+
+	firing := &types.Alert{Alert: model.Alert{
+		StartsAt: time.Now(),
+		EndsAt:   time.Now().Add(time.Hour),
+		Labels:   model.LabelSet{"Message": "m", "Description": "d"},
+	}}
+
+	for _, tc := range []struct {
+		name         string
+		createStatus int
+		noteStatus   int
+		wantErr      bool
+		wantRetry    bool
+	}{
+		{name: "note_404_is_dropped", createStatus: http.StatusAccepted, noteStatus: http.StatusNotFound, wantErr: false, wantRetry: true},
+		{name: "note_429_still_retries", createStatus: http.StatusAccepted, noteStatus: http.StatusTooManyRequests, wantErr: true, wantRetry: true},
+		{name: "create_404_still_fails", createStatus: http.StatusNotFound, noteStatus: http.StatusAccepted, wantErr: true, wantRetry: false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if strings.HasSuffix(r.URL.Path, "/notes") {
+					w.WriteHeader(tc.noteStatus)
+					return
+				}
+				w.WriteHeader(tc.createStatus)
+			}))
+			defer srv.Close()
+
+			u, err := url.Parse(srv.URL)
+			require.NoError(t, err)
+			notifier, err := New(&config.OpsGenieConfig{
+				Message:     `{{ .CommonLabels.Message }}`,
+				Description: `{{ .CommonLabels.Description }}`,
+				APIKey:      "k",
+				APIURL:      &config.URL{URL: u},
+				HTTPConfig:  &commoncfg.HTTPClientConfig{},
+			}, tmpl, promslog.NewNopLogger(), newTestTemplater(tmpl), true)
+			require.NoError(t, err)
+
+			retry, err := notifier.Notify(ctx, firing)
+			if tc.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			assert.Equal(t, tc.wantRetry, retry)
+		})
+	}
 }
 
 func TestOpsGenieApiKeyFile(t *testing.T) {

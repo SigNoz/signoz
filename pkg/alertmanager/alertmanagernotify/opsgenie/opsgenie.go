@@ -147,10 +147,22 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		shouldRetry, err := n.retrier.Check(resp.StatusCode, resp.Body)
 		notify.Drain(resp)
 		if err != nil {
+			// notes are enrichment; a permanently-failed note (e.g. the first-fire
+			// note racing JSM's async alert create) must not fail the notification
+			if !shouldRetry && isNoteRequest(req) {
+				n.logger.WarnContext(ctx, "dropping failed note", slog.Int("status_code", resp.StatusCode), errors.Attr(err))
+				continue
+			}
 			return shouldRetry, notify.NewErrorWithReason(notify.GetFailureReasonFromStatusCode(resp.StatusCode), err)
 		}
 	}
 	return true, nil
+}
+
+// isNoteRequest reports whether req targets the notes endpoint, the only one
+// built by noteRequest.
+func isNoteRequest(req *http.Request) bool {
+	return strings.HasSuffix(req.URL.Path, "/notes")
 }
 
 // Like Split but filter out empty strings.
