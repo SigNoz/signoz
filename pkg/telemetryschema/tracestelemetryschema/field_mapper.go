@@ -348,13 +348,12 @@ func (m *fieldMapper) resolveColumnExprs(
 	return exprs, existExprs, columns, nil
 }
 
-// resolveReferencedField resolves a user-referenced field to the candidate key(s) to query for
-// it. It is the resolution shared by ConditionFor (filter) and ColumnExpressionFor (select /
-// group by / order by), so a name that maps to several physical homes unions all of them the
-// same way in both. narrowAmbiguous applies the filter-only heuristic of collapsing an
-// attribute+resource collision to the resource key (via ResolveKeys); select passes false so it
-// surfaces every home. It returns the candidates, whether they were synthesized (name absent
-// from metadata), and an ambiguity warning.
+// resolveReferencedField resolves a referenced field to the candidate key(s) that select /
+// group by / order by query for it, unioning every physical home the name maps to (a scope
+// field and a same-named scope attribute, an attribute and a resource attribute, ...). Unlike
+// the filter path, it does not collapse an attribute+resource collision to the resource key:
+// select surfaces every home rather than narrowing. Returns the resolved candidates, or an
+// error when the name matches nothing.
 func resolveReferencedField(
 	ctx context.Context,
 	fm qbtypes.FieldMapper,
@@ -363,13 +362,8 @@ func resolveReferencedField(
 	field *telemetrytypes.TelemetryFieldKey,
 	value any,
 	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
-	narrowAmbiguous bool,
-) ([]*telemetrytypes.TelemetryFieldKey, bool, string, error) {
-	matches := querybuilder.MatchingFieldKeys(field, fieldKeys)
-	resolved, warning := matches, ""
-	if narrowAmbiguous {
-		resolved, warning = querybuilder.ResolveKeys(field, matches)
-	}
+) ([]*telemetrytypes.TelemetryFieldKey, error) {
+	resolved := querybuilder.MatchingFieldKeys(field, fieldKeys)
 
 	// A bare key that names a real column resolves to the column — first — keeping same-named
 	// metadata keys under other contexts only where their type is consistent with the column, so
@@ -407,16 +401,16 @@ func resolveReferencedField(
 	}
 
 	if len(resolved) > 0 {
-		return resolved, false, warning, nil
+		return resolved, nil
 	}
 
 	// Not in metadata: synthesize. Fold contexts (span/trace) get the map so a real column or a
 	// stripped-name metadata match can win; strict contexts pass nil and keep their synthesize path.
 	synth := fm.CandidateKeys(ctx, orgID, field, value, candidateLookupKeys(field, fieldKeys))
 	if len(synth) == 0 {
-		return nil, false, warning, querybuilder.NewKeyNotFoundError(field.Name)
+		return nil, querybuilder.NewKeyNotFoundError(field.Name)
 	}
-	return synth, true, warning, nil
+	return synth, nil
 }
 
 // ColumnExpressionFor returns the bare (unaliased) SQL expression for the field, resolving
@@ -433,7 +427,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 
 	// Resolve the candidate column(s) the same way the filter path does, so select / group by /
 	// order by union every physical home of a name exactly as a filter on it would.
-	candidates, _, _, err := resolveReferencedField(ctx, m, orgID, startNs, endNs, field, nil, keys, false)
+	candidates, err := resolveReferencedField(ctx, m, orgID, startNs, endNs, field, nil, keys)
 	if err != nil {
 		return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
 	}

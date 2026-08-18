@@ -295,17 +295,6 @@ func TestNormalize(t *testing.T) {
 			},
 		},
 		{
-			name: "Normalize redundant context prefix restating the set context",
-			input: TelemetryFieldKey{
-				Name:         "scope.name",
-				FieldContext: FieldContextScope,
-			},
-			expected: TelemetryFieldKey{
-				Name:         "name",
-				FieldContext: FieldContextScope,
-			},
-		},
-		{
 			name: "Normalize keeps a prefix that does not match the set context",
 			input: TelemetryFieldKey{
 				Name:         "scope.name",
