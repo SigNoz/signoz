@@ -7,7 +7,6 @@ import (
 	"reflect"
 	"regexp"
 	"slices"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -91,10 +90,148 @@ func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.Ti
 	return payload, err
 }
 
+// labelPair is a label held in per-row scratch, so that rows landing in an existing series do not
+// allocate label objects only to drop them. It keeps the value unboxed — an any field would put
+// every label of every row on the heap — and boxes once, for the row that creates the series.
+type labelPair struct {
+	name    string
+	display string // the form the series key is built from
+	num     float64
+	class   tsColumnClass
+}
+
+func materialiseLabels(pairs []labelPair) []*qbtypes.Label {
+	labels := make([]*qbtypes.Label, len(pairs))
+	for i, pair := range pairs {
+		var value any = pair.display
+		switch pair.class {
+		case tsColumnNumeric:
+			value = pair.num
+		case tsColumnBool:
+			value = pair.num != 0
+		}
+		labels[i] = &qbtypes.Label{
+			Key:   telemetrytypes.TelemetryFieldKey{Name: pair.name},
+			Value: value,
+		}
+	}
+	return labels
+}
+
+// The *FromSlot helpers skip the reflection in derefValue for the types that actually turn up;
+// anything else still goes through it, so a missing width is slower, never dropped.
+func numericFromSlot(ptr any) (float64, bool) {
+	switch v := ptr.(type) {
+	case *float64:
+		return *v, true
+	case *uint64:
+		return float64(*v), true
+	case *int64:
+		return float64(*v), true
+	case *uint32:
+		return float64(*v), true
+	case *int32:
+		return float64(*v), true
+	case *float32:
+		return float64(*v), true
+	case *uint8:
+		return float64(*v), true
+	case *int8:
+		return float64(*v), true
+	}
+	val := derefValue(ptr)
+	if val == nil {
+		return 0, false
+	}
+	return numericAsFloat(val), true
+}
+
+func boolFromSlot(ptr any) bool {
+	if flag, ok := ptr.(*bool); ok {
+		return *flag
+	}
+	flag, _ := derefValue(ptr).(bool)
+	return flag
+}
+
+func stringFromSlot(ptr any) string {
+	switch v := ptr.(type) {
+	case *string:
+		return *v
+	case **string:
+		if *v == nil {
+			return ""
+		}
+		return **v
+	}
+	str, _ := derefValue(ptr).(string)
+	return str
+}
+
+// maxAggregationIndex bounds the __result_<n> indices honored as aggregations; anything past it
+// is read as a plain numeric column.
+const maxAggregationIndex = 1000
+
+type tsColumnClass uint8
+
+const (
+	tsColumnSkip tsColumnClass = iota
+	tsColumnTimestamp
+	tsColumnNumeric
+	tsColumnBool
+	tsColumnString
+	tsColumnDocument // a JSON or Dynamic column, rendered as a label
+)
+
+// tsColumn is what a result column contributes to every row of a time series. The class and the
+// role are the same for all of them, so they are worked out once instead of per cell.
+type tsColumn struct {
+	name          string
+	class         tsColumnClass
+	aggIdx        int // -1 unless the column is aliased as an aggregation
+	isTargetAlias bool
+}
+
+func planColumns(colNames []string, colTypes []driver.ColumnType) []tsColumn {
+	plan := make([]tsColumn, len(colTypes))
+	for i, colType := range colTypes {
+		name := stripKeyAlias(colNames[i])
+		col := tsColumn{
+			name:          name,
+			aggIdx:        -1,
+			isTargetAlias: slices.Contains(legacyReservedColumnTargetAliases, name),
+		}
+		// A raw ClickHouse query writes its own aliases, and aggValues and the result buckets are
+		// sized from this index — an unchecked __result_<n> is an allocation of the user's choosing.
+		if m := aggRe.FindStringSubmatch(name); m != nil {
+			if idx, err := strconv.Atoi(m[1]); err == nil && idx < maxAggregationIndex {
+				col.aggIdx = idx
+			}
+		}
+
+		typ := baseType(colType.ScanType())
+		switch {
+		case typ == timeType:
+			col.class = tsColumnTimestamp
+		case typ == jsonValueType, typ == variantType:
+			col.class = tsColumnDocument
+		case isNumericKind(typ):
+			col.class = tsColumnNumeric
+		case typ.Kind() == reflect.Bool:
+			col.class = tsColumnBool
+		case typ.Kind() == reflect.String:
+			col.class = tsColumnString
+		}
+		plan[i] = col
+	}
+	return plan
+}
+
 func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (*qbtypes.TimeSeriesData, error) {
 	colTypes := rows.ColumnTypes()
 	colNames := rows.Columns()
 
+	plan := planColumns(colNames, colTypes)
 	slots := make([]any, len(colTypes))
 	numericColsCount := 0
 	for i, ct := range colTypes {
@@ -147,117 +284,122 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 		lblValsCapacity = 0
 	}
 
+	// Every row writes into the same scratch: the label objects are materialised only for the row
+	// that creates a series, and aggregation slots are indexed by the alias instead of hashed.
+	aggCount := 1
+	for _, col := range plan {
+		if col.aggIdx >= aggCount {
+			aggCount = col.aggIdx + 1
+		}
+	}
+	var (
+		aggValues = make([]float64, aggCount)
+		aggSeen   = make([]bool, aggCount)
+		lblVals   = make([]string, 0, lblValsCapacity)
+		lblPairs  = make([]labelPair, 0, lblValsCapacity)
+	)
+
 	for rows.Next() {
 		if err := rows.Scan(slots...); err != nil {
 			return nil, err
 		}
 
+		clear(aggSeen)
+		lblVals = lblVals[:0]
+		lblPairs = lblPairs[:0]
+
 		var (
 			ts            int64
-			lblVals       = make([]string, 0, lblValsCapacity)
-			lblObjs       = make([]*qbtypes.Label, 0, lblValsCapacity)
-			aggValues     = map[int]float64{} // all __result_N in this row
-			fallbackValue float64             // value when NO __result_N columns exist
+			anyAgg        bool
+			fallbackValue float64 // value when NO __result_N columns exist
 			fallbackSeen  bool
 		)
 
 		for idx, ptr := range slots {
-			name := stripKeyAlias(colNames[idx])
+			col := plan[idx]
 
-			switch v := ptr.(type) {
-			case *time.Time:
-				ts = v.UnixMilli()
+			switch col.class {
+			case tsColumnTimestamp:
+				if t, ok := ptr.(*time.Time); ok {
+					ts = t.UnixMilli()
+				} else if t, ok := derefValue(ptr).(time.Time); ok {
+					ts = t.UnixMilli()
+				}
 
-			case *float64, *float32, *int64, *int32, *uint64, *uint32:
-				val := numericAsFloat(reflect.ValueOf(ptr).Elem().Interface())
-				if m := aggRe.FindStringSubmatch(name); m != nil {
-					id, _ := strconv.Atoi(m[1])
-					aggValues[id] = val
-				} else if numericColsCount == 1 { // classic single-value query
-					fallbackValue = val
+			case tsColumnNumeric:
+				num, ok := numericFromSlot(ptr)
+				if !ok { // a NULL number is neither a value nor a label
+					continue
+				}
+				switch {
+				case col.aggIdx >= 0:
+					aggValues[col.aggIdx] = num
+					aggSeen[col.aggIdx] = true
+					anyAgg = true
+				case numericColsCount == 1, col.isTargetAlias: // classic single-value query
+					fallbackValue = num
 					fallbackSeen = true
-				} else if slices.Contains(legacyReservedColumnTargetAliases, name) {
-					fallbackValue = val
-					fallbackSeen = true
-				} else {
-					// numeric label
-					lblVals = append(lblVals, fmt.Sprint(val))
-					lblObjs = append(lblObjs, &qbtypes.Label{
-						Key:   telemetrytypes.TelemetryFieldKey{Name: name},
-						Value: val,
+				default:
+					display := strconv.FormatFloat(num, 'g', -1, 64)
+					lblVals = append(lblVals, display)
+					lblPairs = append(lblPairs, labelPair{
+						name:    col.name,
+						display: display,
+						num:     num,
+						class:   tsColumnNumeric,
 					})
 				}
 
-			case **float64, **float32, **int64, **int32, **uint64, **uint32:
-				tempVal := reflect.ValueOf(ptr)
-				if tempVal.IsValid() && !tempVal.IsNil() && !tempVal.Elem().IsNil() {
-					val := numericAsFloat(tempVal.Elem().Elem().Interface())
-					if m := aggRe.FindStringSubmatch(name); m != nil {
-						id, _ := strconv.Atoi(m[1])
-						aggValues[id] = val
-					} else if numericColsCount == 1 { // classic single-value query
-						fallbackValue = val
-						fallbackSeen = true
-					} else if slices.Contains(legacyReservedColumnTargetAliases, name) {
-						fallbackValue = val
-						fallbackSeen = true
-					} else {
-						// numeric label
-						lblVals = append(lblVals, fmt.Sprint(val))
-						lblObjs = append(lblObjs, &qbtypes.Label{
-							Key:   telemetrytypes.TelemetryFieldKey{Name: name},
-							Value: val,
-						})
-					}
+			case tsColumnBool:
+				flag := boolFromSlot(ptr)
+				switch {
+				case col.aggIdx >= 0:
+					aggValues[col.aggIdx] = boolAsFloat(flag)
+					aggSeen[col.aggIdx] = true
+					anyAgg = true
+				case col.isTargetAlias:
+					fallbackValue = boolAsFloat(flag)
+					fallbackSeen = true
+				default:
+					display := strconv.FormatBool(flag)
+					lblVals = append(lblVals, display)
+					lblPairs = append(lblPairs, labelPair{
+						name:    col.name,
+						display: display,
+						num:     boolAsFloat(flag),
+						class:   tsColumnBool,
+					})
 				}
 
-			case *string:
-				lblVals = append(lblVals, *v)
-				lblObjs = append(lblObjs, &qbtypes.Label{
-					Key:   telemetrytypes.TelemetryFieldKey{Name: name},
-					Value: *v,
-				})
+			case tsColumnString:
+				label := stringFromSlot(ptr) // a NULL string labels the series with the empty string
+				lblVals = append(lblVals, label)
+				lblPairs = append(lblPairs, labelPair{name: col.name, display: label, class: tsColumnString})
 
-			case **string:
-				val := *v
-				if val == nil {
-					var empty string
-					val = &empty
-				}
-				lblVals = append(lblVals, *val)
-				lblObjs = append(lblObjs, &qbtypes.Label{
-					Key:   telemetrytypes.TelemetryFieldKey{Name: name},
-					Value: *val,
-				})
-
-			case *telemetrystoretypes.JSONValue, *chcol.Variant:
-				val := labelValue(derefValue(ptr))
-				lblVals = append(lblVals, val)
-				lblObjs = append(lblObjs, &qbtypes.Label{
-					Key:   telemetrytypes.TelemetryFieldKey{Name: name},
-					Value: val,
-				})
-
-			default:
-				continue
+			case tsColumnDocument:
+				label := labelValue(derefValue(ptr))
+				lblVals = append(lblVals, label)
+				lblPairs = append(lblPairs, labelPair{name: col.name, display: label, class: tsColumnDocument})
 			}
 		}
 
 		// Edge-case: no __result_N columns, but a single numeric column present
-		if len(aggValues) == 0 && fallbackSeen {
+		if !anyAgg && fallbackSeen {
 			aggValues[0] = fallbackValue
+			aggSeen[0] = true
+			anyAgg = true
 		}
 
-		if ts == 0 || len(aggValues) == 0 {
+		if ts == 0 || !anyAgg {
 			continue // nothing useful
 		}
 
-		sort.Strings(lblVals)
+		slices.Sort(lblVals)
 		labelsKey := strings.Join(lblVals, ",")
 
 		// one point per aggregation in this row
 		for aggIdx, val := range aggValues {
-			if math.IsNaN(val) || math.IsInf(val, 0) {
+			if !aggSeen[aggIdx] || math.IsNaN(val) || math.IsInf(val, 0) {
 				continue
 			}
 
@@ -265,7 +407,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 
 			series, ok := seriesMap[key]
 			if !ok {
-				series = &qbtypes.TimeSeries{Labels: lblObjs}
+				series = &qbtypes.TimeSeries{Labels: materialiseLabels(lblPairs)}
 				seriesMap[key] = series
 			}
 			series.Values = append(series.Values, &qbtypes.TimeSeriesValue{
@@ -313,6 +455,20 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 		QueryName:    queryName,
 		Aggregations: nonEmpty,
 	}, nil
+}
+
+var (
+	timeType      = reflect.TypeFor[time.Time]()
+	jsonValueType = reflect.TypeFor[telemetrystoretypes.JSONValue]()
+	variantType   = reflect.TypeFor[chcol.Variant]()
+)
+
+// baseType unwraps pointer levels, so that a Nullable column is classified like the column it wraps.
+func baseType(t reflect.Type) reflect.Type {
+	for t.Kind() == reflect.Pointer {
+		t = t.Elem()
+	}
+	return t
 }
 
 func isNumericKind(t reflect.Type) bool {
@@ -511,6 +667,13 @@ func mergeSpanAttributeColumns(data map[string]any) {
 	if raw, ok := data["links"]; ok {
 		data["links"] = spantypes.ParseLinks(raw)
 	}
+}
+
+func boolAsFloat(v bool) float64 {
+	if v {
+		return 1
+	}
+	return 0
 }
 
 // numericAsFloat converts numeric types to float64 efficiently.

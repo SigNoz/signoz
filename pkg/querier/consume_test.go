@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	cmock "github.com/SigNoz/clickhouse-go-mock"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -193,5 +194,116 @@ func TestMergeSpanAttributeColumns_EmptyEventsAndLinks(t *testing.T) {
 	}
 	if links, ok := data["links"].([]spantypes.Link); !ok || len(links) != 0 {
 		t.Fatalf("expected empty []spantypes.Link, got %#v", data["links"])
+	}
+}
+
+// boolRows reports a bool scan type for one column, which cmock cannot do on its own.
+type boolRows struct {
+	driver.Rows
+	col string
+}
+
+func (r boolRows) ColumnTypes() []driver.ColumnType {
+	out := r.Rows.ColumnTypes()
+	for i, colType := range out {
+		if colType.Name() == r.col {
+			out[i] = cmock.NewColumnType(colType.Name(), "Bool", false, reflect.TypeOf(true))
+		}
+	}
+	return out
+}
+
+// A time-series result can carry numeric widths narrower than 32 bits — max(severity_number) is
+// UInt8, kind is Int8, has_error is Bool. Dropping them empties the chart when the column holds the
+// aggregation, and merges every group into one series when it is a group-by key.
+func TestConsume_NarrowNumericWidths(t *testing.T) {
+	ts := time.Date(2026, 8, 19, 10, 0, 0, 0, time.UTC)
+
+	seriesOf := func(t *testing.T, rows driver.Rows) []*qbtypes.TimeSeries {
+		t.Helper()
+		payload, err := consume(rows, qbtypes.RequestTypeTimeSeries, nil, qbtypes.Step{}, "A")
+		require.NoError(t, err)
+		data := payload.(*qbtypes.TimeSeriesData)
+		require.Len(t, data.Aggregations, 1)
+		return data.Aggregations[0].Series
+	}
+
+	t.Run("UInt8 aggregation", func(t *testing.T) {
+		series := seriesOf(t, cmock.NewRows([]cmock.ColumnType{
+			{Name: "ts", Type: "DateTime"},
+			{Name: "__result_0", Type: "UInt8"},
+		}, [][]any{{ts, uint8(17)}}))
+
+		require.Len(t, series, 1)
+		require.Len(t, series[0].Values, 1)
+		assert.Equal(t, float64(17), series[0].Values[0].Value)
+	})
+
+	t.Run("Int8 group-by", func(t *testing.T) {
+		series := seriesOf(t, cmock.NewRows([]cmock.ColumnType{
+			{Name: "ts", Type: "DateTime"},
+			{Name: "kind", Type: "Int8"},
+			{Name: "__result_0", Type: "UInt64"},
+		}, [][]any{{ts, int8(2), uint64(7)}, {ts, int8(3), uint64(2)}}))
+
+		got := map[float64]float64{}
+		for _, s := range series {
+			require.Len(t, s.Labels, 1)
+			require.Len(t, s.Values, 1)
+			got[s.Labels[0].Value.(float64)] = s.Values[0].Value
+		}
+		assert.Equal(t, map[float64]float64{2: 7, 3: 2}, got)
+	})
+
+	t.Run("Bool aggregation", func(t *testing.T) {
+		series := seriesOf(t, boolRows{col: "__result_0", Rows: cmock.NewRows([]cmock.ColumnType{
+			{Name: "ts", Type: "DateTime"},
+			{Name: "__result_0", Type: "UInt8"},
+		}, [][]any{{ts, uint8(1)}})})
+
+		require.Len(t, series, 1)
+		require.Len(t, series[0].Values, 1)
+		assert.Equal(t, float64(1), series[0].Values[0].Value)
+	})
+
+	t.Run("Bool group-by", func(t *testing.T) {
+		series := seriesOf(t, boolRows{col: "has_error", Rows: cmock.NewRows([]cmock.ColumnType{
+			{Name: "ts", Type: "DateTime"},
+			{Name: "has_error", Type: "UInt8"},
+			{Name: "__result_0", Type: "UInt64"},
+		}, [][]any{{ts, uint8(1), uint64(7)}, {ts, uint8(0), uint64(2)}})})
+
+		got := map[bool]float64{}
+		for _, s := range series {
+			require.Len(t, s.Labels, 1)
+			require.Len(t, s.Values, 1)
+			got[s.Labels[0].Value.(bool)] = s.Values[0].Value
+		}
+		assert.Equal(t, map[bool]float64{true: 7, false: 2}, got)
+	})
+}
+
+// A raw ClickHouse query picks its own aliases, so __result_<n> can carry any index — including
+// one that overflows int or would size a slice in the terabytes.
+func TestConsume_HugeAggregationAlias(t *testing.T) {
+	ts := time.Date(2026, 8, 19, 10, 0, 0, 0, time.UTC)
+
+	for _, alias := range []string{"__result_99999999999999999999", "__result_4000000000"} {
+		t.Run(alias, func(t *testing.T) {
+			rows := cmock.NewRows([]cmock.ColumnType{
+				{Name: "ts", Type: "DateTime"},
+				{Name: alias, Type: "UInt64"},
+			}, [][]any{{ts, uint64(7)}})
+
+			payload, err := consume(rows, qbtypes.RequestTypeTimeSeries, nil, qbtypes.Step{}, "A")
+			require.NoError(t, err)
+
+			// the alias is not honored as an aggregation; the single numeric column carries the value
+			data := payload.(*qbtypes.TimeSeriesData)
+			require.Len(t, data.Aggregations, 1)
+			require.Len(t, data.Aggregations[0].Series, 1)
+			require.Len(t, data.Aggregations[0].Series[0].Values, 1)
+			assert.Equal(t, float64(7), data.Aggregations[0].Series[0].Values[0].Value)
+		})
 	}
 }
