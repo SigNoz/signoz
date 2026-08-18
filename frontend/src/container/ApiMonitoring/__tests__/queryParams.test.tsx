@@ -148,27 +148,7 @@ describe('API Monitoring Query Params', () => {
 				state: null,
 			};
 
-			// Create mock history object
-			const history = {
-				push: jest.fn((args) => {
-					// Simulate updating the location search
-					location.search = args.search;
-				}),
-				replace: jest.fn((args) => {
-					location.search = args.search;
-				}),
-				length: 1,
-				location,
-			};
-
-			// Set up mocks for useLocation and useHistory
-			const useLocationMock = jest.requireMock('react-router-dom').useLocation;
-			const useHistoryMock = jest.requireMock('react-router-dom').useHistory;
-
-			useLocationMock.mockReturnValue(location);
-			useHistoryMock.mockReturnValue(history);
-
-			return { location, history };
+			return { location };
 		};
 
 		it('retrieves URL params correctly from location', () => {
@@ -194,7 +174,7 @@ describe('API Monitoring Query Params', () => {
 		});
 
 		it('updates URL correctly with new params', () => {
-			const { location, history } = mockUseLocationAndHistory();
+			const { location } = mockUseLocationAndHistory();
 
 			const newParams: Partial<ApiMonitoringParams> = {
 				selectedDomain: 'new-domain',
@@ -202,13 +182,14 @@ describe('API Monitoring Query Params', () => {
 			};
 
 			// Manually execute the core logic of the hook's setParams function
-			setApiMonitoringParams(newParams, location.search, history as any);
+			setApiMonitoringParams(newParams, location.search);
 
-			expect(history.push).toHaveBeenCalledWith({
-				search: expect.stringContaining('apiMonitoringParams'),
-			});
+			expect(mockNavigate).toHaveBeenCalledWith(
+				{ search: expect.stringContaining('apiMonitoringParams') },
+				{ replace: false },
+			);
 
-			const searchArg = history.push.mock.calls[0][0].search;
+			const searchArg = mockNavigate.mock.calls[0][0].search;
 			const params = new URLSearchParams(searchArg);
 			const decoded = JSON.parse(
 				decodeURIComponent(params.get('apiMonitoringParams') || ''),
@@ -234,20 +215,16 @@ describe('API Monitoring Query Params', () => {
 			const initialSearch = `?${urlParams.toString()}`;
 
 			// Set up mocks
-			const { location, history } = mockUseLocationAndHistory(initialSearch);
+			const { location } = mockUseLocationAndHistory(initialSearch);
 
 			// Manually execute the core logic
-			setApiMonitoringParams(
-				{ selectedView: 'new-view' },
-				location.search,
-				history as any,
-			);
+			setApiMonitoringParams({ selectedView: 'new-view' }, location.search);
 
 			// Verify history was updated
-			expect(history.push).toHaveBeenCalled();
+			expect(mockNavigate).toHaveBeenCalled();
 
 			// Parse the new query params from the URL
-			const searchArg = history.push.mock.calls[0][0].search;
+			const searchArg = mockNavigate.mock.calls[0][0].search;
 			const params = new URLSearchParams(searchArg);
 			const decoded = JSON.parse(
 				decodeURIComponent(params.get('apiMonitoringParams') || ''),

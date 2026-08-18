@@ -1,7 +1,7 @@
-import { useHistory } from 'react-router-dom';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { MOCK_QUERY } from 'container/QueryTable/Drilldown/__tests__/mockTableData';
 import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
+import { navigate } from 'lib/router/navigation';
 import { rest, server } from 'mocks-server/server';
 import {
 	defaultFeatureFlags,
@@ -17,9 +17,9 @@ import { buildExportPanelLink } from 'pages/DashboardPage/DashboardContainer/Pan
 import ExplorerOptionWrapper from '../ExplorerOptionWrapper';
 import { getExplorerToolBarVisibility } from '../utils';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useHistory: jest.fn(),
+jest.mock('lib/router/navigation', () => ({
+	...jest.requireActual('lib/router/navigation'),
+	navigate: jest.fn(),
 }));
 
 jest.mock('../utils', () => ({
@@ -35,7 +35,7 @@ const mockGetExplorerToolBarVisibility = jest.mocked(
 	getExplorerToolBarVisibility,
 );
 
-const mockUseHistory = jest.mocked(useHistory);
+const mockNavigate = jest.mocked(navigate);
 
 // Mock data
 const TEST_QUERY_ID = 'test-query-id';
@@ -141,10 +141,6 @@ describe('ExplorerOptionWrapper', () => {
 
 	it('should navigate to alert creation page when "Create an Alert" is clicked in logs-explorer', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const mockPush = jest.fn();
-		mockUseHistory.mockReturnValue({
-			push: mockPush,
-		} as unknown as ReturnType<typeof useHistory>);
 
 		renderExplorerOptionWrapper({ sourcepage: DataSource.LOGS });
 
@@ -153,8 +149,8 @@ describe('ExplorerOptionWrapper', () => {
 		});
 		await user.click(createAlertButton);
 
-		expect(mockPush).toHaveBeenCalledTimes(1);
-		const calledWith = mockPush.mock.calls[0][0] as string;
+		expect(mockNavigate).toHaveBeenCalledTimes(1);
+		const calledWith = mockNavigate.mock.calls[0][0] as string;
 		const [path, search = ''] = calledWith.split('?');
 		expect(path).toBe('/alerts/new');
 		const params = new URLSearchParams(search);
