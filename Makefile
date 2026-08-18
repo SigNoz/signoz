@@ -124,10 +124,10 @@ go-stop: ## Stops the go backend server listening on SIGNOZ_APISERVER_ADDRESS, w
 		exit 0; \
 	fi; \
 	kill $$PIDS 2>/dev/null; \
-	for i in $$(seq 1 100); do \
+	for i in $$(seq 1 10); do \
 		alive=$$(for p in $$PIDS; do kill -0 $$p 2>/dev/null && echo $$p; done); \
 		[ -z "$$alive" ] && break; \
-		sleep 0.1; \
+		sleep 1; \
 	done; \
 	alive=$$(for p in $$PIDS; do kill -0 $$p 2>/dev/null && echo $$p; done); \
 	if [ -n "$$alive" ]; then \
