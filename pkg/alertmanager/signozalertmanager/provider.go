@@ -120,7 +120,9 @@ var jiraTenantInfoClient = &http.Client{Timeout: 10 * time.Second}
 // only; the resolved id is persisted and read on every notification.
 func resolveJiraCloudIDs(ctx context.Context, receiver *alertmanagertypes.Receiver) error {
 	for _, jc := range receiver.JiraConfigs {
-		if jc.IsServiceAccount() && jc.CloudID == "" {
+		// cloud_id is server-resolved; ignore client-supplied values
+		jc.CloudID = ""
+		if jc.IsServiceAccount() {
 			cloudID, err := jira.ResolveCloudID(ctx, jiraTenantInfoClient, jc.Site)
 			if err != nil {
 				return err
