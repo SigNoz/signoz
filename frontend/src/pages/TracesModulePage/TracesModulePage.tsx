@@ -4,7 +4,6 @@ import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 import { useAppLocation } from 'lib/router/useAppLocation';
-import { navigate } from 'lib/router/navigation';
 
 import { tracesExplorer, tracesFunnel, tracesSaveView } from './constants';
 
@@ -33,7 +32,6 @@ function TracesModulePage(): JSX.Element {
 			activeKey={
 				pathname.includes(ROUTES.TRACES_FUNNELS) ? ROUTES.TRACES_FUNNELS : pathname
 			}
-			history={{ push: navigate } as any}
 			onChangeHandler={handleTabChange}
 		/>
 	);

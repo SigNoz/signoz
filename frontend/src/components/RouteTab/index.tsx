@@ -4,6 +4,7 @@ import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { buildRoutePath } from 'lib/router/buildRoutePath';
 import { matchRoute } from 'lib/router/matchRoute';
+import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { useAppParams } from 'lib/router/useAppParams';
 
@@ -26,7 +27,6 @@ function RouteTab({
 	routes,
 	activeKey,
 	onChangeHandler,
-	history,
 	showRightSection,
 	className,
 	...rest
@@ -48,7 +48,7 @@ function RouteTab({
 		const selectedRoute = routes.find((e) => e.key === activeRoute);
 
 		if (selectedRoute) {
-			history.push(buildRoutePath(selectedRoute.route, params));
+			navigate(buildRoutePath(selectedRoute.route, params));
 		}
 	};
 

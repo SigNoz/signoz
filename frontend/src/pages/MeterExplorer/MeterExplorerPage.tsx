@@ -3,7 +3,6 @@ import RouteTab from 'components/RouteTab';
 import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
-import { navigate } from 'lib/router/navigation';
 
 import { Explorer, Meter, Views } from './constants';
 
@@ -24,7 +23,6 @@ function MeterExplorerPage(): JSX.Element {
 			className="meter-explorer-page"
 			routes={routes}
 			activeKey={pathname}
-			history={{ push: navigate } as any}
 			defaultActiveKey={ROUTES.METER}
 		/>
 	);

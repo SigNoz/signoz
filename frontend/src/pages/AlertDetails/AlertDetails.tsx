@@ -11,7 +11,6 @@ import ROUTES from 'constants/routes';
 import { CreateAlertProvider } from 'container/CreateAlertV2/context';
 import { getCreateAlertLocalStateFromAlertDef } from 'container/CreateAlertV2/utils';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { useAlertRule } from 'providers/Alert';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -111,7 +110,6 @@ function AlertDetails(): JSX.Element {
 					<RouteTab
 						routes={routes}
 						activeKey={pathname}
-						history={{ push: navigate } as any}
 						onChangeHandler={handleTabChange}
 						tabBarExtraContent={<Filters />}
 					/>

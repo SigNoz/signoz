@@ -42,7 +42,6 @@ const INITIAL_PAGE_SIZE = 10;
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export function getColumns(
 	data: MessagingQueuesPayloadProps['payload'],
-	historyAdapter: { push: (path: string) => void },
 	isProducerOverview?: boolean,
 ): RowData[] {
 	if (data?.result?.length === 0) {
@@ -85,7 +84,7 @@ export function getColumns(
 									if (isModifierKeyPressed(e as React.MouseEvent)) {
 										openInNewTab(path);
 									} else {
-										historyAdapter.push(path);
+										navigate(path);
 									}
 								}}
 							>
@@ -153,7 +152,6 @@ function MessagingQueuesTable({
 	const [tableData, setTableData] = useState<any[]>([]);
 	const { notifications } = useNotifications();
 	const urlQuery = useUrlQuery();
-	const historyAdapter = useMemo(() => ({ push: navigate }) as any, []);
 	const timelineQuery = decodeURIComponent(
 		urlQuery.get(QueryParams.selectedTimelineQuery) || '',
 	);
@@ -207,7 +205,7 @@ function MessagingQueuesTable({
 	} = useMutation(tableApi, {
 		onSuccess: (data) => {
 			if (data.payload) {
-				setColumns(getColumns(data?.payload, historyAdapter, isProducerOverview));
+				setColumns(getColumns(data?.payload, isProducerOverview));
 				setTableData(
 					isProducerOverview
 						? getTableDataForProducerLatencyOverview(data?.payload)
@@ -252,13 +250,13 @@ function MessagingQueuesTable({
 		if (selectedRowKeyGenerator(record) === selectedRowKey) {
 			setSelectedRowKey(undefined);
 			setSelectedRows({});
-			setConfigDetail(urlQuery, location, historyAdapter, {});
+			setConfigDetail(urlQuery, location, {});
 		} else {
 			setSelectedRowKey(selectedRowKeyGenerator(record));
 			setSelectedRows(record);
 
 			if (!isEmpty(record)) {
-				setConfigDetail(urlQuery, location, historyAdapter, record);
+				setConfigDetail(urlQuery, location, record);
 			}
 		}
 	};
