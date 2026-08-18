@@ -246,6 +246,27 @@ type FieldKeySelector struct {
 	MetricContext     *MetricContext         `json:"metricContext,omitempty"`
 }
 
+// MatchesKey reports whether a statically defined key satisfies the selector, so
+// callers can suggest keys that were never ingested.
+func (s *FieldKeySelector) MatchesKey(key *TelemetryFieldKey) bool {
+	if s.FieldContext != FieldContextUnspecified && s.FieldContext != key.FieldContext {
+		return false
+	}
+
+	if s.FieldDataType != FieldDataTypeUnspecified && s.FieldDataType != key.FieldDataType {
+		return false
+	}
+
+	if s.Name == "" {
+		return true
+	}
+
+	if s.SelectorMatchType == FieldSelectorMatchTypeExact {
+		return strings.EqualFold(s.Name, key.Name)
+	}
+	return strings.Contains(strings.ToLower(key.Name), strings.ToLower(s.Name))
+}
+
 type FieldValueSelector struct {
 	*FieldKeySelector
 	ExistingQuery string `json:"existingQuery"`

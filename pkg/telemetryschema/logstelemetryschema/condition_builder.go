@@ -460,7 +460,7 @@ func (c *conditionBuilder) ConditionFor(
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) ([]string, []string, error) {
-	matches := querybuilder.MatchingFieldKeys(key, fieldKeys)
+	matches := querybuilder.MatchingLogicalFields(ctx, orgID, nil, key, fieldKeys)
 	skipResourceFilter := options.SkipResourceFilter
 
 	// search() resolves its own (optional) scope; handle it before key resolution.
@@ -468,7 +468,10 @@ func (c *conditionBuilder) ConditionFor(
 		return c.conditionForSearch(ctx, orgID, key, value, sb)
 	}
 
-	keys, warning := querybuilder.ResolveKeys(key, matches)
+	// Logs fields have no family support yet, so every logical field is
+	// single-member and flattens losslessly to its physical key.
+	resolved, warning := querybuilder.ResolveLogicalFields(key, matches)
+	keys := querybuilder.SingleKeys(resolved)
 	var warnings []string
 	if warning != "" {
 		warnings = append(warnings, warning)
