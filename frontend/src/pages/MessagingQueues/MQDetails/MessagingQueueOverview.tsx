@@ -1,7 +1,6 @@
 import { Dispatch, SetStateAction, useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { MessagingQueueServicePayload } from 'api/messagingQueues/getConsumerLagDetails';
@@ -38,7 +37,7 @@ function ProducerLatencyTabs({
 		<ToggleGroupSimple
 			type="single"
 			onChange={(value: string): void => {
-				setConfigDetail(urlQuery, location, { push: navigate } as any, {});
+				setConfigDetail(urlQuery, location, {});
 				setOption(value as ProducerLatencyOptions);
 			}}
 			value={option}

@@ -88,13 +88,7 @@ function MessagingQueuesGraph(): JSX.Element {
 				widget={widgetData}
 				headerMenuList={[...ViewMenuAction]}
 				onClickHandler={(xValue, _yValue, _mouseX, _mouseY, data): void => {
-					setSelectedTimelineQuery(
-						urlQuery,
-						xValue,
-						location,
-						{ push: navigate } as any,
-						data,
-					);
+					setSelectedTimelineQuery(urlQuery, xValue, location, data);
 				}}
 				onDragSelect={onDragSelect}
 				customTooltipElement={messagingQueueCustomTooltipText()}

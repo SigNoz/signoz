@@ -6,7 +6,6 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { useVolumeControlFeatureGate } from 'hooks/metricsExplorer/useVolumeControlFeatureGate';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
-import { navigate } from 'lib/router/navigation';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { Explorer, Summary, Views, VolumeControl } from './constants';
@@ -43,11 +42,7 @@ function MetricsExplorerPage(): JSX.Element {
 
 	return (
 		<div className="metrics-explorer-page">
-			<RouteTab
-				routes={routes}
-				activeKey={pathname}
-				history={{ push: navigate } as any}
-			/>
+			<RouteTab routes={routes} activeKey={pathname} />
 		</div>
 	);
 }

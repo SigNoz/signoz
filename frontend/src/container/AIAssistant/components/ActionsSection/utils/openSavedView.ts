@@ -3,11 +3,11 @@ import { getViewById } from 'api/saveView/getViewById';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
+import { navigate } from 'lib/router/navigation';
 import { SOURCEPAGE_VS_ROUTES } from 'pages/SaveView/constants';
 import { ViewProps } from 'types/api/saveViews/types';
 import { DataSource } from 'types/common/queryBuilder';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { History } from 'history';
 
 type SavedViewSourceHint = DataSource | 'meter';
 
@@ -85,7 +85,7 @@ export function buildExplorerNavigationUrl(
 	return `${route}?${params.toString()}`;
 }
 
-export function openSavedView(view: ViewProps, history: History): void {
+export function openSavedView(view: ViewProps): void {
 	const route = explorerRouteForSourcePage(view.sourcePage);
 	if (!route) {
 		throw new Error('Unsupported saved view source');
@@ -101,16 +101,15 @@ export function openSavedView(view: ViewProps, history: History): void {
 		[QueryParams.viewName]: view.name,
 		[QueryParams.viewKey]: view.id,
 	});
-	history.push(url);
+	navigate(url);
 }
 
 export async function openSavedViewByKey(
 	viewKey: string,
 	sourceHint: SavedViewSourceHint | null | undefined,
-	history: History,
 ): Promise<void> {
 	const view = await loadSavedView(viewKey, sourceHint);
-	openSavedView(view, history);
+	openSavedView(view);
 }
 
 /** @deprecated Use findSavedViewInLists — kept for tests. */

@@ -442,15 +442,7 @@ export default function ActionsSection({
 		}
 		setResult(key, { state: 'loading' });
 		try {
-			// openSavedViewByKey expects a History object but only uses push()
-			const historyAdapter = { push: navigate } as Parameters<
-				typeof openSavedViewByKey
-			>[2];
-			await openSavedViewByKey(
-				resourceId,
-				resolveSavedViewSourceHint(action),
-				historyAdapter,
-			);
+			await openSavedViewByKey(resourceId, resolveSavedViewSourceHint(action));
 			void logEvent(AIAssistantEvents.ResourceOpened, {
 				threadId,
 				messageId,

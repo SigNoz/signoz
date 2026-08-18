@@ -9,7 +9,8 @@ import { OnboardingStatusResponse } from 'api/messagingQueues/onboarding/getOnbo
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetWidgetQueryBuilderProps } from 'container/MetricsApplication/types';
-import { History, Location } from 'history';
+import { navigate } from 'lib/router/navigation';
+import type { AppLocation } from 'lib/router/types';
 import { isEmpty } from 'lodash-es';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -207,8 +208,7 @@ export interface SelectedTimelineQuery {
 export function setSelectedTimelineQuery(
 	urlQuery: URLSearchParams,
 	timestamp: number,
-	location: Location<unknown>,
-	history: History<unknown>,
+	location: AppLocation,
 	data?: {
 		[key: string]: string;
 	},
@@ -224,7 +224,7 @@ export function setSelectedTimelineQuery(
 		encodeURIComponent(JSON.stringify(selectedTimelineQuery)),
 	);
 	const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-	history.replace(generatedUrl);
+	navigate(generatedUrl, { replace: true });
 }
 
 export enum MessagingQueuesViewTypeOptions {
@@ -260,8 +260,7 @@ export const MessagingQueuesViewType = {
 
 export function setConfigDetail(
 	urlQuery: URLSearchParams,
-	location: Location<unknown>,
-	history: History<unknown>,
+	location: AppLocation,
 	paramsToSet?: {
 		[key: string]: string;
 	},
@@ -281,7 +280,7 @@ export function setConfigDetail(
 		urlQuery.delete(QueryParams.configDetail);
 	}
 	const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-	history.replace(generatedUrl);
+	navigate(generatedUrl, { replace: true });
 }
 
 export enum ProducerLatencyOptions {
