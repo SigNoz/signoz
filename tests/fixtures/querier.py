@@ -253,6 +253,27 @@ def get_preview_sql(response: requests.Response, name: str) -> str:
     return statements[0]["db.statement.query"]
 
 
+def get_preview_skip_indexes(response: requests.Response, name: str) -> dict[str, dict[str, Any]]:
+    """The skip-index steps of the named query's read funnel, keyed by index name.
+
+    Needs a verbose preview. ClickHouse lists a skip index only when the predicate matches its
+    expression, so an absent entry means it was never consulted."""
+    statements = get_preview_statements(response, name)
+    assert len(statements) == 1, f"expected 1 statement for query {name}, got {len(statements)}"
+    granules = statements[0]["granules"]
+    assert granules is not None, f"query {name} reads no MergeTree table: {statements[0]}"
+    return {step["name"]: step for read in granules["reads"] for step in read["steps"] if step["type"] == "Skip"}
+
+
+def get_preview_selected_granules(response: requests.Response, name: str) -> int:
+    """Granules surviving every index step of the named query's read funnel."""
+    statements = get_preview_statements(response, name)
+    assert len(statements) == 1, f"expected 1 statement for query {name}, got {len(statements)}"
+    granules = statements[0]["granules"]
+    assert granules is not None, f"query {name} reads no MergeTree table: {statements[0]}"
+    return granules["selected"]
+
+
 def aligned_epoch(ago: timedelta, step_seconds: int = DEFAULT_STEP_INTERVAL) -> int:
     """Epoch seconds for `now - ago`, floored to a step boundary so seeded
     points land exactly on the query's toStartOfInterval buckets."""
