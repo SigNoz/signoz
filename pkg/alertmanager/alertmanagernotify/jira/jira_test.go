@@ -90,12 +90,12 @@ func (m *mockJira) countPost(suffix string) int {
 	return c
 }
 
-func (m *mockJira) countMethod(method string) int {
+func (m *mockJira) countPuts() int {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	c := 0
 	for _, r := range m.reqs {
-		if r.method == method {
+		if r.method == http.MethodPut {
 			c++
 		}
 	}
@@ -160,8 +160,8 @@ func TestNotifyCreatesWhenNoExistingIssue(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, retry)
 	assert.Equal(t, 1, m.countPost("/issue"))
-	assert.Equal(t, 0, m.countPost("/comment"))       // no comment on create
-	assert.Equal(t, 0, m.countMethod(http.MethodPut)) // no update
+	assert.Equal(t, 0, m.countPost("/comment")) // no comment on create
+	assert.Equal(t, 0, m.countPuts())           // no update
 }
 
 func TestNotifyResolvedOnlyWithNoIssueIsNoop(t *testing.T) {
@@ -179,13 +179,13 @@ func TestNotifyStillFiringUpdatesAndComments(t *testing.T) {
 	retry, err := newNotifier(t, m).Notify(ctx(), alert(true))
 	require.NoError(t, err)
 	assert.False(t, retry)
-	assert.Equal(t, 0, m.countPost("/issue"))         // no create
-	assert.Equal(t, 1, m.countMethod(http.MethodPut)) // update
+	assert.Equal(t, 0, m.countPost("/issue")) // no create
+	assert.Equal(t, 1, m.countPuts())         // update
 	assert.Equal(t, 1, m.countPost("/comment"))
 	assert.Equal(t, 0, m.countPost("/transitions")) // still open, no transition
 
 	// comment carries the full rich snapshot (panel + labeled body), not a one-liner.
-	cjs, err := json.Marshal(m.lastBody(t, http.MethodPost, "/comment"))
+	cjs, err := json.Marshal(m.lastBody(t, "/comment"))
 	require.NoError(t, err)
 	assert.Contains(t, string(cjs), `"panel"`)
 	assert.Contains(t, string(cjs), "Summary:")
@@ -198,8 +198,8 @@ func TestNotifyResolveTransitionsToDoneAndComments(t *testing.T) {
 	retry, err := newNotifier(t, m).Notify(ctx(), alert(false))
 	require.NoError(t, err)
 	assert.False(t, retry)
-	assert.Equal(t, 1, m.countMethod(http.MethodPut)) // update
-	assert.Equal(t, 1, m.countPost("/transitions"))   // resolve transition
+	assert.Equal(t, 1, m.countPuts())               // update
+	assert.Equal(t, 1, m.countPost("/transitions")) // resolve transition
 	assert.Equal(t, 1, m.countPost("/comment"))
 }
 
@@ -237,7 +237,7 @@ func TestNotifyPrefersOpenIssueOverRecentlyDone(t *testing.T) {
 	assert.False(t, retry)
 	assert.Equal(t, 0, m.countPost("/issue"))       // no duplicate create
 	assert.Equal(t, 0, m.countPost("/transitions")) // open issue → no reopen
-	assert.Equal(t, 1, m.countMethod(http.MethodPut))
+	assert.Equal(t, 1, m.countPuts())
 	assert.Equal(t, 1, m.countPost("/comment"))
 
 	m.mu.Lock()
@@ -257,16 +257,16 @@ func TestNotifyRetriesOn429(t *testing.T) {
 	assert.True(t, retry)
 }
 
-func (m *mockJira) lastBody(t *testing.T, method, suffix string) map[string]any {
+func (m *mockJira) lastBody(t *testing.T, suffix string) map[string]any {
 	t.Helper()
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	for i := len(m.reqs) - 1; i >= 0; i-- {
-		if m.reqs[i].method == method && strings.HasSuffix(m.reqs[i].path, suffix) {
+		if m.reqs[i].method == http.MethodPost && strings.HasSuffix(m.reqs[i].path, suffix) {
 			return m.reqs[i].body
 		}
 	}
-	t.Fatalf("no %s request to %s", method, suffix)
+	t.Fatalf("no POST request to %s", suffix)
 	return nil
 }
 
@@ -279,7 +279,7 @@ func TestNotifyRichDescriptionPanelAndLinks(t *testing.T) {
 	_, err := newNotifier(t, m).Notify(ctx(), a)
 	require.NoError(t, err)
 
-	body := m.lastBody(t, http.MethodPost, "/issue")
+	body := m.lastBody(t, "/issue")
 	js, err := json.Marshal(body)
 	require.NoError(t, err)
 	s := string(js)
@@ -308,7 +308,7 @@ func TestNotifyCustomTemplateAnnotationsOverrideDefaults(t *testing.T) {
 	_, err := newNotifier(t, m).Notify(ctx(), a1, a2)
 	require.NoError(t, err)
 
-	body := m.lastBody(t, http.MethodPost, "/issue")
+	body := m.lastBody(t, "/issue")
 	fields, ok := body["fields"].(map[string]any)
 	require.True(t, ok)
 	assert.Equal(t, "High throughput for payment", fields["summary"])
@@ -328,7 +328,7 @@ func TestFiringSearchJQLHasReopenWindow(t *testing.T) {
 	_, err := newNotifier(t, m).Notify(ctx(), alert(true))
 	require.NoError(t, err)
 
-	body := m.lastBody(t, http.MethodPost, "/search/jql")
+	body := m.lastBody(t, "/search/jql")
 	jql, ok := body["jql"].(string)
 	require.True(t, ok)
 	// newNotifier uses a 3d window → 4320 minutes.
