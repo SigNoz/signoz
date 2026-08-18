@@ -348,6 +348,77 @@ func (m *fieldMapper) resolveColumnExprs(
 	return exprs, existExprs, columns, nil
 }
 
+// resolveReferencedField resolves a user-referenced field to the candidate key(s) to query for
+// it. It is the resolution shared by ConditionFor (filter) and ColumnExpressionFor (select /
+// group by / order by), so a name that maps to several physical homes unions all of them the
+// same way in both. narrowAmbiguous applies the filter-only heuristic of collapsing an
+// attribute+resource collision to the resource key (via ResolveKeys); select passes false so it
+// surfaces every home. It returns the candidates, whether they were synthesized (name absent
+// from metadata), and an ambiguity warning.
+func resolveReferencedField(
+	ctx context.Context,
+	fm qbtypes.FieldMapper,
+	orgID valuer.UUID,
+	startNs, endNs uint64,
+	field *telemetrytypes.TelemetryFieldKey,
+	value any,
+	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
+	narrowAmbiguous bool,
+) ([]*telemetrytypes.TelemetryFieldKey, bool, string, error) {
+	matches := querybuilder.MatchingFieldKeys(field, fieldKeys)
+	resolved, warning := matches, ""
+	if narrowAmbiguous {
+		resolved, warning = querybuilder.ResolveKeys(field, matches)
+	}
+
+	// A bare key that names a real column resolves to the column — first — keeping same-named
+	// metadata keys under other contexts only where their type is consistent with the column, so
+	// a corrupt entry (a string attribute named `timestamp`) can't degrade the intrinsic. The
+	// column may already be among the matches (surfaced by metadata) or only reachable by probe.
+	if field.FieldContext == telemetrytypes.FieldContextUnspecified && len(resolved) > 0 {
+		var column *schema.Column
+		var columnKey *telemetrytypes.TelemetryFieldKey
+		for _, k := range resolved {
+			if k.FieldContext == telemetrytypes.FieldContextSpan {
+				if cols, err := fm.ColumnFor(ctx, orgID, startNs, endNs, k); err == nil && len(cols) > 0 {
+					column, columnKey = cols[0], k
+				}
+				break
+			}
+		}
+		if column == nil {
+			probe := telemetrytypes.NewTelemetryFieldKey(field.Name, telemetrytypes.FieldContextSpan, field.FieldDataType)
+			if cols, err := fm.ColumnFor(ctx, orgID, startNs, endNs, probe); err == nil && len(cols) > 0 {
+				column, columnKey = cols[0], probe
+			}
+		}
+		if column != nil {
+			combined := []*telemetrytypes.TelemetryFieldKey{columnKey}
+			for _, k := range resolved {
+				if k == columnKey || k.FieldContext == telemetrytypes.FieldContextSpan {
+					continue
+				}
+				if columnMatchesDataType(column, k.FieldDataType) {
+					combined = append(combined, k)
+				}
+			}
+			resolved = combined
+		}
+	}
+
+	if len(resolved) > 0 {
+		return resolved, false, warning, nil
+	}
+
+	// Not in metadata: synthesize. Fold contexts (span/trace) get the map so a real column or a
+	// stripped-name metadata match can win; strict contexts pass nil and keep their synthesize path.
+	synth := fm.CandidateKeys(ctx, orgID, field, value, candidateLookupKeys(field, fieldKeys))
+	if len(synth) == 0 {
+		return nil, false, warning, querybuilder.NewKeyNotFoundError(field.Name)
+	}
+	return synth, true, warning, nil
+}
+
 // ColumnExpressionFor returns the bare (unaliased) SQL expression for the field, resolving
 // unknown keys via CandidateKeys and wrapping guardable columns with exists-guard multiIfs
 // so an absent key yields NULL.
@@ -360,20 +431,11 @@ func (m *fieldMapper) ColumnExpressionFor(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
 
-	// Resolve the candidate column(s).
-	var candidates []*telemetrytypes.TelemetryFieldKey
-	switch _, err := m.FieldFor(ctx, orgID, startNs, endNs, field); {
-	case err == nil:
-		candidates = []*telemetrytypes.TelemetryFieldKey{field}
-	case errors.Is(err, qbtypes.ErrColumnNotFound):
-		// column (when the bare name is one) plus metadata matches, else synthesized
-		// type-variant keys.
-		candidates = m.CandidateKeys(ctx, orgID, field, nil, keys)
-		if len(candidates) == 0 {
-			return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
-		}
-	default:
-		return "", err
+	// Resolve the candidate column(s) the same way the filter path does, so select / group by /
+	// order by union every physical home of a name exactly as a filter on it would.
+	candidates, _, _, err := resolveReferencedField(ctx, m, orgID, startNs, endNs, field, nil, keys, false)
+	if err != nil {
+		return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
 	}
 
 	// Group-by/order (String) and aggregation (String/Float64): every candidate is

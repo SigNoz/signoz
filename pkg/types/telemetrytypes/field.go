@@ -158,11 +158,15 @@ func (f *TelemetryFieldKey) Normalize() {
 		}
 	}
 
-	// Step 2: Parse field context from the left if not already specified
-	if f.FieldContext == FieldContextUnspecified {
-		if dotIdx := strings.Index(f.Name, "."); dotIdx != -1 {
-			potentialContext := f.Name[:dotIdx]
-			if fc, ok := fieldContexts[potentialContext]; ok && fc != FieldContextUnspecified {
+	// Step 2: Parse field context from the left. When the context is unspecified we infer it
+	// from a recognized prefix; when it is already set we strip a prefix that merely restates
+	// it, so a redundant `{Name:"scope.name", FieldContext:Scope}` normalizes to the same
+	// `{Name:"name", FieldContext:Scope}` the text form `scope.name` produces. Without this, the
+	// two forms of the same field stay distinct and resolve differently downstream.
+	if dotIdx := strings.Index(f.Name, "."); dotIdx != -1 {
+		potentialContext := f.Name[:dotIdx]
+		if fc, ok := fieldContexts[potentialContext]; ok && fc != FieldContextUnspecified {
+			if f.FieldContext == FieldContextUnspecified || f.FieldContext == fc {
 				f.Name = f.Name[dotIdx+1:]
 				f.FieldContext = fc
 

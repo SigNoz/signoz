@@ -276,7 +276,7 @@ func TestColumnExpressionForTemporalColumn(t *testing.T) {
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 			},
 			requiredDataType: telemetrytypes.FieldDataTypeString,
-			expectedResult:   "multiIf(mapContains(attributes_string, 'user.id'), attributes_string['user.id'], NULL)",
+			expectedResult:   "multiIf(mapContains(attributes_string, 'user.id'), attributes_string['user.id'], mapContains(attributes_string, 'attribute.user.id'), attributes_string['attribute.user.id'], NULL)",
 		},
 	}
 

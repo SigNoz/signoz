@@ -210,52 +210,18 @@ func (c *conditionBuilder) ConditionFor(
 		return nil, nil, err
 	}
 
-	matches := querybuilder.MatchingFieldKeys(key, fieldKeys)
-	skipResourceFilter := options.SkipResourceFilter
-
-	keys, warning := querybuilder.ResolveKeys(key, matches)
+	keys, synthesized, warning, err := resolveReferencedField(ctx, c.fm, orgID, startNs, endNs, key, value, fieldKeys, true)
 	var warnings []string
 	if warning != "" {
 		warnings = append(warnings, warning)
 	}
-	// A bare key that names a real column filters on the column too — first. When metadata
-	// only knows the name under other contexts, prepend the column and keep metadata matches
-	// only where their type is consistent with it (a corrupt entry can't degrade the column).
-	if key.FieldContext == telemetrytypes.FieldContextUnspecified && len(keys) > 0 {
-		hasColumn := false
-		for _, k := range keys {
-			if k.FieldContext == telemetrytypes.FieldContextSpan {
-				hasColumn = true
-				break
-			}
-		}
-		if !hasColumn {
-			probe := telemetrytypes.NewTelemetryFieldKey(key.Name, telemetrytypes.FieldContextSpan, key.FieldDataType)
-			if cols, colErr := c.fm.ColumnFor(ctx, orgID, startNs, endNs, probe); colErr == nil && len(cols) > 0 {
-				combined := make([]*telemetrytypes.TelemetryFieldKey, 0, len(keys)+1)
-				combined = append(combined, probe)
-				for _, k := range keys {
-					if columnMatchesDataType(cols[0], k.FieldDataType) {
-						combined = append(combined, k)
-					}
-				}
-				keys = combined
-			}
-		}
+	if err != nil {
+		return nil, warnings, err
 	}
-
-	synthesized := false
-	if len(keys) == 0 {
-		// Not in metadata. CandidateKeys resolves it: fold contexts (span/trace) get the
-		// metadata map so it can honor a real column, correct to a stripped-name metadata
-		// match, or synthesize; strict contexts pass nil and keep their synthesize path.
-		keys = c.fm.CandidateKeys(ctx, orgID, key, value, candidateLookupKeys(key, fieldKeys))
-		if len(keys) == 0 {
-			return nil, warnings, querybuilder.NewKeyNotFoundError(key.Name)
-		}
-		synthesized = true
+	if synthesized {
 		warnings = append(warnings, querybuilder.NewKeyNotFoundWarning(key.Name))
 	}
+	skipResourceFilter := options.SkipResourceFilter
 
 	// When a resource sub-query already covers the term, drop resource keys from the main
 	// query. Synthesized keys are exempt: the sub-query skips keys absent from metadata.
