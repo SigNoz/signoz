@@ -10,8 +10,8 @@ import CodeCopyBtn from './CodeCopyBtn/CodeCopyBtn';
 import SyntaxHighlighter, { a11yDark } from './syntaxHighlighter';
 
 interface LinkProps {
-	href?: string;
-	children?: React.ReactNode;
+	href: string;
+	children: React.ReactElement;
 }
 
 function Pre({
@@ -115,6 +115,7 @@ function MarkdownRenderer({
 			className={className}
 			rehypePlugins={[rehypeRaw as any]}
 			components={{
+				// @ts-expect-error
 				a: Link,
 				pre: ({ children }) =>
 					Pre({
@@ -123,7 +124,6 @@ function MarkdownRenderer({
 						trackCopyAction: !!trackCopyAction,
 					}),
 				code: Code,
-				// @ts-expect-error -- customtag is a non-standard element handled by rehypeRaw
 				customtag: CustomTag,
 			}}
 		>

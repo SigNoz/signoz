@@ -1,5 +1,4 @@
 import ReactMarkdown from 'react-markdown';
-import { Link } from 'components/MarkdownRenderer/MarkdownRenderer';
 import dayjs from 'dayjs';
 import {
 	ChangelogSchema,
@@ -12,6 +11,19 @@ import './ChangelogRenderer.styles.scss';
 
 interface Props {
 	changelog: ChangelogSchema;
+}
+
+interface LinkProps {
+	href?: string;
+	children?: React.ReactNode;
+}
+
+function Link({ href, children }: LinkProps): JSX.Element {
+	return (
+		<a href={href} target="_blank" rel="noopener noreferrer">
+			{children}
+		</a>
+	);
 }
 
 function renderMedia(media: Media): JSX.Element | null {
