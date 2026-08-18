@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer/adf"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
@@ -34,14 +35,14 @@ const (
 
 // Notifier implements notify.Notifier for Jira.
 type Notifier struct {
-	conf    *alertmanagertypes.JiraReceiverConfig
-	tmpl    *template.Template
-	logger  *slog.Logger
-	client  *http.Client
-	retrier *notify.Retrier
+	conf      *alertmanagertypes.JiraReceiverConfig
+	logger    *slog.Logger
+	client    *http.Client
+	retrier   *notify.Retrier
+	templater alertmanagertypes.Templater
 }
 
-func New(conf *alertmanagertypes.JiraReceiverConfig, t *template.Template, l *slog.Logger, _ alertmanagertypes.Templater) (*Notifier, error) {
+func New(conf *alertmanagertypes.JiraReceiverConfig, _ *template.Template, l *slog.Logger, templater alertmanagertypes.Templater) (*Notifier, error) {
 	if conf.HTTPConfig == nil {
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "jira http_config is nil")
 	}
@@ -50,11 +51,11 @@ func New(conf *alertmanagertypes.JiraReceiverConfig, t *template.Template, l *sl
 		return nil, err
 	}
 	return &Notifier{
-		conf:    conf,
-		tmpl:    t,
-		logger:  l,
-		client:  client,
-		retrier: &notify.Retrier{RetryCodes: []int{http.StatusTooManyRequests}},
+		conf:      conf,
+		logger:    l,
+		client:    client,
+		retrier:   &notify.Retrier{RetryCodes: []int{http.StatusTooManyRequests}},
+		templater: templater,
 	}, nil
 }
 
@@ -67,14 +68,27 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	firing := types.Alerts(as...).HasFiring()
 	n.logger.DebugContext(ctx, "sending jira notification", slog.String("group_key", key.String()), slog.Bool("firing", firing))
 
-	var tmplErr error
-	data := notify.GetTemplateData(ctx, n.tmpl, as, n.logger)
-	tmplText := notify.TmplText(n.tmpl, data, &tmplErr)
-	summary := truncateRunes(tmplText(n.conf.Summary), maxSummaryLenRunes)
-	descText := truncateRunes(tmplText(n.conf.Description), maxDescriptionLenRunes)
-	if tmplErr != nil {
-		return false, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "jira template render: %v", tmplErr)
+	customTitle, customBody := alertmanagertemplate.ExtractTemplatesFromAnnotations(as)
+	result, err := n.templater.Expand(ctx, alertmanagertypes.ExpandRequest{
+		TitleTemplate:        customTitle,
+		BodyTemplate:         customBody,
+		DefaultTitleTemplate: n.conf.Summary,
+		DefaultBodyTemplate:  n.conf.Description,
+	}, as)
+	if err != nil {
+		return false, err
 	}
+	summary := truncateRunes(result.Title, maxSummaryLenRunes)
+
+	var parts []string
+	for _, body := range result.Body {
+		if body != "" {
+			parts = append(parts, body)
+		}
+	}
+	// custom body templates render per alert; join them under ADF rule dividers.
+	// The default body is a single combined part, so the join is a no-op there.
+	descText := truncateRunes(strings.Join(parts, "\n\n---\n\n"), maxDescriptionLenRunes)
 
 	existing, retry, err := n.searchIssue(ctx, groupID, firing)
 	if err != nil {
