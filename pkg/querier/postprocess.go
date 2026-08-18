@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -1065,7 +1066,7 @@ func (q *querier) postProcessLogBody(ctx context.Context, orgID valuer.UUID, res
 		return result
 	}
 	for _, row := range rawData.Rows {
-		bodyMap, ok := row.Data["body"].(map[string]any)
+		bodyMap, ok := row.Data["body"].(telemetrystoretypes.JSONValue)
 		if !ok {
 			continue
 		}
