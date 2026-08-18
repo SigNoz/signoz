@@ -33,6 +33,7 @@ export type GridTableComponentProps = {
 	panelType?: PANEL_TYPES;
 	queryRangeRequest?: QueryRangeRequestV5;
 	hiddenColumns?: string[];
+	visibleRows?: number | 'auto';
 } & Pick<LogsExplorerTableProps, 'data'> &
 	Omit<TableProps<RowData>, 'columns' | 'dataSource'>;
 

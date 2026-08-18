@@ -31,6 +31,7 @@ export function QueryTable({
 	columnWidths,
 	onColumnWidthsChange,
 	panelType,
+	visibleRows,
 	...props
 }: QueryTableProps): JSX.Element {
 	const { isDownloadEnabled = false, fileName = '' } = downloadOption || {};
@@ -133,7 +134,7 @@ export function QueryTable({
 	);
 
 	const paginationConfig = {
-		pageSize: 10,
+		pageSize: visibleRows === 'auto' ? 9999 : (typeof visibleRows === 'number' ? visibleRows : 10),
 		showSizeChanger: false,
 		hideOnSinglePage: true,
 	};

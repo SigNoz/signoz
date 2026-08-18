@@ -44,6 +44,7 @@ function TablePanelWrapper({
 			queryRangeRequest={queryRangeRequest}
 			decimalPrecision={widget.decimalPrecision}
 			hiddenColumns={widget.hiddenColumns}
+				visibleRows={widget.visibleRows}
 			{...GRID_TABLE_CONFIG}
 		/>
 	);

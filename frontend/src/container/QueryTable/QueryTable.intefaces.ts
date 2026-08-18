@@ -30,4 +30,5 @@ export type QueryTableProps = Omit<
 	contextLinks?: ContextLinksData;
 	panelType?: PANEL_TYPES;
 	queryRangeRequest?: QueryRangeRequestV5;
+	visibleRows?: number | 'auto';
 };

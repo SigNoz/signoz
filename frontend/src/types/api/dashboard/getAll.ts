@@ -142,6 +142,8 @@ export interface IBaseWidget {
 	lineStyle?: LineStyle;
 	fillMode?: FillMode;
 	spanGaps?: boolean | number;
+	/** Number of visible rows in table panels. 'auto' shows all rows. Default: 10 */
+	visibleRows?: number | 'auto';
 }
 export interface Widgets extends IBaseWidget {
 	query: Query;
