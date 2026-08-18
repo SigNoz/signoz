@@ -88,8 +88,8 @@ This command:
    make go-stop
    ```
 
-> 💡 **Tip**: The API server runs at `http://localhost:8080/` by default. See
-> [running more than one instance](#how-do-i-run-more-than-one-instance) to change it.
+> 💡 **Tip**: The API server runs at `http://localhost:8080/` by default. You can configure this using `apiserver.address` configuration option. See
+> [running more than one instance](#how-do-i-run-more-than-one-instance) if you need that for agentic testing.
 
 ### 4. Setting up the Frontend
 
@@ -132,7 +132,7 @@ and path below is read from the environment, so set them on the `make` call:
 
 ```bash
 SIGNOZ_APISERVER_ADDRESS=0.0.0.0:8081 \
-SIGNOZ_SQLSTORE_SQLITE_PATH=signoz-8081.db \
+SIGNOZ_SQLSTORE_SQLITE_PATH=/path/to/main/sqlite.db \
 SIGNOZ_INSTRUMENTATION_METRICS_READERS_PULL_EXPORTER_PROMETHEUS_PORT=9091 \
 make go-run-community
 ```
@@ -140,7 +140,7 @@ make go-run-community
 | Variable | Default | Why you'd change it |
 | --- | --- | --- |
 | `SIGNOZ_APISERVER_ADDRESS` | `0.0.0.0:8080` | Address the API server listens on |
-| `SIGNOZ_SQLSTORE_SQLITE_PATH` | `signoz.db`, set by the Makefile | Give each instance its own metadata store |
+| `SIGNOZ_SQLSTORE_SQLITE_PATH` | `signoz.db` in worktree | To reuse same database |
 | `SIGNOZ_INSTRUMENTATION_METRICS_READERS_PULL_EXPORTER_PROMETHEUS_PORT` | `9090` | Bound by the Prometheus metrics exporter on startup |
 
 Point the frontend at whichever backend you want, in `frontend/.env`:
@@ -154,13 +154,6 @@ Stop an instance using the address it was started on:
 ```bash
 make go-stop SIGNOZ_APISERVER_ADDRESS=0.0.0.0:8081
 ```
-
-ClickHouse and the OTel Collector are shared, so a single `make devenv-up` covers every
-instance.
-
-> 💡 **Tip**: The OpAMP websocket port (`4320`) is not configurable yet, so only one
-> instance can serve OpAMP. The others log `opamp ws server failed to start` and keep
-> serving everything else.
 
 ## How to send test data?
 
