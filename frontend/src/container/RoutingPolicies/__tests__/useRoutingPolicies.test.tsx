@@ -20,13 +20,9 @@ import {
 	MOCK_ROUTING_POLICY_2,
 } from './testUtils';
 
-const mockHistoryReplace = jest.fn();
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useHistory: (): any => ({
-		...jest.requireActual('react-router-dom').useHistory(),
-		replace: mockHistoryReplace,
-	}),
+const mockNavigate = jest.fn();
+jest.mock('lib/router/navigation', () => ({
+	navigate: (...args: unknown[]): void => mockNavigate(...args),
 }));
 
 const mockDebouncedFn = jest.fn((fn: () => void) => fn);
@@ -199,10 +195,10 @@ describe('useRoutingPolicies', () => {
 		});
 
 		await waitFor(() => {
-			expect(mockHistoryReplace).toHaveBeenCalled();
+			expect(mockNavigate).toHaveBeenCalled();
 		});
 
-		const callArg = mockHistoryReplace.mock.calls[0][0];
+		const callArg = mockNavigate.mock.calls[0][0];
 		expect(callArg).toContain('search=test+search');
 	});
 
@@ -214,10 +210,10 @@ describe('useRoutingPolicies', () => {
 		});
 
 		await waitFor(() => {
-			expect(mockHistoryReplace).toHaveBeenCalled();
+			expect(mockNavigate).toHaveBeenCalled();
 		});
 
-		const callArg = mockHistoryReplace.mock.calls[0][0];
+		const callArg = mockNavigate.mock.calls[0][0];
 		expect(callArg).toBe('/alerts?');
 	});
 

@@ -2,12 +2,11 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
+import { MemoryRouter, Route } from 'react-router-dom';
 // eslint-disable-next-line no-restricted-imports
 import { Provider as ReduxProvider } from 'react-redux';
-import { MemoryRouter, Route } from 'react-router-dom';
-import { navigate } from 'lib/router/navigation';
 import { useAppParams } from 'lib/router/useAppParams';
-import { CompatRouter } from 'react-router-dom-v5-compat';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 import {
 	type DashboardtypesPanelDTO,
@@ -97,6 +96,7 @@ function EditorRoute(): JSX.Element {
 
 function Harness(): JSX.Element {
 	const openPanelEditor = useOpenPanelEditor();
+	const { safeNavigate } = useSafeNavigate();
 
 	return (
 		<>
@@ -117,7 +117,7 @@ function Harness(): JSX.Element {
 			<button
 				type="button"
 				data-testid="back"
-				onClick={(): void => navigate('/dashboard/dash-1')}
+				onClick={(): void => safeNavigate('/dashboard/dash-1')}
 			>
 				back
 			</button>
@@ -132,17 +132,15 @@ function Harness(): JSX.Element {
 const renderHarness = (): void => {
 	render(
 		<MemoryRouter initialEntries={['/dashboard/dash-1']}>
-			<CompatRouter>
-				<QueryClientProvider client={new QueryClient()}>
-					<ReduxProvider store={configureStore([])(appStore.getState())}>
-						<TooltipProvider>
-							<QueryBuilderProvider>
-								<Harness />
-							</QueryBuilderProvider>
-						</TooltipProvider>
-					</ReduxProvider>
-				</QueryClientProvider>
-			</CompatRouter>
+			<QueryClientProvider client={new QueryClient()}>
+				<ReduxProvider store={configureStore([])(appStore.getState())}>
+					<TooltipProvider>
+						<QueryBuilderProvider>
+							<Harness />
+						</QueryBuilderProvider>
+					</TooltipProvider>
+				</ReduxProvider>
+			</QueryClientProvider>
 		</MemoryRouter>,
 	);
 };
