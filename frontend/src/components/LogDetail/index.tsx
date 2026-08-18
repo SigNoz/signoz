@@ -100,6 +100,7 @@ function LogDetailInner({
 			// Don't close if clicking on drawer content, overlays, or portal elements
 			if (
 				target.closest('[data-log-detail-ignore="true"]') ||
+				target.closest('.log-detail-drawer') ||
 				target.closest('.cm-tooltip-autocomplete') ||
 				target.closest('.drawer-popover') ||
 				target.closest('.query-status-popover') ||
