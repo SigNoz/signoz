@@ -22,26 +22,29 @@ export function toAppLocation<S = unknown>(
 /**
  * history@4 and history@5 both accept `(path, state)` or a partial-path object,
  * so this dispatch survives the Phase D bump unchanged.
+ *
+ * `state` is omitted rather than passed as `undefined`, so a stateless
+ * `navigate(path)` reaches the history as the bare `push(path)` the call sites
+ * used before the facade.
  */
 export function applyNavigate(
 	history: History,
 	to: To,
 	options?: NavigateOptions,
 ): void {
+	const { replace = false, state } = options ?? {};
+
+	let args: Parameters<History['push']>;
 	if (typeof to === 'string') {
-		if (options?.replace) {
-			history.replace(to, options.state);
-		} else {
-			history.push(to, options?.state);
-		}
-		return;
+		args = state === undefined ? [to] : [to, state];
+	} else {
+		args = [state === undefined ? to : { ...to, state }];
 	}
 
-	const target = { ...to, state: options?.state };
-	if (options?.replace) {
-		history.replace(target);
+	if (replace) {
+		history.replace(...args);
 	} else {
-		history.push(target);
+		history.push(...args);
 	}
 }
 
