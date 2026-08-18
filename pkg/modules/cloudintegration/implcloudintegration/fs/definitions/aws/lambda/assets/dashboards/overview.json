@@ -51,6 +51,28 @@
           },
           "name": "Region"
         }
+      },
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "display": {
+            "name": "FunctionName",
+            "description": "Name of the Lambda function"
+          },
+          "allowAllValue": true,
+          "allowMultiple": true,
+          "customAllValue": "",
+          "capturingRegexp": "",
+          "sort": "none",
+          "plugin": {
+            "kind": "signoz/DynamicVariable",
+            "spec": {
+              "name": "FunctionName",
+              "signal": "metrics"
+            }
+          },
+          "name": "FunctionName"
+        }
       }
     ],
     "panels": {
@@ -118,7 +140,7 @@
                     ],
                     "disabled": false,
                     "filter": {
-                      "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND FunctionName EXISTS AND Resource NOT EXISTS)"
+                      "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND FunctionName EXISTS AND Resource NOT EXISTS) AND FunctionName IN $FunctionName"
                     },
                     "groupBy": [
                       {
@@ -218,7 +240,7 @@
                     ],
                     "disabled": false,
                     "filter": {
-                      "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND FunctionName EXISTS AND Resource NOT EXISTS)"
+                      "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND FunctionName EXISTS AND Resource NOT EXISTS) AND FunctionName IN $FunctionName"
                     },
                     "groupBy": [
                       {
@@ -318,7 +340,7 @@
                     ],
                     "disabled": false,
                     "filter": {
-                      "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND FunctionName EXISTS AND Resource NOT EXISTS)"
+                      "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND FunctionName EXISTS AND Resource NOT EXISTS) AND FunctionName IN $FunctionName"
                     },
                     "groupBy": [
                       {
@@ -418,7 +440,7 @@
                     ],
                     "disabled": false,
                     "filter": {
-                      "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND FunctionName EXISTS AND Resource NOT EXISTS)"
+                      "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND FunctionName EXISTS AND Resource NOT EXISTS) AND FunctionName IN $FunctionName"
                     },
                     "groupBy": [
                       {
@@ -518,7 +540,7 @@
                     ],
                     "disabled": false,
                     "filter": {
-                      "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND FunctionName EXISTS AND Resource NOT EXISTS)"
+                      "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND FunctionName EXISTS AND Resource NOT EXISTS) AND FunctionName IN $FunctionName"
                     },
                     "groupBy": [
                       {
@@ -618,7 +640,7 @@
                     ],
                     "disabled": false,
                     "filter": {
-                      "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND FunctionName EXISTS AND Resource NOT EXISTS)"
+                      "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND FunctionName EXISTS AND Resource NOT EXISTS) AND FunctionName IN $FunctionName"
                     },
                     "groupBy": [
                       {
@@ -718,7 +740,7 @@
                     ],
                     "disabled": false,
                     "filter": {
-                      "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND FunctionName EXISTS AND Resource NOT EXISTS)"
+                      "expression": "(cloud.account.id = $Account AND cloud.region = $Region AND FunctionName EXISTS AND Resource NOT EXISTS) AND FunctionName IN $FunctionName"
                     },
                     "groupBy": [
                       {
