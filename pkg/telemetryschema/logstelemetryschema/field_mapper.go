@@ -279,7 +279,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 		}
 		var stmts []string
 		for _, key := range candidates {
-			guard, err := m.existsExpressionFor(ctx, orgID, tsStart, tsEnd, key, true)
+			guard, err := m.ExistsFor(ctx, orgID, tsStart, tsEnd, key, true)
 			if err != nil {
 				return "", err
 			}
@@ -308,7 +308,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 		if !m.membershipGuarded(ctx, orgID, tsStart, tsEnd, candidates[0]) {
 			return m.FieldFor(ctx, orgID, tsStart, tsEnd, candidates[0])
 		}
-		guard, err := m.existsExpressionFor(ctx, orgID, tsStart, tsEnd, candidates[0], true)
+		guard, err := m.ExistsFor(ctx, orgID, tsStart, tsEnd, candidates[0], true)
 		if err != nil {
 			return "", err
 		}
@@ -326,7 +326,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 
 	var stmts []string
 	for _, key := range candidates {
-		guard, err := m.existsExpressionFor(ctx, orgID, tsStart, tsEnd, key, true)
+		guard, err := m.ExistsFor(ctx, orgID, tsStart, tsEnd, key, true)
 		if err != nil {
 			return "", err
 		}
@@ -569,7 +569,8 @@ func (m *fieldMapper) membershipGuarded(ctx context.Context, orgID valuer.UUID, 
 	return columnType == schema.ColumnTypeEnumMap || columnType == schema.ColumnTypeEnumJSON
 }
 
-func (m *fieldMapper) existsExpressionFor(
+// ExistsFor implements the per-key existence primitive of qbtypes.FieldMapper.
+func (m *fieldMapper) ExistsFor(
 	ctx context.Context,
 	orgID valuer.UUID,
 	tsStart, tsEnd uint64,
