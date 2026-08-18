@@ -336,7 +336,6 @@ function SettingsPage(): JSX.Element {
 					<RouteTab
 						routes={routes}
 						activeKey={pathname}
-						history={{ push: navigate } as any}
 						tabBarStyle={{ display: 'none' }}
 					/>
 				</div>

@@ -2,7 +2,6 @@ import RouteTab from 'components/RouteTab';
 import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import { useAppLocation } from 'lib/router/useAppLocation';
-import { navigate } from 'lib/router/navigation';
 import { ListMinus, Rows3 } from '@signozhq/icons';
 import CeleryOverview from 'pages/Celery/CeleryOverview/CeleryOverview';
 
@@ -72,7 +71,6 @@ export default function MessagingQueuesMainPage(): JSX.Element {
 			className="messaging-queues-module-container"
 			routes={routes}
 			activeKey={pathname}
-			history={{ push: navigate } as any}
 		/>
 	);
 }

@@ -15,7 +15,6 @@ import ResourceAttributesFilterV2 from 'container/ResourceAttributeFilterV2/Reso
 import Toolbar from 'container/Toolbar/Toolbar';
 import { useRunQueryWithFilterItems } from 'hooks/queryBuilder/useRunQueryWithFilterItems';
 import { useAppLocation } from 'lib/router/useAppLocation';
-import { navigate } from 'lib/router/navigation';
 import { isNull } from 'lodash-es';
 
 import { routes } from './config';
@@ -96,12 +95,7 @@ function AllErrors(): JSX.Element {
 				}
 			/>
 			<ResourceAttributesFilterV2 />
-			<RouteTab
-				routes={routes}
-				activeKey={pathname}
-				history={{ push: navigate } as any}
-				showRightSection={false}
-			/>
+			<RouteTab routes={routes} activeKey={pathname} showRightSection={false} />
 		</QuickFiltersLayout>
 	);
 }
