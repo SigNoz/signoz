@@ -307,50 +307,29 @@ func (c *conditionBuilder) conditionForResolvedKey(
 		return "", err
 	}
 
-	// Check if this is a body JSON search (legacy string-body path, JSON flag off).
+	// Check if this is a body JSON search (legacy string-body path, JSON flag off). Such a filter
+	// compares JSON_VALUE output, which matches no index expression, so it also carries what it
+	// implies over the indexed LOWER(body): the quoted path on the existence assertion, the value
+	// literals on the comparison. Negations carry nothing — they match rows without the path,
+	// which say nothing about the body text.
 	if legacyBodyJSONSearch {
-		return c.conditionForLegacyBodyJSON(ctx, orgID, startNs, endNs, key, operator, value, columns, sb)
+		if operator == qbtypes.FilterOperatorExists || operator == qbtypes.FilterOperatorNotExists {
+			exists := GetBodyJSONKeyForExists(ctx, key, operator, value)
+			if operator == qbtypes.FilterOperatorNotExists {
+				return "NOT " + exists, nil
+			}
+			return withBodyIndexPredicate(exists, bodyPathLiterals(key), sb), nil
+		}
+		fieldExpression, value = GetBodyJSONKey(ctx, key, operator, value)
 	}
 
 	fieldExpression, value = querybuilder.DataTypeCollisionHandledFieldName(key, value, fieldExpression, operator)
 
-	return c.conditionForOperator(ctx, orgID, startNs, endNs, key, operator, value, columns, fieldExpression, sb)
-}
-
-// conditionForLegacyBodyJSON renders a filter over a path inside the plain string body, with what it
-// implies over the indexed LOWER(body) - nothing such a filter compares matches an index expression.
-func (c *conditionBuilder) conditionForLegacyBodyJSON(
-	ctx context.Context,
-	orgID valuer.UUID,
-	startNs, endNs uint64,
-	key *telemetrytypes.TelemetryFieldKey,
-	operator qbtypes.FilterOperator,
-	value any,
-	columns []*schema.Column,
-	sb *sqlbuilder.SelectBuilder,
-) (string, error) {
-	if operator == qbtypes.FilterOperatorExists || operator == qbtypes.FilterOperatorNotExists {
-		exists := GetBodyJSONKeyForExists(ctx, key, operator, value)
-		if operator == qbtypes.FilterOperatorNotExists {
-			// matches the rows without the path, which say nothing about the body text
-			return "NOT " + exists, nil
-		}
-		if predicate := bodyIndexPredicate(bodyPathLiterals(key), sb); predicate != "" {
-			return sb.And(exists, predicate), nil
-		}
-		return exists, nil
-	}
-
-	fieldExpression, value := GetBodyJSONKey(ctx, key, operator, value)
-	fieldExpression, value = querybuilder.DataTypeCollisionHandledFieldName(key, value, fieldExpression, operator)
 	cond, err := c.conditionForOperator(ctx, orgID, startNs, endNs, key, operator, value, columns, fieldExpression, sb)
-	if err != nil {
-		return "", err
+	if err != nil || !legacyBodyJSONSearch {
+		return cond, err
 	}
-	if predicate := bodyIndexPredicate(bodyValueLiterals(operator, value), sb); predicate != "" {
-		return sb.And(cond, predicate), nil
-	}
-	return cond, nil
+	return withBodyIndexPredicate(cond, bodyValueLiterals(operator, value), sb), nil
 }
 
 // conditionForOperator renders the comparison itself, once the field expression and value have been

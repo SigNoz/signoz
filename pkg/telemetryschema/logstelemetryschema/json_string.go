@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 
@@ -94,41 +95,6 @@ func InferDataType(value any, operator qbtypes.FilterOperator, key *telemetrytyp
 	return closure(value, key)
 }
 
-// likePatternLiterals returns the runs of pattern between unescaped wildcards, with `\` escapes
-// resolved; every value the pattern matches holds each run verbatim. ClickHouse treats `\` as an
-// escape only before `%`, `_` and itself, so dropping it elsewhere would yield a run it never requires.
-func likePatternLiterals(pattern string) []string {
-	var (
-		literals []string
-		run      strings.Builder
-	)
-	for i := 0; i < len(pattern); i++ {
-		switch c := pattern[i]; c {
-		case '%', '_':
-			if run.Len() > 0 {
-				literals = append(literals, run.String())
-				run.Reset()
-			}
-		case '\\':
-			if i+1 >= len(pattern) {
-				run.WriteByte('\\')
-				continue
-			}
-			i++
-			if escaped := pattern[i]; escaped != '%' && escaped != '_' && escaped != '\\' {
-				run.WriteByte('\\')
-			}
-			run.WriteByte(pattern[i])
-		default:
-			run.WriteByte(c)
-		}
-	}
-	if run.Len() > 0 {
-		literals = append(literals, run.String())
-	}
-	return literals
-}
-
 // jsonEscapable reports whether a JSON encoder is free to rewrite r: `"` and `\` always, `/` by
 // PHP, `<` `>` `&` by Go, non-printable ASCII by Python's ensure_ascii. The legacy body holds the
 // producer's own text, so a literal spanning one of these may not be there to find.
@@ -142,16 +108,14 @@ func jsonTextRuns(s string) []string {
 	return strings.FieldsFunc(s, jsonEscapable)
 }
 
-// bodyPathLiterals returns one literal per component of key's JSON path, quoted the way JSON writes
-// an object key. A component holding a byte an encoder may rewrite is dropped; JSON writes a parent
-// first, so the order carries.
+// bodyPathLiterals returns one literal per component of key's JSON path, taking the quoting from
+// getBodyJSONPath so it matches however the path is written. A component holding a byte an encoder
+// may rewrite is dropped; JSON writes a parent first, so the order carries.
 func bodyPathLiterals(key *telemetrytypes.TelemetryFieldKey) []string {
 	var literals []string
-	for _, part := range strings.Split(key.Name, ".") {
-		if idx := strings.Index(part, "["); idx >= 0 {
-			part = part[:idx]
-		}
-		if literal := `"` + part + `"`; !strings.ContainsFunc(part, jsonEscapable) {
+	for _, part := range strings.Split(getBodyJSONPath(key), ".") {
+		literal := strings.TrimSuffix(part, "[*]")
+		if !strings.ContainsFunc(strings.Trim(literal, `"`), jsonEscapable) {
 			literals = append(literals, literal)
 		}
 	}
@@ -170,36 +134,27 @@ func bodyValueLiterals(operator qbtypes.FilterOperator, value any) []string {
 	case qbtypes.FilterOperatorEqual, qbtypes.FilterOperatorContains:
 		return jsonTextRuns(str)
 	case qbtypes.FilterOperatorLike, qbtypes.FilterOperatorILike:
-		var literals []string
-		for _, literal := range likePatternLiterals(str) {
-			literals = append(literals, jsonTextRuns(literal)...)
-		}
-		return literals
+		// the pattern's own wildcards split runs like the escapable bytes do; `\` is one of
+		// those, so pattern escapes dissolve with it (an escaped wildcard is merely not required)
+		return strings.FieldsFunc(str, func(r rune) bool {
+			return jsonEscapable(r) || r == '%' || r == '_'
+		})
 	}
 	return nil
 }
 
-// escapeLikeLiteral escapes the LIKE metacharacters so s matches as literal text. Backslash
-// goes first, being the escape character itself.
-func escapeLikeLiteral(s string) string {
-	s = strings.ReplaceAll(s, `\`, `\\`)
-	s = strings.ReplaceAll(s, "%", `\%`)
-	return strings.ReplaceAll(s, "_", `\_`)
-}
-
-// bodyIndexPredicate asserts the raw body text holds the literals in order. ILike renders as
-// LOWER(body) LIKE LOWER(?) on the ClickHouse flavor — the expression both bloom filters index.
-// They are plain text and backslash-free by construction, so only the LIKE wildcards need escaping.
-func bodyIndexPredicate(literals []string, sb *sqlbuilder.SelectBuilder) string {
+// withBodyIndexPredicate ANDs onto cond the assertion that the raw body text holds the literals
+// in order; with no literals, cond is returned as is. ILike renders as LOWER(body) LIKE LOWER(?)
+// on the ClickHouse flavor — the expression both bloom filters index.
+func withBodyIndexPredicate(cond string, literals []string, sb *sqlbuilder.SelectBuilder) string {
 	if len(literals) == 0 {
-		return ""
+		return cond
 	}
 	escaped := make([]string, 0, len(literals))
 	for _, literal := range literals {
-		escaped = append(escaped, escapeLikeLiteral(literal))
+		escaped = append(escaped, querybuilder.ClickHouseLikePatternLiteral(literal))
 	}
-	pattern := "%" + strings.Join(escaped, "%") + "%"
-	return sb.ILike(LogsV2BodyColumn, pattern)
+	return sb.And(cond, sb.ILike(LogsV2BodyColumn, "%"+strings.Join(escaped, "%")+"%"))
 }
 
 func getBodyJSONPath(key *telemetrytypes.TelemetryFieldKey) string {

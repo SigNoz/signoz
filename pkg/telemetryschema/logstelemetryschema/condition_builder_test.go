@@ -2,7 +2,6 @@ package logstelemetryschema
 
 import (
 	"context"
-	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"testing"
 	"time"
 
@@ -956,26 +955,30 @@ func TestConditionForBodyIn(t *testing.T) {
 	}
 }
 
-// ClickHouse treats `\` as an escape only before `%`, `_` and itself.
-func TestLikePatternLiterals(t *testing.T) {
+// A LIKE pattern splits at its wildcards on top of the encoder-escapable bytes, so its escape
+// sequences dissolve conservatively; an equality value keeps wildcard characters as literal text.
+func TestBodyValueLiterals(t *testing.T) {
 	testCases := []struct {
 		name     string
-		pattern  string
+		operator qbtypes.FilterOperator
+		value    any
 		expected []string
 	}{
-		{"contains wraps a plain value", "%error%", []string{"error"}},
-		{"wildcards split runs", "%foo%bar%", []string{"foo", "bar"}},
-		{"underscore splits too", "a_b", []string{"a", "b"}},
-		{"escaped wildcards stay literal", `%100\%\_off%`, []string{`100%_off`}},
-		{"escaped backslash collapses", `%C:\\tmp%`, []string{`C:\tmp`}},
-		{"backslash before other chars is literal", `%C:\tmp%`, []string{`C:\tmp`}},
-		{"trailing backslash is literal", `%path\`, []string{`path\`}},
-		{"no literals at all", "%_%", nil},
+		{"equality keeps wildcards literal", qbtypes.FilterOperatorEqual, "100%_off", []string{"100%_off"}},
+		{"wildcards split runs", qbtypes.FilterOperatorLike, "%foo%bar_baz%", []string{"foo", "bar", "baz"}},
+		{"pattern escapes dissolve", qbtypes.FilterOperatorLike, `%C:\\tmp\_%`, []string{"C:", "tmp"}},
+		{"a number carries nothing", qbtypes.FilterOperatorEqual, int64(123), nil},
+		{"no literals at all", qbtypes.FilterOperatorLike, "%_%", nil},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expected, likePatternLiterals(tc.pattern))
+			literals := bodyValueLiterals(tc.operator, tc.value)
+			if len(tc.expected) == 0 {
+				assert.Empty(t, literals)
+				return
+			}
+			assert.Equal(t, tc.expected, literals)
 		})
 	}
 }
@@ -1106,7 +1109,6 @@ func TestLegacyBodyIndexPredicates(t *testing.T) {
 	fl := flaggertest.New(t)
 	cb := NewConditionBuilder(NewFieldMapper(fl), fl)
 	ctx := context.Background()
-	columns := []*schema.Column{logsV2Columns[LogsV2BodyColumn]}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -1114,13 +1116,7 @@ func TestLegacyBodyIndexPredicates(t *testing.T) {
 			sb.Select("1").From("t")
 			key := telemetrytypes.NewTelemetryFieldKey(tc.key, telemetrytypes.FieldContextBody, telemetrytypes.FieldDataTypeUnspecified)
 
-			var cond string
-			var err error
-			if tc.operator.IsArrayFunctionOperator() {
-				cond, err = cb.conditionForArrayFunction(ctx, valuer.UUID{}, key, tc.operator, tc.value, columns, sb)
-			} else {
-				cond, err = cb.conditionForLegacyBodyJSON(ctx, valuer.UUID{}, 0, 0, key, tc.operator, tc.value, columns, sb)
-			}
+			cond, err := cb.conditionForResolvedKey(ctx, valuer.UUID{}, 0, 0, key, tc.operator, tc.value, sb)
 			require.NoError(t, err)
 
 			sb.Where(cond)
