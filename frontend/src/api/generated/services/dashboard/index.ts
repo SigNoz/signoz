@@ -2114,7 +2114,7 @@ export const invalidateGetPublicDashboardPanelQueryRangeV2 = async (
 };
 
 /**
- * Returns a dashboard SigNoz ships and owns, addressed by its stable name rather than its id. System dashboards are read-only and upgraded through releases. The response is the v2 dashboard plus a `system` object carrying the shipped version this copy was provisioned at, whether a newer version is available, and whether the copy has diverged from what the provisioner wrote.
+ * Returns a dashboard SigNoz ships and owns, addressed by its stable definition name (e.g. `ai-o11y-overview`) rather than its id. System dashboards are read-only and upgraded through releases. The dashboard's own `name` field carries a reserved prefix that the path segment must not include.
  * @summary Get system dashboard
  */
 export const getSystemDashboard = (

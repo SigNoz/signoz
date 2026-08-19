@@ -43,6 +43,6 @@ func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, systemDashboard.ToGettableSystemDashboard())
+	render.Success(rw, http.StatusOK, systemDashboard.ToGettableDashboardV2())
 }
 

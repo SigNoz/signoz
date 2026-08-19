@@ -8690,65 +8690,6 @@ components:
       required:
       - references
       type: object
-    SystemdashboardtypesGettableSystemDashboard:
-      properties:
-        createdAt:
-          format: date-time
-          type: string
-        createdBy:
-          type: string
-        id:
-          type: string
-        image:
-          type: string
-        locked:
-          type: boolean
-        name:
-          type: string
-        orgId:
-          type: string
-        schemaVersion:
-          type: string
-        source:
-          $ref: '#/components/schemas/DashboardtypesSource'
-        spec:
-          $ref: '#/components/schemas/DashboardtypesDashboardSpec'
-        system:
-          $ref: '#/components/schemas/SystemdashboardtypesStatus'
-        tags:
-          items:
-            $ref: '#/components/schemas/TagtypesGettableTag'
-          nullable: true
-          type: array
-        updatedAt:
-          format: date-time
-          type: string
-        updatedBy:
-          type: string
-      required:
-      - id
-      - orgId
-      - locked
-      - source
-      - schemaVersion
-      - name
-      - tags
-      - spec
-      - system
-      type: object
-    SystemdashboardtypesStatus:
-      properties:
-        modified:
-          type: boolean
-        updateAvailable:
-          type: boolean
-        version:
-          type: integer
-      required:
-      - modified
-      - updateAvailable
-      - version
-      type: object
     TagtypesGettableTag:
       properties:
         key:
@@ -23118,11 +23059,9 @@ paths:
     get:
       deprecated: false
       description: Returns a dashboard SigNoz ships and owns, addressed by its stable
-        name rather than its id. System dashboards are read-only and upgraded through
-        releases. The response is the v2 dashboard plus a `system` object carrying
-        the shipped version this copy was provisioned at, whether a newer version
-        is available, and whether the copy has diverged from what the provisioner
-        wrote.
+        definition name (e.g. `ai-o11y-overview`) rather than its id. System dashboards
+        are read-only and upgraded through releases. The dashboard's own `name` field
+        carries a reserved prefix that the path segment must not include.
       operationId: GetSystemDashboard
       parameters:
       - in: path
@@ -23137,7 +23076,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/SystemdashboardtypesGettableSystemDashboard'
+                    $ref: '#/components/schemas/DashboardtypesGettableDashboardV2'
                   status:
                     type: string
                 required:

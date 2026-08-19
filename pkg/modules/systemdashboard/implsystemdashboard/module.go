@@ -3,6 +3,7 @@ package implsystemdashboard
 import (
 	"context"
 	"log/slog"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -141,13 +142,8 @@ func (module *module) creator(ctx context.Context, orgID valuer.UUID) valuer.UUI
 	return rootUser.ID
 }
 
-func (module *module) Get(ctx context.Context, orgID valuer.UUID, name string) (*systemdashboardtypes.SystemDashboard, error) {
-	existing, err := module.get(ctx, orgID, name)
-	if err != nil {
-		return nil, err
-	}
-
-	return &systemdashboardtypes.SystemDashboard{Dashboard: existing, Status: module.status(ctx, orgID, existing)}, nil
+func (module *module) Get(ctx context.Context, orgID valuer.UUID, name string) (*dashboardtypes.DashboardV2, error) {
+	return module.get(ctx, orgID, name)
 }
 
 func (module *module) ResolveID(ctx context.Context, orgID valuer.UUID, name string) (valuer.UUID, error) {
@@ -160,7 +156,11 @@ func (module *module) ResolveID(ctx context.Context, orgID valuer.UUID, name str
 }
 
 func (module *module) get(ctx context.Context, orgID valuer.UUID, name string) (*dashboardtypes.DashboardV2, error) {
-	existing, err := module.dashboardModule.GetByNameV2(ctx, orgID, name)
+	if strings.HasPrefix(name, dashboardtypes.SystemDashboardNamePrefix) {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "name must not carry the %q prefix", dashboardtypes.SystemDashboardNamePrefix)
+	}
+
+	existing, err := module.dashboardModule.GetByNameV2(ctx, orgID, dashboardtypes.SystemDashboardNamePrefix+name)
 	if err != nil {
 		return nil, err
 	}
@@ -169,23 +169,4 @@ func (module *module) get(ctx context.Context, orgID valuer.UUID, name string) (
 	}
 
 	return existing, nil
-}
-
-// status degrades rather than failing the read: a missing state row or a
-// definition dropped from the binary only means no update can be offered.
-func (module *module) status(ctx context.Context, orgID valuer.UUID, existing *dashboardtypes.DashboardV2) systemdashboardtypes.Status {
-	status := systemdashboardtypes.Status{Modified: existing.UpdatedBy != systemdashboardtypes.ProvisionerIdentity}
-
-	state, err := module.store.Get(ctx, orgID, existing.Name)
-	if err != nil {
-		module.settings.Logger().WarnContext(ctx, "couldn't read system dashboard state", slog.String("name", existing.Name), slog.String("org_id", orgID.StringValue()), errors.Attr(err))
-		return status
-	}
-	status.Version = state.Version
-
-	if definition, ok := module.registry.Get(existing.Name); ok {
-		status.UpdateAvailable = definition.Version > state.Version
-	}
-
-	return status
 }

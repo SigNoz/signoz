@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/types/systemdashboardtypes"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -14,7 +14,9 @@ type Module interface {
 	// row carries a foreign write and it never deletes.
 	Reconcile(ctx context.Context, orgID valuer.UUID) error
 
-	Get(ctx context.Context, orgID valuer.UUID, name string) (*systemdashboardtypes.SystemDashboard, error)
+	// Get addresses the dashboard by its bare definition name; the reserved
+	// prefix is a storage concern the API never exposes.
+	Get(ctx context.Context, orgID valuer.UUID, name string) (*dashboardtypes.DashboardV2, error)
 
 	// ResolveID maps a system dashboard's name to its id, so routes addressed by
 	// name can be authz-checked and audited against the id tuples carry.

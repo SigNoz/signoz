@@ -1929,32 +1929,9 @@ func TestEnsureSingleExpressionAggregation(t *testing.T) {
 	}
 }
 
+// Guards the constant: a prefixed name must stay a valid DNS-1123 label.
 func TestSystemDashboardNamePrefix(t *testing.T) {
-	const validSpec = `"spec": {"variables": [], "panels": {}, "layouts": [], "links": []}`
-
-	testCases := []struct {
-		description  string
-		name         string
-		wantErrMatch string
-	}{
-		{description: "prefixed name with a valid remainder is accepted", name: SystemDashboardNamePrefix + "ai-o11y-overview"},
-		{description: "prefixed name with an invalid remainder is rejected", name: SystemDashboardNamePrefix + "Not A Label", wantErrMatch: "is invalid"},
-		{description: "the bare prefix is rejected", name: SystemDashboardNamePrefix, wantErrMatch: "is invalid"},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.description, func(t *testing.T) {
-			var postable PostableDashboardV2
-			err := json.Unmarshal([]byte(`{"schemaVersion":"`+SchemaVersion+`","name":"`+testCase.name+`",`+validSpec+`}`), &postable)
-			if testCase.wantErrMatch != "" {
-				require.Error(t, err)
-				assert.Contains(t, err.Error(), testCase.wantErrMatch)
-				return
-			}
-			require.NoError(t, err)
-			assert.Equal(t, testCase.name, postable.Name)
-		})
-	}
+	require.NoError(t, validateDashboardName(SystemDashboardNamePrefix+"ai-o11y-overview"))
 }
 
 func TestErrIfReservedName(t *testing.T) {

@@ -6,7 +6,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
-	"github.com/SigNoz/signoz/pkg/types/systemdashboardtypes"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -18,10 +18,10 @@ func (provider *provider) addSystemDashboardRoutes(router *mux.Router) error {
 			ID:                  "GetSystemDashboard",
 			Tags:                []string{"dashboard"},
 			Summary:             "Get system dashboard",
-			Description:         "Returns a dashboard SigNoz ships and owns, addressed by its stable name rather than its id. System dashboards are read-only and upgraded through releases. The response is the v2 dashboard plus a `system` object carrying the shipped version this copy was provisioned at, whether a newer version is available, and whether the copy has diverged from what the provisioner wrote.",
+			Description:         "Returns a dashboard SigNoz ships and owns, addressed by its stable definition name (e.g. `ai-o11y-overview`) rather than its id. System dashboards are read-only and upgraded through releases. The dashboard's own `name` field carries a reserved prefix that the path segment must not include.",
 			Request:             nil,
 			RequestContentType:  "",
-			Response:            new(systemdashboardtypes.GettableSystemDashboard),
+			Response:            new(dashboardtypes.GettableDashboardV2),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},

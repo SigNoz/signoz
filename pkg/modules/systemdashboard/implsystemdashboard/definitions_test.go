@@ -14,19 +14,7 @@ func TestEmbeddedDefinitionsParseAtCurrentSchemaVersion(t *testing.T) {
 	registry, err := NewRegistry()
 	require.NoError(t, err)
 
-	definitions := registry.List()
-	assert.NotEmpty(t, definitions)
-
-	for _, definition := range definitions {
-		assert.NotEmpty(t, definition.Dashboard.Spec.Panels, "%s", definition.Name())
-	}
-}
-
-// The frontend addresses the overview dashboard by this name.
-func TestAIObservabilityOverviewIsRegistered(t *testing.T) {
-	registry, err := NewRegistry()
-	require.NoError(t, err)
-
+	// The frontend addresses the overview dashboard by this name.
 	_, ok := registry.Get(dashboardtypes.SystemDashboardNamePrefix + "ai-o11y-overview")
 	assert.True(t, ok)
 }

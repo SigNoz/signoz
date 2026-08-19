@@ -6,7 +6,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -56,35 +55,4 @@ type Store interface {
 	UpdateVersion(ctx context.Context, orgID valuer.UUID, name string, version int) error
 
 	RunInTx(ctx context.Context, cb func(ctx context.Context) error) error
-}
-
-// Status is what the API adds on top of a system dashboard so the frontend can
-// offer a re-provision prompt.
-type Status struct {
-	// Modified is true once anything but the provisioner has written the row.
-	Modified bool `json:"modified" required:"true"`
-	// UpdateAvailable is true when the binary ships a newer version than the one
-	// this copy was provisioned at. It only ever matters while Modified is true —
-	// an unmodified copy is upgraded in place by the reconciler at startup.
-	UpdateAvailable bool `json:"updateAvailable" required:"true"`
-	// Version is the shipped version this copy was last provisioned at.
-	Version int `json:"version" required:"true"`
-}
-
-// SystemDashboard pairs a dashboard with its provisioning status.
-type SystemDashboard struct {
-	Dashboard *dashboardtypes.DashboardV2
-	Status    Status
-}
-
-type GettableSystemDashboard struct {
-	dashboardtypes.GettableDashboardV2
-	System Status `json:"system" required:"true"`
-}
-
-func (systemDashboard SystemDashboard) ToGettableSystemDashboard() GettableSystemDashboard {
-	return GettableSystemDashboard{
-		GettableDashboardV2: systemDashboard.Dashboard.ToGettableDashboardV2(),
-		System:              systemDashboard.Status,
-	}
 }

@@ -7,80 +7,11 @@
     "spec": {
       "display": {
         "name": "AI Observability Overview",
-        "description": "Overview of LLM traffic. Placeholder panel until the finalized dashboard ships."
+        "description": "Overview of LLM traffic. Panels ship in an upcoming release."
       },
       "variables": [],
-      "panels": {
-        "11111111-1111-1111-1111-111111111111": {
-          "kind": "Panel",
-          "spec": {
-            "display": {
-              "name": "LLM calls",
-              "description": "Total GenAI spans in the selected window."
-            },
-            "plugin": {
-              "kind": "signoz/NumberPanel",
-              "spec": {
-                "visualization": {
-                  "timePreference": "global_time"
-                }
-              }
-            },
-            "queries": [
-              {
-                "kind": "scalar",
-                "spec": {
-                  "plugin": {
-                    "kind": "signoz/CompositeQuery",
-                    "spec": {
-                      "queries": [
-                        {
-                          "type": "builder_query",
-                          "spec": {
-                            "name": "A",
-                            "signal": "traces",
-                            "stepInterval": 60,
-                            "disabled": false,
-                            "filter": {
-                              "expression": "gen_ai.system != ''"
-                            },
-                            "having": {
-                              "expression": ""
-                            },
-                            "aggregations": [
-                              {
-                                "expression": "count()"
-                              }
-                            ]
-                          }
-                        }
-                      ]
-                    }
-                  }
-                }
-              }
-            ]
-          }
-        }
-      },
-      "layouts": [
-        {
-          "kind": "Grid",
-          "spec": {
-            "items": [
-              {
-                "x": 0,
-                "y": 0,
-                "width": 4,
-                "height": 3,
-                "content": {
-                  "$ref": "#/spec/panels/11111111-1111-1111-1111-111111111111"
-                }
-              }
-            ]
-          }
-        }
-      ]
+      "panels": {},
+      "layouts": []
     }
   }
 }
