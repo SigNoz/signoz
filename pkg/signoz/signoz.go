@@ -547,7 +547,7 @@ func New(
 	if err != nil {
 		return nil, err
 	}
-	systemDashboardModule := implsystemdashboard.NewModule(providerSettings, implsystemdashboard.NewStore(sqlstore), systemDashboardRegistry, dashboard, userGetter)
+	systemDashboardModule := implsystemdashboard.NewModule(providerSettings, implsystemdashboard.NewStore(sqlstore), systemDashboardRegistry, dashboard)
 
 	// Initialize all modules
 	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter, userRoleStore, serviceAccount, serviceAccountGetter, cloudIntegrationModule, retentionGetter, flagger, tagModule, metricReductionRuleModule, systemDashboardModule)

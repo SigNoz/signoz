@@ -70,7 +70,7 @@ func TestNewModules(t *testing.T) {
 	systemDashboardRegistry, err := implsystemdashboard.NewRegistry()
 	require.NoError(t, err)
 
-	systemDashboard := implsystemdashboard.NewModule(providerSettings, implsystemdashboard.NewStore(sqlstore), systemDashboardRegistry, dashboardModule, userGetter)
+	systemDashboard := implsystemdashboard.NewModule(providerSettings, implsystemdashboard.NewStore(sqlstore), systemDashboardRegistry, dashboardModule)
 
 	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{}, dashboardModule, userGetter, userRoleStore, serviceAccount, serviceAccountGetter, implcloudintegration.NewModule(), retentionGetter, flagger, tagModule, implmetricreductionrule.NewModule(), systemDashboard)
 

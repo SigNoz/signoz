@@ -9,24 +9,16 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/systemdashboard"
-	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/systemdashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
-
-// RootUserGetter is the slice of user.Getter this module needs.
-type RootUserGetter interface {
-	GetRootUserByOrgID(context.Context, valuer.UUID) (*types.User, []*authtypes.UserRole, error)
-}
 
 type module struct {
 	settings        factory.ScopedProviderSettings
 	store           systemdashboardtypes.Store
 	registry        systemdashboardtypes.Registry
 	dashboardModule dashboard.Module
-	rootUserGetter  RootUserGetter
 }
 
 func NewModule(
@@ -34,14 +26,12 @@ func NewModule(
 	store systemdashboardtypes.Store,
 	registry systemdashboardtypes.Registry,
 	dashboardModule dashboard.Module,
-	rootUserGetter RootUserGetter,
 ) systemdashboard.Module {
 	return &module{
 		settings:        factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/systemdashboard/implsystemdashboard"),
 		store:           store,
 		registry:        registry,
 		dashboardModule: dashboardModule,
-		rootUserGetter:  rootUserGetter,
 	}
 }
 
@@ -92,7 +82,7 @@ func (module *module) provision(ctx context.Context, orgID valuer.UUID, definiti
 			ctx,
 			orgID,
 			systemdashboardtypes.ProvisionerIdentity,
-			module.creator(ctx, orgID),
+			valuer.UUID{},
 			dashboardtypes.SourceSystem,
 			definition.Dashboard,
 		)
@@ -128,18 +118,6 @@ func (module *module) upgrade(ctx context.Context, orgID valuer.UUID, id valuer.
 
 	module.settings.Logger().InfoContext(ctx, "upgraded system dashboard", slog.String("name", definition.Name()), slog.Int("version", definition.Version), slog.String("org_id", orgID.StringValue()))
 	return nil
-}
-
-// creator attributes the analytics event to the org's root user. The dashboard
-// itself is owned by the provisioner identity, never by a real user — and while
-// an org is being created there is no root user yet.
-func (module *module) creator(ctx context.Context, orgID valuer.UUID) valuer.UUID {
-	rootUser, _, err := module.rootUserGetter.GetRootUserByOrgID(ctx, orgID)
-	if err != nil {
-		return valuer.UUID{}
-	}
-
-	return rootUser.ID
 }
 
 func (module *module) Get(ctx context.Context, orgID valuer.UUID, name string) (*dashboardtypes.DashboardV2, error) {

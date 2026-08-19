@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/analytics/analyticstest"
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory/factorytest"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
@@ -16,8 +15,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlitesqlstore"
-	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/systemdashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/tagtypes"
@@ -27,14 +24,6 @@ import (
 )
 
 const testDashboardName = "test-overview"
-
-// noRootUser stands in for an org whose root user isn't resolvable — the state
-// every org is in while it is being created.
-type noRootUser struct{}
-
-func (noRootUser) GetRootUserByOrgID(context.Context, valuer.UUID) (*types.User, []*authtypes.UserRole, error) {
-	return nil, nil, errors.New(errors.TypeNotFound, errors.CodeNotFound, "no root user")
-}
 
 func newTestSQLStore(t *testing.T) sqlstore.SQLStore {
 	t.Helper()
@@ -83,7 +72,7 @@ func newTestModule(t *testing.T, sqlStore sqlstore.SQLStore, definitions ...syst
 	registry, err := systemdashboardtypes.NewRegistry(definitions)
 	require.NoError(t, err)
 
-	return NewModule(providerSettings, NewStore(sqlStore), registry, dashboardModule, noRootUser{}).(*module), dashboardModule
+	return NewModule(providerSettings, NewStore(sqlStore), registry, dashboardModule).(*module), dashboardModule
 }
 
 func newTestDefinition(t *testing.T, version int, displayName string) systemdashboardtypes.Definition {
