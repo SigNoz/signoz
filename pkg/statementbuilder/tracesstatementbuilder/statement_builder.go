@@ -262,6 +262,14 @@ func adjustTraceKeys(keys map[string][]*telemetrytypes.TelemetryFieldKey, query 
 // adjustTraceKey resolves a single TelemetryFieldKey against the keys map.
 func adjustTraceKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) []string {
 
+	// Scope keys are resolved entirely by the field mapper's scope handling. The intrinsic and
+	// calculated field tables are all span-context, so matching a scope key against them by name
+	// alone would wrongly rewrite e.g. {name, scope} to the span `name` column. Skip the
+	// intrinsic override and let resolution keep the key in scope.
+	if key.FieldContext == telemetrytypes.FieldContextScope {
+		return querybuilder.AdjustKey(key, keys, nil)
+	}
+
 	// for recording actions taken
 	actions := []string{}
 	/*
@@ -271,25 +279,18 @@ func adjustTraceKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*te
 	*/
 	var isIntrinsicOrCalculatedField bool
 	var intrinsicOrCalculatedField telemetrytypes.TelemetryFieldKey
-	// A scope-context key addresses the scope JSON column and must not bind to a non-scope
-	// intrinsic/calculated field that only shares its name (e.g. `{name, scope}` is the scope's
-	// name, not the span `name` column); the field mapper resolves it to the declared scope
-	// path. The span<->attribute remapping of legacy fields is intentionally context-blind.
-	boundToScopeMismatch := func(f telemetrytypes.TelemetryFieldKey) bool {
-		return key.FieldContext == telemetrytypes.FieldContextScope && f.FieldContext != telemetrytypes.FieldContextScope
-	}
-	if f, ok := tracestelemetryschema.IntrinsicFields[key.Name]; ok && !boundToScopeMismatch(f) {
+	if _, ok := tracestelemetryschema.IntrinsicFields[key.Name]; ok {
 		isIntrinsicOrCalculatedField = true
-		intrinsicOrCalculatedField = f
-	} else if f, ok := tracestelemetryschema.CalculatedFields[key.Name]; ok && !boundToScopeMismatch(f) {
+		intrinsicOrCalculatedField = tracestelemetryschema.IntrinsicFields[key.Name]
+	} else if _, ok := tracestelemetryschema.CalculatedFields[key.Name]; ok {
 		isIntrinsicOrCalculatedField = true
-		intrinsicOrCalculatedField = f
-	} else if f, ok := tracestelemetryschema.IntrinsicFieldsDeprecated[key.Name]; ok && !boundToScopeMismatch(f) {
+		intrinsicOrCalculatedField = tracestelemetryschema.CalculatedFields[key.Name]
+	} else if _, ok := tracestelemetryschema.IntrinsicFieldsDeprecated[key.Name]; ok {
 		isIntrinsicOrCalculatedField = true
-		intrinsicOrCalculatedField = f
-	} else if f, ok := tracestelemetryschema.CalculatedFieldsDeprecated[key.Name]; ok && !boundToScopeMismatch(f) {
+		intrinsicOrCalculatedField = tracestelemetryschema.IntrinsicFieldsDeprecated[key.Name]
+	} else if _, ok := tracestelemetryschema.CalculatedFieldsDeprecated[key.Name]; ok {
 		isIntrinsicOrCalculatedField = true
-		intrinsicOrCalculatedField = f
+		intrinsicOrCalculatedField = tracestelemetryschema.CalculatedFieldsDeprecated[key.Name]
 	}
 
 	if isIntrinsicOrCalculatedField {

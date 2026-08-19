@@ -89,6 +89,27 @@ func TestQueryToKeys(t *testing.T) {
 				},
 			},
 		},
+		{
+			// A scope attribute whose own name carries a `scope.` prefix. `scope.prefixed`
+			// normalizes to {prefixed, scope}; the second selector re-adds the prefix so the
+			// metadata fetch can target the attribute's exact key `scope.prefixed` rather than
+			// relying on the broad `%prefixed%` match.
+			query: `scope.prefixed = 'x'`,
+			expectedKeys: []telemetrytypes.FieldKeySelector{
+				{
+					Name:          "prefixed",
+					Signal:        telemetrytypes.SignalUnspecified,
+					FieldContext:  telemetrytypes.FieldContextScope,
+					FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+				},
+				{
+					Name:          "scope.prefixed",
+					Signal:        telemetrytypes.SignalUnspecified,
+					FieldContext:  telemetrytypes.FieldContextUnspecified,
+					FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+				},
+			},
+		},
 	}
 
 	for _, testCase := range testCases {

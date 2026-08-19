@@ -352,58 +352,18 @@ func (m *fieldMapper) resolveColumnExprs(
 	return exprs, existExprs, columns, nil
 }
 
-// resolveReferencedField resolves a referenced field to the candidate member key(s) a select /
-// group by / order by queries for it, unioning every home the name maps to (a scope field and a
-// same-named scope attribute, an attribute and a resource attribute, ...) flattened to members.
-// Unlike the filter path it does not narrow an attribute+resource collision to resource — select
-// surfaces every home. It returns empty when the name is absent from metadata; the caller
-// synthesizes and upgrades the result back to families.
-func (m *fieldMapper) resolveReferencedField(
-	ctx context.Context,
-	orgID valuer.UUID,
-	startNs, endNs uint64,
-	field *telemetrytypes.TelemetryFieldKey,
-	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
-) []*telemetrytypes.TelemetryFieldKey {
-	var resolved []*telemetrytypes.TelemetryFieldKey
-	for _, logical := range querybuilder.MatchingLogicalFields(ctx, orgID, m.fl, field, fieldKeys) {
-		resolved = append(resolved, logical.Members...)
-	}
-
-	// A bare key that names a real column resolves to the column first, keeping only same-named
-	// metadata keys whose type is consistent with it so a corrupt entry can't shadow the column.
-	if field.FieldContext == telemetrytypes.FieldContextUnspecified && len(resolved) > 0 {
-		var column *schema.Column
-		var columnKey *telemetrytypes.TelemetryFieldKey
-		for _, k := range resolved {
-			if k.FieldContext == telemetrytypes.FieldContextSpan {
-				if cols, err := m.ColumnFor(ctx, orgID, startNs, endNs, k); err == nil && len(cols) > 0 {
-					column, columnKey = cols[0], k
-				}
-				break
-			}
-		}
-		if column == nil {
-			probe := telemetrytypes.NewTelemetryFieldKey(field.Name, telemetrytypes.FieldContextSpan, field.FieldDataType)
-			if cols, err := m.ColumnFor(ctx, orgID, startNs, endNs, probe); err == nil && len(cols) > 0 {
-				column, columnKey = cols[0], probe
-			}
-		}
-		if column != nil {
-			combined := []*telemetrytypes.TelemetryFieldKey{columnKey}
-			for _, k := range resolved {
-				if k == columnKey || k.FieldContext == telemetrytypes.FieldContextSpan {
-					continue
-				}
-				if columnMatchesDataType(column, k.FieldDataType) {
-					combined = append(combined, k)
-				}
-			}
-			resolved = combined
+// logicalForResolvedColumn returns the logical field for a directly-resolvable key: its
+// semantic-convention family when the metadata map proves membership, otherwise the
+// single-member field for the key as given.
+func (m *fieldMapper) logicalForResolvedColumn(ctx context.Context, orgID valuer.UUID, field *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) *telemetrytypes.LogicalField {
+	for _, logical := range querybuilder.MatchingLogicalFields(ctx, orgID, m.fl, field, keys) {
+		if logical.IsFamily() &&
+			logical.FieldContext == field.FieldContext &&
+			(field.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || logical.FieldDataType == field.FieldDataType) {
+			return logical
 		}
 	}
-
-	return resolved
+	return telemetrytypes.SingleLogicalField(field.Name, field)
 }
 
 // upgradeToFamilies swaps single-member candidates for their family when the
@@ -466,18 +426,41 @@ func (m *fieldMapper) ColumnExpressionFor(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
 
-	// Resolve the candidate member key(s): the metadata union, or synthesized type-variant keys
-	// when the name is absent. Then upgrade members to their semantic-convention family; the
-	// family step never changes candidate order or non-family behavior.
-	raw := m.resolveReferencedField(ctx, orgID, startNs, endNs, field, keys)
-	if len(raw) == 0 {
-		// Absent from metadata: synthesize the type-variant candidate key(s).
-		raw = m.CandidateKeys(ctx, orgID, field, nil, candidateLookupKeys(field, keys))
+	// Resolve the candidate logical field(s).
+	var candidates []*telemetrytypes.LogicalField
+	switch field.FieldContext {
+	case telemetrytypes.FieldContextScope:
+		// FieldFor resolves any scope key to a single expression, so the probe below would skip
+		// the union. Resolve scope the way the filter path does: MatchingLogicalFields surfaces a
+		// same-named scope attribute (attribute-first) alongside the declared path, and
+		// CandidateKeys synthesizes when metadata knows neither.
+		matches := querybuilder.MatchingLogicalFields(ctx, orgID, m.fl, field, keys)
+		candidates, _ = querybuilder.ResolveLogicalFields(field, matches)
+		if len(candidates) == 0 {
+			candidates = querybuilder.WrapAsLogicalFields(field.Name, m.CandidateKeys(ctx, orgID, field, nil, keys))
+		}
+		if len(candidates) == 0 {
+			return "", errors.Wrapf(querybuilder.NewKeyNotFoundError(field.Name), errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
+		}
+	default:
+		switch _, err := m.FieldFor(ctx, orgID, startNs, endNs, field); {
+		case err == nil:
+			// A directly-resolvable key upgrades to its family when the metadata
+			// map proves membership; otherwise it stays single-member.
+			candidates = []*telemetrytypes.LogicalField{m.logicalForResolvedColumn(ctx, orgID, field, keys)}
+		case errors.Is(err, qbtypes.ErrColumnNotFound):
+			// The legacy candidate flow: column (when the bare name is one) plus metadata
+			// matches, else synthesized type-variant keys. The family step only swaps candidates
+			// for their family; it never changes candidate order or non-family behavior.
+			raw := m.CandidateKeys(ctx, orgID, field, nil, keys)
+			if len(raw) == 0 {
+				return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
+			}
+			candidates = m.upgradeToFamilies(ctx, orgID, field, querybuilder.WrapAsLogicalFields(field.Name, raw), keys)
+		default:
+			return "", err
+		}
 	}
-	if len(raw) == 0 {
-		return "", errors.Wrapf(querybuilder.NewKeyNotFoundError(field.Name), errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
-	}
-	candidates := m.upgradeToFamilies(ctx, orgID, field, querybuilder.WrapAsLogicalFields(field.Name, raw), keys)
 
 	// Group-by/order (String) and aggregation (String/Float64): every candidate is
 	// exists-guarded and coerced to requiredDataType, in a single multiIf. Raw select
