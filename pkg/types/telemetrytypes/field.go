@@ -172,6 +172,17 @@ func (f *TelemetryFieldKey) Normalize() {
 					f.Name = strings.TrimPrefix(f.Name, BodyJSONStringSearchPrefix)
 				}
 
+				// Step 2b: `scope.attribute.` / `scope.attributes.` addresses a scope
+				// attribute explicitly; the prefix collapses so the name is the bare
+				// attribute path (`scope.attribute.foo` and `scope.foo` are the same).
+				if f.FieldContext == FieldContextScope {
+					if stripped, ok := strings.CutPrefix(f.Name, "attributes."); ok {
+						f.Name = stripped
+					} else if stripped, ok := strings.CutPrefix(f.Name, "attribute."); ok {
+						f.Name = stripped
+					}
+				}
+
 			}
 		}
 	}

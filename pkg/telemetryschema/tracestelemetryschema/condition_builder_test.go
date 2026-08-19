@@ -585,3 +585,97 @@ func TestConditionForSynthesizedKeys(t *testing.T) {
 		assert.NotContains(t, sql, "mapContains")
 	})
 }
+
+// TestConditionForScope covers filters on the scope JSON column: declared paths, scope
+// attributes, exists semantics, and the attribute-first union when a scope attribute
+// shares a declared path's name.
+func TestConditionForScope(t *testing.T) {
+	ctx := context.Background()
+	fm := NewFieldMapper(flaggertest.New(t))
+	cb := NewConditionBuilder(fm, flaggertest.New(t))
+
+	scopeName := IntrinsicFields["scope.name"]
+	declared := map[string][]*telemetrytypes.TelemetryFieldKey{"scope.name": {&scopeName}}
+
+	build := func(key telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOperator, value any) (string, []any) {
+		t.Helper()
+		sb := sqlbuilder.NewSelectBuilder()
+		conds, _, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, keys, qbtypes.ConditionBuilderOptions{}, op, value, sb)
+		require.NoError(t, err)
+		sb.Where(sb.Or(conds...))
+		return sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	}
+
+	t.Run("declared scope.name equality is exists-guarded", func(t *testing.T) {
+		key := telemetrytypes.TelemetryFieldKey{Name: "name", FieldContext: telemetrytypes.FieldContextScope}
+		sql, args := build(key, declared, qbtypes.FilterOperatorEqual, "otelcol")
+		assert.Contains(t, sql, "scope.name::String = ?")
+		assert.Contains(t, sql, "scope.name::String <> ''")
+		assert.Contains(t, args, "otelcol")
+	})
+
+	t.Run("declared scope.name exists", func(t *testing.T) {
+		key := telemetrytypes.TelemetryFieldKey{Name: "name", FieldContext: telemetrytypes.FieldContextScope}
+		sql, _ := build(key, declared, qbtypes.FilterOperatorExists, nil)
+		assert.Contains(t, sql, "scope.name::String <> ''")
+	})
+
+	t.Run("scope attribute equality guards the raw JSON path", func(t *testing.T) {
+		key := telemetrytypes.TelemetryFieldKey{Name: "telemetry.sdk.language", FieldContext: telemetrytypes.FieldContextScope}
+		keys := map[string][]*telemetrytypes.TelemetryFieldKey{
+			"telemetry.sdk.language": {{Name: "telemetry.sdk.language", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextScope, FieldDataType: telemetrytypes.FieldDataTypeString}},
+		}
+		sql, args := build(key, keys, qbtypes.FilterOperatorEqual, "python")
+		assert.Contains(t, sql, "scope.attributes.`telemetry.sdk.language`::String = ?")
+		assert.Contains(t, sql, "scope.attributes.`telemetry.sdk.language` IS NOT NULL")
+		assert.Contains(t, args, "python")
+		assert.NotContains(t, sql, "scope.`scope.")
+	})
+
+	t.Run("short name unions attribute and declared path", func(t *testing.T) {
+		key := telemetrytypes.TelemetryFieldKey{Name: "name", FieldContext: telemetrytypes.FieldContextScope}
+		keys := map[string][]*telemetrytypes.TelemetryFieldKey{
+			"scope.name": {&scopeName},
+			"name":       {{Name: "name", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextScope, FieldDataType: telemetrytypes.FieldDataTypeString}},
+		}
+		sql, _ := build(key, keys, qbtypes.FilterOperatorEqual, "x")
+		assert.Contains(t, sql, "scope.attributes.`name`::String = ?")
+		assert.Contains(t, sql, "scope.name::String = ?")
+	})
+
+	t.Run("declared scope.version equality", func(t *testing.T) {
+		scopeVersion := IntrinsicFields["scope.version"]
+		key := telemetrytypes.TelemetryFieldKey{Name: "version", FieldContext: telemetrytypes.FieldContextScope}
+		keys := map[string][]*telemetrytypes.TelemetryFieldKey{"scope.version": {&scopeVersion}}
+		sql, args := build(key, keys, qbtypes.FilterOperatorEqual, "1.2.3")
+		assert.Contains(t, sql, "scope.version::String = ?")
+		assert.Contains(t, sql, "scope.version::String <> ''")
+		assert.Contains(t, args, "1.2.3")
+	})
+
+	t.Run("negative operator on declared path does not add existence guard", func(t *testing.T) {
+		key := telemetrytypes.TelemetryFieldKey{Name: "name", FieldContext: telemetrytypes.FieldContextScope}
+		sql, _ := build(key, declared, qbtypes.FilterOperatorNotEqual, "otelcol")
+		assert.Contains(t, sql, "scope.name::String <> ?")
+		assert.NotContains(t, sql, "= ''")
+	})
+
+	t.Run("IN on a scope attribute", func(t *testing.T) {
+		key := telemetrytypes.TelemetryFieldKey{Name: "telemetry.sdk.language", FieldContext: telemetrytypes.FieldContextScope}
+		keys := map[string][]*telemetrytypes.TelemetryFieldKey{
+			"telemetry.sdk.language": {{Name: "telemetry.sdk.language", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextScope, FieldDataType: telemetrytypes.FieldDataTypeString}},
+		}
+		sql, _ := build(key, keys, qbtypes.FilterOperatorIn, []any{"python", "go"})
+		assert.Contains(t, sql, "scope.attributes.`telemetry.sdk.language`::String = ?")
+		assert.Contains(t, sql, "scope.attributes.`telemetry.sdk.language` IS NOT NULL")
+	})
+
+	t.Run("numeric operand on a scope attribute coerces the string path to float", func(t *testing.T) {
+		key := telemetrytypes.TelemetryFieldKey{Name: "sampler.ratio", FieldContext: telemetrytypes.FieldContextScope}
+		keys := map[string][]*telemetrytypes.TelemetryFieldKey{
+			"sampler.ratio": {{Name: "sampler.ratio", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextScope, FieldDataType: telemetrytypes.FieldDataTypeString}},
+		}
+		sql, _ := build(key, keys, qbtypes.FilterOperatorGreaterThan, float64(0.5))
+		assert.Contains(t, sql, "toFloat64OrNull(scope.attributes.`sampler.ratio`::String) > ?")
+	})
+}

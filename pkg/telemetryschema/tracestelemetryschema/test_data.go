@@ -128,6 +128,21 @@ func BuildCompleteFieldKeyMap(releaseTime time.Time) map[string][]*telemetrytype
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 			},
 		},
+		// declared scope paths, mirroring the intrinsics metadata.go injects at query time
+		"scope.name": {
+			{
+				Name:          "scope.name",
+				FieldContext:  telemetrytypes.FieldContextScope,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
+		"scope.version": {
+			{
+				Name:          "scope.version",
+				FieldContext:  telemetrytypes.FieldContextScope,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
 	}
 	for _, keys := range keysMap {
 		for _, key := range keys {

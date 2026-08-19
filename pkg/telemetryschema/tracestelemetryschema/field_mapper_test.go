@@ -304,3 +304,160 @@ func TestColumnExpressionForTimestampAttributeCollision(t *testing.T) {
 		assert.Contains(t, result, "attributes_number['timestamp']")
 	})
 }
+
+// scopeKey builds a TelemetryFieldKey the way the API boundary would after Normalize.
+func scopeKey(name string) telemetrytypes.TelemetryFieldKey {
+	return telemetrytypes.TelemetryFieldKey{
+		Name:         name,
+		Signal:       telemetrytypes.SignalTraces,
+		FieldContext: telemetrytypes.FieldContextScope,
+	}
+}
+
+// declaredScopeKeys injects the scope.name/scope.version intrinsics into the metadata map
+// the way metadata.go does at query time; resolution of the declared paths depends on it.
+func declaredScopeKeys() map[string][]*telemetrytypes.TelemetryFieldKey {
+	scopeName := IntrinsicFields["scope.name"]
+	scopeVersion := IntrinsicFields["scope.version"]
+	return map[string][]*telemetrytypes.TelemetryFieldKey{
+		"scope.name":    {&scopeName},
+		"scope.version": {&scopeVersion},
+	}
+}
+
+func scopeAttribute(name string) *telemetrytypes.TelemetryFieldKey {
+	return &telemetrytypes.TelemetryFieldKey{
+		Name:          name,
+		Signal:        telemetrytypes.SignalTraces,
+		FieldContext:  telemetrytypes.FieldContextScope,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	}
+}
+
+// TestColumnExpressionForScope covers the scope resolution matrix from PR #10920: declared
+// paths, scope attributes, and the attribute-first union when a scope attribute shares its
+// name with a declared path.
+func TestColumnExpressionForScope(t *testing.T) {
+	ctx := context.Background()
+	tsStart := uint64(time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano())
+	tsEnd := uint64(time.Date(2024, 6, 5, 0, 0, 0, 0, time.UTC).UnixNano())
+	fm := NewFieldMapper(flaggertest.New(t))
+
+	run := func(field telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) string {
+		t.Helper()
+		result, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, tsStart, tsEnd, &field, telemetrytypes.FieldDataTypeUnspecified, keys)
+		require.NoError(t, err)
+		return result
+	}
+
+	t.Run("short name binds to declared scope.name when no attribute exists", func(t *testing.T) {
+		assert.Equal(t,
+			"multiIf(scope.name::String <> '', scope.name::String, NULL)",
+			run(scopeKey("name"), declaredScopeKeys()))
+	})
+
+	t.Run("fully-qualified scope.name isolates the declared path", func(t *testing.T) {
+		assert.Equal(t,
+			"multiIf(scope.name::String <> '', scope.name::String, NULL)",
+			run(scopeKey("scope.name"), declaredScopeKeys()))
+	})
+
+	t.Run("short version binds to declared scope.version", func(t *testing.T) {
+		assert.Equal(t,
+			"multiIf(scope.version::String <> '', scope.version::String, NULL)",
+			run(scopeKey("version"), declaredScopeKeys()))
+	})
+
+	t.Run("plain scope attribute", func(t *testing.T) {
+		keys := declaredScopeKeys()
+		keys["testing.env"] = []*telemetrytypes.TelemetryFieldKey{scopeAttribute("testing.env")}
+		assert.Equal(t,
+			"multiIf(scope.attributes.`testing.env` IS NOT NULL, scope.attributes.`testing.env`::String, NULL)",
+			run(scopeKey("testing.env"), keys))
+	})
+
+	t.Run("scope attribute synthesized when absent from metadata", func(t *testing.T) {
+		assert.Equal(t,
+			"multiIf(scope.attributes.`testing.env` IS NOT NULL, scope.attributes.`testing.env`::String, NULL)",
+			run(scopeKey("testing.env"), declaredScopeKeys()))
+	})
+
+	t.Run("short name unions attribute (first) with declared path", func(t *testing.T) {
+		keys := declaredScopeKeys()
+		keys["name"] = []*telemetrytypes.TelemetryFieldKey{scopeAttribute("name")}
+		assert.Equal(t,
+			"multiIf(scope.attributes.`name` IS NOT NULL, scope.attributes.`name`::String, scope.name::String <> '', scope.name::String, NULL)",
+			run(scopeKey("name"), keys))
+	})
+
+	t.Run("fully-qualified scope.version isolates declared even with conflicting attribute", func(t *testing.T) {
+		keys := declaredScopeKeys()
+		keys["version"] = []*telemetrytypes.TelemetryFieldKey{scopeAttribute("version")}
+		assert.Equal(t,
+			"multiIf(scope.version::String <> '', scope.version::String, NULL)",
+			run(scopeKey("scope.version"), keys))
+	})
+
+	t.Run("group by short name unions attribute and declared without toString", func(t *testing.T) {
+		keys := declaredScopeKeys()
+		keys["name"] = []*telemetrytypes.TelemetryFieldKey{scopeAttribute("name")}
+		result, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, tsStart, tsEnd, &[]telemetrytypes.TelemetryFieldKey{scopeKey("name")}[0], telemetrytypes.FieldDataTypeString, keys)
+		require.NoError(t, err)
+		assert.Equal(t,
+			"multiIf(scope.attributes.`name` IS NOT NULL, scope.attributes.`name`::String, scope.name::String <> '', scope.name::String, NULL)",
+			result)
+	})
+}
+
+// TestFieldForScope covers the per-key SQL for a resolved scope key.
+func TestFieldForScope(t *testing.T) {
+	ctx := context.Background()
+	tsStart := uint64(time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano())
+	tsEnd := uint64(time.Date(2024, 6, 5, 0, 0, 0, 0, time.UTC).UnixNano())
+	fm := NewFieldMapper(flaggertest.New(t))
+
+	cases := map[string]string{
+		"scope.name":    "scope.name::String",
+		"scope.version": "scope.version::String",
+		"custom.attr":   "scope.attributes.`custom.attr`::String",
+	}
+	for name, want := range cases {
+		t.Run(name, func(t *testing.T) {
+			key := scopeKey(name)
+			got, err := fm.FieldFor(ctx, valuer.UUID{}, tsStart, tsEnd, &key)
+			require.NoError(t, err)
+			assert.Equal(t, want, got)
+			// A scope path must never double-prefix the JSON column.
+			assert.NotContains(t, got, "scope.`scope.")
+		})
+	}
+}
+
+// TestExistsForScope covers the presence predicates: declared paths test <> ” (non-Nullable),
+// scope attributes test the raw JSON path IS NOT NULL.
+func TestExistsForScope(t *testing.T) {
+	ctx := context.Background()
+	tsStart := uint64(time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano())
+	tsEnd := uint64(time.Date(2024, 6, 5, 0, 0, 0, 0, time.UTC).UnixNano())
+	fm := NewFieldMapper(flaggertest.New(t))
+
+	cases := []struct {
+		name   string
+		key    string
+		exists bool
+		want   string
+	}{
+		{"declared exists", "scope.name", true, "scope.name::String <> ''"},
+		{"declared not exists", "scope.name", false, "scope.name::String = ''"},
+		{"attribute exists", "exception.type", true, "scope.attributes.`exception.type` IS NOT NULL"},
+		{"attribute not exists", "exception.type", false, "scope.attributes.`exception.type` IS NULL"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			key := scopeKey(tc.key)
+			got, err := fm.ExistsFor(ctx, valuer.UUID{}, tsStart, tsEnd, &key, tc.exists)
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}

@@ -675,6 +675,36 @@ func TestStatementBuilderListQuery(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
+		{
+			name:        "List query selecting and filtering scope fields",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal:       telemetrytypes.SignalTraces,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Filter: &qbtypes.Filter{
+					Expression: "scope.name = 'otelcol'",
+				},
+				Limit: 10,
+				SelectFields: []telemetrytypes.TelemetryFieldKey{
+					{
+						Name:          "scope.name",
+						Signal:        telemetrytypes.SignalTraces,
+						FieldContext:  telemetrytypes.FieldContextScope,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+					{
+						Name:         "telemetry.sdk.language",
+						Signal:       telemetrytypes.SignalTraces,
+						FieldContext: telemetrytypes.FieldContextScope,
+					},
+				},
+			},
+			expected: qbtypes.Statement{
+				Query: "SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, multiIf(scope.name::String <> '', scope.name::String, NULL) AS `__SELECT_KEY_3_scope.name`, multiIf(scope.attributes.`telemetry.sdk.language` IS NOT NULL, scope.attributes.`telemetry.sdk.language`::String, NULL) AS `__SELECT_KEY_4_telemetry.sdk.language` FROM signoz_traces.distributed_signoz_index_v3 WHERE (scope.name::String = ? AND scope.name::String <> '') AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{"otelcol", "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
+			},
+			expectedErr: nil,
+		},
 	}
 
 	fl := flaggertest.New(t)
