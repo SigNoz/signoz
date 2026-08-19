@@ -1561,15 +1561,15 @@ func TestFilterExprLogs(t *testing.T) {
 			expectedArgs:          []any{"download"},
 			expectedErrorContains: "function `hasToken` expects value parameter to be a string",
 		},
-		// A multi-token needle (separator/whitespace) is a clean 400, not a CH execution error.
+		// A multi-token value (separator/whitespace) is a clean 400, not a CH execution error.
 		{
-			category:              "hasTokenUnderscoreNeedle",
+			category:              "hasTokenUnderscoreSeparator",
 			query:                 "hasToken(body, \"user_id\")",
 			shouldPass:            false,
 			expectedErrorContains: "function `hasToken` matches a single whole token",
 		},
 		{
-			category:              "hasTokenWhitespaceNeedle",
+			category:              "hasTokenWhitespaceSeparator",
 			query:                 "hasToken(body, \"production node\")",
 			shouldPass:            false,
 			expectedErrorContains: "function `hasToken` matches a single whole token",

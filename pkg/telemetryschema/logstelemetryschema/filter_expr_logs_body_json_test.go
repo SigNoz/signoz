@@ -105,7 +105,7 @@ func TestFilterExprLogsBodyJSON(t *testing.T) {
 			expectedErrorContains: "",
 		},
 		{
-			// Big-int needle CAST to Array(Int64) to match the haystack (else 386).
+			// Big-int element CAST to Array(Int64) to match the array it is tested against (else 386).
 			category:              "json",
 			query:                 `hasAny(body.ids, ['9007199254740993', '9007199254740994'])`,
 			shouldPass:            true,

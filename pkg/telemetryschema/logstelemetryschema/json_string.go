@@ -249,14 +249,14 @@ func GetBodyJSONKeyForExists(_ context.Context, key *telemetrytypes.TelemetryFie
 	return fmt.Sprintf("JSON_EXISTS(body, '$.%s')", getBodyJSONPath(key))
 }
 
-// legacyElemType infers the has-family element type from the needle (legacy has no schema). It
-// scans EVERY value so the chosen array type and all coerced needles agree — else ClickHouse
+// legacyElemType infers the has-family element type from the arg (legacy has no schema). It
+// scans EVERY value so the chosen array type and all coerced args agree — else ClickHouse
 // raises "no supertype ... String" (code 386). Int64 stays distinct from Float64 so a quoted
 // integer is exact past 2^53 (unquoted literals already arrive as float64, parsed upstream).
-func legacyElemType(needle any) telemetrytypes.FieldDataType {
-	list, ok := needle.([]any)
+func legacyElemType(arg any) telemetrytypes.FieldDataType {
+	list, ok := arg.([]any)
 	if !ok {
-		list = []any{needle}
+		list = []any{arg}
 	}
 	if len(list) == 0 {
 		return telemetrytypes.FieldDataTypeString
@@ -277,7 +277,7 @@ func legacyElemType(needle any) telemetrytypes.FieldDataType {
 			}
 		default:
 			// booleans (and anything else) -> String; a bool renders to 'true'/'false', so a
-			// bool needle only matches genuine JSON booleans, not truthy numbers/strings.
+			// bool arg only matches genuine JSON booleans, not truthy numbers/strings.
 			allInt, allNumeric = false, false
 		}
 	}
@@ -291,9 +291,9 @@ func legacyElemType(needle any) telemetrytypes.FieldDataType {
 	}
 }
 
-// legacyCoerceNeedle coerces a needle to elem type dt so its bound-arg type matches the
+// legacyCoerceElement coerces an element to elem type dt so its bound-arg type matches the
 // extracted column (legacyElemType guarantees it's coercible).
-func legacyCoerceNeedle(v any, dt telemetrytypes.FieldDataType) any {
+func legacyCoerceElement(v any, dt telemetrytypes.FieldDataType) any {
 	switch dt {
 	case telemetrytypes.FieldDataTypeInt64:
 		if s, ok := v.(string); ok {
@@ -309,7 +309,7 @@ func legacyCoerceNeedle(v any, dt telemetrytypes.FieldDataType) any {
 		}
 		return v
 	default:
-		return bodyArrayNeedleString(v)
+		return bodyArrayElementString(v)
 	}
 }
 
@@ -352,7 +352,7 @@ func getBodyJSONScalarKey(key *telemetrytypes.TelemetryFieldKey, dt telemetrytyp
 	return expr, guard, true
 }
 
-func bodyArrayNeedleString(v any) string {
+func bodyArrayElementString(v any) string {
 	switch t := v.(type) {
 	case string:
 		return t
