@@ -1,8 +1,7 @@
 import { Route, Switch } from 'react-router-dom';
 import ROUTES from 'constants/routes';
-import { FeatureKeys } from 'constants/features';
 import { server } from 'mocks-server/server';
-import { defaultFeatureFlags, render, screen } from 'tests/test-utils';
+import { render, screen } from 'tests/test-utils';
 import {
 	invalidLicense,
 	setupAuthzAdmin,
@@ -59,23 +58,6 @@ function renderEditPage(
 
 describe('CreateEditRolePage - Feature Gate', () => {
 	describe('create mode - feature disabled', () => {
-		it('shows error when fine-grained authz flag is inactive', async () => {
-			renderCreatePage({
-				featureFlags: defaultFeatureFlags.map((f) =>
-					f.name === FeatureKeys.USE_FINE_GRAINED_AUTHZ
-						? { ...f, active: false }
-						: f,
-				),
-			});
-
-			await expect(
-				screen.findByTestId('feature-gate-error-banner'),
-			).resolves.toBeInTheDocument();
-			await expect(
-				screen.findByText(/Custom roles feature is not available/i),
-			).resolves.toBeInTheDocument();
-		});
-
 		it('shows error when license is invalid', async () => {
 			renderCreatePage({ activeLicense: invalidLicense });
 
@@ -112,23 +94,6 @@ describe('CreateEditRolePage - Feature Gate', () => {
 	describe('edit mode - feature disabled', () => {
 		const ROLE_ID = '019c24aa-3333-0001-aaaa-111111111111';
 		const ROLE_NAME = 'test-role';
-
-		it('shows error when fine-grained authz flag is inactive', async () => {
-			renderEditPage(ROLE_ID, ROLE_NAME, {
-				featureFlags: defaultFeatureFlags.map((f) =>
-					f.name === FeatureKeys.USE_FINE_GRAINED_AUTHZ
-						? { ...f, active: false }
-						: f,
-				),
-			});
-
-			await expect(
-				screen.findByTestId('feature-gate-error-banner'),
-			).resolves.toBeInTheDocument();
-			await expect(
-				screen.findByText(/Custom roles feature is not available/i),
-			).resolves.toBeInTheDocument();
-		});
 
 		it('shows error when license is invalid', async () => {
 			renderEditPage(ROLE_ID, ROLE_NAME, { activeLicense: invalidLicense });

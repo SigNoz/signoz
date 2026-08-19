@@ -464,27 +464,50 @@ components:
           type: string
       type: object
     AuthtypesAuthDomainConfig:
+      discriminator:
+        mapping:
+          google: '#/components/schemas/AuthtypesAuthDomainConfigGoogle'
+          oidc: '#/components/schemas/AuthtypesAuthDomainConfigOIDC'
+          saml: '#/components/schemas/AuthtypesAuthDomainConfigSAML'
+        propertyName: kind
       oneOf:
-      - $ref: '#/components/schemas/AuthtypesSamlConfig'
-      - $ref: '#/components/schemas/AuthtypesGoogleConfig'
-      - $ref: '#/components/schemas/AuthtypesOIDCConfig'
+      - $ref: '#/components/schemas/AuthtypesAuthDomainConfigSAML'
+      - $ref: '#/components/schemas/AuthtypesAuthDomainConfigGoogle'
+      - $ref: '#/components/schemas/AuthtypesAuthDomainConfigOIDC'
+      type: object
+    AuthtypesAuthDomainConfigGoogle:
       properties:
-        googleAuthConfig:
-          $ref: '#/components/schemas/AuthtypesGoogleConfig'
-        oidcConfig:
-          $ref: '#/components/schemas/AuthtypesOIDCConfig'
-        roleMapping:
-          $ref: '#/components/schemas/AuthtypesRoleMapping'
-        samlConfig:
-          $ref: '#/components/schemas/AuthtypesSamlConfig'
-        ssoEnabled:
-          type: boolean
-        ssoType:
+        kind:
           $ref: '#/components/schemas/AuthtypesAuthNProvider'
+        spec:
+          $ref: '#/components/schemas/AuthtypesGoogleConfig'
+      required:
+      - kind
+      - spec
+      type: object
+    AuthtypesAuthDomainConfigOIDC:
+      properties:
+        kind:
+          $ref: '#/components/schemas/AuthtypesAuthNProvider'
+        spec:
+          $ref: '#/components/schemas/AuthtypesOIDCConfig'
+      required:
+      - kind
+      - spec
+      type: object
+    AuthtypesAuthDomainConfigSAML:
+      properties:
+        kind:
+          $ref: '#/components/schemas/AuthtypesAuthNProvider'
+        spec:
+          $ref: '#/components/schemas/AuthtypesSamlConfig'
+      required:
+      - kind
+      - spec
       type: object
     AuthtypesAuthNProvider:
       enum:
-      - google_auth
+      - google
       - saml
       - email_password
       - oidc
@@ -531,12 +554,16 @@ components:
         createdAt:
           format: date-time
           type: string
+        enabled:
+          type: boolean
         id:
           type: string
         name:
           type: string
         orgId:
           type: string
+        roleMapping:
+          $ref: '#/components/schemas/AuthtypesRoleMapping'
         updatedAt:
           format: date-time
           type: string
@@ -601,6 +628,7 @@ components:
         clientId:
           type: string
         clientSecret:
+          format: password
           type: string
         domainToAdminEmail:
           additionalProperties:
@@ -612,10 +640,12 @@ components:
           type: boolean
         insecureSkipEmailVerified:
           type: boolean
-        redirectURI:
-          type: string
         serviceAccountJson:
+          format: password
           type: string
+      required:
+      - clientId
+      - clientSecret
       type: object
     AuthtypesOIDCConfig:
       properties:
@@ -624,6 +654,7 @@ components:
         clientId:
           type: string
         clientSecret:
+          format: password
           type: string
         getUserInfo:
           type: boolean
@@ -633,6 +664,10 @@ components:
           type: string
         issuerAlias:
           type: string
+      required:
+      - issuer
+      - clientId
+      - clientSecret
       type: object
     AuthtypesOrgSessionContext:
       properties:
@@ -654,8 +689,15 @@ components:
       properties:
         config:
           $ref: '#/components/schemas/AuthtypesAuthDomainConfig'
+        enabled:
+          type: boolean
         name:
           type: string
+        roleMapping:
+          $ref: '#/components/schemas/AuthtypesRoleMapping'
+      required:
+      - name
+      - config
       type: object
     AuthtypesPostableEmailPasswordSession:
       properties:
@@ -762,14 +804,18 @@ components:
       properties:
         attributeMapping:
           $ref: '#/components/schemas/AuthtypesAttributeMapping'
+        certificate:
+          type: string
+        entityId:
+          type: string
         insecureSkipAuthNRequestsSigned:
           type: boolean
-        samlCert:
+        location:
           type: string
-        samlEntity:
-          type: string
-        samlIdp:
-          type: string
+      required:
+      - entityId
+      - location
+      - certificate
       type: object
     AuthtypesSessionContext:
       properties:
@@ -809,6 +855,12 @@ components:
       properties:
         config:
           $ref: '#/components/schemas/AuthtypesAuthDomainConfig'
+        enabled:
+          type: boolean
+        roleMapping:
+          $ref: '#/components/schemas/AuthtypesRoleMapping'
+      required:
+      - config
       type: object
     AuthtypesUpdatableRole:
       properties:
@@ -1496,6 +1548,10 @@ components:
       - redis
       - cloudsql_postgres
       - memorystore_redis
+      - computeengine
+      - gke
+      - cloudstorage
+      - cloudsql_mysql
       type: string
     CloudintegrationtypesServiceMetadata:
       properties:
@@ -4209,6 +4265,21 @@ components:
       - missingOptionalMetrics
       - missingRequiredAttributes
       type: object
+    InframonitoringtypesClusterFilter:
+      properties:
+        expression:
+          type: string
+        filterByNodeReadiness:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesNodeCondition'
+          nullable: true
+          type: array
+        filterByPodStatus:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          nullable: true
+          type: array
+      type: object
     InframonitoringtypesClusterRecord:
       properties:
         clusterCPU:
@@ -4346,6 +4417,16 @@ components:
       - containerCannotRun
       - unknown
       type: object
+    InframonitoringtypesContainerFilter:
+      properties:
+        expression:
+          type: string
+        filterByContainerStatus:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesContainerStatus'
+          nullable: true
+          type: array
+      type: object
     InframonitoringtypesContainerReady:
       enum:
       - ready
@@ -4445,6 +4526,16 @@ components:
       - total
       - endTimeBeforeRetention
       type: object
+    InframonitoringtypesDaemonSetFilter:
+      properties:
+        expression:
+          type: string
+        filterByPodStatus:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          nullable: true
+          type: array
+      type: object
     InframonitoringtypesDaemonSetRecord:
       properties:
         currentNodes:
@@ -4516,6 +4607,16 @@ components:
       - records
       - total
       - endTimeBeforeRetention
+      type: object
+    InframonitoringtypesDeploymentFilter:
+      properties:
+        expression:
+          type: string
+        filterByPodStatus:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          nullable: true
+          type: array
       type: object
     InframonitoringtypesDeploymentRecord:
       properties:
@@ -4658,6 +4759,16 @@ components:
       - total
       - endTimeBeforeRetention
       type: object
+    InframonitoringtypesJobFilter:
+      properties:
+        expression:
+          type: string
+        filterByPodStatus:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          nullable: true
+          type: array
+      type: object
     InframonitoringtypesJobRecord:
       properties:
         activePods:
@@ -4781,6 +4892,16 @@ components:
       - message
       - documentationLink
       type: object
+    InframonitoringtypesNamespaceFilter:
+      properties:
+        expression:
+          type: string
+        filterByPodStatus:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          nullable: true
+          type: array
+      type: object
     InframonitoringtypesNamespaceRecord:
       properties:
         counts:
@@ -4861,6 +4982,21 @@ components:
       required:
       - ready
       - notReady
+      type: object
+    InframonitoringtypesNodeFilter:
+      properties:
+        expression:
+          type: string
+        filterByNodeReadiness:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesNodeCondition'
+          nullable: true
+          type: array
+        filterByPodStatus:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          nullable: true
+          type: array
       type: object
     InframonitoringtypesNodeRecord:
       properties:
@@ -4978,6 +5114,16 @@ components:
       - shutdown
       - unexpectedAdmissionError
       type: object
+    InframonitoringtypesPodFilter:
+      properties:
+        expression:
+          type: string
+        filterByPodStatus:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          nullable: true
+          type: array
+      type: object
     InframonitoringtypesPodRecord:
       properties:
         meta:
@@ -5077,7 +5223,7 @@ components:
           format: int64
           type: integer
         filter:
-          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+          $ref: '#/components/schemas/InframonitoringtypesClusterFilter'
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
@@ -5103,7 +5249,7 @@ components:
           format: int64
           type: integer
         filter:
-          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+          $ref: '#/components/schemas/InframonitoringtypesContainerFilter'
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
@@ -5129,7 +5275,7 @@ components:
           format: int64
           type: integer
         filter:
-          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+          $ref: '#/components/schemas/InframonitoringtypesDaemonSetFilter'
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
@@ -5155,7 +5301,7 @@ components:
           format: int64
           type: integer
         filter:
-          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+          $ref: '#/components/schemas/InframonitoringtypesDeploymentFilter'
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
@@ -5207,7 +5353,7 @@ components:
           format: int64
           type: integer
         filter:
-          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+          $ref: '#/components/schemas/InframonitoringtypesJobFilter'
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
@@ -5233,7 +5379,7 @@ components:
           format: int64
           type: integer
         filter:
-          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+          $ref: '#/components/schemas/InframonitoringtypesNamespaceFilter'
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
@@ -5259,7 +5405,7 @@ components:
           format: int64
           type: integer
         filter:
-          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+          $ref: '#/components/schemas/InframonitoringtypesNodeFilter'
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
@@ -5285,7 +5431,7 @@ components:
           format: int64
           type: integer
         filter:
-          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+          $ref: '#/components/schemas/InframonitoringtypesPodFilter'
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
@@ -5311,7 +5457,7 @@ components:
           format: int64
           type: integer
         filter:
-          $ref: '#/components/schemas/Querybuildertypesv5Filter'
+          $ref: '#/components/schemas/InframonitoringtypesStatefulSetFilter'
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
@@ -5362,6 +5508,16 @@ components:
       - list
       - grouped_list
       type: string
+    InframonitoringtypesStatefulSetFilter:
+      properties:
+        expression:
+          type: string
+        filterByPodStatus:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesPodStatus'
+          nullable: true
+          type: array
+      type: object
     InframonitoringtypesStatefulSetRecord:
       properties:
         currentPods:
@@ -6899,6 +7055,7 @@ components:
     Querybuildertypesv5QueryEnvelope:
       discriminator:
         mapping:
+          builder_ai_query: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilderAI'
           builder_formula: '#/components/schemas/Querybuildertypesv5QueryEnvelopeFormula'
           builder_query: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilder'
           builder_trace_operator: '#/components/schemas/Querybuildertypesv5QueryEnvelopeTraceOperator'
@@ -6907,6 +7064,7 @@ components:
         propertyName: type
       oneOf:
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilder'
+      - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilderAI'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeFormula'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopeTraceOperator'
       - $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelopePromQL'
@@ -6916,6 +7074,15 @@ components:
       properties:
         spec:
           $ref: '#/components/schemas/Querybuildertypesv5BuilderQuerySpec'
+        type:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryType'
+      required:
+      - type
+      type: object
+    Querybuildertypesv5QueryEnvelopeBuilderAI:
+      properties:
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregation'
         type:
           $ref: '#/components/schemas/Querybuildertypesv5QueryType'
       required:
@@ -7034,6 +7201,7 @@ components:
     Querybuildertypesv5QueryType:
       enum:
       - builder_query
+      - builder_ai_query
       - builder_formula
       - builder_trace_operator
       - clickhouse_sql
@@ -7427,6 +7595,8 @@ components:
       - below
       - equal
       - not_equal
+      - above_or_equal
+      - below_or_equal
       - outside_bounds
       type: string
     RuletypesCumulativeSchedule:
@@ -7742,6 +7912,118 @@ components:
       enum:
       - basic
       type: string
+    SavedviewtypesDisplay:
+      properties:
+        color:
+          type: string
+        fontSize:
+          type: string
+        format:
+          type: string
+        maxLines:
+          type: integer
+      type: object
+    SavedviewtypesPanelType:
+      enum:
+      - value
+      - graph
+      - table
+      - list
+      - trace
+      type: string
+    SavedviewtypesPostableSavedView:
+      properties:
+        generateName:
+          type: boolean
+        name:
+          type: string
+        schemaVersion:
+          $ref: '#/components/schemas/SavedviewtypesSchemaVersion'
+        source:
+          $ref: '#/components/schemas/SavedviewtypesSource'
+        spec:
+          $ref: '#/components/schemas/SavedviewtypesSavedViewSpec'
+      required:
+      - source
+      - schemaVersion
+      - spec
+      type: object
+    SavedviewtypesSavedView:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        schemaVersion:
+          $ref: '#/components/schemas/SavedviewtypesSchemaVersion'
+        source:
+          $ref: '#/components/schemas/SavedviewtypesSource'
+        spec:
+          $ref: '#/components/schemas/SavedviewtypesSavedViewSpec'
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - id
+      - schemaVersion
+      - spec
+      type: object
+    SavedviewtypesSavedViewSpec:
+      properties:
+        display:
+          $ref: '#/components/schemas/SavedviewtypesDisplay'
+        displayName:
+          type: string
+        panelType:
+          $ref: '#/components/schemas/SavedviewtypesPanelType'
+        queries:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelope'
+          minItems: 1
+          type: array
+        requestType:
+          $ref: '#/components/schemas/Querybuildertypesv5RequestType'
+        selectedFields:
+          items:
+            $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          type: array
+      required:
+      - displayName
+      - panelType
+      - requestType
+      - queries
+      type: object
+    SavedviewtypesSchemaVersion:
+      enum:
+      - v2
+      type: string
+    SavedviewtypesSource:
+      enum:
+      - traces
+      - logs
+      - metrics
+      - meter
+      type: string
+    SavedviewtypesUpdatableSavedView:
+      properties:
+        schemaVersion:
+          $ref: '#/components/schemas/SavedviewtypesSchemaVersion'
+        source:
+          $ref: '#/components/schemas/SavedviewtypesSource'
+        spec:
+          $ref: '#/components/schemas/SavedviewtypesSavedViewSpec'
+      required:
+      - source
+      - schemaVersion
+      - spec
+      type: object
     ServiceaccounttypesDeprecatedPostableServiceAccountRole:
       properties:
         id:
@@ -8523,6 +8805,7 @@ components:
       - metric
       - log
       - span
+      - trace
       - resource
       - attribute
       - body
@@ -8636,59 +8919,9 @@ components:
         oldPassword:
           type: string
       type: object
-    TypesDeprecatedUser:
-      properties:
-        createdAt:
-          format: date-time
-          type: string
-        displayName:
-          type: string
-        email:
-          type: string
-        id:
-          type: string
-        isRoot:
-          type: boolean
-        orgId:
-          type: string
-        role:
-          type: string
-        status:
-          type: string
-        updatedAt:
-          format: date-time
-          type: string
-      required:
-      - id
-      type: object
     TypesIdentifiable:
       properties:
         id:
-          type: string
-      required:
-      - id
-      type: object
-    TypesInvite:
-      properties:
-        createdAt:
-          format: date-time
-          type: string
-        email:
-          type: string
-        id:
-          type: string
-        inviteLink:
-          type: string
-        name:
-          type: string
-        orgId:
-          type: string
-        role:
-          type: string
-        token:
-          type: string
-        updatedAt:
-          format: date-time
           type: string
       required:
       - id
@@ -8715,15 +8948,6 @@ components:
       required:
       - id
       type: object
-    TypesPostableBulkInviteRequest:
-      properties:
-        invites:
-          items:
-            $ref: '#/components/schemas/TypesPostableInvite'
-          type: array
-      required:
-      - invites
-      type: object
     TypesPostableForgotPassword:
       properties:
         email:
@@ -8736,30 +8960,12 @@ components:
       - orgId
       - email
       type: object
-    TypesPostableInvite:
-      properties:
-        email:
-          type: string
-        frontendBaseUrl:
-          type: string
-        name:
-          type: string
-        role:
-          type: string
-      type: object
     TypesPostableResetPassword:
       properties:
         password:
           type: string
         token:
           type: string
-      type: object
-    TypesPostableRole:
-      properties:
-        name:
-          type: string
-      required:
-      - name
       type: object
     TypesPostableVerifyResetPasswordToken:
       properties:
@@ -8910,6 +9116,158 @@ info:
   version: ""
 openapi: 3.0.3
 paths:
+  /api/v1/ai_observability/fields/keys:
+    get:
+      deprecated: false
+      description: This endpoint returns the field keys the AI observability explorer
+        can filter on, including the computed per-trace aggregates
+      operationId: GetAIObservabilityFieldsKeys
+      parameters:
+      - in: query
+        name: searchText
+        schema:
+          type: string
+      - in: query
+        name: fieldContext
+        schema:
+          $ref: '#/components/schemas/TelemetrytypesFieldContext'
+      - in: query
+        name: fieldDataType
+        schema:
+          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
+      - in: query
+        name: startUnixMilli
+        schema:
+          format: int64
+          type: integer
+      - in: query
+        name: endUnixMilli
+        schema:
+          format: int64
+          type: integer
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TelemetrytypesGettableFieldKeys'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get AI observability field keys
+      tags:
+      - ai_observability
+  /api/v1/ai_observability/fields/values:
+    get:
+      deprecated: false
+      description: This endpoint returns the values the AI observability explorer
+        can filter a field key on
+      operationId: GetAIObservabilityFieldsValues
+      parameters:
+      - in: query
+        name: searchText
+        schema:
+          type: string
+      - in: query
+        name: fieldContext
+        schema:
+          $ref: '#/components/schemas/TelemetrytypesFieldContext'
+      - in: query
+        name: fieldDataType
+        schema:
+          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
+      - in: query
+        name: startUnixMilli
+        schema:
+          format: int64
+          type: integer
+      - in: query
+        name: endUnixMilli
+        schema:
+          format: int64
+          type: integer
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      - in: query
+        name: name
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TelemetrytypesGettableFieldValues'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get AI observability field values
+      tags:
+      - ai_observability
   /api/v1/alerts:
     get:
       deprecated: false
@@ -10230,9 +10588,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - dashboard:update
       - tokenizer:
-        - ADMIN
+        - dashboard:update
       summary: Delete public dashboard
       tags:
       - dashboard
@@ -10281,9 +10639,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - dashboard:read
       - tokenizer:
-        - ADMIN
+        - dashboard:read
       summary: Get public dashboard
       tags:
       - dashboard
@@ -10338,9 +10696,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - dashboard:update
       - tokenizer:
-        - ADMIN
+        - dashboard:update
       summary: Create public dashboard
       tags:
       - dashboard
@@ -10382,281 +10740,12 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - dashboard:update
       - tokenizer:
-        - ADMIN
+        - dashboard:update
       summary: Update public dashboard
       tags:
       - dashboard
-  /api/v1/domains:
-    get:
-      deprecated: false
-      description: This endpoint lists all auth domains
-      operationId: ListAuthDomains
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    items:
-                      $ref: '#/components/schemas/AuthtypesGettableAuthDomain'
-                    type: array
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: List all auth domains
-      tags:
-      - authdomains
-    post:
-      deprecated: false
-      description: This endpoint creates an auth domain
-      operationId: CreateAuthDomain
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AuthtypesPostableAuthDomain'
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/TypesIdentifiable'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: Created
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "409":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Conflict
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Create auth domain
-      tags:
-      - authdomains
-  /api/v1/domains/{id}:
-    delete:
-      deprecated: false
-      description: This endpoint deletes an auth domain
-      operationId: DeleteAuthDomain
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      responses:
-        "204":
-          description: No Content
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Delete auth domain
-      tags:
-      - authdomains
-    get:
-      deprecated: false
-      description: This endpoint returns an auth domain by ID
-      operationId: GetAuthDomain
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/AuthtypesGettableAuthDomain'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Get auth domain by ID
-      tags:
-      - authdomains
-    put:
-      deprecated: false
-      description: This endpoint updates an auth domain
-      operationId: UpdateAuthDomain
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AuthtypesUpdatableAuthDomain'
-      responses:
-        "204":
-          description: No Content
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "409":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Conflict
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Update auth domain
-      tags:
-      - authdomains
   /api/v1/downtime_schedules:
     get:
       deprecated: false
@@ -11175,70 +11264,6 @@ paths:
       summary: Get field values
       tags:
       - fields
-  /api/v1/getResetPasswordToken/{id}:
-    get:
-      deprecated: true
-      description: This endpoint returns the reset password token by id
-      operationId: GetResetPasswordTokenDeprecated
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/TypesResetPasswordToken'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Get reset password token
-      tags:
-      - users
   /api/v1/global/config:
     get:
       deprecated: false
@@ -11268,120 +11293,6 @@ paths:
       summary: Get global config
       tags:
       - global
-  /api/v1/invite:
-    post:
-      deprecated: true
-      description: This endpoint creates an invite for a user
-      operationId: CreateInvite
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TypesPostableInvite'
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/TypesInvite'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: Created
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "409":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Conflict
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Create invite
-      tags:
-      - users
-  /api/v1/invite/bulk:
-    post:
-      deprecated: true
-      description: This endpoint creates a bulk invite for a user
-      operationId: CreateBulkInvite
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TypesPostableBulkInviteRequest'
-      responses:
-        "201":
-          description: Created
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "409":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Conflict
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Create bulk invite
-      tags:
-      - users
   /api/v1/llm_pricing_rules:
     get:
       deprecated: false
@@ -12033,40 +11944,6 @@ paths:
       summary: Get query range result
       tags:
       - dashboard
-  /api/v1/resetPassword:
-    post:
-      deprecated: false
-      description: This endpoint resets the password by token
-      operationId: ResetPassword
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TypesPostableResetPassword'
-      responses:
-        "204":
-          description: No Content
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "409":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Conflict
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      summary: Reset password
-      tags:
-      - users
   /api/v1/roles:
     get:
       deprecated: false
@@ -14257,244 +14134,14 @@ paths:
       summary: Get aggregations for a trace
       tags:
       - tracedetail
-  /api/v1/user:
-    get:
-      deprecated: true
-      description: This endpoint lists all users
-      operationId: ListUsersDeprecated
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    items:
-                      $ref: '#/components/schemas/TypesDeprecatedUser'
-                    type: array
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: List users
-      tags:
-      - users
-  /api/v1/user/{id}:
-    delete:
-      deprecated: true
-      description: This endpoint deletes the user by id
-      operationId: DeleteUserDeprecated
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      responses:
-        "204":
-          description: No Content
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Delete user
-      tags:
-      - users
-    get:
-      deprecated: true
-      description: This endpoint returns the user by id
-      operationId: GetUserDeprecated
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/TypesDeprecatedUser'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Get user
-      tags:
-      - users
-    put:
-      deprecated: true
-      description: This endpoint updates the user by id
-      operationId: UpdateUserDeprecated
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TypesDeprecatedUser'
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/TypesDeprecatedUser'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Update user
-      tags:
-      - users
   /api/v1/user/me:
     get:
       deprecated: true
-      description: This endpoint returns the user I belong to
+      description: This endpoint is deprecated and always fails. Use GET /api/v2/users/me
+        instead.
       operationId: GetMyUserDeprecated
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/TypesDeprecatedUser'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
           description: OK
         "401":
           content:
@@ -14514,6 +14161,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
       security:
       - tokenizer: []
       summary: Get my user
@@ -14681,6 +14334,287 @@ paths:
       summary: Update user preference
       tags:
       - preferences
+  /api/v2/auth_domains:
+    get:
+      deprecated: false
+      description: This endpoint lists all auth domains
+      operationId: ListAuthDomains
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/AuthtypesGettableAuthDomain'
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - auth-domain:list
+      - tokenizer:
+        - auth-domain:list
+      summary: List all auth domains
+      tags:
+      - authdomains
+    post:
+      deprecated: false
+      description: This endpoint creates an auth domain
+      operationId: CreateAuthDomain
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthtypesPostableAuthDomain'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesIdentifiable'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - auth-domain:create
+        - auth-domain:attach
+        - role:attach
+      - tokenizer:
+        - auth-domain:create
+        - auth-domain:attach
+        - role:attach
+      summary: Create auth domain
+      tags:
+      - authdomains
+  /api/v2/auth_domains/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint deletes an auth domain
+      operationId: DeleteAuthDomain
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - auth-domain:delete
+      - tokenizer:
+        - auth-domain:delete
+      summary: Delete auth domain
+      tags:
+      - authdomains
+    get:
+      deprecated: false
+      description: This endpoint returns an auth domain by ID
+      operationId: GetAuthDomain
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuthtypesGettableAuthDomain'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - auth-domain:read
+      - tokenizer:
+        - auth-domain:read
+      summary: Get auth domain by ID
+      tags:
+      - authdomains
+    put:
+      deprecated: false
+      description: This endpoint updates an auth domain
+      operationId: UpdateAuthDomain
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthtypesUpdatableAuthDomain'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - auth-domain:update
+        - auth-domain:attach
+        - auth-domain:detach
+        - role:attach
+        - role:detach
+      - tokenizer:
+        - auth-domain:update
+        - auth-domain:attach
+        - auth-domain:detach
+        - role:attach
+        - role:detach
+      summary: Update auth domain
+      tags:
+      - authdomains
   /api/v2/dashboard_views:
     get:
       deprecated: false
@@ -14722,9 +14656,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - dashboard:list
       - tokenizer:
-        - VIEWER
+        - dashboard:list
       summary: List dashboard saved views
       tags:
       - dashboard
@@ -14779,9 +14713,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - dashboard:list
       - tokenizer:
-        - EDITOR
+        - dashboard:list
       summary: Create dashboard saved view
       tags:
       - dashboard
@@ -14832,9 +14766,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - dashboard:list
       - tokenizer:
-        - EDITOR
+        - dashboard:list
       summary: Delete dashboard saved view
       tags:
       - dashboard
@@ -14900,9 +14834,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - dashboard:list
       - tokenizer:
-        - EDITOR
+        - dashboard:list
       summary: Update dashboard saved view
       tags:
       - dashboard
@@ -14977,9 +14911,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - dashboard:list
       - tokenizer:
-        - VIEWER
+        - dashboard:list
       summary: List dashboards (v2)
       tags:
       - dashboard
@@ -15034,9 +14968,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - dashboard:create
       - tokenizer:
-        - EDITOR
+        - dashboard:create
       summary: Create dashboard (v2)
       tags:
       - dashboard
@@ -15087,9 +15021,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - dashboard:delete
       - tokenizer:
-        - EDITOR
+        - dashboard:delete
       summary: Delete dashboard (v2)
       tags:
       - dashboard
@@ -15150,9 +15084,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - dashboard:read
       - tokenizer:
-        - VIEWER
+        - dashboard:read
       summary: Get dashboard (v2)
       tags:
       - dashboard
@@ -15224,9 +15158,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - dashboard:update
       - tokenizer:
-        - EDITOR
+        - dashboard:update
       summary: Patch dashboard (v2)
       tags:
       - dashboard
@@ -15293,9 +15227,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - dashboard:update
       - tokenizer:
-        - EDITOR
+        - dashboard:update
       summary: Update dashboard (v2)
       tags:
       - dashboard
@@ -15361,9 +15295,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - dashboard:read
+        - dashboard:create
       - tokenizer:
-        - EDITOR
+        - dashboard:read
+        - dashboard:create
       summary: Clone dashboard (v2)
       tags:
       - dashboard
@@ -15414,9 +15350,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - dashboard:update
       - tokenizer:
-        - EDITOR
+        - dashboard:update
       summary: Unlock dashboard (v2)
       tags:
       - dashboard
@@ -15466,10 +15402,76 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - dashboard:update
       - tokenizer:
-        - EDITOR
+        - dashboard:update
       summary: Lock dashboard (v2)
+      tags:
+      - dashboard
+  /api/v2/dashboards/{id}/migrate:
+    post:
+      deprecated: false
+      description: 'This endpoint retries the v1→v2 (Perses) migration on a dashboard
+        still stored in the v1 schema and returns the v2-shape result. It is idempotent:
+        a dashboard already in the v2 schema is returned unchanged.'
+      operationId: MigrateDashboardV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesGettableDashboardV2'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - dashboard:update
+      - tokenizer:
+        - dashboard:update
+      summary: Migrate dashboard to v2
       tags:
       - dashboard
   /api/v2/factor_password/forgot:
@@ -15505,6 +15507,41 @@ paths:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
       summary: Forgot password
+      tags:
+      - users
+  /api/v2/factor_password/reset:
+    post:
+      deprecated: false
+      description: This endpoint resets the password using a single use reset password
+        token
+      operationId: ResetPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypesPostableResetPassword'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Reset password
       tags:
       - users
   /api/v2/features:
@@ -22574,6 +22611,304 @@ paths:
       summary: Test alert rule
       tags:
       - rules
+  /api/v2/saved_views:
+    get:
+      deprecated: false
+      description: Returns saved views, optionally filtered by source and name.
+      operationId: ListSavedViews
+      parameters:
+      - in: query
+        name: source
+        schema:
+          $ref: '#/components/schemas/SavedviewtypesSource'
+      - in: query
+        name: name
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/SavedviewtypesSavedView'
+                    nullable: true
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - saved-view:list
+      - tokenizer:
+        - saved-view:list
+      summary: List saved views
+      tags:
+      - saved_view
+    post:
+      deprecated: false
+      description: Persists a saved view for the explore page. Returns the id of the
+        created view.
+      operationId: CreateSavedView
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SavedviewtypesPostableSavedView'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesIdentifiable'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - saved-view:create
+      - tokenizer:
+        - saved-view:create
+      summary: Create saved view
+      tags:
+      - saved_view
+  /api/v2/saved_views/{id}:
+    delete:
+      deprecated: false
+      description: Deletes a saved view by id.
+      operationId: DeleteSavedView
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - saved-view:delete
+      - tokenizer:
+        - saved-view:delete
+      summary: Delete saved view
+      tags:
+      - saved_view
+    get:
+      deprecated: false
+      description: Returns a saved view by id.
+      operationId: GetSavedView
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SavedviewtypesSavedView'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - saved-view:read
+      - tokenizer:
+        - saved-view:read
+      summary: Get saved view
+      tags:
+      - saved_view
+    put:
+      deprecated: false
+      description: Replaces a saved view's name and query.
+      operationId: UpdateSavedView
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SavedviewtypesUpdatableSavedView'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - saved-view:update
+      - tokenizer:
+        - saved-view:update
+      summary: Update saved view
+      tags:
+      - saved_view
   /api/v2/sessions:
     delete:
       deprecated: false
@@ -23362,108 +23697,6 @@ paths:
       summary: Get user roles
       tags:
       - users
-    post:
-      deprecated: true
-      description: This endpoint assigns the role to the user roles by user id
-      operationId: SetRoleByUserID
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TypesPostableRole'
-      responses:
-        "200":
-          description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Set user roles
-      tags:
-      - users
-  /api/v2/users/{id}/roles/{roleId}:
-    delete:
-      deprecated: true
-      description: This endpoint removes a role from the user by user id and role
-        id
-      operationId: RemoveUserRoleByUserIDAndRoleID
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      - in: path
-        name: roleId
-        required: true
-        schema:
-          type: string
-      responses:
-        "204":
-          description: No Content
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Remove a role from user
-      tags:
-      - users
   /api/v2/users/me:
     get:
       deprecated: false
@@ -23612,9 +23845,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - dashboard:list
       - tokenizer:
-        - VIEWER
+        - dashboard:list
       summary: List dashboards for the current user (v2)
       tags:
       - dashboard
@@ -23659,9 +23892,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - dashboard:list
       - tokenizer:
-        - VIEWER
+        - dashboard:list
       summary: Unpin a dashboard for the current user (v2)
       tags:
       - dashboard
@@ -23718,9 +23951,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - dashboard:list
       - tokenizer:
-        - VIEWER
+        - dashboard:list
       summary: Pin a dashboard for the current user (v2)
       tags:
       - dashboard

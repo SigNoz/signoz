@@ -93,15 +93,12 @@ function Application(): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[handleSetTimeStamp],
 	);
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
 
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {
 		if (!logEventCalledRef.current) {
 			const selectedEnvironments = queries.find(
-				(val) => val.tagKey === getResourceDeploymentKeys(dotMetricsEnabled),
+				(val) => val.tagKey === getResourceDeploymentKeys(),
 			)?.tagValue;
 
 			logEvent('APM: Service detail page visited', {
@@ -127,6 +124,9 @@ function Application(): JSX.Element {
 				start: minTime,
 				end: maxTime,
 			}),
+		// the time range is part of the key, so without this every window change blanks the
+		// operations list and the widgets below are rebuilt with an empty `operation in []`
+		keepPreviousData: true,
 	});
 
 	const selectedTraceTags: string = JSON.stringify(
@@ -159,7 +159,6 @@ function Application(): JSX.Element {
 						servicename,
 						tagFilterItems,
 						topLevelOperations: topLevelOperationsRoute,
-						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -169,7 +168,7 @@ function Application(): JSX.Element {
 				yAxisUnit: 'ops',
 				id: SERVICE_CHART_ID.rps,
 			}),
-		[servicename, tagFilterItems, topLevelOperationsRoute, dotMetricsEnabled],
+		[servicename, tagFilterItems, topLevelOperationsRoute],
 	);
 
 	const errorPercentageWidget = useMemo(
@@ -182,7 +181,6 @@ function Application(): JSX.Element {
 						servicename,
 						tagFilterItems,
 						topLevelOperations: topLevelOperationsRoute,
-						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -193,7 +191,7 @@ function Application(): JSX.Element {
 				id: SERVICE_CHART_ID.errorPercentage,
 				fillSpans: true,
 			}),
-		[servicename, tagFilterItems, topLevelOperationsRoute, dotMetricsEnabled],
+		[servicename, tagFilterItems, topLevelOperationsRoute],
 	);
 
 	const stepInterval = useMemo(

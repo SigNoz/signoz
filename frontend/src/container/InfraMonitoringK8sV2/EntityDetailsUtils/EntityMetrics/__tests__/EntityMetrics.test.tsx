@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import * as appContextHooks from 'providers/App/App';
 import { LicenseEvent } from 'types/api/licensesV3/getActive';
@@ -120,12 +121,6 @@ jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
 			plan_version: 'test-plan-version',
 		},
 	},
-	featureFlags: [
-		{
-			name: 'DOT_METRICS_ENABLED',
-			active: false,
-		},
-	],
 } as any);
 
 const mockEntity = {
@@ -300,14 +295,16 @@ const renderEntityMetrics = (overrides = {}): any => {
 
 	return render(
 		<MemoryRouter>
-			<EntityMetrics
-				entity={defaultProps.entity}
-				eventEntity="test"
-				entityWidgetInfo={defaultProps.entityWidgetInfo}
-				getEntityQueryPayload={defaultProps.getEntityQueryPayload}
-				queryKey={defaultProps.queryKey}
-				category={defaultProps.category}
-			/>
+			<TooltipProvider>
+				<EntityMetrics
+					entity={defaultProps.entity}
+					eventEntity="test"
+					entityWidgetInfo={defaultProps.entityWidgetInfo}
+					getEntityQueryPayload={defaultProps.getEntityQueryPayload}
+					queryKey={defaultProps.queryKey}
+					category={defaultProps.category}
+				/>
+			</TooltipProvider>
 		</MemoryRouter>,
 	);
 };

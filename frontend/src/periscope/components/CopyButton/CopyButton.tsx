@@ -1,10 +1,10 @@
-import { CSSProperties, useCallback } from 'react';
+import { CSSProperties, type MouseEvent, useCallback } from 'react';
 import { Check, Copy } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import cx from 'classnames';
-import { useCopyToClipboard } from 'hooks/useCopyToClipboard';
 
 import styles from './CopyButton.module.scss';
+import { useCopyButton } from './useCopyButton';
 
 export interface CopyButtonProps {
 	/** Text written to the clipboard on click. */
@@ -16,6 +16,8 @@ export interface CopyButtonProps {
 	/** Extra class merged onto the button. */
 	className?: string;
 	testId?: string;
+	/** Called after the copy is triggered (e.g. to show a toast). */
+	onCopy?: () => void;
 }
 
 /**
@@ -29,12 +31,18 @@ function CopyButton({
 	ariaLabel = 'Copy',
 	className,
 	testId,
+	onCopy,
 }: CopyButtonProps): JSX.Element {
-	const { copyToClipboard, isCopied } = useCopyToClipboard();
+	const { copyToClipboard, isCopied } = useCopyButton();
 
-	const handleClick = useCallback((): void => {
-		copyToClipboard(value);
-	}, [copyToClipboard, value]);
+	const handleClick = useCallback(
+		(e: MouseEvent<HTMLButtonElement>): void => {
+			e.stopPropagation();
+			copyToClipboard(value);
+			onCopy?.();
+		},
+		[copyToClipboard, value, onCopy],
+	);
 
 	const stackStyle: CSSProperties = { width: size, height: size };
 
@@ -61,6 +69,7 @@ CopyButton.defaultProps = {
 	ariaLabel: 'Copy',
 	className: undefined,
 	testId: undefined,
+	onCopy: undefined,
 };
 
 export default CopyButton;

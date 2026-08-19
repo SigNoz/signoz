@@ -601,8 +601,8 @@
                       {
                         "metricName": "redis.googleapis.com/stats/cache_hit_ratio",
                         "temporality": "",
-                        "timeAggregation": "max",
-                        "spaceAggregation": "sum",
+                        "timeAggregation": "min",
+                        "spaceAggregation": "min",
                         "reduceTo": "avg"
                       }
                     ],
@@ -788,7 +788,7 @@
                         "metricName": "redis.googleapis.com/commands/usec_per_call",
                         "temporality": "",
                         "timeAggregation": "max",
-                        "spaceAggregation": "sum",
+                        "spaceAggregation": "max",
                         "reduceTo": "avg"
                       }
                     ],
@@ -945,7 +945,7 @@
                       {
                         "metricName": "redis.googleapis.com/commands/calls",
                         "temporality": "",
-                        "timeAggregation": "max",
+                        "timeAggregation": "rate",
                         "spaceAggregation": "sum",
                         "reduceTo": "avg"
                       }
@@ -1044,8 +1044,8 @@
                       {
                         "metricName": "redis.googleapis.com/stats/reject_connections_count",
                         "temporality": "",
-                        "timeAggregation": "avg",
-                        "spaceAggregation": "avg",
+                        "timeAggregation": "rate",
+                        "spaceAggregation": "sum",
                         "reduceTo": "avg"
                       }
                     ],

@@ -1,12 +1,18 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Skeleton } from 'antd';
 import cx from 'classnames';
 import { InfraMonitoringEvents } from 'constants/events';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import TimeSeries from 'container/DashboardContainer/visualization/charts/TimeSeries/TimeSeries';
-import { LegendPosition } from 'lib/uPlotV2/components/types';
-import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
+import {
+	IRenderTooltipFooterArgs,
+	LegendPosition,
+} from 'lib/uPlotV2/components/types';
+import {
+	InfraMonitoringEntity,
+	VIEW_TYPES,
+} from 'container/InfraMonitoringK8sV2/constants';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
@@ -16,6 +22,9 @@ import { useTimezone } from 'providers/Timezone';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { getMetricsExplorerUrl } from 'utils/explorerUtils';
+
+import { getDrawerDurationMs } from 'container/InfraMonitoringK8sV2/Base/useDrawerLifecycleStore';
+import { K8sDetailsWidgetInfo } from 'container/InfraMonitoringK8sV2/Base/types';
 
 import { buildEntityMetricsChartConfig } from './configBuilder';
 import ChartHeader from './ChartHeader';
@@ -27,15 +36,13 @@ import { isKeyNotFoundError } from '../utils';
 
 import styles from './EntityMetrics.module.scss';
 import { MetricsTable } from './MetricsTable';
+import { logInfraExplorerNavigatedEvent } from 'container/InfraMonitoringK8sV2/Base/events';
+import ChartTooltipFooter from './ChartTooltipFooter';
 
 interface EntityMetricsProps<T> {
 	entity: T;
 	eventEntity: string;
-	entityWidgetInfo: {
-		title: string;
-		yAxisUnit: string;
-		docPath?: string;
-	}[];
+	entityWidgetInfo: K8sDetailsWidgetInfo[];
 	getEntityQueryPayload: (
 		node: T,
 		start: number,
@@ -43,6 +50,7 @@ interface EntityMetricsProps<T> {
 	) => GetQueryResultsProps[];
 	queryKey: string;
 	category: InfraMonitoringEntity;
+	view?: string;
 }
 
 function EntityMetrics<T>({
@@ -52,6 +60,7 @@ function EntityMetrics<T>({
 	getEntityQueryPayload,
 	queryKey,
 	category,
+	view = VIEW_TYPES.METRICS,
 }: EntityMetricsProps<T>): JSX.Element {
 	const { timeRange, selectedInterval, handleTimeChange } =
 		useEntityDetailsTime();
@@ -69,6 +78,10 @@ function EntityMetrics<T>({
 		visibilities,
 		category,
 	});
+
+	const [tooltipPortalEl, setTooltipPortalEl] = useState<HTMLDivElement | null>(
+		null,
+	);
 
 	const isDarkMode = useIsDarkMode();
 	const { timezone } = useTimezone();
@@ -163,6 +176,18 @@ function EntityMetrics<T>({
 							height={dimensions.height}
 							timezone={timezone}
 							yAxisUnit={entityWidgetInfo[idx].yAxisUnit}
+							canPinTooltip
+							tooltipPortalRoot={tooltipPortalEl ?? undefined}
+							renderTooltipFooter={({
+								isPinned,
+								dismiss,
+							}: IRenderTooltipFooterArgs) => (
+								<ChartTooltipFooter
+									id={configs[idx]?.getId() || idx.toString()}
+									isPinned={isPinned}
+									dismiss={dismiss}
+								/>
+							)}
 						/>
 					)
 				)}
@@ -172,6 +197,8 @@ function EntityMetrics<T>({
 
 	return (
 		<>
+			<div ref={setTooltipPortalEl} style={{ display: 'contents' }} />
+
 			<div className={styles.metricsHeader}>
 				<EntityDateTimeSelector
 					eventEntity={eventEntity}
@@ -189,6 +216,7 @@ function EntityMetrics<T>({
 						<ChartHeader
 							title={entityWidgetInfo[idx].title}
 							docPath={entityWidgetInfo[idx].docPath}
+							tooltip={entityWidgetInfo[idx].description}
 							metricsExplorerUrl={
 								queryPayloads[idx] && queryPayloads[idx].graphType !== PANEL_TYPES.TABLE
 									? getMetricsExplorerUrl({
@@ -203,6 +231,16 @@ function EntityMetrics<T>({
 									: undefined
 							}
 							metricsExplorerTestId={`open-metrics-explorer-${idx}`}
+							onExploreClick={(): void =>
+								logInfraExplorerNavigatedEvent({
+									entityType: category,
+									destination: 'metrics_explorer',
+									source: 'chart_compass_icon',
+									tab: view,
+									sourceKey: entityWidgetInfo[idx].title,
+									drawerDurationMsAtNavigation: getDrawerDurationMs(),
+								})
+							}
 						/>
 						<div className={styles.entityMetricsCard} ref={graphRef}>
 							{renderCardContent(query, idx)}

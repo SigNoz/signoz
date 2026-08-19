@@ -45,6 +45,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/pprof/nooppprof"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheus"
+	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheusv2"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/querier/signozquerier"
 	"github.com/SigNoz/signoz/pkg/sharder"
@@ -69,6 +70,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/SigNoz/signoz/pkg/web/noopweb"
@@ -227,6 +230,20 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddTelemetryTuplesFactory(sqlstore),
 		sqlmigration.NewAddTagRelationRankFactory(sqlstore, sqlschema),
 		sqlmigration.NewMigrateDashboardsV1ToV2Factory(sqlstore, sqlschema, dashboardStore, tagModule),
+		sqlmigration.NewFillDashboardMeterSourceFactory(sqlstore, dashboardStore),
+		sqlmigration.NewUpdateRoleTransactionGroupsFactory(),
+		sqlmigration.NewFillDashboardSpecCollectionsFactory(sqlstore, dashboardStore),
+		sqlmigration.NewScrubEmailChannelTransportFactory(sqlstore),
+		sqlmigration.NewAddDashboardTuplesFactory(sqlstore),
+		sqlmigration.NewRestructureSavedViewSpecFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddSavedViewTuplesFactory(sqlstore),
+		sqlmigration.NewFixSavedViewSelectedFieldsFactory(sqlstore),
+		sqlmigration.NewBackfillSavedViewRequestTypeFactory(sqlstore),
+		sqlmigration.NewRestructureAuthDomainConfigFactory(sqlstore),
+		sqlmigration.NewFixSavedViewSelectFieldsFactory(sqlstore),
+		sqlmigration.NewDeleteOrphanUserRolesFactory(),
+		sqlmigration.NewMigrateLambdaDashboardsFactory(),
+		sqlmigration.NewAddAuthDomainTuplesFactory(sqlstore),
 	)
 }
 
@@ -244,6 +261,7 @@ func NewTelemetryStoreProviderFactories() factory.NamedMap[factory.ProviderFacto
 func NewPrometheusProviderFactories(telemetryStore telemetrystore.TelemetryStore) factory.NamedMap[factory.ProviderFactory[prometheus.Prometheus, prometheus.Config]] {
 	return factory.MustNewNamedMap(
 		clickhouseprometheus.NewFactory(telemetryStore),
+		clickhouseprometheusv2.NewFactory(telemetryStore),
 	)
 }
 
@@ -285,9 +303,9 @@ func NewStatsReporterProviderFactories(aggregator statsreporter.Aggregator, orgG
 	)
 }
 
-func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, cache cache.Cache, flagger flagger.Flagger) factory.NamedMap[factory.ProviderFactory[querier.Querier, querier.Config]] {
+func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, promV2 prometheus.Prometheus, metadataStore telemetrytypes.MetadataStore, traceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation], aiTraceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation], logStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation], auditStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation], metricStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation], meterStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation], traceOperatorStmtBuilder qbtypes.TraceOperatorStatementBuilder, bucketCache querier.BucketCache, flagger flagger.Flagger) factory.NamedMap[factory.ProviderFactory[querier.Querier, querier.Config]] {
 	return factory.MustNewNamedMap(
-		signozquerier.NewFactory(telemetryStore, prometheus, cache, flagger),
+		signozquerier.NewFactory(telemetryStore, prometheus, promV2, metadataStore, traceStmtBuilder, aiTraceStmtBuilder, logStmtBuilder, auditStmtBuilder, metricStmtBuilder, meterStmtBuilder, traceOperatorStmtBuilder, bucketCache, flagger),
 	)
 }
 
@@ -300,6 +318,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			impluser.NewHandler(modules.UserSetter, modules.UserGetter),
 			implsession.NewHandler(modules.Session, globalConfig),
 			implauthdomain.NewHandler(modules.AuthDomain),
+			modules.AuthDomain,
 			implpreference.NewHandler(modules.Preference),
 			handlers.Global,
 			implpromote.NewHandler(modules.Promote),
@@ -311,6 +330,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.InfraMonitoring,
 			handlers.GatewayHandler,
 			handlers.Fields,
+			handlers.AIObservability,
 			handlers.AuthzHandler,
 			handlers.RawDataExport,
 			handlers.ZeusHandler,
@@ -326,6 +346,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.TraceDetail,
 			handlers.RulerHandler,
 			handlers.StatsHandler,
+			handlers.SavedView,
 		),
 	)
 }

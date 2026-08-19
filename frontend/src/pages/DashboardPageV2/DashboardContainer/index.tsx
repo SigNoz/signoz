@@ -19,11 +19,20 @@ import { resolveDashboardImage } from 'pages/DashboardPageV2/DashboardContainer/
 interface DashboardContainerProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
 	refetch: () => void;
+	/**
+	 * @deprecated
+	 * `canEditDashboardOverride` is a temporary solution to allow the dashboard to be view only.
+	 * This is only used for LLM Observability.
+	 * It will be removed in the future.
+	 *  TODO: @Ashwin / @Abhi — remove when the final solution is implemented.
+	 */
+	canEditDashboardOverride?: boolean;
 }
 
 function DashboardContainer({
 	dashboard,
 	refetch,
+	canEditDashboardOverride,
 }: DashboardContainerProps): JSX.Element {
 	const spec = dashboard.spec;
 	const image = resolveDashboardImage(dashboard.image);
@@ -45,10 +54,11 @@ function DashboardContainer({
 	// Seed during render (not an effect) so the first Panel render already sees the id —
 	// useDashboardFetchRequired throws on a missing id. setEditContext self-guards.
 	const setEditContext = useDashboardStore((s) => s.setEditContext);
+
 	setEditContext({
 		dashboardId: dashboard.id,
 		isLocked,
-		canEditDashboard,
+		canEditDashboard: canEditDashboardOverride ?? canEditDashboard,
 		refetch,
 	});
 

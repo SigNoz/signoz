@@ -30,6 +30,10 @@ body {
 	box-sizing: border-box;
 }
 
+.translate-safe {
+	display: contents;
+}
+
 // Respect user's reduced motion preference
 @media (prefers-reduced-motion: reduce) {
 	* {

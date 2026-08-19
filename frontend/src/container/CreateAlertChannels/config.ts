@@ -104,6 +104,7 @@ export enum ChannelType {
 	Pagerduty = 'pagerduty',
 	Opsgenie = 'opsgenie',
 	MsTeams = 'msteams',
+	GoogleChat = 'googlechat',
 }
 
 // LabelFilterStatement will be used for preparing filter conditions / matchers
@@ -121,6 +122,14 @@ export interface LabelFilterStatement {
 }
 
 export interface MsTeamsChannel extends Channel {
+	webhook_url?: string;
+	title?: string;
+	text?: string;
+}
+
+export interface GoogleChatChannel extends Channel {
+	// incoming webhook url of the google chat space, must be an
+	// https url on chat.googleapis.com
 	webhook_url?: string;
 	title?: string;
 	text?: string;

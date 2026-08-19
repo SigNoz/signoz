@@ -16,8 +16,8 @@ import { MetricAggregation } from 'types/api/v5/queryRange';
 import { ExtendedSelectOption } from 'types/common/select';
 import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 
-import { selectStyle } from '../QueryBuilderSearch/config';
-import OptionRenderer from '../QueryBuilderSearch/OptionRenderer';
+import { selectStyle } from '../QueryBuilderSearchV2/config';
+import OptionRenderer from '../OptionRenderer/OptionRenderer';
 
 import './MetricNameSelector.styles.scss';
 
@@ -34,7 +34,7 @@ export type MetricNameSelectorProps = {
 function getAttributeType(
 	metric: MetricsexplorertypesListMetricDTO,
 ): ATTRIBUTE_TYPES | '' {
-	return toAttributeType(metric.type, metric.isMonotonic);
+	return toAttributeType(metric.type, metric.isMonotonic, metric.temporality);
 }
 
 function createAutocompleteData(

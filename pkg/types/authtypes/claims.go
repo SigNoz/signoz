@@ -72,14 +72,6 @@ func (c *Claims) LogValue() slog.Value {
 	)
 }
 
-func (c *Claims) IsSelfAccess(id string) error {
-	if c.UserID == id {
-		return nil
-	}
-
-	return errors.NewForbiddenf(errors.CodeForbidden, "only the user/admin can access their own resource")
-}
-
 func (c *Claims) IdentityID() string {
 	if c.Principal == PrincipalUser {
 		return c.UserID

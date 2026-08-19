@@ -9,7 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
@@ -61,6 +61,33 @@ func compositeKeyFromLabels(labels map[string]string, groupBy []qbtypes.GroupByK
 		parts[i] = labels[key.Name]
 	}
 	return compositeKeyFromList(parts)
+}
+
+// intersectMap returns the entries of m whose key is present in keep (a new
+// map). keep's value type is irrelevant — only its keys are read — so a
+// per-group counts map (already filtered by the SQL push-down) can be passed
+// directly. Used to trim metadataMap to the status-matching groups.
+func intersectMap[V any, K any](m map[string]V, keep map[string]K) map[string]V {
+	out := make(map[string]V, len(m))
+	for k, v := range m {
+		if _, ok := keep[k]; ok {
+			out[k] = v
+		}
+	}
+	return out
+}
+
+// intersectRankedGroups returns the ranked groups whose compositeKey is present
+// in keep, preserving order. Keeps status-unmatched groups out of the ranked
+// page slots.
+func intersectRankedGroups[K any](groups []rankedGroup, keep map[string]K) []rankedGroup {
+	out := make([]rankedGroup, 0, len(groups))
+	for _, g := range groups {
+		if _, ok := keep[g.compositeKey]; ok {
+			out = append(out, g)
+		}
+	}
+	return out
 }
 
 // parseAndSortGroups extracts group label maps from a ScalarData response and
@@ -344,11 +371,11 @@ func alignedMetricWindow(startMs, endMs int64) (
 		flooredEndMs = flooredEndMs - (flooredEndMs % (adjustStep * 1000))
 	}
 
-	tsAdjustedStartMs, _, distributedTSTable, localTSTable := telemetrymetrics.WhichTSTableToUse(
+	tsAdjustedStartMs, _, distributedTSTable, localTSTable := metricstelemetryschema.WhichTSTableToUse(
 		samplesAdjustedStartMs, flooredEndMs, false, nil,
 	)
 
-	distributedSamplesTable, localSamplesTable := telemetrymetrics.WhichSamplesTableToUse(
+	distributedSamplesTable, localSamplesTable := metricstelemetryschema.WhichSamplesTableToUse(
 		samplesAdjustedStartMs, flooredEndMs,
 		metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, false, nil,
 	)
@@ -362,7 +389,7 @@ func alignedMetricWindow(startMs, endMs int64) (
 func (m *module) buildSamplesTblFingerprintSubQuery(metricNames []string, samplesTable string, flooredStart, flooredEnd uint64) *sqlbuilder.SelectBuilder {
 	fpSB := sqlbuilder.NewSelectBuilder()
 	fpSB.Select("DISTINCT fingerprint")
-	fpSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, samplesTable))
+	fpSB.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, samplesTable))
 	fpSB.Where(
 		fpSB.In("metric_name", sqlbuilder.List(metricNames)),
 		fpSB.GE("unix_milli", flooredStart),
@@ -376,7 +403,7 @@ func (m *module) buildSamplesTblFingerprintSubQuery(metricNames []string, sample
 func (m *module) buildReducedSamplesTblFingerprintSubQuery(metricNames []string, flooredStart, flooredEnd uint64) *sqlbuilder.SelectBuilder {
 	lastSB := sqlbuilder.NewSelectBuilder()
 	lastSB.Select("reduced_fingerprint")
-	lastSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.SamplesV4ReducedLastTableName))
+	lastSB.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, metricstelemetryschema.SamplesV4ReducedLastLocalTableName))
 	lastSB.Where(
 		lastSB.In("metric_name", sqlbuilder.List(metricNames)),
 		lastSB.GE("unix_milli", flooredStart),
@@ -385,7 +412,7 @@ func (m *module) buildReducedSamplesTblFingerprintSubQuery(metricNames []string,
 
 	sumSB := sqlbuilder.NewSelectBuilder()
 	sumSB.Select("reduced_fingerprint")
-	sumSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.SamplesV4ReducedSumTableName))
+	sumSB.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, metricstelemetryschema.SamplesV4ReducedSumLocalTableName))
 	sumSB.Where(
 		sumSB.In("metric_name", sqlbuilder.List(metricNames)),
 		sumSB.GE("unix_milli", flooredStart),
@@ -478,7 +505,7 @@ func (m *module) getEarliestMetricTime(ctx context.Context, metricNames []string
 
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("min(first_reported_unix_milli) AS min_first_reported")
-	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
+	sb.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, metricstelemetryschema.AttributesMetadataTableName))
 	sb.Where(sb.In("metric_name", sqlbuilder.List(metricNames)))
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -504,7 +531,7 @@ func (m *module) getMetricsExistence(ctx context.Context, metricNames []string) 
 
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("metric_name", "count(*) AS cnt")
-	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
+	sb.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, metricstelemetryschema.AttributesMetadataTableName))
 	sb.Where(sb.In("metric_name", sqlbuilder.List(metricNames)))
 	sb.GroupBy("metric_name")
 
@@ -549,7 +576,7 @@ func (m *module) getAttributesExistence(ctx context.Context, metricNames, attrNa
 	}
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("attr_name", "count(*) AS cnt")
-	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
+	sb.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, metricstelemetryschema.AttributesMetadataTableName))
 	sb.Where(
 		sb.In("metric_name", sqlbuilder.List(metricNames)),
 		sb.In("attr_name", sqlbuilder.List(attrNames)),
@@ -656,7 +683,7 @@ func (m *module) getMetadata(
 
 		rawSrc := sqlbuilder.NewSelectBuilder()
 		rawSrc.Select("labels", "unix_milli")
-		rawSrc.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTableName))
+		rawSrc.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, distributedTableName))
 		rawSrc.Where(
 			rawSrc.In("metric_name", sqlbuilder.List(metricNames)),
 			rawSrc.GE("unix_milli", tsAdjustedStartMs),
@@ -669,7 +696,7 @@ func (m *module) getMetadata(
 
 		reducedSrc := sqlbuilder.NewSelectBuilder()
 		reducedSrc.Select("labels", "unix_milli")
-		reducedSrc.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4ReducedTableName))
+		reducedSrc.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, metricstelemetryschema.TimeseriesV4ReducedTableName))
 		reducedSrc.Where(
 			reducedSrc.In("metric_name", sqlbuilder.List(metricNames)),
 			reducedSrc.GE("unix_milli", tsAdjustedStartMs),
@@ -683,7 +710,7 @@ func (m *module) getMetadata(
 		// Inner query reads over the union of raw + reduced series.
 		innerSB.From(innerSB.BuilderAs(sqlbuilder.UnionAll(rawSrc, reducedSrc), "series"))
 	} else {
-		innerSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTableName))
+		innerSB.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, distributedTableName))
 		innerSB.Where(
 			innerSB.In("metric_name", sqlbuilder.List(metricNames)),
 			innerSB.GE("unix_milli", tsAdjustedStartMs),
@@ -850,8 +877,10 @@ func (m *module) getPerGroupDistinctCounts(
 			valueExpr = fmt.Sprintf("(%s)", strings.Join(parts, ", "))
 		}
 
+		// Prefix the alias so it never collides with a groupBy col alias
+		// (e.g. clusters grouped by k8s.node.name, which is also counted).
 		selectCols = append(selectCols,
-			fmt.Sprintf("uniqExactIf(%s, %s != '') AS %s", valueExpr, extract, quoteIdentifier(attr)),
+			fmt.Sprintf("uniqExactIf(%s, %s != '') AS %s", valueExpr, extract, quoteIdentifier(fmt.Sprintf("__count_%s", attr))),
 		)
 	}
 	sb.Select(selectCols...)
@@ -870,7 +899,7 @@ func (m *module) getPerGroupDistinctCounts(
 
 		rawSrc := sqlbuilder.NewSelectBuilder()
 		rawSrc.Select("labels")
-		rawSrc.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTimeSeriesTbl))
+		rawSrc.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, distributedTimeSeriesTbl))
 		rawSrc.Where(
 			rawSrc.In("metric_name", sqlbuilder.List(metricNames)),
 			rawSrc.GE("unix_milli", tsAdjustedStartMs),
@@ -883,7 +912,7 @@ func (m *module) getPerGroupDistinctCounts(
 
 		reducedSrc := sqlbuilder.NewSelectBuilder()
 		reducedSrc.Select("labels")
-		reducedSrc.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV4ReducedTableName))
+		reducedSrc.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, metricstelemetryschema.TimeseriesV4ReducedTableName))
 		reducedSrc.Where(
 			reducedSrc.In("metric_name", sqlbuilder.List(metricNames)),
 			reducedSrc.GE("unix_milli", tsAdjustedStartMs),
@@ -896,7 +925,7 @@ func (m *module) getPerGroupDistinctCounts(
 
 		sb.From(sb.BuilderAs(sqlbuilder.UnionAll(rawSrc, reducedSrc), "series"))
 	} else {
-		sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTimeSeriesTbl))
+		sb.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, distributedTimeSeriesTbl))
 		sb.Where(
 			sb.In("metric_name", sqlbuilder.List(metricNames)),
 			sb.GE("unix_milli", tsAdjustedStartMs),

@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
@@ -23,7 +24,9 @@ jest.mock('api/common/logEvent', () => ({
 
 const mockUseIsAIAssistantEnabled = useIsAIAssistantEnabled as jest.Mock;
 
-function renderHeader(): void {
+function renderHeader(
+	props: Partial<ComponentProps<typeof Header>> = {},
+): void {
 	// AppLayout supplies the TooltipProvider in the app; the header is rendered bare here.
 	render(
 		<MemoryRouter>
@@ -33,6 +36,7 @@ function renderHeader(): void {
 					isSaving={false}
 					onSave={jest.fn()}
 					onClose={jest.fn()}
+					{...props}
 				/>
 			</TooltipProvider>
 		</MemoryRouter>,
@@ -65,5 +69,35 @@ describe('PanelEditor Header', () => {
 			screen.queryByRole('button', { name: 'Open Noz' }),
 		).not.toBeInTheDocument();
 		expect(screen.getByTestId('panel-editor-v2-save')).toBeInTheDocument();
+	});
+
+	it('keeps Save enabled even when there are no unsaved edits', () => {
+		mockUseIsAIAssistantEnabled.mockReturnValue(false);
+
+		renderHeader({ isDirty: false });
+
+		expect(screen.getByTestId('panel-editor-v2-save')).toBeEnabled();
+	});
+
+	it('disables Save only while read-only or saving', () => {
+		mockUseIsAIAssistantEnabled.mockReturnValue(false);
+
+		renderHeader({ isDirty: true, readOnly: true, readOnlyReason: 'Locked' });
+
+		expect(screen.getByTestId('panel-editor-v2-save')).toBeDisabled();
+	});
+
+	it('shows the Unsaved Changes badge only when there are unsaved edits', () => {
+		mockUseIsAIAssistantEnabled.mockReturnValue(false);
+
+		renderHeader({ isDirty: false });
+		expect(
+			screen.queryByTestId('panel-editor-v2-unsaved-badge'),
+		).not.toBeInTheDocument();
+
+		renderHeader({ isDirty: true });
+		expect(
+			screen.getByTestId('panel-editor-v2-unsaved-badge'),
+		).toBeInTheDocument();
 	});
 });
