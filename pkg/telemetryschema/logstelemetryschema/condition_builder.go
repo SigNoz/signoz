@@ -329,7 +329,7 @@ func (c *conditionBuilder) conditionForResolvedKey(
 	if err != nil || !legacyBodyJSONSearch {
 		return cond, err
 	}
-	return withBodyIndexPredicate(cond, bodyValueLiterals(operator, value), sb), nil
+	return withBodyIndexPredicate(cond, querybuilder.JSONComparisonLiterals(operator, value), sb), nil
 }
 
 // conditionForOperator renders the comparison itself, once the field expression and value have been

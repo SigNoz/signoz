@@ -95,19 +95,6 @@ func InferDataType(value any, operator qbtypes.FilterOperator, key *telemetrytyp
 	return closure(value, key)
 }
 
-// jsonEscapable reports whether a JSON encoder is free to rewrite r: `"` and `\` always, `/` by
-// PHP, `<` `>` `&` by Go, non-printable ASCII by Python's ensure_ascii. The legacy body holds the
-// producer's own text, so a literal spanning one of these may not be there to find.
-func jsonEscapable(r rune) bool {
-	return r < 0x20 || r > 0x7e || strings.ContainsRune(`"\/<>&`, r)
-}
-
-// jsonTextRuns splits s at every byte an encoder may rewrite. A body whose JSON holds s contains
-// each returned run verbatim, in order.
-func jsonTextRuns(s string) []string {
-	return strings.FieldsFunc(s, jsonEscapable)
-}
-
 // bodyPathLiterals returns one literal per component of key's JSON path, taking the quoting from
 // getBodyJSONPath so it matches however the path is written. A component holding a byte an encoder
 // may rewrite is dropped; JSON writes a parent first, so the order carries.
@@ -115,32 +102,11 @@ func bodyPathLiterals(key *telemetrytypes.TelemetryFieldKey) []string {
 	var literals []string
 	for _, part := range strings.Split(getBodyJSONPath(key), ".") {
 		literal := strings.TrimSuffix(part, "[*]")
-		if !strings.ContainsFunc(strings.Trim(literal, `"`), jsonEscapable) {
+		if !strings.ContainsFunc(strings.Trim(literal, `"`), querybuilder.JSONEscapable) {
 			literals = append(literals, literal)
 		}
 	}
 	return literals
-}
-
-// bodyValueLiterals returns the literals a comparison implies in the body text. Only string
-// comparisons qualify: a number is compared after JSONExtract parses it, which reads 1.23e2
-// as 123, so the digits of the filter value need not appear in the body at all.
-func bodyValueLiterals(operator qbtypes.FilterOperator, value any) []string {
-	str, ok := value.(string)
-	if !ok {
-		return nil
-	}
-	switch operator {
-	case qbtypes.FilterOperatorEqual, qbtypes.FilterOperatorContains:
-		return jsonTextRuns(str)
-	case qbtypes.FilterOperatorLike, qbtypes.FilterOperatorILike:
-		// the pattern's own wildcards split runs like the escapable bytes do; `\` is one of
-		// those, so pattern escapes dissolve with it (an escaped wildcard is merely not required)
-		return strings.FieldsFunc(str, func(r rune) bool {
-			return jsonEscapable(r) || r == '%' || r == '_'
-		})
-	}
-	return nil
 }
 
 // withBodyIndexPredicate ANDs onto cond the assertion that the raw body text holds the literals
