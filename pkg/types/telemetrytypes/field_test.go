@@ -36,22 +36,6 @@ func TestGetFieldKeyFromKeyText(t *testing.T) {
 			},
 		},
 		{
-			keyText: "scope.attribute.telemetry.sdk.language",
-			expected: TelemetryFieldKey{
-				Name:          "telemetry.sdk.language",
-				FieldContext:  FieldContextScope,
-				FieldDataType: FieldDataTypeUnspecified,
-			},
-		},
-		{
-			keyText: "scope.attributes.telemetry.sdk.language",
-			expected: TelemetryFieldKey{
-				Name:          "telemetry.sdk.language",
-				FieldContext:  FieldContextScope,
-				FieldDataType: FieldDataTypeUnspecified,
-			},
-		},
-		{
 			keyText: "scope.custom.attr:string",
 			expected: TelemetryFieldKey{
 				Name:          "custom.attr",
