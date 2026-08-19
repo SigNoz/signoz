@@ -82,6 +82,7 @@ function EntityLogsContent({
 	const { activeLog, selectedTab, handleSetActiveLog, handleCloseLogDetail } =
 		useLogDetailHandlers();
 
+	// TODO: Move away from using onAddToQuery after old drawer cleanup
 	const onAddToQuery = useCallback(
 		(fieldKey: string, fieldValue: string, operator: string): void => {
 			handleCloseLogDetail();
@@ -96,6 +97,21 @@ function EntityLogsContent({
 			const newUser = currentUser.trim()
 				? `${currentUser} AND ${partExpression}`
 				: partExpression;
+
+			querySearchOnRun(newUser);
+
+			logInfraDrawerFilterCustomizedEvent(category, 'logs', newUser, 'logs');
+		},
+		[userExpression, querySearchOnRun, handleCloseLogDetail, category],
+	);
+
+	const onApplyLogFilter = useCallback(
+		(expression: string): void => {
+			handleCloseLogDetail();
+
+			const newUser = userExpression.trim()
+				? `${userExpression} AND ${expression}`
+				: expression;
 
 			querySearchOnRun(newUser);
 
@@ -328,6 +344,7 @@ function EntityLogsContent({
 						selectedTab={selectedTab}
 						onAddToQuery={onAddToQuery}
 						onClickActionItem={onAddToQuery}
+						onApplyLogFilter={onApplyLogFilter}
 						onScrollToLog={handleScrollToLog}
 						handleOpenInExplorer={(e) => handleOpenInExplorer(e, activeLog)}
 						getContainer={(): HTMLElement =>

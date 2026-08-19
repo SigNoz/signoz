@@ -75,6 +75,7 @@ function LogDetailInner({
 	onScrollToLog,
 	handleOpenInExplorer,
 	getContainer,
+	onApplyLogFilter,
 }: LogDetailInnerProps): JSX.Element {
 	const initialContextQuery = useInitialQuery(log);
 	const [contextQuery, setContextQuery] = useState<Query | undefined>(
@@ -519,6 +520,7 @@ function LogDetailInner({
 						selectedOptions={options}
 						listViewPanelSelectedFields={listViewPanelSelectedFields}
 						handleChangeSelectedView={handleChangeSelectedView}
+						onApplyLogFilter={onApplyLogFilter}
 					/>
 				)}
 				{!isLogDetailsV2 && selectedView === VIEW_TYPES.JSON && (
