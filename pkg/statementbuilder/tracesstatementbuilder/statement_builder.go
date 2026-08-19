@@ -269,27 +269,32 @@ func adjustTraceKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*te
 
 		For example: trace_id (intrinsic), response_status_code (calculated).
 	*/
+	lookupIntrinsic := func(name string) (telemetrytypes.TelemetryFieldKey, bool) {
+		if f, ok := tracestelemetryschema.IntrinsicFields[name]; ok {
+			return f, true
+		}
+		if f, ok := tracestelemetryschema.CalculatedFields[name]; ok {
+			return f, true
+		}
+		if f, ok := tracestelemetryschema.IntrinsicFieldsDeprecated[name]; ok {
+			return f, true
+		}
+		if f, ok := tracestelemetryschema.CalculatedFieldsDeprecated[name]; ok {
+			return f, true
+		}
+		return telemetrytypes.TelemetryFieldKey{}, false
+	}
+
+	// Resolve against the context-qualified name first, then the bare name. The qualified lookup
+	// lets a scope-context key find the declared scope.name / scope.version intrinsic instead of
+	// the span field that shares its short name (e.g. {name, scope} is the scope's name).
 	var isIntrinsicOrCalculatedField bool
 	var intrinsicOrCalculatedField telemetrytypes.TelemetryFieldKey
-	// scope.name / scope.version are scope-context intrinsics, matched by their full name. A
-	// scope-context key resolves against them, but must not bind to a span-context intrinsic that
-	// shares only its short name (e.g. {name, scope} is the scope's name, not the span `name`
-	// column). The context-blind span<->attribute remapping of legacy fields is left untouched.
-	boundToScopeMismatch := func(f telemetrytypes.TelemetryFieldKey) bool {
-		return key.FieldContext == telemetrytypes.FieldContextScope && f.FieldContext != telemetrytypes.FieldContextScope
+	if key.FieldContext != telemetrytypes.FieldContextUnspecified {
+		intrinsicOrCalculatedField, isIntrinsicOrCalculatedField = lookupIntrinsic(key.FieldContext.StringValue() + "." + key.Name)
 	}
-	if f, ok := tracestelemetryschema.IntrinsicFields[key.Name]; ok && !boundToScopeMismatch(f) {
-		isIntrinsicOrCalculatedField = true
-		intrinsicOrCalculatedField = f
-	} else if f, ok := tracestelemetryschema.CalculatedFields[key.Name]; ok && !boundToScopeMismatch(f) {
-		isIntrinsicOrCalculatedField = true
-		intrinsicOrCalculatedField = f
-	} else if f, ok := tracestelemetryschema.IntrinsicFieldsDeprecated[key.Name]; ok && !boundToScopeMismatch(f) {
-		isIntrinsicOrCalculatedField = true
-		intrinsicOrCalculatedField = f
-	} else if f, ok := tracestelemetryschema.CalculatedFieldsDeprecated[key.Name]; ok && !boundToScopeMismatch(f) {
-		isIntrinsicOrCalculatedField = true
-		intrinsicOrCalculatedField = f
+	if !isIntrinsicOrCalculatedField {
+		intrinsicOrCalculatedField, isIntrinsicOrCalculatedField = lookupIntrinsic(key.Name)
 	}
 
 	if isIntrinsicOrCalculatedField {
