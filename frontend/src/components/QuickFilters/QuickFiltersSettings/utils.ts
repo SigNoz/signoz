@@ -7,17 +7,16 @@ import {
 import { SignalType } from 'components/QuickFilters/types';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
-import { DataSource } from 'types/common/queryBuilder';
 
-import { SIGNAL_DATA_SOURCE_MAP } from './constants';
+const SIGNAL_TO_FIELD_KEYS_SIGNAL: Record<SignalType, TelemetrytypesSignalDTO> =
+	{
+		[SignalType.LOGS]: TelemetrytypesSignalDTO.logs,
+		[SignalType.TRACES]: TelemetrytypesSignalDTO.traces,
+		[SignalType.EXCEPTIONS]: TelemetrytypesSignalDTO.traces,
+		[SignalType.API_MONITORING]: TelemetrytypesSignalDTO.traces,
+		[SignalType.METER_EXPLORER]: TelemetrytypesSignalDTO.metrics,
+	};
 
-const DATA_SOURCE_TO_SIGNAL: Record<DataSource, TelemetrytypesSignalDTO> = {
-	[DataSource.LOGS]: TelemetrytypesSignalDTO.logs,
-	[DataSource.TRACES]: TelemetrytypesSignalDTO.traces,
-	[DataSource.METRICS]: TelemetrytypesSignalDTO.metrics,
-};
-
-/** The saved type is sent as `tagType` to /v3/autocomplete/attribute_values, so v3 names win here. */
 const FIELD_CONTEXT_TO_ATTRIBUTE_TYPE: Partial<
 	Record<TelemetrytypesFieldContextDTO, string>
 > = {
@@ -38,18 +37,13 @@ const FIELD_DATA_TYPE_TO_ATTRIBUTE_DATA_TYPE: Partial<
 
 export const getFieldKeysSignal = (
 	signal: SignalType,
-): TelemetrytypesSignalDTO | undefined => {
-	const dataSource = SIGNAL_DATA_SOURCE_MAP[signal];
-	return dataSource ? DATA_SOURCE_TO_SIGNAL[dataSource] : undefined;
-};
+): TelemetrytypesSignalDTO => SIGNAL_TO_FIELD_KEYS_SIGNAL[signal];
 
-/** Contexts with no v3 equivalent (span, log, body) fall back to '', the intrinsic-field lookup path. */
 const toAttributeType = (
 	fieldContext: TelemetrytypesFieldContextDTO | undefined,
 ): string =>
 	(fieldContext && FIELD_CONTEXT_TO_ATTRIBUTE_TYPE[fieldContext]) || '';
 
-/** Absent or unrecognised types fall back to '', which v3 reads as unspecified. */
 const toAttributeDataType = (
 	fieldDataType: TelemetrytypesFieldDataTypeDTO | undefined,
 ): DataTypes =>
