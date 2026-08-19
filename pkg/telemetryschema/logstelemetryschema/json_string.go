@@ -109,18 +109,26 @@ func bodyPathLiterals(key *telemetrytypes.TelemetryFieldKey) []string {
 	return literals
 }
 
-// withBodyIndexPredicate ANDs onto cond the assertion that the raw body text holds the literals
-// in order; with no literals, cond is returned as is. ILike renders as LOWER(body) LIKE LOWER(?)
-// on the ClickHouse flavor — the expression both bloom filters index.
-func withBodyIndexPredicate(cond string, literals []string, sb *sqlbuilder.SelectBuilder) string {
+// bodyIndexPredicate asserts the raw body text holds the literals in order ("" for none). ILike
+// renders as LOWER(body) LIKE LOWER(?) on the ClickHouse flavor — the expression both bloom
+// filters index.
+func bodyIndexPredicate(literals []string, sb *sqlbuilder.SelectBuilder) string {
 	if len(literals) == 0 {
-		return cond
+		return ""
 	}
 	escaped := make([]string, 0, len(literals))
 	for _, literal := range literals {
 		escaped = append(escaped, querybuilder.ClickHouseLikePatternLiteral(literal))
 	}
-	return sb.And(cond, sb.ILike(LogsV2BodyColumn, "%"+strings.Join(escaped, "%")+"%"))
+	return sb.ILike(LogsV2BodyColumn, "%"+strings.Join(escaped, "%")+"%")
+}
+
+// withBodyIndexPredicate ANDs the literals' predicate onto cond; with none, cond is returned as is.
+func withBodyIndexPredicate(cond string, literals []string, sb *sqlbuilder.SelectBuilder) string {
+	if predicate := bodyIndexPredicate(literals, sb); predicate != "" {
+		return sb.And(cond, predicate)
+	}
+	return cond
 }
 
 func getBodyJSONPath(key *telemetrytypes.TelemetryFieldKey) string {

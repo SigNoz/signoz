@@ -126,20 +126,41 @@ func (c *conditionBuilder) conditionForArrayFunction(
 		return NewJSONConditionBuilder(key, valueType).buildArrayFunctionCondition(operator, needle, sb)
 	}
 
-	// legacy string-body path: type-matched array extraction, OR-ed with a scalar comparison
-	// for a scalar body value (coalesced to false so NOT has() matches missing-key rows).
+	return c.legacyArrayFunctionCondition(key, operator, needle, sb), nil
+}
+
+// legacyArrayFunctionCondition builds the has-family comparison over the plain body string, with
+// what it implies over the indexed LOWER(body): the path, since the extraction yields nothing for an
+// absent one, and each element, since it must appear in the text. The comparison decides the row.
+func (c *conditionBuilder) legacyArrayFunctionCondition(
+	key *telemetrytypes.TelemetryFieldKey,
+	operator qbtypes.FilterOperator,
+	needle any,
+	sb *sqlbuilder.SelectBuilder,
+) string {
+	// type-matched array extraction, OR-ed with a scalar comparison for a scalar body value
+	// (coalesced to false so NOT has() matches missing-key rows).
 	elemType := legacyElemType(needle)
 	arrayExpr := getBodyJSONArrayKey(key, elemType)
 	scalarExpr, scalarGuard, hasScalar := getBodyJSONScalarKey(key, elemType)
-	if list, ok := needle.([]any); ok {
-		vals := make([]any, len(list))
-		for i, v := range list {
-			vals[i] = legacyCoerceNeedle(v, elemType)
-		}
+
+	elements, isList := needle.([]any)
+	if !isList {
+		elements = []any{needle}
+	}
+	vals := make([]any, len(elements))
+	for i, v := range elements {
+		vals[i] = legacyCoerceNeedle(v, elemType)
+	}
+
+	var cond string
+	switch {
+	case isList:
 		// Pin the needle array type to the haystack; scalar fallback below coerces value-level.
 		arrayCond := fmt.Sprintf("%s(%s, %s)", operator.FunctionName(), arrayExpr, castNeedleArray(elemType, sb.Var(vals)))
 		if !hasScalar {
-			return arrayCond, nil
+			cond = arrayCond
+			break
 		}
 		var membership string
 		if operator == qbtypes.FilterOperatorHasAll {
@@ -151,14 +172,70 @@ func (c *conditionBuilder) conditionForArrayFunction(
 		} else {
 			membership = sb.In(scalarExpr, vals...)
 		}
-		return fmt.Sprintf("(%s OR ifNull(%s, false))", arrayCond, sb.And(membership, scalarGuard)), nil
+		cond = fmt.Sprintf("(%s OR ifNull(%s, false))", arrayCond, sb.And(membership, scalarGuard))
+	default:
+		arrayCond := fmt.Sprintf("%s(%s, %s)", operator.FunctionName(), arrayExpr, sb.Var(vals[0]))
+		if !hasScalar {
+			cond = arrayCond
+			break
+		}
+		cond = fmt.Sprintf("(%s OR ifNull(%s, false))", arrayCond, sb.And(sb.E(scalarExpr, vals[0]), scalarGuard))
 	}
-	typedNeedle := legacyCoerceNeedle(needle, elemType)
-	arrayCond := fmt.Sprintf("%s(%s, %s)", operator.FunctionName(), arrayExpr, sb.Var(typedNeedle))
-	if !hasScalar {
-		return arrayCond, nil
+
+	predicates := []string{cond}
+	if predicate := bodyIndexPredicate(bodyPathLiterals(key), sb); predicate != "" {
+		predicates = append(predicates, predicate)
 	}
-	return fmt.Sprintf("(%s OR ifNull(%s, false))", arrayCond, sb.And(sb.E(scalarExpr, typedNeedle), scalarGuard)), nil
+	// only strings imply text: the family compares at the element type it infers, so a quoted
+	// number is still a number here and its digits need not appear in the body
+	if elemType == telemetrytypes.FieldDataTypeString {
+		predicates = append(predicates, elementLiterals(operator, elements, sb)...)
+	}
+	if len(predicates) > 1 {
+		return sb.And(predicates...)
+	}
+	return cond
+}
+
+// elementLiterals returns what the elements of a has-family filter imply about the body text. has
+// and hasAll require every one, so each becomes its own predicate; hasAny requires only one, so the
+// arms are ORed - and an element yielding no literal leaves that OR unassertable.
+func elementLiterals(operator qbtypes.FilterOperator, elements []any, sb *sqlbuilder.SelectBuilder) []string {
+	if operator == qbtypes.FilterOperatorHasAny {
+		// resolve every element before binding anything: one unusable element voids the whole OR
+		runSets := make([][]string, 0, len(elements))
+		for _, v := range elements {
+			str, ok := v.(string)
+			if !ok {
+				return nil
+			}
+			runs := querybuilder.JSONTextRuns(str)
+			if len(runs) == 0 {
+				return nil
+			}
+			runSets = append(runSets, runs)
+		}
+		arms := make([]string, 0, len(runSets))
+		for _, runs := range runSets {
+			arms = append(arms, bodyIndexPredicate(runs, sb))
+		}
+		if len(arms) == 0 {
+			return nil
+		}
+		return []string{sb.Or(arms...)}
+	}
+
+	var predicates []string
+	for _, v := range elements {
+		str, ok := v.(string)
+		if !ok {
+			continue
+		}
+		if predicate := bodyIndexPredicate(querybuilder.JSONTextRuns(str), sb); predicate != "" {
+			predicates = append(predicates, predicate)
+		}
+	}
+	return predicates
 }
 
 // castNeedleArray pins an Int64 needle array to Array(Int64) so it matches the Array(Nullable(Int64))
