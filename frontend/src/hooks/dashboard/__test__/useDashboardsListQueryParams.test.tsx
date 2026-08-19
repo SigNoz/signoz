@@ -1,6 +1,6 @@
 import React from 'react';
-import { MemoryRouter } from 'react-router-dom';
 import { act, renderHook } from '@testing-library/react';
+import { TestRouter } from 'tests/router';
 
 import useDashboardsListQueryParams, {
 	DASHBOARDS_LIST_QUERY_PARAMS_STORAGE_KEY,
@@ -23,11 +23,7 @@ function createTestWrapper(
 	}: {
 		children: React.ReactNode;
 	}): JSX.Element {
-		return React.createElement(
-			MemoryRouter,
-			{ initialEntries: [initialUrl] },
-			children,
-		) as JSX.Element;
+		return <TestRouter initialRoute={initialUrl}>{children}</TestRouter>;
 	};
 }
 

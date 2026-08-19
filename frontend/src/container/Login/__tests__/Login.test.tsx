@@ -1,5 +1,5 @@
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { ErrorV2 } from 'types/api';
@@ -16,19 +16,12 @@ const CALLBACK_AUTHN_URL = 'https://sso.example.com/auth';
 const PASSWORD_AUTHN_ORG = 'password_authn_org';
 const PASSWORD_AUTHN_EMAIL = 'jest.test@signoz.io';
 
-jest.mock('lib/history', () => ({
-	__esModule: true,
-	default: {
-		push: jest.fn(),
-		location: {
-			search: '',
-		},
-	},
+jest.mock('lib/router/navigation', () => ({
+	...jest.requireActual('lib/router/navigation'),
+	navigate: jest.fn(),
 }));
 
-const mockHistoryPush = history.push as jest.MockedFunction<
-	typeof history.push
->;
+const mockNavigate = navigate as jest.MockedFunction<typeof navigate>;
 
 // Mock data
 const mockVersionSetupCompleted: Info = {
@@ -179,7 +172,7 @@ describe('Login Component', () => {
 			render(<Login />);
 
 			await waitFor(() => {
-				expect(mockHistoryPush).toHaveBeenCalledWith(ROUTES.SIGN_UP);
+				expect(mockNavigate).toHaveBeenCalledWith(ROUTES.SIGN_UP);
 			});
 		});
 
@@ -187,7 +180,7 @@ describe('Login Component', () => {
 			render(<Login />);
 
 			await waitFor(() => {
-				expect(mockHistoryPush).not.toHaveBeenCalled();
+				expect(mockNavigate).not.toHaveBeenCalled();
 			});
 		});
 
@@ -201,7 +194,7 @@ describe('Login Component', () => {
 			render(<Login />);
 
 			await waitFor(() => {
-				expect(mockHistoryPush).not.toHaveBeenCalled();
+				expect(mockNavigate).not.toHaveBeenCalled();
 			});
 		});
 	});

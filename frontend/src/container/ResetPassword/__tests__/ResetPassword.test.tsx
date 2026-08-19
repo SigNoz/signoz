@@ -1,19 +1,14 @@
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import ResetPassword from '../index';
 
 // Mock dependencies
-jest.mock('lib/history', () => ({
-	__esModule: true,
-	default: {
-		push: jest.fn(),
-		location: {
-			search: '?token=reset-token-123',
-		},
-	},
+jest.mock('lib/router/navigation', () => ({
+	...jest.requireActual('lib/router/navigation'),
+	navigate: jest.fn(),
 }));
 
 const mockSuccessNotification = jest.fn();
@@ -35,9 +30,7 @@ jest.mock('hooks/useNotifications', () => ({
 
 const RESET_PASSWORD_ENDPOINT = '*/api/v2/factor_password/reset';
 
-const mockHistoryPush = history.push as jest.MockedFunction<
-	typeof history.push
->;
+const mockNavigate = navigate as jest.MockedFunction<typeof navigate>;
 
 describe('ResetPassword Component', () => {
 	beforeEach(() => {
@@ -199,7 +192,7 @@ describe('ResetPassword Component', () => {
 
 			await waitFor(() => {
 				expect(mockSuccessNotification).toHaveBeenCalled();
-				expect(mockHistoryPush).toHaveBeenCalledWith(ROUTES.LOGIN);
+				expect(mockNavigate).toHaveBeenCalledWith(ROUTES.LOGIN);
 			});
 		});
 	});

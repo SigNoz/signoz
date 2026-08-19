@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-import { MemoryRouter, Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import { explorerView } from 'mocks-server/__mockdata__/explorer_views';
 import { server } from 'mocks-server/server';
@@ -15,19 +14,11 @@ jest.mock('hooks/useHandleExplorerTabChange', () => ({
 	}),
 }));
 
-jest.mock('react-router-dom', () => {
-	const ROUTES = jest.requireActual('constants/routes').default;
-	return {
-		...jest.requireActual('react-router-dom'),
-		useLocation: jest.fn().mockReturnValue({
-			pathname: ROUTES.TRACES_SAVE_VIEWS,
-		}),
-	};
-});
-
 describe('SaveView', () => {
 	it('should render the SaveView component', async () => {
-		render(<SaveView />);
+		render(<SaveView />, undefined, {
+			initialRoute: ROUTES.TRACES_SAVE_VIEWS,
+		});
 		await expect(screen.findByText('Table View')).resolves.toBeInTheDocument();
 
 		const savedViews = screen.getAllByRole('row');
@@ -45,13 +36,9 @@ describe('SaveView', () => {
 	});
 
 	it('explorer icon should take the user to the related explorer page', async () => {
-		render(
-			<MemoryRouter initialEntries={[ROUTES.TRACES_SAVE_VIEWS]}>
-				<Route path={ROUTES.TRACES_SAVE_VIEWS}>
-					<SaveView />
-				</Route>
-			</MemoryRouter>,
-		);
+		render(<SaveView />, undefined, {
+			initialRoute: ROUTES.TRACES_SAVE_VIEWS,
+		});
 
 		await expect(screen.findByText('Table View')).resolves.toBeInTheDocument();
 
@@ -71,7 +58,9 @@ describe('SaveView', () => {
 	});
 
 	it('should render the SaveView component with a search input', async () => {
-		render(<SaveView />);
+		render(<SaveView />, undefined, {
+			initialRoute: ROUTES.TRACES_SAVE_VIEWS,
+		});
 		const searchInput = screen.getByPlaceholderText('Search for views...');
 		await expect(screen.findByText('Table View')).resolves.toBeInTheDocument();
 
@@ -112,7 +101,9 @@ describe('SaveView', () => {
 					),
 			),
 		);
-		render(<SaveView />);
+		render(<SaveView />, undefined, {
+			initialRoute: ROUTES.TRACES_SAVE_VIEWS,
+		});
 
 		const editButton = await screen.findAllByTestId('edit-view');
 		fireEvent.click(editButton[0]);
@@ -141,7 +132,9 @@ describe('SaveView', () => {
 			),
 		);
 
-		render(<SaveView />);
+		render(<SaveView />, undefined, {
+			initialRoute: ROUTES.TRACES_SAVE_VIEWS,
+		});
 
 		const deleteButton = await screen.findAllByTestId('delete-view');
 		fireEvent.click(deleteButton[0]);
@@ -168,7 +161,9 @@ describe('SaveView', () => {
 				),
 			),
 		);
-		render(<SaveView />);
+		render(<SaveView />, undefined, {
+			initialRoute: ROUTES.TRACES_SAVE_VIEWS,
+		});
 
 		expect(screen.getByText('No data')).toBeInTheDocument();
 	});

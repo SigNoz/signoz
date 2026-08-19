@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import * as appContextHooks from 'providers/App/App';
+import { TestRouter } from 'tests/router';
 import { LicenseEvent } from 'types/api/licensesV3/getActive';
 import uPlot from 'uplot';
 
@@ -291,7 +291,7 @@ const renderEntityMetrics = (overrides = {}): any => {
 	};
 
 	return render(
-		<MemoryRouter>
+		<TestRouter>
 			<TooltipProvider>
 				<EntityMetrics
 					entity={defaultProps.entity}
@@ -302,7 +302,7 @@ const renderEntityMetrics = (overrides = {}): any => {
 					category={defaultProps.category}
 				/>
 			</TooltipProvider>
-		</MemoryRouter>,
+		</TestRouter>,
 	);
 };
 

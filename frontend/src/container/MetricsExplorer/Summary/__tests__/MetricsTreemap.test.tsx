@@ -1,9 +1,9 @@
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import { MetricsexplorertypesTreemapModeDTO } from 'api/generated/services/sigNoz.schemas';
 import store from 'store';
+import { TestRouter } from 'tests/router';
 
 import MetricsTreemap from '../MetricsTreemap';
 
@@ -42,7 +42,7 @@ const mockData = [
 describe('MetricsTreemap', () => {
 	it('renders treemap with data correctly', () => {
 		render(
-			<MemoryRouter>
+			<TestRouter>
 				<Provider store={store}>
 					<MetricsTreemap
 						isLoading={false}
@@ -56,7 +56,7 @@ describe('MetricsTreemap', () => {
 						setHeatmapView={jest.fn()}
 					/>
 				</Provider>
-			</MemoryRouter>,
+			</TestRouter>,
 		);
 
 		expect(screen.getByText('Proportion View')).toBeInTheDocument();
@@ -64,7 +64,7 @@ describe('MetricsTreemap', () => {
 
 	it('shows loading state', () => {
 		render(
-			<MemoryRouter>
+			<TestRouter>
 				<Provider store={store}>
 					<MetricsTreemap
 						isLoading
@@ -78,7 +78,7 @@ describe('MetricsTreemap', () => {
 						setHeatmapView={jest.fn()}
 					/>
 				</Provider>
-			</MemoryRouter>,
+			</TestRouter>,
 		);
 
 		expect(
@@ -88,7 +88,7 @@ describe('MetricsTreemap', () => {
 
 	it('shows error state', () => {
 		render(
-			<MemoryRouter>
+			<TestRouter>
 				<Provider store={store}>
 					<MetricsTreemap
 						isLoading={false}
@@ -102,7 +102,7 @@ describe('MetricsTreemap', () => {
 						setHeatmapView={jest.fn()}
 					/>
 				</Provider>
-			</MemoryRouter>,
+			</TestRouter>,
 		);
 
 		expect(screen.getByTestId('metrics-treemap-error-state')).toBeInTheDocument();
@@ -115,7 +115,7 @@ describe('MetricsTreemap', () => {
 
 	it('shows empty state when no data', () => {
 		render(
-			<MemoryRouter>
+			<TestRouter>
 				<Provider store={store}>
 					<MetricsTreemap
 						isLoading={false}
@@ -126,7 +126,7 @@ describe('MetricsTreemap', () => {
 						setHeatmapView={jest.fn()}
 					/>
 				</Provider>
-			</MemoryRouter>,
+			</TestRouter>,
 		);
 
 		expect(screen.getByTestId('metrics-treemap-empty-state')).toBeInTheDocument();

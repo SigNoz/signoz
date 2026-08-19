@@ -62,15 +62,6 @@ jest.mock('store/actions', () => {
 	};
 });
 
-jest.mock('react-router-dom-v5-compat', () => ({
-	...jest.requireActual('react-router-dom-v5-compat'),
-	useSearchParams: jest.fn(() => {
-		const searchParams = new URLSearchParams();
-
-		return [searchParams, jest.fn()];
-	}),
-}));
-
 // Mock the Redux store's getState method to return updated global time
 const store = jest.requireActual('store').default;
 const originalGetState = store.getState;

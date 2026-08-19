@@ -1,8 +1,6 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 import { render, screen } from '@testing-library/react';
 import {
 	MetrictypesTemporalityDTO,
@@ -16,6 +14,7 @@ import * as appContextHooks from 'providers/App/App';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 import * as timezoneHooks from 'providers/Timezone';
 import store from 'store';
+import { TestRouter } from 'tests/router';
 import { LicenseEvent } from 'types/api/licensesV3/getActive';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
@@ -24,7 +23,6 @@ import Explorer from '../Explorer';
 import * as useGetMetricsHooks from '../utils';
 import { MOCK_METRIC_METADATA } from './testUtils';
 
-const mockSetSearchParams = jest.fn();
 const queryClient = new QueryClient();
 const mockUpdateAllQueriesOperators = jest
 	.fn()
@@ -48,14 +46,6 @@ const mockUseQueryBuilderData = {
 	isDefaultQuery: jest.fn(),
 };
 
-jest.mock('react-router-dom-v5-compat', () => {
-	const actual = jest.requireActual('react-router-dom-v5-compat');
-	return {
-		...actual,
-		useSearchParams: jest.fn(),
-		useNavigationType: (): any => 'PUSH',
-	};
-});
 jest.mock('hooks/useDimensions', () => ({
 	useResizeObserver: (): { width: number; height: number } => ({
 		width: 800,
@@ -141,16 +131,16 @@ jest
 
 const Y_AXIS_UNIT_SELECTOR_TEST_ID = 'y-axis-unit-selector';
 
-function renderExplorer(): void {
+function renderExplorer(initialRoute = '/'): void {
 	render(
 		<QueryClientProvider client={queryClient}>
-			<MemoryRouter>
+			<TestRouter initialRoute={initialRoute}>
 				<Provider store={store}>
 					<ErrorModalProvider>
 						<Explorer />
 					</ErrorModalProvider>
 				</Provider>
-			</MemoryRouter>
+			</TestRouter>
 		</QueryClientProvider>,
 	);
 }
@@ -161,34 +151,26 @@ describe('Explorer', () => {
 	});
 
 	it('should enable one chart per query toggle when oneChartPerQuery=true in URL', () => {
-		(useSearchParams as jest.Mock).mockReturnValue([
-			new URLSearchParams({ isOneChartPerQueryEnabled: 'true' }),
-			mockSetSearchParams,
-		]);
 		jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 			isLoading: false,
 			isError: false,
 			metrics: [MOCK_METRIC_METADATA, MOCK_METRIC_METADATA],
 		});
 
-		renderExplorer();
+		renderExplorer('/?isOneChartPerQueryEnabled=true');
 
 		const toggle = screen.getByRole('switch');
 		expect(toggle).toBeChecked();
 	});
 
 	it('should disable one chart per query toggle when oneChartPerQuery=false in URL', () => {
-		(useSearchParams as jest.Mock).mockReturnValue([
-			new URLSearchParams({ isOneChartPerQueryEnabled: 'false' }),
-			mockSetSearchParams,
-		]);
 		jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 			isLoading: false,
 			isError: false,
 			metrics: [MOCK_METRIC_METADATA, MOCK_METRIC_METADATA],
 		});
 
-		renderExplorer();
+		renderExplorer('/?isOneChartPerQueryEnabled=false');
 
 		const toggle = screen.getByRole('switch');
 		expect(toggle).not.toBeChecked();
@@ -208,17 +190,13 @@ describe('Explorer', () => {
 	});
 
 	it('should not render y axis unit selector for mutliple metrics with same unit', () => {
-		(useSearchParams as jest.Mock).mockReturnValueOnce([
-			new URLSearchParams({ isOneChartPerQueryEnabled: 'true' }),
-			mockSetSearchParams,
-		]);
 		jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 			isLoading: false,
 			isError: false,
 			metrics: [MOCK_METRIC_METADATA, MOCK_METRIC_METADATA],
 		});
 
-		renderExplorer();
+		renderExplorer('/?isOneChartPerQueryEnabled=true');
 
 		const yAxisUnitSelector = screen.queryByTestId(Y_AXIS_UNIT_SELECTOR_TEST_ID);
 		expect(yAxisUnitSelector).not.toBeInTheDocument();
@@ -255,12 +233,7 @@ describe('Explorer', () => {
 			],
 		});
 
-		(useSearchParams as jest.Mock).mockReturnValue([
-			new URLSearchParams({ isOneChartPerQueryEnabled: 'false' }),
-			mockSetSearchParams,
-		]);
-
-		renderExplorer();
+		renderExplorer('/?isOneChartPerQueryEnabled=false');
 
 		const oneChartPerQueryToggle = screen.getByRole('switch');
 		expect(oneChartPerQueryToggle).toBeChecked();
@@ -372,12 +345,7 @@ describe('Explorer', () => {
 			metrics: [metricWithNoUnit, metricWithNoUnit],
 		});
 
-		(useSearchParams as jest.Mock).mockReturnValue([
-			new URLSearchParams({ isOneChartPerQueryEnabled: 'false' }),
-			mockSetSearchParams,
-		]);
-
-		renderExplorer();
+		renderExplorer('/?isOneChartPerQueryEnabled=false');
 
 		const oneChartPerQueryToggle = screen.getByRole('switch');
 		// Toggle should be enabled (not forced/disabled) since both metrics
@@ -390,10 +358,6 @@ describe('Explorer', () => {
 		const EMPTY_STATE_TEXT = 'Select a metric and run a query to see the results';
 
 		it('should show empty state when no metric is selected', () => {
-			(useSearchParams as jest.Mock).mockReturnValue([
-				new URLSearchParams({}),
-				mockSetSearchParams,
-			]);
 			jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 				isLoading: false,
 				isError: false,
@@ -409,10 +373,6 @@ describe('Explorer', () => {
 		});
 
 		it('should not show empty state when saved view has v5 aggregations format', () => {
-			(useSearchParams as jest.Mock).mockReturnValue([
-				new URLSearchParams({}),
-				mockSetSearchParams,
-			]);
 			jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 				isLoading: false,
 				isError: false,
@@ -456,10 +416,6 @@ describe('Explorer', () => {
 		});
 
 		it('should not show empty state when query uses v3 aggregateAttribute format', () => {
-			(useSearchParams as jest.Mock).mockReturnValue([
-				new URLSearchParams({}),
-				mockSetSearchParams,
-			]);
 			jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 				isLoading: false,
 				isError: false,

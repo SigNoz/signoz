@@ -1,8 +1,8 @@
 import type { ComponentProps } from 'react';
-import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from 'tests/test-utils';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
+import { TestRouter } from 'tests/router';
 
 import Header from '../Header';
 
@@ -29,7 +29,7 @@ function renderHeader(
 ): void {
 	// AppLayout supplies the TooltipProvider in the app; the header is rendered bare here.
 	render(
-		<MemoryRouter>
+		<TestRouter>
 			<TooltipProvider>
 				<Header
 					isDirty={false}
@@ -39,7 +39,7 @@ function renderHeader(
 					{...props}
 				/>
 			</TooltipProvider>
-		</MemoryRouter>,
+		</TestRouter>,
 	);
 }
 

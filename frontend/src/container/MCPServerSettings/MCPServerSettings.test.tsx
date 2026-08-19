@@ -4,7 +4,7 @@ import { render, screen, userEvent } from 'tests/test-utils';
 import MCPServerSettings from './MCPServerSettings';
 
 const mockCopyToClipboard = jest.fn();
-const mockHistoryPush = jest.fn();
+const mockNavigate = jest.fn();
 const mockUseGetGlobalConfig = jest.fn();
 const mockUseGetHosts = jest.fn();
 const mockUseGetTenantLicense = jest.fn();
@@ -37,12 +37,9 @@ jest.mock('@signozhq/ui/sonner', () => ({
 	},
 }));
 
-jest.mock('lib/history', () => ({
-	__esModule: true,
-	default: {
-		push: (...args: unknown[]): unknown => mockHistoryPush(...args),
-		location: { pathname: '/', search: '', hash: '', state: null },
-	},
+jest.mock('lib/router/navigation', () => ({
+	...jest.requireActual('lib/router/navigation'),
+	navigate: (...args: unknown[]): unknown => mockNavigate(...args),
 }));
 
 jest.mock('utils/basePath', () => ({
@@ -182,7 +179,7 @@ describe('MCPServerSettings', () => {
 
 		await user.click(screen.getByText('Create service account'));
 
-		expect(mockHistoryPush).toHaveBeenCalledWith(
+		expect(mockNavigate).toHaveBeenCalledWith(
 			'/settings/service-accounts?create-sa=true',
 		);
 	});

@@ -1,7 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
-import { CompatRouter } from 'react-router-dom-v5-compat';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
@@ -10,6 +8,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { fromPerses } from 'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { TestRouter } from 'tests/router';
 
 import { usePanelEditorDraft } from 'pages/DashboardPage/DashboardContainer/PanelEditor/hooks/usePanelEditorDraft';
 
@@ -17,11 +16,16 @@ import { useViewPanelMode } from '../ViewPanelModal/useViewPanelMode';
 import { useViewPanel } from '../hooks/useViewPanel';
 
 // jest.config maps the real hook to a no-op mock; this suite needs real navigation.
-jest.mock('hooks/useSafeNavigate', () =>
-	jest
-		.requireActual('tests/browser-history-safe-navigate')
-		.createBrowserHistorySafeNavigateMock(),
-);
+jest.mock('hooks/useSafeNavigate', () => {
+	const { navigate } = jest.requireActual('lib/router/navigation');
+	return {
+		useSafeNavigate: (): unknown => ({
+			safeNavigate: (to: string, opts?: { replace?: boolean }): void => {
+				navigate(to, { replace: opts?.replace });
+			},
+		}),
+	};
+});
 
 jest.mock('pages/DashboardPage/DashboardContainer/hooks/usePanelQuery', () => ({
 	usePanelQuery: (): unknown => ({
@@ -200,13 +204,11 @@ const INITIAL_ROUTE = '/dashboard/dash-1';
 const renderHarness = (): void => {
 	window.history.replaceState(null, '', INITIAL_ROUTE);
 	render(
-		<MemoryRouter initialEntries={[INITIAL_ROUTE]}>
-			<CompatRouter>
-				<QueryBuilderProvider>
-					<Harness />
-				</QueryBuilderProvider>
-			</CompatRouter>
-		</MemoryRouter>,
+		<TestRouter initialRoute="/dashboard/dash-1">
+			<QueryBuilderProvider>
+				<Harness />
+			</QueryBuilderProvider>
+		</TestRouter>,
 	);
 };
 

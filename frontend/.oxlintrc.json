@@ -603,7 +603,7 @@
         "src/hooks/useSafeNavigate.ts",
         "src/hooks/useNavigationBlocker.ts",
         "src/lib/history.ts",
-        "src/tests/test-utils.tsx"
+        "src/tests/router.tsx"
       ],
       "rules": {
         "signoz/no-direct-react-router-import": "off"

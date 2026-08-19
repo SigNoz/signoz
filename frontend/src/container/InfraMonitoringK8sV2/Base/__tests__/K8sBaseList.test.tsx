@@ -2,8 +2,6 @@ import React from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
-import { MemoryRouter as MemoryRouterV5 } from 'react-router-dom-v5-compat';
 import { VirtuosoMockContext } from 'react-virtuoso';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -19,6 +17,7 @@ import {
 import { AppProvider } from 'providers/App/App';
 import TimezoneProvider from 'providers/Timezone';
 import store from 'store';
+import { TestRouter } from 'tests/router';
 import APIError from 'types/api/error';
 import { openInNewTab } from 'utils/navigation';
 
@@ -191,33 +190,28 @@ function renderComponent<
 	});
 
 	return render(
-		<MemoryRouter>
-			<MemoryRouterV5>
-				<TimezoneProvider>
-					<QueryClientProvider client={queryClient}>
-						<AppProvider>
-							<Provider store={store}>
-								<NuqsTestingAdapter
-									searchParams={queryParams}
-									onUrlUpdate={onUrlUpdate}
+		<TestRouter>
+			<TimezoneProvider>
+				<QueryClientProvider client={queryClient}>
+					<AppProvider>
+						<Provider store={store}>
+							<NuqsTestingAdapter searchParams={queryParams} onUrlUpdate={onUrlUpdate}>
+								<VirtuosoMockContext.Provider
+									value={{ viewportHeight: 800, itemHeight: 50 }}
 								>
-									<VirtuosoMockContext.Provider
-										value={{ viewportHeight: 800, itemHeight: 50 }}
-									>
-										<TooltipProvider>
-											<K8sBaseList<T, TItemKey>
-												{...props}
-												detailsQueryKeyPrefix={detailsQueryKeyPrefix}
-											/>
-										</TooltipProvider>
-									</VirtuosoMockContext.Provider>
-								</NuqsTestingAdapter>
-							</Provider>
-						</AppProvider>
-					</QueryClientProvider>
-				</TimezoneProvider>
-			</MemoryRouterV5>
-		</MemoryRouter>,
+									<TooltipProvider>
+										<K8sBaseList<T, TItemKey>
+											{...props}
+											detailsQueryKeyPrefix={detailsQueryKeyPrefix}
+										/>
+									</TooltipProvider>
+								</VirtuosoMockContext.Provider>
+							</NuqsTestingAdapter>
+						</Provider>
+					</AppProvider>
+				</QueryClientProvider>
+			</TimezoneProvider>
+		</TestRouter>,
 	);
 }
 

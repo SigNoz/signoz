@@ -1,7 +1,6 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
@@ -10,6 +9,7 @@ import {
 } from 'container/CreateAlertV2/context/constants';
 import { buildInitialAlertDef } from 'container/CreateAlertV2/context/utils';
 import store from 'store';
+import { TestRouter } from 'tests/router';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { EQueryType } from 'types/common/dashboard';
 
@@ -130,11 +130,11 @@ const renderChartPreview = (): ReturnType<typeof render> =>
 	render(
 		<Provider store={store}>
 			<QueryClientProvider client={queryClient}>
-				<MemoryRouter>
+				<TestRouter>
 					<CreateAlertProvider initialAlertType={AlertTypes.METRICS_BASED_ALERT}>
 						<ChartPreview alertDef={mockAlertDef} />
 					</CreateAlertProvider>
-				</MemoryRouter>
+				</TestRouter>
 			</QueryClientProvider>
 		</Provider>,
 	);

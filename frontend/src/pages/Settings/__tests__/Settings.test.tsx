@@ -10,12 +10,6 @@ jest.mock('components/MarkdownRenderer/MarkdownRenderer', () => ({
 		children,
 }));
 
-jest.mock('lib/history', () => ({
-	push: jest.fn(),
-	listen: jest.fn(() => jest.fn()),
-	location: { pathname: '/settings', search: '' },
-}));
-
 const getCloudAdminOverrides = (): any => ({
 	activeLicense: {
 		key: 'test-key',

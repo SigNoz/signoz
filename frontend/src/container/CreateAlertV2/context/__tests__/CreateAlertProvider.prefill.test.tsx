@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { MemoryRouter, useHistory } from 'react-router-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { navigate } from 'lib/router/navigation';
+import { TestRouter } from 'tests/router';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import { INITIAL_CREATE_ALERT_STATE } from '../constants';
@@ -45,13 +46,13 @@ function renderWithSearch(search: string): void {
 		defaultOptions: { queries: { retry: false } },
 	});
 	render(
-		<MemoryRouter initialEntries={[`/alerts/new${search}`]}>
+		<TestRouter initialRoute={`/alerts/new${search}`}>
 			<QueryClientProvider client={queryClient}>
 				<CreateAlertProvider initialAlertType={AlertTypes.METRICS_BASED_ALERT}>
 					<Probe />
 				</CreateAlertProvider>
 			</QueryClientProvider>
-		</MemoryRouter>,
+		</TestRouter>,
 	);
 }
 
@@ -115,15 +116,14 @@ describe('CreateAlertProvider — URL-declared prefill (issue #5291)', () => {
 // rewrites location.search after the alert loads, which used to re-run the prefill
 // effect and RESET the loaded threshold back to 0.
 function SearchMutator(): JSX.Element {
-	const routerHistory = useHistory();
 	return (
 		<button
 			type="button"
 			data-testid="mutate-search"
 			onClick={(): void =>
-				routerHistory.replace(
-					'/alerts/overview?compositeQuery=normalized&ruleId=r1',
-				)
+				navigate('/alerts/overview?compositeQuery=normalized&ruleId=r1', {
+					replace: true,
+				})
 			}
 		>
 			change search
@@ -151,7 +151,7 @@ describe('CreateAlertProvider — edit mode ignores URL prefill', () => {
 			defaultOptions: { queries: { retry: false } },
 		});
 		render(
-			<MemoryRouter initialEntries={['/alerts/overview?ruleId=r1']}>
+			<TestRouter initialRoute="/alerts/overview?ruleId=r1">
 				<QueryClientProvider client={queryClient}>
 					<CreateAlertProvider
 						initialAlertType={AlertTypes.METRICS_BASED_ALERT}
@@ -163,7 +163,7 @@ describe('CreateAlertProvider — edit mode ignores URL prefill', () => {
 						<SearchMutator />
 					</CreateAlertProvider>
 				</QueryClientProvider>
-			</MemoryRouter>,
+			</TestRouter>,
 		);
 
 		expect(screen.getByTestId('threshold-value')).toHaveTextContent('245');
