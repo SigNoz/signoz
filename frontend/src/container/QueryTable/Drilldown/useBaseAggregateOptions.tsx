@@ -6,6 +6,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import useUpdatedQuery from 'container/GridCardLayout/useResolveQuery';
 import { processContextLinks } from 'container/NewWidget/RightContainer/ContextLinks/utils';
 import useContextVariables from 'hooks/dashboard/useContextVariables';
+import { useNotifications } from 'hooks/useNotifications';
 import ContextMenu from 'periscope/components/ContextMenu';
 import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { ContextLinksData } from 'types/api/dashboard/getAll';
@@ -50,23 +51,25 @@ const useBaseAggregateOptions = ({
 	const { getUpdatedQuery, isLoading: isResolveQueryLoading } =
 		useUpdatedQuery();
 	const { dashboardData } = useDashboardStore();
+	const { notifications } = useNotifications();
 
 	useEffect(() => {
 		if (!aggregateData) {
 			return;
 		}
-		const resolveQuery = async (): Promise<void> => {
-			const updatedQuery = await getUpdatedQuery({
-				widgetConfig: {
-					query,
-					panelTypes: panelType || PANEL_TYPES.TIME_SERIES,
-					timePreferance: 'GLOBAL_TIME',
-				},
-				dashboardData,
+		getUpdatedQuery({
+			widgetConfig: {
+				query,
+				panelTypes: panelType || PANEL_TYPES.TIME_SERIES,
+				timePreferance: 'GLOBAL_TIME',
+			},
+			dashboardData,
+		})
+			.then(setResolvedQuery)
+			.catch(() => {
+				setResolvedQuery(query);
+				notifications.error({ message: 'Unable to resolve variables' });
 			});
-			setResolvedQuery(updatedQuery);
-		};
-		resolveQuery();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [query, aggregateData, panelType]);
 
