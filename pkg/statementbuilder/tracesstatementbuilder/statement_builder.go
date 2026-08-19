@@ -262,10 +262,13 @@ func adjustTraceKeys(keys map[string][]*telemetrytypes.TelemetryFieldKey, query 
 // adjustTraceKey resolves a single TelemetryFieldKey against the keys map.
 func adjustTraceKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) []string {
 
-	// Scope keys are resolved entirely by the field mapper's scope handling. The intrinsic
-	// and calculated field tables are all span-context, so matching a scope key against them
-	// by name alone would wrongly rewrite e.g. {name, scope} to the span `name` column.
-	// Skip the intrinsic override and let resolution keep the key in scope.
+	// Scope keys must not take the intrinsic/calculated override path. That lookup keys on
+	// name alone (IntrinsicFields[key.Name]) and the trace intrinsics are span-context, so a
+	// scope key like {name, scope} matches the span `name` intrinsic. The override applies it
+	// via OverrideMetadataFrom, which copies context/type but not Name — so it can only flip
+	// the context to span, never produce the declared scope path (name -> scope.name). Pass a
+	// nil intrinsic so AdjustKey uses its metadata path (which does set Name) and the field
+	// mapper's scope handling resolves the rest.
 	if key.FieldContext == telemetrytypes.FieldContextScope {
 		return querybuilder.AdjustKey(key, keys, nil)
 	}
