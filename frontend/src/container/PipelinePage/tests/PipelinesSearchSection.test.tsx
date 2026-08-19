@@ -1,24 +1,24 @@
 import { I18nextProvider } from 'react-i18next';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import i18n from 'ReactI18';
 import store from 'store';
+import { TestRouter } from 'tests/router';
 
 import PipelinesSearchSection from '../Layouts/Pipeline/PipelinesSearchSection';
 
 describe('PipelinePage container test', () => {
 	it('should render PipelinesSearchSection section', () => {
 		const { asFragment } = render(
-			<MemoryRouter>
+			<TestRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
 						<PipelinesSearchSection setPipelineSearchValue={jest.fn()} />
 					</I18nextProvider>
 				</Provider>
-			</MemoryRouter>,
+			</TestRouter>,
 		);
 		expect(asFragment()).toMatchSnapshot();
 	});
@@ -26,13 +26,13 @@ describe('PipelinePage container test', () => {
 	it.skip('should handle search', async () => {
 		const setPipelineValue = jest.fn();
 		const { getByPlaceholderText, container } = render(
-			<MemoryRouter>
+			<TestRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
 						<PipelinesSearchSection setPipelineSearchValue={setPipelineValue} />
 					</I18nextProvider>
 				</Provider>
-			</MemoryRouter>,
+			</TestRouter>,
 		);
 
 		const searchInput = getByPlaceholderText('search_pipeline_placeholder');

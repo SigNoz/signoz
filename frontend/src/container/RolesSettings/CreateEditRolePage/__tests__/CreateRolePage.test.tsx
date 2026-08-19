@@ -3,7 +3,7 @@ import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
-import { safeNavigateMock } from '__tests__/safeNavigateMock';
+import { getCurrentLocation } from 'lib/router/navigation';
 
 import CreateEditRolePage from '../CreateEditRolePage';
 
@@ -128,7 +128,7 @@ describe('CreateRolePage', () => {
 			await user.click(cancelBtn);
 
 			await waitFor(() => {
-				expect(safeNavigateMock).toHaveBeenCalledWith(ROUTES.ROLES_SETTINGS);
+				expect(getCurrentLocation().pathname).toBe(ROUTES.ROLES_SETTINGS);
 			});
 		});
 	});
@@ -172,7 +172,7 @@ describe('CreateRolePage', () => {
 			});
 
 			await waitFor(() => {
-				expect(safeNavigateMock).toHaveBeenCalledWith(ROUTES.ROLES_SETTINGS);
+				expect(getCurrentLocation().pathname).toBe(ROUTES.ROLES_SETTINGS);
 			});
 		});
 	});
