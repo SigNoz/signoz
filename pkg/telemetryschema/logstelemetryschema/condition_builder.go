@@ -3,7 +3,6 @@ package logstelemetryschema
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
@@ -38,9 +37,9 @@ func (c *conditionBuilder) conditionForSearch(
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) ([]string, []string, error) {
-	// QuoteMeta + LOWER on both sides, not (?i): a literal match that can still use the
-	// LOWER(toString(body_v2)) skip index.
-	term := regexp.QuoteMeta(fmt.Sprintf("%v", value))
+	// A literal substring match, LOWER on both sides (what ILike renders) rather than (?i),
+	// so the lowered skip indexes still match the expression.
+	pattern := "%" + escapeLikeLiteral(fmt.Sprintf("%v", value)) + "%"
 
 	useJSONBody := c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID))
 
@@ -51,18 +50,20 @@ func (c *conditionBuilder) conditionForSearch(
 		case schema.ColumnTypeEnumMap:
 			keysExpr := fmt.Sprintf("mapKeys(%s)", col.Name)
 			valsExpr := fmt.Sprintf("mapValues(%s)", col.Name)
-			// match() needs a String array; cast non-string map values first.
+			// arrayExists over mapValues matches no index expression - only has/hasAny do - so these
+			// arms cannot prune whatever the case folding, and carry no companion.
+			// LIKE needs a String array; cast non-string map values first.
 			if mc, ok := col.Type.(schema.MapColumnType); ok && mc.ValueType.GetType() != schema.ColumnTypeEnumString {
 				valsExpr = fmt.Sprintf("arrayMap(x -> toString(x), mapValues(%s))", col.Name)
 			}
 			conditions = append(conditions, sb.Or(
-				fmt.Sprintf("arrayExists(x -> match(LOWER(x), LOWER(%s)), %s)", sb.Var(term), keysExpr),
-				fmt.Sprintf("arrayExists(x -> match(LOWER(x), LOWER(%s)), %s)", sb.Var(term), valsExpr),
+				fmt.Sprintf("arrayExists(x -> %s, %s)", sb.ILike("x", pattern), keysExpr),
+				fmt.Sprintf("arrayExists(x -> %s, %s)", sb.ILike("x", pattern), valsExpr),
 			))
 		case schema.ColumnTypeEnumJSON:
-			conditions = append(conditions, fmt.Sprintf("match(LOWER(toString(%s)), LOWER(%s))", col.Name, sb.Var(term)))
+			conditions = append(conditions, sb.ILike(fmt.Sprintf("toString(%s)", col.Name), pattern))
 		case schema.ColumnTypeEnumString, schema.ColumnTypeEnumLowCardinality:
-			conditions = append(conditions, fmt.Sprintf("match(LOWER(%s), LOWER(%s))", col.Name, sb.Var(term)))
+			conditions = append(conditions, sb.ILike(col.Name, pattern))
 		default:
 			return nil, nil, errors.NewInternalf(errors.CodeInternal, "search does not support the column type of %q", col.Name)
 		}
