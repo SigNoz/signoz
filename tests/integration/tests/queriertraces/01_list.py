@@ -1415,7 +1415,8 @@ def test_traces_list_with_scope_filter(
     insert_traces(traces)
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    start_ms, end_ms = _query_window(now)
+    start_ms = int((now - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=1)).timestamp() * 1000)
 
     response = make_query_request(
         signoz,
