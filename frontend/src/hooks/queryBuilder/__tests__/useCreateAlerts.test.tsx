@@ -141,6 +141,9 @@ describe('useCreateAlerts', () => {
 
 		const composite = getCompositeQueryFromLastOpen();
 		expect(composite.queryType).toBe(EQueryType.PROM);
+
+		const [url] = (window.open as jest.Mock).mock.calls[0];
+		expect(url).not.toContain('panelTypes');
 	});
 
 	it('falls back to the mapped queryType when widget has no queryType', () => {
