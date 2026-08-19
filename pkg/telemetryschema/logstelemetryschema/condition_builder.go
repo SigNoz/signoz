@@ -269,6 +269,9 @@ func (c *conditionBuilder) conditionForResolvedKey(
 		return "", err
 	}
 
+	useJSONBody := c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID))
+	legacyBodyJSONSearch := isBodyJSONSearch(key, columns) && !useJSONBody
+
 	// has/hasAny/hasAll take the body-JSON path, not the normal operator paths.
 	if operator.IsArrayFunctionOperator() {
 		return c.conditionForArrayFunction(ctx, orgID, key, operator, value, columns, sb)
@@ -276,7 +279,7 @@ func (c *conditionBuilder) conditionForResolvedKey(
 
 	// TODO(Piyush): Update this to support multiple JSON columns based on evolutions
 	for _, column := range columns {
-		if column.Type.GetType() == schema.ColumnTypeEnumJSON && isBodyJSONSearch(key, columns) && c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) && key.Name != messageSubField {
+		if column.Type.GetType() == schema.ColumnTypeEnumJSON && isBodyJSONSearch(key, columns) && useJSONBody && key.Name != messageSubField {
 			valueType, value := InferDataType(value, operator, key)
 			if len(key.JSONPlan) == 0 {
 				keyCopy := telemetrytypes.NewTelemetryFieldKey(key.Name, key.FieldContext, key.FieldDataType)
@@ -305,19 +308,83 @@ func (c *conditionBuilder) conditionForResolvedKey(
 	}
 
 	// Check if this is a body JSON search (legacy string-body path, JSON flag off).
-	if isBodyJSONSearch(key, columns) && !c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
-		fieldExpression, value = GetBodyJSONKey(ctx, key, operator, value)
+	if legacyBodyJSONSearch {
+		return c.conditionForLegacyBodyJSON(ctx, orgID, startNs, endNs, key, operator, value, columns, sb)
 	}
 
 	fieldExpression, value = querybuilder.DataTypeCollisionHandledFieldName(key, value, fieldExpression, operator)
 
+	return c.conditionForOperator(ctx, orgID, startNs, endNs, key, operator, value, columns, fieldExpression, sb)
+}
+
+// conditionForLegacyBodyJSON renders a filter over a path inside the plain string body, with what it
+// implies over the indexed LOWER(body) - nothing such a filter compares matches an index expression.
+func (c *conditionBuilder) conditionForLegacyBodyJSON(
+	ctx context.Context,
+	orgID valuer.UUID,
+	startNs, endNs uint64,
+	key *telemetrytypes.TelemetryFieldKey,
+	operator qbtypes.FilterOperator,
+	value any,
+	columns []*schema.Column,
+	sb *sqlbuilder.SelectBuilder,
+) (string, error) {
+	if operator == qbtypes.FilterOperatorExists || operator == qbtypes.FilterOperatorNotExists {
+		exists := GetBodyJSONKeyForExists(ctx, key, operator, value)
+		if operator == qbtypes.FilterOperatorNotExists {
+			// matches the rows without the path, which say nothing about the body text
+			return "NOT " + exists, nil
+		}
+		if predicate := bodyIndexPredicate(bodyPathLiterals(key), sb); predicate != "" {
+			return sb.And(exists, predicate), nil
+		}
+		return exists, nil
+	}
+
+	fieldExpression, value := GetBodyJSONKey(ctx, key, operator, value)
+	fieldExpression, value = querybuilder.DataTypeCollisionHandledFieldName(key, value, fieldExpression, operator)
+	cond, err := c.conditionForOperator(ctx, orgID, startNs, endNs, key, operator, value, columns, fieldExpression, sb)
+	if err != nil {
+		return "", err
+	}
+	if predicate := bodyIndexPredicate(bodyValueLiterals(operator, value), sb); predicate != "" {
+		return sb.And(cond, predicate), nil
+	}
+	return cond, nil
+}
+
+// conditionForOperator renders the comparison itself, once the field expression and value have been
+// resolved for the column the key landed on.
+func (c *conditionBuilder) conditionForOperator(
+	ctx context.Context,
+	orgID valuer.UUID,
+	startNs, endNs uint64,
+	key *telemetrytypes.TelemetryFieldKey,
+	operator qbtypes.FilterOperator,
+	value any,
+	columns []*schema.Column,
+	fieldExpression string,
+	sb *sqlbuilder.SelectBuilder,
+) (string, error) {
+
 	// make use of case insensitive index for body
 	if fieldExpression == "body" || fieldExpression == messageSubColumn {
 		switch operator {
+		case qbtypes.FilterOperatorEqual:
+			// Bloom filters index lower(body), not the column; `=` still decides the row.
+			if _, ok := value.(string); ok && fieldExpression == LogsV2BodyColumn {
+				return sb.And(
+					sb.E(fieldExpression, value),
+					fmt.Sprintf("LOWER(%s) = LOWER(%s)", fieldExpression, sb.Var(value)),
+				), nil
+			}
 		case qbtypes.FilterOperatorLike:
-			return sb.ILike(fieldExpression, value), nil
-		case qbtypes.FilterOperatorNotLike:
-			return sb.NotILike(fieldExpression, value), nil
+			if _, ok := value.(string); ok && fieldExpression == LogsV2BodyColumn {
+				return sb.And(
+					sb.Like(fieldExpression, value),
+					sb.ILike(fieldExpression, value),
+				), nil
+			}
 		case qbtypes.FilterOperatorRegexp:
 			// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
 			// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
@@ -356,12 +423,6 @@ func (c *conditionBuilder) conditionForResolvedKey(
 		return sb.NotILike(fieldExpression, value), nil
 
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
-		if isBodyJSONSearch(key, columns) && !c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
-			if operator == qbtypes.FilterOperatorExists {
-				return GetBodyJSONKeyForExists(ctx, key, operator, value), nil
-			}
-			return "NOT " + GetBodyJSONKeyForExists(ctx, key, operator, value), nil
-		}
 		pred, err := querybuilder.ExistsExpression(columns, key, startNs, endNs, fieldExpression, operator == qbtypes.FilterOperatorExists)
 		if err != nil {
 			return "", err

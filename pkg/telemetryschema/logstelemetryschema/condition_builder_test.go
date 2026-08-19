@@ -2,6 +2,7 @@ package logstelemetryschema
 
 import (
 	"context"
+	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"testing"
 	"time"
 
@@ -168,9 +169,9 @@ func TestConditionFor(t *testing.T) {
 				FieldContext: telemetrytypes.FieldContextLog,
 			},
 			operator:      qbtypes.FilterOperatorEqual,
-			value:         "error message",
-			expectedSQL:   "body = ?",
-			expectedArgs:  []any{"error message"},
+			value:         "Error Message",
+			expectedSQL:   "(body = ? AND LOWER(body) = LOWER(?))",
+			expectedArgs:  []any{"Error Message", "Error Message"},
 			expectedError: nil,
 		},
 		{
@@ -207,8 +208,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorLike,
 			value:         "%error%",
-			expectedSQL:   "LOWER(body) LIKE LOWER(?)",
-			expectedArgs:  []any{"%error%"},
+			expectedSQL:   "(body LIKE ? AND LOWER(body) LIKE LOWER(?))",
+			expectedArgs:  []any{"%error%", "%error%"},
 			expectedError: nil,
 		},
 		{
@@ -219,7 +220,7 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorNotLike,
 			value:         "%error%",
-			expectedSQL:   "LOWER(body) NOT LIKE LOWER(?)",
+			expectedSQL:   "body NOT LIKE ?",
 			expectedArgs:  []any{"%error%"},
 			expectedError: nil,
 		},
@@ -619,8 +620,8 @@ func TestConditionForMultipleKeys(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorEqual,
 			value:         "error message",
-			expectedSQL:   "body = ? AND severity_text = ?",
-			expectedArgs:  []any{"error message", "error message"},
+			expectedSQL:   "(body = ? AND LOWER(body) = LOWER(?)) AND severity_text = ?",
+			expectedArgs:  []any{"error message", "error message", "error message"},
 			expectedError: nil,
 		},
 	}
@@ -906,8 +907,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 	}
 }
 
-// IN on the body column routes each value back through the `=` path; the SQL it produces
-// must stay what the shared IN handling produced before, including for a mixed-type list.
+// IN on the body column routes each value back through the `=` path, so every arm picks up
+// the lower(body) companion — including the values a mixed-type list stringifies.
 func TestConditionForBodyIn(t *testing.T) {
 	testCases := []struct {
 		name         string
@@ -918,14 +919,14 @@ func TestConditionForBodyIn(t *testing.T) {
 		{
 			name:         "strings",
 			values:       []any{"alpha", "beta"},
-			expectedSQL:  "(body = ? OR body = ?)",
-			expectedArgs: []any{"alpha", "beta"},
+			expectedSQL:  "((body = ? AND LOWER(body) = LOWER(?)) OR (body = ? AND LOWER(body) = LOWER(?)))",
+			expectedArgs: []any{"alpha", "alpha", "beta", "beta"},
 		},
 		{
 			name:         "mixed types are stringified before they reach the column",
 			values:       []any{"alpha", float64(1), true},
-			expectedSQL:  "(body = ? OR body = ? OR body = ?)",
-			expectedArgs: []any{"alpha", "1", "true"},
+			expectedSQL:  "((body = ? AND LOWER(body) = LOWER(?)) OR (body = ? AND LOWER(body) = LOWER(?)) OR (body = ? AND LOWER(body) = LOWER(?)))",
+			expectedArgs: []any{"alpha", "alpha", "1", "1", "true", "true"},
 		},
 	}
 
@@ -951,6 +952,185 @@ func TestConditionForBodyIn(t *testing.T) {
 			sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 			assert.Contains(t, sql, tc.expectedSQL)
 			assert.Equal(t, tc.expectedArgs, args)
+		})
+	}
+}
+
+// ClickHouse treats `\` as an escape only before `%`, `_` and itself.
+func TestLikePatternLiterals(t *testing.T) {
+	testCases := []struct {
+		name     string
+		pattern  string
+		expected []string
+	}{
+		{"contains wraps a plain value", "%error%", []string{"error"}},
+		{"wildcards split runs", "%foo%bar%", []string{"foo", "bar"}},
+		{"underscore splits too", "a_b", []string{"a", "b"}},
+		{"escaped wildcards stay literal", `%100\%\_off%`, []string{`100%_off`}},
+		{"escaped backslash collapses", `%C:\\tmp%`, []string{`C:\tmp`}},
+		{"backslash before other chars is literal", `%C:\tmp%`, []string{`C:\tmp`}},
+		{"trailing backslash is literal", `%path\`, []string{`path\`}},
+		{"no literals at all", "%_%", nil},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expected, likePatternLiterals(tc.pattern))
+		})
+	}
+}
+
+// The literals have to hold whichever encoder wrote the body, so the runs stop at every byte
+// one of them may rewrite.
+func TestJSONTextRuns(t *testing.T) {
+	testCases := []struct {
+		name     string
+		value    string
+		expected []string
+	}{
+		{"plain text is one run", "checkout failed", []string{"checkout failed"}},
+		{"a run with nothing to split on is kept whole", "abc", []string{"abc"}},
+		{"quote splits the run", `say "hello there"`, []string{"say ", "hello there"}},
+		{"slash splits the run, PHP escapes it", "/api/v1/users", []string{"api", "v1", "users"}},
+		{"ampersand and angles split, Go escapes them", "a&b<c>dddd", []string{"a", "b", "c", "dddd"}},
+		{"non-ascii splits, Python escapes it", "order café latte", []string{"order caf", " latte"}},
+		{"newline splits", "line one\nline two", []string{"line one", "line two"}},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expected, jsonTextRuns(tc.value))
+		})
+	}
+}
+
+func TestBodyPathLiterals(t *testing.T) {
+	testCases := []struct {
+		name     string
+		key      string
+		expected []string
+	}{
+		{"quoting lifts a short name over the ngram size", "id", []string{`"id"`}},
+		{"one literal per component", "response.status_code", []string{`"response"`, `"status_code"`}},
+		{"array suffixes are trimmed", "items[*].sku", []string{`"items"`, `"sku"`}},
+		{"every component is carried", "a.b.count", []string{`"a"`, `"b"`, `"count"`}},
+		{"a component an encoder may rewrite is dropped", "user/name.email", []string{`"email"`}},
+		{"nothing usable", "us/er.na/me", nil},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			key := telemetrytypes.NewTelemetryFieldKey(tc.key, telemetrytypes.FieldContextBody, telemetrytypes.FieldDataTypeUnspecified)
+			assert.Equal(t, tc.expected, bodyPathLiterals(key))
+		})
+	}
+}
+
+// The path literals ride on the existence assertion and the value literals on the comparison, so
+// a filter carries each at most once. Nothing rides on a negated operator: it matches rows
+// without the path, which say nothing about the body text.
+func TestLegacyBodyIndexPredicates(t *testing.T) {
+	testCases := []struct {
+		name         string
+		key          string
+		operator     qbtypes.FilterOperator
+		value        any
+		expected     string
+		expectedArgs []any
+	}{
+		{
+			name:         "exists carries the path",
+			key:          "user_id",
+			operator:     qbtypes.FilterOperatorExists,
+			expected:     `LOWER(body) LIKE LOWER(?)`,
+			expectedArgs: []any{`%"user\_id"%`},
+		},
+		{
+			name:         "equality carries the value",
+			key:          "status",
+			operator:     qbtypes.FilterOperatorEqual,
+			value:        "timeout_error",
+			expected:     `LOWER(body) LIKE LOWER(?)`,
+			expectedArgs: []any{`%timeout\_error%`},
+		},
+		{
+			name:         "contains carries the value",
+			key:          "message",
+			operator:     qbtypes.FilterOperatorContains,
+			value:        "upstream refused",
+			expected:     `LOWER(body) LIKE LOWER(?)`,
+			expectedArgs: []any{`%upstream refused%`},
+		},
+		{
+			name:         "like carries one literal per run of the pattern",
+			key:          "message",
+			operator:     qbtypes.FilterOperatorLike,
+			value:        "%conn%refused%",
+			expected:     `LOWER(body) LIKE LOWER(?)`,
+			expectedArgs: []any{`%conn%refused%`},
+		},
+		{
+			name:     "a number carries nothing",
+			key:      "user_id",
+			operator: qbtypes.FilterOperatorEqual,
+			value:    int64(123),
+		},
+		{
+			// IN delegates to `=`, so the literal rides each arm rather than the IN itself
+			name:         "IN carries one literal per arm it delegates to",
+			key:          "status",
+			operator:     qbtypes.FilterOperatorIn,
+			value:        []any{"timeout_error", "conn_refused"},
+			expected:     `(JSON_VALUE(body, '$."status"') = ? AND LOWER(body) LIKE LOWER(?)) OR (JSON_VALUE(body, '$."status"') = ? AND LOWER(body) LIKE LOWER(?))`,
+			expectedArgs: []any{`%timeout\_error%`, `%conn\_refused%`},
+		},
+		{
+			name:     "not equal carries nothing",
+			key:      "status",
+			operator: qbtypes.FilterOperatorNotEqual,
+			value:    "timeout_error",
+		},
+		{
+			name:     "not exists carries nothing",
+			key:      "user_id",
+			operator: qbtypes.FilterOperatorNotExists,
+		},
+		{
+			name:     "not contains carries nothing",
+			key:      "message",
+			operator: qbtypes.FilterOperatorNotContains,
+			value:    "upstream refused",
+		},
+	}
+
+	fl := flaggertest.New(t)
+	cb := NewConditionBuilder(NewFieldMapper(fl), fl)
+	ctx := context.Background()
+	columns := []*schema.Column{logsV2Columns[LogsV2BodyColumn]}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			sb := sqlbuilder.NewSelectBuilder()
+			sb.Select("1").From("t")
+			key := telemetrytypes.NewTelemetryFieldKey(tc.key, telemetrytypes.FieldContextBody, telemetrytypes.FieldDataTypeUnspecified)
+
+			var cond string
+			var err error
+			if tc.operator.IsArrayFunctionOperator() {
+				cond, err = cb.conditionForArrayFunction(ctx, valuer.UUID{}, key, tc.operator, tc.value, columns, sb)
+			} else {
+				cond, err = cb.conditionForLegacyBodyJSON(ctx, valuer.UUID{}, 0, 0, key, tc.operator, tc.value, columns, sb)
+			}
+			require.NoError(t, err)
+
+			sb.Where(cond)
+			query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+			if tc.expected == "" {
+				assert.NotContains(t, query, "LOWER(body) LIKE")
+				return
+			}
+			assert.Contains(t, query, tc.expected)
+			assert.Subset(t, args, tc.expectedArgs)
 		})
 	}
 }
