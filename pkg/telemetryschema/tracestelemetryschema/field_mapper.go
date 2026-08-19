@@ -616,11 +616,11 @@ func (m *fieldMapper) CandidateKeys(ctx context.Context, _ valuer.UUID, field *t
 	// No metadata: synthesize per context.
 	switch field.FieldContext {
 	case telemetrytypes.FieldContextUnspecified:
-		return append(querybuilder.SynthesizeKeys(field, value), synthScopeAttributeKey(field))
+		return querybuilder.SynthesizeKeys(field, value)
 	case telemetrytypes.FieldContextSpan, telemetrytypes.FieldContextTrace:
-		// honored as-is: the stripped name lives in the attribute or scope attribute maps
+		// honored as-is: the stripped name lives in the attribute maps
 		stripped := telemetrytypes.NewTelemetryFieldKey(field.Name, telemetrytypes.FieldContextUnspecified, field.FieldDataType)
-		return append(querybuilder.SynthesizeKeys(stripped, value), synthScopeAttributeKey(stripped))
+		return querybuilder.SynthesizeKeys(stripped, value)
 	case telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextResource:
 		// strict context honored as-is: stripped interpretation first, literal spelling second
 		literal := telemetrytypes.NewTelemetryFieldKey(field.FieldContext.StringValue()+"."+field.Name, field.FieldContext, field.FieldDataType)

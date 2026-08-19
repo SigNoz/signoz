@@ -518,13 +518,12 @@ func TestConditionForSynthesizedKeys(t *testing.T) {
 		conds, warnings, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, noMatches, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorExists, nil, sb)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, warnings)
-		assert.Len(t, conds, 4, "exists should fan out to string/number/bool, plus scope attribute")
+		assert.Len(t, conds, 3, "exists should fan out to string/number/bool")
 		sb.Where(sb.Or(conds...))
 		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 		assert.Contains(t, sql, "mapContains(attributes_string, 'exception.type')")
 		assert.Contains(t, sql, "mapContains(attributes_number, 'exception.type')")
 		assert.Contains(t, sql, "mapContains(attributes_bool, 'exception.type')")
-		assert.Contains(t, sql, "scope.attributes.`exception.type` IS NOT NULL")
 	})
 
 	t.Run("qualified data type honored without fanout", func(t *testing.T) {
@@ -532,11 +531,10 @@ func TestConditionForSynthesizedKeys(t *testing.T) {
 		key := telemetrytypes.TelemetryFieldKey{Name: "custom.key", FieldDataType: telemetrytypes.FieldDataTypeString}
 		conds, _, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, noMatches, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorEqual, "v", sb)
 		assert.NoError(t, err)
-		assert.Len(t, conds, 2, "qualified data type skips attribute-type fanout, but the scope attribute candidate still applies")
-		sb.Where(sb.Or(conds...))
+		assert.Len(t, conds, 1)
+		sb.Where(conds...)
 		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 		assert.Contains(t, sql, "attributes_string['custom.key']")
-		assert.Contains(t, sql, "scope.attributes.`custom.key`")
 	})
 
 	t.Run("bare intrinsic column resolves to the column, not synthesized attributes", func(t *testing.T) {
@@ -598,11 +596,10 @@ func TestConditionForSynthesizedKeys(t *testing.T) {
 		conds, warnings, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, noMatches, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorEqual, "v", sb)
 		require.NoError(t, err)
 		assert.NotEmpty(t, warnings)
-		require.Len(t, conds, 2, "stripped attribute candidate, plus the scope attribute candidate")
-		sb.Where(sb.Or(conds...))
+		require.Len(t, conds, 1)
+		sb.Where(conds...)
 		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 		assert.Contains(t, sql, "attributes_string['custom.attr']")
-		assert.Contains(t, sql, "scope.attributes.`custom.attr`")
 		assert.NotContains(t, sql, "span.custom.attr")
 	})
 
