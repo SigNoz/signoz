@@ -269,32 +269,14 @@ func adjustTraceKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*te
 
 		For example: trace_id (intrinsic), response_status_code (calculated).
 	*/
-	lookupIntrinsic := func(name string) (telemetrytypes.TelemetryFieldKey, bool) {
-		if f, ok := tracestelemetryschema.IntrinsicFields[name]; ok {
-			return f, true
-		}
-		if f, ok := tracestelemetryschema.CalculatedFields[name]; ok {
-			return f, true
-		}
-		if f, ok := tracestelemetryschema.IntrinsicFieldsDeprecated[name]; ok {
-			return f, true
-		}
-		if f, ok := tracestelemetryschema.CalculatedFieldsDeprecated[name]; ok {
-			return f, true
-		}
-		return telemetrytypes.TelemetryFieldKey{}, false
-	}
-
-	// Resolve against the context-qualified name first, then the bare name. The qualified lookup
-	// lets a scope-context key find the declared scope.name / scope.version intrinsic instead of
-	// the span field that shares its short name (e.g. {name, scope} is the scope's name).
+	// Resolve against the context-qualified name first, then the bare name since that can be instrinsic field e.g. scope.name.
 	var isIntrinsicOrCalculatedField bool
 	var intrinsicOrCalculatedField telemetrytypes.TelemetryFieldKey
 	if key.FieldContext != telemetrytypes.FieldContextUnspecified {
-		intrinsicOrCalculatedField, isIntrinsicOrCalculatedField = lookupIntrinsic(key.FieldContext.StringValue() + "." + key.Name)
+		intrinsicOrCalculatedField, isIntrinsicOrCalculatedField = lookupIntrinsicOrCalculatedField(key.FieldContext.StringValue() + "." + key.Name)
 	}
 	if !isIntrinsicOrCalculatedField {
-		intrinsicOrCalculatedField, isIntrinsicOrCalculatedField = lookupIntrinsic(key.Name)
+		intrinsicOrCalculatedField, isIntrinsicOrCalculatedField = lookupIntrinsicOrCalculatedField(key.Name)
 	}
 
 	if isIntrinsicOrCalculatedField {
@@ -304,6 +286,24 @@ func adjustTraceKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*te
 	}
 
 	return actions
+}
+
+// lookupIntrinsicOrCalculatedField returns the intrinsic or calculated field registered under
+// name, across the current and deprecated tables.
+func lookupIntrinsicOrCalculatedField(name string) (telemetrytypes.TelemetryFieldKey, bool) {
+	if f, ok := tracestelemetryschema.IntrinsicFields[name]; ok {
+		return f, true
+	}
+	if f, ok := tracestelemetryschema.CalculatedFields[name]; ok {
+		return f, true
+	}
+	if f, ok := tracestelemetryschema.IntrinsicFieldsDeprecated[name]; ok {
+		return f, true
+	}
+	if f, ok := tracestelemetryschema.CalculatedFieldsDeprecated[name]; ok {
+		return f, true
+	}
+	return telemetrytypes.TelemetryFieldKey{}, false
 }
 
 // buildListQuery builds a query for list panel type.
