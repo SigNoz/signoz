@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { TestRouter } from 'tests/router';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { Channels } from 'types/api/channels/getAll';
 
@@ -128,13 +128,13 @@ const createTestQueryClient = (): QueryClient =>
 const renderAlertThreshold = (): ReturnType<typeof render> => {
 	const queryClient = createTestQueryClient();
 	return render(
-		<MemoryRouter>
+		<TestRouter>
 			<QueryClientProvider client={queryClient}>
 				<CreateAlertProvider initialAlertType={AlertTypes.METRICS_BASED_ALERT}>
 					<AlertThreshold {...mockProps} />
 				</CreateAlertProvider>
 			</QueryClientProvider>
-		</MemoryRouter>,
+		</TestRouter>,
 	);
 };
 

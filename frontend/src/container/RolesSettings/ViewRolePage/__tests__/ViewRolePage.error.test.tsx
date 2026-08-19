@@ -5,7 +5,7 @@ import { customRoleResponse } from 'mocks-server/__mockdata__/roles';
 import { server } from 'mocks-server/server';
 import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { render, screen, waitFor } from 'tests/test-utils';
-import { safeNavigateMock } from '__tests__/safeNavigateMock';
+import { getCurrentLocation } from 'lib/router/navigation';
 
 import * as useRolePermissionsModule from '../../hooks/useRolePermissions';
 import ViewRolePage from '../ViewRolePage';
@@ -104,7 +104,7 @@ describe('ViewRolePage - Error State', () => {
 		await user.click(cancelButton);
 
 		await waitFor(() => {
-			expect(safeNavigateMock).toHaveBeenCalledWith(ROUTES.ROLES_SETTINGS);
+			expect(getCurrentLocation().pathname).toBe(ROUTES.ROLES_SETTINGS);
 		});
 	});
 });

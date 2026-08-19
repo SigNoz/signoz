@@ -1,17 +1,14 @@
 import { Logout } from 'api/utils';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { createErrorResponse, rest, server } from 'mocks-server/server';
 import { render, screen, waitFor, fireEvent } from 'tests/test-utils';
 
 import ResetPassword from '../index';
 
-jest.mock('lib/history', () => ({
-	__esModule: true,
-	default: {
-		push: jest.fn(),
-		location: { search: '' },
-	},
+jest.mock('lib/router/navigation', () => ({
+	...jest.requireActual('lib/router/navigation'),
+	navigate: jest.fn(),
 }));
 
 jest.mock('api/utils', () => ({
@@ -21,9 +18,7 @@ jest.mock('api/utils', () => ({
 const VERIFY_TOKEN_ENDPOINT = '*/api/v2/reset_password_tokens/verify';
 const VERSION_ENDPOINT = '*/version';
 
-const mockHistoryPush = history.push as jest.MockedFunction<
-	typeof history.push
->;
+const mockNavigate = navigate as jest.MockedFunction<typeof navigate>;
 
 const successVerifyResponse = {
 	data: { id: 'token-id', token: 'valid-token' },
@@ -136,7 +131,7 @@ describe('ResetPassword Page', () => {
 				screen.getByText(/reset password token has expired/i),
 			).toBeInTheDocument();
 			// 401 from this endpoint must NOT trigger logout/redirect
-			expect(mockHistoryPush).not.toHaveBeenCalledWith(ROUTES.LOGIN);
+			expect(mockNavigate).not.toHaveBeenCalledWith(ROUTES.LOGIN);
 			expect(Logout).not.toHaveBeenCalled();
 			expect(screen.getByTestId('back-to-login')).toBeInTheDocument();
 		});
@@ -163,7 +158,7 @@ describe('ResetPassword Page', () => {
 			});
 
 			fireEvent.click(screen.getByTestId('back-to-login'));
-			expect(mockHistoryPush).toHaveBeenCalledWith(ROUTES.LOGIN);
+			expect(mockNavigate).toHaveBeenCalledWith(ROUTES.LOGIN);
 		});
 
 		it('redirects to login when no token is in the URL', async () => {
@@ -173,7 +168,7 @@ describe('ResetPassword Page', () => {
 			});
 
 			await waitFor(() => {
-				expect(mockHistoryPush).toHaveBeenCalledWith(ROUTES.LOGIN);
+				expect(mockNavigate).toHaveBeenCalledWith(ROUTES.LOGIN);
 			});
 
 			expect(Logout).toHaveBeenCalled();

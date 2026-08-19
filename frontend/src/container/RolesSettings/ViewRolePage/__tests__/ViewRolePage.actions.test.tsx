@@ -2,7 +2,7 @@ import userEvent from '@testing-library/user-event';
 import * as roleApi from 'api/generated/services/role';
 import ROUTES from 'constants/routes';
 import { render, screen, waitFor, within } from 'tests/test-utils';
-import { safeNavigateMock } from '__tests__/safeNavigateMock';
+import { getCurrentLocation } from 'lib/router/navigation';
 
 import ViewRolePage from '../ViewRolePage';
 
@@ -33,7 +33,7 @@ describe('ViewRolePage - Actions', () => {
 		await user.click(cancelBtn);
 
 		await waitFor(() => {
-			expect(safeNavigateMock).toHaveBeenCalledWith(ROUTES.ROLES_SETTINGS);
+			expect(getCurrentLocation().pathname).toBe(ROUTES.ROLES_SETTINGS);
 		});
 	});
 
@@ -51,7 +51,8 @@ describe('ViewRolePage - Actions', () => {
 		await user.click(updateBtn);
 
 		await waitFor(() => {
-			expect(safeNavigateMock).toHaveBeenCalledWith(
+			const { pathname, search } = getCurrentLocation();
+			expect(`${pathname}${search}`).toBe(
 				`${ROUTES.ROLE_EDIT.replace(':roleId', CUSTOM_ROLE_ID)}?name=${CUSTOM_ROLE_NAME}`,
 			);
 		});
@@ -110,7 +111,7 @@ describe('ViewRolePage - Actions', () => {
 		});
 
 		await waitFor(() => {
-			expect(safeNavigateMock).toHaveBeenCalledWith(ROUTES.ROLES_SETTINGS);
+			expect(getCurrentLocation().pathname).toBe(ROUTES.ROLES_SETTINGS);
 		});
 	});
 });
