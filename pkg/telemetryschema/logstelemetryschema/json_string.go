@@ -7,8 +7,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+
+	"github.com/huandu/go-sqlbuilder"
 )
 
 func parseStrValue(valueStr string, operator qbtypes.FilterOperator) (telemetrytypes.FieldDataType, any) {
@@ -90,6 +93,68 @@ func InferDataType(value any, operator qbtypes.FilterOperator, key *telemetrytyp
 
 	// calculate the data type of the value
 	return closure(value, key)
+}
+
+// jsonEscapable reports whether a JSON encoder is free to rewrite r: `"` and `\` always, `/` by
+// PHP, `<` `>` `&` by Go, non-printable ASCII by Python's ensure_ascii. The legacy body holds the
+// producer's own text, so a literal spanning one of these may not be there to find.
+func jsonEscapable(r rune) bool {
+	return r < 0x20 || r > 0x7e || strings.ContainsRune(`"\/<>&`, r)
+}
+
+// jsonTextRuns splits s at every byte an encoder may rewrite. A body whose JSON holds s contains
+// each returned run verbatim, in order.
+func jsonTextRuns(s string) []string {
+	return strings.FieldsFunc(s, jsonEscapable)
+}
+
+// bodyPathLiterals returns one literal per component of key's JSON path, taking the quoting from
+// getBodyJSONPath so it matches however the path is written. A component holding a byte an encoder
+// may rewrite is dropped; JSON writes a parent first, so the order carries.
+func bodyPathLiterals(key *telemetrytypes.TelemetryFieldKey) []string {
+	var literals []string
+	for _, part := range strings.Split(getBodyJSONPath(key), ".") {
+		literal := strings.TrimSuffix(part, "[*]")
+		if !strings.ContainsFunc(strings.Trim(literal, `"`), jsonEscapable) {
+			literals = append(literals, literal)
+		}
+	}
+	return literals
+}
+
+// bodyValueLiterals returns the literals a comparison implies in the body text. Only string
+// comparisons qualify: a number is compared after JSONExtract parses it, which reads 1.23e2
+// as 123, so the digits of the filter value need not appear in the body at all.
+func bodyValueLiterals(operator qbtypes.FilterOperator, value any) []string {
+	str, ok := value.(string)
+	if !ok {
+		return nil
+	}
+	switch operator {
+	case qbtypes.FilterOperatorEqual, qbtypes.FilterOperatorContains:
+		return jsonTextRuns(str)
+	case qbtypes.FilterOperatorLike, qbtypes.FilterOperatorILike:
+		// the pattern's own wildcards split runs like the escapable bytes do; `\` is one of
+		// those, so pattern escapes dissolve with it (an escaped wildcard is merely not required)
+		return strings.FieldsFunc(str, func(r rune) bool {
+			return jsonEscapable(r) || r == '%' || r == '_'
+		})
+	}
+	return nil
+}
+
+// withBodyIndexPredicate ANDs onto cond the assertion that the raw body text holds the literals
+// in order; with no literals, cond is returned as is. ILike renders as LOWER(body) LIKE LOWER(?)
+// on the ClickHouse flavor — the expression both bloom filters index.
+func withBodyIndexPredicate(cond string, literals []string, sb *sqlbuilder.SelectBuilder) string {
+	if len(literals) == 0 {
+		return cond
+	}
+	escaped := make([]string, 0, len(literals))
+	for _, literal := range literals {
+		escaped = append(escaped, querybuilder.ClickHouseLikePatternLiteral(literal))
+	}
+	return sb.And(cond, sb.ILike(LogsV2BodyColumn, "%"+strings.Join(escaped, "%")+"%"))
 }
 
 func getBodyJSONPath(key *telemetrytypes.TelemetryFieldKey) string {
@@ -216,8 +281,8 @@ func getBodyJSONArrayKey(key *telemetrytypes.TelemetryFieldKey, dt telemetrytype
 
 // getBodyJSONScalarKey builds the single-element-set fallback for a scalar body value: the leaf
 // extracted as a scalar of type dt, plus a guard restricting it to a genuinely scalar body. The
-// guard is required because JSON_VALUE returns '' for an array/object/missing value, which would
-// otherwise zero-value match (has(x,0) / has(x,false) / has(x,'') on any array). ok=false when
+// guard is required because JSON_VALUE returns ” for an array/object/missing value, which would
+// otherwise zero-value match (has(x,0) / has(x,false) / has(x,”) on any array). ok=false when
 // the path still traverses an array ([*]/[]).
 func getBodyJSONScalarKey(key *telemetrytypes.TelemetryFieldKey, dt telemetrytypes.FieldDataType) (expr string, guard string, ok bool) {
 	name := strings.TrimSuffix(strings.TrimSuffix(key.Name, "[*]"), "[]")
