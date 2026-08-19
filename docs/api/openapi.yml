@@ -8807,6 +8807,7 @@ components:
       - span
       - trace
       - resource
+      - scope
       - attribute
       - body
       - ""
