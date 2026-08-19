@@ -1128,13 +1128,19 @@ func (aH *APIHandler) registerEvent(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getTopOperations(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	query, err := parseGetTopOperationsRequest(r)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
-	result, apiErr := aH.reader.GetTopOperations(r.Context(), query)
+	result, apiErr := aH.reader.GetTopOperations(r.Context(), orgID, query)
 
 	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
@@ -1145,13 +1151,20 @@ func (aH *APIHandler) getTopOperations(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getEntryPointOps(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
 	query, err := parseGetTopOperationsRequest(r)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	result, apiErr := aH.reader.GetEntryPointOperations(r.Context(), query)
+	result, apiErr := aH.reader.GetEntryPointOperations(r.Context(), orgID, query)
 	if apiErr != nil {
 		render.Error(w, apiErr)
 		return
@@ -1226,12 +1239,19 @@ func (aH *APIHandler) getServicesTopLevelOps(w http.ResponseWriter, r *http.Requ
 }
 
 func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
 	query, err := parseGetServicesRequest(r)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
-	result, apiErr := aH.reader.GetServices(r.Context(), query)
+	result, apiErr := aH.reader.GetServices(r.Context(), orgID, query)
 	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
@@ -1240,13 +1260,19 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) dependencyGraph(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	query, err := parseGetServicesRequest(r)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
-	result, err := aH.reader.GetDependencyGraph(r.Context(), query)
+	result, err := aH.reader.GetDependencyGraph(r.Context(), orgID, query)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
