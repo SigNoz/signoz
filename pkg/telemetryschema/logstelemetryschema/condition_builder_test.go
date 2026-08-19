@@ -1073,6 +1073,52 @@ func TestLegacyBodyIndexPredicates(t *testing.T) {
 			expectedArgs: []any{`%conn%refused%`},
 		},
 		{
+			name:     "has carries the path and the element",
+			key:      "tags[*]",
+			operator: qbtypes.FilterOperatorHas,
+			value:    []any{"production"},
+			// The element rides on its own predicate rather than being pinned next to the key:
+			// has() over the extracted array says nothing about where in the text it sits.
+			expected:     `LOWER(body) LIKE LOWER(?) AND LOWER(body) LIKE LOWER(?)`,
+			expectedArgs: []any{`%"tags"%`, "%production%"},
+		},
+		{
+			name:         "hasAll carries one literal per element",
+			key:          "tags[*]",
+			operator:     qbtypes.FilterOperatorHasAll,
+			value:        []any{[]any{"production", "webserver"}},
+			expected:     `LOWER(body) LIKE LOWER(?) AND LOWER(body) LIKE LOWER(?) AND LOWER(body) LIKE LOWER(?)`,
+			expectedArgs: []any{`%"tags"%`, "%production%", "%webserver%"},
+		},
+		{
+			// hasAny asks for one of the elements, so the arms are ORed — ANDing them would
+			// demand every element be present.
+			name:         "hasAny ORs the element literals",
+			key:          "tags[*]",
+			operator:     qbtypes.FilterOperatorHasAny,
+			value:        []any{[]any{"production", "webserver"}},
+			expected:     `LOWER(body) LIKE LOWER(?) AND (LOWER(body) LIKE LOWER(?) OR LOWER(body) LIKE LOWER(?))`,
+			expectedArgs: []any{`%"tags"%`, "%production%", "%webserver%"},
+		},
+		{
+			// one element with no usable literal voids the whole OR: the filter can still match
+			// through that element, so nothing about the text is implied.
+			name:         "hasAny drops the OR when an element carries no literal",
+			key:          "tags[*]",
+			operator:     qbtypes.FilterOperatorHasAny,
+			value:        []any{[]any{"production", "/"}},
+			expected:     `LOWER(body) LIKE LOWER(?)`,
+			expectedArgs: []any{`%"tags"%`},
+		},
+		{
+			name:         "numeric elements carry nothing",
+			key:          "ids[*]",
+			operator:     qbtypes.FilterOperatorHasAny,
+			value:        []any{[]any{"9007199254740993", "9007199254740994"}},
+			expected:     `LOWER(body) LIKE LOWER(?)`,
+			expectedArgs: []any{`%"ids"%`},
+		},
+		{
 			name:     "a number carries nothing",
 			key:      "user_id",
 			operator: qbtypes.FilterOperatorEqual,

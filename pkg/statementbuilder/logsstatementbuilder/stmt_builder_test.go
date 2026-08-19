@@ -498,8 +498,8 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 				Limit: 10,
 			},
 			expected: qbtypes.Statement{
-				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE (has(JSONExtract(JSON_QUERY(body, '$.\"user_names\"[*]'), 'Array(Nullable(String))'), ?) OR ifNull((JSON_VALUE(body, '$.\"user_names\"') = ? AND JSONType(body, 'user_names') NOT IN ('Array', 'Object', 'Null')), false)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:     []any{"john_doe", "john_doe", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE ((has(JSONExtract(JSON_QUERY(body, '$.\"user_names\"[*]'), 'Array(Nullable(String))'), ?) OR ifNull((JSON_VALUE(body, '$.\"user_names\"') = ? AND JSONType(body, 'user_names') NOT IN ('Array', 'Object', 'Null')), false)) AND LOWER(body) LIKE LOWER(?) AND LOWER(body) LIKE LOWER(?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:     []any{"john_doe", "john_doe", "%\"user\\_names\"%", "%john\\_doe%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 				Warnings: []string{querybuilder.NewKeyNotFoundWarning("user_names[*]")},
 			},
 			expectedErr: nil,
