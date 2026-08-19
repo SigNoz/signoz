@@ -15645,9 +15645,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - ingestion-key:list
       - tokenizer:
-        - EDITOR
+        - ingestion-key:list
       summary: Get ingestion keys for workspace
       tags:
       - gateway
@@ -15695,9 +15695,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - ingestion-key:create
       - tokenizer:
-        - EDITOR
+        - ingestion-key:create
       summary: Create ingestion key for workspace
       tags:
       - gateway
@@ -15735,9 +15735,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - ingestion-key:delete
       - tokenizer:
-        - EDITOR
+        - ingestion-key:delete
       summary: Delete ingestion key for workspace
       tags:
       - gateway
@@ -15792,9 +15792,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - ingestion-key:read
       - tokenizer:
-        - EDITOR
+        - ingestion-key:read
       summary: Get ingestion key for workspace
       tags:
       - gateway
@@ -15836,16 +15836,16 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - ingestion-key:update
       - tokenizer:
-        - EDITOR
+        - ingestion-key:update
       summary: Update ingestion key for workspace
       tags:
       - gateway
   /api/v2/gateway/ingestion_keys/{keyId}/limits:
     post:
       deprecated: true
-      description: This endpoint creates an ingestion key limit
+      description: This endpoint creates an ingestion key limit.
       operationId: CreateIngestionKeyLimit
       parameters:
       - in: path
@@ -15893,9 +15893,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - ingestion-limit:create
+        - ingestion-key:attach
       - tokenizer:
-        - EDITOR
+        - ingestion-limit:create
+        - ingestion-key:attach
       summary: Create limit for the ingestion key
       tags:
       - gateway
@@ -15933,15 +15935,17 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - ingestion-limit:delete
+        - ingestion-key:detach
       - tokenizer:
-        - EDITOR
+        - ingestion-limit:delete
+        - ingestion-key:detach
       summary: Delete limit for the ingestion key
       tags:
       - gateway
     patch:
       deprecated: true
-      description: This endpoint updates an ingestion key limit
+      description: This endpoint updates an ingestion key limit.
       operationId: UpdateIngestionKeyLimit
       parameters:
       - in: path
@@ -15977,9 +15981,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - ingestion-limit:update
       - tokenizer:
-        - EDITOR
+        - ingestion-limit:update
       summary: Update limit for the ingestion key
       tags:
       - gateway
@@ -16037,9 +16041,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - ingestion-key:list
       - tokenizer:
-        - EDITOR
+        - ingestion-key:list
       summary: Search ingestion keys for workspace
       tags:
       - gateway
@@ -16095,9 +16099,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - ingestion-limit:create
+        - ingestion-key:attach
       - tokenizer:
-        - EDITOR
+        - ingestion-limit:create
+        - ingestion-key:attach
       summary: Create ingestion limit
       tags:
       - gateway
@@ -16135,9 +16141,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - ingestion-limit:delete
+        - ingestion-key:detach
       - tokenizer:
-        - EDITOR
+        - ingestion-limit:delete
+        - ingestion-key:detach
       summary: Delete ingestion limit
       tags:
       - gateway
@@ -16192,9 +16200,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - ingestion-limit:read
       - tokenizer:
-        - EDITOR
+        - ingestion-limit:read
       summary: Get ingestion limit
       tags:
       - gateway
@@ -16236,9 +16244,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - ingestion-limit:update
       - tokenizer:
-        - EDITOR
+        - ingestion-limit:update
       summary: Update ingestion limit
       tags:
       - gateway

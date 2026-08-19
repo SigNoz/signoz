@@ -370,6 +370,21 @@ def test_delete_ingestion_key_limit(
         [
             Mapping(
                 request=MappingRequest(
+                    method=HttpMethods.GET,
+                    url=gateway_url,
+                    headers=common_gateway_headers(),
+                ),
+                response=MappingResponse(
+                    status=200,
+                    json_body={
+                        "status": "success",
+                        "data": {"id": TEST_LIMIT_ID, "key_id": TEST_KEY_ID, "signal": "logs"},
+                    },
+                ),
+                persistent=False,
+            ),
+            Mapping(
+                request=MappingRequest(
                     method=HttpMethods.DELETE,
                     url=gateway_url,
                     headers=common_gateway_headers(),
@@ -576,6 +591,21 @@ def test_delete_ingestion_limit(
     make_http_mocks(
         signoz.gateway,
         [
+            Mapping(
+                request=MappingRequest(
+                    method=HttpMethods.GET,
+                    url=gateway_url,
+                    headers=common_gateway_headers(),
+                ),
+                response=MappingResponse(
+                    status=200,
+                    json_body={
+                        "status": "success",
+                        "data": {"id": TEST_LIMIT_ID, "key_id": TEST_KEY_ID, "signal": "logs"},
+                    },
+                ),
+                persistent=False,
+            ),
             Mapping(
                 request=MappingRequest(
                     method=HttpMethods.DELETE,

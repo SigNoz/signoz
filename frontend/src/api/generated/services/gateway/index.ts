@@ -510,7 +510,7 @@ export const useUpdateIngestionKey = <
 	return useMutation(getUpdateIngestionKeyMutationOptions(options));
 };
 /**
- * This endpoint creates an ingestion key limit
+ * This endpoint creates an ingestion key limit.
  * @deprecated
  * @summary Create limit for the ingestion key
  */
@@ -694,7 +694,7 @@ export const useDeleteIngestionKeyLimit = <
 	return useMutation(getDeleteIngestionKeyLimitMutationOptions(options));
 };
 /**
- * This endpoint updates an ingestion key limit
+ * This endpoint updates an ingestion key limit.
  * @deprecated
  * @summary Update limit for the ingestion key
  */
