@@ -43,6 +43,19 @@ export const getFieldKeysSignal = (
 	return dataSource ? DATA_SOURCE_TO_SIGNAL[dataSource] : undefined;
 };
 
+/** Contexts with no v3 equivalent (span, log, body) fall back to '', the intrinsic-field lookup path. */
+const toAttributeType = (
+	fieldContext: TelemetrytypesFieldContextDTO | undefined,
+): string =>
+	(fieldContext && FIELD_CONTEXT_TO_ATTRIBUTE_TYPE[fieldContext]) || '';
+
+/** Absent or unrecognised types fall back to '', which v3 reads as unspecified. */
+const toAttributeDataType = (
+	fieldDataType: TelemetrytypesFieldDataTypeDTO | undefined,
+): DataTypes =>
+	(fieldDataType && FIELD_DATA_TYPE_TO_ATTRIBUTE_DATA_TYPE[fieldDataType]) ||
+	DataTypes.EMPTY;
+
 /** Keys are grouped by name and one name can span contexts (resource and attribute); first wins. */
 export const mapFieldKeysToFilters = (
 	keys: TelemetrytypesGettableFieldKeysDTOKeys | undefined,
@@ -56,12 +69,7 @@ export const mapFieldKeysToFilters = (
 		.filter((fieldKey) => !!fieldKey?.name)
 		.map((fieldKey) => ({
 			key: fieldKey.name,
-			dataType: fieldKey.fieldDataType
-				? (FIELD_DATA_TYPE_TO_ATTRIBUTE_DATA_TYPE[fieldKey.fieldDataType] ??
-					DataTypes.EMPTY)
-				: DataTypes.EMPTY,
-			type: fieldKey.fieldContext
-				? (FIELD_CONTEXT_TO_ATTRIBUTE_TYPE[fieldKey.fieldContext] ?? '')
-				: '',
+			dataType: toAttributeDataType(fieldKey.fieldDataType),
+			type: toAttributeType(fieldKey.fieldContext),
 		}));
 };
