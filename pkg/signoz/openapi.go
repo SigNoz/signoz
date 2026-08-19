@@ -74,6 +74,7 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ metricreductionrule.Handler }{},
 		struct{ inframonitoring.Handler }{},
 		struct{ gateway.Handler }{},
+		struct{ gateway.Gateway }{},
 		struct{ fields.Handler }{},
 		struct{ aiobservability.Handler }{},
 		struct{ authz.Handler }{},
