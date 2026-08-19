@@ -262,6 +262,14 @@ func adjustTraceKeys(keys map[string][]*telemetrytypes.TelemetryFieldKey, query 
 // adjustTraceKey resolves a single TelemetryFieldKey against the keys map.
 func adjustTraceKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) []string {
 
+	// Scope keys are resolved entirely by the field mapper's scope handling. The intrinsic
+	// and calculated field tables are all span-context, so matching a scope key against them
+	// by name alone would wrongly rewrite e.g. {name, scope} to the span `name` column.
+	// Skip the intrinsic override and let resolution keep the key in scope.
+	if key.FieldContext == telemetrytypes.FieldContextScope {
+		return querybuilder.AdjustKey(key, keys, nil)
+	}
+
 	// for recording actions taken
 	actions := []string{}
 	/*

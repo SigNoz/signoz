@@ -705,6 +705,34 @@ func TestStatementBuilderListQuery(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
+		{
+			// Short scope names (`name`/`version`) collide with span intrinsics; adjustTraceKeys
+			// must keep them in scope and resolve the declared paths, not the span `name` column.
+			name:        "List query selecting short scope declared names",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal:       telemetrytypes.SignalTraces,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Limit:        10,
+				SelectFields: []telemetrytypes.TelemetryFieldKey{
+					{
+						Name:         "name",
+						Signal:       telemetrytypes.SignalTraces,
+						FieldContext: telemetrytypes.FieldContextScope,
+					},
+					{
+						Name:         "version",
+						Signal:       telemetrytypes.SignalTraces,
+						FieldContext: telemetrytypes.FieldContextScope,
+					},
+				},
+			},
+			expected: qbtypes.Statement{
+				Query: "SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, multiIf(scope.name::String <> '', scope.name::String, NULL) AS `__SELECT_KEY_3_scope.name`, multiIf(scope.version::String <> '', scope.version::String, NULL) AS `__SELECT_KEY_4_scope.version` FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{"1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
+			},
+			expectedErr: nil,
+		},
 	}
 
 	fl := flaggertest.New(t)
