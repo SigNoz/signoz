@@ -25,6 +25,10 @@ const (
 	dashboardNameSuffixLen = 8
 )
 
+// SystemDashboardNamePrefix is reserved for dashboards SigNoz ships and owns. Generated
+// names never contain consecutive hyphens, so only a typed name can carry it — create rejects that.
+const SystemDashboardNamePrefix = "signoz---"
+
 const (
 	dashboardIconPathPrefix = "/assets/Icons/"
 	dashboardLogoPathPrefix = "/assets/Logos/"
@@ -126,6 +130,13 @@ func (d *DashboardV2) LockUnlock(lock bool, isAdmin bool, updatedBy string) erro
 	d.Locked = lock
 	d.UpdatedBy = updatedBy
 	d.UpdatedAt = time.Now()
+	return nil
+}
+
+func (d *DashboardV2) ErrIfNotSystem() error {
+	if d.Source != SourceSystem {
+		return errors.Newf(errors.TypeNotFound, ErrCodeDashboardNotFound, "system dashboard %q doesn't exist", d.Name)
+	}
 	return nil
 }
 
@@ -278,6 +289,14 @@ func validateDashboardName(name string) error {
 	}
 	if errs := validation.IsDNS1123Label(name); len(errs) > 0 {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "name %q is invalid: %s", name, strings.Join(errs, "; "))
+	}
+	return nil
+}
+
+// ErrIfReservedName keeps the system prefix out of everything but a system dashboard.
+func ErrIfReservedName(name string, source Source) error {
+	if source != SourceSystem && strings.HasPrefix(name, SystemDashboardNamePrefix) {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "name %q is invalid: the %q prefix is reserved for system dashboards", name, SystemDashboardNamePrefix)
 	}
 	return nil
 }

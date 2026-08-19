@@ -8690,6 +8690,65 @@ components:
       required:
       - references
       type: object
+    SystemdashboardtypesGettableSystemDashboard:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        id:
+          type: string
+        image:
+          type: string
+        locked:
+          type: boolean
+        name:
+          type: string
+        orgId:
+          type: string
+        schemaVersion:
+          type: string
+        source:
+          $ref: '#/components/schemas/DashboardtypesSource'
+        spec:
+          $ref: '#/components/schemas/DashboardtypesDashboardSpec'
+        system:
+          $ref: '#/components/schemas/SystemdashboardtypesStatus'
+        tags:
+          items:
+            $ref: '#/components/schemas/TagtypesGettableTag'
+          nullable: true
+          type: array
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - id
+      - orgId
+      - locked
+      - source
+      - schemaVersion
+      - name
+      - tags
+      - spec
+      - system
+      type: object
+    SystemdashboardtypesStatus:
+      properties:
+        modified:
+          type: boolean
+        updateAvailable:
+          type: boolean
+        version:
+          type: integer
+      required:
+      - modified
+      - updateAvailable
+      - version
+      type: object
     TagtypesGettableTag:
       properties:
         key:
@@ -23055,6 +23114,145 @@ paths:
       summary: Rotate session
       tags:
       - sessions
+  /api/v2/system/dashboards/{name}:
+    get:
+      deprecated: false
+      description: Returns a dashboard SigNoz ships and owns, addressed by its stable
+        name rather than its id. The response is the v2 dashboard plus a `system`
+        object carrying whether the org has edited it, the shipped version it was
+        provisioned at, and whether a newer version is available.
+      operationId: GetSystemDashboard
+      parameters:
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SystemdashboardtypesGettableSystemDashboard'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - dashboard:read
+      - tokenizer:
+        - dashboard:read
+      summary: Get system dashboard
+      tags:
+      - dashboard
+    put:
+      deprecated: false
+      description: Updates a system dashboard addressed by its stable name. It behaves
+        exactly like UpdateDashboardV2 — same body, same validation, the name stays
+        immutable — and exists so the frontend can address a shipped dashboard without
+        first resolving its id. Once updated, the dashboard counts as modified and
+        is no longer upgraded in place by new releases.
+      operationId: UpdateSystemDashboard
+      parameters:
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardtypesUpdatableDashboardV2'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SystemdashboardtypesGettableSystemDashboard'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - dashboard:update
+      - tokenizer:
+        - dashboard:update
+      summary: Update system dashboard
+      tags:
+      - dashboard
   /api/v2/user_roles:
     post:
       deprecated: false

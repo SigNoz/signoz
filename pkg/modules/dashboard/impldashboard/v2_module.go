@@ -20,6 +20,9 @@ func (m *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy stri
 	}
 
 	dashboard := postable.NewDashboardV2(orgID, createdBy, source)
+	if err := dashboardtypes.ErrIfReservedName(dashboard.Name, source); err != nil {
+		return nil, err
+	}
 
 	err := m.store.RunInTx(ctx, func(ctx context.Context) error {
 		resolvedTags, err := m.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, dashboard.ID, postable.Tags)
@@ -113,6 +116,20 @@ func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UU
 	}
 
 	tags, err := module.tagModule.ListForResource(ctx, orgID, coretypes.KindDashboard, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return storable.ToDashboardV2(tags)
+}
+
+func (module *module) GetByNameV2(ctx context.Context, orgID valuer.UUID, name string) (*dashboardtypes.DashboardV2, error) {
+	storable, err := module.store.GetByName(ctx, orgID, name)
+	if err != nil {
+		return nil, err
+	}
+
+	tags, err := module.tagModule.ListForResource(ctx, orgID, coretypes.KindDashboard, storable.ID)
 	if err != nil {
 		return nil, err
 	}

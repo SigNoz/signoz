@@ -1928,3 +1928,58 @@ func TestEnsureSingleExpressionAggregation(t *testing.T) {
 		})
 	}
 }
+
+func TestSystemDashboardNamePrefix(t *testing.T) {
+	const validSpec = `"spec": {"variables": [], "panels": {}, "layouts": [], "links": []}`
+
+	testCases := []struct {
+		description  string
+		name         string
+		wantErrMatch string
+	}{
+		{description: "prefixed name with a valid remainder is accepted", name: SystemDashboardNamePrefix + "ai-o11y-overview"},
+		{description: "prefixed name with an invalid remainder is rejected", name: SystemDashboardNamePrefix + "Not A Label", wantErrMatch: "is invalid"},
+		{description: "the bare prefix is rejected", name: SystemDashboardNamePrefix, wantErrMatch: "is invalid"},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			var postable PostableDashboardV2
+			err := json.Unmarshal([]byte(`{"schemaVersion":"`+SchemaVersion+`","name":"`+testCase.name+`",`+validSpec+`}`), &postable)
+			if testCase.wantErrMatch != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), testCase.wantErrMatch)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, testCase.name, postable.Name)
+		})
+	}
+}
+
+func TestErrIfReservedName(t *testing.T) {
+	testCases := []struct {
+		description string
+		name        string
+		source      Source
+		wantErr     bool
+	}{
+		{description: "reserved name for a system dashboard", name: SystemDashboardNamePrefix + "overview", source: SourceSystem},
+		{description: "reserved name for a user dashboard", name: SystemDashboardNamePrefix + "overview", source: SourceUser, wantErr: true},
+		{description: "reserved name for an integration dashboard", name: SystemDashboardNamePrefix + "overview", source: SourceIntegration, wantErr: true},
+		{description: "ordinary name for a user dashboard", name: "overview", source: SourceUser},
+		{description: "fewer hyphens than the prefix for a user dashboard", name: "signoz--overview", source: SourceUser},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			err := ErrIfReservedName(testCase.name, testCase.source)
+			if testCase.wantErr {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), "reserved for system dashboards")
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}

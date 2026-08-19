@@ -9896,6 +9896,73 @@ export interface SpantypesUpdatableSpanMapperGroupDTO {
 	name?: string | null;
 }
 
+export interface SystemdashboardtypesStatusDTO {
+	/**
+	 * @type boolean
+	 */
+	modified: boolean;
+	/**
+	 * @type boolean
+	 */
+	updateAvailable: boolean;
+	/**
+	 * @type integer
+	 */
+	version: number;
+}
+
+export interface SystemdashboardtypesGettableSystemDashboardDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	image?: string;
+	/**
+	 * @type boolean
+	 */
+	locked: boolean;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type string
+	 */
+	schemaVersion: string;
+	source: DashboardtypesSourceDTO;
+	spec: DashboardtypesDashboardSpecDTO;
+	system: SystemdashboardtypesStatusDTO;
+	/**
+	 * @type array,null
+	 */
+	tags: TagtypesGettableTagDTO[] | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
 export type TelemetrytypesGettableFieldKeysDTOKeysAnyOf = {
 	[key: string]: TelemetrytypesTelemetryFieldKeyDTO[];
 };
@@ -12265,6 +12332,28 @@ export type CreateSessionByEmailPassword200 = {
 
 export type RotateSession200 = {
 	data: AuthtypesGettableTokenDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetSystemDashboardPathParameters = {
+	name: string;
+};
+export type GetSystemDashboard200 = {
+	data: SystemdashboardtypesGettableSystemDashboardDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateSystemDashboardPathParameters = {
+	name: string;
+};
+export type UpdateSystemDashboard200 = {
+	data: SystemdashboardtypesGettableSystemDashboardDTO;
 	/**
 	 * @type string
 	 */
