@@ -8,7 +8,7 @@ import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKey
 import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
 
-import { useOtherFilterKeys } from './hooks/useOtherFilterKeys';
+import { useFieldKeys } from './hooks/useFieldKeys';
 
 function OtherFiltersSkeleton(): JSX.Element {
 	return (
@@ -43,7 +43,7 @@ function OtherFilters({
 	);
 
 	const { filters: fieldKeyFilters, isFetching: isFetchingFieldKeys } =
-		useOtherFilterKeys({
+		useFieldKeys({
 			signal,
 			searchText: inputValue,
 			enabled: !!signal && !isMeterDataSource,

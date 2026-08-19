@@ -6,22 +6,23 @@ import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
 
 import { getFieldKeysSignal, mapFieldKeysToFilters } from '../utils';
 
-interface UseOtherFilterKeysProps {
+interface UseFieldKeysProps {
 	signal: SignalType | undefined;
 	searchText: string;
 	enabled: boolean;
 }
 
-interface UseOtherFilterKeysReturn {
+interface UseFieldKeysReturn {
 	filters: FilterType[];
 	isFetching: boolean;
 }
 
-export function useOtherFilterKeys({
+/** Backs the logs and traces signals; meter keys still come from useGetQueryKeySuggestions. */
+export function useFieldKeys({
 	signal,
 	searchText,
 	enabled,
-}: UseOtherFilterKeysProps): UseOtherFilterKeysReturn {
+}: UseFieldKeysProps): UseFieldKeysReturn {
 	const { data, isFetching } = useGetFieldsKeys(
 		{
 			signal: signal ? getFieldKeysSignal(signal) : undefined,
