@@ -20,7 +20,7 @@ interface UseFieldKeysReturn {
 	isFetching: boolean;
 }
 
-/** Backs the logs and traces signals; meter keys still come from useGetQueryKeySuggestions. */
+/**  only for logs and traces signals; meter keys still come from useGetQueryKeySuggestions. */
 export function useFieldKeys({
 	signal,
 	searchText,
