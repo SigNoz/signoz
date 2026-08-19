@@ -1,6 +1,3 @@
-// temporary flag to be removed with old log details code.
-export const isLogDetailsV2 = true;
-
 export const VIEW_TYPES = {
 	OVERVIEW: 'OVERVIEW',
 	JSON: 'JSON',
