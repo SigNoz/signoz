@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -51,7 +52,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, _ valuer.UUID, _, _ uint64, 
 		return "", err
 	}
 	if col.Name == "labels" && key.Name != "labels" {
-		return fmt.Sprintf("JSONExtractString(labels, '%s')", strings.ReplaceAll(key.Name, "'", "\\'")), nil
+		return fmt.Sprintf("JSONExtractString(labels, %s)", querybuilder.ClickHouseStringLiteral(key.Name)), nil
 	}
 	return col.Name, nil
 }
@@ -62,6 +63,24 @@ func (m *fieldMapper) ColumnFor(ctx context.Context, _ valuer.UUID, _, _ uint64,
 		return nil, err
 	}
 	return []*schema.Column{col}, nil
+}
+
+// ExistsFor implements the per-key existence primitive of qbtypes.FieldMapper.
+// A label inside the JSON gets a membership check, with the same condition
+// that FieldFor uses for extraction; every real column always exists.
+func (m *fieldMapper) ExistsFor(ctx context.Context, _ valuer.UUID, _, _ uint64, key *telemetrytypes.TelemetryFieldKey, exists bool) (string, error) {
+	col, err := m.getColumn(ctx, key)
+	if err != nil {
+		return "", err
+	}
+	if col.Name == "labels" && key.Name != "labels" {
+		pred := fmt.Sprintf("JSONHas(labels, %s)", querybuilder.ClickHouseStringLiteral(key.Name))
+		if exists {
+			return pred, nil
+		}
+		return "not " + pred, nil
+	}
+	return "true", nil
 }
 
 func (m *fieldMapper) ColumnExpressionFor(ctx context.Context, orgID valuer.UUID, tsStart, tsEnd uint64, field *telemetrytypes.TelemetryFieldKey, _ telemetrytypes.FieldDataType, _ map[string][]*telemetrytypes.TelemetryFieldKey) (string, error) {

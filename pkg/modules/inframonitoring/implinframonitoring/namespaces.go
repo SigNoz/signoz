@@ -7,17 +7,16 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"golang.org/x/sync/errgroup"
 )
 
-// buildNamespaceRecords assembles the page records. Pod phase counts come from
-// phaseCounts in both modes; every row is a group of pods, so there's no
-// per-row "current phase" concept (unlike pods/nodes list mode).
+// buildNamespaceRecords assembles the page records. Pod status counts come from
+// podStatusCounts in both modes; every row is a group of pods.
 func buildNamespaceRecords(
 	resp *qbtypes.QueryRangeResponse,
 	pageGroups []map[string]string,
 	groupBy []qbtypes.GroupByKey,
 	metadataMap map[string]map[string]string,
-	phaseCounts map[string]podPhaseCounts,
 	podStatusCounts map[string]podStatusCounts,
 	resourceCounts map[string]map[string]int64,
 ) []inframonitoringtypes.NamespaceRecord {
@@ -44,16 +43,6 @@ func buildNamespaceRecords(
 			}
 		}
 
-		if phaseCountsForGroup, ok := phaseCounts[compositeKey]; ok {
-			record.PodCountsByPhase = inframonitoringtypes.PodCountsByPhase{
-				Pending:   phaseCountsForGroup.Pending,
-				Running:   phaseCountsForGroup.Running,
-				Succeeded: phaseCountsForGroup.Succeeded,
-				Failed:    phaseCountsForGroup.Failed,
-				Unknown:   phaseCountsForGroup.Unknown,
-			}
-		}
-
 		if podStatusCountsForGroup, ok := podStatusCounts[compositeKey]; ok {
 			record.PodCountsByStatus = podStatusCountsToResponse(podStatusCountsForGroup)
 		}
@@ -76,16 +65,64 @@ func buildNamespaceRecords(
 	return records
 }
 
-func (m *module) getTopNamespaceGroups(
+// getTopNamespaceGroupsAndMetadata concurrently fetches metadata + the ordering-metric
+// ranking (plus the full-scope pod-status keyset when filtering, to intersect both).
+func (m *module) getTopNamespaceGroupsAndMetadata(
 	ctx context.Context,
 	orgID valuer.UUID,
 	req *inframonitoringtypes.PostableNamespaces,
-	metadataMap map[string]map[string]string,
-) ([]map[string]string, error) {
-	orderByKey := req.OrderBy.Key.Name
-	if orderByKey == inframonitoringtypes.NamespaceNameAttrKey {
-		return inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.NamespaceNameAttrKey), nil
+) ([]map[string]string, map[string]map[string]string, map[string]podStatusCounts, *qbtypes.QueryWarnData, error) {
+
+	var (
+		orderByKey        string
+		metadataMap       map[string]map[string]string
+		allMetricGroups   []rankedGroup
+		statusCounts      map[string]podStatusCounts
+		statusWarning     *qbtypes.QueryWarnData
+		filter            *qbtypes.Filter
+		filterByPodStatus []inframonitoringtypes.PodStatus
+	)
+
+	orderByKey = req.OrderBy.Key.Name
+
+	// When filtering by pod status, resolve the full-scope status keyset
+	// concurrently (pageGroups=nil spans all groups under the user filter) so it
+	// can intersect metadata + ranked groups below.
+	if req.Filter != nil {
+		filter = &req.Filter.Filter
+		filterByPodStatus = req.Filter.FilterByPodStatus
 	}
+
+	g, gCtx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		var err error
+		metadataMap, err = m.getNamespacesTableMetadata(gCtx, orgID, req)
+		return err
+	})
+
+	if len(filterByPodStatus) != 0 {
+		g.Go(func() error {
+			var err error
+			statusCounts, statusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, filter, req.GroupBy, nil, filterByPodStatus)
+			return err
+		})
+	}
+
+	if orderByKey == inframonitoringtypes.NamespaceNameAttrKey {
+		if err := g.Wait(); err != nil {
+			return nil, nil, nil, nil, err
+		}
+		// Secondary filter: keep only status-matching groups. A missing metric
+		// yields an empty statusCounts, so this correctly empties the result
+		// (the caller also surfaces the warning).
+		if len(filterByPodStatus) != 0 {
+			metadataMap = intersectMap(metadataMap, statusCounts)
+		}
+		pageGroups := inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.NamespaceNameAttrKey)
+		return pageGroups, metadataMap, statusCounts, statusWarning, nil
+	}
+
 	queryNamesForOrderBy := orderByToNamespacesQueryNames[orderByKey]
 	rankingQueryName := queryNamesForOrderBy[len(queryNamesForOrderBy)-1]
 
@@ -119,13 +156,29 @@ func (m *module) getTopNamespaceGroups(
 		topReq.CompositeQuery.Queries = append(topReq.CompositeQuery.Queries, copied)
 	}
 
-	resp, err := m.querier.QueryRange(ctx, orgID, topReq)
-	if err != nil {
-		return nil, err
+	g.Go(func() error {
+		resp, err := m.querier.QueryRange(gCtx, orgID, topReq)
+		if err != nil {
+			return err
+		}
+		allMetricGroups = parseAndSortGroups(resp, rankingQueryName, req.GroupBy, req.OrderBy.Direction)
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return nil, nil, nil, nil, err
 	}
 
-	allMetricGroups := parseAndSortGroups(resp, rankingQueryName, req.GroupBy, req.OrderBy.Direction)
-	return paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit), nil
+	// Secondary filter: intersect ranked groups + metadata with the status keyset.
+	// A missing metric yields an empty statusCounts, correctly emptying the result
+	// (the caller also surfaces the warning).
+	if len(filterByPodStatus) != 0 {
+		allMetricGroups = intersectRankedGroups(allMetricGroups, statusCounts)
+		metadataMap = intersectMap(metadataMap, statusCounts)
+	}
+
+	pageGroups := paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit)
+	return pageGroups, metadataMap, statusCounts, statusWarning, nil
 }
 
 func (m *module) getNamespacesTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableNamespaces) (map[string]map[string]string, error) {
@@ -135,5 +188,9 @@ func (m *module) getNamespacesTableMetadata(ctx context.Context, orgID valuer.UU
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}
 	}
-	return m.getMetadata(ctx, orgID, namespacesTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
+	var filter *qbtypes.Filter
+	if req.Filter != nil {
+		filter = &req.Filter.Filter
+	}
+	return m.getMetadata(ctx, orgID, namespacesTableMetricNamesList, req.GroupBy, nonGroupByAttrs, filter, req.Start, req.End)
 }

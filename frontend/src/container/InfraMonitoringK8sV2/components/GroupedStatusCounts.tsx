@@ -1,8 +1,9 @@
-import { TooltipSimple } from '@signozhq/ui/tooltip';
-
+// oxlint-disable jsx-a11y/click-events-have-key-events
 import styles from './GroupedStatusCounts.module.scss';
 import TanStackTable from 'components/TanStackTableView';
 import { Typography } from '@signozhq/ui/typography';
+import { TextNoData } from './TextNoData';
+import { MouseEventHandler } from 'react';
 
 export interface StatusBreakdownItem {
 	label: string;
@@ -18,22 +19,30 @@ export interface StatusCountItem {
 
 interface GroupedStatusCountsProps {
 	items: StatusCountItem[];
+	rowId: string;
 	showZeroValues?: boolean;
 }
 
 function buildTooltipContent(item: StatusCountItem): React.ReactNode {
+	const onClickHandle: MouseEventHandler = (e) => {
+		e.preventDefault();
+		e.stopPropagation();
+	};
+
 	if (!item.breakdown || item.breakdown.length === 0) {
 		return (
-			<Typography.Text>
-				{item.label}: {item.value}
-			</Typography.Text>
+			<div onClick={onClickHandle}>
+				<Typography.Text>
+					{item.label}: {item.value}
+				</Typography.Text>
+			</div>
 		);
 	}
 
 	const nonZeroBreakdown = item.breakdown.filter((b) => b.value > 0);
 	if (nonZeroBreakdown.length === 0) {
 		return (
-			<div className={styles.tooltipContent}>
+			<div className={styles.tooltipContent} onClick={onClickHandle}>
 				<Typography.Text className={styles.tooltipHeader}>
 					{item.label}
 				</Typography.Text>
@@ -44,7 +53,7 @@ function buildTooltipContent(item: StatusCountItem): React.ReactNode {
 	}
 
 	return (
-		<div className={styles.tooltipContent}>
+		<div className={styles.tooltipContent} onClick={onClickHandle}>
 			<Typography.Text className={styles.tooltipHeader}>
 				{item.label}
 			</Typography.Text>
@@ -62,33 +71,41 @@ function buildTooltipContent(item: StatusCountItem): React.ReactNode {
 
 export function GroupedStatusCounts({
 	items,
+	rowId,
 	showZeroValues = true,
 }: GroupedStatusCountsProps): JSX.Element {
 	const visibleItems =
 		showZeroValues === false ? items.filter((item) => item.value > 0) : items;
 
 	if (visibleItems.length === 0) {
-		return <TanStackTable.Text>-</TanStackTable.Text>;
+		return <TextNoData type="tanstack" />;
 	}
 
 	return (
 		<div className={styles.container}>
 			{visibleItems.map((item) => (
-				<div key={item.label} className={styles.itemWrapper}>
-					<div
-						className={styles.separator}
-						style={{ backgroundColor: item.color }}
-					/>
-					<div className={styles.valueWrapper}>
-						<TooltipSimple title={buildTooltipContent(item)} arrow align="start">
-							<span className={styles.valueWrapperTooltip}>
-								<TanStackTable.Text className={styles.value}>
-									{item.value || '-'}
-								</TanStackTable.Text>
-							</span>
-						</TooltipSimple>
-					</div>
-				</div>
+				<TanStackTable.HoverTooltip
+					key={item.label}
+					rowId={rowId}
+					title={buildTooltipContent(item)}
+					arrow
+					align="start"
+				>
+					{item.value ? (
+						<TanStackTable.Text
+							className={styles.item}
+							style={{ '--gsc-color': item.color } as React.CSSProperties}
+						>
+							{item.value}
+						</TanStackTable.Text>
+					) : (
+						<TextNoData
+							type="tanstack"
+							className={styles.item}
+							style={{ '--gsc-color': item.color } as React.CSSProperties}
+						/>
+					)}
+				</TanStackTable.HoverTooltip>
 			))}
 		</div>
 	);

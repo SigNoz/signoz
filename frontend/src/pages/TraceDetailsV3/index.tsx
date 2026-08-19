@@ -80,7 +80,7 @@ function TraceDetailsV3(): JSX.Element {
 
 	const handleSpanDetailsClose = useCallback((): void => {
 		urlQuery.delete('spanId');
-		safeNavigate({ search: urlQuery.toString() });
+		safeNavigate({ search: urlQuery.toString() }, { replace: true });
 	}, [urlQuery, safeNavigate]);
 
 	const handleFilteredSpansChange = useCallback(
@@ -346,6 +346,7 @@ function TraceDetailsV3(): JSX.Element {
 			rootServiceEntryPoint: payload.rootServiceEntryPoint,
 			rootSpanStatusCode: rootSpan?.response_status_code || '',
 			hasMissingSpans: payload.hasMissingSpans || false,
+			totalSpansCount: payload.totalSpansCount || 0,
 		};
 	}, [traceData?.payload]);
 

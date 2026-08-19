@@ -3190,11 +3190,6 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, orgID v
 	var rows driver.Rows
 	var attributeValues v3.FilterAttributeValueResponse
 
-	normalized := true
-	if constants.IsDotMetricsEnabled {
-		normalized = false
-	}
-
 	reductionEnabled := r.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableMetricsReduction, featuretypes.NewFlaggerEvaluationContext(orgID))
 
 	if reductionEnabled {
@@ -3206,7 +3201,7 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, orgID v
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
 	names := []string{req.AggregateAttribute}
-	names = append(names, metrics.GetTransitionedMetric(req.AggregateAttribute, normalized))
+	names = append(names, metrics.GetTransitionedMetric(req.AggregateAttribute))
 
 	rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, names, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), common.PastDayRoundOff())
 
@@ -3337,60 +3332,6 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, orgID valuer.U
 		IsMonotonic: isMonotonic,
 		Temporality: temporality,
 	}, nil
-}
-
-// GetCountOfThings returns the count of things in the query
-// This is a generic function that can be used to check if any data exists for a given query
-func (r *ClickHouseReader) GetCountOfThings(ctx context.Context, query string) (uint64, error) {
-	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
-		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
-		instrumentationtypes.CodeFunctionName: "GetCountOfThings",
-	})
-	var count uint64
-	err := r.db.QueryRow(ctx, query).Scan(&count)
-	if err != nil {
-		return 0, err
-	}
-	return count, nil
-}
-
-func (r *ClickHouseReader) GetActiveHostsFromMetricMetadata(ctx context.Context, metricNames []string, hostNameAttr string, sinceUnixMilli int64) (map[string]bool, error) {
-	activeHosts := map[string]bool{}
-
-	query := fmt.Sprintf(
-		`SELECT DISTINCT attr_string_value
-		FROM %s.%s
-		WHERE metric_name IN @metricNames
-		  AND attr_name = @attrName
-		  AND last_reported_unix_milli >= @sinceUnixMilli`,
-		signozMetricDBName,
-		constants.SIGNOZ_METADATA_TABLENAME,
-	)
-
-	rows, err := r.db.Query(ctx, query,
-		clickhouse.Named("metricNames", metricNames),
-		clickhouse.Named("attrName", hostNameAttr),
-		clickhouse.Named("sinceUnixMilli", sinceUnixMilli),
-	)
-	if err != nil {
-		return nil, errorsV2.WrapInternalf(err, errorsV2.CodeInternal, "error querying active hosts")
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var hostName string
-		if err := rows.Scan(&hostName); err != nil {
-			return nil, errorsV2.WrapInternalf(err, errorsV2.CodeInternal, "error scanning active host row")
-		}
-		if hostName != "" {
-			activeHosts[hostName] = true
-		}
-	}
-	if err := rows.Err(); err != nil {
-		return nil, errorsV2.WrapInternalf(err, errorsV2.CodeInternal, "error iterating active host rows")
-	}
-
-	return activeHosts, nil
 }
 
 func (r *ClickHouseReader) GetLatestReceivedMetric(
@@ -4203,33 +4144,6 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 
 	return rowList, getPersonalisedError(rows.Err())
 
-}
-
-// GetHostMetricsExistenceAndEarliestTime returns (count, minFirstReportedUnixMilli, error) for the given host metric names
-// from distributed_metadata. When count is 0, minFirstReportedUnixMilli is 0.
-func (r *ClickHouseReader) GetMetricsExistenceAndEarliestTime(ctx context.Context, metricNames []string) (uint64, uint64, error) {
-	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
-		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
-		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
-		instrumentationtypes.CodeFunctionName: "GetMetricsExistenceAndEarliestTime",
-	})
-	if len(metricNames) == 0 {
-		return 0, 0, nil
-	}
-
-	query := fmt.Sprintf(
-		`SELECT count(*) AS cnt, min(first_reported_unix_milli) AS min_first_reported
-		FROM %s.%s
-		WHERE metric_name IN @metric_names`,
-		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_METADATA_TABLENAME)
-
-	var count, minFirstReported uint64
-	err := r.db.QueryRow(ctx, query, clickhouse.Named("metric_names", metricNames)).Scan(&count, &minFirstReported)
-	if err != nil {
-		r.logger.Error("error getting host metrics existence and earliest time", errorsV2.Attr(err))
-		return 0, 0, err
-	}
-	return count, minFirstReported, nil
 }
 
 func getPersonalisedError(err error) error {
@@ -5447,113 +5361,4 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	searchSpansResult[0].EndTimestampMillis = endTime + (durationNano / 1000000)
 
 	return &searchSpansResult, nil
-}
-
-func (r *ClickHouseReader) GetNormalizedStatus(
-	ctx context.Context,
-	orgID valuer.UUID,
-	metricNames []string,
-) (map[string]bool, error) {
-
-	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
-		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
-		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
-		instrumentationtypes.CodeFunctionName: "GetNormalizedStatus",
-	})
-	if len(metricNames) == 0 {
-		return map[string]bool{}, nil
-	}
-
-	result := make(map[string]bool, len(metricNames))
-	buildKey := func(name string) string {
-		return constants.NormalizedMetricsMapCacheKey + ":" + name
-	}
-
-	uncached := make([]string, 0, len(metricNames))
-	for _, m := range metricNames {
-		var status model.MetricsNormalizedMap
-		if err := r.cache.Get(ctx, orgID, buildKey(m), &status); err == nil {
-			result[m] = status.IsUnNormalized
-		} else {
-			uncached = append(uncached, m)
-		}
-	}
-	if len(uncached) == 0 {
-		return result, nil
-	}
-
-	placeholders := "'" + strings.Join(uncached, "', '") + "'"
-
-	reductionEnabled := r.fl.BooleanOrEmpty(ctx, flagger.FeatureEnableMetricsReduction, featuretypes.NewFlaggerEvaluationContext(orgID))
-
-	var q string
-	if reductionEnabled {
-		q = fmt.Sprintf(
-			`SELECT metric_name, toUInt8(__normalized)
-           FROM (
-               SELECT metric_name, __normalized FROM %s.%s WHERE metric_name IN (%s)
-               UNION ALL
-               SELECT metric_name, __normalized FROM %s.%s WHERE metric_name IN (%s)
-           )
-          GROUP BY metric_name, __normalized`,
-			signozMetricDBName, signozTSTableNameV41Day, placeholders,
-			signozMetricDBName, signozTSTableNameV4Reduced, placeholders,
-		)
-	} else {
-		q = fmt.Sprintf(
-			`SELECT metric_name, toUInt8(__normalized)
-           FROM %s.%s
-          WHERE metric_name IN (%s)
-          GROUP BY metric_name, __normalized`,
-			signozMetricDBName, signozTSTableNameV41Day, placeholders,
-		)
-	}
-
-	rows, err := r.db.Query(ctx, q)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	// tmp[m] collects the set {0,1} for a metric name, truth table
-	tmp := make(map[string]map[uint8]struct{}, len(uncached))
-
-	for rows.Next() {
-		var (
-			name       string
-			normalized uint8
-		)
-		if err := rows.Scan(&name, &normalized); err != nil {
-			return nil, err
-		}
-		if _, ok := tmp[name]; !ok {
-			tmp[name] = make(map[uint8]struct{}, 2)
-		}
-		tmp[name][normalized] = struct{}{}
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	for _, m := range uncached {
-		set := tmp[m]
-		switch {
-		case len(set) == 0:
-			return nil, fmt.Errorf("metric %q not found in ClickHouse", m)
-
-		case len(set) == 2:
-			result[m] = true
-
-		default:
-			_, hasUnnorm := set[0]
-			result[m] = hasUnnorm
-		}
-		status := model.MetricsNormalizedMap{
-			MetricName:     m,
-			IsUnNormalized: result[m],
-		}
-		_ = r.cache.Set(ctx, orgID, buildKey(m), &status, 0)
-	}
-
-	return result, nil
 }

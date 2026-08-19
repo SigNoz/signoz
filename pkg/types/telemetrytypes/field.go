@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/SigNoz/signoz-otel-collector/exporter/jsontypeexporter"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -22,20 +21,27 @@ const (
 	// BodyJSONStringSearchPrefix is the prefix used for body JSON search queries.
 	// e.g., "body.status" where "body." is the prefix.
 	BodyJSONStringSearchPrefix = "body."
-	ArraySep                   = jsontypeexporter.ArraySeparator
-	ArraySepSuffix             = "[]"
+	// ArraySep must match the array separator written by the collector's JSON
+	// type exporter; the shared constant (jsontypeexporter.ArraySeparator) was
+	// removed from signoz-otel-collector, so the value is duplicated here.
+	ArraySep       = "[]."
+	ArraySepSuffix = "[]"
 	// TODO(Piyush): Remove once we've migrated to the new array syntax.
 	ArrayAnyIndex       = "[*]."
 	ArrayAnyIndexSuffix = "[*]"
 )
 
 type TelemetryFieldKey struct {
-	Name          string        `json:"name" validate:"required" required:"true"`
-	Description   string        `json:"description,omitempty"`
-	Unit          string        `json:"unit,omitempty"`
-	Signal        Signal        `json:"signal,omitzero"`
-	FieldContext  FieldContext  `json:"fieldContext,omitzero"`
-	FieldDataType FieldDataType `json:"fieldDataType,omitzero"`
+	Name        string `json:"name" validate:"required" required:"true"`
+	Description string `json:"description,omitempty"`
+	Unit        string `json:"unit,omitempty"`
+	// signal/fieldContext/fieldDataType always serialize (empty included): the empty
+	// value is a first-class "unspecified / any" selection a client can set, so it
+	// must round-trip verbatim rather than be dropped. Their Enum()s include the
+	// empty member so the "" is a valid schema value.
+	Signal        Signal        `json:"signal"`
+	FieldContext  FieldContext  `json:"fieldContext"`
+	FieldDataType FieldDataType `json:"fieldDataType"`
 
 	JSONPlan     JSONAccessPlan               `json:"-"`
 	Indexes      []TelemetryFieldKeySkipIndex `json:"-"`
@@ -238,6 +244,27 @@ type FieldKeySelector struct {
 	SelectorMatchType FieldSelectorMatchType `json:"selectorMatchType"`
 	Limit             int                    `json:"limit"`
 	MetricContext     *MetricContext         `json:"metricContext,omitempty"`
+}
+
+// MatchesKey reports whether a statically defined key satisfies the selector, so
+// callers can suggest keys that were never ingested.
+func (s *FieldKeySelector) MatchesKey(key *TelemetryFieldKey) bool {
+	if s.FieldContext != FieldContextUnspecified && s.FieldContext != key.FieldContext {
+		return false
+	}
+
+	if s.FieldDataType != FieldDataTypeUnspecified && s.FieldDataType != key.FieldDataType {
+		return false
+	}
+
+	if s.Name == "" {
+		return true
+	}
+
+	if s.SelectorMatchType == FieldSelectorMatchTypeExact {
+		return strings.EqualFold(s.Name, key.Name)
+	}
+	return strings.Contains(strings.ToLower(key.Name), strings.ToLower(s.Name))
 }
 
 type FieldValueSelector struct {

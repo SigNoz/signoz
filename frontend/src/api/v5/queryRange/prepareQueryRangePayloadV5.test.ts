@@ -18,7 +18,10 @@ import {
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
-import { prepareQueryRangePayloadV5 } from './prepareQueryRangePayloadV5';
+import {
+	convertBuilderQueriesToV5,
+	prepareQueryRangePayloadV5,
+} from './prepareQueryRangePayloadV5';
 
 jest.mock('lib/getStartEndRangeTime', () => ({
 	__esModule: true,
@@ -897,5 +900,38 @@ describe('prepareQueryRangePayloadV5', () => {
 		) as QueryEnvelope;
 		const logSpec = builderQuery.spec as LogBuilderQuery;
 		expect(logSpec.filter).toStrictEqual({ expression: '' });
+	});
+});
+
+describe('convertBuilderQueriesToV5 having normalization', () => {
+	const buildSpec = (having: unknown): MetricBuilderQuery => {
+		const [envelope] = convertBuilderQueriesToV5(
+			{
+				A: {
+					dataSource: DataSource.METRICS,
+					queryName: 'A',
+					aggregations: [{ metricName: 'm', spaceAggregation: 'p99' }],
+					having,
+				} as unknown as IBuilderQuery,
+			},
+			'time_series',
+			PANEL_TYPES.TIME_SERIES,
+		);
+		return envelope.spec as MetricBuilderQuery;
+	};
+
+	it.each([
+		['a legacy V4 array', []],
+		['a blank empty-object having', { expression: '' }],
+		['a whitespace-only having', { expression: '   ' }],
+		['a nullish having', undefined],
+	])('drops %s (serializes to undefined)', (_label, having) => {
+		expect(buildSpec(having).having).toBeUndefined();
+	});
+
+	it('preserves a real having expression', () => {
+		expect(buildSpec({ expression: 'count() > 5' }).having).toStrictEqual({
+			expression: 'count() > 5',
+		});
 	});
 });

@@ -13,9 +13,11 @@ import {
 import { AxiosError } from 'axios';
 import APIError from 'types/api/error';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
-import { QuickFiltersSource } from 'components/QuickFilters/types';
+import {
+	QuickFilterChangeEventData,
+	QuickFiltersSource,
+} from 'components/QuickFilters/types';
 import { InfraMonitoringEvents } from 'constants/events';
-import { FeatureKeys } from 'constants/features';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import K8sBaseDetails, {
 	K8sDetailsFilters,
@@ -29,7 +31,6 @@ import {
 } from 'container/InfraMonitoringK8sV2/constants';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useAppContext } from 'providers/App/App';
 import { DataSource } from 'types/common/queryBuilder';
 
 import {
@@ -51,6 +52,11 @@ import { getHostsQuickFiltersConfig } from './utils';
 import styles from './InfraMonitoringHosts.module.scss';
 import { ArrowUpToLine, Filter } from '@signozhq/icons';
 import { NANO_SECOND_MULTIPLIER, useGlobalTimeStore } from 'store/globalTime';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
+import {
+	logInfraFilterCustomizedEvent,
+	logInfraMonitoringListViewedEvent,
+} from 'container/InfraMonitoringK8sV2/Base/events';
 
 function Hosts(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
@@ -91,11 +97,6 @@ function Hosts(): JSX.Element {
 			});
 		}
 	}, [compositeQuery, redirectWithQueryBuilderData]);
-
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
 
 	const handleFilterVisibilityChange = (): void => {
 		setShowFilters(!showFilters);
@@ -139,6 +140,7 @@ function Hosts(): JSX.Element {
 					records: data.records,
 					total: data.total,
 					endTimeBeforeRetention: data.endTimeBeforeRetention,
+					warning: data.warning,
 				};
 			} catch (error) {
 				return {
@@ -189,9 +191,22 @@ function Hosts(): JSX.Element {
 
 	const getInitialLogTracesExpression = useCallback(
 		(host: InframonitoringtypesHostRecordDTO) =>
-			hostInitialLogTracesExpression(host, dotMetricsEnabled),
-		[dotMetricsEnabled],
+			hostInitialLogTracesExpression(host),
+		[],
 	);
+
+	const handleQuickFilterChange = useCallback(
+		(data: QuickFilterChangeEventData): void => {
+			logInfraFilterCustomizedEvent(
+				InfraMonitoringEntity.HOSTS,
+				'quick_filter',
+				data.expression,
+				data.filterItemKeys,
+			);
+		},
+		[],
+	);
+
 	const controlListPrefix = !showFilters ? (
 		<div className={styles.quickFiltersToggleContainer}>
 			<Button
@@ -205,33 +220,42 @@ function Hosts(): JSX.Element {
 		</div>
 	) : undefined;
 
+	useEffect(() => {
+		logInfraMonitoringListViewedEvent(InfraMonitoringEntity.HOSTS);
+	}, []);
+
 	return (
 		<>
 			<div className={styles.infraMonitoringContainer}>
 				<div className={styles.infraContentRow}>
 					{showFilters && (
 						<div className={styles.quickFiltersContainer}>
-							<div className={styles.quickFiltersContainerHeader}>
-								<Typography.Text>Filters</Typography.Text>
-								<Tooltip title="Collapse Filters">
-									<ArrowUpToLine
-										style={{ rotate: '270deg', cursor: 'pointer' }}
-										onClick={handleFilterVisibilityChange}
-										size="md"
+							<OverlayScrollbar>
+								<>
+									<div className={styles.quickFiltersContainerHeader}>
+										<Typography.Text>Filters</Typography.Text>
+										<Tooltip title="Collapse Filters">
+											<ArrowUpToLine
+												style={{ rotate: '270deg', cursor: 'pointer' }}
+												onClick={handleFilterVisibilityChange}
+												size="md"
+											/>
+										</Tooltip>
+									</div>
+									<QuickFilters
+										source={QuickFiltersSource.INFRA_MONITORING}
+										config={getHostsQuickFiltersConfig()}
+										handleFilterVisibilityChange={handleFilterVisibilityChange}
+										useFieldApis={{
+											metricNamespace:
+												METRIC_NAMESPACE_BY_ENTITY[InfraMonitoringEntity.HOSTS],
+											startUnixMilli,
+											endUnixMilli,
+										}}
+										onQuickFilterChange={handleQuickFilterChange}
 									/>
-								</Tooltip>
-							</div>
-							<QuickFilters
-								source={QuickFiltersSource.INFRA_MONITORING}
-								config={getHostsQuickFiltersConfig(dotMetricsEnabled)}
-								handleFilterVisibilityChange={handleFilterVisibilityChange}
-								useFieldApis={{
-									metricNamespace:
-										METRIC_NAMESPACE_BY_ENTITY[InfraMonitoringEntity.HOSTS],
-									startUnixMilli,
-									endUnixMilli,
-								}}
-							/>
+								</>
+							</OverlayScrollbar>
 						</div>
 					)}
 					<div
@@ -248,6 +272,7 @@ function Hosts(): JSX.Element {
 							getRowKey={getHostRowKey}
 							getItemKey={getHostItemKey}
 							eventCategory={InfraMonitoringEvents.HostEntity}
+							detailsQueryKeyPrefix="hosts"
 						/>
 					</div>
 				</div>

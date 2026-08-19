@@ -1,6 +1,6 @@
-/** Triggers a browser download of in-memory string content as a file. */
+/** Triggers a browser download of in-memory content (string or Blob) as a file. */
 export function downloadFile(
-	content: string,
+	content: string | Blob,
 	fileName: string,
 	mime: string,
 ): void {

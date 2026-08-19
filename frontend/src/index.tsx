@@ -7,15 +7,22 @@ import AppRoutes from 'AppRoutes';
 import { AxiosError } from 'axios';
 import { GlobalTimeStoreAdapter } from 'components/GlobalTimeStoreAdapter/GlobalTimeStoreAdapter';
 import { ThemeProvider } from 'hooks/useDarkMode';
+import { configureOverlayScrollbars } from 'lib/configureOverlayScrollbars';
 import { NuqsAdapter } from 'nuqs/adapters/react';
 import { AppProvider } from 'providers/App/App';
 import TimezoneProvider from 'providers/Timezone';
 import store from 'store';
 import APIError from 'types/api/error';
+import { installTranslationResilience } from 'translation-resilience';
+
+import 'lib/monaco/setup';
 
 import './ReactI18';
 
 import 'styles.scss';
+
+installTranslationResilience();
+configureOverlayScrollbars();
 
 const queryClient = new QueryClient({
 	defaultOptions: {

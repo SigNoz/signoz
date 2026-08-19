@@ -637,6 +637,21 @@ const generateData = (
 	return data;
 };
 
+export const compareTableColumnValues = (
+	a: RowData,
+	b: RowData,
+	dataIndex: string,
+): number => {
+	const valueA = Number(a[`${dataIndex}_without_unit`] ?? a[dataIndex]);
+	const valueB = Number(b[`${dataIndex}_without_unit`] ?? b[dataIndex]);
+
+	if (!isNaN(valueA) && !isNaN(valueB)) {
+		return valueA - valueB;
+	}
+
+	return String(a[dataIndex] ?? '').localeCompare(String(b[dataIndex] ?? ''));
+};
+
 const generateTableColumns = (
 	dynamicColumns: DynamicColumns,
 	renderColumnCell?: QueryTableProps['renderColumnCell'],
@@ -650,18 +665,8 @@ const generateTableColumns = (
 			title: item.title,
 			width: QUERY_TABLE_CONFIG.width,
 			render: renderColumnCell && renderColumnCell[dataIndex],
-			sorter: (a: RowData, b: RowData): number => {
-				const valueA = Number(a[`${dataIndex}_without_unit`] ?? a[dataIndex]);
-				const valueB = Number(b[`${dataIndex}_without_unit`] ?? b[dataIndex]);
-
-				if (!isNaN(valueA) && !isNaN(valueB)) {
-					return valueA - valueB;
-				}
-
-				return ((a[dataIndex] as string) || '').localeCompare(
-					(b[dataIndex] as string) || '',
-				);
-			},
+			sorter: (a: RowData, b: RowData): number =>
+				compareTableColumnValues(a, b, dataIndex),
 		};
 
 		return [...acc, column];

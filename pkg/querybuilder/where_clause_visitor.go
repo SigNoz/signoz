@@ -9,7 +9,9 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
+	"github.com/SigNoz/signoz/pkg/semconv"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -27,6 +29,7 @@ const stringMatchingOperatorDocURL = "https://signoz.io/docs/userguide/operators
 type filterExpressionVisitor struct {
 	context            context.Context
 	orgID              valuer.UUID
+	fl                 flagger.Flagger
 	fieldMapper        qbtypes.FieldMapper
 	conditionBuilder   qbtypes.ConditionBuilder
 	warnings           []string
@@ -43,11 +46,16 @@ type filterExpressionVisitor struct {
 	keysWithWarnings map[string]bool
 	startNs          uint64
 	endNs            uint64
+
+	requiresCostGuard bool
 }
 
 type FilterExprVisitorOpts struct {
-	Context            context.Context
-	OrgID              valuer.UUID
+	Context context.Context
+	OrgID   valuer.UUID
+	// Flagger evaluates the resolve_semconv_families flag during resolution.
+	// A nil Flagger keeps resolution literal.
+	Flagger            flagger.Flagger
 	Logger             *slog.Logger
 	FieldMapper        qbtypes.FieldMapper
 	ConditionBuilder   qbtypes.ConditionBuilder
@@ -66,6 +74,7 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 	return &filterExpressionVisitor{
 		context:            opts.Context,
 		orgID:              opts.OrgID,
+		fl:                 opts.Flagger,
 		fieldMapper:        opts.FieldMapper,
 		conditionBuilder:   opts.ConditionBuilder,
 		fieldKeys:          opts.FieldKeys,
@@ -81,9 +90,13 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 }
 
 type PreparedWhereClause struct {
-	WhereClause    *sqlbuilder.WhereClause
-	Warnings       []string
-	WarningsDocURL string
+	WhereClause *sqlbuilder.WhereClause
+	// Expr is the bare predicate ($n markers bound to opts.Builder), embeddable
+	// outside a WHERE clause (e.g. inside countIf).
+	Expr              string
+	Warnings          []string
+	WarningsDocURL    string
+	RequiresCostGuard bool
 }
 
 func (p PreparedWhereClause) IsEmpty() bool {
@@ -165,12 +178,12 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (PreparedWhere
 
 	// Return empty where clause so callers can skip the WHERE clause
 	if cond == "" || cond == SkipConditionLiteral {
-		return PreparedWhereClause{WhereClause: nil, Warnings: visitor.warnings, WarningsDocURL: visitor.mainWarnURL}, nil
+		return PreparedWhereClause{WhereClause: nil, Warnings: visitor.warnings, WarningsDocURL: visitor.mainWarnURL, RequiresCostGuard: visitor.requiresCostGuard}, nil
 	}
 
 	whereClause := sqlbuilder.NewWhereClause().AddWhereExpr(visitor.builder.Args, cond)
 
-	return PreparedWhereClause{WhereClause: whereClause, Warnings: visitor.warnings, WarningsDocURL: visitor.mainWarnURL}, nil
+	return PreparedWhereClause{WhereClause: whereClause, Expr: cond, Warnings: visitor.warnings, WarningsDocURL: visitor.mainWarnURL, RequiresCostGuard: visitor.requiresCostGuard}, nil
 }
 
 // Visit dispatches to the specific visit method based on node type.
@@ -203,6 +216,8 @@ func (v *filterExpressionVisitor) Visit(tree antlr.ParseTree) any {
 		return v.VisitValueList(t)
 	case *grammar.FullTextContext:
 		return v.VisitFullText(t)
+	case *grammar.SearchCallContext:
+		return v.VisitSearchCall(t)
 	case *grammar.FunctionCallContext:
 		return v.VisitFunctionCall(t)
 	case *grammar.FunctionParamListContext:
@@ -317,6 +332,8 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 		return v.Visit(ctx.Comparison())
 	} else if ctx.FunctionCall() != nil {
 		return v.Visit(ctx.FunctionCall())
+	} else if ctx.SearchCall() != nil {
+		return v.Visit(ctx.SearchCall())
 	} else if ctx.FullText() != nil {
 		return v.Visit(ctx.FullText())
 	}
@@ -350,7 +367,7 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 				return ErrorConditionLiteral
 			}
 		}
-		conds, ok := v.buildConditions(v.fullTextColumn, []*telemetrytypes.TelemetryFieldKey{v.fullTextColumn}, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(searchText))
+		conds, ok := v.buildConditions(v.fullTextColumn, []*telemetrytypes.LogicalField{telemetrytypes.SingleLogicalField(v.fullTextColumn.Name, v.fullTextColumn)}, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(searchText))
 		if !ok {
 			return ErrorConditionLiteral
 		}
@@ -369,7 +386,7 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 // VisitComparison handles all comparison operators.
 func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext) any {
 	key := v.Visit(ctx.Key()).(*telemetrytypes.TelemetryFieldKey)
-	matching := MatchingFieldKeys(key, v.fieldKeys)
+	matching := MatchingLogicalFields(v.context, v.orgID, v.fl, key, v.fieldKeys)
 
 	// Handle EXISTS specially
 	if ctx.EXISTS() != nil {
@@ -665,7 +682,7 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 		v.errors = append(v.errors, "full text search is not supported")
 		return ErrorConditionLiteral
 	}
-	conds, ok := v.buildConditions(v.fullTextColumn, []*telemetrytypes.TelemetryFieldKey{v.fullTextColumn}, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text))
+	conds, ok := v.buildConditions(v.fullTextColumn, []*telemetrytypes.LogicalField{telemetrytypes.SingleLogicalField(v.fullTextColumn.Name, v.fullTextColumn)}, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text))
 	if !ok {
 		return ErrorConditionLiteral
 	}
@@ -720,7 +737,7 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 		return ErrorConditionLiteral
 	}
 
-	conds, ok := v.buildConditions(key, MatchingFieldKeys(key, v.fieldKeys), operator, value)
+	conds, ok := v.buildConditions(key, MatchingLogicalFields(v.context, v.orgID, v.fl, key, v.fieldKeys), operator, value)
 	if !ok {
 		return ErrorConditionLiteral
 	}
@@ -770,6 +787,79 @@ func normalizeFunctionValue(operator qbtypes.FilterOperator, functionName string
 		return []any{values}, nil
 	}
 	return valueParams, nil
+}
+
+// VisitSearchCall handles search('term'[, body, resource, …]): a case-insensitive
+// search term plus optional field-context scopes, ORing one FilterOperatorSearch per
+// scope (no scope = keyless, covering every field).
+func (v *filterExpressionVisitor) VisitSearchCall(ctx *grammar.SearchCallContext) any {
+	// Flag scan-heavy so the statement builder attaches the cost guard.
+	v.requiresCostGuard = true
+
+	valueList := ctx.ValueList()
+	if valueList == nil {
+		v.errors = append(v.errors, "function `search` expects a search term, e.g. search('error')")
+		return ErrorConditionLiteral
+	}
+	params := valueList.AllValue()
+	if len(params) == 0 {
+		v.errors = append(v.errors, "function `search` expects a search term, e.g. search('error')")
+		return ErrorConditionLiteral
+	}
+
+	searchText, ok := searchParamText(params[0])
+	if !ok {
+		v.errors = append(v.errors, "function `search` expects a search term as its first argument, e.g. search('error')")
+		return ErrorConditionLiteral
+	}
+
+	var fieldContexts []telemetrytypes.FieldContext
+	if len(params) == 1 {
+		fieldContexts = []telemetrytypes.FieldContext{telemetrytypes.FieldContextUnspecified}
+	} else {
+		for _, p := range params[1:] {
+			scopeText, sok := searchParamText(p)
+			if !sok {
+				v.errors = append(v.errors, "function `search` expects each scope to be a context, e.g. search('error', body, resource)")
+				return ErrorConditionLiteral
+			}
+			fc, fok := telemetrytypes.FieldContextFromText(scopeText)
+			if !fok {
+				v.errors = append(v.errors, fmt.Sprintf("invalid search scope %q; expected a field context: body, attribute, resource, or log", scopeText))
+				return ErrorConditionLiteral
+			}
+			fieldContexts = append(fieldContexts, fc)
+		}
+	}
+
+	var conds []string
+	for _, fieldContext := range fieldContexts {
+		key := telemetrytypes.NewTelemetryFieldKey("", fieldContext, telemetrytypes.FieldDataTypeUnspecified)
+		scoped, cok := v.buildConditions(key, nil, qbtypes.FilterOperatorSearch, searchText)
+		if !cok {
+			return ErrorConditionLiteral
+		}
+		conds = append(conds, scoped...)
+	}
+	if len(conds) == 0 {
+		return SkipConditionLiteral
+	}
+	if len(conds) == 1 {
+		return conds[0]
+	}
+	return v.builder.Or(conds...)
+}
+
+// searchParamText returns an argument's raw token text (quoted or bare) rather than its
+// visited value, so a bare word stays literal and search(1000000) isn't "1e+06".
+func searchParamText(val grammar.IValueContext) (string, bool) {
+	if val == nil {
+		return "", false
+	}
+	if val.QUOTED_TEXT() != nil {
+		return trimQuotes(val.QUOTED_TEXT().GetText()), true
+	}
+	return val.GetText(), true
 }
 
 // VisitFunctionParamList handles the parameter list for function calls.
@@ -839,7 +929,7 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 
 // buildConditions invokes the condition builder for a filter term, folding its
 // warnings/errors into visitor state; returns false if an error was recorded.
-func (v *filterExpressionVisitor) buildConditions(key *telemetrytypes.TelemetryFieldKey, matching []*telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOperator, value any) ([]string, bool) {
+func (v *filterExpressionVisitor) buildConditions(key *telemetrytypes.TelemetryFieldKey, matching []*telemetrytypes.LogicalField, op qbtypes.FilterOperator, value any) ([]string, bool) {
 	conds, warns, err := v.conditionBuilder.ConditionFor(v.context, v.orgID, v.startNs, v.endNs, key, v.fieldKeys, qbtypes.ConditionBuilderOptions{SkipResourceFilter: v.skipResourceFilter}, op, value, v.builder)
 	if err != nil {
 		_, _, _, _, errURL, _ := errors.Unwrapb(err)
@@ -896,30 +986,161 @@ func assignIfEmpty(s *string, value string) {
 	}
 }
 
-// MatchingFieldKeys returns the field keys from the map that match the given key,
-// honoring any context/data type the user specified.
-func MatchingFieldKeys(field *telemetrytypes.TelemetryFieldKey, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
-	fieldKeysForName := []*telemetrytypes.TelemetryFieldKey{}
-
-	// match by name; keep items whose context and data type match (unspecified matches any)
-	for _, item := range fieldKeys[field.Name] {
-		if (field.FieldContext == telemetrytypes.FieldContextUnspecified || field.FieldContext == item.FieldContext) &&
-			(field.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || field.FieldDataType == item.FieldDataType) {
-			fieldKeysForName = append(fieldKeysForName, item)
-		}
+// familyMemberNames returns the physical spellings to look up for the
+// referenced key: the semantic-convention family members (current-first) when
+// the resolve_semconv_families flag is on for the org and the key can resolve
+// to traces, else just the requested name. Only trace field mappers understand
+// families today; logs and metrics keep the requested spelling until theirs
+// land.
+func familyMemberNames(ctx context.Context, orgID valuer.UUID, fl flagger.Flagger, field *telemetrytypes.TelemetryFieldKey) []string {
+	if !semconvFamiliesEnabled(ctx, orgID, fl) {
+		return []string{field.Name}
 	}
+	if field.Signal != telemetrytypes.SignalUnspecified && field.Signal != telemetrytypes.SignalTraces {
+		return []string{field.Name}
+	}
+	return semconv.Members(semconv.KindAttribute, telemetrytypes.FieldKeySelector{
+		Name:         field.Name,
+		Signal:       telemetrytypes.SignalTraces,
+		FieldContext: field.FieldContext,
+	})
+}
 
-	// A context may have been split off a name that legitimately contained it (e.g.
-	// `attribute.key`); also look up the context-prefixed name so both readings resolve.
-	if field.FieldContext != telemetrytypes.FieldContextUnspecified {
-		contextPrefixedFieldName := fmt.Sprintf("%s.%s", field.FieldContext.StringValue(), field.Name)
-		for _, item := range fieldKeys[contextPrefixedFieldName] {
-			// Context already matched via the lookup key; only data type needs checking.
-			if field.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || item.FieldDataType == field.FieldDataType {
-				fieldKeysForName = append(fieldKeysForName, item)
+// MatchingLogicalFields resolves the referenced key against the metadata map
+// into logical fields, honoring any context/data type the user specified.
+//
+// Physical keys that are members of one semantic-convention family (traces
+// only today) group into one logical field per (signal, context, data type)
+// identity, members ordered current-first. Every other matching key becomes
+// its own single-member logical field. Ambiguity is the length of the
+// returned slice: one family is one element and is never ambiguous with
+// itself, but the slice can hold several logical fields — including several
+// family fields, one per identity, when the family exists under more than
+// one context or data type. Members alias the metadata map entries; nothing
+// is copied or mutated.
+//
+// Family grouping only happens when the resolve_semconv_families flag is on
+// for the org. A nil flagger means off: every match then stays a
+// single-member logical field.
+func MatchingLogicalFields(ctx context.Context, orgID valuer.UUID, fl flagger.Flagger, field *telemetrytypes.TelemetryFieldKey, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.LogicalField {
+	members := familyMemberNames(ctx, orgID, fl, field)
+	matches := collectMemberMatches(field, members, fieldKeys)
+	return groupIntoLogicalFields(field.Name, len(members) > 1, matches)
+}
+
+// memberMatch pairs a metadata entry with the family rank of the member name
+// it matched under. The stored name of a context-prefixed match differs from
+// the member name, so the rank must travel with the match.
+type memberMatch struct {
+	key  *telemetrytypes.TelemetryFieldKey
+	rank int
+}
+
+// matchesRequestedIdentity reports whether the entry fits the context and data
+// type that the request specified; unspecified matches any. A context-prefixed
+// lookup already matched the context through the lookup key itself.
+func matchesRequestedIdentity(field, item *telemetrytypes.TelemetryFieldKey, contextMatched bool) bool {
+	if !contextMatched && field.FieldContext != telemetrytypes.FieldContextUnspecified && field.FieldContext != item.FieldContext {
+		return false
+	}
+	if field.FieldDataType != telemetrytypes.FieldDataTypeUnspecified && field.FieldDataType != item.FieldDataType {
+		return false
+	}
+	return true
+}
+
+// inFamilyScope reports whether a match found under a sibling member name is
+// legitimate: the entry must be trace metadata, and the member must be in the
+// family of the requested name for the entry's context. A member lookup can
+// otherwise find a same-named field in a scope where the family does not
+// apply.
+func inFamilyScope(field, item *telemetrytypes.TelemetryFieldKey, memberName string) bool {
+	if item.Signal != telemetrytypes.SignalTraces {
+		return false
+	}
+	return slices.Contains(semconv.Members(semconv.KindAttribute, telemetrytypes.FieldKeySelector{
+		Name:         field.Name,
+		Signal:       telemetrytypes.SignalTraces,
+		FieldContext: item.FieldContext,
+	}), memberName)
+}
+
+// collectMemberMatches finds the metadata entries for every member spelling:
+// first under the member names, then under their context-prefixed spellings
+// (a context can be a legitimate part of a stored name, e.g. `attribute.key`).
+func collectMemberMatches(field *telemetrytypes.TelemetryFieldKey, members []string, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) []memberMatch {
+	matches := make([]memberMatch, 0)
+	collect := func(lookupName string, rank int, memberName string, contextMatched bool) {
+		for _, item := range fieldKeys[lookupName] {
+			if !matchesRequestedIdentity(field, item, contextMatched) {
+				continue
 			}
+			if memberName != field.Name && !inFamilyScope(field, item, memberName) {
+				continue
+			}
+			matches = append(matches, memberMatch{key: item, rank: rank})
 		}
 	}
 
-	return fieldKeysForName
+	for rank, member := range members {
+		collect(member, rank, member, false)
+	}
+	if field.FieldContext != telemetrytypes.FieldContextUnspecified {
+		for rank, member := range members {
+			collect(fmt.Sprintf("%s.%s", field.FieldContext.StringValue(), member), rank, member, true)
+		}
+	}
+	return matches
+}
+
+// groupIntoLogicalFields turns matches into logical fields. Trace entries in
+// family mode group by their (signal, context, data type) identity; every
+// other entry becomes its own single-member field. Members sort by family
+// rank at the end: precedence is a property of the family, not of the order
+// in which the lookups found the members.
+func groupIntoLogicalFields(requestedName string, familyMode bool, matches []memberMatch) []*telemetrytypes.LogicalField {
+	fields := make([]*telemetrytypes.LogicalField, 0, len(matches))
+	groups := make(map[string]*telemetrytypes.LogicalField)
+	ranks := make(map[*telemetrytypes.TelemetryFieldKey]int)
+
+	for _, match := range matches {
+		if !familyMode || match.key.Signal != telemetrytypes.SignalTraces {
+			fields = append(fields, telemetrytypes.SingleLogicalField(requestedName, match.key))
+			continue
+		}
+
+		identity := match.key.Signal.StringValue() + ";" + match.key.FieldContext.StringValue() + ";" + match.key.FieldDataType.StringValue()
+		group, ok := groups[identity]
+		if !ok {
+			group = &telemetrytypes.LogicalField{
+				Name:          requestedName,
+				Signal:        match.key.Signal,
+				FieldContext:  match.key.FieldContext,
+				FieldDataType: match.key.FieldDataType,
+			}
+			groups[identity] = group
+			fields = append(fields, group)
+		}
+		if groupHasMemberNamed(group, match.key.Name) {
+			continue
+		}
+		ranks[match.key] = match.rank
+		group.Members = append(group.Members, match.key)
+	}
+
+	for _, logical := range fields {
+		slices.SortStableFunc(logical.Members, func(a, b *telemetrytypes.TelemetryFieldKey) int {
+			return ranks[a] - ranks[b]
+		})
+	}
+	return fields
+}
+
+func groupHasMemberNamed(group *telemetrytypes.LogicalField, name string) bool {
+	for _, member := range group.Members {
+		if member.Name == name {
+			return true
+		}
+	}
+	return false
 }

@@ -6,6 +6,7 @@ import {
 	useDefaultLayout,
 } from '@signozhq/ui/resizable';
 import { toast } from '@signozhq/ui/sonner';
+import { ConfigProvider } from 'antd';
 import {
 	type DashboardtypesPanelDTO,
 	TelemetrytypesSignalDTO,
@@ -18,6 +19,7 @@ import {
 	SectionKind,
 } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/sections';
 import { getBuilderQueries } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/getBuilderQueries';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 
 import { getExecStats } from '../queryV5/v5ResponseData';
 import { usePanelInteractions } from '../PanelsAndSectionsLayout/Panel/hooks/usePanelInteractions';
@@ -41,10 +43,22 @@ import styles from './PanelEditor.module.scss';
 import logEvent from '@/api/common/logEvent';
 import { DashboardEvents } from '../../constants/events';
 
+// The query builder sits in an `overflow:hidden` resizable pane, so its Select
+// popups (group-by, order-by, having, …) clip when they open into the short pane.
+// Portal them to the document body; the query-builder filters honor this via
+// `useSelectPopupContainer`. Scoped to the full-page editor — the View modal keeps
+// its own `ConfigProvider` so popups stay inside the focus-trapped dialog.
+const getBodyPopupContainer = (): HTMLElement => document.body;
+
 interface PanelEditorContainerProps {
 	dashboardId: string;
 	panelId: string;
 	panel: DashboardtypesPanelDTO;
+	/**
+	 * The persisted panel the dirty check compares against. Distinct from `panel` (the
+	 * seed), which may carry unsaved edits handed off from View mode. Omit for a new panel.
+	 */
+	savedPanel?: DashboardtypesPanelDTO;
 	/** Creating a new panel (seeded default) vs editing an existing one. */
 	isNew?: boolean;
 	/** Target section for a new panel; falls back to the last/new section. */
@@ -68,6 +82,7 @@ function PanelEditorContainer({
 	dashboardId,
 	panelId,
 	panel,
+	savedPanel,
 	isNew = false,
 	layoutIndex,
 	isEditable,
@@ -91,6 +106,7 @@ function PanelEditorContainer({
 	} = usePanelEditSession({
 		panel,
 		panelId,
+		savedPanel,
 		alwaysSerializeQuery: isNew,
 		seedQuerySignal: true,
 	});
@@ -144,11 +160,13 @@ function PanelEditorContainer({
 		return section?.controls;
 	}, [panelDefinition]);
 
-	// A new panel is savable once it has a query to run — List auto-seeds one; other
-	// kinds open query-less, so there's nothing to save until the user builds one.
+	// Unsaved-edits flag driving the discard confirmation on close (Save is always
+	// enabled). Read the seed `panel`, not the live `draft` — the staged-query sync
+	// commits the seed into the draft on open, which would falsely dirty an untouched
+	// query-less new panel.
 	const isDirty = useMemo(
-		() => isSpecDirty || isQueryDirty || (isNew && draft.spec.queries.length > 0),
-		[isSpecDirty, isQueryDirty, isNew, draft.spec.queries.length],
+		() => isSpecDirty || isQueryDirty || (isNew && panel.spec.queries.length > 0),
+		[isSpecDirty, isQueryDirty, isNew, panel.spec.queries.length],
 	);
 
 	const isListPanel = panelKind === 'signoz/ListPanel';
@@ -210,6 +228,7 @@ function PanelEditorContainer({
 	});
 
 	const setScrollTargetId = useScrollIntoViewStore((s) => s.setScrollTargetId);
+	const { showErrorModal } = useErrorModal();
 
 	const onSave = useCallback(async (): Promise<void> => {
 		if (!isEditable) {
@@ -220,12 +239,22 @@ function PanelEditorContainer({
 			const savedPanelId = await save(buildSaveSpec(draft.spec));
 			// Reveal the saved panel once the dashboard re-renders.
 			setScrollTargetId(savedPanelId);
-			toast.success('Panel saved');
+			toast.success('Panel saved', {
+				position: 'top-center',
+			});
 			onSaved();
-		} catch {
-			toast.error('Failed to save panel');
+		} catch (err) {
+			showErrorModal(err);
 		}
-	}, [isEditable, save, buildSaveSpec, draft.spec, setScrollTargetId, onSaved]);
+	}, [
+		isEditable,
+		save,
+		buildSaveSpec,
+		draft.spec,
+		setScrollTargetId,
+		onSaved,
+		showErrorModal,
+	]);
 
 	// Leaving an existing panel's editor (without saving) still returns to it, so
 	// the dashboard lands on that panel rather than scrolled to the top. A new,
@@ -288,22 +317,24 @@ function PanelEditorContainer({
 							</ResizablePanel>
 							<ResizableHandle withHandle className={styles.handle} />
 							<ResizablePanel minSize="35%" maxSize="45%" defaultSize="40%">
-								<PanelEditorQueryBuilder
-									panelKind={panelKind}
-									signal={listSignal}
-									isLoadingQueries={isFetching}
-									onStageRunQuery={runQuery}
-									onCancelQuery={cancelQuery}
-									footer={
-										isListPanel ? (
-											<ListColumnsEditor
-												spec={spec}
-												onChangeSpec={setSpec}
-												signal={listSignal}
-											/>
-										) : undefined
-									}
-								/>
+								<ConfigProvider getPopupContainer={getBodyPopupContainer}>
+									<PanelEditorQueryBuilder
+										panelKind={panelKind}
+										signal={listSignal}
+										isLoadingQueries={isFetching}
+										onStageRunQuery={runQuery}
+										onCancelQuery={cancelQuery}
+										footer={
+											isListPanel ? (
+												<ListColumnsEditor
+													spec={spec}
+													onChangeSpec={setSpec}
+													signal={listSignal}
+												/>
+											) : undefined
+										}
+									/>
+								</ConfigProvider>
 							</ResizablePanel>
 						</ResizablePanelGroup>
 					</div>

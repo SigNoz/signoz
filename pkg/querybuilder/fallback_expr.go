@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strconv"
 
+	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -181,8 +182,27 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 			// dynamic array elements will be default casted to string
 			tblFieldName, value = castString(tblFieldName), toStrings(v)
 		}
+	case telemetrytypes.FieldDataTypeUnspecified:
+		if operator == qbtypes.FilterOperatorUnknown {
+			switch value.(type) {
+			case float32, float64, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, json.Number:
+				tblFieldName = accurateCastFloat(tblFieldName)
+			case string:
+				tblFieldName = castString(tblFieldName)
+			}
+		}
 	}
 	return tblFieldName, value
+}
+
+// ColumnIsTemporal reports whether a column carries a time value.
+func ColumnIsTemporal(col *schema.Column) bool {
+	switch col.Type.GetType() {
+	case schema.ColumnTypeEnumDateTime64, schema.ColumnTypeEnumDateTime,
+		schema.ColumnTypeEnumDate, schema.ColumnTypeEnumDate32:
+		return true
+	}
+	return false
 }
 
 func castFloat(col string) string     { return fmt.Sprintf("toFloat64OrNull(%s)", col) }

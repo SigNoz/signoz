@@ -21,17 +21,15 @@ import Controls from 'container/Controls';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import LoadingContainer from 'container/InfraMonitoringK8sV2/LoadingContainer';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
-import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
-import {
-	CustomTimeType,
-	Time,
-} from 'container/TopNav/DateTimeSelectionV2/types';
 import { ChevronDown, ChevronRight } from '@signozhq/icons';
+import { saveRecentQueryByExpression } from 'lib/recentQueries/saveRecentQuery';
 import { useQueryState } from 'nuqs';
 import { DataSource } from 'types/common/queryBuilder';
 import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
 import { validateQuery } from 'utils/queryValidationUtils';
 
+import EntityDateTimeSelector from '../EntityDateTimeSelector/EntityDateTimeSelector';
+import { useEntityDetailsTime } from '../EntityDateTimeSelector/useEntityDetailsTime';
 import EntityEmptyState from '../EntityEmptyState/EntityEmptyState';
 import EntityError from '../EntityError/EntityError';
 import { EventContents } from './EventsContent';
@@ -41,6 +39,7 @@ import { getEntityEventsQueryPayload, isEventsKeyNotFoundError } from './utils';
 
 import styles from './EntityEvents.module.scss';
 import { useTimezone } from 'providers/Timezone';
+import { logInfraDrawerFilterCustomizedEvent } from 'container/InfraMonitoringK8sV2/EntityDetailsUtils/events';
 
 interface EventDataType {
 	key: string;
@@ -53,16 +52,7 @@ interface EventDataType {
 }
 
 interface Props {
-	timeRange: {
-		startTime: number;
-		endTime: number;
-	};
-	isModalTimeSelection: boolean;
-	handleTimeChange: (
-		interval: Time | CustomTimeType,
-		dateTimeRange?: [number, number],
-	) => void;
-	selectedInterval: Time;
+	eventEntity: string;
 	queryKey: string;
 	category: InfraMonitoringEntity;
 	initialExpression: string;
@@ -77,13 +67,11 @@ const handleExpandRow = (record: EventDataType): JSX.Element => (
 );
 
 function EntityEventsContent({
-	timeRange,
-	isModalTimeSelection,
-	handleTimeChange,
-	selectedInterval,
+	eventEntity,
 	queryKey,
 	category,
 }: Omit<Props, 'initialExpression'>): JSX.Element {
+	const { timeRange } = useEntityDetailsTime();
 	const expression = useExpression();
 	const inputExpression = useInputExpression();
 	const userExpression = useUserExpression();
@@ -129,19 +117,34 @@ function EntityEventsContent({
 					: newUserExpression || '',
 			);
 			if (validation.isValid) {
+				saveRecentQueryByExpression(DataSource.LOGS, newUserExpression);
 				querySearchOnRun(newUserExpression || '');
 
-				logEvent(InfraMonitoringEvents.FilterApplied, {
-					entity: InfraMonitoringEvents.K8sEntity,
+				void logEvent(InfraMonitoringEvents.FilterApplied, {
+					entity: eventEntity,
 					page: InfraMonitoringEvents.DetailedPage,
 					category,
 					view: InfraMonitoringEvents.EventsView,
 				});
 
+				logInfraDrawerFilterCustomizedEvent(
+					category,
+					'events',
+					newUserExpression || '',
+					'search',
+				);
+
 				refetch();
 			}
 		},
-		[inputExpression, initialExpression, refetch, querySearchOnRun, category],
+		[
+			inputExpression,
+			initialExpression,
+			refetch,
+			querySearchOnRun,
+			category,
+			eventEntity,
+		],
 	);
 
 	const queryData = useMemo(
@@ -229,16 +232,10 @@ function EntityEventsContent({
 		<div className={styles.container}>
 			<div className={styles.filterContainer}>
 				<div className={styles.filterContainerTime}>
-					<DateTimeSelectionV2
-						showAutoRefresh
-						showRefreshText={false}
-						hideShareModal
-						isModalTimeSelection={isModalTimeSelection}
-						onTimeChange={handleTimeChange}
-						defaultRelativeTime="5m"
-						modalSelectedInterval={selectedInterval}
-						modalInitialStartTime={timeRange.startTime * 1000}
-						modalInitialEndTime={timeRange.endTime * 1000}
+					<EntityDateTimeSelector
+						eventEntity={eventEntity}
+						category={category}
+						view={InfraMonitoringEvents.EventsView}
 					/>
 
 					<RunQueryBtn

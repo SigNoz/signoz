@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
-import { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import * as appContextHooks from 'providers/App/App';
 import { LicenseEvent } from 'types/api/licensesV3/getActive';
 import uPlot from 'uplot';
@@ -28,11 +28,26 @@ jest.mock('lib/uPlotV2/utils/dataUtils', () => ({
 	hasSingleVisiblePoint: jest.fn().mockReturnValue(false),
 }));
 
-jest.mock('container/TopNav/DateTimeSelectionV2', () => ({
+jest.mock('../../EntityDateTimeSelector/EntityDateTimeSelector', () => ({
 	__esModule: true,
 	default: (): JSX.Element => (
 		<div data-testid="date-time-selection">Date Time</div>
 	),
+}));
+
+const mockTimeRange = { startTime: 1705315200, endTime: 1705318800 };
+let mockSelectedInterval = '5m';
+
+jest.mock('../../EntityDateTimeSelector/useEntityDetailsTime', () => ({
+	useEntityDetailsTime: (): {
+		timeRange: { startTime: number; endTime: number };
+		selectedInterval: string;
+		handleTimeChange: jest.Mock;
+	} => ({
+		timeRange: mockTimeRange,
+		selectedInterval: mockSelectedInterval,
+		handleTimeChange: jest.fn(),
+	}),
 }));
 
 jest.mock(
@@ -106,12 +121,6 @@ jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
 			plan_version: 'test-plan-version',
 		},
 	},
-	featureFlags: [
-		{
-			name: 'DOT_METRICS_ENABLED',
-			active: false,
-		},
-	],
 } as any);
 
 const mockEntity = {
@@ -143,13 +152,6 @@ const mockGetEntityQueryPayload = jest.fn().mockReturnValue([
 		end: 1705318800,
 	},
 ]);
-
-const mockTimeRange = {
-	startTime: 1705315200,
-	endTime: 1705318800,
-};
-
-const mockHandleTimeChange = jest.fn();
 
 const mockQueries = [
 	{
@@ -283,10 +285,6 @@ const mockEmptyQueries = [
 
 const renderEntityMetrics = (overrides = {}): any => {
 	const defaultProps = {
-		timeRange: mockTimeRange,
-		isModalTimeSelection: false,
-		handleTimeChange: mockHandleTimeChange,
-		selectedInterval: '5m' as Time,
 		entity: mockEntity,
 		entityWidgetInfo: mockEntityWidgetInfo,
 		getEntityQueryPayload: mockGetEntityQueryPayload,
@@ -297,17 +295,16 @@ const renderEntityMetrics = (overrides = {}): any => {
 
 	return render(
 		<MemoryRouter>
-			<EntityMetrics
-				timeRange={defaultProps.timeRange}
-				isModalTimeSelection={defaultProps.isModalTimeSelection}
-				handleTimeChange={defaultProps.handleTimeChange}
-				selectedInterval={defaultProps.selectedInterval}
-				entity={defaultProps.entity}
-				entityWidgetInfo={defaultProps.entityWidgetInfo}
-				getEntityQueryPayload={defaultProps.getEntityQueryPayload}
-				queryKey={defaultProps.queryKey}
-				category={defaultProps.category}
-			/>
+			<TooltipProvider>
+				<EntityMetrics
+					entity={defaultProps.entity}
+					eventEntity="test"
+					entityWidgetInfo={defaultProps.entityWidgetInfo}
+					getEntityQueryPayload={defaultProps.getEntityQueryPayload}
+					queryKey={defaultProps.queryKey}
+					category={defaultProps.category}
+				/>
+			</TooltipProvider>
 		</MemoryRouter>,
 	);
 };
@@ -344,6 +341,7 @@ const mockQueryPayloads = [
 describe('EntityMetrics', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
+		mockSelectedInterval = '5m';
 		mockUseEntityMetrics.mockReturnValue({
 			queries: mockQueries as any,
 			chartData: mockChartData,
@@ -454,7 +452,8 @@ describe('EntityMetrics', () => {
 	});
 
 	it('builds metrics explorer link with relativeTime when a relative interval is selected', () => {
-		renderEntityMetrics({ selectedInterval: '5m' as Time });
+		mockSelectedInterval = '5m';
+		renderEntityMetrics();
 		const href = screen
 			.getByTestId('open-metrics-explorer-0')
 			.getAttribute('href');
@@ -464,7 +463,8 @@ describe('EntityMetrics', () => {
 	});
 
 	it('builds metrics explorer link with absolute time range in milliseconds for custom interval', () => {
-		renderEntityMetrics({ selectedInterval: 'custom' as Time });
+		mockSelectedInterval = 'custom';
+		renderEntityMetrics();
 		const href = screen
 			.getByTestId('open-metrics-explorer-0')
 			.getAttribute('href');
@@ -478,7 +478,6 @@ describe('EntityMetrics', () => {
 		expect(mockUseEntityMetrics).toHaveBeenCalledWith(
 			expect.objectContaining({
 				queryKey: 'test-query-key',
-				timeRange: mockTimeRange,
 				entity: mockEntity,
 				category: InfraMonitoringEntity.PODS,
 			}),

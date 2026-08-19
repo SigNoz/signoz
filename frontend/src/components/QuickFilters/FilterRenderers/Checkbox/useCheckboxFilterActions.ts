@@ -1,5 +1,6 @@
 import {
 	IQuickFiltersConfig,
+	QuickFilterChangeEventData,
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -19,6 +20,7 @@ interface UseCheckboxFilterActionsProps {
 	attributeValues: string[];
 	activeQueryIndex: number;
 	onFilterChange?: ((query: Query) => void) | null;
+	onQuickFilterChange?: (data: QuickFilterChangeEventData) => void;
 }
 
 interface UseCheckboxFilterActionsReturn {
@@ -42,6 +44,7 @@ function useCheckboxFilterActions({
 	attributeValues,
 	activeQueryIndex,
 	onFilterChange,
+	onQuickFilterChange,
 }: UseCheckboxFilterActionsProps): UseCheckboxFilterActionsReturn {
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 
@@ -60,20 +63,34 @@ function useCheckboxFilterActions({
 		previousState?: CheckedState,
 		sectionType?: SectionType,
 	): void => {
-		dispatch(
-			applyCheckboxToggle({
-				currentQuery,
-				activeQueryIndex,
-				filter,
-				source,
-				attributeValues,
-				value,
-				checked,
-				isOnlyOrAllClicked,
-				previousState,
-				sectionType,
-			}),
-		);
+		const updatedQuery = applyCheckboxToggle({
+			currentQuery,
+			activeQueryIndex,
+			filter,
+			source,
+			attributeValues,
+			value,
+			checked,
+			isOnlyOrAllClicked,
+			previousState,
+			sectionType,
+		});
+
+		dispatch(updatedQuery);
+
+		if (onQuickFilterChange) {
+			const queryData = updatedQuery.builder.queryData[activeQueryIndex];
+			const expression = queryData?.filter?.expression || '';
+			const filterItemKeys = (queryData?.filters?.items || [])
+				.map((item) => item.key?.key)
+				.filter((key): key is string => !!key);
+
+			onQuickFilterChange({
+				filterKey: filter.attributeKey.key,
+				expression,
+				filterItemKeys,
+			});
+		}
 	};
 
 	const onClear = (): void => {

@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { toast } from '@signozhq/ui/sonner';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Panels/registry';
@@ -100,6 +101,12 @@ jest.mock('@signozhq/ui/resizable', () => ({
 jest.mock('@signozhq/ui/sonner', () => ({
 	toast: { success: jest.fn(), error: jest.fn() },
 }));
+const mockShowErrorModal = jest.fn();
+jest.mock('providers/ErrorModalProvider', () => ({
+	useErrorModal: (): { showErrorModal: jest.Mock } => ({
+		showErrorModal: mockShowErrorModal,
+	}),
+}));
 
 // Children mocked to capture props (and expose a Save trigger / footer slot).
 const mockHeaderProps = jest.fn();
@@ -174,11 +181,13 @@ const baseProps = {
 function setup(
 	panel: DashboardtypesPanelDTO,
 	overrides?: Partial<React.ComponentProps<typeof PanelEditorContainer>>,
-	draftOverrides?: { isSpecDirty?: boolean },
+	draftOverrides?: { isSpecDirty?: boolean; draft?: DashboardtypesPanelDTO },
 ): void {
+	// The live draft can diverge from the seed `panel`; default to the seed.
+	const draftPanel = draftOverrides?.draft ?? panel;
 	mockUseDraft.mockReturnValue({
-		draft: panel,
-		spec: panel.spec,
+		draft: draftPanel,
+		spec: draftPanel.spec,
 		setSpec: mockSetSpec,
 		isSpecDirty: draftOverrides?.isSpecDirty ?? false,
 	});
@@ -259,19 +268,36 @@ describe('PanelEditorContainer composition', () => {
 		);
 	});
 
-	it('keeps a query-less new panel unsaveable but still serializes its seed query', () => {
+	it('keeps a query-less new panel clean but still serializes its seed query', () => {
 		setup(makePanel('signoz/TimeSeriesPanel'), { isNew: true });
 
 		expect(mockUseQuerySync).toHaveBeenCalledWith(
 			expect.objectContaining({ alwaysSerializeQuery: true }),
 		);
-		// No query and no edits yet → nothing to save, so Save stays disabled.
+		// No query and no edits yet → not dirty, so closing won't prompt to discard.
 		expect(mockHeaderProps).toHaveBeenCalledWith(
 			expect.objectContaining({ isDirty: false }),
 		);
 	});
 
-	it('marks a new panel that already has a query saveable (e.g. list auto-runs one)', () => {
+	it('keeps a query-less new panel clean after the staged-query sync seeds its draft (regression)', () => {
+		// Staged-query sync populated the draft with the seed; dirty must read the seed
+		// `panel` (query-less), not the draft, else an untouched new panel reads dirty.
+		const committedDraft = makePanel('signoz/TimeSeriesPanel', [
+			{ spec: { plugin: { kind: 'signoz/CompositeQuery', spec: {} } } },
+		]);
+		setup(
+			makePanel('signoz/TimeSeriesPanel'),
+			{ isNew: true },
+			{ draft: committedDraft },
+		);
+
+		expect(mockHeaderProps).toHaveBeenCalledWith(
+			expect.objectContaining({ isDirty: false }),
+		);
+	});
+
+	it('marks a new panel that already has a query dirty (e.g. list auto-runs one)', () => {
 		const seededQuery = {
 			spec: { plugin: { kind: 'signoz/BuilderQuery', spec: { signal: 'logs' } } },
 		};
@@ -306,6 +332,24 @@ describe('PanelEditorContainer composition', () => {
 
 		expect(mockBuildSaveSpec).toHaveBeenCalledWith(panel.spec);
 		expect(mockSave).toHaveBeenCalledWith(panel.spec);
+	});
+
+	it('surfaces a save failure through the error modal', async () => {
+		// The raw thrown value flows straight to the modal, which normalizes it to an
+		// APIError itself (that normalization is covered by ErrorModalProvider's tests).
+		const failure = {
+			response: {
+				status: 400,
+				data: { error: { code: 'INVALID', message: 'Panel name already exists' } },
+			},
+		};
+		mockSave.mockRejectedValueOnce(failure);
+		setup(makePanel('signoz/TimeSeriesPanel'));
+
+		await userEvent.click(screen.getByTestId('editor-save'));
+
+		await waitFor(() => expect(mockShowErrorModal).toHaveBeenCalledWith(failure));
+		expect(toast.error).not.toHaveBeenCalled();
 	});
 
 	it('marks the saved panel to be scrolled into view on the dashboard', async () => {

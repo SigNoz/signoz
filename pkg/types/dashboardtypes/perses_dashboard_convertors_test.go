@@ -22,7 +22,8 @@ func newTestDashboardV2(t *testing.T, orgID valuer.UUID, source Source) *Dashboa
 	updatedAt := time.Date(2026, time.January, 2, 12, 0, 0, 0, time.UTC)
 
 	spec := DashboardSpec{
-		Display: Display{Name: "Test Dashboard"},
+		Display:   Display{Name: "Test Dashboard"},
+		Variables: []Variable{},
 		Panels: map[string]*Panel{
 			"p1": {
 				Kind: "Panel",
@@ -54,10 +55,12 @@ func newTestDashboardV2(t *testing.T, orgID valuer.UUID, source Source) *Dashboa
 							},
 						},
 					},
+					Links: []Link{},
 				},
 			},
 		},
 		Layouts: []Layout{},
+		Links:   []Link{},
 	}
 
 	return &DashboardV2{

@@ -7,19 +7,18 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"golang.org/x/sync/errgroup"
 )
 
 // buildClusterRecords assembles the page records. Node condition counts and
-// pod phase counts come from the respective per-group maps in both modes;
-// every row is a group of nodes+pods, so there's no per-row "current state"
-// concept (analogous to namespaces).
+// pod status counts come from the respective per-group maps in both modes;
+// every row is a group of nodes+pods (analogous to namespaces).
 func buildClusterRecords(
 	resp *qbtypes.QueryRangeResponse,
 	pageGroups []map[string]string,
 	groupBy []qbtypes.GroupByKey,
 	metadataMap map[string]map[string]string,
 	nodeConditionCountsMap map[string]nodeConditionCounts,
-	podPhaseCountsMap map[string]podPhaseCounts,
 	podStatusCounts map[string]podStatusCounts,
 	resourceCounts map[string]map[string]int64,
 ) []inframonitoringtypes.ClusterRecord {
@@ -61,16 +60,6 @@ func buildClusterRecords(
 			}
 		}
 
-		if phaseCountsForGroup, ok := podPhaseCountsMap[compositeKey]; ok {
-			record.PodCountsByPhase = inframonitoringtypes.PodCountsByPhase{
-				Pending:   phaseCountsForGroup.Pending,
-				Running:   phaseCountsForGroup.Running,
-				Succeeded: phaseCountsForGroup.Succeeded,
-				Failed:    phaseCountsForGroup.Failed,
-				Unknown:   phaseCountsForGroup.Unknown,
-			}
-		}
-
 		if podStatusCountsForGroup, ok := podStatusCounts[compositeKey]; ok {
 			record.PodCountsByStatus = podStatusCountsToResponse(podStatusCountsForGroup)
 		}
@@ -95,16 +84,79 @@ func buildClusterRecords(
 	return records
 }
 
-func (m *module) getTopClusterGroups(
+// getTopClusterGroupsAndMetadata concurrently fetches metadata + the ordering-metric
+// ranking (plus the full-scope pod-status / node-readiness keysets when filtering,
+// to intersect all).
+func (m *module) getTopClusterGroupsAndMetadata(
 	ctx context.Context,
 	orgID valuer.UUID,
 	req *inframonitoringtypes.PostableClusters,
-	metadataMap map[string]map[string]string,
-) ([]map[string]string, error) {
-	orderByKey := req.OrderBy.Key.Name
-	if orderByKey == inframonitoringtypes.ClusterNameAttrKey {
-		return inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.ClusterNameAttrKey), nil
+) ([]map[string]string, map[string]map[string]string, map[string]podStatusCounts, *qbtypes.QueryWarnData, map[string]nodeConditionCounts, error) {
+
+	var (
+		orderByKey            string
+		metadataMap           map[string]map[string]string
+		allMetricGroups       []rankedGroup
+		statusCounts          map[string]podStatusCounts
+		statusWarning         *qbtypes.QueryWarnData
+		nodeConditionCounts   map[string]nodeConditionCounts
+		filter                *qbtypes.Filter
+		filterByPodStatus     []inframonitoringtypes.PodStatus
+		filterByNodeReadiness []inframonitoringtypes.NodeCondition
+	)
+
+	orderByKey = req.OrderBy.Key.Name
+
+	// When filtering by pod status / node readiness, resolve the full-scope
+	// keyset(s) concurrently (pageGroups=nil spans all groups under the user
+	// filter) to intersect metadata + ranked groups below. Filters compose as AND.
+	if req.Filter != nil {
+		filter = &req.Filter.Filter
+		filterByPodStatus = req.Filter.FilterByPodStatus
+		filterByNodeReadiness = req.Filter.FilterByNodeReadiness
 	}
+
+	g, gCtx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		var err error
+		metadataMap, err = m.getClustersTableMetadata(gCtx, orgID, req)
+		return err
+	})
+
+	if len(filterByPodStatus) != 0 {
+		g.Go(func() error {
+			var err error
+			statusCounts, statusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, filter, req.GroupBy, nil, filterByPodStatus)
+			return err
+		})
+	}
+
+	if len(filterByNodeReadiness) != 0 {
+		g.Go(func() error {
+			var err error
+			nodeConditionCounts, err = m.getPerGroupNodeConditionCounts(gCtx, orgID, req.Start, req.End, filter, req.GroupBy, nil, filterByNodeReadiness)
+			return err
+		})
+	}
+
+	if orderByKey == inframonitoringtypes.ClusterNameAttrKey {
+		if err := g.Wait(); err != nil {
+			return nil, nil, nil, nil, nil, err
+		}
+		// Secondary filter: keep only status/readiness-matching groups. A missing
+		// metric yields an empty statusCounts, so this correctly empties the result
+		// (the caller also surfaces the warning). Filters compose as AND.
+		if len(filterByPodStatus) != 0 {
+			metadataMap = intersectMap(metadataMap, statusCounts)
+		}
+		if len(filterByNodeReadiness) != 0 {
+			metadataMap = intersectMap(metadataMap, nodeConditionCounts)
+		}
+		pageGroups := inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.ClusterNameAttrKey)
+		return pageGroups, metadataMap, statusCounts, statusWarning, nodeConditionCounts, nil
+	}
+
 	queryNamesForOrderBy := orderByToClustersQueryNames[orderByKey]
 	rankingQueryName := queryNamesForOrderBy[len(queryNamesForOrderBy)-1]
 
@@ -138,13 +190,33 @@ func (m *module) getTopClusterGroups(
 		topReq.CompositeQuery.Queries = append(topReq.CompositeQuery.Queries, copied)
 	}
 
-	resp, err := m.querier.QueryRange(ctx, orgID, topReq)
-	if err != nil {
-		return nil, err
+	g.Go(func() error {
+		resp, err := m.querier.QueryRange(gCtx, orgID, topReq)
+		if err != nil {
+			return err
+		}
+		allMetricGroups = parseAndSortGroups(resp, rankingQueryName, req.GroupBy, req.OrderBy.Direction)
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return nil, nil, nil, nil, nil, err
 	}
 
-	allMetricGroups := parseAndSortGroups(resp, rankingQueryName, req.GroupBy, req.OrderBy.Direction)
-	return paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit), nil
+	// Secondary filter: intersect ranked groups + metadata with the status/readiness
+	// keyset. A missing metric yields an empty keyset, correctly emptying the result
+	// (the caller also surfaces the warning). Filters compose as AND.
+	if len(filterByPodStatus) != 0 {
+		allMetricGroups = intersectRankedGroups(allMetricGroups, statusCounts)
+		metadataMap = intersectMap(metadataMap, statusCounts)
+	}
+	if len(filterByNodeReadiness) != 0 {
+		allMetricGroups = intersectRankedGroups(allMetricGroups, nodeConditionCounts)
+		metadataMap = intersectMap(metadataMap, nodeConditionCounts)
+	}
+
+	pageGroups := paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit)
+	return pageGroups, metadataMap, statusCounts, statusWarning, nodeConditionCounts, nil
 }
 
 func (m *module) getClustersTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableClusters) (map[string]map[string]string, error) {
@@ -154,5 +226,9 @@ func (m *module) getClustersTableMetadata(ctx context.Context, orgID valuer.UUID
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}
 	}
-	return m.getMetadata(ctx, orgID, clustersTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
+	var filter *qbtypes.Filter
+	if req.Filter != nil {
+		filter = &req.Filter.Filter
+	}
+	return m.getMetadata(ctx, orgID, clustersTableMetricNamesList, req.GroupBy, nonGroupByAttrs, filter, req.Start, req.End)
 }

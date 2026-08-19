@@ -8,24 +8,24 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
+	"golang.org/x/sync/errgroup"
 )
 
-// buildPodRecords assembles the page records. Phase counts come from
-// phaseCounts in both modes. In list mode (isPodUIDInGroupBy=true) each
-// group is one pod, so exactly one count is 1; PodPhase is derived from
-// which one. In grouped_list mode PodPhase stays PodPhaseNoData.
+// buildPodRecords assembles the page records. Status counts come from
+// statusCounts in both modes. In list mode (isPodUIDInGroupBy=true) each
+// group is one pod, so exactly one count is 1; PodStatus is derived from
+// which one. In grouped_list mode PodStatus stays PodStatusNoData.
 func buildPodRecords(
 	isPodUIDInGroupBy bool,
 	resp *qbtypes.QueryRangeResponse,
 	pageGroups []map[string]string,
 	groupBy []qbtypes.GroupByKey,
 	metadataMap map[string]map[string]string,
-	phaseCounts map[string]podPhaseCounts,
 	statusCounts map[string]podStatusCounts,
 	restartCounts map[string]int64,
 	reqEnd int64,
@@ -39,7 +39,6 @@ func buildPodRecords(
 
 		record := inframonitoringtypes.PodRecord{ // initialize with default values
 			PodUID:           podUID,
-			PodPhase:         inframonitoringtypes.PodPhaseNoData,
 			PodStatus:        inframonitoringtypes.PodStatusNoData,
 			PodRestarts:      -1,
 			PodCPU:           -1,
@@ -70,32 +69,6 @@ func buildPodRecords(
 			}
 			if v, exists := metrics["F"]; exists {
 				record.PodMemoryLimit = v
-			}
-		}
-
-		if phaseCountsForGroup, ok := phaseCounts[compositeKey]; ok {
-			record.PodCountsByPhase = inframonitoringtypes.PodCountsByPhase{
-				Pending:   phaseCountsForGroup.Pending,
-				Running:   phaseCountsForGroup.Running,
-				Succeeded: phaseCountsForGroup.Succeeded,
-				Failed:    phaseCountsForGroup.Failed,
-				Unknown:   phaseCountsForGroup.Unknown,
-			}
-
-			// In list mode each group is one pod; the count==1 bucket identifies the phase.
-			if isPodUIDInGroupBy {
-				switch {
-				case phaseCountsForGroup.Pending == 1:
-					record.PodPhase = inframonitoringtypes.PodPhasePending
-				case phaseCountsForGroup.Running == 1:
-					record.PodPhase = inframonitoringtypes.PodPhaseRunning
-				case phaseCountsForGroup.Succeeded == 1:
-					record.PodPhase = inframonitoringtypes.PodPhaseSucceeded
-				case phaseCountsForGroup.Failed == 1:
-					record.PodPhase = inframonitoringtypes.PodPhaseFailed
-				case phaseCountsForGroup.Unknown == 1:
-					record.PodPhase = inframonitoringtypes.PodPhaseUnknown
-				}
 			}
 		}
 
@@ -173,16 +146,64 @@ func buildPodRecords(
 	return records
 }
 
-func (m *module) getTopPodGroups(
+// getTopPodGroupsAndMetadata concurrently fetches metadata + the ordering-metric
+// ranking (plus the full-scope pod-status keyset when filtering, to intersect both).
+func (m *module) getTopPodGroupsAndMetadata(
 	ctx context.Context,
 	orgID valuer.UUID,
 	req *inframonitoringtypes.PostablePods,
-	metadataMap map[string]map[string]string,
-) ([]map[string]string, error) {
-	orderByKey := req.OrderBy.Key.Name
-	if orderByKey == inframonitoringtypes.PodNameAttrKey {
-		return inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.PodNameAttrKey), nil
+) ([]map[string]string, map[string]map[string]string, map[string]podStatusCounts, *qbtypes.QueryWarnData, error) {
+
+	var (
+		orderByKey        string
+		metadataMap       map[string]map[string]string
+		allMetricGroups   []rankedGroup
+		statusCounts      map[string]podStatusCounts
+		statusWarning     *qbtypes.QueryWarnData
+		filter            *qbtypes.Filter
+		filterByPodStatus []inframonitoringtypes.PodStatus
+	)
+
+	orderByKey = req.OrderBy.Key.Name
+
+	// When filtering by pod status, resolve the full-scope status keyset
+	// concurrently (pageGroups=nil spans all groups under the user filter) so it
+	// can intersect metadata + ranked groups below.
+	if req.Filter != nil {
+		filter = &req.Filter.Filter
+		filterByPodStatus = req.Filter.FilterByPodStatus
 	}
+
+	g, gCtx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		var err error
+		metadataMap, err = m.getPodsTableMetadata(gCtx, orgID, req)
+		return err
+	})
+
+	if len(filterByPodStatus) != 0 {
+		g.Go(func() error {
+			var err error
+			statusCounts, statusWarning, err = m.getPerGroupPodStatusCountsWithReqMetricChecks(gCtx, orgID, req.Start, req.End, filter, req.GroupBy, nil, filterByPodStatus)
+			return err
+		})
+	}
+
+	if orderByKey == inframonitoringtypes.PodNameAttrKey {
+		if err := g.Wait(); err != nil {
+			return nil, nil, nil, nil, err
+		}
+		// Secondary filter: keep only status-matching groups. A missing metric
+		// yields an empty statusCounts, so this correctly empties the result
+		// (the caller also surfaces the warning).
+		if len(filterByPodStatus) != 0 {
+			metadataMap = intersectMap(metadataMap, statusCounts)
+		}
+		pageGroups := inframonitoringtypes.PaginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, inframonitoringtypes.PodNameAttrKey)
+		return pageGroups, metadataMap, statusCounts, statusWarning, nil
+	}
+
 	queryNamesForOrderBy := orderByToPodsQueryNames[orderByKey]
 	rankingQueryName := queryNamesForOrderBy[len(queryNamesForOrderBy)-1]
 
@@ -216,13 +237,29 @@ func (m *module) getTopPodGroups(
 		topReq.CompositeQuery.Queries = append(topReq.CompositeQuery.Queries, copied)
 	}
 
-	resp, err := m.querier.QueryRange(ctx, orgID, topReq)
-	if err != nil {
-		return nil, err
+	g.Go(func() error {
+		resp, err := m.querier.QueryRange(gCtx, orgID, topReq)
+		if err != nil {
+			return err
+		}
+		allMetricGroups = parseAndSortGroups(resp, rankingQueryName, req.GroupBy, req.OrderBy.Direction)
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return nil, nil, nil, nil, err
 	}
 
-	allMetricGroups := parseAndSortGroups(resp, rankingQueryName, req.GroupBy, req.OrderBy.Direction)
-	return paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit), nil
+	// Secondary filter: intersect ranked groups + metadata with the status keyset.
+	// A missing metric yields an empty statusCounts, correctly emptying the result
+	// (the caller also surfaces the warning).
+	if len(filterByPodStatus) != 0 {
+		allMetricGroups = intersectRankedGroups(allMetricGroups, statusCounts)
+		metadataMap = intersectMap(metadataMap, statusCounts)
+	}
+
+	pageGroups := paginateWithBackfill(allMetricGroups, metadataMap, req.GroupBy, req.Offset, req.Limit)
+	return pageGroups, metadataMap, statusCounts, statusWarning, nil
 }
 
 func (m *module) getPodsTableMetadata(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostablePods) (map[string]map[string]string, error) {
@@ -232,163 +269,11 @@ func (m *module) getPodsTableMetadata(ctx context.Context, orgID valuer.UUID, re
 			nonGroupByAttrs = append(nonGroupByAttrs, key)
 		}
 	}
-	return m.getMetadata(ctx, orgID, podsTableMetricNamesList, req.GroupBy, nonGroupByAttrs, req.Filter, req.Start, req.End)
-}
-
-// getPerGroupPodPhaseCounts computes per-group pod counts bucketed by each
-// pod's latest phase in the requested window.
-// Pipeline:
-//
-//	timeSeriesFPs:      fp ↔ (pod_uid, groupBy cols) from the time_series table.
-//	                    User filter + page-groups filter applied here.
-//	latestPhasePerPod:  INNER JOIN samples × timeSeriesFPs, collapsed to
-//	                    the latest phase per pod via argMax(value, unix_milli).
-//	countPodsPerPhase:  per-group uniqExactIf into 5 phase buckets.
-//
-// Groups absent from the result map have implicit zero counts (caller default).
-func (m *module) getPerGroupPodPhaseCounts(
-	ctx context.Context,
-	orgID valuer.UUID,
-	start, end int64,
-	filter *qbtypes.Filter,
-	groupBy []qbtypes.GroupByKey,
-	pageGroups []map[string]string,
-) (map[string]podPhaseCounts, error) {
-	if len(pageGroups) == 0 || len(groupBy) == 0 {
-		return map[string]podPhaseCounts{}, nil
+	var filter *qbtypes.Filter
+	if req.Filter != nil {
+		filter = &req.Filter.Filter
 	}
-
-	// Merge user filter with page-groups IN clauses.
-	userFilterExpr := ""
-	if filter != nil {
-		userFilterExpr = filter.Expression
-	}
-	pageGroupsFilterExpr := buildPageGroupsFilterExpr(pageGroups)
-	mergedFilterExpr := mergeFilterExpressions(userFilterExpr, pageGroupsFilterExpr)
-
-	// Step-floor bounds + resolve tables in one shot to match QB v5 querier.
-	samplesStartMs, flooredEndMs, tsAdjustedStart, _, localTimeSeriesTable, distributedSamplesTable, _ := alignedMetricWindow(start, end)
-	valueCol := telemetrymetrics.ValueColumnForSamplesTable(distributedSamplesTable)
-
-	// ----- timeSeriesFPs -----
-	timeSeriesFPs := sqlbuilder.NewSelectBuilder()
-	timeSeriesFPsSelectCols := []string{
-		"fingerprint",
-		fmt.Sprintf("JSONExtractString(labels, %s) AS pod_uid", timeSeriesFPs.Var(podUIDAttrKey)),
-	}
-	for _, key := range groupBy {
-		timeSeriesFPsSelectCols = append(timeSeriesFPsSelectCols,
-			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", timeSeriesFPs.Var(key.Name), quoteIdentifier(key.Name)),
-		)
-	}
-	timeSeriesFPs.Select(timeSeriesFPsSelectCols...)
-	timeSeriesFPs.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, localTimeSeriesTable))
-	timeSeriesFPs.Where(
-		timeSeriesFPs.E("metric_name", podPhaseMetricName),
-		timeSeriesFPs.GE("unix_milli", tsAdjustedStart),
-		timeSeriesFPs.LE("unix_milli", flooredEndMs),
-	)
-	if mergedFilterExpr != "" {
-		filterClause, err := m.buildFilterClause(ctx, orgID, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
-		if err != nil {
-			return nil, err
-		}
-		if filterClause != nil {
-			timeSeriesFPs.AddWhereClause(filterClause)
-		}
-	}
-	timeSeriesFPsGroupBy := []string{"fingerprint", "pod_uid"}
-	for _, key := range groupBy {
-		timeSeriesFPsGroupBy = append(timeSeriesFPsGroupBy, quoteIdentifier(key.Name))
-	}
-	timeSeriesFPs.GroupBy(timeSeriesFPsGroupBy...)
-	timeSeriesFPsSQL, timeSeriesFPsArgs := timeSeriesFPs.BuildWithFlavor(sqlbuilder.ClickHouse)
-
-	latestPhasePerPod := sqlbuilder.NewSelectBuilder()
-	latestPhasePerPodSelectCols := []string{"tsfp.pod_uid AS pod_uid"}
-	latestPhasePerPodGroupBy := []string{"pod_uid"}
-	for _, key := range groupBy {
-		col := quoteIdentifier(key.Name)
-		latestPhasePerPodSelectCols = append(latestPhasePerPodSelectCols, fmt.Sprintf("tsfp.%s AS %s", col, col))
-		latestPhasePerPodGroupBy = append(latestPhasePerPodGroupBy, col)
-	}
-	latestPhasePerPodSelectCols = append(latestPhasePerPodSelectCols,
-		fmt.Sprintf("argMax(samples.%s, samples.unix_milli) AS phase_value", valueCol),
-	)
-	latestPhasePerPod.Select(latestPhasePerPodSelectCols...)
-	latestPhasePerPod.From(fmt.Sprintf(
-		"%s.%s AS samples INNER JOIN time_series_fps AS tsfp ON samples.fingerprint = tsfp.fingerprint",
-		telemetrymetrics.DBName, distributedSamplesTable,
-	))
-	latestPhasePerPod.Where(
-		latestPhasePerPod.E("samples.metric_name", podPhaseMetricName),
-		latestPhasePerPod.GE("samples.unix_milli", samplesStartMs),
-		latestPhasePerPod.L("samples.unix_milli", flooredEndMs),
-		"tsfp.pod_uid != ''",
-	)
-	latestPhasePerPod.GroupBy(latestPhasePerPodGroupBy...)
-	latestPhasePerPodSQL, latestPhasePerPodArgs := latestPhasePerPod.BuildWithFlavor(sqlbuilder.ClickHouse)
-
-	// ----- countPodsPerPhase (outer SELECT) -----
-	countPodsPerPhaseSelectCols := make([]string, 0, len(groupBy)+5)
-	countPodsPerPhaseGroupBy := make([]string, 0, len(groupBy))
-	for _, key := range groupBy {
-		col := quoteIdentifier(key.Name)
-		countPodsPerPhaseSelectCols = append(countPodsPerPhaseSelectCols, col)
-		countPodsPerPhaseGroupBy = append(countPodsPerPhaseGroupBy, col)
-	}
-	countPodsPerPhaseSelectCols = append(countPodsPerPhaseSelectCols,
-		fmt.Sprintf("uniqExactIf(pod_uid, phase_value = %d) AS pending_count", inframonitoringtypes.PodPhaseNumPending),
-		fmt.Sprintf("uniqExactIf(pod_uid, phase_value = %d) AS running_count", inframonitoringtypes.PodPhaseNumRunning),
-		fmt.Sprintf("uniqExactIf(pod_uid, phase_value = %d) AS succeeded_count", inframonitoringtypes.PodPhaseNumSucceeded),
-		fmt.Sprintf("uniqExactIf(pod_uid, phase_value = %d) AS failed_count", inframonitoringtypes.PodPhaseNumFailed),
-		fmt.Sprintf("uniqExactIf(pod_uid, phase_value = %d) AS unknown_count", inframonitoringtypes.PodPhaseNumUnknown),
-	)
-	countPodsPerPhaseSQL := fmt.Sprintf(
-		"SELECT %s FROM latest_phase_per_pod GROUP BY %s",
-		strings.Join(countPodsPerPhaseSelectCols, ", "),
-		strings.Join(countPodsPerPhaseGroupBy, ", "),
-	)
-
-	// Combine CTEs + outer.
-	cteFragments := []string{
-		fmt.Sprintf("time_series_fps AS (%s)", timeSeriesFPsSQL),
-		fmt.Sprintf("latest_phase_per_pod AS (%s)", latestPhasePerPodSQL),
-	}
-	finalSQL := querybuilder.CombineCTEs(cteFragments) + countPodsPerPhaseSQL
-	finalArgs := querybuilder.PrependArgs([][]any{timeSeriesFPsArgs, latestPhasePerPodArgs}, nil)
-
-	rows, err := m.telemetryStore.ClickhouseDB().Query(ctx, finalSQL, finalArgs...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	result := make(map[string]podPhaseCounts)
-	for rows.Next() {
-		groupVals := make([]string, len(groupBy))
-		scanPtrs := make([]any, 0, len(groupBy)+5)
-		for i := range groupVals {
-			scanPtrs = append(scanPtrs, &groupVals[i])
-		}
-		var pending, running, succeeded, failed, unknown uint64
-		scanPtrs = append(scanPtrs, &pending, &running, &succeeded, &failed, &unknown)
-
-		if err := rows.Scan(scanPtrs...); err != nil {
-			return nil, err
-		}
-		result[compositeKeyFromList(groupVals)] = podPhaseCounts{
-			Pending:   int(pending),
-			Running:   int(running),
-			Succeeded: int(succeeded),
-			Failed:    int(failed),
-			Unknown:   int(unknown),
-		}
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return result, nil
+	return m.getMetadata(ctx, orgID, podsTableMetricNamesList, req.GroupBy, nonGroupByAttrs, filter, req.Start, req.End)
 }
 
 // getPerGroupPodStatusCountsWithReqMetricChecks gates getPerGroupPodStatusCounts
@@ -403,6 +288,7 @@ func (m *module) getPerGroupPodStatusCountsWithReqMetricChecks(
 	filter *qbtypes.Filter,
 	groupBy []qbtypes.GroupByKey,
 	pageGroups []map[string]string,
+	filterByPodStatus []inframonitoringtypes.PodStatus,
 ) (map[string]podStatusCounts, *qbtypes.QueryWarnData, error) {
 	present, err := m.getMetricsExistence(ctx, podStatusMetricNamesList)
 	if err != nil {
@@ -428,17 +314,32 @@ func (m *module) getPerGroupPodStatusCountsWithReqMetricChecks(
 		return map[string]podStatusCounts{}, warning, nil
 	}
 
-	counts, err := m.getPerGroupPodStatusCounts(ctx, orgID, start, end, filter, groupBy, pageGroups)
+	counts, err := m.getPerGroupPodStatusCounts(ctx, orgID, start, end, filter, groupBy, pageGroups, filterByPodStatus)
 	if err != nil {
 		return nil, nil, err
 	}
 	return counts, nil, nil
 }
 
+// applyPodStatusFilter adds the display-status push-down (lower(display_status)
+// IN (...)) to the outer count builder. valuer lowercases the wire value while
+// display_status is kubectl-cased, so we compare lower() on both. No-op when the
+// requested set is empty.
+func applyPodStatusFilter(cb *sqlbuilder.SelectBuilder, filterByPodStatus []inframonitoringtypes.PodStatus) {
+	if len(filterByPodStatus) == 0 {
+		return
+	}
+	vals := make([]string, len(filterByPodStatus))
+	for i, s := range filterByPodStatus {
+		vals[i] = s.StringValue()
+	}
+	cb.Where(cb.In("lower(display_status)", sqlbuilder.List(vals)))
+}
+
 // getPerGroupPodStatusCounts computes per-group pod counts bucketed by each
 // pod's latest kubectl-style display status in the requested window. Caller
 // must ensure the required metrics exist (getPerGroupPodStatusCountsWithReqMetricChecks).
-// Pipeline (mirrors getPerGroupPodPhaseCounts, more CTEs):
+// Pipeline:
 //
 //	phase_fps / phase_per_pod:           latest k8s.pod.phase per pod (+ groupBy cols).
 //	pod_reason_fps / pod_reason_per_pod: latest k8s.pod.status_reason per pod.
@@ -455,29 +356,33 @@ func (m *module) getPerGroupPodStatusCounts(
 	filter *qbtypes.Filter,
 	groupBy []qbtypes.GroupByKey,
 	pageGroups []map[string]string,
+	filterByPodStatus []inframonitoringtypes.PodStatus,
 ) (map[string]podStatusCounts, error) {
-	if len(pageGroups) == 0 || len(groupBy) == 0 {
+	// return early if no group by or (no pagegroups provided plus no filterBystatus given for a full scan)
+	if len(groupBy) == 0 || (len(pageGroups) == 0 && len(filterByPodStatus) == 0) {
 		return map[string]podStatusCounts{}, nil
 	}
 
+	var (
+		filterClause   *sqlbuilder.WhereClause
+		err            error
+		userFilterExpr string
+	)
+
 	// Merge user filter with page-groups IN clauses.
-	userFilterExpr := ""
 	if filter != nil {
 		userFilterExpr = filter.Expression
 	}
 	mergedFilterExpr := mergeFilterExpressions(userFilterExpr, buildPageGroupsFilterExpr(pageGroups))
 
 	samplesStartMs, flooredEndMs, tsAdjustedStart, _, localTimeSeriesTable, distributedSamplesTable, _ := alignedMetricWindow(start, end)
-	valueCol := telemetrymetrics.ValueColumnForSamplesTable(distributedSamplesTable)
+	valueCol := metricstelemetryschema.ValueColumnForSamplesTable(distributedSamplesTable)
 
 	// Build the merged filter clause once; it's identical across the three fps
 	// CTEs, and buildFilterClause hits the metadata store + parses the
 	// expression, so we don't want to repeat it per CTE. AddWhereClause only
 	// reads the clause, so the same instance is safe to attach to each builder.
-	var (
-		filterClause *sqlbuilder.WhereClause
-		err          error
-	)
+
 	if mergedFilterExpr != "" {
 		filterClause, err = m.buildFilterClause(ctx, orgID, &qbtypes.Filter{Expression: mergedFilterExpr}, start, end)
 		if err != nil {
@@ -497,7 +402,7 @@ func (m *module) getPerGroupPodStatusCounts(
 		)
 	}
 	phaseFps.Select(phaseFpsCols...)
-	phaseFps.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, localTimeSeriesTable))
+	phaseFps.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, localTimeSeriesTable))
 	phaseFps.Where(
 		phaseFps.E("metric_name", podPhaseMetricName),
 		phaseFps.GE("unix_milli", tsAdjustedStart),
@@ -524,7 +429,7 @@ func (m *module) getPerGroupPodStatusCounts(
 	phasePerPod.Select(phasePerPodCols...)
 	phasePerPod.From(fmt.Sprintf(
 		"%s.%s AS samples INNER JOIN phase_fps AS fps ON samples.fingerprint = fps.fingerprint",
-		telemetrymetrics.DBName, distributedSamplesTable,
+		metricstelemetryschema.DBName, distributedSamplesTable,
 	))
 	phasePerPod.Where(
 		phasePerPod.E("samples.metric_name", podPhaseMetricName),
@@ -541,7 +446,7 @@ func (m *module) getPerGroupPodStatusCounts(
 		"fingerprint",
 		fmt.Sprintf("JSONExtractString(labels, %s) AS pod_uid", podReasonFps.Var(podUIDAttrKey)),
 	)
-	podReasonFps.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, localTimeSeriesTable))
+	podReasonFps.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, localTimeSeriesTable))
 	podReasonFps.Where(
 		podReasonFps.E("metric_name", podStatusReasonMetricName),
 		podReasonFps.GE("unix_milli", tsAdjustedStart),
@@ -561,7 +466,7 @@ func (m *module) getPerGroupPodStatusCounts(
 	)
 	podReasonPerPod.From(fmt.Sprintf(
 		"%s.%s AS samples INNER JOIN pod_reason_fps AS fps ON samples.fingerprint = fps.fingerprint",
-		telemetrymetrics.DBName, distributedSamplesTable,
+		metricstelemetryschema.DBName, distributedSamplesTable,
 	))
 	podReasonPerPod.Where(
 		podReasonPerPod.E("samples.metric_name", podStatusReasonMetricName),
@@ -580,7 +485,7 @@ func (m *module) getPerGroupPodStatusCounts(
 		fmt.Sprintf("JSONExtractString(labels, %s) AS container_name", containerReasonFps.Var(containerNameAttrKey)),
 		fmt.Sprintf("JSONExtractString(labels, %s) AS reason", containerReasonFps.Var(containerStatusReasonAttrKey)),
 	)
-	containerReasonFps.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, localTimeSeriesTable))
+	containerReasonFps.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, localTimeSeriesTable))
 	containerReasonFps.Where(
 		containerReasonFps.E("metric_name", containerStatusReasonMetricName),
 		containerReasonFps.GE("unix_milli", tsAdjustedStart),
@@ -616,7 +521,7 @@ func (m *module) getPerGroupPodStatusCounts(
 	)
 	containerInner.From(fmt.Sprintf(
 		"%s.%s AS samples INNER JOIN container_reason_fps AS fps ON samples.fingerprint = fps.fingerprint",
-		telemetrymetrics.DBName, distributedSamplesTable,
+		metricstelemetryschema.DBName, distributedSamplesTable,
 	))
 	containerInner.Where(
 		containerInner.E("samples.metric_name", containerStatusReasonMetricName),
@@ -692,11 +597,15 @@ func (m *module) getPerGroupPodStatusCounts(
 		countGroupBy = append(countGroupBy, col)
 	}
 	countSelectCols = append(countSelectCols, statusCountCols...)
-	countSQL := fmt.Sprintf(
-		"SELECT %s FROM pod_status GROUP BY %s",
-		strings.Join(countSelectCols, ", "),
-		strings.Join(countGroupBy, ", "),
-	)
+
+	// Outer count query. Built with sqlbuilder so the status push-down uses a
+	// proper IN (keep only pods whose display status is in the requested set).
+	countBuilder := sqlbuilder.NewSelectBuilder()
+	countBuilder.Select(countSelectCols...)
+	countBuilder.From("pod_status")
+	applyPodStatusFilter(countBuilder, filterByPodStatus)
+	countBuilder.GroupBy(countGroupBy...)
+	countSQL, countArgs := countBuilder.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	// Combine CTEs + outer. Arg order mirrors CTE declaration order.
 	cteFragments := []string{
@@ -713,7 +622,7 @@ func (m *module) getPerGroupPodStatusCounts(
 		phaseFpsArgs, phasePerPodArgs,
 		podReasonFpsArgs, podReasonPerPodArgs,
 		containerReasonFpsArgs, containerInnerArgs,
-	}, nil)
+	}, countArgs)
 
 	rows, err := m.telemetryStore.ClickhouseDB().Query(ctx, finalSQL, finalArgs...)
 	if err != nil {
@@ -795,7 +704,7 @@ func (m *module) getPerGroupPodRestartCounts(
 	mergedFilterExpr := mergeFilterExpressions(userFilterExpr, buildPageGroupsFilterExpr(pageGroups))
 
 	samplesStartMs, flooredEndMs, tsAdjustedStart, _, localTimeSeriesTable, distributedSamplesTable, _ := alignedMetricWindow(start, end)
-	valueCol := telemetrymetrics.ValueColumnForSamplesTable(distributedSamplesTable)
+	valueCol := metricstelemetryschema.ValueColumnForSamplesTable(distributedSamplesTable)
 
 	var (
 		filterClause *sqlbuilder.WhereClause
@@ -821,7 +730,7 @@ func (m *module) getPerGroupPodRestartCounts(
 		)
 	}
 	restartFps.Select(restartFpsCols...)
-	restartFps.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, localTimeSeriesTable))
+	restartFps.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, localTimeSeriesTable))
 	restartFps.Where(
 		restartFps.E("metric_name", containerRestartsMetricName),
 		restartFps.GE("unix_milli", tsAdjustedStart),
@@ -851,7 +760,7 @@ func (m *module) getPerGroupPodRestartCounts(
 	containerRestarts.Select(containerRestartsCols...)
 	containerRestarts.From(fmt.Sprintf(
 		"%s.%s AS samples INNER JOIN restart_fps AS fps ON samples.fingerprint = fps.fingerprint",
-		telemetrymetrics.DBName, distributedSamplesTable,
+		metricstelemetryschema.DBName, distributedSamplesTable,
 	))
 	containerRestarts.Where(
 		containerRestarts.E("samples.metric_name", containerRestartsMetricName),

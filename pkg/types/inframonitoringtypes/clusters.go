@@ -26,7 +26,6 @@ type ClusterRecord struct {
 	ClusterMemory            float64               `json:"clusterMemory" required:"true"`
 	ClusterMemoryAllocatable float64               `json:"clusterMemoryAllocatable" required:"true"`
 	NodeCountsByReadiness    NodeCountsByReadiness `json:"nodeCountsByReadiness" required:"true"`
-	PodCountsByPhase         PodCountsByPhase      `json:"podCountsByPhase" required:"true"`
 	PodCountsByStatus        PodCountsByStatus     `json:"podCountsByStatus" required:"true"`
 	Counts                   struct {
 		Nodes        int64 `json:"nodes" required:"true"`
@@ -43,11 +42,20 @@ type ClusterRecord struct {
 type PostableClusters struct {
 	Start   int64                `json:"start" required:"true"`
 	End     int64                `json:"end" required:"true"`
-	Filter  *qbtypes.Filter      `json:"filter"`
+	Filter  *ClusterFilter       `json:"filter"`
 	GroupBy []qbtypes.GroupByKey `json:"groupBy"`
 	OrderBy *qbtypes.OrderBy     `json:"orderBy"`
 	Offset  int                  `json:"offset"`
 	Limit   int                  `json:"limit" required:"true"`
+}
+
+// ClusterFilter is the attribute filter plus optional secondary filters on the
+// derived pod display status(es) (see PodStatus; matches any listed, OR) and node
+// readiness (see NodeCondition; matches any listed, OR). Empty FilterByPodStatus / FilterByNodeReadiness = off.
+type ClusterFilter struct {
+	qbtypes.Filter        `json:",inline"`
+	FilterByPodStatus     []PodStatus     `json:"filterByPodStatus"`
+	FilterByNodeReadiness []NodeCondition `json:"filterByNodeReadiness"`
 }
 
 // Validate ensures PostableClusters contains acceptable values.
@@ -87,6 +95,19 @@ func (req *PostableClusters) Validate() error {
 
 	if req.Offset < 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "offset cannot be negative")
+	}
+
+	if req.Filter != nil {
+		for _, s := range req.Filter.FilterByPodStatus {
+			if !s.IsFilterable() {
+				return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid filter by pod status: %s", s)
+			}
+		}
+		for _, c := range req.Filter.FilterByNodeReadiness {
+			if !c.IsFilterable() {
+				return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid filter by node readiness: %s", c)
+			}
+		}
 	}
 
 	if req.OrderBy != nil {

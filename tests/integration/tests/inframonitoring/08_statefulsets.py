@@ -1,5 +1,3 @@
-"""Integration tests for v2 infra-monitoring statefulsets endpoint."""
-
 import json
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
@@ -10,6 +8,7 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.fs import get_testdata_file_path
+from fixtures.inframonitoring import expected_status_counts
 from fixtures.metrics import Metrics
 from fixtures.querier import compare_values, get_all_warnings
 
@@ -23,7 +22,7 @@ def test_statefulsets_accuracy(
     insert_metrics,
 ) -> None:
     """Assert response shape/contract + exact per-SS metric values, replica
-    counts, and phase counts against precomputed expected output.
+    counts against precomputed expected output.
 
     Locks in Sum vs Avg split across pod-level metrics
     (statefulsets_constants.go:79-198): A/D = SpaceAggregationSum across pods;
@@ -77,7 +76,6 @@ def test_statefulsets_accuracy(
             "statefulSetMemoryLimit",
             "desiredPods",
             "currentPods",
-            "podCountsByPhase",
             "meta",
         ):
             assert field in record, f"missing {field} in {record!r}"
@@ -85,10 +83,6 @@ def test_statefulsets_accuracy(
         # ints (not floats) for replica counts.
         assert isinstance(record["desiredPods"], int)
         assert isinstance(record["currentPods"], int)
-
-        for bucket in ("pending", "running", "succeeded", "failed", "unknown"):
-            assert bucket in record["podCountsByPhase"]
-            assert isinstance(record["podCountsByPhase"][bucket], int)
 
         assert record["meta"].get("k8s.statefulset.name") == record["statefulSetName"]
         assert "k8s.namespace.name" in record["meta"]
@@ -107,7 +101,6 @@ def test_statefulsets_accuracy(
             assert compare_values(record[field], exp[field], 1e-6), f"{record['statefulSetName']}.{field}: got {record[field]}, expected {exp[field]}"
         assert record["desiredPods"] == exp["desiredPods"]
         assert record["currentPods"] == exp["currentPods"]
-        assert record["podCountsByPhase"] == exp["podCountsByPhase"]
 
 
 @pytest.mark.parametrize(
@@ -156,6 +149,7 @@ def test_statefulsets_accuracy(
             {"web-a-prod", "web-b-prod"},
             id="in_contains",
         ),
+        pytest.param("k8s.statefulset.namee = 'web-a-prod'", set(), id="unresolved_key"),
     ],
 )
 def test_statefulsets_filter(
@@ -215,7 +209,6 @@ def test_statefulsets_filter(
 @pytest.mark.parametrize(
     "expression,err_substr",
     [
-        pytest.param("k8s.statefulset.namee = 'web-a-prod'", "k8s.statefulset.namee", id="bad_attr_name"),
         pytest.param("k8s.statefulset.name =", None, id="trailing_op"),
         pytest.param("(k8s.statefulset.name = 'web-a-prod'", None, id="unclosed_paren"),
     ],
@@ -228,8 +221,8 @@ def test_statefulsets_filter_invalid(
     expression: str,
     err_substr,
 ) -> None:
-    """Invalid filter expressions (typo'd attribute key, malformed grammar) return
-    400 invalid_input with structured errors; bad attribute keys are named in them."""
+    """Malformed filter grammar (trailing operator, unclosed paren) returns
+    400 invalid_input with structured errors."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -259,47 +252,6 @@ def test_statefulsets_filter_invalid(
         assert any(err_substr in e["message"] for e in body["error"]["errors"]), f"{err_substr!r} not surfaced: {body['error']['errors']!r}"
 
 
-def test_statefulsets_pod_phase_aggregation(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-) -> None:
-    """StatefulSet with mixed pod phases: 4 Running + 1 Pending + 2 Failed."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path("inframonitoring/statefulsets_pod_phases.jsonl"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(ENDPOINT),
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "filter": {"expression": "k8s.statefulset.name = 'pp-ss'"},
-        },
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-    assert data["total"] == 1
-    rec = data["records"][0]
-    assert rec["statefulSetName"] == "pp-ss"
-    assert rec["podCountsByPhase"] == {
-        "pending": 1,
-        "running": 4,
-        "succeeded": 0,
-        "failed": 2,
-        "unknown": 0,
-    }
-
-
 def test_statefulsets_desired_current_counts(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
@@ -307,7 +259,7 @@ def test_statefulsets_desired_current_counts(
     insert_metrics,
 ) -> None:
     """desired=5, current=3 from k8s.statefulset.* metrics; only 2 Running pods seeded.
-    Distinguishes replica counts from phase counts (separate code paths)."""
+    Distinguishes replica counts from pod counts (separate code paths)."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -337,7 +289,6 @@ def test_statefulsets_desired_current_counts(
     assert isinstance(rec["currentPods"], int)
     assert rec["desiredPods"] == 5
     assert rec["currentPods"] == 3
-    assert rec["podCountsByPhase"]["running"] == 2
 
 
 def test_statefulsets_base_filter_drops_non_statefulset_pods(
@@ -376,6 +327,77 @@ def test_statefulsets_base_filter_drops_non_statefulset_pods(
     # No empty-name group leaking through.
     assert all(r["statefulSetName"] != "" for r in data["records"])
 
+    # filterByPodStatus: ns-ss (ns-ss-p1 Running + ns-ss-p1-clbo CrashLoopBackOff)
+    # is kept when >=1 pod matches; counts reflect only the filtered status; an
+    # absent status yields an empty page. Metric aggregation stays undistorted.
+    unfiltered_cpu = rec["statefulSetCPU"]
+
+    running = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"filterByPodStatus": ["running"]},
+        },
+        timeout=5,
+    )
+    assert running.status_code == HTTPStatus.OK, running.text
+    rdata = running.json()["data"]
+    assert rdata["total"] == 1
+    rrec = rdata["records"][0]
+    assert rrec["statefulSetName"] == "ns-ss"
+    assert rrec["podCountsByStatus"] == expected_status_counts(running=1)
+    assert compare_values(rrec["statefulSetCPU"], unfiltered_cpu, 1e-6), "filterByPodStatus distorted statefulSetCPU"
+
+    clbo = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"filterByPodStatus": ["CrashLoopBackOff"]},
+        },
+        timeout=5,
+    )
+    assert clbo.status_code == HTTPStatus.OK, clbo.text
+    cdata = clbo.json()["data"]
+    assert cdata["total"] == 1
+    assert cdata["records"][0]["podCountsByStatus"] == expected_status_counts(crashLoopBackOff=1)
+
+    # Multi-select is OR: both requested buckets populated (union), others zeroed.
+    multi = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"filterByPodStatus": ["running", "CrashLoopBackOff"]},
+        },
+        timeout=5,
+    )
+    assert multi.status_code == HTTPStatus.OK, multi.text
+    assert multi.json()["data"]["records"][0]["podCountsByStatus"] == expected_status_counts(running=1, crashLoopBackOff=1)
+
+    # A set fully absent from the group -> empty page (single and multi-select).
+    for fbps in (["pending"], ["pending", "oomKilled"]):
+        absent = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
+                "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+                "end": int(now.timestamp() * 1000),
+                "limit": 50,
+                "filter": {"filterByPodStatus": fbps},
+            },
+            timeout=5,
+        )
+        assert absent.status_code == HTTPStatus.OK, absent.text
+        assert absent.json()["data"]["total"] == 0, f"group must be dropped by filterByPodStatus={fbps!r}"
+
 
 # Float record fields compared with tolerance; everything else compared with ==.
 _GROUPBY_FLOAT_FIELDS = {
@@ -386,10 +408,6 @@ _GROUPBY_FLOAT_FIELDS = {
     "statefulSetMemoryRequest",
     "statefulSetMemoryLimit",
 }
-
-
-def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
-    return {"pending": pending, "running": running, "succeeded": succeeded, "failed": failed, "unknown": unknown}
 
 
 @pytest.mark.parametrize(
@@ -406,10 +424,10 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                 "group_meta_keys": ["k8s.statefulset.name"],
                 "expected_type": "grouped_list",
                 "groups": {
-                    "gb-ss-a1": {"statefulSetName": "gb-ss-a1", "podCountsByPhase": _phase(running=1)},
-                    "gb-ss-a2": {"statefulSetName": "gb-ss-a2", "podCountsByPhase": _phase(running=1)},
-                    "gb-ss-b1": {"statefulSetName": "gb-ss-b1", "podCountsByPhase": _phase(running=1)},
-                    "gb-ss-b2": {"statefulSetName": "gb-ss-b2", "podCountsByPhase": _phase(running=1)},
+                    "gb-ss-a1": {"statefulSetName": "gb-ss-a1"},
+                    "gb-ss-a2": {"statefulSetName": "gb-ss-a2"},
+                    "gb-ss-b1": {"statefulSetName": "gb-ss-b1"},
+                    "gb-ss-b2": {"statefulSetName": "gb-ss-b2"},
                 },
             },
             id="statefulset_name",
@@ -424,8 +442,8 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                 "group_meta_keys": ["k8s.namespace.name"],
                 "expected_type": "grouped_list",
                 "groups": {
-                    "gb-ns-a": {"statefulSetName": "", "podCountsByPhase": _phase(running=2)},
-                    "gb-ns-b": {"statefulSetName": "", "podCountsByPhase": _phase(running=2)},
+                    "gb-ns-a": {"statefulSetName": ""},
+                    "gb-ns-b": {"statefulSetName": ""},
                 },
             },
             id="namespace",
@@ -456,7 +474,6 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                         "statefulSetMemoryLimit": 0.7,
                         "desiredPods": 2,
                         "currentPods": 2,
-                        "podCountsByPhase": _phase(running=1),
                     },
                     ("dup-ss", "ns-y", "cluster-a"): {
                         "statefulSetName": "dup-ss",
@@ -468,7 +485,6 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                         "statefulSetMemoryLimit": 0.3,
                         "desiredPods": 3,
                         "currentPods": 1,
-                        "podCountsByPhase": _phase(failed=1),
                     },
                     ("dup-ss", "ns-x", "cluster-b"): {
                         "statefulSetName": "dup-ss",
@@ -480,7 +496,6 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                         "statefulSetMemoryLimit": 0.5,
                         "desiredPods": 4,
                         "currentPods": 4,
-                        "podCountsByPhase": _phase(running=1),
                     },
                     # empty-cluster group: k8s.cluster.name label absent on the source pods.
                     ("dup-ss", "ns-x", ""): {
@@ -493,7 +508,6 @@ def _phase(pending=0, running=0, succeeded=0, failed=0, unknown=0) -> dict:
                         "statefulSetMemoryLimit": 0.1,
                         "desiredPods": 1,
                         "currentPods": 0,
-                        "podCountsByPhase": _phase(pending=1),
                     },
                 },
             },
@@ -712,6 +726,11 @@ def test_statefulsets_orderby(  # pylint: disable=too-many-arguments,too-many-po
             },
             "is only allowed when groupBy is empty",
             id="orderby_ssname_with_groupby",
+        ),
+        pytest.param(
+            {"filter": {"filterByPodStatus": ["Bogus"]}},
+            "invalid filter by pod status",
+            id="filter_by_pod_status_invalid",
         ),
     ],
 )

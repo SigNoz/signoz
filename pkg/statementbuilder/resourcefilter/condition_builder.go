@@ -1,0 +1,328 @@
+package resourcefilter
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/huandu/go-sqlbuilder"
+)
+
+type defaultConditionBuilder struct {
+	fm qbtypes.FieldMapper
+	// fl evaluates the resolve_semconv_families flag during resolution.
+	// A nil flagger keeps resolution literal.
+	fl flagger.Flagger
+}
+
+var _ qbtypes.ConditionBuilder = (*defaultConditionBuilder)(nil)
+
+func NewConditionBuilder(fm qbtypes.FieldMapper, fl flagger.Flagger) *defaultConditionBuilder {
+	return &defaultConditionBuilder{fm: fm, fl: fl}
+}
+
+func valueForIndexFilter(op qbtypes.FilterOperator, key *telemetrytypes.TelemetryFieldKey, value any) any {
+	switch v := value.(type) {
+	case []any:
+		// assuming array will always be for in and not in
+		values := make([]string, 0, len(v))
+		for _, v := range v {
+			values = append(values, fmt.Sprintf(`%%%s":"%s%%`, key.Name, querybuilder.FormatValueForContains(v)))
+		}
+		return values
+	default:
+		// format to string for anything else as we store resource values as string
+		if op == qbtypes.FilterOperatorEqual || op == qbtypes.FilterOperatorNotEqual {
+			return fmt.Sprintf(`%%%s":"%s%%`, key.Name, querybuilder.FormatValueForContains(v))
+		}
+		return fmt.Sprintf(`%%%s%%%s%%`, key.Name, querybuilder.FormatValueForContains(v))
+	}
+}
+
+func keyIndexFilter(key *telemetrytypes.TelemetryFieldKey) any {
+	return fmt.Sprintf(`%%%s%%`, key.Name)
+}
+
+// The three helpers below take the members of one logical field. With a single
+// member they render exactly the pre-family shapes; a family widens key/value
+// index hints to any-member and presence to any-member (all-absent when negated).
+
+func keyIndexCondition(sb *sqlbuilder.SelectBuilder, column string, members []*telemetrytypes.TelemetryFieldKey) string {
+	conditions := make([]string, 0, len(members))
+	for _, member := range members {
+		conditions = append(conditions, sb.Like(column, keyIndexFilter(member)))
+	}
+	if len(conditions) == 1 {
+		return conditions[0]
+	}
+	return sb.Or(conditions...)
+}
+
+func valueIndexCondition(
+	sb *sqlbuilder.SelectBuilder,
+	column string,
+	members []*telemetrytypes.TelemetryFieldKey,
+	op qbtypes.FilterOperator,
+	value any,
+	caseInsensitive bool,
+) string {
+	conditions := make([]string, 0, len(members))
+	for _, member := range members {
+		patterns := valueForIndexFilter(op, member, value)
+		switch values := patterns.(type) {
+		case []string:
+			for _, pattern := range values {
+				conditions = append(conditions, sb.Like(column, pattern))
+			}
+		default:
+			if caseInsensitive {
+				conditions = append(conditions, sb.ILike(column, values))
+			} else {
+				conditions = append(conditions, sb.Like(column, values))
+			}
+		}
+	}
+	if len(conditions) == 1 {
+		return conditions[0]
+	}
+	return sb.Or(conditions...)
+}
+
+func memberPresenceCondition(sb *sqlbuilder.SelectBuilder, column string, members []*telemetrytypes.TelemetryFieldKey, exists bool) string {
+	conditions := make([]string, 0, len(members))
+	for _, member := range members {
+		field := fmt.Sprintf("simpleJSONHas(%s, '%s')", column, member.Name)
+		if exists {
+			conditions = append(conditions, sb.E(field, true))
+		} else {
+			conditions = append(conditions, sb.NE(field, true))
+		}
+	}
+	if exists {
+		if len(conditions) == 1 {
+			return conditions[0]
+		}
+		return sb.Or(conditions...)
+	}
+	return sb.And(conditions...)
+}
+
+// SkipResourceFilter is not applicable here: the fingerprint table only stores resource attributes.
+func (b *defaultConditionBuilder) ConditionFor(
+	ctx context.Context,
+	orgID valuer.UUID,
+	startNs uint64,
+	endNs uint64,
+	key *telemetrytypes.TelemetryFieldKey,
+	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
+	_ qbtypes.ConditionBuilderOptions,
+	op qbtypes.FilterOperator,
+	value any,
+	sb *sqlbuilder.SelectBuilder,
+) ([]string, []string, error) {
+	matches := querybuilder.MatchingLogicalFields(ctx, orgID, b.fl, key, fieldKeys)
+
+	// has/hasAny/hasAll/hasToken are logs-body-only functions; they never apply to the
+	// resource fingerprint table, so skip them (the main query still evaluates them).
+	if op.IsFunctionOperator() {
+		return nil, nil, nil
+	}
+
+	logicalFields, warning := querybuilder.ResolveLogicalFields(key, matches)
+	var warnings []string
+	if warning != "" {
+		warnings = append(warnings, warning)
+	}
+
+	conds := make([]string, 0, len(logicalFields))
+	for _, logical := range logicalFields {
+		// the resource fingerprint table only stores resource attributes; fields from
+		// any other context contribute no condition and are omitted. An empty result
+		// (including an unknown key) lets the caller skip this filter entirely.
+		if logical.FieldContext != telemetrytypes.FieldContextResource {
+			continue
+		}
+		cond, err := b.conditionForLogicalField(ctx, orgID, startNs, endNs, logical, op, value, sb)
+		if err != nil {
+			return nil, nil, err
+		}
+		conds = append(conds, cond)
+	}
+	return conds, warnings, nil
+}
+
+func (b *defaultConditionBuilder) conditionForLogicalField(
+	ctx context.Context,
+	orgID valuer.UUID,
+	startNs uint64,
+	endNs uint64,
+	logical *telemetrytypes.LogicalField,
+	op qbtypes.FilterOperator,
+	value any,
+	sb *sqlbuilder.SelectBuilder,
+) (string, error) {
+
+	// except for in, not in, between, not between all other operators should have formatted value
+	// as we store resource values as string
+	formattedValue := querybuilder.FormatValueForContains(value)
+
+	// Every resource-context key maps to the labels column, so any member
+	// resolves the column for the whole field.
+	columns, err := b.fm.ColumnFor(ctx, orgID, startNs, endNs, logical.Single())
+	if err != nil {
+		return "", err
+	}
+
+	if len(columns) != 1 {
+		return "", errors.Newf(errors.TypeInternal, errors.CodeInternal, "expected exactly 1 column, got %d", len(columns))
+	}
+
+	// resource evolution on main table doesn't affect this
+	// as we have not changed the resource column in the resource fingerprint table.
+	column := columns[0]
+
+	members := logical.Members
+	isFamily := logical.IsFamily()
+	keyIdxFilter := keyIndexCondition(sb, column.Name, members)
+	singleValueIndexFilter := valueForIndexFilter(op, members[0], value)
+
+	fieldName, err := querybuilder.LogicalValueExpr(ctx, orgID, startNs, endNs, b.fm, logical)
+	if err != nil {
+		return "", err
+	}
+
+	switch op {
+	case qbtypes.FilterOperatorEqual:
+		return sb.And(
+			sb.E(fieldName, formattedValue),
+			keyIdxFilter,
+			valueIndexCondition(sb, column.Name, members, op, value, false),
+		), nil
+	case qbtypes.FilterOperatorNotEqual:
+		if isFamily {
+			// A negated value-index hint would drop rows where another member
+			// holds the value; the fingerprint scan is small enough without it.
+			return sb.NE(fieldName, formattedValue), nil
+		}
+		return sb.And(
+			sb.NE(fieldName, formattedValue),
+			sb.NotLike(column.Name, singleValueIndexFilter),
+		), nil
+	case qbtypes.FilterOperatorGreaterThan:
+		return sb.And(sb.GT(fieldName, formattedValue), keyIdxFilter), nil
+	case qbtypes.FilterOperatorGreaterThanOrEq:
+		return sb.And(sb.GE(fieldName, formattedValue), keyIdxFilter), nil
+	case qbtypes.FilterOperatorLessThan:
+		return sb.And(sb.LT(fieldName, formattedValue), keyIdxFilter), nil
+	case qbtypes.FilterOperatorLessThanOrEq:
+		return sb.And(sb.LE(fieldName, formattedValue), keyIdxFilter), nil
+
+	case qbtypes.FilterOperatorLike, qbtypes.FilterOperatorILike:
+		return sb.And(
+			sb.ILike(fieldName, formattedValue),
+			keyIdxFilter,
+			valueIndexCondition(sb, column.Name, members, op, value, true),
+		), nil
+	case qbtypes.FilterOperatorNotLike, qbtypes.FilterOperatorNotILike:
+		// no index filter: as cannot apply `not contains x%y` as y can be somewhere else
+		return sb.And(
+			sb.NotILike(fieldName, formattedValue),
+		), nil
+
+	case qbtypes.FilterOperatorBetween:
+		values, ok := value.([]any)
+		if !ok {
+			return "", qbtypes.ErrBetweenValues
+		}
+		if len(values) != 2 {
+			return "", qbtypes.ErrBetweenValues
+		}
+		return sb.And(keyIdxFilter, sb.Between(fieldName, querybuilder.FormatValueForContains(values[0]), querybuilder.FormatValueForContains(values[1]))), nil
+	case qbtypes.FilterOperatorNotBetween:
+		values, ok := value.([]any)
+		if !ok {
+			return "", qbtypes.ErrBetweenValues
+		}
+		if len(values) != 2 {
+			return "", qbtypes.ErrBetweenValues
+		}
+		return sb.And(sb.NotBetween(fieldName, querybuilder.FormatValueForContains(values[0]), querybuilder.FormatValueForContains(values[1]))), nil
+
+	case qbtypes.FilterOperatorIn:
+		values, ok := value.([]any)
+		if !ok {
+			return "", qbtypes.ErrInValues
+		}
+		inConditions := make([]string, 0, len(values))
+		for _, v := range values {
+			inConditions = append(inConditions, sb.E(fieldName, querybuilder.FormatValueForContains(v)))
+		}
+		mainCondition := sb.Or(inConditions...)
+		mainCondition = sb.And(
+			mainCondition,
+			keyIdxFilter,
+			valueIndexCondition(sb, column.Name, members, op, value, false),
+		)
+
+		return mainCondition, nil
+	case qbtypes.FilterOperatorNotIn:
+		values, ok := value.([]any)
+		if !ok {
+			return "", qbtypes.ErrInValues
+		}
+		notInConditions := make([]string, 0, len(values))
+		for _, v := range values {
+			notInConditions = append(notInConditions, sb.NE(fieldName, querybuilder.FormatValueForContains(v)))
+		}
+		mainCondition := sb.And(notInConditions...)
+		if isFamily {
+			// A negated value-index hint would drop rows where another member
+			// holds the value; the fingerprint scan is small enough without it.
+			return mainCondition, nil
+		}
+		valConditions := make([]string, 0, len(values))
+		if valuesForIndexFilter, ok := singleValueIndexFilter.([]string); ok {
+			for _, v := range valuesForIndexFilter {
+				valConditions = append(valConditions, sb.NotLike(column.Name, v))
+			}
+		}
+		mainCondition = sb.And(mainCondition, sb.And(valConditions...))
+		return mainCondition, nil
+
+	case qbtypes.FilterOperatorExists:
+		return sb.And(
+			memberPresenceCondition(sb, column.Name, members, true),
+			keyIdxFilter,
+		), nil
+	case qbtypes.FilterOperatorNotExists:
+		return memberPresenceCondition(sb, column.Name, members, false), nil
+
+	case qbtypes.FilterOperatorRegexp:
+		return sb.And(
+			fmt.Sprintf("match(%s, %s)", fieldName, sb.Var(formattedValue)),
+			keyIdxFilter,
+		), nil
+	case qbtypes.FilterOperatorNotRegexp:
+		return sb.And(
+			fmt.Sprintf("NOT match(%s, %s)", fieldName, sb.Var(formattedValue)),
+		), nil
+
+	case qbtypes.FilterOperatorContains:
+		return sb.And(
+			sb.ILike(fieldName, fmt.Sprintf(`%%%s%%`, formattedValue)),
+			keyIdxFilter,
+			valueIndexCondition(sb, column.Name, members, op, value, true),
+		), nil
+	case qbtypes.FilterOperatorNotContains:
+		// no index filter: as cannot apply `not contains x%y` as y can be somewhere else
+		return sb.And(
+			sb.NotILike(fieldName, fmt.Sprintf(`%%%s%%`, formattedValue)),
+		), nil
+	}
+	return "", qbtypes.ErrUnsupportedOperator
+}

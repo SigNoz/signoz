@@ -111,54 +111,75 @@ export const namespaceWidgetInfo = [
 	{
 		title: 'CPU Usage (cores)',
 		yAxisUnit: '',
-		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#cpu-usage-cores',
+		docPath:
+			'/infrastructure-monitoring/kubernetes/namespaces/#cpu-usage-cores-1',
+		description:
+			'Avg, max and min pod CPU usage in the namespace against the sum of container CPU requests.',
 	},
 	{
 		title: 'Memory Usage (bytes)',
 		yAxisUnit: 'bytes',
 		docPath:
 			'/infrastructure-monitoring/kubernetes/namespaces/#memory-usage-bytes',
+		description:
+			'Pod memory usage, working set and RSS in the namespace against the sum of container memory requests.',
 	},
 	{
 		title: 'Pods CPU (top 10)',
 		yAxisUnit: '',
 		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#pods-cpu-top-10',
+		description:
+			'CPU consumption in cores for the ten highest-consuming pods in the namespace.',
 	},
 	{
 		title: 'Pods Memory (top 10)',
 		yAxisUnit: 'bytes',
 		docPath:
 			'/infrastructure-monitoring/kubernetes/namespaces/#pods-memory-top-10',
+		description:
+			'Memory consumption in bytes for the ten highest-consuming pods in the namespace.',
 	},
 	{
 		title: 'Network rate',
 		yAxisUnit: 'binBps',
 		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#network-rate',
+		description:
+			'Transmit and receive throughput per interface across the pods of the namespace.',
 	},
 	{
 		title: 'Network errors',
 		yAxisUnit: '',
 		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#network-errors',
+		description:
+			'Per-pod-interface network error counts by direction and interface, reported by the kubelet.',
 	},
 	{
 		title: 'StatefulSets (pods)',
 		yAxisUnit: '',
 		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#statefulsets',
+		description:
+			'Desired, current and updated pod counts per StatefulSet in the namespace, revealing stalled rollouts.',
 	},
 	{
 		title: 'ReplicaSets (pods)',
 		yAxisUnit: '',
 		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#replicasets',
+		description:
+			'Desired versus available replicas per ReplicaSet in the namespace, revealing pods stuck pending.',
 	},
 	{
 		title: 'DaemonSets (nodes)',
 		yAxisUnit: '',
 		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#daemonsets',
+		description:
+			'Desired, current, ready and misscheduled node counts per DaemonSet in the namespace.',
 	},
 	{
 		title: 'Deployments (pods)',
 		yAxisUnit: '',
 		docPath: '/infrastructure-monitoring/kubernetes/namespaces/#deployments',
+		description:
+			'Desired and available replicas with utilization percentage per Deployment in the namespace.',
 	},
 ];
 
@@ -166,97 +187,7 @@ export const getNamespaceMetricsQueryPayload = (
 	namespace: InframonitoringtypesNamespaceRecordDTO,
 	start: number,
 	end: number,
-	dotMetricsEnabled: boolean,
 ): GetQueryResultsProps[] => {
-	const getKey = (dotKey: string, underscoreKey: string): string =>
-		dotMetricsEnabled ? dotKey : underscoreKey;
-	const k8sPodCpuUtilizationKey = getKey(
-		'k8s.pod.cpu.usage',
-		'k8s_pod_cpu_usage',
-	);
-	const k8sContainerCpuRequestKey = getKey(
-		'k8s.container.cpu_request',
-		'k8s_container_cpu_request',
-	);
-	const k8sPodMemoryUsageKey = getKey(
-		'k8s.pod.memory.usage',
-		'k8s_pod_memory_usage',
-	);
-	const k8sContainerMemoryRequestKey = getKey(
-		'k8s.container.memory_request',
-		'k8s_container_memory_request',
-	);
-	const k8sPodMemoryWorkingSetKey = getKey(
-		'k8s.pod.memory.working_set',
-		'k8s_pod_memory_working_set',
-	);
-	const k8sPodMemoryRssKey = getKey('k8s.pod.memory.rss', 'k8s_pod_memory_rss');
-	const k8sPodNetworkIoKey = getKey('k8s.pod.network.io', 'k8s_pod_network_io');
-	const k8sPodNetworkErrorsKey = getKey(
-		'k8s.pod.network.errors',
-		'k8s_pod_network_errors',
-	);
-	const k8sStatefulsetCurrentPodsKey = getKey(
-		'k8s.statefulset.current_pods',
-		'k8s_statefulset_current_pods',
-	);
-	const k8sStatefulsetDesiredPodsKey = getKey(
-		'k8s.statefulset.desired_pods',
-		'k8s_statefulset_desired_pods',
-	);
-	const k8sStatefulsetUpdatedPodsKey = getKey(
-		'k8s.statefulset.updated_pods',
-		'k8s_statefulset_updated_pods',
-	);
-	const k8sReplicasetDesiredKey = getKey(
-		'k8s.replicaset.desired',
-		'k8s_replicaset_desired',
-	);
-	const k8sReplicasetAvailableKey = getKey(
-		'k8s.replicaset.available',
-		'k8s_replicaset_available',
-	);
-	const k8sDaemonsetDesiredScheduledNodesKey = getKey(
-		'k8s.daemonset.desired_scheduled_nodes',
-		'k8s_daemonset_desired_scheduled_nodes',
-	);
-	const k8sDaemonsetCurrentScheduledNodesKey = getKey(
-		'k8s.daemonset.current_scheduled_nodes',
-		'k8s_daemonset_current_scheduled_nodes',
-	);
-	const k8sDaemonsetReadyNodesKey = getKey(
-		'k8s.daemonset.ready_nodes',
-		'k8s_daemonset_ready_nodes',
-	);
-	const k8sDaemonsetMisscheduledNodesKey = getKey(
-		'k8s.daemonset.misscheduled_nodes',
-		'k8s_daemonset_misscheduled_nodes',
-	);
-	const k8sDeploymentDesiredKey = getKey(
-		'k8s.deployment.desired',
-		'k8s_deployment_desired',
-	);
-	const k8sDeploymentAvailableKey = getKey(
-		'k8s.deployment.available',
-		'k8s_deployment_available',
-	);
-	const k8sNamespaceNameKey = getKey('k8s.namespace.name', 'k8s_namespace_name');
-	const k8sPodNameKey = getKey('k8s.pod.name', 'k8s_pod_name');
-	const k8sStatefulsetNameKey = getKey(
-		'k8s.statefulset.name',
-		'k8s_statefulset_name',
-	);
-	const k8sReplicasetNameKey = getKey(
-		'k8s.replicaset.name',
-		'k8s_replicaset_name',
-	);
-	const k8sDaemonsetNameKey = getKey('k8s.daemonset.name', 'k8s_daemonset_name');
-	const k8sDeploymentNameKey = getKey(
-		'k8s.deployment.name',
-		'k8s_deployment_name',
-	);
-	const k8sClusterNameKey = getKey('k8s.cluster.name', 'k8s_cluster_name');
-
 	const clusterName =
 		namespace.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? '';
 
@@ -266,7 +197,7 @@ export const getNamespaceMetricsQueryPayload = (
 			key: {
 				dataType: DataTypes.String,
 				id: 'k8s_cluster_name--string--tag--false',
-				key: k8sClusterNameKey,
+				key: INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME,
 				type: 'tag',
 			},
 			op: '=',
@@ -284,8 +215,8 @@ export const getNamespaceMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: k8sPodCpuUtilizationKey,
-								key: k8sPodCpuUtilizationKey,
+								id: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -298,8 +229,8 @@ export const getNamespaceMetricsQueryPayload = (
 										id: '47b3adae',
 										key: {
 											dataType: DataTypes.String,
-											id: k8sNamespaceNameKey,
-											key: k8sNamespaceNameKey,
+											id: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -324,8 +255,8 @@ export const getNamespaceMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: k8sContainerCpuRequestKey,
-								key: k8sContainerCpuRequestKey,
+								id: INFRA_MONITORING_ATTR_KEYS.K8S_CONTAINER_CPU_REQUEST,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_CONTAINER_CPU_REQUEST,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'latest',
@@ -338,8 +269,8 @@ export const getNamespaceMetricsQueryPayload = (
 										id: '93d2be5e',
 										key: {
 											dataType: DataTypes.String,
-											id: k8sNamespaceNameKey,
-											key: k8sNamespaceNameKey,
+											id: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -364,8 +295,8 @@ export const getNamespaceMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: k8sPodCpuUtilizationKey,
-								key: k8sPodCpuUtilizationKey,
+								id: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'min',
@@ -378,8 +309,8 @@ export const getNamespaceMetricsQueryPayload = (
 										id: '795eb679',
 										key: {
 											dataType: DataTypes.String,
-											id: k8sNamespaceNameKey,
-											key: k8sNamespaceNameKey,
+											id: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -404,8 +335,8 @@ export const getNamespaceMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: k8sPodCpuUtilizationKey,
-								key: k8sPodCpuUtilizationKey,
+								id: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'max',
@@ -418,8 +349,8 @@ export const getNamespaceMetricsQueryPayload = (
 										id: '6792adbe',
 										key: {
 											dataType: DataTypes.String,
-											id: k8sNamespaceNameKey,
-											key: k8sNamespaceNameKey,
+											id: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -478,8 +409,8 @@ export const getNamespaceMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: k8sPodMemoryUsageKey,
-								key: k8sPodMemoryUsageKey,
+								id: INFRA_MONITORING_ATTR_KEYS.K8S_POD_MEMORY_USAGE,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_MEMORY_USAGE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -492,8 +423,8 @@ export const getNamespaceMetricsQueryPayload = (
 										id: '10011298',
 										key: {
 											dataType: DataTypes.String,
-											id: k8sNamespaceNameKey,
-											key: k8sNamespaceNameKey,
+											id: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -518,8 +449,8 @@ export const getNamespaceMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: k8sContainerMemoryRequestKey,
-								key: k8sContainerMemoryRequestKey,
+								id: INFRA_MONITORING_ATTR_KEYS.K8S_CONTAINER_MEMORY_REQUEST,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_CONTAINER_MEMORY_REQUEST,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'latest',
@@ -532,8 +463,8 @@ export const getNamespaceMetricsQueryPayload = (
 										id: 'ea53b656',
 										key: {
 											dataType: DataTypes.String,
-											id: k8sNamespaceNameKey,
-											key: k8sNamespaceNameKey,
+											id: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -558,8 +489,8 @@ export const getNamespaceMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: k8sPodMemoryWorkingSetKey,
-								key: k8sPodMemoryWorkingSetKey,
+								id: INFRA_MONITORING_ATTR_KEYS.K8S_POD_MEMORY_WORKING_SET,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_MEMORY_WORKING_SET,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -572,8 +503,8 @@ export const getNamespaceMetricsQueryPayload = (
 										id: '674ace83',
 										key: {
 											dataType: DataTypes.String,
-											id: k8sNamespaceNameKey,
-											key: k8sNamespaceNameKey,
+											id: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -598,8 +529,8 @@ export const getNamespaceMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: k8sPodMemoryRssKey,
-								key: k8sPodMemoryRssKey,
+								id: INFRA_MONITORING_ATTR_KEYS.K8S_POD_MEMORY_RSS,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_MEMORY_RSS,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -612,8 +543,8 @@ export const getNamespaceMetricsQueryPayload = (
 										id: '187dbdb3',
 										key: {
 											dataType: DataTypes.String,
-											id: k8sNamespaceNameKey,
-											key: k8sNamespaceNameKey,
+											id: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -638,8 +569,8 @@ export const getNamespaceMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: k8sPodMemoryUsageKey,
-								key: k8sPodMemoryUsageKey,
+								id: INFRA_MONITORING_ATTR_KEYS.K8S_POD_MEMORY_USAGE,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_MEMORY_USAGE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'min',
@@ -652,8 +583,8 @@ export const getNamespaceMetricsQueryPayload = (
 										id: 'a3dbf468',
 										key: {
 											dataType: DataTypes.String,
-											id: k8sNamespaceNameKey,
-											key: k8sNamespaceNameKey,
+											id: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -678,8 +609,8 @@ export const getNamespaceMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: k8sPodMemoryUsageKey,
-								key: k8sPodMemoryUsageKey,
+								id: INFRA_MONITORING_ATTR_KEYS.K8S_POD_MEMORY_USAGE,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_MEMORY_USAGE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'max',
@@ -692,8 +623,8 @@ export const getNamespaceMetricsQueryPayload = (
 										id: '4b2406c2',
 										key: {
 											dataType: DataTypes.String,
-											id: k8sNamespaceNameKey,
-											key: k8sNamespaceNameKey,
+											id: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -752,8 +683,8 @@ export const getNamespaceMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: k8sPodCpuUtilizationKey,
-								key: k8sPodCpuUtilizationKey,
+								id: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -766,8 +697,8 @@ export const getNamespaceMetricsQueryPayload = (
 										id: 'c3a73f0a',
 										key: {
 											dataType: DataTypes.String,
-											id: k8sNamespaceNameKey,
-											key: k8sNamespaceNameKey,
+											id: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -781,13 +712,13 @@ export const getNamespaceMetricsQueryPayload = (
 							groupBy: [
 								{
 									dataType: DataTypes.String,
-									id: k8sPodNameKey,
-									key: k8sPodNameKey,
+									id: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME,
+									key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME,
 									type: 'tag',
 								},
 							],
 							having: [],
-							legend: `{{${k8sPodNameKey}}}`,
+							legend: `{{${INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME}}}`,
 							limit: 10,
 							orderBy: [],
 							queryName: 'A',
@@ -833,8 +764,8 @@ export const getNamespaceMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: k8sPodMemoryUsageKey,
-								key: k8sPodMemoryUsageKey,
+								id: INFRA_MONITORING_ATTR_KEYS.K8S_POD_MEMORY_USAGE,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_MEMORY_USAGE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -847,8 +778,8 @@ export const getNamespaceMetricsQueryPayload = (
 										id: '5cad3379',
 										key: {
 											dataType: DataTypes.String,
-											id: k8sNamespaceNameKey,
-											key: k8sNamespaceNameKey,
+											id: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -862,13 +793,13 @@ export const getNamespaceMetricsQueryPayload = (
 							groupBy: [
 								{
 									dataType: DataTypes.String,
-									id: k8sPodNameKey,
-									key: k8sPodNameKey,
+									id: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME,
+									key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME,
 									type: 'tag',
 								},
 							],
 							having: [],
-							legend: `{{${k8sPodNameKey}}}`,
+							legend: `{{${INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME}}}`,
 							limit: 10,
 							orderBy: [],
 							queryName: 'A',
@@ -914,8 +845,8 @@ export const getNamespaceMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: k8sPodNetworkIoKey,
-								key: k8sPodNetworkIoKey,
+								id: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NETWORK_IO,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NETWORK_IO,
 								type: 'Sum',
 							},
 							aggregateOperator: 'rate',
@@ -928,8 +859,8 @@ export const getNamespaceMetricsQueryPayload = (
 										id: '00f5c5e1',
 										key: {
 											dataType: DataTypes.String,
-											id: k8sNamespaceNameKey,
-											key: k8sNamespaceNameKey,
+											id: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -1001,8 +932,8 @@ export const getNamespaceMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.String,
-								id: k8sPodNetworkErrorsKey,
-								key: k8sPodNetworkErrorsKey,
+								id: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NETWORK_ERRORS,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NETWORK_ERRORS,
 								type: 'Sum',
 							},
 							aggregateOperator: 'increase',
@@ -1015,8 +946,8 @@ export const getNamespaceMetricsQueryPayload = (
 										id: '3aa8e064',
 										key: {
 											dataType: DataTypes.String,
-											id: k8sNamespaceNameKey,
-											key: k8sNamespaceNameKey,
+											id: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -1088,8 +1019,8 @@ export const getNamespaceMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: k8sStatefulsetCurrentPodsKey,
-								key: k8sStatefulsetCurrentPodsKey,
+								id: INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_CURRENT_PODS,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_CURRENT_PODS,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'latest',
@@ -1102,8 +1033,8 @@ export const getNamespaceMetricsQueryPayload = (
 										id: '5f2a55c5',
 										key: {
 											dataType: DataTypes.String,
-											id: k8sNamespaceNameKey,
-											key: k8sNamespaceNameKey,
+											id: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -1117,8 +1048,8 @@ export const getNamespaceMetricsQueryPayload = (
 							groupBy: [
 								{
 									dataType: DataTypes.String,
-									id: k8sStatefulsetNameKey,
-									key: k8sStatefulsetNameKey,
+									id: INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME,
+									key: INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME,
 									type: 'tag',
 								},
 							],
@@ -1135,8 +1066,8 @@ export const getNamespaceMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: k8sStatefulsetDesiredPodsKey,
-								key: k8sStatefulsetDesiredPodsKey,
+								id: INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_DESIRED_PODS,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_DESIRED_PODS,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'latest',
@@ -1149,8 +1080,8 @@ export const getNamespaceMetricsQueryPayload = (
 										id: '13bd7a1d',
 										key: {
 											dataType: DataTypes.String,
-											id: k8sNamespaceNameKey,
-											key: k8sNamespaceNameKey,
+											id: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -1164,8 +1095,8 @@ export const getNamespaceMetricsQueryPayload = (
 							groupBy: [
 								{
 									dataType: DataTypes.String,
-									id: k8sStatefulsetNameKey,
-									key: k8sStatefulsetNameKey,
+									id: INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME,
+									key: INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME,
 									type: 'tag',
 								},
 							],
@@ -1182,8 +1113,8 @@ export const getNamespaceMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: k8sStatefulsetUpdatedPodsKey,
-								key: k8sStatefulsetUpdatedPodsKey,
+								id: INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_UPDATED_PODS,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_UPDATED_PODS,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'latest',
@@ -1196,8 +1127,8 @@ export const getNamespaceMetricsQueryPayload = (
 										id: '9d287c73',
 										key: {
 											dataType: DataTypes.String,
-											id: k8sNamespaceNameKey,
-											key: k8sNamespaceNameKey,
+											id: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -1211,8 +1142,8 @@ export const getNamespaceMetricsQueryPayload = (
 							groupBy: [
 								{
 									dataType: DataTypes.String,
-									id: k8sStatefulsetNameKey,
-									key: k8sStatefulsetNameKey,
+									id: INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME,
+									key: INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME,
 									type: 'tag',
 								},
 							],
@@ -1263,8 +1194,8 @@ export const getNamespaceMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: k8sReplicasetDesiredKey,
-								key: k8sReplicasetDesiredKey,
+								id: INFRA_MONITORING_ATTR_KEYS.K8S_REPLICASET_DESIRED,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_REPLICASET_DESIRED,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'latest',
@@ -1277,8 +1208,8 @@ export const getNamespaceMetricsQueryPayload = (
 										id: '0c1e655c',
 										key: {
 											dataType: DataTypes.String,
-											id: k8sNamespaceNameKey,
-											key: k8sNamespaceNameKey,
+											id: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -1292,18 +1223,14 @@ export const getNamespaceMetricsQueryPayload = (
 							groupBy: [
 								{
 									dataType: DataTypes.String,
-									id: k8sReplicasetNameKey,
-									key: k8sReplicasetNameKey,
+									id: INFRA_MONITORING_ATTR_KEYS.K8S_REPLICASET_NAME,
+									key: INFRA_MONITORING_ATTR_KEYS.K8S_REPLICASET_NAME,
 									type: 'tag',
 								},
 							],
-							having: [
-								{
-									columnName: `MAX(${k8sReplicasetDesiredKey})`,
-									op: '>',
-									value: 0,
-								},
-							],
+							having: {
+								expression: `max(${INFRA_MONITORING_ATTR_KEYS.K8S_REPLICASET_DESIRED}) > 0`,
+							},
 							legend: 'desired',
 							limit: null,
 							orderBy: [],
@@ -1316,8 +1243,8 @@ export const getNamespaceMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: k8sReplicasetAvailableKey,
-								key: k8sReplicasetAvailableKey,
+								id: INFRA_MONITORING_ATTR_KEYS.K8S_REPLICASET_AVAILABLE,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_REPLICASET_AVAILABLE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'latest',
@@ -1330,8 +1257,8 @@ export const getNamespaceMetricsQueryPayload = (
 										id: 'b2296bdb',
 										key: {
 											dataType: DataTypes.String,
-											id: k8sNamespaceNameKey,
-											key: k8sNamespaceNameKey,
+											id: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -1345,18 +1272,14 @@ export const getNamespaceMetricsQueryPayload = (
 							groupBy: [
 								{
 									dataType: DataTypes.String,
-									id: k8sReplicasetNameKey,
-									key: k8sReplicasetNameKey,
+									id: INFRA_MONITORING_ATTR_KEYS.K8S_REPLICASET_NAME,
+									key: INFRA_MONITORING_ATTR_KEYS.K8S_REPLICASET_NAME,
 									type: 'tag',
 								},
 							],
-							having: [
-								{
-									columnName: `MAX(${k8sReplicasetDesiredKey})`,
-									op: '>',
-									value: 0,
-								},
-							],
+							having: {
+								expression: `max(${INFRA_MONITORING_ATTR_KEYS.K8S_REPLICASET_AVAILABLE}) > 0`,
+							},
 							legend: 'available',
 							limit: null,
 							orderBy: [],
@@ -1403,8 +1326,8 @@ export const getNamespaceMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: k8sDaemonsetDesiredScheduledNodesKey,
-								key: k8sDaemonsetDesiredScheduledNodesKey,
+								id: INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_DESIRED_SCHEDULED_NODES,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_DESIRED_SCHEDULED_NODES,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'latest',
@@ -1417,8 +1340,8 @@ export const getNamespaceMetricsQueryPayload = (
 										id: '2964eb92',
 										key: {
 											dataType: DataTypes.String,
-											id: k8sNamespaceNameKey,
-											key: k8sNamespaceNameKey,
+											id: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -1432,8 +1355,8 @@ export const getNamespaceMetricsQueryPayload = (
 							groupBy: [
 								{
 									dataType: DataTypes.String,
-									id: k8sDaemonsetNameKey,
-									key: k8sDaemonsetNameKey,
+									id: INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME,
+									key: INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME,
 									type: 'tag',
 								},
 							],
@@ -1450,8 +1373,8 @@ export const getNamespaceMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: k8sDaemonsetCurrentScheduledNodesKey,
-								key: k8sDaemonsetCurrentScheduledNodesKey,
+								id: INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_CURRENT_SCHEDULED_NODES,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_CURRENT_SCHEDULED_NODES,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'latest',
@@ -1464,8 +1387,8 @@ export const getNamespaceMetricsQueryPayload = (
 										id: 'cd324eff',
 										key: {
 											dataType: DataTypes.String,
-											id: k8sNamespaceNameKey,
-											key: k8sNamespaceNameKey,
+											id: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -1479,8 +1402,8 @@ export const getNamespaceMetricsQueryPayload = (
 							groupBy: [
 								{
 									dataType: DataTypes.String,
-									id: k8sDaemonsetNameKey,
-									key: k8sDaemonsetNameKey,
+									id: INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME,
+									key: INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME,
 									type: 'tag',
 								},
 							],
@@ -1497,8 +1420,8 @@ export const getNamespaceMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: k8sDaemonsetReadyNodesKey,
-								key: k8sDaemonsetReadyNodesKey,
+								id: INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_READY_NODES,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_READY_NODES,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'latest',
@@ -1511,8 +1434,8 @@ export const getNamespaceMetricsQueryPayload = (
 										id: '0416fa6f',
 										key: {
 											dataType: DataTypes.String,
-											id: k8sNamespaceNameKey,
-											key: k8sNamespaceNameKey,
+											id: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -1526,8 +1449,8 @@ export const getNamespaceMetricsQueryPayload = (
 							groupBy: [
 								{
 									dataType: DataTypes.String,
-									id: k8sDaemonsetNameKey,
-									key: k8sDaemonsetNameKey,
+									id: INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME,
+									key: INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME,
 									type: 'tag',
 								},
 							],
@@ -1544,8 +1467,8 @@ export const getNamespaceMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: k8sDaemonsetMisscheduledNodesKey,
-								key: k8sDaemonsetMisscheduledNodesKey,
+								id: INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_MISSCHEDULED_NODES,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_MISSCHEDULED_NODES,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'latest',
@@ -1558,8 +1481,8 @@ export const getNamespaceMetricsQueryPayload = (
 										id: 'c0a126d3',
 										key: {
 											dataType: DataTypes.String,
-											id: k8sNamespaceNameKey,
-											key: k8sNamespaceNameKey,
+											id: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -1573,8 +1496,8 @@ export const getNamespaceMetricsQueryPayload = (
 							groupBy: [
 								{
 									dataType: DataTypes.String,
-									id: k8sDaemonsetNameKey,
-									key: k8sDaemonsetNameKey,
+									id: INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME,
+									key: INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME,
 									type: 'tag',
 								},
 							],
@@ -1625,8 +1548,8 @@ export const getNamespaceMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: k8sDeploymentDesiredKey,
-								key: k8sDeploymentDesiredKey,
+								id: INFRA_MONITORING_ATTR_KEYS.K8S_DEPLOYMENT_DESIRED,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_DEPLOYMENT_DESIRED,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'latest',
@@ -1639,8 +1562,8 @@ export const getNamespaceMetricsQueryPayload = (
 										id: '9bc659c1',
 										key: {
 											dataType: DataTypes.String,
-											id: k8sNamespaceNameKey,
-											key: k8sNamespaceNameKey,
+											id: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -1654,8 +1577,8 @@ export const getNamespaceMetricsQueryPayload = (
 							groupBy: [
 								{
 									dataType: DataTypes.String,
-									id: k8sDeploymentNameKey,
-									key: k8sDeploymentNameKey,
+									id: INFRA_MONITORING_ATTR_KEYS.K8S_DEPLOYMENT_NAME,
+									key: INFRA_MONITORING_ATTR_KEYS.K8S_DEPLOYMENT_NAME,
 									type: 'tag',
 								},
 							],
@@ -1672,8 +1595,8 @@ export const getNamespaceMetricsQueryPayload = (
 						{
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
-								id: k8sDeploymentAvailableKey,
-								key: k8sDeploymentAvailableKey,
+								id: INFRA_MONITORING_ATTR_KEYS.K8S_DEPLOYMENT_AVAILABLE,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_DEPLOYMENT_AVAILABLE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -1686,8 +1609,8 @@ export const getNamespaceMetricsQueryPayload = (
 										id: 'e1696631',
 										key: {
 											dataType: DataTypes.String,
-											id: k8sNamespaceNameKey,
-											key: k8sNamespaceNameKey,
+											id: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -1701,8 +1624,8 @@ export const getNamespaceMetricsQueryPayload = (
 							groupBy: [
 								{
 									dataType: DataTypes.String,
-									id: k8sDeploymentNameKey,
-									key: k8sDeploymentNameKey,
+									id: INFRA_MONITORING_ATTR_KEYS.K8S_DEPLOYMENT_NAME,
+									key: INFRA_MONITORING_ATTR_KEYS.K8S_DEPLOYMENT_NAME,
 									type: 'tag',
 								},
 							],
@@ -1714,13 +1637,13 @@ export const getNamespaceMetricsQueryPayload = (
 							reduceTo: ReduceOperators.LAST,
 							spaceAggregation: 'max',
 							stepInterval: 60,
-							timeAggregation: 'avg',
+							timeAggregation: 'latest',
 						},
 					],
 					queryFormulas: [
 						{
 							disabled: false,
-							expression: 'A/B',
+							expression: '(B/A) * 100',
 							legend: 'util %',
 							queryName: 'F1',
 						},
@@ -1758,21 +1681,14 @@ export const getNamespacePodMetricsQueryPayload = (
 	namespace: InframonitoringtypesNamespaceRecordDTO,
 	start: number,
 	end: number,
-	dotMetricsEnabled: boolean,
-): GetQueryResultsProps[] => {
-	const k8sNamespaceNameKey = dotMetricsEnabled
-		? 'k8s.namespace.name'
-		: 'k8s_namespace_name';
-
-	return getPodUtilizationByPodQueryPayloads(
+): GetQueryResultsProps[] =>
+	getPodUtilizationByPodQueryPayloads(
 		{
-			workloadNameKey: k8sNamespaceNameKey,
+			workloadNameKey: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 			workloadNameValue: namespace.namespaceName ?? '',
 			clusterName:
 				namespace.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? '',
 		},
 		start,
 		end,
-		dotMetricsEnabled,
 	);
-};

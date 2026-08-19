@@ -258,7 +258,9 @@ export function getThresholdStateFromAlertDef(
 				recoveryThresholdValue: null,
 				unit: threshold.targetUnit,
 				color: getColorForThreshold(threshold.name),
-				channels: threshold.channels,
+				// rules created outside the UI can come back with a null channels
+				// field; drop the guard once the API enforces the schema
+				channels: threshold.channels ?? [],
 			})) || [],
 		selectedQuery: alertDef.condition.selectedQueryName || '',
 		operator:

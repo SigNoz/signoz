@@ -1,11 +1,15 @@
 import { Button } from '@signozhq/ui/button';
 import { DialogWrapper } from '@signozhq/ui/dialog';
 import { Typography } from '@signozhq/ui/typography';
-import { ArrowUpRight, Copy } from '@signozhq/icons';
+import { ArrowUpRight, Copy, RotateCw } from '@signozhq/icons';
 import { useCopyToClipboard } from 'react-use';
 import { toast } from '@signozhq/ui/sonner';
+import logEvent from 'api/common/logEvent';
 import { handleContactSupport } from 'container/Integrations/utils';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { DashboardListEvents } from 'pages/DashboardsListPageV2/constants/events';
+
+import { useRetryMigration } from '../../hooks/useRetryMigration';
 
 import styles from './LegacyDashboardDialog.module.scss';
 
@@ -13,26 +17,50 @@ interface LegacyDashboardDialogProps {
 	open: boolean;
 	dashboardId: string;
 	dashboardName: string;
+	canEdit: boolean;
 	onClose: () => void;
 }
 
 /**
  * Explains why a legacy (pre-v2) dashboard can't be opened in the new experience
- * and hands the user the dashboard ID to share with support. Legacy rows are
- * surfaced by the list API with `legacy: true` but have no v2 spec to render.
+ * and offers to re-run the migration. Legacy rows are surfaced by the list API
+ * with `legacy: true` but have no v2 spec to render. Retrying needs edit access,
+ * so viewers only get the dashboard ID to share with support.
  */
 function LegacyDashboardDialog({
 	open,
 	dashboardId,
 	dashboardName,
+	canEdit,
 	onClose,
 }: LegacyDashboardDialogProps): JSX.Element {
 	const [, copyToClipboard] = useCopyToClipboard();
 	const { isCloudUser } = useGetTenantLicense();
+	const { retryMigration, isMigrating } = useRetryMigration(onClose);
 
 	const onCopyId = (): void => {
 		copyToClipboard(dashboardId);
 		toast.success('Dashboard ID copied');
+		void logEvent(DashboardListEvents.LegacyDialogAction, {
+			action: 'copyId',
+			dashboardId,
+		});
+	};
+
+	const onContactSupport = (): void => {
+		handleContactSupport(!!isCloudUser);
+		void logEvent(DashboardListEvents.LegacyDialogAction, {
+			action: 'contactSupport',
+			dashboardId,
+		});
+	};
+
+	const onRetryMigration = (): void => {
+		retryMigration(dashboardId);
+		void logEvent(DashboardListEvents.LegacyDialogAction, {
+			action: 'retryMigration',
+			dashboardId,
+		});
 	};
 
 	return (
@@ -51,21 +79,36 @@ function LegacyDashboardDialog({
 						variant="ghost"
 						color="secondary"
 						size="md"
+						disabled={isMigrating}
 						onClick={onClose}
 						testId="legacy-dashboard-close"
 					>
 						Close
 					</Button>
 					<Button
-						variant="solid"
-						color="primary"
+						variant={canEdit ? 'outlined' : 'solid'}
+						color={canEdit ? 'secondary' : 'primary'}
 						size="md"
 						suffix={<ArrowUpRight size={14} />}
-						onClick={(): void => handleContactSupport(!!isCloudUser)}
+						onClick={onContactSupport}
 						testId="legacy-dashboard-contact-support"
 					>
 						Contact Support
 					</Button>
+					{canEdit && (
+						<Button
+							variant="solid"
+							color="primary"
+							size="md"
+							prefix={<RotateCw size={14} />}
+							disabled={isMigrating}
+							loading={isMigrating}
+							onClick={onRetryMigration}
+							testId="legacy-dashboard-retry-migration"
+						>
+							Retry migration
+						</Button>
+					)}
 				</div>
 			}
 		>
@@ -73,8 +116,10 @@ function LegacyDashboardDialog({
 				<Typography.Text className={styles.description}>
 					<strong>{dashboardName || 'This dashboard'}</strong> hasn&apos;t been
 					migrated to the new dashboard experience yet, so it can&apos;t be opened
-					here. Share the dashboard ID below with support and we&apos;ll help you
-					move it over.
+					here.{' '}
+					{canEdit
+						? "Retrying the migration often works once we've handled the case that blocked it. If it still fails, share the dashboard ID below with support."
+						: "Share the dashboard ID below with support and we'll help you move it over."}
 				</Typography.Text>
 
 				<div className={styles.idField}>

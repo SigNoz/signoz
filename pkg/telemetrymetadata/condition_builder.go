@@ -38,8 +38,11 @@ func (c *conditionBuilder) ConditionFor(
 		return nil, nil, err
 	}
 
-	// an unknown key simply yields no condition rather than an error.
-	keys, warning := querybuilder.ResolveKeys(key, querybuilder.MatchingFieldKeys(key, fieldKeys))
+	// an unknown key simply yields no condition rather than an error. Metadata
+	// fields have no family support, so every logical field is single-member
+	// and flattens losslessly to its physical key.
+	resolved, warning := querybuilder.ResolveLogicalFields(key, querybuilder.MatchingLogicalFields(ctx, orgID, nil, key, fieldKeys))
+	keys := querybuilder.SingleKeys(resolved)
 	var warnings []string
 	if warning != "" {
 		warnings = append(warnings, warning)
@@ -96,8 +99,11 @@ func (c *conditionBuilder) conditionForKey(
 
 	fieldExpression, value = querybuilder.DataTypeCollisionHandledFieldName(key, value, fieldExpression, operator)
 
-	// key must exists to apply main filter
-	expr := `if(mapContains(%s, %s), %s, true)`
+	// key must exist to apply the main filter. for positive operators the
+	// absent-key rows are excluded (fallback false); for negative operators
+	// they are kept (fallback true) so rows legitimately lacking the key match.
+	keyMissingFallback := operator.IsNegativeOperator()
+	expr := `if(mapContains(%s, %s), %s, %t)`
 
 	var cond string
 
@@ -171,5 +177,5 @@ func (c *conditionBuilder) conditionForKey(
 		}
 	}
 
-	return fmt.Sprintf(expr, columns[0].Name, sb.Var(key.Name), cond), nil
+	return fmt.Sprintf(expr, columns[0].Name, sb.Var(key.Name), cond, keyMissingFallback), nil
 }

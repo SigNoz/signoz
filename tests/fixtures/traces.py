@@ -65,6 +65,22 @@ class TracesKind(Enum):
     def from_value(cls, value: int) -> "TracesKind":
         return cls(value)
 
+    def kind_string(self) -> str:
+        """The `kind_string` column value, mirroring ptrace.SpanKind.String() — the exporter
+        writes `otelSpan.Kind().String()`. Features filter on these, e.g. third-party-apis
+        requires `kind_string = 'Client'`."""
+        return _KIND_STRINGS[self]
+
+
+_KIND_STRINGS = {
+    TracesKind.SPAN_KIND_UNSPECIFIED: "Unspecified",
+    TracesKind.SPAN_KIND_INTERNAL: "Internal",
+    TracesKind.SPAN_KIND_SERVER: "Server",
+    TracesKind.SPAN_KIND_CLIENT: "Client",
+    TracesKind.SPAN_KIND_PRODUCER: "Producer",
+    TracesKind.SPAN_KIND_CONSUMER: "Consumer",
+}
+
 
 class TracesStatusCode(Enum):
     STATUS_CODE_UNSET = 0
@@ -344,7 +360,7 @@ class Traces(ABC):
         self.flags = flags
         self.name = name
         self.kind = kind.value
-        self.kind_string = kind.name
+        self.kind_string = kind.kind_string()
         self.status_code = status_code.value
         self.status_message = status_message
         self.status_code_string = status_code.name
@@ -609,7 +625,6 @@ class Traces(ABC):
             self.response_status_code = str_value
 
     def np_arr(self) -> np.array:
-        """Return span data as numpy array for database insertion"""
         return np.array(
             [
                 self.ts_bucket_start,
@@ -653,7 +668,6 @@ class Traces(ABC):
         cls,
         data: dict,
     ) -> "Traces":
-        """Create a Traces instance from a dict."""
         # parse timestamp from iso format
         timestamp = parse_timestamp(data["timestamp"])
         duration = parse_duration(data.get("duration", "PT1S"))
@@ -968,12 +982,27 @@ CORRUPT_RESOURCES: dict[str, Any] = {
     "http_method": "corrupt_data",
 }
 
+# A TYPE-CONSISTENT collision, distinct from CORRUPT_* (whose wrong-type values are
+# dropped by field-key resolution): a numeric span attribute named `duration_nano`
+# shares both the name AND a compatible type with the intrinsic duration_nano (UInt64)
+# column, so resolution unions it with the column into a multiIf. This exercises the
+# collision path that regressed with ClickHouse NO_COMMON_TYPE (386) — the intrinsic
+# column must still win. Kept out of CORRUPT_ATTRIBUTES because a type-consistent
+# collision changes raw-select output (the multiIf stringifies the value), which the
+# list tests assert against; only aggregation/filter tests opt into this variant.
+COLLISION_ATTRIBUTES: dict[str, Any] = {
+    "duration_nano": 1.0,  # numeric attr vs the numeric intrinsic (type-consistent)
+}
+
 
 def trace_noise(variant: str) -> tuple[dict[str, Any], dict[str, Any]]:
     """(extra_attributes, extra_resources) to merge into every span a traces test seeds, keyed by
-    variant. "clean" adds nothing; "corrupt" injects colliding intrinsic/calculated field names and
-    an attribute/resource collision so a test parametrized over both doubles as a
-    collision-robustness check. Returns fresh dicts so callers can mutate them safely."""
+    variant. "clean" adds nothing; "corrupt" injects wrong-type colliding intrinsic/calculated field
+    names (dropped by resolution, so results are unchanged); "collision" injects a type-consistent
+    numeric duration_nano attribute that unions into a multiIf, exercising collision resolution on
+    aggregation/filter paths. Returns fresh dicts so callers can mutate them safely."""
     if variant == "clean":
         return {}, {}
+    if variant == "collision":
+        return dict(COLLISION_ATTRIBUTES), {}
     return dict(CORRUPT_ATTRIBUTES), dict(CORRUPT_RESOURCES)

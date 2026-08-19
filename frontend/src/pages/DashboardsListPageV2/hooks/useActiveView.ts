@@ -42,7 +42,7 @@ export interface UseActiveViewResult {
 	saveView: (name: string) => void;
 	saveActiveView: () => void;
 	resetView: () => void;
-	removeView: (id: string) => void;
+	removeView: (id: string) => Promise<void>;
 	renameView: (id: string, name: string) => void;
 }
 
@@ -152,8 +152,14 @@ export function useActiveView({
 	}, [canonicalQuery, setQuery, activeCustom, setSortColumn, setSortOrder]);
 
 	const removeView = useCallback(
-		(id: string): void => {
-			deleteView(id);
+		async (id: string): Promise<void> => {
+			try {
+				await deleteView(id);
+			} catch {
+				// Failure is surfaced by the delete mutation's error toast; still
+				// settle so the confirm modal stops loading and closes.
+				return;
+			}
 			if (activeViewId === id) {
 				void setActiveViewId(BuiltinViewId.All);
 				setQuery('');

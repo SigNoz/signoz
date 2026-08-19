@@ -76,8 +76,17 @@ var (
 		"log":        FieldContextLog,
 		"metric":     FieldContextMetric,
 		"tracefield": FieldContextTrace,
+		"trace":      FieldContextTrace,
 	}
 )
+
+// FieldContextFromText resolves a context word with the same aliases as key parsing
+// ("tag" -> attribute). ok is false for an unknown word, so callers can reject it
+// rather than get unspecified.
+func FieldContextFromText(text string) (FieldContext, bool) {
+	fc, ok := fieldContexts[strings.ToLower(strings.TrimSpace(text))]
+	return fc, ok
+}
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
 func (f *FieldContext) UnmarshalJSON(data []byte) error {
@@ -179,11 +188,12 @@ func (FieldContext) Enum() []any {
 		FieldContextMetric,
 		FieldContextLog,
 		FieldContextSpan,
-		// FieldContextTrace,
+		FieldContextTrace,
 		FieldContextResource,
 		// FieldContextScope,
 		FieldContextAttribute,
 		// FieldContextEvent,
 		FieldContextBody,
+		FieldContextUnspecified,
 	}
 }

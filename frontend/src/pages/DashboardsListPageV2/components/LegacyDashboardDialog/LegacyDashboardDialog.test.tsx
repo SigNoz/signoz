@@ -18,19 +18,30 @@ jest.mock('container/Integrations/utils', () => ({
 	handleContactSupport: (isCloud: boolean): void => mockContactSupport(isCloud),
 }));
 
+const mockRetryMigration = jest.fn();
+let isMigrating = false;
+jest.mock('../../hooks/useRetryMigration', () => ({
+	useRetryMigration: (): {
+		retryMigration: jest.Mock;
+		isMigrating: boolean;
+	} => ({ retryMigration: mockRetryMigration, isMigrating }),
+}));
+
 const DASHBOARD_ID = '0f9a1b2c-3d4e-5f6a-7b8c-9d0e1f2a3b4c';
 
 describe('LegacyDashboardDialog', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
+		isMigrating = false;
 	});
 
-	const setup = (open = true): void => {
+	const setup = ({ open = true, canEdit = true } = {}): void => {
 		render(
 			<LegacyDashboardDialog
 				open={open}
 				dashboardId={DASHBOARD_ID}
 				dashboardName="My Legacy Dashboard"
+				canEdit={canEdit}
 				onClose={jest.fn()}
 			/>,
 		);
@@ -57,8 +68,31 @@ describe('LegacyDashboardDialog', () => {
 		expect(mockContactSupport).toHaveBeenCalledTimes(1);
 	});
 
+	it('retries the migration for the dashboard', async () => {
+		setup();
+		await userEvent.click(screen.getByTestId('legacy-dashboard-retry-migration'));
+		expect(mockRetryMigration).toHaveBeenCalledWith(DASHBOARD_ID);
+	});
+
+	it('blocks retry and close while the migration is in flight', () => {
+		isMigrating = true;
+		setup();
+		expect(screen.getByTestId('legacy-dashboard-retry-migration')).toBeDisabled();
+		expect(screen.getByTestId('legacy-dashboard-close')).toBeDisabled();
+	});
+
+	it('offers only the support path without edit access', () => {
+		setup({ canEdit: false });
+		expect(
+			screen.queryByTestId('legacy-dashboard-retry-migration'),
+		).not.toBeInTheDocument();
+		expect(
+			screen.getByTestId('legacy-dashboard-contact-support'),
+		).toBeInTheDocument();
+	});
+
 	it('renders nothing when closed', () => {
-		setup(false);
+		setup({ open: false });
 		expect(screen.queryByTestId('legacy-dashboard-id')).not.toBeInTheDocument();
 	});
 });

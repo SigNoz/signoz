@@ -175,8 +175,10 @@ function renderComponent<
 >({
 	queryParams,
 	onUrlUpdate,
+	detailsQueryKeyPrefix = 'testEntity',
 	...props
-}: K8sBaseListProps<T, TItemKey> & {
+}: Omit<K8sBaseListProps<T, TItemKey>, 'detailsQueryKeyPrefix'> & {
+	detailsQueryKeyPrefix?: string;
 	queryParams?: Record<string, string>;
 	onUrlUpdate?: OnUrlUpdateFunction;
 }) {
@@ -203,7 +205,10 @@ function renderComponent<
 										value={{ viewportHeight: 800, itemHeight: 50 }}
 									>
 										<TooltipProvider>
-											<K8sBaseList<T, TItemKey> {...props} />
+											<K8sBaseList<T, TItemKey>
+												{...props}
+												detailsQueryKeyPrefix={detailsQueryKeyPrefix}
+											/>
 										</TooltipProvider>
 									</VirtuosoMockContext.Provider>
 								</NuqsTestingAdapter>
@@ -1363,6 +1368,129 @@ describe('K8sBaseList', () => {
 			await expect(
 				screen.findByText('k8s.pod.memory.limit'),
 			).resolves.toBeInTheDocument();
+		});
+	});
+
+	describe('groupBy change clears orderBy', () => {
+		const onUrlUpdateMock = jest.fn<void, [UrlUpdateEvent]>();
+		const fetchListDataMock = jest.fn<
+			ReturnType<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>,
+			Parameters<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>
+		>();
+
+		beforeEach(() => {
+			onUrlUpdateMock.mockClear();
+			fetchListDataMock.mockClear();
+			fetchListDataMock.mockResolvedValue({
+				data: [{ id: 'item-1' }],
+				total: 1,
+				error: null,
+			});
+
+			server.use(
+				rest.get('http://localhost/api/v2/infra_monitoring/checks', (_, res, ctx) =>
+					res(ctx.json({ status: 'success', data: { ready: true } })),
+				),
+				rest.get('http://localhost/api/v1/fields/keys', (_, res, ctx) =>
+					res(
+						ctx.json({
+							status: 'success',
+							data: {
+								keys: {
+									resource: [{ name: 'k8s.namespace.name' }],
+								},
+							},
+						}),
+					),
+				),
+			);
+		});
+
+		it('should clear orderBy for name columns when groupBy is changed', async () => {
+			const user = userEvent.setup();
+
+			renderComponent<TestItem>({
+				onUrlUpdate: onUrlUpdateMock,
+				entity: InfraMonitoringEntity.PODS,
+				eventCategory: InfraMonitoringEvents.Pod,
+				fetchListData: fetchListDataMock,
+				queryParams: {
+					// k8s.pod.name is a name column - should be cleared
+					orderBy: JSON.stringify({ columnName: 'k8s.pod.name', order: 'desc' }),
+				},
+				tableColumns: createTestColumns(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): string => row.id,
+			});
+
+			await waitFor(() => {
+				expect(screen.getByTestId('k8s-table-group-by')).toBeInTheDocument();
+			});
+
+			// Open group by dropdown using testId
+			const groupByContainer = screen.getByTestId('k8s-table-group-by-select');
+			const groupBySelect = groupByContainer.querySelector(
+				'.ant-select-selector',
+			) as Element;
+			await user.click(groupBySelect);
+
+			// Wait for options to load and click on the namespace option
+			const namespaceOption = await screen.findByTitle('k8s.namespace.name');
+			await user.click(namespaceOption);
+
+			// Verify orderBy was cleared (set to null) for name column
+			await waitFor(() => {
+				const orderByCalls = onUrlUpdateMock.mock.calls
+					.map((call) => call[0].searchParams.get('orderBy'))
+					.filter((v) => v !== undefined);
+
+				const hasOrderByCleared = orderByCalls.some((v) => v === null);
+				expect(hasOrderByCleared).toBe(true);
+			});
+		});
+
+		it('should keep orderBy for non-name columns when groupBy is changed', async () => {
+			const user = userEvent.setup();
+
+			renderComponent<TestItem>({
+				onUrlUpdate: onUrlUpdateMock,
+				entity: InfraMonitoringEntity.PODS,
+				eventCategory: InfraMonitoringEvents.Pod,
+				fetchListData: fetchListDataMock,
+				queryParams: {
+					// cpu is NOT a name column - should be kept
+					orderBy: JSON.stringify({ columnName: 'cpu', order: 'desc' }),
+				},
+				tableColumns: createTestColumns(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): string => row.id,
+			});
+
+			await waitFor(() => {
+				expect(screen.getByTestId('k8s-table-group-by')).toBeInTheDocument();
+			});
+
+			// Open group by dropdown using testId
+			const groupByContainer = screen.getByTestId('k8s-table-group-by-select');
+			const groupBySelect = groupByContainer.querySelector(
+				'.ant-select-selector',
+			) as Element;
+			await user.click(groupBySelect);
+
+			// Wait for options to load and click on the namespace option
+			const namespaceOption = await screen.findByTitle('k8s.namespace.name');
+			await user.click(namespaceOption);
+
+			// Verify orderBy was NOT cleared for non-name column
+			await waitFor(() => {
+				const orderByCalls = onUrlUpdateMock.mock.calls
+					.map((call) => call[0].searchParams.get('orderBy'))
+					.filter((v) => v !== undefined);
+
+				// orderBy should never be set to null
+				const hasOrderByCleared = orderByCalls.some((v) => v === null);
+				expect(hasOrderByCleared).toBe(false);
+			});
 		});
 	});
 });

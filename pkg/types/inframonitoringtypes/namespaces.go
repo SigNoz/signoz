@@ -20,7 +20,6 @@ type NamespaceRecord struct {
 	NamespaceName     string            `json:"namespaceName" required:"true"`
 	NamespaceCPU      float64           `json:"namespaceCPU" required:"true"`
 	NamespaceMemory   float64           `json:"namespaceMemory" required:"true"`
-	PodCountsByPhase  PodCountsByPhase  `json:"podCountsByPhase" required:"true"`
 	PodCountsByStatus PodCountsByStatus `json:"podCountsByStatus" required:"true"`
 	Counts            struct {
 		Deployments  int64 `json:"deployments" required:"true"`
@@ -35,11 +34,18 @@ type NamespaceRecord struct {
 type PostableNamespaces struct {
 	Start   int64                `json:"start" required:"true"`
 	End     int64                `json:"end" required:"true"`
-	Filter  *qbtypes.Filter      `json:"filter"`
+	Filter  *NamespaceFilter     `json:"filter"`
 	GroupBy []qbtypes.GroupByKey `json:"groupBy"`
 	OrderBy *qbtypes.OrderBy     `json:"orderBy"`
 	Offset  int                  `json:"offset"`
 	Limit   int                  `json:"limit" required:"true"`
+}
+
+// NamespaceFilter is the attribute filter plus an optional secondary filter on the
+// derived pod display status(es) (see PodStatus); matches any listed (OR). Empty = off.
+type NamespaceFilter struct {
+	qbtypes.Filter    `json:",inline"`
+	FilterByPodStatus []PodStatus `json:"filterByPodStatus"`
 }
 
 // Validate ensures PostableNamespaces contains acceptable values.
@@ -79,6 +85,14 @@ func (req *PostableNamespaces) Validate() error {
 
 	if req.Offset < 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "offset cannot be negative")
+	}
+
+	if req.Filter != nil {
+		for _, s := range req.Filter.FilterByPodStatus {
+			if !s.IsFilterable() {
+				return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid filter by pod status: %s", s)
+			}
+		}
 	}
 
 	if req.OrderBy != nil {

@@ -5,12 +5,14 @@ import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 
 import LLMObservabilityAttributeMapping from '../AttributeMapping/LLMObservabilityAttributeMapping';
+import Explorer from '../Explorer/Explorer';
 import Overview from '../Overview/Overview';
 import LLMObservabilityModelPricing from '../Settings/ModelPricing/LLMObservabilityModelPricing';
 
-const OVERVIEW_KEY = ROUTES.LLM_OBSERVABILITY_OVERVIEW;
-const CONFIGURATION_KEY = ROUTES.LLM_OBSERVABILITY_CONFIGURATION;
-const ATTRIBUTE_MAPPING_KEY = ROUTES.LLM_OBSERVABILITY_ATTRIBUTE_MAPPING;
+const OVERVIEW_KEY = ROUTES.AI_OBSERVABILITY_OVERVIEW;
+const EXPLORER_KEY = ROUTES.AI_OBSERVABILITY_EXPLORER;
+const CONFIGURATION_KEY = ROUTES.AI_OBSERVABILITY_CONFIGURATION;
+const ATTRIBUTE_MAPPING_KEY = ROUTES.AI_OBSERVABILITY_ATTRIBUTE_MAPPING;
 
 interface UseLLMObservabilityTabsResult {
 	items: TabItemProps[];
@@ -31,6 +33,8 @@ export function useLLMObservabilityTabs(): UseLLMObservabilityTabsResult {
 		activeTab = CONFIGURATION_KEY;
 	} else if (pathname.startsWith(ATTRIBUTE_MAPPING_KEY)) {
 		activeTab = ATTRIBUTE_MAPPING_KEY;
+	} else if (pathname.startsWith(EXPLORER_KEY)) {
+		activeTab = EXPLORER_KEY;
 	}
 
 	const onTabChange = useCallback(
@@ -45,6 +49,11 @@ export function useLLMObservabilityTabs(): UseLLMObservabilityTabsResult {
 			key: OVERVIEW_KEY,
 			label: 'Overview',
 			children: <Overview />,
+		},
+		{
+			key: EXPLORER_KEY,
+			label: 'Explorer',
+			children: <Explorer />,
 		},
 		{
 			key: CONFIGURATION_KEY,

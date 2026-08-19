@@ -286,7 +286,7 @@ func isNumericKind(t reflect.Type) bool {
 	if t == nil {
 		return false
 	}
-	for t.Kind() == reflect.Ptr || t.Kind() == reflect.UnsafePointer {
+	for t.Kind() == reflect.Pointer || t.Kind() == reflect.UnsafePointer {
 		t = t.Elem()
 	}
 	switch t.Kind() {
@@ -367,7 +367,7 @@ func derefValue(v any) any {
 
 	val := reflect.ValueOf(v)
 
-	for val.Kind() == reflect.Ptr {
+	for val.Kind() == reflect.Pointer {
 		if val.IsNil() {
 			return nil
 		}

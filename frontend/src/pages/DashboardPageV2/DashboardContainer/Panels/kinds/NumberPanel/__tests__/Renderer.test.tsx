@@ -125,6 +125,37 @@ describe('NumberPanelRenderer', () => {
 		expect(queryByText('3.14159')).not.toBeInTheDocument();
 	});
 
+	// #7669: large scalars are unreadable as an undelimited digit run.
+	it('groups large values into thousands', () => {
+		const { getByText, queryByText } = renderPanel({
+			panel: panelWith({}),
+			data: dataWith('1234567'),
+		});
+
+		expect(getByText('1,234,567')).toBeInTheDocument();
+		expect(queryByText('1234567')).not.toBeInTheDocument();
+	});
+
+	it('groups the value while keeping its unit separate', () => {
+		const { getByText } = renderPanel({
+			panel: panelWith({ formatting: { unit: 'percent' } }),
+			data: dataWith('1234567'),
+		});
+
+		expect(getByText('1,234,567')).toBeInTheDocument();
+		expect(getByText('%')).toBeInTheDocument();
+	});
+
+	it('leaves a unit-scaled value ungrouped', () => {
+		const { getByText } = renderPanel({
+			panel: panelWith({ formatting: { unit: 'bytes' } }),
+			data: dataWith('1234567'),
+		});
+
+		expect(getByText('1.18')).toBeInTheDocument();
+		expect(getByText('MiB')).toBeInTheDocument();
+	});
+
 	it('renders No Data when the response has no scalar results', () => {
 		const { getByTestId } = renderPanel({ data: emptyData });
 

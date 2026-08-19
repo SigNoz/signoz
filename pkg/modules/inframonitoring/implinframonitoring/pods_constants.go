@@ -69,8 +69,8 @@ var orderByToPodsQueryNames = map[string][]string{
 }
 
 // newPodsTableListQuery builds the composite QB v5 request for the pods list.
-// Pod phase is derived separately via getPerGroupPodPhaseCounts (works for both
-// list and grouped_list modes), so no phase query is included here.
+// Pod status is derived separately via getPerGroupPodStatusCounts (works for both
+// list and grouped_list modes), so no status query is included here.
 func (m *module) newPodsTableListQuery() *qbtypes.QueryRangeRequest {
 	queries := []qbtypes.QueryEnvelope{
 		// Query A: CPU usage

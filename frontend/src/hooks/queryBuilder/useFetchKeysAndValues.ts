@@ -7,7 +7,7 @@ import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import {
 	GetK8sEntityToAggregateAttribute,
 	InfraMonitoringEntity,
-} from 'container/InfraMonitoringK8s/constants';
+} from 'container/InfraMonitoringK8sV2/constants';
 import {
 	getRemovePrefixFromKey,
 	getTagToken,
@@ -48,7 +48,6 @@ type IuseFetchKeysAndValues = {
 export const useFetchKeysAndValues = (
 	searchValue: string,
 	query: IBuilderQuery,
-	dotMetricsEnabled: boolean,
 	searchKey: string,
 	shouldUseSuggestions?: boolean,
 	isInfraMonitoring?: boolean,
@@ -122,7 +121,7 @@ export const useFetchKeysAndValues = (
 			aggregateOperator: query.aggregateOperator || '',
 			aggregateAttribute:
 				isInfraMonitoring && entity
-					? GetK8sEntityToAggregateAttribute(entity, dotMetricsEnabled)
+					? GetK8sEntityToAggregateAttribute(entity)
 					: query.aggregateAttribute?.key || '',
 			tagType: query.aggregateAttribute?.type ?? null,
 		},
@@ -196,7 +195,7 @@ export const useFetchKeysAndValues = (
 					aggregateOperator: 'noop',
 					dataSource: query.dataSource,
 					aggregateAttribute:
-						GetK8sEntityToAggregateAttribute(entity, dotMetricsEnabled) ||
+						GetK8sEntityToAggregateAttribute(entity) ||
 						query.aggregateAttribute?.key ||
 						'',
 					attributeKey: filterAttributeKey?.key ?? tagKey,

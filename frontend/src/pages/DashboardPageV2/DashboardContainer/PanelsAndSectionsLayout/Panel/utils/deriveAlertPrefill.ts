@@ -5,11 +5,13 @@ import type {
 	DashboardtypesPanelDTO,
 	DashboardtypesPanelPluginDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { normalizeOperator } from 'container/CreateAlertV2/context/conditionNormalizers';
 import {
 	AlertThresholdMatchType,
 	AlertThresholdOperator,
 	Threshold,
 } from 'container/CreateAlertV2/context/types';
+import { THRESHOLD_COLOR_DANGER_ORDER } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/threshold';
 import type { MetricAggregation } from 'types/api/v5/queryRange';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { ReduceOperators } from 'types/common/queryBuilder';
@@ -20,14 +22,6 @@ export interface PanelAlertPrefill {
 	operator?: AlertThresholdOperator;
 	threshold?: Threshold;
 }
-
-// Most-dangerous first, matching the panel editor palette; unknown colors sort last.
-const THRESHOLD_COLOR_DANGER_ORDER = [
-	'#f1575f',
-	'#f5b225',
-	'#2bb673',
-	'#4e74f8',
-];
 
 interface NormalizedPanelThreshold {
 	color: string;
@@ -93,8 +87,12 @@ function readPanelThresholds(
 	}
 }
 
+// Match case-insensitively (picker emits lowercase hex); unknown colors sort last.
 function colorRank(color: string): number {
-	const index = THRESHOLD_COLOR_DANGER_ORDER.indexOf(color.toLowerCase());
+	const target = color.toLowerCase();
+	const index = THRESHOLD_COLOR_DANGER_ORDER.findIndex(
+		(paletteColor) => paletteColor.toLowerCase() === target,
+	);
 	return index === -1 ? THRESHOLD_COLOR_DANGER_ORDER.length : index;
 }
 
@@ -104,25 +102,6 @@ function pickHighestDanger(
 	return [...thresholds].sort(
 		(a, b) => colorRank(a.color) - colorRank(b.color),
 	)[0];
-}
-
-function panelOperatorToAlertOperator(
-	operator: DashboardtypesComparisonOperatorDTO | undefined,
-): AlertThresholdOperator | undefined {
-	switch (operator) {
-		case 'above':
-		case 'above_or_equal':
-			return AlertThresholdOperator.IS_ABOVE;
-		case 'below':
-		case 'below_or_equal':
-			return AlertThresholdOperator.IS_BELOW;
-		case 'equal':
-			return AlertThresholdOperator.IS_EQUAL_TO;
-		case 'not_equal':
-			return AlertThresholdOperator.IS_NOT_EQUAL_TO;
-		default:
-			return undefined;
-	}
 }
 
 export function deriveAlertPrefill(
@@ -142,7 +121,7 @@ export function deriveAlertPrefill(
 
 	const top = pickHighestDanger(readPanelThresholds(panel.spec.plugin));
 	if (top) {
-		prefill.operator = panelOperatorToAlertOperator(top.operator);
+		prefill.operator = normalizeOperator(top.operator);
 		prefill.threshold = {
 			id: uuid(),
 			label: 'critical',

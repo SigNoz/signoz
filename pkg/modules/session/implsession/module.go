@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/session"
@@ -23,26 +24,28 @@ import (
 )
 
 type module struct {
-	settings   factory.ScopedProviderSettings
-	authNs     map[authtypes.AuthNProvider]authn.AuthN
-	userSetter user.Setter
-	userGetter user.Getter
-	authDomain authdomain.Module
-	tokenizer  tokenizer.Tokenizer
-	orgGetter  organization.Getter
-	authz      authz.AuthZ
+	settings     factory.ScopedProviderSettings
+	authNs       map[authtypes.AuthNProvider]authn.AuthN
+	userSetter   user.Setter
+	userGetter   user.Getter
+	authDomain   authdomain.Module
+	tokenizer    tokenizer.Tokenizer
+	orgGetter    organization.Getter
+	authz        authz.AuthZ
+	globalConfig global.Config
 }
 
-func NewModule(providerSettings factory.ProviderSettings, authNs map[authtypes.AuthNProvider]authn.AuthN, userSetter user.Setter, userGetter user.Getter, authDomain authdomain.Module, tokenizer tokenizer.Tokenizer, orgGetter organization.Getter, authz authz.AuthZ) session.Module {
+func NewModule(providerSettings factory.ProviderSettings, authNs map[authtypes.AuthNProvider]authn.AuthN, userSetter user.Setter, userGetter user.Getter, authDomain authdomain.Module, tokenizer tokenizer.Tokenizer, orgGetter organization.Getter, authz authz.AuthZ, globalConfig global.Config) session.Module {
 	return &module{
-		settings:   factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/session/implsession"),
-		authNs:     authNs,
-		userSetter: userSetter,
-		userGetter: userGetter,
-		authDomain: authDomain,
-		tokenizer:  tokenizer,
-		orgGetter:  orgGetter,
-		authz:      authz,
+		settings:     factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/session/implsession"),
+		authNs:       authNs,
+		userSetter:   userSetter,
+		userGetter:   userGetter,
+		authDomain:   authDomain,
+		tokenizer:    tokenizer,
+		orgGetter:    orgGetter,
+		authz:        authz,
+		globalConfig: globalConfig,
 	}
 }
 
@@ -140,12 +143,16 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 		return "", err
 	}
 
+	if callbackIdentity.State.URL.Host != "" && !module.globalConfig.IsOriginAllowed(callbackIdentity.State.URL) {
+		return "", errors.Newf(errors.TypeForbidden, global.ErrCodeOriginNotAllowed, "state redirect %q is not an allowed origin", callbackIdentity.State.URL.String())
+	}
+
 	authDomain, err := module.authDomain.GetByOrgIDAndID(ctx, callbackIdentity.OrgID, callbackIdentity.State.DomainID)
 	if err != nil {
 		return "", err
 	}
 
-	roleMapping := authDomain.AuthDomainConfig().RoleMapping
+	roleMapping := authDomain.RoleMapping()
 
 	roleAttributeExists := false
 	if roleMapping != nil && roleMapping.UseRoleAttribute && callbackIdentity.Role != "" {
@@ -208,13 +215,17 @@ func (module *module) getOrgSessionContext(ctx context.Context, org *types.Organ
 		return authtypes.NewOrgSessionContext(org.ID, org.Name).AddPasswordAuthNSupport(authtypes.AuthNProviderEmailPassword), nil
 	}
 
-	if !authDomain.AuthDomainConfig().SSOEnabled {
+	if !authDomain.Enabled() {
 		return authtypes.NewOrgSessionContext(org.ID, org.Name).AddPasswordAuthNSupport(authtypes.AuthNProviderEmailPassword), nil
 	}
 
-	provider, err := getProvider[authn.CallbackAuthN](authDomain.AuthDomainConfig().AuthNProvider, module.authNs)
+	provider, err := getProvider[authn.CallbackAuthN](authDomain.Kind(), module.authNs)
 	if err != nil {
 		return nil, err
+	}
+
+	if !module.globalConfig.IsOriginAllowed(siteURL) {
+		return nil, errors.Newf(errors.TypeInvalidInput, global.ErrCodeOriginNotAllowed, "ref %q is not an allowed origin", siteURL.String())
 	}
 
 	loginURL, err := provider.LoginURL(ctx, siteURL, authDomain)
@@ -222,7 +233,7 @@ func (module *module) getOrgSessionContext(ctx context.Context, org *types.Organ
 		return nil, err
 	}
 
-	return authtypes.NewOrgSessionContext(org.ID, org.Name).AddCallbackAuthNSupport(authDomain.AuthDomainConfig().AuthNProvider, loginURL), nil
+	return authtypes.NewOrgSessionContext(org.ID, org.Name).AddCallbackAuthNSupport(authDomain.Kind(), loginURL), nil
 }
 
 func getProvider[T authn.AuthN](authNProvider authtypes.AuthNProvider, authNs map[authtypes.AuthNProvider]authn.AuthN) (T, error) {

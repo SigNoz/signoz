@@ -76,23 +76,31 @@ export const daemonSetWidgetInfo = [
 		yAxisUnit: '',
 		docPath:
 			'/infrastructure-monitoring/kubernetes/daemonsets/#cpu-usage-request-limits',
+		description:
+			'Total CPU usage of the DaemonSet pods against their aggregate CPU requests and limits.',
 	},
 	{
 		title: 'Memory usage, request, limits',
 		yAxisUnit: 'bytes',
 		docPath:
 			'/infrastructure-monitoring/kubernetes/daemonsets/#memory-usage-request-limits',
+		description:
+			'Total memory usage of the DaemonSet pods against their aggregate memory requests and limits.',
 	},
 	{
 		title: 'Network IO',
 		yAxisUnit: 'binBps',
 		docPath: '/infrastructure-monitoring/kubernetes/daemonsets/#network-io',
+		description:
+			'Transmit and receive throughput per interface across all pods of the DaemonSet.',
 	},
 	{
 		title: 'Network errors count',
 		yAxisUnit: '',
 		docPath:
 			'/infrastructure-monitoring/kubernetes/daemonsets/#network-errors-count',
+		description:
+			'Per-pod-interface network error counts by direction and interface, reported by the kubelet.',
 	},
 ];
 
@@ -100,54 +108,7 @@ export const getDaemonSetMetricsQueryPayload = (
 	daemonSet: InframonitoringtypesDaemonSetRecordDTO,
 	start: number,
 	end: number,
-	dotMetricsEnabled: boolean,
 ): GetQueryResultsProps[] => {
-	const k8sPodCpuUtilizationKey = dotMetricsEnabled
-		? 'k8s.pod.cpu.usage'
-		: 'k8s_pod_cpu_usage';
-
-	const k8sContainerCpuRequestKey = dotMetricsEnabled
-		? 'k8s.container.cpu_request'
-		: 'k8s_container_cpu_request';
-
-	const k8sContainerCpuLimitKey = dotMetricsEnabled
-		? 'k8s.container.cpu_limit'
-		: 'k8s_container_cpu_limit';
-
-	const k8sPodMemoryUsageKey = dotMetricsEnabled
-		? 'k8s.pod.memory.usage'
-		: 'k8s_pod_memory_usage';
-
-	const k8sContainerMemoryRequestKey = dotMetricsEnabled
-		? 'k8s.container.memory_request'
-		: 'k8s_container_memory_request';
-
-	const k8sContainerMemoryLimitKey = dotMetricsEnabled
-		? 'k8s.container.memory_limit'
-		: 'k8s_container_memory_limit';
-
-	const k8sPodNetworkIoKey = dotMetricsEnabled
-		? 'k8s.pod.network.io'
-		: 'k8s_pod_network_io';
-
-	const k8sPodNetworkErrorsKey = dotMetricsEnabled
-		? 'k8s.pod.network.errors'
-		: 'k8s_pod_network_errors';
-
-	const k8sDaemonSetNameKey = dotMetricsEnabled
-		? 'k8s.daemonset.name'
-		: 'k8s_daemonset_name';
-
-	const k8sPodNameKey = dotMetricsEnabled ? 'k8s.pod.name' : 'k8s_pod_name';
-
-	const k8sNamespaceNameKey = dotMetricsEnabled
-		? 'k8s.namespace.name'
-		: 'k8s_namespace_name';
-
-	const k8sClusterNameKey = dotMetricsEnabled
-		? 'k8s.cluster.name'
-		: 'k8s_cluster_name';
-
 	const clusterName =
 		daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] ?? '';
 	const namespaceName =
@@ -159,7 +120,7 @@ export const getDaemonSetMetricsQueryPayload = (
 			key: {
 				dataType: DataTypes.String,
 				id: 'k8s_cluster_name--string--tag--false',
-				key: k8sClusterNameKey,
+				key: INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME,
 				type: 'tag',
 			},
 			op: '=',
@@ -170,7 +131,7 @@ export const getDaemonSetMetricsQueryPayload = (
 			key: {
 				dataType: DataTypes.String,
 				id: 'k8s_namespace_name--string--tag--false',
-				key: k8sNamespaceNameKey,
+				key: INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
 				type: 'tag',
 			},
 			op: '=',
@@ -189,7 +150,7 @@ export const getDaemonSetMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_cpu_usage--float64--Gauge--true',
-								key: k8sPodCpuUtilizationKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -203,7 +164,7 @@ export const getDaemonSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_daemonset_name--string--tag--false',
-											key: k8sDaemonSetNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -231,7 +192,7 @@ export const getDaemonSetMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_container_cpu_request--float64--Gauge--true',
-								key: k8sContainerCpuRequestKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_CONTAINER_CPU_REQUEST,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -245,7 +206,7 @@ export const getDaemonSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											key: k8sPodNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME,
 											type: 'tag',
 										},
 										op: 'contains',
@@ -273,7 +234,7 @@ export const getDaemonSetMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_container_cpu_limit--float64--Gauge--true',
-								key: k8sContainerCpuLimitKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_CONTAINER_CPU_LIMIT,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -287,7 +248,7 @@ export const getDaemonSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											key: k8sPodNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME,
 											type: 'tag',
 										},
 										op: 'contains',
@@ -349,7 +310,7 @@ export const getDaemonSetMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_memory_usage--float64--Gauge--true',
-								key: k8sPodMemoryUsageKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_MEMORY_USAGE,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -363,7 +324,7 @@ export const getDaemonSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_daemonset_name--string--tag--false',
-											key: k8sDaemonSetNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -391,7 +352,7 @@ export const getDaemonSetMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_container_memory_request--float64--Gauge--true',
-								key: k8sContainerMemoryRequestKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_CONTAINER_MEMORY_REQUEST,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -405,7 +366,7 @@ export const getDaemonSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											key: k8sPodNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME,
 											type: 'tag',
 										},
 										op: 'contains',
@@ -433,7 +394,7 @@ export const getDaemonSetMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_container_memory_limit--float64--Gauge--true',
-								key: k8sContainerMemoryLimitKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_CONTAINER_MEMORY_LIMIT,
 								type: 'Gauge',
 							},
 							aggregateOperator: 'avg',
@@ -447,7 +408,7 @@ export const getDaemonSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_pod_name--string--tag--false',
-											key: k8sPodNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME,
 											type: 'tag',
 										},
 										op: 'contains',
@@ -509,7 +470,7 @@ export const getDaemonSetMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_network_io--float64--Sum--true',
-								key: k8sPodNetworkIoKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NETWORK_IO,
 								type: 'Sum',
 							},
 							aggregateOperator: 'rate',
@@ -523,7 +484,7 @@ export const getDaemonSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_daemonset_name--string--tag--false',
-											key: k8sDaemonSetNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -598,7 +559,7 @@ export const getDaemonSetMetricsQueryPayload = (
 							aggregateAttribute: {
 								dataType: DataTypes.Float64,
 								id: 'k8s_pod_network_errors--float64--Sum--true',
-								key: k8sPodNetworkErrorsKey,
+								key: INFRA_MONITORING_ATTR_KEYS.K8S_POD_NETWORK_ERRORS,
 								type: 'Sum',
 							},
 							aggregateOperator: 'increase',
@@ -612,7 +573,7 @@ export const getDaemonSetMetricsQueryPayload = (
 										key: {
 											dataType: DataTypes.String,
 											id: 'k8s_daemonset_name--string--tag--false',
-											key: k8sDaemonSetNameKey,
+											key: INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME,
 											type: 'tag',
 										},
 										op: '=',
@@ -684,15 +645,10 @@ export const getDaemonSetPodMetricsQueryPayload = (
 	daemonSet: InframonitoringtypesDaemonSetRecordDTO,
 	start: number,
 	end: number,
-	dotMetricsEnabled: boolean,
 ): GetQueryResultsProps[] => {
-	const k8sDaemonSetNameKey = dotMetricsEnabled
-		? 'k8s.daemonset.name'
-		: 'k8s_daemonset_name';
-
 	return getPodUtilizationByPodQueryPayloads(
 		{
-			workloadNameKey: k8sDaemonSetNameKey,
+			workloadNameKey: INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME,
 			workloadNameValue:
 				daemonSet.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME] ?? '',
 			clusterName:
@@ -702,6 +658,5 @@ export const getDaemonSetPodMetricsQueryPayload = (
 		},
 		start,
 		end,
-		dotMetricsEnabled,
 	);
 };

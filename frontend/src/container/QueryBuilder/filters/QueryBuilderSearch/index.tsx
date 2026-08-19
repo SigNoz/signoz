@@ -19,7 +19,7 @@ import {
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
-import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
+import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import { getDataTypes } from 'container/LogDetailedView/utils';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import {
@@ -50,11 +50,9 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
-import { popupContainer } from 'utils/selectPopupContainer';
+import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 
-import { FeatureKeys } from '../../../../constants/features';
-import { useAppContext } from '../../../../providers/App/App';
 import { selectStyle } from './config';
 import { PLACEHOLDER } from './constant';
 import ExampleQueriesRendererForLogs from './ExampleQueriesRendererForLogs';
@@ -95,6 +93,7 @@ function QueryBuilderSearch({
 	disableNavigationShortcuts,
 	entity,
 }: QueryBuilderSearchProps): JSX.Element {
+	const getPopupContainer = useSelectPopupContainer();
 	const { pathname } = useLocation();
 	const isLogsExplorerPage = useMemo(
 		() => pathname === ROUTES.LOGS_EXPLORER,
@@ -102,11 +101,6 @@ function QueryBuilderSearch({
 	);
 
 	const [isEditingTag, setIsEditingTag] = useState(false);
-
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
 
 	const {
 		updateTag,
@@ -127,7 +121,6 @@ function QueryBuilderSearch({
 		exampleQueries,
 	} = useAutoComplete(
 		query,
-		dotMetricsEnabled,
 		whereClauseConfig,
 		isLogsExplorerPage,
 		isInfraMonitoring,
@@ -145,7 +138,6 @@ function QueryBuilderSearch({
 	const { sourceKeys, handleRemoveSourceKey } = useFetchKeysAndValues(
 		searchValue,
 		query,
-		dotMetricsEnabled,
 		searchKey,
 		isLogsExplorerPage,
 		isInfraMonitoring,
@@ -397,7 +389,7 @@ function QueryBuilderSearch({
 			<Select
 				data-testid={'qb-search-select'}
 				ref={selectRef}
-				getPopupContainer={popupContainer}
+				getPopupContainer={getPopupContainer}
 				transitionName=""
 				choiceTransitionName=""
 				virtual={false}

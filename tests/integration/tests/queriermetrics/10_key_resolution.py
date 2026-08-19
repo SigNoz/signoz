@@ -48,7 +48,7 @@ def test_metrics_group_by_context_collapse(
                 querier.build_scalar_query(
                     name="A",
                     signal="metrics",
-                    aggregations=[querier.build_metrics_aggregation(METRIC, "latest", "sum", "unspecified")],
+                    aggregations=[querier.build_metrics_aggregation(METRIC, "latest", "sum", "unspecified", reduce_to="last")],
                     group_by=[querier.build_group_by_field("region", "string", ctx)],
                 )
             ],
@@ -66,9 +66,9 @@ def test_metrics_filter_label_context(
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[list[Metrics]], None],
 ) -> None:
-    """Unlike group-by (which collapses every context to labels), a label *filter* resolves via
-    metadata under the label's registered (attribute) context: bare `region` and `attribute.region`
-    are equivalent, but an explicit mismatched context (`resource.region`) is not found (400)."""
+    """Metrics has no per-context storage: every label lives in the `labels` JSON, so a label
+    *filter* collapses every context to JSONExtractString(labels,'region') just like group-by does.
+    bare `region`, `attribute.region`, and `resource.region` are all equivalent and select `us`."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     insert_metrics(
         [
@@ -96,7 +96,7 @@ def test_metrics_filter_label_context(
                 querier.build_scalar_query(
                     name="A",
                     signal="metrics",
-                    aggregations=[querier.build_metrics_aggregation(METRIC, "latest", "sum", "unspecified")],
+                    aggregations=[querier.build_metrics_aggregation(METRIC, "latest", "sum", "unspecified", reduce_to="last")],
                     group_by=[querier.build_group_by_field("region", "string", "")],
                     filter_expression=expr,
                 )
@@ -106,7 +106,8 @@ def test_metrics_filter_label_context(
         data = {row[0]: row[-1] for row in querier.get_scalar_table_data(response.json())}
         assert data == {"us": 30.0}, f"{expr}: {data}"
 
-    # resource. is a context the label is not registered under -> hard "not found".
+    # resource. is a context the label is not registered under; metrics collapses it to the
+    # same labels lookup, so it resolves rather than erroring.
     response = querier.make_scalar_query_request(
         signoz,
         token,
@@ -115,12 +116,12 @@ def test_metrics_filter_label_context(
             querier.build_scalar_query(
                 name="A",
                 signal="metrics",
-                aggregations=[querier.build_metrics_aggregation(METRIC, "latest", "sum", "unspecified")],
+                aggregations=[querier.build_metrics_aggregation(METRIC, "latest", "sum", "unspecified", reduce_to="last")],
                 filter_expression='resource.region = "us"',
             )
         ],
     )
-    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert response.status_code == HTTPStatus.OK, response.text
 
 
 def test_metrics_group_by_unknown_label(
@@ -156,7 +157,7 @@ def test_metrics_group_by_unknown_label(
             querier.build_scalar_query(
                 name="A",
                 signal="metrics",
-                aggregations=[querier.build_metrics_aggregation(METRIC, "latest", "sum", "unspecified")],
+                aggregations=[querier.build_metrics_aggregation(METRIC, "latest", "sum", "unspecified", reduce_to="last")],
                 group_by=[querier.build_group_by_field("does_not_exist_label", "string", "attribute")],
             )
         ],
@@ -174,8 +175,9 @@ def test_metrics_filter_unknown_label_matches_nothing(
     insert_metrics: Callable[[list[Metrics]], None],
 ) -> None:
     """A filter on a label no metric carries resolves to JSONExtractString(labels,'<missing>')
-    = '' and matches nothing: metrics returns 200 with an empty result and — unlike the
-    logs/traces synthesize path — emits no key-not-found warning."""
+    = '' and matches nothing: metrics returns 200 with an empty result, and warns that the
+    label is absent from metadata. Only keys are flagged — a value or dashboard variable in
+    value position never reaches the condition builder, so it cannot be mistaken for one."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     insert_metrics(
         [
@@ -200,11 +202,101 @@ def test_metrics_filter_unknown_label_matches_nothing(
             querier.build_scalar_query(
                 name="A",
                 signal="metrics",
-                aggregations=[querier.build_metrics_aggregation(METRIC, "latest", "sum", "unspecified")],
+                aggregations=[querier.build_metrics_aggregation(METRIC, "latest", "sum", "unspecified", reduce_to="last")],
                 filter_expression='does_not_exist_label = "x"',
             )
         ],
     )
     assert response.status_code == HTTPStatus.OK, response.text
     assert querier.get_scalar_table_data(response.json()) == []
-    assert querier.get_all_warnings(response.json()) == []
+    assert [w["message"] for w in querier.get_all_warnings(response.json())] == ["label `does_not_exist_label` not found in metadata; check the label name for typos"]
+
+
+def test_metrics_full_text_filter_does_not_error(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[list[Metrics]], None],
+) -> None:
+    """A bare/quoted term has no key=value form, so the visitor routes it through the metrics
+    full-text search column, which is never present in the metadata keys. The condition builder
+    must resolve it (not hard-error) so the query runs. Regression: a partial filter like `abc`
+    used to 400 with `key <full-text-column> not found` (broke the Metrics Explorer summary)."""
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    insert_metrics(
+        [
+            Metrics(
+                metric_name=METRIC,
+                labels={"region": "us"},
+                timestamp=now - timedelta(seconds=1),
+                temporality="Unspecified",
+                type_="Gauge",
+                is_monotonic=False,
+                value=30.0,
+            )
+        ]
+    )
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    # bare word and quoted term are both full-text searches; neither may 400.
+    for expr in ("abc", '"abc"'):
+        response = querier.make_scalar_query_request(
+            signoz,
+            token,
+            now,
+            [
+                querier.build_scalar_query(
+                    name="A",
+                    signal="metrics",
+                    aggregations=[querier.build_metrics_aggregation(METRIC, "latest", "sum", "unspecified", reduce_to="last")],
+                    filter_expression=expr,
+                )
+            ],
+        )
+        assert response.status_code == HTTPStatus.OK, f"{expr}: {response.text}"
+        # the term matches no series, and metrics emits no key-not-found warning.
+        assert querier.get_scalar_table_data(response.json()) == [], f"{expr}: {response.json()}"
+        assert querier.get_all_warnings(response.json()) == [], f"{expr}: {querier.get_all_warnings(response.json())}"
+
+
+def test_metrics_group_by_label_named_value(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[list[Metrics]], None],
+) -> None:
+    """A label may be named after a column the query builds for itself. Grouping by a label
+    named `value` must alias it apart from the `value` the aggregation produces — selecting
+    both under that one name is rejected by ClickHouse."""
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    insert_metrics(
+        [
+            Metrics(
+                metric_name=METRIC,
+                labels={"value": tier},
+                timestamp=now - timedelta(seconds=1),
+                temporality="Unspecified",
+                type_="Gauge",
+                is_monotonic=False,
+                value=value,
+            )
+            for tier, value in [("high", 30.0), ("low", 10.0)]
+        ]
+    )
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = querier.make_scalar_query_request(
+        signoz,
+        token,
+        now,
+        [
+            querier.build_scalar_query(
+                name="A",
+                signal="metrics",
+                aggregations=[querier.build_metrics_aggregation(METRIC, "latest", "sum", "unspecified", reduce_to="last")],
+                group_by=[querier.build_group_by_field("value", "string", "attribute")],
+            )
+        ],
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert {row[0]: row[-1] for row in querier.get_scalar_table_data(response.json())} == {"high": 30.0, "low": 10.0}

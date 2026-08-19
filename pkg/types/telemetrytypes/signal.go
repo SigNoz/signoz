@@ -19,5 +19,6 @@ func (Signal) Enum() []any {
 		SignalTraces,
 		SignalLogs,
 		SignalMetrics,
+		SignalUnspecified,
 	}
 }

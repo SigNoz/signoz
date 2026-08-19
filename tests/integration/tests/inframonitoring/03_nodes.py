@@ -1,5 +1,3 @@
-"""Integration tests for v2 infra-monitoring node endpoints."""
-
 import json
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
@@ -10,6 +8,7 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.fs import get_testdata_file_path
+from fixtures.inframonitoring import expected_status_counts
 from fixtures.metrics import Metrics
 from fixtures.querier import compare_values, get_all_warnings
 
@@ -67,7 +66,6 @@ def test_nodes_accuracy(
             "nodeName",
             "condition",
             "nodeCountsByReadiness",
-            "podCountsByPhase",
             "nodeCPU",
             "nodeCPUAllocatable",
             "nodeMemory",
@@ -78,8 +76,6 @@ def test_nodes_accuracy(
 
         for bucket in ("ready", "notReady"):
             assert bucket in record["nodeCountsByReadiness"]
-        for bucket in ("pending", "running", "succeeded", "failed", "unknown"):
-            assert bucket in record["podCountsByPhase"]
 
         assert record["meta"].get("k8s.node.name") == record["nodeName"]
         assert "k8s.node.uid" in record["meta"]
@@ -91,7 +87,6 @@ def test_nodes_accuracy(
             assert compare_values(record[field], exp[field], 1e-6), f"{record['nodeName']}.{field}: got {record[field]}, expected {exp[field]}"
         assert record["condition"] == exp["condition"]
         assert record["nodeCountsByReadiness"] == exp["nodeCountsByReadiness"]
-        assert record["podCountsByPhase"] == exp["podCountsByPhase"]
 
 
 @pytest.mark.parametrize(
@@ -216,6 +211,7 @@ def test_nodes_warnings(
             {"web-a-us-1", "web-b-us-1"},
             id="in_contains",
         ),
+        pytest.param("k8s.node.namee = 'web-a-us-1'", set(), id="unresolved_key"),
     ],
 )
 def test_nodes_filter(
@@ -272,7 +268,6 @@ def test_nodes_filter(
 @pytest.mark.parametrize(
     "expression,err_substr",
     [
-        pytest.param("k8s.node.namee = 'web-a-us-1'", "k8s.node.namee", id="bad_attr_name"),
         pytest.param("k8s.node.name =", None, id="trailing_op"),
         pytest.param("(k8s.node.name = 'web-a-us-1'", None, id="unclosed_paren"),
     ],
@@ -285,8 +280,8 @@ def test_nodes_filter_invalid(
     expression: str,
     err_substr,
 ) -> None:
-    """Invalid filter expressions (typo'd attribute key, malformed grammar) return
-    400 invalid_input with structured errors; bad attribute keys are named in them."""
+    """Malformed filter grammar (trailing operator, unclosed paren) returns
+    400 invalid_input with structured errors."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -314,6 +309,115 @@ def test_nodes_filter_invalid(
     assert len(body["error"]["errors"]) > 0
     if err_substr is not None:
         assert any(err_substr in e["message"] for e in body["error"]["errors"]), f"{err_substr!r} not surfaced: {body['error']['errors']!r}"
+
+
+def test_nodes_filter_by_pod_status(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """filterByPodStatus on nodes: a node is kept when >=1 of its pods matches
+    the requested display status, and podCountsByStatus reflects only that
+    status (others 0); an absent status yields an empty page. Reuses
+    clusters_pod_phases.jsonl (carries k8s.node.name + full status metrics):
+    pp-node has running=3, crashLoopBackOff=1, error=1, evicted=1, pending=1."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/clusters_pod_phases.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    # Multi-select is OR -> the union of requested buckets (others zeroed).
+    for fbps, expected in (
+        (["running"], expected_status_counts(running=3)),
+        (["CrashLoopBackOff"], expected_status_counts(crashLoopBackOff=1)),
+        (["running", "CrashLoopBackOff"], expected_status_counts(running=3, crashLoopBackOff=1)),
+    ):
+        resp = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
+                "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+                "end": int(now.timestamp() * 1000),
+                "limit": 50,
+                "filter": {"filterByPodStatus": fbps},
+            },
+            timeout=5,
+        )
+        assert resp.status_code == HTTPStatus.OK, resp.text
+        data = resp.json()["data"]
+        assert data["total"] == 1
+        rec = data["records"][0]
+        assert rec["nodeName"] == "pp-node"
+        assert rec["podCountsByStatus"] == expected
+
+    # A set fully absent from the node -> empty page (single and multi).
+    for fbps in (["completed"], ["completed", "oomKilled"]):
+        absent = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
+                "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+                "end": int(now.timestamp() * 1000),
+                "limit": 50,
+                "filter": {"filterByPodStatus": fbps},
+            },
+            timeout=5,
+        )
+        assert absent.status_code == HTTPStatus.OK, absent.text
+        assert absent.json()["data"]["total"] == 0, f"node must be dropped by filterByPodStatus={fbps!r}"
+
+    # Combined filterByPodStatus + filterByNodeReadiness = AND. pp-node is Ready
+    # and runs pods -> kept when both match; dropped if either side has no match.
+    both_match = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"filterByPodStatus": ["running"], "filterByNodeReadiness": ["ready"]},
+        },
+        timeout=5,
+    )
+    assert both_match.status_code == HTTPStatus.OK, both_match.text
+    bdata = both_match.json()["data"]
+    assert bdata["total"] == 1
+    assert bdata["records"][0]["nodeName"] == "pp-node"
+
+    # readiness side fails (pp-node is not not_ready) -> dropped.
+    readiness_fails = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"filterByPodStatus": ["running"], "filterByNodeReadiness": ["not_ready"]},
+        },
+        timeout=5,
+    )
+    assert readiness_fails.status_code == HTTPStatus.OK, readiness_fails.text
+    assert readiness_fails.json()["data"]["total"] == 0
+
+    # pod-status side fails (no completed pod) -> dropped.
+    status_fails = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"filterByPodStatus": ["completed"], "filterByNodeReadiness": ["ready"]},
+        },
+        timeout=5,
+    )
+    assert status_fails.status_code == HTTPStatus.OK, status_fails.text
+    assert status_fails.json()["data"]["total"] == 0
 
 
 @pytest.mark.parametrize(
@@ -363,6 +467,56 @@ def test_nodes_condition_list_mode(
         assert rec["nodeCountsByReadiness"] == {"ready": 1, "notReady": 0}
     else:
         assert rec["nodeCountsByReadiness"] == {"ready": 0, "notReady": 1}
+
+    # filterByNodeReadiness (secondary filter): matching readiness keeps the node,
+    # the opposite readiness filters it out.
+    matched = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": f"k8s.node.name = '{node_name}'", "filterByNodeReadiness": [expected_condition]},
+        },
+        timeout=5,
+    )
+    assert matched.status_code == HTTPStatus.OK, matched.text
+    mdata = matched.json()["data"]
+    assert mdata["total"] == 1
+    assert mdata["records"][0]["nodeName"] == node_name
+
+    opposite = "not_ready" if expected_condition == "ready" else "ready"
+
+    # Multi-select is OR: a set containing the node's condition keeps it even
+    # alongside the opposite readiness.
+    or_keep = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": f"k8s.node.name = '{node_name}'", "filterByNodeReadiness": [expected_condition, opposite]},
+        },
+        timeout=5,
+    )
+    assert or_keep.status_code == HTTPStatus.OK, or_keep.text
+    assert or_keep.json()["data"]["total"] == 1, f"multi-select should keep {node_name}"
+
+    dropped = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": f"k8s.node.name = '{node_name}'", "filterByNodeReadiness": [opposite]},
+        },
+        timeout=5,
+    )
+    assert dropped.status_code == HTTPStatus.OK, dropped.text
+    assert dropped.json()["data"]["total"] == 0
 
 
 def test_nodes_condition_latest_wins(
@@ -452,77 +606,62 @@ def test_nodes_condition_grouped_mode(
     assert rec["condition"] == "no_data"
     # Aggregated condition counts across the cluster.
     assert rec["nodeCountsByReadiness"] == {"ready": 2, "notReady": 1}
-    # Pod-phase counts aggregated: 3 running pods (one per node).
-    assert rec["podCountsByPhase"]["running"] == 3
-    for other in ("pending", "succeeded", "failed", "unknown"):
-        assert rec["podCountsByPhase"][other] == 0
     # meta surfaces the groupBy key.
     assert rec["meta"].get("k8s.cluster.name") == "cluster-mixed"
 
-
-@pytest.mark.parametrize(
-    "dataset,node_name,filter_expr,expected_counts",
-    [
-        # Node hosts 3 running + 2 failed pods: phase buckets aggregate correctly.
-        pytest.param(
-            "nodes_pod_phases.jsonl",
-            "pp-n1",
-            None,
-            {"pending": 0, "running": 3, "succeeded": 0, "failed": 2, "unknown": 0},
-            id="mixed_phases",
-        ),
-        # Node with no pods: all-zero buckets, node still appears. Filter on the
-        # node to ignore the carrier phantom (see test_nodes_condition_latest_wins).
-        pytest.param(
-            "nodes_no_pods.jsonl",
-            "no-pod-n",
-            "k8s.node.name = 'no-pod-n'",
-            {"pending": 0, "running": 0, "succeeded": 0, "failed": 0, "unknown": 0},
-            id="no_pods",
-        ),
-    ],
-)
-def test_nodes_pod_phase_counts(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token,
-    insert_metrics,
-    dataset: str,
-    node_name: str,
-    filter_expr,
-    expected_counts: dict,
-) -> None:
-    """podCountsByPhase per node aggregates the pods scheduled on it (k8s.pod.phase
-    joined via k8s.node.name). A node with no pods reports all-zero buckets and
-    still appears in the result."""
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    insert_metrics(
-        Metrics.load_from_file(
-            get_testdata_file_path(f"inframonitoring/{dataset}"),
-            base_time=now - timedelta(minutes=4),
-        )
-    )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    body = {
-        "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-        "end": int(now.timestamp() * 1000),
-        "limit": 50,
-    }
-    if filter_expr is not None:
-        body["filter"] = {"expression": filter_expr}
-    response = requests.post(
+    # filterByNodeReadiness in grouped mode: the group is kept (>=1 matching
+    # node) and only the filtered bucket is populated.
+    ready = requests.post(
         signoz.self.host_configs["8080"].get(ENDPOINT),
         headers={"authorization": f"Bearer {token}"},
-        json=body,
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "groupBy": [{"name": "k8s.cluster.name", "fieldDataType": "string", "fieldContext": "resource"}],
+            "filter": {"filterByNodeReadiness": ["ready"]},
+        },
         timeout=5,
     )
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-    assert data["total"] == 1
-    rec = data["records"][0]
-    assert rec["nodeName"] == node_name
-    assert rec["podCountsByPhase"] == expected_counts
+    assert ready.status_code == HTTPStatus.OK, ready.text
+    rdata = ready.json()["data"]
+    assert rdata["total"] == 1
+    assert rdata["records"][0]["nodeCountsByReadiness"] == {"ready": 2, "notReady": 0}
+
+    not_ready = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "groupBy": [{"name": "k8s.cluster.name", "fieldDataType": "string", "fieldContext": "resource"}],
+            "filter": {"filterByNodeReadiness": ["not_ready"]},
+        },
+        timeout=5,
+    )
+    assert not_ready.status_code == HTTPStatus.OK, not_ready.text
+    ndata = not_ready.json()["data"]
+    assert ndata["total"] == 1
+    assert ndata["records"][0]["nodeCountsByReadiness"] == {"ready": 0, "notReady": 1}
+
+    # Multi-select is OR: both buckets populated (union) for the kept group.
+    both = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "groupBy": [{"name": "k8s.cluster.name", "fieldDataType": "string", "fieldContext": "resource"}],
+            "filter": {"filterByNodeReadiness": ["ready", "not_ready"]},
+        },
+        timeout=5,
+    )
+    assert both.status_code == HTTPStatus.OK, both.text
+    bdata = both.json()["data"]
+    assert bdata["total"] == 1
+    assert bdata["records"][0]["nodeCountsByReadiness"] == {"ready": 2, "notReady": 1}
 
 
 @pytest.mark.parametrize(
@@ -533,10 +672,10 @@ def test_nodes_pod_phase_counts(
         pytest.param(
             "k8s.node.name",
             {
-                "gb-a-us": {"condition": "ready", "readiness": {"ready": 1, "notReady": 0}, "running": 1},
-                "gb-a-eu": {"condition": "ready", "readiness": {"ready": 1, "notReady": 0}, "running": 1},
-                "gb-b-us": {"condition": "ready", "readiness": {"ready": 1, "notReady": 0}, "running": 1},
-                "gb-b-eu": {"condition": "ready", "readiness": {"ready": 1, "notReady": 0}, "running": 1},
+                "gb-a-us": {"condition": "ready", "readiness": {"ready": 1, "notReady": 0}},
+                "gb-a-eu": {"condition": "ready", "readiness": {"ready": 1, "notReady": 0}},
+                "gb-b-us": {"condition": "ready", "readiness": {"ready": 1, "notReady": 0}},
+                "gb-b-eu": {"condition": "ready", "readiness": {"ready": 1, "notReady": 0}},
             },
             id="node_name",
         ),
@@ -545,8 +684,8 @@ def test_nodes_pod_phase_counts(
         pytest.param(
             "k8s.cluster.name",
             {
-                "gb-cluster-a": {"condition": "no_data", "readiness": {"ready": 2, "notReady": 0}, "running": 2},
-                "gb-cluster-b": {"condition": "no_data", "readiness": {"ready": 2, "notReady": 0}, "running": 2},
+                "gb-cluster-a": {"condition": "no_data", "readiness": {"ready": 2, "notReady": 0}},
+                "gb-cluster-b": {"condition": "no_data", "readiness": {"ready": 2, "notReady": 0}},
             },
             id="cluster",
         ),
@@ -560,9 +699,9 @@ def test_nodes_groupby(
     group_key: str,
     expected: dict,
 ) -> None:
-    """groupBy returns one record per distinct group with aggregated readiness
-    and pod-phase counts. nodeName is populated and condition is derived only
-    when grouping by k8s.node.name (nodes.go:69-76 list-vs-grouped branch)."""
+    """groupBy returns one record per distinct group with aggregated readiness.
+    nodeName is populated and condition is derived only when grouping by
+    k8s.node.name (nodes.go:69-76 list-vs-grouped branch)."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -603,7 +742,6 @@ def test_nodes_groupby(
         assert rec["nodeName"] == (group if group_key == "k8s.node.name" else "")
         assert rec["condition"] == exp["condition"]
         assert rec["nodeCountsByReadiness"] == exp["readiness"]
-        assert rec["podCountsByPhase"]["running"] == exp["running"]
         assert group_key in rec["meta"], rec["meta"]
 
 
@@ -653,6 +791,95 @@ def test_nodes_pagination(
     assert seen_totals == {K}
     assert len(seen_nodes) == K
     assert set(seen_nodes) == {f"page-n{i}" for i in range(1, K + 1)}
+
+
+def test_nodes_filter_readiness_pagination_and_ordering(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token,
+    insert_metrics,
+) -> None:
+    """filterByNodeReadiness composed with pagination + name ordering. The full-scope
+    readiness keyset is resolved before slicing, so total reflects the full matched
+    set and pages stay disjoint + complete on both the metric-ordering branch
+    (paginateWithBackfill) and the name-ordering branch (PaginateMetadataByName).
+    ready matches 4 nodes in nodes_conditions.jsonl: ready-n, ready-n2, ready-n3, ready-n4."""
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    insert_metrics(
+        Metrics.load_from_file(
+            get_testdata_file_path("inframonitoring/nodes_conditions.jsonl"),
+            base_time=now - timedelta(minutes=4),
+        )
+    )
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    start = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end = int(now.timestamp() * 1000)
+    matched = {"ready-n", "ready-n2", "ready-n3", "ready-n4"}
+
+    # Metric-ordering branch (default cpu order): total is invariant across a paged
+    # walk and the pages are disjoint + cover the full matched set.
+    seen: list[str] = []
+    totals: set[int] = set()
+    for offset in (0, 2, 4):
+        resp = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
+                "start": start,
+                "end": end,
+                "limit": 2,
+                "offset": offset,
+                "filter": {"filterByNodeReadiness": ["ready"]},
+            },
+            timeout=5,
+        )
+        assert resp.status_code == HTTPStatus.OK, resp.text
+        data = resp.json()["data"]
+        totals.add(data["total"])
+        assert len(data["records"]) == max(0, min(2, 4 - offset)), f"offset={offset}: {data['records']!r}"
+        seen.extend(r["meta"]["k8s.node.name"] for r in data["records"])
+    assert totals == {4}, f"total not invariant under filter+pagination: {totals}"
+    assert len(seen) == 4, f"pages overlapped: {seen}"
+    assert set(seen) == matched
+
+    # Name-ordering branch (orderBy k8s.node.name asc, groupBy empty): the filtered
+    # set is returned in name order; total is the full matched count.
+    ordered = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": start,
+            "end": end,
+            "limit": 50,
+            "filter": {"filterByNodeReadiness": ["ready"]},
+            "orderBy": {"key": {"name": "k8s.node.name"}, "direction": "asc"},
+        },
+        timeout=5,
+    )
+    assert ordered.status_code == HTTPStatus.OK, ordered.text
+    odata = ordered.json()["data"]
+    assert odata["total"] == 4
+    assert [r["meta"]["k8s.node.name"] for r in odata["records"]] == ["ready-n", "ready-n2", "ready-n3", "ready-n4"]
+
+    # Second page of the name branch: PaginateMetadataByName slices the filtered set
+    # correctly (offset past the first 2 matched -> the last 2), total unchanged.
+    page2 = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": start,
+            "end": end,
+            "limit": 2,
+            "offset": 2,
+            "filter": {"filterByNodeReadiness": ["ready"]},
+            "orderBy": {"key": {"name": "k8s.node.name"}, "direction": "asc"},
+        },
+        timeout=5,
+    )
+    assert page2.status_code == HTTPStatus.OK, page2.text
+    p2 = page2.json()["data"]
+    assert p2["total"] == 4
+    assert [r["meta"]["k8s.node.name"] for r in p2["records"]] == ["ready-n3", "ready-n4"]
 
 
 # orderBy keys per nodes_constants.go:33-37 (snake_case request keys,
@@ -755,6 +982,21 @@ def test_nodes_orderby(  # pylint: disable=too-many-arguments,too-many-positiona
             },
             "is only allowed when groupBy is empty",
             id="orderby_nodename_with_groupby",
+        ),
+        pytest.param(
+            {"filter": {"filterByPodStatus": ["Bogus"]}},
+            "invalid filter by pod status",
+            id="filter_by_pod_status_invalid",
+        ),
+        pytest.param(
+            {"filter": {"filterByNodeReadiness": ["bogus"]}},
+            "invalid filter by node readiness",
+            id="filter_by_node_readiness_invalid",
+        ),
+        pytest.param(
+            {"filter": {"filterByNodeReadiness": ["notready"]}},
+            "invalid filter by node readiness",
+            id="filter_by_node_readiness_missing_underscore",
         ),
     ],
 )

@@ -3,6 +3,9 @@ import { toast } from '@signozhq/ui/sonner';
 import { cloneDeep } from 'lodash-es';
 import { v4 as uuid } from 'uuid';
 
+import logEvent from 'api/common/logEvent';
+import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
+
 import { useOptimisticPatch } from '../../../hooks/useOptimisticPatch';
 import { cloneSectionOps } from '../../../patchOps';
 import type { DashboardSection } from '../../../utils';
@@ -46,6 +49,10 @@ export function useCloneSection(): (
 
 			try {
 				await clone;
+				void logEvent(DashboardDetailEvents.SectionAction, {
+					action: 'clone',
+					panelCount: panels.length,
+				});
 			} catch {
 				// toast.promise owns the error UX; the optimistic write + settle handle state.
 			}
