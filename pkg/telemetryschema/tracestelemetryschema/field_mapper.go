@@ -643,6 +643,11 @@ func (m *fieldMapper) CandidateKeys(ctx context.Context, _ valuer.UUID, field *t
 		literal := telemetrytypes.NewTelemetryFieldKey(field.FieldContext.StringValue()+"."+field.Name, field.FieldContext, field.FieldDataType)
 		return append(querybuilder.SynthesizeKeys(field, value), querybuilder.SynthesizeKeys(literal, value)...)
 	case telemetrytypes.FieldContextScope:
+		// A short scope name that names a declared scope path (e.g. {name, scope} -> scope.name)
+		// resolves to that declared path, not an undeclared scope attribute.
+		if compound := field.FieldContext.StringValue() + "." + field.Name; isDeclaredScopePath(compound) {
+			return []*telemetrytypes.TelemetryFieldKey{telemetrytypes.NewTelemetryFieldKey(compound, telemetrytypes.FieldContextScope, telemetrytypes.FieldDataTypeString)}
+		}
 		return []*telemetrytypes.TelemetryFieldKey{synthScopeAttributeKey(field)}
 	}
 	// contexts that don't exist on spans (log, body, …) have nothing to synthesize

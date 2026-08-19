@@ -273,8 +273,8 @@ func adjustTraceKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*te
 	var intrinsicOrCalculatedField telemetrytypes.TelemetryFieldKey
 	// A scope-context key addresses the scope JSON column and must not bind to a non-scope
 	// intrinsic/calculated field that only shares its name (e.g. `{name, scope}` is the scope's
-	// name, not the span `name` column). The span<->attribute remapping of legacy fields is
-	// intentionally context-blind and left untouched.
+	// name, not the span `name` column); the field mapper resolves it to the declared scope
+	// path. The span<->attribute remapping of legacy fields is intentionally context-blind.
 	boundToScopeMismatch := func(f telemetrytypes.TelemetryFieldKey) bool {
 		return key.FieldContext == telemetrytypes.FieldContextScope && f.FieldContext != telemetrytypes.FieldContextScope
 	}
