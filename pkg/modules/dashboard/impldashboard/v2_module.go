@@ -19,12 +19,12 @@ func (m *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy stri
 		return nil, err
 	}
 
-	dashboard := postable.NewDashboardV2(orgID, createdBy, source)
-	if err := dashboardtypes.ErrIfReservedName(dashboard.Name, source); err != nil {
+	dashboard, err := postable.NewDashboardV2(orgID, createdBy, source)
+	if err != nil {
 		return nil, err
 	}
 
-	err := m.store.RunInTx(ctx, func(ctx context.Context) error {
+	err = m.store.RunInTx(ctx, func(ctx context.Context) error {
 		resolvedTags, err := m.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, dashboard.ID, postable.Tags)
 		if err != nil {
 			return err
@@ -196,7 +196,7 @@ func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer
 		return nil, err
 	}
 
-	return module.updateV2(ctx, orgID, existing, updatedBy, updatable)
+	return module.updateV2(ctx, orgID, existing, updatedBy, updatable, existing.Update)
 }
 
 func (module *module) UpdateUnsafeV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updatable dashboardtypes.UpdatableDashboardV2) (*dashboardtypes.DashboardV2, error) {
@@ -209,17 +209,19 @@ func (module *module) UpdateUnsafeV2(ctx context.Context, orgID valuer.UUID, id 
 		return nil, err
 	}
 
-	return module.updateV2(ctx, orgID, existing, updatedBy, updatable)
+	return module.updateV2(ctx, orgID, existing, updatedBy, updatable, existing.UpdateUnsafe)
 }
 
-func (module *module) updateV2(ctx context.Context, orgID valuer.UUID, existing *dashboardtypes.DashboardV2, updatedBy string, updatable dashboardtypes.UpdatableDashboardV2) (*dashboardtypes.DashboardV2, error) {
+// apply is existing.Update or existing.UpdateUnsafe, so the gated path keeps its
+// in-transaction checks and only UpdateUnsafeV2 skips them.
+func (module *module) updateV2(ctx context.Context, orgID valuer.UUID, existing *dashboardtypes.DashboardV2, updatedBy string, updatable dashboardtypes.UpdatableDashboardV2, apply func(dashboardtypes.UpdatableDashboardV2, string, []*tagtypes.Tag) error) (*dashboardtypes.DashboardV2, error) {
 	err := module.store.RunInTx(ctx, func(ctx context.Context) error {
 		resolvedTags, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, existing.ID, updatable.Tags)
 		if err != nil {
 			return err
 		}
 
-		err = existing.UpdateUnsafe(updatable, updatedBy, resolvedTags)
+		err = apply(updatable, updatedBy, resolvedTags)
 		if err != nil {
 			return err
 		}

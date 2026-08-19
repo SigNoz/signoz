@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/perses/spec/go/dashboard"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1934,7 +1935,7 @@ func TestSystemDashboardNamePrefix(t *testing.T) {
 	require.NoError(t, validateDashboardName(SystemDashboardNamePrefix+"ai-o11y-overview"))
 }
 
-func TestErrIfReservedName(t *testing.T) {
+func TestNewDashboardV2RejectsReservedName(t *testing.T) {
 	testCases := []struct {
 		description string
 		name        string
@@ -1950,7 +1951,8 @@ func TestErrIfReservedName(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			err := ErrIfReservedName(testCase.name, testCase.source)
+			postable := PostableDashboardV2{Name: testCase.name}
+			_, err := postable.NewDashboardV2(valuer.GenerateUUID(), "user@signoz.io", testCase.source)
 			if testCase.wantErr {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), "reserved for system dashboards")

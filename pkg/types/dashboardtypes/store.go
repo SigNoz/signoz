@@ -13,8 +13,7 @@ type Store interface {
 
 	Get(context.Context, valuer.UUID, valuer.UUID) (*StorableDashboard, error)
 
-	// GetByName resolves a dashboard by its per-org unique name. Only v2
-	// dashboards carry a name; v1 rows hold the empty string.
+	// GetByName resolves a dashboard by its per-org unique name.
 	GetByName(ctx context.Context, orgID valuer.UUID, name string) (*StorableDashboard, error)
 
 	GetPublic(context.Context, string) (*StorablePublicDashboard, error)

@@ -124,7 +124,8 @@ func TestPostableDashboardV2NewDashboardV2(t *testing.T) {
 			}
 
 			before := time.Now()
-			dashboard := postable.NewDashboardV2(orgID, "alice", tc.source)
+			dashboard, err := postable.NewDashboardV2(orgID, "alice", tc.source)
+			require.NoError(t, err)
 			after := time.Now()
 
 			require.NotNil(t, dashboard)
@@ -160,8 +161,10 @@ func TestPostableDashboardV2NewDashboardV2(t *testing.T) {
 			Spec:                    DashboardSpec{},
 		}
 
-		first := postable.NewDashboardV2(orgID, "alice", SourceUser)
-		second := postable.NewDashboardV2(orgID, "alice", SourceUser)
+		first, err := postable.NewDashboardV2(orgID, "alice", SourceUser)
+		require.NoError(t, err)
+		second, err := postable.NewDashboardV2(orgID, "alice", SourceUser)
+		require.NoError(t, err)
 		assert.NotEqual(t, first.ID, second.ID, "expected distinct UUIDs across invocations")
 	})
 
@@ -174,7 +177,8 @@ func TestPostableDashboardV2NewDashboardV2(t *testing.T) {
 			},
 		}
 
-		dashboard := postable.NewDashboardV2(orgID, "alice", SourceUser)
+		dashboard, err := postable.NewDashboardV2(orgID, "alice", SourceUser)
+		require.NoError(t, err)
 		assert.True(t, strings.HasPrefix(dashboard.Name, "my-dashboard-"), "expected slug prefix, got %q", dashboard.Name)
 		assert.Len(t, dashboard.Name, len("my-dashboard-")+dashboardNameSuffixLen)
 	})

@@ -74,8 +74,8 @@ func (module *module) reconcile(ctx context.Context, orgID valuer.UUID, definiti
 
 // provision creates the dashboard and its state row in one transaction, so a
 // system dashboard can never exist without the version it was provisioned at.
-// A concurrent replica loses the race on the state row's unique (org_id, name)
-// index and rolls back, leaving exactly one copy.
+// A concurrent provisioner (another replica, or the org-creation hook racing the
+// startup sweep) loses on the state row's unique (org_id, name) index and rolls back.
 func (module *module) provision(ctx context.Context, orgID valuer.UUID, definition systemdashboardtypes.Definition) error {
 	err := module.store.RunInTx(ctx, func(ctx context.Context) error {
 		created, err := module.dashboardModule.CreateV2(
@@ -94,7 +94,7 @@ func (module *module) provision(ctx context.Context, orgID valuer.UUID, definiti
 	})
 	if err != nil {
 		if errors.Ast(err, errors.TypeAlreadyExists) {
-			module.settings.Logger().DebugContext(ctx, "system dashboard already provisioned by another replica", slog.String("name", definition.Name()), slog.String("org_id", orgID.StringValue()))
+			module.settings.Logger().DebugContext(ctx, "system dashboard already provisioned concurrently", slog.String("name", definition.Name()), slog.String("org_id", orgID.StringValue()))
 			return nil
 		}
 		return err

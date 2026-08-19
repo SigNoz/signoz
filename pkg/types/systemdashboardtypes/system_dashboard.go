@@ -18,8 +18,18 @@ var (
 
 // ProvisionerIdentity is stamped into created_by/updated_by by the reconciler. It
 // is deliberately not a valid email, so it can never collide with a real account:
-// any other value in updated_by means a user edited the dashboard.
+// any other value in updated_by means a foreign write.
 const ProvisionerIdentity = "signoz"
+
+type Store interface {
+	Create(ctx context.Context, storable *StorableSystemDashboard) error
+
+	Get(ctx context.Context, orgID valuer.UUID, name string) (*StorableSystemDashboard, error)
+
+	UpdateVersion(ctx context.Context, orgID valuer.UUID, name string, version int) error
+
+	RunInTx(ctx context.Context, cb func(ctx context.Context) error) error
+}
 
 // StorableSystemDashboard records the shipped version each org's copy of a system
 // dashboard was last provisioned at. That version is the only thing the dashboard
@@ -45,14 +55,4 @@ func NewStorableSystemDashboard(orgID valuer.UUID, dashboardID valuer.UUID, name
 		Name:          name,
 		Version:       version,
 	}
-}
-
-type Store interface {
-	Create(ctx context.Context, storable *StorableSystemDashboard) error
-
-	Get(ctx context.Context, orgID valuer.UUID, name string) (*StorableSystemDashboard, error)
-
-	UpdateVersion(ctx context.Context, orgID valuer.UUID, name string, version int) error
-
-	RunInTx(ctx context.Context, cb func(ctx context.Context) error) error
 }

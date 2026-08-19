@@ -140,7 +140,7 @@ func (d *DashboardV2) LockUnlock(lock bool, isAdmin bool, updatedBy string) erro
 
 func (d *DashboardV2) ErrIfNotSystem() error {
 	if d.Source != SourceSystem {
-		return errors.Newf(errors.TypeNotFound, ErrCodeDashboardNotFound, "system dashboard %q doesn't exist", d.Name)
+		return errors.Newf(errors.TypeNotFound, ErrCodeDashboardNotFound, "dashboard %q is not a system dashboard", d.Name)
 	}
 	return nil
 }
@@ -221,12 +221,17 @@ type PostableDashboardV2 struct {
 	Spec         DashboardSpec          `json:"spec" required:"true"`
 }
 
-func (postable PostableDashboardV2) NewDashboardV2(orgID valuer.UUID, createdBy string, source Source) *DashboardV2 {
+func (postable PostableDashboardV2) NewDashboardV2(orgID valuer.UUID, createdBy string, source Source) (*DashboardV2, error) {
 	now := time.Now()
 
 	name := postable.Name
 	if postable.GenerateName {
 		name = generateDashboardName(postable.Spec.Display.Name)
+	}
+	// Checked on the final name, here rather than in validateName, because only
+	// the constructor knows the source.
+	if source != SourceSystem && strings.HasPrefix(name, SystemDashboardNamePrefix) {
+		return nil, errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "name %q is invalid: the %q prefix is reserved for system dashboards", name, SystemDashboardNamePrefix)
 	}
 
 	return &DashboardV2{
@@ -240,7 +245,7 @@ func (postable PostableDashboardV2) NewDashboardV2(orgID valuer.UUID, createdBy 
 		Name:                    name,
 		Tags:                    tagtypes.NewTagsFromPostableTags(orgID, coretypes.KindDashboard, postable.Tags),
 		Spec:                    postable.Spec,
-	}
+	}, nil
 }
 
 func (p *PostableDashboardV2) UnmarshalJSON(data []byte) error {
@@ -294,14 +299,6 @@ func validateDashboardName(name string) error {
 	}
 	if errs := validation.IsDNS1123Label(name); len(errs) > 0 {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "name %q is invalid: %s", name, strings.Join(errs, "; "))
-	}
-	return nil
-}
-
-// ErrIfReservedName keeps the system prefix out of everything but a system dashboard.
-func ErrIfReservedName(name string, source Source) error {
-	if source != SourceSystem && strings.HasPrefix(name, SystemDashboardNamePrefix) {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "name %q is invalid: the %q prefix is reserved for system dashboards", name, SystemDashboardNamePrefix)
 	}
 	return nil
 }
