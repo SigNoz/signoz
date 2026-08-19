@@ -18,10 +18,9 @@ jest.mock('periscope/components/DataViewer', () => ({
 	DataViewer: (): JSX.Element => <div data-testid="overview-data-viewer" />,
 }));
 
-// The flag to be removed later
-jest.mock('../constants', () => ({
-	...jest.requireActual('../constants'),
-	isLogDetailsV2: true,
+// Force v2 for these tests regardless of route.
+jest.mock('../useIsLogDetailsV2', () => ({
+	useIsLogDetailsV2: (): boolean => true,
 }));
 
 const mockLog: ILog = {
