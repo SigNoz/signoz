@@ -12,7 +12,7 @@ import { Button } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { QueryParams } from 'constants/query';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
 import { RelativeDurationSuggestionOptions } from 'container/TopNav/DateTimeSelectionV2/constants';
@@ -24,6 +24,7 @@ import dayjs from 'dayjs';
 import { Clock, PenLine, TriangleAlert } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 import { getCustomTimeRanges } from 'utils/customTimeRangeUtils';
+import { readPanelTypeFromUrl } from 'utils/readPanelTypeFromUrl';
 import { TimeRangeValidationResult } from 'utils/timeUtils';
 
 import CalendarContainer from './CalendarContainer';
@@ -121,21 +122,14 @@ function CustomTimePickerPopoverContent({
 		[pathname],
 	);
 
-	const url = new URLSearchParams(window.location.search);
-
 	const { timezone } = useTimezone();
 	const activeTimezoneOffset = timezone.offset;
 
-	let panelTypeFromURL = url.get(QueryParams.panelTypes);
-
-	try {
-		panelTypeFromURL = JSON.parse(panelTypeFromURL as string);
-	} catch {
-		// fallback → leave as-is
-	}
+	const panelTypeFromURL = readPanelTypeFromUrl();
 
 	const isLogsListView =
-		panelTypeFromURL !== 'table' && panelTypeFromURL !== 'graph'; // we do not select list view in the url
+		panelTypeFromURL !== PANEL_TYPES.TABLE &&
+		panelTypeFromURL !== PANEL_TYPES.TIME_SERIES; // we do not select list view in the url
 
 	const [dateRange, setDateRange] = useState<DateRange>(() =>
 		getDateRange(minTime, maxTime, timezone.value),

@@ -30,11 +30,15 @@ describe('readPanelTypeFromUrl', () => {
 		expect(readPanelTypeFromUrl()).toBe(PANEL_TYPES.LIST);
 	});
 
-	it('returns the raw value instead of throwing on a malformed one', () => {
-		withParam('{list');
+	it.each(['{list', JSON.stringify('nope')])(
+		'returns the fallback for %s, which is not a panel type',
+		(value) => {
+			withParam(value);
 
-		expect(readPanelTypeFromUrl()).toBe('{list');
-	});
+			expect(readPanelTypeFromUrl(PANEL_TYPES.LIST)).toBe(PANEL_TYPES.LIST);
+			expect(readPanelTypeFromUrl()).toBeNull();
+		},
+	);
 
 	it('returns the fallback when the param is absent', () => {
 		withParam();

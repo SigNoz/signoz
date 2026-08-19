@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { parsePanelType } from 'utils/parsePanelType';
 
 export const useGetPanelTypesQueryParam = <T extends PANEL_TYPES | undefined>(
 	defaultPanelType?: T,
@@ -11,6 +12,10 @@ export const useGetPanelTypesQueryParam = <T extends PANEL_TYPES | undefined>(
 	return useMemo(() => {
 		const panelTypeQuery = urlQuery.get(QueryParams.panelTypes);
 
-		return panelTypeQuery ? JSON.parse(panelTypeQuery) : defaultPanelType;
-	}, [urlQuery, defaultPanelType]);
+		return (
+			(panelTypeQuery ? parsePanelType(panelTypeQuery) : null) ?? defaultPanelType
+		);
+	}, [urlQuery, defaultPanelType]) as T extends undefined
+		? PANEL_TYPES | null
+		: PANEL_TYPES;
 };
