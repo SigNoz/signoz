@@ -1298,6 +1298,9 @@ def test_traces_list_with_corrupt_data(
         pytest.param("scope.version = '2.3.1'", [0], id="intrinsic_scope_version"),
         # A scope attribute resolves against the scope JSON column's attributes.
         pytest.param("scope.telemetry.sdk.language = 'python'", [1], id="scope_attribute"),
+        # A scope attribute whose own name carries a `scope.` prefix. `scope.prefixed`
+        # normalizes to {prefixed, scope} and must still resolve to the attribute.
+        pytest.param("scope.prefixed = 'prefixed-val'", [0], id="scope_prefixed_attribute"),
         # `env.tier` is a span attribute on span 0 and a scope attribute on
         # span 1. Unprefixed -> no explicit context, so it is checked in every
         # applicable context (attribute OR scope) and both spans match.
@@ -1370,7 +1373,8 @@ def test_traces_list_with_scope_filter(
             scope={
                 "name": "io.signoz.checkout",
                 "version": "2.3.1",
-                "attributes": {"telemetry.sdk.language": "go"},
+                # a scope attribute whose own name carries a `scope.` prefix
+                "attributes": {"telemetry.sdk.language": "go", "scope.prefixed": "prefixed-val"},
             },
         ),
         Traces(
