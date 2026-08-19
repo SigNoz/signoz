@@ -42,7 +42,6 @@ export class UPlotScaleBuilder extends ConfigBuilder<
 			logBase = 10,
 			padMinBy = 0,
 			padMaxBy = 0.05,
-			useExactTimeRange = false,
 		} = this.props;
 
 		// Special handling for time scales (X axis)
@@ -55,23 +54,6 @@ export class UPlotScaleBuilder extends ConfigBuilder<
 				const { fallbackMin, fallbackMax } = getFallbackMinMaxTimeStamp();
 				minTime = fallbackMin;
 				maxTime = fallbackMax;
-			}
-
-			// Align max time to "endTime - 1 minute", rounded down to minute precision
-			// This matches legacy getXAxisScale behavior and avoids empty space at the right edge
-			if (!useExactTimeRange) {
-				const oneMinuteAgoTimestamp = (maxTime - 60) * 1000;
-				const currentDate = new Date(oneMinuteAgoTimestamp);
-
-				currentDate.setSeconds(0);
-				currentDate.setMilliseconds(0);
-
-				const unixTimestampSeconds = Math.floor(currentDate.getTime() / 1000);
-
-				// Trimming past min inverts the range, which uPlot draws as an empty plot.
-				if (unixTimestampSeconds > minTime) {
-					maxTime = unixTimestampSeconds;
-				}
 			}
 
 			return {

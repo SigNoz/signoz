@@ -97,8 +97,6 @@ export interface ScaleProps {
 	auto?: boolean;
 	logBase?: uPlot.Scale.LogBase;
 	distribution?: DistributionType;
-	/** Plots a time scale's `min`/`max` as given, skipping the trim below. */
-	useExactTimeRange?: boolean;
 }
 
 export enum DisconnectedValuesMode {

@@ -44,7 +44,7 @@ describe('UPlotScaleBuilder', () => {
 		expect(adjustSpy).toHaveBeenCalledWith(null, null, undefined, undefined);
 	});
 
-	it('handles time scales using explicit min/max and rounds max down to the previous minute', () => {
+	it('handles time scales using explicit min/max', () => {
 		const min = 1_700_000_000; // seconds
 		const max = 1_700_000_600; // seconds
 
@@ -62,44 +62,10 @@ describe('UPlotScaleBuilder', () => {
 
 		expect(xScale.time).toBe(true);
 		expect(xScale.auto).toBe(false);
-		expect(Array.isArray(xScale.range)).toBe(true);
-
-		const [resolvedMin, resolvedMax] = xScale.range as [number, number];
-
-		// min is passed through
-		expect(resolvedMin).toBe(min);
-
-		// max is coerced to "endTime - 1 minute" and rounded down to minute precision
-		const oneMinuteAgoTimestamp = (max - 60) * 1000;
-		const currentDate = new Date(oneMinuteAgoTimestamp);
-		currentDate.setSeconds(0);
-		currentDate.setMilliseconds(0);
-		const expectedMax = Math.floor(currentDate.getTime() / 1000);
-
-		expect(resolvedMax).toBe(expectedMax);
+		expect(xScale.range).toStrictEqual([min, max]);
 	});
 
-	it('plots min/max as given when useExactTimeRange is set', () => {
-		const min = 1_700_000_000;
-		const max = 1_700_000_630;
-
-		const builder = new UPlotScaleBuilder(
-			createScaleProps({
-				scaleKey: 'x',
-				time: true,
-				min,
-				max,
-				useExactTimeRange: true,
-			}),
-		);
-
-		const config = builder.getConfig();
-
-		expect(config.x.range).toStrictEqual([min, max]);
-	});
-
-	it('keeps the requested end when the window is shorter than the trim', () => {
-		// 23 second window: trimming a minute off the end would put max before min.
+	it('keeps short time windows intact', () => {
 		const min = 1_786_527_160;
 		const max = 1_786_527_183;
 
