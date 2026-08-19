@@ -61,6 +61,7 @@ type provider struct {
 	metricReductionRuleHandler metricreductionrule.Handler
 	infraMonitoringHandler     inframonitoring.Handler
 	gatewayHandler             gateway.Handler
+	gatewayService             gateway.Gateway
 	fieldsHandler              fields.Handler
 	aiObservabilityHandler     aiobservability.Handler
 	authzHandler               authz.Handler
@@ -98,6 +99,7 @@ func NewFactory(
 	metricReductionRuleHandler metricreductionrule.Handler,
 	infraMonitoringHandler inframonitoring.Handler,
 	gatewayHandler gateway.Handler,
+	gatewayService gateway.Gateway,
 	fieldsHandler fields.Handler,
 	aiObservabilityHandler aiobservability.Handler,
 	authzHandler authz.Handler,
@@ -138,6 +140,7 @@ func NewFactory(
 			metricReductionRuleHandler,
 			infraMonitoringHandler,
 			gatewayHandler,
+			gatewayService,
 			fieldsHandler,
 			aiObservabilityHandler,
 			authzHandler,
@@ -180,6 +183,7 @@ func newProvider(
 	metricReductionRuleHandler metricreductionrule.Handler,
 	infraMonitoringHandler inframonitoring.Handler,
 	gatewayHandler gateway.Handler,
+	gatewayService gateway.Gateway,
 	fieldsHandler fields.Handler,
 	aiObservabilityHandler aiobservability.Handler,
 	authzHandler authz.Handler,
@@ -221,6 +225,7 @@ func newProvider(
 		metricReductionRuleHandler: metricReductionRuleHandler,
 		infraMonitoringHandler:     infraMonitoringHandler,
 		gatewayHandler:             gatewayHandler,
+		gatewayService:             gatewayService,
 		fieldsHandler:              fieldsHandler,
 		aiObservabilityHandler:     aiObservabilityHandler,
 		authzHandler:               authzHandler,
