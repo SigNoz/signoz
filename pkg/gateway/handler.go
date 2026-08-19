@@ -183,7 +183,7 @@ func (handler *handler) DeleteIngestionKey(rw http.ResponseWriter, r *http.Reque
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-func (handler *handler) CreateIngestionKeyLimit(rw http.ResponseWriter, r *http.Request) {
+func (handler *handler) DeprecatedCreateIngestionKeyLimit(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	claims, err := authtypes.ClaimsFromContext(ctx)
@@ -200,7 +200,7 @@ func (handler *handler) CreateIngestionKeyLimit(rw http.ResponseWriter, r *http.
 		return
 	}
 
-	var req gatewaytypes.PostableIngestionKeyLimit
+	var req gatewaytypes.DeprecatedPostableIngestionKeyLimit
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid request body"))
 		return
@@ -271,6 +271,63 @@ func (handler *handler) DeleteIngestionKeyLimit(rw http.ResponseWriter, r *http.
 	}
 
 	render.Success(rw, http.StatusNoContent, nil)
+}
+
+func (handler *handler) CreateIngestionKeyLimit(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	var req gatewaytypes.PostableIngestionKeyLimit
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid request body"))
+		return
+	}
+
+	if req.KeyID == "" {
+		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "key_id is required"))
+		return
+	}
+
+	response, err := handler.gateway.CreateIngestionKeyLimit(ctx, orgID, req.KeyID, req.Signal, req.Config, req.Tags)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusCreated, response)
+}
+
+func (handler *handler) GetIngestionKeyLimit(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	limitID := mux.Vars(r)["limitId"]
+	if limitID == "" {
+		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "limitId is required"))
+		return
+	}
+
+	response, err := handler.gateway.GetIngestionKeyLimit(ctx, orgID, limitID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, response)
 }
 
 func parseIntWithDefaultValue(value string, defaultValue int) (int, error) {
