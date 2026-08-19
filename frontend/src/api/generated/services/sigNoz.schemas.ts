@@ -12349,17 +12349,6 @@ export type GetSystemDashboard200 = {
 	status: string;
 };
 
-export type UpdateSystemDashboardPathParameters = {
-	name: string;
-};
-export type UpdateSystemDashboard200 = {
-	data: SystemdashboardtypesGettableSystemDashboardDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type CreateUserRole201 = {
 	data: TypesIdentifiableDTO;
 	/**

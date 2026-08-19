@@ -196,13 +196,30 @@ func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer
 		return nil, err
 	}
 
-	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
-		resolvedTags, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, id, updatable.Tags)
+	return module.updateV2(ctx, orgID, existing, updatedBy, updatable)
+}
+
+func (module *module) UpdateUnsafeV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updatable dashboardtypes.UpdatableDashboardV2) (*dashboardtypes.DashboardV2, error) {
+	if err := updatable.Validate(); err != nil {
+		return nil, err
+	}
+
+	existing, err := module.GetV2(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return module.updateV2(ctx, orgID, existing, updatedBy, updatable)
+}
+
+func (module *module) updateV2(ctx context.Context, orgID valuer.UUID, existing *dashboardtypes.DashboardV2, updatedBy string, updatable dashboardtypes.UpdatableDashboardV2) (*dashboardtypes.DashboardV2, error) {
+	err := module.store.RunInTx(ctx, func(ctx context.Context) error {
+		resolvedTags, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, existing.ID, updatable.Tags)
 		if err != nil {
 			return err
 		}
 
-		err = existing.Update(updatable, updatedBy, resolvedTags)
+		err = existing.UpdateUnsafe(updatable, updatedBy, resolvedTags)
 		if err != nil {
 			return err
 		}

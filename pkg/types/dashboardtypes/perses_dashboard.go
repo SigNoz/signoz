@@ -79,8 +79,8 @@ type DashboardV2 struct {
 }
 
 func (d *DashboardV2) ErrIfNotMutable() error {
-	if d.Source == SourceIntegration {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "integration dashboards cannot be modified")
+	if d.Source != SourceUser {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "%s dashboards cannot be modified", d.Source)
 	}
 	return nil
 }
@@ -99,6 +99,11 @@ func (d *DashboardV2) Update(updatable UpdatableDashboardV2, updatedBy string, r
 	if err := d.ErrIfNotUpdatable(); err != nil {
 		return err
 	}
+	return d.UpdateUnsafe(updatable, updatedBy, resolvedTags)
+}
+
+// UpdateUnsafe applies the update without the source/lock gate. Intended for internal system callers.
+func (d *DashboardV2) UpdateUnsafe(updatable UpdatableDashboardV2, updatedBy string, resolvedTags []*tagtypes.Tag) error {
 	if updatable.Name != d.Name {
 		return errors.NewInvalidInputf(ErrCodeDashboardImmutable, "name is immutable; cannot change from %q to %q", d.Name, updatable.Name)
 	}

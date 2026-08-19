@@ -105,7 +105,7 @@ func newTestDefinition(t *testing.T, version int, displayName string) systemdash
 	return definition
 }
 
-func TestReconcileProvisionsThenUpgradesUntilTheUserEdits(t *testing.T) {
+func TestReconcileProvisionsThenUpgradesUntilTheRowIsModified(t *testing.T) {
 	ctx := context.Background()
 	sqlStore := newTestSQLStore(t)
 	orgID := valuer.GenerateUUID()
@@ -127,7 +127,7 @@ func TestReconcileProvisionsThenUpgradesUntilTheUserEdits(t *testing.T) {
 	assert.Equal(t, provisioned.Dashboard.UpdatedAt, unchanged.Dashboard.UpdatedAt)
 
 	// An unmodified copy is upgraded in place, keeping its id.
-	upgradingModule, _ := newTestModule(t, sqlStore, newTestDefinition(t, 2, "v2"))
+	upgradingModule, dashboardModule := newTestModule(t, sqlStore, newTestDefinition(t, 2, "v2"))
 	require.NoError(t, upgradingModule.Reconcile(ctx, orgID))
 
 	upgraded, err := upgradingModule.Get(ctx, orgID, testDashboardName)
@@ -136,9 +136,10 @@ func TestReconcileProvisionsThenUpgradesUntilTheUserEdits(t *testing.T) {
 	assert.Equal(t, "v2", upgraded.Dashboard.Spec.Display.Name)
 	assert.Equal(t, systemdashboardtypes.Status{Modified: false, UpdateAvailable: false, Version: 2}, upgraded.Status)
 
-	// Once the user edits it, the next release is offered rather than applied.
-	updatable := newTestDefinition(t, 2, "edited by the user").ToUpdatable()
-	_, err = upgradingModule.Update(ctx, orgID, testDashboardName, "user@signoz.io", updatable)
+	// Once anything but the provisioner writes the row, the next release is
+	// offered rather than applied.
+	updatable := newTestDefinition(t, 2, "edited out of band").ToUpdatable()
+	_, err = dashboardModule.UpdateUnsafeV2(ctx, orgID, upgraded.Dashboard.ID, "user@signoz.io", updatable)
 	require.NoError(t, err)
 
 	edited, err := upgradingModule.Get(ctx, orgID, testDashboardName)
@@ -151,8 +152,24 @@ func TestReconcileProvisionsThenUpgradesUntilTheUserEdits(t *testing.T) {
 
 	untouched, err := shippingModule.Get(ctx, orgID, testDashboardName)
 	require.NoError(t, err)
-	assert.Equal(t, "edited by the user", untouched.Dashboard.Spec.Display.Name)
+	assert.Equal(t, "edited out of band", untouched.Dashboard.Spec.Display.Name)
 	assert.Equal(t, systemdashboardtypes.Status{Modified: true, UpdateAvailable: true, Version: 2}, untouched.Status)
+}
+
+func TestSystemDashboardsAreImmutableToUsers(t *testing.T) {
+	ctx := context.Background()
+	sqlStore := newTestSQLStore(t)
+	orgID := valuer.GenerateUUID()
+
+	systemDashboardModule, dashboardModule := newTestModule(t, sqlStore, newTestDefinition(t, 1, "v1"))
+	require.NoError(t, systemDashboardModule.Reconcile(ctx, orgID))
+
+	provisioned, err := systemDashboardModule.Get(ctx, orgID, testDashboardName)
+	require.NoError(t, err)
+
+	_, err = dashboardModule.UpdateV2(ctx, orgID, provisioned.Dashboard.ID, "user@signoz.io", newTestDefinition(t, 1, "edited").ToUpdatable())
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cannot be modified")
 }
 
 func TestReconcileDoesNotDowngrade(t *testing.T) {

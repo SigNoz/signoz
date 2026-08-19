@@ -23118,9 +23118,11 @@ paths:
     get:
       deprecated: false
       description: Returns a dashboard SigNoz ships and owns, addressed by its stable
-        name rather than its id. The response is the v2 dashboard plus a `system`
-        object carrying whether the org has edited it, the shipped version it was
-        provisioned at, and whether a newer version is available.
+        name rather than its id. System dashboards are read-only and upgraded through
+        releases. The response is the v2 dashboard plus a `system` object carrying
+        the shipped version this copy was provisioned at, whether a newer version
+        is available, and whether the copy has diverged from what the provisioner
+        wrote.
       operationId: GetSystemDashboard
       parameters:
       - in: path
@@ -23179,78 +23181,6 @@ paths:
       - tokenizer:
         - dashboard:read
       summary: Get system dashboard
-      tags:
-      - dashboard
-    put:
-      deprecated: false
-      description: Updates a system dashboard addressed by its stable name. It behaves
-        exactly like UpdateDashboardV2 — same body, same validation, the name stays
-        immutable — and exists so the frontend can address a shipped dashboard without
-        first resolving its id. Once updated, the dashboard counts as modified and
-        is no longer upgraded in place by new releases.
-      operationId: UpdateSystemDashboard
-      parameters:
-      - in: path
-        name: name
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DashboardtypesUpdatableDashboardV2'
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/SystemdashboardtypesGettableSystemDashboard'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - dashboard:update
-      - tokenizer:
-        - dashboard:update
-      summary: Update system dashboard
       tags:
       - dashboard
   /api/v2/user_roles:

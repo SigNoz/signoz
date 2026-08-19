@@ -63,8 +63,8 @@ func (module *module) reconcile(ctx context.Context, orgID valuer.UUID, definiti
 		return module.provision(ctx, orgID, definition)
 	}
 
-	// Anything but the provisioner in updated_by means the user edited it. Leave
-	// it alone — the frontend surfaces the pending update instead.
+	// Anything but the provisioner in updated_by means a foreign write. Leave the
+	// row alone — never overwriting is the safe direction.
 	if existing.UpdatedBy != systemdashboardtypes.ProvisionerIdentity {
 		return nil
 	}
@@ -115,7 +115,7 @@ func (module *module) provision(ctx context.Context, orgID valuer.UUID, definiti
 
 func (module *module) upgrade(ctx context.Context, orgID valuer.UUID, id valuer.UUID, definition systemdashboardtypes.Definition) error {
 	err := module.store.RunInTx(ctx, func(ctx context.Context) error {
-		if _, err := module.dashboardModule.UpdateV2(ctx, orgID, id, systemdashboardtypes.ProvisionerIdentity, definition.ToUpdatable()); err != nil {
+		if _, err := module.dashboardModule.UpdateUnsafeV2(ctx, orgID, id, systemdashboardtypes.ProvisionerIdentity, definition.ToUpdatable()); err != nil {
 			return err
 		}
 
@@ -148,20 +148,6 @@ func (module *module) Get(ctx context.Context, orgID valuer.UUID, name string) (
 	}
 
 	return &systemdashboardtypes.SystemDashboard{Dashboard: existing, Status: module.status(ctx, orgID, existing)}, nil
-}
-
-func (module *module) Update(ctx context.Context, orgID valuer.UUID, name string, updatedBy string, updatable dashboardtypes.UpdatableDashboardV2) (*systemdashboardtypes.SystemDashboard, error) {
-	existing, err := module.get(ctx, orgID, name)
-	if err != nil {
-		return nil, err
-	}
-
-	updated, err := module.dashboardModule.UpdateV2(ctx, orgID, existing.ID, updatedBy, updatable)
-	if err != nil {
-		return nil, err
-	}
-
-	return &systemdashboardtypes.SystemDashboard{Dashboard: updated, Status: module.status(ctx, orgID, updated)}, nil
 }
 
 func (module *module) ResolveID(ctx context.Context, orgID valuer.UUID, name string) (valuer.UUID, error) {

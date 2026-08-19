@@ -288,6 +288,10 @@ func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer
 	return module.pkgDashboardModule.UpdateV2(ctx, orgID, id, updatedBy, updatable)
 }
 
+func (module *module) UpdateUnsafeV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updatable dashboardtypes.UpdatableDashboardV2) (*dashboardtypes.DashboardV2, error) {
+	return module.pkgDashboardModule.UpdateUnsafeV2(ctx, orgID, id, updatedBy, updatable)
+}
+
 func (module *module) PatchV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, patch dashboardtypes.PatchableDashboardV2) (*dashboardtypes.DashboardV2, error) {
 	return module.pkgDashboardModule.PatchV2(ctx, orgID, id, updatedBy, patch)
 }

@@ -67,8 +67,6 @@ import type {
 	UpdateDashboardView200,
 	UpdateDashboardViewPathParameters,
 	UpdatePublicDashboardPathParameters,
-	UpdateSystemDashboard200,
-	UpdateSystemDashboardPathParameters,
 } from '../sigNoz.schemas';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
@@ -2116,7 +2114,7 @@ export const invalidateGetPublicDashboardPanelQueryRangeV2 = async (
 };
 
 /**
- * Returns a dashboard SigNoz ships and owns, addressed by its stable name rather than its id. The response is the v2 dashboard plus a `system` object carrying whether the org has edited it, the shipped version it was provisioned at, and whether a newer version is available.
+ * Returns a dashboard SigNoz ships and owns, addressed by its stable name rather than its id. System dashboards are read-only and upgraded through releases. The response is the v2 dashboard plus a `system` object carrying the shipped version this copy was provisioned at, whether a newer version is available, and whether the copy has diverged from what the provisioner wrote.
  * @summary Get system dashboard
  */
 export const getSystemDashboard = (
@@ -2217,106 +2215,6 @@ export const invalidateGetSystemDashboard = async (
 	return queryClient;
 };
 
-/**
- * Updates a system dashboard addressed by its stable name. It behaves exactly like UpdateDashboardV2 — same body, same validation, the name stays immutable — and exists so the frontend can address a shipped dashboard without first resolving its id. Once updated, the dashboard counts as modified and is no longer upgraded in place by new releases.
- * @summary Update system dashboard
- */
-export const updateSystemDashboard = (
-	{ name }: UpdateSystemDashboardPathParameters,
-	dashboardtypesUpdatableDashboardV2DTO?: BodyType<DashboardtypesUpdatableDashboardV2DTO>,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<UpdateSystemDashboard200>({
-		url: `/api/v2/system/dashboards/${name}`,
-		method: 'PUT',
-		headers: { 'Content-Type': 'application/json' },
-		data: dashboardtypesUpdatableDashboardV2DTO,
-		signal,
-	});
-};
-
-export const getUpdateSystemDashboardMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof updateSystemDashboard>>,
-		TError,
-		{
-			pathParams: UpdateSystemDashboardPathParameters;
-			data?: BodyType<DashboardtypesUpdatableDashboardV2DTO>;
-		},
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof updateSystemDashboard>>,
-	TError,
-	{
-		pathParams: UpdateSystemDashboardPathParameters;
-		data?: BodyType<DashboardtypesUpdatableDashboardV2DTO>;
-	},
-	TContext
-> => {
-	const mutationKey = ['updateSystemDashboard'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-			'mutationKey' in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof updateSystemDashboard>>,
-		{
-			pathParams: UpdateSystemDashboardPathParameters;
-			data?: BodyType<DashboardtypesUpdatableDashboardV2DTO>;
-		}
-	> = (props) => {
-		const { pathParams, data } = props ?? {};
-
-		return updateSystemDashboard(pathParams, data);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type UpdateSystemDashboardMutationResult = NonNullable<
-	Awaited<ReturnType<typeof updateSystemDashboard>>
->;
-export type UpdateSystemDashboardMutationBody =
-	| BodyType<DashboardtypesUpdatableDashboardV2DTO>
-	| undefined;
-export type UpdateSystemDashboardMutationError =
-	ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Update system dashboard
- */
-export const useUpdateSystemDashboard = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof updateSystemDashboard>>,
-		TError,
-		{
-			pathParams: UpdateSystemDashboardPathParameters;
-			data?: BodyType<DashboardtypesUpdatableDashboardV2DTO>;
-		},
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof updateSystemDashboard>>,
-	TError,
-	{
-		pathParams: UpdateSystemDashboardPathParameters;
-		data?: BodyType<DashboardtypesUpdatableDashboardV2DTO>;
-	},
-	TContext
-> => {
-	return useMutation(getUpdateSystemDashboardMutationOptions(options));
-};
 /**
  * Same as ListDashboardsV2 but personalized for the calling user: each dashboard carries the caller's `pinned` state, and pinned dashboards float to the top of the requested ordering. Supports the same filter DSL, sort, order, and pagination.
  * @summary List dashboards for the current user (v2)
