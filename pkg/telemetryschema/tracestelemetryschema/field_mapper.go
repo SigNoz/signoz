@@ -611,6 +611,13 @@ func (m *fieldMapper) CandidateKeys(ctx context.Context, _ valuer.UUID, field *t
 		}
 	}
 
+	// Scope keys resolve only against the scope JSON column, so they never fall through to the
+	// name-only metadata match below: a same-named span or attribute entry is a different
+	// field (`scope.duration_nano` is not the duration_nano column).
+	if field.FieldContext == telemetrytypes.FieldContextScope {
+		return scopeCandidateKeys(field, keys)
+	}
+
 	// Metadata match by name, then the literal `{context}.{name}` spelling (a context can be
 	// a legitimate prefix in user data, e.g. `metric.max_count`). For a forgiving context
 	// this is the correction step (span.http.method -> attribute http.method).
@@ -633,21 +640,36 @@ func (m *fieldMapper) CandidateKeys(ctx context.Context, _ valuer.UUID, field *t
 		// strict context honored as-is: stripped interpretation first, literal spelling second
 		literal := telemetrytypes.NewTelemetryFieldKey(field.FieldContext.StringValue()+"."+field.Name, field.FieldContext, field.FieldDataType)
 		return append(querybuilder.SynthesizeKeys(field, value), querybuilder.SynthesizeKeys(literal, value)...)
-	case telemetrytypes.FieldContextScope:
-		// A declared path resolves to itself even without metadata, whether referenced
-		// fully-qualified (`scope.name`) or by its short name (`name`); any other name is
-		// a scope attribute on the JSON column. This must not depend on the intrinsic
-		// being present in the metadata map.
-		if isDeclaredScopePath(field.Name) {
-			return []*telemetrytypes.TelemetryFieldKey{telemetrytypes.NewTelemetryFieldKey(field.Name, telemetrytypes.FieldContextScope, telemetrytypes.FieldDataTypeString)}
-		}
-		if declaredName := telemetrytypes.FieldContextScope.StringValue() + "." + field.Name; isDeclaredScopePath(declaredName) {
-			return []*telemetrytypes.TelemetryFieldKey{telemetrytypes.NewTelemetryFieldKey(declaredName, telemetrytypes.FieldContextScope, telemetrytypes.FieldDataTypeString)}
-		}
-		return []*telemetrytypes.TelemetryFieldKey{synthScopeAttributeKey(field)}
 	}
 	// contexts that don't exist on spans (log, body, …) have nothing to synthesize
 	return nil
+}
+
+// scopeCandidateKeys resolves a scope-context key against the scope JSON column: a declared
+// path resolves to itself even without metadata, whether referenced fully-qualified
+// (`scope.name`) or by its short name (`name`); otherwise the scope-context metadata entries
+// under either spelling, and failing those a synthesized scope attribute.
+func scopeCandidateKeys(field *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
+	if isDeclaredScopePath(field.Name) {
+		return []*telemetrytypes.TelemetryFieldKey{telemetrytypes.NewTelemetryFieldKey(field.Name, telemetrytypes.FieldContextScope, telemetrytypes.FieldDataTypeString)}
+	}
+	if declaredName := telemetrytypes.FieldContextScope.StringValue() + "." + field.Name; isDeclaredScopePath(declaredName) {
+		return []*telemetrytypes.TelemetryFieldKey{telemetrytypes.NewTelemetryFieldKey(declaredName, telemetrytypes.FieldContextScope, telemetrytypes.FieldDataTypeString)}
+	}
+
+	for _, name := range []string{field.Name, telemetrytypes.FieldContextScope.StringValue() + "." + field.Name} {
+		scoped := []*telemetrytypes.TelemetryFieldKey{}
+		for _, match := range keys[name] {
+			if match.FieldContext == telemetrytypes.FieldContextScope {
+				scoped = append(scoped, match)
+			}
+		}
+		if len(scoped) > 0 {
+			return scoped
+		}
+	}
+
+	return []*telemetrytypes.TelemetryFieldKey{synthScopeAttributeKey(field)}
 }
 
 // synthScopeAttributeKey guesses a scope attribute (scope.attributes.<name>) for a name

@@ -259,19 +259,25 @@ func adjustTraceKeys(keys map[string][]*telemetrytypes.TelemetryFieldKey, query 
 	return actions
 }
 
+// intrinsicLookupName returns the name under which a key is registered in the intrinsic and
+// calculated field tables. Span-context intrinsics are registered bare (`name`, `duration_nano`)
+// while scope intrinsics are registered fully qualified (`scope.name`, `scope.version`), so a
+// scope key must be looked up qualified — bare lookup would match the span intrinsic of the same
+// name. A scope key that misses stays qualified rather than falling back to the bare name: a
+// scope attribute named `duration_nano` is not the span `duration_nano` column.
+func intrinsicLookupName(key *telemetrytypes.TelemetryFieldKey) string {
+	if key.FieldContext != telemetrytypes.FieldContextScope {
+		return key.Name
+	}
+	prefix := telemetrytypes.FieldContextScope.StringValue() + "."
+	if strings.HasPrefix(key.Name, prefix) {
+		return key.Name
+	}
+	return prefix + key.Name
+}
+
 // adjustTraceKey resolves a single TelemetryFieldKey against the keys map.
 func adjustTraceKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) []string {
-
-	// Scope keys must not take the intrinsic/calculated override path. That lookup keys on
-	// name alone (IntrinsicFields[key.Name]) and the trace intrinsics are span-context, so a
-	// scope key like {name, scope} matches the span `name` intrinsic. The override applies it
-	// via OverrideMetadataFrom, which copies context/type but not Name — so it can only flip
-	// the context to span, never produce the declared scope path (name -> scope.name). Pass a
-	// nil intrinsic so AdjustKey uses its metadata path (which does set Name) and the field
-	// mapper's scope handling resolves the rest.
-	if key.FieldContext == telemetrytypes.FieldContextScope {
-		return querybuilder.AdjustKey(key, keys, nil)
-	}
 
 	// for recording actions taken
 	actions := []string{}
@@ -280,20 +286,22 @@ func adjustTraceKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*te
 
 		For example: trace_id (intrinsic), response_status_code (calculated).
 	*/
+	lookupName := intrinsicLookupName(key)
+
 	var isIntrinsicOrCalculatedField bool
 	var intrinsicOrCalculatedField telemetrytypes.TelemetryFieldKey
-	if _, ok := tracestelemetryschema.IntrinsicFields[key.Name]; ok {
+	if _, ok := tracestelemetryschema.IntrinsicFields[lookupName]; ok {
 		isIntrinsicOrCalculatedField = true
-		intrinsicOrCalculatedField = tracestelemetryschema.IntrinsicFields[key.Name]
-	} else if _, ok := tracestelemetryschema.CalculatedFields[key.Name]; ok {
+		intrinsicOrCalculatedField = tracestelemetryschema.IntrinsicFields[lookupName]
+	} else if _, ok := tracestelemetryschema.CalculatedFields[lookupName]; ok {
 		isIntrinsicOrCalculatedField = true
-		intrinsicOrCalculatedField = tracestelemetryschema.CalculatedFields[key.Name]
-	} else if _, ok := tracestelemetryschema.IntrinsicFieldsDeprecated[key.Name]; ok {
+		intrinsicOrCalculatedField = tracestelemetryschema.CalculatedFields[lookupName]
+	} else if _, ok := tracestelemetryschema.IntrinsicFieldsDeprecated[lookupName]; ok {
 		isIntrinsicOrCalculatedField = true
-		intrinsicOrCalculatedField = tracestelemetryschema.IntrinsicFieldsDeprecated[key.Name]
-	} else if _, ok := tracestelemetryschema.CalculatedFieldsDeprecated[key.Name]; ok {
+		intrinsicOrCalculatedField = tracestelemetryschema.IntrinsicFieldsDeprecated[lookupName]
+	} else if _, ok := tracestelemetryschema.CalculatedFieldsDeprecated[lookupName]; ok {
 		isIntrinsicOrCalculatedField = true
-		intrinsicOrCalculatedField = tracestelemetryschema.CalculatedFieldsDeprecated[key.Name]
+		intrinsicOrCalculatedField = tracestelemetryschema.CalculatedFieldsDeprecated[lookupName]
 	}
 
 	if isIntrinsicOrCalculatedField {

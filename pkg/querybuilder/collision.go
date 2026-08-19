@@ -147,6 +147,11 @@ func AdjustKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemet
 			// So we can safely override the context and data type
 
 			actions = append(actions, fmt.Sprintf("Overriding key: %s to %s", key, intrinsicOrCalculatedField))
+			// Adopt the canonical name of the field it resolved to, the same way the metadata
+			// path below does. This is a no-op when the caller looked the field up by the key's
+			// own name, and carries the qualified name for fields registered under one
+			// (`name` with scope context -> `scope.name`).
+			key.Name = intrinsicOrCalculatedField.Name
 			key.OverrideMetadataFrom(intrinsicOrCalculatedField)
 			return actions
 
