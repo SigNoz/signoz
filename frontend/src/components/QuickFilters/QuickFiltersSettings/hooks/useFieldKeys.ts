@@ -6,6 +6,8 @@ import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
 
 import { getFieldKeysSignal, mapFieldKeysToFilters } from '../utils';
 
+const FIELD_KEYS_LIMIT = 100;
+
 interface UseFieldKeysProps {
 	signal: SignalType | undefined;
 	searchText: string;
@@ -27,6 +29,7 @@ export function useFieldKeys({
 		{
 			signal: signal ? getFieldKeysSignal(signal) : undefined,
 			searchText,
+			limit: FIELD_KEYS_LIMIT,
 		},
 		{
 			query: {
@@ -38,6 +41,5 @@ export function useFieldKeys({
 	);
 
 	const filters = useMemo(() => mapFieldKeysToFilters(data?.data?.keys), [data]);
-
 	return { filters, isFetching };
 }
