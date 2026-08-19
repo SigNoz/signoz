@@ -2,7 +2,11 @@ import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { SignalType } from 'components/QuickFilters/types';
 
 import { SIGNAL_DATA_SOURCE_MAP } from '../constants';
-import { DATA_SOURCE_TO_SIGNAL, mapFieldKeysToFilters } from '../utils';
+import {
+	DATA_SOURCE_TO_SIGNAL,
+	mapFieldKeysToFilters,
+	mapMeterFieldKeysToFilters,
+} from '../utils';
 
 describe('DATA_SOURCE_TO_SIGNAL', () => {
 	it.each([
@@ -10,6 +14,7 @@ describe('DATA_SOURCE_TO_SIGNAL', () => {
 		[SignalType.TRACES, TelemetrytypesSignalDTO.traces],
 		[SignalType.EXCEPTIONS, TelemetrytypesSignalDTO.traces],
 		[SignalType.API_MONITORING, TelemetrytypesSignalDTO.traces],
+		[SignalType.METER_EXPLORER, TelemetrytypesSignalDTO.metrics],
 	])('maps %s to the %s signal', (signal, expected) => {
 		expect(DATA_SOURCE_TO_SIGNAL[SIGNAL_DATA_SOURCE_MAP[signal]]).toBe(expected);
 	});
@@ -78,5 +83,57 @@ describe('mapFieldKeysToFilters', () => {
 		} as never);
 
 		expect(filters).toStrictEqual([{ key: 'custom', dataType: '', type: '' }]);
+	});
+});
+
+describe('mapMeterFieldKeysToFilters', () => {
+	it('returns an empty list when there are no keys', () => {
+		expect(mapMeterFieldKeysToFilters(undefined)).toStrictEqual([]);
+	});
+
+	it('keeps the raw field context, which carries the metric aggregation', () => {
+		const filters = mapMeterFieldKeysToFilters({
+			'service.name': [
+				{
+					name: 'service.name',
+					fieldContext: 'attribute',
+					fieldDataType: 'string',
+				},
+			],
+			'signoz.metric.name': [
+				{
+					name: 'signoz.metric.name',
+					fieldContext: 'metric',
+					fieldDataType: 'float64',
+				},
+			],
+		} as never);
+
+		expect(filters).toStrictEqual([
+			{ key: 'service.name', dataType: 'string', type: 'attribute' },
+			{ key: 'signoz.metric.name', dataType: 'float64', type: 'metric' },
+		]);
+	});
+
+	it('narrows the number data type so the save is not rejected', () => {
+		const filters = mapMeterFieldKeysToFilters({
+			'http.status_code': [
+				{
+					name: 'http.status_code',
+					fieldContext: 'attribute',
+					fieldDataType: 'number',
+				},
+			],
+		} as never);
+
+		expect(filters).toStrictEqual([
+			{ key: 'http.status_code', dataType: 'float64', type: 'attribute' },
+		]);
+	});
+
+	it('falls back to unspecified for missing context and data type', () => {
+		expect(
+			mapMeterFieldKeysToFilters({ custom: [{ name: 'custom' }] } as never),
+		).toStrictEqual([{ key: 'custom', dataType: '', type: '' }]);
 	});
 });

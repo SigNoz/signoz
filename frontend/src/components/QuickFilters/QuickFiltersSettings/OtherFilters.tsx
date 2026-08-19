@@ -1,11 +1,7 @@
 import { useMemo } from 'react';
 import { Button, Skeleton } from 'antd';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { SIGNAL_DATA_SOURCE_MAP } from 'components/QuickFilters/QuickFiltersSettings/constants';
 import { SignalType } from 'components/QuickFilters/types';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
-import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
 
 import { useFieldKeys } from './hooks/useFieldKeys';
@@ -37,49 +33,19 @@ function OtherFilters({
 	addedFilters: FilterType[];
 	setAddedFilters: React.Dispatch<React.SetStateAction<FilterType[]>>;
 }): JSX.Element {
-	const isMeterDataSource = useMemo(
-		() => signal && signal === SignalType.METER_EXPLORER,
-		[signal],
+	const { filters: fieldKeyFilters, isFetching } = useFieldKeys({
+		signal,
+		searchText: inputValue,
+		enabled: !!signal,
+	});
+
+	const otherFilters = useMemo(
+		() =>
+			fieldKeyFilters.filter(
+				(attr) => !addedFilters.some((filter) => filter.key === attr.key),
+			),
+		[addedFilters, fieldKeyFilters],
 	);
-
-	const { filters: fieldKeyFilters, isFetching: isFetchingFieldKeys } =
-		useFieldKeys({
-			signal,
-			searchText: inputValue,
-			enabled: !!signal && !isMeterDataSource,
-		});
-
-	const { data: meterFieldKeysData, isLoading: isLoadingMeterFieldKeys } =
-		useGetQueryKeySuggestions(
-			{
-				searchText: inputValue,
-				signal: SIGNAL_DATA_SOURCE_MAP[signal as SignalType],
-				signalSource: 'meter',
-			},
-			{
-				queryKey: [REACT_QUERY_KEY.GET_OTHER_FILTERS, inputValue],
-				enabled: !!signal && isMeterDataSource,
-			},
-		);
-
-	const otherFilters = useMemo(() => {
-		let filterAttributes: FilterType[];
-		if (isMeterDataSource) {
-			const fieldKeys: QueryKeyDataSuggestionsProps[] = Object.values(
-				meterFieldKeysData?.data?.data?.keys || {},
-			)?.flat();
-			filterAttributes = fieldKeys.map((attr) => ({
-				key: attr.name,
-				dataType: attr.fieldDataType || '',
-				type: attr.fieldContext || '',
-			}));
-		} else {
-			filterAttributes = fieldKeyFilters;
-		}
-		return filterAttributes?.filter(
-			(attr) => !addedFilters.some((filter) => filter.key === attr.key),
-		);
-	}, [addedFilters, fieldKeyFilters, isMeterDataSource, meterFieldKeysData]);
 
 	const handleAddFilter = (filter: FilterType): void => {
 		setAddedFilters((prev) => [
@@ -93,8 +59,7 @@ function OtherFilters({
 	};
 
 	const renderFilters = (): React.ReactNode => {
-		const isLoading = isFetchingFieldKeys || isLoadingMeterFieldKeys;
-		if (isLoading) {
+		if (isFetching) {
 			return <OtherFiltersSkeleton />;
 		}
 		if (!otherFilters?.length) {

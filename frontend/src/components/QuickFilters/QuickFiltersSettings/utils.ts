@@ -3,6 +3,7 @@ import {
 	TelemetrytypesFieldDataTypeDTO,
 	TelemetrytypesGettableFieldKeysDTOKeys,
 	TelemetrytypesSignalDTO,
+	TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
@@ -47,9 +48,9 @@ const toAttributeDataType = (
 	(fieldDataType && FIELD_DATA_TYPE_TO_ATTRIBUTE_DATA_TYPE[fieldDataType]) ||
 	DataTypes.EMPTY;
 
-/** Keys are grouped by name and one name can span contexts (resource and attribute); first wins. */
-export const mapFieldKeysToFilters = (
+const mapFirstKeyPerName = (
 	keys: TelemetrytypesGettableFieldKeysDTOKeys | undefined,
+	toFilter: (fieldKey: TelemetrytypesTelemetryFieldKeyDTO) => FilterType,
 ): FilterType[] => {
 	if (!keys) {
 		return [];
@@ -58,9 +59,29 @@ export const mapFieldKeysToFilters = (
 	return Object.values(keys)
 		.map(([fieldKey]) => fieldKey)
 		.filter((fieldKey) => !!fieldKey?.name)
-		.map((fieldKey) => ({
-			key: fieldKey.name,
-			dataType: toAttributeDataType(fieldKey.fieldDataType),
-			type: toAttributeType(fieldKey.fieldContext),
-		}));
+		.map(toFilter);
 };
+
+/** Keys are grouped by name and one name can span contexts (resource and attribute) */
+export const mapFieldKeysToFilters = (
+	keys: TelemetrytypesGettableFieldKeysDTOKeys | undefined,
+): FilterType[] =>
+	mapFirstKeyPerName(keys, (fieldKey) => ({
+		key: fieldKey.name,
+		dataType: toAttributeDataType(fieldKey.fieldDataType),
+		type: toAttributeType(fieldKey.fieldContext),
+	}));
+
+/**
+ * Meter keeps the raw field context: for metrics `type` carries the aggregation
+ * (`Sum`), not the log/trace attribute scope, so the v3 attribute mapping must not
+ * apply. The data type still needs narrowing — `number` fails the save validation.
+ */
+export const mapMeterFieldKeysToFilters = (
+	keys: TelemetrytypesGettableFieldKeysDTOKeys | undefined,
+): FilterType[] =>
+	mapFirstKeyPerName(keys, (fieldKey) => ({
+		key: fieldKey.name,
+		dataType: toAttributeDataType(fieldKey.fieldDataType),
+		type: fieldKey.fieldContext || '',
+	}));

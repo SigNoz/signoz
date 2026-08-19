@@ -62,6 +62,31 @@ export const quickFiltersListResponse = {
 	},
 };
 
+export const meterFieldKeysResponse = {
+	status: 'success',
+	data: {
+		complete: true,
+		keys: {
+			'service.name': [
+				{
+					name: 'service.name',
+					signal: 'metrics',
+					fieldContext: 'attribute',
+					fieldDataType: 'string',
+				},
+			],
+			'http.status_code': [
+				{
+					name: 'http.status_code',
+					signal: 'metrics',
+					fieldContext: 'attribute',
+					fieldDataType: 'number',
+				},
+			],
+		},
+	},
+};
+
 export const otherFiltersFieldKeysResponse = {
 	status: 'success',
 	data: {

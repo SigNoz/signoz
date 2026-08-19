@@ -1,11 +1,16 @@
 import { useMemo } from 'react';
+import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { useGetFieldsKeys } from 'api/generated/services/fields';
 import { SignalType } from 'components/QuickFilters/types';
 import { FIELD_API_CACHE_TIME } from 'constants/queryCacheTime';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
 
 import { SIGNAL_DATA_SOURCE_MAP } from '../constants';
-import { DATA_SOURCE_TO_SIGNAL, mapFieldKeysToFilters } from '../utils';
+import {
+	DATA_SOURCE_TO_SIGNAL,
+	mapFieldKeysToFilters,
+	mapMeterFieldKeysToFilters,
+} from '../utils';
 
 const FIELD_KEYS_LIMIT = 100;
 
@@ -20,17 +25,24 @@ interface UseFieldKeysReturn {
 	isFetching: boolean;
 }
 
-/**  only for logs and traces signals; meter keys still come from useGetQueryKeySuggestions. */
+/**
+ * Meter is the odd signal out: its keys are a source-scoped subset of metrics, and its
+ * `type` keeps the raw field context instead of the v3 attribute scope — hence both the
+ * `source` param and the separate mapper.
+ */
 export function useFieldKeys({
 	signal,
 	searchText,
 	enabled,
 }: UseFieldKeysProps): UseFieldKeysReturn {
+	const isMeterSignal = signal === SignalType.METER_EXPLORER;
+
 	const { data, isFetching } = useGetFieldsKeys(
 		{
 			signal: signal
 				? DATA_SOURCE_TO_SIGNAL[SIGNAL_DATA_SOURCE_MAP[signal]]
 				: undefined,
+			source: isMeterSignal ? TelemetrytypesSourceDTO.meter : undefined,
 			searchText,
 			limit: FIELD_KEYS_LIMIT,
 		},
@@ -43,6 +55,12 @@ export function useFieldKeys({
 		},
 	);
 
-	const filters = useMemo(() => mapFieldKeysToFilters(data?.data?.keys), [data]);
+	const filters = useMemo(
+		() =>
+			isMeterSignal
+				? mapMeterFieldKeysToFilters(data?.data?.keys)
+				: mapFieldKeysToFilters(data?.data?.keys),
+		[data, isMeterSignal],
+	);
 	return { filters, isFetching };
 }
