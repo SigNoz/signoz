@@ -6,10 +6,16 @@ import {
 	TooltipRenderArgs,
 } from 'lib/uPlotV2/components/types';
 
+import { StackMode } from 'lib/uPlotV2/config/types';
+
 import { TimeSeriesChartProps } from '../types';
 
 export default function TimeSeries(props: TimeSeriesChartProps): JSX.Element {
-	const { children, customTooltip, ...rest } = props;
+	const { children, customTooltip, stack = StackMode.None, ...rest } = props;
+
+	// Written during render so it lands before UPlotChart's effect reads the config,
+	// which derives the fill bands, percent axis unit and percent range from it.
+	rest.config.setStack(stack);
 
 	const renderTooltip = useCallback(
 		(props: TooltipRenderArgs): React.ReactNode => {

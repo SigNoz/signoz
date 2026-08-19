@@ -1,7 +1,6 @@
 import type { DashboardtypesBarChartPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { getInitialStackedBands } from 'container/DashboardContainer/visualization/charts/utils/stackSeriesUtils';
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 import { buildBaseConfig } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/baseConfigBuilder';
 import { resolveSeriesLabelV5 } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/resolveSeriesLabel';
@@ -100,12 +99,6 @@ function addSeries({
 	isDarkMode,
 }: AddSeriesArgs): void {
 	const colorMapping = spec.legend?.customColors ?? {};
-
-	if (spec.visualization?.stackedBarChart) {
-		// uPlot uses 1-based series indices (index 0 is the timestamp axis);
-		// `+1` keeps the band targets aligned with the series we're about to add.
-		builder.setBands(getInitialStackedBands(series.length + 1));
-	}
 
 	series.forEach((s) => {
 		const baseLabel = getLabelName(s.labels, s.queryName, s.legend);

@@ -146,16 +146,3 @@ function findNextVisibleSeriesIndex(
 	}
 	return -1;
 }
-
-/**
- * Returns band indices for initial stacked state (no series omitted).
- * Top-down: first series at top, band fills between consecutive series.
- * uPlot band format: [upperSeriesIdx, lowerSeriesIdx].
- */
-export function getInitialStackedBands(seriesCount: number): uPlot.Band[] {
-	const bands: uPlot.Band[] = [];
-	for (let seriesIndex = 1; seriesIndex < seriesCount; seriesIndex++) {
-		bands.push({ series: [seriesIndex, seriesIndex + 1] });
-	}
-	return bands;
-}
