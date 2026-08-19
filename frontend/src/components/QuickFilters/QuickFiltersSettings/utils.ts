@@ -4,18 +4,19 @@ import {
 	TelemetrytypesGettableFieldKeysDTOKeys,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { SignalType } from 'components/QuickFilters/types';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
+import { DataSource } from 'types/common/queryBuilder';
 
-const SIGNAL_TO_FIELD_KEYS_SIGNAL: Record<SignalType, TelemetrytypesSignalDTO> =
-	{
-		[SignalType.LOGS]: TelemetrytypesSignalDTO.logs,
-		[SignalType.TRACES]: TelemetrytypesSignalDTO.traces,
-		[SignalType.EXCEPTIONS]: TelemetrytypesSignalDTO.traces,
-		[SignalType.API_MONITORING]: TelemetrytypesSignalDTO.traces,
-		[SignalType.METER_EXPLORER]: TelemetrytypesSignalDTO.metrics,
-	};
+/** Same values either side, but the enums are nominal — TS rejects the cast, so bridge them. */
+export const DATA_SOURCE_TO_SIGNAL: Record<
+	DataSource,
+	TelemetrytypesSignalDTO
+> = {
+	[DataSource.LOGS]: TelemetrytypesSignalDTO.logs,
+	[DataSource.TRACES]: TelemetrytypesSignalDTO.traces,
+	[DataSource.METRICS]: TelemetrytypesSignalDTO.metrics,
+};
 
 const FIELD_CONTEXT_TO_ATTRIBUTE_TYPE: Partial<
 	Record<TelemetrytypesFieldContextDTO, string>
@@ -34,10 +35,6 @@ const FIELD_DATA_TYPE_TO_ATTRIBUTE_DATA_TYPE: Partial<
 	[TelemetrytypesFieldDataTypeDTO.float64]: DataTypes.Float64,
 	[TelemetrytypesFieldDataTypeDTO.number]: DataTypes.Float64,
 };
-
-export const getFieldKeysSignal = (
-	signal: SignalType,
-): TelemetrytypesSignalDTO => SIGNAL_TO_FIELD_KEYS_SIGNAL[signal];
 
 const toAttributeType = (
 	fieldContext: TelemetrytypesFieldContextDTO | undefined,

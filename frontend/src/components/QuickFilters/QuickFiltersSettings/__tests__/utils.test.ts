@@ -1,16 +1,17 @@
 import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { SignalType } from 'components/QuickFilters/types';
 
-import { getFieldKeysSignal, mapFieldKeysToFilters } from '../utils';
+import { SIGNAL_DATA_SOURCE_MAP } from '../constants';
+import { DATA_SOURCE_TO_SIGNAL, mapFieldKeysToFilters } from '../utils';
 
-describe('getFieldKeysSignal', () => {
+describe('DATA_SOURCE_TO_SIGNAL', () => {
 	it.each([
 		[SignalType.LOGS, TelemetrytypesSignalDTO.logs],
 		[SignalType.TRACES, TelemetrytypesSignalDTO.traces],
 		[SignalType.EXCEPTIONS, TelemetrytypesSignalDTO.traces],
 		[SignalType.API_MONITORING, TelemetrytypesSignalDTO.traces],
 	])('maps %s to the %s signal', (signal, expected) => {
-		expect(getFieldKeysSignal(signal)).toBe(expected);
+		expect(DATA_SOURCE_TO_SIGNAL[SIGNAL_DATA_SOURCE_MAP[signal]]).toBe(expected);
 	});
 });
 
