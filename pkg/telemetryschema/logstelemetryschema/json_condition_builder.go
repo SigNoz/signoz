@@ -439,27 +439,27 @@ func (c *jsonConditionBuilder) arrayFuncScalarLeaf(node *telemetrytypes.JSONAcce
 // buildTokenFunctionCondition builds a hasToken search over a body JSON string field:
 // hasToken(LOWER(<elem>), LOWER(?)) wrapped in arrayExists over any array hops between the
 // root and the terminal. The field must resolve to a String leaf or a String array.
-func (c *jsonConditionBuilder) buildTokenFunctionCondition(needle any, sb *sqlbuilder.SelectBuilder) (string, error) {
+func (c *jsonConditionBuilder) buildTokenFunctionCondition(token any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	if len(c.key.JSONPlan) == 0 {
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "function `hasToken` could not resolve a JSON access plan for field `%s`", c.key.Name)
 	}
 
 	return c.buildOredRootChains(func(node *telemetrytypes.JSONAccessNode) (string, error) {
-		return c.tokenLeaf(node, needle, sb)
+		return c.tokenLeaf(node, token, sb)
 	}, sb)
 }
 
 // tokenLeaf builds the hasToken match at a terminal node: a direct match for a String leaf
 // (coalesced to false, as in arrayFuncScalarLeaf), or an arrayExists over the elements for a
 // String array leaf. hasToken is string-only, so any other element type is rejected.
-func (c *jsonConditionBuilder) tokenLeaf(node *telemetrytypes.JSONAccessNode, needle any, sb *sqlbuilder.SelectBuilder) (string, error) {
+func (c *jsonConditionBuilder) tokenLeaf(node *telemetrytypes.JSONAccessNode, token any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	switch node.TerminalConfig.ElemType {
 	case telemetrytypes.String:
 		fieldExpr := fmt.Sprintf("dynamicElement(%s, 'String')", node.FieldPath())
-		return fmt.Sprintf("ifNull(hasToken(LOWER(%s), LOWER(%s)), false)", fieldExpr, sb.Var(needle)), nil
+		return fmt.Sprintf("ifNull(hasToken(LOWER(%s), LOWER(%s)), false)", fieldExpr, sb.Var(token)), nil
 	case telemetrytypes.ArrayString:
 		arrayExpr := fmt.Sprintf("dynamicElement(%s, '%s')", node.FieldPath(), node.TerminalConfig.ElemType.StringValue())
-		return fmt.Sprintf("arrayExists(x -> hasToken(LOWER(x), LOWER(%s)), %s)", sb.Var(needle), arrayExpr), nil
+		return fmt.Sprintf("arrayExists(x -> hasToken(LOWER(x), LOWER(%s)), %s)", sb.Var(token), arrayExpr), nil
 	default:
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "function `hasToken` only supports string fields; field `%s` is `%s`", c.key.Name, node.TerminalConfig.Key.FieldDataType.StringValue())
 	}

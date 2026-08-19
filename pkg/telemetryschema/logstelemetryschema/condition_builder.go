@@ -105,14 +105,14 @@ func (c *conditionBuilder) conditionForArrayFunction(
 			"function `%s` supports only body JSON search", operator.FunctionName()).WithUrl(functionBodyJSONSearchDocURL)
 	}
 
-	needle := value
+	element := value
 	if args, ok := value.([]any); ok && len(args) > 0 {
-		needle = args[0]
+		element = args[0]
 	}
 
 	if c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
 		// JSON access plan: data-type collision handling, nested array paths.
-		valueType, needle := InferDataType(needle, operator, key)
+		valueType, element := InferDataType(element, operator, key)
 		// A not-found (synthesized) body path carries no metadata plan; build an exhaustive
 		// one so the query runs against the underlying data (with the not-found warning)
 		// instead of erroring, matching the regular-operator path.
@@ -123,10 +123,10 @@ func (c *conditionBuilder) conditionForArrayFunction(
 			}
 			key = keyCopy
 		}
-		return NewJSONConditionBuilder(key, valueType).buildArrayFunctionCondition(operator, needle, sb)
+		return NewJSONConditionBuilder(key, valueType).buildArrayFunctionCondition(operator, element, sb)
 	}
 
-	return c.legacyArrayFunctionCondition(key, operator, needle, sb), nil
+	return c.legacyArrayFunctionCondition(key, operator, element, sb), nil
 }
 
 // legacyArrayFunctionCondition builds the has-family comparison over the plain body string, with
@@ -135,29 +135,29 @@ func (c *conditionBuilder) conditionForArrayFunction(
 func (c *conditionBuilder) legacyArrayFunctionCondition(
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
-	needle any,
+	element any,
 	sb *sqlbuilder.SelectBuilder,
 ) string {
 	// type-matched array extraction, OR-ed with a scalar comparison for a scalar body value
 	// (coalesced to false so NOT has() matches missing-key rows).
-	elemType := legacyElemType(needle)
+	elemType := legacyElemType(element)
 	arrayExpr := getBodyJSONArrayKey(key, elemType)
 	scalarExpr, scalarGuard, hasScalar := getBodyJSONScalarKey(key, elemType)
 
-	elements, isList := needle.([]any)
+	elements, isList := element.([]any)
 	if !isList {
-		elements = []any{needle}
+		elements = []any{element}
 	}
 	vals := make([]any, len(elements))
 	for i, v := range elements {
-		vals[i] = legacyCoerceNeedle(v, elemType)
+		vals[i] = legacyCoerceElement(v, elemType)
 	}
 
 	var cond string
 	switch {
 	case isList:
-		// Pin the needle array type to the haystack; scalar fallback below coerces value-level.
-		arrayCond := fmt.Sprintf("%s(%s, %s)", operator.FunctionName(), arrayExpr, castNeedleArray(elemType, sb.Var(vals)))
+		// Pin the element array type to the array it is tested against; scalar fallback below coerces value-level.
+		arrayCond := fmt.Sprintf("%s(%s, %s)", operator.FunctionName(), arrayExpr, castElementArray(elemType, sb.Var(vals)))
 		if !hasScalar {
 			cond = arrayCond
 			break
@@ -238,9 +238,9 @@ func elementLiterals(operator qbtypes.FilterOperator, elements []any, sb *sqlbui
 	return predicates
 }
 
-// castNeedleArray pins an Int64 needle array to Array(Int64) so it matches the Array(Nullable(Int64))
-// haystack; without it a needle >= 2^32 binds as Array(UInt64) and hasAny/hasAll error (code 386).
-func castNeedleArray(elemType telemetrytypes.FieldDataType, arg string) string {
+// castElementArray pins an Int64 element array to Array(Int64) so it matches the Array(Nullable(Int64))
+// it is tested against; without it an element >= 2^32 binds as Array(UInt64) and hasAny/hasAll error (code 386).
+func castElementArray(elemType telemetrytypes.FieldDataType, arg string) string {
 	if elemType == telemetrytypes.FieldDataTypeInt64 {
 		return fmt.Sprintf("CAST(%s AS Array(Int64))", arg)
 	}
@@ -268,24 +268,24 @@ func (c *conditionBuilder) conditionForHasToken(
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
-	// hasToken takes a single needle; unwrap it from the function-argument slice.
-	needle := value
+	// hasToken takes a single token; unwrap it from the function-argument slice.
+	token := value
 	if args, ok := value.([]any); ok && len(args) > 0 {
-		needle = args[0]
+		token = args[0]
 	}
 
 	// hasToken matches string tokens only.
-	needleStr, ok := needle.(string)
+	tokenStr, ok := token.(string)
 	if !ok {
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"function `hasToken` expects value parameter to be a string").WithUrl(hasTokenFunctionDocURL)
 	}
 
-	// A multi-token needle makes CH hasToken error (code 36); reject up front as a 400. Both modes flow here.
-	if sep, found := firstTokenSeparator(needleStr); found {
+	// A multi-token value makes CH hasToken error (code 36); reject up front as a 400. Both modes flow here.
+	if sep, found := firstTokenSeparator(tokenStr); found {
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"function `hasToken` matches a single whole token, but %q contains the separator %q; use a substring filter (e.g. `body CONTAINS '%s'`) to search across separators",
-			needleStr, sep, needleStr).WithUrl(hasTokenFunctionDocURL)
+			tokenStr, sep, tokenStr).WithUrl(hasTokenFunctionDocURL)
 	}
 
 	bodyJSONEnabled := c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID))
@@ -296,7 +296,7 @@ func (c *conditionBuilder) conditionForHasToken(
 			return "", errors.NewInvalidInputf(errors.CodeInvalidInput,
 				"function `hasToken` only supports body field as first parameter").WithUrl(hasTokenFunctionDocURL)
 		}
-		return fmt.Sprintf("hasToken(LOWER(%s), LOWER(%s))", LogsV2BodyColumn, sb.Var(needle)), nil
+		return fmt.Sprintf("hasToken(LOWER(%s), LOWER(%s))", LogsV2BodyColumn, sb.Var(token)), nil
 	}
 
 	// JSON mode: a bare body/body.message key searches the body.message column; any other body
@@ -305,7 +305,7 @@ func (c *conditionBuilder) conditionForHasToken(
 	// falls through and emits dynamicElement over the already-typed String column, which errors.
 	if key.Name == LogsV2BodyColumn || key.Name == bodyMessageField ||
 		(key.FieldContext == telemetrytypes.FieldContextBody && key.Name == messageSubField) {
-		return fmt.Sprintf("hasToken(LOWER(%s), LOWER(%s))", bodyMessageField, sb.Var(needle)), nil
+		return fmt.Sprintf("hasToken(LOWER(%s), LOWER(%s))", bodyMessageField, sb.Var(token)), nil
 	}
 	if key.FieldContext == telemetrytypes.FieldContextBody {
 		// A not-found (synthesized) body path carries no metadata plan; build an exhaustive
@@ -317,7 +317,7 @@ func (c *conditionBuilder) conditionForHasToken(
 			}
 			key = keyCopy
 		}
-		return NewJSONConditionBuilder(key, telemetrytypes.FieldDataTypeString).buildTokenFunctionCondition(needle, sb)
+		return NewJSONConditionBuilder(key, telemetrytypes.FieldDataTypeString).buildTokenFunctionCondition(token, sb)
 	}
 	return "", errors.NewInvalidInputf(errors.CodeInvalidInput,
 		"function `hasToken` only supports the body field or a body JSON string field as first parameter").WithUrl(hasTokenFunctionDocURL)
