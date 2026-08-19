@@ -79,7 +79,6 @@ export function useCreateAlertFromPanel(): (
 						const unit = readPanelUnit(panel.spec.plugin);
 						const url = buildAlertUrl(
 							query,
-							panelType,
 							unit,
 							deriveAlertPrefill(panel, query, unit),
 						);

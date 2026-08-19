@@ -168,7 +168,6 @@ describe('useCreateAlertFromPanel', () => {
 			// The resolved query is seeded with the panel-derived alert prefill.
 			expect(mockBuildAlertUrl).toHaveBeenCalledWith(
 				{ resolved: 'query' },
-				PANEL_TYPES.TIME_SERIES,
 				undefined,
 				mockPrefill,
 			);
