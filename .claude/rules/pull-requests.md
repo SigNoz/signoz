@@ -8,3 +8,4 @@
 - **AI assistance in commits may optionally be disclosed with an `Assisted-by:` trailer** naming the model (e.g. `Assisted-by: Claude Opus 4.5`) — do NOT use a `Co-authored-by:` trailer for this.
 - **Keep the commit body short and human readable** focused on decision made if any. Commit body must not re-iterate the changes done, skip if title is sufficient in conveying the change.
 - **Use convensional commit format** for commits and PR title.
+- **Do not amend the commits once pushed.** Always create a new commit once changes are pushed to remote.
