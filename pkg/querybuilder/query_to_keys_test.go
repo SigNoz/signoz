@@ -72,6 +72,26 @@ func TestQueryToKeys(t *testing.T) {
 				},
 			},
 		},
+		{
+			// A scope reference also fetches its full `scope.`-prefixed name so a scope
+			// attribute whose flattened name begins with `scope.` (e.g. `scope.prefixed`)
+			// is discoverable after Normalize strips the prefix.
+			query: `scope.prefixed = 'local'`,
+			expectedKeys: []telemetrytypes.FieldKeySelector{
+				{
+					Name:          "prefixed",
+					Signal:        telemetrytypes.SignalUnspecified,
+					FieldContext:  telemetrytypes.FieldContextScope,
+					FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+				},
+				{
+					Name:          "scope.prefixed",
+					Signal:        telemetrytypes.SignalUnspecified,
+					FieldContext:  telemetrytypes.FieldContextUnspecified,
+					FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
+				},
+			},
+		},
 	}
 
 	for _, testCase := range testCases {

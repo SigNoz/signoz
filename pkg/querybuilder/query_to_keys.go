@@ -56,6 +56,21 @@ func QueryStringToKeysSelectors(query string) []*telemetrytypes.FieldKeySelector
 					FieldDataType: key.FieldDataType,
 				})
 			}
+
+			// A scope attribute whose flattened name begins with `scope.` (e.g. an OTel
+			// scope attribute nested under `scope`) is indistinguishable from the `scope.`
+			// context prefix after Normalize strips it. Also fetch the metadata key under
+			// its full `scope.`-prefixed name so resolution can find it.
+			// todo(tushar): consider reverting changes done to this method in below PR to avoid scope specific checks
+			// https://github.com/SigNoz/signoz/issues/11374
+			if key.FieldContext == telemetrytypes.FieldContextScope {
+				keys = append(keys, &telemetrytypes.FieldKeySelector{
+					Name:          key.FieldContext.StringValue() + "." + key.Name,
+					Signal:        key.Signal,
+					FieldContext:  telemetrytypes.FieldContextUnspecified, // this allows 'scope.' prefix for keys with other context as well
+					FieldDataType: key.FieldDataType,
+				})
+			}
 		}
 	}
 
