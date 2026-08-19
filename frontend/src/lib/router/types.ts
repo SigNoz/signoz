@@ -58,6 +58,15 @@ export interface NavigateOptions {
 
 export type NavigateFn = (to: To, options?: NavigateOptions) => void;
 
+/**
+ * The slice of a history object `applyNavigate` needs, so the adapter does not
+ * have to name a particular history package.
+ */
+export interface NavigableHistory {
+	push(to: To, state?: unknown): void;
+	replace(to: To, state?: unknown): void;
+}
+
 export interface BlockedTransition {
 	location: AppLocation;
 	action: NavigationAction;

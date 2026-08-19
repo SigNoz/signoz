@@ -1,6 +1,7 @@
 import { expect, test } from '../../fixtures/auth';
 import {
 	historyDepth,
+	HOME_PATH,
 	LOGIN_PATH,
 	SERVICES_PATH,
 	submitLoginForm,
@@ -56,16 +57,17 @@ test.describe('Routing — auth guards', () => {
 			await submitLoginForm(page);
 			await page.waitForURL((url) => url.pathname === SERVICES_PATH);
 
-			// The post-login hop back to the stashed route does push, on v5 today.
+			// The post-login redirect to the stashed route pushes a new history entry.
 			expect(await historyDepth(page)).toBe(depthAtLogin + 1);
 
-			// So Back reaches the replaced /login entry — where being logged in
-			// redirects straight out again, rather than re-running the login chain.
+			// Back reaches the replaced /login entry — being logged in redirects away
+			// rather than re-running the login form. The stashed route was cleared
+			// after the post-login redirect, so the fallback is /home.
 			await page.goBack();
 			await expect
 				.poll(() => urlOf(page).pathname, { timeout: 15_000 })
 				.not.toBe(LOGIN_PATH);
-			expect(urlOf(page).pathname).toBe(SERVICES_PATH);
+			expect(urlOf(page).pathname).toBe(HOME_PATH);
 		} finally {
 			await ctx.close();
 		}

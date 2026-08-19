@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Route } from 'react-router-dom';
 import { screen, userEvent, within } from 'storybook/test';
 import ROUTES from 'constants/routes';
+import { renderAtRoute } from '../../../../storybook/renderAtRoute';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -27,12 +27,7 @@ const meta = {
 	// `aws`, `azure` and `gcp` are integration ids like any other, and the detail
 	// page renders the cloud page instead of the built-in one for those three, so
 	// the story runs on the detail route and its `route` picks the provider.
-	render: (): JSX.Element => (
-		<Route
-			path={ROUTES.INTEGRATIONS_DETAIL}
-			component={IntegrationsDetailsPage}
-		/>
-	),
+	render: renderAtRoute(ROUTES.INTEGRATIONS_DETAIL, IntegrationsDetailsPage),
 	...pageStory,
 	// The built-in-integration lookup is expected to 404 for a cloud provider.
 	parameters: { ...pageStory.parameters, allowConsoleErrors: true },

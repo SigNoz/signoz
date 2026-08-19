@@ -1,6 +1,5 @@
 import { ReactNode, useEffect, useMemo } from 'react';
-import { Router } from 'react-router-dom';
-import { CompatRouter } from 'react-router-dom-v5-compat';
+import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 import AppPageProviders from '@/app/AppPageProviders';
 import AppProviders from '@/app/AppProviders';
@@ -9,6 +8,7 @@ import type { AppLayer } from '@/app/types';
 import { CmdKPalette } from 'components/cmdKPalette/cmdKPalette';
 import AppLayout from 'container/AppLayout';
 import history from 'lib/history';
+import { getBasePath } from 'utils/basePath';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { AppContext, useAppContext } from 'providers/App/App';
 
@@ -42,9 +42,9 @@ function StoryContextProbe(): null {
 }
 
 const storyRouter: AppLayer = (children) => (
-	<Router history={history}>
-		<CompatRouter>{children}</CompatRouter>
-	</Router>
+	<HistoryRouter basename={getBasePath()} history={history}>
+		{children}
+	</HistoryRouter>
 );
 
 const appLayout: AppLayer = (children) => <AppLayout>{children}</AppLayout>;

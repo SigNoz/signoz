@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
+import { renderAtRoute } from '../../../storybook/renderAtRoute';
 import { screen, userEvent, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
@@ -25,9 +25,7 @@ const meta = {
 	component: TracesFunnelDetails,
 	// The funnel id is in the pathname, so the page renders under its own route
 	// rather than being mounted on its own.
-	render: (): JSX.Element => (
-		<Route path={ROUTES.TRACES_FUNNELS_DETAIL} component={TracesFunnelDetails} />
-	),
+	render: renderAtRoute(ROUTES.TRACES_FUNNELS_DETAIL, TracesFunnelDetails),
 	...pageStory,
 	parameters: { ...pageStory.parameters },
 } satisfies Meta<TracesFunnelDetailsArgs>;

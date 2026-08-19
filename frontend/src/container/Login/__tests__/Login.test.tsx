@@ -466,6 +466,19 @@ describe('Login Component', () => {
 	});
 
 	describe('Callback Authentication', () => {
+		const originalLocation = window.location;
+
+		// The redirect case swaps `window.location` for a stub. history@5 reads
+		// that object on every `history.location` access, so leaving the stub in
+		// place would freeze the URL for every later test in this file.
+		afterEach(() => {
+			Object.defineProperty(window, 'location', {
+				value: originalLocation,
+				writable: true,
+				configurable: true,
+			});
+		});
+
 		it('shows callback login button when callback auth is supported', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
@@ -503,13 +516,20 @@ describe('Login Component', () => {
 		it('redirects to callback URL on button click', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-			// Mock window.location.href
+			// Mock window.location.href. The rest of the shape matters: history@5
+			// re-reads `window.location` on every access, so a stub without a
+			// pathname breaks every later render in this file.
 			const mockLocation = {
 				href: 'http://localhost/',
+				origin: 'http://localhost',
+				pathname: '/',
+				search: '',
+				hash: '',
 			};
 			Object.defineProperty(window, 'location', {
 				value: mockLocation,
 				writable: true,
+				configurable: true,
 			});
 
 			server.use(

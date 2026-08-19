@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
+import { renderAtRoute } from '../../../storybook/renderAtRoute';
 import { screen, userEvent } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
@@ -27,9 +27,7 @@ const meta = {
 	// The published id comes out of the pathname, so the viewer renders under its
 	// own route rather than being mounted on its own. The layout drops the app
 	// chrome on this path, which is what a signed-out viewer sees.
-	render: (): JSX.Element => (
-		<Route path={ROUTES.PUBLIC_DASHBOARD} component={PublicDashboardPage} />
-	),
+	render: renderAtRoute(ROUTES.PUBLIC_DASHBOARD, PublicDashboardPage),
 	...pageStory,
 	parameters: { ...pageStory.parameters },
 } satisfies Meta<PublicDashboardArgs>;

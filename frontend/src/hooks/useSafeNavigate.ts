@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { cloneDeep, isEqual } from 'lodash-es';
 import { withBasePath } from 'utils/basePath';
 

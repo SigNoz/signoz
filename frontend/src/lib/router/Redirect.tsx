@@ -1,5 +1,4 @@
-import { Redirect as RouterRedirect } from 'react-router-dom';
-import { parsePath } from 'history';
+import { Navigate } from 'react-router-dom';
 
 import type { To } from './types';
 
@@ -18,12 +17,7 @@ export function Redirect({
 	replace = true,
 	state,
 }: RedirectProps): JSX.Element {
-	const target =
-		state === undefined
-			? to
-			: { ...(typeof to === 'string' ? parsePath(to) : to), state };
-
-	return <RouterRedirect to={target} push={!replace} />;
+	return <Navigate to={to} replace={replace} state={state} />;
 }
 
 Redirect.defaultProps = {

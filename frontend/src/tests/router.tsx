@@ -1,7 +1,12 @@
 import { ReactElement, ReactNode, useRef } from 'react';
-import { Route, Router } from 'react-router-dom';
-import { CompatRouter, useInRouterContext } from 'react-router-dom-v5-compat';
+import {
+	Route,
+	Routes,
+	unstable_HistoryRouter as HistoryRouter,
+	useInRouterContext,
+} from 'react-router-dom';
 import history from 'lib/history';
+import { getBasePath, withBasePath } from 'utils/basePath';
 
 // The router half of the test harness. It lives apart from `test-utils` so that
 // a test can mount a router without also inheriting that module's global mocks,
@@ -13,9 +18,8 @@ import history from 'lib/history';
 //   `src/AppRoutes/index.tsx`. Imperative `navigate()` calls write to that
 //   singleton, so a `MemoryRouter` would never see them — components that
 //   navigate outside a render simply did not move the router before.
-// - `CompatRouter` is always present, so the v6-only facade hooks
-//   (`useAppSearchParams`, `useAppNavigationType`) work without each test
-//   knowing to add it.
+// - The base path is applied the same way the real mount applies it, so a test
+//   reads the same pathnames the app does.
 //
 // Nesting is a no-op: several suites render `AllTheProviders` inside a
 // `render()` that already wraps it, and a second router would trip v6's
@@ -31,8 +35,7 @@ interface TestRouterProps {
 	initialRoute?: string;
 	/**
 	 * Route pattern(s) to mount the children under, for a component that reads
-	 * `useParams`. Matching is exact, which is v6's default, so the eventual
-	 * `<Routes>` swap does not change which tests match.
+	 * `useParams`. Matching is exact, which is `<Routes>`'s default.
 	 */
 	routePath?: string | string[];
 }
@@ -51,14 +54,18 @@ export function TestRouter({
 	if (!seeded.current) {
 		seeded.current = true;
 		if (initialRoute) {
-			history.replace(initialRoute);
+			// The raw history no longer strips or prepends the base path — the
+			// router owns it — so the seed has to be a real browser path.
+			history.replace(withBasePath(initialRoute));
 		}
 	}
 
 	const tree = routePath ? (
-		<Route exact path={routePath}>
-			{children}
-		</Route>
+		<Routes>
+			{(Array.isArray(routePath) ? routePath : [routePath]).map((pattern) => (
+				<Route key={pattern} path={pattern} element={children} />
+			))}
+		</Routes>
 	) : (
 		children
 	);
@@ -68,9 +75,9 @@ export function TestRouter({
 	}
 
 	return (
-		<Router history={history}>
-			<CompatRouter>{tree}</CompatRouter>
-		</Router>
+		<HistoryRouter basename={getBasePath()} history={history}>
+			{tree}
+		</HistoryRouter>
 	);
 }
 
@@ -81,5 +88,5 @@ TestRouter.defaultProps = {
 
 /** Returns the history singleton to the state a suite should start each test in. */
 export function resetTestRoute(): void {
-	history.replace('/');
+	history.replace(withBasePath('/'));
 }

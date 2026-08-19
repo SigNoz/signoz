@@ -18,29 +18,22 @@ export function matchRoute<Key extends string = string>(
 ): RouteMatch<Key> | null {
 	const end = options.exact ?? false;
 
-	const match = matchPath<Record<string, string | undefined>>(pathname, {
-		path: pattern,
-		exact: end,
-	});
+	// v6 un-escapes `%2F` in param values itself (and nothing else), which is
+	// what keeps `buildRoutePath` -> `matchRoute` a round trip for a value
+	// containing a slash.
+	const match = matchPath(
+		{ path: pattern, end, caseSensitive: false },
+		pathname,
+	);
 
 	if (match === null) {
 		return null;
 	}
 
-	// v6.30 un-escapes `%2F` in param values (and nothing else); v5 hands them
-	// back raw. Doing it here keeps `buildRoutePath` -> `matchRoute` a round trip
-	// for values containing a slash, on both versions.
-	const params = Object.fromEntries(
-		Object.entries(match.params).map(([key, value]) => [
-			key,
-			value?.replace(/%2F/g, '/'),
-		]),
-	);
-
 	return {
-		params: params as AppParams<Key>,
-		pathname: match.url,
-		pathnameBase: match.url,
+		params: match.params as AppParams<Key>,
+		pathname: match.pathname,
+		pathnameBase: match.pathnameBase,
 		pattern: { path: pattern, caseSensitive: false, end },
 	};
 }

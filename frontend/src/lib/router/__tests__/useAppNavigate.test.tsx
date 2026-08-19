@@ -1,9 +1,10 @@
-import { MemoryRouter, useHistory } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import type { NavigateOptions, To } from '../types';
 import { useAppLocation } from '../useAppLocation';
 import { useAppNavigate } from '../useAppNavigate';
+import { useAppNavigationType } from '../useAppNavigationType';
 
 function Probe({
 	to,
@@ -14,7 +15,7 @@ function Probe({
 }): JSX.Element {
 	const navigate = useAppNavigate();
 	const location = useAppLocation();
-	const history = useHistory();
+	const navigationType = useAppNavigationType();
 
 	return (
 		<div>
@@ -27,7 +28,7 @@ function Probe({
 			<span data-testid="pathname">{location.pathname}</span>
 			<span data-testid="search">{location.search}</span>
 			<span data-testid="state">{JSON.stringify(location.state ?? null)}</span>
-			<span data-testid="length">{history.length}</span>
+			<span data-testid="action">{navigationType}</span>
 		</div>
 	);
 }
@@ -66,20 +67,16 @@ describe('useAppNavigate', () => {
 
 	it('adds a history entry by default', () => {
 		renderProbe('/logs');
-		const before = screen.getByTestId('length').textContent;
 		fireEvent.click(screen.getByTestId('navigate'));
 
-		expect(Number(screen.getByTestId('length').textContent)).toBe(
-			Number(before) + 1,
-		);
+		expect(screen.getByTestId('action')).toHaveTextContent('PUSH');
 	});
 
 	it('does not add a history entry when replacing', () => {
 		renderProbe('/logs', { replace: true });
-		const before = screen.getByTestId('length').textContent;
 		fireEvent.click(screen.getByTestId('navigate'));
 
 		expect(screen.getByTestId('pathname')).toHaveTextContent('/logs');
-		expect(screen.getByTestId('length').textContent).toBe(before);
+		expect(screen.getByTestId('action')).toHaveTextContent('REPLACE');
 	});
 });

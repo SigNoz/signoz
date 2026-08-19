@@ -1,4 +1,5 @@
 import history from 'lib/history';
+import { stripBasePath, withBasePath } from 'utils/basePath';
 
 import type {
 	AppLocation,
@@ -7,28 +8,41 @@ import type {
 	NavigationBlocker,
 	To,
 } from './types';
-import { applyNavigate, retryTransition, toAppLocation } from './utils';
+import { applyNavigate, toAppLocation } from './utils';
 
 /**
  * Module-level imperative navigation — the escape hatch for code outside a
  * component. Unlike `useSafeNavigate` it does not suppress same-URL navigation
  * and has no new-tab branch, because it cannot see the current render.
  *
- * The basename contract, stable across the migration: callers pass and receive
- * basename-free app paths. history@4 implements that itself today; at the
- * version flip the basename moves onto the router, which does not cover this
- * module, so `navigate`/`getCurrentLocation` take it over then.
+ * This module owns the base path. history@5 has no `basename` option, so the
+ * router carries it for component navigation and never sees what goes through
+ * here: callers pass and receive basename-free app paths, and the prepend on
+ * write and the strip on read happen below.
  */
+function toBrowserTarget(to: To): To {
+	if (typeof to === 'string') {
+		return withBasePath(to);
+	}
+	return to.pathname === undefined
+		? to
+		: { ...to, pathname: withBasePath(to.pathname) };
+}
+
+function toAppPath<S>(location: AppLocation<S>): AppLocation<S> {
+	return { ...location, pathname: stripBasePath(location.pathname) };
+}
+
 export function navigate(to: To, options?: NavigateOptions): void {
-	applyNavigate(history, to, options);
+	applyNavigate(history, toBrowserTarget(to), options);
 }
 
 export function back(): void {
-	history.goBack();
+	history.go(-1);
 }
 
 export function getCurrentLocation(): AppLocation {
-	return toAppLocation(history.location);
+	return toAppPath(toAppLocation(history.location));
 }
 
 export function subscribe(
@@ -37,29 +51,21 @@ export function subscribe(
 		action: NavigationAction;
 	}) => void,
 ): () => void {
-	return history.listen((location, action) => {
+	return history.listen(({ location, action }) => {
 		listener({
-			location: toAppLocation(location),
+			location: toAppPath(toAppLocation(location)),
 			action: action as NavigationAction,
 		});
 	});
 }
 
 export function blockNavigation(blocker: NavigationBlocker): () => void {
-	return history.block((location, action) => {
-		const appLocation = toAppLocation(location);
-		const navigationAction = action as NavigationAction;
-
+	return history.block(({ location, action, retry }) => {
 		blocker({
-			location: appLocation,
-			action: navigationAction,
-			retry: () => retryTransition(history, appLocation, navigationAction),
+			location: toAppPath(toAppLocation(location)),
+			action: action as NavigationAction,
+			retry,
 		});
-
-		// history@4 cancels the transition on `false`; history@5 cancels whenever a
-		// blocker is registered and hands control to `retry()`. Returning `false`
-		// makes the v4 path behave like the v5 one.
-		return false;
 	});
 }
 

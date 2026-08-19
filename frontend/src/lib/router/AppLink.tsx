@@ -1,6 +1,5 @@
 import type { AnchorHTMLAttributes, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { parsePath } from 'history';
 
 import type { To } from './types';
 
@@ -21,15 +20,8 @@ export function AppLink({
 	children,
 	...rest
 }: AppLinkProps): JSX.Element {
-	// v5 carries state inside `to`; v6 takes it as its own prop. The string form
-	// has to be parsed first, or search and hash would land in `pathname`.
-	const target =
-		state === undefined
-			? to
-			: { ...(typeof to === 'string' ? parsePath(to) : to), state };
-
 	return (
-		<Link to={target} replace={replace} {...rest}>
+		<Link to={to} replace={replace} state={state} {...rest}>
 			{children}
 		</Link>
 	);

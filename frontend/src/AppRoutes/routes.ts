@@ -1,4 +1,4 @@
-import { RouteProps } from 'react-router-dom';
+import type { ComponentType } from 'react';
 import ROUTES from 'constants/routes';
 
 import {
@@ -61,27 +61,25 @@ const routes: AppRoutes[] = [
 	{
 		component: SignupPage,
 		path: ROUTES.SIGN_UP,
-		exact: true,
 		isPrivate: false,
 		key: 'SIGN_UP',
 	},
 	{
 		path: ROUTES.GET_STARTED_WITH_CLOUD,
-		exact: false,
+		nested: true,
 		component: OnboardingV2,
 		isPrivate: true,
 		key: 'GET_STARTED_WITH_CLOUD',
 	},
 	{
 		path: ROUTES.HOME,
-		exact: true,
 		component: Home,
 		isPrivate: true,
 		key: 'HOME',
 	},
 	{
 		path: ROUTES.ONBOARDING,
-		exact: false,
+		nested: true,
 		component: OrgOnboarding,
 		isPrivate: true,
 		key: 'ONBOARDING',
@@ -89,27 +87,23 @@ const routes: AppRoutes[] = [
 	{
 		component: LogsIndexToFields,
 		path: ROUTES.LOGS_INDEX_FIELDS,
-		exact: true,
 		isPrivate: true,
 		key: 'LOGS_INDEX_FIELDS',
 	},
 	{
 		component: ServicesTablePage,
 		path: ROUTES.APPLICATION,
-		exact: true,
 		isPrivate: true,
 		key: 'APPLICATION',
 	},
 	{
 		path: ROUTES.SERVICE_METRICS,
-		exact: true,
 		component: ServiceMetricsPage,
 		isPrivate: true,
 		key: 'SERVICE_METRICS',
 	},
 	{
 		path: ROUTES.SERVICE_TOP_LEVEL_OPERATIONS,
-		exact: true,
 		component: ServiceTopLevelOperationsPage,
 		isPrivate: true,
 		key: 'SERVICE_TOP_LEVEL_OPERATIONS',
@@ -118,320 +112,276 @@ const routes: AppRoutes[] = [
 		path: ROUTES.SERVICE_MAP,
 		component: ServiceMapPage,
 		isPrivate: true,
-		exact: true,
 		key: 'SERVICE_MAP',
 	},
 	{
 		path: ROUTES.LOGS_SAVE_VIEWS,
 		component: LogsSaveViews,
 		isPrivate: true,
-		exact: true,
 		key: 'LOGS_SAVE_VIEWS',
 	},
 	{
 		path: ROUTES.TRACE_DETAIL,
-		exact: true,
 		component: TraceDetailV3,
 		isPrivate: true,
 		key: 'TRACE_DETAIL',
 	},
 	{
 		path: ROUTES.SETTINGS,
-		exact: false,
+		nested: true,
 		component: SettingsPage,
 		isPrivate: true,
 		key: 'SETTINGS',
 	},
 	{
 		path: ROUTES.USAGE_EXPLORER,
-		exact: true,
 		component: UsageExplorerPage,
 		isPrivate: true,
 		key: 'USAGE_EXPLORER',
 	},
 	{
 		path: ROUTES.ALL_DASHBOARD,
-		exact: true,
 		component: DashboardsListPage,
 		isPrivate: true,
 		key: 'ALL_DASHBOARD',
 	},
 	{
 		path: ROUTES.DASHBOARD,
-		exact: true,
 		component: DashboardPage,
 		isPrivate: true,
 		key: 'DASHBOARD',
 	},
 	{
 		path: ROUTES.PUBLIC_DASHBOARD,
-		exact: false,
+		nested: true,
 		component: PublicDashboardPage,
 		isPrivate: false,
 		key: 'PUBLIC_DASHBOARD',
 	},
 	{
 		path: ROUTES.DASHBOARD_PANEL_EDITOR,
-		exact: true,
 		component: DashboardPanelEditorPage,
 		isPrivate: true,
 		key: 'DASHBOARD_PANEL_EDITOR',
 	},
 	{
 		path: ROUTES.EDIT_ALERTS,
-		exact: true,
 		component: EditRulesPage,
 		isPrivate: true,
 		key: 'EDIT_ALERTS',
 	},
 	{
 		path: ROUTES.LIST_ALL_ALERT,
-		exact: true,
 		component: ListAllALertsPage,
 		isPrivate: true,
 		key: 'LIST_ALL_ALERT',
 	},
 	{
 		path: ROUTES.ALERTS_NEW,
-		exact: true,
 		component: CreateNewAlerts,
 		isPrivate: true,
 		key: 'ALERTS_NEW',
 	},
 	{
 		path: ROUTES.ALERT_HISTORY,
-		exact: true,
 		component: AlertHistory,
 		isPrivate: true,
 		key: 'ALERT_HISTORY',
 	},
 	{
 		path: ROUTES.ALERT_OVERVIEW,
-		exact: true,
 		component: AlertOverview,
 		isPrivate: true,
 		key: 'ALERT_OVERVIEW',
 	},
 	{
 		path: ROUTES.TRACES_EXPLORER,
-		exact: true,
 		component: TracesExplorer,
 		isPrivate: true,
 		key: 'TRACES_EXPLORER',
 	},
 	{
 		path: ROUTES.TRACES_SAVE_VIEWS,
-		exact: true,
 		component: TracesSaveViews,
 		isPrivate: true,
 		key: 'TRACES_SAVE_VIEWS',
 	},
 	{
 		path: ROUTES.TRACES_FUNNELS,
-		exact: true,
 		component: TracesFunnels,
 		isPrivate: true,
 		key: 'TRACES_FUNNELS',
 	},
 	{
 		path: ROUTES.TRACES_FUNNELS_DETAIL,
-		exact: true,
 		component: TracesFunnelDetails,
 		isPrivate: true,
 		key: 'TRACES_FUNNELS_DETAIL',
 	},
 	{
 		path: ROUTES.CHANNELS_NEW,
-		exact: true,
 		component: ChannelsNew,
 		isPrivate: true,
 		key: 'CHANNELS_NEW',
 	},
 	{
 		path: ROUTES.CHANNELS_EDIT,
-		exact: true,
 		component: ChannelsEdit,
 		isPrivate: true,
 		key: 'CHANNELS_EDIT',
 	},
 	{
 		path: ROUTES.ALL_ERROR,
-		exact: true,
 		isPrivate: true,
 		component: AllErrors,
 		key: 'ALL_ERROR',
 	},
 	{
 		path: ROUTES.ERROR_DETAIL,
-		exact: true,
 		component: ErrorDetails,
 		isPrivate: true,
 		key: 'ERROR_DETAIL',
 	},
 	{
 		path: ROUTES.VERSION,
-		exact: true,
 		component: StatusPage,
 		isPrivate: true,
 		key: 'VERSION',
 	},
 	{
 		path: ROUTES.LOGS,
-		exact: true,
 		component: Logs,
 		key: 'LOGS',
 		isPrivate: true,
 	},
 	{
 		path: ROUTES.LIVE_LOGS,
-		exact: true,
 		component: LiveLogs,
 		key: 'LIVE_LOGS',
 		isPrivate: true,
 	},
 	{
 		path: ROUTES.LOGS_PIPELINES,
-		exact: true,
 		component: PipelinePage,
 		key: 'LOGS_PIPELINES',
 		isPrivate: true,
 	},
 	{
 		path: ROUTES.LOGIN,
-		exact: true,
 		component: Login,
 		isPrivate: false,
 		key: 'LOGIN',
 	},
 	{
 		path: ROUTES.FORGOT_PASSWORD,
-		exact: true,
 		component: ForgotPassword,
 		isPrivate: false,
 		key: 'FORGOT_PASSWORD',
 	},
 	{
 		path: ROUTES.UN_AUTHORIZED,
-		exact: true,
 		component: UnAuthorized,
 		key: 'UN_AUTHORIZED',
 		isPrivate: true,
 	},
 	{
 		path: ROUTES.PASSWORD_RESET,
-		exact: true,
 		component: PasswordReset,
 		key: 'PASSWORD_RESET',
 		isPrivate: false,
 	},
 	{
 		path: ROUTES.SOMETHING_WENT_WRONG,
-		exact: true,
 		component: SomethingWentWrong,
 		key: 'SOMETHING_WENT_WRONG',
 		isPrivate: false,
 	},
 	{
 		path: ROUTES.WORKSPACE_LOCKED,
-		exact: true,
 		component: WorkspaceBlocked,
 		isPrivate: true,
 		key: 'WORKSPACE_LOCKED',
 	},
 	{
 		path: ROUTES.WORKSPACE_SUSPENDED,
-		exact: true,
 		component: WorkspaceSuspended,
 		isPrivate: true,
 		key: 'WORKSPACE_SUSPENDED',
 	},
 	{
 		path: ROUTES.WORKSPACE_ACCESS_RESTRICTED,
-		exact: true,
 		component: WorkspaceAccessRestricted,
 		isPrivate: true,
 		key: 'WORKSPACE_ACCESS_RESTRICTED',
 	},
 	{
 		path: ROUTES.INTEGRATIONS_DETAIL,
-		exact: true,
 		component: IntegrationsDetailsPage,
 		isPrivate: true,
 		key: 'INTEGRATIONS_DETAIL',
 	},
 	{
 		path: ROUTES.INTEGRATIONS,
-		exact: true,
 		component: Integrations,
 		isPrivate: true,
 		key: 'INTEGRATIONS',
 	},
 	{
 		path: ROUTES.MESSAGING_QUEUES_KAFKA,
-		exact: true,
 		component: MessagingQueuesMainPage,
 		key: 'MESSAGING_QUEUES_KAFKA',
 		isPrivate: true,
 	},
 	{
 		path: ROUTES.MESSAGING_QUEUES_CELERY_TASK,
-		exact: true,
 		component: MessagingQueuesMainPage,
 		key: 'MESSAGING_QUEUES_CELERY_TASK',
 		isPrivate: true,
 	},
 	{
 		path: ROUTES.MESSAGING_QUEUES_OVERVIEW,
-		exact: true,
 		component: MessagingQueuesMainPage,
 		key: 'MESSAGING_QUEUES_OVERVIEW',
 		isPrivate: true,
 	},
 	{
 		path: ROUTES.MESSAGING_QUEUES_KAFKA_DETAIL,
-		exact: true,
 		component: MessagingQueuesMainPage,
 		key: 'MESSAGING_QUEUES_KAFKA_DETAIL',
 		isPrivate: true,
 	},
 	{
 		path: ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
-		exact: true,
 		component: InfrastructureMonitoring,
 		key: 'INFRASTRUCTURE_MONITORING_HOSTS',
 		isPrivate: true,
 	},
 	{
 		path: ROUTES.INFRASTRUCTURE_MONITORING_KUBERNETES,
-		exact: true,
 		component: InfrastructureMonitoring,
 		key: 'INFRASTRUCTURE_MONITORING_KUBERNETES',
 		isPrivate: true,
 	},
 	{
 		path: ROUTES.METRICS_EXPLORER,
-		exact: true,
 		component: MetricsExplorer,
 		key: 'METRICS_EXPLORER',
 		isPrivate: true,
 	},
 	{
 		path: ROUTES.METRICS_EXPLORER_EXPLORER,
-		exact: true,
 		component: MetricsExplorer,
 		key: 'METRICS_EXPLORER_EXPLORER',
 		isPrivate: true,
 	},
 	{
 		path: ROUTES.METRICS_EXPLORER_VIEWS,
-		exact: true,
 		component: MetricsExplorer,
 		key: 'METRICS_EXPLORER_VIEWS',
 		isPrivate: true,
 	},
 	{
 		path: ROUTES.METRICS_EXPLORER_VOLUME_CONTROL,
-		exact: true,
 		component: MetricsExplorer,
 		key: 'METRICS_EXPLORER_VOLUME_CONTROL',
 		isPrivate: true,
@@ -439,63 +389,54 @@ const routes: AppRoutes[] = [
 
 	{
 		path: ROUTES.METER,
-		exact: true,
 		component: MeterExplorerPage,
 		key: 'METER',
 		isPrivate: true,
 	},
 	{
 		path: ROUTES.METER_EXPLORER,
-		exact: true,
 		component: MeterExplorerPage,
 		key: 'METER_EXPLORER',
 		isPrivate: true,
 	},
 	{
 		path: ROUTES.METER_EXPLORER_VIEWS,
-		exact: true,
 		component: MeterExplorerPage,
 		key: 'METER_EXPLORER_VIEWS',
 		isPrivate: true,
 	},
 	{
 		path: ROUTES.API_MONITORING,
-		exact: true,
 		component: ApiMonitoring,
 		key: 'API_MONITORING',
 		isPrivate: true,
 	},
 	{
 		path: [ROUTES.AI_ASSISTANT_BASE, ROUTES.AI_ASSISTANT],
-		exact: true,
 		component: AIAssistantPage,
 		key: 'AI_ASSISTANT',
 		isPrivate: true,
 	},
 	{
 		path: ROUTES.AI_OBSERVABILITY_ATTRIBUTE_MAPPING,
-		exact: true,
 		component: LLMObservabilityPage,
 		key: 'AI_OBSERVABILITY_ATTRIBUTE_MAPPING',
 		isPrivate: true,
 	},
 	{
 		path: ROUTES.AI_OBSERVABILITY_OVERVIEW,
-		exact: true,
 		component: LLMObservabilityPage,
 		key: 'AI_OBSERVABILITY_OVERVIEW',
 		isPrivate: true,
 	},
 	{
 		path: ROUTES.AI_OBSERVABILITY_EXPLORER,
-		exact: true,
 		component: LLMObservabilityPage,
 		key: 'AI_OBSERVABILITY_EXPLORER',
 		isPrivate: true,
 	},
 	{
 		path: ROUTES.AI_OBSERVABILITY_CONFIGURATION,
-		exact: true,
 		component: LLMObservabilityPage,
 		key: 'AI_OBSERVABILITY_CONFIGURATION',
 		isPrivate: true,
@@ -504,7 +445,6 @@ const routes: AppRoutes[] = [
 
 export const SUPPORT_ROUTE: AppRoutes = {
 	path: ROUTES.SUPPORT,
-	exact: true,
 	component: SupportPage,
 	key: 'SUPPORT',
 	isPrivate: true,
@@ -512,7 +452,6 @@ export const SUPPORT_ROUTE: AppRoutes = {
 
 export const LIST_LICENSES: AppRoutes = {
 	path: ROUTES.LIST_LICENSES,
-	exact: true,
 	component: LicensePage,
 	isPrivate: true,
 	key: 'LIST_LICENSES',
@@ -541,9 +480,15 @@ export const ROUTES_NOT_TO_BE_OVERRIDEN: string[] = [
 ];
 
 export interface AppRoutes {
-	component: RouteProps['component'];
-	path: RouteProps['path'];
-	exact: RouteProps['exact'];
+	component: ComponentType;
+	/** An array registers the same component under each pattern. */
+	path: string | string[];
+	/**
+	 * The route renders its own child routes, so it matches as a prefix. v6
+	 * matches the whole path by default, so the mount appends a `/*` splat for
+	 * these and nothing for the rest.
+	 */
+	nested?: boolean;
 	isPrivate: boolean;
 	key: keyof typeof ROUTES;
 }

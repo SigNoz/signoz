@@ -43,9 +43,8 @@ jest.mock('lib/router/navigation', () => ({
 }));
 
 jest.mock('utils/basePath', () => ({
+	...jest.requireActual('utils/basePath'),
 	getBaseUrl: (): string => 'http://localhost',
-	getBasePath: (): string => '/',
-	withBasePath: (p: string): string => p,
 }));
 
 const MCP_URL = 'https://mcp.us.signoz.cloud/mcp';

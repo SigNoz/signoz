@@ -4,7 +4,7 @@
  */
 
 import { rest } from 'msw';
-import { generatePath } from 'react-router-dom';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
 import ROUTES from 'constants/routes';
 import type { GetPublicDashboard200 } from 'api/generated/services/sigNoz.schemas';
 import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
@@ -46,7 +46,7 @@ const DATA = 'Dashboard · panels';
 const SHARING = 'Dashboard · sharing';
 
 export const dashboardRoute = (): string =>
-	generatePath(ROUTES.DASHBOARD, { dashboardId: STORY_DASHBOARD_ID });
+	buildRoutePath(ROUTES.DASHBOARD, { dashboardId: STORY_DASHBOARD_ID });
 
 export const tooltipRoute = (): string =>
 	`${dashboardRoute()}?variables=${encodeURIComponent(
