@@ -1,5 +1,5 @@
 import { expect, test } from '../../../fixtures/alerts/alert-rules';
-import { alertRuleRows, gotoAlertList } from '../../../helpers/alerts';
+import { alertRuleRows, gotoAlertList } from '../../../helpers/alerts/navigation';
 
 test.describe('Alert rules list — navigation', () => {
 	test('TC-01 row click opens the overview page', async ({

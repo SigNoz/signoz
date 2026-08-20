@@ -1,15 +1,15 @@
 import { expect, test } from '../../../fixtures/alerts/alert-history';
+import { TIMELINE_PAGE_SIZE } from '../../../helpers/alerts/constants';
 import {
 	encodeTimelineCursor,
 	expectFirstPage,
 	gotoAlertHistory,
 	isHistoryRequest,
 	sortTimelineDescending,
-	TIMELINE_PAGE_SIZE,
 	timelineFooterRange,
 	timelineRowLabels,
 	timelineRows,
-} from '../../../helpers/alerts';
+} from '../../../helpers/alerts/history';
 import { requestUrl } from '../../../helpers/common';
 
 test.describe('Alert history — timeline pagination', () => {

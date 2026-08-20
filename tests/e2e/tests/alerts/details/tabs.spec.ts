@@ -3,9 +3,9 @@ import {
 	ALERT_HISTORY_PATH,
 	ALERT_OVERVIEW_PATH,
 	DEFAULT_RELATIVE_TIME,
-	gotoAlertDetails,
-	gotoAlertHistory,
-} from '../../../helpers/alerts';
+} from '../../../helpers/alerts/constants';
+import { gotoAlertHistory } from '../../../helpers/alerts/history';
+import { gotoAlertDetails } from '../../../helpers/alerts/navigation';
 
 test.describe('Alert details — tabs', () => {
 	test('TC-01 Overview/History tabs preserve ruleId and relativeTime', async ({

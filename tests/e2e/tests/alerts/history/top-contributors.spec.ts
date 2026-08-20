@@ -1,5 +1,5 @@
 import { expect, test } from '../../../fixtures/alerts/alert-history';
-import { gotoAlertHistory } from '../../../helpers/alerts';
+import { gotoAlertHistory } from '../../../helpers/alerts/history';
 
 test.describe('Alert history — top contributors', () => {
 	test('TC-01 card displays max 3 rows with count ratios', async ({

@@ -1,6 +1,6 @@
 import { expect, test } from '../../../fixtures/alerts/alert-rules';
-import { ALERT_EDIT_PATH } from '../../../helpers/alert-forms';
-import { ALERT_OVERVIEW_PATH } from '../../../helpers/alerts';
+import { ALERT_EDIT_PATH } from '../../../helpers/alert-forms/constants';
+import { ALERT_OVERVIEW_PATH } from '../../../helpers/alerts/constants';
 
 // TC-* — what the edit routes do with an unknown ruleId.
 //

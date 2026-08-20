@@ -1,5 +1,6 @@
 import { expect, test } from '../../../fixtures/alerts/alert-history';
-import { ALERTS_LIST_PATH, gotoAlertHistory } from '../../../helpers/alerts';
+import { ALERTS_LIST_PATH } from '../../../helpers/alerts/constants';
+import { gotoAlertHistory } from '../../../helpers/alerts/history';
 
 test.describe('Alert details — page chrome', () => {
 	test('TC-01 copy-link button copies the current URL to clipboard', async ({

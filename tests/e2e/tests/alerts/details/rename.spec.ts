@@ -1,9 +1,7 @@
 import { expect, test } from '../../../fixtures/alerts/alert-history';
-import {
-	ALERTS_LIST_PATH,
-	gotoAlertDetails,
-	gotoAlertHistory,
-} from '../../../helpers/alerts';
+import { ALERTS_LIST_PATH } from '../../../helpers/alerts/constants';
+import { gotoAlertHistory } from '../../../helpers/alerts/history';
+import { gotoAlertDetails } from '../../../helpers/alerts/navigation';
 
 test.describe('Alert details — rename', () => {
 	test('TC-01 v1 rename via modal updates the rule name', async ({

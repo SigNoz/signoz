@@ -1,5 +1,5 @@
 import { expect, test } from '../../../fixtures/alerts/alert-rules';
-import { gotoAlertOverview } from '../../../helpers/alerts';
+import { gotoAlertOverview } from '../../../helpers/alerts/navigation';
 
 const TARGET = 245;
 

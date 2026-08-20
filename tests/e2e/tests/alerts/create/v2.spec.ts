@@ -1,27 +1,23 @@
 import { expect, test } from '../../../fixtures/alerts/alert-rules';
+import { AlertType, ThresholdMatchType, ThresholdOperator } from '../../../helpers/alert-forms/constants';
+import { gotoCreateAlertV2 } from '../../../helpers/alert-forms/navigation';
+import { dropdownOption, openDropdown, ownDropdown } from '../../../helpers/alert-forms/shared';
 import {
 	addAlertLabel,
 	advancedOptionToggle,
-	AlertType,
 	evaluationCadenceInput,
 	expandAdvancedOptions,
-	gotoCreateAlertV2,
 	labelPill,
-	dropdownOption,
-	openDropdown,
-	ownDropdown,
 	selectEvaluationTimeframe,
 	selectThresholdChannel,
 	stubNoChannels,
 	thresholdRows,
-	ThresholdMatchType,
-	ThresholdOperator,
 	v2ClickDiscard,
 	v2DiscardButton,
 	v2SaveButton,
 	v2SaveTooltip,
 	v2TestButton,
-} from '../../../helpers/alert-forms';
+} from '../../../helpers/alert-forms/v2';
 
 // CV2-* — the v2 create builder.
 //

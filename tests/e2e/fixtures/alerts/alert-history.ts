@@ -8,15 +8,29 @@ import {
 	createTracesAlertViaApi,
 	deleteAlertViaApi,
 	deleteChannelViaApi,
+	setRuleDisabledViaApi,
+} from '../../helpers/alerts/api';
+import {
 	readTimelineTotal,
+	waitForTimelineEntries,
+	waitForTimelineStates,
+} from '../../helpers/alerts/history';
+import {
 	seedAlertHistoryLogs,
 	seedAlertHistoryMetrics,
 	seedAlertHistoryTraces,
-	setRuleDisabledViaApi,
-	waitForTimelineEntries,
-	waitForTimelineStates,
-} from '../helpers/alerts';
+} from '../../helpers/alerts/seeding';
 import { expect, test as base, withAdminPage } from './alert-rules';
+import {
+	FIXTURE_ALERT_HISTORY,
+	FIXTURE_EMPTY_HISTORY,
+	FIXTURE_METRICS_HISTORY,
+	FIXTURE_NODATA_HISTORY,
+	FIXTURE_RESOLVED_HISTORY,
+	FIXTURE_TRACES_HISTORY,
+	WAIT_METRICS_TIMELINE,
+	WAIT_NODATA_TIMELINE,
+} from './timeouts';
 
 // Worker-scoped alert-history fixtures. Extends `alert-rules`, so a spec that
 // imports `test` from here also gets `alertChannel` / `alertList` / `ownedRules`
@@ -199,7 +213,7 @@ async function createMetricsHistorySeed(
 
 		await waitForTimelineEntries(page, ruleId, {
 			min: METRICS_HISTORY_HOSTS.length,
-			timeoutMs: 120_000,
+			timeoutMs: WAIT_METRICS_TIMELINE,
 		});
 		await setRuleDisabledViaApi(page, ruleId, true);
 
@@ -316,7 +330,7 @@ async function createNoDataHistorySeed(
 		await waitForTimelineEntries(page, ruleId, {
 			min: 1,
 			state: 'nodata',
-			timeoutMs: 180_000,
+			timeoutMs: WAIT_NODATA_TIMELINE,
 		});
 		await setRuleDisabledViaApi(page, ruleId, true);
 
@@ -371,7 +385,7 @@ export const test = base.extend<
 			await use(seed);
 			await cleanup(browser, { ruleIds, channelId });
 		},
-		{ scope: 'worker', timeout: 240_000 },
+		{ scope: 'worker', timeout: FIXTURE_ALERT_HISTORY },
 	],
 
 	metricsHistory: [
@@ -380,7 +394,7 @@ export const test = base.extend<
 			await use(seed);
 			await cleanup(browser, { ruleIds, channelId });
 		},
-		{ scope: 'worker', timeout: 240_000 },
+		{ scope: 'worker', timeout: FIXTURE_METRICS_HISTORY },
 	],
 
 	tracesHistory: [
@@ -389,7 +403,7 @@ export const test = base.extend<
 			await use(seed);
 			await cleanup(browser, { ruleIds, channelId });
 		},
-		{ scope: 'worker', timeout: 240_000 },
+		{ scope: 'worker', timeout: FIXTURE_TRACES_HISTORY },
 	],
 
 	resolvedHistory: [
@@ -398,7 +412,7 @@ export const test = base.extend<
 			await use(seed);
 			await cleanup(browser, { ruleIds, channelId });
 		},
-		{ scope: 'worker', timeout: 300_000 },
+		{ scope: 'worker', timeout: FIXTURE_RESOLVED_HISTORY },
 	],
 
 	noDataHistory: [
@@ -407,7 +421,7 @@ export const test = base.extend<
 			await use(seed);
 			await cleanup(browser, { ruleIds, channelId });
 		},
-		{ scope: 'worker', timeout: 300_000 },
+		{ scope: 'worker', timeout: FIXTURE_NODATA_HISTORY },
 	],
 
 	emptyHistory: [
@@ -416,7 +430,7 @@ export const test = base.extend<
 			await use(seed);
 			await cleanup(browser, { ruleIds, channelId });
 		},
-		{ scope: 'worker', timeout: 120_000 },
+		{ scope: 'worker', timeout: FIXTURE_EMPTY_HISTORY },
 	],
 });
 

@@ -2,16 +2,18 @@ import { expect, test } from '../../../fixtures/alerts/alert-history';
 import {
 	ALERT_HISTORY_PATH,
 	DEFAULT_RELATIVE_TIME,
+	TIMELINE_PAGE_SIZE,
+} from '../../../helpers/alerts/constants';
+import {
 	encodeTimelineCursor,
 	gotoAlertHistory,
 	HISTORY_ENDPOINTS,
 	isHistoryRequest,
 	sortTimelineDescending,
 	statsCard,
-	TIMELINE_PAGE_SIZE,
 	timelineFooterRange,
 	timelineRows,
-} from '../../../helpers/alerts';
+} from '../../../helpers/alerts/history';
 import {
 	collectRequests,
 	requestUrl,

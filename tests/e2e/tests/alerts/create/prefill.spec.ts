@@ -5,14 +5,13 @@ import {
 	ALERTS_NEW_PATH,
 	AlertType,
 	type AlertTypeValue,
-	evaluationSettingsButton,
-	gotoCreateAlertV2,
 	RuleType,
-	thresholdRows,
 	ThresholdMatchType,
 	ThresholdOperator,
-} from '../../../helpers/alert-forms';
-import { gotoAlertOverview } from '../../../helpers/alerts';
+} from '../../../helpers/alert-forms/constants';
+import { gotoCreateAlertV2 } from '../../../helpers/alert-forms/navigation';
+import { evaluationSettingsButton, thresholdRows } from '../../../helpers/alert-forms/v2';
+import { gotoAlertOverview } from '../../../helpers/alerts/navigation';
 
 // TC-* — deep-link prefill.
 //

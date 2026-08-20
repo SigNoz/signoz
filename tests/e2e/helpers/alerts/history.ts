@@ -13,6 +13,8 @@ import {
 	ALERT_HISTORY_PATH,
 	DEFAULT_RELATIVE_TIME,
 	TIMELINE_PAGE_SIZE,
+	WAIT_TIMELINE_ENTRIES_DEFAULT,
+	WAIT_TIMELINE_STATES_DEFAULT,
 } from './constants';
 import type { TimelineItem, TimelineResponse } from './types';
 
@@ -73,7 +75,7 @@ export async function waitForTimelineEntries(
 	{
 		min,
 		state = 'firing',
-		timeoutMs = 90_000,
+		timeoutMs = WAIT_TIMELINE_ENTRIES_DEFAULT,
 	}: { min: number; state?: string; timeoutMs?: number },
 ): Promise<TimelineResponse> {
 	const deadline = Date.now() + timeoutMs;
@@ -104,7 +106,7 @@ export async function waitForTimelineStates(
 	ruleId: string,
 	{
 		states,
-		timeoutMs = 180_000,
+		timeoutMs = WAIT_TIMELINE_STATES_DEFAULT,
 	}: { states: Record<string, number>; timeoutMs?: number },
 ): Promise<TimelineResponse> {
 	const deadline = Date.now() + timeoutMs;

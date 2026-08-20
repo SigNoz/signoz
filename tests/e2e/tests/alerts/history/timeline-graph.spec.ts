@@ -1,9 +1,6 @@
 import { expect, test } from '../../../fixtures/alerts/alert-history';
-import {
-	DEFAULT_RELATIVE_TIME,
-	gotoAlertHistory,
-	isHistoryRequest,
-} from '../../../helpers/alerts';
+import { DEFAULT_RELATIVE_TIME } from '../../../helpers/alerts/constants';
+import { gotoAlertHistory, isHistoryRequest } from '../../../helpers/alerts/history';
 import { watchConsole } from '../../../helpers/common';
 
 test.describe('Alert history — timeline graph', () => {

@@ -1,18 +1,17 @@
 import type { Browser, Page } from '@playwright/test';
 
 import {
-	type AlertSchema,
 	createEmailChannelViaApi,
 	createLogsAlertViaApi,
 	createThresholdAlertViaApi,
 	deleteAlertViaApi,
 	deleteChannelViaApi,
-	type LogsAlertSeed,
-	seedAlertRules,
-	type ThresholdAlertSeed,
-} from '../helpers/alerts';
-import { newAdminContext } from '../helpers/auth';
-import { expect, test as base } from './auth';
+} from '../../helpers/alerts/api';
+import { seedAlertRules } from '../../helpers/alerts/seeding';
+import type { AlertSchema, LogsAlertSeed, ThresholdAlertSeed } from '../../helpers/alerts/types';
+import { newAdminContext } from '../../helpers/auth';
+import { expect, test as base } from '../auth';
+import { FIXTURE_ALERT_LIST } from './timeouts';
 
 // Alert *rule* fixtures — the API-only half of the alerts suite. Nothing here
 // waits on the ruler: a rule is created and that's it. History rows need real
@@ -226,7 +225,7 @@ export const test = base.extend<
 			await use(seed);
 			await deleteRules(browser, seed.ruleIds);
 		},
-		{ scope: 'worker', timeout: 120_000 },
+		{ scope: 'worker', timeout: FIXTURE_ALERT_LIST },
 	],
 
 	ownedRules: async ({ browser, alertChannel }, use) => {

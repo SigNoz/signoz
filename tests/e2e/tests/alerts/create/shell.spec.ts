@@ -2,17 +2,19 @@ import { expect, test } from '../../../fixtures/alerts/alert-rules';
 import {
 	AlertListTab,
 	AlertType,
+	RuleType,
+	STOCK_ALERT_TYPE_CARDS,
+} from '../../../helpers/alert-forms/constants';
+import {
 	alertTypeCard,
-	expectAlertTypeCardSet,
 	createAlertUrl,
+	expectAlertTypeCardSet,
 	gotoAlertTypeSelection,
 	gotoCreateAlertV1,
 	gotoCreateAlertV2,
 	hasAnomalyAlertTypeCard,
-	RuleType,
-	STOCK_ALERT_TYPE_CARDS,
-	v1SaveButton,
-} from '../../../helpers/alert-forms';
+} from '../../../helpers/alert-forms/navigation';
+import { v1SaveButton } from '../../../helpers/alert-forms/v1';
 
 // TC-* — the create *shell*: type selection, how a card click writes the
 // URL, the breadcrumb, the surrounding alerts tab bar, and the two ways to reach

@@ -1,5 +1,5 @@
 import { expect, test } from '../../fixtures/alerts/alert-rules';
-import { ALERTS_LIST_PATH } from '../../helpers/alerts';
+import { ALERTS_LIST_PATH } from '../../helpers/alerts/constants';
 import { watchConsole } from '../../helpers/common';
 
 // TC-* — the Alerts page shell: the four top-level tabs, how they map to

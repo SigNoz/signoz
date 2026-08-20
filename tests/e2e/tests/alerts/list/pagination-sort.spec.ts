@@ -1,9 +1,6 @@
 import { expect, test } from '../../../fixtures/alerts/alert-rules';
-import {
-	ALERT_LIST_PAGE_SIZE,
-	alertRuleRows,
-	gotoAlertList,
-} from '../../../helpers/alerts';
+import { ALERT_LIST_PAGE_SIZE } from '../../../helpers/alerts/constants';
+import { alertRuleRows, gotoAlertList } from '../../../helpers/alerts/navigation';
 
 test.describe('Alert rules list — pagination and sorting', () => {
 	test('TC-01 navigates between pages', async ({

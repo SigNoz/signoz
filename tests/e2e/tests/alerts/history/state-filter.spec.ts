@@ -5,7 +5,7 @@ import {
 	isHistoryRequest,
 	timelineRows,
 	waitForHistoryResponse,
-} from '../../../helpers/alerts';
+} from '../../../helpers/alerts/history';
 import { requestUrl } from '../../../helpers/common';
 
 test.describe('Alert history — state filter', () => {

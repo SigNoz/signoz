@@ -1,14 +1,14 @@
 import { expect, test } from '../../../fixtures/alerts/alert-history';
+import { TIMELINE_PAGE_SIZE } from '../../../helpers/alerts/constants';
 import {
 	expectFirstPage,
 	gotoAlertHistory,
 	isHistoryRequest,
 	runFilterExpression,
-	TIMELINE_PAGE_SIZE,
 	timelineFooterRange,
 	timelineRows,
 	waitForHistoryResponse,
-} from '../../../helpers/alerts';
+} from '../../../helpers/alerts/history';
 import { requestUrl } from '../../../helpers/common';
 import { typeExpression } from '../../../helpers/query-builder';
 

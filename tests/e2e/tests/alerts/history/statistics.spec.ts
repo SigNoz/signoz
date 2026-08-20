@@ -1,9 +1,5 @@
 import { expect, test } from '../../../fixtures/alerts/alert-history';
-import {
-	gotoAlertHistory,
-	statsCard,
-	timelineRows,
-} from '../../../helpers/alerts';
+import { gotoAlertHistory, statsCard, timelineRows } from '../../../helpers/alerts/history';
 
 test.describe('Alert history — statistics', () => {
 	test('TC-01 Total Triggered card shows the firing count', async ({

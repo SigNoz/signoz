@@ -3,7 +3,7 @@ import {
 	V1_RULE_TEAM_LABEL,
 	test,
 } from '../../../fixtures/alerts/alert-history';
-import { gotoAlertDetails } from '../../../helpers/alerts';
+import { gotoAlertDetails } from '../../../helpers/alerts/navigation';
 
 test.describe('Alert details — header', () => {
 	test('TC-01 v2 header shows editable name input without Rename menu item', async ({

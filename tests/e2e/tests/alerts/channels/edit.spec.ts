@@ -1,8 +1,5 @@
 import { expect, test } from '../../../fixtures/auth';
-import {
-	createEmailChannelViaApi,
-	deleteChannelViaApi,
-} from '../../../helpers/alerts';
+import { createEmailChannelViaApi, deleteChannelViaApi } from '../../../helpers/alerts/api';
 
 test.describe('Notification channels — edit', () => {
 	// Regression guard for engineering-pod#5509: after channels moved from

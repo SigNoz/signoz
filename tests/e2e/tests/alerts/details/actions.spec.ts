@@ -1,9 +1,6 @@
 import { expect, test } from '../../../fixtures/alerts/alert-history';
-import {
-	ALERT_OVERVIEW_PATH,
-	ALERTS_LIST_PATH,
-	gotoAlertDetails,
-} from '../../../helpers/alerts';
+import { ALERT_OVERVIEW_PATH, ALERTS_LIST_PATH } from '../../../helpers/alerts/constants';
+import { gotoAlertDetails } from '../../../helpers/alerts/navigation';
 
 test.describe('Alert details — actions', () => {
 	test('TC-01 enable/disable toggle changes the rule state', async ({

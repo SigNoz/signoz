@@ -1,18 +1,19 @@
 import { expect, test } from '../../../fixtures/alerts/alert-history';
 import {
-	ALERT_HISTORY_PATH,
 	createLogsAlertViaApi,
 	deleteAlertViaApi,
+	setRuleDisabledViaApi,
+} from '../../../helpers/alerts/api';
+import { ALERT_HISTORY_PATH, TIMELINE_PAGE_SIZE } from '../../../helpers/alerts/constants';
+import {
 	expectFirstPage,
 	gotoAlertHistory,
 	runFilterExpression,
-	setRuleDisabledViaApi,
 	statsCard,
-	TIMELINE_PAGE_SIZE,
 	timelineFooterRange,
 	timelineRows,
 	waitForHistoryResponse,
-} from '../../../helpers/alerts';
+} from '../../../helpers/alerts/history';
 import { collectRequests } from '../../../helpers/common';
 import { typeExpression } from '../../../helpers/query-builder';
 

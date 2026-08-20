@@ -20,5 +20,26 @@ export const DEFAULT_RELATIVE_TIME = '30m';
  */
 export const ALERT_LIST_PAGE_SIZE = 10;
 
-/** Severities SEED-B cycles through, so list search/sort has more than one value. */
+/** Severities the list seed cycles through, so search/sort tests have more than one value. */
 export const SEED_B_SEVERITIES = ['critical', 'warning', 'info'] as const;
+
+// ─── Wait timeouts (ms) ──────────────────────────────────────────────────
+// These timeouts gate on the "ruler" — SigNoz's alert evaluation engine that
+// runs on ~15s cycles and writes history rows to ClickHouse. No way to force
+// evaluation or seed history directly, so we poll until rows appear.
+
+/**
+ * Default timeout for waitForTimelineEntries.
+ *
+ * Logs rules need 2+ ruler cycles (~15s each) to see 25 services fire.
+ * 90s = 6 cycles worst-case. Actual time: 20-35s for logs, ~10s for metrics.
+ */
+export const WAIT_TIMELINE_ENTRIES_DEFAULT = 90_000;
+
+/**
+ * Default timeout for waitForTimelineStates (firing + resolved).
+ *
+ * Resolved state appears after evalWindow expires with no matching data.
+ * 1m window + 2 ruler cycles = ~105s observed. 180s = safe margin.
+ */
+export const WAIT_TIMELINE_STATES_DEFAULT = 180_000;

@@ -1,11 +1,11 @@
 import { expect, test } from '../../../fixtures/alerts/alert-history';
+import { TIMELINE_PAGE_SIZE } from '../../../helpers/alerts/constants';
 import {
 	firstTimelineRowCreatedAt,
 	gotoAlertHistory,
-	TIMELINE_PAGE_SIZE,
 	timelineFooterRange,
 	timelineRows,
-} from '../../../helpers/alerts';
+} from '../../../helpers/alerts/history';
 
 test.describe('Alert history — timeline table', () => {
 	test('TC-01 timeline section renders all chrome elements', async ({

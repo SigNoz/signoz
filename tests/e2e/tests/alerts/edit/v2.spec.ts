@@ -2,6 +2,10 @@ import { expect, test } from '../../../fixtures/alerts/alert-rules';
 import {
 	ALERT_EDIT_PATH,
 	EVALUATION_WINDOW_PRESETS,
+	ThresholdMatchType,
+	ThresholdOperator,
+} from '../../../helpers/alert-forms/constants';
+import {
 	evaluationCadenceInput,
 	evaluationCadenceUnitSelect,
 	evaluationSettingsButton,
@@ -9,12 +13,10 @@ import {
 	expandAdvancedOptions,
 	openEvaluationSettings,
 	thresholdRows,
-	ThresholdMatchType,
-	ThresholdOperator,
 	v2ClickDiscard,
 	v2SaveButton,
-} from '../../../helpers/alert-forms';
-import { gotoAlertOverview } from '../../../helpers/alerts';
+} from '../../../helpers/alert-forms/v2';
+import { gotoAlertOverview } from '../../../helpers/alerts/navigation';
 import { watchConsole } from '../../../helpers/common';
 
 // TC-* — editing a rule whose `schemaVersion` is `v2alpha1`.

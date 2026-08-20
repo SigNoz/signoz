@@ -1,9 +1,6 @@
 import { expect, test } from '../../../fixtures/alerts/alert-rules';
-import {
-	ALERT_LIST_PAGE_SIZE,
-	alertRuleRows,
-	gotoAlertList,
-} from '../../../helpers/alerts';
+import { ALERT_LIST_PAGE_SIZE } from '../../../helpers/alerts/constants';
+import { alertRuleRows, gotoAlertList } from '../../../helpers/alerts/navigation';
 
 test.describe('Alert rules list — columns', () => {
 	test('TC-01 renders all default columns (Status, Alert Name, Severity, Labels, Actions)', async ({
