@@ -8,7 +8,6 @@ import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
 import { DataSource } from 'types/common/queryBuilder';
 import { fieldDataTypeToDataType } from 'utils/fieldDataType';
 
-/** Same values either side, but the enums are nominal — TS rejects the cast, so bridge them. */
 export const DATA_SOURCE_TO_SIGNAL: Record<
 	DataSource,
 	TelemetrytypesSignalDTO
@@ -30,11 +29,10 @@ const toAttributeType = (
 ): string =>
 	(fieldContext && FIELD_CONTEXT_TO_ATTRIBUTE_TYPE[fieldContext]) || '';
 
-/** One name can span contexts, so `type` disambiguates — mirrors the columns menu's `buildCompositeKey`. */
 export const getFilterId = (filter: {
 	key: string;
 	type?: string | null;
-}): string => (filter.type ? `${filter.type}.${filter.key}` : filter.key);
+}): string => (filter.type ? `${filter.type}:${filter.key}` : filter.key);
 
 /** Keyed by id: distinct contexts can map to the same v3 type, and a repeated id collides as a React key. */
 const mapEachKeyVariant = (
