@@ -18,14 +18,14 @@ jest.mock('@signozhq/ui/sonner', () => ({
 	},
 }));
 
-/** jsdom reports 0 for both, so the clamped path needs the overflow faked. */
-function fakeClamping(scrollHeight: number, clientHeight: number): () => void {
+/** jsdom reports 0 for both, so the truncated path needs the overflow faked. */
+function fakeTruncation(scrollWidth: number, clientWidth: number): () => void {
 	const scroll = jest
-		.spyOn(HTMLElement.prototype, 'scrollHeight', 'get')
-		.mockReturnValue(scrollHeight);
+		.spyOn(HTMLElement.prototype, 'scrollWidth', 'get')
+		.mockReturnValue(scrollWidth);
 	const client = jest
-		.spyOn(HTMLElement.prototype, 'clientHeight', 'get')
-		.mockReturnValue(clientHeight);
+		.spyOn(HTMLElement.prototype, 'clientWidth', 'get')
+		.mockReturnValue(clientWidth);
 
 	return (): void => {
 		scroll.mockRestore();
@@ -72,8 +72,8 @@ describe('EntityMetadataItem', () => {
 		expect(screen.queryByTestId('copy-metadata-node')).not.toBeInTheDocument();
 	});
 
-	it('exposes the full value on hover once it is clamped', async () => {
-		const restore = fakeClamping(40, 20);
+	it('exposes the full value on hover once it is truncated', async () => {
+		const restore = fakeTruncation(400, 200);
 
 		try {
 			render(
@@ -97,27 +97,31 @@ describe('EntityMetadataItem', () => {
 		}
 	});
 
-	it('marks a clamped value as hoverable, since it has more to reveal', () => {
-		const restore = fakeClamping(40, 20);
+	it('never presents the value as clickable, truncated or not', () => {
+		const restore = fakeTruncation(400, 200);
 
 		try {
 			render(<EntityMetadataItem label="Node" value="a-very-long-node-name" />);
 
-			expect(screen.getByText('a-very-long-node-name')).toHaveAttribute(
-				'data-interactive',
-			);
+			const valueEl = screen.getByText('a-very-long-node-name');
+			expect(valueEl).not.toHaveAttribute('data-interactive');
+			expect(valueEl).not.toHaveAttribute('data-truncate');
 		} finally {
 			restore();
 		}
 	});
 
-	it('leaves a value that fits unmarked', () => {
-		const restore = fakeClamping(20, 20);
+	it('offers no tooltip for a value that fits', async () => {
+		const restore = fakeTruncation(200, 200);
 
 		try {
 			render(<EntityMetadataItem label="Cluster Name" value="mgmt" />);
 
-			expect(screen.getByText('mgmt')).not.toHaveAttribute('data-interactive');
+			await userEvent.hover(screen.getByText('mgmt'));
+
+			await waitFor(() => {
+				expect(screen.getAllByText('mgmt')).toHaveLength(1);
+			});
 		} finally {
 			restore();
 		}

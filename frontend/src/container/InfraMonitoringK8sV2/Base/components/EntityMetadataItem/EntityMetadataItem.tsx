@@ -5,7 +5,7 @@ import { Typography } from '@signozhq/ui/typography';
 import CopyButton from 'periscope/components/CopyButton/CopyButton';
 
 import styles from './EntityMetadataItem.module.scss';
-import { useIsTextClamped } from './useIsTextClamped';
+import { useIsTextTruncated } from './useIsTextTruncated';
 
 export interface EntityMetadataItemProps {
 	label: string;
@@ -20,25 +20,28 @@ export function EntityMetadataItem({
 	renderedValue,
 }: EntityMetadataItemProps): JSX.Element {
 	const valueRef = useRef<HTMLSpanElement>(null);
-	const isClamped = useIsTextClamped(valueRef, value);
+	const isTruncated = useIsTextTruncated(valueRef, value);
 
 	const handleCopy = useCallback((): void => {
 		toast.success(`${label} copied to clipboard`, { position: 'bottom-left' });
 	}, [label]);
 
-	// Only a clamped value has anything to reveal, so only then is it worth
-	// marking as hoverable.
+	// The tooltip trigger is this wrapper, not the text itself: TooltipSimple
+	// renders asChild, and Typography treats the onClick that Radix merges in as
+	// a signal to style itself as interactive — pointer cursor and link colour on
+	// a value that does nothing when clicked. Rendering the wrapper regardless of
+	// the tooltip also keeps the measured box stable across the state flip.
 	const valueText = (
-		<Typography.Text
-			ref={valueRef}
-			size="small"
-			weight="medium"
-			truncate={1}
-			interactive={isClamped}
-			className={styles.value}
-		>
-			{value}
-		</Typography.Text>
+		<span className={styles.valueWrapper}>
+			<Typography.Text
+				ref={valueRef}
+				size="small"
+				weight="medium"
+				className={styles.value}
+			>
+				{value}
+			</Typography.Text>
+		</span>
 	);
 
 	return (
@@ -54,8 +57,8 @@ export function EntityMetadataItem({
 
 			{renderedValue ?? (
 				<div className={styles.valueRow}>
-					{isClamped ? (
-						<TooltipSimple title={value} arrow align="start">
+					{isTruncated ? (
+						<TooltipSimple title={value} arrow side="bottom" align="start">
 							{valueText}
 						</TooltipSimple>
 					) : (
