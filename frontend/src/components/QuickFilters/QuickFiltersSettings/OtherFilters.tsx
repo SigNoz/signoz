@@ -5,6 +5,7 @@ import { SignalType } from 'components/QuickFilters/types';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
 
 import { useFieldKeys } from './hooks/useFieldKeys';
+import { getFilterId } from './utils';
 
 function OtherFiltersSkeleton(): JSX.Element {
 	return (
@@ -42,7 +43,8 @@ function OtherFilters({
 	const otherFilters = useMemo(
 		() =>
 			fieldKeyFilters.filter(
-				(attr) => !addedFilters.some((filter) => filter.key === attr.key),
+				(attr) =>
+					!addedFilters.some((filter) => getFilterId(filter) === getFilterId(attr)),
 			),
 		[addedFilters, fieldKeyFilters],
 	);
@@ -67,7 +69,7 @@ function OtherFilters({
 		}
 
 		return otherFilters.map((filter) => (
-			<div key={filter.key} className="qf-filter-item other-filters-item">
+			<div key={getFilterId(filter)} className="qf-filter-item other-filters-item">
 				<div className="qf-filter-key">{filter.key}</div>
 				<Button
 					className="add-filter-btn periscope-btn"

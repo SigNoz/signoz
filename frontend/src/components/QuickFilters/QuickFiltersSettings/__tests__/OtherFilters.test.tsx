@@ -87,6 +87,49 @@ describe('OtherFilters field keys request', () => {
 		expect(requests).toHaveLength(0);
 	});
 
+	it('renders one row per context for a key that spans contexts', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		renderOtherFilters(SignalType.LOGS);
+
+		const rows = await screen.findAllByText('host.name');
+		expect(rows).toHaveLength(2);
+
+		await user.click(
+			rows[0].parentElement?.querySelector('button') as HTMLElement,
+		);
+		await user.click(
+			rows[1].parentElement?.querySelector('button') as HTMLElement,
+		);
+
+		const added = setAddedFilters.mock.calls.map((call) => call[0]([])[0]);
+		expect(added).toStrictEqual([
+			{ key: 'host.name', dataType: 'string', type: 'resource' },
+			{ key: 'host.name', dataType: 'string', type: 'tag' },
+		]);
+	});
+
+	it('excludes an added filter only for its own context', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(
+			<OtherFilters
+				signal={SignalType.LOGS}
+				inputValue=""
+				addedFilters={[{ key: 'host.name', dataType: 'string', type: 'resource' }]}
+				setAddedFilters={setAddedFilters}
+			/>,
+		);
+
+		const rows = await screen.findAllByText('host.name');
+		expect(rows).toHaveLength(1);
+
+		await user.click(
+			rows[0].parentElement?.querySelector('button') as HTMLElement,
+		);
+		expect(setAddedFilters.mock.calls[0][0]([])).toStrictEqual([
+			{ key: 'host.name', dataType: 'string', type: 'tag' },
+		]);
+	});
+
 	it('keeps the raw meter context and narrows its number data type on add', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		renderOtherFilters(SignalType.METER_EXPLORER);

@@ -19,6 +19,8 @@ import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { GripVertical } from '@signozhq/icons';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
 
+import { getFilterId } from './utils';
+
 function SortableFilter({
 	filter,
 	onRemove,
@@ -31,7 +33,7 @@ function SortableFilter({
 	allowRemove: boolean;
 }): JSX.Element {
 	const { attributes, listeners, setNodeRef, transform, transition } =
-		useSortable({ id: filter.key });
+		useSortable({ id: getFilterId(filter) });
 
 	const style = {
 		transform: CSS.Transform.toString(transform),
@@ -79,8 +81,8 @@ function AddedFilters({
 
 		if (over && active.id !== over.id) {
 			setAddedFilters((items) => {
-				const oldIndex = items.findIndex((item) => item.key === active.id);
-				const newIndex = items.findIndex((item) => item.key === over.id);
+				const oldIndex = items.findIndex((item) => getFilterId(item) === active.id);
+				const newIndex = items.findIndex((item) => getFilterId(item) === over.id);
 
 				return arrayMove(items, oldIndex, newIndex);
 			});
@@ -96,7 +98,9 @@ function AddedFilters({
 	);
 
 	const handleRemoveFilter = (filter: FilterType): void => {
-		setAddedFilters((prev) => prev.filter((f) => f.key !== filter.key));
+		setAddedFilters((prev) =>
+			prev.filter((f) => getFilterId(f) !== getFilterId(filter)),
+		);
 	};
 
 	const allowDrag = inputValue.length === 0;
@@ -116,13 +120,13 @@ function AddedFilters({
 							<div className="no-values-found">No values found</div>
 						) : (
 							<SortableContext
-								items={addedFilters.map((f) => f.key)}
+								items={addedFilters.map((f) => getFilterId(f))}
 								strategy={verticalListSortingStrategy}
 								disabled={!allowDrag}
 							>
 								{filteredAddedFilters.map((filter) => (
 									<SortableFilter
-										key={filter.key}
+										key={getFilterId(filter)}
 										filter={filter}
 										onRemove={handleRemoveFilter}
 										allowDrag={allowDrag}

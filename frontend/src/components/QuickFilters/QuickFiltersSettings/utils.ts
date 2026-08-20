@@ -48,25 +48,30 @@ const toAttributeDataType = (
 	(fieldDataType && FIELD_DATA_TYPE_TO_ATTRIBUTE_DATA_TYPE[fieldDataType]) ||
 	DataTypes.EMPTY;
 
-const mapFirstKeyPerName = (
+/** One name can span contexts, so `type` disambiguates — mirrors the columns menu's `buildCompositeKey`. */
+export const getFilterId = (filter: {
+	key: string;
+	type?: string | null;
+}): string => (filter.type ? `${filter.type}.${filter.key}` : filter.key);
+
+/** Keyed by id: distinct contexts can map to the same v3 type, and a repeated id collides as a React key. */
+const mapEachKeyVariant = (
 	keys: TelemetrytypesGettableFieldKeysDTOKeys | undefined,
 	toFilter: (fieldKey: TelemetrytypesTelemetryFieldKeyDTO) => FilterType,
 ): FilterType[] => {
-	if (!keys) {
-		return [];
-	}
-
-	return Object.values(keys)
-		.map(([fieldKey]) => fieldKey)
+	const filters = Object.values(keys ?? {})
+		.flat()
 		.filter((fieldKey) => !!fieldKey?.name)
 		.map(toFilter);
+
+	return [...new Map(filters.map((f) => [getFilterId(f), f])).values()];
 };
 
-/** Keys are grouped by name and one name can span contexts (resource and attribute) */
+/** Keys are grouped by name; each context under a name becomes its own filter. */
 export const mapFieldKeysToFilters = (
 	keys: TelemetrytypesGettableFieldKeysDTOKeys | undefined,
 ): FilterType[] =>
-	mapFirstKeyPerName(keys, (fieldKey) => ({
+	mapEachKeyVariant(keys, (fieldKey) => ({
 		key: fieldKey.name,
 		dataType: toAttributeDataType(fieldKey.fieldDataType),
 		type: toAttributeType(fieldKey.fieldContext),
@@ -80,7 +85,7 @@ export const mapFieldKeysToFilters = (
 export const mapMeterFieldKeysToFilters = (
 	keys: TelemetrytypesGettableFieldKeysDTOKeys | undefined,
 ): FilterType[] =>
-	mapFirstKeyPerName(keys, (fieldKey) => ({
+	mapEachKeyVariant(keys, (fieldKey) => ({
 		key: fieldKey.name,
 		dataType: toAttributeDataType(fieldKey.fieldDataType),
 		type: fieldKey.fieldContext || '',

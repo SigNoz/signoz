@@ -4,6 +4,7 @@ import { SignalType } from 'components/QuickFilters/types';
 import { SIGNAL_DATA_SOURCE_MAP } from '../constants';
 import {
 	DATA_SOURCE_TO_SIGNAL,
+	getFilterId,
 	mapFieldKeysToFilters,
 	mapMeterFieldKeysToFilters,
 } from '../utils';
@@ -60,7 +61,7 @@ describe('mapFieldKeysToFilters', () => {
 		]);
 	});
 
-	it('keeps the first entry when a key exists under multiple contexts', () => {
+	it('returns one filter per context when a key exists under multiple contexts', () => {
 		const filters = mapFieldKeysToFilters({
 			'service.name': [
 				{ name: 'service.name', fieldContext: 'resource', fieldDataType: 'string' },
@@ -74,6 +75,20 @@ describe('mapFieldKeysToFilters', () => {
 
 		expect(filters).toStrictEqual([
 			{ key: 'service.name', dataType: 'string', type: 'resource' },
+			{ key: 'service.name', dataType: 'string', type: 'tag' },
+		]);
+	});
+
+	it('dedupes variants whose contexts map to the same v3 type', () => {
+		const filters = mapFieldKeysToFilters({
+			body: [
+				{ name: 'body', fieldContext: 'body', fieldDataType: 'string' },
+				{ name: 'body', fieldContext: 'log', fieldDataType: 'string' },
+			],
+		} as never);
+
+		expect(filters).toStrictEqual([
+			{ key: 'body', dataType: 'string', type: '' },
 		]);
 	});
 
@@ -83,6 +98,22 @@ describe('mapFieldKeysToFilters', () => {
 		} as never);
 
 		expect(filters).toStrictEqual([{ key: 'custom', dataType: '', type: '' }]);
+	});
+});
+
+describe('getFilterId', () => {
+	it('disambiguates the same name across types', () => {
+		expect(getFilterId({ key: 'service.name', type: 'resource' })).toBe(
+			'resource.service.name',
+		);
+		expect(getFilterId({ key: 'service.name', type: 'tag' })).toBe(
+			'tag.service.name',
+		);
+	});
+
+	it('falls back to the bare name without a type', () => {
+		expect(getFilterId({ key: 'body', type: '' })).toBe('body');
+		expect(getFilterId({ key: 'body' })).toBe('body');
 	});
 });
 

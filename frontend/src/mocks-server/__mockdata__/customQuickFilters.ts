@@ -132,6 +132,20 @@ export const otherFiltersFieldKeysResponse = {
 					fieldDataType: 'string',
 				},
 			],
+			'host.name': [
+				{
+					name: 'host.name',
+					signal: 'logs',
+					fieldContext: 'resource',
+					fieldDataType: 'string',
+				},
+				{
+					name: 'host.name',
+					signal: 'logs',
+					fieldContext: 'attribute',
+					fieldDataType: 'string',
+				},
+			],
 		},
 	},
 };
