@@ -16,6 +16,7 @@ import {
 	ArrowUpDown,
 	ArrowUpToLine,
 	Bolt,
+	Box,
 	Boxes,
 	Computer,
 	Container,
@@ -31,6 +32,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { K8sDynamicList } from './Base/K8sDynamicList';
 import {
 	GetClustersQuickFiltersConfig,
+	GetContainersQuickFiltersConfig,
 	GetDaemonsetsQuickFiltersConfig,
 	GetDeploymentsQuickFiltersConfig,
 	GetJobsQuickFiltersConfig,
@@ -157,6 +159,12 @@ export default function InfraMonitoringK8s(): JSX.Element {
 				label: 'Pods',
 				icon: <Container size={14} />,
 				config: GetPodsQuickFiltersConfig(),
+			},
+			{
+				key: K8sCategories.CONTAINERS,
+				label: 'Containers',
+				icon: <Box size={14} />,
+				config: GetContainersQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.NODES,
