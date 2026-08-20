@@ -33,15 +33,6 @@ test.describe('Alert rules list — columns', () => {
 		await expect(page.getByTestId('alert-columns-button')).toBeVisible();
 	});
 
-	// eslint-disable-next-line playwright/expect-expect -- documented coverage gap
-	test('LR-02 shows empty state when no rules exist', async () => {
-		test.skip(
-			true,
-			'AlertsEmptyState needs a zero-rule workspace; unreachable without ' +
-				'tearing down SEED-B mid-suite. Covered by the component test.',
-		);
-	});
-
 	test('LR-10 column selector hides and shows a column', async ({
 		authedPage: page,
 		alertList,
@@ -70,5 +61,22 @@ test.describe('Alert rules list — columns', () => {
 		await expect(
 			page.getByRole('columnheader', { name: 'Severity' }),
 		).toBeVisible();
+	});
+
+	test('LR-09 sorts by column header click', async ({
+		authedPage: page,
+		alertList,
+	}) => {
+		await gotoAlertList(page, { search: alertList.namePrefix });
+
+		const firstCell = alertRuleRows(page).first();
+		const ascFirst = await firstCell.textContent();
+
+		await page.getByRole('button', { name: 'Alert Name' }).click();
+		await expect(page).toHaveURL(/[?&]orderBy=/);
+
+		await page.getByRole('button', { name: 'Alert Name' }).click();
+		await expect(page).toHaveURL(/[?&]orderBy=/);
+		await expect(alertRuleRows(page).first()).not.toHaveText(ascFirst ?? '');
 	});
 });

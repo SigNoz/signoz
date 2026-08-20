@@ -38,21 +38,4 @@ test.describe('Alert rules list — pagination and sorting', () => {
 		await expect(page).toHaveURL(/[?&]limit=20/);
 		await expect(alertRuleRows(page)).toHaveCount(alertList.count);
 	});
-
-	test('LR-09 sorts by column header click', async ({
-		authedPage: page,
-		alertList,
-	}) => {
-		await gotoAlertList(page, { search: alertList.namePrefix });
-
-		const firstCell = alertRuleRows(page).first();
-		const ascFirst = await firstCell.textContent();
-
-		await page.getByRole('button', { name: 'Alert Name' }).click();
-		await expect(page).toHaveURL(/[?&]orderBy=/);
-
-		await page.getByRole('button', { name: 'Alert Name' }).click();
-		await expect(page).toHaveURL(/[?&]orderBy=/);
-		await expect(alertRuleRows(page).first()).not.toHaveText(ascFirst ?? '');
-	});
 });
