@@ -14,6 +14,11 @@ import (
 // (transition.dashboardMigrateV5). Pre-v5 builder queries will produce
 // invalid v2 envelopes — run the v4→v5 migration first.
 //
+// The v1 input shape is closed: nothing writes v1 dashboards any more, so these
+// files only ever convert what v1 could already express. Panel kinds and spec
+// fields added to v2 from here on need no converter entry — change these files
+// only when a v2 type edit breaks the build.
+//
 // The conversion is split across sibling files by concern:
 //   - perses_v1_to_v2_tags.go      tags
 //   - perses_v1_to_v2_panels.go    widgets → panels (+ panel field mappers)
