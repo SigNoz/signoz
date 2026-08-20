@@ -7,6 +7,7 @@
     "preinstall": "npx only-allow pnpm",
     "i18n:generate-hash": "node ./i18-generate-hash.cjs",
     "dev": "vite",
+    "scaffold": "node .claude/skills/scaffold-feature/scaffold.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "prettify": "oxfmt",

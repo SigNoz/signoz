@@ -1,0 +1,11 @@
+import { render, screen } from 'tests/test-utils';
+
+import __Pascal__ from '../index';
+
+describe('__Pascal__', () => {
+	it('renders the tab shell', () => {
+		render(<__Pascal__ />);
+
+		expect(screen.getByTestId('__kebab__-shell')).toBeInTheDocument();
+	});
+});
