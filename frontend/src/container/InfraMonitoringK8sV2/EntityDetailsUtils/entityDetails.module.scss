@@ -45,21 +45,20 @@
 	flex-direction: column;
 }
 
+// Tracks size to the entity's field count instead of a fixed four, so entities
+// with more fields stay on one row rather than spilling a near-empty second one.
 .entityDetailsGrid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: var(--spacing-4) var(--spacing-6);
+}
+
+// Label and value share a cell so they cannot drift apart as tracks wrap.
+.entityDetailsMetadataItem {
 	display: flex;
 	flex-direction: column;
-}
-
-.labelsRow,
-.valuesRow {
-	display: grid;
-	grid-template-columns: 1.5fr 1.5fr 1.5fr 1.5fr;
-	gap: 30px;
-	align-items: center;
-}
-
-.labelsRow {
-	margin-bottom: var(--spacing-4);
+	gap: var(--spacing-1);
+	min-width: 0;
 }
 
 .entityDetailsMetadataLabel {
@@ -69,6 +68,7 @@
 
 .entityDetailsMetadataValue {
 	font-family: var(--periscope-font-family-mono);
+	overflow-wrap: anywhere;
 }
 
 .viewsTabsContainer {

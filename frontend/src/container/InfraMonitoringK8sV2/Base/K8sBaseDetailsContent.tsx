@@ -239,41 +239,33 @@ export default function K8sBaseDetailsContent<T>({
 		<>
 			<div className={styles.entityDetailsEntity}>
 				<div className={styles.entityDetailsGrid}>
-					<div className={styles.labelsRow}>
-						{metadataConfig.map((config) => (
-							<Typography.Text
-								key={config.label}
-								color="muted"
-								size="small"
-								weight="medium"
-								className={styles.entityDetailsMetadataLabel}
-							>
-								{config.label}
-							</Typography.Text>
-						))}
-					</div>
+					{metadataConfig.map((config) => {
+						const value = config.getValue(entity);
 
-					<div className={styles.valuesRow}>
-						{metadataConfig.map((config) => {
-							const value = config.getValue(entity);
-
-							if (config.render) {
-								return config.render(value, entity);
-							}
-
-							const displayValue = String(value);
-							return (
+						return (
+							<div key={config.label} className={styles.entityDetailsMetadataItem}>
 								<Typography.Text
-									key={config.label}
+									color="muted"
 									size="small"
 									weight="medium"
-									className={styles.entityDetailsMetadataValue}
+									className={styles.entityDetailsMetadataLabel}
 								>
-									{displayValue}
+									{config.label}
 								</Typography.Text>
-							);
-						})}
-					</div>
+								{config.render ? (
+									config.render(value, entity)
+								) : (
+									<Typography.Text
+										size="small"
+										weight="medium"
+										className={styles.entityDetailsMetadataValue}
+									>
+										{String(value)}
+									</Typography.Text>
+								)}
+							</div>
+						);
+					})}
 				</div>
 
 				{countsConfig &&
