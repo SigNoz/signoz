@@ -215,7 +215,7 @@ function withPagination(
 export interface BuildQueryRangeRequestArgs {
 	queries: DashboardtypesQueryDTO[];
 	/**
-	 * The panel kind's declared query capabilities (`PanelDefinition.query`): request type,
+	 * The panel kind's declared query capabilities (`PanelDefinition.queryCapabilities`): request type,
 	 * result formatting, and the step-interval/order treatment. Passed in rather than looked up
 	 * by kind so this stays a leaf of the query layer — the panel registry carries every
 	 * renderer with it, which has no business in the data path.

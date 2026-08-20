@@ -52,29 +52,42 @@ export interface ConfigBuilderProps {
  * Props for configuring an axis
  */
 export interface AxisProps {
+	/** Scale this axis is drawn against — `'x'` / `'y'`, matching an `addScale` key. Also
+	 * selects the default tick formatter and sizing (x: time, y: value + unit). */
 	scaleKey: string;
+	/** Axis title drawn alongside the ticks; omitted when there's nothing to name. */
 	label?: string;
+	/** Render the axis at all; false keeps the scale but draws no ticks or labels. */
 	show?: boolean;
-	side?: 0 | 1 | 2 | 3; // top, right, bottom, left
+	/** Which edge of the plot the axis sits on: 0 | 1 | 2 | 3 — top, right, bottom, left. */
+	side?: 0 | 1 | 2 | 3;
+	/** Tick/label color. Defaults to black or white from `isDarkMode`. */
 	stroke?: string;
+	/** Partial override of the grid lines; unset keys fall back to the theme defaults. */
 	grid?: {
 		stroke?: string;
 		width?: number;
 		show?: boolean;
 	};
+	/** Partial override of the tick marks; provided as-is to uPlot when set. */
 	ticks?: {
 		stroke?: string;
 		width?: number;
 		show?: boolean;
 		size?: number;
 	};
+	/** Explicit tick formatter, replacing the scale's default (time / unit-formatted). */
 	values?: uPlot.Axis.Values;
+	/** Pixels between the ticks and their labels; also feeds the y axis width calculation. */
 	gap?: number;
+	/** Explicit axis thickness. Left unset, the y axis sizes itself to its widest label. */
 	size?: uPlot.Axis.Size;
-	formatValue?: (v: number) => string;
 	space?: number; // Space for log scale axes
+	/** Picks the dark or light default for stroke and grid color. */
 	isDarkMode?: boolean;
+	/** Axis is on a log scale — thins the grid lines to keep dense decades readable. */
 	isLogScale?: boolean;
+	/** Unit the y axis ticks are formatted in (`spec.formatting.unit`). */
 	yAxisUnit?: string;
 	/**
 	 * X axis carries timestamps, so its ticks format as dates/times. Declared by the caller
@@ -82,6 +95,7 @@ export interface AxisProps {
 	 * (histogram) leaves it off.
 	 */
 	isTimeAxis?: boolean;
+	/** Decimal places for y axis tick values; unset lets the unit formatter decide. */
 	decimalPrecision?: PrecisionOption;
 }
 

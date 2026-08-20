@@ -40,7 +40,7 @@ function PublicPanel({
 	const { data, isFetching, isPreviousData, error, refetch } =
 		usePublicPanelQuery({
 			panel,
-			queryCapabilities: panelDefinition.query,
+			queryCapabilities: panelDefinition.queryCapabilities,
 			panelKey,
 			publicDashboardId,
 			startMs,

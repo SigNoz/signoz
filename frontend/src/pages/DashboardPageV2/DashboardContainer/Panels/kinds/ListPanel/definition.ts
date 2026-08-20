@@ -35,14 +35,12 @@ export const definition: PanelDefinition<'signoz/ListPanel'> = {
 	sections,
 	// The only kind reading raw rows: they page server-side, and the sort needs a
 	// tiebreaker so a duplicated sort key can't repeat or skip a row across pages.
-	query: {
+	queryCapabilities: {
 		requestType: Querybuildertypesv5RequestTypeDTO.raw,
 		formatTableResultForUI: false,
 		bucketedStepInterval: false,
 		orderTiebreaker: true,
 		serverPaginated: true,
-		listView: true,
-		traceOperator: false,
 	},
 	actions: {
 		view: true,

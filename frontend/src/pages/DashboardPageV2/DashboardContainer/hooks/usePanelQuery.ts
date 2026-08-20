@@ -37,7 +37,7 @@ const DEFAULT_LIST_PAGE_SIZE = 25;
 export interface UsePanelQueryArgs {
 	panel: DashboardtypesPanelDTO;
 	panelId: string;
-	/** The panel kind's declared query capabilities — `panelDefinition.query`, or `DEFAULT_QUERY_CAPABILITIES` for a kind the registry doesn't resolve. */
+	/** The panel kind's declared query capabilities — `panelDefinition.queryCapabilities` at the call site. */
 	queryCapabilities: PanelQueryCapabilities;
 	/**
 	 * Gate the fetch (default true). PanelV2 sets false for unregistered kinds to skip a wasted

@@ -19,14 +19,12 @@ export const definition: PanelDefinition<'signoz/PieChartPanel'> = {
 	],
 	supportedQueryTypes: [EQueryType.QUERY_BUILDER, EQueryType.CLICKHOUSE],
 	queryBuilderFields: {},
-	query: {
+	queryCapabilities: {
 		requestType: Querybuildertypesv5RequestTypeDTO.scalar,
 		formatTableResultForUI: false,
 		bucketedStepInterval: false,
 		orderTiebreaker: false,
 		serverPaginated: false,
-		listView: false,
-		traceOperator: true,
 	},
 	actions: {
 		view: true,

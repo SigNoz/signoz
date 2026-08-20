@@ -25,14 +25,12 @@ export const definition: PanelDefinition<'signoz/HistogramPanel'> = {
 	queryBuilderFields: {},
 	// Buckets are computed client-side from the raw series, so the request is a plain
 	// time series — the bucket count is a display concern, not a query one.
-	query: {
+	queryCapabilities: {
 		requestType: Querybuildertypesv5RequestTypeDTO.time_series,
 		formatTableResultForUI: false,
 		bucketedStepInterval: false,
 		orderTiebreaker: false,
 		serverPaginated: false,
-		listView: false,
-		traceOperator: true,
 	},
 	actions: {
 		view: true,

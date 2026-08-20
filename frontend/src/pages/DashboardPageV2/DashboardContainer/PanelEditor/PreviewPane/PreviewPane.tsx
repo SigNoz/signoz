@@ -84,7 +84,7 @@ function PreviewPane({
 				<div className={styles.header}>
 					<PlotTag
 						queryType={queryType}
-						isListView={panelDefinition.query.listView}
+						isListViewPanel={panel.spec.plugin.kind === 'signoz/ListPanel'}
 						className={styles.queryType}
 					/>
 					<div className={styles.dateTimeSelector}>

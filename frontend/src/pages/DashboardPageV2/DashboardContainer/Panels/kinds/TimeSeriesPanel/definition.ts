@@ -23,14 +23,12 @@ export const definition: PanelDefinition<'signoz/TimeSeriesPanel'> = {
 		EQueryType.PROM,
 	],
 	queryBuilderFields: {},
-	query: {
+	queryCapabilities: {
 		requestType: Querybuildertypesv5RequestTypeDTO.time_series,
 		formatTableResultForUI: false,
 		bucketedStepInterval: false,
 		orderTiebreaker: false,
 		serverPaginated: false,
-		listView: false,
-		traceOperator: true,
 	},
 	actions: {
 		view: true,

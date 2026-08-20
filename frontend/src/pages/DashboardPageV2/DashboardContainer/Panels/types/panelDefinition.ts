@@ -72,7 +72,7 @@ export interface PanelDefinition<K extends PanelKind = PanelKind> {
 	/** Query-builder fields this kind hides/disables, optionally per signal (`{}` hides none). */
 	queryBuilderFields: QueryBuilderFieldRule;
 	/** How this kind's query-range request is shaped (request type, paging, result formatting). */
-	query: PanelQueryCapabilities;
+	queryCapabilities: PanelQueryCapabilities;
 	actions: PanelActionCapabilities;
 }
 

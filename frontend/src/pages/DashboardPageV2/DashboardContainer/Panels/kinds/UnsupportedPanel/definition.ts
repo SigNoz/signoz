@@ -23,14 +23,12 @@ export const UNSUPPORTED_PANEL: RenderablePanelDefinition = {
 	supportedSignals: [],
 	supportedQueryTypes: [],
 	queryBuilderFields: {},
-	query: {
+	queryCapabilities: {
 		requestType: Querybuildertypesv5RequestTypeDTO.time_series,
 		formatTableResultForUI: false,
 		bucketedStepInterval: false,
 		orderTiebreaker: false,
 		serverPaginated: false,
-		listView: false,
-		traceOperator: false,
 	},
 	actions: NO_PANEL_ACTIONS,
 };

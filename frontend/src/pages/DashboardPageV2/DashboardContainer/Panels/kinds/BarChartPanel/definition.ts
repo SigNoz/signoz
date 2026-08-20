@@ -25,14 +25,12 @@ export const definition: PanelDefinition<'signoz/BarChartPanel'> = {
 	queryBuilderFields: {},
 	// Bars are binned client-side from a raw time series, so the request asks for a
 	// step interval wide enough to keep the bar count readable (V1 parity).
-	query: {
+	queryCapabilities: {
 		requestType: Querybuildertypesv5RequestTypeDTO.time_series,
 		formatTableResultForUI: false,
 		bucketedStepInterval: true,
 		orderTiebreaker: false,
 		serverPaginated: false,
-		listView: false,
-		traceOperator: true,
 	},
 	actions: {
 		view: true,

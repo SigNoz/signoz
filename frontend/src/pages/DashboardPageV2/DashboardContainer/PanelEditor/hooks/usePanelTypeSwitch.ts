@@ -19,7 +19,6 @@ import type {
 } from 'types/api/queryBuilder/queryBuilderData';
 
 import { resolveQueryType } from '../../Panels/capabilities';
-import { getPanelDefinition } from '../../Panels/registry';
 import {
 	PANEL_KIND_TO_PANEL_TYPE,
 	type PanelKind,
@@ -145,10 +144,11 @@ export function usePanelTypeSwitch({
 				{ ...query, queryType },
 				panelTypeRef.current,
 			);
-			// Match a fresh list view's default order so the builder's Order By isn't empty.
-			const nextQuery = getPanelDefinition(newKind).query.listView
-				? withDefaultListOrder(transformed)
-				: transformed;
+			// Match a fresh list panel's default order so the builder's Order By isn't empty.
+			const nextQuery =
+				newKind === 'signoz/ListPanel'
+					? withDefaultListOrder(transformed)
+					: transformed;
 			const signal = getBuilderQueries(currentSpec.queries)[0]
 				?.signal as TelemetrytypesSignalDTO;
 
