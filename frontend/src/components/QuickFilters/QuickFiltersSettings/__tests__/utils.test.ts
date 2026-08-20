@@ -120,10 +120,10 @@ describe('mapFieldKeysToFilters', () => {
 describe('getFilterId', () => {
 	it('disambiguates the same name across types', () => {
 		expect(getFilterId({ key: 'service.name', type: 'resource' })).toBe(
-			'resource.service.name',
+			'resource:service.name',
 		);
 		expect(getFilterId({ key: 'service.name', type: 'tag' })).toBe(
-			'tag.service.name',
+			'tag:service.name',
 		);
 	});
 
