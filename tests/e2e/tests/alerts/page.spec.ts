@@ -1,4 +1,4 @@
-import { expect, test } from '../../fixtures/alert-rules';
+import { expect, test } from '../../fixtures/alerts/alert-rules';
 import { ALERTS_LIST_PATH } from '../../helpers/alerts';
 import { watchConsole } from '../../helpers/common';
 

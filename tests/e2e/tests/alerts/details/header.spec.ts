@@ -2,7 +2,7 @@ import {
 	expect,
 	SEED_C_TEAM_LABEL,
 	test,
-} from '../../../fixtures/alert-history';
+} from '../../../fixtures/alerts/alert-history';
 import { gotoAlertDetails } from '../../../helpers/alerts';
 
 test.describe('Alert details — header', () => {

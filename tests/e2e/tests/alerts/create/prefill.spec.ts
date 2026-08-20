@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 
-import { expect, test } from '../../../fixtures/alert-rules';
+import { expect, test } from '../../../fixtures/alerts/alert-rules';
 import {
 	ALERTS_NEW_PATH,
 	AlertType,

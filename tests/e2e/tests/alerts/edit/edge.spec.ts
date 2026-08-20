@@ -1,4 +1,4 @@
-import { expect, test } from '../../../fixtures/alert-rules';
+import { expect, test } from '../../../fixtures/alerts/alert-rules';
 import { ALERT_EDIT_PATH } from '../../../helpers/alert-forms';
 import { ALERT_OVERVIEW_PATH } from '../../../helpers/alerts';
 

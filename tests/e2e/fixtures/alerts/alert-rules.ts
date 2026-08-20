@@ -16,7 +16,7 @@ import { expect, test as base } from './auth';
 
 // Alert *rule* fixtures — the API-only half of the alerts suite. Nothing here
 // waits on the ruler: a rule is created and that's it. History rows need real
-// evaluations, so those fixtures live in `fixtures/alert-history.ts`, which
+// evaluations, so those fixtures live in `alert-history.ts`, which
 // extends this module — a spec importing from there gets both sets.
 //
 // Scopes, and why:

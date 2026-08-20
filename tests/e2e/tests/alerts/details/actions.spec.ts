@@ -1,4 +1,4 @@
-import { expect, test } from '../../../fixtures/alert-history';
+import { expect, test } from '../../../fixtures/alerts/alert-history';
 import {
 	ALERT_OVERVIEW_PATH,
 	ALERTS_LIST_PATH,

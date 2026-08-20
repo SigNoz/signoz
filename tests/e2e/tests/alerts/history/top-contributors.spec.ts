@@ -1,4 +1,4 @@
-import { expect, test } from '../../../fixtures/alert-history';
+import { expect, test } from '../../../fixtures/alerts/alert-history';
 import { gotoAlertHistory } from '../../../helpers/alerts';
 
 test.describe('Alert history — top contributors', () => {

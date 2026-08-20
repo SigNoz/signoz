@@ -1,4 +1,4 @@
-import { expect, test } from '../../../fixtures/alert-rules';
+import { expect, test } from '../../../fixtures/alerts/alert-rules';
 import { alertRuleRows, gotoAlertList } from '../../../helpers/alerts';
 
 test.describe('Alert rules list — row actions', () => {

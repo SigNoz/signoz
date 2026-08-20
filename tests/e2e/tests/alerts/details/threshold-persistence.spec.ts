@@ -1,4 +1,4 @@
-import { expect, test } from '../../../fixtures/alert-rules';
+import { expect, test } from '../../../fixtures/alerts/alert-rules';
 import { gotoAlertOverview } from '../../../helpers/alerts';
 
 const TARGET = 245;

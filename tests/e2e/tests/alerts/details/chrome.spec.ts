@@ -1,4 +1,4 @@
-import { expect, test } from '../../../fixtures/alert-history';
+import { expect, test } from '../../../fixtures/alerts/alert-history';
 import { ALERTS_LIST_PATH, gotoAlertHistory } from '../../../helpers/alerts';
 
 test.describe('Alert details — page chrome', () => {
