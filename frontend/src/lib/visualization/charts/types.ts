@@ -33,6 +33,13 @@ interface BaseChartProps {
 	renderTooltipFooter?: (args: IRenderTooltipFooterArgs) => React.ReactNode;
 	customTooltip?: (props: TooltipRenderArgs) => React.ReactNode;
 	tooltipPortalRoot?: HTMLElement | null;
+	/** Replaces the config-driven legend, for charts whose legend lists something
+	 *  other than uPlot series — heatmap groups, where the series are bucket rows. */
+	customLegend?: (averageLegendWidth: number) => React.ReactNode;
+	/** Measured against for the chart/legend split. Pair with `customLegend`. */
+	legendLabels?: string[];
+	/** Rendered under the plot but above the legend, inside the chart column. */
+	contentFooter?: React.ReactNode;
 	'data-testid'?: string;
 }
 interface UPlotBasedChartProps {
