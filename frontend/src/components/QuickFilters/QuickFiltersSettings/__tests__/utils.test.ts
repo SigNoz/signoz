@@ -61,6 +61,22 @@ describe('mapFieldKeysToFilters', () => {
 		]);
 	});
 
+	it('maps array data types rather than dropping them', () => {
+		const filters = mapFieldKeysToFilters({
+			'http.request.header': [
+				{
+					name: 'http.request.header',
+					fieldContext: 'attribute',
+					fieldDataType: '[]string',
+				},
+			],
+		} as never);
+
+		expect(filters).toStrictEqual([
+			{ key: 'http.request.header', dataType: 'array(string)', type: 'tag' },
+		]);
+	});
+
 	it('returns one filter per context when a key exists under multiple contexts', () => {
 		const filters = mapFieldKeysToFilters({
 			'service.name': [
