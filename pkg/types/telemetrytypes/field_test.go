@@ -22,7 +22,7 @@ func TestGetFieldKeyFromKeyText(t *testing.T) {
 		{
 			keyText: "scope.name",
 			expected: TelemetryFieldKey{
-				Name:          "name",
+				Name:          "scope.name",
 				FieldContext:  FieldContextScope,
 				FieldDataType: FieldDataTypeUnspecified,
 			},
@@ -30,7 +30,7 @@ func TestGetFieldKeyFromKeyText(t *testing.T) {
 		{
 			keyText: "scope.version",
 			expected: TelemetryFieldKey{
-				Name:          "version",
+				Name:          "scope.version",
 				FieldContext:  FieldContextScope,
 				FieldDataType: FieldDataTypeUnspecified,
 			},

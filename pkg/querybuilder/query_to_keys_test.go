@@ -73,18 +73,15 @@ func TestQueryToKeys(t *testing.T) {
 			},
 		},
 		{
+			// A declared scope path keeps its compound name and addresses the scope field
+			// only, so it yields a single scope-context selector (no `scope.`-prefixed
+			// cross-context companion).
 			query: `scope.version = '1.0.0'`,
 			expectedKeys: []telemetrytypes.FieldKeySelector{
 				{
-					Name:          "version",
-					Signal:        telemetrytypes.SignalUnspecified,
-					FieldContext:  telemetrytypes.FieldContextScope,
-					FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
-				},
-				{
 					Name:          "scope.version",
 					Signal:        telemetrytypes.SignalUnspecified,
-					FieldContext:  telemetrytypes.FieldContextUnspecified,
+					FieldContext:  telemetrytypes.FieldContextScope,
 					FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 				},
 			},

@@ -1,6 +1,8 @@
 package querybuilder
 
 import (
+	"strings"
+
 	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/antlr4-go/antlr/v4"
@@ -59,11 +61,16 @@ func QueryStringToKeysSelectors(query string) []*telemetrytypes.FieldKeySelector
 
 			// todo(tushar): consider reverting changes done to this method in below PR to avoid scope specific checks
 			// https://github.com/SigNoz/signoz/issues/11374
-			if key.FieldContext == telemetrytypes.FieldContextScope {
+			//
+			// A scope attribute lets its `scope.`-prefixed name resolve under other contexts too.
+			// Declared paths (scope.name/scope.version) keep their compound name after
+			// normalization and address the scope field only, so they get no such selector.
+			scopePrefix := telemetrytypes.FieldContextScope.StringValue() + "."
+			if key.FieldContext == telemetrytypes.FieldContextScope && !strings.HasPrefix(key.Name, scopePrefix) {
 				keys = append(keys, &telemetrytypes.FieldKeySelector{
-					Name:          key.FieldContext.StringValue() + "." + key.Name,
+					Name:          scopePrefix + key.Name,
 					Signal:        key.Signal,
-					FieldContext:  telemetrytypes.FieldContextUnspecified, // this allows 'scope.' prefix for keys with other context as well
+					FieldContext:  telemetrytypes.FieldContextUnspecified,
 					FieldDataType: key.FieldDataType,
 				})
 			}

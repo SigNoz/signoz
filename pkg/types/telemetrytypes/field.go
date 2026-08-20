@@ -145,6 +145,19 @@ func (f *TelemetryFieldKey) Equal(key *TelemetryFieldKey) bool {
 //	key := &TelemetryFieldKey{Name: "resource.service.name:string"}
 //	key.Normalize()
 //	// Result: Name: "service.name", FieldContext: FieldContextResource, FieldDataType: FieldDataTypeString
+// declaredScopePathSuffixes are the OTel InstrumentationScope fields that address a
+// declared top-level path on the scope column rather than a scope attribute. They keep
+// their compound `scope.<suffix>` name through normalization.
+var declaredScopePathSuffixes = map[string]struct{}{
+	"name":    {},
+	"version": {},
+}
+
+func isDeclaredScopePathSuffix(name string) bool {
+	_, ok := declaredScopePathSuffixes[name]
+	return ok
+}
+
 func (f *TelemetryFieldKey) Normalize() {
 
 	// Step 1: Parse data type from the right (after the last ":") if not already specified
@@ -163,8 +176,16 @@ func (f *TelemetryFieldKey) Normalize() {
 		if dotIdx := strings.Index(f.Name, "."); dotIdx != -1 {
 			potentialContext := f.Name[:dotIdx]
 			if fc, ok := fieldContexts[potentialContext]; ok && fc != FieldContextUnspecified {
-				f.Name = f.Name[dotIdx+1:]
+				remainder := f.Name[dotIdx+1:]
 				f.FieldContext = fc
+
+				// The declared scope paths (scope.name / scope.version) keep their compound
+				// name so they stay distinct from a scope attribute of the same short name.
+				if fc == FieldContextScope && isDeclaredScopePathSuffix(remainder) {
+					// f.Name stays as the compound `scope.<suffix>`
+				} else {
+					f.Name = remainder
+				}
 
 				// Step 2a: Handle special case for log.body.* fields
 				if f.FieldContext == FieldContextLog && strings.HasPrefix(f.Name, BodyJSONStringSearchPrefix) {

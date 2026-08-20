@@ -228,24 +228,6 @@ func (c *conditionBuilder) ConditionFor(
 	if warning != "" {
 		warnings = append(warnings, warning)
 	}
-
-	// scope.name / scope.version address the declared scope fields only. A scope attribute
-	// that happens to carry one of those reserved names is addressed as scope.attribute.<name>,
-	// so drop the scope-context attribute interpretation here. The declared path and any
-	// same-named field under another context (e.g. a span attribute literally named scope.name)
-	// are kept; an emptied set falls through to CandidateKeys, which resolves the declared path.
-	if _, reserved := declaredScopePath(key); reserved && key.FieldContext == telemetrytypes.FieldContextScope {
-		kept := make([]*telemetrytypes.LogicalField, 0, len(logicalFields))
-		for _, logical := range logicalFields {
-			single := logical.Single()
-			if single.FieldContext == telemetrytypes.FieldContextScope && !isDeclaredScopePath(single.Name) {
-				continue
-			}
-			kept = append(kept, logical)
-		}
-		logicalFields = kept
-	}
-
 	// A bare key that names a real column filters on the column too — first. When metadata
 	// only knows the name under other contexts, prepend the column and keep metadata matches
 	// only where their type is consistent with it (a corrupt entry can't degrade the column).
