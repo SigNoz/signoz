@@ -103,9 +103,7 @@ describe('UPlotScaleBuilder', () => {
 
 		expect(getFallbackMinMaxSpy).toHaveBeenCalled();
 		expect(resolvedMin).toBe(100);
-		// max is aligned to "fallbackMax - 60 seconds" minute boundary
-		expect(resolvedMax).toBeLessThanOrEqual(200);
-		expect(resolvedMax).toBeGreaterThan(100);
+		expect(resolvedMax).toBe(200);
 	});
 
 	it('pipes limits through soft-limit adjustment and log-scale normalization before range config', () => {
