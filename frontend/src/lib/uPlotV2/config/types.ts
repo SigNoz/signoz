@@ -63,6 +63,7 @@ export interface AxisProps {
 		size?: number;
 	};
 	values?: uPlot.Axis.Values;
+	splits?: uPlot.Axis.Splits;
 	gap?: number;
 	size?: uPlot.Axis.Size;
 	formatValue?: (v: number) => string;
