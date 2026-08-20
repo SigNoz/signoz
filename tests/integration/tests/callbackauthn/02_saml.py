@@ -13,12 +13,14 @@ from fixtures.auth import (
     USER_ADMIN_PASSWORD,
     add_license,
     assert_user_has_role,
+    create_active_user,
     find_user_with_roles_by_email,
 )
 from fixtures.idp import (
     get_saml_domain,
     perform_saml_login,
 )
+from fixtures.role import find_role_by_name
 from fixtures.types import Operation, SigNoz, TestContainerDocker, TestContainerIDP
 
 
@@ -50,16 +52,16 @@ def test_create_auth_domain(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
         json={
             "name": "saml.integration.test",
+            "enabled": True,
             "config": {
-                "ssoEnabled": True,
-                "ssoType": "saml",
-                "samlConfig": {
-                    "samlEntity": settings["entityID"],
-                    "samlIdp": settings["singleSignOnServiceLocation"],
-                    "samlCert": settings["certificate"],
+                "kind": "saml",
+                "spec": {
+                    "entityId": settings["entityID"],
+                    "location": settings["singleSignOnServiceLocation"],
+                    "certificate": settings["certificate"],
                 },
             },
         },
@@ -71,7 +73,7 @@ def test_create_auth_domain(
 
     # Get the domains from signoz
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -174,30 +176,30 @@ def test_saml_update_domain_with_group_mappings(
 
     # update the existing saml domain to have role mappings also
     response = requests.put(
-        signoz.self.host_configs["8080"].get(f"/api/v1/domains/{domain['id']}"),
+        signoz.self.host_configs["8080"].get(f"/api/v2/auth_domains/{domain['id']}"),
         json={
+            "enabled": True,
             "config": {
-                "ssoEnabled": True,
-                "ssoType": "saml",
-                "samlConfig": {
-                    "samlEntity": settings["entityID"],
-                    "samlIdp": settings["singleSignOnServiceLocation"],
-                    "samlCert": settings["certificate"],
+                "kind": "saml",
+                "spec": {
+                    "entityId": settings["entityID"],
+                    "location": settings["singleSignOnServiceLocation"],
+                    "certificate": settings["certificate"],
                     "attributeMapping": {
                         "name": "givenName",
                         "groups": "groups",
                         "role": "signoz_role",
                     },
                 },
-                "roleMapping": {
-                    "defaultRole": "VIEWER",
-                    "groupMappings": {
-                        "signoz-admins": "ADMIN",
-                        "signoz-editors": "EDITOR",
-                        "signoz-viewers": "VIEWER",
-                    },
-                    "useRoleAttribute": False,
+            },
+            "roleMapping": {
+                "defaultRole": "VIEWER",
+                "groupMappings": {
+                    "signoz-admins": "ADMIN",
+                    "signoz-editors": "EDITOR",
+                    "signoz-viewers": "VIEWER",
                 },
+                "useRoleAttribute": False,
             },
         },
         headers={"Authorization": f"Bearer {admin_token}"},
@@ -329,29 +331,29 @@ def test_saml_update_domain_with_use_role_claim(
     settings = get_saml_settings()
 
     response = requests.put(
-        signoz.self.host_configs["8080"].get(f"/api/v1/domains/{domain['id']}"),
+        signoz.self.host_configs["8080"].get(f"/api/v2/auth_domains/{domain['id']}"),
         json={
+            "enabled": True,
             "config": {
-                "ssoEnabled": True,
-                "ssoType": "saml",
-                "samlConfig": {
-                    "samlEntity": settings["entityID"],
-                    "samlIdp": settings["singleSignOnServiceLocation"],
-                    "samlCert": settings["certificate"],
+                "kind": "saml",
+                "spec": {
+                    "entityId": settings["entityID"],
+                    "location": settings["singleSignOnServiceLocation"],
+                    "certificate": settings["certificate"],
                     "attributeMapping": {
                         "name": "displayName",
                         "groups": "groups",
                         "role": "signoz_role",
                     },
                 },
-                "roleMapping": {
-                    "defaultRole": "VIEWER",
-                    "groupMappings": {
-                        "signoz-admins": "ADMIN",
-                        "signoz-editors": "EDITOR",
-                    },
-                    "useRoleAttribute": True,
+            },
+            "roleMapping": {
+                "defaultRole": "VIEWER",
+                "groupMappings": {
+                    "signoz-admins": "ADMIN",
+                    "signoz-editors": "EDITOR",
                 },
+                "useRoleAttribute": True,
             },
         },
         headers={"Authorization": f"Bearer {admin_token}"},
@@ -509,8 +511,12 @@ def test_saml_sso_login_activates_pending_invite_user(
 
     # Invite user as ADMIN
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={"email": email, "role": "ADMIN", "name": "SAML SSO Pending User"},
+        signoz.self.host_configs["8080"].get("/api/v2/users"),
+        json={
+            "email": email,
+            "displayName": "SAML SSO Pending User",
+            "userRoles": [{"id": find_role_by_name(signoz, admin_token, "signoz-admin")}],
+        },
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -547,26 +553,18 @@ def test_saml_sso_deleted_user_gets_new_user_on_login(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # --- Step 1: Invite and activate via password reset ---
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={"email": email, "role": "EDITOR", "name": "SAML SSO Lifecycle User"},
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
+    user_id = create_active_user(
+        signoz,
+        admin_token,
+        email=email,
+        role="signoz-editor",
+        password="password123Z$",
+        name="SAML SSO Lifecycle User",
     )
-    assert response.status_code == HTTPStatus.CREATED
-    user_id = response.json()["data"]["id"]
-    reset_token = response.json()["data"]["token"]
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
-        json={"password": "password123Z$", "token": reset_token},
-        timeout=2,
-    )
-    assert response.status_code == HTTPStatus.NO_CONTENT
 
     # --- Step 2: Soft delete via DB using API
     response = requests.delete(
-        signoz.self.host_configs["8080"].get(f"/api/v1/user/{user_id}"),
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{user_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )

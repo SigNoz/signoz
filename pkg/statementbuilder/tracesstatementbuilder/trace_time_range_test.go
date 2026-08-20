@@ -21,8 +21,9 @@ import (
 func TestTraceTimeRangeOptimization(t *testing.T) {
 	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 
-	fm := tracestelemetryschema.NewFieldMapper()
-	cb := tracestelemetryschema.NewConditionBuilder(fm)
+	fl := flaggertest.New(t)
+	fm := tracestelemetryschema.NewFieldMapper(fl)
+	cb := tracestelemetryschema.NewConditionBuilder(fm, fl)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
@@ -39,7 +40,6 @@ func TestTraceTimeRangeOptimization(t *testing.T) {
 		Signal:        telemetrytypes.SignalTraces,
 	}}
 
-	fl := flaggertest.New(t)
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
 
 	statementBuilder := NewTraceQueryStatementBuilder(

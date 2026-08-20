@@ -28,7 +28,7 @@ func (t *StoreTest) Store() savedviewtypes.Store { return t.store }
 func (t *StoreTest) Mock() sqlmock.Sqlmock { return t.mock }
 
 func savedViewRow(view *savedviewtypes.SavedView) []driver.Value {
-	data, _ := json.Marshal(view.Data)
+	data, _ := json.Marshal(savedviewtypes.NewStorableSavedView(view).Data)
 	return []driver.Value{
 		view.ID.StringValue(),
 		view.CreatedAt,
@@ -45,6 +45,12 @@ func savedViewRow(view *savedviewtypes.SavedView) []driver.Value {
 // ExpectCreate sets up the SQL expectation for a Create call.
 func (t *StoreTest) ExpectCreate() {
 	t.mock.ExpectExec(`INSERT INTO "saved_view"`).WillReturnResult(sqlmock.NewResult(1, 1))
+}
+
+// ExpectCreateError sets up the SQL expectation for a Create call whose insert
+// fails, e.g. on a UNIQUE(org_id, name) violation.
+func (t *StoreTest) ExpectCreateError(err error) {
+	t.mock.ExpectExec(`INSERT INTO "saved_view"`).WillReturnError(err)
 }
 
 // ExpectGet sets up the SQL expectation for a Get call. Pass view = nil to

@@ -3,7 +3,7 @@ import { ReactNode } from 'react';
 export interface InviteMemberRow {
 	id: string;
 	email: string;
-	roleId: string;
+	roleIds: string[];
 }
 
 export interface InviteResult {
@@ -38,7 +38,7 @@ export interface UseInviteMembersReturn {
 	addRow: () => void;
 	removeRow: (id: string) => void;
 	updateEmail: (id: string, email: string) => void;
-	updateRole: (id: string, roleId: string | undefined) => void;
+	updateRole: (id: string, roleIds: string[]) => void;
 	reset: () => void;
 	submit: () => Promise<InviteResult[]>;
 

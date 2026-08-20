@@ -8,7 +8,7 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.fs import get_testdata_file_path
-from fixtures.inframonitoring import expected_status_counts
+from fixtures.inframonitoring import expected_resource_counts, expected_status_counts
 from fixtures.metrics import Metrics
 from fixtures.querier import compare_values, get_all_warnings
 
@@ -361,6 +361,51 @@ def test_clusters_node_readiness_aggregation(
     assert rec["clusterName"] == "rn-cluster"
     assert rec["nodeCountsByReadiness"] == {"ready": 3, "notReady": 2}
 
+    # filterByNodeReadiness: cluster kept (>=1 matching node), only the filtered
+    # bucket populated.
+    ready = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.cluster.name = 'rn-cluster'", "filterByNodeReadiness": ["ready"]},
+        },
+        timeout=5,
+    )
+    assert ready.status_code == HTTPStatus.OK, ready.text
+    assert ready.json()["data"]["records"][0]["nodeCountsByReadiness"] == {"ready": 3, "notReady": 0}
+
+    not_ready = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.cluster.name = 'rn-cluster'", "filterByNodeReadiness": ["not_ready"]},
+        },
+        timeout=5,
+    )
+    assert not_ready.status_code == HTTPStatus.OK, not_ready.text
+    assert not_ready.json()["data"]["records"][0]["nodeCountsByReadiness"] == {"ready": 0, "notReady": 2}
+
+    # Multi-select is OR: both buckets populated (union) for the kept cluster.
+    both = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.cluster.name = 'rn-cluster'", "filterByNodeReadiness": ["ready", "not_ready"]},
+        },
+        timeout=5,
+    )
+    assert both.status_code == HTTPStatus.OK, both.text
+    assert both.json()["data"]["records"][0]["nodeCountsByReadiness"] == {"ready": 3, "notReady": 2}
+
 
 def test_clusters_pod_status_aggregation(
     signoz: types.SigNoz,
@@ -402,19 +447,109 @@ def test_clusters_pod_status_aggregation(
     # All status metrics present -> gate satisfied -> no status warning.
     assert all("Pod status could not be computed" not in w["message"] for w in get_all_warnings(response.json()))
 
+    # filterByPodStatus: cluster kept (>=1 matching pod), only the filtered
+    # buckets populated. Multi-select is OR -> the union of requested buckets.
+    for fbps, expected in (
+        (["running"], expected_status_counts(running=3)),
+        (["CrashLoopBackOff"], expected_status_counts(crashLoopBackOff=1)),
+        (["running", "CrashLoopBackOff"], expected_status_counts(running=3, crashLoopBackOff=1)),
+    ):
+        resp = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
+                "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+                "end": int(now.timestamp() * 1000),
+                "limit": 50,
+                "filter": {"expression": "k8s.cluster.name = 'pp-cluster'", "filterByPodStatus": fbps},
+            },
+            timeout=5,
+        )
+        assert resp.status_code == HTTPStatus.OK, resp.text
+        fdata = resp.json()["data"]
+        assert fdata["total"] == 1
+        assert fdata["records"][0]["podCountsByStatus"] == expected
+
+    # A set fully absent from the cluster -> empty page (single and multi).
+    for fbps in (["completed"], ["completed", "oomKilled"]):
+        absent = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
+                "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+                "end": int(now.timestamp() * 1000),
+                "limit": 50,
+                "filter": {"expression": "k8s.cluster.name = 'pp-cluster'", "filterByPodStatus": fbps},
+            },
+            timeout=5,
+        )
+        assert absent.status_code == HTTPStatus.OK, absent.text
+        assert absent.json()["data"]["total"] == 0, f"cluster must be dropped by filterByPodStatus={fbps!r}"
+
+    # Combined filterByPodStatus + filterByNodeReadiness = AND. pp-cluster has a
+    # Ready node and Running pods -> kept when both match; dropped if either side
+    # has no match.
+    both_match = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.cluster.name = 'pp-cluster'", "filterByPodStatus": ["running"], "filterByNodeReadiness": ["ready"]},
+        },
+        timeout=5,
+    )
+    assert both_match.status_code == HTTPStatus.OK, both_match.text
+    bdata = both_match.json()["data"]
+    assert bdata["total"] == 1
+    assert bdata["records"][0]["podCountsByStatus"] == expected_status_counts(running=3)
+    assert bdata["records"][0]["nodeCountsByReadiness"] == {"ready": 1, "notReady": 0}
+
+    # readiness side fails (no not_ready node) -> dropped.
+    readiness_fails = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.cluster.name = 'pp-cluster'", "filterByPodStatus": ["running"], "filterByNodeReadiness": ["not_ready"]},
+        },
+        timeout=5,
+    )
+    assert readiness_fails.status_code == HTTPStatus.OK, readiness_fails.text
+    assert readiness_fails.json()["data"]["total"] == 0
+
+    # pod-status side fails (no completed pod) -> dropped.
+    status_fails = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"expression": "k8s.cluster.name = 'pp-cluster'", "filterByPodStatus": ["completed"], "filterByNodeReadiness": ["ready"]},
+        },
+        timeout=5,
+    )
+    assert status_fails.status_code == HTTPStatus.OK, status_fails.text
+    assert status_fails.json()["data"]["total"] == 0
+
 
 @pytest.mark.parametrize(
-    "group_key,expected",
+    "group_key,flt,expected",
     [
         # groupBy=[k8s.cluster.name]: one record per cluster, clusterName
         # populated (clusters.go:29-32). Each cluster has 1 ready node, 1 pod.
         pytest.param(
             "k8s.cluster.name",
+            None,
             {
-                "gb-gcp-1": {"readiness": {"ready": 1, "notReady": 0}},
-                "gb-gcp-2": {"readiness": {"ready": 1, "notReady": 0}},
-                "gb-aws-1": {"readiness": {"ready": 1, "notReady": 0}},
-                "gb-aws-2": {"readiness": {"ready": 1, "notReady": 0}},
+                "gb-gcp-1": {"readiness": {"ready": 1, "notReady": 0}, "counts": expected_resource_counts(nodes=1, namespaces=1)},
+                "gb-gcp-2": {"readiness": {"ready": 1, "notReady": 0}, "counts": expected_resource_counts(nodes=1, namespaces=1)},
+                "gb-aws-1": {"readiness": {"ready": 1, "notReady": 0}, "counts": expected_resource_counts(nodes=1, namespaces=1)},
+                "gb-aws-2": {"readiness": {"ready": 1, "notReady": 0}, "counts": expected_resource_counts(nodes=1, namespaces=1)},
             },
             id="cluster_name",
         ),
@@ -422,25 +557,38 @@ def test_clusters_pod_status_aggregation(
         # clusterName empty (custom-groupBy branch).
         pytest.param(
             "cloud.provider",
+            None,
             {
-                "gcp": {"readiness": {"ready": 2, "notReady": 0}},
-                "aws": {"readiness": {"ready": 2, "notReady": 0}},
+                "gcp": {"readiness": {"ready": 2, "notReady": 0}, "counts": expected_resource_counts(nodes=2, namespaces=2)},
+                "aws": {"readiness": {"ready": 2, "notReady": 0}, "counts": expected_resource_counts(nodes=2, namespaces=2)},
             },
             id="cloud_provider",
         ),
+        # groupBy on a counted attr: regression guard for the counts-query
+        # alias collision (CH error 179).
+        pytest.param(
+            "k8s.namespace.name",
+            "k8s.namespace.name = 'ns-x'",
+            {
+                "ns-x": {"readiness": {"ready": 0, "notReady": 0}, "counts": expected_resource_counts(nodes=4, namespaces=4)},
+            },
+            id="namespace_name_counted_attr",
+        ),
     ],
 )
-def test_clusters_groupby(
+def test_clusters_groupby(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token,
     insert_metrics,
     group_key: str,
+    flt,
     expected: dict,
 ) -> None:
-    """groupBy returns one record per distinct group with aggregated readiness.
-    clusterName is populated only when grouping by k8s.cluster.name
-    (clusters.go:29-32 list-vs-grouped branch); meta surfaces the groupBy key."""
+    """groupBy returns one record per distinct group with aggregated readiness
+    and resource counts. clusterName is populated only when grouping by
+    k8s.cluster.name (clusters.go:29-32 list-vs-grouped branch); meta surfaces
+    the groupBy key."""
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_metrics(
         Metrics.load_from_file(
@@ -450,21 +598,24 @@ def test_clusters_groupby(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    body: dict = {
+        "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+        "end": int(now.timestamp() * 1000),
+        "limit": 50,
+        "groupBy": [
+            {
+                "name": group_key,
+                "fieldDataType": "string",
+                "fieldContext": "resource",
+            }
+        ],
+    }
+    if flt is not None:
+        body["filter"] = {"expression": flt}
     response = requests.post(
         signoz.self.host_configs["8080"].get(ENDPOINT),
         headers={"authorization": f"Bearer {token}"},
-        json={
-            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "limit": 50,
-            "groupBy": [
-                {
-                    "name": group_key,
-                    "fieldDataType": "string",
-                    "fieldContext": "resource",
-                }
-            ],
-        },
+        json=body,
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
@@ -481,6 +632,7 @@ def test_clusters_groupby(
         # empty otherwise.
         assert rec["clusterName"] == (group if group_key == "k8s.cluster.name" else "")
         assert rec["nodeCountsByReadiness"] == exp["readiness"]
+        assert rec["counts"] == exp["counts"], f"{group}: got {rec['counts']}, expected {exp['counts']}"
         assert group_key in rec["meta"], rec["meta"]
 
 
@@ -626,6 +778,21 @@ def test_clusters_orderby(  # pylint: disable=too-many-arguments,too-many-positi
             },
             "is only allowed when groupBy is empty",
             id="orderby_clustername_with_groupby",
+        ),
+        pytest.param(
+            {"filter": {"filterByPodStatus": ["Bogus"]}},
+            "invalid filter by pod status",
+            id="filter_by_pod_status_invalid",
+        ),
+        pytest.param(
+            {"filter": {"filterByNodeReadiness": ["bogus"]}},
+            "invalid filter by node readiness",
+            id="filter_by_node_readiness_invalid",
+        ),
+        pytest.param(
+            {"filter": {"filterByNodeReadiness": ["notready"]}},
+            "invalid filter by node readiness",
+            id="filter_by_node_readiness_missing_underscore",
         ),
     ],
 )

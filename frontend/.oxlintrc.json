@@ -487,8 +487,11 @@
     // Simplifies boolean returns
     "sonarjs/prefer-while": "error",
     // Suggests while loops over for loops
-    "sonarjs/elseif-without-else": "off"
+    "sonarjs/elseif-without-else": "off",
     // Requires final else in if-else-if chains (was disabled)
+    "signoz/no-conditional-text-nodes-with-siblings": "warn",
+    // Vendored from eslint-plugin-react-google-translate
+    "signoz/no-return-text-nodes": "warn"
   },
   "ignorePatterns": [
     "src/parser/*.ts",

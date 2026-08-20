@@ -7,6 +7,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -28,27 +30,76 @@ var (
 )
 
 type SavedView struct {
+	types.Identifiable
+	types.TimeAuditable
+	types.UserAuditable
+	OrgID         string        `json:"-"`
+	Name          string        `json:"name"`
+	Source        Source        `json:"source"`
+	SchemaVersion SchemaVersion `json:"schemaVersion" required:"true"`
+	Spec          SavedViewSpec `json:"spec" required:"true"`
+}
+
+type StorableSavedView struct {
 	bun.BaseModel `bun:"table:saved_view"`
 
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
-	OrgID  string        `json:"-" bun:"org_id,notnull"`
-	Name   string        `json:"name" bun:"name,type:text,notnull"`
-	Source Source        `json:"source" bun:"source,type:text,notnull"`
-	Data   SavedViewData `json:"data" bun:"data,type:text,notnull"`
+	OrgID  string        `bun:"org_id,notnull"`
+	Name   string        `bun:"name,type:text,notnull"`
+	Source Source        `bun:"source,type:text,notnull"`
+	Data   SavedViewData `bun:"data,type:text,notnull"`
+}
+
+func (s *StorableSavedView) ToSavedView() *SavedView {
+	spec := s.Data.Spec
+	if spec.Queries == nil {
+		spec.Queries = []qbtypes.QueryEnvelope{}
+	}
+	if spec.SelectedFields == nil {
+		spec.SelectedFields = []telemetrytypes.TelemetryFieldKey{}
+	}
+
+	return &SavedView{
+		Identifiable:  s.Identifiable,
+		TimeAuditable: s.TimeAuditable,
+		UserAuditable: s.UserAuditable,
+		OrgID:         s.OrgID,
+		Name:          s.Name,
+		Source:        s.Source,
+		SchemaVersion: SchemaVersion{valuer.NewString(s.Data.SchemaVersion)},
+		Spec:          spec,
+	}
+}
+
+func NewStorableSavedView(view *SavedView) *StorableSavedView {
+	return &StorableSavedView{
+		Identifiable:  view.Identifiable,
+		TimeAuditable: view.TimeAuditable,
+		UserAuditable: view.UserAuditable,
+		OrgID:         view.OrgID,
+		Name:          view.Name,
+		Source:        view.Source,
+		Data: SavedViewData{
+			SchemaVersion: view.SchemaVersion.StringValue(),
+			Spec:          view.Spec,
+		},
+	}
 }
 
 type PostableSavedView struct {
-	Name         string        `json:"name"`
-	GenerateName bool          `json:"generateName"`
-	Source       Source        `json:"source" required:"true"`
-	Data         SavedViewData `json:"data" required:"true"`
+	Name          string        `json:"name"`
+	GenerateName  bool          `json:"generateName"`
+	Source        Source        `json:"source" required:"true"`
+	SchemaVersion SchemaVersion `json:"schemaVersion" required:"true"`
+	Spec          SavedViewSpec `json:"spec" required:"true"`
 }
 
 type UpdatableSavedView struct {
-	Source Source        `json:"source" required:"true"`
-	Data   SavedViewData `json:"data" required:"true"`
+	Source        Source        `json:"source" required:"true"`
+	SchemaVersion SchemaVersion `json:"schemaVersion" required:"true"`
+	Spec          SavedViewSpec `json:"spec" required:"true"`
 }
 
 type ListSavedViewsParams struct {
@@ -83,7 +134,7 @@ func (postable PostableSavedView) ToSavedView(orgID string, createdBy string) *S
 
 	name := postable.Name
 	if postable.GenerateName {
-		name = generateSavedViewName(postable.Data.Spec.DisplayName)
+		name = generateSavedViewName(postable.Spec.DisplayName)
 	}
 
 	return &SavedView{
@@ -93,7 +144,8 @@ func (postable PostableSavedView) ToSavedView(orgID string, createdBy string) *S
 		OrgID:         orgID,
 		Name:          name,
 		Source:        postable.Source,
-		Data:          postable.Data,
+		SchemaVersion: postable.SchemaVersion,
+		Spec:          postable.Spec,
 	}
 }
 
@@ -106,7 +158,8 @@ func (updatable UpdatableSavedView) ToSavedView(id valuer.UUID, orgID string, up
 		UserAuditable: types.UserAuditable{UpdatedBy: updatedBy},
 		OrgID:         orgID,
 		Source:        updatable.Source,
-		Data:          updatable.Data,
+		SchemaVersion: updatable.SchemaVersion,
+		Spec:          updatable.Spec,
 	}
 }
 
@@ -117,8 +170,11 @@ func (p *PostableSavedView) Validate() error {
 	if err := p.Source.Validate(); err != nil {
 		return err
 	}
+	if err := p.SchemaVersion.Validate(); err != nil {
+		return err
+	}
 
-	return p.Data.Validate()
+	return p.Spec.Validate()
 }
 
 func (p *PostableSavedView) validateName() error {
@@ -135,8 +191,11 @@ func (u *UpdatableSavedView) Validate() error {
 	if err := u.Source.Validate(); err != nil {
 		return err
 	}
+	if err := u.SchemaVersion.Validate(); err != nil {
+		return err
+	}
 
-	return u.Data.Validate()
+	return u.Spec.Validate()
 }
 
 func (p *ListSavedViewsParams) Validate() error {
@@ -147,7 +206,17 @@ func (p *ListSavedViewsParams) Validate() error {
 	return p.Source.Validate()
 }
 
-func NewStatsFromSavedViews(savedViews []*SavedView) map[string]any {
+// NewSavedViewsFromStorableSavedViews converts scanned rows to their domain shape.
+func NewSavedViewsFromStorableSavedViews(storableSavedViews []*StorableSavedView) []*SavedView {
+	savedViews := make([]*SavedView, len(storableSavedViews))
+	for idx, storableSavedView := range storableSavedViews {
+		savedViews[idx] = storableSavedView.ToSavedView()
+	}
+
+	return savedViews
+}
+
+func NewStatsFromStorableSavedViews(savedViews []*StorableSavedView) map[string]any {
 	stats := make(map[string]any)
 	for _, savedView := range savedViews {
 		key := "savedview.source." + strings.ToLower(savedView.Source.StringValue()) + ".count"

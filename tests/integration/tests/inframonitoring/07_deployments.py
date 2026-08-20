@@ -377,6 +377,45 @@ def test_deployments_pod_status_aggregation(
     # All status metrics present -> gate satisfied -> no status warning.
     assert all("Pod status could not be computed" not in w["message"] for w in get_all_warnings(response.json()))
 
+    # filterByPodStatus: deployment kept (>=1 matching pod), only the filtered
+    # buckets populated. Multi-select is OR -> the union of requested buckets.
+    for fbps, expected in (
+        (["running"], expected_status_counts(running=3)),
+        (["CrashLoopBackOff"], expected_status_counts(crashLoopBackOff=1)),
+        (["running", "CrashLoopBackOff"], expected_status_counts(running=3, crashLoopBackOff=1)),
+    ):
+        resp = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
+                "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+                "end": int(now.timestamp() * 1000),
+                "limit": 50,
+                "filter": {"expression": "k8s.deployment.name = 'pp-dep'", "filterByPodStatus": fbps},
+            },
+            timeout=5,
+        )
+        assert resp.status_code == HTTPStatus.OK, resp.text
+        fdata = resp.json()["data"]
+        assert fdata["total"] == 1
+        assert fdata["records"][0]["podCountsByStatus"] == expected
+
+    # A set fully absent from the deployment -> empty page (single and multi).
+    for fbps in (["completed"], ["completed", "oomKilled"]):
+        absent = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
+                "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+                "end": int(now.timestamp() * 1000),
+                "limit": 50,
+                "filter": {"expression": "k8s.deployment.name = 'pp-dep'", "filterByPodStatus": fbps},
+            },
+            timeout=5,
+        )
+        assert absent.status_code == HTTPStatus.OK, absent.text
+        assert absent.json()["data"]["total"] == 0, f"deployment must be dropped by filterByPodStatus={fbps!r}"
+
 
 def test_deployments_desired_available_counts(
     signoz: types.SigNoz,
@@ -782,6 +821,11 @@ def test_deployments_orderby(  # pylint: disable=too-many-arguments,too-many-pos
             },
             "is only allowed when groupBy is empty",
             id="orderby_depname_with_groupby",
+        ),
+        pytest.param(
+            {"filter": {"filterByPodStatus": ["Bogus"]}},
+            "invalid filter by pod status",
+            id="filter_by_pod_status_invalid",
         ),
     ],
 )

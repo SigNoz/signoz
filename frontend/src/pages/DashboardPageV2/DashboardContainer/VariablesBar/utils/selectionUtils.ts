@@ -47,6 +47,43 @@ export function hasUsableValue(
 	return value !== '' && value !== null && value !== undefined;
 }
 
+interface CommittedValues {
+	values: string[];
+	options: string[];
+	showAllOption: boolean;
+	emptyFallback: VariableSelection;
+}
+
+/**
+ * The selection a multi-select commit resolves to. Options are known only here, so
+ * this is where a value the list never offered is recorded as typed in.
+ */
+export function selectionFromCommittedValues({
+	values,
+	options,
+	showAllOption,
+	emptyFallback,
+}: CommittedValues): VariableSelection {
+	if (values.length === 0) {
+		return emptyFallback;
+	}
+
+	const customValues = values.filter((value) => !options.includes(value));
+	// ALL re-materializes to the option set, so a set carrying a typed value is not ALL
+	// — the next refetch would expand it back and drop what the user typed.
+	const allSelected =
+		showAllOption &&
+		options.length > 0 &&
+		customValues.length === 0 &&
+		options.every((option) => values.includes(option));
+
+	return {
+		value: values,
+		allSelected,
+		...(customValues.length > 0 && { customValues }),
+	};
+}
+
 /** Flatten the selection map into the `{ name: value }` payload a query expects. */
 export function selectionToPayload(
 	selection: VariableSelectionMap,

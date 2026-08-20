@@ -47,7 +47,7 @@ func New[T any](
 ) *resourceFilterStatementBuilder[T] {
 	set := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/statementbuilder/resourcefilter")
 	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
+	cb := NewConditionBuilder(fm, fl)
 	return &resourceFilterStatementBuilder[T]{
 		logger:           set.Logger(),
 		dbName:           dbName,
@@ -99,7 +99,7 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 	q.Select("fingerprint")
 	q.From(fmt.Sprintf("%s.%s", b.dbName, b.tableName))
 
-	keySelectors := b.getKeySelectors(query)
+	keySelectors := querybuilder.ExpandKeySelectorsForFamilies(ctx, orgID, b.flagger, b.getKeySelectors(query))
 	keys, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, keySelectors)
 	if err != nil {
 		return nil, err
@@ -164,6 +164,7 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 		filterWhereClause, err := querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
 			Context:            ctx,
 			OrgID:              orgID,
+			Flagger:            b.flagger,
 			Logger:             b.logger,
 			FieldMapper:        b.fieldMapper,
 			ConditionBuilder:   b.conditionBuilder,
