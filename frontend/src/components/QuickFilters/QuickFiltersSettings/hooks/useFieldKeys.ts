@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { useGetFieldsKeys } from 'api/generated/services/fields';
 import { SignalType } from 'components/QuickFilters/types';
-import { FIELD_API_CACHE_TIME } from 'constants/queryCacheTime';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
 
 import { SIGNAL_DATA_SOURCE_MAP } from '../constants';
@@ -45,7 +44,6 @@ export function useFieldKeys({
 		{
 			query: {
 				enabled,
-				cacheTime: FIELD_API_CACHE_TIME,
 				keepPreviousData: true,
 			},
 		},
