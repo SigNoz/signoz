@@ -57,6 +57,9 @@ type ConditionBuilder interface {
 type ConditionBuilderOptions struct {
 	// SkipResourceFilter drops the resource context from the candidate set.
 	SkipResourceFilter bool
+	// MetricContext carries the queried metric name so metric-scoped
+	// semantic-convention families can resolve.
+	MetricContext *telemetrytypes.MetricContext
 }
 type AggExprRewriter interface {
 	// Rewrite rewrites the aggregation expression to be used in the query.

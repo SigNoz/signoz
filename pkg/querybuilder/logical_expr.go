@@ -52,8 +52,13 @@ func LogicalValueExpr(
 		return "COALESCE(" + strings.Join(values, ", ") + ", '')", nil
 	}
 
-	// Numeric and boolean maps return zero for an absent key. If a family of
-	// either type is enabled, this tail must become zero too.
+	// Numeric and boolean maps read their zero value for an absent key, so the
+	// tail keeps single-key semantics for rows without any member — the same
+	// contract as the '' tail above.
+	tail := "0"
+	if logical.FieldDataType == telemetrytypes.FieldDataTypeBool {
+		tail = "false"
+	}
 	branches := make([]string, 0, len(logical.Members)*2)
 	for i, member := range logical.Members {
 		guard, err := fm.ExistsFor(ctx, orgID, tsStart, tsEnd, member, true)
@@ -62,7 +67,7 @@ func LogicalValueExpr(
 		}
 		branches = append(branches, guard, memberExprs[i])
 	}
-	return "multiIf(" + strings.Join(branches, ", ") + ", NULL)", nil
+	return "multiIf(" + strings.Join(branches, ", ") + ", " + tail + ")", nil
 }
 
 // LogicalExistsExpr returns the existence predicate for a resolved logical

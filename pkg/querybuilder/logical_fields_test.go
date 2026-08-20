@@ -48,7 +48,7 @@ func TestFamiliesOffByDefault(t *testing.T) {
 		}},
 	}
 
-	fields := MatchingLogicalFields(context.Background(), valuer.UUID{}, flaggertest.New(t), &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, fieldKeys)
+	fields := MatchingLogicalFields(context.Background(), valuer.UUID{}, flaggertest.New(t), telemetrytypes.SignalUnspecified, nil, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, fieldKeys)
 	require.Len(t, fields, 1)
 	assert.False(t, fields[0].IsFamily())
 	assert.Equal(t, []string{"deployment.environment.name"}, memberNames(fields[0]))
@@ -76,7 +76,7 @@ func TestMatchingLogicalFieldsGroupsFamilyMembers(t *testing.T) {
 	}
 
 	for _, requested := range []string{"deployment.environment.name", "deployment.environment"} {
-		fields := MatchingLogicalFields(context.Background(), valuer.UUID{}, familiesOn(t), &telemetrytypes.TelemetryFieldKey{Name: requested}, fieldKeys)
+		fields := MatchingLogicalFields(context.Background(), valuer.UUID{}, familiesOn(t), telemetrytypes.SignalUnspecified, nil, &telemetrytypes.TelemetryFieldKey{Name: requested}, fieldKeys)
 		require.Len(t, fields, 1, "a family is one logical field, requested via %s", requested)
 		logical := fields[0]
 		assert.Equal(t, requested, logical.Name, "response identity is the requested spelling")
@@ -106,7 +106,7 @@ func TestMatchingLogicalFieldsOrdersMembersByFamilyRank(t *testing.T) {
 		}},
 	}
 
-	fields := MatchingLogicalFields(context.Background(), valuer.UUID{}, familiesOn(t), &telemetrytypes.TelemetryFieldKey{
+	fields := MatchingLogicalFields(context.Background(), valuer.UUID{}, familiesOn(t), telemetrytypes.SignalUnspecified, nil, &telemetrytypes.TelemetryFieldKey{
 		Name:         "deployment.environment.name",
 		FieldContext: telemetrytypes.FieldContextResource,
 	}, fieldKeys)
@@ -115,9 +115,8 @@ func TestMatchingLogicalFieldsOrdersMembersByFamilyRank(t *testing.T) {
 	assert.Equal(t, []string{"resource.deployment.environment.name", "deployment.environment"}, memberNames(fields[0]))
 }
 
-// Non-trace signals have no family support: the requested spelling stays
-// literal, and a family member name never pulls in its siblings.
-func TestMatchingLogicalFieldsKeepsLogsLiteral(t *testing.T) {
+// Log entries group into families exactly like trace entries.
+func TestMatchingLogicalFieldsGroupsLogEntries(t *testing.T) {
 	logsKey := func(name string) *telemetrytypes.TelemetryFieldKey {
 		return &telemetrytypes.TelemetryFieldKey{
 			Name:          name,
@@ -131,10 +130,60 @@ func TestMatchingLogicalFieldsKeepsLogsLiteral(t *testing.T) {
 		"deployment.environment":      {logsKey("deployment.environment")},
 	}
 
-	fields := MatchingLogicalFields(context.Background(), valuer.UUID{}, familiesOn(t), &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, fieldKeys)
+	fields := MatchingLogicalFields(context.Background(), valuer.UUID{}, familiesOn(t), telemetrytypes.SignalLogs, nil, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, fieldKeys)
+	require.Len(t, fields, 1)
+	assert.True(t, fields[0].IsFamily())
+	assert.Equal(t, []string{"deployment.environment.name", "deployment.environment"}, memberNames(fields[0]))
+}
+
+// A family gated away from a signal stays literal there: db.system carries
+// signals [traces, logs], so a metrics lookup never pulls in siblings.
+func TestMatchingLogicalFieldsHonorsTheFamilySignalGate(t *testing.T) {
+	metricsKey := func(name string) *telemetrytypes.TelemetryFieldKey {
+		return &telemetrytypes.TelemetryFieldKey{
+			Name:          name,
+			Signal:        telemetrytypes.SignalMetrics,
+			FieldContext:  telemetrytypes.FieldContextAttribute,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		}
+	}
+	fieldKeys := map[string][]*telemetrytypes.TelemetryFieldKey{
+		"db.system.name": {metricsKey("db.system.name")},
+		"db.system":      {metricsKey("db.system")},
+	}
+
+	fields := MatchingLogicalFields(context.Background(), valuer.UUID{}, familiesOn(t), telemetrytypes.SignalMetrics, nil, &telemetrytypes.TelemetryFieldKey{Name: "db.system.name"}, fieldKeys)
 	require.Len(t, fields, 1)
 	assert.False(t, fields[0].IsFamily())
-	assert.Equal(t, []string{"deployment.environment.name"}, memberNames(fields[0]))
+	assert.Equal(t, []string{"db.system.name"}, memberNames(fields[0]))
+}
+
+// Metric entries group across the stored label spellings of the family, in
+// member-major order: every spelling of the current name precedes the first
+// spelling of the old one.
+func TestMatchingLogicalFieldsGroupsMetricSpellings(t *testing.T) {
+	metricsKey := func(name string) *telemetrytypes.TelemetryFieldKey {
+		return &telemetrytypes.TelemetryFieldKey{
+			Name:          name,
+			Signal:        telemetrytypes.SignalMetrics,
+			FieldContext:  telemetrytypes.FieldContextAttribute,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		}
+	}
+	fieldKeys := map[string][]*telemetrytypes.TelemetryFieldKey{
+		"deployment.environment.name": {metricsKey("deployment.environment.name")},
+		"deployment_environment_name": {metricsKey("deployment_environment_name")},
+		"deployment.environment":      {metricsKey("deployment.environment")},
+		"deployment_environment":      {metricsKey("deployment_environment")},
+	}
+
+	fields := MatchingLogicalFields(context.Background(), valuer.UUID{}, familiesOn(t), telemetrytypes.SignalMetrics, nil, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment"}, fieldKeys)
+	require.Len(t, fields, 1)
+	assert.True(t, fields[0].IsFamily())
+	assert.Equal(t, []string{
+		"deployment.environment.name", "deployment_environment_name",
+		"deployment.environment", "deployment_environment",
+	}, memberNames(fields[0]))
 }
 
 // A family and a genuine same-name collision stack cleanly: the family stays
@@ -165,7 +214,7 @@ func TestResolveLogicalFieldsKeepsFamilyThroughAmbiguity(t *testing.T) {
 	}
 
 	requested := &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}
-	fields := MatchingLogicalFields(context.Background(), valuer.UUID{}, familiesOn(t), requested, fieldKeys)
+	fields := MatchingLogicalFields(context.Background(), valuer.UUID{}, familiesOn(t), telemetrytypes.SignalUnspecified, nil, requested, fieldKeys)
 	require.Len(t, fields, 2, "resource family + attribute collision")
 
 	resolved, warning := ResolveLogicalFields(requested, fields)
@@ -193,7 +242,7 @@ func TestMatchingLogicalFieldsNeverMergesAcrossDataTypes(t *testing.T) {
 		}},
 	}
 
-	fields := MatchingLogicalFields(context.Background(), valuer.UUID{}, familiesOn(t), &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, fieldKeys)
+	fields := MatchingLogicalFields(context.Background(), valuer.UUID{}, familiesOn(t), telemetrytypes.SignalUnspecified, nil, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, fieldKeys)
 	require.Len(t, fields, 2)
 	for _, logical := range fields {
 		assert.False(t, logical.IsFamily())

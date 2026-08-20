@@ -42,6 +42,8 @@ type filterExpressionVisitor struct {
 	skipResourceFilter bool
 	skipFullTextFilter bool
 	variables          map[string]qbtypes.VariableItem
+	signal             telemetrytypes.Signal
+	metricContext      *telemetrytypes.MetricContext
 
 	keysWithWarnings map[string]bool
 	startNs          uint64
@@ -67,6 +69,11 @@ type FilterExprVisitorOpts struct {
 	Variables          map[string]qbtypes.VariableItem
 	StartNs            uint64
 	EndNs              uint64
+	// Signal is the signal the statement builder compiles for; family
+	// resolution uses it for keys that do not carry their own. MetricContext
+	// carries the queried metric name so metric-scoped families resolve.
+	Signal        telemetrytypes.Signal
+	MetricContext *telemetrytypes.MetricContext
 }
 
 // newFilterExpressionVisitor creates a new filterExpressionVisitor.
@@ -83,6 +90,8 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 		skipResourceFilter: opts.SkipResourceFilter,
 		skipFullTextFilter: opts.SkipFullTextFilter,
 		variables:          opts.Variables,
+		signal:             opts.Signal,
+		metricContext:      opts.MetricContext,
 		keysWithWarnings:   make(map[string]bool),
 		startNs:            opts.StartNs,
 		endNs:              opts.EndNs,
@@ -386,7 +395,7 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 // VisitComparison handles all comparison operators.
 func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext) any {
 	key := v.Visit(ctx.Key()).(*telemetrytypes.TelemetryFieldKey)
-	matching := MatchingLogicalFields(v.context, v.orgID, v.fl, key, v.fieldKeys)
+	matching := MatchingLogicalFields(v.context, v.orgID, v.fl, v.signal, v.metricContext, key, v.fieldKeys)
 
 	// Handle EXISTS specially
 	if ctx.EXISTS() != nil {
@@ -737,7 +746,7 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 		return ErrorConditionLiteral
 	}
 
-	conds, ok := v.buildConditions(key, MatchingLogicalFields(v.context, v.orgID, v.fl, key, v.fieldKeys), operator, value)
+	conds, ok := v.buildConditions(key, MatchingLogicalFields(v.context, v.orgID, v.fl, v.signal, v.metricContext, key, v.fieldKeys), operator, value)
 	if !ok {
 		return ErrorConditionLiteral
 	}
@@ -930,7 +939,7 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 // buildConditions invokes the condition builder for a filter term, folding its
 // warnings/errors into visitor state; returns false if an error was recorded.
 func (v *filterExpressionVisitor) buildConditions(key *telemetrytypes.TelemetryFieldKey, matching []*telemetrytypes.LogicalField, op qbtypes.FilterOperator, value any) ([]string, bool) {
-	conds, warns, err := v.conditionBuilder.ConditionFor(v.context, v.orgID, v.startNs, v.endNs, key, v.fieldKeys, qbtypes.ConditionBuilderOptions{SkipResourceFilter: v.skipResourceFilter}, op, value, v.builder)
+	conds, warns, err := v.conditionBuilder.ConditionFor(v.context, v.orgID, v.startNs, v.endNs, key, v.fieldKeys, qbtypes.ConditionBuilderOptions{SkipResourceFilter: v.skipResourceFilter, MetricContext: v.metricContext}, op, value, v.builder)
 	if err != nil {
 		_, _, _, _, errURL, _ := errors.Unwrapb(err)
 		assignIfEmpty(&v.mainErrorURL, errURL)
@@ -987,44 +996,47 @@ func assignIfEmpty(s *string, value string) {
 }
 
 // familyMemberNames returns the physical spellings to look up for the
-// referenced key: the semantic-convention family members (current-first) when
-// the resolve_semconv_families flag is on for the org and the key can resolve
-// to traces, else just the requested name. Only trace field mappers understand
-// families today; logs and metrics keep the requested spelling until theirs
-// land.
-func familyMemberNames(ctx context.Context, orgID valuer.UUID, fl flagger.Flagger, field *telemetrytypes.TelemetryFieldKey) []string {
-	if !semconvFamiliesEnabled(ctx, orgID, fl) {
+// referenced key: the semantic-convention family spellings (current-first)
+// when the resolve_semconv_families flag is on for the org, else just the
+// requested name. The key's own signal wins over the caller's; metric lookups
+// additionally expand each member into its stored label spellings.
+func familyMemberNames(ctx context.Context, orgID valuer.UUID, fl flagger.Flagger, signal telemetrytypes.Signal, metricCtx *telemetrytypes.MetricContext, field *telemetrytypes.TelemetryFieldKey) []string {
+	if !SemconvFamiliesEnabled(ctx, orgID, fl) {
 		return []string{field.Name}
 	}
-	if field.Signal != telemetrytypes.SignalUnspecified && field.Signal != telemetrytypes.SignalTraces {
-		return []string{field.Name}
+	if field.Signal != telemetrytypes.SignalUnspecified {
+		signal = field.Signal
 	}
-	return semconv.Members(semconv.KindAttribute, telemetrytypes.FieldKeySelector{
-		Name:         field.Name,
-		Signal:       telemetrytypes.SignalTraces,
-		FieldContext: field.FieldContext,
+	return semconv.AttributeMembers(telemetrytypes.FieldKeySelector{
+		Name:          field.Name,
+		Signal:        signal,
+		FieldContext:  field.FieldContext,
+		MetricContext: metricCtx,
 	})
 }
 
 // MatchingLogicalFields resolves the referenced key against the metadata map
 // into logical fields, honoring any context/data type the user specified.
 //
-// Physical keys that are members of one semantic-convention family (traces
-// only today) group into one logical field per (signal, context, data type)
-// identity, members ordered current-first. Every other matching key becomes
-// its own single-member logical field. Ambiguity is the length of the
-// returned slice: one family is one element and is never ambiguous with
-// itself, but the slice can hold several logical fields — including several
-// family fields, one per identity, when the family exists under more than
-// one context or data type. Members alias the metadata map entries; nothing
-// is copied or mutated.
+// Physical keys that are members of one semantic-convention family group into
+// one logical field per (signal, context, data type) identity, members
+// ordered current-first. Every other matching key becomes its own
+// single-member logical field. Ambiguity is the length of the returned slice:
+// one family is one element and is never ambiguous with itself, but the slice
+// can hold several logical fields — including several family fields, one per
+// identity, when the family exists under more than one context or data type.
+// Members alias the metadata map entries; nothing is copied or mutated.
+//
+// signal is the signal the caller compiles for and metricCtx the queried
+// metric, both used only for family resolution; a key that carries its own
+// signal wins over the caller's.
 //
 // Family grouping only happens when the resolve_semconv_families flag is on
 // for the org. A nil flagger means off: every match then stays a
 // single-member logical field.
-func MatchingLogicalFields(ctx context.Context, orgID valuer.UUID, fl flagger.Flagger, field *telemetrytypes.TelemetryFieldKey, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.LogicalField {
-	members := familyMemberNames(ctx, orgID, fl, field)
-	matches := collectMemberMatches(field, members, fieldKeys)
+func MatchingLogicalFields(ctx context.Context, orgID valuer.UUID, fl flagger.Flagger, signal telemetrytypes.Signal, metricCtx *telemetrytypes.MetricContext, field *telemetrytypes.TelemetryFieldKey, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.LogicalField {
+	members := familyMemberNames(ctx, orgID, fl, signal, metricCtx, field)
+	matches := collectMemberMatches(field, members, metricCtx, fieldKeys)
 	return groupIntoLogicalFields(field.Name, len(members) > 1, matches)
 }
 
@@ -1050,32 +1062,29 @@ func matchesRequestedIdentity(field, item *telemetrytypes.TelemetryFieldKey, con
 }
 
 // inFamilyScope reports whether a match found under a sibling member name is
-// legitimate: the entry must be trace metadata, and the member must be in the
-// family of the requested name for the entry's context. A member lookup can
-// otherwise find a same-named field in a scope where the family does not
-// apply.
-func inFamilyScope(field, item *telemetrytypes.TelemetryFieldKey, memberName string) bool {
-	if item.Signal != telemetrytypes.SignalTraces {
-		return false
-	}
-	return slices.Contains(semconv.Members(semconv.KindAttribute, telemetrytypes.FieldKeySelector{
-		Name:         field.Name,
-		Signal:       telemetrytypes.SignalTraces,
-		FieldContext: item.FieldContext,
+// legitimate: the member must be a family spelling of the requested name for
+// the entry's own signal and context. A member lookup can otherwise find a
+// same-named field in a scope where the family does not apply.
+func inFamilyScope(field, item *telemetrytypes.TelemetryFieldKey, memberName string, metricCtx *telemetrytypes.MetricContext) bool {
+	return slices.Contains(semconv.AttributeMembers(telemetrytypes.FieldKeySelector{
+		Name:          field.Name,
+		Signal:        item.Signal,
+		FieldContext:  item.FieldContext,
+		MetricContext: metricCtx,
 	}), memberName)
 }
 
 // collectMemberMatches finds the metadata entries for every member spelling:
 // first under the member names, then under their context-prefixed spellings
 // (a context can be a legitimate part of a stored name, e.g. `attribute.key`).
-func collectMemberMatches(field *telemetrytypes.TelemetryFieldKey, members []string, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) []memberMatch {
+func collectMemberMatches(field *telemetrytypes.TelemetryFieldKey, members []string, metricCtx *telemetrytypes.MetricContext, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) []memberMatch {
 	matches := make([]memberMatch, 0)
 	collect := func(lookupName string, rank int, memberName string, contextMatched bool) {
 		for _, item := range fieldKeys[lookupName] {
 			if !matchesRequestedIdentity(field, item, contextMatched) {
 				continue
 			}
-			if memberName != field.Name && !inFamilyScope(field, item, memberName) {
+			if memberName != field.Name && !inFamilyScope(field, item, memberName, metricCtx) {
 				continue
 			}
 			matches = append(matches, memberMatch{key: item, rank: rank})
@@ -1093,18 +1102,18 @@ func collectMemberMatches(field *telemetrytypes.TelemetryFieldKey, members []str
 	return matches
 }
 
-// groupIntoLogicalFields turns matches into logical fields. Trace entries in
-// family mode group by their (signal, context, data type) identity; every
-// other entry becomes its own single-member field. Members sort by family
-// rank at the end: precedence is a property of the family, not of the order
-// in which the lookups found the members.
+// groupIntoLogicalFields turns matches into logical fields. Entries of a
+// family-capable signal in family mode group by their (signal, context, data
+// type) identity; every other entry becomes its own single-member field.
+// Members sort by family rank at the end: precedence is a property of the
+// family, not of the order in which the lookups found the members.
 func groupIntoLogicalFields(requestedName string, familyMode bool, matches []memberMatch) []*telemetrytypes.LogicalField {
 	fields := make([]*telemetrytypes.LogicalField, 0, len(matches))
 	groups := make(map[string]*telemetrytypes.LogicalField)
 	ranks := make(map[*telemetrytypes.TelemetryFieldKey]int)
 
 	for _, match := range matches {
-		if !familyMode || match.key.Signal != telemetrytypes.SignalTraces {
+		if !familyMode || !familySignal(match.key.Signal) {
 			fields = append(fields, telemetrytypes.SingleLogicalField(requestedName, match.key))
 			continue
 		}
@@ -1141,6 +1150,14 @@ func groupHasMemberNamed(group *telemetrytypes.LogicalField, name string) bool {
 		if member.Name == name {
 			return true
 		}
+	}
+	return false
+}
+
+func familySignal(signal telemetrytypes.Signal) bool {
+	switch signal {
+	case telemetrytypes.SignalTraces, telemetrytypes.SignalLogs, telemetrytypes.SignalMetrics:
+		return true
 	}
 	return false
 }

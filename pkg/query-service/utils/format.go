@@ -10,8 +10,9 @@ import (
 	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/metrics"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/semconv"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 // ValidateAndCastValue validates and casts the value of a key to the corresponding data type of the key
@@ -232,14 +233,17 @@ func ClickHouseFormattedValue(v interface{}) string {
 	}
 }
 
+// The exact-name lookup keeps the legacy substitution semantics: only the
+// canonical dotted spellings redirect, exactly like the transition table this
+// replaced. Style-aware matching (MetricNames) is for the flagged v5 path.
 func ClickHouseFormattedMetricNames(v interface{}) string {
 	if name, ok := v.(string); ok {
-		transitionedMetrics := metrics.GetTransitionedMetric(name)
-		if transitionedMetrics != name {
-			return ClickHouseFormattedValue([]interface{}{transitionedMetrics})
-		} else {
-			return ClickHouseFormattedValue([]interface{}{name})
-		}
+		current := semconv.Current(semconv.KindMetric, telemetrytypes.FieldKeySelector{
+			Name:         name,
+			Signal:       telemetrytypes.SignalMetrics,
+			FieldContext: telemetrytypes.FieldContextMetric,
+		})
+		return ClickHouseFormattedValue([]interface{}{current})
 	}
 
 	return ClickHouseFormattedValue(v)

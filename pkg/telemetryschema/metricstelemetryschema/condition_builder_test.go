@@ -343,8 +343,8 @@ func TestConditionFor(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
-	conditionBuilder := NewConditionBuilder(fm)
+	fm := NewFieldMapper(nil)
+	conditionBuilder := NewConditionBuilder(fm, nil)
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
@@ -396,8 +396,8 @@ func TestConditionForMultipleKeys(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
-	conditionBuilder := NewConditionBuilder(fm)
+	fm := NewFieldMapper(nil)
+	conditionBuilder := NewConditionBuilder(fm, nil)
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
@@ -483,8 +483,8 @@ func TestConditionForKeyNotInMetadata(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
-	conditionBuilder := NewConditionBuilder(fm)
+	fm := NewFieldMapper(nil)
+	conditionBuilder := NewConditionBuilder(fm, nil)
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {

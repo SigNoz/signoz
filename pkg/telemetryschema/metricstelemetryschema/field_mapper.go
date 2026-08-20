@@ -6,6 +6,8 @@ import (
 	"slices"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -35,7 +37,11 @@ var (
 	}
 )
 
-type fieldMapper struct{}
+type fieldMapper struct {
+	// fl evaluates the resolve_semconv_families flag during resolution.
+	// A nil flagger keeps resolution literal.
+	fl flagger.Flagger
+}
 
 // CandidateKeys returns nil: metrics has no attribute-map fallback, so a context-missing
 // key stays unresolved and the caller errors.
@@ -43,8 +49,8 @@ func (m *fieldMapper) CandidateKeys(_ context.Context, _ valuer.UUID, _ *telemet
 	return nil
 }
 
-func NewFieldMapper() qbtypes.FieldMapper {
-	return &fieldMapper{}
+func NewFieldMapper(fl flagger.Flagger) qbtypes.FieldMapper {
+	return &fieldMapper{fl: fl}
 }
 
 func (m *fieldMapper) getColumn(_ context.Context, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
@@ -108,13 +114,21 @@ func (m *fieldMapper) ExistsFor(_ context.Context, _ valuer.UUID, _, _ uint64, k
 	return fmt.Sprintf("not has(JSONExtractKeys(labels), '%s')", key.Name), nil
 }
 
+// ColumnExpressionFor merges the stored spellings of a semantic-convention
+// family when the field resolves to exactly one family; everything else keeps
+// the literal label read. An ambiguous name (several logical fields) stays
+// literal, because a group-by column holds one expression.
 func (m *fieldMapper) ColumnExpressionFor(
 	ctx context.Context,
 	orgID valuer.UUID,
 	startNs, endNs uint64,
 	field *telemetrytypes.TelemetryFieldKey,
 	_ telemetrytypes.FieldDataType,
-	_ map[string][]*telemetrytypes.TelemetryFieldKey,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
+	logicalFields := querybuilder.MatchingLogicalFields(ctx, orgID, m.fl, telemetrytypes.SignalMetrics, nil, field, keys)
+	if len(logicalFields) == 1 && logicalFields[0].IsFamily() {
+		return querybuilder.LogicalValueExpr(ctx, orgID, startNs, endNs, m, logicalFields[0])
+	}
 	return m.FieldFor(ctx, orgID, startNs, endNs, field)
 }

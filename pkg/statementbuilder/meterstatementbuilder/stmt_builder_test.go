@@ -162,8 +162,8 @@ func TestStatementBuilder(t *testing.T) {
 		},
 	}
 
-	fm := metricstelemetryschema.NewFieldMapper()
-	cb := metricstelemetryschema.NewConditionBuilder(fm)
+	fm := metricstelemetryschema.NewFieldMapper(nil)
+	cb := metricstelemetryschema.NewConditionBuilder(fm, nil)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	keys, err := telemetrytypestest.LoadFieldKeysFromJSON("testdata/keys_map.json")
 	if err != nil {
@@ -202,8 +202,8 @@ func TestStatementBuilder(t *testing.T) {
 }
 
 func TestGroupByAliasAvoidsColumnCollision(t *testing.T) {
-	fm := metricstelemetryschema.NewFieldMapper()
-	cb := metricstelemetryschema.NewConditionBuilder(fm)
+	fm := metricstelemetryschema.NewFieldMapper(nil)
+	cb := metricstelemetryschema.NewConditionBuilder(fm, nil)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	keys, err := telemetrytypestest.LoadFieldKeysFromJSON("testdata/keys_map.json")
 	require.NoError(t, err)

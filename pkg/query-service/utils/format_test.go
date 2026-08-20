@@ -483,3 +483,22 @@ func TestGetEpochNanoSecs(t *testing.T) {
 		})
 	}
 }
+
+// Only the canonical dotted spelling of a metric-name family redirects on the
+// legacy path; a normalized spelling keeps reading its own series.
+func TestClickHouseFormattedMetricNames(t *testing.T) {
+	cases := []struct {
+		name     string
+		expected string
+	}{
+		{name: "k8s.pod.cpu.utilization", expected: "['k8s.pod.cpu.usage']"},
+		{name: "k8s.pod.cpu.usage", expected: "['k8s.pod.cpu.usage']"},
+		{name: "k8s_pod_cpu_utilization", expected: "['k8s_pod_cpu_utilization']"},
+		{name: "http.server.duration", expected: "['http.server.duration']"},
+	}
+	for _, c := range cases {
+		if got := ClickHouseFormattedMetricNames(c.name); got != c.expected {
+			t.Errorf("ClickHouseFormattedMetricNames(%q) = %q, want %q", c.name, got, c.expected)
+		}
+	}
+}
