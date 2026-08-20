@@ -91,6 +91,24 @@ describe('LogDetail drawer — header (isLogDetailsV2)', () => {
 		);
 	});
 
+	it('normalizes a nanosecond-epoch timestamp in the header', () => {
+		localStorage.setItem(LOCALSTORAGE.PREFERRED_TIMEZONE, 'UTC');
+
+		// Same instant as mockLog but as epoch nanoseconds (e.g. dashboard list panel).
+		// Must scale to ms, not render a wildly wrong date.
+		renderDrawer({
+			log: {
+				...mockLog,
+				date: '1705311930000000000',
+				timestamp: 1705311930000000000,
+			},
+		});
+
+		expect(screen.getByTestId('log-details-header-timestamp')).toHaveTextContent(
+			'Jan 15, 2024 ⎯ 09:45:30',
+		);
+	});
+
 	it('copies the log link from the ⋯ menu', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 

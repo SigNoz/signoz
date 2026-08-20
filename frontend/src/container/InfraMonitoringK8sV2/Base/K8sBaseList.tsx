@@ -7,6 +7,7 @@ import TanStackTable, {
 	TableColumnDef,
 	useCalculatedPageSize,
 	useHiddenColumnIds,
+	useRecoverFromEmptyPage,
 	useTableParams,
 } from 'components/TanStackTableView';
 import { InfraMonitoringEvents } from 'constants/events';
@@ -136,6 +137,7 @@ export function K8sBaseList<
 		page: currentPage,
 		limit: currentPageSize,
 		setLimit,
+		setPage,
 	} = useTableParams(
 		{
 			page: INFRA_MONITORING_K8S_PARAMS_KEYS.PAGE,
@@ -242,6 +244,16 @@ export function K8sBaseList<
 	const pageData = data?.data ?? [];
 	const totalCount = data?.total || 0;
 	const hasFilters = !!expression?.trim();
+
+	useRecoverFromEmptyPage({
+		page: currentPage,
+		pageSize: currentPageSize,
+		rowCount: pageData.length,
+		total: totalCount,
+		isFetching: isLoading || isFetching,
+		isDisabled: isError || Boolean(data?.error),
+		setPage,
+	});
 
 	const getGroupKeyFn = useCallback(
 		(item: T) => getGroupedByMeta(item, groupBy),
