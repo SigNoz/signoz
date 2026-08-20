@@ -201,9 +201,15 @@ async function createMetricsHistorySeed(
 	const metricName = `e2e_ah_probe_metric_${stamp}`;
 
 	return withAdminPage(browser, async (page) => {
-		const channel = await createEmailChannelViaApi(page, `e2e-ah-metrics-ch-${stamp}`);
+		const channel = await createEmailChannelViaApi(
+			page,
+			`e2e-ah-metrics-ch-${stamp}`,
+		);
 
-		await seedAlertHistoryMetrics(page, { metricName, hosts: METRICS_HISTORY_HOSTS });
+		await seedAlertHistoryMetrics(page, {
+			metricName,
+			hosts: METRICS_HISTORY_HOSTS,
+		});
 
 		const ruleId = await createMetricAlertViaApi(page, {
 			name: `e2e-ah-metrics-rule-${stamp}`,
@@ -238,7 +244,10 @@ async function createTracesHistorySeed(
 	const marker = `e2e-aht-span-${stamp}`;
 
 	return withAdminPage(browser, async (page) => {
-		const channel = await createEmailChannelViaApi(page, `e2e-ah-traces-ch-${stamp}`);
+		const channel = await createEmailChannelViaApi(
+			page,
+			`e2e-ah-traces-ch-${stamp}`,
+		);
 
 		const services = await seedAlertHistoryTraces(page, {
 			marker,
@@ -276,7 +285,10 @@ async function createResolvedHistorySeed(
 	const marker = `e2e alert resolved ${stamp}`;
 
 	return withAdminPage(browser, async (page) => {
-		const channel = await createEmailChannelViaApi(page, `e2e-ah-resolved-ch-${stamp}`);
+		const channel = await createEmailChannelViaApi(
+			page,
+			`e2e-ah-resolved-ch-${stamp}`,
+		);
 
 		const services = await seedAlertHistoryLogs(page, {
 			marker,
@@ -294,7 +306,10 @@ async function createResolvedHistorySeed(
 		});
 
 		const timeline = await waitForTimelineStates(page, ruleId, {
-			states: { firing: RESOLVED_HISTORY_SERVICES, inactive: RESOLVED_HISTORY_SERVICES },
+			states: {
+				firing: RESOLVED_HISTORY_SERVICES,
+				inactive: RESOLVED_HISTORY_SERVICES,
+			},
 		});
 		await setRuleDisabledViaApi(page, ruleId, true);
 
@@ -319,7 +334,10 @@ async function createNoDataHistorySeed(
 	const stamp = Date.now();
 
 	return withAdminPage(browser, async (page) => {
-		const channel = await createEmailChannelViaApi(page, `e2e-ah-nodata-ch-${stamp}`);
+		const channel = await createEmailChannelViaApi(
+			page,
+			`e2e-ah-nodata-ch-${stamp}`,
+		);
 
 		const ruleId = await createNoDataAlertViaApi(page, {
 			name: `e2e-ah-nodata-rule-${stamp}`,
@@ -348,7 +366,10 @@ async function createEmptyHistorySeed(
 	const stamp = Date.now();
 
 	return withAdminPage(browser, async (page) => {
-		const channel = await createEmailChannelViaApi(page, `e2e-ah-empty-ch-${stamp}`);
+		const channel = await createEmailChannelViaApi(
+			page,
+			`e2e-ah-empty-ch-${stamp}`,
+		);
 
 		const ruleId = await createLogsAlertViaApi(page, {
 			name: `e2e-ah-empty-rule-${stamp}`,
@@ -408,7 +429,8 @@ export const test = base.extend<
 
 	resolvedHistory: [
 		async ({ browser }, use) => {
-			const { seed, ruleIds, channelId } = await createResolvedHistorySeed(browser);
+			const { seed, ruleIds, channelId } =
+				await createResolvedHistorySeed(browser);
 			await use(seed);
 			await cleanup(browser, { ruleIds, channelId });
 		},

@@ -1,5 +1,8 @@
 import { expect, test } from '../../../fixtures/alerts/alert-rules';
-import { alertRuleRows, gotoAlertList } from '../../../helpers/alerts/navigation';
+import {
+	alertRuleRows,
+	gotoAlertList,
+} from '../../../helpers/alerts/navigation';
 
 test.describe('Alert rules list — row actions', () => {
 	test('TC-01 Disable then Enable toggles the rule state', async ({

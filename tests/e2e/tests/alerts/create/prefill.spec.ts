@@ -10,7 +10,10 @@ import {
 	ThresholdOperator,
 } from '../../../helpers/alert-forms/constants';
 import { gotoCreateAlertV2 } from '../../../helpers/alert-forms/navigation';
-import { evaluationSettingsButton, thresholdRows } from '../../../helpers/alert-forms/v2';
+import {
+	evaluationSettingsButton,
+	thresholdRows,
+} from '../../../helpers/alert-forms/v2';
 import { gotoAlertOverview } from '../../../helpers/alerts/navigation';
 
 // TC-* — deep-link prefill.

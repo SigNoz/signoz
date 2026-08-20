@@ -1,7 +1,15 @@
 import { expect, test } from '../../../fixtures/alerts/alert-rules';
-import { AlertType, ThresholdMatchType, ThresholdOperator } from '../../../helpers/alert-forms/constants';
+import {
+	AlertType,
+	ThresholdMatchType,
+	ThresholdOperator,
+} from '../../../helpers/alert-forms/constants';
 import { gotoCreateAlertV2 } from '../../../helpers/alert-forms/navigation';
-import { dropdownOption, openDropdown, ownDropdown } from '../../../helpers/alert-forms/shared';
+import {
+	dropdownOption,
+	openDropdown,
+	ownDropdown,
+} from '../../../helpers/alert-forms/shared';
 import {
 	addAlertLabel,
 	advancedOptionToggle,

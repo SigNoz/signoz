@@ -8,7 +8,11 @@ import {
 	deleteChannelViaApi,
 } from '../../helpers/alerts/api';
 import { seedAlertRules } from '../../helpers/alerts/seeding';
-import type { AlertSchema, LogsAlertSeed, ThresholdAlertSeed } from '../../helpers/alerts/types';
+import type {
+	AlertSchema,
+	LogsAlertSeed,
+	ThresholdAlertSeed,
+} from '../../helpers/alerts/types';
 import { newAdminContext } from '../../helpers/auth';
 import { expect, test as base } from '../auth';
 import { FIXTURE_ALERT_LIST } from './timeouts';
@@ -161,7 +165,9 @@ function createOwnedRulesFactory(
 	channelName: string,
 	ids: Set<string>,
 ): OwnedRules {
-	const seed = async (create: (page: Page) => Promise<string>): Promise<string> => {
+	const seed = async (
+		create: (page: Page) => Promise<string>,
+	): Promise<string> => {
 		const id = await withAdminPage(browser, create);
 		ids.add(id);
 		return id;

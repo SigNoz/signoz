@@ -4,7 +4,10 @@ import {
 	deleteAlertViaApi,
 	setRuleDisabledViaApi,
 } from '../../../helpers/alerts/api';
-import { ALERT_HISTORY_PATH, TIMELINE_PAGE_SIZE } from '../../../helpers/alerts/constants';
+import {
+	ALERT_HISTORY_PATH,
+	TIMELINE_PAGE_SIZE,
+} from '../../../helpers/alerts/constants';
 import {
 	expectFirstPage,
 	gotoAlertHistory,

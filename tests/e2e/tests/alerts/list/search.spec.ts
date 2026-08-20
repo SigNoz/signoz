@@ -1,7 +1,13 @@
 import { expect, test } from '../../../fixtures/alerts/alert-rules';
-import { ALERT_LIST_PAGE_SIZE, SEED_B_SEVERITIES } from '../../../helpers/alerts/constants';
+import {
+	ALERT_LIST_PAGE_SIZE,
+	SEED_B_SEVERITIES,
+} from '../../../helpers/alerts/constants';
 import { expectFirstPage } from '../../../helpers/alerts/history';
-import { alertRuleRows, gotoAlertList } from '../../../helpers/alerts/navigation';
+import {
+	alertRuleRows,
+	gotoAlertList,
+} from '../../../helpers/alerts/navigation';
 
 test.describe('Alert rules list — search', () => {
 	test('TC-01 filters by name', async ({ authedPage: page, alertList }) => {

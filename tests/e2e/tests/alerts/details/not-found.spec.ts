@@ -1,5 +1,8 @@
 import { expect, test } from '../../../fixtures/alerts/alert-rules';
-import { ALERT_HISTORY_PATH, ALERT_OVERVIEW_PATH } from '../../../helpers/alerts/constants';
+import {
+	ALERT_HISTORY_PATH,
+	ALERT_OVERVIEW_PATH,
+} from '../../../helpers/alerts/constants';
 
 test.describe('Alert details — not found', () => {
 	test('TC-01 invalid ruleId shows AlertNotFound page', async ({

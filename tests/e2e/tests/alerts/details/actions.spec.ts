@@ -1,5 +1,8 @@
 import { expect, test } from '../../../fixtures/alerts/alert-history';
-import { ALERT_OVERVIEW_PATH, ALERTS_LIST_PATH } from '../../../helpers/alerts/constants';
+import {
+	ALERT_OVERVIEW_PATH,
+	ALERTS_LIST_PATH,
+} from '../../../helpers/alerts/constants';
 import { gotoAlertDetails } from '../../../helpers/alerts/navigation';
 
 test.describe('Alert details — actions', () => {

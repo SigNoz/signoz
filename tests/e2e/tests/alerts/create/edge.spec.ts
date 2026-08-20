@@ -1,6 +1,9 @@
 import { expect, test } from '../../../fixtures/alerts/alert-rules';
 import { AlertType } from '../../../helpers/alert-forms/constants';
-import { gotoCreateAlertV1, gotoCreateAlertV2 } from '../../../helpers/alert-forms/navigation';
+import {
+	gotoCreateAlertV1,
+	gotoCreateAlertV2,
+} from '../../../helpers/alert-forms/navigation';
 import { v1SaveButton } from '../../../helpers/alert-forms/v1';
 import {
 	elementAtPointClassName,
@@ -8,8 +11,14 @@ import {
 	v2DiscardButton,
 	v2SaveButton,
 } from '../../../helpers/alert-forms/v2';
-import { createEmailChannelViaApi, deleteChannelViaApi } from '../../../helpers/alerts/api';
-import { gotoAlertDetails, gotoAlertOverview } from '../../../helpers/alerts/navigation';
+import {
+	createEmailChannelViaApi,
+	deleteChannelViaApi,
+} from '../../../helpers/alerts/api';
+import {
+	gotoAlertDetails,
+	gotoAlertOverview,
+} from '../../../helpers/alerts/navigation';
 import { watchConsole } from '../../../helpers/common';
 
 // TC-* — errors and edges that are not specific to one form.
