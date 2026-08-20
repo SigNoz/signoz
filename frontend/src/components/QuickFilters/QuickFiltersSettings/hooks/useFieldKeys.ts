@@ -25,11 +25,7 @@ interface UseFieldKeysReturn {
 	isFetching: boolean;
 }
 
-/**
- * Meter is the odd signal out: its keys are a source-scoped subset of metrics, and its
- * `type` keeps the raw field context instead of the v3 attribute scope — hence both the
- * `source` param and the separate mapper.
- */
+/** Meter keys are a source-scoped subset of metrics, hence the `source` param and its own mapper. */
 export function useFieldKeys({
 	signal,
 	searchText,

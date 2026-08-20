@@ -77,11 +77,7 @@ export const mapFieldKeysToFilters = (
 		type: toAttributeType(fieldKey.fieldContext),
 	}));
 
-/**
- * Meter keeps the raw field context: for metrics `type` carries the aggregation
- * (`Sum`), not the log/trace attribute scope, so the v3 attribute mapping must not
- * apply. The data type still needs narrowing — `number` fails the save validation.
- */
+/** Keeps the raw field context: for metrics `type` carries the aggregation, not the attribute scope. */
 export const mapMeterFieldKeysToFilters = (
 	keys: TelemetrytypesGettableFieldKeysDTOKeys | undefined,
 ): FilterType[] =>
