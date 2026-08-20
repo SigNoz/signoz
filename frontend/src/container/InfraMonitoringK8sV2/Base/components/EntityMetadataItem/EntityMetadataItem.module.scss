@@ -17,20 +17,22 @@
 	text-transform: uppercase;
 }
 
-.valueWrapper {
-	display: block;
-	min-width: 0;
-}
-
 // Single-line ellipsis rather than Typography's `truncate`, which line-clamps:
 // clamping still wraps the text, so a value breaking at a hyphen ends its line
 // early and leaves a gap between the ellipsis and the copy button.
+//
+// This has to be a block: overflow and text-overflow do not apply to inline
+// boxes, and Typography.Text renders an inline span.
 .value {
-	font-family: var(--periscope-font-family-mono);
+	display: block;
 	min-width: 0;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+}
+
+.valueText {
+	font-family: var(--periscope-font-family-mono);
 }
 
 // Sized to the icon rather than the default 2rem tap target, so it sits flush

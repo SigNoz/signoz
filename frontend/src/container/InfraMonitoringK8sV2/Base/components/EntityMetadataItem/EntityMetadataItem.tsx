@@ -26,19 +26,15 @@ export function EntityMetadataItem({
 		toast.success(`${label} copied to clipboard`, { position: 'bottom-left' });
 	}, [label]);
 
-	// The tooltip trigger is this wrapper, not the text itself: TooltipSimple
-	// renders asChild, and Typography treats the onClick that Radix merges in as
-	// a signal to style itself as interactive — pointer cursor and link colour on
-	// a value that does nothing when clicked. Rendering the wrapper regardless of
-	// the tooltip also keeps the measured box stable across the state flip.
+	// This span, not the Typography inside it, is what truncates and what the
+	// tooltip triggers from. TooltipSimple renders asChild, and Typography reads
+	// the onClick that Radix merges in as a cue to style itself interactive —
+	// pointer cursor and link colour on a value that does nothing when clicked.
+	// It also renders whether or not a tooltip is attached, so the measured box
+	// stays the same shape across the state flip.
 	const valueText = (
-		<span className={styles.valueWrapper}>
-			<Typography.Text
-				ref={valueRef}
-				size="small"
-				weight="medium"
-				className={styles.value}
-			>
+		<span ref={valueRef} className={styles.value}>
+			<Typography.Text size="small" weight="medium" className={styles.valueText}>
 				{value}
 			</Typography.Text>
 		</span>

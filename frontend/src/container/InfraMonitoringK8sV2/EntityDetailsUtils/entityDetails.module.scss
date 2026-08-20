@@ -37,7 +37,15 @@
 .title {
 	font-family: var(--periscope-font-family-mono);
 
-	--typography-margin: 0px var(--spacing-4) 0px 0px;
+	--typography-margin: 0px var(--spacing-1) 0px 0px;
+}
+
+// Sized to the icon rather than the default tap target, so it sits beside the
+// entity name instead of a gap away from it.
+.copyIdButton {
+	--button-padding: 2px;
+	--button-height: auto;
+	--button-width: auto;
 }
 
 .entityDetailsEntity {

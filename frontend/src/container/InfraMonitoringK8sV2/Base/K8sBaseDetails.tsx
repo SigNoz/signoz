@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useQuery } from 'react-query';
-import { useCopyToClipboard } from 'react-use';
-import { Copy, X } from '@signozhq/icons';
+import { X } from '@signozhq/icons';
 import { Divider } from '@signozhq/ui/divider';
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper, DrawerWrapperProps } from '@signozhq/ui/drawer';
 import { toast } from '@signozhq/ui/sonner';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
@@ -20,6 +18,7 @@ import {
 
 import { INFRA_MONITORING_K8S_PARAMS_KEYS } from '../constants';
 import { useInfraMonitoringSelectedItemParams } from '../hooks';
+import CopyButton from 'periscope/components/CopyButton/CopyButton';
 import LoadingContainer from '../LoadingContainer';
 
 import K8sBaseDetailsContent from './K8sBaseDetailsContent';
@@ -172,14 +171,9 @@ export default function K8sBaseDetails<T>({
 		[handleClose],
 	);
 
-	const [, copyToClipboard] = useCopyToClipboard();
-
 	const handleCopyId = useCallback((): void => {
-		if (selectedItem) {
-			copyToClipboard(selectedItem);
-			toast.success('ID copied to clipboard', { position: 'bottom-left' });
-		}
-	}, [copyToClipboard, selectedItem]);
+		toast.success('ID copied to clipboard', { position: 'bottom-left' });
+	}, []);
 
 	const entityName = entity ? getEntityName(entity) : '';
 
@@ -213,17 +207,13 @@ export default function K8sBaseDetails<T>({
 					(isEntityLoading && 'Loading...') ||
 					'-'}
 			</Typography.Text>
-			<TooltipSimple title="Copy ID">
-				<Button
-					variant="ghost"
-					size="sm"
-					color="secondary"
-					onClick={handleCopyId}
-					data-testid="copy-id-button"
-				>
-					<Copy size={14} />
-				</Button>
-			</TooltipSimple>
+			<CopyButton
+				value={selectedItem ?? ''}
+				ariaLabel="Copy ID"
+				className={styles.copyIdButton}
+				testId="copy-id-button"
+				onCopy={handleCopyId}
+			/>
 		</>
 	) as unknown as string;
 

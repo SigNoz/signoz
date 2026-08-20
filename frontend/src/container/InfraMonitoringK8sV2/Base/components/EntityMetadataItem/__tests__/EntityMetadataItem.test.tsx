@@ -111,6 +111,23 @@ describe('EntityMetadataItem', () => {
 		}
 	});
 
+	it('triggers the tooltip from the wrapper, never from the text itself', () => {
+		const restore = fakeTruncation(400, 200);
+
+		try {
+			render(<EntityMetadataItem label="Node" value="a-very-long-node-name" />);
+
+			// Radix merges its handlers onto the trigger, and Typography styles
+			// itself interactive off any merged onClick — so the trigger has to stay
+			// off the text.
+			const textEl = screen.getByText('a-very-long-node-name');
+			expect(textEl).not.toHaveAttribute('data-slot', 'tooltip-trigger');
+			expect(textEl.parentElement).toHaveAttribute('data-slot', 'tooltip-trigger');
+		} finally {
+			restore();
+		}
+	});
+
 	it('offers no tooltip for a value that fits', async () => {
 		const restore = fakeTruncation(200, 200);
 
