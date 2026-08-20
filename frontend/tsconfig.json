@@ -76,6 +76,7 @@
 	],
 	"include": [
 		"./src",
+		"./.storybook",
 		"./__mocks__",
 		"./babel.config.cjs",
 		"./jest.config.ts",

@@ -1,0 +1,24 @@
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+	href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+	rel="stylesheet"
+/>
+<link rel="stylesheet" href="css/uPlot.min.css" />
+
+<script>
+	// i18n's language detector would pick the browser locale (e.g. `en-US`), which
+	// /public/locales does not ship; pin it to the bundled language instead.
+	window.localStorage.setItem('i18nextLng', 'en');
+
+	// The Go backend injects this at boot; every integration it enables is off in
+	// Storybook so no third-party script loads inside the iframe.
+	window.signozBootData = {
+		settings: {
+			posthog: { enabled: false, apiHost: '', key: '', uiHost: '' },
+			appcues: { enabled: false, appId: '' },
+			sentry: { enabled: false, dsn: '', tunnel: '' },
+			pylon: { enabled: false, appId: '', identitySecret: '' },
+		},
+	};
+</script>
