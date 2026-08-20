@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"strings"
 	"sync"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -68,6 +69,17 @@ func (client *client) Read(ctx context.Context, query *prompb.Query, sortSeries 
 	}
 	if len(fingerprints) == 0 {
 		return remote.FromQueryResult(sortSeries, new(prompb.QueryResult)), nil
+	}
+
+	// For series-only requests (e.g. /api/v1/series), return label sets directly
+	// without fetching sample data. This avoids the "metric_name = ''" condition
+	// in querySamples when no __name__ matcher is present.
+	if query.Hints != nil && query.Hints.Func == "series" {
+		res := new(prompb.QueryResult)
+		for _, lbls := range fingerprints {
+			res.Timeseries = append(res.Timeseries, &prompb.TimeSeries{Labels: lbls})
+		}
+		return remote.FromQueryResult(sortSeries, res), nil
 	}
 
 	sub, err := seriesLookupQuery(query, true)
@@ -167,15 +179,16 @@ func seriesLookupQuery(query *prompb.Query, subQuery bool) (*sqlbuilder.SelectBu
 			}
 			continue
 		}
+		labelName := unescapePromLabelName(m.Name)
 		switch m.Type {
 		case prompb.LabelMatcher_EQ:
-			sb.Where(fmt.Sprintf("JSONExtractString(labels, %s) = %s", sb.Var(m.Name), sb.Var(m.Value)))
+			sb.Where(fmt.Sprintf("JSONExtractString(labels, %s) = %s", sb.Var(labelName), sb.Var(m.Value)))
 		case prompb.LabelMatcher_NEQ:
-			sb.Where(fmt.Sprintf("JSONExtractString(labels, %s) != %s", sb.Var(m.Name), sb.Var(m.Value)))
+			sb.Where(fmt.Sprintf("JSONExtractString(labels, %s) != %s", sb.Var(labelName), sb.Var(m.Value)))
 		case prompb.LabelMatcher_RE:
-			sb.Where(fmt.Sprintf("match(JSONExtractString(labels, %s), %s)", sb.Var(m.Name), sb.Var(anchorRegex(m.Value))))
+			sb.Where(fmt.Sprintf("match(JSONExtractString(labels, %s), %s)", sb.Var(labelName), sb.Var(anchorRegex(m.Value))))
 		case prompb.LabelMatcher_NRE:
-			sb.Where(fmt.Sprintf("not match(JSONExtractString(labels, %s), %s)", sb.Var(m.Name), sb.Var(anchorRegex(m.Value))))
+			sb.Where(fmt.Sprintf("not match(JSONExtractString(labels, %s), %s)", sb.Var(labelName), sb.Var(anchorRegex(m.Value))))
 		default:
 			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported or invalid matcher type: %s", m.Type.String())
 		}
@@ -505,6 +518,57 @@ func (client *client) queryRaw(ctx context.Context, query string, ts int64) (*pr
 	}
 
 	return &res, nil
+}
+
+// unescapePromLabelName converts a Prometheus value-encoded label name back to
+// its original UTF-8 form. Value-encoded names start with "U__" and use _XX_
+// (lowercase hex) sequences for non-legacy characters, and __ for a literal
+// underscore. See https://prometheus.io/docs/instrumenting/escaping_schemes/
+func unescapePromLabelName(name string) string {
+	if len(name) < 3 || name[:3] != "U__" {
+		return name
+	}
+	enc := name[3:]
+	var b strings.Builder
+	b.Grow(len(enc))
+	for i := 0; i < len(enc); {
+		if enc[i] != '_' {
+			b.WriteByte(enc[i])
+			i++
+			continue
+		}
+		// doubled underscore → original underscore
+		if i+1 < len(enc) && enc[i+1] == '_' {
+			b.WriteByte('_')
+			i += 2
+			continue
+		}
+		// _XX_ hex escape
+		if i+3 < len(enc) && enc[i+3] == '_' {
+			hi, hiOk := promHexVal(enc[i+1])
+			lo, loOk := promHexVal(enc[i+2])
+			if hiOk && loOk {
+				b.WriteByte(hi<<4 | lo)
+				i += 4
+				continue
+			}
+		}
+		b.WriteByte('_')
+		i++
+	}
+	return b.String()
+}
+
+func promHexVal(c byte) (byte, bool) {
+	switch {
+	case c >= '0' && c <= '9':
+		return c - '0', true
+	case c >= 'a' && c <= 'f':
+		return c - 'a' + 10, true
+	case c >= 'A' && c <= 'F':
+		return c - 'A' + 10, true
+	}
+	return 0, false
 }
 
 func (client *client) withClickhousePrometheusContext(ctx context.Context, functionName string) context.Context {
