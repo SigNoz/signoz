@@ -6,6 +6,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/gorilla/mux"
 )
 
@@ -126,6 +128,33 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		Deprecated:          true,
 		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 	})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/notification_channels", handler.New(
+		provider.authzMiddleware.CheckResources(provider.alertmanagerHandler.CreateNotificationChannel, authtypes.SigNozAdminRoleName),
+		handler.OpenAPIDef{
+			ID:                  "CreateNotificationChannel",
+			Tags:                []string{"channels"},
+			Summary:             "Create notification channel",
+			Description:         "This endpoint creates a notification channel",
+			Request:             new(alertmanagertypes.PostableNotificationChannel),
+			RequestContentType:  "application/json",
+			Response:            new(alertmanagertypes.GettableNotificationChannel),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusCreated,
+			ErrorStatusCodes:    []int{http.StatusBadRequest},
+			Deprecated:          false,
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbCreate)}),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceNotificationChannel,
+			Verb:     coretypes.VerbCreate,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			ID:       coretypes.ResponseJSONPath("data.id"),
+			Selector: coretypes.WildcardSelector,
+		}),
+	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 

@@ -52,10 +52,15 @@ type Channel struct {
 	Type  string `json:"type" required:"true" bun:"type"`
 	Data  string `json:"data" required:"true" bun:"data"`
 	OrgID string `json:"orgId" required:"true" bun:"org_id"`
+
+	// InternalName is the DNS1123 identity references will migrate onto. Until then
+	// Name is the receiver name inside Data and what policies and rules reference.
+	InternalName string `json:"internalName" required:"true" bun:"internal_name"`
 }
 
 // NewChannelFromReceiver creates a new Channel from a Receiver.
 // It can return nil if the receiver is the default receiver.
+// A receiver carries no internal name, so one is generated from its name.
 func NewChannelFromReceiver(receiver *Receiver, orgID string) (*Channel, error) {
 	if receiver.Name == DefaultReceiverName {
 		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelInvalid, "cannot use %s name as a channel name", receiver.Name)
@@ -72,6 +77,8 @@ func NewChannelFromReceiver(receiver *Receiver, orgID string) (*Channel, error) 
 		},
 		Name:  receiver.Name,
 		OrgID: orgID,
+
+		InternalName: generateChannelName(receiver.Name),
 	}
 
 	data, err := json.Marshal(receiver)
@@ -86,6 +93,19 @@ func NewChannelFromReceiver(receiver *Receiver, orgID string) (*Channel, error) 
 	}
 
 	return &channel, nil
+}
+
+// NewChannelFromReceiverWithInternalName overrides the internal name that
+// NewChannelFromReceiver generates.
+func NewChannelFromReceiverWithInternalName(receiver *Receiver, internalName string, orgID string) (*Channel, error) {
+	channel, err := NewChannelFromReceiver(receiver, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	channel.InternalName = internalName
+
+	return channel, nil
 }
 
 // receiverChannelType returns the channel.Type discriminator. Walks
@@ -188,13 +208,19 @@ func NewStatsFromChannels(channels Channels) map[string]any {
 }
 
 func (c *Channel) Update(receiver *Receiver) error {
-	channel, err := NewChannelFromReceiver(receiver, c.OrgID)
+	channel, err := NewChannelFromReceiverWithInternalName(receiver, c.InternalName, c.OrgID)
 	if err != nil {
 		return err
 	}
 
 	if c.Name != channel.Name {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelNameMismatch, "cannot update channel name")
+	}
+
+	// Unreachable while the internal name is passed in above rather than derived
+	// from the receiver, which is why this is internal rather than invalid input.
+	if c.InternalName != channel.InternalName {
+		return errors.NewInternalf(ErrCodeAlertmanagerChannelNameMismatch, "cannot update channel internal name")
 	}
 
 	c.Type = channel.Type
