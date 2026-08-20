@@ -22,15 +22,10 @@
 	min-width: 0;
 }
 
-// Kept out of the way until the field is hovered, so a header of five or more
-// fields is not a row of icons.
+// Sized to the icon rather than the default 2rem tap target, so it sits flush
+// against the value instead of floating in its own block of padding.
 .copyButton {
-	flex-shrink: 0;
-	opacity: 0;
-	transition: opacity 0.15s ease;
-
-	.metadataItem:hover &,
-	&:focus-visible {
-		opacity: 1;
-	}
+	--button-padding: 2px;
+	--button-height: auto;
+	--button-width: auto;
 }

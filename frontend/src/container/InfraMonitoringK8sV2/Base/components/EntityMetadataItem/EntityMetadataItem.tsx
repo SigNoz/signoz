@@ -1,10 +1,8 @@
 import { ReactNode, useCallback, useRef } from 'react';
-import { useCopyToClipboard } from 'react-use';
-import { Copy } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
 import { toast } from '@signozhq/ui/sonner';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
+import CopyButton from 'periscope/components/CopyButton/CopyButton';
 
 import styles from './EntityMetadataItem.module.scss';
 import { useIsTextClamped } from './useIsTextClamped';
@@ -23,21 +21,20 @@ export function EntityMetadataItem({
 }: EntityMetadataItemProps): JSX.Element {
 	const valueRef = useRef<HTMLSpanElement>(null);
 	const isClamped = useIsTextClamped(valueRef, value);
-	const [, copyToClipboard] = useCopyToClipboard();
-
-	const testId = label.toLowerCase().replace(/\s+/g, '-');
 
 	const handleCopy = useCallback((): void => {
-		copyToClipboard(value);
 		toast.success(`${label} copied to clipboard`, { position: 'bottom-left' });
-	}, [copyToClipboard, label, value]);
+	}, [label]);
 
+	// Only a clamped value has anything to reveal, so only then is it worth
+	// marking as hoverable.
 	const valueText = (
 		<Typography.Text
 			ref={valueRef}
 			size="small"
 			weight="medium"
 			truncate={1}
+			interactive={isClamped}
 			className={styles.value}
 		>
 			{value}
@@ -65,17 +62,14 @@ export function EntityMetadataItem({
 						valueText
 					)}
 					{!!value && (
-						<TooltipSimple title={`Copy ${label}`}>
-							<Button
-								variant="ghost"
-								size="icon"
-								color="secondary"
-								className={styles.copyButton}
-								onClick={handleCopy}
-								data-testid={`copy-metadata-${testId}`}
-								prefix={<Copy size={12} />}
-							/>
-						</TooltipSimple>
+						<CopyButton
+							value={value}
+							size={12}
+							ariaLabel={`Copy ${label}`}
+							className={styles.copyButton}
+							testId={`copy-metadata-${label.toLowerCase().replace(/\s+/g, '-')}`}
+							onCopy={handleCopy}
+						/>
 					)}
 				</div>
 			)}

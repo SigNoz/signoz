@@ -97,6 +97,32 @@ describe('EntityMetadataItem', () => {
 		}
 	});
 
+	it('marks a clamped value as hoverable, since it has more to reveal', () => {
+		const restore = fakeClamping(40, 20);
+
+		try {
+			render(<EntityMetadataItem label="Node" value="a-very-long-node-name" />);
+
+			expect(screen.getByText('a-very-long-node-name')).toHaveAttribute(
+				'data-interactive',
+			);
+		} finally {
+			restore();
+		}
+	});
+
+	it('leaves a value that fits unmarked', () => {
+		const restore = fakeClamping(20, 20);
+
+		try {
+			render(<EntityMetadataItem label="Cluster Name" value="mgmt" />);
+
+			expect(screen.getByText('mgmt')).not.toHaveAttribute('data-interactive');
+		} finally {
+			restore();
+		}
+	});
+
 	it('leaves an entity-supplied renderer alone', () => {
 		render(
 			<EntityMetadataItem
