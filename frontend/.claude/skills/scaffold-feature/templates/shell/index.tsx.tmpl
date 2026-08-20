@@ -1,0 +1,25 @@
+import { useLocation } from 'react-router-dom';
+import RouteTab from 'components/RouteTab';
+import history from 'lib/history';
+
+import { __CONST___TABS } from './constants';
+
+import styles from './__Pascal__.module.scss';
+
+function __Pascal__(): JSX.Element {
+	const { pathname } = useLocation();
+
+	return (
+		<div className={styles.shell} data-testid="__kebab__-shell">
+			<RouteTab
+				routes={__CONST___TABS}
+				activeKey={pathname}
+				history={history}
+				showRightSection={false}
+				defaultActiveKey={__CONST___TABS[0].key}
+			/>
+		</div>
+	);
+}
+
+export default __Pascal__;
