@@ -44,7 +44,7 @@ const HARNESS_CONSOLE_NOISE = [
 	'Failed to load resource: the server responded with a status of 403',
 	'Request failed with status code 404',
 	'client never received a response, or request never left',
-	'any',
+	'ErrorResponseHandler: unclassified error',
 ];
 
 export interface ConsoleWatch {
