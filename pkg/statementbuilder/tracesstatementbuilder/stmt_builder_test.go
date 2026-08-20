@@ -955,44 +955,6 @@ func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
 				Args:  []any{"1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
 			},
 		},
-		{
-			// A scope name that collides with a declared path: with both the declared
-			// scope.version and a scope attribute literally named `version` in metadata, a
-			// select on `{version, scope}` unions both (attribute first, declared fallback).
-			name:        "scope select field unions a same-named scope attribute and the declared path",
-			requestType: qbtypes.RequestTypeRaw,
-			keysMap: map[string][]*telemetrytypes.TelemetryFieldKey{
-				"scope.version": {
-					{
-						Name:          "scope.version",
-						Signal:        telemetrytypes.SignalTraces,
-						FieldContext:  telemetrytypes.FieldContextScope,
-						FieldDataType: telemetrytypes.FieldDataTypeString,
-					},
-				},
-				"version": {
-					{
-						Name:          "version",
-						Signal:        telemetrytypes.SignalTraces,
-						FieldContext:  telemetrytypes.FieldContextScope,
-						FieldDataType: telemetrytypes.FieldDataTypeString,
-					},
-				},
-			},
-			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-				Signal:       telemetrytypes.SignalTraces,
-				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
-				Filter:       &qbtypes.Filter{},
-				SelectFields: []telemetrytypes.TelemetryFieldKey{
-					{Name: "version", FieldContext: telemetrytypes.FieldContextScope},
-				},
-				Limit: 10,
-			},
-			expected: qbtypes.Statement{
-				Query: "SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, multiIf(scope.attributes.`version` IS NOT NULL, toString(scope.attributes.`version`::String), scope.version::String <> '', toString(scope.version::String), NULL) AS `__SELECT_KEY_3_version` FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:  []any{"1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
-			},
-		},
 	}
 
 	for _, c := range cases {

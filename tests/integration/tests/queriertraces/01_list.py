@@ -1308,18 +1308,23 @@ def test_traces_list_with_corrupt_data(
         # The explicit `scope.` prefix forces scope context only, so span 0's
         # span attribute is ignored — only span 1 matches.
         pytest.param("scope.env.tier = 'gold'", [1], id="scope_prefixed_cross_context"),
-        # `scope.name` matches BOTH the intrinsic scope.name field (span 0) and a
-        # scope attribute literally named `name` (span 1's scope attribute
-        # name='io.signoz.checkout').
-        pytest.param("scope.name = 'io.signoz.checkout'", [0, 1], id="scope_name_collision"),
-        # `scope.name` also matches a span attribute literally named `scope.name`
-        # (attribute context) — span 2 carries attribute scope.name='attr-scope-name'.
-        pytest.param("scope.name = 'attr-scope-name'", [2], id="scope_name_attribute_collision"),
-        # An unprefixed `name` resolves to the intrinsic span `name` column and a
-        # `name` scope attribute, but NOT the scope.name field. Span 2's span
-        # name and span 1's scope attribute `name` both equal 'io.signoz.checkout';
-        # span 0's scope.name field equals it too but is NOT matched.
-        pytest.param("name = 'io.signoz.checkout'", [1, 2], id="bare_name_excludes_scope_name_field"),
+        # `scope.name` binds to the declared scope.name field ONLY (span 0). A same-named
+        # `name` scope attribute (span 1) does NOT shadow or union with it — query that
+        # attribute as `scope.attribute.name` instead.
+        pytest.param("scope.name = 'io.signoz.checkout'", [0], id="scope_name_collision"),
+        # `scope.name` is the declared path only; it does not cross-match a span attribute
+        # literally named `scope.name` (span 2's attribute scope.name='attr-scope-name'),
+        # whose declared scope.name is 'span-gamma'. So nothing matches.
+        pytest.param("scope.name = 'attr-scope-name'", [], id="scope_name_declared_only"),
+        # A `name`/`version` scope attribute is reachable only via the explicit
+        # `scope.attribute.` prefix. Span 1 has a `name` scope attribute = 'io.signoz.checkout'.
+        pytest.param("scope.attribute.name = 'io.signoz.checkout'", [1], id="scope_attribute_name"),
+        # `version` as a scope attribute: no span carries one (span 1's 4.5.6 is the declared
+        # scope.version, not a scope attribute), so this matches nothing.
+        pytest.param("scope.attribute.version = '4.5.6'", [], id="scope_attribute_version_none"),
+        # An unprefixed `name` resolves to the span `name` column only (span 2). It matches
+        # neither the scope.name field (span 0) nor a `name` scope attribute (span 1).
+        pytest.param("name = 'io.signoz.checkout'", [2], id="bare_name_excludes_scope_name_field"),
         # A value that no resolvable key holds (scope.name/scope.version field,
         # a `name`/`version` scope attribute, or a same-named attribute/resource)
         # returns nothing.
@@ -1349,10 +1354,10 @@ def test_traces_list_with_scope_filter(
     - Filtering on scope.name / scope.version / a scope attribute.
     - An unprefixed key is resolved across contexts (scope checked alongside
       attribute / intrinsic), while a `scope.`-prefixed key is scope-only.
-    - `scope.name` hits the intrinsic field, a `name` scope attribute, and a
-      span attribute `scope.name` (cross-context), while a bare `name` hits
-      the span name column (and a `name` scope attribute) but never the
-      scope.name field.
+    - `scope.name`/`scope.version` bind to the declared JSON sub-columns only; a
+      same-named `name`/`version` scope attribute is reachable only via the explicit
+      `scope.attribute.` prefix, never via `scope.name` or a bare `name`.
+    - a bare `name` resolves to the span `name` column and never the scope.name field.
     """
     now = datetime.now(tz=UTC).replace(microsecond=0)
     trace_id = TraceIdGenerator.trace_id()

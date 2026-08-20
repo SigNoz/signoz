@@ -112,6 +112,18 @@ func TestGetFieldKeyName(t *testing.T) {
 			expectedError:  nil,
 		},
 		{
+			// `scope.attribute.name` normalizes to {attribute.name, scope}; the literal
+			// `attribute.` prefix is dropped so it addresses the scope attribute named `name`
+			// (which the declared `scope.name` path deliberately does not).
+			name: "Scope field - attribute prefix addresses the named scope attribute",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "attribute.name",
+				FieldContext: telemetrytypes.FieldContextScope,
+			},
+			expectedResult: "scope.attributes.`name`::String",
+			expectedError:  nil,
+		},
+		{
 			// Query like `attribute.attribute_string:string` should resolve to `attributes_string['attribute_string']`.
 			name: "Attribute key whose name collides with contextual map column resolves as a map lookup",
 			key: telemetrytypes.TelemetryFieldKey{
@@ -332,12 +344,13 @@ func TestColumnExpressionForTimestampAttributeCollision(t *testing.T) {
 	})
 }
 
-// TestColumnExpressionForScopeUnion covers select-side resolution of scope names that
+// TestColumnExpressionForScopeDeclaredPath covers select-side resolution of scope names that
 // collide with a declared scope path. A short name under scope context (or the bare
-// `scope.<x>` spelling that normalizes to it) binds to the declared path, and unions a
-// same-named scope attribute when one is also in metadata. The full `scope.<x>` name under
-// explicit scope context addresses the declared path alone.
-func TestColumnExpressionForScopeUnion(t *testing.T) {
+// `scope.<x>` spelling that normalizes to it) binds to the declared path — a same-named
+// scope attribute never shadows it. The full `scope.<x>` name under explicit scope context
+// likewise addresses the declared path alone. A `name`/`version` scope attribute is reachable
+// only via the explicit `scope.attribute.` prefix.
+func TestColumnExpressionForScopeDeclaredPath(t *testing.T) {
 	ctx := context.Background()
 
 	scopeKey := func(name string) *telemetrytypes.TelemetryFieldKey {
@@ -372,28 +385,25 @@ func TestColumnExpressionForScopeUnion(t *testing.T) {
 			expectedResult: "multiIf(scope.version::String <> '', scope.version::String, NULL)",
 		},
 		{
-			name:           "short name unions the declared path and a same-named scope attribute",
-			key:            telemetrytypes.TelemetryFieldKey{Name: "version", FieldContext: telemetrytypes.FieldContextScope},
-			keys:           withAttr,
-			expectedResult: "multiIf(scope.attributes.`version` IS NOT NULL, toString(scope.attributes.`version`::String), scope.version::String <> '', toString(scope.version::String), NULL)",
-		},
-		{
 			name:           "full scope.version name under scope context addresses the declared path alone",
 			key:            telemetrytypes.TelemetryFieldKey{Name: "scope.version", FieldContext: telemetrytypes.FieldContextScope},
 			keys:           withAttr,
 			expectedResult: "multiIf(scope.version::String <> '', scope.version::String, NULL)",
 		},
 		{
-			name:           "short scope name unions the declared scope.name and a same-named attribute",
-			key:            telemetrytypes.TelemetryFieldKey{Name: "name", FieldContext: telemetrytypes.FieldContextScope},
-			keys:           withAttr,
-			expectedResult: "multiIf(scope.attributes.`name` IS NOT NULL, toString(scope.attributes.`name`::String), scope.name::String <> '', toString(scope.name::String), NULL)",
-		},
-		{
 			name:           "full scope.name name under scope context addresses the declared path alone",
 			key:            telemetrytypes.TelemetryFieldKey{Name: "scope.name", FieldContext: telemetrytypes.FieldContextScope},
 			keys:           withAttr,
 			expectedResult: "multiIf(scope.name::String <> '', scope.name::String, NULL)",
+		},
+		{
+			// `scope.attribute.name` normalizes to {attribute.name, scope}; the `attribute.`
+			// prefix is dropped so it addresses the scope attribute named `name` — the only
+			// way to reach it, since `scope.name` is reserved for the declared path.
+			name:           "attribute prefix reaches the named scope attribute",
+			key:            telemetrytypes.TelemetryFieldKey{Name: "attribute.name", FieldContext: telemetrytypes.FieldContextScope},
+			keys:           withAttr,
+			expectedResult: "multiIf(scope.attributes.`name` IS NOT NULL, scope.attributes.`name`::String, NULL)",
 		},
 	}
 

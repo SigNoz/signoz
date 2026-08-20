@@ -453,6 +453,19 @@ func TestConditionForScopeIntrinsicFields(t *testing.T) {
 			value:       nil,
 			expectedSQL: "scope.version::String = ''",
 		},
+		{
+			// `scope.attribute.name` (normalized to {attribute.name, scope}) addresses the scope
+			// attribute named `name` — the declared `scope.name` path is never reached this way.
+			name: "Equal - scope.attribute.name reaches the named scope attribute",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "attribute.name",
+				FieldContext:  telemetrytypes.FieldContextScope,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:    qbtypes.FilterOperatorEqual,
+			value:       "io.signoz.checkout",
+			expectedSQL: "(scope.attributes.`name`::String = ? AND scope.attributes.`name` IS NOT NULL)",
+		},
 	}
 
 	for _, tc := range testCases {

@@ -182,6 +182,9 @@ func (m *fieldMapper) getColumn(
 	case telemetrytypes.FieldContextResource:
 		return []*schema.Column{indexV3Columns["resource"], indexV3Columns["resources_string"]}, nil
 	case telemetrytypes.FieldContextScope:
+		if key.Name == "name" || key.Name == "version" {
+			return nil, qbtypes.ErrColumnNotFound
+		}
 		return []*schema.Column{indexV3Columns["scope"]}, nil
 	case telemetrytypes.FieldContextAttribute:
 		switch key.FieldDataType {
@@ -305,8 +308,9 @@ func (m *fieldMapper) resolveColumnExprs(
 					exprs = append(exprs, fmt.Sprintf("%s::String", key.Name))
 					existExprs = append(existExprs, fmt.Sprintf("%s <> ''", key.Name))
 				} else {
-					exprs = append(exprs, fmt.Sprintf("%s.attributes.`%s`::String", columnName, key.Name))
-					existExprs = append(existExprs, fmt.Sprintf("%s.attributes.`%s` IS NOT NULL", columnName, key.Name))
+					attributeName := strings.TrimPrefix(key.Name, "attribute.") // literal "attribute" prefix in attribute keys needs double prefix
+					exprs = append(exprs, fmt.Sprintf("%s.attributes.`%s`::String", columnName, attributeName))
+					existExprs = append(existExprs, fmt.Sprintf("%s.attributes.`%s` IS NOT NULL", columnName, attributeName))
 				}
 			default:
 				return nil, nil, nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource and scope context fields are supported for json columns, got %s", key.FieldContext.String)
@@ -428,38 +432,17 @@ func (m *fieldMapper) ColumnExpressionFor(
 
 	// Resolve the candidate logical field(s).
 	var candidates []*telemetrytypes.LogicalField
-	switch field.FieldContext {
-	case telemetrytypes.FieldContextScope:
-		// FieldFor resolves any scope key to a single expression, so the probe below would skip
-		// the union. Resolve scope the way the filter path does: MatchingLogicalFields surfaces a
-		// same-named scope attribute (attribute-first) alongside the declared path, and
-		// CandidateKeys synthesizes when metadata knows neither.
-		matches := querybuilder.MatchingLogicalFields(ctx, orgID, m.fl, field, keys)
-		candidates, _ = querybuilder.ResolveLogicalFields(field, matches)
-		if len(candidates) == 0 {
-			candidates = querybuilder.WrapAsLogicalFields(field.Name, m.CandidateKeys(ctx, orgID, field, nil, keys))
+	switch _, err := m.FieldFor(ctx, orgID, startNs, endNs, field); {
+	case err == nil:
+		candidates = []*telemetrytypes.LogicalField{m.logicalForResolvedColumn(ctx, orgID, field, keys)}
+	case errors.Is(err, qbtypes.ErrColumnNotFound):
+		raw := m.CandidateKeys(ctx, orgID, field, nil, keys)
+		if len(raw) == 0 {
+			return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
 		}
-		if len(candidates) == 0 {
-			return "", errors.Wrapf(querybuilder.NewKeyNotFoundError(field.Name), errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
-		}
+		candidates = m.upgradeToFamilies(ctx, orgID, field, querybuilder.WrapAsLogicalFields(field.Name, raw), keys)
 	default:
-		switch _, err := m.FieldFor(ctx, orgID, startNs, endNs, field); {
-		case err == nil:
-			// A directly-resolvable key upgrades to its family when the metadata
-			// map proves membership; otherwise it stays single-member.
-			candidates = []*telemetrytypes.LogicalField{m.logicalForResolvedColumn(ctx, orgID, field, keys)}
-		case errors.Is(err, qbtypes.ErrColumnNotFound):
-			// The legacy candidate flow: column (when the bare name is one) plus metadata
-			// matches, else synthesized type-variant keys. The family step only swaps candidates
-			// for their family; it never changes candidate order or non-family behavior.
-			raw := m.CandidateKeys(ctx, orgID, field, nil, keys)
-			if len(raw) == 0 {
-				return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
-			}
-			candidates = m.upgradeToFamilies(ctx, orgID, field, querybuilder.WrapAsLogicalFields(field.Name, raw), keys)
-		default:
-			return "", err
-		}
+		return "", err
 	}
 
 	// Group-by/order (String) and aggregation (String/Float64): every candidate is
