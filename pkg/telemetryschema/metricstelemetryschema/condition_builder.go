@@ -177,6 +177,7 @@ func (c *conditionBuilder) ConditionFor(
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
+	logicalFields []*telemetrytypes.LogicalField,
 	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
 	_ qbtypes.ConditionBuilderOptions,
 	operator qbtypes.FilterOperator,
@@ -189,11 +190,9 @@ func (c *conditionBuilder) ConditionFor(
 		return nil, nil, err
 	}
 
-	// Metric labels have no family support, so every logical field is
-	// single-member and flattens losslessly to its physical key.
-	keys := querybuilder.SingleKeys(querybuilder.MatchingLogicalFields(ctx, orgID, nil, key, fieldKeys))
 	var warnings []string
-	if len(keys) == 0 {
+	if len(logicalFields) == 0 {
+		var keys []*telemetrytypes.TelemetryFieldKey
 		if _, isColumn := timeSeriesV4Columns[key.Name]; isColumn {
 			keys = []*telemetrytypes.TelemetryFieldKey{key}
 		} else {
@@ -208,11 +207,20 @@ func (c *conditionBuilder) ConditionFor(
 					key.FieldContext.StringValue()+"."+key.Name, telemetrytypes.FieldContextAttribute, key.FieldDataType))
 			}
 		}
+		logicalFields = querybuilder.WrapAsLogicalFields(key.Name, keys)
 	}
 
-	conds := make([]string, 0, len(keys))
-	for _, k := range keys {
-		cond, err := c.conditionFor(ctx, orgID, startNs, endNs, k, operator, value, sb)
+	conds := make([]string, 0, len(logicalFields))
+	for _, logical := range logicalFields {
+		if logical.IsFamily() {
+			cond, err := querybuilder.LogicalFamilyCondition(ctx, orgID, startNs, endNs, c.fm, logical, operator, value, sb)
+			if err != nil {
+				return nil, nil, err
+			}
+			conds = append(conds, cond)
+			continue
+		}
+		cond, err := c.conditionFor(ctx, orgID, startNs, endNs, logical.Single(), operator, value, sb)
 		if err != nil {
 			return nil, nil, err
 		}

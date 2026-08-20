@@ -1336,7 +1336,7 @@ func buildJSONTestStatementBuilder(t *testing.T, addIndexes bool) (*logQueryStat
 	fm := logstelemetryschema.NewFieldMapper(fl)
 	cb := logstelemetryschema.NewConditionBuilder(fm, fl)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl, telemetrytypes.SignalLogs)
 
 	statementBuilder := NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),

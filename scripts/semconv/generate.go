@@ -64,6 +64,9 @@ type overlayFile struct {
 	Families map[string]overlayFamily `yaml:"families"`
 }
 
+// Contexts and Signals set the family-level gate: the axes a family may
+// resolve on at all. The Add* fields widen the schema-derived member scopes,
+// for renames SigNoz applies beyond where the schema published them.
 type overlayFamily struct {
 	Enabled           *bool             `yaml:"enabled"`
 	Kind              string            `yaml:"kind"`
@@ -79,27 +82,37 @@ type overlayFamily struct {
 	ValueMap          map[string]string `yaml:"value_map"`
 }
 
-type edge struct {
-	old            string
-	current        string
-	kind           string
+// scope is the constraint a rename edge carries. A nil axis places no
+// constraint on that axis.
+type scope struct {
 	contexts       []string
 	signals        []string
-	allContexts    bool
-	allSignals     bool
 	applyToMetrics []string
+}
+
+type edge struct {
+	old     string
+	current string
+	kind    string
+	scope   scope
 }
 
 type graphKey struct{ kind, name string }
 
-type generatedFamily struct {
-	Current        string
-	Old            []string
-	Kind           string
+type generatedMember struct {
+	Name           string
 	Contexts       []string
 	Signals        []string
 	ApplyToMetrics []string
-	ValueMap       map[string]string
+}
+
+type generatedFamily struct {
+	Current  string
+	Kind     string
+	Members  []generatedMember
+	Contexts []string
+	Signals  []string
+	ValueMap map[string]string
 }
 
 func main() {
@@ -232,25 +245,31 @@ func collectEdges(schemas []schemaFile) ([]edge, error) {
 				{name: "metrics", section: version.Metrics},
 			}
 			for _, scoped := range sections {
-				contexts, signals, allContexts, allSignals, err := scopeForSection(scoped.name)
+				sectionScope, err := scopeForSection(scoped.name)
 				if err != nil {
 					return nil, err
 				}
 				for _, change := range scoped.section.Changes {
 					if change.RenameAttributes != nil {
+						if change.RenameAttributes.ApplyToMetrics != nil && len(change.RenameAttributes.ApplyToMetrics) == 0 {
+							return nil, fmt.Errorf(
+								"schema version %q has an explicitly empty apply_to_metrics; an empty list would be emitted as unconstrained",
+								versionName,
+							)
+						}
+						edgeScope := sectionScope
+						edgeScope.applyToMetrics = change.RenameAttributes.ApplyToMetrics
 						for _, old := range sortedMapKeys(change.RenameAttributes.AttributeMap) {
 							versionEdges = append(versionEdges, edge{
 								old: old, current: change.RenameAttributes.AttributeMap[old], kind: kindAttribute,
-								contexts: contexts, signals: signals,
-								allContexts: allContexts, allSignals: allSignals,
-								applyToMetrics: change.RenameAttributes.ApplyToMetrics,
+								scope: edgeScope,
 							})
 						}
 					}
 					for _, old := range sortedMapKeys(change.RenameMetrics) {
 						versionEdges = append(versionEdges, edge{
 							old: old, current: change.RenameMetrics[old], kind: kindMetric,
-							contexts: []string{"metric"}, signals: []string{"metrics"},
+							scope: scope{contexts: []string{"metric"}, signals: []string{"metrics"}},
 						})
 					}
 				}
@@ -311,21 +330,100 @@ func compareVersionParts(left, right [3]int) int {
 	return 0
 }
 
-func scopeForSection(section string) (contexts, signals []string, allContexts, allSignals bool, err error) {
+func scopeForSection(section string) (scope, error) {
 	switch section {
 	case "all":
-		return nil, nil, true, true, nil
+		return scope{}, nil
 	case "resources":
-		return []string{"resource"}, nil, false, true, nil
+		return scope{contexts: []string{"resource"}}, nil
 	case "spans":
-		return []string{"attribute"}, []string{"traces"}, false, false, nil
+		return scope{contexts: []string{"attribute"}, signals: []string{"traces"}}, nil
 	case "logs":
-		return []string{"attribute"}, []string{"logs"}, false, false, nil
+		return scope{contexts: []string{"attribute"}, signals: []string{"logs"}}, nil
 	case "metrics":
-		return []string{"attribute"}, []string{"metrics"}, false, false, nil
+		return scope{contexts: []string{"attribute"}, signals: []string{"metrics"}}, nil
 	default:
-		return nil, nil, false, false, fmt.Errorf("unsupported schema section %q", section)
+		return scope{}, fmt.Errorf("unsupported schema section %q", section)
 	}
+}
+
+// unionScope widens per axis: no constraint on either side widens to no
+// constraint. The metric-name axis only takes evidence from edges that can
+// apply to metrics — a rename filed under a non-metrics section says nothing
+// about metric scoping and must not erase a scoped list into a wildcard.
+func unionScope(left, right scope) scope {
+	return scope{
+		contexts:       unionAxis(left.contexts, right.contexts),
+		signals:        unionAxis(left.signals, right.signals),
+		applyToMetrics: applyToMetricsUnion(left, right),
+	}
+}
+
+func applyToMetricsUnion(left, right scope) []string {
+	leftApplies := coversMetrics(left.signals)
+	rightApplies := coversMetrics(right.signals)
+	switch {
+	case leftApplies && rightApplies:
+		return unionAxis(left.applyToMetrics, right.applyToMetrics)
+	case leftApplies:
+		return sortedCopy(left.applyToMetrics)
+	case rightApplies:
+		return sortedCopy(right.applyToMetrics)
+	}
+	return nil
+}
+
+func coversMetrics(signals []string) bool {
+	if signals == nil {
+		return true
+	}
+	for _, signal := range signals {
+		if signal == "metrics" {
+			return true
+		}
+	}
+	return false
+}
+
+func unionAxis(left, right []string) []string {
+	if left == nil || right == nil {
+		return nil
+	}
+	merged := appendUnique(append([]string(nil), left...), right...)
+	sort.Strings(merged)
+	return merged
+}
+
+// pathResult is one resolution path from a name to a family root: the root
+// name and the hop count. Hops carry only reachability — a member's scope
+// comes from its own rename edges, because the section a later rename is
+// filed under says nothing about where the older spelling existed (the
+// vendored schema files chained renames under different sections).
+type pathResult struct {
+	root     string
+	distance int
+}
+
+func rootsFor(next map[graphKey][]edge, kind, name string, distance int, seen map[string]bool) ([]pathResult, error) {
+	if seen[name] {
+		return nil, fmt.Errorf("rename cycle for %s %q", kind, name)
+	}
+	outgoing := next[graphKey{kind: kind, name: name}]
+	if len(outgoing) == 0 {
+		return []pathResult{{root: name, distance: distance}}, nil
+	}
+	seen[name] = true
+	defer delete(seen, name)
+
+	var results []pathResult
+	for _, hop := range outgoing {
+		hopResults, err := rootsFor(next, kind, hop.current, distance+1, seen)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, hopResults...)
+	}
+	return results, nil
 }
 
 func buildFamilies(schemas []schemaFile, overlay overlayFile) ([]generatedFamily, error) {
@@ -333,77 +431,96 @@ func buildFamilies(schemas []schemaFile, overlay overlayFile) ([]generatedFamily
 	if err != nil {
 		return nil, err
 	}
-	next := make(map[graphKey]string)
+	// One old name can fan out into several families when its rename edges are
+	// scoped differently, so the graph keeps every successor.
+	next := make(map[graphKey][]edge)
 	for _, item := range edges {
 		key := graphKey{kind: item.kind, name: item.old}
-		if existing, ok := next[key]; ok && existing == item.current {
-			// Repeated entries are common in chained schema histories. Treat an
-			// identical edge as a no-op so it cannot sever a later edge in the
-			// same chain (A -> B, B -> C, then a repeated A -> B).
+		merged := false
+		for i, existing := range next[key] {
+			if existing.current == item.current {
+				// Repeated entries are common in chained schema histories. Merge
+				// the scopes instead of appending so a repeat cannot sever a
+				// later edge in the same chain (A -> B, B -> C, then a repeated
+				// A -> B).
+				next[key][i].scope = unionScope(existing.scope, item.scope)
+				merged = true
+				break
+			}
+		}
+		if merged {
 			continue
 		}
 		// Schema history occasionally repeats an old name with a newer direct
 		// destination or rolls a rename back. Edges are collected
-		// oldest-to-newest, so the latest published current name must be a root.
+		// oldest-to-newest, so the latest published current name must be a
+		// root. The delete removes every outgoing edge of the re-published
+		// name: a family only reachable through it becomes orphaned. The
+		// vendored history contains only true rollbacks, where the orphan is
+		// the correct result.
 		delete(next, graphKey{kind: item.kind, name: item.current})
-		next[key] = item.current
+		next[key] = append(next[key], item)
 	}
 
+	type memberState struct {
+		sc       scope
+		distance int
+	}
 	type familyState struct {
-		family      generatedFamily
-		distance    map[string]int
-		allContexts bool
-		allSignals  bool
+		family  generatedFamily
+		members map[string]*memberState
 	}
 	states := map[graphKey]*familyState{}
-	for _, item := range edges {
-		root, distance, err := rootFor(next, item.kind, item.old)
-		if err != nil {
-			return nil, err
-		}
-		key := graphKey{kind: item.kind, name: root}
-		state := states[key]
-		if state == nil {
-			state = &familyState{
-				family:   generatedFamily{Current: root, Kind: item.kind},
-				distance: map[string]int{},
+	for key, outgoing := range next {
+		for _, item := range outgoing {
+			results, err := rootsFor(next, key.kind, item.current, 1, map[string]bool{key.name: true})
+			if err != nil {
+				return nil, err
 			}
-			states[key] = state
+			for _, result := range results {
+				rootKey := graphKey{kind: key.kind, name: result.root}
+				state := states[rootKey]
+				if state == nil {
+					state = &familyState{
+						family:  generatedFamily{Current: result.root, Kind: key.kind},
+						members: map[string]*memberState{},
+					}
+					states[rootKey] = state
+				}
+				member := state.members[key.name]
+				if member == nil {
+					state.members[key.name] = &memberState{sc: item.scope, distance: result.distance}
+					continue
+				}
+				member.sc = unionScope(member.sc, item.scope)
+				if result.distance < member.distance {
+					member.distance = result.distance
+				}
+			}
 		}
-		if prior, ok := state.distance[item.old]; !ok || distance < prior {
-			state.distance[item.old] = distance
-		}
-		state.allContexts = state.allContexts || item.allContexts
-		state.allSignals = state.allSignals || item.allSignals
-		state.family.Contexts = appendUnique(state.family.Contexts, item.contexts...)
-		state.family.Signals = appendUnique(state.family.Signals, item.signals...)
-		state.family.ApplyToMetrics = appendUnique(state.family.ApplyToMetrics, item.applyToMetrics...)
 	}
 
 	for _, state := range states {
-		for old := range state.distance {
-			if old != state.family.Current {
-				state.family.Old = append(state.family.Old, old)
-			}
+		names := make([]string, 0, len(state.members))
+		for name := range state.members {
+			names = append(names, name)
 		}
-		sort.Slice(state.family.Old, func(i, j int) bool {
-			left, right := state.family.Old[i], state.family.Old[j]
-			if state.distance[left] != state.distance[right] {
-				return state.distance[left] < state.distance[right]
+		sort.Slice(names, func(i, j int) bool {
+			left, right := state.members[names[i]], state.members[names[j]]
+			if left.distance != right.distance {
+				return left.distance < right.distance
 			}
-			return left < right
+			return names[i] < names[j]
 		})
-		if state.allContexts {
-			state.family.Contexts = nil
-		} else {
-			sort.Strings(state.family.Contexts)
+		for _, name := range names {
+			member := state.members[name]
+			state.family.Members = append(state.family.Members, generatedMember{
+				Name:           name,
+				Contexts:       sortedCopy(member.sc.contexts),
+				Signals:        sortedCopy(member.sc.signals),
+				ApplyToMetrics: sortedCopy(member.sc.applyToMetrics),
+			})
 		}
-		if state.allSignals {
-			state.family.Signals = nil
-		} else {
-			sort.Strings(state.family.Signals)
-		}
-		sort.Strings(state.family.ApplyToMetrics)
 	}
 
 	for _, current := range sortedMapKeys(overlay.Families) {
@@ -414,6 +531,12 @@ func buildFamilies(schemas []schemaFile, overlay overlayFile) ([]generatedFamily
 		}
 		policy.Kind = kind
 		overlay.Families[current] = policy
+		if policy.ApplyToMetrics != nil && len(policy.ApplyToMetrics) == 0 {
+			return nil, fmt.Errorf(
+				"overlay family %q has an explicitly empty apply_to_metrics; an empty list would be emitted as unconstrained",
+				current,
+			)
+		}
 		key := graphKey{kind: kind, name: current}
 		state := states[key]
 		if state == nil {
@@ -424,10 +547,7 @@ func buildFamilies(schemas []schemaFile, overlay overlayFile) ([]generatedFamily
 					kind,
 				)
 			}
-			state = &familyState{
-				family:   generatedFamily{Current: current, Kind: kind, Old: append([]string(nil), policy.Old...)},
-				distance: map[string]int{},
-			}
+			state = &familyState{family: generatedFamily{Current: current, Kind: kind}}
 			states[key] = state
 		}
 		applyOverlay(&state.family, policy)
@@ -446,7 +566,7 @@ func buildFamilies(schemas []schemaFile, overlay overlayFile) ([]generatedFamily
 		if !enabled {
 			continue
 		}
-		if len(state.family.Old) == 0 {
+		if len(state.family.Members) == 0 {
 			return nil, fmt.Errorf(
 				"enabled family %q with kind %q has no old members",
 				state.family.Current,
@@ -455,7 +575,6 @@ func buildFamilies(schemas []schemaFile, overlay overlayFile) ([]generatedFamily
 		}
 		sort.Strings(state.family.Contexts)
 		sort.Strings(state.family.Signals)
-		sort.Strings(state.family.ApplyToMetrics)
 		result = append(result, state.family)
 	}
 
@@ -468,21 +587,13 @@ func buildFamilies(schemas []schemaFile, overlay overlayFile) ([]generatedFamily
 	return result, nil
 }
 
-func rootFor(next map[graphKey]string, kind, name string) (string, int, error) {
-	seen := map[string]bool{}
-	distance := 0
-	for {
-		if seen[name] {
-			return "", 0, fmt.Errorf("rename cycle for %s %q", kind, name)
-		}
-		seen[name] = true
-		current, ok := next[graphKey{kind: kind, name: name}]
-		if !ok {
-			return name, distance, nil
-		}
-		name = current
-		distance++
+func sortedCopy(values []string) []string {
+	if values == nil {
+		return nil
 	}
+	out := append([]string(nil), values...)
+	sort.Strings(out)
+	return out
 }
 
 func normalizedOverlayKind(current string, policy overlayFamily) (string, error) {
@@ -501,15 +612,29 @@ func applyOverlay(family *generatedFamily, policy overlayFamily) {
 		family.Kind = policy.Kind
 	}
 	if policy.Old != nil {
-		family.Old = append([]string(nil), policy.Old...)
+		family.Members = nil
+		for _, old := range policy.Old {
+			family.Members = append(family.Members, generatedMember{Name: old})
+		}
 	}
-	family.Old = appendUnique(family.Old, policy.AddOld...)
+	for _, old := range policy.AddOld {
+		if familyHasMember(family, old) {
+			continue
+		}
+		family.Members = append(family.Members, generatedMember{Name: old})
+	}
 	if len(policy.ExcludeOld) > 0 {
 		excluded := make(map[string]bool, len(policy.ExcludeOld))
 		for _, old := range policy.ExcludeOld {
 			excluded[old] = true
 		}
-		family.Old = deleteMatching(family.Old, excluded)
+		kept := family.Members[:0]
+		for _, member := range family.Members {
+			if !excluded[member.Name] {
+				kept = append(kept, member)
+			}
+		}
+		family.Members = kept
 	}
 	if policy.Contexts != nil {
 		family.Contexts = append([]string(nil), policy.Contexts...)
@@ -517,18 +642,43 @@ func applyOverlay(family *generatedFamily, policy overlayFamily) {
 	if policy.Signals != nil {
 		family.Signals = append([]string(nil), policy.Signals...)
 	}
-	family.Contexts = appendUnique(family.Contexts, policy.AddContexts...)
-	family.Signals = appendUnique(family.Signals, policy.AddSignals...)
-	if policy.ApplyToMetrics != nil {
-		family.ApplyToMetrics = append([]string(nil), policy.ApplyToMetrics...)
+	// Add* fields only widen: a nil gate already admits everything, so they
+	// extend a gate only when the overlay set one.
+	if family.Contexts != nil {
+		family.Contexts = appendUnique(family.Contexts, policy.AddContexts...)
 	}
-	family.ApplyToMetrics = appendUnique(family.ApplyToMetrics, policy.AddApplyToMetrics...)
+	if family.Signals != nil {
+		family.Signals = appendUnique(family.Signals, policy.AddSignals...)
+	}
+	for i := range family.Members {
+		if len(policy.AddContexts) > 0 {
+			family.Members[i].Contexts = unionAxis(family.Members[i].Contexts, sortedCopy(policy.AddContexts))
+		}
+		if len(policy.AddSignals) > 0 {
+			family.Members[i].Signals = unionAxis(family.Members[i].Signals, sortedCopy(policy.AddSignals))
+		}
+		if policy.ApplyToMetrics != nil {
+			family.Members[i].ApplyToMetrics = sortedCopy(policy.ApplyToMetrics)
+		}
+		if len(policy.AddApplyToMetrics) > 0 && family.Members[i].ApplyToMetrics != nil {
+			family.Members[i].ApplyToMetrics = unionAxis(family.Members[i].ApplyToMetrics, sortedCopy(policy.AddApplyToMetrics))
+		}
+	}
 	if policy.ValueMap != nil {
 		family.ValueMap = make(map[string]string, len(policy.ValueMap))
 		for old, current := range policy.ValueMap {
 			family.ValueMap[old] = current
 		}
 	}
+}
+
+func familyHasMember(family *generatedFamily, name string) bool {
+	for _, member := range family.Members {
+		if member.Name == name {
+			return true
+		}
+	}
+	return false
 }
 
 func appendUnique(values []string, additions ...string) []string {
@@ -546,16 +696,6 @@ func appendUnique(values []string, additions ...string) []string {
 	return values
 }
 
-func deleteMatching(values []string, excluded map[string]bool) []string {
-	result := values[:0]
-	for _, value := range values {
-		if !excluded[value] {
-			result = append(result, value)
-		}
-	}
-	return result
-}
-
 func renderGo(families []generatedFamily) ([]byte, error) {
 	var out bytes.Buffer
 	out.WriteString("// Code generated by scripts/semconv. DO NOT EDIT.\n\n")
@@ -564,7 +704,11 @@ func renderGo(families []generatedFamily) ([]byte, error) {
 	for _, family := range families {
 		if len(family.Contexts) > 0 || len(family.Signals) > 0 {
 			needsTelemetryTypes = true
-			break
+		}
+		for _, member := range family.Members {
+			if len(member.Contexts) > 0 || len(member.Signals) > 0 {
+				needsTelemetryTypes = true
+			}
 		}
 	}
 	if needsTelemetryTypes {
@@ -572,37 +716,64 @@ func renderGo(families []generatedFamily) ([]byte, error) {
 	}
 	out.WriteString("var families = []Family{\n")
 	for _, family := range families {
-		contexts, err := goFieldContextSlice(family.Contexts)
-		if err != nil {
-			return nil, fmt.Errorf("render family %q: %w", family.Current, err)
-		}
-		signals, err := goSignalSlice(family.Signals)
-		if err != nil {
-			return nil, fmt.Errorf("render family %q: %w", family.Current, err)
-		}
 		out.WriteString("\t{\n")
-		fmt.Fprintf(&out, "\t\tCurrent: %s,\n", strconv.Quote(family.Current))
-		fmt.Fprintf(&out, "\t\tOld: %s,\n", goStringSlice(family.Old))
+		fmt.Fprintf(&out, "\t\tcurrent: %s,\n", strconv.Quote(family.Current))
 		if family.Kind == kindMetric {
-			out.WriteString("\t\tKind: KindMetric,\n")
+			out.WriteString("\t\tkind: KindMetric,\n")
 		} else {
-			out.WriteString("\t\tKind: KindAttribute,\n")
+			out.WriteString("\t\tkind: KindAttribute,\n")
 		}
-		fmt.Fprintf(&out, "\t\tContexts: %s,\n", contexts)
-		fmt.Fprintf(&out, "\t\tSignals: %s,\n", signals)
-		fmt.Fprintf(&out, "\t\tApplyToMetrics: %s,\n", goStringSlice(family.ApplyToMetrics))
-		if len(family.ValueMap) > 0 {
-			out.WriteString("\t\tValueMap: map[string]string{\n")
-			keys := sortedMapKeys(family.ValueMap)
-			for _, key := range keys {
-				fmt.Fprintf(&out, "\t\t\t%s: %s,\n", strconv.Quote(key), strconv.Quote(family.ValueMap[key]))
+		out.WriteString("\t\tmembers: []Member{\n")
+		for _, member := range family.Members {
+			if err := writeGoMember(&out, family.Current, member); err != nil {
+				return nil, err
 			}
-			out.WriteString("\t\t},\n")
+		}
+		out.WriteString("\t\t},\n")
+		if len(family.Contexts) > 0 {
+			contexts, err := goFieldContextSlice(family.Contexts)
+			if err != nil {
+				return nil, fmt.Errorf("render family %q: %w", family.Current, err)
+			}
+			fmt.Fprintf(&out, "\t\tcontexts: %s,\n", contexts)
+		}
+		if len(family.Signals) > 0 {
+			signals, err := goSignalSlice(family.Signals)
+			if err != nil {
+				return nil, fmt.Errorf("render family %q: %w", family.Current, err)
+			}
+			fmt.Fprintf(&out, "\t\tsignals: %s,\n", signals)
+		}
+		if len(family.ValueMap) > 0 {
+			return nil, fmt.Errorf("family %q carries a value map, and the Go registry has no value-map reader yet", family.Current)
 		}
 		out.WriteString("\t},\n")
 	}
 	out.WriteString("}\n")
 	return format.Source(out.Bytes())
+}
+
+func writeGoMember(out *bytes.Buffer, current string, member generatedMember) error {
+	parts := []string{fmt.Sprintf("name: %s", strconv.Quote(member.Name))}
+	if len(member.Contexts) > 0 {
+		contexts, err := goFieldContextSlice(member.Contexts)
+		if err != nil {
+			return fmt.Errorf("render family %q member %q: %w", current, member.Name, err)
+		}
+		parts = append(parts, "contexts: "+contexts)
+	}
+	if len(member.Signals) > 0 {
+		signals, err := goSignalSlice(member.Signals)
+		if err != nil {
+			return fmt.Errorf("render family %q member %q: %w", current, member.Name, err)
+		}
+		parts = append(parts, "signals: "+signals)
+	}
+	if len(member.ApplyToMetrics) > 0 {
+		parts = append(parts, "applyToMetrics: "+goStringSlice(member.ApplyToMetrics))
+	}
+	fmt.Fprintf(out, "\t\t\t{%s},\n", strings.Join(parts, ", "))
+	return nil
 }
 
 func goStringSlice(values []string) string {
@@ -659,21 +830,36 @@ func goSignalSlice(values []string) (string, error) {
 func renderTypeScript(families []generatedFamily) []byte {
 	var out bytes.Buffer
 	out.WriteString("// Code generated by scripts/semconv. DO NOT EDIT.\n\n")
+	out.WriteString("// An empty contexts/signals/applyToMetrics array places no constraint on\n")
+	out.WriteString("// that axis.\n")
+	out.WriteString("export type SemconvMember = {\n")
+	out.WriteString("\treadonly name: string;\n")
+	out.WriteString("\treadonly contexts: readonly string[];\n")
+	out.WriteString("\treadonly signals: readonly string[];\n")
+	out.WriteString("\treadonly applyToMetrics: readonly string[];\n};\n\n")
 	out.WriteString("export type SemconvFamily = {\n")
-	out.WriteString("\treadonly current: string;\n\treadonly old: readonly string[];\n")
+	out.WriteString("\treadonly current: string;\n")
 	out.WriteString("\treadonly kind: 'attribute' | 'metric';\n")
+	out.WriteString("\treadonly members: readonly SemconvMember[];\n")
 	out.WriteString("\treadonly contexts: readonly string[];\n\treadonly signals: readonly string[];\n")
-	out.WriteString("\treadonly applyToMetrics: readonly string[];\n")
 	out.WriteString("\treadonly valueMap: Readonly<Record<string, string>>;\n};\n\n")
 	out.WriteString("export const SEMCONV_FAMILIES: readonly SemconvFamily[] = [\n")
 	for _, family := range families {
 		out.WriteString("\t{\n")
 		fmt.Fprintf(&out, "\t\tcurrent: %s,\n", tsString(family.Current))
-		fmt.Fprintf(&out, "\t\told: %s,\n", tsStringSlice(family.Old))
 		fmt.Fprintf(&out, "\t\tkind: %s,\n", tsString(family.Kind))
+		out.WriteString("\t\tmembers: [\n")
+		for _, member := range family.Members {
+			out.WriteString("\t\t\t{\n")
+			fmt.Fprintf(&out, "\t\t\t\tname: %s,\n", tsString(member.Name))
+			fmt.Fprintf(&out, "\t\t\t\tcontexts: %s,\n", tsStringSlice(member.Contexts))
+			fmt.Fprintf(&out, "\t\t\t\tsignals: %s,\n", tsStringSlice(member.Signals))
+			fmt.Fprintf(&out, "\t\t\t\tapplyToMetrics: %s,\n", tsStringSlice(member.ApplyToMetrics))
+			out.WriteString("\t\t\t},\n")
+		}
+		out.WriteString("\t\t],\n")
 		fmt.Fprintf(&out, "\t\tcontexts: %s,\n", tsStringSlice(family.Contexts))
 		fmt.Fprintf(&out, "\t\tsignals: %s,\n", tsStringSlice(family.Signals))
-		fmt.Fprintf(&out, "\t\tapplyToMetrics: %s,\n", tsStringSlice(family.ApplyToMetrics))
 		out.WriteString("\t\tvalueMap: {")
 		keys := sortedMapKeys(family.ValueMap)
 		for i, key := range keys {

@@ -42,7 +42,9 @@ func NewFactory(
 		func(_ context.Context, settings factory.ProviderSettings, _ statementbuilder.Config) (qbtypes.StatementBuilder[qbtypes.LogAggregation], error) {
 			fm := audittelemetryschema.NewFieldMapper()
 			cb := audittelemetryschema.NewConditionBuilder(fm)
-			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, audittelemetryschema.DefaultFullTextColumn, fm, cb, fl)
+			// The audit condition builder compiles single keys only, so the
+			// rewriter resolves literally: a nil flagger keeps families off.
+			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, audittelemetryschema.DefaultFullTextColumn, fm, cb, nil, telemetrytypes.SignalUnspecified)
 			return NewAuditQueryStatementBuilder(
 				settings, metadataStore, fm, cb, aggExprRewriter, audittelemetryschema.DefaultFullTextColumn, fl,
 			), nil
@@ -263,7 +265,7 @@ func (b *auditQueryStatementBuilder) buildListQuery(
 				continue
 			}
 
-			colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &query.SelectFields[index], telemetrytypes.FieldDataTypeUnspecified, keys)
+			colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &query.SelectFields[index], nil, telemetrytypes.FieldDataTypeUnspecified, keys)
 			if err != nil {
 				return nil, err
 			}
@@ -279,7 +281,7 @@ func (b *auditQueryStatementBuilder) buildListQuery(
 	}
 
 	for _, orderBy := range query.Order {
-		colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &orderBy.Key.TelemetryFieldKey, telemetrytypes.FieldDataTypeUnspecified, keys)
+		colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &orderBy.Key.TelemetryFieldKey, nil, telemetrytypes.FieldDataTypeUnspecified, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -341,7 +343,7 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for _, gb := range query.GroupBy {
-		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &gb.TelemetryFieldKey, nil, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -476,7 +478,7 @@ func (b *auditQueryStatementBuilder) buildScalarQuery(
 	var allGroupByArgs []any
 
 	for _, gb := range query.GroupBy {
-		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &gb.TelemetryFieldKey, nil, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}

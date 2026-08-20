@@ -22,6 +22,7 @@ type aggExprRewriter struct {
 	fieldMapper      qbtypes.FieldMapper
 	conditionBuilder qbtypes.ConditionBuilder
 	flagger          flagger.Flagger
+	signal           telemetrytypes.Signal
 }
 
 var _ qbtypes.AggExprRewriter = (*aggExprRewriter)(nil)
@@ -32,6 +33,7 @@ func NewAggExprRewriter(
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
 	fl flagger.Flagger,
+	signal telemetrytypes.Signal,
 ) *aggExprRewriter {
 	set := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querybuilder/agg_rewrite")
 
@@ -41,6 +43,7 @@ func NewAggExprRewriter(
 		fieldMapper:      fieldMapper,
 		conditionBuilder: conditionBuilder,
 		flagger:          fl,
+		signal:           signal,
 	}
 }
 
@@ -89,6 +92,7 @@ func (r *aggExprRewriter) Rewrite(
 		r.fieldMapper,
 		r.conditionBuilder,
 		r.flagger,
+		r.signal,
 	)
 	// Rewrite the first select item (our expression)
 	if err := sel.SelectItems[0].Accept(visitor); err != nil {
@@ -143,6 +147,7 @@ type exprVisitor struct {
 	fieldMapper      qbtypes.FieldMapper
 	conditionBuilder qbtypes.ConditionBuilder
 	flagger          flagger.Flagger
+	signal           telemetrytypes.Signal
 	Modified         bool
 	chArgs           []any
 	isRate           bool
@@ -159,6 +164,7 @@ func newExprVisitor(
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
 	fl flagger.Flagger,
+	signal telemetrytypes.Signal,
 ) *exprVisitor {
 	return &exprVisitor{
 		ctx:              ctx,
@@ -171,6 +177,7 @@ func newExprVisitor(
 		fieldMapper:      fieldMapper,
 		conditionBuilder: conditionBuilder,
 		flagger:          fl,
+		signal:           signal,
 	}
 }
 
@@ -213,6 +220,8 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 			FilterExprVisitorOpts{
 				Context:          v.ctx,
 				OrgID:            v.orgID,
+				Flagger:          v.flagger,
+				Signal:           v.signal,
 				Logger:           v.logger,
 				FieldKeys:        v.fieldKeys,
 				FieldMapper:      v.fieldMapper,
@@ -244,7 +253,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		for i := 0; i < len(args)-1; i++ {
 			origVal := chparser.Format(args[i])
 			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(origVal)
-			expr, err := v.fieldMapper.ColumnExpressionFor(v.ctx, v.orgID, v.startNs, v.endNs, &fieldKey, dataType, v.fieldKeys)
+			expr, err := v.fieldMapper.ColumnExpressionFor(v.ctx, v.orgID, v.startNs, v.endNs, &fieldKey, MatchingLogicalFields(v.ctx, v.orgID, v.flagger, v.signal, nil, &fieldKey, v.fieldKeys), dataType, v.fieldKeys)
 			if err != nil {
 				return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to get table field name for %q", origVal)
 			}
@@ -261,7 +270,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		for i, arg := range args {
 			orig := chparser.Format(arg)
 			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(orig)
-			expr, err := v.fieldMapper.ColumnExpressionFor(v.ctx, v.orgID, v.startNs, v.endNs, &fieldKey, dataType, v.fieldKeys)
+			expr, err := v.fieldMapper.ColumnExpressionFor(v.ctx, v.orgID, v.startNs, v.endNs, &fieldKey, MatchingLogicalFields(v.ctx, v.orgID, v.flagger, v.signal, nil, &fieldKey, v.fieldKeys), dataType, v.fieldKeys)
 			if err != nil {
 				return err
 			}

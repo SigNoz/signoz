@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -108,13 +109,23 @@ func (m *fieldMapper) ExistsFor(_ context.Context, _ valuer.UUID, _, _ uint64, k
 	return fmt.Sprintf("not has(JSONExtractKeys(labels), '%s')", key.Name), nil
 }
 
+// ColumnExpressionFor renders the caller-resolved spellings when they differ
+// from the requested name: a family becomes the merged label read, and the
+// cross-spelling single member of the mid-migration state reads the one
+// stored sibling. Everything else keeps the literal label read. An ambiguous
+// name (several logical fields) stays literal, because a group-by column
+// holds one expression.
 func (m *fieldMapper) ColumnExpressionFor(
 	ctx context.Context,
 	orgID valuer.UUID,
 	startNs, endNs uint64,
 	field *telemetrytypes.TelemetryFieldKey,
+	logicalFields []*telemetrytypes.LogicalField,
 	_ telemetrytypes.FieldDataType,
 	_ map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
+	if len(logicalFields) == 1 && querybuilder.ReadsOtherSpelling(logicalFields[0], field.Name) {
+		return querybuilder.LogicalValueExpr(ctx, orgID, startNs, endNs, m, logicalFields[0])
+	}
 	return m.FieldFor(ctx, orgID, startNs, endNs, field)
 }

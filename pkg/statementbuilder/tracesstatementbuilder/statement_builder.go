@@ -54,9 +54,9 @@ func NewFactory(
 	return factory.NewProviderFactory(
 		factory.MustNewName("traces"),
 		func(_ context.Context, settings factory.ProviderSettings, cfg statementbuilder.Config) (qbtypes.StatementBuilder[qbtypes.TraceAggregation], error) {
-			fm := tracestelemetryschema.NewFieldMapper(fl)
-			cb := tracestelemetryschema.NewConditionBuilder(fm, fl)
-			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, fm, cb, fl)
+			fm := tracestelemetryschema.NewFieldMapper()
+			cb := tracestelemetryschema.NewConditionBuilder(fm)
+			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, fm, cb, fl, telemetrytypes.SignalTraces)
 			return NewTraceQueryStatementBuilder(
 				settings, metadataStore, fm, cb, aggExprRewriter, telemetryStore, fl,
 				cfg.SkipResourceFingerprint.Enabled, cfg.SkipResourceFingerprint.Threshold,
@@ -378,7 +378,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 	}
 
 	for i, field := range query.SelectFields {
-		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &field, telemetrytypes.FieldDataTypeUnspecified, keys)
+		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &field, querybuilder.MatchingLogicalFields(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, &field, keys), telemetrytypes.FieldDataTypeUnspecified, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -402,7 +402,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 
 	// Add order by
 	for _, orderBy := range query.Order {
-		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &orderBy.Key.TelemetryFieldKey, telemetrytypes.FieldDataTypeUnspecified, keys)
+		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &orderBy.Key.TelemetryFieldKey, querybuilder.MatchingLogicalFields(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, &orderBy.Key.TelemetryFieldKey, keys), telemetrytypes.FieldDataTypeUnspecified, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -591,7 +591,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	// Keep original column expressions so we can build the tuple
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for i, gb := range query.GroupBy {
-		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &gb.TelemetryFieldKey, querybuilder.MatchingLogicalFields(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, &gb.TelemetryFieldKey, keys), telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -754,7 +754,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for i, gb := range query.GroupBy {
-		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &gb.TelemetryFieldKey, querybuilder.MatchingLogicalFields(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, &gb.TelemetryFieldKey, keys), telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -867,6 +867,7 @@ func (b *traceQueryStatementBuilder) addFilterCondition(
 			Context:            ctx,
 			OrgID:              orgID,
 			Flagger:            b.fl,
+			Signal:             telemetrytypes.SignalTraces,
 			Logger:             b.logger,
 			FieldMapper:        b.fm,
 			ConditionBuilder:   b.cb,

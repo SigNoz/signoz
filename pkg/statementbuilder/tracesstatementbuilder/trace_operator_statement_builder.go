@@ -42,9 +42,9 @@ func NewOperatorFactory(
 	return factory.NewProviderFactory(
 		factory.MustNewName("traceoperator"),
 		func(_ context.Context, settings factory.ProviderSettings, cfg statementbuilder.Config) (qbtypes.TraceOperatorStatementBuilder, error) {
-			fm := tracestelemetryschema.NewFieldMapper(fl)
-			cb := tracestelemetryschema.NewConditionBuilder(fm, fl)
-			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, fm, cb, fl)
+			fm := tracestelemetryschema.NewFieldMapper()
+			cb := tracestelemetryschema.NewConditionBuilder(fm)
+			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, fm, cb, fl, telemetrytypes.SignalTraces)
 			traceStmtBuilder := NewTraceQueryStatementBuilder(
 				settings, metadataStore, fm, cb, aggExprRewriter, telemetryStore, fl,
 				cfg.SkipResourceFingerprint.Enabled, cfg.SkipResourceFingerprint.Threshold,

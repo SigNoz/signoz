@@ -47,7 +47,7 @@ func New[T any](
 ) *resourceFilterStatementBuilder[T] {
 	set := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/statementbuilder/resourcefilter")
 	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm, fl)
+	cb := NewConditionBuilder(fm)
 	return &resourceFilterStatementBuilder[T]{
 		logger:           set.Logger(),
 		dbName:           dbName,
@@ -165,6 +165,7 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 			Context:            ctx,
 			OrgID:              orgID,
 			Flagger:            b.flagger,
+			Signal:             b.signal,
 			Logger:             b.logger,
 			FieldMapper:        b.fieldMapper,
 			ConditionBuilder:   b.conditionBuilder,

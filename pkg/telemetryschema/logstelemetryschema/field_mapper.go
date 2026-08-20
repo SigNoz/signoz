@@ -222,45 +222,74 @@ func (m *fieldMapper) ColumnExpressionFor(
 	orgID valuer.UUID,
 	tsStart, tsEnd uint64,
 	field *telemetrytypes.TelemetryFieldKey,
+	logicalFields []*telemetrytypes.LogicalField,
 	requiredDataType telemetrytypes.FieldDataType,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
 
 	bodyJSONEnabled := m.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID))
 
+	// A resolution that reads other spellings renders through its members: a
+	// family becomes the merged column — the filter's value semantics (an
+	// empty member falls through, the current spelling wins) with the
+	// presence guard keeping the NULL group of a single key for rows with no
+	// member — and the cross-spelling single member of the mid-migration
+	// state reads the one stored sibling instead of the requested name.
 	var candidates []*telemetrytypes.TelemetryFieldKey
-	switch _, err := m.FieldFor(ctx, orgID, tsStart, tsEnd, field); {
-	case err == nil:
-		if field.FieldContext == telemetrytypes.FieldContextBody && !bodyJSONEnabled {
-			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "Operation isn't available for the body column")
-		}
-		candidates = []*telemetrytypes.TelemetryFieldKey{field}
-	case errors.Is(err, qbtypes.ErrColumnNotFound):
-		if _, ok := logsV2Columns[field.Name]; ok {
-			field.FieldContext = telemetrytypes.FieldContextLog
-			candidates = []*telemetrytypes.TelemetryFieldKey{field}
-			break
-		}
-		candidates = keys[field.Name]
-		if len(candidates) == 0 {
-			candidates = keys[fmt.Sprintf("%s.%s", field.FieldContext.StringValue(), field.Name)]
-		}
-		if len(candidates) == 0 {
-			// synthesized attribute candidates first, body path last; legacy body
-			// doesn't support group by/select, so bare keys keep attributes only
-			for _, key := range m.CandidateKeys(ctx, orgID, field, nil, nil) {
-				if !bodyJSONEnabled && field.FieldContext == telemetrytypes.FieldContextUnspecified &&
-					key.FieldContext == telemetrytypes.FieldContextBody {
-					continue
-				}
-				candidates = append(candidates, key)
+	if len(logicalFields) == 1 && querybuilder.ReadsOtherSpelling(logicalFields[0], field.Name) {
+		logical := logicalFields[0]
+		switch requiredDataType {
+		case telemetrytypes.FieldDataTypeUnspecified:
+			return querybuilder.LogicalValueExpr(ctx, orgID, tsStart, tsEnd, m, logical)
+		case telemetrytypes.FieldDataTypeString:
+			valueExpr, err := querybuilder.LogicalValueExpr(ctx, orgID, tsStart, tsEnd, m, logical)
+			if err != nil {
+				return "", err
 			}
+			existsExpr, err := querybuilder.LogicalExistsExpr(ctx, orgID, tsStart, tsEnd, m, logical, true)
+			if err != nil {
+				return "", err
+			}
+			return fmt.Sprintf("multiIf(%s, %s, NULL)", existsExpr, valueExpr), nil
+		default:
+			candidates = logical.Members
 		}
-		if len(candidates) == 0 {
-			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "field `%s` not found", field.Name)
+	}
+
+	if candidates == nil {
+		switch _, err := m.FieldFor(ctx, orgID, tsStart, tsEnd, field); {
+		case err == nil:
+			if field.FieldContext == telemetrytypes.FieldContextBody && !bodyJSONEnabled {
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "Operation isn't available for the body column")
+			}
+			candidates = []*telemetrytypes.TelemetryFieldKey{field}
+		case errors.Is(err, qbtypes.ErrColumnNotFound):
+			if _, ok := logsV2Columns[field.Name]; ok {
+				field.FieldContext = telemetrytypes.FieldContextLog
+				candidates = []*telemetrytypes.TelemetryFieldKey{field}
+				break
+			}
+			candidates = keys[field.Name]
+			if len(candidates) == 0 {
+				candidates = keys[fmt.Sprintf("%s.%s", field.FieldContext.StringValue(), field.Name)]
+			}
+			if len(candidates) == 0 {
+				// synthesized attribute candidates first, body path last; legacy body
+				// doesn't support group by/select, so bare keys keep attributes only
+				for _, key := range m.CandidateKeys(ctx, orgID, field, nil, nil) {
+					if !bodyJSONEnabled && field.FieldContext == telemetrytypes.FieldContextUnspecified &&
+						key.FieldContext == telemetrytypes.FieldContextBody {
+						continue
+					}
+					candidates = append(candidates, key)
+				}
+			}
+			if len(candidates) == 0 {
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "field `%s` not found", field.Name)
+			}
+		default:
+			return "", err
 		}
-	default:
-		return "", err
 	}
 
 	// Group-by/order (String) and aggregation (String/Float64): every candidate is

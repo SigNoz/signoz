@@ -7,6 +7,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -50,13 +51,14 @@ func TestConditionForFamilyMergesMembersCurrentFirst(t *testing.T) {
 		}},
 	}
 	fl := familyFlagOn(t)
-	cb := NewConditionBuilder(NewFieldMapper(fl), fl)
+	cb := NewConditionBuilder(NewFieldMapper())
 
 	// The requested spelling is the old name; precedence must still be
 	// current-first.
 	sb := sqlbuilder.NewSelectBuilder()
 	conds, warnings, err := cb.ConditionFor(context.Background(), valuer.UUID{}, startNs, endNs,
 		&telemetrytypes.TelemetryFieldKey{Name: "deployment.environment"},
+		querybuilder.MatchingLogicalFields(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment"}, fieldKeys),
 		fieldKeys, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorEqual, "production", sb)
 	require.NoError(t, err)
 	require.Empty(t, warnings, "a family is one logical field, never ambiguous with itself")
@@ -88,11 +90,12 @@ func TestConditionForFamilyNegativeKeepsKeylessRows(t *testing.T) {
 		}},
 	}
 	fl := familyFlagOn(t)
-	cb := NewConditionBuilder(NewFieldMapper(fl), fl)
+	cb := NewConditionBuilder(NewFieldMapper())
 
 	sb := sqlbuilder.NewSelectBuilder()
 	conds, _, err := cb.ConditionFor(context.Background(), valuer.UUID{}, startNs, endNs,
 		&telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"},
+		querybuilder.MatchingLogicalFields(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, fieldKeys),
 		fieldKeys, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorNotEqual, "production", sb)
 	require.NoError(t, err)
 	require.Len(t, conds, 1)
@@ -125,11 +128,12 @@ func TestConditionForFamilyExists(t *testing.T) {
 		}},
 	}
 	fl := familyFlagOn(t)
-	cb := NewConditionBuilder(NewFieldMapper(fl), fl)
+	cb := NewConditionBuilder(NewFieldMapper())
 
 	sb := sqlbuilder.NewSelectBuilder()
 	conds, _, err := cb.ConditionFor(context.Background(), valuer.UUID{}, startNs, endNs,
 		&telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"},
+		querybuilder.MatchingLogicalFields(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, fieldKeys),
 		fieldKeys, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorNotExists, nil, sb)
 	require.NoError(t, err)
 	require.Len(t, conds, 1)
@@ -162,11 +166,12 @@ func TestConditionForFamilyOffByDefault(t *testing.T) {
 		}},
 	}
 	fl := flaggertest.New(t)
-	cb := NewConditionBuilder(NewFieldMapper(fl), fl)
+	cb := NewConditionBuilder(NewFieldMapper())
 
 	sb := sqlbuilder.NewSelectBuilder()
 	conds, _, err := cb.ConditionFor(context.Background(), valuer.UUID{}, startNs, endNs,
 		&telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"},
+		querybuilder.MatchingLogicalFields(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, fieldKeys),
 		fieldKeys, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorEqual, "production", sb)
 	require.NoError(t, err)
 	require.Len(t, conds, 1)
@@ -200,11 +205,12 @@ func TestConditionForSingleMemberIsUnchanged(t *testing.T) {
 	}
 	delete(fieldKeys, "deployment.environment")
 	fl := familyFlagOn(t)
-	cb := NewConditionBuilder(NewFieldMapper(fl), fl)
+	cb := NewConditionBuilder(NewFieldMapper())
 
 	sb := sqlbuilder.NewSelectBuilder()
 	conds, _, err := cb.ConditionFor(context.Background(), valuer.UUID{}, startNs, endNs,
 		&telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"},
+		querybuilder.MatchingLogicalFields(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, fieldKeys),
 		fieldKeys, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorEqual, "production", sb)
 	require.NoError(t, err)
 	require.Len(t, conds, 1)
@@ -234,10 +240,13 @@ func TestColumnExpressionForFamilyGroupBy(t *testing.T) {
 			Evolutions:    MockEvolutionData(releaseTime),
 		}},
 	}
-	fm := NewFieldMapper(familyFlagOn(t))
+	fm := NewFieldMapper()
 
+	requested := &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}
 	expr, err := fm.ColumnExpressionFor(context.Background(), valuer.UUID{}, startNs, endNs,
-		&telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, telemetrytypes.FieldDataTypeString, fieldKeys)
+		requested,
+		querybuilder.MatchingLogicalFields(context.Background(), valuer.UUID{}, familyFlagOn(t), telemetrytypes.SignalTraces, nil, requested, fieldKeys),
+		telemetrytypes.FieldDataTypeString, fieldKeys)
 	require.NoError(t, err)
 	require.Equal(t, "multiIf((multiIf(resource.`deployment.environment.name` IS NOT NULL, resource.`deployment.environment.name`::String, mapContains(resources_string, 'deployment.environment.name'), resources_string['deployment.environment.name'], NULL) IS NOT NULL OR multiIf(resource.`deployment.environment` IS NOT NULL, resource.`deployment.environment`::String, mapContains(resources_string, 'deployment.environment'), resources_string['deployment.environment'], NULL) IS NOT NULL), COALESCE(NULLIF(multiIf(resource.`deployment.environment.name` IS NOT NULL, resource.`deployment.environment.name`::String, mapContains(resources_string, 'deployment.environment.name'), resources_string['deployment.environment.name'], NULL), ''), NULLIF(multiIf(resource.`deployment.environment` IS NOT NULL, resource.`deployment.environment`::String, mapContains(resources_string, 'deployment.environment'), resources_string['deployment.environment'], NULL), ''), ''), NULL)", expr)
 }

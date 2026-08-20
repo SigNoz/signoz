@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -349,7 +350,7 @@ func TestConditionFor(t *testing.T) {
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, _, err := conditionBuilder.ConditionFor(ctx, valuer.UUID{}, 0, 0, &tc.key, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {&tc.key}}, qbtypes.ConditionBuilderOptions{}, tc.operator, tc.value, sb)
+			cond, _, err := conditionBuilder.ConditionFor(ctx, valuer.UUID{}, 0, 0, &tc.key, querybuilder.MatchingLogicalFields(ctx, valuer.UUID{}, nil, telemetrytypes.SignalMetrics, nil, &tc.key, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {&tc.key}}), map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {&tc.key}}, qbtypes.ConditionBuilderOptions{}, tc.operator, tc.value, sb)
 			sb.Where(cond...)
 
 			if tc.expectedError != nil {
@@ -404,7 +405,7 @@ func TestConditionForMultipleKeys(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var err error
 			for _, key := range tc.keys {
-				cond, _, err := conditionBuilder.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, qbtypes.ConditionBuilderOptions{}, tc.operator, tc.value, sb)
+				cond, _, err := conditionBuilder.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, querybuilder.MatchingLogicalFields(ctx, valuer.UUID{}, nil, telemetrytypes.SignalMetrics, nil, &key, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}), map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, qbtypes.ConditionBuilderOptions{}, tc.operator, tc.value, sb)
 				sb.Where(cond...)
 				if err != nil {
 					t.Fatalf("Error getting condition for key %s: %v", key.Name, err)
@@ -489,7 +490,7 @@ func TestConditionForKeyNotInMetadata(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			sb := sqlbuilder.NewSelectBuilder()
-			cond, warnings, err := conditionBuilder.ConditionFor(ctx, valuer.UUID{}, 0, 0, &tc.key, tc.fieldKeys, qbtypes.ConditionBuilderOptions{}, tc.operator, tc.value, sb)
+			cond, warnings, err := conditionBuilder.ConditionFor(ctx, valuer.UUID{}, 0, 0, &tc.key, querybuilder.MatchingLogicalFields(ctx, valuer.UUID{}, nil, telemetrytypes.SignalMetrics, nil, &tc.key, tc.fieldKeys), tc.fieldKeys, qbtypes.ConditionBuilderOptions{}, tc.operator, tc.value, sb)
 			require.NoError(t, err)
 			sb.Where(cond...)
 			sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)

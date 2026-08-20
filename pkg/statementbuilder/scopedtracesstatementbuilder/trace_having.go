@@ -85,6 +85,7 @@ func (c *aliasConditionBuilder) ConditionFor(
 	_ valuer.UUID,
 	_, _ uint64,
 	key *telemetrytypes.TelemetryFieldKey,
+	_ []*telemetrytypes.LogicalField,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	_ qbtypes.ConditionBuilderOptions,
 	op qbtypes.FilterOperator,

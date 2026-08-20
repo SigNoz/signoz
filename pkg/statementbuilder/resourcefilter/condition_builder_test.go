@@ -2,7 +2,7 @@ package resourcefilter
 
 import (
 	"context"
-	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"testing"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -202,12 +202,12 @@ func TestConditionBuilder(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	conditionBuilder := NewConditionBuilder(fm, flaggertest.New(t))
+	conditionBuilder := NewConditionBuilder(fm)
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, _, err := conditionBuilder.ConditionFor(context.Background(), valuer.UUID{}, 0, 0, tc.key, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {tc.key}}, qbtypes.ConditionBuilderOptions{}, tc.op, tc.value, sb)
+			cond, _, err := conditionBuilder.ConditionFor(context.Background(), valuer.UUID{}, 0, 0, tc.key, querybuilder.MatchingLogicalFields(context.Background(), valuer.UUID{}, nil, telemetrytypes.SignalUnspecified, nil, tc.key, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {tc.key}}), map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {tc.key}}, qbtypes.ConditionBuilderOptions{}, tc.op, tc.value, sb)
 			sb.Where(cond...)
 
 			if tc.expectedErr != nil {

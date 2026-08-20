@@ -75,15 +75,29 @@ func WrapAsLogicalFields(requestedName string, keys []*telemetrytypes.TelemetryF
 }
 
 // SingleKeys flattens logical fields to their single members. It is the
-// adapter for signals whose fields are single-member by construction (every
-// signal without family support); their condition builders keep compiling per
-// physical key.
-func SingleKeys(fields []*telemetrytypes.LogicalField) []*telemetrytypes.TelemetryFieldKey {
+// adapter for signals whose condition builders compile per physical key. A
+// family in the input is a wiring error — the caller's signal has no family
+// compiler, and flattening would silently read one spelling — so it returns
+// an error instead.
+func SingleKeys(fields []*telemetrytypes.LogicalField) ([]*telemetrytypes.TelemetryFieldKey, error) {
 	keys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(fields))
 	for _, field := range fields {
+		if field.IsFamily() {
+			return nil, errors.NewInternalf(errors.CodeInternal, "field %q resolved to a family, and this signal compiles single keys only", field.Name)
+		}
 		keys = append(keys, field.Single())
 	}
-	return keys
+	return keys, nil
+}
+
+// ReadsOtherSpelling reports whether the resolved logical field reads a
+// spelling different from the requested name: a family merges several
+// spellings, and a cross-spelling single member reads the one stored sibling
+// of the requested name. Mappers route such fields through the resolved
+// members instead of the requested-name flow, so a column reads the same
+// rows the filter matches.
+func ReadsOtherSpelling(logical *telemetrytypes.LogicalField, requested string) bool {
+	return logical.IsFamily() || logical.Single().Name != requested
 }
 
 // NewKeyNotFoundError builds the error a condition builder returns when a filter term
