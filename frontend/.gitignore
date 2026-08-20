@@ -29,3 +29,7 @@ e2e/test-plan/service-map/
 e2e/test-plan/services/
 e2e/test-plan/traces/
 e2e/test-plan/user-preferences/
+
+# Storybook
+/storybook-static/
+debug-storybook.log
