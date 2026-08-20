@@ -69,6 +69,18 @@ function toPercent(value: number, total: number): number {
 	return total === 0 ? 0 : (value / total) * 100;
 }
 
+/** What a raw value adds to the stack at a given point. */
+type Contribution = (value: number, pointIndex: number) => number;
+
+function contributionForMode(params: BuildStackedSeriesParams): Contribution {
+	if (params.mode !== StackMode.Percent) {
+		return (value): number => value;
+	}
+	// Resolved up front: totals span series the accumulation below has not reached yet.
+	const totals = columnTotals(params);
+	return (value, pointIndex): number => toPercent(value, totals[pointIndex]);
+}
+
 /**
  * Accumulate from last series upward: last series = raw values, first = total.
  * Omitted series are copied as-is (no accumulation).
@@ -82,11 +94,13 @@ function buildStackedSeries({
 }: BuildStackedSeriesParams): (number | null)[][] {
 	const stackedSeries: (number | null)[][] = Array(valueSeriesCount);
 	const cumulativeSums = Array(pointCount).fill(0) as number[];
-	// Known up front: totals span series the accumulation below has not reached yet.
-	const totals =
-		mode === StackMode.Percent
-			? columnTotals({ data, valueSeriesCount, pointCount, omit })
-			: undefined;
+	const contributionOf = contributionForMode({
+		data,
+		valueSeriesCount,
+		pointCount,
+		omit,
+		mode,
+	});
 
 	for (let seriesIndex = valueSeriesCount; seriesIndex >= 1; seriesIndex--) {
 		const rawValues = data[seriesIndex] as (number | null)[];
@@ -96,10 +110,10 @@ function buildStackedSeries({
 		} else {
 			stackedSeries[seriesIndex - 1] = rawValues.map((rawValue, pointIndex) => {
 				const numericValue = rawValue == null ? 0 : Number(rawValue);
-				const contribution = totals
-					? toPercent(numericValue, totals[pointIndex])
-					: numericValue;
-				return (cumulativeSums[pointIndex] += contribution);
+				return (cumulativeSums[pointIndex] += contributionOf(
+					numericValue,
+					pointIndex,
+				));
 			});
 		}
 	}

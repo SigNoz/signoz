@@ -23,7 +23,7 @@ export default function BarChart(props: BarChartProps): JSX.Element {
 
 	// Written during render so it lands before UPlotChart's effect reads the config,
 	// which derives the fill bands, percent axis unit and percent range from it.
-	config.setStack(stack);
+	config.setStackMode(stack);
 
 	const renderTooltip = useCallback(
 		(props: TooltipRenderArgs): React.ReactNode => {

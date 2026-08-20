@@ -32,12 +32,12 @@ function canApplyStacking(
 
 function setupStackingHooks(
 	config: UPlotConfigBuilder,
-	restack: (plot: uPlot) => void,
+	updateStacksInChart: (plot: uPlot) => void,
 	isUpdatingRef: MutableRefObject<boolean>,
 ): () => void {
 	const onDataChange = (plot: uPlot): void => {
 		if (!isUpdatingRef.current) {
-			restack(plot);
+			updateStacksInChart(plot);
 		}
 	};
 
@@ -48,7 +48,7 @@ function setupStackingHooks(
 	): void => {
 		// uPlot fires setSeries for hover focus too; only visibility changes restack.
 		if (!has(opts, 'focus')) {
-			restack(plot);
+			updateStacksInChart(plot);
 		}
 	};
 
@@ -93,7 +93,7 @@ export function useChartStacking({
 		return stackSeries(data, noSeriesHidden, stack).data;
 	}, [data, stack]);
 
-	const restack = useCallback(
+	const updateStacksInChart = useCallback(
 		(plot: uPlot): void => {
 			const unstacked = unstackedDataRef.current;
 			if (
@@ -125,8 +125,8 @@ export function useChartStacking({
 		if (stack === StackMode.None || !config) {
 			return undefined;
 		}
-		return setupStackingHooks(config, restack, isUpdatingChartRef);
-	}, [stack, config, restack]);
+		return setupStackingHooks(config, updateStacksInChart, isUpdatingChartRef);
+	}, [stack, config, updateStacksInChart]);
 
 	return chartData;
 }

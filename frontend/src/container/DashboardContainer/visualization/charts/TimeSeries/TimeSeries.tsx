@@ -15,7 +15,7 @@ export default function TimeSeries(props: TimeSeriesChartProps): JSX.Element {
 
 	// Written during render so it lands before UPlotChart's effect reads the config,
 	// which derives the fill bands, percent axis unit and percent range from it.
-	rest.config.setStack(stack);
+	rest.config.setStackMode(stack);
 
 	const renderTooltip = useCallback(
 		(props: TooltipRenderArgs): React.ReactNode => {

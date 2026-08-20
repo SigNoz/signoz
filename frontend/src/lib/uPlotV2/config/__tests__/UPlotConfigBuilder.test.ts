@@ -543,7 +543,7 @@ describe('UPlotConfigBuilder stacking', () => {
 	function builderFor(stack?: StackMode, seriesCount = 3): UPlotConfigBuilder {
 		const builder = new UPlotConfigBuilder({ id: 'stack-test' });
 		if (stack) {
-			builder.setStack(stack);
+			builder.setStackMode(stack);
 		}
 		builder.addAxis({ scaleKey: 'y', show: true, side: 3, yAxisUnit: 'ms' });
 		for (let i = 0; i < seriesCount; i++) {
@@ -601,7 +601,7 @@ describe('UPlotConfigBuilder stacking', () => {
 
 	it('pins the y scale to the 0–100 band under a percent stack, dropping panel limits', () => {
 		const builder = new UPlotConfigBuilder({ id: 'stack-scale' });
-		builder.setStack(StackMode.Percent);
+		builder.setStackMode(StackMode.Percent);
 		builder.addScale({ scaleKey: 'y', softMin: 5, softMax: 500 });
 
 		// Soft, not hard: mixed-sign shares fall outside 0–100 and must stay visible.
@@ -611,7 +611,7 @@ describe('UPlotConfigBuilder stacking', () => {
 
 	it('leaves the panel limits alone when the stack is not percent', () => {
 		const builder = new UPlotConfigBuilder({ id: 'stack-scale' });
-		builder.setStack(StackMode.Normal);
+		builder.setStackMode(StackMode.Normal);
 		builder.addScale({ scaleKey: 'y', softMin: 5, softMax: 500 });
 
 		expect(scaleSoftLimits(builder, 'y')).toStrictEqual({ min: 5, max: 500 });
@@ -621,7 +621,7 @@ describe('UPlotConfigBuilder stacking', () => {
 		'draws thresholds under a %s stack',
 		(stack) => {
 			const builder = new UPlotConfigBuilder({ id: 'stack-thr' });
-			builder.setStack(stack);
+			builder.setStackMode(stack);
 			builder.addThresholds({
 				scaleKey: 'y',
 				thresholds: [{ thresholdValue: 500, thresholdColor: 'red' }],
@@ -634,7 +634,7 @@ describe('UPlotConfigBuilder stacking', () => {
 
 	it('keeps a source-unit threshold from stretching the percent band', () => {
 		const builder = new UPlotConfigBuilder({ id: 'stack-thr' });
-		builder.setStack(StackMode.Percent);
+		builder.setStackMode(StackMode.Percent);
 		const thresholds = {
 			scaleKey: 'y',
 			thresholds: [{ thresholdValue: 500, thresholdColor: 'red' }],

@@ -63,7 +63,7 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 
 	private bands: uPlot.Band[] = [];
 
-	private stack: StackMode = StackMode.None;
+	private stackMode: StackMode = StackMode.None;
 
 	private cursor: Cursor | undefined;
 
@@ -152,12 +152,12 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	}
 
 	/** Drives the fill bands, the percent axis unit and the percent range below. */
-	setStack(stack: StackMode): void {
-		this.stack = stack;
+	setStackMode(stackMode: StackMode): void {
+		this.stackMode = stackMode;
 	}
 
 	getStackMode(): StackMode {
-		return this.stack;
+		return this.stackMode;
 	}
 
 	/**
@@ -233,7 +233,7 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	 * normalised. Soft rather than hard, so mixed-sign shares outside 0–100 stay visible.
 	 */
 	private resolveScale(scale: UPlotScaleBuilder): UPlotScaleBuilder {
-		if (this.stack !== StackMode.Percent || scale.props.scaleKey !== 'y') {
+		if (this.stackMode !== StackMode.Percent || scale.props.scaleKey !== 'y') {
 			return scale;
 		}
 		return new UPlotScaleBuilder({
@@ -252,7 +252,7 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 		if (this.bands.length > 0) {
 			return this.bands;
 		}
-		if (this.stack === StackMode.None || this.series.length < 2) {
+		if (this.stackMode === StackMode.None || this.series.length < 2) {
 			return undefined;
 		}
 		return (
@@ -497,7 +497,7 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 			}),
 		];
 		config.axes = Object.entries(this.axes).map(([scaleKey, axis]) => {
-			if (scaleKey !== 'y' || this.stack !== StackMode.Percent) {
+			if (scaleKey !== 'y' || this.stackMode !== StackMode.Percent) {
 				return axis.getConfig();
 			}
 			// Ticks read as percentages; the panel unit still applies to tooltips and
