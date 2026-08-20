@@ -335,7 +335,7 @@ func scopeAttribute(name string) *telemetrytypes.TelemetryFieldKey {
 }
 
 // TestColumnExpressionForScope covers the scope resolution matrix from PR #10920: declared
-// paths, scope attributes, and the attribute-first union when a scope attribute shares its
+// paths, scope attributes, and the precedence between them when a scope attribute shares its
 // name with a declared path.
 func TestColumnExpressionForScope(t *testing.T) {
 	ctx := context.Background()
@@ -382,12 +382,20 @@ func TestColumnExpressionForScope(t *testing.T) {
 			run(scopeKey("testing.env"), declaredScopeKeys()))
 	})
 
-	t.Run("short name unions attribute (first) with declared path", func(t *testing.T) {
+	t.Run("declared path wins over a same-named scope attribute", func(t *testing.T) {
 		keys := declaredScopeKeys()
 		keys["name"] = []*telemetrytypes.TelemetryFieldKey{scopeAttribute("name")}
 		assert.Equal(t,
-			"multiIf(scope.attributes.`name` IS NOT NULL, scope.attributes.`name`::String, scope.name::String <> '', scope.name::String, NULL)",
+			"multiIf(scope.name::String <> '', scope.name::String, NULL)",
 			run(scopeKey("name"), keys))
+	})
+
+	t.Run("attributes prefix reaches the shadowed scope attribute", func(t *testing.T) {
+		keys := declaredScopeKeys()
+		keys["name"] = []*telemetrytypes.TelemetryFieldKey{scopeAttribute("name")}
+		assert.Equal(t,
+			"multiIf(scope.attributes.`name` IS NOT NULL, scope.attributes.`name`::String, NULL)",
+			run(scopeKey("attributes.name"), keys))
 	})
 
 	t.Run("fully-qualified scope.version isolates declared even with conflicting attribute", func(t *testing.T) {
@@ -398,13 +406,13 @@ func TestColumnExpressionForScope(t *testing.T) {
 			run(scopeKey("scope.version"), keys))
 	})
 
-	t.Run("group by short name unions attribute and declared without toString", func(t *testing.T) {
+	t.Run("group by keeps the scope expression unwrapped by toString", func(t *testing.T) {
 		keys := declaredScopeKeys()
 		keys["name"] = []*telemetrytypes.TelemetryFieldKey{scopeAttribute("name")}
-		result, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, tsStart, tsEnd, &[]telemetrytypes.TelemetryFieldKey{scopeKey("name")}[0], telemetrytypes.FieldDataTypeString, keys)
+		result, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, tsStart, tsEnd, &[]telemetrytypes.TelemetryFieldKey{scopeKey("attributes.name")}[0], telemetrytypes.FieldDataTypeString, keys)
 		require.NoError(t, err)
 		assert.Equal(t,
-			"multiIf(scope.attributes.`name` IS NOT NULL, scope.attributes.`name`::String, scope.name::String <> '', scope.name::String, NULL)",
+			"multiIf(scope.attributes.`name` IS NOT NULL, scope.attributes.`name`::String, NULL)",
 			result)
 	})
 }
@@ -449,8 +457,11 @@ func TestExistsForScope(t *testing.T) {
 	}{
 		{"declared exists", "scope.name", true, "scope.name::String <> ''"},
 		{"declared not exists", "scope.name", false, "scope.name::String = ''"},
+		{"short declared exists", "name", true, "scope.name::String <> ''"},
 		{"attribute exists", "exception.type", true, "scope.attributes.`exception.type` IS NOT NULL"},
 		{"attribute not exists", "exception.type", false, "scope.attributes.`exception.type` IS NULL"},
+		{"shadowed attribute exists", "attributes.name", true, "scope.attributes.`name` IS NOT NULL"},
+		{"shadowed attribute not exists", "attributes.name", false, "scope.attributes.`name` IS NULL"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

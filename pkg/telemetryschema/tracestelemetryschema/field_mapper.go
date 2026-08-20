@@ -300,13 +300,14 @@ func (m *fieldMapper) resolveColumnExprs(
 				exprs = append(exprs, fmt.Sprintf("%s.`%s`::String", columnName, key.Name))
 				existExprs = append(existExprs, fmt.Sprintf("%s.`%s` IS NOT NULL", columnName, key.Name))
 			case telemetrytypes.FieldContextScope:
-				if isDeclaredScopePath(key.Name) {
+				if declared, ok := resolvedScopeDeclaredPath(key.Name); ok {
 					// declared typed String paths are non-Nullable: absent reads '' not NULL.
-					exprs = append(exprs, fmt.Sprintf("%s::String", key.Name))
-					existExprs = append(existExprs, fmt.Sprintf("%s::String <> ''", key.Name))
+					exprs = append(exprs, fmt.Sprintf("%s::String", declared))
+					existExprs = append(existExprs, fmt.Sprintf("%s::String <> ''", declared))
 				} else {
-					exprs = append(exprs, fmt.Sprintf("%s.attributes.`%s`::String", columnName, key.Name))
-					existExprs = append(existExprs, fmt.Sprintf("%s.attributes.`%s` IS NOT NULL", columnName, key.Name))
+					attribute := scopeAttributeName(key.Name)
+					exprs = append(exprs, fmt.Sprintf("%s.attributes.`%s`::String", columnName, attribute))
+					existExprs = append(existExprs, fmt.Sprintf("%s.attributes.`%s` IS NOT NULL", columnName, attribute))
 				}
 			default:
 				return nil, nil, nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource and scope context fields are supported for json columns, got %s", key.FieldContext.String)
@@ -428,40 +429,23 @@ func (m *fieldMapper) ColumnExpressionFor(
 
 	// Resolve the candidate logical field(s).
 	var candidates []*telemetrytypes.LogicalField
-	switch field.FieldContext {
-	case telemetrytypes.FieldContextScope:
-		// FieldFor resolves any scope key to a single expression, so the probe below
-		// would skip the union. Resolve scope the way the filter path does instead:
-		// MatchingLogicalFields returns a same-named scope attribute (attribute-first)
-		// alongside the declared path, and CandidateKeys synthesizes an attribute when
-		// metadata knows neither.
-		matches := querybuilder.MatchingLogicalFields(ctx, orgID, m.fl, field, keys)
-		candidates, _ = querybuilder.ResolveLogicalFields(field, matches)
-		if len(candidates) == 0 {
-			candidates = querybuilder.WrapAsLogicalFields(field.Name, m.CandidateKeys(ctx, orgID, field, nil, keys))
+	switch _, err := m.FieldFor(ctx, orgID, startNs, endNs, field); {
+	case err == nil:
+		// A directly-resolvable key upgrades to its family when the metadata
+		// map proves membership; otherwise it stays single-member.
+		candidates = []*telemetrytypes.LogicalField{m.logicalForResolvedColumn(ctx, orgID, field, keys)}
+	case errors.Is(err, qbtypes.ErrColumnNotFound):
+		// The legacy candidate flow, unchanged: column (when the bare name is
+		// one) plus metadata matches, else synthesized type-variant keys. The
+		// family step below only swaps candidates for their family; it never
+		// changes candidate order or non-family behavior.
+		raw := m.CandidateKeys(ctx, orgID, field, nil, keys)
+		if len(raw) == 0 {
+			return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
 		}
-		if len(candidates) == 0 {
-			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name)
-		}
+		candidates = m.upgradeToFamilies(ctx, orgID, field, querybuilder.WrapAsLogicalFields(field.Name, raw), keys)
 	default:
-		switch _, err := m.FieldFor(ctx, orgID, startNs, endNs, field); {
-		case err == nil:
-			// A directly-resolvable key upgrades to its family when the metadata
-			// map proves membership; otherwise it stays single-member.
-			candidates = []*telemetrytypes.LogicalField{m.logicalForResolvedColumn(ctx, orgID, field, keys)}
-		case errors.Is(err, qbtypes.ErrColumnNotFound):
-			// The legacy candidate flow, unchanged: column (when the bare name is
-			// one) plus metadata matches, else synthesized type-variant keys. The
-			// family step below only swaps candidates for their family; it never
-			// changes candidate order or non-family behavior.
-			raw := m.CandidateKeys(ctx, orgID, field, nil, keys)
-			if len(raw) == 0 {
-				return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
-			}
-			candidates = m.upgradeToFamilies(ctx, orgID, field, querybuilder.WrapAsLogicalFields(field.Name, raw), keys)
-		default:
-			return "", err
-		}
+		return "", err
 	}
 
 	// Group-by/order (String) and aggregation (String/Float64): every candidate is
@@ -483,10 +467,13 @@ func (m *fieldMapper) ColumnExpressionFor(
 				return "", err
 			}
 			coerced := value
-			// a time column keeps its native type; coercing it would yield seconds
+			// a time column keeps its native type; coercing it would yield seconds, and a
+			// scope expression is already ::String so a String cast would be redundant
+			alreadyString := field.FieldContext == telemetrytypes.FieldContextScope &&
+				requiredDataType == telemetrytypes.FieldDataTypeString
 			if temporal, err := m.logicalIsTemporal(ctx, startNs, endNs, logical); err != nil {
 				return "", err
-			} else if !temporal {
+			} else if !temporal && !alreadyString {
 				coerced, _ = querybuilder.DataTypeCollisionHandledFieldName(logical.Single(), dummyValue, value, qbtypes.FilterOperatorUnknown)
 			}
 			stmts = append(stmts, guard, coerced)
@@ -645,16 +632,18 @@ func (m *fieldMapper) CandidateKeys(ctx context.Context, _ valuer.UUID, field *t
 	return nil
 }
 
-// scopeCandidateKeys resolves a scope-context key against the scope JSON column: a declared
-// path resolves to itself even without metadata, whether referenced fully-qualified
-// (`scope.name`) or by its short name (`name`); otherwise the scope-context metadata entries
-// under either spelling, and failing those a synthesized scope attribute.
+// scopeCandidateKeys resolves a scope-context key against the scope JSON column. A name that
+// addresses one home explicitly — a declared path, or the `attributes.` prefix — resolves to
+// it alone, even without metadata. A short declared name is ambiguous: the declared path
+// comes first, joined by a same-named scope attribute that metadata knows about, the way a
+// bare name puts its column ahead of same-named attributes.
 func scopeCandidateKeys(field *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
-	if isDeclaredScopePath(field.Name) {
-		return []*telemetrytypes.TelemetryFieldKey{telemetrytypes.NewTelemetryFieldKey(field.Name, telemetrytypes.FieldContextScope, telemetrytypes.FieldDataTypeString)}
+	scopeStringKey := func(name string) *telemetrytypes.TelemetryFieldKey {
+		return telemetrytypes.NewTelemetryFieldKey(name, telemetrytypes.FieldContextScope, telemetrytypes.FieldDataTypeString)
 	}
-	if declaredName := telemetrytypes.FieldContextScope.StringValue() + "." + field.Name; isDeclaredScopePath(declaredName) {
-		return []*telemetrytypes.TelemetryFieldKey{telemetrytypes.NewTelemetryFieldKey(declaredName, telemetrytypes.FieldContextScope, telemetrytypes.FieldDataTypeString)}
+
+	if declared, ok := resolvedScopeDeclaredPath(field.Name); ok {
+		return []*telemetrytypes.TelemetryFieldKey{scopeStringKey(declared)}
 	}
 
 	for _, name := range []string{field.Name, telemetrytypes.FieldContextScope.StringValue() + "." + field.Name} {
@@ -678,6 +667,30 @@ func synthScopeAttributeKey(field *telemetrytypes.TelemetryFieldKey) *telemetryt
 	return telemetrytypes.NewTelemetryFieldKey(field.Name, telemetrytypes.FieldContextScope, telemetrytypes.FieldDataTypeString)
 }
 
+// scopeAttributeNamePrefix addresses the attributes home explicitly, so a name that also
+// exists as a declared path stays reachable (`scope.attributes.name`).
+const scopeAttributeNamePrefix = "attributes."
+
+// scopeAttributeName is the key inside scope.attributes that name refers to.
+func scopeAttributeName(name string) string {
+	return strings.TrimPrefix(name, scopeAttributeNamePrefix)
+}
+
+// resolvedScopeDeclaredPath returns the declared path a scope name refers to, resolving the
+// short spelling users type (`scope.name` normalizes to `name`) to it. The declared path wins
+// over a same-named scope attribute, which stays reachable as `scope.attributes.name` — the
+// precedence a real column has over a same-named attribute elsewhere in the builder.
+func resolvedScopeDeclaredPath(name string) (string, bool) {
+	if strings.HasPrefix(name, scopeAttributeNamePrefix) {
+		return "", false
+	}
+	if isDeclaredScopePath(name) {
+		return name, true
+	}
+	qualified := telemetrytypes.FieldContextScope.StringValue() + "." + name
+	return qualified, isDeclaredScopePath(qualified)
+}
+
 // isDeclaredScopePath reports whether name is a declared typed sub-path of the scope JSON
 // column (scope.name / scope.version), as opposed to an entry in scope.attributes.
 func isDeclaredScopePath(name string) bool {
@@ -693,7 +706,7 @@ func scopeJSONExistsExpression(key *telemetrytypes.TelemetryFieldKey, fieldExpre
 	if key.FieldContext != telemetrytypes.FieldContextScope {
 		return "", false
 	}
-	if isDeclaredScopePath(key.Name) {
+	if _, ok := resolvedScopeDeclaredPath(key.Name); ok {
 		if exists {
 			return fieldExpression + " <> ''", true
 		}

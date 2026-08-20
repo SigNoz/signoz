@@ -632,15 +632,19 @@ func TestConditionForScope(t *testing.T) {
 		assert.NotContains(t, sql, "scope.`scope.")
 	})
 
-	t.Run("short name unions attribute and declared path", func(t *testing.T) {
-		key := telemetrytypes.TelemetryFieldKey{Name: "name", FieldContext: telemetrytypes.FieldContextScope}
+	t.Run("declared path wins over a same-named scope attribute", func(t *testing.T) {
 		keys := map[string][]*telemetrytypes.TelemetryFieldKey{
 			"scope.name": {&scopeName},
 			"name":       {{Name: "name", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextScope, FieldDataType: telemetrytypes.FieldDataTypeString}},
 		}
+		key := telemetrytypes.TelemetryFieldKey{Name: "name", FieldContext: telemetrytypes.FieldContextScope}
 		sql, _ := build(key, keys, qbtypes.FilterOperatorEqual, "x")
-		assert.Contains(t, sql, "scope.attributes.`name`::String = ?")
 		assert.Contains(t, sql, "scope.name::String = ?")
+		assert.NotContains(t, sql, "scope.attributes.`name`")
+
+		explicit := telemetrytypes.TelemetryFieldKey{Name: "attributes.name", FieldContext: telemetrytypes.FieldContextScope}
+		sql, _ = build(explicit, keys, qbtypes.FilterOperatorEqual, "x")
+		assert.Contains(t, sql, "scope.attributes.`name`::String = ?")
 	})
 
 	t.Run("declared scope.version equality", func(t *testing.T) {

@@ -36,6 +36,16 @@ func TestGetFieldKeyFromKeyText(t *testing.T) {
 			},
 		},
 		{
+			// only the context prefix is stripped, so `attributes.` survives to address the
+			// scope attribute that a declared path of the same name would otherwise win
+			keyText: "scope.attributes.name",
+			expected: TelemetryFieldKey{
+				Name:          "attributes.name",
+				FieldContext:  FieldContextScope,
+				FieldDataType: FieldDataTypeUnspecified,
+			},
+		},
+		{
 			keyText: "scope.custom.attr:string",
 			expected: TelemetryFieldKey{
 				Name:          "custom.attr",

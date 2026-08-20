@@ -734,6 +734,26 @@ func TestStatementBuilderListQuery(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
+			// `scope.name` resolves to the declared path; the scope attribute of the same name
+			// stays reachable by addressing the attributes home explicitly.
+			name:        "List query selecting declared scope path and its shadowed attribute",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal:       telemetrytypes.SignalTraces,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Limit:        10,
+				SelectFields: []telemetrytypes.TelemetryFieldKey{
+					{Name: "name", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextScope},
+					{Name: "attributes.name", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextScope},
+				},
+			},
+			expected: qbtypes.Statement{
+				Query: "SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, multiIf(scope.name::String <> '', scope.name::String, NULL) AS `__SELECT_KEY_3_scope.name`, multiIf(scope.attributes.`name` IS NOT NULL, scope.attributes.`name`::String, NULL) AS `__SELECT_KEY_4_attributes.name` FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{"1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
+			},
+			expectedErr: nil,
+		},
+		{
 			// A scope attribute may share its name with a span intrinsic. It must resolve to the
 			// scope attribute, never to the span column of that name.
 			name:        "List query selecting scope attribute colliding with span intrinsic",
