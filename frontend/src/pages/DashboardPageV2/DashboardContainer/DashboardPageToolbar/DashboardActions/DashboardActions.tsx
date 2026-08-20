@@ -189,7 +189,8 @@ function DashboardActions({
 				onClick: (): void => void handleClone(),
 			});
 		}
-		if (isAuthor || user.role === USER_ROLES.ADMIN) {
+
+		if (canEditDashboard && (isAuthor || user.role === USER_ROLES.ADMIN)) {
 			dashboardGroup.push({
 				key: 'lock',
 				label: isDashboardLocked ? 'Unlock dashboard' : 'Lock dashboard',

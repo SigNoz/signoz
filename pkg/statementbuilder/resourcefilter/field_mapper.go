@@ -71,6 +71,33 @@ func (m *defaultFieldMapper) FieldFor(
 	return columns[0].Name, nil
 }
 
+// ExistsFor reports key presence in the fingerprint labels JSON. Only resource
+// context keys have a presence notion here; anything else is a real column and
+// always present.
+func (m *defaultFieldMapper) ExistsFor(
+	ctx context.Context,
+	_ valuer.UUID,
+	tsStart, tsEnd uint64,
+	key *telemetrytypes.TelemetryFieldKey,
+	exists bool,
+) (string, error) {
+	columns, err := m.getColumn(ctx, tsStart, tsEnd, key)
+	if err != nil {
+		return "", err
+	}
+	if key.FieldContext != telemetrytypes.FieldContextResource {
+		if exists {
+			return "true", nil
+		}
+		return "false", nil
+	}
+	pred := fmt.Sprintf("simpleJSONHas(%s, '%s')", columns[0].Name, key.Name)
+	if exists {
+		return pred, nil
+	}
+	return "NOT " + pred, nil
+}
+
 func (m *defaultFieldMapper) ColumnExpressionFor(
 	ctx context.Context,
 	orgID valuer.UUID,

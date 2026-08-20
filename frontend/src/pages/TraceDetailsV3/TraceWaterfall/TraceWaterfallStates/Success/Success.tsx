@@ -690,7 +690,7 @@ function Success(props: ISuccessProps): JSX.Element {
 				urlQuery.set('spanId', span?.span_id);
 			}
 
-			safeNavigate({ search: urlQuery.toString() });
+			safeNavigate({ search: urlQuery.toString() }, { replace: true });
 		},
 		[setSelectedSpan, urlQuery, safeNavigate],
 	);
