@@ -9,7 +9,6 @@ import {
 import { Button } from '@signozhq/ui/button';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
-import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
 import { InfraMonitoringEvents } from 'constants/events';
@@ -42,6 +41,7 @@ import {
 } from '../hooks';
 
 import { EntityCountsSection } from './components/EntityCountsSection/EntityCountsSection';
+import { EntityMetadataItem } from './components/EntityMetadataItem/EntityMetadataItem';
 import { K8sBaseDetailsContentProps } from './types';
 import { getDrawerDurationMs } from './useDrawerLifecycleStore';
 
@@ -243,27 +243,12 @@ export default function K8sBaseDetailsContent<T>({
 						const value = config.getValue(entity);
 
 						return (
-							<div key={config.label} className={styles.entityDetailsMetadataItem}>
-								<Typography.Text
-									color="muted"
-									size="small"
-									weight="medium"
-									className={styles.entityDetailsMetadataLabel}
-								>
-									{config.label}
-								</Typography.Text>
-								{config.render ? (
-									config.render(value, entity)
-								) : (
-									<Typography.Text
-										size="small"
-										weight="medium"
-										className={styles.entityDetailsMetadataValue}
-									>
-										{String(value)}
-									</Typography.Text>
-								)}
-							</div>
+							<EntityMetadataItem
+								key={config.label}
+								label={config.label}
+								value={String(value)}
+								renderedValue={config.render?.(value, entity)}
+							/>
 						);
 					})}
 				</div>

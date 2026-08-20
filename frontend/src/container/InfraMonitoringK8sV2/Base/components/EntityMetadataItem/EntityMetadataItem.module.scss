@@ -1,0 +1,36 @@
+.metadataItem {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-1);
+	min-width: 0;
+}
+
+.valueRow {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-1);
+	min-width: 0;
+}
+
+.label {
+	letter-spacing: 0.44px;
+	text-transform: uppercase;
+}
+
+.value {
+	font-family: var(--periscope-font-family-mono);
+	min-width: 0;
+}
+
+// Kept out of the way until the field is hovered, so a header of five or more
+// fields is not a row of icons.
+.copyButton {
+	flex-shrink: 0;
+	opacity: 0;
+	transition: opacity 0.15s ease;
+
+	.metadataItem:hover &,
+	&:focus-visible {
+		opacity: 1;
+	}
+}
