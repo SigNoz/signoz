@@ -143,7 +143,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 			Response:            new(alertmanagertypes.GettableNotificationChannel),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusCreated,
-			ErrorStatusCodes:    []int{http.StatusBadRequest},
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusConflict},
 			Deprecated:          false,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceNotificationChannel.Scope(coretypes.VerbCreate)}),
 		},
