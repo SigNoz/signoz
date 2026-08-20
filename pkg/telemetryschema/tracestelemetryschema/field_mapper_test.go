@@ -372,10 +372,10 @@ func TestColumnExpressionForScopeUnion(t *testing.T) {
 			expectedResult: "multiIf(scope.version::String <> '', scope.version::String, NULL)",
 		},
 		{
-			name:           "short name unions the declared path and a same-named scope attribute",
+			name:           "short name binds to the declared path only, ignoring a same-named scope attribute",
 			key:            telemetrytypes.TelemetryFieldKey{Name: "version", FieldContext: telemetrytypes.FieldContextScope},
 			keys:           withAttr,
-			expectedResult: "multiIf(scope.attributes.`version` IS NOT NULL, toString(scope.attributes.`version`::String), scope.version::String <> '', toString(scope.version::String), NULL)",
+			expectedResult: "multiIf(scope.version::String <> '', scope.version::String, NULL)",
 		},
 		{
 			name:           "full scope.version name under scope context addresses the declared path alone",
@@ -384,10 +384,10 @@ func TestColumnExpressionForScopeUnion(t *testing.T) {
 			expectedResult: "multiIf(scope.version::String <> '', scope.version::String, NULL)",
 		},
 		{
-			name:           "short scope name unions the declared scope.name and a same-named attribute",
+			name:           "short scope name binds to the declared scope.name only, ignoring a same-named attribute",
 			key:            telemetrytypes.TelemetryFieldKey{Name: "name", FieldContext: telemetrytypes.FieldContextScope},
 			keys:           withAttr,
-			expectedResult: "multiIf(scope.attributes.`name` IS NOT NULL, toString(scope.attributes.`name`::String), scope.name::String <> '', toString(scope.name::String), NULL)",
+			expectedResult: "multiIf(scope.name::String <> '', scope.name::String, NULL)",
 		},
 		{
 			name:           "full scope.name name under scope context addresses the declared path alone",

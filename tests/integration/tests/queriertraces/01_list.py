@@ -1308,10 +1308,10 @@ def test_traces_list_with_corrupt_data(
         # The explicit `scope.` prefix forces scope context only, so span 0's
         # span attribute is ignored — only span 1 matches.
         pytest.param("scope.env.tier = 'gold'", [1], id="scope_prefixed_cross_context"),
-        # `scope.name` matches BOTH the intrinsic scope.name field (span 0) and a
-        # scope attribute literally named `name` (span 1's scope attribute
-        # name='io.signoz.checkout').
-        pytest.param("scope.name = 'io.signoz.checkout'", [0, 1], id="scope_name_collision"),
+        # `scope.name` binds to the declared scope.name field only (span 0). A scope
+        # attribute literally named `name` (span 1) is reserved-shadowed and is addressed
+        # separately as scope.attribute.name, so it does not match here.
+        pytest.param("scope.name = 'io.signoz.checkout'", [0], id="scope_name_reserved_declared_only"),
         # `scope.name` also matches a span attribute literally named `scope.name`
         # (attribute context) — span 2 carries attribute scope.name='attr-scope-name'.
         pytest.param("scope.name = 'attr-scope-name'", [2], id="scope_name_attribute_collision"),
@@ -1349,10 +1349,10 @@ def test_traces_list_with_scope_filter(
     - Filtering on scope.name / scope.version / a scope attribute.
     - An unprefixed key is resolved across contexts (scope checked alongside
       attribute / intrinsic), while a `scope.`-prefixed key is scope-only.
-    - `scope.name` hits the intrinsic field, a `name` scope attribute, and a
-      span attribute `scope.name` (cross-context), while a bare `name` hits
-      the span name column (and a `name` scope attribute) but never the
-      scope.name field.
+    - `scope.name` hits the declared scope.name field and a span attribute
+      literally named `scope.name` (cross-context), but NOT a `name` scope
+      attribute (reserved-shadowed); a bare `name` hits the span name column
+      and a `name` scope attribute but never the scope.name field.
     """
     now = datetime.now(tz=UTC).replace(microsecond=0)
     trace_id = TraceIdGenerator.trace_id()

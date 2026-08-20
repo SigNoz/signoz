@@ -300,10 +300,10 @@ func (m *fieldMapper) resolveColumnExprs(
 				exprs = append(exprs, fmt.Sprintf("%s.`%s`::String", columnName, key.Name))
 				existExprs = append(existExprs, fmt.Sprintf("%s.`%s` IS NOT NULL", columnName, key.Name))
 			case telemetrytypes.FieldContextScope:
-				if isDeclaredScopePath(key.Name) {
+				if path, ok := declaredScopePath(key); ok {
 					// declared String paths on the scope column read '' for the missing case
-					exprs = append(exprs, fmt.Sprintf("%s::String", key.Name))
-					existExprs = append(existExprs, fmt.Sprintf("%s <> ''", key.Name))
+					exprs = append(exprs, fmt.Sprintf("%s::String", path))
+					existExprs = append(existExprs, fmt.Sprintf("%s <> ''", path))
 				} else {
 					exprs = append(exprs, fmt.Sprintf("%s.attributes.`%s`::String", columnName, key.Name))
 					existExprs = append(existExprs, fmt.Sprintf("%s.attributes.`%s` IS NOT NULL", columnName, key.Name))
@@ -428,38 +428,22 @@ func (m *fieldMapper) ColumnExpressionFor(
 
 	// Resolve the candidate logical field(s).
 	var candidates []*telemetrytypes.LogicalField
-	switch field.FieldContext {
-	case telemetrytypes.FieldContextScope:
-		// FieldFor resolves any scope key to a single expression, so the probe below would skip
-		// the union. Resolve scope the way the filter path does: MatchingLogicalFields surfaces a
-		// same-named scope attribute (attribute-first) alongside the declared path, and
-		// CandidateKeys synthesizes when metadata knows neither.
-		matches := querybuilder.MatchingLogicalFields(ctx, orgID, m.fl, field, keys)
-		candidates, _ = querybuilder.ResolveLogicalFields(field, matches)
-		if len(candidates) == 0 {
-			candidates = querybuilder.WrapAsLogicalFields(field.Name, m.CandidateKeys(ctx, orgID, field, nil, keys))
+	switch _, err := m.FieldFor(ctx, orgID, startNs, endNs, field); {
+	case err == nil:
+		// A directly-resolvable key upgrades to its family when the metadata
+		// map proves membership; otherwise it stays single-member.
+		candidates = []*telemetrytypes.LogicalField{m.logicalForResolvedColumn(ctx, orgID, field, keys)}
+	case errors.Is(err, qbtypes.ErrColumnNotFound):
+		// The legacy candidate flow: column (when the bare name is one) plus metadata
+		// matches, else synthesized type-variant keys. The family step only swaps candidates
+		// for their family; it never changes candidate order or non-family behavior.
+		raw := m.CandidateKeys(ctx, orgID, field, nil, keys)
+		if len(raw) == 0 {
+			return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
 		}
-		if len(candidates) == 0 {
-			return "", errors.Wrapf(querybuilder.NewKeyNotFoundError(field.Name), errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
-		}
+		candidates = m.upgradeToFamilies(ctx, orgID, field, querybuilder.WrapAsLogicalFields(field.Name, raw), keys)
 	default:
-		switch _, err := m.FieldFor(ctx, orgID, startNs, endNs, field); {
-		case err == nil:
-			// A directly-resolvable key upgrades to its family when the metadata
-			// map proves membership; otherwise it stays single-member.
-			candidates = []*telemetrytypes.LogicalField{m.logicalForResolvedColumn(ctx, orgID, field, keys)}
-		case errors.Is(err, qbtypes.ErrColumnNotFound):
-			// The legacy candidate flow: column (when the bare name is one) plus metadata
-			// matches, else synthesized type-variant keys. The family step only swaps candidates
-			// for their family; it never changes candidate order or non-family behavior.
-			raw := m.CandidateKeys(ctx, orgID, field, nil, keys)
-			if len(raw) == 0 {
-				return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
-			}
-			candidates = m.upgradeToFamilies(ctx, orgID, field, querybuilder.WrapAsLogicalFields(field.Name, raw), keys)
-		default:
-			return "", err
-		}
+		return "", err
 	}
 
 	// Group-by/order (String) and aggregation (String/Float64): every candidate is
@@ -648,6 +632,21 @@ func isDeclaredScopePath(name string) bool {
 	return ok && f.FieldContext == telemetrytypes.FieldContextScope
 }
 
+// declaredScopePath returns the compound declared scope path (e.g. `scope.name`) for a scope
+// key given in either its short ({name, scope}) or already-compound ({scope.name, scope})
+// form, and whether it names a declared path at all. Normalization strips the `scope.` prefix,
+// so the declared paths reach the renderers in short form; IntrinsicFields keys them compound.
+func declaredScopePath(key *telemetrytypes.TelemetryFieldKey) (string, bool) {
+	if isDeclaredScopePath(key.Name) {
+		return key.Name, true
+	}
+	compound := telemetrytypes.FieldContextScope.StringValue() + "." + key.Name
+	if isDeclaredScopePath(compound) {
+		return compound, true
+	}
+	return "", false
+}
+
 // scopeJSONExistsExpression renders the existence predicate for the scope JSON column, the one
 // signal-specific case the generic querybuilder.ExistsExpression must not carry.
 func scopeJSONExistsExpression(key *telemetrytypes.TelemetryFieldKey, fieldExpression string, exists bool) (string, bool) {
@@ -655,7 +654,7 @@ func scopeJSONExistsExpression(key *telemetrytypes.TelemetryFieldKey, fieldExpre
 		return "", false
 	}
 	// Declared String paths are non-Nullable (absent reads '' not NULL).
-	if isDeclaredScopePath(key.Name) {
+	if _, ok := declaredScopePath(key); ok {
 		if exists {
 			return fieldExpression + " <> ''", true
 		}
