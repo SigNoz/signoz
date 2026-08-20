@@ -112,6 +112,41 @@ These two folders look similar but mean different things:
 
 Rule of thumb: if it's a `test.extend` fixture, put it in `fixtures/`. If it's a function you call explicitly (or a constant the function uses), put it in `helpers/`. If it's a static file the helpers read, put it in `testdata/`.
 
+### Extended fixtures
+
+For features needing complex setup (API-seeded data, ruler evaluation waits, cleanup), create domain-specific fixtures that extend `auth`. Group them in `fixtures/<domain>/`.
+
+**Fixture scopes:**
+- **test scope** — fresh data per test. Use for mutations (edit, delete, rename).
+- **worker scope** — shared across tests in one worker. Use for read-only data. Worker scope pays the setup cost once per worker instead of once per test.
+
+**The alerts pattern** (`fixtures/alerts/`) demonstrates extending fixtures:
+
+```
+fixtures/alerts/
+├── alert-rules.ts   # extends auth — worker-scoped rule list + test-scoped factory
+└── alert-history.ts # extends alert-rules — adds history fixtures (waits on ruler)
+```
+
+Specs import from the fixture they need:
+
+```ts
+// List tests — just need rules, no history
+import { test, expect } from '../../../fixtures/alerts/alert-rules';
+
+// History tests — need history rows from ruler evaluation
+import { test, expect } from '../../../fixtures/alerts/alert-history';
+```
+
+**When creating new fixtures:**
+
+1. **Identify scope** — Will tests mutate the data? If yes, test-scoped. If read-only, worker-scoped.
+2. **Group by domain** — Put fixtures in `fixtures/<domain>/`. Helpers in `helpers/<domain>/`.
+3. **Extend existing fixtures** — Chain from `auth` or another fixture to inherit its setup.
+4. **Handle timeouts** — Worker-scoped fixtures that wait on backend processing need explicit timeouts.
+5. **Clean up** — Always delete seeded data in the fixture teardown (after `use()`).
+6. **Extract logic into functions** — Keep the `test.extend()` block lean; move setup/teardown logic to named functions so the extend block reads as a manifest of "what fixtures exist."
+
 Each spec follows these principles:
 
 1. **Directory per feature**: `tests/e2e/tests/<feature>/*.spec.ts`. Cross-resource junction concerns (e.g. cascade-delete) go in their own file, not packed into one giant spec.

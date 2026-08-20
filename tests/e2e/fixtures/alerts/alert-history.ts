@@ -113,6 +113,246 @@ async function cleanup(
 	});
 }
 
+// --- Fixture setup functions ---
+
+interface HistoryFixtureResult<T> {
+	seed: T;
+	ruleIds: string[];
+	channelId: string;
+}
+
+async function createAlertHistorySeed(
+	browser: Browser,
+): Promise<HistoryFixtureResult<AlertHistorySeed>> {
+	const stamp = Date.now();
+	const marker = `e2e alert history ${stamp}`;
+
+	const result = await withAdminPage(browser, async (page) => {
+		const channel = await createEmailChannelViaApi(page, `e2e-ah-ch-${stamp}`);
+
+		const services = await seedAlertHistoryLogs(page, {
+			marker,
+			services: LOGS_HISTORY_SERVICES,
+			servicePrefix: `e2e-ah-svc`,
+		});
+
+		const ruleId = await createLogsAlertViaApi(page, {
+			name: `e2e-ah-rule-v2-${stamp}`,
+			marker,
+			channels: [channel.name],
+			schema: 'v2',
+		});
+		const ruleIdV1 = await createLogsAlertViaApi(page, {
+			name: `e2e-ah-rule-v1-${stamp}`,
+			marker,
+			channels: [channel.name],
+			schema: 'v1',
+			extraLabels: { team: V1_RULE_TEAM_LABEL },
+		});
+
+		await waitForTimelineEntries(page, ruleId, { min: LOGS_HISTORY_SERVICES });
+		await waitForTimelineEntries(page, ruleIdV1, { min: LOGS_HISTORY_SERVICES });
+
+		await setRuleDisabledViaApi(page, ruleId, true);
+		await setRuleDisabledViaApi(page, ruleIdV1, true);
+
+		return {
+			seed: {
+				ruleId,
+				ruleIdV1,
+				channelName: channel.name,
+				marker,
+				services,
+				total: await readTimelineTotal(page, ruleId),
+				totalV1: await readTimelineTotal(page, ruleIdV1),
+			},
+			ruleIds: [ruleId, ruleIdV1],
+			channelId: channel.id,
+		};
+	});
+
+	if (result.seed.total !== LOGS_HISTORY_SERVICES) {
+		throw new Error(
+			`alertHistory expected ${LOGS_HISTORY_SERVICES} timeline rows, got ${result.seed.total}`,
+		);
+	}
+
+	return result;
+}
+
+async function createMetricsHistorySeed(
+	browser: Browser,
+): Promise<HistoryFixtureResult<MetricsHistorySeed>> {
+	const stamp = Date.now();
+	const metricName = `e2e_ah_probe_metric_${stamp}`;
+
+	return withAdminPage(browser, async (page) => {
+		const channel = await createEmailChannelViaApi(page, `e2e-ah-metrics-ch-${stamp}`);
+
+		await seedAlertHistoryMetrics(page, { metricName, hosts: METRICS_HISTORY_HOSTS });
+
+		const ruleId = await createMetricAlertViaApi(page, {
+			name: `e2e-ah-metrics-rule-${stamp}`,
+			metricName,
+			channels: [channel.name],
+		});
+
+		await waitForTimelineEntries(page, ruleId, {
+			min: METRICS_HISTORY_HOSTS.length,
+			timeoutMs: 120_000,
+		});
+		await setRuleDisabledViaApi(page, ruleId, true);
+
+		return {
+			seed: {
+				ruleId,
+				channelName: channel.name,
+				metricName,
+				hosts: METRICS_HISTORY_HOSTS,
+				total: await readTimelineTotal(page, ruleId),
+			},
+			ruleIds: [ruleId],
+			channelId: channel.id,
+		};
+	});
+}
+
+async function createTracesHistorySeed(
+	browser: Browser,
+): Promise<HistoryFixtureResult<TracesHistorySeed>> {
+	const stamp = Date.now();
+	const marker = `e2e-aht-span-${stamp}`;
+
+	return withAdminPage(browser, async (page) => {
+		const channel = await createEmailChannelViaApi(page, `e2e-ah-traces-ch-${stamp}`);
+
+		const services = await seedAlertHistoryTraces(page, {
+			marker,
+			services: TRACES_HISTORY_SERVICES,
+			servicePrefix: 'e2e-aht-svc',
+		});
+
+		const ruleId = await createTracesAlertViaApi(page, {
+			name: `e2e-ah-traces-rule-${stamp}`,
+			marker,
+			channels: [channel.name],
+		});
+
+		await waitForTimelineEntries(page, ruleId, { min: TRACES_HISTORY_SERVICES });
+		await setRuleDisabledViaApi(page, ruleId, true);
+
+		return {
+			seed: {
+				ruleId,
+				channelName: channel.name,
+				marker,
+				services,
+				total: await readTimelineTotal(page, ruleId),
+			},
+			ruleIds: [ruleId],
+			channelId: channel.id,
+		};
+	});
+}
+
+async function createResolvedHistorySeed(
+	browser: Browser,
+): Promise<HistoryFixtureResult<ResolvedHistorySeed>> {
+	const stamp = Date.now();
+	const marker = `e2e alert resolved ${stamp}`;
+
+	return withAdminPage(browser, async (page) => {
+		const channel = await createEmailChannelViaApi(page, `e2e-ah-resolved-ch-${stamp}`);
+
+		const services = await seedAlertHistoryLogs(page, {
+			marker,
+			services: RESOLVED_HISTORY_SERVICES,
+			ageSeconds: 40,
+			minAgeSeconds: 28,
+			servicePrefix: 'e2e-ahr-svc',
+		});
+
+		const ruleId = await createLogsAlertViaApi(page, {
+			name: `e2e-ah-resolved-rule-${stamp}`,
+			marker,
+			channels: [channel.name],
+			evalWindow: '1m0s',
+		});
+
+		const timeline = await waitForTimelineStates(page, ruleId, {
+			states: { firing: RESOLVED_HISTORY_SERVICES, inactive: RESOLVED_HISTORY_SERVICES },
+		});
+		await setRuleDisabledViaApi(page, ruleId, true);
+
+		return {
+			seed: {
+				ruleId,
+				channelName: channel.name,
+				marker,
+				services,
+				firingCount: timeline.items.filter((i) => i.state === 'firing').length,
+				resolvedCount: timeline.items.filter((i) => i.state === 'inactive').length,
+			},
+			ruleIds: [ruleId],
+			channelId: channel.id,
+		};
+	});
+}
+
+async function createNoDataHistorySeed(
+	browser: Browser,
+): Promise<HistoryFixtureResult<NoDataHistorySeed>> {
+	const stamp = Date.now();
+
+	return withAdminPage(browser, async (page) => {
+		const channel = await createEmailChannelViaApi(page, `e2e-ah-nodata-ch-${stamp}`);
+
+		const ruleId = await createNoDataAlertViaApi(page, {
+			name: `e2e-ah-nodata-rule-${stamp}`,
+			marker: `e2e alert nodata ${stamp}`,
+			channels: [channel.name],
+		});
+
+		await waitForTimelineEntries(page, ruleId, {
+			min: 1,
+			state: 'nodata',
+			timeoutMs: 180_000,
+		});
+		await setRuleDisabledViaApi(page, ruleId, true);
+
+		return {
+			seed: { ruleId, channelName: channel.name },
+			ruleIds: [ruleId],
+			channelId: channel.id,
+		};
+	});
+}
+
+async function createEmptyHistorySeed(
+	browser: Browser,
+): Promise<HistoryFixtureResult<EmptyHistorySeed>> {
+	const stamp = Date.now();
+
+	return withAdminPage(browser, async (page) => {
+		const channel = await createEmailChannelViaApi(page, `e2e-ah-empty-ch-${stamp}`);
+
+		const ruleId = await createLogsAlertViaApi(page, {
+			name: `e2e-ah-empty-rule-${stamp}`,
+			marker: `e2e alert never seeded ${stamp}`,
+			channels: [channel.name],
+		});
+		await setRuleDisabledViaApi(page, ruleId, true);
+
+		return {
+			seed: { ruleId, channelName: channel.name },
+			ruleIds: [ruleId],
+			channelId: channel.id,
+		};
+	});
+}
+
+// --- Fixture definitions ---
+
 export const test = base.extend<
 	// eslint-disable-next-line @typescript-eslint/ban-types
 	{},
@@ -125,317 +365,56 @@ export const test = base.extend<
 		emptyHistory: EmptyHistorySeed;
 	}
 >({
-	/**
-	 * 25-row firing history (v2) plus a legacy v1 rule over the same logs.
-	 * Both rules share one seeded log batch, so the two ruler waves overlap
-	 * and the fixture costs roughly one wait (~20-35s), not two.
-	 */
 	alertHistory: [
 		async ({ browser }, use) => {
-			const stamp = Date.now();
-			const marker = `e2e alert history ${stamp}`;
-			let channelId = '';
-			let ruleId = '';
-			let ruleIdV1 = '';
-
-			const seed = await withAdminPage(browser, async (page) => {
-				const channel = await createEmailChannelViaApi(page, `e2e-ah-ch-${stamp}`);
-				channelId = channel.id;
-
-				// Seed and create in the same breath: the rules only fire while the
-				// records are inside the 5m eval window.
-				const services = await seedAlertHistoryLogs(page, {
-					marker,
-					services: LOGS_HISTORY_SERVICES,
-					servicePrefix: `e2e-ah-svc`,
-				});
-
-				ruleId = await createLogsAlertViaApi(page, {
-					name: `e2e-ah-rule-v2-${stamp}`,
-					marker,
-					channels: [channel.name],
-					schema: 'v2',
-				});
-				ruleIdV1 = await createLogsAlertViaApi(page, {
-					name: `e2e-ah-rule-v1-${stamp}`,
-					marker,
-					channels: [channel.name],
-					schema: 'v1',
-					// The v1 header renders `labels` minus `severity`, so without a
-					// second label its labels row is present but empty (AD-02).
-					extraLabels: { team: V1_RULE_TEAM_LABEL },
-				});
-
-				await waitForTimelineEntries(page, ruleId, { min: LOGS_HISTORY_SERVICES });
-				await waitForTimelineEntries(page, ruleIdV1, { min: LOGS_HISTORY_SERVICES });
-
-				// Freeze both before the eval window rolls past the seeded records —
-				// otherwise the resolve wave doubles `total` mid-suite.
-				await setRuleDisabledViaApi(page, ruleId, true);
-				await setRuleDisabledViaApi(page, ruleIdV1, true);
-
-				return {
-					ruleId,
-					ruleIdV1,
-					channelName: channel.name,
-					marker,
-					services,
-					total: await readTimelineTotal(page, ruleId),
-					totalV1: await readTimelineTotal(page, ruleIdV1),
-				};
-			});
-
-			if (seed.total !== LOGS_HISTORY_SERVICES) {
-				// A different total means the fixture is not what the scenarios were
-				// written against — most likely the resolve wave landed before the
-				// PATCH froze the rule. Fail loudly here rather than let every
-				// downstream count assertion fail with a confusing off-by-N.
-				throw new Error(
-					`alertHistory expected ${LOGS_HISTORY_SERVICES} timeline rows, got ${seed.total}`,
-				);
-			}
-
+			const { seed, ruleIds, channelId } = await createAlertHistorySeed(browser);
 			await use(seed);
-
-			await cleanup(browser, { ruleIds: [ruleId, ruleIdV1], channelId });
+			await cleanup(browser, { ruleIds, channelId });
 		},
 		{ scope: 'worker', timeout: 240_000 },
 	],
 
-	/**
-	 * Metrics rule over two hosts. Covers things the logs fixture can't:
-	 * history rows with no related-logs links (derived from signal type),
-	 * and a 2-row history that fits on a single page.
-	 */
 	metricsHistory: [
 		async ({ browser }, use) => {
-			const stamp = Date.now();
-			const metricName = `e2e_ah_probe_metric_${stamp}`;
-			let channelId = '';
-			let ruleId = '';
-
-			const seed = await withAdminPage(browser, async (page) => {
-				const channel = await createEmailChannelViaApi(
-					page,
-					`e2e-ah-metrics-ch-${stamp}`,
-				);
-				channelId = channel.id;
-
-				await seedAlertHistoryMetrics(page, {
-					metricName,
-					hosts: METRICS_HISTORY_HOSTS,
-				});
-
-				ruleId = await createMetricAlertViaApi(page, {
-					name: `e2e-ah-metrics-rule-${stamp}`,
-					metricName,
-					channels: [channel.name],
-				});
-
-				await waitForTimelineEntries(page, ruleId, {
-					min: METRICS_HISTORY_HOSTS.length,
-					timeoutMs: 120_000,
-				});
-				await setRuleDisabledViaApi(page, ruleId, true);
-
-				return {
-					ruleId,
-					channelName: channel.name,
-					metricName,
-					hosts: METRICS_HISTORY_HOSTS,
-					total: await readTimelineTotal(page, ruleId),
-				};
-			});
-
+			const { seed, ruleIds, channelId } = await createMetricsHistorySeed(browser);
 			await use(seed);
-
-			await cleanup(browser, { ruleIds: [ruleId], channelId });
+			await cleanup(browser, { ruleIds, channelId });
 		},
 		{ scope: 'worker', timeout: 240_000 },
 	],
 
-	/**
-	 * Traces rule over seeded spans. The only fixture whose history rows carry
-	 * `relatedTracesLink`: the backend derives the link from the rule's signal
-	 * and returns either a logs link or a traces link, never both.
-	 */
 	tracesHistory: [
 		async ({ browser }, use) => {
-			const stamp = Date.now();
-			const marker = `e2e-aht-span-${stamp}`;
-			let channelId = '';
-			let ruleId = '';
-
-			const seed = await withAdminPage(browser, async (page) => {
-				const channel = await createEmailChannelViaApi(
-					page,
-					`e2e-ah-traces-ch-${stamp}`,
-				);
-				channelId = channel.id;
-
-				const services = await seedAlertHistoryTraces(page, {
-					marker,
-					services: TRACES_HISTORY_SERVICES,
-					servicePrefix: 'e2e-aht-svc',
-				});
-
-				ruleId = await createTracesAlertViaApi(page, {
-					name: `e2e-ah-traces-rule-${stamp}`,
-					marker,
-					channels: [channel.name],
-				});
-
-				await waitForTimelineEntries(page, ruleId, { min: TRACES_HISTORY_SERVICES });
-				// Freeze before the eval window rolls past the seeded spans and the
-				// resolve wave doubles `total`.
-				await setRuleDisabledViaApi(page, ruleId, true);
-
-				return {
-					ruleId,
-					channelName: channel.name,
-					marker,
-					services,
-					total: await readTimelineTotal(page, ruleId),
-				};
-			});
-
+			const { seed, ruleIds, channelId } = await createTracesHistorySeed(browser);
 			await use(seed);
-
-			await cleanup(browser, { ruleIds: [ruleId], channelId });
+			await cleanup(browser, { ruleIds, channelId });
 		},
 		{ scope: 'worker', timeout: 240_000 },
 	],
 
-	/**
-	 * Firing **and** resolved history. A 1m eval window means seeded records
-	 * fall out fast, so the rule resolves on its own in ~105s. The only fixture
-	 * that produces non-zero avg resolution time and 3-segment status graph.
-	 */
 	resolvedHistory: [
 		async ({ browser }, use) => {
-			const stamp = Date.now();
-			const marker = `e2e alert resolved ${stamp}`;
-			let channelId = '';
-			let ruleId = '';
-
-			const seed = await withAdminPage(browser, async (page) => {
-				const channel = await createEmailChannelViaApi(
-					page,
-					`e2e-ah-resolved-ch-${stamp}`,
-				);
-				channelId = channel.id;
-
-				const services = await seedAlertHistoryLogs(page, {
-					marker,
-					services: RESOLVED_HISTORY_SERVICES,
-					ageSeconds: 40,
-					minAgeSeconds: 28,
-					servicePrefix: 'e2e-ahr-svc',
-				});
-
-				ruleId = await createLogsAlertViaApi(page, {
-					name: `e2e-ah-resolved-rule-${stamp}`,
-					marker,
-					channels: [channel.name],
-					evalWindow: '1m0s',
-				});
-
-				const timeline = await waitForTimelineStates(page, ruleId, {
-					states: {
-						firing: RESOLVED_HISTORY_SERVICES,
-						inactive: RESOLVED_HISTORY_SERVICES,
-					},
-				});
-				await setRuleDisabledViaApi(page, ruleId, true);
-
-				return {
-					ruleId,
-					channelName: channel.name,
-					marker,
-					services,
-					firingCount: timeline.items.filter((i) => i.state === 'firing').length,
-					resolvedCount: timeline.items.filter((i) => i.state === 'inactive').length,
-				};
-			});
-
+			const { seed, ruleIds, channelId } = await createResolvedHistorySeed(browser);
 			await use(seed);
-
-			await cleanup(browser, { ruleIds: [ruleId], channelId });
+			await cleanup(browser, { ruleIds, channelId });
 		},
 		{ scope: 'worker', timeout: 300_000 },
 	],
 
-	/**
-	 * A `nodata` row: `alertOnAbsent` on a query that matches nothing.
-	 */
 	noDataHistory: [
 		async ({ browser }, use) => {
-			const stamp = Date.now();
-			let channelId = '';
-			let ruleId = '';
-
-			const seed = await withAdminPage(browser, async (page) => {
-				const channel = await createEmailChannelViaApi(
-					page,
-					`e2e-ah-nodata-ch-${stamp}`,
-				);
-				channelId = channel.id;
-
-				ruleId = await createNoDataAlertViaApi(page, {
-					name: `e2e-ah-nodata-rule-${stamp}`,
-					// Deliberately unseeded — the query must match nothing.
-					marker: `e2e alert nodata ${stamp}`,
-					channels: [channel.name],
-				});
-
-				await waitForTimelineEntries(page, ruleId, {
-					min: 1,
-					state: 'nodata',
-					timeoutMs: 180_000,
-				});
-				await setRuleDisabledViaApi(page, ruleId, true);
-
-				return { ruleId, channelName: channel.name };
-			});
-
+			const { seed, ruleIds, channelId } = await createNoDataHistorySeed(browser);
 			await use(seed);
-
-			await cleanup(browser, { ruleIds: [ruleId], channelId });
+			await cleanup(browser, { ruleIds, channelId });
 		},
 		{ scope: 'worker', timeout: 300_000 },
 	],
 
-	/**
-	 * A rule that will never have history: its query matches nothing and it is
-	 * disabled immediately. Covers "no history yet" (empty table, zero stats) and
-	 * "no key suggestions" without waiting on the ruler at all.
-	 */
 	emptyHistory: [
 		async ({ browser }, use) => {
-			const stamp = Date.now();
-			let channelId = '';
-			let ruleId = '';
-
-			const seed = await withAdminPage(browser, async (page) => {
-				const channel = await createEmailChannelViaApi(
-					page,
-					`e2e-ah-empty-ch-${stamp}`,
-				);
-				channelId = channel.id;
-
-				ruleId = await createLogsAlertViaApi(page, {
-					name: `e2e-ah-empty-rule-${stamp}`,
-					marker: `e2e alert never seeded ${stamp}`,
-					channels: [channel.name],
-				});
-				await setRuleDisabledViaApi(page, ruleId, true);
-
-				return { ruleId, channelName: channel.name };
-			});
-
+			const { seed, ruleIds, channelId } = await createEmptyHistorySeed(browser);
 			await use(seed);
-
-			await cleanup(browser, { ruleIds: [ruleId], channelId });
+			await cleanup(browser, { ruleIds, channelId });
 		},
 		{ scope: 'worker', timeout: 120_000 },
 	],

@@ -112,101 +112,127 @@ async function deleteRules(browser: Browser, ids: string[]): Promise<void> {
 	});
 }
 
+// --- Fixture setup/teardown functions ---
+
+async function createAlertChannel(
+	browser: Browser,
+	workerIndex: number,
+): Promise<AlertChannel> {
+	return withAdminPage(browser, (page) =>
+		createEmailChannelViaApi(page, `e2e-alerts-ch-w${workerIndex}-${Date.now()}`),
+	);
+}
+
+async function deleteAlertChannel(
+	browser: Browser,
+	channelId: string,
+): Promise<void> {
+	await withAdminPage(browser, (page) => deleteChannelViaApi(page, channelId));
+}
+
+async function createAlertList(
+	browser: Browser,
+	channelName: string,
+	workerIndex: number,
+): Promise<AlertListSeed> {
+	const stamp = `w${workerIndex}-${Date.now()}`;
+	const namePrefix = `e2e-alert-list-${stamp}`;
+	const teamSuffix = `-${stamp}`;
+
+	const ruleIds = await withAdminPage(browser, (page) =>
+		seedAlertRules(page, {
+			count: LIST_SEED_COUNT,
+			channelName,
+			namePrefix,
+			teamSuffix,
+		}),
+	);
+
+	return {
+		channelName,
+		namePrefix,
+		count: LIST_SEED_COUNT,
+		paymentsLabel: `payments${teamSuffix}`,
+		ruleIds,
+	};
+}
+
+function createOwnedRulesFactory(
+	browser: Browser,
+	channelName: string,
+	ids: Set<string>,
+): OwnedRules {
+	const seed = async (create: (page: Page) => Promise<string>): Promise<string> => {
+		const id = await withAdminPage(browser, create);
+		ids.add(id);
+		return id;
+	};
+
+	return {
+		threshold: (name, overrides = {}) =>
+			seed((page) =>
+				createThresholdAlertViaApi(page, {
+					name,
+					target: 42,
+					channels: [channelName],
+					labels: { severity: 'critical' },
+					...overrides,
+				}),
+			),
+
+		logs: ({ name, schema = 'v2', marker, ...overrides }) =>
+			seed((page) =>
+				createLogsAlertViaApi(page, {
+					name,
+					marker: marker ?? `e2e alert never seeded ${name}`,
+					channels: [channelName],
+					schema,
+					...overrides,
+				}),
+			),
+
+		register: async (response) => {
+			const body = (await response.json()) as { data?: { id?: string } };
+			const id = body.data?.id;
+			if (id) {
+				ids.add(String(id));
+			}
+		},
+	};
+}
+
+// --- Fixture definitions ---
+
 export const test = base.extend<
 	{ ownedRules: OwnedRules },
 	{ alertChannel: AlertChannel; alertList: AlertListSeed }
 >({
 	alertChannel: [
 		async ({ browser }, use, workerInfo) => {
-			const channel = await withAdminPage(browser, (page) =>
-				createEmailChannelViaApi(
-					page,
-					`e2e-alerts-ch-w${workerInfo.workerIndex}-${Date.now()}`,
-				),
-			);
-
+			const channel = await createAlertChannel(browser, workerInfo.workerIndex);
 			await use(channel);
-
-			await withAdminPage(browser, (page) =>
-				deleteChannelViaApi(page, channel.id),
-			);
+			await deleteAlertChannel(browser, channel.id);
 		},
 		{ scope: 'worker' },
 	],
 
 	alertList: [
 		async ({ browser, alertChannel }, use, workerInfo) => {
-			const stamp = `w${workerInfo.workerIndex}-${Date.now()}`;
-			const namePrefix = `e2e-alert-list-${stamp}`;
-			const teamSuffix = `-${stamp}`;
-
-			const ruleIds = await withAdminPage(browser, (page) =>
-				seedAlertRules(page, {
-					count: LIST_SEED_COUNT,
-					channelName: alertChannel.name,
-					namePrefix,
-					teamSuffix,
-				}),
+			const seed = await createAlertList(
+				browser,
+				alertChannel.name,
+				workerInfo.workerIndex,
 			);
-
-			await use({
-				channelName: alertChannel.name,
-				namePrefix,
-				count: LIST_SEED_COUNT,
-				paymentsLabel: `payments${teamSuffix}`,
-				ruleIds,
-			});
-
-			await deleteRules(browser, ruleIds);
+			await use(seed);
+			await deleteRules(browser, seed.ruleIds);
 		},
 		{ scope: 'worker', timeout: 120_000 },
 	],
 
 	ownedRules: async ({ browser, alertChannel }, use) => {
 		const ids = new Set<string>();
-
-		const seed = async (
-			create: (page: Page) => Promise<string>,
-		): Promise<string> => {
-			const id = await withAdminPage(browser, create);
-			ids.add(id);
-			return id;
-		};
-
-		await use({
-			threshold: (name, overrides = {}) =>
-				seed((page) =>
-					createThresholdAlertViaApi(page, {
-						name,
-						target: 42,
-						channels: [alertChannel.name],
-						labels: { severity: 'critical' },
-						...overrides,
-					}),
-				),
-
-			logs: ({ name, schema = 'v2', marker, ...overrides }) =>
-				seed((page) =>
-					createLogsAlertViaApi(page, {
-						name,
-						marker: marker ?? `e2e alert never seeded ${name}`,
-						channels: [alertChannel.name],
-						schema,
-						...overrides,
-					}),
-				),
-
-			register: async (response) => {
-				const body = (await response.json()) as { data?: { id?: string } };
-				const id = body.data?.id;
-				if (id) {
-					ids.add(String(id));
-				}
-			},
-		});
-
-		// Best-effort: `deleteAlertViaApi` tolerates a rule a scenario already
-		// deleted through the UI.
+		const factory = createOwnedRulesFactory(browser, alertChannel.name, ids);
+		await use(factory);
 		await deleteRules(browser, [...ids]);
 	},
 });
