@@ -1,8 +1,7 @@
 import { OPERATORS } from 'constants/queryBuilder';
-import { MetricsType } from 'container/MetricsApplication/constant';
 import { queryFilterTags } from 'hooks/queryBuilder/useTag';
 import { parse } from 'papaparse';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import type { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import { orderByValueDelimiter } from '../OrderByFilter/utils';
 
@@ -189,18 +188,6 @@ export function getRemoveOrderFromValue(tag: string): string {
 		return key;
 	}
 	return tag;
-}
-
-export function getOptionType(label: string): MetricsType | undefined {
-	let optionType;
-
-	if (label.startsWith('tag_')) {
-		optionType = MetricsType.Tag;
-	} else if (label.startsWith('resource_')) {
-		optionType = MetricsType.Resource;
-	}
-
-	return optionType;
 }
 
 /**

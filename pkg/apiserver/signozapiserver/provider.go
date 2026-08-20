@@ -51,6 +51,7 @@ type provider struct {
 	userHandler                user.Handler
 	sessionHandler             session.Handler
 	authDomainHandler          authdomain.Handler
+	authDomainModule           authdomain.Module
 	preferenceHandler          preference.Handler
 	globalHandler              global.Handler
 	promoteHandler             promote.Handler
@@ -88,6 +89,7 @@ func NewFactory(
 	userHandler user.Handler,
 	sessionHandler session.Handler,
 	authDomainHandler authdomain.Handler,
+	authDomainModule authdomain.Module,
 	preferenceHandler preference.Handler,
 	globalHandler global.Handler,
 	promoteHandler promote.Handler,
@@ -128,6 +130,7 @@ func NewFactory(
 			userHandler,
 			sessionHandler,
 			authDomainHandler,
+			authDomainModule,
 			preferenceHandler,
 			globalHandler,
 			promoteHandler,
@@ -170,6 +173,7 @@ func newProvider(
 	userHandler user.Handler,
 	sessionHandler session.Handler,
 	authDomainHandler authdomain.Handler,
+	authDomainModule authdomain.Module,
 	preferenceHandler preference.Handler,
 	globalHandler global.Handler,
 	promoteHandler promote.Handler,
@@ -211,6 +215,7 @@ func newProvider(
 		authzService:               authzService,
 		sessionHandler:             sessionHandler,
 		authDomainHandler:          authDomainHandler,
+		authDomainModule:           authDomainModule,
 		preferenceHandler:          preferenceHandler,
 		globalHandler:              globalHandler,
 		promoteHandler:             promoteHandler,
