@@ -968,6 +968,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 		m.logger.ErrorContext(ctx, "failed to unmarshal rule from db", slog.String("rule.id", id.StringValue()), errors.Attr(err))
 		return nil, err
 	}
+	storedRule.NormalizeAlertType()
 
 	if err := json.Unmarshal([]byte(ruleStr), &storedRule); err != nil {
 		m.logger.ErrorContext(ctx, "failed to unmarshal patched rule with given id", slog.String("rule.id", id.StringValue()), errors.Attr(err))
