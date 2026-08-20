@@ -20,7 +20,7 @@ import { useQuery, useQueryClient } from 'react-query';
 
 export interface UsePublicPanelQueryArgs {
 	panel: DashboardtypesPanelDTO;
-	/** The panel kind's declared query capabilities — `panelDefinition.query`. */
+	/** The panel kind's declared query capabilities — `panelDefinition.queryCapabilities`. */
 	queryCapabilities: PanelQueryCapabilities;
 	/** Panel key in `spec.panels` — addresses the panel on the public endpoint. */
 	panelKey: string;

@@ -94,7 +94,7 @@ export function usePanelEditSession({
 	const query = usePanelQuery({
 		panel: draft,
 		panelId,
-		queryCapabilities: panelDefinition.query,
+		queryCapabilities: panelDefinition.queryCapabilities,
 		time,
 		enabled: isPanelKindSupported(panelKind),
 	});

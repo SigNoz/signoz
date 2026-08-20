@@ -61,22 +61,18 @@ function panelWith(
 // The capability blocks TimeSeries and List declare. Passed in rather than resolved from
 // the registry: the hook takes them as input, and importing the registry here would pull
 // every panel renderer (and the app's API client) into this suite.
-const TIME_SERIES_CAPS: PanelQueryCapabilities = {
+const TIME_SERIES_CAPABILITIES: PanelQueryCapabilities = {
 	requestType: Querybuildertypesv5RequestTypeDTO.time_series,
 	formatTableResultForUI: false,
 	bucketedStepInterval: false,
 	orderTiebreaker: false,
 	serverPaginated: false,
-	listView: false,
-	traceOperator: true,
 };
-const LIST_CAPS: PanelQueryCapabilities = {
-	...TIME_SERIES_CAPS,
+const LIST_PANEL_CAPABILITIES: PanelQueryCapabilities = {
+	...TIME_SERIES_CAPABILITIES,
 	requestType: Querybuildertypesv5RequestTypeDTO.raw,
 	orderTiebreaker: true,
 	serverPaginated: true,
-	listView: true,
-	traceOperator: false,
 };
 
 function builderPanel(): DashboardtypesPanelDTO {
@@ -129,7 +125,7 @@ describe('usePanelQuery', () => {
 			usePanelQuery({
 				panel: builderPanel(),
 				panelId: 'p1',
-				queryCapabilities: TIME_SERIES_CAPS,
+				queryCapabilities: TIME_SERIES_CAPABILITIES,
 			}),
 		);
 		const [{ requestPayload }] = mockUseGetQueryRangeV5.mock.calls[0];
@@ -147,7 +143,7 @@ describe('usePanelQuery', () => {
 			usePanelQuery({
 				panel: builderPanel(),
 				panelId: 'p1',
-				queryCapabilities: TIME_SERIES_CAPS,
+				queryCapabilities: TIME_SERIES_CAPABILITIES,
 			}),
 		);
 		const [{ requestPayload }] = mockUseGetQueryRangeV5.mock.calls[0];
@@ -162,7 +158,7 @@ describe('usePanelQuery', () => {
 			usePanelQuery({
 				panel: panelWith('signoz/ListPanel', { name: 'A', signal: 'logs' }),
 				panelId: 'p1',
-				queryCapabilities: LIST_CAPS,
+				queryCapabilities: LIST_PANEL_CAPABILITIES,
 			}),
 		);
 		const [{ requestPayload }] = mockUseGetQueryRangeV5.mock.calls[0];
@@ -182,7 +178,7 @@ describe('usePanelQuery', () => {
 			usePanelQuery({
 				panel: builderPanel(),
 				panelId: 'p1',
-				queryCapabilities: TIME_SERIES_CAPS,
+				queryCapabilities: TIME_SERIES_CAPABILITIES,
 			}),
 		);
 
@@ -196,7 +192,7 @@ describe('usePanelQuery', () => {
 			usePanelQuery({
 				panel: builderPanel(),
 				panelId: 'p1',
-				queryCapabilities: TIME_SERIES_CAPS,
+				queryCapabilities: TIME_SERIES_CAPABILITIES,
 			}),
 		);
 		expect(result.current.data.response).toBeUndefined();
@@ -213,7 +209,7 @@ describe('usePanelQuery', () => {
 			usePanelQuery({
 				panel: builderPanel(),
 				panelId: 'p1',
-				queryCapabilities: TIME_SERIES_CAPS,
+				queryCapabilities: TIME_SERIES_CAPABILITIES,
 			}),
 		);
 		expect(result.current.error?.message).toBe('boom');
@@ -232,7 +228,7 @@ describe('usePanelQuery', () => {
 			usePanelQuery({
 				panel: builderPanel(),
 				panelId: 'p1',
-				queryCapabilities: TIME_SERIES_CAPS,
+				queryCapabilities: TIME_SERIES_CAPABILITIES,
 			}),
 		);
 		expect(result.current.isLoading).toBe(false);
@@ -250,7 +246,7 @@ describe('usePanelQuery', () => {
 			usePanelQuery({
 				panel: builderPanel(),
 				panelId: 'p1',
-				queryCapabilities: TIME_SERIES_CAPS,
+				queryCapabilities: TIME_SERIES_CAPABILITIES,
 			}),
 		);
 		expect(result.current.isLoading).toBe(true);
@@ -267,7 +263,7 @@ describe('usePanelQuery', () => {
 			usePanelQuery({
 				panel: builderPanel(),
 				panelId: 'p1',
-				queryCapabilities: TIME_SERIES_CAPS,
+				queryCapabilities: TIME_SERIES_CAPABILITIES,
 			}),
 		);
 		expect(result.current.error).toBeNull();
@@ -278,7 +274,7 @@ describe('usePanelQuery', () => {
 			usePanelQuery({
 				panel: builderPanel(),
 				panelId: 'p1',
-				queryCapabilities: TIME_SERIES_CAPS,
+				queryCapabilities: TIME_SERIES_CAPABILITIES,
 				enabled: false,
 			}),
 		);
@@ -291,7 +287,7 @@ describe('usePanelQuery', () => {
 			usePanelQuery({
 				panel: emptyPanel(),
 				panelId: 'p1',
-				queryCapabilities: TIME_SERIES_CAPS,
+				queryCapabilities: TIME_SERIES_CAPABILITIES,
 				enabled: true,
 			}),
 		);
@@ -308,7 +304,7 @@ describe('usePanelQuery', () => {
 					aggregations: [{}],
 				}),
 				panelId: 'p1',
-				queryCapabilities: TIME_SERIES_CAPS,
+				queryCapabilities: TIME_SERIES_CAPABILITIES,
 			}),
 		);
 		const [{ enabled }] = mockUseGetQueryRangeV5.mock.calls[0];
@@ -318,7 +314,11 @@ describe('usePanelQuery', () => {
 	it('composes a react-query cache key that includes panelId, time range, kind, and queries', () => {
 		const panel = builderPanel();
 		renderHook(() =>
-			usePanelQuery({ panel, panelId: 'p1', queryCapabilities: TIME_SERIES_CAPS }),
+			usePanelQuery({
+				panel,
+				panelId: 'p1',
+				queryCapabilities: TIME_SERIES_CAPABILITIES,
+			}),
 		);
 		const [{ queryKey }] = mockUseGetQueryRangeV5.mock.calls[0];
 		expect(queryKey).toStrictEqual(
@@ -338,7 +338,7 @@ describe('usePanelQuery', () => {
 		renderHook(() =>
 			usePanelQuery({
 				panel,
-				queryCapabilities: TIME_SERIES_CAPS,
+				queryCapabilities: TIME_SERIES_CAPABILITIES,
 				panelId: 'p1',
 				time: { startMs: 1_700_000_000_000, endMs: 1_700_000_600_000 },
 			}),
@@ -365,7 +365,7 @@ describe('usePanelQuery', () => {
 			usePanelQuery({
 				panel: builderPanel(),
 				panelId: 'p1',
-				queryCapabilities: TIME_SERIES_CAPS,
+				queryCapabilities: TIME_SERIES_CAPABILITIES,
 				time: { startMs: 1_700_000_000_000.546, endMs: 1_700_000_600_000.999 },
 			}),
 		);
@@ -389,7 +389,7 @@ describe('usePanelQuery', () => {
 				usePanelQuery({
 					panel: listPanel({}),
 					panelId: 'p1',
-					queryCapabilities: LIST_CAPS,
+					queryCapabilities: LIST_PANEL_CAPABILITIES,
 				}),
 			);
 			expect(result.current.pagination).toBeDefined();
@@ -404,7 +404,7 @@ describe('usePanelQuery', () => {
 				usePanelQuery({
 					panel: listPanel({ limit: 100 }),
 					panelId: 'p1',
-					queryCapabilities: LIST_CAPS,
+					queryCapabilities: LIST_PANEL_CAPABILITIES,
 				}),
 			);
 			expect(result.current.pagination).toBeUndefined();
@@ -415,7 +415,7 @@ describe('usePanelQuery', () => {
 				usePanelQuery({
 					panel: listPanel({}),
 					panelId: 'p1',
-					queryCapabilities: LIST_CAPS,
+					queryCapabilities: LIST_PANEL_CAPABILITIES,
 				}),
 			);
 			const [{ keepPreviousData }] = mockUseGetQueryRangeV5.mock.calls[0];
@@ -427,7 +427,7 @@ describe('usePanelQuery', () => {
 				usePanelQuery({
 					panel: listPanel({}),
 					panelId: 'p1',
-					queryCapabilities: LIST_CAPS,
+					queryCapabilities: LIST_PANEL_CAPABILITIES,
 				}),
 			);
 
@@ -471,7 +471,7 @@ describe('usePanelQuery', () => {
 				usePanelQuery({
 					panel: listPanel({}),
 					panelId: 'p1',
-					queryCapabilities: LIST_CAPS,
+					queryCapabilities: LIST_PANEL_CAPABILITIES,
 				}),
 			);
 			expect(result.current.pagination?.pageIndex).toBe(0);
@@ -487,7 +487,7 @@ describe('usePanelQuery', () => {
 				usePanelQuery({
 					panel: listPanel({}),
 					panelId: 'p1',
-					queryCapabilities: LIST_CAPS,
+					queryCapabilities: LIST_PANEL_CAPABILITIES,
 				}),
 			);
 			expect(fullPage.result.current.pagination?.canNext).toBe(true);
@@ -498,7 +498,7 @@ describe('usePanelQuery', () => {
 				usePanelQuery({
 					panel: listPanel({}),
 					panelId: 'p1',
-					queryCapabilities: LIST_CAPS,
+					queryCapabilities: LIST_PANEL_CAPABILITIES,
 				}),
 			);
 			expect(partialPage.result.current.pagination?.canNext).toBe(false);
@@ -509,7 +509,7 @@ describe('usePanelQuery', () => {
 				usePanelQuery({
 					panel: listPanel({}),
 					panelId: 'p1',
-					queryCapabilities: LIST_CAPS,
+					queryCapabilities: LIST_PANEL_CAPABILITIES,
 				}),
 			);
 			expect(withCursor.result.current.pagination?.canNext).toBe(true);
@@ -521,7 +521,11 @@ describe('usePanelQuery', () => {
 			// `queries` identity and trip the offset-reset effect (real props are stable).
 			const panel = listPanel({});
 			const { result } = renderHook(() =>
-				usePanelQuery({ panel, panelId: 'p1', queryCapabilities: LIST_CAPS }),
+				usePanelQuery({
+					panel,
+					panelId: 'p1',
+					queryCapabilities: LIST_PANEL_CAPABILITIES,
+				}),
 			);
 			expect(result.current.pagination?.pageIndex).toBe(0);
 
@@ -537,7 +541,7 @@ describe('usePanelQuery', () => {
 				usePanelQuery({
 					panel: listPanel({}),
 					panelId: 'p1',
-					queryCapabilities: LIST_CAPS,
+					queryCapabilities: LIST_PANEL_CAPABILITIES,
 				}),
 			);
 			expect(result.current.pagination).toBeDefined();
@@ -550,7 +554,7 @@ describe('usePanelQuery', () => {
 				usePanelQuery({
 					panel: listPanel({}),
 					panelId: 'p1',
-					queryCapabilities: LIST_CAPS,
+					queryCapabilities: LIST_PANEL_CAPABILITIES,
 				}),
 			);
 			act(() => result.current.pagination?.setPageSize(0));
@@ -574,7 +578,7 @@ describe('usePanelQuery', () => {
 				usePanelQuery({
 					panel: builderPanel(),
 					panelId: 'p1',
-					queryCapabilities: TIME_SERIES_CAPS,
+					queryCapabilities: TIME_SERIES_CAPABILITIES,
 				}),
 			);
 			const [{ cacheTime }] = mockUseGetQueryRangeV5.mock.calls[0];
@@ -587,7 +591,7 @@ describe('usePanelQuery', () => {
 				usePanelQuery({
 					panel: builderPanel(),
 					panelId: 'p1',
-					queryCapabilities: TIME_SERIES_CAPS,
+					queryCapabilities: TIME_SERIES_CAPABILITIES,
 				}),
 			);
 			const [{ cacheTime }] = mockUseGetQueryRangeV5.mock.calls[0];

@@ -56,14 +56,19 @@ function Panel({
 	const searchable = panelDefinition.actions.search;
 	const [searchTerm, setSearchTerm] = useState('');
 
+	// Only an explicit false defers the fetch: `isVisible` is undefined wherever no
+	// observer reports visibility (the View modal, the editor preview), and those panels
+	// are on screen by construction.
+	const isOffScreen = isVisible === false;
+
 	const { data, isFetching, isPreviousData, error, refetch, pagination } =
 		usePanelQuery({
 			panel,
 			panelId,
-			queryCapabilities: panelDefinition.query,
-			// Lazy: fetch only once on screen (undefined → visible), and never for a kind
-			// this build can't render — the data would have nothing to render into.
-			enabled: isPanelKindSupported(panelKind) && isVisible !== false,
+			queryCapabilities: panelDefinition.queryCapabilities,
+			// Lazy: fetch once on screen, and never for a kind this build can't render —
+			// the data would have nothing to render into.
+			enabled: isPanelKindSupported(panelKind) && !isOffScreen,
 		});
 
 	const { onDragSelect, dashboardPreference } = usePanelInteractions();

@@ -47,11 +47,4 @@ export interface PanelQueryCapabilities {
 	 * carries no explicit limit" — an explicit limit means the user asked for a fixed set.
 	 */
 	serverPaginated: boolean;
-	/**
-	 * Authored as a list view: the query builder drops its aggregation controls, and the
-	 * editor preview hides the plot-mode chip because nothing is plotted.
-	 */
-	listView: boolean;
-	/** Query builder offers a trace operator alongside the builder queries. */
-	traceOperator: boolean;
 }

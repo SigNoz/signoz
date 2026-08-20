@@ -25,7 +25,6 @@ import {
 	getHiddenQueryBuilderFields,
 	getSupportedQueryTypes,
 } from '../../Panels/capabilities';
-import { getPanelDefinition } from '../../Panels/registry';
 import {
 	PANEL_KIND_TO_PANEL_TYPE,
 	type PanelKind,
@@ -67,7 +66,9 @@ function PanelEditorQueryBuilder({
 	// The shared QueryBuilderV2 provider still speaks the legacy PANEL_TYPES; what the
 	// builder offers for this kind comes from the kind's own declaration.
 	const panelType = PANEL_KIND_TO_PANEL_TYPE[panelKind];
-	const { listView, traceOperator } = getPanelDefinition(panelKind).query;
+	// Raw rows: the builder drops its aggregation controls, and with them the trace
+	// operator that combines aggregated trace queries (V1 parity).
+	const isListViewPanel = panelKind === 'signoz/ListPanel';
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const isDarkMode = useIsDarkMode();
 
@@ -114,9 +115,9 @@ function PanelEditorQueryBuilder({
 						<QueryBuilderV2
 							panelType={panelType}
 							filterConfigs={filterConfigs}
-							showTraceOperator={traceOperator}
+							showTraceOperator={!isListViewPanel}
 							version="v3"
-							isListViewPanel={listView}
+							isListViewPanel={isListViewPanel}
 							queryComponents={{}}
 							signalSourceChangeEnabled
 							savePreviousQuery
@@ -150,7 +151,7 @@ function PanelEditorQueryBuilder({
 			),
 			children: queryTypeComponents[queryType].component,
 		}));
-	}, [panelKind, panelType, filterConfigs, isDarkMode]);
+	}, [panelKind, panelType, filterConfigs, isDarkMode, isListViewPanel]);
 
 	return (
 		<div

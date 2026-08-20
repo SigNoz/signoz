@@ -53,8 +53,6 @@ const args = {
 		bucketedStepInterval: false,
 		orderTiebreaker: false,
 		serverPaginated: false,
-		listView: false,
-		traceOperator: true,
 	},
 	panelKey: 'panel-1',
 	publicDashboardId: 'pub-1',

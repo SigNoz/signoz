@@ -180,7 +180,7 @@ export function useDrilldown(
 	const { resolvedQuery, isResolving } = useResolvedDrilldownQuery({
 		queries,
 		panelKind: kind,
-		queryCapabilities: getPanelDefinition(kind).query,
+		queryCapabilities: getPanelDefinition(kind).queryCapabilities,
 		v1Query,
 		enabled: showAggregateMenu,
 	});

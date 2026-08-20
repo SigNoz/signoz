@@ -54,8 +54,6 @@ const EXPECTED_QUERY_CAPABILITIES: Record<PanelKind, PanelQueryCapabilities> = {
 		bucketedStepInterval: false,
 		orderTiebreaker: false,
 		serverPaginated: false,
-		listView: false,
-		traceOperator: true,
 	},
 	// Bar bins client-side, so it asks for a widened step interval over a raw series.
 	'signoz/BarChartPanel': {
@@ -64,8 +62,6 @@ const EXPECTED_QUERY_CAPABILITIES: Record<PanelKind, PanelQueryCapabilities> = {
 		bucketedStepInterval: true,
 		orderTiebreaker: false,
 		serverPaginated: false,
-		listView: false,
-		traceOperator: true,
 	},
 	'signoz/HistogramPanel': {
 		requestType: time_series,
@@ -73,8 +69,6 @@ const EXPECTED_QUERY_CAPABILITIES: Record<PanelKind, PanelQueryCapabilities> = {
 		bucketedStepInterval: false,
 		orderTiebreaker: false,
 		serverPaginated: false,
-		listView: false,
-		traceOperator: true,
 	},
 	'signoz/NumberPanel': {
 		requestType: scalar,
@@ -82,8 +76,6 @@ const EXPECTED_QUERY_CAPABILITIES: Record<PanelKind, PanelQueryCapabilities> = {
 		bucketedStepInterval: false,
 		orderTiebreaker: false,
 		serverPaginated: false,
-		listView: false,
-		traceOperator: true,
 	},
 	'signoz/PieChartPanel': {
 		requestType: scalar,
@@ -91,8 +83,6 @@ const EXPECTED_QUERY_CAPABILITIES: Record<PanelKind, PanelQueryCapabilities> = {
 		bucketedStepInterval: false,
 		orderTiebreaker: false,
 		serverPaginated: false,
-		listView: false,
-		traceOperator: true,
 	},
 	// Only Table asks the server to transpose its scalar result into UI rows.
 	'signoz/TablePanel': {
@@ -101,8 +91,6 @@ const EXPECTED_QUERY_CAPABILITIES: Record<PanelKind, PanelQueryCapabilities> = {
 		bucketedStepInterval: false,
 		orderTiebreaker: false,
 		serverPaginated: false,
-		listView: false,
-		traceOperator: true,
 	},
 	// Only List reads raw rows, pages them server-side, and needs an order tiebreaker.
 	'signoz/ListPanel': {
@@ -111,8 +99,6 @@ const EXPECTED_QUERY_CAPABILITIES: Record<PanelKind, PanelQueryCapabilities> = {
 		bucketedStepInterval: false,
 		orderTiebreaker: true,
 		serverPaginated: true,
-		listView: true,
-		traceOperator: false,
 	},
 };
 
@@ -121,7 +107,7 @@ const ALL_KINDS = Object.keys(EXPECTED_QUERY_TYPES) as PanelKind[];
 describe('panel capabilities guard', () => {
 	describe('query capabilities', () => {
 		it.each(ALL_KINDS)('declares how %s shapes its request', (kind) => {
-			expect(getPanelDefinition(kind).query).toStrictEqual(
+			expect(getPanelDefinition(kind).queryCapabilities).toStrictEqual(
 				EXPECTED_QUERY_CAPABILITIES[kind],
 			);
 		});
@@ -163,10 +149,10 @@ describe('panel capabilities guard', () => {
 		});
 
 		it('carries an inert query shape, so a stray request can do no harm', () => {
-			const { query } = getPanelDefinition(unknownKind);
-			expect(query.requestType).toBe(time_series);
-			expect(query.serverPaginated).toBe(false);
-			expect(query.formatTableResultForUI).toBe(false);
+			const { queryCapabilities } = getPanelDefinition(unknownKind);
+			expect(queryCapabilities.requestType).toBe(time_series);
+			expect(queryCapabilities.serverPaginated).toBe(false);
+			expect(queryCapabilities.formatTableResultForUI).toBe(false);
 		});
 	});
 

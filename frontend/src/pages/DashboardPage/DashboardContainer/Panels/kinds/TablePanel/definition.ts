@@ -20,14 +20,12 @@ export const definition: PanelDefinition<'signoz/TablePanel'> = {
 	supportedQueryTypes: [EQueryType.QUERY_BUILDER, EQueryType.CLICKHOUSE],
 	queryBuilderFields: {},
 	// The only kind that asks the server to transpose its scalar result into UI rows.
-	query: {
+	queryCapabilities: {
 		requestType: Querybuildertypesv5RequestTypeDTO.scalar,
 		formatTableResultForUI: true,
 		bucketedStepInterval: false,
 		orderTiebreaker: false,
 		serverPaginated: false,
-		listView: false,
-		traceOperator: true,
 	},
 	// Tables carry tabular data worth exporting (V1 parity: download is table-only).
 	actions: {

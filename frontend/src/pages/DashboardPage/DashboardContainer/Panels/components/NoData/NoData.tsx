@@ -20,8 +20,12 @@ interface NoDataProps {
 	isFetching?: boolean;
 	/** When provided, renders a Retry button that re-runs the query. */
 	onRetry?: () => void;
-	/** Hides the global "Extend time range" action when this panel is locked to a fixed time preference. */
-	panel?: DashboardtypesPanelDTO;
+	/**
+	 * The panel this empty state stands in for. Every renderer has it, and it decides
+	 * whether the global "Extend time range" action applies (a panel locked to a fixed
+	 * time preference can't be widened by it) as well as what the action events report.
+	 */
+	panel: DashboardtypesPanelDTO;
 	'data-testid'?: string;
 }
 
@@ -43,11 +47,8 @@ function NoData({
 	const globalExtend = useExtendTimeWindow();
 	// The View modal's local extender wins; the global one only applies to a panel that
 	// follows the ambient window (a fixed preference can't be widened by it).
-	const hasFixedTimePreference = panel
-		? panelHasFixedTimePreference(panel)
-		: false;
 	const activeExtend =
-		viewExtend ?? (hasFixedTimePreference ? undefined : globalExtend);
+		viewExtend ?? (panelHasFixedTimePreference(panel) ? undefined : globalExtend);
 
 	if (isFetching) {
 		return <PanelLoader />;
@@ -55,8 +56,8 @@ function NoData({
 
 	// `panelType` stays on the event so existing reports keep resolving; `panelKind` is the
 	// V2 identity, and the only one that can tell two kinds sharing a panel type apart.
-	const panelKind = panel?.spec.plugin.kind;
-	const panelType = panelKind ? PANEL_KIND_TO_PANEL_TYPE[panelKind] : undefined;
+	const panelKind = panel.spec.plugin.kind;
+	const panelType = PANEL_KIND_TO_PANEL_TYPE[panelKind];
 
 	const extendAction: PanelMessageAction | undefined =
 		activeExtend?.canExtend && activeExtend.actionLabel

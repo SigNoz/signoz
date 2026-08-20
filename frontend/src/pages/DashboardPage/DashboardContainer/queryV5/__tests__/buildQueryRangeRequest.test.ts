@@ -44,28 +44,27 @@ const START_MS = 1_700_000_000_000;
 // Capability blocks matching what each kind declares, so these tests exercise the
 // builder's response to the flags rather than the declarations themselves (those are
 // asserted against the registry in Panels/__tests__/capabilities.test.ts).
-const TIME_SERIES_CAPS = {
+const TIME_SERIES_CAPABILITIES = {
 	requestType: Querybuildertypesv5RequestTypeDTO.time_series,
 	formatTableResultForUI: false,
 	bucketedStepInterval: false,
 	orderTiebreaker: false,
 	serverPaginated: false,
-	listView: false,
-	traceOperator: true,
 };
-const BAR_CAPS = { ...TIME_SERIES_CAPS, bucketedStepInterval: true };
-const TABLE_CAPS = {
-	...TIME_SERIES_CAPS,
+const BAR_CAPABILITIES = {
+	...TIME_SERIES_CAPABILITIES,
+	bucketedStepInterval: true,
+};
+const TABLE_CAPABILITIES = {
+	...TIME_SERIES_CAPABILITIES,
 	requestType: Querybuildertypesv5RequestTypeDTO.scalar,
 	formatTableResultForUI: true,
 };
-const LIST_CAPS = {
-	...TIME_SERIES_CAPS,
+const LIST_PANEL_CAPABILITIES = {
+	...TIME_SERIES_CAPABILITIES,
 	requestType: Querybuildertypesv5RequestTypeDTO.raw,
 	orderTiebreaker: true,
 	serverPaginated: true,
-	listView: true,
-	traceOperator: false,
 };
 
 describe('requestType', () => {
@@ -77,7 +76,7 @@ describe('requestType', () => {
 	])('passes %s through from the declared capabilities', (requestType) => {
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A', signal: 'metrics' }),
-			queryCapabilities: { ...TIME_SERIES_CAPS, requestType },
+			queryCapabilities: { ...TIME_SERIES_CAPABILITIES, requestType },
 			startMs: START_MS,
 			endMs: START_MS + HOUR_MS,
 		});
@@ -163,7 +162,7 @@ describe('buildQueryRangeRequest', () => {
 	it('assembles the full request DTO', () => {
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A', signal: 'metrics' }),
-			queryCapabilities: TIME_SERIES_CAPS,
+			queryCapabilities: TIME_SERIES_CAPABILITIES,
 			startMs: START_MS,
 			endMs: START_MS + HOUR_MS,
 		});
@@ -185,7 +184,7 @@ describe('buildQueryRangeRequest', () => {
 	it('sets formatTableResultForUI only for TABLE panels', () => {
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A' }),
-			queryCapabilities: TABLE_CAPS,
+			queryCapabilities: TABLE_CAPABILITIES,
 			startMs: START_MS,
 			endMs: START_MS + HOUR_MS,
 		});
@@ -195,7 +194,7 @@ describe('buildQueryRangeRequest', () => {
 	it('passes through fillGaps into formatOptions', () => {
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A' }),
-			queryCapabilities: TIME_SERIES_CAPS,
+			queryCapabilities: TIME_SERIES_CAPABILITIES,
 			startMs: START_MS,
 			endMs: START_MS + HOUR_MS,
 			fillGaps: true,
@@ -206,7 +205,7 @@ describe('buildQueryRangeRequest', () => {
 	it('stamps offset/limit onto builder queries when pagination is given', () => {
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A', signal: 'logs' }),
-			queryCapabilities: LIST_CAPS,
+			queryCapabilities: LIST_PANEL_CAPABILITIES,
 			startMs: START_MS,
 			endMs: START_MS + HOUR_MS,
 			pagination: { offset: 100, limit: 50 },
@@ -226,7 +225,7 @@ describe('buildQueryRangeRequest', () => {
 	it('defaults a logs list with no order to timestamp desc + id tiebreaker', () => {
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A', signal: 'logs' }),
-			queryCapabilities: LIST_CAPS,
+			queryCapabilities: LIST_PANEL_CAPABILITIES,
 			startMs: START_MS,
 			endMs: START_MS + HOUR_MS,
 		});
@@ -246,7 +245,7 @@ describe('buildQueryRangeRequest', () => {
 				signal: 'logs',
 				order: [{ key: { name: 'timestamp' }, direction: 'desc' }],
 			}),
-			queryCapabilities: LIST_CAPS,
+			queryCapabilities: LIST_PANEL_CAPABILITIES,
 			startMs: START_MS,
 			endMs: START_MS + HOUR_MS,
 		});
@@ -266,7 +265,7 @@ describe('buildQueryRangeRequest', () => {
 		];
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A', signal: 'logs', order }),
-			queryCapabilities: LIST_CAPS,
+			queryCapabilities: LIST_PANEL_CAPABILITIES,
 			startMs: START_MS,
 			endMs: START_MS + HOUR_MS,
 		});
@@ -280,7 +279,7 @@ describe('buildQueryRangeRequest', () => {
 		const order = [{ key: { name: 'timestamp' }, direction: 'desc' }];
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A', signal: 'traces', order }),
-			queryCapabilities: LIST_CAPS,
+			queryCapabilities: LIST_PANEL_CAPABILITIES,
 			startMs: START_MS,
 			endMs: START_MS + HOUR_MS,
 		});
@@ -293,7 +292,7 @@ describe('buildQueryRangeRequest', () => {
 	it('injects the range-derived stepInterval into BAR builder queries without one', () => {
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A', signal: 'metrics' }),
-			queryCapabilities: BAR_CAPS,
+			queryCapabilities: BAR_CAPABILITIES,
 			startMs: START_MS,
 			endMs: START_MS + HOUR_MS,
 		});
@@ -308,7 +307,7 @@ describe('buildQueryRangeRequest', () => {
 	it('preserves a user-set stepInterval on BAR builder queries', () => {
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A', stepInterval: 300 }),
-			queryCapabilities: BAR_CAPS,
+			queryCapabilities: BAR_CAPABILITIES,
 			startMs: START_MS,
 			endMs: START_MS + HOUR_MS,
 		});
@@ -321,7 +320,7 @@ describe('buildQueryRangeRequest', () => {
 	it('does not touch stepInterval for non-BAR panels', () => {
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A' }),
-			queryCapabilities: TIME_SERIES_CAPS,
+			queryCapabilities: TIME_SERIES_CAPABILITIES,
 			startMs: START_MS,
 			endMs: START_MS + HOUR_MS,
 		});

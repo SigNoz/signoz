@@ -70,7 +70,7 @@ export function useCreateAlertFromPanel(): (
 			// Redux global time is nanoseconds; the request DTO takes epoch ms.
 			const request = buildQueryRangeRequest({
 				queries: panel.spec.queries,
-				queryCapabilities: getPanelDefinition(panelKind).query,
+				queryCapabilities: getPanelDefinition(panelKind).queryCapabilities,
 				startMs: Math.floor(minTime / NANO_SECOND_MULTIPLIER),
 				endMs: Math.floor(maxTime / NANO_SECOND_MULTIPLIER),
 				variables,
