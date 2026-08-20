@@ -16,20 +16,31 @@ export interface ChartLayoutProps {
 		averageLegendWidth: number;
 	}) => React.ReactNode;
 	layoutChildren?: React.ReactNode;
+	/**
+	 * Rendered directly under the plot, inside the chart column — so it stays next to
+	 * the axis with the legend below it, and beside a RIGHT legend rather than under
+	 * it. `layoutChildren` sits below everything instead.
+	 */
+	contentFooter?: React.ReactNode;
 	containerWidth: number;
 	containerHeight: number;
 	legendConfig: LegendConfig;
 	config: UPlotConfigBuilder;
+	/** Defaults to the chart's series labels. Pass them when the legend lists
+	 *  something else, or the split is measured against the wrong text. */
+	seriesLabels?: string[];
 }
 export default function ChartLayout({
 	showLegend = true,
 	legendComponent,
 	children,
 	layoutChildren,
+	contentFooter,
 	containerWidth,
 	containerHeight,
 	legendConfig,
 	config,
+	seriesLabels,
 }: ChartLayoutProps): JSX.Element {
 	const chartDimensions = useMemo(
 		() => {
@@ -42,19 +53,20 @@ export default function ChartLayout({
 					averageLegendWidth: MAX_LEGEND_WIDTH,
 				};
 			}
-			const legendItemsMap = config.getLegendItems();
-			const seriesLabels = Object.values(legendItemsMap)
-				.map((item) => item.label)
-				.filter((label): label is string => label !== undefined);
+			const resolvedLabels =
+				seriesLabels ??
+				Object.values(config.getLegendItems())
+					.map((item) => item.label)
+					.filter((label): label is string => label !== undefined);
 			return calculateChartDimensions({
 				containerWidth,
 				containerHeight,
 				legendConfig,
-				seriesLabels,
+				seriesLabels: resolvedLabels,
 			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[containerWidth, containerHeight, legendConfig, showLegend],
+		[containerWidth, containerHeight, legendConfig, showLegend, seriesLabels],
 	);
 
 	return (
@@ -72,6 +84,7 @@ export default function ChartLayout({
 						chartHeight: chartDimensions.height,
 						averageLegendWidth: chartDimensions.averageLegendWidth,
 					})}
+					{contentFooter}
 				</div>
 				{showLegend && (
 					<div
