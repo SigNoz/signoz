@@ -26,7 +26,7 @@ export function alertTypeCard(page: Page, type: AlertTypeValue): Locator {
 	return page.getByTestId(`alert-type-card-${type}`);
 }
 
-export function alertTypeCards(page: Page): Locator {
+function alertTypeCards(page: Page): Locator {
 	return page.locator('[data-testid^="alert-type-card-"]');
 }
 

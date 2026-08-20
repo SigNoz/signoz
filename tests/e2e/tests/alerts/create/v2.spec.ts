@@ -9,6 +9,7 @@ import {
 	dropdownOption,
 	openDropdown,
 	ownDropdown,
+	stubNoChannels,
 } from '../../../helpers/alert-forms/shared';
 import {
 	addAlertLabel,
@@ -18,7 +19,6 @@ import {
 	labelPill,
 	selectEvaluationTimeframe,
 	selectThresholdChannel,
-	stubNoChannels,
 	thresholdRows,
 	v2ClickDiscard,
 	v2DiscardButton,

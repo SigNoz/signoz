@@ -1,7 +1,7 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
 import { EVALUATION_WINDOW_PRESETS } from './constants';
-import { ownDropdown, pickChannelByName, selectedTags } from './shared';
+import { pickChannelByName } from './shared';
 
 // ─── v2 builder ────────────────────────────────────────────────────────────
 
@@ -224,6 +224,3 @@ export function evaluationCadenceUnitSelect(page: Page): Locator {
 export function labelPill(page: Page, key: string, value: string): Locator {
 	return page.getByTestId(`label-pill-${key}-${value}`);
 }
-
-// Re-export shared helpers that v2 code uses
-export { ownDropdown, selectedTags } from './shared';
