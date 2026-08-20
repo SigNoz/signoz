@@ -22,9 +22,9 @@ import { expect, test as base } from './auth';
 // Scopes, and why:
 //   `alertChannel` — worker. Every rule payload has to reference a channel by
 //     name, and one channel serves the whole worker.
-//   `alertList`    — worker. SEED-B, the read-only rule list the `tests/alerts/
-//     list` specs page, search and sort through. Names and label values are
-//     stamped per worker so parallel batches never count each other's rules.
+//   `alertList`    — worker. Read-only rule list the `tests/alerts/list` specs
+//     page, search and sort through. Names and label values are stamped per
+//     worker so parallel batches never count each other's rules.
 //   `ownedRules`   — test. Scenarios that rename/toggle/clone/delete a rule seed
 //     their own and have it removed when they finish; mutating a shared seed
 //     would break every scenario scheduled after it.
@@ -55,9 +55,9 @@ export interface OwnedRules {
 	 * Seed a logs rule this test owns. No telemetry is seeded for its marker, so
 	 * it never fires — enough for anything about the details shell.
 	 *
-	 * `schema: 'v1'` posts the legacy payload and is SEED-RV1; the condition
-	 * overrides exist so a v1 *prefill* assertion can be made against values the
-	 * create form would not have produced by itself.
+	 * `schema: 'v1'` posts the legacy payload; the condition overrides exist so
+	 * a v1 *prefill* assertion can be made against values the create form would
+	 * not have produced by itself.
 	 */
 	logs(
 		options: {
@@ -79,7 +79,7 @@ export interface OwnedRules {
 	register(response: { json: () => Promise<unknown> }): Promise<void>;
 }
 
-/** SEED-B size. 12 over a pinned page size of 10 ⇒ a short second page. */
+/** alertList size. 12 over page size 10 = short second page for pagination tests. */
 const LIST_SEED_COUNT = 12;
 
 /**

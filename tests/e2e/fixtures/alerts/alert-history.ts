@@ -24,28 +24,25 @@ import { expect, test as base, withAdminPage } from './alert-rules';
 //
 // Every history row has to come from the ruler actually evaluating a rule (there
 // is no seeder endpoint for `rule_state_history_v0`), so each fixture pays a
-// real ruler wait: ~20-35s for the logs fixtures, ~10s for metrics, ~105s for
-// the firing→resolved wave. Worker scope means one wait per worker instead of
-// one per test, and Playwright creates each fixture lazily — a spec that never
-// asks for `resolvedHistory` never pays its 105s.
-//
-// See `tests/e2e/specs/alerts/alerts-e2e-coverage.md` §3 for the recipes and the
-// empirically-measured timings each budget here is derived from.
+// real ruler wait: ~20-35s for logs, ~10s for metrics, ~105s for firing→resolved.
+// Worker scope means one wait per worker instead of one per test, and Playwright
+// creates each fixture lazily — a spec that never asks for `resolvedHistory`
+// never pays its 105s.
 
-/** Distinct `service.name` values SEED-A seeds ⇒ its timeline row count. */
-const SEED_A_SERVICES = 25;
+/** Service count for `alertHistory`. 25 yields multi-page timeline + pagination tests. */
+const LOGS_HISTORY_SERVICES = 25;
 
-/** SEED-F seeds fewer services and a 1m window so it resolves inside ~105s. */
-const SEED_F_SERVICES = 3;
+/** Service count for `resolvedHistory`. 3 services + 1m window = resolves in ~105s. */
+const RESOLVED_HISTORY_SERVICES = 3;
 
-/** SEED-E's group-by values ⇒ a 2-row history that fits on one page. */
-const SEED_E_HOSTS = ['host-0', 'host-1'];
+/** Hosts for `metricsHistory`. 2 rows fit one page, no related-logs links. */
+const METRICS_HISTORY_HOSTS = ['host-0', 'host-1'];
 
-/** SEED-H seeds just enough services to prove the traces link; keeps the wait short. */
-const SEED_H_SERVICES = 3;
+/** Service count for `tracesHistory`. 3 keeps wait short while proving traces link. */
+const TRACES_HISTORY_SERVICES = 3;
 
-/** Non-severity label on SEED-C, so the v1 header's labels row is non-empty. */
-export const SEED_C_TEAM_LABEL = 'e2e-platform';
+/** Team label for the v1 rule in `alertHistory`, so its header labels row is non-empty. */
+export const V1_RULE_TEAM_LABEL = 'e2e-platform';
 
 export interface AlertHistorySeed {
 	/** v2 (`schemaVersion: v2alpha1`) rule — the default history subject. */
@@ -129,9 +126,9 @@ export const test = base.extend<
 	}
 >({
 	/**
-	 * SEED-A (25-row firing history, v2) **plus** SEED-C (the same logs seen
-	 * through a legacy v1 rule). Both rules share one seeded log batch, so the
-	 * two ruler waves overlap and the fixture costs roughly one wait, not two.
+	 * 25-row firing history (v2) plus a legacy v1 rule over the same logs.
+	 * Both rules share one seeded log batch, so the two ruler waves overlap
+	 * and the fixture costs roughly one wait (~20-35s), not two.
 	 */
 	alertHistory: [
 		async ({ browser }, use) => {
@@ -149,7 +146,7 @@ export const test = base.extend<
 				// records are inside the 5m eval window.
 				const services = await seedAlertHistoryLogs(page, {
 					marker,
-					services: SEED_A_SERVICES,
+					services: LOGS_HISTORY_SERVICES,
 					servicePrefix: `e2e-ah-svc`,
 				});
 
@@ -166,11 +163,11 @@ export const test = base.extend<
 					schema: 'v1',
 					// The v1 header renders `labels` minus `severity`, so without a
 					// second label its labels row is present but empty (AD-02).
-					extraLabels: { team: SEED_C_TEAM_LABEL },
+					extraLabels: { team: V1_RULE_TEAM_LABEL },
 				});
 
-				await waitForTimelineEntries(page, ruleId, { min: SEED_A_SERVICES });
-				await waitForTimelineEntries(page, ruleIdV1, { min: SEED_A_SERVICES });
+				await waitForTimelineEntries(page, ruleId, { min: LOGS_HISTORY_SERVICES });
+				await waitForTimelineEntries(page, ruleIdV1, { min: LOGS_HISTORY_SERVICES });
 
 				// Freeze both before the eval window rolls past the seeded records —
 				// otherwise the resolve wave doubles `total` mid-suite.
@@ -188,13 +185,13 @@ export const test = base.extend<
 				};
 			});
 
-			if (seed.total !== SEED_A_SERVICES) {
+			if (seed.total !== LOGS_HISTORY_SERVICES) {
 				// A different total means the fixture is not what the scenarios were
 				// written against — most likely the resolve wave landed before the
 				// PATCH froze the rule. Fail loudly here rather than let every
 				// downstream count assertion fail with a confusing off-by-N.
 				throw new Error(
-					`SEED-A expected ${SEED_A_SERVICES} timeline rows, got ${seed.total}`,
+					`alertHistory expected ${LOGS_HISTORY_SERVICES} timeline rows, got ${seed.total}`,
 				);
 			}
 
@@ -206,9 +203,9 @@ export const test = base.extend<
 	],
 
 	/**
-	 * SEED-E — a metrics rule over two hosts. Two things SEED-A can't give:
-	 * history rows with **no** related links (links are derived from the rule's
-	 * signal), and a 2-row history that fits on a single page.
+	 * Metrics rule over two hosts. Covers things the logs fixture can't:
+	 * history rows with no related-logs links (derived from signal type),
+	 * and a 2-row history that fits on a single page.
 	 */
 	metricsHistory: [
 		async ({ browser }, use) => {
@@ -226,7 +223,7 @@ export const test = base.extend<
 
 				await seedAlertHistoryMetrics(page, {
 					metricName,
-					hosts: SEED_E_HOSTS,
+					hosts: METRICS_HISTORY_HOSTS,
 				});
 
 				ruleId = await createMetricAlertViaApi(page, {
@@ -236,7 +233,7 @@ export const test = base.extend<
 				});
 
 				await waitForTimelineEntries(page, ruleId, {
-					min: SEED_E_HOSTS.length,
+					min: METRICS_HISTORY_HOSTS.length,
 					timeoutMs: 120_000,
 				});
 				await setRuleDisabledViaApi(page, ruleId, true);
@@ -245,7 +242,7 @@ export const test = base.extend<
 					ruleId,
 					channelName: channel.name,
 					metricName,
-					hosts: SEED_E_HOSTS,
+					hosts: METRICS_HISTORY_HOSTS,
 					total: await readTimelineTotal(page, ruleId),
 				};
 			});
@@ -258,10 +255,9 @@ export const test = base.extend<
 	],
 
 	/**
-	 * SEED-H — a traces rule over seeded spans. The only fixture whose history
-	 * rows carry `relatedTracesLink`: the backend derives the link from the
-	 * rule's signal and returns either a logs link or a traces link, never both,
-	 * so the "View Traces" popover entry is unreachable from SEED-A.
+	 * Traces rule over seeded spans. The only fixture whose history rows carry
+	 * `relatedTracesLink`: the backend derives the link from the rule's signal
+	 * and returns either a logs link or a traces link, never both.
 	 */
 	tracesHistory: [
 		async ({ browser }, use) => {
@@ -279,7 +275,7 @@ export const test = base.extend<
 
 				const services = await seedAlertHistoryTraces(page, {
 					marker,
-					services: SEED_H_SERVICES,
+					services: TRACES_HISTORY_SERVICES,
 					servicePrefix: 'e2e-aht-svc',
 				});
 
@@ -289,9 +285,9 @@ export const test = base.extend<
 					channels: [channel.name],
 				});
 
-				await waitForTimelineEntries(page, ruleId, { min: SEED_H_SERVICES });
-				// Same reason as SEED-A: freeze before the eval window rolls past the
-				// seeded spans and the resolve wave doubles `total`.
+				await waitForTimelineEntries(page, ruleId, { min: TRACES_HISTORY_SERVICES });
+				// Freeze before the eval window rolls past the seeded spans and the
+				// resolve wave doubles `total`.
 				await setRuleDisabledViaApi(page, ruleId, true);
 
 				return {
@@ -311,10 +307,9 @@ export const test = base.extend<
 	],
 
 	/**
-	 * SEED-F — firing **and** resolved, without touching the seeder: a 1m eval
-	 * window means the seeded records fall out of it fast, so the rule resolves
-	 * on its own in ~105s. This is the only fixture that produces a non-zero
-	 * average resolution time and a 3-segment overall-status graph.
+	 * Firing **and** resolved history. A 1m eval window means seeded records
+	 * fall out fast, so the rule resolves on its own in ~105s. The only fixture
+	 * that produces non-zero avg resolution time and 3-segment status graph.
 	 */
 	resolvedHistory: [
 		async ({ browser }, use) => {
@@ -332,7 +327,7 @@ export const test = base.extend<
 
 				const services = await seedAlertHistoryLogs(page, {
 					marker,
-					services: SEED_F_SERVICES,
+					services: RESOLVED_HISTORY_SERVICES,
 					ageSeconds: 40,
 					minAgeSeconds: 28,
 					servicePrefix: 'e2e-ahr-svc',
@@ -347,8 +342,8 @@ export const test = base.extend<
 
 				const timeline = await waitForTimelineStates(page, ruleId, {
 					states: {
-						firing: SEED_F_SERVICES,
-						inactive: SEED_F_SERVICES,
+						firing: RESOLVED_HISTORY_SERVICES,
+						inactive: RESOLVED_HISTORY_SERVICES,
 					},
 				});
 				await setRuleDisabledViaApi(page, ruleId, true);
@@ -371,9 +366,7 @@ export const test = base.extend<
 	],
 
 	/**
-	 * SEED-G — a `nodata` row, reached the same way
-	 * `integration/testdata/alerts/test_scenarios/no_data_rule_test` does:
-	 * `alertOnAbsent` on a query that matches nothing.
+	 * A `nodata` row: `alertOnAbsent` on a query that matches nothing.
 	 */
 	noDataHistory: [
 		async ({ browser }, use) => {

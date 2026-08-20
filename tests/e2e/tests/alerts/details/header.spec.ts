@@ -1,6 +1,6 @@
 import {
 	expect,
-	SEED_C_TEAM_LABEL,
+	V1_RULE_TEAM_LABEL,
 	test,
 } from '../../../fixtures/alerts/alert-history';
 import { gotoAlertDetails } from '../../../helpers/alerts';
@@ -45,7 +45,7 @@ test.describe('Alert details — header', () => {
 			'Warning',
 		);
 		await expect(page.getByTestId('alert-header-labels')).toContainText(
-			SEED_C_TEAM_LABEL,
+			V1_RULE_TEAM_LABEL,
 		);
 		await expect(page.getByTestId('alert-name-input')).toHaveCount(0);
 
