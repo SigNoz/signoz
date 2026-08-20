@@ -17,12 +17,10 @@ import {
 } from '../../../helpers/alerts';
 import { watchConsole } from '../../../helpers/common';
 
-// CE-* — errors and edges that are not specific to one form. CE-03 lives in
-// `edit/edge.spec.ts`; CE-05/CE-06 are v1-only validation and live with the v1
-// specs.
+// TC-* — errors and edges that are not specific to one form.
 
 test.describe('Alert create — errors and edges', () => {
-	test('CE-04 a server-side rejection opens the error modal and keeps the draft', async ({
+	test('TC-01 a server-side rejection opens the error modal and keeps the draft', async ({
 		authedPage: page,
 	}) => {
 		// A duplicate rule name is *not* rejected — the API happily creates two rules
@@ -64,7 +62,7 @@ test.describe('Alert create — errors and edges', () => {
 		await expect(page.getByTestId('alert-name-input')).toHaveValue(name);
 	});
 
-	test('CE-07 none of the four builder mounts logs a console error', async ({
+	test('TC-02 none of the four builder mounts logs a console error', async ({
 		authedPage: page,
 		ownedRules,
 	}) => {
@@ -114,7 +112,7 @@ test.describe('Alert create — errors and edges', () => {
 	// Fix is one of: make the footer's `left` follow the nav's actual width, move
 	// Discard to the right-hand group, or lift the footer out of the nav's stacking
 	// context.
-	test.skip('CE-09 the v2 Discard button is clickable', async ({
+	test.skip('TC-03 the v2 Discard button is clickable', async ({
 		authedPage: page,
 	}) => {
 		await gotoCreateAlertV2(page, { alertType: AlertType.LOGS });

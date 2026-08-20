@@ -6,7 +6,7 @@ import {
 } from '../../../helpers/alerts';
 
 test.describe('Alert rules list — columns', () => {
-	test('LR-01 renders all default columns (Status, Alert Name, Severity, Labels, Actions)', async ({
+	test('TC-01 renders all default columns (Status, Alert Name, Severity, Labels, Actions)', async ({
 		authedPage: page,
 		alertList,
 	}) => {
@@ -33,7 +33,7 @@ test.describe('Alert rules list — columns', () => {
 		await expect(page.getByTestId('alert-columns-button')).toBeVisible();
 	});
 
-	test('LR-10 column selector hides and shows a column', async ({
+	test('TC-02 column selector hides and shows a column', async ({
 		authedPage: page,
 		alertList,
 	}) => {
@@ -63,7 +63,7 @@ test.describe('Alert rules list — columns', () => {
 		).toBeVisible();
 	});
 
-	test('LR-09 sorts by column header click', async ({
+	test('TC-03 sorts by column header click', async ({
 		authedPage: page,
 		alertList,
 	}) => {

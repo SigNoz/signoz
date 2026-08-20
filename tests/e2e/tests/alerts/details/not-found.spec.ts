@@ -5,7 +5,7 @@ import {
 } from '../../../helpers/alerts';
 
 test.describe('Alert details — not found', () => {
-	test('AD-11 invalid ruleId shows AlertNotFound page', async ({
+	test('TC-01 invalid ruleId shows AlertNotFound page', async ({
 		authedPage: page,
 	}) => {
 		await page.goto(`${ALERT_HISTORY_PATH}?ruleId=not-a-real-rule-id`);
@@ -21,7 +21,7 @@ test.describe('Alert details — not found', () => {
 		).toBeVisible();
 	});
 
-	test('AD-12 missing ruleId on overview shows AlertNotFound page', async ({
+	test('TC-02 missing ruleId on overview shows AlertNotFound page', async ({
 		authedPage: page,
 	}) => {
 		await page.goto(ALERT_OVERVIEW_PATH);

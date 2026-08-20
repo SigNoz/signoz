@@ -14,12 +14,12 @@ import {
 	v1SaveButton,
 } from '../../../helpers/alert-forms';
 
-// CS-01 … CS-08 — the create *shell*: type selection, how a card click writes the
+// TC-* — the create *shell*: type selection, how a card click writes the
 // URL, the breadcrumb, the surrounding alerts tab bar, and the two ways to reach
 // the classic form. Nothing here saves a rule, so no scenario needs a channel.
 
 test.describe('Alert create — shell & type selection', () => {
-	test('CS-01 bare /alerts/new lists exactly the expected alert-type cards', async ({
+	test('TC-01 bare /alerts/new lists exactly the expected alert-type cards', async ({
 		authedPage: page,
 	}) => {
 		await gotoAlertTypeSelection(page);
@@ -35,7 +35,7 @@ test.describe('Alert create — shell & type selection', () => {
 		await expectAlertTypeCardSet(page);
 	});
 
-	test('CS-02 picking a card writes both params and mounts the v2 builder', async ({
+	test('TC-02 picking a card writes both params and mounts the v2 builder', async ({
 		authedPage: page,
 	}) => {
 		await gotoAlertTypeSelection(page);
@@ -48,7 +48,7 @@ test.describe('Alert create — shell & type selection', () => {
 		expect(params.get('alertType')).toBe(AlertType.METRICS);
 	});
 
-	test('CS-03 the anomaly card rewrites the rule type, not the alert type', async ({
+	test('TC-03 the anomaly card rewrites the rule type, not the alert type', async ({
 		authedPage: page,
 	}) => {
 		await gotoAlertTypeSelection(page);
@@ -68,7 +68,7 @@ test.describe('Alert create — shell & type selection', () => {
 		expect(params.get('alertType')).toBe(AlertType.METRICS);
 	});
 
-	test('CS-04 modifier-clicking a card opens the builder in a new tab', async ({
+	test('TC-04 modifier-clicking a card opens the builder in a new tab', async ({
 		authedPage: page,
 	}) => {
 		await gotoAlertTypeSelection(page);
@@ -92,7 +92,7 @@ test.describe('Alert create — shell & type selection', () => {
 		await newTab.close();
 	});
 
-	test('CS-05 breadcrumb gains a third crumb after a type is picked', async ({
+	test('TC-05 breadcrumb gains a third crumb after a type is picked', async ({
 		authedPage: page,
 	}) => {
 		await gotoAlertTypeSelection(page);
@@ -112,7 +112,7 @@ test.describe('Alert create — shell & type selection', () => {
 		expect(new URL(page.url()).searchParams.get('alertType')).toBeNull();
 	});
 
-	test('CS-06 create renders inside the Alert Rules tab and leaving drops subTab/search', async ({
+	test('TC-06 create renders inside the Alert Rules tab and leaving drops subTab/search', async ({
 		authedPage: page,
 	}) => {
 		// `subTab` and `search` are seeded here precisely so their removal is
@@ -136,7 +136,7 @@ test.describe('Alert create — shell & type selection', () => {
 		expect(params.get('search')).toBeNull();
 	});
 
-	test('CS-07 showClassicCreateAlertsPage=true renders the v1 form instead', async ({
+	test('TC-07 showClassicCreateAlertsPage=true renders the v1 form instead', async ({
 		authedPage: page,
 	}) => {
 		await gotoCreateAlertV1(page, { alertType: AlertType.METRICS });
@@ -146,7 +146,7 @@ test.describe('Alert create — shell & type selection', () => {
 		await expect(page.getByTestId('alert-name-input')).toBeHidden();
 	});
 
-	test('CS-08 Switch to Classic Experience replaces history, so Back does not return to v2', async ({
+	test('TC-08 Switch to Classic Experience replaces history, so Back does not return to v2', async ({
 		authedPage: page,
 	}) => {
 		await gotoCreateAlertV2(page, { alertType: AlertType.METRICS });

@@ -2,7 +2,7 @@ import { expect, test } from '../../fixtures/alert-rules';
 import { ALERTS_LIST_PATH } from '../../helpers/alerts';
 import { watchConsole } from '../../helpers/common';
 
-// AL-* — the Alerts page shell: the four top-level tabs, how they map to
+// TC-* — the Alerts page shell: the four top-level tabs, how they map to
 // `?tab=`, and a navigation smoke check per tab. Tab *internals* (channel CRUD,
 // planned downtime, routing policies) are deliberately out of scope — each
 // deserves its own spec file.
@@ -15,7 +15,7 @@ const TAB_NAMES = {
 };
 
 test.describe('Alerts page shell', () => {
-	test('AL-01 all four top-level tabs render', async ({ authedPage: page }) => {
+	test('TC-01 all four top-level tabs render', async ({ authedPage: page }) => {
 		await page.goto(ALERTS_LIST_PATH);
 
 		for (const name of Object.values(TAB_NAMES)) {
@@ -23,7 +23,7 @@ test.describe('Alerts page shell', () => {
 		}
 	});
 
-	test('AL-02 default tab is Alert Rules', async ({ authedPage: page }) => {
+	test('TC-02 default tab is Alert Rules', async ({ authedPage: page }) => {
 		await page.goto(ALERTS_LIST_PATH);
 
 		// No `tab` param at all — `getActiveKey()` falls back to AlertRules.
@@ -42,7 +42,7 @@ test.describe('Alerts page shell', () => {
 		).toBeVisible();
 	});
 
-	test('AL-03 tab switch writes ?tab= and clears subTab', async ({
+	test('TC-03 tab switch writes ?tab= and clears subTab', async ({
 		authedPage: page,
 	}) => {
 		await page.goto(ALERTS_LIST_PATH);
@@ -65,7 +65,7 @@ test.describe('Alerts page shell', () => {
 		await expect(page).not.toHaveURL(/subTab=/);
 	});
 
-	test('AL-04 Configuration deep-link', async ({ authedPage: page }) => {
+	test('TC-04 Configuration deep-link', async ({ authedPage: page }) => {
 		// Deep-linking without subTab: the inner Tabs falls back to
 		// planned-downtime for its activeKey without writing it to the URL, so
 		// assert the rendered tab, not the param.
@@ -82,7 +82,7 @@ test.describe('Alerts page shell', () => {
 		).toHaveAttribute('aria-selected', 'true');
 	});
 
-	test('AL-05 Triggered Alerts tab smoke', async ({ authedPage: page }) => {
+	test('TC-05 Triggered Alerts tab smoke', async ({ authedPage: page }) => {
 		// Known application defect, out of scope here: an icon on this tab renders
 		// with a NaN dimension ("<svg> attribute viewBox: Expected number, \"0 0 32
 		// NaN\""). Ignore that one string so the rest of the console guard still
@@ -101,7 +101,7 @@ test.describe('Alerts page shell', () => {
 		expect(watch.failedResponses).toEqual([]);
 	});
 
-	test('AL-06 Notification Channels tab smoke', async ({
+	test('TC-06 Notification Channels tab smoke', async ({
 		authedPage: page,
 		alertChannel,
 	}) => {
@@ -114,7 +114,7 @@ test.describe('Alerts page shell', () => {
 		).toBeVisible();
 	});
 
-	test('AL-07 tab state survives reload', async ({ authedPage: page }) => {
+	test('TC-07 tab state survives reload', async ({ authedPage: page }) => {
 		await page.goto(`${ALERTS_LIST_PATH}?tab=Channels`);
 		await expect(
 			page.getByRole('tab', { name: TAB_NAMES.channels }),

@@ -6,7 +6,7 @@ import {
 } from '../../../helpers/alerts';
 
 test.describe('Alert details — actions', () => {
-	test('AD-06 enable/disable toggle changes the rule state', async ({
+	test('TC-01 enable/disable toggle changes the rule state', async ({
 		authedPage: page,
 		ownedRules,
 	}) => {
@@ -43,7 +43,7 @@ test.describe('Alert details — actions', () => {
 		await expect(page.getByText('Alert has been enabled.')).toBeVisible();
 	});
 
-	test('AD-07 Duplicate creates a copy and navigates to overview', async ({
+	test('TC-02 Duplicate creates a copy and navigates to overview', async ({
 		authedPage: page,
 		ownedRules,
 	}) => {
@@ -70,7 +70,7 @@ test.describe('Alert details — actions', () => {
 		await expect(page.getByText(`${name} - Copy`)).toBeVisible();
 	});
 
-	test('AD-08 Delete removes the rule and returns to the list', async ({
+	test('TC-03 Delete removes the rule and returns to the list', async ({
 		authedPage: page,
 		ownedRules,
 	}) => {

@@ -6,7 +6,7 @@ import {
 } from '../../../helpers/alerts';
 
 test.describe('Alert details — rename', () => {
-	test('AD-03 v1 rename via modal updates the rule name', async ({
+	test('TC-01 v1 rename via modal updates the rule name', async ({
 		authedPage: page,
 		ownedRules,
 	}) => {
@@ -33,7 +33,7 @@ test.describe('Alert details — rename', () => {
 		await expect(page.getByText(renamed)).toBeVisible();
 	});
 
-	test('AD-04 v2 inline rename saves via Overview footer button', async ({
+	test('TC-02 v2 inline rename saves via Overview footer button', async ({
 		authedPage: page,
 		ownedRules,
 	}) => {

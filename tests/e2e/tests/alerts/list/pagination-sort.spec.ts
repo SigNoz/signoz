@@ -6,7 +6,7 @@ import {
 } from '../../../helpers/alerts';
 
 test.describe('Alert rules list — pagination and sorting', () => {
-	test('LR-07 navigates between pages', async ({
+	test('TC-01 navigates between pages', async ({
 		authedPage: page,
 		alertList,
 	}) => {
@@ -28,7 +28,7 @@ test.describe('Alert rules list — pagination and sorting', () => {
 		);
 	});
 
-	test('LR-08 changes page size', async ({ authedPage: page, alertList }) => {
+	test('TC-02 changes page size', async ({ authedPage: page, alertList }) => {
 		await gotoAlertList(page, { search: alertList.namePrefix });
 		await expect(alertRuleRows(page)).toHaveCount(ALERT_LIST_PAGE_SIZE);
 

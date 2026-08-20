@@ -17,7 +17,7 @@ import {
 import { gotoAlertOverview } from '../../../helpers/alerts';
 import { watchConsole } from '../../../helpers/common';
 
-// EV2-* — editing a rule whose `schemaVersion` is `v2alpha1`.
+// TC-* — editing a rule whose `schemaVersion` is `v2alpha1`.
 //
 // Unless a scenario says otherwise these run through `/alerts/overview?ruleId=`,
 // which is the route the rules list's Edit action actually uses. EV2-12 is the
@@ -45,7 +45,7 @@ function isRuleUpdate(url: string, method: string, ruleId: string): boolean {
 }
 
 test.describe('Alert edit — v2 rule', () => {
-	test('EV2-01 the v2 editor renders inside the details shell', async ({
+	test('TC-01 the v2 editor renders inside the details shell', async ({
 		authedPage: page,
 		ownedRules,
 	}) => {
@@ -70,7 +70,7 @@ test.describe('Alert edit — v2 rule', () => {
 		).toBeHidden();
 	});
 
-	test('EV2-02 name and labels prefill from the rule', async ({
+	test('TC-02 name and labels prefill from the rule', async ({
 		authedPage: page,
 		ownedRules,
 	}) => {
@@ -87,7 +87,7 @@ test.describe('Alert edit — v2 rule', () => {
 		await expect(page.getByTestId('label-pill-team-payments')).toBeVisible();
 	});
 
-	test('EV2-03 both thresholds prefill, and the sentence reads spec[0]', async ({
+	test('TC-03 both thresholds prefill, and the sentence reads spec[0]', async ({
 		authedPage: page,
 		ownedRules,
 		alertChannel,
@@ -141,7 +141,7 @@ test.describe('Alert edit — v2 rule', () => {
 		).toContainText(ThresholdMatchType.ALL_THE_TIME.label);
 	});
 
-	test('EV2-04 the recovery threshold control never renders', async ({
+	test('TC-04 the recovery threshold control never renders', async ({
 		authedPage: page,
 		ownedRules,
 	}) => {
@@ -163,7 +163,7 @@ test.describe('Alert edit — v2 rule', () => {
 		).toHaveCount(0);
 	});
 
-	test('EV2-05 the evaluation window prefills, and a non-preset value collapses to custom', async ({
+	test('TC-05 the evaluation window prefills, and a non-preset value collapses to custom', async ({
 		authedPage: page,
 		ownedRules,
 	}) => {
@@ -199,7 +199,7 @@ test.describe('Alert edit — v2 rule', () => {
 		);
 	});
 
-	test('EV2-06 repeat notifications prefill from the seeded renotify block', async ({
+	test('TC-06 repeat notifications prefill from the seeded renotify block', async ({
 		authedPage: page,
 		ownedRules,
 	}) => {
@@ -228,7 +228,7 @@ test.describe('Alert edit — v2 rule', () => {
 		).toContainText('Firing');
 	});
 
-	test('EV2-07 alertOnAbsent prefills the advanced options', async ({
+	test('TC-07 alertOnAbsent prefills the advanced options', async ({
 		authedPage: page,
 		ownedRules,
 	}) => {
@@ -254,7 +254,7 @@ test.describe('Alert edit — v2 rule', () => {
 		).toBeHidden();
 	});
 
-	test('EV2-08 the evaluation cadence always reads back in default mode', async ({
+	test('TC-08 the evaluation cadence always reads back in default mode', async ({
 		authedPage: page,
 		ownedRules,
 	}) => {
@@ -279,7 +279,7 @@ test.describe('Alert edit — v2 rule', () => {
 		await expect(page.locator('.edit-custom-schedule')).toHaveCount(0);
 	});
 
-	test('EV2-09 changing a threshold PUTs the rule and the change survives a reload', async ({
+	test('TC-09 changing a threshold PUTs the rule and the change survives a reload', async ({
 		authedPage: page,
 		ownedRules,
 	}) => {
@@ -318,7 +318,7 @@ test.describe('Alert edit — v2 rule', () => {
 		);
 	});
 
-	test('EV2-10 the footer save is what persists a rename made on the Overview tab', async ({
+	test('TC-10 the footer save is what persists a rename made on the Overview tab', async ({
 		authedPage: page,
 		ownedRules,
 	}) => {
@@ -347,7 +347,7 @@ test.describe('Alert edit — v2 rule', () => {
 		await expect(page.getByTestId('alert-name-input')).toHaveValue(renamed);
 	});
 
-	test('EV2-11 Discard leaves without a PUT and without touching the rule', async ({
+	test('TC-11 Discard leaves without a PUT and without touching the rule', async ({
 		authedPage: page,
 		ownedRules,
 	}) => {
@@ -381,7 +381,7 @@ test.describe('Alert edit — v2 rule', () => {
 		await expect(page.getByTestId('alert-name-input')).toHaveValue(name);
 	});
 
-	test('EV2-12 /alerts/edit is a legacy alias that redirects into the details shell', async ({
+	test('TC-12 /alerts/edit is a legacy alias that redirects into the details shell', async ({
 		authedPage: page,
 		ownedRules,
 	}) => {

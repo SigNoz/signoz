@@ -17,7 +17,7 @@ import { collectRequests } from '../../../helpers/common';
 import { typeExpression } from '../../../helpers/query-builder';
 
 test.describe('Alert history — error and empty states', () => {
-	test('AE-01 invalid filter expression shows syntax error and recovers on fix', async ({
+	test('TC-01 invalid filter expression shows syntax error and recovers on fix', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -45,7 +45,7 @@ test.describe('Alert history — error and empty states', () => {
 		await expect(timelineRows(page)).toHaveCount(1);
 	});
 
-	test('AE-02 empty filter_keys response still mounts editor (no suggestions)', async ({
+	test('TC-02 empty filter_keys response still mounts editor (no suggestions)', async ({
 		authedPage: page,
 		emptyHistory,
 	}) => {
@@ -68,7 +68,7 @@ test.describe('Alert history — error and empty states', () => {
 		).toContainText('anything.at.all');
 	});
 
-	test('AE-02b bogus ruleId never reaches history APIs (shows AlertNotFound)', async ({
+	test('TC-03 bogus ruleId never reaches history APIs (shows AlertNotFound)', async ({
 		authedPage: page,
 	}) => {
 		const requests = collectRequests(page);
@@ -83,7 +83,7 @@ test.describe('Alert history — error and empty states', () => {
 		);
 	});
 
-	test('AE-03 rule with no history renders empty state (not error)', async ({
+	test('TC-04 rule with no history renders empty state (not error)', async ({
 		authedPage: page,
 		emptyHistory,
 	}) => {
@@ -100,7 +100,7 @@ test.describe('Alert history — error and empty states', () => {
 		await expect(page.getByTestId('timeline-error')).toHaveCount(0);
 	});
 
-	test('AE-04 time range with no data renders empty state', async ({
+	test('TC-05 time range with no data renders empty state', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -118,7 +118,7 @@ test.describe('Alert history — error and empty states', () => {
 		await expect(page.getByTestId('timeline-error')).toHaveCount(0);
 	});
 
-	test('AE-05 time-range change resets pagination to first page', async ({
+	test('TC-06 time-range change resets pagination to first page', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -131,7 +131,7 @@ test.describe('Alert history — error and empty states', () => {
 		await expectFirstPage(page);
 	});
 
-	test('AE-06 absurd time range (90d) still renders', async ({
+	test('TC-07 absurd time range (90d) still renders', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -144,7 +144,7 @@ test.describe('Alert history — error and empty states', () => {
 		);
 	});
 
-	test('AE-07 disabled rule history is still readable', async ({
+	test('TC-08 disabled rule history is still readable', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -156,7 +156,7 @@ test.describe('Alert history — error and empty states', () => {
 		);
 	});
 
-	test('AE-08 deleted rule shows AlertNotFound on revisit', async ({
+	test('TC-09 deleted rule shows AlertNotFound on revisit', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {

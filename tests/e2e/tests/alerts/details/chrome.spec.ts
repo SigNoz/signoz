@@ -2,7 +2,7 @@ import { expect, test } from '../../../fixtures/alert-history';
 import { ALERTS_LIST_PATH, gotoAlertHistory } from '../../../helpers/alerts';
 
 test.describe('Alert details — page chrome', () => {
-	test('AD-09 copy-link button copies the current URL to clipboard', async ({
+	test('TC-01 copy-link button copies the current URL to clipboard', async ({
 		authedPage: page,
 		alertHistory,
 		browserName,
@@ -23,7 +23,7 @@ test.describe('Alert details — page chrome', () => {
 		expect(copied).toBe(expected);
 	});
 
-	test('AD-10 breadcrumb navigates back to the alert list', async ({
+	test('TC-02 breadcrumb navigates back to the alert list', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -38,7 +38,7 @@ test.describe('Alert details — page chrome', () => {
 		await expect(page).toHaveURL(new RegExp(`${ALERTS_LIST_PATH}$`));
 	});
 
-	test('AD-13 document title updates to show the rule name', async ({
+	test('TC-03 document title updates to show the rule name', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {

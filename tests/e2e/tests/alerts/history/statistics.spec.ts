@@ -6,7 +6,7 @@ import {
 } from '../../../helpers/alerts';
 
 test.describe('Alert history — statistics', () => {
-	test('AS-01 Total Triggered card shows the firing count', async ({
+	test('TC-01 Total Triggered card shows the firing count', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -20,7 +20,7 @@ test.describe('Alert history — statistics', () => {
 		);
 	});
 
-	test('AS-02 Avg. Resolution Time card shows "No Resolutions." when none exist', async ({
+	test('TC-02 Avg. Resolution Time card shows "No Resolutions." when none exist', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -35,7 +35,7 @@ test.describe('Alert history — statistics', () => {
 		await expect(card.getByTestId('stats-card-sparkline')).toHaveCount(0);
 	});
 
-	test('AS-03 empty stats card never renders a sparkline', async ({
+	test('TC-03 empty stats card never renders a sparkline', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -47,7 +47,7 @@ test.describe('Alert history — statistics', () => {
 	});
 
 	// eslint-disable-next-line playwright/expect-expect -- documented coverage gap
-	test('AS-03b sparkline present with a multi-point series', async () => {
+	test('TC-04 sparkline present with a multi-point series', async () => {
 		test.skip(
 			true,
 			'Not deterministic on SEED-A: whether `currentTriggersSeries` lands in ' +
@@ -58,7 +58,7 @@ test.describe('Alert history — statistics', () => {
 		);
 	});
 
-	test('AS-04 change-vs-past indicator shows "no previous data" when unavailable', async ({
+	test('TC-05 change-vs-past indicator shows "no previous data" when unavailable', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -70,7 +70,7 @@ test.describe('Alert history — statistics', () => {
 		);
 	});
 
-	test('AS-09 stats update when time range changes', async ({
+	test('TC-06 stats update when time range changes', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -94,7 +94,7 @@ test.describe('Alert history — statistics', () => {
 		).toHaveText(String(alertHistory.total));
 	});
 
-	test('AS-11 Avg. Resolution Time shows formatted duration when resolutions exist', async ({
+	test('TC-07 Avg. Resolution Time shows formatted duration when resolutions exist', async ({
 		authedPage: page,
 		resolvedHistory,
 	}) => {
@@ -109,7 +109,7 @@ test.describe('Alert history — statistics', () => {
 		await expect(card.getByTestId('stats-card-sparkline')).toHaveCount(0);
 	});
 
-	test('AS-12 Total Triggered counts only firing rows (not resolved)', async ({
+	test('TC-08 Total Triggered counts only firing rows (not resolved)', async ({
 		authedPage: page,
 		resolvedHistory,
 	}) => {

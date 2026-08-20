@@ -10,7 +10,7 @@ test.describe('Notification channels — edit', () => {
 	// channel id out of the old pathname, so every save PUT went to an empty id
 	// and no edit ever persisted. Nothing in the suite navigated into the edit
 	// page, so the whole class of "edits silently do nothing" was invisible.
-	test('NC-01 an edited recipient persists after reload', async ({
+	test('TC-01 an edited recipient persists after reload', async ({
 		authedPage: page,
 	}) => {
 		// The channel *name* is read-only on the edit page, so the editable field

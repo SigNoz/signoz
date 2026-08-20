@@ -6,7 +6,7 @@ import {
 import { gotoAlertDetails } from '../../../helpers/alerts';
 
 test.describe('Alert details — header', () => {
-	test('AD-01 v2 header shows editable name input without Rename menu item', async ({
+	test('TC-01 v2 header shows editable name input without Rename menu item', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -28,7 +28,7 @@ test.describe('Alert details — header', () => {
 		await expect(page.getByRole('menuitem', { name: 'Rename' })).toHaveCount(0);
 	});
 
-	test('AD-02 v1 header shows static title with state, severity and labels', async ({
+	test('TC-02 v1 header shows static title with state, severity and labels', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {

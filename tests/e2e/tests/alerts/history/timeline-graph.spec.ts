@@ -7,7 +7,7 @@ import {
 import { watchConsole } from '../../../helpers/common';
 
 test.describe('Alert history — timeline graph', () => {
-	test('AT-03 renders canvas with two segments (inactive→firing)', async ({
+	test('TC-01 renders canvas with two segments (inactive→firing)', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -38,7 +38,7 @@ test.describe('Alert history — timeline graph', () => {
 		expect(watch.failedResponses).toEqual([]);
 	});
 
-	test('AT-03b renders canvas with three segments (inactive→firing→inactive)', async ({
+	test('TC-02 renders canvas with three segments (inactive→firing→inactive)', async ({
 		authedPage: page,
 		resolvedHistory,
 	}) => {
@@ -63,7 +63,7 @@ test.describe('Alert history — timeline graph', () => {
 		expect(watch.failedResponses).toEqual([]);
 	});
 
-	test('AT-19 handles nodata state without console errors', async ({
+	test('TC-03 handles nodata state without console errors', async ({
 		authedPage: page,
 		noDataHistory,
 	}) => {

@@ -2,7 +2,7 @@ import { expect, test } from '../../../fixtures/alert-history';
 import { gotoAlertHistory } from '../../../helpers/alerts';
 
 test.describe('Alert history — top contributors', () => {
-	test('AS-05 card displays max 3 rows with count ratios', async ({
+	test('TC-01 card displays max 3 rows with count ratios', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -26,7 +26,7 @@ test.describe('Alert history — top contributors', () => {
 	// the bar does. Dropping the `/ total * 100` scaling from the bar leaves that
 	// text untouched, so the width needs its own assertion. Radix surfaces the
 	// clamped percent as `aria-valuenow`.
-	test('AS-13 contributor bar width is the count as a percentage of the total', async ({
+	test('TC-02 contributor bar width is the count as a percentage of the total', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -47,7 +47,7 @@ test.describe('Alert history — top contributors', () => {
 		}
 	});
 
-	test('AS-06 "View all" button only appears when more than 3 contributors', async ({
+	test('TC-03 "View all" button only appears when more than 3 contributors', async ({
 		authedPage: page,
 		alertHistory,
 		metricsHistory,
@@ -60,7 +60,7 @@ test.describe('Alert history — top contributors', () => {
 		await expect(page.getByTestId('top-contributors-view-all')).toHaveCount(0);
 	});
 
-	test('AS-07 View-all drawer shows paginated list of all contributors', async ({
+	test('TC-04 View-all drawer shows paginated list of all contributors', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -77,7 +77,7 @@ test.describe('Alert history — top contributors', () => {
 		);
 	});
 
-	test('AS-07b drawer opens from deep link with ?viewAllTopContributors=true', async ({
+	test('TC-05 drawer opens from deep link with ?viewAllTopContributors=true', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -88,7 +88,7 @@ test.describe('Alert history — top contributors', () => {
 		await expect(page.getByTestId('top-contributors-drawer')).toBeVisible();
 	});
 
-	test('AS-08 View-all click adds ?viewAllTopContributors=true to URL', async ({
+	test('TC-06 View-all click adds ?viewAllTopContributors=true to URL', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -99,7 +99,7 @@ test.describe('Alert history — top contributors', () => {
 		await expect(page.getByTestId('top-contributors-drawer')).toBeVisible();
 	});
 
-	test('AS-10 contributor rows show related-logs link for logs-based rules', async ({
+	test('TC-07 contributor rows show related-logs link for logs-based rules', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {

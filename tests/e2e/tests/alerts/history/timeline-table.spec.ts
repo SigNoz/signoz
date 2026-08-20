@@ -8,7 +8,7 @@ import {
 } from '../../../helpers/alerts';
 
 test.describe('Alert history — timeline table', () => {
-	test('AT-01 timeline section renders all chrome elements', async ({
+	test('TC-01 timeline section renders all chrome elements', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -23,7 +23,7 @@ test.describe('Alert history — timeline table', () => {
 		await expect(page.getByTestId('timeline-table')).toBeVisible();
 	});
 
-	test('AT-02 Top 5 Contributors tab is disabled with Coming Soon indicator', async ({
+	test('TC-02 Top 5 Contributors tab is disabled with Coming Soon indicator', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -34,7 +34,7 @@ test.describe('Alert history — timeline table', () => {
 		await expect(tab).toContainText('Coming Soon');
 	});
 
-	test('AT-04 table rows display state, labels and formatted timestamp', async ({
+	test('TC-03 table rows display state, labels and formatted timestamp', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -52,7 +52,7 @@ test.describe('Alert history — timeline table', () => {
 		);
 	});
 
-	test('AT-05 footer shows correct row range', async ({
+	test('TC-04 footer shows correct row range', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -63,7 +63,7 @@ test.describe('Alert history — timeline table', () => {
 		);
 	});
 
-	test('AT-14 row click does not navigate away', async ({
+	test('TC-05 row click does not navigate away', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -76,7 +76,7 @@ test.describe('Alert history — timeline table', () => {
 		await expect(page.getByTestId('timeline-table')).toBeVisible();
 	});
 
-	test('AT-15 row actions link navigates to logs explorer', async ({
+	test('TC-06 row actions link navigates to logs explorer', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -95,7 +95,7 @@ test.describe('Alert history — timeline table', () => {
 		expect(page.url()).toContain('compositeQuery');
 	});
 
-	test('AT-15b row actions link navigates to traces explorer', async ({
+	test('TC-07 row actions link navigates to traces explorer', async ({
 		authedPage: page,
 		tracesHistory,
 	}) => {
@@ -117,7 +117,7 @@ test.describe('Alert history — timeline table', () => {
 		expect(page.url()).toContain('compositeQuery');
 	});
 
-	test('AT-16 metrics rule rows show disabled action (no related links)', async ({
+	test('TC-08 metrics rule rows show disabled action (no related links)', async ({
 		authedPage: page,
 		metricsHistory,
 	}) => {
@@ -130,7 +130,7 @@ test.describe('Alert history — timeline table', () => {
 		await expect(page.getByTestId('alert-popover-view-traces')).toHaveCount(0);
 	});
 
-	test('AT-17 CREATED AT column respects app timezone setting', async ({
+	test('TC-09 CREATED AT column respects app timezone setting', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -147,7 +147,7 @@ test.describe('Alert history — timeline table', () => {
 		expect(await firstTimelineRowCreatedAt(page)).not.toBe(utcCell);
 	});
 
-	test('AT-18 state cell renders Firing, Resolved, and No Data correctly', async ({
+	test('TC-10 state cell renders Firing, Resolved, and No Data correctly', async ({
 		authedPage: page,
 		resolvedHistory,
 		noDataHistory,
@@ -166,7 +166,7 @@ test.describe('Alert history — timeline table', () => {
 	});
 
 	// eslint-disable-next-line playwright/expect-expect -- documented coverage gap
-	test('AT-18b pending/recovering states render blank (coverage gap)', async () => {
+	test('TC-11 pending/recovering states render blank (coverage gap)', async () => {
 		test.skip(
 			true,
 			'Needs SEED-D (coverage doc §3.5): `pending` and `recovering` are ' +
@@ -177,7 +177,7 @@ test.describe('Alert history — timeline table', () => {
 	});
 
 	// eslint-disable-next-line playwright/expect-expect -- documented coverage gap
-	test('AT-18c disabled state renders as "Muted" (coverage gap)', async () => {
+	test('TC-12 disabled state renders as "Muted" (coverage gap)', async () => {
 		test.skip(
 			true,
 			'Needs SEED-D (coverage doc §3.5): a `disabled` history row is ' +
@@ -187,7 +187,7 @@ test.describe('Alert history — timeline table', () => {
 	});
 
 	// eslint-disable-next-line playwright/expect-expect -- documented coverage gap
-	test('AT-20 time-range boundaries inclusive/exclusive (coverage gap)', async () => {
+	test('TC-13 time-range boundaries inclusive/exclusive (coverage gap)', async () => {
 		test.skip(
 			true,
 			'Needs SEED-D (coverage doc §3.5): asserting a row exactly at `start` ' +

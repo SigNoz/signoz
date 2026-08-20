@@ -9,7 +9,7 @@ import {
 import { requestUrl } from '../../../helpers/common';
 
 test.describe('Alert history — state filter', () => {
-	test('AF-01 All filter sends no state param in request', async ({
+	test('TC-01 All filter sends no state param in request', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -27,7 +27,7 @@ test.describe('Alert history — state filter', () => {
 		expect(requestUrl(request).searchParams.get('state')).toBeNull();
 	});
 
-	test('AF-02 Fired filter sends state=firing in request', async ({
+	test('TC-02 Fired filter sends state=firing in request', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -44,7 +44,7 @@ test.describe('Alert history — state filter', () => {
 		await expect(timelineRows(page).first()).toBeVisible();
 	});
 
-	test('AF-03 Resolved filter shows empty for rule with no resolutions', async ({
+	test('TC-03 Resolved filter shows empty for rule with no resolutions', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -61,7 +61,7 @@ test.describe('Alert history — state filter', () => {
 		await expect(timelineRows(page)).toHaveCount(0);
 	});
 
-	test('AF-03b Resolved filter shows rows for rule with resolutions', async ({
+	test('TC-04 Resolved filter shows rows for rule with resolutions', async ({
 		authedPage: page,
 		resolvedHistory,
 	}) => {
@@ -82,7 +82,7 @@ test.describe('Alert history — state filter', () => {
 		await expect(timelineRows(page)).toHaveCount(resolvedHistory.firingCount);
 	});
 
-	test('AF-04 deep-link ?timelineFilter=FIRED starts on Fired tab', async ({
+	test('TC-05 deep-link ?timelineFilter=FIRED starts on Fired tab', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -96,7 +96,7 @@ test.describe('Alert history — state filter', () => {
 		await expect(timelineRows(page).first()).toBeVisible();
 	});
 
-	test('AF-05 changing state filter resets pagination to first page', async ({
+	test('TC-06 changing state filter resets pagination to first page', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {

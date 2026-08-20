@@ -13,7 +13,7 @@ import {
 import { requestUrl } from '../../../helpers/common';
 
 test.describe('Alert history — timeline pagination', () => {
-	test('AT-06 next page sends cursor and shows different rows', async ({
+	test('TC-01 next page sends cursor and shows different rows', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -42,7 +42,7 @@ test.describe('Alert history — timeline pagination', () => {
 		expect(await timelineRowLabels(page)).not.toEqual(firstPageLabels);
 	});
 
-	test('AT-07 prev page drops the cursor from request', async ({
+	test('TC-02 prev page drops the cursor from request', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -60,7 +60,7 @@ test.describe('Alert history — timeline pagination', () => {
 		);
 	});
 
-	test('AT-08 pagination buttons disable at first and last page', async ({
+	test('TC-03 pagination buttons disable at first and last page', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -74,7 +74,7 @@ test.describe('Alert history — timeline pagination', () => {
 		await expect(page.getByTestId('timeline-prev-page')).toBeEnabled();
 	});
 
-	test('AT-09 browser back after paging returns to previous page', async ({
+	test('TC-04 browser back after paging returns to previous page', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -91,7 +91,7 @@ test.describe('Alert history — timeline pagination', () => {
 		);
 	});
 
-	test('AT-10 deep-link ?page=2 loads second page directly', async ({
+	test('TC-05 deep-link ?page=2 loads second page directly', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -108,7 +108,7 @@ test.describe('Alert history — timeline pagination', () => {
 		);
 	});
 
-	test('AT-11 default sort order is ascending', async ({
+	test('TC-06 default sort order is ascending', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -122,7 +122,7 @@ test.describe('Alert history — timeline pagination', () => {
 		expect(requestUrl(request).searchParams.get('order')).toBe('asc');
 	});
 
-	test('AT-12 sorting toggles order and resets to first page', async ({
+	test('TC-07 sorting toggles order and resets to first page', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -134,7 +134,7 @@ test.describe('Alert history — timeline pagination', () => {
 		await expectFirstPage(page);
 	});
 
-	test('AT-13 single page disables both pagination buttons', async ({
+	test('TC-08 single page disables both pagination buttons', async ({
 		authedPage: page,
 		metricsHistory,
 	}) => {
@@ -148,7 +148,7 @@ test.describe('Alert history — timeline pagination', () => {
 		);
 	});
 
-	test('AT-21 all pages together cover the complete row set', async ({
+	test('TC-09 all pages together cover the complete row set', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {

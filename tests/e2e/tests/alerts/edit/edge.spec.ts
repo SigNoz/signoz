@@ -2,7 +2,7 @@ import { expect, test } from '../../../fixtures/alert-rules';
 import { ALERT_EDIT_PATH } from '../../../helpers/alert-forms';
 import { ALERT_OVERVIEW_PATH } from '../../../helpers/alerts';
 
-// CE-03 — what the edit routes do with an unknown ruleId.
+// TC-* — what the edit routes do with an unknown ruleId.
 //
 // `pages/EditRules`'s own error branches are unreachable: `/alerts/edit` is a
 // legacy alias redirected to `/alerts/overview` before any route matches
@@ -14,7 +14,7 @@ import { ALERT_OVERVIEW_PATH } from '../../../helpers/alerts';
 const UNKNOWN_RULE_ID = '999999999';
 
 test.describe('Alert edit — routing edges', () => {
-	test('CE-03 an unknown ruleId shows AlertNotFound on both entry URLs', async ({
+	test('TC-01 an unknown ruleId shows AlertNotFound on both entry URLs', async ({
 		authedPage: page,
 	}) => {
 		for (const entry of [
@@ -40,7 +40,7 @@ test.describe('Alert edit — routing edges', () => {
 		}
 	});
 
-	test('CE-03b /alerts/edit with no ruleId also lands on AlertNotFound', async ({
+	test('TC-02 /alerts/edit with no ruleId also lands on AlertNotFound', async ({
 		authedPage: page,
 	}) => {
 		await page.goto(ALERT_EDIT_PATH);

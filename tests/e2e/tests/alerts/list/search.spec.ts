@@ -8,7 +8,7 @@ import {
 } from '../../../helpers/alerts';
 
 test.describe('Alert rules list — search', () => {
-	test('LR-03 filters by name', async ({ authedPage: page, alertList }) => {
+	test('TC-01 filters by name', async ({ authedPage: page, alertList }) => {
 		await gotoAlertList(page);
 
 		await page
@@ -20,7 +20,7 @@ test.describe('Alert rules list — search', () => {
 		await expect(page.getByText(`${alertList.namePrefix}-03`)).toBeVisible();
 	});
 
-	test('LR-04 filters by severity and by label', async ({
+	test('TC-02 filters by severity and by label', async ({
 		authedPage: page,
 		alertList,
 	}) => {
@@ -42,7 +42,7 @@ test.describe('Alert rules list — search', () => {
 		await expect(alertRuleRows(page)).toHaveCount(alertList.count / 2);
 	});
 
-	test('LR-05 shows no-results state with clear button', async ({
+	test('TC-03 shows no-results state with clear button', async ({
 		authedPage: page,
 		alertList,
 	}) => {
@@ -60,7 +60,7 @@ test.describe('Alert rules list — search', () => {
 		await expect(alertRuleRows(page)).toHaveCount(ALERT_LIST_PAGE_SIZE);
 	});
 
-	test('LR-06 resets pagination when searching', async ({
+	test('TC-04 resets pagination when searching', async ({
 		authedPage: page,
 		alertList,
 	}) => {
@@ -72,7 +72,7 @@ test.describe('Alert rules list — search', () => {
 		await expectFirstPage(page);
 	});
 
-	test('LR-19 state and severity filters intersect, they do not union', async ({
+	test('TC-05 state and severity filters intersect, they do not union', async ({
 		authedPage: page,
 		alertList,
 	}) => {

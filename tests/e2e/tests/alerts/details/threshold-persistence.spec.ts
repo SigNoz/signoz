@@ -4,7 +4,7 @@ import { gotoAlertOverview } from '../../../helpers/alerts';
 const TARGET = 245;
 
 test.describe('Alert overview — threshold persistence', () => {
-	test('TC-02 edit page displays the saved threshold value', async ({
+	test('TC-01 edit page displays the saved threshold value', async ({
 		authedPage: page,
 		ownedRules,
 	}) => {

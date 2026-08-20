@@ -13,7 +13,7 @@ import { requestUrl } from '../../../helpers/common';
 import { typeExpression } from '../../../helpers/query-builder';
 
 test.describe('Alert history — expression filter', () => {
-	test('AF-06 key suggestions load on page load', async ({
+	test('TC-01 key suggestions load on page load', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -39,7 +39,7 @@ test.describe('Alert history — expression filter', () => {
 		await expect(page.getByTestId('timeline-filter-skeleton')).toHaveCount(0);
 	});
 
-	test('AF-07 value suggestions fetch from filter_values endpoint', async ({
+	test('TC-02 value suggestions fetch from filter_values endpoint', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -63,7 +63,7 @@ test.describe('Alert history — expression filter', () => {
 		expect(body.data?.complete).toBe(true);
 	});
 
-	test('AF-08 value suggestions filter client-side as user types', async ({
+	test('TC-03 value suggestions filter client-side as user types', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -81,7 +81,7 @@ test.describe('Alert history — expression filter', () => {
 		}
 	});
 
-	test('AF-09 running equality expression filters the table', async ({
+	test('TC-04 running equality expression filters the table', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -101,7 +101,7 @@ test.describe('Alert history — expression filter', () => {
 		await expect(page).toHaveURL(/[?&]alertHistoryExpression=/);
 	});
 
-	test('AF-10 running expression resets pagination to first page', async ({
+	test('TC-05 running expression resets pagination to first page', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -118,7 +118,7 @@ test.describe('Alert history — expression filter', () => {
 		await expectFirstPage(page);
 	});
 
-	test('AF-11 Run button re-fetches unchanged expression', async ({
+	test('TC-06 Run button re-fetches unchanged expression', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -138,7 +138,7 @@ test.describe('Alert history — expression filter', () => {
 		await expect(timelineRows(page)).toHaveCount(1);
 	});
 
-	test('AF-12 in-flight query can be cancelled', async ({
+	test('TC-07 in-flight query can be cancelled', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -166,7 +166,7 @@ test.describe('Alert history — expression filter', () => {
 		await expect(page.getByRole('button', { name: /run query/i })).toBeVisible();
 	});
 
-	test('AF-13 threshold.name and severity keys filter correctly', async ({
+	test('TC-08 threshold.name and severity keys filter correctly', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -201,7 +201,7 @@ test.describe('Alert history — expression filter', () => {
 		await expect(timelineRows(page)).toHaveCount(0);
 	});
 
-	test('AF-14 unknown key returns 200 with zero rows (not 500)', async ({
+	test('TC-09 unknown key returns 200 with zero rows (not 500)', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -216,7 +216,7 @@ test.describe('Alert history — expression filter', () => {
 		await expect(page.getByTestId('timeline-error')).toHaveCount(0);
 	});
 
-	test('AF-15 expression is lost on Overview→History round-trip (known bug)', async ({
+	test('TC-10 expression is lost on Overview→History round-trip (known bug)', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -238,7 +238,7 @@ test.describe('Alert history — expression filter', () => {
 		await expect(timelineRows(page)).toHaveCount(TIMELINE_PAGE_SIZE);
 	});
 
-	test('AF-16 expression and state filter compose in request', async ({
+	test('TC-11 expression and state filter compose in request', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -259,7 +259,7 @@ test.describe('Alert history — expression filter', () => {
 		await expect(timelineRows(page)).toHaveCount(1);
 	});
 
-	test('AF-17 clearing expression restores full unfiltered list', async ({
+	test('TC-12 clearing expression restores full unfiltered list', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {

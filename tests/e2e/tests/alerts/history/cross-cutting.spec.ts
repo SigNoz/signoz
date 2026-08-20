@@ -19,7 +19,7 @@ import {
 } from '../../../helpers/common';
 
 test.describe('Alert history — cross-cutting', () => {
-	test('AX-01 full deep-link with all params is honoured in one load', async ({
+	test('TC-01 full deep-link with all params is honoured in one load', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -40,7 +40,7 @@ test.describe('Alert history — cross-cutting', () => {
 		await expect(timelineRows(page)).toHaveCount(1);
 	});
 
-	test('AX-02 page reload preserves all history params', async ({
+	test('TC-02 page reload preserves all history params', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -60,7 +60,7 @@ test.describe('Alert history — cross-cutting', () => {
 		}
 	});
 
-	test('AX-03 browser back/forward restores correct table state', async ({
+	test('TC-03 browser back/forward restores correct table state', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -87,7 +87,7 @@ test.describe('Alert history — cross-cutting', () => {
 		);
 	});
 
-	test('AX-04 no unhandled console errors across full history session', async ({
+	test('TC-04 no unhandled console errors across full history session', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -106,7 +106,7 @@ test.describe('Alert history — cross-cutting', () => {
 		expect(watch.failedResponses).toEqual([]);
 	});
 
-	test('AX-05 no request storm on mount (exactly one call per endpoint)', async ({
+	test('TC-05 no request storm on mount (exactly one call per endpoint)', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -124,7 +124,7 @@ test.describe('Alert history — cross-cutting', () => {
 		}
 	});
 
-	test('AX-06 v1 and v2 schema rules both render history correctly', async ({
+	test('TC-06 v1 and v2 schema rules both render history correctly', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -144,7 +144,7 @@ test.describe('Alert history — cross-cutting', () => {
 		}
 	});
 
-	test('AX-07 no legacy v1 history API calls during full session', async ({
+	test('TC-07 no legacy v1 history API calls during full session', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -174,7 +174,7 @@ test.describe('Alert history — cross-cutting', () => {
 		}
 	});
 
-	test('AX-08 history API endpoints carry expected params', async ({
+	test('TC-08 history API endpoints carry expected params', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {

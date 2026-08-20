@@ -2,7 +2,7 @@ import { expect, test } from '../../../fixtures/alert-rules';
 import { alertRuleRows, gotoAlertList } from '../../../helpers/alerts';
 
 test.describe('Alert rules list — row actions', () => {
-	test('LR-14 Disable then Enable toggles the rule state', async ({
+	test('TC-01 Disable then Enable toggles the rule state', async ({
 		authedPage: page,
 		ownedRules,
 	}) => {
@@ -40,7 +40,7 @@ test.describe('Alert rules list — row actions', () => {
 		await expect(row.getByTestId(`alert-row-${ruleId}-state`)).toHaveText('OK');
 	});
 
-	test('LR-15 Clone creates a copy and shows success toast', async ({
+	test('TC-02 Clone creates a copy and shows success toast', async ({
 		authedPage: page,
 		ownedRules,
 	}) => {
@@ -67,7 +67,7 @@ test.describe('Alert rules list — row actions', () => {
 		await expect(page.getByText(`${name} - Copy`)).toBeVisible();
 	});
 
-	test('LR-16 Delete removes the rule and shows success toast', async ({
+	test('TC-03 Delete removes the rule and shows success toast', async ({
 		authedPage: page,
 		ownedRules,
 	}) => {

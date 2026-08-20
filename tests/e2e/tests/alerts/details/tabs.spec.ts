@@ -8,7 +8,7 @@ import {
 } from '../../../helpers/alerts';
 
 test.describe('Alert details — tabs', () => {
-	test('AD-05 Overview/History tabs preserve ruleId and relativeTime', async ({
+	test('TC-01 Overview/History tabs preserve ruleId and relativeTime', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {
@@ -31,7 +31,7 @@ test.describe('Alert details — tabs', () => {
 		await expect(page).toHaveURL(new RegExp(`ruleId=${alertHistory.ruleId}`));
 	});
 
-	test('AD-05b switching to History tab discards other history params', async ({
+	test('TC-02 switching to History tab discards other history params', async ({
 		authedPage: page,
 		alertHistory,
 	}) => {

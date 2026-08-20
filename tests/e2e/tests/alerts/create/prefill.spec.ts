@@ -14,7 +14,7 @@ import {
 } from '../../../helpers/alert-forms';
 import { gotoAlertOverview } from '../../../helpers/alerts';
 
-// CD-* — deep-link prefill.
+// TC-* — deep-link prefill.
 //
 // The contract is producer-agnostic (`context/resolveUrlAlertPrefill.ts`), but the
 // three producers do **not** write the same params: dashboards
@@ -67,7 +67,7 @@ function prefillUrl(params: Record<string, string>): string {
 }
 
 test.describe('Alert create — deep-link prefill', () => {
-	test('CD-01 a compositeQuery alone selects the alert type', async ({
+	test('TC-01 a compositeQuery alone selects the alert type', async ({
 		authedPage: page,
 	}) => {
 		const compositeQuery = await harvestCompositeQuery(page, AlertType.LOGS);
@@ -98,7 +98,7 @@ test.describe('Alert create — deep-link prefill', () => {
 		);
 	});
 
-	test('CD-02 thresholds prefill from JSON, and a malformed value falls back', async ({
+	test('TC-02 thresholds prefill from JSON, and a malformed value falls back', async ({
 		authedPage: page,
 	}) => {
 		const base = {
@@ -139,7 +139,7 @@ test.describe('Alert create — deep-link prefill', () => {
 		);
 	});
 
-	test('CD-03 matchType and compareOp aliases normalise to the enum', async ({
+	test('TC-03 matchType and compareOp aliases normalise to the enum', async ({
 		authedPage: page,
 	}) => {
 		// `avg` and `<` are aliases the *backend* accepts (`normalizeMatchType` /
@@ -162,7 +162,7 @@ test.describe('Alert create — deep-link prefill', () => {
 		).toContainText(ThresholdOperator.BELOW.label);
 	});
 
-	test('CD-04 ruleName and yAxisUnit apply once and never stomp an edit', async ({
+	test('TC-04 ruleName and yAxisUnit apply once and never stomp an edit', async ({
 		authedPage: page,
 	}) => {
 		const compositeQuery = await harvestCompositeQuery(page, AlertType.METRICS);
@@ -205,7 +205,7 @@ test.describe('Alert create — deep-link prefill', () => {
 		await expect(page.getByTestId('alert-name-input')).toHaveValue(edited);
 	});
 
-	test('CD-05 evaluationWindowPreset=meter switches to the cumulative daily window', async ({
+	test('TC-05 evaluationWindowPreset=meter switches to the cumulative daily window', async ({
 		authedPage: page,
 	}) => {
 		const compositeQuery = await harvestCompositeQuery(page, AlertType.METRICS);
@@ -227,7 +227,7 @@ test.describe('Alert create — deep-link prefill', () => {
 		);
 	});
 
-	test('CD-06 URL prefill is ignored in edit mode', async ({
+	test('TC-06 URL prefill is ignored in edit mode', async ({
 		authedPage: page,
 		ownedRules,
 	}) => {

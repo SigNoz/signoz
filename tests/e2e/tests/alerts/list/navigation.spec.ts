@@ -2,7 +2,7 @@ import { expect, test } from '../../../fixtures/alert-rules';
 import { alertRuleRows, gotoAlertList } from '../../../helpers/alerts';
 
 test.describe('Alert rules list — navigation', () => {
-	test('LR-11 row click opens the overview page', async ({
+	test('TC-01 row click opens the overview page', async ({
 		authedPage: page,
 		alertList,
 	}) => {
@@ -16,7 +16,7 @@ test.describe('Alert rules list — navigation', () => {
 		await expect(page).toHaveURL(/[?&]panelTypes=/);
 	});
 
-	test('LR-13 actions menu Edit and Edit in New Tab navigate correctly', async ({
+	test('TC-02 actions menu Edit and Edit in New Tab navigate correctly', async ({
 		authedPage: page,
 		alertList,
 	}) => {
@@ -40,7 +40,7 @@ test.describe('Alert rules list — navigation', () => {
 		await expect(page).toHaveURL(/[?&]ruleId=/);
 	});
 
-	test('LR-17 New Alert button navigates to alert creation', async ({
+	test('TC-03 New Alert button navigates to alert creation', async ({
 		authedPage: page,
 		alertList,
 	}) => {
