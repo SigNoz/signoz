@@ -1274,6 +1274,264 @@ func TestTimeSeriesPanelDefaults(t *testing.T) {
 	}
 }
 
+func TestAreaChartPanelDefaults(t *testing.T) {
+	data := []byte(`{
+		"variables": [],
+		"panels": {
+			"p1": {
+				"kind": "Panel",
+				"spec": {
+					"links": [],
+					"plugin": {
+						"kind": "signoz/AreaChartPanel",
+						"spec": {}
+					},
+					"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
+				}
+			}
+		},
+		"links": [],
+		"layouts": []
+	}`)
+	d, err := unmarshalDashboard(data)
+	require.NoError(t, err, "unmarshal and validate failed")
+
+	require.IsType(t, &AreaChartPanelSpec{}, d.Panels["p1"].Spec.Plugin.Spec)
+	spec := d.Panels["p1"].Spec.Plugin.Spec.(*AreaChartPanelSpec)
+
+	assert.Equal(t, "solid", spec.ChartAppearance.FillMode.ValueOrDefault(), "area fillMode defaults to solid, where the TimeSeries FillMode defaults to none")
+	assert.Nil(t, spec.ChartAppearance.FillOpacity, "an omitted fillOpacity stays nil so the renderer applies the kind default")
+	assert.Equal(t, "none", spec.Visualization.Stack.ValueOrDefault(), "expected Stack default none")
+	assert.Equal(t, "2", spec.Formatting.DecimalPrecision.ValueOrDefault(), "expected DecimalPrecision default 2")
+	assert.Equal(t, "spline", spec.ChartAppearance.LineInterpolation.ValueOrDefault(), "expected LineInterpolation default spline")
+	assert.Equal(t, "solid", spec.ChartAppearance.LineStyle.ValueOrDefault(), "expected LineStyle default solid")
+	assert.Equal(t, "global_time", spec.Visualization.TimePreference.ValueOrDefault(), "expected TimePreference default global_time")
+	assert.Equal(t, "bottom", spec.Legend.Position.ValueOrDefault(), "expected LegendPosition default bottom")
+	assert.Equal(t, "list", spec.Legend.Mode.ValueOrDefault(), "expected LegendMode default list")
+
+	output, err := json.Marshal(d)
+	require.NoError(t, err, "marshal dashboard failed")
+	outputStr := string(output)
+	for field, want := range map[string]string{
+		"fillMode":    `"solid"`,
+		"stack":       `"none"`,
+		"fillOpacity": `null`,
+	} {
+		assert.Contains(t, outputStr, `"`+field+`":`+want, "expected stored/response JSON to contain %s:%s", field, want)
+	}
+}
+
+func TestAreaChartPanelRoundTrip(t *testing.T) {
+	data := []byte(`{
+		"variables": [],
+		"panels": {
+			"p1": {
+				"kind": "Panel",
+				"spec": {
+					"links": [],
+					"plugin": {
+						"kind": "signoz/AreaChartPanel",
+						"spec": {
+							"visualization": {"timePreference": "global_time", "fillSpans": false, "stack": "percent"},
+							"chartAppearance": {"fillMode": "gradient", "fillOpacity": 0.4}
+						}
+					},
+					"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
+				}
+			}
+		},
+		"links": [],
+		"layouts": []
+	}`)
+	d, err := unmarshalDashboard(data)
+	require.NoError(t, err, "unmarshal and validate failed")
+
+	require.IsType(t, &AreaChartPanelSpec{}, d.Panels["p1"].Spec.Plugin.Spec)
+	spec := d.Panels["p1"].Spec.Plugin.Spec.(*AreaChartPanelSpec)
+
+	assert.Equal(t, "percent", spec.Visualization.Stack.ValueOrDefault(), "expected stack percent")
+	assert.Equal(t, "gradient", spec.ChartAppearance.FillMode.ValueOrDefault(), "expected fillMode gradient")
+
+	output, err := json.Marshal(d)
+	require.NoError(t, err, "marshal dashboard failed")
+	assert.Contains(t, string(output), `"stack":"percent"`, "expected stack in stored/response JSON")
+	assert.Contains(t, string(output), `"fillMode":"gradient"`, "expected fillMode in stored/response JSON")
+}
+
+func TestAreaChartPanelFillOpacity(t *testing.T) {
+	tests := []struct {
+		scenario                 string
+		chartAppearance          string
+		expectedFillOpacitySet   bool
+		expectedFillOpacityValue FillOpacity
+		expectedMarshalledJSON   string
+	}{
+		{
+			scenario:                 "zero is a set value, not an absent one",
+			chartAppearance:          `{"fillOpacity": 0}`,
+			expectedFillOpacitySet:   true,
+			expectedFillOpacityValue: 0,
+			expectedMarshalledJSON:   `"fillOpacity":0`,
+		},
+		{
+			scenario:                 "fully opaque upper bound",
+			chartAppearance:          `{"fillOpacity": 1}`,
+			expectedFillOpacitySet:   true,
+			expectedFillOpacityValue: 1,
+			expectedMarshalledJSON:   `"fillOpacity":1`,
+		},
+		{
+			scenario:                 "typical fractional value",
+			chartAppearance:          `{"fillOpacity": 0.4}`,
+			expectedFillOpacitySet:   true,
+			expectedFillOpacityValue: 0.4,
+			expectedMarshalledJSON:   `"fillOpacity":0.4`,
+		},
+		{
+			scenario:                 "precision beyond one decimal place survives",
+			chartAppearance:          `{"fillOpacity": 0.125}`,
+			expectedFillOpacitySet:   true,
+			expectedFillOpacityValue: 0.125,
+			expectedMarshalledJSON:   `"fillOpacity":0.125`,
+		},
+		{
+			scenario:               "omitted field stays nil so the renderer applies the kind default",
+			chartAppearance:        `{}`,
+			expectedFillOpacitySet: false,
+			expectedMarshalledJSON: `"fillOpacity":null`,
+		},
+		{
+			scenario:               "explicit null stays nil rather than decoding as zero",
+			chartAppearance:        `{"fillOpacity": null}`,
+			expectedFillOpacitySet: false,
+			expectedMarshalledJSON: `"fillOpacity":null`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.scenario, func(t *testing.T) {
+			data := []byte(`{
+				"variables": [],
+				"panels": {
+					"p1": {
+						"kind": "Panel",
+						"spec": {
+							"links": [],
+							"plugin": {"kind": "signoz/AreaChartPanel", "spec": {"chartAppearance": ` + test.chartAppearance + `}},
+							"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
+						}
+					}
+				},
+				"links": [],
+				"layouts": []
+			}`)
+			d, err := unmarshalDashboard(data)
+			require.NoError(t, err, "unmarshal and validate failed")
+
+			require.IsType(t, &AreaChartPanelSpec{}, d.Panels["p1"].Spec.Plugin.Spec)
+			spec := d.Panels["p1"].Spec.Plugin.Spec.(*AreaChartPanelSpec)
+
+			if !test.expectedFillOpacitySet {
+				assert.Nil(t, spec.ChartAppearance.FillOpacity, "expected fillOpacity to stay unset")
+			} else {
+				require.NotNil(t, spec.ChartAppearance.FillOpacity, "expected fillOpacity to decode as a set value")
+				assert.Equal(t, test.expectedFillOpacityValue, *spec.ChartAppearance.FillOpacity, "unexpected decoded fillOpacity")
+			}
+
+			output, err := json.Marshal(d)
+			require.NoError(t, err, "marshal dashboard failed")
+			assert.Contains(t, string(output), test.expectedMarshalledJSON, "unexpected fillOpacity in stored/response JSON")
+		})
+	}
+}
+
+func TestInvalidateAreaChartPanelSpecValues(t *testing.T) {
+	tests := []struct {
+		scenario               string
+		panelKind              string
+		panelSpec              string
+		expectedErrorSubstring string
+	}{
+		{
+			scenario:               "unknown stack mode",
+			panelKind:              "signoz/AreaChartPanel",
+			panelSpec:              `{"visualization": {"stack": "stacked"}}`,
+			expectedErrorSubstring: "stack mode",
+		},
+		{
+			scenario:               "unknown area fill mode",
+			panelKind:              "signoz/AreaChartPanel",
+			panelSpec:              `{"chartAppearance": {"fillMode": "striped"}}`,
+			expectedErrorSubstring: "fill mode",
+		},
+		{
+			scenario:               "fill opacity on a 0-100 scale",
+			panelKind:              "signoz/AreaChartPanel",
+			panelSpec:              `{"chartAppearance": {"fillOpacity": 40}}`,
+			expectedErrorSubstring: "invalid fillOpacity 40: must be between 0 and 1",
+		},
+		{
+			scenario:               "negative fill opacity",
+			panelKind:              "signoz/AreaChartPanel",
+			panelSpec:              `{"chartAppearance": {"fillOpacity": -0.5}}`,
+			expectedErrorSubstring: "invalid fillOpacity -0.5: must be between 0 and 1",
+		},
+		{
+			scenario:               "non-numeric fill opacity",
+			panelKind:              "signoz/AreaChartPanel",
+			panelSpec:              `{"chartAppearance": {"fillOpacity": "0.4"}}`,
+			expectedErrorSubstring: "cannot unmarshal string",
+		},
+		{
+			scenario:               "stack on a time series panel",
+			panelKind:              "signoz/TimeSeriesPanel",
+			panelSpec:              `{"visualization": {"stack": "normal"}}`,
+			expectedErrorSubstring: `unknown field`,
+		},
+		{
+			scenario:               "fill opacity on a time series panel",
+			panelKind:              "signoz/TimeSeriesPanel",
+			panelSpec:              `{"chartAppearance": {"fillOpacity": 0.4}}`,
+			expectedErrorSubstring: `unknown field`,
+		},
+		{
+			scenario:               "stacked bar chart on an area panel",
+			panelKind:              "signoz/AreaChartPanel",
+			panelSpec:              `{"visualization": {"stackedBarChart": true}}`,
+			expectedErrorSubstring: `unknown field`,
+		},
+		{
+			scenario:               "stack on a bar chart panel",
+			panelKind:              "signoz/BarChartPanel",
+			panelSpec:              `{"visualization": {"stack": "percent"}}`,
+			expectedErrorSubstring: `unknown field`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.scenario, func(t *testing.T) {
+			data := []byte(`{
+				"variables": [],
+				"panels": {
+					"p1": {
+						"kind": "Panel",
+						"spec": {
+							"links": [],
+							"plugin": {"kind": "` + test.panelKind + `", "spec": ` + test.panelSpec + `},
+							"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
+						}
+					}
+				},
+				"links": [],
+				"layouts": []
+			}`)
+			_, err := unmarshalDashboard(data)
+			require.Error(t, err, "expected the spec to be rejected")
+			assert.Contains(t, err.Error(), test.expectedErrorSubstring, "unexpected error message: %s", err.Error())
+		})
+	}
+}
+
 func TestNumberPanelDefaults(t *testing.T) {
 	data := []byte(`{
 		"variables": [],

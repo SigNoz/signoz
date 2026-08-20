@@ -168,6 +168,7 @@ type PanelPluginKind string
 const (
 	PanelKindTimeSeries PanelPluginKind = "signoz/TimeSeriesPanel"
 	PanelKindBarChart   PanelPluginKind = "signoz/BarChartPanel"
+	PanelKindAreaChart  PanelPluginKind = "signoz/AreaChartPanel"
 	PanelKindNumber     PanelPluginKind = "signoz/NumberPanel"
 	PanelKindPieChart   PanelPluginKind = "signoz/PieChartPanel"
 	PanelKindTable      PanelPluginKind = "signoz/TablePanel"
@@ -176,7 +177,7 @@ const (
 )
 
 func (PanelPluginKind) Enum() []any {
-	return []any{PanelKindTimeSeries, PanelKindBarChart, PanelKindNumber, PanelKindPieChart, PanelKindTable, PanelKindHistogram, PanelKindList}
+	return []any{PanelKindTimeSeries, PanelKindBarChart, PanelKindAreaChart, PanelKindNumber, PanelKindPieChart, PanelKindTable, PanelKindHistogram, PanelKindList}
 }
 
 type TimeSeriesPanelSpec struct {
@@ -202,6 +203,30 @@ type BarChartPanelSpec struct {
 	Axes          Axes                  `json:"axes"`
 	Legend        Legend                `json:"legend"`
 	Thresholds    []ThresholdWithLabel  `json:"thresholds" validate:"dive"`
+}
+
+type AreaChartPanelSpec struct {
+	Visualization   AreaChartVisualization `json:"visualization"`
+	Formatting      PanelFormatting        `json:"formatting"`
+	ChartAppearance AreaChartAppearance    `json:"chartAppearance"`
+	Axes            Axes                   `json:"axes"`
+	Legend          Legend                 `json:"legend"`
+	Thresholds      []ThresholdWithLabel   `json:"thresholds" validate:"dive"`
+}
+
+// AreaChartAppearance repeats the line-drawing fields rather than embedding
+// TimeSeriesChartAppearance: both carry a `fillMode` under different enums, and
+// a duplicated json tag across an embed boundary is resolved by depth, which the
+// schema reflector does not model.
+type AreaChartAppearance struct {
+	LineInterpolation LineInterpolation `json:"lineInterpolation"`
+	ShowPoints        bool              `json:"showPoints"`
+	LineStyle         LineStyle         `json:"lineStyle"`
+	FillMode          AreaFillMode      `json:"fillMode"`
+	// FillOpacity is a pointer so an omitted field resolves to the kind default at
+	// render time; a plain value would make the Go zero value a transparent fill.
+	FillOpacity *FillOpacity `json:"fillOpacity"`
+	SpanGaps    SpanGaps     `json:"spanGaps"`
 }
 
 type NumberPanelSpec struct {
@@ -260,6 +285,12 @@ type BarChartVisualization struct {
 	BasicVisualization
 	FillSpans       bool `json:"fillSpans"`
 	StackedBarChart bool `json:"stackedBarChart"`
+}
+
+type AreaChartVisualization struct {
+	BasicVisualization
+	FillSpans bool      `json:"fillSpans"`
+	Stack     StackMode `json:"stack"`
 }
 
 type PanelFormatting struct {
@@ -620,6 +651,112 @@ func (fm *FillMode) UnmarshalJSON(data []byte) error {
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid fill mode %q: must be `solid`, `gradient`, or `none`", v)
 	}
+}
+
+// AreaFillMode is separate from FillMode so area panels can default to `solid`.
+// An area panel that omits the field would otherwise render as a bare line, and
+// flipping FillMode's default would change how existing TimeSeries panels render.
+type AreaFillMode struct{ valuer.String }
+
+var (
+	AreaFillModeSolid    = AreaFillMode{valuer.NewString("solid")} // default
+	AreaFillModeGradient = AreaFillMode{valuer.NewString("gradient")}
+	// AreaFillModeNone lets an area panel degrade to a line without the save API
+	// rejecting it, so an Area -> TimeSeries -> Area round trip keeps its config.
+	AreaFillModeNone = AreaFillMode{valuer.NewString("none")}
+)
+
+func (AreaFillMode) Enum() []any {
+	return []any{AreaFillModeSolid, AreaFillModeGradient, AreaFillModeNone}
+}
+
+func (fm AreaFillMode) ValueOrDefault() string {
+	if fm.IsZero() {
+		return AreaFillModeSolid.StringValue()
+	}
+	return fm.StringValue()
+}
+
+func (fm AreaFillMode) MarshalJSON() ([]byte, error) {
+	return json.Marshal(fm.ValueOrDefault())
+}
+
+func (fm *AreaFillMode) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid fill mode: must be a string, one of `solid`, `gradient`, or `none`")
+	}
+	val := AreaFillMode{valuer.NewString(v)}
+	switch val {
+	case AreaFillModeSolid, AreaFillModeGradient, AreaFillModeNone:
+		*fm = val
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid fill mode %q: must be `solid`, `gradient`, or `none`", v)
+	}
+}
+
+// StackMode is area-only. Bar stacking stays on BarChartVisualization.StackedBarChart,
+// so `percent` is not reachable from a bar panel.
+type StackMode struct{ valuer.String }
+
+var (
+	StackModeNone    = StackMode{valuer.NewString("none")} // default
+	StackModeNormal  = StackMode{valuer.NewString("normal")}
+	StackModePercent = StackMode{valuer.NewString("percent")}
+)
+
+func (StackMode) Enum() []any {
+	return []any{StackModeNone, StackModeNormal, StackModePercent}
+}
+
+func (sm StackMode) ValueOrDefault() string {
+	if sm.IsZero() {
+		return StackModeNone.StringValue()
+	}
+	return sm.StringValue()
+}
+
+func (sm StackMode) MarshalJSON() ([]byte, error) {
+	return json.Marshal(sm.ValueOrDefault())
+}
+
+func (sm *StackMode) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid stack mode: must be a string, one of `none`, `normal`, or `percent`")
+	}
+	val := StackMode{valuer.NewString(v)}
+	switch val {
+	case StackModeNone, StackModeNormal, StackModePercent:
+		*sm = val
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid stack mode %q: must be `none`, `normal`, or `percent`", v)
+	}
+}
+
+// FillOpacity is the alpha of an area fill, in 0–1 because that is what the
+// chart layer consumes directly. Unlike the enums in this section it has no
+// ValueOrDefault: 0 is a legitimate value, so the kind default lives at render
+// time behind a nil pointer.
+type FillOpacity float64
+
+func (FillOpacity) PrepareJSONSchema(s *jsonschema.Schema) error {
+	s.WithMinimum(0).WithMaximum(1)
+	return nil
+}
+
+func (o *FillOpacity) UnmarshalJSON(data []byte) error {
+	var v float64
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid fillOpacity: must be a number between 0 and 1")
+	}
+	if v < 0 || v > 1 {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid fillOpacity %v: must be between 0 and 1", v)
+	}
+	*o = FillOpacity(v)
+	return nil
 }
 
 type SpanGaps struct {
