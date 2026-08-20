@@ -399,6 +399,15 @@ func TestChannelToPostableChannelRejectsUnrepresentableChannels(t *testing.T) {
 			},
 		},
 		{
+			// Only the first would survive the read, and the second would be
+			// dropped on the next write.
+			description: "two configs of the same notifier kind",
+			channel: Channel{
+				Name: "two-slacks",
+				Data: `{"name":"two-slacks","slack_configs":[{"channel":"#a"},{"channel":"#b"}]}`,
+			},
+		},
+		{
 			description: "no notifier configuration",
 			channel: Channel{
 				Name: "empty",

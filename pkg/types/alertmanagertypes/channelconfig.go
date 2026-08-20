@@ -3,6 +3,7 @@ package alertmanagertypes
 import (
 	"bytes"
 	"encoding/json"
+	"net/url"
 	"reflect"
 	"slices"
 	"strings"
@@ -212,13 +213,7 @@ func (c ChannelSlackConfig) toReceiver(displayName string) (*Receiver, error) {
 	}}, nil
 }
 
-// newChannelSlackConfigFromReceiver returns nil when the receiver carries no
-// slack configuration.
 func newChannelSlackConfigFromReceiver(_ string, receiver *Receiver) (ChannelSpec, error) {
-	if len(receiver.SlackConfigs) == 0 {
-		return nil, nil
-	}
-
 	slack := receiver.SlackConfigs[0]
 
 	return &ChannelSlackConfig{
@@ -261,10 +256,6 @@ func (c ChannelEmailConfig) toReceiver(displayName string) (*Receiver, error) {
 }
 
 func newChannelEmailConfigFromReceiver(_ string, receiver *Receiver) (ChannelSpec, error) {
-	if len(receiver.EmailConfigs) == 0 {
-		return nil, nil
-	}
-
 	email := receiver.EmailConfigs[0]
 
 	return &ChannelEmailConfig{
@@ -337,10 +328,6 @@ func (c ChannelWebhookConfig) toReceiver(displayName string) (*Receiver, error) 
 }
 
 func newChannelWebhookConfigFromReceiver(name string, receiver *Receiver) (ChannelSpec, error) {
-	if len(receiver.WebhookConfigs) == 0 {
-		return nil, nil
-	}
-
 	upstream := receiver.WebhookConfigs[0]
 	if err := assertRepresentableHTTPConfig(name, upstream.HTTPConfig); err != nil {
 		return nil, err
@@ -389,9 +376,13 @@ func (c ChannelPagerdutyConfig) Validate() error {
 }
 
 func (c ChannelPagerdutyConfig) toReceiver(displayName string) (*Receiver, error) {
-	eventsURL, err := parseUpstreamURL(c.URL)
-	if err != nil {
-		return nil, err
+	var eventsURL *config.URL
+	if c.URL != "" {
+		parsed, err := parseUpstreamURL(c.URL)
+		if err != nil {
+			return nil, err
+		}
+		eventsURL = parsed
 	}
 
 	return &Receiver{Receiver: &config.Receiver{
@@ -414,14 +405,15 @@ func (c ChannelPagerdutyConfig) toReceiver(displayName string) (*Receiver, error
 }
 
 func newChannelPagerdutyConfigFromReceiver(name string, receiver *Receiver) (ChannelSpec, error) {
-	if len(receiver.PagerdutyConfigs) == 0 {
-		return nil, nil
-	}
-
 	pagerduty := receiver.PagerdutyConfigs[0]
-	details, err := extractStringDetails(name, pagerduty.Details)
-	if err != nil {
-		return nil, err
+
+	var details map[string]string
+	if len(pagerduty.Details) > 0 {
+		extracted, err := extractStringDetails(name, pagerduty.Details)
+		if err != nil {
+			return nil, err
+		}
+		details = extracted
 	}
 
 	return &ChannelPagerdutyConfig{
@@ -461,9 +453,13 @@ func (c ChannelOpsgenieConfig) Validate() error {
 }
 
 func (c ChannelOpsgenieConfig) toReceiver(displayName string) (*Receiver, error) {
-	apiURL, err := parseUpstreamURL(c.APIURL)
-	if err != nil {
-		return nil, err
+	var apiURL *config.URL
+	if c.APIURL != "" {
+		parsed, err := parseUpstreamURL(c.APIURL)
+		if err != nil {
+			return nil, err
+		}
+		apiURL = parsed
 	}
 
 	return &Receiver{Receiver: &config.Receiver{
@@ -482,10 +478,6 @@ func (c ChannelOpsgenieConfig) toReceiver(displayName string) (*Receiver, error)
 }
 
 func newChannelOpsgenieConfigFromReceiver(_ string, receiver *Receiver) (ChannelSpec, error) {
-	if len(receiver.OpsGenieConfigs) == 0 {
-		return nil, nil
-	}
-
 	opsgenie := receiver.OpsGenieConfigs[0]
 
 	return &ChannelOpsgenieConfig{
@@ -533,10 +525,6 @@ func (c ChannelMSTeamsConfig) toReceiver(displayName string) (*Receiver, error) 
 }
 
 func newChannelMSTeamsConfigFromReceiver(_ string, receiver *Receiver) (ChannelSpec, error) {
-	if len(receiver.MSTeamsV2Configs) == 0 {
-		return nil, nil
-	}
-
 	msteams := receiver.MSTeamsV2Configs[0]
 
 	return &ChannelMSTeamsConfig{
@@ -580,10 +568,6 @@ func (c ChannelGoogleChatConfig) toReceiver(displayName string) (*Receiver, erro
 }
 
 func newChannelGoogleChatConfigFromReceiver(_ string, receiver *Receiver) (ChannelSpec, error) {
-	if len(receiver.GoogleChatConfigs) == 0 {
-		return nil, nil
-	}
-
 	googlechat := receiver.GoogleChatConfigs[0]
 
 	return &ChannelGoogleChatConfig{
@@ -598,53 +582,178 @@ func newChannelGoogleChatConfigFromReceiver(_ string, receiver *Receiver) (Chann
 // Helpers
 // ════════════════════════════════════════════════════════════════════════
 
+// bearerAuthorizationType is the scheme SigNoz writes for token auth.
+const bearerAuthorizationType = "Bearer"
+
+// parseSecretURL and parseUpstreamURL wrap the two URL types upstream uses for
+// notifier endpoints. Callers holding an optional URL skip the call on an empty
+// string, so the field stays nil and is omitted rather than stored as an empty URL.
+func parseSecretURL(raw string) (*config.SecretURL, error) {
+	parsed, err := parseUpstreamURL(raw)
+	if err != nil {
+		return nil, err
+	}
+
+	return (*config.SecretURL)(parsed), nil
+}
+
+func parseUpstreamURL(raw string) (*config.URL, error) {
+	parsed, err := url.Parse(raw)
+	if err != nil {
+		return nil, errors.WrapInvalidInputf(err, ErrCodeAlertmanagerChannelInvalid, "parse url %q", raw)
+	}
+
+	return &config.URL{URL: parsed}, nil
+}
+
+func formatSecretURL(secretURL *config.SecretURL) string {
+	if secretURL == nil {
+		return ""
+	}
+
+	return formatUpstreamURL((*config.URL)(secretURL))
+}
+
+func formatUpstreamURL(upstreamURL *config.URL) string {
+	if upstreamURL == nil || upstreamURL.URL == nil {
+		return ""
+	}
+
+	return upstreamURL.String()
+}
+
+// PagerDuty is the one notifier whose details upstream types as map[string]any.
+func newUpstreamDetails(details map[string]string) map[string]any {
+	if details == nil {
+		return nil
+	}
+
+	upstream := make(map[string]any, len(details))
+	for key, value := range details {
+		upstream[key] = value
+	}
+
+	return upstream
+}
+
+func extractStringDetails(name string, details map[string]any) (map[string]string, error) {
+	extracted := make(map[string]string, len(details))
+	for key, value := range details {
+		stringValue, ok := value.(string)
+		if !ok {
+			return nil, errors.NewInvalidInputf(
+				ErrCodeAlertmanagerChannelInvalid,
+				"channel %q sets a non-string value for details.%s, which this API cannot represent", name, key,
+			)
+		}
+		extracted[key] = stringValue
+	}
+
+	return extracted, nil
+}
+
+// assertRepresentableHTTPConfig fails when a stored webhook carries http_config
+// members this API has no field for. Without it a read would drop them and the
+// next write would persist the channel without them, silently unauthenticating
+// it. The two booleans are checked last: upstream marshals them unconditionally,
+// so they are the least specific signal of a config we cannot represent.
+func assertRepresentableHTTPConfig(name string, httpConfig *commoncfg.HTTPClientConfig) error {
+	if httpConfig == nil {
+		return nil
+	}
+
+	member := ""
+	switch {
+	case httpConfig.OAuth2 != nil:
+		member = "oauth2"
+	case httpConfig.BearerToken != "":
+		member = "bearer_token"
+	case httpConfig.BearerTokenFile != "":
+		member = "bearer_token_file"
+	case httpConfig.ProxyURL.URL != nil && httpConfig.ProxyURL.String() != "":
+		member = "proxy_url"
+	case httpConfig.NoProxy != "":
+		member = "no_proxy"
+	case httpConfig.ProxyFromEnvironment:
+		member = "proxy_from_environment"
+	case httpConfig.HTTPHeaders != nil:
+		member = "http_headers"
+	case httpConfig.TLSConfig.CAFile != "", httpConfig.TLSConfig.CertFile != "",
+		httpConfig.TLSConfig.KeyFile != "", httpConfig.TLSConfig.ServerName != "",
+		httpConfig.TLSConfig.InsecureSkipVerify:
+		member = "tls_config"
+	case !httpConfig.FollowRedirects:
+		member = "follow_redirects"
+	case !httpConfig.EnableHTTP2:
+		member = "enable_http2"
+	}
+
+	if member != "" {
+		return errors.NewInvalidInputf(
+			ErrCodeAlertmanagerChannelInvalid,
+			"channel %q sets http_config.%s, which this API cannot represent", name, member,
+		)
+	}
+
+	return nil
+}
+
 // channelKinds registers each notification kind with the spec constructor
 // UnmarshalJSON picks by kind and the extractor that reads a stored receiver
 // back. The ChannelKind enum derives from it; the JSON schema hooks stay
 // literal lists so each branch reads as one line.
 var channelKinds = []channelKindEntry{
 	{
-		kind:        ChannelKindSlack,
-		newSpec:     func() ChannelSpec { return new(ChannelSlackConfig) },
-		extractSpec: newChannelSlackConfigFromReceiver,
+		kind:         ChannelKindSlack,
+		newSpec:      func() ChannelSpec { return new(ChannelSlackConfig) },
+		countConfigs: func(receiver *Receiver) int { return len(receiver.SlackConfigs) },
+		extractSpec:  newChannelSlackConfigFromReceiver,
 	},
 	{
-		kind:        ChannelKindEmail,
-		newSpec:     func() ChannelSpec { return new(ChannelEmailConfig) },
-		extractSpec: newChannelEmailConfigFromReceiver,
+		kind:         ChannelKindEmail,
+		newSpec:      func() ChannelSpec { return new(ChannelEmailConfig) },
+		countConfigs: func(receiver *Receiver) int { return len(receiver.EmailConfigs) },
+		extractSpec:  newChannelEmailConfigFromReceiver,
 	},
 	{
-		kind:        ChannelKindWebhook,
-		newSpec:     func() ChannelSpec { return new(ChannelWebhookConfig) },
-		extractSpec: newChannelWebhookConfigFromReceiver,
+		kind:         ChannelKindWebhook,
+		newSpec:      func() ChannelSpec { return new(ChannelWebhookConfig) },
+		countConfigs: func(receiver *Receiver) int { return len(receiver.WebhookConfigs) },
+		extractSpec:  newChannelWebhookConfigFromReceiver,
 	},
 	{
-		kind:        ChannelKindPagerduty,
-		newSpec:     func() ChannelSpec { return new(ChannelPagerdutyConfig) },
-		extractSpec: newChannelPagerdutyConfigFromReceiver,
+		kind:         ChannelKindPagerduty,
+		newSpec:      func() ChannelSpec { return new(ChannelPagerdutyConfig) },
+		countConfigs: func(receiver *Receiver) int { return len(receiver.PagerdutyConfigs) },
+		extractSpec:  newChannelPagerdutyConfigFromReceiver,
 	},
 	{
-		kind:        ChannelKindOpsgenie,
-		newSpec:     func() ChannelSpec { return new(ChannelOpsgenieConfig) },
-		extractSpec: newChannelOpsgenieConfigFromReceiver,
+		kind:         ChannelKindOpsgenie,
+		newSpec:      func() ChannelSpec { return new(ChannelOpsgenieConfig) },
+		countConfigs: func(receiver *Receiver) int { return len(receiver.OpsGenieConfigs) },
+		extractSpec:  newChannelOpsgenieConfigFromReceiver,
 	},
 	{
-		kind:        ChannelKindMSTeams,
-		newSpec:     func() ChannelSpec { return new(ChannelMSTeamsConfig) },
-		extractSpec: newChannelMSTeamsConfigFromReceiver,
+		kind:         ChannelKindMSTeams,
+		newSpec:      func() ChannelSpec { return new(ChannelMSTeamsConfig) },
+		countConfigs: func(receiver *Receiver) int { return len(receiver.MSTeamsV2Configs) },
+		extractSpec:  newChannelMSTeamsConfigFromReceiver,
 	},
 	{
-		kind:        ChannelKindGoogleChat,
-		newSpec:     func() ChannelSpec { return new(ChannelGoogleChatConfig) },
-		extractSpec: newChannelGoogleChatConfigFromReceiver,
+		kind:         ChannelKindGoogleChat,
+		newSpec:      func() ChannelSpec { return new(ChannelGoogleChatConfig) },
+		countConfigs: func(receiver *Receiver) int { return len(receiver.GoogleChatConfigs) },
+		extractSpec:  newChannelGoogleChatConfigFromReceiver,
 	},
 }
 
 type channelKindEntry struct {
 	kind    ChannelKind
 	newSpec func() ChannelSpec
-	// extractSpec returns nil when the receiver carries no config of this kind.
-	extractSpec func(name string, receiver *Receiver) (ChannelSpec, error)
+	// countConfigs guards extractSpec, which reads the receiver's first config of
+	// this kind and so must not be called when there is none.
+	countConfigs func(receiver *Receiver) int
+	extractSpec  func(name string, receiver *Receiver) (ChannelSpec, error)
 }
 
 func newChannelSpec(kind ChannelKind) (func() ChannelSpec, bool) {
