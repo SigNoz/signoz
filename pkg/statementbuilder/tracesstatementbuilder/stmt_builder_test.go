@@ -935,6 +935,38 @@ func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
 			},
 		},
 		{
+			// A scope attribute whose own name literally carries a `scope.` prefix (`scope.prefixed`,
+			// normalized to {prefixed, scope}) resolves to that attribute in a SELECT even without a
+			// filter: getKeySelectors emits the reconstructed `scope.prefixed` selector so the metadata
+			// fetch surfaces it and AdjustKey recovers the full name. Without it the `scope.` prefix is
+			// lost and it wrongly reads `scope.attributes.prefixed`.
+			name:        "scope-prefixed attribute in selectFields resolves without a filter",
+			requestType: qbtypes.RequestTypeRaw,
+			keysMap: map[string][]*telemetrytypes.TelemetryFieldKey{
+				"scope.prefixed": {
+					{
+						Name:          "scope.prefixed",
+						Signal:        telemetrytypes.SignalTraces,
+						FieldContext:  telemetrytypes.FieldContextScope,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+				},
+			},
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal:       telemetrytypes.SignalTraces,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Filter:       &qbtypes.Filter{},
+				SelectFields: []telemetrytypes.TelemetryFieldKey{
+					{Name: "prefixed", FieldContext: telemetrytypes.FieldContextScope},
+				},
+				Limit: 10,
+			},
+			expected: qbtypes.Statement{
+				Query: "SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, multiIf(scope.attributes.`scope.prefixed` IS NOT NULL, scope.attributes.`scope.prefixed`::String, NULL) AS `__SELECT_KEY_3_scope.prefixed` FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{"1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
+			},
+		},
+		{
 			// A scope-context key whose name matches a declared scope path resolves to that
 			// declared path (scope.name), not the span `name` column and not an undeclared
 			// scope attribute, even with no metadata.

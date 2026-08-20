@@ -163,31 +163,15 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) 
 	}
 
 	for idx := range query.GroupBy {
-		groupBy := query.GroupBy[idx]
-		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
-			Name:          groupBy.Name,
-			Signal:        telemetrytypes.SignalTraces,
-			FieldContext:  groupBy.FieldContext,
-			FieldDataType: groupBy.FieldDataType,
-		})
+		keySelectors = append(keySelectors, keySelectorsForField(query.GroupBy[idx].TelemetryFieldKey)...)
 	}
 
 	for idx := range query.SelectFields {
-		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
-			Name:          query.SelectFields[idx].Name,
-			Signal:        telemetrytypes.SignalTraces,
-			FieldContext:  query.SelectFields[idx].FieldContext,
-			FieldDataType: query.SelectFields[idx].FieldDataType,
-		})
+		keySelectors = append(keySelectors, keySelectorsForField(query.SelectFields[idx])...)
 	}
 
 	for idx := range query.Order {
-		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
-			Name:          query.Order[idx].Key.Name,
-			Signal:        telemetrytypes.SignalTraces,
-			FieldContext:  query.Order[idx].Key.FieldContext,
-			FieldDataType: query.Order[idx].Key.FieldDataType,
-		})
+		keySelectors = append(keySelectors, keySelectorsForField(query.Order[idx].Key.TelemetryFieldKey)...)
 	}
 
 	for idx := range keySelectors {
@@ -196,6 +180,26 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) 
 	}
 
 	return keySelectors
+}
+
+func keySelectorsForField(key telemetrytypes.TelemetryFieldKey) []*telemetrytypes.FieldKeySelector {
+	selectors := []*telemetrytypes.FieldKeySelector{
+		{
+			Name:          key.Name,
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  key.FieldContext,
+			FieldDataType: key.FieldDataType,
+		},
+	}
+	if key.FieldContext != telemetrytypes.FieldContextUnspecified {
+		selectors = append(selectors, &telemetrytypes.FieldKeySelector{
+			Name:          key.FieldContext.StringValue() + "." + key.Name,
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextUnspecified,
+			FieldDataType: key.FieldDataType,
+		})
+	}
+	return selectors
 }
 
 // mergeDeprecatedTraceKeys prepends deprecated intrinsic/calculated trace field
