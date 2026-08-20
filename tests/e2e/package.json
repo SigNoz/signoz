@@ -10,7 +10,6 @@
     "env:clean": "rm -rf ../tmp ../.pytest_cache .env.local artifacts && echo 'Cleaned. Run docker container prune if needed.'",
     "test": "playwright test",
     "test:local": "pnpm env:start && pnpm test",
-    "test:all": "playwright test",
     "test:staging": "SIGNOZ_E2E_BASE_URL=https://app.us.staging.signoz.cloud playwright test",
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",
