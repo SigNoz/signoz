@@ -323,6 +323,58 @@ func TestNotifyCustomTemplateAnnotationsOverrideDefaults(t *testing.T) {
 	assert.NotContains(t, s, "Summary:") // default body template not used
 }
 
+func TestADFDocLen(t *testing.T) {
+	text := func(s string) map[string]any { return map[string]any{"type": "text", "text": s} }
+	para := func(children ...any) map[string]any {
+		return map[string]any{"type": "paragraph", "content": children}
+	}
+	cases := []struct {
+		name string
+		node any
+		want int
+	}{
+		{"text node", text("hello"), 7},               // 5 utf16 + 2 overhead
+		{"emoji counts utf16", text("🔴"), 4},          // 2 utf16 units + 2 overhead
+		{"paragraph wraps text", para(text("hi")), 6}, // 2 + (2+2)
+		{"link href counted", map[string]any{"type": "text", "text": "a", "marks": []any{map[string]any{"type": "link", "attrs": map[string]any{"href": "https://x"}}}}, 12}, // 1 + 9 href + 2
+		{"non-map is zero", "junk", 0},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			assert.Equal(t, c.want, adfDocLen(c.node))
+		})
+	}
+}
+
+// 30 fat custom bodies overflow Jira's description accounting (text + per-node
+// overhead); the built doc must be shrunk under the limit, never rejected.
+func TestNotifyDescriptionShrunkUnderJiraLimit(t *testing.T) {
+	m := newMockJira(t)
+	filler := strings.Repeat("This is a long runbook detail line used to inflate the alert body. ", 25)
+	alerts := make([]*types.Alert, 0, 30)
+	for i := range 30 {
+		a := alert(true)
+		a.Labels["service"] = model.LabelValue(strings.Repeat("s", 3) + string(rune('a'+i%26)))
+		a.Annotations[ruletypes.AnnotationTitleTemplate] = "overflow probe"
+		a.Annotations[ruletypes.AnnotationBodyTemplate] = model.LabelValue("**Alert in service** $labels.service\n\n" + filler)
+		alerts = append(alerts, a)
+	}
+
+	_, err := newNotifier(t, m).Notify(ctx(), alerts...)
+	require.NoError(t, err)
+
+	body := m.lastBody(t, "/issue")
+	fields, ok := body["fields"].(map[string]any)
+	require.True(t, ok)
+	desc := fields["description"]
+	assert.LessOrEqual(t, adfDocLen(desc), maxDescriptionLenRunes)
+
+	js, err := json.Marshal(desc)
+	require.NoError(t, err)
+	assert.Contains(t, string(js), "FIRING") // status panel survives the shrink
+	assert.Contains(t, string(js), "…")      // body ends with the shrink marker
+}
+
 func TestFiringSearchJQLHasReopenWindow(t *testing.T) {
 	m := newMockJira(t)
 	_, err := newNotifier(t, m).Notify(ctx(), alert(true))

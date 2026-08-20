@@ -15,6 +15,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unicode/utf16"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -133,12 +134,76 @@ func (n *Notifier) buildFields(groupID, summary, descText string, alerts []*type
 		Issuetype:   &idName{Name: n.conf.IssueType},
 		Summary:     summary,
 		Labels:      n.labels(groupID),
-		Description: n.buildDescription(descText, alerts, firing),
+		Description: n.buildBoundedDescription(descText, alerts, firing),
 	}
 	if n.conf.Priority != "" {
 		f.Priority = &idName{Name: n.conf.Priority}
 	}
 	return f
+}
+
+// buildBoundedDescription builds the ADF issue body and keeps it within Jira's
+// description limit, which counts text characters plus per-node overhead — so a
+// text-only markdown cap is not enough. Over-limit bodies are shrunk at the
+// markdown level and rebuilt; the panel and deep-links are part of the measured
+// document, so the result always fits.
+func (n *Notifier) buildBoundedDescription(descText string, alerts []*types.Alert, firing bool) map[string]any {
+	doc := n.buildDescription(descText, alerts, firing)
+	for range 4 {
+		size := adfDocLen(doc)
+		if size <= maxDescriptionLenRunes {
+			return doc
+		}
+		runes := []rune(descText)
+		keep := len(runes) * maxDescriptionLenRunes / size * 9 / 10
+		if keep >= len(runes) {
+			keep = len(runes) - 1
+		}
+		if keep <= 0 {
+			break
+		}
+		descText = string(runes[:keep]) + "…"
+		doc = n.buildDescription(descText, alerts, firing)
+	}
+	if adfDocLen(doc) <= maxDescriptionLenRunes {
+		return doc
+	}
+	// still over after shrinking: keep just the panel and deep-links
+	return n.buildDescription("", alerts, firing)
+}
+
+// adfDocLen approximates how Jira measures an ADF document against the 32767
+// limit: text length in UTF-16 code units, plus per-node overhead (block
+// boundaries count like newlines), plus link targets. Deliberately counts on
+// the high side so a passing measurement never 400s.
+func adfDocLen(node any) int {
+	m, ok := node.(map[string]any)
+	if !ok {
+		return 0
+	}
+	size := 2
+	if text, ok := m["text"].(string); ok {
+		for _, r := range text {
+			size += utf16.RuneLen(r)
+		}
+	}
+	if marks, ok := m["marks"].([]any); ok {
+		for _, mark := range marks {
+			if mm, ok := mark.(map[string]any); ok {
+				if attrs, ok := mm["attrs"].(map[string]any); ok {
+					if href, ok := attrs["href"].(string); ok {
+						size += len(href)
+					}
+				}
+			}
+		}
+	}
+	if content, ok := m["content"].([]any); ok {
+		for _, child := range content {
+			size += adfDocLen(child)
+		}
+	}
+	return size
 }
 
 // buildDescription assembles the ADF issue body: a firing/resolved status panel,
