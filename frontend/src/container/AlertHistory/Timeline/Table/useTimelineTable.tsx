@@ -21,18 +21,14 @@ export const timelineTableColumns = ({
 		sorter: true,
 		width: 140,
 		render: (value): JSX.Element => (
-			<div className="alert-rule-state" data-testid="timeline-row-state">
-				<AlertState state={value} showLabel />
-			</div>
+			<AlertState state={value} showLabel testId="timeline-row-state" />
 		),
 	},
 	{
 		title: 'LABELS',
 		dataIndex: 'labels',
 		render: (labels): JSX.Element => (
-			<div className="alert-rule-labels" data-testid="timeline-row-labels">
-				<AlertLabels labels={labels} />
-			</div>
+			<AlertLabels labels={labels} testId="timeline-row-labels" />
 		),
 	},
 	{
