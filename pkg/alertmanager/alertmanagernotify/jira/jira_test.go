@@ -3,6 +3,7 @@ package jira
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -321,6 +322,41 @@ func TestNotifyCustomTemplateAnnotationsOverrideDefaults(t *testing.T) {
 	// per-alert custom bodies are separated by an ADF rule divider
 	assert.Contains(t, s, `"rule"`)
 	assert.NotContains(t, s, "Summary:") // default body template not used
+}
+
+// Jira replaces labels wholesale on PUT, so the update must union in the
+// labels already on the issue or user-added ones get wiped.
+func TestNotifyUpdatePreservesUserAddedLabels(t *testing.T) {
+	m := newMockJira(t)
+	existing := openIssue()
+	existing.Fields.Labels = []string{"user-added-label", "signoz"}
+	m.searchIssues = []issue{existing}
+
+	_, err := newNotifier(t, m).Notify(ctx(), alert(true))
+	require.NoError(t, err)
+
+	search := m.lastBody(t, "/search/jql")
+	assert.Contains(t, search["fields"], "labels")
+
+	m.mu.Lock()
+	var putLabels []any
+	for _, r := range m.reqs {
+		if r.method == http.MethodPut {
+			putLabels, _ = r.body["fields"].(map[string]any)["labels"].([]any)
+		}
+	}
+	m.mu.Unlock()
+	assert.Contains(t, putLabels, "user-added-label")
+	assert.Contains(t, putLabels, "signoz")
+	assert.Equal(t, 1, strings.Count(fmt.Sprint(putLabels), "signoz")) // no duplicates
+	// the dedup label is re-asserted
+	found := false
+	for _, l := range putLabels {
+		if s, ok := l.(string); ok && strings.HasPrefix(s, "ALERT{") {
+			found = true
+		}
+	}
+	assert.True(t, found)
 }
 
 func TestADFDocLen(t *testing.T) {

@@ -107,7 +107,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	}
 
 	// Existing issue: refresh it, then transition + comment based on the new state.
-	if retry, err := n.updateIssue(ctx, existing.Key, fields); err != nil {
+	if retry, err := n.updateIssue(ctx, existing, fields); err != nil {
 		return retry, err
 	}
 
@@ -283,7 +283,7 @@ func (n *Notifier) searchIssue(ctx context.Context, groupID string, firing bool)
 	fmt.Fprintf(&jql, `project=%q and labels=%q order by status ASC, resolutiondate DESC`, n.conf.Project, fmt.Sprintf("ALERT{%s}", groupID))
 
 	body, retry, err := n.callAPI(ctx, http.MethodPost, n.conf.APIBaseURL()+"/search/jql", searchRequest{
-		JQL: jql.String(), MaxResults: 2, Fields: []string{"status"},
+		JQL: jql.String(), MaxResults: 2, Fields: []string{"status", "labels"},
 	})
 	if err != nil {
 		return nil, retry, err
@@ -310,13 +310,31 @@ func (n *Notifier) createIssue(ctx context.Context, fields *issueFields) (bool, 
 	return retry, err
 }
 
-func (n *Notifier) updateIssue(ctx context.Context, key string, fields *issueFields) (bool, error) {
+func (n *Notifier) updateIssue(ctx context.Context, existing *issue, fields *issueFields) (bool, error) {
 	// project and issue type are set at creation and cannot be edited.
 	upd := *fields
 	upd.Project = nil
 	upd.Issuetype = nil
-	_, retry, err := n.callAPI(ctx, http.MethodPut, n.issueURL(key, ""), issue{Fields: &upd})
+	// Jira replaces the labels array wholesale, so union in the labels already
+	// on the issue to keep user-added ones.
+	if existing.Fields != nil {
+		upd.Labels = mergeLabels(existing.Fields.Labels, fields.Labels)
+	}
+	_, retry, err := n.callAPI(ctx, http.MethodPut, n.issueURL(existing.Key, ""), issue{Fields: &upd})
 	return retry, err
+}
+
+func mergeLabels(existing, ours []string) []string {
+	seen := make(map[string]bool, len(existing)+len(ours))
+	var merged []string
+	for _, label := range append(append([]string{}, existing...), ours...) {
+		if !seen[label] {
+			seen[label] = true
+			merged = append(merged, label)
+		}
+	}
+	sort.Strings(merged)
+	return merged
 }
 
 // applyTransition moves the issue into (toDone) or out of (!toDone) the "done"
