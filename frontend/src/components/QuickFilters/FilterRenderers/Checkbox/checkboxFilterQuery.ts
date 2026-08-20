@@ -5,7 +5,7 @@ import {
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
 import { OPERATORS } from 'constants/antlrQueryConstants';
-import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
+import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearchV2/utils';
 import { cloneDeep, isArray } from 'lodash-es';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';

@@ -41,6 +41,7 @@ interface OverviewProps {
 	selectedOptions: OptionsQuery;
 	listViewPanelSelectedFields?: IField[] | null;
 	handleChangeSelectedView?: ChangeViewFunctionType;
+	onApplyLogFilter?: (expression: string) => void;
 }
 
 type Props = OverviewProps &
@@ -55,6 +56,7 @@ function Overview({
 	selectedOptions,
 	listViewPanelSelectedFields,
 	handleChangeSelectedView,
+	onApplyLogFilter,
 }: Props): JSX.Element {
 	const [isWrapWord, setIsWrapWord] = useState<boolean>(true);
 	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(true);
@@ -67,6 +69,7 @@ function Overview({
 	const { actions, visibleActions } = useLogAttributeActions({
 		handleChangeSelectedView,
 		isListViewPanel,
+		onApplyLogFilter,
 	});
 
 	const isLogDetailsV2 = useIsLogDetailsV2();
