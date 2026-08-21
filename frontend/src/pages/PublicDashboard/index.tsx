@@ -6,7 +6,7 @@ import {
 import { Frown, TriangleAlert } from '@signozhq/icons';
 
 import PublicDashboardMessage from './PublicDashboardMessage';
-import PublicDashboardV2 from './PublicDashboardV2/PublicDashboardV2';
+import PublicDashboardView from './PublicDashboardView/PublicDashboardView';
 
 import './PublicDashboard.styles.scss';
 
@@ -26,7 +26,7 @@ function PublicDashboardPage(): JSX.Element {
 	return (
 		<div className="public-dashboard-page">
 			{resolved?.schema === PublicDashboardSchema.V2 && (
-				<PublicDashboardV2 publicDashboardId={dashboardId} data={resolved.data} />
+				<PublicDashboardView publicDashboardId={dashboardId} data={resolved.data} />
 			)}
 
 			{resolved?.schema === PublicDashboardSchema.Legacy && (

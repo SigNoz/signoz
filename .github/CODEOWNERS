@@ -171,9 +171,8 @@ go.mod @therealpandey
 /frontend/src/lib/dashboardVariables/ @SigNoz/pulse-frontend
 /frontend/src/components/NewSelect/ @SigNoz/pulse-frontend
 
-## Dashboard V2
-/frontend/src/pages/DashboardPageV2/ @SigNoz/pulse-frontend
-/frontend/src/pages/DashboardsListPageV2/ @SigNoz/pulse-frontend
+/frontend/src/pages/DashboardPage/ @SigNoz/pulse-frontend
+/frontend/src/pages/DashboardsListPage/ @SigNoz/pulse-frontend
 
 ## Infrastructure Monitoring
 /frontend/src/pages/InfrastructureMonitoring/ @SigNoz/pulse-frontend

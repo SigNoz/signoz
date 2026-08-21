@@ -12,7 +12,7 @@ import {
 } from 'tests/test-utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { buildExportPanelLink } from 'pages/DashboardPageV2/DashboardContainer/PanelEditor/newPanelRoute';
+import { buildExportPanelLink } from 'pages/DashboardPage/DashboardContainer/PanelEditor/newPanelRoute';
 
 import ExplorerOptionWrapper from '../ExplorerOptionWrapper';
 import { getExplorerToolBarVisibility } from '../utils';
