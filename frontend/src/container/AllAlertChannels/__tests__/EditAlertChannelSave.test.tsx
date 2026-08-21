@@ -101,6 +101,7 @@ describe('EditAlertChannels save', () => {
 					url: 'https://api.incident.io/v2/alert_events/http/01M0D1JNVBGBGVTWX053EM12XV',
 					token: 'tok-abc',
 					send_resolved: true,
+					metadata: { env: 'prod' },
 				}}
 			/>,
 		);
@@ -117,6 +118,7 @@ describe('EditAlertChannels save', () => {
 					url: 'https://api.incident.io/v2/alert_events/http/01M0D1JNVBGBGVTWX053EM12XV',
 					token: 'tok-abc',
 					send_resolved: true,
+					metadata: { env: 'prod' },
 				},
 			],
 		});

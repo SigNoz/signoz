@@ -826,6 +826,10 @@ describe('Create Alert Channel', () => {
 				);
 				await user.type(screen.getByTestId('incidentio-token-textbox'), 'tok-abc');
 
+				await user.click(screen.getByTestId('incidentio-metadata-add'));
+				await user.type(screen.getByTestId('incidentio-metadata-key-0'), 'team');
+				await user.type(screen.getByTestId('incidentio-metadata-value-0'), 'core');
+
 				await user.click(screen.getByTestId('save-channel-button'));
 
 				await waitFor(() =>
@@ -844,6 +848,7 @@ describe('Create Alert Channel', () => {
 							send_resolved: true,
 							title: IncidentIOInitialConfig.title,
 							description: IncidentIOInitialConfig.description,
+							metadata: { team: 'core' },
 						},
 					],
 				});

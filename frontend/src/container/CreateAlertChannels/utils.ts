@@ -205,6 +205,12 @@ export const prepareIncidentIORequest = (
 	if (config.description) {
 		incidentio.description = config.description;
 	}
+	const metadata = Object.fromEntries(
+		Object.entries(config.metadata || {}).filter(([key]) => key.trim() !== ''),
+	);
+	if (Object.keys(metadata).length > 0) {
+		incidentio.metadata = metadata;
+	}
 
 	return {
 		name: config.name || '',

@@ -64,7 +64,12 @@ function FormAlertChannels({
 			case ChannelType.JsmOps:
 				return <JsmOpsSettings setSelectedConfig={setSelectedConfig} />;
 			case ChannelType.IncidentIO:
-				return <IncidentIOSettings setSelectedConfig={setSelectedConfig} />;
+				return (
+					<IncidentIOSettings
+						setSelectedConfig={setSelectedConfig}
+						initialMetadata={initialValue?.metadata as Record<string, string>}
+					/>
+				);
 			case ChannelType.Opsgenie:
 				return <OpsgenieSettings setSelectedConfig={setSelectedConfig} />;
 			case ChannelType.Email:

@@ -172,6 +172,8 @@ export interface IncidentIOChannel extends Channel {
 	title?: string;
 	// alert body template (markdown, rendered natively by incident.io)
 	description?: string;
+	// extra metadata pairs merged over the alert's labels (channel wins on clash)
+	metadata?: Record<string, string>;
 }
 
 // JsmOpsChannel configures the Jira Service Management Ops alert channel
