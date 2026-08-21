@@ -109,6 +109,25 @@ components:
         webhook_url:
           $ref: '#/components/schemas/ConfigSecretURL'
       type: object
+    AlertmanagertypesIncidentIOReceiverConfig:
+      properties:
+        description:
+          type: string
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        metadata:
+          additionalProperties:
+            type: string
+          type: object
+        send_resolved:
+          type: boolean
+        title:
+          type: string
+        token:
+          type: string
+        url:
+          type: string
+      type: object
     AlertmanagertypesJSMOpsReceiverConfig:
       properties:
         api_key:
@@ -220,11 +239,11 @@ components:
       - required:
         - jsmops_configs
       - required:
+        - incidentio_configs
+      - required:
         - discord_configs
       - required:
         - email_configs
-      - required:
-        - incidentio_configs
       - required:
         - pagerduty_configs
       - required:
@@ -268,7 +287,7 @@ components:
           type: array
         incidentio_configs:
           items:
-            $ref: '#/components/schemas/ConfigIncidentioConfig'
+            $ref: '#/components/schemas/AlertmanagertypesIncidentIOReceiverConfig'
           type: array
         jira_configs:
           items:
@@ -399,7 +418,7 @@ components:
           type: array
         incidentio_configs:
           items:
-            $ref: '#/components/schemas/ConfigIncidentioConfig'
+            $ref: '#/components/schemas/AlertmanagertypesIncidentIOReceiverConfig'
           type: array
         jira_configs:
           items:
