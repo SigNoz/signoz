@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { startTransition, useCallback } from 'react';
 import { generatePath } from 'react-router-dom';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
@@ -46,23 +46,32 @@ export function useOpenPanelEditor(): (
 			new URLSearchParams(timeSearch).forEach((value, key) => {
 				params.set(key, value);
 			});
-			if (options?.panel) {
-				const query = getPanelBuilderQuery(options.panel);
+			const query = options?.panel
+				? getPanelBuilderQuery(options.panel)
+				: undefined;
+			if (query) {
 				// Single-encoded: `useGetCompositeQueryParam` decodes once on top of the decode
 				// `URLSearchParams` already does.
 				params.set(
 					QueryParams.compositeQuery,
 					encodeURIComponent(JSON.stringify(query)),
 				);
-				// The provider applies the URL in an effect, a tick after the builder's fields
-				// have mounted and read the query they keep (PromQL inputs, add-on rows).
-				resetQuery(query);
 			}
 			const search = params.toString();
-			safeNavigate(
-				search ? `${path}?${search}` : path,
-				options?.handoffState ? { state: options.handoffState } : undefined,
-			);
+			// Leaving the dashboard tears down every panel and re-renders the app-wide
+			// query builder — off the urgent lane so the menu this ran from closes and
+			// paints before that work starts.
+			startTransition(() => {
+				if (query) {
+					// The provider applies the URL in an effect, a tick after the builder's fields
+					// have mounted and read the query they keep (PromQL inputs, add-on rows).
+					resetQuery(query);
+				}
+				safeNavigate(
+					search ? `${path}?${search}` : path,
+					options?.handoffState ? { state: options.handoffState } : undefined,
+				);
+			});
 		},
 		[safeNavigate, dashboardId, timeSearch, resetQuery],
 	);

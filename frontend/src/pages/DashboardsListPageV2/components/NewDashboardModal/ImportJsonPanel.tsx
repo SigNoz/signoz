@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { startTransition, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { generatePath } from 'react-router-dom';
 import { red } from '@ant-design/colors';
@@ -81,9 +81,13 @@ function ImportJsonPanel({ onClose }: Props): JSX.Element {
 			const response = await createDashboardV2(payload);
 			void logEvent(DashboardListEvents.DashboardCreated, { method: 'import' });
 			onClose();
-			safeNavigate(
-				generatePath(ROUTES.DASHBOARD, { dashboardId: response.data.id }),
-			);
+			// As in the blank panel: let the modal's close paint before the dashboard
+			// page mounts.
+			startTransition(() => {
+				safeNavigate(
+					generatePath(ROUTES.DASHBOARD, { dashboardId: response.data.id }),
+				);
+			});
 		} catch (error) {
 			showErrorModal(error as APIError);
 			setIsCreateError(true);
