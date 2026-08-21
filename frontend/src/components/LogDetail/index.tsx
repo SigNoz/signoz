@@ -51,11 +51,12 @@ import { ILogBody } from 'types/api/logs/log';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
-import { isLogDetailsV2, RESOURCE_KEYS, VIEW_TYPES, VIEWS } from './constants';
+import { RESOURCE_KEYS, VIEW_TYPES, VIEWS } from './constants';
 import { LogDetailInnerProps, LogDetailProps } from './LogDetail.interfaces';
 import LogDetailsHeader from './LogDetailsHeader/LogDetailsHeader';
 import { useLogNavigation } from './LogDetailsHeader/useLogNavigation';
 import LogHighlights from './LogHighlights/LogHighlights';
+import { useIsLogDetailsV2 } from './useIsLogDetailsV2';
 
 import './LogDetails.styles.scss';
 
@@ -74,6 +75,7 @@ function LogDetailInner({
 	onScrollToLog,
 	handleOpenInExplorer,
 	getContainer,
+	onApplyLogFilter,
 }: LogDetailInnerProps): JSX.Element {
 	const initialContextQuery = useInitialQuery(log);
 	const [contextQuery, setContextQuery] = useState<Query | undefined>(
@@ -91,6 +93,8 @@ function LogDetailInner({
 	const [filters, setFilters] = useState<TagFilter | null>(null);
 	const [isEdit, setIsEdit] = useState<boolean>(false);
 	const { stagedQuery } = useQueryBuilder();
+
+	const isLogDetailsV2 = useIsLogDetailsV2();
 
 	// Handle clicks outside to close drawer, except on explicitly ignored regions
 	useEffect(() => {
@@ -516,6 +520,7 @@ function LogDetailInner({
 						selectedOptions={options}
 						listViewPanelSelectedFields={listViewPanelSelectedFields}
 						handleChangeSelectedView={handleChangeSelectedView}
+						onApplyLogFilter={onApplyLogFilter}
 					/>
 				)}
 				{!isLogDetailsV2 && selectedView === VIEW_TYPES.JSON && (

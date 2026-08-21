@@ -10,7 +10,7 @@ import {
 	RESTRICTED_SELECTED_FIELDS,
 } from 'container/LogsFilters/config';
 import { MetricsType } from 'container/MetricsApplication/constant';
-import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
+import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearchV2/utils';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 import {
 	BaseAutocompleteData,
