@@ -9,7 +9,7 @@ import { IDashboardVariable } from 'types/api/dashboard/variables';
  *
  * Keyed on `IDashboardVariable`. The V2 editor has a parallel implementation
  * over its own flat form model in
- * `pages/DashboardPageV2/DashboardContainer/VariablesBar/utils/variableDependencies.ts`.
+ * `pages/DashboardPage/DashboardContainer/VariablesBar/utils/variableDependencies.ts`.
  */
 
 export type VariableGraph = Record<string, string[]>;

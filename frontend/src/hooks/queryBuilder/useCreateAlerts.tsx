@@ -26,7 +26,7 @@ import { getGraphType } from 'utils/getGraphType';
 /**
  * @deprecated V1-only. V2 dashboards seed alerts from a panel via
  * `useCreateAlertFromPanel` / `buildCreateAlertUrl`
- * (pages/DashboardPageV2/.../Panel). Do not use in new code.
+ * (pages/DashboardPage/.../Panel). Do not use in new code.
  */
 const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 	const queryRangeMutation = useMutation(getSubstituteVars);
