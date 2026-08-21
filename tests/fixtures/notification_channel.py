@@ -1,22 +1,32 @@
 # pylint: disable=line-too-long
 import json
+import re
 import time
+import uuid
 from collections.abc import Callable
 from http import HTTPStatus
+from pathlib import Path
 
 import docker
 import docker.errors
 import pytest
 import requests
 from testcontainers.core.container import Network
+from wiremock.resources.mappings import HttpMethods, Mapping, MappingRequest, MappingResponse
 from wiremock.testing.testcontainer import WireMockContainer
 
 from fixtures import reuse, types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logger import setup_logger
 from fixtures.maildev import MAILDEV_INCOMING_PASS, SMTP_TEST_FROM
+from fixtures.tls import CA_ID_LABEL, KEYSTORE_PASSWORD, ca_id, issue_server_keystore
 
 logger = setup_logger(__name__)
+
+# Google Chat validates the webhook host, so the WireMock container joins the
+# network under this alias and serves HTTPS on 443 with a certificate issued by
+# the integration CA that signoz trusts; channels point at https://<host>/...
+GOOGLE_CHAT_HOST = "chat.googleapis.com"
 
 
 EMAIL_TRANSPORT_KEYS = [
@@ -124,9 +134,77 @@ email_default_config = {
 }
 
 
+def googlechat_config(space: str) -> dict:
+    """Google Chat channel config for a per-test WireMock space path. Title/text are
+    omitted so the backend applies its default templates. The host is injected at
+    runtime by update_raw_channel_config."""
+    return {
+        "googlechat_configs": [
+            {
+                "webhook_url": f"/v1/spaces/{space}/messages",  # host set on runtime
+            }
+        ],
+    }
+
+
+def googlechat_ok_mappings(path: str) -> list[Mapping]:
+    return [
+        Mapping(
+            request=MappingRequest(method=HttpMethods.POST, url_path=path),
+            response=MappingResponse(status=200, json_body={"name": "spaces/x/messages/x"}),
+        )
+    ]
+
+
+def googlechat_retry_mappings(path: str) -> list[Mapping]:
+    """429 on the first call then 200, via a wiremock scenario transition."""
+    scenario = f"gc-retry-{path}"
+    return [
+        Mapping(
+            request=MappingRequest(method=HttpMethods.POST, url_path=path),
+            response=MappingResponse(status=429, json_body={"error": {"code": 429, "status": "RESOURCE_EXHAUSTED"}}),
+            scenario_name=scenario,
+            required_scenario_state="Started",
+            new_scenario_state="ok",
+        ),
+        Mapping(
+            request=MappingRequest(method=HttpMethods.POST, url_path=path),
+            response=MappingResponse(status=200, json_body={"name": "spaces/x/messages/x"}),
+            scenario_name=scenario,
+            required_scenario_state="ok",
+        ),
+    ]
+
+
+def googlechat_card_subset(alertname: str, buttons: list[tuple[str, str]]) -> dict:
+    """A cardsV2 subset asserting title, firing banner, rendered body, and each
+    button's text AND deep-link url (as a regex), so a broken link is caught too.
+    buttons: list of (text, url_regex)."""
+    return {
+        "text": f"[FIRING:1] {alertname}",
+        "cardsV2": [
+            {
+                "cardId": "signoz-alert",
+                "card": {
+                    "header": {"title": f"[FIRING:1] {alertname}"},
+                    "sections": [
+                        # firing banner
+                        {"widgets": [{"textParagraph": {"text": re.compile("FIRING")}}]},
+                        # rendered alert body mentions the alertname
+                        {"widgets": [{"textParagraph": {"text": re.compile(re.escape(alertname))}}]},
+                    ]
+                    + [{"widgets": [{"buttonList": {"buttons": [{"text": text, "onClick": {"openLink": {"url": re.compile(url)}}}]}}]} for text, url in buttons],
+                },
+            }
+        ],
+    }
+
+
 @pytest.fixture(name="notification_channel", scope="package")
-def notification_channel(
+def notification_channel(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     network: Network,
+    tls: types.TLS,
+    tmpfs: Callable[[str], Path],
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
 ) -> types.TestContainerDocker:
@@ -135,9 +213,25 @@ def notification_channel(
     """
 
     def create() -> types.TestContainerDocker:
+        # http:8080 for admin API + plain webhook delivery; https:443 aliased as
+        # chat.googleapis.com with a CA-issued cert so Google Chat's validated
+        # webhook host routes here over real TLS (signoz trusts the integration CA).
+        keystore_path = issue_server_keystore(tls, tmpfs("notification-channel-certs"), GOOGLE_CHAT_HOST)
+
         container = WireMockContainer(image="wiremock/wiremock:2.35.1-1", secure=False)
+        container.with_volume_mapping(str(keystore_path.parent), "/certs", "ro")
         container.with_network(network)
-        container.start()
+        container.with_network_aliases(GOOGLE_CHAT_HOST)
+        container.with_kwargs(labels={CA_ID_LABEL: ca_id(tls)})
+
+        try:
+            container.start(f"--port 8080 --https-port 443 --https-keystore /certs/keystore.p12 --keystore-type PKCS12 --keystore-password {KEYSTORE_PASSWORD}")
+        except Exception:
+            # Ryuk is disabled: a started-but-unready container would survive and
+            # keep squatting on the chat.googleapis.com alias, poisoning DNS for
+            # any replacement on the shared network.
+            container.stop()
+            raise
 
         return types.TestContainerDocker(
             id=container.get_wrapped_container().id,
@@ -148,7 +242,11 @@ def notification_channel(
                     container.get_exposed_port(8080),
                 )
             },
-            container_configs={"8080": types.TestContainerUrlConfig("http", container.get_wrapped_container().name, 8080)},
+            container_configs={
+                "8080": types.TestContainerUrlConfig("http", container.get_wrapped_container().name, 8080),
+                # Google Chat delivery: https to the validated host via the network alias.
+                "443": types.TestContainerUrlConfig("https", GOOGLE_CHAT_HOST, 443),
+            },
         )
 
     def delete(container: types.TestContainerDocker):
@@ -165,6 +263,16 @@ def notification_channel(
     def restore(cache: dict) -> types.TestContainerDocker:
         return types.TestContainerDocker.from_cache(cache)
 
+    def stale(container: types.TestContainerDocker) -> bool:
+        # A container built against a rotated/absent CA can't serve a cert signoz
+        # trusts; recreate it instead of failing TLS opaquely.
+        client = docker.from_env()
+        try:
+            labels = client.containers.get(container_id=container.id).attrs["Config"]["Labels"]
+        except docker.errors.NotFound:
+            return True
+        return labels.get(CA_ID_LABEL) != ca_id(tls)
+
     return reuse.wrap(
         request,
         pytestconfig,
@@ -173,6 +281,7 @@ def notification_channel(
         create,
         delete,
         restore,
+        stale=stale,
     )
 
 
@@ -246,6 +355,31 @@ def create_webhook_notification_channel(
         return channel_id
 
     return _create_webhook_notification_channel
+
+
+def wait_for_org_registration(signoz: types.SigNoz, token: str, notification_channel: types.TestContainerDocker, wait_seconds: int = 60) -> None:
+    """Polls until the org's alertmanager server is registered (one poll tick).
+
+    channels/test 404s until then, before reaching any notifier. The sentinel
+    receiver posts to its own unstubbed wiremock path, so request journals
+    asserted by tests stay clean."""
+    sentinel = {
+        "name": str(uuid.uuid4()),
+        "webhook_configs": [{"url": notification_channel.container_configs["8080"].get("/org-registration-sentinel")}],
+    }
+    deadline = time.time() + wait_seconds
+    last = None
+    while time.time() < deadline:
+        last = requests.post(
+            signoz.self.host_configs["8080"].get("/api/v1/channels/test"),
+            json=sentinel,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=30,
+        )
+        if last.status_code != HTTPStatus.NOT_FOUND:
+            return
+        time.sleep(2)
+    raise AssertionError(f"org alertmanager did not register within {wait_seconds}s, last response: {last.status_code} {last.text}")
 
 
 def send_test_notification(signoz: types.SigNoz, token: str, receiver: dict, wait_seconds: int = 90) -> None:
