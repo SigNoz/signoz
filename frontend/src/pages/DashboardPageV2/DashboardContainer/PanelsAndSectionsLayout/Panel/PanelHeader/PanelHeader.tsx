@@ -99,7 +99,9 @@ function PanelHeader({
 	return (
 		<div className={cx(styles.header, 'panel-drag-handle')}>
 			<div className={styles.headerLeft}>
-				<Typography.Text className={styles.headerTitle}>{name}</Typography.Text>
+				<Typography.Text className={styles.headerTitle} data-testid="panel-title">
+					{name}
+				</Typography.Text>
 				{description && (
 					<TooltipSimple
 						title={description}

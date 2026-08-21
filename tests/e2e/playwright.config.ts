@@ -15,9 +15,13 @@ export default defineConfig({
 	testDir: './tests',
 
 	// Temporarily excluded: the V1 -> V2 dashboard migration changes the
-	// behaviour the dashboards specs assert against, so they fail as written.
-	// Remove this once they are updated for the V2 dashboard.
-	testIgnore: ['**/tests/dashboards/**'],
+	// behaviour these specs assert against, so they fail as written. The V2
+	// suite under tests/dashboards/v2/ is deliberately NOT ignored — narrow
+	// this list further as the V1 specs are ported, don't re-broaden it.
+	testIgnore: [
+		'**/tests/dashboards/list.spec.ts',
+		'**/tests/dashboards/details/**',
+	],
 
 	// All Playwright output lands under artifacts/. One subdir per reporter
 	// plus results/ for per-test artifacts (traces/screenshots/videos).
