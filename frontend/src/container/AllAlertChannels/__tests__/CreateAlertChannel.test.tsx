@@ -2,6 +2,7 @@ import CreateAlertChannels from 'container/CreateAlertChannels';
 import { ChannelType } from 'container/CreateAlertChannels/config';
 import {
 	GoogleChatInitialConfig,
+	IncidentIOInitialConfig,
 	JiraInitialConfig,
 	JsmOpsInitialConfig,
 } from 'container/CreateAlertChannels/defaults';
@@ -736,6 +737,117 @@ describe('Create Alert Channel', () => {
 					],
 				});
 			});
+		});
+		describe('incident.io', () => {
+			const incidentIOURL =
+				'https://api.incident.io/v2/alert_events/http/01M0D1JNVBGBGVTWX053EM12XV';
+
+			beforeEach(() => {
+				render(<CreateAlertChannels preType={ChannelType.IncidentIO} />);
+			});
+
+			it('Should display the URL and token fields with the docs tip', () => {
+				testLabelInputAndHelpValue({
+					labelText: 'field_incidentio_url',
+					testId: 'incidentio-url-textbox',
+				});
+				testLabelInputAndHelpValue({
+					labelText: 'field_incidentio_token',
+					testId: 'incidentio-token-textbox',
+				});
+				expect(screen.getByTestId('incidentio-tip')).toBeInTheDocument();
+				expect(
+					screen.getByRole('link', { name: 'incidentio_tip_link' }),
+				).toHaveAttribute(
+					'href',
+					'https://signoz.io/docs/alerts-management/notification-channel/incidentio/',
+				);
+			});
+
+			it('Should block save when the URL or token is missing', async () => {
+				const user = userEvent.setup();
+				await user.type(
+					screen.getByTestId('channel-name-textbox'),
+					'incidentio-channel',
+				);
+
+				await user.click(screen.getByTestId('save-channel-button'));
+
+				await waitFor(() =>
+					expect(errorNotification).toHaveBeenCalledWith({
+						message: 'Error',
+						description: 'incidentio_required_fields',
+					}),
+				);
+			});
+
+			it('Should display an error when the URL is not an alert events URL', async () => {
+				const user = userEvent.setup();
+				await user.type(
+					screen.getByTestId('channel-name-textbox'),
+					'incidentio-channel',
+				);
+				await user.type(
+					screen.getByTestId('incidentio-url-textbox'),
+					'https://api.incident.io/v2/incidents',
+				);
+				await user.type(screen.getByTestId('incidentio-token-textbox'), 'tok-abc');
+
+				await user.click(screen.getByTestId('save-channel-button'));
+
+				await waitFor(() =>
+					expect(errorNotification).toHaveBeenCalledWith({
+						message: 'Error',
+						description: 'incidentio_url_invalid',
+					}),
+				);
+			}, 15000);
+
+			it('Should send an incidentio_configs payload with prefilled defaults', async () => {
+				let requestBody: unknown;
+				server.use(
+					rest.post('http://localhost/api/v1/channels', async (req, res, ctx) => {
+						requestBody = await req.json();
+						return res(
+							ctx.status(201),
+							ctx.json({ status: 'success', data: 'channel created' }),
+						);
+					}),
+				);
+
+				const user = userEvent.setup();
+				await user.type(
+					screen.getByTestId('channel-name-textbox'),
+					'incidentio-channel',
+				);
+				await user.type(
+					screen.getByTestId('incidentio-url-textbox'),
+					incidentIOURL,
+				);
+				await user.type(screen.getByTestId('incidentio-token-textbox'), 'tok-abc');
+
+				await user.click(screen.getByTestId('save-channel-button'));
+
+				await waitFor(() =>
+					expect(successNotification).toHaveBeenCalledWith({
+						message: 'Success',
+						description: 'channel_creation_done',
+					}),
+				);
+
+				expect(requestBody).toStrictEqual({
+					name: 'incidentio-channel',
+					incidentio_configs: [
+						{
+							url: incidentIOURL,
+							token: 'tok-abc',
+							send_resolved: true,
+							title: IncidentIOInitialConfig.title,
+							description: IncidentIOInitialConfig.description,
+						},
+					],
+				});
+			}, 15000);
 		});
 		describe('Changing the channel type', () => {
 			async function selectType(

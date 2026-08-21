@@ -1,4 +1,5 @@
 import {
+	AlertmanagertypesIncidentIOReceiverConfigDTO,
 	AlertmanagertypesJiraReceiverConfigDTO,
 	AlertmanagertypesJSMOpsReceiverConfigDTO,
 	AlertmanagertypesPostableChannelDTO,
@@ -9,6 +10,7 @@ import {
 import {
 	ChannelType,
 	GoogleChatChannel,
+	IncidentIOChannel,
 	JiraChannel,
 	JsmOpsChannel,
 } from './config';
@@ -166,5 +168,46 @@ export const prepareJsmOpsRequest = (
 	return {
 		name: config.name || '',
 		jsmops_configs: [jsmops],
+	};
+};
+
+const INCIDENTIO_EVENTS_PATH_PREFIX = '/v2/alert_events/http/';
+
+// the backend enforces the same rule, this is only for a nicer error experience
+export const isValidIncidentIOURL = (url: string): boolean => {
+	try {
+		const { protocol, pathname } = new URL(url);
+		const idx = pathname.indexOf(INCIDENTIO_EVENTS_PATH_PREFIX);
+		return (
+			protocol === 'https:' &&
+			idx !== -1 &&
+			pathname.length > idx + INCIDENTIO_EVENTS_PATH_PREFIX.length
+		);
+	} catch {
+		return false;
+	}
+};
+
+// create, update and test all send the same body shape. Optional fields are
+// omitted when empty so the backend applies its defaults.
+export const prepareIncidentIORequest = (
+	config: Partial<IncidentIOChannel>,
+): AlertmanagertypesPostableChannelDTO => {
+	const incidentio: AlertmanagertypesIncidentIOReceiverConfigDTO = {
+		url: config.url || '',
+		token: config.token || '',
+		send_resolved: config.send_resolved || false,
+	};
+
+	if (config.title) {
+		incidentio.title = config.title;
+	}
+	if (config.description) {
+		incidentio.description = config.description;
+	}
+
+	return {
+		name: config.name || '',
+		incidentio_configs: [incidentio],
 	};
 };

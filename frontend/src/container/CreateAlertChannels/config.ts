@@ -107,6 +107,7 @@ export enum ChannelType {
 	GoogleChat = 'googlechat',
 	Jira = 'jira',
 	JsmOps = 'jsmops',
+	IncidentIO = 'incidentio',
 }
 
 // LabelFilterStatement will be used for preparing filter conditions / matchers
@@ -157,6 +158,20 @@ export interface JiraChannel extends Channel {
 	reopen_transition?: string;
 	// duration string, e.g. 72h or 3d
 	reopen_duration?: string;
+}
+
+// IncidentIOChannel configures the incident.io alert channel, backed by an
+// incident.io HTTP alert source (Alert Events V2 API).
+export interface IncidentIOChannel extends Channel {
+	// per-source alert events URL, e.g.
+	// https://api.incident.io/v2/alert_events/http/<source_config_id>
+	url?: string;
+	// the alert source's secret token
+	token?: string;
+	// alert title template
+	title?: string;
+	// alert body template (markdown, rendered natively by incident.io)
+	description?: string;
 }
 
 // JsmOpsChannel configures the Jira Service Management Ops alert channel

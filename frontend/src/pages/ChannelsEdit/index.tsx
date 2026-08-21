@@ -11,6 +11,7 @@ import ROUTES from 'constants/routes';
 import {
 	ChannelType,
 	GoogleChatChannel,
+	IncidentIOChannel,
 	JiraChannel,
 	JsmOpsChannel,
 	MsTeamsChannel,
@@ -68,7 +69,8 @@ function ChannelsEdit(): JSX.Element {
 			MsTeamsChannel &
 			GoogleChatChannel &
 			JiraChannel &
-			JsmOpsChannel;
+			JsmOpsChannel &
+			IncidentIOChannel;
 	} => {
 		let channel: SlackChannel &
 			WebhookChannel &
@@ -76,7 +78,8 @@ function ChannelsEdit(): JSX.Element {
 			MsTeamsChannel &
 			GoogleChatChannel &
 			JiraChannel &
-			JsmOpsChannel = {
+			JsmOpsChannel &
+			IncidentIOChannel = {
 			name: '',
 		};
 
@@ -127,6 +130,15 @@ function ChannelsEdit(): JSX.Element {
 			channel.detailsArray = { ...pagerConfig.details };
 			return {
 				type: ChannelType.Pagerduty,
+				channel,
+			};
+		}
+
+		if (value && 'incidentio_configs' in value) {
+			const [incidentIOConfig] = value.incidentio_configs;
+			channel = incidentIOConfig;
+			return {
+				type: ChannelType.IncidentIO,
 				channel,
 			};
 		}
