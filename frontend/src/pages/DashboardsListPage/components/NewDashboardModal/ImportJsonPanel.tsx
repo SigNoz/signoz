@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { startTransition, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { buildRoutePath } from 'lib/router/buildRoutePath';
 import { red } from '@ant-design/colors';
@@ -81,9 +81,11 @@ function ImportJsonPanel({ onClose }: Props): JSX.Element {
 			const response = await createDashboardV2(payload);
 			void logEvent(DashboardListEvents.DashboardCreated, { method: 'import' });
 			onClose();
-			safeNavigate(
-				buildRoutePath(ROUTES.DASHBOARD, { dashboardId: response.data.id }),
-			);
+			startTransition(() => {
+				safeNavigate(
+					buildRoutePath(ROUTES.DASHBOARD, { dashboardId: response.data.id }),
+				);
+			});
 		} catch (error) {
 			showErrorModal(error as APIError);
 			setIsCreateError(true);

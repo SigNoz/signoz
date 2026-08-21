@@ -1,4 +1,4 @@
-import { type ChangeEvent, useState } from 'react';
+import { type ChangeEvent, startTransition, useState } from 'react';
 // eslint-disable-next-line signoz/no-antd-components -- no @signozhq/ui multiline TextArea yet
 import { Input as AntInput } from 'antd';
 import { Button } from '@signozhq/ui/button';
@@ -71,9 +71,11 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 				hasImage: Boolean(image),
 			});
 			onClose();
-			safeNavigate(
-				buildRoutePath(ROUTES.DASHBOARD, { dashboardId: created.data.id }),
-			);
+			startTransition(() => {
+				safeNavigate(
+					buildRoutePath(ROUTES.DASHBOARD, { dashboardId: created.data.id }),
+				);
+			});
 		} catch (e) {
 			showErrorModal(e as APIError);
 			toast.error((e as AxiosError).toString() || 'Failed to create dashboard');
