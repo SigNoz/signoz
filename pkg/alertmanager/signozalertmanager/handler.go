@@ -72,6 +72,11 @@ func (handler *handler) TestReceiver(rw http.ResponseWriter, req *http.Request) 
 		return
 	}
 
+	if err := receiver.ValidateFileReferences(); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	err = handler.alertmanager.TestReceiver(ctx, claims.OrgID, receiver)
 	if err != nil {
 		render.Error(rw, err)
@@ -196,6 +201,11 @@ func (handler *handler) UpdateChannelByID(rw http.ResponseWriter, req *http.Requ
 		return
 	}
 
+	if err := receiver.ValidateFileReferences(); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	err = handler.alertmanager.UpdateChannelByReceiverAndID(ctx, claims.OrgID, receiver, id)
 	if err != nil {
 		render.Error(rw, err)
@@ -262,6 +272,11 @@ func (handler *handler) CreateChannel(rw http.ResponseWriter, req *http.Request)
 
 	receiver, err := alertmanagertypes.NewReceiver(string(body))
 	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	if err := receiver.ValidateFileReferences(); err != nil {
 		render.Error(rw, err)
 		return
 	}
