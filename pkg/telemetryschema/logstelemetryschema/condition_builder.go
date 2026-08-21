@@ -126,20 +126,41 @@ func (c *conditionBuilder) conditionForArrayFunction(
 		return NewJSONConditionBuilder(key, valueType).buildArrayFunctionCondition(operator, needle, sb)
 	}
 
-	// legacy string-body path: type-matched array extraction, OR-ed with a scalar comparison
-	// for a scalar body value (coalesced to false so NOT has() matches missing-key rows).
+	return c.legacyArrayFunctionCondition(key, operator, needle, sb), nil
+}
+
+// legacyArrayFunctionCondition builds the has-family comparison over the plain body string, with
+// what it implies over the indexed LOWER(body): the path, since the extraction yields nothing for an
+// absent one, and each element, since it must appear in the text. The comparison decides the row.
+func (c *conditionBuilder) legacyArrayFunctionCondition(
+	key *telemetrytypes.TelemetryFieldKey,
+	operator qbtypes.FilterOperator,
+	needle any,
+	sb *sqlbuilder.SelectBuilder,
+) string {
+	// type-matched array extraction, OR-ed with a scalar comparison for a scalar body value
+	// (coalesced to false so NOT has() matches missing-key rows).
 	elemType := legacyElemType(needle)
 	arrayExpr := getBodyJSONArrayKey(key, elemType)
 	scalarExpr, scalarGuard, hasScalar := getBodyJSONScalarKey(key, elemType)
-	if list, ok := needle.([]any); ok {
-		vals := make([]any, len(list))
-		for i, v := range list {
-			vals[i] = legacyCoerceNeedle(v, elemType)
-		}
+
+	elements, isList := needle.([]any)
+	if !isList {
+		elements = []any{needle}
+	}
+	vals := make([]any, len(elements))
+	for i, v := range elements {
+		vals[i] = legacyCoerceNeedle(v, elemType)
+	}
+
+	var cond string
+	switch {
+	case isList:
 		// Pin the needle array type to the haystack; scalar fallback below coerces value-level.
 		arrayCond := fmt.Sprintf("%s(%s, %s)", operator.FunctionName(), arrayExpr, castNeedleArray(elemType, sb.Var(vals)))
 		if !hasScalar {
-			return arrayCond, nil
+			cond = arrayCond
+			break
 		}
 		var membership string
 		if operator == qbtypes.FilterOperatorHasAll {
@@ -151,14 +172,70 @@ func (c *conditionBuilder) conditionForArrayFunction(
 		} else {
 			membership = sb.In(scalarExpr, vals...)
 		}
-		return fmt.Sprintf("(%s OR ifNull(%s, false))", arrayCond, sb.And(membership, scalarGuard)), nil
+		cond = fmt.Sprintf("(%s OR ifNull(%s, false))", arrayCond, sb.And(membership, scalarGuard))
+	default:
+		arrayCond := fmt.Sprintf("%s(%s, %s)", operator.FunctionName(), arrayExpr, sb.Var(vals[0]))
+		if !hasScalar {
+			cond = arrayCond
+			break
+		}
+		cond = fmt.Sprintf("(%s OR ifNull(%s, false))", arrayCond, sb.And(sb.E(scalarExpr, vals[0]), scalarGuard))
 	}
-	typedNeedle := legacyCoerceNeedle(needle, elemType)
-	arrayCond := fmt.Sprintf("%s(%s, %s)", operator.FunctionName(), arrayExpr, sb.Var(typedNeedle))
-	if !hasScalar {
-		return arrayCond, nil
+
+	predicates := []string{cond}
+	if predicate := bodyIndexPredicate(bodyPathLiterals(key), sb); predicate != "" {
+		predicates = append(predicates, predicate)
 	}
-	return fmt.Sprintf("(%s OR ifNull(%s, false))", arrayCond, sb.And(sb.E(scalarExpr, typedNeedle), scalarGuard)), nil
+	// only strings imply text: the family compares at the element type it infers, so a quoted
+	// number is still a number here and its digits need not appear in the body
+	if elemType == telemetrytypes.FieldDataTypeString {
+		predicates = append(predicates, elementLiterals(operator, elements, sb)...)
+	}
+	if len(predicates) > 1 {
+		return sb.And(predicates...)
+	}
+	return cond
+}
+
+// elementLiterals returns what the elements of a has-family filter imply about the body text. has
+// and hasAll require every one, so each becomes its own predicate; hasAny requires only one, so the
+// arms are ORed - and an element yielding no literal leaves that OR unassertable.
+func elementLiterals(operator qbtypes.FilterOperator, elements []any, sb *sqlbuilder.SelectBuilder) []string {
+	if operator == qbtypes.FilterOperatorHasAny {
+		// resolve every element before binding anything: one unusable element voids the whole OR
+		runSets := make([][]string, 0, len(elements))
+		for _, v := range elements {
+			str, ok := v.(string)
+			if !ok {
+				return nil
+			}
+			runs := querybuilder.JSONTextRuns(str)
+			if len(runs) == 0 {
+				return nil
+			}
+			runSets = append(runSets, runs)
+		}
+		arms := make([]string, 0, len(runSets))
+		for _, runs := range runSets {
+			arms = append(arms, bodyIndexPredicate(runs, sb))
+		}
+		if len(arms) == 0 {
+			return nil
+		}
+		return []string{sb.Or(arms...)}
+	}
+
+	var predicates []string
+	for _, v := range elements {
+		str, ok := v.(string)
+		if !ok {
+			continue
+		}
+		if predicate := bodyIndexPredicate(querybuilder.JSONTextRuns(str), sb); predicate != "" {
+			predicates = append(predicates, predicate)
+		}
+	}
+	return predicates
 }
 
 // castNeedleArray pins an Int64 needle array to Array(Int64) so it matches the Array(Nullable(Int64))
@@ -269,6 +346,9 @@ func (c *conditionBuilder) conditionForResolvedKey(
 		return "", err
 	}
 
+	useJSONBody := c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID))
+	legacyBodyJSONSearch := isBodyJSONSearch(key, columns) && !useJSONBody
+
 	// has/hasAny/hasAll take the body-JSON path, not the normal operator paths.
 	if operator.IsArrayFunctionOperator() {
 		return c.conditionForArrayFunction(ctx, orgID, key, operator, value, columns, sb)
@@ -276,7 +356,7 @@ func (c *conditionBuilder) conditionForResolvedKey(
 
 	// TODO(Piyush): Update this to support multiple JSON columns based on evolutions
 	for _, column := range columns {
-		if column.Type.GetType() == schema.ColumnTypeEnumJSON && isBodyJSONSearch(key, columns) && c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) && key.Name != messageSubField {
+		if column.Type.GetType() == schema.ColumnTypeEnumJSON && isBodyJSONSearch(key, columns) && useJSONBody && key.Name != messageSubField {
 			valueType, value := InferDataType(value, operator, key)
 			if len(key.JSONPlan) == 0 {
 				keyCopy := telemetrytypes.NewTelemetryFieldKey(key.Name, key.FieldContext, key.FieldDataType)
@@ -304,20 +384,63 @@ func (c *conditionBuilder) conditionForResolvedKey(
 		return "", err
 	}
 
-	// Check if this is a body JSON search (legacy string-body path, JSON flag off).
-	if isBodyJSONSearch(key, columns) && !c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
+	// Check if this is a body JSON search (legacy string-body path, JSON flag off). Such a filter
+	// compares JSON_VALUE output, which matches no index expression, so it also carries what it
+	// implies over the indexed LOWER(body): the quoted path on the existence assertion, the value
+	// literals on the comparison. Negations carry nothing — they match rows without the path,
+	// which say nothing about the body text.
+	if legacyBodyJSONSearch {
+		if operator == qbtypes.FilterOperatorExists || operator == qbtypes.FilterOperatorNotExists {
+			exists := GetBodyJSONKeyForExists(ctx, key, operator, value)
+			if operator == qbtypes.FilterOperatorNotExists {
+				return "NOT " + exists, nil
+			}
+			return withBodyIndexPredicate(exists, bodyPathLiterals(key), sb), nil
+		}
 		fieldExpression, value = GetBodyJSONKey(ctx, key, operator, value)
 	}
 
 	fieldExpression, value = querybuilder.DataTypeCollisionHandledFieldName(key, value, fieldExpression, operator)
 
+	cond, err := c.conditionForOperator(ctx, orgID, startNs, endNs, key, operator, value, columns, fieldExpression, sb)
+	if err != nil || !legacyBodyJSONSearch {
+		return cond, err
+	}
+	return withBodyIndexPredicate(cond, querybuilder.JSONComparisonLiterals(operator, value), sb), nil
+}
+
+// conditionForOperator renders the comparison itself, once the field expression and value have been
+// resolved for the column the key landed on.
+func (c *conditionBuilder) conditionForOperator(
+	ctx context.Context,
+	orgID valuer.UUID,
+	startNs, endNs uint64,
+	key *telemetrytypes.TelemetryFieldKey,
+	operator qbtypes.FilterOperator,
+	value any,
+	columns []*schema.Column,
+	fieldExpression string,
+	sb *sqlbuilder.SelectBuilder,
+) (string, error) {
+
 	// make use of case insensitive index for body
 	if fieldExpression == "body" || fieldExpression == messageSubColumn {
 		switch operator {
+		case qbtypes.FilterOperatorEqual:
+			// Bloom filters index lower(body), not the column; `=` still decides the row.
+			if _, ok := value.(string); ok && fieldExpression == LogsV2BodyColumn {
+				return sb.And(
+					sb.E(fieldExpression, value),
+					fmt.Sprintf("LOWER(%s) = LOWER(%s)", fieldExpression, sb.Var(value)),
+				), nil
+			}
 		case qbtypes.FilterOperatorLike:
-			return sb.ILike(fieldExpression, value), nil
-		case qbtypes.FilterOperatorNotLike:
-			return sb.NotILike(fieldExpression, value), nil
+			if _, ok := value.(string); ok && fieldExpression == LogsV2BodyColumn {
+				return sb.And(
+					sb.Like(fieldExpression, value),
+					sb.ILike(fieldExpression, value),
+				), nil
+			}
 		case qbtypes.FilterOperatorRegexp:
 			// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
 			// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
@@ -356,12 +479,6 @@ func (c *conditionBuilder) conditionForResolvedKey(
 		return sb.NotILike(fieldExpression, value), nil
 
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
-		if isBodyJSONSearch(key, columns) && !c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
-			if operator == qbtypes.FilterOperatorExists {
-				return GetBodyJSONKeyForExists(ctx, key, operator, value), nil
-			}
-			return "NOT " + GetBodyJSONKeyForExists(ctx, key, operator, value), nil
-		}
 		pred, err := querybuilder.ExistsExpression(columns, key, startNs, endNs, fieldExpression, operator == qbtypes.FilterOperatorExists)
 		if err != nil {
 			return "", err
