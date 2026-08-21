@@ -7,8 +7,12 @@ import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import Uplot from 'components/Uplot';
+import dayjs from 'dayjs';
+import timezonePlugin from 'dayjs/plugin/timezone';
+import utcPlugin from 'dayjs/plugin/utc';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
+import { useTimezone } from 'providers/Timezone';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -20,6 +24,9 @@ import HoverPopover from './HoverPopover';
 import TableView from './TableView';
 import { GraphPopoverOptions, GraphViewProps } from './types';
 import { onGraphClick, onGraphHover } from './utils';
+
+dayjs.extend(utcPlugin);
+dayjs.extend(timezonePlugin);
 
 function GraphView({
 	inspectMetricsTimeSeries,
@@ -37,6 +44,7 @@ function GraphView({
 	isInspectMetricsRefetching,
 }: GraphViewProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
+	const { timezone } = useTimezone();
 	const graphRef = useRef<HTMLDivElement>(null);
 	const dimensions = useResizeObserver(graphRef);
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
@@ -88,13 +96,12 @@ function GraphView({
 					},
 					values: (_, vals): string[] =>
 						vals.map((v) => {
-							const d = new Date(v);
-							const date = `${String(d.getDate()).padStart(2, '0')}/${String(
-								d.getMonth() + 1,
-							).padStart(2, '0')}`;
-							const time = `${String(d.getHours()).padStart(2, '0')}:${String(
-								d.getMinutes(),
-							).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
+							// Render in the user-selected timezone (falls back to the
+							// browser timezone via useTimezone()) instead of always
+							// using the browser's local timezone.
+							const d = dayjs(v).tz(timezone.value);
+							const date = d.format('DD/MM');
+							const time = d.format('HH:mm:ss');
 							return `${date}\n${time}`; // two-line label
 						}),
 				},
@@ -176,6 +183,7 @@ function GraphView({
 			end,
 			setPopoverOptions,
 			showGraphPopover,
+			timezone,
 		],
 	);
 
