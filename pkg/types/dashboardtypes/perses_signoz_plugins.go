@@ -661,13 +661,10 @@ type AreaFillMode struct{ valuer.String }
 var (
 	AreaFillModeSolid    = AreaFillMode{valuer.NewString("solid")} // default
 	AreaFillModeGradient = AreaFillMode{valuer.NewString("gradient")}
-	// AreaFillModeNone lets an area panel degrade to a line without the save API
-	// rejecting it, so an Area -> TimeSeries -> Area round trip keeps its config.
-	AreaFillModeNone = AreaFillMode{valuer.NewString("none")}
 )
 
 func (AreaFillMode) Enum() []any {
-	return []any{AreaFillModeSolid, AreaFillModeGradient, AreaFillModeNone}
+	return []any{AreaFillModeSolid, AreaFillModeGradient}
 }
 
 func (fm AreaFillMode) ValueOrDefault() string {
@@ -688,7 +685,7 @@ func (fm *AreaFillMode) UnmarshalJSON(data []byte) error {
 	}
 	val := AreaFillMode{valuer.NewString(v)}
 	switch val {
-	case AreaFillModeSolid, AreaFillModeGradient, AreaFillModeNone:
+	case AreaFillModeSolid, AreaFillModeGradient:
 		*fm = val
 		return nil
 	default:
