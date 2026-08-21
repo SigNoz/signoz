@@ -22,6 +22,7 @@ import { prepareBarPanelConfig } from './utils';
 import '../Panel.styles.scss';
 import TooltipFooter from '../components/TooltipFooter';
 import { prepareChartData } from 'lib/uPlotV2/utils/dataUtils';
+import { StackMode } from 'lib/uPlotV2/config/types';
 
 function BarPanel(props: PanelWrapperProps): JSX.Element {
 	const {
@@ -147,6 +148,7 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 			{containerDimensions.width > 0 && containerDimensions.height > 0 && (
 				<BarChart
 					key={`${syncMode}-${syncFilterMode}`}
+					stack={widget.stackedBarChart ? StackMode.Normal : StackMode.None}
 					config={config}
 					legendConfig={{
 						position: widget?.legendPosition ?? LegendPosition.BOTTOM,
@@ -159,7 +161,6 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 					height={containerDimensions.height}
 					layoutChildren={layoutChildren}
 					groupByPerQuery={groupByPerQuery}
-					isStackedBarChart={widget.stackedBarChart ?? false}
 					yAxisUnit={widget.yAxisUnit}
 					decimalPrecision={widget.decimalPrecision}
 					timezone={timezone}
