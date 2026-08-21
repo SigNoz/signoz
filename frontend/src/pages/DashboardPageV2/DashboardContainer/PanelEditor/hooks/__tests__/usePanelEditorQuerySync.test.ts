@@ -4,7 +4,7 @@ import type {
 	DashboardtypesPanelSpecDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { getIsQueryModified } from 'container/NewWidget/utils';
+import { getIsQueryModified } from 'lib/query/panelQuery';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -18,7 +18,7 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 jest.mock('hooks/queryBuilder/useShareBuilderUrl', () => ({
 	useShareBuilderUrl: jest.fn(),
 }));
-jest.mock('container/NewWidget/utils', () => ({
+jest.mock('lib/query/panelQuery', () => ({
 	getIsQueryModified: jest.fn(),
 }));
 jest.mock('../../../queryV5/persesQueryAdapters', () => ({

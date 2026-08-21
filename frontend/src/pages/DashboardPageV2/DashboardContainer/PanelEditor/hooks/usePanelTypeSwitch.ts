@@ -10,7 +10,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	handleQueryChange,
 	type PartialPanelTypes,
-} from 'container/NewWidget/utils';
+} from 'lib/query/panelQuery';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { DashboardDetailEvents } from 'pages/DashboardPageV2/constants/events';
 import type {

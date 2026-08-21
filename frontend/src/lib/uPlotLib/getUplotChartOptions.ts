@@ -3,7 +3,7 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { FullViewProps } from 'container/GridCardLayout/GridCard/FullView/types';
 import { saveLegendEntriesToLocalStorage } from 'container/GridCardLayout/GridCard/FullView/utils';
-import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
+import { ThresholdProps } from 'types/api/widgets/threshold';
 import {
 	applyEnhancedLegendStyling,
 	calculateEnhancedLegendConfig,

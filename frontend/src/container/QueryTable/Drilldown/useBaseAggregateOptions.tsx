@@ -3,7 +3,7 @@ import { Link, Loader } from '@signozhq/icons';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import useUpdatedQuery from 'container/GridCardLayout/useResolveQuery';
-import { processContextLinks } from 'container/NewWidget/RightContainer/ContextLinks/utils';
+import { processContextLinks } from 'utils/contextLinks/utils';
 import useContextVariables from 'hooks/dashboard/useContextVariables';
 import { useNotifications } from 'hooks/useNotifications';
 import ContextMenu from 'periscope/components/ContextMenu';

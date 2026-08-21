@@ -4,7 +4,7 @@ import { Typography } from '@signozhq/ui/typography';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { PanelTypesWithData } from 'container/GridCardLayout/panelTypeItems';
-import { handleQueryChange } from 'container/NewWidget/utils';
+import { handleQueryChange } from 'lib/query/panelQuery';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 

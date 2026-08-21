@@ -19,14 +19,14 @@ jest.mock('components/QueryBuilderV2/QueryBuilderV2', () => ({
 		return null;
 	},
 }));
-jest.mock(
-	'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/ClickHouse',
-	() => ({ __esModule: true, default: (): null => null }),
-);
-jest.mock(
-	'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/promQL',
-	() => ({ __esModule: true, default: (): null => null }),
-);
+jest.mock('container/QueryBuilder/rawQueryEditors/ClickHouse', () => ({
+	__esModule: true,
+	default: (): null => null,
+}));
+jest.mock('container/QueryBuilder/rawQueryEditors/PromQL', () => ({
+	__esModule: true,
+	default: (): null => null,
+}));
 jest.mock('container/QueryBuilder/components/RunQueryBtn/RunQueryBtn', () => ({
 	__esModule: true,
 	default: (): null => null,

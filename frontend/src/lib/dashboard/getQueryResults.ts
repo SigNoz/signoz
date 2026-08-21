@@ -10,7 +10,7 @@ import {
 } from 'api/v5/v5';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
+import { timePreferenceType } from 'constants/timePreference';
 import {
 	CustomTimeType,
 	Time,

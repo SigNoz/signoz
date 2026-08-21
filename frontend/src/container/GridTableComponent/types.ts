@@ -5,10 +5,11 @@ import { LogsExplorerTableProps } from 'container/LogsExplorerTable/LogsExplorer
 import {
 	ThresholdOperators,
 	ThresholdProps,
-} from 'container/NewWidget/RightContainer/Threshold/types';
+} from 'types/api/widgets/threshold';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { ColumnUnit, ContextLinksData } from 'types/api/dashboard/getAll';
+import { ColumnUnit } from 'types/api/widgets/columnUnit';
+import { ContextLinksData } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 
