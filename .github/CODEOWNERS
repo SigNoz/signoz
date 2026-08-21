@@ -162,7 +162,6 @@ go.mod @therealpandey
 ## Public Dashboard Page
 
 /frontend/src/pages/PublicDashboard/ @SigNoz/pulse-frontend
-/frontend/src/container/PublicDashboardContainer/ @SigNoz/pulse-frontend
 
 ## Dashboard Libs + Components
 
