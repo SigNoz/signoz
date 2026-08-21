@@ -2,6 +2,7 @@ package querier
 
 import (
 	"context"
+	"fmt"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -309,3 +310,64 @@ func TestRunQueryErrorCancelsSiblings(t *testing.T) {
 	require.ErrorContains(t, err, "query A failed")
 	assert.True(t, bCanceled.Load(), "query B should be canceled once query A fails")
 }
+
+func TestQueryRange_ClickHouseQueryErrorSurfacing(t *testing.T) {
+	// When ClickHouse returns an error during query execution,
+	// the returned internal error should contain the ClickHouse error message in its additionals.
+	providerSettings := instrumentationtest.New().ToProviderSettings()
+	metadataStore := telemetrytypestest.NewMockMetadataStore()
+	metadataStore.TypeMap["my_metric"] = metrictypes.SumType
+	metadataStore.TemporalityMap["my_metric"] = metrictypes.Cumulative
+
+	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
+	telemetryStore.Mock().
+		ExpectQuery("SELECT any").
+		WillReturnError(fmt.Errorf("code: 46, message: Function with name `histogramQuantile` does not exist"))
+
+	q := New(
+		providerSettings,
+		telemetryStore,
+		metadataStore,
+		nil, // prometheus
+		nil, // promV2
+		nil, // traceStmtBuilder
+		nil, // aiTraceStmtBuilder
+		nil, // logStmtBuilder
+		nil, // auditStmtBuilder
+		&mockMetricStmtBuilder{},
+		nil,                // meterStmtBuilder
+		nil,                // traceOperatorStmtBuilder
+		nil,                // bucketCache
+		flaggertest.New(t), // flagger
+		0,                  // logTraceIDWindowPadding
+		0,                  // maxConcurrentQueries
+	)
+
+	req := &qbtypes.QueryRangeRequest{
+		Start:       uint64(time.Now().Add(-5 * time.Minute).UnixMilli()),
+		End:         uint64(time.Now().UnixMilli()),
+		RequestType: qbtypes.RequestTypeTimeSeries,
+		CompositeQuery: qbtypes.CompositeQuery{
+			Queries: []qbtypes.QueryEnvelope{{
+				Type: qbtypes.QueryTypeBuilder,
+				Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+					Name:         "A",
+					StepInterval: qbtypes.Step{Duration: time.Minute},
+					Aggregations: []qbtypes.MetricAggregation{
+						{
+							MetricName:       "my_metric",
+							TimeAggregation:  metrictypes.TimeAggregationRate,
+							SpaceAggregation: metrictypes.SpaceAggregationSum,
+						},
+					},
+					Signal: telemetrytypes.SignalMetrics,
+				},
+			}},
+		},
+	}
+
+	_, err := q.QueryRange(context.Background(), valuer.GenerateUUID(), req)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "histogramQuantile")
+}
+
