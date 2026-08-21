@@ -155,16 +155,16 @@ export default function InfraMonitoringK8s(): JSX.Element {
 	const categories = useMemo(
 		() => [
 			{
-				key: K8sCategories.PODS,
-				label: 'Pods',
-				icon: <Container size={14} />,
-				config: GetPodsQuickFiltersConfig(),
-			},
-			{
 				key: K8sCategories.CONTAINERS,
 				label: 'Containers',
 				icon: <Box size={14} />,
 				config: GetContainersQuickFiltersConfig(),
+			},
+			{
+				key: K8sCategories.PODS,
+				label: 'Pods',
+				icon: <Container size={14} />,
+				config: GetPodsQuickFiltersConfig(),
 			},
 			{
 				key: K8sCategories.NODES,
