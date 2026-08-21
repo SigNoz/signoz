@@ -2,7 +2,7 @@ import {
 	type DashboardtypesTablePanelSpecDTO,
 	type QueryRangeV5200,
 } from 'api/generated/services/sigNoz.schemas';
-import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
+import { PanelMode } from 'lib/visualization/panels/types';
 import type { PanelQueryData } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
 import { render } from 'tests/test-utils';
 

@@ -1,7 +1,7 @@
 import type { DashboardtypesBarChartPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
+import { PanelMode } from 'lib/visualization/panels/types';
 import { buildBaseConfig } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/baseConfigBuilder';
 import { resolveSeriesLabelV5 } from 'pages/DashboardPageV2/DashboardContainer/Panels/utils/resolveSeriesLabel';
 import type { PanelSeries } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';

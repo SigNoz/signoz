@@ -4,7 +4,7 @@ import type {
 } from 'api/generated/services/sigNoz.schemas';
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
+import { PanelMode } from 'lib/visualization/panels/types';
 import onClickPlugin, {
 	OnClickPluginOpts,
 } from 'lib/uPlotLib/plugins/onClickPlugin';

@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useRef } from 'react';
 import type { DashboardtypesTimeSeriesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
-import TimeSeries from 'container/DashboardContainer/visualization/charts/TimeSeries/TimeSeries';
-import ChartManager from 'container/DashboardContainer/visualization/components/ChartManager/ChartManager';
-import TooltipFooter from 'container/DashboardContainer/visualization/panels/components/TooltipFooter';
-import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
+import TimeSeries from 'lib/visualization/charts/TimeSeries/TimeSeries';
+import ChartManager from 'lib/visualization/components/ChartManager/ChartManager';
+import TooltipFooter from 'lib/visualization/panels/components/TooltipFooter';
+import { PanelMode } from 'lib/visualization/panels/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { IRenderTooltipFooterArgs } from 'lib/uPlotV2/components/types';

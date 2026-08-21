@@ -7,7 +7,7 @@ import type {
 	DashboardCursorSync,
 	SyncTooltipFilterMode,
 } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
-import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
+import { PanelMode } from 'lib/visualization/panels/types';
 import type {
 	PanelPagination,
 	PanelQueryData,

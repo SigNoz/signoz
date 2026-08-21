@@ -1,11 +1,11 @@
 import { histogramBucketSizes } from '@grafana/data';
-import { DEFAULT_BUCKET_COUNT } from 'container/PanelWrapper/constants';
+import { DEFAULT_BUCKET_COUNT } from 'lib/visualization/constants';
 import {
 	buildHistogramBuckets,
 	mergeAlignedDataTables,
 	prependNullBinToFirstHistogramSeries,
 	replaceUndefinedWithNullInAlignedData,
-} from 'container/DashboardContainer/visualization/panels/utils/histogram';
+} from 'lib/visualization/panels/utils/histogram';
 import type { PanelSeries } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
 import { AlignedData } from 'uplot';
 import { incrRoundDn, roundDecimals } from 'utils/round';

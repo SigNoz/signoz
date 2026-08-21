@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
-import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
+import { PanelMode } from 'lib/visualization/panels/types';
 import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import ContextMenu from 'periscope/components/ContextMenu';
 import ListColumnsEditor from 'pages/DashboardPageV2/DashboardContainer/PanelEditor/ListColumnsEditor/ListColumnsEditor';
