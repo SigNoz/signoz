@@ -5,8 +5,10 @@ import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interface
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { DEFAULT_PANEL_TYPE } from '../constants';
+
 function QuerySection(): JSX.Element {
-	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
+	const panelTypes = useGetPanelTypesQueryParam(DEFAULT_PANEL_TYPE);
 
 	// Only reaches the builder for timeseries/table; list and trace panels get
 	// QueryBuilderV2's own listViewTracesFilterConfigs instead.
