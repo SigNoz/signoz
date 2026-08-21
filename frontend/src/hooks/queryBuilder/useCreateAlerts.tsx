@@ -17,7 +17,6 @@ import { useNotifications } from 'hooks/useNotifications';
 import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariables';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { isEmpty } from 'lodash-es';
-import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -39,8 +38,6 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 
 	const { notifications } = useNotifications();
 
-	const { dashboardData } = useDashboardStore();
-
 	const { dashboardVariables } = useDashboardVariables();
 	const dashboardDynamicVariables = useDashboardVariablesByType(
 		'DYNAMIC',
@@ -55,8 +52,6 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 		if (caller === 'panelView') {
 			logEvent('Panel Edit: Create alert', {
 				panelType: widget.panelTypes,
-				dashboardName: dashboardData?.data?.title,
-				dashboardId: dashboardData?.id,
 				widgetId: widget.id,
 				queryType: widget.query.queryType,
 			});
@@ -64,8 +59,6 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 			logEvent('Dashboard Detail: Panel action', {
 				action: MenuItemKeys.CreateAlerts,
 				panelType: widget.panelTypes,
-				dashboardName: dashboardData?.data?.title,
-				dashboardId: dashboardData?.id,
 				widgetId: widget.id,
 				queryType: widget.query.queryType,
 			});

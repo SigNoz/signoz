@@ -1,4 +1,4 @@
-import { RefObject, useCallback, useEffect, useRef, useState } from 'react';
+import { RefObject, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Skeleton, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
@@ -19,7 +19,6 @@ import {
 	getCustomTimeRangeWindowSweepInMS,
 	getStartAndEndTimesInMilliseconds,
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
-import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -86,15 +85,6 @@ function WidgetGraphComponent({
 	const tableProcessedDataRef = useRef<RowData[]>([]);
 
 	const navigateToExplorerPages = useNavigateToExplorerPages();
-
-	const { setColumnWidths } = useDashboardStore();
-
-	const onColumnWidthsChange = useCallback(
-		(widths: Record<string, number>) => {
-			setColumnWidths((prev) => ({ ...prev, [widget.id]: widths }));
-		},
-		[setColumnWidths, widget.id],
-	);
 
 	const handleOnView = (): void => {
 		const queryParams = {
@@ -281,7 +271,6 @@ function WidgetGraphComponent({
 						customOnRowClick={customOnRowClick}
 						enableDrillDown={enableDrillDown}
 						hidePagination={hidePagination}
-						onColumnWidthsChange={onColumnWidthsChange}
 					/>
 				</div>
 			)}

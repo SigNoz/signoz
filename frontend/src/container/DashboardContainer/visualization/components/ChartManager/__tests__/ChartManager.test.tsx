@@ -32,20 +32,6 @@ jest.mock('lib/uPlotV2/hooks/useLegendsSync', () => ({
 	}),
 }));
 
-jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
-	useDashboardStore: (
-		selector?: (s: { dashboardData: { locked: boolean } | undefined }) => {
-			dashboardData: { locked: boolean };
-		},
-	): { dashboardData: { locked: boolean } } => {
-		const mockState = { dashboardData: { locked: false } };
-		return selector ? selector(mockState) : mockState;
-	},
-	selectIsDashboardLocked: (s: {
-		dashboardData: { locked: boolean } | undefined;
-	}): boolean => s.dashboardData?.locked ?? false,
-}));
-
 jest.mock('@signozhq/ui/sonner', () => ({
 	...jest.requireActual('@signozhq/ui/sonner'),
 	toast: {
