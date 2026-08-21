@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { startTransition, useCallback } from 'react';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import logEvent from 'api/common/logEvent';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
@@ -59,13 +59,17 @@ export function useViewPanel(): UseViewPanelApi {
 					QueryParams.compositeQuery,
 					encodeURIComponent(JSON.stringify(query)),
 				);
-				// The provider applies the URL in an effect, a tick after the builder's fields have
-				// mounted and read the query they keep. `resetQuery` — not `initQueryBuilderData`:
-				// swapping one staged id for another re-anchors global time and refetches the grid.
-				resetQuery(query);
 			}
 			void logEvent(DashboardDetailEvents.PanelViewed, { panelId });
-			safeNavigate(`${pathname}?${next.toString()}`);
+			startTransition(() => {
+				if (query) {
+					// The provider applies the URL in an effect, a tick after the builder's fields have
+					// mounted and read the query they keep. `resetQuery` — not `initQueryBuilderData`:
+					// swapping one staged id for another re-anchors global time and refetches the grid.
+					resetQuery(query);
+				}
+				safeNavigate(`${pathname}?${next.toString()}`);
+			});
 		},
 		[pathname, safeNavigate, urlQuery, resetQuery],
 	);
@@ -77,17 +81,19 @@ export function useViewPanel(): UseViewPanelApi {
 			next.set(QueryParams.graphType, panelType);
 			// A grid drilldown opens on the saved panel, never a stale editor handoff.
 			clearViewPanelHandoff();
-			// As in `openView`. Clearing the staged query matters twice over here: the URL
-			// below carries this query's own id, and a staged query with a matching id
-			// makes the provider skip the hydration that normalises legacy filter fields.
-			resetQuery(query);
 			// Same encoding the query builder uses (see `useGetCompositeQueryParam`): the URL
 			// value is `encodeURIComponent(JSON.stringify(query))`, decoded once on read.
 			next.set(
 				QueryParams.compositeQuery,
 				encodeURIComponent(JSON.stringify(query)),
 			);
-			safeNavigate(`${pathname}?${next.toString()}`);
+			startTransition(() => {
+				// As in `openView`. Clearing the staged query matters twice over here: the URL
+				// below carries this query's own id, and a staged query with a matching id
+				// makes the provider skip the hydration that normalises legacy filter fields.
+				resetQuery(query);
+				safeNavigate(`${pathname}?${next.toString()}`);
+			});
 		},
 		[pathname, safeNavigate, urlQuery, resetQuery],
 	);
