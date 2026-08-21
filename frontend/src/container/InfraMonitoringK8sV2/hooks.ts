@@ -137,12 +137,14 @@ export interface SelectedItemParams {
 	selectedItem: string | null;
 	clusterName?: string | null;
 	namespaceName?: string | null;
+	containerName?: string | null;
 }
 
 const selectedItemParamsParsers = {
 	[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM]: parseAsString,
 	[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CLUSTER_NAME]: parseAsString,
 	[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_NAMESPACE_NAME]: parseAsString,
+	[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CONTAINER_NAME]: parseAsString,
 };
 
 export type UseSelectedItemParamsReturn = [
@@ -167,6 +169,9 @@ export const useInfraMonitoringSelectedItemParams =
 				namespaceName:
 					rawParams[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_NAMESPACE_NAME] ??
 					null,
+				containerName:
+					rawParams[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CONTAINER_NAME] ??
+					null,
 			}),
 			[rawParams],
 		);
@@ -178,6 +183,7 @@ export const useInfraMonitoringSelectedItemParams =
 						[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM]: null,
 						[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CLUSTER_NAME]: null,
 						[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_NAMESPACE_NAME]: null,
+						[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CONTAINER_NAME]: null,
 					});
 					return;
 				}
@@ -189,6 +195,8 @@ export const useInfraMonitoringSelectedItemParams =
 						newParams.clusterName ?? null,
 					[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_NAMESPACE_NAME]:
 						newParams.namespaceName ?? null,
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CONTAINER_NAME]:
+						newParams.containerName ?? null,
 				});
 			},
 			[setRawParams],
