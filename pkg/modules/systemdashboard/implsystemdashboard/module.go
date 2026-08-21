@@ -57,6 +57,7 @@ func (module *module) reconcile(ctx context.Context, orgID valuer.UUID, definiti
 	// Anything but the provisioner in updated_by means a foreign write. Leave the
 	// row alone — never overwriting is the safe direction.
 	if existing.UpdatedBy != systemdashboardtypes.ProvisionerIdentity {
+		module.settings.Logger().WarnContext(ctx, "skipping system dashboard reconcile: last write was not by the provisioner", slog.String("name", definition.Name()), slog.String("org_id", orgID.StringValue()), slog.String("updated_by", existing.UpdatedBy))
 		return nil
 	}
 

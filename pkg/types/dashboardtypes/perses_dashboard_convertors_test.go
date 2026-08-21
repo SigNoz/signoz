@@ -89,21 +89,25 @@ func TestPostableDashboardV2NewDashboardV2(t *testing.T) {
 	cases := []struct {
 		scenario       string
 		source         Source
+		name           string
 		expectedLocked bool
 	}{
 		{
 			scenario:       "user source is not locked",
 			source:         SourceUser,
+			name:           "my-dashboard",
 			expectedLocked: false,
 		},
 		{
 			scenario:       "system source is not locked",
 			source:         SourceSystem,
+			name:           SystemDashboardNamePrefix + "my-dashboard",
 			expectedLocked: false,
 		},
 		{
 			scenario:       "integration source is locked",
 			source:         SourceIntegration,
+			name:           "my-dashboard",
 			expectedLocked: true,
 		},
 	}
@@ -115,7 +119,7 @@ func TestPostableDashboardV2NewDashboardV2(t *testing.T) {
 					SchemaVersion: SchemaVersion,
 					Image:         "img",
 				},
-				Name: "my-dashboard",
+				Name: tc.name,
 				Tags: []tagtypes.PostableTag{
 					{Key: "team", Value: "platform"},
 					{Key: "env", Value: "prod"},

@@ -1940,11 +1940,12 @@ func TestNewDashboardV2RejectsReservedName(t *testing.T) {
 		description string
 		name        string
 		source      Source
-		wantErr     bool
+		errContains string
 	}{
 		{description: "reserved name for a system dashboard", name: SystemDashboardNamePrefix + "overview", source: SourceSystem},
-		{description: "reserved name for a user dashboard", name: SystemDashboardNamePrefix + "overview", source: SourceUser, wantErr: true},
-		{description: "reserved name for an integration dashboard", name: SystemDashboardNamePrefix + "overview", source: SourceIntegration, wantErr: true},
+		{description: "reserved name for a user dashboard", name: SystemDashboardNamePrefix + "overview", source: SourceUser, errContains: "reserved for system dashboards"},
+		{description: "reserved name for an integration dashboard", name: SystemDashboardNamePrefix + "overview", source: SourceIntegration, errContains: "reserved for system dashboards"},
+		{description: "unprefixed name for a system dashboard", name: "overview", source: SourceSystem, errContains: "must start with"},
 		{description: "ordinary name for a user dashboard", name: "overview", source: SourceUser},
 		{description: "fewer hyphens than the prefix for a user dashboard", name: "signoz--overview", source: SourceUser},
 	}
@@ -1953,9 +1954,9 @@ func TestNewDashboardV2RejectsReservedName(t *testing.T) {
 		t.Run(testCase.description, func(t *testing.T) {
 			postable := PostableDashboardV2{Name: testCase.name}
 			_, err := postable.NewDashboardV2(valuer.GenerateUUID(), "user@signoz.io", testCase.source)
-			if testCase.wantErr {
+			if testCase.errContains != "" {
 				require.Error(t, err)
-				assert.Contains(t, err.Error(), "reserved for system dashboards")
+				assert.Contains(t, err.Error(), testCase.errContains)
 				return
 			}
 			require.NoError(t, err)

@@ -233,6 +233,9 @@ func (postable PostableDashboardV2) NewDashboardV2(orgID valuer.UUID, createdBy 
 	if source != SourceSystem && strings.HasPrefix(name, SystemDashboardNamePrefix) {
 		return nil, errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "name %q is invalid: the %q prefix is reserved for system dashboards", name, SystemDashboardNamePrefix)
 	}
+	if source == SourceSystem && !strings.HasPrefix(name, SystemDashboardNamePrefix) {
+		return nil, errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "name %q is invalid: system dashboard names must start with the %q prefix", name, SystemDashboardNamePrefix)
+	}
 
 	return &DashboardV2{
 		Identifiable:            types.Identifiable{ID: valuer.GenerateUUID()},
