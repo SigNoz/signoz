@@ -987,6 +987,26 @@ func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
 				Args:  []any{"1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
 			},
 		},
+		{
+			// span.scope.name (span context, name "scope.name") resolves to the declared
+			// scope path scope.name, not a span attribute literally named scope.name.
+			name:        "span-context scope.name in selectFields resolves to the declared scope path",
+			requestType: qbtypes.RequestTypeRaw,
+			keysMap:     map[string][]*telemetrytypes.TelemetryFieldKey{},
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal:       telemetrytypes.SignalTraces,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Filter:       &qbtypes.Filter{},
+				SelectFields: []telemetrytypes.TelemetryFieldKey{
+					{Name: "scope.name", FieldContext: telemetrytypes.FieldContextSpan},
+				},
+				Limit: 10,
+			},
+			expected: qbtypes.Statement{
+				Query: "SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, multiIf(scope.name::String <> '', scope.name::String, NULL) AS `__SELECT_KEY_3_scope.name` FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{"1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
+			},
+		},
 	}
 
 	for _, c := range cases {
