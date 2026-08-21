@@ -12,9 +12,9 @@ import {
 	statusCodeWidgetInfo,
 } from 'container/ApiMonitoring/utils';
 import BarChart from 'lib/visualization/charts/BarChart/BarChart';
-import { handleGraphClick } from 'container/GridCardLayout/GridCard/utils';
-import { useGraphClickToShowButton } from 'container/GridCardLayout/useGraphClickToShowButton';
-import useNavigateToExplorerPages from 'container/GridCardLayout/useNavigateToExplorerPages';
+import { handleGraphClick } from 'container/WidgetCard/Card/utils';
+import { useGraphClickToShowButton } from 'container/WidgetCard/hooks/useGraphClickToShowButton';
+import useNavigateToExplorerPages from 'container/WidgetCard/hooks/useNavigateToExplorerPages';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';

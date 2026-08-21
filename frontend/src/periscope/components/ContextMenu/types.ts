@@ -1,4 +1,4 @@
-import { CustomDataColumnType } from 'container/GridTableComponent/utils';
+import { CustomDataColumnType } from 'container/WidgetCard/TablePanel/utils';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 
 export interface ClickedData {

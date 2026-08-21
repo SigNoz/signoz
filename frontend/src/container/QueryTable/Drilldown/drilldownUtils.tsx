@@ -6,7 +6,7 @@ import {
 	QUERY_BUILDER_OPERATORS_BY_TYPES,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { isApmMetric } from 'container/PanelWrapper/utils';
+import { isApmMetric } from 'container/WidgetCard/PanelWrapper/utils';
 import {
 	applyMappingsToExpression,
 	DRILLDOWN_TO_LOGS_MAPPINGS,

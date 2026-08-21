@@ -1,7 +1,7 @@
 import {
 	getTimeRangeFromStepInterval,
 	isApmMetric,
-} from 'container/PanelWrapper/utils';
+} from 'container/WidgetCard/PanelWrapper/utils';
 import type { BuilderQuery, MetricAggregation } from 'types/api/v5/queryRange';
 
 /** Fallback step (seconds) when the response carries no per-query step interval (V1 parity). */

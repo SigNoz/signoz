@@ -40,7 +40,7 @@ jest.mock('components/CeleryTask/useNavigateToExplorer', () => ({
 	}),
 }));
 
-jest.mock('container/GridCardLayout/useGraphClickToShowButton', () => ({
+jest.mock('container/WidgetCard/hooks/useGraphClickToShowButton', () => ({
 	useGraphClickToShowButton: (): {
 		componentClick: boolean;
 		htmlRef: HTMLElement | null;
@@ -50,7 +50,7 @@ jest.mock('container/GridCardLayout/useGraphClickToShowButton', () => ({
 	}),
 }));
 
-jest.mock('container/GridCardLayout/useNavigateToExplorerPages', () => ({
+jest.mock('container/WidgetCard/hooks/useNavigateToExplorerPages', () => ({
 	__esModule: true,
 	default: (): { navigateToExplorerPages: jest.Mock } => ({
 		navigateToExplorerPages: jest.fn(),

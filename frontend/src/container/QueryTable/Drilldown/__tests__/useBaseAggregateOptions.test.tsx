@@ -6,7 +6,7 @@ import useBaseAggregateOptions from '../useBaseAggregateOptions';
 const mockGetUpdatedQuery = jest.fn();
 const mockNotificationsError = jest.fn();
 
-jest.mock('container/GridCardLayout/useResolveQuery', () => ({
+jest.mock('container/WidgetCard/hooks/useResolveQuery', () => ({
 	__esModule: true,
 	default: (): unknown => ({
 		getUpdatedQuery: mockGetUpdatedQuery,
