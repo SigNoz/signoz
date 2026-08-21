@@ -20,10 +20,6 @@ jest.mock('hooks/useNotifications', () => ({
 	}),
 }));
 
-jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
-	useDashboardStore: (): unknown => ({ dashboardData: undefined }),
-}));
-
 jest.mock('hooks/dashboard/useContextVariables', () => ({
 	__esModule: true,
 	default: (): unknown => ({ processedVariables: {} }),
