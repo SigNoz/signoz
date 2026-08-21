@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react';
 import { UseQueryResult } from 'react-query';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 
 import { usePanelContextMenu } from 'container/WidgetCard/PanelWrapper/hooks/usePanelContextMenu';

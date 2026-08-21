@@ -34,7 +34,7 @@ import { isEmpty } from 'lodash-es';
 import { unparse } from 'papaparse';
 import { useAppContext } from 'providers/App/App';
 import { SuccessResponse, Warning } from 'types/api';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import APIError from 'types/api/error';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { buildAbsolutePath } from 'utils/app';

@@ -7,7 +7,7 @@ import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { DrawStyle } from 'lib/uPlotV2/config/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { get } from 'lodash-es';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 

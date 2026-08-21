@@ -1,6 +1,6 @@
 import { CONTEXT_LINK_FIELDS } from 'utils/contextLinks/constants';
 import { resolveTexts } from 'hooks/dashboard/useContextVariables';
-import { ContextLinkProps } from 'types/api/dashboard/getAll';
+import { ContextLinkProps } from 'types/api/widgets/widget';
 import { v4 as uuid } from 'uuid';
 
 // Configuration for variable source types

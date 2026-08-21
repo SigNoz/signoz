@@ -39,7 +39,7 @@ import { useTimezone } from 'providers/Timezone';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { SuccessResponse, Warning } from 'types/api';
-import { LegendPosition } from 'types/api/dashboard/getAll';
+import { LegendPosition } from 'types/api/widgets/widget';
 import APIError from 'types/api/error';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { QueryRangeResponseV5 } from 'types/api/v5/queryRange';

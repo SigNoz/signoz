@@ -14,7 +14,7 @@ import { isEmpty } from 'lodash-es';
 import { getStartAndEndTimesInMilliseconds } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { CaptureDataProps } from '../CeleryTaskDetail/CeleryTaskDetail';

@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Typography } from '@signozhq/ui/typography';
 import { CardContainer } from 'container/WidgetCard/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 
 import MetricPageGridGraph from './MetricPageGraph';
 import {

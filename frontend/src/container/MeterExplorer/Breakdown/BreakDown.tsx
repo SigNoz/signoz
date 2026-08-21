@@ -18,7 +18,7 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuid } from 'uuid';
 

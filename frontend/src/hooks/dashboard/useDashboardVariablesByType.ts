@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import {
 	IDashboardVariable,
 	TVariableQueryType,
-} from 'types/api/dashboard/getAll';
+} from 'types/api/dashboard/variables';
 
 import { useDashboardVariables } from './useDashboardVariables';
 

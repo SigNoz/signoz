@@ -18,7 +18,7 @@ import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariab
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { isEmpty } from 'lodash-es';
 import { AppState } from 'store/reducers';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { withBasePath } from 'utils/basePath';
 import { getGraphType } from 'utils/getGraphType';

@@ -18,7 +18,7 @@ import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { cloneDeep } from 'lodash-es';
 import { ArrowUpDown, ChevronDown, ChevronRight, Info } from '@signozhq/icons';
 import { getWidgetQuery } from 'pages/MessagingQueues/MQDetails/MetricPage/MetricPageUtil';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import {
 	BaseAutocompleteData,

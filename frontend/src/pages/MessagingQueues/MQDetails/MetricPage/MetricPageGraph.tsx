@@ -10,7 +10,7 @@ import { Card } from 'container/WidgetCard/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { UpdateTimeInterval } from 'store/actions';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 
 import './MetricPage.styles.scss';
 

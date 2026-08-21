@@ -10,7 +10,7 @@ import {
 	PopoverPosition,
 	useCoordinates,
 } from 'periscope/components/ContextMenu';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 

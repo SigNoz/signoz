@@ -13,7 +13,7 @@ import {
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { hasSingleVisiblePoint } from 'lib/uPlotV2/utils/dataUtils';
 import get from 'lodash-es/get';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
