@@ -590,21 +590,29 @@ func (m *fieldMapper) CandidateKeys(ctx context.Context, _ valuer.UUID, field *t
 	// Metadata match by name, then the literal `{context}.{name}` spelling (a context can be
 	// a legitimate prefix in user data, e.g. `metric.max_count`). For a forgiving context
 	// this is the correction step (span.http.method -> attribute http.method).
-	validMatches := make([]*telemetrytypes.TelemetryFieldKey, 0)
 	matches := keys[field.Name]
-	for _, match := range matches {
-		if match.FieldContext == field.FieldContext && field.FieldContext != telemetrytypes.FieldContextUnspecified {
-			validMatches = append(validMatches, match)
+	if field.FieldContext != telemetrytypes.FieldContextUnspecified {
+		// A bare-name match must agree on context; a same-named key under a different
+		// context is a different field. The literal `{context}.{name}` spelling is a real
+		// key in whatever context it was stored (e.g. an attribute named `span.test`), so
+		// it is taken regardless of context.
+		validMatches := make([]*telemetrytypes.TelemetryFieldKey, 0, len(matches))
+		for _, match := range matches {
+			if match.FieldContext == field.FieldContext {
+				validMatches = append(validMatches, match)
+			}
+		}
+		compoundName := fmt.Sprintf("%s.%s", field.FieldContext.StringValue(), field.Name)
+		compoundMatches := keys[compoundName]
+		validMatches = append(validMatches, compoundMatches...)
+		matches = append(matches, compoundMatches...)
+		if len(validMatches) > 0 {
+			return validMatches
 		}
 	}
 
-	if field.FieldContext != telemetrytypes.FieldContextUnspecified {
-		compoundName := fmt.Sprintf("%s.%s", field.FieldContext.StringValue(), field.Name)
-		validMatches = append(validMatches, keys[compoundName]...)
-	}
-
-	if len(validMatches) > 0 {
-		return validMatches
+	if len(matches) > 0 {
+		return matches
 	}
 
 	// No metadata: synthesize per context.
@@ -620,8 +628,9 @@ func (m *fieldMapper) CandidateKeys(ctx context.Context, _ valuer.UUID, field *t
 		literal := telemetrytypes.NewTelemetryFieldKey(field.FieldContext.StringValue()+"."+field.Name, field.FieldContext, field.FieldDataType)
 		return append(querybuilder.SynthesizeKeys(field, value), querybuilder.SynthesizeKeys(literal, value)...)
 	case telemetrytypes.FieldContextScope:
-		compound := field.FieldContext.StringValue() + "." + field.Name
-		return []*telemetrytypes.TelemetryFieldKey{field, telemetrytypes.NewTelemetryFieldKey(compound, telemetrytypes.FieldContextScope, telemetrytypes.FieldDataTypeString)}
+		// Declared scope paths (scope.name / scope.version) arrive via metadata as intrinsics;
+		// anything reaching synth is an undeclared scope attribute.
+		return []*telemetrytypes.TelemetryFieldKey{telemetrytypes.NewTelemetryFieldKey(field.Name, telemetrytypes.FieldContextScope, telemetrytypes.FieldDataTypeString)}
 	}
 	// contexts that don't exist on spans (log, body, …) have nothing to synthesize
 	return nil

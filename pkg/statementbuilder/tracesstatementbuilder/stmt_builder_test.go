@@ -969,10 +969,28 @@ func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
 		{
 			// A scope-context key whose name matches a declared scope path resolves to that
 			// declared path (scope.name), not the span `name` column and not an undeclared
-			// scope attribute, even with no metadata.
-			name:        "scope-context name with no metadata resolves to the declared scope path",
+			// scope attribute. getTracesKeys surfaces the declared path as an intrinsic key
+			// (metadata.go), which shadows the same-named span intrinsic.
+			name:        "scope-context name resolves to the declared scope path",
 			requestType: qbtypes.RequestTypeRaw,
-			keysMap:     map[string][]*telemetrytypes.TelemetryFieldKey{},
+			keysMap: map[string][]*telemetrytypes.TelemetryFieldKey{
+				"scope.name": {
+					{
+						Name:          "scope.name",
+						Signal:        telemetrytypes.SignalTraces,
+						FieldContext:  telemetrytypes.FieldContextScope,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+				},
+				"name": {
+					{
+						Name:          "name",
+						Signal:        telemetrytypes.SignalTraces,
+						FieldContext:  telemetrytypes.FieldContextSpan,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+				},
+			},
 			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 				Signal:       telemetrytypes.SignalTraces,
 				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
