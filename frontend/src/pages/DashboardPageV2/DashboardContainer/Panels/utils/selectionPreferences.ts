@@ -1,4 +1,4 @@
-import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
+import { PanelMode } from 'lib/visualization/panels/types';
 import { SelectionPreferencesSource } from 'lib/uPlotV2/config/types';
 
 // Drag-to-zoom "selection preference" wiring, driven by the render context.

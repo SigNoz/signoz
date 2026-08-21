@@ -1,7 +1,7 @@
 import { Color } from '@signozhq/design-tokens';
 import type { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { buildBaseConfig } from 'container/DashboardContainer/visualization/panels/utils/baseConfigBuilder';
+import { buildBaseConfig } from 'lib/visualization/panels/utils/baseConfigBuilder';
 import { DrawStyle } from 'lib/uPlotV2/config/types';
 import type { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
