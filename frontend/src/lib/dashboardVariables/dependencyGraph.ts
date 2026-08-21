@@ -1,6 +1,6 @@
 import { textContainsVariableReference } from 'lib/dashboardVariables/variableReference';
 import { IDependencyData } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
-import { IDashboardVariable } from 'types/api/dashboard/getAll';
+import { IDashboardVariable } from 'types/api/dashboard/variables';
 
 /**
  * Inter-variable dependency graph over the shared dashboard-variables store. A

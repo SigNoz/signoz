@@ -4,7 +4,7 @@ import { PanelMode } from 'lib/visualization/panels/types';
 import PanelWrapper from 'container/WidgetCard/PanelWrapper/PanelWrapper';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { render, screen, waitFor } from 'tests/test-utils';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';

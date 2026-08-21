@@ -10,7 +10,7 @@ import { QueryParams } from 'constants/query';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 export interface DrilldownQueryProps {

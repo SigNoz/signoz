@@ -7,7 +7,7 @@ import {
 } from 'constants/queryBuilder';
 import { IUseDashboardVariablesReturn } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
-import { IDashboardVariable } from 'types/api/dashboard/getAll';
+import { IDashboardVariable } from 'types/api/dashboard/variables';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 

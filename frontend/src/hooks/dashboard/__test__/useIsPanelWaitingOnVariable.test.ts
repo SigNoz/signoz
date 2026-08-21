@@ -5,7 +5,7 @@ import {
 	VariableFetchState,
 	variableFetchStore,
 } from 'providers/Dashboard/store/variableFetchStore';
-import { IDashboardVariable } from 'types/api/dashboard/getAll';
+import { IDashboardVariable } from 'types/api/dashboard/variables';
 
 import { useIsPanelWaitingOnVariable } from '../useVariableFetchState';
 

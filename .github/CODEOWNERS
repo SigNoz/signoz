@@ -152,7 +152,8 @@ go.mod @therealpandey
 
 ## Dashboard Types
 
-/frontend/src/api/types/dashboard/ @SigNoz/pulse-frontend
+/frontend/src/types/api/dashboard/ @SigNoz/pulse-frontend
+/frontend/src/types/api/widgets/ @SigNoz/pulse-frontend
 
 ## Widget Card
 

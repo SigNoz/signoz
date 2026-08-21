@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useNotifications } from 'hooks/useNotifications';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,

@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 
 import { IServiceName } from './Tabs/types';

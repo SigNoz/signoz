@@ -1,7 +1,7 @@
 import { Card } from 'antd';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import GridCard from 'container/WidgetCard/Card';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 
 function MetricOverTimeGraph({
 	widget,

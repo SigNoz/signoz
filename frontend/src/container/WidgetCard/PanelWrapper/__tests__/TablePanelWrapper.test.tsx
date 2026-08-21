@@ -1,6 +1,6 @@
 import { PanelMode } from 'lib/visualization/panels/types';
 import { render } from 'tests/test-utils';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 
 import TablePanelWrapper from 'container/WidgetCard/PanelWrapper/TablePanelWrapper';
 import {

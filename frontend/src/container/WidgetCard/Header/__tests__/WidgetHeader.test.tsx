@@ -12,7 +12,7 @@ import { IAppContext } from 'providers/App/types';
 import configureStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { SuccessResponse, Warning } from 'types/api';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { ROLES } from 'types/roles';
