@@ -9,6 +9,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import useUrlYAxisUnit from 'hooks/useUrlYAxisUnit';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
+import { StackMode } from 'lib/uPlotV2/config/types';
 import { prepareChartData } from 'lib/uPlotV2/utils/dataUtils';
 import { useTimezone } from 'providers/Timezone';
 import { AppState } from 'store/reducers';
@@ -137,6 +138,7 @@ function TimeSeries({
 									key={`${WIDGET_ID}-${index}`}
 								>
 									<BarChart
+										stack={StackMode.Normal}
 										config={chart.config}
 										legendConfig={{
 											position: LegendPosition.BOTTOM,
@@ -144,7 +146,6 @@ function TimeSeries({
 										data={chart.chartData as uPlot.AlignedData}
 										width={containerDimensions.width}
 										height={containerDimensions.height}
-										isStackedBarChart
 										yAxisUnit={yAxisUnit || 'short'}
 										timezone={timezone}
 									/>
