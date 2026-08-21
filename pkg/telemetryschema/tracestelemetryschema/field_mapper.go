@@ -310,8 +310,8 @@ func (m *fieldMapper) resolveColumnExprs(
 					existExprs = append(existExprs, fmt.Sprintf("%s <> ''", key.Name))
 				} else {
 					attributeName := strings.TrimPrefix(key.Name, "attribute.") // literal "attribute" prefix in attribute keys needs double prefix
-					exprs = append(exprs, fmt.Sprintf("%s.attributes.`%s`::String", columnName, attributeName))
-					existExprs = append(existExprs, fmt.Sprintf("%s.attributes.`%s` IS NOT NULL", columnName, attributeName))
+					exprs = append(exprs, fmt.Sprintf("%s.attributes.%s::String", columnName, querybuilder.ClickHouseIdentifier(attributeName)))
+					existExprs = append(existExprs, fmt.Sprintf("%s.attributes.%s IS NOT NULL", columnName, querybuilder.ClickHouseIdentifier(attributeName)))
 				}
 			default:
 				return nil, nil, nil, errors.NewInternalf(errors.CodeInternal, "only resource and scope context fields are supported for json columns, got %s", key.FieldContext.String)
@@ -590,25 +590,21 @@ func (m *fieldMapper) CandidateKeys(ctx context.Context, _ valuer.UUID, field *t
 	// Metadata match by name, then the literal `{context}.{name}` spelling (a context can be
 	// a legitimate prefix in user data, e.g. `metric.max_count`). For a forgiving context
 	// this is the correction step (span.http.method -> attribute http.method).
+	validMatches := make([]*telemetrytypes.TelemetryFieldKey, 0)
 	matches := keys[field.Name]
-	validMatches := make([]*telemetrytypes.TelemetryFieldKey, 0, len(matches))
-	if field.FieldContext != telemetrytypes.FieldContextUnspecified {
-		compoundName := fmt.Sprintf("%s.%s", field.FieldContext.StringValue(), field.Name)
-		matches = append(matches, keys[compoundName]...)
-
-		for _, match := range matches {
-			if match.FieldContext == field.FieldContext {
-				validMatches = append(validMatches, match)
-			}
-		}
-
-		if len(validMatches) > 0 {
-			return validMatches
+	for _, match := range matches {
+		if match.FieldContext == field.FieldContext && field.FieldContext != telemetrytypes.FieldContextUnspecified {
+			validMatches = append(validMatches, match)
 		}
 	}
 
-	if len(matches) > 0 {
-		return matches
+	if field.FieldContext != telemetrytypes.FieldContextUnspecified {
+		compoundName := fmt.Sprintf("%s.%s", field.FieldContext.StringValue(), field.Name)
+		validMatches = append(validMatches, keys[compoundName]...)
+	}
+
+	if len(validMatches) > 0 {
+		return validMatches
 	}
 
 	// No metadata: synthesize per context.
@@ -619,10 +615,13 @@ func (m *fieldMapper) CandidateKeys(ctx context.Context, _ valuer.UUID, field *t
 		// honored as-is: the stripped name lives in the attribute maps
 		stripped := telemetrytypes.NewTelemetryFieldKey(field.Name, telemetrytypes.FieldContextUnspecified, field.FieldDataType)
 		return querybuilder.SynthesizeKeys(stripped, value)
-	case telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextResource, telemetrytypes.FieldContextScope:
+	case telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextResource:
 		// strict context honored as-is: stripped interpretation first, literal spelling second
 		literal := telemetrytypes.NewTelemetryFieldKey(field.FieldContext.StringValue()+"."+field.Name, field.FieldContext, field.FieldDataType)
 		return append(querybuilder.SynthesizeKeys(field, value), querybuilder.SynthesizeKeys(literal, value)...)
+	case telemetrytypes.FieldContextScope:
+		compound := field.FieldContext.StringValue() + "." + field.Name
+		return []*telemetrytypes.TelemetryFieldKey{field, telemetrytypes.NewTelemetryFieldKey(compound, telemetrytypes.FieldContextScope, telemetrytypes.FieldDataTypeString)}
 	}
 	// contexts that don't exist on spans (log, body, …) have nothing to synthesize
 	return nil
