@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import { Link, Loader } from '@signozhq/icons';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -117,15 +116,6 @@ const useBaseAggregateOptions = ({
 		callback: onClose,
 	});
 
-	const { pathname } = useLocation();
-
-	const showDashboardVariablesOption = useMemo(() => {
-		const fieldVariablesExist = Object.keys(fieldVariables).length > 0;
-		// Check if current route is exactly dashboard route (/dashboard/:dashboardId)
-		const dashboardPattern = /^\/dashboard\/[^/]+$/;
-		return fieldVariablesExist && dashboardPattern.test(pathname);
-	}, [pathname, fieldVariables]);
-
 	const baseAggregateOptionsConfig = useMemo(() => {
 		if (!aggregateData) {
 			console.warn('aggregateData is null in baseAggregateOptionsConfig');
@@ -142,7 +132,6 @@ const useBaseAggregateOptions = ({
 		const baseContextConfig = getBaseContextConfig({
 			handleBaseDrilldown,
 			setSubMenu,
-			showDashboardVariablesOption,
 			showBreakoutOption: true,
 		}).filter((item) => !item.hidden);
 
@@ -206,7 +195,6 @@ const useBaseAggregateOptions = ({
 		getContextLinksItems,
 		isResolveQueryLoading,
 		resolvedQuery,
-		showDashboardVariablesOption,
 		setSubMenu,
 	]);
 

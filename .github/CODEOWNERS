@@ -154,11 +154,6 @@ go.mod @therealpandey
 
 /frontend/src/api/types/dashboard/ @SigNoz/pulse-frontend
 
-## Dashboard List
-
-/frontend/src/pages/DashboardsListPage/ @SigNoz/pulse-frontend
-/frontend/src/container/ListOfDashboard/ @SigNoz/pulse-frontend
-
 # Dashboard Widget Page
 
 /frontend/src/pages/DashboardWidget/ @SigNoz/pulse-frontend
@@ -166,7 +161,6 @@ go.mod @therealpandey
 
 ## Dashboard Page
 
-/frontend/src/pages/DashboardPage/ @SigNoz/pulse-frontend
 /frontend/src/container/DashboardContainer/ @SigNoz/pulse-frontend
 /frontend/src/container/GridCardLayout/ @SigNoz/pulse-frontend
 
