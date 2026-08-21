@@ -45,6 +45,7 @@ var _ qbtypes.StatementProvider = (*builderQuery[any])(nil)
 
 type builderConfig struct {
 	logTraceIDWindowPaddingMS uint64
+	traceIDWindowPaddingMS    uint64
 }
 
 func newBuilderQuery[T any](
@@ -351,7 +352,16 @@ func (q *builderQuery[T]) narrowWindowByTraceID(ctx context.Context, fromMS, toM
 	}
 
 	finder := tracestelemetryschema.NewTraceTimeRangeFinder(q.telemetryStore)
-	traceStart, traceEnd, exists, err := finder.GetTraceTimeRangeMulti(ctx, traceIDs)
+	
+	searchFromMS := fromMS
+	if searchFromMS > q.builderConfig.traceIDWindowPaddingMS {
+		searchFromMS -= q.builderConfig.traceIDWindowPaddingMS
+	} else {
+		searchFromMS = 0
+	}
+	searchToMS := toMS + q.builderConfig.traceIDWindowPaddingMS
+
+	traceStart, traceEnd, exists, err := finder.GetTraceTimeRangeMulti(ctx, traceIDs, searchFromMS, searchToMS)
 	if err != nil {
 		return fromMS, toMS, true, ""
 	}
