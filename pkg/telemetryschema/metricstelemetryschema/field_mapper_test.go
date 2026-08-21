@@ -120,7 +120,7 @@ func TestGetColumn(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
+	fm := NewFieldMapper(nil)
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -204,7 +204,7 @@ func TestGetFieldKeyName(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
+	fm := NewFieldMapper(nil)
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {

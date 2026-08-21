@@ -149,7 +149,7 @@ func (c *conditionBuilder) ConditionFor(
 
 	// Audit fields have no family support, so every logical field is
 	// single-member and flattens losslessly to its physical key.
-	resolved, warning := querybuilder.ResolveLogicalFields(key, querybuilder.MatchingLogicalFields(ctx, orgID, nil, key, fieldKeys))
+	resolved, warning := querybuilder.ResolveLogicalFields(key, querybuilder.MatchingLogicalFields(ctx, orgID, nil, telemetrytypes.SignalUnspecified, nil, key, fieldKeys))
 	keys := querybuilder.SingleKeys(resolved)
 	var warnings []string
 	if warning != "" {

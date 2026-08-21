@@ -220,7 +220,7 @@ func (c *conditionBuilder) ConditionFor(
 		return nil, nil, err
 	}
 
-	matches := querybuilder.MatchingLogicalFields(ctx, orgID, c.fl, key, fieldKeys)
+	matches := querybuilder.MatchingLogicalFields(ctx, orgID, c.fl, telemetrytypes.SignalTraces, nil, key, fieldKeys)
 	skipResourceFilter := options.SkipResourceFilter
 
 	logicalFields, warning := querybuilder.ResolveLogicalFields(key, matches)

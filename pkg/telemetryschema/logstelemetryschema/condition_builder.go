@@ -460,7 +460,7 @@ func (c *conditionBuilder) ConditionFor(
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) ([]string, []string, error) {
-	matches := querybuilder.MatchingLogicalFields(ctx, orgID, nil, key, fieldKeys)
+	matches := querybuilder.MatchingLogicalFields(ctx, orgID, c.fl, telemetrytypes.SignalLogs, nil, key, fieldKeys)
 	skipResourceFilter := options.SkipResourceFilter
 
 	// search() resolves its own (optional) scope; handle it before key resolution.
@@ -468,18 +468,16 @@ func (c *conditionBuilder) ConditionFor(
 		return c.conditionForSearch(ctx, orgID, key, value, sb)
 	}
 
-	// Logs fields have no family support yet, so every logical field is
-	// single-member and flattens losslessly to its physical key.
-	resolved, warning := querybuilder.ResolveLogicalFields(key, matches)
-	keys := querybuilder.SingleKeys(resolved)
+	logicalFields, warning := querybuilder.ResolveLogicalFields(key, matches)
 	var warnings []string
 	if warning != "" {
 		warnings = append(warnings, warning)
 	}
 
 	synthesized := false
-	if len(keys) == 0 {
+	if len(logicalFields) == 0 {
 		_, isIntrinsicColumn := logsV2Columns[key.Name]
+		var keys []*telemetrytypes.TelemetryFieldKey
 		switch {
 		case key.FieldContext == telemetrytypes.FieldContextBody && key.Name == "":
 			return nil, warnings, errors.NewInvalidInputf(errors.CodeInvalidInput, "missing key for body json search - expected key of the form `body.key` (ex: `body.status`)")
@@ -509,23 +507,38 @@ func (c *conditionBuilder) ConditionFor(
 			synthesized = true
 			warnings = append(warnings, querybuilder.NewKeyNotFoundWarning(key.Name))
 		}
+		logicalFields = querybuilder.WrapAsLogicalFields(key.Name, keys)
 	}
 
 	if skipResourceFilter && !synthesized {
-		filtered := make([]*telemetrytypes.TelemetryFieldKey, 0, len(keys))
-		for _, k := range keys {
-			if k.FieldContext != telemetrytypes.FieldContextResource {
-				filtered = append(filtered, k)
+		filtered := make([]*telemetrytypes.LogicalField, 0, len(logicalFields))
+		for _, logical := range logicalFields {
+			if logical.FieldContext != telemetrytypes.FieldContextResource {
+				filtered = append(filtered, logical)
 			}
 		}
 		if len(filtered) == 0 {
 			return nil, warnings, nil
 		}
-		keys = filtered
+		logicalFields = filtered
 	}
 
-	conds := make([]string, 0, len(keys))
-	for _, k := range keys {
+	conds := make([]string, 0, len(logicalFields))
+	for _, logical := range logicalFields {
+		if logical.IsFamily() {
+			// has/hasAny/hasAll/hasToken are body-JSON only; family members are
+			// attribute and resource keys, so keep the descriptive error.
+			if err := querybuilder.NewFunctionUnsupportedError(operator); err != nil {
+				return nil, nil, err
+			}
+			cond, err := querybuilder.LogicalFamilyCondition(ctx, orgID, startNs, endNs, c.fm, logical, operator, value, sb)
+			if err != nil {
+				return nil, nil, err
+			}
+			conds = append(conds, cond)
+			continue
+		}
+		k := logical.Single()
 		cond, err := c.conditionForKey(ctx, orgID, startNs, endNs, k, operator, value, sb)
 		if err != nil {
 			return nil, nil, err

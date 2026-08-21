@@ -345,7 +345,7 @@ func (m *fieldMapper) resolveColumnExprs(
 // probe succeeded) to its family when the metadata map proves membership;
 // otherwise the key stays a single-member logical field.
 func (m *fieldMapper) logicalForResolvedColumn(ctx context.Context, orgID valuer.UUID, field *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) *telemetrytypes.LogicalField {
-	for _, logical := range querybuilder.MatchingLogicalFields(ctx, orgID, m.fl, field, keys) {
+	for _, logical := range querybuilder.MatchingLogicalFields(ctx, orgID, m.fl, telemetrytypes.SignalTraces, nil, field, keys) {
 		if logical.IsFamily() &&
 			logical.FieldContext == field.FieldContext &&
 			(field.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || logical.FieldDataType == field.FieldDataType) {
@@ -361,7 +361,7 @@ func (m *fieldMapper) logicalForResolvedColumn(ctx context.Context, orgID valuer
 // of an already-emitted family are dropped rather than duplicated.
 func (m *fieldMapper) upgradeToFamilies(ctx context.Context, orgID valuer.UUID, field *telemetrytypes.TelemetryFieldKey, candidates []*telemetrytypes.LogicalField, keys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.LogicalField {
 	var families []*telemetrytypes.LogicalField
-	for _, logical := range querybuilder.MatchingLogicalFields(ctx, orgID, m.fl, field, keys) {
+	for _, logical := range querybuilder.MatchingLogicalFields(ctx, orgID, m.fl, telemetrytypes.SignalTraces, nil, field, keys) {
 		if logical.IsFamily() {
 			families = append(families, logical)
 		}

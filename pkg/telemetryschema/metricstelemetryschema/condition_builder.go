@@ -7,6 +7,7 @@ import (
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -17,10 +18,13 @@ import (
 
 type conditionBuilder struct {
 	fm qbtypes.FieldMapper
+	// fl evaluates the resolve_semconv_families flag during resolution.
+	// A nil flagger keeps resolution literal.
+	fl flagger.Flagger
 }
 
-func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
-	return &conditionBuilder{fm: fm}
+func NewConditionBuilder(fm qbtypes.FieldMapper, fl flagger.Flagger) *conditionBuilder {
+	return &conditionBuilder{fm: fm, fl: fl}
 }
 
 // Labels read back as String from the `labels` JSON whatever type the metadata claims, so the
@@ -170,7 +174,7 @@ func (c *conditionBuilder) conditionFor(
 	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator: %v", operator)
 }
 
-// Metrics has no resource sub-query, so options are unused.
+// Metrics has no resource sub-query; options carry only the metric context.
 func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
 	orgID valuer.UUID,
@@ -178,7 +182,7 @@ func (c *conditionBuilder) ConditionFor(
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
-	_ qbtypes.ConditionBuilderOptions,
+	options qbtypes.ConditionBuilderOptions,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
@@ -189,11 +193,10 @@ func (c *conditionBuilder) ConditionFor(
 		return nil, nil, err
 	}
 
-	// Metric labels have no family support, so every logical field is
-	// single-member and flattens losslessly to its physical key.
-	keys := querybuilder.SingleKeys(querybuilder.MatchingLogicalFields(ctx, orgID, nil, key, fieldKeys))
+	logicalFields := querybuilder.MatchingLogicalFields(ctx, orgID, c.fl, telemetrytypes.SignalMetrics, options.MetricContext, key, fieldKeys)
 	var warnings []string
-	if len(keys) == 0 {
+	if len(logicalFields) == 0 {
+		var keys []*telemetrytypes.TelemetryFieldKey
 		if _, isColumn := timeSeriesV4Columns[key.Name]; isColumn {
 			keys = []*telemetrytypes.TelemetryFieldKey{key}
 		} else {
@@ -208,11 +211,20 @@ func (c *conditionBuilder) ConditionFor(
 					key.FieldContext.StringValue()+"."+key.Name, telemetrytypes.FieldContextAttribute, key.FieldDataType))
 			}
 		}
+		logicalFields = querybuilder.WrapAsLogicalFields(key.Name, keys)
 	}
 
-	conds := make([]string, 0, len(keys))
-	for _, k := range keys {
-		cond, err := c.conditionFor(ctx, orgID, startNs, endNs, k, operator, value, sb)
+	conds := make([]string, 0, len(logicalFields))
+	for _, logical := range logicalFields {
+		if logical.IsFamily() {
+			cond, err := querybuilder.LogicalFamilyCondition(ctx, orgID, startNs, endNs, c.fm, logical, operator, value, sb)
+			if err != nil {
+				return nil, nil, err
+			}
+			conds = append(conds, cond)
+			continue
+		}
+		cond, err := c.conditionFor(ctx, orgID, startNs, endNs, logical.Single(), operator, value, sb)
 		if err != nil {
 			return nil, nil, err
 		}

@@ -40,8 +40,8 @@ func NewModule(
 	providerSettings factory.ProviderSettings,
 	cfg inframonitoring.Config,
 ) inframonitoring.Module {
-	fieldMapper := metricstelemetryschema.NewFieldMapper()
-	condBuilder := metricstelemetryschema.NewConditionBuilder(fieldMapper)
+	fieldMapper := metricstelemetryschema.NewFieldMapper(fl)
+	condBuilder := metricstelemetryschema.NewConditionBuilder(fieldMapper, fl)
 	return &module{
 		telemetryStore:         telemetryStore,
 		telemetryMetadataStore: telemetryMetadataStore,

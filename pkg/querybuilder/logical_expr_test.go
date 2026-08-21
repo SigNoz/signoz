@@ -72,7 +72,23 @@ func TestLogicalValueExprNumericFamilyGuardsEveryMember(t *testing.T) {
 	}
 	expr, err := LogicalValueExpr(context.Background(), valuer.UUID{}, 0, 0, stubFieldMapper{}, logical)
 	require.NoError(t, err)
-	assert.Equal(t, "multiIf(has(current), value(current), has(old), value(old), NULL)", expr)
+	// The 0 tail mirrors the '' tail of the string branch: numeric maps read 0
+	// for an absent key, so keyless rows keep single-key semantics.
+	assert.Equal(t, "multiIf(has(current), value(current), has(old), value(old), 0)", expr)
+}
+
+func TestLogicalValueExprBoolFamilyReadsFalseForKeylessRows(t *testing.T) {
+	logical := &telemetrytypes.LogicalField{
+		Name:          "flag",
+		FieldDataType: telemetrytypes.FieldDataTypeBool,
+		Members: []*telemetrytypes.TelemetryFieldKey{
+			{Name: "current", FieldDataType: telemetrytypes.FieldDataTypeBool},
+			{Name: "old", FieldDataType: telemetrytypes.FieldDataTypeBool},
+		},
+	}
+	expr, err := LogicalValueExpr(context.Background(), valuer.UUID{}, 0, 0, stubFieldMapper{}, logical)
+	require.NoError(t, err)
+	assert.Equal(t, "multiIf(has(current), value(current), has(old), value(old), false)", expr)
 }
 
 func TestLogicalExistsExprSingleMemberDelegatesToExistsFor(t *testing.T) {

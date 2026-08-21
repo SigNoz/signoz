@@ -237,6 +237,10 @@ py-clean: ## Clear all pycache and pytest cache from tests directory recursively
 semconv-generate: ## Regenerate semantic-convention families for Go and TypeScript
 	@go run ./scripts/semconv
 
+.PHONY: semconv-check
+semconv-check: ## Fail if the generated semantic-convention files are stale
+	@go run ./scripts/semconv -check
+
 .PHONY: gen-mocks
 gen-mocks:
 	@echo ">> Generating mocks"

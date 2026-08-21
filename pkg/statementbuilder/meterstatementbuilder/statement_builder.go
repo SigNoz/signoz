@@ -44,8 +44,8 @@ func NewFactory(
 			if err != nil {
 				return nil, err
 			}
-			fm := metricstelemetryschema.NewFieldMapper()
-			cb := metricstelemetryschema.NewConditionBuilder(fm)
+			fm := metricstelemetryschema.NewFieldMapper(nil)
+			cb := metricstelemetryschema.NewConditionBuilder(fm, nil)
 			return NewMeterQueryStatementBuilder(settings, metadataStore, fm, cb, metricsStatementBuilder), nil
 		},
 	)

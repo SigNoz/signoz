@@ -590,7 +590,7 @@ func TestVisitKey(t *testing.T) {
 			// and decides not-found handling. Replay that here against the generic
 			// builder behavior (error unless the key is ignored). The test maps carry
 			// no signal, so every logical field is single-member and flattens losslessly.
-			matching := MatchingLogicalFields(context.Background(), valuer.UUID{}, nil, key, tt.fieldKeys)
+			matching := MatchingLogicalFields(context.Background(), valuer.UUID{}, nil, telemetrytypes.SignalUnspecified, nil, key, tt.fieldKeys)
 			resolved, warning := ResolveLogicalFields(key, matching)
 			keys := SingleKeys(resolved)
 
@@ -768,7 +768,7 @@ func (b *resourceConditionBuilder) ConditionFor(
 		return nil, nil, nil
 	}
 
-	resolved, warning := ResolveLogicalFields(key, MatchingLogicalFields(context.Background(), valuer.UUID{}, nil, key, fieldKeys))
+	resolved, warning := ResolveLogicalFields(key, MatchingLogicalFields(context.Background(), valuer.UUID{}, nil, telemetrytypes.SignalUnspecified, nil, key, fieldKeys))
 	keys := SingleKeys(resolved)
 	var warnings []string
 	if warning != "" {
@@ -811,7 +811,7 @@ func (b *conditionBuilder) ConditionFor(
 		return []string{fmt.Sprintf("%s_cond", key.Name)}, nil, nil
 	}
 
-	resolved, warning := ResolveLogicalFields(key, MatchingLogicalFields(context.Background(), valuer.UUID{}, nil, key, fieldKeys))
+	resolved, warning := ResolveLogicalFields(key, MatchingLogicalFields(context.Background(), valuer.UUID{}, nil, telemetrytypes.SignalUnspecified, nil, key, fieldKeys))
 	keys := SingleKeys(resolved)
 	var warnings []string
 	if warning != "" {

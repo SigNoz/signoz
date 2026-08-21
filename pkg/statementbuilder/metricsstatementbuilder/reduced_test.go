@@ -144,8 +144,8 @@ func TestReducedStatementBuilder(t *testing.T) {
 		},
 	}
 
-	fm := metricstelemetryschema.NewFieldMapper()
-	cb := metricstelemetryschema.NewConditionBuilder(fm)
+	fm := metricstelemetryschema.NewFieldMapper(nil)
+	cb := metricstelemetryschema.NewConditionBuilder(fm, nil)
 	fl, err := flagger.New(context.Background(), instrumentationtest.New().ToProviderSettings(), flagger.Config{}, flagger.MustNewRegistry())
 	require.NoError(t, err)
 	sb := NewMetricQueryStatementBuilder(instrumentationtest.New().ToProviderSettings(), telemetrytypestest.NewMockMetadataStore(), fm, cb, fl)

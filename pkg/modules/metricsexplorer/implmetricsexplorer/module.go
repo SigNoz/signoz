@@ -49,8 +49,8 @@ type module struct {
 
 // NewModule constructs the metrics module with the provided dependencies.
 func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, cache cache.Cache, ruleStore ruletypes.RuleStore, dashboardModule dashboard.Module, fl flagger.Flagger, providerSettings factory.ProviderSettings, cfg metricsexplorer.Config) metricsexplorer.Module {
-	fieldMapper := metricstelemetryschema.NewFieldMapper()
-	condBuilder := metricstelemetryschema.NewConditionBuilder(fieldMapper)
+	fieldMapper := metricstelemetryschema.NewFieldMapper(fl)
+	condBuilder := metricstelemetryschema.NewConditionBuilder(fieldMapper, fl)
 	return &module{
 		telemetryStore:         ts,
 		fieldMapper:            fieldMapper,

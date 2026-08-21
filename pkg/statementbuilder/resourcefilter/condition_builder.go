@@ -125,7 +125,7 @@ func (b *defaultConditionBuilder) ConditionFor(
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) ([]string, []string, error) {
-	matches := querybuilder.MatchingLogicalFields(ctx, orgID, b.fl, key, fieldKeys)
+	matches := querybuilder.MatchingLogicalFields(ctx, orgID, b.fl, telemetrytypes.SignalUnspecified, nil, key, fieldKeys)
 
 	// has/hasAny/hasAll/hasToken are logs-body-only functions; they never apply to the
 	// resource fingerprint table, so skip them (the main query still evaluates them).

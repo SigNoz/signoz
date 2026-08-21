@@ -52,10 +52,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 
 	chErrors "github.com/SigNoz/signoz/pkg/query-service/errors"
-	"github.com/SigNoz/signoz/pkg/query-service/metrics"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/semconv"
 )
 
 const (
@@ -3201,8 +3201,13 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, orgID v
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
-	names := []string{req.AggregateAttribute}
-	names = append(names, metrics.GetTransitionedMetric(req.AggregateAttribute))
+	// Exact-name members keep the legacy union semantics: only the canonical
+	// dotted spellings widen, exactly like the transition table this replaced.
+	names := semconv.Members(semconv.KindMetric, telemetrytypes.FieldKeySelector{
+		Name:         req.AggregateAttribute,
+		Signal:       telemetrytypes.SignalMetrics,
+		FieldContext: telemetrytypes.FieldContextMetric,
+	})
 
 	rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, names, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), common.PastDayRoundOff())
 
