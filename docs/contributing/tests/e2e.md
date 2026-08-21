@@ -112,6 +112,41 @@ These two folders look similar but mean different things:
 
 Rule of thumb: if it's a `test.extend` fixture, put it in `fixtures/`. If it's a function you call explicitly (or a constant the function uses), put it in `helpers/`. If it's a static file the helpers read, put it in `testdata/`.
 
+### Extended fixtures
+
+For features needing complex setup (API-seeded data, ruler evaluation waits, cleanup), create domain-specific fixtures that extend `auth`. Group them in `fixtures/<domain>/`.
+
+**Fixture scopes:**
+- **test scope** — fresh data per test. Use for mutations (edit, delete, rename).
+- **worker scope** — shared across tests in one worker. Use for read-only data. Worker scope pays the setup cost once per worker instead of once per test.
+
+**The alerts pattern** (`fixtures/alerts/`) demonstrates extending fixtures:
+
+```
+fixtures/alerts/
+├── alert-rules.ts   # extends auth — worker-scoped rule list + test-scoped factory
+└── alert-history.ts # extends alert-rules — adds history fixtures (waits on ruler)
+```
+
+Specs import from the fixture they need:
+
+```ts
+// List tests — just need rules, no history
+import { test, expect } from '../../../fixtures/alerts/alert-rules';
+
+// History tests — need history rows from ruler evaluation
+import { test, expect } from '../../../fixtures/alerts/alert-history';
+```
+
+**When creating new fixtures:**
+
+1. **Identify scope** — Will tests mutate the data? If yes, test-scoped. If read-only, worker-scoped.
+2. **Group by domain** — Put fixtures in `fixtures/<domain>/`. Helpers in `helpers/<domain>/`.
+3. **Extend existing fixtures** — Chain from `auth` or another fixture to inherit its setup.
+4. **Handle timeouts** — Worker-scoped fixtures that wait on backend processing need explicit timeouts.
+5. **Clean up** — Always delete seeded data in the fixture teardown (after `use()`).
+6. **Extract logic into functions** — Keep the `test.extend()` block lean; move setup/teardown logic to named functions so the extend block reads as a manifest of "what fixtures exist."
+
 Each spec follows these principles:
 
 1. **Directory per feature**: `tests/e2e/tests/<feature>/*.spec.ts`. Cross-resource junction concerns (e.g. cascade-delete) go in their own file, not packed into one giant spec.
@@ -232,11 +267,14 @@ cd tests/e2e
 # Single feature dir
 npx playwright test tests/alerts/ --project=chromium
 
+# Single sub-area
+npx playwright test tests/alerts/history/ --project=chromium
+
 # Single file
-npx playwright test tests/alerts/alerts.spec.ts --project=chromium
+npx playwright test tests/alerts/page.spec.ts --project=chromium
 
 # Single test by title grep
-npx playwright test --project=chromium -g "TC-01"
+npx playwright test --project=chromium -g "AL-01"
 ```
 
 ### Iterative modes
@@ -270,7 +308,14 @@ yarn test:staging
 | `SIGNOZ_E2E_PASSWORD` | Admin password. Bootstrap writes the integration-test default. |
 | `SIGNOZ_E2E_SEEDER_URL` | Seeder HTTP base URL — hit by specs that need per-test telemetry. |
 
-Loading order in `playwright.config.ts`: `.env` first (user-provided, staging), then `.env.local` with `override: true` (bootstrap-generated, local mode). Anything already set in `process.env` at yarn-test time wins because dotenv doesn't touch vars that are already present.
+Precedence in `playwright.config.ts`, lowest to highest: `.env` (user-provided, staging) → `.env.local` (bootstrap-generated, local mode) → whatever is already in `process.env`. The config parses both files itself and only fills in keys the environment does not already define, so exporting a variable always wins:
+
+```bash
+# runs against a locally served frontend, not whatever .env.local points at
+SIGNOZ_E2E_BASE_URL=http://127.0.0.1:3301 pnpm test tests/alerts
+```
+
+This is deliberately not `dotenv.config({ override: true })`. That flag makes the *file* beat `process.env`, which silently discarded exported values — including the `SIGNOZ_E2E_BASE_URL` in `pnpm test:staging`, whenever a `.env.local` happened to exist.
 
 ### Playwright options
 
