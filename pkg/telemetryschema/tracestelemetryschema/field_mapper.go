@@ -182,6 +182,7 @@ func (m *fieldMapper) getColumn(
 	case telemetrytypes.FieldContextResource:
 		return []*schema.Column{indexV3Columns["resource"], indexV3Columns["resources_string"]}, nil
 	case telemetrytypes.FieldContextScope:
+		// scope attributes with same name as declared paths create ambiguity and can't be queried directly.
 		if key.Name == "name" || key.Name == "version" {
 			return nil, qbtypes.ErrColumnNotFound
 		}
@@ -303,7 +304,7 @@ func (m *fieldMapper) resolveColumnExprs(
 				exprs = append(exprs, fmt.Sprintf("%s.`%s`::String", columnName, key.Name))
 				existExprs = append(existExprs, fmt.Sprintf("%s.`%s` IS NOT NULL", columnName, key.Name))
 			case telemetrytypes.FieldContextScope:
-				if isDeclaredScopePath(key.Name) {
+				if f, ok := IntrinsicFields[key.Name]; ok && f.FieldContext == telemetrytypes.FieldContextScope {
 					// declared String paths on the scope column read '' for the missing case
 					exprs = append(exprs, fmt.Sprintf("%s::String", key.Name))
 					existExprs = append(existExprs, fmt.Sprintf("%s <> ''", key.Name))
@@ -313,7 +314,7 @@ func (m *fieldMapper) resolveColumnExprs(
 					existExprs = append(existExprs, fmt.Sprintf("%s.attributes.`%s` IS NOT NULL", columnName, attributeName))
 				}
 			default:
-				return nil, nil, nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource and scope context fields are supported for json columns, got %s", key.FieldContext.String)
+				return nil, nil, nil, errors.NewInternalf(errors.CodeInternal, "only resource and scope context fields are supported for json columns, got %s", key.FieldContext.String)
 			}
 		case schema.ColumnTypeEnumString,
 			schema.ColumnTypeEnumUInt64,
@@ -611,24 +612,14 @@ func (m *fieldMapper) CandidateKeys(ctx context.Context, _ valuer.UUID, field *t
 	case telemetrytypes.FieldContextScope:
 		// A short scope name that names a declared scope path (e.g. {name, scope} -> scope.name)
 		// resolves to that declared path, not an undeclared scope attribute.
-		if compound := field.FieldContext.StringValue() + "." + field.Name; isDeclaredScopePath(compound) {
+		compound := field.FieldContext.StringValue() + "." + field.Name
+		if f, ok := IntrinsicFields[compound]; ok && f.FieldContext == telemetrytypes.FieldContextScope {
 			return []*telemetrytypes.TelemetryFieldKey{telemetrytypes.NewTelemetryFieldKey(compound, telemetrytypes.FieldContextScope, telemetrytypes.FieldDataTypeString)}
 		}
-		return []*telemetrytypes.TelemetryFieldKey{synthScopeAttributeKey(field)}
+		return []*telemetrytypes.TelemetryFieldKey{telemetrytypes.NewTelemetryFieldKey(field.Name, telemetrytypes.FieldContextScope, telemetrytypes.FieldDataTypeString)}
 	}
 	// contexts that don't exist on spans (log, body, …) have nothing to synthesize
 	return nil
-}
-
-// synthScopeAttributeKey guesses a scope attribute (scope.attributes.<name>) for a name absent
-// from metadata — the scope analog of querybuilder.SynthesizeKeys.
-func synthScopeAttributeKey(field *telemetrytypes.TelemetryFieldKey) *telemetrytypes.TelemetryFieldKey {
-	return telemetrytypes.NewTelemetryFieldKey(field.Name, telemetrytypes.FieldContextScope, telemetrytypes.FieldDataTypeString)
-}
-
-func isDeclaredScopePath(name string) bool {
-	f, ok := IntrinsicFields[name]
-	return ok && f.FieldContext == telemetrytypes.FieldContextScope
 }
 
 // scopeJSONExistsExpression renders the existence predicate for the scope JSON column, the one
@@ -638,7 +629,7 @@ func scopeJSONExistsExpression(key *telemetrytypes.TelemetryFieldKey, fieldExpre
 		return "", false
 	}
 	// Declared String paths are non-Nullable (absent reads '' not NULL).
-	if isDeclaredScopePath(key.Name) {
+	if f, ok := IntrinsicFields[key.Name]; ok && f.FieldContext == telemetrytypes.FieldContextScope {
 		if exists {
 			return fieldExpression + " <> ''", true
 		}
