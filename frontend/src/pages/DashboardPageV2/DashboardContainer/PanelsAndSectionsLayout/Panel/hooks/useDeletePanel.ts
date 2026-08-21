@@ -42,6 +42,7 @@ export function useDeletePanel({
 			}
 
 			const removed = section.items.find((i) => i.id === panelId);
+			const removedKind = removed?.panel?.spec.plugin.kind;
 			const nextItems = section.items.filter((i) => i.id !== panelId);
 			try {
 				await patchAsync([
@@ -50,9 +51,15 @@ export function useDeletePanel({
 				]);
 				void logEvent(DashboardDetailEvents.PanelAction, {
 					action: 'delete',
-					panelType: removed?.panel
-						? PANEL_KIND_TO_PANEL_TYPE[removed.panel.spec.plugin.kind]
-						: undefined,
+					// An item ref can outlive its panel, so both fields go on together or
+					// not at all: `panelType` keeps existing reports resolving, `panelKind`
+					// is the V2 identity.
+					...(removedKind
+						? {
+								panelType: PANEL_KIND_TO_PANEL_TYPE[removedKind],
+								panelKind: removedKind,
+							}
+						: {}),
 					panelId,
 					dashboardId,
 				});

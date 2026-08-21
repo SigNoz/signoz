@@ -6,7 +6,7 @@ import type {
 	DashboardtypesQueryDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	handleQueryChange,
 	type PartialPanelTypes,
@@ -146,7 +146,7 @@ export function usePanelTypeSwitch({
 			);
 			// Match a fresh list panel's default order so the builder's Order By isn't empty.
 			const nextQuery =
-				newPanelType === PANEL_TYPES.LIST
+				newKind === 'signoz/ListPanel'
 					? withDefaultListOrder(transformed)
 					: transformed;
 			const signal = getBuilderQueries(currentSpec.queries)[0]

@@ -43,6 +43,7 @@ export function useDownloadPanelCsv({
 		void logEvent(DashboardDetailEvents.PanelExported, {
 			format: 'csv',
 			panelType: PANEL_KIND_TO_PANEL_TYPE[panel.spec.plugin.kind],
+			panelKind: panel.spec.plugin.kind,
 		});
 	}, [canDownloadCsv, fileName, panel, data]);
 }

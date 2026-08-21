@@ -13,7 +13,6 @@ import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.sche
 import PromQLIcon from 'assets/Dashboard/PromQl';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import TextToolTip from 'components/TextToolTip';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import ClickHouseQueryContainer from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/ClickHouse';
 import PromQLQueryContainer from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/promQL';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
@@ -64,8 +63,12 @@ function PanelEditorQueryBuilder({
 	footer,
 	stickyHeader = true,
 }: PanelEditorQueryBuilderProps): JSX.Element {
-	// The shared QueryBuilderV2 / list-view checks still speak the legacy PANEL_TYPES.
+	// The shared QueryBuilderV2 provider still speaks the legacy PANEL_TYPES; what the
+	// builder offers for this kind comes from the kind's own declaration.
 	const panelType = PANEL_KIND_TO_PANEL_TYPE[panelKind];
+	// Raw rows: the builder drops its aggregation controls, and with them the trace
+	// operator that combines aggregated trace queries (V1 parity).
+	const isListViewPanel = panelKind === 'signoz/ListPanel';
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const isDarkMode = useIsDarkMode();
 
@@ -112,9 +115,9 @@ function PanelEditorQueryBuilder({
 						<QueryBuilderV2
 							panelType={panelType}
 							filterConfigs={filterConfigs}
-							showTraceOperator={panelType !== PANEL_TYPES.LIST}
+							showTraceOperator={!isListViewPanel}
 							version="v3"
-							isListViewPanel={panelType === PANEL_TYPES.LIST}
+							isListViewPanel={isListViewPanel}
 							queryComponents={{}}
 							signalSourceChangeEnabled
 							savePreviousQuery
@@ -148,7 +151,7 @@ function PanelEditorQueryBuilder({
 			),
 			children: queryTypeComponents[queryType].component,
 		}));
-	}, [panelKind, panelType, filterConfigs, isDarkMode]);
+	}, [panelKind, panelType, filterConfigs, isDarkMode, isListViewPanel]);
 
 	return (
 		<div

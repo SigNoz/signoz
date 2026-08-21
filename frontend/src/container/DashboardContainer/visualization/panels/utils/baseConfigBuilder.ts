@@ -124,7 +124,9 @@ export function buildBaseConfig({
 		side: 2,
 		isDarkMode,
 		isLogScale,
-		panelType,
+		// Graph and bar plot time on X; every other panel type here does not.
+		isTimeAxis:
+			panelType === PANEL_TYPES.TIME_SERIES || panelType === PANEL_TYPES.BAR,
 	});
 
 	builder.addAxis({
@@ -134,7 +136,6 @@ export function buildBaseConfig({
 		isDarkMode,
 		isLogScale,
 		yAxisUnit,
-		panelType,
 	});
 
 	return builder;

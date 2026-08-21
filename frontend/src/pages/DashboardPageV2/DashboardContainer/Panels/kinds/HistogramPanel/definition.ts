@@ -1,7 +1,10 @@
 import type { PanelDefinition } from '../../types/panelDefinition';
 import Renderer from './Renderer';
 import { sections } from './sections';
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	Querybuildertypesv5RequestTypeDTO,
+	TelemetrytypesSignalDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { EQueryType } from 'types/common/dashboard';
 
 export const definition: PanelDefinition<'signoz/HistogramPanel'> = {
@@ -20,6 +23,15 @@ export const definition: PanelDefinition<'signoz/HistogramPanel'> = {
 		EQueryType.PROM,
 	],
 	queryBuilderFields: {},
+	// Buckets are computed client-side from the raw series, so the request is a plain
+	// time series — the bucket count is a display concern, not a query one.
+	queryCapabilities: {
+		requestType: Querybuildertypesv5RequestTypeDTO.time_series,
+		formatTableResultForUI: false,
+		bucketedStepInterval: false,
+		orderTiebreaker: false,
+		serverPaginated: false,
+	},
 	actions: {
 		view: true,
 		edit: true,

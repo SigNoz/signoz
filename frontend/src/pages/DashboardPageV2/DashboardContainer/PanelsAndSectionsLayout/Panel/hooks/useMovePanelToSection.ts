@@ -53,6 +53,7 @@ export function useMovePanelToSection({
 			if (!moved) {
 				return;
 			}
+			const movedKind = moved.panel?.spec.plugin.kind;
 
 			const sourceItems = source.items.filter((i) => i.id !== panelId);
 			// Land at the section bottom, not backfilled into a gap — least disruptive
@@ -71,9 +72,15 @@ export function useMovePanelToSection({
 				);
 				void logEvent(DashboardDetailEvents.PanelAction, {
 					action: 'move',
-					panelType: moved.panel
-						? PANEL_KIND_TO_PANEL_TYPE[moved.panel.spec.plugin.kind]
-						: undefined,
+					// An item ref can outlive its panel, so both fields go on together or
+					// not at all: `panelType` keeps existing reports resolving, `panelKind`
+					// is the V2 identity.
+					...(movedKind
+						? {
+								panelType: PANEL_KIND_TO_PANEL_TYPE[movedKind],
+								panelKind: movedKind,
+							}
+						: {}),
 					panelId,
 					dashboardId,
 				});

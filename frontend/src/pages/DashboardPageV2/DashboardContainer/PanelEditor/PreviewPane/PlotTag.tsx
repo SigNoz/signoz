@@ -1,12 +1,15 @@
 import { Spline } from '@signozhq/icons';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import QueryTypeTag from 'container/NewWidget/LeftContainer/QueryTypeTag';
 import { EQueryType } from 'types/common/dashboard';
 
 interface PlotTagProps {
 	/** Authoring mode of the panel's query; undefined when no query exists yet. */
 	queryType: EQueryType | undefined;
-	panelType: PANEL_TYPES;
+	/**
+	 * Panel shows raw rows rather than a plot, so naming the mode the rows were
+	 * "plotted with" would be wrong.
+	 */
+	isListViewPanel: boolean;
 	className?: string;
 }
 
@@ -17,10 +20,10 @@ interface PlotTagProps {
  */
 function PlotTag({
 	queryType,
-	panelType,
+	isListViewPanel,
 	className,
 }: PlotTagProps): JSX.Element | null {
-	if (queryType === undefined || panelType === PANEL_TYPES.LIST) {
+	if (queryType === undefined || isListViewPanel) {
 		return null;
 	}
 

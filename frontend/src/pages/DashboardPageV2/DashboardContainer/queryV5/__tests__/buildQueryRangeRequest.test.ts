@@ -1,12 +1,13 @@
-import type { DashboardtypesQueryDTO } from 'api/generated/services/sigNoz.schemas';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import {
+	type DashboardtypesQueryDTO,
+	Querybuildertypesv5RequestTypeDTO,
+} from 'api/generated/services/sigNoz.schemas';
 
 import {
 	buildQueryRangeRequest,
 	extractLegendMap,
 	getBarStepIntervalSeconds,
 	hasRunnableQueries,
-	panelTypeToRequestType,
 	toQueryEnvelopes,
 } from '../buildQueryRangeRequest';
 
@@ -40,20 +41,46 @@ function compositeQuery(
 const HOUR_MS = 60 * 60 * 1000;
 const START_MS = 1_700_000_000_000;
 
-describe('panelTypeToRequestType', () => {
+// Capability blocks matching what each kind declares, so these tests exercise the
+// builder's response to the flags rather than the declarations themselves (those are
+// asserted against the registry in Panels/__tests__/capabilities.test.ts).
+const TIME_SERIES_CAPABILITIES = {
+	requestType: Querybuildertypesv5RequestTypeDTO.time_series,
+	formatTableResultForUI: false,
+	bucketedStepInterval: false,
+	orderTiebreaker: false,
+	serverPaginated: false,
+};
+const BAR_CAPABILITIES = {
+	...TIME_SERIES_CAPABILITIES,
+	bucketedStepInterval: true,
+};
+const TABLE_CAPABILITIES = {
+	...TIME_SERIES_CAPABILITIES,
+	requestType: Querybuildertypesv5RequestTypeDTO.scalar,
+	formatTableResultForUI: true,
+};
+const LIST_PANEL_CAPABILITIES = {
+	...TIME_SERIES_CAPABILITIES,
+	requestType: Querybuildertypesv5RequestTypeDTO.raw,
+	orderTiebreaker: true,
+	serverPaginated: true,
+};
+
+describe('requestType', () => {
 	it.each([
-		[PANEL_TYPES.TIME_SERIES, 'time_series'],
-		// HISTOGRAM and BAR bin client-side from time-series data; sending
-		// 'distribution' would return a shape the renderers can't bin.
-		[PANEL_TYPES.BAR, 'time_series'],
-		[PANEL_TYPES.HISTOGRAM, 'time_series'],
-		[PANEL_TYPES.TABLE, 'scalar'],
-		[PANEL_TYPES.PIE, 'scalar'],
-		[PANEL_TYPES.VALUE, 'scalar'],
-		[PANEL_TYPES.LIST, 'raw'],
-		[PANEL_TYPES.TRACE, 'trace'],
-	])('%s → %s', (panelType, requestType) => {
-		expect(panelTypeToRequestType(panelType)).toBe(requestType);
+		Querybuildertypesv5RequestTypeDTO.time_series,
+		Querybuildertypesv5RequestTypeDTO.scalar,
+		Querybuildertypesv5RequestTypeDTO.raw,
+		Querybuildertypesv5RequestTypeDTO.trace,
+	])('passes %s through from the declared capabilities', (requestType) => {
+		const request = buildQueryRangeRequest({
+			queries: bareBuilderQuery({ name: 'A', signal: 'metrics' }),
+			queryCapabilities: { ...TIME_SERIES_CAPABILITIES, requestType },
+			startMs: START_MS,
+			endMs: START_MS + HOUR_MS,
+		});
+		expect(request.requestType).toBe(requestType);
 	});
 });
 
@@ -135,7 +162,7 @@ describe('buildQueryRangeRequest', () => {
 	it('assembles the full request DTO', () => {
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A', signal: 'metrics' }),
-			panelType: PANEL_TYPES.TIME_SERIES,
+			queryCapabilities: TIME_SERIES_CAPABILITIES,
 			startMs: START_MS,
 			endMs: START_MS + HOUR_MS,
 		});
@@ -157,7 +184,7 @@ describe('buildQueryRangeRequest', () => {
 	it('sets formatTableResultForUI only for TABLE panels', () => {
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A' }),
-			panelType: PANEL_TYPES.TABLE,
+			queryCapabilities: TABLE_CAPABILITIES,
 			startMs: START_MS,
 			endMs: START_MS + HOUR_MS,
 		});
@@ -167,7 +194,7 @@ describe('buildQueryRangeRequest', () => {
 	it('passes through fillGaps into formatOptions', () => {
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A' }),
-			panelType: PANEL_TYPES.TIME_SERIES,
+			queryCapabilities: TIME_SERIES_CAPABILITIES,
 			startMs: START_MS,
 			endMs: START_MS + HOUR_MS,
 			fillGaps: true,
@@ -178,7 +205,7 @@ describe('buildQueryRangeRequest', () => {
 	it('stamps offset/limit onto builder queries when pagination is given', () => {
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A', signal: 'logs' }),
-			panelType: PANEL_TYPES.LIST,
+			queryCapabilities: LIST_PANEL_CAPABILITIES,
 			startMs: START_MS,
 			endMs: START_MS + HOUR_MS,
 			pagination: { offset: 100, limit: 50 },
@@ -198,7 +225,7 @@ describe('buildQueryRangeRequest', () => {
 	it('defaults a logs list with no order to timestamp desc + id tiebreaker', () => {
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A', signal: 'logs' }),
-			panelType: PANEL_TYPES.LIST,
+			queryCapabilities: LIST_PANEL_CAPABILITIES,
 			startMs: START_MS,
 			endMs: START_MS + HOUR_MS,
 		});
@@ -218,7 +245,7 @@ describe('buildQueryRangeRequest', () => {
 				signal: 'logs',
 				order: [{ key: { name: 'timestamp' }, direction: 'desc' }],
 			}),
-			panelType: PANEL_TYPES.LIST,
+			queryCapabilities: LIST_PANEL_CAPABILITIES,
 			startMs: START_MS,
 			endMs: START_MS + HOUR_MS,
 		});
@@ -238,7 +265,7 @@ describe('buildQueryRangeRequest', () => {
 		];
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A', signal: 'logs', order }),
-			panelType: PANEL_TYPES.LIST,
+			queryCapabilities: LIST_PANEL_CAPABILITIES,
 			startMs: START_MS,
 			endMs: START_MS + HOUR_MS,
 		});
@@ -252,7 +279,7 @@ describe('buildQueryRangeRequest', () => {
 		const order = [{ key: { name: 'timestamp' }, direction: 'desc' }];
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A', signal: 'traces', order }),
-			panelType: PANEL_TYPES.LIST,
+			queryCapabilities: LIST_PANEL_CAPABILITIES,
 			startMs: START_MS,
 			endMs: START_MS + HOUR_MS,
 		});
@@ -265,7 +292,7 @@ describe('buildQueryRangeRequest', () => {
 	it('injects the range-derived stepInterval into BAR builder queries without one', () => {
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A', signal: 'metrics' }),
-			panelType: PANEL_TYPES.BAR,
+			queryCapabilities: BAR_CAPABILITIES,
 			startMs: START_MS,
 			endMs: START_MS + HOUR_MS,
 		});
@@ -280,7 +307,7 @@ describe('buildQueryRangeRequest', () => {
 	it('preserves a user-set stepInterval on BAR builder queries', () => {
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A', stepInterval: 300 }),
-			panelType: PANEL_TYPES.BAR,
+			queryCapabilities: BAR_CAPABILITIES,
 			startMs: START_MS,
 			endMs: START_MS + HOUR_MS,
 		});
@@ -293,7 +320,7 @@ describe('buildQueryRangeRequest', () => {
 	it('does not touch stepInterval for non-BAR panels', () => {
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A' }),
-			panelType: PANEL_TYPES.TIME_SERIES,
+			queryCapabilities: TIME_SERIES_CAPABILITIES,
 			startMs: START_MS,
 			endMs: START_MS + HOUR_MS,
 		});
