@@ -7,7 +7,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	ItemsProps,
 	PanelTypesWithData,
-} from 'container/DashboardContainer/PanelTypeSelectionModal/menuItems';
+} from 'container/GridCardLayout/panelTypeItems';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { LayoutDashboard } from '@signozhq/icons';
 import { DataSource } from 'types/common/queryBuilder';

@@ -4,7 +4,7 @@ import { Typography } from '@signozhq/ui/typography';
 import { ExecStats } from 'api/v5/v5';
 import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
 import { PANEL_TYPES, PanelDisplay } from 'constants/queryBuilder';
-import { PanelTypesWithData } from 'container/DashboardContainer/PanelTypeSelectionModal/menuItems';
+import { PanelTypesWithData } from 'container/GridCardLayout/panelTypeItems';
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import {
