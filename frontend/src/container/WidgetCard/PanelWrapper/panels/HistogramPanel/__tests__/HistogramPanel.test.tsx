@@ -3,7 +3,7 @@ import { HistogramChartProps } from 'lib/visualization/charts/types';
 import { PanelMode } from 'lib/visualization/panels/types';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { render, screen } from 'tests/test-utils';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import {
 	MetricQueryRangeSuccessResponse,
 	MetricRangePayloadProps,

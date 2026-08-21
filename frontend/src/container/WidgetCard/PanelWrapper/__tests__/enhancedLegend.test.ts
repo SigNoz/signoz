@@ -1,5 +1,5 @@
 import { Dimensions } from 'hooks/useDimensions';
-import { LegendPosition } from 'types/api/dashboard/getAll';
+import { LegendPosition } from 'types/api/widgets/widget';
 
 import {
 	applyEnhancedLegendStyling,

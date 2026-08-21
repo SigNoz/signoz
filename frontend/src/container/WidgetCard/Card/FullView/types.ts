@@ -4,7 +4,7 @@ import { UplotProps } from 'components/Uplot/Uplot';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import uPlot from 'uplot';
 
 export interface DataSetProps {

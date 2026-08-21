@@ -1,6 +1,6 @@
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
-import { LegendPosition } from 'types/api/dashboard/getAll';
+import { LegendPosition } from 'types/api/widgets/widget';
 
 // Mock uPlot
 jest.mock('uplot', () => {

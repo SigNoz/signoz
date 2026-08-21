@@ -6,7 +6,7 @@ import cx from 'classnames';
 import { CardContainer } from 'container/WidgetCard/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ChevronDown, ChevronUp } from '@signozhq/icons';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 
 import MetricColumnGraphs from './MetricColumnGraphs';
 import MetricPageGridGraph from './MetricPageGraph';

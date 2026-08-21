@@ -14,7 +14,7 @@ import { convertValue } from 'lib/getConvertedValue';
 import getLabelName from 'lib/getLabelName';
 import { cloneDeep, isUndefined } from 'lodash-es';
 import _noop from 'lodash-es/noop';
-import { LegendPosition } from 'types/api/dashboard/getAll';
+import { LegendPosition } from 'types/api/widgets/widget';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryData, QueryDataV3 } from 'types/api/widgets/getQuery';

@@ -6,7 +6,7 @@ import Graph from 'container/WidgetCard/Card';
 import { SERVICE_DETAIL_DRILLDOWN_ENABLED } from 'container/MetricsApplication/constant';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 
 function TopLevelOperation({
 	name,

@@ -23,7 +23,7 @@ import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { useTimezone } from 'providers/Timezone';
 import { SuccessResponse } from 'types/api';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import ErrorState from './ErrorState';

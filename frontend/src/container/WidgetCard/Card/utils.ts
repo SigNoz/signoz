@@ -5,7 +5,7 @@ import { NavigateToExplorerProps } from 'components/CeleryTask/useNavigateToExpl
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import getLabelName from 'lib/getLabelName';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import APIError from 'types/api/error';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';

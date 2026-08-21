@@ -7,7 +7,7 @@ import { setDashboardVariablesStore } from 'providers/Dashboard/store/dashboardV
 import type {
 	IDashboardVariable,
 	TVariableQueryType,
-} from 'types/api/dashboard/getAll';
+} from 'types/api/dashboard/variables';
 
 import { dtoToFormModel } from '../DashboardSettings/Variables/variableAdapters';
 import {

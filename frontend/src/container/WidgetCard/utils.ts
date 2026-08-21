@@ -1,7 +1,5 @@
 import { Layout } from 'react-grid-layout';
 import { FORMULA_REGEXP } from 'constants/regExp';
-import { isEmpty, isEqual } from 'lodash-es';
-import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 
 export type PanelMap = Record<
@@ -146,34 +144,6 @@ export function extractQueryNamesFromExpression(expression: string): string[] {
 	// Extract matches and deduplicate
 	return [...new Set(expression.match(queryNameRegex) || [])];
 }
-
-export const hasColumnWidthsChanged = (
-	columnWidths: Record<string, Record<string, number>>,
-	dashboardData?: Dashboard,
-): boolean => {
-	// If no column widths stored, no changes
-	if (isEmpty(columnWidths) || !dashboardData) {
-		return false;
-	}
-
-	// Check each widget's column widths
-	return Object.keys(columnWidths).some((widgetId) => {
-		const dashboardWidget = dashboardData?.data?.widgets?.find(
-			(widget) => widget.id === widgetId,
-		) as Widgets;
-
-		const newWidths = columnWidths[widgetId];
-		const existingWidths = dashboardWidget?.columnWidths;
-
-		// If both are empty/undefined, no change
-		if (isEmpty(newWidths) || isEmpty(existingWidths)) {
-			return false;
-		}
-
-		// Compare stored column widths with dashboard widget's column widths
-		return !isEqual(newWidths, existingWidths);
-	});
-};
 
 /**
  * Calculates the step interval in uPlot points (1 minute = 60 points)

@@ -9,7 +9,7 @@ import {
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { ColumnUnit } from 'types/api/widgets/columnUnit';
-import { ContextLinksData } from 'types/api/dashboard/getAll';
+import { ContextLinksData } from 'types/api/widgets/widget';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 
