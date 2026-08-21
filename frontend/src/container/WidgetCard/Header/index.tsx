@@ -1,0 +1,275 @@
+import { ReactNode, useCallback, useMemo, useState } from 'react';
+import { UseQueryResult } from 'react-query';
+import {
+	Bell,
+	CircleX,
+	CloudDownload,
+	EllipsisVertical,
+	Fullscreen,
+	Search,
+	SolidInfoCircle,
+	SquareArrowOutUpRight,
+	X,
+} from '@signozhq/icons';
+import { Color } from '@signozhq/design-tokens';
+import { Button, Input, Tooltip } from 'antd';
+import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
+import { Typography } from '@signozhq/ui/typography';
+import ErrorContent from 'components/ErrorModal/components/ErrorContent';
+import ErrorPopover from 'components/ErrorPopover/ErrorPopover';
+import Spinner from 'components/Spinner';
+import WarningPopover from 'components/WarningPopover/WarningPopover';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import useGetResolvedText from 'hooks/dashboard/useGetResolvedText';
+import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
+import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { isEmpty } from 'lodash-es';
+import { unparse } from 'papaparse';
+import { SuccessResponse, Warning } from 'types/api';
+import { Widgets } from 'types/api/dashboard/getAll';
+import APIError from 'types/api/error';
+import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+
+import { errorTooltipPosition } from 'container/WidgetCard/Header/config';
+import {
+	MENUITEM_KEYS_VS_LABELS,
+	MenuItemKeys,
+} from 'container/WidgetCard/Header/contants';
+import { MenuItem } from 'container/WidgetCard/Header/types';
+import {
+	generateMenuList,
+	isTWidgetOptions,
+} from 'container/WidgetCard/Header/utils';
+
+import 'container/WidgetCard/Header/WidgetHeader.styles.scss';
+
+interface IWidgetHeaderProps {
+	title: ReactNode;
+	widget: Widgets;
+	onView: VoidFunction;
+	queryResponse: UseQueryResult<
+		SuccessResponse<MetricRangePayloadProps, unknown> & {
+			warning?: Warning;
+		},
+		Error
+	>;
+	threshold?: ReactNode;
+	headerMenuList?: MenuItemKeys[];
+	isWarning: boolean;
+	isFetchingResponse: boolean;
+	tableProcessedDataRef: React.MutableRefObject<RowData[]>;
+	setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
+}
+
+function WidgetHeader({
+	title,
+	widget,
+	onView,
+	queryResponse,
+	threshold,
+	headerMenuList,
+	isWarning,
+	isFetchingResponse,
+	tableProcessedDataRef,
+	setSearchTerm,
+}: IWidgetHeaderProps): JSX.Element | null {
+	const onCreateAlertsHandler = useCreateAlerts(widget, 'dashboardView');
+
+	const onDownloadHandler = useCallback((): void => {
+		const csv = unparse(tableProcessedDataRef.current);
+		const csvBlob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+		const csvUrl = URL.createObjectURL(csvBlob);
+		const downloadLink = document.createElement('a');
+		downloadLink.href = csvUrl;
+		downloadLink.download = `${!isEmpty(title) ? title : 'table-panel'}.csv`;
+		downloadLink.click();
+		downloadLink.remove();
+	}, [tableProcessedDataRef, title]);
+
+	const keyMethodMapping = useMemo(
+		() => ({
+			[MenuItemKeys.View]: onView,
+			[MenuItemKeys.CreateAlerts]: onCreateAlertsHandler,
+			[MenuItemKeys.Download]: onDownloadHandler,
+		}),
+		[onView, onCreateAlertsHandler, onDownloadHandler],
+	);
+
+	const onMenuItemSelectHandler = useCallback(
+		({ key }: { key: string }): void => {
+			if (isTWidgetOptions(key)) {
+				const functionToCall = keyMethodMapping[key];
+
+				if (functionToCall) {
+					functionToCall();
+				}
+			}
+		},
+		[keyMethodMapping],
+	);
+	const actions = useMemo(
+		(): MenuItem[] => [
+			{
+				key: MenuItemKeys.View,
+				icon: <Fullscreen size="md" />,
+				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.View],
+				isVisible: headerMenuList?.includes(MenuItemKeys.View) || false,
+				disabled: queryResponse.isFetching,
+			},
+			{
+				key: MenuItemKeys.Download,
+				icon: <CloudDownload size="md" />,
+				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Download],
+				isVisible: widget.panelTypes === PANEL_TYPES.TABLE,
+				disabled: false,
+			},
+			{
+				key: MenuItemKeys.CreateAlerts,
+				icon: <Bell size="md" />,
+				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.CreateAlerts],
+				rightIcon: <SquareArrowOutUpRight size="lg" />,
+				isVisible: headerMenuList?.includes(MenuItemKeys.CreateAlerts) || false,
+				disabled: false,
+			},
+		],
+		[headerMenuList, queryResponse.isFetching, widget.panelTypes],
+	);
+
+	const updatedMenuList = useMemo(() => generateMenuList(actions), [actions]);
+
+	const [showGlobalSearch, setShowGlobalSearch] = useState(false);
+
+	const globalSearchAvailable = widget.panelTypes === PANEL_TYPES.TABLE;
+
+	const menu = useMemo(
+		() => ({
+			items: updatedMenuList.map((item) => ({
+				...item,
+				onClick: onMenuItemSelectHandler,
+			})),
+		}),
+		[updatedMenuList, onMenuItemSelectHandler],
+	);
+
+	const { truncatedText, fullText } = useGetResolvedText({
+		text: widget.title as string,
+		maxLength: 100,
+	});
+
+	const renderErrorMessage = useMemo(
+		() => <ErrorContent error={queryResponse.error as APIError} />,
+		[queryResponse.error],
+	);
+
+	if (widget.id === PANEL_TYPES.EMPTY_WIDGET) {
+		return null;
+	}
+
+	return (
+		<div className="widget-header-container">
+			{showGlobalSearch ? (
+				<Input
+					addonBefore={<Search size={14} />}
+					placeholder="Search..."
+					bordered={false}
+					data-testid="widget-header-search-input"
+					addonAfter={
+						<X
+							size={14}
+							onClick={(e): void => {
+								e.stopPropagation();
+								e.preventDefault();
+								setSearchTerm('');
+								setShowGlobalSearch(false);
+							}}
+							className="search-header-icons"
+						/>
+					}
+					key={widget.id}
+					onChange={(e): void => {
+						setSearchTerm(e.target.value || '');
+					}}
+				/>
+			) : (
+				<>
+					<div className="widget-header-title-container">
+						<Tooltip title={fullText} placement="top">
+							<Typography.Text
+								truncate={1}
+								data-testid={title}
+								className="widget-header-title"
+							>
+								{truncatedText}
+							</Typography.Text>
+						</Tooltip>
+						{widget.description && (
+							<Tooltip
+								title={widget.description}
+								overlayClassName="long-tooltip"
+								className="info-tooltip"
+								placement="right"
+							>
+								<SolidInfoCircle size="md" />
+							</Tooltip>
+						)}
+					</div>
+					<div className="widget-header-actions">
+						<div className="widget-api-actions">{threshold}</div>
+						{isFetchingResponse && !queryResponse.isError && (
+							<Spinner style={{ paddingRight: '0.25rem' }} />
+						)}
+						{queryResponse.isError && (
+							<ErrorPopover
+								content={renderErrorMessage}
+								placement={errorTooltipPosition}
+								overlayStyle={{ padding: 0, maxWidth: '600px' }}
+								overlayInnerStyle={{ padding: 0 }}
+								autoAdjustOverflow
+							>
+								<CircleX
+									size={16}
+									style={{ cursor: 'pointer' }}
+									color={Color.BG_CHERRY_500}
+								/>
+							</ErrorPopover>
+						)}
+
+						{isWarning && queryResponse.data?.warning && (
+							<WarningPopover warningData={queryResponse.data?.warning as Warning} />
+						)}
+						{globalSearchAvailable && (
+							<Search
+								className="search-header-icons"
+								onClick={(): void => setShowGlobalSearch(true)}
+								data-testid="widget-header-search"
+							/>
+						)}
+						{menu && Array.isArray(menu.items) && menu.items.length > 0 && (
+							<DropdownMenuSimple
+								menu={menu}
+								side="bottom"
+								align="end"
+								className="widget-header-dropdown"
+							>
+								<Button
+									data-testid="widget-header-options"
+									className={`widget-header-more-options ${
+										globalSearchAvailable ? 'widget-header-more-options-visible' : ''
+									}`}
+									icon={<EllipsisVertical size="md" />}
+								/>
+							</DropdownMenuSimple>
+						)}
+					</div>
+				</>
+			)}
+		</div>
+	);
+}
+
+WidgetHeader.defaultProps = {
+	threshold: undefined,
+	headerMenuList: [MenuItemKeys.View],
+};
+
+export default WidgetHeader;

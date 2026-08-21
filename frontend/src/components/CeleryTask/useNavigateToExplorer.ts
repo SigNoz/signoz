@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import useUpdatedQuery from 'container/GridCardLayout/useResolveQuery';
+import useUpdatedQuery from 'container/WidgetCard/hooks/useResolveQuery';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useNotifications } from 'hooks/useNotifications';
 import { AppState } from 'store/reducers';

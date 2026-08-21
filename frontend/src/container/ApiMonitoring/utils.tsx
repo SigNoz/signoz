@@ -10,7 +10,7 @@ import {
 } from 'components/QuickFilters/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { GraphClickMetaData } from 'container/GridCardLayout/useNavigateToExplorerPages';
+import { GraphClickMetaData } from 'container/WidgetCard/hooks/useNavigateToExplorerPages';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { convertNanoToMilliseconds } from 'container/MetricsExplorer/Summary/utils';
 import dayjs from 'dayjs';
