@@ -34,6 +34,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 		filterConfigs,
 		isListViewPanel = false,
 		showTraceOperator = false,
+		showSpanScopeSelector = true,
 		hasTraceOperator = false,
 		version,
 		showOnlyWhereClause = false,
@@ -93,9 +94,9 @@ export const QueryV2 = forwardRef(function QueryV2(
 		[dataSource, panelType],
 	);
 
-	const showSpanScopeSelector = useMemo(
-		() => dataSource === DataSource.TRACES,
-		[dataSource],
+	const shouldShowSpanScopeSelector = useMemo(
+		() => dataSource === DataSource.TRACES && showSpanScopeSelector,
+		[dataSource, showSpanScopeSelector],
 	);
 
 	const showInlineQuerySearch = useMemo(() => {
@@ -185,7 +186,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 										/>
 									</div>
 
-									{showSpanScopeSelector && (
+									{shouldShowSpanScopeSelector && (
 										<div className="traces-search-filter-container">
 											<div className="traces-search-filter-in">in</div>
 											<SpanScopeSelector query={query} />
@@ -255,7 +256,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 										/>
 									</div>
 
-									{showSpanScopeSelector && (
+									{shouldShowSpanScopeSelector && (
 										<div className="traces-search-filter-container">
 											<div className="traces-search-filter-in">in</div>
 											<SpanScopeSelector query={query} />

@@ -1,4 +1,4 @@
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueryAIWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import { cloneDeep, set } from 'lodash-es';
 import { OrderByPayload, Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -9,7 +9,7 @@ export const getListViewQuery = (
 ): Query => {
 	const query = stagedQuery
 		? cloneDeep(stagedQuery)
-		: cloneDeep(initialQueriesMap.traces);
+		: cloneDeep(initialQueryAIWithType);
 
 	const orderByPayload: OrderByPayload[] = orderBy
 		? [

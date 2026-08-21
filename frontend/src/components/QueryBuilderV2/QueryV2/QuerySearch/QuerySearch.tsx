@@ -16,7 +16,6 @@ import { githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, { EditorView, keymap, Prec } from '@uiw/react-codemirror';
 import { Button, Card, Collapse, Popover, Tooltip } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
-import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import cx from 'classnames';
 import {
@@ -54,6 +53,11 @@ import {
 	SUGGESTION_FETCH_DEBOUNCE_MS,
 	SUGGESTIONS_SECTION,
 } from './constants';
+import {
+	fetchFieldKeysForQuery,
+	SuggestedFieldKey,
+	SuggestedFieldKeysByName,
+} from './keySuggestions';
 import {
 	combineInitialAndUserExpression,
 	dedupeOptionsByLabel,
@@ -264,10 +268,8 @@ function QuerySearch({
 	);
 
 	// Add back the generateOptions function and useEffect
-	const generateOptions = (keys: {
-		[key: string]: QueryKeyDataSuggestionsProps[];
-	}): any[] =>
-		Object.values(keys).flatMap((items: QueryKeyDataSuggestionsProps[]) =>
+	const generateOptions = (keys: SuggestedFieldKeysByName): any[] =>
+		Object.values(keys).flatMap((items: SuggestedFieldKey[]) =>
 			items.map(({ name, fieldDataType, fieldContext }) => ({
 				label: name,
 				type: fieldDataType === 'string' ? 'keyword' : fieldDataType,
@@ -320,16 +322,16 @@ function QuerySearch({
 
 			lastFetchedKeyRef.current = searchText || '';
 
-			const response = await getKeySuggestions({
-				signal: dataSource,
+			const keys = await fetchFieldKeysForQuery({
+				builderQueryType: queryData.builderQueryType,
+				dataSource,
 				searchText: searchText || '',
 				metricName: debouncedMetricName ?? undefined,
 				signalSource: signalSource as 'meter' | '',
 				metricNamespace,
 			});
 
-			if (response.data.data) {
-				const { keys } = response.data.data;
+			if (keys) {
 				const options = generateOptions(keys);
 				// Deduplicate by full variant identity (name + context + data type), NOT by
 				// label. deduping by label removes varient which is not expected. If we need
@@ -363,6 +365,7 @@ function QuerySearch({
 			hardcodedAttributeKeys,
 			showFilterSuggestionsWithoutMetric,
 			metricNamespace,
+			queryData.builderQueryType,
 		],
 	);
 
