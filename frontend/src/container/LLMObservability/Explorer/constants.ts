@@ -1,4 +1,7 @@
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { DEFAULT_PER_PAGE_OPTIONS } from 'hooks/queryPagination';
+
+export const DEFAULT_PANEL_TYPE = PANEL_TYPES.TRACE;
 
 export const TOOLBAR_VIEWS = {
 	list: {

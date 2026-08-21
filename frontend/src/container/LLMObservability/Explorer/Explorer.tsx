@@ -11,7 +11,7 @@ import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { initialQueryAIWithType, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueryAIWithType } from 'constants/queryBuilder';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import LeftToolbarActions from 'container/QueryBuilder/components/ToolbarActions/LeftToolbarActions';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
@@ -34,7 +34,11 @@ import {
 	getExplorerViewFromUrl,
 } from 'utils/explorerUtils';
 
-import { defaultSelectedColumns, TOOLBAR_VIEWS } from './constants';
+import {
+	DEFAULT_PANEL_TYPE,
+	defaultSelectedColumns,
+	TOOLBAR_VIEWS,
+} from './constants';
 import styles from './Explorer.module.scss';
 import ListView from './ListView/ListView';
 import QuerySection from './QuerySection/QuerySection';
@@ -69,7 +73,7 @@ function Explorer(): JSX.Element {
 	const listQueryKeyRef = useRef<QueryKey>();
 
 	// Get panel type from URL
-	const panelTypesFromUrl = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
+	const panelTypesFromUrl = useGetPanelTypesQueryParam(DEFAULT_PANEL_TYPE);
 	const [isLoadingQueries, setIsLoadingQueries] = useState<boolean>(false);
 	const [isCancelled, setIsCancelled] = useState(false);
 
@@ -99,7 +103,7 @@ function Explorer(): JSX.Element {
 		(): Query =>
 			updateAllQueriesOperators(
 				initialQueryAIWithType,
-				PANEL_TYPES.LIST,
+				DEFAULT_PANEL_TYPE,
 				DataSource.TRACES,
 			),
 		[updateAllQueriesOperators],
