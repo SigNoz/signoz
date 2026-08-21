@@ -132,7 +132,12 @@ class MetricsSample(ABC):
 
 
 class MetricsExpHist(ABC):
-    """Represents a row in the exp_hist table for exponential histograms."""
+    """Represents a row in the exp_hist table for exponential histograms.
+
+    Carries the raw observations rather than a serialized sketch: the `sketch`
+    column is an AggregateFunction state that only ClickHouse can build, so
+    `observations` is what gets folded into one on insert. Must be non-empty.
+    """
 
     env: str
     temporality: str
@@ -143,7 +148,7 @@ class MetricsExpHist(ABC):
     sum: np.float64
     min: np.float64
     max: np.float64
-    sketch: bytes
+    observations: list[int]
     flags: np.uint32
 
     def __init__(
@@ -151,11 +156,7 @@ class MetricsExpHist(ABC):
         metric_name: str,
         fingerprint: np.uint64,
         timestamp: datetime.datetime,
-        count: int,
-        sum_value: float,
-        min_value: float,
-        max_value: float,
-        sketch: bytes = b"",
+        observations: list[int],
         temporality: str = "Unspecified",
         env: str = "default",
         flags: int = 0,
@@ -165,27 +166,12 @@ class MetricsExpHist(ABC):
         self.metric_name = metric_name
         self.fingerprint = fingerprint
         self.unix_milli = np.int64(int(timestamp.timestamp() * 1e3))
-        self.count = np.uint64(count)
-        self.sum = np.float64(sum_value)
-        self.min = np.float64(min_value)
-        self.max = np.float64(max_value)
-        self.sketch = sketch
+        self.observations = observations
+        self.count = np.uint64(len(observations))
+        self.sum = np.float64(sum(observations))
+        self.min = np.float64(min(observations))
+        self.max = np.float64(max(observations))
         self.flags = np.uint32(flags)
-
-    def to_row(self) -> list:
-        return [
-            self.env,
-            self.temporality,
-            self.metric_name,
-            self.fingerprint,
-            self.unix_milli,
-            self.count,
-            self.sum,
-            self.min,
-            self.max,
-            self.sketch,
-            self.flags,
-        ]
 
 
 class MetricsMetadata(ABC):
@@ -427,6 +413,73 @@ class Metrics(ABC):
             metrics.append(cls.from_dict(data, metric_name_override=metric_name_override))
 
         return metrics
+
+
+class ExpHistogramMetrics(ABC):
+    """High-level exponential histogram representation. Produces both time series
+    and exp_hist entries."""
+
+    metric_name: str
+    labels: dict[str, str]
+    temporality: str
+    timestamp: datetime.datetime
+    observations: list[int]
+
+    @property
+    def time_series(self) -> MetricsTimeSeries:
+        return self._time_series
+
+    @property
+    def exp_hist(self) -> MetricsExpHist:
+        return self._exp_hist
+
+    def __init__(
+        self,
+        metric_name: str,
+        observations: list[int],
+        labels: dict[str, str] = {},
+        timestamp: datetime.datetime | None = None,
+        temporality: str = "Delta",
+        flags: int = 0,
+        description: str = "",
+        unit: str = "",
+        env: str = "default",
+        resource_attributes: dict[str, str] = {},
+        scope_attributes: dict[str, str] = {},
+    ) -> None:
+        if timestamp is None:
+            timestamp = datetime.datetime.now()
+        self.metric_name = metric_name
+        self.labels = labels
+        self.temporality = temporality
+        self.timestamp = timestamp
+        self.observations = observations
+
+        self._time_series = MetricsTimeSeries(
+            metric_name=metric_name,
+            labels=labels,
+            timestamp=timestamp,
+            temporality=temporality,
+            description=description,
+            unit=unit,
+            # the querier resolves the metric type from this column, and only an
+            # ExponentialHistogram here routes the query to the sketch read
+            type_="ExponentialHistogram",
+            is_monotonic=False,
+            env=env,
+            resource_attrs=resource_attributes,
+            scope_attrs=scope_attributes,
+        )
+
+        self._exp_hist = MetricsExpHist(
+            metric_name=metric_name,
+            fingerprint=self._time_series.fingerprint,
+            timestamp=timestamp,
+            observations=observations,
+            temporality=temporality,
+            env=env,
+            flags=flags,
+        )
 
 
 class MetricsReducedTimeSeries(ABC):
@@ -846,6 +899,86 @@ def insert_metrics(
         insert_metrics_to_clickhouse(clickhouse.conn, metrics)
 
     yield _insert_metrics
+
+    truncate_metrics_tables(
+        clickhouse.conn,
+        clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"],
+    )
+
+
+def insert_exp_histogram_metrics_to_clickhouse(conn, metrics: list[ExpHistogramMetrics]) -> None:
+    """
+    Insert exponential histograms into ClickHouse tables.
+    Handles insertion into:
+    - distributed_time_series_v4 (time series metadata)
+    - distributed_exp_hist (per-point sketches)
+    """
+    time_series_map: dict[tuple[int, int], MetricsTimeSeries] = {}
+    for metric in metrics:
+        fp = int(metric.time_series.fingerprint)
+        hour_bucket = int(metric.time_series.unix_milli) // 3_600_000
+        if (fp, hour_bucket) not in time_series_map:
+            metric.time_series.unix_milli = np.int64(hour_bucket * 3_600_000)
+            time_series_map[(fp, hour_bucket)] = metric.time_series
+
+    if len(time_series_map) > 0:
+        conn.insert(
+            database="signoz_metrics",
+            table="distributed_time_series_v4",
+            column_names=[
+                "env",
+                "temporality",
+                "metric_name",
+                "description",
+                "unit",
+                "type",
+                "is_monotonic",
+                "fingerprint",
+                "unix_milli",
+                "labels",
+                "attrs",
+                "scope_attrs",
+                "resource_attrs",
+            ],
+            data=[ts.to_row() for ts in time_series_map.values()],
+        )
+
+    # `sketch` is AggregateFunction(quantilesDD(...), UInt64) — the state has to be
+    # folded server-side, it cannot be sent as a literal. The quantilesDDState
+    # parameters must match the column's exactly or the INSERT is rejected.
+    for metric in metrics:
+        hist = metric.exp_hist
+        conn.command(
+            "INSERT INTO signoz_metrics.distributed_exp_hist "
+            "(env, temporality, metric_name, fingerprint, unix_milli, count, sum, min, max, sketch, flags) "
+            "SELECT %(env)s, %(temporality)s, %(metric_name)s, %(fingerprint)s, %(unix_milli)s, "
+            "%(count)s, %(sum)s, %(min)s, %(max)s, "
+            "quantilesDDState(0.01, 0.5, 0.75, 0.9, 0.95, 0.99)(toUInt64(observation)), %(flags)s "
+            "FROM (SELECT arrayJoin(%(observations)s) AS observation)",
+            parameters={
+                "env": hist.env,
+                "temporality": hist.temporality,
+                "metric_name": hist.metric_name,
+                "fingerprint": int(hist.fingerprint),
+                "unix_milli": int(hist.unix_milli),
+                "count": int(hist.count),
+                "sum": float(hist.sum),
+                "min": float(hist.min),
+                "max": float(hist.max),
+                "observations": hist.observations,
+                "flags": int(hist.flags),
+            },
+        )
+
+
+@pytest.fixture(name="insert_exp_histogram_metrics", scope="function")
+def insert_exp_histogram_metrics(
+    clickhouse: types.TestContainerClickhouse,
+) -> Generator[Callable[[list[ExpHistogramMetrics]], None], Any]:
+    def _insert_exp_histogram_metrics(metrics: list[ExpHistogramMetrics]) -> None:
+        insert_exp_histogram_metrics_to_clickhouse(clickhouse.conn, metrics)
+
+    yield _insert_exp_histogram_metrics
 
     truncate_metrics_tables(
         clickhouse.conn,
