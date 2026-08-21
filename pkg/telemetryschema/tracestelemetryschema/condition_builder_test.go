@@ -391,6 +391,96 @@ func TestConditionForResourceWithEvolution(t *testing.T) {
 	}
 }
 
+// TestConditionForScopeIntrinsicFields covers the scope.name/scope.version intrinsic
+// fields against the "scope" JSON column. These are *declared* String paths on that
+// column, so a row without a scope reads as ” and never NULL: presence must be an
+// empty-string check, since "IS NOT NULL" would hold for every row. That also rules
+// out treating them as nested attribute keys under scope.attributes, which are
+// undeclared (Dynamic) paths and genuinely NULL when absent.
+func TestConditionForScopeIntrinsicFields(t *testing.T) {
+	ctx := context.Background()
+	fm := NewFieldMapper(flaggertest.New(t))
+	conditionBuilder := NewConditionBuilder(fm, flaggertest.New(t))
+
+	testCases := []struct {
+		name        string
+		key         telemetrytypes.TelemetryFieldKey
+		operator    qbtypes.FilterOperator
+		value       any
+		expectedSQL string
+	}{
+		{
+			name: "Equal - scope.name",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "scope.name",
+				FieldContext:  telemetrytypes.FieldContextScope,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:    qbtypes.FilterOperatorEqual,
+			value:       "io.signoz.payment",
+			expectedSQL: "(scope.name::String = ? AND scope.name::String <> '')",
+		},
+		{
+			name: "Equal - scope.version",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "scope.version",
+				FieldContext:  telemetrytypes.FieldContextScope,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:    qbtypes.FilterOperatorEqual,
+			value:       "2.3.1",
+			expectedSQL: "(scope.version::String = ? AND scope.version::String <> '')",
+		},
+		{
+			name: "Exists - scope.name",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "scope.name",
+				FieldContext:  telemetrytypes.FieldContextScope,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:    qbtypes.FilterOperatorExists,
+			value:       nil,
+			expectedSQL: "scope.name::String <> ''",
+		},
+		{
+			name: "NotExists - scope.version",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "scope.version",
+				FieldContext:  telemetrytypes.FieldContextScope,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:    qbtypes.FilterOperatorNotExists,
+			value:       nil,
+			expectedSQL: "scope.version::String = ''",
+		},
+		{
+			// `scope.attribute.name` (normalized to {attribute.name, scope}) addresses the scope
+			// attribute named `name` — the declared `scope.name` path is never reached this way.
+			name: "Equal - scope.attribute.name reaches the named scope attribute",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "attribute.name",
+				FieldContext:  telemetrytypes.FieldContextScope,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:    qbtypes.FilterOperatorEqual,
+			value:       "io.signoz.checkout",
+			expectedSQL: "(scope.attributes.`name`::String = ? AND scope.attributes.`name` IS NOT NULL)",
+		},
+	}
+
+	for _, tc := range testCases {
+		sb := sqlbuilder.NewSelectBuilder()
+		t.Run(tc.name, func(t *testing.T) {
+			conds, _, err := conditionBuilder.ConditionFor(ctx, valuer.UUID{}, 0, 0, &tc.key, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {&tc.key}}, qbtypes.ConditionBuilderOptions{}, tc.operator, tc.value, sb)
+			require.NoError(t, err)
+			sb.Where(conds...)
+			sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+			assert.Contains(t, sql, tc.expectedSQL)
+			assert.NotContains(t, sql, "scope.`scope.", "must not double-prefix the scope JSON path")
+		})
+	}
+}
+
 // TestConditionForSynthesizedKeys covers the KeyNotFound fallback: when a
 // referenced attribute key has no metadata match, the builder synthesizes key(s) from
 // user input and queries anyway, emitting a warning instead of failing.

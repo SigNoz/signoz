@@ -1240,6 +1240,13 @@ def test_traces_list_span_scope(
             lambda x: {"duration_nano": int(x[1].duration_nano), "span_id": x[1].span_id, "timestamp": format_timestamp(x[1].timestamp), "trace_id": x[1].trace_id},
             id="select_attribute_duration_order_intrinsic",
         ),
+        # Case 9: filter on the intrinsic scope.version. Only x[1] should match.
+        pytest.param(
+            BuilderQuery(signal="traces", name="A", select_fields=[TelemetryFieldKey("timestamp")], filter_expression="scope.version = '1.0.0'", limit=1),
+            HTTPStatus.OK,
+            lambda x: {"span_id": x[1].span_id, "timestamp": format_timestamp(x[1].timestamp), "trace_id": x[1].trace_id},
+            id="filter_scope_version",
+        ),
     ],
 )
 def test_traces_list_with_corrupt_data(
@@ -1281,6 +1288,166 @@ def test_traces_list_with_corrupt_data(
 
     if response.status_code == HTTPStatus.OK:
         assert get_rows(response)[0]["data"] == expected(traces)
+
+
+@pytest.mark.parametrize(
+    "filter_expression,expected_indices",
+    [
+        # Intrinsic scope.name / scope.version resolve to the JSON sub-columns.
+        pytest.param("scope.name = 'io.signoz.payment'", [1], id="intrinsic_scope_name"),
+        pytest.param("scope.version = '2.3.1'", [0], id="intrinsic_scope_version"),
+        # A scope attribute resolves against the scope JSON column's attributes.
+        pytest.param("scope.telemetry.sdk.language = 'python'", [1], id="scope_attribute"),
+        # A scope attribute whose own name carries a `scope.` prefix. `scope.prefixed`
+        # normalizes to {prefixed, scope} and must still resolve to the attribute.
+        pytest.param("scope.prefixed = 'prefixed-val'", [0], id="scope_prefixed_attribute"),
+        # `env.tier` is a span attribute on span 0 and a scope attribute on
+        # span 1. Unprefixed -> no explicit context, so it is checked in every
+        # applicable context (attribute OR scope) and both spans match.
+        pytest.param("env.tier = 'gold'", [0, 1], id="bare_cross_context"),
+        # The explicit `scope.` prefix forces scope context only, so span 0's
+        # span attribute is ignored — only span 1 matches.
+        pytest.param("scope.env.tier = 'gold'", [1], id="scope_prefixed_cross_context"),
+        # `scope.name` binds to the declared scope.name field ONLY (span 0). A same-named
+        # `name` scope attribute (span 1) does NOT shadow or union with it — query that
+        # attribute as `scope.attribute.name` instead.
+        pytest.param("scope.name = 'io.signoz.checkout'", [0], id="scope_name_collision"),
+        # `scope.name` is the declared path only; it does not cross-match a span attribute
+        # literally named `scope.name` (span 2's attribute scope.name='attr-scope-name'),
+        # whose declared scope.name is 'span-gamma'. So nothing matches.
+        pytest.param("scope.name = 'attr-scope-name'", [], id="scope_name_declared_only"),
+        # A `name`/`version` scope attribute is reachable only via the explicit
+        # `scope.attribute.` prefix. Span 1 has a `name` scope attribute = 'io.signoz.checkout'.
+        pytest.param("scope.attribute.name = 'io.signoz.checkout'", [1], id="scope_attribute_name"),
+        # `version` as a scope attribute: no span carries one (span 1's 4.5.6 is the declared
+        # scope.version, not a scope attribute), so this matches nothing.
+        pytest.param("scope.attribute.version = '4.5.6'", [], id="scope_attribute_version_none"),
+        # An unprefixed `name` resolves to the span `name` column only (span 2). It matches
+        # neither the scope.name field (span 0) nor a `name` scope attribute (span 1).
+        pytest.param("name = 'io.signoz.checkout'", [2], id="bare_name_excludes_scope_name_field"),
+        # A value that no resolvable key holds (scope.name/scope.version field,
+        # a `name`/`version` scope attribute, or a same-named attribute/resource)
+        # returns nothing.
+        pytest.param("scope.version = 'corrupt_data'", [], id="scope_version_no_match"),
+        pytest.param("scope.name = 'corrupt_data'", [], id="scope_name_no_match"),
+    ],
+)
+def test_traces_list_with_scope_filter(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+    filter_expression: str,
+    expected_indices: list[int],
+) -> None:
+    """
+    Setup three spans with different scope key resolution:
+    - x[0]: scope.name/version 'io.signoz.checkout'/'2.3.1'; span attribute
+      env.tier='gold'.
+    - x[1]: scope.name/version 'io.signoz.payment'/'4.5.6'; scope attributes
+      telemetry.sdk.language='python', env.tier='gold', and a `name` scope
+      attribute colliding with x[0]'s scope.name value.
+    - x[2]: span name 'io.signoz.checkout' (colliding with x[0]'s scope.name
+      value) and a span attribute literally named `scope.name`.
+
+    Tests:
+    - Filtering on scope.name / scope.version / a scope attribute.
+    - An unprefixed key is resolved across contexts (scope checked alongside
+      attribute / intrinsic), while a `scope.`-prefixed key is scope-only.
+    - `scope.name`/`scope.version` bind to the declared JSON sub-columns only; a
+      same-named `name`/`version` scope attribute is reachable only via the explicit
+      `scope.attribute.` prefix, never via `scope.name` or a bare `name`.
+    - a bare `name` resolves to the span `name` column and never the scope.name field.
+    """
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    trace_id = TraceIdGenerator.trace_id()
+    span_ids = [TraceIdGenerator.span_id() for _ in range(3)]
+
+    traces = [
+        Traces(
+            timestamp=now - timedelta(seconds=4),
+            duration=timedelta(seconds=2),
+            trace_id=trace_id,
+            span_id=span_ids[0],
+            parent_span_id="",
+            name="GET /checkout",
+            kind=TracesKind.SPAN_KIND_SERVER,
+            status_code=TracesStatusCode.STATUS_CODE_OK,
+            resources={"service.name": "checkout"},
+            attributes={"http.request.method": "GET", "env.tier": "gold"},
+            scope={
+                "name": "io.signoz.checkout",
+                "version": "2.3.1",
+                # a scope attribute whose own name carries a `scope.` prefix
+                "attributes": {"telemetry.sdk.language": "go", "scope.prefixed": "prefixed-val"},
+            },
+        ),
+        Traces(
+            timestamp=now - timedelta(seconds=2),
+            duration=timedelta(seconds=1),
+            trace_id=trace_id,
+            span_id=span_ids[1],
+            parent_span_id="",
+            name="POST /pay",
+            kind=TracesKind.SPAN_KIND_SERVER,
+            status_code=TracesStatusCode.STATUS_CODE_OK,
+            resources={"service.name": "payment"},
+            attributes={"http.request.method": "POST"},
+            # env.tier is a scope attribute here (cross-context with span 0);
+            # `name` is a scope attribute colliding with span 0's scope.name.
+            scope={
+                "name": "io.signoz.payment",
+                "version": "4.5.6",
+                "attributes": {
+                    "telemetry.sdk.language": "python",
+                    "env.tier": "gold",
+                    "name": "io.signoz.checkout",
+                },
+            },
+        ),
+        Traces(
+            timestamp=now - timedelta(seconds=1),
+            duration=timedelta(seconds=1),
+            trace_id=trace_id,
+            span_id=span_ids[2],
+            parent_span_id="",
+            # span name collides with span 0's scope.name value
+            name="io.signoz.checkout",
+            kind=TracesKind.SPAN_KIND_SERVER,
+            status_code=TracesStatusCode.STATUS_CODE_OK,
+            resources={"service.name": "probe"},
+            # a span attribute named `scope.name`
+            attributes={"scope.name": "attr-scope-name"},
+            scope={"name": "span-gamma", "version": "9.9.9"},
+        ),
+    ]
+    insert_traces(traces)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    start_ms = int((now - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=1)).timestamp() * 1000)
+
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=start_ms,
+        end_ms=end_ms,
+        request_type=RequestType.RAW,
+        queries=[
+            BuilderQuery(
+                signal="traces",
+                name="A",
+                select_fields=[TelemetryFieldKey("timestamp")],
+                filter_expression=filter_expression,
+                limit=10,
+            ).to_dict()
+        ],
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    got_span_ids = {row["data"]["span_id"] for row in get_rows(response)}
+    expected_span_ids = {traces[i].span_id for i in expected_indices}
+    assert got_span_ids == expected_span_ids
 
 
 @pytest.mark.parametrize("surface", ["filter", "select", "order"])
