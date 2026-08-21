@@ -1,4 +1,4 @@
-import { sortByMeanDesc } from 'container/DashboardContainer/visualization/charts/utils/sortByMeanDesc';
+import { sortByMeanDesc } from 'lib/visualization/charts/utils/sortByMeanDesc';
 import type { PanelSeries } from 'pages/DashboardPageV2/DashboardContainer/queryV5/types';
 
 function seriesKey(series: PanelSeries): string {

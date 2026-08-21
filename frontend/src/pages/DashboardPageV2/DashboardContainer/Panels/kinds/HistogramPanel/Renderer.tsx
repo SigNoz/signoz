@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef } from 'react';
 import type { DashboardtypesHistogramPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
-import Histogram from 'container/DashboardContainer/visualization/charts/Histogram/Histogram';
-import TooltipFooter from 'container/DashboardContainer/visualization/panels/components/TooltipFooter';
+import Histogram from 'lib/visualization/charts/Histogram/Histogram';
+import TooltipFooter from 'lib/visualization/panels/components/TooltipFooter';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { IRenderTooltipFooterArgs } from 'lib/uPlotV2/components/types';
