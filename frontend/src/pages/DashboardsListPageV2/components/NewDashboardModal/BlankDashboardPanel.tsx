@@ -158,6 +158,7 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 					color="primary"
 					size="md"
 					disabled={!canSubmit}
+					loading={submitting}
 					testId="create-dashboard-submit"
 					onClick={(): void => {
 						void handleCreate();
