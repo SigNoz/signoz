@@ -13,7 +13,7 @@ import { getContainerName, getContainerPodUID } from './utils';
 const QUERY_NAMES = ['A', 'B', 'C', 'D', 'E', 'F'];
 const STEP_INTERVAL = 60;
 
-type TimeAggregation = 'avg' | 'max' | 'min';
+type TimeAggregation = 'avg' | 'max' | 'min' | 'latest';
 type SpaceAggregation = 'sum' | 'avg' | 'max';
 
 interface SeriesSpec {
@@ -251,8 +251,8 @@ export const getContainerMetricsQueryPayload = (
 			{
 				metricKey: INFRA_MONITORING_ATTR_KEYS.CONTAINER_UPTIME,
 				legend: 'Uptime',
-				timeAggregation: 'max',
-				spaceAggregation: 'max',
+				timeAggregation: 'latest',
+				spaceAggregation: 'sum',
 			},
 		]),
 		query([
