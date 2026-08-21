@@ -11,7 +11,7 @@ import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueryAIWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import LeftToolbarActions from 'container/QueryBuilder/components/ToolbarActions/LeftToolbarActions';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
@@ -98,7 +98,7 @@ function Explorer(): JSX.Element {
 	const defaultQuery = useMemo(
 		(): Query =>
 			updateAllQueriesOperators(
-				initialQueriesMap.traces,
+				initialQueryAIWithType,
 				PANEL_TYPES.LIST,
 				DataSource.TRACES,
 			),

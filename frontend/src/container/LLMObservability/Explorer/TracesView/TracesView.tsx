@@ -18,7 +18,7 @@ import TanStackTable from 'components/TanStackTableView';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueryAIWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import NoLogs from 'container/NoLogs/NoLogs';
@@ -68,7 +68,7 @@ function TracesView({
 	);
 
 	const transformedQuery = useMemo(
-		() => getListViewQuery(stagedQuery || initialQueriesMap.traces),
+		() => getListViewQuery(stagedQuery || initialQueryAIWithType),
 		[stagedQuery],
 	);
 

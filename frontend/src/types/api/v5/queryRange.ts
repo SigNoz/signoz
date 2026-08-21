@@ -16,12 +16,19 @@ export type RequestType =
 
 export type QueryType =
 	| 'builder_query'
+	| 'builder_ai_query'
 	| 'builder_trace_operator'
 	| 'builder_formula'
 	| 'builder_sub_query'
 	| 'builder_join'
 	| 'clickhouse_sql'
 	| 'promql';
+
+/** Envelope types carrying a BuilderQuery spec; builder_ai_query routes to the gen_ai-scoped trace builder. */
+export type BuilderQueryType = Extract<
+	QueryType,
+	'builder_query' | 'builder_ai_query'
+>;
 
 export type OrderDirection = 'asc' | 'desc';
 
