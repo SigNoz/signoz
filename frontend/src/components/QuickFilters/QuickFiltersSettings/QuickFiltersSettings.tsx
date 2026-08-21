@@ -8,6 +8,7 @@ import { SignalType } from '../types';
 import AddedFilters from './AddedFilters';
 import useQuickFilterSettings from './hooks/useQuickFilterSettings';
 import OtherFilters from './OtherFilters';
+import { getFilterId } from './utils';
 
 import './QuickFiltersSettings.styles.scss';
 
@@ -45,7 +46,8 @@ function QuickFiltersSettings({
 			!(
 				addedFilters.length === customFilters.length &&
 				addedFilters.every(
-					(filter, index) => filter.key === customFilters[index].key,
+					(filter, index) =>
+						getFilterId(filter) === getFilterId(customFilters[index]),
 				)
 			),
 		[addedFilters, customFilters],
