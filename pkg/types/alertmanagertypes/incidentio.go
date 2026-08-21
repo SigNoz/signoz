@@ -87,6 +87,16 @@ func (c *IncidentIOReceiverConfig) UnmarshalYAML(unmarshal func(any) error) erro
 	}
 	c.URL = trimmed
 
+	// incident.io's setup page shows the header value as "Bearer <token>", so a
+	// pasted prefix is stripped rather than sent doubled.
+	token := strings.TrimSpace(string(c.Token))
+	if strings.EqualFold(token, "bearer") {
+		token = ""
+	} else if len(token) >= 7 && strings.EqualFold(token[:7], "bearer ") {
+		token = strings.TrimSpace(token[7:])
+	}
+	c.Token = config.Secret(token)
+
 	if c.Token == "" {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "incidentio token is required")
 	}
