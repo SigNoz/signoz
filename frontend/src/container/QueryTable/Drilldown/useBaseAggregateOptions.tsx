@@ -7,7 +7,6 @@ import { processContextLinks } from 'utils/contextLinks/utils';
 import useContextVariables from 'hooks/dashboard/useContextVariables';
 import { useNotifications } from 'hooks/useNotifications';
 import ContextMenu from 'periscope/components/ContextMenu';
-import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { ContextLinksData } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { openInNewTab } from 'utils/navigation';
@@ -49,7 +48,6 @@ const useBaseAggregateOptions = ({
 	const [resolvedQuery, setResolvedQuery] = useState<Query>(query);
 	const { getUpdatedQuery, isLoading: isResolveQueryLoading } =
 		useUpdatedQuery();
-	const { dashboardData } = useDashboardStore();
 	const { notifications } = useNotifications();
 
 	useEffect(() => {
@@ -62,7 +60,6 @@ const useBaseAggregateOptions = ({
 				panelTypes: panelType || PANEL_TYPES.TIME_SERIES,
 				timePreferance: 'GLOBAL_TIME',
 			},
-			dashboardData,
 		})
 			.then(setResolvedQuery)
 			.catch(() => {

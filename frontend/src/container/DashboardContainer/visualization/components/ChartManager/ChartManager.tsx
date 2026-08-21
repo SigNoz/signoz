@@ -6,10 +6,6 @@ import { ResizeTable } from 'components/ResizeTable';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { usePlotContext } from 'lib/uPlotV2/context/PlotContext';
 import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
-import {
-	selectIsDashboardLocked,
-	useDashboardStore,
-} from 'providers/Dashboard/store/useDashboardStore';
 import { toast } from '@signozhq/ui/sonner';
 
 import { getChartManagerColumns } from './getChartMangerColumns';
@@ -53,7 +49,6 @@ export default function ChartManager({
 		onToggleSeriesVisibility,
 		syncSeriesVisibilityToLocalStorage,
 	} = usePlotContext();
-	const isDashboardLocked = useDashboardStore(selectIsDashboardLocked);
 
 	const [tableDataSet, setTableDataSet] = useState<ExtendedChartDataset[]>(() =>
 		getDefaultTableDataSet(
@@ -119,7 +114,7 @@ export default function ChartManager({
 				onToggleSeriesOnOff: handleToggleSeriesOnOff,
 				onToggleSeriesVisibility,
 				yAxisUnit,
-				isGraphDisabled: isDashboardLocked,
+				isGraphDisabled: false,
 				decimalPrecision,
 			}),
 		[
@@ -128,7 +123,6 @@ export default function ChartManager({
 			handleToggleSeriesOnOff,
 			onToggleSeriesVisibility,
 			yAxisUnit,
-			isDashboardLocked,
 			decimalPrecision,
 		],
 	);

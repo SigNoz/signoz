@@ -37,10 +37,6 @@ import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariables';
 import GetMinMax from 'lib/getMinMax';
 import { isEmpty } from 'lodash-es';
-import {
-	selectIsDashboardLocked,
-	useDashboardStore,
-} from 'providers/Dashboard/store/useDashboardStore';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -83,15 +79,6 @@ function FullView({
 		setCurrentGraphRef(fullViewRef);
 	}, [setCurrentGraphRef]);
 
-	const { dashboardData, setColumnWidths } = useDashboardStore();
-	const isDashboardLocked = useDashboardStore(selectIsDashboardLocked);
-
-	const onColumnWidthsChange = useCallback(
-		(widths: Record<string, number>) => {
-			setColumnWidths((prev) => ({ ...prev, [widget.id]: widths }));
-		},
-		[setColumnWidths, widget.id],
-	);
 	const { dashboardVariables } = useDashboardVariables();
 
 	const getSelectedTime = useCallback(
@@ -331,7 +318,7 @@ function FullView({
 							<>
 								<QueryBuilderV2
 									panelType={selectedPanelType}
-									version={dashboardData?.data?.version || 'v3'}
+									version="v3"
 									isListViewPanel={selectedPanelType === PANEL_TYPES.LIST}
 									signalSourceChangeEnabled
 									// filterConfigs={filterConfigs}
@@ -350,7 +337,6 @@ function FullView({
 
 					<div
 						className={cx('graph-container', {
-							disabled: isDashboardLocked,
 							'height-widget':
 								widget?.mergeAllActiveQueries || widget?.stackedBarChart,
 							'full-view-graph-container': isListView,
@@ -393,7 +379,6 @@ function FullView({
 									onClickHandler={onClickHandler}
 									enableDrillDown={enableDrillDown}
 									selectedGraph={selectedPanelType}
-									onColumnWidthsChange={onColumnWidthsChange}
 								/>
 							)}
 						</GraphContainer>

@@ -156,16 +156,6 @@ const mockProps: WidgetGraphComponentProps = {
 };
 
 // Mock useDashabord hook
-jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
-	useDashboardStore: (): any => ({
-		dashboardData: {
-			data: {
-				variables: [],
-			},
-		},
-		setColumnWidths: jest.fn(),
-	}),
-}));
 
 describe('WidgetGraphComponent', () => {
 	it('should show correct menu items when hovering over more options while loading', async () => {

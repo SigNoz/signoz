@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 import { useNotifications } from 'hooks/useNotifications';
-import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -121,7 +120,6 @@ function useNavigateToExplorerPages(): (
 ) => Promise<{
 	[queryName: string]: { filters: TagFilterItem[]; dataSource?: string };
 }> {
-	const { dashboardData } = useDashboardStore();
 	const { notifications } = useNotifications();
 
 	return useCallback(
@@ -143,7 +141,7 @@ function useNavigateToExplorerPages(): (
 			}
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[dashboardData, notifications],
+		[notifications],
 	);
 }
 

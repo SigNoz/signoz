@@ -50,10 +50,6 @@ jest.mock('lib/dashboardVariables/getDashboardVariables', () => ({
 	getDashboardVariables: (): unknown => ({}),
 }));
 
-jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
-	useDashboardStore: (): unknown => ({ dashboardData: undefined }),
-}));
-
 jest.mock('utils/getGraphType', () => ({
 	getGraphType: jest.fn().mockReturnValue('time_series'),
 }));
