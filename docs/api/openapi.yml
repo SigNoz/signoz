@@ -115,6 +115,10 @@ components:
           type: string
         http_config:
           $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        metadata:
+          additionalProperties:
+            type: string
+          type: object
         send_resolved:
           type: boolean
         title:

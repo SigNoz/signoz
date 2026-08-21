@@ -116,7 +116,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		Status:           status,
 		DeduplicationKey: key.Hash(),
 		SourceURL:        sourceURL(as),
-		Metadata:         metadata(ctx, n.tmpl, as, n.logger),
+		Metadata:         n.metadata(ctx, as),
 	}
 
 	var buf bytes.Buffer
@@ -146,14 +146,24 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 
 // metadata copies the group's common labels wholesale (the Opsgenie details
 // precedent), so severity, ruleId and any user-defined rule labels arrive as
-// flat strings ready for incident.io attribute mapping.
-func metadata(ctx context.Context, tmpl *template.Template, as []*types.Alert, logger *slog.Logger) map[string]string {
-	data := notify.GetTemplateData(ctx, tmpl, as, logger)
-	if len(data.CommonLabels) == 0 {
+// flat strings ready for incident.io attribute mapping. Channel-configured
+// pairs are template-expanded and laid on top (channel wins on key clash);
+// a value that fails to expand is sent raw so delivery never breaks on it.
+func (n *Notifier) metadata(ctx context.Context, as []*types.Alert) map[string]string {
+	data := notify.GetTemplateData(ctx, n.tmpl, as, n.logger)
+	out := make(map[string]string, len(data.CommonLabels)+len(n.conf.Metadata))
+	maps.Copy(out, data.CommonLabels)
+	for k, v := range n.conf.Metadata {
+		expanded, err := n.tmpl.ExecuteTextString(v, data)
+		if err != nil {
+			n.logger.WarnContext(ctx, "failed to expand incidentio metadata value, sending it raw", slog.String("metadata_key", k))
+			expanded = v
+		}
+		out[k] = expanded
+	}
+	if len(out) == 0 {
 		return nil
 	}
-	out := make(map[string]string, len(data.CommonLabels))
-	maps.Copy(out, data.CommonLabels)
 	return out
 }
 

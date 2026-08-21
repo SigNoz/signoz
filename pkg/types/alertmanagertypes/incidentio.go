@@ -48,6 +48,9 @@ type IncidentIOReceiverConfig struct {
 	Token       config.Secret `yaml:"token,omitempty" json:"token,omitempty"`
 	Title       string        `yaml:"title,omitempty" json:"title,omitempty"`
 	Description string        `yaml:"description,omitempty" json:"description,omitempty"`
+	// Metadata is merged into the event's metadata on top of the group's common
+	// labels (channel wins on key clash). Values are template-expanded.
+	Metadata map[string]string `yaml:"metadata,omitempty" json:"metadata,omitempty"`
 }
 
 // send_resolved has no omitempty upstream, so a var default here is overwritten

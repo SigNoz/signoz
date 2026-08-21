@@ -155,6 +155,35 @@ func TestNotifyRateLimitRetries(t *testing.T) {
 	assert.True(t, retry)
 }
 
+func TestNotifyMergesChannelMetadata(t *testing.T) {
+	m := newMockIncidentIO(t)
+	tmpl := test.CreateTmpl(t)
+	n, err := New(&alertmanagertypes.IncidentIOReceiverConfig{
+		URL:         m.srv.URL + "/v2/alert_events/http/src-1",
+		Token:       "tok-1",
+		Title:       alertmanagertypes.DefaultIncidentIOTitleTemplate,
+		Description: alertmanagertypes.DefaultIncidentIODescriptionTemplate,
+		HTTPConfig:  &commoncfg.HTTPClientConfig{},
+		Metadata: map[string]string{
+			"env":       "prod",
+			"sev":       "{{ .CommonLabels.severity }}",
+			"alertname": "channel-wins",
+			"broken":    "{{ .Nope",
+		},
+	}, tmpl, slog.New(slog.DiscardHandler), alertmanagertemplate.New(tmpl, slog.New(slog.DiscardHandler)))
+	require.NoError(t, err)
+
+	_, err = n.Notify(ctx(), alert(true))
+	require.NoError(t, err) // a broken metadata template must not fail delivery
+
+	md := m.lastEvent(t).Metadata
+	assert.Equal(t, "prod", md["env"])
+	assert.Equal(t, "critical", md["sev"])           // values are template-expanded
+	assert.Equal(t, "channel-wins", md["alertname"]) // channel overrides the rule label
+	assert.Equal(t, "{{ .Nope", md["broken"])        // unexpandable value sent raw
+	assert.Equal(t, "critical", md["severity"])      // rule labels still present
+}
+
 func TestNotifyTruncatesLongDescription(t *testing.T) {
 	m := newMockIncidentIO(t)
 	a := alert(true)
