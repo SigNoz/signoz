@@ -3320,7 +3320,6 @@ components:
       enum:
       - solid
       - gradient
-      - none
       type: string
     DashboardtypesAxes:
       properties:
