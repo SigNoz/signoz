@@ -154,9 +154,9 @@ go.mod @therealpandey
 
 /frontend/src/api/types/dashboard/ @SigNoz/pulse-frontend
 
-## Dashboard Page
+## Widget Card
 
-/frontend/src/container/GridCardLayout/ @SigNoz/pulse-frontend
+/frontend/src/container/WidgetCard/ @SigNoz/pulse-frontend
 
 ## Public Dashboard Page
 

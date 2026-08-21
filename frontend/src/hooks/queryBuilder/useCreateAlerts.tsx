@@ -10,7 +10,7 @@ import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import { MenuItemKeys } from 'container/GridCardLayout/WidgetHeader/contants';
+import { MenuItemKeys } from 'container/WidgetCard/Header/contants';
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariablesByType';
 import { useNotifications } from 'hooks/useNotifications';

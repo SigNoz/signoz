@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
-import { CardContainer } from 'container/GridCardLayout/styles';
+import { CardContainer } from 'container/WidgetCard/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ChevronDown, ChevronUp } from '@signozhq/icons';
 import { Widgets } from 'types/api/dashboard/getAll';
