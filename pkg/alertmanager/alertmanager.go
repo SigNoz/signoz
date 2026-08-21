@@ -46,6 +46,10 @@ type Alertmanager interface {
 	// CreateChannel creates a channel for the organization.
 	CreateChannel(context.Context, string, *alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error)
 
+	// CreateNotificationChannel takes the postable rather than a receiver, because
+	// a receiver carries only the display name.
+	CreateNotificationChannel(context.Context, string, *alertmanagertypes.PostableNotificationChannel) (*alertmanagertypes.Channel, error)
+
 	// DeleteChannelByID deletes a channel for the organization.
 	DeleteChannelByID(context.Context, string, valuer.UUID) error
 
