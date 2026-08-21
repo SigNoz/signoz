@@ -75,6 +75,38 @@
 	word-break: break-word;
 }
 
+// Error bubble: a subtle error-tinted callout replacing the default
+// assistant background, rendered when a turn fails.
+.bubble.error {
+	.assistant & {
+		background: var(--callout-error-background);
+		border: 1px solid var(--callout-error-border);
+	}
+}
+
+.errorContent {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+}
+
+.errorIcon {
+	flex-shrink: 0;
+	margin-top: 2px;
+	color: var(--destructive);
+}
+
+.errorText {
+	color: var(--callout-error-title);
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.retryButton {
+	margin-top: 6px;
+	align-self: flex-start;
+}
+
 // User-bubble row: pencil button sits to the LEFT of the bubble within
 // the right-aligned message line, so it visually "ends" at the bubble's
 // right edge while keeping the bubble in its original position.
