@@ -15,6 +15,13 @@ type RunQueryBtnProps = {
 	className?: string;
 	label?: string;
 	disabled?: boolean;
+	/**
+	 * Distinguishes co-existing instances — a page can render this button both in
+	 * its own controls and inside a drawer, where `.run-query-btn` alone is
+	 * ambiguous. The cancel state reuses it with a `-cancel` suffix so a test can
+	 * follow one button through both states.
+	 */
+	testId?: string;
 } & (
 	| {
 			onStageRunQuery: () => void;
@@ -35,6 +42,7 @@ function RunQueryBtn({
 	handleCancelQuery,
 	onStageRunQuery,
 	disabled,
+	testId,
 }: RunQueryBtnProps): JSX.Element {
 	const isMac = getUserOperatingSystem() === UserOperatingSystem.MACOS;
 	const isLoading = isLoadingQueries ?? false;
@@ -46,6 +54,7 @@ function RunQueryBtn({
 			prefix={<LoaderCircle size={14} className="loading-icon animate-spin" />}
 			className={cx('cancel-query-btn', className)}
 			onClick={handleCancelQuery}
+			data-testid={testId ? `${testId}-cancel` : undefined}
 		>
 			Cancel
 		</Button>
@@ -54,6 +63,7 @@ function RunQueryBtn({
 			color="primary"
 			type="button"
 			className={cx('run-query-btn', className)}
+			data-testid={testId}
 			disabled={disabled}
 			onClick={onStageRunQuery}
 			prefix={<Play size={14} />}

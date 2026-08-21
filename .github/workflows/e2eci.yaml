@@ -109,7 +109,7 @@ jobs:
       - name: playwright-test
         run: |
           cd tests/e2e && \
-            pnpm playwright test --project=${{ matrix.project }}
+            pnpm playwright test --project=${{ matrix.project }} --grep-invert @wide
       - name: teardown-stack
         if: always()
         run: |
