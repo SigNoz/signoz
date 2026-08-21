@@ -25,11 +25,6 @@ type UseGetQueryRange = (
 	version: string,
 	options?: UseGetQueryRangeOptions,
 	headers?: Record<string, string>,
-	publicQueryMeta?: {
-		isPublic: boolean;
-		widgetIndex: number;
-		publicDashboardId: string;
-	},
 ) => UseQueryResult<MetricQueryRangeSuccessResponse, Error>;
 
 export const useGetQueryRange: UseGetQueryRange = (
@@ -37,7 +32,6 @@ export const useGetQueryRange: UseGetQueryRange = (
 	version,
 	options,
 	headers,
-	publicQueryMeta,
 ) => {
 	const dashboardDynamicVariables = useDashboardVariablesByType(
 		'DYNAMIC',
@@ -163,8 +157,6 @@ export const useGetQueryRange: UseGetQueryRange = (
 				dashboardDynamicVariables,
 				signal,
 				headers,
-				undefined,
-				publicQueryMeta,
 			),
 		...options,
 		retry,
