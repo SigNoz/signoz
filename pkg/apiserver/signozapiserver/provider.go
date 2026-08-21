@@ -30,6 +30,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
+	"github.com/SigNoz/signoz/pkg/modules/systemdashboard"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/querier"
@@ -80,6 +81,8 @@ type provider struct {
 	llmPricingRuleHandler      llmpricingrule.Handler
 	statsHandler               statsreporter.Handler
 	savedViewHandler           savedview.Handler
+	systemDashboardModule      systemdashboard.Module
+	systemDashboardHandler     systemdashboard.Handler
 }
 
 func NewFactory(
@@ -118,6 +121,8 @@ func NewFactory(
 	rulerHandler ruler.Handler,
 	statsHandler statsreporter.Handler,
 	savedViewHandler savedview.Handler,
+	systemDashboardModule systemdashboard.Module,
+	systemDashboardHandler systemdashboard.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
 		return newProvider(
@@ -159,6 +164,8 @@ func NewFactory(
 			rulerHandler,
 			statsHandler,
 			savedViewHandler,
+			systemDashboardModule,
+			systemDashboardHandler,
 		)
 	})
 }
@@ -202,6 +209,8 @@ func newProvider(
 	rulerHandler ruler.Handler,
 	statsHandler statsreporter.Handler,
 	savedViewHandler savedview.Handler,
+	systemDashboardModule systemdashboard.Module,
+	systemDashboardHandler systemdashboard.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
@@ -244,6 +253,8 @@ func newProvider(
 		llmPricingRuleHandler:      llmPricingRuleHandler,
 		statsHandler:               statsHandler,
 		savedViewHandler:           savedViewHandler,
+		systemDashboardModule:      systemDashboardModule,
+		systemDashboardHandler:     systemDashboardHandler,
 	}
 
 	provider.authzMiddleware = middleware.NewAuthZ(settings.Logger(), orgGetter, authzService)
@@ -293,6 +304,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addDashboardRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addSystemDashboardRoutes(router); err != nil {
 		return err
 	}
 

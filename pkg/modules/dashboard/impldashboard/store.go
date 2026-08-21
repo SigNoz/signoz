@@ -64,6 +64,23 @@ func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) 
 	return storableDashboard, nil
 }
 
+func (store *store) GetByName(ctx context.Context, orgID valuer.UUID, name string) (*dashboardtypes.StorableDashboard, error) {
+	storableDashboard := new(dashboardtypes.StorableDashboard)
+	err := store.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Model(storableDashboard).
+		Where("name = ?", name).
+		Where("org_id = ?", orgID).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "dashboard with name %s doesn't exist", name)
+	}
+
+	return storableDashboard, nil
+}
+
 // ListForUser emits the joined dashboard ⨝ user_dashboard_preference query the
 // spec calls for. Aliases:
 //

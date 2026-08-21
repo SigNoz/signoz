@@ -63,6 +63,8 @@ type Module interface {
 
 	GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error)
 
+	GetByNameV2(ctx context.Context, orgID valuer.UUID, name string) (*dashboardtypes.DashboardV2, error)
+
 	// MigrateV2 retries the v1→v2 migration on a dashboard still stored in the v1 schema.
 	MigrateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error)
 
@@ -71,6 +73,9 @@ type Module interface {
 	ListForUserV2(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, params *dashboardtypes.ListDashboardsV2Params) (*dashboardtypes.ListableDashboardForUserV2, error)
 
 	UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updatable dashboardtypes.UpdatableDashboardV2) (*dashboardtypes.DashboardV2, error)
+
+	// UpdateUnsafeV2 updates a dashboard bypassing the guards. Intended for internal system callers.
+	UpdateUnsafeV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updatable dashboardtypes.UpdatableDashboardV2) (*dashboardtypes.DashboardV2, error)
 
 	LockUnlockV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error
 

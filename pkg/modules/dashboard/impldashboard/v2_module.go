@@ -19,9 +19,12 @@ func (m *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy stri
 		return nil, err
 	}
 
-	dashboard := postable.NewDashboardV2(orgID, createdBy, source)
+	dashboard, err := postable.NewDashboardV2(orgID, createdBy, source)
+	if err != nil {
+		return nil, err
+	}
 
-	err := m.store.RunInTx(ctx, func(ctx context.Context) error {
+	err = m.store.RunInTx(ctx, func(ctx context.Context) error {
 		resolvedTags, err := m.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, dashboard.ID, postable.Tags)
 		if err != nil {
 			return err
@@ -120,6 +123,20 @@ func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UU
 	return storable.ToDashboardV2(tags)
 }
 
+func (module *module) GetByNameV2(ctx context.Context, orgID valuer.UUID, name string) (*dashboardtypes.DashboardV2, error) {
+	storable, err := module.store.GetByName(ctx, orgID, name)
+	if err != nil {
+		return nil, err
+	}
+
+	tags, err := module.tagModule.ListForResource(ctx, orgID, coretypes.KindDashboard, storable.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return storable.ToDashboardV2(tags)
+}
+
 // MigrateV2 retries the v1→v2 migration on a dashboard still stored as v1 (one the
 // bulk 103 migration skipped or failed). Idempotent: an already-v2 one is unchanged.
 func (module *module) MigrateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
@@ -179,13 +196,32 @@ func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer
 		return nil, err
 	}
 
-	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
-		resolvedTags, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, id, updatable.Tags)
+	return module.updateV2(ctx, orgID, existing, updatedBy, updatable, existing.Update)
+}
+
+func (module *module) UpdateUnsafeV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updatable dashboardtypes.UpdatableDashboardV2) (*dashboardtypes.DashboardV2, error) {
+	if err := updatable.Validate(); err != nil {
+		return nil, err
+	}
+
+	existing, err := module.GetV2(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return module.updateV2(ctx, orgID, existing, updatedBy, updatable, existing.UpdateUnsafe)
+}
+
+// apply is existing.Update or existing.UpdateUnsafe, so the gated path keeps its
+// in-transaction checks and only UpdateUnsafeV2 skips them.
+func (module *module) updateV2(ctx context.Context, orgID valuer.UUID, existing *dashboardtypes.DashboardV2, updatedBy string, updatable dashboardtypes.UpdatableDashboardV2, apply func(dashboardtypes.UpdatableDashboardV2, string, []*tagtypes.Tag) error) (*dashboardtypes.DashboardV2, error) {
+	err := module.store.RunInTx(ctx, func(ctx context.Context) error {
+		resolvedTags, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, existing.ID, updatable.Tags)
 		if err != nil {
 			return err
 		}
 
-		err = existing.Update(updatable, updatedBy, resolvedTags)
+		err = apply(updatable, updatedBy, resolvedTags)
 		if err != nil {
 			return err
 		}

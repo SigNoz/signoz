@@ -12249,6 +12249,17 @@ export type RotateSession200 = {
 	status: string;
 };
 
+export type GetSystemDashboardPathParameters = {
+	name: string;
+};
+export type GetSystemDashboard200 = {
+	data: DashboardtypesGettableDashboardV2DTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type CreateUserRole201 = {
 	data: TypesIdentifiableDTO;
 	/**
