@@ -653,9 +653,6 @@ func (fm *FillMode) UnmarshalJSON(data []byte) error {
 	}
 }
 
-// AreaFillMode is separate from FillMode so area panels can default to `solid`.
-// An area panel that omits the field would otherwise render as a bare line, and
-// flipping FillMode's default would change how existing TimeSeries panels render.
 type AreaFillMode struct{ valuer.String }
 
 var (
