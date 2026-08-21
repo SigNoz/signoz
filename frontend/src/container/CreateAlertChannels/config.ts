@@ -105,6 +105,8 @@ export enum ChannelType {
 	Opsgenie = 'opsgenie',
 	MsTeams = 'msteams',
 	GoogleChat = 'googlechat',
+	Jira = 'jira',
+	JsmOps = 'jsmops',
 }
 
 // LabelFilterStatement will be used for preparing filter conditions / matchers
@@ -133,4 +135,40 @@ export interface GoogleChatChannel extends Channel {
 	webhook_url?: string;
 	title?: string;
 	text?: string;
+}
+
+// JiraChannel configures the Jira Cloud alert channel. Auth is basic auth
+// (Atlassian account email + API token) carried in username / password.
+export interface JiraChannel extends Channel {
+	// Jira Cloud base URL, e.g. https://acme.atlassian.net
+	site?: string;
+	project?: string;
+	issue_type?: string;
+	// issue title template
+	summary?: string;
+	// issue body template, rendered to rich text server-side
+	description?: string;
+	// basic auth: username is the Atlassian account email, password is the API token
+	username?: string;
+	password?: string;
+	priority?: string;
+	labels?: string[];
+	resolve_transition?: string;
+	reopen_transition?: string;
+	// duration string, e.g. 72h or 3d
+	reopen_duration?: string;
+}
+
+// JsmOpsChannel configures the Jira Service Management Ops alert channel
+// (ex-Opsgenie alert API). Auth is the JSM integration API key.
+export interface JsmOpsChannel extends Channel {
+	api_key?: string;
+	// alert title template
+	message?: string;
+	// alert body template (markdown, rendered to HTML server-side)
+	description?: string;
+	// priority template, resolves to P1-P5
+	priority?: string;
+	// tags, joined to a comma-separated string for the backend
+	tags?: string[];
 }
