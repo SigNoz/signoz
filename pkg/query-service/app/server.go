@@ -95,7 +95,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 	s := &Server{
 		config:             config,
 		signoz:             signoz,
-		httpHostPort:       constants.HTTPHostPort,
+		httpHostPort:       config.APIServer.Address,
 		unavailableChannel: make(chan healthcheck.Status),
 	}
 
@@ -217,7 +217,7 @@ func (s *Server) initListeners() error {
 	var err error
 	publicHostPort := s.httpHostPort
 	if publicHostPort == "" {
-		return fmt.Errorf("constants.HTTPHostPort is required")
+		return fmt.Errorf("apiserver.address is required")
 	}
 
 	s.httpConn, err = net.Listen("tcp", publicHostPort)

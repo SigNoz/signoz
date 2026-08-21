@@ -8,6 +8,8 @@ import (
 
 // Config holds the configuration for config.
 type Config struct {
+	// Address is the TCP address the API server listens on, in the form "host:port".
+	Address string  `mapstructure:"address"`
 	Timeout Timeout `mapstructure:"timeout"`
 	Logging Logging `mapstructure:"logging"`
 }
@@ -32,6 +34,7 @@ func NewConfigFactory() factory.ConfigFactory {
 
 func newConfig() factory.Config {
 	return &Config{
+		Address: "0.0.0.0:8080",
 		Timeout: Timeout{
 			Default: 60 * time.Second,
 			Max:     600 * time.Second,

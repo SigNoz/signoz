@@ -13,6 +13,7 @@ import (
 )
 
 func TestNewWithEnvProvider(t *testing.T) {
+	t.Setenv("SIGNOZ_APISERVER_ADDRESS", "0.0.0.0:9090")
 	t.Setenv("SIGNOZ_APISERVER_TIMEOUT_DEFAULT", "70s")
 	t.Setenv("SIGNOZ_APISERVER_TIMEOUT_MAX", "700s")
 	t.Setenv("SIGNOZ_APISERVER_TIMEOUT_EXCLUDED__ROUTES", "/excluded1,/excluded2")
@@ -38,6 +39,7 @@ func TestNewWithEnvProvider(t *testing.T) {
 	require.NoError(t, err)
 
 	expected := &Config{
+		Address: "0.0.0.0:9090",
 		Timeout: Timeout{
 			Default: 70 * time.Second,
 			Max:     700 * time.Second,
