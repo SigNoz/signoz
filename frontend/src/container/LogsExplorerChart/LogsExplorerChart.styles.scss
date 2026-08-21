@@ -3,11 +3,11 @@
 	min-height: 200px;
 	border-bottom: 1px solid var(--l1-border);
 
-	.ant-card-body {
-		height: 200px;
-		min-height: 200px;
-		padding: 0 16px 16px 16px;
-		font-family: 'Geist Mono';
+	// Hides the legend row of a series whose label is blank, keeping it on the chart.
+	.virtuoso-grid-item:has(
+		.legend-copy-button[aria-label^='Copy '][aria-label$=' ']
+	) {
+		display: none;
 	}
 
 	.logs-frequency-chart-loading {
