@@ -2806,8 +2806,8 @@ export const hostWidgetInfo = [
 			'The 1m, 5m and 15m load averages together; 1m above 15m means load is building.',
 	},
 	{
-		title: 'Network usage (bytes)',
-		yAxisUnit: 'bytes',
+		title: 'Network usage',
+		yAxisUnit: 'binBps',
 		docPath: '/infrastructure-monitoring/host-monitoring/#network-usage-bytes',
 		description:
 			'Throughput in bytes/s per interface and direction, to spot NICs nearing rated bandwidth.',
@@ -2841,8 +2841,8 @@ export const hostWidgetInfo = [
 			'Active connection counts per protocol and state (ESTABLISHED, TIME_WAIT, SYN_RECV) to spot leaks and churn.',
 	},
 	{
-		title: 'System disk io (bytes transferred)',
-		yAxisUnit: 'bytes',
+		title: 'System disk IO',
+		yAxisUnit: 'binBps',
 		docPath: '/infrastructure-monitoring/host-monitoring/#system-disk-io-bytes',
 		description:
 			'Disk throughput in bytes/s per device and direction, tracking heavy file I/O or database flushes.',

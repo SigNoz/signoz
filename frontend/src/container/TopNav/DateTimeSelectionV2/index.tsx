@@ -54,7 +54,7 @@ import {
 	Time,
 	TimeRange,
 } from './types';
-import { getUnstableCurrentSearchParams } from './utils/getUnstableCurrentSearchParams';
+import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 
 import './DateTimeSelectionV2.styles.scss';
 

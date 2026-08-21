@@ -2,6 +2,7 @@ package resourcefilter
 
 import (
 	"context"
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"testing"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -201,7 +202,7 @@ func TestConditionBuilder(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	conditionBuilder := NewConditionBuilder(fm)
+	conditionBuilder := NewConditionBuilder(fm, flaggertest.New(t))
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
