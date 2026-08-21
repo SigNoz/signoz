@@ -402,7 +402,6 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
 		width: { default: 100 },
 		enableSort: false,
-		defaultVisibility: false,
 		cell: ({ value }): React.ReactNode => (
 			<TanStackTable.Text>{value as string}</TanStackTable.Text>
 		),
