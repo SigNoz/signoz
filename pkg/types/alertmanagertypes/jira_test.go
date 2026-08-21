@@ -104,6 +104,8 @@ func TestJiraReceiverConfigValidation(t *testing.T) {
 		{"missing site", `{"name":"j","jira_configs":[{"project":"KAN","issue_type":"Task","http_config":{"basic_auth":{"username":"e","password":"t"}}}]}`},
 		{"http site", jiraReceiverJSON("http://acme.atlassian.net", "KAN", "Task", true)},
 		{"non-cloud host", jiraReceiverJSON("https://jira.acme.com", "KAN", "Task", true)},
+		{"lookalike host suffix", jiraReceiverJSON("https://www.iamnotatlassian.net", "KAN", "Task", true)},
+		{"bare atlassian.net", jiraReceiverJSON("https://atlassian.net", "KAN", "Task", true)},
 		{"missing project", jiraReceiverJSON("https://acme.atlassian.net", "", "Task", true)},
 		{"missing issue_type", jiraReceiverJSON("https://acme.atlassian.net", "KAN", "", true)},
 		{"missing basic auth", jiraReceiverJSON("https://acme.atlassian.net", "KAN", "Task", false)},

@@ -4,7 +4,7 @@ import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { MetricAggregateOperator } from 'types/common/queryBuilder';
 import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 
-import { selectStyle } from '../../QueryBuilderSearch/config';
+import { selectStyle } from '../../QueryBuilderSearchV2/config';
 import { OrderByProps } from './types';
 import { useOrderByFormulaFilter } from './useOrderByFormulaFilter';
 

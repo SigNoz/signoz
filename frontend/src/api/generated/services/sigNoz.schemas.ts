@@ -3587,6 +3587,7 @@ export enum TelemetrytypesFieldContextDTO {
 	metric = 'metric',
 	log = 'log',
 	span = 'span',
+	trace = 'trace',
 	resource = 'resource',
 	attribute = 'attribute',
 	body = 'body',
@@ -9188,13 +9189,6 @@ export interface SavedviewtypesUpdatableSavedViewDTO {
 	spec: SavedviewtypesSavedViewSpecDTO;
 }
 
-export interface ServiceaccounttypesDeprecatedPostableServiceAccountRoleDTO {
-	/**
-	 * @type string
-	 */
-	id: string;
-}
-
 export interface ServiceaccounttypesGettableFactorAPIKeyDTO {
 	/**
 	 * @type string
@@ -10272,6 +10266,93 @@ export interface ZeustypesPostableProfileDTO {
 	where_did_you_discover_signoz: string;
 }
 
+export type GetAIObservabilityFieldsKeysParams = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	searchText?: string;
+	/**
+	 * @description undefined
+	 */
+	fieldContext?: TelemetrytypesFieldContextDTO;
+	/**
+	 * @description undefined
+	 */
+	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	startUnixMilli?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	endUnixMilli?: number;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+};
+
+export type GetAIObservabilityFieldsKeys200 = {
+	data: TelemetrytypesGettableFieldKeysDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetAIObservabilityFieldsValuesParams = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	searchText?: string;
+	/**
+	 * @description undefined
+	 */
+	fieldContext?: TelemetrytypesFieldContextDTO;
+	/**
+	 * @description undefined
+	 */
+	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	startUnixMilli?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	endUnixMilli?: number;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	name?: string;
+};
+
+export type GetAIObservabilityFieldsValues200 = {
+	data: TelemetrytypesGettableFieldValuesDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetAlerts200 = {
 	/**
 	 * @type array
@@ -11029,21 +11110,6 @@ export type GetServiceAccountRoles200 = {
 	status: string;
 };
 
-export type CreateServiceAccountRoleDeprecatedPathParameters = {
-	id: string;
-};
-export type CreateServiceAccountRoleDeprecated201 = {
-	data: TypesIdentifiableDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type DeleteServiceAccountRoleDeprecatedPathParameters = {
-	id: string;
-	rid: string;
-};
 export type GetMyServiceAccount200 = {
 	data: ServiceaccounttypesServiceAccountWithRolesDTO;
 	/**

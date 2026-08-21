@@ -12,6 +12,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/global/signozglobal"
 	"github.com/SigNoz/signoz/pkg/licensing"
+	"github.com/SigNoz/signoz/pkg/modules/aiobservability"
+	"github.com/SigNoz/signoz/pkg/modules/aiobservability/implaiobservability"
 	"github.com/SigNoz/signoz/pkg/modules/apdex"
 	"github.com/SigNoz/signoz/pkg/modules/apdex/implapdex"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
@@ -72,6 +74,7 @@ type Handlers struct {
 	FlaggerHandler          flagger.Handler
 	GatewayHandler          gateway.Handler
 	Fields                  fields.Handler
+	AIObservability         aiobservability.Handler
 	AuthzHandler            authz.Handler
 	ZeusHandler             zeus.Handler
 	QuerierHandler          querier.Handler
@@ -120,6 +123,7 @@ func NewHandlers(
 		FlaggerHandler:          flagger.NewHandler(flaggerService),
 		GatewayHandler:          gateway.NewHandler(gatewayService),
 		Fields:                  implfields.NewHandler(providerSettings, telemetryMetadataStore),
+		AIObservability:         implaiobservability.NewHandler(telemetryMetadataStore),
 		AuthzHandler:            signozauthzapi.NewHandler(authz),
 		ZeusHandler:             zeus.NewHandler(zeusService, licensing),
 		QuerierHandler:          querierHandler,

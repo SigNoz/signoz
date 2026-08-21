@@ -1,10 +1,3 @@
-import getLocalStorage from 'api/browser/localstorage/get';
-import { LOCALSTORAGE } from 'constants/localStorage';
-
-// Temp feature flag before actual roll-out
-export const isLogDetailsV2 =
-	getLocalStorage(LOCALSTORAGE.LOG_DETAILS_V2) === 'true';
-
 export const VIEW_TYPES = {
 	OVERVIEW: 'OVERVIEW',
 	JSON: 'JSON',

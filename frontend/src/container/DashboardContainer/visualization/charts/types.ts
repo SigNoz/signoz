@@ -14,6 +14,7 @@ import {
 	ChartClickData,
 } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { StackMode } from 'lib/uPlotV2/config/types';
 
 interface BaseChartProps {
 	width: number;
@@ -52,26 +53,25 @@ interface UPlotChartDataProps {
 	groupByPerQuery?: Record<string, BaseAutocompleteData[]>;
 }
 
-export interface TimeSeriesChartProps
-	extends BaseChartProps, UPlotBasedChartProps, UPlotChartDataProps {
+/** Everything the shared uPlot shell consumes; each chart's props narrow it. */
+export interface ChartWrapperProps
+	extends BaseChartProps, UPlotBasedChartProps, UPlotChartDataProps {}
+
+export interface TimeSeriesChartProps extends ChartWrapperProps {
 	timezone?: Timezone;
+	/** How series compose. Defaults to `none`, which draws them independently. */
+	stack?: StackMode;
 }
 
-export interface HistogramChartProps
-	extends BaseChartProps, UPlotBasedChartProps, UPlotChartDataProps {
+export interface BarChartProps extends ChartWrapperProps {
+	timezone?: Timezone;
+	/** How series compose. Defaults to `none`, which draws them independently. */
+	stack?: StackMode;
+}
+
+export interface HistogramChartProps extends ChartWrapperProps {
 	isQueriesMerged?: boolean;
 }
-
-export interface BarChartProps
-	extends BaseChartProps, UPlotBasedChartProps, UPlotChartDataProps {
-	isStackedBarChart?: boolean;
-	timezone?: Timezone;
-}
-
-export type ChartProps =
-	| TimeSeriesChartProps
-	| BarChartProps
-	| HistogramChartProps;
 
 /**
  * One resolved pie/donut slice: a display label, its (already parsed) positive

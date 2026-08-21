@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -197,25 +198,10 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) (s
 	if result.IsDefaultBody && !n.advancedFeatures {
 		description = strings.Join(result.Body, "\n")
 	} else {
-		var b strings.Builder
-		first := true
-		for _, part := range result.Body {
-			if part == "" {
-				continue
-			}
-			rendered, renderErr := markdownrenderer.RenderHTML(part)
-			if renderErr != nil {
-				return "", "", renderErr
-			}
-			if !first {
-				b.WriteString("<hr>")
-			}
-			b.WriteString("<div>")
-			b.WriteString(rendered)
-			b.WriteString("</div>")
-			first = false
+		description, err = buildHTMLDescription(result.Body, maxDescriptionLenRunes)
+		if err != nil {
+			return "", "", err
 		}
-		description = b.String()
 	}
 
 	title, truncated := notify.TruncateInRunes(result.Title, maxMessageLenRunes)
@@ -224,13 +210,99 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) (s
 	}
 
 	// The API silently truncates over-limit descriptions, which would drop the
-	// trailing SigNoz link; cap here with an ellipsis instead.
+	// trailing SigNoz link; cap here with an ellipsis instead. The HTML path is
+	// pre-fitted above, so this only ever cuts the plain-text default body.
 	description, descTruncated := notify.TruncateInRunes(description, maxDescriptionLenRunes)
 	if descTruncated {
 		n.logger.WarnContext(ctx, "Truncated description", slog.Int("max_runes", maxDescriptionLenRunes))
 	}
 
 	return title, description, nil
+}
+
+const (
+	// room reserved for the "+N more" trailer appended when parts are dropped.
+	descriptionTrailerReserveRunes = 80
+	// below this rendering budget a shrunk part carries no signal; drop it instead.
+	minShrinkBudgetRunes = 64
+)
+
+// buildHTMLDescription renders each markdown part to HTML (<div>-wrapped,
+// <hr>-joined) while keeping the total within budget runes. An over-budget part
+// is shrunk at the markdown level and re-rendered so the HTML stays well-formed;
+// fully dropped parts are summarized by a "+N more" trailer.
+func buildHTMLDescription(parts []string, budget int) (string, error) {
+	rendering := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if part != "" {
+			rendering = append(rendering, part)
+		}
+	}
+
+	budget -= descriptionTrailerReserveRunes
+	var b strings.Builder
+	used, included := 0, 0
+	for _, part := range rendering {
+		rendered, err := markdownrenderer.RenderHTML(part)
+		if err != nil {
+			return "", err
+		}
+		overhead := len("<div></div>")
+		if included > 0 {
+			overhead += len("<hr>")
+		}
+		if used+overhead+utf8.RuneCountInString(rendered) > budget {
+			rendered, err = shrinkMarkdownToFit(part, budget-used-overhead)
+			if err != nil {
+				return "", err
+			}
+			if rendered == "" {
+				break
+			}
+		}
+		if included > 0 {
+			b.WriteString("<hr>")
+		}
+		b.WriteString("<div>")
+		b.WriteString(rendered)
+		b.WriteString("</div>")
+		used += overhead + utf8.RuneCountInString(rendered)
+		included++
+	}
+	if dropped := len(rendering) - included; dropped > 0 {
+		fmt.Fprintf(&b, "<hr><div><i>…and %d more alerts. Open in SigNoz for the full list.</i></div>", dropped)
+	}
+	return b.String(), nil
+}
+
+// shrinkMarkdownToFit cuts markdown until its rendered HTML fits within budget
+// runes, returning "" when the budget is too small to carry anything useful.
+// Only the markdown is ever cut, never the rendered HTML, so goldmark always
+// emits balanced markup.
+func shrinkMarkdownToFit(md string, budget int) (string, error) {
+	if budget < minShrinkBudgetRunes {
+		return "", nil
+	}
+	for range 4 {
+		rendered, err := markdownrenderer.RenderHTML(md)
+		if err != nil {
+			return "", err
+		}
+		renderedLen := utf8.RuneCountInString(rendered)
+		if renderedLen <= budget {
+			return rendered, nil
+		}
+		runes := []rune(md)
+		keep := len(runes) * budget / renderedLen * 9 / 10
+		if keep >= len(runes) {
+			keep = len(runes) - 1
+		}
+		if keep < minShrinkBudgetRunes {
+			return "", nil
+		}
+		md = string(runes[:keep]) + "…"
+	}
+	return "", nil
 }
 
 // prepareNote renders the same body template as plain text for a timeline note.

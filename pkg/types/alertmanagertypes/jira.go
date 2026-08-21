@@ -17,7 +17,7 @@ const defaultJiraReopenDuration = model.Duration(3 * 24 * time.Hour)
 // Service accounts authenticate against the api.atlassian.com gateway (keyed by
 // cloud id) instead of the site host; they are identified by their email domain.
 const (
-	jiraCloudHostSuffix           = "atlassian.net"
+	jiraCloudHostSuffix           = ".atlassian.net"
 	jiraServiceAccountEmailDomain = "@serviceaccount.atlassian.com"
 	jiraGatewayBaseURL            = "https://api.atlassian.com/ex/jira/"
 )
@@ -85,7 +85,7 @@ func (c *JiraReceiverConfig) UnmarshalYAML(unmarshal func(any) error) error {
 	site := strings.TrimRight(strings.TrimSpace(c.Site), "/")
 	u, err := url.Parse(site)
 	if site == "" || err != nil || u.Scheme != "https" || !strings.HasSuffix(strings.ToLower(u.Hostname()), jiraCloudHostSuffix) {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("jira site must be a Jira Cloud URL (https://<site>.%s)", jiraCloudHostSuffix))
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("jira site must be a Jira Cloud URL (https://<site>%s)", jiraCloudHostSuffix))
 	}
 	c.Site = site
 

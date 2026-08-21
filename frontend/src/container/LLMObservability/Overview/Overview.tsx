@@ -9,7 +9,11 @@ function Overview(): JSX.Element {
 
 	return (
 		<div className={styles.overview} data-testid="llm-observability-overview">
-			<DashboardContainer dashboard={dashboard} refetch={refetch} />
+			<DashboardContainer
+				dashboard={dashboard}
+				refetch={refetch}
+				canEditDashboardOverride={false}
+			/>
 		</div>
 	);
 }

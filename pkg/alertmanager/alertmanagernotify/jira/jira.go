@@ -15,6 +15,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unicode/utf16"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -106,7 +107,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	}
 
 	// Existing issue: refresh it, then transition + comment based on the new state.
-	if retry, err := n.updateIssue(ctx, existing.Key, fields); err != nil {
+	if retry, err := n.updateIssue(ctx, existing, fields); err != nil {
 		return retry, err
 	}
 
@@ -133,12 +134,76 @@ func (n *Notifier) buildFields(groupID, summary, descText string, alerts []*type
 		Issuetype:   &idName{Name: n.conf.IssueType},
 		Summary:     summary,
 		Labels:      n.labels(groupID),
-		Description: n.buildDescription(descText, alerts, firing),
+		Description: n.buildBoundedDescription(descText, alerts, firing),
 	}
 	if n.conf.Priority != "" {
 		f.Priority = &idName{Name: n.conf.Priority}
 	}
 	return f
+}
+
+// buildBoundedDescription builds the ADF issue body and keeps it within Jira's
+// description limit, which counts text characters plus per-node overhead — so a
+// text-only markdown cap is not enough. Over-limit bodies are shrunk at the
+// markdown level and rebuilt; the panel and deep-links are part of the measured
+// document, so the result always fits.
+func (n *Notifier) buildBoundedDescription(descText string, alerts []*types.Alert, firing bool) map[string]any {
+	doc := n.buildDescription(descText, alerts, firing)
+	for range 4 {
+		size := adfDocLen(doc)
+		if size <= maxDescriptionLenRunes {
+			return doc
+		}
+		runes := []rune(descText)
+		keep := len(runes) * maxDescriptionLenRunes / size * 9 / 10
+		if keep >= len(runes) {
+			keep = len(runes) - 1
+		}
+		if keep <= 0 {
+			break
+		}
+		descText = string(runes[:keep]) + "…"
+		doc = n.buildDescription(descText, alerts, firing)
+	}
+	if adfDocLen(doc) <= maxDescriptionLenRunes {
+		return doc
+	}
+	// still over after shrinking: keep just the panel and deep-links
+	return n.buildDescription("", alerts, firing)
+}
+
+// adfDocLen approximates how Jira measures an ADF document against the 32767
+// limit: text length in UTF-16 code units, plus per-node overhead (block
+// boundaries count like newlines), plus link targets. Deliberately counts on
+// the high side so a passing measurement never 400s.
+func adfDocLen(node any) int {
+	m, ok := node.(map[string]any)
+	if !ok {
+		return 0
+	}
+	size := 2
+	if text, ok := m["text"].(string); ok {
+		for _, r := range text {
+			size += utf16.RuneLen(r)
+		}
+	}
+	if marks, ok := m["marks"].([]any); ok {
+		for _, mark := range marks {
+			if mm, ok := mark.(map[string]any); ok {
+				if attrs, ok := mm["attrs"].(map[string]any); ok {
+					if href, ok := attrs["href"].(string); ok {
+						size += len(href)
+					}
+				}
+			}
+		}
+	}
+	if content, ok := m["content"].([]any); ok {
+		for _, child := range content {
+			size += adfDocLen(child)
+		}
+	}
+	return size
 }
 
 // buildDescription assembles the ADF issue body: a firing/resolved status panel,
@@ -218,7 +283,7 @@ func (n *Notifier) searchIssue(ctx context.Context, groupID string, firing bool)
 	fmt.Fprintf(&jql, `project=%q and labels=%q order by status ASC, resolutiondate DESC`, n.conf.Project, fmt.Sprintf("ALERT{%s}", groupID))
 
 	body, retry, err := n.callAPI(ctx, http.MethodPost, n.conf.APIBaseURL()+"/search/jql", searchRequest{
-		JQL: jql.String(), MaxResults: 2, Fields: []string{"status"},
+		JQL: jql.String(), MaxResults: 2, Fields: []string{"status", "labels"},
 	})
 	if err != nil {
 		return nil, retry, err
@@ -245,13 +310,31 @@ func (n *Notifier) createIssue(ctx context.Context, fields *issueFields) (bool, 
 	return retry, err
 }
 
-func (n *Notifier) updateIssue(ctx context.Context, key string, fields *issueFields) (bool, error) {
+func (n *Notifier) updateIssue(ctx context.Context, existing *issue, fields *issueFields) (bool, error) {
 	// project and issue type are set at creation and cannot be edited.
 	upd := *fields
 	upd.Project = nil
 	upd.Issuetype = nil
-	_, retry, err := n.callAPI(ctx, http.MethodPut, n.issueURL(key, ""), issue{Fields: &upd})
+	// Jira replaces the labels array wholesale, so union in the labels already
+	// on the issue to keep user-added ones.
+	if existing.Fields != nil {
+		upd.Labels = mergeLabels(existing.Fields.Labels, fields.Labels)
+	}
+	_, retry, err := n.callAPI(ctx, http.MethodPut, n.issueURL(existing.Key, ""), issue{Fields: &upd})
 	return retry, err
+}
+
+func mergeLabels(existing, ours []string) []string {
+	seen := make(map[string]bool, len(existing)+len(ours))
+	var merged []string
+	for _, label := range append(append([]string{}, existing...), ours...) {
+		if !seen[label] {
+			seen[label] = true
+			merged = append(merged, label)
+		}
+	}
+	sort.Strings(merged)
+	return merged
 }
 
 // applyTransition moves the issue into (toDone) or out of (!toDone) the "done"

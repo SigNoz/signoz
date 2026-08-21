@@ -188,7 +188,7 @@ func (FieldContext) Enum() []any {
 		FieldContextMetric,
 		FieldContextLog,
 		FieldContextSpan,
-		// FieldContextTrace,
+		FieldContextTrace,
 		FieldContextResource,
 		// FieldContextScope,
 		FieldContextAttribute,

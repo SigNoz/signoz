@@ -17,6 +17,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
@@ -546,6 +547,109 @@ func TestPrepareContent(t *testing.T) {
 		// Each alert body wrapped in <div>, separated by <hr>
 		assert.Equal(t, "<div><p>Alert firing in NS: potter-the-harry</p>\n</div><hr><div><p>Alert firing in NS: smart-the-rat</p>\n</div>", desc)
 	})
+}
+
+func TestShrinkMarkdownToFit(t *testing.T) {
+	cases := []struct {
+		name      string
+		md        string
+		budget    int
+		wantEmpty bool
+	}{
+		{"fits untouched", "**bold** text", 1000, false},
+		{"shrinks to fit", strings.Repeat("lorem ipsum ", 500), 1000, false},
+		{"budget too small", strings.Repeat("lorem ipsum ", 500), 10, true},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got, err := shrinkMarkdownToFit(c.md, c.budget)
+			require.NoError(t, err)
+			if c.wantEmpty {
+				assert.Empty(t, got)
+				return
+			}
+			assert.NotEmpty(t, got)
+			assert.LessOrEqual(t, utf8.RuneCountInString(got), c.budget)
+			assert.Equal(t, strings.Count(got, "<p>"), strings.Count(got, "</p>"))
+		})
+	}
+}
+
+func TestBuildHTMLDescriptionOverflow(t *testing.T) {
+	bigPart := strings.Repeat("alpha beta gamma ", 100)
+	cases := []struct {
+		name        string
+		parts       []string
+		budget      int
+		wantTrailer bool
+	}{
+		{"all parts fit", []string{"**a**", "**b**"}, maxDescriptionLenRunes, false},
+		{"empty parts skipped", []string{"", "hello", ""}, maxDescriptionLenRunes, false},
+		{"overflow drops parts with trailer", repeatParts(bigPart, 12), maxDescriptionLenRunes, true},
+		{"single huge part shrunk without trailer", []string{strings.Repeat(bigPart, 20)}, maxDescriptionLenRunes, false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got, err := buildHTMLDescription(c.parts, c.budget)
+			require.NoError(t, err)
+			assert.LessOrEqual(t, utf8.RuneCountInString(got), c.budget)
+			assert.Equal(t, strings.Count(got, "<div>"), strings.Count(got, "</div>"))
+			assert.True(t, strings.HasSuffix(got, "</div>"))
+			if c.wantTrailer {
+				assert.Regexp(t, `…and \d+ more alerts\. Open in SigNoz for the full list\.`, got)
+			} else {
+				assert.NotContains(t, got, "more alerts")
+			}
+		})
+	}
+}
+
+// prepareContent end-to-end: 40 custom-template alerts overflow the description
+// budget yet the posted HTML stays within limits and well-formed.
+func TestPrepareContentDescriptionOverflow(t *testing.T) {
+	tmpl := test.CreateTmpl(t)
+	notifier := &Notifier{
+		conf: &config.OpsGenieConfig{
+			Message:     `{{ .CommonLabels.alertname }}`,
+			Description: `{{ .CommonLabels.alertname }}`,
+		},
+		tmpl:             tmpl,
+		logger:           promslog.NewNopLogger(),
+		templater:        newTestTemplater(tmpl),
+		advancedFeatures: true,
+	}
+
+	bodyTemplate := "**Alert in** $labels.namespace\n\n" + strings.Repeat("detail line for the runbook ", 30)
+	alerts := make([]*types.Alert, 0, 40)
+	for i := range 40 {
+		alerts = append(alerts, &types.Alert{
+			Alert: model.Alert{
+				Labels: model.LabelSet{
+					"alertname": "overflow",
+					"namespace": model.LabelValue(fmt.Sprintf("ns-%d", i)),
+				},
+				Annotations: model.LabelSet{
+					ruletypes.AnnotationBodyTemplate: model.LabelValue(bodyTemplate),
+				},
+				StartsAt: time.Now(),
+				EndsAt:   time.Now().Add(time.Hour),
+			},
+		})
+	}
+
+	_, desc, err := notifier.prepareContent(notify.WithGroupKey(context.Background(), "1"), alerts)
+	require.NoError(t, err)
+	assert.LessOrEqual(t, utf8.RuneCountInString(desc), maxDescriptionLenRunes)
+	assert.Equal(t, strings.Count(desc, "<div>"), strings.Count(desc, "</div>"))
+	assert.Regexp(t, `…and \d+ more alerts\. Open in SigNoz for the full list\.`, desc)
+}
+
+func repeatParts(part string, n int) []string {
+	parts := make([]string, n)
+	for i := range parts {
+		parts[i] = part
+	}
+	return parts
 }
 
 func readBody(t *testing.T, r *http.Request) string {

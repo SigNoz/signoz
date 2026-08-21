@@ -38,8 +38,11 @@ func (c *conditionBuilder) ConditionFor(
 		return nil, nil, err
 	}
 
-	// an unknown key simply yields no condition rather than an error.
-	keys, warning := querybuilder.ResolveKeys(key, querybuilder.MatchingFieldKeys(key, fieldKeys))
+	// an unknown key simply yields no condition rather than an error. Metadata
+	// fields have no family support, so every logical field is single-member
+	// and flattens losslessly to its physical key.
+	resolved, warning := querybuilder.ResolveLogicalFields(key, querybuilder.MatchingLogicalFields(ctx, orgID, nil, key, fieldKeys))
+	keys := querybuilder.SingleKeys(resolved)
 	var warnings []string
 	if warning != "" {
 		warnings = append(warnings, warning)

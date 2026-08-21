@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { Select } from 'antd';
 
 // ** Types
-import { selectStyle } from '../QueryBuilderSearch/config';
+import { selectStyle } from '../QueryBuilderSearchV2/config';
 import { OperatorsSelectProps } from './OperatorsSelect.interfaces';
 
 export const OperatorsSelect = memo(function OperatorsSelect({
