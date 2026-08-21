@@ -1,6 +1,6 @@
 import { Spline } from '@signozhq/icons';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import QueryTypeTag from 'container/NewWidget/LeftContainer/QueryTypeTag';
+import QueryTypeTag from 'components/QueryTypeTag/QueryTypeTag';
 import { EQueryType } from 'types/common/dashboard';
 
 interface PlotTagProps {

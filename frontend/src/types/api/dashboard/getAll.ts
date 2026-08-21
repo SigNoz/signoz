@@ -2,8 +2,9 @@ import { ReactNode } from 'react';
 import { Layout } from 'react-grid-layout';
 import { PrecisionOption } from 'components/Graph/types';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
-import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
-import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
+import { ColumnUnit } from 'types/api/widgets/columnUnit';
+import { ThresholdProps } from 'types/api/widgets/threshold';
+import { timePreferenceType } from 'constants/timePreference';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
 import {
 	FillMode,
@@ -107,9 +108,6 @@ export interface WidgetRow {
 	description: string;
 }
 
-export interface ColumnUnit {
-	[key: string]: string;
-}
 export interface IBaseWidget {
 	id: string;
 	panelTypes: PANEL_TYPES;

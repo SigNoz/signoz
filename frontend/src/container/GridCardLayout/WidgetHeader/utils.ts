@@ -16,8 +16,5 @@ export const generateMenuList = (actions: MenuItem[]): DropdownMenuItem[] =>
 
 export const isTWidgetOptions = (value: string): value is MenuItemKeys =>
 	value === MenuItemKeys.View ||
-	value === MenuItemKeys.Edit ||
-	value === MenuItemKeys.Delete ||
-	value === MenuItemKeys.Clone ||
 	value === MenuItemKeys.CreateAlerts ||
 	value === MenuItemKeys.Download;
