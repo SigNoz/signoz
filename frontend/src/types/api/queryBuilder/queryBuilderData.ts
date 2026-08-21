@@ -8,6 +8,7 @@ import {
 } from 'types/common/queryBuilder';
 
 import {
+	BuilderQueryType,
 	Filter,
 	Having as HavingV5,
 	LogAggregation,
@@ -90,6 +91,8 @@ export type IBuilderQuery = {
 	offset?: number;
 	selectColumns?: BaseAutocompleteData[] | TelemetryFieldKey[];
 	source?: 'meter' | '';
+	/** Envelope type this query serializes to in the v5 payload; absent means builder_query. */
+	builderQueryType?: BuilderQueryType;
 };
 
 export interface IClickHouseQuery {

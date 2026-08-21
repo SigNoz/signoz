@@ -22,6 +22,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 	isListViewPanel = false,
 	showOnlyWhereClause = false,
 	showTraceOperator = false,
+	showSpanScopeSelector = true,
 	version,
 	onSignalSourceChange,
 	signalSourceChangeEnabled = false,
@@ -203,6 +204,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 							queryComponents={queryComponents}
 							isMultiQueryAllowed={isMultiQueryAllowed}
 							showTraceOperator={showTraceOperator}
+							showSpanScopeSelector={showSpanScopeSelector}
 							hasTraceOperator={hasTraceOperator}
 							version={version}
 							isAvailableToDisable={false}
@@ -228,6 +230,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 								isMultiQueryAllowed={isMultiQueryAllowed}
 								isAvailableToDisable={false}
 								showTraceOperator={showTraceOperator}
+								showSpanScopeSelector={showSpanScopeSelector}
 								hasTraceOperator={hasTraceOperator}
 								queryVariant={config?.queryVariant || 'dropdown'}
 								showOnlyWhereClause={showOnlyWhereClause}
