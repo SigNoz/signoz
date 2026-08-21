@@ -8,7 +8,7 @@ import {
 	OPERATORS,
 	QUERY_BUILDER_FUNCTIONS,
 } from 'constants/antlrQueryConstants';
-import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
+import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearchV2/utils';
 import FilterQueryLexer from 'parser/FilterQueryLexer';
 import FilterQueryParser, {
 	AndExpressionContext,

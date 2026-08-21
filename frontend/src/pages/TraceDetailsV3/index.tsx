@@ -80,7 +80,7 @@ function TraceDetailsV3(): JSX.Element {
 
 	const handleSpanDetailsClose = useCallback((): void => {
 		urlQuery.delete('spanId');
-		safeNavigate({ search: urlQuery.toString() });
+		safeNavigate({ search: urlQuery.toString() }, { replace: true });
 	}, [urlQuery, safeNavigate]);
 
 	const handleFilteredSpansChange = useCallback(

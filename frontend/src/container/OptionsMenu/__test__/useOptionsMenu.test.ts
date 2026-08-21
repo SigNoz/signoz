@@ -387,4 +387,42 @@ describe('useOptionsMenu', () => {
 			expect(remaining).toHaveLength(seedColumns.length);
 		});
 	});
+
+	describe('fieldsSelector.value drops legacy columns without a name', () => {
+		it('excludes entries missing name while keeping valid columns', () => {
+			(useGetQueryKeySuggestions as jest.Mock).mockReturnValue({
+				data: { data: { data: { keys: {} } } },
+				isFetching: false,
+			});
+			(usePreferenceContext as jest.Mock).mockReturnValue({
+				traces: {
+					preferences: {
+						columns: [
+							{ name: 'body', fieldContext: 'log' },
+							{ key: 'legacy-key-no-name', fieldContext: 'log' },
+							{ name: 'timestamp', fieldContext: 'log' },
+						],
+						formatting: { format: 'table', maxLines: 1, fontSize: 'small' },
+					},
+					updateColumns: mockUpdateColumns,
+					updateFormatting: mockUpdateFormatting,
+				},
+				logs: {
+					preferences: { columns: [], formatting: {} },
+					updateColumns: mockUpdateColumns,
+					updateFormatting: mockUpdateFormatting,
+				},
+			});
+
+			const { result } = renderHook(() =>
+				useOptionsMenu({
+					dataSource: DataSource.TRACES,
+					aggregateOperator: 'count',
+				}),
+			);
+
+			const fields = result.current.config.fieldsSelector?.value ?? [];
+			expect(fields.map((f) => f.name)).toStrictEqual(['body', 'timestamp']);
+		});
+	});
 });

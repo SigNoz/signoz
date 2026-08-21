@@ -905,3 +905,52 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 		})
 	}
 }
+
+// IN on the body column routes each value back through the `=` path; the SQL it produces
+// must stay what the shared IN handling produced before, including for a mixed-type list.
+func TestConditionForBodyIn(t *testing.T) {
+	testCases := []struct {
+		name         string
+		values       []any
+		expectedSQL  string
+		expectedArgs []any
+	}{
+		{
+			name:         "strings",
+			values:       []any{"alpha", "beta"},
+			expectedSQL:  "(body = ? OR body = ?)",
+			expectedArgs: []any{"alpha", "beta"},
+		},
+		{
+			name:         "mixed types are stringified before they reach the column",
+			values:       []any{"alpha", float64(1), true},
+			expectedSQL:  "(body = ? OR body = ? OR body = ?)",
+			expectedArgs: []any{"alpha", "1", "true"},
+		},
+	}
+
+	fl := flaggertest.New(t)
+	fm := NewFieldMapper(fl)
+	conditionBuilder := NewConditionBuilder(fm, fl)
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			key := telemetrytypes.TelemetryFieldKey{
+				Name:          "body",
+				FieldContext:  telemetrytypes.FieldContextLog,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			}
+			sb := sqlbuilder.NewSelectBuilder()
+			sb.Select("1").From("t")
+			cond, _, err := conditionBuilder.ConditionFor(context.Background(), valuer.UUID{}, 0, 0, &key,
+				map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, qbtypes.ConditionBuilderOptions{},
+				qbtypes.FilterOperatorIn, tc.values, sb)
+			require.NoError(t, err)
+			sb.Where(cond...)
+
+			sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+			assert.Contains(t, sql, tc.expectedSQL)
+			assert.Equal(t, tc.expectedArgs, args)
+		})
+	}
+}

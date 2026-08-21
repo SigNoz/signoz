@@ -1861,8 +1861,19 @@ export interface AuthtypesAttributeMappingDTO {
 	role?: string;
 }
 
+export enum AuthtypesAuthDomainConfigSAMLDTOKind {
+	saml = 'saml',
+}
 export interface AuthtypesSamlConfigDTO {
 	attributeMapping?: AuthtypesAttributeMappingDTO;
+	/**
+	 * @type string
+	 */
+	certificate: string;
+	/**
+	 * @type string
+	 */
+	entityId: string;
 	/**
 	 * @type boolean
 	 */
@@ -1870,17 +1881,21 @@ export interface AuthtypesSamlConfigDTO {
 	/**
 	 * @type string
 	 */
-	samlCert?: string;
-	/**
-	 * @type string
-	 */
-	samlEntity?: string;
-	/**
-	 * @type string
-	 */
-	samlIdp?: string;
+	location: string;
 }
 
+export interface AuthtypesAuthDomainConfigSAMLDTO {
+	/**
+	 * @type string
+	 * @enum saml
+	 */
+	kind: AuthtypesAuthDomainConfigSAMLDTOKind;
+	spec: AuthtypesSamlConfigDTO;
+}
+
+export enum AuthtypesAuthDomainConfigGoogleDTOKind {
+	google = 'google',
+}
 export type AuthtypesGoogleConfigDTODomainToAdminEmail = {
 	[key: string]: string;
 };
@@ -1893,11 +1908,12 @@ export interface AuthtypesGoogleConfigDTO {
 	/**
 	 * @type string
 	 */
-	clientId?: string;
+	clientId: string;
 	/**
 	 * @type string
+	 * @format password
 	 */
-	clientSecret?: string;
+	clientSecret: string;
 	/**
 	 * @type object
 	 */
@@ -1916,24 +1932,34 @@ export interface AuthtypesGoogleConfigDTO {
 	insecureSkipEmailVerified?: boolean;
 	/**
 	 * @type string
-	 */
-	redirectURI?: string;
-	/**
-	 * @type string
+	 * @format password
 	 */
 	serviceAccountJson?: string;
 }
 
+export interface AuthtypesAuthDomainConfigGoogleDTO {
+	/**
+	 * @type string
+	 * @enum google
+	 */
+	kind: AuthtypesAuthDomainConfigGoogleDTOKind;
+	spec: AuthtypesGoogleConfigDTO;
+}
+
+export enum AuthtypesAuthDomainConfigOIDCDTOKind {
+	oidc = 'oidc',
+}
 export interface AuthtypesOIDCConfigDTO {
 	claimMapping?: AuthtypesAttributeMappingDTO;
 	/**
 	 * @type string
 	 */
-	clientId?: string;
+	clientId: string;
 	/**
 	 * @type string
+	 * @format password
 	 */
-	clientSecret?: string;
+	clientSecret: string;
 	/**
 	 * @type boolean
 	 */
@@ -1945,79 +1971,33 @@ export interface AuthtypesOIDCConfigDTO {
 	/**
 	 * @type string
 	 */
-	issuer?: string;
+	issuer: string;
 	/**
 	 * @type string
 	 */
 	issuerAlias?: string;
 }
 
-export type AuthtypesRoleMappingDTOGroupMappingsAnyOf = {
-	[key: string]: string;
-};
-
-/**
- * @nullable
- */
-export type AuthtypesRoleMappingDTOGroupMappings =
-	AuthtypesRoleMappingDTOGroupMappingsAnyOf | null;
-
-export interface AuthtypesRoleMappingDTO {
+export interface AuthtypesAuthDomainConfigOIDCDTO {
 	/**
 	 * @type string
+	 * @enum oidc
 	 */
-	defaultRole?: string;
-	/**
-	 * @type object,null
-	 */
-	groupMappings?: AuthtypesRoleMappingDTOGroupMappings;
-	/**
-	 * @type boolean
-	 */
-	useRoleAttribute?: boolean;
+	kind: AuthtypesAuthDomainConfigOIDCDTOKind;
+	spec: AuthtypesOIDCConfigDTO;
 }
 
+export type AuthtypesAuthDomainConfigDTO =
+	| AuthtypesAuthDomainConfigSAMLDTO
+	| AuthtypesAuthDomainConfigGoogleDTO
+	| AuthtypesAuthDomainConfigOIDCDTO;
+
 export enum AuthtypesAuthNProviderDTO {
-	google_auth = 'google_auth',
+	google = 'google',
 	saml = 'saml',
 	email_password = 'email_password',
 	oidc = 'oidc',
 }
-export type AuthtypesAuthDomainConfigDTO =
-	| (AuthtypesSamlConfigDTO & {
-			googleAuthConfig?: AuthtypesGoogleConfigDTO;
-			oidcConfig?: AuthtypesOIDCConfigDTO;
-			roleMapping?: AuthtypesRoleMappingDTO;
-			samlConfig?: AuthtypesSamlConfigDTO;
-			/**
-			 * @type boolean
-			 */
-			ssoEnabled?: boolean;
-			ssoType?: AuthtypesAuthNProviderDTO;
-	  })
-	| (AuthtypesGoogleConfigDTO & {
-			googleAuthConfig?: AuthtypesGoogleConfigDTO;
-			oidcConfig?: AuthtypesOIDCConfigDTO;
-			roleMapping?: AuthtypesRoleMappingDTO;
-			samlConfig?: AuthtypesSamlConfigDTO;
-			/**
-			 * @type boolean
-			 */
-			ssoEnabled?: boolean;
-			ssoType?: AuthtypesAuthNProviderDTO;
-	  })
-	| (AuthtypesOIDCConfigDTO & {
-			googleAuthConfig?: AuthtypesGoogleConfigDTO;
-			oidcConfig?: AuthtypesOIDCConfigDTO;
-			roleMapping?: AuthtypesRoleMappingDTO;
-			samlConfig?: AuthtypesSamlConfigDTO;
-			/**
-			 * @type boolean
-			 */
-			ssoEnabled?: boolean;
-			ssoType?: AuthtypesAuthNProviderDTO;
-	  });
-
 export interface AuthtypesAuthNProviderInfoDTO {
 	/**
 	 * @type string,null
@@ -2055,6 +2035,31 @@ export interface AuthtypesDeprecatedPostableUserRoleDTO {
 	id: string;
 }
 
+export type AuthtypesRoleMappingDTOGroupMappingsAnyOf = {
+	[key: string]: string;
+};
+
+/**
+ * @nullable
+ */
+export type AuthtypesRoleMappingDTOGroupMappings =
+	AuthtypesRoleMappingDTOGroupMappingsAnyOf | null;
+
+export interface AuthtypesRoleMappingDTO {
+	/**
+	 * @type string
+	 */
+	defaultRole?: string;
+	/**
+	 * @type object,null
+	 */
+	groupMappings?: AuthtypesRoleMappingDTOGroupMappings;
+	/**
+	 * @type boolean
+	 */
+	useRoleAttribute?: boolean;
+}
+
 export interface AuthtypesGettableAuthDomainDTO {
 	authNProviderInfo?: AuthtypesAuthNProviderInfoDTO;
 	config?: AuthtypesAuthDomainConfigDTO;
@@ -2063,6 +2068,10 @@ export interface AuthtypesGettableAuthDomainDTO {
 	 * @format date-time
 	 */
 	createdAt?: string;
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
 	/**
 	 * @type string
 	 */
@@ -2075,6 +2084,7 @@ export interface AuthtypesGettableAuthDomainDTO {
 	 * @type string
 	 */
 	orgId?: string;
+	roleMapping?: AuthtypesRoleMappingDTO;
 	/**
 	 * @type string
 	 * @format date-time
@@ -2271,11 +2281,16 @@ export interface AuthtypesOrgSessionContextDTO {
 }
 
 export interface AuthtypesPostableAuthDomainDTO {
-	config?: AuthtypesAuthDomainConfigDTO;
+	config: AuthtypesAuthDomainConfigDTO;
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
 	/**
 	 * @type string
 	 */
-	name?: string;
+	name: string;
+	roleMapping?: AuthtypesRoleMappingDTO;
 }
 
 export interface AuthtypesPostableEmailPasswordSessionDTO {
@@ -2408,7 +2423,12 @@ export interface AuthtypesTransactionDTO {
 }
 
 export interface AuthtypesUpdatableAuthDomainDTO {
-	config?: AuthtypesAuthDomainConfigDTO;
+	config: AuthtypesAuthDomainConfigDTO;
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+	roleMapping?: AuthtypesRoleMappingDTO;
 }
 
 export interface AuthtypesUpdatableRoleDTO {
@@ -2818,6 +2838,7 @@ export enum CloudintegrationtypesServiceIDDTO {
 	computeengine = 'computeengine',
 	gke = 'gke',
 	cloudstorage = 'cloudstorage',
+	cloudsql_mysql = 'cloudsql_mysql',
 }
 export type CloudintegrationtypesCloudIntegrationServiceDTOAnyOf = {
 	/**
@@ -3469,6 +3490,7 @@ export enum TelemetrytypesFieldContextDTO {
 	metric = 'metric',
 	log = 'log',
 	span = 'span',
+	trace = 'trace',
 	resource = 'resource',
 	attribute = 'attribute',
 	body = 'body',
@@ -9070,13 +9092,6 @@ export interface SavedviewtypesUpdatableSavedViewDTO {
 	spec: SavedviewtypesSavedViewSpecDTO;
 }
 
-export interface ServiceaccounttypesDeprecatedPostableServiceAccountRoleDTO {
-	/**
-	 * @type string
-	 */
-	id: string;
-}
-
 export interface ServiceaccounttypesGettableFactorAPIKeyDTO {
 	/**
 	 * @type string
@@ -9933,93 +9948,11 @@ export interface TypesChangePasswordRequestDTO {
 	oldPassword?: string;
 }
 
-export interface TypesDeprecatedUserDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: string;
-	/**
-	 * @type string
-	 */
-	displayName?: string;
-	/**
-	 * @type string
-	 */
-	email?: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type boolean
-	 */
-	isRoot?: boolean;
-	/**
-	 * @type string
-	 */
-	orgId?: string;
-	/**
-	 * @type string
-	 */
-	role?: string;
-	/**
-	 * @type string
-	 */
-	status?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: string;
-}
-
 export interface TypesIdentifiableDTO {
 	/**
 	 * @type string
 	 */
 	id: string;
-}
-
-export interface TypesInviteDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: string;
-	/**
-	 * @type string
-	 */
-	email?: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	inviteLink?: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	orgId?: string;
-	/**
-	 * @type string
-	 */
-	role?: string;
-	/**
-	 * @type string
-	 */
-	token?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: string;
 }
 
 export interface TypesOrganizationDTO {
@@ -10071,25 +10004,6 @@ export interface TypesPostableForgotPasswordDTO {
 	orgId: string;
 }
 
-export interface TypesPostableInviteDTO {
-	/**
-	 * @type string
-	 */
-	email?: string;
-	/**
-	 * @type string
-	 */
-	frontendBaseUrl?: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	role?: string;
-}
-
 export interface TypesPostableResetPasswordDTO {
 	/**
 	 * @type string
@@ -10099,13 +10013,6 @@ export interface TypesPostableResetPasswordDTO {
 	 * @type string
 	 */
 	token?: string;
-}
-
-export interface TypesPostableRoleDTO {
-	/**
-	 * @type string
-	 */
-	name: string;
 }
 
 export interface TypesPostableVerifyResetPasswordTokenDTO {
@@ -10261,6 +10168,93 @@ export interface ZeustypesPostableProfileDTO {
 	 */
 	where_did_you_discover_signoz: string;
 }
+
+export type GetAIObservabilityFieldsKeysParams = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	searchText?: string;
+	/**
+	 * @description undefined
+	 */
+	fieldContext?: TelemetrytypesFieldContextDTO;
+	/**
+	 * @description undefined
+	 */
+	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	startUnixMilli?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	endUnixMilli?: number;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+};
+
+export type GetAIObservabilityFieldsKeys200 = {
+	data: TelemetrytypesGettableFieldKeysDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetAIObservabilityFieldsValuesParams = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	searchText?: string;
+	/**
+	 * @description undefined
+	 */
+	fieldContext?: TelemetrytypesFieldContextDTO;
+	/**
+	 * @description undefined
+	 */
+	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	startUnixMilli?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description undefined
+	 */
+	endUnixMilli?: number;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	name?: string;
+};
+
+export type GetAIObservabilityFieldsValues200 = {
+	data: TelemetrytypesGettableFieldValuesDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
 
 export type GetAlerts200 = {
 	/**
@@ -10524,42 +10518,6 @@ export type CreatePublicDashboard201 = {
 export type UpdatePublicDashboardPathParameters = {
 	id: string;
 };
-export type ListAuthDomains200 = {
-	/**
-	 * @type array
-	 */
-	data: AuthtypesGettableAuthDomainDTO[];
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type CreateAuthDomain201 = {
-	data: TypesIdentifiableDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type DeleteAuthDomainPathParameters = {
-	id: string;
-};
-export type GetAuthDomainPathParameters = {
-	id: string;
-};
-export type GetAuthDomain200 = {
-	data: AuthtypesGettableAuthDomainDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type UpdateAuthDomainPathParameters = {
-	id: string;
-};
 export type ListDowntimeSchedulesParams = {
 	/**
 	 * @type boolean,null
@@ -10750,27 +10708,8 @@ export type GetFieldsValues200 = {
 	status: string;
 };
 
-export type GetResetPasswordTokenDeprecatedPathParameters = {
-	id: string;
-};
-export type GetResetPasswordTokenDeprecated200 = {
-	data: TypesResetPasswordTokenDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type GetGlobalConfig200 = {
 	data: GlobaltypesConfigDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type CreateInvite201 = {
-	data: TypesInviteDTO;
 	/**
 	 * @type string
 	 */
@@ -11074,21 +11013,6 @@ export type GetServiceAccountRoles200 = {
 	status: string;
 };
 
-export type CreateServiceAccountRoleDeprecatedPathParameters = {
-	id: string;
-};
-export type CreateServiceAccountRoleDeprecated201 = {
-	data: TypesIdentifiableDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type DeleteServiceAccountRoleDeprecatedPathParameters = {
-	id: string;
-	rid: string;
-};
 export type GetMyServiceAccount200 = {
 	data: ServiceaccounttypesServiceAccountWithRolesDTO;
 	/**
@@ -11189,25 +11113,6 @@ export type GetTraceAggregations200 = {
 	status: string;
 };
 
-export type ListUsersDeprecated200 = {
-	/**
-	 * @type array
-	 */
-	data: TypesDeprecatedUserDTO[];
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type GetMyUserDeprecated200 = {
-	data: TypesDeprecatedUserDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type ListUserPreferences200 = {
 	/**
 	 * @type array
@@ -11232,6 +11137,42 @@ export type GetUserPreference200 = {
 
 export type UpdateUserPreferencePathParameters = {
 	name: string;
+};
+export type ListAuthDomains200 = {
+	/**
+	 * @type array
+	 */
+	data: AuthtypesGettableAuthDomainDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateAuthDomain201 = {
+	data: TypesIdentifiableDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteAuthDomainPathParameters = {
+	id: string;
+};
+export type GetAuthDomainPathParameters = {
+	id: string;
+};
+export type GetAuthDomain200 = {
+	data: AuthtypesGettableAuthDomainDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateAuthDomainPathParameters = {
+	id: string;
 };
 export type ListDashboardViews200 = {
 	data: DashboardtypesListableDashboardViewDTO;
@@ -12402,13 +12343,6 @@ export type GetRolesByUserID200 = {
 	status: string;
 };
 
-export type SetRoleByUserIDPathParameters = {
-	id: string;
-};
-export type RemoveUserRoleByUserIDAndRoleIDPathParameters = {
-	id: string;
-	roleId: string;
-};
 export type GetMyUser200 = {
 	data: AuthtypesUserWithRolesDTO;
 	/**

@@ -94,7 +94,11 @@ func (c *conditionBuilder) conditionFor(
 		}
 		conditions := []string{}
 		for _, value := range values {
-			conditions = append(conditions, sb.E(fieldExpression, value))
+			cond, err := c.conditionFor(ctx, orgID, startNs, endNs, key, qbtypes.FilterOperatorEqual, value, sb)
+			if err != nil {
+				return "", err
+			}
+			conditions = append(conditions, cond)
 		}
 		return sb.Or(conditions...), nil
 	case qbtypes.FilterOperatorNotIn:
@@ -104,7 +108,11 @@ func (c *conditionBuilder) conditionFor(
 		}
 		conditions := []string{}
 		for _, value := range values {
-			conditions = append(conditions, sb.NE(fieldExpression, value))
+			cond, err := c.conditionFor(ctx, orgID, startNs, endNs, key, qbtypes.FilterOperatorNotEqual, value, sb)
+			if err != nil {
+				return "", err
+			}
+			conditions = append(conditions, cond)
 		}
 		return sb.And(conditions...), nil
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
@@ -139,7 +147,10 @@ func (c *conditionBuilder) ConditionFor(
 		return nil, nil, err
 	}
 
-	keys, warning := querybuilder.ResolveKeys(key, querybuilder.MatchingFieldKeys(key, fieldKeys))
+	// Audit fields have no family support, so every logical field is
+	// single-member and flattens losslessly to its physical key.
+	resolved, warning := querybuilder.ResolveLogicalFields(key, querybuilder.MatchingLogicalFields(ctx, orgID, nil, key, fieldKeys))
+	keys := querybuilder.SingleKeys(resolved)
 	var warnings []string
 	if warning != "" {
 		warnings = append(warnings, warning)

@@ -70,28 +70,38 @@ export const volumeWidgetInfo = [
 		title: 'Volume available',
 		yAxisUnit: 'bytes',
 		docPath: '/infrastructure-monitoring/kubernetes/volumes/#volume-available-1',
+		description:
+			'Free bytes on the volume over time; a steady decline forecasts when the volume fills up.',
 	},
 	{
 		title: 'Volume capacity',
 		yAxisUnit: 'bytes',
 		docPath: '/infrastructure-monitoring/kubernetes/volumes/#volume-capacity-1',
+		description:
+			'Total provisioned capacity of the volume in bytes, which steps up only when the PVC is resized.',
 	},
 	{
 		title: 'Volume inodes used',
 		yAxisUnit: 'short',
 		docPath:
 			'/infrastructure-monitoring/kubernetes/volumes/#volume-inodes-used-1',
+		description:
+			'Inodes consumed on the volume filesystem; a rising line means many small files are being created.',
 	},
 	{
 		title: 'Volume inodes',
 		yAxisUnit: 'short',
 		docPath: '/infrastructure-monitoring/kubernetes/volumes/#volume-inodes-1',
+		description:
+			'Total inodes available on the volume filesystem, the reference for spotting inode exhaustion.',
 	},
 	{
 		title: 'Volume inodes free',
 		yAxisUnit: 'short',
 		docPath:
 			'/infrastructure-monitoring/kubernetes/volumes/#volume-inodes-free-1',
+		description:
+			'Unallocated inodes on the volume; near zero, file creation fails with ENOSPC even with free bytes.',
 	},
 ];
 

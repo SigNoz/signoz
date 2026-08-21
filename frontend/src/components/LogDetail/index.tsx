@@ -51,11 +51,12 @@ import { ILogBody } from 'types/api/logs/log';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
-import { isLogDetailsV2, RESOURCE_KEYS, VIEW_TYPES, VIEWS } from './constants';
+import { RESOURCE_KEYS, VIEW_TYPES, VIEWS } from './constants';
 import { LogDetailInnerProps, LogDetailProps } from './LogDetail.interfaces';
 import LogDetailsHeader from './LogDetailsHeader/LogDetailsHeader';
 import { useLogNavigation } from './LogDetailsHeader/useLogNavigation';
 import LogHighlights from './LogHighlights/LogHighlights';
+import { useIsLogDetailsV2 } from './useIsLogDetailsV2';
 
 import './LogDetails.styles.scss';
 
@@ -74,6 +75,7 @@ function LogDetailInner({
 	onScrollToLog,
 	handleOpenInExplorer,
 	getContainer,
+	onApplyLogFilter,
 }: LogDetailInnerProps): JSX.Element {
 	const initialContextQuery = useInitialQuery(log);
 	const [contextQuery, setContextQuery] = useState<Query | undefined>(
@@ -92,6 +94,8 @@ function LogDetailInner({
 	const [isEdit, setIsEdit] = useState<boolean>(false);
 	const { stagedQuery } = useQueryBuilder();
 
+	const isLogDetailsV2 = useIsLogDetailsV2();
+
 	// Handle clicks outside to close drawer, except on explicitly ignored regions
 	useEffect(() => {
 		const handleClickOutside = (e: MouseEvent): void => {
@@ -100,6 +104,7 @@ function LogDetailInner({
 			// Don't close if clicking on drawer content, overlays, or portal elements
 			if (
 				target.closest('[data-log-detail-ignore="true"]') ||
+				target.closest('.log-detail-drawer') ||
 				target.closest('.cm-tooltip-autocomplete') ||
 				target.closest('.drawer-popover') ||
 				target.closest('.query-status-popover') ||
@@ -402,6 +407,8 @@ function LogDetailInner({
 
 				{isLogDetailsV2 && <LogHighlights log={log} />}
 
+				{isLogDetailsV2 && <div className="log-detail-drawer__section-divider" />}
+
 				<div className="tabs-and-search">
 					<ToggleGroupSimple
 						type="single"
@@ -418,15 +425,21 @@ function LogDetailInner({
 									</div>
 								),
 							},
-							{
-								value: VIEW_TYPES.JSON,
-								label: (
-									<div className="view-title">
-										<Braces size={14} />
-										JSON
-									</div>
-								),
-							},
+							// V2's DataViewer has its own Pretty/JSON toggle, so the separate
+							// JSON tab is redundant.
+							...(isLogDetailsV2
+								? []
+								: [
+										{
+											value: VIEW_TYPES.JSON,
+											label: (
+												<div className="view-title">
+													<Braces size={14} />
+													JSON
+												</div>
+											),
+										},
+									]),
 							{
 								value: VIEW_TYPES.CONTEXT,
 								label: (
@@ -507,9 +520,10 @@ function LogDetailInner({
 						selectedOptions={options}
 						listViewPanelSelectedFields={listViewPanelSelectedFields}
 						handleChangeSelectedView={handleChangeSelectedView}
+						onApplyLogFilter={onApplyLogFilter}
 					/>
 				)}
-				{selectedView === VIEW_TYPES.JSON && (
+				{!isLogDetailsV2 && selectedView === VIEW_TYPES.JSON && (
 					<JsonView data={LogJsonData} height="68vh" />
 				)}
 

@@ -64,6 +64,8 @@ export interface K8sDetailsFilters {
 export interface K8sDetailsWidgetInfo {
 	title: string;
 	yAxisUnit: string;
+	docPath?: string;
+	description?: string;
 }
 
 export type GetEntityQueryPayload<T> = (

@@ -336,7 +336,7 @@ func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, start, end
 	return &operations, nil
 }
 
-func (r *ClickHouseReader) buildResourceSubQuery(tags []model.TagQueryParam, svc string, start, end time.Time) (string, error) {
+func (r *ClickHouseReader) buildResourceSubQuery(ctx context.Context, orgID valuer.UUID, tags []model.TagQueryParam, svc string, start, end time.Time) (string, error) {
 	// assuming all will be resource attributes.
 	// and resource attributes are string for traces
 	filterSet := v3.FilterSet{}
@@ -387,7 +387,8 @@ func (r *ClickHouseReader) buildResourceSubQuery(tags []model.TagQueryParam, svc
 		&filterSet,
 		[]v3.AttributeKey{},
 		v3.AttributeKey{},
-		false)
+		false,
+		r.fl.BooleanOrEmpty(ctx, flagger.FeatureResolveSemconvFamilies, featuretypes.NewFlaggerEvaluationContext(orgID)))
 	if err != nil {
 		r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 		return "", err
@@ -395,7 +396,7 @@ func (r *ClickHouseReader) buildResourceSubQuery(tags []model.TagQueryParam, svc
 	return resourceSubQuery, nil
 }
 
-func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceItem, *model.ApiError) {
+func (r *ClickHouseReader) GetServices(ctx context.Context, orgID valuer.UUID, queryParams *model.GetServicesParams) (*[]model.ServiceItem, *model.ApiError) {
 
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
@@ -467,7 +468,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 				clickhouse.Named("names", ops),
 			)
 
-			resourceSubQuery, err := r.buildResourceSubQuery(queryParams.Tags, svc, *queryParams.Start, *queryParams.End)
+			resourceSubQuery, err := r.buildResourceSubQuery(ctx, orgID, queryParams.Tags, svc, *queryParams.Start, *queryParams.End)
 			if err != nil {
 				r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 				return
@@ -703,9 +704,9 @@ func addExistsOperator(item model.TagQuery, tagMapType string, not bool) (string
 	return fmt.Sprintf(" AND %s (%s)", notStr, strings.Join(tagOperatorPair, " OR ")), args
 }
 
-func (r *ClickHouseReader) GetEntryPointOperations(ctx context.Context, queryParams *model.GetTopOperationsParams) (*[]model.TopOperationsItem, error) {
+func (r *ClickHouseReader) GetEntryPointOperations(ctx context.Context, orgID valuer.UUID, queryParams *model.GetTopOperationsParams) (*[]model.TopOperationsItem, error) {
 	// Step 1: Get top operations for the given service
-	topOps, err := r.GetTopOperations(ctx, queryParams)
+	topOps, err := r.GetTopOperations(ctx, orgID, queryParams)
 	if err != nil {
 		return nil, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "Error in getting Top Operations")
 	}
@@ -757,7 +758,7 @@ func (r *ClickHouseReader) GetEntryPointOperations(ctx context.Context, queryPar
 	return &filtered, nil
 }
 
-func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *model.GetTopOperationsParams) (*[]model.TopOperationsItem, *model.ApiError) {
+func (r *ClickHouseReader) GetTopOperations(ctx context.Context, orgID valuer.UUID, queryParams *model.GetTopOperationsParams) (*[]model.TopOperationsItem, *model.ApiError) {
 
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
@@ -787,7 +788,7 @@ func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *mo
 		r.TraceDB, r.traceTableName,
 	)
 
-	resourceSubQuery, err := r.buildResourceSubQuery(queryParams.Tags, queryParams.ServiceName, *queryParams.Start, *queryParams.End)
+	resourceSubQuery, err := r.buildResourceSubQuery(ctx, orgID, queryParams.Tags, queryParams.ServiceName, *queryParams.Start, *queryParams.End)
 	if err != nil {
 		r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query")}
@@ -858,7 +859,7 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 	return &usageItems, nil
 }
 
-func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error) {
+func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, orgID valuer.UUID, queryParams *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error) {
 
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
@@ -895,7 +896,7 @@ func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, queryParams *
 	)
 
 	tags := createTagQueryFromTagQueryParams(queryParams.Tags)
-	filterQuery, filterArgs := services.BuildServiceMapQuery(tags)
+	filterQuery, filterArgs := services.BuildServiceMapQuery(tags, r.fl.BooleanOrEmpty(ctx, flagger.FeatureResolveSemconvFamilies, featuretypes.NewFlaggerEvaluationContext(orgID)))
 	query += filterQuery + " GROUP BY src, dest;"
 	args = append(args, filterArgs...)
 
@@ -3334,60 +3335,6 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, orgID valuer.U
 	}, nil
 }
 
-// GetCountOfThings returns the count of things in the query
-// This is a generic function that can be used to check if any data exists for a given query
-func (r *ClickHouseReader) GetCountOfThings(ctx context.Context, query string) (uint64, error) {
-	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
-		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
-		instrumentationtypes.CodeFunctionName: "GetCountOfThings",
-	})
-	var count uint64
-	err := r.db.QueryRow(ctx, query).Scan(&count)
-	if err != nil {
-		return 0, err
-	}
-	return count, nil
-}
-
-func (r *ClickHouseReader) GetActiveHostsFromMetricMetadata(ctx context.Context, metricNames []string, hostNameAttr string, sinceUnixMilli int64) (map[string]bool, error) {
-	activeHosts := map[string]bool{}
-
-	query := fmt.Sprintf(
-		`SELECT DISTINCT attr_string_value
-		FROM %s.%s
-		WHERE metric_name IN @metricNames
-		  AND attr_name = @attrName
-		  AND last_reported_unix_milli >= @sinceUnixMilli`,
-		signozMetricDBName,
-		constants.SIGNOZ_METADATA_TABLENAME,
-	)
-
-	rows, err := r.db.Query(ctx, query,
-		clickhouse.Named("metricNames", metricNames),
-		clickhouse.Named("attrName", hostNameAttr),
-		clickhouse.Named("sinceUnixMilli", sinceUnixMilli),
-	)
-	if err != nil {
-		return nil, errorsV2.WrapInternalf(err, errorsV2.CodeInternal, "error querying active hosts")
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var hostName string
-		if err := rows.Scan(&hostName); err != nil {
-			return nil, errorsV2.WrapInternalf(err, errorsV2.CodeInternal, "error scanning active host row")
-		}
-		if hostName != "" {
-			activeHosts[hostName] = true
-		}
-	}
-	if err := rows.Err(); err != nil {
-		return nil, errorsV2.WrapInternalf(err, errorsV2.CodeInternal, "error iterating active host rows")
-	}
-
-	return activeHosts, nil
-}
-
 func (r *ClickHouseReader) GetLatestReceivedMetric(
 	ctx context.Context, orgID valuer.UUID, metricNames []string, labelValues map[string]string,
 ) (*model.MetricStatus, *model.ApiError) {
@@ -4198,33 +4145,6 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 
 	return rowList, getPersonalisedError(rows.Err())
 
-}
-
-// GetHostMetricsExistenceAndEarliestTime returns (count, minFirstReportedUnixMilli, error) for the given host metric names
-// from distributed_metadata. When count is 0, minFirstReportedUnixMilli is 0.
-func (r *ClickHouseReader) GetMetricsExistenceAndEarliestTime(ctx context.Context, metricNames []string) (uint64, uint64, error) {
-	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
-		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
-		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
-		instrumentationtypes.CodeFunctionName: "GetMetricsExistenceAndEarliestTime",
-	})
-	if len(metricNames) == 0 {
-		return 0, 0, nil
-	}
-
-	query := fmt.Sprintf(
-		`SELECT count(*) AS cnt, min(first_reported_unix_milli) AS min_first_reported
-		FROM %s.%s
-		WHERE metric_name IN @metric_names`,
-		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_METADATA_TABLENAME)
-
-	var count, minFirstReported uint64
-	err := r.db.QueryRow(ctx, query, clickhouse.Named("metric_names", metricNames)).Scan(&count, &minFirstReported)
-	if err != nil {
-		r.logger.Error("error getting host metrics existence and earliest time", errorsV2.Attr(err))
-		return 0, 0, err
-	}
-	return count, minFirstReported, nil
 }
 
 func getPersonalisedError(err error) error {

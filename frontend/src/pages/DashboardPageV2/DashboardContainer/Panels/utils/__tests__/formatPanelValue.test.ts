@@ -30,4 +30,14 @@ describe('formatPanelValue', () => {
 	it('renders whole numbers without a trailing decimal', () => {
 		expect(formatPanelValue(5, undefined, 2)).toBe('5');
 	});
+
+	it('groups the integer part into thousands', () => {
+		expect(formatPanelValue(1234567, undefined, 2)).toBe('1,234,567');
+		expect(formatPanelValue(1234567, 'percent', 2)).toBe('1,234,567%');
+		expect(formatPanelValue(1234567.891, undefined, 2)).toBe('1,234,567.89');
+	});
+
+	it('leaves unit-scaled values ungrouped', () => {
+		expect(formatPanelValue(1234567, 'bytes', 2)).toBe('1.18 MiB');
+	});
 });

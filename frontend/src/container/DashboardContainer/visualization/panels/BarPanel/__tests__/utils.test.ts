@@ -35,20 +35,10 @@ jest.mock('lib/getLabelName', () => ({
 	),
 }));
 
-jest.mock(
-	'container/DashboardContainer/visualization/charts/utils/stackSeriesUtils',
-	() => ({
-		getInitialStackedBands: jest.fn().mockReturnValue([]),
-	}),
-);
-
 const getLegendMock = jest.requireMock('lib/dashboard/getQueryResults')
 	.getLegend as jest.Mock;
 const getLabelNameMock = jest.requireMock('lib/getLabelName')
 	.default as jest.Mock;
-const getInitialStackedBandsMock = jest.requireMock(
-	'container/DashboardContainer/visualization/charts/utils/stackSeriesUtils',
-).getInitialStackedBands as jest.Mock;
 
 const createApiResponse = (
 	result: MetricRangePayloadProps['data']['result'] = [],
@@ -246,37 +236,6 @@ describe('BarPanel utils', () => {
 				apiResponse,
 			}).getConfig();
 			expect(config.series?.[1]).toMatchObject({ stroke: '#ff0000' });
-		});
-
-		it('calls getInitialStackedBands when widget is stackedBarChart', () => {
-			const widget = createWidget({ stackedBarChart: true });
-			const apiResponse = createApiResponse([
-				{
-					metric: {},
-					queryName: 'Q1',
-					values: [[1000, '1']],
-				} as MetricRangePayloadProps['data']['result'][0],
-				{
-					metric: {},
-					queryName: 'Q2',
-					values: [[1000, '2']],
-				} as MetricRangePayloadProps['data']['result'][0],
-			]);
-			prepareBarPanelConfig({ ...baseParams, widget, apiResponse });
-			// seriesCount = result.length + 1 = 3
-			expect(getInitialStackedBandsMock).toHaveBeenCalledWith(3);
-		});
-
-		it('does not call getInitialStackedBands for non-stacked chart', () => {
-			const apiResponse = createApiResponse([
-				{
-					metric: {},
-					queryName: 'Q1',
-					values: [[1000, '1']],
-				} as MetricRangePayloadProps['data']['result'][0],
-			]);
-			prepareBarPanelConfig({ ...baseParams, apiResponse });
-			expect(getInitialStackedBandsMock).not.toHaveBeenCalled();
 		});
 	});
 });
