@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { handleQueryChange } from 'container/NewWidget/utils';
+import { handleQueryChange } from 'lib/query/panelQuery';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -14,7 +14,7 @@ import { usePanelTypeSwitch } from '../usePanelTypeSwitch';
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: jest.fn(),
 }));
-jest.mock('container/NewWidget/utils', () => ({
+jest.mock('lib/query/panelQuery', () => ({
 	handleQueryChange: jest.fn(),
 }));
 jest.mock('../../../Panels/capabilities', () => ({

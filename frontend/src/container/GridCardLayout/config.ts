@@ -3,13 +3,6 @@ import { MenuItemKeys } from 'container/GridCardLayout/WidgetHeader/contants';
 
 export const ViewMenuAction = [MenuItemKeys.View];
 
-export const EditMenuAction = [
-	MenuItemKeys.Clone,
-	MenuItemKeys.Delete,
-	MenuItemKeys.Edit,
-	MenuItemKeys.CreateAlerts,
-];
-
 export const headerMenuList = [...ViewMenuAction];
 
 export const EMPTY_WIDGET_LAYOUT = {

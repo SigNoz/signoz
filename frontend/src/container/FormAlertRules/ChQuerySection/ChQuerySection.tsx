@@ -1,10 +1,10 @@
 import { Callout } from '@signozhq/ui/callout';
-import ClickHouseQueryBuilder from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/ClickHouse/query';
+import ClickHouseQueryBuilder from 'container/QueryBuilder/rawQueryEditors/ClickHouse/query';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import DOCLINKS from 'utils/docLinks';
 
-import 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/ClickHouse/ClickHouse.styles.scss';
+import 'container/QueryBuilder/rawQueryEditors/ClickHouse/ClickHouse.styles.scss';
 
 const ALERT_TYPE_DOC_LINK: Partial<Record<AlertTypes, string>> = {
 	[AlertTypes.LOGS_BASED_ALERT]: DOCLINKS.QUERY_CLICKHOUSE_LOGS,

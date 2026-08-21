@@ -5,7 +5,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { Threshold } from 'container/CreateAlertV2/context/types';
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 import { buildBaseConfig } from 'container/DashboardContainer/visualization/panels/utils/baseConfigBuilder';
-import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
+import { ThresholdProps } from 'types/api/widgets/threshold';
 import {
 	BooleanFormats,
 	DataFormats,
@@ -13,7 +13,7 @@ import {
 	MiscellaneousFormats,
 	ThroughputFormats,
 	TimeFormats,
-} from 'container/NewWidget/RightContainer/types';
+} from 'constants/formats/types';
 import { TFunction } from 'i18next';
 import { getLegend } from 'lib/dashboard/getQueryResults';
 import getLabelName from 'lib/getLabelName';

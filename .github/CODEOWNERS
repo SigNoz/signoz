@@ -154,11 +154,6 @@ go.mod @therealpandey
 
 /frontend/src/api/types/dashboard/ @SigNoz/pulse-frontend
 
-# Dashboard Widget Page
-
-/frontend/src/pages/DashboardWidget/ @SigNoz/pulse-frontend
-/frontend/src/container/NewWidget/ @SigNoz/pulse-frontend
-
 ## Dashboard Page
 
 /frontend/src/container/DashboardContainer/ @SigNoz/pulse-frontend

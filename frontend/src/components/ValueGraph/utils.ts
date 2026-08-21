@@ -1,5 +1,5 @@
 import { evaluateThresholdWithConvertedValue } from 'container/GridTableComponent/utils';
-import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
+import { ThresholdProps } from 'types/api/widgets/threshold';
 
 function doesValueSatisfyThreshold(
 	rawValue: number,

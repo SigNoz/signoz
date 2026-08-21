@@ -145,13 +145,7 @@ const mockProps: WidgetGraphComponentProps = {
 	},
 	errorMessage: '',
 	version: 'v4',
-	headerMenuList: [
-		MenuItemKeys.View,
-		MenuItemKeys.Clone,
-		MenuItemKeys.Delete,
-		MenuItemKeys.Edit,
-		MenuItemKeys.CreateAlerts,
-	],
+	headerMenuList: [MenuItemKeys.View, MenuItemKeys.CreateAlerts],
 	isWarning: false,
 	isFetchingResponse: false,
 	setRequestData: jest.fn(),
@@ -216,9 +210,6 @@ describe('WidgetGraphComponent', () => {
 		// Check if all menu items are present
 		const expectedMenuItems = [
 			MENUITEM_KEYS_VS_LABELS[MenuItemKeys.View],
-			MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Clone],
-			MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Delete],
-			MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Edit],
 			MENUITEM_KEYS_VS_LABELS[MenuItemKeys.CreateAlerts],
 		];
 

@@ -4,14 +4,11 @@ import {
 	Bell,
 	CircleX,
 	CloudDownload,
-	Copy,
 	EllipsisVertical,
 	Fullscreen,
-	Pencil,
 	Search,
 	SolidInfoCircle,
 	SquareArrowOutUpRight,
-	Trash2,
 	X,
 } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
@@ -22,22 +19,16 @@ import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import ErrorPopover from 'components/ErrorPopover/ErrorPopover';
 import Spinner from 'components/Spinner';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
-import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import useGetResolvedText from 'hooks/dashboard/useGetResolvedText';
 import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
-import useComponentPermission from 'hooks/useComponentPermission';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import useUrlQuery from 'hooks/useUrlQuery';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { isEmpty } from 'lodash-es';
 import { unparse } from 'papaparse';
-import { useAppContext } from 'providers/App/App';
 import { SuccessResponse, Warning } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { buildAbsolutePath } from 'utils/app';
 
 import { errorTooltipPosition } from './config';
 import { MENUITEM_KEYS_VS_LABELS, MenuItemKeys } from './contants';
@@ -50,8 +41,6 @@ interface IWidgetHeaderProps {
 	title: ReactNode;
 	widget: Widgets;
 	onView: VoidFunction;
-	onDelete?: VoidFunction;
-	onClone?: VoidFunction;
 	queryResponse: UseQueryResult<
 		SuccessResponse<MetricRangePayloadProps, unknown> & {
 			warning?: Warning;
@@ -70,8 +59,6 @@ function WidgetHeader({
 	title,
 	widget,
 	onView,
-	onDelete,
-	onClone,
 	queryResponse,
 	threshold,
 	headerMenuList,
@@ -80,23 +67,6 @@ function WidgetHeader({
 	tableProcessedDataRef,
 	setSearchTerm,
 }: IWidgetHeaderProps): JSX.Element | null {
-	const urlQuery = useUrlQuery();
-	const { safeNavigate } = useSafeNavigate();
-	const onEditHandler = useCallback((): void => {
-		const widgetId = widget.id;
-		urlQuery.set(QueryParams.widgetId, widgetId);
-		urlQuery.set(QueryParams.graphType, widget.panelTypes);
-		urlQuery.set(
-			QueryParams.compositeQuery,
-			encodeURIComponent(JSON.stringify(widget.query)),
-		);
-		const generatedUrl = buildAbsolutePath({
-			relativePath: 'new',
-			urlQueryString: urlQuery.toString(),
-		});
-		safeNavigate(generatedUrl);
-	}, [safeNavigate, urlQuery, widget.id, widget.panelTypes, widget.query]);
-
 	const onCreateAlertsHandler = useCreateAlerts(widget, 'dashboardView');
 
 	const onDownloadHandler = useCallback((): void => {
@@ -113,20 +83,10 @@ function WidgetHeader({
 	const keyMethodMapping = useMemo(
 		() => ({
 			[MenuItemKeys.View]: onView,
-			[MenuItemKeys.Edit]: onEditHandler,
-			[MenuItemKeys.Delete]: onDelete,
-			[MenuItemKeys.Clone]: onClone,
 			[MenuItemKeys.CreateAlerts]: onCreateAlertsHandler,
 			[MenuItemKeys.Download]: onDownloadHandler,
 		}),
-		[
-			onView,
-			onEditHandler,
-			onDelete,
-			onClone,
-			onCreateAlertsHandler,
-			onDownloadHandler,
-		],
+		[onView, onCreateAlertsHandler, onDownloadHandler],
 	);
 
 	const onMenuItemSelectHandler = useCallback(
@@ -141,13 +101,6 @@ function WidgetHeader({
 		},
 		[keyMethodMapping],
 	);
-	const { user } = useAppContext();
-
-	const [deleteWidget, editWidget] = useComponentPermission(
-		['delete_widget', 'edit_widget'],
-		user.role,
-	);
-
 	const actions = useMemo(
 		(): MenuItem[] => [
 			{
@@ -158,33 +111,11 @@ function WidgetHeader({
 				disabled: queryResponse.isFetching,
 			},
 			{
-				key: MenuItemKeys.Edit,
-				icon: <Pencil size="md" />,
-				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Edit],
-				isVisible: headerMenuList?.includes(MenuItemKeys.Edit) || false,
-				disabled: !editWidget,
-			},
-			{
-				key: MenuItemKeys.Clone,
-				icon: <Copy size="md" />,
-				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Clone],
-				isVisible: headerMenuList?.includes(MenuItemKeys.Clone) || false,
-				disabled: !editWidget,
-			},
-			{
 				key: MenuItemKeys.Download,
 				icon: <CloudDownload size="md" />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Download],
 				isVisible: widget.panelTypes === PANEL_TYPES.TABLE,
 				disabled: false,
-			},
-			{
-				key: MenuItemKeys.Delete,
-				icon: <Trash2 size="md" />,
-				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Delete],
-				isVisible: headerMenuList?.includes(MenuItemKeys.Delete) || false,
-				disabled: !deleteWidget,
-				danger: true,
 			},
 			{
 				key: MenuItemKeys.CreateAlerts,
@@ -195,13 +126,7 @@ function WidgetHeader({
 				disabled: false,
 			},
 		],
-		[
-			headerMenuList,
-			queryResponse.isFetching,
-			editWidget,
-			deleteWidget,
-			widget.panelTypes,
-		],
+		[headerMenuList, queryResponse.isFetching, widget.panelTypes],
 	);
 
 	const updatedMenuList = useMemo(() => generateMenuList(actions), [actions]);
@@ -337,8 +262,6 @@ function WidgetHeader({
 }
 
 WidgetHeader.defaultProps = {
-	onDelete: undefined,
-	onClone: undefined,
 	threshold: undefined,
 	headerMenuList: [MenuItemKeys.View],
 };

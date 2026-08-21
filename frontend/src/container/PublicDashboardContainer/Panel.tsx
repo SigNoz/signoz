@@ -3,7 +3,7 @@ import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import EmptyWidget from 'container/GridCardLayout/EmptyWidget';
 import WidgetGraphComponent from 'container/GridCardLayout/GridCard/WidgetGraphComponent';
-import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
+import { populateMultipleResults } from 'lib/query/populateMultipleResults';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { isEqual } from 'lodash-es';
