@@ -1,0 +1,22 @@
+.container {
+	display: flex;
+	flex-direction: column;
+}
+
+.actionsContainer {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.controls {
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	gap: var(--spacing-4);
+}
+
+.table {
+	max-height: calc(100vh - 330px);
+	overflow-y: auto;
+}

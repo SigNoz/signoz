@@ -1,0 +1,21 @@
+.container {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 0.3rem;
+	margin: var(--spacing-4) 0;
+}
+
+.optionsTrigger {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	cursor: pointer;
+
+	// Resets button chrome: this was a bare div in the traces explorer.
+	border: none;
+	background: none;
+	padding: 0;
+	color: inherit;
+	font: inherit;
+}
