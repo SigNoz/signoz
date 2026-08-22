@@ -4165,6 +4165,8 @@ components:
           $ref: '#/components/schemas/GlobaltypesImpersonationConfig'
         tokenizer:
           $ref: '#/components/schemas/GlobaltypesTokenizerConfig'
+        trustedHeader:
+          $ref: '#/components/schemas/GlobaltypesTrustedHeaderConfig'
       type: object
     GlobaltypesImpersonationConfig:
       properties:
@@ -4175,6 +4177,13 @@ components:
       properties:
         enabled:
           type: boolean
+      type: object
+    GlobaltypesTrustedHeaderConfig:
+      properties:
+        enabled:
+          type: boolean
+        logoutRedirectUrl:
+          type: string
       type: object
     InframonitoringtypesAssociatedComponent:
       properties:
