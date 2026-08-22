@@ -282,6 +282,8 @@ func TestColumnExpressionForTemporalColumn(t *testing.T) {
 			expectedResult:   "multiIf(name <> '', accurateCastOrNull(name, 'Float64'), NULL)",
 		},
 		{
+			// absent from metadata, so both spellings a strict context can mean are
+			// tried, exactly as a filter on the same key does
 			name: "map-backed attribute keeps its exists guard",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:          "user.id",
@@ -289,7 +291,7 @@ func TestColumnExpressionForTemporalColumn(t *testing.T) {
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 			},
 			requiredDataType: telemetrytypes.FieldDataTypeString,
-			expectedResult:   "multiIf(mapContains(attributes_string, 'user.id'), attributes_string['user.id'], NULL)",
+			expectedResult:   "multiIf(mapContains(attributes_string, 'user.id'), attributes_string['user.id'], mapContains(attributes_string, 'attribute.user.id'), attributes_string['attribute.user.id'], NULL)",
 		},
 	}
 

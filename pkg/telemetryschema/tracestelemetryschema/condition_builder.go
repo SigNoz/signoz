@@ -199,6 +199,71 @@ func candidateLookupKeys(key *telemetrytypes.TelemetryFieldKey, fieldKeys map[st
 	return nil
 }
 
+// resolveLogicalFields resolves a referenced key to the logical field(s) it names. Metadata
+// decides first; a bare key that also names a real column gets the column prepended, keeping
+// only same-named metadata matches whose type the column allows; a key metadata does not know
+// falls through to CandidateKeys and is reported as synthesized.
+//
+// The select and the filter path both resolve through here, so a key names the same field
+// whether it is read or filtered on. Callers own the not-found error: no match returns nil
+// fields and no error.
+func resolveLogicalFields(
+	ctx context.Context,
+	orgID valuer.UUID,
+	fm qbtypes.FieldMapper,
+	fl flagger.Flagger,
+	startNs, endNs uint64,
+	key *telemetrytypes.TelemetryFieldKey,
+	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
+	value any,
+) (logicalFields []*telemetrytypes.LogicalField, synthesized bool, warnings []string) {
+
+	matches := querybuilder.MatchingLogicalFields(ctx, orgID, fl, key, fieldKeys)
+
+	logicalFields, warning := querybuilder.ResolveLogicalFields(key, matches)
+	if warning != "" {
+		warnings = append(warnings, warning)
+	}
+
+	if key.FieldContext == telemetrytypes.FieldContextUnspecified && len(logicalFields) > 0 {
+		hasColumn := false
+		for _, logical := range logicalFields {
+			if logical.FieldContext == telemetrytypes.FieldContextSpan {
+				hasColumn = true
+				break
+			}
+		}
+		probe := telemetrytypes.NewTelemetryFieldKey(key.Name, telemetrytypes.FieldContextSpan, key.FieldDataType)
+		if cols, colErr := fm.ColumnFor(ctx, orgID, startNs, endNs, probe); colErr == nil && len(cols) > 0 {
+			// The column is the field; a same-named metadata key only joins it where the
+			// column's type allows, so a corrupt entry can neither shadow nor degrade it.
+			// The column is prepended only when metadata did not already surface it.
+			combined := make([]*telemetrytypes.LogicalField, 0, len(logicalFields)+1)
+			if !hasColumn {
+				combined = append(combined, telemetrytypes.SingleLogicalField(key.Name, probe))
+			}
+			for _, logical := range logicalFields {
+				if logical.FieldContext == telemetrytypes.FieldContextSpan ||
+					columnMatchesDataType(cols[0], logical.FieldDataType) {
+					combined = append(combined, logical)
+				}
+			}
+			logicalFields = combined
+		}
+	}
+
+	if len(logicalFields) == 0 {
+		logicalFields = querybuilder.WrapAsLogicalFields(key.Name, fm.CandidateKeys(ctx, orgID, key, value, candidateLookupKeys(key, fieldKeys)))
+		if len(logicalFields) == 0 {
+			return nil, false, warnings
+		}
+		synthesized = true
+		warnings = append(warnings, querybuilder.NewKeyNotFoundWarning(key.Name))
+	}
+
+	return logicalFields, synthesized, warnings
+}
+
 // ConditionFor resolves the referenced key to the key(s) to filter on (ResolveKeys, else
 // synthesized keys with a warning) and builds one condition per resolved key. fieldKeys is
 // the full metadata map; the builder owns key resolution.
@@ -220,51 +285,11 @@ func (c *conditionBuilder) ConditionFor(
 		return nil, nil, err
 	}
 
-	matches := querybuilder.MatchingLogicalFields(ctx, orgID, c.fl, key, fieldKeys)
 	skipResourceFilter := options.SkipResourceFilter
 
-	logicalFields, warning := querybuilder.ResolveLogicalFields(key, matches)
-	var warnings []string
-	if warning != "" {
-		warnings = append(warnings, warning)
-	}
-	// A bare key that names a real column filters on the column too — first. When metadata
-	// only knows the name under other contexts, prepend the column and keep metadata matches
-	// only where their type is consistent with it (a corrupt entry can't degrade the column).
-	if key.FieldContext == telemetrytypes.FieldContextUnspecified && len(logicalFields) > 0 {
-		hasColumn := false
-		for _, logical := range logicalFields {
-			if logical.FieldContext == telemetrytypes.FieldContextSpan {
-				hasColumn = true
-				break
-			}
-		}
-		if !hasColumn {
-			probe := telemetrytypes.NewTelemetryFieldKey(key.Name, telemetrytypes.FieldContextSpan, key.FieldDataType)
-			if cols, colErr := c.fm.ColumnFor(ctx, orgID, startNs, endNs, probe); colErr == nil && len(cols) > 0 {
-				combined := make([]*telemetrytypes.LogicalField, 0, len(logicalFields)+1)
-				combined = append(combined, telemetrytypes.SingleLogicalField(key.Name, probe))
-				for _, logical := range logicalFields {
-					if columnMatchesDataType(cols[0], logical.FieldDataType) {
-						combined = append(combined, logical)
-					}
-				}
-				logicalFields = combined
-			}
-		}
-	}
-
-	synthesized := false
+	logicalFields, synthesized, warnings := resolveLogicalFields(ctx, orgID, c.fm, c.fl, startNs, endNs, key, fieldKeys, value)
 	if len(logicalFields) == 0 {
-		// Not in metadata. CandidateKeys resolves it: fold contexts (span/trace) get the
-		// metadata map so it can honor a real column, correct to a stripped-name metadata
-		// match, or synthesize; strict contexts pass nil and keep their synthesize path.
-		logicalFields = querybuilder.WrapAsLogicalFields(key.Name, c.fm.CandidateKeys(ctx, orgID, key, value, candidateLookupKeys(key, fieldKeys)))
-		if len(logicalFields) == 0 {
-			return nil, warnings, querybuilder.NewKeyNotFoundError(key.Name)
-		}
-		synthesized = true
-		warnings = append(warnings, querybuilder.NewKeyNotFoundWarning(key.Name))
+		return nil, warnings, querybuilder.NewKeyNotFoundError(key.Name)
 	}
 
 	// When a resource sub-query already covers the term, drop resource fields from the main
