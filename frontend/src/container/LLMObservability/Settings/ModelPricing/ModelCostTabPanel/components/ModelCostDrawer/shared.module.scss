@@ -22,17 +22,26 @@
 	font-size: 10px;
 }
 
-.drawerSurface {
-	padding: var(--spacing-7);
-	border-radius: 6px;
-	border: 1px solid var(--l2-border);
+.drawerLabel {
+	font-size: var(--font-size-sm);
+	font-weight: var(--font-weight-medium);
+	color: var(--l1-foreground);
 }
 
-.drawerSurfaceHead {
+.drawerSubLabel {
+	font-size: var(--font-size-xs);
+	font-weight: var(--font-weight-medium);
+	color: var(--l1-foreground);
+}
+
+.drawerFieldset {
+	gap: var(--spacing-5);
+}
+
+.drawerFieldsetHead {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	margin-bottom: var(--spacing-5);
 }
 
 .managedLabel {
@@ -40,7 +49,7 @@
 	align-items: center;
 	gap: var(--spacing-2);
 	font-size: var(--periscope-font-size-small);
-	color: var(--l3-foreground);
+	color: var(--l2-foreground);
 }
 
 .required {
