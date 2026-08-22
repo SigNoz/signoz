@@ -20,13 +20,18 @@ describe('valueUtils', () => {
 			expect(defaultTo(null, 'fallback')).toBe('fallback');
 			expect(defaultTo(undefined, 'fallback')).toBe('fallback');
 			expect(defaultTo(Number.NaN, 'fallback')).toBe('fallback');
-			expect(defaultTo(new Number(Number.NaN), 'fallback')).toBe('fallback');
 		});
 
 		it('keeps falsey values that are valid values', () => {
 			expect(defaultTo('', 'fallback')).toBe('');
 			expect(defaultTo(false, true)).toBe(false);
 			expect(defaultTo(0, 1)).toBe(0);
+		});
+
+		it('preserves boxed NaN values like lodash-es', () => {
+			const boxedNaN = new Number(Number.NaN);
+
+			expect(defaultTo(boxedNaN, 'fallback')).toBe(boxedNaN);
 		});
 	});
 
@@ -80,6 +85,12 @@ describe('valueUtils', () => {
 		expect(isString('value')).toBe(true);
 		expect(isString(new String('value'))).toBe(true);
 		expect(isString(1)).toBe(false);
+	});
+
+	it('does not match objects that spoof native tags', () => {
+		expect(isBoolean({ [Symbol.toStringTag]: 'Boolean' })).toBe(false);
+		expect(isNumber({ [Symbol.toStringTag]: 'Number' })).toBe(false);
+		expect(isString({ [Symbol.toStringTag]: 'String' })).toBe(false);
 	});
 
 	it('returns own enumerable keys and safely handles nullish values', () => {

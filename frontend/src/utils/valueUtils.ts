@@ -1,10 +1,54 @@
-const objectToString = Object.prototype.toString;
+const symbolToStringTag =
+	typeof Symbol !== 'undefined' ? Symbol.toStringTag : undefined;
+
+function hasOwn(value: object, key: PropertyKey): boolean {
+	return Object.prototype.hasOwnProperty.call(value, key);
+}
+
+function nativeObjectToString(value: unknown): string {
+	return Object.prototype.toString.call(value);
+}
+
+function objectToString(value: unknown): string {
+	if (symbolToStringTag === undefined || isNil(value)) {
+		return nativeObjectToString(value);
+	}
+
+	const objectValue = Object(value) as Record<PropertyKey, unknown>;
+
+	if (!(symbolToStringTag in objectValue)) {
+		return nativeObjectToString(value);
+	}
+
+	const isOwn = hasOwn(objectValue, symbolToStringTag);
+	const tag = objectValue[symbolToStringTag];
+	let unmasked = false;
+
+	try {
+		objectValue[symbolToStringTag] = undefined;
+		unmasked = true;
+	} catch {
+		// Ignore read-only Symbol.toStringTag values.
+	}
+
+	const result = nativeObjectToString(value);
+
+	if (unmasked) {
+		if (isOwn) {
+			objectValue[symbolToStringTag] = tag;
+		} else {
+			delete objectValue[symbolToStringTag];
+		}
+	}
+
+	return result;
+}
 
 export function defaultTo<T, D>(
 	value: T | null | undefined,
 	defaultValue: D,
 ): Exclude<T, null | undefined> | D {
-	return (isNil(value) || isNaN(value) ? defaultValue : value) as
+	return (isNil(value) || value !== value ? defaultValue : value) as
 		| Exclude<T, null | undefined>
 		| D;
 }
@@ -17,7 +61,7 @@ export function isBoolean(value: unknown): value is boolean {
 	return (
 		value === true ||
 		value === false ||
-		objectToString.call(value) === '[object Boolean]'
+		objectToString(value) === '[object Boolean]'
 	);
 }
 
@@ -45,13 +89,13 @@ export function isNull(value: unknown): value is null {
 
 export function isNumber(value: unknown): value is number {
 	return (
-		typeof value === 'number' || objectToString.call(value) === '[object Number]'
+		typeof value === 'number' || objectToString(value) === '[object Number]'
 	);
 }
 
 export function isString(value: unknown): value is string {
 	return (
-		typeof value === 'string' || objectToString.call(value) === '[object String]'
+		typeof value === 'string' || objectToString(value) === '[object String]'
 	);
 }
 
