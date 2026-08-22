@@ -250,6 +250,9 @@ function ListView({
 						value={orderBy}
 						onChange={handleOrderChange}
 						dataSource={DataSource.TRACES}
+						// POC: AI order-by — type=builder_ai_query&fieldContext=trace
+						fieldContext="trace"
+						queryType="builder_ai_query"
 					/>
 				</div>
 

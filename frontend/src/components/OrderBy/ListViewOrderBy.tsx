@@ -11,6 +11,16 @@ interface ListViewOrderByProps {
 	value: string;
 	onChange: (value: string) => void;
 	dataSource: DataSource;
+	/**
+	 * POC / AI Trace View: scopes keys to trace aggregates
+	 * (`fieldContext=trace` on /fields/keys).
+	 */
+	fieldContext?: 'resource' | 'scope' | 'attribute' | 'span' | 'trace';
+	/**
+	 * POC / AI O11y: forwarded as `type` on /fields/keys
+	 * (e.g. 'builder_ai_query').
+	 */
+	queryType?: string;
 }
 
 // Loader component for the dropdown when loading or no results
@@ -26,6 +36,8 @@ function ListViewOrderBy({
 	value,
 	onChange,
 	dataSource,
+	fieldContext,
+	queryType,
 }: ListViewOrderByProps): JSX.Element {
 	const [searchInput, setSearchInput] = useState('');
 	const [debouncedInput, setDebouncedInput] = useState('');
@@ -36,11 +48,19 @@ function ListViewOrderBy({
 
 	// Fetch key suggestions based on debounced input
 	const { data, isLoading } = useQuery({
-		queryKey: ['orderByKeySuggestions', dataSource, debouncedInput],
+		queryKey: [
+			'orderByKeySuggestions',
+			dataSource,
+			debouncedInput,
+			fieldContext,
+			queryType,
+		],
 		queryFn: async () => {
 			const response = await getKeySuggestions({
 				signal: dataSource,
 				searchText: debouncedInput,
+				fieldContext,
+				type: queryType,
 			});
 			return response.data;
 		},

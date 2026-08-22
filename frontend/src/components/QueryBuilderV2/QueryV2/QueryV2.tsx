@@ -43,6 +43,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 		signalSourceChangeEnabled = false,
 		queriesCount = 1,
 		savePreviousQuery = false,
+		queryType,
 	}: QueryProps & {
 		onSignalSourceChange: (value: string) => void;
 		signalSourceChangeEnabled: boolean;
@@ -182,6 +183,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 											queryData={query}
 											dataSource={dataSource}
 											signalSource={signalSource}
+											queryType={queryType}
 										/>
 									</div>
 
@@ -252,6 +254,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 											queryData={query}
 											dataSource={dataSource}
 											signalSource={signalSource}
+											queryType={queryType}
 										/>
 									</div>
 
