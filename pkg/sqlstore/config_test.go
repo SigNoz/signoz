@@ -56,3 +56,145 @@ func TestNewWithEnvProvider(t *testing.T) {
 	assert.Equal(t, expected, actual)
 	assert.NoError(t, actual.Validate())
 }
+
+func validSQLiteConfig() Config {
+	return Config{
+		Provider: ProviderSQLite,
+		Connection: ConnectionConfig{
+			MaxOpenConns:    100,
+			MaxConnLifetime: 0,
+		},
+		Sqlite: SqliteConfig{
+			Path:            "/var/lib/signoz/signoz.db",
+			Mode:            SQLiteModeWAL,
+			BusyTimeout:     10 * time.Second,
+			TransactionMode: SQLiteTransactionModeImmediate,
+		},
+	}
+}
+
+func validPostgresConfig() Config {
+	return Config{
+		Provider: ProviderPostgres,
+		Connection: ConnectionConfig{
+			MaxOpenConns:    100,
+			MaxConnLifetime: 0,
+		},
+		Postgres: PostgresConfig{
+			DSN: "postgres://user:pass@localhost:5432/signoz?sslmode=disable",
+		},
+	}
+}
+
+func TestValidate(t *testing.T) {
+	testCases := []struct {
+		name    string
+		mutate  func(*Config)
+		wantErr string
+	}{
+		{
+			name: "ValidSQLiteDefaults",
+		},
+		{
+			name: "ValidPostgres",
+			mutate: func(c *Config) {
+				*c = validPostgresConfig()
+			},
+		},
+		{
+			name: "EmptyProvider",
+			mutate: func(c *Config) {
+				c.Provider = ""
+			},
+			wantErr: `sqlstore::provider must be one of [sqlite, postgres], got ""`,
+		},
+		{
+			name: "UnknownProvider",
+			mutate: func(c *Config) {
+				c.Provider = "mysql"
+			},
+			wantErr: `sqlstore::provider must be one of [sqlite, postgres], got "mysql"`,
+		},
+		{
+			name: "EmptySQLitePath",
+			mutate: func(c *Config) {
+				c.Sqlite.Path = ""
+			},
+			wantErr: "sqlstore::sqlite::path cannot be empty",
+		},
+		{
+			name: "InvalidSQLiteMode",
+			mutate: func(c *Config) {
+				c.Sqlite.Mode = "memory"
+			},
+			wantErr: `sqlstore::sqlite::mode must be one of [delete, wal], got "memory"`,
+		},
+		{
+			name: "NegativeSQLiteBusyTimeout",
+			mutate: func(c *Config) {
+				c.Sqlite.BusyTimeout = -time.Second
+			},
+			wantErr: "sqlstore::sqlite::busy_timeout cannot be negative, got -1s",
+		},
+		{
+			name: "InvalidSQLiteTransactionMode",
+			mutate: func(c *Config) {
+				c.Sqlite.TransactionMode = "read_only"
+			},
+			wantErr: `sqlstore::sqlite::transaction_mode must be one of [deferred, immediate, exclusive], got "read_only"`,
+		},
+		{
+			name: "EmptyPostgresDSN",
+			mutate: func(c *Config) {
+				*c = validPostgresConfig()
+				c.Postgres.DSN = ""
+			},
+			wantErr: "sqlstore::postgres::dsn cannot be empty",
+		},
+		{
+			name: "NonPositiveMaxOpenConns",
+			mutate: func(c *Config) {
+				c.Connection.MaxOpenConns = 0
+			},
+			wantErr: "sqlstore::max_open_conns must be positive, got 0",
+		},
+		{
+			name: "NegativeMaxConnLifetime",
+			mutate: func(c *Config) {
+				c.Connection.MaxConnLifetime = -time.Minute
+			},
+			wantErr: "sqlstore::max_conn_lifetime cannot be negative, got -1m0s",
+		},
+		{
+			name: "SQLiteModeDeleteAndDeferredAreValid",
+			mutate: func(c *Config) {
+				c.Sqlite.Mode = SQLiteModeDelete
+				c.Sqlite.TransactionMode = SQLiteTransactionModeDeferred
+			},
+		},
+		{
+			name: "SQLiteTransactionModeExclusiveIsValid",
+			mutate: func(c *Config) {
+				c.Sqlite.TransactionMode = SQLiteTransactionModeExclusive
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := validSQLiteConfig()
+			if tc.mutate != nil {
+				tc.mutate(&cfg)
+			}
+
+			err := cfg.Validate()
+			if tc.wantErr == "" {
+				assert.NoError(t, err)
+				return
+			}
+
+			require.Error(t, err)
+			assert.EqualError(t, err, tc.wantErr)
+		})
+	}
+}
