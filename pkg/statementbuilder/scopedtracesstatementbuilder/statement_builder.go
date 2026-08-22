@@ -31,14 +31,23 @@ var (
 // (e.g. gen_ai spans); the TraceScope decides which spans are in scope and which
 // per-trace columns to compute.
 type scopedTraceStatementBuilder struct {
-	logger                    *slog.Logger
-	metadataStore             telemetrytypes.MetadataStore
-	fm                        qbtypes.FieldMapper
-	cb                        qbtypes.ConditionBuilder
-	scope                     TraceScope
-	traceStmtBuilder          qbtypes.StatementBuilder[qbtypes.TraceAggregation]
+	logger           *slog.Logger
+	metadataStore    telemetrytypes.MetadataStore
+	fm               qbtypes.FieldMapper
+	cb               qbtypes.ConditionBuilder
+	scope            TraceScope
+	traceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation]
+	// scopedDelegate is traceStmtBuilder's trace-scoping capability, resolved once at
+	// construction; nil when the delegate cannot constrain a query by trace ids.
+	scopedDelegate            traceScopedStatementBuilder
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation]
 	fl                        flagger.Flagger
+}
+
+// traceScopedStatementBuilder is the delegate's optional capability of constraining a
+// query to a set of trace ids (implemented by the traces statement builder).
+type traceScopedStatementBuilder interface {
+	BuildTraceScoped(ctx context.Context, orgID valuer.UUID, start, end uint64, requestType qbtypes.RequestType, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], variables map[string]qbtypes.VariableItem, traceScope *qbtypes.Statement) (*qbtypes.Statement, error)
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.TraceAggregation] = (*scopedTraceStatementBuilder)(nil)
@@ -91,6 +100,7 @@ func NewScopedTraceStatementBuilder(
 		fl,
 	)
 
+	scopedDelegate, _ := traceStmtBuilder.(traceScopedStatementBuilder)
 	return &scopedTraceStatementBuilder{
 		logger:                    scopedSettings.Logger(),
 		metadataStore:             metadataStore,
@@ -98,6 +108,7 @@ func NewScopedTraceStatementBuilder(
 		cb:                        conditionBuilder,
 		scope:                     scope,
 		traceStmtBuilder:          traceStmtBuilder,
+		scopedDelegate:            scopedDelegate,
 		resourceFilterStmtBuilder: resourceFilterStmtBuilder,
 		fl:                        fl,
 	}
@@ -116,14 +127,18 @@ func (b *scopedTraceStatementBuilder) Build(
 	case qbtypes.RequestTypeTrace:
 		return b.buildTraceListQuery(ctx, orgID, querybuilder.ToNanoSecs(start), querybuilder.ToNanoSecs(end), query, variables)
 	case qbtypes.RequestTypeRaw:
+		if err := b.validateRawOrderKeys(query); err != nil {
+			return nil, err
+		}
 		return b.buildDelegated(ctx, orgID, start, end, requestType, query, variables)
 	default:
 		return nil, ErrUnsupportedRequestType
 	}
 }
 
-// buildDelegated ANDs the base gate into the user filter and delegates to the
-// standard trace builder (the span-list / raw path).
+// buildDelegated serves the span-list / raw path: the gate is ANDed into the filter's
+// span-level part and the query delegates to the standard trace builder; a trace-level
+// part becomes a qualification the delegate constrains trace_id by.
 func (b *scopedTraceStatementBuilder) buildDelegated(
 	ctx context.Context,
 	orgID valuer.UUID,
@@ -132,17 +147,127 @@ func (b *scopedTraceStatementBuilder) buildDelegated(
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
+	var spanExpr, traceExpr string
+	if query.Filter != nil && strings.TrimSpace(query.Filter.Expression) != "" {
+		var err error
+		spanExpr, traceExpr, err = querybuilder.SplitFilterForAggregates(query.Filter.Expression, b.aggregateAliasSet())
+		if err != nil {
+			return nil, err
+		}
+	}
+	traceExpr, err := substituteTraceLevelVariables(traceExpr, variables)
+	if err != nil {
+		return nil, err
+	}
+
 	gate := b.scope.FilterExpression
 	expr := gate
-	if query.Filter != nil && strings.TrimSpace(query.Filter.Expression) != "" {
-		expr = fmt.Sprintf("(%s) AND (%s)", gate, query.Filter.Expression)
+	if strings.TrimSpace(spanExpr) != "" {
+		expr = fmt.Sprintf("(%s) AND (%s)", gate, spanExpr)
 	}
 
 	// shallow copy; only Filter is replaced, caller's query untouched
 	gated := query
 	gated.Filter = &qbtypes.Filter{Expression: expr}
 
-	return b.traceStmtBuilder.Build(ctx, orgID, start, end, requestType, gated, variables)
+	if strings.TrimSpace(traceExpr) == "" {
+		return b.traceStmtBuilder.Build(ctx, orgID, start, end, requestType, gated, variables)
+	}
+
+	if b.scopedDelegate == nil {
+		return nil, errors.NewInternalf(errors.CodeInternal, "trace statement builder does not support trace-scoped queries")
+	}
+	scope, err := b.buildTraceScopeStatement(ctx, orgID, querybuilder.ToNanoSecs(start), querybuilder.ToNanoSecs(end), traceExpr)
+	if err != nil {
+		return nil, err
+	}
+	return b.scopedDelegate.BuildTraceScoped(ctx, orgID, start, end, requestType, gated, variables, scope)
+}
+
+// validateRawOrderKeys rejects ordering the span list by an explicitly trace-level
+// aggregate (trace. prefix or trace field context) — the per-trace value does not
+// exist on span rows. Bare names pass through: they may legitimately be span columns
+// (duration_nano, timestamp).
+func (b *scopedTraceStatementBuilder) validateRawOrderKeys(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) error {
+	aliases := b.aggregateAliasSet()
+	for _, o := range query.Order {
+		key := telemetrytypes.GetFieldKeyFromKeyText(o.Key.Name)
+		if _, ok := aliases[key.Name]; !ok {
+			continue
+		}
+		if key.FieldContext == telemetrytypes.FieldContextTrace || o.Key.FieldContext == telemetrytypes.FieldContextTrace {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput,
+				"ordering the span list by trace-level aggregate %q is not supported; order by span columns instead (e.g. timestamp, duration_nano)", o.Key.Name)
+		}
+	}
+	return nil
+}
+
+// substituteTraceLevelVariables resolves query variables in a trace-level expression.
+// The span-level parts bind variables via PrepareWhereClause; trace-level parts are
+// text rewrites, so variables become literals (a dynamic __all__ drops its condition).
+func substituteTraceLevelVariables(expr string, variables map[string]qbtypes.VariableItem) (string, error) {
+	if strings.TrimSpace(expr) == "" || len(variables) == 0 {
+		return expr, nil
+	}
+	return qbvariables.ReplaceVariablesInExpression(expr, variables)
+}
+
+// buildTraceScopeStatement builds the __trace_scope statement: trace ids whose
+// window-clipped per-trace aggregates satisfy traceExpr. The same scan as the matched
+// CTE, minus its span-filter widening, resource prune, ordering and pagination.
+// start/end are ns.
+func (b *scopedTraceStatementBuilder) buildTraceScopeStatement(ctx context.Context, orgID valuer.UUID, start, end uint64, traceExpr string) (*qbtypes.Statement, error) {
+	keys, err := b.fetchKeys(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+	sb := sqlbuilder.NewSelectBuilder()
+	maskExpr, resolved, err := b.resolveFor(ctx, orgID, start, end, keys, sb)
+	if err != nil {
+		return nil, err
+	}
+	orderableSet := orderableAliasSet(resolved)
+	if err := validateAggregateFilter(traceExpr, orderableSet); err != nil {
+		return nil, err
+	}
+
+	needed := neededMatchedAliases(nil, traceExpr, orderableSet)
+	selects := []string{"trace_id"}
+	for _, rc := range resolved {
+		if _, ok := needed[rc.alias]; !ok {
+			continue
+		}
+		selects = append(selects, rc.expr+" AS "+quoteAlias(rc.alias))
+	}
+	sb.Select(selects...)
+	sb.From(fmt.Sprintf("%s.%s", tracestelemetryschema.DBName, tracestelemetryschema.SpanIndexV3TableName))
+	sb.Where(
+		sb.GE("timestamp", fmt.Sprintf("%d", start)),
+		sb.L("timestamp", fmt.Sprintf("%d", end)),
+		sb.GE("ts_bucket_start", start/querybuilder.NsToSeconds-querybuilder.BucketAdjustment),
+		sb.LE("ts_bucket_start", end/querybuilder.NsToSeconds),
+		"("+maskExpr+")",
+	)
+	sb.GroupBy("trace_id")
+
+	// the rewriter matches raw key text, so map the trace. form alongside the bare name
+	columnMap := make(map[string]string, len(orderableSet)*2)
+	for a := range orderableSet {
+		columnMap[a] = quoteAlias(a)
+		columnMap[telemetrytypes.FieldContextTrace.StringValue()+"."+a] = quoteAlias(a)
+	}
+	hv, err := querybuilder.NewHavingExpressionRewriter().Rewrite(traceExpr, columnMap)
+	if err != nil {
+		return nil, err
+	}
+	if hv != "" {
+		// escape user text so a literal $ isn't read as an arg marker
+		sb.Having(sqlbuilder.Escape(hv))
+	}
+
+	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	return &qbtypes.Statement{Query: sql, Args: args}, nil
 }
 
 // buildTraceListQuery wires the CTE pipeline (start/end are nanoseconds):
