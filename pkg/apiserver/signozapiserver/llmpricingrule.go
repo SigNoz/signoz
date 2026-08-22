@@ -55,7 +55,7 @@ func (provider *provider) addLLMPricingRuleRoutes(router *mux.Router) error {
 			ID:                  "ListUnmappedLLMModels",
 			Tags:                []string{"llmpricingrules"},
 			Summary:             "List unmapped models",
-			Description:         "Returns models seen in the last hour of trace data (gen_ai.request.model) that no pricing rule pattern matches, so the user can add them to an existing rule or create a new one.",
+			Description:         "Returns models seen in the last hour of trace data (gen_ai.request.model) that no enabled pricing rule pattern matches, so the user can add them to an existing rule or create a new one.",
 			Request:             nil,
 			RequestContentType:  "",
 			Response:            new(llmpricingruletypes.GettableUnmappedModels),
