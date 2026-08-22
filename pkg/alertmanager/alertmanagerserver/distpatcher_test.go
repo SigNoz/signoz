@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"reflect"
 	"sort"
 	"sync"
 	"testing"
@@ -28,6 +27,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/common/promslog"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -110,40 +110,42 @@ func TestAggrGroup(t *testing.T) {
 		}
 	)
 
-	var (
-		last       = time.Now()
-		current    = time.Now()
-		lastCurMtx = &sync.Mutex{}
-		alertsCh   = make(chan alertmanagertypes.AlertSlice)
-	)
+	type notification struct {
+		alerts     alertmanagertypes.AlertSlice
+		notifiedAt time.Time
+	}
+	alertsCh := make(chan notification)
 
 	ntfy := func(ctx context.Context, alerts ...*alertmanagertypes.Alert) bool {
 		// Validate that the context is properly populated.
-		if _, ok := notify.Now(ctx); !ok {
-			t.Errorf("now missing")
+		notifiedAt, ok := notify.Now(ctx)
+		assert.True(t, ok, "now missing")
+		_, ok = notify.GroupKey(ctx)
+		assert.True(t, ok, "group key missing")
+		lbls, ok := notify.GroupLabels(ctx)
+		if assert.True(t, ok, "group labels missing") {
+			assert.Equal(t, lset, lbls, "wrong group labels")
 		}
-		if _, ok := notify.GroupKey(ctx); !ok {
-			t.Errorf("group key missing")
+		rcv, ok := notify.ReceiverName(ctx)
+		if assert.True(t, ok, "receiver missing") {
+			assert.Equal(t, opts.Receiver, rcv, "wrong receiver")
 		}
-		if lbls, ok := notify.GroupLabels(ctx); !ok || !reflect.DeepEqual(lbls, lset) {
-			t.Errorf("wrong group labels: %q", lbls)
-		}
-		if rcv, ok := notify.ReceiverName(ctx); !ok || rcv != opts.Receiver {
-			t.Errorf("wrong receiver: %q", rcv)
-		}
-		if ri, ok := notify.RepeatInterval(ctx); !ok || ri != notificationConfig.Renotify.RenotifyInterval {
-			t.Errorf("wrong repeat interval: %q", ri)
+		ri, ok := notify.RepeatInterval(ctx)
+		if assert.True(t, ok, "repeat interval missing") {
+			assert.Equal(t, notificationConfig.Renotify.RenotifyInterval, ri, "wrong repeat interval")
 		}
 
-		lastCurMtx.Lock()
-		last = current
-		// Subtract a millisecond to allow for races.
-		current = time.Now().Add(-time.Millisecond)
-		lastCurMtx.Unlock()
-
-		alertsCh <- alertmanagertypes.AlertSlice(alerts)
+		alertsCh <- notification{
+			alerts:     alertmanagertypes.AlertSlice(alerts),
+			notifiedAt: notifiedAt,
+		}
 
 		return true
+	}
+
+	assertNotifiedAfter := func(previous, current time.Time, interval time.Duration) {
+		t.Helper()
+		require.GreaterOrEqual(t, current.Sub(previous), interval, "received batch too early")
 	}
 
 	removeEndsAt := func(as alertmanagertypes.AlertSlice) alertmanagertypes.AlertSlice {
@@ -156,29 +158,26 @@ func TestAggrGroup(t *testing.T) {
 	}
 
 	// Test regular situation where we wait for group_wait to send out alerts.
+	groupStartedAt := time.Now()
 	ag := newAggrGroup(context.Background(), lset, route, nil, promslog.NewNopLogger(), notificationConfig.Renotify.RenotifyInterval)
 
 	go ag.run(ntfy)
 
 	ag.insert(a1)
+	var lastNotificationAt time.Time
 
 	select {
 	case <-time.After(2 * opts.GroupWait):
-		t.Fatalf("expected initial batch after group_wait")
+		require.FailNow(t, "expected initial batch after group_wait")
 
-	case batch := <-alertsCh:
-		lastCurMtx.Lock()
-		s := time.Since(last)
-		lastCurMtx.Unlock()
-		if s < opts.GroupWait {
-			t.Fatalf("received batch too early after %v", s)
-		}
+	case notification := <-alertsCh:
+		assertNotifiedAfter(groupStartedAt, notification.notifiedAt, opts.GroupWait)
+		lastNotificationAt = notification.notifiedAt
+		batch := notification.alerts
 		exp := removeEndsAt(alertmanagertypes.AlertSlice{a1})
 		sort.Sort(batch)
 
-		if !reflect.DeepEqual(batch, exp) {
-			t.Fatalf("expected alerts %v but got %v", exp, batch)
-		}
+		require.Equal(t, exp, batch)
 	}
 
 	for i := 0; i < 3; i++ {
@@ -187,21 +186,16 @@ func TestAggrGroup(t *testing.T) {
 
 		select {
 		case <-time.After(2 * opts.GroupInterval):
-			t.Fatalf("expected new batch after group interval but received none")
+			require.FailNow(t, "expected new batch after group interval but received none")
 
-		case batch := <-alertsCh:
-			lastCurMtx.Lock()
-			s := time.Since(last)
-			lastCurMtx.Unlock()
-			if s < opts.GroupInterval {
-				t.Fatalf("received batch too early after %v", s)
-			}
+		case notification := <-alertsCh:
+			assertNotifiedAfter(lastNotificationAt, notification.notifiedAt, opts.GroupInterval)
+			lastNotificationAt = notification.notifiedAt
+			batch := notification.alerts
 			exp := removeEndsAt(alertmanagertypes.AlertSlice{a1, a3})
 			sort.Sort(batch)
 
-			if !reflect.DeepEqual(batch, exp) {
-				t.Fatalf("expected alerts %v but got %v", exp, batch)
-			}
+			require.Equal(t, exp, batch)
 		}
 	}
 
@@ -220,15 +214,15 @@ func TestAggrGroup(t *testing.T) {
 	// a2 lies way in the past so the initial group_wait should be skipped.
 	select {
 	case <-time.After(opts.GroupWait / 2):
-		t.Fatalf("expected immediate alert but received none")
+		require.FailNow(t, "expected immediate alert but received none")
 
-	case batch := <-alertsCh:
+	case notification := <-alertsCh:
+		lastNotificationAt = notification.notifiedAt
+		batch := notification.alerts
 		exp := removeEndsAt(alertmanagertypes.AlertSlice{a1, a2})
 		sort.Sort(batch)
 
-		if !reflect.DeepEqual(batch, exp) {
-			t.Fatalf("expected alerts %v but got %v", exp, batch)
-		}
+		require.Equal(t, exp, batch)
 	}
 
 	for i := 0; i < 3; i++ {
@@ -237,21 +231,16 @@ func TestAggrGroup(t *testing.T) {
 
 		select {
 		case <-time.After(2 * opts.GroupInterval):
-			t.Fatalf("expected new batch after group interval but received none")
+			require.FailNow(t, "expected new batch after group interval but received none")
 
-		case batch := <-alertsCh:
-			lastCurMtx.Lock()
-			s := time.Since(last)
-			lastCurMtx.Unlock()
-			if s < opts.GroupInterval {
-				t.Fatalf("received batch too early after %v", s)
-			}
+		case notification := <-alertsCh:
+			assertNotifiedAfter(lastNotificationAt, notification.notifiedAt, opts.GroupInterval)
+			lastNotificationAt = notification.notifiedAt
+			batch := notification.alerts
 			exp := removeEndsAt(alertmanagertypes.AlertSlice{a1, a2, a3})
 			sort.Sort(batch)
 
-			if !reflect.DeepEqual(batch, exp) {
-				t.Fatalf("expected alerts %v but got %v", exp, batch)
-			}
+			require.Equal(t, exp, batch)
 		}
 	}
 
@@ -263,19 +252,14 @@ func TestAggrGroup(t *testing.T) {
 
 	select {
 	case <-time.After(2 * opts.GroupInterval):
-		t.Fatalf("expected new batch after group interval but received none")
-	case batch := <-alertsCh:
-		lastCurMtx.Lock()
-		s := time.Since(last)
-		lastCurMtx.Unlock()
-		if s < opts.GroupInterval {
-			t.Fatalf("received batch too early after %v", s)
-		}
+		require.FailNow(t, "expected new batch after group interval but received none")
+	case notification := <-alertsCh:
+		assertNotifiedAfter(lastNotificationAt, notification.notifiedAt, opts.GroupInterval)
+		lastNotificationAt = notification.notifiedAt
+		batch := notification.alerts
 		sort.Sort(batch)
 
-		if !reflect.DeepEqual(batch, exp) {
-			t.Fatalf("expected alerts %v but got %v", exp, batch)
-		}
+		require.Equal(t, exp, batch)
 	}
 
 	// Resolve all remaining alerts, they should be removed after the next batch was sent.
@@ -289,24 +273,16 @@ func TestAggrGroup(t *testing.T) {
 
 	select {
 	case <-time.After(2 * opts.GroupInterval):
-		t.Fatalf("expected new batch after group interval but received none")
+		require.FailNow(t, "expected new batch after group interval but received none")
 
-	case batch := <-alertsCh:
-		lastCurMtx.Lock()
-		s := time.Since(last)
-		lastCurMtx.Unlock()
-		if s < opts.GroupInterval {
-			t.Fatalf("received batch too early after %v", s)
-		}
+	case notification := <-alertsCh:
+		assertNotifiedAfter(lastNotificationAt, notification.notifiedAt, opts.GroupInterval)
+		batch := notification.alerts
 		sort.Sort(batch)
 
-		if !reflect.DeepEqual(batch, resolved) {
-			t.Fatalf("expected alerts %v but got %v", resolved, batch)
-		}
+		require.Equal(t, resolved, batch)
 
-		if !ag.empty() {
-			t.Fatalf("Expected aggregation group to be empty after resolving alerts: %v", ag)
-		}
+		require.Eventually(t, ag.empty, 2*opts.GroupInterval, 10*time.Millisecond, "expected aggregation group to be empty after resolving alerts: %v", ag)
 	}
 
 	ag.stop()
@@ -340,9 +316,7 @@ func TestGroupLabels(t *testing.T) {
 
 	ls := getGroupLabels(a, route.RouteOpts.GroupBy, false)
 
-	if !reflect.DeepEqual(ls, expLs) {
-		t.Fatalf("expected labels are %v, but got %v", expLs, ls)
-	}
+	require.Equal(t, expLs, ls)
 }
 
 func TestAggrRouteMap(t *testing.T) {
@@ -358,17 +332,13 @@ route:
   group_interval: 1m
   receiver: 'slack'`
 	conf, err := config.Load(confData)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	providerSettings := createTestProviderSettings()
 	logger := providerSettings.Logger
 	route := dispatch.NewRoute(conf.Route, nil)
 	marker := alertmanagertypes.NewMarker(prometheus.NewRegistry())
 	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, 0, nil, logger, prometheus.NewRegistry(), nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	defer alerts.Close()
 
 	timeout := func(d time.Duration) time.Duration { return time.Duration(0) }
@@ -377,9 +347,7 @@ route:
 	store := nfroutingstoretest.NewMockSQLRouteStore()
 	store.MatchExpectationsInOrder(false)
 	nfManager, err := rulebasednotification.New(context.Background(), providerSettings, nfmanager.Config{}, store)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	orgId := "test-org"
 
 	ctx := context.Background()
@@ -497,9 +465,7 @@ route:
 		require.NoError(t, err)
 	}
 	err = alerts.Put(ctx, inputAlerts...)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	// Let alerts get processed.
 	for i := 0; len(recorder.Alerts()) != 4; i++ {
@@ -631,17 +597,13 @@ route:
   group_interval: 10ms
   receiver: 'slack'`
 	conf, err := config.Load(confData)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	providerSettings := createTestProviderSettings()
 	logger := providerSettings.Logger
 	route := dispatch.NewRoute(conf.Route, nil)
 	marker := alertmanagertypes.NewMarker(prometheus.NewRegistry())
 	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, 0, nil, logger, prometheus.NewRegistry(), nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	defer alerts.Close()
 
 	timeout := func(d time.Duration) time.Duration { return time.Duration(0) }
@@ -650,9 +612,7 @@ route:
 	store := nfroutingstoretest.NewMockSQLRouteStore()
 	store.MatchExpectationsInOrder(false)
 	nfManager, err := rulebasednotification.New(context.Background(), providerSettings, nfmanager.Config{}, store)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	orgId := "test-org"
 
 	ctx := context.Background()
@@ -799,9 +759,7 @@ route:
 		require.NoError(t, err)
 	}
 	err = alerts.Put(ctx, inputAlerts...)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	for i := 0; len(recorder.Alerts()) != 9; i++ {
 		time.Sleep(400 * time.Millisecond)
@@ -890,17 +848,13 @@ route:
   group_interval: 10ms
   receiver: 'slack'`
 	conf, err := config.Load(confData)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	providerSettings := createTestProviderSettings()
 	logger := providerSettings.Logger
 	route := dispatch.NewRoute(conf.Route, nil)
 	marker := alertmanagertypes.NewMarker(prometheus.NewRegistry())
 	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, 0, nil, logger, prometheus.NewRegistry(), nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	defer alerts.Close()
 
 	timeout := func(d time.Duration) time.Duration { return time.Duration(0) }
@@ -909,9 +863,7 @@ route:
 	store := nfroutingstoretest.NewMockSQLRouteStore()
 	store.MatchExpectationsInOrder(false)
 	nfManager, err := rulebasednotification.New(context.Background(), providerSettings, nfmanager.Config{}, store)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	orgId := "test-org"
 
 	ctx := context.Background()
@@ -1029,9 +981,7 @@ route:
 		require.NoError(t, err)
 	}
 	err = alerts.Put(ctx, inputAlerts...)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	for i := 0; len(recorder.Alerts()) != 3 && i < 15; i++ {
 		time.Sleep(400 * time.Millisecond)
@@ -1160,9 +1110,7 @@ func TestDispatcherRace(t *testing.T) {
 	logger := promslog.NewNopLogger()
 	marker := alertmanagertypes.NewMarker(prometheus.NewRegistry())
 	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, 0, nil, logger, prometheus.NewRegistry(), nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	defer alerts.Close()
 
 	timeout := func(d time.Duration) time.Duration { return time.Duration(0) }
@@ -1188,17 +1136,13 @@ route:
   group_interval: 5m
   receiver: 'slack'`
 	conf, err := config.Load(confData)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	route := dispatch.NewRoute(conf.Route, nil)
 	providerSettings := createTestProviderSettings()
 	logger := providerSettings.Logger
 	marker := alertmanagertypes.NewMarker(prometheus.NewRegistry())
 	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, 0, nil, logger, prometheus.NewRegistry(), nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	defer alerts.Close()
 	timeout := func(d time.Duration) time.Duration { return d }
 	recorder := &recordStage{alerts: make(map[string]map[model.Fingerprint]*alertmanagertypes.Alert)}
@@ -1206,9 +1150,7 @@ route:
 	store := nfroutingstoretest.NewMockSQLRouteStore()
 	store.MatchExpectationsInOrder(false)
 	nfManager, err := rulebasednotification.New(context.Background(), providerSettings, nfmanager.Config{}, store)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	orgId := "test-org"
 
 	for i := 0; i < numAlerts; i++ {
@@ -1267,9 +1209,7 @@ func TestDispatcher_DoMaintenance(t *testing.T) {
 	marker := alertmanagertypes.NewMarker(r)
 
 	alerts, err := mem.NewAlerts(context.Background(), marker, time.Minute, 0, nil, promslog.NewNopLogger(), prometheus.NewRegistry(), nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	route := &dispatch.Route{
 		RouteOpts: dispatch.RouteOpts{
@@ -1363,18 +1303,14 @@ route:
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			conf, err := config.Load(tc.confData)
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			providerSettings := createTestProviderSettings()
 			logger := providerSettings.Logger
 			route := dispatch.NewRoute(conf.Route, nil)
 			marker := alertmanagertypes.NewMarker(prometheus.NewRegistry())
 			alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, 0, nil, logger, prometheus.NewRegistry(), nil)
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 			defer alerts.Close()
 
 			timeout := func(d time.Duration) time.Duration { return time.Duration(0) }
@@ -1383,9 +1319,7 @@ route:
 			store := nfroutingstoretest.NewMockSQLRouteStore()
 			store.MatchExpectationsInOrder(false)
 			nfManager, err := rulebasednotification.New(context.Background(), providerSettings, nfmanager.Config{}, store)
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 			d := NewDispatcher(alerts, route, recorder, marker, timeout, nil, logger, metrics, nfManager, "test-org")
 			// setup the dispatcher for tests
 			d.receiverRoutes = map[string]*dispatch.Route{}
