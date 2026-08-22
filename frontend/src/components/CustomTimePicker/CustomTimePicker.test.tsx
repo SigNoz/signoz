@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import dayjs from 'dayjs';
 import * as timeUtils from 'utils/timeUtils';
 
 import CustomTimePicker from './CustomTimePicker';
+import { INVALID_FLASH_DURATION_MS } from './useInvalidFlash';
 
 jest.mock('react-router-dom', () => {
 	const actual = jest.requireActual('react-router-dom');
@@ -284,5 +285,103 @@ describe('CustomTimePicker', () => {
 		fireEvent.focus(input);
 
 		expect((input as HTMLInputElement).value).toBe('Live');
+	});
+
+	describe('invalid entry flash', () => {
+		const FLASH_START_DELAY_MS = 50;
+
+		const enterInvalidRange = (input: HTMLElement): void => {
+			fireEvent.focus(input);
+			fireEvent.change(input, {
+				target: { value: '10/08/2026 14:30 - 10/08/2026 15:30' },
+			});
+			fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
+		};
+
+		const getFieldWrapper = (input: HTMLElement): HTMLElement =>
+			input.closest('.timeSelection-input') as HTMLElement;
+
+		beforeEach(() => {
+			jest.useFakeTimers();
+		});
+
+		afterEach(() => {
+			jest.useRealTimers();
+		});
+
+		it('flashes the field, then clears the flash on its own', () => {
+			render(<Wrapper />);
+
+			const input = screen.getByRole('textbox');
+			enterInvalidRange(input);
+
+			act(() => {
+				jest.advanceTimersByTime(FLASH_START_DELAY_MS);
+			});
+			expect(getFieldWrapper(input)).toHaveClass('invalid-flash');
+
+			act(() => {
+				jest.advanceTimersByTime(INVALID_FLASH_DURATION_MS);
+			});
+			expect(getFieldWrapper(input)).not.toHaveClass('invalid-flash');
+		});
+
+		it('flashes again on a second consecutive invalid entry', () => {
+			render(<Wrapper />);
+
+			const input = screen.getByRole('textbox');
+
+			enterInvalidRange(input);
+			act(() => {
+				jest.advanceTimersByTime(FLASH_START_DELAY_MS + INVALID_FLASH_DURATION_MS);
+			});
+			expect(getFieldWrapper(input)).not.toHaveClass('invalid-flash');
+
+			enterInvalidRange(input);
+			act(() => {
+				jest.advanceTimersByTime(FLASH_START_DELAY_MS);
+			});
+			expect(getFieldWrapper(input)).toHaveClass('invalid-flash');
+		});
+
+		it('drops the error state when closing restores the previous value', () => {
+			const onError = jest.fn();
+
+			render(<Wrapper onError={onError} />);
+
+			const input = screen.getByRole('textbox');
+			enterInvalidRange(input);
+
+			act(() => {
+				jest.advanceTimersByTime(FLASH_START_DELAY_MS);
+			});
+			expect(getFieldWrapper(input)).toHaveClass('error');
+
+			// Chevron close without an intervening blur takes the branch that reverts
+			// the input to the previously applied range
+			fireEvent.click(
+				document.querySelector('.time-input-suffix-icon-badge') as HTMLElement,
+			);
+
+			expect(getFieldWrapper(input)).not.toHaveClass('error');
+			expect((input as HTMLInputElement).value).toBe(
+				'2024-01-01 00:00:00 - 2024-01-01 01:00:00',
+			);
+			expect(onError).toHaveBeenLastCalledWith(false);
+		});
+
+		it('keeps the persistent error styling after the flash has gone', () => {
+			render(<Wrapper />);
+
+			const input = screen.getByRole('textbox');
+			enterInvalidRange(input);
+
+			act(() => {
+				jest.advanceTimersByTime(FLASH_START_DELAY_MS + INVALID_FLASH_DURATION_MS);
+			});
+
+			expect(getFieldWrapper(input)).toHaveClass('error');
+			expect(getFieldWrapper(input)).not.toHaveClass('invalid-flash');
+		});
 	});
 });
