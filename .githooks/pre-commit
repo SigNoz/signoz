@@ -1,0 +1,22 @@
+#!/bin/sh
+
+set -e
+
+staged_go_files=$(git diff --cached --name-only --diff-filter=ACM -- '*.go')
+if [ -n "$staged_go_files" ]; then
+	if command -v gofmt >/dev/null 2>&1; then
+		echo "$staged_go_files" | xargs gofmt -l -w
+		echo "$staged_go_files" | xargs git add
+	else
+		echo "pre-commit: gofmt not found, skipping go formatting" >&2
+	fi
+fi
+
+staged_web_files=$(git diff --cached --name-only --diff-filter=ACM -- 'frontend/*')
+if [ -n "$staged_web_files" ]; then
+	if [ -d frontend/node_modules ] && command -v pnpm >/dev/null 2>&1; then
+		cd frontend && pnpm lint-staged
+	else
+		echo "pre-commit: frontend dependencies not installed, skipping lint-staged" >&2
+	fi
+fi
