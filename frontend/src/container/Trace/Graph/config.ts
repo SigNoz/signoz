@@ -1,8 +1,8 @@
 import { ChartData, ChartDatasetProperties } from 'chart.js';
 import dayjs from 'dayjs';
 import { colors } from 'lib/getRandomColor';
-import { keys } from 'lodash-es';
 import { TraceReducer } from 'types/reducer/trace';
+import { keys } from 'utils/valueUtils';
 
 function transposeArray(array: number[][], arrayLength: number): number[][] {
 	const newArray: number[][] = [];

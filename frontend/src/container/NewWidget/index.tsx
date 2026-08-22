@@ -41,7 +41,7 @@ import {
 	LineInterpolation,
 	LineStyle,
 } from 'lib/uPlotV2/config/types';
-import { cloneDeep, defaultTo, isEmpty, isUndefined } from 'lodash-es';
+import { cloneDeep, isEmpty } from 'lodash-es';
 import { useScrollToWidgetIdStore } from 'providers/Dashboard/helpers/scrollToWidgetIdHelper';
 import {
 	clearSelectedRowWidgetId,
@@ -83,6 +83,7 @@ import {
 import DiscardChangesModal from './WidgetModals/DiscardChangesModal';
 
 import './NewWidget.styles.scss';
+import { defaultTo, isUndefined } from 'utils/valueUtils';
 
 function NewWidget({
 	dashboardData,

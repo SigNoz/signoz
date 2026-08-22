@@ -1,6 +1,7 @@
-import { escapeRegExp, isArray } from 'lodash-es';
+import { escapeRegExp } from 'lodash-es';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
+import { isArray } from 'utils/valueUtils';
 
 /**
  * Builds a RegExp that matches any recognized variable reference syntax:

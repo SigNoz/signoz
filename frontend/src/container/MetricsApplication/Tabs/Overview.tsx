@@ -24,7 +24,6 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import getStep from 'lib/getStep';
 import history from 'lib/history';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
-import { defaultTo } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
@@ -60,6 +59,7 @@ import {
 	useGetAPMToTracesQueries,
 	useGraphClickHandler,
 } from './util';
+import { defaultTo } from 'utils/valueUtils';
 
 function Application(): JSX.Element {
 	const { servicename: encodedServiceName } = useParams<IServiceName>();

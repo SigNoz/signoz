@@ -23,7 +23,6 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { defaultTo, isUndefined } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 import {
 	Check,
@@ -58,6 +57,7 @@ import { MenuItemKeys } from './WidgetHeader/contants';
 import { WidgetRowHeader } from './WidgetRow';
 
 import './GridCardLayout.styles.scss';
+import { defaultTo, isUndefined } from 'utils/valueUtils';
 
 interface GraphLayoutProps {
 	handle: FullScreenHandle;

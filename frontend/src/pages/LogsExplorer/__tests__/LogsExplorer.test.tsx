@@ -7,7 +7,6 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { noop } from 'lodash-es';
 import { logsQueryRangeSuccessResponse } from 'mocks-server/__mockdata__/logs_query_range';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
@@ -17,6 +16,7 @@ import { fireEvent, render, waitFor } from 'tests/test-utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import LogsExplorer from '../index';
+import { noop } from 'utils/valueUtils';
 
 const queryRangeURL = 'http://localhost/api/v3/query_range';
 

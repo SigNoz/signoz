@@ -1,8 +1,8 @@
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { convertValue } from 'lib/getConvertedValue';
-import { isFinite } from 'lodash-es';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 import uPlot from 'uplot';
+import { isFinite } from 'utils/valueUtils';
 
 function findMinMaxValues(data: QueryDataV3[]): [number, number] {
 	let min = Number.MAX_SAFE_INTEGER;

@@ -14,7 +14,6 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import { FeatureKeys } from 'constants/features';
-import { defaultTo } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { ErrorV2Resp } from 'types/api';
@@ -33,6 +32,7 @@ import ConfigureOIDCAuthnProvider from './Providers/AuthnOIDC';
 import ConfigureSAMLAuthnProvider from './Providers/AuthnSAML';
 
 import './CreateEdit.styles.scss';
+import { defaultTo } from 'utils/valueUtils';
 function configureAuthnProvider(
 	authnProvider: string,
 	isCreate: boolean,

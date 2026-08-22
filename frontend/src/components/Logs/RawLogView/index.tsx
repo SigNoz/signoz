@@ -17,7 +17,7 @@ import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 // hooks
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { FlatLogData } from 'lib/logs/flatLogData';
-import { isEmpty, isNumber, isUndefined } from 'lodash-es';
+import { isEmpty } from 'lodash-es';
 import { useTimezone } from 'providers/Timezone';
 
 import LogLinesActionButtons from '../LogLinesActionButtons/LogLinesActionButtons';
@@ -26,6 +26,7 @@ import { getLogIndicatorType } from '../LogStateIndicator/utils';
 // styles
 import { InfoIconWrapper, RawLogContent, RawLogViewContainer } from './styles';
 import { RawLogViewProps } from './types';
+import { isNumber, isUndefined } from 'utils/valueUtils';
 
 function RawLogView({
 	isActiveLog,

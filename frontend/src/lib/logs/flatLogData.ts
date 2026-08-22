@@ -1,5 +1,5 @@
-import { defaultTo } from 'lodash-es';
 import { ILog, ILogBody } from 'types/api/logs/log';
+import { defaultTo } from 'utils/valueUtils';
 
 export function FlatLogData(log: ILog): Record<string, string> {
 	const flattenLogObject: Record<string, string> = {};

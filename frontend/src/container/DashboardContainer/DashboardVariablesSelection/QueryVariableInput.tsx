@@ -6,7 +6,7 @@ import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQ
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useVariableFetchState } from 'hooks/dashboard/useVariableFetchState';
 import sortValues from 'lib/dashboardVariables/sortVariableValues';
-import { isArray, isEmpty } from 'lodash-es';
+import { isEmpty } from 'lodash-es';
 import { AppState } from 'store/reducers';
 import { VariableResponseProps } from 'types/api/dashboard/variables/query';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -21,6 +21,7 @@ import { useDashboardVariableSelectHelper } from './useDashboardVariableSelectHe
 import { areArraysEqual, settleVariableFetch } from './util';
 import { VariableItemProps } from './VariableItem';
 import { queryVariableSelectStrategy } from './variableSelectStrategy/queryVariableSelectStrategy';
+import { isArray } from 'utils/valueUtils';
 
 type QueryVariableInputProps = Pick<
 	VariableItemProps,

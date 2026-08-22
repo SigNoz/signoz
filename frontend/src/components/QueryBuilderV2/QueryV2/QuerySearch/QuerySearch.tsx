@@ -30,7 +30,7 @@ import {
 import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariablesByType';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebounce from 'hooks/useDebounce';
-import { debounce, isNull } from 'lodash-es';
+import { debounce } from 'lodash-es';
 import {
 	IDetailedError,
 	IQueryContext,
@@ -64,6 +64,7 @@ import {
 } from './utils';
 
 import './QuerySearch.styles.scss';
+import { isNull } from 'utils/valueUtils';
 
 const { Panel } = Collapse;
 

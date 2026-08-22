@@ -4,9 +4,9 @@ import ROUTES from 'constants/routes';
 import LiveLogsPauseResume from 'container/LiveLogs/LiveLogsPauseResume/LiveLogsPauseResume';
 import NewExplorerCTA from 'container/NewExplorerCTA';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
-import { noop } from 'lodash-es';
 
 import './Toolbar.styles.scss';
+import { noop } from 'utils/valueUtils';
 
 interface ToolbarProps {
 	showAutoRefresh: boolean;
