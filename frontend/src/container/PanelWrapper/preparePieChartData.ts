@@ -1,8 +1,8 @@
 import getLabelName from 'lib/getLabelName';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
-import { isNaN } from 'lodash-es';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { QueryData, QueryDataV3 } from 'types/api/widgets/getQuery';
+import { isNaN } from 'utils/valueUtils';
 
 export interface PieChartSlice {
 	label: string;

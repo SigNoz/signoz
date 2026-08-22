@@ -5,7 +5,6 @@ import { themeColors } from 'constants/theme';
 import { saveLegendEntriesToLocalStorage } from 'container/GridCardLayout/GridCard/FullView/utils';
 import { Dimensions } from 'hooks/useDimensions';
 import getLabelName from 'lib/getLabelName';
-import _noop from 'lodash-es/noop';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryData } from 'types/api/widgets/getQuery';
@@ -16,6 +15,7 @@ import tooltipPlugin from './plugins/tooltipPlugin';
 import { drawStyles } from './utils/constants';
 import { generateColor } from './utils/generateColor';
 import getAxes from './utils/getAxes';
+import { noop as _noop } from 'utils/valueUtils';
 
 // Extended uPlot interface with custom properties
 interface ExtendedUPlot extends uPlot {

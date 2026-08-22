@@ -50,7 +50,6 @@ import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { useIsAIObservabilityEnabled } from 'hooks/useIsAIObservabilityEnabled';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import { isArray } from 'lodash-es';
 import {
 	ArrowUpRight,
 	Check,
@@ -99,6 +98,7 @@ import {
 import { getActiveMenuKeyFromPath } from './sideNav.utils';
 
 import './SideNav.styles.scss';
+import { isArray } from 'utils/valueUtils';
 
 function SortableFilter({ item }: { item: SidebarItem }): JSX.Element {
 	const { attributes, listeners, setNodeRef, transform, transition } =

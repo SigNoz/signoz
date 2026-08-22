@@ -15,7 +15,6 @@ import type { ErrorType } from 'api/generatedAPIInstance';
 import cx from 'classnames';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
-import { defaultTo } from 'lodash-es';
 import { CalendarClock, PenLine, Trash2 } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
@@ -29,6 +28,7 @@ import {
 } from './PlannedDowntimeutils';
 
 import './PlannedDowntime.styles.scss';
+import { defaultTo } from 'utils/valueUtils';
 
 const { Panel } = Collapse;
 

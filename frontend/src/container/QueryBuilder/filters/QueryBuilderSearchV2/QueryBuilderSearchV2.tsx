@@ -30,15 +30,7 @@ import { validationMapper } from 'hooks/queryBuilder/useIsValidTag';
 import { operatorTypeMapper } from 'hooks/queryBuilder/useOperatorType';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useDebounceValue from 'hooks/useDebounce';
-import {
-	cloneDeep,
-	isArray,
-	isEmpty,
-	isEqual,
-	isObject,
-	isUndefined,
-	unset,
-} from 'lodash-es';
+import { cloneDeep, isEmpty, isEqual, isObject, unset } from 'lodash-es';
 import { ChevronDown, ChevronUp } from '@signozhq/icons';
 import type { BaseSelectRef } from 'rc-select';
 import {
@@ -69,6 +61,7 @@ import SpanScopeSelector from './SpanScopeSelector';
 import Suggestions from './Suggestions';
 
 import './QueryBuilderSearchV2.styles.scss';
+import { isArray, isUndefined } from 'utils/valueUtils';
 
 export interface ITag {
 	id?: string;

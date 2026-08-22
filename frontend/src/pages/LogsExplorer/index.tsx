@@ -24,7 +24,7 @@ import {
 	useHandleExplorerTabChange,
 } from 'hooks/useHandleExplorerTabChange';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
-import { defaultTo, isEmpty, isNull } from 'lodash-es';
+import { isEmpty } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { EventSourceProvider } from 'providers/EventSource';
 import { Warning } from 'types/api';
@@ -43,6 +43,7 @@ import {
 import { ExplorerViews } from './utils';
 
 import './LogsExplorer.styles.scss';
+import { defaultTo, isNull } from 'utils/valueUtils';
 
 function LogsExplorer(): JSX.Element {
 	const [showLiveLogs, setShowLiveLogs] = useState<boolean>(false);

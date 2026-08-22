@@ -4,10 +4,11 @@ import { useGetAlerts } from 'api/generated/services/alerts';
 import type { FilterValue } from 'components/Alerts/types';
 import { filterByLabels, searchByLabels } from 'components/Alerts/utils';
 import type { SortState } from 'components/TanStackTableView/types';
-import { groupBy as lodashGroupBy, isUndefined } from 'lodash-es';
+import { groupBy as lodashGroupBy } from 'lodash-es';
 
 import type { Alert, GroupedAlert } from './types';
 import { normalizeAlerts, sortAlerts } from './utils';
+import { isUndefined } from 'utils/valueUtils';
 
 interface UseTriggeredAlertsDataReturn {
 	allAlerts: Alert[];

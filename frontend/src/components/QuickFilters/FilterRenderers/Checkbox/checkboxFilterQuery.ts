@@ -6,13 +6,14 @@ import {
 } from 'components/QuickFilters/types';
 import { OPERATORS } from 'constants/antlrQueryConstants';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearchV2/utils';
-import { cloneDeep, isArray } from 'lodash-es';
+import { cloneDeep } from 'lodash-es';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
 
 import { isKeyMatch } from './utils';
 import { CheckedState } from '../../types';
 import { SectionType } from './v2/itemRules';
+import { isArray } from 'utils/valueUtils';
 
 export const SELECTED_OPERATORS = [OPERATORS['='], 'in'];
 export const NON_SELECTED_OPERATORS = [OPERATORS['!='], 'not in', 'nin'];

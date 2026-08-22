@@ -4,7 +4,6 @@ import { ThresholdsDrawHookOptions } from 'lib/uPlotV2/hooks/types';
 import { thresholdsDrawHook } from 'lib/uPlotV2/hooks/useThresholdsDrawHook';
 import { resolveSeriesVisibility } from 'lib/uPlotV2/utils/seriesVisibility';
 import { merge } from 'lodash-es';
-import noop from 'lodash-es/noop';
 import uPlot, { Cursor, Hooks, Options } from 'uplot';
 
 import {
@@ -25,6 +24,7 @@ import {
 import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
 import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
+import { noop } from 'utils/valueUtils';
 
 /**
  * Type definitions for uPlot option objects

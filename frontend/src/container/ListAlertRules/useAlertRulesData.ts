@@ -3,10 +3,10 @@ import logEvent from 'api/common/logEvent';
 import { useListRules } from 'api/generated/services/rules';
 import { searchByLabels } from 'components/Alerts/utils';
 import type { SortState } from 'components/TanStackTableView/types';
-import { isUndefined } from 'lodash-es';
 
 import type { AlertRule } from './types';
 import { filterRulesByFilters, sortRules } from './utils';
+import { isUndefined } from 'utils/valueUtils';
 
 interface UseAlertRulesDataReturn {
 	allRules: AlertRule[];

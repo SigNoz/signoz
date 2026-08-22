@@ -4,9 +4,10 @@ import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/typ
 import { QUERY_TABLE_CONFIG } from 'container/QueryTable/config';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { isEmpty, isNaN } from 'lodash-es';
+import { isEmpty } from 'lodash-es';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
+import { isNaN } from 'utils/valueUtils';
 
 // Custom column type that extends ColumnType to include isValueColumn
 export interface CustomDataColumnType<T> extends ColumnType<T> {

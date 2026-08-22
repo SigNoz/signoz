@@ -2,11 +2,12 @@ import { UsageResponsePayloadProps } from 'api/billing/getUsage';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { prepareChartData } from 'lib/uPlotV2/utils/dataUtils';
-import { isEmpty, isNull } from 'lodash-es';
+import { isEmpty } from 'lodash-es';
 import { unparse } from 'papaparse';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 import generateCsvData, { QuantityData } from './generateCsvData';
+import { isNull } from 'utils/valueUtils';
 
 export const convertDataToMetricRangePayload = (
 	data: any,

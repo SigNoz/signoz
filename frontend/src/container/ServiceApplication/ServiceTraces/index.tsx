@@ -12,13 +12,13 @@ import {
 	convertRawQueriesToTraceSelectedTags,
 	getResourceDeploymentKeys,
 } from 'hooks/useResourceAttribute/utils';
-import { isUndefined } from 'lodash-es';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
 
 import SkipOnBoardingModal from '../SkipOnBoardModal';
 import ServiceTraceTable from './ServiceTracesTable';
+import { isUndefined } from 'utils/valueUtils';
 
 function ServiceTraces(): JSX.Element {
 	const { maxTime, minTime, selectedTime } = useSelector<

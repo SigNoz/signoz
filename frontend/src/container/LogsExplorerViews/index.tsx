@@ -46,7 +46,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import useUrlYAxisUnit from 'hooks/useUrlYAxisUnit';
-import { isEmpty, isUndefined } from 'lodash-es';
+import { isEmpty } from 'lodash-es';
 import LiveLogs from 'pages/LiveLogs';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
@@ -62,6 +62,7 @@ import { v4 } from 'uuid';
 import LogsActionsContainer from './LogsActionsContainer';
 
 import './LogsExplorerViews.styles.scss';
+import { isUndefined } from 'utils/valueUtils';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function LogsExplorerViewsContainer({

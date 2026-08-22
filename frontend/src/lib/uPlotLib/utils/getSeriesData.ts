@@ -3,13 +3,13 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import { getLegend } from 'lib/dashboard/getQueryResults';
 import getLabelName from 'lib/getLabelName';
-import { isUndefined } from 'lodash-es';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryData } from 'types/api/widgets/getQuery';
 
 import { drawStyles, lineInterpolations } from './constants';
 import { generateColor } from './generateColor';
 import getRenderer from './getRenderer';
+import { isUndefined } from 'utils/valueUtils';
 
 const paths = (
 	u: any,

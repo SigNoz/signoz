@@ -1,8 +1,8 @@
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { defaultTo } from 'lodash-es';
 
 import { IUser } from './types';
+import { defaultTo } from 'utils/valueUtils';
 
 function getUserDefaults(): IUser {
 	const accessJwt = defaultTo(getLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN), '');

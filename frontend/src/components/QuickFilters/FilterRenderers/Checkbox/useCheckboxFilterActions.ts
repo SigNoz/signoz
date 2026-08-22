@@ -4,7 +4,6 @@ import {
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { isFunction } from 'lodash-es';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import {
@@ -13,6 +12,7 @@ import {
 } from './checkboxFilterQuery';
 import { CheckedState } from '../../types';
 import { SectionType } from './v2/itemRules';
+import { isFunction } from 'utils/valueUtils';
 
 interface UseCheckboxFilterActionsProps {
 	filter: IQuickFiltersConfig;

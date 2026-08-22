@@ -55,7 +55,7 @@ import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useGetGlobalConfig } from 'api/generated/services/global';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
-import { cloneDeep, isNil, isUndefined } from 'lodash-es';
+import { cloneDeep } from 'lodash-es';
 import {
 	ArrowUpRight,
 	BellPlus,
@@ -84,6 +84,7 @@ import { USER_ROLES } from 'types/roles';
 import { getDaysUntilExpiry } from 'utils/timeUtils';
 
 import './IngestionSettings.styles.scss';
+import { isNil, isUndefined } from 'utils/valueUtils';
 
 const { Option } = Select;
 

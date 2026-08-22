@@ -15,7 +15,7 @@ import type { ExpandableConfig } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import savePipeline from 'api/pipeline/post';
 import { useNotifications } from 'hooks/useNotifications';
-import { isEqual, isUndefined } from 'lodash-es';
+import { isEqual } from 'lodash-es';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
@@ -58,6 +58,7 @@ import {
 } from './utils';
 
 import './styles.scss';
+import { isUndefined } from 'utils/valueUtils';
 
 function PipelinesListEmptyState(): JSX.Element {
 	const { t } = useTranslation(['pipeline']);

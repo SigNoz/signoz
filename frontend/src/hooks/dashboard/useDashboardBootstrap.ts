@@ -8,7 +8,6 @@ import { useTransformDashboardVariables } from 'hooks/dashboard/useTransformDash
 import useTabVisibility from 'hooks/useTabFocus';
 import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
 import { getMinMaxForSelectedTime } from 'lib/getMinMax';
-import { defaultTo } from 'lodash-es';
 import { initializeDefaultVariables } from 'providers/Dashboard/initializeDefaultVariables';
 import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { sortLayout } from 'providers/Dashboard/util';
@@ -22,6 +21,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { useDashboardQuery } from './useDashboardQuery';
 import { useDashboardVariablesSync } from './useDashboardVariablesSync';
+import { defaultTo } from 'utils/valueUtils';
 
 interface UseDashboardBootstrapOptions {
 	/** Pass `onModal.confirm` from `Modal.useModal()` to get theme-aware modals. Falls back to static `Modal.confirm`. */

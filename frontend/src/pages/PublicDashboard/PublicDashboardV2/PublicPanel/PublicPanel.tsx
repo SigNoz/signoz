@@ -1,6 +1,5 @@
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
-import { noop } from 'lodash-es';
 import PanelBody from 'pages/DashboardPageV2/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelBody/PanelBody';
 import PanelHeader from 'pages/DashboardPageV2/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelHeader/PanelHeader';
 import type { DashboardPreference } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/rendererProps';
@@ -8,6 +7,7 @@ import { getPanelDefinition } from 'pages/DashboardPageV2/DashboardContainer/Pan
 
 import { usePublicPanelQuery } from '../hooks/usePublicPanelQuery';
 import styles from './PublicPanel.module.scss';
+import { noop } from 'utils/valueUtils';
 
 interface PublicPanelProps {
 	panel: DashboardtypesPanelDTO;

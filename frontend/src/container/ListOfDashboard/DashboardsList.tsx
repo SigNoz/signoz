@@ -33,7 +33,8 @@ import {
 	sanitizeDashboardData,
 } from 'container/DashboardContainer/DashboardDescription/utils';
 import { Base64Icons } from 'container/DashboardContainer/DashboardSettings/General/utils';
-// #TODO: lucide will be removing brand icons like Github in future, in that case we can use simple icons
+// #TODO: lucide will be removing brand icons like Github in future,
+// in that case we can use simple icons
 // see more: https://github.com/lucide-icons/lucide/issues/94
 import { handleContactSupport } from 'container/Integrations/utils';
 import dayjs from 'dayjs';
@@ -43,7 +44,7 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { get, isEmpty, isUndefined } from 'lodash-es';
+import { get, isEmpty } from 'lodash-es';
 import {
 	ArrowDownWideNarrow,
 	ArrowUpRight,
@@ -95,6 +96,7 @@ import {
 
 import styles from './DashboardActions.module.scss';
 import './DashboardList.styles.scss';
+import { isUndefined } from 'utils/valueUtils';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function DashboardsList(): JSX.Element {

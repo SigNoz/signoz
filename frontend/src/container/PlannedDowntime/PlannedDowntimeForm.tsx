@@ -36,7 +36,7 @@ import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
 import { useNotifications } from 'hooks/useNotifications';
-import { defaultTo, isEmpty } from 'lodash-es';
+import { isEmpty } from 'lodash-es';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 import { ALL_TIME_ZONES } from 'utils/timeZoneUtil';
@@ -55,6 +55,7 @@ import {
 
 import './PlannedDowntime.styles.scss';
 import { RadioGroupItem, RadioGroup } from '@signozhq/ui/radio-group';
+import { defaultTo } from 'utils/valueUtils';
 
 dayjs.locale('en');
 dayjs.extend(utc);
