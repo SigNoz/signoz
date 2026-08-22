@@ -21,6 +21,11 @@ interface OtherFieldsProps {
 	addedFields: TelemetryFieldKey[];
 	onAdd: (field: TelemetryFieldKey) => void;
 	isAtLimit: boolean;
+	/**
+	 * Caller-supplied field list. When provided, key discovery is skipped and
+	 * these are filtered locally by the search term instead.
+	 */
+	availableFields?: TelemetryFieldKey[];
 }
 
 function OtherFields({
@@ -29,7 +34,10 @@ function OtherFields({
 	addedFields,
 	onAdd,
 	isAtLimit,
+	availableFields,
 }: OtherFieldsProps): JSX.Element {
+	const useRegistry = Boolean(availableFields);
+
 	const { data, isFetching } = useGetQueryKeySuggestions(
 		{
 			signal,
@@ -41,11 +49,34 @@ function OtherFields({
 				signal,
 				debouncedInputValue,
 			],
-			enabled: true,
+			enabled: !useRegistry,
 		},
 	);
 
 	const otherFields: TelemetryFieldKey[] = useMemo(() => {
+		const addedIds = new Set(
+			addedFields.map((f) => f.key ?? buildCompositeKey(f.name, f.fieldContext)),
+		);
+
+		if (useRegistry && availableFields) {
+			const search = debouncedInputValue.trim().toLowerCase();
+			return availableFields
+				.filter((attr) => {
+					const id = attr.key ?? buildCompositeKey(attr.name, attr.fieldContext);
+					if (addedIds.has(id)) {
+						return false;
+					}
+					if (!search) {
+						return true;
+					}
+					return attr.name.toLowerCase().includes(search);
+				})
+				.map((attr) => ({
+					...attr,
+					key: attr.key ?? buildCompositeKey(attr.name, attr.fieldContext),
+				}));
+		}
+
 		const suggestions = Object.values(data?.data.data.keys || {}).flat();
 		// Normalize: synthesize `key` once so downstream reads can trust it.
 		const normalizedSuggestions: TelemetryFieldKey[] = suggestions.map(
@@ -57,15 +88,12 @@ function OtherFields({
 				fieldDataType: attr.fieldDataType,
 			}),
 		);
-		const addedIds = new Set(
-			addedFields.map((f) => f.key ?? buildCompositeKey(f.name, f.fieldContext)),
-		);
 		return normalizedSuggestions.filter(
 			(attr) => !addedIds.has(attr.key as string),
 		);
-	}, [data, addedFields]);
+	}, [data, addedFields, availableFields, debouncedInputValue, useRegistry]);
 
-	if (isFetching) {
+	if (!useRegistry && isFetching) {
 		return (
 			<div className={cx(styles.section, styles.sectionOther)}>
 				<div className={styles.sectionHeader}>OTHER FIELDS</div>

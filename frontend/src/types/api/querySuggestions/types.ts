@@ -30,11 +30,20 @@ export interface QueryKeySuggestionsResponseProps {
 export interface QueryKeyRequestProps {
 	signal: 'traces' | 'logs' | 'metrics';
 	searchText: string;
-	fieldContext?: 'resource' | 'scope' | 'attribute' | 'span';
+	/**
+	 * `trace` scopes to trace-level fields. Valid for the `traces` signal per
+	 * `telemetrytypes.FieldContext` — the union was previously missing it.
+	 */
+	fieldContext?: 'resource' | 'scope' | 'attribute' | 'span' | 'trace';
 	fieldDataType?: FieldDataType;
 	metricName?: string;
 	metricNamespace?: string;
 	signalSource?: 'meter' | '';
+	/**
+	 * Query type the keys must be valid for, e.g. `builder_ai_query` to get only
+	 * trace-level AI aggregates. Omit for the default builder query.
+	 */
+	type?: string;
 }
 
 export interface QueryKeyValueSuggestionsProps {
