@@ -168,7 +168,7 @@ func (c *conditionBuilder) conditionForKey(
 			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 			ValueType: schema.ColumnTypeString,
 		}:
-			leftOperand := fmt.Sprintf("mapContains(%s, '%s')", columns[0].Name, key.Name)
+			leftOperand := fmt.Sprintf("mapContains(%s, %s)", columns[0].Name, querybuilder.ClickHouseStringLiteral(key.Name))
 			if operator == qbtypes.FilterOperatorExists {
 				cond = sb.E(leftOperand, true)
 			} else {
