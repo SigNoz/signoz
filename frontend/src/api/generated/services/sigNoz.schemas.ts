@@ -5319,6 +5319,34 @@ export interface FeaturetypesGettableFeatureDTO {
 	variants?: FeaturetypesGettableFeatureDTOVariants;
 }
 
+export interface GatewaytypesLimitValueDTO {
+	/**
+	 * @type integer,null
+	 */
+	count?: number | null;
+	/**
+	 * @type integer,null
+	 */
+	size?: number | null;
+}
+
+export interface GatewaytypesLimitConfigDTO {
+	day?: GatewaytypesLimitValueDTO;
+	second?: GatewaytypesLimitValueDTO;
+}
+
+export interface GatewaytypesDeprecatedPostableIngestionKeyLimitDTO {
+	config?: GatewaytypesLimitConfigDTO;
+	/**
+	 * @type string
+	 */
+	signal?: string;
+	/**
+	 * @type array,null
+	 */
+	tags?: string[] | null;
+}
+
 export interface GatewaytypesGettableCreatedIngestionKeyDTO {
 	/**
 	 * @type string
@@ -5354,22 +5382,6 @@ export interface GatewaytypesPaginationDTO {
 	 * @type integer
 	 */
 	total?: number;
-}
-
-export interface GatewaytypesLimitValueDTO {
-	/**
-	 * @type integer,null
-	 */
-	count?: number | null;
-	/**
-	 * @type integer,null
-	 */
-	size?: number | null;
-}
-
-export interface GatewaytypesLimitConfigDTO {
-	day?: GatewaytypesLimitValueDTO;
-	second?: GatewaytypesLimitValueDTO;
 }
 
 export interface GatewaytypesLimitMetricValueDTO {
@@ -5489,6 +5501,10 @@ export interface GatewaytypesPostableIngestionKeyDTO {
 
 export interface GatewaytypesPostableIngestionKeyLimitDTO {
 	config?: GatewaytypesLimitConfigDTO;
+	/**
+	 * @type string
+	 */
+	key_id: string;
 	/**
 	 * @type string
 	 */
@@ -11399,6 +11415,31 @@ export type SearchIngestionKeys200 = {
 	status: string;
 };
 
+export type CreateIngestionLimit201 = {
+	data: GatewaytypesGettableCreatedIngestionKeyLimitDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteIngestionLimitPathParameters = {
+	limitId: string;
+};
+export type GetIngestionLimitPathParameters = {
+	limitId: string;
+};
+export type GetIngestionLimit200 = {
+	data: GatewaytypesLimitDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateIngestionLimitPathParameters = {
+	limitId: string;
+};
 export type Healthz200 = {
 	data: FactoryResponseDTO;
 	/**

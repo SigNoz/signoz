@@ -3969,6 +3969,18 @@ components:
           nullable: true
           type: object
       type: object
+    GatewaytypesDeprecatedPostableIngestionKeyLimit:
+      properties:
+        config:
+          $ref: '#/components/schemas/GatewaytypesLimitConfig'
+        signal:
+          type: string
+        tags:
+          items:
+            type: string
+          nullable: true
+          type: array
+      type: object
     GatewaytypesGettableCreatedIngestionKey:
       properties:
         id:
@@ -4112,6 +4124,8 @@ components:
       properties:
         config:
           $ref: '#/components/schemas/GatewaytypesLimitConfig'
+        key_id:
+          type: string
         signal:
           type: string
         tags:
@@ -4119,6 +4133,8 @@ components:
             type: string
           nullable: true
           type: array
+      required:
+      - key_id
       type: object
     GatewaytypesUpdatableIngestionKeyLimit:
       properties:
@@ -15665,7 +15681,7 @@ paths:
       - gateway
   /api/v2/gateway/ingestion_keys/{keyId}/limits:
     post:
-      deprecated: false
+      deprecated: true
       description: This endpoint creates an ingestion key limit
       operationId: CreateIngestionKeyLimit
       parameters:
@@ -15678,7 +15694,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GatewaytypesPostableIngestionKeyLimit'
+              $ref: '#/components/schemas/GatewaytypesDeprecatedPostableIngestionKeyLimit'
       responses:
         "201":
           content:
@@ -15722,7 +15738,7 @@ paths:
       - gateway
   /api/v2/gateway/ingestion_keys/limits/{limitId}:
     delete:
-      deprecated: false
+      deprecated: true
       description: This endpoint deletes an ingestion key limit
       operationId: DeleteIngestionKeyLimit
       parameters:
@@ -15761,7 +15777,7 @@ paths:
       tags:
       - gateway
     patch:
-      deprecated: false
+      deprecated: true
       description: This endpoint updates an ingestion key limit
       operationId: UpdateIngestionKeyLimit
       parameters:
@@ -15862,6 +15878,205 @@ paths:
       - tokenizer:
         - EDITOR
       summary: Search ingestion keys for workspace
+      tags:
+      - gateway
+  /api/v2/gateway/ingestion_limits:
+    post:
+      deprecated: false
+      description: This endpoint creates an ingestion limit for the ingestion key
+        referenced by key_id
+      operationId: CreateIngestionLimit
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GatewaytypesPostableIngestionKeyLimit'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/GatewaytypesGettableCreatedIngestionKeyLimit'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Create ingestion limit
+      tags:
+      - gateway
+  /api/v2/gateway/ingestion_limits/{limitId}:
+    delete:
+      deprecated: false
+      description: This endpoint deletes an ingestion limit
+      operationId: DeleteIngestionLimit
+      parameters:
+      - in: path
+        name: limitId
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Delete ingestion limit
+      tags:
+      - gateway
+    get:
+      deprecated: false
+      description: This endpoint returns an ingestion limit
+      operationId: GetIngestionLimit
+      parameters:
+      - in: path
+        name: limitId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/GatewaytypesLimit'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Get ingestion limit
+      tags:
+      - gateway
+    patch:
+      deprecated: false
+      description: This endpoint updates an ingestion limit
+      operationId: UpdateIngestionLimit
+      parameters:
+      - in: path
+        name: limitId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GatewaytypesUpdatableIngestionKeyLimit'
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Update ingestion limit
       tags:
       - gateway
   /api/v2/healthz:

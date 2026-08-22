@@ -47,6 +47,10 @@ func (p *provider) CreateIngestionKeyLimit(_ context.Context, _ valuer.UUID, _ s
 	return nil, errors.New(errors.TypeUnsupported, gateway.ErrCodeGatewayUnsupported, "unsupported call")
 }
 
+func (p *provider) GetIngestionKeyLimit(_ context.Context, _ valuer.UUID, _ string) (*gatewaytypes.Limit, error) {
+	return nil, errors.New(errors.TypeUnsupported, gateway.ErrCodeGatewayUnsupported, "unsupported call")
+}
+
 func (p *provider) UpdateIngestionKeyLimit(_ context.Context, _ valuer.UUID, _ string, _ gatewaytypes.LimitConfig, _ []string) error {
 	return errors.New(errors.TypeUnsupported, gateway.ErrCodeGatewayUnsupported, "unsupported call")
 }

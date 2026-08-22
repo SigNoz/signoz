@@ -34,6 +34,9 @@ type Gateway interface {
 	// Create Ingestion Key Limit
 	CreateIngestionKeyLimit(ctx context.Context, orgID valuer.UUID, keyID string, signal string, limitConfig gatewaytypes.LimitConfig, tags []string) (*gatewaytypes.GettableCreatedIngestionKeyLimit, error)
 
+	// Get Ingestion Key Limit
+	GetIngestionKeyLimit(ctx context.Context, orgID valuer.UUID, limitID string) (*gatewaytypes.Limit, error)
+
 	// Update Ingestion Key Limit
 	UpdateIngestionKeyLimit(ctx context.Context, orgID valuer.UUID, limitID string, limitConfig gatewaytypes.LimitConfig, tags []string) error
 
@@ -52,9 +55,13 @@ type Handler interface {
 
 	DeleteIngestionKey(http.ResponseWriter, *http.Request)
 
-	CreateIngestionKeyLimit(http.ResponseWriter, *http.Request)
+	DeprecatedCreateIngestionKeyLimit(http.ResponseWriter, *http.Request)
 
 	UpdateIngestionKeyLimit(http.ResponseWriter, *http.Request)
 
 	DeleteIngestionKeyLimit(http.ResponseWriter, *http.Request)
+
+	CreateIngestionKeyLimit(http.ResponseWriter, *http.Request)
+
+	GetIngestionKeyLimit(http.ResponseWriter, *http.Request)
 }
