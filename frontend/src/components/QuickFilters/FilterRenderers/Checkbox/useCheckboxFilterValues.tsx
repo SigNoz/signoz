@@ -27,6 +27,10 @@ function useCheckboxFilterValues({
 	searchText,
 	isOpen,
 }: UseCheckboxFilterValuesProps): UseCheckboxFilterValuesReturn {
+	const usesFieldsValuesApi =
+		source === QuickFiltersSource.METER_EXPLORER ||
+		source === QuickFiltersSource.AI_OBSERVABILITY;
+
 	const { data, isLoading } = useGetAggregateValues(
 		{
 			aggregateOperator: filter.aggregateOperator || 'noop',
@@ -38,7 +42,7 @@ function useCheckboxFilterValues({
 			searchText: searchText ?? '',
 		},
 		{
-			enabled: isOpen && source !== QuickFiltersSource.METER_EXPLORER,
+			enabled: isOpen && !usesFieldsValuesApi,
 			keepPreviousData: true,
 		},
 	);
@@ -47,9 +51,14 @@ function useCheckboxFilterValues({
 		useGetQueryKeyValueSuggestions({
 			key: filter.attributeKey.key,
 			signal: filter.dataSource || DataSource.LOGS,
-			signalSource: 'meter',
+			signalSource: source === QuickFiltersSource.METER_EXPLORER ? 'meter' : '',
+			// POC: AI value suggestions — type=builder_ai_query (no suggestions for aggregates)
+			type:
+				source === QuickFiltersSource.AI_OBSERVABILITY
+					? 'builder_ai_query'
+					: undefined,
 			options: {
-				enabled: isOpen && source === QuickFiltersSource.METER_EXPLORER,
+				enabled: isOpen && usesFieldsValuesApi,
 				keepPreviousData: true,
 			},
 		});
@@ -57,7 +66,7 @@ function useCheckboxFilterValues({
 	const attributeValues: string[] = useMemo(() => {
 		const dataType = filter.attributeKey.dataType || DataTypes.String;
 
-		if (source === QuickFiltersSource.METER_EXPLORER && keyValueSuggestions) {
+		if (usesFieldsValuesApi && keyValueSuggestions) {
 			// Process the response data
 			const responseData = keyValueSuggestions?.data as any;
 			const values = responseData.data?.values || {};
@@ -88,7 +97,12 @@ function useCheckboxFilterValues({
 		return (data?.payload?.[key] || []).filter(
 			(val) => val !== undefined && val !== null,
 		);
-	}, [data?.payload, filter.attributeKey.dataType, keyValueSuggestions, source]);
+	}, [
+		data?.payload,
+		filter.attributeKey.dataType,
+		keyValueSuggestions,
+		usesFieldsValuesApi,
+	]);
 
 	return {
 		attributeValues,
