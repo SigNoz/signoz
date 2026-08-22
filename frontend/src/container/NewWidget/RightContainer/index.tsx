@@ -1,9 +1,11 @@
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
+import { Select } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { ExecStats } from 'api/v5/v5';
 import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
 import { PANEL_TYPES, PanelDisplay } from 'constants/queryBuilder';
+import { HEATMAP_COLOR_GRADIENTS } from 'container/PanelWrapper/constants';
 import { PanelTypesWithData } from 'container/DashboardContainer/PanelTypeSelectionModal/menuItems';
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
@@ -24,6 +26,7 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 import {
 	panelTypeVsBucketConfig,
+	panelTypeVsColorPalette,
 	panelTypeVsColumnUnitPreferences,
 	panelTypeVsContextLinks,
 	panelTypeVsCreateAlert,
@@ -57,6 +60,14 @@ import { ThresholdProps } from './Threshold/types';
 import { timePreferance } from './timeItems';
 
 import './RightContainer.styles.scss';
+
+const heatmapColorPaletteOptions = Object.keys(HEATMAP_COLOR_GRADIENTS).map(
+	(key) => ({
+		label: key.charAt(0).toUpperCase() + key.slice(1),
+		value: key,
+	}),
+);
+
 function RightContainer({
 	description,
 	setDescription,
@@ -110,6 +121,8 @@ function RightContainer({
 	setContextLinks,
 	enableDrillDown = false,
 	isNewDashboard,
+	heatmapColorPalette,
+	setHeatmapColorPalette,
 }: RightContainerProps): JSX.Element {
 	const { dashboardVariables } = useDashboardVariables();
 
@@ -138,6 +151,7 @@ function RightContainer({
 	const allowContextLinks =
 		panelTypeVsContextLinks[selectedGraph] && enableDrillDown;
 	const allowDecimalPrecision = panelTypeVsDecimalPrecision[selectedGraph];
+	const allowColorPalette = panelTypeVsColorPalette[selectedGraph];
 
 	const allowLineInterpolation = panelTypeVsLineInterpolation[selectedGraph];
 	const allowLineStyle = panelTypeVsLineStyle[selectedGraph];
@@ -270,6 +284,18 @@ function RightContainer({
 					/>
 				)}
 
+				{allowColorPalette && (
+					<section className="heatmap-color-palette-selector">
+						<Typography.Text className="typography">Color Palette</Typography.Text>
+						<Select
+							options={heatmapColorPaletteOptions}
+							value={heatmapColorPalette}
+							className="panel-type-select"
+							onChange={(val: string): void => setHeatmapColorPalette(val)}
+						/>
+					</section>
+				)}
+
 				{isAxisSectionVisible && (
 					<AxesSection
 						allowSoftMinMax={allowSoftMinMax}
@@ -382,6 +408,8 @@ export interface RightContainerProps {
 	setContextLinks: Dispatch<SetStateAction<ContextLinksData>>;
 	enableDrillDown?: boolean;
 	isNewDashboard: boolean;
+	heatmapColorPalette: string;
+	setHeatmapColorPalette: Dispatch<SetStateAction<string>>;
 	lineInterpolation: LineInterpolation;
 	setLineInterpolation: Dispatch<SetStateAction<LineInterpolation>>;
 	fillMode: FillMode;
