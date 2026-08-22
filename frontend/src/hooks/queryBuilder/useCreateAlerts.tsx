@@ -95,7 +95,6 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 					QueryParams.compositeQuery,
 					encodeURIComponent(JSON.stringify(updatedQuery)),
 				);
-				params.set(QueryParams.panelTypes, widget.panelTypes);
 				params.set(QueryParams.version, ENTITY_VERSION_V5);
 				params.set(QueryParams.source, YAxisSource.DASHBOARDS);
 
