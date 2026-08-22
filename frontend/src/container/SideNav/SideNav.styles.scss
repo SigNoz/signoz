@@ -63,6 +63,10 @@
 
 			cursor: pointer;
 
+			// Reset anchor defaults when rendered as a <Link>
+			text-decoration: none;
+			color: inherit;
+
 			img {
 				height: 16px;
 				width: auto;
@@ -200,6 +204,9 @@
 
 			color: var(--l2-foreground);
 
+			// Reset anchor defaults when rendered as a <Link>
+			text-decoration: none;
+
 			svg {
 				color: var(--l2-foreground);
 			}
@@ -208,7 +215,7 @@
 				color: var(--l2-foreground);
 			}
 
-			&:hover:not(:disabled) {
+			&:hover:not([aria-disabled='true']) {
 				background: var(--l2-background);
 				border-color: var(--l2-background);
 
