@@ -26,6 +26,7 @@ import { useOptionsMenu } from 'container/OptionsMenu';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
 import TraceExplorerControls from 'container/TracesExplorer/Controls';
 import { getListViewQuery } from 'container/TracesExplorer/explorerUtils';
+import { useIsAIQueryDemo } from 'container/TracesExplorer/useIsAIQueryDemo';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination } from 'hooks/queryPagination';
@@ -61,6 +62,7 @@ function ListView({
 }: ListViewProps): JSX.Element {
 	const { stagedQuery, panelType: panelTypeFromQueryBuilder } =
 		useQueryBuilder();
+	const isAIQueryDemo = useIsAIQueryDemo();
 
 	const panelType = panelTypeFromQueryBuilder || PANEL_TYPES.LIST;
 
@@ -140,6 +142,7 @@ function ListView({
 			graphType: panelType,
 			selectedTime: 'GLOBAL_TIME' as const,
 			globalSelectedInterval: globalSelectedTime as CustomTimeType,
+			builderQueryType: isAIQueryDemo ? 'builder_ai_query' : undefined,
 			params: {
 				dataSource: 'traces',
 			},
@@ -151,7 +154,7 @@ function ListView({
 		// ENTITY_VERSION_V4,
 		ENTITY_VERSION_V5,
 		{
-			queryKey,
+			queryKey: [...queryKey, isAIQueryDemo],
 			enabled:
 				// don't make api call while the time range state in redux is loading
 				!timeRangeUpdateLoading &&

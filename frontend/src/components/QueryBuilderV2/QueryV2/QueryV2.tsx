@@ -37,6 +37,9 @@ export const QueryV2 = forwardRef(function QueryV2(
 		hasTraceOperator = false,
 		version,
 		showOnlyWhereClause = false,
+		// Aliased: the local memo below is also called `showSpanScopeSelector`.
+		showSpanScopeSelector: allowSpanScopeSelector = true,
+		fieldKeysQueryType,
 		signalSource = '',
 		isMultiQueryAllowed = false,
 		onSignalSourceChange,
@@ -94,8 +97,8 @@ export const QueryV2 = forwardRef(function QueryV2(
 	);
 
 	const showSpanScopeSelector = useMemo(
-		() => dataSource === DataSource.TRACES,
-		[dataSource],
+		() => dataSource === DataSource.TRACES && allowSpanScopeSelector,
+		[dataSource, allowSpanScopeSelector],
 	);
 
 	const showInlineQuerySearch = useMemo(() => {
@@ -182,6 +185,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 											queryData={query}
 											dataSource={dataSource}
 											signalSource={signalSource}
+											fieldKeysQueryType={fieldKeysQueryType}
 										/>
 									</div>
 
@@ -252,6 +256,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 											queryData={query}
 											dataSource={dataSource}
 											signalSource={signalSource}
+											fieldKeysQueryType={fieldKeysQueryType}
 										/>
 									</div>
 
