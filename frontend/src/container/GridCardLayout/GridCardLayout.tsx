@@ -18,6 +18,7 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { themeColors } from 'constants/theme';
 import { DEFAULT_ROW_NAME } from 'container/DashboardContainer/DashboardDescription/utils';
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
+import { useRepeatExpander } from 'hooks/dashboard/useRepeatExpander';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -89,6 +90,12 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 	const { dashboardVariables } = useDashboardVariables();
 
+	const { widgets: expandedWidgets, layout: expandedLayout } = useRepeatExpander(
+		widgets,
+		layouts,
+		dashboardVariables,
+	);
+
 	const { user } = useAppContext();
 
 	const isDarkMode = useIsDarkMode();
@@ -141,8 +148,8 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	);
 
 	useEffect(() => {
-		setDashboardLayout(sortLayout(layouts));
-	}, [layouts]);
+		setDashboardLayout(sortLayout(expandedLayout));
+	}, [expandedLayout]);
 
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {
@@ -238,7 +245,9 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 			dashboardLayout &&
 			Array.isArray(dashboardLayout) &&
 			dashboardLayout.length > 0 &&
-			!isEqual(layouts, dashboardLayout);
+			!isEqual(layouts, dashboardLayout) &&
+			// Never persist expanded (repeated) layout items
+			!dashboardLayout.some((l) => l.i.includes('__repeat_'));
 
 		const shouldSaveColumnWidths =
 			dashboardLayout &&
@@ -423,9 +432,9 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 			>
 				{dashboardLayout.map((layout) => {
 					const { i: id } = layout;
-					const currentWidget = (widgets || [])?.find((e) => e.id === id);
+					const currentWidget = (expandedWidgets || [])?.find((e) => e.id === id);
 
-					if (currentWidget?.panelTypes === PANEL_GROUP_TYPES.ROW) {
+					if ((currentWidget as any)?.panelTypes === PANEL_GROUP_TYPES.ROW) {
 						const rowWidgetProperties = currentPanelMap[id] || {};
 						let { title } = currentWidget;
 						if (rowWidgetProperties.collapsed) {
