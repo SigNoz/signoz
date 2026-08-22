@@ -1,0 +1,4 @@
+{
+	"delete_confirm_message": "Tem certeza de que deseja excluir a chave {{keyName}}? A exclusão de uma chave de ingestão é irreversível e não pode ser desfeita.",
+	"delete_limit_confirm_message": "Tem certeza de que deseja excluir o limite {{limit_name}} para a chave de ingestão {{keyName}}?"
+}
