@@ -6,6 +6,7 @@ import TimeSeriesPanel from '../DashboardContainer/visualization/panels/TimeSeri
 import ListPanelWrapper from './ListPanelWrapper';
 import PiePanelWrapper from './PiePanelWrapper';
 import TablePanelWrapper from './TablePanelWrapper';
+import StateTimelinePanelWrapper from './StateTimelinePanelWrapper';
 import ValuePanelWrapper from './ValuePanelWrapper';
 
 export const PanelTypeVsPanelWrapper = {
@@ -18,6 +19,7 @@ export const PanelTypeVsPanelWrapper = {
 	[PANEL_TYPES.PIE]: PiePanelWrapper,
 	[PANEL_TYPES.BAR]: BarPanel,
 	[PANEL_TYPES.HISTOGRAM]: HistogramPanel,
+	[PANEL_TYPES.STATE_TIMELINE]: StateTimelinePanelWrapper,
 };
 
 export const DEFAULT_BUCKET_COUNT = 30;

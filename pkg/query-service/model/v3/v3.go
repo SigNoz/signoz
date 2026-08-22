@@ -203,20 +203,27 @@ func (q QueryType) Validate() error {
 type PanelType string
 
 const (
-	PanelTypeValue PanelType = "value"
-	PanelTypeGraph PanelType = "graph"
-	PanelTypeTable PanelType = "table"
-	PanelTypeList  PanelType = "list"
-	PanelTypeTrace PanelType = "trace"
+	PanelTypeValue         PanelType = "value"
+	PanelTypeGraph         PanelType = "graph"
+	PanelTypeTable         PanelType = "table"
+	PanelTypeList          PanelType = "list"
+	PanelTypeTrace         PanelType = "trace"
+	PanelTypeStateTimeline PanelType = "state_timeline"
 )
 
 func (p PanelType) Validate() error {
 	switch p {
-	case PanelTypeValue, PanelTypeGraph, PanelTypeTable, PanelTypeList, PanelTypeTrace:
+	case PanelTypeValue, PanelTypeGraph, PanelTypeTable, PanelTypeList, PanelTypeTrace, PanelTypeStateTimeline:
 		return nil
 	default:
 		return fmt.Errorf("invalid panel type: %s", p)
 	}
+}
+
+// IsGraphLike returns true for panel types that produce time-series data
+// (graph, state_timeline). These types share the same query execution path.
+func (p PanelType) IsGraphLike() bool {
+	return p == PanelTypeGraph || p == PanelTypeStateTimeline
 }
 
 // AggregateAttributeRequest is a request to fetch possible attribute keys
@@ -435,8 +442,6 @@ type QueryRangeParamsV3 struct {
 	NoCache        bool                   `json:"noCache"`
 	Version        string                 `json:"-"`
 	FormatForWeb   bool                   `json:"formatForWeb,omitempty"`
-	// Resolved from the use_json_body feature flag by the handler, never sent by clients.
-	UseJSONBody bool `json:"-"`
 }
 
 func (q *QueryRangeParamsV3) Clone() *QueryRangeParamsV3 {
@@ -452,7 +457,6 @@ func (q *QueryRangeParamsV3) Clone() *QueryRangeParamsV3 {
 		NoCache:        q.NoCache,
 		Version:        q.Version,
 		FormatForWeb:   q.FormatForWeb,
-		UseJSONBody:    q.UseJSONBody,
 	}
 }
 
@@ -1472,5 +1476,4 @@ type MetricMetadataResponse struct {
 type QBOptions struct {
 	GraphLimitQtype string
 	IsLivetailQuery bool
-	UseJSONBody     bool
 }
