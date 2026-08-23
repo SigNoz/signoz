@@ -98,6 +98,17 @@ func TestIsValidPostablePipeline(t *testing.T) {
 			},
 			IsValid: true,
 		},
+        {
+            Name: "Alias length exceeds max allowed length",
+            Pipeline: PostablePipeline{
+                OrderID: 1,
+                Name:    "pipeline 1",
+                Alias:   "this_is_a_very_long_alias_string_that_exceeds_four_hundred_characters_this_is_a_very_long_alias_string_that_exceeds_four_hundred_characters_this_is_a_very_long_alias_string_that_exceeds_four_hundred_characters_this_is_a_very_long_alias_string_that_exceeds_four_hundred_characters_this_is_a_very_long_alias_string_that_exceeds_four_hundred_characters_this_is_a_very_long_alias_string_that_exceeds_four_hundred_characters_extra",
+                Enabled: true,
+                Filter:  validPipelineFilterSet,
+            },
+            IsValid: false,
+        },
 	}
 
 	for _, test := range correctQueriesTest {
