@@ -21,6 +21,9 @@ import { useLogsExplorerChartConfig } from './useLogsExplorerChartConfig';
 
 import './LogsExplorerChart.styles.scss';
 
+// Axis and tooltip format separately; both need this or only one abbreviates.
+const Y_AXIS_UNIT = 'short';
+
 function LogsExplorerChart({
 	data,
 	isLoading,
@@ -89,8 +92,7 @@ function LogsExplorerChart({
 		onDragSelect,
 		minTimeScale,
 		maxTimeScale,
-		// Match the previous Chart.js Graph default (yAxisUnit = 'short')
-		yAxisUnit: 'short',
+		yAxisUnit: Y_AXIS_UNIT,
 	});
 
 	return (
@@ -100,20 +102,18 @@ function LogsExplorerChart({
 					<Spinner size="default" height="100%" />
 				</div>
 			) : (
-				<div style={{ zIndex: 1000 }}>
-					<BarChart
-						config={config}
-						data={chartData}
-						width={dimensions.width}
-						height={dimensions.height}
-						stack={isLogsExplorerViews ? StackMode.Normal : StackMode.None}
-						showLegend={isLabelEnabled}
-						legendConfig={{ position: LegendPosition.BOTTOM }}
-						timezone={timezone}
-						data-testid="logs-frequency-chart"
-						yAxisUnit="short"
-					/>
-				</div>
+				<BarChart
+					config={config}
+					data={chartData}
+					width={dimensions.width}
+					height={dimensions.height}
+					stack={isLogsExplorerViews ? StackMode.Normal : StackMode.None}
+					showLegend={isLabelEnabled}
+					legendConfig={{ position: LegendPosition.BOTTOM }}
+					timezone={timezone}
+					data-testid="logs-frequency-chart"
+					yAxisUnit={Y_AXIS_UNIT}
+				/>
 			)}
 		</div>
 	);
