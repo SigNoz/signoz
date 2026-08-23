@@ -12,7 +12,6 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
-import { useIsAIQueryDemo } from 'container/TracesExplorer/useIsAIQueryDemo';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useUrlYAxisUnit from 'hooks/useUrlYAxisUnit';
@@ -32,7 +31,6 @@ function TimeSeriesViewContainer({
 	queryKeyRef,
 }: TimeSeriesViewProps): JSX.Element {
 	const { stagedQuery, currentQuery, panelType } = useQueryBuilder();
-	const isAIQueryDemo = useIsAIQueryDemo();
 
 	const isValidToConvertToMs = useMemo(() => {
 		const isValid: boolean[] = [];
@@ -83,7 +81,6 @@ function TimeSeriesViewContainer({
 			graphType: panelType || PANEL_TYPES.TIME_SERIES,
 			selectedTime: 'GLOBAL_TIME',
 			globalSelectedInterval: globalSelectedTime,
-			builderQueryType: isAIQueryDemo ? 'builder_ai_query' : undefined,
 			params: {
 				dataSource,
 			},
@@ -91,7 +88,7 @@ function TimeSeriesViewContainer({
 		// ENTITY_VERSION_V4,
 		ENTITY_VERSION_V5,
 		{
-			queryKey: [...queryKey, isAIQueryDemo],
+			queryKey,
 			enabled: !!stagedQuery && panelType === PANEL_TYPES.TIME_SERIES,
 		},
 	);

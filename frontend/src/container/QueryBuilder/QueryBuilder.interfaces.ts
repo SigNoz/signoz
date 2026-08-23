@@ -34,16 +34,9 @@ export type QueryBuilderProps = {
 	showOnlyTraceOperator?: boolean;
 	showTraceViewSelector?: boolean;
 	showTraceOperator?: boolean;
-	/**
-	 * Traces only. Default `true`. Set `false` to hide the
-	 * All / Root / Entrypoint span-scope select — e.g. on views that render a
-	 * single query as a bare filter, where a scope sub-filter is noise.
-	 */
+	/** Traces only, default true; false hides the All/Root/Entrypoint span-scope select. */
 	showSpanScopeSelector?: boolean;
-	/**
-	 * Forwarded verbatim to `/fields/keys` as `type` so the backend can scope the
-	 * suggested key set. Never interpreted by the builder.
-	 */
+	/** Forwarded verbatim to `/fields/keys` as `type`; never interpreted by the builder. */
 	fieldKeysQueryType?: BuilderQueryEnvelopeType;
 	version: string;
 	onChangeTraceView?: (view: TraceView) => void;

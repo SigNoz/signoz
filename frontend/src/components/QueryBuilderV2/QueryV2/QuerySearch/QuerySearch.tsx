@@ -114,11 +114,7 @@ interface QuerySearchProps {
 		numberValues: number[];
 		complete: boolean;
 	}>;
-	/**
-	 * Forwarded to `/fields/keys` as `type`, letting the backend scope the key set.
-	 * Not named `type`: `QueryKeyDataSuggestionsProps.type` already means something
-	 * else on the response side.
-	 */
+	/** Sent to `/fields/keys` as `type`; not named `type` — that's taken on the response side. */
 	fieldKeysQueryType?: BuilderQueryEnvelopeType;
 }
 

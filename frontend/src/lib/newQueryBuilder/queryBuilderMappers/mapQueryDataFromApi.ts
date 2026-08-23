@@ -40,9 +40,7 @@ const mapQueryFromV5 = (compositeQuery: ICompositeMetricQuery): Query => {
 
 	compositeQuery.queries?.forEach((q) => {
 		const spec = q.spec as BuilderQuery | PromQuery | ClickHouseQuery;
-		// `builder_ai_query` shares the builder-query spec shape and name namespace,
-		// so it hydrates back into `queryData` exactly like `builder_query`. Without
-		// this branch the chain has no fallback and the envelope is silently dropped.
+		// Shares builder_query's spec shape, so it hydrates identically; without this branch it's dropped.
 		if (q.type === 'builder_query' || q.type === 'builder_ai_query') {
 			if (spec.name) {
 				builderQueries[spec.name] = convertBuilderQueryToIBuilderQuery(

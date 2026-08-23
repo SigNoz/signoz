@@ -38,10 +38,7 @@ export interface QueryKeyRequestProps {
 	metricName?: string;
 	metricNamespace?: string;
 	signalSource?: 'meter' | '';
-	/**
-	 * Scopes the returned key set to a query-type sub-variant of the signal.
-	 * `builder_ai_query` narrows `signal=traces` to the gen_ai attribute keys.
-	 */
+	/** Scopes the key set to a sub-variant of the signal: `builder_ai_query` narrows traces to gen_ai keys. */
 	type?: BuilderQueryEnvelopeType;
 }
 

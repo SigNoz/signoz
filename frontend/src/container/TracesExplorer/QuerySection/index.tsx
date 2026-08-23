@@ -4,13 +4,11 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import ExplorerOrderBy from 'container/ExplorerOrderBy';
 import { OrderByFilterProps } from 'container/QueryBuilder/filters/OrderByFilter/OrderByFilter.interfaces';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
-import { useIsAIQueryDemo } from 'container/TracesExplorer/useIsAIQueryDemo';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { DataSource } from 'types/common/queryBuilder';
 
 function QuerySection(): JSX.Element {
 	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
-	const isAIQueryDemo = useIsAIQueryDemo();
 
 	const filterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
 		const isList = panelTypes === PANEL_TYPES.LIST;
@@ -52,10 +50,6 @@ function QuerySection(): JSX.Element {
 			queryComponents={queryComponents}
 			panelType={panelTypes}
 			filterConfigs={filterConfigs}
-			// DEMO: in AI mode, List/Trace hide the span-scope select and suggestions
-			// are scoped to the gen_ai key set. Both are no-ops without ?aiDemo=1.
-			showSpanScopeSelector={!isAIQueryDemo || !isListViewPanel}
-			fieldKeysQueryType={isAIQueryDemo ? 'builder_ai_query' : undefined}
 			showOnlyWhereClause={
 				panelTypes === PANEL_TYPES.LIST || panelTypes === PANEL_TYPES.TRACE
 			}

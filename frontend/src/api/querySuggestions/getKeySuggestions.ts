@@ -33,8 +33,7 @@ export const getKeySuggestions = (
 	const encodedFieldDataType = encodeURIComponent(fieldDataType);
 	const encodedSource = encodeURIComponent(signalSource);
 	const encodedMetricNamespace = encodeURIComponent(metricNamespace);
-	// Appended only when the caller sets `type`, unlike the params above which are
-	// always sent. Keeps every existing request URL byte-identical.
+	// Appended only when set, so existing request URLs stay byte-identical.
 	const typeParam = type ? `&type=${encodeURIComponent(type)}` : '';
 
 	return axios.get(

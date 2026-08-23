@@ -24,12 +24,7 @@ export type QueryType =
 	| 'clickhouse_sql'
 	| 'promql';
 
-/**
- * The envelope types `convertBuilderQueriesToV5` may emit. Deliberately narrower
- * than `QueryType`: the remaining members take a different spec shape, and the
- * backend decodes specs with `DisallowUnknownFields`, so sending one of them with
- * a builder spec is a 400.
- */
+/** Envelope types `convertBuilderQueriesToV5` may emit; the rest take a different spec shape and 400. */
 export type BuilderQueryEnvelopeType = Extract<
 	QueryType,
 	'builder_query' | 'builder_ai_query'

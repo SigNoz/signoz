@@ -15,7 +15,6 @@ import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { QueryTable } from 'container/QueryTable';
-import { useIsAIQueryDemo } from 'container/TracesExplorer/useIsAIQueryDemo';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { AppState } from 'store/reducers';
@@ -37,7 +36,6 @@ function TableView({
 	queryKeyRef?: MutableRefObject<any>;
 }): JSX.Element {
 	const { stagedQuery, panelType } = useQueryBuilder();
-	const isAIQueryDemo = useIsAIQueryDemo();
 
 	const {
 		selectedTime: globalSelectedTime,
@@ -66,14 +64,13 @@ function TableView({
 			graphType: panelType || PANEL_TYPES.TABLE,
 			selectedTime: 'GLOBAL_TIME',
 			globalSelectedInterval: globalSelectedTime,
-			builderQueryType: isAIQueryDemo ? 'builder_ai_query' : undefined,
 			params: {
 				dataSource: 'traces',
 			},
 		},
 		ENTITY_VERSION_V5,
 		{
-			queryKey: [...queryKey, isAIQueryDemo],
+			queryKey,
 			enabled: !!stagedQuery && panelType === PANEL_TYPES.TABLE,
 		},
 	);
