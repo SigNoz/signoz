@@ -14,7 +14,7 @@ import {
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 
 /** builder_query and builder_ai_query both carry a BuilderQuery spec, hence aggregation metadata. */
-const hasBuilderQuerySpec = (
+const isBuilderQueryEnvelope = (
 	envelope: QueryEnvelope,
 ): envelope is QueryEnvelope & { spec: BuilderQuery } =>
 	envelope.type === 'builder_query' || envelope.type === 'builder_ai_query';
@@ -417,7 +417,7 @@ export function convertV5ResponseToLegacy(
 	const v5Data = payload?.data;
 
 	const aggregationPerQuery =
-		params?.compositeQuery?.queries?.filter(hasBuilderQuerySpec).reduce(
+		params?.compositeQuery?.queries?.filter(isBuilderQueryEnvelope).reduce(
 			(acc, query) => {
 				if (query.spec.name && query.spec.aggregations) {
 					acc[query.spec.name] = query.spec.aggregations;
