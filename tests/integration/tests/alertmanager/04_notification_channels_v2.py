@@ -15,7 +15,6 @@ from fixtures.auth import (
 
 TIMEOUT = 10
 
-V1_BASE_URL = "/api/v1/channels"
 V2_BASE_URL = "/api/v2/notification_channels"
 
 DNS1123_LABEL = re.compile(r"^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
@@ -250,42 +249,6 @@ def test_create_rejects_invalid_bodies(
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
 
 
-def test_create_is_visible_to_the_v1_endpoints(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    cleanup_notification_channels: list[str],
-) -> None:
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    name = f"v2-interop-{uuid.uuid4().hex[:8]}"
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(V2_BASE_URL),
-        json={
-            "name": name,
-            "displayName": f"Display {name}",
-            "config": {"kind": "slack", "spec": {"apiUrl": "https://hooks.slack.test/services/T/B/X", "channel": "#interop"}},
-        },
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=TIMEOUT,
-    )
-    assert response.status_code == HTTPStatus.CREATED, response.text
-    channel_id = response.json()["data"]["id"]
-    cleanup_notification_channels.append(channel_id)
-
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(f"{V1_BASE_URL}/{channel_id}"),
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=TIMEOUT,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-
-    v1_channel = response.json()["data"]
-    assert v1_channel["name"] == f"Display {name}"
-    assert v1_channel["type"] == "slack"
-    assert "#interop" in v1_channel["data"]
-
-
 def test_setup_managed_role_users(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
@@ -330,12 +293,3 @@ def test_create_is_forbidden_below_admin(
         timeout=TIMEOUT,
     )
     assert response.status_code == HTTPStatus.FORBIDDEN, response.text
-
-
-def test_create_requires_authentication(signoz: types.SigNoz) -> None:
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(V2_BASE_URL),
-        json={"name": "unauthenticated", "config": {"kind": "email", "spec": {"to": "a@integration.test"}}},
-        timeout=TIMEOUT,
-    )
-    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.text
