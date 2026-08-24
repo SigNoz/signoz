@@ -33,7 +33,7 @@ function FieldCell({ name, value }: FieldCellProps): JSX.Element {
 	}
 
 	if (value === '' || value == null) {
-		return <TanStackTable.Text data-testid={name}>N/A</TanStackTable.Text>;
+		return <TanStackTable.Text data-testid={name}>-</TanStackTable.Text>;
 	}
 
 	const text = stringifyCellValue(value);

@@ -19,5 +19,8 @@
 	--tanstack-cell-header-padding-left-first-column: 15px;
 
 	--tanstack-plain-body-line-clamp: 1;
-	--row-hover-bg: var(--l1-border);
+
+	--tanstack-table-cell-bg: var(--l2-background);
+	--tanstack-table-header-cell-bg: var(--l1-background-hover);
+	--tanstack-table-row-hover-bg: var(--l1-background-hover);
 }
