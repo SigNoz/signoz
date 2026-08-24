@@ -35,7 +35,8 @@ _PASSWORD = "password123Z$"
         pytest.param("pagerduty", {"routingKey": "pd-routing-key", "severity": "critical", "class": "db"}, "severity", "critical", id="pagerduty"),
         pytest.param("opsgenie", {"apiKey": "og-api-key", "message": "{{ .CommonLabels.alertname }}", "priority": "P2"}, "priority", "P2", id="opsgenie"),
         pytest.param("msteams", {"webhookUrl": "https://teams.test/webhook/abc", "title": "Alert"}, "title", "Alert", id="msteams"),
-        pytest.param("googlechat", {"webhookUrl": "https://chat.test/webhook/abc", "title": "Alert"}, "title", "Alert", id="googlechat"),
+        # The google chat notifier only accepts https URLs on chat.googleapis.com.
+        pytest.param("googlechat", {"webhookUrl": "https://chat.googleapis.com/v1/spaces/A/messages?key=k&token=t", "title": "Alert"}, "title", "Alert", id="googlechat"),
     ],
 )
 def test_create_returns_the_channel_for_every_kind(  # pylint: disable=too-many-arguments,too-many-positional-arguments
