@@ -1,3 +1,8 @@
+/**
+ * AI-owned. Generated and maintained by the `signoz-page-story` skill.
+ * Do not hand-edit: regenerate instead.
+ */
+
 import type { MetricRangePayloadV5 } from 'types/api/v5/queryRange';
 
 /** Typed builders for the query_range v5 response shapes. */

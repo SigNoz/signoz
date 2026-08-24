@@ -103,6 +103,10 @@ where the state lives.
 
 ```ts
 // src/pages/Services/Services.stories.mocks.tsx
+/**
+ * AI-owned. Generated and maintained by the `signoz-page-story` skill.
+ * Do not hand-edit: regenerate instead.
+ */
 export const servicesMocks = defineStoryMocks({
 	controls: {
 		services: countControl('Services', { group: LISTS, value: 8, max: 12 }),

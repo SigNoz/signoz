@@ -1,3 +1,8 @@
+/**
+ * AI-owned. Generated and maintained by the `signoz-page-story` skill.
+ * Do not hand-edit: regenerate instead.
+ */
+
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import type { UserPreference } from 'types/api/preferences/preference';
 
