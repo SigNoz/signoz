@@ -21,6 +21,7 @@ interface OtherFieldsProps {
 	addedFields: TelemetryFieldKey[];
 	onAdd: (field: TelemetryFieldKey) => void;
 	isAtLimit: boolean;
+	allowCustomFields?: boolean;
 }
 
 function OtherFields({
@@ -29,6 +30,7 @@ function OtherFields({
 	addedFields,
 	onAdd,
 	isAtLimit,
+	allowCustomFields,
 }: OtherFieldsProps): JSX.Element {
 	const { data, isFetching } = useGetQueryKeySuggestions(
 		{
@@ -45,25 +47,45 @@ function OtherFields({
 		},
 	);
 
-	const otherFields: TelemetryFieldKey[] = useMemo(() => {
-		const suggestions = Object.values(data?.data.data.keys || {}).flat();
+	const otherFields = useMemo<TelemetryFieldKey[]>(() => {
+		const rawSuggestions = Object.values(data?.data.data.keys || {}).flat();
 		// Normalize: synthesize `key` once so downstream reads can trust it.
-		const normalizedSuggestions: TelemetryFieldKey[] = suggestions.map(
-			(attr) => ({
-				...attr,
-				key: buildCompositeKey(attr.name, attr.fieldContext as string),
-				signal: attr.signal as SignalType,
-				fieldContext: attr.fieldContext as FieldContext,
-				fieldDataType: attr.fieldDataType,
-			}),
-		);
+		const suggestions: TelemetryFieldKey[] = rawSuggestions.map((attr) => ({
+			...attr,
+			key: buildCompositeKey(attr.name, attr.fieldContext as string),
+			signal: attr.signal as SignalType,
+			fieldContext: attr.fieldContext as FieldContext,
+			fieldDataType: attr.fieldDataType,
+		}));
 		const addedIds = new Set(
-			addedFields.map((f) => f.key ?? buildCompositeKey(f.name, f.fieldContext)),
+			addedFields.map((f) => buildCompositeKey(f.name, f.fieldContext)),
 		);
-		return normalizedSuggestions.filter(
+		const available = suggestions.filter(
 			(attr) => !addedIds.has(attr.key as string),
 		);
-	}, [data, addedFields]);
+
+		// Prepend the custom field when its name is not in suggestions and
+		// not already added.
+		const typed = debouncedInputValue.trim();
+		const nameMatches = (list: TelemetryFieldKey[]): boolean =>
+			list.some((f) => f.name.toLowerCase() === typed.toLowerCase());
+		const showCustom =
+			!!allowCustomFields &&
+			typed.length > 0 &&
+			!nameMatches(suggestions) &&
+			!nameMatches(addedFields);
+
+		if (!showCustom) {
+			return available;
+		}
+		const customField: TelemetryFieldKey = {
+			name: typed,
+			fieldContext: '',
+			fieldDataType: '',
+			key: buildCompositeKey(typed, ''),
+		};
+		return [customField, ...available];
+	}, [data, addedFields, allowCustomFields, debouncedInputValue]);
 
 	if (isFetching) {
 		return (
