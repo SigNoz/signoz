@@ -34,7 +34,6 @@ export const QueryV2 = forwardRef(function QueryV2(
 		filterConfigs,
 		isListViewPanel = false,
 		showTraceOperator = false,
-		showSpanScopeSelector = true,
 		hasTraceOperator = false,
 		version,
 		showOnlyWhereClause = false,
@@ -55,7 +54,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 	const { cloneQuery, panelType } = useQueryBuilder();
 
 	const showFunctions = query?.functions?.length > 0;
-	const { dataSource } = query;
+	const { dataSource, builderQueryType } = query;
 
 	const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -95,8 +94,9 @@ export const QueryV2 = forwardRef(function QueryV2(
 	);
 
 	const shouldShowSpanScopeSelector = useMemo(
-		() => dataSource === DataSource.TRACES && showSpanScopeSelector,
-		[dataSource, showSpanScopeSelector],
+		() =>
+			dataSource === DataSource.TRACES && builderQueryType !== 'builder_ai_query',
+		[dataSource, builderQueryType],
 	);
 
 	const showInlineQuerySearch = useMemo(() => {
