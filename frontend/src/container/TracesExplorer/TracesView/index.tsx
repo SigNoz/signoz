@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/cognitive-complexity */
 import {
 	Dispatch,
 	memo,
@@ -12,30 +11,29 @@ import { useSelector } from 'react-redux';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsMenu';
-import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
-import { ResizeTable } from 'components/ResizeTable';
 import { ENTITY_VERSION_V5 } from 'constants/app';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
-import NoLogs from 'container/NoLogs/NoLogs';
 import { getListViewQuery } from 'container/TracesExplorer/explorerUtils';
+import { getTraceLink } from 'container/TracesExplorer/ListView/utils';
+import TracesTable from 'container/TracesExplorer/TracesTable/TracesTable';
+import { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination } from 'hooks/queryPagination';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
-import APIError from 'types/api/error';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import DOCLINKS from 'utils/docLinks';
 
 import TraceExplorerControls from '../Controls';
-import { TracesLoading } from '../TraceLoading/TraceLoading';
 import { columns, PER_PAGE_OPTIONS } from './configs';
-import { ActionsContainer, Container } from './styles';
+
+import styles from './TracesView.module.scss';
 
 interface TracesViewProps {
 	isFilterApplied: boolean;
@@ -119,8 +117,13 @@ function TracesView({
 	}, [data?.payload, data?.warning]);
 
 	const responseData = data?.payload?.data?.newResult?.data?.result[0]?.list;
-	const tableData = useMemo(
-		() => responseData?.map((listItem) => listItem.data),
+
+	const rows = useMemo<TracesTableRow[]>(
+		() =>
+			(responseData ?? []).map((item) => {
+				const row = item.data;
+				return { ...row, id: row.trace_id };
+			}) as TracesTableRow[],
 		[responseData],
 	);
 
@@ -133,71 +136,52 @@ function TracesView({
 	}, [isLoading, isFetching, setIsLoadingQueries]);
 
 	useEffect(() => {
-		if (!isLoading && !isFetching && !isError && (tableData || []).length !== 0) {
-			logEvent('Traces Explorer: Data present', {
+		if (!isLoading && !isFetching && !isError && rows.length !== 0) {
+			void logEvent('Traces Explorer: Data present', {
 				panelType: 'TRACE',
 			});
 		}
-	}, [isLoading, isFetching, isError, panelType, tableData]);
+	}, [isLoading, isFetching, isError, rows.length]);
 
 	return (
-		<Container>
-			{(tableData || []).length !== 0 && (
-				<ActionsContainer>
-					<Typography>
-						This tab only shows Root Spans. More details
-						<Typography.Link href={DOCLINKS.TRACES_DETAILS_LINK} target="_blank">
-							{' '}
-							here
-						</Typography.Link>
-					</Typography>
+		<div className={styles.container}>
+			<div className={styles.actionsContainer}>
+				<Typography>
+					This tab only shows Root Spans. More details
+					<Typography.Link href={DOCLINKS.TRACES_DETAILS_LINK} target="_blank">
+						{' '}
+						here
+					</Typography.Link>
+				</Typography>
 
-					<div className="trace-explorer-controls">
-						<DownloadOptionsMenu
-							dataSource={DataSource.TRACES}
-							panelType={PANEL_TYPES.TRACE}
-						/>
+				<div className="trace-explorer-controls">
+					<DownloadOptionsMenu
+						dataSource={DataSource.TRACES}
+						panelType={PANEL_TYPES.TRACE}
+					/>
 
-						<TraceExplorerControls
-							isLoading={isLoading}
-							totalCount={responseData?.length || 0}
-							perPageOptions={PER_PAGE_OPTIONS}
-						/>
-					</div>
-				</ActionsContainer>
-			)}
+					<TraceExplorerControls
+						isLoading={isLoading}
+						totalCount={rows.length}
+						perPageOptions={PER_PAGE_OPTIONS}
+					/>
+				</div>
+			</div>
 
-			{isError && error && <ErrorInPlace error={error as APIError} />}
-
-			{(isLoading || (isFetching && (tableData || []).length === 0)) && (
-				<TracesLoading />
-			)}
-
-			{!isLoading &&
-				!isFetching &&
-				!isError &&
-				!isFilterApplied &&
-				(tableData || []).length === 0 && <NoLogs dataSource={DataSource.TRACES} />}
-
-			{!isLoading &&
-				!isFetching &&
-				(tableData || []).length === 0 &&
-				!isError &&
-				isFilterApplied && (
-					<EmptyLogsSearch dataSource={DataSource.TRACES} panelType="TRACE" />
-				)}
-
-			{(tableData || []).length !== 0 && (
-				<ResizeTable
-					loading={isLoading}
-					columns={columns}
-					tableLayout="fixed"
-					dataSource={tableData}
-					scroll={{ x: true }}
-					pagination={false}
-				/>
-			)}
-		</Container>
+			<TracesTable
+				data={rows}
+				columns={columns}
+				columnStorageKey={LOCALSTORAGE.TRACES_VIEW_COLUMNS}
+				respectColumnOrder
+				panelType="TRACE"
+				getRowHref={getTraceLink}
+				isLoading={isLoading}
+				isFetching={isFetching}
+				isError={isError}
+				error={error}
+				isFilterApplied={isFilterApplied}
+			/>
+		</div>
 	);
 }
 
