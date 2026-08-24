@@ -1,7 +1,6 @@
 import { ExecStats } from 'api/v5/v5';
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { getInitialStackedBands } from 'container/DashboardContainer/visualization/charts/utils/stackSeriesUtils';
 import { getLegend } from 'lib/dashboard/getQueryResults';
 import getLabelName from 'lib/getLabelName';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
@@ -67,11 +66,6 @@ export function prepareBarPanelConfig({
 	if (!(apiResponse && apiResponse?.data?.result)) {
 		// if no data, return the builder without adding any series
 		return builder;
-	}
-
-	if (widget.stackedBarChart) {
-		const seriesCount = (apiResponse.data.result.length ?? 0) + 1; // +1 for 1-based uPlot series indices
-		builder.setBands(getInitialStackedBands(seriesCount));
 	}
 
 	apiResponse.data.result.forEach((series) => {

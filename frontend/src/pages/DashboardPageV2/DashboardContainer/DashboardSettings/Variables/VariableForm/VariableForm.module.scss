@@ -116,7 +116,7 @@
    is hidden — the row stays a single crisp line and scrolls only when narrow. */
 .typeTabsScroll {
 	justify-self: flex-end;
-	--tab-list-wrapper-secondary-padding-left: 0;
+	--tabs-list-wrapper-secondary-padding-left: 0;
 }
 
 /* Connected segmented control, mirroring Overview's SegmentedControl: no outer

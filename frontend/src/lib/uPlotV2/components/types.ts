@@ -69,6 +69,11 @@ export interface TooltipRenderArgs {
 	syncedSeriesIndexes?: number[] | null;
 	/** Receiver-side filter mode for the synced tooltip. Defaults to Filtered. */
 	syncFilterMode?: SyncTooltipFilterMode;
+	/**
+	 * Pre-stack values, injected by `ChartWrapper`. `Percent` discards the column total,
+	 * so the raw value cannot be recovered from the plot's own cumulative data.
+	 */
+	unstackedData?: uPlot.AlignedData;
 }
 
 export interface IRenderTooltipFooterArgs {
