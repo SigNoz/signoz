@@ -294,7 +294,7 @@ mapping the page, deriving its controls, and the checks a story has to pass.
 
 1. Point the story at the page component under `src/pages/<Page>`.
 2. Declare the page's mocks in `<Page>.stories.mocks.ts` next to it, with its
-   payload builders under `<Page>/__mockdata__/`, and spread
+   payload builders under `<Page>/__story_mockdata__/`, and spread
    `storyMocks(<page>Mocks, { route })` into the meta.
 3. Add `decorators: [withAppLayout]` to the meta.
 4. Give the default story every widget populated. A page story earns its keep by

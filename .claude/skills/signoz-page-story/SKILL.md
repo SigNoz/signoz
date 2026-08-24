@@ -21,7 +21,7 @@ process on top of it.
 2. **Skeleton first**: story + empty `defineStoryMocks`, then run it. The console
    names the endpoints step 1 missed.
 3. **Inventory to controls**: [references/controls.md](references/controls.md).
-4. **Mock data and handlers**: builders in `__mockdata__`, handlers in the page's
+4. **Mock data and handlers**: builders in `__story_mockdata__`, handlers in the page's
    mocks module.
 5. **Verify in the browser**: [references/verify.md](references/verify.md). Never
    report the story as done without it.
@@ -49,15 +49,15 @@ process on top of it.
   mode someone would want to flip.
 - **File layout**: `src/pages/<Page>/<Page>.stories.tsx`,
   `src/pages/<Page>/<Page>.stories.mocks.tsx`, payload builders in
-  `src/pages/<Page>/__mockdata__/<page>.ts`. Nothing page-specific in
+  `src/pages/<Page>/__story_mockdata__/<page>.ts`. Nothing page-specific in
   `src/storybook/controls/`.
 - **Reuse fixtures** from `src/mocks-server/` and `src/tests/fixtures/` where they
   exist. An endpoint jest needs too belongs in `src/mocks-server/handlers.ts`.
-- **Shared response builders live in `src/storybook/msw/__mockdata__/`**: typed
+- **Shared response builders live in `src/storybook/msw/__story_mockdata__/`**: typed
   helpers like `queryRangeV5ScalarResponse` that multiple pages need. Before
   writing a response shape inline, check if a builder exists; if not and the
   shape will repeat, add it there. Page-specific builders stay in the page's
-  `__mockdata__/`.
+  `__story_mockdata__/`.
 - **No comment is the default.** Write one only for what the code cannot show:
   a shape the backend dictates, an app bug the mock reproduces, an ordering or
   cap the page depends on, a workaround and the reason for it. Never restate a

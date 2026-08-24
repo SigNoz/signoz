@@ -7,7 +7,7 @@ import {
 	userPreferencesResponse,
 	versionResponse,
 	zeusHostsResponse,
-} from './__mockdata__/appShell';
+} from './__story_mockdata__/appShell';
 
 /**
  * Endpoints the app shell hits on every route that the jest handlers in
