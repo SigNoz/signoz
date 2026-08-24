@@ -1,3 +1,8 @@
+/**
+ * AI-owned. Generated and maintained by the `signoz-page-story` skill.
+ * Do not hand-edit: regenerate instead.
+ */
+
 import { FeatureKeys } from 'constants/features';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import { checkListStepToPreferenceKeyMap } from 'container/Home/constants';

@@ -51,6 +51,22 @@ process on top of it.
   `src/pages/<Page>/<Page>.stories.mocks.tsx`, payload builders in
   `src/pages/<Page>/__story_mockdata__/<page>.ts`. Nothing page-specific in
   `src/storybook/controls/`.
+- **The mocks are AI-owned and say so.** `<Page>.stories.mocks.tsx` and every file
+  under a `__story_mockdata__/` open with this banner, above the imports:
+
+  ```ts
+  /**
+   * AI-owned. Generated and maintained by the `signoz-page-story` skill.
+   * Do not hand-edit: regenerate instead.
+   */
+  ```
+
+  The root `.gitattributes` marks both paths `linguist-generated=true`, so the
+  reviewer gets them collapsed and spends the attention on the rendered page. The
+  story file is the human surface and never carries the banner. A file with the
+  banner has to stay regenerable from the page alone: no page knowledge in
+  `src/storybook/`, and builders typed from `src/api/generated` where the endpoint
+  has types, so a contract change is a compile error instead of a mock that lies.
 - **Reuse fixtures** from `src/mocks-server/` and `src/tests/fixtures/` where they
   exist. An endpoint jest needs too belongs in `src/mocks-server/handlers.ts`.
 - **Shared response builders live in `src/storybook/msw/__story_mockdata__/`**: typed
@@ -69,6 +85,7 @@ process on top of it.
 ## Done means
 
 - [ ] `Default` shows the page with data, checked in dark and light
+- [ ] the mocks module and every `__story_mockdata__` file carry the AI-owned banner
 - [ ] every control flipped once, its effect seen on screen
 - [ ] console clean: no `[storybook] no msw handler`, no 501, no msw unhandled
       request, no React warning
