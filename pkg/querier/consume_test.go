@@ -197,20 +197,26 @@ func TestMergeSpanAttributeColumns_EmptyEventsAndLinks(t *testing.T) {
 	}
 }
 
-// boolRows reports a bool scan type for one column, which cmock cannot do on its own.
-type boolRows struct {
+// scanTypeRows reports a scan type for one column that cmock cannot produce on its own.
+type scanTypeRows struct {
 	driver.Rows
-	col string
+	col      string
+	chType   string
+	scanType reflect.Type
 }
 
-func (r boolRows) ColumnTypes() []driver.ColumnType {
+func (r scanTypeRows) ColumnTypes() []driver.ColumnType {
 	out := r.Rows.ColumnTypes()
 	for i, colType := range out {
 		if colType.Name() == r.col {
-			out[i] = cmock.NewColumnType(colType.Name(), "Bool", false, reflect.TypeOf(true))
+			out[i] = cmock.NewColumnType(colType.Name(), r.chType, false, r.scanType)
 		}
 	}
 	return out
+}
+
+func boolRows(col string, rows driver.Rows) driver.Rows {
+	return scanTypeRows{Rows: rows, col: col, chType: "Bool", scanType: reflect.TypeOf(true)}
 }
 
 // A time-series result can carry numeric widths narrower than 32 bits — max(severity_number) is
@@ -256,10 +262,10 @@ func TestConsume_NarrowNumericWidths(t *testing.T) {
 	})
 
 	t.Run("Bool aggregation", func(t *testing.T) {
-		series := seriesOf(t, boolRows{col: "__result_0", Rows: cmock.NewRows([]cmock.ColumnType{
+		series := seriesOf(t, boolRows("__result_0", cmock.NewRows([]cmock.ColumnType{
 			{Name: "ts", Type: "DateTime"},
 			{Name: "__result_0", Type: "UInt8"},
-		}, [][]any{{ts, uint8(1)}})})
+		}, [][]any{{ts, uint8(1)}})))
 
 		require.Len(t, series, 1)
 		require.Len(t, series[0].Values, 1)
@@ -267,11 +273,11 @@ func TestConsume_NarrowNumericWidths(t *testing.T) {
 	})
 
 	t.Run("Bool group-by", func(t *testing.T) {
-		series := seriesOf(t, boolRows{col: "has_error", Rows: cmock.NewRows([]cmock.ColumnType{
+		series := seriesOf(t, boolRows("has_error", cmock.NewRows([]cmock.ColumnType{
 			{Name: "ts", Type: "DateTime"},
 			{Name: "has_error", Type: "UInt8"},
 			{Name: "__result_0", Type: "UInt64"},
-		}, [][]any{{ts, uint8(1), uint64(7)}, {ts, uint8(0), uint64(2)}})})
+		}, [][]any{{ts, uint8(1), uint64(7)}, {ts, uint8(0), uint64(2)}})))
 
 		got := map[bool]float64{}
 		for _, s := range series {
@@ -306,4 +312,34 @@ func TestConsume_HugeAggregationAlias(t *testing.T) {
 			assert.Equal(t, float64(7), data.Aggregations[0].Series[0].Values[0].Value)
 		})
 	}
+}
+
+// A builder aggregation is Nullable(Float64) — accurateCastOrNull — so its scan slot is a double
+// pointer, and a NULL cell must skip the point rather than plot a zero.
+func TestConsume_NullableAggregation(t *testing.T) {
+	ts := time.Date(2026, 8, 24, 10, 0, 0, 0, time.UTC)
+	rows := scanTypeRows{
+		col:      "__result_0",
+		chType:   "Nullable(Float64)",
+		scanType: reflect.TypeOf((*float64)(nil)),
+		Rows: cmock.NewRows([]cmock.ColumnType{
+			{Name: "ts", Type: "DateTime"},
+			{Name: "__result_0", Type: "Nullable(Float64)"},
+		}, [][]any{
+			{ts, float64(4.5)},
+			{ts.Add(time.Minute), nil},
+			{ts.Add(2 * time.Minute), float64(2.5)},
+		}),
+	}
+
+	payload, err := consume(rows, qbtypes.RequestTypeTimeSeries, nil, qbtypes.Step{}, "A")
+	require.NoError(t, err)
+
+	data := payload.(*qbtypes.TimeSeriesData)
+	require.Len(t, data.Aggregations, 1)
+	require.Len(t, data.Aggregations[0].Series, 1)
+	values := data.Aggregations[0].Series[0].Values
+	require.Len(t, values, 2)
+	assert.Equal(t, 4.5, values[0].Value)
+	assert.Equal(t, 2.5, values[1].Value)
 }

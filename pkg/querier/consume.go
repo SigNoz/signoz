@@ -134,16 +134,36 @@ func numericFromSlot(ptr any) (float64, bool) {
 		return float64(*v), true
 	case *float32:
 		return float64(*v), true
+	case *uint16:
+		return float64(*v), true
+	case *int16:
+		return float64(*v), true
 	case *uint8:
 		return float64(*v), true
 	case *int8:
 		return float64(*v), true
+	// builder aggregations arrive as Nullable(Float64) — accurateCastOrNull — so the nullable
+	// carriers matter as much as the plain ones
+	case **float64:
+		return nullableAsFloat(v)
+	case **uint64:
+		return nullableAsFloat(v)
+	case **int64:
+		return nullableAsFloat(v)
 	}
 	val := derefValue(ptr)
 	if val == nil {
 		return 0, false
 	}
 	return numericAsFloat(val), true
+}
+
+// nullableAsFloat reads a Nullable column's scan slot; NULL is no value, not a zero.
+func nullableAsFloat[T int64 | uint64 | float64](v **T) (float64, bool) {
+	if *v == nil {
+		return 0, false
+	}
+	return float64(**v), true
 }
 
 func boolFromSlot(ptr any) bool {
