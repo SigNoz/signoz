@@ -54,9 +54,11 @@ export interface AppHarnessProps {
 /**
  * The app's provider tree, as `src/index.tsx` and `src/AppRoutes/index.tsx`
  * mount it, minus Sentry, posthog and `AppProvider`, with the pieces a test
- * runner has to choose left as props. Both harnesses that render pages outside
- * the app (jest's `test-utils`, Storybook's `StorybookProviders`) go through
- * here, so a provider added to the app is added once and both see it.
+ * runner has to choose left as props. Storybook's `StorybookProviders` mounts
+ * it, so a story gets the tree production gets. jest's `test-utils` keeps its
+ * own smaller tree: ~20 files in the suite mock provider modules down to a
+ * single export, so the providers those modules also carry would come back
+ * `undefined`.
  */
 function AppHarness({
 	children,
