@@ -1,0 +1,23 @@
+.tableWrapper {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.tracesTable {
+	--tanstack-table-row-height: 54px;
+	--tanstack-table-header-height: 54px;
+
+	--tanstack-cell-padding-top-override: 5px;
+	--tanstack-cell-padding-bottom-override: 5px;
+	--tanstack-cell-padding-right-override: 15px;
+
+	--tanstack-cell-padding-left-override: 15px;
+	--tanstack-cell-header-padding-left-override: 5px;
+
+	--tanstack-cell-header-padding-left-first-column: 15px;
+
+	--tanstack-plain-body-line-clamp: 1;
+	--row-hover-bg: var(--l1-border);
+}
