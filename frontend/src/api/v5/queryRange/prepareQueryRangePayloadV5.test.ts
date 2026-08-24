@@ -955,23 +955,17 @@ describe('convertBuilderQueriesToV5 builder query type', () => {
 		return envelope;
 	};
 
-	it.each<[RequestType]>([['trace'], ['raw']])(
-		'sends builder_ai_query for the %s request type',
-		(requestType) => {
-			expect(buildEnvelope('builder_ai_query', requestType).type).toBe(
-				'builder_ai_query',
-			);
-		},
-	);
-
-	it.each<[RequestType]>([['time_series'], ['scalar'], ['distribution']])(
-		'falls back to builder_query for the unsupported %s request type',
-		(requestType) => {
-			expect(buildEnvelope('builder_ai_query', requestType).type).toBe(
-				'builder_query',
-			);
-		},
-	);
+	it.each<[RequestType]>([
+		['trace'],
+		['raw'],
+		['time_series'],
+		['scalar'],
+		['distribution'],
+	])('sends builder_ai_query for the %s request type', (requestType) => {
+		expect(buildEnvelope('builder_ai_query', requestType).type).toBe(
+			'builder_ai_query',
+		);
+	});
 
 	it.each<[string, IBuilderQuery['builderQueryType']]>([
 		['an unmarked query', undefined],

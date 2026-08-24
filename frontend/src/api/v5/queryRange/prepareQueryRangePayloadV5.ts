@@ -13,7 +13,6 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	BaseBuilderQuery,
-	BuilderQueryType,
 	FieldContext,
 	FieldDataType,
 	Filter,
@@ -316,23 +315,6 @@ export function createAggregation(
 	return [{ expression: 'count()' }];
 }
 
-// The gen_ai-scoped builder serves only trace and raw; other panels fall back to the generic builder.
-const AI_QUERY_REQUEST_TYPES: RequestType[] = ['trace', 'raw'];
-
-function resolveBuilderQueryType(
-	queryData: IBuilderQuery,
-	requestType: RequestType,
-): BuilderQueryType {
-	if (
-		queryData.builderQueryType === 'builder_ai_query' &&
-		AI_QUERY_REQUEST_TYPES.includes(requestType)
-	) {
-		return 'builder_ai_query';
-	}
-
-	return 'builder_query';
-}
-
 /**
  * Converts query builder data to V5 builder queries
  */
@@ -382,7 +364,7 @@ export function convertBuilderQueriesToV5(
 			}
 
 			return {
-				type: resolveBuilderQueryType(queryData, requestType),
+				type: queryData.builderQueryType ?? 'builder_query',
 				spec,
 			};
 		},
