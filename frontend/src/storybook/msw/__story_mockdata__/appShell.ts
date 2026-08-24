@@ -38,15 +38,15 @@ export const zeusHostsResponse = {
 };
 
 export const versionResponse = {
-	version: 'v0.99.0',
+	version: 'v0.0.0',
 	ee: 'Y',
 	setupCompleted: true,
 };
 
 export const latestGithubReleaseResponse = {
-	tag_name: 'v0.99.0',
-	name: 'v0.99.0',
-	html_url: 'https://github.com/SigNoz/signoz/releases/tag/v0.99.0',
+	tag_name: 'v0.0.0',
+	name: 'v0.0.0',
+	html_url: 'https://github.com/SigNoz/signoz/releases/tag/v0.0.0',
 };
 
 export const globalConfigResponse = {
@@ -69,7 +69,7 @@ export const changelogResponse = {
 		{
 			id: 1,
 			documentId: 'changelog-v0-99-0',
-			version: 'v0.99.0',
+			version: 'v0.0.0',
 			release_date: '2026-08-12',
 			bug_fixes:
 				'Fixed dashboard variables losing their selection on refresh.\nFixed alert history pagination.',
