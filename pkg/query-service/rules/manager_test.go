@@ -14,6 +14,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
+	"github.com/SigNoz/signoz/pkg/queryparser"
+	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -25,6 +27,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	cmock "github.com/SigNoz/clickhouse-go-mock"
 )
 
@@ -286,3 +290,59 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 		})
 	}
 }
+
+func TestManager_CreateRule_Disabled(t *testing.T) {
+	orgID := valuer.GenerateUUID()
+	ctx := authtypes.NewContextWithClaims(context.Background(), authtypes.Claims{
+		OrgID: orgID.StringValue(),
+		Email: "test@example.com",
+	})
+
+	ruleJSON := `{
+		"schemaVersion": "v2alpha1",
+		"alert": "Test Disabled Rule",
+		"alertType": "METRIC_BASED_ALERT",
+		"ruleType": "threshold_rule",
+		"disabled": true,
+		"condition": {
+			"compositeQuery": {
+				"queries": [{"type": "promql", "spec": {"name": "A", "query": "up"}}],
+				"panelType": "graph",
+				"queryType": "promql"
+			},
+			"thresholds": {"kind": "basic", "spec": [{"name": "critical", "target": 90, "matchType": "1", "op": "1"}]}
+		},
+		"evaluation": {"kind": "rolling", "spec": {"evalWindow": "5m", "frequency": "1m"}},
+		"notificationSettings": {"usePolicy": false}
+	}`
+
+	mgr := NewTestManager(t, &TestManagerOptions{
+		AlertmanagerHook: func(am alertmanager.Alertmanager) {
+			mockAM := am.(*alertmanagermock.MockAlertmanager)
+			mockAM.On("SetNotificationConfig", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+			mockAM.On("CreateRoutePolicies", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
+			mockAM.On("CreateInhibitRules", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+			mockAM.On("Config").Return(alertmanagerserver.Config{}).Maybe()
+		},
+		SqlStoreHook: func(store sqlstore.SQLStore) {
+			mockStore := store.(*sqlstoretest.Provider)
+			// Mock DB query for rule creation (bun uses ExpectQuery with RETURNING)
+			mockStore.Mock().ExpectQuery("INSERT INTO (.+)rule(.+)").WillReturnRows(sqlmock.NewRows([]string{"deleted"}).AddRow(0))
+		},
+		ManagerOptionsHook: func(opts *ManagerOptions) {
+			providerSettings := instrumentationtest.New().ToProviderSettings()
+			qp := queryparser.New(providerSettings)
+			opts.RuleStore = sqlrulestore.NewRuleStore(opts.SQLStore, qp, providerSettings)
+		},
+	})
+
+	rule, err := mgr.CreateRule(ctx, ruleJSON)
+	require.NoError(t, err)
+	require.NotNil(t, rule)
+
+	// Since disabled is true, no task should be scheduled in mgr.tasks
+	taskName := prepareTaskName(rule.Id)
+	_, exists := mgr.tasks[taskName]
+	assert.False(t, exists, "Task should NOT be created for a disabled rule")
+}
+

@@ -610,9 +610,11 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 			}
 		}
 
-		taskName := prepareTaskName(id.StringValue())
-		if err = m.addTask(ctx, orgID, &parsedRule, taskName); err != nil {
-			return err
+		if !parsedRule.Disabled {
+			taskName := prepareTaskName(id.StringValue())
+			if err = m.addTask(ctx, orgID, &parsedRule, taskName); err != nil {
+				return err
+			}
 		}
 
 		return nil
