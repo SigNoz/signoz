@@ -182,10 +182,6 @@ func (m *fieldMapper) getColumn(
 	case telemetrytypes.FieldContextResource:
 		return []*schema.Column{indexV3Columns["resource"], indexV3Columns["resources_string"]}, nil
 	case telemetrytypes.FieldContextScope:
-		// scope attributes with same name as declared paths create ambiguity and can't be queried directly.
-		if key.Name == "name" || key.Name == "version" {
-			return nil, qbtypes.ErrColumnNotFound
-		}
 		return []*schema.Column{indexV3Columns["scope"]}, nil
 	case telemetrytypes.FieldContextAttribute:
 		switch key.FieldDataType {
@@ -431,19 +427,30 @@ func (m *fieldMapper) ColumnExpressionFor(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
 
-	// Resolve the candidate logical field(s).
+	// Resolve the candidate logical field(s). A key carrying a context is asked of metadata
+	// first, the way the filter path asks: the probe below only answers whether a key
+	// resolves to a column and stands in for whether it names one field, so a column that
+	// resolves for either of two homes -- a declared scope path or a same-named scope
+	// attribute -- would be reported as resolved while still being ambiguous. A bare key
+	// cannot resolve through the probe at all (getColumn needs a context), so it already
+	// reaches CandidateKeys, which consults metadata itself, and is left alone here.
 	var candidates []*telemetrytypes.LogicalField
-	switch _, err := m.FieldFor(ctx, orgID, startNs, endNs, field); {
-	case err == nil:
-		candidates = []*telemetrytypes.LogicalField{m.logicalForResolvedColumn(ctx, orgID, field, keys)}
-	case errors.Is(err, qbtypes.ErrColumnNotFound):
-		raw := m.CandidateKeys(ctx, orgID, field, nil, keys)
-		if len(raw) == 0 {
-			return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
+	if field.FieldContext != telemetrytypes.FieldContextUnspecified {
+		candidates = querybuilder.MatchingLogicalFields(ctx, orgID, m.fl, field, keys)
+	}
+	if len(candidates) == 0 {
+		switch _, err := m.FieldFor(ctx, orgID, startNs, endNs, field); {
+		case err == nil:
+			candidates = []*telemetrytypes.LogicalField{m.logicalForResolvedColumn(ctx, orgID, field, keys)}
+		case errors.Is(err, qbtypes.ErrColumnNotFound):
+			raw := m.CandidateKeys(ctx, orgID, field, nil, keys)
+			if len(raw) == 0 {
+				return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
+			}
+			candidates = m.upgradeToFamilies(ctx, orgID, field, querybuilder.WrapAsLogicalFields(field.Name, raw), keys)
+		default:
+			return "", err
 		}
-		candidates = m.upgradeToFamilies(ctx, orgID, field, querybuilder.WrapAsLogicalFields(field.Name, raw), keys)
-	default:
-		return "", err
 	}
 
 	// Group-by/order (String) and aggregation (String/Float64): every candidate is
