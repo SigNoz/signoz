@@ -60,7 +60,7 @@ const config: StorybookConfig = {
 	// the root; `./public` carries the msw worker, which must not ship in a
 	// production build.
 	staticDirs: ['../public', './public'],
-	addons: [],
+	addons: ['@storybook/addon-a11y'],
 	core: { disableTelemetry: true },
 	viteFinal: async (viteConfig) => {
 		const plugins = (viteConfig.plugins ?? [])
