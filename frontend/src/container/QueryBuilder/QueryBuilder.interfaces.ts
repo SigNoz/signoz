@@ -37,8 +37,6 @@ export type QueryBuilderProps = {
 	showOnlyTraceOperator?: boolean;
 	showTraceViewSelector?: boolean;
 	showTraceOperator?: boolean;
-	/** Traces-only control; the AI explorer hides it since the gen_ai gate already scopes spans. */
-	showSpanScopeSelector?: boolean;
 	version: string;
 	onChangeTraceView?: (view: TraceView) => void;
 	onSignalSourceChange?: (value: string) => void;

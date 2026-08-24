@@ -28,7 +28,6 @@ function QuerySection(): JSX.Element {
 	return (
 		<QueryBuilderV2
 			isListViewPanel={isListViewPanel}
-			showSpanScopeSelector={false}
 			config={{ initialDataSource: DataSource.TRACES, queryVariant: 'static' }}
 			panelType={panelTypes}
 			filterConfigs={filterConfigs}
