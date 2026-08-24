@@ -11,8 +11,8 @@ import type { MetricRangePayloadV3 } from 'types/api/metrics/getQueryRange';
 import type { ServicesList } from 'types/api/metrics/getService';
 import type { UserPreference } from 'types/api/preferences/preference';
 
-import { baseUserPreferences } from '@/storybook/msw/__mockdata__/appShell';
-import { queryRangeV5ScalarResponse } from '@/storybook/msw/__mockdata__/queryRange';
+import { baseUserPreferences } from '@/storybook/msw/__story_mockdata__/appShell';
+import { queryRangeV5ScalarResponse } from '@/storybook/msw/__story_mockdata__/queryRange';
 
 export { queryRangeV5ScalarResponse };
 

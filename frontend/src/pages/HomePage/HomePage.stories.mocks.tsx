@@ -24,7 +24,7 @@ import {
 	type ServicesSource,
 	spanMetricsResponse,
 	topLevelOperationsResponse,
-} from './__mockdata__/home';
+} from './__story_mockdata__/home';
 
 const SIGNALS = 'Home · signals';
 const ONBOARDING = 'Home · onboarding';

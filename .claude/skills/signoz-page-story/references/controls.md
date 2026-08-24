@@ -17,7 +17,7 @@ inside `src/storybook/` import each other relatively.
 | `MockRequest`, `MockResponse` | `../controls/types` |
 | `withAppLayout` | `@/storybook/decorators/withAppLayout` |
 | the page's mocks, from the story | `./<Page>.stories.mocks` |
-| `queryRangeV5ScalarResponse`, `queryRangeV5RawResponse`, etc. | `@/storybook/msw/__mockdata__/queryRange` |
+| `queryRangeV5ScalarResponse`, `queryRangeV5RawResponse`, etc. | `@/storybook/msw/__story_mockdata__/queryRange` |
 
 ## Which builder
 
