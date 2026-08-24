@@ -16,7 +16,7 @@ export const getOptionsFromKeys = (
 };
 
 // Composite identity for a column. Disambiguates same-name fields across
-// different fieldContexts (e.g. resource.service.name vs attribute.service.name).
+// different fieldContexts (e.g. resource:service.name vs attribute:service.name).
 // Falls back to bare name when context is missing.
 export const buildCompositeKey = (name: string, context?: string): string =>
-	context ? `${context}.${name}` : name;
+	context ? `${context}:${name}` : name;
