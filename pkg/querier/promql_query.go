@@ -1,16 +1,12 @@
 package querier
 
 import (
-	"bytes"
 	"context"
-	"fmt"
 	"log/slog"
 	"math"
 	"regexp"
-	"sort"
 	"strings"
 	"sync"
-	"text/template"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -212,7 +208,6 @@ func (q *promqlQuery) removeAllVarMatchers(query string, vars map[string]qbv5.Va
 	return expr.String(), nil
 }
 
-// TODO(srikanthccv): cleanup the templating logic.
 func (q *promqlQuery) renderVars(query string, vars map[string]qbv5.VariableItem, start, end uint64) (string, error) {
 	// First, remove label matchers that use variables with __all__ value.
 	// This must happen before variable substitution so we can detect variable references
@@ -221,40 +216,8 @@ func (q *promqlQuery) renderVars(query string, vars map[string]qbv5.VariableItem
 	if err != nil {
 		return "", err
 	}
-	varsData := map[string]any{}
-	for k, v := range vars {
-		varsData[k] = formatValueForProm(v.Value)
-	}
 
-	querybuilder.AssignReservedVars(varsData, start, end)
-
-	keys := make([]string, 0, len(varsData))
-	for k := range varsData {
-		keys = append(keys, k)
-	}
-	sort.Slice(keys, func(i, j int) bool {
-		return len(keys[i]) > len(keys[j])
-	})
-
-	for _, k := range keys {
-		query = strings.ReplaceAll(query, fmt.Sprintf("{{%s}}", k), fmt.Sprint(varsData[k]))
-		query = strings.ReplaceAll(query, fmt.Sprintf("[[%s]]", k), fmt.Sprint(varsData[k]))
-		query = strings.ReplaceAll(query, fmt.Sprintf("$%s", k), fmt.Sprint(varsData[k]))
-	}
-
-	tmpl := template.New("promql-query")
-	tmpl, err = tmpl.Parse(query)
-	if err != nil {
-		return "", errors.WrapInternalf(err, errors.CodeInternal, "error while replacing template variables")
-	}
-	var newQuery bytes.Buffer
-
-	// replace go template variables
-	err = tmpl.Execute(&newQuery, varsData)
-	if err != nil {
-		return "", errors.WrapInternalf(err, errors.CodeInternal, "error while replacing template variables")
-	}
-	return newQuery.String(), nil
+	return substituteVariables(query, vars, start, end, formatValueForProm, "promql-query")
 }
 
 // Statement renders the PromQL string (no SQL args) without executing it, for
