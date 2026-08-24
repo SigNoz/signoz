@@ -1,8 +1,10 @@
 package alertmanagertypes
 
 import (
+	"reflect"
 	"testing"
 
+	commoncfg "github.com/prometheus/common/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -105,11 +107,11 @@ func TestPostableChannelToReceiverWritesTheExpectedConfigsField(t *testing.T) {
 	}
 }
 
-// The spec types and the wire types they translate through carry the same field
-// sets, and nothing but this couples them: a field missing from a wire type, or
-// from either direction of its mapping, is silently dropped. Every field is set
-// so no default can fill the gap and hide it, and the whole spec is compared so
-// a dropped field fails rather than going unasserted. Webhook is covered by
+// The spec types and the upstream configs they translate through carry the same
+// field sets, and nothing but this couples them: a field missing from either
+// direction of the mapping is silently dropped. Every field is set so no default
+// can fill the gap and hide it, and the whole spec is compared so a dropped
+// field fails rather than going unasserted. Webhook is covered by
 // TestPostableChannelToReceiverRoundTripsWebhookAuthModes, whose auth modes are
 // mutually exclusive and so cannot all be set at once.
 func TestChannelToPostableChannelRoundTripsEveryFieldOfEveryKind(t *testing.T) {
@@ -384,6 +386,14 @@ func TestPostableChannelToReceiverRoundTripsWebhookAuthModes(t *testing.T) {
 			assert.Equal(t, testCase.expectedRoundTrip, roundTripped.Config.Spec)
 		})
 	}
+}
+
+// rejectUnrepresentableHTTPConfig enumerates the members it rejects, so a field
+// added upstream would pass unnoticed and be dropped on read. Pinning the counts
+// turns a dependency bump into a failing test rather than silent data loss.
+func TestRejectUnrepresentableHTTPConfigCoversEveryUpstreamMember(t *testing.T) {
+	assert.Equal(t, 10, reflect.TypeFor[commoncfg.HTTPClientConfig]().NumField())
+	assert.Equal(t, 5, reflect.TypeFor[commoncfg.ProxyConfig]().NumField())
 }
 
 func TestChannelToPostableChannelRejectsUnrepresentableChannels(t *testing.T) {

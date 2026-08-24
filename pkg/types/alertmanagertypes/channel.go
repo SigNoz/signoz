@@ -123,7 +123,7 @@ func receiverChannelType(receiver *Receiver) string {
 }
 
 // countNotifierConfigs totals every *_configs entry on the receiver, including
-// notifier kinds this API does not model, so a row mixing a modelled kind with
+// notifier kinds no ChannelSpec models, so a row mixing a modelled kind with
 // an unmodelled one is not mistaken for a single-notifier channel.
 func countNotifierConfigs(receiver *Receiver) int {
 	return countConfigsFields(reflect.ValueOf(*receiver)) +

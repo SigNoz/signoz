@@ -45,7 +45,7 @@ func (c *Channel) toPostableNotificationChannel() (*PostableNotificationChannel,
 	if total := countNotifierConfigs(receiver); total > 1 {
 		return nil, errors.NewInvalidInputf(
 			ErrCodeAlertmanagerChannelInvalid,
-			"channel %q carries %d notifier configurations; this API represents one per channel", c.Name, total,
+			"channel %q carries %d notifier configurations; only one per channel is supported", c.Name, total,
 		)
 	}
 
@@ -68,7 +68,7 @@ func (c *Channel) toPostableNotificationChannel() (*PostableNotificationChannel,
 
 	return nil, errors.NewNotFoundf(
 		ErrCodeChannelUnsupportedKind,
-		"channel %q carries no notifier configuration this API supports", c.Name,
+		"channel %q carries no supported notifier configuration", c.Name,
 	)
 }
 

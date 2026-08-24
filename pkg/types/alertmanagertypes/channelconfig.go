@@ -303,7 +303,7 @@ func (c ChannelWebhookConfig) toReceiver(displayName string) (*Receiver, error) 
 
 	// Seeded from upstream's default rather than a zero value: FollowRedirects
 	// and EnableHTTP2 marshal unconditionally, so a zero value would persist
-	// them as false and read back as a config this API cannot represent.
+	// them as false and read back as a config ChannelWebhookConfig cannot represent.
 	switch {
 	case c.Username != "":
 		httpConfig := commoncfg.DefaultHTTPClientConfig
@@ -329,7 +329,7 @@ func (c ChannelWebhookConfig) toReceiver(displayName string) (*Receiver, error) 
 
 func newChannelWebhookConfigFromReceiver(name string, receiver *Receiver) (ChannelSpec, error) {
 	upstream := receiver.WebhookConfigs[0]
-	if err := assertRepresentableHTTPConfig(name, upstream.HTTPConfig); err != nil {
+	if err := rejectUnrepresentableHTTPConfig(name, upstream.HTTPConfig); err != nil {
 		return nil, err
 	}
 
@@ -643,7 +643,7 @@ func extractStringDetails(name string, details map[string]any) (map[string]strin
 		if !ok {
 			return nil, errors.NewInvalidInputf(
 				ErrCodeAlertmanagerChannelInvalid,
-				"channel %q sets a non-string value for details.%s, which this API cannot represent", name, key,
+				"channel %q sets a non-string value for details.%s, which is not supported", name, key,
 			)
 		}
 		extracted[key] = stringValue
@@ -652,78 +652,45 @@ func extractStringDetails(name string, details map[string]any) (map[string]strin
 	return extracted, nil
 }
 
-// assertRepresentableHTTPConfig fails when a stored webhook carries http_config
-// members this API has no field for. Without it a read would drop them and the
-// next write would persist the channel without them, silently unauthenticating
-// it. The two booleans are checked last: upstream marshals them unconditionally,
-// so they are the least specific signal of a config we cannot represent.
-func assertRepresentableHTTPConfig(name string, httpConfig *commoncfg.HTTPClientConfig) error {
+// rejectUnrepresentableHTTPConfig fails the read when a stored webhook uses an
+// http_config member ChannelWebhookConfig has no field for.
+func rejectUnrepresentableHTTPConfig(name string, httpConfig *commoncfg.HTTPClientConfig) error {
 	if httpConfig == nil {
 		return nil
 	}
 
-	member := ""
-	switch {
-	case httpConfig.OAuth2 != nil:
-		member = "oauth2"
-	case httpConfig.BearerToken != "":
-		member = "bearer_token"
-	case httpConfig.BearerTokenFile != "":
-		member = "bearer_token_file"
-	case httpConfig.ProxyURL.URL != nil && httpConfig.ProxyURL.String() != "":
-		member = "proxy_url"
-	case httpConfig.NoProxy != "":
-		member = "no_proxy"
-	case httpConfig.ProxyFromEnvironment:
-		member = "proxy_from_environment"
-	case httpConfig.HTTPHeaders != nil:
-		member = "http_headers"
-	case !isRepresentableBasicAuth(httpConfig.BasicAuth):
-		// Only the inline username and password round-trip; the _file and _ref
-		// indirections have no field on the spec.
-		member = "basic_auth"
-	case !isRepresentableAuthorization(httpConfig.Authorization):
-		// The spec models the credentials but not the scheme, so any scheme but
-		// Bearer would be rewritten as Bearer on the next write.
-		member = "authorization"
-	case !isRepresentableTLSConfig(httpConfig.TLSConfig):
-		member = "tls_config"
-	case !httpConfig.FollowRedirects:
-		member = "follow_redirects"
-	case !httpConfig.EnableHTTP2:
-		member = "enable_http2"
-	}
+	// basic_auth and authorization are the only members ChannelWebhookConfig
+	// partly models, so rather than checking whether they are set at all, compare
+	// them against what it would write back for the same credentials.
+	basicAuth := httpConfig.BasicAuth
+	authorization := httpConfig.Authorization
 
-	if member != "" {
-		return errors.NewInvalidInputf(
-			ErrCodeAlertmanagerChannelInvalid,
-			"channel %q sets http_config.%s, which this API cannot represent", name, member,
-		)
+	for _, unrepresentable := range []struct {
+		set    bool
+		member string
+	}{
+		{httpConfig.OAuth2 != nil, "oauth2"},
+		{httpConfig.BearerToken != "", "bearer_token"},
+		{httpConfig.BearerTokenFile != "", "bearer_token_file"},
+		{httpConfig.ProxyURL.URL != nil && httpConfig.ProxyURL.String() != "", "proxy_url"},
+		{httpConfig.NoProxy != "", "no_proxy"},
+		{httpConfig.ProxyFromEnvironment, "proxy_from_environment"},
+		{httpConfig.HTTPHeaders != nil, "http_headers"},
+		{httpConfig.TLSConfig != (commoncfg.TLSConfig{}), "tls_config"},
+		{basicAuth != nil && *basicAuth != (commoncfg.BasicAuth{Username: basicAuth.Username, Password: basicAuth.Password}), "basic_auth"},
+		{authorization != nil && *authorization != (commoncfg.Authorization{Type: bearerAuthorizationType, Credentials: authorization.Credentials}), "authorization"},
+		{!httpConfig.FollowRedirects, "follow_redirects"},
+		{!httpConfig.EnableHTTP2, "enable_http2"},
+	} {
+		if unrepresentable.set {
+			return errors.NewInvalidInputf(
+				ErrCodeAlertmanagerChannelInvalid,
+				"channel %q sets http_config.%s, which is not supported", name, unrepresentable.member,
+			)
+		}
 	}
 
 	return nil
-}
-
-func isRepresentableBasicAuth(basicAuth *commoncfg.BasicAuth) bool {
-	if basicAuth == nil {
-		return true
-	}
-
-	return basicAuth.UsernameFile == "" && basicAuth.UsernameRef == "" &&
-		basicAuth.PasswordFile == "" && basicAuth.PasswordRef == ""
-}
-
-func isRepresentableAuthorization(authorization *commoncfg.Authorization) bool {
-	if authorization == nil {
-		return true
-	}
-
-	return strings.EqualFold(authorization.Type, bearerAuthorizationType) &&
-		authorization.CredentialsFile == "" && authorization.CredentialsRef == ""
-}
-
-func isRepresentableTLSConfig(tlsConfig commoncfg.TLSConfig) bool {
-	return tlsConfig == commoncfg.TLSConfig{}
 }
 
 // channelKinds registers each notification kind with the spec constructor
