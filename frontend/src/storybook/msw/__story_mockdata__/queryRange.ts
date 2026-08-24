@@ -3,7 +3,11 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type { MetricRangePayloadV5 } from 'types/api/v5/queryRange';
+import type {
+	MetricRangePayloadV5,
+	TimeSeries,
+	TimeSeriesValue,
+} from 'types/api/v5/queryRange';
 
 /** Typed builders for the query_range v5 response shapes. */
 
@@ -71,3 +75,59 @@ export const queryRangeV5RawResponse = <T>(
 		},
 	};
 };
+
+export interface TimeSeriesPointsOptions {
+	/** Epoch milliseconds, as `query_range` sends them. */
+	start: number;
+	end: number;
+	points?: number;
+	base: number;
+	amplitude: number;
+	seed?: number;
+}
+
+/**
+ * Points spread evenly across the requested window, so a chart drawn from them
+ * lands inside whatever range the page asked for. The wave is derived from the
+ * index rather than random, so a re-render redraws the same line.
+ */
+export const timeSeriesPoints = ({
+	start,
+	end,
+	points = 30,
+	base,
+	amplitude,
+	seed = 0,
+}: TimeSeriesPointsOptions): TimeSeriesValue[] => {
+	const step = (end - start) / Math.max(points - 1, 1);
+
+	return Array.from({ length: points }, (_unused, index) => ({
+		timestamp: Math.round(start + index * step),
+		value:
+			base +
+			amplitude * Math.sin((index + seed) / 3) +
+			amplitude * 0.3 * Math.cos((index + seed) / 7),
+	}));
+};
+
+export interface TimeSeriesResult {
+	/** The query or formula the series answers for, as the request named it. */
+	queryName: string;
+	series: TimeSeries[];
+	alias?: string;
+}
+
+export const queryRangeV5TimeSeriesResponse = (
+	results: TimeSeriesResult[],
+): MetricRangePayloadV5 => ({
+	data: {
+		type: 'time_series',
+		data: {
+			results: results.map(({ queryName, series, alias = '' }) => ({
+				queryName,
+				aggregations: [{ index: 0, alias, meta: {}, series }],
+			})),
+		},
+		meta: { rowsScanned: 0, bytesScanned: 0, durationMs: 0, stepIntervals: {} },
+	},
+});
