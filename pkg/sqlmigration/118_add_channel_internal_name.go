@@ -35,6 +35,12 @@ func (migration *addChannelInternalName) Register(migrations *migrate.Migrations
 // channel reads it yet: routing policies and rules still reference the name
 // column, and the alertmanager config still keys receivers by that same string.
 func (migration *addChannelInternalName) Up(ctx context.Context, db *bun.DB) error {
+	// notification_channel references organizations; FK enforcement must be off
+	// for the SQLite recreate-table fallback the NOT NULL column add falls into.
+	if err := migration.sqlschema.ToggleFKEnforcement(ctx, db, false); err != nil {
+		return err
+	}
+
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -67,11 +73,14 @@ func (migration *addChannelInternalName) Up(ctx context.Context, db *bun.DB) err
 		Name          string      `bun:"name"`
 	}
 
+	// Only rows the column add left empty are backfilled, so a retry after a
+	// partial run does not hand already-named channels a fresh random suffix.
 	var channels []channel
 	if err := tx.
 		NewSelect().
 		Model(&channels).
 		Column("id", "name").
+		Where("internal_name = ?", "").
 		Scan(ctx); err != nil {
 		return err
 	}
@@ -87,21 +96,21 @@ func (migration *addChannelInternalName) Up(ctx context.Context, db *bun.DB) err
 		}
 	}
 
-	if err := tx.Commit(); err != nil {
-		return err
-	}
-
 	indexSQLs := migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{
 		TableName:   "notification_channel",
 		ColumnNames: []sqlschema.ColumnName{"org_id", "internal_name"},
 	})
 	for _, sql := range indexSQLs {
-		if _, err := db.ExecContext(ctx, string(sql)); err != nil {
+		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
 			return err
 		}
 	}
 
-	return nil
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return migration.sqlschema.ToggleFKEnforcement(ctx, db, true)
 }
 
 func (migration *addChannelInternalName) Down(context.Context, *bun.DB) error {

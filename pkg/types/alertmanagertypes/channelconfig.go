@@ -678,9 +678,15 @@ func assertRepresentableHTTPConfig(name string, httpConfig *commoncfg.HTTPClient
 		member = "proxy_from_environment"
 	case httpConfig.HTTPHeaders != nil:
 		member = "http_headers"
-	case httpConfig.TLSConfig.CAFile != "", httpConfig.TLSConfig.CertFile != "",
-		httpConfig.TLSConfig.KeyFile != "", httpConfig.TLSConfig.ServerName != "",
-		httpConfig.TLSConfig.InsecureSkipVerify:
+	case !isRepresentableBasicAuth(httpConfig.BasicAuth):
+		// Only the inline username and password round-trip; the _file and _ref
+		// indirections have no field on the spec.
+		member = "basic_auth"
+	case !isRepresentableAuthorization(httpConfig.Authorization):
+		// The spec models the credentials but not the scheme, so any scheme but
+		// Bearer would be rewritten as Bearer on the next write.
+		member = "authorization"
+	case !isRepresentableTLSConfig(httpConfig.TLSConfig):
 		member = "tls_config"
 	case !httpConfig.FollowRedirects:
 		member = "follow_redirects"
@@ -696,6 +702,28 @@ func assertRepresentableHTTPConfig(name string, httpConfig *commoncfg.HTTPClient
 	}
 
 	return nil
+}
+
+func isRepresentableBasicAuth(basicAuth *commoncfg.BasicAuth) bool {
+	if basicAuth == nil {
+		return true
+	}
+
+	return basicAuth.UsernameFile == "" && basicAuth.UsernameRef == "" &&
+		basicAuth.PasswordFile == "" && basicAuth.PasswordRef == ""
+}
+
+func isRepresentableAuthorization(authorization *commoncfg.Authorization) bool {
+	if authorization == nil {
+		return true
+	}
+
+	return strings.EqualFold(authorization.Type, bearerAuthorizationType) &&
+		authorization.CredentialsFile == "" && authorization.CredentialsRef == ""
+}
+
+func isRepresentableTLSConfig(tlsConfig commoncfg.TLSConfig) bool {
+	return tlsConfig == commoncfg.TLSConfig{}
 }
 
 // channelKinds registers each notification kind with the spec constructor

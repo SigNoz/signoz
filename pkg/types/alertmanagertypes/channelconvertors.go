@@ -42,39 +42,34 @@ func (c *Channel) toPostableNotificationChannel() (*PostableNotificationChannel,
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "unmarshal channel %q", c.Name)
 	}
 
-	postable := &PostableNotificationChannel{Name: c.InternalName, DisplayName: c.Name}
-	found := 0
+	if total := countNotifierConfigs(receiver); total > 1 {
+		return nil, errors.NewInvalidInputf(
+			ErrCodeAlertmanagerChannelInvalid,
+			"channel %q carries %d notifier configurations; this API represents one per channel", c.Name, total,
+		)
+	}
 
 	for _, channelKind := range channelKinds {
-		count := channelKind.countConfigs(receiver)
-		if count == 0 {
+		if channelKind.countConfigs(receiver) == 0 {
 			continue
 		}
-		found += count
 
 		spec, err := channelKind.extractSpec(c.Name, receiver)
 		if err != nil {
 			return nil, err
 		}
 
-		postable.Config = ChannelConfig{Kind: channelKind.kind, Spec: spec}
+		return &PostableNotificationChannel{
+			Name:        c.InternalName,
+			DisplayName: c.Name,
+			Config:      ChannelConfig{Kind: channelKind.kind, Spec: spec},
+		}, nil
 	}
 
-	if found == 0 {
-		return nil, errors.NewNotFoundf(
-			ErrCodeChannelUnsupportedKind,
-			"channel %q carries no notifier configuration this API supports", c.Name,
-		)
-	}
-
-	if found > 1 {
-		return nil, errors.NewInvalidInputf(
-			ErrCodeAlertmanagerChannelInvalid,
-			"channel %q carries %d notifier configurations; this API represents one per channel", c.Name, found,
-		)
-	}
-
-	return postable, nil
+	return nil, errors.NewNotFoundf(
+		ErrCodeChannelUnsupportedKind,
+		"channel %q carries no notifier configuration this API supports", c.Name,
+	)
 }
 
 func (c *Channel) ToGettableNotificationChannel() (*GettableNotificationChannel, error) {

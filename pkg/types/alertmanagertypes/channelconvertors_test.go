@@ -437,6 +437,51 @@ func TestChannelToPostableChannelRejectsUnrepresentableChannels(t *testing.T) {
 				Data: `{"name":"proxied","webhook_configs":[{"url":"https://a","http_config":{"proxy_url":"https://proxy","tls_config":{"insecure_skip_verify":true}}}]}`,
 			},
 		},
+		{
+			description: "a modelled notifier kind alongside an unmodelled one",
+			channel: Channel{
+				Name: "slack-and-telegram",
+				Data: `{"name":"slack-and-telegram","slack_configs":[{"api_url":"https://a","channel":"#a"}],"telegram_configs":[{"chat_id":1,"bot_token":"t"}]}`,
+			},
+		},
+		{
+			// The spec models one config per kind, so the second would be lost.
+			description: "two configs of one notifier kind",
+			channel: Channel{
+				Name: "two-slacks",
+				Data: `{"name":"two-slacks","slack_configs":[{"api_url":"https://a","channel":"#a"},{"api_url":"https://b","channel":"#b"}]}`,
+			},
+		},
+		{
+			// The spec carries the credentials but not the scheme, so any other
+			// scheme would be rewritten as Bearer on the next write.
+			description: "webhook authorization scheme other than bearer",
+			channel: Channel{
+				Name: "token-auth",
+				Data: `{"name":"token-auth","webhook_configs":[{"url":"https://a","http_config":{"authorization":{"type":"Token","credentials":"abc"},"follow_redirects":true,"enable_http2":true}}]}`,
+			},
+		},
+		{
+			description: "webhook credentials sourced from a file",
+			channel: Channel{
+				Name: "file-auth",
+				Data: `{"name":"file-auth","webhook_configs":[{"url":"https://a","http_config":{"authorization":{"type":"Bearer","credentials_file":"/run/token"},"follow_redirects":true,"enable_http2":true}}]}`,
+			},
+		},
+		{
+			description: "webhook basic auth password sourced from a file",
+			channel: Channel{
+				Name: "file-password",
+				Data: `{"name":"file-password","webhook_configs":[{"url":"https://a","http_config":{"basic_auth":{"username":"u","password_file":"/run/pass"},"follow_redirects":true,"enable_http2":true}}]}`,
+			},
+		},
+		{
+			description: "webhook inline tls material",
+			channel: Channel{
+				Name: "inline-tls",
+				Data: `{"name":"inline-tls","webhook_configs":[{"url":"https://a","http_config":{"tls_config":{"ca":"---PEM---","min_version":"TLS12"},"follow_redirects":true,"enable_http2":true}}]}`,
+			},
+		},
 	}
 
 	for _, testCase := range testCases {
