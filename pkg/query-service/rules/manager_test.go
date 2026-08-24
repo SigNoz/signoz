@@ -14,12 +14,16 @@ import (
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
+	"github.com/SigNoz/signoz/pkg/ruler/rulestore/rulestoretest"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -283,6 +287,69 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 			}
 
 			promProvider.Close()
+		})
+	}
+}
+
+func TestManager_CreateRule_Disabled(t *testing.T) {
+	for _, tc := range []struct {
+		name            string
+		disabled        bool
+		expectScheduled bool
+	}{
+		{name: "disabled rule is stored without a task", disabled: true, expectScheduled: false},
+		{name: "enabled rule is scheduled", disabled: false, expectScheduled: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			rule := ThresholdRuleAtLeastOnceValueAbove(10.0, nil)
+			rule.Disabled = tc.disabled
+
+			ruleBytes, err := json.Marshal(rule)
+			require.NoError(t, err)
+
+			orgID := valuer.GenerateUUID()
+			ruleStore := rulestoretest.NewMockSQLRuleStore()
+
+			mgr := NewTestManager(t, &TestManagerOptions{
+				AlertmanagerHook: func(am alertmanager.Alertmanager) {
+					mockAM := am.(*alertmanagermock.MockAlertmanager)
+					mockAM.On("SetNotificationConfig", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+					mockAM.On("CreateRoutePolicies", mock.Anything, mock.Anything).Return([]*alertmanagertypes.GettableRoutePolicy{}, nil).Maybe()
+					mockAM.On("CreateInhibitRules", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+					mockAM.On("Config").Return(alertmanagerserver.Config{ExternalURL: mustParseURL(t, "http://localhost:8080")}).Maybe()
+				},
+				ManagerOptionsHook: func(opts *ManagerOptions) {
+					opts.RuleStore = ruleStore
+				},
+			})
+
+			storedRule := &ruletypes.StorableRule{
+				Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
+				TimeAuditable: types.TimeAuditable{CreatedAt: time.Now(), UpdatedAt: time.Now()},
+				UserAuditable: types.UserAuditable{CreatedBy: "test@signoz.io", UpdatedBy: "test@signoz.io"},
+				Data:          string(ruleBytes),
+				OrgID:         orgID.StringValue(),
+			}
+			ruleStore.ExpectCreateRule(storedRule)
+
+			ctx := authtypes.NewContextWithClaims(context.Background(), authtypes.Claims{
+				OrgID: orgID.StringValue(),
+				Email: "test@signoz.io",
+			})
+
+			gettableRule, err := mgr.CreateRule(ctx, string(ruleBytes))
+			require.NoError(t, err)
+			require.NotNil(t, gettableRule)
+
+			tasks := mgr.RuleTasks()
+			if tc.expectScheduled {
+				require.Len(t, tasks, 1)
+				assert.Equal(t, prepareTaskName(gettableRule.Id), tasks[0].Name())
+				assert.Len(t, mgr.Rules(), 1)
+			} else {
+				assert.Empty(t, tasks, "disabled rule must not be scheduled")
+				assert.Empty(t, mgr.Rules())
+			}
 		})
 	}
 }
