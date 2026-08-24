@@ -356,6 +356,9 @@ importers:
       '@jest/types':
         specifier: 30.2.0
         version: 30.2.0
+      '@storybook/addon-a11y':
+        specifier: 10.5.9
+        version: 10.5.9(storybook@10.5.9(@types/react@18.0.26)(prettier@3.8.3)(react@18.2.0))
       '@storybook/react-vite':
         specifier: 10.5.9
         version: 10.5.9(@types/react-dom@18.0.10)(@types/react@18.0.26)(esbuild@0.28.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(rolldown-vite@7.3.1(@types/node@16.18.25)(esbuild@0.28.1)(jiti@2.6.1)(less@4.9.0)(sass@1.97.3)(stylus@0.62.0)(terser@5.46.2)(yaml@2.8.4))(storybook@10.5.9(@types/react@18.0.26)(prettier@3.8.3)(react@18.2.0))(typescript@5.9.3)
@@ -3706,6 +3709,11 @@ packages:
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
 
+  '@storybook/addon-a11y@10.5.9':
+    resolution: {integrity: sha512-MvXkoJIVRcZrqhWi+wynYAmFkvTWm5aHdJfYohhgPeEJVDRF91zejtOsN7zPRE/lQvBDY+IiomKxeRN3UhWNVw==}
+    peerDependencies:
+      storybook: ^10.5.9
+
   '@storybook/builder-vite@10.5.9':
     resolution: {integrity: sha512-Zg4JbGQiHFPGlFJ9HM+XPgzKmU/RFPCymhohVRJhBBYfmgaQgz0flWWzscseCDpl638MNd8/r/H+nwuoBgSYDg==}
     peerDependencies:
@@ -4544,6 +4552,10 @@ packages:
   available-typed-arrays@1.0.7:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
     engines: {node: '>= 0.4'}
+
+  axe-core@4.13.0:
+    resolution: {integrity: sha512-UzGt8zg7Ny8djbYMhxl2zuEevVa7r2gJjYY5Lwr1xM7+XU2nd6CkIWFTVcCIbAP63vSz71NaVyyuSk9lHKcy0A==}
+    engines: {node: '>=4'}
 
   axios@1.18.0:
     resolution: {integrity: sha512-E32NzpYKp++W7XRe52rHiXV2ehxmh3wbdgO7MHeFM+vqxLBYHzt0ElkiImtOBxtOmyp0yoC8C6uESVV84Y2/hw==}
@@ -13025,6 +13037,12 @@ snapshots:
 
   '@standard-schema/spec@1.1.0': {}
 
+  '@storybook/addon-a11y@10.5.9(storybook@10.5.9(@types/react@18.0.26)(prettier@3.8.3)(react@18.2.0))':
+    dependencies:
+      '@storybook/global': 5.0.0
+      axe-core: 4.13.0
+      storybook: 10.5.9(@types/react@18.0.26)(prettier@3.8.3)(react@18.2.0)
+
   '@storybook/builder-vite@10.5.9(esbuild@0.28.1)(rolldown-vite@7.3.1(@types/node@16.18.25)(esbuild@0.28.1)(jiti@2.6.1)(less@4.9.0)(sass@1.97.3)(stylus@0.62.0)(terser@5.46.2)(yaml@2.8.4))(storybook@10.5.9(@types/react@18.0.26)(prettier@3.8.3)(react@18.2.0))':
     dependencies:
       '@storybook/csf-plugin': 10.5.9(esbuild@0.28.1)(rolldown-vite@7.3.1(@types/node@16.18.25)(esbuild@0.28.1)(jiti@2.6.1)(less@4.9.0)(sass@1.97.3)(stylus@0.62.0)(terser@5.46.2)(yaml@2.8.4))(storybook@10.5.9(@types/react@18.0.26)(prettier@3.8.3)(react@18.2.0))
@@ -13948,6 +13966,8 @@ snapshots:
   available-typed-arrays@1.0.7:
     dependencies:
       possible-typed-array-names: 1.1.0
+
+  axe-core@4.13.0: {}
 
   axios@1.18.0:
     dependencies:
