@@ -36,9 +36,6 @@ func NewReceiver(input string) (*Receiver, error) {
 	return newDefaultedReceiver(receiver)
 }
 
-// newDefaultedReceiver applies the per-notifier defaults and validation. It is
-// separate from NewReceiver because JSON decoding applies neither: upstream
-// implements only UnmarshalYAML, so a receiver assembled in Go needs this too.
 func newDefaultedReceiver(receiver *Receiver) (*Receiver, error) {
 	withDefaults, err := defaultedBaseReceiver(receiver.Receiver)
 	if err != nil {

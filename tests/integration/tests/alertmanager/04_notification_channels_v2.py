@@ -24,8 +24,6 @@ _VIEWER_EMAIL = "viewer+channelsv2@integration.test"
 _PASSWORD = "password123Z$"
 
 
-# Each case pins a spec field whose value proves the config survived the round
-# trip through the stored upstream receiver.
 @pytest.mark.parametrize(
     "kind,spec,assert_field,assert_value",
     [
