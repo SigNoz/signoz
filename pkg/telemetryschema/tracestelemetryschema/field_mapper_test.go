@@ -406,6 +406,15 @@ func TestColumnExpressionForScopeDeclaredPath(t *testing.T) {
 			expectedResult: "multiIf(scope.attributes.`name` IS NOT NULL, scope.attributes.`name`::String, NULL)",
 		},
 		{
+			// the caller supplied the context, so `scope.` is part of the name rather than a
+			// prefix to strip: this addresses a scope attribute literally named
+			// `scope.testing.env`, not the attribute `testing.env`
+			name:           "explicit context keeps a scope-prefixed name intact",
+			key:            telemetrytypes.TelemetryFieldKey{Name: "scope.testing.env", FieldContext: telemetrytypes.FieldContextScope},
+			keys:           declaredOnly,
+			expectedResult: "multiIf(scope.attributes.`scope.testing.env` IS NOT NULL, scope.attributes.`scope.testing.env`::String, NULL)",
+		},
+		{
 			// metadata knows both homes under this name, so the short spelling coalesces
 			// them instead of being rejected as ambiguous
 			name:           "short name coalesces a known scope attribute with the declared path",
