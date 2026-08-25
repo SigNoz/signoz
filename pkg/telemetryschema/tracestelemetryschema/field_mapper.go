@@ -597,28 +597,10 @@ func (m *fieldMapper) CandidateKeys(ctx context.Context, _ valuer.UUID, field *t
 	// Metadata match by name, then the literal `{context}.{name}` spelling (a context can be
 	// a legitimate prefix in user data, e.g. `metric.max_count`). For a forgiving context
 	// this is the correction step (span.http.method -> attribute http.method).
-	matches := keys[field.Name]
-	if field.FieldContext != telemetrytypes.FieldContextUnspecified {
-		// A bare-name match must agree on context; a same-named key under a different
-		// context is a different field. The literal `{context}.{name}` spelling is a real
-		// key in whatever context it was stored (e.g. an attribute named `span.test`), so
-		// it is taken regardless of context.
-		validMatches := make([]*telemetrytypes.TelemetryFieldKey, 0, len(matches))
-		for _, match := range matches {
-			if match.FieldContext == field.FieldContext {
-				validMatches = append(validMatches, match)
-			}
-		}
-		compoundName := fmt.Sprintf("%s.%s", field.FieldContext.StringValue(), field.Name)
-		compoundMatches := keys[compoundName]
-		validMatches = append(validMatches, compoundMatches...)
-		matches = append(matches, compoundMatches...)
-		if len(validMatches) > 0 {
-			return validMatches
-		}
+	if matches := keys[field.Name]; len(matches) > 0 {
+		return matches
 	}
-
-	if len(matches) > 0 {
+	if matches := keys[fmt.Sprintf("%s.%s", field.FieldContext.StringValue(), field.Name)]; len(matches) > 0 {
 		return matches
 	}
 
