@@ -25,13 +25,13 @@
  * Metrics history wait override. Metrics push faster than logs, but ruler still
  * needs 2 evaluation windows to confirm state. 10s typical, 120s defensive.
  */
-export const WAIT_METRICS_TIMELINE = 120_000;
+export const WAIT_METRICS_TIMELINE_TIMEOUT = 120_000;
 
 /**
  * Nodata state detection. Ruler must evaluate twice with empty result set.
  * Takes longer than firing detection because it's an absence check.
  */
-export const WAIT_NODATA_TIMELINE = 180_000;
+export const WAIT_NODATA_TIMELINE_TIMEOUT = 180_000;
 
 // ─── Fixture timeouts (ms) ─────────────────────────────────────────────
 
@@ -41,7 +41,7 @@ export const WAIT_NODATA_TIMELINE = 180_000;
  * Breakdown: createChannel(2s) + 12×createRule(24s) = ~26s.
  * Timeout: 120s (~5x headroom for CI).
  */
-export const FIXTURE_ALERT_LIST = 120_000;
+export const FIXTURE_ALERT_LIST_TIMEOUT = 120_000;
 
 /**
  * alertHistory: seeds 25 logs + 2 rules, waits for ruler evaluation.
@@ -50,7 +50,7 @@ export const FIXTURE_ALERT_LIST = 120_000;
  *            2×waitForEntries(70s) + 2×disableRule(4s) = ~90s.
  * Timeout: 240s (~2.5x headroom).
  */
-export const FIXTURE_ALERT_HISTORY = 240_000;
+export const FIXTURE_ALERT_HISTORY_TIMEOUT = 240_000;
 
 /**
  * metricsHistory: seeds 2 hosts, waits for metrics ruler cycle.
@@ -59,7 +59,7 @@ export const FIXTURE_ALERT_HISTORY = 240_000;
  *            waitForEntries(10s actual, 120s budget) + disableRule(2s) = ~21s.
  * Timeout: 240s (matches alertHistory for consistency).
  */
-export const FIXTURE_METRICS_HISTORY = 240_000;
+export const FIXTURE_METRICS_HISTORY_TIMEOUT = 240_000;
 
 /**
  * tracesHistory: seeds 3 trace services, waits for ruler.
@@ -67,7 +67,7 @@ export const FIXTURE_METRICS_HISTORY = 240_000;
  * Breakdown: similar to alertHistory but fewer services = ~45s.
  * Timeout: 240s (~5x headroom).
  */
-export const FIXTURE_TRACES_HISTORY = 240_000;
+export const FIXTURE_TRACES_HISTORY_TIMEOUT = 240_000;
 
 /**
  * resolvedHistory: waits for firing→resolved transition.
@@ -76,7 +76,7 @@ export const FIXTURE_TRACES_HISTORY = 240_000;
  * Timeout: 300s (~2x headroom). Longest because resolved requires
  * evalWindow expiry after data stops matching.
  */
-export const FIXTURE_RESOLVED_HISTORY = 300_000;
+export const FIXTURE_RESOLVED_HISTORY_TIMEOUT = 300_000;
 
 /**
  * noDataHistory: waits for nodata state to appear.
@@ -85,7 +85,7 @@ export const FIXTURE_RESOLVED_HISTORY = 300_000;
  * Timeout: 300s. Nodata detection is slowest because ruler must confirm
  * absence across multiple evaluation cycles.
  */
-export const FIXTURE_NODATA_HISTORY = 300_000;
+export const FIXTURE_NODATA_HISTORY_TIMEOUT = 300_000;
 
 /**
  * emptyHistory: creates rule then immediately disables it (no ruler wait).
@@ -93,4 +93,4 @@ export const FIXTURE_NODATA_HISTORY = 300_000;
  * Breakdown: createChannel(2s) + createRule(2s) + disableRule(2s) = ~6s.
  * Timeout: 120s (generous for slow CI, no ruler dependency).
  */
-export const FIXTURE_EMPTY_HISTORY = 120_000;
+export const FIXTURE_EMPTY_HISTORY_TIMEOUT = 120_000;

@@ -15,7 +15,7 @@ import type {
 } from '../../helpers/alerts/types';
 import { newAdminContext } from '../../helpers/auth';
 import { expect, test as base } from '../auth';
-import { FIXTURE_ALERT_LIST } from './timeouts';
+import { FIXTURE_ALERT_LIST_TIMEOUT } from './timeouts';
 
 // Alert *rule* fixtures — the API-only half of the alerts suite. Nothing here
 // waits on the ruler: a rule is created and that's it. History rows need real
@@ -231,7 +231,7 @@ export const test = base.extend<
 			await use(seed);
 			await deleteRules(browser, seed.ruleIds);
 		},
-		{ scope: 'worker', timeout: FIXTURE_ALERT_LIST },
+		{ scope: 'worker', timeout: FIXTURE_ALERT_LIST_TIMEOUT },
 	],
 
 	ownedRules: async ({ browser, alertChannel }, use) => {
