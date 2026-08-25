@@ -16061,7 +16061,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/GatewaytypesGettableCreatedIngestionKeyLimit'
+                    $ref: '#/components/schemas/TypesIdentifiable'
                   status:
                     type: string
                 required:

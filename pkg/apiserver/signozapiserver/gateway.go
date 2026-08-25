@@ -172,7 +172,7 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		Description:         "This endpoint creates an ingestion limit for the ingestion key referenced by key_id",
 		Request:             new(gatewaytypes.PostableIngestionKeyLimit),
 		RequestContentType:  "application/json",
-		Response:            new(gatewaytypes.GettableCreatedIngestionKeyLimit),
+		Response:            new(types.Identifiable),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{http.StatusBadRequest},

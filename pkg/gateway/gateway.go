@@ -52,21 +52,21 @@ type Handler interface {
 
 	SearchIngestionKeys(http.ResponseWriter, *http.Request)
 
+	GetIngestionKey(http.ResponseWriter, *http.Request)
+
 	CreateIngestionKey(http.ResponseWriter, *http.Request)
 
 	UpdateIngestionKey(http.ResponseWriter, *http.Request)
 
 	DeleteIngestionKey(http.ResponseWriter, *http.Request)
 
-	DeprecatedCreateIngestionKeyLimit(http.ResponseWriter, *http.Request)
+	CreateIngestionKeyLimit(http.ResponseWriter, *http.Request)
+
+	GetIngestionKeyLimit(http.ResponseWriter, *http.Request)
 
 	UpdateIngestionKeyLimit(http.ResponseWriter, *http.Request)
 
 	DeleteIngestionKeyLimit(http.ResponseWriter, *http.Request)
 
-	CreateIngestionKeyLimit(http.ResponseWriter, *http.Request)
-
-	GetIngestionKeyLimit(http.ResponseWriter, *http.Request)
-
-	GetIngestionKey(http.ResponseWriter, *http.Request)
+	DeprecatedCreateIngestionKeyLimit(http.ResponseWriter, *http.Request)
 }

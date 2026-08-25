@@ -1,11 +1,11 @@
 package gateway
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/gatewaytypes"
@@ -111,8 +111,8 @@ func (handler *handler) CreateIngestionKey(rw http.ResponseWriter, r *http.Reque
 	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	var req gatewaytypes.PostableIngestionKey
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid request body"))
+	if err := binding.JSON.BindBody(r.Body, &req); err != nil {
+		render.Error(rw, err)
 		return
 	}
 
@@ -143,8 +143,8 @@ func (handler *handler) UpdateIngestionKey(rw http.ResponseWriter, r *http.Reque
 	}
 
 	var req gatewaytypes.PostableIngestionKey
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid request body"))
+	if err := binding.JSON.BindBody(r.Body, &req); err != nil {
+		render.Error(rw, err)
 		return
 	}
 
@@ -201,8 +201,8 @@ func (handler *handler) DeprecatedCreateIngestionKeyLimit(rw http.ResponseWriter
 	}
 
 	var req gatewaytypes.DeprecatedPostableIngestionKeyLimit
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid request body"))
+	if err := binding.JSON.BindBody(r.Body, &req); err != nil {
+		render.Error(rw, err)
 		return
 	}
 
@@ -233,8 +233,8 @@ func (handler *handler) UpdateIngestionKeyLimit(rw http.ResponseWriter, r *http.
 	}
 
 	var req gatewaytypes.UpdatableIngestionKeyLimit
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid request body"))
+	if err := binding.JSON.BindBody(r.Body, &req); err != nil {
+		render.Error(rw, err)
 		return
 	}
 
@@ -285,8 +285,8 @@ func (handler *handler) CreateIngestionKeyLimit(rw http.ResponseWriter, r *http.
 	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	var req gatewaytypes.PostableIngestionKeyLimit
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid request body"))
+	if err := binding.JSON.BindBody(r.Body, &req); err != nil {
+		render.Error(rw, err)
 		return
 	}
 

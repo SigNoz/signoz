@@ -183,7 +183,6 @@ def test_get_ingestion_key_by_id(
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
 ) -> None:
-    """GET /api/v2/gateway/ingestion_keys/{keyId} returns a single key."""
     editor_token = get_token(GATEWAY_APIS_EDITOR_EMAIL, GATEWAY_APIS_EDITOR_PASSWORD)
 
     gateway_url = f"/v1/workspaces/me/keys/{TEST_KEY_ID}"

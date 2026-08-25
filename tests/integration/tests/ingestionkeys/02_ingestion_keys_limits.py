@@ -393,18 +393,12 @@ def test_delete_ingestion_key_limit(
     assert len(matched) >= 1, "Expected a DELETE request to reach the gateway"
 
 
-# ---------------------------------------------------------------------------
-# First-class ingestion limit routes
-# ---------------------------------------------------------------------------
-
-
 def test_create_ingestion_limit(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
 ) -> None:
-    """POST /api/v2/gateway/ingestion_limits creates a limit for the key referenced by key_id."""
     editor_token = get_token(GATEWAY_APIS_EDITOR_EMAIL, GATEWAY_APIS_EDITOR_PASSWORD)
 
     gateway_url = f"/v1/workspaces/me/keys/{TEST_KEY_ID}/limits"
@@ -458,7 +452,6 @@ def test_create_ingestion_limit_without_key_id(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
-    """POST /api/v2/gateway/ingestion_limits without key_id is rejected."""
     editor_token = get_token(GATEWAY_APIS_EDITOR_EMAIL, GATEWAY_APIS_EDITOR_PASSWORD)
 
     response = requests.post(
@@ -480,7 +473,6 @@ def test_get_ingestion_limit(
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
 ) -> None:
-    """GET /api/v2/gateway/ingestion_limits/{limitId} returns a limit."""
     editor_token = get_token(GATEWAY_APIS_EDITOR_EMAIL, GATEWAY_APIS_EDITOR_PASSWORD)
 
     gateway_url = f"/v1/workspaces/me/limits/{TEST_LIMIT_ID}"
@@ -533,7 +525,6 @@ def test_update_ingestion_limit(
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
 ) -> None:
-    """PATCH /api/v2/gateway/ingestion_limits/{limitId} updates a limit."""
     editor_token = get_token(GATEWAY_APIS_EDITOR_EMAIL, GATEWAY_APIS_EDITOR_PASSWORD)
 
     gateway_url = f"/v1/workspaces/me/limits/{TEST_LIMIT_ID}"
@@ -578,7 +569,6 @@ def test_delete_ingestion_limit(
     make_http_mocks: Callable[[types.TestContainerDocker, list], None],
     get_token: Callable[[str, str], str],
 ) -> None:
-    """DELETE /api/v2/gateway/ingestion_limits/{limitId} deletes a limit."""
     editor_token = get_token(GATEWAY_APIS_EDITOR_EMAIL, GATEWAY_APIS_EDITOR_PASSWORD)
 
     gateway_url = f"/v1/workspaces/me/limits/{TEST_LIMIT_ID}"

@@ -11449,7 +11449,7 @@ export type SearchIngestionKeys200 = {
 };
 
 export type CreateIngestionLimit201 = {
-	data: GatewaytypesGettableCreatedIngestionKeyLimitDTO;
+	data: TypesIdentifiableDTO;
 	/**
 	 * @type string
 	 */
