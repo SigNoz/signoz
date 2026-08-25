@@ -353,18 +353,17 @@ func (m *fieldMapper) resolveColumnExprs(
 	return exprs, existExprs, columns, nil
 }
 
-// logicalForResolvedColumn returns the logical field for a directly-resolvable key: its
-// semantic-convention family when the metadata map proves membership, otherwise the
-// single-member field for the key as given.
-func (m *fieldMapper) logicalForResolvedColumn(ctx context.Context, orgID valuer.UUID, field *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) *telemetrytypes.LogicalField {
-	for _, logical := range querybuilder.MatchingLogicalFields(ctx, orgID, m.fl, field, keys) {
-		if logical.IsFamily() &&
-			logical.FieldContext == field.FieldContext &&
-			(field.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || logical.FieldDataType == field.FieldDataType) {
-			return logical
-		}
+// logicalForResolvedColumn returns the logical field(s) a directly-resolvable key names.
+// Resolving to a column answers only that the key is addressable, not that it names one
+// field: the scope JSON column resolves for both a declared path and a same-named scope
+// attribute. Metadata is what tells those homes apart, so every match it reports is kept,
+// the way the filter path keeps them. Only a name metadata does not know falls back to
+// the key as given.
+func (m *fieldMapper) logicalForResolvedColumn(ctx context.Context, orgID valuer.UUID, field *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.LogicalField {
+	if matches := querybuilder.MatchingLogicalFields(ctx, orgID, m.fl, field, keys); len(matches) > 0 {
+		return matches
 	}
-	return telemetrytypes.SingleLogicalField(field.Name, field)
+	return []*telemetrytypes.LogicalField{telemetrytypes.SingleLogicalField(field.Name, field)}
 }
 
 // upgradeToFamilies swaps single-member candidates for their family when the
@@ -427,30 +426,19 @@ func (m *fieldMapper) ColumnExpressionFor(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
 
-	// Resolve the candidate logical field(s). A key carrying a context is asked of metadata
-	// first, the way the filter path asks: the probe below only answers whether a key
-	// resolves to a column and stands in for whether it names one field, so a column that
-	// resolves for either of two homes -- a declared scope path or a same-named scope
-	// attribute -- would be reported as resolved while still being ambiguous. A bare key
-	// cannot resolve through the probe at all (getColumn needs a context), so it already
-	// reaches CandidateKeys, which consults metadata itself, and is left alone here.
+	// Resolve the candidate logical field(s).
 	var candidates []*telemetrytypes.LogicalField
-	if field.FieldContext != telemetrytypes.FieldContextUnspecified {
-		candidates = querybuilder.MatchingLogicalFields(ctx, orgID, m.fl, field, keys)
-	}
-	if len(candidates) == 0 {
-		switch _, err := m.FieldFor(ctx, orgID, startNs, endNs, field); {
-		case err == nil:
-			candidates = []*telemetrytypes.LogicalField{m.logicalForResolvedColumn(ctx, orgID, field, keys)}
-		case errors.Is(err, qbtypes.ErrColumnNotFound):
-			raw := m.CandidateKeys(ctx, orgID, field, nil, keys)
-			if len(raw) == 0 {
-				return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
-			}
-			candidates = m.upgradeToFamilies(ctx, orgID, field, querybuilder.WrapAsLogicalFields(field.Name, raw), keys)
-		default:
-			return "", err
+	switch _, err := m.FieldFor(ctx, orgID, startNs, endNs, field); {
+	case err == nil:
+		candidates = m.logicalForResolvedColumn(ctx, orgID, field, keys)
+	case errors.Is(err, qbtypes.ErrColumnNotFound):
+		raw := m.CandidateKeys(ctx, orgID, field, nil, keys)
+		if len(raw) == 0 {
+			return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
 		}
+		candidates = m.upgradeToFamilies(ctx, orgID, field, querybuilder.WrapAsLogicalFields(field.Name, raw), keys)
+	default:
+		return "", err
 	}
 
 	// Group-by/order (String) and aggregation (String/Float64): every candidate is
