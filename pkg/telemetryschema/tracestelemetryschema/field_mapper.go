@@ -423,6 +423,10 @@ func (m *fieldMapper) ColumnExpressionFor(
 			candidates = []*telemetrytypes.LogicalField{telemetrytypes.SingleLogicalField(field.Name, field)}
 		}
 	case errors.Is(err, qbtypes.ErrColumnNotFound):
+		// The legacy candidate flow, unchanged: column (when the bare name is
+		// one) plus metadata matches, else synthesized type-variant keys. The
+		// family step below only swaps candidates for their family; it never
+		// changes candidate order or non-family behavior.
 		raw := m.CandidateKeys(ctx, orgID, field, nil, keys)
 		if len(raw) == 0 {
 			return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
