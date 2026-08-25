@@ -1312,14 +1312,10 @@ def test_traces_list_with_corrupt_data(
         # (span 0) and a same-named `name` scope attribute (span 1), the same way any
         # other name colliding across contexts unions. `scope.attribute.name` addresses
         # the attribute alone.
-        pytest.param(
-            "scope.name = 'io.signoz.checkout'", [0, 1], id="scope_name_unions_attribute"
-        ),
+        pytest.param("scope.name = 'io.signoz.checkout'", [0, 1], id="scope_name_unions_attribute"),
         # The `scope.name` spelling is also a real stored key: span 2 carries a span
         # attribute literally named `scope.name`, so it matches too.
-        pytest.param(
-            "scope.name = 'attr-scope-name'", [2], id="scope_name_matches_stored_spelling"
-        ),
+        pytest.param("scope.name = 'attr-scope-name'", [2], id="scope_name_matches_stored_spelling"),
         # The explicit `scope.attribute.` prefix addresses the scope attribute alone, without
         # the declared path. Span 1 has a `name` scope attribute = 'io.signoz.checkout'.
         pytest.param("scope.attribute.name = 'io.signoz.checkout'", [1], id="scope_attribute_name"),

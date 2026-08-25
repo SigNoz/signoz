@@ -417,11 +417,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 	var candidates []*telemetrytypes.LogicalField
 	switch _, err := m.FieldFor(ctx, orgID, startNs, endNs, field); {
 	case err == nil:
-		// Resolving to a column answers only that the key is addressable, not that it
-		// names one field: the scope JSON column resolves for both a declared path and a
-		// same-named scope attribute. Metadata is what tells those homes apart, so every
-		// match it reports is kept, the way the filter path keeps them. Only a name
-		// metadata does not know falls back to the key as given.
+		// Every match from metadata is kept, similar to the filter path.
 		candidates = querybuilder.MatchingLogicalFields(ctx, orgID, m.fl, field, keys)
 		if len(candidates) == 0 {
 			candidates = []*telemetrytypes.LogicalField{telemetrytypes.SingleLogicalField(field.Name, field)}
