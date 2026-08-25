@@ -8040,13 +8040,6 @@ components:
       - schemaVersion
       - spec
       type: object
-    ServiceaccounttypesDeprecatedPostableServiceAccountRole:
-      properties:
-        id:
-          type: string
-      required:
-      - id
-      type: object
     ServiceaccounttypesGettableFactorAPIKey:
       properties:
         createdAt:
@@ -13278,117 +13271,6 @@ paths:
       summary: Gets service account roles
       tags:
       - serviceaccount
-    post:
-      deprecated: true
-      description: This endpoint assigns a role to a service account
-      operationId: CreateServiceAccountRoleDeprecated
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ServiceaccounttypesDeprecatedPostableServiceAccountRole'
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/TypesIdentifiable'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: Created
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - serviceaccount:attach
-        - role:attach
-      - tokenizer:
-        - serviceaccount:attach
-        - role:attach
-      summary: Create service account role
-      tags:
-      - serviceaccount
-  /api/v1/service_accounts/{id}/roles/{rid}:
-    delete:
-      deprecated: true
-      description: This endpoint revokes a role from service account
-      operationId: DeleteServiceAccountRoleDeprecated
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      - in: path
-        name: rid
-        required: true
-        schema:
-          type: string
-      responses:
-        "204":
-          description: No Content
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - serviceaccount:detach
-        - role:detach
-      - tokenizer:
-        - serviceaccount:detach
-        - role:detach
-      summary: Delete service account role
-      tags:
-      - serviceaccount
   /api/v1/service_accounts/me:
     get:
       deprecated: false
@@ -14392,9 +14274,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - auth-domain:list
       - tokenizer:
-        - ADMIN
+        - auth-domain:list
       summary: List all auth domains
       tags:
       - authdomains
@@ -14454,9 +14336,13 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - auth-domain:create
+        - auth-domain:attach
+        - role:attach
       - tokenizer:
-        - ADMIN
+        - auth-domain:create
+        - auth-domain:attach
+        - role:attach
       summary: Create auth domain
       tags:
       - authdomains
@@ -14500,9 +14386,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - auth-domain:delete
       - tokenizer:
-        - ADMIN
+        - auth-domain:delete
       summary: Delete auth domain
       tags:
       - authdomains
@@ -14557,9 +14443,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - auth-domain:read
       - tokenizer:
-        - ADMIN
+        - auth-domain:read
       summary: Get auth domain by ID
       tags:
       - authdomains
@@ -14613,9 +14499,17 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - auth-domain:update
+        - auth-domain:attach
+        - auth-domain:detach
+        - role:attach
+        - role:detach
       - tokenizer:
-        - ADMIN
+        - auth-domain:update
+        - auth-domain:attach
+        - auth-domain:detach
+        - role:attach
+        - role:detach
       summary: Update auth domain
       tags:
       - authdomains

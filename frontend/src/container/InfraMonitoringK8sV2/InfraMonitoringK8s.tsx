@@ -47,6 +47,7 @@ import {
 	useInfraMonitoringCategory,
 	useInfraMonitoringGroupBy,
 	useInfraMonitoringOrderBy,
+	useInfraMonitoringPageListing,
 	useInfraMonitoringSelectedItemParams,
 } from './hooks';
 
@@ -67,6 +68,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 	const [, setGroupBy] = useInfraMonitoringGroupBy();
 	const [, setOrderBy] = useInfraMonitoringOrderBy();
 	const [, setSelectedItemParams] = useInfraMonitoringSelectedItemParams();
+	const [, setCurrentPage] = useInfraMonitoringPageListing();
 
 	const compositeQuery = useGetCompositeQueryParam();
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
@@ -218,6 +220,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			void setSelectedCategory(key as string);
 			void setOrderBy(null);
 			void setGroupBy(null);
+			void setCurrentPage(null);
 			setSelectedItemParams(null);
 			redirectWithQueryBuilderData({
 				...currentQuery,

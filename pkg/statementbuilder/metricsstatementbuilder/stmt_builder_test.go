@@ -322,6 +322,38 @@ func TestStatementBuilder(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
+		{
+			name:        "test_bool_label_filter",
+			requestType: qbtypes.RequestTypeTimeSeries,
+			query: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Signal:       telemetrytypes.SignalMetrics,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "signoz_calls_total",
+						Type:             metrictypes.SumType,
+						Temporality:      metrictypes.Cumulative,
+						TimeAggregation:  metrictypes.TimeAggregationRate,
+						SpaceAggregation: metrictypes.SpaceAggregationSum,
+					},
+				},
+				Filter: &qbtypes.Filter{
+					Expression: "success = true",
+				},
+				GroupBy: []qbtypes.GroupByKey{
+					{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: "service.name",
+						},
+					},
+				},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __temporal_aggregation_cte AS (SELECT ts, `__GROUP_BY_KEY_0_service.name`, multiIf(row_number() OVER rate_window = 1, nan, (per_series_value - lagInFrame(per_series_value, 1) OVER rate_window) < 0, per_series_value / (ts - lagInFrame(ts, 1) OVER rate_window), (per_series_value - lagInFrame(per_series_value, 1) OVER rate_window) / (ts - lagInFrame(ts, 1) OVER rate_window)) AS per_series_value FROM (SELECT fingerprint, toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(30)) AS ts, `__GROUP_BY_KEY_0_service.name`, max(value) AS per_series_value FROM signoz_metrics.distributed_samples_v4 AS points INNER JOIN (SELECT fingerprint, JSONExtractString(labels, 'service.name') AS `__GROUP_BY_KEY_0_service.name` FROM signoz_metrics.time_series_v4_6hrs WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli <= ? AND LOWER(temporality) LIKE LOWER(?) AND accurateCastOrNull(JSONExtractString(labels, 'success'), 'Bool') = ? GROUP BY fingerprint, `__GROUP_BY_KEY_0_service.name`) AS filtered_time_series ON points.fingerprint = filtered_time_series.fingerprint WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli < ? GROUP BY fingerprint, ts, `__GROUP_BY_KEY_0_service.name` ORDER BY fingerprint, ts) WINDOW rate_window AS (PARTITION BY fingerprint ORDER BY fingerprint, ts)), __spatial_aggregation_cte AS (SELECT ts, `__GROUP_BY_KEY_0_service.name`, sum(per_series_value) AS value FROM __temporal_aggregation_cte WHERE isNaN(per_series_value) = ? GROUP BY ts, `__GROUP_BY_KEY_0_service.name`) SELECT * FROM __spatial_aggregation_cte ORDER BY `__GROUP_BY_KEY_0_service.name`, ts",
+				Args:  []any{"signoz_calls_total", uint64(1747936800000), uint64(1747983420000), "cumulative", true, "signoz_calls_total", uint64(1747947360000), uint64(1747983420000), 0},
+			},
+			expectedErr: nil,
+		},
 	}
 
 	fm := metricstelemetryschema.NewFieldMapper()

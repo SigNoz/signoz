@@ -18,10 +18,9 @@ jest.mock('periscope/components/DataViewer', () => ({
 	DataViewer: (): JSX.Element => <div data-testid="overview-data-viewer" />,
 }));
 
-// The flag to be removed later
-jest.mock('../constants', () => ({
-	...jest.requireActual('../constants'),
-	isLogDetailsV2: true,
+// Force v2 for these tests regardless of route.
+jest.mock('../useIsLogDetailsV2', () => ({
+	useIsLogDetailsV2: (): boolean => true,
 }));
 
 const mockLog: ILog = {
@@ -87,6 +86,24 @@ describe('LogDetail drawer — header (isLogDetailsV2)', () => {
 		renderDrawer();
 
 		// mockLog date is 2024-01-15T09:45:30Z → DASH_DATETIME in UTC.
+		expect(screen.getByTestId('log-details-header-timestamp')).toHaveTextContent(
+			'Jan 15, 2024 ⎯ 09:45:30',
+		);
+	});
+
+	it('normalizes a nanosecond-epoch timestamp in the header', () => {
+		localStorage.setItem(LOCALSTORAGE.PREFERRED_TIMEZONE, 'UTC');
+
+		// Same instant as mockLog but as epoch nanoseconds (e.g. dashboard list panel).
+		// Must scale to ms, not render a wildly wrong date.
+		renderDrawer({
+			log: {
+				...mockLog,
+				date: '1705311930000000000',
+				timestamp: 1705311930000000000,
+			},
+		});
+
 		expect(screen.getByTestId('log-details-header-timestamp')).toHaveTextContent(
 			'Jan 15, 2024 ⎯ 09:45:30',
 		);
