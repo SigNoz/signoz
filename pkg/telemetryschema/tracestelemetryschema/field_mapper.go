@@ -182,10 +182,6 @@ func (m *fieldMapper) getColumn(
 	case telemetrytypes.FieldContextResource:
 		return []*schema.Column{indexV3Columns["resource"], indexV3Columns["resources_string"]}, nil
 	case telemetrytypes.FieldContextScope:
-		// scope attributes with same name as declared paths create ambiguity and can't be queried directly.
-		if key.Name == "name" || key.Name == "version" {
-			return nil, qbtypes.ErrColumnNotFound
-		}
 		return []*schema.Column{indexV3Columns["scope"]}, nil
 	case telemetrytypes.FieldContextAttribute:
 		switch key.FieldDataType {
@@ -357,20 +353,6 @@ func (m *fieldMapper) resolveColumnExprs(
 	return exprs, existExprs, columns, nil
 }
 
-// logicalForResolvedColumn returns the logical field for a directly-resolvable key: its
-// semantic-convention family when the metadata map proves membership, otherwise the
-// single-member field for the key as given.
-func (m *fieldMapper) logicalForResolvedColumn(ctx context.Context, orgID valuer.UUID, field *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) *telemetrytypes.LogicalField {
-	for _, logical := range querybuilder.MatchingLogicalFields(ctx, orgID, m.fl, field, keys) {
-		if logical.IsFamily() &&
-			logical.FieldContext == field.FieldContext &&
-			(field.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || logical.FieldDataType == field.FieldDataType) {
-			return logical
-		}
-	}
-	return telemetrytypes.SingleLogicalField(field.Name, field)
-}
-
 // upgradeToFamilies swaps single-member candidates for their family when the
 // metadata map proves membership. Candidate order and every non-family
 // candidate stay exactly as the legacy flow produced them; sibling candidates
@@ -435,7 +417,11 @@ func (m *fieldMapper) ColumnExpressionFor(
 	var candidates []*telemetrytypes.LogicalField
 	switch _, err := m.FieldFor(ctx, orgID, startNs, endNs, field); {
 	case err == nil:
-		candidates = []*telemetrytypes.LogicalField{m.logicalForResolvedColumn(ctx, orgID, field, keys)}
+		// Every match from metadata is kept, similar to the filter path.
+		candidates = querybuilder.MatchingLogicalFields(ctx, orgID, m.fl, field, keys)
+		if len(candidates) == 0 {
+			candidates = []*telemetrytypes.LogicalField{telemetrytypes.SingleLogicalField(field.Name, field)}
+		}
 	case errors.Is(err, qbtypes.ErrColumnNotFound):
 		raw := m.CandidateKeys(ctx, orgID, field, nil, keys)
 		if len(raw) == 0 {
@@ -590,28 +576,10 @@ func (m *fieldMapper) CandidateKeys(ctx context.Context, _ valuer.UUID, field *t
 	// Metadata match by name, then the literal `{context}.{name}` spelling (a context can be
 	// a legitimate prefix in user data, e.g. `metric.max_count`). For a forgiving context
 	// this is the correction step (span.http.method -> attribute http.method).
-	matches := keys[field.Name]
-	if field.FieldContext != telemetrytypes.FieldContextUnspecified {
-		// A bare-name match must agree on context; a same-named key under a different
-		// context is a different field. The literal `{context}.{name}` spelling is a real
-		// key in whatever context it was stored (e.g. an attribute named `span.test`), so
-		// it is taken regardless of context.
-		validMatches := make([]*telemetrytypes.TelemetryFieldKey, 0, len(matches))
-		for _, match := range matches {
-			if match.FieldContext == field.FieldContext {
-				validMatches = append(validMatches, match)
-			}
-		}
-		compoundName := fmt.Sprintf("%s.%s", field.FieldContext.StringValue(), field.Name)
-		compoundMatches := keys[compoundName]
-		validMatches = append(validMatches, compoundMatches...)
-		matches = append(matches, compoundMatches...)
-		if len(validMatches) > 0 {
-			return validMatches
-		}
+	if matches := keys[field.Name]; len(matches) > 0 {
+		return matches
 	}
-
-	if len(matches) > 0 {
+	if matches := keys[fmt.Sprintf("%s.%s", field.FieldContext.StringValue(), field.Name)]; len(matches) > 0 {
 		return matches
 	}
 

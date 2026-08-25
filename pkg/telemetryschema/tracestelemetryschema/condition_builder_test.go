@@ -504,6 +504,17 @@ func TestConditionForSynthesizedKeys(t *testing.T) {
 		assert.Contains(t, args, "timeout")
 	})
 
+	t.Run("scope context with no metadata -> scope attribute", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		key := telemetrytypes.TelemetryFieldKey{Name: "custom.attr", FieldContext: telemetrytypes.FieldContextScope}
+		conds, warnings, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, noMatches, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorEqual, "v", sb)
+		assert.NoError(t, err, "an undeclared scope attribute must still be filterable")
+		assert.NotEmpty(t, warnings)
+		sb.Where(conds...)
+		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		assert.Contains(t, sql, "scope.attributes.`custom.attr`")
+	})
+
 	t.Run("bare key with number operand -> attribute number", func(t *testing.T) {
 		sb := sqlbuilder.NewSelectBuilder()
 		key := telemetrytypes.TelemetryFieldKey{Name: "http.status"}
