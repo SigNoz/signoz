@@ -51,13 +51,13 @@ describe('useLogsTableColumns — selectColumns-order respected', () => {
 		);
 
 		// body/timestamp appear where the caller placed them, keyed by their
-		// composite IDs ('log.*'); contextless user fields collapse to bare name.
+		// composite IDs ('log:*'); contextless user fields collapse to bare name.
 		expect(result.current.map((c) => c.id)).toStrictEqual([
 			'state-indicator',
 			'service.name',
-			'log.body',
+			'log:body',
 			'request.id',
-			'log.timestamp',
+			'log:timestamp',
 		]);
 	});
 
@@ -70,14 +70,14 @@ describe('useLogsTableColumns — selectColumns-order respected', () => {
 		);
 
 		const byId = new Map(result.current.map((c) => [c.id, c]));
-		// Attribute variant is its own column, not a duplicate 'log.body'.
+		// Attribute variant is its own column, not a duplicate 'log:body'.
 		expect(result.current.map((c) => c.id)).toStrictEqual([
 			'state-indicator',
-			'log.body',
-			'attribute.body',
+			'log:body',
+			'attribute:body',
 		]);
-		expect(byId.get('log.body')?.enableRemove).toBe(false);
-		expect(byId.get('attribute.body')?.enableRemove).toBe(true);
+		expect(byId.get('log:body')?.enableRemove).toBe(false);
+		expect(byId.get('attribute:body')?.enableRemove).toBe(true);
 	});
 
 	it('applies the same distinct-column treatment to timestamp variants', () => {
@@ -91,11 +91,11 @@ describe('useLogsTableColumns — selectColumns-order respected', () => {
 		const byId = new Map(result.current.map((c) => [c.id, c]));
 		expect(result.current.map((c) => c.id)).toStrictEqual([
 			'state-indicator',
-			'log.timestamp',
-			'attribute.timestamp',
+			'log:timestamp',
+			'attribute:timestamp',
 		]);
-		expect(byId.get('log.timestamp')?.enableRemove).toBe(false);
-		expect(byId.get('attribute.timestamp')?.enableRemove).toBe(true);
+		expect(byId.get('log:timestamp')?.enableRemove).toBe(false);
+		expect(byId.get('attribute:timestamp')?.enableRemove).toBe(true);
 	});
 
 	it('skips the synthetic "id" field name', () => {
@@ -127,10 +127,10 @@ describe('useLogsTableColumns — selectColumns-order respected', () => {
 
 		const byId = new Map(result.current.map((c) => [c.id, c]));
 		// body + timestamp are locked from the table-X removal pathway.
-		expect(byId.get('log.body')?.canBeHidden).toBe(false);
-		expect(byId.get('log.body')?.enableRemove).toBe(false);
-		expect(byId.get('log.timestamp')?.canBeHidden).toBe(false);
-		expect(byId.get('log.timestamp')?.enableRemove).toBe(false);
+		expect(byId.get('log:body')?.canBeHidden).toBe(false);
+		expect(byId.get('log:body')?.enableRemove).toBe(false);
+		expect(byId.get('log:timestamp')?.canBeHidden).toBe(false);
+		expect(byId.get('log:timestamp')?.enableRemove).toBe(false);
 		// User-added fields stay removable. User field has type='' so composite
 		// collapses to bare name.
 		expect(byId.get('user_field')?.enableRemove).toBe(true);
