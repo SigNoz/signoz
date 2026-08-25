@@ -97,6 +97,23 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v2/gateway/ingestion_keys/{keyId}", handler.New(provider.authzMiddleware.EditAccess(provider.gatewayHandler.GetIngestionKey), handler.OpenAPIDef{
+		ID:                  "GetIngestionKey",
+		Tags:                []string{"gateway"},
+		Summary:             "Get ingestion key for workspace",
+		Description:         "This endpoint returns an ingestion key for the workspace",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            new(gatewaytypes.IngestionKey),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v2/gateway/ingestion_keys/{keyId}/limits", handler.New(provider.authzMiddleware.EditAccess(provider.gatewayHandler.DeprecatedCreateIngestionKeyLimit), handler.OpenAPIDef{
 		ID:                  "CreateIngestionKeyLimit",
 		Tags:                []string{"gateway"},

@@ -177,6 +177,62 @@ def test_get_ingestion_keys(
     assert data["_pagination"]["total"] == 1
 
 
+def test_get_ingestion_key_by_id(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    make_http_mocks: Callable[[types.TestContainerDocker, list], None],
+    get_token: Callable[[str, str], str],
+) -> None:
+    """GET /api/v2/gateway/ingestion_keys/{keyId} returns a single key."""
+    editor_token = get_token(GATEWAY_APIS_EDITOR_EMAIL, GATEWAY_APIS_EDITOR_PASSWORD)
+
+    gateway_url = f"/v1/workspaces/me/keys/{TEST_KEY_ID}"
+
+    make_http_mocks(
+        signoz.gateway,
+        [
+            Mapping(
+                request=MappingRequest(
+                    method=HttpMethods.GET,
+                    url=gateway_url,
+                    headers=common_gateway_headers(),
+                ),
+                response=MappingResponse(
+                    status=200,
+                    json_body={
+                        "status": "success",
+                        "data": {
+                            "id": TEST_KEY_ID,
+                            "name": "my-test-key",
+                            "value": "secret",
+                            "expires_at": "2030-01-01T00:00:00Z",
+                            "tags": ["env:test"],
+                            "created_at": "2024-01-01T00:00:00Z",
+                            "updated_at": "2024-01-01T00:00:00Z",
+                            "workspace_id": "ws-1",
+                        },
+                    },
+                ),
+                persistent=False,
+            ),
+        ],
+    )
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v2/gateway/ingestion_keys/{TEST_KEY_ID}"),
+        headers={"Authorization": f"Bearer {editor_token}"},
+        timeout=10,
+    )
+
+    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}: {response.text}"
+
+    data = response.json()["data"]
+    assert data["id"] == TEST_KEY_ID
+    assert data["name"] == "my-test-key"
+    assert data["workspace_id"] == "ws-1"
+    assert data["tags"] == ["env:test"]
+
+
 def test_get_ingestion_keys_custom_pagination(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument

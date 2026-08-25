@@ -330,6 +330,32 @@ func (handler *handler) GetIngestionKeyLimit(rw http.ResponseWriter, r *http.Req
 	render.Success(rw, http.StatusOK, response)
 }
 
+func (handler *handler) GetIngestionKey(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	keyID := mux.Vars(r)["keyId"]
+	if keyID == "" {
+		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "keyId is required"))
+		return
+	}
+
+	response, err := handler.gateway.GetIngestionKey(ctx, orgID, keyID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, response)
+}
+
 func parseIntWithDefaultValue(value string, defaultValue int) (int, error) {
 	if value == "" {
 		return defaultValue, nil

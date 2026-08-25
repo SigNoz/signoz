@@ -29,6 +29,8 @@ import type {
 	GatewaytypesPostableIngestionKeyDTO,
 	GatewaytypesPostableIngestionKeyLimitDTO,
 	GatewaytypesUpdatableIngestionKeyLimitDTO,
+	GetIngestionKey200,
+	GetIngestionKeyPathParameters,
 	GetIngestionKeys200,
 	GetIngestionKeysParams,
 	GetIngestionLimit200,
@@ -306,6 +308,108 @@ export const useDeleteIngestionKey = <
 > => {
 	return useMutation(getDeleteIngestionKeyMutationOptions(options));
 };
+/**
+ * This endpoint returns an ingestion key for the workspace
+ * @summary Get ingestion key for workspace
+ */
+export const getIngestionKey = (
+	{ keyId }: GetIngestionKeyPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetIngestionKey200>({
+		url: `/api/v2/gateway/ingestion_keys/${keyId}`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetIngestionKeyQueryKey = ({
+	keyId,
+}: GetIngestionKeyPathParameters) => {
+	return [`/api/v2/gateway/ingestion_keys/${keyId}`] as const;
+};
+
+export const getGetIngestionKeyQueryOptions = <
+	TData = Awaited<ReturnType<typeof getIngestionKey>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ keyId }: GetIngestionKeyPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getIngestionKey>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getGetIngestionKeyQueryKey({ keyId });
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof getIngestionKey>>> = ({
+		signal,
+	}) => getIngestionKey({ keyId }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!keyId,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getIngestionKey>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetIngestionKeyQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getIngestionKey>>
+>;
+export type GetIngestionKeyQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get ingestion key for workspace
+ */
+
+export function useGetIngestionKey<
+	TData = Awaited<ReturnType<typeof getIngestionKey>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ keyId }: GetIngestionKeyPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getIngestionKey>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetIngestionKeyQueryOptions({ keyId }, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get ingestion key for workspace
+ */
+export const invalidateGetIngestionKey = async (
+	queryClient: QueryClient,
+	{ keyId }: GetIngestionKeyPathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetIngestionKeyQueryKey({ keyId }) },
+		options,
+	);
+
+	return queryClient;
+};
+
 /**
  * This endpoint updates an ingestion key for the workspace
  * @summary Update ingestion key for workspace

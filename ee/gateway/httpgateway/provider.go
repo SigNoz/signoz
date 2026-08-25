@@ -108,6 +108,20 @@ func (provider *Provider) SearchIngestionKeysByName(ctx context.Context, orgID v
 	}, nil
 }
 
+func (provider *Provider) GetIngestionKey(ctx context.Context, orgID valuer.UUID, keyID string) (*gatewaytypes.IngestionKey, error) {
+	responseBody, err := provider.do(ctx, orgID, http.MethodGet, "/v1/workspaces/me/keys/"+keyID, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var ingestionKey gatewaytypes.IngestionKey
+	if err := json.Unmarshal([]byte(gjson.GetBytes(responseBody, "data").String()), &ingestionKey); err != nil {
+		return nil, err
+	}
+
+	return &ingestionKey, nil
+}
+
 func (provider *Provider) CreateIngestionKey(ctx context.Context, orgID valuer.UUID, name string, tags []string, expiresAt time.Time) (*gatewaytypes.GettableCreatedIngestionKey, error) {
 	requestBody := gatewaytypes.PostableIngestionKey{
 		Name:      name,

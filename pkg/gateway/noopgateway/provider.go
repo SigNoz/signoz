@@ -31,6 +31,10 @@ func (p *provider) SearchIngestionKeysByName(_ context.Context, _ valuer.UUID, _
 	return nil, errors.New(errors.TypeUnsupported, gateway.ErrCodeGatewayUnsupported, "unsupported call")
 }
 
+func (p *provider) GetIngestionKey(_ context.Context, _ valuer.UUID, _ string) (*gatewaytypes.IngestionKey, error) {
+	return nil, errors.New(errors.TypeUnsupported, gateway.ErrCodeGatewayUnsupported, "unsupported call")
+}
+
 func (p *provider) CreateIngestionKey(_ context.Context, _ valuer.UUID, _ string, _ []string, _ time.Time) (*gatewaytypes.GettableCreatedIngestionKey, error) {
 	return nil, errors.New(errors.TypeUnsupported, gateway.ErrCodeGatewayUnsupported, "unsupported call")
 }

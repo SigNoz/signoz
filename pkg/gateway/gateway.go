@@ -22,6 +22,9 @@ type Gateway interface {
 	// Search Ingestion Keys by Name (this is supposed to be for the current user but for now in gateway code this is ignoring the consumer user)
 	SearchIngestionKeysByName(ctx context.Context, orgID valuer.UUID, name string, page, perPage int) (*gatewaytypes.GettableIngestionKeys, error)
 
+	// Get Ingestion Key
+	GetIngestionKey(ctx context.Context, orgID valuer.UUID, keyID string) (*gatewaytypes.IngestionKey, error)
+
 	// Create Ingestion Key
 	CreateIngestionKey(ctx context.Context, orgID valuer.UUID, name string, tags []string, expiresAt time.Time) (*gatewaytypes.GettableCreatedIngestionKey, error)
 
@@ -64,4 +67,6 @@ type Handler interface {
 	CreateIngestionKeyLimit(http.ResponseWriter, *http.Request)
 
 	GetIngestionKeyLimit(http.ResponseWriter, *http.Request)
+
+	GetIngestionKey(http.ResponseWriter, *http.Request)
 }

@@ -11391,6 +11391,17 @@ export type CreateIngestionKey201 = {
 export type DeleteIngestionKeyPathParameters = {
 	keyId: string;
 };
+export type GetIngestionKeyPathParameters = {
+	keyId: string;
+};
+export type GetIngestionKey200 = {
+	data: GatewaytypesIngestionKeyDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type UpdateIngestionKeyPathParameters = {
 	keyId: string;
 };
