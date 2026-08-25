@@ -81,14 +81,14 @@ describe('OptimiseSignozNeeds', () => {
 		expect(hostsSliderThumb).toHaveAttribute('aria-valuenow', '0');
 		expect(nextButton).toBeDisabled();
 		expect(
-			screen.getByText('Adjust at least one slider to continue.'),
+			screen.getByText('Interact with at least one slider to continue.'),
 		).toBeInTheDocument();
 
 		fireEvent.pointerDown(hostsSliderThumb, { pointerId: 1, clientX: 0 });
 
 		expect(nextButton).toBeEnabled();
 		expect(
-			screen.queryByText('Adjust at least one slider to continue.'),
+			screen.queryByText('Interact with at least one slider to continue.'),
 		).not.toBeInTheDocument();
 
 		fireEvent.click(nextButton);

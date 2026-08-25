@@ -289,7 +289,7 @@ function OptimiseSignozNeeds({
 							id={SCALE_ANSWER_HINT_ID}
 							size="sm"
 						>
-							Adjust at least one slider to continue.
+							Interact with at least one slider to continue.
 						</Typography.Text>
 					)}
 					<Button
