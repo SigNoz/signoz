@@ -134,9 +134,12 @@ class MetricsSample(ABC):
 class MetricsExpHist(ABC):
     """Represents a row in the exp_hist table for exponential histograms.
 
-    Carries the raw observations rather than a serialized sketch: the `sketch`
-    column is an AggregateFunction state that only ClickHouse can build, so
-    `observations` is what gets folded into one on insert. Must be non-empty.
+    `observations` must be non-empty; ClickHouse folds it into the `sketch`
+    AggregateFunction state on insert.
+
+    TODO: take an ExponentialHistogramDataPoint and compute the sketch bytes the
+    way the collector does, so the fixture exercises the real write path instead
+    of having ClickHouse build the state.
     """
 
     env: str
@@ -739,6 +742,47 @@ class MetricsBufferSample(ABC):
         ]
 
 
+def insert_time_series_to_clickhouse(conn, time_series: list[MetricsTimeSeries]) -> None:
+    """
+    Insert one distributed_time_series_v4 registration row per (series, hour
+    bucket), unix_milli floored to the hour — the exporter's exact shape.
+    Readers floor lookup windows to these buckets: skipping per-bucket
+    re-registration or keeping raw mid-hour timestamps hides series in ways
+    production never sees.
+    """
+    time_series_map: dict[tuple[int, int], MetricsTimeSeries] = {}
+    for ts in time_series:
+        fp = int(ts.fingerprint)
+        hour_bucket = int(ts.unix_milli) // 3_600_000
+        if (fp, hour_bucket) not in time_series_map:
+            ts.unix_milli = np.int64(hour_bucket * 3_600_000)
+            time_series_map[(fp, hour_bucket)] = ts
+
+    if len(time_series_map) == 0:
+        return
+
+    conn.insert(
+        database="signoz_metrics",
+        table="distributed_time_series_v4",
+        column_names=[
+            "env",
+            "temporality",
+            "metric_name",
+            "description",
+            "unit",
+            "type",
+            "is_monotonic",
+            "fingerprint",
+            "unix_milli",
+            "labels",
+            "attrs",
+            "scope_attrs",
+            "resource_attrs",
+        ],
+        data=[ts.to_row() for ts in time_series_map.values()],
+    )
+
+
 def insert_metrics_to_clickhouse(conn, metrics: list[Metrics]) -> None:
     """
     Insert metrics into ClickHouse tables.
@@ -750,39 +794,7 @@ def insert_metrics_to_clickhouse(conn, metrics: list[Metrics]) -> None:
     Pure function so the seeder container can reuse the exact insert path
     used by the pytest fixture. `conn` is a clickhouse-connect Client.
     """
-    # One registration row per (series, hour bucket), unix_milli floored to
-    # the hour — the exporter's exact shape. Readers floor lookup windows to
-    # these buckets: skipping per-bucket re-registration or keeping raw
-    # mid-hour timestamps hides series in ways production never sees.
-    time_series_map: dict[tuple[int, int], MetricsTimeSeries] = {}
-    for metric in metrics:
-        fp = int(metric.time_series.fingerprint)
-        hour_bucket = int(metric.time_series.unix_milli) // 3_600_000
-        if (fp, hour_bucket) not in time_series_map:
-            metric.time_series.unix_milli = np.int64(hour_bucket * 3_600_000)
-            time_series_map[(fp, hour_bucket)] = metric.time_series
-
-    if len(time_series_map) > 0:
-        conn.insert(
-            database="signoz_metrics",
-            table="distributed_time_series_v4",
-            column_names=[
-                "env",
-                "temporality",
-                "metric_name",
-                "description",
-                "unit",
-                "type",
-                "is_monotonic",
-                "fingerprint",
-                "unix_milli",
-                "labels",
-                "attrs",
-                "scope_attrs",
-                "resource_attrs",
-            ],
-            data=[ts.to_row() for ts in time_series_map.values()],
-        )
+    insert_time_series_to_clickhouse(conn, [metric.time_series for metric in metrics])
 
     samples = [metric.sample for metric in metrics]
     if len(samples) > 0:
@@ -801,6 +813,15 @@ def insert_metrics_to_clickhouse(conn, metrics: list[Metrics]) -> None:
             data=[sample.to_row() for sample in samples],
         )
 
+    insert_metrics_metadata_to_clickhouse(conn, metrics)
+
+
+def insert_metrics_metadata_to_clickhouse(conn, metrics: list) -> None:
+    """
+    Insert the distributed_metadata rows describing each metric's point, resource
+    and scope attributes. Accepts anything exposing `time_series`, `labels` and
+    `timestamp`.
+    """
     # (metric_name, attr_type, attr_name, attr_value) -> MetricsMetadata
     metadata_map: dict[tuple, MetricsMetadata] = {}
     for metric in metrics:
@@ -912,36 +933,9 @@ def insert_exp_histogram_metrics_to_clickhouse(conn, metrics: list[ExpHistogramM
     Handles insertion into:
     - distributed_time_series_v4 (time series metadata)
     - distributed_exp_hist (per-point sketches)
+    - distributed_metadata (metric attribute metadata)
     """
-    time_series_map: dict[tuple[int, int], MetricsTimeSeries] = {}
-    for metric in metrics:
-        fp = int(metric.time_series.fingerprint)
-        hour_bucket = int(metric.time_series.unix_milli) // 3_600_000
-        if (fp, hour_bucket) not in time_series_map:
-            metric.time_series.unix_milli = np.int64(hour_bucket * 3_600_000)
-            time_series_map[(fp, hour_bucket)] = metric.time_series
-
-    if len(time_series_map) > 0:
-        conn.insert(
-            database="signoz_metrics",
-            table="distributed_time_series_v4",
-            column_names=[
-                "env",
-                "temporality",
-                "metric_name",
-                "description",
-                "unit",
-                "type",
-                "is_monotonic",
-                "fingerprint",
-                "unix_milli",
-                "labels",
-                "attrs",
-                "scope_attrs",
-                "resource_attrs",
-            ],
-            data=[ts.to_row() for ts in time_series_map.values()],
-        )
+    insert_time_series_to_clickhouse(conn, [metric.time_series for metric in metrics])
 
     # `sketch` is AggregateFunction(quantilesDD(...), UInt64) — the state has to be
     # folded server-side, it cannot be sent as a literal. The quantilesDDState
@@ -969,6 +963,8 @@ def insert_exp_histogram_metrics_to_clickhouse(conn, metrics: list[ExpHistogramM
                 "flags": int(hist.flags),
             },
         )
+
+    insert_metrics_metadata_to_clickhouse(conn, metrics)
 
 
 @pytest.fixture(name="insert_exp_histogram_metrics", scope="function")
