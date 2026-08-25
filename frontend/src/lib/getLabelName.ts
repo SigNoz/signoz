@@ -16,12 +16,12 @@ const getLabelName = (
 			.filter((e) => e)
 			.map((e) => e.split('}}')[0]);
 
-		const results = variables.map((variable) => metric[variable]);
+		const results = variables.map((variable) => metric[variable] ?? '');
 
 		let endResult = legends;
 
 		variables.forEach((e, index) => {
-			endResult = endResult.replace(`{{${e}}}`, results[index]);
+			endResult = endResult.split(`{{${e}}}`).join(results[index]);
 		});
 
 		return endResult;
