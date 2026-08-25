@@ -353,19 +353,6 @@ func (m *fieldMapper) resolveColumnExprs(
 	return exprs, existExprs, columns, nil
 }
 
-// logicalForResolvedColumn returns the logical field(s) a directly-resolvable key names.
-// Resolving to a column answers only that the key is addressable, not that it names one
-// field: the scope JSON column resolves for both a declared path and a same-named scope
-// attribute. Metadata is what tells those homes apart, so every match it reports is kept,
-// the way the filter path keeps them. Only a name metadata does not know falls back to
-// the key as given.
-func (m *fieldMapper) logicalForResolvedColumn(ctx context.Context, orgID valuer.UUID, field *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.LogicalField {
-	if matches := querybuilder.MatchingLogicalFields(ctx, orgID, m.fl, field, keys); len(matches) > 0 {
-		return matches
-	}
-	return []*telemetrytypes.LogicalField{telemetrytypes.SingleLogicalField(field.Name, field)}
-}
-
 // upgradeToFamilies swaps single-member candidates for their family when the
 // metadata map proves membership. Candidate order and every non-family
 // candidate stay exactly as the legacy flow produced them; sibling candidates
@@ -430,7 +417,15 @@ func (m *fieldMapper) ColumnExpressionFor(
 	var candidates []*telemetrytypes.LogicalField
 	switch _, err := m.FieldFor(ctx, orgID, startNs, endNs, field); {
 	case err == nil:
-		candidates = m.logicalForResolvedColumn(ctx, orgID, field, keys)
+		// Resolving to a column answers only that the key is addressable, not that it
+		// names one field: the scope JSON column resolves for both a declared path and a
+		// same-named scope attribute. Metadata is what tells those homes apart, so every
+		// match it reports is kept, the way the filter path keeps them. Only a name
+		// metadata does not know falls back to the key as given.
+		candidates = querybuilder.MatchingLogicalFields(ctx, orgID, m.fl, field, keys)
+		if len(candidates) == 0 {
+			candidates = []*telemetrytypes.LogicalField{telemetrytypes.SingleLogicalField(field.Name, field)}
+		}
 	case errors.Is(err, qbtypes.ErrColumnNotFound):
 		raw := m.CandidateKeys(ctx, orgID, field, nil, keys)
 		if len(raw) == 0 {
