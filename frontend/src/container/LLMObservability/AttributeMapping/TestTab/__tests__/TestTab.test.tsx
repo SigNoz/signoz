@@ -7,7 +7,7 @@ import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { mockUseAuthZGrantAll } from 'lib/authz/utils/authz-test-utils';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
-jest.mock('@monaco-editor/react', () => ({
+jest.mock('components/MonacoEditor/MonacoEditor', () => ({
 	__esModule: true,
 	default: ({
 		value,

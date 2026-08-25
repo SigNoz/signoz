@@ -1,5 +1,6 @@
 import { ChangeEvent, useCallback } from 'react';
-import MEditor, { Monaco } from '@monaco-editor/react';
+import { Monaco } from '@monaco-editor/react';
+import MEditor from 'components/MonacoEditor/MonacoEditor';
 import { Color } from '@signozhq/design-tokens';
 import { Input } from 'antd';
 import { LEGEND } from 'constants/global';

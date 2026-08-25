@@ -14,7 +14,7 @@ jest.mock('../../../store/useDashboardStore', () => ({
 	): unknown => selector({ isEditable: true, editDisabledReason: '' }),
 }));
 
-jest.mock('@monaco-editor/react', () => ({
+jest.mock('components/MonacoEditor/MonacoEditor', () => ({
 	__esModule: true,
 	default: ({
 		value,

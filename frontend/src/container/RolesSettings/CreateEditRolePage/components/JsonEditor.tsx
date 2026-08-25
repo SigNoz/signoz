@@ -7,7 +7,8 @@ import {
 	useRef,
 } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import MEditor, { Monaco, OnMount } from '@monaco-editor/react';
+import { Monaco, OnMount } from '@monaco-editor/react';
+import MEditor from 'components/MonacoEditor/MonacoEditor';
 import { Color } from '@signozhq/design-tokens';
 import { Check, Copy } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';

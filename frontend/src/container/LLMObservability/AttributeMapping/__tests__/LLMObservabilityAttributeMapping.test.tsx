@@ -9,7 +9,7 @@ jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
 const mockedUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
 
 // Monaco can't run in jsdom — stand in a textarea so the span input is editable.
-jest.mock('@monaco-editor/react', () => ({
+jest.mock('components/MonacoEditor/MonacoEditor', () => ({
 	__esModule: true,
 	default: ({
 		value,

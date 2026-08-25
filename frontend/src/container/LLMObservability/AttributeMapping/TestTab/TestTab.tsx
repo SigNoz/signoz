@@ -1,4 +1,4 @@
-import MEditor from '@monaco-editor/react';
+import MEditor from 'components/MonacoEditor/MonacoEditor';
 import { Play, RotateCcw } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
