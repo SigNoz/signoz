@@ -259,7 +259,7 @@ func (provider *provider) CreateNotificationChannel(ctx context.Context, orgID s
 		return nil, err
 	}
 
-	if err := config.CreateReceiver(receiver); err != nil {
+	if err := config.CreateReceiverV2(receiver); err != nil {
 		return nil, err
 	}
 

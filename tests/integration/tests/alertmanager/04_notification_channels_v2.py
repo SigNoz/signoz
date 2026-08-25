@@ -209,7 +209,7 @@ def test_create_rejects_a_duplicate_display_name(
         headers={"Authorization": f"Bearer {token}"},
         timeout=TIMEOUT,
     )
-    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert response.status_code == HTTPStatus.CONFLICT, response.text
     assert "unique" in response.text
 
 
