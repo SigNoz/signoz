@@ -10,4 +10,5 @@ export enum LogDetailsAction {
 	FILTER_OUT = 'filter-out',
 	GROUP_BY = 'group-by',
 	REPLACE_FILTER = 'replace-filter',
+	PIN = 'pin',
 }
