@@ -1,0 +1,21 @@
+{
+	"$comment": "Specs not currently running, and why. This is the ONLY place a spec may be excluded from the suite: `playwright.config.ts` feeds `specs` to `testIgnore`, and `pnpm guard:specs` fails if any spec that is NOT listed here contains a skipped, fixme'd or .only test. So a spec is either running and complete, or parked here with a reason — nothing rots quietly in between. Every entry is removed by the PR that migrates it; the list only shrinks.",
+	"specs": [
+		"**/tests/dashboards/list.spec.ts",
+		"**/tests/dashboards/details/03-viewing.spec.ts",
+		"**/tests/dashboards/details/12-sections.spec.ts",
+		"**/tests/dashboards/details/21-panel-actions.spec.ts",
+		"**/tests/dashboards/details/35-add-panel.spec.ts",
+		"**/tests/dashboards/details/44-edit-panel.spec.ts",
+		"**/tests/dashboards/details/56-time-range.spec.ts",
+		"**/tests/dashboards/details/67-variables.spec.ts",
+		"**/tests/dashboards/details/78-edit-mode.spec.ts",
+		"**/tests/dashboards/details/87-configure.spec.ts",
+		"**/tests/dashboards/details/95-edge-cases.spec.ts",
+		"**/tests/trace-details/preview-fields.spec.ts"
+	],
+	"reasons": {
+		"**/tests/dashboards/**": "Written against V1 dashboard behaviour; the V1 -> V2 migration changed what they assert. Being rewritten area by area — see the E0-E8 plan.",
+		"**/tests/trace-details/preview-fields.spec.ts": "Entirely `describe.skip` since it was added: the hover card's preview field needs seeded telemetry the suite does not provide yet."
+	}
+}
