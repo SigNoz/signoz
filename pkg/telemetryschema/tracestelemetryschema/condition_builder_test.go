@@ -513,6 +513,9 @@ func TestConditionForSynthesizedKeys(t *testing.T) {
 		sb.Where(conds...)
 		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 		assert.Contains(t, sql, "scope.attributes.`custom.attr`")
+		// `scope.` can be part of the attribute's own name, so the literal spelling is a
+		// candidate too — the caller ORs the two.
+		assert.Contains(t, sql, "scope.attributes.`scope.custom.attr`")
 	})
 
 	t.Run("bare key with number operand -> attribute number", func(t *testing.T) {

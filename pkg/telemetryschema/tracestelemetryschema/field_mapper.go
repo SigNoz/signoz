@@ -595,14 +595,10 @@ func (m *fieldMapper) CandidateKeys(ctx context.Context, _ valuer.UUID, field *t
 		// honored as-is: the stripped name lives in the attribute maps
 		stripped := telemetrytypes.NewTelemetryFieldKey(field.Name, telemetrytypes.FieldContextUnspecified, field.FieldDataType)
 		return querybuilder.SynthesizeKeys(stripped, value)
-	case telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextResource:
+	case telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextResource, telemetrytypes.FieldContextScope:
 		// strict context honored as-is: stripped interpretation first, literal spelling second
 		literal := telemetrytypes.NewTelemetryFieldKey(field.FieldContext.StringValue()+"."+field.Name, field.FieldContext, field.FieldDataType)
 		return append(querybuilder.SynthesizeKeys(field, value), querybuilder.SynthesizeKeys(literal, value)...)
-	case telemetrytypes.FieldContextScope:
-		// Declared scope paths (scope.name / scope.version) arrive via metadata as intrinsics;
-		// anything reaching synth is an undeclared scope attribute.
-		return []*telemetrytypes.TelemetryFieldKey{telemetrytypes.NewTelemetryFieldKey(field.Name, telemetrytypes.FieldContextScope, telemetrytypes.FieldDataTypeString)}
 	}
 	// contexts that don't exist on spans (log, body, …) have nothing to synthesize
 	return nil
