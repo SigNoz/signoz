@@ -95,4 +95,20 @@ describe('OptimiseSignozNeeds', () => {
 
 		expect(mockOnNext).toHaveBeenCalledTimes(1);
 	});
+
+	it('submits the current slider values directly when continuing', () => {
+		render(<OptimiseSignozNeedsHarness />);
+
+		const logsSlider = screen.getByTestId('onboarding-logs-slider');
+		const [, nonZeroLogMark] = within(logsSlider).getAllByRole('button');
+
+		fireEvent.click(nonZeroLogMark);
+		fireEvent.click(screen.getByTestId('onboarding-scale-next-button'));
+
+		expect(mockOnNext).toHaveBeenCalledWith({
+			logsPerDay: linearToExponential(25, 1, 10000),
+			hostsPerDay: 0,
+			services: 0,
+		});
+	});
 });

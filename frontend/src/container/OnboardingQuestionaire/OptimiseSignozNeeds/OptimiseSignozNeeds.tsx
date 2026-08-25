@@ -32,7 +32,7 @@ const servicesMax = 5000;
 interface OptimiseSignozNeedsProps {
 	optimiseSignozDetails: OptimiseSignozDetails;
 	setOptimiseSignozDetails: (details: OptimiseSignozDetails) => void;
-	onNext: () => void;
+	onNext: (details: OptimiseSignozDetails) => void;
 	onScaleInteraction: () => void;
 	onWillDoLater: () => void;
 	isUpdatingProfile: boolean;
@@ -110,13 +110,15 @@ function OptimiseSignozNeeds({
 	}, [services, hostsPerDay, logsPerDay]);
 
 	const handleOnNext = (): void => {
-		void logEvent('Org Onboarding: Answered', {
+		const scaleDetails = {
 			logsPerDay,
 			hostsPerDay,
 			services,
-		});
+		};
 
-		onNext();
+		void logEvent('Org Onboarding: Answered', scaleDetails);
+
+		onNext(scaleDetails);
 	};
 
 	const handleWillDoLater = (): void => {
@@ -135,10 +137,10 @@ function OptimiseSignozNeeds({
 
 	const handleSliderChange = (key: string, value: number): void => {
 		onScaleInteraction();
-		setSliderValues({
-			...sliderValues,
+		setSliderValues((currentSliderValues) => ({
+			...currentSliderValues,
 			[key]: value,
-		});
+		}));
 
 		switch (key) {
 			case 'logsPerDay':

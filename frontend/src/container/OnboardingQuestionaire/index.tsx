@@ -119,9 +119,7 @@ function OnboardingQuestionaire(): JSX.Element {
 		},
 	});
 
-	const handleUpdateProfile = (
-		scaleDetails: OptimiseSignozDetails = optimiseSignozDetails,
-	): void => {
+	const handleUpdateProfile = (scaleDetails: OptimiseSignozDetails): void => {
 		void logEvent(NEXT_BUTTON_EVENT_NAME, {
 			currentPageID: 3,
 			nextPageID: 4,
