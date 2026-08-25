@@ -70,11 +70,22 @@ async function pinSidenav(page: Page): Promise<void> {
 		data: { value: true },
 		headers: { Authorization: `Bearer ${token}` },
 	});
-	if (!res.ok()) {
-		throw new Error(
-			`PUT /api/v1/user/preferences/sidenav_pinned ${res.status()}: ${await res.text()}`,
-		);
+	if (res.ok()) {
+		return;
 	}
+
+	// Workers log in concurrently as the same user and race on this row; the
+	// backend insert isn't upsert-safe, so the loser gets a unique-constraint
+	// 500. The winner already set the pref to the value we want, so the desired
+	// state holds — tolerate exactly this error and keep failing on the rest
+	// (a 401 here means auth is broken and every spec should stop).
+	const body = await res.text();
+	if (/uq_user_preference_name_user_id|23505|duplicate key/i.test(body)) {
+		return;
+	}
+	throw new Error(
+		`PUT /api/v1/user/preferences/sidenav_pinned ${res.status()}: ${body}`,
+	);
 }
 
 export const test = base.extend<{

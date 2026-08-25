@@ -81,7 +81,7 @@ function PreviewPane({
 	const [searchTerm, setSearchTerm] = useState('');
 
 	return (
-		<div className={styles.preview}>
+		<div className={styles.preview} data-testid="preview-pane">
 			{!hideHeader && (
 				<div className={styles.header}>
 					<PlotTag
