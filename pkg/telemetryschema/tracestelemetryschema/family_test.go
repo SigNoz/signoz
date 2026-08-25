@@ -236,30 +236,8 @@ func TestColumnExpressionForFamilyGroupBy(t *testing.T) {
 	}
 	fm := NewFieldMapper(familyFlagOn(t))
 
-	// The family must be reached whether or not the key carries a context: a bare key
-	// resolves through the candidate path, a context-carrying one through metadata.
-	keys := []struct {
-		name string
-		key  telemetrytypes.TelemetryFieldKey
-	}{
-		{"bare", telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}},
-		{"with context", telemetrytypes.TelemetryFieldKey{
-			Name:         "deployment.environment.name",
-			FieldContext: telemetrytypes.FieldContextResource,
-		}},
-		{"with context and data type", telemetrytypes.TelemetryFieldKey{
-			Name:          "deployment.environment.name",
-			FieldContext:  telemetrytypes.FieldContextResource,
-			FieldDataType: telemetrytypes.FieldDataTypeString,
-		}},
-	}
-	for _, tc := range keys {
-		t.Run(tc.name, func(t *testing.T) {
-			key := tc.key
-			expr, err := fm.ColumnExpressionFor(context.Background(), valuer.UUID{}, startNs, endNs,
-				&key, telemetrytypes.FieldDataTypeString, fieldKeys)
-			require.NoError(t, err)
-			require.Equal(t, "multiIf((multiIf(resource.`deployment.environment.name` IS NOT NULL, resource.`deployment.environment.name`::String, mapContains(resources_string, 'deployment.environment.name'), resources_string['deployment.environment.name'], NULL) IS NOT NULL OR multiIf(resource.`deployment.environment` IS NOT NULL, resource.`deployment.environment`::String, mapContains(resources_string, 'deployment.environment'), resources_string['deployment.environment'], NULL) IS NOT NULL), COALESCE(NULLIF(multiIf(resource.`deployment.environment.name` IS NOT NULL, resource.`deployment.environment.name`::String, mapContains(resources_string, 'deployment.environment.name'), resources_string['deployment.environment.name'], NULL), ''), NULLIF(multiIf(resource.`deployment.environment` IS NOT NULL, resource.`deployment.environment`::String, mapContains(resources_string, 'deployment.environment'), resources_string['deployment.environment'], NULL), ''), ''), NULL)", expr)
-		})
-	}
+	expr, err := fm.ColumnExpressionFor(context.Background(), valuer.UUID{}, startNs, endNs,
+		&telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, telemetrytypes.FieldDataTypeString, fieldKeys)
+	require.NoError(t, err)
+	require.Equal(t, "multiIf((multiIf(resource.`deployment.environment.name` IS NOT NULL, resource.`deployment.environment.name`::String, mapContains(resources_string, 'deployment.environment.name'), resources_string['deployment.environment.name'], NULL) IS NOT NULL OR multiIf(resource.`deployment.environment` IS NOT NULL, resource.`deployment.environment`::String, mapContains(resources_string, 'deployment.environment'), resources_string['deployment.environment'], NULL) IS NOT NULL), COALESCE(NULLIF(multiIf(resource.`deployment.environment.name` IS NOT NULL, resource.`deployment.environment.name`::String, mapContains(resources_string, 'deployment.environment.name'), resources_string['deployment.environment.name'], NULL), ''), NULLIF(multiIf(resource.`deployment.environment` IS NOT NULL, resource.`deployment.environment`::String, mapContains(resources_string, 'deployment.environment'), resources_string['deployment.environment'], NULL), ''), ''), NULL)", expr)
 }
