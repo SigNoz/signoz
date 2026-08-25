@@ -346,10 +346,10 @@ func TestColumnExpressionForTimestampAttributeCollision(t *testing.T) {
 
 // TestColumnExpressionForScopeDeclaredPath covers select-side resolution of scope names that
 // collide with a declared scope path. A short name under scope context (or the bare
-// `scope.<x>` spelling that normalizes to it) binds to the declared path — a same-named
-// scope attribute never shadows it. The full `scope.<x>` name under explicit scope context
-// likewise addresses the declared path alone. A `name`/`version` scope attribute is reachable
-// only via the explicit `scope.attribute.` prefix.
+// `scope.<x>` spelling that normalizes to it) names both homes and coalesces them when
+// metadata knows a same-named scope attribute, and binds to the declared path alone when it
+// does not. The full `scope.<x>` name under explicit scope context addresses the declared
+// path alone; the explicit `scope.attribute.` prefix addresses the attribute alone.
 func TestColumnExpressionForScopeDeclaredPath(t *testing.T) {
 	ctx := context.Background()
 
