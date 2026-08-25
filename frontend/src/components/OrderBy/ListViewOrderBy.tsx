@@ -1,16 +1,28 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { Select, Spin } from 'antd';
-import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
-import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
+import type { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	fetchFieldKeysForQuery,
+	SuggestedFieldKey,
+} from 'components/QueryBuilderV2/QueryV2/QuerySearch/keySuggestions';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import './ListViewOrderBy.styles.scss';
+
+/** Offered even when the keys endpoint cannot report them, e.g. an intrinsic column. */
+const DEFAULT_STATIC_OPTION_KEYS = ['timestamp'];
 
 interface ListViewOrderByProps {
 	value: string;
 	onChange: (value: string) => void;
 	dataSource: DataSource;
+	/** Picks the key endpoint; builder_ai_query reads ai_observability. */
+	builderQueryType?: IBuilderQuery['builderQueryType'];
+	fieldContext?: TelemetrytypesFieldContextDTO;
+	/** Keys always offered, on top of whatever the endpoint reports. */
+	staticOptionKeys?: string[];
 }
 
 // Loader component for the dropdown when loading or no results
@@ -26,6 +38,9 @@ function ListViewOrderBy({
 	value,
 	onChange,
 	dataSource,
+	builderQueryType,
+	fieldContext,
+	staticOptionKeys = DEFAULT_STATIC_OPTION_KEYS,
 }: ListViewOrderByProps): JSX.Element {
 	const [searchInput, setSearchInput] = useState('');
 	const [debouncedInput, setDebouncedInput] = useState('');
@@ -36,14 +51,20 @@ function ListViewOrderBy({
 
 	// Fetch key suggestions based on debounced input
 	const { data, isLoading } = useQuery({
-		queryKey: ['orderByKeySuggestions', dataSource, debouncedInput],
-		queryFn: async () => {
-			const response = await getKeySuggestions({
-				signal: dataSource,
+		queryKey: [
+			'orderByKeySuggestions',
+			dataSource,
+			builderQueryType,
+			fieldContext,
+			debouncedInput,
+		],
+		queryFn: () =>
+			fetchFieldKeysForQuery({
+				builderQueryType,
+				dataSource,
+				fieldContext,
 				searchText: debouncedInput,
-			});
-			return response.data;
-		},
+			}),
 	});
 
 	useEffect(
@@ -55,16 +76,20 @@ function ListViewOrderBy({
 		[],
 	);
 
+	// A signature, not the array: an inline literal would loop the effect below.
+	const staticKeysSignature = staticOptionKeys.join(',');
+
 	// Update options when API data changes
 	useEffect(() => {
-		const rawKeys: QueryKeyDataSuggestionsProps[] = data?.data?.keys
-			? Object.values(data.data?.keys).flat()
-			: [];
+		const rawKeys: SuggestedFieldKey[] = data ? Object.values(data).flat() : [];
 
 		const keyNames = rawKeys.map((key) => key.name);
-		const uniqueKeys = [
-			...new Set(searchInput ? keyNames : ['timestamp', ...keyNames]),
-		];
+		// Static keys survive a search; the endpoint never reports them.
+		const search = searchInput.trim().toLowerCase();
+		const staticMatches = staticKeysSignature
+			.split(',')
+			.filter((key) => key.length > 0 && key.toLowerCase().includes(search));
+		const uniqueKeys = [...new Set([...staticMatches, ...keyNames])];
 
 		const updatedOptions = uniqueKeys.flatMap((key) => [
 			{ label: `${key} (desc)`, value: `${key}:desc` },
@@ -72,7 +97,7 @@ function ListViewOrderBy({
 		]);
 
 		setSelectOptions(updatedOptions);
-	}, [data, searchInput]);
+	}, [data, searchInput, staticKeysSignature]);
 
 	// Handle search input with debounce
 	const handleSearch = (input: string): void => {
@@ -111,5 +136,11 @@ function ListViewOrderBy({
 		/>
 	);
 }
+
+ListViewOrderBy.defaultProps = {
+	builderQueryType: undefined,
+	fieldContext: undefined,
+	staticOptionKeys: DEFAULT_STATIC_OPTION_KEYS,
+};
 
 export default ListViewOrderBy;

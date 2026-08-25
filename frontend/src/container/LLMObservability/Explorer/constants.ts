@@ -51,3 +51,8 @@ export const defaultSelectedColumns: string[] = [
 ];
 
 export const PER_PAGE_OPTIONS: number[] = DEFAULT_PER_PAGE_OPTIONS;
+
+/** The trace list's default order, which the keys endpoint does not report. */
+export const TRACE_VIEW_STATIC_ORDER_BY_KEYS: string[] = ['last_activity_time'];
+
+export const TRACE_VIEW_DEFAULT_ORDER_BY = 'last_activity_time:desc';

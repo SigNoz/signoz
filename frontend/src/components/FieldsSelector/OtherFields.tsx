@@ -22,6 +22,8 @@ interface OtherFieldsProps {
 	onAdd: (field: TelemetryFieldKey) => void;
 	isAtLimit: boolean;
 	allowCustomFields?: boolean;
+	/** Fixed pool, filtered client-side; for responses the keys endpoint cannot report. */
+	availableFields?: TelemetryFieldKey[];
 }
 
 function OtherFields({
@@ -31,7 +33,10 @@ function OtherFields({
 	onAdd,
 	isAtLimit,
 	allowCustomFields,
+	availableFields,
 }: OtherFieldsProps): JSX.Element {
+	const hasFixedPool = availableFields !== undefined;
+
 	const { data, isFetching } = useGetQueryKeySuggestions(
 		{
 			signal,
@@ -43,12 +48,17 @@ function OtherFields({
 				signal,
 				debouncedInputValue,
 			],
-			enabled: true,
+			enabled: !hasFixedPool,
 		},
 	);
 
 	const otherFields = useMemo<TelemetryFieldKey[]>(() => {
-		const rawSuggestions = Object.values(data?.data.data.keys || {}).flat();
+		const search = debouncedInputValue.trim().toLowerCase();
+		const rawSuggestions = availableFields
+			? availableFields.filter((field) =>
+					field.name.toLowerCase().includes(search),
+				)
+			: Object.values(data?.data.data.keys || {}).flat();
 		// Normalize: synthesize `key` once so downstream reads can trust it.
 		const suggestions: TelemetryFieldKey[] = rawSuggestions.map((attr) => ({
 			...attr,
@@ -85,7 +95,13 @@ function OtherFields({
 			key: buildCompositeKey(typed, ''),
 		};
 		return [customField, ...available];
-	}, [data, addedFields, allowCustomFields, debouncedInputValue]);
+	}, [
+		data,
+		addedFields,
+		allowCustomFields,
+		debouncedInputValue,
+		availableFields,
+	]);
 
 	if (isFetching) {
 		return (

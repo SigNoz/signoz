@@ -4,6 +4,7 @@ import FieldsSelector from 'components/FieldsSelector';
 import Controls, { ControlsProps } from 'container/Controls';
 import { OptionsMenuConfig } from 'container/OptionsMenu/types';
 import useQueryPagination from 'hooks/queryPagination/useQueryPagination';
+import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import styles from './Controls.module.scss';
@@ -13,6 +14,8 @@ function ExplorerControls({
 	totalCount,
 	perPageOptions,
 	config,
+	availableFields,
+	requiredFields,
 	showSizeChanger = true,
 }: ExplorerControlsProps): JSX.Element | null {
 	const [isFieldsSelectorOpen, setIsFieldsSelectorOpen] = useState(false);
@@ -44,6 +47,8 @@ function ExplorerControls({
 						onFieldsChange={config.fieldsSelector.onFieldsChange}
 						onClose={(): void => setIsFieldsSelectorOpen(false)}
 						signal={DataSource.TRACES}
+						availableFields={availableFields}
+						requiredFields={requiredFields}
 					/>
 				</>
 			)}
@@ -68,11 +73,16 @@ type ExplorerControlsProps = Pick<
 	'isLoading' | 'totalCount' | 'perPageOptions'
 > & {
 	config?: OptionsMenuConfig | null;
+	/** Fixed pool for the fields selector; omit to search the keys endpoint. */
+	availableFields?: TelemetryFieldKey[];
+	requiredFields?: readonly string[];
 	showSizeChanger?: boolean;
 };
 
 ExplorerControls.defaultProps = {
 	config: null,
+	availableFields: undefined,
+	requiredFields: undefined,
 	showSizeChanger: true,
 };
 

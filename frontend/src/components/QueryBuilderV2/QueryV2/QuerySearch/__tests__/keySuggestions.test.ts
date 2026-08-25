@@ -1,4 +1,5 @@
 import { getAIObservabilityFieldsKeys } from 'api/generated/services/ai-observability';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -39,11 +40,50 @@ describe('fetchFieldKeysForQuery', () => {
 			searchText: 'llm',
 		});
 
-		expect(mockedAIKeys).toHaveBeenCalledWith({ searchText: 'llm' });
+		expect(mockedAIKeys).toHaveBeenCalledWith({
+			searchText: 'llm',
+			fieldContext: undefined,
+		});
 		expect(mockedGenericKeys).not.toHaveBeenCalled();
 		expect(keys).toStrictEqual({
 			llm_call_count: [{ name: 'llm_call_count' }],
 		});
+	});
+
+	it('forwards fieldContext to the ai_observability endpoint', async () => {
+		mockedAIKeys.mockResolvedValue({
+			status: 'success',
+			data: { complete: true, keys: {} },
+		} as Awaited<ReturnType<typeof getAIObservabilityFieldsKeys>>);
+
+		await fetchFieldKeysForQuery({
+			builderQueryType: 'builder_ai_query',
+			dataSource: DataSource.TRACES,
+			searchText: '',
+			fieldContext: TelemetrytypesFieldContextDTO.trace,
+		});
+
+		expect(mockedAIKeys).toHaveBeenCalledWith({
+			searchText: '',
+			fieldContext: TelemetrytypesFieldContextDTO.trace,
+		});
+	});
+
+	it('drops fieldContext for the generic endpoint, which cannot narrow on it', async () => {
+		mockedGenericKeys.mockResolvedValue({
+			data: { status: 'success', data: { complete: true, keys: {} } },
+		} as Awaited<ReturnType<typeof getKeySuggestions>>);
+
+		await fetchFieldKeysForQuery({
+			builderQueryType: 'builder_query',
+			dataSource: DataSource.TRACES,
+			searchText: '',
+			fieldContext: TelemetrytypesFieldContextDTO.trace,
+		});
+
+		expect(mockedGenericKeys).toHaveBeenCalledWith(
+			expect.not.objectContaining({ fieldContext: expect.anything() }),
+		);
 	});
 
 	it.each<[string, 'builder_query' | undefined]>([

@@ -31,6 +31,8 @@ interface FieldsSelectorProps {
 	// Lets users add a free-typed field which
 	// does not show up in the suggestions
 	allowCustomFields?: boolean;
+	// Fixed pool of selectable fields; skips the key suggestions endpoint.
+	availableFields?: TelemetryFieldKey[];
 	width?: number;
 	height?: number;
 	defaultPosition?: { x: number; y: number };
@@ -50,6 +52,7 @@ function FieldsSelectorContent({
 	maxFields,
 	requiredFields,
 	allowCustomFields,
+	availableFields,
 	width = DEFAULT_PANEL_WIDTH,
 	height,
 	defaultPosition,
@@ -158,6 +161,7 @@ function FieldsSelectorContent({
 					onAdd={handleAdd}
 					isAtLimit={isAtLimit}
 					allowCustomFields={allowCustomFields}
+					availableFields={availableFields}
 				/>
 
 				{hasUnsavedChanges && (

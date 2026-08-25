@@ -123,3 +123,54 @@ describe('OtherFields — custom (free-typed) option', () => {
 		).not.toBeInTheDocument();
 	});
 });
+
+describe('OtherFields — availableFields (fixed pool)', () => {
+	const pool: TelemetryFieldKey[] = [
+		{ name: 'total_tokens', fieldContext: 'trace', fieldDataType: 'float64' },
+		{ name: 'llm_call_count', fieldContext: 'trace', fieldDataType: 'float64' },
+	];
+
+	beforeEach(() => {
+		mockSuggestions(['ingested.field']);
+	});
+
+	it('lists the pool and never reads the suggestions endpoint', () => {
+		renderOtherFields({ availableFields: pool, allowCustomFields: false });
+
+		expect(screen.getByText('total_tokens')).toBeInTheDocument();
+		expect(screen.getByText('llm_call_count')).toBeInTheDocument();
+		expect(screen.queryByText('ingested.field')).not.toBeInTheDocument();
+		expect(useGetQueryKeySuggestions).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.objectContaining({ enabled: false }),
+		);
+	});
+
+	it('filters the pool client-side on the search input', () => {
+		renderOtherFields({
+			availableFields: pool,
+			allowCustomFields: false,
+			debouncedInputValue: 'llm',
+		});
+
+		expect(screen.getByText('llm_call_count')).toBeInTheDocument();
+		expect(screen.queryByText('total_tokens')).not.toBeInTheDocument();
+	});
+
+	it('omits pool fields that are already added', () => {
+		renderOtherFields({
+			availableFields: pool,
+			allowCustomFields: false,
+			addedFields: [
+				{
+					name: 'total_tokens',
+					fieldContext: 'trace',
+					key: 'trace:total_tokens',
+				},
+			],
+		});
+
+		expect(screen.queryByText('total_tokens')).not.toBeInTheDocument();
+		expect(screen.getByText('llm_call_count')).toBeInTheDocument();
+	});
+});

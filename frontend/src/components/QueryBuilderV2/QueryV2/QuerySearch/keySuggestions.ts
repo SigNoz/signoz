@@ -1,4 +1,5 @@
 import { getAIObservabilityFieldsKeys } from 'api/generated/services/ai-observability';
+import type { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -16,6 +17,8 @@ interface FetchFieldKeysParams {
 	builderQueryType: IBuilderQuery['builderQueryType'];
 	dataSource: DataSource;
 	searchText: string;
+	/** Narrows the ai_observability keys; the trace context names the per-trace aggregates. */
+	fieldContext?: TelemetrytypesFieldContextDTO;
 	metricName?: string;
 	signalSource?: 'meter' | '';
 	metricNamespace?: string;
@@ -26,12 +29,16 @@ export const fetchFieldKeysForQuery = async ({
 	builderQueryType,
 	dataSource,
 	searchText,
+	fieldContext,
 	metricName,
 	signalSource,
 	metricNamespace,
 }: FetchFieldKeysParams): Promise<SuggestedFieldKeysByName | undefined> => {
 	if (builderQueryType === 'builder_ai_query') {
-		const response = await getAIObservabilityFieldsKeys({ searchText });
+		const response = await getAIObservabilityFieldsKeys({
+			searchText,
+			fieldContext,
+		});
 
 		return response.data?.keys ?? undefined;
 	}
