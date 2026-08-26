@@ -9021,6 +9021,7 @@ export enum SavedviewtypesSourceDTO {
 	logs = 'logs',
 	metrics = 'metrics',
 	meter = 'meter',
+	ai_observability = 'ai_observability',
 }
 export interface SavedviewtypesSavedViewSpecDTO {
 	display?: SavedviewtypesDisplayDTO;
@@ -9090,13 +9091,6 @@ export interface SavedviewtypesUpdatableSavedViewDTO {
 	schemaVersion: SavedviewtypesSchemaVersionDTO;
 	source: SavedviewtypesSourceDTO;
 	spec: SavedviewtypesSavedViewSpecDTO;
-}
-
-export interface ServiceaccounttypesDeprecatedPostableServiceAccountRoleDTO {
-	/**
-	 * @type string
-	 */
-	id: string;
 }
 
 export interface ServiceaccounttypesGettableFactorAPIKeyDTO {
@@ -11020,21 +11014,6 @@ export type GetServiceAccountRoles200 = {
 	status: string;
 };
 
-export type CreateServiceAccountRoleDeprecatedPathParameters = {
-	id: string;
-};
-export type CreateServiceAccountRoleDeprecated201 = {
-	data: TypesIdentifiableDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type DeleteServiceAccountRoleDeprecatedPathParameters = {
-	id: string;
-	rid: string;
-};
 export type GetMyServiceAccount200 = {
 	data: ServiceaccounttypesServiceAccountWithRolesDTO;
 	/**

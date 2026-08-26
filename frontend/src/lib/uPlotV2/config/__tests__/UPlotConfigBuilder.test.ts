@@ -5,7 +5,7 @@ import {
 	STEP_INTERVAL_MULTIPLIER,
 } from '../../constants';
 import type { SeriesProps } from '../types';
-import { DrawStyle, SelectionPreferencesSource } from '../types';
+import { DrawStyle, SelectionPreferencesSource, StackMode } from '../types';
 import { UPlotConfigBuilder } from '../UPlotConfigBuilder';
 
 // Mock only the real boundary that hits localStorage
@@ -494,5 +494,163 @@ describe('UPlotConfigBuilder', () => {
 		const config = builder.getConfig();
 
 		expect(config.bands).toBeUndefined();
+	});
+});
+
+describe('UPlotConfigBuilder stacking', () => {
+	beforeEach(() => {
+		jest.clearAllMocks();
+		getStoredSeriesVisibilityMock.getStoredSeriesVisibility.mockReturnValue([]);
+	});
+
+	/**
+	 * Soft limits end up captured in the scale's range closure, so the only way to read
+	 * them back is to run it and inspect the range config it hands uPlot.
+	 */
+	function scaleSoftLimits(
+		builder: UPlotConfigBuilder,
+		scaleKey: string,
+	): { min: number; max: number } {
+		const rangeNum = jest.fn().mockReturnValue([0, 0]);
+		(uPlot as unknown as { rangeNum: unknown }).rangeNum = rangeNum;
+
+		const range = builder.getConfig().scales?.[scaleKey]?.range as (
+			u: unknown,
+			min: number,
+			max: number,
+			key: string,
+		) => void;
+		range({ scales: { [scaleKey]: { distr: 1 } } }, 40, 60, scaleKey);
+
+		const [, , rangeConfig] = rangeNum.mock.calls[0] as [
+			number,
+			number,
+			{ min: { soft: number }; max: { soft: number } },
+		];
+		return { min: rangeConfig.min.soft, max: rangeConfig.max.soft };
+	}
+
+	/** Renders y-axis ticks the way uPlot would, so unit formatting is observable. */
+	function yAxisTicks(builder: UPlotConfigBuilder, ticks: number[]): string[] {
+		const yAxis = builder.getConfig().axes?.find((a) => a.scale === 'y');
+		const values = yAxis?.values as (
+			u: unknown,
+			splits: number[],
+		) => (string | null)[];
+		return values(null, ticks).map((v) => String(v));
+	}
+
+	function builderFor(stack?: StackMode, seriesCount = 3): UPlotConfigBuilder {
+		const builder = new UPlotConfigBuilder({ id: 'stack-test' });
+		if (stack) {
+			builder.setStackMode(stack);
+		}
+		builder.addAxis({ scaleKey: 'y', show: true, side: 3, yAxisUnit: 'ms' });
+		for (let i = 0; i < seriesCount; i++) {
+			builder.addSeries({
+				scaleKey: 'y',
+				label: `S${i}`,
+				drawStyle: DrawStyle.Bar,
+				colorMapping: {},
+				isDarkMode: false,
+			} as SeriesProps);
+		}
+		return builder;
+	}
+
+	it('defaults to no stacking, so no bands and the panel unit on the axis', () => {
+		const builder = builderFor();
+
+		expect(builder.getStackMode()).toBe('none');
+		expect(builder.getConfig().bands).toBeUndefined();
+		expect(yAxisTicks(builder, [1000])).toStrictEqual(['1 s']);
+	});
+
+	it('derives one band per adjacent series pair once a stack is declared', () => {
+		expect(builderFor(StackMode.Normal).getConfig().bands).toStrictEqual([
+			{ series: [1, 2] },
+			{ series: [2, 3] },
+		]);
+	});
+
+	it('emits no bands for a single series', () => {
+		expect(builderFor(StackMode.Normal, 1).getConfig().bands).toBeUndefined();
+	});
+
+	it('keeps the panel unit on the axis for a normal stack', () => {
+		expect(yAxisTicks(builderFor(StackMode.Normal), [1000])).toStrictEqual([
+			'1 s',
+		]);
+	});
+
+	it('formats the axis as percentages for a percent stack', () => {
+		expect(yAxisTicks(builderFor(StackMode.Percent), [0, 50, 100])).toStrictEqual(
+			['0%', '50%', '100%'],
+		);
+	});
+
+	it('leaves other axes on their own unit under a percent stack', () => {
+		const builder = builderFor(StackMode.Percent);
+		builder.addAxis({ scaleKey: 'x', show: true, side: 2 });
+
+		expect(builder.getConfig().axes?.map((a) => a.scale)).toStrictEqual([
+			'y',
+			'x',
+		]);
+	});
+
+	it('pins the y scale to the 0–100 band under a percent stack, dropping panel limits', () => {
+		const builder = new UPlotConfigBuilder({ id: 'stack-scale' });
+		builder.setStackMode(StackMode.Percent);
+		builder.addScale({ scaleKey: 'y', softMin: 5, softMax: 500 });
+
+		// Soft, not hard: mixed-sign shares fall outside 0–100 and must stay visible.
+		expect(builder.getConfig().scales?.y).toMatchObject({ auto: true });
+		expect(scaleSoftLimits(builder, 'y')).toStrictEqual({ min: 0, max: 100 });
+	});
+
+	it('leaves the panel limits alone when the stack is not percent', () => {
+		const builder = new UPlotConfigBuilder({ id: 'stack-scale' });
+		builder.setStackMode(StackMode.Normal);
+		builder.addScale({ scaleKey: 'y', softMin: 5, softMax: 500 });
+
+		expect(scaleSoftLimits(builder, 'y')).toStrictEqual({ min: 5, max: 500 });
+	});
+
+	it.each([StackMode.Normal, StackMode.Percent])(
+		'draws thresholds under a %s stack',
+		(stack) => {
+			const builder = new UPlotConfigBuilder({ id: 'stack-thr' });
+			builder.setStackMode(stack);
+			builder.addThresholds({
+				scaleKey: 'y',
+				thresholds: [{ thresholdValue: 500, thresholdColor: 'red' }],
+				yAxisUnit: 'ms',
+			});
+
+			expect(builder.getConfig().hooks?.draw).toHaveLength(1);
+		},
+	);
+
+	it('keeps a source-unit threshold from stretching the percent band', () => {
+		const builder = new UPlotConfigBuilder({ id: 'stack-thr' });
+		builder.setStackMode(StackMode.Percent);
+		const thresholds = {
+			scaleKey: 'y',
+			thresholds: [{ thresholdValue: 500, thresholdColor: 'red' }],
+			yAxisUnit: 'ms',
+		};
+		builder.addThresholds(thresholds);
+		builder.addScale({ scaleKey: 'y', thresholds });
+
+		// Without this the 500ms threshold would widen a percentage axis to 0–500.
+		expect(scaleSoftLimits(builder, 'y')).toStrictEqual({ min: 0, max: 100 });
+	});
+
+	it('lets explicit bands win over the derived ones', () => {
+		const builder = builderFor(StackMode.Normal);
+		builder.setBands([{ series: [1, 3] }]);
+
+		expect(builder.getConfig().bands).toStrictEqual([{ series: [1, 3] }]);
 	});
 });

@@ -124,6 +124,9 @@ function Application(): JSX.Element {
 				start: minTime,
 				end: maxTime,
 			}),
+		// the time range is part of the key, so without this every window change blanks the
+		// operations list and the widgets below are rebuilt with an empty `operation in []`
+		keepPreviousData: true,
 	});
 
 	const selectedTraceTags: string = JSON.stringify(

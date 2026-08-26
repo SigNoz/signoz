@@ -1,6 +1,6 @@
 export enum LogAttributeBucket {
 	ATTRIBUTES = 'attributes',
-	RESOURCES = 'resources',
+	RESOURCES = 'resource',
 	SCOPE = 'scope',
 }
 
