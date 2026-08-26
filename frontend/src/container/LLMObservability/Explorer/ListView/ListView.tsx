@@ -12,16 +12,15 @@ import { QueryKey } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
-import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsMenu';
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import type { TableColumnDef } from 'components/TanStackTableView/types';
 import { ENTITY_VERSION_V5 } from 'constants/app';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { initialQueryAIWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
-import TraceExplorerControls from 'container/TracesExplorer/Controls';
 import { getListViewQuery } from 'container/TracesExplorer/explorerUtils';
 import {
 	getTraceLink,
@@ -43,6 +42,7 @@ import { Warning } from 'types/api';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import ExplorerControls from '../Controls';
 import {
 	defaultSelectedColumns,
 	PER_PAGE_OPTIONS,
@@ -80,6 +80,7 @@ function ListView({
 	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
 	const { options, config } = useOptionsMenu({
+		storageKey: LOCALSTORAGE.AI_OBSERVABILITY_LIST_OPTIONS,
 		dataSource: DataSource.TRACES,
 		aggregateOperator: 'count',
 		initialOptions: {
@@ -235,12 +236,7 @@ function ListView({
 					/>
 				</div>
 
-				<DownloadOptionsMenu
-					dataSource={DataSource.TRACES}
-					selectedColumns={options?.selectColumns}
-				/>
-
-				<TraceExplorerControls
+				<ExplorerControls
 					isLoading={isFetching}
 					totalCount={rows.length}
 					config={config}
@@ -251,6 +247,7 @@ function ListView({
 			<TracesTable
 				data={rows}
 				columns={columns}
+				columnStorageKey={LOCALSTORAGE.AI_OBSERVABILITY_LIST_COLUMNS}
 				panelType="LIST"
 				getRowHref={getTraceLink}
 				isLoading={isLoading}

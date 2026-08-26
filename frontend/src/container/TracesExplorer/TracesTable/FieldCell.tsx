@@ -7,6 +7,7 @@ import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import { useTimezone } from 'providers/Timezone';
 
 import {
+	DATETIME_FIELD_NAMES,
 	DURATION_FIELD_NAMES,
 	STATUS_FIELD_NAMES,
 	TIMESTAMP_FIELD_NAMES,
@@ -22,7 +23,7 @@ type FieldCellProps = {
 function FieldCell({ name, value }: FieldCellProps): JSX.Element {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
-	if (TIMESTAMP_FIELD_NAMES.has(name)) {
+	if (TIMESTAMP_FIELD_NAMES.has(name) || DATETIME_FIELD_NAMES.has(name)) {
 		const ts = value as string | number;
 		const formatted =
 			typeof ts === 'string'

@@ -3,6 +3,13 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 export const DEFAULT_PANEL_TYPE = PANEL_TYPES.TRACE;
 
 export const TOOLBAR_VIEWS = {
+	trace: {
+		name: 'trace',
+		label: 'Trace',
+		disabled: false,
+		show: true,
+		key: 'trace',
+	},
 	list: {
 		name: 'list',
 		label: 'List',
@@ -15,13 +22,6 @@ export const TOOLBAR_VIEWS = {
 		disabled: false,
 		show: true,
 		key: 'timeseries',
-	},
-	trace: {
-		name: 'trace',
-		label: 'Trace',
-		disabled: false,
-		show: true,
-		key: 'trace',
 	},
 	table: {
 		name: 'table',
@@ -38,3 +38,8 @@ export const TOOLBAR_VIEWS = {
 		key: 'clickhouse',
 	},
 };
+
+/** The trace list's default order, which the keys endpoint does not report. */
+export const TRACE_VIEW_STATIC_ORDER_BY_KEYS: string[] = ['last_activity_time'];
+
+export const TRACE_VIEW_DEFAULT_ORDER_BY = 'last_activity_time:desc';

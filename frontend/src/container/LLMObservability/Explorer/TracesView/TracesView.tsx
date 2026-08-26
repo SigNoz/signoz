@@ -3,20 +3,22 @@ import {
 	memo,
 	MutableRefObject,
 	SetStateAction,
+	useCallback,
 	useEffect,
 	useMemo,
+	useState,
 } from 'react';
 import { QueryKey } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsMenu';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
+import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import { ENTITY_VERSION_V5 } from 'constants/app';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { initialQueryAIWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import TraceExplorerControls from 'container/TracesExplorer/Controls';
 import { getListViewQuery } from 'container/TracesExplorer/explorerUtils';
 import { getTraceLink } from 'container/TracesExplorer/ListView/utils';
 import { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
@@ -25,13 +27,19 @@ import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination } from 'hooks/queryPagination';
 import useUrlQueryData from 'hooks/useUrlQueryData';
+import { ArrowUp10, Minus } from '@signozhq/icons';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import DOCLINKS from 'utils/docLinks';
 
-import { columns, PER_PAGE_OPTIONS } from './configs';
+import ExplorerControls from '../Controls';
+import {
+	TRACE_VIEW_DEFAULT_ORDER_BY,
+	TRACE_VIEW_STATIC_ORDER_BY_KEYS,
+} from '../constants';
+import { PER_PAGE_OPTIONS } from './configs';
+import { useTraceViewColumns } from './useTraceViewColumns';
 import styles from './TracesView.module.scss';
 
 interface TracesViewProps {
@@ -49,6 +57,17 @@ function TracesView({
 }: TracesViewProps): JSX.Element {
 	const { stagedQuery, panelType } = useQueryBuilder();
 
+	const [orderBy, setOrderBy] = useState<string>(TRACE_VIEW_DEFAULT_ORDER_BY);
+
+	const {
+		columns,
+		availableFields,
+		selectedFields,
+		onFieldsChange,
+		requiredFields,
+		isLoading: isColumnsLoading,
+	} = useTraceViewColumns();
+
 	const {
 		selectedTime: globalSelectedTime,
 		maxTime,
@@ -60,8 +79,8 @@ function TracesView({
 	);
 
 	const transformedQuery = useMemo(
-		() => getListViewQuery(stagedQuery || initialQueryAIWithType),
-		[stagedQuery],
+		() => getListViewQuery(stagedQuery || initialQueryAIWithType, orderBy),
+		[stagedQuery, orderBy],
 	);
 
 	const queryKey = useMemo(
@@ -73,6 +92,7 @@ function TracesView({
 			stagedQuery,
 			panelType,
 			paginationQueryData,
+			orderBy,
 		],
 		[
 			globalSelectedTime,
@@ -81,6 +101,7 @@ function TracesView({
 			stagedQuery,
 			panelType,
 			paginationQueryData,
+			orderBy,
 		],
 	);
 
@@ -142,27 +163,41 @@ function TracesView({
 		}
 	}, [isLoading, isFetching, isError, rows.length]);
 
+	const handleOrderChange = useCallback((value: string): void => {
+		setOrderBy(value);
+	}, []);
+
+	const fieldsSelectorConfig = useMemo(
+		() => ({ fieldsSelector: { value: selectedFields, onFieldsChange } }),
+		[selectedFields, onFieldsChange],
+	);
+
 	return (
 		<div className={styles.container}>
 			<div className={styles.actionsContainer}>
-				<Typography>
-					This tab only shows Root Spans. More details
-					<Typography.Link href={DOCLINKS.TRACES_DETAILS_LINK} target="_blank">
-						{' '}
-						here
-					</Typography.Link>
-				</Typography>
-
 				<div className="trace-explorer-controls">
-					<DownloadOptionsMenu
-						dataSource={DataSource.TRACES}
-						panelType={PANEL_TYPES.TRACE}
-					/>
+					<div className={styles.orderByContainer}>
+						<div className={styles.orderByLabel}>
+							Order by <Minus size={14} /> <ArrowUp10 size={14} />
+						</div>
 
-					<TraceExplorerControls
+						<ListViewOrderBy
+							value={orderBy}
+							onChange={handleOrderChange}
+							dataSource={DataSource.TRACES}
+							builderQueryType="builder_ai_query"
+							fieldContext={TelemetrytypesFieldContextDTO.trace}
+							staticOptionKeys={TRACE_VIEW_STATIC_ORDER_BY_KEYS}
+						/>
+					</div>
+
+					<ExplorerControls
 						isLoading={isLoading}
 						totalCount={rows.length}
 						perPageOptions={PER_PAGE_OPTIONS}
+						config={fieldsSelectorConfig}
+						availableFields={availableFields}
+						requiredFields={requiredFields}
 					/>
 				</div>
 			</div>
@@ -170,10 +205,11 @@ function TracesView({
 			<TracesTable
 				data={rows}
 				columns={columns}
+				columnStorageKey={LOCALSTORAGE.AI_OBSERVABILITY_TRACE_VIEW_COLUMNS}
 				respectColumnOrder
 				panelType="TRACE"
 				getRowHref={getTraceLink}
-				isLoading={isLoading}
+				isLoading={isLoading || isColumnsLoading}
 				isFetching={isFetching}
 				isError={isError}
 				error={error}
