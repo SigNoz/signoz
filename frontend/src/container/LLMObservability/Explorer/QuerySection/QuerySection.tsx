@@ -1,41 +1,24 @@
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import ExplorerOrderBy from 'container/ExplorerOrderBy';
-import { OrderByFilterProps } from 'container/QueryBuilder/filters/OrderByFilter/OrderByFilter.interfaces';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { DEFAULT_PANEL_TYPE } from '../constants';
+
 function QuerySection(): JSX.Element {
-	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
+	const panelTypes = useGetPanelTypesQueryParam(DEFAULT_PANEL_TYPE);
 
-	const filterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
-		const isList = panelTypes === PANEL_TYPES.LIST;
-		const config: QueryBuilderProps['filterConfigs'] = {
+	// Only reaches the builder for timeseries/table; list/trace panels use QueryBuilderV2's listViewTracesFilterConfigs.
+	const filterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(
+		() => ({
 			stepInterval: { isHidden: false, isDisabled: false },
-			limit: { isHidden: isList, isDisabled: true },
-			having: { isHidden: isList, isDisabled: true },
-		};
-
-		return config;
-	}, [panelTypes]);
-
-	const renderOrderBy = useCallback(
-		({ query, onChange }: OrderByFilterProps) => (
-			<ExplorerOrderBy query={query} onChange={onChange} />
-		),
+			limit: { isHidden: false, isDisabled: true },
+			having: { isHidden: false, isDisabled: true },
+		}),
 		[],
 	);
-
-	const queryComponents = useMemo((): QueryBuilderProps['queryComponents'] => {
-		const shouldRenderCustomOrderBy =
-			panelTypes === PANEL_TYPES.LIST || panelTypes === PANEL_TYPES.TRACE;
-
-		return {
-			...(shouldRenderCustomOrderBy ? { renderOrderBy } : {}),
-		};
-	}, [panelTypes, renderOrderBy]);
 
 	const isListViewPanel = useMemo(
 		() => panelTypes === PANEL_TYPES.LIST || panelTypes === PANEL_TYPES.TRACE,
@@ -45,14 +28,10 @@ function QuerySection(): JSX.Element {
 	return (
 		<QueryBuilderV2
 			isListViewPanel={isListViewPanel}
-			showTraceOperator
 			config={{ initialDataSource: DataSource.TRACES, queryVariant: 'static' }}
-			queryComponents={queryComponents}
 			panelType={panelTypes}
 			filterConfigs={filterConfigs}
-			showOnlyWhereClause={
-				panelTypes === PANEL_TYPES.LIST || panelTypes === PANEL_TYPES.TRACE
-			}
+			showOnlyWhereClause={isListViewPanel}
 			version="v3" // setting this to v3 as we this is rendered in logs explorer
 		/>
 	);

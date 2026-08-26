@@ -54,7 +54,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 	const { cloneQuery, panelType } = useQueryBuilder();
 
 	const showFunctions = query?.functions?.length > 0;
-	const { dataSource } = query;
+	const { dataSource, builderQueryType } = query;
 
 	const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -94,8 +94,9 @@ export const QueryV2 = forwardRef(function QueryV2(
 	);
 
 	const showSpanScopeSelector = useMemo(
-		() => dataSource === DataSource.TRACES,
-		[dataSource],
+		() =>
+			dataSource === DataSource.TRACES && builderQueryType !== 'builder_ai_query',
+		[dataSource, builderQueryType],
 	);
 
 	const showInlineQuerySearch = useMemo(() => {

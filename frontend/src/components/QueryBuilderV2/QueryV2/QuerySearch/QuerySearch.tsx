@@ -16,8 +16,6 @@ import { githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, { EditorView, keymap, Prec } from '@uiw/react-codemirror';
 import { Button, Card, Collapse, Popover, Tooltip } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
-import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
-import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import cx from 'classnames';
 import {
 	negationQueryOperatorSuggestions,
@@ -54,6 +52,12 @@ import {
 	SUGGESTION_FETCH_DEBOUNCE_MS,
 	SUGGESTIONS_SECTION,
 } from './constants';
+import {
+	fetchFieldKeysForQuery,
+	fetchFieldValuesForQuery,
+	SuggestedFieldKey,
+	SuggestedFieldKeysByName,
+} from './fieldSuggestions';
 import {
 	combineInitialAndUserExpression,
 	dedupeOptionsByLabel,
@@ -244,6 +248,12 @@ function QuerySearch({
 		[keySuggestions],
 	);
 
+	// read inside fetchValueSuggestions so resolving a key's context does not churn its deps
+	const keySuggestionsRef = useRef<QueryKeyDataSuggestionsProps[]>([]);
+	useEffect(() => {
+		keySuggestionsRef.current = keySuggestions || [];
+	}, [keySuggestions]);
+
 	const [showExamples] = useState(false);
 
 	const [cursorPos, setCursorPos] = useState({ line: 0, ch: 0 });
@@ -264,10 +274,8 @@ function QuerySearch({
 	);
 
 	// Add back the generateOptions function and useEffect
-	const generateOptions = (keys: {
-		[key: string]: QueryKeyDataSuggestionsProps[];
-	}): any[] =>
-		Object.values(keys).flatMap((items: QueryKeyDataSuggestionsProps[]) =>
+	const generateOptions = (keys: SuggestedFieldKeysByName): any[] =>
+		Object.values(keys).flatMap((items: SuggestedFieldKey[]) =>
 			items.map(({ name, fieldDataType, fieldContext }) => ({
 				label: name,
 				type: fieldDataType === 'string' ? 'keyword' : fieldDataType,
@@ -320,16 +328,16 @@ function QuerySearch({
 
 			lastFetchedKeyRef.current = searchText || '';
 
-			const response = await getKeySuggestions({
-				signal: dataSource,
+			const keys = await fetchFieldKeysForQuery({
+				builderQueryType: queryData.builderQueryType,
+				dataSource,
 				searchText: searchText || '',
 				metricName: debouncedMetricName ?? undefined,
 				signalSource: signalSource as 'meter' | '',
 				metricNamespace,
 			});
 
-			if (response.data.data) {
-				const { keys } = response.data.data;
+			if (keys) {
 				const options = generateOptions(keys);
 				// Deduplicate by full variant identity (name + context + data type), NOT by
 				// label. deduping by label removes varient which is not expected. If we need
@@ -363,6 +371,7 @@ function QuerySearch({
 			hardcodedAttributeKeys,
 			showFilterSuggestionsWithoutMetric,
 			metricNamespace,
+			queryData.builderQueryType,
 		],
 	);
 
@@ -496,21 +505,16 @@ function QuerySearch({
 			try {
 				const values = valueSuggestionsOverride
 					? await valueSuggestionsOverride(key, sanitizedSearchText)
-					: await getValueSuggestions({
+					: await fetchFieldValuesForQuery({
+							builderQueryType: queryData.builderQueryType,
+							dataSource,
 							key,
 							searchText: sanitizedSearchText,
-							signal: dataSource,
+							fieldContext: keySuggestionsRef.current.find(
+								(option) => option.label === key,
+							)?.fieldContext,
 							signalSource: signalSource as 'meter' | '',
 							metricName: debouncedMetricName ?? undefined,
-						}).then((response) => {
-							const responseData = response.data as any;
-							const data = responseData.data || {};
-							const values = data.values || {};
-							return {
-								stringValues: values.stringValues || [],
-								numberValues: values.numberValues || [],
-								complete: data.complete ?? false,
-							};
 						});
 
 				// Skip updates if component unmounted or key changed
@@ -604,6 +608,7 @@ function QuerySearch({
 			signalSource,
 			toggleSuggestions,
 			valueSuggestionsOverride,
+			queryData.builderQueryType,
 		],
 	);
 
