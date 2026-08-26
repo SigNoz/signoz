@@ -511,9 +511,10 @@ export async function expectCategoryActive(
 	if (!entity.categoryTestId) {
 		throw new Error(`${entity.key} has no category rail button`);
 	}
-	await expect(page.getByTestId(entity.categoryTestId)).toHaveAttribute(
-		'aria-pressed',
-		'true',
+	// The rail buttons carry no pressed state, only the selected one's CSS-module
+	// class, whose generated name keeps the local name as a substring.
+	await expect(page.getByTestId(entity.categoryTestId)).toHaveClass(
+		/categoryItemSelected/,
 	);
 }
 

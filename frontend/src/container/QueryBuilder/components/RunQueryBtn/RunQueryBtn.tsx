@@ -15,12 +15,6 @@ type RunQueryBtnProps = {
 	className?: string;
 	label?: string;
 	disabled?: boolean;
-	/**
-	 * Distinguishes co-existing instances — a page can render this button both in
-	 * its own controls and inside a drawer, where `.run-query-btn` alone is
-	 * ambiguous. The cancel state reuses it with a `-cancel` suffix so a test can
-	 * follow one button through both states.
-	 */
 	testId?: string;
 } & (
 	| {

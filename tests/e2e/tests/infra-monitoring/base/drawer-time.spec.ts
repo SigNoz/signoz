@@ -13,6 +13,7 @@ import type { Page } from '@playwright/test';
 import { expect, test } from '../../../fixtures/auth';
 import { expectUrlParams } from '../../../helpers/infra-monitoring/assertions';
 import {
+	drawerTab,
 	drawerTimeParams,
 	drawerTimePicker,
 	expectDrawerBodyReady,
@@ -243,7 +244,7 @@ test.describe('B-TIME drawer range propagation', () => {
 
 		// Switching tabs must not reset the drawer's own range.
 		for (const view of ['logs', 'traces', 'events'] as const) {
-			await page.getByTestId(`drawer-tab-${view}`).click();
+			await drawerTab(page, view).click();
 			await expect(page).toHaveURL(new RegExp(`view=${view}\\b`));
 			expect(drawerTimeParams(page).relativeTime, `${view} keeps 6h`).toBe('6h');
 		}

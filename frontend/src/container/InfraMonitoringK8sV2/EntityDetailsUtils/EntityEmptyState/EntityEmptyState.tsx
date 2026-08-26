@@ -12,11 +12,7 @@ export default function EntityEmptyState({
 	hasFilters,
 }: EntityEmptyStateProps): JSX.Element {
 	return (
-		<div
-			className={styles.container}
-			data-testid="entity-empty-state"
-			data-has-filters={hasFilters}
-		>
+		<div className={styles.container} data-testid="entity-empty-state">
 			<div className={styles.content}>
 				<img src={emptyStateUrl} alt="empty-state" className={styles.icon} />
 				{hasFilters ? (

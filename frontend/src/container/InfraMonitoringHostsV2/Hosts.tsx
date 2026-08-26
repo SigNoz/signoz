@@ -214,8 +214,6 @@ function Hosts(): JSX.Element {
 				type="text"
 				size="small"
 				data-testid="quick-filters-toggle"
-				aria-label="Open Filters"
-				aria-expanded={false}
 				onClick={handleFilterVisibilityChange}
 			>
 				<Filter size={14} />
@@ -238,16 +236,12 @@ function Hosts(): JSX.Element {
 									<div className={styles.quickFiltersContainerHeader}>
 										<Typography.Text>Filters</Typography.Text>
 										<Tooltip title="Collapse Filters">
-											<button
-												type="button"
-												className={styles.collapseFiltersButton}
+											<ArrowUpToLine
+												style={{ rotate: '270deg', cursor: 'pointer' }}
 												onClick={handleFilterVisibilityChange}
-												aria-label="Collapse Filters"
-												aria-expanded
+												size="md"
 												data-testid="quick-filters-toggle"
-											>
-												<ArrowUpToLine style={{ rotate: '270deg' }} size="md" />
-											</button>
+											/>
 										</Tooltip>
 									</div>
 									<QuickFilters

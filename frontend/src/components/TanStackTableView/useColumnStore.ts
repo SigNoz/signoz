@@ -66,11 +66,8 @@ const loadTableFromStorage = (tableKey: string): ColumnState | null => {
 			return cached.parsed;
 		}
 
-		// Normalise on the way in. Once a table is in `tables`, the selectors read
-		// its fields directly (`table.hiddenColumnIds`), so a stored value missing a
-		// key — an older schema, a partial hand-written entry, a truncated write —
-		// would hand `undefined` to callers doing `.includes(...)` and take the whole
-		// route down with the error boundary.
+		// Selectors read these fields directly, so a value persisted under an older
+		// schema must be filled in rather than handed to callers as `undefined`.
 		const stored = JSON.parse(raw) as Partial<ColumnState> | null;
 		const parsed: ColumnState = {
 			hiddenColumnIds: Array.isArray(stored?.hiddenColumnIds)

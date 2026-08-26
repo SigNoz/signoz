@@ -7,7 +7,7 @@ import {
 	ScrollText,
 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
+import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
@@ -294,70 +294,76 @@ export default function K8sBaseDetailsContent<T>({
 
 			{!hideDetailViewTabs && (
 				<div className={styles.viewsTabsContainer}>
-					<ToggleGroup
+					<ToggleGroupSimple
 						type="single"
 						className={styles.viewsTabs}
 						onChange={handleTabChange}
 						value={selectedView}
 						testId="drawer-tab-bar"
-					>
-						{tabVisibility.showMetrics && (
-							<ToggleGroupItem
-								value={VIEW_TYPES.METRICS}
-								testId={`drawer-tab-${VIEW_TYPES.METRICS}`}
-							>
-								<div className={styles.viewTitle}>
-									<BarChart size={14} />
-									Metrics
-								</div>
-							</ToggleGroupItem>
-						)}
-						{tabVisibility.showLogs && (
-							<ToggleGroupItem
-								value={VIEW_TYPES.LOGS}
-								testId={`drawer-tab-${VIEW_TYPES.LOGS}`}
-							>
-								<div className={styles.viewTitle}>
-									<ScrollText size={14} />
-									Logs
-								</div>
-							</ToggleGroupItem>
-						)}
-						{tabVisibility.showTraces && (
-							<ToggleGroupItem
-								value={VIEW_TYPES.TRACES}
-								testId={`drawer-tab-${VIEW_TYPES.TRACES}`}
-							>
-								<div className={styles.viewTitle}>
-									<DraftingCompass size={14} />
-									Traces
-								</div>
-							</ToggleGroupItem>
-						)}
-						{tabVisibility.showEvents && (
-							<ToggleGroupItem
-								value={VIEW_TYPES.EVENTS}
-								testId={`drawer-tab-${VIEW_TYPES.EVENTS}`}
-							>
-								<div className={styles.viewTitle}>
-									<ChevronsLeftRight size={14} />
-									Events
-								</div>
-							</ToggleGroupItem>
-						)}
-						{customTabs?.map((tab) => (
-							<ToggleGroupItem
-								key={tab.key}
-								value={tab.key}
-								testId={`drawer-tab-${tab.key}`}
-							>
-								<div className={styles.viewTitle}>
-									{tab.icon}
-									{tab.label}
-								</div>
-							</ToggleGroupItem>
-						))}
-					</ToggleGroup>
+						items={[
+							...(tabVisibility.showMetrics
+								? [
+										{
+											value: VIEW_TYPES.METRICS,
+											label: (
+												<div className={styles.viewTitle}>
+													<BarChart size={14} />
+													Metrics
+												</div>
+											),
+										},
+									]
+								: []),
+							...(tabVisibility.showLogs
+								? [
+										{
+											value: VIEW_TYPES.LOGS,
+											label: (
+												<div className={styles.viewTitle}>
+													<ScrollText size={14} />
+													Logs
+												</div>
+											),
+										},
+									]
+								: []),
+							...(tabVisibility.showTraces
+								? [
+										{
+											value: VIEW_TYPES.TRACES,
+											label: (
+												<div className={styles.viewTitle}>
+													<DraftingCompass size={14} />
+													Traces
+												</div>
+											),
+										},
+									]
+								: []),
+							...(tabVisibility.showEvents
+								? [
+										{
+											value: VIEW_TYPES.EVENTS,
+											label: (
+												<div className={styles.viewTitle}>
+													<ChevronsLeftRight size={14} />
+													Events
+												</div>
+											),
+										},
+									]
+								: []),
+							...(customTabs?.map((tab) => ({
+								value: tab.key,
+								label: (
+									<div className={styles.viewTitle}>
+										{tab.icon}
+										{tab.label}
+									</div>
+								),
+							})) ?? []),
+						]}
+					/>
 
 					{selectedView === VIEW_TYPES.LOGS && (
 						<TooltipSimple title="Go to Logs Explorer" side="left" arrow>

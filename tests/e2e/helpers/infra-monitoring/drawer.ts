@@ -82,8 +82,23 @@ export function tabBar(page: Page): Locator {
 	return page.getByTestId(DRAWER.tabBar);
 }
 
+/**
+ * The tab bar renders `ToggleGroupSimple` items, which carry no per-item testid
+ * and drop their `value` before the DOM, so the label is the only handle on a
+ * single tab.
+ */
+const DRAWER_TAB_LABEL: Record<DrawerView, string> = {
+	[DRAWER_TAB.metrics]: 'Metrics',
+	[DRAWER_TAB.logs]: 'Logs',
+	[DRAWER_TAB.traces]: 'Traces',
+	[DRAWER_TAB.events]: 'Events',
+	[DRAWER_TAB.podMetrics]: 'Pod Metrics',
+};
+
 export function drawerTab(page: Page, view: DrawerView): Locator {
-	return page.getByTestId(`drawer-tab-${view}`);
+	return tabBar(page)
+		.locator('button')
+		.filter({ hasText: new RegExp(`^${DRAWER_TAB_LABEL[view]}$`) });
 }
 
 export function chartHeaders(page: Page): Locator {
@@ -237,15 +252,17 @@ export async function renderedTabs(page: Page): Promise<string[]> {
 }
 
 /** Tab `value`s the bar renders, in order — the URL-visible identity. */
-export async function renderedTabViews(page: Page): Promise<string[]> {
-	return tabBar(page)
-		.locator('button')
-		.evaluateAll((buttons) =>
-			buttons
-				.map((button) => button.getAttribute('data-testid') ?? '')
-				.map((id) => id.replace(/^drawer-tab-/, ''))
-				.filter(Boolean),
-		);
+export async function renderedTabViews(page: Page): Promise<DrawerView[]> {
+	const byLabel = new Map(
+		Object.entries(DRAWER_TAB_LABEL).map(([view, label]) => [
+			label,
+			view as DrawerView,
+		]),
+	);
+	const labels = await renderedTabs(page);
+	return labels
+		.map((label) => byLabel.get(label))
+		.filter((view): view is DrawerView => Boolean(view));
 }
 
 /**
@@ -345,6 +362,19 @@ export function drawerTimeParams(page: Page): {
 
 export function emptyState(page: Page): Locator {
 	return page.getByTestId(DRAWER_STATE.emptyState);
+}
+
+/**
+ * `EntityEmptyState` swaps its copy on `hasFilters`, and the copy is the only
+ * thing that distinguishes the two branches in the DOM.
+ */
+export async function expectEmptyState(
+	page: Page,
+	hasFilters: boolean,
+): Promise<void> {
+	await expect(emptyState(page)).toContainText(
+		hasFilters ? 'This query had no results.' : 'No data yet.',
+	);
 }
 
 export function errorState(page: Page): Locator {

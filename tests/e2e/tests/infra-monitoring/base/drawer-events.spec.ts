@@ -14,6 +14,7 @@ import {
 	PAGINATION_PARAM,
 	SCOPE_CHIP,
 	TAB_USER_EXPRESSION_PARAM,
+	drawerTab,
 	emptyState,
 	errorState,
 	eventsNotConfigured,
@@ -261,7 +262,7 @@ test.describe('B-EVT hosts exclusion', () => {
 	}) => {
 		await openEventsTab(page, hosts);
 
-		await expect(page.getByTestId('drawer-tab-events')).toHaveCount(0);
+		await expect(drawerTab(page, 'events')).toHaveCount(0);
 		await expect(async () => {
 			expect(new URL(page.url()).searchParams.get('view')).not.toBe('events');
 		}).toPass();

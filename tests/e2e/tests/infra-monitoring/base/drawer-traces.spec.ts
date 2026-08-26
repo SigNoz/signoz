@@ -12,6 +12,7 @@ import {
 	SCOPE_CHIP,
 	TAB_USER_EXPRESSION_PARAM,
 	emptyState,
+	expectEmptyState,
 	entityRunQueryButton,
 	errorState,
 	expectDrawerVisible,
@@ -64,7 +65,7 @@ for (const entity of fanOut('representative', 'tracesTab')) {
 		}) => {
 			await openTracesTab(page, entity);
 			await expect(emptyState(page)).toBeVisible();
-			await expect(emptyState(page)).toHaveAttribute('data-has-filters', 'false');
+			await expectEmptyState(page, false);
 		});
 
 		test(`B-TRC-03 ${entity.key}: a user expression is kept in the URL and survives a reload`, async ({
@@ -86,7 +87,7 @@ for (const entity of fanOut('representative', 'tracesTab')) {
 			expect(new URL(page.url()).searchParams.get(TRACES_EXPRESSION_PARAM)).toBe(
 				expression,
 			);
-			await expect(emptyState(page)).toHaveAttribute('data-has-filters', 'true');
+			await expectEmptyState(page, true);
 		});
 
 		test(`B-TRC-06 ${entity.key}: the compass opens the traces explorer in a new tab`, async ({

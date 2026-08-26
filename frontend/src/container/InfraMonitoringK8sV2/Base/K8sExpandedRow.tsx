@@ -68,7 +68,6 @@ export type K8sExpandedRowProps<T, TItemKey = string> = {
 	getRowKey?: (record: T) => string;
 	/** Function to get the item key used for selection. Defaults to getRowKey if not provided. */
 	getItemKey?: (record: T) => TItemKey;
-	/** Row `data-testid`, so members of an expanded group are addressable too. */
 	getRowTestId?: (record: T) => string;
 	/** Query key prefix for pre-caching detail data on row click */
 	detailsQueryKeyPrefix?: string;

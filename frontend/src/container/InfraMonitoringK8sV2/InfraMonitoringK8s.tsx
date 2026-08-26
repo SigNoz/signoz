@@ -249,8 +249,6 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								size="icon"
 								color="secondary"
 								data-testid="quick-filters-toggle"
-								aria-label="Open Filters"
-								aria-expanded={false}
 								onClick={handleFilterVisibilityChange}
 								prefix={<Filter size={14} />}
 							/>
@@ -276,16 +274,12 @@ export default function InfraMonitoringK8s(): JSX.Element {
 											</Typography.Text>
 											<div className={styles.sectionLine} />
 											<TooltipSimple title="Collapse Filters" arrow>
-												<button
-													type="button"
-													className={styles.collapseFiltersButton}
+												<ArrowUpToLine
+													style={{ transform: 'rotate(270deg)' }}
 													onClick={handleFilterVisibilityChange}
-													aria-label="Collapse Filters"
-													aria-expanded
+													size="md"
 													data-testid="quick-filters-toggle"
-												>
-													<ArrowUpToLine style={{ transform: 'rotate(270deg)' }} size="md" />
-												</button>
+												/>
 											</TooltipSimple>
 										</div>
 										<div className={styles.categoryCard}>
@@ -300,7 +294,6 @@ export default function InfraMonitoringK8s(): JSX.Element {
 																: ''
 														}`}
 														onClick={(): void => handleCategorySelect(category.key)}
-														aria-pressed={selectedCategory === category.key}
 														data-testid={`category-${category.key}`}
 													>
 														{category.icon}

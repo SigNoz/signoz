@@ -14,6 +14,7 @@ import {
 	SCOPE_CHIP,
 	TAB_USER_EXPRESSION_PARAM,
 	emptyState,
+	expectEmptyState,
 	entityRunQueryButton,
 	errorState,
 	expectDrawerVisible,
@@ -71,7 +72,7 @@ for (const entity of fanOut('representative', 'logsTab')) {
 
 			// Nothing was seeded for logs, so the tab has nothing to show.
 			await expect(emptyState(page)).toBeVisible();
-			await expect(emptyState(page)).toHaveAttribute('data-has-filters', 'false');
+			await expectEmptyState(page, false);
 		});
 
 		test(`B-LOG-03 ${entity.key}: a user expression is kept in the URL and survives a reload`, async ({
@@ -94,7 +95,7 @@ for (const entity of fanOut('representative', 'logsTab')) {
 				expression,
 			);
 			// With a user filter, the empty state switches to its "has filters" copy.
-			await expect(emptyState(page)).toHaveAttribute('data-has-filters', 'true');
+			await expectEmptyState(page, true);
 		});
 
 		test(`B-LOG-06 ${entity.key}: the compass opens the logs explorer in a new tab`, async ({

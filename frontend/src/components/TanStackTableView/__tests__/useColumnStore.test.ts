@@ -271,9 +271,6 @@ describe('useColumnStore', () => {
 		])(
 			'normalises a persisted value carrying %s so selectors never yield undefined',
 			(_label, stored) => {
-				// Once a table is in memory the selectors read its fields directly, so an
-				// un-normalised partial value returns `undefined` to callers doing
-				// `.includes(...)` — which crashed the whole infra-monitoring route.
 				localStorage.setItem(
 					'@signoz/table-columns/test-table',
 					JSON.stringify(stored),
