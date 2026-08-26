@@ -10,6 +10,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 type storableQuickFilterRow struct {
@@ -29,13 +30,6 @@ type legacyQuickFilterEntry struct {
 	Signal   string `json:"signal"`
 }
 
-type quickFilterFieldKeyOutput struct {
-	Name          string `json:"name"`
-	Signal        string `json:"signal"`
-	FieldContext  string `json:"fieldContext"`
-	FieldDataType string `json:"fieldDataType"`
-}
-
 // quickFilterLegacyDataTypes maps the legacy datatype spellings that differ:
 // the fields API reports every numeric as "number", so both resolve to it.
 var quickFilterLegacyDataTypes = map[string]string{
@@ -48,6 +42,16 @@ func quickFilterFieldDataType(legacyDataType string) string {
 		return mapped
 	}
 	return legacyDataType
+}
+
+// quickFilterFieldContext resolves legacy type spellings via the shared alias
+// table and normalizes anything unknown (e.g. "Sum") to unspecified, matching
+// what the v1 write path does at runtime.
+func quickFilterFieldContext(legacyType string) string {
+	if fieldContext, ok := telemetrytypes.FieldContextFromText(legacyType); ok {
+		return fieldContext.StringValue()
+	}
+	return ""
 }
 
 type migrateQuickFilters struct {
@@ -123,10 +127,10 @@ func migrateQuickFilterEntries(filter string) (migrated string, changed bool, ok
 		case entry.Name != "":
 			migratedEntries = append(migratedEntries, rawEntry)
 		case entry.Key != "":
-			migratedJSON, err := marshalUnescaped(quickFilterFieldKeyOutput{
+			migratedJSON, err := marshalUnescaped(telemetryFieldKeyOutput{
 				Name:          entry.Key,
 				Signal:        entry.Signal,
-				FieldContext:  fieldContextFromLegacyType(entry.Type),
+				FieldContext:  quickFilterFieldContext(entry.Type),
 				FieldDataType: quickFilterFieldDataType(entry.DataType),
 			})
 			if err != nil {

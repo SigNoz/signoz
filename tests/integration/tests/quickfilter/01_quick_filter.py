@@ -22,8 +22,6 @@ def test_v1_get_serves_legacy_shape(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    """The v1 endpoints stay alive over the migrated storage, rendering
-    telemetry field keys back into the legacy key/type/dataType shape."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.get(
@@ -99,8 +97,6 @@ def test_get_quick_filters_returns_defaults(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    """Org creation seeds defaults for every signal, served as telemetry field
-    keys (name/fieldContext/fieldDataType), not the legacy key/type/dataType shape."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.get(

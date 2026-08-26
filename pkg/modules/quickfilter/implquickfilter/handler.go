@@ -31,7 +31,13 @@ type legacySignalFilters struct {
 
 // newTelemetryFieldKeysFromLegacy converts a v1 write payload with the same
 // normalizations as the storage migration: alias contexts, numerics to number.
-func newTelemetryFieldKeysFromLegacy(filters []v3.AttributeKey) ([]telemetrytypes.TelemetryFieldKey, error) {
+// The v1 shape carries no per-filter signal, so meter keys get it restored.
+func newTelemetryFieldKeysFromLegacy(signal quickfiltertypes.Signal, filters []v3.AttributeKey) ([]telemetrytypes.TelemetryFieldKey, error) {
+	var fieldSignal telemetrytypes.Signal
+	if signal == quickfiltertypes.SignalMeter {
+		fieldSignal = telemetrytypes.SignalMetrics
+	}
+
 	fieldKeys := make([]telemetrytypes.TelemetryFieldKey, 0, len(filters))
 	for _, filter := range filters {
 		if err := filter.Validate(); err != nil {
@@ -47,12 +53,13 @@ func newTelemetryFieldKeysFromLegacy(filters []v3.AttributeKey) ([]telemetrytype
 		if err := fieldDataType.Scan(string(filter.DataType)); err != nil {
 			fieldDataType = telemetrytypes.FieldDataTypeUnspecified
 		}
-		if fieldDataType == telemetrytypes.FieldDataTypeInt64 || fieldDataType == telemetrytypes.FieldDataTypeFloat64 {
+		if fieldDataType == telemetrytypes.FieldDataTypeInt64 {
 			fieldDataType = telemetrytypes.FieldDataTypeNumber
 		}
 
 		fieldKeys = append(fieldKeys, telemetrytypes.TelemetryFieldKey{
 			Name:          filter.Key,
+			Signal:        fieldSignal,
 			FieldContext:  fieldContext,
 			FieldDataType: fieldDataType,
 		})
@@ -66,12 +73,16 @@ func newTelemetryFieldKeysFromLegacy(filters []v3.AttributeKey) ([]telemetrytype
 func newLegacySignalFiltersFromSignalFilters(signalFilters *quickfiltertypes.SignalFilters) *legacySignalFilters {
 	filters := make([]v3.AttributeKey, 0, len(signalFilters.Filters))
 	for _, fieldKey := range signalFilters.Filters {
+		// Only tag and resource exist in the v3 enum; other contexts render as
+		// unspecified so v1 clients never see spellings their queries can't use.
 		var attributeType v3.AttributeKeyType
 		switch fieldKey.FieldContext {
 		case telemetrytypes.FieldContextAttribute:
 			attributeType = v3.AttributeKeyTypeTag
+		case telemetrytypes.FieldContextResource:
+			attributeType = v3.AttributeKeyTypeResource
 		default:
-			attributeType = v3.AttributeKeyType(fieldKey.FieldContext.StringValue())
+			attributeType = v3.AttributeKeyTypeUnspecified
 		}
 
 		var dataType v3.AttributeKeyDataType
@@ -152,7 +163,7 @@ func (handler *handler) UpdateQuickFilters(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	fieldKeys, err := newTelemetryFieldKeysFromLegacy(req.Filters)
+	fieldKeys, err := newTelemetryFieldKeysFromLegacy(req.Signal, req.Filters)
 	if err != nil {
 		render.Error(rw, err)
 		return

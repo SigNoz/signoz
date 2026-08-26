@@ -11,7 +11,7 @@ import (
 )
 
 func TestNewTelemetryFieldKeysFromLegacy(t *testing.T) {
-	fieldKeys, err := newTelemetryFieldKeysFromLegacy([]v3.AttributeKey{
+	fieldKeys, err := newTelemetryFieldKeysFromLegacy(quickfiltertypes.SignalTraces, []v3.AttributeKey{
 		{Key: "service.name", Type: v3.AttributeKeyTypeResource, DataType: v3.AttributeKeyDataTypeString},
 		{Key: "http.method", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeString},
 		{Key: "duration_nano", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeFloat64},
@@ -25,27 +25,38 @@ func TestNewTelemetryFieldKeysFromLegacy(t *testing.T) {
 	assert.Equal(t, telemetrytypes.FieldDataTypeNumber, fieldKeys[2].FieldDataType)
 	assert.Equal(t, telemetrytypes.FieldDataTypeNumber, fieldKeys[3].FieldDataType)
 
+	t.Run("meter writes restore the per-filter signal", func(t *testing.T) {
+		fieldKeys, err := newTelemetryFieldKeysFromLegacy(quickfiltertypes.SignalMeter, []v3.AttributeKey{
+			{Key: "host.name", DataType: v3.AttributeKeyDataTypeString},
+		})
+		require.NoError(t, err)
+		require.Len(t, fieldKeys, 1)
+		assert.Equal(t, telemetrytypes.SignalMetrics, fieldKeys[0].Signal)
+	})
+
 	t.Run("rejects a filter without a key", func(t *testing.T) {
-		_, err := newTelemetryFieldKeysFromLegacy([]v3.AttributeKey{{DataType: v3.AttributeKeyDataTypeString}})
+		_, err := newTelemetryFieldKeysFromLegacy(quickfiltertypes.SignalTraces, []v3.AttributeKey{{DataType: v3.AttributeKeyDataTypeString}})
 		require.Error(t, err)
 	})
 }
 
 func TestNewLegacySignalFiltersFromSignalFilters(t *testing.T) {
 	legacy := newLegacySignalFiltersFromSignalFilters(&quickfiltertypes.SignalFilters{
-		Signal: quickfiltertypes.SignalTraces,
+		Signal: quickfiltertypes.SignalLogs,
 		Filters: []telemetrytypes.TelemetryFieldKey{
 			{Name: "service.name", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString},
 			{Name: "http.method", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
 			{Name: "duration_nano", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeNumber},
+			{Name: "severity_text", FieldContext: telemetrytypes.FieldContextLog, FieldDataType: telemetrytypes.FieldDataTypeString},
 			{Name: "host.name", Signal: telemetrytypes.SignalMetrics},
 		},
 	})
 
-	assert.Equal(t, quickfiltertypes.SignalTraces, legacy.Signal)
-	require.Len(t, legacy.Filters, 4)
+	assert.Equal(t, quickfiltertypes.SignalLogs, legacy.Signal)
+	require.Len(t, legacy.Filters, 5)
 	assert.Equal(t, v3.AttributeKey{Key: "service.name", Type: v3.AttributeKeyTypeResource, DataType: v3.AttributeKeyDataTypeString}, legacy.Filters[0])
 	assert.Equal(t, v3.AttributeKeyTypeTag, legacy.Filters[1].Type)
 	assert.Equal(t, v3.AttributeKeyDataTypeFloat64, legacy.Filters[2].DataType)
-	assert.Equal(t, v3.AttributeKey{Key: "host.name"}, legacy.Filters[3])
+	assert.Equal(t, v3.AttributeKeyTypeUnspecified, legacy.Filters[3].Type, "contexts outside the v3 enum must render as unspecified")
+	assert.Equal(t, v3.AttributeKey{Key: "host.name"}, legacy.Filters[4])
 }

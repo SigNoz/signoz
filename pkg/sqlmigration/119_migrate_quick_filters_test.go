@@ -30,9 +30,9 @@ func TestMigrateQuickFilterEntries(t *testing.T) {
 			ok:          true,
 		},
 		{
-			description: "meter junk type passes through for the tolerant unmarshaller",
+			description: "meter junk type normalizes to unspecified",
 			filter:      `[{"key":"deployment.environment","dataType":"float64","type":"Sum"}]`,
-			expected:    `[{"name":"deployment.environment","signal":"","fieldContext":"Sum","fieldDataType":"number"}]`,
+			expected:    `[{"name":"deployment.environment","signal":"","fieldContext":"","fieldDataType":"number"}]`,
 			changed:     true,
 			ok:          true,
 		},
