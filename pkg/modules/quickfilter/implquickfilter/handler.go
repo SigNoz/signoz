@@ -31,7 +31,7 @@ type legacySignalFilters struct {
 
 // newTelemetryFieldKeysFromLegacy converts a v1 write payload with the same
 // normalizations as the storage migration: alias contexts, numerics to number.
-// The v1 shape carries no per-filter signal, so meter keys get it restored.
+// The v1 shape carries no per filter signal, so meter keys get it restored.
 func newTelemetryFieldKeysFromLegacy(signal quickfiltertypes.Signal, filters []v3.AttributeKey) ([]telemetrytypes.TelemetryFieldKey, error) {
 	var fieldSignal telemetrytypes.Signal
 	if signal == quickfiltertypes.SignalMeter {
