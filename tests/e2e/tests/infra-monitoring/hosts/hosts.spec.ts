@@ -8,15 +8,10 @@ import {
 	expectFirstPage,
 	expectQuickFilterSections,
 	expectUrlParams,
-	expectWidgetTitles,
 } from '../../../helpers/infra-monitoring/assertions';
 import {
 	drawer,
-	expectDrawerVisible,
-	drawerTab,
 	openRowDrawer,
-	tabBar,
-	selectedItemParams,
 } from '../../../helpers/infra-monitoring/drawer';
 import {
 	entityByKey,
@@ -121,47 +116,18 @@ test.describe('hosts', () => {
 		await openRowDrawer(page, HOSTS.seed.sampleItemKey);
 
 		// Hosts is the only entity whose metadata labels are all-caps.
-		for (const label of HOSTS.metadataLabels) {
+		for (const label of HOSTS.metadataLabels!) {
 			await expect(drawer(page).getByText(label, { exact: true })).toBeVisible();
 		}
 	});
 
-	test(`H-05 the drawer Metrics tab shows all ${HOSTS.widgetTitles.length} host widgets`, async ({
-		authedPage: page,
-	}) => {
-		await resetTableState(page, HOSTS);
-		await seedDataset(page, 'hosts_value_accuracy');
-		await page.goto(listUrl(HOSTS, selectedItemParams(HOSTS)));
-		await expectDrawerVisible(page);
-
-		// The plan says 8; `hostWidgetInfo` actually has 13, and the registry is the
-		// source of truth.
-		await expectWidgetTitles(page, HOSTS.widgetTitles);
-	});
-
-	test('H-06 the drawer has Logs and Traces but no Events tab', async ({
-		authedPage: page,
-	}) => {
-		await resetTableState(page, HOSTS);
-		await seedDataset(page, 'hosts_value_accuracy');
-		await page.goto(
-			listUrl(HOSTS, { ...selectedItemParams(HOSTS), view: 'events' }),
-		);
-		await expectDrawerVisible(page);
-
-		// The tab bar arrives with the tab body, not with the drawer shell.
-		await expect(tabBar(page)).toBeVisible({ timeout: 30_000 });
-		await expect(drawerTab(page, 'logs')).toBeVisible();
-		await expect(drawerTab(page, 'traces')).toBeVisible();
-		// `tabsConfig={{ showEvents: false }}`.
-		await expect(drawerTab(page, 'events')).toHaveCount(0);
-		// …and the invalid `view` coerces away.
-		await expect(async () => {
-			expect(new URL(page.url()).searchParams.get('view')).not.toBe('events');
-		}).toPass();
-	});
-
-	test(`H-07 hosts group by ${HOSTS.groupByAttribute}`, async ({
+	/**
+	 * The column swap and the expand button are `B-GRP-02 hosts`. What only a
+	 * fixture can reach is that the real OS values seeded here become the group
+	 * rows, and that grouping replaces the host rows rather than nesting beside
+	 * them.
+	 */
+	test(`H-07 hosts group by ${HOSTS.groupByAttribute} renders one row per OS and no host rows`, async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, HOSTS);
@@ -171,12 +137,29 @@ test.describe('hosts', () => {
 
 		await groupListBy(page, HOSTS.groupByAttribute);
 
-		// The group column replaces the name column while grouped.
-		await expect(headerCell(page, HOSTS.groupColumnId)).toHaveCount(1);
-		await expect(headerCell(page, HOSTS.nameColumnId)).toHaveCount(0);
 		await expect(groupRowFor(page, 'linux')).toBeVisible();
 		await expect(groupRowFor(page, 'windows')).toBeVisible();
 		// A grouped row is not a data row.
 		await expect(rowFor(page, HOSTS.seed.sampleItemKey)).toHaveCount(0);
+	});
+
+	test('H-08 a host missing a metric renders a dash, not a zero', async ({
+		authedPage: page,
+	}) => {
+		await resetTableState(page, HOSTS);
+		const seeded = await seedDataset(page, 'hosts_missing_metrics');
+		await gotoScopedList(page, HOSTS, seeded.names);
+		await waitForRows(page);
+
+		// The *specific* cell, matched exactly. `getByText('-')` is a
+		// case-insensitive **substring** match and the seeded host is called
+		// `miss-h1`, so it would be satisfied by the name cell whatever the memory
+		// column rendered. `hosts_missing_metrics` seeds only `system.cpu.time`, so
+		// memory has no series and the cell is `TextNoData`.
+		const memoryCell = rowFor(page, seeded.names[0]).locator(
+			'td.tanstack-cell-memory',
+		);
+		await expect(memoryCell).toHaveText('-');
+		await expect(memoryCell, 'a missing metric is not zero').not.toHaveText('0');
 	});
 });

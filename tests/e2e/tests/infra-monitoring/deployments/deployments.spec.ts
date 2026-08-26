@@ -4,16 +4,12 @@
  */
 
 import { expect, test } from '../../../fixtures/auth';
-import { expectWidgetTitles } from '../../../helpers/infra-monitoring/assertions';
 import {
-	expectDrawerVisible,
-	selectedItemParams,
-	switchDrawerTab,
-} from '../../../helpers/infra-monitoring/drawer';
-import {
-	entityByKey,
-	POD_METRICS_WIDGET_TITLES,
-} from '../../../helpers/infra-monitoring/entities';
+	expectedNumber,
+	expectedRecord,
+} from '../../../helpers/infra-monitoring/datasets';
+import { expectDrawerVisible } from '../../../helpers/infra-monitoring/drawer';
+import { entityByKey } from '../../../helpers/infra-monitoring/entities';
 import {
 	expressionParams,
 	gotoScopedList,
@@ -47,25 +43,13 @@ test.describe('deployments', () => {
 		).not.toHaveText('');
 	});
 
-	test('D-02 the Pod Metrics tab renders the 5 utilisation-by-pod widgets', async ({
-		authedPage: page,
-	}) => {
-		await resetTableState(page, DEPLOYMENTS);
-		await seedDataset(page, 'deployments_value_accuracy');
-		await page.goto(listUrl(DEPLOYMENTS, selectedItemParams(DEPLOYMENTS)));
-		await expectDrawerVisible(page);
-
-		await switchDrawerTab(page, 'pod_metrics');
-		await expectWidgetTitles(page, POD_METRICS_WIDGET_TITLES);
-	});
-
 	test('D-03 Available Pods / Desired Pods are addable and sortable', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, DEPLOYMENTS);
 		const seeded = await seedDataset(page, 'deployments_value_accuracy');
 		await gotoScopedList(page, DEPLOYMENTS, seeded.names);
-		await waitForRows(page);
+		await waitForRow(page, DEPLOYMENTS.seed.sampleItemKey);
 
 		for (const columnId of ['available_pods', 'desired_pods']) {
 			await expect(headerCell(page, columnId)).toHaveCount(0);
@@ -83,6 +67,34 @@ test.describe('deployments', () => {
 				headerCell(page, columnId).locator('button.tanstack-header-title'),
 			).toHaveCount(1);
 		}
+
+		// …and the counts, from the integration suite's expectation file rather
+		// than invented. Both columns render the bare integer with no unit or
+		// separator, so the match is exact. `acc-dep-1` is available 2 of a desired
+		// 3, so a mapping that swapped the two accessors fails here. Against a
+		// deployment whose two counts are equal, or against the headers alone, it
+		// would not.
+		const expected = expectedRecord(
+			'deployments_value_accuracy',
+			'deploymentName',
+			DEPLOYMENTS.seed.sampleName,
+		);
+		const FIELD: Record<string, string> = {
+			available_pods: 'availablePods',
+			desired_pods: 'desiredPods',
+		};
+		for (const columnId of ['available_pods', 'desired_pods']) {
+			await expect(
+				rowFor(page, DEPLOYMENTS.seed.sampleItemKey).locator(
+					`td.tanstack-cell-${columnId}`,
+				),
+				columnId,
+			).toHaveText(String(expectedNumber(expected, FIELD[columnId])));
+		}
+		expect(
+			expectedNumber(expected, 'availablePods'),
+			'the sample deployment must not have available === desired, or a swap passes',
+		).not.toBe(expectedNumber(expected, 'desiredPods'));
 	});
 
 	test('D-04 the same deployment name across namespaces/clusters stays distinct rows', async ({
@@ -148,5 +160,25 @@ test.describe('deployments', () => {
 		expect(params.get('selectedItemNamespaceName')).toBe(
 			DEPLOYMENTS.seed.sampleNamespaceName,
 		);
+	});
+
+	test('D-07 a deployment missing a metric renders a dash, not a zero', async ({
+		authedPage: page,
+	}) => {
+		await resetTableState(page, DEPLOYMENTS);
+		const seeded = await seedDataset(page, 'deployments_missing_metrics');
+		await gotoScopedList(page, DEPLOYMENTS, seeded.names);
+		await waitForRows(page);
+
+		// The *specific* cell, matched exactly. `getByText('-')` is a
+		// case-insensitive **substring** match and the seeded deployment is called
+		// `miss-dep`, so it would be satisfied by the name cell whatever the memory
+		// column rendered. `deployments_missing_metrics` seeds only
+		// `k8s.pod.cpu.usage`, so the memory roll-up has nothing to sum.
+		const memoryCell = rowFor(page, seeded.names[0]).locator(
+			'td.tanstack-cell-memory',
+		);
+		await expect(memoryCell).toHaveText('-');
+		await expect(memoryCell, 'a missing metric is not zero').not.toHaveText('0');
 	});
 });

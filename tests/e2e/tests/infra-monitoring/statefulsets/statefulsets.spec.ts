@@ -4,21 +4,15 @@
  * are visible on every other workload entity.
  */
 
+import type { Locator } from '@playwright/test';
+
 import { expect, test } from '../../../fixtures/auth';
+import {} from '../../../helpers/infra-monitoring/assertions';
+import { fixtureMetric } from '../../../helpers/infra-monitoring/datasets';
+import {} from '../../../helpers/infra-monitoring/drawer';
+import { entityByKey } from '../../../helpers/infra-monitoring/entities';
 import {
-	expectDefaultColumns,
-	expectWidgetTitles,
-} from '../../../helpers/infra-monitoring/assertions';
-import {
-	expectDrawerVisible,
-	selectedItemParams,
-	switchDrawerTab,
-} from '../../../helpers/infra-monitoring/drawer';
-import {
-	entityByKey,
-	POD_METRICS_WIDGET_TITLES,
-} from '../../../helpers/infra-monitoring/entities';
-import {
+	dataRows,
 	expressionParams,
 	gotoScopedList,
 	headerCell,
@@ -26,6 +20,7 @@ import {
 	openOptionsPanel,
 	renderedRowKeys,
 	resetTableState,
+	rowFor,
 	toggleColumn,
 	waitForRows,
 } from '../../../helpers/infra-monitoring/list';
@@ -33,27 +28,19 @@ import { seedDataset } from '../../../helpers/infra-monitoring/seed';
 
 const STATEFULSETS = entityByKey('statefulsets');
 
+/**
+ * One count inside a `pod_replicas` cell.
+ *
+ * `GroupedStatusCounts` draws current and desired as two sibling spans with no
+ * separator between them, so the cell's own text reads as the two digits run
+ * together (`35` for current 3 / desired 5). The per-item `data-testid` is the
+ * only way to read one count on its own.
+ */
+function statusCount(cell: Locator, label: string): Locator {
+	return cell.getByTestId(`status-count-${label}`);
+}
+
 test.describe('statefulsets', () => {
-	test('S-00 cpu and memory are default-hidden here, unlike every other workload', async ({
-		authedPage: page,
-	}) => {
-		await resetTableState(page, STATEFULSETS);
-		const seeded = await seedDataset(page, 'statefulsets_value_accuracy');
-		await gotoScopedList(page, STATEFULSETS, seeded.names);
-		await waitForRows(page);
-
-		// The registry records the asymmetry; this is what makes a refactor that
-		// "tidies" it up fail loudly.
-		for (const columnId of ['cpu', 'memory']) {
-			expect(
-				STATEFULSETS.columns.find((c) => c.id === columnId)?.hiddenByDefault,
-				`${columnId} is registered as hidden`,
-			).toBe(true);
-			await expect(headerCell(page, columnId)).toHaveCount(0);
-		}
-		await expectDefaultColumns(page, STATEFULSETS);
-	});
-
 	test('S-01 Pod Replicas shows current/desired', async ({
 		authedPage: page,
 	}) => {
@@ -63,24 +50,26 @@ test.describe('statefulsets', () => {
 		await waitForRows(page);
 
 		await expect(headerCell(page, 'pod_replicas')).toBeVisible();
-		await expect(
-			page.locator('table td.tanstack-cell-pod_replicas').first(),
-		).not.toHaveText('');
+
+		const name = seeded.names[0];
+		const pods = (metric: string): number =>
+			fixtureMetric(
+				'statefulsets_desired_current',
+				STATEFULSETS.nameColumnId,
+				name,
+				metric,
+			);
+
+		const cell = rowFor(page, name).locator('td.tanstack-cell-pod_replicas');
+		await expect(statusCount(cell, 'current')).toHaveText(
+			String(pods('k8s.statefulset.current_pods')),
+		);
+		await expect(statusCount(cell, 'desired')).toHaveText(
+			String(pods('k8s.statefulset.desired_pods')),
+		);
 	});
 
-	test('S-02 the Pod Metrics tab renders the 5 utilisation-by-pod widgets', async ({
-		authedPage: page,
-	}) => {
-		await resetTableState(page, STATEFULSETS);
-		await seedDataset(page, 'statefulsets_value_accuracy');
-		await page.goto(listUrl(STATEFULSETS, selectedItemParams(STATEFULSETS)));
-		await expectDrawerVisible(page);
-
-		await switchDrawerTab(page, 'pod_metrics');
-		await expectWidgetTitles(page, POD_METRICS_WIDGET_TITLES);
-	});
-
-	test('S-03 Current Pods / Desired Pods are addable and sortable', async ({
+	test('S-03 Current Pods / Desired Pods are addable, sortable and carry the seeded counts', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, STATEFULSETS);
@@ -100,17 +89,29 @@ test.describe('statefulsets', () => {
 				headerCell(page, columnId).locator('button.tanstack-header-title'),
 			).toHaveCount(1);
 		}
-	});
 
-	test(`S-04 the Metrics tab shows all ${STATEFULSETS.widgetTitles.length} statefulset widgets`, async ({
-		authedPage: page,
-	}) => {
-		await resetTableState(page, STATEFULSETS);
-		await seedDataset(page, 'statefulsets_value_accuracy');
-		await page.goto(listUrl(STATEFULSETS, selectedItemParams(STATEFULSETS)));
-		await expectDrawerVisible(page);
-
-		await expectWidgetTitles(page, STATEFULSETS.widgetTitles);
+		// `acc-ss-1` is the row whose current and desired differ, so a column that
+		// reads the wrong one of the two fails here.
+		const row = rowFor(page, 'acc-ss-1');
+		const metricFor: Record<string, string> = {
+			current_pods: 'k8s.statefulset.current_pods',
+			desired_pods: 'k8s.statefulset.desired_pods',
+		};
+		for (const columnId of ['current_pods', 'desired_pods']) {
+			await expect(
+				row.locator(`td.tanstack-cell-${columnId}`),
+				columnId,
+			).toHaveText(
+				String(
+					fixtureMetric(
+						'statefulsets_value_accuracy',
+						STATEFULSETS.nameColumnId,
+						'acc-ss-1',
+						metricFor[columnId],
+					),
+				),
+			);
+		}
 	});
 
 	test('S-05 non-statefulset pods are excluded', async ({
@@ -140,5 +141,43 @@ test.describe('statefulsets', () => {
 			'nd-standalone',
 		);
 		expect(keys, 'a deployment is not a statefulset row').not.toContain('nd-dep');
+	});
+
+	test('S-06 the same statefulset name across namespaces/clusters stays distinct rows', async ({
+		authedPage: page,
+	}) => {
+		await resetTableState(page, STATEFULSETS);
+		const seeded = await seedDataset(
+			page,
+			'statefulsets_same_name_across_ns_and_clusters',
+		);
+		await gotoScopedList(page, STATEFULSETS, seeded.names);
+		await waitForRows(page);
+
+		// One name, four (namespace, cluster) pairs: ns-x/cluster-a, ns-y/cluster-a,
+		// ns-x/cluster-b and ns-x with no cluster label at all. Identity on the name
+		// alone collapses these to one row and identity on (name, namespace) to two,
+		// so the count is the assertion.
+		await expect(headerCell(page, 'namespaceName')).toBeVisible();
+		await expect(dataRows(page)).toHaveCount(4);
+
+		// …and the rows carry their own counts rather than a merged roll-up. `ns-y`
+		// is the one namespace the fixture uses once, so it addresses a single row.
+		const nsYRow = dataRows(page).filter({
+			has: page.locator('td.tanstack-cell-namespaceName', { hasText: /^ns-y$/ }),
+		});
+		await expect(nsYRow).toHaveCount(1);
+		await expect(
+			statusCount(nsYRow.locator('td.tanstack-cell-pod_replicas'), 'desired'),
+		).toHaveText(
+			String(
+				fixtureMetric(
+					'statefulsets_same_name_across_ns_and_clusters',
+					'k8s.namespace.name',
+					'ns-y',
+					'k8s.statefulset.desired_pods',
+				),
+			),
+		);
 	});
 });

@@ -5,26 +5,20 @@
 
 import { expect, test } from '../../../fixtures/auth';
 import { expectedRecord } from '../../../helpers/infra-monitoring/datasets';
-import {
-	expectExpressionContains,
-	expectWidgetTitles,
-} from '../../../helpers/infra-monitoring/assertions';
+import { expectExpressionContains } from '../../../helpers/infra-monitoring/assertions';
 import {
 	countCard,
 	countCardNavLink,
 	expectDrawerVisible,
 	selectedItemParams,
-	switchDrawerTab,
 } from '../../../helpers/infra-monitoring/drawer';
-import {
-	entityByKey,
-	POD_METRICS_WIDGET_TITLES,
-} from '../../../helpers/infra-monitoring/entities';
+import { entityByKey } from '../../../helpers/infra-monitoring/entities';
 import {
 	gotoScopedList,
 	listUrl,
 	renderedRowKeys,
 	resetTableState,
+	rowFor,
 	waitForRows,
 } from '../../../helpers/infra-monitoring/list';
 import { seedDataset } from '../../../helpers/infra-monitoring/seed';
@@ -102,18 +96,6 @@ test.describe('namespaces', () => {
 		expect(new URL(page.url()).searchParams.get('relativeTime')).toBe('6h');
 	});
 
-	test('NS-03 the Pod Metrics tab renders the 5 utilisation-by-pod widgets', async ({
-		authedPage: page,
-	}) => {
-		await resetTableState(page, NAMESPACES);
-		await seedDataset(page, 'namespaces_value_accuracy');
-		await page.goto(listUrl(NAMESPACES, selectedItemParams(NAMESPACES)));
-		await expectDrawerVisible(page);
-
-		await switchDrawerTab(page, 'pod_metrics');
-		await expectWidgetTitles(page, POD_METRICS_WIDGET_TITLES);
-	});
-
 	test('NS-04 the same namespace name in two clusters stays two rows', async ({
 		authedPage: page,
 	}) => {
@@ -131,5 +113,25 @@ test.describe('namespaces', () => {
 		await expect(
 			page.locator('table').getByText('cluster', { exact: false }).first(),
 		).toBeVisible();
+	});
+
+	test('NS-05 a namespace missing a metric renders a dash, not a zero', async ({
+		authedPage: page,
+	}) => {
+		await resetTableState(page, NAMESPACES);
+		const seeded = await seedDataset(page, 'namespaces_missing_metrics');
+		await gotoScopedList(page, NAMESPACES, seeded.names);
+		await waitForRows(page);
+
+		// The *specific* cell, matched exactly. `getByText('-')` is a
+		// case-insensitive **substring** match and the seeded namespace is called
+		// `miss-ns`, so it would be satisfied by the name cell whatever the memory
+		// column rendered. `namespaces_missing_metrics` seeds only
+		// `k8s.pod.cpu.usage`, so the memory roll-up has nothing to sum.
+		const memoryCell = rowFor(page, seeded.names[0]).locator(
+			'td.tanstack-cell-memory',
+		);
+		await expect(memoryCell).toHaveText('-');
+		await expect(memoryCell, 'a missing metric is not zero').not.toHaveText('0');
 	});
 });

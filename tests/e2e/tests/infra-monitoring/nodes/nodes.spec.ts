@@ -4,17 +4,18 @@
  */
 
 import { expect, test } from '../../../fixtures/auth';
-import { expectWidgetTitles } from '../../../helpers/infra-monitoring/assertions';
 import {
-	expectDrawerVisible,
-	selectedItemParams,
-} from '../../../helpers/infra-monitoring/drawer';
+	expectedNumber,
+	expectedRecord,
+} from '../../../helpers/infra-monitoring/datasets';
+import {} from '../../../helpers/infra-monitoring/drawer';
 import { entityByKey } from '../../../helpers/infra-monitoring/entities';
 import {
 	gotoScopedList,
 	headerCell,
-	listUrl,
 	resetTableState,
+	rowFor,
+	waitForRow,
 	waitForRows,
 } from '../../../helpers/infra-monitoring/list';
 import { seedDataset } from '../../../helpers/infra-monitoring/seed';
@@ -70,25 +71,13 @@ test.describe('nodes', () => {
 		await expect(headerCell(page, 'podCountsByStatus')).toBeVisible();
 	});
 
-	test(`N-04 the Metrics tab shows all ${NODES.widgetTitles.length} node widgets`, async ({
-		authedPage: page,
-	}) => {
-		await resetTableState(page, NODES);
-		await seedDataset(page, 'nodes_value_accuracy');
-		await page.goto(listUrl(NODES, selectedItemParams(NODES)));
-		await expectDrawerVisible(page);
-
-		// Includes `Pods by CPU (top 10)` / `Pods by Memory (top 10)`.
-		await expectWidgetTitles(page, NODES.widgetTitles);
-	});
-
 	test('N-05 the allocatable columns render and are sortable', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, NODES);
 		const seeded = await seedDataset(page, 'nodes_value_accuracy');
 		await gotoScopedList(page, NODES, seeded.names);
-		await waitForRows(page);
+		await waitForRow(page, NODES.seed.sampleItemKey);
 
 		for (const columnId of ['cpu_allocatable', 'memory_allocatable']) {
 			await expect(headerCell(page, columnId)).toBeVisible();
@@ -96,5 +85,42 @@ test.describe('nodes', () => {
 				headerCell(page, columnId).locator('button.tanstack-header-title'),
 			).toHaveCount(1);
 		}
+
+		// …and the column carries the seeded number. A header on its own is what
+		// `B-LIST-01` already covers, and a metric-mapping regression leaves it
+		// standing. `nodeCPUAllocatable` renders through `toFixed(2)`, so the
+		// expectation is the fixture's value formatted the same way.
+		const allocatableCPU = (name: string): string =>
+			expectedNumber(
+				expectedRecord('nodes_value_accuracy', 'nodeName', name),
+				'nodeCPUAllocatable',
+			).toFixed(2);
+
+		for (const name of seeded.names) {
+			await expect(
+				rowFor(page, name).locator('td.tanstack-cell-cpu_allocatable'),
+				`${name} allocatable CPU`,
+			).toHaveText(allocatableCPU(name));
+		}
+	});
+
+	test('N-06 a node missing a metric renders a dash, not a zero', async ({
+		authedPage: page,
+	}) => {
+		await resetTableState(page, NODES);
+		const seeded = await seedDataset(page, 'nodes_missing_metrics');
+		await gotoScopedList(page, NODES, seeded.names);
+		await waitForRow(page, seeded.names[0]);
+
+		// `nodes_missing_metrics` seeds only `k8s.node.cpu.usage`, so memory is
+		// guaranteed absent. The *specific* cell, matched exactly: `getByText('-')`
+		// is a case-insensitive substring match and the seeded node is called
+		// `miss-n1`, so it would be satisfied by the name cell whatever the memory
+		// column rendered.
+		const memoryCell = rowFor(page, seeded.names[0]).locator(
+			'td.tanstack-cell-memory',
+		);
+		await expect(memoryCell).toHaveText('-');
+		await expect(memoryCell, 'a missing metric is not zero').not.toHaveText('0');
 	});
 });

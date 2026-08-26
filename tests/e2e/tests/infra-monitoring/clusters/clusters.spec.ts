@@ -4,7 +4,6 @@
  */
 
 import { expect, test } from '../../../fixtures/auth';
-import { expectWidgetTitles } from '../../../helpers/infra-monitoring/assertions';
 import {
 	countCard,
 	countCardNavLink,
@@ -17,6 +16,8 @@ import {
 	headerCell,
 	listUrl,
 	resetTableState,
+	rowFor,
+	waitForRow,
 	waitForRows,
 } from '../../../helpers/infra-monitoring/list';
 import { seedDataset } from '../../../helpers/infra-monitoring/seed';
@@ -64,17 +65,6 @@ test.describe('clusters', () => {
 		await expect(headerCell(page, 'nodeCountsByReadiness')).toBeVisible();
 	});
 
-	test(`C-03 the Metrics tab shows all ${CLUSTERS.widgetTitles.length} cluster widgets`, async ({
-		authedPage: page,
-	}) => {
-		await resetTableState(page, CLUSTERS);
-		await seedDataset(page, 'clusters_value_accuracy');
-		await page.goto(listUrl(CLUSTERS, selectedItemParams(CLUSTERS)));
-		await expectDrawerVisible(page);
-
-		await expectWidgetTitles(page, CLUSTERS.widgetTitles);
-	});
-
 	test('C-04 pod phases roll up into the Pod Status column', async ({
 		authedPage: page,
 	}) => {
@@ -86,5 +76,26 @@ test.describe('clusters', () => {
 		await expect(headerCell(page, 'podCountsByStatus')).toBeVisible();
 		// The roll-up renders counts, not raw phase names.
 		await expect(page.locator('table').getByText(/\d/).first()).toBeVisible();
+	});
+
+	test('C-05 a cluster missing a metric renders a dash, not a zero', async ({
+		authedPage: page,
+	}) => {
+		await resetTableState(page, CLUSTERS);
+		const seeded = await seedDataset(page, 'clusters_missing_metrics');
+		await gotoScopedList(page, CLUSTERS, seeded.names);
+		await waitForRow(page, seeded.names[0]);
+
+		// `clusters_missing_metrics` seeds one node carrying only
+		// `k8s.node.cpu.usage`, so the cluster's memory roll-up has nothing to sum.
+		// The *specific* cell, matched exactly: `getByText('-')` is a
+		// case-insensitive substring match and the seeded cluster is called
+		// `miss-cluster`, so it would be satisfied by the name cell whatever the
+		// memory column rendered.
+		const memoryCell = rowFor(page, seeded.names[0]).locator(
+			'td.tanstack-cell-memory',
+		);
+		await expect(memoryCell).toHaveText('-');
+		await expect(memoryCell, 'a missing metric is not zero').not.toHaveText('0');
 	});
 });

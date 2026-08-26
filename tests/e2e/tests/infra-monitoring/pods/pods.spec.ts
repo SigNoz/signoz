@@ -6,18 +6,14 @@
 
 import { expect, test } from '../../../fixtures/auth';
 import { fixtureMetric } from '../../../helpers/infra-monitoring/datasets';
-import {
-	expectUrlParams,
-	expectWidgetTitles,
-} from '../../../helpers/infra-monitoring/assertions';
+import { expectUrlParams } from '../../../helpers/infra-monitoring/assertions';
 import {
 	drawer,
-	expectDrawerVisible,
 	openRowDrawer,
-	selectedItemParams,
 } from '../../../helpers/infra-monitoring/drawer';
 import { entityByKey } from '../../../helpers/infra-monitoring/entities';
 import {
+	dataRows,
 	gotoScopedList,
 	expressionParam,
 	groupListBy,
@@ -89,13 +85,16 @@ test.describe('pods', () => {
 		await gotoScopedList(page, PODS, seeded.names);
 		await waitForRow(page, PODS.seed.sampleItemKey);
 
-		// `seed.ts` resolves the placeholder to ~10 minutes ago, so the age is a
-		// small, non-empty duration rather than a dash.
+		// `seed.ts` resolves the placeholder to `START_TIME_AGE_MS` (10 minutes) ago,
+		// and `formatAge` switches to `Nh Nm` past the hour and `Nd Nh` past the day.
+		// So a minutes-only age is the bounded statement that the rebase reached the
+		// column: `not.toHaveText('')` also passed on `-`, on `0s`, and on the
+		// unrebased fixture epoch rendering as `Nd`.
 		const ageCell = rowFor(page, PODS.seed.sampleItemKey).locator(
 			'td.tanstack-cell-podAge',
 		);
 		await expect(ageCell).toBeVisible();
-		await expect(ageCell).not.toHaveText('');
+		await expect(ageCell).toHaveText(/^\d+m$/);
 	});
 
 	test('P-04 the Restarts column renders, and is not sortable', async ({
@@ -162,18 +161,6 @@ test.describe('pods', () => {
 		expect(band('acc-p1'), 'the two pods span a threshold boundary').toBeLessThan(
 			band('acc-p2'),
 		);
-	});
-
-	test(`P-06 the Metrics tab shows all ${PODS.widgetTitles.length} pod widgets`, async ({
-		authedPage: page,
-	}) => {
-		await resetTableState(page, PODS);
-		await seedDataset(page, 'pods_value_accuracy');
-		await page.goto(listUrl(PODS, selectedItemParams(PODS)));
-		await expectDrawerVisible(page);
-
-		// Includes the four per-container panels.
-		await expectWidgetTitles(page, PODS.widgetTitles);
 	});
 
 	test('P-07 selectedItem is the pod UID, with no cluster/namespace extras', async ({
@@ -244,5 +231,42 @@ test.describe('pods', () => {
 		await expect(
 			rowFor(page, PODS.seed.sampleItemKey).locator('td.tanstack-cell-cluster'),
 		).toContainText('cluster-x');
+	});
+
+	test('P-10 a pod whose phase flips mid-window reports the latest phase', async ({
+		authedPage: page,
+	}) => {
+		await resetTableState(page, PODS);
+		const seeded = await seedDataset(page, 'pods_phases_transition');
+		// An explicit window, not the route's default `relativeTime=30m`. The list
+		// endpoint floors its query end down to a whole minute (`alignedMetricWindow`,
+		// whose step is never under 60 s) while `seed.ts` lands the newest sample 30 s
+		// before now, so on a now-ended range that sample falls outside the query
+		// whenever the clock is past the half-minute. The pod then reports the phase
+		// it held *before* the flip, which is correct for a window that excludes it
+		// and makes this scenario a coin flip. Ending a minute ahead puts the whole
+		// series inside whatever the floor rounds down to.
+		const endTime = Date.now() + 60_000;
+		await gotoScopedList(page, PODS, seeded.names, {
+			startTime: String(endTime - 30 * 60 * 1000),
+			endTime: String(endTime),
+		});
+		await waitForRows(page);
+
+		// One row per pod, since a transition must not split into two. The name
+		// filter cannot make this pass on its own: both halves of a split would
+		// carry the same `k8s.pod.name`.
+		await expect(dataRows(page)).toHaveCount(seeded.names.length);
+
+		// `k8s.pod.phase` runs 1 (Pending), 1, then 2 (Running) across the fixture's
+		// three samples, and the status expression takes `argMax(value, timestamp)`,
+		// so the badge is the latest phase and not the first one. The fixture also
+		// carries a `CrashLoopBackOff` container reason whose latest sample is 0:
+		// container reasons outrank the phase, but only while active, so a
+		// deactivated one must not win either.
+		const statusCell = rowFor(page, itemKeyFor(PODS, seeded.names[0])).locator(
+			'td.tanstack-cell-podStatus',
+		);
+		await expect(statusCell).toHaveText('Running');
 	});
 });

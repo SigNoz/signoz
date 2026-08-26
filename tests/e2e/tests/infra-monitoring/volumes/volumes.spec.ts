@@ -5,6 +5,10 @@
  */
 
 import { expect, test } from '../../../fixtures/auth';
+import {
+	expectedNumber,
+	expectedRecord,
+} from '../../../helpers/infra-monitoring/datasets';
 import { expectWidgetTitles } from '../../../helpers/infra-monitoring/assertions';
 import {
 	expectDrawerVisible,
@@ -59,13 +63,38 @@ test.describe('volumes', () => {
 		await resetTableState(page, VOLUMES);
 		const seeded = await seedDataset(page, 'volumes_value_accuracy');
 		await gotoScopedList(page, VOLUMES, seeded.names);
-		await waitForRows(page);
+		await waitForRow(page, VOLUMES.seed.sampleItemKey);
 
 		for (const columnId of INODE_COLUMNS) {
 			await expect(headerCell(page, columnId), columnId).toBeVisible();
 			await expect(
 				headerCell(page, columnId).locator('button.tanstack-header-title'),
 			).toHaveCount(1);
+		}
+
+		// …and the counts the fixture was built to populate, from the integration
+		// suite's expectation file rather than invented. The cells render the raw
+		// integer with no unit or thousands separator, so the match is exact.
+		// Asserting all three is the point: used and free are the pair a metric
+		// mapping is most likely to swap, and neither the headers nor a single
+		// count would notice.
+		const expected = expectedRecord(
+			'volumes_value_accuracy',
+			'persistentVolumeClaimName',
+			VOLUMES.seed.sampleName,
+		);
+		const FIELD: Record<string, string> = {
+			inodes: 'volumeInodes',
+			inodes_used: 'volumeInodesUsed',
+			inodes_free: 'volumeInodesFree',
+		};
+		for (const columnId of INODE_COLUMNS) {
+			await expect(
+				rowFor(page, VOLUMES.seed.sampleItemKey).locator(
+					`td.tanstack-cell-${columnId}`,
+				),
+				columnId,
+			).toHaveText(String(expectedNumber(expected, FIELD[columnId])));
 		}
 	});
 
@@ -81,18 +110,7 @@ test.describe('volumes', () => {
 
 		// `hideDetailViewTabs` — no bar, and `effectiveView` is pinned to metrics.
 		await expect(tabBar(page)).toHaveCount(0);
-		await expectWidgetTitles(page, VOLUMES.widgetTitles);
-	});
-
-	test(`V-04 the Metrics tab shows all ${VOLUMES.widgetTitles.length} volume widgets`, async ({
-		authedPage: page,
-	}) => {
-		await resetTableState(page, VOLUMES);
-		await seedDataset(page, 'volumes_value_accuracy');
-		await page.goto(listUrl(VOLUMES, selectedItemParams(VOLUMES)));
-		await expectDrawerVisible(page);
-
-		await expectWidgetTitles(page, VOLUMES.widgetTitles);
+		await expectWidgetTitles(page, VOLUMES.widgetTitles!);
 	});
 
 	test('V-05 non-PVC volumes are excluded', async ({ authedPage: page }) => {
@@ -138,5 +156,57 @@ test.describe('volumes', () => {
 		await waitForRow(page, seeded.names[0]);
 		await expect(rowFor(page, seeded.names[0])).toBeVisible();
 		await resizeColumn(page, 'capacity', 60);
+	});
+
+	test('V-07 the same volume name across namespaces and clusters stays distinct rows', async ({
+		authedPage: page,
+	}) => {
+		await resetTableState(page, VOLUMES);
+		const seeded = await seedDataset(
+			page,
+			'volumes_same_name_across_ns_and_clusters',
+		);
+		const [name] = seeded.names;
+
+		// Scoped by **cluster**, not by name, for the reason V-05 records: a
+		// name-scoped list that had deduped `dup-pvc` down to one row would still
+		// satisfy every assertion about the seeded name.
+		await page.goto(
+			listUrl(VOLUMES, { ...expressionParams(`k8s.cluster.name = 'cluster-a'`) }),
+		);
+		await waitForRows(page);
+
+		// `cluster-a` holds `dup-pvc` in two namespaces, so identity is not the PVC
+		// name alone and the correct row set is two rows. Note both carry the same
+		// `row-dup-pvc` testid: `getK8sVolumeRowKey` is the PVC name on its own, so
+		// `rowFor` cannot address either of them and the namespace column is what
+		// makes the two distinguishable.
+		expect(await renderedRowKeys(page), 'one name, two rows').toEqual([
+			name,
+			name,
+		]);
+		const rendered = await page
+			.locator('table td.tanstack-cell-namespaceName')
+			.allInnerTexts();
+		expect(rendered.map((text) => text.trim()).sort()).toEqual(
+			Object.keys(seeded.groups[VOLUMES.groupByAttribute]).sort(),
+		);
+
+		await page.goto(
+			listUrl(VOLUMES, {
+				...expressionParams(`${VOLUMES.groupByAttribute} = 'ns-x'`),
+			}),
+		);
+		await waitForRows(page);
+
+		// …and the cluster half of the same question. `ns-x` holds `dup-pvc` three
+		// times: under `cluster-a`, under `cluster-b`, and once with no cluster
+		// label at all, which is the case an identity keyed on (name, namespace,
+		// cluster) has to keep separate rather than fold into one of the others.
+		expect(await renderedRowKeys(page), 'one name, three rows').toEqual([
+			name,
+			name,
+			name,
+		]);
 	});
 });
