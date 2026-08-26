@@ -6,6 +6,7 @@ import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPage/DashboardContainer
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
+import { useDashboardEventMeta } from '../../../hooks/useDashboardEventMeta';
 import { useOptimisticPatch } from '../../../hooks/useOptimisticPatch';
 import { removePanelOp, replaceSectionItemsOp } from '../../../patchOps';
 import { useDashboardStore } from '../../../store/useDashboardStore';
@@ -28,6 +29,7 @@ export function useDeletePanel({
 	sections,
 }: Params): (args: DeletePanelArgs) => Promise<void> {
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
+	const eventMeta = useDashboardEventMeta();
 	const { patchAsync } = useOptimisticPatch();
 	const { showErrorModal } = useErrorModal();
 
@@ -54,12 +56,12 @@ export function useDeletePanel({
 						? PANEL_KIND_TO_PANEL_TYPE[removed.panel.spec.plugin.kind]
 						: undefined,
 					panelId,
-					dashboardId,
+					...eventMeta,
 				});
 			} catch (error) {
 				showErrorModal(error as APIError);
 			}
 		},
-		[sections, dashboardId, patchAsync, showErrorModal],
+		[sections, dashboardId, eventMeta, patchAsync, showErrorModal],
 	);
 }

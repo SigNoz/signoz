@@ -6,6 +6,7 @@ import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 import { v4 as uuid } from 'uuid';
 
+import { useDashboardEventMeta } from '../../../hooks/useDashboardEventMeta';
 import { useOptimisticPatch } from '../../../hooks/useOptimisticPatch';
 import {
 	addPanelToSectionOps,
@@ -35,6 +36,7 @@ export function useClonePanel({
 	sections,
 }: Params): (args: ClonePanelArgs) => Promise<void> {
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
+	const eventMeta = useDashboardEventMeta();
 	const { patchAsync } = useOptimisticPatch();
 	const setScrollTargetId = useScrollIntoViewStore((s) => s.setScrollTargetId);
 
@@ -82,12 +84,12 @@ export function useClonePanel({
 					action: 'clone',
 					panelType: PANEL_KIND_TO_PANEL_TYPE[source.panel.spec.plugin.kind],
 					panelId,
-					dashboardId,
+					...eventMeta,
 				});
 			} catch {
 				// no-op
 			}
 		},
-		[sections, dashboardId, patchAsync, setScrollTargetId],
+		[sections, dashboardId, eventMeta, patchAsync, setScrollTargetId],
 	);
 }
