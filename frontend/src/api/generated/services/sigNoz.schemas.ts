@@ -2175,6 +2175,7 @@ export enum CoretypesKindDTO {
 	'factor-api-key' = 'factor-api-key',
 	license = 'license',
 	subscription = 'subscription',
+	'deployment-host' = 'deployment-host',
 	logs = 'logs',
 	traces = 'traces',
 	metrics = 'metrics',
