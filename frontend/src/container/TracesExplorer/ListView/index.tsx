@@ -12,16 +12,18 @@ import {
 import { useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
 import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsMenu';
-import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
-import { ResizeTable } from 'components/ResizeTable';
+import type { TableColumnDef } from 'components/TanStackTableView/types';
+import TracesTable from 'container/TracesExplorer/TracesTable/TracesTable';
+import {
+	getFieldColumn,
+	TracesTableRow,
+} from 'container/TracesExplorer/TracesTable/getFieldColumn';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
-import NoLogs from 'container/NoLogs/NoLogs';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
 import TraceExplorerControls from 'container/TracesExplorer/Controls';
@@ -32,19 +34,21 @@ import { Pagination } from 'hooks/queryPagination';
 import { getDefaultPaginationConfig } from 'hooks/queryPagination/utils';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { ArrowUp10, Minus } from '@signozhq/icons';
-import { useTimezone } from 'providers/Timezone';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
-import APIError from 'types/api/error';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { TracesLoading } from '../TraceLoading/TraceLoading';
-import { defaultSelectedColumns, PER_PAGE_OPTIONS } from './configs';
-import { Container, tableStyles } from './styles';
-import { getListColumns, transformDataWithDate } from './utils';
+import {
+	defaultSelectedColumns,
+	PER_PAGE_OPTIONS,
+	TIMESTAMP_FIELD,
+} from './configs';
+import { getTraceLink, transformSpanRows } from './utils';
 
 import './ListView.styles.scss';
+
+import styles from './ListView.module.scss';
 
 interface ListViewProps {
 	isFilterApplied: boolean;
@@ -93,7 +97,7 @@ function ListView({
 		[stagedQuery, orderBy],
 	);
 
-	// TEMP — remove after traces moves to TanStack table.
+	// Stable sorted-name signature for the queryKey.
 	// - Drag updates selectColumns; raw queryKey would churn on reorder.
 	// - Trace API fetches only listed columns → add/remove must refetch.
 	// - Sorted-name signature: stable on reorder, changes on add/remove.
@@ -186,60 +190,42 @@ function ListView({
 		[queryTableDataResult],
 	);
 
-	const { formatTimezoneAdjustedTimestamp } = useTimezone();
-
-	const columns = useMemo(
-		() =>
-			getListColumns(
-				options?.selectColumns || [],
-				formatTimezoneAdjustedTimestamp,
+	const columns = useMemo<TableColumnDef<TracesTableRow>[]>(() => {
+		const fields = [
+			TIMESTAMP_FIELD,
+			...(options?.selectColumns ?? []).filter(
+				(field) => field.name !== TIMESTAMP_FIELD.name,
 			),
-		[options?.selectColumns, formatTimezoneAdjustedTimestamp],
-	);
+		];
+		return fields.map((field) => getFieldColumn(field));
+	}, [options?.selectColumns]);
 
-	const transformedQueryTableData = useMemo(
-		() => transformDataWithDate(queryTableData) || [],
+	const rows = useMemo(
+		() => transformSpanRows(queryTableData),
 		[queryTableData],
 	);
 
-	const handleDragColumn = useCallback(
-		(fromIndex: number, toIndex: number): void => {
-			const reordered = [...columns];
-			const [moved] = reordered.splice(fromIndex, 1);
-			reordered.splice(toIndex, 0, moved);
-			// `key` is the composite (fieldContext.name) — disambiguates same-name fields.
-			const orderedIds = reordered
-				.map((c) => String(c.key || ('dataIndex' in c && c.dataIndex) || ''))
-				.filter(Boolean);
-			config?.addColumn?.onReorder(orderedIds);
+	const handleColumnOrderChange = useCallback(
+		(cols: TableColumnDef<TracesTableRow>[]): void => {
+			config?.addColumn?.onReorder(cols.map((c) => c.id));
 		},
-		[columns, config],
+		[config],
 	);
 
 	const handleOrderChange = useCallback((value: string) => {
 		setOrderBy(value);
 	}, []);
 
-	const isDataAbsent =
-		!isLoading &&
-		!isFetching &&
-		!isError &&
-		transformedQueryTableData.length === 0;
-
 	useEffect(() => {
-		if (
-			!isLoading &&
-			!isFetching &&
-			!isError &&
-			transformedQueryTableData.length !== 0
-		) {
-			logEvent('Traces Explorer: Data present', {
+		if (!isLoading && !isFetching && !isError && rows.length !== 0) {
+			void logEvent('Traces Explorer: Data present', {
 				panelType,
 			});
 		}
-	}, [isLoading, isFetching, isError, transformedQueryTableData, panelType]);
+	}, [isLoading, isFetching, isError, rows, panelType]);
+
 	return (
-		<Container>
+		<div className={styles.container}>
 			<div className="trace-explorer-controls">
 				<div className="order-by-container">
 					<div className="order-by-label">
@@ -266,33 +252,21 @@ function ListView({
 				/>
 			</div>
 
-			{isError && error && <ErrorInPlace error={error as APIError} />}
-
-			{(isLoading || (isFetching && transformedQueryTableData.length === 0)) && (
-				<TracesLoading />
-			)}
-
-			{isDataAbsent && !isFilterApplied && (
-				<NoLogs dataSource={DataSource.TRACES} />
-			)}
-
-			{isDataAbsent && isFilterApplied && (
-				<EmptyLogsSearch dataSource={DataSource.TRACES} panelType="LIST" />
-			)}
-
-			{!isError && transformedQueryTableData.length !== 0 && (
-				<ResizeTable
-					tableLayout="fixed"
-					pagination={false}
-					scroll={{ x: 'max-content' }}
-					loading={isFetching}
-					style={tableStyles}
-					dataSource={transformedQueryTableData}
-					columns={columns}
-					onDragColumn={handleDragColumn}
-				/>
-			)}
-		</Container>
+			<TracesTable
+				data={rows}
+				columns={columns}
+				columnStorageKey={LOCALSTORAGE.TRACES_LIST_COLUMNS}
+				panelType="LIST"
+				getRowHref={getTraceLink}
+				isLoading={isLoading}
+				isFetching={isFetching}
+				isError={isError}
+				error={error}
+				isFilterApplied={isFilterApplied}
+				onColumnOrderChange={handleColumnOrderChange}
+				onColumnRemove={config?.addColumn?.onRemove}
+			/>
+		</div>
 	);
 }
 
