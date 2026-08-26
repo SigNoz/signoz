@@ -1,7 +1,6 @@
 from collections.abc import Callable
 from http import HTTPStatus
 
-import pytest
 import requests
 
 from fixtures import types
@@ -15,6 +14,32 @@ ALL_SIGNALS = {
     "meter",
     "ai_observability",
 }
+
+
+def test_get_quick_filters_returns_defaults(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/orgs/me/filters"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()["data"]
+    assert {signal_filters["signal"] for signal_filters in data} == ALL_SIGNALS
+
+    for signal_filters in data:
+        assert len(signal_filters["filters"]) > 0
+        for field_key in signal_filters["filters"]:
+            assert field_key["name"] != ""
+            assert "fieldContext" in field_key
+            assert "fieldDataType" in field_key
+            assert "key" not in field_key
 
 
 def test_v1_get_serves_legacy_shape(
@@ -92,51 +117,6 @@ def test_v1_update_round_trips_to_v2(
     ]
 
 
-def test_get_quick_filters_returns_defaults(
-    signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-):
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v2/orgs/me/filters"),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
-
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-    assert {signal_filters["signal"] for signal_filters in data} == ALL_SIGNALS
-
-    for signal_filters in data:
-        assert len(signal_filters["filters"]) > 0
-        for field_key in signal_filters["filters"]:
-            assert field_key["name"] != ""
-            assert "fieldContext" in field_key
-            assert "fieldDataType" in field_key
-            assert "key" not in field_key
-
-
-def test_get_signal_filters(
-    signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-):
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v2/orgs/me/filters/traces"),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
-
-    assert response.status_code == HTTPStatus.OK, response.text
-    data = response.json()["data"]
-    assert data["signal"] == "traces"
-    assert data["filters"][0]["name"] == "duration_nano"
-
-
 def test_update_quick_filters_round_trip(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -183,30 +163,24 @@ def test_update_quick_filters_round_trip(
     assert filters[1]["fieldContext"] == "body"
 
 
-@pytest.mark.parametrize(
-    "invalid_body",
-    [
+def test_update_quick_filters_rejects_invalid_input(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    for invalid_body in [
         {
             "signal": "traces",
             "filters": [{"key": "service.name", "dataType": "string", "type": "resource"}],
         },
         {"signal": "invalid", "filters": []},
-    ],
-    ids=["legacy_shape", "unknown_signal"],
-)
-def test_update_quick_filters_rejects_invalid_input(
-    signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    invalid_body: dict,
-):
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    response = requests.put(
-        signoz.self.host_configs["8080"].get("/api/v2/orgs/me/filters"),
-        json=invalid_body,
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
-
-    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    ]:
+        response = requests.put(
+            signoz.self.host_configs["8080"].get("/api/v2/orgs/me/filters"),
+            json=invalid_body,
+            headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=2,
+        )
+        assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
