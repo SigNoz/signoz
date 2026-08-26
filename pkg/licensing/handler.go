@@ -13,15 +13,15 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-type licensingAPI struct {
+type handler struct {
 	licensing Licensing
 }
 
-func NewAPI(licensing Licensing) API {
-	return &licensingAPI{licensing: licensing}
+func NewHandler(licensing Licensing) Handler {
+	return &handler{licensing: licensing}
 }
 
-func (api *licensingAPI) Activate(rw http.ResponseWriter, r *http.Request) {
+func (handler *handler) Activate(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -44,7 +44,7 @@ func (api *licensingAPI) Activate(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = api.licensing.Activate(r.Context(), orgID, req.Key)
+	err = handler.licensing.Activate(r.Context(), orgID, req.Key)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -53,7 +53,7 @@ func (api *licensingAPI) Activate(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusAccepted, nil)
 }
 
-func (api *licensingAPI) GetActive(rw http.ResponseWriter, r *http.Request) {
+func (handler *handler) GetActive(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -69,7 +69,7 @@ func (api *licensingAPI) GetActive(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	license, err := api.licensing.GetActive(r.Context(), orgID)
+	license, err := handler.licensing.GetActive(r.Context(), orgID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -79,7 +79,7 @@ func (api *licensingAPI) GetActive(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusOK, gettableLicense)
 }
 
-func (api *licensingAPI) Refresh(rw http.ResponseWriter, r *http.Request) {
+func (handler *handler) Refresh(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -95,7 +95,7 @@ func (api *licensingAPI) Refresh(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = api.licensing.Refresh(r.Context(), orgID)
+	err = handler.licensing.Refresh(r.Context(), orgID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -104,7 +104,7 @@ func (api *licensingAPI) Refresh(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-func (api *licensingAPI) Checkout(rw http.ResponseWriter, r *http.Request) {
+func (handler *handler) Checkout(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -126,7 +126,7 @@ func (api *licensingAPI) Checkout(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	gettableSubscription, err := api.licensing.Checkout(ctx, orgID, req)
+	gettableSubscription, err := handler.licensing.Checkout(ctx, orgID, req)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -135,7 +135,7 @@ func (api *licensingAPI) Checkout(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusCreated, gettableSubscription)
 }
 
-func (api *licensingAPI) Portal(rw http.ResponseWriter, r *http.Request) {
+func (handler *handler) Portal(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -157,7 +157,7 @@ func (api *licensingAPI) Portal(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	gettableSubscription, err := api.licensing.Portal(ctx, orgID, req)
+	gettableSubscription, err := handler.licensing.Portal(ctx, orgID, req)
 	if err != nil {
 		render.Error(rw, err)
 		return

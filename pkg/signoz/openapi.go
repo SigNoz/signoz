@@ -81,7 +81,7 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ authz.Handler }{},
 		struct{ rawdataexport.Handler }{},
 		struct{ zeus.Handler }{},
-		struct{ licensing.API }{},
+		struct{ licensing.Handler }{},
 		struct{ querier.Handler }{},
 		struct{ serviceaccount.Handler }{},
 		struct{ serviceaccount.Getter }{},

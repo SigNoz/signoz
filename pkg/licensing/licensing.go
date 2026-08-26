@@ -37,7 +37,7 @@ type Licensing interface {
 	statsreporter.StatsCollector
 }
 
-type API interface {
+type Handler interface {
 	Activate(http.ResponseWriter, *http.Request)
 	Refresh(http.ResponseWriter, *http.Request)
 	GetActive(http.ResponseWriter, *http.Request)

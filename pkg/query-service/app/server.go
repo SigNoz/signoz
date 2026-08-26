@@ -84,7 +84,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		IntegrationsController:        integrationsController,
 		LogsParsingPipelineController: logParsingPipelineController,
 		FluxInterval:                  config.Querier.FluxInterval,
-		LicensingAPI:                  licensing.NewAPI(signoz.Licensing),
+		LicensingHandler:              licensing.NewHandler(signoz.Licensing),
 		Signoz:                        signoz,
 		QueryParserAPI:                queryparser.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.QueryParser),
 	}, config)

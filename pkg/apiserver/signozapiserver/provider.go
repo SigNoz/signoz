@@ -68,7 +68,7 @@ type provider struct {
 	authzHandler               authz.Handler
 	rawDataExportHandler       rawdataexport.Handler
 	zeusHandler                zeus.Handler
-	licensingHandler           licensing.API
+	licensingHandler           licensing.Handler
 	querierHandler             querier.Handler
 	serviceAccountHandler      serviceaccount.Handler
 	serviceAccountGetter       serviceaccount.Getter
@@ -107,7 +107,7 @@ func NewFactory(
 	authzHandler authz.Handler,
 	rawDataExportHandler rawdataexport.Handler,
 	zeusHandler zeus.Handler,
-	licensingHandler licensing.API,
+	licensingHandler licensing.Handler,
 	querierHandler querier.Handler,
 	serviceAccountHandler serviceaccount.Handler,
 	serviceAccountGetter serviceaccount.Getter,
@@ -193,7 +193,7 @@ func newProvider(
 	authzHandler authz.Handler,
 	rawDataExportHandler rawdataexport.Handler,
 	zeusHandler zeus.Handler,
-	licensingHandler licensing.API,
+	licensingHandler licensing.Handler,
 	querierHandler querier.Handler,
 	serviceAccountHandler serviceaccount.Handler,
 	serviceAccountGetter serviceaccount.Getter,

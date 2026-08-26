@@ -119,7 +119,7 @@ type APIHandler struct {
 	// Websocket connection upgrader
 	Upgrader *websocket.Upgrader
 
-	LicensingAPI licensing.API
+	LicensingHandler licensing.Handler
 
 	QueryParserAPI *queryparser.API
 
@@ -139,7 +139,7 @@ type APIHandlerOpts struct {
 	// Flux Interval
 	FluxInterval time.Duration
 
-	LicensingAPI licensing.API
+	LicensingHandler licensing.Handler
 
 	QueryParserAPI *queryparser.API
 
@@ -176,7 +176,7 @@ func NewAPIHandler(opts APIHandlerOpts, config signoz.Config) (*APIHandler, erro
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		querier:                       querier,
 		querierV2:                     querierv2,
-		LicensingAPI:                  opts.LicensingAPI,
+		LicensingHandler:              opts.LicensingHandler,
 		Signoz:                        opts.Signoz,
 		QueryParserAPI:                opts.QueryParserAPI,
 	}
