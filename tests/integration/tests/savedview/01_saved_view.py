@@ -592,6 +592,66 @@ def test_saved_view_lifecycle(
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
+def test_ai_observability_view_with_builder_ai_query_roundtrip(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    """builder_ai_query implies the traces signal -- the spec is sent without
+    one and must read back with signal pinned to "traces"."""
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            "name": "ai-observability-overview",
+            "generateName": False,
+            "source": "ai_observability",
+            "schemaVersion": "v2",
+            "spec": {
+                "displayName": "ai-observability-overview",
+                "requestType": "scalar",
+                "queries": [{"type": "builder_ai_query", "spec": {"name": "A", "aggregations": [{"expression": "count()"}], "disabled": False, "legend": ""}}],
+                "selectedFields": [],
+                "panelType": "table",
+                "display": {"maxLines": 0, "fontSize": "", "format": "", "color": ""},
+            },
+        },
+        headers=headers,
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    view_id = response.json()["data"]["id"]
+
+    try:
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
+            headers=headers,
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.OK, response.text
+        got = response.json()["data"]
+        assert got["source"] == "ai_observability"
+        assert got["spec"]["queries"][0]["type"] == "builder_ai_query"
+        assert got["spec"]["queries"][0]["spec"]["signal"] == "traces"
+
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(BASE_URL),
+            params={"source": "ai_observability"},
+            headers=headers,
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.OK, response.text
+        assert {v["name"] for v in response.json()["data"]} == {"ai-observability-overview"}
+    finally:
+        requests.delete(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{view_id}"),
+            headers=headers,
+            timeout=5,
+        )
+
+
 def test_empty_name_derives_a_slug_from_display_name(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
