@@ -16,7 +16,6 @@ export interface GetChartManagerColumnsParams {
 	onToggleSeriesVisibility: (index: number) => void;
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
-	isGraphDisabled?: boolean;
 }
 
 export function getChartManagerColumns({
@@ -26,7 +25,6 @@ export function getChartManagerColumns({
 	onToggleSeriesVisibility,
 	yAxisUnit,
 	decimalPrecision = PrecisionOptionsEnum.TWO,
-	isGraphDisabled,
 }: GetChartManagerColumnsParams): ColumnType<ExtendedChartDataset>[] {
 	return [
 		{
@@ -39,7 +37,6 @@ export function getChartManagerColumns({
 					data={tableDataSet}
 					graphVisibilityState={graphVisibilityState}
 					index={record.index}
-					disabled={isGraphDisabled}
 					checkBoxOnChangeHandler={(_e, idx): void => onToggleSeriesOnOff(idx)}
 				/>
 			),
@@ -53,7 +50,6 @@ export function getChartManagerColumns({
 				<SeriesLabel
 					label={label ?? ''}
 					labelIndex={record.index}
-					disabled={isGraphDisabled}
 					onClick={onToggleSeriesVisibility}
 				/>
 			),
