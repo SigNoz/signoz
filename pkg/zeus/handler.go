@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -106,6 +107,70 @@ func (h *handler) PutHost(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.zeus.PutHost(ctx, license.Key, req); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusNoContent, nil)
+}
+
+func (h *handler) GetActiveLicense(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	license, err := h.licensing.GetActive(ctx, valuer.MustNewUUID(claims.OrgID))
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	gettableLicense, err := zeustypes.NewGettableLicense(license)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, gettableLicense)
+}
+
+func (h *handler) ActivateLicense(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	req := new(licensetypes.PostableLicense)
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	if err := h.licensing.Activate(ctx, valuer.MustNewUUID(claims.OrgID), req.Key); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusAccepted, nil)
+}
+
+func (h *handler) RefreshLicense(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	if err := h.licensing.Refresh(ctx, valuer.MustNewUUID(claims.OrgID)); err != nil {
 		render.Error(rw, err)
 		return
 	}
