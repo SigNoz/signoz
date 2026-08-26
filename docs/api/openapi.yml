@@ -15467,10 +15467,8 @@ paths:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
       security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
+      - api_key: []
+      - tokenizer: []
       summary: Get features
       tags:
       - features
