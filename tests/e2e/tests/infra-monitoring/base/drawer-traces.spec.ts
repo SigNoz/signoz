@@ -1,189 +1,31 @@
 /**
- * B-TRC — the drawer's Traces tab. Mirrors B-LOG with the traces expression key,
- * plus the `pagination` param the traces list drives paging with.
+ * B-TRC — the drawer's Traces tab. Scenarios 01 through 07 are the contract it
+ * shares with B-LOG and live in `drawer-query-tab.ts`; what stays here is what
+ * has no logs counterpart: the `pagination` param the traces list drives paging
+ * with, and the trace column set.
  */
-
-import type { Page } from '@playwright/test';
 
 import { expect, test } from '../../../fixtures/auth';
 import {
-	EXPLORER_LINK,
 	PAGINATION_PARAM,
-	SCOPE_CHIP,
-	TAB_USER_EXPRESSION_PARAM,
-	emptyState,
-	expectEmptyState,
-	entityRunQueryButton,
-	errorState,
-	expectDrawerVisible,
 	paginationFromUrl,
-	runEntityQuery,
-	selectedItemParams,
 	switchDrawerTab,
 } from '../../../helpers/infra-monitoring/drawer';
-import {
-	fanOut,
-	type EntityDef,
-} from '../../../helpers/infra-monitoring/entities';
-import {
-	allowForSeededWait,
-	listUrl,
-	resetTableState,
-} from '../../../helpers/infra-monitoring/list';
-import { seedDataset } from '../../../helpers/infra-monitoring/seed';
+import { fanOut } from '../../../helpers/infra-monitoring/entities';
 
-const TRACES_EXPRESSION_PARAM = TAB_USER_EXPRESSION_PARAM.traces;
+import { describeQueryTab, openQueryTab } from './drawer-query-tab';
 
-async function openTracesTab(
-	page: Page,
-	entity: EntityDef,
-	overrides: Record<string, string> = {},
-): Promise<void> {
-	await resetTableState(page, entity);
-	await seedDataset(page, entity.seed.primary);
-	await page.goto(
-		listUrl(entity, {
-			...selectedItemParams(entity),
-			view: 'traces',
-			...overrides,
-		}),
-	);
-	await expectDrawerVisible(page);
-}
+describeQueryTab({
+	tab: 'traces',
+	tag: 'B-TRC',
+	capability: 'tracesTab',
+	sampleExpression: "name = 'GET /health'",
+	explorerPath: '/traces-explorer',
+	filtersParam: 'tracesFilters',
+});
 
 for (const entity of fanOut('representative', 'tracesTab')) {
-	test.describe(`B-TRC ${entity.key}`, () => {
-		test(`B-TRC-01 ${entity.key}: the tab loads pre-filtered by the entity's identity`, async ({
-			authedPage: page,
-		}) => {
-			await openTracesTab(page, entity);
-			await expect(page.locator(SCOPE_CHIP)).toBeVisible();
-		});
-
-		test(`B-TRC-02 ${entity.key}: no matching traces renders the empty state`, async ({
-			authedPage: page,
-		}) => {
-			await openTracesTab(page, entity);
-			await expect(emptyState(page)).toBeVisible();
-			await expectEmptyState(page, false);
-		});
-
-		test(`B-TRC-03 ${entity.key}: a user expression is kept in the URL and survives a reload`, async ({
-			authedPage: page,
-		}) => {
-			const expression = "name = 'GET /health'";
-			await openTracesTab(page, entity, {
-				[TRACES_EXPRESSION_PARAM]: expression,
-			});
-
-			await expect(async () => {
-				expect(new URL(page.url()).searchParams.get(TRACES_EXPRESSION_PARAM)).toBe(
-					expression,
-				);
-			}).toPass();
-
-			await page.reload();
-			await expectDrawerVisible(page);
-			expect(new URL(page.url()).searchParams.get(TRACES_EXPRESSION_PARAM)).toBe(
-				expression,
-			);
-			await expectEmptyState(page, true);
-		});
-
-		test(`B-TRC-06 ${entity.key}: the compass opens the traces explorer in a new tab`, async ({
-			authedPage: page,
-		}) => {
-			await openTracesTab(page, entity);
-
-			const compass = page.getByTestId(EXPLORER_LINK.traces);
-			await expect(compass).toBeVisible();
-
-			const [opened] = await Promise.all([
-				page.context().waitForEvent('page'),
-				compass.click(),
-			]);
-			await opened.waitForLoadState();
-
-			expect(opened.url()).toContain('/traces-explorer');
-			expect(opened.url()).toContain('compositeQuery');
-			await opened.close();
-		});
-
-		test(`B-TRC-07 ${entity.key}: a list error renders the error state`, async ({
-			authedPage: page,
-		}) => {
-			// `expectDrawerVisible` alone may spend the whole default budget on a cold
-			// deep link (§11.1), and this scenario needs the error state on top of it.
-			allowForSeededWait();
-			await resetTableState(page, entity);
-			await seedDataset(page, entity.seed.primary);
-
-			await page.route(/\/api\/v\d+\/query_range/, async (route) => {
-				const body = route.request().postData() ?? '';
-				if (body.includes('"traces"')) {
-					await route.fulfill({
-						status: 500,
-						contentType: 'application/json',
-						body: JSON.stringify({ status: 'error', error: 'traces exploded' }),
-					});
-					return;
-				}
-				await route.continue();
-			});
-
-			await page.goto(
-				listUrl(entity, { ...selectedItemParams(entity), view: 'traces' }),
-			);
-
-			await expectDrawerVisible(page);
-			await expect(errorState(page)).toBeVisible();
-			await page.unrouteAll();
-		});
-
-		test(`B-TRC-05 ${entity.key}: Run refetches without discarding the entity scope`, async ({
-			authedPage: page,
-		}) => {
-			await openTracesTab(page, entity);
-
-			// Wait for the tab *body* before arming anything. `openTracesTab` returns
-			// once the drawer shell is up, which is before the tab's own initial
-			// `query_range` fires — so that request satisfied `length > before` while
-			// the Run button was still mounting, and deleting the `runEntityQuery`
-			// call below left the test green.
-			await expect(page.locator(SCOPE_CHIP)).toBeVisible({ timeout: 30_000 });
-			await expect(entityRunQueryButton(page, 'traces')).toBeVisible();
-
-			// Tie the assertion to the click: wait for a request that starts *after*
-			// it, rather than counting ones that may predate it.
-			const refetch = page.waitForRequest(
-				(request) => /query_range/.test(request.url()),
-				{ timeout: 15_000 },
-			);
-			await runEntityQuery(page, 'traces');
-			await refetch;
-			await expect(page.locator(SCOPE_CHIP)).toBeVisible();
-		});
-
-		test(`B-TRC-04 ${entity.key}: switching away from Traces drops tracesFilters but keeps the expression`, async ({
-			authedPage: page,
-		}) => {
-			await openTracesTab(page, entity, {
-				[TRACES_EXPRESSION_PARAM]: "name = 'GET /health'",
-				tracesFilters: JSON.stringify({ items: [], op: 'AND' }),
-			});
-
-			await switchDrawerTab(page, 'metrics');
-
-			// `handleTabChange` nulls the three `*Filters` params and nothing else, so
-			// the user's typed expression outlives the tab. Same contract as B-LOG-04.
-			await expect(async () => {
-				expect(new URL(page.url()).searchParams.get('tracesFilters')).toBeNull();
-			}).toPass();
-			expect(new URL(page.url()).searchParams.get(TRACES_EXPRESSION_PARAM)).toBe(
-				"name = 'GET /health'",
-			);
-		});
-
+	test.describe(`B-TRC ${entity.key} traces-only`, () => {
 		test(`B-TRC-09 ${entity.key}: the trace columns render and a row opens the trace detail page`, async ({
 			authedPage: page,
 		}) => {
@@ -203,7 +45,7 @@ for (const entity of fanOut('representative', 'tracesTab')) {
 				await route.continue();
 			});
 
-			await openTracesTab(page, entity);
+			await openQueryTab(page, entity, 'traces');
 
 			const cell = page.getByTestId('serviceName').first();
 			await expect(cell).toHaveText(STUB_TRACE.serviceName, { timeout: 30_000 });
@@ -251,7 +93,7 @@ for (const entity of fanOut('representative', 'tracesTab')) {
 		test(`B-TRC-08 ${entity.key}: pagination is per-visit — the tab clears it on the way out`, async ({
 			authedPage: page,
 		}) => {
-			await openTracesTab(page, entity, {
+			await openQueryTab(page, entity, 'traces', {
 				[PAGINATION_PARAM.traces]: JSON.stringify({ offset: 10, limit: 10 }),
 			});
 
