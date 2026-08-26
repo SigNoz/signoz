@@ -7171,6 +7171,21 @@ export interface InframonitoringtypesVolumesDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
+export type LicensetypesGettableLicenseDTOAnyOf = { [key: string]: unknown };
+
+/**
+ * @nullable
+ */
+export type LicensetypesGettableLicenseDTO =
+	LicensetypesGettableLicenseDTOAnyOf | null;
+
+export interface LicensetypesPostableLicenseDTO {
+	/**
+	 * @type string
+	 */
+	key?: string;
+}
+
 /**
  * @nullable
  */
@@ -12393,6 +12408,14 @@ export type PinDashboardV2PathParameters = {
 };
 export type GetHosts200 = {
 	data: ZeustypesGettableHostDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetActiveLicense200 = {
+	data: LicensetypesGettableLicenseDTO | null;
 	/**
 	 * @type string
 	 */
