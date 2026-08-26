@@ -8,12 +8,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/SigNoz/signoz/pkg/factory/factorytest"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlitesqlstore"
+	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -98,4 +100,21 @@ func TestKeepOnlyLast50Agents(t *testing.T) {
 		Count(context.Background())
 	require.NoError(t, err)
 	assert.Equal(t, 5, otherCount)
+}
+
+func TestKeepOnlyLast50Agents_PostgresDialect(t *testing.T) {
+	store := sqlstoretest.New(sqlstore.Config{Provider: "postgres"}, sqlmock.QueryMatcherRegexp)
+	orgID := valuer.GenerateUUID()
+
+	// SQLite tolerates SELECT DISTINCT ... ORDER BY in the pruning subquery, so
+	// TestKeepOnlyLast50Agents cannot catch the postgres dialect regression. Assert
+	// the exact bun-rendered DELETE shape instead: the subquery must select bare
+	// agent_id, not distinct(agent_id).
+	store.Mock().ExpectExec(`^DELETE FROM "agent" AS "storable_agent" WHERE \(org_id = '[^']+'\) AND \(agent_id NOT IN \(SELECT agent_id FROM "agent" AS "storable_agent" WHERE \(org_id = '[^']+'\) ORDER BY created_at DESC LIMIT 50\)\)$`).
+		WillReturnResult(sqlmock.NewResult(0, 0))
+
+	agent := New(store, slog.New(slog.DiscardHandler), orgID, "agent-00", nil)
+	agent.KeepOnlyLast50Agents(context.Background())
+
+	require.NoError(t, store.Mock().ExpectationsWereMet())
 }
