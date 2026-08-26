@@ -20,7 +20,6 @@ import { ILog } from 'types/api/logs/log';
 
 import { ActionItemProps } from './ActionItem';
 import { useLogAttributeActions } from './hooks/useLogAttributeActions';
-import { useLogPinnedFields } from './hooks/useLogPinnedFields';
 import TableView from './TableView';
 import {
 	aggregateAttributesResourcesToObject,
@@ -72,8 +71,6 @@ function Overview({
 		isListViewPanel,
 		onApplyLogFilter,
 	});
-	const { value: pinnedFieldsValue, onChange: onPinnedFieldsChange } =
-		useLogPinnedFields();
 
 	const isLogDetailsV2 = useIsLogDetailsV2();
 
@@ -89,9 +86,6 @@ function Overview({
 					prettyViewProps={{
 						actions,
 						visibleActions,
-						showPinned: true,
-						pinnedFieldsValue,
-						onPinnedFieldsChange,
 						renderLeafValue: (value, keyPath): ReactNode | undefined => {
 							// Sanitize (unescape + ANSI→color) string values under `body`.
 							// Skip huge ones (render raw, still safe) to avoid the sanitize

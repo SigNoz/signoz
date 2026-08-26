@@ -6,5 +6,4 @@ export const USER_PREFERENCES = {
 	SPAN_DETAILS_PREVIEW_ATTRIBUTES: 'span_details_preview_attributes',
 	SPAN_DETAILS_COLOR_BY_ATTRIBUTE: 'span_details_color_by_attribute',
 	SPAN_PERCENTILE_RESOURCE_ATTRIBUTES: 'span_percentile_resource_attributes',
-	LOG_DETAILS_PINNED_ATTRIBUTES: 'log_details_pinned_attributes',
 };
