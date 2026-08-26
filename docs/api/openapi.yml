@@ -8030,6 +8030,7 @@ components:
       - logs
       - metrics
       - meter
+      - ai_observability
       type: string
     SavedviewtypesUpdatableSavedView:
       properties:

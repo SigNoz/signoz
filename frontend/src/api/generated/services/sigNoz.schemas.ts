@@ -9043,6 +9043,7 @@ export enum SavedviewtypesSourceDTO {
 	logs = 'logs',
 	metrics = 'metrics',
 	meter = 'meter',
+	ai_observability = 'ai_observability',
 }
 export interface SavedviewtypesSavedViewSpecDTO {
 	display?: SavedviewtypesDisplayDTO;
