@@ -163,20 +163,23 @@ export function QueryBuilderProvider({
 	const prepareQueryBuilderData = useCallback(
 		(query: Query): Query => {
 			const builder: QueryBuilderData = {
-				queryData: query.builder.queryData?.map((item) => ({
-					...initialQueryBuilderFormValuesMap[
-						initialDataSource || DataSource.METRICS
-					],
-					...item,
-				})),
-				queryFormulas: query.builder.queryFormulas?.map((item) => ({
-					...initialFormulaBuilderFormValues,
-					...item,
-				})),
-				queryTraceOperator: query.builder.queryTraceOperator?.map((item) => ({
-					...initialQueryBuilderFormTraceOperatorValues,
-					...item,
-				})),
+				queryData:
+					query.builder.queryData?.map((item) => ({
+						...initialQueryBuilderFormValuesMap[
+							initialDataSource || DataSource.METRICS
+						],
+						...item,
+					})) ?? [],
+				queryFormulas:
+					query.builder.queryFormulas?.map((item) => ({
+						...initialFormulaBuilderFormValues,
+						...item,
+					})) ?? [],
+				queryTraceOperator:
+					query.builder.queryTraceOperator?.map((item) => ({
+						...initialQueryBuilderFormTraceOperatorValues,
+						...item,
+					})) ?? [],
 			};
 
 			const setupedQueryData = builder.queryData.map((item) => {
