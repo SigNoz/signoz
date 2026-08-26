@@ -1,8 +1,8 @@
 /**
- * B-URL — the URL is the state. Every infra param uses `history: 'push'`, so the
+ * The URL is the state. Every infra param uses `history: 'push'`, so the
  * back button is a first-class assertion rather than an afterthought.
  *
- * B-URL-03 is the ported `group-view-all.spec.ts` regression, generalised: params
+ * TC-03 is the ported `group-view-all.spec.ts` regression, generalised: params
  * written *after* page load must not be resurrected-stale by a later navigation
  * built from `location.search`.
  */
@@ -66,8 +66,8 @@ function statusFilterParam(entity: EntityDef): Record<string, string> {
 // ─── params only `statusFilter` varies by entity, and hosts is representative.
 
 for (const entity of fanOut('representative')) {
-	test.describe(`B-URL ${entity.key} deep link ${WIDE_TAG}`, () => {
-		test(`B-URL-01 ${entity.key}: a fully-specified deep link restores every param`, async ({
+	test.describe(`url-state ${entity.key} deep link ${WIDE_TAG}`, () => {
+		test(`TC-01 ${entity.key}: a fully-specified deep link restores every param`, async ({
 			authedPage: page,
 		}) => {
 			await resetTableState(page, entity);
@@ -129,8 +129,8 @@ for (const entity of fanOut('representative')) {
 // ─── representative-level ────────────────────────────────────────────────────
 
 for (const entity of fanOut('representative')) {
-	test.describe(`B-URL ${entity.key}`, () => {
-		test(`B-URL-04 ${entity.key}: params owned by other features survive infra navigation`, async ({
+	test.describe(`url-state ${entity.key}`, () => {
+		test(`TC-04 ${entity.key}: params owned by other features survive infra navigation`, async ({
 			authedPage: page,
 		}) => {
 			await resetTableState(page, entity);
@@ -153,7 +153,7 @@ for (const entity of fanOut('representative')) {
 			});
 		});
 
-		test(`B-URL-02 ${entity.key}: each mutation is a history push`, async ({
+		test(`TC-02 ${entity.key}: each mutation is a history push`, async ({
 			authedPage: page,
 		}) => {
 			await resetTableState(page, entity);
@@ -188,8 +188,8 @@ for (const entity of fanOut('representative')) {
 
 // ─── once-level ──────────────────────────────────────────────────────────────
 
-test.describe('B-URL cross-cutting', () => {
-	test('B-URL-03 params written after load are not resurrected-stale by a later navigation', async ({
+test.describe('url-state cross-cutting', () => {
+	test('TC-03 params written after load are not resurrected-stale by a later navigation', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, PODS);
@@ -221,7 +221,7 @@ test.describe('B-URL cross-cutting', () => {
 		expect(groupByFromUrl(page)).toEqual([PODS.groupByAttribute]);
 	});
 
-	test('B-URL-05 a ctrl+click URL cold-loads to the same visible state', async ({
+	test('TC-05 a ctrl+click URL cold-loads to the same visible state', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, PODS);
@@ -246,7 +246,7 @@ test.describe('B-URL cross-cutting', () => {
 		await opened.close();
 	});
 
-	test('B-URL-06 a malformed orderBy deep link is ignored rather than fatal', async ({
+	test('TC-06 a malformed orderBy deep link is ignored rather than fatal', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, PODS);

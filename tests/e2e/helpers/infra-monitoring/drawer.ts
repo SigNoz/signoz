@@ -65,7 +65,7 @@ export const EXPLORER_LINK = {
  * An exiting drawer keeps its node mounted for the slide-out animation, marked
  * `aria-hidden="true"`, so during a transition two `drawer-wrapper` dialogs are in
  * the DOM at once and a bare `getByTestId` is a strict-mode violation rather than a
- * missing element. That happens on Back out of the metrics explorer (B-MET-04),
+ * missing element. That happens on Back out of the metrics explorer (drawer-metrics TC-04),
  * where the drawer being restored mounts while the previous one is still leaving.
  * Excluding `aria-hidden` is also the semantically right filter: the hidden node is
  * out of the accessibility tree, so it is not the drawer a user is looking at.
@@ -413,7 +413,7 @@ export const TAB_USER_EXPRESSION_PARAM = {
  * Not to be confused with {@link TAB_USER_EXPRESSION_PARAM}. `eventsFilters` and
  * its two siblings are *write-only-null*: `K8sBaseDetailsContent` clears them on
  * every tab change and nothing in the product ever sets them to a value. They are
- * worth asserting as "cleared on tab switch" (B-DRW-09) and worth nothing at all
+ * worth asserting as "cleared on tab switch" (drawer-shell TC-09) and worth nothing at all
  * as a stand-in for a user expression.
  */
 export type TabWithUserExpression = keyof typeof TAB_USER_EXPRESSION_PARAM;

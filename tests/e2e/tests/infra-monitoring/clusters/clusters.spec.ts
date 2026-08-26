@@ -25,7 +25,7 @@ import { seedDataset } from '../../../helpers/infra-monitoring/seed';
 const CLUSTERS = entityByKey('clusters');
 
 test.describe('clusters', () => {
-	test(`C-01 the drawer shows all ${CLUSTERS.countsCards!.length} count cards with working nav links`, async ({
+	test(`TC-01 the drawer shows all ${CLUSTERS.countsCards!.length} count cards with working nav links`, async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, CLUSTERS);
@@ -54,7 +54,7 @@ test.describe('clusters', () => {
 		await expect(countCard(page, CLUSTERS.countsCards![0])).toBeVisible();
 	});
 
-	test('C-02 the Node Readiness column renders', async ({
+	test('TC-02 the Node Readiness column renders', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, CLUSTERS);
@@ -65,7 +65,7 @@ test.describe('clusters', () => {
 		await expect(headerCell(page, 'nodeCountsByReadiness')).toBeVisible();
 	});
 
-	test('C-04 pod phases roll up into the Pod Status column', async ({
+	test('TC-04 pod phases roll up into the Pod Status column', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, CLUSTERS);
@@ -78,7 +78,7 @@ test.describe('clusters', () => {
 		await expect(page.locator('table').getByText(/\d/).first()).toBeVisible();
 	});
 
-	test('C-05 a cluster missing a metric renders a dash, not a zero', async ({
+	test('TC-05 a cluster missing a metric renders a dash, not a zero', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, CLUSTERS);

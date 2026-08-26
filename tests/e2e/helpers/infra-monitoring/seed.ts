@@ -175,7 +175,7 @@ export function assertDatasetFacts(dataset: DatasetKey): SeededFacts {
 		Object.keys(declared.groups ?? {}).length === 0
 	) {
 		throw new Error(
-			`dataset ${dataset} declares no names and no groups, so SMOKE-00 asserts nothing about it`,
+			`dataset ${dataset} declares no names and no groups, so smoke TC-01 asserts nothing about it`,
 		);
 	}
 
@@ -304,7 +304,7 @@ export interface SeedGroupedOptions {
 	/**
 	 * How many members the cloned group should hold. Defaults to
 	 * `EXPANDED_ROW_LIMIT + 2`, so the expanded table is capped *and* offers
-	 * "View All" — the two things B-EXP-02/06 need.
+	 * "View All" — the two things expanded-row TC-02/06 need.
 	 */
 	members?: number;
 	/**

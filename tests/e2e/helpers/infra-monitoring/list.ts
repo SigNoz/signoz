@@ -19,7 +19,7 @@ import type { EntityDef } from './entities';
  *
  * **Not `test.slow()`.** That multiplies the budget by three *every* call
  * (`slot.timeout = slot.timeout * 3`), so a helper that carries it and is called
- * in a loop compounds: B-LIST-08a calls the helper once per sortable column, and
+ * in a loop compounds: table TC-08 calls the helper once per sortable column, and
  * with `test.slow()` inside it volumes' nine columns reached 30 s × 3¹⁰ ≈ seven
  * days. A test that never times out is strictly worse than one that fails fast —
  * it wedges a worker until the whole run is killed.
@@ -112,7 +112,7 @@ const RESET_MARKER = '__e2e_infra_table_reset';
  * The "once" is load-bearing. `addInitScript` re-runs before app code on **every**
  * navigation, so an unguarded version also wipes the state on `page.reload()` —
  * which silently breaks exactly the scenarios that assert persistence survives a
- * reload (B-LIST-12/13, B-OPT-02/03). The marker makes the clear a one-shot.
+ * reload (table TC-12/13, options-panel TC-02/03). The marker makes the clear a one-shot.
  */
 export async function resetTableState(
 	page: Page,
@@ -151,7 +151,7 @@ export interface TablePreferences {
  * `useInfraMonitoringTablePreferencesStore` persists through zustand's `persist`
  * middleware, so the payload is the `{ state, version }` envelope rather than the
  * bare store — reading the keys off the top level silently yields `undefined` for
- * both and makes B-OPT-07/08 fail against a perfectly healthy app.
+ * both and makes options-panel TC-07/08 fail against a perfectly healthy app.
  *
  * `useColumnStore` writes its own JSON directly, which is why
  * {@link readColumnState} needs no unwrapping.
@@ -188,7 +188,7 @@ export async function readColumnState(
  *
  * `useColumnStore` always writes all three keys, so a spec that seeds only one of
  * them is testing a shape the product never produces. Partial values are worth a
- * scenario of their own (see B-OPT-11) rather than being the accidental setup of
+ * scenario of their own (see options-panel TC-11) rather than being the accidental setup of
  * every other one.
  */
 export async function writeColumnState(
@@ -744,7 +744,7 @@ export async function resizeColumn(
 // per-header "Remove column" action on `column.enableRemove` being *truthy*, and
 // no infra column opts in — so the trigger never renders and such a helper could
 // only ever time out. Hiding a column goes through the options panel
-// (`toggleColumn`); `columnActionsTrigger` stays so B-LIST-14 can assert the
+// (`toggleColumn`); `columnActionsTrigger` stays so table TC-14 can assert the
 // absence.
 
 export interface SortState {
@@ -756,8 +756,8 @@ export interface SortState {
  * The `orderBy` param, or `null` when unsorted.
  *
  * Throws on a malformed value rather than returning `null`: "unsorted" and
- * "the app wrote something unparseable" are different outcomes, and B-URL
- * deep-links a deliberately malformed `orderBy` — a helper that reports both as
+ * "the app wrote something unparseable" are different outcomes, and
+ * `url-state` deep-links a deliberately malformed `orderBy` — a helper that reports both as
  * `null` cannot tell that scenario from a passing one. Use
  * {@link rawOrderByParam} where malformed is the expectation.
  */

@@ -41,7 +41,7 @@ function statusCount(cell: Locator, label: string): Locator {
 }
 
 test.describe('statefulsets', () => {
-	test('S-01 Pod Replicas shows current/desired', async ({
+	test('TC-01 Pod Replicas shows current/desired', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, STATEFULSETS);
@@ -69,7 +69,7 @@ test.describe('statefulsets', () => {
 		);
 	});
 
-	test('S-03 Current Pods / Desired Pods are addable, sortable and carry the seeded counts', async ({
+	test('TC-03 Current Pods / Desired Pods are addable, sortable and carry the seeded counts', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, STATEFULSETS);
@@ -114,7 +114,7 @@ test.describe('statefulsets', () => {
 		}
 	});
 
-	test('S-05 non-statefulset pods are excluded', async ({
+	test('TC-05 non-statefulset pods are excluded', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, STATEFULSETS);
@@ -143,7 +143,7 @@ test.describe('statefulsets', () => {
 		expect(keys, 'a deployment is not a statefulset row').not.toContain('nd-dep');
 	});
 
-	test('S-06 the same statefulset name across namespaces/clusters stays distinct rows', async ({
+	test('TC-06 the same statefulset name across namespaces/clusters stays distinct rows', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, STATEFULSETS);

@@ -1,5 +1,5 @@
 /**
- * B-GRP — grouping the list through the toolbar's "Group by" select.
+ * Grouping the list through the toolbar's "Group by" select.
  *
  * Grouping flips two columns at once: the group column is `hidden-on-collapse`
  * (so it only appears while grouped) and the name column is `hidden-on-expand`
@@ -53,7 +53,7 @@ async function openGroupableList(page: Page, entity: EntityDef): Promise<void> {
  * grouped page size is viewport-derived and the shared stack holds every other
  * worker's groups, so on an unscoped list the group under test drifts off page
  * one. §11.1's last row — "never assert set membership against an unscoped list"
- * — was applied to B-GRP-06 and missed on B-GRP-02/05/08.
+ * — was applied to TC-06 and missed on TC-02/05/08.
  */
 async function openScopedGroupableList(
 	page: Page,
@@ -68,8 +68,8 @@ async function openScopedGroupableList(
 // ─── entity, and the column swap itself is `TanStackTable`'s.
 
 for (const entity of fanOut('representative', 'groupBy')) {
-	test.describe(`B-GRP ${entity.key} column swap ${WIDE_TAG}`, () => {
-		test(`B-GRP-02 ${entity.key}: grouping by ${entity.groupByAttribute} swaps the name column for the group column`, async ({
+	test.describe(`group-by ${entity.key} column swap ${WIDE_TAG}`, () => {
+		test(`TC-02 ${entity.key}: grouping by ${entity.groupByAttribute} swaps the name column for the group column`, async ({
 			authedPage: page,
 		}) => {
 			await openScopedGroupableList(page, entity);
@@ -93,8 +93,8 @@ for (const entity of fanOut('representative', 'groupBy')) {
 // ─── representative-level ────────────────────────────────────────────────────
 
 for (const entity of fanOut('representative', 'groupBy')) {
-	test.describe(`B-GRP ${entity.key}`, () => {
-		test(`B-GRP-01 ${entity.key}: the group-by select offers this entity's attributes`, async ({
+	test.describe(`group-by ${entity.key}`, () => {
+		test(`TC-01 ${entity.key}: the group-by select offers this entity's attributes`, async ({
 			authedPage: page,
 		}) => {
 			await openGroupableList(page, entity);
@@ -109,7 +109,7 @@ for (const entity of fanOut('representative', 'groupBy')) {
 			).toHaveCount(1);
 		});
 
-		test(`B-GRP-03 ${entity.key}: a second attribute appends to groupBy in pick order`, async ({
+		test(`TC-03 ${entity.key}: a second attribute appends to groupBy in pick order`, async ({
 			authedPage: page,
 		}) => {
 			await openGroupableList(page, entity);
@@ -123,7 +123,7 @@ for (const entity of fanOut('representative', 'groupBy')) {
 			]);
 		});
 
-		test(`B-GRP-04 ${entity.key}: clearing grouping restores the flat table`, async ({
+		test(`TC-04 ${entity.key}: clearing grouping restores the flat table`, async ({
 			authedPage: page,
 		}) => {
 			await openGroupableList(page, entity);
@@ -137,7 +137,7 @@ for (const entity of fanOut('representative', 'groupBy')) {
 			await expect(headerCell(page, entity.nameColumnId)).toHaveCount(1);
 		});
 
-		test(`B-GRP-05 ${entity.key}: clicking a group row does not open the drawer`, async ({
+		test(`TC-05 ${entity.key}: clicking a group row does not open the drawer`, async ({
 			authedPage: page,
 		}) => {
 			await openScopedGroupableList(page, entity);
@@ -156,7 +156,7 @@ for (const entity of fanOut('representative', 'groupBy')) {
 			await expectUrlParams(page, { selectedItem: null });
 		});
 
-		test(`B-GRP-07 ${entity.key}: a groupBy deep link restores grouping`, async ({
+		test(`TC-07 ${entity.key}: a groupBy deep link restores grouping`, async ({
 			authedPage: page,
 		}) => {
 			await resetTableState(page, entity);
@@ -170,7 +170,7 @@ for (const entity of fanOut('representative', 'groupBy')) {
 			await expect(headerCell(page, entity.nameColumnId)).toHaveCount(0);
 		});
 
-		test(`B-GRP-08 ${entity.key}: expanding writes expanded and survives a reload`, async ({
+		test(`TC-08 ${entity.key}: expanding writes expanded and survives a reload`, async ({
 			authedPage: page,
 		}) => {
 			await openScopedGroupableList(page, entity);
@@ -197,7 +197,7 @@ for (const entity of fanOut('representative', 'groupBy')) {
 			).toHaveAttribute('aria-expanded', 'true');
 		});
 
-		test(`B-GRP-09 ${entity.key}: the legacy groupBy=[{key}] shape still parses`, async ({
+		test(`TC-09 ${entity.key}: the legacy groupBy=[{key}] shape still parses`, async ({
 			authedPage: page,
 		}) => {
 			await resetTableState(page, entity);
@@ -220,7 +220,7 @@ for (const entity of fanOut('representative', 'groupBy')) {
 
 // ─── once-level: the grouped status-count cell ───────────────────────────────
 
-test.describe('B-GRP grouped status cells', () => {
+test.describe('group-by grouped status cells', () => {
 	// `once`, where §4.0's default would put this at `representative`. Deliberate:
 	// the assertion needs a status-count cell and a fixture whose group holds one
 	// pod per phase, and `pods_phases_grouped` is pods-shaped. Of the four
@@ -228,7 +228,7 @@ test.describe('B-GRP grouped status cells', () => {
 	// wider fan-out would be two real cases and two vacuous ones.
 	const entity = fanOut('once', 'groupBy')[0];
 
-	test('B-GRP-06 grouped rows render one status count per non-zero phase', async ({
+	test('TC-06 grouped rows render one status count per non-zero phase', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, entity);

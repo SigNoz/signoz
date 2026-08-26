@@ -28,7 +28,7 @@ import { seedDataset } from '../../../helpers/infra-monitoring/seed';
 const DEPLOYMENTS = entityByKey('deployments');
 
 test.describe('deployments', () => {
-	test('D-01 Pod Replicas shows available/desired', async ({
+	test('TC-01 Pod Replicas shows available/desired', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, DEPLOYMENTS);
@@ -43,7 +43,7 @@ test.describe('deployments', () => {
 		).not.toHaveText('');
 	});
 
-	test('D-03 Available Pods / Desired Pods are addable and sortable', async ({
+	test('TC-03 Available Pods / Desired Pods are addable and sortable', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, DEPLOYMENTS);
@@ -97,7 +97,7 @@ test.describe('deployments', () => {
 		).not.toBe(expectedNumber(expected, 'desiredPods'));
 	});
 
-	test('D-04 the same deployment name across namespaces/clusters stays distinct rows', async ({
+	test('TC-04 the same deployment name across namespaces/clusters stays distinct rows', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, DEPLOYMENTS);
@@ -113,7 +113,7 @@ test.describe('deployments', () => {
 		expect((await renderedRowKeys(page)).length).toBeGreaterThan(0);
 	});
 
-	test('D-05 pods not owned by a deployment stay out of the roll-up', async ({
+	test('TC-05 pods not owned by a deployment stay out of the roll-up', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, DEPLOYMENTS);
@@ -142,7 +142,7 @@ test.describe('deployments', () => {
 		expect(keys, 'a statefulset is not a deployment row').not.toContain('nd-ss');
 	});
 
-	test('D-06 the drawer writes cluster and namespace alongside selectedItem', async ({
+	test('TC-06 the drawer writes cluster and namespace alongside selectedItem', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, DEPLOYMENTS);
@@ -162,7 +162,7 @@ test.describe('deployments', () => {
 		);
 	});
 
-	test('D-07 a deployment missing a metric renders a dash, not a zero', async ({
+	test('TC-07 a deployment missing a metric renders a dash, not a zero', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, DEPLOYMENTS);

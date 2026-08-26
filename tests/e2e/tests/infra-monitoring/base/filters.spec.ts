@@ -1,5 +1,5 @@
 /**
- * B-FLT — the two filter surfaces and how they combine: the `QuerySearch`
+ * The two filter surfaces and how they combine: the `QuerySearch`
  * expression in the header and the quick-filter checkbox rail on the left.
  *
  * Every read and write of the expression goes through `applyExpression` /
@@ -93,8 +93,8 @@ function nameExpression(entity: EntityDef, value: string): string {
 // ─── `representative`-level scenario runs on.
 
 for (const entity of fanOut('once')) {
-	test.describe(`B-FLT ${entity.key} ${WIDE_TAG}`, () => {
-		test(`B-FLT-01 ${entity.key}: the search placeholder matches the registry verbatim`, async ({
+	test.describe(`filters ${entity.key} ${WIDE_TAG}`, () => {
+		test(`TC-01 ${entity.key}: the search placeholder matches the registry verbatim`, async ({
 			authedPage: page,
 		}) => {
 			await resetTableState(page, entity);
@@ -106,7 +106,7 @@ for (const entity of fanOut('once')) {
 			);
 		});
 
-		test(`B-FLT-10 ${entity.key}: quick-filter sections and their default open state match the registry`, async ({
+		test(`TC-10 ${entity.key}: quick-filter sections and their default open state match the registry`, async ({
 			authedPage: page,
 		}) => {
 			await openSeededList(page, entity);
@@ -118,8 +118,8 @@ for (const entity of fanOut('once')) {
 // ─── representative-level ────────────────────────────────────────────────────
 
 for (const entity of fanOut('representative')) {
-	test.describe(`B-FLT ${entity.key}`, () => {
-		test(`B-FLT-02 ${entity.key}: a matching expression narrows the rows and resets page`, async ({
+	test.describe(`filters ${entity.key}`, () => {
+		test(`TC-02 ${entity.key}: a matching expression narrows the rows and resets page`, async ({
 			authedPage: page,
 		}) => {
 			// Start off page one, deep-linked. `expectFirstPage` accepts absent-or-'1'
@@ -145,7 +145,7 @@ for (const entity of fanOut('representative')) {
 		});
 
 		/**
-		 * B-FLT-02 filters on the name column, which every row has a unique value
+		 * TC-02 filters on the name column, which every row has a unique value
 		 * for, so it can only ever prove "one row survives". The `*_filter_dataset`
 		 * fixtures exist for the other half: their rows share attribute values in a
 		 * known split, so a filter on an attribute must land on a *subset*.
@@ -155,7 +155,7 @@ for (const entity of fanOut('representative')) {
 		 * filter would also collect whatever a sibling spec seeded under the same
 		 * label.
 		 */
-		test(`B-FLT-14 ${entity.key}: an attribute expression narrows to that attribute's rows`, async ({
+		test(`TC-14 ${entity.key}: an attribute expression narrows to that attribute's rows`, async ({
 			authedPage: page,
 		}) => {
 			test.skip(
@@ -184,7 +184,7 @@ for (const entity of fanOut('representative')) {
 			}).toPass();
 		});
 
-		test(`B-FLT-03 ${entity.key}: Run without touching the search box keeps the expression`, async ({
+		test(`TC-03 ${entity.key}: Run without touching the search box keeps the expression`, async ({
 			authedPage: page,
 		}) => {
 			const seeded = await openSeededList(page, entity);
@@ -208,7 +208,7 @@ for (const entity of fanOut('representative')) {
 			await expectExpression(page, expression);
 		});
 
-		test(`B-FLT-04 ${entity.key}: an expression matching nothing renders the empty state`, async ({
+		test(`TC-04 ${entity.key}: an expression matching nothing renders the empty state`, async ({
 			authedPage: page,
 		}) => {
 			await openSeededList(page, entity);
@@ -225,7 +225,7 @@ for (const entity of fanOut('representative')) {
 			await expect(dataRows(page)).toHaveCount(0);
 		});
 
-		test(`B-FLT-06 ${entity.key}: key autocomplete is scoped to the entity's metric namespace`, async ({
+		test(`TC-06 ${entity.key}: key autocomplete is scoped to the entity's metric namespace`, async ({
 			authedPage: page,
 		}) => {
 			await openSeededList(page, entity);
@@ -245,7 +245,7 @@ for (const entity of fanOut('representative')) {
 
 			// The entity's *own* key is offered.
 			//
-			// §4's B-FLT-06 says "keys scoped to `metricNamespace`", and the product
+			// §4's TC-06 says "keys scoped to `metricNamespace`", and the product
 			// does not do that: on volumes (`metricNamespace` = `k8s.volume.`) the
 			// suggestions are `k8s.persistentvolumeclaim.name`, `k8s.namespace.name`,
 			// `k8s.cluster.name`, `k8s.pod.name` … — the attributes that entity can be
@@ -260,7 +260,7 @@ for (const entity of fanOut('representative')) {
 			await page.keyboard.press('Escape');
 		});
 
-		test(`B-FLT-07 ${entity.key}: a quick-filter checkbox narrows the rows and updates the expression`, async ({
+		test(`TC-07 ${entity.key}: a quick-filter checkbox narrows the rows and updates the expression`, async ({
 			authedPage: page,
 		}) => {
 			const seeded = await openSeededList(page, entity);
@@ -273,7 +273,7 @@ for (const entity of fanOut('representative')) {
 			await waitForRows(page);
 			const before = await renderedRowKeys(page);
 
-			// Intermittently red on the same defect B-FLT-13 is fixme'd for: the list
+			// Intermittently red on the same defect TC-13 is fixme'd for: the list
 			// is already filtered on this attribute, so the row renders checked (it is
 			// one of `relatedValues`) and the tick becomes an untick, landing
 			// `in [<the other name>]` in `filters.items`. `pickQuickFilter`'s URL
@@ -303,7 +303,7 @@ for (const entity of fanOut('representative')) {
 			// actual location needs to be read off a running page.
 		});
 
-		test(`B-FLT-08 ${entity.key}: Clear restores the full row set`, async ({
+		test(`TC-08 ${entity.key}: Clear restores the full row set`, async ({
 			authedPage: page,
 		}) => {
 			const seeded = await openScopedSeededList(page, entity);
@@ -320,7 +320,7 @@ for (const entity of fanOut('representative')) {
 			}).toPass();
 		});
 
-		test(`B-FLT-09 ${entity.key}: a quick filter and a search expression combine`, async ({
+		test(`TC-09 ${entity.key}: a quick filter and a search expression combine`, async ({
 			authedPage: page,
 		}) => {
 			const seeded = await openSeededList(page, entity);
@@ -334,7 +334,7 @@ for (const entity of fanOut('representative')) {
 			await waitForRow(page, rowKeyFor(entity, seeded, target));
 		});
 
-		test(`B-FLT-11 ${entity.key}: a reload preserves the expression from the URL`, async ({
+		test(`TC-11 ${entity.key}: a reload preserves the expression from the URL`, async ({
 			authedPage: page,
 		}) => {
 			const seeded = await openSeededList(page, entity);
@@ -348,7 +348,7 @@ for (const entity of fanOut('representative')) {
 			await expect(querySearchEditor(page)).toContainText(seeded.names[0]);
 		});
 
-		test(`B-FLT-05 ${entity.key}: an invalid expression queries anyway and surfaces the failure`, async ({
+		test(`TC-05 ${entity.key}: an invalid expression queries anyway and surfaces the failure`, async ({
 			authedPage: page,
 		}) => {
 			await openSeededList(page, entity);
@@ -396,10 +396,10 @@ for (const entity of fanOut('representative')) {
 
 // ─── once-level: cancel and the race guard ───────────────────────────────────
 
-test.describe('B-FLT cancel and races', () => {
+test.describe('filters cancel and races', () => {
 	const entity = entityByKey('pods');
 
-	test('B-FLT-12 while fetching, Run becomes Cancel and cancelling aborts the request', async ({
+	test('TC-12 while fetching, Run becomes Cancel and cancelling aborts the request', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, entity);
@@ -459,7 +459,7 @@ test.describe('B-FLT cancel and races', () => {
 		await page.unrouteAll();
 	});
 
-	test('B-FLT-13 rapid successive quick-filter clicks settle on the last one', async ({
+	test('TC-13 rapid successive quick-filter clicks settle on the last one', async ({
 		authedPage: page,
 	}) => {
 		// TODO: only the *first* click in a quick-filter section reaches the query.

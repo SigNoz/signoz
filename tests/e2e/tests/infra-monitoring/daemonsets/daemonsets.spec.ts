@@ -48,7 +48,7 @@ function statusCount(cell: Locator, label: string): Locator {
 }
 
 test.describe('daemonsets', () => {
-	test('DS-01 the Scheduled Nodes column renders current and desired', async ({
+	test('TC-01 the Scheduled Nodes column renders current and desired', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, DAEMONSETS);
@@ -79,7 +79,7 @@ test.describe('daemonsets', () => {
 		);
 	});
 
-	test('DS-02 the four node-count columns are addable, sortable and carry the seeded counts', async ({
+	test('TC-02 the four node-count columns are addable, sortable and carry the seeded counts', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, DAEMONSETS);
@@ -126,7 +126,7 @@ test.describe('daemonsets', () => {
 		}
 	});
 
-	test('DS-05 pods not owned by a daemonset stay out of the roll-up', async ({
+	test('TC-05 pods not owned by a daemonset stay out of the roll-up', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, DAEMONSETS);
@@ -160,7 +160,7 @@ test.describe('daemonsets', () => {
 		}).toPass();
 	});
 
-	test('DS-06 the same daemonset name across namespaces/clusters stays distinct rows', async ({
+	test('TC-06 the same daemonset name across namespaces/clusters stays distinct rows', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, DAEMONSETS);

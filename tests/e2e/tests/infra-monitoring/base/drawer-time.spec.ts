@@ -1,9 +1,9 @@
 /**
- * B-TIME — the two independent time ranges: the list's (`relativeTime` /
+ * The two independent time ranges: the list's (`relativeTime` /
  * `startTime` / `endTime`) and the drawer's own (`detailRelativeTime` /
  * `detailStartTime` / `detailEndTime`).
  *
- * B-TIME-05 is the ported `drawer-explorer-link.spec.ts` regression. `1month` is
+ * TC-05 is the ported `drawer-explorer-link.spec.ts` regression. `1month` is
  * not a `\d+[mhdw]` shorthand, so it used to be discarded by every url-sync path
  * and silently replaced with the route default `30m`.
  */
@@ -70,8 +70,8 @@ async function openDrawer(
 // ─── per-entity one, so a single entity proves it.
 
 for (const entity of fanOut('once')) {
-	test.describe(`B-TIME ${entity.key} ${WIDE_TAG}`, () => {
-		test(`B-TIME-05 ${entity.key}: 1month survives every url-sync path`, async ({
+	test.describe(`drawer-time ${entity.key} ${WIDE_TAG}`, () => {
+		test(`TC-05 ${entity.key}: 1month survives every url-sync path`, async ({
 			authedPage: page,
 		}) => {
 			await openDrawer(page, entity);
@@ -95,8 +95,8 @@ for (const entity of fanOut('once')) {
 // ─── representative-level ────────────────────────────────────────────────────
 
 for (const entity of fanOut('representative')) {
-	test.describe(`B-TIME ${entity.key}`, () => {
-		test(`B-TIME-08 ${entity.key}: the list defaults to ${LIST_DEFAULT_RELATIVE_TIME} on a cold load`, async ({
+	test.describe(`drawer-time ${entity.key}`, () => {
+		test(`TC-08 ${entity.key}: the list defaults to ${LIST_DEFAULT_RELATIVE_TIME} on a cold load`, async ({
 			authedPage: page,
 		}) => {
 			await resetTableState(page, entity);
@@ -109,7 +109,7 @@ for (const entity of fanOut('representative')) {
 			});
 		});
 
-		test(`B-TIME-02 ${entity.key}: the drawer's picker is independent of the list's`, async ({
+		test(`TC-02 ${entity.key}: the drawer's picker is independent of the list's`, async ({
 			authedPage: page,
 		}) => {
 			await openDrawer(page, entity);
@@ -125,7 +125,7 @@ for (const entity of fanOut('representative')) {
 			});
 		});
 
-		test(`B-TIME-03 ${entity.key}: an absolute drawer range round-trips at second precision`, async ({
+		test(`TC-03 ${entity.key}: an absolute drawer range round-trips at second precision`, async ({
 			authedPage: page,
 		}) => {
 			// The drawer keeps its range in seconds, so whole seconds only.
@@ -148,7 +148,7 @@ for (const entity of fanOut('representative')) {
 			expect(afterReload.endTime).toBe(String(endTime));
 		});
 
-		test(`B-TIME-04 ${entity.key}: reset-to-list-time appears only after a change`, async ({
+		test(`TC-04 ${entity.key}: reset-to-list-time appears only after a change`, async ({
 			authedPage: page,
 		}) => {
 			await openDrawer(page, entity);
@@ -173,7 +173,7 @@ for (const entity of fanOut('representative')) {
 			});
 		});
 
-		test(`B-TIME-01 ${entity.key}: changing the list range refires the list request`, async ({
+		test(`TC-01 ${entity.key}: changing the list range refires the list request`, async ({
 			authedPage: page,
 		}) => {
 			await resetTableState(page, entity);
@@ -204,7 +204,7 @@ for (const entity of fanOut('representative')) {
 
 // ─── once-level: the drawer range reaches every tab, and the explorer link ────
 
-test.describe('B-TIME drawer range propagation', () => {
+test.describe('drawer-time drawer range propagation', () => {
 	// Deliberately *not* serial. `authedPage` builds a fresh BrowserContext per
 	// test, so the drawer's time params are per-test already — and serial mode
 	// would make one failure skip the rest, hiding independent regressions.
@@ -212,7 +212,7 @@ test.describe('B-TIME drawer range propagation', () => {
 	const entity = fanOut('once')[0];
 
 	for (const { value, option, label } of RANGES) {
-		test(`B-TIME-05b a ${value} drawer range reaches the metrics-explorer link`, async ({
+		test(`TC-09 a ${value} drawer range reaches the metrics-explorer link`, async ({
 			authedPage: page,
 		}) => {
 			await openDrawer(page, entity);
@@ -234,7 +234,7 @@ test.describe('B-TIME drawer range propagation', () => {
 		});
 	}
 
-	test('B-TIME-07 a drawer-time change is honoured by every tab', async ({
+	test('TC-07 a drawer-time change is honoured by every tab', async ({
 		authedPage: page,
 	}) => {
 		await openDrawer(page, entity);
@@ -255,8 +255,8 @@ test.describe('B-TIME drawer range propagation', () => {
 // Unimplemented, and parked visibly rather than silently absent (§10 claimed
 // "nothing is parked"). The scenario needs to observe list requests across at
 // least two ticks of the auto-refresh interval, and the shortest selectable
-// interval makes the test longer than the whole B-TIME file — it belongs on the
+// interval makes the test longer than this whole file — it belongs on the
 // nightly tier with an explicit long budget rather than in the PR tier.
-test.fixme('B-TIME-06 list auto-refresh refetches on its interval and stops when disabled', () => {
+test.fixme('TC-06 list auto-refresh refetches on its interval and stops when disabled', () => {
 	expect(false, 'not implemented — see the comment above').toBe(true);
 });

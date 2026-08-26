@@ -35,7 +35,7 @@ import { seedDataset } from '../../../helpers/infra-monitoring/seed';
 const HOSTS = entityByKey('hosts');
 
 test.describe('hosts', () => {
-	test('H-01 the hosts route has no category rail and its own quick-filter set', async ({
+	test('TC-01 the hosts route has no category rail and its own quick-filter set', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, HOSTS);
@@ -49,7 +49,7 @@ test.describe('hosts', () => {
 		await expectQuickFilterSections(page, HOSTS);
 	});
 
-	test('H-02 the status filter writes statusFilter, resets the page and filters rows', async ({
+	test('TC-02 the status filter writes statusFilter, resets the page and filters rows', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, HOSTS);
@@ -87,7 +87,7 @@ test.describe('hosts', () => {
 		await expectUrlParams(page, { statusFilter: null });
 	});
 
-	test('H-03 the status column renders a badge per host status', async ({
+	test('TC-03 the status column renders a badge per host status', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, HOSTS);
@@ -106,7 +106,7 @@ test.describe('hosts', () => {
 		).toBeVisible();
 	});
 
-	test('H-04 the drawer metadata shows STATUS and OPERATING SYSTEM', async ({
+	test('TC-04 the drawer metadata shows STATUS and OPERATING SYSTEM', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, HOSTS);
@@ -122,12 +122,12 @@ test.describe('hosts', () => {
 	});
 
 	/**
-	 * The column swap and the expand button are `B-GRP-02 hosts`. What only a
+	 * The column swap and the expand button are `group-by TC-02 hosts`. What only a
 	 * fixture can reach is that the real OS values seeded here become the group
 	 * rows, and that grouping replaces the host rows rather than nesting beside
 	 * them.
 	 */
-	test(`H-07 hosts group by ${HOSTS.groupByAttribute} renders one row per OS and no host rows`, async ({
+	test(`TC-07 hosts group by ${HOSTS.groupByAttribute} renders one row per OS and no host rows`, async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, HOSTS);
@@ -143,7 +143,7 @@ test.describe('hosts', () => {
 		await expect(rowFor(page, HOSTS.seed.sampleItemKey)).toHaveCount(0);
 	});
 
-	test('H-08 a host missing a metric renders a dash, not a zero', async ({
+	test('TC-08 a host missing a metric renders a dash, not a zero', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, HOSTS);

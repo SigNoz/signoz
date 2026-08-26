@@ -35,7 +35,7 @@ import {
 const PODS = entityByKey('pods');
 
 test.describe('pods', () => {
-	test('P-01 each pod phase renders its own badge, and no_data renders TextNoData', async ({
+	test('TC-01 each pod phase renders its own badge, and no_data renders TextNoData', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, PODS);
@@ -54,7 +54,7 @@ test.describe('pods', () => {
 		).toBeVisible();
 	});
 
-	test('P-02 grouped view shows the per-phase breakdown', async ({
+	test('TC-02 grouped view shows the per-phase breakdown', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, PODS);
@@ -77,7 +77,7 @@ test.describe('pods', () => {
 		await expect(headerCell(page, 'podCountsByStatus')).toHaveCount(1);
 	});
 
-	test('P-03 Age renders against the __START_TIME__-rebased seed', async ({
+	test('TC-03 Age renders against the __START_TIME__-rebased seed', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, PODS);
@@ -97,7 +97,7 @@ test.describe('pods', () => {
 		await expect(ageCell).toHaveText(/^\d+m$/);
 	});
 
-	test('P-04 the Restarts column renders, and is not sortable', async ({
+	test('TC-04 the Restarts column renders, and is not sortable', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, PODS);
@@ -117,7 +117,7 @@ test.describe('pods', () => {
 		).toHaveCount(1);
 	});
 
-	test('P-05 request/limit utilisation renders progress bars', async ({
+	test('TC-05 request/limit utilisation renders progress bars', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, PODS);
@@ -130,7 +130,7 @@ test.describe('pods', () => {
 
 		// The *value*, read from the fixture rather than invented — and the two
 		// seeded pods deliberately land in different threshold bands, which is the
-		// half §5's P-05 actually asks for. `EntityProgressBar` renders the
+		// half §5's TC-05 actually asks for. `EntityProgressBar` renders the
 		// percentage as visible text, so the band boundary (limit: ≤60 healthy,
 		// >95 at-limit) is observable without reading a stroke colour.
 		//
@@ -163,7 +163,7 @@ test.describe('pods', () => {
 		);
 	});
 
-	test('P-07 selectedItem is the pod UID, with no cluster/namespace extras', async ({
+	test('TC-07 selectedItem is the pod UID, with no cluster/namespace extras', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, PODS);
@@ -173,7 +173,7 @@ test.describe('pods', () => {
 		await openRowDrawer(page, PODS.seed.sampleItemKey);
 
 		// `getK8sPodItemKey` returns a bare string (the UID), so unlike the workload
-		// entities pods writes *no* cluster/namespace params. The plan's P-07 claims
+		// entities pods writes *no* cluster/namespace params. The plan's TC-07 claims
 		// the opposite; §3.1 and the source agree with this.
 		await expectUrlParams(page, {
 			selectedItem: PODS.seed.sampleItemKey,
@@ -185,7 +185,7 @@ test.describe('pods', () => {
 		expect(PODS.seed.sampleItemKey).not.toBe(PODS.seed.sampleName);
 	});
 
-	test('P-08 a pod missing a metric renders a dash, not a zero', async ({
+	test('TC-08 a pod missing a metric renders a dash, not a zero', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, PODS);
@@ -206,7 +206,7 @@ test.describe('pods', () => {
 		await expect(memoryCell, 'a missing metric is not zero').not.toHaveText('0');
 	});
 
-	test('P-09 namespace, node and cluster are addable from the options panel', async ({
+	test('TC-09 namespace, node and cluster are addable from the options panel', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, PODS);
@@ -233,7 +233,7 @@ test.describe('pods', () => {
 		).toContainText('cluster-x');
 	});
 
-	test('P-10 a pod whose phase flips mid-window reports the latest phase', async ({
+	test('TC-10 a pod whose phase flips mid-window reports the latest phase', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, PODS);

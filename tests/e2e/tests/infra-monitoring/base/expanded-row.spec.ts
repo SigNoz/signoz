@@ -1,11 +1,11 @@
 /**
- * B-EXP — `K8sExpandedRow`: the nested table an expanded group row renders, its
+ * `K8sExpandedRow`: the nested table an expanded group row renders, its
  * 10-row cap, its independent sort/column state, and the "View All" footer.
  *
  * No fixture has a group with more than 6 members, so the oversized-group cases
  * seed a cloned group via `seedGroupedDataset` — see `seed.ts`.
  *
- * B-EXP-07 is the ported `group-view-all.spec.ts` regression: "View All" builds
+ * TC-07 is the ported `group-view-all.spec.ts` regression: "View All" builds
  * its target URL from the *live* URL, because the react-router snapshot lags the
  * nuqs writes that the category tabs and the group-by select make, and building
  * from a stale `location.search` resurrects dead params.
@@ -104,7 +104,7 @@ async function openOversizedGroup(
 /**
  * A taller viewport than the suite default, and the reason is narrower than it
  * looks. Re-measured at 720px: 35 of the 36 scenarios pass, and the one that does
- * not (B-EXP-10 statefulsets) fails because the **sticky table header** —
+ * not (TC-10 statefulsets) fails because the **sticky table header** —
  * `TanStackHeaderRow` is `position: sticky` — intercepts the click after
  * `scrollIntoViewIfNeeded` parks the group row under it:
  *
@@ -114,8 +114,8 @@ async function openOversizedGroup(
  * not an unreachable control: that scenario lists *every* group in the shared
  * stack, so there is ample scroll room and a user can simply scroll the row clear.
  * It is scroll-alignment against a sticky header, so the height is a harness
- * workaround rather than the record of a product defect. Nothing in B-EXP asserts
- * page size, so the height is free; teaching `scrollToCentre` about the sticky
+ * workaround rather than the record of a product defect. Nothing in this file
+ * asserts page size, so the height is free; teaching `scrollToCentre` about the sticky
  * header would remove the need for it.
  */
 test.use({ viewport: { width: 1280, height: 1100 } });
@@ -130,8 +130,8 @@ async function openFixtureGroup(page: Page, entity: EntityDef): Promise<void> {
 }
 
 for (const entity of fanOut('representative', 'groupBy')) {
-	test.describe(`B-EXP ${entity.key}`, () => {
-		test(`B-EXP-01 ${entity.key}: expanding renders the nested table`, async ({
+	test.describe(`expanded-row ${entity.key}`, () => {
+		test(`TC-01 ${entity.key}: expanding renders the nested table`, async ({
 			authedPage: page,
 		}) => {
 			await openFixtureGroup(page, entity);
@@ -140,7 +140,7 @@ for (const entity of fanOut('representative', 'groupBy')) {
 			await expect(expandedTable(page)).toBeVisible();
 		});
 
-		test(`B-EXP-02 ${entity.key}: the expanded table shows at most ${EXPANDED_ROW_LIMIT} rows`, async ({
+		test(`TC-02 ${entity.key}: the expanded table shows at most ${EXPANDED_ROW_LIMIT} rows`, async ({
 			authedPage: page,
 		}) => {
 			const clones = await openOversizedGroup(page, entity);
@@ -159,7 +159,7 @@ for (const entity of fanOut('representative', 'groupBy')) {
 			await expect(expandedRows(page)).toHaveCount(EXPANDED_ROW_LIMIT);
 		});
 
-		test(`B-EXP-03 ${entity.key}: the group column is absent from the nested table`, async ({
+		test(`TC-03 ${entity.key}: the group column is absent from the nested table`, async ({
 			authedPage: page,
 		}) => {
 			await openFixtureGroup(page, entity);
@@ -180,10 +180,10 @@ for (const entity of fanOut('representative', 'groupBy')) {
 			expect(parentHeaders).toContain(groupHeader);
 		});
 
-		test(`B-EXP-03b ${entity.key}: the expanded table's column state is independent of the parent's`, async ({
+		test(`TC-11 ${entity.key}: the expanded table's column state is independent of the parent's`, async ({
 			authedPage: page,
 		}) => {
-			// The independence half of B-EXP-03, which the old
+			// The independence half of TC-03, which the old
 			// `expect(readColumnState(...)).toBeDefined()` could not carry:
 			// `readColumnState` returns `{}` for a missing key and `{}` is defined, so
 			// it passed whether or not the app ever wrote the expanded key.
@@ -224,7 +224,7 @@ for (const entity of fanOut('representative', 'groupBy')) {
 			).not.toContain(target.id);
 		});
 
-		test(`B-EXP-04 ${entity.key}: sorting inside the expanded table uses its own orderBy param`, async ({
+		test(`TC-04 ${entity.key}: sorting inside the expanded table uses its own orderBy param`, async ({
 			authedPage: page,
 		}) => {
 			await openFixtureGroup(page, entity);
@@ -263,7 +263,7 @@ for (const entity of fanOut('representative', 'groupBy')) {
 			}).toPass();
 		});
 
-		test(`B-EXP-05 ${entity.key}: clicking an expanded row opens that member's drawer`, async ({
+		test(`TC-05 ${entity.key}: clicking an expanded row opens that member's drawer`, async ({
 			authedPage: page,
 		}) => {
 			const clones = await openOversizedGroup(page, entity);
@@ -290,7 +290,7 @@ for (const entity of fanOut('representative', 'groupBy')) {
 			}).toPass();
 		});
 
-		test(`B-EXP-06 ${entity.key}: "View All" appears only when the group exceeds ${EXPANDED_ROW_LIMIT}`, async ({
+		test(`TC-06 ${entity.key}: "View All" appears only when the group exceeds ${EXPANDED_ROW_LIMIT}`, async ({
 			authedPage: page,
 		}) => {
 			// A fixture group (<= 6 members) offers no footer …
@@ -305,7 +305,7 @@ for (const entity of fanOut('representative', 'groupBy')) {
 			await expect(viewAllButton(page)).toBeVisible();
 		});
 
-		test(`B-EXP-09 ${entity.key}: collapsing removes the expanded container`, async ({
+		test(`TC-09 ${entity.key}: collapsing removes the expanded container`, async ({
 			authedPage: page,
 		}) => {
 			// Seed → group → expand → collapse. The seeded waits alone can consume the
@@ -317,7 +317,7 @@ for (const entity of fanOut('representative', 'groupBy')) {
 			await expect(page.getByTestId('expanded-table-container')).toHaveCount(0);
 		});
 
-		test(`B-EXP-10 ${entity.key}: an errored expanded fetch shows its message`, async ({
+		test(`TC-10 ${entity.key}: an errored expanded fetch shows its message`, async ({
 			authedPage: page,
 		}) => {
 			await resetTableState(page, entity);
@@ -357,13 +357,13 @@ for (const entity of fanOut('representative', 'groupBy')) {
 	});
 }
 
-// ─── B-EXP-07/08 — the ported "View All" regression ──────────────────────────
+// ─── TC-07/08 — the ported "View All" regression ──────────────────────────
 
-test.describe('B-EXP View All', () => {
+test.describe('expanded-row View All', () => {
 	// Deliberately *not* serial. Grouping and the URL expression are per-test —
 	// `authedPage` builds a fresh BrowserContext each time — and both tests seed
-	// the same idempotent clone set. Serial only meant a red B-EXP-07 *skipped*
-	// B-EXP-08, and the two guard different product fixes (FIX-2 and FIX-5).
+	// the same idempotent clone set. Serial only meant a red TC-07 *skipped*
+	// TC-08, and the two guard different product fixes (FIX-2 and FIX-5).
 
 	// §9: "All five ported scenarios were written pods-only; once in `base/` they
 	// fan out over the registry, which is the point of the restructure." Hosts is
@@ -372,7 +372,7 @@ test.describe('B-EXP View All', () => {
 	for (const entity of fanOut('representative', 'groupBy').filter(
 		(candidate) => candidate.categoryTestId,
 	)) {
-		test(`B-EXP-07 ${entity.key} flattens the group, keeps foreign params, and lists only its members`, async ({
+		test(`TC-07 ${entity.key} flattens the group, keeps foreign params, and lists only its members`, async ({
 			authedPage: page,
 		}) => {
 			const clones = groupedCloneNames(entity);
@@ -441,7 +441,7 @@ test.describe('B-EXP View All', () => {
 		// live URL — `expanded` included — survives the nested sort's own nuqs write. The
 		// promotion itself (`setMainOrderBy(orderBy)`) is older than the fix and was
 		// simply unreachable. Re-measured green 3/3 before un-parking.
-		test(`B-EXP-08 ${entity.key} an expanded-row sort is promoted to the main orderBy`, async ({
+		test(`TC-08 ${entity.key} an expanded-row sort is promoted to the main orderBy`, async ({
 			authedPage: page,
 		}) => {
 			const clones = groupedCloneNames(entity);

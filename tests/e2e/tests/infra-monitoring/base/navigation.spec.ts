@@ -1,9 +1,9 @@
 /**
- * B-NAV — the kubernetes route's left rail: category switching, param defaults,
+ * The kubernetes route's left rail: category switching, param defaults,
  * and the quick-filter collapse.
  *
  * Hosts lives on its own route with no rail, so this file is k8s-only; the hosts
- * side of navigation is H-01 in `tests/infra-monitoring/hosts/`.
+ * side of navigation is hosts TC-01 in `tests/infra-monitoring/hosts/`.
  */
 
 import { expect, test } from '../../../fixtures/auth';
@@ -48,8 +48,8 @@ import { stubCloudOnlyApis, watchConsole } from '../../../helpers/common';
 
 const PODS = entityByKey('pods');
 
-test.describe('B-NAV', () => {
-	test('B-NAV-01 a fresh kubernetes route lands on pods with no category param', async ({
+test.describe('navigation', () => {
+	test('TC-01 a fresh kubernetes route lands on pods with no category param', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, PODS);
@@ -65,7 +65,7 @@ test.describe('B-NAV', () => {
 		await expectDefaultColumns(page, PODS);
 	});
 
-	test(`B-NAV-09 the rail order is ${K8S_CATEGORY_TAB_ORDER.join(' · ')}`, async ({
+	test(`TC-09 the rail order is ${K8S_CATEGORY_TAB_ORDER.join(' · ')}`, async ({
 		authedPage: page,
 	}) => {
 		await page.goto(K8S_PATH);
@@ -83,7 +83,7 @@ test.describe('B-NAV', () => {
 		expect(rendered).toEqual(K8S_CATEGORY_TAB_ORDER);
 	});
 
-	test('B-NAV-03 clicking back to pods removes the param rather than writing category=pods', async ({
+	test('TC-03 clicking back to pods removes the param rather than writing category=pods', async ({
 		authedPage: page,
 	}) => {
 		await page.goto(listUrl(entityByKey('nodes')));
@@ -93,7 +93,7 @@ test.describe('B-NAV', () => {
 		await expectUrlParams(page, { category: null });
 	});
 
-	test('B-NAV-04 a category switch clears orderBy, groupBy, selectedItem* and the expression, and resets page', async ({
+	test('TC-04 a category switch clears orderBy, groupBy, selectedItem* and the expression, and resets page', async ({
 		authedPage: page,
 	}) => {
 		// Five settle-and-navigate steps in one scenario (filter, drawer, sort, group,
@@ -121,14 +121,14 @@ test.describe('B-NAV', () => {
 
 		await expectUrlParams(page, { orderBy: null, groupBy: null });
 		await expectExpression(page, '');
-		// The `page` half of this scenario is B-NAV-04b — it is a live product bug,
+		// The `page` half of this scenario is TC-11 — it is a live product bug,
 		// so it is parked separately rather than taking the other three claims red.
 	});
 
 	/**
 	 * **Parked: this is a live product bug.** A category switch does not reset the
 	 * page, so switching while on page 3 lands on page 3 of the new entity — which,
-	 * if that entity has fewer rows, is the dead end B-LIST-18 describes.
+	 * if that entity has fewer rows, is the dead end table TC-18 describes.
 	 *
 	 * `handleCategorySelect` (`InfraMonitoringK8s.tsx:216-236`) clears `orderBy`,
 	 * `groupBy`, `selectedItem*` and the expression, and never touches `page`. The
@@ -138,14 +138,14 @@ test.describe('B-NAV', () => {
 	 * so a switch re-renders the same instance and `useTableParams`'
 	 * `cleanupOnUnmount` never fires.
 	 *
-	 * §4's B-NAV-04 has always claimed this reset. It read as covered because the
+	 * §4's TC-04 has always claimed this reset. It read as covered because the
 	 * scenario never left page one and `expectFirstPage` accepts absent-or-`'1'`.
 	 *
 	 * Driven from a **deep link** rather than a click, because that is the reported
 	 * repro (refresh on `page=3`, then switch) and it also exercises the URL-seeded
 	 * path through `useTableParams` that a click does not.
 	 */
-	test.fixme('B-NAV-04b a category switch resets the page, including from a deep link', async ({
+	test.fixme('TC-11 a category switch resets the page, including from a deep link', async ({
 		authedPage: page,
 	}) => {
 		const nodes = entityByKey('nodes');
@@ -162,7 +162,7 @@ test.describe('B-NAV', () => {
 		await expectFirstPage(page);
 	});
 
-	test('B-NAV-10 a category switch from a drawer deep link clears selectedItem*', async ({
+	test('TC-10 a category switch from a drawer deep link clears selectedItem*', async ({
 		authedPage: page,
 	}) => {
 		const nodes = entityByKey('nodes');
@@ -192,7 +192,7 @@ test.describe('B-NAV', () => {
 		});
 	});
 
-	test('B-NAV-06 back after a category switch returns to the previous category', async ({
+	test('TC-06 back after a category switch returns to the previous category', async ({
 		authedPage: page,
 	}) => {
 		const clusters = entityByKey('clusters');
@@ -210,7 +210,7 @@ test.describe('B-NAV', () => {
 		await expectUrlParams(page, { category: 'clusters' });
 	});
 
-	test('B-NAV-07 an unknown category renders nothing but keeps the shell intact', async ({
+	test('TC-07 an unknown category renders nothing but keeps the shell intact', async ({
 		authedPage: page,
 	}) => {
 		await stubCloudOnlyApis(page);
@@ -230,7 +230,7 @@ test.describe('B-NAV', () => {
 		expect(watch.failedResponses, 'failed requests').toEqual([]);
 	});
 
-	test('B-NAV-08 the quick-filter rail collapses and reopens', async ({
+	test('TC-08 the quick-filter rail collapses and reopens', async ({
 		authedPage: page,
 	}) => {
 		// Seed first so the table is guaranteed present and its width measurable —
@@ -275,15 +275,15 @@ test.describe('B-NAV', () => {
 
 // ─── the three k8s representative entities: the switch and the reload ────────
 //
-// Both scenarios are `B-LIST-01` plus one more param, reached by a click rather
+// Both scenarios are `table TC-01` plus one more param, reached by a click rather
 // than a URL, so what they prove about the rail is entity-independent. Hosts is
 // excluded either way, since it has no category rail.
 
 for (const entity of REPRESENTATIVE_ENTITIES.filter((candidate) =>
 	K8S_ENTITIES.includes(candidate),
 )) {
-	test.describe(`B-NAV ${entity.key} ${WIDE_TAG}`, () => {
-		test(`B-NAV-02 ${entity.key}: clicking its tab applies its columns and quick filters`, async ({
+	test.describe(`navigation ${entity.key} ${WIDE_TAG}`, () => {
+		test(`TC-02 ${entity.key}: clicking its tab applies its columns and quick filters`, async ({
 			authedPage: page,
 		}) => {
 			await resetTableState(page, entity);
@@ -298,7 +298,7 @@ for (const entity of REPRESENTATIVE_ENTITIES.filter((candidate) =>
 			await expectQuickFilterSections(page, entity);
 		});
 
-		test(`B-NAV-05 ${entity.key}: reloading ?category=${entity.key} restores the tab`, async ({
+		test(`TC-05 ${entity.key}: reloading ?category=${entity.key} restores the tab`, async ({
 			authedPage: page,
 		}) => {
 			await resetTableState(page, entity);

@@ -55,7 +55,7 @@ function statusCount(cell: Locator, label: string): Locator {
 }
 
 test.describe('jobs', () => {
-	test('J-01 the Completions column renders', async ({ authedPage: page }) => {
+	test('TC-01 the Completions column renders', async ({ authedPage: page }) => {
 		await resetTableState(page, JOBS);
 		const seeded = await seedDataset(page, 'jobs_lifecycle');
 		await gotoScopedList(page, JOBS, seeded.names);
@@ -67,7 +67,7 @@ test.describe('jobs', () => {
 		).not.toHaveText('');
 	});
 
-	test('J-02 the four lifecycle pod-count columns are addable, sortable and carry the seeded counts', async ({
+	test('TC-02 the four lifecycle pod-count columns are addable, sortable and carry the seeded counts', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, JOBS);
@@ -109,7 +109,7 @@ test.describe('jobs', () => {
 		}
 	});
 
-	test('J-03 a completed job still lists with its final counts', async ({
+	test('TC-03 a completed job still lists with its final counts', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, JOBS);
@@ -123,7 +123,7 @@ test.describe('jobs', () => {
 		await expect(headerCell(page, 'completion')).toBeVisible();
 	});
 
-	test('J-06 pods not owned by a job stay out of the roll-up', async ({
+	test('TC-06 pods not owned by a job stay out of the roll-up', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, JOBS);
@@ -154,7 +154,7 @@ test.describe('jobs', () => {
 		}).toPass();
 	});
 
-	test('J-07 a job missing a metric renders a dash, not a zero', async ({
+	test('TC-07 a job missing a metric renders a dash, not a zero', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, JOBS);
@@ -173,7 +173,7 @@ test.describe('jobs', () => {
 		await expect(memoryCell, 'a missing metric is not zero').not.toHaveText('0');
 	});
 
-	test('J-08 the same job name across namespaces/clusters stays distinct rows', async ({
+	test('TC-08 the same job name across namespaces/clusters stays distinct rows', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, JOBS);

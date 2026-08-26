@@ -4,8 +4,8 @@
  * Both are the same product component with a different query source, and
  * scenarios 01 through 07 were byte-identical between the two spec files modulo
  * the tab name. They live here so the two specs carry only what is genuinely
- * theirs: `B-TRC-08` (pagination) and `B-TRC-09` (trace columns) have no logs
- * counterpart.
+ * theirs: `drawer-traces` TC-08 (pagination) and TC-09 (trace columns) have no
+ * logs counterpart.
  *
  * Not a `.spec.ts`: Playwright's default `testMatch` would collect it directly
  * and declare every scenario twice.
@@ -43,8 +43,8 @@ export type QueryTab = 'logs' | 'traces';
 
 export interface QueryTabOptions {
 	tab: QueryTab;
-	/** Scenario-id prefix, `B-LOG` or `B-TRC`. */
-	tag: string;
+	/** Describe-block label: the calling spec file's name. */
+	label: string;
 	capability: EntityCapability;
 	/** Any expression valid for the tab's signal; what it selects is irrelevant. */
 	sampleExpression: string;
@@ -79,13 +79,19 @@ export async function openQueryTab(
 }
 
 export function describeQueryTab(options: QueryTabOptions): void {
-	const { tab, tag, capability, sampleExpression, explorerPath, filtersParam } =
-		options;
+	const {
+		tab,
+		label,
+		capability,
+		sampleExpression,
+		explorerPath,
+		filtersParam,
+	} = options;
 	const expressionParam = TAB_USER_EXPRESSION_PARAM[tab];
 
 	for (const entity of fanOut('representative', capability)) {
-		test.describe(`${tag} ${entity.key}`, () => {
-			test(`${tag}-01 ${entity.key}: the tab loads pre-filtered by the entity's identity`, async ({
+		test.describe(`${label} ${entity.key}`, () => {
+			test(`TC-01 ${entity.key}: the tab loads pre-filtered by the entity's identity`, async ({
 				authedPage: page,
 			}) => {
 				await openQueryTab(page, entity, tab);
@@ -95,7 +101,7 @@ export function describeQueryTab(options: QueryTabOptions): void {
 				await expect(page.locator(SCOPE_CHIP)).toBeVisible();
 			});
 
-			test(`${tag}-02 ${entity.key}: no matching ${tab} renders the empty state`, async ({
+			test(`TC-02 ${entity.key}: no matching ${tab} renders the empty state`, async ({
 				authedPage: page,
 			}) => {
 				await openQueryTab(page, entity, tab);
@@ -106,7 +112,7 @@ export function describeQueryTab(options: QueryTabOptions): void {
 				await expectEmptyState(page, false);
 			});
 
-			test(`${tag}-03 ${entity.key}: a user expression is kept in the URL and survives a reload`, async ({
+			test(`TC-03 ${entity.key}: a user expression is kept in the URL and survives a reload`, async ({
 				authedPage: page,
 			}) => {
 				await openQueryTab(page, entity, tab, {
@@ -128,7 +134,7 @@ export function describeQueryTab(options: QueryTabOptions): void {
 				await expectEmptyState(page, true);
 			});
 
-			test(`${tag}-04 ${entity.key}: switching away drops ${filtersParam} but keeps the expression`, async ({
+			test(`TC-04 ${entity.key}: switching away drops ${filtersParam} but keeps the expression`, async ({
 				authedPage: page,
 			}) => {
 				await openQueryTab(page, entity, tab, {
@@ -149,7 +155,7 @@ export function describeQueryTab(options: QueryTabOptions): void {
 				);
 			});
 
-			test(`${tag}-05 ${entity.key}: Run refetches without discarding the entity scope`, async ({
+			test(`TC-05 ${entity.key}: Run refetches without discarding the entity scope`, async ({
 				authedPage: page,
 			}) => {
 				await openQueryTab(page, entity, tab);
@@ -175,7 +181,7 @@ export function describeQueryTab(options: QueryTabOptions): void {
 				await expect(page.locator(SCOPE_CHIP)).toBeVisible();
 			});
 
-			test(`${tag}-06 ${entity.key}: the compass opens the ${tab} explorer in a new tab`, async ({
+			test(`TC-06 ${entity.key}: the compass opens the ${tab} explorer in a new tab`, async ({
 				authedPage: page,
 			}) => {
 				await openQueryTab(page, entity, tab);
@@ -195,7 +201,7 @@ export function describeQueryTab(options: QueryTabOptions): void {
 				await opened.close();
 			});
 
-			test(`${tag}-07 ${entity.key}: a list error renders the error state`, async ({
+			test(`TC-07 ${entity.key}: a list error renders the error state`, async ({
 				authedPage: page,
 			}) => {
 				// `expectDrawerVisible` alone may spend the whole default budget on a cold

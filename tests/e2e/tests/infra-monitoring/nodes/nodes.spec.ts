@@ -23,7 +23,7 @@ import { seedDataset } from '../../../helpers/infra-monitoring/seed';
 const NODES = entityByKey('nodes');
 
 test.describe('nodes', () => {
-	test('N-01 the condition column renders Ready / Not Ready / No Data', async ({
+	test('TC-01 the condition column renders Ready / Not Ready / No Data', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, NODES);
@@ -41,7 +41,7 @@ test.describe('nodes', () => {
 		).toBeVisible();
 	});
 
-	test('N-02 a node whose condition flips mid-window reports the latest state', async ({
+	test('TC-02 a node whose condition flips mid-window reports the latest state', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, NODES);
@@ -60,7 +60,7 @@ test.describe('nodes', () => {
 		).toBeVisible();
 	});
 
-	test('N-03 Pod Status shows ready vs not-ready counts', async ({
+	test('TC-03 Pod Status shows ready vs not-ready counts', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, NODES);
@@ -71,7 +71,7 @@ test.describe('nodes', () => {
 		await expect(headerCell(page, 'podCountsByStatus')).toBeVisible();
 	});
 
-	test('N-05 the allocatable columns render and are sortable', async ({
+	test('TC-05 the allocatable columns render and are sortable', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, NODES);
@@ -87,7 +87,7 @@ test.describe('nodes', () => {
 		}
 
 		// …and the column carries the seeded number. A header on its own is what
-		// `B-LIST-01` already covers, and a metric-mapping regression leaves it
+		// `table TC-01` already covers, and a metric-mapping regression leaves it
 		// standing. `nodeCPUAllocatable` renders through `toFixed(2)`, so the
 		// expectation is the fixture's value formatted the same way.
 		const allocatableCPU = (name: string): string =>
@@ -104,7 +104,7 @@ test.describe('nodes', () => {
 		}
 	});
 
-	test('N-06 a node missing a metric renders a dash, not a zero', async ({
+	test('TC-06 a node missing a metric renders a dash, not a zero', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, NODES);

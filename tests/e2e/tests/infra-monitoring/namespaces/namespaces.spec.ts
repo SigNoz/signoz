@@ -26,7 +26,7 @@ import { seedDataset } from '../../../helpers/infra-monitoring/seed';
 const NAMESPACES = entityByKey('namespaces');
 
 test.describe('namespaces', () => {
-	test(`NS-01 the drawer shows the ${NAMESPACES.countsCards!.join(' / ')} count cards`, async ({
+	test(`TC-01 the drawer shows the ${NAMESPACES.countsCards!.join(' / ')} count cards`, async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, NAMESPACES);
@@ -64,7 +64,7 @@ test.describe('namespaces', () => {
 		}
 	});
 
-	test('NS-02 a count card navigates to that category, filtered to the namespace', async ({
+	test('TC-02 a count card navigates to that category, filtered to the namespace', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, NAMESPACES);
@@ -96,7 +96,7 @@ test.describe('namespaces', () => {
 		expect(new URL(page.url()).searchParams.get('relativeTime')).toBe('6h');
 	});
 
-	test('NS-04 the same namespace name in two clusters stays two rows', async ({
+	test('TC-04 the same namespace name in two clusters stays two rows', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, NAMESPACES);
@@ -115,7 +115,7 @@ test.describe('namespaces', () => {
 		).toBeVisible();
 	});
 
-	test('NS-05 a namespace missing a metric renders a dash, not a zero', async ({
+	test('TC-05 a namespace missing a metric renders a dash, not a zero', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, NAMESPACES);

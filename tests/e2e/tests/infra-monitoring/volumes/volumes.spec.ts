@@ -1,5 +1,5 @@
 /**
- * V-* — volumes-only. The distinguishing one is V-03: volumes passes
+ * V-* — volumes-only. The distinguishing one is TC-03: volumes passes
  * `hideDetailViewTabs`, so its drawer renders **no tab bar at all** and always the
  * Metrics body — even when `?view=logs` asks for something else.
  */
@@ -36,7 +36,7 @@ const VOLUMES = entityByKey('volumes');
 const INODE_COLUMNS = ['inodes', 'inodes_used', 'inodes_free'];
 
 test.describe('volumes', () => {
-	test('V-01 the Used column renders a progress bar from the usage formula', async ({
+	test('TC-01 the Used column renders a progress bar from the usage formula', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, VOLUMES);
@@ -57,7 +57,7 @@ test.describe('volumes', () => {
 		).toBeVisible();
 	});
 
-	test('V-02 the three inode columns render and are sortable', async ({
+	test('TC-02 the three inode columns render and are sortable', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, VOLUMES);
@@ -98,7 +98,7 @@ test.describe('volumes', () => {
 		}
 	});
 
-	test('V-03 the drawer renders no tab bar, even with ?view=logs', async ({
+	test('TC-03 the drawer renders no tab bar, even with ?view=logs', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, VOLUMES);
@@ -113,7 +113,7 @@ test.describe('volumes', () => {
 		await expectWidgetTitles(page, VOLUMES.widgetTitles!);
 	});
 
-	test('V-05 non-PVC volumes are excluded', async ({ authedPage: page }) => {
+	test('TC-05 non-PVC volumes are excluded', async ({ authedPage: page }) => {
 		await resetTableState(page, VOLUMES);
 		await seedDataset(page, 'volumes_non_pvc_volume');
 
@@ -134,7 +134,7 @@ test.describe('volumes', () => {
 		expect(keys, 'only the real PVC is listed').toEqual(['np-real-pvc']);
 	});
 
-	test('V-06 a formula with a missing operand renders a dash, not a crash', async ({
+	test('TC-06 a formula with a missing operand renders a dash, not a crash', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, VOLUMES);
@@ -158,7 +158,7 @@ test.describe('volumes', () => {
 		await resizeColumn(page, 'capacity', 60);
 	});
 
-	test('V-07 the same volume name across namespaces and clusters stays distinct rows', async ({
+	test('TC-07 the same volume name across namespaces and clusters stays distinct rows', async ({
 		authedPage: page,
 	}) => {
 		await resetTableState(page, VOLUMES);
@@ -168,7 +168,7 @@ test.describe('volumes', () => {
 		);
 		const [name] = seeded.names;
 
-		// Scoped by **cluster**, not by name, for the reason V-05 records: a
+		// Scoped by **cluster**, not by name, for the reason TC-05 records: a
 		// name-scoped list that had deduped `dup-pvc` down to one row would still
 		// satisfy every assertion about the seeded name.
 		await page.goto(

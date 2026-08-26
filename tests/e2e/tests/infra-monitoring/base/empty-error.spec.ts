@@ -1,5 +1,5 @@
 /**
- * B-EMP — the list's empty, error and warning branches, plus the console walk.
+ * The list's empty, error and warning branches, plus the console walk.
  *
  * These paths are **route-intercepted rather than seeded**: the seeder cannot
  * produce a 500 or a retention boundary on demand (§6 of the plan).
@@ -67,8 +67,8 @@ async function gotoStubbedList(page: Page, entity: EntityDef): Promise<void> {
 }
 
 for (const entity of fanOut('representative')) {
-	test.describe(`B-EMP ${entity.key}`, () => {
-		test(`B-EMP-01 ${entity.key}: a 500 renders the error state, not a blank page`, async ({
+	test.describe(`empty-error ${entity.key}`, () => {
+		test(`TC-01 ${entity.key}: a 500 renders the error state, not a blank page`, async ({
 			authedPage: page,
 		}) => {
 			await stubListResponse(page, 500, {
@@ -87,7 +87,7 @@ for (const entity of fanOut('representative')) {
 			await page.unrouteAll();
 		});
 
-		test(`B-EMP-02 ${entity.key}: endTimeBeforeRetention renders the retention panel`, async ({
+		test(`TC-02 ${entity.key}: endTimeBeforeRetention renders the retention panel`, async ({
 			authedPage: page,
 		}) => {
 			await stubListResponse(page, 200, {
@@ -104,7 +104,7 @@ for (const entity of fanOut('representative')) {
 			await page.unrouteAll();
 		});
 
-		test(`B-EMP-03 ${entity.key}: a response warning surfaces in the pagination row`, async ({
+		test(`TC-03 ${entity.key}: a response warning surfaces in the pagination row`, async ({
 			authedPage: page,
 		}) => {
 			await resetTableState(page, entity);
@@ -149,7 +149,7 @@ for (const entity of fanOut('representative')) {
 			await page.unrouteAll();
 		});
 
-		test(`B-EMP-04 ${entity.key}: the instrumentation callout can be rechecked`, async ({
+		test(`TC-04 ${entity.key}: the instrumentation callout can be rechecked`, async ({
 			authedPage: page,
 		}) => {
 			await resetTableState(page, entity);
@@ -223,10 +223,10 @@ for (const entity of fanOut('representative')) {
 
 // ─── once-level: the console walk ────────────────────────────────────────────
 
-test.describe('B-EMP console walk', () => {
+test.describe('empty-error console walk', () => {
 	const entity = entityByKey('pods');
 
-	test('B-EMP-05 a full list → filter → group → expand → drawer → tabs walk is console-clean', async ({
+	test('TC-05 a full list → filter → group → expand → drawer → tabs walk is console-clean', async ({
 		authedPage: page,
 	}) => {
 		// Must be armed before the first navigation.

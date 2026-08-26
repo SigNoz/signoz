@@ -58,19 +58,19 @@ export const DATASETS = {
 			'page-h6',
 			'page-h7',
 		],
-		purpose: 'B-LIST-06/07/16',
+		purpose: 'table TC-06/07/16',
 	},
 	hosts_orderby: {
 		file: 'hosts_orderby',
 		entity: 'hosts',
 		names: ['order-h1', 'order-h2', 'order-h3', 'order-h4', 'order-h5'],
-		purpose: 'B-LIST-08',
+		purpose: 'table TC-08',
 	},
 	hosts_filter_dataset: {
 		file: 'hosts_filter_dataset',
 		entity: 'hosts',
 		names: ['dev-linux-1', 'dev-windows-1', 'prod-linux-1', 'prod-windows-1'],
-		purpose: 'B-FLT-02/04/07/09',
+		purpose: 'filters TC-02/04/07/09',
 	},
 	hosts_missing_metrics: {
 		file: 'hosts_missing_metrics',
@@ -82,14 +82,14 @@ export const DATASETS = {
 		file: 'hosts_status',
 		entity: 'hosts',
 		names: ['active-h1', 'inactive-h1'],
-		purpose: 'H-02/H-03 — Active/Inactive status filter and badge',
+		purpose: 'hosts TC-02/hosts TC-03 — Active/Inactive status filter and badge',
 	},
 	hosts_groupby_os_type: {
 		file: 'hosts_groupby_os_type',
 		entity: 'hosts',
 		names: [],
 		groups: { 'os.type': { linux: 3, windows: 3 } },
-		purpose: 'H-07 and the hosts arm of B-GRP-*',
+		purpose: 'hosts TC-07 and the hosts arm of group-by TC-*',
 	},
 
 	// ── pods ─────────────────────────────────────────────────────────────────
@@ -114,13 +114,13 @@ export const DATASETS = {
 			'page-p6',
 			'page-p7',
 		],
-		purpose: 'B-LIST-06/07/16',
+		purpose: 'table TC-06/07/16',
 	},
 	pods_orderby: {
 		file: 'pods_orderby',
 		entity: 'pods',
 		names: ['order-p1', 'order-p2', 'order-p3', 'order-p4', 'order-p5'],
-		purpose: 'B-LIST-08',
+		purpose: 'table TC-08',
 	},
 	pods_groupby: {
 		file: 'pods_groupby',
@@ -130,7 +130,8 @@ export const DATASETS = {
 			'k8s.namespace.name': { 'gns-a': 2, 'gns-b': 2 },
 			'k8s.node.name': { 'node-a': 2, 'node-b': 2 },
 		},
-		purpose: 'B-GRP-*, B-EXP-* (clone up for the >10 member cases)',
+		purpose:
+			'group-by TC-*, expanded-row TC-* (clone up for the >10 member cases)',
 	},
 	pods_filter_dataset: {
 		file: 'pods_filter_dataset',
@@ -145,26 +146,26 @@ export const DATASETS = {
 			'web-prod-1',
 			'web-prod-2',
 		],
-		purpose: 'B-FLT-02/04/07/09',
+		purpose: 'filters TC-02/04/07/09',
 	},
 	pods_missing_metrics: {
 		file: 'pods_missing_metrics',
 		entity: 'pods',
 		names: ['miss-p1'],
-		purpose: 'P-08 — a pod missing a metric renders `-`, not `0`',
+		purpose: 'pods TC-08 — a pod missing a metric renders `-`, not `0`',
 	},
 	pods_phases: {
 		file: 'pods_phases',
 		entity: 'pods',
 		names: ['clbo-a', 'clbo-b', 'fail-p', 'pend-p', 'run-p', 'succ-p', 'unk-p'],
-		purpose: 'P-01 — one pod per status, plus a `no_data` pod',
+		purpose: 'pods TC-01 — one pod per status, plus a `no_data` pod',
 	},
 	pods_phases_grouped: {
 		file: 'pods_phases_grouped',
 		entity: 'pods',
 		names: [],
 		groups: { 'k8s.namespace.name': { 'ns-mixed': 6 } },
-		purpose: 'P-02 — podCountsByStatus breakdown in grouped view',
+		purpose: 'pods TC-02 — podCountsByStatus breakdown in grouped view',
 	},
 	pods_phases_transition: {
 		file: 'pods_phases_transition',
@@ -194,7 +195,7 @@ export const DATASETS = {
 			'page-n6',
 			'page-n7',
 		],
-		purpose: 'B-LIST-06/07/16',
+		purpose: 'table TC-06/07/16',
 	},
 	nodes_orderby: {
 		file: 'nodes_orderby',
@@ -207,7 +208,7 @@ export const DATASETS = {
 			'order-n4',
 			'order-n5',
 		],
-		purpose: 'B-LIST-08',
+		purpose: 'table TC-08',
 	},
 	nodes_groupby: {
 		file: 'nodes_groupby',
@@ -216,7 +217,7 @@ export const DATASETS = {
 		groups: {
 			'k8s.cluster.name': { 'gb-cluster-a': 2, 'gb-cluster-b': 2 },
 		},
-		purpose: 'B-GRP-*, B-EXP-*',
+		purpose: 'group-by TC-*, expanded-row TC-*',
 	},
 	nodes_filter_dataset: {
 		file: 'nodes_filter_dataset',
@@ -231,7 +232,7 @@ export const DATASETS = {
 			'web-b-eu-1',
 			'web-b-us-1',
 		],
-		purpose: 'B-FLT-02/04/07/09',
+		purpose: 'filters TC-02/04/07/09',
 	},
 	nodes_missing_metrics: {
 		file: 'nodes_missing_metrics',
@@ -250,20 +251,20 @@ export const DATASETS = {
 			'ready-n3',
 			'ready-n4',
 		],
-		purpose: 'N-01 — Ready / NotReady / NoData condition badges',
+		purpose: 'nodes TC-01 — Ready / NotReady / NoData condition badges',
 	},
 	nodes_conditions_transition: {
 		file: 'nodes_conditions_transition',
 		entity: 'nodes',
 		names: ['carrier-phantom-host', 'trans-n'],
-		purpose: 'N-02 — a node whose condition flips mid-window',
+		purpose: 'nodes TC-02 — a node whose condition flips mid-window',
 	},
 	nodes_conditions_grouped: {
 		file: 'nodes_conditions_grouped',
 		entity: 'nodes',
 		names: [],
 		groups: { 'k8s.cluster.name': { 'cluster-mixed': 3 } },
-		purpose: 'N-03 — Pod Status ready vs not-ready counts',
+		purpose: 'nodes TC-03 — Pod Status ready vs not-ready counts',
 	},
 
 	// ── namespaces ───────────────────────────────────────────────────────────
@@ -272,7 +273,7 @@ export const DATASETS = {
 		entity: 'namespaces',
 		names: ['acc-ns-1', 'acc-ns-2'],
 		clusters: ['cluster-x', 'cluster-y'],
-		purpose: 'happy-path namespace list; feeds NS-01 counts cards',
+		purpose: 'happy-path namespace list; feeds namespaces TC-01 counts cards',
 	},
 	namespaces_pagination: {
 		file: 'namespaces_pagination',
@@ -286,20 +287,20 @@ export const DATASETS = {
 			'page-ns-6',
 			'page-ns-7',
 		],
-		purpose: 'B-LIST-06/07/16',
+		purpose: 'table TC-06/07/16',
 	},
 	namespaces_orderby: {
 		file: 'namespaces_orderby',
 		entity: 'namespaces',
 		names: ['order-ns-1', 'order-ns-2', 'order-ns-3', 'order-ns-4', 'order-ns-5'],
-		purpose: 'B-LIST-08',
+		purpose: 'table TC-08',
 	},
 	namespaces_groupby: {
 		file: 'namespaces_groupby',
 		entity: 'namespaces',
 		names: [],
 		groups: { 'k8s.cluster.name': { 'gb-cluster-a': 2, 'gb-cluster-b': 2 } },
-		purpose: 'B-GRP-*, B-EXP-*',
+		purpose: 'group-by TC-*, expanded-row TC-*',
 	},
 	namespaces_filter_dataset: {
 		file: 'namespaces_filter_dataset',
@@ -314,7 +315,7 @@ export const DATASETS = {
 			'web-b-dev',
 			'web-b-prod',
 		],
-		purpose: 'B-FLT-02/04/07/09',
+		purpose: 'filters TC-02/04/07/09',
 	},
 	namespaces_missing_metrics: {
 		file: 'namespaces_missing_metrics',
@@ -326,7 +327,8 @@ export const DATASETS = {
 		file: 'namespaces_same_name_across_clusters',
 		entity: 'namespaces',
 		names: ['dup-ns'],
-		purpose: 'NS-04 — one namespace name in two clusters stays two rows',
+		purpose:
+			'namespaces TC-04 — one namespace name in two clusters stays two rows',
 	},
 
 	// ── clusters ─────────────────────────────────────────────────────────────
@@ -334,7 +336,7 @@ export const DATASETS = {
 		file: 'clusters_value_accuracy',
 		entity: 'clusters',
 		names: ['acc-cluster-1', 'acc-cluster-2'],
-		purpose: 'happy-path cluster list; feeds C-01 counts cards',
+		purpose: 'happy-path cluster list; feeds clusters TC-01 counts cards',
 	},
 	clusters_pagination: {
 		file: 'clusters_pagination',
@@ -348,13 +350,13 @@ export const DATASETS = {
 			'page-c6',
 			'page-c7',
 		],
-		purpose: 'B-LIST-06/07/16',
+		purpose: 'table TC-06/07/16',
 	},
 	clusters_orderby: {
 		file: 'clusters_orderby',
 		entity: 'clusters',
 		names: ['order-c1', 'order-c2', 'order-c3', 'order-c4', 'order-c5'],
-		purpose: 'B-LIST-08',
+		purpose: 'table TC-08',
 	},
 	clusters_groupby: {
 		file: 'clusters_groupby',
@@ -368,7 +370,7 @@ export const DATASETS = {
 				'gb-aws-2': 1,
 			},
 		},
-		purpose: 'B-GRP-*, B-EXP-*',
+		purpose: 'group-by TC-*, expanded-row TC-*',
 	},
 	clusters_filter_dataset: {
 		file: 'clusters_filter_dataset',
@@ -383,7 +385,7 @@ export const DATASETS = {
 			'web-gcp-dev',
 			'web-gcp-prod',
 		],
-		purpose: 'B-FLT-02/04/07/09',
+		purpose: 'filters TC-02/04/07/09',
 	},
 	clusters_missing_metrics: {
 		file: 'clusters_missing_metrics',
@@ -395,13 +397,13 @@ export const DATASETS = {
 		file: 'clusters_node_readiness',
 		entity: 'clusters',
 		names: ['rn-cluster'],
-		purpose: 'C-02 — Node Readiness column and breakdown tooltip',
+		purpose: 'clusters TC-02 — Node Readiness column and breakdown tooltip',
 	},
 	clusters_pod_phases: {
 		file: 'clusters_pod_phases',
 		entity: 'clusters',
 		names: ['pp-cluster'],
-		purpose: 'C-04 — pod-phase roll-up into Pod Status',
+		purpose: 'clusters TC-04 — pod-phase roll-up into Pod Status',
 	},
 
 	// ── deployments ──────────────────────────────────────────────────────────
@@ -425,7 +427,7 @@ export const DATASETS = {
 			'page-dep-6',
 			'page-dep-7',
 		],
-		purpose: 'B-LIST-06/07/16',
+		purpose: 'table TC-06/07/16',
 	},
 	deployments_orderby: {
 		file: 'deployments_orderby',
@@ -437,14 +439,14 @@ export const DATASETS = {
 			'order-dep-4',
 			'order-dep-5',
 		],
-		purpose: 'B-LIST-08',
+		purpose: 'table TC-08',
 	},
 	deployments_groupby: {
 		file: 'deployments_groupby',
 		entity: 'deployments',
 		names: [],
 		groups: { 'k8s.namespace.name': { 'gb-ns-a': 2, 'gb-ns-b': 2 } },
-		purpose: 'B-GRP-*, B-EXP-*',
+		purpose: 'group-by TC-*, expanded-row TC-*',
 	},
 	deployments_filter_dataset: {
 		file: 'deployments_filter_dataset',
@@ -459,7 +461,7 @@ export const DATASETS = {
 			'web-b-dev',
 			'web-b-prod',
 		],
-		purpose: 'B-FLT-02/04/07/09',
+		purpose: 'filters TC-02/04/07/09',
 	},
 	deployments_missing_metrics: {
 		file: 'deployments_missing_metrics',
@@ -471,19 +473,22 @@ export const DATASETS = {
 		file: 'deployments_desired_available',
 		entity: 'deployments',
 		names: ['da-dep'],
-		purpose: 'D-01 — Pod Replicas available/desired with the warning colour',
+		purpose:
+			'deployments TC-01 — Pod Replicas available/desired with the warning colour',
 	},
 	deployments_non_deployment_pods: {
 		file: 'deployments_non_deployment_pods',
 		entity: 'deployments',
 		names: ['nd-dep'],
-		purpose: 'D-05 — pods not owned by a deployment stay out of the roll-up',
+		purpose:
+			'deployments TC-05 — pods not owned by a deployment stay out of the roll-up',
 	},
 	deployments_same_name_across_ns_and_clusters: {
 		file: 'deployments_same_name_across_ns_and_clusters',
 		entity: 'deployments',
 		names: ['dup-dep'],
-		purpose: 'D-04 — same name across namespaces/clusters stays distinct rows',
+		purpose:
+			'deployments TC-04 — same name across namespaces/clusters stays distinct rows',
 	},
 
 	// ── statefulsets ─────────────────────────────────────────────────────────
@@ -507,20 +512,20 @@ export const DATASETS = {
 			'page-ss-6',
 			'page-ss-7',
 		],
-		purpose: 'B-LIST-06/07/16',
+		purpose: 'table TC-06/07/16',
 	},
 	statefulsets_orderby: {
 		file: 'statefulsets_orderby',
 		entity: 'statefulsets',
 		names: ['order-ss-1', 'order-ss-2', 'order-ss-3', 'order-ss-4', 'order-ss-5'],
-		purpose: 'B-LIST-08',
+		purpose: 'table TC-08',
 	},
 	statefulsets_groupby: {
 		file: 'statefulsets_groupby',
 		entity: 'statefulsets',
 		names: [],
 		groups: { 'k8s.namespace.name': { 'gb-ns-a': 2, 'gb-ns-b': 2 } },
-		purpose: 'B-GRP-*, B-EXP-*',
+		purpose: 'group-by TC-*, expanded-row TC-*',
 	},
 	statefulsets_filter_dataset: {
 		file: 'statefulsets_filter_dataset',
@@ -535,19 +540,19 @@ export const DATASETS = {
 			'web-b-dev',
 			'web-b-prod',
 		],
-		purpose: 'B-FLT-02/04/07/09',
+		purpose: 'filters TC-02/04/07/09',
 	},
 	statefulsets_desired_current: {
 		file: 'statefulsets_desired_current',
 		entity: 'statefulsets',
 		names: ['dc-ss'],
-		purpose: 'S-01 — Pod Replicas current/desired',
+		purpose: 'statefulsets TC-01 — Pod Replicas current/desired',
 	},
 	statefulsets_non_ss_pods: {
 		file: 'statefulsets_non_ss_pods',
 		entity: 'statefulsets',
 		names: ['ns-ss'],
-		purpose: 'S-05 — non-statefulset pods excluded',
+		purpose: 'statefulsets TC-05 — non-statefulset pods excluded',
 	},
 	statefulsets_same_name_across_ns_and_clusters: {
 		file: 'statefulsets_same_name_across_ns_and_clusters',
@@ -577,20 +582,20 @@ export const DATASETS = {
 			'page-ds-6',
 			'page-ds-7',
 		],
-		purpose: 'B-LIST-06/07/16',
+		purpose: 'table TC-06/07/16',
 	},
 	daemonsets_orderby: {
 		file: 'daemonsets_orderby',
 		entity: 'daemonsets',
 		names: ['order-ds-1', 'order-ds-2', 'order-ds-3', 'order-ds-4', 'order-ds-5'],
-		purpose: 'B-LIST-08',
+		purpose: 'table TC-08',
 	},
 	daemonsets_groupby: {
 		file: 'daemonsets_groupby',
 		entity: 'daemonsets',
 		names: [],
 		groups: { 'k8s.namespace.name': { 'gb-ns-a': 2, 'gb-ns-b': 2 } },
-		purpose: 'B-GRP-*, B-EXP-*',
+		purpose: 'group-by TC-*, expanded-row TC-*',
 	},
 	daemonsets_filter_dataset: {
 		file: 'daemonsets_filter_dataset',
@@ -605,13 +610,13 @@ export const DATASETS = {
 			'metrics-b-dev',
 			'metrics-b-prod',
 		],
-		purpose: 'B-FLT-02/04/07/09',
+		purpose: 'filters TC-02/04/07/09',
 	},
 	daemonsets_desired_current: {
 		file: 'daemonsets_desired_current',
 		entity: 'daemonsets',
 		names: ['dc-ds'],
-		purpose: 'DS-01 — Scheduled Nodes',
+		purpose: 'daemonsets TC-01 — Scheduled Nodes',
 	},
 	daemonsets_non_ds_pods: {
 		file: 'daemonsets_non_ds_pods',
@@ -647,7 +652,7 @@ export const DATASETS = {
 			'page-job-6',
 			'page-job-7',
 		],
-		purpose: 'B-LIST-06/07/16',
+		purpose: 'table TC-06/07/16',
 	},
 	jobs_orderby: {
 		file: 'jobs_orderby',
@@ -659,14 +664,14 @@ export const DATASETS = {
 			'order-job-4',
 			'order-job-5',
 		],
-		purpose: 'B-LIST-08',
+		purpose: 'table TC-08',
 	},
 	jobs_groupby: {
 		file: 'jobs_groupby',
 		entity: 'jobs',
 		names: [],
 		groups: { 'k8s.namespace.name': { 'gb-ns-a': 2, 'gb-ns-b': 2 } },
-		purpose: 'B-GRP-*, B-EXP-*',
+		purpose: 'group-by TC-*, expanded-row TC-*',
 	},
 	jobs_filter_dataset: {
 		file: 'jobs_filter_dataset',
@@ -681,7 +686,7 @@ export const DATASETS = {
 			'etl-b-dev',
 			'etl-b-prod',
 		],
-		purpose: 'B-FLT-02/04/07/09',
+		purpose: 'filters TC-02/04/07/09',
 	},
 	jobs_missing_metrics: {
 		file: 'jobs_missing_metrics',
@@ -693,13 +698,13 @@ export const DATASETS = {
 		file: 'jobs_lifecycle',
 		entity: 'jobs',
 		names: ['lc-job'],
-		purpose: 'J-01 — Completions column',
+		purpose: 'jobs TC-01 — Completions column',
 	},
 	jobs_completed: {
 		file: 'jobs_completed',
 		entity: 'jobs',
 		names: ['done-job'],
-		purpose: 'J-03 — a completed job still lists with its final counts',
+		purpose: 'jobs TC-03 — a completed job still lists with its final counts',
 	},
 	jobs_non_job_pods: {
 		file: 'jobs_non_job_pods',
@@ -735,7 +740,7 @@ export const DATASETS = {
 			'page-pvc-6',
 			'page-pvc-7',
 		],
-		purpose: 'B-LIST-06/07/16',
+		purpose: 'table TC-06/07/16',
 	},
 	volumes_orderby: {
 		file: 'volumes_orderby',
@@ -747,14 +752,14 @@ export const DATASETS = {
 			'order-pvc-4',
 			'order-pvc-5',
 		],
-		purpose: 'B-LIST-08',
+		purpose: 'table TC-08',
 	},
 	volumes_groupby: {
 		file: 'volumes_groupby',
 		entity: 'volumes',
 		names: [],
 		groups: { 'k8s.namespace.name': { 'gb-ns-a': 2, 'gb-ns-b': 2 } },
-		purpose: 'B-GRP-*, B-EXP-*',
+		purpose: 'group-by TC-*, expanded-row TC-*',
 	},
 	volumes_filter_dataset: {
 		file: 'volumes_filter_dataset',
@@ -769,25 +774,26 @@ export const DATASETS = {
 			'logs-ns-b-dev',
 			'logs-ns-b-prod',
 		],
-		purpose: 'B-FLT-02/04/07/09',
+		purpose: 'filters TC-02/04/07/09',
 	},
 	volumes_usage_formula: {
 		file: 'volumes_usage_formula',
 		entity: 'volumes',
 		names: ['uf-pvc'],
-		purpose: 'V-01 — Used progress bar computed from the usage formula',
+		purpose: 'volumes TC-01 — Used progress bar computed from the usage formula',
 	},
 	volumes_non_pvc_volume: {
 		file: 'volumes_non_pvc_volume',
 		entity: 'volumes',
 		names: ['np-real-pvc'],
-		purpose: 'V-05 — non-PVC volumes excluded',
+		purpose: 'volumes TC-05 — non-PVC volumes excluded',
 	},
 	volumes_formula_operand_missing: {
 		file: 'volumes_formula_operand_missing',
 		entity: 'volumes',
 		names: ['fop-pvc'],
-		purpose: 'V-06 — a formula with a missing operand renders `-`, no crash',
+		purpose:
+			'volumes TC-06 — a formula with a missing operand renders `-`, no crash',
 	},
 	volumes_same_name_across_ns_and_clusters: {
 		file: 'volumes_same_name_across_ns_and_clusters',

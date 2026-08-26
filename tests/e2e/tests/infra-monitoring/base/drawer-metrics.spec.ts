@@ -1,14 +1,14 @@
 /**
- * B-MET — the drawer's Metrics tab.
+ * The drawer's Metrics tab.
  *
- * B-MET-03/04 are the ported `drawer-explorer-link.spec.ts` cases: the compass on
+ * TC-03/04 are the ported `drawer-explorer-link.spec.ts` cases: the compass on
  * every chart deep-links to the metrics explorer and must carry the **drawer's**
  * time range, not the list's, plus the panel's own metric.
  *
  * The link *does* serialise a `unit` now, and that one key is what keeps the back
  * button usable: the explorer rewrites — and pushes — any `compositeQuery` missing
  * a key of `initialQueriesMap.metrics`. #12402 fixed it at the producer, so
- * B-MET-04 and B-MET-10 assert Back rather than documenting why it cannot work.
+ * TC-04 and TC-10 assert Back rather than documenting why it cannot work.
  * See §12.2, FIX-4 in the plan.
  */
 
@@ -61,8 +61,8 @@ async function openMetricsTab(
 // ─── on, so widening this again buys nothing to assert against.
 
 for (const entity of fanOut('once')) {
-	test.describe(`B-MET ${entity.key} ${WIDE_TAG}`, () => {
-		test(`B-MET-01 ${entity.key}: chart headers match the registry's ${entity.widgetTitles!.length} widgets in order`, async ({
+	test.describe(`drawer-metrics ${entity.key} ${WIDE_TAG}`, () => {
+		test(`TC-01 ${entity.key}: chart headers match the registry's ${entity.widgetTitles!.length} widgets in order`, async ({
 			authedPage: page,
 		}) => {
 			await openMetricsTab(page, entity);
@@ -75,8 +75,8 @@ for (const entity of fanOut('once')) {
 // ─── five different `table.config.tsx` files, so `all` is the honest level.
 
 for (const entity of fanOut('all', 'podMetricsTab')) {
-	test.describe(`B-MET ${entity.key} pod metrics ${WIDE_TAG}`, () => {
-		test(`B-MET-11 ${entity.key}: the Pod Metrics tab renders the ${POD_METRICS_WIDGET_TITLES.length} utilisation-by-pod widgets`, async ({
+	test.describe(`drawer-metrics ${entity.key} pod metrics ${WIDE_TAG}`, () => {
+		test(`TC-11 ${entity.key}: the Pod Metrics tab renders the ${POD_METRICS_WIDGET_TITLES.length} utilisation-by-pod widgets`, async ({
 			authedPage: page,
 		}) => {
 			await openMetricsTab(page, entity);
@@ -89,8 +89,8 @@ for (const entity of fanOut('all', 'podMetricsTab')) {
 // ─── representative-level ────────────────────────────────────────────────────
 
 for (const entity of fanOut('representative')) {
-	test.describe(`B-MET ${entity.key}`, () => {
-		test(`B-MET-02 ${entity.key}: panels with a docPath expose an info icon`, async ({
+	test.describe(`drawer-metrics ${entity.key}`, () => {
+		test(`TC-02 ${entity.key}: panels with a docPath expose an info icon`, async ({
 			authedPage: page,
 		}) => {
 			await openMetricsTab(page, entity);
@@ -113,7 +113,7 @@ for (const entity of fanOut('representative')) {
 			await expect(learnMore).toHaveAttribute('href', /\/docs\//);
 		});
 
-		test(`B-MET-05 ${entity.key}: off-screen panels render once scrolled into view`, async ({
+		test(`TC-05 ${entity.key}: off-screen panels render once scrolled into view`, async ({
 			authedPage: page,
 		}) => {
 			test.skip(
@@ -131,13 +131,13 @@ for (const entity of fanOut('representative')) {
 			// elements — those class names were guessed, not read off a running page.
 			// Getting it right needs the real card container selector; until then this
 			// scenario proves the scroll works and not that anything lazy-loaded, so
-			// B-MET's other body assertions rest on an unverified premise.
+			// this file's other body assertions rest on an unverified premise.
 			const last = chartHeaders(page).last();
 			await last.scrollIntoViewIfNeeded();
 			await expect(last).toBeInViewport();
 		});
 
-		test(`B-MET-09 ${entity.key}: an all-empty metric response renders no-data, not a crash`, async ({
+		test(`TC-09 ${entity.key}: an all-empty metric response renders no-data, not a crash`, async ({
 			authedPage: page,
 		}) => {
 			await resetTableState(page, entity);
@@ -159,14 +159,14 @@ for (const entity of fanOut('representative')) {
 			await page.unrouteAll();
 		});
 
-		test(`B-MET-06 ${entity.key}: one failing widget query leaves the others rendered`, async ({
+		test(`TC-06 ${entity.key}: one failing widget query leaves the others rendered`, async ({
 			authedPage: page,
 		}) => {
 			await resetTableState(page, entity);
 			const seeded = await seedDataset(page, entity.seed.primary);
 			// The drawer resolves `selectedItem` out of the *list* response, and the
 			// list does not refetch on its own — so deep-linking before the seeded row
-			// is queryable opens the dash-titled shell of B-DRW-06, which renders no
+			// is queryable opens the dash-titled shell of drawer-shell TC-06, which renders no
 			// Metrics tab at all and fails this scenario on a symptom it is not about.
 			// Confirm the row is listed first, then deep-link.
 			await gotoScopedList(page, entity, seeded.names);
@@ -209,15 +209,15 @@ for (const entity of fanOut('representative')) {
 // ─── representative-level: the chart body itself ─────────────────────────────
 
 for (const entity of fanOut('representative')) {
-	test.describe(`B-MET ${entity.key} chart body`, () => {
+	test.describe(`drawer-metrics ${entity.key} chart body`, () => {
 		/**
 		 * `EntityMetrics` renders the chart behind `configs[idx] && chartData[idx]`,
 		 * so a data-shape regression leaves an empty panel under a correct header and
-		 * every B-MET-01 assertion still passes. `data-has-data` is the state made
+		 * every TC-01 assertion still passes. `data-has-data` is the state made
 		 * observable for exactly that: asserting on `styles.noDataContainer` is not
 		 * viable, since CSS-module class names are hashed at build time.
 		 */
-		test(`B-MET-12 ${entity.key}: the first panel draws a chart, not just a header`, async ({
+		test(`TC-12 ${entity.key}: the first panel draws a chart, not just a header`, async ({
 			authedPage: page,
 		}) => {
 			await openMetricsTab(page, entity);
@@ -233,7 +233,7 @@ for (const entity of fanOut('representative')) {
 	});
 }
 
-test.describe('B-MET chart tooltip', () => {
+test.describe('drawer-metrics chart tooltip', () => {
 	const entity = fanOut('once')[0];
 
 	/**
@@ -241,7 +241,7 @@ test.describe('B-MET chart tooltip', () => {
 	 * affordance that lets a reader hold a hover reading still long enough to
 	 * compare series.
 	 */
-	test('B-MET-13 a chart tooltip can be pinned and unpinned', async ({
+	test('TC-13 a chart tooltip can be pinned and unpinned', async ({
 		authedPage: page,
 	}) => {
 		await openMetricsTab(page, entity);
@@ -272,14 +272,14 @@ test.describe('B-MET chart tooltip', () => {
 	});
 });
 
-test.describe('B-MET explorer link', () => {
+test.describe('drawer-metrics explorer link', () => {
 	// Deliberately *not* serial. These were thought to share the drawer's time
 	// params, but `authedPage` gives each test its own BrowserContext and its own
-	// URL. Serial only bought a skipped B-MET-04/10/07 whenever B-MET-03 went red.
+	// URL. Serial only bought a skipped TC-04/10/07 whenever TC-03 went red.
 
 	const entity = fanOut('once')[0];
 
-	test('B-MET-03 the compass carries an absolute drawer range as start/end ms', async ({
+	test('TC-03 the compass carries an absolute drawer range as start/end ms', async ({
 		authedPage: page,
 	}) => {
 		// The drawer keeps its range in seconds, so whole seconds only — sub-second
@@ -327,7 +327,7 @@ test.describe('B-MET explorer link', () => {
 		).toContain(entity.metricNamespace);
 	});
 
-	test('B-MET-04 the compass lands on the explorer carrying the drawer range', async ({
+	test('TC-04 the compass lands on the explorer carrying the drawer range', async ({
 		authedPage: page,
 	}) => {
 		await openMetricsTab(page, entity, { relativeTime: '30m' });
@@ -351,14 +351,14 @@ test.describe('B-MET explorer link', () => {
 		await expectDrawerVisible(page);
 	});
 
-	test('B-MET-10 the compass keeps the back button usable for a month-long range', async ({
+	test('TC-10 the compass keeps the back button usable for a month-long range', async ({
 		authedPage: page,
 	}) => {
 		// The second, independent trap #12402 closed: `1month` failed
 		// `validCustomTimeRegex` in `getMinMax`, so `DateTimeSelectionV2` treated the
 		// range as invalid on arrival, fell through to the route default and pushed a
 		// *different* `relativeTime`. Only a month-scale range reaches it, which is why
-		// B-MET-04's `30m` cannot stand in for this.
+		// TC-04's `30m` cannot stand in for this.
 		allowForSeededWait();
 		await openMetricsTab(page, entity, { relativeTime: '1month' });
 
@@ -384,7 +384,7 @@ test.describe('B-MET explorer link', () => {
 	// `PANEL_TYPES.TABLE` exists only in `Clusters/constants.ts` and
 	// `Namespaces/constants.ts`. Moving it to clusters is right, but the rewritten
 	// assertion needs the real panel-card selector to scope a compass to its own
-	// card, and that selector is the same unknown blocking B-MET-05/06.
+	// card, and that selector is the same unknown blocking TC-05/06.
 	const tablePanelEntity = entityByKey('clusters');
 
 	// Unimplemented, and parked visibly rather than silently absent — the plan's
@@ -393,11 +393,11 @@ test.describe('B-MET explorer link', () => {
 	// what is missing is a reliable way to drag-select on a uPlot canvas whose
 	// pixel geometry depends on the rendered series, and asserting it against a
 	// stubbed empty result would assert nothing.
-	test.fixme('B-MET-08 drag-selecting a chart range writes detailStartTime/detailEndTime', () => {
+	test.fixme('TC-08 drag-selecting a chart range writes detailStartTime/detailEndTime', () => {
 		expect(false, 'not implemented — see the comment above').toBe(true);
 	});
 
-	test.fixme('B-MET-07 table panels render metrics-table and expose no compass', async ({
+	test.fixme('TC-07 table panels render metrics-table and expose no compass', async ({
 		authedPage: page,
 	}) => {
 		allowForSeededWait();

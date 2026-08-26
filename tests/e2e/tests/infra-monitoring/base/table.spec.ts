@@ -1,5 +1,5 @@
 /**
- * B-LIST — `K8sBaseList`'s table, parametrised over the entity registry.
+ * `K8sBaseList`'s table, parametrised over the entity registry.
  *
  * The component does not branch on entity: the only thing that varies is the
  * config object, so anything the table does is asserted from the registry. Each
@@ -99,7 +99,7 @@ async function showAllColumns(page: Page, entity: EntityDef): Promise<void> {
  * this stacks *two* ingestion-bound waits — `gotoScopedList`'s editor wait and
  * `waitForRows` — each budgeted at `SEEDED_ROW_TIMEOUT_MS`, which is itself the
  * default test timeout. A caller then still has its own assertions to run, so on
- * a slow ingestion tick the test dies with no failing assertion (B-LIST-01 nodes
+ * a slow ingestion tick the test dies with no failing assertion (TC-01 nodes
  * did exactly that, once, in a 598-instance run). See §11.1's `SEEDED_ROW_TIMEOUT_MS`
  * row.
  */
@@ -123,22 +123,22 @@ async function openSeededList(
 // ─── `representative`-level scenario runs on.
 
 for (const entity of fanOut('once')) {
-	test.describe(`B-LIST ${entity.key} ${WIDE_TAG}`, () => {
-		test(`B-LIST-01 ${entity.key}: default visible columns match the registry`, async ({
+	test.describe(`table ${entity.key} ${WIDE_TAG}`, () => {
+		test(`TC-01 ${entity.key}: default visible columns match the registry`, async ({
 			authedPage: page,
 		}) => {
 			await openSeededList(page, entity);
 			await expectDefaultColumns(page, entity);
 		});
 
-		test(`B-LIST-05 ${entity.key}: total count reads "Showing 1 - N of T ${entity.key}"`, async ({
+		test(`TC-05 ${entity.key}: total count reads "Showing 1 - N of T ${entity.key}"`, async ({
 			authedPage: page,
 		}) => {
 			await openSeededList(page, entity);
 			await expectTotalCountLabel(page, entity);
 		});
 
-		test(`B-LIST-09 ${entity.key}: non-sortable columns render no sort button`, async ({
+		test(`TC-09 ${entity.key}: non-sortable columns render no sort button`, async ({
 			authedPage: page,
 		}) => {
 			await openSeededList(page, entity);
@@ -171,7 +171,7 @@ for (const entity of fanOut('once')) {
 // ─── representative-level: the four entities span every axis that varies ─────
 
 for (const entity of fanOut('representative')) {
-	test.describe(`B-LIST ${entity.key} sorting ${WIDE_TAG}`, () => {
+	test.describe(`table ${entity.key} sorting ${WIDE_TAG}`, () => {
 		/**
 		 * Every sortable column is clickable and writes its own `orderBy`, and
 		 * sorting restarts paging.
@@ -184,14 +184,14 @@ for (const entity of fanOut('representative')) {
 		 * the new order returns nothing, so no reload is needed between columns.
 		 *
 		 * Only the *first* click of each column is asserted. The full asc → desc →
-		 * unset cycle is B-LIST-08b's job, on the one column per entity that is
+		 * unset cycle is TC-20's job, on the one column per entity that is
 		 * guaranteed to carry data.
 		 *
 		 * The page reset is asserted on the first column only, because it is what
 		 * consumes the off-page-one setup: after that click the list is already on
 		 * page 1 and a second assertion would pass without proving anything.
 		 */
-		test(`B-LIST-08a ${entity.key}: every sortable column writes its own orderBy`, async ({
+		test(`TC-08 ${entity.key}: every sortable column writes its own orderBy`, async ({
 			authedPage: page,
 		}) => {
 			allowForSeededWait();
@@ -236,7 +236,7 @@ for (const entity of fanOut('representative')) {
 		 * The *rendered* half, on `orderByColumnId` — the one column the entity's
 		 * `_orderby` fixture is guaranteed to populate and vary.
 		 */
-		test(`B-LIST-08b ${entity.key}: sorting ${entity.orderByColumnId} reorders the rows and marks the header`, async ({
+		test(`TC-20 ${entity.key}: sorting ${entity.orderByColumnId} reorders the rows and marks the header`, async ({
 			authedPage: page,
 		}) => {
 			await openSeededList(page, entity, entity.orderByDataset);
@@ -281,7 +281,7 @@ for (const entity of fanOut('representative')) {
 // ─── representative-level: the four entities span every axis that varies ─────
 
 for (const entity of fanOut('representative')) {
-	test.describe(`B-LIST ${entity.key}`, () => {
+	test.describe(`table ${entity.key}`, () => {
 		/**
 		 * The plan's wording for this scenario ("stays visible after scrolling the
 		 * table fully right") describes a horizontally-sticky column, and
@@ -293,7 +293,7 @@ for (const entity of fanOut('representative')) {
 		 * leads the order, exposes no drag grip, and cannot be removed. Horizontal
 		 * stickiness is a product gap, not something to fake green here.
 		 */
-		test(`B-LIST-02 ${entity.key}: pinned columns lead the order and cannot be moved`, async ({
+		test(`TC-02 ${entity.key}: pinned columns lead the order and cannot be moved`, async ({
 			authedPage: page,
 		}) => {
 			await openSeededList(page, entity);
@@ -322,7 +322,7 @@ for (const entity of fanOut('representative')) {
 			}
 		});
 
-		test(`B-LIST-03 ${entity.key}: the group column is absent when not grouped`, async ({
+		test(`TC-03 ${entity.key}: the group column is absent when not grouped`, async ({
 			authedPage: page,
 		}) => {
 			await openSeededList(page, entity);
@@ -333,7 +333,7 @@ for (const entity of fanOut('representative')) {
 			);
 		});
 
-		test(`B-LIST-06 ${entity.key}: page size lands in the URL, resets page and persists`, async ({
+		test(`TC-06 ${entity.key}: page size lands in the URL, resets page and persists`, async ({
 			authedPage: page,
 		}) => {
 			const seeded = await openSeededList(page, entity, entity.seed.pagination, {
@@ -362,7 +362,7 @@ for (const entity of fanOut('representative')) {
 			await expectUrlParams(page, { pageSize: '20' });
 		});
 
-		test(`B-LIST-07 ${entity.key}: page 2 shows different rows and back returns to page 1`, async ({
+		test(`TC-07 ${entity.key}: page 2 shows different rows and back returns to page 1`, async ({
 			authedPage: page,
 		}) => {
 			await openSeededList(page, entity, entity.seed.pagination, {
@@ -384,7 +384,7 @@ for (const entity of fanOut('representative')) {
 			}).toPass();
 		});
 
-		test(`B-LIST-11 ${entity.key}: ctrl+click opens a new tab carrying selectedItem`, async ({
+		test(`TC-11 ${entity.key}: ctrl+click opens a new tab carrying selectedItem`, async ({
 			authedPage: page,
 		}) => {
 			await openSeededList(page, entity);
@@ -406,7 +406,7 @@ for (const entity of fanOut('representative')) {
 			await opened.close();
 		});
 
-		test(`B-LIST-12 ${entity.key}: resizing a column persists columnSizing`, async ({
+		test(`TC-12 ${entity.key}: resizing a column persists columnSizing`, async ({
 			authedPage: page,
 		}) => {
 			await openSeededList(page, entity);
@@ -437,7 +437,7 @@ for (const entity of fanOut('representative')) {
 			}).toPass();
 		});
 
-		test(`B-LIST-13 ${entity.key}: reordering a column persists columnOrder; pinned columns have no grip`, async ({
+		test(`TC-13 ${entity.key}: reordering a column persists columnOrder; pinned columns have no grip`, async ({
 			authedPage: page,
 		}) => {
 			await openSeededList(page, entity);
@@ -484,10 +484,10 @@ for (const entity of fanOut('representative')) {
 		 * `true`; the only occurrences are the `false` on group and name columns.
 		 *
 		 * So this pins the actual contract: no header action anywhere, and hiding
-		 * goes through the options panel (B-OPT-02). Flip this to the plan's version
+		 * goes through the options panel (options-panel TC-02). Flip this to the plan's version
 		 * the day the configs opt in.
 		 */
-		test(`B-LIST-14 ${entity.key}: no header exposes a remove action; hiding is via the options panel`, async ({
+		test(`TC-14 ${entity.key}: no header exposes a remove action; hiding is via the options panel`, async ({
 			authedPage: page,
 		}) => {
 			await openSeededList(page, entity);
@@ -514,7 +514,7 @@ for (const entity of fanOut('representative')) {
 			}).toPass();
 		});
 
-		test(`B-LIST-15 ${entity.key}: the last column has no resize handle`, async ({
+		test(`TC-15 ${entity.key}: the last column has no resize handle`, async ({
 			authedPage: page,
 		}) => {
 			await openSeededList(page, entity);
@@ -539,7 +539,7 @@ for (const entity of fanOut('representative')) {
 		 * comes back short, or keep the pagination row mounted alongside the empty
 		 * state. Un-park this once one of them lands.
 		 */
-		test.fixme(`B-LIST-18 ${entity.key}: a page past the end of the results can still get back to page 1`, async ({
+		test.fixme(`TC-18 ${entity.key}: a page past the end of the results can still get back to page 1`, async ({
 			authedPage: page,
 		}) => {
 			const seeded = await openSeededList(page, entity, entity.seed.pagination);
@@ -560,7 +560,7 @@ for (const entity of fanOut('representative')) {
 			await waitForRows(page);
 		});
 
-		test(`B-LIST-16 ${entity.key}: page, pageSize and orderBy restore on a cold load`, async ({
+		test(`TC-16 ${entity.key}: page, pageSize and orderBy restore on a cold load`, async ({
 			authedPage: page,
 		}) => {
 			// `orderByColumnId` rather than "the first sortable column": sorting by a
@@ -593,7 +593,7 @@ for (const entity of fanOut('representative')) {
 		 * arrives (`showEmptyState = !isLoading && pageData.length === 0`), so
 		 * "no results" never flashes on the way to results.
 		 */
-		test(`B-LIST-04 ${entity.key}: skeleton rows stand in while loading, then give way to rows`, async ({
+		test(`TC-04 ${entity.key}: skeleton rows stand in while loading, then give way to rows`, async ({
 			authedPage: page,
 		}) => {
 			await resetTableState(page, entity);
@@ -653,7 +653,7 @@ function maxScrollTop(): number {
 	return Math.max(0, ...tops);
 }
 
-test.describe('B-LIST threshold legend', () => {
+test.describe('table threshold legend', () => {
 	const entity = fanOut('once')[0];
 
 	/**
@@ -667,7 +667,7 @@ test.describe('B-LIST threshold legend', () => {
 	 * The hover target is located by `svg` rather than by class: the icon's
 	 * `styles.infoIcon` is a CSS module, hashed at build time.
 	 */
-	test('B-LIST-19 a progress-bar column header explains its thresholds', async ({
+	test('TC-19 a progress-bar column header explains its thresholds', async ({
 		authedPage: page,
 	}) => {
 		await openSeededList(page, entity);
@@ -684,12 +684,12 @@ test.describe('B-LIST threshold legend', () => {
 	});
 });
 
-test.describe('B-LIST cross-entity', () => {
+test.describe('table cross-entity', () => {
 	const [first, second] = fanOut('all').filter(
 		(entity) => entity.categoryTestId,
 	);
 
-	test('B-LIST-17 switching entity resets the table scroll to the top', async ({
+	test('TC-17 switching entity resets the table scroll to the top', async ({
 		authedPage: page,
 	}) => {
 		// The scoped list holds ~7 rows, which does not overflow the config's

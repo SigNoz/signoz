@@ -1,10 +1,10 @@
 /**
- * B-OPT — `K8sOptionsSidePanel`: column visibility, font size and line clamp.
+ * `K8sOptionsSidePanel`: column visibility, font size and line clamp.
  *
  * Two persistence scopes matter and are deliberately different:
  * column state is per entity (`@signoz/table-columns/k8s-<entity>-columns`) while
  * font size and line clamp are **global**
- * (`@signoz/infra-monitoring-table-preferences`) — B-OPT-07 asserts that leak on
+ * (`@signoz/infra-monitoring-table-preferences`) — TC-07 asserts that leak on
  * purpose.
  */
 
@@ -71,8 +71,8 @@ function firstToggleableColumn(entity: EntityDef): EntityColumn {
 // ─── runs on.
 
 for (const entity of fanOut('once')) {
-	test.describe(`B-OPT ${entity.key} column matrix ${WIDE_TAG}`, () => {
-		test(`B-OPT-04 ${entity.key}: required columns' switches are disabled`, async ({
+	test.describe(`options-panel ${entity.key} column matrix ${WIDE_TAG}`, () => {
+		test(`TC-04 ${entity.key}: required columns' switches are disabled`, async ({
 			authedPage: page,
 		}) => {
 			await openSeededList(page, entity);
@@ -97,7 +97,7 @@ for (const entity of fanOut('once')) {
 			).toBeVisible();
 		});
 
-		test(`B-OPT-05 ${entity.key}: the panel omits hidden-on-collapse columns`, async ({
+		test(`TC-05 ${entity.key}: the panel omits hidden-on-collapse columns`, async ({
 			authedPage: page,
 		}) => {
 			await openSeededList(page, entity);
@@ -117,8 +117,8 @@ for (const entity of fanOut('once')) {
 // ─── four representative entities cover the same ground as ten.
 
 for (const entity of fanOut('representative')) {
-	test.describe(`B-OPT ${entity.key} toggles ${WIDE_TAG}`, () => {
-		test(`B-OPT-02 ${entity.key}: toggling a column off hides it and persists`, async ({
+	test.describe(`options-panel ${entity.key} toggles ${WIDE_TAG}`, () => {
+		test(`TC-02 ${entity.key}: toggling a column off hides it and persists`, async ({
 			authedPage: page,
 		}) => {
 			await openSeededList(page, entity);
@@ -145,7 +145,7 @@ for (const entity of fanOut('representative')) {
 			await expect(headerCell(page, hideable!.id)).toHaveCount(0);
 		});
 
-		test(`B-OPT-03 ${entity.key}: toggling a hidden-by-default column on shows it and persists`, async ({
+		test(`TC-03 ${entity.key}: toggling a hidden-by-default column on shows it and persists`, async ({
 			authedPage: page,
 		}) => {
 			const hidden = hiddenByDefaultColumns(entity);
@@ -173,8 +173,8 @@ for (const entity of fanOut('representative')) {
 // ─── representative-level ────────────────────────────────────────────────────
 
 for (const entity of fanOut('representative')) {
-	test.describe(`B-OPT ${entity.key}`, () => {
-		test(`B-OPT-01 ${entity.key}: the Options drawer opens and closes`, async ({
+	test.describe(`options-panel ${entity.key}`, () => {
+		test(`TC-01 ${entity.key}: the Options drawer opens and closes`, async ({
 			authedPage: page,
 		}) => {
 			await openSeededList(page, entity);
@@ -184,7 +184,7 @@ for (const entity of fanOut('representative')) {
 			await expect(panel).toBeHidden();
 		});
 
-		test(`B-OPT-06 ${entity.key}: panel order follows the persisted columnOrder`, async ({
+		test(`TC-06 ${entity.key}: panel order follows the persisted columnOrder`, async ({
 			authedPage: page,
 		}) => {
 			await openSeededList(page, entity);
@@ -215,7 +215,7 @@ for (const entity of fanOut('representative')) {
 			expect(rendered).toEqual([...ids].reverse());
 		});
 
-		test(`B-OPT-09 ${entity.key}: clearing the column key restores the registry defaults`, async ({
+		test(`TC-09 ${entity.key}: clearing the column key restores the registry defaults`, async ({
 			authedPage: page,
 		}) => {
 			await openSeededList(page, entity);
@@ -241,11 +241,11 @@ for (const entity of fanOut('representative')) {
 
 // ─── once-level: global state, no per-entity input ───────────────────────────
 
-test.describe('B-OPT global preferences', () => {
+test.describe('options-panel global preferences', () => {
 	const pods = entityByKey('pods');
 	const nodes = entityByKey('nodes');
 
-	test('B-OPT-07 font size persists globally across entities', async ({
+	test('TC-07 font size persists globally across entities', async ({
 		authedPage: page,
 	}) => {
 		await openSeededList(page, pods);
@@ -268,7 +268,7 @@ test.describe('B-OPT global preferences', () => {
 		expect((await readTablePreferences(page)).fontSize).toBe('large');
 	});
 
-	test('B-OPT-08 line clamp clamps to 1..10, disables at the bounds and persists', async ({
+	test('TC-08 line clamp clamps to 1..10, disables at the bounds and persists', async ({
 		authedPage: page,
 	}) => {
 		await openSeededList(page, pods);
@@ -329,7 +329,7 @@ test.describe('B-OPT global preferences', () => {
 		}).toPass();
 	});
 
-	test('B-OPT-11 a partial persisted column state does not take the route down', async ({
+	test('TC-11 a partial persisted column state does not take the route down', async ({
 		authedPage: page,
 	}) => {
 		await openSeededList(page, pods);
@@ -350,7 +350,7 @@ test.describe('B-OPT global preferences', () => {
 		await expect(headerCell(page, pods.nameColumnId)).toBeVisible();
 	});
 
-	test('B-OPT-10 a bogus hiddenColumnIds entry is pruned on load', async ({
+	test('TC-10 a bogus hiddenColumnIds entry is pruned on load', async ({
 		authedPage: page,
 	}) => {
 		await openSeededList(page, pods);

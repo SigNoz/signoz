@@ -1,5 +1,5 @@
 /**
- * B-DRW — `K8sBaseDetails`: the drawer shell. Identity in the URL, the metadata
+ * `K8sBaseDetails`: the drawer shell. Identity in the URL, the metadata
  * row, the tab bar, and closing.
  *
  * The metadata labels and tab set are read straight from the registry, so a
@@ -72,8 +72,8 @@ async function gotoDrawerDeepLink(
 // ─── runs on.
 
 for (const entity of fanOut('once')) {
-	test.describe(`B-DRW ${entity.key} metadata ${WIDE_TAG}`, () => {
-		test(`B-DRW-02 ${entity.key}: metadata labels match the registry verbatim`, async ({
+	test.describe(`drawer-shell ${entity.key} metadata ${WIDE_TAG}`, () => {
+		test(`TC-02 ${entity.key}: metadata labels match the registry verbatim`, async ({
 			authedPage: page,
 		}) => {
 			await openSampleDrawer(page, entity);
@@ -85,14 +85,14 @@ for (const entity of fanOut('once')) {
 // ─── representative-level: four entities, four shapes ────────────────────────
 //
 // `getItemKey` has four shapes across the ten entities and the representative
-// four are exactly those four, so B-DRW-01 gains nothing from the other six.
+// four are exactly those four, so TC-01 gains nothing from the other six.
 // The tab *bar* is a real product branch rather than a label list, and the same
 // four entities span it: volumes has no bar, hosts has no events tab, and pods
 // and statefulsets differ in the pod-metrics tab.
 
 for (const entity of fanOut('representative')) {
-	test.describe(`B-DRW ${entity.key} identity ${WIDE_TAG}`, () => {
-		test(`B-DRW-01 ${entity.key}: a row click opens the drawer and writes its identity`, async ({
+	test.describe(`drawer-shell ${entity.key} identity ${WIDE_TAG}`, () => {
+		test(`TC-01 ${entity.key}: a row click opens the drawer and writes its identity`, async ({
 			authedPage: page,
 		}) => {
 			await openSampleDrawer(page, entity);
@@ -104,7 +104,7 @@ for (const entity of fanOut('representative')) {
 			await expectUrlParams(page, selectedItemParams(entity));
 		});
 
-		test(`B-DRW-07 ${entity.key}: the tab bar holds exactly ${expectedTabViews(entity).join(' · ') || 'no tabs'}`, async ({
+		test(`TC-07 ${entity.key}: the tab bar holds exactly ${expectedTabViews(entity).join(' · ') || 'no tabs'}`, async ({
 			authedPage: page,
 		}) => {
 			await openSampleDrawer(page, entity);
@@ -116,8 +116,8 @@ for (const entity of fanOut('representative')) {
 // ─── representative-level ────────────────────────────────────────────────────
 
 for (const entity of fanOut('representative')) {
-	test.describe(`B-DRW ${entity.key}`, () => {
-		test(`B-DRW-03 ${entity.key}: copy-id copies selectedItem and toasts`, async ({
+	test.describe(`drawer-shell ${entity.key}`, () => {
+		test(`TC-03 ${entity.key}: copy-id copies selectedItem and toasts`, async ({
 			authedPage: page,
 		}) => {
 			await openSampleDrawer(page, entity);
@@ -129,7 +129,7 @@ for (const entity of fanOut('representative')) {
 			expect(await readClipboardViaPaste(page)).toBe(entity.seed.sampleItemKey);
 		});
 
-		test(`B-DRW-04 ${entity.key}: the close button and Escape both clear the identity params`, async ({
+		test(`TC-04 ${entity.key}: the close button and Escape both clear the identity params`, async ({
 			authedPage: page,
 		}) => {
 			await openSampleDrawer(page, entity);
@@ -147,7 +147,7 @@ for (const entity of fanOut('representative')) {
 			await expectUrlParams(page, { selectedItem: null });
 		});
 
-		test(`B-DRW-05 ${entity.key}: a cold deep link opens the drawer without a click`, async ({
+		test(`TC-05 ${entity.key}: a cold deep link opens the drawer without a click`, async ({
 			authedPage: page,
 		}) => {
 			await gotoDrawerDeepLink(page, entity);
@@ -156,7 +156,7 @@ for (const entity of fanOut('representative')) {
 			await expect(drawer(page)).toContainText(entity.seed.sampleName);
 		});
 
-		test(`B-DRW-06 ${entity.key}: a nonexistent selectedItem opens a dash-titled drawer, not a blank page`, async ({
+		test(`TC-06 ${entity.key}: a nonexistent selectedItem opens a dash-titled drawer, not a blank page`, async ({
 			authedPage: page,
 		}) => {
 			await resetTableState(page, entity);
@@ -177,7 +177,7 @@ for (const entity of fanOut('representative')) {
 			await expect(drawer(page)).not.toContainText(entity.seed.sampleName);
 		});
 
-		test(`B-DRW-10 ${entity.key}: auto-refresh is hidden while the drawer is open`, async ({
+		test(`TC-10 ${entity.key}: auto-refresh is hidden while the drawer is open`, async ({
 			authedPage: page,
 		}) => {
 			await openSampleDrawer(page, entity);
@@ -200,7 +200,7 @@ for (const entity of fanOut('representative')) {
 			await expect(autoRefresh.first()).toBeVisible();
 		});
 
-		test(`B-DRW-11 ${entity.key}: back closes the drawer and forward reopens it`, async ({
+		test(`TC-11 ${entity.key}: back closes the drawer and forward reopens it`, async ({
 			authedPage: page,
 		}) => {
 			await openSampleDrawer(page, entity);
@@ -216,7 +216,7 @@ for (const entity of fanOut('representative')) {
 			await expectDrawerVisible(page);
 		});
 
-		test(`B-DRW-12 ${entity.key}: closing and reopening keeps the metadata`, async ({
+		test(`TC-12 ${entity.key}: closing and reopening keeps the metadata`, async ({
 			authedPage: page,
 		}) => {
 			await openSampleDrawer(page, entity);
@@ -236,8 +236,8 @@ for (const entity of fanOut('representative')) {
 // ─── tab-bar behaviour, on the entities that have a tab bar ──────────────────
 
 for (const entity of fanOut('representative', 'tabBar')) {
-	test.describe(`B-DRW tabs ${entity.key}`, () => {
-		test(`B-DRW-08 ${entity.key}: an invalid view coerces to the first valid tab`, async ({
+	test.describe(`drawer-shell tabs ${entity.key}`, () => {
+		test(`TC-08 ${entity.key}: an invalid view coerces to the first valid tab`, async ({
 			authedPage: page,
 		}) => {
 			await gotoDrawerDeepLink(page, entity, { view: 'not-a-tab' });
@@ -253,7 +253,7 @@ for (const entity of fanOut('representative', 'tabBar')) {
 			await expect(drawerTab(page, first)).toHaveAttribute('data-state', 'on');
 		});
 
-		test(`B-DRW-09 ${entity.key}: switching tabs writes view and clears the per-tab expressions`, async ({
+		test(`TC-09 ${entity.key}: switching tabs writes view and clears the per-tab expressions`, async ({
 			authedPage: page,
 		}) => {
 			const views = expectedTabViews(entity);

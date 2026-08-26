@@ -1,6 +1,6 @@
 /**
- * B-TRC — the drawer's Traces tab. Scenarios 01 through 07 are the contract it
- * shares with B-LOG and live in `drawer-query-tab.ts`; what stays here is what
+ * The drawer's Traces tab. Scenarios 01 through 07 are the contract it shares
+ * with `drawer-logs` and live in `drawer-query-tab.ts`; what stays here is what
  * has no logs counterpart: the `pagination` param the traces list drives paging
  * with, and the trace column set.
  */
@@ -17,7 +17,7 @@ import { describeQueryTab, openQueryTab } from './drawer-query-tab';
 
 describeQueryTab({
 	tab: 'traces',
-	tag: 'B-TRC',
+	label: 'drawer-traces',
 	capability: 'tracesTab',
 	sampleExpression: "name = 'GET /health'",
 	explorerPath: '/traces-explorer',
@@ -25,12 +25,12 @@ describeQueryTab({
 });
 
 for (const entity of fanOut('representative', 'tracesTab')) {
-	test.describe(`B-TRC ${entity.key} traces-only`, () => {
-		test(`B-TRC-09 ${entity.key}: the trace columns render and a row opens the trace detail page`, async ({
+	test.describe(`drawer-traces ${entity.key} traces-only`, () => {
+		test(`TC-09 ${entity.key}: the trace columns render and a row opens the trace detail page`, async ({
 			authedPage: page,
 		}) => {
 			// Nothing seeds traces — `seed.ts` posts only `/telemetry/metrics` — so the
-			// row comes from a stub. Discriminate on the traces signal the way B-TRC-07
+			// row comes from a stub. Discriminate on the traces signal the way TC-07
 			// does; a blanket stub would also answer the list page's own query_range.
 			await page.route(/\/api\/v\d+\/query_range/, async (route) => {
 				const body = route.request().postData() ?? '';
@@ -76,7 +76,7 @@ for (const entity of fanOut('representative', 'tracesTab')) {
 			// The navigation is the cell, not the row: every cell is wrapped in
 			// `BlockLink to={getTraceLink(...)} openInNewTab`, i.e. an `<a
 			// target="_blank">`. `onRow.onClick` only logs the analytics event, so the
-			// trace detail page arrives as a *new tab*, like B-TRC-06's compass.
+			// trace detail page arrives as a *new tab*, like TC-06's compass.
 			const [opened] = await Promise.all([
 				page.context().waitForEvent('page'),
 				cell.click(),
@@ -90,7 +90,7 @@ for (const entity of fanOut('representative', 'tracesTab')) {
 			await page.unrouteAll();
 		});
 
-		test(`B-TRC-08 ${entity.key}: pagination is per-visit — the tab clears it on the way out`, async ({
+		test(`TC-08 ${entity.key}: pagination is per-visit — the tab clears it on the way out`, async ({
 			authedPage: page,
 		}) => {
 			await openQueryTab(page, entity, 'traces', {
@@ -99,7 +99,7 @@ for (const entity of fanOut('representative', 'tracesTab')) {
 
 			// `EntityTraces` nulls `pagination` in an unmount cleanup, so a deep-linked
 			// offset does *not* survive arriving on the tab — unlike the events tab,
-			// which keeps `eventsPagination` (B-EVT-04). Asserting the round trip would
+			// which keeps `eventsPagination` (drawer-events TC-04). Asserting the round trip would
 			// be asserting the opposite of the shipped contract.
 			// The cleanup lands as a *reset to the first page*, not as a removal: the
 			// param is rewritten with `offset: 0` and the tab's own page size.
