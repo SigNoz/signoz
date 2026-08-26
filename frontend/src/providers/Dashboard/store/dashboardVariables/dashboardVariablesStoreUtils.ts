@@ -25,7 +25,7 @@ export function buildSortedVariablesArray(
 		sortedVariablesArray.push({ ...value });
 	});
 
-	sortedVariablesArray.sort((a, b) => a.order - b.order);
+	sortedVariablesArray.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
 	return sortedVariablesArray;
 }
