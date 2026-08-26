@@ -61,7 +61,7 @@ describe('PublicDashboardPage', () => {
 
 		expect(screen.getByTestId('public-dashboard-legacy')).toBeInTheDocument();
 		expect(
-			screen.getByText(/hasn't been migrated to the new experience/i),
+			screen.getByText(/hasn't been migrated to the new dashboard experience/i),
 		).toBeInTheDocument();
 		expect(screen.queryByTestId('public-dashboard-view')).not.toBeInTheDocument();
 	});

@@ -33,8 +33,8 @@ function PublicDashboardPage(): JSX.Element {
 				<PublicDashboardMessage
 					testId="public-dashboard-legacy"
 					icon={<TriangleAlert size={36} />}
-					title="This dashboard hasn't been migrated to the new experience yet."
-					description="Please reach out to the owner of the dashboard — they can migrate it and re-share the link."
+					title="This dashboard isn't available in the new experience"
+					description="It hasn't been migrated to the new dashboard experience yet, so it can't be shown here. Reach out to the owner of the dashboard — they can migrate it and re-share the link."
 				/>
 			)}
 
