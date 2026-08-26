@@ -1,4 +1,4 @@
-package httplicensing
+package licensing
 
 import (
 	"context"
@@ -8,17 +8,16 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type licensingAPI struct {
-	licensing licensing.Licensing
+	licensing Licensing
 }
 
-func NewLicensingAPI(licensing licensing.Licensing) licensing.API {
+func NewAPI(licensing Licensing) API {
 	return &licensingAPI{licensing: licensing}
 }
 

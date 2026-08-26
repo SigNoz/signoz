@@ -61,10 +61,4 @@ type Handler interface {
 
 	// API level handler for PutHost
 	PutHost(http.ResponseWriter, *http.Request)
-
-	GetActiveLicense(http.ResponseWriter, *http.Request)
-
-	ActivateLicense(http.ResponseWriter, *http.Request)
-
-	RefreshLicense(http.ResponseWriter, *http.Request)
 }

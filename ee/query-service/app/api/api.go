@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/SigNoz/signoz/ee/licensing/httplicensing"
 	"github.com/SigNoz/signoz/ee/query-service/usage"
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/licensing"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
@@ -42,7 +42,7 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz, config signoz.
 		IntegrationsController:        opts.IntegrationsController,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		FluxInterval:                  opts.FluxInterval,
-		LicensingAPI:                  httplicensing.NewLicensingAPI(signoz.Licensing),
+		LicensingAPI:                  licensing.NewAPI(signoz.Licensing),
 		Signoz:                        signoz,
 		QueryParserAPI:                queryparser.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.QueryParser),
 	}, config)
@@ -75,11 +75,6 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/checkout", am.AdminAccess(ah.LicensingAPI.Checkout)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/billing", am.AdminAccess(ah.getBilling)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/portal", am.AdminAccess(ah.LicensingAPI.Portal)).Methods(http.MethodPost)
-
-	// v3
-	router.HandleFunc("/api/v3/licenses", am.AdminAccess(ah.LicensingAPI.Activate)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v3/licenses", am.AdminAccess(ah.LicensingAPI.Refresh)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v3/licenses/active", am.ViewAccess(ah.LicensingAPI.GetActive)).Methods(http.MethodGet)
 
 	// v4
 	router.HandleFunc("/api/v4/query_range", am.ViewAccess(ah.queryRangeV4)).Methods(http.MethodPost)
