@@ -11,7 +11,7 @@ import (
 )
 
 func (provider *provider) addLicensingRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v3/licenses", handler.New(provider.authzMiddleware.AdminAccess(provider.licensingAPI.Activate), handler.OpenAPIDef{
+	if err := router.Handle("/api/v3/licenses", handler.New(provider.authzMiddleware.AdminAccess(provider.licensingHandler.Activate), handler.OpenAPIDef{
 		ID:                  "ActivateLicense",
 		Tags:                []string{"licenses"},
 		Summary:             "Activate a license.",
@@ -28,7 +28,7 @@ func (provider *provider) addLicensingRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v3/licenses", handler.New(provider.authzMiddleware.AdminAccess(provider.licensingAPI.Refresh), handler.OpenAPIDef{
+	if err := router.Handle("/api/v3/licenses", handler.New(provider.authzMiddleware.AdminAccess(provider.licensingHandler.Refresh), handler.OpenAPIDef{
 		ID:                  "RefreshLicense",
 		Tags:                []string{"licenses"},
 		Summary:             "Refresh the active license.",
@@ -45,7 +45,7 @@ func (provider *provider) addLicensingRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v3/licenses/active", handler.New(provider.authzMiddleware.OpenAccess(provider.licensingAPI.GetActive), handler.OpenAPIDef{
+	if err := router.Handle("/api/v3/licenses/active", handler.New(provider.authzMiddleware.OpenAccess(provider.licensingHandler.GetActive), handler.OpenAPIDef{
 		ID:                  "GetActiveLicense",
 		Tags:                []string{"licenses"},
 		Summary:             "Get the active license.",
