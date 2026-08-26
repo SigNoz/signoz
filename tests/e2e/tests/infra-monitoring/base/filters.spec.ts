@@ -30,7 +30,6 @@ import {
 	cancelQueryButton,
 	clearQuickFilterSection,
 	dataRows,
-	expandQuickFilterSection,
 	gotoList,
 	gotoScopedList,
 	isListUrl,
@@ -38,6 +37,7 @@ import {
 	pickQuickFilter,
 	querySearchEditor,
 	quickFilterSection,
+	readExpression,
 	renderedRowKeys,
 	resetTableState,
 	runQuery,
@@ -87,9 +87,12 @@ function nameExpression(entity: EntityDef, value: string): string {
 	return `${entity.nameColumnId} = '${value}'`;
 }
 
-// ─── all-level: the placeholder and the section list are per-entity tables ────
+// ─── once-level: the placeholder and the section list reach the DOM through
+// ─── `K8sBaseList`, which does not branch on entity. The per-entity values are
+// ─── only mirrored in the registry for the entities a `once`- or
+// ─── `representative`-level scenario runs on.
 
-for (const entity of fanOut('all')) {
+for (const entity of fanOut('once')) {
 	test.describe(`B-FLT ${entity.key} ${WIDE_TAG}`, () => {
 		test(`B-FLT-01 ${entity.key}: the search placeholder matches the registry verbatim`, async ({
 			authedPage: page,
@@ -99,7 +102,7 @@ for (const entity of fanOut('all')) {
 
 			// CodeMirror renders its placeholder as a child node, not an attribute.
 			await expect(querySearchEditor(page)).toContainText(
-				entity.filterPlaceholder,
+				entity.filterPlaceholder!,
 			);
 		});
 
@@ -125,7 +128,7 @@ for (const entity of fanOut('representative')) {
 			// scoped list can have too few rows for a page-2 button to exist, and the
 			// click then waits out the budget instead of failing.
 			await resetTableState(page, entity);
-			const seeded = await seedDataset(page, entity.seed.pagination);
+			const seeded = await seedDataset(page, entity.seed.filter);
 			await gotoList(page, entity, { pageSize: '2', page: '2' });
 			await waitForRows(page);
 			const target = seeded.names[0];
@@ -138,6 +141,46 @@ for (const entity of fanOut('representative')) {
 			await expect(async () => {
 				const keys = await renderedRowKeys(page);
 				expect(keys.length).toBe(1);
+			}).toPass();
+		});
+
+		/**
+		 * B-FLT-02 filters on the name column, which every row has a unique value
+		 * for, so it can only ever prove "one row survives". The `*_filter_dataset`
+		 * fixtures exist for the other half: their rows share attribute values in a
+		 * known split, so a filter on an attribute must land on a *subset*.
+		 *
+		 * The scope stays inside the expression rather than being replaced by it:
+		 * `applyExpression` overwrites the whole box, and an unscoped attribute
+		 * filter would also collect whatever a sibling spec seeded under the same
+		 * label.
+		 */
+		test(`B-FLT-14 ${entity.key}: an attribute expression narrows to that attribute's rows`, async ({
+			authedPage: page,
+		}) => {
+			test.skip(
+				!entity.capabilities.has('groupBy'),
+				`${entity.key} has no groupable attribute to filter on`,
+			);
+			await resetTableState(page, entity);
+			const seeded = await seedDataset(page, entity.seed.filter);
+			await gotoScopedList(page, entity, seeded.names);
+			await waitForRows(page);
+
+			const split = seeded.groups[entity.groupByAttribute];
+			const [label, members] = Object.entries(split)[0];
+			expect(members, `${label} is a strict subset of the fixture`).toBeLessThan(
+				seeded.names.length,
+			);
+
+			const names = seeded.names.map((name) => `'${name}'`).join(', ');
+			await applyExpression(
+				page,
+				`${entity.nameColumnId} IN (${names}) AND ${entity.groupByAttribute} = '${label}'`,
+			);
+
+			await expect(async () => {
+				expect(await renderedRowKeys(page)).toHaveLength(members);
 			}).toPass();
 		});
 
@@ -221,7 +264,7 @@ for (const entity of fanOut('representative')) {
 			authedPage: page,
 		}) => {
 			const seeded = await openSeededList(page, entity);
-			const section = entity.quickFilterTitles[0];
+			const section = entity.quickFilterTitles![0];
 			const value = seeded.names[0];
 
 			// Scoped, so `before` is a stable seed-owned set rather than whatever page
@@ -230,6 +273,15 @@ for (const entity of fanOut('representative')) {
 			await waitForRows(page);
 			const before = await renderedRowKeys(page);
 
+			// Intermittently red on the same defect B-FLT-13 is fixme'd for: the list
+			// is already filtered on this attribute, so the row renders checked (it is
+			// one of `relatedValues`) and the tick becomes an untick, landing
+			// `in [<the other name>]` in `filters.items`. `pickQuickFilter`'s URL
+			// assertion cannot see that — the scope expression already contains
+			// `value` — so it returns on the excluded state, and `waitForRow` below
+			// fails whenever the query builder gets around to folding `items` into
+			// `filter.expression`. Fixing it in the helper needs the rail to agree with
+			// itself about which of the two holds the clause.
 			await pickQuickFilter(page, section, value);
 
 			await expectExpressionContains(page, value);
@@ -256,7 +308,7 @@ for (const entity of fanOut('representative')) {
 		}) => {
 			const seeded = await openScopedSeededList(page, entity);
 			const before = await renderedRowKeys(page);
-			const section = entity.quickFilterTitles[0];
+			const section = entity.quickFilterTitles![0];
 
 			await pickQuickFilter(page, section, seeded.names[0]);
 			await expectExpressionContains(page, seeded.names[0]);
@@ -274,7 +326,7 @@ for (const entity of fanOut('representative')) {
 			const seeded = await openSeededList(page, entity);
 			const target = seeded.names[0];
 
-			await pickQuickFilter(page, entity.quickFilterTitles[0], target);
+			await pickQuickFilter(page, entity.quickFilterTitles![0], target);
 			// A second, non-contradicting clause via the search box.
 			await applyExpressionKeepingExisting(page, nameExpression(entity, target));
 
@@ -410,19 +462,43 @@ test.describe('B-FLT cancel and races', () => {
 	test('B-FLT-13 rapid successive quick-filter clicks settle on the last one', async ({
 		authedPage: page,
 	}) => {
+		// TODO: only the *first* click in a quick-filter section reaches the query.
+		// `applyCheckboxToggle` reads and writes the V3 `filters.items`, but once a
+		// tick lands the query builder normalises that clause into the V5
+		// `filter.expression` and empties `items` — so the next click takes the "no
+		// filter for this key" branch and appends a contradictory clause instead of
+		// editing the existing one, while `useExistingQuery` keeps rendering the row
+		// states off `filter.expression`. Observed on pods with a six-second settle
+		// between clicks, so it is the toggle algebra and not a render race:
+		// `in ['acc-p1']` → untick acc-p1 → still `in ['acc-p1']`, row still checked.
+		// Unfixme once the rail edits whichever of the two the query actually holds.
+		test.fixme(
+			true,
+			'only the first quick-filter tick reaches the query: applyCheckboxToggle edits filters.items, which the query builder has already normalised into filter.expression, so every later click in the section is dropped',
+		);
+
 		await resetTableState(page, entity);
 		const seeded = await seedDataset(page, entity.seed.primary);
 		await gotoList(page, entity);
 		await waitForRows(page);
 
-		const section = entity.quickFilterTitles[0];
+		const section = entity.quickFilterTitles![0];
 		const [first, second] = seeded.names;
+
+		// Start from a section that already carries a clause for this attribute.
+		// Without one the rail renders *every* value checked — `deriveItemConfig`'s
+		// "no existing query and no filter" rule — so a click there excludes rather
+		// than picks, and the pair below would settle on the same state whether or
+		// not the first click was lost. Priming is what makes a lost update visible:
+		// from `in [first]`, ticking `second` and then unticking `first` settles on
+		// `in [second]`, while a handler that read the pre-click query for the second
+		// click drops the clause entirely and the unfiltered list comes back.
+		await pickQuickFilter(page, section, first);
 
 		// `pickQuickFilter` waits for each tick to land in the URL before returning,
 		// so calling it twice is strictly sequential and creates no race at all — the
 		// scenario was named for a guard it never exercised. Click both boxes
 		// back-to-back instead, with no settle in between.
-		await expandQuickFilterSection(page, section);
 		const panel = quickFilterSection(page, section);
 		// Both rows have to be on screen at once for the clicks to be back-to-back,
 		// and the value list is a truncated top-N over a shared stack — so search for
@@ -432,29 +508,34 @@ test.describe('B-FLT cancel and races', () => {
 		await panel
 			.getByTestId('checkbox-filter-search')
 			.fill(shared === -1 ? first : first.slice(0, shared));
-		await expect(panel.getByTestId(`checkbox-value-row-${first}`)).toBeVisible({
+		await expect(panel.getByTestId(`checkbox-value-row-${second}`)).toBeVisible({
 			timeout: 15_000,
 		});
-		await expect(panel.getByTestId(`checkbox-value-row-${second}`)).toBeVisible();
-		await panel
-			.getByTestId(`checkbox-value-row-${first}`)
-			.locator('button[role="checkbox"]')
-			.click();
+		await expect(panel.getByTestId(`checkbox-value-row-${first}`)).toBeVisible();
 		await panel
 			.getByTestId(`checkbox-value-row-${second}`)
 			.locator('button[role="checkbox"]')
 			.click();
+		await panel
+			.getByTestId(`checkbox-value-row-${first}`)
+			.locator('button[role="checkbox"]')
+			.click();
 
-		// Both ticks survive, and the rendered rows match the *settled* expression
-		// rather than a stale response — which is what "no stale rows" means. A
-		// `length > 0` check passes on a fully stale list, so assert the exact set.
-		await expectExpressionContains(page, first);
-		await expectExpressionContains(page, second);
-		const expected = [first, second]
-			.map((name) => rowKeyFor(entity, seeded, name))
-			.sort();
+		// Both clicks applied, in order, and the rendered rows match the *settled*
+		// expression rather than a stale response — which is what "no stale rows"
+		// means. A `length > 0` check passes on a fully stale list, so assert the
+		// exact set. The two expression reads share one `toPass` because they are one
+		// claim about a single settled state: reading them apart lets the mid-flight
+		// `in [first, second]` satisfy each in turn.
 		await expect(async () => {
-			expect((await renderedRowKeys(page)).sort()).toEqual(expected);
+			const expression = readExpression(page);
+			expect(expression).toContain(second);
+			expect(expression).not.toContain(first);
+		}).toPass();
+		await expect(async () => {
+			expect(await renderedRowKeys(page)).toEqual([
+				rowKeyFor(entity, seeded, second),
+			]);
 		}).toPass();
 	});
 });

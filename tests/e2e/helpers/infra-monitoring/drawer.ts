@@ -43,6 +43,8 @@ export const METRICS = {
 	chartHeader: 'chart-header',
 	infoIcon: 'chart-header-info-icon',
 	table: 'metrics-table',
+	/** The panel body. Carries `data-has-data`, so an empty panel is observable. */
+	chart: 'entity-metrics-chart',
 } as const;
 
 /** `EntityMetrics` numbers its compass links by panel index. */
@@ -141,6 +143,10 @@ export async function openRowDrawer(
 	// And the retry has to be a no-op once the drawer is up, for the same reason.
 	await expect(async () => {
 		if (!(await drawer(page).isVisible())) {
+			// `TanStackHeaderRow` is `position: sticky`, so the row Playwright scrolls
+			// "just into view" lands *under* the header and the click is swallowed by a
+			// header cell. Centring it first keeps it clear of both sticky edges.
+			await row.evaluate((element) => element.scrollIntoView({ block: 'center' }));
 			await row.click({ timeout: 5_000 });
 		}
 		await expect(page.getByTestId(DRAWER.close)).toBeVisible({ timeout: 3_000 });

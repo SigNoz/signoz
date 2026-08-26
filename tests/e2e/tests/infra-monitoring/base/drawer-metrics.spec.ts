@@ -22,9 +22,11 @@ import {
 	METRICS,
 	metricsExplorerLinkTestId,
 	selectedItemParams,
+	switchDrawerTab,
 } from '../../../helpers/infra-monitoring/drawer';
 import {
 	type EntityDef,
+	POD_METRICS_WIDGET_TITLES,
 	WIDE_TAG,
 	entityByKey,
 	fanOut,
@@ -32,8 +34,10 @@ import {
 import {
 	allowForSeededWait,
 	goBackUntil,
+	gotoScopedList,
 	listUrl,
 	resetTableState,
+	waitForRow,
 } from '../../../helpers/infra-monitoring/list';
 import { seedDataset } from '../../../helpers/infra-monitoring/seed';
 
@@ -51,15 +55,33 @@ async function openMetricsTab(
 	await expectDrawerVisible(page);
 }
 
-// ─── all-level: the widget list is a per-entity table (§3.3) ──────────────────
+// ─── once-level: the widget list reaches the DOM through `K8sBaseDetails`, which
+// ─── does not branch on entity. The per-entity titles are only mirrored in the
+// ─── registry for the entities a `once`- or `representative`-level scenario runs
+// ─── on, so widening this again buys nothing to assert against.
 
-for (const entity of fanOut('all')) {
+for (const entity of fanOut('once')) {
 	test.describe(`B-MET ${entity.key} ${WIDE_TAG}`, () => {
-		test(`B-MET-01 ${entity.key}: chart headers match the registry's ${entity.widgetTitles.length} widgets in order`, async ({
+		test(`B-MET-01 ${entity.key}: chart headers match the registry's ${entity.widgetTitles!.length} widgets in order`, async ({
 			authedPage: page,
 		}) => {
 			await openMetricsTab(page, entity);
-			await expectWidgetTitles(page, entity.widgetTitles);
+			await expectWidgetTitles(page, entity.widgetTitles!);
+		});
+	});
+}
+
+// ─── all-level, capability-gated: five entities supply the Pod Metrics tab from
+// ─── five different `table.config.tsx` files, so `all` is the honest level.
+
+for (const entity of fanOut('all', 'podMetricsTab')) {
+	test.describe(`B-MET ${entity.key} pod metrics ${WIDE_TAG}`, () => {
+		test(`B-MET-11 ${entity.key}: the Pod Metrics tab renders the ${POD_METRICS_WIDGET_TITLES.length} utilisation-by-pod widgets`, async ({
+			authedPage: page,
+		}) => {
+			await openMetricsTab(page, entity);
+			await switchDrawerTab(page, 'pod_metrics');
+			await expectWidgetTitles(page, POD_METRICS_WIDGET_TITLES);
 		});
 	});
 }
@@ -95,13 +117,13 @@ for (const entity of fanOut('representative')) {
 			authedPage: page,
 		}) => {
 			test.skip(
-				entity.widgetTitles.length < 6,
+				entity.widgetTitles!.length < 6,
 				`${entity.key} has too few widgets to scroll`,
 			);
 			await openMetricsTab(page, entity);
 
 			// Headers are always rendered; the chart bodies are what lazy-load.
-			await expect(chartHeaders(page)).toHaveCount(entity.widgetTitles.length);
+			await expect(chartHeaders(page)).toHaveCount(entity.widgetTitles!.length);
 
 			// NOTE: the "off-screen panel is a skeleton" half of this scenario is still
 			// unasserted. An attempt to add it against
@@ -133,7 +155,7 @@ for (const entity of fanOut('representative')) {
 			await page.goto(listUrl(entity, selectedItemParams(entity)));
 
 			await expectDrawerVisible(page);
-			await expectWidgetTitles(page, entity.widgetTitles);
+			await expectWidgetTitles(page, entity.widgetTitles!);
 			await page.unrouteAll();
 		});
 
@@ -141,7 +163,14 @@ for (const entity of fanOut('representative')) {
 			authedPage: page,
 		}) => {
 			await resetTableState(page, entity);
-			await seedDataset(page, entity.seed.primary);
+			const seeded = await seedDataset(page, entity.seed.primary);
+			// The drawer resolves `selectedItem` out of the *list* response, and the
+			// list does not refetch on its own — so deep-linking before the seeded row
+			// is queryable opens the dash-titled shell of B-DRW-06, which renders no
+			// Metrics tab at all and fails this scenario on a symptom it is not about.
+			// Confirm the row is listed first, then deep-link.
+			await gotoScopedList(page, entity, seeded.names);
+			await waitForRow(page, entity.seed.sampleItemKey);
 
 			// Fail only the first panel's request.
 			let failed = false;
@@ -158,11 +187,11 @@ for (const entity of fanOut('representative')) {
 				await route.continue();
 			});
 
-			await page.goto(listUrl(entity, selectedItemParams(entity)));
+			await gotoScopedList(page, entity, seeded.names, selectedItemParams(entity));
 
 			await expectDrawerVisible(page);
 			// Every header still renders — the failure is contained to its own card.
-			await expectWidgetTitles(page, entity.widgetTitles);
+			await expectWidgetTitles(page, entity.widgetTitles!);
 			// NOTE: still weaker than the scenario name. `ChartHeader` renders from the
 			// widget config, never from the response, so these titles are satisfied by
 			// "the drawer did not crash". Adding the in-card error text and a surviving
@@ -176,6 +205,72 @@ for (const entity of fanOut('representative')) {
 }
 
 // ─── the ported explorer-link cases ──────────────────────────────────────────
+
+// ─── representative-level: the chart body itself ─────────────────────────────
+
+for (const entity of fanOut('representative')) {
+	test.describe(`B-MET ${entity.key} chart body`, () => {
+		/**
+		 * `EntityMetrics` renders the chart behind `configs[idx] && chartData[idx]`,
+		 * so a data-shape regression leaves an empty panel under a correct header and
+		 * every B-MET-01 assertion still passes. `data-has-data` is the state made
+		 * observable for exactly that: asserting on `styles.noDataContainer` is not
+		 * viable, since CSS-module class names are hashed at build time.
+		 */
+		test(`B-MET-12 ${entity.key}: the first panel draws a chart, not just a header`, async ({
+			authedPage: page,
+		}) => {
+			await openMetricsTab(page, entity);
+
+			const panel = page.getByTestId(METRICS.chart).first();
+			await expect(panel).toHaveAttribute('data-has-data', 'true', {
+				timeout: 30_000,
+			});
+			// uPlot draws into a canvas, so a header with no canvas under it is the
+			// `configs[idx] && chartData[idx]` guard failing silently.
+			await expect(panel.locator('canvas').first()).toBeVisible();
+		});
+	});
+}
+
+test.describe('B-MET chart tooltip', () => {
+	const entity = fanOut('once')[0];
+
+	/**
+	 * `canPinTooltip` is wired at `EntityMetrics.tsx`, and the footer is the only
+	 * affordance that lets a reader hold a hover reading still long enough to
+	 * compare series.
+	 */
+	test('B-MET-13 a chart tooltip can be pinned and unpinned', async ({
+		authedPage: page,
+	}) => {
+		await openMetricsTab(page, entity);
+
+		const canvas = page
+			.getByTestId(METRICS.chart)
+			.first()
+			.locator('canvas')
+			.first();
+		await expect(canvas).toBeVisible({ timeout: 30_000 });
+
+		const box = await canvas.boundingBox();
+		expect(box, 'the chart canvas has a box to click in').not.toBeNull();
+		const centre = {
+			x: box!.x + box!.width / 2,
+			y: box!.y + box!.height / 2,
+		};
+		// uPlot pins on click, but only once its cursor is over a data point, so the
+		// move has to land before the click rather than as part of it.
+		await page.mouse.move(centre.x, centre.y);
+		await page.mouse.click(centre.x, centre.y);
+
+		const footer = page.getByTestId('entity-chart-tooltip-footer');
+		await expect(footer).toBeVisible();
+
+		await page.getByTestId('entity-chart-tooltip-unpin').click();
+		await expect(footer).toBeHidden();
+	});
+});
 
 test.describe('B-MET explorer link', () => {
 	// Deliberately *not* serial. These were thought to share the drawer's time
