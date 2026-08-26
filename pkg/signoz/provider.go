@@ -244,6 +244,8 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewDeleteOrphanUserRolesFactory(),
 		sqlmigration.NewMigrateLambdaDashboardsFactory(),
 		sqlmigration.NewAddAuthDomainTuplesFactory(sqlstore),
+		sqlmigration.NewMigrateQuickFiltersFactory(sqlstore),
+		sqlmigration.NewAddQuickFilterTuplesFactory(sqlstore),
 	)
 }
 
@@ -347,6 +349,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.RulerHandler,
 			handlers.StatsHandler,
 			handlers.SavedView,
+			handlers.QuickFilter,
 		),
 	)
 }

@@ -24,6 +24,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
+	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
@@ -80,6 +81,7 @@ type provider struct {
 	llmPricingRuleHandler      llmpricingrule.Handler
 	statsHandler               statsreporter.Handler
 	savedViewHandler           savedview.Handler
+	quickFilterHandler         quickfilter.Handler
 }
 
 func NewFactory(
@@ -118,6 +120,7 @@ func NewFactory(
 	rulerHandler ruler.Handler,
 	statsHandler statsreporter.Handler,
 	savedViewHandler savedview.Handler,
+	quickFilterHandler quickfilter.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
 		return newProvider(
@@ -159,6 +162,7 @@ func NewFactory(
 			rulerHandler,
 			statsHandler,
 			savedViewHandler,
+			quickFilterHandler,
 		)
 	})
 }
@@ -202,6 +206,7 @@ func newProvider(
 	rulerHandler ruler.Handler,
 	statsHandler statsreporter.Handler,
 	savedViewHandler savedview.Handler,
+	quickFilterHandler quickfilter.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
@@ -244,6 +249,7 @@ func newProvider(
 		llmPricingRuleHandler:      llmPricingRuleHandler,
 		statsHandler:               statsHandler,
 		savedViewHandler:           savedViewHandler,
+		quickFilterHandler:         quickFilterHandler,
 	}
 
 	provider.authzMiddleware = middleware.NewAuthZ(settings.Logger(), orgGetter, authzService)
@@ -381,6 +387,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addSavedViewRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addQuickFilterRoutes(router); err != nil {
 		return err
 	}
 
