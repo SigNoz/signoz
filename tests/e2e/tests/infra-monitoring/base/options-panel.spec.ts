@@ -306,9 +306,12 @@ test.describe('B-OPT global preferences', () => {
 		// The plan's remaining half: the *rendered* rows pick the clamp up. Store
 		// state alone says nothing about whether the table ever consumed it.
 		await expect(async () => {
+			// The clamp lands on the cell's text span (`.tableCellText`), which is where
+			// `--tanstack-plain-body-line-clamp` is consumed; the `td` itself never
+			// carries it and always computes to `none`.
 			const clamp = await dataRows(page)
 				.first()
-				.locator('td')
+				.locator('[class*="tableCellText"]')
 				.first()
 				.evaluate((cell) => getComputedStyle(cell).webkitLineClamp);
 			expect(clamp).toBe('10');

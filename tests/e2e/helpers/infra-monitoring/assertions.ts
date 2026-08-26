@@ -226,23 +226,12 @@ export async function expectMetadataLabels(
 
 	// One value per rendered label, each non-empty.
 	//
-	// The count is what makes this falsifiable: `for (i < await values.count())`
-	// never runs its body when nothing rendered, so the "non-empty value" half
-	// silently held for zero values, and a CSS-module class rename would have
-	// turned it into a permanent pass across all ten entities.
-	//
-	// Counted, so the loop below cannot vacuously pass over zero values — that was
-	// the original defect here: `for (i < await values.count())` never ran its body
-	// when nothing rendered, and a CSS-module class rename would have made this a
-	// permanent pass across all ten entities.
-	//
-	// NOT counted against `entity.metadataLabels.length`, and not against the
-	// rendered label count either: both fail on hosts, whose metadata row renders
-	// fewer plain value nodes than it has labels (`STATUS` is a badge, not a value
-	// node). Pinning either number is a scenario of its own; what holds everywhere
-	// is "at least one value rendered, and none of them are empty".
-	const values = panel.locator('[class*="entityDetailsMetadataValue"]');
-	await expect(values.first()).toBeVisible();
+	// Taken from the values row's own children rather than from a value class: a
+	// metadata entry with a custom `render` produces no node carrying it, and hosts
+	// renders all four of its entries that way. Counting is what keeps this
+	// falsifiable: the loop below passes vacuously over zero values.
+	const values = panel.locator('[class*="valuesRow"]').first().locator('> *');
+	await expect(values).toHaveCount(entity.metadataLabels.length);
 	const count = await values.count();
 	for (let i = 0; i < count; i += 1) {
 		await expect(values.nth(i), `metadata value ${i}`).not.toHaveText('');
