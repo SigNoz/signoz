@@ -7,7 +7,7 @@ import { ThresholdProps } from 'types/api/widgets/threshold';
 import {
 	applyEnhancedLegendStyling,
 	calculateEnhancedLegendConfig,
-} from 'container/WidgetCard/PanelWrapper/enhancedLegend';
+} from 'container/WidgetCard/Panels/enhancedLegend';
 import { Dimensions } from 'hooks/useDimensions';
 import { getLegend } from 'lib/dashboard/getQueryResults';
 import { convertValue } from 'lib/getConvertedValue';
