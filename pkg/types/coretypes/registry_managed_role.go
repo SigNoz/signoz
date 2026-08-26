@@ -64,10 +64,10 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindFactorPassword}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindFactorPassword}, WildCardSelectorString)},
 		// license — admin only.
-		// Uniform LCRUD shape; actual ee routes are POST /api/v3/licenses (create
-		// = Activate), PUT /api/v3/licenses (update = Refresh), GET
-		// /api/v3/licenses/active (read; currently exposed as ViewAccess on the
-		// route side). delete and list are placeholders for shape parity, no
+		// Uniform LCRUD shape; routes are POST /api/v3/licenses (create =
+		// Activate) and PUT /api/v3/licenses (update = Refresh). GET
+		// /api/v3/licenses/active is OpenAccess, so the read grant is not
+		// route-enforced. delete and list are placeholders for shape parity, no
 		// route serves them today.
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLicense}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLicense}, WildCardSelectorString)},

@@ -24122,9 +24122,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - license:create
       - tokenizer:
-        - ADMIN
+        - license:create
       summary: Activate a license.
       tags:
       - licenses
@@ -24168,9 +24168,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - license:update
       - tokenizer:
-        - ADMIN
+        - license:update
       summary: Refresh the active license.
       tags:
       - licenses
