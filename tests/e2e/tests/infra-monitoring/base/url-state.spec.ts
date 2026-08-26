@@ -23,6 +23,7 @@ import {
 import {
 	entityByKey,
 	fanOut,
+	WIDE_TAG,
 	type EntityDef,
 } from '../../../helpers/infra-monitoring/entities';
 import {
@@ -61,10 +62,11 @@ function statusFilterParam(entity: EntityDef): Record<string, string> {
 		: {};
 }
 
-// ─── all-level: one deep link restoring everything ───────────────────────────
+// ─── representative-level: one deep link restoring everything. Of the eleven
+// ─── params only `statusFilter` varies by entity, and hosts is representative.
 
-for (const entity of fanOut('all')) {
-	test.describe(`B-URL ${entity.key} @wide`, () => {
+for (const entity of fanOut('representative')) {
+	test.describe(`B-URL ${entity.key} deep link ${WIDE_TAG}`, () => {
 		test(`B-URL-01 ${entity.key}: a fully-specified deep link restores every param`, async ({
 			authedPage: page,
 		}) => {

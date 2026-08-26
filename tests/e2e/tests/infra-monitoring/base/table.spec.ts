@@ -17,10 +17,7 @@ import {
 	expectUrlParams,
 } from '../../../helpers/infra-monitoring/assertions';
 import type { DatasetKey } from '../../../helpers/infra-monitoring/datasets';
-import {
-	openRowDrawer,
-	DRAWER,
-} from '../../../helpers/infra-monitoring/drawer';
+import { DRAWER } from '../../../helpers/infra-monitoring/drawer';
 import {
 	defaultVisibleColumns,
 	fanOut,
@@ -120,9 +117,12 @@ async function openSeededList(
 	return seeded;
 }
 
-// ─── all-level: the expected value comes from a per-entity table in §3 ────────
+// ─── once-level: config-to-DOM plumbing. `K8sBaseList` does not branch on
+// ─── entity, so one entity proves the render path, and the per-entity values
+// ─── are only mirrored in the registry for the entities a `once`- or
+// ─── `representative`-level scenario runs on.
 
-for (const entity of fanOut('all')) {
+for (const entity of fanOut('once')) {
 	test.describe(`B-LIST ${entity.key} ${WIDE_TAG}`, () => {
 		test(`B-LIST-01 ${entity.key}: default visible columns match the registry`, async ({
 			authedPage: page,
@@ -138,49 +138,97 @@ for (const entity of fanOut('all')) {
 			await expectTotalCountLabel(page, entity);
 		});
 
+		test(`B-LIST-09 ${entity.key}: non-sortable columns render no sort button`, async ({
+			authedPage: page,
+		}) => {
+			await openSeededList(page, entity);
+
+			// Split by the registry rather than branching in the body: a sortable
+			// header is a `button`, a non-sortable one a plain `span`.
+			for (const column of visibleSortableColumns(entity)) {
+				await expect(
+					headerCell(page, column.id).locator('button.tanstack-header-title'),
+					`${column.id} is sortable`,
+				).toHaveCount(1);
+			}
+			for (const column of defaultVisibleColumns(entity).filter(
+				(candidate) => !candidate.sortable,
+			)) {
+				const cell = headerCell(page, column.id);
+				await expect(
+					cell.locator('button.tanstack-header-title'),
+					`${column.id} has no sort button`,
+				).toHaveCount(0);
+				await expect(
+					cell.locator('span.tanstack-header-title'),
+					`${column.id} renders a plain title`,
+				).toHaveCount(1);
+			}
+		});
+	});
+}
+
+// ─── representative-level: the four entities span every axis that varies ─────
+
+for (const entity of fanOut('representative')) {
+	test.describe(`B-LIST ${entity.key} sorting ${WIDE_TAG}`, () => {
 		/**
-		 * Every sortable column is clickable and writes its own `orderBy`.
+		 * Every sortable column is clickable and writes its own `orderBy`, and
+		 * sorting restarts paging.
 		 *
-		 * Only the *first* click of each column is asserted, and each column starts
-		 * from a fresh page. The reason is a product behaviour worth knowing: sorting
-		 * by a column the `_orderby` fixture has no metric for — `podRestarts`,
-		 * `diskUsage`, `inodesUsed` — comes back **empty**, and an empty list swaps
-		 * the table for the empty state, taking the header (and any second click)
-		 * with it. The full asc → desc → unset cycle is B-LIST-08b's job, on the one
-		 * column per entity that is guaranteed to carry data.
+		 * One load, N clicks. The previous shape called `openSeededList` once per
+		 * column, and `openSeededList` stacks two ingestion-bound waits each
+		 * budgeted at the whole default timeout, so the wider entities could not fit
+		 * in one test and it timed out rather than failed. A click costs ~150 ms
+		 * against ~20 s for a reload, and the header survives the click even when
+		 * the new order returns nothing, so no reload is needed between columns.
+		 *
+		 * Only the *first* click of each column is asserted. The full asc → desc →
+		 * unset cycle is B-LIST-08b's job, on the one column per entity that is
+		 * guaranteed to carry data.
+		 *
+		 * The page reset is asserted on the first column only, because it is what
+		 * consumes the off-page-one setup: after that click the list is already on
+		 * page 1 and a second assertion would pass without proving anything.
 		 */
 		test(`B-LIST-08a ${entity.key}: every sortable column writes its own orderBy`, async ({
 			authedPage: page,
 		}) => {
-			// One seeded list load per sortable column, and #12402 made the name column
-			// sortable too — pods' nine columns do not fit the default timeout with six
-			// workers sharing the stack.
 			allowForSeededWait();
-			// Hidden-by-default sortable columns are B-OPT-03's job to reveal first.
-			for (const column of visibleSortableColumns(entity)) {
-				// Start *off* page one, or the `expectFirstPage` below cannot fail: it
-				// accepts absent-or-'1' (three writers, three spellings — see its
-				// docstring) and a freshly opened list carries no `page` param at all.
-				//
-				// Deep-linked rather than clicked. The `_orderby` fixtures hold five
-				// entities and this list is scoped to them, so at any page size ≥ 5
-				// there is only one page and no page-2 button to click — `gotoPage`
-				// would wait out the whole budget. `pageSize: '2'` guarantees three
-				// pages, and the URL seeds the page directly.
-				await openSeededList(page, entity, entity.seed.orderBy, {
-					pageSize: '2',
-					page: '2',
-				});
+			await resetTableState(page, entity);
+			const seeded = await seedDataset(page, entity.seed.orderBy);
+			// Start *off* page one, or the `expectFirstPage` below cannot fail: it
+			// accepts absent-or-'1' (three writers, three spellings — see its
+			// docstring) and a freshly opened list carries no `page` param at all.
+			//
+			// Deep-linked rather than clicked. The `_orderby` fixtures hold five
+			// entities and this list is scoped to them, so at any page size ≥ 5
+			// there is only one page and no page-2 button to click — `gotoPage`
+			// would wait out the whole budget. `pageSize: '2'` guarantees three
+			// pages, and the URL seeds the page directly.
+			await gotoScopedList(page, entity, seeded.names, {
+				pageSize: '2',
+				page: '2',
+			});
+			await waitForRows(page);
 
+			const [first, ...rest] = visibleSortableColumns(entity);
+
+			await clickSortHeader(page, first.id);
+			expect(sortStateFromUrl(page), `${first.id} asc`).toEqual({
+				columnName: first.id,
+				order: 'asc',
+			});
+			// Sorting is a new query, so paging restarts — and page 1 is the
+			// default, which nuqs drops from the URL rather than writing.
+			await expectFirstPage(page);
+
+			for (const column of rest) {
 				await clickSortHeader(page, column.id);
-
 				expect(sortStateFromUrl(page), `${column.id} asc`).toEqual({
 					columnName: column.id,
 					order: 'asc',
 				});
-				// Sorting is a new query, so paging restarts — and page 1 is the
-				// default, which nuqs drops from the URL rather than writing.
-				await expectFirstPage(page);
 			}
 		});
 
@@ -226,61 +274,6 @@ for (const entity of fanOut('all')) {
 				'data-sort',
 				'none',
 			);
-		});
-
-		test(`B-LIST-09 ${entity.key}: non-sortable columns render no sort button`, async ({
-			authedPage: page,
-		}) => {
-			await openSeededList(page, entity);
-
-			// Split by the registry rather than branching in the body: a sortable
-			// header is a `button`, a non-sortable one a plain `span`.
-			for (const column of visibleSortableColumns(entity)) {
-				await expect(
-					headerCell(page, column.id).locator('button.tanstack-header-title'),
-					`${column.id} is sortable`,
-				).toHaveCount(1);
-			}
-			for (const column of defaultVisibleColumns(entity).filter(
-				(candidate) => !candidate.sortable,
-			)) {
-				const cell = headerCell(page, column.id);
-				await expect(
-					cell.locator('button.tanstack-header-title'),
-					`${column.id} has no sort button`,
-				).toHaveCount(0);
-				await expect(
-					cell.locator('span.tanstack-header-title'),
-					`${column.id} renders a plain title`,
-				).toHaveCount(1);
-			}
-		});
-
-		test(`B-LIST-10 ${entity.key}: row click opens the drawer and writes selectedItem`, async ({
-			authedPage: page,
-		}) => {
-			// `waitForRow` can spend the whole default budget on its own before the
-			// drawer is even opened (§11.1).
-			allowForSeededWait();
-			await openSeededList(page, entity);
-			await waitForRow(page, entity.seed.sampleItemKey);
-			await openRowDrawer(page, entity.seed.sampleItemKey);
-
-			// The entity's `getItemKey` decides which extras get written; a `null`
-			// expectation asserts the param is absent.
-			await expectUrlParams(page, {
-				selectedItem: entity.seed.sampleItemKey,
-				selectedItemClusterName: entity.selectedItemExtraParams.includes(
-					'clusterName',
-				)
-					? (entity.seed.sampleClusterName ?? null)
-					: null,
-				selectedItemNamespaceName: entity.selectedItemExtraParams.includes(
-					'namespaceName',
-				)
-					? (entity.seed.sampleNamespaceName ?? null)
-					: null,
-			});
 		});
 	});
 }
@@ -335,7 +328,8 @@ for (const entity of fanOut('representative')) {
 			await openSeededList(page, entity);
 			await expect(headerCell(page, entity.groupColumnId)).toHaveCount(0);
 			expect(await visibleColumnHeaders(page)).not.toContain(
-				entity.columns.find((column) => column.id === entity.groupColumnId)?.header,
+				entity.columns!.find((column) => column.id === entity.groupColumnId)
+					?.header,
 			);
 		});
 
@@ -658,6 +652,37 @@ function maxScrollTop(): number {
 	);
 	return Math.max(0, ...tops);
 }
+
+test.describe('B-LIST threshold legend', () => {
+	const entity = fanOut('once')[0];
+
+	/**
+	 * The progress-bar columns carry their colour scale as a header tooltip
+	 * (`ColumnHeader tooltip={<EntityProgressThresholds .../>}`), which is the
+	 * only place the bands are ever spelled out for the user.
+	 *
+	 * `cpu_limit` rather than `cpu_request`: both carry a legend, but only
+	 * `cpu_limit` is default-visible, so this needs no options-panel detour.
+	 *
+	 * The hover target is located by `svg` rather than by class: the icon's
+	 * `styles.infoIcon` is a CSS module, hashed at build time.
+	 */
+	test('B-LIST-19 a progress-bar column header explains its thresholds', async ({
+		authedPage: page,
+	}) => {
+		await openSeededList(page, entity);
+
+		await headerCell(page, 'cpu_limit')
+			.locator('[data-slot="column-header"] svg')
+			.hover();
+
+		// `.first()`: Radix renders the tooltip body twice, once on screen and once
+		// as the visually-hidden copy screen readers announce.
+		await expect(
+			page.getByTestId('entity-progress-thresholds-cpu-limit').first(),
+		).toBeVisible();
+	});
+});
 
 test.describe('B-LIST cross-entity', () => {
 	const [first, second] = fanOut('all').filter(

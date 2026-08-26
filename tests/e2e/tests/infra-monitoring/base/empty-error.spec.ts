@@ -241,7 +241,7 @@ test.describe('B-EMP console walk', () => {
 		await waitForRows(page);
 
 		// Filter.
-		await pickQuickFilter(page, entity.quickFilterTitles[0], primary.names[0]);
+		await pickQuickFilter(page, entity.quickFilterTitles![0], primary.names[0]);
 
 		// Group and expand.
 		await gotoScopedList(page, entity, seeded.names);

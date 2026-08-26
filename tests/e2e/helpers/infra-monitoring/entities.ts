@@ -59,6 +59,14 @@ export interface EntitySeedFacts {
 	grouped: DatasetKey;
 	pagination: DatasetKey;
 	orderBy: DatasetKey;
+	/**
+	 * Dataset whose rows differ in the attributes the quick-filter rail and the
+	 * expression editor filter on, so a filter can narrow the list rather than
+	 * leaving it whole. `pagination` cannot: its rows are near-identical by
+	 * construction, which is what made the filter specs seed it and assert only
+	 * that *something* rendered.
+	 */
+	filter: DatasetKey;
 	/** One row's name, for row-scoped locators. */
 	sampleName: string;
 	/**
@@ -85,21 +93,33 @@ export interface EntityDef {
 	columnStorageKey: string;
 	expandedColumnStorageKey: string;
 	pageSizeStorageKey: string;
-	columns: EntityColumn[];
+	/**
+	 * The product's column matrix, mirrored by hand.
+	 *
+	 * Present only for the entities a `once`- or `representative`-level scenario
+	 * runs on. Every scenario that read it for all ten was asserting a literal in
+	 * `table.config.tsx` against a literal here, through a browser, so the six
+	 * others carry no copy to keep in sync. Do not back-fill them for symmetry:
+	 * widen the scenario first, and the field with it.
+	 */
+	columns?: EntityColumn[];
 	nameColumnId: string;
 	groupColumnId: string;
-	/** `ENTITY_FILTER_PLACEHOLDERS[key]`, verbatim. */
-	filterPlaceholder: string;
-	/** `METRIC_NAMESPACE_BY_ENTITY[key]`. */
-	metricNamespace: string;
-	/** Quick-filter section titles, in order. */
-	quickFilterTitles: string[];
+	/** `ENTITY_FILTER_PLACEHOLDERS[key]`, verbatim. Mirrored, see {@link EntityDef.columns}. */
+	filterPlaceholder?: string;
+	/** `METRIC_NAMESPACE_BY_ENTITY[key]`. Mirrored, see {@link EntityDef.columns}. */
+	metricNamespace?: string;
+	/** Quick-filter section titles, in order. Mirrored, see {@link EntityDef.columns}. */
+	quickFilterTitles?: string[];
 	/** The subset of `quickFilterTitles` with `defaultOpen: true`. */
-	quickFilterDefaultOpen: string[];
-	/** Drawer metadata row labels, in order — casing is deliberately verbatim. */
-	metadataLabels: string[];
-	/** Metrics-tab `chart-header` titles, in order. */
-	widgetTitles: string[];
+	quickFilterDefaultOpen?: string[];
+	/**
+	 * Drawer metadata row labels, in order — casing is deliberately verbatim.
+	 * Mirrored, see {@link EntityDef.columns}.
+	 */
+	metadataLabels?: string[];
+	/** Metrics-tab `chart-header` titles, in order. Mirrored, see {@link EntityDef.columns}. */
+	widgetTitles?: string[];
 	/** `EntityCountsSection` labels, when the entity has counts cards. */
 	countsCards?: string[];
 	capabilities: Set<EntityCapability>;
@@ -233,6 +253,7 @@ const HOSTS: EntityDef = {
 	quickFilterTitles: ['Host Name', 'OS Type', 'Environment'],
 	quickFilterDefaultOpen: ['Host Name', 'OS Type', 'Environment'],
 	metadataLabels: ['STATUS', 'OPERATING SYSTEM', 'CPU USAGE', 'MEMORY USAGE'],
+	/** The plan says 8; `hostWidgetInfo` actually has 13. */
 	widgetTitles: [
 		'CPU Usage',
 		'Memory Usage',
@@ -320,6 +341,7 @@ const HOSTS: EntityDef = {
 		primary: 'hosts_value_accuracy',
 		grouped: 'hosts_groupby_os_type',
 		pagination: 'hosts_pagination',
+		filter: 'hosts_filter_dataset',
 		orderBy: 'hosts_orderby',
 		sampleName: 'acc-h1',
 		sampleItemKey: 'acc-h1',
@@ -435,6 +457,7 @@ const PODS: EntityDef = {
 		primary: 'pods_value_accuracy',
 		grouped: 'pods_groupby',
 		pagination: 'pods_pagination',
+		filter: 'pods_filter_dataset',
 		orderBy: 'pods_orderby',
 		sampleName: 'acc-p1',
 		// `getK8sPodItemKey` returns `pod.podUID`, so a pod deep link and
@@ -454,96 +477,17 @@ const NODES: EntityDef = {
 	pageSizeStorageKey: 'k8s-nodes-preferred-page-size',
 	nameColumnId: 'k8s.node.name',
 	groupColumnId: 'nodeGroup',
-	filterPlaceholder:
-		"Enter your filter query (e.g., k8s.node.name = 'node-01' AND k8s.cluster.name = 'prod-cluster')",
-	metricNamespace: 'k8s.node.',
-	quickFilterTitles: ['Node Name', 'Cluster Name', 'Environment'],
-	quickFilterDefaultOpen: ['Node Name', 'Cluster Name', 'Environment'],
-	metadataLabels: ['Node Name', 'Cluster Name'],
-	widgetTitles: [
-		'CPU Usage (cores)',
-		'Memory Usage (bytes)',
-		'CPU Usage (%)',
-		'Memory Usage (%)',
-		'Pods by CPU (top 10)',
-		'Pods by Memory (top 10)',
-		'Network error count',
-		'Network IO rate',
-		'Filesystem usage (bytes)',
-		'Filesystem usage (%)',
-	],
 	capabilities: new Set<EntityCapability>(['groupBy', ...ALL_TABS]),
 	selectedItemExtraParams: [],
 	groupByAttribute: K8S_CLUSTER_ATTR,
 	orderByColumnId: 'cpu',
 	orderByDataset: 'nodes_orderby',
 	secondGroupByAttribute: 'k8s.node.name',
-	columns: [
-		{
-			id: 'nodeGroup',
-			header: 'Node Group',
-			hiddenByDefault: false,
-			sortable: false,
-			visibility: 'hidden-on-collapse',
-			pinned: 'left',
-			required: true,
-		},
-		{
-			id: 'k8s.node.name',
-			header: 'Node Name',
-			hiddenByDefault: false,
-			sortable: true,
-			visibility: 'hidden-on-expand',
-			pinned: 'left',
-			required: true,
-		},
-		{
-			id: 'condition',
-			header: 'Status',
-			hiddenByDefault: false,
-			sortable: false,
-		},
-		{
-			id: 'podCountsByStatus',
-			header: 'Pod Status',
-			hiddenByDefault: false,
-			sortable: false,
-		},
-		{
-			id: 'clusterName',
-			header: 'Cluster Name',
-			hiddenByDefault: true,
-			sortable: false,
-		},
-		{
-			id: 'cpu',
-			header: 'CPU Usage (cores)',
-			hiddenByDefault: false,
-			sortable: true,
-		},
-		{
-			id: 'cpu_allocatable',
-			header: 'CPU Allocatable (cores)',
-			hiddenByDefault: false,
-			sortable: true,
-		},
-		{
-			id: 'memory',
-			header: 'Memory Usage (WSS)',
-			hiddenByDefault: false,
-			sortable: true,
-		},
-		{
-			id: 'memory_allocatable',
-			header: 'Memory Allocatable',
-			hiddenByDefault: false,
-			sortable: true,
-		},
-	],
 	seed: {
 		primary: 'nodes_value_accuracy',
 		grouped: 'nodes_groupby',
 		pagination: 'nodes_pagination',
+		filter: 'nodes_filter_dataset',
 		orderBy: 'nodes_orderby',
 		sampleName: 'acc-n1',
 		sampleItemKey: 'acc-n1',
@@ -561,24 +505,6 @@ const NAMESPACES: EntityDef = {
 	pageSizeStorageKey: 'k8s-namespaces-preferred-page-size',
 	nameColumnId: 'k8s.namespace.name',
 	groupColumnId: 'namespaceGroup',
-	filterPlaceholder:
-		"Enter your filter query (e.g., k8s.namespace.name = 'production' AND k8s.cluster.name = 'prod-cluster')",
-	metricNamespace: 'k8s.pod.',
-	quickFilterTitles: ['Namespace Name', 'Cluster Name', 'Environment'],
-	quickFilterDefaultOpen: ['Namespace Name', 'Cluster Name', 'Environment'],
-	metadataLabels: ['Namespace Name', 'Cluster Name'],
-	widgetTitles: [
-		'CPU Usage (cores)',
-		'Memory Usage (bytes)',
-		'Pods CPU (top 10)',
-		'Pods Memory (top 10)',
-		'Network rate',
-		'Network errors',
-		'StatefulSets (pods)',
-		'ReplicaSets (pods)',
-		'DaemonSets (nodes)',
-		'Deployments (pods)',
-	],
 	countsCards: ['Deployments', 'StatefulSets', 'DaemonSets', 'Jobs'],
 	capabilities: new Set<EntityCapability>([
 		'groupBy',
@@ -591,54 +517,11 @@ const NAMESPACES: EntityDef = {
 	orderByColumnId: 'cpu',
 	orderByDataset: 'namespaces_orderby',
 	secondGroupByAttribute: K8S_NAMESPACE_ATTR,
-	columns: [
-		{
-			id: 'namespaceGroup',
-			header: 'Namespace Group',
-			hiddenByDefault: false,
-			sortable: false,
-			visibility: 'hidden-on-collapse',
-			pinned: 'left',
-			required: true,
-		},
-		{
-			id: 'k8s.namespace.name',
-			header: 'Namespace Name',
-			hiddenByDefault: false,
-			sortable: true,
-			visibility: 'hidden-on-expand',
-			pinned: 'left',
-			required: true,
-		},
-		{
-			id: 'clusterName',
-			header: 'Cluster Name',
-			hiddenByDefault: false,
-			sortable: false,
-		},
-		{
-			id: 'podCountsByStatus',
-			header: 'Pod Status',
-			hiddenByDefault: false,
-			sortable: false,
-		},
-		{
-			id: 'cpu',
-			header: 'CPU Usage (cores)',
-			hiddenByDefault: false,
-			sortable: true,
-		},
-		{
-			id: 'memory',
-			header: 'Memory Usage (WSS)',
-			hiddenByDefault: false,
-			sortable: true,
-		},
-	],
 	seed: {
 		primary: 'namespaces_value_accuracy',
 		grouped: 'namespaces_groupby',
 		pagination: 'namespaces_pagination',
+		filter: 'namespaces_filter_dataset',
 		orderBy: 'namespaces_orderby',
 		sampleName: 'acc-ns-1',
 		sampleItemKey: 'acc-ns-1',
@@ -657,22 +540,6 @@ const CLUSTERS: EntityDef = {
 	pageSizeStorageKey: 'k8s-clusters-preferred-page-size',
 	nameColumnId: 'k8s.cluster.name',
 	groupColumnId: 'clusterGroup',
-	filterPlaceholder:
-		"Enter your filter query (e.g., k8s.cluster.name = 'prod-cluster' AND deployment.environment = 'production')",
-	metricNamespace: 'k8s.node.',
-	quickFilterTitles: ['Cluster Name', 'Environment'],
-	quickFilterDefaultOpen: ['Cluster Name', 'Environment'],
-	metadataLabels: ['Cluster Name'],
-	widgetTitles: [
-		'CPU Usage, allocatable',
-		'Memory Usage, allocatable',
-		'Ready Nodes',
-		'NotReady Nodes',
-		'Deployments available and desired',
-		'Statefulset pods',
-		'Daemonset nodes',
-		'Jobs',
-	],
 	countsCards: [
 		'Namespaces',
 		'Nodes',
@@ -691,66 +558,11 @@ const CLUSTERS: EntityDef = {
 	orderByColumnId: 'cpu',
 	orderByDataset: 'clusters_orderby',
 	secondGroupByAttribute: K8S_NAMESPACE_ATTR,
-	columns: [
-		{
-			id: 'clusterGroup',
-			header: 'Cluster Group',
-			hiddenByDefault: false,
-			sortable: false,
-			visibility: 'hidden-on-collapse',
-			pinned: 'left',
-			required: true,
-		},
-		{
-			id: 'k8s.cluster.name',
-			header: 'Cluster Name',
-			hiddenByDefault: false,
-			sortable: true,
-			visibility: 'hidden-on-expand',
-			pinned: 'left',
-			required: true,
-		},
-		{
-			id: 'nodeCountsByReadiness',
-			header: 'Node Readiness',
-			hiddenByDefault: false,
-			sortable: false,
-		},
-		{
-			id: 'podCountsByStatus',
-			header: 'Pod Status',
-			hiddenByDefault: false,
-			sortable: false,
-		},
-		{
-			id: 'cpu',
-			header: 'CPU Usage (cores)',
-			hiddenByDefault: false,
-			sortable: true,
-		},
-		{
-			id: 'cpu_allocatable',
-			header: 'CPU Allocatable (cores)',
-			hiddenByDefault: false,
-			sortable: true,
-		},
-		{
-			id: 'memory',
-			header: 'Memory Usage (WSS)',
-			hiddenByDefault: false,
-			sortable: true,
-		},
-		{
-			id: 'memory_allocatable',
-			header: 'Memory Allocatable',
-			hiddenByDefault: false,
-			sortable: true,
-		},
-	],
 	seed: {
 		primary: 'clusters_value_accuracy',
 		grouped: 'clusters_groupby',
 		pagination: 'clusters_pagination',
+		filter: 'clusters_filter_dataset',
 		orderBy: 'clusters_orderby',
 		sampleName: 'acc-cluster-1',
 		sampleItemKey: 'acc-cluster-1',
@@ -768,28 +580,6 @@ const DEPLOYMENTS: EntityDef = {
 	pageSizeStorageKey: 'k8s-deployments-preferred-page-size',
 	nameColumnId: 'k8s.deployment.name',
 	groupColumnId: 'deploymentGroup',
-	filterPlaceholder:
-		"Enter your filter query (e.g., k8s.deployment.name = 'api-server' AND k8s.namespace.name = 'production')",
-	metricNamespace: 'k8s.',
-	quickFilterTitles: [
-		'Deployment Name',
-		'Namespace Name',
-		'Cluster Name',
-		'Environment',
-	],
-	quickFilterDefaultOpen: [
-		'Deployment Name',
-		'Namespace Name',
-		'Cluster Name',
-		'Environment',
-	],
-	metadataLabels: ['Deployment Name', 'Cluster Name', 'Namespace Name'],
-	widgetTitles: [
-		'CPU usage, request, limits',
-		'Memory usage, request, limits',
-		'Network IO',
-		'Network error count',
-	],
 	capabilities: new Set<EntityCapability>([
 		'groupBy',
 		'podMetricsTab',
@@ -800,61 +590,11 @@ const DEPLOYMENTS: EntityDef = {
 	orderByColumnId: 'cpu',
 	orderByDataset: 'deployments_orderby',
 	secondGroupByAttribute: K8S_CLUSTER_ATTR,
-	columns: [
-		{
-			id: 'deploymentGroup',
-			header: 'Deployment Group',
-			hiddenByDefault: false,
-			sortable: false,
-			visibility: 'hidden-on-collapse',
-			pinned: 'left',
-			required: true,
-		},
-		{
-			id: 'k8s.deployment.name',
-			header: 'Deployment Name',
-			hiddenByDefault: false,
-			sortable: true,
-			visibility: 'hidden-on-expand',
-			pinned: 'left',
-			required: true,
-		},
-		{
-			id: 'namespaceName',
-			header: 'Namespace',
-			hiddenByDefault: false,
-			sortable: false,
-		},
-		{
-			id: 'podCountsByStatus',
-			header: 'Pod Status',
-			hiddenByDefault: false,
-			sortable: false,
-		},
-		{
-			id: 'pod_replicas',
-			header: 'Pod Replicas',
-			hiddenByDefault: false,
-			sortable: false,
-		},
-		...utilisationColumns(),
-		{
-			id: 'available_pods',
-			header: 'Available Pods',
-			hiddenByDefault: true,
-			sortable: true,
-		},
-		{
-			id: 'desired_pods',
-			header: 'Desired Pods',
-			hiddenByDefault: true,
-			sortable: true,
-		},
-	],
 	seed: {
 		primary: 'deployments_value_accuracy',
 		grouped: 'deployments_groupby',
 		pagination: 'deployments_pagination',
+		filter: 'deployments_filter_dataset',
 		orderBy: 'deployments_orderby',
 		sampleName: 'acc-dep-1',
 		sampleItemKey: 'acc-dep-1',
@@ -965,6 +705,7 @@ const STATEFULSETS: EntityDef = {
 		primary: 'statefulsets_value_accuracy',
 		grouped: 'statefulsets_groupby',
 		pagination: 'statefulsets_pagination',
+		filter: 'statefulsets_filter_dataset',
 		orderBy: 'statefulsets_orderby',
 		sampleName: 'acc-ss-1',
 		sampleItemKey: 'acc-ss-1',
@@ -984,28 +725,6 @@ const DAEMONSETS: EntityDef = {
 	pageSizeStorageKey: 'k8s-daemonsets-preferred-page-size',
 	nameColumnId: 'k8s.daemonset.name',
 	groupColumnId: 'daemonSetGroup',
-	filterPlaceholder:
-		"Enter your filter query (e.g., k8s.daemonset.name = 'fluentd' AND k8s.namespace.name = 'logging')",
-	metricNamespace: 'k8s.',
-	quickFilterTitles: [
-		'DaemonSet Name',
-		'Namespace Name',
-		'Cluster Name',
-		'Environment',
-	],
-	quickFilterDefaultOpen: [
-		'DaemonSet Name',
-		'Namespace Name',
-		'Cluster Name',
-		'Environment',
-	],
-	metadataLabels: ['Daemonset Name', 'Cluster Name', 'Namespace Name'],
-	widgetTitles: [
-		'CPU usage, request, limits',
-		'Memory usage, request, limits',
-		'Network IO',
-		'Network errors count',
-	],
 	capabilities: new Set<EntityCapability>([
 		'groupBy',
 		'podMetricsTab',
@@ -1016,74 +735,11 @@ const DAEMONSETS: EntityDef = {
 	orderByColumnId: 'cpu_limit',
 	orderByDataset: 'daemonsets_orderby',
 	secondGroupByAttribute: K8S_CLUSTER_ATTR,
-	columns: [
-		{
-			id: 'daemonSetGroup',
-			header: 'DaemonSet Group',
-			hiddenByDefault: false,
-			sortable: false,
-			visibility: 'hidden-on-collapse',
-			pinned: 'left',
-			required: true,
-		},
-		{
-			id: 'k8s.daemonset.name',
-			header: 'DaemonSet Name',
-			hiddenByDefault: false,
-			sortable: true,
-			visibility: 'hidden-on-expand',
-			pinned: 'left',
-			required: true,
-		},
-		{
-			id: 'namespaceName',
-			header: 'Namespace',
-			hiddenByDefault: false,
-			sortable: false,
-		},
-		{
-			id: 'pod_counts_by_status',
-			header: 'Pod Status',
-			hiddenByDefault: false,
-			sortable: false,
-		},
-		{
-			id: 'scheduled_nodes',
-			header: 'Scheduled Nodes',
-			hiddenByDefault: false,
-			sortable: false,
-		},
-		// `cpu` is default-hidden here but visible on every other workload entity.
-		...utilisationColumns(['cpu']),
-		{
-			id: 'ready_nodes',
-			header: 'Ready Nodes',
-			hiddenByDefault: true,
-			sortable: true,
-		},
-		{
-			id: 'current_nodes',
-			header: 'Current Nodes',
-			hiddenByDefault: true,
-			sortable: true,
-		},
-		{
-			id: 'desired_nodes',
-			header: 'Desired Nodes',
-			hiddenByDefault: true,
-			sortable: true,
-		},
-		{
-			id: 'misscheduled_nodes',
-			header: 'Misscheduled Nodes',
-			hiddenByDefault: true,
-			sortable: true,
-		},
-	],
 	seed: {
 		primary: 'daemonsets_value_accuracy',
 		grouped: 'daemonsets_groupby',
 		pagination: 'daemonsets_pagination',
+		filter: 'daemonsets_filter_dataset',
 		orderBy: 'daemonsets_orderby',
 		sampleName: 'acc-ds-1',
 		sampleItemKey: 'acc-ds-1',
@@ -1103,28 +759,6 @@ const JOBS: EntityDef = {
 	pageSizeStorageKey: 'k8s-jobs-preferred-page-size',
 	nameColumnId: 'k8s.job.name',
 	groupColumnId: 'jobGroup',
-	filterPlaceholder:
-		"Enter your filter query (e.g., k8s.job.name = 'backup-job' AND k8s.namespace.name = 'cron-jobs')",
-	metricNamespace: 'k8s.',
-	quickFilterTitles: [
-		'Job Name',
-		'Namespace Name',
-		'Cluster Name',
-		'Environment',
-	],
-	quickFilterDefaultOpen: [
-		'Job Name',
-		'Namespace Name',
-		'Cluster Name',
-		'Environment',
-	],
-	metadataLabels: ['Job Name', 'Cluster Name', 'Namespace Name'],
-	widgetTitles: [
-		'CPU usage',
-		'Memory Usage',
-		'Network IO',
-		'Network errors count',
-	],
 	capabilities: new Set<EntityCapability>([
 		'groupBy',
 		'podMetricsTab',
@@ -1135,73 +769,11 @@ const JOBS: EntityDef = {
 	orderByColumnId: 'cpu',
 	orderByDataset: 'jobs_orderby',
 	secondGroupByAttribute: K8S_CLUSTER_ATTR,
-	columns: [
-		{
-			id: 'jobGroup',
-			header: 'Job Group',
-			hiddenByDefault: false,
-			sortable: false,
-			visibility: 'hidden-on-collapse',
-			pinned: 'left',
-			required: true,
-		},
-		{
-			id: 'k8s.job.name',
-			header: 'Job Name',
-			hiddenByDefault: false,
-			sortable: true,
-			visibility: 'hidden-on-expand',
-			pinned: 'left',
-			required: true,
-		},
-		{
-			id: 'namespaceName',
-			header: 'Namespace',
-			hiddenByDefault: false,
-			sortable: false,
-		},
-		{
-			id: 'pod_counts_by_status',
-			header: 'Pod Status',
-			hiddenByDefault: false,
-			sortable: false,
-		},
-		{
-			id: 'completion',
-			header: 'Completions',
-			hiddenByDefault: false,
-			sortable: false,
-		},
-		...utilisationColumns(),
-		{
-			id: 'active_pods',
-			header: 'Active Pods',
-			hiddenByDefault: true,
-			sortable: true,
-		},
-		{
-			id: 'failed_pods',
-			header: 'Failed Pods',
-			hiddenByDefault: true,
-			sortable: true,
-		},
-		{
-			id: 'successful_pods',
-			header: 'Successful Pods',
-			hiddenByDefault: true,
-			sortable: true,
-		},
-		{
-			id: 'desired_successful_pods',
-			header: 'Desired Successful Pods',
-			hiddenByDefault: true,
-			sortable: true,
-		},
-	],
 	seed: {
 		primary: 'jobs_value_accuracy',
 		grouped: 'jobs_groupby',
 		pagination: 'jobs_pagination',
+		filter: 'jobs_filter_dataset',
 		orderBy: 'jobs_orderby',
 		sampleName: 'acc-job-1',
 		sampleItemKey: 'acc-job-1',
@@ -1307,6 +879,7 @@ const VOLUMES: EntityDef = {
 		primary: 'volumes_value_accuracy',
 		grouped: 'volumes_groupby',
 		pagination: 'volumes_pagination',
+		filter: 'volumes_filter_dataset',
 		orderBy: 'volumes_orderby',
 		sampleName: 'acc-pvc-1',
 		sampleItemKey: 'acc-pvc-1',
@@ -1370,19 +943,43 @@ export function entityByKey(key: string): EntityDef {
 // with no empty-result guard, and had no callers — two ways to say the same
 // thing, one of which silently declares zero tests.
 
+/**
+ * A mirrored field, or a failure that names the entity and the field.
+ *
+ * The mirror is kept only for the entities a `once`- or `representative`-level
+ * scenario runs on, so widening a scenario to one of the other six reads
+ * `undefined`. Left alone, `columns` would filter to `[]` and every column
+ * assertion would pass against nothing. Same silent hole `fanOut`'s
+ * empty-selection throw closes, in the other direction.
+ */
+export function mirrored<Field extends keyof EntityDef>(
+	entity: EntityDef,
+	field: Field,
+): NonNullable<EntityDef[Field]> {
+	const value = entity[field];
+	if (value == null) {
+		throw new Error(
+			`${entity.key} does not mirror '${String(field)}': the field is kept only for the ` +
+				`entities a 'once'- or 'representative'-level scenario runs on. Narrow the ` +
+				`scenario, or add the field back for this one entity and say why.`,
+		);
+	}
+	return value as NonNullable<EntityDef[Field]>;
+}
+
 export function defaultVisibleColumns(entity: EntityDef): EntityColumn[] {
-	return entity.columns.filter(
+	return mirrored(entity, 'columns').filter(
 		(column) =>
 			!column.hiddenByDefault && column.visibility !== 'hidden-on-collapse',
 	);
 }
 
 export function hiddenByDefaultColumns(entity: EntityDef): EntityColumn[] {
-	return entity.columns.filter((column) => column.hiddenByDefault);
+	return mirrored(entity, 'columns').filter((column) => column.hiddenByDefault);
 }
 
 export function sortableColumns(entity: EntityDef): EntityColumn[] {
-	return entity.columns.filter((column) => column.sortable);
+	return mirrored(entity, 'columns').filter((column) => column.sortable);
 }
 
 /**
@@ -1390,7 +987,7 @@ export function sortableColumns(entity: EntityDef): EntityColumn[] {
  * group column never appears.
  */
 export function optionsPanelColumns(entity: EntityDef): EntityColumn[] {
-	return entity.columns.filter(
+	return mirrored(entity, 'columns').filter(
 		(column) => column.visibility !== 'hidden-on-collapse',
 	);
 }

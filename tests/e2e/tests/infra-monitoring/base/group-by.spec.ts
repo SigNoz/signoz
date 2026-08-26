@@ -64,10 +64,11 @@ async function openScopedGroupableList(
 	await gotoGroupScopedList(page, entity, entity.seed.sampleGroup);
 }
 
-// ─── all-level ───────────────────────────────────────────────────────────────
+// ─── representative-level: only the grouped-on attribute name varies by
+// ─── entity, and the column swap itself is `TanStackTable`'s.
 
-for (const entity of fanOut('all', 'groupBy')) {
-	test.describe(`B-GRP ${entity.key} ${WIDE_TAG}`, () => {
+for (const entity of fanOut('representative', 'groupBy')) {
+	test.describe(`B-GRP ${entity.key} column swap ${WIDE_TAG}`, () => {
 		test(`B-GRP-02 ${entity.key}: grouping by ${entity.groupByAttribute} swaps the name column for the group column`, async ({
 			authedPage: page,
 		}) => {

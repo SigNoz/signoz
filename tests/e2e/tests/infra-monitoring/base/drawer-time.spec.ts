@@ -66,9 +66,10 @@ async function openDrawer(
 	await expectDrawerVisible(page);
 }
 
-// ─── all-level: the `1month` regression, on every entity ──────────────────────
+// ─── once-level: the `1month` regression is one global url-sync path, not a
+// ─── per-entity one, so a single entity proves it.
 
-for (const entity of fanOut('all')) {
+for (const entity of fanOut('once')) {
 	test.describe(`B-TIME ${entity.key} ${WIDE_TAG}`, () => {
 		test(`B-TIME-05 ${entity.key}: 1month survives every url-sync path`, async ({
 			authedPage: page,

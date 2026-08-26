@@ -159,7 +159,7 @@ for (const entity of fanOut('representative', 'groupBy')) {
 			await expect(expandedRows(page)).toHaveCount(EXPANDED_ROW_LIMIT);
 		});
 
-		test(`B-EXP-03 ${entity.key}: expanded columns persist independently of the parent`, async ({
+		test(`B-EXP-03 ${entity.key}: the group column is absent from the nested table`, async ({
 			authedPage: page,
 		}) => {
 			await openFixtureGroup(page, entity);
@@ -169,7 +169,7 @@ for (const entity of fanOut('representative', 'groupBy')) {
 			const expandedHeaders = await expandedTable(page)
 				.locator('thead th .tanstack-header-title')
 				.allInnerTexts();
-			const groupHeader = entity.columns.find(
+			const groupHeader = entity.columns!.find(
 				(column) => column.id === entity.groupColumnId,
 			)!.header;
 			expect(expandedHeaders.map((text) => text.trim())).not.toContain(

@@ -65,10 +65,59 @@ function firstToggleableColumn(entity: EntityDef): EntityColumn {
 	return column;
 }
 
-// ─── all-level: expected values come from the registry's column matrix ────────
+// ─── once-level: the panel is built from the column matrix by `K8sBaseList`,
+// ─── which does not branch on entity, and the matrix is only mirrored in the
+// ─── registry for the entities a `once`- or `representative`-level scenario
+// ─── runs on.
 
-for (const entity of fanOut('all')) {
-	test.describe(`B-OPT ${entity.key} ${WIDE_TAG}`, () => {
+for (const entity of fanOut('once')) {
+	test.describe(`B-OPT ${entity.key} column matrix ${WIDE_TAG}`, () => {
+		test(`B-OPT-04 ${entity.key}: required columns' switches are disabled`, async ({
+			authedPage: page,
+		}) => {
+			await openSeededList(page, entity);
+			await openOptionsPanel(page);
+
+			const required = optionsPanelColumns(entity).filter(
+				(column) => column.required,
+			);
+			expect(required.length, 'entity has a required column').toBeGreaterThan(0);
+
+			for (const column of required) {
+				await expect(columnToggle(page, column.id)).toBeDisabled();
+			}
+
+			// The tooltip lives on the wrapper the disabled switch sits inside. The
+			// columns list scrolls, so a required switch can sit below the panel's fold —
+			// `hover` then fails with "outside of the viewport" even with `force`.
+			await columnToggle(page, required[0].id).scrollIntoViewIfNeeded();
+			await columnToggle(page, required[0].id).hover({ force: true });
+			await expect(
+				page.getByText('Required column cannot be hidden'),
+			).toBeVisible();
+		});
+
+		test(`B-OPT-05 ${entity.key}: the panel omits hidden-on-collapse columns`, async ({
+			authedPage: page,
+		}) => {
+			await openSeededList(page, entity);
+			await openOptionsPanel(page);
+
+			// The group column is `hidden-on-collapse` and must not be listed.
+			await expect(columnToggle(page, entity.groupColumnId)).toHaveCount(0);
+			for (const column of optionsPanelColumns(entity)) {
+				await expect(columnToggle(page, column.id)).toHaveCount(1);
+			}
+		});
+	});
+}
+
+// ─── representative-level: the toggle-and-persist path is shared, and both
+// ─── bodies pick their column off the registry rather than naming one, so the
+// ─── four representative entities cover the same ground as ten.
+
+for (const entity of fanOut('representative')) {
+	test.describe(`B-OPT ${entity.key} toggles ${WIDE_TAG}`, () => {
 		test(`B-OPT-02 ${entity.key}: toggling a column off hides it and persists`, async ({
 			authedPage: page,
 		}) => {
@@ -117,44 +166,6 @@ for (const entity of fanOut('all')) {
 			await waitForRows(page);
 			await expect(headerCell(page, column.id)).toHaveCount(1);
 			expect(await visibleColumnHeaders(page)).toContain(column.header);
-		});
-
-		test(`B-OPT-04 ${entity.key}: required columns' switches are disabled`, async ({
-			authedPage: page,
-		}) => {
-			await openSeededList(page, entity);
-			await openOptionsPanel(page);
-
-			const required = optionsPanelColumns(entity).filter(
-				(column) => column.required,
-			);
-			expect(required.length, 'entity has a required column').toBeGreaterThan(0);
-
-			for (const column of required) {
-				await expect(columnToggle(page, column.id)).toBeDisabled();
-			}
-
-			// The tooltip lives on the wrapper the disabled switch sits inside. The
-			// columns list scrolls, so a required switch can sit below the panel's fold —
-			// `hover` then fails with "outside of the viewport" even with `force`.
-			await columnToggle(page, required[0].id).scrollIntoViewIfNeeded();
-			await columnToggle(page, required[0].id).hover({ force: true });
-			await expect(
-				page.getByText('Required column cannot be hidden'),
-			).toBeVisible();
-		});
-
-		test(`B-OPT-05 ${entity.key}: the panel omits hidden-on-collapse columns`, async ({
-			authedPage: page,
-		}) => {
-			await openSeededList(page, entity);
-			await openOptionsPanel(page);
-
-			// The group column is `hidden-on-collapse` and must not be listed.
-			await expect(columnToggle(page, entity.groupColumnId)).toHaveCount(0);
-			for (const column of optionsPanelColumns(entity)) {
-				await expect(columnToggle(page, column.id)).toHaveCount(1);
-			}
 		});
 	});
 }

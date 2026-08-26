@@ -10,6 +10,7 @@ import { expect, type Page } from '@playwright/test';
 import {
 	defaultVisibleColumns,
 	hiddenByDefaultColumns,
+	mirrored,
 	type EntityDef,
 } from './entities';
 import {
@@ -45,7 +46,9 @@ export async function expectVisibleColumns(
 	await expect(async () => {
 		const rendered = await visibleColumnHeaders(page);
 		const expected = ids.map(
-			(id) => entity.columns.find((column) => column.id === id)?.header ?? id,
+			(id) =>
+				mirrored(entity, 'columns').find((column) => column.id === id)?.header ??
+				id,
 		);
 		expect(rendered).toEqual(expected);
 	}).toPass();
@@ -184,11 +187,13 @@ export async function expectQuickFilterSections(
 	entity: EntityDef,
 ): Promise<void> {
 	await expect(async () => {
-		expect(await quickFilterTitles(page)).toEqual(entity.quickFilterTitles);
+		expect(await quickFilterTitles(page)).toEqual(
+			mirrored(entity, 'quickFilterTitles'),
+		);
 	}).toPass();
 
-	for (const title of entity.quickFilterTitles) {
-		const expected = entity.quickFilterDefaultOpen.includes(title)
+	for (const title of mirrored(entity, 'quickFilterTitles')) {
+		const expected = mirrored(entity, 'quickFilterDefaultOpen').includes(title)
 			? 'open'
 			: 'closed';
 		expect(
@@ -221,7 +226,9 @@ export async function expectMetadataLabels(
 		const labels = await panel
 			.locator('[class*="entityDetailsMetadataLabel"]')
 			.allInnerTexts();
-		expect(normalise(labels)).toEqual(normalise(entity.metadataLabels));
+		expect(normalise(labels)).toEqual(
+			normalise(mirrored(entity, 'metadataLabels')),
+		);
 	}).toPass();
 
 	// One value per rendered label, each non-empty.
@@ -231,7 +238,7 @@ export async function expectMetadataLabels(
 	// renders all four of its entries that way. Counting is what keeps this
 	// falsifiable: the loop below passes vacuously over zero values.
 	const values = panel.locator('[class*="valuesRow"]').first().locator('> *');
-	await expect(values).toHaveCount(entity.metadataLabels.length);
+	await expect(values).toHaveCount(mirrored(entity, 'metadataLabels').length);
 	const count = await values.count();
 	for (let i = 0; i < count; i += 1) {
 		await expect(values.nth(i), `metadata value ${i}`).not.toHaveText('');

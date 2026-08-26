@@ -66,10 +66,32 @@ async function gotoDrawerDeepLink(
 	);
 }
 
-// ─── all-level: metadata labels and the tab set are per-entity tables ─────────
+// ─── once-level: the metadata block reaches the DOM through `K8sBaseDetails`,
+// ─── which does not branch on entity, and the labels are only mirrored in the
+// ─── registry for the entities a `once`- or `representative`-level scenario
+// ─── runs on.
 
-for (const entity of fanOut('all')) {
-	test.describe(`B-DRW ${entity.key} ${WIDE_TAG}`, () => {
+for (const entity of fanOut('once')) {
+	test.describe(`B-DRW ${entity.key} metadata ${WIDE_TAG}`, () => {
+		test(`B-DRW-02 ${entity.key}: metadata labels match the registry verbatim`, async ({
+			authedPage: page,
+		}) => {
+			await openSampleDrawer(page, entity);
+			await expectMetadataLabels(page, entity);
+		});
+	});
+}
+
+// ─── representative-level: four entities, four shapes ────────────────────────
+//
+// `getItemKey` has four shapes across the ten entities and the representative
+// four are exactly those four, so B-DRW-01 gains nothing from the other six.
+// The tab *bar* is a real product branch rather than a label list, and the same
+// four entities span it: volumes has no bar, hosts has no events tab, and pods
+// and statefulsets differ in the pod-metrics tab.
+
+for (const entity of fanOut('representative')) {
+	test.describe(`B-DRW ${entity.key} identity ${WIDE_TAG}`, () => {
 		test(`B-DRW-01 ${entity.key}: a row click opens the drawer and writes its identity`, async ({
 			authedPage: page,
 		}) => {
@@ -80,13 +102,6 @@ for (const entity of fanOut('all')) {
 			// `selectedItem` UID, which is why both come from the registry.
 			await expect(drawer(page)).toContainText(entity.seed.sampleName);
 			await expectUrlParams(page, selectedItemParams(entity));
-		});
-
-		test(`B-DRW-02 ${entity.key}: metadata labels match the registry verbatim`, async ({
-			authedPage: page,
-		}) => {
-			await openSampleDrawer(page, entity);
-			await expectMetadataLabels(page, entity);
 		});
 
 		test(`B-DRW-07 ${entity.key}: the tab bar holds exactly ${expectedTabViews(entity).join(' · ') || 'no tabs'}`, async ({

@@ -19,6 +19,8 @@ import {
 	K8S_CATEGORY_TAB_ORDER,
 	K8S_ENTITIES,
 	K8S_PATH,
+	REPRESENTATIVE_ENTITIES,
+	WIDE_TAG,
 } from '../../../helpers/infra-monitoring/entities';
 import {
 	allowForSeededWait,
@@ -271,10 +273,16 @@ test.describe('B-NAV', () => {
 	});
 });
 
-// ─── all nine k8s entities: the switch and the reload ────────────────────────
+// ─── the three k8s representative entities: the switch and the reload ────────
+//
+// Both scenarios are `B-LIST-01` plus one more param, reached by a click rather
+// than a URL, so what they prove about the rail is entity-independent. Hosts is
+// excluded either way, since it has no category rail.
 
-for (const entity of K8S_ENTITIES) {
-	test.describe(`B-NAV ${entity.key} @wide`, () => {
+for (const entity of REPRESENTATIVE_ENTITIES.filter((candidate) =>
+	K8S_ENTITIES.includes(candidate),
+)) {
+	test.describe(`B-NAV ${entity.key} ${WIDE_TAG}`, () => {
 		test(`B-NAV-02 ${entity.key}: clicking its tab applies its columns and quick filters`, async ({
 			authedPage: page,
 		}) => {
