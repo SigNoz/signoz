@@ -42,7 +42,7 @@ import {
 	expectDrawerVisible,
 } from '../../../helpers/infra-monitoring/drawer';
 import { seedDataset } from '../../../helpers/infra-monitoring/seed';
-import { watchConsole } from '../../../helpers/common';
+import { stubCloudOnlyApis, watchConsole } from '../../../helpers/common';
 
 const PODS = entityByKey('pods');
 
@@ -211,6 +211,7 @@ test.describe('B-NAV', () => {
 	test('B-NAV-07 an unknown category renders nothing but keeps the shell intact', async ({
 		authedPage: page,
 	}) => {
+		await stubCloudOnlyApis(page);
 		const watch = watchConsole(page);
 		await page.goto(`${K8S_PATH}?category=bogus`);
 

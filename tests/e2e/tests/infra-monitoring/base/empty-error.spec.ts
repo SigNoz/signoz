@@ -8,7 +8,7 @@
 import type { Page, Route } from '@playwright/test';
 
 import { expect, test } from '../../../fixtures/auth';
-import { watchConsole } from '../../../helpers/common';
+import { stubCloudOnlyApis, watchConsole } from '../../../helpers/common';
 import {
 	closeDrawer,
 	drawer,
@@ -230,6 +230,7 @@ test.describe('B-EMP console walk', () => {
 		authedPage: page,
 	}) => {
 		// Must be armed before the first navigation.
+		await stubCloudOnlyApis(page);
 		const watch = watchConsole(page);
 
 		await resetTableState(page, entity);
