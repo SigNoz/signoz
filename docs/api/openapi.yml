@@ -24225,6 +24225,7 @@ paths:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
       security:
+      - api_key: []
       - tokenizer: []
       summary: Get the active license.
       tags:
