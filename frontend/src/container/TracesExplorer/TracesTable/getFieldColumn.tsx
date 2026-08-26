@@ -10,11 +10,11 @@ export type TracesTableRow = { id: string } & Record<string, unknown>;
 export function getFieldColumn(
 	field: TelemetryFieldKey,
 ): TableColumnDef<TracesTableRow> {
-	const { name, fieldContext } = field;
+	const { name, fieldContext, fieldDataType } = field;
 	const isTimestamp = TIMESTAMP_FIELD_NAMES.has(name);
 
 	return {
-		id: buildCompositeKey(name, fieldContext),
+		id: buildCompositeKey(name, fieldContext, fieldDataType),
 		header: name,
 		accessorFn: (row): unknown => row[name],
 		enableMove: !isTimestamp,

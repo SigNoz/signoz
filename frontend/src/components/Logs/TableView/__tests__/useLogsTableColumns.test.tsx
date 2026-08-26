@@ -14,10 +14,10 @@ jest.mock('providers/App/App', () => ({
 	useAppContext: (): { featureFlags: [] } => ({ featureFlags: [] }),
 }));
 
-const field = (name: string, type = ''): IField => ({
+const field = (name: string, type = '', dataType = ''): IField => ({
 	name,
 	type,
-	dataType: 'string',
+	dataType,
 });
 
 describe('useLogsTableColumns — selectColumns-order respected', () => {
@@ -134,6 +134,24 @@ describe('useLogsTableColumns — selectColumns-order respected', () => {
 		// User-added fields stay removable. User field has type='' so composite
 		// collapses to bare name.
 		expect(byId.get('user_field')?.enableRemove).toBe(true);
+	});
+
+	it('disambiguates same-name/same-context fields by dataType (3-part id)', () => {
+		const { result } = renderHook(() =>
+			useLogsTableColumns({
+				fields: [
+					field('http.status_code', 'attribute', 'int64'),
+					field('http.status_code', 'attribute', 'string'),
+				],
+				fontSize: FontSize.SMALL,
+			}),
+		);
+
+		expect(result.current.map((c) => c.id)).toStrictEqual([
+			'state-indicator',
+			'attribute:http.status_code:int64',
+			'attribute:http.status_code:string',
+		]);
 	});
 
 	it('renders only the stateIndicator when fields is empty', () => {
