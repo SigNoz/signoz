@@ -1497,7 +1497,7 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 
 	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
-		aH.HandleError(w, err, http.StatusInternalServerError)
+		aH.HandleError(w, err, http.StatusUnauthorized)
 		return
 	}
 
