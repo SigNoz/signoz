@@ -37,7 +37,7 @@ func (provider *provider) addQuickFilterRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/orgs/me/filters/{signal}", handler.New(
+	if err := router.Handle("/api/v2/orgs/me/filters/{signal_name}", handler.New(
 		provider.authzMiddleware.CheckResources(provider.quickFilterHandler.GetSignalFiltersV2, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "GetSignalQuickFilters",

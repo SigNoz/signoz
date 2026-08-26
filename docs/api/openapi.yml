@@ -18296,7 +18296,7 @@ paths:
       summary: Update quick filters
       tags:
       - quick_filter
-  /api/v2/orgs/me/filters/{signal}:
+  /api/v2/orgs/me/filters/{signal_name}:
     get:
       deprecated: false
       description: Returns the org's quick filters for one signal, each filter as
@@ -18304,7 +18304,7 @@ paths:
       operationId: GetSignalQuickFilters
       parameters:
       - in: path
-        name: signal
+        name: signal_name
         required: true
         schema:
           type: string

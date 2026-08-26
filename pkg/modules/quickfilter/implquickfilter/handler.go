@@ -223,7 +223,7 @@ func (handler *handler) GetSignalFiltersV2(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	signal := mux.Vars(r)["signal"]
+	signal := mux.Vars(r)["signal_name"]
 	validatedSignal, err := quickfiltertypes.NewSignal(signal)
 	if err != nil {
 		render.Error(rw, err)

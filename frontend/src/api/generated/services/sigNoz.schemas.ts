@@ -8435,6 +8435,28 @@ export enum Querybuildertypesv5QueryTypeDTO {
 	clickhouse_sql = 'clickhouse_sql',
 	promql = 'promql',
 }
+export interface QuickfiltertypesSignalFiltersDTO {
+	/**
+	 * @type array,null
+	 */
+	filters?: TelemetrytypesTelemetryFieldKeyDTO[] | null;
+	/**
+	 * @type string
+	 */
+	signal?: string;
+}
+
+export interface QuickfiltertypesUpdatableQuickFiltersDTO {
+	/**
+	 * @type array,null
+	 */
+	filters?: TelemetrytypesTelemetryFieldKeyDTO[] | null;
+	/**
+	 * @type string
+	 */
+	signal?: string;
+}
+
 export interface RenderErrorResponseDTO {
 	error: ErrorsJSONDTO;
 	/**
@@ -11782,6 +11804,28 @@ export type GetMetricsTreemap200 = {
 
 export type GetMyOrganization200 = {
 	data: TypesOrganizationDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListQuickFilters200 = {
+	/**
+	 * @type array,null
+	 */
+	data: QuickfiltertypesSignalFiltersDTO[] | null;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetSignalQuickFiltersPathParameters = {
+	signalName: string;
+};
+export type GetSignalQuickFilters200 = {
+	data: QuickfiltertypesSignalFiltersDTO;
 	/**
 	 * @type string
 	 */
