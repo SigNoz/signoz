@@ -72,6 +72,35 @@ describe('Tooltip utils', () => {
 			expect(result).toBe(20);
 		});
 
+		it('reports the pre-stack value, identically for normal and percent', () => {
+			const unstackedData: AlignedData = [[0], [30], [10]];
+			const series = [{}, { show: true }, { show: true }] as Series[];
+			const read = (data: AlignedData): number | null =>
+				getTooltipBaseValue({
+					data,
+					unstackedData,
+					index: 1,
+					dataIndex: 0,
+					isStackedBarChart: true,
+					series,
+				});
+
+			expect(read([[0], [40], [10]])).toBe(30);
+			expect(read([[0], [100], [25]])).toBe(30);
+		});
+
+		it('falls back to subtraction when no pre-stack data is given', () => {
+			const result = getTooltipBaseValue({
+				data: [[0], [40], [10]],
+				index: 1,
+				dataIndex: 0,
+				isStackedBarChart: true,
+				series: [{}, { show: true }, { show: true }] as Series[],
+			});
+
+			expect(result).toBe(30);
+		});
+
 		it('returns null when value is missing', () => {
 			const data: AlignedData = [
 				[0, 1],

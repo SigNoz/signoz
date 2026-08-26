@@ -3,6 +3,7 @@ import type { TableColumnsType as ColumnsType } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import { TelemetryFieldKey } from 'api/v5/v5';
+import type { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
@@ -41,12 +42,23 @@ export const transformDataWithDate = (
 	data[0]?.list?.map(({ data, timestamp }) => ({ ...data, date: timestamp })) ||
 	[];
 
-export const getTraceLink = (record: RowData): string =>
-	`${ROUTES.TRACE}/${record.traceID || record.trace_id}${formUrlParams({
-		spanId: record.spanID || record.span_id,
+export const getTraceLink = (record: Record<string, unknown>): string => {
+	function readId(value: unknown): string {
+		if (typeof value === 'string' || typeof value === 'number') {
+			return String(value);
+		}
+		return '';
+	}
+
+	const traceId = readId(record.traceID) || readId(record.trace_id);
+	const spanId = readId(record.spanID) || readId(record.span_id);
+
+	return `${ROUTES.TRACE}/${traceId}${formUrlParams({
+		spanId,
 		levelUp: 0,
 		levelDown: 0,
 	})}`;
+};
 
 export const getListColumns = (
 	selectedColumns: TelemetryFieldKey[],
@@ -135,4 +147,22 @@ export const getListColumns = (
 		}) || [];
 
 	return [...initialColumns, ...columns];
+};
+
+// Reshapes the query-range list payload into table rows. `id` mirrors span_id so
+// TanStack sees genuine row changes on orderBy toggles instead of falling back to
+// positional ids; `timestamp` is lifted from the wrapping ListItem.
+export const transformSpanRows = (data: QueryDataV3[]): TracesTableRow[] => {
+	const list = data[0]?.list;
+	if (!list) {
+		return [];
+	}
+	return list.map((item) => {
+		const row = item.data as Record<string, unknown>;
+		return {
+			...row,
+			timestamp: item.timestamp,
+			id: row.span_id,
+		};
+	}) as TracesTableRow[];
 };
