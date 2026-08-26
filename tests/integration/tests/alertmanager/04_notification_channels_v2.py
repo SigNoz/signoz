@@ -210,7 +210,9 @@ def test_create_rejects_a_duplicate_display_name(
         timeout=TIMEOUT,
     )
     assert response.status_code == HTTPStatus.CONFLICT, response.text
-    assert "unique" in response.text
+    # Both v2 conflicts share a status and an error code, so only the message
+    # separates a clashing display name from a clashing name.
+    assert "display name" in response.text
 
 
 @pytest.mark.parametrize(
