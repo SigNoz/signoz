@@ -168,6 +168,17 @@ export function assertDatasetFacts(dataset: DatasetKey): SeededFacts {
 	const declared = datasetFacts(dataset);
 	const actual = factsFor(dataset, readRows(dataset));
 
+	// Both loops below are guarded on non-empty input, so a dataset that declares
+	// neither is registered with nothing this function can check.
+	if (
+		declared.names.length === 0 &&
+		Object.keys(declared.groups ?? {}).length === 0
+	) {
+		throw new Error(
+			`dataset ${dataset} declares no names and no groups, so SMOKE-00 asserts nothing about it`,
+		);
+	}
+
 	if (declared.names.length > 0) {
 		const missing = declared.names.filter((name) => !actual.names.includes(name));
 		if (missing.length > 0) {
