@@ -296,12 +296,12 @@ describe('useOptionsMenu', () => {
 				}),
 			);
 
-			// New order: [attribute.service.name, log.body, resource.service.name, log.timestamp]
+			// New order: [attribute:service.name, log:body, resource:service.name, log:timestamp]
 			result.current.config.addColumn?.onReorder([
-				'attribute.service.name',
-				'log.body',
-				'resource.service.name',
-				'log.timestamp',
+				'attribute:service.name:string',
+				'log:body:string',
+				'resource:service.name:string',
+				'log:timestamp',
 			]);
 
 			expect(mockUpdateColumns).toHaveBeenCalledTimes(1);
@@ -309,13 +309,13 @@ describe('useOptionsMenu', () => {
 			expect(
 				reordered.map(
 					(c: { name: string; fieldContext: string }) =>
-						`${c.fieldContext}.${c.name}`,
+						`${c.fieldContext}:${c.name}`,
 				),
 			).toStrictEqual([
-				'attribute.service.name',
-				'log.body',
-				'resource.service.name',
-				'log.timestamp',
+				'attribute:service.name',
+				'log:body',
+				'resource:service.name',
+				'log:timestamp',
 			]);
 		});
 
@@ -329,11 +329,11 @@ describe('useOptionsMenu', () => {
 
 			result.current.config.addColumn?.onReorder([
 				'state-indicator',
-				'log.timestamp',
+				'log:timestamp',
 				'unknown.composite',
-				'log.body',
-				'resource.service.name',
-				'attribute.service.name',
+				'log:body:string',
+				'resource:service.name:string',
+				'attribute:service.name:string',
 			]);
 
 			const reordered = mockUpdateColumns.mock.calls[0][0];
@@ -341,13 +341,13 @@ describe('useOptionsMenu', () => {
 			expect(
 				reordered.map(
 					(c: { name: string; fieldContext: string }) =>
-						`${c.fieldContext}.${c.name}`,
+						`${c.fieldContext}:${c.name}`,
 				),
 			).toStrictEqual([
-				'log.timestamp',
-				'log.body',
-				'resource.service.name',
-				'attribute.service.name',
+				'log:timestamp',
+				'log:body',
+				'resource:service.name',
+				'attribute:service.name',
 			]);
 		});
 
@@ -359,17 +359,17 @@ describe('useOptionsMenu', () => {
 				}),
 			);
 
-			// Removing 'resource.service.name' should drop ONLY the resource variant.
-			result.current.config.addColumn?.onRemove('resource.service.name');
+			// Removing 'resource:service.name' should drop ONLY the resource variant.
+			result.current.config.addColumn?.onRemove('resource:service.name:string');
 
 			expect(mockUpdateColumns).toHaveBeenCalledTimes(1);
 			const remaining = mockUpdateColumns.mock.calls[0][0];
 			expect(
 				remaining.map(
 					(c: { name: string; fieldContext: string }) =>
-						`${c.fieldContext}.${c.name}`,
+						`${c.fieldContext}:${c.name}`,
 				),
-			).toStrictEqual(['log.body', 'attribute.service.name', 'log.timestamp']);
+			).toStrictEqual(['log:body', 'attribute:service.name', 'log:timestamp']);
 		});
 
 		it('removing by a non-matching composite ID is a no-op (filter returns the full list)', () => {
