@@ -8,7 +8,6 @@ import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-/** The only fields both key endpoints agree on; ai_observability reports a wider fieldContext (adds trace). */
 export interface SuggestedFieldKey {
 	name: string;
 	fieldContext?: string;
@@ -16,6 +15,15 @@ export interface SuggestedFieldKey {
 }
 
 export type SuggestedFieldKeysByName = Record<string, SuggestedFieldKey[]>;
+
+export interface SuggestedFieldKeysPayload {
+	complete: boolean;
+	keys: SuggestedFieldKeysByName;
+}
+
+export interface SuggestedFieldKeysResponse {
+	data: { data?: SuggestedFieldKeysPayload };
+}
 
 export interface SuggestedFieldValues {
 	stringValues: string[];
@@ -42,7 +50,6 @@ interface FetchFieldValuesParams {
 	signalSource?: 'meter' | '';
 }
 
-/** getValueSuggestions declares data as an array, but the endpoint returns the object read here. */
 interface LegacyFieldValuesResponseData {
 	complete?: boolean;
 	values?: {
@@ -57,7 +64,6 @@ const EMPTY_FIELD_VALUES: SuggestedFieldValues = {
 	complete: false,
 };
 
-/** builder_ai_query needs the ai_observability endpoint: its per-trace aggregates are computed, never ingested. */
 export const fetchFieldKeysForQuery = async ({
 	builderQueryType,
 	dataSource,
@@ -65,29 +71,28 @@ export const fetchFieldKeysForQuery = async ({
 	metricName,
 	signalSource,
 	metricNamespace,
-}: FetchFieldKeysParams): Promise<SuggestedFieldKeysByName | undefined> => {
+}: FetchFieldKeysParams): Promise<SuggestedFieldKeysResponse> => {
 	if (builderQueryType === 'builder_ai_query') {
 		const response = await getAIObservabilityFieldsKeys({ searchText });
 
-		return response.data?.keys ?? undefined;
+		return {
+			data: {
+				data: response.data
+					? { complete: response.data.complete, keys: response.data.keys ?? {} }
+					: undefined,
+			},
+		};
 	}
 
-	const response = await getKeySuggestions({
+	return getKeySuggestions({
 		signal: dataSource,
 		searchText,
 		metricName,
 		signalSource,
 		metricNamespace,
 	});
-
-	return response.data.data?.keys;
 };
 
-/**
- * Mirrors fetchFieldKeysForQuery for values, so a key suggested under the gen_ai gate is
- * valued under it too. fieldContext must be forwarded: the endpoint short-circuits the
- * computed trace aggregates on it rather than scanning for attributes that were never ingested.
- */
 export const fetchFieldValuesForQuery = async ({
 	builderQueryType,
 	dataSource,

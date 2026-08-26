@@ -69,8 +69,9 @@ describe('fetchFieldKeysForQuery', () => {
 
 		expect(mockedAIKeys).toHaveBeenCalledWith({ searchText: 'llm' });
 		expect(mockedGenericKeys).not.toHaveBeenCalled();
-		expect(keys).toStrictEqual({
-			llm_call_count: [{ name: 'llm_call_count' }],
+		expect(keys.data.data).toStrictEqual({
+			complete: true,
+			keys: { llm_call_count: [{ name: 'llm_call_count' }] },
 		});
 	});
 
@@ -94,19 +95,34 @@ describe('fetchFieldKeysForQuery', () => {
 		);
 	});
 
-	it('normalizes a null ai_observability keys payload to undefined', async () => {
+	it('normalizes a null ai_observability keys payload to an empty map', async () => {
 		mockedAIKeys.mockResolvedValue({
 			status: 'success',
 			data: { complete: false, keys: null },
 		} as Awaited<ReturnType<typeof getAIObservabilityFieldsKeys>>);
 
+		const response = await fetchFieldKeysForQuery({
+			builderQueryType: 'builder_ai_query',
+			dataSource: DataSource.TRACES,
+			searchText: '',
+		});
+
+		expect(response.data.data).toStrictEqual({ complete: false, keys: {} });
+	});
+
+	it('passes the generic response through untouched', async () => {
+		const genericResponse = {
+			data: { status: 'success', data: { complete: true, keys: {} } },
+		} as unknown as Awaited<ReturnType<typeof getKeySuggestions>>;
+		mockedGenericKeys.mockResolvedValue(genericResponse);
+
 		await expect(
 			fetchFieldKeysForQuery({
-				builderQueryType: 'builder_ai_query',
+				builderQueryType: 'builder_query',
 				dataSource: DataSource.TRACES,
 				searchText: '',
 			}),
-		).resolves.toBeUndefined();
+		).resolves.toBe(genericResponse);
 	});
 });
 

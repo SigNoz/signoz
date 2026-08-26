@@ -328,7 +328,7 @@ function QuerySearch({
 
 			lastFetchedKeyRef.current = searchText || '';
 
-			const keys = await fetchFieldKeysForQuery({
+			const response = await fetchFieldKeysForQuery({
 				builderQueryType: queryData.builderQueryType,
 				dataSource,
 				searchText: searchText || '',
@@ -337,7 +337,8 @@ function QuerySearch({
 				metricNamespace,
 			});
 
-			if (keys) {
+			if (response.data.data) {
+				const { keys } = response.data.data;
 				const options = generateOptions(keys);
 				// Deduplicate by full variant identity (name + context + data type), NOT by
 				// label. deduping by label removes varient which is not expected. If we need
