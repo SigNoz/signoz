@@ -25,10 +25,16 @@ export interface SuggestedFieldKeysResponse {
 	data: { data?: SuggestedFieldKeysPayload };
 }
 
-export interface SuggestedFieldValues {
-	stringValues: string[];
-	numberValues: number[];
-	complete: boolean;
+export interface SuggestedFieldValuesPayload {
+	complete?: boolean;
+	values?: {
+		stringValues?: string[] | null;
+		numberValues?: number[] | null;
+	} | null;
+}
+
+export interface SuggestedFieldValuesResponse {
+	data: { data?: SuggestedFieldValuesPayload };
 }
 
 interface FetchFieldKeysParams {
@@ -49,20 +55,6 @@ interface FetchFieldValuesParams {
 	metricName?: string;
 	signalSource?: 'meter' | '';
 }
-
-interface LegacyFieldValuesResponseData {
-	complete?: boolean;
-	values?: {
-		stringValues?: string[] | null;
-		numberValues?: number[] | null;
-	} | null;
-}
-
-const EMPTY_FIELD_VALUES: SuggestedFieldValues = {
-	stringValues: [],
-	numberValues: [],
-	complete: false,
-};
 
 export const fetchFieldKeysForQuery = async ({
 	builderQueryType,
@@ -101,7 +93,7 @@ export const fetchFieldValuesForQuery = async ({
 	fieldContext,
 	metricName,
 	signalSource,
-}: FetchFieldValuesParams): Promise<SuggestedFieldValues> => {
+}: FetchFieldValuesParams): Promise<SuggestedFieldValuesResponse> => {
 	if (builderQueryType === 'builder_ai_query') {
 		const response = await getAIObservabilityFieldsValues({
 			name: key,
@@ -109,34 +101,15 @@ export const fetchFieldValuesForQuery = async ({
 			fieldContext: fieldContext as TelemetrytypesFieldContextDTO | undefined,
 		});
 
-		return {
-			stringValues: response.data?.values?.stringValues ?? [],
-			numberValues: response.data?.values?.numberValues ?? [],
-			complete: response.data?.complete ?? false,
-		};
+		return { data: { data: response.data } };
 	}
 
-	const response = await getValueSuggestions({
+	// getValueSuggestions' declared response type does not match what the endpoint returns.
+	return getValueSuggestions({
 		signal: dataSource,
 		key,
 		searchText,
 		signalSource,
 		metricName,
-	});
-
-	const data = (
-		response.data as unknown as {
-			data?: LegacyFieldValuesResponseData;
-		}
-	)?.data;
-
-	if (!data) {
-		return EMPTY_FIELD_VALUES;
-	}
-
-	return {
-		stringValues: data.values?.stringValues ?? [],
-		numberValues: data.values?.numberValues ?? [],
-		complete: data.complete ?? false,
-	};
+	}) as unknown as Promise<SuggestedFieldValuesResponse>;
 };

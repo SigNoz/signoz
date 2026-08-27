@@ -516,6 +516,15 @@ function QuerySearch({
 							)?.fieldContext,
 							signalSource: signalSource as 'meter' | '',
 							metricName: debouncedMetricName ?? undefined,
+						}).then((response) => {
+							const responseData = response.data as any;
+							const data = responseData.data || {};
+							const values = data.values || {};
+							return {
+								stringValues: values.stringValues || [],
+								numberValues: values.numberValues || [],
+								complete: data.complete ?? false,
+							};
 						});
 
 				// Skip updates if component unmounted or key changed

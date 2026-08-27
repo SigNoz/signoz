@@ -136,7 +136,7 @@ describe('fetchFieldValuesForQuery', () => {
 			aiValuesResponse({ stringValues: ['gpt-4o'], numberValues: [] }),
 		);
 
-		const values = await fetchFieldValuesForQuery({
+		const response = await fetchFieldValuesForQuery({
 			builderQueryType: 'builder_ai_query',
 			dataSource: DataSource.TRACES,
 			key: 'gen_ai.request.model',
@@ -145,17 +145,20 @@ describe('fetchFieldValuesForQuery', () => {
 		});
 
 		expect(mockedGenericValues).not.toHaveBeenCalled();
-		expect(values).toStrictEqual({
-			stringValues: ['gpt-4o'],
-			numberValues: [],
-			complete: true,
+		expect(response).toStrictEqual({
+			data: {
+				data: {
+					complete: true,
+					values: { stringValues: ['gpt-4o'], numberValues: [] },
+				},
+			},
 		});
 	});
 
 	it('forwards fieldContext so the endpoint can short-circuit trace aggregates', async () => {
 		mockedAIValues.mockResolvedValue(aiValuesResponse({}));
 
-		const values = await fetchFieldValuesForQuery({
+		await fetchFieldValuesForQuery({
 			builderQueryType: 'builder_ai_query',
 			dataSource: DataSource.TRACES,
 			key: 'total_tokens',
@@ -168,14 +171,9 @@ describe('fetchFieldValuesForQuery', () => {
 			searchText: '',
 			fieldContext: TelemetrytypesFieldContextDTO.trace,
 		});
-		expect(values).toStrictEqual({
-			stringValues: [],
-			numberValues: [],
-			complete: true,
-		});
 	});
 
-	it('normalizes a null ai_observability values payload to empty lists', async () => {
+	it('wraps the ai_observability payload in the envelope the call site unwraps', async () => {
 		mockedAIValues.mockResolvedValue(aiValuesResponse(null, false));
 
 		await expect(
@@ -187,9 +185,7 @@ describe('fetchFieldValuesForQuery', () => {
 				fieldContext: 'trace',
 			}),
 		).resolves.toStrictEqual({
-			stringValues: [],
-			numberValues: [],
-			complete: false,
+			data: { data: { complete: false, values: null } },
 		});
 	});
 
@@ -197,13 +193,14 @@ describe('fetchFieldValuesForQuery', () => {
 		['an unmarked query', undefined],
 		['an explicitly generic query', 'builder_query'],
 	])('reads the generic endpoint for %s', async (_label, builderQueryType) => {
-		mockedGenericValues.mockResolvedValue({
+		const genericResponse = {
 			data: {
 				data: { complete: false, values: { stringValues: ['frontend'] } },
 			},
-		} as unknown as Awaited<ReturnType<typeof getValueSuggestions>>);
+		} as unknown as Awaited<ReturnType<typeof getValueSuggestions>>;
+		mockedGenericValues.mockResolvedValue(genericResponse);
 
-		const values = await fetchFieldValuesForQuery({
+		const response = await fetchFieldValuesForQuery({
 			builderQueryType,
 			dataSource: DataSource.TRACES,
 			key: 'service.name',
@@ -218,29 +215,6 @@ describe('fetchFieldValuesForQuery', () => {
 				searchText: 'front',
 			}),
 		);
-		expect(values).toStrictEqual({
-			stringValues: ['frontend'],
-			numberValues: [],
-			complete: false,
-		});
-	});
-
-	it('falls back to empty lists when the generic endpoint returns no data', async () => {
-		mockedGenericValues.mockResolvedValue({ data: {} } as unknown as Awaited<
-			ReturnType<typeof getValueSuggestions>
-		>);
-
-		await expect(
-			fetchFieldValuesForQuery({
-				builderQueryType: 'builder_query',
-				dataSource: DataSource.TRACES,
-				key: 'service.name',
-				searchText: '',
-			}),
-		).resolves.toStrictEqual({
-			stringValues: [],
-			numberValues: [],
-			complete: false,
-		});
+		expect(response).toBe(genericResponse);
 	});
 });
