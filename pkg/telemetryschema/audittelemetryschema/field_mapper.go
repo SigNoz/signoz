@@ -68,7 +68,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, _ valuer.UUID, _, _ uint64, 
 		if key.FieldContext != telemetrytypes.FieldContextResource {
 			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "only resource context fields are supported for json columns in audit, got %s", key.FieldContext.String)
 		}
-		return fmt.Sprintf("%s.`%s`::String", column.Name, key.Name), nil
+		return fmt.Sprintf("%s.%s::String", column.Name, querybuilder.ClickHouseIdentifier(key.Name)), nil
 	case schema.ColumnTypeEnumLowCardinality:
 		return column.Name, nil
 	case schema.ColumnTypeEnumString, schema.ColumnTypeEnumUInt64, schema.ColumnTypeEnumUInt32, schema.ColumnTypeEnumUInt8:
@@ -84,7 +84,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, _ valuer.UUID, _, _ uint64, 
 			if key.Materialized {
 				return telemetrytypes.FieldKeyToMaterializedColumnName(key), nil
 			}
-			return fmt.Sprintf("%s['%s']", column.Name, key.Name), nil
+			return fmt.Sprintf("%s[%s]", column.Name, querybuilder.ClickHouseStringLiteral(key.Name)), nil
 		default:
 			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported map value type %s", valueType)
 		}
@@ -156,7 +156,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 		return fmt.Sprintf("multiIf(%s, %s, NULL)", guard, coerced), nil
 	}
 
-	return fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(fieldExpression), field.Name), nil
+	return fmt.Sprintf("%s AS %s", sqlbuilder.Escape(fieldExpression), querybuilder.ClickHouseIdentifier(field.Name)), nil
 }
 
 // CandidateKeys returns nil: audit has no synthesize-on-unknown-key fallback, so an

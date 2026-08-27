@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -79,14 +80,14 @@ func (m *fieldMapper) FieldFor(ctx context.Context, _ valuer.UUID, startNs, endN
 
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource, telemetrytypes.FieldContextScope, telemetrytypes.FieldContextAttribute:
-		return fmt.Sprintf("JSONExtractString(%s, '%s')", columns[0].Name, key.Name), nil
+		return fmt.Sprintf("JSONExtractString(%s, %s)", columns[0].Name, querybuilder.ClickHouseStringLiteral(key.Name)), nil
 	case telemetrytypes.FieldContextMetric:
 		return columns[0].Name, nil
 	case telemetrytypes.FieldContextUnspecified:
 		if slices.Contains(IntrinsicFields, key.Name) {
 			return columns[0].Name, nil
 		}
-		return fmt.Sprintf("JSONExtractString(%s, '%s')", columns[0].Name, key.Name), nil
+		return fmt.Sprintf("JSONExtractString(%s, %s)", columns[0].Name, querybuilder.ClickHouseStringLiteral(key.Name)), nil
 	}
 
 	return columns[0].Name, nil
@@ -103,9 +104,9 @@ func (m *fieldMapper) ExistsFor(_ context.Context, _ valuer.UUID, _, _ uint64, k
 		return "true", nil
 	}
 	if exists {
-		return fmt.Sprintf("has(JSONExtractKeys(labels), '%s')", key.Name), nil
+		return fmt.Sprintf("has(JSONExtractKeys(labels), %s)", querybuilder.ClickHouseStringLiteral(key.Name)), nil
 	}
-	return fmt.Sprintf("not has(JSONExtractKeys(labels), '%s')", key.Name), nil
+	return fmt.Sprintf("not has(JSONExtractKeys(labels), %s)", querybuilder.ClickHouseStringLiteral(key.Name)), nil
 }
 
 func (m *fieldMapper) ColumnExpressionFor(

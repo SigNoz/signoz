@@ -96,7 +96,7 @@ func valueIndexCondition(
 func memberPresenceCondition(sb *sqlbuilder.SelectBuilder, column string, members []*telemetrytypes.TelemetryFieldKey, exists bool) string {
 	conditions := make([]string, 0, len(members))
 	for _, member := range members {
-		field := fmt.Sprintf("simpleJSONHas(%s, '%s')", column, member.Name)
+		field := fmt.Sprintf("simpleJSONHas(%s, %s)", column, querybuilder.ClickHouseStringLiteral(member.Name))
 		if exists {
 			conditions = append(conditions, sb.E(field, true))
 		} else {
