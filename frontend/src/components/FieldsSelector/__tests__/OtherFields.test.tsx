@@ -1,34 +1,23 @@
 import { fireEvent, render, screen } from 'tests/test-utils';
-import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
-
-import { useStaticFields } from '../useStaticFields';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import OtherFields from '../OtherFields';
+import { useSelectableFields } from '../useSelectableFields';
 
-jest.mock('hooks/querySuggestions/useGetQueryKeySuggestions');
-jest.mock('../useStaticFields', () => ({
-	useStaticFields: jest.fn(() => ({ fields: undefined, isLoading: false })),
+jest.mock('../useSelectableFields', () => ({
+	useSelectableFields: jest.fn(() => ({ fields: [], isLoading: false })),
 }));
 
 const mockSuggestions = (names: string[]): void => {
-	(useGetQueryKeySuggestions as jest.Mock).mockReturnValue({
-		data: {
-			data: {
-				data: {
-					keys: {
-						attributeKeys: names.map((name) => ({
-							name,
-							signal: 'logs',
-							fieldDataType: 'string',
-							fieldContext: '',
-						})),
-					},
-				},
-			},
-		},
-		isFetching: false,
+	(useSelectableFields as jest.Mock).mockReturnValue({
+		fields: names.map((name) => ({
+			name,
+			signal: 'logs',
+			fieldDataType: 'string',
+			fieldContext: '',
+		})),
+		isLoading: false,
 	});
 };
 
@@ -136,7 +125,7 @@ describe('OtherFields — addStaticFields (named pool)', () => {
 
 	beforeEach(() => {
 		mockSuggestions(['ingested.field']);
-		(useStaticFields as jest.Mock).mockReturnValue({
+		(useSelectableFields as jest.Mock).mockReturnValue({
 			fields: pool,
 			isLoading: false,
 		});
@@ -148,9 +137,8 @@ describe('OtherFields — addStaticFields (named pool)', () => {
 		expect(screen.getByText('total_tokens')).toBeInTheDocument();
 		expect(screen.getByText('llm_call_count')).toBeInTheDocument();
 		expect(screen.queryByText('ingested.field')).not.toBeInTheDocument();
-		expect(useGetQueryKeySuggestions).toHaveBeenCalledWith(
-			expect.anything(),
-			expect.objectContaining({ enabled: false }),
+		expect(useSelectableFields).toHaveBeenCalledWith(
+			expect.objectContaining({ source: 'ai_o11y' }),
 		);
 	});
 

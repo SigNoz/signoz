@@ -3,19 +3,13 @@ import { Button } from '@signozhq/ui/button';
 import { Skeleton } from 'antd';
 import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
-import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
-import {
-	FieldContext,
-	SignalType,
-	TelemetryFieldKey,
-} from 'types/api/v5/queryRange';
+import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import styles from './FieldsSelector.module.scss';
 import { StaticFieldsSource } from './staticFields';
-import { useStaticFields } from './useStaticFields';
+import { useSelectableFields } from './useSelectableFields';
 
 interface OtherFieldsProps {
 	signal: DataSource;
@@ -24,7 +18,6 @@ interface OtherFieldsProps {
 	onAdd: (field: TelemetryFieldKey) => void;
 	isAtLimit: boolean;
 	allowCustomFields?: boolean;
-	/** Names a built-in pool, filtered client-side, for fields the keys endpoint cannot report. */
 	addStaticFields?: StaticFieldsSource;
 }
 
@@ -37,36 +30,22 @@ function OtherFields({
 	allowCustomFields,
 	addStaticFields,
 }: OtherFieldsProps): JSX.Element {
-	const { fields: staticFields, isLoading: isLoadingStaticFields } =
-		useStaticFields(addStaticFields);
-	const hasStaticFields = staticFields !== undefined;
-	const { data, isFetching } = useGetQueryKeySuggestions(
-		{
-			signal,
-			searchText: debouncedInputValue,
-		},
-		{
-			queryKey: [
-				REACT_QUERY_KEY.GET_FIELDS_SELECTOR_SUGGESTIONS,
-				signal,
-				debouncedInputValue,
-			],
-			enabled: !hasStaticFields,
-		},
-	);
+	const { fields, isLoading } = useSelectableFields({
+		signal,
+		searchText: debouncedInputValue,
+		source: addStaticFields,
+	});
 
 	const otherFields = useMemo<TelemetryFieldKey[]>(() => {
+		// A named source returns the whole pool, so the search narrows it here.
 		const search = debouncedInputValue.trim().toLowerCase();
-		const rawSuggestions = staticFields
-			? staticFields.filter((field) => field.name.toLowerCase().includes(search))
-			: Object.values(data?.data.data.keys || {}).flat();
+		const rawSuggestions = addStaticFields
+			? fields.filter((field) => field.name.toLowerCase().includes(search))
+			: fields;
 		// Normalize: synthesize `key` once so downstream reads can trust it.
 		const suggestions: TelemetryFieldKey[] = rawSuggestions.map((attr) => ({
 			...attr,
 			key: buildCompositeKey(attr.name, attr.fieldContext, attr.fieldDataType),
-			signal: attr.signal as SignalType,
-			fieldContext: attr.fieldContext as FieldContext,
-			fieldDataType: attr.fieldDataType,
 		}));
 		const addedIds = new Set(
 			addedFields.map((f) =>
@@ -98,9 +77,15 @@ function OtherFields({
 			key: buildCompositeKey(typed, ''),
 		};
 		return [customField, ...available];
-	}, [data, addedFields, allowCustomFields, debouncedInputValue, staticFields]);
+	}, [
+		fields,
+		addedFields,
+		allowCustomFields,
+		debouncedInputValue,
+		addStaticFields,
+	]);
 
-	if (isFetching || isLoadingStaticFields) {
+	if (isLoading) {
 		return (
 			<div className={cx(styles.section, styles.sectionOther)}>
 				<div className={styles.sectionHeader}>OTHER FIELDS</div>

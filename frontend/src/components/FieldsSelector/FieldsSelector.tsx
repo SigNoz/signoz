@@ -32,7 +32,6 @@ interface FieldsSelectorProps {
 	// Lets users add a free-typed field which
 	// does not show up in the suggestions
 	allowCustomFields?: boolean;
-	// Names a built-in pool to offer instead of the key suggestions endpoint.
 	addStaticFields?: StaticFieldsSource;
 	width?: number;
 	height?: number;

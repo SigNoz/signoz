@@ -1,11 +1,13 @@
 import { act, fireEvent, render, screen } from 'tests/test-utils';
-import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import FieldsSelector from '../FieldsSelector';
+import { useSelectableFields } from '../useSelectableFields';
 
-jest.mock('hooks/querySuggestions/useGetQueryKeySuggestions');
+jest.mock('../useSelectableFields', () => ({
+	useSelectableFields: jest.fn(() => ({ fields: [], isLoading: false })),
+}));
 
 jest.mock('@signozhq/ui/sonner', () => ({
 	...jest.requireActual('@signozhq/ui/sonner'),
@@ -21,22 +23,14 @@ jest.mock('periscope/components/FloatingPanel', () => ({
 }));
 
 const mockSuggestions = (names: string[]): void => {
-	(useGetQueryKeySuggestions as jest.Mock).mockReturnValue({
-		data: {
-			data: {
-				data: {
-					keys: {
-						attributeKeys: names.map((name) => ({
-							name,
-							signal: 'logs',
-							fieldDataType: 'string',
-							fieldContext: '',
-						})),
-					},
-				},
-			},
-		},
-		isFetching: false,
+	(useSelectableFields as jest.Mock).mockReturnValue({
+		fields: names.map((name) => ({
+			name,
+			signal: 'logs',
+			fieldDataType: 'string',
+			fieldContext: '',
+		})),
+		isLoading: false,
 	});
 };
 

@@ -9,7 +9,7 @@ export type StaticFieldsSource = 'ai_o11y';
  * aggregates are absent here on purpose — they come from the endpoint.
  */
 export const AI_O11Y_DISPLAY_ONLY_FIELDS: TelemetryFieldKey[] = [
-	{ name: 'service.name' },
+	{ name: 'service.name', fieldContext: 'resource' },
 	{ name: 'root_span_name' },
 	{ name: 'trace_duration_nano' },
 	{ name: 'span_count' },
@@ -22,7 +22,9 @@ export const AI_O11Y_DISPLAY_ONLY_FIELDS: TelemetryFieldKey[] = [
 ] as TelemetryFieldKey[];
 
 /** Shared so the selector and the trace view's column hook reuse one fetch. */
-export const AI_O11Y_AGGREGATE_KEYS_QUERY_KEY = ['traceViewAggregateKeys'];
+export const AI_O11Y_SELECTABLE_FIELDS_QUERY_KEY = [
+	'aiObservabilitySelectableFields',
+];
 
 export const mergeAIObservabilityStaticFields = (
 	aggregates: TelemetryFieldKey[],

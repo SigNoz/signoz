@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { useStaticFields } from 'components/FieldsSelector/useStaticFields';
+import { useSelectableFields } from 'components/FieldsSelector/useSelectableFields';
 import type { TableColumnDef } from 'components/TanStackTableView/types';
 import {
 	hideColumn,
@@ -13,6 +13,7 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
 import { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+import { DataSource } from 'types/common/queryBuilder';
 
 import { buildTraceViewColumns, TRACE_ID_COLUMN_ID } from './configs';
 
@@ -34,9 +35,11 @@ interface UseTraceViewColumns {
 // TODO(ai-explorer): browser-local only, unlike the list views' `?options=` columns.
 export function useTraceViewColumns(): UseTraceViewColumns {
 	// Same pool the fields selector offers, so columns and choices cannot drift apart.
-	const { fields, isLoading } = useStaticFields('ai_o11y');
-	const availableFields = useMemo(() => fields ?? [], [fields]);
-	const isFetched = !isLoading;
+	const { fields: availableFields, isFetched } = useSelectableFields({
+		signal: DataSource.TRACES,
+		searchText: '',
+		source: 'ai_o11y',
+	});
 
 	const columns = useMemo(
 		() => buildTraceViewColumns(availableFields),
