@@ -91,7 +91,6 @@ export type IBuilderQuery = {
 	offset?: number;
 	selectColumns?: BaseAutocompleteData[] | TelemetryFieldKey[];
 	source?: 'meter' | '';
-	/** Envelope type this query serializes to in the v5 payload; absent means builder_query. */
 	builderQueryType?: BuilderQueryType;
 };
 
