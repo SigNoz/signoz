@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { useSelectableFields } from 'components/FieldsSelector/useSelectableFields';
+import { useSelectableFields } from 'hooks/querySuggestions/useSelectableFields';
 import type { TableColumnDef } from 'components/TanStackTableView/types';
 import {
 	hideColumn,

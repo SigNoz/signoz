@@ -8,12 +8,11 @@ import {
 	AI_O11Y_SELECTABLE_FIELDS_QUERY_KEY,
 	mergeAIObservabilityStaticFields,
 	StaticFieldsSource,
-} from './staticFields';
+} from 'hooks/querySuggestions/staticFields';
 
 interface UseSelectableFieldsParams {
 	signal: DataSource;
 	searchText: string;
-	/** Named pool to offer instead of the keys endpoint. */
 	source?: StaticFieldsSource;
 }
 
@@ -40,7 +39,6 @@ const toFieldKeys = (
 		}),
 	);
 
-/** A named source reads the whole pool once; otherwise the keys endpoint narrows on searchText. */
 export function useSelectableFields({
 	signal,
 	searchText,

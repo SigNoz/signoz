@@ -3,9 +3,9 @@ import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import FieldsSelector from '../FieldsSelector';
-import { useSelectableFields } from '../useSelectableFields';
+import { useSelectableFields } from 'hooks/querySuggestions/useSelectableFields';
 
-jest.mock('../useSelectableFields', () => ({
+jest.mock('hooks/querySuggestions/useSelectableFields', () => ({
 	useSelectableFields: jest.fn(() => ({ fields: [], isLoading: false })),
 }));
 

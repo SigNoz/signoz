@@ -2,7 +2,7 @@ import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Settings } from '@signozhq/icons';
 import FieldsSelector from 'components/FieldsSelector';
-import { StaticFieldsSource } from 'components/FieldsSelector/staticFields';
+import { StaticFieldsSource } from 'hooks/querySuggestions/staticFields';
 import Controls, { ControlsProps } from 'container/Controls';
 import { OptionsMenuConfig } from 'container/OptionsMenu/types';
 import useQueryPagination from 'hooks/queryPagination/useQueryPagination';
@@ -71,7 +71,6 @@ type ExplorerControlsProps = Pick<
 	'isLoading' | 'totalCount' | 'perPageOptions'
 > & {
 	config?: OptionsMenuConfig | null;
-	/** Named pool for the fields selector; omit to search the keys endpoint. */
 	addStaticFields?: StaticFieldsSource;
 	requiredFields?: readonly string[];
 };

@@ -8,8 +8,8 @@ import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import styles from './FieldsSelector.module.scss';
-import { StaticFieldsSource } from './staticFields';
-import { useSelectableFields } from './useSelectableFields';
+import { StaticFieldsSource } from 'hooks/querySuggestions/staticFields';
+import { useSelectableFields } from 'hooks/querySuggestions/useSelectableFields';
 
 interface OtherFieldsProps {
 	signal: DataSource;

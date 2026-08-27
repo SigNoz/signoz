@@ -1,13 +1,8 @@
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
-/** Named field pools the selector can offer instead of the key suggestions endpoint. */
 export type StaticFieldsSource = 'ai_o11y';
 
-/**
- * Display-only columns: the trace list returns them, but the keys endpoint cannot
- * report them because ordering or filtering on one is an error. The orderable
- * aggregates are absent here on purpose — they come from the endpoint.
- */
+/** Display-only: ordering or filtering on one is an error, so the keys endpoint omits them. */
 export const AI_O11Y_DISPLAY_ONLY_FIELDS: TelemetryFieldKey[] = [
 	{ name: 'service.name', fieldContext: 'resource' },
 	{ name: 'root_span_name' },
