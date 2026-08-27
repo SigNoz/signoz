@@ -212,15 +212,17 @@ export function QueryBuilderProvider({
 				return currentElement;
 			});
 
-			const promql: IPromQLQuery[] = query.promql.map((item) => ({
-				...initialQueryPromQLData,
-				...item,
-			}));
+			const promql: IPromQLQuery[] =
+				query.promql?.map((item) => ({
+					...initialQueryPromQLData,
+					...item,
+				})) ?? [];
 
-			const clickHouse: IClickHouseQuery[] = query.clickhouse_sql.map((item) => ({
-				...initialClickHouseData,
-				...item,
-			}));
+			const clickHouse: IClickHouseQuery[] =
+				query.clickhouse_sql?.map((item) => ({
+					...initialClickHouseData,
+					...item,
+				})) ?? [];
 
 			const newQueryState: QueryState = {
 				clickhouse_sql: clickHouse,
