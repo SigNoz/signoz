@@ -8011,6 +8011,7 @@ components:
       - logs
       - metrics
       - meter
+      - ai_observability
       type: string
     SavedviewtypesUpdatableSavedView:
       properties:
@@ -8801,6 +8802,7 @@ components:
       - span
       - trace
       - resource
+      - scope
       - attribute
       - body
       - ""
@@ -15468,10 +15470,8 @@ paths:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
       security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
+      - api_key: []
+      - tokenizer: []
       summary: Get features
       tags:
       - features

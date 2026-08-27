@@ -23,10 +23,11 @@ var (
 const savedViewNameSuffixLen = 8
 
 var (
-	SourceTraces  = Source{valuer.NewString("traces")}
-	SourceLogs    = Source{valuer.NewString("logs")}
-	SourceMetrics = Source{valuer.NewString("metrics")}
-	SourceMeter   = Source{valuer.NewString("meter")}
+	SourceTraces          = Source{valuer.NewString("traces")}
+	SourceLogs            = Source{valuer.NewString("logs")}
+	SourceMetrics         = Source{valuer.NewString("metrics")}
+	SourceMeter           = Source{valuer.NewString("meter")}
+	SourceAIObservability = Source{valuer.NewString("ai_observability")}
 )
 
 type SavedView struct {
@@ -117,12 +118,13 @@ func (Source) Enum() []any {
 		SourceLogs,
 		SourceMetrics,
 		SourceMeter,
+		SourceAIObservability,
 	}
 }
 
 func (s Source) Validate() error {
 	switch s {
-	case SourceTraces, SourceLogs, SourceMetrics, SourceMeter:
+	case SourceTraces, SourceLogs, SourceMetrics, SourceMeter, SourceAIObservability:
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeSavedViewInvalidInput, "invalid source: %s", s.StringValue())
