@@ -7,7 +7,6 @@ import { TOOLBAR_VIEW_CONFIG } from './toolbarViewsConfig';
 
 import 'container/QueryBuilder/components/ToolbarActions/ToolbarActions.styles.scss';
 
-/** Labels and icons come from TOOLBAR_VIEW_CONFIG, keyed by `key`. */
 interface ToolbarViewItem {
 	name: string;
 	key: string;

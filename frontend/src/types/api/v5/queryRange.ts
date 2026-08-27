@@ -24,7 +24,7 @@ export type QueryType =
 	| 'clickhouse_sql'
 	| 'promql';
 
-/** Envelope types carrying a BuilderQuery spec; builder_ai_query routes to the gen_ai-scoped trace builder. */
+/** Envelope types carrying a BuilderQuery spec; builder_ai_query scopes to gen_ai traces. */
 export type BuilderQueryType = Extract<
 	QueryType,
 	'builder_query' | 'builder_ai_query'

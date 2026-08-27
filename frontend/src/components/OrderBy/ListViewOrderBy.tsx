@@ -11,7 +11,6 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import './ListViewOrderBy.styles.scss';
 
-/** Offered even when the keys endpoint cannot report them, e.g. an intrinsic column. */
 const DEFAULT_STATIC_OPTION_KEYS = ['timestamp'];
 
 interface ListViewOrderByProps {

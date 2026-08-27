@@ -10,7 +10,7 @@ import { DEFAULT_PANEL_TYPE } from '../constants';
 function QuerySection(): JSX.Element {
 	const panelTypes = useGetPanelTypesQueryParam(DEFAULT_PANEL_TYPE);
 
-	// Only reaches the builder for timeseries/table; list/trace panels use QueryBuilderV2's listViewTracesFilterConfigs.
+	// Reaches the builder only for timeseries/table; list and trace use listViewTracesFilterConfigs.
 	const filterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(
 		() => ({
 			stepInterval: { isHidden: false, isDisabled: false },
