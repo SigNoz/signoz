@@ -52,8 +52,9 @@ var (
 			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 			ValueType: schema.ColumnTypeString,
 		}},
-		"resource": {Name: "resource", Type: schema.JSONColumnType{}},
-		"scope":    {Name: "scope", Type: schema.JSONColumnType{}},
+		"resource":   {Name: "resource", Type: schema.JSONColumnType{}},
+		"scope":      {Name: "scope", Type: schema.JSONColumnType{}},
+		"attributes": {Name: "attributes", Type: schema.JSONColumnType{}},
 
 		"events": {Name: "events", Type: schema.ArrayColumnType{
 			ElementType: schema.ColumnTypeString,
@@ -184,16 +185,32 @@ func (m *fieldMapper) getColumn(
 	case telemetrytypes.FieldContextScope:
 		return []*schema.Column{indexV3Columns["scope"]}, nil
 	case telemetrytypes.FieldContextAttribute:
+		// Only typed keys resolve here: a data-type-unspecified attribute key
+		// falls through to ErrColumnNotFound so bare keys keep taking the legacy
+		// CandidateKeys/synthesis path rather than flipping to metadata-first.
+		var mapCol *schema.Column
 		switch key.FieldDataType {
 		case telemetrytypes.FieldDataTypeString:
-			return []*schema.Column{indexV3Columns["attributes_string"]}, nil
+			mapCol = indexV3Columns["attributes_string"]
 		case telemetrytypes.FieldDataTypeInt64,
 			telemetrytypes.FieldDataTypeFloat64,
 			telemetrytypes.FieldDataTypeNumber:
-			return []*schema.Column{indexV3Columns["attributes_number"]}, nil
+			mapCol = indexV3Columns["attributes_number"]
 		case telemetrytypes.FieldDataTypeBool:
-			return []*schema.Column{indexV3Columns["attributes_bool"]}, nil
+			mapCol = indexV3Columns["attributes_bool"]
+		default:
+			return nil, qbtypes.ErrColumnNotFound
 		}
+		// Dual-read from the JSON column only once the attributes evolution entry
+		// is registered for this key; without it, resolution is byte-for-byte the
+		// legacy Map path. The JSON column is returned first so it wins the multiIf
+		// when both homes hold the key; SelectEvolutionsForColumns narrows the pair
+		// by the query's time range. This makes the evolution entry the rollout
+		// control, exactly as it is for resource/scope.
+		if attributeJSONEvolutionRegistered(key) {
+			return []*schema.Column{indexV3Columns["attributes"], mapCol}, nil
+		}
+		return []*schema.Column{mapCol}, nil
 	case telemetrytypes.FieldContextSpan:
 		// Check if this is a span scope field
 		if strings.ToLower(key.Name) == SpanSearchScopeRoot || strings.ToLower(key.Name) == SpanSearchScopeEntryPoint {
@@ -279,6 +296,7 @@ func (m *fieldMapper) resolveColumnExprs(
 		return nil, nil, nil, err
 	}
 
+	key = narrowEvolutionsToColumns(key, columns)
 	newColumns, evolutionsEntries, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, startNs, endNs)
 	if err != nil {
 		return nil, nil, nil, err
@@ -309,6 +327,17 @@ func (m *fieldMapper) resolveColumnExprs(
 					exprs = append(exprs, fmt.Sprintf("%s.attributes.%s::String", columnName, querybuilder.ClickHouseIdentifier(attributeName)))
 					existExprs = append(existExprs, fmt.Sprintf("%s.attributes.%s IS NOT NULL", columnName, querybuilder.ClickHouseIdentifier(attributeName)))
 				}
+			case telemetrytypes.FieldContextAttribute:
+				// Span attributes are flat shared-data paths keyed by the attribute name
+				// verbatim (no nested object), so the name addresses the path directly.
+				// String casts to ::String so an absent path folds to '' — matching the
+				// Map column's default and preserving negative-operator parity; typed
+				// numeric/bool cast to Nullable so a missing or wrong-typed path reads
+				// NULL rather than 0/false. Existence tests the raw path (the cast folds
+				// NULL) and is index-eligible via attributes_paths_tokenbf.
+				path := fmt.Sprintf("%s.%s", columnName, querybuilder.ClickHouseIdentifier(key.Name))
+				exprs = append(exprs, fmt.Sprintf("%s::%s", path, attributeJSONCast(key.FieldDataType)))
+				existExprs = append(existExprs, fmt.Sprintf("%s IS NOT NULL", path))
 			default:
 				return nil, nil, nil, errors.NewInternalf(errors.CodeInternal, "only resource and scope context fields are supported for json columns, got %s", key.FieldContext.String)
 			}
@@ -351,6 +380,66 @@ func (m *fieldMapper) resolveColumnExprs(
 	}
 
 	return exprs, existExprs, columns, nil
+}
+
+// attributeJSONEvolutionRegistered reports whether the key carries an evolution entry for the
+// `attributes` JSON column. Until that entry is registered, attribute resolution stays on the
+// legacy Map column and the JSON column is never touched.
+func attributeJSONEvolutionRegistered(key *telemetrytypes.TelemetryFieldKey) bool {
+	for _, e := range key.Evolutions {
+		if e != nil && e.ColumnName == SpanAttributesColumn {
+			return true
+		}
+	}
+	return false
+}
+
+// narrowEvolutionsToColumns returns key.Evolutions filtered to entries whose column is in cols.
+// A metadata attribute key carries the `__all__` evolutions for every attribute-context column
+// (all three legacy maps plus the JSON column), but getColumn resolves a typed key to only its
+// own map + the JSON column; without this filter SelectEvolutionsForColumns would reject the
+// in-range sibling-map entries as columns not present in the slice. A no-op for every other
+// context, where getColumn already returns exactly the columns the evolutions name.
+func narrowEvolutionsToColumns(key *telemetrytypes.TelemetryFieldKey, cols []*schema.Column) *telemetrytypes.TelemetryFieldKey {
+	if len(key.Evolutions) == 0 {
+		return key
+	}
+	allowed := make(map[string]struct{}, len(cols))
+	for _, c := range cols {
+		allowed[c.Name] = struct{}{}
+	}
+	filtered := make([]*telemetrytypes.EvolutionEntry, 0, len(key.Evolutions))
+	for _, e := range key.Evolutions {
+		if e == nil {
+			continue
+		}
+		if _, ok := allowed[e.ColumnName]; ok {
+			filtered = append(filtered, e)
+		}
+	}
+	if len(filtered) == len(key.Evolutions) {
+		return key
+	}
+	narrowed := *key
+	narrowed.Evolutions = filtered
+	return &narrowed
+}
+
+// attributeJSONCast returns the ClickHouse cast target for a span attribute read from the
+// JSON column. String (and data-type-unspecified) casts to non-nullable String so an absent
+// path folds to ” the way the Map column's default does, keeping negative-operator parity;
+// numeric and bool cast to Nullable so an absent or wrong-typed path reads NULL instead of a
+// spurious 0/false. GROUP BY accepts these Nullable scalar casts (unlike a raw Dynamic).
+func attributeJSONCast(dataType telemetrytypes.FieldDataType) string {
+	switch dataType {
+	case telemetrytypes.FieldDataTypeInt64,
+		telemetrytypes.FieldDataTypeFloat64,
+		telemetrytypes.FieldDataTypeNumber,
+		telemetrytypes.FieldDataTypeBool:
+		return fmt.Sprintf("Nullable(%s)", telemetrytypes.MappingFieldDataTypeToJSONDataType[dataType].StringValue())
+	default:
+		return "String"
+	}
 }
 
 // upgradeToFamilies swaps single-member candidates for their family when the
@@ -516,6 +605,7 @@ func (m *fieldMapper) columnIsTemporal(ctx context.Context, startNs, endNs uint6
 	if err != nil {
 		return false, err
 	}
+	key = narrowEvolutionsToColumns(key, columns)
 	newColumns, _, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, startNs, endNs)
 	if err != nil {
 		return false, err
@@ -638,6 +728,7 @@ func (m *fieldMapper) ExistsFor(
 	if err != nil {
 		return "", err
 	}
+	key = narrowEvolutionsToColumns(key, columns)
 	fieldExpression, err := m.FieldFor(ctx, orgID, tsStart, tsEnd, key)
 	if err != nil {
 		return "", err

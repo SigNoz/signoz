@@ -43,6 +43,7 @@ const (
 	SpanAttributesStringColumn = "attributes_string"
 	SpanAttributesNumberColumn = "attributes_number"
 	SpanAttributesBoolColumn   = "attributes_bool"
+	SpanAttributesColumn       = "attributes"
 	SpanResourcesStringColumn  = "resources_string"
 )
 

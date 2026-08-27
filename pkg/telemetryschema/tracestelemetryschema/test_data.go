@@ -154,6 +154,29 @@ func BuildCompleteFieldKeyMap(releaseTime time.Time) map[string][]*telemetrytype
 	return keysMap
 }
 
+// MockAttributeEvolutionData returns the attribute-context evolution timeline: the three legacy
+// map columns at epoch 0 and the JSON `attributes` column released at releaseTime. Every entry
+// is field_name "__all__", so a typed attribute key carries all four; getColumn keeps only its
+// own map plus the JSON column and narrowEvolutionsToColumns drops the rest before selection.
+func MockAttributeEvolutionData(releaseTime time.Time) []*telemetrytypes.EvolutionEntry {
+	entry := func(col, typ string, rt time.Time) *telemetrytypes.EvolutionEntry {
+		return &telemetrytypes.EvolutionEntry{
+			Signal:       telemetrytypes.SignalTraces,
+			ColumnName:   col,
+			ColumnType:   typ,
+			FieldContext: telemetrytypes.FieldContextAttribute,
+			FieldName:    "__all__",
+			ReleaseTime:  rt,
+		}
+	}
+	return []*telemetrytypes.EvolutionEntry{
+		entry("attributes_string", "Map(LowCardinality(String), String)", time.Unix(0, 0)),
+		entry("attributes_number", "Map(LowCardinality(String), Float64)", time.Unix(0, 0)),
+		entry("attributes_bool", "Map(LowCardinality(String), Bool)", time.Unix(0, 0)),
+		entry("attributes", "JSON()", releaseTime),
+	}
+}
+
 // MockEvolutionData returns the canonical resource-column evolution timeline used in tests:
 // the legacy resources_string map at epoch 0 and the JSON resource column released at releaseTime.
 func MockEvolutionData(releaseTime time.Time) []*telemetrytypes.EvolutionEntry {

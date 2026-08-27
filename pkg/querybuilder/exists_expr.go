@@ -43,7 +43,7 @@ func ExistsExpression(columns []*schema.Column, key *telemetrytypes.TelemetryFie
 		if len(evolutionsEntries) > 0 && evolutionsEntries[0] != nil {
 			columnName = evolutionsEntries[0].ColumnName
 		}
-		rawPath := fmt.Sprintf("%s.`%s`", columnName, key.Name)
+		rawPath := fmt.Sprintf("%s.%s", columnName, ClickHouseIdentifier(key.Name))
 		if exists {
 			return rawPath + " IS NOT NULL", nil
 		}
