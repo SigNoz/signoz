@@ -11,6 +11,7 @@ export default function TimeSeriesTooltip(
 		(): TooltipContentItem[] =>
 			buildTooltipContent({
 				data: props.uPlotInstance.data,
+				unstackedData: props.unstackedData,
 				series: props.uPlotInstance.series,
 				dataIndexes: props.dataIndexes,
 				activeSeriesIndex: props.seriesIndex,
@@ -22,6 +23,7 @@ export default function TimeSeriesTooltip(
 			}),
 		[
 			props.uPlotInstance,
+			props.unstackedData,
 			props.seriesIndex,
 			props.dataIndexes,
 			props.yAxisUnit,
