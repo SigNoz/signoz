@@ -242,6 +242,18 @@ def test_ai_span_list_trace_level_filter(
     assert large[0].trace_id in body
     assert small[0].trace_id not in body
 
+    # a threshold no trace meets: the empty qualification yields no spans, not an error
+    query = BuilderQuery(
+        signal="traces",
+        query_type="builder_ai_query",
+        name="A",
+        filter_expression=f"service.name = '{service}' AND trace.output_tokens > 1000",
+        limit=10,
+    )
+    response = make_query_request(signoz, token, start_ms, end_ms, [query.to_dict()], request_type=RequestType.RAW)
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert not (response.json()["data"]["data"]["results"][0].get("rows") or [])
+
 
 def test_ai_list_having_or_aggregates(
     signoz: types.SigNoz,
