@@ -33,13 +33,14 @@ func TestIncidentIOReceiverConfigOverrides(t *testing.T) {
 	require.Len(t, r.IncidentIOConfigs, 1)
 
 	c := r.IncidentIOConfigs[0]
-	assert.Equal(t, testIncidentIOURL, c.URL) // trailing slash trimmed
+	assert.Equal(t, testIncidentIOURL+"/", c.URL) // stored verbatim
+	assert.Equal(t, testIncidentIOURL, c.AlertEventsURL())
 	assert.Equal(t, "t", c.Title)
 	assert.Equal(t, "d", c.Description)
 	assert.True(t, c.SendResolved())
 }
 
-func TestIncidentIOReceiverConfigStripsBearerPrefix(t *testing.T) {
+func TestIncidentIOReceiverConfigBearerToken(t *testing.T) {
 	cases := []struct {
 		name  string
 		token string
@@ -60,7 +61,8 @@ func TestIncidentIOReceiverConfigStripsBearerPrefix(t *testing.T) {
 			}
 			require.NoError(t, err)
 			require.Len(t, r.IncidentIOConfigs, 1)
-			assert.Equal(t, c.want, string(r.IncidentIOConfigs[0].Token))
+			assert.Equal(t, c.token, string(r.IncidentIOConfigs[0].Token)) // stored verbatim
+			assert.Equal(t, c.want, r.IncidentIOConfigs[0].BearerToken())
 		})
 	}
 }
