@@ -248,12 +248,6 @@ function QuerySearch({
 		[keySuggestions],
 	);
 
-	// read inside fetchValueSuggestions so resolving a key's context does not churn its deps
-	const keySuggestionsRef = useRef<QueryKeyDataSuggestionsProps[]>([]);
-	useEffect(() => {
-		keySuggestionsRef.current = keySuggestions || [];
-	}, [keySuggestions]);
-
 	const [showExamples] = useState(false);
 
 	const [cursorPos, setCursorPos] = useState({ line: 0, ch: 0 });
@@ -511,9 +505,6 @@ function QuerySearch({
 							dataSource,
 							key,
 							searchText: sanitizedSearchText,
-							fieldContext: keySuggestionsRef.current.find(
-								(option) => option.label === key,
-							)?.fieldContext,
 							signalSource: signalSource as 'meter' | '',
 							metricName: debouncedMetricName ?? undefined,
 						}).then((response) => {

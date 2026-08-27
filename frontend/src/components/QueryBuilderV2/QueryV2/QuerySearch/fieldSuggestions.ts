@@ -2,7 +2,6 @@ import {
 	getAIObservabilityFieldsKeys,
 	getAIObservabilityFieldsValues,
 } from 'api/generated/services/ai-observability';
-import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -51,7 +50,6 @@ interface FetchFieldValuesParams {
 	dataSource: DataSource;
 	key: string;
 	searchText: string;
-	fieldContext?: SuggestedFieldKey['fieldContext'];
 	metricName?: string;
 	signalSource?: 'meter' | '';
 }
@@ -90,7 +88,6 @@ export const fetchFieldValuesForQuery = async ({
 	dataSource,
 	key,
 	searchText,
-	fieldContext,
 	metricName,
 	signalSource,
 }: FetchFieldValuesParams): Promise<SuggestedFieldValuesResponse> => {
@@ -98,7 +95,6 @@ export const fetchFieldValuesForQuery = async ({
 		const response = await getAIObservabilityFieldsValues({
 			name: key,
 			searchText,
-			fieldContext: fieldContext as TelemetrytypesFieldContextDTO | undefined,
 		});
 
 		return { data: { data: response.data } };

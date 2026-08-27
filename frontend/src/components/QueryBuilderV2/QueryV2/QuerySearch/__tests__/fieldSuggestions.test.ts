@@ -2,7 +2,6 @@ import {
 	getAIObservabilityFieldsKeys,
 	getAIObservabilityFieldsValues,
 } from 'api/generated/services/ai-observability';
-import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import { DataSource } from 'types/common/queryBuilder';
@@ -141,7 +140,6 @@ describe('fetchFieldValuesForQuery', () => {
 			dataSource: DataSource.TRACES,
 			key: 'gen_ai.request.model',
 			searchText: 'gpt',
-			fieldContext: 'attribute',
 		});
 
 		expect(mockedGenericValues).not.toHaveBeenCalled();
@@ -155,7 +153,7 @@ describe('fetchFieldValuesForQuery', () => {
 		});
 	});
 
-	it('forwards fieldContext so the endpoint can short-circuit trace aggregates', async () => {
+	it('forwards the key as the name the endpoint expects', async () => {
 		mockedAIValues.mockResolvedValue(aiValuesResponse({}));
 
 		await fetchFieldValuesForQuery({
@@ -163,13 +161,11 @@ describe('fetchFieldValuesForQuery', () => {
 			dataSource: DataSource.TRACES,
 			key: 'total_tokens',
 			searchText: '',
-			fieldContext: 'trace',
 		});
 
 		expect(mockedAIValues).toHaveBeenCalledWith({
 			name: 'total_tokens',
 			searchText: '',
-			fieldContext: TelemetrytypesFieldContextDTO.trace,
 		});
 	});
 
@@ -182,7 +178,6 @@ describe('fetchFieldValuesForQuery', () => {
 				dataSource: DataSource.TRACES,
 				key: 'llm_call_count',
 				searchText: '',
-				fieldContext: 'trace',
 			}),
 		).resolves.toStrictEqual({
 			data: { data: { complete: false, values: null } },
