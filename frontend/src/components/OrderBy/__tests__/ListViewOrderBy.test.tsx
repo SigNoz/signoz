@@ -1,13 +1,16 @@
 import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
 import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
-import { fetchFieldKeysForQuery } from 'api/querySuggestions/fieldSuggestions';
+import { fetchFieldKeysForQuery } from 'components/QueryBuilderV2/QueryV2/QuerySearch/fieldSuggestions';
 import { DataSource } from 'types/common/queryBuilder';
 
 import ListViewOrderBy from '../ListViewOrderBy';
 
-jest.mock('api/querySuggestions/fieldSuggestions', () => ({
-	fetchFieldKeysForQuery: jest.fn(),
-}));
+jest.mock(
+	'components/QueryBuilderV2/QueryV2/QuerySearch/fieldSuggestions',
+	() => ({
+		fetchFieldKeysForQuery: jest.fn(),
+	}),
+);
 
 const mockedFetchKeys = fetchFieldKeysForQuery as jest.MockedFunction<
 	typeof fetchFieldKeysForQuery

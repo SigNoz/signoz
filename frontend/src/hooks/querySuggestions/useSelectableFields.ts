@@ -1,6 +1,6 @@
 import { useQuery } from 'react-query';
 import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
-import { fetchFieldKeysForQuery } from 'api/querySuggestions/fieldSuggestions';
+import { fetchFieldKeysForQuery } from 'components/QueryBuilderV2/QueryV2/QuerySearch/fieldSuggestions';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 

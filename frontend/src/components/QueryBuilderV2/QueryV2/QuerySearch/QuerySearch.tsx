@@ -57,7 +57,7 @@ import {
 	fetchFieldValuesForQuery,
 	SuggestedFieldKey,
 	SuggestedFieldKeysByName,
-} from 'api/querySuggestions/fieldSuggestions';
+} from './fieldSuggestions';
 import {
 	combineInitialAndUserExpression,
 	dedupeOptionsByLabel,

@@ -3,7 +3,7 @@ import { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
-import { fetchFieldKeysForQuery } from 'api/querySuggestions/fieldSuggestions';
+import { fetchFieldKeysForQuery } from 'components/QueryBuilderV2/QueryV2/QuerySearch/fieldSuggestions';
 import { useColumnStore } from 'components/TanStackTableView/useColumnStore';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
@@ -11,9 +11,12 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import { useTraceViewColumns } from '../useTraceViewColumns';
 
-jest.mock('api/querySuggestions/fieldSuggestions', () => ({
-	fetchFieldKeysForQuery: jest.fn(),
-}));
+jest.mock(
+	'components/QueryBuilderV2/QueryV2/QuerySearch/fieldSuggestions',
+	() => ({
+		fetchFieldKeysForQuery: jest.fn(),
+	}),
+);
 
 const mockedFetchKeys = fetchFieldKeysForQuery as jest.MockedFunction<
 	typeof fetchFieldKeysForQuery
