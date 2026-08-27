@@ -45,6 +45,7 @@ jobs:
           - callbackauthn
           - cloudintegrations
           - dashboard
+          - deploymenthost
           - ingestionkeys
           - inframonitoring
           - logspipelines
