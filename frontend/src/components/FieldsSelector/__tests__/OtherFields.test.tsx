@@ -1,11 +1,16 @@
 import { fireEvent, render, screen } from 'tests/test-utils';
 import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
+
+import { useStaticFields } from '../useStaticFields';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import OtherFields from '../OtherFields';
 
 jest.mock('hooks/querySuggestions/useGetQueryKeySuggestions');
+jest.mock('../useStaticFields', () => ({
+	useStaticFields: jest.fn(() => ({ fields: undefined, isLoading: false })),
+}));
 
 const mockSuggestions = (names: string[]): void => {
 	(useGetQueryKeySuggestions as jest.Mock).mockReturnValue({
@@ -123,7 +128,7 @@ describe('OtherFields — custom (free-typed) option', () => {
 		).not.toBeInTheDocument();
 	});
 });
-describe('OtherFields — availableFields (fixed pool)', () => {
+describe('OtherFields — addStaticFields (named pool)', () => {
 	const pool: TelemetryFieldKey[] = [
 		{ name: 'total_tokens', fieldContext: 'trace', fieldDataType: 'float64' },
 		{ name: 'llm_call_count', fieldContext: 'trace', fieldDataType: 'float64' },
@@ -131,10 +136,14 @@ describe('OtherFields — availableFields (fixed pool)', () => {
 
 	beforeEach(() => {
 		mockSuggestions(['ingested.field']);
+		(useStaticFields as jest.Mock).mockReturnValue({
+			fields: pool,
+			isLoading: false,
+		});
 	});
 
 	it('lists the pool and never reads the suggestions endpoint', () => {
-		renderOtherFields({ availableFields: pool, allowCustomFields: false });
+		renderOtherFields({ addStaticFields: 'ai_o11y', allowCustomFields: false });
 
 		expect(screen.getByText('total_tokens')).toBeInTheDocument();
 		expect(screen.getByText('llm_call_count')).toBeInTheDocument();
@@ -147,7 +156,7 @@ describe('OtherFields — availableFields (fixed pool)', () => {
 
 	it('filters the pool client-side on the search input', () => {
 		renderOtherFields({
-			availableFields: pool,
+			addStaticFields: 'ai_o11y',
 			allowCustomFields: false,
 			debouncedInputValue: 'llm',
 		});
@@ -158,7 +167,7 @@ describe('OtherFields — availableFields (fixed pool)', () => {
 
 	it('omits pool fields that are already added', () => {
 		renderOtherFields({
-			availableFields: pool,
+			addStaticFields: 'ai_o11y',
 			allowCustomFields: false,
 			addedFields: [
 				{

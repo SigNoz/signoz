@@ -2,10 +2,10 @@ import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Settings } from '@signozhq/icons';
 import FieldsSelector from 'components/FieldsSelector';
+import { StaticFieldsSource } from 'components/FieldsSelector/staticFields';
 import Controls, { ControlsProps } from 'container/Controls';
 import { OptionsMenuConfig } from 'container/OptionsMenu/types';
 import useQueryPagination from 'hooks/queryPagination/useQueryPagination';
-import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import styles from './Controls.module.scss';
@@ -15,7 +15,7 @@ function ExplorerControls({
 	totalCount,
 	perPageOptions,
 	config,
-	availableFields,
+	addStaticFields,
 	requiredFields,
 }: ExplorerControlsProps): JSX.Element | null {
 	const { t } = useTranslation(['trace']);
@@ -46,7 +46,7 @@ function ExplorerControls({
 						onFieldsChange={config.fieldsSelector.onFieldsChange}
 						onClose={(): void => setIsFieldsSelectorOpen(false)}
 						signal={DataSource.TRACES}
-						availableFields={availableFields}
+						addStaticFields={addStaticFields}
 						requiredFields={requiredFields}
 					/>
 				</>
@@ -71,14 +71,14 @@ type ExplorerControlsProps = Pick<
 	'isLoading' | 'totalCount' | 'perPageOptions'
 > & {
 	config?: OptionsMenuConfig | null;
-	/** Fixed pool for the fields selector; omit to search the keys endpoint. */
-	availableFields?: TelemetryFieldKey[];
+	/** Named pool for the fields selector; omit to search the keys endpoint. */
+	addStaticFields?: StaticFieldsSource;
 	requiredFields?: readonly string[];
 };
 
 ExplorerControls.defaultProps = {
 	config: null,
-	availableFields: undefined,
+	addStaticFields: undefined,
 	requiredFields: undefined,
 };
 

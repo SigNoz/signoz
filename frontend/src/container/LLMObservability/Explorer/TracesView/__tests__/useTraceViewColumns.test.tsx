@@ -38,6 +38,10 @@ const AGGREGATE_KEYS = [
 const fieldNames = (fields: TelemetryFieldKey[]): string[] =>
 	fields.map((field) => field.name);
 
+/** The pool now lives in the shared static-fields hook; columns mirror it one-to-one. */
+const columnNames = (columns: { header?: unknown }[]): string[] =>
+	columns.map((column) => column.header as string);
+
 function wrapper({ children }: { children: ReactNode }): JSX.Element {
 	const queryClient = new QueryClient({
 		defaultOptions: { queries: { retry: false } },
@@ -91,7 +95,7 @@ describe('useTraceViewColumns', () => {
 	it('pools the hardcoded display-only columns with the endpoint aggregates', async () => {
 		const { result } = await renderColumns();
 
-		expect(fieldNames(result.current.availableFields)).toStrictEqual([
+		expect(columnNames(result.current.columns)).toStrictEqual([
 			// display-only: the endpoint cannot report these
 			'service.name',
 			'root_span_name',
@@ -138,9 +142,7 @@ describe('useTraceViewColumns', () => {
 
 		const { result } = await renderColumns();
 
-		expect(fieldNames(result.current.availableFields)).toContain(
-			'brand_new_aggregate',
-		);
+		expect(columnNames(result.current.columns)).toContain('brand_new_aggregate');
 		expect(fieldNames(result.current.selectedFields)).not.toContain(
 			'brand_new_aggregate',
 		);

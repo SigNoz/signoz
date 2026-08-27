@@ -14,6 +14,8 @@ import {
 import { DataSource } from 'types/common/queryBuilder';
 
 import styles from './FieldsSelector.module.scss';
+import { StaticFieldsSource } from './staticFields';
+import { useStaticFields } from './useStaticFields';
 
 interface OtherFieldsProps {
 	signal: DataSource;
@@ -22,8 +24,8 @@ interface OtherFieldsProps {
 	onAdd: (field: TelemetryFieldKey) => void;
 	isAtLimit: boolean;
 	allowCustomFields?: boolean;
-	/** Fixed pool, filtered client-side; for responses the keys endpoint cannot report. */
-	availableFields?: TelemetryFieldKey[];
+	/** Names a built-in pool, filtered client-side, for fields the keys endpoint cannot report. */
+	addStaticFields?: StaticFieldsSource;
 }
 
 function OtherFields({
@@ -33,9 +35,11 @@ function OtherFields({
 	onAdd,
 	isAtLimit,
 	allowCustomFields,
-	availableFields,
+	addStaticFields,
 }: OtherFieldsProps): JSX.Element {
-	const hasFixedPool = availableFields !== undefined;
+	const { fields: staticFields, isLoading: isLoadingStaticFields } =
+		useStaticFields(addStaticFields);
+	const hasStaticFields = staticFields !== undefined;
 	const { data, isFetching } = useGetQueryKeySuggestions(
 		{
 			signal,
@@ -47,16 +51,14 @@ function OtherFields({
 				signal,
 				debouncedInputValue,
 			],
-			enabled: !hasFixedPool,
+			enabled: !hasStaticFields,
 		},
 	);
 
 	const otherFields = useMemo<TelemetryFieldKey[]>(() => {
 		const search = debouncedInputValue.trim().toLowerCase();
-		const rawSuggestions = availableFields
-			? availableFields.filter((field) =>
-					field.name.toLowerCase().includes(search),
-				)
+		const rawSuggestions = staticFields
+			? staticFields.filter((field) => field.name.toLowerCase().includes(search))
 			: Object.values(data?.data.data.keys || {}).flat();
 		// Normalize: synthesize `key` once so downstream reads can trust it.
 		const suggestions: TelemetryFieldKey[] = rawSuggestions.map((attr) => ({
@@ -96,15 +98,9 @@ function OtherFields({
 			key: buildCompositeKey(typed, ''),
 		};
 		return [customField, ...available];
-	}, [
-		data,
-		addedFields,
-		allowCustomFields,
-		debouncedInputValue,
-		availableFields,
-	]);
+	}, [data, addedFields, allowCustomFields, debouncedInputValue, staticFields]);
 
-	if (isFetching) {
+	if (isFetching || isLoadingStaticFields) {
 		return (
 			<div className={cx(styles.section, styles.sectionOther)}>
 				<div className={styles.sectionHeader}>OTHER FIELDS</div>

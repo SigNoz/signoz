@@ -61,7 +61,6 @@ function TracesView({
 
 	const {
 		columns,
-		availableFields,
 		selectedFields,
 		onFieldsChange,
 		requiredFields,
@@ -196,7 +195,7 @@ function TracesView({
 						totalCount={rows.length}
 						perPageOptions={PER_PAGE_OPTIONS}
 						config={fieldsSelectorConfig}
-						availableFields={availableFields}
+						addStaticFields="ai_o11y"
 						requiredFields={requiredFields}
 					/>
 				</div>

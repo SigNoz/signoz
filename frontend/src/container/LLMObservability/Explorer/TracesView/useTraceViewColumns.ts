@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { useQuery } from 'react-query';
-import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
-import { fetchFieldKeysForQuery } from 'components/QueryBuilderV2/QueryV2/QuerySearch/fieldSuggestions';
+import { useStaticFields } from 'components/FieldsSelector/useStaticFields';
 import type { TableColumnDef } from 'components/TanStackTableView/types';
 import {
 	hideColumn,
@@ -15,13 +13,8 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
 import { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
-import { DataSource } from 'types/common/queryBuilder';
 
-import {
-	buildTraceViewColumns,
-	DISPLAY_ONLY_FIELDS,
-	TRACE_ID_COLUMN_ID,
-} from './configs';
+import { buildTraceViewColumns, TRACE_ID_COLUMN_ID } from './configs';
 
 const STORAGE_KEY = LOCALSTORAGE.AI_OBSERVABILITY_TRACE_VIEW_COLUMNS;
 
@@ -31,7 +24,6 @@ const columnIdOf = (field: TelemetryFieldKey): string =>
 
 interface UseTraceViewColumns {
 	columns: TableColumnDef<TracesTableRow>[];
-	availableFields: TelemetryFieldKey[];
 	selectedFields: TelemetryFieldKey[];
 	onFieldsChange: (next: TelemetryFieldKey[]) => void;
 	requiredFields: readonly string[];
@@ -41,36 +33,10 @@ interface UseTraceViewColumns {
 /** Edits column visibility in the table's own store; the request is unaffected. */
 // TODO(ai-explorer): browser-local only, unlike the list views' `?options=` columns.
 export function useTraceViewColumns(): UseTraceViewColumns {
-	// The per-trace aggregates are computed, so only this endpoint names them.
-	const { data, isFetched } = useQuery({
-		queryKey: ['traceViewAggregateKeys'],
-		queryFn: async () => {
-			const response = await fetchFieldKeysForQuery({
-				builderQueryType: 'builder_ai_query',
-				dataSource: DataSource.TRACES,
-				searchText: '',
-				fieldContext: TelemetrytypesFieldContextDTO.trace,
-			});
-
-			return response.data.data?.keys;
-		},
-	});
-
-	const availableFields = useMemo(() => {
-		const aggregates = (data ? Object.values(data).flat() : []).map(
-			(key): TelemetryFieldKey => ({
-				name: key.name,
-				fieldContext: key.fieldContext as TelemetryFieldKey['fieldContext'],
-				fieldDataType: key.fieldDataType as TelemetryFieldKey['fieldDataType'],
-			}),
-		);
-		const displayOnlyNames = new Set(DISPLAY_ONLY_FIELDS.map(({ name }) => name));
-
-		return [
-			...DISPLAY_ONLY_FIELDS,
-			...aggregates.filter(({ name }) => !displayOnlyNames.has(name)),
-		];
-	}, [data]);
+	// Same pool the fields selector offers, so columns and choices cannot drift apart.
+	const { fields, isLoading } = useStaticFields('ai_o11y');
+	const availableFields = useMemo(() => fields ?? [], [fields]);
+	const isFetched = !isLoading;
 
 	const columns = useMemo(
 		() => buildTraceViewColumns(availableFields),
@@ -121,7 +87,6 @@ export function useTraceViewColumns(): UseTraceViewColumns {
 
 	return {
 		columns,
-		availableFields,
 		selectedFields,
 		onFieldsChange,
 		requiredFields: [TRACE_ID_COLUMN_ID],
