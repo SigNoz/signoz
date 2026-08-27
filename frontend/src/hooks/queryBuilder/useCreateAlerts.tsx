@@ -11,10 +11,8 @@ import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { MenuItemKeys } from 'container/WidgetCard/Header/contants';
-import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
-import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariablesByType';
+import { useDynamicVariableSuggestions } from 'hooks/dashboard/useDynamicVariableSuggestions';
 import { useNotifications } from 'hooks/useNotifications';
-import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariables';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { isEmpty } from 'lodash-es';
 import { AppState } from 'store/reducers';
@@ -38,11 +36,7 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 
 	const { notifications } = useNotifications();
 
-	const { dashboardVariables } = useDashboardVariables();
-	const dashboardDynamicVariables = useDashboardVariablesByType(
-		'DYNAMIC',
-		'values',
-	);
+	const dashboardDynamicVariables = useDynamicVariableSuggestions();
 
 	return useCallback(() => {
 		if (!widget) {
@@ -68,7 +62,6 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 			globalSelectedInterval,
 			graphType: getGraphType(widget.panelTypes),
 			selectedTime: widget.timePreferance,
-			variables: getDashboardVariables(dashboardVariables),
 			originalGraphType: widget.panelTypes,
 			dynamicVariables: dashboardDynamicVariables,
 		});
@@ -107,7 +100,6 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 		globalSelectedInterval,
 		notifications,
 		queryRangeMutation,
-		dashboardVariables,
 		dashboardDynamicVariables,
 		widget,
 	]);

@@ -32,22 +32,14 @@ jest.mock(
 	}),
 );
 
-jest.mock('hooks/dashboard/useDashboardVariables', () => ({
-	useDashboardVariables: (): unknown => ({ dashboardVariables: {} }),
-}));
-
-jest.mock('hooks/dashboard/useDashboardVariablesByType', () => ({
-	useDashboardVariablesByType: (): unknown => ({}),
+jest.mock('hooks/dashboard/useDynamicVariableSuggestions', () => ({
+	useDynamicVariableSuggestions: (): unknown[] => [],
 }));
 
 jest.mock('hooks/useNotifications', () => ({
 	useNotifications: (): unknown => ({
 		notifications: { error: jest.fn() },
 	}),
-}));
-
-jest.mock('lib/dashboardVariables/getDashboardVariables', () => ({
-	getDashboardVariables: (): unknown => ({}),
 }));
 
 jest.mock('utils/getGraphType', () => ({

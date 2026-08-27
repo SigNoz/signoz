@@ -671,9 +671,9 @@ export const prepareQueryRangePayloadV5 = ({
 			(acc, [key, value]) => {
 				acc[key] = {
 					value,
-					type: dynamicVariables
-						?.find((v) => v.name === key)
-						?.type?.toLowerCase() as VariableType,
+					type: dynamicVariables?.some((v) => v.name === key)
+						? ('dynamic' as VariableType)
+						: undefined,
 				};
 				return acc;
 			},
