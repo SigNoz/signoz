@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
-import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { mockUseAuthZGrantAll } from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
 
 import CreateEdit from '../CreateEdit/CreateEdit';
@@ -9,6 +10,9 @@ import {
 	mockGoogleAuthWithWorkspaceGroups,
 	mockUpdateSuccessResponse,
 } from './mocks';
+
+jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
+const mockedUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
 
 // TODO: https://github.com/SigNoz/platform-pod/issues/2602
 // The real @signozhq/ui/button has internal effects that prevent form.validateFields()
@@ -52,7 +56,7 @@ jest.setTimeout(20000);
 
 describe('CreateEdit — save payload correctness', () => {
 	beforeEach(() => {
-		server.use(setupAuthzAdmin());
+		mockedUseAuthZ.mockImplementation(mockUseAuthZGrantAll);
 	});
 
 	afterEach(() => {
@@ -116,9 +120,7 @@ describe('CreateEdit — save payload correctness', () => {
 		);
 
 		// Submit — MSW intercepts the PUT request
-		const saveButton = screen.getByRole('button', { name: /save changes/i });
-		await waitFor(() => expect(saveButton).toBeEnabled());
-		fireEvent.click(saveButton);
+		fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
 
 		await waitFor(() => expect(capturedPayload).not.toBeNull());
 
@@ -164,9 +166,7 @@ describe('CreateEdit — save payload correctness', () => {
 		);
 
 		// Submit
-		const saveButton = screen.getByRole('button', { name: /save changes/i });
-		await waitFor(() => expect(saveButton).toBeEnabled());
-		fireEvent.click(saveButton);
+		fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
 
 		await waitFor(() => expect(capturedPayload).not.toBeNull());
 

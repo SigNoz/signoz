@@ -1,5 +1,6 @@
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
-import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { mockUseAuthZGrantAll } from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
 import {
 	allRoles,
@@ -15,6 +16,9 @@ import {
 	mockSamlAuthDomain,
 	mockUpdateSuccessResponse,
 } from './mocks';
+
+jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
+const mockedUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
 
 // TODO: https://github.com/SigNoz/platform-pod/issues/2602
 // The @signozhq/ui Button uses Radix Slot and has CSS infinite animations that
@@ -109,15 +113,12 @@ const expandRoleMapping = (user: User): Promise<void> =>
 const openDefaultRoleSelect = (user: User): Promise<void> =>
 	user.click(screen.getByLabelText(/default role/i));
 
-const saveChanges = async (user: User): Promise<void> => {
-	const saveButton = screen.getByRole('button', { name: /save changes/i });
-	await waitFor(() => expect(saveButton).toBeEnabled());
-	await user.click(saveButton);
-};
+const saveChanges = (user: User): Promise<void> =>
+	user.click(screen.getByRole('button', { name: /save changes/i }));
 
 describe('CreateEdit — role mapping uses API roles', () => {
 	beforeEach(() => {
-		server.use(setupAuthzAdmin());
+		mockedUseAuthZ.mockImplementation(mockUseAuthZGrantAll);
 	});
 
 	afterEach(() => {

@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
-import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { mockUseAuthZGrantAll } from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
 import {
 	AuthtypesAuthDomainConfigGoogleDTO,
@@ -16,6 +17,13 @@ import {
 	mockSamlWithAttributeMapping,
 	mockUpdateSuccessResponse,
 } from './mocks';
+
+jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
+const mockedUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
+
+beforeEach(() => {
+	mockedUseAuthZ.mockImplementation(mockUseAuthZGrantAll);
+});
 
 // @signozhq/ui/button internal effects block form.validateFields() in tests
 jest.mock('@signozhq/ui/button', () => ({
@@ -64,7 +72,6 @@ async function submitForm(
 	const requests: SavedPayload[] = [];
 
 	server.use(
-		setupAuthzAdmin(),
 		rest.put(AUTH_DOMAINS_UPDATE_ENDPOINT, async (req, res, ctx) => {
 			requests.push((await req.json()) as SavedPayload);
 			return res(ctx.status(200), ctx.json(mockUpdateSuccessResponse));
@@ -72,9 +79,7 @@ async function submitForm(
 	);
 
 	render(<CreateEdit isCreate={false} record={record} onClose={jest.fn()} />);
-	const saveButton = screen.getByRole('button', { name: /save changes/i });
-	await waitFor(() => expect(saveButton).toBeEnabled());
-	fireEvent.click(saveButton);
+	fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
 	await waitFor(() => expect(requests).toHaveLength(1));
 
 	return requests[0];
