@@ -23,6 +23,7 @@ import (
 type Receiver struct {
 	*config.Receiver
 	GoogleChatConfigs []*GoogleChatReceiverConfig `json:"googlechat_configs,omitempty" yaml:"googlechat_configs,omitempty"`
+	GotifyConfigs     []*GotifyReceiverConfig     `json:"gotify_configs,omitempty" yaml:"gotify_configs,omitempty"`
 }
 
 // NewReceiver builds a Receiver from its JSON input, applying each notifier
@@ -49,6 +50,14 @@ func NewReceiver(input string) (*Receiver, error) {
 			return nil, err
 		}
 		receiver.GoogleChatConfigs[i] = defaulted
+	}
+
+	for i, gt := range receiver.GotifyConfigs {
+		defaulted, err := defaultedNotifierConfig(gt)
+		if err != nil {
+			return nil, err
+		}
+		receiver.GotifyConfigs[i] = defaulted
 	}
 
 	return receiver, nil

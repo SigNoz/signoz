@@ -7,6 +7,7 @@ import {
 	PagerChannel,
 	SlackChannel,
 	WebhookChannel,
+	GotifyChannel,
 } from './config';
 
 // shared by slack and ms teams, both render the same title / description boxes
@@ -494,6 +495,18 @@ export const EmailInitialConfig: Partial<EmailChannel> = {
   </html>`,
 };
 
+// mirrors DefaultGotifyReceiverConfig in pkg/types/alertmanagertypes/gotify.go,
+// which the backend applies when title / message are left empty
+export const GotifyInitialConfig: Partial<GotifyChannel> = {
+	priority: 5,
+	title: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`,
+	message: `{{ range .Alerts -}}
+**Alert:** {{ .Labels.alertname }}{{ if .Labels.severity }} ({{ .Labels.severity }}){{ end }}{{ if .Annotations.summary }}
+**Summary:** {{ .Annotations.summary }}{{ end }}{{ if .Annotations.description }}
+**Description:** {{ .Annotations.description }}{{ end }}
+{{ end }}`,
+};
+
 // prefilled values of every channel type, keyed by type so the form can apply
 // exactly one set of defaults and swap it when the type changes
 export const ChannelInitialConfig: Record<
@@ -505,7 +518,8 @@ export const ChannelInitialConfig: Record<
 			MsTeamsChannel &
 			OpsgenieChannel &
 			EmailChannel &
-			GoogleChatChannel
+			GoogleChatChannel &
+			GotifyChannel
 	>
 > = {
 	[ChannelType.Slack]: SlackInitialConfig,
@@ -515,4 +529,5 @@ export const ChannelInitialConfig: Record<
 	[ChannelType.Opsgenie]: OpsgenieInitialConfig,
 	[ChannelType.Email]: EmailInitialConfig,
 	[ChannelType.Webhook]: {},
+	[ChannelType.Gotify]: GotifyInitialConfig,
 };
