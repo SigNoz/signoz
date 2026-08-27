@@ -13,18 +13,6 @@ export const STATUS_FIELD_NAMES = new Set([
 	'http.response.status_code',
 ]);
 
-export const DURATION_FIELD_NAMES = new Set([
-	'durationNano',
-	'duration_nano',
-	'trace_duration_nano',
-	'max_llm_duration_nano',
-]);
-
-/** Rendered as datetimes, but unlike TIMESTAMP_FIELD_NAMES they stay movable and hideable. */
-export const DATETIME_FIELD_NAMES = new Set([
-	'start_time',
-	'end_time',
-	'last_activity_time',
-]);
+export const DURATION_FIELD_NAMES = new Set(['durationNano', 'duration_nano']);
 
 export const TRACE_ID_FIELD_NAMES = new Set(['traceID', 'trace_id']);

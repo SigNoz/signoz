@@ -6,6 +6,8 @@ import {
 } from 'container/TracesExplorer/TracesTable/getFieldColumn';
 import { DEFAULT_PER_PAGE_OPTIONS } from 'hooks/queryPagination';
 
+import AITraceFieldCell from './AITraceFieldCell';
+
 export const PER_PAGE_OPTIONS: number[] = [10, ...DEFAULT_PER_PAGE_OPTIONS];
 
 /** Always visible: it is the row's link to the trace. */
@@ -28,6 +30,9 @@ export const buildTraceViewColumns = (
 ): TableColumnDef<TracesTableRow>[] =>
 	fields.map((field) => ({
 		...getFieldColumn(field),
+		cell: ({ value }: { value: unknown }): JSX.Element => (
+			<AITraceFieldCell name={field.name} value={value} />
+		),
 		defaultVisibility: DEFAULT_VISIBLE_FIELDS.has(field.name),
 		enableRemove: field.name !== TRACE_ID_COLUMN_ID,
 		canBeHidden: field.name !== TRACE_ID_COLUMN_ID,

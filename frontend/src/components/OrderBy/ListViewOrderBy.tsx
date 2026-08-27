@@ -17,10 +17,8 @@ interface ListViewOrderByProps {
 	value: string;
 	onChange: (value: string) => void;
 	dataSource: DataSource;
-	/** Picks the key endpoint; builder_ai_query reads ai_observability. */
 	builderQueryType?: IBuilderQuery['builderQueryType'];
 	fieldContext?: TelemetrytypesFieldContextDTO;
-	/** Keys always offered, on top of whatever the endpoint reports. */
 	staticOptionKeys?: string[];
 }
 
