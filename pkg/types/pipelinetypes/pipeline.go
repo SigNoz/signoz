@@ -49,7 +49,7 @@ type StoreablePipeline struct {
 	OrderID      int    `json:"orderId" bun:"order_id"`
 	Enabled      bool   `json:"enabled" bun:"enabled"`
 	Name         string `json:"name" bun:"name,type:varchar(400),notnull"`
-	Alias        string `json:"alias" bun:"alias,type:varchar(20),notnull"`
+	Alias        string `json:"alias" bun:"alias,type:varchar(400),notnull"`
 	Description  string `json:"description" bun:"description,type:text"`
 	FilterString string `json:"-" bun:"filter,type:text,notnull"`
 	ConfigJSON   string `json:"-" bun:"config_json,type:text"`
@@ -216,6 +216,10 @@ func (p *PostablePipeline) IsValid() error {
 	if p.Alias == "" {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "pipeline alias is required")
 	}
+
+    if len(p.Alias) > 400 {
+        return errors.NewInvalidInputf(errors.CodeInvalidInput, "pipeline alias length cannot exceed 400 characters")
+    }
 
 	// check the filter
 	_, err := queryBuilderToExpr.Parse(p.Filter)
