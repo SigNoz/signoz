@@ -13,7 +13,6 @@ import {
 } from 'types/api/v5/queryRange';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 
-/** builder_query and builder_ai_query both carry a BuilderQuery spec, hence aggregation metadata. */
 const isBuilderQueryEnvelope = (
 	envelope: QueryEnvelope,
 ): envelope is QueryEnvelope & { spec: BuilderQuery } =>
