@@ -30,9 +30,9 @@ func TestMigrateQuickFilterEntries(t *testing.T) {
 			ok:          true,
 		},
 		{
-			description: "meter junk type normalizes to unspecified",
-			filter:      `[{"key":"deployment.environment","dataType":"float64","type":"Sum"}]`,
-			expected:    `[{"name":"deployment.environment","signal":"","fieldContext":"","fieldDataType":"number"}]`,
+			description: "junk type and datatype normalize to unspecified",
+			filter:      `[{"key":"deployment.environment","dataType":"float64","type":"Sum"},{"key":"x","dataType":"banana","type":"tag"}]`,
+			expected:    `[{"name":"deployment.environment","signal":"","fieldContext":"","fieldDataType":"number"},{"name":"x","signal":"","fieldContext":"attribute","fieldDataType":""}]`,
 			changed:     true,
 			ok:          true,
 		},

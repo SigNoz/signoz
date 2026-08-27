@@ -85,6 +85,7 @@ def test_v1_update_round_trips_to_v2(
             "filters": [
                 {"key": "service.name", "dataType": "string", "type": "resource"},
                 {"key": "http.method", "dataType": "string", "type": "tag"},
+                {"key": "code_line", "dataType": "int64", "type": "tag"},
             ],
         },
         headers={"Authorization": f"Bearer {admin_token}"},
@@ -102,7 +103,9 @@ def test_v1_update_round_trips_to_v2(
     assert [(field_key["name"], field_key["fieldContext"]) for field_key in filters] == [
         ("service.name", "resource"),
         ("http.method", "attribute"),
+        ("code_line", "attribute"),
     ]
+    assert filters[2]["fieldDataType"] == "number"
 
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/orgs/me/filters/exceptions"),
@@ -114,7 +117,27 @@ def test_v1_update_round_trips_to_v2(
     assert [(legacy_filter["key"], legacy_filter["type"]) for legacy_filter in filters] == [
         ("service.name", "resource"),
         ("http.method", "tag"),
+        ("code_line", "tag"),
     ]
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get("/api/v1/orgs/me/filters"),
+        json={
+            "signal": "meter",
+            "filters": [{"key": "host.name", "dataType": "string", "type": ""}],
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/orgs/me/filters/meter"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert [(field_key["name"], field_key["signal"]) for field_key in response.json()["data"]["filters"]] == [("host.name", "metrics")]
 
 
 def test_update_quick_filters_round_trip(
@@ -161,6 +184,17 @@ def test_update_quick_filters_round_trip(
     ]
     assert filters[0]["fieldContext"] == "resource"
     assert filters[1]["fieldContext"] == "body"
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/orgs/me/filters/logs"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert [(legacy_filter["key"], legacy_filter["type"]) for legacy_filter in response.json()["data"]["filters"]] == [
+        ("k8s.pod.name", "resource"),
+        ("body.status", ""),
+    ]
 
 
 def test_update_quick_filters_rejects_invalid_input(

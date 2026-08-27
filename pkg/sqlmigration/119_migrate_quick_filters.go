@@ -30,18 +30,18 @@ type legacyQuickFilterEntry struct {
 	Signal   string `json:"signal"`
 }
 
-// quickFilterLegacyDataTypes maps the legacy datatype spellings that differ:
-// the fields API reports every numeric as "number", so both resolve to it.
-var quickFilterLegacyDataTypes = map[string]string{
-	"int64":   "number",
-	"float64": "number",
-}
-
+// quickFilterFieldDataType resolves legacy datatype spellings via the shared
+// alias table, with unknowns normalized to unspecified and every numeric
+// collapsed to number, matching the fields API and the v1 write path.
 func quickFilterFieldDataType(legacyDataType string) string {
-	if mapped, ok := quickFilterLegacyDataTypes[legacyDataType]; ok {
-		return mapped
+	var fieldDataType telemetrytypes.FieldDataType
+	if err := fieldDataType.Scan(legacyDataType); err != nil {
+		return ""
 	}
-	return legacyDataType
+	if fieldDataType == telemetrytypes.FieldDataTypeInt64 {
+		fieldDataType = telemetrytypes.FieldDataTypeNumber
+	}
+	return fieldDataType.StringValue()
 }
 
 // quickFilterFieldContext resolves legacy type spellings via the shared alias
