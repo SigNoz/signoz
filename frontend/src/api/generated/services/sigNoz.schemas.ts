@@ -3492,6 +3492,7 @@ export enum TelemetrytypesFieldContextDTO {
 	span = 'span',
 	trace = 'trace',
 	resource = 'resource',
+	scope = 'scope',
 	attribute = 'attribute',
 	body = 'body',
 	'' = '',
