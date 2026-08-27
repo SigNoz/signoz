@@ -1,4 +1,5 @@
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
 import {
 	allRoles,
@@ -108,10 +109,17 @@ const expandRoleMapping = (user: User): Promise<void> =>
 const openDefaultRoleSelect = (user: User): Promise<void> =>
 	user.click(screen.getByLabelText(/default role/i));
 
-const saveChanges = (user: User): Promise<void> =>
-	user.click(screen.getByRole('button', { name: /save changes/i }));
+const saveChanges = async (user: User): Promise<void> => {
+	const saveButton = screen.getByRole('button', { name: /save changes/i });
+	await waitFor(() => expect(saveButton).toBeEnabled());
+	await user.click(saveButton);
+};
 
 describe('CreateEdit — role mapping uses API roles', () => {
+	beforeEach(() => {
+		server.use(setupAuthzAdmin());
+	});
+
 	afterEach(() => {
 		server.resetHandlers();
 	});

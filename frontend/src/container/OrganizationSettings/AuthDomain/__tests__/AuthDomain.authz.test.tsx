@@ -10,7 +10,7 @@ import {
 	setupAuthzGrantByPrefix,
 } from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
-import { render, screen, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import AuthDomain from '../index';
 import { AUTH_DOMAINS_LIST_ENDPOINT, mockDomainsListResponse } from './mocks';
@@ -92,6 +92,31 @@ describe('AuthDomain authz', () => {
 			});
 			screen.getAllByRole('switch').forEach((toggle) => {
 				expect(toggle).toBeEnabled();
+			});
+		});
+	});
+
+	describe('when read is granted but update is not', () => {
+		it('keeps configure clickable and disables save inside the modal', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			server.use(setupAuthzGrantByPrefix('list', 'read'));
+			setupListHandler();
+
+			render(<AuthDomain />);
+
+			await expect(screen.findByText('signoz.io')).resolves.toBeInTheDocument();
+
+			const configureButtons = screen.getAllByTestId('auth-domain-configure');
+			await waitFor(() => {
+				expect(configureButtons[0]).toBeEnabled();
+			});
+			await user.click(configureButtons[0]);
+
+			await screen.findByTestId('auth-domain-save');
+			await waitFor(() => {
+				const saveButton = screen.getByTestId('auth-domain-save');
+				expect(saveButton).toBeDisabled();
+				expect(saveButton).toHaveAttribute('data-denied-permissions');
 			});
 		});
 	});

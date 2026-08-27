@@ -21,7 +21,6 @@ import {
 	AuthDomainListPermission,
 	buildAuthDomainDeletePermission,
 	buildAuthDomainReadPermission,
-	buildAuthDomainUpdatePermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/auth-domain.permissions';
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
@@ -168,10 +167,7 @@ function AuthDomain(): JSX.Element {
 				render: (_, record: AuthtypesGettableAuthDomainDTO): JSX.Element => (
 					<section className="auth-domain-list-column-action">
 						<AuthZButton
-							checks={[
-								buildAuthDomainReadPermission(record.id ?? ''),
-								buildAuthDomainUpdatePermission(record.id ?? ''),
-							]}
+							checks={[buildAuthDomainReadPermission(record.id ?? '')]}
 							className="auth-domain-list-action-link"
 							onClick={(): void => setRecord(record)}
 							variant="link"

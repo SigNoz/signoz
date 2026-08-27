@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
 
 import CreateEdit from '../CreateEdit/CreateEdit';
@@ -45,7 +46,15 @@ jest.mock('@signozhq/ui/button', () => ({
 	),
 }));
 
+// Heavy real-timer integration tests (antd Collapse + form.validateFields() + a
+// react-query mutation); the default 5000ms budget flakes under parallel runs.
+jest.setTimeout(20000);
+
 describe('CreateEdit — save payload correctness', () => {
+	beforeEach(() => {
+		server.use(setupAuthzAdmin());
+	});
+
 	afterEach(() => {
 		server.resetHandlers();
 	});
@@ -107,7 +116,9 @@ describe('CreateEdit — save payload correctness', () => {
 		);
 
 		// Submit — MSW intercepts the PUT request
-		fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+		const saveButton = screen.getByRole('button', { name: /save changes/i });
+		await waitFor(() => expect(saveButton).toBeEnabled());
+		fireEvent.click(saveButton);
 
 		await waitFor(() => expect(capturedPayload).not.toBeNull());
 
@@ -153,7 +164,9 @@ describe('CreateEdit — save payload correctness', () => {
 		);
 
 		// Submit
-		fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+		const saveButton = screen.getByRole('button', { name: /save changes/i });
+		await waitFor(() => expect(saveButton).toBeEnabled());
+		fireEvent.click(saveButton);
 
 		await waitFor(() => expect(capturedPayload).not.toBeNull());
 
