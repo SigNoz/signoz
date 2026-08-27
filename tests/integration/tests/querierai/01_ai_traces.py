@@ -215,9 +215,8 @@ def test_ai_span_list_trace_level_filter(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """Span list (raw) with a trace-level condition returns only the gen_ai spans of
-    traces whose window-clipped aggregates qualify: of two traces with out-tokens
-    100/300, `trace.output_tokens > 100` keeps only the large one's LLM span."""
+    """Span list (raw) with a trace-level condition returns only the gen_ai spans
+    of traces whose window-clipped aggregates qualify."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-spanlist-tracefilter"
     small = ai_trace(now=now, service=service, user="a", in_tokens=10, out_tokens=100)

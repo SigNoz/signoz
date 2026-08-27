@@ -125,20 +125,15 @@ func (b *scopedTraceStatementBuilder) Build(
 	}
 }
 
-// validateRawOrderKeys rejects ordering the span list by an explicitly trace-level
-// aggregate (trace. prefix or trace field context) — the per-trace value does not
-// exist on span rows. Bare names pass through: they may legitimately be span columns
-// (duration_nano, timestamp).
+// validateRawOrderKeys rejects trace-level order keys — no per-trace value exists on
+// span rows. A bare name may be a span column sharing an alias (duration_nano), so it passes.
 func (b *scopedTraceStatementBuilder) validateRawOrderKeys(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) error {
-	aliases := b.aggregateAliasSet()
 	for _, o := range query.Order {
-		key := telemetrytypes.GetFieldKeyFromKeyText(o.Key.Name)
-		if _, ok := aliases[key.Name]; !ok {
-			continue
-		}
-		if key.FieldContext == telemetrytypes.FieldContextTrace || o.Key.FieldContext == telemetrytypes.FieldContextTrace {
+		key := o.Key.TelemetryFieldKey
+		key.Normalize()
+		if key.FieldContext == telemetrytypes.FieldContextTrace {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput,
-				"ordering the span list by trace-level aggregate %q is not supported; order by span columns instead (e.g. timestamp, duration_nano)", o.Key.Name)
+				"ordering the span list by trace-level key %q is not supported; order by span columns instead (e.g. timestamp, duration_nano)", o.Key.Name)
 		}
 	}
 	return nil
