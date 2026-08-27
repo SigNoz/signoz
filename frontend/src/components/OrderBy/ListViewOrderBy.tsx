@@ -5,7 +5,7 @@ import type { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNo
 import {
 	fetchFieldKeysForQuery,
 	SuggestedFieldKey,
-} from 'components/QueryBuilderV2/QueryV2/QuerySearch/fieldSuggestions';
+} from 'api/querySuggestions/fieldSuggestions';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 

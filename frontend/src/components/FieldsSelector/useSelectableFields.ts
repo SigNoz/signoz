@@ -1,6 +1,6 @@
 import { useQuery } from 'react-query';
 import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
-import { fetchFieldKeysForQuery } from 'components/QueryBuilderV2/QueryV2/QuerySearch/fieldSuggestions';
+import { fetchFieldKeysForQuery } from 'api/querySuggestions/fieldSuggestions';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -40,10 +40,7 @@ const toFieldKeys = (
 		}),
 	);
 
-/**
- * The fields the selector can offer. A named source reads the whole pool once and
- * is filtered client-side; otherwise the keys endpoint narrows on searchText.
- */
+/** A named source reads the whole pool once; otherwise the keys endpoint narrows on searchText. */
 export function useSelectableFields({
 	signal,
 	searchText,

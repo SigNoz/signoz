@@ -46,8 +46,7 @@ export function useTraceViewColumns(): UseTraceViewColumns {
 		[availableFields],
 	);
 
-	// Seeded only once the aggregates have arrived: defaults derived from a partial
-	// column set would persist as the user's own choice.
+	// Defaults from a partial column set would persist as the user's own choice.
 	useEffect(() => {
 		if (isFetched) {
 			initializeFromDefaults(STORAGE_KEY, columns);
