@@ -7,6 +7,8 @@ import {
 	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import { buildAuthDomainUpdatePermission } from 'lib/authz/hooks/useAuthZ/permissions/auth-domain.permissions';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { ErrorV2Resp } from 'types/api';
 import APIError from 'types/api/error';
@@ -60,12 +62,14 @@ function SSOEnforcementToggle({
 	};
 
 	return (
-		<Switch
-			disabled={isLoading}
-			value={isChecked}
-			onChange={onChangeHandler}
-			testId="auth-domain-enforce-sso"
-		/>
+		<AuthZTooltip checks={[buildAuthDomainUpdatePermission(record.id ?? '')]}>
+			<Switch
+				disabled={isLoading}
+				value={isChecked}
+				onChange={onChangeHandler}
+				testId="auth-domain-enforce-sso"
+			/>
+		</AuthZTooltip>
 	);
 }
 

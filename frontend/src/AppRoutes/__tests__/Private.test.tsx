@@ -1541,6 +1541,7 @@ describe('PrivateRoute', () => {
 				path: ROUTES.SERVICE_ACCOUNTS_SETTINGS,
 				deniedRoles: DENIED_ROLES,
 			},
+			ORG_SETTINGS: { path: ROUTES.ORG_SETTINGS, deniedRoles: DENIED_ROLES },
 			TRACES_EXPLORER: { path: ROUTES.TRACES_EXPLORER, deniedRoles: DENIED_ROLES },
 			TRACE: { path: ROUTES.TRACE, deniedRoles: DENIED_ROLES },
 			TRACE_DETAIL: {

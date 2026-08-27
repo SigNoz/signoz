@@ -14,6 +14,16 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
+import {
+	AuthDomainCreatePermission,
+	AuthDomainListPermission,
+	buildAuthDomainDeletePermission,
+	buildAuthDomainReadPermission,
+	buildAuthDomainUpdatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/auth-domain.permissions';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
@@ -41,13 +51,17 @@ function AuthDomain(): JSX.Element {
 
 	const { showErrorModal } = useErrorModal();
 
+	const { permissions: authzPermissions } = useAuthZ([AuthDomainListPermission]);
+	const canListAuthDomains =
+		authzPermissions?.[AuthDomainListPermission]?.isGranted ?? false;
+
 	const {
 		data: authDomainListResponse,
 		isLoading: isLoadingAuthDomainListResponse,
 		isFetching: isFetchingAuthDomainListResponse,
 		error: errorFetchingAuthDomainListResponse,
 		refetch: refetchAuthDomainListResponse,
-	} = useListAuthDomains();
+	} = useListAuthDomains({ query: { enabled: canListAuthDomains } });
 
 	const { mutate: deleteAuthDomain, isLoading } =
 		useDeleteAuthDomain<AxiosError<RenderErrorResponseDTO>>();
@@ -153,22 +167,27 @@ function AuthDomain(): JSX.Element {
 				width: 100,
 				render: (_, record: AuthtypesGettableAuthDomainDTO): JSX.Element => (
 					<section className="auth-domain-list-column-action">
-						<Button
+						<AuthZButton
+							checks={[
+								buildAuthDomainReadPermission(record.id ?? ''),
+								buildAuthDomainUpdatePermission(record.id ?? ''),
+							]}
 							className="auth-domain-list-action-link"
 							onClick={(): void => setRecord(record)}
 							variant="link"
 							testId="auth-domain-configure"
 						>
 							Configure {SSOType.get(record.config?.kind || '')}
-						</Button>
-						<Button
+						</AuthZButton>
+						<AuthZButton
+							checks={[buildAuthDomainDeletePermission(record.id ?? '')]}
 							className="auth-domain-list-action-link delete"
 							onClick={(): void => showDeleteModal(record)}
 							variant="link"
 							testId="auth-domain-delete"
 						>
 							Delete
-						</Button>
+						</AuthZButton>
 					</section>
 				),
 			},
@@ -182,7 +201,8 @@ function AuthDomain(): JSX.Element {
 				<h3 className="auth-domain-title" data-testid="auth-domain-title">
 					Authenticated Domains
 				</h3>
-				<Button
+				<AuthZButton
+					checks={[AuthDomainCreatePermission]}
 					prefix={<Plus size="md" />}
 					onClick={(): void => {
 						setAddDomain(true);
@@ -193,28 +213,32 @@ function AuthDomain(): JSX.Element {
 					testId="auth-domain-add"
 				>
 					Add Domain
-				</Button>
+				</AuthZButton>
 			</section>
-			{formattedError && <ErrorContent error={formattedError} />}
-			{!errorFetchingAuthDomainListResponse && (
-				<Table
-					columns={columns}
-					dataSource={authDomainListResponse?.data}
-					onRow={(
-						record: AuthtypesGettableAuthDomainDTO,
-					): HTMLAttributes<HTMLElement> =>
-						// data-* attributes are valid row props but absent from the antd typing
-						({
-							'data-testid': `auth-domain-row-${record.name}`,
-						}) as unknown as HTMLAttributes<HTMLElement>
-					}
-					loading={
-						isLoadingAuthDomainListResponse || isFetchingAuthDomainListResponse
-					}
-					className="auth-domain-list"
-					rowKey="id"
-				/>
-			)}
+			<AuthZGuardContent checks={[AuthDomainListPermission]}>
+				<>
+					{formattedError && <ErrorContent error={formattedError} />}
+					{!errorFetchingAuthDomainListResponse && (
+						<Table
+							columns={columns}
+							dataSource={authDomainListResponse?.data}
+							onRow={(
+								record: AuthtypesGettableAuthDomainDTO,
+							): HTMLAttributes<HTMLElement> =>
+								// data-* attributes are valid row props but absent from the antd typing
+								({
+									'data-testid': `auth-domain-row-${record.name}`,
+								}) as unknown as HTMLAttributes<HTMLElement>
+							}
+							loading={
+								isLoadingAuthDomainListResponse || isFetchingAuthDomainListResponse
+							}
+							className="auth-domain-list"
+							rowKey="id"
+						/>
+					)}
+				</>
+			</AuthZGuardContent>
 			{(addDomain || record) && (
 				<CreateEdit
 					isCreate={!record}

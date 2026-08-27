@@ -59,7 +59,7 @@ export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	HOME: ['ADMIN', 'EDITOR', 'VIEWER'],
 	ALERTS_NEW: ['ADMIN', 'EDITOR'],
-	ORG_SETTINGS: ['ADMIN'],
+	ORG_SETTINGS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	MY_SETTINGS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	SERVICE_MAP: ['ADMIN', 'EDITOR', 'VIEWER'],
 	ALL_CHANNELS: ['ADMIN', 'EDITOR', 'VIEWER'],
@@ -172,6 +172,7 @@ export const routeWithInitialAuthZSupport = {
 	LOGS: true,
 	LOGS_EXPLORER: true,
 	LIVE_LOGS: true,
+	ORG_SETTINGS: true,
 	ROLES_SETTINGS: true,
 	ROLE_CREATE: true,
 	ROLE_DETAILS: true,

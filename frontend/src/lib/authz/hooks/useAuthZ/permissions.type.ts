@@ -4,6 +4,19 @@ export default {
 	data: {
 		resources: [
 			{
+				kind: 'auth-domain',
+				type: 'metaresource',
+				allowedVerbs: [
+					'attach',
+					'create',
+					'delete',
+					'detach',
+					'list',
+					'read',
+					'update',
+				],
+			},
+			{
 				kind: 'factor-api-key',
 				type: 'metaresource',
 				allowedVerbs: ['create', 'delete', 'list', 'read', 'update'],

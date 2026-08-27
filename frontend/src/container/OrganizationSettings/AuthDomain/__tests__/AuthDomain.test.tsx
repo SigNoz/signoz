@@ -1,3 +1,4 @@
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
@@ -20,6 +21,7 @@ jest.mock('@signozhq/ui/sonner', () => ({
 describe('AuthDomain', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
+		server.use(setupAuthzAdmin());
 	});
 
 	afterEach(() => {
@@ -122,6 +124,9 @@ describe('AuthDomain', () => {
 			render(<AuthDomain />);
 
 			const addButton = await screen.findByRole('button', { name: /add domain/i });
+			await waitFor(() => {
+				expect(addButton).toBeEnabled();
+			});
 			await user.click(addButton);
 
 			await waitFor(() => {
@@ -148,8 +153,13 @@ describe('AuthDomain', () => {
 				expect(screen.getByText('signoz.io')).toBeInTheDocument();
 			});
 
-			const configureLinks = await screen.findAllByText(/configure google auth/i);
-			await user.click(configureLinks[0]);
+			const configureButtons = await screen.findAllByTestId(
+				'auth-domain-configure',
+			);
+			await waitFor(() => {
+				expect(configureButtons[0]).toBeEnabled();
+			});
+			await user.click(configureButtons[0]);
 
 			await waitFor(() => {
 				expect(screen.getByText(/edit google authentication/i)).toBeInTheDocument();

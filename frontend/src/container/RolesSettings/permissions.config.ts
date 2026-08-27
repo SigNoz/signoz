@@ -3,6 +3,7 @@ import {
 	ChartLine,
 	DraftingCompass,
 	Gauge,
+	Globe,
 	Key,
 	Logs,
 	Shield,
@@ -38,13 +39,49 @@ export interface ResourcePanelConfig {
  * we want to add resource panel configs for only types we actually are using,
  * not all of them
  */
+// Keys must stay alphabetically sorted — RESOURCE_ORDER derives the display order from them.
 export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
+	'auth-domain': {
+		label: 'Auth Domains',
+		description: 'Authenticated domains and their SSO configuration.',
+		icon: Globe,
+		selectorPlaceholder:
+			'Type auth domain ID, separate multiple with comma or space',
+		docsAnchor: 'auth-domain',
+	},
 	'factor-api-key': {
 		label: 'API Keys',
 		description: 'Programmatic access tokens for the workspace.',
 		icon: Key,
 		selectorPlaceholder: 'Type API key ID, separate multiple with comma or space',
 		docsAnchor: 'factor-api-key',
+	},
+	logs: {
+		label: 'Logs',
+		description: 'Log data collected across the workspace.',
+		icon: Logs,
+		selectorPlaceholder:
+			'Enter selector as <query-type>/<key>/<value> or <query-type>/* or use wizard...',
+		docsAnchor: 'logs',
+		selectorType: 'telemetryBuilder',
+	},
+	'meter-metrics': {
+		label: 'Meter Metrics',
+		description: 'Usage metering data for the workspace.',
+		icon: Gauge,
+		selectorPlaceholder:
+			'Enter selector as <query-type>/<key>/<value> or <query-type>/* or use wizard...',
+		docsAnchor: 'meter-metrics',
+		selectorType: 'telemetryBuilder',
+	},
+	metrics: {
+		label: 'Metrics',
+		description: 'Metric data collected across the workspace.',
+		icon: ChartLine,
+		selectorPlaceholder:
+			'Enter selector as <query-type>/<key>/<value> or <query-type>/* or use wizard...',
+		docsAnchor: 'metrics',
+		selectorType: 'telemetryBuilder',
 	},
 	role: {
 		label: 'Roles',
@@ -61,15 +98,6 @@ export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
 			'Type service account ID, separate multiple with comma or space',
 		docsAnchor: 'service-account',
 	},
-	logs: {
-		label: 'Logs',
-		description: 'Log data collected across the workspace.',
-		icon: Logs,
-		selectorPlaceholder:
-			'Enter selector as <query-type>/<key>/<value> or <query-type>/* or use wizard...',
-		docsAnchor: 'logs',
-		selectorType: 'telemetryBuilder',
-	},
 	traces: {
 		label: 'Traces',
 		description: 'Distributed tracing data collected across the workspace.',
@@ -77,24 +105,6 @@ export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
 		selectorPlaceholder:
 			'Enter selector as <query-type>/<key>/<value> or <query-type>/* or use wizard...',
 		docsAnchor: 'traces',
-		selectorType: 'telemetryBuilder',
-	},
-	metrics: {
-		label: 'Metrics',
-		description: 'Metric data collected across the workspace.',
-		icon: ChartLine,
-		selectorPlaceholder:
-			'Enter selector as <query-type>/<key>/<value> or <query-type>/* or use wizard...',
-		docsAnchor: 'metrics',
-		selectorType: 'telemetryBuilder',
-	},
-	'meter-metrics': {
-		label: 'Meter Metrics',
-		description: 'Usage metering data for the workspace.',
-		icon: Gauge,
-		selectorPlaceholder:
-			'Enter selector as <query-type>/<key>/<value> or <query-type>/* or use wizard...',
-		docsAnchor: 'meter-metrics',
 		selectorType: 'telemetryBuilder',
 	},
 };

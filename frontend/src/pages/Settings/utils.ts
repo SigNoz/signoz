@@ -21,7 +21,6 @@ import {
 
 export const getRoutes = (
 	userRole: ROLES | null,
-	isCurrentOrgSettings: boolean,
 	isGatewayEnabled: boolean,
 	isWorkspaceBlocked: boolean,
 	isCloudUser: boolean,
@@ -47,9 +46,8 @@ export const getRoutes = (
 
 	settings.push(...generalSettings(t));
 
-	if (isCurrentOrgSettings) {
-		settings.push(...organizationSettings(t));
-	}
+	// Visible to all authenticated users — in-page authz gates the content
+	settings.push(...organizationSettings(t));
 
 	if (isGatewayEnabled && (isAdmin || isEditor)) {
 		settings.push(...multiIngestionSettings(t));
