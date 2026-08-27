@@ -31,10 +31,14 @@ type traceQueryStatementBuilder struct {
 	cb                             qbtypes.ConditionBuilder
 	resourceFilterResolver         *resourcefilter.ResourceFingerprintResolver[qbtypes.TraceAggregation]
 	aggExprRewriter                qbtypes.AggExprRewriter
+	fl                             flagger.Flagger
 	skipResourceFingerprintEnabled bool
-	// traceScope is set only on the per-call copy made by BuildTraceScoped; it
-	// constrains the query to trace ids selected by the __trace_scope CTE.
+	// traceScope, set only on the per-call copy made by BuildTraceScoped, constrains
+	// queries to spans whose trace_id is in the __trace_scope CTE.
 	traceScope *qbtypes.Statement
+	// traceScopeResource is the __resource_filter CTE traceScope's predicate references,
+	// emitted only when this builder's own resource filter did not already emit it.
+	traceScopeResource *qbtypes.Statement
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.TraceAggregation] = (*traceQueryStatementBuilder)(nil)
@@ -50,8 +54,8 @@ func NewFactory(
 	return factory.NewProviderFactory(
 		factory.MustNewName("traces"),
 		func(_ context.Context, settings factory.ProviderSettings, cfg statementbuilder.Config) (qbtypes.StatementBuilder[qbtypes.TraceAggregation], error) {
-			fm := tracestelemetryschema.NewFieldMapper()
-			cb := tracestelemetryschema.NewConditionBuilder(fm)
+			fm := tracestelemetryschema.NewFieldMapper(fl)
+			cb := tracestelemetryschema.NewConditionBuilder(fm, fl)
 			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, fm, cb, fl)
 			return NewTraceQueryStatementBuilder(
 				settings, metadataStore, fm, cb, aggExprRewriter, telemetryStore, fl,
@@ -94,12 +98,13 @@ func NewTraceQueryStatementBuilder(
 		cb:                             conditionBuilder,
 		resourceFilterResolver:         resourceFilterResolver,
 		aggExprRewriter:                aggExprRewriter,
+		fl:                             flagger,
 		skipResourceFingerprintEnabled: skipResourceFingerprintEnable,
 	}
 }
 
-// BuildTraceScoped is Build additionally constrained to spans whose trace_id is
-// selected by traceScope. The receiver is copied so the shared builder stays stateless.
+// BuildTraceScoped is Build constrained to trace_ids selected by traceScope; the
+// receiver is copied so the shared builder stays stateless.
 func (b *traceQueryStatementBuilder) BuildTraceScoped(
 	ctx context.Context,
 	orgID valuer.UUID,
@@ -108,26 +113,29 @@ func (b *traceQueryStatementBuilder) BuildTraceScoped(
 	requestType qbtypes.RequestType,
 	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 	variables map[string]qbtypes.VariableItem,
-	traceScope *qbtypes.Statement,
+	traceScope, traceScopeResource *qbtypes.Statement,
 ) (*qbtypes.Statement, error) {
-	// The scope is wired into the list query only; reject other request types rather
-	// than silently dropping the constraint.
-	if requestType != qbtypes.RequestTypeRaw {
-		return nil, errors.NewInternalf(errors.CodeInternal, "trace-scoped build supports only the raw request type, got %s", requestType.StringValue())
-	}
 	scoped := *b
 	scoped.traceScope = traceScope
+	scoped.traceScopeResource = traceScopeResource
 	return scoped.Build(ctx, orgID, start, end, requestType, query, variables)
 }
 
-// attachTraceScope adds the trace-scope condition to sb and returns the CTE fragment
-// + args to prepend; both empty when no scope is set.
-func (b *traceQueryStatementBuilder) attachTraceScope(sb *sqlbuilder.SelectBuilder) (string, []any) {
+// attachTraceScope adds the trace-scope condition to sb and returns the CTE fragments
+// + args to prepend; resourceEmitted reports whether the query already carries the
+// __resource_filter CTE, so the scope's copy is emitted only when it does not.
+func (b *traceQueryStatementBuilder) attachTraceScope(sb *sqlbuilder.SelectBuilder, resourceEmitted bool) ([]string, [][]any) {
 	if b.traceScope == nil {
-		return "", nil
+		return nil, nil
 	}
 	sb.Where("trace_id GLOBAL IN (SELECT trace_id FROM __trace_scope)")
-	return fmt.Sprintf("__trace_scope AS (%s)", b.traceScope.Query), b.traceScope.Args
+	var frags []string
+	var args [][]any
+	if b.traceScopeResource != nil && !resourceEmitted {
+		frags = append(frags, fmt.Sprintf("__resource_filter AS (%s)", b.traceScopeResource.Query))
+		args = append(args, b.traceScopeResource.Args)
+	}
+	return append(frags, fmt.Sprintf("__trace_scope AS (%s)", b.traceScope.Query)), append(args, b.traceScope.Args)
 }
 
 // Build builds a SQL query for traces based on the given parameters.
@@ -154,7 +162,7 @@ func (b *traceQueryStatementBuilder) Build(
 
 	// We modify SelectFields above (injecting default fields), and those default
 	// fields can carry keys that need evolutions, so fetch keys after that.
-	keySelectors := getKeySelectors(query)
+	keySelectors := querybuilder.ExpandKeySelectorsForFamilies(ctx, orgID, b.fl, getKeySelectors(query))
 
 	keys, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, keySelectors)
 	if err != nil {
@@ -353,9 +361,9 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 		cteArgs = append(cteArgs, args)
 	}
 
-	if scopeFrag, scopeArgs := b.attachTraceScope(sb); scopeFrag != "" {
-		cteFragments = append(cteFragments, scopeFrag)
-		cteArgs = append(cteArgs, scopeArgs)
+	if scopeFrags, scopeArgs := b.attachTraceScope(sb, frag != ""); len(scopeFrags) > 0 {
+		cteFragments = append(cteFragments, scopeFrags...)
+		cteArgs = append(cteArgs, scopeArgs...)
 	}
 
 	for i, field := range query.SelectFields {
@@ -559,6 +567,11 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		cteArgs = append(cteArgs, args)
 	}
 
+	if scopeFrags, scopeArgs := b.attachTraceScope(sb, frag != ""); len(scopeFrags) > 0 {
+		cteFragments = append(cteFragments, scopeFrags...)
+		cteArgs = append(cteArgs, scopeArgs...)
+	}
+
 	sb.SelectMore(fmt.Sprintf(
 		"toStartOfInterval(timestamp, INTERVAL %d SECOND) AS ts",
 		int64(query.StepInterval.Seconds()),
@@ -719,6 +732,13 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 		cteArgs = append(cteArgs, args)
 	}
 
+	// skipResourceCTE means this scalar is embedded as a CTE of a time-series query,
+	// which has already emitted the __trace_scope fragment — add only the condition.
+	if scopeFrags, scopeArgs := b.attachTraceScope(sb, frag != ""); len(scopeFrags) > 0 && !skipResourceCTE {
+		cteFragments = append(cteFragments, scopeFrags...)
+		cteArgs = append(cteArgs, scopeArgs...)
+	}
+
 	allAggChArgs := []any{}
 
 	fieldNames := make([]string, 0, len(query.GroupBy))
@@ -835,6 +855,7 @@ func (b *traceQueryStatementBuilder) addFilterCondition(
 		preparedWhereClause, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
 			Context:            ctx,
 			OrgID:              orgID,
+			Flagger:            b.fl,
 			Logger:             b.logger,
 			FieldMapper:        b.fm,
 			ConditionBuilder:   b.cb,

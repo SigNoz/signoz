@@ -29,6 +29,7 @@ type builderQuery[T any] struct {
 	telemetryStore telemetrystore.TelemetryStore
 	orgID          valuer.UUID
 	stmtBuilder    qbtypes.StatementBuilder[T]
+	queryType      qbtypes.QueryType
 	spec           qbtypes.QueryBuilderQuery[T]
 	variables      map[string]qbtypes.VariableItem
 
@@ -51,6 +52,7 @@ func newBuilderQuery[T any](
 	telemetryStore telemetrystore.TelemetryStore,
 	orgID valuer.UUID,
 	stmtBuilder qbtypes.StatementBuilder[T],
+	queryType qbtypes.QueryType,
 	spec qbtypes.QueryBuilderQuery[T],
 	tr qbtypes.TimeRange,
 	kind qbtypes.RequestType,
@@ -62,6 +64,7 @@ func newBuilderQuery[T any](
 		telemetryStore: telemetryStore,
 		orgID:          orgID,
 		stmtBuilder:    stmtBuilder,
+		queryType:      queryType,
 		spec:           spec,
 		variables:      variables,
 		fromMS:         tr.From,
@@ -79,9 +82,15 @@ func (q *builderQuery[T]) Fingerprint() string {
 		return ""
 	}
 
+	// AI trace aggregations qualify and rank traces on whole-window per-trace
+	// values, which do not decompose into cacheable time buckets.
+	if q.queryType == qbtypes.QueryTypeBuilderAI {
+		return ""
+	}
+
 	// Create a deterministic fingerprint for builder queries
 	// This needs to include all fields that affect the query results
-	parts := []string{"builder"}
+	parts := []string{q.queryType.StringValue()}
 
 	// Add signal type
 	parts = append(parts, fmt.Sprintf("signal=%s", q.spec.Signal.StringValue()))

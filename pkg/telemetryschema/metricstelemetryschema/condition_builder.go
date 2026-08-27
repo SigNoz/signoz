@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 
+	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -20,6 +21,28 @@ type conditionBuilder struct {
 
 func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
 	return &conditionBuilder{fm: fm}
+}
+
+// Labels read back as String from the `labels` JSON whatever type the metadata claims, so the
+// collision is always String vs the literal; intrinsic columns keep their own type.
+func resolveTypeCollisionForFieldName(fieldExpression string, value any) string {
+	if col, isColumn := timeSeriesV4Columns[fieldExpression]; isColumn {
+		columnType := col.Type.GetType()
+		if lowCardinality, ok := col.Type.(schema.LowCardinalityColumnType); ok {
+			columnType = lowCardinality.ElementType.GetType()
+		}
+		if columnType != schema.ColumnTypeEnumString {
+			return fieldExpression
+		}
+	}
+
+	switch value.(type) {
+	case bool:
+		return fmt.Sprintf("accurateCastOrNull(%s, 'Bool')", fieldExpression)
+	case float64:
+		return fmt.Sprintf("toFloat64OrNull(%s)", fieldExpression)
+	}
+	return fieldExpression
 }
 
 func (c *conditionBuilder) conditionFor(
@@ -42,17 +65,8 @@ func (c *conditionBuilder) conditionFor(
 		return "", err
 	}
 
-	// TODO(srikanthccv): use the same data type collision handling when metrics schemas are updated
-	switch v := value.(type) {
-	case float64:
-		fieldExpression = fmt.Sprintf("toFloat64OrNull(%s)", fieldExpression)
-	case []any:
-		if len(v) > 0 && (operator == qbtypes.FilterOperatorBetween || operator == qbtypes.FilterOperatorNotBetween) {
-			if _, ok := v[0].(float64); ok {
-				fieldExpression = fmt.Sprintf("toFloat64OrNull(%s)", fieldExpression)
-			}
-		}
-	}
+	// TODO(srikanthccv): use querybuilder.DataTypeCollisionHandledFieldName when metrics schemas are updated
+	fieldExpression = resolveTypeCollisionForFieldName(fieldExpression, value)
 
 	switch operator {
 	case qbtypes.FilterOperatorEqual:
@@ -100,6 +114,8 @@ func (c *conditionBuilder) conditionFor(
 		if len(values) != 2 {
 			return "", qbtypes.ErrBetweenValues
 		}
+		// both bounds share one expression, so the lower bound picks the cast
+		fieldExpression = resolveTypeCollisionForFieldName(fieldExpression, values[0])
 		return sb.Between(fieldExpression, values[0], values[1]), nil
 	case qbtypes.FilterOperatorNotBetween:
 		values, ok := value.([]any)
@@ -109,6 +125,7 @@ func (c *conditionBuilder) conditionFor(
 		if len(values) != 2 {
 			return "", qbtypes.ErrBetweenValues
 		}
+		fieldExpression = resolveTypeCollisionForFieldName(fieldExpression, values[0])
 		return sb.NotBetween(fieldExpression, values[0], values[1]), nil
 
 	// in and not in
@@ -117,13 +134,23 @@ func (c *conditionBuilder) conditionFor(
 		if !ok {
 			return "", qbtypes.ErrInValues
 		}
-		return sb.In(fieldExpression, values), nil
+		// instead of using IN, we use `=` + `OR` to make use of index
+		conditions := []string{}
+		for _, item := range values {
+			conditions = append(conditions, sb.E(resolveTypeCollisionForFieldName(fieldExpression, item), item))
+		}
+		return sb.Or(conditions...), nil
 	case qbtypes.FilterOperatorNotIn:
 		values, ok := value.([]any)
 		if !ok {
 			return "", qbtypes.ErrInValues
 		}
-		return sb.NotIn(fieldExpression, values), nil
+		// instead of using NOT IN, we use `!=` + `AND` to make use of index
+		conditions := []string{}
+		for _, item := range values {
+			conditions = append(conditions, sb.NE(resolveTypeCollisionForFieldName(fieldExpression, item), item))
+		}
+		return sb.And(conditions...), nil
 
 	// exists and not exists
 	// in the UI based query builder, `exists` and `not exists` are used for
@@ -162,7 +189,9 @@ func (c *conditionBuilder) ConditionFor(
 		return nil, nil, err
 	}
 
-	keys := querybuilder.MatchingFieldKeys(key, fieldKeys)
+	// Metric labels have no family support, so every logical field is
+	// single-member and flattens losslessly to its physical key.
+	keys := querybuilder.SingleKeys(querybuilder.MatchingLogicalFields(ctx, orgID, nil, key, fieldKeys))
 	var warnings []string
 	if len(keys) == 0 {
 		if _, isColumn := timeSeriesV4Columns[key.Name]; isColumn {

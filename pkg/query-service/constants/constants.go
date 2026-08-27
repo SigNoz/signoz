@@ -3,7 +3,6 @@ package constants
 import (
 	"maps"
 	"os"
-	"regexp"
 	"strconv"
 
 	"github.com/SigNoz/signoz/pkg/query-service/model"
@@ -25,12 +24,6 @@ const OrderBySpanCount = "span_count"
 
 var MetricsExplorerClickhouseThreads = GetOrDefaultEnvInt("METRICS_EXPLORER_CLICKHOUSE_THREADS", 8)
 var UpdatedMetricsMetadataCachePrefix = GetOrDefaultEnv("METRICS_UPDATED_METADATA_CACHE_KEY", "UPDATED_METRICS_METADATA")
-
-const NormalizedMetricsMapCacheKey = "NORMALIZED_METRICS_MAP_CACHE_KEY"
-const NormalizedMetricsMapQueryThreads = 10
-
-var NormalizedMetricsMapRegex = regexp.MustCompile(`[^a-zA-Z0-9]`)
-var NormalizedMetricsMapQuantileRegex = regexp.MustCompile(`(?i)([._-]?quantile.*)$`)
 
 func GetEvalDelay() valuer.TextDuration {
 	evalDelayStr := GetOrDefaultEnv("RULES_EVAL_DELAY", "2m")
@@ -203,13 +196,18 @@ const (
 		"CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool," +
 		"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string," +
 		"CAST((scope_string_key, scope_string_value), 'Map(String, String)') as scope "
-	LogsSQLSelectV2 = "SELECT " +
-		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, " +
-		"attributes_string, " +
+	logsSQLSelectV2Head = "SELECT " +
+		"timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, "
+	logsSQLSelectV2Tail = "attributes_string, " +
 		"attributes_number, " +
 		"attributes_bool, " +
 		"resources_string, " +
 		"scope_string "
+	LogsSQLSelectV2 = logsSQLSelectV2Head + "body, " + logsSQLSelectV2Tail
+	// Orgs on JSON bodies keep the body in body_v2 and have the body column written empty.
+	// Stringified because filters emit a bare `body`, which ClickHouse resolves to this alias:
+	// as JSON it fails every string comparison, as String it matches against the body text.
+	LogsSQLSelectV2WithBodyJSON             = logsSQLSelectV2Head + "toString(body_v2) as body, " + logsSQLSelectV2Tail
 	TracesExplorerViewSQLSelectWithSubQuery = "(SELECT traceID, durationNano, " +
 		"serviceName, name FROM %s.%s WHERE parentSpanID = '' AND %s ORDER BY durationNano DESC LIMIT 1 BY traceID"
 	TracesExplorerViewSQLSelectBeforeSubQuery = "SELECT subQuery.serviceName as `subQuery.serviceName`, subQuery.name as `subQuery.name`, count() AS " +
@@ -671,16 +669,11 @@ var OldToNewTraceFieldsMap = map[string]string{
 
 var StaticFieldsTraces = map[string]v3.AttributeKey{}
 
-var IsDotMetricsEnabled = false
 var MaxJSONFlatteningDepth = 1
 
 func init() {
 	StaticFieldsTraces = maps.Clone(NewStaticFieldsTraces)
 	maps.Copy(StaticFieldsTraces, DeprecatedStaticFieldsTraces)
-	if GetOrDefaultEnv(DotMetricsEnabled, "true") == "true" {
-		IsDotMetricsEnabled = true
-	}
-
 	// set max flattening depth
 	depth, err := strconv.Atoi(GetOrDefaultEnv(maxJSONFlatteningDepth, "1"))
 	if err == nil {
@@ -708,5 +701,4 @@ var MaterializedDataTypeMap = map[string]string{
 
 const InspectMetricsMaxTimeDiff = 1800000
 
-const DotMetricsEnabled = "DOT_METRICS_ENABLED"
 const maxJSONFlatteningDepth = "MAX_JSON_FLATTENING_DEPTH"

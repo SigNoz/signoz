@@ -1,10 +1,3 @@
-"""
-Integration tests for query_type="builder_ai_query" over the traces signal.
-
-Each test tags its spans with a unique service.name and filters on it, so tests do
-not interfere with each other's data. Shared builders live in fixtures/querierai.py.
-"""
-
 import json
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
@@ -30,6 +23,8 @@ from fixtures.querierai import (
 from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
 
 
+# Each test tags its spans with a unique service.name and filters on it, so tests
+# do not interfere with each other's data.
 def test_ai_list_excludes_non_ai(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
@@ -77,8 +72,8 @@ def test_ai_list_having_aggregate_filter(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """Span + aggregate condition in one filter box splits into WHERE + HAVING; bare
-    and `trace.` spellings behave identically; an output-only aggregate is rejected."""
+    """One filter box splits into WHERE + HAVING; bare and `trace.` spellings behave
+    identically; an output-only aggregate is rejected."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-having"
 
@@ -362,9 +357,8 @@ def test_ai_list_nested_group_span_or_and_aggregate(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """service.name = X AND (has_error = true OR gen_ai.request.model = 'gpt-4o') AND
-    total_tokens > 100: the nested OR group must not flatten, span predicates go to
-    WHERE, the aggregate to HAVING."""
+    """A nested (span OR span) group ANDed with an aggregate must not flatten: span
+    predicates go to WHERE, the aggregate to HAVING."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-nested"
 

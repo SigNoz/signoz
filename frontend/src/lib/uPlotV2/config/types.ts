@@ -33,6 +33,13 @@ export enum SelectionPreferencesSource {
 /**
  * Props for configuring the uPlot config builder
  */
+/** `Percent` rescales each x-slice to its column total, so every column fills to 100. */
+export enum StackMode {
+	None = 'none',
+	Normal = 'normal',
+	Percent = 'percent',
+}
+
 export interface ConfigBuilderProps {
 	id: string;
 	onDragSelect?: (startTime: number, endTime: number) => void;

@@ -32,7 +32,7 @@ WITH __trace_scope AS (
       AND timestamp < '1747983448000000000'
       AND ts_bucket_start >= 1747945619
       AND ts_bucket_start <= 1747983448
-      AND ((mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name')))
+      AND (mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))
     GROUP BY trace_id
     HAVING output_tokens > 1000
 )
@@ -131,7 +131,8 @@ func TestBuild_SpanList_TraceFilter_Validation(t *testing.T) {
 }
 
 // Variables in a trace-level condition on the span list get the trace list's
-// treatment: substituted as literals, __all__ drops the condition (no scope CTE).
+// treatment: resolved through the standard pipeline, a dynamic __all__ drops the
+// condition (no scope CTE).
 func TestBuild_SpanList_TraceFilter_Variables(t *testing.T) {
 	b := newTestBuilder(t)
 	build := func(expr string, vars map[string]qbtypes.VariableItem) (*qbtypes.Statement, error) {
@@ -146,7 +147,7 @@ func TestBuild_SpanList_TraceFilter_Variables(t *testing.T) {
 	stmt, err := build("trace.output_tokens > $threshold",
 		map[string]qbtypes.VariableItem{"threshold": {Value: 700}})
 	require.NoError(t, err)
-	require.Contains(t, stmt.Query, "HAVING output_tokens > 700")
+	require.Contains(t, renderSQL(t, stmt), "HAVING output_tokens > 700")
 
 	stmt, err = build("trace.output_tokens > $threshold",
 		map[string]qbtypes.VariableItem{"threshold": {Type: qbtypes.DynamicVariableType, Value: "__all__"}})

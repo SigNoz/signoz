@@ -7,6 +7,7 @@ import { PanelMode } from 'container/DashboardContainer/visualization/panels/typ
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { IRenderTooltipFooterArgs } from 'lib/uPlotV2/components/types';
+import { StackMode } from 'lib/uPlotV2/config/types';
 import {
 	flattenTimeSeries,
 	getExecStats,
@@ -219,7 +220,9 @@ function BarPanelRenderer({
 						height={containerDimensions.height}
 						syncMode={dashboardPreference?.syncMode}
 						syncFilterMode={dashboardPreference?.syncFilterMode}
-						isStackedBarChart={spec.visualization?.stackedBarChart ?? false}
+						stack={
+							spec.visualization?.stackedBarChart ? StackMode.Normal : StackMode.None
+						}
 						renderTooltipFooter={renderTooltipFooter}
 						onClick={enableDrillDown ? handleChartClick : undefined}
 					/>

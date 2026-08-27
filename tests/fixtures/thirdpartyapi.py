@@ -1,9 +1,3 @@
-"""Shared helpers for the third-party (external) API monitoring domain list.
-
-A translator over v5 builder queries that answers with a UI-formatted scalar table, so the
-response is read by column rather than by series.
-"""
-
 from typing import Any
 
 import requests
@@ -49,7 +43,9 @@ def make_third_party_apis_request(
 
 
 def scalar_result(response: requests.Response) -> dict:
-    """The single scalar table from a third-party-apis response."""
+    """The single scalar table from a third-party-apis response. The endpoint is a
+    translator over v5 builder queries answering with a UI-formatted scalar table,
+    so the response is read by column rather than by series."""
     return response.json()["data"]["data"]["results"][0]
 
 

@@ -2,6 +2,7 @@ package tracestelemetryschema
 
 import (
 	"context"
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"testing"
 	"time"
 
@@ -288,8 +289,8 @@ func TestConditionFor(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
-	conditionBuilder := NewConditionBuilder(fm)
+	fm := NewFieldMapper(flaggertest.New(t))
+	conditionBuilder := NewConditionBuilder(fm, flaggertest.New(t))
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
@@ -375,8 +376,8 @@ func TestConditionForResourceWithEvolution(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
-	conditionBuilder := NewConditionBuilder(fm)
+	fm := NewFieldMapper(flaggertest.New(t))
+	conditionBuilder := NewConditionBuilder(fm, flaggertest.New(t))
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
@@ -395,8 +396,8 @@ func TestConditionForResourceWithEvolution(t *testing.T) {
 // user input and queries anyway, emitting a warning instead of failing.
 func TestConditionForSynthesizedKeys(t *testing.T) {
 	ctx := context.Background()
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
+	fm := NewFieldMapper(flaggertest.New(t))
+	cb := NewConditionBuilder(fm, flaggertest.New(t))
 
 	// no metadata matches -> the builder must synthesize from user input
 	var noMatches map[string][]*telemetrytypes.TelemetryFieldKey

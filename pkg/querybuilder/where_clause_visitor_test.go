@@ -588,9 +588,11 @@ func TestVisitKey(t *testing.T) {
 
 			// VisitKey only parses; the condition builder matches, resolves ambiguity
 			// and decides not-found handling. Replay that here against the generic
-			// builder behavior (error unless the key is ignored).
-			matching := MatchingFieldKeys(key, tt.fieldKeys)
-			keys, warning := ResolveKeys(key, matching)
+			// builder behavior (error unless the key is ignored). The test maps carry
+			// no signal, so every logical field is single-member and flattens losslessly.
+			matching := MatchingLogicalFields(context.Background(), valuer.UUID{}, nil, key, tt.fieldKeys)
+			resolved, warning := ResolveLogicalFields(key, matching)
+			keys := SingleKeys(resolved)
 
 			var gotErrors []string
 			var gotMainErrURL, gotMainWrnURL string
@@ -766,7 +768,8 @@ func (b *resourceConditionBuilder) ConditionFor(
 		return nil, nil, nil
 	}
 
-	keys, warning := ResolveKeys(key, MatchingFieldKeys(key, fieldKeys))
+	resolved, warning := ResolveLogicalFields(key, MatchingLogicalFields(context.Background(), valuer.UUID{}, nil, key, fieldKeys))
+	keys := SingleKeys(resolved)
 	var warnings []string
 	if warning != "" {
 		warnings = append(warnings, warning)
@@ -808,7 +811,8 @@ func (b *conditionBuilder) ConditionFor(
 		return []string{fmt.Sprintf("%s_cond", key.Name)}, nil, nil
 	}
 
-	keys, warning := ResolveKeys(key, MatchingFieldKeys(key, fieldKeys))
+	resolved, warning := ResolveLogicalFields(key, MatchingLogicalFields(context.Background(), valuer.UUID{}, nil, key, fieldKeys))
+	keys := SingleKeys(resolved)
 	var warnings []string
 	if warning != "" {
 		warnings = append(warnings, warning)

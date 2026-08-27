@@ -18,7 +18,14 @@ var (
 	ErrUnsupportedOperator = errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator")
 )
 
-// FieldMapper maps the telemetry field key to the table field name.
+// FieldMapper is a signal's storage dialect: given a resolved physical key, it
+// renders how this signal's tables express that key — its value (FieldFor),
+// its presence (ExistsFor), and its backing columns (ColumnFor) — honoring
+// materialization and column-generation choices carried on the key.
+//
+// ColumnExpressionFor and CandidateKeys additionally carry per-signal
+// resolution behavior (unknown-name fallback, candidate ordering); they
+// predate the resolution layer and are slated to move behind it.
 type FieldMapper interface {
 	// FieldFor returns the field name for the given key.
 	FieldFor(ctx context.Context, orgID valuer.UUID, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) (string, error)
@@ -34,6 +41,11 @@ type FieldMapper interface {
 	// the name (or `{context}.{name}`) first, else synthesized type-variant keys for sources
 	// that support it, else nil (caller errors). value is the filter operand, nil otherwise.
 	CandidateKeys(ctx context.Context, orgID valuer.UUID, field *telemetrytypes.TelemetryFieldKey, value any, keys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey
+	// ExistsFor returns the existence predicate for a single physical key (negated when
+	// exists is false), self-contained and arg-free so it can guard column expressions.
+	// It is the per-member primitive querybuilder.LogicalExistsExpr and the numeric branch
+	// of querybuilder.LogicalValueExpr compose family expressions from.
+	ExistsFor(ctx context.Context, orgID valuer.UUID, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey, exists bool) (string, error)
 }
 
 // ConditionBuilder builds the conditions for a filter term. The builder owns key resolution:

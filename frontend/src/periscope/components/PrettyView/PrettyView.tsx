@@ -67,6 +67,15 @@ export interface PrettyViewProps {
 	 */
 	pinnedFieldsValue?: string[];
 	onPinnedFieldsChange?: (next: string[]) => void;
+	/**
+	 * Optional per-leaf value renderer. Return a node to override the default
+	 * `String(value)` rendering for that leaf, or `undefined` to fall back. Used
+	 * e.g. to sanitize/format log body values (ANSI → color, unescape).
+	 */
+	renderLeafValue?: (
+		value: unknown,
+		keyPath: readonly (string | number)[],
+	) => React.ReactNode | undefined;
 }
 
 function PrettyView({
@@ -78,6 +87,7 @@ function PrettyView({
 	drawerKey = 'default',
 	pinnedFieldsValue,
 	onPinnedFieldsChange,
+	renderLeafValue,
 }: PrettyViewProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const [, setCopy] = useCopyToClipboard();
@@ -233,7 +243,9 @@ function PrettyView({
 					>
 						<span
 							className="pretty-view__actions"
-							onClick={(e): void => e.stopPropagation()}
+							onClick={(e): void => {
+								e.stopPropagation();
+							}}
 							role="button"
 							tabIndex={0}
 						>
@@ -278,15 +290,16 @@ function PrettyView({
 			...keyPath: KeyPath
 		): React.ReactNode => {
 			const forwardPath = keyPathToForward(keyPath);
+			const custom = renderLeafValue?.(value, keyPath);
 			return renderWithActions({
-				content: String(valueAsString),
+				content: custom ?? String(valueAsString),
 				fieldKey: keyPathToDisplayString(keyPath),
 				fieldKeyPath: forwardPath,
 				value,
 				isNested: typeof value === 'object' && value !== null,
 			});
 		},
-		[renderWithActions],
+		[renderWithActions, renderLeafValue],
 	);
 
 	const pinnedLabelRenderer = useCallback(

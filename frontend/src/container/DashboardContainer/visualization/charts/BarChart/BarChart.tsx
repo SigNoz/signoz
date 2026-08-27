@@ -6,25 +6,24 @@ import {
 	TooltipRenderArgs,
 } from 'lib/uPlotV2/components/types';
 
-import { useBarChartStacking } from '../../hooks/useBarChartStacking';
+import { StackMode } from 'lib/uPlotV2/config/types';
+
 import { BarChartProps } from '../types';
 
 export default function BarChart(props: BarChartProps): JSX.Element {
 	const {
 		children,
-		isStackedBarChart,
 		customTooltip,
 		config,
 		data,
+		stack = StackMode.None,
 		pinnedTooltipElement,
 		...rest
 	} = props;
 
-	const chartData = useBarChartStacking({
-		data,
-		isStackedBarChart,
-		config,
-	});
+	// Written during render so it lands before UPlotChart's effect reads the config,
+	// which derives the fill bands, percent axis unit and percent range from it.
+	config.setStackMode(stack);
 
 	const renderTooltip = useCallback(
 		(props: TooltipRenderArgs): React.ReactNode => {
@@ -37,7 +36,6 @@ export default function BarChart(props: BarChartProps): JSX.Element {
 				timezone: rest.timezone,
 				yAxisUnit: rest.yAxisUnit,
 				decimalPrecision: rest.decimalPrecision,
-				isStackedBarChart: isStackedBarChart,
 				canPinTooltip: rest.canPinTooltip,
 				renderTooltipFooter: rest.renderTooltipFooter,
 			};
@@ -48,7 +46,6 @@ export default function BarChart(props: BarChartProps): JSX.Element {
 			rest.timezone,
 			rest.yAxisUnit,
 			rest.decimalPrecision,
-			isStackedBarChart,
 			rest.canPinTooltip,
 			rest.renderTooltipFooter,
 		],
@@ -58,7 +55,7 @@ export default function BarChart(props: BarChartProps): JSX.Element {
 		<ChartWrapper
 			{...rest}
 			config={config}
-			data={chartData}
+			data={data}
 			customTooltip={renderTooltip}
 			pinnedTooltipElement={pinnedTooltipElement}
 		>
