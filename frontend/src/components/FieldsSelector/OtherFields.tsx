@@ -4,7 +4,11 @@ import { Skeleton } from 'antd';
 import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
-import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+import {
+	FieldContext,
+	SignalType,
+	TelemetryFieldKey,
+} from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import styles from './FieldsSelector.module.scss';
@@ -46,6 +50,9 @@ function OtherFields({
 		const suggestions: TelemetryFieldKey[] = rawSuggestions.map((attr) => ({
 			...attr,
 			key: buildCompositeKey(attr.name, attr.fieldContext, attr.fieldDataType),
+			signal: attr.signal as SignalType,
+			fieldContext: attr.fieldContext as FieldContext,
+			fieldDataType: attr.fieldDataType,
 		}));
 		const addedIds = new Set(
 			addedFields.map((f) =>
