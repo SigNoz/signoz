@@ -35,11 +35,16 @@ interface UseTraceViewColumns {
 // TODO(ai-explorer): browser-local only, unlike the list views' `?options=` columns.
 export function useTraceViewColumns(): UseTraceViewColumns {
 	// Same pool the fields selector offers, so columns and choices cannot drift apart.
-	const { fields: availableFields, isFetched } = useSelectableFields({
+	const { data, isFetched } = useSelectableFields({
 		signal: DataSource.TRACES,
 		searchText: '',
 		source: 'ai_o11y',
 	});
+
+	const availableFields = useMemo(
+		() => Object.values(data?.data.data.keys || {}).flat(),
+		[data],
+	);
 
 	const columns = useMemo(
 		() => buildTraceViewColumns(availableFields),

@@ -19,10 +19,15 @@ interface UseSelectableFieldsParams {
 	source?: StaticFieldsSource;
 }
 
+/** The envelope the keys endpoint returns, which a named source is shaped into. */
+export interface SelectableFieldsResponse {
+	data: { data: { keys: Record<string, TelemetryFieldKey[]> } };
+}
+
 interface UseSelectableFields {
-	fields: TelemetryFieldKey[];
-	isLoading: boolean;
-	/** True once a response has landed; unlike isLoading it is false before the first fetch. */
+	data: SelectableFieldsResponse | undefined;
+	isFetching: boolean;
+	/** True once a response has landed; unlike isFetching it is false before the first fetch. */
 	isFetched: boolean;
 }
 
@@ -78,19 +83,34 @@ export function useSelectableFields({
 		enabled: isAIObservability,
 	});
 
-	const fields = useMemo(
-		() =>
-			isAIObservability
-				? (staticPool.data ?? [])
-				: (Object.values(
-						suggestions.data?.data.data.keys || {},
-					).flat() as TelemetryFieldKey[]),
-		[isAIObservability, staticPool.data, suggestions.data],
-	);
+	// The pool is fetched whole, so the search narrows it here rather than server-side.
+	const staticResponse = useMemo((): SelectableFieldsResponse | undefined => {
+		if (!staticPool.data) {
+			return undefined;
+		}
+
+		const search = searchText.trim().toLowerCase();
+
+		return {
+			data: {
+				data: {
+					keys: {
+						[source as string]: staticPool.data.filter((field) =>
+							field.name.toLowerCase().includes(search),
+						),
+					},
+				},
+			},
+		};
+	}, [staticPool.data, searchText, source]);
 
 	return {
-		fields,
-		isLoading: isAIObservability ? staticPool.isFetching : suggestions.isFetching,
+		data: isAIObservability
+			? staticResponse
+			: (suggestions.data as unknown as SelectableFieldsResponse | undefined),
+		isFetching: isAIObservability
+			? staticPool.isFetching
+			: suggestions.isFetching,
 		isFetched: isAIObservability ? staticPool.isFetched : suggestions.isFetched,
 	};
 }

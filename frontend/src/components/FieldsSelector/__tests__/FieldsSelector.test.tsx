@@ -6,7 +6,11 @@ import FieldsSelector from '../FieldsSelector';
 import { useSelectableFields } from 'hooks/querySuggestions/useSelectableFields';
 
 jest.mock('hooks/querySuggestions/useSelectableFields', () => ({
-	useSelectableFields: jest.fn(() => ({ fields: [], isLoading: false })),
+	useSelectableFields: jest.fn(() => ({
+		data: undefined,
+		isFetching: false,
+		isFetched: true,
+	})),
 }));
 
 jest.mock('@signozhq/ui/sonner', () => ({
@@ -24,13 +28,22 @@ jest.mock('periscope/components/FloatingPanel', () => ({
 
 const mockSuggestions = (names: string[]): void => {
 	(useSelectableFields as jest.Mock).mockReturnValue({
-		fields: names.map((name) => ({
-			name,
-			signal: 'logs',
-			fieldDataType: 'string',
-			fieldContext: '',
-		})),
-		isLoading: false,
+		data: {
+			data: {
+				data: {
+					keys: {
+						attributeKeys: names.map((name) => ({
+							name,
+							signal: 'logs',
+							fieldDataType: 'string',
+							fieldContext: '',
+						})),
+					},
+				},
+			},
+		},
+		isFetching: false,
+		isFetched: true,
 	});
 };
 

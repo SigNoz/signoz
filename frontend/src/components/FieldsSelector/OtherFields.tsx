@@ -34,18 +34,14 @@ function OtherFields({
 	allowCustomFields,
 	addStaticFields,
 }: OtherFieldsProps): JSX.Element {
-	const { fields, isLoading } = useSelectableFields({
+	const { data, isFetching } = useSelectableFields({
 		signal,
 		searchText: debouncedInputValue,
 		source: addStaticFields,
 	});
 
 	const otherFields = useMemo<TelemetryFieldKey[]>(() => {
-		// A named source returns the whole pool, so the search narrows it here.
-		const search = debouncedInputValue.trim().toLowerCase();
-		const rawSuggestions = addStaticFields
-			? fields.filter((field) => field.name.toLowerCase().includes(search))
-			: fields;
+		const rawSuggestions = Object.values(data?.data.data.keys || {}).flat();
 		// Normalize: synthesize `key` once so downstream reads can trust it.
 		const suggestions: TelemetryFieldKey[] = rawSuggestions.map((attr) => ({
 			...attr,
@@ -84,15 +80,9 @@ function OtherFields({
 			key: buildCompositeKey(typed, ''),
 		};
 		return [customField, ...available];
-	}, [
-		fields,
-		addedFields,
-		allowCustomFields,
-		debouncedInputValue,
-		addStaticFields,
-	]);
+	}, [data, addedFields, allowCustomFields, debouncedInputValue]);
 
-	if (isLoading) {
+	if (isFetching) {
 		return (
 			<div className={cx(styles.section, styles.sectionOther)}>
 				<div className={styles.sectionHeader}>OTHER FIELDS</div>

@@ -6,18 +6,31 @@ import OtherFields from '../OtherFields';
 import { useSelectableFields } from 'hooks/querySuggestions/useSelectableFields';
 
 jest.mock('hooks/querySuggestions/useSelectableFields', () => ({
-	useSelectableFields: jest.fn(() => ({ fields: [], isLoading: false })),
+	useSelectableFields: jest.fn(() => ({
+		data: undefined,
+		isFetching: false,
+		isFetched: true,
+	})),
 }));
 
 const mockSuggestions = (names: string[]): void => {
 	(useSelectableFields as jest.Mock).mockReturnValue({
-		fields: names.map((name) => ({
-			name,
-			signal: 'logs',
-			fieldDataType: 'string',
-			fieldContext: '',
-		})),
-		isLoading: false,
+		data: {
+			data: {
+				data: {
+					keys: {
+						attributeKeys: names.map((name) => ({
+							name,
+							signal: 'logs',
+							fieldDataType: 'string',
+							fieldContext: '',
+						})),
+					},
+				},
+			},
+		},
+		isFetching: false,
+		isFetched: true,
 	});
 };
 
@@ -123,34 +136,35 @@ describe('OtherFields — addStaticFields (named pool)', () => {
 		{ name: 'llm_call_count', fieldContext: 'trace', fieldDataType: 'float64' },
 	];
 
-	beforeEach(() => {
-		mockSuggestions(['ingested.field']);
+	const mockPool = (fields: TelemetryFieldKey[]): void => {
 		(useSelectableFields as jest.Mock).mockReturnValue({
-			fields: pool,
-			isLoading: false,
+			data: { data: { data: { keys: { ai_o11y: fields } } } },
+			isFetching: false,
+			isFetched: true,
 		});
+	};
+
+	beforeEach(() => {
+		mockPool(pool);
 	});
 
-	it('lists the pool and never reads the suggestions endpoint', () => {
+	it('lists the pool it is handed', () => {
 		renderOtherFields({ addStaticFields: 'ai_o11y', allowCustomFields: false });
 
 		expect(screen.getByText('total_tokens')).toBeInTheDocument();
 		expect(screen.getByText('llm_call_count')).toBeInTheDocument();
-		expect(screen.queryByText('ingested.field')).not.toBeInTheDocument();
-		expect(useSelectableFields).toHaveBeenCalledWith(
-			expect.objectContaining({ source: 'ai_o11y' }),
-		);
 	});
 
-	it('filters the pool client-side on the search input', () => {
+	it('names the source and forwards the search so the hook can narrow the pool', () => {
 		renderOtherFields({
 			addStaticFields: 'ai_o11y',
 			allowCustomFields: false,
 			debouncedInputValue: 'llm',
 		});
 
-		expect(screen.getByText('llm_call_count')).toBeInTheDocument();
-		expect(screen.queryByText('total_tokens')).not.toBeInTheDocument();
+		expect(useSelectableFields).toHaveBeenCalledWith(
+			expect.objectContaining({ source: 'ai_o11y', searchText: 'llm' }),
+		);
 	});
 
 	it('omits pool fields that are already added', () => {
