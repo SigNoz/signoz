@@ -126,6 +126,7 @@ function TimeSeriesViewContainer({
 				dataSource={dataSource}
 				setWarning={setWarning}
 				allowExport
+				exportFileName="ai-traces-timeseries"
 			/>
 		</div>
 	);
