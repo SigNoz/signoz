@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/aiobservability"
@@ -66,13 +65,6 @@ func (handler *handler) GetFieldsValues(rw http.ResponseWriter, req *http.Reques
 	ctx, cancel := context.WithTimeout(req.Context(), 10*time.Second)
 	defer cancel()
 
-	// binding ignores query params the struct does not declare, so an unsupported
-	// existingQuery would silently return values it did not narrow
-	if req.URL.Query().Has("existingQuery") {
-		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "existingQuery is not supported"))
-		return
-	}
-
 	var params aiobservabilitytypes.PostableFieldValueParams
 	if err := binding.Query.BindQuery(req.URL.Query(), &params); err != nil {
 		render.Error(rw, err)
@@ -84,18 +76,29 @@ func (handler *handler) GetFieldsValues(rw http.ResponseWriter, req *http.Reques
 		render.Error(rw, err)
 		return
 	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
+	params.ExistingQuery = aitelemetryschema.ScopedExistingQuery(params.ExistingQuery)
 	fieldValueSelector := aiobservabilitytypes.NewFieldValueSelectorFromPostableFieldValueParams(params)
 
 	values := &telemetrytypes.TelemetryFieldValues{}
 	complete := true
 	// the trace context names the computed per-trace aggregates, which are never ingested
 	if fieldValueSelector.FieldContext != telemetrytypes.FieldContextTrace {
-		values, complete, err = handler.telemetryMetadataStore.GetAllValues(ctx, valuer.MustNewUUID(claims.OrgID), fieldValueSelector)
+		values, complete, err = handler.telemetryMetadataStore.GetAllValues(ctx, orgID, fieldValueSelector)
 		if err != nil {
 			render.Error(rw, err)
 			return
 		}
+
+		// related values are best-effort: on failure the plain values still serve
+		// the filter bar
+		relatedValues, relatedComplete, err := handler.telemetryMetadataStore.GetRelatedValues(ctx, orgID, fieldValueSelector)
+		if err != nil {
+			relatedValues = []string{}
+		}
+		values.RelatedValues = relatedValues
+		complete = complete && relatedComplete
 	}
 
 	render.Success(rw, http.StatusOK, &telemetrytypes.GettableFieldValues{

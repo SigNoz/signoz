@@ -9222,6 +9222,10 @@ paths:
         name: name
         schema:
           type: string
+      - in: query
+        name: existingQuery
+        schema:
+          type: string
       responses:
         "200":
           content:
