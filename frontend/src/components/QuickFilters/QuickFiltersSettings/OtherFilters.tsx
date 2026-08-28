@@ -4,14 +4,9 @@ import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { SIGNAL_DATA_SOURCE_MAP } from 'components/QuickFilters/QuickFiltersSettings/constants';
 import { SignalType } from 'components/QuickFilters/types';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
-import { useGetAttributeSuggestions } from 'hooks/queryBuilder/useGetAttributeSuggestions';
+import { buildCompositeKey } from 'container/OptionsMenu/utils';
 import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
-import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
-import { DataSource } from 'types/common/queryBuilder';
+import { FieldContext, TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 function OtherFiltersSkeleton(): JSX.Element {
 	return (
@@ -37,106 +32,49 @@ function OtherFilters({
 }: {
 	signal: SignalType | undefined;
 	inputValue: string;
-	addedFilters: FilterType[];
-	setAddedFilters: React.Dispatch<React.SetStateAction<FilterType[]>>;
+	addedFilters: TelemetryFieldKey[];
+	setAddedFilters: React.Dispatch<React.SetStateAction<TelemetryFieldKey[]>>;
 }): JSX.Element {
-	const isLogDataSource = useMemo(
-		() => SIGNAL_DATA_SOURCE_MAP[signal as SignalType] === DataSource.LOGS,
-		[signal],
+	const isMeterDataSource = signal === SignalType.METER_EXPLORER;
+
+	const { data, isFetching } = useGetQueryKeySuggestions(
+		{
+			searchText: inputValue,
+			signal: SIGNAL_DATA_SOURCE_MAP[signal as SignalType],
+			signalSource: isMeterDataSource ? 'meter' : '',
+		},
+		{
+			queryKey: [REACT_QUERY_KEY.GET_OTHER_FILTERS, signal, inputValue],
+			enabled: !!signal,
+		},
 	);
-	const isMeterDataSource = useMemo(
-		() => signal && signal === SignalType.METER_EXPLORER,
-		[signal],
-	);
 
-	const { data: suggestionsData, isFetching: isFetchingSuggestions } =
-		useGetAttributeSuggestions(
-			{
-				searchText: inputValue,
-				dataSource: SIGNAL_DATA_SOURCE_MAP[signal as SignalType],
-				filters: {} as TagFilter,
-			},
-			{
-				queryKey: [REACT_QUERY_KEY.GET_OTHER_FILTERS, inputValue],
-				enabled: !!signal && isLogDataSource,
-			},
+	const otherFilters = useMemo<TelemetryFieldKey[]>(() => {
+		const rawSuggestions = Object.values(data?.data?.data?.keys || {}).flat();
+		// Normalize: synthesize the composite `key` once so downstream reads (dedupe,
+		// add, render) can trust it.
+		const suggestions: TelemetryFieldKey[] = rawSuggestions.map((attr) => ({
+			name: attr.name,
+			signal: attr.signal,
+			fieldContext: attr.fieldContext as FieldContext,
+			fieldDataType: attr.fieldDataType,
+			key: buildCompositeKey(attr.name, attr.fieldContext, attr.fieldDataType),
+		}));
+
+		const addedKeys = new Set(
+			addedFilters.map((filter) =>
+				buildCompositeKey(filter.name, filter.fieldContext, filter.fieldDataType),
+			),
 		);
+		return suggestions.filter((attr) => !addedKeys.has(attr.key as string));
+	}, [data, addedFilters]);
 
-	const { data: aggregateKeysData, isFetching: isFetchingAggregateKeys } =
-		useGetAggregateKeys(
-			{
-				searchText: inputValue,
-				dataSource: SIGNAL_DATA_SOURCE_MAP[signal as SignalType],
-				aggregateOperator: 'noop',
-				aggregateAttribute: '',
-				tagType: '',
-			},
-			{
-				queryKey: [REACT_QUERY_KEY.GET_OTHER_FILTERS, inputValue],
-				enabled: !!signal && !isLogDataSource && !isMeterDataSource,
-			},
-		);
-
-	const { data: fieldKeysData, isLoading: isLoadingFieldKeys } =
-		useGetQueryKeySuggestions(
-			{
-				searchText: inputValue,
-				signal: SIGNAL_DATA_SOURCE_MAP[signal as SignalType],
-				signalSource: 'meter',
-			},
-			{
-				queryKey: [REACT_QUERY_KEY.GET_OTHER_FILTERS, inputValue],
-				enabled: !!signal && isMeterDataSource,
-			},
-		);
-
-	const otherFilters = useMemo(() => {
-		let filterAttributes;
-		if (isLogDataSource) {
-			filterAttributes = suggestionsData?.payload?.attributes || [];
-		} else if (isMeterDataSource) {
-			const fieldKeys: QueryKeyDataSuggestionsProps[] = Object.values(
-				fieldKeysData?.data?.data?.keys || {},
-			)?.flat();
-			filterAttributes = fieldKeys.map(
-				(attr) =>
-					({
-						key: attr.name,
-						dataType: attr.fieldDataType,
-						type: attr.fieldContext,
-						signal: attr.signal,
-					}) as BaseAutocompleteData,
-			);
-		} else {
-			filterAttributes = aggregateKeysData?.payload?.attributeKeys || [];
-		}
-		return filterAttributes?.filter(
-			(attr) => !addedFilters.some((filter) => filter.key === attr.key),
-		);
-	}, [
-		suggestionsData,
-		aggregateKeysData,
-		addedFilters,
-		isLogDataSource,
-		fieldKeysData,
-		isMeterDataSource,
-	]);
-
-	const handleAddFilter = (filter: FilterType): void => {
-		setAddedFilters((prev) => [
-			...prev,
-			{
-				key: filter.key,
-				dataType: filter.dataType,
-				type: filter.type,
-			},
-		]);
+	const handleAddFilter = (filter: TelemetryFieldKey): void => {
+		setAddedFilters((prev) => [...prev, filter]);
 	};
 
 	const renderFilters = (): React.ReactNode => {
-		const isLoading =
-			isFetchingSuggestions || isFetchingAggregateKeys || isLoadingFieldKeys;
-		if (isLoading) {
+		if (isFetching) {
 			return <OtherFiltersSkeleton />;
 		}
 		if (!otherFilters?.length) {
@@ -145,11 +83,11 @@ function OtherFilters({
 
 		return otherFilters.map((filter) => (
 			<div key={filter.key} className="qf-filter-item other-filters-item">
-				<div className="qf-filter-key">{filter.key}</div>
+				<div className="qf-filter-key">{filter.name}</div>
 				<Button
 					className="add-filter-btn periscope-btn"
 					size="small"
-					onClick={(): void => handleAddFilter(filter as FilterType)}
+					onClick={(): void => handleAddFilter(filter)}
 				>
 					Add
 				</Button>
