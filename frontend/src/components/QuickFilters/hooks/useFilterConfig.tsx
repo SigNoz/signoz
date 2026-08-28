@@ -1,8 +1,6 @@
 import { useMemo } from 'react';
-import { useQuery } from 'react-query';
-import getCustomFilters from 'api/quickFilters/getCustomFilters';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
+import { useGetSignalQuickFilters } from 'api/generated/services/quick-filter';
+import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 import { IQuickFiltersConfig, SignalType } from '../types';
 import { getFilterConfig } from '../utils';
@@ -13,7 +11,7 @@ interface UseFilterConfigProps {
 }
 interface UseFilterConfigReturn {
 	filterConfig: IQuickFiltersConfig[];
-	customFilters: FilterType[];
+	customFilters: TelemetryFieldKey[];
 	isCustomFiltersLoading: boolean;
 	isDynamicFilters: boolean;
 	refetchCustomFilters: () => void;
@@ -25,17 +23,16 @@ const useFilterConfig = ({
 }: UseFilterConfigProps): UseFilterConfigReturn => {
 	const {
 		isFetching: isCustomFiltersLoading,
-		data: customFilters = [],
+		data,
 		refetch,
-	} = useQuery<FilterType[], Error>(
-		[REACT_QUERY_KEY.GET_CUSTOM_FILTERS, signal],
-		async () => {
-			const res = await getCustomFilters({ signal: signal || '' });
-			return 'payload' in res && res.payload?.filters ? res.payload.filters : [];
-		},
-		{
-			enabled: !!signal,
-		},
+	} = useGetSignalQuickFilters(
+		{ signalName: signal ?? '' },
+		{ query: { enabled: !!signal } },
+	);
+
+	const customFilters = useMemo<TelemetryFieldKey[]>(
+		() => (data?.data?.filters ?? []) as TelemetryFieldKey[],
+		[data],
 	);
 
 	const isDynamicFilters = useMemo(
