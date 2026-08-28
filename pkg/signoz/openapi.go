@@ -35,7 +35,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
-	"github.com/SigNoz/signoz/pkg/modules/systemdashboard"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/querier"
@@ -94,8 +93,6 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ ruler.Handler }{},
 		struct{ statsreporter.Handler }{},
 		struct{ savedview.Handler }{},
-		struct{ systemdashboard.Module }{},
-		struct{ systemdashboard.Handler }{},
 	).New(ctx, instrumentation.ToProviderSettings(), apiserver.Config{})
 	if err != nil {
 		return nil, err

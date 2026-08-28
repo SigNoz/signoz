@@ -11313,6 +11313,17 @@ export type MigrateDashboardV2200 = {
 	status: string;
 };
 
+export type GetSystemDashboardPathParameters = {
+	name: string;
+};
+export type GetSystemDashboard200 = {
+	data: DashboardtypesGettableDashboardV2DTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetFeatures200 = {
 	/**
 	 * @type array
@@ -12246,17 +12257,6 @@ export type CreateSessionByEmailPassword200 = {
 
 export type RotateSession200 = {
 	data: AuthtypesGettableTokenDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type GetSystemDashboardPathParameters = {
-	name: string;
-};
-export type GetSystemDashboard200 = {
-	data: DashboardtypesGettableDashboardV2DTO;
 	/**
 	 * @type string
 	 */

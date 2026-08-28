@@ -49,7 +49,9 @@ func TestNewHandlers(t *testing.T) {
 	queryParser := queryparser.New(providerSettings)
 	require.NoError(t, err)
 	tagModule := impltag.NewModule(impltag.NewStore(sqlstore))
-	dashboardModule := impldashboard.NewModule(impldashboard.NewStore(sqlstore), providerSettings, nil, orgGetter, queryParser, tagModule)
+	systemDashboardRegistry, err := impldashboard.NewSystemDashboardRegistry()
+	require.NoError(t, err)
+	dashboardModule := impldashboard.NewModule(impldashboard.NewStore(sqlstore), providerSettings, nil, orgGetter, queryParser, tagModule, systemDashboardRegistry)
 
 	flagger, err := flagger.New(context.Background(), instrumentationtest.New().ToProviderSettings(), flagger.Config{}, flagger.MustNewRegistry())
 	require.NoError(t, err)
@@ -59,7 +61,7 @@ func TestNewHandlers(t *testing.T) {
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings), userRoleStore, flagger)
 
 	retentionGetter := implretention.NewGetter(implretention.NewStore(sqlstore))
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{}, dashboardModule, userGetter, userRoleStore, nil, nil, nil, retentionGetter, flagger, tagModule, nil, nil)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{}, dashboardModule, userGetter, userRoleStore, nil, nil, nil, retentionGetter, flagger, tagModule, nil)
 
 	querierHandler := querier.NewHandler(providerSettings, nil, nil)
 	registryHandler := factory.NewHandler(nil)

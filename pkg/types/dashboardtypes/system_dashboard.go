@@ -1,7 +1,6 @@
-package systemdashboardtypes
+package dashboardtypes
 
 import (
-	"context"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -16,20 +15,8 @@ var (
 	ErrCodeSystemDashboardAlreadyProvisioned = errors.MustNewCode("system_dashboard_already_provisioned")
 )
 
-// ProvisionerIdentity is stamped into created_by/updated_by by the reconciler. It
-// is deliberately not a valid email, so it can never collide with a real account:
-// any other value in updated_by means a foreign write.
+// ProvisionerIdentity is stamped into created_by/updated_by by the reconciler.
 const ProvisionerIdentity = "signoz"
-
-type Store interface {
-	Create(ctx context.Context, storable *StorableSystemDashboard) error
-
-	Get(ctx context.Context, orgID valuer.UUID, name string) (*StorableSystemDashboard, error)
-
-	UpdateVersion(ctx context.Context, orgID valuer.UUID, name string, version int) error
-
-	RunInTx(ctx context.Context, cb func(ctx context.Context) error) error
-}
 
 // StorableSystemDashboard records the shipped version each org's copy of a system
 // dashboard was last provisioned at. That version is the only thing the dashboard

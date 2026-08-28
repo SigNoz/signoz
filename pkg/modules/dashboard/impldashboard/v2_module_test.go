@@ -1,4 +1,4 @@
-package implsystemdashboard
+package impldashboard
 
 import (
 	"context"
@@ -9,14 +9,11 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/analytics/analyticstest"
 	"github.com/SigNoz/signoz/pkg/factory/factorytest"
-	"github.com/SigNoz/signoz/pkg/modules/dashboard"
-	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/tag/impltag"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlitesqlstore"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
-	"github.com/SigNoz/signoz/pkg/types/systemdashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
@@ -44,7 +41,7 @@ func newTestSQLStore(t *testing.T) sqlstore.SQLStore {
 		(*dashboardtypes.StorableDashboard)(nil),
 		(*tagtypes.Tag)(nil),
 		(*tagtypes.TagRelation)(nil),
-		(*systemdashboardtypes.StorableSystemDashboard)(nil),
+		(*dashboardtypes.StorableSystemDashboard)(nil),
 	} {
 		_, err := store.BunDB().NewCreateTable().Model(model).IfNotExists().Exec(context.Background())
 		require.NoError(t, err)
@@ -56,26 +53,25 @@ func newTestSQLStore(t *testing.T) sqlstore.SQLStore {
 	return store
 }
 
-func newTestModule(t *testing.T, sqlStore sqlstore.SQLStore, definitions ...systemdashboardtypes.Definition) (*module, dashboard.Module) {
+func newTestModule(t *testing.T, sqlStore sqlstore.SQLStore, definitions ...dashboardtypes.SystemDashboardDefinition) *module {
 	t.Helper()
 
+	registry, err := dashboardtypes.NewSystemDashboardRegistry(definitions)
+	require.NoError(t, err)
+
 	providerSettings := factorytest.NewSettings()
-	dashboardModule := impldashboard.NewModule(
-		impldashboard.NewStore(sqlStore),
+	return NewModule(
+		NewStore(sqlStore),
 		providerSettings,
 		analyticstest.New(),
 		nil,
 		queryparser.New(providerSettings),
 		impltag.NewModule(impltag.NewStore(sqlStore)),
-	)
-
-	registry, err := systemdashboardtypes.NewRegistry(definitions)
-	require.NoError(t, err)
-
-	return NewModule(providerSettings, NewStore(sqlStore), registry, dashboardModule).(*module), dashboardModule
+		registry,
+	).(*module)
 }
 
-func newTestDefinition(t *testing.T, version int, displayName string) systemdashboardtypes.Definition {
+func newTestDefinition(t *testing.T, version int, displayName string) dashboardtypes.SystemDashboardDefinition {
 	t.Helper()
 
 	raw := `{
@@ -88,62 +84,48 @@ func newTestDefinition(t *testing.T, version int, displayName string) systemdash
 		}
 	}`
 
-	definition, err := systemdashboardtypes.NewDefinition([]byte(raw))
+	definition, err := dashboardtypes.NewSystemDashboardDefinition([]byte(raw))
 	require.NoError(t, err)
 
 	return definition
 }
 
-func TestReconcileProvisionsThenUpgradesUntilTheRowIsModified(t *testing.T) {
+func TestReconcileProvisionsThenUpgrades(t *testing.T) {
 	ctx := context.Background()
 	sqlStore := newTestSQLStore(t)
 	orgID := valuer.GenerateUUID()
 
-	systemDashboardModule, _ := newTestModule(t, sqlStore, newTestDefinition(t, 1, "v1"))
-	require.NoError(t, systemDashboardModule.Reconcile(ctx, orgID))
+	dashboardModule := newTestModule(t, sqlStore, newTestDefinition(t, 1, "v1"))
+	require.NoError(t, dashboardModule.ReconcileSystemDashboards(ctx, orgID))
 
-	provisioned, err := systemDashboardModule.Get(ctx, orgID, testDashboardName)
+	provisioned, err := dashboardModule.GetSystemDashboard(ctx, orgID, testDashboardName)
 	require.NoError(t, err)
 	assert.Equal(t, dashboardtypes.SourceSystem, provisioned.Source)
-	assert.Equal(t, systemdashboardtypes.ProvisionerIdentity, provisioned.CreatedBy)
+	assert.Equal(t, dashboardtypes.ProvisionerIdentity, provisioned.CreatedBy)
 	assert.Equal(t, "v1", provisioned.Spec.Display.Name)
-	assert.Equal(t, 1, stateVersion(t, systemDashboardModule, ctx, orgID))
+	assert.Equal(t, 1, stateVersion(t, dashboardModule, ctx, orgID))
 
 	// Reconciling the same version again is a no-op.
-	require.NoError(t, systemDashboardModule.Reconcile(ctx, orgID))
-	unchanged, err := systemDashboardModule.Get(ctx, orgID, testDashboardName)
+	require.NoError(t, dashboardModule.ReconcileSystemDashboards(ctx, orgID))
+	unchanged, err := dashboardModule.GetSystemDashboard(ctx, orgID, testDashboardName)
 	require.NoError(t, err)
 	assert.Equal(t, provisioned.UpdatedAt, unchanged.UpdatedAt)
 
 	// An unmodified copy is upgraded in place, keeping its id.
-	upgradingModule, dashboardModule := newTestModule(t, sqlStore, newTestDefinition(t, 2, "v2"))
-	require.NoError(t, upgradingModule.Reconcile(ctx, orgID))
+	upgradingModule := newTestModule(t, sqlStore, newTestDefinition(t, 2, "v2"))
+	require.NoError(t, upgradingModule.ReconcileSystemDashboards(ctx, orgID))
 
-	upgraded, err := upgradingModule.Get(ctx, orgID, testDashboardName)
+	upgraded, err := upgradingModule.GetSystemDashboard(ctx, orgID, testDashboardName)
 	require.NoError(t, err)
 	assert.Equal(t, provisioned.ID, upgraded.ID)
 	assert.Equal(t, "v2", upgraded.Spec.Display.Name)
 	assert.Equal(t, 2, stateVersion(t, upgradingModule, ctx, orgID))
-
-	// Once anything but the provisioner writes the row, later releases leave it alone.
-	updatable := newTestDefinition(t, 2, "edited out of band").ToUpdatable()
-	_, err = dashboardModule.UpdateUnsafeV2(ctx, orgID, upgraded.ID, "user@signoz.io", updatable)
-	require.NoError(t, err)
-
-	shippingModule, _ := newTestModule(t, sqlStore, newTestDefinition(t, 3, "v3"))
-	require.NoError(t, shippingModule.Reconcile(ctx, orgID))
-
-	untouched, err := shippingModule.Get(ctx, orgID, testDashboardName)
-	require.NoError(t, err)
-	assert.Equal(t, "user@signoz.io", untouched.UpdatedBy)
-	assert.Equal(t, "edited out of band", untouched.Spec.Display.Name)
-	assert.Equal(t, 2, stateVersion(t, shippingModule, ctx, orgID))
 }
 
 func stateVersion(t *testing.T, module *module, ctx context.Context, orgID valuer.UUID) int {
 	t.Helper()
 
-	state, err := module.store.Get(ctx, orgID, dashboardtypes.SystemDashboardNamePrefix+testDashboardName)
+	state, err := module.store.GetSystemDashboard(ctx, orgID, dashboardtypes.SystemDashboardNamePrefix+testDashboardName)
 	require.NoError(t, err)
 
 	return state.Version
@@ -154,10 +136,10 @@ func TestSystemDashboardsAreImmutableToUsers(t *testing.T) {
 	sqlStore := newTestSQLStore(t)
 	orgID := valuer.GenerateUUID()
 
-	systemDashboardModule, dashboardModule := newTestModule(t, sqlStore, newTestDefinition(t, 1, "v1"))
-	require.NoError(t, systemDashboardModule.Reconcile(ctx, orgID))
+	dashboardModule := newTestModule(t, sqlStore, newTestDefinition(t, 1, "v1"))
+	require.NoError(t, dashboardModule.ReconcileSystemDashboards(ctx, orgID))
 
-	provisioned, err := systemDashboardModule.Get(ctx, orgID, testDashboardName)
+	provisioned, err := dashboardModule.GetSystemDashboard(ctx, orgID, testDashboardName)
 	require.NoError(t, err)
 
 	_, err = dashboardModule.UpdateV2(ctx, orgID, provisioned.ID, "user@signoz.io", newTestDefinition(t, 1, "edited").ToUpdatable())
@@ -170,13 +152,13 @@ func TestReconcileDoesNotDowngrade(t *testing.T) {
 	sqlStore := newTestSQLStore(t)
 	orgID := valuer.GenerateUUID()
 
-	newerModule, _ := newTestModule(t, sqlStore, newTestDefinition(t, 3, "v3"))
-	require.NoError(t, newerModule.Reconcile(ctx, orgID))
+	newerModule := newTestModule(t, sqlStore, newTestDefinition(t, 3, "v3"))
+	require.NoError(t, newerModule.ReconcileSystemDashboards(ctx, orgID))
 
-	olderModule, _ := newTestModule(t, sqlStore, newTestDefinition(t, 2, "v2"))
-	require.NoError(t, olderModule.Reconcile(ctx, orgID))
+	olderModule := newTestModule(t, sqlStore, newTestDefinition(t, 2, "v2"))
+	require.NoError(t, olderModule.ReconcileSystemDashboards(ctx, orgID))
 
-	got, err := newerModule.Get(ctx, orgID, testDashboardName)
+	got, err := newerModule.GetSystemDashboard(ctx, orgID, testDashboardName)
 	require.NoError(t, err)
 	assert.Equal(t, "v3", got.Spec.Display.Name)
 	assert.Equal(t, 3, stateVersion(t, newerModule, ctx, orgID))
@@ -187,7 +169,7 @@ func TestGetRejectsANonSystemDashboard(t *testing.T) {
 	sqlStore := newTestSQLStore(t)
 	orgID := valuer.GenerateUUID()
 
-	systemDashboardModule, dashboardModule := newTestModule(t, sqlStore)
+	dashboardModule := newTestModule(t, sqlStore)
 
 	var postable dashboardtypes.PostableDashboardV2
 	require.NoError(t, postable.UnmarshalJSON([]byte(`{
@@ -200,10 +182,10 @@ func TestGetRejectsANonSystemDashboard(t *testing.T) {
 	require.NoError(t, err)
 
 	// The server-side prefix makes user names structurally unreachable here.
-	_, err = systemDashboardModule.Get(ctx, orgID, "a-user-dashboard")
+	_, err = dashboardModule.GetSystemDashboard(ctx, orgID, "a-user-dashboard")
 	require.Error(t, err)
 
-	_, err = systemDashboardModule.Get(ctx, orgID, dashboardtypes.SystemDashboardNamePrefix+testDashboardName)
+	_, err = dashboardModule.GetSystemDashboard(ctx, orgID, dashboardtypes.SystemDashboardNamePrefix+testDashboardName)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "must not carry")
 }

@@ -2,6 +2,8 @@ package impldashboard
 
 import (
 	"context"
+	"log/slog"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/transition"
@@ -331,4 +333,112 @@ func (module *module) UnpinV2(ctx context.Context, orgID valuer.UUID, userID val
 
 func (module *module) DeletePreferencesForUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) error {
 	return module.store.DeletePreferencesForUser(ctx, orgID, userID)
+}
+
+func (m *module) ReconcileSystemDashboards(ctx context.Context, orgID valuer.UUID) error {
+	for _, definition := range m.systemDashboardRegistry.List() {
+		if err := m.reconcileSystemDashboard(ctx, orgID, definition); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *module) reconcileSystemDashboard(ctx context.Context, orgID valuer.UUID, definition dashboardtypes.SystemDashboardDefinition) error {
+	existing, err := m.GetByNameV2(ctx, orgID, definition.Name())
+	if err != nil {
+		if !errors.Ast(err, errors.TypeNotFound) {
+			return err
+		}
+		return m.provisionSystemDashboard(ctx, orgID, definition)
+	}
+
+	state, err := m.store.GetSystemDashboard(ctx, orgID, definition.Name())
+	if err != nil {
+		return err
+	}
+	// Only ever move forward: a downgrade must not rewrite the newer content.
+	if state.Version >= definition.Version {
+		return nil
+	}
+
+	return m.upgradeSystemDashboard(ctx, orgID, existing.ID, definition)
+}
+
+// provisionSystemDashboard creates the dashboard and its state row in one transaction,
+// so a system dashboard can never exist without the version it was provisioned at.
+// A concurrent provisioner (another replica, or the org-creation hook racing the
+// startup sweep) loses on the state row's unique (org_id, name) index and rolls back.
+func (m *module) provisionSystemDashboard(ctx context.Context, orgID valuer.UUID, definition dashboardtypes.SystemDashboardDefinition) error {
+	err := m.store.RunInTx(ctx, func(ctx context.Context) error {
+		created, err := m.CreateV2(
+			ctx,
+			orgID,
+			dashboardtypes.ProvisionerIdentity,
+			valuer.UUID{},
+			dashboardtypes.SourceSystem,
+			definition.Dashboard,
+		)
+		if err != nil {
+			return err
+		}
+
+		return m.store.CreateSystemDashboard(ctx, dashboardtypes.NewStorableSystemDashboard(orgID, created.ID, definition.Name(), definition.Version))
+	})
+	if err != nil {
+		if errors.Ast(err, errors.TypeAlreadyExists) {
+			m.settings.Logger().DebugContext(ctx, "system dashboard already provisioned concurrently", slog.String("name", definition.Name()), slog.String("org_id", orgID.StringValue()))
+			return nil
+		}
+		return err
+	}
+
+	m.settings.Logger().InfoContext(ctx, "provisioned system dashboard", slog.String("name", definition.Name()), slog.Int("version", definition.Version), slog.String("org_id", orgID.StringValue()))
+	return nil
+}
+
+func (m *module) upgradeSystemDashboard(ctx context.Context, orgID valuer.UUID, id valuer.UUID, definition dashboardtypes.SystemDashboardDefinition) error {
+	err := m.store.RunInTx(ctx, func(ctx context.Context) error {
+		if _, err := m.UpdateUnsafeV2(ctx, orgID, id, dashboardtypes.ProvisionerIdentity, definition.ToUpdatable()); err != nil {
+			return err
+		}
+
+		return m.store.UpdateSystemDashboardVersion(ctx, orgID, definition.Name(), definition.Version)
+	})
+	if err != nil {
+		return err
+	}
+
+	m.settings.Logger().InfoContext(ctx, "upgraded system dashboard", slog.String("name", definition.Name()), slog.Int("version", definition.Version), slog.String("org_id", orgID.StringValue()))
+	return nil
+}
+
+func (m *module) GetSystemDashboard(ctx context.Context, orgID valuer.UUID, name string) (*dashboardtypes.DashboardV2, error) {
+	return m.getSystemDashboard(ctx, orgID, name)
+}
+
+func (m *module) ResolveSystemDashboardID(ctx context.Context, orgID valuer.UUID, name string) (valuer.UUID, error) {
+	existing, err := m.getSystemDashboard(ctx, orgID, name)
+	if err != nil {
+		return valuer.UUID{}, err
+	}
+
+	return existing.ID, nil
+}
+
+func (m *module) getSystemDashboard(ctx context.Context, orgID valuer.UUID, name string) (*dashboardtypes.DashboardV2, error) {
+	if strings.HasPrefix(name, dashboardtypes.SystemDashboardNamePrefix) {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "name must not carry the %q prefix", dashboardtypes.SystemDashboardNamePrefix)
+	}
+
+	existing, err := m.GetByNameV2(ctx, orgID, dashboardtypes.SystemDashboardNamePrefix+name)
+	if err != nil {
+		return nil, err
+	}
+	if err := existing.ErrIfNotSystem(); err != nil {
+		return nil, err
+	}
+
+	return existing, nil
 }

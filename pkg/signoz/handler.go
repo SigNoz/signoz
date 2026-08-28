@@ -46,8 +46,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/spanmapper/implspanmapper"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile/implspanpercentile"
-	"github.com/SigNoz/signoz/pkg/modules/systemdashboard"
-	"github.com/SigNoz/signoz/pkg/modules/systemdashboard/implsystemdashboard"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail/impltracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
@@ -90,7 +88,6 @@ type Handlers struct {
 	RulerHandler            ruler.Handler
 	LLMPricingRuleHandler   llmpricingrule.Handler
 	StatsHandler            statsreporter.Handler
-	SystemDashboard         systemdashboard.Handler
 }
 
 func NewHandlers(
@@ -140,6 +137,5 @@ func NewHandlers(
 		RulerHandler:            signozruler.NewHandler(rulerService),
 		LLMPricingRuleHandler:   impllmpricingrule.NewHandler(modules.LLMPricingRule),
 		StatsHandler:            statsreporter.NewHandler(statsAggregator),
-		SystemDashboard:         implsystemdashboard.NewHandler(modules.SystemDashboard),
 	}
 }

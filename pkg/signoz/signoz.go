@@ -36,7 +36,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount/implserviceaccount"
-	"github.com/SigNoz/signoz/pkg/modules/systemdashboard/implsystemdashboard"
 	"github.com/SigNoz/signoz/pkg/modules/tag"
 	"github.com/SigNoz/signoz/pkg/modules/tag/impltag"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
@@ -61,6 +60,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	pkgtokenizer "github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/version"
@@ -176,7 +176,7 @@ func New(
 	telemetrystoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]],
 	authNsCallback func(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing) (map[authtypes.AuthNProvider]authn.AuthN, error),
 	authzCallback func(context.Context, sqlstore.SQLStore, authz.Config, licensing.Licensing, []authz.OnBeforeRoleDelete) (factory.ProviderFactory[authz.AuthZ, authz.Config], error),
-	dashboardModuleCallback func(sqlstore.SQLStore, factory.ProviderSettings, analytics.Analytics, organization.Getter, queryparser.QueryParser, querier.Querier, licensing.Licensing, tag.Module) dashboard.Module,
+	dashboardModuleCallback func(sqlstore.SQLStore, factory.ProviderSettings, analytics.Analytics, organization.Getter, queryparser.QueryParser, querier.Querier, licensing.Licensing, tag.Module, dashboardtypes.SystemDashboardRegistry) dashboard.Module,
 	gatewayProviderFactory func(licensing.Licensing) factory.ProviderFactory[gateway.Gateway, gateway.Config],
 	auditorProviderFactories func(licensing.Licensing) factory.NamedMap[factory.ProviderFactory[auditor.Auditor, auditor.Config]],
 	meterReporterProviderFactories func(context.Context, factory.ProviderSettings, flagger.Flagger, licensing.Licensing, telemetrystore.TelemetryStore, retention.Getter, organization.Getter, zeus.Zeus) (factory.NamedMap[factory.ProviderFactory[meterreporter.Reporter, meterreporter.Config]], string),
@@ -441,8 +441,13 @@ func New(
 	// Initialize query parser (needed for dashboard module)
 	queryParser := queryparser.New(providerSettings)
 
-	// Initialize dashboard module
-	dashboard := dashboardModuleCallback(sqlstore, providerSettings, analytics, orgGetter, queryParser, querier, licensing, tagModule)
+	// Initialize dashboard module. The system dashboard registry is parsed here so
+	// a malformed embedded definition fails startup instead of a request.
+	systemDashboardRegistry, err := impldashboard.NewSystemDashboardRegistry()
+	if err != nil {
+		return nil, err
+	}
+	dashboard := dashboardModuleCallback(sqlstore, providerSettings, analytics, orgGetter, queryParser, querier, licensing, tagModule, systemDashboardRegistry)
 
 	// Initialize user getter
 	userGetter := impluser.NewGetter(userStore, userRoleStore, flagger)
@@ -541,16 +546,8 @@ func New(
 
 	metricReductionRuleModule := metricReductionRuleModuleCallback(sqlstore, telemetrystore, dashboard, queryParser, licensing, flagger, telemetryMetadataStore, providerSettings, config.MetricsExplorer.TelemetryStore.Threads)
 
-	// Initialize the system dashboard module. The registry is parsed here so a
-	// malformed embedded definition fails startup instead of a request.
-	systemDashboardRegistry, err := implsystemdashboard.NewRegistry()
-	if err != nil {
-		return nil, err
-	}
-	systemDashboardModule := implsystemdashboard.NewModule(providerSettings, implsystemdashboard.NewStore(sqlstore), systemDashboardRegistry, dashboard)
-
 	// Initialize all modules
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter, userRoleStore, serviceAccount, serviceAccountGetter, cloudIntegrationModule, retentionGetter, flagger, tagModule, metricReductionRuleModule, systemDashboardModule)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter, userRoleStore, serviceAccount, serviceAccountGetter, cloudIntegrationModule, retentionGetter, flagger, tagModule, metricReductionRuleModule)
 
 	// Initialize ruler from the variant-specific provider factories
 	rulerInstance, err := factory.NewProviderFromNamedMap(ctx, providerSettings, config.Ruler, rulerProviderFactories(cache, alertmanager, sqlstore, telemetrystore, telemetryMetadataStore, prometheus, orgGetter, modules.RuleStateHistory, querier, queryParser), "signoz")
@@ -619,7 +616,7 @@ func New(
 		factory.NewNamedService(factory.MustNewName("auditor"), auditor),
 		factory.NewNamedService(factory.MustNewName("meterreporter"), meterReporter, factory.MustNewName("licensing")),
 		factory.NewNamedService(factory.MustNewName("ruler"), rulerInstance),
-		factory.NewNamedService(factory.MustNewName("systemdashboard"), implsystemdashboard.NewService(providerSettings, systemDashboardModule, orgGetter)),
+		factory.NewNamedService(factory.MustNewName("systemdashboard"), impldashboard.NewService(providerSettings, dashboard, orgGetter)),
 	)
 	if err != nil {
 		return nil, err

@@ -1,4 +1,4 @@
-package implsystemdashboard
+package impldashboard
 
 import (
 	"context"
@@ -7,15 +7,15 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/modules/systemdashboard"
 )
 
 const reconcileRetryInterval = 30 * time.Second
 
 type service struct {
 	settings  factory.ScopedProviderSettings
-	module    systemdashboard.Module
+	module    dashboard.Module
 	orgGetter organization.Getter
 	stopC     chan struct{}
 	healthyC  chan struct{}
@@ -23,9 +23,9 @@ type service struct {
 
 // NewService reconciles every org's system dashboards once at startup. Orgs
 // created later are reconciled by the organization setter instead.
-func NewService(providerSettings factory.ProviderSettings, module systemdashboard.Module, orgGetter organization.Getter) factory.Service {
+func NewService(providerSettings factory.ProviderSettings, module dashboard.Module, orgGetter organization.Getter) factory.Service {
 	return &service{
-		settings:  factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/systemdashboard/implsystemdashboard"),
+		settings:  factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"),
 		module:    module,
 		orgGetter: orgGetter,
 		stopC:     make(chan struct{}),
@@ -71,7 +71,7 @@ func (service *service) reconcile(ctx context.Context) error {
 	}
 
 	for _, org := range orgs {
-		if err := service.module.Reconcile(ctx, org.ID); err != nil {
+		if err := service.module.ReconcileSystemDashboards(ctx, org.ID); err != nil {
 			return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "couldn't reconcile system dashboards for org %s", org.ID.StringValue())
 		}
 	}

@@ -3,6 +3,7 @@ package impldashboard
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -628,5 +629,62 @@ func (store *store) DeleteDashboardView(ctx context.Context, orgID valuer.UUID, 
 	if rows == 0 {
 		return errors.Newf(errors.TypeNotFound, dashboardtypes.ErrCodeDashboardViewNotFound, "dashboard view with id %s doesn't exist", id)
 	}
+	return nil
+}
+
+func (store *store) CreateSystemDashboard(ctx context.Context, storable *dashboardtypes.StorableSystemDashboard) error {
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewInsert().
+		Model(storable).
+		Exec(ctx)
+	if err != nil {
+		return store.sqlstore.WrapAlreadyExistsErrf(err, dashboardtypes.ErrCodeSystemDashboardAlreadyProvisioned, "system dashboard %s is already provisioned", storable.Name)
+	}
+
+	return nil
+}
+
+func (store *store) GetSystemDashboard(ctx context.Context, orgID valuer.UUID, name string) (*dashboardtypes.StorableSystemDashboard, error) {
+	storable := new(dashboardtypes.StorableSystemDashboard)
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(storable).
+		Where("org_id = ?", orgID).
+		Where("name = ?", name).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, dashboardtypes.ErrCodeSystemDashboardNotFound, "system dashboard %s is not provisioned", name)
+	}
+
+	return storable, nil
+}
+
+func (store *store) UpdateSystemDashboardVersion(ctx context.Context, orgID valuer.UUID, name string, version int) error {
+	result, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewUpdate().
+		Model(new(dashboardtypes.StorableSystemDashboard)).
+		Set("version = ?", version).
+		Set("updated_at = ?", time.Now()).
+		Where("org_id = ?", orgID).
+		Where("name = ?", name).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return errors.Newf(errors.TypeNotFound, dashboardtypes.ErrCodeSystemDashboardNotFound, "system dashboard %s is not provisioned", name)
+	}
+
 	return nil
 }

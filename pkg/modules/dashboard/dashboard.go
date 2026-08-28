@@ -104,6 +104,16 @@ type Module interface {
 	DeleteView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 
 	GetByMetricNamesV2(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string][]dashboardtypes.DashboardPanelRef, error)
+
+	// ════════════════════════════════════════════════════════════════════════
+	// System dashboard methods
+	// ════════════════════════════════════════════════════════════════════════
+
+	ReconcileSystemDashboards(ctx context.Context, orgID valuer.UUID) error
+
+	GetSystemDashboard(ctx context.Context, orgID valuer.UUID, name string) (*dashboardtypes.DashboardV2, error)
+
+	ResolveSystemDashboardID(ctx context.Context, orgID valuer.UUID, name string) (valuer.UUID, error)
 }
 
 type Handler interface {
@@ -167,4 +177,6 @@ type Handler interface {
 	UpdateView(http.ResponseWriter, *http.Request)
 
 	DeleteView(http.ResponseWriter, *http.Request)
+
+	GetSystemDashboard(http.ResponseWriter, *http.Request)
 }
