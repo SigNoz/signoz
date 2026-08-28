@@ -757,11 +757,11 @@ func (provider *provider) systemDashboardID() coretypes.ResourceIDExtractor {
 			return "", err
 		}
 
-		id, err := provider.dashboardModule.ResolveSystemDashboardID(ctx, valuer.MustNewUUID(claims.OrgID), mux.Vars(ec.Request)["name"])
+		systemDashboard, err := provider.dashboardModule.GetSystemDashboard(ctx, valuer.MustNewUUID(claims.OrgID), mux.Vars(ec.Request)["name"])
 		if err != nil {
 			return "", err
 		}
 
-		return id.StringValue(), nil
+		return systemDashboard.ID.StringValue(), nil
 	})
 }

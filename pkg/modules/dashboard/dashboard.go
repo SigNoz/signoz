@@ -112,8 +112,6 @@ type Module interface {
 	ReconcileSystemDashboards(ctx context.Context, orgID valuer.UUID) error
 
 	GetSystemDashboard(ctx context.Context, orgID valuer.UUID, name string) (*dashboardtypes.DashboardV2, error)
-
-	ResolveSystemDashboardID(ctx context.Context, orgID valuer.UUID, name string) (valuer.UUID, error)
 }
 
 type Handler interface {

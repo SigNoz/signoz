@@ -415,19 +415,6 @@ func (m *module) upgradeSystemDashboard(ctx context.Context, orgID valuer.UUID, 
 }
 
 func (m *module) GetSystemDashboard(ctx context.Context, orgID valuer.UUID, name string) (*dashboardtypes.DashboardV2, error) {
-	return m.getSystemDashboard(ctx, orgID, name)
-}
-
-func (m *module) ResolveSystemDashboardID(ctx context.Context, orgID valuer.UUID, name string) (valuer.UUID, error) {
-	existing, err := m.getSystemDashboard(ctx, orgID, name)
-	if err != nil {
-		return valuer.UUID{}, err
-	}
-
-	return existing.ID, nil
-}
-
-func (m *module) getSystemDashboard(ctx context.Context, orgID valuer.UUID, name string) (*dashboardtypes.DashboardV2, error) {
 	if strings.HasPrefix(name, dashboardtypes.SystemDashboardNamePrefix) {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "name must not carry the %q prefix", dashboardtypes.SystemDashboardNamePrefix)
 	}
