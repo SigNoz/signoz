@@ -122,20 +122,12 @@ func NewStorableQuickFilter(orgID valuer.UUID, signal Signal, filters []telemetr
 	}, nil
 }
 
-// Update updates an existing StorableQuickFilter with new filters after validation.
-func (quickfilter *StorableQuickFilter) Update(filters []telemetrytypes.TelemetryFieldKey) error {
-	if err := validateFilters(filters); err != nil {
-		return err
+// NewSignalFiltersFromSignal creates a SignalFilters with no filters for a signal.
+func NewSignalFiltersFromSignal(signal Signal) *SignalFilters {
+	return &SignalFilters{
+		Signal:  signal,
+		Filters: []telemetrytypes.TelemetryFieldKey{},
 	}
-
-	filterJSON, err := json.Marshal(filters)
-	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error marshalling filters")
-	}
-
-	quickfilter.Filter = string(filterJSON)
-	quickfilter.UpdatedAt = time.Now()
-	return nil
 }
 
 // NewSignalFilterFromStorableQuickFilter converts a StorableQuickFilter to a SignalFilters object.

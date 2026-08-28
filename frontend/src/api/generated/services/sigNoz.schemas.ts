@@ -11811,28 +11811,6 @@ export type GetMyOrganization200 = {
 	status: string;
 };
 
-export type ListQuickFilters200 = {
-	/**
-	 * @type array,null
-	 */
-	data: QuickfiltertypesSignalFiltersDTO[] | null;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type GetSignalQuickFiltersPathParameters = {
-	signalName: string;
-};
-export type GetSignalQuickFilters200 = {
-	data: QuickfiltertypesSignalFiltersDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type GetPublicDashboardDataV2PathParameters = {
 	id: string;
 };
@@ -11863,6 +11841,28 @@ export type GetPublicDashboardPanelQueryRangeV2Params = {
 
 export type GetPublicDashboardPanelQueryRangeV2200 = {
 	data: Querybuildertypesv5QueryRangeResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListQuickFilters200 = {
+	/**
+	 * @type array,null
+	 */
+	data: QuickfiltertypesSignalFiltersDTO[] | null;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetQuickFiltersPathParameters = {
+	signalName: string;
+};
+export type GetQuickFilters200 = {
+	data: QuickfiltertypesSignalFiltersDTO;
 	/**
 	 * @type string
 	 */

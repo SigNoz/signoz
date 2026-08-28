@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"strings"
 
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 type storableQuickFilterRow struct {
@@ -30,28 +30,36 @@ type legacyQuickFilterEntry struct {
 	Signal   string `json:"signal"`
 }
 
-// quickFilterFieldDataType resolves legacy datatype spellings via the shared
-// alias table, with unknowns normalized to unspecified and every numeric
-// collapsed to number, matching the fields API and the v1 write path.
-func quickFilterFieldDataType(legacyDataType string) string {
-	var fieldDataType telemetrytypes.FieldDataType
-	if err := fieldDataType.Scan(legacyDataType); err != nil {
-		return ""
-	}
-	if fieldDataType == telemetrytypes.FieldDataTypeInt64 {
-		fieldDataType = telemetrytypes.FieldDataTypeNumber
-	}
-	return fieldDataType.StringValue()
+// quickFilterLegacyTypeToFieldContext maps the v3 attribute key types the v1
+// write path could store. Materialized top-level fields carried no type, and
+// anything unknown (e.g. "Sum" in the old meter defaults) normalizes to
+// unspecified, matching what the v1 write path does at runtime.
+var quickFilterLegacyTypeToFieldContext = map[string]string{
+	"tag":      "attribute",
+	"resource": "resource",
+	"scope":    "scope",
 }
 
-// quickFilterFieldContext resolves legacy type spellings via the shared alias
-// table and normalizes anything unknown (e.g. "Sum") to unspecified, matching
-// what the v1 write path does at runtime.
+// quickFilterLegacyDataTypeToFieldDataType maps the v3 attribute key data
+// types the v1 write path could store, with numerics collapsed to number,
+// matching the fields API and the v1 write path.
+var quickFilterLegacyDataTypeToFieldDataType = map[string]string{
+	"string":  "string",
+	"bool":    "bool",
+	"int64":   "number",
+	"float64": "number",
+}
+
+// quickFilterFieldDataType resolves legacy datatype spellings, with unknowns
+// normalized to unspecified.
+func quickFilterFieldDataType(legacyDataType string) string {
+	return quickFilterLegacyDataTypeToFieldDataType[strings.ToLower(strings.TrimSpace(legacyDataType))]
+}
+
+// quickFilterFieldContext resolves legacy type spellings, with unknowns
+// normalized to unspecified.
 func quickFilterFieldContext(legacyType string) string {
-	if fieldContext, ok := telemetrytypes.FieldContextFromText(legacyType); ok {
-		return fieldContext.StringValue()
-	}
-	return ""
+	return quickFilterLegacyTypeToFieldContext[strings.ToLower(strings.TrimSpace(legacyType))]
 }
 
 type migrateQuickFilters struct {
@@ -120,7 +128,13 @@ func migrateQuickFilterEntries(filter string) (migrated string, changed bool, ok
 	for _, rawEntry := range entriesRaw {
 		var entry legacyQuickFilterEntry
 		if err := json.Unmarshal(rawEntry, &entry); err != nil {
-			return "", false, false
+			// Some stored entries are plain strings rather than objects; treat
+			// the string as the filter key name, dropping empty ones.
+			var name string
+			if err := json.Unmarshal(rawEntry, &name); err != nil {
+				return "", false, false
+			}
+			entry = legacyQuickFilterEntry{Key: name}
 		}
 
 		switch {

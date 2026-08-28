@@ -57,14 +57,14 @@ def test_non_admin_can_read_quick_filters(
     token = get_token(email, NON_ADMIN_PASSWORD)
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v2/orgs/me/filters"),
+        signoz.self.host_configs["8080"].get("/api/v2/quick_filters"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=2,
     )
     assert response.status_code == HTTPStatus.OK, response.text
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v2/orgs/me/filters/traces"),
+        signoz.self.host_configs["8080"].get("/api/v2/quick_filters/traces"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=2,
     )
@@ -81,7 +81,7 @@ def test_non_admin_cannot_update_quick_filters(
     token = get_token(email, NON_ADMIN_PASSWORD)
 
     response = requests.put(
-        signoz.self.host_configs["8080"].get("/api/v2/orgs/me/filters"),
+        signoz.self.host_configs["8080"].get("/api/v2/quick_filters"),
         json={
             "signal": "traces",
             "filters": [{"name": "service.name", "fieldContext": "resource", "fieldDataType": "string"}],

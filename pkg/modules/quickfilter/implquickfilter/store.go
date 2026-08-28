@@ -62,7 +62,7 @@ func (s *store) Upsert(ctx context.Context, filter *quickfiltertypes.StorableQui
 		BunDB().
 		NewInsert().
 		Model(filter).
-		On("CONFLICT (id) DO UPDATE").
+		On("CONFLICT (org_id, signal) DO UPDATE").
 		Set("filter = EXCLUDED.filter").
 		Set("updated_at = EXCLUDED.updated_at").
 		Exec(ctx)
