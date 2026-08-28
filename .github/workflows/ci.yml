@@ -70,7 +70,9 @@ jobs:
           cache: true
 
       - name: Vet
-        run: go vet ./...
+        # Exclude kode hasil generate (ANTLR grammar parser) — false positive "unreachable code"
+        # yang memang dari pola generated code, bukan bug di kode kita.
+        run: go vet $(go list ./... | grep -v '/grammar$')
 
       - name: Build
         run: go build ./...
@@ -95,7 +97,7 @@ jobs:
           echo "CI passed"
 
       - name: Notify Slack on failure
-        if: failure()
+        if: failure() && vars.SLACK_NOTIFICATIONS_ENABLED == 'true'
         uses: slackapi/slack-github-action@v1.27.0
         with:
           payload: |
