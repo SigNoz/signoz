@@ -11,7 +11,7 @@ import {
 } from 'mocks-server/__mockdata__/customQuickFilters';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 
 import '@testing-library/jest-dom';
 
@@ -34,9 +34,9 @@ const mockUseApiMonitoringParams = jest.mocked(useApiMonitoringParams);
 
 const BASE_URL = ENVIRONMENT.baseURL;
 const SIGNAL = SignalType.LOGS;
-const quickFiltersListURL = `${BASE_URL}/api/v1/orgs/me/filters/${SIGNAL}`;
-const saveQuickFiltersURL = `${BASE_URL}/api/v1/orgs/me/filters`;
-const quickFiltersSuggestionsURL = `${BASE_URL}/api/v3/filter_suggestions`;
+const quickFiltersListURL = `${BASE_URL}/api/v2/orgs/me/filters/${SIGNAL}`;
+const saveQuickFiltersURL = `${BASE_URL}/api/v2/orgs/me/filters`;
+const quickFiltersSuggestionsURL = `${BASE_URL}/api/v1/fields/keys`;
 const quickFiltersAttributeValuesURL = `${BASE_URL}/api/v3/autocomplete/attribute_values`;
 const fieldsValuesURL = `${BASE_URL}/api/v1/fields/values`;
 
@@ -338,6 +338,63 @@ describe('Quick Filters with custom filters', () => {
 		);
 	});
 
+	it('keeps same-name fields with different context as distinct entries', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		server.use(
+			rest.get(quickFiltersSuggestionsURL, (_req, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
+						status: 'success',
+						data: {
+							complete: true,
+							keys: {
+								level: [
+									{
+										name: 'level',
+										fieldContext: 'attribute',
+										fieldDataType: 'string',
+										signal: 'logs',
+									},
+									{
+										name: 'level',
+										fieldContext: 'span',
+										fieldDataType: 'string',
+										signal: 'logs',
+									},
+								],
+							},
+						},
+					}),
+				),
+			),
+		);
+
+		render(<TestQuickFilters signal={SIGNAL} />);
+		await screen.findByText(FILTER_SERVICE_NAME);
+
+		const icon = await screen.findByTestId(SETTINGS_ICON_TEST_ID);
+		const settingsButton = icon.closest('button') ?? icon;
+		await user.click(settingsButton);
+
+		const otherSection = screen.getByText(OTHER_FILTERS_LABEL).parentElement!;
+		// Both `level` variants are shown despite sharing a name.
+		await waitFor(() =>
+			expect(within(otherSection).getAllByText('level')).toHaveLength(2),
+		);
+
+		// Adding one variant removes only that one; the other stays.
+		const firstLevel = within(otherSection).getAllByText('level')[0];
+		const addButton = firstLevel.parentElement?.querySelector('button');
+		await user.click(addButton as HTMLButtonElement);
+
+		const addedSection = screen.getByText(ADDED_FILTERS_LABEL).parentElement!;
+		await waitFor(() => {
+			expect(within(addedSection).getAllByText('level')).toHaveLength(1);
+			expect(within(otherSection).getAllByText('level')).toHaveLength(1);
+		});
+	});
+
 	it('adds a filter from OTHER FILTERS to ADDED FILTERS when clicked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
@@ -458,7 +515,7 @@ describe('Quick Filters with custom filters', () => {
 		const requestBody = putHandler.mock.calls[0][0];
 		expect(requestBody.filters).toStrictEqual(
 			expect.arrayContaining([
-				expect.not.objectContaining({ key: FILTER_OS_DESCRIPTION }),
+				expect.not.objectContaining({ name: FILTER_OS_DESCRIPTION }),
 			]),
 		);
 		expect(requestBody.signal).toBe(SIGNAL);
@@ -612,9 +669,9 @@ describe('Quick Filters refetch behavior', () => {
 				filters: [
 					...(quickFiltersListResponse.data.filters ?? []),
 					{
-						key: 'new.custom.filter',
-						dataType: 'string',
-						type: 'resource',
+						name: 'new.custom.filter',
+						fieldDataType: 'string',
+						fieldContext: 'resource',
 					} as const,
 				],
 			},
