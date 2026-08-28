@@ -144,6 +144,24 @@ func TestConditionForAttributeJSON(t *testing.T) {
 			operator: qbtypes.FilterOperatorNotExists, value: nil,
 			expected: "attributes.`user.id` IS NULL",
 		},
+		{
+			name:     "in string",
+			key:      attrKey("user.id", telemetrytypes.FieldDataTypeString, evo),
+			operator: qbtypes.FilterOperatorIn, value: []any{"a", "b"},
+			expected: "((attributes.`user.id`::String = ? OR attributes.`user.id`::String = ?) AND attributes.`user.id` IS NOT NULL)",
+		},
+		{
+			name:     "not in string has no exists guard",
+			key:      attrKey("user.id", telemetrytypes.FieldDataTypeString, evo),
+			operator: qbtypes.FilterOperatorNotIn, value: []any{"a", "b"},
+			expected: "(attributes.`user.id`::String <> ? AND attributes.`user.id`::String <> ?)",
+		},
+		{
+			name:     "between number",
+			key:      attrKey("latency", telemetrytypes.FieldDataTypeNumber, evo),
+			operator: qbtypes.FilterOperatorBetween, value: []any{float64(1), float64(9)},
+			expected: "toFloat64(attributes.`latency`::Nullable(Float64)) BETWEEN ? AND ?",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -179,4 +197,58 @@ func TestConditionForAttributeJSONNotExistsDualRead(t *testing.T) {
 	assert.Contains(t, sql, "IS NULL")
 	assert.Contains(t, sql, "attributes.`user.id` IS NOT NULL")
 	assert.Contains(t, sql, "mapContains(attributes_string, 'user.id')")
+}
+
+// TestColumnExpressionForAttributeJSON covers group-by (coerced to String) and aggregation
+// (coerced to Float64) over a JSON attribute after release: both are exists-guarded so an absent
+// path is NULL rather than a spurious ”/0, and the numeric branch keeps its toFloat64 coercion.
+func TestColumnExpressionForAttributeJSON(t *testing.T) {
+	ctx := context.Background()
+	fm := NewFieldMapper(flaggertest.New(t))
+	evo := MockAttributeEvolutionData(attrJSONRelease)
+
+	t.Run("group by string", func(t *testing.T) {
+		key := attrKey("user.id", telemetrytypes.FieldDataTypeString, evo)
+		got, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, attrWindowAfter[0], attrWindowAfter[1], &key, telemetrytypes.FieldDataTypeString, nil)
+		require.NoError(t, err)
+		assert.Equal(t, "multiIf(attributes.`user.id` IS NOT NULL, attributes.`user.id`::String, NULL)", got)
+	})
+
+	t.Run("aggregation numeric", func(t *testing.T) {
+		key := attrKey("latency", telemetrytypes.FieldDataTypeNumber, evo)
+		got, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, attrWindowAfter[0], attrWindowAfter[1], &key, telemetrytypes.FieldDataTypeFloat64, nil)
+		require.NoError(t, err)
+		assert.Equal(t, "multiIf(attributes.`latency` IS NOT NULL, toFloat64(attributes.`latency`::Nullable(Float64)), NULL)", got)
+	})
+}
+
+// TestAttributeJSONNoAmbiguityWarning guards against a visible regression: the JSON column is a
+// second physical home for the same logical field, not a second logical field, so a plain
+// attribute filter must not emit the "ambiguous key" warning.
+func TestAttributeJSONNoAmbiguityWarning(t *testing.T) {
+	ctx := context.Background()
+	fm := NewFieldMapper(flaggertest.New(t))
+	cb := NewConditionBuilder(fm, flaggertest.New(t))
+	evo := MockAttributeEvolutionData(attrJSONRelease)
+
+	key := attrKey("user.id", telemetrytypes.FieldDataTypeString, evo)
+	sb := sqlbuilder.NewSelectBuilder()
+	_, warnings, err := cb.ConditionFor(ctx, valuer.UUID{}, attrWindowAfter[0], attrWindowAfter[1], &key,
+		map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorEqual, "x", sb)
+	require.NoError(t, err)
+	assert.Empty(t, warnings, "a plain attribute filter must not emit an ambiguity warning")
+}
+
+// TestColumnForUnspecifiedAttributeNoBranchFlip pins the branch-flip decision: a
+// data-type-unspecified attribute key resolves to no column (even with the evolution present), so
+// bare attribute keys keep taking the legacy CandidateKeys/synthesis path rather than becoming
+// metadata-first resolvable.
+func TestColumnForUnspecifiedAttributeNoBranchFlip(t *testing.T) {
+	ctx := context.Background()
+	fm := NewFieldMapper(flaggertest.New(t))
+	evo := MockAttributeEvolutionData(attrJSONRelease)
+
+	key := attrKey("user.id", telemetrytypes.FieldDataTypeUnspecified, evo)
+	_, err := fm.ColumnFor(ctx, valuer.UUID{}, attrWindowAfter[0], attrWindowAfter[1], &key)
+	assert.ErrorIs(t, err, qbtypes.ErrColumnNotFound)
 }
