@@ -17,7 +17,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Button } from 'antd';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { GripVertical } from '@signozhq/icons';
-import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
+import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 function SortableFilter({
 	filter,
@@ -25,13 +25,13 @@ function SortableFilter({
 	allowDrag,
 	allowRemove,
 }: {
-	filter: FilterType;
-	onRemove: (filter: FilterType) => void;
+	filter: TelemetryFieldKey;
+	onRemove: (filter: TelemetryFieldKey) => void;
 	allowDrag: boolean;
 	allowRemove: boolean;
 }): JSX.Element {
 	const { attributes, listeners, setNodeRef, transform, transition } =
-		useSortable({ id: filter.key });
+		useSortable({ id: filter.key as string });
 
 	const style = {
 		transform: CSS.Transform.toString(transform),
@@ -46,14 +46,14 @@ function SortableFilter({
 		>
 			<div {...attributes} {...listeners} className="drag-handle">
 				{allowDrag && <GripVertical size={16} />}
-				{filter.key}
+				{filter.name}
 			</div>
 			{allowRemove && (
 				<Button
 					className="remove-filter-btn periscope-btn"
 					size="small"
 					onClick={(): void => {
-						onRemove(filter as FilterType);
+						onRemove(filter);
 					}}
 				>
 					Remove
@@ -69,8 +69,8 @@ function AddedFilters({
 	setAddedFilters,
 }: {
 	inputValue: string;
-	addedFilters: FilterType[];
-	setAddedFilters: React.Dispatch<React.SetStateAction<FilterType[]>>;
+	addedFilters: TelemetryFieldKey[];
+	setAddedFilters: React.Dispatch<React.SetStateAction<TelemetryFieldKey[]>>;
 }): JSX.Element {
 	const sensors = useSensors(useSensor(PointerSensor));
 
@@ -90,12 +90,12 @@ function AddedFilters({
 	const filteredAddedFilters = useMemo(
 		() =>
 			addedFilters.filter((filter) =>
-				filter.key.toLowerCase().includes(inputValue.toLowerCase()),
+				filter.name.toLowerCase().includes(inputValue.toLowerCase()),
 			),
 		[addedFilters, inputValue],
 	);
 
-	const handleRemoveFilter = (filter: FilterType): void => {
+	const handleRemoveFilter = (filter: TelemetryFieldKey): void => {
 		setAddedFilters((prev) => prev.filter((f) => f.key !== filter.key));
 	};
 
@@ -116,7 +116,7 @@ function AddedFilters({
 							<div className="no-values-found">No values found</div>
 						) : (
 							<SortableContext
-								items={addedFilters.map((f) => f.key)}
+								items={addedFilters.map((f) => f.key as string)}
 								strategy={verticalListSortingStrategy}
 								disabled={!allowDrag}
 							>
