@@ -18,6 +18,8 @@ jobs:
       backend: ${{ steps.filter.outputs.backend }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # paths-filter butuh history lengkap untuk banding commit dengan benar
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -50,7 +52,12 @@ jobs:
       - name: Lint
         run: yarn lint
 
-      - name: Unit test
+      - name: Unit test (changed only) — untuk feedback cepat di PR
+        if: github.event_name == 'pull_request'
+        run: yarn test --ci --coverage --changedSince=origin/${{ github.base_ref }}
+
+      - name: Unit test (full suite) — safety net saat push ke main/develop
+        if: github.event_name == 'push'
         run: yarn test --ci --coverage
 
       - name: Build
@@ -69,14 +76,13 @@ jobs:
           go-version-file: 'go.mod'
           cache: true
 
-      - name: Vet
-        # Exclude kode hasil generate (grammar) + matikan 2 analyzer yang menyoroti
-        # temuan pre-existing di kode upstream SigNoz (bukan dari diff custom feature kita):
-        # - stdmethods: Seek() signature di clickhouseprometheusv2
-        # - copylocks: sync.Mutex copy di ee/query-service/app/api
-        # TODO: hapus flag ini kalau upstream sudah fix, atau kalau file itu justru
-        # bagian dari custom feature kita sendiri (cek dulu git blame-nya).
-        run: go vet -stdmethods=false -copylocks=false $(go list ./... | grep -v '/grammar$')
+      - name: Lint (golangci-lint)
+        # Pakai .golangci.yml yang sudah ada di root repo (dari upstream SigNoz) —
+        # config ini sudah exclude grammar/generated code & legacy findings yang
+        # sebelumnya bikin `go vet` manual noise (Seek signature, copylocks, dll).
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
 
       - name: Build
         run: go build ./...
