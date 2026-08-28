@@ -23,9 +23,7 @@ def test_get_system_dashboard(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"{SYSTEM_BASE_URL}/{SYSTEM_DASHBOARD_NAME}"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SYSTEM_BASE_URL}/{SYSTEM_DASHBOARD_NAME}"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -46,9 +44,7 @@ def test_get_system_dashboard_rejects_prefixed_name(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"{SYSTEM_BASE_URL}/{SYSTEM_DASHBOARD_PREFIX}{SYSTEM_DASHBOARD_NAME}"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SYSTEM_BASE_URL}/{SYSTEM_DASHBOARD_PREFIX}{SYSTEM_DASHBOARD_NAME}"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -81,9 +77,7 @@ def test_system_dashboard_hidden_from_list_but_gettable_by_id(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"{SYSTEM_BASE_URL}/{SYSTEM_DASHBOARD_NAME}"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SYSTEM_BASE_URL}/{SYSTEM_DASHBOARD_NAME}"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -91,9 +85,7 @@ def test_system_dashboard_hidden_from_list_but_gettable_by_id(
     dashboard_id = response.json()["data"]["id"]
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"{DASHBOARDS_BASE_URL}?limit={MAX_LIST_LIMIT}"
-        ),
+        signoz.self.host_configs["8080"].get(f"{DASHBOARDS_BASE_URL}?limit={MAX_LIST_LIMIT}"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -119,9 +111,7 @@ def test_system_dashboard_is_immutable(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"{SYSTEM_BASE_URL}/{SYSTEM_DASHBOARD_NAME}"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SYSTEM_BASE_URL}/{SYSTEM_DASHBOARD_NAME}"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -152,9 +142,7 @@ def test_system_dashboard_is_immutable(
     assert response.json()["error"]["code"] == "dashboard_immutable"
 
     response = requests.put(
-        signoz.self.host_configs["8080"].get(
-            f"{DASHBOARDS_BASE_URL}/{dashboard_id}/lock"
-        ),
+        signoz.self.host_configs["8080"].get(f"{DASHBOARDS_BASE_URL}/{dashboard_id}/lock"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -162,9 +150,7 @@ def test_system_dashboard_is_immutable(
     assert response.json()["error"]["code"] == "dashboard_immutable"
 
     response = requests.post(
-        signoz.self.host_configs["8080"].get(
-            f"{DASHBOARDS_BASE_URL}/{dashboard_id}/clone"
-        ),
+        signoz.self.host_configs["8080"].get(f"{DASHBOARDS_BASE_URL}/{dashboard_id}/clone"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
