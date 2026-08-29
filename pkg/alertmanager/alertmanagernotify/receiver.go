@@ -28,7 +28,14 @@ var customNotifierIntegrations = []string{
 	googlechat.Integration,
 }
 
-func NewReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger, templater alertmanagertypes.Templater) ([]notify.Integration, error) {
+func NewReceiverIntegrations(
+	nc *alertmanagertypes.Receiver,
+	tmpl *template.Template,
+	logger *slog.Logger,
+	templater alertmanagertypes.Templater,
+	orgID string,
+	threadStore alertmanagertypes.AlertThreadStore,
+) ([]notify.Integration, error) {
 	upstreamIntegrations, err := receiver.BuildReceiverIntegrations(*nc.Receiver, tmpl, logger)
 	if err != nil {
 		return nil, err
@@ -69,7 +76,9 @@ func NewReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Temp
 		add(opsgenie.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return opsgenie.New(c, tmpl, l, templater) })
 	}
 	for i, c := range nc.SlackConfigs {
-		add(slack.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return slack.New(c, tmpl, l, templater) })
+		add(slack.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) {
+			return slack.New(c, tmpl, l, templater, orgID, threadStore)
+		})
 	}
 	for i, c := range nc.MSTeamsV2Configs {
 		add(msteamsv2.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) {

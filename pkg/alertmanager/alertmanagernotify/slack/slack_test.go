@@ -46,6 +46,8 @@ func TestSlackRetry(t *testing.T) {
 		tmpl,
 		promslog.NewNopLogger(),
 		newTestTemplater(tmpl),
+		"",
+		nil,
 	)
 	require.NoError(t, err)
 
@@ -68,6 +70,8 @@ func TestSlackRedactedURL(t *testing.T) {
 		tmpl,
 		promslog.NewNopLogger(),
 		newTestTemplater(tmpl),
+		"",
+		nil,
 	)
 	require.NoError(t, err)
 
@@ -92,6 +96,8 @@ func TestGettingSlackURLFromFile(t *testing.T) {
 		tmpl,
 		promslog.NewNopLogger(),
 		newTestTemplater(tmpl),
+		"",
+		nil,
 	)
 	require.NoError(t, err)
 
@@ -116,6 +122,8 @@ func TestTrimmingSlackURLFromFile(t *testing.T) {
 		tmpl,
 		promslog.NewNopLogger(),
 		newTestTemplater(tmpl),
+		"",
+		nil,
 	)
 	require.NoError(t, err)
 
@@ -211,6 +219,8 @@ func TestNotifier_Notify_WithReason(t *testing.T) {
 				tmpl,
 				promslog.NewNopLogger(),
 				newTestTemplater(tmpl),
+				"",
+				nil,
 			)
 			require.NoError(t, err)
 
@@ -272,6 +282,8 @@ func TestSlackTimeout(t *testing.T) {
 				tmpl,
 				promslog.NewNopLogger(),
 				newTestTemplater(tmpl),
+				"",
+				nil,
 			)
 			require.NoError(t, err)
 			notifier.postJSONFunc = func(ctx context.Context, client *http.Client, url string, body io.Reader) (*http.Response, error) {
@@ -562,7 +574,7 @@ func TestSlackMessageField(t *testing.T) {
 	tmpl.ExternalURL = u
 
 	logger := slog.New(slog.DiscardHandler)
-	notifier, err := New(conf, tmpl, logger, newTestTemplater(tmpl))
+	notifier, err := New(conf, tmpl, logger, newTestTemplater(tmpl), "", nil)
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -570,4 +582,101 @@ func TestSlackMessageField(t *testing.T) {
 
 	_, err = notifier.Notify(ctx)
 	require.NoError(t, err, "Notify failed")
+}
+
+type mockThreadStore struct {
+	threads map[string]string
+}
+
+func (m *mockThreadStore) GetThreadTs(ctx context.Context, orgID string, groupKey string) (string, error) {
+	return m.threads[groupKey], nil
+}
+
+func (m *mockThreadStore) SetThreadTs(ctx context.Context, orgID string, groupKey string, threadTs string) error {
+	m.threads[groupKey] = threadTs
+	return nil
+}
+
+func (m *mockThreadStore) DeleteThread(ctx context.Context, orgID string, groupKey string) error {
+	delete(m.threads, groupKey)
+	return nil
+}
+
+func TestSlackThreading(t *testing.T) {
+	store := &mockThreadStore{threads: make(map[string]string)}
+	var receivedRequests []map[string]any
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		assert.NoError(t, json.NewDecoder(r.Body).Decode(&body))
+		receivedRequests = append(receivedRequests, body)
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"ok": true, "ts": "1234567.890"}`))
+	}))
+	defer server.Close()
+
+	u, _ := url.Parse(server.URL)
+	conf := &config.SlackConfig{
+		APIURL:     &config.SecretURL{URL: u},
+		Channel:    "#test-channel",
+		HTTPConfig: &commoncfg.HTTPClientConfig{},
+	}
+
+	tmpl, err := template.FromGlobs([]string{})
+	require.NoError(t, err)
+	tmpl.ExternalURL = u
+
+	notifier, err := New(conf, tmpl, slog.New(slog.DiscardHandler), newTestTemplater(tmpl), "org-1", store)
+	require.NoError(t, err)
+
+	ctx := context.Background()
+	ctx = notify.WithGroupKey(ctx, "test-group-key")
+
+	// 1. Post a Firing alert (should start a thread: 1 compact post, then 1 detailed thread post)
+	firingAlert := &types.Alert{
+		Alert: model.Alert{
+			StartsAt: time.Now(),
+			EndsAt:   time.Now().Add(time.Hour),
+		},
+	}
+	_, err = notifier.Notify(ctx, firingAlert)
+	require.NoError(t, err)
+
+	// Verify two requests were sent
+	require.Len(t, receivedRequests, 2)
+	// First request: compact message to channel (no thread_ts)
+	assert.Empty(t, receivedRequests[0]["thread_ts"])
+	attachments0, ok := receivedRequests[0]["attachments"].([]any)
+	require.True(t, ok)
+	assert.Len(t, attachments0, 1)
+
+	// Second request: detailed message in thread
+	assert.Equal(t, "1234567.890", receivedRequests[1]["thread_ts"])
+
+	// Verify thread ts was saved in store
+	ts, _ := store.GetThreadTs(ctx, "org-1", "test-group-key")
+	assert.Equal(t, "1234567.890", ts)
+
+	// Clear request log for next stage
+	receivedRequests = nil
+
+	// 2. Post a Resolved alert (should reply in thread, then delete thread)
+	resolvedAlert := &types.Alert{
+		Alert: model.Alert{
+			StartsAt: time.Now().Add(-time.Hour),
+			EndsAt:   time.Now().Add(-10 * time.Minute), // EndsAt is in past -> Resolved
+		},
+	}
+	_, err = notifier.Notify(ctx, resolvedAlert)
+	require.NoError(t, err)
+
+	// Verify one request was sent
+	require.Len(t, receivedRequests, 1)
+	assert.Equal(t, "1234567.890", receivedRequests[0]["thread_ts"])
+
+	// Verify thread ts was deleted from store
+	ts, _ = store.GetThreadTs(ctx, "org-1", "test-group-key")
+	assert.Empty(t, ts)
 }

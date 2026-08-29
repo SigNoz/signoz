@@ -244,6 +244,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewDeleteOrphanUserRolesFactory(),
 		sqlmigration.NewMigrateLambdaDashboardsFactory(),
 		sqlmigration.NewAddAuthDomainTuplesFactory(sqlstore),
+		sqlmigration.NewAddSlackAlertThreadsFactory(sqlstore),
 	)
 }
 
