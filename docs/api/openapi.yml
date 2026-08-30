@@ -7529,6 +7529,7 @@ components:
         queries:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelope'
+          minItems: 1
           nullable: true
           type: array
         queryType:
@@ -7718,35 +7719,28 @@ components:
           type: string
         disabled:
           type: boolean
-        evalWindow:
-          type: string
         evaluation:
           $ref: '#/components/schemas/RuletypesEvaluationEnvelope'
-        frequency:
-          type: string
         labels:
           additionalProperties:
             type: string
           type: object
         notificationSettings:
           $ref: '#/components/schemas/RuletypesNotificationSettings'
-        preferredChannels:
-          items:
-            type: string
-          type: array
         ruleType:
           $ref: '#/components/schemas/RuletypesRuleType'
         schemaVersion:
-          type: string
-        source:
-          type: string
-        version:
+          enum:
+          - v2alpha1
           type: string
       required:
       - alert
       - alertType
       - ruleType
       - condition
+      - schemaVersion
+      - evaluation
+      - notificationSettings
       type: object
     RuletypesQueryType:
       enum:
@@ -7797,12 +7791,8 @@ components:
           type: string
         disabled:
           type: boolean
-        evalWindow:
-          type: string
         evaluation:
           $ref: '#/components/schemas/RuletypesEvaluationEnvelope'
-        frequency:
-          type: string
         id:
           type: string
         labels:
@@ -7811,15 +7801,11 @@ components:
           type: object
         notificationSettings:
           $ref: '#/components/schemas/RuletypesNotificationSettings'
-        preferredChannels:
-          items:
-            type: string
-          type: array
         ruleType:
           $ref: '#/components/schemas/RuletypesRuleType'
         schemaVersion:
-          type: string
-        source:
+          enum:
+          - v2alpha1
           type: string
         state:
           $ref: '#/components/schemas/RuletypesAlertState'
@@ -7828,8 +7814,6 @@ components:
           type: string
         updatedBy:
           type: string
-        version:
-          type: string
       required:
       - id
       - state
@@ -7837,6 +7821,9 @@ components:
       - alertType
       - ruleType
       - condition
+      - schemaVersion
+      - evaluation
+      - notificationSettings
       type: object
     RuletypesRuleCondition:
       properties:
@@ -7849,10 +7836,6 @@ components:
           type: string
         compositeQuery:
           $ref: '#/components/schemas/RuletypesAlertCompositeQuery'
-        matchType:
-          $ref: '#/components/schemas/RuletypesMatchType'
-        op:
-          $ref: '#/components/schemas/RuletypesCompareOperator'
         requireMinPoints:
           type: boolean
         requiredNumPoints:
@@ -7861,16 +7844,12 @@ components:
           $ref: '#/components/schemas/RuletypesSeasonality'
         selectedQueryName:
           type: string
-        target:
-          format: double
-          nullable: true
-          type: number
-        targetUnit:
-          type: string
         thresholds:
           $ref: '#/components/schemas/RuletypesRuleThresholdData'
       required:
       - compositeQuery
+      - thresholds
+      - selectedQueryName
       type: object
     RuletypesRuleThresholdData:
       discriminator:
