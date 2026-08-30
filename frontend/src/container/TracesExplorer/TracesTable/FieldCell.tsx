@@ -1,6 +1,8 @@
+import { generatePath, Link } from 'react-router-dom';
 import { Badge } from '@signozhq/ui/badge';
 import TanStackTable from 'components/TanStackTableView';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
+import ROUTES from 'constants/routes';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import { useTimezone } from 'providers/Timezone';
 
@@ -8,6 +10,7 @@ import {
 	DURATION_FIELD_NAMES,
 	STATUS_FIELD_NAMES,
 	TIMESTAMP_FIELD_NAMES,
+	TRACE_ID_FIELD_NAMES,
 } from './constants';
 import { stringifyCellValue } from './utils';
 
@@ -37,6 +40,18 @@ function FieldCell({ name, value }: FieldCellProps): JSX.Element {
 	}
 
 	const text = stringifyCellValue(value);
+
+	if (TRACE_ID_FIELD_NAMES.has(name)) {
+		return (
+			<Link
+				to={generatePath(ROUTES.TRACE_DETAIL, { id: text })}
+				data-testid="trace-id"
+				onClick={(e): void => e.stopPropagation()}
+			>
+				{text}
+			</Link>
+		);
+	}
 
 	if (STATUS_FIELD_NAMES.has(name)) {
 		return (
