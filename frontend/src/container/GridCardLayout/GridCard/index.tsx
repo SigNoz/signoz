@@ -36,6 +36,10 @@ import { GridCardGraphProps } from './types';
 import { errorDetails, isDataAvailableByPanelType } from './utils';
 import WidgetGraphComponent from './WidgetGraphComponent';
 
+// React Grid Layout settles item geometry after mount. Delay the one-shot
+// observation so panels near the fold are measured at their final position.
+const GRID_LAYOUT_OBSERVER_START_DELAY_MS = 350;
+
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function GridCardGraph({
 	widget,
@@ -104,7 +108,12 @@ function GridCardGraph({
 
 	const widgetContainerRef = useRef<HTMLDivElement>(null);
 
-	const isVisible = useIntersectionObserver(widgetContainerRef, undefined, true);
+	const isVisible = useIntersectionObserver(
+		widgetContainerRef,
+		undefined,
+		true,
+		GRID_LAYOUT_OBSERVER_START_DELAY_MS,
+	);
 
 	useScrollWidgetIntoView(widget?.id || '', widgetContainerRef);
 
