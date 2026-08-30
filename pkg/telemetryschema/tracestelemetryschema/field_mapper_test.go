@@ -96,6 +96,33 @@ func TestGetFieldKeyName(t *testing.T) {
 			expectedError:  nil,
 		},
 		{
+			name: "Deprecated column traceID",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "traceID",
+				FieldContext: telemetrytypes.FieldContextSpan,
+			},
+			expectedResult: "traceID",
+			expectedError:  nil,
+		},
+		{
+			name: "Deprecated column spanKind",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "spanKind",
+				FieldContext: telemetrytypes.FieldContextSpan,
+			},
+			expectedResult: "spanKind",
+			expectedError:  nil,
+		},
+		{
+			name: "Deprecated column serviceName",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "serviceName",
+				FieldContext: telemetrytypes.FieldContextSpan,
+			},
+			expectedResult: "serviceName",
+			expectedError:  nil,
+		},
+		{
 			name: "Non-existent column",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:         "nonexistent_field",

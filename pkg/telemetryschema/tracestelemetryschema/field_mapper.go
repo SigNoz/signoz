@@ -124,40 +124,6 @@ var (
 		"attribute_string_peer$$service_exists":        {Name: "attribute_string_peer$$service_exists", Type: schema.ColumnTypeBool},
 	}
 
-	// TODO(srikanthccv): remove this mapping.
-	oldToNew = map[string]string{
-		// deprecated intrinsic -> new intrinsic
-		"traceID":          "trace_id",
-		"spanID":           "span_id",
-		"parentSpanID":     "parent_span_id",
-		"spanKind":         "kind_string",
-		"durationNano":     "duration_nano",
-		"statusCode":       "status_code",
-		"statusMessage":    "status_message",
-		"statusCodeString": "status_code_string",
-
-		// deprecated derived -> new derived / materialized
-		"references":         "links",
-		"responseStatusCode": "response_status_code",
-		"externalHttpUrl":    "external_http_url",
-		"httpUrl":            "http_url",
-		"externalHttpMethod": "external_http_method",
-		"httpMethod":         "http_method",
-		"httpHost":           "http_host",
-		"dbName":             "db_name",
-		"dbOperation":        "db_operation",
-		"hasError":           "has_error",
-		"isRemote":           "is_remote",
-		"serviceName":        "resource_string_service$$name",
-		"httpRoute":          "attribute_string_http$$route",
-		"msgSystem":          "attribute_string_messaging$$system",
-		"msgOperation":       "attribute_string_messaging$$operation",
-		"dbSystem":           "attribute_string_db$$system",
-		"rpcSystem":          "attribute_string_rpc$$system",
-		"rpcService":         "attribute_string_rpc$$service",
-		"rpcMethod":          "attribute_string_rpc$$method",
-		"peerService":        "attribute_string_peer$$service",
-	}
 )
 
 type fieldMapper struct {
@@ -201,13 +167,13 @@ func (m *fieldMapper) getColumn(
 		}
 		if _, ok := CalculatedFieldsDeprecated[key.Name]; ok {
 			// Check if we have a mapping for the deprecated calculated field
-			if col, ok := indexV3Columns[oldToNew[key.Name]]; ok {
+			if col, ok := indexV3Columns[key.Name]; ok {
 				return []*schema.Column{col}, nil
 			}
 		}
 		if _, ok := IntrinsicFieldsDeprecated[key.Name]; ok {
 			// Check if we have a mapping for the deprecated intrinsic field
-			if col, ok := indexV3Columns[oldToNew[key.Name]]; ok {
+			if col, ok := indexV3Columns[key.Name]; ok {
 				return []*schema.Column{col}, nil
 			}
 		}
