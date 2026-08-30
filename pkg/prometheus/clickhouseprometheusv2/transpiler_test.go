@@ -2,6 +2,7 @@ package clickhouseprometheusv2
 
 import (
 	"context"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -543,6 +544,30 @@ func TestDisjointWindowLattice(t *testing.T) {
 				"slot mismatch: u=%d selStart=%d step=%d window=%d", u, selStart, stepMs, windowMs)
 		}
 	}
+}
+
+// Transpiled results never pass the engine's sample limiter, so the grid
+// cells (series x grid width) must be budgeted as the arrays accumulate —
+// otherwise a wide query rebuilds the OOM this provider exists to prevent.
+func TestExecuteUnit_GridCellBudget(t *testing.T) {
+	c, store := newTestClient(t)
+	c.cfg.MaxFetchedSamples = 100
+	e := &executor{client: c, parser: prometheus.NewParser()}
+
+	grid61 := make([]*float64, 61)
+	store.Mock().ExpectQuery("timeSeriesRateToGrid").WithArgs(anyArgs(7)...).WillReturnRows(cmock.NewRows(
+		[]cmock.ColumnType{{Name: "g0", Type: "String"}, {Name: "grid", Type: "Array(Nullable(Float64))"}},
+		[][]any{{"api", grid61}, {"web", grid61}},
+	))
+
+	plan, ok := classify(parse(t, `sum by (job) (rate(up[5m]))`), gridContext{startMs: 1_700_000_000_000, endMs: 1_700_003_600_000, stepMs: 60_000})
+	require.True(t, ok)
+
+	// 2 series x 61 grid points = 122 cells > 100.
+	var cells atomic.Int64
+	_, err := e.executeUnit(context.Background(), &plan.units[0].core, plan.units[0].grid, &cells)
+	require.Error(t, err)
+	assert.True(t, errors.Ast(err, errors.TypeInvalidInput), "budget refusal must be typed invalid input, got %v", err)
 }
 
 func TestTryExecuteRange_WindowedGateFallsBack(t *testing.T) {

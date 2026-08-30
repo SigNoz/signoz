@@ -7,6 +7,7 @@ import (
 	"math"
 	"slices"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -29,6 +30,7 @@ type client struct {
 	settings       factory.ScopedProviderSettings
 	telemetryStore telemetrystore.TelemetryStore
 	lookbackMs     int64
+	cfg            prometheus.ClickhouseV2Config
 }
 
 func newClient(settings factory.ScopedProviderSettings, telemetryStore telemetrystore.TelemetryStore, cfg prometheus.Config) *client {
@@ -41,6 +43,7 @@ func newClient(settings factory.ScopedProviderSettings, telemetryStore telemetry
 		settings:       settings,
 		telemetryStore: telemetryStore,
 		lookbackMs:     lookback.Milliseconds(),
+		cfg:            cfg.ClickhouseV2,
 	}
 }
 
@@ -76,6 +79,13 @@ func (c *client) selectSeries(ctx context.Context, query string, args []any) (*s
 		lookup.fingerprints[fingerprint] = lset
 		if name := lset.Get(metricNameLabel); name != "" {
 			names[name] = struct{}{}
+		}
+		if c.cfg.MaxFetchedSeries > 0 && len(lookup.fingerprints) > c.cfg.MaxFetchedSeries {
+			return nil, errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"promql selector matched more than %d series; narrow the label matchers or raise prometheus::clickhousev2::max_fetched_series",
+				c.cfg.MaxFetchedSeries,
+			)
 		}
 	}
 	if err := rows.Err(); err != nil {
@@ -136,12 +146,23 @@ func (c *client) selectSamples(ctx context.Context, query string, args []any, lo
 		first        = true
 		haveCurrent  bool
 		staleMarker  = math.Float64frombits(promValue.StaleNaN)
+		maxSamples   = c.cfg.MaxFetchedSamples
+		fetched      int64
 		unknownCount int
 	)
 
 	for rows.Next() {
 		if err := rows.Scan(&fingerprint, &timestampMs, &val, &flags); err != nil {
 			return nil, err
+		}
+
+		fetched++
+		if maxSamples > 0 && fetched > maxSamples {
+			return nil, errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"promql query would fetch more than %d samples; narrow the selector or time range, or raise prometheus::clickhousev2::max_fetched_samples",
+				maxSamples,
+			)
 		}
 
 		if first || fingerprint != prevFp {
