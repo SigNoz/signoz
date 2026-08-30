@@ -1,4 +1,5 @@
 import { Button } from '@signozhq/ui/button';
+import { Input } from '@signozhq/ui/input';
 import { SelectSimple } from '@signozhq/ui/select';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -11,7 +12,6 @@ import {
 	MapperOperationValue,
 	SourceConfig,
 } from 'container/LLMObservability/AttributeMapping/types';
-import KeySearchInput from '../../../KeySearchInput/KeySearchInput';
 import styles from './SourceAttributeRow.module.scss';
 
 const CONTEXT_OPTIONS = [
@@ -66,12 +66,12 @@ function SourceAttributeRow({
 				<GripVertical size={14} />
 			</div>
 			<span className={styles.sourceIndex}>{index + 1}</span>
-			<KeySearchInput
+			<Input
 				className={styles.sourceInput}
 				placeholder="Source attribute key"
 				value={value.key}
-				fieldContext={value.context}
-				onChange={(key): void => onChange(index, { key })}
+				autoComplete="off"
+				onChange={(event): void => onChange(index, { key: event.target.value })}
 				testId={`mapper-form-source-${index}`}
 			/>
 			<SelectSimple
