@@ -1,0 +1,24 @@
+{
+	"metricGraphCategory": {
+		"brokerMetrics": {
+			"title": "브로커 메트릭",
+			"description": "Kafka 브로커 메트릭은 언클린 리더 선출로 인한 데이터 손실/지연과 네트워크 처리량, 그리고 요청 퍼가토리 및 타임아웃 메트릭을 통한 요청 실패를 알려줍니다"
+		},
+		"consumerMetrics": {
+			"title": "컨슈머 메트릭",
+			"description": "Kafka 컨슈머 메트릭은 메시지 생산과 소비 사이의 지연, 메시지 전달의 성공률과 지연 시간, 그리고 소비된 데이터의 양에 대한 인사이트를 제공합니다."
+		},
+		"producerMetrics": {
+			"title": "프로듀서 메트릭",
+			"description": "Kafka 프로듀서는 저장 및 토픽별 배포를 위해 브로커로 메시지를 전송합니다. 이 메트릭은 전송된 데이터의 양과 속도, 메시지 전달 성공률을 알려줍니다."
+		},
+		"brokerJVMMetrics": {
+			"title": "브로커 JVM 메트릭",
+			"description": "Kafka 브로커는 브로커의 시스템 상태를 알려주는 JVM 메트릭을 노출하는 Java 애플리케이션입니다. 아래와 같은 가비지 컬렉션 메트릭은 여유 메모리, 브로커 성능, 힙 크기에 대한 핵심 인사이트를 제공합니다. 이 섹션을 채우려면 new_gc_metrics를 활성화해야 합니다."
+		},
+		"partitionMetrics": {
+			"title": "파티션 메트릭",
+			"description": "Kafka 파티션은 Kafka의 병렬 처리 단위입니다. 이 메트릭은 토픽별 파티션 수, 각 파티션의 현재 오프셋, 가장 오래된 오프셋, 동기화된 복제본 수를 알려줍니다."
+		}
+	}
+}

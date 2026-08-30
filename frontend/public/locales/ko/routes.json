@@ -1,0 +1,23 @@
+{
+	"general": "일반",
+	"alert_channels": "알림 채널",
+	"organization_settings": "조직 설정",
+	"ingestion_settings": "수집 설정",
+	"api_keys": "API 키",
+	"my_settings": "내 설정",
+	"overview_metrics": "개요 메트릭",
+	"custom_domain_settings": "커스텀 도메인 설정",
+	"dbcall_metrics": "데이터베이스 호출",
+	"external_metrics": "외부 호출",
+	"pipeline": "파이프라인",
+	"pipelines": "파이프라인",
+	"archives": "아카이브",
+	"logs_to_metrics": "로그를 메트릭으로",
+	"roles": "역할",
+	"role_details": "역할 상세",
+	"role_edit": "역할 수정",
+	"role_create": "역할 생성",
+	"members": "멤버",
+	"service_accounts": "서비스 계정",
+	"mcp_server": "MCP 서버"
+}
