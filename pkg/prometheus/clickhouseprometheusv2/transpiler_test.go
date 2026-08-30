@@ -32,6 +32,17 @@ var seriesCols = []cmock.ColumnType{
 	{Name: "labels", Type: "String"},
 }
 
+var unitCols = []cmock.ColumnType{
+	{Name: "gkey", Type: "String"},
+	{Name: "grid", Type: "Array(Nullable(Float64))"},
+}
+
+// anyArgs matches a bound-argument list by count alone: the mock treats a
+// nil expected argument as a wildcard.
+func anyArgs(n int) []any {
+	return make([]any, n)
+}
+
 func parse(t *testing.T, q string) parser.Expr {
 	t.Helper()
 	expr, err := parser.NewParser(parser.Options{}).ParseExpr(q)
@@ -553,7 +564,7 @@ func TestTryExecuteRange_WindowedGateFallsBack(t *testing.T) {
 
 	// 1m range at 5m step: the windows are disjoint slivers — no
 	// divisibility or width requirement, so this transpiles.
-	store.Mock().ExpectQuery("SELECT fingerprint, any\\(labels\\)").WithArgs("up", int64(1_699_999_200_000), int64(1_700_003_600_000)).WillReturnRows(cmock.NewRows(seriesCols, [][]any{}))
+	store.Mock().ExpectQuery("FROM signoz_metrics\\.distributed_samples_v4").WithArgs(anyArgs(9)...).WillReturnRows(cmock.NewRows(unitCols, [][]any{}))
 	_, ok, err = e.TryExecuteRange(context.Background(), `avg_over_time(up[1m])`, start, end, 5*time.Minute)
 	require.NoError(t, err)
 	assert.True(t, ok, "range below step is the disjoint form and must transpile")
@@ -637,12 +648,12 @@ func TestTryExecuteRange_LastStyleWindowBelowStepTranspiles(t *testing.T) {
 	start := time.UnixMilli(1_700_000_000_000)
 	end := time.UnixMilli(1_700_003_600_000)
 
-	store.Mock().ExpectQuery("SELECT fingerprint, any\\(labels\\)").WithArgs("up", int64(1_699_999_200_000), int64(1_700_003_600_000)).WillReturnRows(cmock.NewRows(seriesCols, [][]any{}))
+	store.Mock().ExpectQuery("timeSeriesLastToGrid").WithArgs(anyArgs(10)...).WillReturnRows(cmock.NewRows(unitCols, [][]any{}))
 	_, ok, err := e.TryExecuteRange(context.Background(), `sum by (pod) (up)`, start, end, time.Hour)
 	require.NoError(t, err)
 	assert.True(t, ok, "instant selection at step > lookback must transpile")
 
-	store.Mock().ExpectQuery("SELECT fingerprint, any\\(labels\\)").WithArgs("up", int64(1_699_999_200_000), int64(1_700_003_600_000)).WillReturnRows(cmock.NewRows(seriesCols, [][]any{}))
+	store.Mock().ExpectQuery("timeSeriesLastToGrid").WithArgs(anyArgs(9)...).WillReturnRows(cmock.NewRows(unitCols, [][]any{}))
 	_, ok, err = e.TryExecuteRange(context.Background(), `last_over_time(up[10m])`, start, end, time.Hour)
 	require.NoError(t, err)
 	assert.True(t, ok, "last_over_time at range < step must transpile")

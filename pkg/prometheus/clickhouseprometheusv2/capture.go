@@ -73,8 +73,8 @@ func (c *captureQuerier) LabelNames(context.Context, *storage.LabelHints, ...*la
 }
 
 // metricNamesFromMatchers extracts the statically known metric name, if any.
-// The live path derives names from the matched series; the capture path has
-// no execution results, so only a __name__ equality contributes.
+// Only a __name__ equality contributes; a regex selector needs a series
+// lookup to learn the concrete names.
 func metricNamesFromMatchers(matchers []*labels.Matcher) []string {
 	for _, m := range matchers {
 		if m.Name == metricNameLabel && m.Type == labels.MatchEqual && m.Value != "" {
