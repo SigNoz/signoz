@@ -10,7 +10,13 @@ function PipelineSimulationResult({
 	inputLogs,
 	pipeline,
 }: PipelineSimulationResultProps): JSX.Element {
-	const { isLoading, outputLogs, isError, errorMsg } = usePipelinePreview({
+	const {
+		isLoading,
+		outputLogs,
+		collectorLogs,
+		isError,
+		errorMsg,
+	} = usePipelinePreview({
 		pipeline: {
 			...pipeline,
 			// Ensure disabled pipelines can also be previewed
@@ -32,11 +38,27 @@ function PipelineSimulationResult({
 		return <div>Loading...</div>;
 	}
 
-	if (outputLogs.length < 1) {
-		return <div>No logs found</div>;
-	}
-
-	return <LogsList logs={outputLogs} />;
+	return (
+		<>
+			{outputLogs.length > 0 ? (
+				<LogsList logs={outputLogs} />
+			) : (
+				<div>No logs found</div>
+			)}
+			{collectorLogs.length > 0 && (
+				<div className="pipeline-simulation-collector-logs">
+					<div className="pipeline-simulation-collector-logs-title">
+						Collector logs
+					</div>
+					{collectorLogs.map((collectorLog) => (
+						<pre key={collectorLog} className="pipeline-simulation-collector-log">
+							{collectorLog}
+						</pre>
+					))}
+				</div>
+			)}
+		</>
+	);
 }
 
 export interface PipelineSimulationResultProps {
