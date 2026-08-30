@@ -38,6 +38,7 @@ import Slider from './FilterRenderers/Slider/Slider';
 import useFilterConfig from './hooks/useFilterConfig';
 import AnnouncementTooltip from './QuickFiltersSettings/AnnouncementTooltip';
 import QuickFiltersSettings from './QuickFiltersSettings/QuickFiltersSettings';
+import { getFilterId } from './QuickFiltersSettings/utils';
 import { FiltersType, IQuickFiltersProps, QuickFiltersSource } from './types';
 
 import './QuickFilters.styles.scss';
@@ -302,7 +303,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 						case FiltersType.CHECKBOX:
 							return useFieldApis ? (
 								<CheckboxV2
-									key={filter.attributeKey.key}
+									key={getFilterId(filter.attributeKey)}
 									source={source}
 									filter={filter}
 									onFilterChange={onFilterChange}
@@ -311,7 +312,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 								/>
 							) : (
 								<Checkbox
-									key={filter.attributeKey.key}
+									key={getFilterId(filter.attributeKey)}
 									source={source}
 									filter={filter}
 									onFilterChange={onFilterChange}
@@ -321,18 +322,18 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 						case FiltersType.DURATION:
 							return (
 								<Duration
-									key={filter.attributeKey.key}
+									key={getFilterId(filter.attributeKey)}
 									filter={filter}
 									onFilterChange={onFilterChange}
 								/>
 							);
 						case FiltersType.SLIDER:
-							return <Slider key={filter.attributeKey.key} />;
+							return <Slider key={getFilterId(filter.attributeKey)} />;
 						// eslint-disable-next-line sonarjs/no-duplicated-branches
 						default:
 							return useFieldApis ? (
 								<CheckboxV2
-									key={filter.attributeKey.key}
+									key={getFilterId(filter.attributeKey)}
 									source={source}
 									filter={filter}
 									onFilterChange={onFilterChange}
@@ -341,7 +342,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 								/>
 							) : (
 								<Checkbox
-									key={filter.attributeKey.key}
+									key={getFilterId(filter.attributeKey)}
 									source={source}
 									filter={filter}
 									onFilterChange={onFilterChange}
