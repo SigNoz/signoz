@@ -19,7 +19,8 @@ import styles from './TracesTable.module.scss';
 export type TracesTableProps = {
 	data: TracesTableRow[];
 	columns: TableColumnDef<TracesTableRow>[];
-	columnStorageKey: string;
+	columnStorageKey?: string;
+	respectColumnOrder?: boolean;
 	panelType: PanelTypeKeys;
 	/** Builds the trace-detail href for a row; drives row click + cmd/ctrl-click. */
 	getRowHref: (row: TracesTableRow) => string;
@@ -37,6 +38,7 @@ function TracesTable({
 	data,
 	columns,
 	columnStorageKey,
+	respectColumnOrder = false,
 	panelType,
 	getRowHref,
 	isLoading,
@@ -88,7 +90,7 @@ function TracesTable({
 						columns={columns}
 						className={styles.tracesTable}
 						columnStorageKey={columnStorageKey}
-						respectColumnOrder={false}
+						respectColumnOrder={respectColumnOrder}
 						isLoading={isFetching}
 						cellTypographySize={cellTypographySize}
 						onColumnOrderChange={onColumnOrderChange}
@@ -104,6 +106,8 @@ function TracesTable({
 }
 
 TracesTable.defaultProps = {
+	columnStorageKey: undefined,
+	respectColumnOrder: false,
 	onColumnOrderChange: undefined,
 	onColumnRemove: undefined,
 	cellTypographySize: 'medium',

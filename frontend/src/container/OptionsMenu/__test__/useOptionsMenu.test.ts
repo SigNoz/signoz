@@ -298,9 +298,9 @@ describe('useOptionsMenu', () => {
 
 			// New order: [attribute:service.name, log:body, resource:service.name, log:timestamp]
 			result.current.config.addColumn?.onReorder([
-				'attribute:service.name',
-				'log:body',
-				'resource:service.name',
+				'attribute:service.name:string',
+				'log:body:string',
+				'resource:service.name:string',
 				'log:timestamp',
 			]);
 
@@ -331,9 +331,9 @@ describe('useOptionsMenu', () => {
 				'state-indicator',
 				'log:timestamp',
 				'unknown.composite',
-				'log:body',
-				'resource:service.name',
-				'attribute:service.name',
+				'log:body:string',
+				'resource:service.name:string',
+				'attribute:service.name:string',
 			]);
 
 			const reordered = mockUpdateColumns.mock.calls[0][0];
@@ -360,7 +360,7 @@ describe('useOptionsMenu', () => {
 			);
 
 			// Removing 'resource:service.name' should drop ONLY the resource variant.
-			result.current.config.addColumn?.onRemove('resource:service.name');
+			result.current.config.addColumn?.onRemove('resource:service.name:string');
 
 			expect(mockUpdateColumns).toHaveBeenCalledTimes(1);
 			const remaining = mockUpdateColumns.mock.calls[0][0];

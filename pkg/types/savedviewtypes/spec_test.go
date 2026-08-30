@@ -174,6 +174,21 @@ func TestSavedViewSpecValidate(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name: "builder_ai_query is valid",
+			spec: SavedViewSpec{
+				DisplayName: "My View",
+				PanelType:   PanelTypeList,
+				RequestType: qbtypes.RequestTypeRaw,
+				Queries: []qbtypes.QueryEnvelope{{
+					Type: qbtypes.QueryTypeBuilderAI,
+					Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+						Signal: telemetrytypes.SignalTraces,
+					},
+				}},
+			},
+			expectError: false,
+		},
+		{
 			name: "graph panel query with no aggregation is still rejected",
 			spec: SavedViewSpec{
 				DisplayName: "My View",
