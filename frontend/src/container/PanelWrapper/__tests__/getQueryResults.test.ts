@@ -1,4 +1,7 @@
-import { getLegend } from 'lib/dashboard/getQueryResults';
+import {
+	getLegend,
+	shouldShowFormulaMissingDataLegendInfo,
+} from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { QueryData } from 'types/api/widgets/getQuery';
 import { EQueryType } from 'types/common/dashboard';
@@ -285,5 +288,81 @@ describe('getLegend', () => {
 
 		const legendsData = getLegend(mockQueryData, payloadQuery, MOCK_LABEL_NAME);
 		expect(legendsData).toBe(`total-${MOCK_LABEL_NAME}`);
+	});
+
+	it('should return formula query name when formula label has missing component data', () => {
+		const formulaQueryData = {
+			...mockQueryData,
+			queryName: 'F1',
+			metaData: {
+				...mockQueryData.metaData,
+				queryName: 'F1',
+			},
+		};
+		const payloadQuery = getMockQuery({
+			...mockQuery,
+			builder: {
+				...mockQuery.builder,
+				queryData: [
+					{
+						...mockQuery.builder.queryData[0],
+						queryName: 'A',
+						dataSource: DataSource.LOGS,
+					},
+					{
+						...mockQuery.builder.queryData[0],
+						queryName: 'B',
+						dataSource: DataSource.LOGS,
+					},
+				],
+				queryFormulas: [
+					{
+						queryName: 'F1',
+						expression: 'A / B',
+						legend: '{{service.name}}',
+						disabled: false,
+					},
+				],
+			},
+		});
+
+		const legendsData = getLegend(formulaQueryData, payloadQuery, 'undefined');
+
+		expect(legendsData).toBe('F1');
+		expect(
+			shouldShowFormulaMissingDataLegendInfo(
+				formulaQueryData,
+				payloadQuery,
+				'undefined',
+			),
+		).toBe(true);
+	});
+
+	it('should not replace non-formula labels that contain missing component data', () => {
+		const payloadQuery = getMockQuery({
+			...mockQuery,
+			builder: {
+				...mockQuery.builder,
+				queryData: [
+					{
+						...mockQuery.builder.queryData[0],
+						queryName: mockQueryData.queryName,
+						dataSource: DataSource.LOGS,
+					},
+				],
+				queryFormulas: [],
+			},
+		});
+
+		const legendsData = getLegend(mockQueryData, payloadQuery, 'undefined');
+
+		expect(legendsData).toBe('count()');
+		expect(
+			shouldShowFormulaMissingDataLegendInfo(
+				mockQueryData,
+				payloadQuery,
+				'undefined',
+			),
+		).toBe(false);
 	});
 });
