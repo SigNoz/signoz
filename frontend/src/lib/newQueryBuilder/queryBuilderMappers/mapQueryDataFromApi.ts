@@ -30,19 +30,23 @@ const mapQueryFromV5 = (compositeQuery: ICompositeMetricQuery): Query => {
 	> = {};
 	const builderQueryTypes: Record<
 		string,
-		'builder_query' | 'builder_formula' | 'builder_trace_operator'
+		| 'builder_query'
+		| 'builder_ai_query'
+		| 'builder_formula'
+		| 'builder_trace_operator'
 	> = {};
 	const promQueries: IPromQLQuery[] = [];
 	const clickhouseQueries: IClickHouseQuery[] = [];
 
 	compositeQuery.queries?.forEach((q) => {
 		const spec = q.spec as BuilderQuery | PromQuery | ClickHouseQuery;
-		if (q.type === 'builder_query') {
+		// Shares builder_query's spec shape, so it hydrates identically; without this branch it's dropped.
+		if (q.type === 'builder_query' || q.type === 'builder_ai_query') {
 			if (spec.name) {
 				builderQueries[spec.name] = convertBuilderQueryToIBuilderQuery(
 					spec as BuilderQuery,
 				);
-				builderQueryTypes[spec.name] = 'builder_query';
+				builderQueryTypes[spec.name] = q.type;
 			}
 		} else if (q.type === 'builder_formula') {
 			if (spec.name) {

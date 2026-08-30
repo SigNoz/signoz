@@ -1,6 +1,7 @@
 import { IQueryBuilderState } from 'constants/queryBuilder';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { BuilderQueryEnvelopeType } from 'types/api/v5/queryRange';
 
 export interface InitialStateI {
 	search: string;
@@ -30,6 +31,7 @@ export type QueryProps = {
 	showFunctions?: boolean;
 	version: string;
 	showSpanScopeSelector?: boolean;
+	fieldKeysQueryType?: BuilderQueryEnvelopeType;
 	showOnlyWhereClause?: boolean;
 	showTraceOperator?: boolean;
 	hasTraceOperator?: boolean;

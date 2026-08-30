@@ -23,6 +23,7 @@ import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import {
+	BuilderQueryEnvelopeType,
 	ExecStats,
 	MetricRangePayloadV5,
 	QueryRangeResponseV5,
@@ -399,4 +400,6 @@ export interface GetQueryResultsProps {
 	step?: number;
 	originalGraphType?: PANEL_TYPES;
 	dynamicVariables?: IDashboardVariable[];
+	/** Envelope type stamped on every builder query; defaults to `builder_query`. */
+	builderQueryType?: BuilderQueryEnvelopeType;
 }

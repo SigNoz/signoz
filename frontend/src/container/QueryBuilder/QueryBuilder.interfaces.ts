@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { BuilderQueryEnvelopeType } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { OrderByFilterProps } from './filters/OrderByFilter/OrderByFilter.interfaces';
@@ -37,6 +38,10 @@ export type QueryBuilderProps = {
 	showOnlyTraceOperator?: boolean;
 	showTraceViewSelector?: boolean;
 	showTraceOperator?: boolean;
+	/** Traces only, default true; false hides the All/Root/Entrypoint span-scope select. */
+	showSpanScopeSelector?: boolean;
+	/** Forwarded verbatim to `/fields/keys` as `type`; never interpreted by the builder. */
+	fieldKeysQueryType?: BuilderQueryEnvelopeType;
 	version: string;
 	onChangeTraceView?: (view: TraceView) => void;
 	onSignalSourceChange?: (value: string) => void;
