@@ -2,6 +2,7 @@ import { expect, test } from '../../../fixtures/auth';
 import { newAdminContext } from '../../../helpers/auth';
 import {
 	authToken,
+	configureAndSavePanel,
 	createDashboardViaApi,
 	deleteDashboardViaApi,
 } from '../../../helpers/dashboards';
@@ -142,5 +143,60 @@ test.describe('Dashboard Detail — Add Panel (entry-point + persistence)', () =
 		await expect(
 			page.getByText(panelName, { exact: true }).first(),
 		).toBeVisible();
+	});
+
+	// ─── Per-signal panel creation ───────────────────────────────────────────
+	//
+	// Configure a query for each signal using values from testdata/queries.json,
+	// save the panel, return to the dashboard, and verify the panel card renders
+	// and survives a reload.
+
+	test('TC-03 add metrics Time Series panel using signoz_calls_total from queries.json', async ({
+		authedPage: page,
+	}) => {
+		const id = await createDashboardViaApi(page, 'add-panel-metrics');
+		seedIds.add(id);
+		await page.goto(`/dashboard/${id}`);
+		await expect(page.getByTestId('add-panel')).toBeVisible();
+
+		await configureAndSavePanel(page, 'metrics', 'metrics-timeseries');
+
+		await expect(page.getByTestId('metrics-timeseries')).toBeVisible();
+
+		// Reload — proves the panel persists, not just optimistic UI from the save.
+		await page.reload();
+		await expect(page.getByTestId('metrics-timeseries')).toBeVisible();
+	});
+
+	test('TC-04 add logs Time Series panel with default query from queries.json', async ({
+		authedPage: page,
+	}) => {
+		const id = await createDashboardViaApi(page, 'add-panel-logs');
+		seedIds.add(id);
+		await page.goto(`/dashboard/${id}`);
+		await expect(page.getByTestId('add-panel')).toBeVisible();
+
+		await configureAndSavePanel(page, 'logs', 'logs-timeseries');
+
+		await expect(page.getByTestId('logs-timeseries')).toBeVisible();
+
+		await page.reload();
+		await expect(page.getByTestId('logs-timeseries')).toBeVisible();
+	});
+
+	test('TC-05 add traces Time Series panel with default query from queries.json', async ({
+		authedPage: page,
+	}) => {
+		const id = await createDashboardViaApi(page, 'add-panel-traces');
+		seedIds.add(id);
+		await page.goto(`/dashboard/${id}`);
+		await expect(page.getByTestId('add-panel')).toBeVisible();
+
+		await configureAndSavePanel(page, 'traces', 'traces-timeseries');
+
+		await expect(page.getByTestId('traces-timeseries')).toBeVisible();
+
+		await page.reload();
+		await expect(page.getByTestId('traces-timeseries')).toBeVisible();
 	});
 });
