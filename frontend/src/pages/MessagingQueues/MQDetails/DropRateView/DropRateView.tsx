@@ -12,7 +12,6 @@ import cx from 'classnames';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
-import { isNumber } from 'lodash-es';
 import {
 	convertToTitleCase,
 	MessagingQueuesViewType,
@@ -30,6 +29,7 @@ import {
 import EvaluationTimeSelector from './EvaluationTimeSelector';
 
 import '../MQDetails.style.scss';
+import { isNumber } from 'utils/valueUtils';
 
 export function getTableData(data: DropRateResponse[]): RowData[] {
 	if (data?.length === 0) {

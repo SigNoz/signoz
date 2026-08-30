@@ -2,10 +2,10 @@ import {
 	CustomTimeType,
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';
-import { isString } from 'lodash-es';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import getMinAgo from './getStartAndEndTime/getMinAgo';
+import { isString } from 'utils/valueUtils';
 
 const validCustomTimeRegex = /^(\d+)(months?|[mhdw])$/;
 

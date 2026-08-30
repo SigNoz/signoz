@@ -17,12 +17,12 @@ import ResourceAttributesFilterV2 from 'container/ResourceAttributeFilterV2/Reso
 import Toolbar from 'container/Toolbar/Toolbar';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import history from 'lib/history';
-import { isNull } from 'lodash-es';
 
 import { routes } from './config';
 import { useAllErrorsQueryState } from './QueryStateContext';
 
 import './AllErrors.styles.scss';
+import { isNull } from 'utils/valueUtils';
 
 function AllErrors(): JSX.Element {
 	const { pathname } = useLocation();

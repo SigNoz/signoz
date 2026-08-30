@@ -10,11 +10,11 @@ import { StackMode } from 'lib/uPlotV2/config/types';
 import { prepareAlignedData } from 'lib/uPlotV2/components/UPlotChart/utils';
 import { PlotContextProvider } from 'lib/uPlotV2/context/PlotContext';
 import TooltipPlugin from 'lib/uPlotV2/plugins/TooltipPlugin/TooltipPlugin';
-import noop from 'lodash-es/noop';
 import uPlot from 'uplot';
 
 import { ChartWrapperProps } from '../types';
 import { useChartStacking } from './useChartStacking';
+import { noop } from 'utils/valueUtils';
 
 const TOOLTIP_WIDTH_PADDING = 120;
 const TOOLTIP_MIN_WIDTH = 300;

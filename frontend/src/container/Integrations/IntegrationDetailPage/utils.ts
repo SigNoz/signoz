@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
-import { isNull, isUndefined } from 'lodash-es';
 
 import { ConnectionStates } from './TestConnection';
+import { isNull, isUndefined } from 'utils/valueUtils';
 
 export function getConnectionStatesFromConnectionStatus(
 	installation:

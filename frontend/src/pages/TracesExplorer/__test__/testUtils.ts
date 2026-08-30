@@ -3,12 +3,12 @@ import {
 	initialQueryBuilderFormValues,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
-import { noop } from 'lodash-es';
 import { screen, waitFor } from 'tests/test-utils';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { AllTraceFilterKeyValue } from '../Filter/filterUtils';
+import { noop } from 'utils/valueUtils';
 
 export const optionMenuReturn = {
 	options: {

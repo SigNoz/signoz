@@ -12,8 +12,7 @@ import { Dimensions } from 'hooks/useDimensions';
 import { getLegend } from 'lib/dashboard/getQueryResults';
 import { convertValue } from 'lib/getConvertedValue';
 import getLabelName from 'lib/getLabelName';
-import { cloneDeep, isUndefined } from 'lodash-es';
-import _noop from 'lodash-es/noop';
+import { cloneDeep } from 'lodash-es';
 import { LegendPosition } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -28,6 +27,7 @@ import { getXAxisScale } from './utils/getXAxisScale';
 import { getYAxisScale } from './utils/getYAxisScale';
 
 import './uPlotLib.styles.scss';
+import { noop as _noop, isUndefined } from 'utils/valueUtils';
 
 // Extended uPlot interface with custom properties
 interface ExtendedUPlot extends uPlot {

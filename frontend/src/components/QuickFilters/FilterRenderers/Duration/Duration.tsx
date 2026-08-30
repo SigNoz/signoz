@@ -8,7 +8,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { cloneDeep, isArray, isEqual, isFunction } from 'lodash-es';
+import { cloneDeep, isEqual } from 'lodash-es';
 import { DurationSection } from 'pages/TracesExplorer/Filter/DurationSection';
 import {
 	AllTraceFilterKeys,
@@ -21,6 +21,7 @@ import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
 
 import './Duration.styles.scss';
+import { isArray, isFunction } from 'utils/valueUtils';
 
 export type FilterType = Record<
 	AllTraceFilterKeys,

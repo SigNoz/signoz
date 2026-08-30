@@ -3,8 +3,6 @@ import { Button, Col, Tooltip } from 'antd';
 import cx from 'classnames';
 import ROUTES from 'constants/routes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { isFunction } from 'lodash-es';
-import noop from 'lodash-es/noop';
 import {
 	ChevronDown,
 	ChevronRight,
@@ -21,6 +19,7 @@ import { DataSourceDropdown } from '..';
 import QueryFunctions from '../QueryFunctions/QueryFunctions';
 
 import './QBEntityOptions.styles.scss';
+import { isFunction, noop } from 'utils/valueUtils';
 
 interface QBEntityOptionsProps {
 	query?: IBuilderQuery;

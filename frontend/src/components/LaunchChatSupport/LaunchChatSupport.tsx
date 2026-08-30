@@ -9,7 +9,6 @@ import cx from 'classnames';
 import { FeatureKeys } from 'constants/features';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
-import { defaultTo } from 'lodash-es';
 import { CircleHelp, CreditCard, X } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { SuccessResponseV2 } from 'types/api';
@@ -18,6 +17,7 @@ import APIError from 'types/api/error';
 import { getBaseUrl } from 'utils/basePath';
 
 import './LaunchChatSupport.styles.scss';
+import { defaultTo } from 'utils/valueUtils';
 
 export interface LaunchChatSupportProps {
 	eventName: string;

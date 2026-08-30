@@ -26,7 +26,6 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useApiMonitoringParams } from 'container/ApiMonitoring/queryParams';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { isFunction, isNull } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { USER_ROLES } from 'types/roles';
@@ -41,6 +40,7 @@ import QuickFiltersSettings from './QuickFiltersSettings/QuickFiltersSettings';
 import { FiltersType, IQuickFiltersProps, QuickFiltersSource } from './types';
 
 import './QuickFilters.styles.scss';
+import { isFunction, isNull } from 'utils/valueUtils';
 
 export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	const {

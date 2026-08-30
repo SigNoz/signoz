@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { isUndefined } from 'lodash-es';
 
 import './GridCardLayout.styles.scss';
+import { isUndefined } from 'utils/valueUtils';
 
 interface ClickToShowButtonProps {
 	graphRef: React.RefObject<HTMLDivElement>;

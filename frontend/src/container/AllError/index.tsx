@@ -29,7 +29,6 @@ import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter'
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
-import { isUndefined } from 'lodash-es';
 import { useAllErrorsQueryState } from 'pages/AllErrors/QueryStateContext';
 import { useTimezone } from 'providers/Timezone';
 import { AppState } from 'store/reducers';
@@ -51,6 +50,7 @@ import {
 	getUpdatePageSize,
 	urlKey,
 } from './utils';
+import { isUndefined } from 'utils/valueUtils';
 
 type QueryParams = {
 	order: string;

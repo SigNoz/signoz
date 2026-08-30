@@ -10,7 +10,7 @@ import { Button, Card, Input, Tooltip } from 'antd';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { ParaGraph } from 'container/Trace/Filters/Panel/PanelBody/Common/styles';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import { isArray, isEmpty } from 'lodash-es';
+import { isEmpty } from 'lodash-es';
 
 import {
 	addFilter,
@@ -24,6 +24,7 @@ import {
 } from './filterUtils';
 
 import './Filter.styles.scss';
+import { isArray } from 'utils/valueUtils';
 
 interface SectionBodyProps {
 	type: AllTraceFilterKeys;

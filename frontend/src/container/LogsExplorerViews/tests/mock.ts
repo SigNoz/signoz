@@ -4,9 +4,9 @@ import {
 	OPERATORS,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
-import { noop } from 'lodash-es';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { noop } from 'utils/valueUtils';
 
 export const logsQueryRangeSuccessNewFormatResponse = {
 	data: {

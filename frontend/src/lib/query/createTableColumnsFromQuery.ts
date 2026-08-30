@@ -12,7 +12,7 @@ import {
 import { FORMULA_REGEXP } from 'constants/regExp';
 import { QUERY_TABLE_CONFIG } from 'container/QueryTable/config';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
-import { get, isEqual, isNaN, isObject } from 'lodash-es';
+import { get, isEqual, isObject } from 'lodash-es';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
@@ -24,6 +24,7 @@ import { ListItem, QueryDataV3, SeriesItem } from 'types/api/widgets/getQuery';
 import { EQueryType } from 'types/common/dashboard';
 import { QueryBuilderData } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
+import { isNaN } from 'utils/valueUtils';
 
 type CreateTableDataFromQueryParams = Pick<
 	QueryTableProps,

@@ -22,7 +22,6 @@ import dayjs from 'dayjs';
 import { useZoomOut } from 'hooks/useZoomOut';
 import { isValidShortHandDateTimeFormat } from 'lib/getMinMax';
 import { isZoomOutDisabled } from 'lib/zoomOutUtils';
-import { defaultTo, isFunction, noop } from 'lodash-es';
 import { ChevronDown, ChevronUp, ZoomOut } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 import { getTimeDifference, validateEpochRange } from 'utils/epochUtils';
@@ -32,6 +31,7 @@ import { TimeRangeValidationResult, validateTimeRange } from 'utils/timeUtils';
 import CustomTimePickerPopoverContent from './CustomTimePickerPopoverContent';
 
 import './CustomTimePicker.styles.scss';
+import { defaultTo, isFunction, noop } from 'utils/valueUtils';
 
 const maxAllowedMinTimeInMonths = 15;
 type ViewType = 'datetime' | 'timezone';

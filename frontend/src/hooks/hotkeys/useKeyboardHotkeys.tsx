@@ -8,9 +8,10 @@ import {
 	useMemo,
 	useRef,
 } from 'react';
-import { noop, unset } from 'lodash-es';
+import { unset } from 'lodash-es';
 
 import { useCmdK } from '../../providers/cmdKProvider';
+import { noop } from 'utils/valueUtils';
 
 interface KeyboardHotkeysContextReturnValue {
 	/**

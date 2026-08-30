@@ -4,12 +4,13 @@ import {
 	removeKeysFromExpression,
 	removeVariableFromExpression,
 } from 'components/QueryBuilderV2/utils';
-import { cloneDeep, isArray, isEmpty } from 'lodash-es';
+import { cloneDeep, isEmpty } from 'lodash-es';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import {
 	IBuilderQuery,
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
+import { isArray } from 'utils/valueUtils';
 
 /**
  * Updates the query filters in a builder query by appending new tag filters

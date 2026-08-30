@@ -4,7 +4,6 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { convertKeysToColumnFields } from 'container/LogsExplorerList/utils';
 import { placeWidgetAtBottom } from 'container/NewWidget/utils';
 import { textContainsVariableReference } from 'lib/dashboardVariables/variableReference';
-import { isArray } from 'lodash-es';
 import {
 	Dashboard,
 	IDashboardVariable,
@@ -18,6 +17,7 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuidv4 } from 'uuid';
+import { isArray } from 'utils/valueUtils';
 
 const baseLogsSelectedColumns = {
 	dataType: 'string',

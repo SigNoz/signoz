@@ -1,5 +1,3 @@
-import { isNil } from 'lodash-es';
-
 import createStore from '../store';
 import { VariableFetchContext } from '../variableFetchStore';
 import { IDashboardVariablesStoreState } from './dashboardVariablesStoreTypes';
@@ -7,6 +5,7 @@ import {
 	computeDerivedValues,
 	updateDerivedValues,
 } from './dashboardVariablesStoreUtils';
+import { isNil } from 'utils/valueUtils';
 
 const initialState: IDashboardVariablesStoreState = {
 	dashboardId: '',

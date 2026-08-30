@@ -17,7 +17,7 @@ import logEvent from 'api/common/logEvent';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { cloneDeep, isArray, isEmpty, isEqual } from 'lodash-es';
+import { cloneDeep, isEmpty, isEqual } from 'lodash-es';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
@@ -33,6 +33,7 @@ import {
 import { Section } from './Section';
 
 import './Filter.styles.scss';
+import { isArray } from 'utils/valueUtils';
 
 interface FilterProps {
 	setOpen: Dispatch<SetStateAction<boolean>>;

@@ -8,12 +8,13 @@ import {
 	queryFunctionsTypesConfig,
 } from 'constants/queryFunctionOptions';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { debounce, isNil } from 'lodash-es';
+import { debounce } from 'lodash-es';
 import { X } from '@signozhq/icons';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryFunction } from 'types/api/v5/queryRange';
 import { DataSource, QueryFunctionsTypes } from 'types/common/queryBuilder';
 import { normalizeFunctionName } from 'utils/functionNameNormalizer';
+import { isNil } from 'utils/valueUtils';
 
 interface FunctionProps {
 	query: IBuilderQuery;

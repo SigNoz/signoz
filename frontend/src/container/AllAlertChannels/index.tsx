@@ -11,7 +11,6 @@ import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
-import { isUndefined } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { SuccessResponseV2 } from 'types/api';
 import { Channels } from 'types/api/channels/getAll';
@@ -21,6 +20,7 @@ import AlertChannelsComponent from './AlertChannels';
 import { Button, ButtonContainer, RightActionContainer } from './styles';
 
 import './AllAlertChannels.styles.scss';
+import { isUndefined } from 'utils/valueUtils';
 
 const { Text } = Typography;
 
