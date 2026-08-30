@@ -26,6 +26,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 	onSignalSourceChange,
 	signalSourceChangeEnabled = false,
 	savePreviousQuery = false,
+	queryType,
 }: QueryBuilderProps): JSX.Element {
 	const {
 		currentQuery,
@@ -214,6 +215,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 							signalSourceChangeEnabled={signalSourceChangeEnabled}
 							queriesCount={1}
 							savePreviousQuery={savePreviousQuery}
+							queryType={queryType}
 						/>
 					) : (
 						currentQuery.builder.queryData.map((query, index) => (
@@ -237,6 +239,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 								signalSourceChangeEnabled={signalSourceChangeEnabled}
 								queriesCount={currentQuery.builder.queryData.length}
 								savePreviousQuery={savePreviousQuery}
+								queryType={queryType}
 							/>
 						))
 					)}
