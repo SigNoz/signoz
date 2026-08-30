@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"math"
 	"sort"
+	"sync/atomic"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -89,12 +90,16 @@ func (e *executor) TryExecuteRange(ctx context.Context, qs string, start, end ti
 
 	// Evaluate every unit concurrently on its own grid (the query grid, or a
 	// subquery grid); each is one grid query (see executeUnit for when a
-	// series lookup precedes it).
+	// series lookup precedes it). The units share one grid-cell budget:
+	// transpiled results never pass through the engine's sample limiter, so
+	// without it a large series-count x grid-width query would buffer
+	// unbounded arrays — the OOM this provider exists to prevent.
 	results := make([][]transpiledSeries, len(plan.units))
+	var gridCells atomic.Int64
 	eg, egCtx := errgroup.WithContext(ctx)
 	for i, unit := range plan.units {
 		eg.Go(func() error {
-			res, err := e.executeUnit(egCtx, &unit.core, unit.grid)
+			res, err := e.executeUnit(egCtx, &unit.core, unit.grid, &gridCells)
 			if err != nil {
 				return err
 			}
@@ -134,7 +139,7 @@ type transpiledSeries struct {
 	values []*float64
 }
 
-func (e *executor) executeUnit(ctx context.Context, unit *coreUnit, grid gridContext) ([]transpiledSeries, error) {
+func (e *executor) executeUnit(ctx context.Context, unit *coreUnit, grid gridContext, gridCells *atomic.Int64) ([]transpiledSeries, error) {
 	startMs, endMs, stepMs := grid.startMs, grid.endMs, grid.stepMs
 	windowMs := unit.rangeMs
 	if unit.kind == unitInstant {
@@ -198,6 +203,17 @@ func (e *executor) executeUnit(ctx context.Context, unit *coreUnit, grid gridCon
 	for rows.Next() {
 		if err := rows.Scan(targets...); err != nil {
 			return nil, err
+		}
+		// One row buffers one grid array; series count times grid width is
+		// the transpiled equivalent of fetched samples. Counted per row as
+		// the arrays accumulate: without a series lookup there is no series
+		// count to charge up front.
+		if maxSamples := e.client.cfg.MaxFetchedSamples; maxSamples > 0 && gridCells.Add(int64(len(gridValues))) > maxSamples {
+			return nil, errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"promql query would buffer more than %d output points; narrow the selector or time range, or raise prometheus::clickhousev2::max_fetched_samples",
+				maxSamples,
+			)
 		}
 		var lset labels.Labels
 		if keyNames != nil {

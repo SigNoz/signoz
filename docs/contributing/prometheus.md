@@ -305,6 +305,16 @@ selector without a static `__name__` runs the series lookup first, to learn
 the concrete metric names. A step of 0 is an instant query: a single
 evaluation at `end`.
 
+Both paths enforce fetch budgets
+(`prometheus::clickhousev2::max_fetched_series` and
+`::max_fetched_samples`; 0 disables). The engine path counts matched series
+and scanned samples. The transpiled path counts buffered grid cells (series
+times grid width) across a plan's units, because transpiled results never
+pass the engine's sample limiter. A refusal is a typed invalid-input error.
+It pierces the engine's `promql.ErrStorage` wrapper
+(`prometheus.TypedStorageError`), so the APIs report a user error, not an
+internal one.
+
 A note on the window sliver: when the window is narrower than the step, the
 grid windows cover only `window/step` of the timeline. A sample in a gap
 belongs to no window. It cannot move any grid point, but the grid aggregate

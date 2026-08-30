@@ -43,6 +43,10 @@ var quotedMetricOutsideBracesPattern = regexp.MustCompile(`"([^"]+)"\s*\{`)
 // tryEnhancePromQLExecError attempts to convert a PromQL execution error into
 // a properly typed error. Returns nil if the error is not a recognized execution error.
 func tryEnhancePromQLExecError(execErr error) error {
+	if typed := prometheus.TypedStorageError(execErr); typed != nil {
+		return typed
+	}
+
 	var eqc promql.ErrQueryCanceled
 	var eqt promql.ErrQueryTimeout
 	var es promql.ErrStorage

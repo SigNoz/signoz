@@ -13,6 +13,16 @@ type ActiveQueryTrackerConfig struct {
 	MaxConcurrent int    `mapstructure:"max_concurrent"`
 }
 
+type ClickhouseV2Config struct {
+	// MaxFetchedSeries caps the series one selector may match; 0 disables
+	// the cap.
+	MaxFetchedSeries int `mapstructure:"max_fetched_series"`
+
+	// MaxFetchedSamples caps the samples (engine path) or buffered grid
+	// cells (transpiled path) one query may fetch; 0 disables the cap.
+	MaxFetchedSamples int64 `mapstructure:"max_fetched_samples"`
+}
+
 type Config struct {
 	ActiveQueryTrackerConfig ActiveQueryTrackerConfig `mapstructure:"active_query_tracker"`
 
@@ -28,6 +38,8 @@ type Config struct {
 	// ProviderName selects the storage provider: "clickhouse" (default) or
 	// "clickhousev2".
 	ProviderName string `mapstructure:"provider"`
+
+	ClickhouseV2 ClickhouseV2Config `mapstructure:"clickhousev2"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
@@ -43,6 +55,10 @@ func newConfig() factory.Config {
 		},
 		Timeout:      2 * time.Minute,
 		ProviderName: "clickhouse",
+		ClickhouseV2: ClickhouseV2Config{
+			MaxFetchedSeries:  500_000,
+			MaxFetchedSamples: 50_000_000,
+		},
 	}
 }
 
@@ -52,6 +68,9 @@ func (c Config) Validate() error {
 	}
 	if c.ProviderName != "" && c.ProviderName != "clickhouse" && c.ProviderName != "clickhousev2" {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "prometheus::provider must be one of [clickhouse, clickhousev2], got %q", c.ProviderName)
+	}
+	if c.ClickhouseV2.MaxFetchedSeries < 0 || c.ClickhouseV2.MaxFetchedSamples < 0 {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "prometheus::clickhousev2 limits must not be negative")
 	}
 	return nil
 }
