@@ -252,3 +252,39 @@ export const valuePanelQueryResponse = {
 	isRefetchError: false,
 	isStale: true,
 };
+
+/**
+ * A Value panel served by query_range v5: the panel requests the `scalar`
+ * request type, so `convertV5ResponseToLegacy` emits a table-shaped
+ * `data.result` and no `data.newResult` at all.
+ */
+export const valuePanelScalarQueryResponse = {
+	...valuePanelQueryResponse,
+	data: {
+		...valuePanelQueryResponse.data,
+		payload: {
+			data: {
+				resultType: 'scalar',
+				result: [
+					{
+						queryName: 'A',
+						legend: '',
+						series: null,
+						list: null,
+						table: {
+							columns: [
+								{
+									name: 'A',
+									queryName: 'A',
+									isValueColumn: true,
+									id: 'A',
+								},
+							],
+							rows: [{ data: { A: 461.059 } }],
+						},
+					},
+				],
+			},
+		},
+	},
+};

@@ -6,6 +6,7 @@ import ValuePanelWrapper from '../ValuePanelWrapper';
 import {
 	thresholds,
 	valuePanelQueryResponse,
+	valuePanelScalarQueryResponse,
 	valuePanelWidget,
 } from './valuePanelWrapperHelper';
 
@@ -46,5 +47,19 @@ describe('Value panel wrappper tests', () => {
 		expect(getByTestId('conflicting-thresholds')).toBeInTheDocument();
 		// added snapshot test here for checking the thresholds color being applied properly
 		expect(container).toMatchSnapshot();
+	});
+
+	it('should render the reduced value from a v5 scalar response', () => {
+		const { getByText } = render(
+			<ValuePanelWrapper
+				panelMode={PanelMode.DASHBOARD_VIEW}
+				widget={valuePanelWidget as unknown as Widgets}
+				queryResponse={valuePanelScalarQueryResponse as unknown as any}
+				onDragSelect={(): void => {}}
+			/>,
+		);
+
+		expect(getByText('461.06')).toBeInTheDocument();
+		expect(getByText('ms')).toBeInTheDocument();
 	});
 });
