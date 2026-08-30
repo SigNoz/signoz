@@ -177,6 +177,82 @@ func parseQueryRangeRequest(r *http.Request) (*model.QueryRangeParams, *model.Ap
 	return &queryRangeParams, nil
 }
 
+func parseSeriesRequest(r *http.Request) (*model.SeriesQueryParams, *model.ApiError) {
+	if err := r.ParseForm(); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+	}
+
+	matches := r.Form["match[]"]
+	if len(matches) == 0 {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: errors.New("no match[] parameter provided")}
+	}
+
+	// Default: start=Unix epoch, end=now — covers all stored data when omitted.
+	start := time.Unix(0, 0)
+	end := time.Now()
+
+	if s := r.FormValue("start"); s != "" {
+		var err error
+		start, err = parseMetricsTime(s)
+		if err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		}
+	}
+	if e := r.FormValue("end"); e != "" {
+		var err error
+		end, err = parseMetricsTime(e)
+		if err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		}
+	}
+
+	var limit int
+	if l := r.FormValue("limit"); l != "" {
+		v, err := strconv.Atoi(l)
+		if err != nil || v < 0 {
+			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: errors.New("limit must be a non-negative integer")}
+		}
+		limit = v
+	}
+
+	return &model.SeriesQueryParams{
+		Start:   start,
+		End:     end,
+		Matches: matches,
+		Limit:   limit,
+	}, nil
+}
+
+func parseLabelRequest(r *http.Request) (*model.LabelQueryParams, *model.ApiError) {
+	if err := r.ParseForm(); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+	}
+
+	start := time.Unix(0, 0)
+	end := time.Now()
+
+	if s := r.FormValue("start"); s != "" {
+		var err error
+		start, err = parseMetricsTime(s)
+		if err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		}
+	}
+	if e := r.FormValue("end"); e != "" {
+		var err error
+		end, err = parseMetricsTime(e)
+		if err != nil {
+			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		}
+	}
+
+	return &model.LabelQueryParams{
+		Start:   start,
+		End:     end,
+		Matches: r.Form["match[]"],
+	}, nil
+}
+
 func parseGetUsageRequest(r *http.Request) (*model.GetUsageParams, error) {
 	startTime, err := parseTime("start", r)
 	if err != nil {
