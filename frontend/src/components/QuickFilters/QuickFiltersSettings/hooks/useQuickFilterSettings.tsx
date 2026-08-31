@@ -115,6 +115,7 @@ const useQuickFilterSettings = ({
 	const handleSaveChanges = useCallback((): void => {
 		if (signal) {
 			updateCustomFilters({
+				pathParams: { source: signal },
 				data: {
 					// Send only the stored TelemetryFieldKey fields; the composite `key`
 					// is UI-only.
@@ -123,7 +124,6 @@ const useQuickFilterSettings = ({
 						fieldContext: filter.fieldContext as TelemetrytypesFieldContextDTO,
 						fieldDataType: filter.fieldDataType as TelemetrytypesFieldDataTypeDTO,
 					})),
-					signal,
 				},
 			});
 		}
