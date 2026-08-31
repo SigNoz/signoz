@@ -45,4 +45,11 @@ export const appShellHandlers = [
 	rest.get('https://cms.signoz.cloud/api/release-changelogs', (_req, res, ctx) =>
 		res(ctx.status(200), ctx.json(changelogResponse)),
 	),
+
+	// The webfonts the app links from `index.html`. The story serves them from
+	// `../public`, so answering the CDN with nothing keeps msw from reporting a
+	// request that would leave the browser on every story.
+	rest.get('https://fonts.googleapis.com/css2', (_req, res, ctx) =>
+		res(ctx.status(200), ctx.text('')),
+	),
 ];
