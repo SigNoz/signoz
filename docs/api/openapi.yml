@@ -24644,7 +24644,7 @@ paths:
       summary: Refresh a license.
       tags:
       - licenses
-  /api/v4/orgs/me/license:
+  /api/v4/licenses/active:
     get:
       deprecated: false
       description: This endpoint gets the active license of the organization.
