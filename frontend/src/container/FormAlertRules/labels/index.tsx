@@ -174,6 +174,7 @@ function LabelSelect({
 
 			<div style={{ display: 'flex', width: '100%' }}>
 				<Input
+					data-testid="alert-labels-input-v1"
 					placeholder={renderPlaceholder()}
 					onChange={handleLabelChange}
 					onKeyUp={(e): void => {

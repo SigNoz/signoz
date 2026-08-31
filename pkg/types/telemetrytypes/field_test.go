@@ -295,6 +295,17 @@ func TestNormalize(t *testing.T) {
 			},
 		},
 		{
+			name: "Normalize keeps a prefix that does not match the set context",
+			input: TelemetryFieldKey{
+				Name:         "scope.name",
+				FieldContext: FieldContextAttribute,
+			},
+			expected: TelemetryFieldKey{
+				Name:         "scope.name",
+				FieldContext: FieldContextAttribute,
+			},
+		},
+		{
 			name: "Normalize body field",
 			input: TelemetryFieldKey{
 				Name: "body.status:int",
