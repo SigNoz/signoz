@@ -17,6 +17,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
+	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/aiobservability"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
@@ -80,6 +81,7 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ authz.Handler }{},
 		struct{ rawdataexport.Handler }{},
 		struct{ zeus.Handler }{},
+		struct{ licensing.Handler }{},
 		struct{ querier.Handler }{},
 		struct{ serviceaccount.Handler }{},
 		struct{ serviceaccount.Getter }{},

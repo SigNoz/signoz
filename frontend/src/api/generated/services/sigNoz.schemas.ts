@@ -7172,6 +7172,205 @@ export interface InframonitoringtypesVolumesDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
+export interface LicensetypesFeatureDTO {
+	/**
+	 * @type boolean
+	 */
+	active?: boolean;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	route?: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	usage?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	usage_limit?: number;
+}
+
+export interface LicensetypesGettableLicenseEventQueueDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	created_at?: string;
+	/**
+	 * @type string
+	 */
+	event?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	scheduled_at?: string;
+	/**
+	 * @type string
+	 */
+	status?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updated_at?: string;
+}
+
+export interface LicensetypesGettableLicensePlanDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	created_at?: string;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	id?: string;
+	/**
+	 * @type boolean
+	 */
+	is_active?: boolean;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updated_at?: string;
+}
+
+export interface LicensetypesGettableLicenseDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	created_at?: string;
+	event_queue?: LicensetypesGettableLicenseEventQueueDTO;
+	/**
+	 * @type array,null
+	 */
+	features?: LicensetypesFeatureDTO[] | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	free_until?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	plan: LicensetypesGettableLicensePlanDTO;
+	/**
+	 * @type string
+	 */
+	plan_id?: string;
+	/**
+	 * @type string
+	 */
+	platform?: string;
+	/**
+	 * @type string
+	 */
+	state?: string;
+	/**
+	 * @type string
+	 */
+	status: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updated_at?: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	valid_from?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	valid_until?: number;
+}
+
+export interface LicensetypesGettableLicenseWithKeyDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	created_at?: string;
+	event_queue?: LicensetypesGettableLicenseEventQueueDTO;
+	/**
+	 * @type array,null
+	 */
+	features?: LicensetypesFeatureDTO[] | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	free_until?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	key: string;
+	plan: LicensetypesGettableLicensePlanDTO;
+	/**
+	 * @type string
+	 */
+	plan_id?: string;
+	/**
+	 * @type string
+	 */
+	platform?: string;
+	/**
+	 * @type string
+	 */
+	state?: string;
+	/**
+	 * @type string
+	 */
+	status: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updated_at?: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	valid_from?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	valid_until?: number;
+}
+
+export interface LicensetypesPostableLicenseDTO {
+	/**
+	 * @type string
+	 */
+	key?: string;
+}
+
 /**
  * @nullable
  */
@@ -12422,6 +12621,42 @@ export type GetFlamegraphPathParameters = {
 };
 export type GetFlamegraph200 = {
 	data: SpantypesGettableFlamegraphTraceDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListLicenses200 = {
+	/**
+	 * @type array
+	 */
+	data: LicensetypesGettableLicenseDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteLicensePathParameters = {
+	id: string;
+};
+export type GetLicensePathParameters = {
+	id: string;
+};
+export type GetLicense200 = {
+	data: LicensetypesGettableLicenseWithKeyDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type RefreshLicensePathParameters = {
+	id: string;
+};
+export type GetActiveLicense200 = {
+	data: LicensetypesGettableLicenseDTO;
 	/**
 	 * @type string
 	 */

@@ -45,7 +45,7 @@ func (api *licensingAPI) Activate(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = api.licensing.Activate(r.Context(), orgID, req.Key)
+	_, err = api.licensing.Activate(r.Context(), orgID, req.Key)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -76,7 +76,7 @@ func (api *licensingAPI) GetActive(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	gettableLicense := licensetypes.NewGettableLicense(license.Data, license.Key)
+	gettableLicense := licensetypes.NewDeprecatedGettableLicense(license.Data, license.Key)
 	render.Success(rw, http.StatusOK, gettableLicense)
 }
 

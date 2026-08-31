@@ -32,6 +32,7 @@ type License struct {
 	Features        []*Feature
 	Status          valuer.String
 	State           string
+	Platform        valuer.String
 	FreeUntil       time.Time
 	ValidFrom       int64
 	ValidUntil      int64
@@ -41,26 +42,48 @@ type License struct {
 	OrganizationID  valuer.UUID
 }
 
-type GettableLicense map[string]any
+type DeprecatedGettableLicense map[string]any
+
+type GettableLicensePlan struct {
+	ID          valuer.UUID `json:"id"`
+	Name        string      `json:"name" required:"true"`
+	Description string      `json:"description"`
+	IsActive    bool        `json:"is_active"`
+	CreatedAt   time.Time   `json:"created_at"`
+	UpdatedAt   time.Time   `json:"updated_at"`
+}
+
+type GettableLicenseEventQueue struct {
+	Event       string    `json:"event"`
+	Status      string    `json:"status"`
+	ScheduledAt time.Time `json:"scheduled_at"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+type GettableLicense struct {
+	ID         valuer.UUID               `json:"id" required:"true"`
+	ValidFrom  int64                     `json:"valid_from"`
+	ValidUntil int64                     `json:"valid_until"`
+	Status     string                    `json:"status" required:"true"`
+	State      string                    `json:"state"`
+	Platform   string                    `json:"platform"`
+	FreeUntil  time.Time                 `json:"free_until"`
+	CreatedAt  time.Time                 `json:"created_at"`
+	UpdatedAt  time.Time                 `json:"updated_at"`
+	PlanID     valuer.UUID               `json:"plan_id"`
+	Plan       GettableLicensePlan       `json:"plan" required:"true"`
+	Features   []*Feature                `json:"features"`
+	EventQueue GettableLicenseEventQueue `json:"event_queue"`
+}
+
+type GettableLicenseWithKey struct {
+	GettableLicense
+	Key string `json:"key" required:"true"`
+}
 
 type PostableLicense struct {
 	Key string `json:"key"`
-}
-
-func NewStorableLicense(ID valuer.UUID, key string, data map[string]any, createdAt, updatedAt, lastValidatedAt time.Time, organizationID valuer.UUID) *StorableLicense {
-	return &StorableLicense{
-		Identifiable: types.Identifiable{
-			ID: ID,
-		},
-		TimeAuditable: types.TimeAuditable{
-			CreatedAt: createdAt,
-			UpdatedAt: updatedAt,
-		},
-		Key:             key,
-		Data:            data,
-		LastValidatedAt: lastValidatedAt,
-		OrgID:           organizationID,
-	}
 }
 
 func NewStorableLicenseFromLicense(license *License) *StorableLicense {
@@ -171,6 +194,11 @@ func NewLicense(data []byte, organizationID valuer.UUID) (*License, error) {
 		state = ""
 	}
 
+	platform, err := extractKeyFromMapStringInterface[string](licenseData, "platform")
+	if err != nil {
+		platform = ""
+	}
+
 	freeUntilStr, err := extractKeyFromMapStringInterface[string](licenseData, "free_until")
 	if err != nil {
 		freeUntilStr = ""
@@ -241,6 +269,7 @@ func NewLicense(data []byte, organizationID valuer.UUID) (*License, error) {
 		ValidUntil:      validUntil,
 		Status:          status,
 		State:           state,
+		Platform:        valuer.NewString(platform),
 		FreeUntil:       freeUntil,
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
@@ -329,6 +358,11 @@ func NewLicenseFromStorableLicense(storableLicense *StorableLicense) (*License, 
 		state = ""
 	}
 
+	platform, err := extractKeyFromMapStringInterface[string](storableLicense.Data, "platform")
+	if err != nil {
+		platform = ""
+	}
+
 	freeUntilStr, err := extractKeyFromMapStringInterface[string](storableLicense.Data, "free_until")
 	if err != nil {
 		freeUntilStr = ""
@@ -349,6 +383,7 @@ func NewLicenseFromStorableLicense(storableLicense *StorableLicense) (*License, 
 		ValidUntil:      validUntil,
 		Status:          status,
 		State:           state,
+		Platform:        valuer.NewString(platform),
 		FreeUntil:       freeUntil,
 		CreatedAt:       storableLicense.CreatedAt,
 		UpdatedAt:       storableLicense.UpdatedAt,
@@ -384,6 +419,7 @@ func (license *License) Update(data []byte) error {
 	license.Key = updatedLicense.Key
 	license.PlanName = updatedLicense.PlanName
 	license.Status = updatedLicense.Status
+	license.Platform = updatedLicense.Platform
 	license.ValidFrom = updatedLicense.ValidFrom
 	license.ValidUntil = updatedLicense.ValidUntil
 	license.UpdatedAt = currentTime
@@ -392,13 +428,41 @@ func (license *License) Update(data []byte) error {
 	return nil
 }
 
-func NewGettableLicense(data map[string]any, key string) *GettableLicense {
-	gettableLicense := make(GettableLicense)
+func NewDeprecatedGettableLicense(data map[string]any, key string) *DeprecatedGettableLicense {
+	deprecatedGettableLicense := make(DeprecatedGettableLicense)
 	for k, v := range data {
-		gettableLicense[k] = v
+		deprecatedGettableLicense[k] = v
 	}
-	gettableLicense["key"] = key
-	return &gettableLicense
+	deprecatedGettableLicense["key"] = key
+	return &deprecatedGettableLicense
+}
+
+func NewGettableLicense(license *License) (*GettableLicense, error) {
+	data, err := json.Marshal(license.Data)
+	if err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal license data")
+	}
+
+	gettableLicense := new(GettableLicense)
+	if err := json.Unmarshal(data, gettableLicense); err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to unmarshal license data")
+	}
+
+	gettableLicense.ID = license.ID
+
+	return gettableLicense, nil
+}
+
+func NewGettableLicenseWithKey(license *License) (*GettableLicenseWithKey, error) {
+	gettableLicense, err := NewGettableLicense(license)
+	if err != nil {
+		return nil, err
+	}
+
+	return &GettableLicenseWithKey{
+		GettableLicense: *gettableLicense,
+		Key:             license.Key,
+	}, nil
 }
 
 func (p *PostableLicense) UnmarshalJSON(data []byte) error {
@@ -424,4 +488,5 @@ type Store interface {
 	Get(context.Context, valuer.UUID, valuer.UUID) (*StorableLicense, error)
 	GetAll(context.Context, valuer.UUID) ([]*StorableLicense, error)
 	Update(context.Context, valuer.UUID, *StorableLicense) error
+	Delete(context.Context, valuer.UUID, valuer.UUID) error
 }

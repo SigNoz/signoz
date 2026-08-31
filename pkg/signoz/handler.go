@@ -77,6 +77,7 @@ type Handlers struct {
 	AIObservability         aiobservability.Handler
 	AuthzHandler            authz.Handler
 	ZeusHandler             zeus.Handler
+	LicensingHandler        licensing.Handler
 	QuerierHandler          querier.Handler
 	ServiceAccountHandler   serviceaccount.Handler
 	RegistryHandler         factory.Handler
@@ -95,7 +96,7 @@ func NewHandlers(
 	providerSettings factory.ProviderSettings,
 	analytics analytics.Analytics,
 	querierHandler querier.Handler,
-	licensing licensing.Licensing,
+	licensingService licensing.Licensing,
 	global global.Global,
 	flaggerService flagger.Flagger,
 	gatewayService gateway.Gateway,
@@ -125,7 +126,8 @@ func NewHandlers(
 		Fields:                  implfields.NewHandler(providerSettings, telemetryMetadataStore),
 		AIObservability:         implaiobservability.NewHandler(telemetryMetadataStore),
 		AuthzHandler:            signozauthzapi.NewHandler(authz),
-		ZeusHandler:             zeus.NewHandler(zeusService, licensing),
+		ZeusHandler:             zeus.NewHandler(zeusService, licensingService),
+		LicensingHandler:        licensing.NewHandler(licensingService),
 		QuerierHandler:          querierHandler,
 		ServiceAccountHandler:   implserviceaccount.NewHandler(modules.ServiceAccount, modules.ServiceAccountGetter),
 		RegistryHandler:         registryHandler,

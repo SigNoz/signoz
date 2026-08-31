@@ -453,3 +453,34 @@ def change_user_role(
         timeout=5,
     )
     assert response.status_code == HTTPStatus.CREATED, response.text
+
+
+def license_mapping(license_id: str, key: str, valid_from: int, platform: str = "CLOUD") -> Mapping:
+    return Mapping(
+        request=MappingRequest(
+            method=HttpMethods.GET,
+            url="/v2/licenses/me",
+            headers={"X-Signoz-Cloud-Api-Key": {WireMockMatchers.EQUAL_TO: key}},
+        ),
+        response=MappingResponse(
+            status=200,
+            json_body={
+                "status": "success",
+                "data": {
+                    "id": license_id,
+                    "key": key,
+                    "valid_from": valid_from,
+                    "valid_until": -1,
+                    "status": "VALID",
+                    "state": "EVALUATING",
+                    "plan": {
+                        "name": "ENTERPRISE",
+                    },
+                    "platform": platform,
+                    "features": [],
+                    "event_queue": {},
+                },
+            },
+        ),
+        persistent=False,
+    )
