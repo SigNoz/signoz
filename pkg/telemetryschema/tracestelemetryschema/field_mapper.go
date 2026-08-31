@@ -199,21 +199,17 @@ func (m *fieldMapper) getColumn(
 		default:
 			return nil, qbtypes.ErrColumnNotFound
 		}
-		// The evolution entries are the rollout control. The JSON `attributes` column
-		// is added once its column-wide entry is registered; `attributes_promoted` is
-		// added per path once that path's promotion entry is registered. Promotion is
-		// just a third evolution column: SelectEvolutionsForColumns picks a single home
-		// per time window (promoted after its release, attributes before it, Map before
-		// the JSON rollout), reading more than one only across an evolution boundary.
-		cols := make([]*schema.Column, 0, 3)
-		if attributeColumnEvolutionRegistered(key, SpanAttributesPromotedColumn) {
-			cols = append(cols, indexV3Columns["attributes_promoted"])
-		}
+		// The `attributes` evolution entry is the rollout control. Once it is
+		// registered the key dual-reads the JSON column and the Map column, and
+		// `attributes_promoted` always rides along as a candidate home: promotion is
+		// just a third evolution column, and SelectEvolutionsForColumns selects it
+		// only when this key has a promotion entry in range (a column with no
+		// evolution entry is never selected), picking a single home per window and
+		// reading more than one only across an evolution boundary.
 		if attributeColumnEvolutionRegistered(key, SpanAttributesColumn) {
-			cols = append(cols, indexV3Columns["attributes"])
+			return []*schema.Column{indexV3Columns["attributes_promoted"], indexV3Columns["attributes"], mapCol}, nil
 		}
-		cols = append(cols, mapCol)
-		return cols, nil
+		return []*schema.Column{mapCol}, nil
 	case telemetrytypes.FieldContextSpan:
 		// Check if this is a span scope field
 		if strings.ToLower(key.Name) == SpanSearchScopeRoot || strings.ToLower(key.Name) == SpanSearchScopeEntryPoint {
