@@ -2,6 +2,8 @@ import type { Preview } from '@storybook/react-vite';
 import type { SetupWorker } from 'msw';
 import { setupWorker } from 'msw';
 
+import PageDocs from '../src/storybook/docs/PageDocs';
+import ThemedDocsContainer from '../src/storybook/docs/ThemedDocsContainer';
 import { withProviders } from '../src/storybook/decorators/withProviders';
 import { globalMocks } from '../src/storybook/globals';
 import { resetStoryHistory } from '../src/storybook/navigation/containment';
@@ -70,7 +72,11 @@ const preview: Preview = {
 	parameters: {
 		layout: 'fullscreen',
 		controls: { expanded: true },
+		docs: { page: PageDocs, container: ThemedDocsContainer },
 	},
+	// Every page story gets a docs page: the descriptions on the meta and on each
+	// story are the page's documentation, and without this they render nowhere.
+	tags: ['autodocs'],
 	globalTypes: {
 		theme: {
 			description: 'SigNoz color scheme',

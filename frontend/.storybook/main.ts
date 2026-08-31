@@ -60,12 +60,12 @@ const isExcluded = (plugin: PluginOption): boolean =>
 
 const config: StorybookConfig = {
 	framework: '@storybook/react-vite',
-	stories: ['../src/**/*.stories.@(ts|tsx)'],
+	stories: ['../src/storybook/docs/**/*.mdx', '../src/**/*.stories.@(ts|tsx)'],
 	// `../public` carries the fonts, icons and i18n bundles the app expects at
 	// the root; `./public` carries the msw worker, which must not ship in a
 	// production build.
 	staticDirs: ['../public', './public'],
-	addons: ['@storybook/addon-a11y'],
+	addons: ['@storybook/addon-a11y', '@storybook/addon-docs'],
 	core: { disableTelemetry: true },
 	viteFinal: async (viteConfig) => {
 		const plugins = (viteConfig.plugins ?? [])
