@@ -8450,9 +8450,9 @@ export interface QuickfiltertypesSignalFiltersDTO {
 
 export interface QuickfiltertypesUpdatableQuickFiltersDTO {
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	filters?: TelemetrytypesTelemetryFieldKeyDTO[] | null;
+	filters: TelemetrytypesTelemetryFieldKeyDTO[];
 	/**
 	 * @type string
 	 */

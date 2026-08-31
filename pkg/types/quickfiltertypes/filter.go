@@ -76,7 +76,7 @@ type SignalFilters struct {
 
 type UpdatableQuickFilters struct {
 	Signal  Signal                             `json:"signal"`
-	Filters []telemetrytypes.TelemetryFieldKey `json:"filters"`
+	Filters []telemetrytypes.TelemetryFieldKey `json:"filters" required:"true" nullable:"false"`
 }
 
 func validateFilters(filters []telemetrytypes.TelemetryFieldKey) error {
@@ -100,6 +100,12 @@ func NewStorableQuickFilter(orgID valuer.UUID, signal Signal, filters []telemetr
 
 	if err := validateFilters(filters); err != nil {
 		return nil, err
+	}
+
+	// A nil slice marshals to the JSON literal "null"; store an empty array so
+	// reads never have to render a null filter list.
+	if filters == nil {
+		filters = []telemetrytypes.TelemetryFieldKey{}
 	}
 
 	filterJSON, err := json.Marshal(filters)
