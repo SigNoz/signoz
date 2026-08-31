@@ -79,6 +79,7 @@ type validationConfig struct {
 	skipGroupByValidation          bool
 	withTimestampGroupByValidation bool
 	withReduceToValidation         bool
+	withRawOrderByValidation       bool
 }
 
 func applyValidationOptions(opts []ValidationOption) validationConfig {
@@ -150,6 +151,15 @@ func WithTimestampGroupByValidation() ValidationOption {
 func WithReduceToValidation() ValidationOption {
 	return func(cfg *validationConfig) {
 		cfg.withReduceToValidation = true
+	}
+}
+
+// WithRawOrderByValidation enables the raw-request order-by check consumed by
+// scoped (builder_ai) trace queries: raw rows are spans, so trace-scoped order
+// keys are rejected.
+func WithRawOrderByValidation() ValidationOption {
+	return func(cfg *validationConfig) {
+		cfg.withRawOrderByValidation = true
 	}
 }
 
@@ -569,6 +579,23 @@ func (q *QueryBuilderQuery[T]) validateOrderByForAggregation() error {
 	return nil
 }
 
+// validateRawOrderKeys rejects trace-level order keys — no per-trace value exists on
+// span rows. A bare name may be a span column sharing an alias (duration_nano), so it passes.
+func (q *QueryBuilderQuery[T]) validateRawOrderKeys(cfg validationConfig) error {
+	if !cfg.withRawOrderByValidation {
+		return nil
+	}
+	for _, order := range q.Order {
+		key := order.Key.TelemetryFieldKey
+		key.Normalize()
+		if key.FieldContext == telemetrytypes.FieldContextTrace {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput,
+				"ordering the span list by trace-level key %q is not supported; order by span columns instead (e.g. timestamp, duration_nano)", order.Key.Name)
+		}
+	}
+	return nil
+}
+
 // Validate validates the entire query range request.
 func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
 	// Validate time range
@@ -763,7 +790,10 @@ func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) err
 				"invalid AI builder query spec",
 			)
 		}
-		return spec.Validate(opts...)
+		if err := spec.Validate(opts...); err != nil {
+			return err
+		}
+		return spec.validateRawOrderKeys(applyValidationOptions(opts))
 	case QueryTypeFormula:
 		spec, ok := envelope.Spec.(QueryBuilderFormula)
 		if !ok {
@@ -844,7 +874,9 @@ func GetValidationOptions(requestType RequestType) []ValidationOption {
 		return []ValidationOption{WithSkipSelectFieldValidation(), WithTimestampGroupByValidation()}
 	case RequestTypeScalar:
 		return []ValidationOption{WithSkipSelectFieldValidation(), WithReduceToValidation()}
-	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace:
+	case RequestTypeRaw:
+		return []ValidationOption{WithSkipAggregationValidation(), WithSkipHavingValidation(), WithSkipAggregationOrderBy(), WithSkipGroupByValidation(), WithRawOrderByValidation()}
+	case RequestTypeRawStream, RequestTypeTrace:
 		return []ValidationOption{WithSkipAggregationValidation(), WithSkipHavingValidation(), WithSkipAggregationOrderBy(), WithSkipGroupByValidation()}
 	default:
 		return []ValidationOption{}

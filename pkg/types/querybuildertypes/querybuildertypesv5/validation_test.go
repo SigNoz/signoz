@@ -7,6 +7,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func contains(s, substr string) bool {
@@ -1016,6 +1018,37 @@ func TestValidateQueryEnvelope(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Trace-level order keys are rejected on the scoped span list — known aggregate alias
+// or not — while a bare span column sharing an alias (duration_nano) stays orderable.
+func TestValidateQueryEnvelope_RawOrderKeys(t *testing.T) {
+	envelope := func(queryType QueryType, orderKey string) QueryEnvelope {
+		return QueryEnvelope{
+			Type: queryType,
+			Spec: QueryBuilderQuery[TraceAggregation]{
+				Name:   "A",
+				Signal: telemetrytypes.SignalTraces,
+				Order:  []OrderBy{{Key: OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: orderKey}}, Direction: OrderDirectionDesc}},
+			},
+		}
+	}
+	rawOpts := GetValidationOptions(RequestTypeRaw)
+
+	err := envelope(QueryTypeBuilderAI, "trace.output_tokens").Validate(rawOpts...)
+	require.ErrorContains(t, err, `ordering the span list by trace-level key "trace.output_tokens" is not supported`)
+
+	err = envelope(QueryTypeBuilderAI, "trace.foo").Validate(rawOpts...)
+	require.ErrorContains(t, err, `trace-level key "trace.foo"`)
+
+	assert.NoError(t, envelope(QueryTypeBuilderAI, "duration_nano").Validate(rawOpts...),
+		"bare duration_nano is a span column, not a trace-level key")
+
+	assert.NoError(t, envelope(QueryTypeBuilderAI, "trace.output_tokens").Validate(GetValidationOptions(RequestTypeTrace)...),
+		"trace list requests still order by trace-level keys")
+
+	assert.NoError(t, envelope(QueryTypeBuilder, "trace.output_tokens").Validate(rawOpts...),
+		"plain builder raw queries are unaffected")
 }
 
 func TestQueryEnvelope_Helpers(t *testing.T) {
