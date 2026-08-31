@@ -88,10 +88,16 @@ self.addEventListener('fetch', function (event) {
   const { request } = event
   const accept = request.headers.get('accept') || ''
 
-  // Bypass server-sent events.
-  if (accept.includes('text/event-stream')) {
-    return
-  }
+  // msw bypasses server-sent events here, because it answers a request in one
+  // piece and has no stream to hand back. A story is not a live connection
+  // either: it wants the backlog a page renders, and one response carries that
+  // fine. Left bypassed, `/api/v3/logs/livetail` reaches the real network and
+  // the live tail story is a spinner over ERR_CONNECTION_REFUSED. Restore the
+  // bypass and re-check `Pages/Logs/Live Tail` if msw regenerates this file.
+  //
+  // if (accept.includes('text/event-stream')) {
+  //   return
+  // }
 
   // Bypass navigation requests.
   if (request.mode === 'navigate') {
