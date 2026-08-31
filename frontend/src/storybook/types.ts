@@ -52,4 +52,6 @@ export interface ResolvedStoryConfig extends StoryOwnedConfig {
 export interface SignozStoryParameters {
 	signoz?: SignozStoryConfig;
 	msw?: StoryMswParameter;
+	/** Written by the csf plugin from the doc comments in the story file. */
+	docs?: { description?: { component?: string } };
 }
