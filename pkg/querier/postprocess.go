@@ -13,8 +13,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -73,8 +73,12 @@ func (q *querier) postProcessResults(ctx context.Context, orgID valuer.UUID, res
 		case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
 			if result, ok := typedResults[spec.Name]; ok {
 				result = postProcessBuilderQuery(q, result, spec, req)
-				result = q.postProcessLogBody(ctx, orgID, result, req)
+				result = q.postProcessLogBody(ctx, orgID, result)
 				typedResults[spec.Name] = result
+			}
+		case qbtypes.ClickHouseQuery:
+			if result, ok := typedResults[spec.Name]; ok {
+				typedResults[spec.Name] = q.postProcessLogBody(ctx, orgID, result)
 			}
 		case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
 			if result, ok := typedResults[spec.Name]; ok {
@@ -1052,32 +1056,44 @@ func (q *querier) calculateFormulaStep(expression string, req *qbtypes.QueryRang
 	return result
 }
 
-// postProcessLogBody removes the "message" key from the body map when it is empty.
-// Only runs for raw list queries with the use_json_body feature enabled.
-func (q *querier) postProcessLogBody(ctx context.Context, orgID valuer.UUID, result *qbtypes.Result, req *qbtypes.QueryRangeRequest) *qbtypes.Result {
-	if req.RequestType != qbtypes.RequestTypeRaw {
-		return result
-	}
+// postProcessLogBody removes the empty "message" the typed body path materializes into every
+// document, wherever a decoded body lands in the payload — raw rows and scalar cells, under the
+// column's own name or the builder's `body` alias. Only runs with the use_json_body feature
+// enabled. A time-series label keeps the document verbatim: it is the group key.
+func (q *querier) postProcessLogBody(ctx context.Context, orgID valuer.UUID, result *qbtypes.Result) *qbtypes.Result {
 	if !q.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
 		return result
 	}
-	rawData, ok := result.Value.(*qbtypes.RawData)
-	if !ok {
-		return result
-	}
-	for _, row := range rawData.Rows {
-		bodyMap, ok := row.Data["body"].(telemetrystoretypes.JSONValue)
-		if !ok {
-			continue
+	switch data := result.Value.(type) {
+	case *qbtypes.RawData:
+		for _, row := range data.Rows {
+			for _, name := range []string{"body", "body_v2"} {
+				stripEmptyBodyMessage(row.Data[name])
+			}
 		}
-		if msg, exists := bodyMap["message"]; exists {
-			switch v := msg.(type) {
-			case string:
-				if v == "" {
-					delete(bodyMap, "message")
-				}
+	case *qbtypes.ScalarData:
+		for idx, column := range data.Columns {
+			if column.Name != "body" && column.Name != "body_v2" {
+				continue
+			}
+			for _, row := range data.Data {
+				stripEmptyBodyMessage(row[idx])
 			}
 		}
 	}
 	return result
+}
+
+// stripEmptyBodyMessage drops `message: ""` from a decoded body document: the message path is
+// typed String in the JSON column, so ClickHouse materializes it even for documents that never
+// carried one. Anything that is not a decoded document — the legacy string body, a NULL cell —
+// is legal under these names and left alone.
+func stripEmptyBodyMessage(val any) {
+	bodyMap, ok := val.(telemetrystoretypes.JSONValue)
+	if !ok {
+		return
+	}
+	if msg, ok := bodyMap["message"].(string); ok && msg == "" {
+		delete(bodyMap, "message")
+	}
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
-	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/DATA-DOG/go-sqlmock"
 	cmock "github.com/SigNoz/clickhouse-go-mock"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -34,20 +33,6 @@ func New(_ telemetrystore.Config, matcher sqlmock.QueryMatcher) *Provider {
 // ClickhouseDB returns the mock Clickhouse connection.
 func (p *Provider) ClickhouseDB() clickhouse.Conn {
 	return conn{Conn: p.clickhouseDB.(clickhouse.Conn)}
-}
-
-// conn wraps rows the way the clickhouse provider does, so mocked JSON columns report the scan
-// type they do in production.
-type conn struct {
-	clickhouse.Conn
-}
-
-func (c conn) Query(ctx context.Context, query string, args ...any) (driver.Rows, error) {
-	rows, err := c.Conn.Query(ctx, query, args...)
-	if err != nil {
-		return nil, err
-	}
-	return telemetrystore.WrapRows(rows), nil
 }
 
 // Cluster returns the cluster name.
