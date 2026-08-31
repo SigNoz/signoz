@@ -13,6 +13,11 @@ import {
 
 import '../src/ReactI18';
 
+// `src/index.tsx` does this at boot: without it `@monaco-editor/react` falls back
+// to its loader default and pulls Monaco from cdn.jsdelivr.net, which msw does
+// not report because the requests look like static assets.
+import '../src/lib/monaco/setup';
+
 import '../src/styles.scss';
 
 import '../src/storybook/storybook-root.scss';
