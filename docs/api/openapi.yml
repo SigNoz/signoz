@@ -2559,6 +2559,7 @@ components:
       - factor-api-key
       - license
       - subscription
+      - deployment-host
       - logs
       - traces
       - metrics
@@ -8821,6 +8822,7 @@ components:
       - span
       - trace
       - resource
+      - scope
       - attribute
       - body
       - ""
@@ -15488,10 +15490,8 @@ paths:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
       security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
+      - api_key: []
+      - tokenizer: []
       summary: Get features
       tags:
       - features
@@ -18197,165 +18197,6 @@ paths:
       summary: Update my organization
       tags:
       - orgs
-  /api/v2/orgs/me/filters:
-    get:
-      deprecated: false
-      description: Returns the org's quick filters for every signal, each filter as
-        a telemetry field key.
-      operationId: ListQuickFilters
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    items:
-                      $ref: '#/components/schemas/QuickfiltertypesSignalFilters'
-                    nullable: true
-                    type: array
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - quick-filter:list
-      - tokenizer:
-        - quick-filter:list
-      summary: List quick filters
-      tags:
-      - quick_filter
-    put:
-      deprecated: false
-      description: Replaces the org's quick filters for the signal named in the body.
-      operationId: UpdateQuickFilters
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/QuickfiltertypesUpdatableQuickFilters'
-      responses:
-        "204":
-          description: No Content
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - quick-filter:update
-      - tokenizer:
-        - quick-filter:update
-      summary: Update quick filters
-      tags:
-      - quick_filter
-  /api/v2/orgs/me/filters/{signal_name}:
-    get:
-      deprecated: false
-      description: Returns the org's quick filters for one signal, each filter as
-        a telemetry field key.
-      operationId: GetSignalQuickFilters
-      parameters:
-      - in: path
-        name: signal_name
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/QuickfiltertypesSignalFilters'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - quick-filter:read
-      - tokenizer:
-        - quick-filter:read
-      summary: Get a signal's quick filters
-      tags:
-      - quick_filter
   /api/v2/public/dashboards/{id}:
     get:
       deprecated: false
@@ -18498,6 +18339,165 @@ paths:
       summary: Get query range result (v2)
       tags:
       - dashboard
+  /api/v2/quick_filters:
+    get:
+      deprecated: false
+      description: Returns the org's quick filters for every signal, each filter as
+        a telemetry field key.
+      operationId: ListQuickFilters
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/QuickfiltertypesSignalFilters'
+                    nullable: true
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - quick-filter:list
+      - tokenizer:
+        - quick-filter:list
+      summary: List quick filters
+      tags:
+      - quick_filter
+    put:
+      deprecated: false
+      description: Replaces the org's quick filters for the signal named in the body.
+      operationId: UpdateQuickFilters
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuickfiltertypesUpdatableQuickFilters'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - quick-filter:update
+      - tokenizer:
+        - quick-filter:update
+      summary: Update quick filters
+      tags:
+      - quick_filter
+  /api/v2/quick_filters/{signal_name}:
+    get:
+      deprecated: false
+      description: Returns the org's quick filters for one signal, each filter as
+        a telemetry field key.
+      operationId: GetQuickFilters
+      parameters:
+      - in: path
+        name: signal_name
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/QuickfiltertypesSignalFilters'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - quick-filter:read
+      - tokenizer:
+        - quick-filter:read
+      summary: Get a signal's quick filters
+      tags:
+      - quick_filter
   /api/v2/readyz:
     get:
       operationId: Readyz
@@ -24122,9 +24122,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - deployment-host:list
       - tokenizer:
-        - VIEWER
+        - deployment-host:list
       summary: Get host info from Zeus.
       tags:
       - zeus
@@ -24178,9 +24178,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - deployment-host:update
       - tokenizer:
-        - ADMIN
+        - deployment-host:update
       summary: Put host in Zeus for a deployment.
       tags:
       - zeus

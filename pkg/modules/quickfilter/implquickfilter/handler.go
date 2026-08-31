@@ -113,7 +113,7 @@ func (handler *handler) GetQuickFilters(rw http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	filters, err := handler.module.GetQuickFilters(r.Context(), valuer.MustNewUUID(claims.OrgID))
+	filters, err := handler.module.GetQuickFilters(r.Context(), valuer.MustNewUUID(claims.OrgID), quickfiltertypes.Signal{})
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -141,13 +141,13 @@ func (handler *handler) GetSignalFilters(rw http.ResponseWriter, r *http.Request
 		return
 	}
 
-	filters, err := handler.module.GetSignalFilters(r.Context(), valuer.MustNewUUID(claims.OrgID), validatedSignal)
+	filters, err := handler.module.GetQuickFilters(r.Context(), valuer.MustNewUUID(claims.OrgID), validatedSignal)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusOK, newLegacySignalFiltersFromSignalFilters(filters))
+	render.Success(rw, http.StatusOK, newLegacySignalFiltersFromSignalFilters(filters[0]))
 }
 
 func (handler *handler) UpdateQuickFilters(rw http.ResponseWriter, r *http.Request) {
@@ -169,7 +169,7 @@ func (handler *handler) UpdateQuickFilters(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	err = handler.module.UpdateQuickFilters(r.Context(), valuer.MustNewUUID(claims.OrgID), req.Signal, fieldKeys)
+	err = handler.module.UpsertQuickFilters(r.Context(), valuer.MustNewUUID(claims.OrgID), req.Signal, fieldKeys)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -178,14 +178,14 @@ func (handler *handler) UpdateQuickFilters(rw http.ResponseWriter, r *http.Reque
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-func (handler *handler) GetQuickFiltersV2(rw http.ResponseWriter, r *http.Request) {
+func (handler *handler) ListQuickFiltersV2(rw http.ResponseWriter, r *http.Request) {
 	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	filters, err := handler.module.GetQuickFilters(r.Context(), valuer.MustNewUUID(claims.OrgID))
+	filters, err := handler.module.GetQuickFilters(r.Context(), valuer.MustNewUUID(claims.OrgID), quickfiltertypes.Signal{})
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -207,7 +207,7 @@ func (handler *handler) UpdateQuickFiltersV2(rw http.ResponseWriter, r *http.Req
 		return
 	}
 
-	err = handler.module.UpdateQuickFilters(r.Context(), valuer.MustNewUUID(claims.OrgID), req.Signal, req.Filters)
+	err = handler.module.UpsertQuickFilters(r.Context(), valuer.MustNewUUID(claims.OrgID), req.Signal, req.Filters)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -216,7 +216,7 @@ func (handler *handler) UpdateQuickFiltersV2(rw http.ResponseWriter, r *http.Req
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-func (handler *handler) GetSignalFiltersV2(rw http.ResponseWriter, r *http.Request) {
+func (handler *handler) GetQuickFiltersV2(rw http.ResponseWriter, r *http.Request) {
 	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
 		render.Error(rw, err)
@@ -230,11 +230,11 @@ func (handler *handler) GetSignalFiltersV2(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	filters, err := handler.module.GetSignalFilters(r.Context(), valuer.MustNewUUID(claims.OrgID), validatedSignal)
+	filters, err := handler.module.GetQuickFilters(r.Context(), valuer.MustNewUUID(claims.OrgID), validatedSignal)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusOK, filters)
+	render.Success(rw, http.StatusOK, filters[0])
 }

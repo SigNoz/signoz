@@ -2,6 +2,7 @@ from collections.abc import Callable
 from http import HTTPStatus
 
 import requests
+from sqlalchemy import sql
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
@@ -24,7 +25,7 @@ def test_get_quick_filters_returns_defaults(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v2/orgs/me/filters"),
+        signoz.self.host_configs["8080"].get("/api/v2/quick_filters"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -94,7 +95,7 @@ def test_v1_update_round_trips_to_v2(
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v2/orgs/me/filters/exceptions"),
+        signoz.self.host_configs["8080"].get("/api/v2/quick_filters/exceptions"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -132,7 +133,7 @@ def test_v1_update_round_trips_to_v2(
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v2/orgs/me/filters/meter"),
+        signoz.self.host_configs["8080"].get("/api/v2/quick_filters/meter"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -148,7 +149,7 @@ def test_update_quick_filters_round_trip(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.put(
-        signoz.self.host_configs["8080"].get("/api/v2/orgs/me/filters"),
+        signoz.self.host_configs["8080"].get("/api/v2/quick_filters"),
         json={
             "signal": "logs",
             "filters": [
@@ -171,7 +172,7 @@ def test_update_quick_filters_round_trip(
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v2/orgs/me/filters/logs"),
+        signoz.self.host_configs["8080"].get("/api/v2/quick_filters/logs"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -197,6 +198,54 @@ def test_update_quick_filters_round_trip(
     ]
 
 
+def test_update_quick_filters_creates_row_for_signal_without_one(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    with signoz.sqlstore.conn.connect() as conn:
+        conn.execute(
+            sql.text("DELETE FROM quick_filter WHERE signal = :signal"),
+            {"signal": "api_monitoring"},
+        )
+        conn.commit()
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/quick_filters/api_monitoring"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["data"] == {"signal": "api_monitoring", "filters": []}
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get("/api/v2/quick_filters"),
+        json={
+            "signal": "api_monitoring",
+            "filters": [
+                {
+                    "name": "service.name",
+                    "fieldContext": "resource",
+                    "fieldDataType": "string",
+                },
+            ],
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/quick_filters/api_monitoring"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert [field_key["name"] for field_key in response.json()["data"]["filters"]] == ["service.name"]
+
+
 def test_update_quick_filters_rejects_invalid_input(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -212,7 +261,7 @@ def test_update_quick_filters_rejects_invalid_input(
         {"signal": "invalid", "filters": []},
     ]:
         response = requests.put(
-            signoz.self.host_configs["8080"].get("/api/v2/orgs/me/filters"),
+            signoz.self.host_configs["8080"].get("/api/v2/quick_filters"),
             json=invalid_body,
             headers={"Authorization": f"Bearer {admin_token}"},
             timeout=2,

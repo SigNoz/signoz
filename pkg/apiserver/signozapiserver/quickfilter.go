@@ -11,8 +11,8 @@ import (
 )
 
 func (provider *provider) addQuickFilterRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v2/orgs/me/filters", handler.New(
-		provider.authzMiddleware.CheckResources(provider.quickFilterHandler.GetQuickFiltersV2, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
+	if err := router.Handle("/api/v2/quick_filters", handler.New(
+		provider.authzMiddleware.CheckResources(provider.quickFilterHandler.ListQuickFiltersV2, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "ListQuickFilters",
 			Tags:                []string{"quick_filter"},
@@ -37,10 +37,10 @@ func (provider *provider) addQuickFilterRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/orgs/me/filters/{signal_name}", handler.New(
-		provider.authzMiddleware.CheckResources(provider.quickFilterHandler.GetSignalFiltersV2, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
+	if err := router.Handle("/api/v2/quick_filters/{signal_name}", handler.New(
+		provider.authzMiddleware.CheckResources(provider.quickFilterHandler.GetQuickFiltersV2, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
-			ID:                  "GetSignalQuickFilters",
+			ID:                  "GetQuickFilters",
 			Tags:                []string{"quick_filter"},
 			Summary:             "Get a signal's quick filters",
 			Description:         "Returns the org's quick filters for one signal, each filter as a telemetry field key.",
@@ -63,7 +63,7 @@ func (provider *provider) addQuickFilterRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/orgs/me/filters", handler.New(
+	if err := router.Handle("/api/v2/quick_filters", handler.New(
 		provider.authzMiddleware.CheckResources(provider.quickFilterHandler.UpdateQuickFiltersV2, authtypes.SigNozAdminRoleName),
 		handler.OpenAPIDef{
 			ID:                  "UpdateQuickFilters",

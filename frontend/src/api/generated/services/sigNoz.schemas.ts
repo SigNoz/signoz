@@ -2175,6 +2175,7 @@ export enum CoretypesKindDTO {
 	'factor-api-key' = 'factor-api-key',
 	license = 'license',
 	subscription = 'subscription',
+	'deployment-host' = 'deployment-host',
 	logs = 'logs',
 	traces = 'traces',
 	metrics = 'metrics',
@@ -3492,6 +3493,7 @@ export enum TelemetrytypesFieldContextDTO {
 	span = 'span',
 	trace = 'trace',
 	resource = 'resource',
+	scope = 'scope',
 	attribute = 'attribute',
 	body = 'body',
 	'' = '',
@@ -11811,28 +11813,6 @@ export type GetMyOrganization200 = {
 	status: string;
 };
 
-export type ListQuickFilters200 = {
-	/**
-	 * @type array,null
-	 */
-	data: QuickfiltertypesSignalFiltersDTO[] | null;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type GetSignalQuickFiltersPathParameters = {
-	signalName: string;
-};
-export type GetSignalQuickFilters200 = {
-	data: QuickfiltertypesSignalFiltersDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type GetPublicDashboardDataV2PathParameters = {
 	id: string;
 };
@@ -11863,6 +11843,28 @@ export type GetPublicDashboardPanelQueryRangeV2Params = {
 
 export type GetPublicDashboardPanelQueryRangeV2200 = {
 	data: Querybuildertypesv5QueryRangeResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListQuickFilters200 = {
+	/**
+	 * @type array,null
+	 */
+	data: QuickfiltertypesSignalFiltersDTO[] | null;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetQuickFiltersPathParameters = {
+	signalName: string;
+};
+export type GetQuickFilters200 = {
+	data: QuickfiltertypesSignalFiltersDTO;
 	/**
 	 * @type string
 	 */
