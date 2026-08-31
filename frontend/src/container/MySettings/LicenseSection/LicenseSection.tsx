@@ -3,13 +3,13 @@ import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { useNotifications } from 'hooks/useNotifications';
 import { Copy } from '@signozhq/icons';
-import { useAppContext } from 'providers/App/App';
+import useActiveLicenseKey from 'hooks/useActiveLicenseKey/useActiveLicenseKey';
 import { getMaskedKey } from 'utils/maskedKey';
 
 import './LicenseSection.styles.scss';
 
 function LicenseSection(): JSX.Element | null {
-	const { activeLicense } = useAppContext();
+	const { licenseKey } = useActiveLicenseKey();
 	const { notifications } = useNotifications();
 	const [, handleCopyToClipboard] = useCopyToClipboard();
 
@@ -20,7 +20,7 @@ function LicenseSection(): JSX.Element | null {
 		});
 	};
 
-	if (!activeLicense?.key) {
+	if (!licenseKey) {
 		return <></>;
 	}
 
@@ -35,13 +35,13 @@ function LicenseSection(): JSX.Element | null {
 					<div className="license-section-content-item-title-action">
 						<span>License key</span>
 						<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-							<Typography.Text code>{getMaskedKey(activeLicense.key)}</Typography.Text>
+							<Typography.Text code>{getMaskedKey(licenseKey)}</Typography.Text>
 							<Button
 								variant="link"
 								color="none"
 								aria-label="Copy license key"
 								data-testid="license-key-copy-btn"
-								onClick={(): void => handleCopyKey(activeLicense.key)}
+								onClick={(): void => handleCopyKey(licenseKey)}
 							>
 								<Copy size={14} />
 							</Button>

@@ -16,6 +16,7 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { StatusCodes } from 'http-status-codes';
 import find from 'lodash-es/find';
+import useActiveLicenseKey from 'hooks/useActiveLicenseKey/useActiveLicenseKey';
 import { useAppContext } from 'providers/App/App';
 import {
 	ErrorResponse,
@@ -78,7 +79,8 @@ function GeneralSettings({
 	const [logsCurrentTTLValues, setLogsCurrentTTLValues] =
 		useState(logsTtlValuesPayload);
 
-	const { user, activeLicense } = useAppContext();
+	const { user } = useAppContext();
+	const { licenseKey } = useActiveLicenseKey();
 
 	const [setRetentionPermission] = useComponentPermission(
 		['set_retention_period'],
@@ -673,13 +675,13 @@ function GeneralSettings({
 				</span>
 			</div>
 
-			{(showCustomDomainSettings || activeLicense?.key) && (
+			{(showCustomDomainSettings || licenseKey) && (
 				<div className="custom-domain-card">
 					{showCustomDomainSettings && <CustomDomainSettings />}
-					{showCustomDomainSettings && activeLicense?.key && (
+					{showCustomDomainSettings && licenseKey && (
 						<div className="custom-domain-card-divider" />
 					)}
-					{activeLicense?.key && (
+					{licenseKey && (
 						<>
 							<LicenseKeyRow />
 							<LicenseRowDismissibleCallout />

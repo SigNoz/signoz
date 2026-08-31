@@ -1,5 +1,6 @@
 import userEvent from '@testing-library/user-event';
 import MySettingsContainer from 'container/MySettings';
+import useActiveLicenseKey from 'hooks/useActiveLicenseKey/useActiveLicenseKey';
 import { logEventMock } from '__tests__/logEventMock';
 import {
 	act,
@@ -11,6 +12,11 @@ import {
 } from 'tests/test-utils';
 import APIError from 'types/api/error';
 import { toast } from '@signozhq/ui/sonner';
+
+jest.mock('hooks/useActiveLicenseKey/useActiveLicenseKey');
+const mockUseActiveLicenseKey = useActiveLicenseKey as jest.MockedFunction<
+	typeof useActiveLicenseKey
+>;
 
 const toggleThemeFunction = jest.fn();
 const copyToClipboardFn = jest.fn();
@@ -87,6 +93,10 @@ describe('MySettings Flows', () => {
 		jest.clearAllMocks();
 		editUserFn.mockResolvedValue({});
 		updateMyPasswordFn.mockResolvedValue({});
+		mockUseActiveLicenseKey.mockReturnValue({
+			licenseKey: 'test-key',
+			isLoading: false,
+		});
 		render(<MySettingsContainer />);
 	});
 
@@ -368,11 +378,11 @@ describe('MySettings Flows', () => {
 		});
 
 		it('Should not render license section when license key is missing', () => {
-			const { container } = render(<MySettingsContainer />, undefined, {
-				appContextOverrides: {
-					activeLicense: null,
-				},
+			mockUseActiveLicenseKey.mockReturnValue({
+				licenseKey: undefined,
+				isLoading: false,
 			});
+			const { container } = render(<MySettingsContainer />);
 
 			const scoped = within(container);
 			expect(scoped.queryByText('License')).not.toBeInTheDocument();
@@ -383,38 +393,32 @@ describe('MySettings Flows', () => {
 		});
 
 		it('Should mask license key in the UI', () => {
-			const { container } = render(<MySettingsContainer />, undefined, {
-				appContextOverrides: {
-					activeLicense: {
-						key: 'abcd',
-					} as any,
-				},
+			mockUseActiveLicenseKey.mockReturnValue({
+				licenseKey: 'abcd',
+				isLoading: false,
 			});
+			const { container } = render(<MySettingsContainer />);
 
 			expect(within(container).getByText('ab·······cd')).toBeInTheDocument();
 		});
 
 		it('Should not mask license key if it is too short', () => {
-			const { container } = render(<MySettingsContainer />, undefined, {
-				appContextOverrides: {
-					activeLicense: {
-						key: 'abc',
-					} as any,
-				},
+			mockUseActiveLicenseKey.mockReturnValue({
+				licenseKey: 'abc',
+				isLoading: false,
 			});
+			const { container } = render(<MySettingsContainer />);
 
 			expect(within(container).getByText('abc')).toBeInTheDocument();
 		});
 
 		it('Should copy license key and show success toast', async () => {
 			const user = userEvent.setup();
-			const { container } = render(<MySettingsContainer />, undefined, {
-				appContextOverrides: {
-					activeLicense: {
-						key: 'test-license-key-12345',
-					} as any,
-				},
+			mockUseActiveLicenseKey.mockReturnValue({
+				licenseKey: 'test-license-key-12345',
+				isLoading: false,
 			});
+			const { container } = render(<MySettingsContainer />);
 
 			await user.click(within(container).getByTestId('license-key-copy-btn'));
 
