@@ -2493,22 +2493,26 @@ func (k *telemetryMetaStore) updateColumnEvolutionMetadataForKeys(ctx context.Co
 		evolutionsByUniqueKey[key.QualifiedName()] = append(evolutionsByUniqueKey[key.QualifiedName()], evolution)
 	}
 
-	if len(keysToUpdate) > 0 {
-		for i, key := range keysToUpdate {
-			selector := &telemetrytypes.EvolutionSelector{
-				Signal:       key.Signal,
-				FieldContext: key.FieldContext,
-				FieldName:    "__all__",
-			}
-			// first check if there is evolutions that with field name as __all__
-			if keyEvolutions, ok := evolutionsByUniqueKey[selector.QualifiedName()]; ok {
-				keysToUpdate[i].Evolutions = keyEvolutions
-			}
-			// then check for specific field name
-			selector.FieldName = key.Name
-			if keyEvolutions, ok := evolutionsByUniqueKey[selector.QualifiedName()]; ok {
-				keysToUpdate[i].Evolutions = keyEvolutions
-			}
+	for i, key := range keysToUpdate {
+		columnWideSelector := &telemetrytypes.EvolutionSelector{
+			Signal:       key.Signal,
+			FieldContext: key.FieldContext,
+			FieldName:    "__all__",
+		}
+		perFieldSelector := &telemetrytypes.EvolutionSelector{
+			Signal:       key.Signal,
+			FieldContext: key.FieldContext,
+			FieldName:    key.Name,
+		}
+		// The column-wide (__all__) homes and this field's own homes (e.g. a promoted
+		// column) are composed, not replaced: a promoted key keeps its Map/base-JSON
+		// homes for time ranges before it was promoted.
+		merged := telemetrytypes.MergeEvolutions(
+			evolutionsByUniqueKey[columnWideSelector.QualifiedName()],
+			evolutionsByUniqueKey[perFieldSelector.QualifiedName()],
+		)
+		if len(merged) > 0 {
+			keysToUpdate[i].Evolutions = merged
 		}
 	}
 	return nil

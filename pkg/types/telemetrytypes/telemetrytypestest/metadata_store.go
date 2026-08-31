@@ -391,19 +391,24 @@ func (m *MockMetadataStore) updateColumnEvolutionMetadataForKeys(_ context.Conte
 	}
 	result := make(map[string][]*telemetrytypes.EvolutionEntry)
 	for i, selector := range metadataKeySelectors {
-		sel := &telemetrytypes.EvolutionSelector{
+		columnWideSelector := &telemetrytypes.EvolutionSelector{
 			Signal:       selector.Signal,
 			FieldContext: selector.FieldContext,
 			FieldName:    "__all__",
 		}
-		key := sel.QualifiedName()
-		if entries, exists := m.ColumnEvolutionMetadataMap[key]; exists {
-			result[key] = entries
+		perFieldSelector := &telemetrytypes.EvolutionSelector{
+			Signal:       selector.Signal,
+			FieldContext: selector.FieldContext,
+			FieldName:    metadataKeySelectors[i].FieldName,
 		}
-		sel.FieldName = metadataKeySelectors[i].FieldName
-		key = sel.QualifiedName()
-		if entries, exists := m.ColumnEvolutionMetadataMap[key]; exists {
-			result[key] = entries
+		// Compose column-wide and per-field homes, mirroring the real store.
+		merged := telemetrytypes.MergeEvolutions(
+			m.ColumnEvolutionMetadataMap[columnWideSelector.QualifiedName()],
+			m.ColumnEvolutionMetadataMap[perFieldSelector.QualifiedName()],
+		)
+		if len(merged) > 0 {
+			keysToUpdate[i].Evolutions = merged
+			result[perFieldSelector.QualifiedName()] = merged
 		}
 	}
 	return result
