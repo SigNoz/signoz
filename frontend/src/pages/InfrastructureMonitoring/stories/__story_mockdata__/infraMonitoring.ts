@@ -1,3 +1,8 @@
+/**
+ * AI-owned. Generated and maintained by the `signoz-page-story` skill.
+ * Do not hand-edit: regenerate instead.
+ */
+
 import {
 	type InframonitoringtypesAssociatedComponentDTO,
 	InframonitoringtypesCheckComponentTypeDTO,
@@ -25,10 +30,6 @@ import {
 	InfraMonitoringEntity,
 } from 'container/InfraMonitoringK8sV2/constants';
 import type { RawRow } from 'types/api/v5/queryRange';
-
-export const INFRA_TABS = ['hosts', 'kubernetes'] as const;
-
-export type InfraTab = (typeof INFRA_TABS)[number];
 
 /** The nine entities `entityRegistry` registers under the `category` param. */
 export const K8S_CATEGORIES = [
@@ -70,6 +71,18 @@ const ENTITY_BY_RESOURCE = new Map(
 
 export const entityForResource = (resource: string): InfraEntity | undefined =>
 	ENTITY_BY_RESOURCE.get(resource);
+
+const ENTITY_BY_NAME = new Map<string, InfraEntity>(
+	Object.keys(RESOURCE_BY_ENTITY).map((entity) => [
+		entity,
+		entity as InfraEntity,
+	]),
+);
+
+/** The `type` the checks endpoint is asked for, which is the entity's own name. */
+export const entityForChecksType = (
+	type: string | null,
+): InfraEntity | undefined => (type ? ENTITY_BY_NAME.get(type) : undefined);
 
 const CLUSTERS = ['prod-us-east-1', 'prod-eu-west-1', 'staging-us-east-1'];
 const NAMESPACES = ['default', 'signoz', 'kube-system', 'payments'];
@@ -696,28 +709,149 @@ interface CheckComponents {
 	documentationLink: string;
 }
 
-const K8S_COMPONENTS: CheckComponents = {
-	receiver: {
-		name: 'kubeletstatsreceiver',
-		type: InframonitoringtypesCheckComponentTypeDTO.receiver,
+/**
+ * Which collector reports an entity, and the metrics and attributes it carries:
+ * kubeletstats scrapes the node for pods, nodes and volumes, k8scluster watches
+ * the API server for the workload objects. Every name is one the app already
+ * knows, so a renamed metric moves with `INFRA_MONITORING_ATTR_KEYS`.
+ */
+interface EntityChecks {
+	receiver: string;
+	presentMetrics: string[];
+	presentAttributes: string[];
+	missingMetric: string;
+}
+
+const KUBELETSTATS = 'kubeletstatsreceiver';
+const K8SCLUSTER = 'k8sclusterreceiver';
+
+const CHECKS_BY_K8S_ENTITY: Record<K8sCategory, EntityChecks> = {
+	[InfraMonitoringEntity.PODS]: {
+		receiver: KUBELETSTATS,
+		presentMetrics: [
+			INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
+			INFRA_MONITORING_ATTR_KEYS.K8S_POD_MEMORY_USAGE,
+		],
+		presentAttributes: [
+			INFRA_MONITORING_ATTR_KEYS.K8S_POD_UID,
+			INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+		],
+		missingMetric: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_LIMIT_UTILIZATION,
 	},
-	processor: {
-		name: 'k8sattributesprocessor',
-		type: InframonitoringtypesCheckComponentTypeDTO.processor,
+	[InfraMonitoringEntity.NODES]: {
+		receiver: KUBELETSTATS,
+		presentMetrics: [
+			INFRA_MONITORING_ATTR_KEYS.K8S_NODE_CPU_USAGE,
+			INFRA_MONITORING_ATTR_KEYS.K8S_NODE_MEMORY_USAGE,
+		],
+		presentAttributes: [INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME],
+		missingMetric: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_FILESYSTEM_USAGE,
 	},
-	presentMetrics: ['k8s.pod.cpu.usage', 'k8s.pod.memory.usage'],
-	presentAttributes: [
-		INFRA_MONITORING_ATTR_KEYS.K8S_POD_UID,
-		INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
-	],
-	missingMetrics: [INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_LIMIT_UTILIZATION],
-	missingMetricsMessage:
-		'Set `k8s.pod.cpu_limit_utilization` to `enabled: true` on the kubeletstats receiver.',
-	missingAttributes: [INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME],
-	missingAttributesMessage:
-		'Add `k8s.cluster.name` to the k8sattributes processor so rows can be grouped by cluster.',
-	documentationLink:
-		'https://signoz.io/docs/infrastructure-monitoring/kubernetes/',
+	// A namespace and a cluster have no metrics of their own: the app reads them
+	// off the pods and the nodes they hold, which is what
+	// `METRIC_NAMESPACE_BY_ENTITY` maps them to.
+	[InfraMonitoringEntity.NAMESPACES]: {
+		receiver: KUBELETSTATS,
+		presentMetrics: [
+			INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
+			INFRA_MONITORING_ATTR_KEYS.K8S_POD_MEMORY_USAGE,
+		],
+		presentAttributes: [INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME],
+		missingMetric: INFRA_MONITORING_ATTR_KEYS.K8S_POD_MEMORY_LIMIT_UTILIZATION,
+	},
+	[InfraMonitoringEntity.CLUSTERS]: {
+		receiver: KUBELETSTATS,
+		presentMetrics: [
+			INFRA_MONITORING_ATTR_KEYS.K8S_NODE_CPU_USAGE,
+			INFRA_MONITORING_ATTR_KEYS.K8S_NODE_MEMORY_USAGE,
+		],
+		presentAttributes: [INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME],
+		missingMetric: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_FILESYSTEM_USAGE,
+	},
+	[InfraMonitoringEntity.DEPLOYMENTS]: {
+		receiver: K8SCLUSTER,
+		presentMetrics: [
+			INFRA_MONITORING_ATTR_KEYS.K8S_DEPLOYMENT_AVAILABLE,
+			INFRA_MONITORING_ATTR_KEYS.K8S_DEPLOYMENT_DESIRED,
+		],
+		presentAttributes: [
+			INFRA_MONITORING_ATTR_KEYS.K8S_DEPLOYMENT_NAME,
+			INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+		],
+		missingMetric: INFRA_MONITORING_ATTR_KEYS.K8S_CONTAINER_CPU_LIMIT,
+	},
+	[InfraMonitoringEntity.JOBS]: {
+		receiver: K8SCLUSTER,
+		presentMetrics: [
+			INFRA_MONITORING_ATTR_KEYS.K8S_JOB_ACTIVE_PODS,
+			INFRA_MONITORING_ATTR_KEYS.K8S_JOB_SUCCESSFUL_PODS,
+		],
+		presentAttributes: [
+			INFRA_MONITORING_ATTR_KEYS.K8S_JOB_NAME,
+			INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+		],
+		missingMetric: INFRA_MONITORING_ATTR_KEYS.K8S_JOB_DESIRED_SUCCESSFUL_PODS,
+	},
+	[InfraMonitoringEntity.DAEMONSETS]: {
+		receiver: K8SCLUSTER,
+		presentMetrics: [
+			INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_CURRENT_SCHEDULED_NODES,
+			INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_DESIRED_SCHEDULED_NODES,
+		],
+		presentAttributes: [
+			INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_NAME,
+			INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+		],
+		missingMetric: INFRA_MONITORING_ATTR_KEYS.K8S_DAEMONSET_MISSCHEDULED_NODES,
+	},
+	[InfraMonitoringEntity.STATEFULSETS]: {
+		receiver: K8SCLUSTER,
+		presentMetrics: [
+			INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_CURRENT_PODS,
+			INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_DESIRED_PODS,
+		],
+		presentAttributes: [
+			INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_NAME,
+			INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+		],
+		missingMetric: INFRA_MONITORING_ATTR_KEYS.K8S_STATEFULSET_UPDATED_PODS,
+	},
+	[InfraMonitoringEntity.VOLUMES]: {
+		receiver: KUBELETSTATS,
+		presentMetrics: [
+			INFRA_MONITORING_ATTR_KEYS.K8S_VOLUME_AVAILABLE,
+			INFRA_MONITORING_ATTR_KEYS.K8S_VOLUME_CAPACITY,
+		],
+		presentAttributes: [
+			INFRA_MONITORING_ATTR_KEYS.K8S_PERSISTENT_VOLUME_CLAIM_NAME,
+			INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME,
+		],
+		missingMetric: INFRA_MONITORING_ATTR_KEYS.K8S_VOLUME_INODES_FREE,
+	},
+};
+
+const k8sComponents = (entity: K8sCategory): CheckComponents => {
+	const checks = CHECKS_BY_K8S_ENTITY[entity];
+
+	return {
+		receiver: {
+			name: checks.receiver,
+			type: InframonitoringtypesCheckComponentTypeDTO.receiver,
+		},
+		processor: {
+			name: 'k8sattributesprocessor',
+			type: InframonitoringtypesCheckComponentTypeDTO.processor,
+		},
+		presentMetrics: checks.presentMetrics,
+		presentAttributes: checks.presentAttributes,
+		missingMetrics: [checks.missingMetric],
+		missingMetricsMessage: `Set \`${checks.missingMetric}\` to \`enabled: true\` on the ${checks.receiver}.`,
+		missingAttributes: [INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME],
+		missingAttributesMessage:
+			'Add `k8s.cluster.name` to the k8sattributes processor so rows can be grouped by cluster.',
+		documentationLink:
+			'https://signoz.io/docs/infrastructure-monitoring/kubernetes/',
+	};
 };
 
 const HOST_COMPONENTS: CheckComponents = {
@@ -798,7 +932,9 @@ export const infraChecksResponse = (
 	const type = CHECK_TYPE_BY_ENTITY[entity];
 
 	const components =
-		entity === InfraMonitoringEntity.HOSTS ? HOST_COMPONENTS : K8S_COMPONENTS;
+		entity === InfraMonitoringEntity.HOSTS
+			? HOST_COMPONENTS
+			: k8sComponents(entity);
 
 	const checks = ((): Omit<InframonitoringtypesChecksDTO, 'ready' | 'type'> => {
 		switch (state) {
