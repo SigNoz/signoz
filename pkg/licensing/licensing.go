@@ -44,10 +44,6 @@ type Licensing interface {
 }
 
 type API interface {
-	Activate(http.ResponseWriter, *http.Request)
-	Refresh(http.ResponseWriter, *http.Request)
-	GetActive(http.ResponseWriter, *http.Request)
-
 	Checkout(http.ResponseWriter, *http.Request)
 	Portal(http.ResponseWriter, *http.Request)
 }
