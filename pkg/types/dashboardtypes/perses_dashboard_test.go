@@ -1158,7 +1158,8 @@ func TestValidateTextPanel(t *testing.T) {
 		d, err := unmarshalDashboard(wrapPanel(`{
 			"mode": "markdown",
 			"text": "# Runbook\n\nSee the [oncall doc](https://example.com).",
-			"presentation": {"textAlign": "center", "verticalAlign": "bottom", "background": "transparent"}
+			"presentation": {"textAlign": "center", "verticalAlign": "bottom", "background": "transparent"},
+			"headerOptions": {"hide": true}
 		}`))
 		require.NoError(t, err, "expected a fully specified text panel to validate")
 
@@ -1169,8 +1170,11 @@ func TestValidateTextPanel(t *testing.T) {
 		assert.Equal(t, TextAlignCenter, spec.Presentation.TextAlign)
 		assert.Equal(t, VerticalAlignBottom, spec.Presentation.VerticalAlign)
 		assert.Equal(t, PanelBackgroundTransparent, spec.Presentation.Background)
+		assert.True(t, spec.HeaderOptions.Hide)
 	})
 
+	// The header shows unless explicitly hidden, so the zero value must round-trip
+	// as a shown header.
 	t.Run("omitted fields marshal back as their defaults", func(t *testing.T) {
 		d, err := unmarshalDashboard(wrapPanel(`{}`))
 		require.NoError(t, err, "expected an empty text panel spec to validate")
@@ -1180,7 +1184,8 @@ func TestValidateTextPanel(t *testing.T) {
 		assert.JSONEq(t, `{
 			"mode": "markdown",
 			"text": "",
-			"presentation": {"textAlign": "left", "verticalAlign": "top", "background": "solid"}
+			"presentation": {"textAlign": "left", "verticalAlign": "top", "background": "solid"},
+			"headerOptions": {"hide": false}
 		}`, string(out))
 	})
 
@@ -1239,8 +1244,14 @@ func TestValidateTextPanel(t *testing.T) {
 	})
 
 	t.Run("unknown spec fields are rejected", func(t *testing.T) {
-		_, err := unmarshalDashboard(wrapPanel(`{"markdown": "hi"}`))
-		assert.Error(t, err, "expected an unknown text panel spec field to be rejected")
+		for field, spec := range map[string]string{
+			"top level":     `{"markdown": "hi"}`,
+			"presentation":  `{"presentation": {"horizontalAlign": "left"}}`,
+			"headerOptions": `{"headerOptions": {"show": true}}`,
+		} {
+			_, err := unmarshalDashboard(wrapPanel(spec))
+			assert.Error(t, err, "expected an unknown %s field to be rejected", field)
+		}
 	})
 }
 

@@ -243,9 +243,10 @@ type ListPanelSpec struct {
 }
 
 type TextPanelSpec struct {
-	Mode         TextMode         `json:"mode"`
-	Text         string           `json:"text"`
-	Presentation TextPresentation `json:"presentation"`
+	Mode          TextMode         `json:"mode"`
+	Text          string           `json:"text"`
+	Presentation  TextPresentation `json:"presentation"`
+	HeaderOptions HeaderOptions    `json:"headerOptions"`
 }
 
 type TextPresentation struct {
@@ -262,6 +263,13 @@ type Axes struct {
 	SoftMin    *float64 `json:"softMin"`
 	SoftMax    *float64 `json:"softMax"`
 	IsLogScale bool     `json:"isLogScale"`
+}
+
+// HeaderOptions controls the panel card's header strip — the title/description
+// row above the panel content. Phrased as hide so the zero value shows the
+// header, matching every other panel kind.
+type HeaderOptions struct {
+	Hide bool `json:"hide"`
 }
 
 type BasicVisualization struct {

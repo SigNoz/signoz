@@ -2944,6 +2944,11 @@ components:
         publicDashboard:
           $ref: '#/components/schemas/DashboardtypesGettablePublicDasbhboard'
       type: object
+    DashboardtypesHeaderOptions:
+      properties:
+        hide:
+          type: boolean
+      type: object
     DashboardtypesHistogramBuckets:
       properties:
         bucketCount:
@@ -3717,6 +3722,8 @@ components:
       type: string
     DashboardtypesTextPanelSpec:
       properties:
+        headerOptions:
+          $ref: '#/components/schemas/DashboardtypesHeaderOptions'
         mode:
           $ref: '#/components/schemas/DashboardtypesTextMode'
         presentation:
