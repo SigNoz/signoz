@@ -450,6 +450,12 @@ export default function ChatInput({
 			return;
 		}
 		el.style.height = 'auto';
+		// A hidden composer (a closed drawer, a story swapping in) measures 0.
+		// Leaving the height on `auto` keeps the `rows` fallback until there is
+		// something real to measure, instead of pinning the field shut.
+		if (el.scrollHeight === 0) {
+			return;
+		}
 		el.style.height = `${Math.min(el.scrollHeight, TEXTAREA_MAX_HEIGHT_PX)}px`;
 	}, [text]);
 
