@@ -3,6 +3,7 @@ import { Input } from '@signozhq/ui/input';
 import { Skeleton } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { LoaderCircle } from '@signozhq/icons';
+import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	IQuickFiltersConfig,
 	QuickFilterChangeEventData,
@@ -74,6 +75,10 @@ export default function CheckboxFilterV2(
 		searchText,
 		existingQuery,
 		metricNamespace: useFieldApis.metricNamespace,
+		source:
+			source === QuickFiltersSource.METER_EXPLORER
+				? TelemetrytypesSourceDTO.meter
+				: undefined,
 		startUnixMilli: useFieldApis.startUnixMilli,
 		endUnixMilli: useFieldApis.endUnixMilli,
 		enabled: isOpen,
