@@ -459,14 +459,14 @@ export const useRefreshLicense = <
  */
 export const getActiveLicense = (signal?: AbortSignal) => {
 	return GeneratedAPIInstance<GetActiveLicense200>({
-		url: `/api/v4/licenses/active`,
+		url: `/api/v4/orgs/me/license`,
 		method: 'GET',
 		signal,
 	});
 };
 
 export const getGetActiveLicenseQueryKey = () => {
-	return [`/api/v4/licenses/active`] as const;
+	return [`/api/v4/orgs/me/license`] as const;
 };
 
 export const getGetActiveLicenseQueryOptions = <

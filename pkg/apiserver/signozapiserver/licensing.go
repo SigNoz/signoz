@@ -63,7 +63,7 @@ func (provider *provider) addLicensingRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v4/licenses/active", handler.New(provider.authzMiddleware.OpenAccess(provider.licensingHandler.GetActive), handler.OpenAPIDef{
+	if err := router.Handle("/api/v4/orgs/me/license", handler.New(provider.authzMiddleware.OpenAccess(provider.licensingHandler.GetActive), handler.OpenAPIDef{
 		ID:                  "GetActiveLicense",
 		Tags:                []string{"licenses"},
 		Summary:             "Get the active license.",

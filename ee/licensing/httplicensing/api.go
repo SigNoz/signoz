@@ -45,7 +45,7 @@ func (api *licensingAPI) Activate(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = api.licensing.Activate(r.Context(), orgID, req.Key)
+	err = api.licensing.Activate(r.Context(), orgID, req.Key)
 	if err != nil {
 		render.Error(rw, err)
 		return

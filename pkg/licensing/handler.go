@@ -35,7 +35,7 @@ func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = handler.licensing.Activate(ctx, valuer.MustNewUUID(claims.OrgID), req.Key)
+	err = handler.licensing.Activate(ctx, valuer.MustNewUUID(claims.OrgID), req.Key)
 	if err != nil {
 		render.Error(rw, err)
 		return

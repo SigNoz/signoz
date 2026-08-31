@@ -95,24 +95,24 @@ func (provider *provider) Validate(ctx context.Context) error {
 	return nil
 }
 
-func (provider *provider) Activate(ctx context.Context, organizationID valuer.UUID, key string) (*licensetypes.License, error) {
+func (provider *provider) Activate(ctx context.Context, organizationID valuer.UUID, key string) error {
 	data, err := provider.zeus.GetLicense(ctx, key)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "unable to fetch license data with upstream server")
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "unable to fetch license data with upstream server")
 	}
 
 	license, err := licensetypes.NewLicense(data, organizationID)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to create license entity")
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to create license entity")
 	}
 
 	storableLicense := licensetypes.NewStorableLicenseFromLicense(license)
 	err = provider.store.Create(ctx, storableLicense)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return license, nil
+	return nil
 }
 
 func (provider *provider) Get(ctx context.Context, organizationID valuer.UUID, licenseID valuer.UUID) (*licensetypes.License, error) {
@@ -149,8 +149,8 @@ func (provider *provider) Delete(ctx context.Context, organizationID valuer.UUID
 		return err
 	}
 
-	if license.Platform == licensetypes.LicensePlatformCloud {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "license %s is managed by SigNoz Cloud and cannot be deleted", licenseID.StringValue())
+	if err := license.ErrIfCloud(); err != nil {
+		return errors.WithAdditionalf(err, "license %s cannot be deleted", licenseID.StringValue())
 	}
 
 	return provider.store.Delete(ctx, organizationID, licenseID)

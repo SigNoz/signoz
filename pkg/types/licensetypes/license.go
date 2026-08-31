@@ -13,6 +13,10 @@ import (
 	"github.com/uptrace/bun"
 )
 
+var (
+	ErrCodeCloudLicenseOperationUnsupported = errors.MustNewCode("cloud_license_operation_unsupported")
+)
+
 type StorableLicense struct {
 	bun.BaseModel `bun:"table:license"`
 
@@ -474,6 +478,13 @@ func NewLicenseFromStorableLicense(storableLicense *StorableLicense) (*License, 
 		OrganizationID:  storableLicense.OrgID,
 	}, nil
 
+}
+
+func (license *License) ErrIfCloud() error {
+	if license.Platform == LicensePlatformCloud {
+		return errors.New(errors.TypeInvalidInput, ErrCodeCloudLicenseOperationUnsupported, "this operation is not supported for licenses managed by SigNoz Cloud")
+	}
+	return nil
 }
 
 func NewStatsFromLicense(license *License) map[string]any {
