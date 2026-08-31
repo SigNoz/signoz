@@ -25317,9 +25317,9 @@ paths:
           description: Service Unavailable
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: Prometheus instant query
       tags:
       - prometheus
@@ -25402,9 +25402,9 @@ paths:
           description: Service Unavailable
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: Prometheus instant query
       tags:
       - prometheus
@@ -25501,9 +25501,9 @@ paths:
           description: Service Unavailable
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: Prometheus range query
       tags:
       - prometheus
@@ -25599,9 +25599,9 @@ paths:
           description: Service Unavailable
       security:
       - api_key:
-        - VIEWER
+        - metrics:read
       - tokenizer:
-        - VIEWER
+        - metrics:read
       summary: Prometheus range query
       tags:
       - prometheus

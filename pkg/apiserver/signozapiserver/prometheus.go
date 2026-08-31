@@ -8,7 +8,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/prometheus"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/gorilla/mux"
 	openapi "github.com/swaggest/openapi-go"
 )
@@ -39,7 +41,7 @@ func (h *prometheusOpenAPIHandler) ServeOpenAPI(opCtx openapi.OperationContext) 
 	opCtx.SetSummary(h.summary)
 	opCtx.SetDescription("Prometheus-compatible endpoint: the request and response contract is the upstream Prometheus HTTP API (https://prometheus.io/docs/prometheus/latest/querying/api/). Parameters are accepted as URL query parameters or a form-encoded body, on GET and POST alike.")
 
-	for _, scheme := range newSecuritySchemes(types.RoleViewer) {
+	for _, scheme := range newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}) {
 		opCtx.AddSecurity(scheme.Name, scheme.Scopes...)
 	}
 
@@ -69,12 +71,17 @@ func (h *prometheusOpenAPIHandler) ServeOpenAPI(opCtx openapi.OperationContext) 
 }
 
 func (h *prometheusOpenAPIHandler) ResourceDefs() []handler.ResourceDef {
-	return nil
+	return []handler.ResourceDef{handler.TelemetryResourceDef{
+		Verb:      coretypes.VerbRead,
+		Category:  coretypes.ActionCategoryDataAccess,
+		Selector:  querybuilder.TelemetrySelector,
+		Resources: querybuilder.PromQLResources,
+	}}
 }
 
 func (provider *provider) addPrometheusRoutes(router *mux.Router) error {
 	if err := router.Handle("/prometheus/api/v1/query", &prometheusOpenAPIHandler{
-		handlerFunc: provider.authzMiddleware.ViewAccess(provider.prometheusHandler.Query),
+		handlerFunc: provider.authzMiddleware.CheckResources(provider.prometheusHandler.Query, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		id:          "PrometheusQuery",
 		summary:     "Prometheus instant query",
 		params:      new(prometheus.QueryParamsSchema),
@@ -83,7 +90,7 @@ func (provider *provider) addPrometheusRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/prometheus/api/v1/query_range", &prometheusOpenAPIHandler{
-		handlerFunc: provider.authzMiddleware.ViewAccess(provider.prometheusHandler.QueryRange),
+		handlerFunc: provider.authzMiddleware.CheckResources(provider.prometheusHandler.QueryRange, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		id:          "PrometheusQueryRange",
 		summary:     "Prometheus range query",
 		params:      new(prometheus.QueryRangeParamsSchema),
