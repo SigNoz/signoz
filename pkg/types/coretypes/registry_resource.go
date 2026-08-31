@@ -31,6 +31,7 @@ var Resources = []Resource{
 	ResourceMetaResourceFactorAPIKey,
 	ResourceMetaResourceLicense,
 	ResourceMetaResourceSubscription,
+	ResourceMetaResourceDeploymentHost,
 	ResourceTelemetryResourceLogs,
 	ResourceTelemetryResourceTraces,
 	ResourceTelemetryResourceMetrics,
@@ -71,6 +72,7 @@ var (
 	ResourceMetaResourceFactorAPIKey                     = NewResourceMetaResource(KindFactorAPIKey, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)
 	ResourceMetaResourceLicense                          = NewResourceMetaResource(KindLicense)
 	ResourceMetaResourceSubscription                     = NewResourceMetaResource(KindSubscription)
+	ResourceMetaResourceDeploymentHost                   = NewResourceMetaResource(KindDeploymentHost, VerbList, VerbUpdate)
 	ResourceTelemetryResourceLogs                        = NewResourceTelemetryResource(KindLogs)
 	ResourceTelemetryResourceTraces                      = NewResourceTelemetryResource(KindTraces)
 	ResourceTelemetryResourceMetrics                     = NewResourceTelemetryResource(KindMetrics)
