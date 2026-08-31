@@ -3,6 +3,8 @@ import type { SetupWorker } from 'msw';
 import { setupWorker } from 'msw';
 
 import { settleForCapture } from '../src/storybook/visual/settleForCapture';
+import PageDocs from '../src/storybook/docs/PageDocs';
+import ThemedDocsContainer from '../src/storybook/docs/ThemedDocsContainer';
 import { withProviders } from '../src/storybook/decorators/withProviders';
 import { globalMocks } from '../src/storybook/globals';
 import { resetStoryHistory } from '../src/storybook/navigation/containment';
@@ -72,6 +74,7 @@ const preview: Preview = {
 	parameters: {
 		layout: 'fullscreen',
 		controls: { expanded: true },
+		docs: { page: PageDocs, container: ThemedDocsContainer },
 		// One cloud snapshot per theme, for every story. A mode carries Storybook
 		// globals, so `theme` here is the same toolbar global the app reads out of
 		// localStorage. Widths are Chromatic's only real dimension, as they are
@@ -79,6 +82,9 @@ const preview: Preview = {
 		// one it is given.
 		chromatic: { modes: allModes },
 	},
+	// Every page story gets a docs page: the descriptions on the meta and on each
+	// story are the page's documentation, and without this they render nowhere.
+	tags: ['autodocs'],
 	globalTypes: {
 		theme: {
 			description: 'SigNoz color scheme',
