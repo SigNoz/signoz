@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useGetSignalQuickFilters } from 'api/generated/services/quick-filter';
+import { useGetQuickFilters } from 'api/generated/services/quick-filter';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 import { IQuickFiltersConfig, SignalType } from '../types';
@@ -25,7 +25,7 @@ const useFilterConfig = ({
 		isFetching: isCustomFiltersLoading,
 		data,
 		refetch,
-	} = useGetSignalQuickFilters(
+	} = useGetQuickFilters(
 		{ signalName: signal ?? '' },
 		{ query: { enabled: !!signal } },
 	);
