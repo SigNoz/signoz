@@ -1,7 +1,11 @@
 import { useMemo } from 'react';
 import { useGetFieldsValues } from 'api/generated/services/fields';
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	TelemetrytypesSignalDTO,
+	TelemetrytypesSourceDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { IQuickFiltersConfig } from 'components/QuickFilters/types';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 import { FIELD_API_CACHE_TIME } from 'constants/queryCacheTime';
 
@@ -10,6 +14,7 @@ interface UseFieldValuesProps {
 	searchText: string;
 	existingQuery?: string;
 	metricNamespace?: string;
+	source?: TelemetrytypesSourceDTO;
 	startUnixMilli?: number;
 	endUnixMilli?: number;
 	enabled: boolean;
@@ -33,6 +38,7 @@ export function useFieldValues({
 	searchText,
 	existingQuery,
 	metricNamespace,
+	source,
 	startUnixMilli,
 	endUnixMilli,
 	enabled,
@@ -46,6 +52,7 @@ export function useFieldValues({
 			searchText,
 			existingQuery,
 			metricNamespace,
+			source,
 			startUnixMilli,
 			// This field does not affect the backend but I wanted to keep it here
 			// in case we add the support in the future
@@ -75,6 +82,12 @@ export function useFieldValues({
 	}, [data]);
 
 	const allValues: string[] = useMemo(() => {
+		// Bool fields should always offer true/false.
+		// The values api returns nothing for them.
+		if (filter.attributeKey.dataType === DataTypes.bool) {
+			return ['true', 'false'];
+		}
+
 		const values = data?.data?.values;
 		if (!values) {
 			return [];
@@ -91,7 +104,7 @@ export function useFieldValues({
 				.map((value) => value.toString()) || [];
 
 		return [...stringValues, ...numberValues];
-	}, [data]);
+	}, [data, filter.attributeKey.dataType]);
 
 	return { relatedValues, allValues, isLoading, isFetching };
 }
