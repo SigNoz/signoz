@@ -6,6 +6,7 @@ import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
+import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import { initialQueryMeterWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -31,6 +32,7 @@ import { splitQueryIntoOneChartPerQuery } from './utils';
 import './Explorer.styles.scss';
 
 function Explorer(): JSX.Element {
+	const quickFilterFieldApis = useSignalFieldApis();
 	const {
 		handleRunQuery,
 		stagedQuery,
@@ -141,6 +143,7 @@ function Explorer(): JSX.Element {
 						handleFilterVisibilityChange={(): void => {
 							setShowQuickFilters(!showQuickFilters);
 						}}
+						useFieldApis={quickFilterFieldApis}
 					/>
 				</div>
 
