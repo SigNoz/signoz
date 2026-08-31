@@ -28,6 +28,11 @@ const mockAliases = [
 		replacement: `${srcPath}/storybook/mocks/logEvent.mock.ts`,
 	},
 	{
+		// jest: not replaced, the suite mounts a mock store per test.
+		find: /^(?:src\/)?store$/,
+		replacement: `${srcPath}/storybook/mocks/store.mock.ts`,
+	},
+	{
 		// jest: __mocks__/env.ts, which leaves `baseURL` empty because jsdom already
 		// resolves a relative `/api/...` against `http://localhost`.
 		find: /^(?:src\/)?constants\/env$/,
