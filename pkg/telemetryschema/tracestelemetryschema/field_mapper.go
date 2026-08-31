@@ -52,9 +52,10 @@ var (
 			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 			ValueType: schema.ColumnTypeString,
 		}},
-		"resource":   {Name: "resource", Type: schema.JSONColumnType{}},
-		"scope":      {Name: "scope", Type: schema.JSONColumnType{}},
-		"attributes": {Name: "attributes", Type: schema.JSONColumnType{}},
+		"resource":            {Name: "resource", Type: schema.JSONColumnType{}},
+		"scope":               {Name: "scope", Type: schema.JSONColumnType{}},
+		"attributes":          {Name: "attributes", Type: schema.JSONColumnType{}},
+		"attributes_promoted": {Name: "attributes_promoted", Type: schema.JSONColumnType{}},
 
 		"events": {Name: "events", Type: schema.ArrayColumnType{
 			ElementType: schema.ColumnTypeString,
@@ -185,9 +186,6 @@ func (m *fieldMapper) getColumn(
 	case telemetrytypes.FieldContextScope:
 		return []*schema.Column{indexV3Columns["scope"]}, nil
 	case telemetrytypes.FieldContextAttribute:
-		// Only typed keys resolve here: a data-type-unspecified attribute key
-		// falls through to ErrColumnNotFound so bare keys keep taking the legacy
-		// CandidateKeys/synthesis path rather than flipping to metadata-first.
 		var mapCol *schema.Column
 		switch key.FieldDataType {
 		case telemetrytypes.FieldDataTypeString:
@@ -201,16 +199,21 @@ func (m *fieldMapper) getColumn(
 		default:
 			return nil, qbtypes.ErrColumnNotFound
 		}
-		// Dual-read from the JSON column only once the attributes evolution entry
-		// is registered for this key; without it, resolution is byte-for-byte the
-		// legacy Map path. The JSON column is returned first so it wins the multiIf
-		// when both homes hold the key; SelectEvolutionsForColumns narrows the pair
-		// by the query's time range. This makes the evolution entry the rollout
-		// control, exactly as it is for resource/scope.
-		if attributeJSONEvolutionRegistered(key) {
-			return []*schema.Column{indexV3Columns["attributes"], mapCol}, nil
+		// The evolution entries are the rollout control. The JSON `attributes` column
+		// is added once its column-wide entry is registered; `attributes_promoted` is
+		// added per path once that path's promotion entry is registered. Promotion is
+		// just a third evolution column: SelectEvolutionsForColumns picks a single home
+		// per time window (promoted after its release, attributes before it, Map before
+		// the JSON rollout), reading more than one only across an evolution boundary.
+		cols := make([]*schema.Column, 0, 3)
+		if attributeColumnEvolutionRegistered(key, SpanAttributesPromotedColumn) {
+			cols = append(cols, indexV3Columns["attributes_promoted"])
 		}
-		return []*schema.Column{mapCol}, nil
+		if attributeColumnEvolutionRegistered(key, SpanAttributesColumn) {
+			cols = append(cols, indexV3Columns["attributes"])
+		}
+		cols = append(cols, mapCol)
+		return cols, nil
 	case telemetrytypes.FieldContextSpan:
 		// Check if this is a span scope field
 		if strings.ToLower(key.Name) == SpanSearchScopeRoot || strings.ToLower(key.Name) == SpanSearchScopeEntryPoint {
@@ -382,12 +385,11 @@ func (m *fieldMapper) resolveColumnExprs(
 	return exprs, existExprs, columns, nil
 }
 
-// attributeJSONEvolutionRegistered reports whether the key carries an evolution entry for the
-// `attributes` JSON column. Until that entry is registered, attribute resolution stays on the
-// legacy Map column and the JSON column is never touched.
-func attributeJSONEvolutionRegistered(key *telemetrytypes.TelemetryFieldKey) bool {
+// attributeColumnEvolutionRegistered reports whether key carries an evolution entry for the
+// given column, i.e. that column is a rollout-registered home for this attribute key.
+func attributeColumnEvolutionRegistered(key *telemetrytypes.TelemetryFieldKey, columnName string) bool {
 	for _, e := range key.Evolutions {
-		if e != nil && e.ColumnName == SpanAttributesColumn {
+		if e != nil && e.ColumnName == columnName {
 			return true
 		}
 	}

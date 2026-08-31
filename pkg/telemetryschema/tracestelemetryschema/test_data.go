@@ -177,6 +177,19 @@ func MockAttributeEvolutionData(releaseTime time.Time) []*telemetrytypes.Evoluti
 	}
 }
 
+// MockPromotedAttributeEvolutionData returns an attribute timeline where a single path is
+// promoted: the datatype's legacy map at epoch 0, the JSON `attributes` column at jsonRelease
+// (field_name "__all__"), and the per-path `attributes_promoted` column at promoteRelease
+// (field_name = path). This is what a promoted key's Evolutions look like once the metadata
+// layer composes the column-wide and per-path entries.
+func MockPromotedAttributeEvolutionData(mapColumn, mapType, path string, jsonRelease, promoteRelease time.Time) []*telemetrytypes.EvolutionEntry {
+	return []*telemetrytypes.EvolutionEntry{
+		{Signal: telemetrytypes.SignalTraces, ColumnName: mapColumn, ColumnType: mapType, FieldContext: telemetrytypes.FieldContextAttribute, FieldName: "__all__", ReleaseTime: time.Unix(0, 0)},
+		{Signal: telemetrytypes.SignalTraces, ColumnName: "attributes", ColumnType: "JSON()", FieldContext: telemetrytypes.FieldContextAttribute, FieldName: "__all__", ReleaseTime: jsonRelease},
+		{Signal: telemetrytypes.SignalTraces, ColumnName: "attributes_promoted", ColumnType: "JSON()", FieldContext: telemetrytypes.FieldContextAttribute, FieldName: path, ReleaseTime: promoteRelease},
+	}
+}
+
 // MockEvolutionData returns the canonical resource-column evolution timeline used in tests:
 // the legacy resources_string map at epoch 0 and the JSON resource column released at releaseTime.
 func MockEvolutionData(releaseTime time.Time) []*telemetrytypes.EvolutionEntry {
