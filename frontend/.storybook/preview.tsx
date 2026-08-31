@@ -155,6 +155,7 @@ const preview: Preview = {
 							'Workspace',
 							'Account',
 							'Billing',
+							['Overview', 'Authz'],
 							'MCP Server',
 							'Roles',
 							'Role Details',
