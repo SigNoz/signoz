@@ -60,9 +60,10 @@ function StorybookProviders({
 	queryBuilder,
 	route = '/',
 	layout = 'none',
+	routeState,
 	reduxState,
 }: StorybookProvidersProps): JSX.Element {
-	const searchParams = useStoryRoute(route);
+	const searchParams = useStoryRoute(route, routeState);
 	const queryClient = useMemo(createStorybookQueryClient, []);
 	const store = useMemo(() => {
 		const created = createStorybookStore(reduxState);
