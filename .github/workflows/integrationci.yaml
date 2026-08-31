@@ -58,10 +58,12 @@ jobs:
           - querierai
           - rawexportdata
           - promqlconformance
+          - promapiconformance
           - querierauthz
           - role
           - rootuser
           - savedview
+          - semconvfamilies
           - serviceaccount
           - spanmapper
           - querier_json_body

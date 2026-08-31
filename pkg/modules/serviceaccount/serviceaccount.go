@@ -94,10 +94,6 @@ type Handler interface {
 
 	UpdateMe(http.ResponseWriter, *http.Request)
 
-	SetRole(http.ResponseWriter, *http.Request)
-
-	DeleteRole(http.ResponseWriter, *http.Request)
-
 	CreateServiceAccountRole(http.ResponseWriter, *http.Request)
 
 	GetServiceAccountRole(http.ResponseWriter, *http.Request)

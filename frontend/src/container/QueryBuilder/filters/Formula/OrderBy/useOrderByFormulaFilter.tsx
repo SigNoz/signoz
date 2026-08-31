@@ -16,7 +16,7 @@ import {
 	mapLabelValuePairs,
 	orderByValueDelimiter,
 } from '../../OrderByFilter/utils';
-import { getRemoveOrderFromValue } from '../../QueryBuilderSearch/utils';
+import { getRemoveOrderFromValue } from '../../QueryBuilderSearchV2/utils';
 import { getUniqueOrderByValues, getValidOrderByResult } from '../../utils';
 import { IOrderByFormulaFilterProps } from './types';
 import { transformToOrderByStringValuesByFormula } from './utils';

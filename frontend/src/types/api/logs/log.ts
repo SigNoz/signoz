@@ -41,6 +41,6 @@ type OmitAttributesResources = Pick<
 
 export type ILogAggregateAttributesResources = OmitAttributesResources & {
 	attributes: Record<string, never>;
-	resources: Record<string, never>;
+	resource: Record<string, never>;
 	scope: Record<string, never>;
 };

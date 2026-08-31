@@ -35,7 +35,7 @@ exports[`Value panel wrappper tests should render tooltip when there are conflic
     class="c0"
   >
     <p
-      class="_typography_ulrzs_1"
+      class="_typography_j4pmm_1"
       data-slot="typography"
       data-variant="text"
     />
@@ -50,7 +50,7 @@ exports[`Value panel wrappper tests should render tooltip when there are conflic
         class="value-text-container"
       >
         <p
-          class="_typography_ulrzs_1 value-graph-text"
+          class="_typography_j4pmm_1 value-graph-text"
           data-slot="typography"
           data-testid="value-graph-text"
           data-variant="text"
@@ -59,7 +59,7 @@ exports[`Value panel wrappper tests should render tooltip when there are conflic
           295.43
         </p>
         <p
-          class="_typography_ulrzs_1 value-graph-unit"
+          class="_typography_j4pmm_1 value-graph-unit"
           data-slot="typography"
           data-testid="value-graph-suffix-unit"
           data-variant="text"

@@ -22,11 +22,11 @@ exports[`PipelinePage container test should render DragAction section 1`] = `
     class="c0"
   >
     <div
-      class="_switch-wrapper_jbsv7_1"
+      class="_switch-wrapper_1a8sn_6"
     >
       <button
         aria-checked="true"
-        class="_switch_jbsv7_1"
+        class="_switch_1a8sn_6"
         data-color="robin"
         data-state="checked"
         id=":r0:"
@@ -35,7 +35,7 @@ exports[`PipelinePage container test should render DragAction section 1`] = `
         value="on"
       >
         <span
-          class="_switch__thumb_jbsv7_59"
+          class="_switch__thumb_1a8sn_71"
           data-state="checked"
         />
       </button>

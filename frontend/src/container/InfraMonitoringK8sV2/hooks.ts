@@ -34,6 +34,9 @@ export const useInfraMonitoringPageListing = (): UseQueryStateReturn<
 > =>
 	useQueryState(
 		INFRA_MONITORING_K8S_PARAMS_KEYS.PAGE,
+		// do not use .withDefault here, this can cause bugs when
+		// two hooks of nuqs define default twice, this is also
+		// defined at useTableParams
 		parseAsInteger.withOptions(defaultNuqsOptions),
 	);
 
