@@ -50,6 +50,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail/impltracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
+	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/ruler/signozruler"
@@ -84,6 +85,7 @@ type Handlers struct {
 	RuleStateHistory        rulestatehistory.Handler
 	SpanMapperHandler       spanmapper.Handler
 	AlertmanagerHandler     alertmanager.Handler
+	PrometheusHandler       prometheus.Handler
 	TraceDetail             tracedetail.Handler
 	RulerHandler            ruler.Handler
 	LLMPricingRuleHandler   llmpricingrule.Handler
@@ -104,6 +106,7 @@ func NewHandlers(
 	zeusService zeus.Zeus,
 	registryHandler factory.Handler,
 	alertmanagerService alertmanager.Alertmanager,
+	prometheusService prometheus.Prometheus,
 	rulerService ruler.Ruler,
 	statsAggregator statsreporter.Aggregator,
 ) Handlers {
@@ -133,6 +136,7 @@ func NewHandlers(
 		CloudIntegrationHandler: implcloudintegration.NewHandler(modules.CloudIntegration),
 		SpanMapperHandler:       implspanmapper.NewHandler(modules.SpanMapper),
 		AlertmanagerHandler:     signozalertmanager.NewHandler(alertmanagerService),
+		PrometheusHandler:       prometheus.NewHandler(providerSettings.Logger, prometheusService),
 		TraceDetail:             impltracedetail.NewHandler(modules.TraceDetail),
 		RulerHandler:            signozruler.NewHandler(rulerService),
 		LLMPricingRuleHandler:   impllmpricingrule.NewHandler(modules.LLMPricingRule),
