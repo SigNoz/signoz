@@ -54,7 +54,7 @@ import {
 } from 'container/OptionsMenu/constants';
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
-import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
+import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
 import { useSaveView } from 'hooks/saveViews/useSaveView';
@@ -287,8 +287,7 @@ function ExplorerOptions({
 
 	const compositeQuery = mapCompositeQueryFromQuery(currentQuery, panelType);
 
-	const viewName = useGetSearchQueryParam(QueryParams.viewName) || '';
-	const viewKey = useGetSearchQueryParam(QueryParams.viewKey) || '';
+	const { viewName, viewKey } = useGetSavedViewParams();
 
 	const extraData = viewsData?.data?.data?.find(
 		(view) => view.id === viewKey,
