@@ -7,7 +7,7 @@ import DOCLINKS from 'utils/docLinks';
 import { QueryButton } from '../../styles';
 import ClickHouseQueryBuilder from './query';
 
-import './ClickHouse.styles.scss';
+import './ClickHouse.module.scss';
 
 function ClickHouseQueryContainer(): JSX.Element | null {
 	const { currentQuery, addNewQueryItem } = useQueryBuilder();

@@ -1,0 +1,18 @@
+.info-banner-wrapper {
+	margin: 8px 8px 16px 16px;
+
+	a {
+		text-decoration: underline;
+	}
+}
+
+.clickhouse-query-builder {
+	&.expanded {
+		.me-editor-container {
+			height: 500px !important;
+			width: 100%;
+			z-index: 100;
+			position: relative;
+		}
+	}
+}

@@ -4,7 +4,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import DOCLINKS from 'utils/docLinks';
 
-import 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/ClickHouse/ClickHouse.styles.scss';
+import 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/ClickHouse/ClickHouse.module.scss';
 
 const ALERT_TYPE_DOC_LINK: Partial<Record<AlertTypes, string>> = {
 	[AlertTypes.LOGS_BASED_ALERT]: DOCLINKS.QUERY_CLICKHOUSE_LOGS,
