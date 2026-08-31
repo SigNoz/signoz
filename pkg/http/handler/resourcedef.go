@@ -53,6 +53,9 @@ type AttachDetachSiblingResourceDef struct {
 	TargetResource coretypes.Resource
 	TargetIDs      coretypes.ResourceIDsExtractor
 	TargetSelector coretypes.SelectorFunc
+	// SkipIfNoIDs skips the authz checks entirely when neither source nor target
+	// ids resolve — an attach/detach of nothing authorizes nothing.
+	SkipIfNoIDs bool
 }
 
 func (def AttachDetachSiblingResourceDef) resolveRequest(ec coretypes.ExtractorContext) []coretypes.ResolvedResource {
@@ -67,6 +70,7 @@ func (def AttachDetachSiblingResourceDef) resolveRequest(ec coretypes.ExtractorC
 			def.TargetIDs,
 			def.TargetSelector,
 			false,
+			def.SkipIfNoIDs,
 			ec,
 		),
 	}
@@ -96,6 +100,7 @@ func (def AttachDetachParentChildResourceDef) resolveRequest(ec coretypes.Extrac
 			def.ChildIDs,
 			nil,
 			true,
+			false,
 			ec,
 		),
 	}

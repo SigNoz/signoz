@@ -329,20 +329,40 @@ describe('transformTransactionGroupsToResourcePermissions', () => {
 	it('returns all resources from RESOURCE_ORDER even with empty transaction groups', () => {
 		const result = transformTransactionGroupsToResourcePermissions([]);
 
-		expect(result).toHaveLength(7);
+		expect(result).toHaveLength(8);
 		expect(result.map((r) => r.resourceKind)).toStrictEqual([
+			'auth-domain',
 			'factor-api-key',
+			'logs',
+			'meter-metrics',
+			'metrics',
 			'role',
 			'serviceaccount',
-			'logs',
 			'traces',
-			'metrics',
-			'meter-metrics',
 		]);
 	});
 
 	it('sets correct resource metadata from permissions config', () => {
 		const result = transformTransactionGroupsToResourcePermissions([]);
+
+		const authDomainResource = result.find(
+			(r) => r.resourceKind === 'auth-domain',
+		);
+		expect(authDomainResource).toMatchObject({
+			resourceId: 'auth-domain',
+			resourceKind: 'auth-domain',
+			resourceType: CoretypesTypeDTO.metaresource,
+			resourceLabel: 'Auth Domains',
+			availableActions: [
+				'attach',
+				'create',
+				'delete',
+				'detach',
+				'list',
+				'read',
+				'update',
+			],
+		});
 
 		const apiKeyResource = result.find(
 			(r) => r.resourceKind === 'factor-api-key',
@@ -418,15 +438,16 @@ describe('createEmptyRolePermissions', () => {
 	it('creates permissions for all resources in RESOURCE_ORDER', () => {
 		const result = createEmptyRolePermissions();
 
-		expect(result).toHaveLength(7);
+		expect(result).toHaveLength(8);
 		expect(result.map((r) => r.resourceKind)).toStrictEqual([
+			'auth-domain',
 			'factor-api-key',
+			'logs',
+			'meter-metrics',
+			'metrics',
 			'role',
 			'serviceaccount',
-			'logs',
 			'traces',
-			'metrics',
-			'meter-metrics',
 		]);
 	});
 

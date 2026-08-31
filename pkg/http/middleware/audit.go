@@ -123,6 +123,10 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 		}
 
 		resource.ResolveResponse(extractorCtx)
+
+		if resource.Skip() {
+			continue
+		}
 		verb, category := resource.Verb(), resource.Category()
 
 		switch typed := resource.(type) {

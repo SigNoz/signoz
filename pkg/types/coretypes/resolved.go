@@ -19,6 +19,7 @@ type ResolvedResource interface {
 	SourceIDs() []string
 	SourceSelector() SelectorFunc
 	Err() error
+	Skip() bool
 	ResolveResponse(ec ExtractorContext)
 	hasResponsePhase() bool
 }

@@ -1,3 +1,4 @@
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
@@ -34,6 +35,7 @@ import {
 describe('SSOEnforcementToggle', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
+		server.use(setupAuthzAdmin());
 	});
 
 	afterEach(() => {
@@ -87,6 +89,9 @@ describe('SSOEnforcementToggle', () => {
 		);
 
 		const switchElement = screen.getByRole('switch');
+		await waitFor(() => {
+			expect(switchElement).toBeEnabled();
+		});
 		await user.click(switchElement);
 
 		await waitFor(() => {
@@ -122,7 +127,11 @@ describe('SSOEnforcementToggle', () => {
 			/>,
 		);
 
-		await user.click(screen.getByRole('switch'));
+		const switchElement = screen.getByRole('switch');
+		await waitFor(() => {
+			expect(switchElement).toBeEnabled();
+		});
+		await user.click(switchElement);
 
 		await waitFor(() => expect(mockUpdateAPI).toHaveBeenCalledTimes(1));
 		expect(mockUpdateAPI).toHaveBeenCalledWith({
@@ -149,6 +158,9 @@ describe('SSOEnforcementToggle', () => {
 		);
 
 		const switchElement = screen.getByRole('switch');
+		await waitFor(() => {
+			expect(switchElement).toBeEnabled();
+		});
 		await user.click(switchElement);
 
 		await waitFor(() => {

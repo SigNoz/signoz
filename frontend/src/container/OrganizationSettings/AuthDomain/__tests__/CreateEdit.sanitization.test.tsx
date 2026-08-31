@@ -1,4 +1,6 @@
 import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { mockUseAuthZGrantAll } from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
 import {
 	AuthtypesAuthDomainConfigGoogleDTO,
@@ -15,6 +17,13 @@ import {
 	mockSamlWithAttributeMapping,
 	mockUpdateSuccessResponse,
 } from './mocks';
+
+jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
+const mockedUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
+
+beforeEach(() => {
+	mockedUseAuthZ.mockImplementation(mockUseAuthZGrantAll);
+});
 
 // @signozhq/ui/button internal effects block form.validateFields() in tests
 jest.mock('@signozhq/ui/button', () => ({

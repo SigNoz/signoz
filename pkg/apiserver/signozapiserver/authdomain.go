@@ -77,7 +77,7 @@ func (provider *provider) addAuthDomainRoutes(router *mux.Router) error {
 				SourceIDs:      coretypes.OneID(coretypes.ResponseJSONPath("data.id")),
 				SourceSelector: coretypes.WildcardSelector,
 				TargetResource: coretypes.ResourceRole,
-				TargetIDs:      authDomainRoleNamesExtractor(),
+				TargetIDs:      provider.authDomainRoleNamesExtractor(),
 				TargetSelector: coretypes.IDSelector,
 			},
 		),
@@ -146,21 +146,23 @@ func (provider *provider) addAuthDomainRoutes(router *mux.Router) error {
 				Verb:           coretypes.VerbAttach,
 				Category:       coretypes.ActionCategoryAccessControl,
 				SourceResource: coretypes.ResourceMetaResourceAuthDomain,
-				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
+				SourceIDs:      provider.authDomainIDWhenRolesChangeExtractor(provider.authDomainAttachedRoleNames),
 				SourceSelector: coretypes.IDSelector,
 				TargetResource: coretypes.ResourceRole,
-				TargetIDs:      authDomainRoleNamesExtractor(),
+				TargetIDs:      coretypes.ResourceIDsExtractor{Phase: coretypes.PhaseRequest, Fn: provider.authDomainAttachedRoleNames},
 				TargetSelector: coretypes.IDSelector,
+				SkipIfNoIDs:    true,
 			},
 			handler.AttachDetachSiblingResourceDef{
 				Verb:           coretypes.VerbDetach,
 				Category:       coretypes.ActionCategoryAccessControl,
 				SourceResource: coretypes.ResourceMetaResourceAuthDomain,
-				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
+				SourceIDs:      provider.authDomainIDWhenRolesChangeExtractor(provider.authDomainDetachedRoleNames),
 				SourceSelector: coretypes.IDSelector,
 				TargetResource: coretypes.ResourceRole,
-				TargetIDs:      provider.authDomainStoredRoleNamesExtractor(),
+				TargetIDs:      coretypes.ResourceIDsExtractor{Phase: coretypes.PhaseRequest, Fn: provider.authDomainDetachedRoleNames},
 				TargetSelector: coretypes.IDSelector,
+				SkipIfNoIDs:    true,
 			},
 		),
 	)).Methods(http.MethodPut).GetError(); err != nil {
@@ -197,67 +199,119 @@ func (provider *provider) addAuthDomainRoutes(router *mux.Router) error {
 	return nil
 }
 
-// The extracted names are the roles the request body's mapping grants at SSO
-// login — see authDomainEffectiveRoleNames.
-func authDomainRoleNamesExtractor() coretypes.ResourceIDsExtractor {
-	return coretypes.ResourceIDsExtractor{Phase: coretypes.PhaseRequest, Fn: func(ec coretypes.ExtractorContext) ([]string, error) {
-		roleMappingJSON := gjson.GetBytes(ec.RequestBody, "roleMapping")
-		if !roleMappingJSON.Exists() || roleMappingJSON.Type == gjson.Null {
-			return authDomainEffectiveRoleNames(nil), nil
-		}
-
-		roleMapping := new(authtypes.RoleMapping)
-		if err := json.Unmarshal([]byte(roleMappingJSON.Raw), roleMapping); err != nil {
-			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid role mapping: %v", err)
-		}
-
-		return authDomainEffectiveRoleNames(roleMapping), nil
-	}}
+func (provider *provider) authDomainRoleNamesExtractor() coretypes.ResourceIDsExtractor {
+	return coretypes.ResourceIDsExtractor{Phase: coretypes.PhaseRequest, Fn: provider.authDomainRequestEffectiveRoleNames}
 }
 
-// The extracted names are the roles the stored domain's mapping grants at SSO
-// login — an update replaces that mapping, so the caller must be able to detach
-// them.
-func (provider *provider) authDomainStoredRoleNamesExtractor() coretypes.ResourceIDsExtractor {
+func (provider *provider) authDomainIDWhenRolesChangeExtractor(roleNamesDiff func(coretypes.ExtractorContext) ([]string, error)) coretypes.ResourceIDsExtractor {
 	return coretypes.ResourceIDsExtractor{Phase: coretypes.PhaseRequest, Fn: func(ec coretypes.ExtractorContext) ([]string, error) {
-		if ec.Request == nil {
+		diff, err := roleNamesDiff(ec)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(diff) == 0 || ec.Request == nil {
 			return nil, nil
 		}
 
-		claims, err := authtypes.ClaimsFromContext(ec.Request.Context())
-		if err != nil {
-			return nil, err
-		}
-
-		orgID, err := valuer.NewUUID(claims.OrgID)
-		if err != nil {
-			return nil, err
-		}
-
-		id, err := valuer.NewUUID(mux.Vars(ec.Request)["id"])
-		if err != nil {
-			return nil, err
-		}
-
-		authDomain, err := provider.authDomainModule.GetByOrgIDAndID(ec.Request.Context(), orgID, id)
-		if err != nil {
-			return nil, err
-		}
-
-		return authDomainEffectiveRoleNames(authDomain.RoleMapping()), nil
+		return []string{mux.Vars(ec.Request)["id"]}, nil
 	}}
 }
 
-// The effective names are the roles a domain grants at SSO login: the mapped
-// roles plus the default (signoz-viewer when unset), or every role when the IDP
-// role attribute is trusted. Never empty — a check with no selectors is forbidden.
-func authDomainEffectiveRoleNames(roleMapping *authtypes.RoleMapping) []string {
+func (provider *provider) authDomainAttachedRoleNames(ec coretypes.ExtractorContext) ([]string, error) {
+	requestRoleNames, err := provider.authDomainRequestEffectiveRoleNames(ec)
+	if err != nil {
+		return nil, err
+	}
+
+	storedRoleNames, err := provider.authDomainStoredEffectiveRoleNames(ec)
+	if err != nil {
+		return nil, err
+	}
+
+	return provider.subtractRoleNames(requestRoleNames, storedRoleNames), nil
+}
+
+func (provider *provider) authDomainDetachedRoleNames(ec coretypes.ExtractorContext) ([]string, error) {
+	requestRoleNames, err := provider.authDomainRequestEffectiveRoleNames(ec)
+	if err != nil {
+		return nil, err
+	}
+
+	storedRoleNames, err := provider.authDomainStoredEffectiveRoleNames(ec)
+	if err != nil {
+		return nil, err
+	}
+
+	return provider.subtractRoleNames(storedRoleNames, requestRoleNames), nil
+}
+
+func (provider *provider) authDomainRequestEffectiveRoleNames(ec coretypes.ExtractorContext) ([]string, error) {
+	roleMappingJSON := gjson.GetBytes(ec.RequestBody, "roleMapping")
+	if !roleMappingJSON.Exists() || roleMappingJSON.Type == gjson.Null {
+		return provider.authDomainEffectiveRoleNames(nil), nil
+	}
+
+	roleMapping := new(authtypes.RoleMapping)
+	if err := json.Unmarshal([]byte(roleMappingJSON.Raw), roleMapping); err != nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid role mapping: %v", err)
+	}
+
+	return provider.authDomainEffectiveRoleNames(roleMapping), nil
+}
+
+func (provider *provider) authDomainStoredEffectiveRoleNames(ec coretypes.ExtractorContext) ([]string, error) {
+	if ec.Request == nil {
+		return nil, nil
+	}
+
+	claims, err := authtypes.ClaimsFromContext(ec.Request.Context())
+	if err != nil {
+		return nil, err
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := valuer.NewUUID(mux.Vars(ec.Request)["id"])
+	if err != nil {
+		return nil, err
+	}
+
+	authDomain, err := provider.authDomainModule.GetByOrgIDAndID(ec.Request.Context(), orgID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return provider.authDomainEffectiveRoleNames(authDomain.RoleMapping()), nil
+}
+
+func (provider *provider) subtractRoleNames(roleNames []string, roleNamesToRemove []string) []string {
+	removeSet := make(map[string]struct{}, len(roleNamesToRemove))
+	for _, roleName := range roleNamesToRemove {
+		removeSet[roleName] = struct{}{}
+	}
+
+	remaining := make([]string, 0, len(roleNames))
+	for _, roleName := range roleNames {
+		if _, ok := removeSet[roleName]; !ok {
+			remaining = append(remaining, roleName)
+		}
+	}
+
+	return remaining
+}
+
+// Never empty — a check with no selectors is forbidden.
+func (provider *provider) authDomainEffectiveRoleNames(roleMapping *authtypes.RoleMapping) []string {
 	if roleMapping == nil {
 		return []string{authtypes.SigNozViewerRoleName}
 	}
 
 	if roleMapping.UseRoleAttribute {
-		return []string{coretypes.WildCardSelectorString}
+		return []string{coretypes.WildCardSelectorString, authtypes.SigNozViewerRoleName}
 	}
 
 	roleNames := roleMapping.RoleNames()

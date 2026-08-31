@@ -12,6 +12,7 @@ type resolvedResourceWithTarget struct {
 	targetExtractor ResourceIDsExtractor
 	targetIDs       []string
 	parentChild     bool
+	skipIfNoIDs     bool
 	err             error
 }
 
@@ -25,6 +26,7 @@ func NewResolvedResourceWithTarget(
 	targetExtractor ResourceIDsExtractor,
 	targetSelector SelectorFunc,
 	parentChild bool,
+	skipIfNoIDs bool,
 	ec ExtractorContext,
 ) ResolvedResourceWithTargetResource {
 	resolved := &resolvedResourceWithTarget{
@@ -37,6 +39,7 @@ func NewResolvedResourceWithTarget(
 		targetSelector:  targetSelector,
 		targetExtractor: targetExtractor,
 		parentChild:     parentChild,
+		skipIfNoIDs:     skipIfNoIDs,
 	}
 	resolved.fill(PhaseRequest, ec)
 
@@ -67,6 +70,10 @@ func (resolved *resolvedResourceWithTarget) fill(phase ExtractPhase, ec Extracto
 			resolved.targetIDs = ids
 		}
 	}
+}
+
+func (resolved *resolvedResourceWithTarget) Skip() bool {
+	return resolved.skipIfNoIDs && len(resolved.sourceIDs) == 0 && len(resolved.targetIDs) == 0
 }
 
 func (resolved *resolvedResourceWithTarget) Err() error {

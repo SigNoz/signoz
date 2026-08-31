@@ -72,7 +72,8 @@ function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
 		await updateMyOrganization({ data: { id: orgId, displayName: name } });
 	};
 
-	if (!org) {
+	// The organization resource is not authz-backed yet, keep the legacy admin gate
+	if (!org || !isAdmin) {
 		return <div />;
 	}
 

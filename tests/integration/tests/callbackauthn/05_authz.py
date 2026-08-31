@@ -28,6 +28,7 @@ _TARGET_A = "target-a-authdomain.integration.test"
 _TARGET_B = "target-b-authdomain.integration.test"
 _ADMIN_DOMAIN = "admin-crud-authdomain.integration.test"
 _ACTOR_DOMAIN = "actor-crud-authdomain.integration.test"
+_DIFF_DOMAIN = "diff-crud-authdomain.integration.test"
 
 _SAML_CONFIG = {
     "kind": "saml",
@@ -419,6 +420,75 @@ def test_update_requires_detach_on_stored_roles(
         timeout=5,
     )
     assert response.status_code == HTTPStatus.NO_CONTENT, f"drop mapping with detach on stored role: {response.text}"
+
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"/api/v2/auth_domains/{domain_id}"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+
+def test_update_with_unchanged_mapping_needs_only_update(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    actor_id = find_role_by_name(signoz, admin_token, _ACTOR_ROLE_NAME)
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
+        json={
+            "name": _DIFF_DOMAIN,
+            "enabled": True,
+            "config": _SAML_CONFIG,
+            "roleMapping": {"defaultRole": "EDITOR"},
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    domain_id = response.json()["data"]["id"]
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v1/roles/{actor_id}"),
+        json={
+            "description": "",
+            "transactionGroups": [
+                transaction_group("update", "metaresource", "auth-domain", [domain_id]),
+            ],
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
+
+    # The mapping is echoed back unchanged, so the attach/detach checks are
+    # skipped and update alone suffices.
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v2/auth_domains/{domain_id}"),
+        json={
+            "enabled": False,
+            "config": _SAML_CONFIG,
+            "roleMapping": {"defaultRole": "EDITOR"},
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, f"unchanged mapping with update only: {response.text}"
+
+    # Dropping the mapping attaches signoz-viewer and detaches signoz-editor,
+    # neither of which the actor can do.
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v2/auth_domains/{domain_id}"),
+        json={"enabled": False, "config": _SAML_CONFIG},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN, f"changed mapping without attach/detach: expected 403, got {response.status_code}: {response.text}"
 
     response = requests.delete(
         signoz.self.host_configs["8080"].get(f"/api/v2/auth_domains/{domain_id}"),

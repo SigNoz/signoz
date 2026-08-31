@@ -1,4 +1,6 @@
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { mockUseAuthZGrantAll } from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
 import {
 	allRoles,
@@ -14,6 +16,9 @@ import {
 	mockSamlAuthDomain,
 	mockUpdateSuccessResponse,
 } from './mocks';
+
+jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
+const mockedUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
 
 // TODO: https://github.com/SigNoz/platform-pod/issues/2602
 // The @signozhq/ui Button uses Radix Slot and has CSS infinite animations that
@@ -112,6 +117,10 @@ const saveChanges = (user: User): Promise<void> =>
 	user.click(screen.getByRole('button', { name: /save changes/i }));
 
 describe('CreateEdit — role mapping uses API roles', () => {
+	beforeEach(() => {
+		mockedUseAuthZ.mockImplementation(mockUseAuthZGrantAll);
+	});
+
 	afterEach(() => {
 		server.resetHandlers();
 	});

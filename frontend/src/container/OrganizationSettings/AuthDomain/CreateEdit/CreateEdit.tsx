@@ -14,6 +14,8 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import { FeatureKeys } from 'constants/features';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import { buildAuthDomainUpdatePermission } from 'lib/authz/hooks/useAuthZ/permissions/auth-domain.permissions';
 import { defaultTo } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
@@ -209,7 +211,11 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 									Cancel
 								</Button>
 							)}
-							<Button
+							<AuthZButton
+								checks={
+									isCreate ? [] : [buildAuthDomainUpdatePermission(record?.id ?? '')]
+								}
+								withPortal={false}
 								onClick={onSubmitHandler}
 								variant="solid"
 								color="primary"
@@ -217,7 +223,7 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 								testId="auth-domain-save"
 							>
 								Save Changes
-							</Button>
+							</AuthZButton>
 						</section>
 					</div>
 				)}
