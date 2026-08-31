@@ -61,13 +61,7 @@ func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
 
 	gettableLicenses := make([]*licensetypes.GettableLicense, 0, len(licenses))
 	for _, license := range licenses {
-		gettableLicense, err := licensetypes.NewGettableLicense(license)
-		if err != nil {
-			render.Error(rw, err)
-			return
-		}
-
-		gettableLicenses = append(gettableLicenses, gettableLicense)
+		gettableLicenses = append(gettableLicenses, licensetypes.NewGettableLicense(license))
 	}
 
 	render.Success(rw, http.StatusOK, gettableLicenses)
@@ -94,13 +88,7 @@ func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	gettableLicense, err := licensetypes.NewGettableLicenseWithKey(license)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	render.Success(rw, http.StatusOK, gettableLicense)
+	render.Success(rw, http.StatusOK, licensetypes.NewGettableLicenseWithKey(license))
 }
 
 func (handler *handler) Refresh(rw http.ResponseWriter, r *http.Request) {
@@ -177,11 +165,5 @@ func (handler *handler) GetActive(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	gettableLicense, err := licensetypes.NewGettableLicense(license)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	render.Success(rw, http.StatusOK, gettableLicense)
+	render.Success(rw, http.StatusOK, licensetypes.NewGettableLicense(license))
 }

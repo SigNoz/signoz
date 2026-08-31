@@ -29,10 +29,11 @@ type License struct {
 	ID              valuer.UUID
 	Key             string
 	Data            map[string]interface{}
-	PlanName        valuer.String
+	Plan            LicensePlan
+	EventQueue      LicenseEventQueue
 	Features        []*Feature
 	Status          valuer.String
-	State           string
+	State           valuer.String
 	Platform        valuer.String
 	FreeUntil       time.Time
 	ValidFrom       int64
@@ -43,39 +44,38 @@ type License struct {
 	OrganizationID  valuer.UUID
 }
 
+type LicensePlan struct {
+	ID          valuer.UUID   `json:"id" required:"true"`
+	Name        valuer.String `json:"name" required:"true"`
+	Description string        `json:"description" required:"true"`
+	IsActive    bool          `json:"isActive" required:"true"`
+	CreatedAt   time.Time     `json:"createdAt" required:"true"`
+	UpdatedAt   time.Time     `json:"updatedAt" required:"true"`
+}
+
+type LicenseEventQueue struct {
+	Event       valuer.String `json:"event" required:"true"`
+	Status      valuer.String `json:"status" required:"true"`
+	ScheduledAt time.Time     `json:"scheduledAt" required:"true"`
+	CreatedAt   time.Time     `json:"createdAt" required:"true"`
+	UpdatedAt   time.Time     `json:"updatedAt" required:"true"`
+}
+
 type DeprecatedGettableLicense map[string]any
 
-type GettableLicensePlan struct {
-	ID          valuer.UUID `json:"id"`
-	Name        string      `json:"name" required:"true"`
-	Description string      `json:"description"`
-	IsActive    bool        `json:"isActive"`
-	CreatedAt   time.Time   `json:"createdAt"`
-	UpdatedAt   time.Time   `json:"updatedAt"`
-}
-
-type GettableLicenseEventQueue struct {
-	Event       string    `json:"event"`
-	Status      string    `json:"status"`
-	ScheduledAt time.Time `json:"scheduledAt"`
-	CreatedAt   time.Time `json:"createdAt"`
-	UpdatedAt   time.Time `json:"updatedAt"`
-}
-
 type GettableLicense struct {
-	ID         valuer.UUID               `json:"id" required:"true"`
-	ValidFrom  int64                     `json:"validFrom"`
-	ValidUntil int64                     `json:"validUntil"`
-	Status     string                    `json:"status" required:"true"`
-	State      string                    `json:"state"`
-	Platform   string                    `json:"platform"`
-	FreeUntil  time.Time                 `json:"freeUntil"`
-	CreatedAt  time.Time                 `json:"createdAt"`
-	UpdatedAt  time.Time                 `json:"updatedAt"`
-	PlanID     valuer.UUID               `json:"planId"`
-	Plan       GettableLicensePlan       `json:"plan" required:"true"`
-	Features   []*Feature                `json:"features"`
-	EventQueue GettableLicenseEventQueue `json:"eventQueue"`
+	ID         valuer.UUID       `json:"id" required:"true"`
+	ValidFrom  int64             `json:"validFrom" required:"true"`
+	ValidUntil int64             `json:"validUntil" required:"true"`
+	Status     valuer.String     `json:"status" required:"true"`
+	State      valuer.String     `json:"state" required:"true"`
+	Platform   valuer.String     `json:"platform" required:"true"`
+	FreeUntil  time.Time         `json:"freeUntil" required:"true"`
+	CreatedAt  time.Time         `json:"createdAt" required:"true"`
+	UpdatedAt  time.Time         `json:"updatedAt" required:"true"`
+	Plan       LicensePlan       `json:"plan" required:"true"`
+	Features   []*Feature        `json:"features" required:"true"`
+	EventQueue LicenseEventQueue `json:"eventQueue" required:"true"`
 }
 
 type GettableLicenseWithKey struct {
@@ -190,6 +190,46 @@ func NewLicense(data []byte, organizationID valuer.UUID) (*License, error) {
 		planName = PlanNameBasic
 	}
 
+	planData, err := json.Marshal(planMap)
+	if err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to marshal plan data")
+	}
+
+	zeusPlan := zeustypes.LicensePlan{}
+	if err := json.Unmarshal(planData, &zeusPlan); err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to unmarshal plan data")
+	}
+
+	plan := LicensePlan{
+		ID:          zeusPlan.ID,
+		Name:        planName,
+		Description: zeusPlan.Description,
+		IsActive:    zeusPlan.IsActive,
+		CreatedAt:   zeusPlan.CreatedAt,
+		UpdatedAt:   zeusPlan.UpdatedAt,
+	}
+
+	eventQueue := LicenseEventQueue{}
+	if _eventQueue, ok := licenseData["event_queue"]; ok {
+		eventQueueData, err := json.Marshal(_eventQueue)
+		if err != nil {
+			return nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to marshal event queue data")
+		}
+
+		zeusEventQueue := zeustypes.LicenseEventQueue{}
+		if err := json.Unmarshal(eventQueueData, &zeusEventQueue); err != nil {
+			return nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to unmarshal event queue data")
+		}
+
+		eventQueue = LicenseEventQueue{
+			Event:       valuer.NewString(zeusEventQueue.Event),
+			Status:      valuer.NewString(zeusEventQueue.Status),
+			ScheduledAt: zeusEventQueue.ScheduledAt,
+			CreatedAt:   zeusEventQueue.CreatedAt,
+			UpdatedAt:   zeusEventQueue.UpdatedAt,
+		}
+	}
+
 	state, err := extractKeyFromMapStringInterface[string](licenseData, "state")
 	if err != nil {
 		state = ""
@@ -264,12 +304,13 @@ func NewLicense(data []byte, organizationID valuer.UUID) (*License, error) {
 		ID:              licenseID,
 		Key:             licenseKey,
 		Data:            licenseData,
-		PlanName:        planName,
+		Plan:            plan,
+		EventQueue:      eventQueue,
 		Features:        features,
 		ValidFrom:       validFrom,
 		ValidUntil:      validUntil,
 		Status:          status,
-		State:           state,
+		State:           valuer.NewString(state),
 		Platform:        valuer.NewString(platform),
 		FreeUntil:       freeUntil,
 		CreatedAt:       time.Now(),
@@ -302,6 +343,46 @@ func NewLicenseFromStorableLicense(storableLicense *StorableLicense) (*License, 
 	// if license status is invalid then default it to basic
 	if status == LicenseStatusInvalid {
 		planName = PlanNameBasic
+	}
+
+	planData, err := json.Marshal(planMap)
+	if err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to marshal plan data")
+	}
+
+	zeusPlan := zeustypes.LicensePlan{}
+	if err := json.Unmarshal(planData, &zeusPlan); err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to unmarshal plan data")
+	}
+
+	plan := LicensePlan{
+		ID:          zeusPlan.ID,
+		Name:        planName,
+		Description: zeusPlan.Description,
+		IsActive:    zeusPlan.IsActive,
+		CreatedAt:   zeusPlan.CreatedAt,
+		UpdatedAt:   zeusPlan.UpdatedAt,
+	}
+
+	eventQueue := LicenseEventQueue{}
+	if _eventQueue, ok := storableLicense.Data["event_queue"]; ok {
+		eventQueueData, err := json.Marshal(_eventQueue)
+		if err != nil {
+			return nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to marshal event queue data")
+		}
+
+		zeusEventQueue := zeustypes.LicenseEventQueue{}
+		if err := json.Unmarshal(eventQueueData, &zeusEventQueue); err != nil {
+			return nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to unmarshal event queue data")
+		}
+
+		eventQueue = LicenseEventQueue{
+			Event:       valuer.NewString(zeusEventQueue.Event),
+			Status:      valuer.NewString(zeusEventQueue.Status),
+			ScheduledAt: zeusEventQueue.ScheduledAt,
+			CreatedAt:   zeusEventQueue.CreatedAt,
+			UpdatedAt:   zeusEventQueue.UpdatedAt,
+		}
 	}
 
 	featuresFromZeus := make([]*Feature, 0)
@@ -378,12 +459,13 @@ func NewLicenseFromStorableLicense(storableLicense *StorableLicense) (*License, 
 		ID:              storableLicense.ID,
 		Key:             storableLicense.Key,
 		Data:            storableLicense.Data,
-		PlanName:        planName,
+		Plan:            plan,
+		EventQueue:      eventQueue,
 		Features:        features,
 		ValidFrom:       validFrom,
 		ValidUntil:      validUntil,
 		Status:          status,
-		State:           state,
+		State:           valuer.NewString(state),
 		Platform:        valuer.NewString(platform),
 		FreeUntil:       freeUntil,
 		CreatedAt:       storableLicense.CreatedAt,
@@ -397,8 +479,8 @@ func NewLicenseFromStorableLicense(storableLicense *StorableLicense) (*License, 
 func NewStatsFromLicense(license *License) map[string]any {
 	return map[string]any{
 		"license.id":              license.ID.StringValue(),
-		"license.plan.name":       license.PlanName.StringValue(),
-		"license.state.name":      license.State,
+		"license.plan.name":       license.Plan.Name.StringValue(),
+		"license.state.name":      license.State.StringValue(),
 		"license.free_until.time": license.FreeUntil.UTC(),
 	}
 }
@@ -418,8 +500,10 @@ func (license *License) Update(data []byte) error {
 	license.Features = updatedLicense.Features
 	license.ID = updatedLicense.ID
 	license.Key = updatedLicense.Key
-	license.PlanName = updatedLicense.PlanName
+	license.Plan = updatedLicense.Plan
+	license.EventQueue = updatedLicense.EventQueue
 	license.Status = updatedLicense.Status
+	license.State = updatedLicense.State
 	license.Platform = updatedLicense.Platform
 	license.ValidFrom = updatedLicense.ValidFrom
 	license.ValidUntil = updatedLicense.ValidUntil
@@ -438,57 +522,28 @@ func NewDeprecatedGettableLicense(data map[string]any, key string) *DeprecatedGe
 	return &deprecatedGettableLicense
 }
 
-func NewGettableLicense(license *License) (*GettableLicense, error) {
-	dataBytes, err := json.Marshal(license.Data)
-	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal license data")
-	}
-
-	zeusLicense := new(zeustypes.License)
-	if err := json.Unmarshal(dataBytes, zeusLicense); err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to unmarshal license data")
-	}
-
+func NewGettableLicense(license *License) *GettableLicense {
 	return &GettableLicense{
 		ID:         license.ID,
-		ValidFrom:  zeusLicense.ValidFrom,
-		ValidUntil: zeusLicense.ValidUntil,
-		Status:     zeusLicense.Status,
-		State:      zeusLicense.State,
-		Platform:   zeusLicense.Platform,
-		FreeUntil:  zeusLicense.FreeUntil,
-		CreatedAt:  zeusLicense.CreatedAt,
-		UpdatedAt:  zeusLicense.UpdatedAt,
-		PlanID:     zeusLicense.PlanID,
-		Plan: GettableLicensePlan{
-			ID:          zeusLicense.Plan.ID,
-			Name:        zeusLicense.Plan.Name,
-			Description: zeusLicense.Plan.Description,
-			IsActive:    zeusLicense.Plan.IsActive,
-			CreatedAt:   zeusLicense.Plan.CreatedAt,
-			UpdatedAt:   zeusLicense.Plan.UpdatedAt,
-		},
-		Features: license.Features,
-		EventQueue: GettableLicenseEventQueue{
-			Event:       zeusLicense.EventQueue.Event,
-			Status:      zeusLicense.EventQueue.Status,
-			ScheduledAt: zeusLicense.EventQueue.ScheduledAt,
-			CreatedAt:   zeusLicense.EventQueue.CreatedAt,
-			UpdatedAt:   zeusLicense.EventQueue.UpdatedAt,
-		},
-	}, nil
+		ValidFrom:  license.ValidFrom,
+		ValidUntil: license.ValidUntil,
+		Status:     license.Status,
+		State:      license.State,
+		Platform:   license.Platform,
+		FreeUntil:  license.FreeUntil,
+		CreatedAt:  license.CreatedAt,
+		UpdatedAt:  license.UpdatedAt,
+		Plan:       license.Plan,
+		Features:   license.Features,
+		EventQueue: license.EventQueue,
+	}
 }
 
-func NewGettableLicenseWithKey(license *License) (*GettableLicenseWithKey, error) {
-	gettableLicense, err := NewGettableLicense(license)
-	if err != nil {
-		return nil, err
-	}
-
+func NewGettableLicenseWithKey(license *License) *GettableLicenseWithKey {
 	return &GettableLicenseWithKey{
-		GettableLicense: *gettableLicense,
+		GettableLicense: *NewGettableLicense(license),
 		Key:             license.Key,
-	}, nil
+	}
 }
 
 func (p *PostableLicense) UnmarshalJSON(data []byte) error {
