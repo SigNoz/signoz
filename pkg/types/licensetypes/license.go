@@ -8,6 +8,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -48,33 +49,33 @@ type GettableLicensePlan struct {
 	ID          valuer.UUID `json:"id"`
 	Name        string      `json:"name" required:"true"`
 	Description string      `json:"description"`
-	IsActive    bool        `json:"is_active"`
-	CreatedAt   time.Time   `json:"created_at"`
-	UpdatedAt   time.Time   `json:"updated_at"`
+	IsActive    bool        `json:"isActive"`
+	CreatedAt   time.Time   `json:"createdAt"`
+	UpdatedAt   time.Time   `json:"updatedAt"`
 }
 
 type GettableLicenseEventQueue struct {
 	Event       string    `json:"event"`
 	Status      string    `json:"status"`
-	ScheduledAt time.Time `json:"scheduled_at"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ScheduledAt time.Time `json:"scheduledAt"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
 type GettableLicense struct {
 	ID         valuer.UUID               `json:"id" required:"true"`
-	ValidFrom  int64                     `json:"valid_from"`
-	ValidUntil int64                     `json:"valid_until"`
+	ValidFrom  int64                     `json:"validFrom"`
+	ValidUntil int64                     `json:"validUntil"`
 	Status     string                    `json:"status" required:"true"`
 	State      string                    `json:"state"`
 	Platform   string                    `json:"platform"`
-	FreeUntil  time.Time                 `json:"free_until"`
-	CreatedAt  time.Time                 `json:"created_at"`
-	UpdatedAt  time.Time                 `json:"updated_at"`
-	PlanID     valuer.UUID               `json:"plan_id"`
+	FreeUntil  time.Time                 `json:"freeUntil"`
+	CreatedAt  time.Time                 `json:"createdAt"`
+	UpdatedAt  time.Time                 `json:"updatedAt"`
+	PlanID     valuer.UUID               `json:"planId"`
 	Plan       GettableLicensePlan       `json:"plan" required:"true"`
 	Features   []*Feature                `json:"features"`
-	EventQueue GettableLicenseEventQueue `json:"event_queue"`
+	EventQueue GettableLicenseEventQueue `json:"eventQueue"`
 }
 
 type GettableLicenseWithKey struct {
@@ -438,19 +439,44 @@ func NewDeprecatedGettableLicense(data map[string]any, key string) *DeprecatedGe
 }
 
 func NewGettableLicense(license *License) (*GettableLicense, error) {
-	data, err := json.Marshal(license.Data)
+	dataBytes, err := json.Marshal(license.Data)
 	if err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal license data")
 	}
 
-	gettableLicense := new(GettableLicense)
-	if err := json.Unmarshal(data, gettableLicense); err != nil {
+	zeusLicense := new(zeustypes.License)
+	if err := json.Unmarshal(dataBytes, zeusLicense); err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to unmarshal license data")
 	}
 
-	gettableLicense.ID = license.ID
-
-	return gettableLicense, nil
+	return &GettableLicense{
+		ID:         license.ID,
+		ValidFrom:  zeusLicense.ValidFrom,
+		ValidUntil: zeusLicense.ValidUntil,
+		Status:     zeusLicense.Status,
+		State:      zeusLicense.State,
+		Platform:   zeusLicense.Platform,
+		FreeUntil:  zeusLicense.FreeUntil,
+		CreatedAt:  zeusLicense.CreatedAt,
+		UpdatedAt:  zeusLicense.UpdatedAt,
+		PlanID:     zeusLicense.PlanID,
+		Plan: GettableLicensePlan{
+			ID:          zeusLicense.Plan.ID,
+			Name:        zeusLicense.Plan.Name,
+			Description: zeusLicense.Plan.Description,
+			IsActive:    zeusLicense.Plan.IsActive,
+			CreatedAt:   zeusLicense.Plan.CreatedAt,
+			UpdatedAt:   zeusLicense.Plan.UpdatedAt,
+		},
+		Features: license.Features,
+		EventQueue: GettableLicenseEventQueue{
+			Event:       zeusLicense.EventQueue.Event,
+			Status:      zeusLicense.EventQueue.Status,
+			ScheduledAt: zeusLicense.EventQueue.ScheduledAt,
+			CreatedAt:   zeusLicense.EventQueue.CreatedAt,
+			UpdatedAt:   zeusLicense.EventQueue.UpdatedAt,
+		},
+	}, nil
 }
 
 func NewGettableLicenseWithKey(license *License) (*GettableLicenseWithKey, error) {

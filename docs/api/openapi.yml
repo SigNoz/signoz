@@ -5658,24 +5658,24 @@ components:
       type: object
     LicensetypesGettableLicense:
       properties:
-        created_at:
+        createdAt:
           format: date-time
           type: string
-        event_queue:
+        eventQueue:
           $ref: '#/components/schemas/LicensetypesGettableLicenseEventQueue'
         features:
           items:
             $ref: '#/components/schemas/LicensetypesFeature'
           nullable: true
           type: array
-        free_until:
+        freeUntil:
           format: date-time
           type: string
         id:
           type: string
         plan:
           $ref: '#/components/schemas/LicensetypesGettableLicensePlan'
-        plan_id:
+        planId:
           type: string
         platform:
           type: string
@@ -5683,13 +5683,13 @@ components:
           type: string
         status:
           type: string
-        updated_at:
+        updatedAt:
           format: date-time
           type: string
-        valid_from:
+        validFrom:
           format: int64
           type: integer
-        valid_until:
+        validUntil:
           format: int64
           type: integer
       required:
@@ -5699,34 +5699,34 @@ components:
       type: object
     LicensetypesGettableLicenseEventQueue:
       properties:
-        created_at:
+        createdAt:
           format: date-time
           type: string
         event:
           type: string
-        scheduled_at:
+        scheduledAt:
           format: date-time
           type: string
         status:
           type: string
-        updated_at:
+        updatedAt:
           format: date-time
           type: string
       type: object
     LicensetypesGettableLicensePlan:
       properties:
-        created_at:
+        createdAt:
           format: date-time
           type: string
         description:
           type: string
         id:
           type: string
-        is_active:
+        isActive:
           type: boolean
         name:
           type: string
-        updated_at:
+        updatedAt:
           format: date-time
           type: string
       required:
@@ -5734,17 +5734,17 @@ components:
       type: object
     LicensetypesGettableLicenseWithKey:
       properties:
-        created_at:
+        createdAt:
           format: date-time
           type: string
-        event_queue:
+        eventQueue:
           $ref: '#/components/schemas/LicensetypesGettableLicenseEventQueue'
         features:
           items:
             $ref: '#/components/schemas/LicensetypesFeature'
           nullable: true
           type: array
-        free_until:
+        freeUntil:
           format: date-time
           type: string
         id:
@@ -5753,7 +5753,7 @@ components:
           type: string
         plan:
           $ref: '#/components/schemas/LicensetypesGettableLicensePlan'
-        plan_id:
+        planId:
           type: string
         platform:
           type: string
@@ -5761,13 +5761,13 @@ components:
           type: string
         status:
           type: string
-        updated_at:
+        updatedAt:
           format: date-time
           type: string
-        valid_from:
+        validFrom:
           format: int64
           type: integer
-        valid_until:
+        validUntil:
           format: int64
           type: integer
       required:

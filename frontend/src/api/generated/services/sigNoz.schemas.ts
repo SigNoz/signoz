@@ -7202,7 +7202,7 @@ export interface LicensetypesGettableLicenseEventQueueDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	created_at?: string;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -7211,7 +7211,7 @@ export interface LicensetypesGettableLicenseEventQueueDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	scheduled_at?: string;
+	scheduledAt?: string;
 	/**
 	 * @type string
 	 */
@@ -7220,7 +7220,7 @@ export interface LicensetypesGettableLicenseEventQueueDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updated_at?: string;
+	updatedAt?: string;
 }
 
 export interface LicensetypesGettableLicensePlanDTO {
@@ -7228,7 +7228,7 @@ export interface LicensetypesGettableLicensePlanDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	created_at?: string;
+	createdAt?: string;
 	/**
 	 * @type string
 	 */
@@ -7240,7 +7240,7 @@ export interface LicensetypesGettableLicensePlanDTO {
 	/**
 	 * @type boolean
 	 */
-	is_active?: boolean;
+	isActive?: boolean;
 	/**
 	 * @type string
 	 */
@@ -7249,7 +7249,7 @@ export interface LicensetypesGettableLicensePlanDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updated_at?: string;
+	updatedAt?: string;
 }
 
 export interface LicensetypesGettableLicenseDTO {
@@ -7257,8 +7257,8 @@ export interface LicensetypesGettableLicenseDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	created_at?: string;
-	event_queue?: LicensetypesGettableLicenseEventQueueDTO;
+	createdAt?: string;
+	eventQueue?: LicensetypesGettableLicenseEventQueueDTO;
 	/**
 	 * @type array,null
 	 */
@@ -7267,7 +7267,7 @@ export interface LicensetypesGettableLicenseDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	free_until?: string;
+	freeUntil?: string;
 	/**
 	 * @type string
 	 */
@@ -7276,7 +7276,7 @@ export interface LicensetypesGettableLicenseDTO {
 	/**
 	 * @type string
 	 */
-	plan_id?: string;
+	planId?: string;
 	/**
 	 * @type string
 	 */
@@ -7293,17 +7293,17 @@ export interface LicensetypesGettableLicenseDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updated_at?: string;
+	updatedAt?: string;
 	/**
 	 * @type integer
 	 * @format int64
 	 */
-	valid_from?: number;
+	validFrom?: number;
 	/**
 	 * @type integer
 	 * @format int64
 	 */
-	valid_until?: number;
+	validUntil?: number;
 }
 
 export interface LicensetypesGettableLicenseWithKeyDTO {
@@ -7311,8 +7311,8 @@ export interface LicensetypesGettableLicenseWithKeyDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	created_at?: string;
-	event_queue?: LicensetypesGettableLicenseEventQueueDTO;
+	createdAt?: string;
+	eventQueue?: LicensetypesGettableLicenseEventQueueDTO;
 	/**
 	 * @type array,null
 	 */
@@ -7321,7 +7321,7 @@ export interface LicensetypesGettableLicenseWithKeyDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	free_until?: string;
+	freeUntil?: string;
 	/**
 	 * @type string
 	 */
@@ -7334,7 +7334,7 @@ export interface LicensetypesGettableLicenseWithKeyDTO {
 	/**
 	 * @type string
 	 */
-	plan_id?: string;
+	planId?: string;
 	/**
 	 * @type string
 	 */
@@ -7351,17 +7351,17 @@ export interface LicensetypesGettableLicenseWithKeyDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updated_at?: string;
+	updatedAt?: string;
 	/**
 	 * @type integer
 	 * @format int64
 	 */
-	valid_from?: number;
+	validFrom?: number;
 	/**
 	 * @type integer
 	 * @format int64
 	 */
-	valid_until?: number;
+	validUntil?: number;
 }
 
 export interface LicensetypesPostableLicenseDTO {
