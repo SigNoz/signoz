@@ -389,6 +389,36 @@ func (d DashboardV2) ToGettableDashboardV2() GettableDashboardV2 {
 	}
 }
 
+// GettableSystemDashboard is the system-dashboard endpoint's response. System
+// dashboards are addressed by their stable definition name, so it carries no id.
+type GettableSystemDashboard struct {
+	types.TimeAuditable
+	types.UserAuditable
+
+	OrgID  valuer.UUID `json:"orgId" required:"true"`
+	Locked bool        `json:"locked" required:"true"`
+	Source Source      `json:"source" required:"true"`
+
+	DashboardV2MetadataBase
+	Name string                  `json:"name" required:"true"`
+	Tags []*tagtypes.GettableTag `json:"tags" required:"true"`
+	Spec DashboardSpec           `json:"spec" required:"true"`
+}
+
+func (d DashboardV2) ToGettableSystemDashboard() GettableSystemDashboard {
+	return GettableSystemDashboard{
+		TimeAuditable:           d.TimeAuditable,
+		UserAuditable:           d.UserAuditable,
+		OrgID:                   d.OrgID,
+		Locked:                  d.Locked,
+		Source:                  d.Source,
+		DashboardV2MetadataBase: d.DashboardV2MetadataBase,
+		Name:                    d.Name,
+		Tags:                    tagtypes.NewGettableTagsFromTags(d.Tags),
+		Spec:                    d.Spec,
+	}
+}
+
 // ════════════════════════════════════════════════════════════════════════
 // Storable
 // ════════════════════════════════════════════════════════════════════════

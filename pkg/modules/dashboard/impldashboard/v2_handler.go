@@ -525,5 +525,5 @@ func (handler *handler) GetSystemDashboard(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	render.Success(rw, http.StatusOK, systemDashboard.ToGettableDashboardV2())
+	render.Success(rw, http.StatusOK, systemDashboard.ToGettableSystemDashboard())
 }

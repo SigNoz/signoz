@@ -2,6 +2,7 @@ from collections.abc import Callable
 from http import HTTPStatus
 
 import requests
+from sqlalchemy import sql
 
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.dashboards import DASHBOARDS_BASE_URL, MAX_LIST_LIMIT
@@ -34,6 +35,7 @@ def test_get_system_dashboard(
     assert dashboard["source"] == "system"
     assert dashboard["createdBy"] == "signoz"
     assert dashboard["schemaVersion"] == "v6"
+    assert "id" not in dashboard
 
 
 def test_get_system_dashboard_rejects_prefixed_name(
@@ -76,13 +78,12 @@ def test_system_dashboard_hidden_from_list_but_gettable_by_id(
 ):
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(f"{SYSTEM_BASE_URL}/{SYSTEM_DASHBOARD_NAME}"),
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, response.text
-    dashboard_id = response.json()["data"]["id"]
+    # The API never exposes a system dashboard's id; read it from the state row.
+    with signoz.sqlstore.conn.connect() as conn:
+        dashboard_id = conn.execute(
+            sql.text("SELECT dashboard_id FROM system_dashboard WHERE name = :name"),
+            {"name": SYSTEM_DASHBOARD_PREFIX + SYSTEM_DASHBOARD_NAME},
+        ).scalar_one()
 
     response = requests.get(
         signoz.self.host_configs["8080"].get(f"{DASHBOARDS_BASE_URL}?limit={MAX_LIST_LIMIT}"),
@@ -117,7 +118,12 @@ def test_system_dashboard_is_immutable(
     )
     assert response.status_code == HTTPStatus.OK, response.text
     dashboard = response.json()["data"]
-    dashboard_id = dashboard["id"]
+
+    with signoz.sqlstore.conn.connect() as conn:
+        dashboard_id = conn.execute(
+            sql.text("SELECT dashboard_id FROM system_dashboard WHERE name = :name"),
+            {"name": SYSTEM_DASHBOARD_PREFIX + SYSTEM_DASHBOARD_NAME},
+        ).scalar_one()
 
     response = requests.put(
         signoz.self.host_configs["8080"].get(f"{DASHBOARDS_BASE_URL}/{dashboard_id}"),

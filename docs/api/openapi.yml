@@ -2944,6 +2944,46 @@ components:
         publicDashboard:
           $ref: '#/components/schemas/DashboardtypesGettablePublicDasbhboard'
       type: object
+    DashboardtypesGettableSystemDashboard:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        image:
+          type: string
+        locked:
+          type: boolean
+        name:
+          type: string
+        orgId:
+          type: string
+        schemaVersion:
+          type: string
+        source:
+          $ref: '#/components/schemas/DashboardtypesSource'
+        spec:
+          $ref: '#/components/schemas/DashboardtypesDashboardSpec'
+        tags:
+          items:
+            $ref: '#/components/schemas/TagtypesGettableTag'
+          nullable: true
+          type: array
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - orgId
+      - locked
+      - source
+      - schemaVersion
+      - name
+      - tags
+      - spec
+      type: object
     DashboardtypesHistogramBuckets:
       properties:
         bucketCount:
@@ -15380,7 +15420,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/DashboardtypesGettableDashboardV2'
+                    $ref: '#/components/schemas/DashboardtypesGettableSystemDashboard'
                   status:
                     type: string
                 required:

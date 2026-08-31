@@ -341,7 +341,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 			Description:         "Returns a dashboard SigNoz ships and owns, addressed by its stable definition name (e.g. `ai-o11y-overview`) rather than its id. System dashboards are read-only and upgraded through releases. The dashboard's own `name` field carries a reserved prefix that the path segment must not include.",
 			Request:             nil,
 			RequestContentType:  "",
-			Response:            new(dashboardtypes.GettableDashboardV2),
+			Response:            new(dashboardtypes.GettableSystemDashboard),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},

@@ -276,20 +276,12 @@ func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UU
 	return module.pkgDashboardModule.GetV2(ctx, orgID, id)
 }
 
-func (module *module) GetByNameV2(ctx context.Context, orgID valuer.UUID, name string) (*dashboardtypes.DashboardV2, error) {
-	return module.pkgDashboardModule.GetByNameV2(ctx, orgID, name)
-}
-
 func (module *module) MigrateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
 	return module.pkgDashboardModule.MigrateV2(ctx, orgID, id)
 }
 
 func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updatable dashboardtypes.UpdatableDashboardV2) (*dashboardtypes.DashboardV2, error) {
 	return module.pkgDashboardModule.UpdateV2(ctx, orgID, id, updatedBy, updatable)
-}
-
-func (module *module) UpdateUnsafeV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updatable dashboardtypes.UpdatableDashboardV2) (*dashboardtypes.DashboardV2, error) {
-	return module.pkgDashboardModule.UpdateUnsafeV2(ctx, orgID, id, updatedBy, updatable)
 }
 
 func (module *module) PatchV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, patch dashboardtypes.PatchableDashboardV2) (*dashboardtypes.DashboardV2, error) {

@@ -125,7 +125,7 @@ func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UU
 	return storable.ToDashboardV2(tags)
 }
 
-func (module *module) GetByNameV2(ctx context.Context, orgID valuer.UUID, name string) (*dashboardtypes.DashboardV2, error) {
+func (module *module) getByNameV2(ctx context.Context, orgID valuer.UUID, name string) (*dashboardtypes.DashboardV2, error) {
 	storable, err := module.store.GetByName(ctx, orgID, name)
 	if err != nil {
 		return nil, err
@@ -201,7 +201,8 @@ func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer
 	return module.updateV2(ctx, orgID, existing, updatedBy, updatable, existing.Update)
 }
 
-func (module *module) UpdateUnsafeV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updatable dashboardtypes.UpdatableDashboardV2) (*dashboardtypes.DashboardV2, error) {
+// updateUnsafeV2 updates a dashboard bypassing the guards. Intended for internal system callers.
+func (module *module) updateUnsafeV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updatable dashboardtypes.UpdatableDashboardV2) (*dashboardtypes.DashboardV2, error) {
 	if err := updatable.Validate(); err != nil {
 		return nil, err
 	}
@@ -215,7 +216,7 @@ func (module *module) UpdateUnsafeV2(ctx context.Context, orgID valuer.UUID, id 
 }
 
 // apply is existing.Update or existing.UpdateUnsafe, so the gated path keeps its
-// in-transaction checks and only UpdateUnsafeV2 skips them.
+// in-transaction checks and only updateUnsafeV2 skips them.
 func (module *module) updateV2(ctx context.Context, orgID valuer.UUID, existing *dashboardtypes.DashboardV2, updatedBy string, updatable dashboardtypes.UpdatableDashboardV2, apply func(dashboardtypes.UpdatableDashboardV2, string, []*tagtypes.Tag) error) (*dashboardtypes.DashboardV2, error) {
 	err := module.store.RunInTx(ctx, func(ctx context.Context) error {
 		resolvedTags, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, existing.ID, updatable.Tags)
@@ -346,7 +347,7 @@ func (m *module) ReconcileSystemDashboards(ctx context.Context, orgID valuer.UUI
 }
 
 func (m *module) reconcileSystemDashboard(ctx context.Context, orgID valuer.UUID, definition dashboardtypes.SystemDashboardDefinition) error {
-	existing, err := m.GetByNameV2(ctx, orgID, definition.Name())
+	existing, err := m.getByNameV2(ctx, orgID, definition.Name())
 	if err != nil {
 		if !errors.Ast(err, errors.TypeNotFound) {
 			return err
@@ -400,7 +401,7 @@ func (m *module) provisionSystemDashboard(ctx context.Context, orgID valuer.UUID
 
 func (m *module) upgradeSystemDashboard(ctx context.Context, orgID valuer.UUID, id valuer.UUID, definition dashboardtypes.SystemDashboardDefinition) error {
 	err := m.store.RunInTx(ctx, func(ctx context.Context) error {
-		if _, err := m.UpdateUnsafeV2(ctx, orgID, id, dashboardtypes.ProvisionerIdentity, definition.ToUpdatable()); err != nil {
+		if _, err := m.updateUnsafeV2(ctx, orgID, id, dashboardtypes.ProvisionerIdentity, definition.ToUpdatable()); err != nil {
 			return err
 		}
 
@@ -419,7 +420,7 @@ func (m *module) GetSystemDashboard(ctx context.Context, orgID valuer.UUID, name
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "name must not carry the %q prefix", dashboardtypes.SystemDashboardNamePrefix)
 	}
 
-	existing, err := m.GetByNameV2(ctx, orgID, dashboardtypes.SystemDashboardNamePrefix+name)
+	existing, err := m.getByNameV2(ctx, orgID, dashboardtypes.SystemDashboardNamePrefix+name)
 	if err != nil {
 		return nil, err
 	}
