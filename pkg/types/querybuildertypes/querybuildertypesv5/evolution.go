@@ -23,6 +23,23 @@ func SelectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetr
 		return columns, nil, nil
 	}
 
+	// Legacy Map columns are the epoch-0 base and aren't stored as evolution rows, so
+	// synthesize a base entry for any Map candidate the metadata doesn't name. A JSON
+	// candidate with no entry (e.g. an unpromoted attributes_promoted) is left alone so
+	// it stays unselected.
+	seen := make(map[string]struct{}, len(evolutions))
+	for _, e := range evolutions {
+		seen[e.ColumnName] = struct{}{}
+	}
+	for _, c := range columns {
+		if _, ok := seen[c.Name]; ok {
+			continue
+		}
+		if _, isMap := c.Type.(schema.MapColumnType); isMap {
+			evolutions = append(evolutions, &telemetrytypes.EvolutionEntry{ColumnName: c.Name, ReleaseTime: time.Unix(0, 0)})
+		}
+	}
+
 	sortedEvolutions := make([]*telemetrytypes.EvolutionEntry, len(evolutions))
 	copy(sortedEvolutions, evolutions)
 

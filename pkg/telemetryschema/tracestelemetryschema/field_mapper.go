@@ -289,7 +289,6 @@ func (m *fieldMapper) resolveColumnExprs(
 		return nil, nil, nil, err
 	}
 
-	key = narrowEvolutionsToColumns(key, columns)
 	newColumns, evolutionsEntries, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, startNs, endNs)
 	if err != nil {
 		return nil, nil, nil, err
@@ -384,37 +383,6 @@ func attributeColumnEvolutionRegistered(key *telemetrytypes.TelemetryFieldKey, c
 		}
 	}
 	return false
-}
-
-// narrowEvolutionsToColumns returns key.Evolutions filtered to entries whose column is in cols.
-// A metadata attribute key carries the `__all__` evolutions for every attribute-context column
-// (all three legacy maps plus the JSON column), but getColumn resolves a typed key to only its
-// own map + the JSON column; without this filter SelectEvolutionsForColumns would reject the
-// in-range sibling-map entries as columns not present in the slice. A no-op for every other
-// context, where getColumn already returns exactly the columns the evolutions name.
-func narrowEvolutionsToColumns(key *telemetrytypes.TelemetryFieldKey, cols []*schema.Column) *telemetrytypes.TelemetryFieldKey {
-	if len(key.Evolutions) == 0 {
-		return key
-	}
-	allowed := make(map[string]struct{}, len(cols))
-	for _, c := range cols {
-		allowed[c.Name] = struct{}{}
-	}
-	filtered := make([]*telemetrytypes.EvolutionEntry, 0, len(key.Evolutions))
-	for _, e := range key.Evolutions {
-		if e == nil {
-			continue
-		}
-		if _, ok := allowed[e.ColumnName]; ok {
-			filtered = append(filtered, e)
-		}
-	}
-	if len(filtered) == len(key.Evolutions) {
-		return key
-	}
-	narrowed := *key
-	narrowed.Evolutions = filtered
-	return &narrowed
 }
 
 // attributeJSONCast returns the ClickHouse cast target for a span attribute read from the
@@ -597,7 +565,6 @@ func (m *fieldMapper) columnIsTemporal(ctx context.Context, startNs, endNs uint6
 	if err != nil {
 		return false, err
 	}
-	key = narrowEvolutionsToColumns(key, columns)
 	newColumns, _, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, startNs, endNs)
 	if err != nil {
 		return false, err
@@ -720,7 +687,6 @@ func (m *fieldMapper) ExistsFor(
 	if err != nil {
 		return "", err
 	}
-	key = narrowEvolutionsToColumns(key, columns)
 	fieldExpression, err := m.FieldFor(ctx, orgID, tsStart, tsEnd, key)
 	if err != nil {
 		return "", err

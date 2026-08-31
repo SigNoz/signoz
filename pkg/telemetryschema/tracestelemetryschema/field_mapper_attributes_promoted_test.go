@@ -26,10 +26,7 @@ var (
 func TestFieldForAttributePromotedEvolution(t *testing.T) {
 	ctx := context.Background()
 	fm := NewFieldMapper(flaggertest.New(t))
-	evo := MockPromotedAttributeEvolutionData(
-		"attributes_string", "Map(LowCardinality(String), String)", "span.operation",
-		promoJSONRelease, promoPromoRelease,
-	)
+	evo := MockPromotedAttributeEvolutionData("span.operation", promoJSONRelease, promoPromoRelease)
 
 	win := func(from, to string) [2]uint64 {
 		a, _ := time.Parse("2006-01-02", from)
@@ -71,10 +68,7 @@ func TestConditionForAttributePromoted(t *testing.T) {
 	ctx := context.Background()
 	fm := NewFieldMapper(flaggertest.New(t))
 	cb := NewConditionBuilder(fm, flaggertest.New(t))
-	evo := MockPromotedAttributeEvolutionData(
-		"attributes_string", "Map(LowCardinality(String), String)", "span.operation",
-		promoJSONRelease, promoPromoRelease,
-	)
+	evo := MockPromotedAttributeEvolutionData("span.operation", promoJSONRelease, promoPromoRelease)
 	afterPromo := [2]uint64{
 		uint64(time.Date(2025, 7, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
 		uint64(time.Date(2025, 8, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
