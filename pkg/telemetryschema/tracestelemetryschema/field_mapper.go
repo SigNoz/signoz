@@ -199,13 +199,7 @@ func (m *fieldMapper) getColumn(
 		default:
 			return nil, qbtypes.ErrColumnNotFound
 		}
-		// The `attributes` evolution entry is the rollout control. Once it is
-		// registered the key dual-reads the JSON column and the Map column, and
-		// `attributes_promoted` always rides along as a candidate home: promotion is
-		// just a third evolution column, and SelectEvolutionsForColumns selects it
-		// only when this key has a promotion entry in range (a column with no
-		// evolution entry is never selected), picking a single home per window and
-		// reading more than one only across an evolution boundary.
+		// The `attributes` evolution entry is the rollout control.
 		if attributeColumnEvolutionRegistered(key, SpanAttributesColumn) {
 			return []*schema.Column{indexV3Columns["attributes_promoted"], indexV3Columns["attributes"], mapCol}, nil
 		}
