@@ -2559,6 +2559,7 @@ components:
       - factor-api-key
       - license
       - subscription
+      - deployment-host
       - logs
       - traces
       - metrics
@@ -24107,9 +24108,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - deployment-host:list
       - tokenizer:
-        - VIEWER
+        - deployment-host:list
       summary: Get host info from Zeus.
       tags:
       - zeus
@@ -24163,9 +24164,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - deployment-host:update
       - tokenizer:
-        - ADMIN
+        - deployment-host:update
       summary: Put host in Zeus for a deployment.
       tags:
       - zeus

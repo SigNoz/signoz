@@ -190,6 +190,9 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTTLSetting}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTTLSetting}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTTLSetting}, WildCardSelectorString)},
+		// deployment-host — admin updates, viewer lists
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindDeploymentHost}, WildCardSelectorString)},
+		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindDeploymentHost}, WildCardSelectorString)},
 		// user-preference — every authenticated user can read+update their own
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindUserPreference}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindUserPreference}, WildCardSelectorString)},
@@ -282,6 +285,8 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		// ttl-setting — read only (admin updates)
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTTLSetting}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTTLSetting}, WildCardSelectorString)},
+		// deployment-host — list only (admin updates)
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindDeploymentHost}, WildCardSelectorString)},
 		// user-preference — every authenticated user can read+update their own
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindUserPreference}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindUserPreference}, WildCardSelectorString)},
@@ -340,6 +345,8 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		// ttl-setting — read only
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTTLSetting}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTTLSetting}, WildCardSelectorString)},
+		// deployment-host — list only
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindDeploymentHost}, WildCardSelectorString)},
 		// user-preference — every authenticated user can read+update their own
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindUserPreference}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindUserPreference}, WildCardSelectorString)},
