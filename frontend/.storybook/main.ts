@@ -82,6 +82,14 @@ const config: StorybookConfig = {
 
 		return {
 			...viteConfig,
+			build: {
+				...viteConfig.build,
+				// `vite.config.ts` sets this for the app; Storybook's builder replaces
+				// `build` wholesale, which leaves rolldown-vite on its default
+				// lightningcss. That one rejects `:global()` in a plain stylesheet, which
+				// the app has, and the static build dies in CSS minification.
+				cssMinify: 'esbuild',
+			},
 			plugins,
 			resolve: {
 				...viteConfig.resolve,
