@@ -299,8 +299,11 @@ substituted. One subtlety makes it exact: we write stale markers at absent
 grid points. Without them, the engine's lookback would resurrect a point
 from up to `lookback` earlier. The marker encodes "absent here" the way the
 engine itself encodes it. Units evaluate concurrently. Each unit is one
-series lookup plus one grid statement. A step of 0 is an instant query: a
-single evaluation at `end`.
+grid statement: the group-key join resolves the matchers, and the samples
+primary key takes the metric name straight from the selector. Only a
+selector without a static `__name__` runs the series lookup first, to learn
+the concrete metric names. A step of 0 is an instant query: a single
+evaluation at `end`.
 
 A note on the window sliver: when the window is narrower than the step, the
 grid windows cover only `window/step` of the timeline. A sample in a gap
@@ -315,8 +318,9 @@ selectors and `last_over_time` transpile at window < step too.
 
 ## Series lookup
 
-Both paths resolve matchers the same way, once per selector
-(`selectSeries`). The series tables hold one row per (fingerprint, bucket)
+The engine path resolves matchers once per selector (`selectSeries`); the
+transpiled path builds the same conditions into its group-key join. Both
+read the same tables. The series tables hold one row per (fingerprint, bucket)
 at 1h/6h/1d/1w granularities. The shared schema package
 (`pkg/telemetryschema/metricstelemetryschema`) picks the table whose bucket
 fits the window. It rounds the window start down to the bucket boundary, so
