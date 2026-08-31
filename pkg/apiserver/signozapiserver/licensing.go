@@ -70,7 +70,7 @@ func (provider *provider) addLicensingRoutes(router *mux.Router) error {
 		Description:         "This endpoint gets the active license of the organization.",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            new(licensetypes.GettableLicense),
+		Response:            new(licensetypes.GettableActiveLicense),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusNotFound, http.StatusNotImplemented},

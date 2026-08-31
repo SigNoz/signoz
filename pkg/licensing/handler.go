@@ -165,5 +165,5 @@ func (handler *handler) GetActive(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, licensetypes.NewGettableLicense(license))
+	render.Success(rw, http.StatusOK, licensetypes.NewGettableActiveLicense(license))
 }

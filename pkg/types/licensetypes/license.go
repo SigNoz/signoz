@@ -84,6 +84,10 @@ type GettableLicenseWithKey struct {
 	Key string `json:"key" required:"true"`
 }
 
+type GettableActiveLicense struct {
+	GettableLicense
+}
+
 type PostableLicense struct {
 	Key string `json:"key"`
 }
@@ -220,6 +224,108 @@ func NewZeusLicenseFromData(data map[string]any) (*zeustypes.License, error) {
 	return zeusLicense, nil
 }
 
+// ErrIfCloud returns an error if the license is managed by SigNoz Cloud. The
+// caller should enrich the error with the specific operation using errors.WithAdditionalf.
+func (license *License) ErrIfCloud() error {
+	if license.Platform == LicensePlatformCloud {
+		return errors.New(errors.TypeInvalidInput, ErrCodeCloudLicenseOperationUnsupported, "this operation is not supported for licenses managed by SigNoz Cloud")
+	}
+	return nil
+}
+
+func NewStatsFromLicense(license *License) map[string]any {
+	return map[string]any{
+		"license.id":              license.ID.StringValue(),
+		"license.plan.name":       license.Plan.Name.StringValue(),
+		"license.state.name":      license.State.StringValue(),
+		"license.free_until.time": license.FreeUntil.UTC(),
+	}
+}
+
+func (license *License) UpdateFeatures(features []*Feature) {
+	license.Features = features
+}
+
+func (license *License) Update(zeusLicense *zeustypes.License) error {
+	updatedLicense, err := NewLicense(zeusLicense, license.OrganizationID)
+	if err != nil {
+		return err
+	}
+
+	currentTime := time.Now()
+	license.Data = updatedLicense.Data
+	license.Features = updatedLicense.Features
+	license.ID = updatedLicense.ID
+	license.Key = updatedLicense.Key
+	license.Plan = updatedLicense.Plan
+	license.EventQueue = updatedLicense.EventQueue
+	license.Status = updatedLicense.Status
+	license.State = updatedLicense.State
+	license.Platform = updatedLicense.Platform
+	license.ValidFrom = updatedLicense.ValidFrom
+	license.ValidUntil = updatedLicense.ValidUntil
+	license.UpdatedAt = currentTime
+	license.LastValidatedAt = currentTime
+
+	return nil
+}
+
+func NewGettableLicense(license *License) *GettableLicense {
+	return &GettableLicense{
+		ID:         license.ID,
+		ValidFrom:  license.ValidFrom,
+		ValidUntil: license.ValidUntil,
+		Status:     license.Status,
+		State:      license.State,
+		Platform:   license.Platform,
+		FreeUntil:  license.FreeUntil,
+		CreatedAt:  license.CreatedAt,
+		UpdatedAt:  license.UpdatedAt,
+		Plan:       license.Plan,
+		Features:   license.Features,
+		EventQueue: license.EventQueue,
+	}
+}
+
+func NewGettableLicenseWithKey(license *License) *GettableLicenseWithKey {
+	return &GettableLicenseWithKey{
+		GettableLicense: *NewGettableLicense(license),
+		Key:             license.Key,
+	}
+}
+
+func NewGettableActiveLicense(license *License) *GettableActiveLicense {
+	return &GettableActiveLicense{
+		GettableLicense: *NewGettableLicense(license),
+	}
+}
+
+func (p *PostableLicense) UnmarshalJSON(data []byte) error {
+	var postableLicense struct {
+		Key string `json:"key"`
+	}
+
+	err := json.Unmarshal(data, &postableLicense)
+	if err != nil {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to unmarshal payload")
+	}
+
+	if postableLicense.Key == "" {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "license key cannot be empty")
+	}
+
+	p.Key = postableLicense.Key
+	return nil
+}
+
+type Store interface {
+	Create(context.Context, *StorableLicense) error
+	Get(context.Context, valuer.UUID, valuer.UUID) (*StorableLicense, error)
+	GetAll(context.Context, valuer.UUID) ([]*StorableLicense, error)
+	Update(context.Context, valuer.UUID, *StorableLicense) error
+	Delete(context.Context, valuer.UUID, valuer.UUID) error
+}
+
 func newPlanNameAndStatusFromZeusLicense(zeusLicense *zeustypes.License) (valuer.String, valuer.String, error) {
 	if zeusLicense.Status == "" {
 		return valuer.String{}, valuer.String{}, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "license status is missing")
@@ -310,100 +416,4 @@ func newDataFromZeusLicense(zeusLicense *zeustypes.License, features []*Feature)
 	data["features"] = features
 
 	return data, nil
-}
-
-// ErrIfCloud returns an error if the license is managed by SigNoz Cloud. The
-// caller should enrich the error with the specific operation using errors.WithAdditionalf.
-func (license *License) ErrIfCloud() error {
-	if license.Platform == LicensePlatformCloud {
-		return errors.New(errors.TypeInvalidInput, ErrCodeCloudLicenseOperationUnsupported, "this operation is not supported for licenses managed by SigNoz Cloud")
-	}
-	return nil
-}
-
-func NewStatsFromLicense(license *License) map[string]any {
-	return map[string]any{
-		"license.id":              license.ID.StringValue(),
-		"license.plan.name":       license.Plan.Name.StringValue(),
-		"license.state.name":      license.State.StringValue(),
-		"license.free_until.time": license.FreeUntil.UTC(),
-	}
-}
-
-func (license *License) UpdateFeatures(features []*Feature) {
-	license.Features = features
-}
-
-func (license *License) Update(zeusLicense *zeustypes.License) error {
-	updatedLicense, err := NewLicense(zeusLicense, license.OrganizationID)
-	if err != nil {
-		return err
-	}
-
-	currentTime := time.Now()
-	license.Data = updatedLicense.Data
-	license.Features = updatedLicense.Features
-	license.ID = updatedLicense.ID
-	license.Key = updatedLicense.Key
-	license.Plan = updatedLicense.Plan
-	license.EventQueue = updatedLicense.EventQueue
-	license.Status = updatedLicense.Status
-	license.State = updatedLicense.State
-	license.Platform = updatedLicense.Platform
-	license.ValidFrom = updatedLicense.ValidFrom
-	license.ValidUntil = updatedLicense.ValidUntil
-	license.UpdatedAt = currentTime
-	license.LastValidatedAt = currentTime
-
-	return nil
-}
-
-func NewGettableLicense(license *License) *GettableLicense {
-	return &GettableLicense{
-		ID:         license.ID,
-		ValidFrom:  license.ValidFrom,
-		ValidUntil: license.ValidUntil,
-		Status:     license.Status,
-		State:      license.State,
-		Platform:   license.Platform,
-		FreeUntil:  license.FreeUntil,
-		CreatedAt:  license.CreatedAt,
-		UpdatedAt:  license.UpdatedAt,
-		Plan:       license.Plan,
-		Features:   license.Features,
-		EventQueue: license.EventQueue,
-	}
-}
-
-func NewGettableLicenseWithKey(license *License) *GettableLicenseWithKey {
-	return &GettableLicenseWithKey{
-		GettableLicense: *NewGettableLicense(license),
-		Key:             license.Key,
-	}
-}
-
-func (p *PostableLicense) UnmarshalJSON(data []byte) error {
-	var postableLicense struct {
-		Key string `json:"key"`
-	}
-
-	err := json.Unmarshal(data, &postableLicense)
-	if err != nil {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to unmarshal payload")
-	}
-
-	if postableLicense.Key == "" {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "license key cannot be empty")
-	}
-
-	p.Key = postableLicense.Key
-	return nil
-}
-
-type Store interface {
-	Create(context.Context, *StorableLicense) error
-	Get(context.Context, valuer.UUID, valuer.UUID) (*StorableLicense, error)
-	GetAll(context.Context, valuer.UUID) ([]*StorableLicense, error)
-	Update(context.Context, valuer.UUID, *StorableLicense) error
-	Delete(context.Context, valuer.UUID, valuer.UUID) error
 }

@@ -7253,6 +7253,56 @@ export interface LicensetypesLicensePlanDTO {
 	updatedAt: string;
 }
 
+export interface LicensetypesGettableActiveLicenseDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	eventQueue: LicensetypesLicenseEventQueueDTO;
+	/**
+	 * @type array,null
+	 */
+	features: LicensetypesFeatureDTO[] | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	freeUntil: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	plan: LicensetypesLicensePlanDTO;
+	/**
+	 * @type string
+	 */
+	platform: string;
+	/**
+	 * @type string
+	 */
+	state: string;
+	/**
+	 * @type string
+	 */
+	status: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	validFrom: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	validUntil: number;
+}
+
 export interface LicensetypesGettableLicenseDTO {
 	/**
 	 * @type string
@@ -12649,7 +12699,7 @@ export type RefreshLicensePathParameters = {
 	id: string;
 };
 export type GetActiveLicense200 = {
-	data: LicensetypesGettableLicenseDTO;
+	data: LicensetypesGettableActiveLicenseDTO;
 	/**
 	 * @type string
 	 */
