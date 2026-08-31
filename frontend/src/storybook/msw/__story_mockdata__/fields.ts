@@ -1,3 +1,8 @@
+/**
+ * AI-owned. Generated and maintained by the `signoz-page-story` skill.
+ * Do not hand-edit: regenerate instead.
+ */
+
 import type {
 	GetFieldsKeys200,
 	GetFieldsValues200,
