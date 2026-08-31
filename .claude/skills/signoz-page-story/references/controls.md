@@ -129,16 +129,76 @@ export const servicesMocks = defineStoryMocks({
 // src/pages/Services/Services.stories.tsx
 type ServicesArgs = PageStoryArgs<typeof servicesMocks>;
 
+const pageStory = storyMocks(servicesMocks, { route: ROUTES.APPLICATION });
+
+/**
+ * Every instrumented service with its p99, error rate and throughput.
+ *
+ * Route: `/services`.
+ */
 const meta = {
-	title: 'Pages/Services',
+	title: 'Pages/Services/List',
 	component: Services,
 	decorators: [withAppLayout],
-	...storyMocks(servicesMocks, { route: ROUTES.APPLICATION }),
+	...pageStory,
+	parameters: { ...pageStory.parameters },
 } satisfies Meta<ServicesArgs>;
 ```
 
 `PageStoryArgs` folds in the global controls, so a story's `args` can set
 `access`, `dataState` or `banner` next to the page's own knobs and stay typed.
+
+## A step the page keeps in component state
+
+A wizard's step, a questionnaire's page, a picker's next question: the page holds
+it in `useState` and nothing in the URL says which one is open. It is still a
+control. Declare the steps in the mocks module and drive them from a `play` on
+the **meta**, so every story of the page inherits the walk and only sets `args`:
+
+```tsx
+// <Page>.stories.mocks.tsx
+export const SETUP_STEPS = ['pick-source', 'pick-framework', 'configure'] as const;
+export type SetupStep = (typeof SETUP_STEPS)[number];
+
+controls: {
+	step: choiceControl<SetupStep>('Setup step', { group: SETUP, options: SETUP_STEPS, value: 'pick-source' }),
+},
+```
+
+```tsx
+// <Page>.stories.tsx
+const meta = {
+	play: async ({ mount, args, canvasElement }): Promise<void> => {
+		await mount();
+		await advanceToSetupStep(canvasElement, args.step);
+	},
+	...storyMocks(pageMocks),
+} satisfies Meta<PageArgs>;
+
+export const Configure: Story = { args: { step: 'configure' } };
+```
+
+**Destructuring `mount` is what makes it a control.** Storybook re-runs a play
+function on an arg change only for a story whose play asks to be remounted
+(`usesMount`); otherwise it re-renders the tree the previous walk left behind and
+the panel looks broken. With `mount` destructured, the story renders when `play`
+calls it, and every arg change replays the walk from a fresh mount.
+
+The walk itself:
+
+- one `answer` function per step, in an array indexed the same as the step list,
+  so reaching step *n* is `answers.slice(0, STEPS.indexOf(step))`;
+- answer each step with the least its Next button accepts, and prefer a "do this
+  later" over filling a slider;
+- run them sequentially (`reduce` over a promise), since each answer is what
+  renders the step the next one reads;
+- bail out when the page did not start where the walk expects, such as a source
+  deep-linked past the questions. Check for the first step's own text rather than
+  reading another control's value.
+
+An endpoint that only settles the transition between two steps (the profile a
+questionnaire saves before its last page) takes a plain resolver, or the Data
+control on `loading` strands the walk halfway.
 
 ## Not a control
 
