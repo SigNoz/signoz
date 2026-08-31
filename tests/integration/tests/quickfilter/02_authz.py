@@ -81,9 +81,8 @@ def test_non_admin_cannot_update_quick_filters(
     token = get_token(email, NON_ADMIN_PASSWORD)
 
     response = requests.put(
-        signoz.self.host_configs["8080"].get("/api/v2/quick_filters"),
+        signoz.self.host_configs["8080"].get("/api/v2/quick_filters/traces"),
         json={
-            "signal": "traces",
             "filters": [{"name": "service.name", "fieldContext": "resource", "fieldDataType": "string"}],
         },
         headers={"Authorization": f"Bearer {token}"},

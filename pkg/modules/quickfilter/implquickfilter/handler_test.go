@@ -11,7 +11,7 @@ import (
 )
 
 func TestNewTelemetryFieldKeysFromLegacy(t *testing.T) {
-	fieldKeys, err := newTelemetryFieldKeysFromLegacy(quickfiltertypes.SignalTraces, []v3.AttributeKey{
+	fieldKeys, err := newTelemetryFieldKeysFromLegacy(quickfiltertypes.SourceTraces, []v3.AttributeKey{
 		{Key: "service.name", Type: v3.AttributeKeyTypeResource, DataType: v3.AttributeKeyDataTypeString},
 		{Key: "http.method", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeString},
 		{Key: "duration_nano", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeFloat64},
@@ -25,8 +25,8 @@ func TestNewTelemetryFieldKeysFromLegacy(t *testing.T) {
 	assert.Equal(t, telemetrytypes.FieldDataTypeNumber, fieldKeys[2].FieldDataType)
 	assert.Equal(t, telemetrytypes.FieldDataTypeNumber, fieldKeys[3].FieldDataType)
 
-	t.Run("meter writes restore the per-filter signal", func(t *testing.T) {
-		fieldKeys, err := newTelemetryFieldKeysFromLegacy(quickfiltertypes.SignalMeter, []v3.AttributeKey{
+	t.Run("meter writes restore the per-filter telemetry signal", func(t *testing.T) {
+		fieldKeys, err := newTelemetryFieldKeysFromLegacy(quickfiltertypes.SourceMeter, []v3.AttributeKey{
 			{Key: "host.name", DataType: v3.AttributeKeyDataTypeString},
 		})
 		require.NoError(t, err)
@@ -35,14 +35,14 @@ func TestNewTelemetryFieldKeysFromLegacy(t *testing.T) {
 	})
 
 	t.Run("rejects a filter without a key", func(t *testing.T) {
-		_, err := newTelemetryFieldKeysFromLegacy(quickfiltertypes.SignalTraces, []v3.AttributeKey{{DataType: v3.AttributeKeyDataTypeString}})
+		_, err := newTelemetryFieldKeysFromLegacy(quickfiltertypes.SourceTraces, []v3.AttributeKey{{DataType: v3.AttributeKeyDataTypeString}})
 		require.Error(t, err)
 	})
 }
 
-func TestNewLegacySignalFiltersFromSignalFilters(t *testing.T) {
-	legacy := newLegacySignalFiltersFromSignalFilters(&quickfiltertypes.SignalFilters{
-		Signal: quickfiltertypes.SignalLogs,
+func TestNewLegacySourceFilters(t *testing.T) {
+	legacy := newLegacySourceFilters(&quickfiltertypes.SourceFilters{
+		Source: quickfiltertypes.SourceLogs,
 		Filters: []telemetrytypes.TelemetryFieldKey{
 			{Name: "service.name", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString},
 			{Name: "http.method", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
@@ -52,7 +52,7 @@ func TestNewLegacySignalFiltersFromSignalFilters(t *testing.T) {
 		},
 	})
 
-	assert.Equal(t, quickfiltertypes.SignalLogs, legacy.Signal)
+	assert.Equal(t, quickfiltertypes.SourceLogs, legacy.Source)
 	require.Len(t, legacy.Filters, 5)
 	assert.Equal(t, v3.AttributeKey{Key: "service.name", Type: v3.AttributeKeyTypeResource, DataType: v3.AttributeKeyDataTypeString}, legacy.Filters[0])
 	assert.Equal(t, v3.AttributeKeyTypeTag, legacy.Filters[1].Type)

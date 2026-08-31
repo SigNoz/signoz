@@ -7,7 +7,7 @@ from sqlalchemy import sql
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 
-ALL_SIGNALS = {
+ALL_SOURCES = {
     "traces",
     "logs",
     "api_monitoring",
@@ -32,11 +32,11 @@ def test_get_quick_filters_returns_defaults(
 
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
-    assert {signal_filters["signal"] for signal_filters in data} == ALL_SIGNALS
+    assert {source_filters["source"] for source_filters in data} == ALL_SOURCES
 
-    for signal_filters in data:
-        assert len(signal_filters["filters"]) > 0
-        for field_key in signal_filters["filters"]:
+    for source_filters in data:
+        assert len(source_filters["filters"]) > 0
+        for field_key in source_filters["filters"]:
             assert field_key["name"] != ""
             assert "fieldContext" in field_key
             assert "fieldDataType" in field_key
@@ -57,7 +57,7 @@ def test_v1_get_serves_legacy_shape(
     )
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
-    assert {signal_filters["signal"] for signal_filters in data} == ALL_SIGNALS
+    assert {source_filters["signal"] for source_filters in data} == ALL_SOURCES
 
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/orgs/me/filters/traces"),
@@ -149,9 +149,8 @@ def test_update_quick_filters_round_trip(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.put(
-        signoz.self.host_configs["8080"].get("/api/v2/quick_filters"),
+        signoz.self.host_configs["8080"].get("/api/v2/quick_filters/logs"),
         json={
-            "signal": "logs",
             "filters": [
                 {
                     "name": "k8s.pod.name",
@@ -198,7 +197,7 @@ def test_update_quick_filters_round_trip(
     ]
 
 
-def test_update_quick_filters_creates_row_for_signal_without_one(
+def test_update_quick_filters_creates_row_for_source_without_one(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -207,8 +206,8 @@ def test_update_quick_filters_creates_row_for_signal_without_one(
 
     with signoz.sqlstore.conn.connect() as conn:
         conn.execute(
-            sql.text("DELETE FROM quick_filter WHERE signal = :signal"),
-            {"signal": "api_monitoring"},
+            sql.text("DELETE FROM quick_filter WHERE source = :source"),
+            {"source": "api_monitoring"},
         )
         conn.commit()
 
@@ -218,12 +217,11 @@ def test_update_quick_filters_creates_row_for_signal_without_one(
         timeout=2,
     )
     assert response.status_code == HTTPStatus.OK, response.text
-    assert response.json()["data"] == {"signal": "api_monitoring", "filters": []}
+    assert response.json()["data"] == {"source": "api_monitoring", "filters": []}
 
     response = requests.put(
-        signoz.self.host_configs["8080"].get("/api/v2/quick_filters"),
+        signoz.self.host_configs["8080"].get("/api/v2/quick_filters/api_monitoring"),
         json={
-            "signal": "api_monitoring",
             "filters": [
                 {
                     "name": "service.name",
@@ -253,15 +251,15 @@ def test_update_quick_filters_rejects_invalid_input(
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    for invalid_body in [
-        {
-            "signal": "traces",
-            "filters": [{"key": "service.name", "dataType": "string", "type": "resource"}],
-        },
-        {"signal": "invalid", "filters": []},
+    for source, invalid_body in [
+        (
+            "traces",
+            {"filters": [{"key": "service.name", "dataType": "string", "type": "resource"}]},
+        ),
+        ("invalid", {"filters": []}),
     ]:
         response = requests.put(
-            signoz.self.host_configs["8080"].get("/api/v2/quick_filters"),
+            signoz.self.host_configs["8080"].get(f"/api/v2/quick_filters/{source}"),
             json=invalid_body,
             headers={"Authorization": f"Bearer {admin_token}"},
             timeout=2,

@@ -73,7 +73,7 @@ func (migration *updateApiMonitoringFilters) Up(ctx context.Context, db *bun.DB)
 		// Find the API monitoring filter from the storable quick filters
 		var apiMonitoringFilterJSON string
 		for _, filter := range storableQuickFilters {
-			if filter.Signal == quickfiltertypes.SignalApiMonitoring {
+			if filter.Source.StringValue() == "api_monitoring" {
 				apiMonitoringFilterJSON = filter.Filter
 				break
 			}
@@ -83,7 +83,7 @@ func (migration *updateApiMonitoringFilters) Up(ctx context.Context, db *bun.DB)
 			_, err = tx.NewUpdate().
 				Table("quick_filter").
 				Set("filter = ?, updated_at = ?", apiMonitoringFilterJSON, time.Now()).
-				Where("signal = ? AND org_id = ?", quickfiltertypes.SignalApiMonitoring, orgID).
+				Where("signal = ? AND org_id = ?", "api_monitoring", orgID).
 				Exec(ctx)
 
 			if err != nil {

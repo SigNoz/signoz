@@ -109,6 +109,10 @@ func (migration *migrateQuickFilters) Up(ctx context.Context, db *bun.DB) error 
 
 	migration.settings.Logger.InfoContext(ctx, "migrated quick filters to telemetry field keys", slog.Int("total", len(rows)), slog.Int("migrated", migrated), slog.Int("skipped", skipped))
 
+	if _, err := migration.sqlstore.Dialect().RenameColumn(ctx, tx, "quick_filter", "signal", "source"); err != nil {
+		return err
+	}
+
 	return tx.Commit()
 }
 

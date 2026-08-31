@@ -23,13 +23,14 @@ import type {
 	ListQuickFilters200,
 	QuickfiltertypesUpdatableQuickFiltersDTO,
 	RenderErrorResponseDTO,
+	UpdateQuickFiltersPathParameters,
 } from '../sigNoz.schemas';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
 /**
- * Returns the org's quick filters for every signal, each filter as a telemetry field key.
+ * Returns the org's quick filters for every source, each filter as a telemetry field key.
  * @summary List quick filters
  */
 export const listQuickFilters = (signal?: AbortSignal) => {
@@ -113,15 +114,118 @@ export const invalidateListQuickFilters = async (
 };
 
 /**
- * Replaces the org's quick filters for the signal named in the body.
+ * Returns the org's quick filters for one source, each filter as a telemetry field key.
+ * @summary Get a source's quick filters
+ */
+export const getQuickFilters = (
+	{ source }: GetQuickFiltersPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetQuickFilters200>({
+		url: `/api/v2/quick_filters/${source}`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetQuickFiltersQueryKey = ({
+	source,
+}: GetQuickFiltersPathParameters) => {
+	return [`/api/v2/quick_filters/${source}`] as const;
+};
+
+export const getGetQuickFiltersQueryOptions = <
+	TData = Awaited<ReturnType<typeof getQuickFilters>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ source }: GetQuickFiltersPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getQuickFilters>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getGetQuickFiltersQueryKey({ source });
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuickFilters>>> = ({
+		signal,
+	}) => getQuickFilters({ source }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!source,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getQuickFilters>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetQuickFiltersQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getQuickFilters>>
+>;
+export type GetQuickFiltersQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get a source's quick filters
+ */
+
+export function useGetQuickFilters<
+	TData = Awaited<ReturnType<typeof getQuickFilters>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ source }: GetQuickFiltersPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getQuickFilters>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetQuickFiltersQueryOptions({ source }, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get a source's quick filters
+ */
+export const invalidateGetQuickFilters = async (
+	queryClient: QueryClient,
+	{ source }: GetQuickFiltersPathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetQuickFiltersQueryKey({ source }) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * Replaces the org's quick filters for the source named in the path.
  * @summary Update quick filters
  */
 export const updateQuickFilters = (
+	{ source }: UpdateQuickFiltersPathParameters,
 	quickfiltertypesUpdatableQuickFiltersDTO?: BodyType<QuickfiltertypesUpdatableQuickFiltersDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
-		url: `/api/v2/quick_filters`,
+		url: `/api/v2/quick_filters/${source}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		data: quickfiltertypesUpdatableQuickFiltersDTO,
@@ -136,13 +240,19 @@ export const getUpdateQuickFiltersMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateQuickFilters>>,
 		TError,
-		{ data?: BodyType<QuickfiltertypesUpdatableQuickFiltersDTO> },
+		{
+			pathParams: UpdateQuickFiltersPathParameters;
+			data?: BodyType<QuickfiltertypesUpdatableQuickFiltersDTO>;
+		},
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof updateQuickFilters>>,
 	TError,
-	{ data?: BodyType<QuickfiltertypesUpdatableQuickFiltersDTO> },
+	{
+		pathParams: UpdateQuickFiltersPathParameters;
+		data?: BodyType<QuickfiltertypesUpdatableQuickFiltersDTO>;
+	},
 	TContext
 > => {
 	const mutationKey = ['updateQuickFilters'];
@@ -156,11 +266,14 @@ export const getUpdateQuickFiltersMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof updateQuickFilters>>,
-		{ data?: BodyType<QuickfiltertypesUpdatableQuickFiltersDTO> }
+		{
+			pathParams: UpdateQuickFiltersPathParameters;
+			data?: BodyType<QuickfiltertypesUpdatableQuickFiltersDTO>;
+		}
 	> = (props) => {
-		const { data } = props ?? {};
+		const { pathParams, data } = props ?? {};
 
-		return updateQuickFilters(data);
+		return updateQuickFilters(pathParams, data);
 	};
 
 	return { mutationFn, ...mutationOptions };
@@ -184,115 +297,20 @@ export const useUpdateQuickFilters = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateQuickFilters>>,
 		TError,
-		{ data?: BodyType<QuickfiltertypesUpdatableQuickFiltersDTO> },
+		{
+			pathParams: UpdateQuickFiltersPathParameters;
+			data?: BodyType<QuickfiltertypesUpdatableQuickFiltersDTO>;
+		},
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof updateQuickFilters>>,
 	TError,
-	{ data?: BodyType<QuickfiltertypesUpdatableQuickFiltersDTO> },
+	{
+		pathParams: UpdateQuickFiltersPathParameters;
+		data?: BodyType<QuickfiltertypesUpdatableQuickFiltersDTO>;
+	},
 	TContext
 > => {
 	return useMutation(getUpdateQuickFiltersMutationOptions(options));
-};
-/**
- * Returns the org's quick filters for one signal, each filter as a telemetry field key.
- * @summary Get a signal's quick filters
- */
-export const getQuickFilters = (
-	{ signalName }: GetQuickFiltersPathParameters,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<GetQuickFilters200>({
-		url: `/api/v2/quick_filters/${signalName}`,
-		method: 'GET',
-		signal,
-	});
-};
-
-export const getGetQuickFiltersQueryKey = ({
-	signalName,
-}: GetQuickFiltersPathParameters) => {
-	return [`/api/v2/quick_filters/${signalName}`] as const;
-};
-
-export const getGetQuickFiltersQueryOptions = <
-	TData = Awaited<ReturnType<typeof getQuickFilters>>,
-	TError = ErrorType<RenderErrorResponseDTO>,
->(
-	{ signalName }: GetQuickFiltersPathParameters,
-	options?: {
-		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof getQuickFilters>>,
-			TError,
-			TData
-		>;
-	},
-) => {
-	const { query: queryOptions } = options ?? {};
-
-	const queryKey =
-		queryOptions?.queryKey ?? getGetQuickFiltersQueryKey({ signalName });
-
-	const queryFn: QueryFunction<Awaited<ReturnType<typeof getQuickFilters>>> = ({
-		signal,
-	}) => getQuickFilters({ signalName }, signal);
-
-	return {
-		queryKey,
-		queryFn,
-		enabled: !!signalName,
-		...queryOptions,
-	} as UseQueryOptions<
-		Awaited<ReturnType<typeof getQuickFilters>>,
-		TError,
-		TData
-	> & { queryKey: QueryKey };
-};
-
-export type GetQuickFiltersQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getQuickFilters>>
->;
-export type GetQuickFiltersQueryError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Get a signal's quick filters
- */
-
-export function useGetQuickFilters<
-	TData = Awaited<ReturnType<typeof getQuickFilters>>,
-	TError = ErrorType<RenderErrorResponseDTO>,
->(
-	{ signalName }: GetQuickFiltersPathParameters,
-	options?: {
-		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof getQuickFilters>>,
-			TError,
-			TData
-		>;
-	},
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getGetQuickFiltersQueryOptions({ signalName }, options);
-
-	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-		queryKey: QueryKey;
-	};
-
-	return { ...query, queryKey: queryOptions.queryKey };
-}
-
-/**
- * @summary Get a signal's quick filters
- */
-export const invalidateGetQuickFilters = async (
-	queryClient: QueryClient,
-	{ signalName }: GetQuickFiltersPathParameters,
-	options?: InvalidateOptions,
-): Promise<QueryClient> => {
-	await queryClient.invalidateQueries(
-		{ queryKey: getGetQuickFiltersQueryKey({ signalName }) },
-		options,
-	);
-
-	return queryClient;
 };

@@ -7383,13 +7383,13 @@ components:
       - custom
       - text
       type: string
-    QuickfiltertypesSignalFilters:
+    QuickfiltertypesSourceFilters:
       properties:
         filters:
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
           type: array
-        signal:
+        source:
           type: string
       required:
       - filters
@@ -7400,8 +7400,6 @@ components:
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
           type: array
-        signal:
-          type: string
       required:
       - filters
       type: object
@@ -18344,7 +18342,7 @@ paths:
   /api/v2/quick_filters:
     get:
       deprecated: false
-      description: Returns the org's quick filters for every signal, each filter as
+      description: Returns the org's quick filters for every source, each filter as
         a telemetry field key.
       operationId: ListQuickFilters
       responses:
@@ -18355,7 +18353,7 @@ paths:
                 properties:
                   data:
                     items:
-                      $ref: '#/components/schemas/QuickfiltertypesSignalFilters'
+                      $ref: '#/components/schemas/QuickfiltertypesSourceFilters'
                     nullable: true
                     type: array
                   status:
@@ -18397,10 +18395,75 @@ paths:
       summary: List quick filters
       tags:
       - quick_filter
+  /api/v2/quick_filters/{source}:
+    get:
+      deprecated: false
+      description: Returns the org's quick filters for one source, each filter as
+        a telemetry field key.
+      operationId: GetQuickFilters
+      parameters:
+      - in: path
+        name: source
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/QuickfiltertypesSourceFilters'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - quick-filter:read
+      - tokenizer:
+        - quick-filter:read
+      summary: Get a source's quick filters
+      tags:
+      - quick_filter
     put:
       deprecated: false
-      description: Replaces the org's quick filters for the signal named in the body.
+      description: Replaces the org's quick filters for the source named in the path.
       operationId: UpdateQuickFilters
+      parameters:
+      - in: path
+        name: source
+        required: true
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
@@ -18439,65 +18502,6 @@ paths:
       - tokenizer:
         - quick-filter:update
       summary: Update quick filters
-      tags:
-      - quick_filter
-  /api/v2/quick_filters/{signal_name}:
-    get:
-      deprecated: false
-      description: Returns the org's quick filters for one signal, each filter as
-        a telemetry field key.
-      operationId: GetQuickFilters
-      parameters:
-      - in: path
-        name: signal_name
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/QuickfiltertypesSignalFilters'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - quick-filter:read
-      - tokenizer:
-        - quick-filter:read
-      summary: Get a signal's quick filters
       tags:
       - quick_filter
   /api/v2/readyz:

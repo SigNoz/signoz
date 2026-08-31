@@ -8437,7 +8437,7 @@ export enum Querybuildertypesv5QueryTypeDTO {
 	clickhouse_sql = 'clickhouse_sql',
 	promql = 'promql',
 }
-export interface QuickfiltertypesSignalFiltersDTO {
+export interface QuickfiltertypesSourceFiltersDTO {
 	/**
 	 * @type array
 	 */
@@ -8445,7 +8445,7 @@ export interface QuickfiltertypesSignalFiltersDTO {
 	/**
 	 * @type string
 	 */
-	signal?: string;
+	source?: string;
 }
 
 export interface QuickfiltertypesUpdatableQuickFiltersDTO {
@@ -8453,10 +8453,6 @@ export interface QuickfiltertypesUpdatableQuickFiltersDTO {
 	 * @type array
 	 */
 	filters: TelemetrytypesTelemetryFieldKeyDTO[];
-	/**
-	 * @type string
-	 */
-	signal?: string;
 }
 
 export interface RenderErrorResponseDTO {
@@ -11853,7 +11849,7 @@ export type ListQuickFilters200 = {
 	/**
 	 * @type array,null
 	 */
-	data: QuickfiltertypesSignalFiltersDTO[] | null;
+	data: QuickfiltertypesSourceFiltersDTO[] | null;
 	/**
 	 * @type string
 	 */
@@ -11861,16 +11857,19 @@ export type ListQuickFilters200 = {
 };
 
 export type GetQuickFiltersPathParameters = {
-	signalName: string;
+	source: string;
 };
 export type GetQuickFilters200 = {
-	data: QuickfiltertypesSignalFiltersDTO;
+	data: QuickfiltertypesSourceFiltersDTO;
 	/**
 	 * @type string
 	 */
 	status: string;
 };
 
+export type UpdateQuickFiltersPathParameters = {
+	source: string;
+};
 export type Readyz200 = {
 	data: FactoryResponseDTO;
 	/**

@@ -350,6 +350,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.RulerHandler,
 			handlers.StatsHandler,
 			handlers.SavedView,
+			modules.QuickFilter,
 			handlers.QuickFilter,
 		),
 	)

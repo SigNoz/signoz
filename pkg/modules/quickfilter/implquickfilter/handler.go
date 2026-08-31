@@ -23,18 +23,19 @@ func NewHandler(module quickfilter.Module) quickfilter.Handler {
 	return &handler{module: module}
 }
 
-// legacySignalFilters is the v1 API shape: filters as v3 attribute keys.
-type legacySignalFilters struct {
-	Signal  quickfiltertypes.Signal `json:"signal"`
+// legacySourceFilters is the v1 API shape: filters as v3 attribute keys,
+// with the source still spelled "signal" on the wire.
+type legacySourceFilters struct {
+	Source  quickfiltertypes.Source `json:"signal"`
 	Filters []v3.AttributeKey       `json:"filters"`
 }
 
 // newTelemetryFieldKeysFromLegacy converts a v1 write payload with the same
 // normalizations as the storage migration: alias contexts, numerics to number.
 // The v1 shape carries no per filter signal, so meter keys get it restored.
-func newTelemetryFieldKeysFromLegacy(signal quickfiltertypes.Signal, filters []v3.AttributeKey) ([]telemetrytypes.TelemetryFieldKey, error) {
+func newTelemetryFieldKeysFromLegacy(source quickfiltertypes.Source, filters []v3.AttributeKey) ([]telemetrytypes.TelemetryFieldKey, error) {
 	var fieldSignal telemetrytypes.Signal
-	if signal == quickfiltertypes.SignalMeter {
+	if source == quickfiltertypes.SourceMeter {
 		fieldSignal = telemetrytypes.SignalMetrics
 	}
 
@@ -68,11 +69,11 @@ func newTelemetryFieldKeysFromLegacy(signal quickfiltertypes.Signal, filters []v
 	return fieldKeys, nil
 }
 
-// newLegacySignalFiltersFromSignalFilters renders stored telemetry field keys
+// newLegacySourceFilters renders stored telemetry field keys
 // back into the v1 shape, restoring the legacy spellings v1 clients expect.
-func newLegacySignalFiltersFromSignalFilters(signalFilters *quickfiltertypes.SignalFilters) *legacySignalFilters {
-	filters := make([]v3.AttributeKey, 0, len(signalFilters.Filters))
-	for _, fieldKey := range signalFilters.Filters {
+func newLegacySourceFilters(sourceFilters *quickfiltertypes.SourceFilters) *legacySourceFilters {
+	filters := make([]v3.AttributeKey, 0, len(sourceFilters.Filters))
+	for _, fieldKey := range sourceFilters.Filters {
 		// Only tag and resource exist in the v3 enum; other contexts render as
 		// unspecified so v1 clients never see spellings their queries can't use.
 		var attributeType v3.AttributeKeyType
@@ -100,8 +101,8 @@ func newLegacySignalFiltersFromSignalFilters(signalFilters *quickfiltertypes.Sig
 		})
 	}
 
-	return &legacySignalFilters{
-		Signal:  signalFilters.Signal,
+	return &legacySourceFilters{
+		Source:  sourceFilters.Source,
 		Filters: filters,
 	}
 }
@@ -113,41 +114,41 @@ func (handler *handler) GetQuickFilters(rw http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	filters, err := handler.module.GetQuickFilters(r.Context(), valuer.MustNewUUID(claims.OrgID), quickfiltertypes.Signal{})
+	filters, err := handler.module.GetQuickFilters(r.Context(), valuer.MustNewUUID(claims.OrgID), quickfiltertypes.Source{})
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	legacyFilters := make([]*legacySignalFilters, 0, len(filters))
-	for _, signalFilters := range filters {
-		legacyFilters = append(legacyFilters, newLegacySignalFiltersFromSignalFilters(signalFilters))
+	legacyFilters := make([]*legacySourceFilters, 0, len(filters))
+	for _, sourceFilters := range filters {
+		legacyFilters = append(legacyFilters, newLegacySourceFilters(sourceFilters))
 	}
 
 	render.Success(rw, http.StatusOK, legacyFilters)
 }
 
-func (handler *handler) GetSignalFilters(rw http.ResponseWriter, r *http.Request) {
+func (handler *handler) GetSourceFilters(rw http.ResponseWriter, r *http.Request) {
 	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	signal := mux.Vars(r)["signal"]
-	validatedSignal, err := quickfiltertypes.NewSignal(signal)
+	source := mux.Vars(r)["signal"]
+	validatedSource, err := quickfiltertypes.NewSource(source)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	filters, err := handler.module.GetQuickFilters(r.Context(), valuer.MustNewUUID(claims.OrgID), validatedSignal)
+	filters, err := handler.module.GetQuickFilters(r.Context(), valuer.MustNewUUID(claims.OrgID), validatedSource)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusOK, newLegacySignalFiltersFromSignalFilters(handler.signalFiltersOrEmpty(filters, validatedSignal)))
+	render.Success(rw, http.StatusOK, newLegacySourceFilters(handler.sourceFiltersOrEmpty(filters, validatedSource)))
 }
 
 func (handler *handler) UpdateQuickFilters(rw http.ResponseWriter, r *http.Request) {
@@ -157,19 +158,19 @@ func (handler *handler) UpdateQuickFilters(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	var req legacySignalFilters
+	var req legacySourceFilters
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	fieldKeys, err := newTelemetryFieldKeysFromLegacy(req.Signal, req.Filters)
+	fieldKeys, err := newTelemetryFieldKeysFromLegacy(req.Source, req.Filters)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	err = handler.module.UpsertQuickFilters(r.Context(), valuer.MustNewUUID(claims.OrgID), req.Signal, fieldKeys)
+	err = handler.module.UpsertQuickFilters(r.Context(), valuer.MustNewUUID(claims.OrgID), req.Source, fieldKeys)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -185,7 +186,7 @@ func (handler *handler) ListQuickFiltersV2(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	filters, err := handler.module.GetQuickFilters(r.Context(), valuer.MustNewUUID(claims.OrgID), quickfiltertypes.Signal{})
+	filters, err := handler.module.GetQuickFilters(r.Context(), valuer.MustNewUUID(claims.OrgID), quickfiltertypes.Source{})
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -201,13 +202,20 @@ func (handler *handler) UpdateQuickFiltersV2(rw http.ResponseWriter, r *http.Req
 		return
 	}
 
+	source := mux.Vars(r)["source"]
+	validatedSource, err := quickfiltertypes.NewSource(source)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	var req quickfiltertypes.UpdatableQuickFilters
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	err = handler.module.UpsertQuickFilters(r.Context(), valuer.MustNewUUID(claims.OrgID), req.Signal, req.Filters)
+	err = handler.module.UpsertQuickFilters(r.Context(), valuer.MustNewUUID(claims.OrgID), validatedSource, req.Filters)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -223,27 +231,27 @@ func (handler *handler) GetQuickFiltersV2(rw http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	signal := mux.Vars(r)["signal_name"]
-	validatedSignal, err := quickfiltertypes.NewSignal(signal)
+	source := mux.Vars(r)["source"]
+	validatedSource, err := quickfiltertypes.NewSource(source)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	filters, err := handler.module.GetQuickFilters(r.Context(), valuer.MustNewUUID(claims.OrgID), validatedSignal)
+	filters, err := handler.module.GetQuickFilters(r.Context(), valuer.MustNewUUID(claims.OrgID), validatedSource)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusOK, handler.signalFiltersOrEmpty(filters, validatedSignal))
+	render.Success(rw, http.StatusOK, handler.sourceFiltersOrEmpty(filters, validatedSource))
 }
 
-// signalFiltersOrEmpty keeps the single-signal response contract: a signal
+// sourceFiltersOrEmpty keeps the single-source response contract: a source
 // with no stored filters is served as an empty filter list, not an error.
-func (handler *handler) signalFiltersOrEmpty(filters []*quickfiltertypes.SignalFilters, signal quickfiltertypes.Signal) *quickfiltertypes.SignalFilters {
+func (handler *handler) sourceFiltersOrEmpty(filters []*quickfiltertypes.SourceFilters, source quickfiltertypes.Source) *quickfiltertypes.SourceFilters {
 	if len(filters) == 0 {
-		return quickfiltertypes.NewSignalFiltersFromSignal(signal)
+		return quickfiltertypes.NewSourceFiltersFromSource(source)
 	}
 	return filters[0]
 }

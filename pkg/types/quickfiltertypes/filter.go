@@ -12,51 +12,51 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type Signal struct {
+type Source struct {
 	valuer.String
 }
 
-func (enum *Signal) UnmarshalJSON(data []byte) error {
+func (enum *Source) UnmarshalJSON(data []byte) error {
 	var str string
 	if err := json.Unmarshal(data, &str); err != nil {
 		return err
 	}
 
-	signal, err := NewSignal(str)
+	source, err := NewSource(str)
 	if err != nil {
 		return err
 	}
 
-	*enum = signal
+	*enum = source
 	return nil
 }
 
 var (
-	SignalTraces          = Signal{valuer.NewString("traces")}
-	SignalLogs            = Signal{valuer.NewString("logs")}
-	SignalApiMonitoring   = Signal{valuer.NewString("api_monitoring")}
-	SignalExceptions      = Signal{valuer.NewString("exceptions")}
-	SignalMeter           = Signal{valuer.NewString("meter")}
-	SignalAiObservability = Signal{valuer.NewString("ai_observability")}
+	SourceTraces          = Source{valuer.NewString("traces")}
+	SourceLogs            = Source{valuer.NewString("logs")}
+	SourceApiMonitoring   = Source{valuer.NewString("api_monitoring")}
+	SourceExceptions      = Source{valuer.NewString("exceptions")}
+	SourceMeter           = Source{valuer.NewString("meter")}
+	SourceAiObservability = Source{valuer.NewString("ai_observability")}
 )
 
-// NewSignal creates a Signal from a string.
-func NewSignal(s string) (Signal, error) {
+// NewSource creates a Source from a string.
+func NewSource(s string) (Source, error) {
 	switch s {
 	case "traces":
-		return SignalTraces, nil
+		return SourceTraces, nil
 	case "logs":
-		return SignalLogs, nil
+		return SourceLogs, nil
 	case "api_monitoring":
-		return SignalApiMonitoring, nil
+		return SourceApiMonitoring, nil
 	case "exceptions":
-		return SignalExceptions, nil
+		return SourceExceptions, nil
 	case "meter":
-		return SignalMeter, nil
+		return SourceMeter, nil
 	case "ai_observability":
-		return SignalAiObservability, nil
+		return SourceAiObservability, nil
 	default:
-		return Signal{}, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid signal: %s", s)
+		return Source{}, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid source: %s", s)
 	}
 }
 
@@ -65,17 +65,16 @@ type StorableQuickFilter struct {
 	types.Identifiable
 	OrgID  valuer.UUID `bun:"org_id,type:text,notnull"`
 	Filter string      `bun:"filter,type:text,notnull"`
-	Signal Signal      `bun:"signal,type:text,notnull"`
+	Source Source      `bun:"source,type:text,notnull"`
 	types.TimeAuditable
 }
 
-type SignalFilters struct {
-	Signal  Signal                             `json:"signal"`
+type SourceFilters struct {
+	Source  Source                             `json:"source"`
 	Filters []telemetrytypes.TelemetryFieldKey `json:"filters" required:"true" nullable:"false"`
 }
 
 type UpdatableQuickFilters struct {
-	Signal  Signal                             `json:"signal"`
 	Filters []telemetrytypes.TelemetryFieldKey `json:"filters" required:"true" nullable:"false"`
 }
 
@@ -89,12 +88,12 @@ func validateFilters(filters []telemetrytypes.TelemetryFieldKey) error {
 }
 
 // NewStorableQuickFilter creates a new StorableQuickFilter after validation.
-func NewStorableQuickFilter(orgID valuer.UUID, signal Signal, filters []telemetrytypes.TelemetryFieldKey) (*StorableQuickFilter, error) {
+func NewStorableQuickFilter(orgID valuer.UUID, source Source, filters []telemetrytypes.TelemetryFieldKey) (*StorableQuickFilter, error) {
 	if orgID.IsZero() {
 		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "orgID is required")
 	}
 
-	if _, err := NewSignal(signal.StringValue()); err != nil {
+	if _, err := NewSource(source.StringValue()); err != nil {
 		return nil, err
 	}
 
@@ -119,7 +118,7 @@ func NewStorableQuickFilter(orgID valuer.UUID, signal Signal, filters []telemetr
 			ID: valuer.GenerateUUID(),
 		},
 		OrgID:  orgID,
-		Signal: signal,
+		Source: source,
 		Filter: string(filterJSON),
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: now,
@@ -128,16 +127,16 @@ func NewStorableQuickFilter(orgID valuer.UUID, signal Signal, filters []telemetr
 	}, nil
 }
 
-// NewSignalFiltersFromSignal creates a SignalFilters with no filters for a signal.
-func NewSignalFiltersFromSignal(signal Signal) *SignalFilters {
-	return &SignalFilters{
-		Signal:  signal,
+// NewSourceFiltersFromSource creates a SourceFilters with no filters for a source.
+func NewSourceFiltersFromSource(source Source) *SourceFilters {
+	return &SourceFilters{
+		Source:  source,
 		Filters: []telemetrytypes.TelemetryFieldKey{},
 	}
 }
 
-// NewSignalFilterFromStorableQuickFilter converts a StorableQuickFilter to a SignalFilters object.
-func NewSignalFilterFromStorableQuickFilter(storableQuickFilter *StorableQuickFilter) (*SignalFilters, error) {
+// NewSourceFilterFromStorableQuickFilter converts a StorableQuickFilter to a SourceFilters object.
+func NewSourceFilterFromStorableQuickFilter(storableQuickFilter *StorableQuickFilter) (*SourceFilters, error) {
 	if storableQuickFilter == nil {
 		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "storableQuickFilter cannot be nil")
 	}
@@ -156,13 +155,13 @@ func NewSignalFilterFromStorableQuickFilter(storableQuickFilter *StorableQuickFi
 		filters = []telemetrytypes.TelemetryFieldKey{}
 	}
 
-	return &SignalFilters{
-		Signal:  storableQuickFilter.Signal,
+	return &SourceFilters{
+		Source:  storableQuickFilter.Source,
 		Filters: filters,
 	}, nil
 }
 
-// NewDefaultQuickFilter generates default filters for all supported signals.
+// NewDefaultQuickFilter generates default filters for all supported sources.
 func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 	tracesFilters := []telemetrytypes.TelemetryFieldKey{
 		{Name: "duration_nano", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeNumber},
@@ -227,20 +226,20 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 	}
 
 	defaults := []struct {
-		signal  Signal
+		source  Source
 		filters []telemetrytypes.TelemetryFieldKey
 	}{
-		{SignalTraces, tracesFilters},
-		{SignalLogs, logsFilters},
-		{SignalApiMonitoring, apiMonitoringFilters},
-		{SignalExceptions, exceptionsFilters},
-		{SignalMeter, meterFilters},
-		{SignalAiObservability, aiObservabilityFilters},
+		{SourceTraces, tracesFilters},
+		{SourceLogs, logsFilters},
+		{SourceApiMonitoring, apiMonitoringFilters},
+		{SourceExceptions, exceptionsFilters},
+		{SourceMeter, meterFilters},
+		{SourceAiObservability, aiObservabilityFilters},
 	}
 
 	storableQuickFilters := make([]*StorableQuickFilter, 0, len(defaults))
 	for _, def := range defaults {
-		storableQuickFilter, err := NewStorableQuickFilter(orgID, def.signal, def.filters)
+		storableQuickFilter, err := NewStorableQuickFilter(orgID, def.source, def.filters)
 		if err != nil {
 			return nil, err
 		}

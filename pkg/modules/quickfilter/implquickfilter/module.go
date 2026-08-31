@@ -18,45 +18,49 @@ func NewModule(store quickfiltertypes.QuickFilterStore) quickfilter.Module {
 	return &module{store: store}
 }
 
-// GetQuickFilters returns quick filters for a signal, or for every signal when signal is zero.
-func (module *module) GetQuickFilters(ctx context.Context, orgID valuer.UUID, signal quickfiltertypes.Signal) ([]*quickfiltertypes.SignalFilters, error) {
-	if signal.IsZero() {
+func (module *module) Get(ctx context.Context, orgID valuer.UUID, source quickfiltertypes.Source) (*quickfiltertypes.StorableQuickFilter, error) {
+	return module.store.GetBySource(ctx, orgID, source.StringValue())
+}
+
+// GetQuickFilters returns quick filters for a source, or for every source when source is zero.
+func (module *module) GetQuickFilters(ctx context.Context, orgID valuer.UUID, source quickfiltertypes.Source) ([]*quickfiltertypes.SourceFilters, error) {
+	if source.IsZero() {
 		storedFilters, err := module.store.Get(ctx, orgID)
 		if err != nil {
 			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error fetching organization filters")
 		}
 
-		result := make([]*quickfiltertypes.SignalFilters, 0, len(storedFilters))
+		result := make([]*quickfiltertypes.SourceFilters, 0, len(storedFilters))
 		for _, storedFilter := range storedFilters {
-			signalFilter, err := quickfiltertypes.NewSignalFilterFromStorableQuickFilter(storedFilter)
+			sourceFilter, err := quickfiltertypes.NewSourceFilterFromStorableQuickFilter(storedFilter)
 			if err != nil {
-				return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error processing filter for signal: %s", storedFilter.Signal)
+				return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error processing filter for source: %s", storedFilter.Source)
 			}
-			result = append(result, signalFilter)
+			result = append(result, sourceFilter)
 		}
 
 		return result, nil
 	}
 
-	storedFilter, err := module.store.GetBySignal(ctx, orgID, signal.StringValue())
+	storedFilter, err := module.store.GetBySource(ctx, orgID, source.StringValue())
 	if err != nil {
 		if errors.Ast(err, errors.TypeNotFound) {
-			return []*quickfiltertypes.SignalFilters{}, nil
+			return []*quickfiltertypes.SourceFilters{}, nil
 		}
 		return nil, err
 	}
 
-	signalFilter, err := quickfiltertypes.NewSignalFilterFromStorableQuickFilter(storedFilter)
+	sourceFilter, err := quickfiltertypes.NewSourceFilterFromStorableQuickFilter(storedFilter)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error processing filter for signal: %s", storedFilter.Signal)
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error processing filter for source: %s", storedFilter.Source)
 	}
 
-	return []*quickfiltertypes.SignalFilters{signalFilter}, nil
+	return []*quickfiltertypes.SourceFilters{sourceFilter}, nil
 }
 
-// UpsertQuickFilters replaces quick filters for a specific signal in an organization, creating them if absent.
-func (module *module) UpsertQuickFilters(ctx context.Context, orgID valuer.UUID, signal quickfiltertypes.Signal, filters []telemetrytypes.TelemetryFieldKey) error {
-	filter, err := quickfiltertypes.NewStorableQuickFilter(orgID, signal, filters)
+// UpsertQuickFilters replaces quick filters for a specific source in an organization, creating them if absent.
+func (module *module) UpsertQuickFilters(ctx context.Context, orgID valuer.UUID, source quickfiltertypes.Source, filters []telemetrytypes.TelemetryFieldKey) error {
+	filter, err := quickfiltertypes.NewStorableQuickFilter(orgID, source, filters)
 	if err != nil {
 		return err
 	}

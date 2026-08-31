@@ -81,6 +81,7 @@ type provider struct {
 	llmPricingRuleHandler      llmpricingrule.Handler
 	statsHandler               statsreporter.Handler
 	savedViewHandler           savedview.Handler
+	quickFilterModule          quickfilter.Module
 	quickFilterHandler         quickfilter.Handler
 }
 
@@ -120,6 +121,7 @@ func NewFactory(
 	rulerHandler ruler.Handler,
 	statsHandler statsreporter.Handler,
 	savedViewHandler savedview.Handler,
+	quickFilterModule quickfilter.Module,
 	quickFilterHandler quickfilter.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
@@ -162,6 +164,7 @@ func NewFactory(
 			rulerHandler,
 			statsHandler,
 			savedViewHandler,
+			quickFilterModule,
 			quickFilterHandler,
 		)
 	})
@@ -206,6 +209,7 @@ func newProvider(
 	rulerHandler ruler.Handler,
 	statsHandler statsreporter.Handler,
 	savedViewHandler savedview.Handler,
+	quickFilterModule quickfilter.Module,
 	quickFilterHandler quickfilter.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
@@ -249,6 +253,7 @@ func newProvider(
 		llmPricingRuleHandler:      llmPricingRuleHandler,
 		statsHandler:               statsHandler,
 		savedViewHandler:           savedViewHandler,
+		quickFilterModule:          quickFilterModule,
 		quickFilterHandler:         quickFilterHandler,
 	}
 
