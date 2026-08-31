@@ -71,7 +71,7 @@ type StorableQuickFilter struct {
 
 type SignalFilters struct {
 	Signal  Signal                             `json:"signal"`
-	Filters []telemetrytypes.TelemetryFieldKey `json:"filters"`
+	Filters []telemetrytypes.TelemetryFieldKey `json:"filters" required:"true" nullable:"false"`
 }
 
 type UpdatableQuickFilters struct {
@@ -136,12 +136,18 @@ func NewSignalFilterFromStorableQuickFilter(storableQuickFilter *StorableQuickFi
 		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "storableQuickFilter cannot be nil")
 	}
 
-	var filters []telemetrytypes.TelemetryFieldKey
+	filters := []telemetrytypes.TelemetryFieldKey{}
 	if storableQuickFilter.Filter != "" {
 		err := json.Unmarshal([]byte(storableQuickFilter.Filter), &filters)
 		if err != nil {
 			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error unmarshalling filters")
 		}
+	}
+
+	// Stored filter JSON can be the literal "null" (a nil slice was upserted),
+	// which unmarshals to nil; the API contract requires a non-null array.
+	if filters == nil {
+		filters = []telemetrytypes.TelemetryFieldKey{}
 	}
 
 	return &SignalFilters{

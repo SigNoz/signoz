@@ -7388,10 +7388,11 @@ components:
         filters:
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
-          nullable: true
           type: array
         signal:
           type: string
+      required:
+      - filters
       type: object
     QuickfiltertypesUpdatableQuickFilters:
       properties:

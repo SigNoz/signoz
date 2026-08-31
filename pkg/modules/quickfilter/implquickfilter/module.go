@@ -41,7 +41,7 @@ func (module *module) GetQuickFilters(ctx context.Context, orgID valuer.UUID, si
 	storedFilter, err := module.store.GetBySignal(ctx, orgID, signal.StringValue())
 	if err != nil {
 		if errors.Ast(err, errors.TypeNotFound) {
-			return []*quickfiltertypes.SignalFilters{quickfiltertypes.NewSignalFiltersFromSignal(signal)}, nil
+			return []*quickfiltertypes.SignalFilters{}, nil
 		}
 		return nil, err
 	}

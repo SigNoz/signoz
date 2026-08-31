@@ -147,7 +147,7 @@ func (handler *handler) GetSignalFilters(rw http.ResponseWriter, r *http.Request
 		return
 	}
 
-	render.Success(rw, http.StatusOK, newLegacySignalFiltersFromSignalFilters(filters[0]))
+	render.Success(rw, http.StatusOK, newLegacySignalFiltersFromSignalFilters(handler.signalFiltersOrEmpty(filters, validatedSignal)))
 }
 
 func (handler *handler) UpdateQuickFilters(rw http.ResponseWriter, r *http.Request) {
@@ -236,5 +236,14 @@ func (handler *handler) GetQuickFiltersV2(rw http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	render.Success(rw, http.StatusOK, filters[0])
+	render.Success(rw, http.StatusOK, handler.signalFiltersOrEmpty(filters, validatedSignal))
+}
+
+// signalFiltersOrEmpty keeps the single-signal response contract: a signal
+// with no stored filters is served as an empty filter list, not an error.
+func (handler *handler) signalFiltersOrEmpty(filters []*quickfiltertypes.SignalFilters, signal quickfiltertypes.Signal) *quickfiltertypes.SignalFilters {
+	if len(filters) == 0 {
+		return quickfiltertypes.NewSignalFiltersFromSignal(signal)
+	}
+	return filters[0]
 }

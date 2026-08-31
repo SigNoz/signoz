@@ -8439,9 +8439,9 @@ export enum Querybuildertypesv5QueryTypeDTO {
 }
 export interface QuickfiltertypesSignalFiltersDTO {
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	filters?: TelemetrytypesTelemetryFieldKeyDTO[] | null;
+	filters: TelemetrytypesTelemetryFieldKeyDTO[];
 	/**
 	 * @type string
 	 */
