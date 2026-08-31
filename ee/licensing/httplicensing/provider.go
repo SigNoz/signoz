@@ -96,12 +96,12 @@ func (provider *provider) Validate(ctx context.Context) error {
 }
 
 func (provider *provider) Activate(ctx context.Context, organizationID valuer.UUID, key string) error {
-	data, err := provider.zeus.GetLicense(ctx, key)
+	zeusLicense, err := provider.zeus.GetLicense(ctx, key)
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "unable to fetch license data with upstream server")
 	}
 
-	license, err := licensetypes.NewLicense(data, organizationID)
+	license, err := licensetypes.NewLicense(zeusLicense, organizationID)
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to create license entity")
 	}
@@ -180,7 +180,7 @@ func (provider *provider) Refresh(ctx context.Context, organizationID valuer.UUI
 		return err
 	}
 
-	data, err := provider.zeus.GetLicense(ctx, activeLicense.Key)
+	zeusLicense, err := provider.zeus.GetLicense(ctx, activeLicense.Key)
 	if err != nil {
 		if time.Since(activeLicense.LastValidatedAt) > time.Duration(provider.config.FailureThreshold)*provider.config.PollInterval {
 			activeLicense.UpdateFeatures(licensetypes.BasicPlan)
@@ -195,7 +195,7 @@ func (provider *provider) Refresh(ctx context.Context, organizationID valuer.UUI
 		return err
 	}
 
-	err = activeLicense.Update(data)
+	err = activeLicense.Update(zeusLicense)
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to create license entity from license data")
 	}
