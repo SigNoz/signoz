@@ -585,7 +585,7 @@ func TestConditionForSynthesizedKeys(t *testing.T) {
 		require.Len(t, conds, 1)
 		sb.Where(conds...)
 		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-		assert.Contains(t, sql, "http_method = ?")
+		assert.Contains(t, sql, "httpMethod = ?")
 		assert.NotContains(t, sql, "attributes_string")
 	})
 
