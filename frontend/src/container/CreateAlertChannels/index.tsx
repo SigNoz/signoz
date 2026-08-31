@@ -38,12 +38,14 @@ import {
 	SlackChannel,
 	ValidatePagerChannel,
 	WebhookChannel,
+	GotifyChannel,
 } from './config';
 import { ChannelInitialConfig } from './defaults';
 import {
 	isChannelType,
 	isValidGoogleChatWebhookURL,
 	prepareGoogleChatRequest,
+	prepareGotifyRequest,
 } from './utils';
 
 import './CreateAlertChannels.styles.scss';
@@ -69,7 +71,8 @@ function CreateAlertChannels({
 				MsTeamsChannel &
 				OpsgenieChannel &
 				EmailChannel &
-				GoogleChatChannel
+				GoogleChatChannel &
+				GotifyChannel
 		>
 	>(() => ({
 		send_resolved: true,
@@ -434,6 +437,60 @@ function CreateAlertChannels({
 		showErrorModal,
 	]);
 
+	const validateGotifyConfig = useCallback((): boolean => {
+		if (!selectedConfig.url) {
+			notifications.error({
+				message: 'Error',
+				description: t('gotify_url_required', {
+					defaultValue: 'Gotify server URL is required',
+				}),
+			});
+			return false;
+		}
+
+		if (!selectedConfig.token) {
+			notifications.error({
+				message: 'Error',
+				description: t('gotify_token_required', {
+					defaultValue: 'Gotify application token is required',
+				}),
+			});
+			return false;
+		}
+
+		return true;
+	}, [selectedConfig.url, selectedConfig.token, notifications, t]);
+
+	const onGotifyHandler = useCallback(async () => {
+		if (!validateGotifyConfig()) {
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
+		}
+
+		setSavingState(true);
+
+		try {
+			await createChannel({ data: prepareGotifyRequest(selectedConfig) });
+			notifications.success({
+				message: 'Success',
+				description: t('channel_creation_done'),
+			});
+			history.replace(ROUTES.ALL_CHANNELS);
+			return { status: 'success', statusMessage: t('channel_creation_done') };
+		} catch (error) {
+			showErrorModal(toAPIError(error as ErrorType<RenderErrorResponseDTO>));
+			return { status: 'failed', statusMessage: t('channel_creation_failed') };
+		} finally {
+			setSavingState(false);
+		}
+	}, [
+		validateGotifyConfig,
+		createChannel,
+		selectedConfig,
+		notifications,
+		t,
+		showErrorModal,
+	]);
+
 	const onSaveHandler = useCallback(
 		async (value: ChannelType) => {
 			if (!selectedConfig.name) {
@@ -452,6 +509,7 @@ function CreateAlertChannels({
 				[ChannelType.MsTeams]: onMsTeamsHandler,
 				[ChannelType.Email]: onEmailHandler,
 				[ChannelType.GoogleChat]: onGoogleChatHandler,
+				[ChannelType.Gotify]: onGotifyHandler,
 			};
 
 			if (isChannelType(value)) {
@@ -484,6 +542,7 @@ function CreateAlertChannels({
 			onMsTeamsHandler,
 			onEmailHandler,
 			onGoogleChatHandler,
+			onGotifyHandler,
 			notifications,
 			t,
 		],
@@ -527,6 +586,13 @@ function CreateAlertChannels({
 							return;
 						}
 						await testChannel({ data: prepareGoogleChatRequest(selectedConfig) });
+						break;
+					case ChannelType.Gotify:
+						if (!validateGotifyConfig()) {
+							setTestingState(false);
+							return;
+						}
+						await testChannel({ data: prepareGotifyRequest(selectedConfig) });
 						break;
 					default:
 						notifications.error({
@@ -576,6 +642,7 @@ function CreateAlertChannels({
 			prepareMsTeamsRequest,
 			prepareEmailRequest,
 			validateGoogleChatConfig,
+			validateGotifyConfig,
 			testChannel,
 			notifications,
 		],

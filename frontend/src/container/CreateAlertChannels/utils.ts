@@ -3,7 +3,7 @@ import {
 	ConfigSecretURLDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
-import { ChannelType, GoogleChatChannel } from './config';
+import { ChannelType, GoogleChatChannel, GotifyChannel } from './config';
 
 export const isChannelType = (type: string): type is ChannelType =>
 	Object.values(ChannelType).includes(type as ChannelType);
@@ -37,3 +37,20 @@ export const prepareGoogleChatRequest = (
 		},
 	],
 });
+
+export const prepareGotifyRequest = (
+	config: Partial<GotifyChannel>,
+): AlertmanagertypesPostableChannelDTO =>
+	({
+		name: config.name || '',
+		gotify_configs: [
+			{
+				url: (config.url || '') as unknown as ConfigSecretURLDTO,
+				token: config.token || '',
+				priority: Number(config.priority) || 5,
+				title: config.title || '',
+				message: config.message || '',
+				send_resolved: config.send_resolved || false,
+			},
+		],
+	}) as unknown as AlertmanagertypesPostableChannelDTO;

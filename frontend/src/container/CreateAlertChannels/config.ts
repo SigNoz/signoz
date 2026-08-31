@@ -61,7 +61,7 @@ export interface OpsgenieChannel extends Channel {
 	detailsArray?: Record<string, string>;
 
 	// Priority level of alert. Possible values are P1, P2, P3, P4, and P5.
-	priority?: string;
+	priority?: string | number;
 }
 
 export interface EmailChannel extends Channel {
@@ -105,6 +105,7 @@ export enum ChannelType {
 	Opsgenie = 'opsgenie',
 	MsTeams = 'msteams',
 	GoogleChat = 'googlechat',
+	Gotify = 'gotify',
 }
 
 // LabelFilterStatement will be used for preparing filter conditions / matchers
@@ -133,4 +134,12 @@ export interface GoogleChatChannel extends Channel {
 	webhook_url?: string;
 	title?: string;
 	text?: string;
+}
+
+export interface GotifyChannel extends Channel {
+	url?: string;
+	token?: string;
+	priority?: string | number;
+	title?: string;
+	message?: string;
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/email"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/googlechat"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/gotify"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/msteamsv2"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/opsgenie"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/pagerduty"
@@ -26,6 +27,7 @@ var customNotifierIntegrations = []string{
 	slack.Integration,
 	msteamsv2.Integration,
 	googlechat.Integration,
+	gotify.Integration,
 }
 
 func NewReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger, templater alertmanagertypes.Templater) ([]notify.Integration, error) {
@@ -79,6 +81,11 @@ func NewReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Temp
 	for i, c := range nc.GoogleChatConfigs {
 		add(googlechat.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) {
 			return googlechat.New(c, tmpl, l, templater)
+		})
+	}
+	for i, c := range nc.GotifyConfigs {
+		add(gotify.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) {
+			return gotify.New(c, tmpl, l, templater)
 		})
 	}
 

@@ -14,11 +14,13 @@ import {
 	PagerChannel,
 	SlackChannel,
 	WebhookChannel,
+	GotifyChannel,
 } from 'container/CreateAlertChannels/config';
 import history from 'lib/history';
 
 import EmailSettings from './Settings/Email';
 import GoogleChatSettings from './Settings/GoogleChat';
+import GotifySettings from './Settings/Gotify';
 import MsTeamsSettings from './Settings/MsTeams';
 import OpsgenieSettings from './Settings/Opsgenie';
 import PagerSettings from './Settings/Pager';
@@ -53,6 +55,8 @@ function FormAlertChannels({
 				return <MsTeamsSettings setSelectedConfig={setSelectedConfig} />;
 			case ChannelType.GoogleChat:
 				return <GoogleChatSettings setSelectedConfig={setSelectedConfig} />;
+			case ChannelType.Gotify:
+				return <GotifySettings setSelectedConfig={setSelectedConfig} />;
 			case ChannelType.Opsgenie:
 				return <OpsgenieSettings setSelectedConfig={setSelectedConfig} />;
 			case ChannelType.Email:
@@ -141,6 +145,10 @@ function FormAlertChannels({
 						>
 							Google Chat
 						</Select.Option>
+
+						<Select.Option value="gotify" key="gotify" data-testid="select-option">
+							Gotify
+						</Select.Option>
 					</Select>
 				</Form.Item>
 
@@ -189,7 +197,8 @@ interface FormAlertChannelsProps {
 					PagerChannel &
 					OpsgenieChannel &
 					EmailChannel &
-					GoogleChatChannel
+					GoogleChatChannel &
+					GotifyChannel
 			>
 		>
 	>;

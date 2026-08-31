@@ -31,10 +31,12 @@ import {
 	SlackChannel,
 	ValidatePagerChannel,
 	WebhookChannel,
+	GotifyChannel,
 } from 'container/CreateAlertChannels/config';
 import {
 	isValidGoogleChatWebhookURL,
 	prepareGoogleChatRequest,
+	prepareGotifyRequest,
 } from 'container/CreateAlertChannels/utils';
 import FormAlertChannels from 'container/FormAlertChannels';
 import { useNotifications } from 'hooks/useNotifications';
@@ -58,7 +60,8 @@ function EditAlertChannels({
 				MsTeamsChannel &
 				OpsgenieChannel &
 				EmailChannel &
-				GoogleChatChannel
+				GoogleChatChannel &
+				GotifyChannel
 		>
 	>({
 		...initialValue,
@@ -452,6 +455,65 @@ function EditAlertChannels({
 		t,
 	]);
 
+	const validateGotifyConfig = useCallback((): string => {
+		if (!selectedConfig?.url) {
+			return t('gotify_url_required', {
+				defaultValue: 'Gotify server URL is required',
+			});
+		}
+
+		if (!selectedConfig.token) {
+			return t('gotify_token_required', {
+				defaultValue: 'Gotify application token is required',
+			});
+		}
+
+		return '';
+	}, [selectedConfig, t]);
+
+	const onGotifyEditHandler = useCallback(async () => {
+		const validationError = validateGotifyConfig();
+
+		if (validationError !== '') {
+			notifications.error({
+				message: 'Error',
+				description: validationError,
+			});
+			return { status: 'failed', statusMessage: validationError };
+		}
+
+		setSavingState(true);
+
+		try {
+			await updateChannel({
+				pathParams: { id },
+				data: prepareGotifyRequest(selectedConfig),
+			});
+			notifications.success({
+				message: 'Success',
+				description: t('channel_edit_done'),
+			});
+			history.replace(ROUTES.ALL_CHANNELS);
+			return { status: 'success', statusMessage: t('channel_edit_done') };
+		} catch (error) {
+			const apiError = notifyError(error);
+			return {
+				status: 'failed',
+				statusMessage: apiError.getErrorMessage() || t('channel_edit_failed'),
+			};
+		} finally {
+			setSavingState(false);
+		}
+	}, [
+		validateGotifyConfig,
+		updateChannel,
+		id,
+		selectedConfig,
+		notifications,
+		notifyError,
+		t,
+	]);
+
 	const onSaveHandler = useCallback(
 		async (value: ChannelType) => {
 			let result;
@@ -469,6 +531,8 @@ function EditAlertChannels({
 				result = await onEmailEditHandler();
 			} else if (value === ChannelType.GoogleChat) {
 				result = await onGoogleChatEditHandler();
+			} else if (value === ChannelType.Gotify) {
+				result = await onGotifyEditHandler();
 			}
 			logEvent('Alert Channel: Save channel', {
 				type: value,
@@ -488,6 +552,7 @@ function EditAlertChannels({
 			onOpsgenieEditHandler,
 			onEmailEditHandler,
 			onGoogleChatEditHandler,
+			onGotifyEditHandler,
 		],
 	);
 
@@ -542,6 +607,19 @@ function EditAlertChannels({
 						await testChannel({ data: prepareGoogleChatRequest(selectedConfig) });
 						break;
 					}
+					case ChannelType.Gotify: {
+						const validationError = validateGotifyConfig();
+						if (validationError !== '') {
+							notifications.error({
+								message: 'Error',
+								description: validationError,
+							});
+							setTestingState(false);
+							return;
+						}
+						await testChannel({ data: prepareGotifyRequest(selectedConfig) });
+						break;
+					}
 					default:
 						notifications.error({
 							message: 'Error',
@@ -579,6 +657,7 @@ function EditAlertChannels({
 			t,
 			notifyError,
 			validateGoogleChatConfig,
+			validateGotifyConfig,
 			testChannel,
 			prepareWebhookRequest,
 			preparePagerRequest,
