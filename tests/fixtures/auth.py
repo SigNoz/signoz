@@ -189,7 +189,7 @@ def apply_license(
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
 ) -> types.Operation:
-    """Stub Zeus license-lookup, then POST /api/v3/licenses so the BE flips
+    """Stub Zeus license-lookup, then POST /api/v4/licenses so the BE flips
     to ENTERPRISE. Package-scoped so an e2e bootstrap can pull it in and
     every spec inherits the licensed state."""
 
@@ -229,7 +229,7 @@ def apply_license(
         # 202 = applied, 409 = already applied. Retry transient failures —
         # the BE occasionally 5xxs right after startup before the license
         # sync goroutine is ready.
-        license_url = signoz.self.host_configs["8080"].get("/api/v3/licenses")
+        license_url = signoz.self.host_configs["8080"].get("/api/v4/licenses")
         auth_header = {"Authorization": f"Bearer {access_token}"}
         for attempt in range(10):
             resp = requests.post(
@@ -318,7 +318,7 @@ def add_license(
     access_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.post(
-        url=signoz.self.host_configs["8080"].get(f"{base_path}/api/v3/licenses"),
+        url=signoz.self.host_configs["8080"].get(f"{base_path}/api/v4/licenses"),
         json={"key": "secret-key"},
         headers={"Authorization": "Bearer " + access_token},
         timeout=5,

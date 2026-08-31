@@ -55,7 +55,7 @@ def test_apply_license(
     access_token = get_token("admin@integration.test", "password123Z$")
 
     response = requests.post(
-        url=signoz.self.host_configs["8080"].get("/api/v3/licenses"),
+        url=signoz.self.host_configs["8080"].get("/api/v4/licenses"),
         json={"key": "secret-key"},
         headers={"Authorization": "Bearer " + access_token},
         timeout=5,
@@ -114,7 +114,7 @@ def test_refresh_license(
     access_token = get_token("admin@integration.test", "password123Z$")
 
     response = requests.put(
-        url=signoz.self.host_configs["8080"].get("/api/v3/licenses"),
+        url=signoz.self.host_configs["8080"].get("/api/v4/licenses/0196360e-90cd-7a74-8313-1aa815ce2a67"),
         headers={"Authorization": "Bearer " + access_token},
         timeout=5,
     )
@@ -122,12 +122,12 @@ def test_refresh_license(
     assert response.status_code == http.HTTPStatus.NO_CONTENT
 
     response = requests.get(
-        url=signoz.self.host_configs["8080"].get("/api/v3/licenses/active"),
+        url=signoz.self.host_configs["8080"].get("/api/v4/licenses/active"),
         headers={"Authorization": "Bearer " + access_token},
         timeout=5,
     )
     assert response.status_code == http.HTTPStatus.OK
-    assert response.json()["data"]["valid_from"] == 1732146922
+    assert response.json()["data"]["validFrom"] == 1732146922
 
     response = requests.post(
         url=signoz.zeus.host_configs["8080"].get("/__admin/requests/count"),
