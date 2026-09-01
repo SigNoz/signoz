@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import MEditor, { EditorProps } from '@monaco-editor/react';
+import { EditorProps } from '@monaco-editor/react';
+import MEditor from 'components/MonacoEditor/MonacoEditor';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
 function Editor({

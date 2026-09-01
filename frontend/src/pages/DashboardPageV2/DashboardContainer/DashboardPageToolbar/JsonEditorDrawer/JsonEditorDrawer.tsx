@@ -1,5 +1,5 @@
 import { KeyboardEvent, useCallback } from 'react';
-import MEditor from '@monaco-editor/react';
+import MEditor from 'components/MonacoEditor/MonacoEditor';
 import { TriangleAlert } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';

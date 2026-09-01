@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import MEditor, { EditorProps, Monaco } from '@monaco-editor/react';
+import { EditorProps, Monaco } from '@monaco-editor/react';
+import MEditor from 'components/MonacoEditor/MonacoEditor';
 import { Color } from '@signozhq/design-tokens';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
