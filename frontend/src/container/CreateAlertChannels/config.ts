@@ -165,9 +165,9 @@ export interface JiraChannel extends Channel {
 export interface IncidentIOChannel extends Channel {
 	// per-source alert events URL, e.g.
 	// https://api.incident.io/v2/alert_events/http/<source_config_id>
-	url?: string;
+	url: string;
 	// the alert source's secret token
-	token?: string;
+	token: string;
 	// alert title template
 	title?: string;
 	// alert body template (markdown, rendered natively by incident.io)
