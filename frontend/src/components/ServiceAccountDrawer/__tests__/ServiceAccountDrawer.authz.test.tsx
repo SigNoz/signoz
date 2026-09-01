@@ -4,7 +4,7 @@ import {
 } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import { render, screen, waitFor } from 'tests/test-utils';
 import {
 	setupAuthzAdmin,
 	setupAuthzDeny,
@@ -110,10 +110,7 @@ describe('ServiceAccountDrawer — permissions', () => {
 	it('shows PermissionDeniedCallout in Keys tab when list-keys permission is denied', async () => {
 		server.use(setupAuthzDeny(APIKeyListPermission));
 
-		renderDrawer();
-		await screen.findByDisplayValue('CI Bot');
-
-		fireEvent.click(screen.getByRole('radio', { name: /keys/i }));
+		renderDrawer({ account: 'sa-1', tab: 'keys' });
 
 		await waitFor(() => {
 			expect(screen.getByText(/list:factor-api-key/)).toBeInTheDocument();

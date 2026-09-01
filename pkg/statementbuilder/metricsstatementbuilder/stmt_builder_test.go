@@ -127,6 +127,64 @@ func TestStatementBuilder(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
+			name:        "test_exp_histogram_percentile_delta",
+			requestType: qbtypes.RequestTypeTimeSeries,
+			query: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Signal:       telemetrytypes.SignalMetrics,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "signoz_latency",
+						Type:             metrictypes.ExpHistogramType,
+						Temporality:      metrictypes.Delta,
+						SpaceAggregation: metrictypes.SpaceAggregationPercentile95,
+					},
+				},
+				GroupBy: []qbtypes.GroupByKey{
+					{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: "service.name",
+						},
+					},
+				},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __spatial_aggregation_cte AS (SELECT toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(30)) AS ts, `__GROUP_BY_KEY_0_service.name`, quantilesDDMerge(0.01, 0.950000)(sketch)[1] AS value FROM signoz_metrics.distributed_exp_hist AS points INNER JOIN (SELECT fingerprint, JSONExtractString(labels, 'service.name') AS `__GROUP_BY_KEY_0_service.name` FROM signoz_metrics.time_series_v4_6hrs WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli <= ? AND LOWER(temporality) LIKE LOWER(?) GROUP BY fingerprint, `__GROUP_BY_KEY_0_service.name`) AS filtered_time_series ON points.fingerprint = filtered_time_series.fingerprint WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli < ? GROUP BY ts, `__GROUP_BY_KEY_0_service.name`) SELECT * FROM __spatial_aggregation_cte ORDER BY `__GROUP_BY_KEY_0_service.name`, ts",
+				Args:  []any{"signoz_latency", uint64(1747936800000), uint64(1747983420000), "delta", "signoz_latency", uint64(1747947390000), uint64(1747983420000)},
+			},
+			expectedErr: nil,
+		},
+		{
+			// the sketch merge spans the whole step, so `rate` must not add a /step divisor
+			name:        "test_exp_histogram_percentile_delta_rate_time_aggregation",
+			requestType: qbtypes.RequestTypeTimeSeries,
+			query: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Signal:       telemetrytypes.SignalMetrics,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "signoz_latency",
+						Type:             metrictypes.ExpHistogramType,
+						Temporality:      metrictypes.Delta,
+						TimeAggregation:  metrictypes.TimeAggregationRate,
+						SpaceAggregation: metrictypes.SpaceAggregationPercentile95,
+					},
+				},
+				GroupBy: []qbtypes.GroupByKey{
+					{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: "service.name",
+						},
+					},
+				},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __spatial_aggregation_cte AS (SELECT toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(30)) AS ts, `__GROUP_BY_KEY_0_service.name`, quantilesDDMerge(0.01, 0.950000)(sketch)[1] AS value FROM signoz_metrics.distributed_exp_hist AS points INNER JOIN (SELECT fingerprint, JSONExtractString(labels, 'service.name') AS `__GROUP_BY_KEY_0_service.name` FROM signoz_metrics.time_series_v4_6hrs WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli <= ? AND LOWER(temporality) LIKE LOWER(?) GROUP BY fingerprint, `__GROUP_BY_KEY_0_service.name`) AS filtered_time_series ON points.fingerprint = filtered_time_series.fingerprint WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli < ? GROUP BY ts, `__GROUP_BY_KEY_0_service.name`) SELECT * FROM __spatial_aggregation_cte ORDER BY `__GROUP_BY_KEY_0_service.name`, ts",
+				Args:  []any{"signoz_latency", uint64(1747936800000), uint64(1747983420000), "delta", "signoz_latency", uint64(1747947390000), uint64(1747983420000)},
+			},
+			expectedErr: nil,
+		},
+		{
 			name:        "test_histogram_percentile1",
 			requestType: qbtypes.RequestTypeTimeSeries,
 			query: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
