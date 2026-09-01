@@ -320,13 +320,6 @@ func (m *fieldMapper) resolveColumnExprs(
 					existExprs = append(existExprs, fmt.Sprintf("%s.attributes.%s IS NOT NULL", columnName, querybuilder.ClickHouseIdentifier(attributeName)))
 				}
 			case telemetrytypes.FieldContextAttribute:
-				// Span attributes are flat shared-data paths keyed by the attribute name
-				// verbatim (no nested object), so the name addresses the path directly.
-				// String casts to ::String so an absent path folds to '' — matching the
-				// Map column's default and preserving negative-operator parity; typed
-				// numeric/bool cast to Nullable so a missing or wrong-typed path reads
-				// NULL rather than 0/false. Existence tests the raw path (the cast folds
-				// NULL) and is index-eligible via attributes_paths_tokenbf.
 				path := fmt.Sprintf("%s.%s", columnName, querybuilder.ClickHouseIdentifier(key.Name))
 				exprs = append(exprs, fmt.Sprintf("%s::%s", path, attributeJSONCast(key.FieldDataType)))
 				existExprs = append(existExprs, fmt.Sprintf("%s IS NOT NULL", path))
@@ -374,8 +367,7 @@ func (m *fieldMapper) resolveColumnExprs(
 	return exprs, existExprs, columns, nil
 }
 
-// attributeColumnEvolutionRegistered reports whether key carries an evolution entry for the
-// given column, i.e. that column is a rollout-registered home for this attribute key.
+// attributeColumnEvolutionRegistered reports whether key carries an evolution entry for the given column.
 func attributeColumnEvolutionRegistered(key *telemetrytypes.TelemetryFieldKey, columnName string) bool {
 	for _, e := range key.Evolutions {
 		if e != nil && e.ColumnName == columnName {

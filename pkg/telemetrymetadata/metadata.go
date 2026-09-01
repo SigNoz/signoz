@@ -2500,8 +2500,7 @@ func (k *telemetryMetaStore) updateColumnEvolutionMetadataForKeys(ctx context.Co
 				FieldContext: key.FieldContext,
 				FieldName:    "__all__",
 			}
-			// column-wide (__all__) homes plus this field's own homes (e.g. a promoted
-			// column); the per-field entries add to the column-wide ones, they don't replace them
+			// the per-field entries add to the column-wide ones, they don't replace them.
 			var keyEvolutions []*telemetrytypes.EvolutionEntry
 			keyEvolutions = append(keyEvolutions, evolutionsByUniqueKey[selector.QualifiedName()]...)
 			selector.FieldName = key.Name

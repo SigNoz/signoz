@@ -23,10 +23,7 @@ func SelectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetr
 		return columns, nil, nil
 	}
 
-	// Legacy Map columns are the epoch-0 base and aren't stored as evolution rows, so
-	// synthesize a base entry for any Map candidate the metadata doesn't name. A JSON
-	// candidate with no entry (e.g. an unpromoted attributes_promoted) is left alone so
-	// it stays unselected.
+	// Derive the base column from the candidate columns.
 	seen := make(map[string]struct{}, len(evolutions))
 	for _, e := range evolutions {
 		seen[e.ColumnName] = struct{}{}
