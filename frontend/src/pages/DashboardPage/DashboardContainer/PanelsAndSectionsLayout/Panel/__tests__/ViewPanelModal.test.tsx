@@ -237,6 +237,7 @@ describe('ViewPanelModal', () => {
 			/>,
 		);
 
+		expect(screen.getByTestId('view-panel-header')).toBeInTheDocument();
 		expect(screen.getByTestId('static-editor-pane')).toBeInTheDocument();
 		expect(screen.getByTestId('fake-static-renderer')).toBeInTheDocument();
 		expect(

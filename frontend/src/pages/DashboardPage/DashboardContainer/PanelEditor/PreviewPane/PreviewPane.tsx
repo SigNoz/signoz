@@ -95,6 +95,7 @@ function PreviewPane({
 					})}
 				>
 					<PanelHeader
+						mode="query"
 						panelId={panelId}
 						panel={panel}
 						data={data}

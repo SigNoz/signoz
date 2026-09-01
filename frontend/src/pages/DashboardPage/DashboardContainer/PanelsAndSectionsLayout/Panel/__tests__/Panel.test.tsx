@@ -2,7 +2,6 @@ import { render, screen } from '@testing-library/react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 import { usePanelQuery } from 'pages/DashboardPage/DashboardContainer/hooks/usePanelQuery';
-import { EMPTY_PANEL_QUERY_DATA } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
 import Panel from '../Panel';
 
@@ -74,7 +73,7 @@ describe('Panel — authoring-mode fork', () => {
 	beforeEach(() => {
 		mockUsePanelQuery.mockReset();
 		mockUsePanelQuery.mockReturnValue({
-			data: EMPTY_PANEL_QUERY_DATA,
+			data: { response: undefined, requestPayload: undefined, legendMap: {} },
 			isFetching: false,
 			isPreviousData: false,
 			error: null,
