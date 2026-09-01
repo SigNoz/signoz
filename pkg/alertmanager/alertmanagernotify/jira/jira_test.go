@@ -438,10 +438,11 @@ func TestSelectTransition(t *testing.T) {
 
 func TestResolveCloudID(t *testing.T) {
 	cases := []struct {
-		name    string
-		handler http.HandlerFunc
-		want    string
-		wantErr bool
+		name      string
+		handler   http.HandlerFunc
+		want      string
+		wantErr   bool
+		wantRetry bool
 	}{
 		{
 			name: "success",
@@ -452,7 +453,7 @@ func TestResolveCloudID(t *testing.T) {
 			want: "abc-123",
 		},
 		{
-			name:    "non-200",
+			name:    "non-200 is not retryable",
 			handler: func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNotFound) },
 			wantErr: true,
 		},
@@ -472,9 +473,13 @@ func TestResolveCloudID(t *testing.T) {
 			srv := httptest.NewServer(c.handler)
 			defer srv.Close()
 
-			got, err := ResolveCloudID(context.Background(), srv.Client(), srv.URL)
+			n, err := New(&alertmanagertypes.JiraReceiverConfig{Site: srv.URL, HTTPConfig: &commoncfg.HTTPClientConfig{}}, nil, slog.New(slog.DiscardHandler), nil)
+			require.NoError(t, err)
+
+			got, retry, err := n.resolveCloudID(context.Background())
 			if c.wantErr {
 				assert.Error(t, err)
+				assert.Equal(t, c.wantRetry, retry)
 				return
 			}
 			require.NoError(t, err)

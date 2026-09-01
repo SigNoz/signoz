@@ -128,8 +128,6 @@ components:
       type: object
     AlertmanagertypesJiraReceiverConfig:
       properties:
-        cloud_id:
-          type: string
         custom_fields:
           additionalProperties: {}
           type: object
