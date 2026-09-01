@@ -184,4 +184,7 @@ export const routeWithInitialAuthZSupport = {
 	METRICS_EXPLORER_VOLUME_CONTROL: true,
 	METER_EXPLORER: true,
 	METER: true,
+	WORKSPACE_LOCKED: true,
+	WORKSPACE_SUSPENDED: true,
+	WORKSPACE_ACCESS_RESTRICTED: true,
 } as const satisfies Partial<Record<keyof typeof ROUTES, true>>;
