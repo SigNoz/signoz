@@ -57,8 +57,6 @@ type JiraReceiverConfig struct {
 	WontFixResolution string                      `json:"wont_fix_resolution,omitempty" yaml:"wont_fix_resolution,omitempty"`
 	CustomFields      map[string]any              `json:"custom_fields,omitempty" yaml:"custom_fields,omitempty"`
 	HTTPConfig        *commoncfg.HTTPClientConfig `json:"http_config,omitempty" yaml:"http_config,omitempty"`
-	CloudID           string                      `json:"cloud_id,omitempty" yaml:"cloud_id,omitempty"` // CloudID is resolved from the site at save/test time for service accounts and
-	// then read on every notification; empty for personal API tokens.
 }
 
 func (c *JiraReceiverConfig) UnmarshalYAML(unmarshal func(any) error) error {
@@ -112,10 +110,10 @@ func (c *JiraReceiverConfig) IsServiceAccount() bool {
 }
 
 // APIBaseURL returns the Jira Cloud REST v3 base URL: the api.atlassian.com
-// gateway (keyed by cloud id) for service accounts, else the site host.
-func (c *JiraReceiverConfig) APIBaseURL() string {
-	if c.CloudID != "" {
-		return fmt.Sprintf("%s%s/rest/api/3", jiraGatewayBaseURL, c.CloudID)
+// gateway when a cloud id is given (service accounts), else the site host.
+func (c *JiraReceiverConfig) APIBaseURL(cloudID string) string {
+	if cloudID != "" {
+		return fmt.Sprintf("%s%s/rest/api/3", jiraGatewayBaseURL, cloudID)
 	}
 	return fmt.Sprintf("%s/rest/api/3", strings.TrimRight(c.Site, "/"))
 }
