@@ -16,7 +16,8 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { StatusCodes } from 'http-status-codes';
 import find from 'lodash-es/find';
-import useActiveLicenseKey from 'hooks/useActiveLicenseKey/useActiveLicenseKey';
+import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
+import { buildLicenseReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/license.permissions';
 import { useAppContext } from 'providers/App/App';
 import {
 	ErrorResponse,
@@ -79,8 +80,7 @@ function GeneralSettings({
 	const [logsCurrentTTLValues, setLogsCurrentTTLValues] =
 		useState(logsTtlValuesPayload);
 
-	const { user } = useAppContext();
-	const { licenseKey } = useActiveLicenseKey();
+	const { user, activeLicense } = useAppContext();
 
 	const [setRetentionPermission] = useComponentPermission(
 		['set_retention_period'],
@@ -675,17 +675,21 @@ function GeneralSettings({
 				</span>
 			</div>
 
-			{(showCustomDomainSettings || licenseKey) && (
+			{(showCustomDomainSettings || activeLicense) && (
 				<div className="custom-domain-card">
 					{showCustomDomainSettings && <CustomDomainSettings />}
-					{showCustomDomainSettings && licenseKey && (
+					{showCustomDomainSettings && activeLicense && (
 						<div className="custom-domain-card-divider" />
 					)}
-					{licenseKey && (
-						<>
-							<LicenseKeyRow />
-							<LicenseRowDismissibleCallout />
-						</>
+					{activeLicense && (
+						<AuthZGuardContent
+							checks={[buildLicenseReadPermission(activeLicense.id)]}
+						>
+							<>
+								<LicenseKeyRow />
+								<LicenseRowDismissibleCallout />
+							</>
+						</AuthZGuardContent>
 					)}
 				</div>
 			)}

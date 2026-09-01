@@ -1,6 +1,11 @@
 import userEvent from '@testing-library/user-event';
 import MySettingsContainer from 'container/MySettings';
 import useActiveLicenseKey from 'hooks/useActiveLicenseKey/useActiveLicenseKey';
+import {
+	setupAuthzAdmin,
+	setupAuthzDenyAll,
+} from 'lib/authz/utils/authz-test-utils';
+import { server } from 'mocks-server/server';
 import { logEventMock } from '__tests__/logEventMock';
 import {
 	act,
@@ -371,18 +376,28 @@ describe('MySettings Flows', () => {
 	});
 
 	describe('License section', () => {
-		it('Should render license section content when license key exists', () => {
+		beforeEach(() => {
+			server.use(setupAuthzAdmin());
+		});
+
+		afterEach(() => {
+			server.resetHandlers();
+		});
+
+		it('Should render license section content when license key exists', async () => {
 			expect(screen.getByText('License')).toBeInTheDocument();
-			expect(screen.getByText('License key')).toBeInTheDocument();
+			await expect(screen.findByText('License key')).resolves.toBeInTheDocument();
 			expect(screen.getByText('Your SigNoz license key.')).toBeInTheDocument();
 		});
 
-		it('Should not render license section when license key is missing', () => {
+		it('Should not render license section when there is no active license', () => {
 			mockUseActiveLicenseKey.mockReturnValue({
 				licenseKey: undefined,
 				isLoading: false,
 			});
-			const { container } = render(<MySettingsContainer />);
+			const { container } = render(<MySettingsContainer />, undefined, {
+				appContextOverrides: { activeLicense: null },
+			});
 
 			const scoped = within(container);
 			expect(scoped.queryByText('License')).not.toBeInTheDocument();
@@ -392,24 +407,40 @@ describe('MySettings Flows', () => {
 			).not.toBeInTheDocument();
 		});
 
-		it('Should mask license key in the UI', () => {
+		it('Should show permission denied instead of the license key when read is denied', async () => {
+			server.use(setupAuthzDenyAll());
+			const { container } = render(<MySettingsContainer />);
+
+			const scoped = within(container);
+			await expect(
+				scoped.findByText(/not authorized/i),
+			).resolves.toBeInTheDocument();
+			expect(scoped.getByText('License')).toBeInTheDocument();
+			expect(scoped.queryByText('License key')).not.toBeInTheDocument();
+		});
+
+		it('Should mask license key in the UI', async () => {
 			mockUseActiveLicenseKey.mockReturnValue({
 				licenseKey: 'abcd',
 				isLoading: false,
 			});
 			const { container } = render(<MySettingsContainer />);
 
-			expect(within(container).getByText('ab·······cd')).toBeInTheDocument();
+			await expect(
+				within(container).findByText('ab·······cd'),
+			).resolves.toBeInTheDocument();
 		});
 
-		it('Should not mask license key if it is too short', () => {
+		it('Should not mask license key if it is too short', async () => {
 			mockUseActiveLicenseKey.mockReturnValue({
 				licenseKey: 'abc',
 				isLoading: false,
 			});
 			const { container } = render(<MySettingsContainer />);
 
-			expect(within(container).getByText('abc')).toBeInTheDocument();
+			await expect(
+				within(container).findByText('abc'),
+			).resolves.toBeInTheDocument();
 		});
 
 		it('Should copy license key and show success toast', async () => {
@@ -420,7 +451,9 @@ describe('MySettings Flows', () => {
 			});
 			const { container } = render(<MySettingsContainer />);
 
-			await user.click(within(container).getByTestId('license-key-copy-btn'));
+			await user.click(
+				await within(container).findByTestId('license-key-copy-btn'),
+			);
 
 			await waitFor(() => {
 				expect(copyToClipboardFn).toHaveBeenCalledWith('test-license-key-12345');
