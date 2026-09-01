@@ -2,7 +2,7 @@ import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schem
 import { initialQueriesMap } from 'constants/queryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import { getPanelDefinition } from '../registry';
+import { getSupportedSignals } from '../capabilities';
 import { PANEL_KIND_TO_PANEL_TYPE } from '../types/panelKind';
 import { fromPerses } from '../../queryV5/persesQueryAdapters';
 
@@ -13,7 +13,7 @@ import { fromPerses } from '../../queryV5/persesQueryAdapters';
  */
 export function getPanelBuilderQuery(panel: DashboardtypesPanelDTO): Query {
 	const kind = panel.spec.plugin.kind;
-	const [defaultSignal] = getPanelDefinition(kind).supportedSignals;
+	const [defaultSignal] = getSupportedSignals(kind);
 	// A query-less panel seeds from the kind's first supported signal — `fromPerses`'s
 	// metrics default isn't authorable in every kind (e.g. List).
 	if (panel.spec.queries.length === 0 && defaultSignal) {

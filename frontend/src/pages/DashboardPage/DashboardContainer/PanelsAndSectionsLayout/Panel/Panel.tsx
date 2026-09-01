@@ -1,22 +1,8 @@
-import { useState } from 'react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
-import ContextMenu from 'periscope/components/ContextMenu';
-import {
-	getPanelDefinition,
-	isPanelKindSupported,
-} from 'pages/DashboardPage/DashboardContainer/Panels/registry';
-import {
-	getPanelTimePreference,
-	panelTimePreferenceLabel,
-} from 'pages/DashboardPage/DashboardContainer/hooks/resolvePanelTimeWindow';
-import { usePanelQuery } from 'pages/DashboardPage/DashboardContainer/hooks/usePanelQuery';
+import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 
 import type { DashboardSection } from '../../utils';
-import { useDrilldown } from './hooks/useDrilldown';
-import { usePanelInteractions } from './hooks/usePanelInteractions';
-import PanelBody from './PanelBody/PanelBody';
-import PanelHeader from './PanelHeader/PanelHeader';
-import styles from './Panel.module.scss';
+import QueryPanel from './QueryPanel';
 
 /**
  * Layout context for the panel actions menu — present only in editable mode. No
@@ -37,83 +23,30 @@ interface PanelProps {
 }
 
 /**
- * A single dashboard panel (header + body). Thin orchestrator: fetching lives in
- * `usePanelQuery`, interactions in `usePanelInteractions`, state in `PanelBody`.
+ * A single dashboard panel. Forks on the kind's mode before any query machinery
+ * exists, so a static kind never mounts a fetch — not even a disabled one.
  */
 function Panel({
 	panel,
 	panelId,
 	isVisible,
 	panelActions,
-}: PanelProps): JSX.Element {
-	const timeLabel = panelTimePreferenceLabel(getPanelTimePreference(panel));
+}: PanelProps): JSX.Element | null {
+	const panelDefinition = getPanelDefinition(panel.spec.plugin.kind);
 
-	const panelKind = panel.spec.plugin.kind;
-	const panelDefinition = getPanelDefinition(panelKind);
-
-	// Header search: only kinds that declare it render the box. The term is owned
-	// here and threaded to both the header (input) and renderer (filter).
-	const searchable = panelDefinition.actions.search;
-	const [searchTerm, setSearchTerm] = useState('');
-
-	// Only an explicit false defers the fetch: `isVisible` is undefined wherever no
-	// observer reports visibility (the View modal, the editor preview), and those panels
-	// are on screen by construction.
-	const isOffScreen = isVisible === false;
-
-	const { data, isFetching, isPreviousData, error, refetch, pagination } =
-		usePanelQuery({
-			panel,
-			panelId,
-			queryCapabilities: panelDefinition.queryCapabilities,
-			// Lazy: fetch once on screen, and never for a kind this build can't render —
-			// the data would have nothing to render into.
-			enabled: isPanelKindSupported(panelKind) && !isOffScreen,
-		});
-
-	const { onDragSelect, dashboardPreference } = usePanelInteractions();
-	const drilldown = useDrilldown(panel, panelId);
+	if (panelDefinition.mode === 'static') {
+		// No static kind is registered yet; StaticPanel lands with the first one.
+		return null;
+	}
 
 	return (
-		<div
-			className={styles.panel}
-			data-panel-visible={isOffScreen ? 'false' : 'true'}
-			// Stable locator so the "Download as PNG" action can find this node to
-			// capture, without threading a ref through the header/actions chain.
-			data-panel-root={panelId}
-		>
-			<PanelHeader
-				panelId={panelId}
-				panel={panel}
-				data={data}
-				isFetching={isFetching}
-				error={error}
-				warning={data.response?.data?.warning}
-				timeLabel={timeLabel}
-				panelActions={panelActions}
-				searchable={searchable}
-				searchTerm={searchTerm}
-				onSearchChange={setSearchTerm}
-			/>
-			<PanelBody
-				panelDefinition={panelDefinition}
-				panel={panel}
-				panelId={panelId}
-				data={data}
-				isFetching={isFetching}
-				isVisible={isVisible}
-				isPreviousData={isPreviousData}
-				error={error}
-				refetch={refetch}
-				onDragSelect={onDragSelect}
-				dashboardPreference={dashboardPreference}
-				searchTerm={searchable ? searchTerm : undefined}
-				pagination={pagination}
-				onClick={drilldown.onPanelClick}
-				enableDrillDown={drilldown.enableDrillDown}
-			/>
-			<ContextMenu {...drilldown.contextMenuProps} />
-		</div>
+		<QueryPanel
+			panel={panel}
+			panelId={panelId}
+			panelDefinition={panelDefinition}
+			isVisible={isVisible}
+			panelActions={panelActions}
+		/>
 	);
 }
 

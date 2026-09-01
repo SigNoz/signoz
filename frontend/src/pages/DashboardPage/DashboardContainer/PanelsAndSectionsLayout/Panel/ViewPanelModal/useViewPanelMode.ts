@@ -11,7 +11,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { usePanelEditSession } from 'pages/DashboardPage/DashboardContainer/PanelEditor/hooks/usePanelEditSession';
 import type { OpenDrilldownView } from 'pages/DashboardPage/DashboardContainer/Panels/types/drilldown';
-import type { RenderablePanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
+import type { RenderableQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
 import {
 	PANEL_KIND_TO_PANEL_TYPE,
 	type PanelKind,
@@ -41,7 +41,7 @@ export interface UseViewPanelModeReturn {
 	/** Update the draft's spec in place (e.g. the List columns editor). */
 	setSpec: (next: DashboardtypesPanelSpecDTO) => void;
 	/** Resolved renderer for the draft's current kind (registry always resolves a kind). */
-	panelDefinition: RenderablePanelDefinition;
+	panelDefinition: RenderableQueryPanelDefinition;
 	/**
 	 * Builder datasource driving the query builder and the panel-type selector's
 	 * disabled rule. Resolved from the query, falling back to the kind's default

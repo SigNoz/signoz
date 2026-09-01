@@ -12,6 +12,7 @@ import { EQueryType } from 'types/common/dashboard';
 export const definition: PanelDefinition<'signoz/PieChartPanel'> = {
 	kind: 'signoz/PieChartPanel',
 	displayName: 'Pie Chart',
+	mode: 'query',
 	icon: ChartPie,
 	Renderer,
 	sections,

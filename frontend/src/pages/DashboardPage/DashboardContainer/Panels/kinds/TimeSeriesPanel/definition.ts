@@ -12,6 +12,7 @@ import { EQueryType } from 'types/common/dashboard';
 export const definition: PanelDefinition<'signoz/TimeSeriesPanel'> = {
 	kind: 'signoz/TimeSeriesPanel',
 	displayName: 'Time Series',
+	mode: 'query',
 	icon: ChartLine,
 	Renderer,
 	sections,

@@ -11,6 +11,8 @@ import type { PanelQueryCapabilities } from '../types/panelCapabilities';
 import { NO_PANEL_ACTIONS } from '../types/panelDefinition';
 import {
 	getHiddenQueryBuilderFields,
+	getQueryPanelDefinition,
+	requireQueryPanelDefinition,
 	getSupportedQueryTypes,
 	getSupportedSignals,
 	isPanelCombinationValid,
@@ -107,7 +109,7 @@ const ALL_KINDS = Object.keys(EXPECTED_QUERY_TYPES) as PanelKind[];
 describe('panel capabilities guard', () => {
 	describe('query capabilities', () => {
 		it.each(ALL_KINDS)('declares how %s shapes its request', (kind) => {
-			expect(getPanelDefinition(kind).queryCapabilities).toStrictEqual(
+			expect(getQueryPanelDefinition(kind)?.queryCapabilities).toStrictEqual(
 				EXPECTED_QUERY_CAPABILITIES[kind],
 			);
 		});
@@ -149,7 +151,8 @@ describe('panel capabilities guard', () => {
 		});
 
 		it('carries an inert query shape, so a stray request can do no harm', () => {
-			const { queryCapabilities } = getPanelDefinition(unknownKind);
+			const queryCapabilities = requireQueryPanelDefinition(unknownKind)
+				.queryCapabilities;
 			expect(queryCapabilities.requestType).toBe(time_series);
 			expect(queryCapabilities.serverPaginated).toBe(false);
 			expect(queryCapabilities.formatTableResultForUI).toBe(false);

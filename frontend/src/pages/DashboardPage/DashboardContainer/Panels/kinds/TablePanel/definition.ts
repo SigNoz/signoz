@@ -12,6 +12,7 @@ import { EQueryType } from 'types/common/dashboard';
 export const definition: PanelDefinition<'signoz/TablePanel'> = {
 	kind: 'signoz/TablePanel',
 	displayName: 'Table',
+	mode: 'query',
 	icon: Table,
 	Renderer,
 	sections,

@@ -19,6 +19,7 @@ import Renderer from './Renderer';
 export const UNSUPPORTED_PANEL: RenderablePanelDefinition = {
 	kind: '<unsupported>' as RenderablePanelDefinition['kind'],
 	displayName: 'Unsupported panel',
+	mode: 'query',
 	icon: TriangleAlert,
 	Renderer,
 	sections: [],
