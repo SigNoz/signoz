@@ -9,6 +9,13 @@
 	}
 }
 
+.headerActions {
+	display: flex;
+	align-items: center;
+	flex: 1;
+	min-width: 0;
+}
+
 .dragHandle {
 	display: inline-flex;
 	align-items: center;
@@ -38,6 +45,18 @@
 	text-align: left;
 	cursor: pointer;
 	min-width: 0;
+}
+
+.maximizeToggle {
+	flex-shrink: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	background: transparent;
+	border: none;
+	color: var(--l2-foreground);
+	cursor: pointer;
 }
 
 .title {

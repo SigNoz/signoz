@@ -1,6 +1,11 @@
 import type { DraggableAttributes } from '@dnd-kit/core';
 import type { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities';
-import { ChevronDown, ChevronRight, GripVertical } from '@signozhq/icons';
+import {
+	ChevronDown,
+	ChevronRight,
+	Fullscreen,
+	GripVertical,
+} from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
@@ -27,6 +32,8 @@ interface SectionHeaderProps {
 	title: string;
 	open: boolean;
 	onToggle: () => void;
+	onMaximizeToggle?: () => void;
+	isMaximized?: boolean;
 	repeatVariable?: string;
 	/** Provided by SortableSection in sectioned mode; absent for untitled/free-flow. */
 	dragHandle?: SectionDragHandle;
@@ -41,6 +48,8 @@ function SectionHeader({
 	title,
 	open,
 	onToggle,
+	onMaximizeToggle,
+	isMaximized = false,
 	repeatVariable,
 	dragHandle,
 	actions,
@@ -64,22 +73,39 @@ function SectionHeader({
 					<GripVertical size={14} />
 				</Button>
 			) : null}
-			<Button
-				type="button"
-				variant="ghost"
-				color="secondary"
-				className={styles.toggle}
-				onClick={onToggle}
-				data-testid={`dashboard-section-toggle-${sectionId}`}
-			>
-				{open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-				<Typography.Text className={styles.title}>{title}</Typography.Text>
-				{repeatVariable ? (
-					<Typography.Text className={styles.repeatBadge}>
-						(repeats per ${repeatVariable})
-					</Typography.Text>
+			<div className={styles.headerActions}>
+				<Button
+					type="button"
+					variant="ghost"
+					color="secondary"
+					className={styles.toggle}
+					onClick={onToggle}
+					data-testid={`dashboard-section-toggle-${sectionId}`}
+				>
+					{open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+					<Typography.Text className={styles.title}>{title}</Typography.Text>
+					{repeatVariable ? (
+						<Typography.Text className={styles.repeatBadge}>
+							(repeats per ${repeatVariable})
+						</Typography.Text>
+					) : null}
+				</Button>
+				{onMaximizeToggle ? (
+					<Button
+						type="button"
+						variant="ghost"
+						color="secondary"
+						size="icon"
+						className={styles.maximizeToggle}
+						onClick={onMaximizeToggle}
+						aria-label={isMaximized ? 'Restore section' : 'Maximize section'}
+						aria-pressed={isMaximized}
+						data-testid={`dashboard-section-maximize-${sectionId}`}
+					>
+						<Fullscreen size={14} />
+					</Button>
 				) : null}
-			</Button>
+			</div>
 			{actions ? (
 				<SectionActionsMenu
 					sectionId={sectionId}
