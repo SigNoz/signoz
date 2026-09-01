@@ -1419,8 +1419,20 @@ func (aH *APIHandler) setCustomRetentionTTL(w http.ResponseWriter, r *http.Reque
 	}
 
 	var params retentiontypes.CustomRetentionTTLParams
-	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&params); err != nil {
 		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "Invalid data"))
+		return
+	}
+
+	if params.Type == "" {
+		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "type param cannot be empty"))
+		return
+	}
+
+	if params.DefaultTTLDays <= 0 {
+		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "defaultTTLDays should be a positive integer, got %d", params.DefaultTTLDays))
 		return
 	}
 
