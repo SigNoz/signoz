@@ -191,7 +191,7 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3) (map[strin
 				switch query.DataSource {
 				case v3.DataSourceTraces:
 					// for ts query with group by and limit form two queries
-					if compositeQuery.PanelType == v3.PanelTypeGraph && query.Limit > 0 && len(query.GroupBy) > 0 {
+					if compositeQuery.PanelType.IsGraphLike() && query.Limit > 0 && len(query.GroupBy) > 0 {
 						limitQuery, err := qb.options.BuildTraceQuery(start, end, compositeQuery.PanelType, query,
 							v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit})
 						if err != nil {
@@ -214,19 +214,19 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3) (map[strin
 					}
 				case v3.DataSourceLogs:
 					// for ts query with limit replace it as it is already formed
-					if compositeQuery.PanelType == v3.PanelTypeGraph && query.Limit > 0 && len(query.GroupBy) > 0 {
-						limitQuery, err := qb.options.BuildLogQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit, UseJSONBody: params.UseJSONBody})
+					if compositeQuery.PanelType.IsGraphLike() && query.Limit > 0 && len(query.GroupBy) > 0 {
+						limitQuery, err := qb.options.BuildLogQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, v3.QBOptions{GraphLimitQtype: constants.FirstQueryGraphLimit})
 						if err != nil {
 							return nil, err
 						}
-						placeholderQuery, err := qb.options.BuildLogQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, v3.QBOptions{GraphLimitQtype: constants.SecondQueryGraphLimit, UseJSONBody: params.UseJSONBody})
+						placeholderQuery, err := qb.options.BuildLogQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, v3.QBOptions{GraphLimitQtype: constants.SecondQueryGraphLimit})
 						if err != nil {
 							return nil, err
 						}
 						query := fmt.Sprintf(placeholderQuery, limitQuery)
 						queries[queryName] = query
 					} else {
-						queryString, err := qb.options.BuildLogQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, v3.QBOptions{GraphLimitQtype: "", UseJSONBody: params.UseJSONBody})
+						queryString, err := qb.options.BuildLogQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, v3.QBOptions{GraphLimitQtype: ""})
 						if err != nil {
 							return nil, err
 						}
@@ -317,7 +317,7 @@ func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[stri
 
 	// Use query as the cache key for PromQL queries
 	if params.CompositeQuery.QueryType == v3.QueryTypePromQL {
-		if params.CompositeQuery.PanelType != v3.PanelTypeGraph {
+		if !params.CompositeQuery.PanelType.IsGraphLike() {
 			return keys
 		}
 
@@ -331,7 +331,7 @@ func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[stri
 	for queryName, query := range params.CompositeQuery.BuilderQueries {
 		if query.Expression == queryName && query.DataSource == v3.DataSourceLogs {
 
-			if params.CompositeQuery.PanelType != v3.PanelTypeGraph {
+			if !params.CompositeQuery.PanelType.IsGraphLike() {
 				continue
 			}
 
@@ -392,7 +392,7 @@ func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[stri
 
 			// if version is not v4 (it can be empty or v3) and panel type is not graph
 			// then we can't use the previous results for caching
-			if params.Version != "v4" && params.CompositeQuery.PanelType != v3.PanelTypeGraph {
+			if params.Version != "v4" && !params.CompositeQuery.PanelType.IsGraphLike() {
 				continue
 			}
 
@@ -441,7 +441,7 @@ func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[stri
 	// Build keys for each expression
 	for _, query := range params.CompositeQuery.BuilderQueries {
 		if query.Expression != query.QueryName {
-			if params.Version != "v4" && params.CompositeQuery.PanelType != v3.PanelTypeGraph {
+			if params.Version != "v4" && !params.CompositeQuery.PanelType.IsGraphLike() {
 				continue
 			}
 			expression, _ := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, EvalFuncs)

@@ -6,6 +6,9 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/prometheus/prometheus/promql/parser"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 	logsV4 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v4"
 	metricsV3 "github.com/SigNoz/signoz/pkg/query-service/app/metrics/v3"
 	metricsV4 "github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4"
@@ -32,7 +35,7 @@ func prepareLogsQuery(
 	}
 
 	// for ts query with limit replace it as it is already formed
-	if params.CompositeQuery.PanelType == v3.PanelTypeGraph && builderQuery.Limit > 0 && len(builderQuery.GroupBy) > 0 {
+	if params.CompositeQuery.PanelType.IsGraphLike() && builderQuery.Limit > 0 && len(builderQuery.GroupBy) > 0 {
 		limitQuery, err := logsQueryBuilder(
 			start,
 			end,
@@ -170,7 +173,7 @@ func (q *querier) runBuilderQuery(
 		var query string
 		var err error
 		// for ts query with group by and limit form two queries
-		if params.CompositeQuery.PanelType == v3.PanelTypeGraph && builderQuery.Limit > 0 && len(builderQuery.GroupBy) > 0 {
+		if params.CompositeQuery.PanelType.IsGraphLike() && builderQuery.Limit > 0 && len(builderQuery.GroupBy) > 0 {
 			limitQuery, err := tracesQueryBuilder(
 				start,
 				end,
@@ -273,5 +276,61 @@ func (q *querier) runBuilderQuery(
 		Err:    nil,
 		Name:   queryName,
 		Series: resultSeries,
+	}
+}
+
+// ValidateMetricNames function is used to print all those queries who are still using old normalized metrics and not new metrics.
+func (q *querier) ValidateMetricNames(ctx context.Context, query *v3.CompositeQuery, orgID valuer.UUID) {
+	var metricNames []string
+	switch query.QueryType {
+	case v3.QueryTypePromQL:
+		for _, query := range query.PromQueries {
+			expr, err := q.parser.ParseExpr(query.Query)
+			if err != nil {
+				q.logger.DebugContext(ctx, "error parsing promql expression", "query", query.Query, errors.Attr(err))
+				continue
+			}
+			parser.Inspect(expr, func(node parser.Node, path []parser.Node) error {
+				if vs, ok := node.(*parser.VectorSelector); ok {
+					for _, m := range vs.LabelMatchers {
+						if m.Name == "__name__" {
+							metricNames = append(metricNames, m.Value)
+						}
+					}
+				}
+				return nil
+			})
+		}
+		metrics, err := q.reader.GetNormalizedStatus(ctx, orgID, metricNames)
+		if err != nil {
+			q.logger.DebugContext(ctx, "error getting corresponding normalized metrics", errors.Attr(err))
+			return
+		}
+		for metricName, metricPresent := range metrics {
+			if metricPresent {
+				continue
+			} else {
+				q.logger.WarnContext(ctx, "using normalized metric name", "metrics", metricName)
+				continue
+			}
+		}
+	case v3.QueryTypeBuilder:
+		for _, query := range query.BuilderQueries {
+			metricName := query.AggregateAttribute.Key
+			metricNames = append(metricNames, metricName)
+		}
+		metrics, err := q.reader.GetNormalizedStatus(ctx, orgID, metricNames)
+		if err != nil {
+			q.logger.DebugContext(ctx, "error getting corresponding normalized metrics", errors.Attr(err))
+			return
+		}
+		for metricName, metricPresent := range metrics {
+			if metricPresent {
+				continue
+			} else {
+				q.logger.WarnContext(ctx, "using normalized metric name", "metrics", metricName)
+				continue
+			}
+		}
 	}
 }
