@@ -78,39 +78,32 @@ func (c *IncidentIOReceiverConfig) UnmarshalYAML(unmarshal func(any) error) erro
 		c.Description = DefaultIncidentIODescriptionTemplate
 	}
 
-	// Validate on the normalized forms but store user values verbatim, so a
-	// read returns exactly what was configured (no drift for API/terraform
-	// users); normalization happens again at send time.
-	trimmed := c.AlertEventsURL()
-	u, err := url.Parse(trimmed)
-	if trimmed == "" || err != nil || u.Scheme != "https" || u.Host == "" ||
+	// Values are stored and sent exactly as configured, so anything that is
+	// not already canonical is rejected rather than rewritten.
+	if c.URL != strings.TrimSpace(c.URL) {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "incidentio url must not have leading or trailing whitespace")
+	}
+	u, err := url.Parse(c.URL)
+	if c.URL == "" || err != nil || u.Scheme != "https" || u.Host == "" ||
 		!strings.Contains(u.Path, incidentIOEventsPathPrefix) ||
 		strings.HasSuffix(u.Path, incidentIOEventsPathPrefix) {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, fmt.Sprintf("incidentio url must be an alert events URL (https://api.incident.io%s<source_config_id>)", incidentIOEventsPathPrefix))
 	}
+	if strings.HasSuffix(c.URL, "/") {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "incidentio url must not end with a trailing slash")
+	}
 
-	if c.BearerToken() == "" {
+	token := string(c.Token)
+	if token == "" {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "incidentio token is required")
 	}
+	if token != strings.TrimSpace(token) {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "incidentio token must not have leading or trailing whitespace")
+	}
+	// incident.io's setup page shows the header value as "Bearer <token>"; a
+	// pasted prefix would be sent doubled, so reject it instead.
+	if strings.EqualFold(token, "bearer") || (len(token) >= 7 && strings.EqualFold(token[:7], "bearer ")) {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "incidentio token must be the source's secret token only, without the Bearer prefix")
+	}
 	return nil
-}
-
-// AlertEventsURL is the endpoint to POST alert events to: the configured URL
-// with surrounding whitespace and any trailing slash removed.
-func (c *IncidentIOReceiverConfig) AlertEventsURL() string {
-	return strings.TrimRight(strings.TrimSpace(c.URL), "/")
-}
-
-// BearerToken is the configured token ready for the Authorization header.
-// incident.io's setup page shows the header value as "Bearer <token>", so a
-// pasted prefix is stripped rather than sent doubled.
-func (c *IncidentIOReceiverConfig) BearerToken() string {
-	token := strings.TrimSpace(string(c.Token))
-	if strings.EqualFold(token, "bearer") {
-		return ""
-	}
-	if len(token) >= 7 && strings.EqualFold(token[:7], "bearer ") {
-		return strings.TrimSpace(token[7:])
-	}
-	return token
 }
