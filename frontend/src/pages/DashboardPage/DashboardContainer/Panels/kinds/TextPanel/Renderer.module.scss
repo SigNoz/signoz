@@ -60,3 +60,10 @@
 .panel.alignBottom > *:first-child {
 	margin-top: auto;
 }
+
+// Positioning context for the scroll-to-bottom pill floating over the body.
+.host {
+	position: relative;
+	height: 100%;
+	min-height: 0;
+}

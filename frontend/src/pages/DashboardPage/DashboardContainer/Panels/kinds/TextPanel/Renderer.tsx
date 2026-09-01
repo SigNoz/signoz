@@ -10,6 +10,8 @@ import { useDashboardStore } from 'pages/DashboardPage/DashboardContainer/store/
 import type { StaticRendererProps } from '../../types/rendererProps';
 import { interpolateVariables } from './interpolateVariables';
 import MarkdownContent from './MarkdownContent';
+import ScrollToBottomPill from './ScrollToBottomPill';
+import { useOverflowBelow } from './useOverflowBelow';
 
 import styles from './Renderer.module.scss';
 
@@ -47,20 +49,27 @@ function Renderer({
 		[text, variables],
 	);
 
+	const { scrollRef, hasMoreBelow, scrollToBottom } =
+		useOverflowBelow<HTMLDivElement>();
+
 	return (
-		<div
-			className={cx(
-				styles.panel,
-				HORIZONTAL_ALIGN_CLASS[
-					presentation?.textAlign ?? DashboardtypesTextAlignDTO.left
-				],
-				VERTICAL_ALIGN_CLASS[
-					presentation?.verticalAlign ?? DashboardtypesVerticalAlignDTO.top
-				],
-			)}
-			data-testid="text-panel"
-		>
-			<MarkdownContent>{body}</MarkdownContent>
+		<div className={styles.host}>
+			<div
+				ref={scrollRef}
+				className={cx(
+					styles.panel,
+					HORIZONTAL_ALIGN_CLASS[
+						presentation?.textAlign ?? DashboardtypesTextAlignDTO.left
+					],
+					VERTICAL_ALIGN_CLASS[
+						presentation?.verticalAlign ?? DashboardtypesVerticalAlignDTO.top
+					],
+				)}
+				data-testid="text-panel"
+			>
+				<MarkdownContent>{body}</MarkdownContent>
+			</div>
+			{hasMoreBelow && <ScrollToBottomPill onClick={scrollToBottom} />}
 		</div>
 	);
 }

@@ -1,0 +1,37 @@
+.pill {
+	all: unset;
+	position: absolute;
+	bottom: 8px;
+	left: 50%;
+	transform: translateX(-50%);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	padding: 4px 12px 4px 10px;
+	background-color: var(--l1-border);
+	border-radius: 20px;
+	cursor: pointer;
+	transition: background-color 0.1s;
+	color: var(--l2-foreground);
+
+	span {
+		font-size: 12px;
+		line-height: 18px;
+		color: var(--l2-foreground);
+	}
+
+	svg {
+		animation: scroll-pill-pulse 1s infinite;
+	}
+}
+
+@keyframes scroll-pill-pulse {
+	0% {
+		opacity: 1;
+	}
+
+	50% {
+		opacity: 0.5;
+	}
+}
