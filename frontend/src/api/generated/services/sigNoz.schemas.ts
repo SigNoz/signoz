@@ -7261,9 +7261,9 @@ export interface LicensetypesGettableActiveLicenseDTO {
 	createdAt: string;
 	eventQueue: LicensetypesLicenseEventQueueDTO;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	features: LicensetypesFeatureDTO[] | null;
+	features: LicensetypesFeatureDTO[];
 	/**
 	 * @type string
 	 * @format date-time
@@ -7311,9 +7311,9 @@ export interface LicensetypesGettableLicenseDTO {
 	createdAt: string;
 	eventQueue: LicensetypesLicenseEventQueueDTO;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	features: LicensetypesFeatureDTO[] | null;
+	features: LicensetypesFeatureDTO[];
 	/**
 	 * @type string
 	 * @format date-time
@@ -7361,9 +7361,9 @@ export interface LicensetypesGettableLicenseWithKeyDTO {
 	createdAt: string;
 	eventQueue: LicensetypesLicenseEventQueueDTO;
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	features: LicensetypesFeatureDTO[] | null;
+	features: LicensetypesFeatureDTO[];
 	/**
 	 * @type string
 	 * @format date-time

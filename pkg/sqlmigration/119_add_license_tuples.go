@@ -3,13 +3,11 @@ package sqlmigration
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/oklog/ulid/v2"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
@@ -124,29 +122,6 @@ func (migration *addLicenseTuples) Up(ctx context.Context, db *bun.DB) error {
 				if err != nil {
 					return err
 				}
-			}
-		}
-	}
-
-	managedRoleGroups := make(map[string]string, len(coretypes.ManagedRoleToTransactions))
-	for roleName, transactions := range coretypes.ManagedRoleToTransactions {
-		data, err := json.Marshal(authtypes.NewTransactionGroupsFromTransactions(transactions))
-		if err != nil {
-			return err
-		}
-		managedRoleGroups[roleName] = string(data)
-	}
-
-	for _, orgID := range orgIDs {
-		for roleName, data := range managedRoleGroups {
-			if _, err := tx.NewUpdate().
-				Model(new(roles)).
-				Set("transaction_groups = ?", data).
-				Where("org_id = ?", orgID).
-				Where("type = ?", authtypes.RoleTypeManaged.StringValue()).
-				Where("name = ?", roleName).
-				Exec(ctx); err != nil {
-				return err
 			}
 		}
 	}

@@ -3,6 +3,7 @@ package licensetypes
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -75,7 +76,7 @@ type GettableLicense struct {
 	CreatedAt  time.Time         `json:"createdAt" required:"true"`
 	UpdatedAt  time.Time         `json:"updatedAt" required:"true"`
 	Plan       LicensePlan       `json:"plan" required:"true"`
-	Features   []*Feature        `json:"features" required:"true"`
+	Features   []*Feature        `json:"features" required:"true" nullable:"false"`
 	EventQueue LicenseEventQueue `json:"eventQueue" required:"true"`
 }
 
@@ -237,7 +238,7 @@ func NewStatsFromLicense(license *License) map[string]any {
 	return map[string]any{
 		"license.id":              license.ID.StringValue(),
 		"license.plan.name":       license.Plan.Name.StringValue(),
-		"license.state.name":      license.State.StringValue(),
+		"license.state.name":      strings.ToUpper(license.State.StringValue()),
 		"license.free_until.time": license.FreeUntil.UTC(),
 	}
 }
@@ -316,14 +317,6 @@ func (p *PostableLicense) UnmarshalJSON(data []byte) error {
 
 	p.Key = postableLicense.Key
 	return nil
-}
-
-type Store interface {
-	Create(context.Context, *StorableLicense) error
-	Get(context.Context, valuer.UUID, valuer.UUID) (*StorableLicense, error)
-	GetAll(context.Context, valuer.UUID) ([]*StorableLicense, error)
-	Update(context.Context, valuer.UUID, *StorableLicense) error
-	Delete(context.Context, valuer.UUID, valuer.UUID) error
 }
 
 func newPlanNameAndStatusFromZeusLicense(zeusLicense *zeustypes.License) (valuer.String, valuer.String, error) {
@@ -416,4 +409,12 @@ func newDataFromZeusLicense(zeusLicense *zeustypes.License, features []*Feature)
 	data["features"] = features
 
 	return data, nil
+}
+
+type Store interface {
+	Create(context.Context, *StorableLicense) error
+	Get(context.Context, valuer.UUID, valuer.UUID) (*StorableLicense, error)
+	GetAll(context.Context, valuer.UUID) ([]*StorableLicense, error)
+	Update(context.Context, valuer.UUID, *StorableLicense) error
+	Delete(context.Context, valuer.UUID, valuer.UUID) error
 }
