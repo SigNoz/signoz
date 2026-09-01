@@ -14,6 +14,7 @@ export const Options: Option[] = [
 	{ value: '3d', label: 'Last 3 days' },
 	{ value: '1w', label: 'Last 1 week' },
 	{ value: '1month', label: 'Last 1 month' },
+	{ value: 'around', label: 'Around a time' },
 	{ value: 'custom', label: 'Custom Date Range' },
 ];
 
