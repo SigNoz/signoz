@@ -49,7 +49,9 @@ func TestNewHandlers(t *testing.T) {
 	queryParser := queryparser.New(providerSettings)
 	require.NoError(t, err)
 	tagModule := impltag.NewModule(impltag.NewStore(sqlstore))
-	dashboardModule := impldashboard.NewModule(impldashboard.NewStore(sqlstore), providerSettings, nil, orgGetter, queryParser, tagModule)
+	systemDashboardRegistry, err := impldashboard.NewSystemDashboardRegistry()
+	require.NoError(t, err)
+	dashboardModule := impldashboard.NewModule(impldashboard.NewStore(sqlstore), providerSettings, nil, orgGetter, queryParser, tagModule, systemDashboardRegistry)
 
 	flagger, err := flagger.New(context.Background(), instrumentationtest.New().ToProviderSettings(), flagger.Config{}, flagger.MustNewRegistry())
 	require.NoError(t, err)

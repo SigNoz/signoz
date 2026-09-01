@@ -5085,6 +5085,53 @@ export interface DashboardtypesGettablePublicDashboardDataV2DTO {
 	publicDashboard?: DashboardtypesGettablePublicDasbhboardDTO;
 }
 
+export interface DashboardtypesGettableSystemDashboardDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type string
+	 */
+	image?: string;
+	/**
+	 * @type boolean
+	 */
+	locked: boolean;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type string
+	 */
+	schemaVersion: string;
+	source: DashboardtypesSourceDTO;
+	spec: DashboardtypesDashboardSpecDTO;
+	/**
+	 * @type array,null
+	 */
+	tags: TagtypesGettableTagDTO[] | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
 export enum DashboardtypesPatchOpDTO {
 	add = 'add',
 	remove = 'remove',
@@ -11590,6 +11637,17 @@ export type MigrateDashboardV2PathParameters = {
 };
 export type MigrateDashboardV2200 = {
 	data: DashboardtypesGettableDashboardV2DTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetSystemDashboardPathParameters = {
+	name: string;
+};
+export type GetSystemDashboard200 = {
+	data: DashboardtypesGettableSystemDashboardDTO;
 	/**
 	 * @type string
 	 */

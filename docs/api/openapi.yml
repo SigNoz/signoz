@@ -3024,6 +3024,46 @@ components:
         publicDashboard:
           $ref: '#/components/schemas/DashboardtypesGettablePublicDasbhboard'
       type: object
+    DashboardtypesGettableSystemDashboard:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        image:
+          type: string
+        locked:
+          type: boolean
+        name:
+          type: string
+        orgId:
+          type: string
+        schemaVersion:
+          type: string
+        source:
+          $ref: '#/components/schemas/DashboardtypesSource'
+        spec:
+          $ref: '#/components/schemas/DashboardtypesDashboardSpec'
+        tags:
+          items:
+            $ref: '#/components/schemas/TagtypesGettableTag'
+          nullable: true
+          type: array
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - orgId
+      - locked
+      - source
+      - schemaVersion
+      - name
+      - tags
+      - spec
+      type: object
     DashboardtypesHistogramBuckets:
       properties:
         bucketCount:
@@ -15579,6 +15619,73 @@ paths:
       - tokenizer:
         - dashboard:update
       summary: Migrate dashboard to v2
+      tags:
+      - dashboard
+  /api/v2/dashboards/system/{name}:
+    get:
+      deprecated: false
+      description: Returns a dashboard SigNoz ships and owns, addressed by its stable
+        definition name (e.g. `ai-o11y-overview`) rather than its id. System dashboards
+        are read-only and upgraded through releases. The dashboard's own `name` field
+        carries a reserved prefix that the path segment must not include.
+      operationId: GetSystemDashboard
+      parameters:
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesGettableSystemDashboard'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - dashboard:read
+      - tokenizer:
+        - dashboard:read
+      summary: Get system dashboard
       tags:
       - dashboard
   /api/v2/factor_password/forgot:
