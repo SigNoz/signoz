@@ -3,10 +3,9 @@ import { useLocation } from 'react-router-dom';
 import { CircleMinus, CirclePlus, Layers, RefreshCw } from '@signozhq/icons';
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
 import { FeatureKeys } from 'constants/features';
-import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
-import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
+import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ICurrentQueryData } from 'hooks/useHandleExplorerTabChange';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
@@ -58,7 +57,7 @@ export function useLogAttributeActions({
 	const { pathname } = useLocation();
 	const { stagedQuery, updateQueriesData } = useQueryBuilder();
 	const { featureFlags } = useAppContext();
-	const viewName = useGetSearchQueryParam(QueryParams.viewName) || '';
+	const { viewName } = useGetSavedViewParams();
 
 	const isBodyJsonQueryEnabled =
 		featureFlags?.find((flag) => flag.name === FeatureKeys.USE_JSON_BODY)
