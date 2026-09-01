@@ -68,6 +68,7 @@ jobs:
           - spanmapper
           - querier_json_body
           - querier_skip_resource_fingerprint
+          - trustedheaderauthn
           - ttl
           - clickhousecluster
           - metricreduction
