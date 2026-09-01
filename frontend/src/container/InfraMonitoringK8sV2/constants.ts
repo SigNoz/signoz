@@ -181,6 +181,9 @@ export const K8sCategories = {
 	VOLUMES: 'volumes',
 };
 
+/** The section the Kubernetes view opens on when a link names none. */
+export const DEFAULT_K8S_CATEGORY = K8sCategories.CONTAINERS;
+
 const dotMap = {
 	[InfraMonitoringEntity.HOSTS]:
 		INFRA_MONITORING_ATTR_KEYS.SYSTEM_CPU_LOAD_AVERAGE_15M,

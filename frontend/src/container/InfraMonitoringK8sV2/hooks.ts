@@ -16,8 +16,8 @@ import {
 import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
 
 import {
+	DEFAULT_K8S_CATEGORY,
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
-	K8sCategories,
 	VIEWS,
 } from './constants';
 import { orderBySchema, OrderBySchemaType } from './schemas';
@@ -131,8 +131,8 @@ export const useInfraMonitoringCategory = (): UseQueryStateReturn<
 	useQueryState(
 		INFRA_MONITORING_K8S_PARAMS_KEYS.CATEGORY,
 		parseAsString
-			.withDefault(K8sCategories.CONTAINERS)
-			.withOptions(defaultNuqsOptions),
+			.withDefault(DEFAULT_K8S_CATEGORY)
+			.withOptions({ ...defaultNuqsOptions, clearOnDefault: false }),
 	);
 
 export interface SelectedItemParams {
