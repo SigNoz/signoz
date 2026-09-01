@@ -820,7 +820,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 								Your bill payment has failed. Your workspace will get suspended on{' '}
 								<span>
 									{getFormattedDateWithMinutes(
-										dayjs(activeLicense?.eventQueue?.scheduledAt).unix() || Date.now(),
+										activeLicense?.eventQueue?.scheduledAt
+											? dayjs(activeLicense.eventQueue.scheduledAt).unix()
+											: dayjs().unix(),
 									)}
 									.
 								</span>
