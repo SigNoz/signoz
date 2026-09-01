@@ -132,6 +132,19 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 		},
 	},
 	{
+		id: 'namespace',
+		header: (): React.ReactNode => (
+			<ColumnHeader docPath={CONTAINERS_DOC_PATH}>Namespace</ColumnHeader>
+		),
+		accessorFn: (row): string =>
+			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
+		width: { min: 160 },
+		enableSort: false,
+		cell: ({ value }): React.ReactNode => (
+			<TanStackTable.Text>{value as string}</TanStackTable.Text>
+		),
+	},
+	{
 		id: 'image',
 		header: (): React.ReactNode => (
 			<ColumnHeader docPath={`${CONTAINERS_DOC_PATH}#imagetag`}>
@@ -402,19 +415,6 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 			>
 				<TanStackTable.Text>{formatBytes(value as number)}</TanStackTable.Text>
 			</ValidateColumnValueWrapper>
-		),
-	},
-	{
-		id: 'namespace',
-		header: (): React.ReactNode => (
-			<ColumnHeader docPath={CONTAINERS_DOC_PATH}>Namespace</ColumnHeader>
-		),
-		accessorFn: (row): string =>
-			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
-		width: { default: 100 },
-		enableSort: false,
-		cell: ({ value }): React.ReactNode => (
-			<TanStackTable.Text>{value as string}</TanStackTable.Text>
 		),
 	},
 	{
