@@ -18,6 +18,7 @@ import type {
 } from 'react-query';
 
 import type {
+	ActivateLicense201,
 	DeleteLicensePathParameters,
 	GetActiveLicense200,
 	GetLicense200,
@@ -123,7 +124,7 @@ export const activateLicense = (
 	licensetypesPostableLicenseDTO?: BodyType<LicensetypesPostableLicenseDTO>,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<void>({
+	return GeneratedAPIInstance<ActivateLicense201>({
 		url: `/api/v4/licenses`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },

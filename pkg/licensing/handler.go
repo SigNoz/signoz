@@ -6,6 +6,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -35,13 +36,13 @@ func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.licensing.Activate(ctx, valuer.MustNewUUID(claims.OrgID), req.Key)
+	license, err := handler.licensing.Activate(ctx, valuer.MustNewUUID(claims.OrgID), req.Key)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusAccepted, nil)
+	render.Success(rw, http.StatusCreated, types.Identifiable{ID: license.ID})
 }
 
 func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {

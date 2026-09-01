@@ -5808,6 +5808,7 @@ components:
         id:
           type: string
         key:
+          format: password
           type: string
         plan:
           $ref: '#/components/schemas/LicensetypesLicensePlan'
@@ -5890,6 +5891,7 @@ components:
     LicensetypesPostableLicense:
       properties:
         key:
+          format: password
           type: string
       type: object
     LlmpricingruletypesGettablePricingRules:
@@ -24724,8 +24726,20 @@ paths:
             schema:
               $ref: '#/components/schemas/LicensetypesPostableLicense'
       responses:
-        "202":
-          description: Accepted
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesIdentifiable'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
         "400":
           content:
             application/json:

@@ -7422,6 +7422,7 @@ export interface LicensetypesGettableLicenseWithKeyDTO {
 	id: string;
 	/**
 	 * @type string
+	 * @format password
 	 */
 	key: string;
 	plan: LicensetypesLicensePlanDTO;
@@ -7457,6 +7458,7 @@ export interface LicensetypesGettableLicenseWithKeyDTO {
 export interface LicensetypesPostableLicenseDTO {
 	/**
 	 * @type string
+	 * @format password
 	 */
 	key?: string;
 }
@@ -12891,6 +12893,14 @@ export type ListLicenses200 = {
 	 * @type array
 	 */
 	data: LicensetypesGettableLicenseDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ActivateLicense201 = {
+	data: TypesIdentifiableDTO;
 	/**
 	 * @type string
 	 */

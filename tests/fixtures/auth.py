@@ -226,7 +226,7 @@ def apply_license(
 
         access_token = _login(signoz, USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-        # 202 = applied, 409 = already applied. Retry transient failures —
+        # 201 = applied, 409 = already applied. Retry transient failures —
         # the BE occasionally 5xxs right after startup before the license
         # sync goroutine is ready.
         license_url = signoz.self.host_configs["8080"].get("/api/v4/licenses")
@@ -238,7 +238,7 @@ def apply_license(
                 headers=auth_header,
                 timeout=5,
             )
-            if resp.status_code in (HTTPStatus.ACCEPTED, HTTPStatus.CONFLICT):
+            if resp.status_code in (HTTPStatus.CREATED, HTTPStatus.CONFLICT):
                 break
             if attempt == 9:
                 resp.raise_for_status()
@@ -327,7 +327,7 @@ def add_license(
     if response.status_code == HTTPStatus.CONFLICT:
         return
 
-    assert response.status_code == HTTPStatus.ACCEPTED
+    assert response.status_code == HTTPStatus.CREATED
 
     response = requests.post(
         url=signoz.zeus.host_configs["8080"].get("/__admin/requests/count"),

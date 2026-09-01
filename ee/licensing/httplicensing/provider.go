@@ -95,24 +95,24 @@ func (provider *provider) Validate(ctx context.Context) error {
 	return nil
 }
 
-func (provider *provider) Activate(ctx context.Context, organizationID valuer.UUID, key string) error {
+func (provider *provider) Activate(ctx context.Context, organizationID valuer.UUID, key string) (*licensetypes.License, error) {
 	zeusLicense, err := provider.zeus.GetLicense(ctx, key)
 	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "unable to fetch license data with upstream server")
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "unable to fetch license data with upstream server")
 	}
 
 	license, err := licensetypes.NewLicense(zeusLicense, organizationID)
 	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to create license entity")
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to create license entity")
 	}
 
 	storableLicense := licensetypes.NewStorableLicenseFromLicense(license)
 	err = provider.store.Create(ctx, storableLicense)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return license, nil
 }
 
 func (provider *provider) Get(ctx context.Context, organizationID valuer.UUID, licenseID valuer.UUID) (*licensetypes.License, error) {
