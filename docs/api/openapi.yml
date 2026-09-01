@@ -5667,7 +5667,6 @@ components:
         features:
           items:
             $ref: '#/components/schemas/LicensetypesFeature'
-          nullable: true
           type: array
         freeUntil:
           format: date-time
@@ -5715,7 +5714,6 @@ components:
         features:
           items:
             $ref: '#/components/schemas/LicensetypesFeature'
-          nullable: true
           type: array
         freeUntil:
           format: date-time
@@ -5763,7 +5761,6 @@ components:
         features:
           items:
             $ref: '#/components/schemas/LicensetypesFeature'
-          nullable: true
           type: array
         freeUntil:
           format: date-time
