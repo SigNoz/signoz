@@ -28,43 +28,15 @@ func TestIncidentIOReceiverConfigDefaults(t *testing.T) {
 }
 
 func TestIncidentIOReceiverConfigOverrides(t *testing.T) {
-	r, err := NewReceiver(fmt.Sprintf(`{"name":"incio","incidentio_configs":[{"url":"%s/","token":"k","title":"t","description":"d","send_resolved":true}]}`, testIncidentIOURL))
+	r, err := NewReceiver(fmt.Sprintf(`{"name":"incio","incidentio_configs":[{"url":"%s","token":"k","title":"t","description":"d","send_resolved":true}]}`, testIncidentIOURL))
 	require.NoError(t, err)
 	require.Len(t, r.IncidentIOConfigs, 1)
 
 	c := r.IncidentIOConfigs[0]
-	assert.Equal(t, testIncidentIOURL+"/", c.URL) // stored verbatim
-	assert.Equal(t, testIncidentIOURL, c.AlertEventsURL())
+	assert.Equal(t, testIncidentIOURL, c.URL)
 	assert.Equal(t, "t", c.Title)
 	assert.Equal(t, "d", c.Description)
 	assert.True(t, c.SendResolved())
-}
-
-func TestIncidentIOReceiverConfigBearerToken(t *testing.T) {
-	cases := []struct {
-		name  string
-		token string
-		want  string
-	}{
-		{"bearer prefix", "Bearer tok-123", "tok-123"},
-		{"case insensitive", "bearer tok-123", "tok-123"},
-		{"whitespace around", "  Bearer  tok-123 ", "tok-123"},
-		{"no prefix untouched", "tok-123", "tok-123"},
-		{"bearer only is empty", "Bearer ", ""},
-	}
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			r, err := NewReceiver(fmt.Sprintf(`{"name":"incio","incidentio_configs":[{"url":"%s","token":"%s"}]}`, testIncidentIOURL, c.token))
-			if c.want == "" {
-				assert.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-			require.Len(t, r.IncidentIOConfigs, 1)
-			assert.Equal(t, c.token, string(r.IncidentIOConfigs[0].Token)) // stored verbatim
-			assert.Equal(t, c.want, r.IncidentIOConfigs[0].BearerToken())
-		})
-	}
 }
 
 func TestIncidentIOReceiverConfigValidation(t *testing.T) {
@@ -76,7 +48,13 @@ func TestIncidentIOReceiverConfigValidation(t *testing.T) {
 		{"http url", `{"name":"incio","incidentio_configs":[{"url":"http://api.incident.io/v2/alert_events/http/abc","token":"k"}]}`},
 		{"not an alert events url", `{"name":"incio","incidentio_configs":[{"url":"https://api.incident.io/v2/incidents","token":"k"}]}`},
 		{"missing source config id", `{"name":"incio","incidentio_configs":[{"url":"https://api.incident.io/v2/alert_events/http/","token":"k"}]}`},
+		{"trailing slash", fmt.Sprintf(`{"name":"incio","incidentio_configs":[{"url":"%s/","token":"k"}]}`, testIncidentIOURL)},
+		{"whitespace around url", fmt.Sprintf(`{"name":"incio","incidentio_configs":[{"url":" %s ","token":"k"}]}`, testIncidentIOURL)},
 		{"missing token", fmt.Sprintf(`{"name":"incio","incidentio_configs":[{"url":"%s"}]}`, testIncidentIOURL)},
+		{"bearer prefixed token", fmt.Sprintf(`{"name":"incio","incidentio_configs":[{"url":"%s","token":"Bearer tok-123"}]}`, testIncidentIOURL)},
+		{"lowercase bearer prefixed token", fmt.Sprintf(`{"name":"incio","incidentio_configs":[{"url":"%s","token":"bearer tok-123"}]}`, testIncidentIOURL)},
+		{"bearer only token", fmt.Sprintf(`{"name":"incio","incidentio_configs":[{"url":"%s","token":"Bearer"}]}`, testIncidentIOURL)},
+		{"whitespace around token", fmt.Sprintf(`{"name":"incio","incidentio_configs":[{"url":"%s","token":" tok-123 "}]}`, testIncidentIOURL)},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

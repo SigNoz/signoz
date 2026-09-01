@@ -124,12 +124,12 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		return false, err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, n.conf.AlertEventsURL(), &buf)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, n.conf.URL, &buf)
 	if err != nil {
 		return false, err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+n.conf.BearerToken())
+	req.Header.Set("Authorization", "Bearer "+string(n.conf.Token))
 
 	resp, err := n.client.Do(req) //nolint:bodyclose // notify.Drain closes the body
 	if err != nil {
