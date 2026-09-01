@@ -2944,6 +2944,46 @@ components:
         publicDashboard:
           $ref: '#/components/schemas/DashboardtypesGettablePublicDasbhboard'
       type: object
+    DashboardtypesGettableSystemDashboard:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        image:
+          type: string
+        locked:
+          type: boolean
+        name:
+          type: string
+        orgId:
+          type: string
+        schemaVersion:
+          type: string
+        source:
+          $ref: '#/components/schemas/DashboardtypesSource'
+        spec:
+          $ref: '#/components/schemas/DashboardtypesDashboardSpec'
+        tags:
+          items:
+            $ref: '#/components/schemas/TagtypesGettableTag'
+          nullable: true
+          type: array
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - orgId
+      - locked
+      - source
+      - schemaVersion
+      - name
+      - tags
+      - spec
+      type: object
     DashboardtypesHistogramBuckets:
       properties:
         bucketCount:
@@ -6669,6 +6709,148 @@ components:
         value: {}
       type: object
     PreferencetypesValue:
+      type: object
+    PrometheusErrorResponseSchema:
+      properties:
+        error:
+          type: string
+        errorType:
+          enum:
+          - bad_data
+          - execution
+          - canceled
+          - timeout
+          - internal
+          type: string
+        status:
+          enum:
+          - error
+          type: string
+      required:
+      - status
+      - errorType
+      - error
+      type: object
+    PrometheusMatrixDataSchema:
+      properties:
+        result:
+          items:
+            $ref: '#/components/schemas/PrometheusMatrixSeriesSchema'
+          nullable: true
+          type: array
+        resultType:
+          enum:
+          - matrix
+          type: string
+      required:
+      - resultType
+      - result
+      type: object
+    PrometheusMatrixSeriesSchema:
+      properties:
+        metric:
+          additionalProperties:
+            type: string
+          nullable: true
+          type: object
+        values:
+          items:
+            $ref: '#/components/schemas/PrometheusSamplePairSchema'
+          nullable: true
+          type: array
+      required:
+      - metric
+      - values
+      type: object
+    PrometheusQueryDataSchema:
+      oneOf:
+      - $ref: '#/components/schemas/PrometheusMatrixDataSchema'
+      - $ref: '#/components/schemas/PrometheusVectorDataSchema'
+      - $ref: '#/components/schemas/PrometheusScalarDataSchema'
+      - $ref: '#/components/schemas/PrometheusStringDataSchema'
+      type: object
+    PrometheusSamplePairSchema:
+      description: 'A [timestamp, value] pair: float unix seconds, then the string-encoded
+        sample value ("NaN", "+Inf", "-Inf" included).'
+      items:
+        oneOf:
+        - type: number
+        - type: string
+      maxItems: 2
+      minItems: 2
+      nullable: true
+      type: array
+    PrometheusScalarDataSchema:
+      properties:
+        result:
+          $ref: '#/components/schemas/PrometheusSamplePairSchema'
+        resultType:
+          enum:
+          - scalar
+          type: string
+      required:
+      - resultType
+      - result
+      type: object
+    PrometheusStringDataSchema:
+      properties:
+        result:
+          $ref: '#/components/schemas/PrometheusSamplePairSchema'
+        resultType:
+          enum:
+          - string
+          type: string
+      required:
+      - resultType
+      - result
+      type: object
+    PrometheusSuccessResponseSchema:
+      properties:
+        data:
+          $ref: '#/components/schemas/PrometheusQueryDataSchema'
+        infos:
+          items:
+            type: string
+          type: array
+        status:
+          enum:
+          - success
+          type: string
+        warnings:
+          items:
+            type: string
+          type: array
+      required:
+      - status
+      - data
+      type: object
+    PrometheusVectorDataSchema:
+      properties:
+        result:
+          items:
+            $ref: '#/components/schemas/PrometheusVectorSampleSchema'
+          nullable: true
+          type: array
+        resultType:
+          enum:
+          - vector
+          type: string
+      required:
+      - resultType
+      - result
+      type: object
+    PrometheusVectorSampleSchema:
+      properties:
+        metric:
+          additionalProperties:
+            type: string
+          nullable: true
+          type: object
+        value:
+          $ref: '#/components/schemas/PrometheusSamplePairSchema'
+      required:
+      - metric
+      - value
       type: object
     PromotetypesPromotePath:
       properties:
@@ -15567,6 +15749,73 @@ paths:
       - tokenizer:
         - dashboard:update
       summary: Migrate dashboard to v2
+      tags:
+      - dashboard
+  /api/v2/dashboards/system/{name}:
+    get:
+      deprecated: false
+      description: Returns a dashboard SigNoz ships and owns, addressed by its stable
+        definition name (e.g. `ai-o11y-overview`) rather than its id. System dashboards
+        are read-only and upgraded through releases. The dashboard's own `name` field
+        carries a reserved prefix that the path segment must not include.
+      operationId: GetSystemDashboard
+      parameters:
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesGettableSystemDashboard'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - dashboard:read
+      - tokenizer:
+        - dashboard:read
+      summary: Get system dashboard
       tags:
       - dashboard
   /api/v2/factor_password/forgot:
@@ -25362,6 +25611,374 @@ paths:
       summary: Replace variables
       tags:
       - querier
+  /prometheus/api/v1/query:
+    get:
+      description: 'Prometheus-compatible endpoint: the request and response contract
+        is the upstream Prometheus HTTP API (https://prometheus.io/docs/prometheus/latest/querying/api/).
+        Parameters are accepted as URL query parameters or a form-encoded body, on
+        GET and POST alike.'
+      operationId: PrometheusQuery
+      parameters:
+      - description: PromQL expression.
+        in: query
+        name: query
+        required: true
+        schema:
+          description: PromQL expression.
+          type: string
+      - description: 'Evaluation timestamp: RFC3339 or float unix seconds. Defaults
+          to the server''s current time.'
+        in: query
+        name: time
+        schema:
+          description: 'Evaluation timestamp: RFC3339 or float unix seconds. Defaults
+            to the server''s current time.'
+          type: string
+      - description: 'Evaluation timeout: duration string or float seconds.'
+        in: query
+        name: timeout
+        schema:
+          description: 'Evaluation timeout: duration string or float seconds.'
+          type: string
+      - description: Any non-empty value includes query statistics in the response.
+        in: query
+        name: stats
+        schema:
+          description: Any non-empty value includes query statistics in the response.
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusSuccessResponseSchema'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Internal Server Error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Service Unavailable
+      security:
+      - api_key:
+        - metrics:read
+      - tokenizer:
+        - metrics:read
+      summary: Prometheus instant query
+      tags:
+      - prometheus
+    post:
+      description: 'Prometheus-compatible endpoint: the request and response contract
+        is the upstream Prometheus HTTP API (https://prometheus.io/docs/prometheus/latest/querying/api/).
+        Parameters are accepted as URL query parameters or a form-encoded body, on
+        GET and POST alike.'
+      operationId: PrometheusQueryPost
+      parameters:
+      - description: PromQL expression.
+        in: query
+        name: query
+        required: true
+        schema:
+          description: PromQL expression.
+          type: string
+      - description: 'Evaluation timestamp: RFC3339 or float unix seconds. Defaults
+          to the server''s current time.'
+        in: query
+        name: time
+        schema:
+          description: 'Evaluation timestamp: RFC3339 or float unix seconds. Defaults
+            to the server''s current time.'
+          type: string
+      - description: 'Evaluation timeout: duration string or float seconds.'
+        in: query
+        name: timeout
+        schema:
+          description: 'Evaluation timeout: duration string or float seconds.'
+          type: string
+      - description: Any non-empty value includes query statistics in the response.
+        in: query
+        name: stats
+        schema:
+          description: Any non-empty value includes query statistics in the response.
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusSuccessResponseSchema'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Internal Server Error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Service Unavailable
+      security:
+      - api_key:
+        - metrics:read
+      - tokenizer:
+        - metrics:read
+      summary: Prometheus instant query
+      tags:
+      - prometheus
+  /prometheus/api/v1/query_range:
+    get:
+      description: 'Prometheus-compatible endpoint: the request and response contract
+        is the upstream Prometheus HTTP API (https://prometheus.io/docs/prometheus/latest/querying/api/).
+        Parameters are accepted as URL query parameters or a form-encoded body, on
+        GET and POST alike.'
+      operationId: PrometheusQueryRange
+      parameters:
+      - description: PromQL expression.
+        in: query
+        name: query
+        required: true
+        schema:
+          description: PromQL expression.
+          type: string
+      - description: 'Range start: RFC3339 or float unix seconds.'
+        in: query
+        name: start
+        required: true
+        schema:
+          description: 'Range start: RFC3339 or float unix seconds.'
+          type: string
+      - description: 'Range end: RFC3339 or float unix seconds.'
+        in: query
+        name: end
+        required: true
+        schema:
+          description: 'Range end: RFC3339 or float unix seconds.'
+          type: string
+      - description: 'Resolution step: duration string or float seconds.'
+        in: query
+        name: step
+        required: true
+        schema:
+          description: 'Resolution step: duration string or float seconds.'
+          type: string
+      - description: 'Evaluation timeout: duration string or float seconds.'
+        in: query
+        name: timeout
+        schema:
+          description: 'Evaluation timeout: duration string or float seconds.'
+          type: string
+      - description: Any non-empty value includes query statistics in the response.
+        in: query
+        name: stats
+        schema:
+          description: Any non-empty value includes query statistics in the response.
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusSuccessResponseSchema'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Internal Server Error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Service Unavailable
+      security:
+      - api_key:
+        - metrics:read
+      - tokenizer:
+        - metrics:read
+      summary: Prometheus range query
+      tags:
+      - prometheus
+    post:
+      description: 'Prometheus-compatible endpoint: the request and response contract
+        is the upstream Prometheus HTTP API (https://prometheus.io/docs/prometheus/latest/querying/api/).
+        Parameters are accepted as URL query parameters or a form-encoded body, on
+        GET and POST alike.'
+      operationId: PrometheusQueryRangePost
+      parameters:
+      - description: PromQL expression.
+        in: query
+        name: query
+        required: true
+        schema:
+          description: PromQL expression.
+          type: string
+      - description: 'Range start: RFC3339 or float unix seconds.'
+        in: query
+        name: start
+        required: true
+        schema:
+          description: 'Range start: RFC3339 or float unix seconds.'
+          type: string
+      - description: 'Range end: RFC3339 or float unix seconds.'
+        in: query
+        name: end
+        required: true
+        schema:
+          description: 'Range end: RFC3339 or float unix seconds.'
+          type: string
+      - description: 'Resolution step: duration string or float seconds.'
+        in: query
+        name: step
+        required: true
+        schema:
+          description: 'Resolution step: duration string or float seconds.'
+          type: string
+      - description: 'Evaluation timeout: duration string or float seconds.'
+        in: query
+        name: timeout
+        schema:
+          description: 'Evaluation timeout: duration string or float seconds.'
+          type: string
+      - description: Any non-empty value includes query statistics in the response.
+        in: query
+        name: stats
+        schema:
+          description: Any non-empty value includes query statistics in the response.
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusSuccessResponseSchema'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Internal Server Error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Service Unavailable
+      security:
+      - api_key:
+        - metrics:read
+      - tokenizer:
+        - metrics:read
+      summary: Prometheus range query
+      tags:
+      - prometheus
 servers:
 - description: The fully qualified URL to the SigNoz APIServer.
   url: https://{host}:{port}{base_path}

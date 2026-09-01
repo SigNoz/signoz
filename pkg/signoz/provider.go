@@ -245,6 +245,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewMigrateLambdaDashboardsFactory(),
 		sqlmigration.NewAddAuthDomainTuplesFactory(sqlstore),
 		sqlmigration.NewAddDeploymentHostTuplesFactory(sqlstore),
+		sqlmigration.NewAddSystemDashboardFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddLicenseTuplesFactory(sqlstore),
 	)
 }
@@ -345,6 +346,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.RuleStateHistory,
 			handlers.SpanMapperHandler,
 			handlers.AlertmanagerHandler,
+			handlers.PrometheusHandler,
 			handlers.LLMPricingRuleHandler,
 			handlers.TraceDetail,
 			handlers.RulerHandler,
