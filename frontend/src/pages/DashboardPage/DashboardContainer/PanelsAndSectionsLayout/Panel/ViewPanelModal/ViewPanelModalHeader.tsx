@@ -10,12 +10,20 @@ import type {
 import { usePanelTypeSelectItems } from 'pages/DashboardPage/DashboardContainer/PanelEditor/ConfigPane/PanelTypeSwitcher/usePanelTypeSelectItems';
 import ConfigSelect from 'pages/DashboardPage/DashboardContainer/PanelEditor/ConfigPane/controls/ConfigSelect/ConfigSelect';
 import type { PanelKind } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
-import type { EQueryType } from 'types/common/dashboard';
+import { EQueryType } from 'types/common/dashboard';
 
 import styles from './ViewPanelModal.module.scss';
 import { useDashboardStore } from 'pages/DashboardPage/DashboardContainer/store/useDashboardStore';
 
-interface ViewPanelModalHeaderProps {
+interface ViewPanelModalHeaderBaseProps {
+	onSwitchToEdit: () => void;
+	/** Draft's current kind (selected value of the panel-type selector). */
+	panelKind: PanelKind;
+	onChangePanelKind: (kind: PanelKind) => void;
+}
+
+interface QueryViewModalHeaderProps extends ViewPanelModalHeaderBaseProps {
+	mode: 'query';
 	selectedInterval: Time | CustomTimeType;
 	/** Current window bounds (epoch ms) — seed the picker's modal display. */
 	startMs: number;
@@ -27,9 +35,6 @@ interface ViewPanelModalHeaderProps {
 	/** Any query in flight — spins the refresh icon and disables it. */
 	isFetching: boolean;
 	onRefresh: () => void;
-	onSwitchToEdit: () => void;
-	/** Draft's current kind (selected value of the panel-type selector). */
-	panelKind: PanelKind;
 	/**
 	 * The active query-builder tab (Query Builder / PromQL / ClickHouse). The type
 	 * selector greys out kinds that can't be authored in it — e.g. List is
@@ -38,33 +43,34 @@ interface ViewPanelModalHeaderProps {
 	queryType: EQueryType;
 	/** Current builder datasource — greys out kinds that don't support it (e.g. List needs logs/traces, not metrics). */
 	signal: TelemetrytypesSignalDTO;
-	onChangePanelKind: (kind: PanelKind) => void;
 	/** Restore the saved query + kind (drilldown reset). */
 	onResetQuery: () => void;
 }
 
+interface StaticViewModalHeaderProps extends ViewPanelModalHeaderBaseProps {
+	mode: 'static';
+}
+
+type ViewPanelModalHeaderProps =
+	| QueryViewModalHeaderProps
+	| StaticViewModalHeaderProps;
+
 /**
  * Toolbar for the View modal: reset the drilldown, open the full editor, switch the
  * visualization kind, pick a per-view time window (isolated from the dashboard), and
- * refresh. Mirrors V1's FullView header controls.
+ * refresh. Mirrors V1's FullView header controls. In static mode only the kind
+ * selector and the edit switch remain — the rest is query machinery.
  */
-function ViewPanelModalHeader({
-	selectedInterval,
-	startMs,
-	endMs,
-	onTimeChange,
-	isFetching,
-	onRefresh,
-	onSwitchToEdit,
-	panelKind,
-	queryType,
-	signal,
-	onChangePanelKind,
-	onResetQuery,
-}: ViewPanelModalHeaderProps): JSX.Element {
+function ViewPanelModalHeader(props: ViewPanelModalHeaderProps): JSX.Element {
+	const { onSwitchToEdit, panelKind, onChangePanelKind } = props;
+	const query = props.mode === 'query' ? props : null;
+
 	// Same capabilities-guarded options as the editor's PanelTypeSwitcher, so the two
 	// selectors disable the same kinds (e.g. List under PromQL, metrics-only kinds).
-	const panelTypeItems = usePanelTypeSelectItems({ queryType, signal });
+	const panelTypeItems = usePanelTypeSelectItems({
+		queryType: query?.queryType ?? EQueryType.QUERY_BUILDER,
+		signal: query?.signal,
+	});
 	const canEditDashboard = useDashboardStore((s) => s.canEditDashboard);
 	const isLocked = useDashboardStore((s) => s.isLocked);
 
@@ -91,38 +97,42 @@ function ViewPanelModalHeader({
 					Switch to Edit Mode
 				</Button>
 			)}
-			<Button
-				variant="link"
-				color="primary"
-				onClick={onResetQuery}
-				data-testid="view-panel-reset-query"
-			>
-				Reset Query
-			</Button>
-			<div className={styles.toolbarTime}>
-				<DateTimeSelectionV2
-					showAutoRefresh={false}
-					showRefreshText={false}
-					hideShareModal
-					isModalTimeSelection
-					disableUrlSync
-					onTimeChange={onTimeChange}
-					modalSelectedInterval={selectedInterval as Time}
-					modalInitialStartTime={startMs}
-					modalInitialEndTime={endMs}
-				/>
+			{query && (
 				<Button
-					size="icon"
-					variant="outlined"
-					color="secondary"
-					onClick={onRefresh}
-					disabled={isFetching}
-					aria-label="Refresh"
-					data-testid="view-panel-refresh"
+					variant="link"
+					color="primary"
+					onClick={query.onResetQuery}
+					data-testid="view-panel-reset-query"
 				>
-					<RotateCw className={cx({ 'animate-spin': isFetching })} />
+					Reset Query
 				</Button>
-			</div>
+			)}
+			{query && (
+				<div className={styles.toolbarTime}>
+					<DateTimeSelectionV2
+						showAutoRefresh={false}
+						showRefreshText={false}
+						hideShareModal
+						isModalTimeSelection
+						disableUrlSync
+						onTimeChange={query.onTimeChange}
+						modalSelectedInterval={query.selectedInterval as Time}
+						modalInitialStartTime={query.startMs}
+						modalInitialEndTime={query.endMs}
+					/>
+					<Button
+						size="icon"
+						variant="outlined"
+						color="secondary"
+						onClick={query.onRefresh}
+						disabled={query.isFetching}
+						aria-label="Refresh"
+						data-testid="view-panel-refresh"
+					>
+						<RotateCw className={cx({ 'animate-spin': query.isFetching })} />
+					</Button>
+				</div>
+			)}
 		</div>
 	);
 }

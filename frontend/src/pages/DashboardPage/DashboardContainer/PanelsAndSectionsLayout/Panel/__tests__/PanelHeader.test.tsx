@@ -76,6 +76,7 @@ function makePanelWithQueries(
 }
 
 const baseProps = {
+	mode: 'query' as const,
 	panel: makePanel(),
 	panelId: 'panel-1',
 	data: {
@@ -240,6 +241,22 @@ describe('PanelHeader actions menu', () => {
 	it('hides the actions menu when hideActions is set (editor preview)', () => {
 		renderWithProvider(<PanelHeader {...baseProps} hideActions />);
 		expect(screen.queryByTestId('panel-actions-menu')).not.toBeInTheDocument();
+	});
+});
+
+describe('PanelHeader static mode', () => {
+	it('renders the title and actions menu with no query-status chrome', () => {
+		renderWithProvider(
+			<PanelHeader mode="static" panelId="panel-1" panel={makePanel()} />,
+		);
+		expect(screen.getByText('My panel')).toBeInTheDocument();
+		expect(screen.getByTestId('panel-actions-menu')).toBeInTheDocument();
+		expect(screen.queryByTestId('panel-refetching')).not.toBeInTheDocument();
+		expect(screen.queryByTestId('panel-status-error')).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId('panel-header-search-trigger'),
+		).not.toBeInTheDocument();
+		expect(screen.queryByTestId('panel-time-preference')).not.toBeInTheDocument();
 	});
 });
 

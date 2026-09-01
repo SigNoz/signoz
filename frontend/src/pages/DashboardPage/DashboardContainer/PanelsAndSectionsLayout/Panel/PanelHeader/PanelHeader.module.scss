@@ -8,6 +8,11 @@
 	min-height: 32px;
 }
 
+// D7: when the panel drops its card chrome, the header's divider goes with it.
+.transparent {
+	border-bottom-color: transparent;
+}
+
 .headerLeft {
 	display: flex;
 	align-items: center;

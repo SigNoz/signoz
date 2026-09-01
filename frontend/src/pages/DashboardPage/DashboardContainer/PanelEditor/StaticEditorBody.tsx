@@ -1,13 +1,8 @@
 import { useCallback } from 'react';
 import { toast } from '@signozhq/ui/sonner';
-import cx from 'classnames';
 import { PanelMode } from 'lib/visualization/panels/types';
-import StaticPanelBody from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/StaticPanelBody/StaticPanelBody';
-import PanelHeader from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelHeader/PanelHeader';
 import type { RenderableStaticPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
-import { isTransparentPanel } from 'pages/DashboardPage/DashboardContainer/Panels/utils/isTransparentPanel';
 import type { PanelKind } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
-import { EMPTY_PANEL_QUERY_DATA } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 import { EQueryType } from 'types/common/dashboard';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 
@@ -17,11 +12,10 @@ import Header from './Header/Header';
 import PanelEditorLayout, {
 	PANE_SPLIT,
 } from './PanelEditorLayout/PanelEditorLayout';
+import StaticPreviewPane from './StaticPreviewPane/StaticPreviewPane';
 import type { PanelEditorContainerProps } from './index';
 import type { PanelEditorDraftApi } from './types';
 import { usePanelEditorSave } from './hooks/usePanelEditorSave';
-
-import styles from './PanelEditor.module.scss';
 
 interface StaticEditorBodyProps extends PanelEditorContainerProps {
 	draftApi: PanelEditorDraftApi;
@@ -86,7 +80,7 @@ function StaticEditorBody({
 	}, [isNew, panelId, setScrollTargetId, onClose]);
 
 	return (
-<PanelEditorLayout
+		<PanelEditorLayout
 			split={PANE_SPLIT.static}
 			header={
 				<Header
@@ -100,28 +94,12 @@ function StaticEditorBody({
 				/>
 			}
 			preview={
-				<div className={styles.staticPreview}>
-					<div
-						className={cx(styles.staticPreviewSurface, {
-							[styles.staticPreviewTransparent]: isTransparentPanel(draft.spec),
-						})}
-					>
-						<PanelHeader
-							panelId={panelId}
-							panel={draft}
-							data={EMPTY_PANEL_QUERY_DATA}
-							isFetching={false}
-							error={null}
-							hideActions
-						/>
-						<StaticPanelBody
-							panelDefinition={panelDefinition}
-							panel={draft}
-							panelId={panelId}
-							panelMode={PanelMode.DASHBOARD_EDIT}
-						/>
-					</div>
-				</div>
+				<StaticPreviewPane
+					panelId={panelId}
+					panel={draft}
+					panelDefinition={panelDefinition}
+					panelMode={PanelMode.DASHBOARD_EDIT}
+				/>
 			}
 			editor={<EditorPane spec={spec} onChangeSpec={setSpec} />}
 			config={

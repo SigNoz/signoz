@@ -9,6 +9,8 @@ import cx from 'classnames';
 import type { PanelTimePreferenceLabel } from 'pages/DashboardPage/DashboardContainer/hooks/resolvePanelTimeWindow';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
+import { isTransparentPanel } from 'pages/DashboardPage/DashboardContainer/Panels/utils/isTransparentPanel';
+
 import type { PanelActionsConfig } from '../Panel';
 import PanelActionsMenu from '../PanelActionsMenu/PanelActionsMenu';
 import PanelHeaderSearch from './PanelHeaderSearch';
@@ -21,10 +23,22 @@ import {
 import styles from './PanelHeader.module.scss';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 
-interface PanelHeaderProps {
+interface PanelHeaderBaseProps {
 	panelId: string;
 	/** The panel itself — its query seeds the menu's "Create Alerts" action. */
 	panel: DashboardtypesPanelDTO;
+	/** Layout context for move/delete — absent outside editable sectioned mode. */
+	panelActions?: PanelActionsConfig;
+	/**
+	 * Suppress the actions menu entirely — for the editor preview, where
+	 * panel-level actions don't apply (some survive their gates without
+	 * `panelActions`, so omitting it isn't enough).
+	 */
+	hideActions?: boolean;
+}
+
+interface QueryPanelHeaderProps extends PanelHeaderBaseProps {
+	mode: 'query';
 	/** The panel's query response — the menu's source for "Download as CSV". */
 	data: PanelQueryData;
 	/** Background refresh in flight — shows a spinner without blinking the chart. */
@@ -35,44 +49,35 @@ interface PanelHeaderProps {
 	warning?: WarningDTO;
 	/** Per-panel time-preference label; null when it follows the dashboard window. */
 	timeLabel?: PanelTimePreferenceLabel | null;
-	/** Layout context for move/delete — absent outside editable sectioned mode. */
-	panelActions?: PanelActionsConfig;
 	/** Kind declares header search — renders the box. */
 	searchable?: boolean;
 	/** Current search term; shell owns it, the renderer applies the filter. */
 	searchTerm?: string;
 	/** Pushes a new search term up to the shell. */
 	onSearchChange?: (value: string) => void;
-	/**
-	 * Suppress the actions menu entirely — for the editor preview, where
-	 * panel-level actions don't apply (some survive their gates without
-	 * `panelActions`, so omitting it isn't enough).
-	 */
-	hideActions?: boolean;
 }
 
+interface StaticPanelHeaderProps extends PanelHeaderBaseProps {
+	mode: 'static';
+}
+
+type PanelHeaderProps = QueryPanelHeaderProps | StaticPanelHeaderProps;
+
 /** Panel chrome: drag handle, title, refetch + status indicators, actions. */
-function PanelHeader({
-	panelId,
-	panel,
-	data,
-	isFetching,
-	error,
-	warning,
-	timeLabel,
-	panelActions,
-	searchable,
-	searchTerm = '',
-	onSearchChange,
-	hideActions,
-}: PanelHeaderProps): JSX.Element {
+function PanelHeader(props: PanelHeaderProps): JSX.Element {
+	const { panelId, panel, panelActions, hideActions } = props;
+	const query = props.mode === 'query' ? props : null;
+
 	const name = panel.spec.display.name;
 	const description = panel.spec.display.description;
-	const errorDetail = useMemo(() => panelStatusFromError(error), [error]);
+	const errorDetail = useMemo(
+		() => panelStatusFromError(query?.error),
+		[query?.error],
+	);
 
 	const warningDetail = useMemo(
-		() => panelStatusFromWarning(warning),
-		[warning],
+		() => panelStatusFromWarning(query?.warning),
+		[query?.warning],
 	);
 
 	// Client-derived: warn a Number panel that has more than one enabled query (#9512).
@@ -97,7 +102,11 @@ function PanelHeader({
 	}
 
 	return (
-		<div className={cx(styles.header, 'panel-drag-handle')}>
+		<div
+			className={cx(styles.header, 'panel-drag-handle', {
+				[styles.transparent]: isTransparentPanel(panel.spec),
+			})}
+		>
 			<div className={styles.headerLeft}>
 				<Typography.Text className={styles.headerTitle}>{name}</Typography.Text>
 				{description && (
@@ -113,7 +122,7 @@ function PanelHeader({
 						/>
 					</TooltipSimple>
 				)}
-				{isFetching && (
+				{query?.isFetching && (
 					<Loader
 						size={12}
 						className={cx('animate-spin', styles.refetchIndicator)}
@@ -124,13 +133,16 @@ function PanelHeader({
 			{/* `panel-no-drag` opts this region out of the drag handle so clicks hit
 			    the controls instead of starting a panel drag. */}
 			<div className={cx('panel-no-drag', styles.actions)}>
-				{searchable && onSearchChange && (
-					<PanelHeaderSearch value={searchTerm ?? ''} onChange={onSearchChange} />
+				{query?.searchable && query.onSearchChange && (
+					<PanelHeaderSearch
+						value={query.searchTerm ?? ''}
+						onChange={query.onSearchChange}
+					/>
 				)}
-				{timeLabel && (
-					<TooltipSimple title={timeLabel.full} arrow>
+				{query?.timeLabel && (
+					<TooltipSimple title={query.timeLabel.full} arrow>
 						<span className={styles.timePill} data-testid="panel-time-preference">
-							{timeLabel.short}
+							{query.timeLabel.short}
 						</span>
 					</TooltipSimple>
 				)}
@@ -150,7 +162,7 @@ function PanelHeader({
 					<PanelActionsMenu
 						panelId={panelId}
 						panel={panel}
-						data={data}
+						data={query?.data}
 						panelActions={panelActions}
 					/>
 				)}

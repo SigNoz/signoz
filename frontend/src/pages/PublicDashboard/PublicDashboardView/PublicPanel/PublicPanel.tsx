@@ -1,14 +1,16 @@
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import cx from 'classnames';
 import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { noop } from 'lodash-es';
 import PanelBody from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelBody/PanelBody';
 import PanelHeader from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelHeader/PanelHeader';
+import StaticPanelBody from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/StaticPanelBody/StaticPanelBody';
 import type { DashboardPreference } from 'pages/DashboardPage/DashboardContainer/Panels/types/rendererProps';
 import type { RenderableQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
+import { isTransparentPanel } from 'pages/DashboardPage/DashboardContainer/Panels/utils/isTransparentPanel';
 
 import { usePublicPanelQuery } from '../hooks/usePublicPanelQuery';
-import StaticPublicPanel from './StaticPublicPanel';
 import styles from './PublicPanel.module.scss';
 
 interface PublicPanelProps {
@@ -29,31 +31,44 @@ const PUBLIC_DASHBOARD_PREFERENCE: DashboardPreference = {
 };
 
 /**
- * Read-only v2 public panel. Forks on the kind's mode before any query machinery
- * exists; the static arm renders nothing until a static kind registers.
+ * Read-only v2 public panel. Forks on the kind's mode before any query
+ * machinery exists. A static body is authored content meant to be read, so it
+ * is not redacted; public dashboards carry no variable runtime, so variable
+ * tokens render literally.
  */
 function PublicPanel(props: PublicPanelProps): JSX.Element {
-	const panelDefinition = getPanelDefinition(props.panel.spec.plugin.kind);
+	const { panel, panelKey } = props;
+	const panelDefinition = getPanelDefinition(panel.spec.plugin.kind);
 
-	if (panelDefinition.mode === 'static') {
-		return (
-			<StaticPublicPanel
-				panel={props.panel}
-				panelKey={props.panelKey}
-				panelDefinition={panelDefinition}
-			/>
-		);
-	}
-
-	return <QueryPublicPanel {...props} panelDefinition={panelDefinition} />;
+	return (
+		<div
+			className={cx(styles.panel, {
+				[styles.transparent]: isTransparentPanel(panel.spec),
+			})}
+			data-panel-root={panelKey}
+		>
+			{panelDefinition.mode === 'static' ? (
+				<>
+					<PanelHeader mode="static" panelId={panelKey} panel={panel} hideActions />
+					<StaticPanelBody
+						panelDefinition={panelDefinition}
+						panel={panel}
+						panelId={panelKey}
+					/>
+				</>
+			) : (
+				<QueryPublicPanelContent {...props} panelDefinition={panelDefinition} />
+			)}
+		</div>
+	);
 }
 
-interface QueryPublicPanelProps extends PublicPanelProps {
+interface QueryPublicPanelContentProps extends PublicPanelProps {
 	panelDefinition: RenderableQueryPanelDefinition;
 }
 
 // Reuses the V2 header/body renderers with interactions disabled.
-function QueryPublicPanel({
+function QueryPublicPanelContent({
 	panel,
 	panelKey,
 	publicDashboardId,
@@ -61,7 +76,7 @@ function QueryPublicPanel({
 	endMs,
 	isVisible,
 	panelDefinition,
-}: QueryPublicPanelProps): JSX.Element {
+}: QueryPublicPanelContentProps): JSX.Element {
 	const { data, isFetching, isPreviousData, error, refetch } =
 		usePublicPanelQuery({
 			panel,
@@ -74,8 +89,9 @@ function QueryPublicPanel({
 		});
 
 	return (
-		<div className={styles.panel} data-panel-root={panelKey}>
+		<>
 			<PanelHeader
+				mode="query"
 				panelId={panelKey}
 				panel={panel}
 				data={data}
@@ -97,7 +113,7 @@ function QueryPublicPanel({
 				dashboardPreference={PUBLIC_DASHBOARD_PREFERENCE}
 				enableDrillDown={false}
 			/>
-		</div>
+		</>
 	);
 }
 

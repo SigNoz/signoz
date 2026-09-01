@@ -10,7 +10,7 @@ import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/quer
 
 interface UseDownloadPanelCsvArgs {
 	panel: DashboardtypesPanelDTO;
-	data: PanelQueryData;
+	data?: PanelQueryData;
 	/**
 	 * Whether the kind's definition declares CSV as a downloadable format
 	 * (`actions.download.csv`). Only tables carry tabular data, so this is the
@@ -32,7 +32,7 @@ export function useDownloadPanelCsv({
 	const fileName = panel.spec.display.name;
 
 	return useCallback((): void => {
-		if (!canDownloadCsv) {
+		if (!canDownloadCsv || !data) {
 			return;
 		}
 		const rows = getTableCsvRows(panel as PanelOfKind<'signoz/TablePanel'>, data);
