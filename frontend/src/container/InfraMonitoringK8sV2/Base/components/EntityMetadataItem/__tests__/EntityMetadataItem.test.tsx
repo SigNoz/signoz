@@ -18,21 +18,6 @@ jest.mock('@signozhq/ui/sonner', () => ({
 	},
 }));
 
-/** jsdom reports 0 for both, so the truncated path needs the overflow faked. */
-function fakeTruncation(scrollWidth: number, clientWidth: number): () => void {
-	const scroll = jest
-		.spyOn(HTMLElement.prototype, 'scrollWidth', 'get')
-		.mockReturnValue(scrollWidth);
-	const client = jest
-		.spyOn(HTMLElement.prototype, 'clientWidth', 'get')
-		.mockReturnValue(clientWidth);
-
-	return (): void => {
-		scroll.mockRestore();
-		client.mockRestore();
-	};
-}
-
 describe('EntityMetadataItem', () => {
 	afterEach(() => {
 		jest.clearAllMocks();
@@ -72,76 +57,42 @@ describe('EntityMetadataItem', () => {
 		expect(screen.queryByTestId('copy-metadata-node')).not.toBeInTheDocument();
 	});
 
-	it('exposes the full value on hover once it is truncated', async () => {
-		const restore = fakeTruncation(400, 200);
+	it('exposes the full value on hover', async () => {
+		render(
+			<EntityMetadataItem
+				label="Node"
+				value="gke-mgmt-pl-generator-e2st4-sp-41c1bdc8-zv4t"
+			/>,
+		);
 
-		try {
-			render(
-				<EntityMetadataItem
-					label="Node"
-					value="gke-mgmt-pl-generator-e2st4-sp-41c1bdc8-zv4t"
-				/>,
-			);
+		await userEvent.hover(
+			screen.getByText('gke-mgmt-pl-generator-e2st4-sp-41c1bdc8-zv4t'),
+		);
 
-			await userEvent.hover(
-				screen.getByText('gke-mgmt-pl-generator-e2st4-sp-41c1bdc8-zv4t'),
-			);
-
-			await waitFor(() => {
-				expect(
-					screen.getAllByText('gke-mgmt-pl-generator-e2st4-sp-41c1bdc8-zv4t').length,
-				).toBeGreaterThan(1);
-			});
-		} finally {
-			restore();
-		}
+		await waitFor(() => {
+			expect(
+				screen.getAllByText('gke-mgmt-pl-generator-e2st4-sp-41c1bdc8-zv4t').length,
+			).toBeGreaterThan(1);
+		});
 	});
 
-	it('never presents the value as clickable, truncated or not', () => {
-		const restore = fakeTruncation(400, 200);
+	it('never presents the value as clickable', () => {
+		render(<EntityMetadataItem label="Node" value="a-very-long-node-name" />);
 
-		try {
-			render(<EntityMetadataItem label="Node" value="a-very-long-node-name" />);
-
-			const valueEl = screen.getByText('a-very-long-node-name');
-			expect(valueEl).not.toHaveAttribute('data-interactive');
-			expect(valueEl).not.toHaveAttribute('data-truncate');
-		} finally {
-			restore();
-		}
+		const valueEl = screen.getByText('a-very-long-node-name');
+		expect(valueEl).not.toHaveAttribute('data-interactive');
+		expect(valueEl).not.toHaveAttribute('data-truncate');
 	});
 
 	it('triggers the tooltip from the wrapper, never from the text itself', () => {
-		const restore = fakeTruncation(400, 200);
+		render(<EntityMetadataItem label="Node" value="a-very-long-node-name" />);
 
-		try {
-			render(<EntityMetadataItem label="Node" value="a-very-long-node-name" />);
-
-			// Radix merges its handlers onto the trigger, and Typography styles
-			// itself interactive off any merged onClick — so the trigger has to stay
-			// off the text.
-			const textEl = screen.getByText('a-very-long-node-name');
-			expect(textEl).not.toHaveAttribute('data-slot', 'tooltip-trigger');
-			expect(textEl.parentElement).toHaveAttribute('data-slot', 'tooltip-trigger');
-		} finally {
-			restore();
-		}
-	});
-
-	it('offers no tooltip for a value that fits', async () => {
-		const restore = fakeTruncation(200, 200);
-
-		try {
-			render(<EntityMetadataItem label="Cluster Name" value="mgmt" />);
-
-			await userEvent.hover(screen.getByText('mgmt'));
-
-			await waitFor(() => {
-				expect(screen.getAllByText('mgmt')).toHaveLength(1);
-			});
-		} finally {
-			restore();
-		}
+		// Radix merges its handlers onto the trigger, and Typography styles
+		// itself interactive off any merged onClick — so the trigger has to stay
+		// off the text.
+		const textEl = screen.getByText('a-very-long-node-name');
+		expect(textEl).not.toHaveAttribute('data-slot', 'tooltip-trigger');
+		expect(textEl.parentElement).toHaveAttribute('data-slot', 'tooltip-trigger');
 	});
 
 	it('leaves an entity-supplied renderer alone', () => {
