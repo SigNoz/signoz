@@ -177,7 +177,7 @@ func TestResolveJiraCloudIDsIgnoresClientSuppliedValues(t *testing.T) {
 				}},
 			}
 
-			err := receiver.ResolveJiraCloudIDs(context.Background(), srv.Client())
+			err := receiver.ResolveJiraCloudIDs(context.Background())
 			if tc.wantErr {
 				require.Error(t, err)
 			} else {

@@ -2,7 +2,6 @@ package signozalertmanager
 
 import (
 	"context"
-	"net/http"
 	"time"
 
 	amConfig "github.com/prometheus/alertmanager/config"
@@ -112,10 +111,8 @@ func (provider *provider) PutAlerts(ctx context.Context, orgID string, alerts al
 	return provider.service.PutAlerts(ctx, orgID, alerts)
 }
 
-var jiraTenantInfoClient = &http.Client{Timeout: 10 * time.Second}
-
 func (provider *provider) TestReceiver(ctx context.Context, orgID string, receiver *alertmanagertypes.Receiver) error {
-	if err := receiver.ResolveJiraCloudIDs(ctx, jiraTenantInfoClient); err != nil {
+	if err := receiver.ResolveJiraCloudIDs(ctx); err != nil {
 		return err
 	}
 	return provider.service.TestReceiver(ctx, orgID, receiver)
@@ -159,7 +156,7 @@ func (provider *provider) GetChannelByID(ctx context.Context, orgID string, chan
 }
 
 func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgID string, receiver *alertmanagertypes.Receiver, id valuer.UUID) error {
-	if err := receiver.ResolveJiraCloudIDs(ctx, jiraTenantInfoClient); err != nil {
+	if err := receiver.ResolveJiraCloudIDs(ctx); err != nil {
 		return err
 	}
 
@@ -226,7 +223,7 @@ func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, c
 }
 
 func (provider *provider) CreateChannel(ctx context.Context, orgID string, receiver *alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error) {
-	if err := receiver.ResolveJiraCloudIDs(ctx, jiraTenantInfoClient); err != nil {
+	if err := receiver.ResolveJiraCloudIDs(ctx); err != nil {
 		return nil, err
 	}
 
