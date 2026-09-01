@@ -11,15 +11,7 @@ import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 import ColumnHeader from '../Base/ColumnHeader';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
-import {
-	CONTAINER_READY_COLORS,
-	CONTAINER_READY_LABELS,
-	CONTAINER_STATUS_COLORS,
-	CONTAINER_STATUS_LABELS,
-	formatBytes,
-	getContainerReadyItems,
-	getContainerStatusItems,
-} from '../commonUtils';
+import { formatBytes } from '../commonUtils';
 import {
 	EntityProgressBar,
 	EntityProgressThresholds,
@@ -32,7 +24,16 @@ import {
 	InfraMonitoringEntity,
 } from '../constants';
 import { SelectedItemParams } from '../hooks';
-import { CONTAINERS_DOC_PATH, getContainerImageWithTag } from './utils';
+import {
+	CONTAINER_READY_COLORS,
+	CONTAINER_READY_LABELS,
+	CONTAINER_STATUS_COLORS,
+	CONTAINER_STATUS_LABELS,
+	CONTAINERS_DOC_PATH,
+	getContainerImageWithTag,
+	getContainerReadyItems,
+	getContainerStatusItems,
+} from './utils';
 
 export function getK8sContainerRowKey(
 	container: InframonitoringtypesContainerRecordDTO,
