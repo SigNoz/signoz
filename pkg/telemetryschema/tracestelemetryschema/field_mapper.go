@@ -199,10 +199,7 @@ func (m *fieldMapper) getColumn(
 		default:
 			return nil, qbtypes.ErrColumnNotFound
 		}
-		// The `attributes` evolution entry is the rollout control; the promoted column is a
-		// candidate only when the key carries its own promotion entry, so every JSON candidate
-		// returned here has an evolution entry and SelectEvolutionsForColumns synthesizes a base
-		// only for the legacy map.
+		// The `attributes` evolution entry is the rollout control.
 		if attributeColumnEvolutionRegistered(key, SpanAttributesColumn) {
 			cols := make([]*schema.Column, 0, 3)
 			if attributeColumnEvolutionRegistered(key, SpanAttributesPromotedColumn) {
