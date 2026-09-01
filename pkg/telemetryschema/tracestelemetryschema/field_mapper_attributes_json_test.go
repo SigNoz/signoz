@@ -239,6 +239,89 @@ func TestAttributeJSONNoAmbiguityWarning(t *testing.T) {
 	assert.Empty(t, warnings, "a plain attribute filter must not emit an ambiguity warning")
 }
 
+// TestConditionForAttributeJSONTypeCollision covers a name stored under two data types (String
+// and Int64) in the JSON column: an untyped filter fans out to one exists-guarded condition per
+// type, both reading the same physical path with their own cast, and surfaces the ambiguity
+// warning. In the JSON column the two branches share the raw path; only the cast differs.
+func TestConditionForAttributeJSONTypeCollision(t *testing.T) {
+	ctx := context.Background()
+	fm := NewFieldMapper(flaggertest.New(t))
+	cb := NewConditionBuilder(fm, flaggertest.New(t))
+	evo := MockAttributeEvolutionData(attrJSONRelease)
+
+	strKey := attrKey("http.status_code", telemetrytypes.FieldDataTypeString, evo)
+	intKey := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
+	fieldKeys := map[string][]*telemetrytypes.TelemetryFieldKey{
+		"http.status_code": {&strKey, &intKey},
+	}
+
+	ref := attrKey("http.status_code", telemetrytypes.FieldDataTypeUnspecified, nil)
+	sb := sqlbuilder.NewSelectBuilder()
+	conds, warnings, err := cb.ConditionFor(ctx, valuer.UUID{}, attrWindowAfter[0], attrWindowAfter[1], &ref,
+		fieldKeys, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorEqual, float64(200), sb)
+	require.NoError(t, err)
+	require.Len(t, conds, 2, "a colliding name must build one condition per data type")
+
+	sb.Where(sb.Or(conds...))
+	sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	assert.Contains(t, sql, "toFloat64OrNull(attributes.`http.status_code`::String) = ?")
+	assert.Contains(t, sql, "toFloat64(attributes.`http.status_code`::Nullable(Int64)) = ?")
+	assert.Contains(t, sql, "attributes.`http.status_code` IS NOT NULL")
+	assert.NotEmpty(t, warnings, "a colliding name must surface the ambiguity warning")
+}
+
+// TestColumnExpressionForAttributeJSONTypeCollision covers group-by on a name stored under two
+// data types: both interpretations fold into a single multiIf output column, each guarded on the
+// shared raw path and coerced to the group-by type (String rendered directly, Int64 via toString).
+func TestColumnExpressionForAttributeJSONTypeCollision(t *testing.T) {
+	ctx := context.Background()
+	fm := NewFieldMapper(flaggertest.New(t))
+	evo := MockAttributeEvolutionData(attrJSONRelease)
+
+	strKey := attrKey("http.status_code", telemetrytypes.FieldDataTypeString, evo)
+	intKey := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
+	fieldKeys := map[string][]*telemetrytypes.TelemetryFieldKey{
+		"http.status_code": {&strKey, &intKey},
+	}
+
+	ref := attrKey("http.status_code", telemetrytypes.FieldDataTypeUnspecified, nil)
+	got, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, attrWindowAfter[0], attrWindowAfter[1], &ref, telemetrytypes.FieldDataTypeString, fieldKeys)
+	require.NoError(t, err)
+	assert.Equal(t,
+		"multiIf(attributes.`http.status_code` IS NOT NULL, attributes.`http.status_code`::String, attributes.`http.status_code` IS NOT NULL, toString(attributes.`http.status_code`::Nullable(Int64)), NULL)",
+		got)
+}
+
+// TestConditionForAttributeMapTypeCollisionParity anchors the legacy behavior the JSON path must
+// preserve: before the rollout the same colliding name fans out to two separate physical map
+// columns (attributes_string / attributes_number), each with its own mapContains guard.
+func TestConditionForAttributeMapTypeCollisionParity(t *testing.T) {
+	ctx := context.Background()
+	fm := NewFieldMapper(flaggertest.New(t))
+	cb := NewConditionBuilder(fm, flaggertest.New(t))
+	evo := MockAttributeEvolutionData(attrJSONRelease)
+
+	strKey := attrKey("http.status_code", telemetrytypes.FieldDataTypeString, evo)
+	intKey := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
+	fieldKeys := map[string][]*telemetrytypes.TelemetryFieldKey{
+		"http.status_code": {&strKey, &intKey},
+	}
+
+	ref := attrKey("http.status_code", telemetrytypes.FieldDataTypeUnspecified, nil)
+	sb := sqlbuilder.NewSelectBuilder()
+	conds, _, err := cb.ConditionFor(ctx, valuer.UUID{}, attrWindowBefore[0], attrWindowBefore[1], &ref,
+		fieldKeys, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorEqual, float64(200), sb)
+	require.NoError(t, err)
+	require.Len(t, conds, 2, "a colliding name must build one condition per data type")
+
+	sb.Where(sb.Or(conds...))
+	sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	assert.Contains(t, sql, "toFloat64OrNull(attributes_string['http.status_code']) = ?")
+	assert.Contains(t, sql, "mapContains(attributes_string, 'http.status_code')")
+	assert.Contains(t, sql, "toFloat64(attributes_number['http.status_code']) = ?")
+	assert.Contains(t, sql, "mapContains(attributes_number, 'http.status_code')")
+}
+
 // TestColumnForUnspecifiedAttributeNoBranchFlip pins the branch-flip decision: a
 // data-type-unspecified attribute key resolves to no column (even with the evolution present), so
 // bare attribute keys keep taking the legacy CandidateKeys/synthesis path rather than becoming
