@@ -387,6 +387,7 @@ func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
 func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/query_range", am.ViewAccess(aH.queryRangeMetrics)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/query", am.ViewAccess(aH.queryMetrics)).Methods(http.MethodGet)
+
 	router.HandleFunc("/api/v1/rules", am.ViewAccess(aH.listRules)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules/{id}", am.ViewAccess(aH.getRule)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules", am.EditAccess(aH.createRule)).Methods(http.MethodPost)
@@ -439,7 +440,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v2/traces/fields", am.EditAccess(aH.updateTraceField)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/version", am.OpenAccess(aH.getVersion)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/features", am.ViewAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/features", am.OpenAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/health", am.OpenAccess(aH.getHealth)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/listErrors", am.ViewAccess(aH.listErrors)).Methods(http.MethodPost)
@@ -1497,7 +1498,7 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 
 	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
-		aH.HandleError(w, err, http.StatusInternalServerError)
+		aH.HandleError(w, err, http.StatusUnauthorized)
 		return
 	}
 

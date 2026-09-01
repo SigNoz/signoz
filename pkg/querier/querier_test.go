@@ -189,6 +189,7 @@ func TestRunExecutesQueriesConcurrently(t *testing.T) {
 
 	q := &querier{
 		logger:               instrumentationtest.New().Logger(),
+		fl:                   flaggertest.New(t),
 		maxConcurrentQueries: numQueries,
 	}
 
@@ -236,6 +237,7 @@ func TestRunRespectsMaxConcurrentQueries(t *testing.T) {
 
 	q := &querier{
 		logger:               instrumentationtest.New().Logger(),
+		fl:                   flaggertest.New(t),
 		maxConcurrentQueries: limit,
 	}
 
@@ -273,6 +275,7 @@ func TestRunRespectsMaxConcurrentQueries(t *testing.T) {
 func TestRunQueryErrorCancelsSiblings(t *testing.T) {
 	q := &querier{
 		logger:               instrumentationtest.New().Logger(),
+		fl:                   flaggertest.New(t),
 		maxConcurrentQueries: 4,
 	}
 
