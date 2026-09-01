@@ -143,6 +143,16 @@ def wait_for_firing_timeline_entry(signoz: types.SigNoz, token: str, rule_id: st
     raise AssertionError(f"No firing entry recorded in rule state history within {wait_seconds}s, items: {items}")
 
 
+def get_rule(signoz: types.SigNoz, token: str, rule_id: str) -> dict:
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v2/rules/{rule_id}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, f"Failed to get rule, api returned {response.status_code} with response: {response.text}"
+    return response.json()["data"]
+
+
 def get_rule_history_top_contributors(signoz: types.SigNoz, token: str, rule_id: str, start_ms: int, end_ms: int) -> list[dict]:
     response = requests.get(
         signoz.self.host_configs["8080"].get(f"/api/v2/rules/{rule_id}/history/top_contributors"),
