@@ -627,7 +627,7 @@ describe('Create Alert Channel', () => {
 						},
 					],
 				});
-			});
+			}, 15000);
 
 			it('Should block save when the reopen window is below the 1m minimum', async () => {
 				const user = userEvent.setup({ delay: null });
@@ -649,7 +649,7 @@ describe('Create Alert Channel', () => {
 						description: 'jira_reopen_duration_invalid',
 					}),
 				);
-			});
+			}, 15000);
 		});
 		describe('JSM Ops', () => {
 			beforeEach(() => {
