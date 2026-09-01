@@ -13,7 +13,7 @@ import type {
 	DrilldownContext,
 	OpenDrilldownView,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/drilldown';
-import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
+import { toLegacyPanelType } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 import { requireQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 import { buildAggregateData } from 'pages/DashboardPage/DashboardContainer/Panels/utils/drilldown/buildAggregateData';
@@ -79,7 +79,7 @@ export function useDrilldown(
 	options?: UseDrilldownOptions,
 ): UseDrilldownResult {
 	const kind = panel.spec.plugin.kind;
-	const panelType = PANEL_KIND_TO_PANEL_TYPE[kind];
+	const panelType = toLegacyPanelType(kind);
 	const queries = panel.spec.queries;
 
 	// Drilldown only for builder-authored panels with a query to drill into (PromQL /

@@ -1,6 +1,6 @@
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
-import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
+import { toLegacyPanelType } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 
 import QueryEditorBody from './QueryEditorBody';
 import StaticEditorBody from './StaticEditorBody';
@@ -45,7 +45,7 @@ function PanelEditorContainer(props: PanelEditorContainerProps): JSX.Element {
 
 	const { onChangePanelKind } = usePanelTypeSwitch({
 		spec: draftApi.draft.spec,
-		panelType: PANEL_KIND_TO_PANEL_TYPE[panelKind],
+		panelType: toLegacyPanelType(panelKind),
 		setSpec: draftApi.setSpec,
 	});
 

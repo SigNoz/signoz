@@ -23,7 +23,7 @@ import {
 	resolveQueryType,
 } from '../../Panels/capabilities';
 import {
-	PANEL_KIND_TO_PANEL_TYPE,
+	toLegacyPanelType,
 	type PanelKind,
 } from '../../Panels/types/panelKind';
 import { getBuilderQueries } from '../../Panels/utils/getBuilderQueries';
@@ -113,7 +113,7 @@ export function usePanelTypeSwitch({
 				builderQuery: query,
 			});
 
-			const newPanelType = PANEL_KIND_TO_PANEL_TYPE[newKind];
+			const newPanelType = toLegacyPanelType(newKind);
 
 			// Only `plugin` needs a cast: it's a discriminated union over `kind`, and a
 			// dynamically-chosen kind can't be correlated with its spec statically (as in

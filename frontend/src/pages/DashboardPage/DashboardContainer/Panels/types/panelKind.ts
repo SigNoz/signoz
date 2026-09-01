@@ -8,7 +8,12 @@ import type { DashboardtypesPanelPluginKindDTO } from 'api/generated/services/si
  */
 export type PanelKind = `${DashboardtypesPanelPluginKindDTO}`;
 
-export const PANEL_KIND_TO_PANEL_TYPE: Record<PanelKind, PANEL_TYPES> = {
+/**
+ * Partial: a static kind has no legacy `PANEL_TYPES` counterpart — V1 never had
+ * one. V1-era query/alert/drilldown paths read {@link toLegacyPanelType}; new code
+ * reads this map directly, where the `undefined` is worth seeing.
+ */
+export const PANEL_KIND_TO_PANEL_TYPE: Partial<Record<PanelKind, PANEL_TYPES>> = {
 	'signoz/TimeSeriesPanel': PANEL_TYPES.TIME_SERIES,
 	'signoz/BarChartPanel': PANEL_TYPES.BAR,
 	'signoz/NumberPanel': PANEL_TYPES.VALUE,
@@ -17,6 +22,17 @@ export const PANEL_KIND_TO_PANEL_TYPE: Record<PanelKind, PANEL_TYPES> = {
 	'signoz/HistogramPanel': PANEL_TYPES.HISTOGRAM,
 	'signoz/ListPanel': PANEL_TYPES.LIST,
 };
+
+/**
+ * The legacy `PANEL_TYPES` a kind maps to, for the V1-era query, alert and
+ * drilldown surfaces that still speak it. Every such path is gated on the kind's
+ * query arm or an action capability a static kind declares `false`, so the
+ * fallback is unreachable — it exists to keep those call sites total rather than
+ * have each invent its own.
+ */
+export function toLegacyPanelType(kind: PanelKind): PANEL_TYPES {
+	return PANEL_KIND_TO_PANEL_TYPE[kind] ?? PANEL_TYPES.TIME_SERIES;
+}
 
 /**
  * Reverse of {@link PANEL_KIND_TO_PANEL_TYPE} — the mapping is a bijection, so every

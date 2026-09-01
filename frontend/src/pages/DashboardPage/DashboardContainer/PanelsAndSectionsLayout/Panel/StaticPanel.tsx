@@ -1,5 +1,7 @@
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import cx from 'classnames';
 import type { RenderableStaticPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
+import { isTransparentPanel } from 'pages/DashboardPage/DashboardContainer/Panels/utils/isTransparentPanel';
 import { EMPTY_PANEL_QUERY_DATA } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
 import type { PanelActionsConfig } from './Panel';
@@ -27,9 +29,11 @@ function StaticPanel({
 	isVisible,
 	panelActions,
 }: StaticPanelProps): JSX.Element {
+	const isTransparent = isTransparentPanel(panel.spec);
+
 	return (
 		<div
-			className={styles.panel}
+			className={cx(styles.panel, { [styles.transparent]: isTransparent })}
 			data-panel-visible={isVisible ? 'true' : 'false'}
 			// Stable locator, as on QueryPanel — actions that capture the panel node
 			// (and tests) address it the same way for both arms.

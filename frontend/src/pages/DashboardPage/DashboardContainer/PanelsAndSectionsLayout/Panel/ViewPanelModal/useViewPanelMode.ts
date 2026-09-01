@@ -10,7 +10,7 @@ import { usePanelEditSession } from 'pages/DashboardPage/DashboardContainer/Pane
 import type { PanelEditorDraftApi } from 'pages/DashboardPage/DashboardContainer/PanelEditor/types';
 import type { OpenDrilldownView } from 'pages/DashboardPage/DashboardContainer/Panels/types/drilldown';
 import type { RenderableQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
-import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
+import { toLegacyPanelType } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 import { resolveSignal } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getBuilderQueries';
 import { buildViewPanelSpec } from 'pages/DashboardPage/DashboardContainer/Panels/utils/drilldown/buildViewPanelSpec';
 import { fromPerses } from 'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters';
@@ -89,7 +89,7 @@ export function useViewPanelMode({
 		() =>
 			fromPerses(
 				panel.spec.queries,
-				PANEL_KIND_TO_PANEL_TYPE[panel.spec.plugin.kind],
+				toLegacyPanelType(panel.spec.plugin.kind),
 			),
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only snapshot
 		[],

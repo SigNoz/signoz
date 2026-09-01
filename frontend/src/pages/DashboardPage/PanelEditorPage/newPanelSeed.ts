@@ -2,9 +2,12 @@ import type { DashboardtypesQueryDTO } from 'api/generated/services/sigNoz.schem
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
-import { isQueryTypeSupportedByPanelKind } from '../DashboardContainer/Panels/capabilities';
+import {
+	isQuerylessPanelKind,
+	isQueryTypeSupportedByPanelKind,
+} from '../DashboardContainer/Panels/capabilities';
 import { getPanelDefinition } from '../DashboardContainer/Panels/registry';
-import { PANEL_KIND_TO_PANEL_TYPE } from '../DashboardContainer/Panels/types/panelKind';
+import { toLegacyPanelType } from '../DashboardContainer/Panels/types/panelKind';
 import type { PanelKind } from '../DashboardContainer/Panels/types/panelKind';
 import { SectionKind } from '../DashboardContainer/Panels/types/sections';
 import { buildDefaultQueries } from '../DashboardContainer/Panels/utils/buildDefaultQueries';
@@ -51,7 +54,8 @@ export function buildNewPanelSeed(
 	compositeQuery: Query | null,
 	isExplorerExport = false,
 ): NewPanelSeed {
-	if (!isExplorerExport || !compositeQuery) {
+	// A static kind has no query to seed; an exported query can't target it.
+	if (!isExplorerExport || !compositeQuery || isQuerylessPanelKind(requestedKind)) {
 		return {
 			kind: requestedKind,
 			queries: buildDefaultQueries(requestedKind),
@@ -62,7 +66,7 @@ export function buildNewPanelSeed(
 	const kind = resolveSeededPanelKind(requestedKind, compositeQuery);
 	const pluginSpec = buildPluginSpec(getPanelDefinition(kind).sections);
 
-	const converted = toPerses(compositeQuery, PANEL_KIND_TO_PANEL_TYPE[kind]);
+	const converted = toPerses(compositeQuery, toLegacyPanelType(kind));
 	const queries = converted.length > 0 ? converted : buildDefaultQueries(kind);
 
 	// Explorers put the single `unit` on the query itself, not the panel spec.

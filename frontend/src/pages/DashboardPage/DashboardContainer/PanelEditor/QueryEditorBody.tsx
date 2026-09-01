@@ -8,7 +8,7 @@ import {
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import type { RenderableQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
 import type { PanelKind } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
-import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
+import { toLegacyPanelType } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 import {
 	type SectionConfig,
 	type SectionControls,
@@ -217,7 +217,7 @@ function QueryEditorBody({
 	const onSwitchToView = useSwitchToViewMode({
 		dashboardId,
 		panelId,
-		panelType: PANEL_KIND_TO_PANEL_TYPE[panelKind],
+		panelType: toLegacyPanelType(panelKind),
 		query: currentQuery,
 		spec: draft.spec,
 	});

@@ -9,6 +9,7 @@ import type {
 	DashboardtypesPanelSpecDTO,
 	DashboardtypesTableFormattingDTO,
 	DashboardtypesTableThresholdDTO,
+	DashboardtypesTextPresentationDTO,
 	DashboardtypesThresholdWithLabelDTO,
 	DashboardtypesTimeSeriesChartAppearanceDTO,
 	TelemetrytypesTelemetryFieldKeyDTO,
@@ -25,6 +26,7 @@ import {
 	Scale3D,
 	Signpost,
 	Wallpaper,
+	AlignLeft,
 } from '@signozhq/icons';
 
 // Derived from an actual icon component so the type stays exact (size is a
@@ -51,6 +53,7 @@ export enum SectionKind {
 	Thresholds = 'thresholds',
 	ContextLinks = 'contextLinks',
 	Columns = 'columns',
+	TextLayout = 'presentation',
 }
 
 /**
@@ -93,6 +96,7 @@ export interface SectionSpecMap {
 	[SectionKind.Thresholds]: AnyThreshold[]; // spec.plugin.spec.thresholds (variant picks the editor)
 	[SectionKind.ContextLinks]: DashboardtypesLinkDTO[]; // spec.links (PANEL-level)
 	[SectionKind.Columns]: TelemetrytypesTelemetryFieldKeyDTO[]; // spec.plugin.spec.selectFields (List)
+	[SectionKind.TextLayout]: DashboardtypesTextPresentationDTO; // spec.plugin.spec.presentation (Text)
 }
 
 /**
@@ -140,7 +144,10 @@ export interface SectionControls {
 export type ControlledSectionKind = keyof SectionControls;
 
 /** Atomic sections — no sub-controls; a kind either shows them or not. */
-export type AtomicSectionKind = SectionKind.ContextLinks | SectionKind.Columns;
+export type AtomicSectionKind =
+	| SectionKind.ContextLinks
+	| SectionKind.Columns
+	| SectionKind.TextLayout;
 
 /** Predicate to hide a section from the current spec; returning true removes it. */
 export type SectionVisibilityPredicate = (
@@ -173,6 +180,7 @@ export const SECTION_METADATA = {
 	[SectionKind.Thresholds]: { title: 'Thresholds', icon: Antenna },
 	[SectionKind.ContextLinks]: { title: 'Context Links', icon: Link2 },
 	[SectionKind.Columns]: { title: 'Columns', icon: Columns3 },
+	[SectionKind.TextLayout]: { title: 'Text layout', icon: AlignLeft },
 } as const satisfies Record<SectionKind, SectionMetadata>;
 
 /**
