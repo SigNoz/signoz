@@ -18,7 +18,10 @@ import type {
 	Query,
 } from 'types/api/queryBuilder/queryBuilderData';
 
-import { resolveQueryType } from '../../Panels/capabilities';
+import {
+	isQuerylessPanelKind,
+	resolveQueryType,
+} from '../../Panels/capabilities';
 import {
 	PANEL_KIND_TO_PANEL_TYPE,
 	type PanelKind,
@@ -128,11 +131,25 @@ export function usePanelTypeSwitch({
 				queries,
 			});
 
-			// Revisit → restore the stash verbatim (the reversibility path).
+			// Revisit → restore the stash verbatim (the reversibility path). A static
+			// kind's stash carries `queries: []` and its builder query is untouched —
+			// there is no builder to re-seed for it.
 			const cached = cacheRef.current.get(newKind);
 			if (cached) {
 				setSpec(buildSpec(cached.pluginSpec, cached.queries));
-				redirectWithQueryBuilderData(cached.builderQuery);
+				if (!isQuerylessPanelKind(newKind)) {
+					redirectWithQueryBuilderData(cached.builderQuery);
+				}
+				return;
+			}
+
+			// First visit to a static kind → fresh spec from its sections, queries
+			// emptied (the API accepts nothing else), and the query builder left as-is:
+			// the stash above keeps the old kind's query for the return trip.
+			if (isQuerylessPanelKind(newKind)) {
+				const signal = getBuilderQueries(currentSpec.queries)[0]
+					?.signal as TelemetrytypesSignalDTO;
+				setSpec(buildSpec(getSwitchedPluginSpec(currentSpec, newKind, signal), []));
 				return;
 			}
 

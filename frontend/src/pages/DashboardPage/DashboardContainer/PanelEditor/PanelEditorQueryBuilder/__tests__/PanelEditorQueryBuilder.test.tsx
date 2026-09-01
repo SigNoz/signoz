@@ -4,6 +4,9 @@ import { OPERATORS } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { EQueryType } from 'types/common/dashboard';
 
+import { requireQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
+import type { PanelKind } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
+
 import PanelEditorQueryBuilder from '../PanelEditorQueryBuilder';
 
 // Capture the props the (real-guard-fed) QueryBuilderV2 receives without rendering it.
@@ -48,7 +51,7 @@ function renderBuilder(
 ): void {
 	render(
 		<PanelEditorQueryBuilder
-			panelKind={panelKind as never}
+			panelDefinition={requireQueryPanelDefinition(panelKind as PanelKind)}
 			signal={signal}
 			isLoadingQueries={false}
 			onStageRunQuery={jest.fn()}

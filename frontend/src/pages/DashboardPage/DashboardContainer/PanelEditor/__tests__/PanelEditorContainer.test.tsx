@@ -233,7 +233,12 @@ describe('PanelEditorContainer composition', () => {
 			}),
 		);
 		expect(mockQbProps).toHaveBeenCalledWith(
-			expect.objectContaining({ panelKind: 'signoz/TimeSeriesPanel' }),
+			expect.objectContaining({
+				panelDefinition: expect.objectContaining({
+					kind: 'signoz/TimeSeriesPanel',
+					mode: 'query',
+				}),
+			}),
 		);
 		expect(mockConfigProps).toHaveBeenCalledWith(
 			expect.objectContaining({

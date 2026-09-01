@@ -19,6 +19,10 @@ jest.mock('lib/query/panelQuery', () => ({
 }));
 jest.mock('../../../Panels/capabilities', () => ({
 	resolveQueryType: jest.fn(),
+	// Real predicate: these specs use real (query) kinds and the static path is
+	// exercised through its own cases below.
+	isQuerylessPanelKind: jest.requireActual('../../../Panels/capabilities')
+		.isQuerylessPanelKind,
 }));
 jest.mock('../../../queryV5/persesQueryAdapters', () => ({
 	toPerses: jest.fn(),

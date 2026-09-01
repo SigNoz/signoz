@@ -2,7 +2,10 @@ import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.sche
 import { EQueryType } from 'types/common/dashboard';
 
 import { getPanelDefinition } from './registry';
-import type { FilterConfigsPartial } from './types/panelCapabilities';
+import {
+	mergeQueryBuilderFieldRule,
+	type FilterConfigsPartial,
+} from './types/panelCapabilities';
 import type { RenderableQueryPanelDefinition } from './types/panelDefinition';
 import type { PanelKind } from './types/panelKind';
 
@@ -130,6 +133,5 @@ export function getHiddenQueryBuilderFields(
 	signal: TelemetrytypesSignalDTO,
 ): FilterConfigsPartial {
 	const rule = getQueryPanelDefinition(kind)?.queryBuilderFields ?? {};
-	const perSignal = signal ? rule[signal] : undefined;
-	return { ...rule.default, ...perSignal };
+	return mergeQueryBuilderFieldRule(rule, signal);
 }

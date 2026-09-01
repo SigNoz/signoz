@@ -10,6 +10,7 @@ import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQue
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { usePanelEditSession } from 'pages/DashboardPage/DashboardContainer/PanelEditor/hooks/usePanelEditSession';
+import { usePanelTypeSwitch } from 'pages/DashboardPage/DashboardContainer/PanelEditor/hooks/usePanelTypeSwitch';
 import type { OpenDrilldownView } from 'pages/DashboardPage/DashboardContainer/Panels/types/drilldown';
 import type { RenderableQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
 import {
@@ -115,13 +116,21 @@ export function useViewPanelMode({
 		draft,
 		panelDefinition,
 		defaultSignal,
+		panelType,
 		query,
 		runQuery,
-		onChangePanelKind,
 		buildSaveSpec,
 		reset,
 		setSpec,
 	} = usePanelEditSession({ panel: initialPanel, panelId, time });
+
+	// Hoisted out of the session (the editor shell owns its own); the modal keeps
+	// a local instance until it forks on mode (plan phase 3).
+	const { onChangePanelKind } = usePanelTypeSwitch({
+		spec: draft.spec,
+		panelType,
+		setSpec,
+	});
 
 	// The query the view opened with, captured once — the Reset target.
 	const savedQuery = useMemo(

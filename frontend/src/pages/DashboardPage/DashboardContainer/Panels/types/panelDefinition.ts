@@ -87,6 +87,24 @@ export interface StaticEditorPaneProps {
 }
 
 /**
+ * Props for a query kind's authoring pane (the editor's lower-left slot). Spec
+ * read/write is included so a kind's pane can edit its own spec slices (the List
+ * columns editor) without the host carrying per-kind conditionals.
+ */
+export interface QueryEditorPaneProps {
+	/** The kind's definition, narrowed by the host's fork. */
+	panelDefinition: RenderableQueryPanelDefinition;
+	signal: TelemetrytypesSignalDTO;
+	isLoadingQueries: boolean;
+	onStageRunQuery: () => void;
+	onCancelQuery: () => void;
+	/** Pin the tabs row to the pane top; the View modal opts out. */
+	stickyHeader?: boolean;
+	spec: DashboardtypesPanelSpecDTO;
+	onChangeSpec: (spec: DashboardtypesPanelSpecDTO) => void;
+}
+
+/**
  * A kind that renders from a query. Declares its whole query surface here, so a
  * kind without one carries no query declarations at all — no dummy capabilities,
  * no empty signal lists standing in for "not applicable".
@@ -95,6 +113,8 @@ export interface QueryPanelDefinition<K extends PanelKind = PanelKind>
 	extends PanelDefinitionBase<K> {
 	mode: 'query';
 	Renderer: ComponentType<PanelRendererProps<K>>;
+	/** Lower editor pane — the shared query-builder pane, or a kind wrapper of it. */
+	EditorPane: ComponentType<QueryEditorPaneProps>;
 	/** Signals this kind can visualize. */
 	supportedSignals: TelemetrytypesSignalDTO[];
 	/** Query languages this kind supports (Query Builder / ClickHouse / PromQL). */

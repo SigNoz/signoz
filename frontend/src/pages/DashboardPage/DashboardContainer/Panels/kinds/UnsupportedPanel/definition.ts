@@ -5,6 +5,7 @@ import {
 	NO_PANEL_ACTIONS,
 	type RenderablePanelDefinition,
 } from '../../types/panelDefinition';
+import QueryBuilderEditorPane from 'pages/DashboardPage/DashboardContainer/PanelEditor/PanelEditorQueryBuilder/QueryBuilderEditorPane';
 import Renderer from './Renderer';
 
 /**
@@ -23,6 +24,7 @@ export const UNSUPPORTED_PANEL: RenderablePanelDefinition = {
 	// Never offered in the UI — the kind lists come from the registry, which omits this.
 	icon: TriangleAlert,
 	Renderer,
+	EditorPane: QueryBuilderEditorPane,
 	sections: [],
 	supportedSignals: [],
 	supportedQueryTypes: [],
