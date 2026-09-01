@@ -8,7 +8,7 @@ import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schem
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
+import { toLegacyPanelType } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 import { getPanelQueryType } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getPanelQueryType';
 import { useDashboardEventMeta } from 'pages/DashboardPage/DashboardContainer/hooks/useDashboardEventMeta';
 import { buildQueryRangeRequest } from 'pages/DashboardPage/DashboardContainer/queryV5/buildQueryRangeRequest';
@@ -51,7 +51,7 @@ export function useCreateAlertFromPanel(): (
 			const panelKind = panel.spec.plugin.kind;
 			// Alerts are a V1 surface: the query pivots through the V1 `Query` shape and the
 			// URL carries a legacy panel type, so this flow keeps translating.
-			const panelType = PANEL_KIND_TO_PANEL_TYPE[panelKind];
+			const panelType = toLegacyPanelType(panelKind);
 
 			void logEvent(DashboardDetailEvents.PanelAction, {
 				action: 'createAlerts',

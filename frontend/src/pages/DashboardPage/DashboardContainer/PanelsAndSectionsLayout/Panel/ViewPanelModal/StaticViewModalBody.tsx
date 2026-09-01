@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { PenLine } from '@signozhq/icons';
+import cx from 'classnames';
 import { Button } from '@signozhq/ui/button';
 import { PanelMode } from 'lib/visualization/panels/types';
 import logEvent from 'api/common/logEvent';
@@ -9,6 +10,7 @@ import PanelHeader from 'pages/DashboardPage/DashboardContainer/PanelsAndSection
 import StaticPanelBody from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/StaticPanelBody/StaticPanelBody';
 import type { RenderableStaticPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
 import type { PanelKind } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
+import { isTransparentPanel } from 'pages/DashboardPage/DashboardContainer/Panels/utils/isTransparentPanel';
 import { EMPTY_PANEL_QUERY_DATA } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 import { useOpenPanelEditor } from 'pages/DashboardPage/DashboardContainer/hooks/useOpenPanelEditor';
 import { DashboardEvents } from 'pages/DashboardPage/constants/events';
@@ -67,7 +69,11 @@ function StaticViewModalBody({
 					Edit panel
 				</Button>
 			</div>
-			<div className={styles.staticPreview}>
+			<div
+				className={cx(styles.staticPreview, {
+					[styles.staticPreviewTransparent]: isTransparentPanel(draft.spec),
+				})}
+			>
 				<PanelHeader
 					panelId={panelId}
 					panel={draft}

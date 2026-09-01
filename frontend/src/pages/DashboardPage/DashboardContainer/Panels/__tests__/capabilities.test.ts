@@ -34,6 +34,8 @@ const EXPECTED_QUERY_TYPES: Record<PanelKind, EQueryType[]> = {
 	'signoz/PieChartPanel': [QUERY_BUILDER, CLICKHOUSE],
 	'signoz/TablePanel': [QUERY_BUILDER, CLICKHOUSE],
 	'signoz/ListPanel': [QUERY_BUILDER],
+	// Static kind: no query surface at all.
+	'signoz/TextPanel': [],
 };
 
 const EXPECTED_SIGNALS: Record<PanelKind, TelemetrytypesSignalDTO[]> = {
@@ -45,11 +47,16 @@ const EXPECTED_SIGNALS: Record<PanelKind, TelemetrytypesSignalDTO[]> = {
 	'signoz/TablePanel': [metrics, logs, traces],
 	// List renders raw rows; metrics produce no row data.
 	'signoz/ListPanel': [logs, traces],
+	'signoz/TextPanel': [],
 };
 
 // Exhaustive over PanelKind, so a new kind can't ship without stating how its request is
 // shaped — the check that used to be implicit in a legacy PANEL_TYPES switch.
-const EXPECTED_QUERY_CAPABILITIES: Record<PanelKind, PanelQueryCapabilities> = {
+// Partial: a static kind declares no query capabilities — the lookup below
+// resolves undefined on both sides for it.
+const EXPECTED_QUERY_CAPABILITIES: Partial<
+	Record<PanelKind, PanelQueryCapabilities>
+> = {
 	'signoz/TimeSeriesPanel': {
 		requestType: time_series,
 		formatTableResultForUI: false,

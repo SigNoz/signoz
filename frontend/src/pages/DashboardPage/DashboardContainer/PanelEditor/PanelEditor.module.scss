@@ -27,15 +27,36 @@
 	}
 }
 
-// The static editor's preview: the panel card the grid shows, minus actions.
-.staticPreviewSurface {
+// The static editor's preview canvas: same dotted backdrop and spacing as the
+// query preview. The pane itself never scrolls — the panel card clips, and the
+// renderer scrolls its own body when the content outgrows it, as on the grid.
+.staticPreview {
 	display: flex;
 	flex-direction: column;
 	height: 100%;
+	box-sizing: border-box;
+	padding: 24px;
+	background-image: radial-gradient(var(--l2-border) 1px, transparent 0);
+	background-size: 20px 20px;
+	border-bottom: 1px solid var(--l1-border);
+	overflow: hidden;
+}
+
+// The draft panel, rendered as the card the grid shows (minus actions).
+.staticPreviewSurface {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
 	min-height: 0;
-	margin: 12px;
 	border: 1px solid var(--l2-border);
 	border-radius: 4px;
 	background: var(--l2-background);
 	overflow: hidden;
+}
+
+// The preview honours the draft's transparent option (TDD §6.4): the card chrome
+// drops and the body sits on the dotted canvas, as it will on the dashboard.
+.staticPreviewTransparent {
+	background: transparent;
+	border-color: transparent;
 }

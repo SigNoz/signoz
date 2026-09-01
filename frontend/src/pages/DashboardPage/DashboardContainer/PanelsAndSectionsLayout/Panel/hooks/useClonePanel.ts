@@ -3,7 +3,7 @@ import { toast } from '@signozhq/ui/sonner';
 import logEvent from 'api/common/logEvent';
 import { cloneDeep } from 'lodash-es';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
-import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
+import { toLegacyPanelType } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 import { v4 as uuid } from 'uuid';
 
 import { useDashboardEventMeta } from '../../../hooks/useDashboardEventMeta';
@@ -82,7 +82,7 @@ export function useClonePanel({
 				await clone;
 				void logEvent(DashboardDetailEvents.PanelAction, {
 					action: 'clone',
-					panelType: PANEL_KIND_TO_PANEL_TYPE[source.panel.spec.plugin.kind],
+					panelType: toLegacyPanelType(source.panel.spec.plugin.kind),
 					panelKind: source.panel.spec.plugin.kind,
 					panelId,
 					...eventMeta,

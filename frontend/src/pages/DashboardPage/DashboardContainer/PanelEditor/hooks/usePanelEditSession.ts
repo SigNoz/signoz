@@ -7,7 +7,7 @@ import type { PANEL_TYPES } from 'constants/queryBuilder';
 import { requireQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
 import { isPanelKindSupported } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 import type { RenderableQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
-import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
+import { toLegacyPanelType } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 import {
 	usePanelQuery,
 	type PanelQueryTimeOverride,
@@ -90,7 +90,7 @@ export function usePanelEditSession({
 	// Hosts fork on `definition.mode` before mounting this session (the editor and
 	// View modal shells) — asserted rather than assumed.
 	const panelDefinition = requireQueryPanelDefinition(panelKind);
-	const panelType = PANEL_KIND_TO_PANEL_TYPE[panelKind];
+	const panelType = toLegacyPanelType(panelKind);
 	const defaultSignal = panelDefinition.supportedSignals[0];
 
 	const query = usePanelQuery({

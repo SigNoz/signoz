@@ -8,3 +8,10 @@
 	border-radius: 4px;
 	overflow: hidden;
 }
+
+// D7: a static kind may drop the card so its body sits on the dashboard canvas
+// (section headers). Chrome only — hover actions in the header stay reachable.
+.transparent {
+	background: transparent;
+	border-color: transparent;
+}

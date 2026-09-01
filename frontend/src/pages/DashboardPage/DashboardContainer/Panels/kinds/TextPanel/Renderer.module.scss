@@ -1,0 +1,62 @@
+@use '../../../../../../styles/scrollbar' as *;
+
+.panel {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 0;
+	padding: 8px 12px;
+	overflow: auto;
+	@include custom-scrollbar;
+}
+
+// Horizontal alignment inherits into the rendered body, which deliberately leaves
+// `text-align` alone so the panel can own it.
+.alignLeft {
+	text-align: left;
+}
+
+.alignCenter {
+	text-align: center;
+}
+
+.alignRight {
+	text-align: right;
+}
+
+// `text-align` moves only inline content: the table is a block box inside its
+// scroll wrapper and stays put, and list markers hang at the list's left edge.
+// (0,2,1) beats the body reset at (0,2,0); `list-style-position` goes on the
+// `li` directly because the body's `list-style` shorthand on `ul`/`ol` resets
+// the inherited position.
+.panel.alignRight table {
+	margin-left: auto;
+}
+
+.panel.alignCenter table {
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.panel.alignRight li,
+.panel.alignCenter li {
+	list-style-position: inside;
+}
+
+.alignTop {
+	justify-content: flex-start;
+}
+
+// Auto margins, not `justify-content`: when the body overflows, an auto margin
+// resolves to zero so the content's top stays scrollable — `center`/`flex-end`
+// push the overflow above the scrollport, where no scroll position reaches it.
+// Specificity (0,3,0): the body root's `all: revert` reset sits at (0,2,0) and
+// would strip a tied margin rule.
+.panel.alignMiddle > *:first-child {
+	margin-top: auto;
+	margin-bottom: auto;
+}
+
+.panel.alignBottom > *:first-child {
+	margin-top: auto;
+}

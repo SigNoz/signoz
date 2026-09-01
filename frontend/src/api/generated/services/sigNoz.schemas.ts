@@ -5019,6 +5019,50 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	spec: DashboardtypesListPanelSpecDTO;
 }
 
+export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTOKind {
+	'signoz/TextPanel' = 'signoz/TextPanel',
+}
+export enum DashboardtypesTextModeDTO {
+	markdown = 'markdown',
+}
+export enum DashboardtypesPanelBackgroundDTO {
+	solid = 'solid',
+	transparent = 'transparent',
+}
+export enum DashboardtypesTextAlignDTO {
+	left = 'left',
+	center = 'center',
+	right = 'right',
+}
+export enum DashboardtypesVerticalAlignDTO {
+	top = 'top',
+	center = 'center',
+	bottom = 'bottom',
+}
+export interface DashboardtypesTextPresentationDTO {
+	background?: DashboardtypesPanelBackgroundDTO;
+	textAlign?: DashboardtypesTextAlignDTO;
+	verticalAlign?: DashboardtypesVerticalAlignDTO;
+}
+
+export interface DashboardtypesTextPanelSpecDTO {
+	mode?: DashboardtypesTextModeDTO;
+	presentation?: DashboardtypesTextPresentationDTO;
+	/**
+	 * @type string
+	 */
+	text?: string;
+}
+
+export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTO {
+	/**
+	 * @enum signoz/TextPanel
+	 * @type string
+	 */
+	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTOKind;
+	spec: DashboardtypesTextPanelSpecDTO;
+}
+
 export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpecDTO
@@ -5026,7 +5070,8 @@ export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpecDTO
-	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTO;
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTO
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTO;
 
 export enum Querybuildertypesv5RequestTypeDTO {
 	scalar = 'scalar',
@@ -5950,6 +5995,7 @@ export enum DashboardtypesPanelPluginKindDTO {
 	'signoz/TablePanel' = 'signoz/TablePanel',
 	'signoz/HistogramPanel' = 'signoz/HistogramPanel',
 	'signoz/ListPanel' = 'signoz/ListPanel',
+	'signoz/TextPanel' = 'signoz/TextPanel',
 }
 /**
  * @nullable

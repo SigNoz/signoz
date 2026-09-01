@@ -8,7 +8,7 @@ import {
 	selectViewPanelExtendWindow,
 	useViewPanelStore,
 } from '../../../store/useViewPanelStore';
-import { PANEL_KIND_TO_PANEL_TYPE } from '../../types/panelKind';
+import { toLegacyPanelType } from '../../types/panelKind';
 import PanelLoader from '../PanelLoader/PanelLoader';
 import PanelMessage, { PanelMessageAction } from '../PanelMessage/PanelMessage';
 import { useExtendTimeWindow } from './useExtendTimeWindow';
@@ -57,7 +57,7 @@ function NoData({
 	// `panelType` stays on the event so existing reports keep resolving; `panelKind` is the
 	// V2 identity, and the only one that can tell two kinds sharing a panel type apart.
 	const panelKind = panel.spec.plugin.kind;
-	const panelType = PANEL_KIND_TO_PANEL_TYPE[panelKind];
+	const panelType = toLegacyPanelType(panelKind);
 
 	const extendAction: PanelMessageAction | undefined =
 		activeExtend?.canExtend && activeExtend.actionLabel

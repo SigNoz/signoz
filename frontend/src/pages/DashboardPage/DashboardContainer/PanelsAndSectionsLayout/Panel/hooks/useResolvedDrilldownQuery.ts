@@ -9,7 +9,7 @@ import { selectResolvedVariables } from 'pages/DashboardPage/DashboardContainer/
 import { useDashboardStore } from 'pages/DashboardPage/DashboardContainer/store/useDashboardStore';
 import type { PanelQueryCapabilities } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelCapabilities';
 import {
-	PANEL_KIND_TO_PANEL_TYPE,
+	toLegacyPanelType,
 	type PanelKind,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 import { AppState } from 'store/reducers';
@@ -92,7 +92,7 @@ export function useResolvedDrilldownQuery({
 		// V1 `Query` shape — the one place this hook still needs a legacy panel type.
 		return envelopesToQuery(
 			data.data.compositeQuery?.queries ?? [],
-			PANEL_KIND_TO_PANEL_TYPE[panelKind],
+			toLegacyPanelType(panelKind),
 		);
 	}, [hasVariables, data, v1Query, panelKind]);
 

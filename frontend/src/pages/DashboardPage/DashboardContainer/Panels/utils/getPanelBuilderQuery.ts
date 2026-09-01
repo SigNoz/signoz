@@ -3,7 +3,7 @@ import { initialQueriesMap } from 'constants/queryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { getQueryPanelDefinition } from '../capabilities';
-import { PANEL_KIND_TO_PANEL_TYPE } from '../types/panelKind';
+import { toLegacyPanelType } from '../types/panelKind';
 import { fromPerses } from '../../queryV5/persesQueryAdapters';
 
 /**
@@ -28,5 +28,5 @@ export function getPanelBuilderQuery(
 	if (panel.spec.queries.length === 0 && defaultSignal) {
 		return initialQueriesMap[defaultSignal];
 	}
-	return fromPerses(panel.spec.queries, PANEL_KIND_TO_PANEL_TYPE[kind]);
+	return fromPerses(panel.spec.queries, toLegacyPanelType(kind));
 }
