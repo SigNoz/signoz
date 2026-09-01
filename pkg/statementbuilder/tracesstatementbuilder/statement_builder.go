@@ -204,31 +204,15 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) 
 	}
 
 	for idx := range query.GroupBy {
-		groupBy := query.GroupBy[idx]
-		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
-			Name:          groupBy.Name,
-			Signal:        telemetrytypes.SignalTraces,
-			FieldContext:  groupBy.FieldContext,
-			FieldDataType: groupBy.FieldDataType,
-		})
+		keySelectors = append(keySelectors, keySelectorsForField(query.GroupBy[idx].TelemetryFieldKey)...)
 	}
 
 	for idx := range query.SelectFields {
-		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
-			Name:          query.SelectFields[idx].Name,
-			Signal:        telemetrytypes.SignalTraces,
-			FieldContext:  query.SelectFields[idx].FieldContext,
-			FieldDataType: query.SelectFields[idx].FieldDataType,
-		})
+		keySelectors = append(keySelectors, keySelectorsForField(query.SelectFields[idx])...)
 	}
 
 	for idx := range query.Order {
-		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
-			Name:          query.Order[idx].Key.Name,
-			Signal:        telemetrytypes.SignalTraces,
-			FieldContext:  query.Order[idx].Key.FieldContext,
-			FieldDataType: query.Order[idx].Key.FieldDataType,
-		})
+		keySelectors = append(keySelectors, keySelectorsForField(query.Order[idx].Key.TelemetryFieldKey)...)
 	}
 
 	for idx := range keySelectors {
@@ -237,6 +221,26 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) 
 	}
 
 	return keySelectors
+}
+
+func keySelectorsForField(key telemetrytypes.TelemetryFieldKey) []*telemetrytypes.FieldKeySelector {
+	selectors := []*telemetrytypes.FieldKeySelector{
+		{
+			Name:          key.Name,
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  key.FieldContext,
+			FieldDataType: key.FieldDataType,
+		},
+	}
+	if key.FieldContext != telemetrytypes.FieldContextUnspecified {
+		selectors = append(selectors, &telemetrytypes.FieldKeySelector{
+			Name:          key.FieldContext.StringValue() + "." + key.Name,
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextUnspecified,
+			FieldDataType: key.FieldDataType,
+		})
+	}
+	return selectors
 }
 
 // mergeDeprecatedTraceKeys prepends deprecated intrinsic/calculated trace field
@@ -310,20 +314,14 @@ func adjustTraceKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*te
 
 		For example: trace_id (intrinsic), response_status_code (calculated).
 	*/
+	// Resolve against the context-qualified name first, then the bare name since that can be instrinsic field e.g. scope.name.
 	var isIntrinsicOrCalculatedField bool
 	var intrinsicOrCalculatedField telemetrytypes.TelemetryFieldKey
-	if _, ok := tracestelemetryschema.IntrinsicFields[key.Name]; ok {
-		isIntrinsicOrCalculatedField = true
-		intrinsicOrCalculatedField = tracestelemetryschema.IntrinsicFields[key.Name]
-	} else if _, ok := tracestelemetryschema.CalculatedFields[key.Name]; ok {
-		isIntrinsicOrCalculatedField = true
-		intrinsicOrCalculatedField = tracestelemetryschema.CalculatedFields[key.Name]
-	} else if _, ok := tracestelemetryschema.IntrinsicFieldsDeprecated[key.Name]; ok {
-		isIntrinsicOrCalculatedField = true
-		intrinsicOrCalculatedField = tracestelemetryschema.IntrinsicFieldsDeprecated[key.Name]
-	} else if _, ok := tracestelemetryschema.CalculatedFieldsDeprecated[key.Name]; ok {
-		isIntrinsicOrCalculatedField = true
-		intrinsicOrCalculatedField = tracestelemetryschema.CalculatedFieldsDeprecated[key.Name]
+	if key.FieldContext != telemetrytypes.FieldContextUnspecified {
+		intrinsicOrCalculatedField, isIntrinsicOrCalculatedField = lookupIntrinsicOrCalculatedField(key.FieldContext.StringValue() + "." + key.Name)
+	}
+	if !isIntrinsicOrCalculatedField {
+		intrinsicOrCalculatedField, isIntrinsicOrCalculatedField = lookupIntrinsicOrCalculatedField(key.Name)
 	}
 
 	if isIntrinsicOrCalculatedField {
@@ -333,6 +331,24 @@ func adjustTraceKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*te
 	}
 
 	return actions
+}
+
+// lookupIntrinsicOrCalculatedField returns the intrinsic or calculated field registered under
+// name, across the current and deprecated tables.
+func lookupIntrinsicOrCalculatedField(name string) (telemetrytypes.TelemetryFieldKey, bool) {
+	if f, ok := tracestelemetryschema.IntrinsicFields[name]; ok {
+		return f, true
+	}
+	if f, ok := tracestelemetryschema.CalculatedFields[name]; ok {
+		return f, true
+	}
+	if f, ok := tracestelemetryschema.IntrinsicFieldsDeprecated[name]; ok {
+		return f, true
+	}
+	if f, ok := tracestelemetryschema.CalculatedFieldsDeprecated[name]; ok {
+		return f, true
+	}
+	return telemetrytypes.TelemetryFieldKey{}, false
 }
 
 // buildListQuery builds a query for list panel type.
