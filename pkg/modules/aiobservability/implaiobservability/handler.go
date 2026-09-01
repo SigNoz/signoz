@@ -2,9 +2,12 @@ package implaiobservability
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/aiobservability"
@@ -16,11 +19,13 @@ import (
 )
 
 type handler struct {
+	settings               factory.ScopedProviderSettings
 	telemetryMetadataStore telemetrytypes.MetadataStore
 }
 
-func NewHandler(telemetryMetadataStore telemetrytypes.MetadataStore) aiobservability.Handler {
+func NewHandler(providerSettings factory.ProviderSettings, telemetryMetadataStore telemetrytypes.MetadataStore) aiobservability.Handler {
 	return &handler{
+		settings:               factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/aiobservability/implaiobservability"),
 		telemetryMetadataStore: telemetryMetadataStore,
 	}
 }
@@ -78,7 +83,11 @@ func (handler *handler) GetFieldsValues(rw http.ResponseWriter, req *http.Reques
 	}
 	orgID := valuer.MustNewUUID(claims.OrgID)
 
-	params.ExistingQuery = aitelemetryschema.ScopedExistingQuery(params.ExistingQuery)
+	scopedQuery, err := aitelemetryschema.ScopedExistingQuery(params.ExistingQuery)
+	if err != nil {
+		handler.settings.Logger().WarnContext(ctx, "dropping unparseable existing query", slog.String("query", params.ExistingQuery), errors.Attr(err))
+	}
+	params.ExistingQuery = scopedQuery
 	fieldValueSelector := aiobservabilitytypes.NewFieldValueSelectorFromPostableFieldValueParams(params)
 
 	values := &telemetrytypes.TelemetryFieldValues{}
@@ -91,8 +100,7 @@ func (handler *handler) GetFieldsValues(rw http.ResponseWriter, req *http.Reques
 			return
 		}
 
-		// related values are best-effort: on failure the plain values still serve
-		// the filter bar
+		// related values are best-effort: on failure the plain values still serve the filter bar
 		relatedValues, relatedComplete, err := handler.telemetryMetadataStore.GetRelatedValues(ctx, orgID, fieldValueSelector)
 		if err != nil {
 			relatedValues = []string{}

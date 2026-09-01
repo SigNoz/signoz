@@ -13,6 +13,7 @@ func TestScopedExistingQuery(t *testing.T) {
 		name          string
 		existingQuery string
 		expected      string
+		expectedErr   string
 	}{
 		{
 			name:          "empty query returns the gate alone",
@@ -43,6 +44,7 @@ func TestScopedExistingQuery(t *testing.T) {
 			name:          "unparseable filter is dropped",
 			existingQuery: "service.name = ",
 			expected:      gate,
+			expectedErr:   "syntax errors while parsing the filter expression",
 		},
 		{
 			name:          "multiple span conditions survive as one AND chain",
@@ -68,6 +70,7 @@ func TestScopedExistingQuery(t *testing.T) {
 			name:          "OR mixing aggregate and span atoms drops the whole filter",
 			existingQuery: "llm_call_count > 5 OR service.name = 'checkout'",
 			expected:      gate,
+			expectedErr:   "trace-level and span-level filters cannot be combined within an OR/NOT group",
 		},
 		{
 			name:          "parenthesized AND group is split, not routed whole",
@@ -88,7 +91,13 @@ func TestScopedExistingQuery(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			assert.Equal(t, testCase.expected, ScopedExistingQuery(testCase.existingQuery))
+			scoped, err := ScopedExistingQuery(testCase.existingQuery)
+			if testCase.expectedErr != "" {
+				assert.ErrorContains(t, err, testCase.expectedErr)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, testCase.expected, scoped)
 		})
 	}
 }

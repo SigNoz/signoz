@@ -20,6 +20,15 @@ const (
 	GenAIOutputMessages = "gen_ai.output.messages"
 )
 
+// Per-span costs the SigNoz LLM pricing processor attaches; not OTel semconv.
+const (
+	SignozGenAICostInput      = "_signoz.gen_ai.cost_input"
+	SignozGenAICostOutput     = "_signoz.gen_ai.cost_output"
+	SignozGenAICostCacheRead  = "_signoz.gen_ai.cost_cache_read"
+	SignozGenAICostCacheWrite = "_signoz.gen_ai.cost_cache_write"
+	SignozGenAITotalCost      = "_signoz.gen_ai.total_cost"
+)
+
 // GenAISpanGateKeys mark a span as gen_ai: an LLM call, a tool call, or an
 // agent span. A trace belongs to the AI explorer when any span carries one.
 var GenAISpanGateKeys = []string{GenAIRequestModel, GenAIToolName, GenAIAgentName}
@@ -33,12 +42,3 @@ func GenAISpanFilterExpression() string {
 	}
 	return strings.Join(exprs, " OR ")
 }
-
-// Per-span costs the SigNoz LLM pricing processor attaches; not OTel semconv.
-const (
-	SignozGenAICostInput      = "_signoz.gen_ai.cost_input"
-	SignozGenAICostOutput     = "_signoz.gen_ai.cost_output"
-	SignozGenAICostCacheRead  = "_signoz.gen_ai.cost_cache_read"
-	SignozGenAICostCacheWrite = "_signoz.gen_ai.cost_cache_write"
-	SignozGenAITotalCost      = "_signoz.gen_ai.total_cost"
-)

@@ -20,17 +20,12 @@ var (
 // ScopedExistingQuery narrows value suggestions to gen_ai spans: the caller's
 // filter minus its per-trace aggregate atoms (never ingested, so nothing can
 // narrow on them), ANDed with the gen_ai span gate. An unparseable filter is
-// dropped, matching how the metadata store treats it downstream.
-func ScopedExistingQuery(existingQuery string) string {
-	spanExpr := ""
-	if existingQuery != "" {
-		if expr, _, err := querybuilder.SplitFilterForAggregates(existingQuery, traceAggregateNames); err == nil {
-			spanExpr = expr
-		}
+// dropped and reported through the returned error; the gate alone is still
+// usable, matching how the metadata store treats a bad filter downstream.
+func ScopedExistingQuery(existingQuery string) (string, error) {
+	spanExpr, _, err := querybuilder.SplitFilterForAggregates(existingQuery, traceAggregateNames)
+	if err != nil || spanExpr == "" {
+		return genAISpanGate, err
 	}
-
-	if spanExpr == "" {
-		return genAISpanGate
-	}
-	return genAISpanGate + " AND (" + spanExpr + ")"
+	return genAISpanGate + " AND (" + spanExpr + ")", nil
 }
