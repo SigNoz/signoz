@@ -130,7 +130,9 @@ export const useInfraMonitoringCategory = (): UseQueryStateReturn<
 > =>
 	useQueryState(
 		INFRA_MONITORING_K8S_PARAMS_KEYS.CATEGORY,
-		parseAsString.withDefault(K8sCategories.PODS).withOptions(defaultNuqsOptions),
+		parseAsString
+			.withDefault(K8sCategories.CONTAINERS)
+			.withOptions(defaultNuqsOptions),
 	);
 
 export interface SelectedItemParams {
