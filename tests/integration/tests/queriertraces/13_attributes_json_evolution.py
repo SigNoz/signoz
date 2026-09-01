@@ -23,10 +23,11 @@ def test_traces_attributes_json_evolution(
     insert_traces: Callable[[list[Traces]], None],
     seed_attribute_evolution: Callable[[str, datetime], None],
 ) -> None:
-    """Spans before the attribute JSON-evolution time write the endpoint attribute only to the
-    legacy attributes_string map; spans at or after it dual-write the `attributes` JSON column too.
-    A query window resolves the attribute to the map (before), the JSON column (after), or a
-    map+JSON multiIf (straddling) — and must return identical rows across the boundary."""
+    """`http.route` is a dotted key, so the `attributes` JSON column nests it under the path
+    http.route while the legacy attributes_string map keys it verbatim. Spans before the attribute
+    JSON-evolution time write only the map; spans at or after it dual-write the JSON column too. A
+    query window resolves the attribute to the map (before), the JSON nested path (after), or a
+    map+JSON multiIf (straddling), and must return identical rows across the boundary."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     evolution_time = datetime.now(tz=UTC).replace(second=0, microsecond=0) - timedelta(minutes=30)
@@ -44,7 +45,7 @@ def test_traces_attributes_json_evolution(
                 trace_id=TraceIdGenerator.trace_id(),
                 span_id=TraceIdGenerator.span_id(),
                 name="before 2",
-                attributes={"endpoint": "/d"},
+                attributes={"http.route": "/d"},
                 attribute_write_mode="legacy_only",
             ),
             Traces(
@@ -52,7 +53,7 @@ def test_traces_attributes_json_evolution(
                 trace_id=TraceIdGenerator.trace_id(),
                 span_id=TraceIdGenerator.span_id(),
                 name="before 1",
-                attributes={"endpoint": "/c"},
+                attributes={"http.route": "/c"},
                 attribute_write_mode="legacy_only",
             ),
             Traces(
@@ -60,7 +61,7 @@ def test_traces_attributes_json_evolution(
                 trace_id=TraceIdGenerator.trace_id(),
                 span_id=TraceIdGenerator.span_id(),
                 name="after 1",
-                attributes={"endpoint": "/a", "retries": 5, "cache_hit": True},
+                attributes={"http.route": "/a", "http.retry.count": 5, "http.cache.hit": True},
                 attribute_write_mode="dual_write",
             ),
             Traces(
@@ -68,7 +69,7 @@ def test_traces_attributes_json_evolution(
                 trace_id=TraceIdGenerator.trace_id(),
                 span_id=TraceIdGenerator.span_id(),
                 name="after 2",
-                attributes={"endpoint": "/b", "retries": 1, "cache_hit": False},
+                attributes={"http.route": "/b", "http.retry.count": 1, "http.cache.hit": False},
                 attribute_write_mode="dual_write",
             ),
         ]
@@ -84,13 +85,13 @@ def test_traces_attributes_json_evolution(
         queries=[
             build_traces_scalar_query(
                 aggregations=[build_aggregation("count()")],
-                group_by=[build_group_by_field("endpoint", field_context="attribute")],
+                group_by=[build_group_by_field("http.route", field_context="attribute")],
             )
         ],
     )
     assert response.status_code == HTTPStatus.OK
     before_series = index_series_by_label(
-        response.json()["data"]["data"]["results"][0]["aggregations"][0]["series"], "endpoint"
+        response.json()["data"]["data"]["results"][0]["aggregations"][0]["series"], "http.route"
     )
     assert_grouped_series(
         before_series,
@@ -100,7 +101,7 @@ def test_traces_attributes_json_evolution(
         },
     )
 
-    # after window -> JSON-only resolution
+    # after window -> JSON-only resolution (nested path)
     response = make_query_request(
         signoz,
         token,
@@ -110,13 +111,13 @@ def test_traces_attributes_json_evolution(
         queries=[
             build_traces_scalar_query(
                 aggregations=[build_aggregation("count()")],
-                group_by=[build_group_by_field("endpoint", field_context="attribute")],
+                group_by=[build_group_by_field("http.route", field_context="attribute")],
             )
         ],
     )
     assert response.status_code == HTTPStatus.OK
     after_series = index_series_by_label(
-        response.json()["data"]["data"]["results"][0]["aggregations"][0]["series"], "endpoint"
+        response.json()["data"]["data"]["results"][0]["aggregations"][0]["series"], "http.route"
     )
     assert_grouped_series(
         after_series,
@@ -136,13 +137,13 @@ def test_traces_attributes_json_evolution(
         queries=[
             build_traces_scalar_query(
                 aggregations=[build_aggregation("count()")],
-                group_by=[build_group_by_field("endpoint", field_context="attribute")],
+                group_by=[build_group_by_field("http.route", field_context="attribute")],
             )
         ],
     )
     assert response.status_code == HTTPStatus.OK
     spanning_series = index_series_by_label(
-        response.json()["data"]["data"]["results"][0]["aggregations"][0]["series"], "endpoint"
+        response.json()["data"]["data"]["results"][0]["aggregations"][0]["series"], "http.route"
     )
     assert_grouped_series(
         spanning_series,
@@ -162,8 +163,8 @@ def test_traces_attributes_json_typed_filters(
     insert_traces: Callable[[list[Traces]], None],
     seed_attribute_evolution: Callable[[str, datetime], None],
 ) -> None:
-    """In the JSON-only window each attribute data type reads through its native cast:
-    string (::String), Int64 (toFloat64(...::Nullable(Float64))), Bool (::Nullable(Bool)),
+    """In the JSON-only window each dotted attribute reads through the nested path with its native
+    cast: string (::String), Int64 (toFloat64(...::Nullable(Float64))), Bool (::Nullable(Bool)),
     and existence via the raw path. Filters must select the same rows the Map path would."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
@@ -180,7 +181,7 @@ def test_traces_attributes_json_typed_filters(
                 trace_id=TraceIdGenerator.trace_id(),
                 span_id=TraceIdGenerator.span_id(),
                 name="hit",
-                attributes={"endpoint": "/a", "retries": 5, "cache_hit": True},
+                attributes={"http.route": "/a", "http.retry.count": 5, "http.cache.hit": True},
                 attribute_write_mode="dual_write",
             ),
             Traces(
@@ -188,7 +189,7 @@ def test_traces_attributes_json_typed_filters(
                 trace_id=TraceIdGenerator.trace_id(),
                 span_id=TraceIdGenerator.span_id(),
                 name="miss",
-                attributes={"endpoint": "/b", "retries": 1, "cache_hit": False},
+                attributes={"http.route": "/b", "http.retry.count": 1, "http.cache.hit": False},
                 attribute_write_mode="dual_write",
             ),
         ]
@@ -198,10 +199,10 @@ def test_traces_attributes_json_typed_filters(
     end_ms = int((miss + timedelta(minutes=1)).timestamp() * 1000)
 
     for label, filter_expression, expected in [
-        ("string_eq", "endpoint = '/a'", {"/a"}),
-        ("int_gt", "retries > 1", {"/a"}),
-        ("bool_eq", "cache_hit = true", {"/a"}),
-        ("exists", "cache_hit EXISTS", {"/a", "/b"}),
+        ("string_eq", "http.route = '/a'", {"/a"}),
+        ("int_gt", "http.retry.count > 1", {"/a"}),
+        ("bool_eq", "http.cache.hit = true", {"/a"}),
+        ("exists", "http.cache.hit EXISTS", {"/a", "/b"}),
     ]:
         response = make_query_request(
             signoz,
@@ -212,13 +213,13 @@ def test_traces_attributes_json_typed_filters(
             queries=[
                 build_traces_scalar_query(
                     aggregations=[build_aggregation("count()")],
-                    group_by=[build_group_by_field("endpoint", field_context="attribute")],
+                    group_by=[build_group_by_field("http.route", field_context="attribute")],
                     filter_expression=filter_expression,
                 )
             ],
         )
         assert response.status_code == HTTPStatus.OK, label
         series = index_series_by_label(
-            response.json()["data"]["data"]["results"][0]["aggregations"][0]["series"], "endpoint"
+            response.json()["data"]["data"]["results"][0]["aggregations"][0]["series"], "http.route"
         )
         assert set(series.keys()) == expected, label
