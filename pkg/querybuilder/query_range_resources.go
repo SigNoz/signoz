@@ -75,6 +75,16 @@ func queryRangeVariables(body []byte) (map[string]qbtypes.VariableItem, error) {
 	return variables, nil
 }
 
+// PromQLResources is the resource set of a bare PromQL query: metrics on
+// the promql wildcard, the same ID resourcesForQuery assigns to a PromQL
+// query inside a composite — one grant covers both entry points.
+func PromQLResources(coretypes.ExtractorContext) ([]coretypes.ResourceWithID, error) {
+	return []coretypes.ResourceWithID{{
+		Resource: coretypes.ResourceTelemetryResourceMetrics,
+		ID:       qbtypes.QueryTypePromQL.StringValue() + "/" + coretypes.WildCardSelectorString,
+	}}, nil
+}
+
 func resourcesForQuery(query gjson.Result, variables map[string]qbtypes.VariableItem) ([]coretypes.ResourceWithID, error) {
 	queryType := query.Get("type").String()
 	typeWildcard := queryType + "/" + coretypes.WildCardSelectorString

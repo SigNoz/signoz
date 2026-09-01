@@ -44,6 +44,13 @@
 			--tanstack-first-column-header-bg,
 			var(--tanstack-table-header-cell-bg, var(--l2-background))
 		) !important;
+		padding-left: var(
+			--tanstack-cell-header-padding-left-first-column,
+			var(
+				--tanstack-cell-header-padding-left-override,
+				var(--tanstack-cell-padding-left, 0.3rem)
+			)
+		);
 	}
 }
 
