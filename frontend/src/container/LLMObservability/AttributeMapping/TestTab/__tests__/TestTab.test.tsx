@@ -45,9 +45,7 @@ const SAMPLE_SPAN = JSON.parse(SAMPLE_SPAN_JSON) as {
 
 const MAPPED_ATTRIBUTE_KEY = 'gen_ai.content.prompt';
 
-// The backend echoes the submitted span back with the mapper output merged in.
-// Deriving from the sample keeps exactly one key added, which is what makes the
-// single `populated` badge assertion below exact.
+// Deriving from the sample keeps exactly one key added, so the single `populated` badge assertion below stays exact.
 const RESULT_SPAN = {
 	attributes: {
 		...SAMPLE_SPAN.attributes,
