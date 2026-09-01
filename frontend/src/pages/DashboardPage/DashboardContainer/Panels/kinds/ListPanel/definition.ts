@@ -13,6 +13,7 @@ import { EQueryType } from 'types/common/dashboard';
 export const definition: PanelDefinition<'signoz/ListPanel'> = {
 	kind: 'signoz/ListPanel',
 	displayName: 'List',
+	mode: 'query',
 	icon: List,
 	Renderer,
 	// Raw records come from logs and traces; metrics don't produce row data.

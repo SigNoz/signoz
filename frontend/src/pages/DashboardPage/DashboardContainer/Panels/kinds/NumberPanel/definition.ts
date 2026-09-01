@@ -12,6 +12,7 @@ import { EQueryType } from 'types/common/dashboard';
 export const definition: PanelDefinition<'signoz/NumberPanel'> = {
 	kind: 'signoz/NumberPanel',
 	displayName: 'Number',
+	mode: 'query',
 	icon: Hash,
 	Renderer,
 	sections,

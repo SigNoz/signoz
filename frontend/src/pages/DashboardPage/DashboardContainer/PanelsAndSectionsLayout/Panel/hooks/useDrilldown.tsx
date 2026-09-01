@@ -14,6 +14,7 @@ import type {
 	OpenDrilldownView,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/drilldown';
 import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
+import { requireQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 import { buildAggregateData } from 'pages/DashboardPage/DashboardContainer/Panels/utils/drilldown/buildAggregateData';
 import { getBuilderQueries } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getBuilderQueries';
@@ -180,7 +181,7 @@ export function useDrilldown(
 	const { resolvedQuery, isResolving } = useResolvedDrilldownQuery({
 		queries,
 		panelKind: kind,
-		queryCapabilities: getPanelDefinition(kind).queryCapabilities,
+		queryCapabilities: requireQueryPanelDefinition(kind).queryCapabilities,
 		v1Query,
 		enabled: showAggregateMenu,
 	});

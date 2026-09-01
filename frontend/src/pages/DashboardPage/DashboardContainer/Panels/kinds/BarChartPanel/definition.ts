@@ -12,6 +12,7 @@ import { EQueryType } from 'types/common/dashboard';
 export const definition: PanelDefinition<'signoz/BarChartPanel'> = {
 	kind: 'signoz/BarChartPanel',
 	displayName: 'Bar Chart',
+	mode: 'query',
 	icon: BarChart,
 	Renderer,
 	sections,

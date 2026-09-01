@@ -19,6 +19,7 @@ import Renderer from './Renderer';
 export const UNSUPPORTED_PANEL: RenderablePanelDefinition = {
 	kind: '<unsupported>' as RenderablePanelDefinition['kind'],
 	displayName: 'Unsupported panel',
+	mode: 'query',
 	// Never offered in the UI — the kind lists come from the registry, which omits this.
 	icon: TriangleAlert,
 	Renderer,

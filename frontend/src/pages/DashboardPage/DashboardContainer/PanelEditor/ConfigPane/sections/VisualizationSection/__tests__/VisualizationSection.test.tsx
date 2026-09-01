@@ -8,6 +8,7 @@ import VisualizationSection from '../VisualizationSection';
 // the test doesn't pull the whole panel registry (renderers, chart libs).
 jest.mock('pages/DashboardPage/DashboardContainer/Panels/registry', () => ({
 	getPanelDefinition: jest.fn(() => ({
+		mode: 'query',
 		supportedSignals: ['metrics', 'logs', 'traces'],
 		supportedQueryTypes: ['builder', 'clickhouse_sql', 'promql'],
 	})),

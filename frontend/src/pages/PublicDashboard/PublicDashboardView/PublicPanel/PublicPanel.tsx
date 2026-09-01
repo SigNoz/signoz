@@ -4,6 +4,7 @@ import { noop } from 'lodash-es';
 import PanelBody from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelBody/PanelBody';
 import PanelHeader from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelHeader/PanelHeader';
 import type { DashboardPreference } from 'pages/DashboardPage/DashboardContainer/Panels/types/rendererProps';
+import type { RenderableQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 
 import { usePublicPanelQuery } from '../hooks/usePublicPanelQuery';
@@ -26,17 +27,35 @@ const PUBLIC_DASHBOARD_PREFERENCE: DashboardPreference = {
 	syncMode: DashboardCursorSync.None,
 };
 
-// Read-only v2 public panel: reuses the V2 header/body renderers with interactions disabled.
-function PublicPanel({
+/**
+ * Read-only v2 public panel. Forks on the kind's mode before any query machinery
+ * exists; the static arm renders nothing until a static kind registers.
+ */
+function PublicPanel(props: PublicPanelProps): JSX.Element | null {
+	const panelDefinition = getPanelDefinition(props.panel.spec.plugin.kind);
+
+	if (panelDefinition.mode === 'static') {
+		// No static kind is registered yet; the static public host lands with the first one.
+		return null;
+	}
+
+	return <QueryPublicPanel {...props} panelDefinition={panelDefinition} />;
+}
+
+interface QueryPublicPanelProps extends PublicPanelProps {
+	panelDefinition: RenderableQueryPanelDefinition;
+}
+
+// Reuses the V2 header/body renderers with interactions disabled.
+function QueryPublicPanel({
 	panel,
 	panelKey,
 	publicDashboardId,
 	startMs,
 	endMs,
 	isVisible,
-}: PublicPanelProps): JSX.Element {
-	const panelDefinition = getPanelDefinition(panel.spec.plugin.kind);
-
+	panelDefinition,
+}: QueryPublicPanelProps): JSX.Element {
 	const { data, isFetching, isPreviousData, error, refetch } =
 		usePublicPanelQuery({
 			panel,
@@ -60,7 +79,7 @@ function PublicPanel({
 				hideActions
 			/>
 			<PanelBody
-				panelDefinition={panelDefinition}
+				Renderer={panelDefinition.Renderer}
 				panel={panel}
 				panelId={panelKey}
 				data={data}
