@@ -112,9 +112,6 @@ func (provider *provider) PutAlerts(ctx context.Context, orgID string, alerts al
 }
 
 func (provider *provider) TestReceiver(ctx context.Context, orgID string, receiver *alertmanagertypes.Receiver) error {
-	if err := receiver.Resolve(ctx); err != nil {
-		return err
-	}
 	return provider.service.TestReceiver(ctx, orgID, receiver)
 }
 
@@ -156,10 +153,6 @@ func (provider *provider) GetChannelByID(ctx context.Context, orgID string, chan
 }
 
 func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgID string, receiver *alertmanagertypes.Receiver, id valuer.UUID) error {
-	if err := receiver.Resolve(ctx); err != nil {
-		return err
-	}
-
 	channel, err := provider.configStore.GetChannelByID(ctx, orgID, id)
 	if err != nil {
 		return err
@@ -223,10 +216,6 @@ func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, c
 }
 
 func (provider *provider) CreateChannel(ctx context.Context, orgID string, receiver *alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error) {
-	if err := receiver.Resolve(ctx); err != nil {
-		return nil, err
-	}
-
 	config, err := provider.configStore.Get(ctx, orgID)
 	if err != nil {
 		return nil, err

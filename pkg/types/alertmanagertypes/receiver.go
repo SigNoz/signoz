@@ -30,13 +30,6 @@ type Receiver struct {
 	JSMOpsConfigs []*JSMOpsReceiverConfig `json:"jsmops_configs,omitempty" yaml:"jsmops_configs,omitempty"`
 }
 
-// Resolve fills server-derived receiver fields (network I/O; run it at channel
-// save/test time only, never on the notify or config re-parse paths).
-// Extend the dispatch when another notifier type needs save-time resolution.
-func (r *Receiver) Resolve(ctx context.Context) error {
-	return r.resolveJiraCloudIDs(ctx)
-}
-
 // NewReceiver builds a Receiver from its JSON input, applying each notifier
 // config's per-config defaults via UnmarshalYAML.
 func NewReceiver(input string) (*Receiver, error) {

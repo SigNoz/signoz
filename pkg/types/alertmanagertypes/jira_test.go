@@ -1,11 +1,7 @@
 package alertmanagertypes
 
 import (
-	"context"
 	"fmt"
-	"net/http"
-	"net/http/httptest"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -33,7 +29,7 @@ func TestJiraReceiverConfigDefaults(t *testing.T) {
 
 	jc := r.JiraConfigs[0]
 	assert.Equal(t, "https://acme.atlassian.net", jc.Site)
-	assert.Equal(t, "https://acme.atlassian.net/rest/api/3", jc.APIBaseURL())
+	assert.Equal(t, "https://acme.atlassian.net/rest/api/3", jc.APIBaseURL(""))
 	assert.False(t, jc.SendResolved()) // default off when omitted, like other channels
 	assert.Equal(t, defaultJiraReopenDuration, jc.ReopenDuration)
 	assert.Equal(t, DefaultJiraSummaryTemplate, jc.Summary)
@@ -77,10 +73,8 @@ func TestJiraReceiverConfigReopenDurationMinimum(t *testing.T) {
 
 func TestJiraAPIBaseURL(t *testing.T) {
 	c := &JiraReceiverConfig{Site: "https://acme.atlassian.net"}
-	assert.Equal(t, "https://acme.atlassian.net/rest/api/3", c.APIBaseURL())
-
-	c.CloudID = "09851b38-1a40-4c01-a36a-0a9336293200"
-	assert.Equal(t, "https://api.atlassian.com/ex/jira/09851b38-1a40-4c01-a36a-0a9336293200/rest/api/3", c.APIBaseURL())
+	assert.Equal(t, "https://acme.atlassian.net/rest/api/3", c.APIBaseURL(""))
+	assert.Equal(t, "https://api.atlassian.com/ex/jira/09851b38-1a40-4c01-a36a-0a9336293200/rest/api/3", c.APIBaseURL("09851b38-1a40-4c01-a36a-0a9336293200"))
 }
 
 func TestJiraIsServiceAccount(t *testing.T) {
@@ -97,7 +91,7 @@ func TestJiraReceiverConfigTrailingSlashSite(t *testing.T) {
 	r, err := NewReceiver(jiraReceiverJSON("https://acme.atlassian.net/", "KAN", "Task", true))
 	require.NoError(t, err)
 	assert.Equal(t, "https://acme.atlassian.net", r.JiraConfigs[0].Site)
-	assert.Equal(t, "https://acme.atlassian.net/rest/api/3", r.JiraConfigs[0].APIBaseURL())
+	assert.Equal(t, "https://acme.atlassian.net/rest/api/3", r.JiraConfigs[0].APIBaseURL(""))
 }
 
 func TestJiraReceiverConfigValidation(t *testing.T) {
@@ -120,118 +114,6 @@ func TestJiraReceiverConfigValidation(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			_, err := NewReceiver(c.json)
 			assert.Error(t, err)
-		})
-	}
-}
-
-func TestResolveIgnoresClientSuppliedJiraCloudIDs(t *testing.T) {
-	cases := []struct {
-		name         string
-		username     string
-		clientSent   string
-		serverStatus int
-		wantCloudID  string
-		wantErr      bool
-		wantHits     int32
-	}{
-		{
-			name:         "service_account_bogus_cloud_id_is_replaced",
-			username:     "bot@serviceaccount.atlassian.com",
-			clientSent:   "bogus",
-			serverStatus: http.StatusOK,
-			wantCloudID:  "resolved-123",
-			wantHits:     1,
-		},
-		{
-			name:        "personal_token_cloud_id_is_cleared_without_resolving",
-			username:    "user@signoz.io",
-			clientSent:  "bogus",
-			wantCloudID: "",
-			wantHits:    0,
-		},
-		{
-			name:         "service_account_resolve_error_fails_save",
-			username:     "bot@serviceaccount.atlassian.com",
-			serverStatus: http.StatusInternalServerError,
-			wantErr:      true,
-			wantHits:     1,
-		},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			var hits atomic.Int32
-			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				hits.Add(1)
-				w.WriteHeader(tc.serverStatus)
-				_, _ = w.Write([]byte(`{"cloudId":"resolved-123"}`))
-			}))
-			defer srv.Close()
-
-			receiver := &Receiver{
-				JiraConfigs: []*JiraReceiverConfig{{
-					Site:    srv.URL,
-					CloudID: tc.clientSent,
-					HTTPConfig: &commoncfg.HTTPClientConfig{
-						BasicAuth: &commoncfg.BasicAuth{Username: tc.username},
-					},
-				}},
-			}
-
-			err := receiver.Resolve(context.Background())
-			if tc.wantErr {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tc.wantCloudID, receiver.JiraConfigs[0].CloudID)
-			}
-			assert.Equal(t, tc.wantHits, hits.Load())
-		})
-	}
-}
-
-func TestResolveCloudID(t *testing.T) {
-	cases := []struct {
-		name    string
-		handler http.HandlerFunc
-		want    string
-		wantErr bool
-	}{
-		{
-			name: "success",
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, "/_edge/tenant_info", r.URL.Path)
-				_, _ = w.Write([]byte(`{"cloudId":"abc-123"}`))
-			},
-			want: "abc-123",
-		},
-		{
-			name:    "non-200",
-			handler: func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNotFound) },
-			wantErr: true,
-		},
-		{
-			name:    "empty cloud id",
-			handler: func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write([]byte(`{"cloudId":""}`)) },
-			wantErr: true,
-		},
-		{
-			name:    "bad json",
-			handler: func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write([]byte(`not json`)) },
-			wantErr: true,
-		},
-	}
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			srv := httptest.NewServer(c.handler)
-			defer srv.Close()
-
-			got, err := ResolveCloudID(context.Background(), srv.Client(), srv.URL)
-			if c.wantErr {
-				assert.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-			assert.Equal(t, c.want, got)
 		})
 	}
 }

@@ -1,11 +1,7 @@
 package alertmanagertypes
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"net/url"
 	"strings"
 	"time"
@@ -61,8 +57,6 @@ type JiraReceiverConfig struct {
 	WontFixResolution string                      `json:"wont_fix_resolution,omitempty" yaml:"wont_fix_resolution,omitempty"`
 	CustomFields      map[string]any              `json:"custom_fields,omitempty" yaml:"custom_fields,omitempty"`
 	HTTPConfig        *commoncfg.HTTPClientConfig `json:"http_config,omitempty" yaml:"http_config,omitempty"`
-	CloudID           string                      `json:"cloud_id,omitempty" yaml:"cloud_id,omitempty"` // CloudID is resolved from the site at save/test time for service accounts and
-	// then read on every notification; empty for personal API tokens.
 }
 
 func (c *JiraReceiverConfig) UnmarshalYAML(unmarshal func(any) error) error {
@@ -116,67 +110,10 @@ func (c *JiraReceiverConfig) IsServiceAccount() bool {
 }
 
 // APIBaseURL returns the Jira Cloud REST v3 base URL: the api.atlassian.com
-// gateway (keyed by cloud id) for service accounts, else the site host.
-func (c *JiraReceiverConfig) APIBaseURL() string {
-	if c.CloudID != "" {
-		return fmt.Sprintf("%s%s/rest/api/3", jiraGatewayBaseURL, c.CloudID)
+// gateway when a cloud id is given (service accounts), else the site host.
+func (c *JiraReceiverConfig) APIBaseURL(cloudID string) string {
+	if cloudID != "" {
+		return fmt.Sprintf("%s%s/rest/api/3", jiraGatewayBaseURL, cloudID)
 	}
 	return fmt.Sprintf("%s/rest/api/3", strings.TrimRight(c.Site, "/"))
-}
-
-var jiraTenantInfoClient = &http.Client{Timeout: 10 * time.Second}
-
-// resolveJiraCloudIDs fills the cloud id for Jira service-account configs so
-// notifications address the api.atlassian.com gateway. The resolved id is
-// persisted and read on every notification.
-func (r *Receiver) resolveJiraCloudIDs(ctx context.Context) error {
-	for _, jc := range r.JiraConfigs {
-		// cloud_id is server-resolved; ignore client-supplied values
-		jc.CloudID = ""
-		if jc.IsServiceAccount() {
-			cloudID, err := ResolveCloudID(ctx, jiraTenantInfoClient, jc.Site)
-			if err != nil {
-				return err
-			}
-			jc.CloudID = cloudID
-		}
-	}
-	return nil
-}
-
-// ResolveCloudID fetches a Jira Cloud site's cloud id from its unauthenticated
-// tenant_info endpoint. Service accounts need it to address the
-// api.atlassian.com gateway; it is resolved once at channel save/test time.
-func ResolveCloudID(ctx context.Context, client *http.Client, site string) (string, error) {
-	url := strings.TrimRight(site, "/") + "/_edge/tenant_info"
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return "", err
-	}
-	req.Header.Set("Accept", "application/json")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch jira cloud id")
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-	if resp.StatusCode != http.StatusOK {
-		return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to resolve jira cloud id from %s: status %d", url, resp.StatusCode)
-	}
-
-	var out struct {
-		CloudID string `json:"cloudId"`
-	}
-	if err := json.Unmarshal(body, &out); err != nil {
-		return "", errors.WrapInternalf(err, errors.CodeInternal, "failed to parse jira tenant_info response")
-	}
-	if out.CloudID == "" {
-		return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "jira tenant_info returned an empty cloud id for %s", site)
-	}
-	return out.CloudID, nil
 }
