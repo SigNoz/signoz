@@ -264,7 +264,7 @@ func deepLinks(alerts []*types.Alert) map[string]any {
 
 func (n *Notifier) labels(groupID string) []string {
 	out := append([]string{}, n.conf.Labels...)
-	out = append(out, "signoz", fmt.Sprintf("ALERT{%s}", groupID))
+	out = append(out, "signoz-alert", fmt.Sprintf("ALERT{%s}", groupID))
 	sort.Strings(out)
 	return out
 }
