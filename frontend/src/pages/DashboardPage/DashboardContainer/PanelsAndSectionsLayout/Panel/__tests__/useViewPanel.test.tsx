@@ -10,6 +10,8 @@ import { fromPerses } from 'pages/DashboardPage/DashboardContainer/queryV5/perse
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
+import { usePanelEditorDraft } from 'pages/DashboardPage/DashboardContainer/PanelEditor/hooks/usePanelEditorDraft';
+
 import { useViewPanelMode } from '../ViewPanelModal/useViewPanelMode';
 import { useViewPanel } from '../hooks/useViewPanel';
 
@@ -89,10 +91,13 @@ const stagedIds: (string | undefined)[] = [];
 
 function ModalBody({ panelId }: { panelId: string }): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
+	// The modal shell owns the draft in production; mirrored here.
+	const draftApi = usePanelEditorDraft(PANELS[panelId]);
 	const { draft } = useViewPanelMode({
 		panel: PANELS[panelId],
 		panelId,
 		time: { startMs: 0, endMs: 1000 },
+		draftApi,
 	});
 	renders.push({
 		current: panelOf(JSON.stringify(currentQuery)),
