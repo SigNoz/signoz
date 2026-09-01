@@ -124,7 +124,7 @@ func TestJiraReceiverConfigValidation(t *testing.T) {
 	}
 }
 
-func TestResolveJiraCloudIDsIgnoresClientSuppliedValues(t *testing.T) {
+func TestResolveIgnoresClientSuppliedJiraCloudIDs(t *testing.T) {
 	cases := []struct {
 		name         string
 		username     string
@@ -177,7 +177,7 @@ func TestResolveJiraCloudIDsIgnoresClientSuppliedValues(t *testing.T) {
 				}},
 			}
 
-			err := receiver.ResolveJiraCloudIDs(context.Background())
+			err := receiver.Resolve(context.Background())
 			if tc.wantErr {
 				require.Error(t, err)
 			} else {

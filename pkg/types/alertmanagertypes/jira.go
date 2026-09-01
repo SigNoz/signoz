@@ -126,10 +126,10 @@ func (c *JiraReceiverConfig) APIBaseURL() string {
 
 var jiraTenantInfoClient = &http.Client{Timeout: 10 * time.Second}
 
-// ResolveJiraCloudIDs fills the cloud id for Jira service-account configs so
-// notifications address the api.atlassian.com gateway. Run it on save/test only;
-// the resolved id is persisted and read on every notification.
-func (r *Receiver) ResolveJiraCloudIDs(ctx context.Context) error {
+// resolveJiraCloudIDs fills the cloud id for Jira service-account configs so
+// notifications address the api.atlassian.com gateway. The resolved id is
+// persisted and read on every notification.
+func (r *Receiver) resolveJiraCloudIDs(ctx context.Context) error {
 	for _, jc := range r.JiraConfigs {
 		// cloud_id is server-resolved; ignore client-supplied values
 		jc.CloudID = ""
