@@ -65,12 +65,19 @@ export function getK8sContainerItemKey(
 export type ContainerTableColumnConfig =
 	TableColumnDef<InframonitoringtypesContainerRecordDTO>;
 
+/**
+ * The grouped table and its nested rows are separate tables, so a column and the
+ * one that replaces it while grouped share a width to keep the two aligned.
+ */
+const NAME_COLUMN_WIDTH = 220;
+const STATUS_COLUMN_WIDTH = 250;
+
 export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 	{
 		id: 'containerGroup',
 		header: (): React.ReactNode => <EntityGroupHeader title="Container Group" />,
 		accessorFn: (row): string => row.containerName || '',
-		width: { min: 290 },
+		width: { min: NAME_COLUMN_WIDTH },
 		enableSort: false,
 		enableRemove: false,
 		enableMove: false,
@@ -95,7 +102,7 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 			row.containerName ||
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CONTAINER_NAME] ||
 			'',
-		width: { min: 260 },
+		width: { min: NAME_COLUMN_WIDTH },
 		enableSort: true,
 		enableRemove: false,
 		enableMove: false,
@@ -116,10 +123,13 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_POD_NAME] || '',
 		width: { min: 260 },
 		enableSort: false,
-		visibilityBehavior: 'hidden-on-expand',
-		cell: ({ value }): React.ReactNode => (
-			<TanStackTable.Text>{value as string}</TanStackTable.Text>
-		),
+		cell: ({ value }): React.ReactNode => {
+			const podName = value as string;
+			if (!podName) {
+				return <TextNoData type="tanstack" />;
+			}
+			return <TanStackTable.Text>{podName}</TanStackTable.Text>;
+		},
 	},
 	{
 		id: 'image',
@@ -145,7 +155,7 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 			<ColumnHeader docPath={`${CONTAINERS_DOC_PATH}#status`}>Status</ColumnHeader>
 		),
 		accessorFn: (row): string => row.status,
-		width: { min: 220 },
+		width: { min: STATUS_COLUMN_WIDTH },
 		enableSort: false,
 		visibilityBehavior: 'hidden-on-expand',
 		cell: ({ row }): React.ReactNode => {
@@ -172,7 +182,7 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 			row,
 		): InframonitoringtypesContainerRecordDTO['containerCountsByStatus'] =>
 			row.containerCountsByStatus,
-		width: { min: 250 },
+		width: { min: STATUS_COLUMN_WIDTH },
 		enableSort: false,
 		visibilityBehavior: 'hidden-on-collapse',
 		cell: ({ row, rowId }): React.ReactNode => {
