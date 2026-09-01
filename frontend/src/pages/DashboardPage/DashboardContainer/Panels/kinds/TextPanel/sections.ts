@@ -9,4 +9,5 @@ export const sections: SectionConfig[] = [
 		controls: { switchPanelKind: true },
 	},
 	{ kind: SectionKind.TextLayout },
+	{ kind: SectionKind.PanelHeader },
 ];

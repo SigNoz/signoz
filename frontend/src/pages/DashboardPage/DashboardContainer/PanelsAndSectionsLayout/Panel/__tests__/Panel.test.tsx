@@ -25,6 +25,10 @@ jest.mock('../PanelBody/PanelBody', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="query-panel-body" />,
 }));
+jest.mock('../PanelActionsMenu/PanelActionsMenu', () => ({
+	__esModule: true,
+	default: (): JSX.Element => <div data-testid="panel-actions-menu" />,
+}));
 jest.mock('../hooks/useDrilldown', () => ({
 	useDrilldown: (): unknown => ({
 		onPanelClick: jest.fn(),
@@ -98,6 +102,27 @@ describe('Panel — authoring-mode fork', () => {
 		expect(screen.getByTestId('fake-static-renderer')).toBeInTheDocument();
 		expect(screen.queryByTestId('query-panel-body')).not.toBeInTheDocument();
 		expect(mockUsePanelQuery).not.toHaveBeenCalled();
+	});
+
+	it('swaps a hidden header for the floating drag pill + actions menu', () => {
+		mockGetPanelDefinition.mockReturnValueOnce(staticDefinition);
+		const hiddenHeaderPanel = {
+			...panel,
+			spec: {
+				...panel.spec,
+				plugin: {
+					kind: 'signoz/TimeSeriesPanel',
+					spec: { headerOptions: { hide: true } },
+				},
+			},
+		} as unknown as DashboardtypesPanelDTO;
+
+		render(<Panel panel={hiddenHeaderPanel} panelId="p1" />);
+
+		expect(screen.queryByTestId('panel-header')).not.toBeInTheDocument();
+		const dragHandle = screen.getByTestId('hidden-header-drag-handle');
+		expect(dragHandle).toHaveClass('panel-drag-handle');
+		expect(screen.getByTestId('panel-actions-menu')).toBeInTheDocument();
 	});
 
 	it('renders the static body in dashboard-view mode with panel chrome', () => {

@@ -5,6 +5,7 @@ import PanelHeader from 'pages/DashboardPage/DashboardContainer/PanelsAndSection
 import StaticPanelBody from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/StaticPanelBody/StaticPanelBody';
 
 import type { RenderableStaticPanelDefinition } from '../../Panels/types/panelDefinition';
+import { isPanelHeaderHidden } from '../../Panels/utils/isPanelHeaderHidden';
 import { isTransparentPanel } from '../../Panels/utils/isTransparentPanel';
 import styles from './StaticPreviewPane.module.scss';
 
@@ -34,7 +35,9 @@ function StaticPreviewPane({
 					[styles.transparent]: isTransparentPanel(panel.spec),
 				})}
 			>
-				<PanelHeader mode="static" panelId={panelId} panel={panel} hideActions />
+				{!isPanelHeaderHidden(panel.spec) && (
+					<PanelHeader mode="static" panelId={panelId} panel={panel} hideActions />
+				)}
 				<StaticPanelBody
 					panelDefinition={panelDefinition}
 					panel={panel}

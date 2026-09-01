@@ -131,6 +131,36 @@ describe('PublicPanel', () => {
 		expect(mockQuery).not.toHaveBeenCalled();
 	});
 
+	it('renders a static kind without its header when headerOptions hides it', () => {
+		const StaticRenderer = (): JSX.Element => (
+			<div data-testid="fake-static-renderer" />
+		);
+		(getPanelDefinition as jest.Mock).mockReturnValueOnce({
+			kind: 'signoz/TimeSeriesPanel',
+			displayName: 'Static',
+			sections: [],
+			actions: {},
+			mode: 'static',
+			Renderer: StaticRenderer,
+			EditorPane: StaticRenderer,
+		});
+		const hiddenHeaderPanel = {
+			...timeseriesPanel,
+			spec: {
+				...timeseriesPanel.spec,
+				plugin: {
+					kind: 'signoz/TimeSeriesPanel',
+					spec: { headerOptions: { hide: true } },
+				},
+			},
+		} as unknown as DashboardtypesPanelDTO;
+
+		render(<PublicPanel panel={hiddenHeaderPanel} {...commonProps} />);
+
+		expect(screen.getByTestId('fake-static-renderer')).toBeInTheDocument();
+		expect(screen.queryByTestId('panel-header')).not.toBeInTheDocument();
+	});
+
 	it('gates the fetch when off screen', () => {
 		render(
 			<PublicPanel panel={timeseriesPanel} {...commonProps} isVisible={false} />,

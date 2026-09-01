@@ -1,9 +1,11 @@
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
+import { isPanelHeaderHidden } from 'pages/DashboardPage/DashboardContainer/Panels/utils/isPanelHeaderHidden';
 import { isTransparentPanel } from 'pages/DashboardPage/DashboardContainer/Panels/utils/isTransparentPanel';
 
 import type { DashboardSection } from '../../utils';
+import PanelActionsMenu from './PanelActionsMenu/PanelActionsMenu';
 import PanelHeader from './PanelHeader/PanelHeader';
 import QueryPanelContent from './QueryPanelContent';
 import StaticPanelBody from './StaticPanelBody/StaticPanelBody';
@@ -52,12 +54,28 @@ function Panel({
 		>
 			{panelDefinition.mode === 'static' ? (
 				<>
-					<PanelHeader
-						mode="static"
-						panelId={panelId}
-						panel={panel}
-						panelActions={panelActions}
-					/>
+					{isPanelHeaderHidden(panel.spec) ? (
+						<div className={styles.hiddenHeaderControls}>
+							<span
+								className={cx('panel-drag-handle', styles.dragPill)}
+								data-testid="hidden-header-drag-handle"
+							/>
+							<div className={styles.floatingActions}>
+								<PanelActionsMenu
+									panelId={panelId}
+									panel={panel}
+									panelActions={panelActions}
+								/>
+							</div>
+						</div>
+					) : (
+						<PanelHeader
+							mode="static"
+							panelId={panelId}
+							panel={panel}
+							panelActions={panelActions}
+						/>
+					)}
 					<StaticPanelBody
 						panelDefinition={panelDefinition}
 						panel={panel}

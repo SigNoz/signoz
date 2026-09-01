@@ -1,4 +1,5 @@
 .panel {
+	position: relative;
 	display: flex;
 	flex-direction: column;
 	height: 100%;
@@ -7,6 +8,46 @@
 	border: 1px solid var(--l2-border);
 	border-radius: 4px;
 	overflow: hidden;
+}
+
+// `headerOptions.hide`: hover floats in the drag pill + actions menu, so a
+// headerless panel can still be moved and edited.
+.hiddenHeaderControls {
+	position: absolute;
+	inset: 0 0 auto;
+	z-index: 2;
+	height: 36px;
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	padding-top: 8px;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.15s ease;
+	background: linear-gradient(to bottom, var(--l2-background), transparent);
+}
+
+// The open-menu case: the dropdown is a portal, so hovering it un-hovers the
+// panel — without this the trigger fades while its menu stays up.
+.panel:hover .hiddenHeaderControls,
+.hiddenHeaderControls:focus-within,
+.hiddenHeaderControls:has([data-state='open']) {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.dragPill {
+	width: 64px;
+	height: 6px;
+	border-radius: 999px;
+	background: var(--l2-border);
+	cursor: grab;
+}
+
+.floatingActions {
+	position: absolute;
+	top: 4px;
+	right: 8px;
 }
 
 // D7: a static kind may drop the card so its body sits on the dashboard canvas

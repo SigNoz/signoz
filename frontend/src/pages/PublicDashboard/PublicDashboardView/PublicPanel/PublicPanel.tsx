@@ -8,6 +8,7 @@ import StaticPanelBody from 'pages/DashboardPage/DashboardContainer/PanelsAndSec
 import type { DashboardPreference } from 'pages/DashboardPage/DashboardContainer/Panels/types/rendererProps';
 import type { RenderableQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
+import { isPanelHeaderHidden } from 'pages/DashboardPage/DashboardContainer/Panels/utils/isPanelHeaderHidden';
 import { isTransparentPanel } from 'pages/DashboardPage/DashboardContainer/Panels/utils/isTransparentPanel';
 
 import { usePublicPanelQuery } from '../hooks/usePublicPanelQuery';
@@ -49,7 +50,9 @@ function PublicPanel(props: PublicPanelProps): JSX.Element {
 		>
 			{panelDefinition.mode === 'static' ? (
 				<>
-					<PanelHeader mode="static" panelId={panelKey} panel={panel} hideActions />
+					{!isPanelHeaderHidden(panel.spec) && (
+						<PanelHeader mode="static" panelId={panelKey} panel={panel} hideActions />
+					)}
 					<StaticPanelBody
 						panelDefinition={panelDefinition}
 						panel={panel}
