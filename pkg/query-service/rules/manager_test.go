@@ -3,6 +3,7 @@ package rules
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"math"
 	"strconv"
 	"testing"
@@ -12,14 +13,17 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
 	alertmanagermock "github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -285,4 +289,64 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 			promProvider.Close()
 		})
 	}
+}
+
+// stubOrgGetter returns a fixed list of organizations, in order.
+type stubOrgGetter struct {
+	organization.Getter
+	orgs []*types.Organization
+}
+
+func (s *stubOrgGetter) ListByOwnedKeyRange(_ context.Context) ([]*types.Organization, error) {
+	return s.orgs, nil
+}
+
+// stubRuleStore serves stored rules per org id.
+type stubRuleStore struct {
+	ruletypes.RuleStore
+	rulesByOrg map[string][]*ruletypes.StorableRule
+}
+
+func (s *stubRuleStore) GetStoredRules(_ context.Context, orgID string) ([]*ruletypes.StorableRule, error) {
+	return s.rulesByOrg[orgID], nil
+}
+
+// An org with no rules yet is the normal state for a new tenant, and it must not
+// stop the orgs after it in the list from having their rules scheduled.
+func TestManager_Initiate_LoadsRulesForOrgsAfterAnEmptyOne(t *testing.T) {
+	emptyOrg := &types.Organization{Identifiable: types.Identifiable{ID: valuer.GenerateUUID()}}
+	orgWithRule := &types.Organization{Identifiable: types.Identifiable{ID: valuer.GenerateUUID()}}
+
+	rule := ThresholdRuleAtLeastOnceValueAbove(10.0, nil)
+	ruleBytes, err := json.Marshal(rule)
+	require.NoError(t, err)
+
+	storedRule := &ruletypes.StorableRule{
+		Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
+		OrgID:        orgWithRule.ID.StringValue(),
+		Data:         string(ruleBytes),
+	}
+
+	mgr := NewTestManager(t, &TestManagerOptions{
+		AlertmanagerHook: func(am alertmanager.Alertmanager) {
+			am.(*alertmanagermock.MockAlertmanager).
+				On("SetNotificationConfig", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+				Return(nil).Maybe()
+			am.(*alertmanagermock.MockAlertmanager).
+				On("Config").
+				Return(alertmanagerserver.Config{ExternalURL: mustParseURL(t, "http://localhost:8080")}).Maybe()
+		},
+		ManagerOptionsHook: func(opts *ManagerOptions) {
+			// emptyOrg is listed first, so it is the one that used to end the loop.
+			opts.OrgGetter = &stubOrgGetter{orgs: []*types.Organization{emptyOrg, orgWithRule}}
+			opts.RuleStore = &stubRuleStore{rulesByOrg: map[string][]*ruletypes.StorableRule{
+				orgWithRule.ID.StringValue(): {storedRule},
+			}}
+		},
+	})
+
+	require.NoError(t, mgr.initiate(context.Background()))
+
+	taskName := fmt.Sprintf("%s-groupname", storedRule.ID.StringValue())
+	assert.Contains(t, mgr.tasks, taskName, "rules of an org listed after an org with no rules were not scheduled")
 }
