@@ -19,6 +19,7 @@ const KIND_LABEL: Record<VariableUsage['kind'], string> = {
 	promql: 'PromQL',
 	clickhouse: 'ClickHouse',
 	variable: 'Variable',
+	text: 'Markdown body',
 };
 
 interface VariableImpactDialogProps {
