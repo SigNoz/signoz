@@ -141,7 +141,7 @@ export const JsmOpsInitialConfig: Partial<JsmOpsChannel> = {
 {{ end }}{{ end }}`,
 	priority:
 		'{{ if eq (index .Alerts 0).Labels.severity "critical" }}P1{{ else if eq (index .Alerts 0).Labels.severity "warning" }}P2{{ else if eq (index .Alerts 0).Labels.severity "info" }}P3{{ else }}P4{{ end }}',
-	tags: ['signoz'],
+	tags: ['signoz-alert'],
 };
 
 export const EmailInitialConfig: Partial<EmailChannel> = {
