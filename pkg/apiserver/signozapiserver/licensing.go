@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
@@ -20,9 +21,9 @@ func (provider *provider) addLicensingRoutes(router *mux.Router) error {
 			Description:         "This endpoint validates the license key with the upstream server and activates the license for the organization.",
 			Request:             new(licensetypes.PostableLicense),
 			RequestContentType:  "application/json",
-			Response:            nil,
+			Response:            new(types.Identifiable),
 			ResponseContentType: "application/json",
-			SuccessStatusCode:   http.StatusAccepted,
+			SuccessStatusCode:   http.StatusCreated,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound, http.StatusConflict},
 			Deprecated:          false,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceLicense.Scope(coretypes.VerbCreate)}),
@@ -31,6 +32,7 @@ func (provider *provider) addLicensingRoutes(router *mux.Router) error {
 			Resource: coretypes.ResourceMetaResourceLicense,
 			Verb:     coretypes.VerbCreate,
 			Category: coretypes.ActionCategoryConfigurationChange,
+			ID:       coretypes.ResponseJSONPath("data.id"),
 			Selector: coretypes.WildcardSelector,
 		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {

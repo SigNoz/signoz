@@ -82,7 +82,7 @@ type GettableLicense struct {
 
 type GettableLicenseWithKey struct {
 	GettableLicense
-	Key string `json:"key" required:"true"`
+	Key string `json:"key" required:"true" format:"password"`
 }
 
 type GettableActiveLicense struct {
@@ -90,7 +90,7 @@ type GettableActiveLicense struct {
 }
 
 type PostableLicense struct {
-	Key string `json:"key"`
+	Key string `json:"key" format:"password"`
 }
 
 func NewStorableLicenseFromLicense(license *License) *StorableLicense {

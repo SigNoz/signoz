@@ -61,7 +61,8 @@ def test_apply_license(
         timeout=5,
     )
 
-    assert response.status_code == http.HTTPStatus.ACCEPTED
+    assert response.status_code == http.HTTPStatus.CREATED
+    assert response.json()["data"]["id"] == "0196360e-90cd-7a74-8313-1aa815ce2a67"
 
     response = requests.post(
         url=signoz.zeus.host_configs["8080"].get("/__admin/requests/count"),

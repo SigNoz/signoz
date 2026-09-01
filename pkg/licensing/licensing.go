@@ -22,7 +22,7 @@ type Licensing interface {
 	// Validate validates the license with the upstream server
 	Validate(ctx context.Context) error
 	// Activate validates the key with the upstream server and enables the license
-	Activate(ctx context.Context, organizationID valuer.UUID, key string) error
+	Activate(ctx context.Context, organizationID valuer.UUID, key string) (*licensetypes.License, error)
 	// GetActive fetches the current active license in org
 	GetActive(ctx context.Context, organizationID valuer.UUID) (*licensetypes.License, error)
 	// Get fetches the license by id in org
