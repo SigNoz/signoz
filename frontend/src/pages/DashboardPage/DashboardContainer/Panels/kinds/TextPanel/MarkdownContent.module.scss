@@ -1,0 +1,324 @@
+@use '../../../../../../styles/scrollbar' as *;
+
+// Style isolation: the subtree is rolled back to user-agent styling, so no global
+// rule reaches the rendered body and the rules below are the only author styles that
+// apply. `all` skips custom properties, so tokens still resolve, and inherited
+// properties the caller owns (`text-align`, set by the panel's presentation options)
+// still flow in. The class is doubled throughout so a global `.wrapper p` can't tie
+// on specificity and win on source order.
+// `[data-md-ui]` marks injected UI islands (the code-block copy button) that keep
+// their design-system styling: `:where(:not(…))` skips them and their subtrees at
+// zero added specificity, so the island escape doesn't out-rank the body rules.
+.content.content,
+.content.content *:where(:not([data-md-ui], [data-md-ui] *)) {
+	all: revert;
+	box-sizing: border-box;
+}
+
+.content.content {
+	--md-foreground: var(--text-vanilla-100);
+	--md-muted: var(--text-neutral-dark-100);
+	--md-link: var(--text-robin-400);
+	--md-border: var(--l1-border);
+	--md-surface: color-mix(in srgb, var(--l1-foreground) 6%, transparent);
+	--md-code-comment: var(--text-neutral-dark-200);
+	--md-code-punctuation: var(--text-neutral-dark-100);
+	--md-code-keyword: var(--text-sakura-400);
+	--md-code-string: var(--text-forest-400);
+	--md-code-number: var(--text-amber-400);
+	--md-code-function: var(--text-robin-300);
+	--md-code-property: var(--text-aqua-400);
+	// Fits a two-digit ordered marker (`10.`). Shared by the task-list offset.
+	--md-list-indent: 24px;
+
+	display: block;
+	font-family: var(--font-family-inter);
+	font-size: var(--paragraph-base-400-font-size);
+	font-weight: var(--font-weight-normal);
+	line-height: var(--paragraph-base-400-line-height);
+	color: var(--md-foreground);
+	overflow-wrap: break-word;
+}
+
+:global(body.lightMode) .content.content {
+	--md-foreground: var(--text-ink-400);
+	--md-muted: var(--text-neutral-light-100);
+	--md-link: var(--text-robin-500);
+	--md-code-comment: var(--text-neutral-light-100);
+	--md-code-punctuation: var(--text-neutral-light-100);
+	--md-code-keyword: var(--text-sakura-600);
+	--md-code-string: var(--text-forest-700);
+	--md-code-number: var(--text-amber-800);
+	--md-code-function: var(--text-robin-600);
+	--md-code-property: var(--text-aqua-700);
+}
+
+.content.content > :first-child {
+	margin-top: 0;
+}
+
+.content.content > :last-child {
+	margin-bottom: 0;
+}
+
+.content.content p {
+	margin: 0 0 8px;
+}
+
+.content.content h1,
+.content.content h2,
+.content.content h3,
+.content.content h4,
+.content.content h5,
+.content.content h6 {
+	margin: 16px 0 8px;
+	font-weight: var(--font-weight-semibold);
+	line-height: var(--line-height-tight);
+	color: var(--md-foreground);
+}
+
+.content.content h1 {
+	font-size: var(--font-size-lg);
+}
+
+.content.content h2 {
+	font-size: var(--label-medium-600-font-size);
+}
+
+.content.content h3 {
+	font-size: var(--font-size-sm);
+}
+
+.content.content h4,
+.content.content h5,
+.content.content h6 {
+	font-size: var(--paragraph-base-600-font-size);
+}
+
+.content.content h5,
+.content.content h6 {
+	color: var(--md-muted);
+}
+
+.content.content ul,
+.content.content ol {
+	margin: 0 0 8px;
+	padding-left: var(--md-list-indent);
+}
+
+// A nested list belongs to the item above it, so it opens tight.
+.content.content li > ul,
+.content.content li > ol {
+	margin: 2px 0 0;
+}
+
+// The reset flattens the user-agent's own disc/circle/square progression, so the
+// per-depth shapes are restated here.
+.content.content ul {
+	list-style: disc;
+}
+
+.content.content ul ul {
+	list-style: circle;
+}
+
+.content.content ul ul ul {
+	list-style: square;
+}
+
+.content.content ol {
+	list-style: decimal;
+}
+
+.content.content ol ol {
+	list-style: lower-alpha;
+}
+
+.content.content ol ol ol {
+	list-style: lower-roman;
+}
+
+.content.content li {
+	margin: 2px 0;
+}
+
+// Markers are structure, not content. Safari below 17 ignores `::marker` colour and
+// leaves them in the body colour.
+.content.content li::marker {
+	color: var(--md-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+// Task lists carry their own checkbox, so drop the marker and reclaim the indent.
+.content.content li:has(> input[type='checkbox']) {
+	list-style: none;
+	margin-left: calc(var(--md-list-indent) * -1);
+}
+
+.content.content input[type='checkbox'] {
+	margin-right: 6px;
+	accent-color: var(--md-link);
+}
+
+.content.content a {
+	color: var(--md-link);
+	text-decoration: none;
+
+	&:hover,
+	&:focus-visible {
+		text-decoration: underline;
+	}
+}
+
+.content.content strong {
+	font-weight: var(--font-weight-semibold);
+	color: var(--md-foreground);
+}
+
+.content.content em {
+	font-style: italic;
+}
+
+.content.content del {
+	text-decoration: line-through;
+	color: var(--md-muted);
+}
+
+.content.content code {
+	padding: 1px 4px;
+	border-radius: 2px;
+	
+	background: var(--md-surface);
+	font-family: var(--font-family-sf-mono);
+	font-size: var(--code-small-400-font-size);
+	color: var(--md-foreground);
+}
+
+.content.content pre {
+	margin: 0 0 8px;
+	padding: 8px 10px;
+	border-radius: 3px;
+	background: var(--md-surface);
+	overflow-x: auto;
+	@include custom-scrollbar;
+
+	code {
+		padding: 0;
+		background: none;
+		font-size: var(--code-small-400-font-size);
+		line-height: var(--line-height-18);
+		color: var(--md-foreground);
+	}
+}
+
+.content.content blockquote {
+	margin: 0 0 8px;
+	padding: 2px 0 2px 10px;
+	border-left: 4px solid var(--md-border);
+	color: var(--md-muted);
+}
+
+.content.content hr {
+	margin: 12px 0;
+	border: none;
+	border-top: 1px solid var(--md-border);
+}
+
+.content.content img {
+	max-width: 100%;
+	height: auto;
+	border-radius: 3px;
+}
+
+.content.content table {
+	border-collapse: collapse;
+	width: auto;
+}
+
+.content.content th,
+.content.content td {
+	padding: 4px 10px;
+	border: 1px solid var(--md-border);
+	text-align: left;
+}
+
+.content.content th {
+	background: var(--md-surface);
+	font-weight: var(--font-weight-semibold);
+}
+
+// Rendered by the `table` component override.
+.content.content .tableScroll {
+	margin: 0 0 8px;
+	overflow-x: auto;
+	@include custom-scrollbar;
+}
+
+// Prism runs with `useInlineStyles` off, so it emits `token …` class names. They are
+// `:global` because CSS Modules would otherwise hash them and match nothing, and the
+// palette lives here on design tokens instead of in a theme object.
+.content.content :global(.token.comment),
+.content.content :global(.token.prolog),
+.content.content :global(.token.doctype),
+.content.content :global(.token.cdata) {
+	color: var(--md-code-comment);
+	font-style: italic;
+}
+
+.content.content :global(.token.punctuation),
+.content.content :global(.token.operator),
+.content.content :global(.token.entity) {
+	color: var(--md-code-punctuation);
+}
+
+.content.content :global(.token.keyword),
+.content.content :global(.token.atrule),
+.content.content :global(.token.rule),
+.content.content :global(.token.important),
+.content.content :global(.token.selector) {
+	color: var(--md-code-keyword);
+}
+
+.content.content :global(.token.string),
+.content.content :global(.token.char),
+.content.content :global(.token.attr-value),
+.content.content :global(.token.regex),
+.content.content :global(.token.url) {
+	color: var(--md-code-string);
+}
+
+.content.content :global(.token.number),
+.content.content :global(.token.boolean),
+.content.content :global(.token.constant),
+.content.content :global(.token.symbol) {
+	color: var(--md-code-number);
+}
+
+.content.content :global(.token.function),
+.content.content :global(.token.class-name),
+.content.content :global(.token.builtin) {
+	color: var(--md-code-function);
+}
+
+.content.content :global(.token.property),
+.content.content :global(.token.attr-name),
+.content.content :global(.token.variable),
+.content.content :global(.token.tag) {
+	color: var(--md-code-property);
+}
+
+.content.content :global(.token.deleted) {
+	color: var(--text-cherry-400);
+}
+
+.content.content :global(.token.inserted) {
+	color: var(--text-forest-400);
+}
+
+.content.content :global(.token.bold) {
+	font-weight: var(--font-weight-semibold);
+}
+
+.content.content :global(.token.italic) {
+	font-style: italic;
+}
