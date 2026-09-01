@@ -37,7 +37,15 @@
 .title {
 	font-family: var(--periscope-font-family-mono);
 
-	--typography-margin: 0px var(--spacing-4) 0px 0px;
+	--typography-margin: 0px var(--spacing-1) 0px 0px;
+}
+
+// Sized to the icon rather than the default tap target, so it sits beside the
+// entity name instead of a gap away from it.
+.copyIdButton {
+	--button-padding: 2px;
+	--button-height: auto;
+	--button-width: auto;
 }
 
 .entityDetailsEntity {
@@ -45,30 +53,12 @@
 	flex-direction: column;
 }
 
+// Tracks size to the entity's field count instead of a fixed four, so entities
+// with more fields stay on one row rather than spilling a near-empty second one.
 .entityDetailsGrid {
-	display: flex;
-	flex-direction: column;
-}
-
-.labelsRow,
-.valuesRow {
 	display: grid;
-	grid-template-columns: 1.5fr 1.5fr 1.5fr 1.5fr;
-	gap: 30px;
-	align-items: center;
-}
-
-.labelsRow {
-	margin-bottom: var(--spacing-4);
-}
-
-.entityDetailsMetadataLabel {
-	letter-spacing: 0.44px;
-	text-transform: uppercase;
-}
-
-.entityDetailsMetadataValue {
-	font-family: var(--periscope-font-family-mono);
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: var(--spacing-4) var(--spacing-6);
 }
 
 .viewsTabsContainer {
