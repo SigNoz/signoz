@@ -4405,6 +4405,13 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTOKind {
 	'signoz/TextPanel' = 'signoz/TextPanel',
 }
+export interface DashboardtypesHeaderOptionsDTO {
+	/**
+	 * @type boolean
+	 */
+	hide?: boolean;
+}
+
 export enum DashboardtypesTextModeDTO {
 	markdown = 'markdown',
 }
@@ -4429,6 +4436,7 @@ export interface DashboardtypesTextPresentationDTO {
 }
 
 export interface DashboardtypesTextPanelSpecDTO {
+	headerOptions?: DashboardtypesHeaderOptionsDTO;
 	mode?: DashboardtypesTextModeDTO;
 	presentation?: DashboardtypesTextPresentationDTO;
 	/**
