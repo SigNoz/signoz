@@ -421,10 +421,6 @@ export type ModelDurationDTO = number;
 
 export interface AlertmanagertypesJiraReceiverConfigDTO {
 	/**
-	 * @type string
-	 */
-	cloud_id?: string;
-	/**
 	 * @type object
 	 */
 	custom_fields?: AlertmanagertypesJiraReceiverConfigDTOCustomFields;
