@@ -81,6 +81,33 @@ func TestBuild_SpanList_ResourcePlusTraceFilter(t *testing.T) {
 	assert.Contains(t, got, "HAVING output_tokens > 1000")
 }
 
+// Trace-level order keys are rejected — known aggregate alias or not — while a bare
+// span column sharing an alias (duration_nano) stays orderable.
+func TestBuild_SpanList_OrderKeyValidation(t *testing.T) {
+	b := newTestBuilder(t)
+	build := func(q qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) error {
+		q.Signal = telemetrytypes.SignalTraces
+		_, err := b.Build(context.Background(), valuer.UUID{}, testStartMs, testEndMs, qbtypes.RequestTypeRaw, q, nil)
+		return err
+	}
+
+	err := build(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+		Order: []qbtypes.OrderBy{{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "trace.output_tokens"}}}},
+	})
+	require.ErrorContains(t, err, `ordering the span list by trace-level key "trace.output_tokens" is not supported`)
+
+	err = build(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+		Order: []qbtypes.OrderBy{{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "trace.foo"}}}},
+	})
+	require.ErrorContains(t, err, `trace-level key "trace.foo"`)
+
+	err = build(qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+		Order: []qbtypes.OrderBy{{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "duration_nano"}}, Direction: qbtypes.OrderDirectionDesc}},
+		Limit: 10,
+	})
+	require.NoError(t, err, "bare duration_nano is a span column, not a trace-level key")
+}
+
 // Variables in a trace-level condition resolve through the standard pipeline; a
 // dynamic __all__ drops the condition (no scope CTE).
 func TestBuild_SpanList_TraceFilter_Variables(t *testing.T) {
