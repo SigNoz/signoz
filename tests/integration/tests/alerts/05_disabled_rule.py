@@ -3,14 +3,13 @@ import time
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
-from http import HTTPStatus
 
-import requests
 from wiremock.client import HttpMethods, Mapping, MappingRequest, MappingResponse
 
 from fixtures import types
 from fixtures.alerts import (
     collect_webhook_firing_alerts,
+    get_rule,
     update_rule_channel_name,
 )
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
@@ -23,16 +22,6 @@ logger = setup_logger(__name__)
 # first evaluation, so a buggy evaluator would transition the rule and fire
 # well within this window.
 OBSERVATION_WINDOW_SECONDS = 35
-
-
-def get_rule(signoz: types.SigNoz, token: str, rule_id: str) -> dict:
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v2/rules/{rule_id}"),
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.OK, f"Failed to get rule, api returned {response.status_code} with response: {response.text}"
-    return response.json()["data"]
 
 
 def test_disabled_rule_does_not_evaluate_or_notify(
