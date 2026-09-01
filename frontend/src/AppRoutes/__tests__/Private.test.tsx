@@ -850,6 +850,22 @@ describe('PrivateRoute', () => {
 			assertStaysOnRoute(ROUTES.WORKSPACE_LOCKED);
 		});
 
+		it('should keep a custom role (ANONYMOUS) on workspace locked instead of bouncing to unauthorized', () => {
+			renderPrivateRoute({
+				initialRoute: ROUTES.WORKSPACE_LOCKED,
+				appContext: {
+					isLoggedIn: true,
+					isFetchingActiveLicense: false,
+					activeLicense: createMockLicense({ platform: LicensePlatform.CLOUD }),
+					trialInfo: createMockTrialInfo({ workSpaceBlock: true }),
+					user: createMockUser({ role: USER_ROLES.ANONYMOUS as ROLES }),
+				},
+				isCloudUser: true,
+			});
+
+			assertStaysOnRoute(ROUTES.WORKSPACE_LOCKED);
+		});
+
 		it('should not redirect self-hosted users to workspace locked even when workSpaceBlock is true', () => {
 			renderPrivateRoute({
 				initialRoute: ROUTES.HOME,
@@ -1017,6 +1033,24 @@ describe('PrivateRoute', () => {
 						platform: LicensePlatform.CLOUD,
 						state: LicenseState.DEFAULTED,
 					}),
+				},
+				isCloudUser: true,
+			});
+
+			assertStaysOnRoute(ROUTES.WORKSPACE_SUSPENDED);
+		});
+
+		it('should keep a custom role (ANONYMOUS) on workspace suspended instead of bouncing to unauthorized', () => {
+			renderPrivateRoute({
+				initialRoute: ROUTES.WORKSPACE_SUSPENDED,
+				appContext: {
+					isLoggedIn: true,
+					isFetchingActiveLicense: false,
+					activeLicense: createMockLicense({
+						platform: LicensePlatform.CLOUD,
+						state: LicenseState.DEFAULTED,
+					}),
+					user: createMockUser({ role: USER_ROLES.ANONYMOUS as ROLES }),
 				},
 				isCloudUser: true,
 			});
@@ -1579,6 +1613,18 @@ describe('PrivateRoute', () => {
 			SUPPORT: {
 				path: ROUTES.SUPPORT,
 				deniedRoles: [USER_ROLES.AUTHOR as ROLES],
+			},
+			WORKSPACE_LOCKED: {
+				path: ROUTES.WORKSPACE_LOCKED,
+				deniedRoles: DENIED_ROLES,
+			},
+			WORKSPACE_SUSPENDED: {
+				path: ROUTES.WORKSPACE_SUSPENDED,
+				deniedRoles: DENIED_ROLES,
+			},
+			WORKSPACE_ACCESS_RESTRICTED: {
+				path: ROUTES.WORKSPACE_ACCESS_RESTRICTED,
+				deniedRoles: DENIED_ROLES,
 			},
 		};
 
