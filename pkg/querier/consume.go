@@ -1,6 +1,7 @@
 package querier
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"reflect"
@@ -11,12 +12,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
-	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/bytedance/sonic"
 )
 
 var (
@@ -30,14 +31,38 @@ var (
 	// written clickhouse query. The column alias indcate which value is
 	// to be considered as final result (or target).
 	legacyReservedColumnTargetAliases = []string{"__result", "__value", "result", "res", "value"}
-
-	CodeFailUnmarshalJSONColumn = errors.MustNewCode("fail_unmarshal_json_column")
 )
 
 // stripKeyAlias removes the __SELECT_KEY_<n>_ / __GROUP_BY_KEY_<n>_ prefix from a result
 // column name, recovering the field name; unprefixed names are returned unchanged.
 func stripKeyAlias(name string) string {
 	return keyAliasRe.ReplaceAllString(name, "")
+}
+
+// unwrapVariant returns the concrete value inside the chcol.Variant envelope the driver scans a
+// Dynamic column — a JSON path such as body_v2.level — into.
+func unwrapVariant(val any) any {
+	if v, ok := val.(chcol.Variant); ok {
+		return v.Any()
+	}
+	return val
+}
+
+// labelValue renders a group-by value the payload cannot carry as a scalar — a JSON column, or a
+// Dynamic one — as a stable string, so that rows differing only in that value land in different
+// series. JSON goes through encoding/json for its sorted map keys: ClickHouse groups documents by
+// structure, so two rows it considers equal have to produce the same label.
+func labelValue(val any) string {
+	val = unwrapVariant(val)
+	if val == nil {
+		return ""
+	}
+	if v, ok := val.(telemetrystoretypes.JSONValue); ok {
+		if raw, err := json.Marshal(v); err == nil {
+			return string(raw)
+		}
+	}
+	return fmt.Sprint(val)
 }
 
 // consume reads every row and shapes it into the payload expected for the
@@ -205,6 +230,14 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 					Value: *val,
 				})
 
+			case *telemetrystoretypes.JSONValue, *chcol.Variant:
+				val := labelValue(derefValue(ptr))
+				lblVals = append(lblVals, val)
+				lblObjs = append(lblObjs, &qbtypes.Label{
+					Key:   telemetrytypes.TelemetryFieldKey{Name: name},
+					Value: val,
+				})
+
 			default:
 				continue
 			}
@@ -345,7 +378,7 @@ func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.ScalarData, erro
 		// 2. deref each slot into the output row
 		row := make([]any, len(scan))
 		for i, cell := range scan {
-			row[i] = derefValue(cell)
+			row[i] = unwrapVariant(derefValue(cell))
 		}
 		data = append(data, row)
 	}
@@ -382,31 +415,13 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 	colTypes := rows.ColumnTypes()
 	colCnt := len(colNames)
 
-	// Helper that decides scan target per column based on DB type
-	makeScanTarget := func(i int) any {
-		dbt := strings.ToUpper(colTypes[i].DatabaseTypeName())
-		if strings.HasPrefix(dbt, "JSON") {
-			// Since the driver fails to decode JSON/Dynamic into native Go values, we read it as raw bytes
-			// TODO: check in future if fixed in the driver
-			var v []byte
-			return &v
-		}
-		return reflect.New(colTypes[i].ScanType()).Interface()
-	}
-
-	// Build a template slice of correctly-typed pointers once
-	scanTpl := make([]any, colCnt)
-	for i := range colTypes {
-		scanTpl[i] = makeScanTarget(i)
-	}
-
 	var outRows []*qbtypes.RawRow
 
 	for rows.Next() {
 		// fresh copy of the scan slice (otherwise the driver reuses pointers)
 		scan := make([]any, colCnt)
-		for i := range scanTpl {
-			scan[i] = makeScanTarget(i)
+		for i := range colTypes {
+			scan[i] = reflect.New(colTypes[i].ScanType()).Interface()
 		}
 
 		if err := rows.Scan(scan...); err != nil {
@@ -421,21 +436,7 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 			name := stripKeyAlias(colNames[i])
 
 			// de-reference the typed pointer to any
-			val := reflect.ValueOf(cellPtr).Elem().Interface()
-			// Post-process JSON columns: unmarshal bytes into map[string]any
-			if strings.HasPrefix(strings.ToUpper(colTypes[i].DatabaseTypeName()), "JSON") {
-				switch x := val.(type) {
-				case []byte:
-					var m map[string]any
-					err := sonic.Unmarshal(x, &m)
-					if err != nil {
-						return nil, errors.WrapInternalf(err, CodeFailUnmarshalJSONColumn, "failed to unmarshal JSON column %s", name)
-					}
-					val = m
-				default:
-					// already a structured type (map[string]any, []any, etc.)
-				}
-			}
+			val := unwrapVariant(reflect.ValueOf(cellPtr).Elem().Interface())
 
 			// special-case: timestamp column
 			if name == "timestamp" || name == "timestamp_datetime" {
