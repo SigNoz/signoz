@@ -141,15 +141,18 @@ components:
         html:
           type: string
         sendResolved:
+          nullable: true
           type: boolean
         to:
           type: string
       required:
       - to
+      - html
       type: object
     AlertmanagertypesChannelGoogleChatConfig:
       properties:
         sendResolved:
+          nullable: true
           type: boolean
         text:
           type: string
@@ -159,6 +162,8 @@ components:
           type: string
       required:
       - webhookUrl
+      - title
+      - text
       type: object
     AlertmanagertypesChannelKind:
       enum:
@@ -173,6 +178,7 @@ components:
     AlertmanagertypesChannelMSTeamsConfig:
       properties:
         sendResolved:
+          nullable: true
           type: boolean
         text:
           type: string
@@ -182,6 +188,8 @@ components:
           type: string
       required:
       - webhookUrl
+      - title
+      - text
       type: object
     AlertmanagertypesChannelOpsgenieConfig:
       properties:
@@ -200,11 +208,14 @@ components:
         priority:
           type: string
         sendResolved:
+          nullable: true
           type: boolean
         source:
           type: string
       required:
       - apiKey
+      - message
+      - description
       type: object
     AlertmanagertypesChannelPagerdutyConfig:
       properties:
@@ -227,6 +238,7 @@ components:
         routingKey:
           type: string
         sendResolved:
+          nullable: true
           type: boolean
         severity:
           type: string
@@ -236,6 +248,7 @@ components:
           type: string
       required:
       - routingKey
+      - description
       type: object
     AlertmanagertypesChannelSlackConfig:
       properties:
@@ -244,6 +257,7 @@ components:
         channel:
           type: string
         sendResolved:
+          nullable: true
           type: boolean
         text:
           type: string
@@ -251,7 +265,8 @@ components:
           type: string
       required:
       - apiUrl
-      - channel
+      - title
+      - text
       type: object
     AlertmanagertypesChannelWebhookConfig:
       properties:
@@ -260,6 +275,7 @@ components:
         password:
           type: string
         sendResolved:
+          nullable: true
           type: boolean
         url:
           type: string

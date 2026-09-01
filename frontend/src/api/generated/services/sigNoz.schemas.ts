@@ -52,19 +52,19 @@ export interface AlertmanagertypesChannelSlackConfigDTO {
 	/**
 	 * @type string
 	 */
-	channel: string;
+	channel?: string;
 	/**
-	 * @type boolean
+	 * @type boolean,null
 	 */
-	sendResolved?: boolean;
-	/**
-	 * @type string
-	 */
-	text?: string;
+	sendResolved?: boolean | null;
 	/**
 	 * @type string
 	 */
-	title?: string;
+	text: string;
+	/**
+	 * @type string
+	 */
+	title: string;
 }
 
 export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfigDTO {
@@ -91,11 +91,11 @@ export interface AlertmanagertypesChannelEmailConfigDTO {
 	/**
 	 * @type string
 	 */
-	html?: string;
+	html: string;
 	/**
-	 * @type boolean
+	 * @type boolean,null
 	 */
-	sendResolved?: boolean;
+	sendResolved?: boolean | null;
 	/**
 	 * @type string
 	 */
@@ -124,9 +124,9 @@ export interface AlertmanagertypesChannelWebhookConfigDTO {
 	 */
 	password?: string;
 	/**
-	 * @type boolean
+	 * @type boolean,null
 	 */
-	sendResolved?: boolean;
+	sendResolved?: boolean | null;
 	/**
 	 * @type string
 	 */
@@ -173,7 +173,7 @@ export interface AlertmanagertypesChannelPagerdutyConfigDTO {
 	/**
 	 * @type string
 	 */
-	description?: string;
+	description: string;
 	/**
 	 * @type object
 	 */
@@ -187,9 +187,9 @@ export interface AlertmanagertypesChannelPagerdutyConfigDTO {
 	 */
 	routingKey: string;
 	/**
-	 * @type boolean
+	 * @type boolean,null
 	 */
-	sendResolved?: boolean;
+	sendResolved?: boolean | null;
 	/**
 	 * @type string
 	 */
@@ -232,7 +232,7 @@ export interface AlertmanagertypesChannelOpsgenieConfigDTO {
 	/**
 	 * @type string
 	 */
-	description?: string;
+	description: string;
 	/**
 	 * @type object
 	 */
@@ -240,15 +240,15 @@ export interface AlertmanagertypesChannelOpsgenieConfigDTO {
 	/**
 	 * @type string
 	 */
-	message?: string;
+	message: string;
 	/**
 	 * @type string
 	 */
 	priority?: string;
 	/**
-	 * @type boolean
+	 * @type boolean,null
 	 */
-	sendResolved?: boolean;
+	sendResolved?: boolean | null;
 	/**
 	 * @type string
 	 */
@@ -269,17 +269,17 @@ export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAl
 }
 export interface AlertmanagertypesChannelMSTeamsConfigDTO {
 	/**
-	 * @type boolean
+	 * @type boolean,null
 	 */
-	sendResolved?: boolean;
+	sendResolved?: boolean | null;
 	/**
 	 * @type string
 	 */
-	text?: string;
+	text: string;
 	/**
 	 * @type string
 	 */
-	title?: string;
+	title: string;
 	/**
 	 * @type string
 	 */
@@ -300,17 +300,17 @@ export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAl
 }
 export interface AlertmanagertypesChannelGoogleChatConfigDTO {
 	/**
-	 * @type boolean
+	 * @type boolean,null
 	 */
-	sendResolved?: boolean;
+	sendResolved?: boolean | null;
 	/**
 	 * @type string
 	 */
-	text?: string;
+	text: string;
 	/**
 	 * @type string
 	 */
-	title?: string;
+	title: string;
 	/**
 	 * @type string
 	 */

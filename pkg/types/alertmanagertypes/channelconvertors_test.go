@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/prometheus/alertmanager/config"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -115,6 +116,8 @@ func TestPostableChannelToReceiverWritesTheExpectedConfigsField(t *testing.T) {
 // TestPostableChannelToReceiverRoundTripsWebhookAuthModes, whose auth modes are
 // mutually exclusive and so cannot all be set at once.
 func TestChannelToPostableChannelRoundTripsEveryFieldOfEveryKind(t *testing.T) {
+	sendResolved := true
+
 	testCases := []struct {
 		description       string
 		kind              ChannelKind
@@ -125,14 +128,14 @@ func TestChannelToPostableChannelRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 			description: "slack",
 			kind:        ChannelKindSlack,
 			spec: &ChannelSlackConfig{
-				SendResolved: true,
+				SendResolved: &sendResolved,
 				APIURL:       "https://hooks.slack.com/services/T/B/X",
 				Channel:      "#alerts",
 				Title:        "slack title",
 				Text:         "slack text",
 			},
 			expectedRoundTrip: &ChannelSlackConfig{
-				SendResolved: true,
+				SendResolved: &sendResolved,
 				APIURL:       "https://hooks.slack.com/services/T/B/X",
 				Channel:      "#alerts",
 				Title:        "slack title",
@@ -143,13 +146,13 @@ func TestChannelToPostableChannelRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 			description: "email",
 			kind:        ChannelKindEmail,
 			spec: &ChannelEmailConfig{
-				SendResolved: true,
+				SendResolved: &sendResolved,
 				To:           "team@example.com",
 				HTML:         "<p>email body</p>",
 				Headers:      map[string]string{"Subject": "email subject"},
 			},
 			expectedRoundTrip: &ChannelEmailConfig{
-				SendResolved: true,
+				SendResolved: &sendResolved,
 				To:           "team@example.com",
 				HTML:         "<p>email body</p>",
 				Headers:      map[string]string{"Subject": "email subject"},
@@ -159,7 +162,7 @@ func TestChannelToPostableChannelRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 			description: "pagerduty",
 			kind:        ChannelKindPagerduty,
 			spec: &ChannelPagerdutyConfig{
-				SendResolved: true,
+				SendResolved: &sendResolved,
 				RoutingKey:   "routing-key",
 				URL:          "https://events.example.com/v2/enqueue",
 				Source:       "pagerduty source",
@@ -177,7 +180,7 @@ func TestChannelToPostableChannelRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 			// upstream's. Clients that diff a read against their own input
 			// (Terraform) see the extra keys.
 			expectedRoundTrip: &ChannelPagerdutyConfig{
-				SendResolved: true,
+				SendResolved: &sendResolved,
 				RoutingKey:   "routing-key",
 				URL:          "https://events.example.com/v2/enqueue",
 				Source:       "pagerduty source",
@@ -201,7 +204,7 @@ func TestChannelToPostableChannelRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 			description: "opsgenie",
 			kind:        ChannelKindOpsgenie,
 			spec: &ChannelOpsgenieConfig{
-				SendResolved: true,
+				SendResolved: &sendResolved,
 				APIKey:       "api-key",
 				APIURL:       "https://api.eu.opsgenie.com",
 				Message:      "opsgenie message",
@@ -211,7 +214,7 @@ func TestChannelToPostableChannelRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				Details:      map[string]string{"env": "prod"},
 			},
 			expectedRoundTrip: &ChannelOpsgenieConfig{
-				SendResolved: true,
+				SendResolved: &sendResolved,
 				APIKey:       "api-key",
 				APIURL:       "https://api.eu.opsgenie.com",
 				Message:      "opsgenie message",
@@ -225,13 +228,13 @@ func TestChannelToPostableChannelRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 			description: "msteams",
 			kind:        ChannelKindMSTeams,
 			spec: &ChannelMSTeamsConfig{
-				SendResolved: true,
+				SendResolved: &sendResolved,
 				WebhookURL:   "https://teams.example.com/hook",
 				Title:        "msteams title",
 				Text:         "msteams text",
 			},
 			expectedRoundTrip: &ChannelMSTeamsConfig{
-				SendResolved: true,
+				SendResolved: &sendResolved,
 				WebhookURL:   "https://teams.example.com/hook",
 				Title:        "msteams title",
 				Text:         "msteams text",
@@ -241,13 +244,13 @@ func TestChannelToPostableChannelRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 			description: "googlechat",
 			kind:        ChannelKindGoogleChat,
 			spec: &ChannelGoogleChatConfig{
-				SendResolved: true,
+				SendResolved: &sendResolved,
 				WebhookURL:   "https://chat.googleapis.com/v1/spaces/s/messages",
 				Title:        "googlechat title",
 				Text:         "googlechat text",
 			},
 			expectedRoundTrip: &ChannelGoogleChatConfig{
-				SendResolved: true,
+				SendResolved: &sendResolved,
 				WebhookURL:   "https://chat.googleapis.com/v1/spaces/s/messages",
 				Title:        "googlechat title",
 				Text:         "googlechat text",
@@ -284,6 +287,42 @@ func TestChannelToPostableChannelRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 // sends no title or text and the stored channel comes back carrying upstream's
 // templates. Clients that diff a read against their own input (Terraform) have
 // to treat these as server-computed.
+// send_resolved carries no omitempty, so a spec that leaves it unset would
+// marshal an explicit false and overwrite the notifier's default. Four of the
+// seven kinds default to true, which is what makes the difference visible.
+func TestChannelSpecWithoutSendResolvedTakesTheUpstreamDefault(t *testing.T) {
+	testCases := []struct {
+		description  string
+		spec         ChannelSpec
+		expectedSend bool
+	}{
+		{"webhook", &ChannelWebhookConfig{URL: "https://example.com/hook"}, true},
+		{"pagerduty", &ChannelPagerdutyConfig{RoutingKey: "routing-key"}, true},
+		{"opsgenie", &ChannelOpsgenieConfig{APIKey: "api-key"}, true},
+		{"msteams", &ChannelMSTeamsConfig{WebhookURL: "https://teams.example.com/hook"}, true},
+		{"slack", &ChannelSlackConfig{APIURL: "https://hooks.slack.com/services/T/B/X"}, false},
+		{"email", &ChannelEmailConfig{To: "team@example.com"}, false},
+		{"googlechat", &ChannelGoogleChatConfig{WebhookURL: "https://chat.googleapis.com/v1/spaces/A/messages"}, false},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			receiver, err := testCase.spec.toReceiver("probe")
+			require.NoError(t, err)
+
+			channel, err := NewChannelFromReceiverWithInternalName(receiver, "probe", "org-1")
+			require.NoError(t, err)
+
+			roundTripped, err := channel.toPostableNotificationChannel()
+			require.NoError(t, err)
+
+			sendResolved := reflect.ValueOf(roundTripped.Config.Spec).Elem().FieldByName("SendResolved")
+			require.False(t, sendResolved.IsNil(), "a read always reports send_resolved")
+			assert.Equal(t, testCase.expectedSend, sendResolved.Elem().Bool())
+		})
+	}
+}
+
 func TestChannelToPostableChannelReturnsDefaultsTheCallerDidNotSet(t *testing.T) {
 	postable := PostableNotificationChannel{
 		Name:        "oncall",
@@ -339,6 +378,10 @@ func TestPostableChannelToReceiverOmitsEmailTransportCredentials(t *testing.T) {
 // The UI offers basic auth and bearer token for webhooks, so both must survive a
 // round trip. The legacy API overloaded one password field for both.
 func TestPostableChannelToReceiverRoundTripsWebhookAuthModes(t *testing.T) {
+	// The webhook notifier defaults send_resolved to true, so a spec that omits
+	// it reads back with that default rather than as unset.
+	sendResolved := config.DefaultWebhookConfig.VSendResolved
+
 	testCases := []struct {
 		description       string
 		spec              ChannelWebhookConfig
@@ -349,19 +392,19 @@ func TestPostableChannelToReceiverRoundTripsWebhookAuthModes(t *testing.T) {
 			description:       "basic auth",
 			spec:              ChannelWebhookConfig{URL: "https://example.com/hook", Username: "u", Password: "p"},
 			expectedInData:    `"basic_auth"`,
-			expectedRoundTrip: &ChannelWebhookConfig{URL: "https://example.com/hook", Username: "u", Password: "p"},
+			expectedRoundTrip: &ChannelWebhookConfig{SendResolved: &sendResolved, URL: "https://example.com/hook", Username: "u", Password: "p"},
 		},
 		{
 			description:       "bearer token",
 			spec:              ChannelWebhookConfig{URL: "https://example.com/hook", BearerToken: "tok"},
 			expectedInData:    `"authorization"`,
-			expectedRoundTrip: &ChannelWebhookConfig{URL: "https://example.com/hook", BearerToken: "tok"},
+			expectedRoundTrip: &ChannelWebhookConfig{SendResolved: &sendResolved, URL: "https://example.com/hook", BearerToken: "tok"},
 		},
 		{
 			description:       "no auth",
 			spec:              ChannelWebhookConfig{URL: "https://example.com/hook"},
 			expectedInData:    `"url"`,
-			expectedRoundTrip: &ChannelWebhookConfig{URL: "https://example.com/hook"},
+			expectedRoundTrip: &ChannelWebhookConfig{SendResolved: &sendResolved, URL: "https://example.com/hook"},
 		},
 	}
 

@@ -19,15 +19,15 @@ func TestPostableChannelUnmarshalJSONDecodesSpecByType(t *testing.T) {
 	}{
 		{
 			description:  "slack",
-			body:         `{"name":"oncall","config":{"kind":"slack","spec":{"apiUrl":"https://hooks.slack.com/services/T/B/X","channel":"#alerts"}}}`,
+			body:         `{"name":"oncall","config":{"kind":"slack","spec":{"apiUrl":"https://hooks.slack.com/services/T/B/X","channel":"#alerts","title":"slack title","text":"slack text"}}}`,
 			expectedKind: ChannelKindSlack,
-			expectedSpec: &ChannelSlackConfig{APIURL: "https://hooks.slack.com/services/T/B/X", Channel: "#alerts"},
+			expectedSpec: &ChannelSlackConfig{APIURL: "https://hooks.slack.com/services/T/B/X", Channel: "#alerts", Title: "slack title", Text: "slack text"},
 		},
 		{
 			description:  "email",
-			body:         `{"name":"team","config":{"kind":"email","spec":{"to":"team@example.com"}}}`,
+			body:         `{"name":"team","config":{"kind":"email","spec":{"to":"team@example.com","html":"<p>body</p>"}}}`,
 			expectedKind: ChannelKindEmail,
-			expectedSpec: &ChannelEmailConfig{To: "team@example.com"},
+			expectedSpec: &ChannelEmailConfig{To: "team@example.com", HTML: "<p>body</p>"},
 		},
 		{
 			description:  "webhook with basic auth",
@@ -43,27 +43,27 @@ func TestPostableChannelUnmarshalJSONDecodesSpecByType(t *testing.T) {
 		},
 		{
 			description:  "pagerduty",
-			body:         `{"name":"pd","config":{"kind":"pagerduty","spec":{"routingKey":"abc","severity":"critical"}}}`,
+			body:         `{"name":"pd","config":{"kind":"pagerduty","spec":{"routingKey":"abc","severity":"critical","description":"pd description"}}}`,
 			expectedKind: ChannelKindPagerduty,
-			expectedSpec: &ChannelPagerdutyConfig{RoutingKey: "abc", Severity: "critical"},
+			expectedSpec: &ChannelPagerdutyConfig{RoutingKey: "abc", Severity: "critical", Description: "pd description"},
 		},
 		{
 			description:  "opsgenie",
-			body:         `{"name":"og","config":{"kind":"opsgenie","spec":{"apiKey":"key","priority":"P1","apiUrl":"https://api.eu.opsgenie.com"}}}`,
+			body:         `{"name":"og","config":{"kind":"opsgenie","spec":{"apiKey":"key","priority":"P1","apiUrl":"https://api.eu.opsgenie.com","message":"og message","description":"og description"}}}`,
 			expectedKind: ChannelKindOpsgenie,
-			expectedSpec: &ChannelOpsgenieConfig{APIKey: "key", Priority: "P1", APIURL: "https://api.eu.opsgenie.com"},
+			expectedSpec: &ChannelOpsgenieConfig{APIKey: "key", Priority: "P1", APIURL: "https://api.eu.opsgenie.com", Message: "og message", Description: "og description"},
 		},
 		{
 			description:  "msteams",
-			body:         `{"name":"teams","config":{"kind":"msteams","spec":{"webhookUrl":"https://teams.example.com/hook"}}}`,
+			body:         `{"name":"teams","config":{"kind":"msteams","spec":{"webhookUrl":"https://teams.example.com/hook","title":"teams title","text":"teams text"}}}`,
 			expectedKind: ChannelKindMSTeams,
-			expectedSpec: &ChannelMSTeamsConfig{WebhookURL: "https://teams.example.com/hook"},
+			expectedSpec: &ChannelMSTeamsConfig{WebhookURL: "https://teams.example.com/hook", Title: "teams title", Text: "teams text"},
 		},
 		{
 			description:  "googlechat",
-			body:         `{"name":"chat","config":{"kind":"googlechat","spec":{"webhookUrl":"https://chat.example.com/hook"}}}`,
+			body:         `{"name":"chat","config":{"kind":"googlechat","spec":{"webhookUrl":"https://chat.example.com/hook","title":"chat title","text":"chat text"}}}`,
 			expectedKind: ChannelKindGoogleChat,
-			expectedSpec: &ChannelGoogleChatConfig{WebhookURL: "https://chat.example.com/hook"},
+			expectedSpec: &ChannelGoogleChatConfig{WebhookURL: "https://chat.example.com/hook", Title: "chat title", Text: "chat text"},
 		},
 	}
 
@@ -98,7 +98,7 @@ func TestPostableChannelUnmarshalJSONRejectsBadInput(t *testing.T) {
 		},
 		{
 			description: "spec field belonging to another type",
-			body:        `{"name":"x","config":{"kind":"slack","spec":{"apiUrl":"https://a","channel":"#c","to":"a@b.c"}}}`,
+			body:        `{"name":"x","config":{"kind":"slack","spec":{"apiUrl":"https://a","channel":"#c","title":"slack title","text":"slack text","to":"a@b.c"}}}`,
 		},
 		{
 			description: "spec field misspelled",
@@ -106,7 +106,7 @@ func TestPostableChannelUnmarshalJSONRejectsBadInput(t *testing.T) {
 		},
 		{
 			description: "unknown field alongside type and spec",
-			body:        `{"name":"x","config":{"kind":"slack","bogus":1,"spec":{"apiUrl":"https://a","channel":"#c"}}}`,
+			body:        `{"name":"x","config":{"kind":"slack","bogus":1,"spec":{"apiUrl":"https://a","channel":"#c","title":"slack title","text":"slack text"}}}`,
 		},
 	}
 
@@ -129,14 +129,14 @@ func TestPostableChannelValidate(t *testing.T) {
 			postable: PostableNotificationChannel{
 				Name:        "oncall",
 				DisplayName: "oncall",
-				Config:      ChannelConfig{Kind: ChannelKindSlack, Spec: &ChannelSlackConfig{APIURL: "https://a", Channel: "#c"}},
+				Config:      ChannelConfig{Kind: ChannelKindSlack, Spec: &ChannelSlackConfig{APIURL: "https://a", Channel: "#c", Title: "slack title", Text: "slack text"}},
 			},
 			expectedError: false,
 		},
 		{
 			description: "missing name",
 			postable: PostableNotificationChannel{
-				Config: ChannelConfig{Kind: ChannelKindSlack, Spec: &ChannelSlackConfig{APIURL: "https://a", Channel: "#c"}},
+				Config: ChannelConfig{Kind: ChannelKindSlack, Spec: &ChannelSlackConfig{APIURL: "https://a", Channel: "#c", Title: "slack title", Text: "slack text"}},
 			},
 			expectedError: true,
 		},
@@ -145,16 +145,88 @@ func TestPostableChannelValidate(t *testing.T) {
 			postable: PostableNotificationChannel{
 				Name:        DefaultReceiverName,
 				DisplayName: DefaultReceiverName,
+				Config:      ChannelConfig{Kind: ChannelKindSlack, Spec: &ChannelSlackConfig{APIURL: "https://a", Channel: "#c", Title: "slack title", Text: "slack text"}},
+			},
+			expectedError: true,
+		},
+		{
+			description: "slack without a channel",
+			postable: PostableNotificationChannel{
+				Name:        "oncall",
+				DisplayName: "oncall",
+				Config:      ChannelConfig{Kind: ChannelKindSlack, Spec: &ChannelSlackConfig{APIURL: "https://a", Title: "slack title", Text: "slack text"}},
+			},
+			expectedError: false,
+		},
+		{
+			description: "slack without a text",
+			postable: PostableNotificationChannel{
+				Name:        "oncall",
+				DisplayName: "oncall",
 				Config:      ChannelConfig{Kind: ChannelKindSlack, Spec: &ChannelSlackConfig{APIURL: "https://a", Channel: "#c"}},
 			},
 			expectedError: true,
 		},
 		{
-			description: "slack missing channel",
+			description: "slack without a title",
 			postable: PostableNotificationChannel{
 				Name:        "oncall",
 				DisplayName: "oncall",
-				Config:      ChannelConfig{Kind: ChannelKindSlack, Spec: &ChannelSlackConfig{APIURL: "https://a"}},
+				Config:      ChannelConfig{Kind: ChannelKindSlack, Spec: &ChannelSlackConfig{APIURL: "https://a", Channel: "#c", Text: "slack text"}},
+			},
+			expectedError: true,
+		},
+		{
+			description: "email without html",
+			postable: PostableNotificationChannel{
+				Name:        "team",
+				DisplayName: "team",
+				Config:      ChannelConfig{Kind: ChannelKindEmail, Spec: &ChannelEmailConfig{To: "team@example.com"}},
+			},
+			expectedError: true,
+		},
+		{
+			description: "msteams without a text",
+			postable: PostableNotificationChannel{
+				Name:        "teams",
+				DisplayName: "teams",
+				Config:      ChannelConfig{Kind: ChannelKindMSTeams, Spec: &ChannelMSTeamsConfig{WebhookURL: "https://a", Title: "teams title"}},
+			},
+			expectedError: true,
+		},
+		{
+			description: "googlechat without a title",
+			postable: PostableNotificationChannel{
+				Name:        "chat",
+				DisplayName: "chat",
+				Config:      ChannelConfig{Kind: ChannelKindGoogleChat, Spec: &ChannelGoogleChatConfig{WebhookURL: "https://a", Text: "chat text"}},
+			},
+			expectedError: true,
+		},
+		{
+			description: "pagerduty without a description",
+			postable: PostableNotificationChannel{
+				Name:        "pd",
+				DisplayName: "pd",
+				Config:      ChannelConfig{Kind: ChannelKindPagerduty, Spec: &ChannelPagerdutyConfig{RoutingKey: "abc"}},
+			},
+			expectedError: true,
+		},
+		{
+			description: "opsgenie without a message",
+			postable: PostableNotificationChannel{
+				Name:        "og",
+				DisplayName: "og",
+				Config:      ChannelConfig{Kind: ChannelKindOpsgenie, Spec: &ChannelOpsgenieConfig{APIKey: "key", Description: "og description", Priority: "P1"}},
+			},
+			expectedError: true,
+		},
+		{
+			description: "opsgenie without a description",
+			postable: PostableNotificationChannel{
+				Name:        "og",
+				DisplayName: "og",
+				Config:      ChannelConfig{Kind: ChannelKindOpsgenie, Spec: &ChannelOpsgenieConfig{APIKey: "key", Message: "og message", Priority: "P1"}},
 			},
 			expectedError: true,
 		},
@@ -220,25 +292,25 @@ func TestPostableChannelUnmarshalJSONResolvesNames(t *testing.T) {
 	}{
 		{
 			description:         "display name defaults to the internal name",
-			body:                `{"name":"oncall","config":{"kind":"slack","spec":{"apiUrl":"https://a","channel":"#c"}}}`,
+			body:                `{"name":"oncall","config":{"kind":"slack","spec":{"apiUrl":"https://a","channel":"#c","title":"slack title","text":"slack text"}}}`,
 			expectedName:        "oncall",
 			expectedDisplayName: "oncall",
 		},
 		{
 			description:         "both names kept when both are sent",
-			body:                `{"name":"staging-alerts","displayName":"#staging alerts","config":{"kind":"slack","spec":{"apiUrl":"https://a","channel":"#c"}}}`,
+			body:                `{"name":"staging-alerts","displayName":"#staging alerts","config":{"kind":"slack","spec":{"apiUrl":"https://a","channel":"#c","title":"slack title","text":"slack text"}}}`,
 			expectedName:        "staging-alerts",
 			expectedDisplayName: "#staging alerts",
 		},
 		{
 			description:         "generateName slugifies the display name",
-			body:                `{"generateName":true,"displayName":"#staging alerts","config":{"kind":"slack","spec":{"apiUrl":"https://a","channel":"#c"}}}`,
+			body:                `{"generateName":true,"displayName":"#staging alerts","config":{"kind":"slack","spec":{"apiUrl":"https://a","channel":"#c","title":"slack title","text":"slack text"}}}`,
 			expectedNamePrefix:  "staging-alerts-",
 			expectedDisplayName: "#staging alerts",
 		},
 		{
 			description:         "generateName falls back to a bare suffix when the display name slugifies to nothing",
-			body:                `{"generateName":true,"displayName":"###","config":{"kind":"slack","spec":{"apiUrl":"https://a","channel":"#c"}}}`,
+			body:                `{"generateName":true,"displayName":"###","config":{"kind":"slack","spec":{"apiUrl":"https://a","channel":"#c","title":"slack title","text":"slack text"}}}`,
 			expectedDisplayName: "###",
 		},
 	}
@@ -269,27 +341,27 @@ func TestPostableChannelUnmarshalJSONRejectsInvalidNames(t *testing.T) {
 	}{
 		{
 			description: "name is not a DNS1123 label",
-			body:        `{"name":"#staging-alerts","config":{"kind":"slack","spec":{"apiUrl":"https://a","channel":"#c"}}}`,
+			body:        `{"name":"#staging-alerts","config":{"kind":"slack","spec":{"apiUrl":"https://a","channel":"#c","title":"slack title","text":"slack text"}}}`,
 		},
 		{
 			description: "name carries uppercase and spaces",
-			body:        `{"name":"On Call","config":{"kind":"slack","spec":{"apiUrl":"https://a","channel":"#c"}}}`,
+			body:        `{"name":"On Call","config":{"kind":"slack","spec":{"apiUrl":"https://a","channel":"#c","title":"slack title","text":"slack text"}}}`,
 		},
 		{
 			description: "no name and no generateName",
-			body:        `{"displayName":"#staging alerts","config":{"kind":"slack","spec":{"apiUrl":"https://a","channel":"#c"}}}`,
+			body:        `{"displayName":"#staging alerts","config":{"kind":"slack","spec":{"apiUrl":"https://a","channel":"#c","title":"slack title","text":"slack text"}}}`,
 		},
 		{
 			description: "generateName alongside an explicit name",
-			body:        `{"generateName":true,"name":"staging-alerts","displayName":"#staging alerts","config":{"kind":"slack","spec":{"apiUrl":"https://a","channel":"#c"}}}`,
+			body:        `{"generateName":true,"name":"staging-alerts","displayName":"#staging alerts","config":{"kind":"slack","spec":{"apiUrl":"https://a","channel":"#c","title":"slack title","text":"slack text"}}}`,
 		},
 		{
 			description: "generateName without a display name to derive from",
-			body:        `{"generateName":true,"config":{"kind":"slack","spec":{"apiUrl":"https://a","channel":"#c"}}}`,
+			body:        `{"generateName":true,"config":{"kind":"slack","spec":{"apiUrl":"https://a","channel":"#c","title":"slack title","text":"slack text"}}}`,
 		},
 		{
 			description: "display name is the reserved receiver name",
-			body:        `{"name":"staging-alerts","displayName":"default-receiver","config":{"kind":"slack","spec":{"apiUrl":"https://a","channel":"#c"}}}`,
+			body:        `{"name":"staging-alerts","displayName":"default-receiver","config":{"kind":"slack","spec":{"apiUrl":"https://a","channel":"#c","title":"slack title","text":"slack text"}}}`,
 		},
 	}
 
@@ -307,7 +379,7 @@ func TestGettableChannelMarshalsAsPostablePlusServerFields(t *testing.T) {
 	gettable := GettableNotificationChannel{
 		Name:        "oncall",
 		DisplayName: "#oncall",
-		Config:      ChannelConfig{Kind: ChannelKindSlack, Spec: &ChannelSlackConfig{APIURL: "https://a", Channel: "#c"}},
+		Config:      ChannelConfig{Kind: ChannelKindSlack, Spec: &ChannelSlackConfig{APIURL: "https://a", Channel: "#c", Title: "slack title", Text: "slack text"}},
 	}
 
 	raw, err := json.Marshal(gettable)
@@ -331,7 +403,7 @@ func TestGettableChannelMarshalsAsPostablePlusServerFields(t *testing.T) {
 func TestChannelConfigValidateRejectsSpecOfAnotherKind(t *testing.T) {
 	config := ChannelConfig{
 		Kind: ChannelKindSlack,
-		Spec: &ChannelEmailConfig{To: "team@example.com"},
+		Spec: &ChannelEmailConfig{To: "team@example.com", HTML: "<p>body</p>"},
 	}
 
 	err := config.Validate()

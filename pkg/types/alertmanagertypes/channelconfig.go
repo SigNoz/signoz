@@ -176,11 +176,11 @@ type ChannelSpec interface {
 }
 
 type ChannelSlackConfig struct {
-	SendResolved bool   `json:"sendResolved,omitempty"`
+	SendResolved *bool  `json:"sendResolved,omitempty"`
 	APIURL       string `json:"apiUrl" required:"true"`
-	Channel      string `json:"channel" required:"true"`
-	Title        string `json:"title,omitempty"`
-	Text         string `json:"text,omitempty"`
+	Channel      string `json:"channel,omitempty"`
+	Title        string `json:"title" required:"true"`
+	Text         string `json:"text" required:"true"`
 }
 
 func (c ChannelSlackConfig) Validate() error {
@@ -188,8 +188,12 @@ func (c ChannelSlackConfig) Validate() error {
 		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.apiUrl is required for a slack channel")
 	}
 
-	if c.Channel == "" {
-		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.channel is required for a slack channel")
+	if c.Title == "" {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.title is required for a slack channel")
+	}
+
+	if c.Text == "" {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.text is required for a slack channel")
 	}
 
 	return nil
@@ -204,7 +208,7 @@ func (c ChannelSlackConfig) toReceiver(displayName string) (*Receiver, error) {
 	return &Receiver{Receiver: &config.Receiver{
 		Name: displayName,
 		SlackConfigs: []*config.SlackConfig{{
-			NotifierConfig: config.NotifierConfig{VSendResolved: c.SendResolved},
+			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, config.DefaultSlackConfig.VSendResolved)},
 			APIURL:         apiURL,
 			Channel:        c.Channel,
 			Title:          c.Title,
@@ -215,9 +219,10 @@ func (c ChannelSlackConfig) toReceiver(displayName string) (*Receiver, error) {
 
 func newChannelSlackConfigFromReceiver(_ string, receiver *Receiver) (ChannelSpec, error) {
 	slack := receiver.SlackConfigs[0]
+	sendResolved := slack.VSendResolved
 
 	return &ChannelSlackConfig{
-		SendResolved: slack.VSendResolved,
+		SendResolved: &sendResolved,
 		APIURL:       formatSecretURL(slack.APIURL),
 		Channel:      slack.Channel,
 		Title:        slack.Title,
@@ -229,15 +234,19 @@ func newChannelSlackConfigFromReceiver(_ string, receiver *Receiver) (ChannelSpe
 // credentials and TLS settings come from the deployment's global config, so a
 // channel can only choose recipients and body.
 type ChannelEmailConfig struct {
-	SendResolved bool              `json:"sendResolved,omitempty"`
+	SendResolved *bool             `json:"sendResolved,omitempty"`
 	To           string            `json:"to" required:"true"`
-	HTML         string            `json:"html,omitempty"`
+	HTML         string            `json:"html" required:"true"`
 	Headers      map[string]string `json:"headers,omitempty"`
 }
 
 func (c ChannelEmailConfig) Validate() error {
 	if c.To == "" {
 		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.to is required for an email channel")
+	}
+
+	if c.HTML == "" {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.html is required for an email channel")
 	}
 
 	return nil
@@ -247,7 +256,7 @@ func (c ChannelEmailConfig) toReceiver(displayName string) (*Receiver, error) {
 	return &Receiver{Receiver: &config.Receiver{
 		Name: displayName,
 		EmailConfigs: []*config.EmailConfig{{
-			NotifierConfig: config.NotifierConfig{VSendResolved: c.SendResolved},
+			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, config.DefaultEmailConfig.VSendResolved)},
 			To:             c.To,
 			HTML:           c.HTML,
 			Headers:        c.Headers,
@@ -257,9 +266,10 @@ func (c ChannelEmailConfig) toReceiver(displayName string) (*Receiver, error) {
 
 func newChannelEmailConfigFromReceiver(_ string, receiver *Receiver) (ChannelSpec, error) {
 	email := receiver.EmailConfigs[0]
+	sendResolved := email.VSendResolved
 
 	return &ChannelEmailConfig{
-		SendResolved: email.VSendResolved,
+		SendResolved: &sendResolved,
 		To:           email.To,
 		HTML:         email.HTML,
 		Headers:      email.Headers,
@@ -270,7 +280,7 @@ func newChannelEmailConfigFromReceiver(_ string, receiver *Receiver) (ChannelSpe
 // overloaded onto one password field, where an empty username meant the password
 // was really a bearer token.
 type ChannelWebhookConfig struct {
-	SendResolved bool   `json:"sendResolved,omitempty"`
+	SendResolved *bool  `json:"sendResolved,omitempty"`
 	URL          string `json:"url" required:"true"`
 	Username     string `json:"username,omitempty"`
 	Password     string `json:"password,omitempty"`
@@ -297,7 +307,7 @@ func (c ChannelWebhookConfig) Validate() error {
 
 func (c ChannelWebhookConfig) toReceiver(displayName string) (*Receiver, error) {
 	webhook := &config.WebhookConfig{
-		NotifierConfig: config.NotifierConfig{VSendResolved: c.SendResolved},
+		NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, config.DefaultWebhookConfig.VSendResolved)},
 		URL:            config.SecretTemplateURL(c.URL),
 	}
 
@@ -329,12 +339,13 @@ func (c ChannelWebhookConfig) toReceiver(displayName string) (*Receiver, error) 
 
 func newChannelWebhookConfigFromReceiver(name string, receiver *Receiver) (ChannelSpec, error) {
 	upstream := receiver.WebhookConfigs[0]
+	sendResolved := upstream.VSendResolved
 	if err := rejectUnrepresentableHTTPConfig(name, upstream.HTTPConfig); err != nil {
 		return nil, err
 	}
 
 	webhook := &ChannelWebhookConfig{
-		SendResolved: upstream.VSendResolved,
+		SendResolved: &sendResolved,
 		URL:          string(upstream.URL),
 	}
 
@@ -352,14 +363,14 @@ func newChannelWebhookConfigFromReceiver(name string, receiver *Receiver) (Chann
 }
 
 type ChannelPagerdutyConfig struct {
-	SendResolved bool   `json:"sendResolved,omitempty"`
+	SendResolved *bool  `json:"sendResolved,omitempty"`
 	RoutingKey   string `json:"routingKey" required:"true"`
 	// URL overrides the PagerDuty Events API endpoint, for proxies and tests.
 	URL         string            `json:"url,omitempty"`
 	Source      string            `json:"source,omitempty"`
 	Client      string            `json:"client,omitempty"`
 	ClientURL   string            `json:"clientUrl,omitempty"`
-	Description string            `json:"description,omitempty"`
+	Description string            `json:"description" required:"true"`
 	Severity    string            `json:"severity,omitempty"`
 	Component   string            `json:"component,omitempty"`
 	Group       string            `json:"group,omitempty"`
@@ -370,6 +381,10 @@ type ChannelPagerdutyConfig struct {
 func (c ChannelPagerdutyConfig) Validate() error {
 	if c.RoutingKey == "" {
 		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.routingKey is required for a pagerduty channel")
+	}
+
+	if c.Description == "" {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.description is required for a pagerduty channel")
 	}
 
 	return nil
@@ -388,7 +403,7 @@ func (c ChannelPagerdutyConfig) toReceiver(displayName string) (*Receiver, error
 	return &Receiver{Receiver: &config.Receiver{
 		Name: displayName,
 		PagerdutyConfigs: []*config.PagerdutyConfig{{
-			NotifierConfig: config.NotifierConfig{VSendResolved: c.SendResolved},
+			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, config.DefaultPagerdutyConfig.VSendResolved)},
 			RoutingKey:     config.Secret(c.RoutingKey),
 			URL:            eventsURL,
 			Source:         c.Source,
@@ -406,6 +421,7 @@ func (c ChannelPagerdutyConfig) toReceiver(displayName string) (*Receiver, error
 
 func newChannelPagerdutyConfigFromReceiver(name string, receiver *Receiver) (ChannelSpec, error) {
 	pagerduty := receiver.PagerdutyConfigs[0]
+	sendResolved := pagerduty.VSendResolved
 
 	var details map[string]string
 	if len(pagerduty.Details) > 0 {
@@ -417,7 +433,7 @@ func newChannelPagerdutyConfigFromReceiver(name string, receiver *Receiver) (Cha
 	}
 
 	return &ChannelPagerdutyConfig{
-		SendResolved: pagerduty.VSendResolved,
+		SendResolved: &sendResolved,
 		RoutingKey:   string(pagerduty.RoutingKey),
 		URL:          formatUpstreamURL(pagerduty.URL),
 		Source:       pagerduty.Source,
@@ -433,20 +449,32 @@ func newChannelPagerdutyConfigFromReceiver(name string, receiver *Receiver) (Cha
 }
 
 type ChannelOpsgenieConfig struct {
-	SendResolved bool   `json:"sendResolved,omitempty"`
+	SendResolved *bool  `json:"sendResolved,omitempty"`
 	APIKey       string `json:"apiKey" required:"true"`
 	// APIURL selects a non-default Opsgenie region, e.g. https://api.eu.opsgenie.com.
 	APIURL      string            `json:"apiUrl,omitempty"`
-	Message     string            `json:"message,omitempty"`
-	Description string            `json:"description,omitempty"`
+	Message     string            `json:"message" required:"true"`
+	Description string            `json:"description" required:"true"`
 	Source      string            `json:"source,omitempty"`
-	Priority    string            `json:"priority,omitempty"`
 	Details     map[string]string `json:"details,omitempty"`
+
+	// Priority stays optional: nothing seeds it, so v1 channels that never set
+	// one hold an empty value, and an empty priority is meaningful — the
+	// notifier omits it and Opsgenie applies its own.
+	Priority string `json:"priority,omitempty"`
 }
 
 func (c ChannelOpsgenieConfig) Validate() error {
 	if c.APIKey == "" {
 		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.apiKey is required for an opsgenie channel")
+	}
+
+	if c.Message == "" {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.message is required for an opsgenie channel")
+	}
+
+	if c.Description == "" {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.description is required for an opsgenie channel")
 	}
 
 	return nil
@@ -465,7 +493,7 @@ func (c ChannelOpsgenieConfig) toReceiver(displayName string) (*Receiver, error)
 	return &Receiver{Receiver: &config.Receiver{
 		Name: displayName,
 		OpsGenieConfigs: []*config.OpsGenieConfig{{
-			NotifierConfig: config.NotifierConfig{VSendResolved: c.SendResolved},
+			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, config.DefaultOpsGenieConfig.VSendResolved)},
 			APIKey:         config.Secret(c.APIKey),
 			APIURL:         apiURL,
 			Message:        c.Message,
@@ -479,9 +507,10 @@ func (c ChannelOpsgenieConfig) toReceiver(displayName string) (*Receiver, error)
 
 func newChannelOpsgenieConfigFromReceiver(_ string, receiver *Receiver) (ChannelSpec, error) {
 	opsgenie := receiver.OpsGenieConfigs[0]
+	sendResolved := opsgenie.VSendResolved
 
 	return &ChannelOpsgenieConfig{
-		SendResolved: opsgenie.VSendResolved,
+		SendResolved: &sendResolved,
 		APIKey:       string(opsgenie.APIKey),
 		APIURL:       formatUpstreamURL(opsgenie.APIURL),
 		Message:      opsgenie.Message,
@@ -493,15 +522,23 @@ func newChannelOpsgenieConfigFromReceiver(_ string, receiver *Receiver) (Channel
 }
 
 type ChannelMSTeamsConfig struct {
-	SendResolved bool   `json:"sendResolved,omitempty"`
+	SendResolved *bool  `json:"sendResolved,omitempty"`
 	WebhookURL   string `json:"webhookUrl" required:"true"`
-	Title        string `json:"title,omitempty"`
-	Text         string `json:"text,omitempty"`
+	Title        string `json:"title" required:"true"`
+	Text         string `json:"text" required:"true"`
 }
 
 func (c ChannelMSTeamsConfig) Validate() error {
 	if c.WebhookURL == "" {
 		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.webhookUrl is required for an msteams channel")
+	}
+
+	if c.Title == "" {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.title is required for an msteams channel")
+	}
+
+	if c.Text == "" {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.text is required for an msteams channel")
 	}
 
 	return nil
@@ -516,7 +553,7 @@ func (c ChannelMSTeamsConfig) toReceiver(displayName string) (*Receiver, error) 
 	return &Receiver{Receiver: &config.Receiver{
 		Name: displayName,
 		MSTeamsV2Configs: []*config.MSTeamsV2Config{{
-			NotifierConfig: config.NotifierConfig{VSendResolved: c.SendResolved},
+			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, config.DefaultMSTeamsV2Config.VSendResolved)},
 			WebhookURL:     webhookURL,
 			Title:          c.Title,
 			Text:           c.Text,
@@ -526,9 +563,10 @@ func (c ChannelMSTeamsConfig) toReceiver(displayName string) (*Receiver, error) 
 
 func newChannelMSTeamsConfigFromReceiver(_ string, receiver *Receiver) (ChannelSpec, error) {
 	msteams := receiver.MSTeamsV2Configs[0]
+	sendResolved := msteams.VSendResolved
 
 	return &ChannelMSTeamsConfig{
-		SendResolved: msteams.VSendResolved,
+		SendResolved: &sendResolved,
 		WebhookURL:   formatSecretURL(msteams.WebhookURL),
 		Title:        msteams.Title,
 		Text:         msteams.Text,
@@ -536,15 +574,23 @@ func newChannelMSTeamsConfigFromReceiver(_ string, receiver *Receiver) (ChannelS
 }
 
 type ChannelGoogleChatConfig struct {
-	SendResolved bool   `json:"sendResolved,omitempty"`
+	SendResolved *bool  `json:"sendResolved,omitempty"`
 	WebhookURL   string `json:"webhookUrl" required:"true"`
-	Title        string `json:"title,omitempty"`
-	Text         string `json:"text,omitempty"`
+	Title        string `json:"title" required:"true"`
+	Text         string `json:"text" required:"true"`
 }
 
 func (c ChannelGoogleChatConfig) Validate() error {
 	if c.WebhookURL == "" {
 		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.webhookUrl is required for a googlechat channel")
+	}
+
+	if c.Title == "" {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.title is required for a googlechat channel")
+	}
+
+	if c.Text == "" {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.text is required for a googlechat channel")
 	}
 
 	return nil
@@ -559,7 +605,7 @@ func (c ChannelGoogleChatConfig) toReceiver(displayName string) (*Receiver, erro
 	return &Receiver{
 		Receiver: &config.Receiver{Name: displayName},
 		GoogleChatConfigs: []*GoogleChatReceiverConfig{{
-			NotifierConfig: config.NotifierConfig{VSendResolved: c.SendResolved},
+			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, DefaultGoogleChatReceiverConfig.VSendResolved)},
 			WebhookURL:     webhookURL,
 			Title:          c.Title,
 			Text:           c.Text,
@@ -569,9 +615,10 @@ func (c ChannelGoogleChatConfig) toReceiver(displayName string) (*Receiver, erro
 
 func newChannelGoogleChatConfigFromReceiver(_ string, receiver *Receiver) (ChannelSpec, error) {
 	googlechat := receiver.GoogleChatConfigs[0]
+	sendResolved := googlechat.VSendResolved
 
 	return &ChannelGoogleChatConfig{
-		SendResolved: googlechat.VSendResolved,
+		SendResolved: &sendResolved,
 		WebhookURL:   formatSecretURL(googlechat.WebhookURL),
 		Title:        googlechat.Title,
 		Text:         googlechat.Text,
@@ -758,6 +805,17 @@ func newChannelSpec(kind ChannelKind) (func() ChannelSpec, bool) {
 		}
 	}
 	return nil, false
+}
+
+// resolveSendResolved falls back to the notifier's own upstream default, because
+// send_resolved has no omitempty: a zero value would marshal as an explicit false
+// and overwrite the default rather than leave it in place.
+func resolveSendResolved(sendResolved *bool, upstreamDefault bool) bool {
+	if sendResolved == nil {
+		return upstreamDefault
+	}
+
+	return *sendResolved
 }
 
 func allowedValuesForChannelKind() string {
