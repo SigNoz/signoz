@@ -63,23 +63,27 @@ function ChannelsEdit(): JSX.Element {
 
 	const prepChannelConfig = (): {
 		type: string;
-		channel: SlackChannel &
-			WebhookChannel &
-			PagerChannel &
-			MsTeamsChannel &
-			GoogleChatChannel &
-			JiraChannel &
-			JsmOpsChannel &
-			IncidentIOChannel;
+		channel: Partial<
+			SlackChannel &
+				WebhookChannel &
+				PagerChannel &
+				MsTeamsChannel &
+				GoogleChatChannel &
+				JiraChannel &
+				JsmOpsChannel &
+				IncidentIOChannel
+		>;
 	} => {
-		let channel: SlackChannel &
-			WebhookChannel &
-			PagerChannel &
-			MsTeamsChannel &
-			GoogleChatChannel &
-			JiraChannel &
-			JsmOpsChannel &
-			IncidentIOChannel = {
+		let channel: Partial<
+			SlackChannel &
+				WebhookChannel &
+				PagerChannel &
+				MsTeamsChannel &
+				GoogleChatChannel &
+				JiraChannel &
+				JsmOpsChannel &
+				IncidentIOChannel
+		> = {
 			name: '',
 		};
 

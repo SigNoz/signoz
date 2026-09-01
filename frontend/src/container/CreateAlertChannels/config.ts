@@ -142,16 +142,16 @@ export interface GoogleChatChannel extends Channel {
 // (Atlassian account email + API token) carried in username / password.
 export interface JiraChannel extends Channel {
 	// Jira Cloud base URL, e.g. https://acme.atlassian.net
-	site?: string;
-	project?: string;
-	issue_type?: string;
+	site: string;
+	project: string;
+	issue_type: string;
 	// issue title template
 	summary?: string;
 	// issue body template, rendered to rich text server-side
 	description?: string;
 	// basic auth: username is the Atlassian account email, password is the API token
-	username?: string;
-	password?: string;
+	username: string;
+	password: string;
 	priority?: string;
 	labels?: string[];
 	resolve_transition?: string;
@@ -179,7 +179,7 @@ export interface IncidentIOChannel extends Channel {
 // JsmOpsChannel configures the Jira Service Management Ops alert channel
 // (ex-Opsgenie alert API). Auth is the JSM integration API key.
 export interface JsmOpsChannel extends Channel {
-	api_key?: string;
+	api_key: string;
 	// alert title template
 	message?: string;
 	// alert body template (markdown, rendered to HTML server-side)

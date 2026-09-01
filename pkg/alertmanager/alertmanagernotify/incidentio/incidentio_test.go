@@ -27,6 +27,7 @@ type mockIncidentIO struct {
 	mu     sync.Mutex
 	events []alertEvent
 	auths  []string
+	paths  []string
 	status int
 }
 
@@ -39,6 +40,7 @@ func newMockIncidentIO(t *testing.T) *mockIncidentIO {
 		m.mu.Lock()
 		m.events = append(m.events, ev)
 		m.auths = append(m.auths, r.Header.Get("Authorization"))
+		m.paths = append(m.paths, r.URL.Path)
 		status := m.status
 		m.mu.Unlock()
 		w.WriteHeader(status)
@@ -182,6 +184,25 @@ func TestNotifyMergesChannelMetadata(t *testing.T) {
 	assert.Equal(t, "channel-wins", md["alertname"]) // channel overrides the rule label
 	assert.Equal(t, "{{ .Nope", md["broken"])        // unexpandable value sent raw
 	assert.Equal(t, "critical", md["severity"])      // rule labels still present
+}
+
+func TestNotifyNormalizesVerbatimURLAndToken(t *testing.T) {
+	m := newMockIncidentIO(t)
+	tmpl := test.CreateTmpl(t)
+	n, err := New(&alertmanagertypes.IncidentIOReceiverConfig{
+		URL:         m.srv.URL + "/v2/alert_events/http/src-1/",
+		Token:       "Bearer tok-1",
+		Title:       alertmanagertypes.DefaultIncidentIOTitleTemplate,
+		Description: alertmanagertypes.DefaultIncidentIODescriptionTemplate,
+		HTTPConfig:  &commoncfg.HTTPClientConfig{},
+	}, tmpl, slog.New(slog.DiscardHandler), alertmanagertemplate.New(tmpl, slog.New(slog.DiscardHandler)))
+	require.NoError(t, err)
+
+	_, err = n.Notify(ctx(), alert(true))
+	require.NoError(t, err)
+
+	assert.Equal(t, "/v2/alert_events/http/src-1", m.paths[0]) // trailing slash trimmed at send
+	assert.Equal(t, "Bearer tok-1", m.auths[0])                // pasted prefix not doubled
 }
 
 func TestNotifyTruncatesLongDescription(t *testing.T) {

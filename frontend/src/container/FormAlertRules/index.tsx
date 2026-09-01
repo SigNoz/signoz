@@ -844,8 +844,6 @@ function FormAlertRules({
 
 	return (
 		<>
-			{Element}
-
 			<div
 				id="top"
 				className={`form-alert-rules-container ${
@@ -968,6 +966,7 @@ function FormAlertRules({
 								!isChannelConfigurationValid ||
 								queryStatus === 'error'
 							}
+							data-testid="alert-save-button"
 						>
 							{isNewRule ? t('button_createrule') : t('button_savechanges')}
 						</ActionButton>
@@ -981,6 +980,7 @@ function FormAlertRules({
 							}
 							type="default"
 							onClick={onTestRuleHandler}
+							data-testid="alert-test-button"
 						>
 							{' '}
 							{t('button_testrule')}
@@ -989,6 +989,7 @@ function FormAlertRules({
 							disabled={loading || false}
 							type="default"
 							onClick={onCancelHandler}
+							data-testid="alert-cancel-button"
 						>
 							{isNewRule && t('button_cancelchanges')}
 							{ruleId && !isEmpty(ruleId) && t('button_discard')}
@@ -998,6 +999,7 @@ function FormAlertRules({
 			</div>
 
 			<ConfirmDialog
+				testId="alert-save-confirm-dialog"
 				open={isConfirmSaveOpen}
 				onOpenChange={setIsConfirmSaveOpen}
 				title={t('confirm_save_title')}

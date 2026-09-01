@@ -5,6 +5,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 	"github.com/gorilla/mux"
 )
@@ -27,7 +29,7 @@ func (provider *provider) addZeusRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/zeus/hosts", handler.New(provider.authzMiddleware.ViewAccess(provider.zeusHandler.GetHosts), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/zeus/hosts", handler.New(provider.authzMiddleware.CheckResources(provider.zeusHandler.GetHosts, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName), handler.OpenAPIDef{
 		ID:                  "GetHosts",
 		Tags:                []string{"zeus"},
 		Summary:             "Get host info from Zeus.",
@@ -39,12 +41,17 @@ func (provider *provider) addZeusRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-	})).Methods(http.MethodGet).GetError(); err != nil {
+		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceDeploymentHost.Scope(coretypes.VerbList)}),
+	}, handler.WithResourceDefs(handler.BasicResourceDef{
+		Resource: coretypes.ResourceMetaResourceDeploymentHost,
+		Verb:     coretypes.VerbList,
+		Category: coretypes.ActionCategoryDataAccess,
+		Selector: coretypes.WildcardSelector,
+	}))).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/zeus/hosts", handler.New(provider.authzMiddleware.AdminAccess(provider.zeusHandler.PutHost), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/zeus/hosts", handler.New(provider.authzMiddleware.CheckResources(provider.zeusHandler.PutHost, authtypes.SigNozAdminRoleName), handler.OpenAPIDef{
 		ID:                  "PutHost",
 		Tags:                []string{"zeus"},
 		Summary:             "Put host in Zeus for a deployment.",
@@ -56,8 +63,14 @@ func (provider *provider) addZeusRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound, http.StatusConflict},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPut).GetError(); err != nil {
+		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceDeploymentHost.Scope(coretypes.VerbUpdate)}),
+	}, handler.WithResourceDefs(handler.BasicResourceDef{
+		Resource: coretypes.ResourceMetaResourceDeploymentHost,
+		Verb:     coretypes.VerbUpdate,
+		Category: coretypes.ActionCategoryConfigurationChange,
+		ID:       coretypes.BodyJSONPath("name"),
+		Selector: coretypes.WildcardSelector,
+	}))).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 

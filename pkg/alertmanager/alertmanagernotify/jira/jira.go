@@ -91,7 +91,12 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	// The default body is a single combined part, so the join is a no-op there.
 	descText := truncateRunes(strings.Join(parts, "\n\n---\n\n"), maxDescriptionLenRunes)
 
-	existing, retry, err := n.searchIssue(ctx, groupID, firing)
+	baseURL, retry, err := n.resolveAPIBaseURL(ctx)
+	if err != nil {
+		return retry, err
+	}
+
+	existing, retry, err := n.searchIssue(ctx, baseURL, groupID, firing)
 	if err != nil {
 		return retry, err
 	}
@@ -103,11 +108,11 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		if !firing {
 			return false, nil
 		}
-		return n.createIssue(ctx, fields)
+		return n.createIssue(ctx, baseURL, fields)
 	}
 
 	// Existing issue: refresh it, then transition + comment based on the new state.
-	if retry, err := n.updateIssue(ctx, existing, fields); err != nil {
+	if retry, err := n.updateIssue(ctx, baseURL, existing, fields); err != nil {
 		return retry, err
 	}
 
@@ -116,16 +121,16 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	// Google Chat re-posts on every notification.
 	switch {
 	case firing && existing.isDone(): // re-fired after resolution → reopen
-		if retry, err := n.applyTransition(ctx, existing.Key, false, n.conf.ReopenTransition); err != nil {
+		if retry, err := n.applyTransition(ctx, baseURL, existing.Key, false, n.conf.ReopenTransition); err != nil {
 			return retry, err
 		}
 	case !firing: // resolved (search returns only open issues, so this one is open)
-		if retry, err := n.applyTransition(ctx, existing.Key, true, n.conf.ResolveTransition); err != nil {
+		if retry, err := n.applyTransition(ctx, baseURL, existing.Key, true, n.conf.ResolveTransition); err != nil {
 			return retry, err
 		}
 	}
 	// firing && !isDone (still firing) needs no transition.
-	return n.addComment(ctx, existing.Key, fields.Description)
+	return n.addComment(ctx, baseURL, existing.Key, fields.Description)
 }
 
 func (n *Notifier) buildFields(groupID, summary, descText string, alerts []*types.Alert, firing bool) *issueFields {
@@ -264,12 +269,12 @@ func deepLinks(alerts []*types.Alert) map[string]any {
 
 func (n *Notifier) labels(groupID string) []string {
 	out := append([]string{}, n.conf.Labels...)
-	out = append(out, "signoz", fmt.Sprintf("ALERT{%s}", groupID))
+	out = append(out, "signoz-alert", fmt.Sprintf("ALERT{%s}", groupID))
 	sort.Strings(out)
 	return out
 }
 
-func (n *Notifier) searchIssue(ctx context.Context, groupID string, firing bool) (*issue, bool, error) {
+func (n *Notifier) searchIssue(ctx context.Context, baseURL, groupID string, firing bool) (*issue, bool, error) {
 	var jql strings.Builder
 	if n.conf.WontFixResolution != "" {
 		// != alone also drops unresolved (EMPTY) issues, so keep those explicitly.
@@ -282,7 +287,7 @@ func (n *Notifier) searchIssue(ctx context.Context, groupID string, firing bool)
 	}
 	fmt.Fprintf(&jql, `project=%q and labels=%q order by status ASC, resolutiondate DESC`, n.conf.Project, fmt.Sprintf("ALERT{%s}", groupID))
 
-	body, retry, err := n.callAPI(ctx, http.MethodPost, n.conf.APIBaseURL()+"/search/jql", searchRequest{
+	body, retry, err := n.callAPI(ctx, http.MethodPost, baseURL+"/search/jql", searchRequest{
 		JQL: jql.String(), MaxResults: 2, Fields: []string{"status", "labels"},
 	})
 	if err != nil {
@@ -305,12 +310,12 @@ func (n *Notifier) searchIssue(ctx context.Context, groupID string, firing bool)
 	return &res.Issues[0], false, nil
 }
 
-func (n *Notifier) createIssue(ctx context.Context, fields *issueFields) (bool, error) {
-	_, retry, err := n.callAPI(ctx, http.MethodPost, n.conf.APIBaseURL()+"/issue", issue{Fields: fields})
+func (n *Notifier) createIssue(ctx context.Context, baseURL string, fields *issueFields) (bool, error) {
+	_, retry, err := n.callAPI(ctx, http.MethodPost, baseURL+"/issue", issue{Fields: fields})
 	return retry, err
 }
 
-func (n *Notifier) updateIssue(ctx context.Context, existing *issue, fields *issueFields) (bool, error) {
+func (n *Notifier) updateIssue(ctx context.Context, baseURL string, existing *issue, fields *issueFields) (bool, error) {
 	// project and issue type are set at creation and cannot be edited.
 	upd := *fields
 	upd.Project = nil
@@ -320,7 +325,7 @@ func (n *Notifier) updateIssue(ctx context.Context, existing *issue, fields *iss
 	if existing.Fields != nil {
 		upd.Labels = mergeLabels(existing.Fields.Labels, fields.Labels)
 	}
-	_, retry, err := n.callAPI(ctx, http.MethodPut, n.issueURL(existing.Key, ""), issue{Fields: &upd})
+	_, retry, err := n.callAPI(ctx, http.MethodPut, n.issueURL(baseURL, existing.Key, ""), issue{Fields: &upd})
 	return retry, err
 }
 
@@ -340,8 +345,8 @@ func mergeLabels(existing, ours []string) []string {
 // applyTransition moves the issue into (toDone) or out of (!toDone) the "done"
 // status category, preferring the named override, else the first matching
 // transition, else skipping without error when none is available.
-func (n *Notifier) applyTransition(ctx context.Context, key string, toDone bool, override string) (bool, error) {
-	transitions, retry, err := n.getTransitions(ctx, key)
+func (n *Notifier) applyTransition(ctx context.Context, baseURL, key string, toDone bool, override string) (bool, error) {
+	transitions, retry, err := n.getTransitions(ctx, baseURL, key)
 	if err != nil {
 		return retry, err
 	}
@@ -350,12 +355,12 @@ func (n *Notifier) applyTransition(ctx context.Context, key string, toDone bool,
 		n.logger.WarnContext(ctx, "jira: no matching transition, leaving issue as-is", slog.String("issue", key), slog.Bool("to_done", toDone))
 		return false, nil
 	}
-	_, retry, err = n.callAPI(ctx, http.MethodPost, n.issueURL(key, "transitions"), issue{Transition: &idName{ID: id}})
+	_, retry, err = n.callAPI(ctx, http.MethodPost, n.issueURL(baseURL, key, "transitions"), issue{Transition: &idName{ID: id}})
 	return retry, err
 }
 
-func (n *Notifier) getTransitions(ctx context.Context, key string) ([]jiraTransition, bool, error) {
-	body, retry, err := n.callAPI(ctx, http.MethodGet, n.issueURL(key, "transitions"), nil)
+func (n *Notifier) getTransitions(ctx context.Context, baseURL, key string) ([]jiraTransition, bool, error) {
+	body, retry, err := n.callAPI(ctx, http.MethodGet, n.issueURL(baseURL, key, "transitions"), nil)
 	if err != nil {
 		return nil, retry, err
 	}
@@ -366,13 +371,13 @@ func (n *Notifier) getTransitions(ctx context.Context, key string) ([]jiraTransi
 	return tr.Transitions, false, nil
 }
 
-func (n *Notifier) addComment(ctx context.Context, key string, body any) (bool, error) {
-	_, retry, err := n.callAPI(ctx, http.MethodPost, n.issueURL(key, "comment"), comment{Body: body})
+func (n *Notifier) addComment(ctx context.Context, baseURL, key string, body any) (bool, error) {
+	_, retry, err := n.callAPI(ctx, http.MethodPost, n.issueURL(baseURL, key, "comment"), comment{Body: body})
 	return retry, err
 }
 
-func (n *Notifier) issueURL(key, sub string) string {
-	u := n.conf.APIBaseURL() + "/issue/" + key
+func (n *Notifier) issueURL(baseURL, key, sub string) string {
+	u := baseURL + "/issue/" + key
 	if sub != "" {
 		u += "/" + sub
 	}
@@ -412,41 +417,53 @@ func (n *Notifier) callAPI(ctx context.Context, method, url string, reqBody any)
 	return respBody, false, nil
 }
 
-// ResolveCloudID fetches a Jira Cloud site's cloud id from its unauthenticated
-// tenant_info endpoint. Service accounts need it to address the
-// api.atlassian.com gateway; it is resolved once at channel save/test time.
-func ResolveCloudID(ctx context.Context, client *http.Client, site string) (string, error) {
-	url := strings.TrimRight(site, "/") + "/_edge/tenant_info"
+// resolveAPIBaseURL resolves the service-account cloud id per notification (it
+// is never persisted); personal API tokens use the site host directly.
+func (n *Notifier) resolveAPIBaseURL(ctx context.Context) (string, bool, error) {
+	if !n.conf.IsServiceAccount() {
+		return n.conf.APIBaseURL(""), false, nil
+	}
+	cloudID, retry, err := n.resolveCloudID(ctx)
+	if err != nil {
+		return "", retry, err
+	}
+	return n.conf.APIBaseURL(cloudID), false, nil
+}
+
+// resolveCloudID fetches the site's cloud id from its unauthenticated
+// tenant_info endpoint; transport failures are retryable, bad responses are not.
+func (n *Notifier) resolveCloudID(ctx context.Context) (string, bool, error) {
+	url := strings.TrimRight(n.conf.Site, "/") + "/_edge/tenant_info"
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 	req.Header.Set("Accept", "application/json")
 
-	resp, err := client.Do(req)
+	resp, err := n.client.Do(req)
 	if err != nil {
-		return "", errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch jira cloud id")
+		return "", true, errors.WrapInternalf(err, errors.CodeInternal, "failed to fetch jira cloud id")
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return "", true, err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to resolve jira cloud id from %s: status %d", url, resp.StatusCode)
+		return "", false, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to resolve jira cloud id from %s: status %d", url, resp.StatusCode)
 	}
 
 	var out struct {
 		CloudID string `json:"cloudId"`
 	}
 	if err := json.Unmarshal(body, &out); err != nil {
-		return "", errors.WrapInternalf(err, errors.CodeInternal, "failed to parse jira tenant_info response")
+		return "", false, errors.WrapInternalf(err, errors.CodeInternal, "failed to parse jira tenant_info response")
 	}
 	if out.CloudID == "" {
-		return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "jira tenant_info returned an empty cloud id for %s", site)
+		return "", false, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "jira tenant_info returned an empty cloud id for %s", n.conf.Site)
 	}
-	return out.CloudID, nil
+	return out.CloudID, false, nil
 }
 
 // selectTransition returns the id of the transition whose target status category

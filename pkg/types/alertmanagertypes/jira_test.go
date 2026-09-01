@@ -29,7 +29,7 @@ func TestJiraReceiverConfigDefaults(t *testing.T) {
 
 	jc := r.JiraConfigs[0]
 	assert.Equal(t, "https://acme.atlassian.net", jc.Site)
-	assert.Equal(t, "https://acme.atlassian.net/rest/api/3", jc.APIBaseURL())
+	assert.Equal(t, "https://acme.atlassian.net/rest/api/3", jc.APIBaseURL(""))
 	assert.False(t, jc.SendResolved()) // default off when omitted, like other channels
 	assert.Equal(t, defaultJiraReopenDuration, jc.ReopenDuration)
 	assert.Equal(t, DefaultJiraSummaryTemplate, jc.Summary)
@@ -73,10 +73,8 @@ func TestJiraReceiverConfigReopenDurationMinimum(t *testing.T) {
 
 func TestJiraAPIBaseURL(t *testing.T) {
 	c := &JiraReceiverConfig{Site: "https://acme.atlassian.net"}
-	assert.Equal(t, "https://acme.atlassian.net/rest/api/3", c.APIBaseURL())
-
-	c.CloudID = "09851b38-1a40-4c01-a36a-0a9336293200"
-	assert.Equal(t, "https://api.atlassian.com/ex/jira/09851b38-1a40-4c01-a36a-0a9336293200/rest/api/3", c.APIBaseURL())
+	assert.Equal(t, "https://acme.atlassian.net/rest/api/3", c.APIBaseURL(""))
+	assert.Equal(t, "https://api.atlassian.com/ex/jira/09851b38-1a40-4c01-a36a-0a9336293200/rest/api/3", c.APIBaseURL("09851b38-1a40-4c01-a36a-0a9336293200"))
 }
 
 func TestJiraIsServiceAccount(t *testing.T) {
@@ -93,7 +91,7 @@ func TestJiraReceiverConfigTrailingSlashSite(t *testing.T) {
 	r, err := NewReceiver(jiraReceiverJSON("https://acme.atlassian.net/", "KAN", "Task", true))
 	require.NoError(t, err)
 	assert.Equal(t, "https://acme.atlassian.net", r.JiraConfigs[0].Site)
-	assert.Equal(t, "https://acme.atlassian.net/rest/api/3", r.JiraConfigs[0].APIBaseURL())
+	assert.Equal(t, "https://acme.atlassian.net/rest/api/3", r.JiraConfigs[0].APIBaseURL(""))
 }
 
 func TestJiraReceiverConfigValidation(t *testing.T) {
