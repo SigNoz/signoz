@@ -241,28 +241,29 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 						))
 					)}
 
-					{!showOnlyWhereClause && currentQuery.builder.queryFormulas.length > 0 && (
-						<div className="qb-formulas-container">
-							{currentQuery.builder.queryFormulas.map((formula, index) => {
-								const query =
-									currentQuery.builder.queryData[index] ||
-									currentQuery.builder.queryData[0];
+					{!showOnlyWhereClause &&
+						currentQuery.builder.queryFormulas?.length > 0 && (
+							<div className="qb-formulas-container">
+								{currentQuery.builder.queryFormulas.map((formula, index) => {
+									const query =
+										currentQuery.builder.queryData[index] ||
+										currentQuery.builder.queryData[0];
 
-								return (
-									<div key={formula.queryName} className="qb-formula">
-										<Formula
-											filterConfigs={filterConfigs}
-											query={query}
-											formula={formula}
-											index={index}
-											isAdditionalFilterEnable={false}
-											isQBV2
-										/>
-									</div>
-								);
-							})}
-						</div>
-					)}
+									return (
+										<div key={formula.queryName} className="qb-formula">
+											<Formula
+												filterConfigs={filterConfigs}
+												query={query}
+												formula={formula}
+												index={index}
+												isAdditionalFilterEnable={false}
+												isQBV2
+											/>
+										</div>
+									);
+								})}
+							</div>
+						)}
 
 					{shouldShowFooter && (
 						<QueryFooter
@@ -290,7 +291,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 							</div>
 						))}
 
-						{currentQuery.builder.queryFormulas.map((formula) => (
+						{currentQuery.builder.queryFormulas?.map((formula) => (
 							<div key={formula.queryName} className="formula-name">
 								{formula.queryName}
 							</div>

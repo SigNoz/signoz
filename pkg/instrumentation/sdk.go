@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/instrumentation/tracehandler"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
@@ -108,7 +109,7 @@ func New(ctx context.Context, cfg Config, build version.Build, serviceName strin
 	}
 
 	// Set the global tracer provider to the sdk tracer provider so that external packages can use this
-	otel.SetTracerProvider(sdk.TracerProvider())
+	otel.SetTracerProvider(tracehandler.New(sdk.TracerProvider(), tracehandler.NewPromQL()))
 
 	return &SDK{
 		sdk:                       sdk,

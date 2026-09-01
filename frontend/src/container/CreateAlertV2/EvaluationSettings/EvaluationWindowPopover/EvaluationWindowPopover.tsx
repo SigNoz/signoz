@@ -66,6 +66,7 @@ function EvaluationWindowPopover({
 						tabIndex={0}
 						data-value={option.value}
 						data-section-id={sectionId}
+						data-testid={`${sectionId}-option-${option.value}`}
 						onClick={(): void => onChange(option.value)}
 						onKeyDown={(e): void => {
 							if (e.key === 'Enter' || e.key === ' ') {
