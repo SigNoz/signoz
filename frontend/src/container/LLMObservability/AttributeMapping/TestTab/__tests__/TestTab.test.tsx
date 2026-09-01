@@ -38,19 +38,22 @@ import {
 	TEST_ENDPOINT,
 } from '../../__tests__/fixtures';
 
+const SAMPLE_SPAN = JSON.parse(SAMPLE_SPAN_JSON) as {
+	attributes: Record<string, unknown>;
+	resource: Record<string, unknown>;
+};
+
+const MAPPED_ATTRIBUTE_KEY = 'gen_ai.content.prompt';
+
+// The backend echoes the submitted span back with the mapper output merged in.
+// Deriving from the sample keeps exactly one key added, which is what makes the
+// single `populated` badge assertion below exact.
 const RESULT_SPAN = {
 	attributes: {
-		'my_company.llm.input': 'What is quantum computing?',
-		'llm.input_messages': 'What is quantum computing?',
-		'gen_ai.request.model': 'gpt-4',
-		'gen_ai.usage.total_tokens': 1250,
-		'gen_ai.content.completion': 'Quantum computing leverages...',
-		'gen_ai.content.prompt': 'What is quantum computing?',
+		...SAMPLE_SPAN.attributes,
+		[MAPPED_ATTRIBUTE_KEY]: SAMPLE_SPAN.attributes['input.value'],
 	},
-	resource: {
-		'service.name': 'llm-gateway',
-		'deployment.environment': 'production',
-	},
+	resource: SAMPLE_SPAN.resource,
 };
 
 const EDITED_SPAN_JSON = `{
@@ -97,7 +100,7 @@ describe('TestTab — sample-span flow', () => {
 		).resolves.toBeInTheDocument();
 		expect(screen.getByTestId('test-result-0')).toBeInTheDocument();
 		expect(screen.getByTestId('test-result-0-attributes')).toHaveTextContent(
-			'gen_ai.content.prompt',
+			MAPPED_ATTRIBUTE_KEY,
 		);
 		expect(screen.getByText('populated')).toBeInTheDocument();
 		expect(screen.queryByTestId('test-error')).not.toBeInTheDocument();
