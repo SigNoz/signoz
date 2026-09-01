@@ -3,6 +3,7 @@ import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panel
 
 import type { DashboardSection } from '../../utils';
 import QueryPanel from './QueryPanel';
+import StaticPanel from './StaticPanel';
 
 /**
  * Layout context for the panel actions menu — present only in editable mode. No
@@ -31,12 +32,19 @@ function Panel({
 	panelId,
 	isVisible,
 	panelActions,
-}: PanelProps): JSX.Element | null {
+}: PanelProps): JSX.Element {
 	const panelDefinition = getPanelDefinition(panel.spec.plugin.kind);
 
 	if (panelDefinition.mode === 'static') {
-		// No static kind is registered yet; StaticPanel lands with the first one.
-		return null;
+		return (
+			<StaticPanel
+				panel={panel}
+				panelId={panelId}
+				panelDefinition={panelDefinition}
+				isVisible={isVisible}
+				panelActions={panelActions}
+			/>
+		);
 	}
 
 	return (

@@ -8,6 +8,7 @@ import type { RenderableQueryPanelDefinition } from 'pages/DashboardPage/Dashboa
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 
 import { usePublicPanelQuery } from '../hooks/usePublicPanelQuery';
+import StaticPublicPanel from './StaticPublicPanel';
 import styles from './PublicPanel.module.scss';
 
 interface PublicPanelProps {
@@ -31,12 +32,17 @@ const PUBLIC_DASHBOARD_PREFERENCE: DashboardPreference = {
  * Read-only v2 public panel. Forks on the kind's mode before any query machinery
  * exists; the static arm renders nothing until a static kind registers.
  */
-function PublicPanel(props: PublicPanelProps): JSX.Element | null {
+function PublicPanel(props: PublicPanelProps): JSX.Element {
 	const panelDefinition = getPanelDefinition(props.panel.spec.plugin.kind);
 
 	if (panelDefinition.mode === 'static') {
-		// No static kind is registered yet; the static public host lands with the first one.
-		return null;
+		return (
+			<StaticPublicPanel
+				panel={props.panel}
+				panelKey={props.panelKey}
+				panelDefinition={panelDefinition}
+			/>
+		);
 	}
 
 	return <QueryPublicPanel {...props} panelDefinition={panelDefinition} />;
