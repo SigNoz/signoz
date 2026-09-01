@@ -1,24 +1,22 @@
-import { useCallback, useEffect, useMemo } from 'react';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
-import { PanelMode } from 'lib/visualization/panels/types';
-import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
-import ContextMenu from 'periscope/components/ContextMenu';
-import PreviewPane from 'pages/DashboardPage/DashboardContainer/PanelEditor/PreviewPane/PreviewPane';
-import type { DashboardPreference } from 'pages/DashboardPage/DashboardContainer/Panels/types/rendererProps';
-import { useViewPanelStore } from 'pages/DashboardPage/DashboardContainer/store/useViewPanelStore';
-import { useOpenPanelEditor } from 'pages/DashboardPage/DashboardContainer/hooks/useOpenPanelEditor';
+import { useMemo } from 'react';
+import type {
+	DashboardtypesPanelDTO,
+	DashboardtypesPanelSpecDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import { QueryParams } from 'constants/query';
+import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
+import useUrlQuery from 'hooks/useUrlQuery';
+import { usePanelEditorDraft } from 'pages/DashboardPage/DashboardContainer/PanelEditor/hooks/usePanelEditorDraft';
+import { usePanelTypeSwitch } from 'pages/DashboardPage/DashboardContainer/PanelEditor/hooks/usePanelTypeSwitch';
+import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
+import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
+import { buildViewPanelSpec } from 'pages/DashboardPage/DashboardContainer/Panels/utils/drilldown/buildViewPanelSpec';
+import { useDashboardStore } from 'pages/DashboardPage/DashboardContainer/store/useDashboardStore';
 
-import { useDrilldown } from '../hooks/useDrilldown';
-import { usePanelInteractions } from '../hooks/usePanelInteractions';
-import ViewPanelModalHeader from './ViewPanelModalHeader';
-import { useViewPanelMode } from './useViewPanelMode';
-import { useViewPanelTimeWindow } from './useViewPanelTimeWindow';
-import styles from './ViewPanelModal.module.scss';
-import logEvent from 'api/common/logEvent';
-import {
-	DashboardDetailEvents,
-	DashboardEvents,
-} from 'pages/DashboardPage/constants/events';
+import QueryViewModalBody from './QueryViewModalBody';
+import StaticViewModalBody from './StaticViewModalBody';
+import { readViewPanelHandoff } from './viewPanelHandoffStore';
 
 interface ViewPanelModalContentProps {
 	panel: DashboardtypesPanelDTO;
@@ -28,161 +26,79 @@ interface ViewPanelModalContentProps {
 }
 
 /**
- * Body of the View modal: a compact drilldown editor. It renders an editable draft of
- * the panel (preview) over a per-view time window plus the shared query builder, so the
- * user can tweak + Stage & Run without touching the dashboard. Edits are temporary.
+ * View-modal shell. Owns the draft and the kind-switch cache — the state that
+ * must survive a switch between authoring modes — and forks on the draft kind's
+ * `mode`, so a static kind mounts no time window, query session or drilldown.
  */
 function ViewPanelModalContent({
 	panel,
 	panelId,
 	onClose,
-}: ViewPanelModalContentProps): JSX.Element | null {
-	const {
-		timeOverride,
-		selectedInterval,
-		onTimeChange,
-		refreshWindow,
-		onDragSelect,
-		extendWindow,
-	} = useViewPanelTimeWindow();
+}: ViewPanelModalContentProps): JSX.Element {
+	// Config edits from the editor's "Switch to View Mode" arrive via the handoff; the
+	// query still comes from the URL. Falls back to the saved panel for a plain "View".
+	const dashboardId = useDashboardStore((s) => s.dashboardId);
+	const baseSpec = useMemo<DashboardtypesPanelSpecDTO>(
+		() => readViewPanelHandoff(dashboardId, panelId) ?? panel.spec,
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only seed
+		[],
+	);
 
-	const {
-		draft,
-		setSpec,
-		panelDefinition,
-		signal,
-		queryType,
-		query,
-		runQuery,
-		onChangePanelKind,
-		resetQuery,
-		buildSaveSpec,
-		applyDrilldownQuery,
-	} = useViewPanelMode({ panel, panelId, time: timeOverride });
-	const {
-		data,
-		isFetching,
-		isPreviousData,
-		error,
-		refetch,
-		cancelQuery,
-		pagination,
-	} = query;
+	// Mount-only so a refresh re-seeds and in-modal edits survive (V1 parity).
+	const compositeQuery = useGetCompositeQueryParam();
+	const urlGraphType = useUrlQuery().get(
+		QueryParams.graphType,
+	) as PANEL_TYPES | null;
+	const initialPanel = useMemo<DashboardtypesPanelDTO>(
+		() => {
+			// A URL query can only seed a kind that takes one.
+			const isQuerySeeded =
+				compositeQuery && getPanelDefinition(baseSpec.plugin.kind).mode === 'query';
+			return isQuerySeeded
+				? {
+						...panel,
+						spec: buildViewPanelSpec({
+							spec: baseSpec,
+							query: compositeQuery,
+							panelType:
+								urlGraphType ?? PANEL_KIND_TO_PANEL_TYPE[baseSpec.plugin.kind],
+						}),
+					}
+				: { ...panel, spec: baseSpec };
+		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only seed from the URL
+		[],
+	);
 
+	const draftApi = usePanelEditorDraft(initialPanel);
+	const draftKind = draftApi.draft.spec.plugin.kind;
+	const panelDefinition = getPanelDefinition(draftKind);
 
-	// Grid drill-down, but filter-by-value / breakout refine this view in place. Drills the draft
-	// so it reflects in-modal edits (and the click's time range follows the per-view window).
-	const drilldown = useDrilldown(draft, panelId, {
-		openDrilldownView: applyDrilldownQuery,
+	const { onChangePanelKind } = usePanelTypeSwitch({
+		spec: draftApi.draft.spec,
+		panelType: PANEL_KIND_TO_PANEL_TYPE[draftKind],
+		setSpec: draftApi.setSpec,
 	});
 
-	// Drag-to-zoom stays inside the modal; opt the chart out of the dashboard's
-	// cursor-sync group so a drag here can't replay onto the grid panels.
-	const { dashboardPreference } = usePanelInteractions();
-	const isolatedPreference = useMemo<DashboardPreference>(
-		() => ({ ...dashboardPreference, syncMode: DashboardCursorSync.None }),
-		[dashboardPreference],
-	);
-	const openPanelEditor = useOpenPanelEditor();
-
-	// Modal drag-to-zoom is its own path (local window, not the grid's) — tag it distinctly.
-	const handleDragSelect = useCallback(
-		(start: number, end: number): void => {
-			if (Math.floor(start) !== Math.floor(end)) {
-				void logEvent(DashboardDetailEvents.PanelZoomed, {
-					context: 'viewModal',
-					panelType: draft.spec.plugin.kind,
-					panelId,
-				});
-			}
-			onDragSelect(start, end);
-		},
-		[onDragSelect, draft.spec.plugin.kind, panelId],
-	);
-
-	// Publish the modal's local extender for the nested no-data state; cleared on close.
-	const setViewPanelExtendWindow = useViewPanelStore(
-		(s) => s.setViewPanelExtendWindow,
-	);
-	useEffect(() => {
-		setViewPanelExtendWindow(extendWindow);
-		return (): void => setViewPanelExtendWindow(null);
-	}, [extendWindow, setViewPanelExtendWindow]);
-
-	// The View action only appears for registered kinds, so this is defensive.
-	if (!panelDefinition) {
-		return null;
+	if (panelDefinition.mode === 'static') {
+		return (
+			<StaticViewModalBody
+				panelId={panelId}
+				draftApi={draftApi}
+				panelDefinition={panelDefinition}
+				onChangePanelKind={onChangePanelKind}
+			/>
+		);
 	}
-	const { EditorPane } = panelDefinition;
-
-	const onSwitchToEdit = (): void => {
-		// Carry the drilldown edits so the editor opens on them, not the saved panel.
-		logEvent(DashboardEvents.SWITCH_TO_EDIT_MODE, {
-			panelId: panelId,
-		});
-		openPanelEditor(panelId, {
-			handoffState: { editSpec: buildSaveSpec(draft.spec) },
-		});
-	};
 
 	return (
-		<div className={styles.content} data-testid="view-panel-modal-content">
-			<ViewPanelModalHeader
-				selectedInterval={selectedInterval}
-				startMs={timeOverride.startMs}
-				endMs={timeOverride.endMs}
-				onTimeChange={onTimeChange}
-				isFetching={isFetching}
-				onRefresh={(): void => {
-					// Relative windows re-anchor to now (new key → refetch); a fixed
-					// custom window just re-runs the same query.
-					if (selectedInterval === 'custom') {
-						refetch();
-					} else {
-						refreshWindow();
-					}
-				}}
-				onSwitchToEdit={onSwitchToEdit}
-				panelKind={draft.spec.plugin.kind}
-				queryType={queryType}
-				signal={signal}
-				onChangePanelKind={onChangePanelKind}
-				onResetQuery={resetQuery}
-			/>
-			<div className={styles.queryBuilder}>
-				<EditorPane
-					panelDefinition={panelDefinition}
-					signal={signal}
-					isLoadingQueries={isFetching}
-					onStageRunQuery={runQuery}
-					onCancelQuery={cancelQuery}
-					stickyHeader={false}
-					spec={draft.spec}
-					onChangeSpec={setSpec}
-				/>
-			</div>
-			<div className={styles.body}>
-				<PreviewPane
-					panelId={panelId}
-					panel={draft}
-					panelDefinition={panelDefinition}
-					data={data}
-					isFetching={isFetching}
-					isPreviousData={isPreviousData}
-					error={error}
-					refetch={refetch}
-					onDragSelect={handleDragSelect}
-					pagination={pagination}
-					panelMode={PanelMode.STANDALONE_VIEW}
-					dashboardPreference={isolatedPreference}
-					onCloseStandaloneView={onClose}
-					onClick={drilldown.onPanelClick}
-					enableDrillDown={drilldown.enableDrillDown}
-					hideHeader
-				/>
-			</div>
-			<ContextMenu {...drilldown.contextMenuProps} />
-		</div>
+		<QueryViewModalBody
+			panel={panel}
+			panelId={panelId}
+			onClose={onClose}
+			draftApi={draftApi}
+			onChangePanelKind={onChangePanelKind}
+		/>
 	);
 }
 

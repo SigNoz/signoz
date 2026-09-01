@@ -8,6 +8,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
+import { isQuerylessPanelKind } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
 import { getPanelBuilderQuery } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getPanelBuilderQuery';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -52,15 +53,18 @@ export function useViewPanel(): UseViewPanelApi {
 			// Only a drilldown retargets the panel type.
 			next.delete(QueryParams.graphType);
 			clearViewPanelHandoff();
-			const query = getPanelBuilderQuery(panel);
-			next.set(
-				QueryParams.compositeQuery,
-				encodeURIComponent(JSON.stringify(query)),
-			);
-			// The provider applies the URL in an effect, a tick after the builder's fields have
-			// mounted and read the query they keep. `resetQuery` — not `initQueryBuilderData`:
-			// swapping one staged id for another re-anchors global time and refetches the grid.
-			resetQuery(query);
+			// A static kind carries no query state — nothing to stage or persist.
+			if (!isQuerylessPanelKind(panel.spec.plugin.kind)) {
+				const query = getPanelBuilderQuery(panel);
+				next.set(
+					QueryParams.compositeQuery,
+					encodeURIComponent(JSON.stringify(query)),
+				);
+				// The provider applies the URL in an effect, a tick after the builder's fields have
+				// mounted and read the query they keep. `resetQuery` — not `initQueryBuilderData`:
+				// swapping one staged id for another re-anchors global time and refetches the grid.
+				resetQuery(query);
+			}
 			void logEvent(DashboardDetailEvents.PanelViewed, { panelId });
 			safeNavigate(`${pathname}?${next.toString()}`);
 		},
