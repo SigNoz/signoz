@@ -8,6 +8,9 @@ export interface InviteMemberRow {
 
 export interface InviteResult {
 	email: string;
+	name?: string;
+	domain?: string;
+	inviteLink?: string;
 	success: boolean;
 	error?: string;
 }
@@ -28,24 +31,27 @@ export interface UseInviteMembersOptions {
 }
 
 export interface UseInviteMembersReturn {
-	rows: InviteMemberRow[];
-	emailValidity: Record<string, boolean>;
+	emailsText: string;
+	setEmailsText: (text: string) => void;
+	globalRoleIds: string[];
+	setGlobalRoleIds: (roleIds: string[]) => void;
 	hasInvalidEmails: boolean;
 	hasInvalidRoles: boolean;
 	isSubmitting: boolean;
 	inviteResults: InviteResult[] | null;
 
-	addRow: () => void;
-	removeRow: (id: string) => void;
-	updateEmail: (id: string, email: string) => void;
-	updateRole: (id: string, roleIds: string[]) => void;
 	reset: () => void;
 	submit: () => Promise<InviteResult[]>;
 
-	touchedRows: InviteMemberRow[];
 	failedResults: InviteResult[];
 	successResults: InviteResult[];
 	canSubmit: boolean;
+	invalidEmailsList: string[];
+
+	parsedNames: Record<string, string>;
+	setParsedNames: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+	parsedDomains: Record<string, string>;
+	setParsedDomains: React.Dispatch<React.SetStateAction<Record<string, string>>>;
 }
 
 export interface InviteMembersProps {

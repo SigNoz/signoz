@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { Check, ChevronDown, Plus } from '@signozhq/icons';
+import { Check, ChevronDown, Plus, Trash2 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
 import { Input } from '@signozhq/ui/input';
-import { useListUsers } from 'api/generated/services/users';
+import { useListUsers, deleteUser } from 'api/generated/services/users';
+import { toast } from '@signozhq/ui/sonner';
 import EditMemberDrawer from 'components/EditMemberDrawer/EditMemberDrawer';
 import InviteMembersModal from 'container/MembersSettings/components/InviteMembersModal/InviteMembersModal';
 import MembersTable, { MemberRow } from 'components/MembersTable/MembersTable';
@@ -32,8 +33,39 @@ function MembersSettings(): JSX.Element {
 		parseAsBoolean.withDefault(false),
 	);
 	const [selectedMember, setSelectedMember] = useState<MemberRow | null>(null);
+	const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+	const [isDeleting, setIsDeleting] = useState(false);
 
 	const { data: usersData, isLoading, refetch: refetchUsers } = useListUsers();
+
+	const handleBulkDelete = useCallback(async (): Promise<void> => {
+		if (selectedRowKeys.length === 0) {
+			return;
+		}
+
+		const confirmDelete = window.confirm(
+			`Are you sure you want to delete ${selectedRowKeys.length} selected member(s)?`,
+		);
+		if (!confirmDelete) {
+			return;
+		}
+
+		setIsDeleting(true);
+		try {
+			const deletePromises = selectedRowKeys.map((key) =>
+				deleteUser({ id: String(key) }),
+			);
+			await Promise.all(deletePromises);
+			toast.success('Selected members deleted successfully');
+			setSelectedRowKeys([]);
+			void refetchUsers();
+		} catch (error) {
+			toast.error('Failed to delete some members');
+			void refetchUsers();
+		} finally {
+			setIsDeleting(false);
+		}
+	}, [selectedRowKeys, refetchUsers]);
 
 	const allMembers = useMemo(
 		(): MemberRow[] =>
@@ -202,6 +234,19 @@ function MembersSettings(): JSX.Element {
 						/>
 					</div>
 
+					{selectedRowKeys.length > 0 && (
+						<Button
+							variant="solid"
+							color="destructive"
+							onClick={handleBulkDelete}
+							loading={isDeleting}
+							style={{ marginRight: '8px' }}
+						>
+							<Trash2 size={12} />
+							Delete Selected ({selectedRowKeys.length})
+						</Button>
+					)}
+
 					<Button
 						variant="solid"
 						color="primary"
@@ -221,6 +266,8 @@ function MembersSettings(): JSX.Element {
 				searchQuery={searchQuery}
 				onPageChange={setPage}
 				onRowClick={handleRowClick}
+				selectedRowKeys={selectedRowKeys}
+				onRowSelectionChange={(keys): void => setSelectedRowKeys(keys)}
 			/>
 
 			<InviteMembersModal

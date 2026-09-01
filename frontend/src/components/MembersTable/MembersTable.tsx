@@ -29,6 +29,8 @@ interface MembersTableProps {
 	onSortChange?: (
 		sorter: SorterResult<MemberRow> | SorterResult<MemberRow>[],
 	) => void;
+	selectedRowKeys?: React.Key[];
+	onRowSelectionChange?: (selectedRowKeys: React.Key[]) => void;
 }
 
 function NameEmailCell({
@@ -114,6 +116,8 @@ function MembersTable({
 	onPageChange,
 	onRowClick,
 	onSortChange,
+	selectedRowKeys,
+	onRowSelectionChange,
 }: MembersTableProps): JSX.Element {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
@@ -196,6 +200,14 @@ function MembersTable({
 				dataSource={data}
 				rowKey="id"
 				loading={loading}
+				rowSelection={
+					onRowSelectionChange
+						? {
+								selectedRowKeys,
+								onChange: onRowSelectionChange,
+							}
+						: undefined
+				}
 				pagination={{
 					current: currentPage,
 					pageSize,

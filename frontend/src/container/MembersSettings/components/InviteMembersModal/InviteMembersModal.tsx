@@ -20,9 +20,8 @@ function InviteMembersModal({
 }: InviteMembersModalProps): JSX.Element {
 	const handleSuccess = useCallback((): void => {
 		toast.success('Invites sent successfully', { position: 'top-right' });
-		onClose();
 		onComplete?.();
-	}, [onClose, onComplete]);
+	}, [onComplete]);
 
 	const handlePartialSuccess = useCallback((): void => {
 		toast.warning('Some invites failed', { position: 'top-right' });
