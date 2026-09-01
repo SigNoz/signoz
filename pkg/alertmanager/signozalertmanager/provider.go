@@ -9,7 +9,6 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
-	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/jira"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
@@ -115,26 +114,8 @@ func (provider *provider) PutAlerts(ctx context.Context, orgID string, alerts al
 
 var jiraTenantInfoClient = &http.Client{Timeout: 10 * time.Second}
 
-// resolveJiraCloudIDs fills the cloud id for Jira service-account receivers so
-// notifications address the api.atlassian.com gateway. It runs on save/test
-// only; the resolved id is persisted and read on every notification.
-func resolveJiraCloudIDs(ctx context.Context, receiver *alertmanagertypes.Receiver) error {
-	for _, jc := range receiver.JiraConfigs {
-		// cloud_id is server-resolved; ignore client-supplied values
-		jc.CloudID = ""
-		if jc.IsServiceAccount() {
-			cloudID, err := jira.ResolveCloudID(ctx, jiraTenantInfoClient, jc.Site)
-			if err != nil {
-				return err
-			}
-			jc.CloudID = cloudID
-		}
-	}
-	return nil
-}
-
 func (provider *provider) TestReceiver(ctx context.Context, orgID string, receiver *alertmanagertypes.Receiver) error {
-	if err := resolveJiraCloudIDs(ctx, receiver); err != nil {
+	if err := receiver.ResolveJiraCloudIDs(ctx, jiraTenantInfoClient); err != nil {
 		return err
 	}
 	return provider.service.TestReceiver(ctx, orgID, receiver)
@@ -178,7 +159,7 @@ func (provider *provider) GetChannelByID(ctx context.Context, orgID string, chan
 }
 
 func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgID string, receiver *alertmanagertypes.Receiver, id valuer.UUID) error {
-	if err := resolveJiraCloudIDs(ctx, receiver); err != nil {
+	if err := receiver.ResolveJiraCloudIDs(ctx, jiraTenantInfoClient); err != nil {
 		return err
 	}
 
@@ -245,7 +226,7 @@ func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, c
 }
 
 func (provider *provider) CreateChannel(ctx context.Context, orgID string, receiver *alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error) {
-	if err := resolveJiraCloudIDs(ctx, receiver); err != nil {
+	if err := receiver.ResolveJiraCloudIDs(ctx, jiraTenantInfoClient); err != nil {
 		return nil, err
 	}
 
