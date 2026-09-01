@@ -37,6 +37,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
@@ -64,6 +65,7 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ user.Handler }{},
 		struct{ session.Handler }{},
 		struct{ authdomain.Handler }{},
+		struct{ authdomain.Module }{},
 		struct{ preference.Handler }{},
 		struct{ global.Handler }{},
 		struct{ promote.Handler }{},
@@ -88,6 +90,7 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ rulestatehistory.Handler }{},
 		struct{ spanmapper.Handler }{},
 		struct{ alertmanager.Handler }{},
+		struct{ prometheus.Handler }{},
 		struct{ llmpricingrule.Handler }{},
 		struct{ tracedetail.Handler }{},
 		struct{ ruler.Handler }{},

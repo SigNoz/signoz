@@ -32,6 +32,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
@@ -51,6 +52,7 @@ type provider struct {
 	userHandler                user.Handler
 	sessionHandler             session.Handler
 	authDomainHandler          authdomain.Handler
+	authDomainModule           authdomain.Module
 	preferenceHandler          preference.Handler
 	globalHandler              global.Handler
 	promoteHandler             promote.Handler
@@ -75,6 +77,7 @@ type provider struct {
 	ruleStateHistoryHandler    rulestatehistory.Handler
 	spanMapperHandler          spanmapper.Handler
 	alertmanagerHandler        alertmanager.Handler
+	prometheusHandler          prometheus.Handler
 	traceDetailHandler         tracedetail.Handler
 	rulerHandler               ruler.Handler
 	llmPricingRuleHandler      llmpricingrule.Handler
@@ -89,6 +92,7 @@ func NewFactory(
 	userHandler user.Handler,
 	sessionHandler session.Handler,
 	authDomainHandler authdomain.Handler,
+	authDomainModule authdomain.Module,
 	preferenceHandler preference.Handler,
 	globalHandler global.Handler,
 	promoteHandler promote.Handler,
@@ -113,6 +117,7 @@ func NewFactory(
 	ruleStateHistoryHandler rulestatehistory.Handler,
 	spanMapperHandler spanmapper.Handler,
 	alertmanagerHandler alertmanager.Handler,
+	prometheusHandler prometheus.Handler,
 	llmPricingRuleHandler llmpricingrule.Handler,
 	traceDetailHandler tracedetail.Handler,
 	rulerHandler ruler.Handler,
@@ -130,6 +135,7 @@ func NewFactory(
 			userHandler,
 			sessionHandler,
 			authDomainHandler,
+			authDomainModule,
 			preferenceHandler,
 			globalHandler,
 			promoteHandler,
@@ -154,6 +160,7 @@ func NewFactory(
 			ruleStateHistoryHandler,
 			spanMapperHandler,
 			alertmanagerHandler,
+			prometheusHandler,
 			llmPricingRuleHandler,
 			traceDetailHandler,
 			rulerHandler,
@@ -173,6 +180,7 @@ func newProvider(
 	userHandler user.Handler,
 	sessionHandler session.Handler,
 	authDomainHandler authdomain.Handler,
+	authDomainModule authdomain.Module,
 	preferenceHandler preference.Handler,
 	globalHandler global.Handler,
 	promoteHandler promote.Handler,
@@ -197,6 +205,7 @@ func newProvider(
 	ruleStateHistoryHandler rulestatehistory.Handler,
 	spanMapperHandler spanmapper.Handler,
 	alertmanagerHandler alertmanager.Handler,
+	prometheusHandler prometheus.Handler,
 	llmPricingRuleHandler llmpricingrule.Handler,
 	traceDetailHandler tracedetail.Handler,
 	rulerHandler ruler.Handler,
@@ -215,6 +224,7 @@ func newProvider(
 		authzService:               authzService,
 		sessionHandler:             sessionHandler,
 		authDomainHandler:          authDomainHandler,
+		authDomainModule:           authDomainModule,
 		preferenceHandler:          preferenceHandler,
 		globalHandler:              globalHandler,
 		promoteHandler:             promoteHandler,
@@ -239,6 +249,7 @@ func newProvider(
 		ruleStateHistoryHandler:    ruleStateHistoryHandler,
 		spanMapperHandler:          spanMapperHandler,
 		alertmanagerHandler:        alertmanagerHandler,
+		prometheusHandler:          prometheusHandler,
 		traceDetailHandler:         traceDetailHandler,
 		rulerHandler:               rulerHandler,
 		llmPricingRuleHandler:      llmPricingRuleHandler,
@@ -337,6 +348,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addQuerierRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addPrometheusRoutes(router); err != nil {
 		return err
 	}
 

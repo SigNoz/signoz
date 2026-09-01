@@ -6,7 +6,7 @@ import { SIGNOZ_VALUE } from 'container/QueryBuilder/filters/OrderByFilter/const
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { useGetSearchQueryParam } from './queryBuilder/useGetSearchQueryParam';
+import { useGetSavedViewParams } from './saveViews/useGetSavedViewParams';
 import { useQueryBuilder } from './queryBuilder/useQueryBuilder';
 
 export interface ICurrentQueryData {
@@ -31,9 +31,7 @@ export const useHandleExplorerTabChange = (): {
 		updateQueriesData,
 	} = useQueryBuilder();
 
-	const viewName = useGetSearchQueryParam(QueryParams.viewName) || '';
-
-	const viewKey = useGetSearchQueryParam(QueryParams.viewKey) || '';
+	const { viewName, viewKey } = useGetSavedViewParams();
 
 	const getUpdateQuery = useCallback(
 		(newPanelType: PANEL_TYPES): Query => {

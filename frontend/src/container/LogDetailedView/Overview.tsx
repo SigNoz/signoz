@@ -13,7 +13,7 @@ import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ChevronDown, ChevronRight, Search } from '@signozhq/icons';
-import { isLogDetailsV2 } from 'components/LogDetail/constants';
+import { useIsLogDetailsV2 } from 'components/LogDetail/useIsLogDetailsV2';
 import { DataViewer } from 'periscope/components/DataViewer';
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
@@ -41,6 +41,7 @@ interface OverviewProps {
 	selectedOptions: OptionsQuery;
 	listViewPanelSelectedFields?: IField[] | null;
 	handleChangeSelectedView?: ChangeViewFunctionType;
+	onApplyLogFilter?: (expression: string) => void;
 }
 
 type Props = OverviewProps &
@@ -55,6 +56,7 @@ function Overview({
 	selectedOptions,
 	listViewPanelSelectedFields,
 	handleChangeSelectedView,
+	onApplyLogFilter,
 }: Props): JSX.Element {
 	const [isWrapWord, setIsWrapWord] = useState<boolean>(true);
 	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(true);
@@ -67,7 +69,10 @@ function Overview({
 	const { actions, visibleActions } = useLogAttributeActions({
 		handleChangeSelectedView,
 		isListViewPanel,
+		onApplyLogFilter,
 	});
+
+	const isLogDetailsV2 = useIsLogDetailsV2();
 
 	if (isLogDetailsV2) {
 		const raw = aggregateAttributesResourcesToObject(logData);

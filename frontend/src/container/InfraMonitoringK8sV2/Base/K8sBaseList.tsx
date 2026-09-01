@@ -7,6 +7,7 @@ import TanStackTable, {
 	TableColumnDef,
 	useCalculatedPageSize,
 	useHiddenColumnIds,
+	useRecoverFromEmptyPage,
 	useTableParams,
 } from 'components/TanStackTableView';
 import { InfraMonitoringEvents } from 'constants/events';
@@ -136,6 +137,7 @@ export function K8sBaseList<
 		page: currentPage,
 		limit: currentPageSize,
 		setLimit,
+		setPage,
 	} = useTableParams(
 		{
 			page: INFRA_MONITORING_K8S_PARAMS_KEYS.PAGE,
@@ -243,6 +245,16 @@ export function K8sBaseList<
 	const totalCount = data?.total || 0;
 	const hasFilters = !!expression?.trim();
 
+	useRecoverFromEmptyPage({
+		page: currentPage,
+		pageSize: currentPageSize,
+		rowCount: pageData.length,
+		total: totalCount,
+		isFetching: isLoading || isFetching,
+		isDisabled: isError || Boolean(data?.error),
+		setPage,
+	});
+
 	const getGroupKeyFn = useCallback(
 		(item: T) => getGroupedByMeta(item, groupBy),
 		[groupBy],
@@ -284,6 +296,7 @@ export function K8sBaseList<
 						params.selectedItem,
 						params.clusterName,
 						params.namespaceName,
+						params.containerName,
 					);
 					queryClient.setQueryData(detailQueryKey, { data: record });
 				}
@@ -334,6 +347,12 @@ export function K8sBaseList<
 					url.searchParams.set(
 						INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_NAMESPACE_NAME,
 						params.namespaceName,
+					);
+				}
+				if (params.containerName) {
+					url.searchParams.set(
+						INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CONTAINER_NAME,
+						params.containerName,
 					);
 				}
 			} else {

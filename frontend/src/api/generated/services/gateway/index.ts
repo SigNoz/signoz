@@ -897,7 +897,7 @@ export const invalidateSearchIngestionKeys = async (
 };
 
 /**
- * This endpoint creates an ingestion limit for the ingestion key referenced by key_id
+ * This endpoint creates an ingestion limit for the ingestion key referenced by keyId
  * @summary Create ingestion limit
  */
 export const createIngestionLimit = (

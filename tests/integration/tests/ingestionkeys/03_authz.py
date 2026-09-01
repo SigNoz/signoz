@@ -122,7 +122,7 @@ def test_admin_allowed_create_ingestion_limit(
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/gateway/ingestion_limits"),
         json={
-            "key_id": TEST_KEY_ID,
+            "keyId": TEST_KEY_ID,
             "signal": "logs",
             "config": {"day": {"size": 1000}},
         },
@@ -156,7 +156,7 @@ def test_admin_allowed_create_ingestion_limit(
         (
             "POST",
             "/api/v2/gateway/ingestion_limits",
-            {"key_id": TEST_KEY_ID, "signal": "logs", "config": {"day": {"size": 1000}}},
+            {"keyId": TEST_KEY_ID, "signal": "logs", "config": {"day": {"size": 1000}}},
         ),
         (
             "PATCH",

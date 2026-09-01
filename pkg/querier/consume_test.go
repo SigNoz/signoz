@@ -3,8 +3,16 @@ package querier
 import (
 	"reflect"
 	"testing"
+	"time"
 
+	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
+	cmock "github.com/SigNoz/clickhouse-go-mock"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMergeSpanAttributeColumns_ParsesEventsAndLinks(t *testing.T) {
@@ -73,6 +81,103 @@ func TestMergeSpanAttributeColumns_ParsesEventsAndLinks(t *testing.T) {
 	if !reflect.DeepEqual(links, wantLinks) {
 		t.Fatalf("links parsed incorrectly:\n got:  %#v\nwant: %#v", links, wantLinks)
 	}
+}
+
+// A ClickHouse query can put a JSON column in the result of any request type — e.g.
+// `select * from signoz_logs.logs_v2` on a body_v2 stack, where `*` covers body_v2.
+func TestConsume_JSONColumn(t *testing.T) {
+	ts := time.Date(2026, 8, 14, 10, 0, 0, 0, time.UTC)
+	body := `{"level":"error","attrs":{"code":500}}`
+	wantBody := telemetrystoretypes.JSONValue{
+		"level": "error",
+		"attrs": map[string]any{"code": float64(500)},
+	}
+
+	// the scalar reader reuses its scan slots across rows, so each row must still carry its own body
+	t.Run("scalar", func(t *testing.T) {
+		rows := telemetrystore.WrapRows(cmock.NewRows([]cmock.ColumnType{
+			{Name: "body_v2", Type: "JSON"},
+			{Name: "__result_0", Type: "UInt64"},
+		}, [][]any{{body, uint64(3)}, {`{"level":"warn"}`, uint64(1)}}))
+
+		payload, err := consume(rows, qbtypes.RequestTypeScalar, nil, qbtypes.Step{}, "A")
+		require.NoError(t, err)
+
+		data := payload.(*qbtypes.ScalarData)
+		require.Len(t, data.Data, 2)
+		assert.Equal(t, wantBody, data.Data[0][0])
+		assert.Equal(t, uint64(3), data.Data[0][1])
+		assert.Equal(t, telemetrystoretypes.JSONValue{"level": "warn"}, data.Data[1][0])
+		assert.Equal(t, uint64(1), data.Data[1][1])
+	})
+
+	t.Run("time series", func(t *testing.T) {
+		rows := telemetrystore.WrapRows(cmock.NewRows([]cmock.ColumnType{
+			{Name: "ts", Type: "DateTime"},
+			{Name: "body_v2", Type: "JSON"},
+			{Name: "__result_0", Type: "UInt64"},
+		}, [][]any{{ts, body, uint64(3)}}))
+
+		payload, err := consume(rows, qbtypes.RequestTypeTimeSeries, nil, qbtypes.Step{}, "A")
+		require.NoError(t, err)
+
+		data := payload.(*qbtypes.TimeSeriesData)
+		require.Len(t, data.Aggregations, 1)
+		require.Len(t, data.Aggregations[0].Series, 1)
+		require.Len(t, data.Aggregations[0].Series[0].Values, 1)
+		assert.Equal(t, float64(3), data.Aggregations[0].Series[0].Values[0].Value)
+	})
+
+	// grouping by a JSON column is legal in ClickHouse, so each document has to label its own
+	// series rather than being dropped, which would merge every group into one
+	t.Run("time series grouped by the JSON column", func(t *testing.T) {
+		rows := telemetrystore.WrapRows(cmock.NewRows([]cmock.ColumnType{
+			{Name: "ts", Type: "DateTime"},
+			{Name: "body_v2", Type: "JSON"},
+			{Name: "__result_0", Type: "UInt64"},
+		}, [][]any{
+			{ts, `{"level":"error"}`, uint64(7)},
+			{ts, `{"level":"warn"}`, uint64(2)},
+		}))
+
+		payload, err := consume(rows, qbtypes.RequestTypeTimeSeries, nil, qbtypes.Step{}, "A")
+		require.NoError(t, err)
+
+		data := payload.(*qbtypes.TimeSeriesData)
+		require.Len(t, data.Aggregations, 1)
+		require.Len(t, data.Aggregations[0].Series, 2)
+
+		got := map[string]float64{}
+		for _, series := range data.Aggregations[0].Series {
+			require.Len(t, series.Labels, 1)
+			require.Len(t, series.Values, 1)
+			got[series.Labels[0].Value.(string)] = series.Values[0].Value
+		}
+		assert.Equal(t, map[string]float64{`{"level":"error"}`: 7, `{"level":"warn"}`: 2}, got)
+	})
+
+	t.Run("raw", func(t *testing.T) {
+		rows := telemetrystore.WrapRows(cmock.NewRows([]cmock.ColumnType{
+			{Name: "timestamp", Type: "DateTime"},
+			{Name: "body_v2", Type: "JSON"},
+		}, [][]any{{ts, body}}))
+
+		payload, err := consume(rows, qbtypes.RequestTypeRaw, nil, qbtypes.Step{}, "A")
+		require.NoError(t, err)
+
+		data := payload.(*qbtypes.RawData)
+		require.Len(t, data.Rows, 1)
+		assert.Equal(t, ts, data.Rows[0].Timestamp.UTC())
+		assert.Equal(t, wantBody, data.Rows[0].Data["body_v2"])
+	})
+}
+
+// A JSON path (e.g. `body_v2.level`) comes back as a Dynamic column, which the driver scans
+// into a chcol.Variant envelope rather than the value itself.
+func TestUnwrapVariant(t *testing.T) {
+	assert.Equal(t, "error", unwrapVariant(chcol.NewDynamicWithType("error", "String")))
+	assert.Nil(t, unwrapVariant(chcol.Dynamic{}))
+	assert.Equal(t, uint64(3), unwrapVariant(uint64(3)))
 }
 
 func TestMergeSpanAttributeColumns_EmptyEventsAndLinks(t *testing.T) {

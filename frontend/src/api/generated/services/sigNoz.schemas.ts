@@ -385,6 +385,93 @@ export interface AlertmanagertypesGoogleChatReceiverConfigDTO {
 	webhook_url?: ConfigSecretURLDTO;
 }
 
+export interface AlertmanagertypesJSMOpsReceiverConfigDTO {
+	/**
+	 * @type string
+	 */
+	api_key?: string;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	http_config?: ConfigHTTPClientConfigDTO;
+	/**
+	 * @type string
+	 */
+	message?: string;
+	/**
+	 * @type string
+	 */
+	priority?: string;
+	/**
+	 * @type boolean
+	 */
+	send_resolved?: boolean;
+	/**
+	 * @type string
+	 */
+	tags?: string;
+}
+
+export type AlertmanagertypesJiraReceiverConfigDTOCustomFields = {
+	[key: string]: unknown;
+};
+
+export type ModelDurationDTO = number;
+
+export interface AlertmanagertypesJiraReceiverConfigDTO {
+	/**
+	 * @type object
+	 */
+	custom_fields?: AlertmanagertypesJiraReceiverConfigDTOCustomFields;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	http_config?: ConfigHTTPClientConfigDTO;
+	/**
+	 * @type string
+	 */
+	issue_type?: string;
+	/**
+	 * @type array
+	 */
+	labels?: string[];
+	/**
+	 * @type string
+	 */
+	priority?: string;
+	/**
+	 * @type string
+	 */
+	project?: string;
+	reopen_duration?: ModelDurationDTO;
+	/**
+	 * @type string
+	 */
+	reopen_transition?: string;
+	/**
+	 * @type string
+	 */
+	resolve_transition?: string;
+	/**
+	 * @type boolean
+	 */
+	send_resolved?: boolean;
+	/**
+	 * @type string
+	 */
+	site?: string;
+	/**
+	 * @type string
+	 */
+	summary?: string;
+	/**
+	 * @type string
+	 */
+	wont_fix_resolution?: string;
+}
+
 export enum AlertmanagertypesMaintenanceKindDTO {
 	fixed = 'fixed',
 	recurring = 'recurring',
@@ -629,69 +716,6 @@ export interface ConfigIncidentioConfigDTO {
 	 * @type string
 	 */
 	url_file?: string;
-}
-
-export interface ConfigJiraFieldConfigDTO {
-	/**
-	 * @type boolean,null
-	 */
-	enable_update?: boolean | null;
-	/**
-	 * @type string
-	 */
-	template?: string;
-}
-
-export type ModelDurationDTO = number;
-
-export type ConfigJiraConfigDTOCustomFields = { [key: string]: unknown };
-
-export interface ConfigJiraConfigDTO {
-	/**
-	 * @type string
-	 */
-	api_type?: string;
-	api_url?: ConfigURLType2DTO;
-	/**
-	 * @type object
-	 */
-	custom_fields?: ConfigJiraConfigDTOCustomFields;
-	description?: ConfigJiraFieldConfigDTO;
-	http_config?: ConfigHTTPClientConfigDTO;
-	/**
-	 * @type string
-	 */
-	issue_type?: string;
-	/**
-	 * @type array
-	 */
-	labels?: string[];
-	/**
-	 * @type string
-	 */
-	priority?: string;
-	/**
-	 * @type string
-	 */
-	project?: string;
-	reopen_duration?: ModelDurationDTO;
-	/**
-	 * @type string
-	 */
-	reopen_transition?: string;
-	/**
-	 * @type string
-	 */
-	resolve_transition?: string;
-	/**
-	 * @type boolean
-	 */
-	send_resolved?: boolean;
-	summary?: ConfigJiraFieldConfigDTO;
-	/**
-	 * @type string
-	 */
-	wont_fix_resolution?: string;
 }
 
 export interface ConfigMattermostFieldDTO {
@@ -1652,7 +1676,11 @@ export type AlertmanagertypesPostableChannelDTO = unknown & {
 	/**
 	 * @type array
 	 */
-	jira_configs?: ConfigJiraConfigDTO[];
+	jira_configs?: AlertmanagertypesJiraReceiverConfigDTO[];
+	/**
+	 * @type array
+	 */
+	jsmops_configs?: AlertmanagertypesJSMOpsReceiverConfigDTO[];
 	/**
 	 * @type array
 	 */
@@ -1779,7 +1807,11 @@ export interface AlertmanagertypesReceiverDTO {
 	/**
 	 * @type array
 	 */
-	jira_configs?: ConfigJiraConfigDTO[];
+	jira_configs?: AlertmanagertypesJiraReceiverConfigDTO[];
+	/**
+	 * @type array
+	 */
+	jsmops_configs?: AlertmanagertypesJSMOpsReceiverConfigDTO[];
 	/**
 	 * @type array
 	 */
@@ -2175,6 +2207,7 @@ export enum CoretypesKindDTO {
 	'factor-api-key' = 'factor-api-key',
 	license = 'license',
 	subscription = 'subscription',
+	'deployment-host' = 'deployment-host',
 	logs = 'logs',
 	traces = 'traces',
 	metrics = 'metrics',
@@ -3267,6 +3300,67 @@ export interface CommonJSONRefDTO {
 	$ref?: string;
 }
 
+export type ConfigJiraConfigDTOCustomFields = { [key: string]: unknown };
+
+export interface ConfigJiraFieldConfigDTO {
+	/**
+	 * @type boolean,null
+	 */
+	enable_update?: boolean | null;
+	/**
+	 * @type string
+	 */
+	template?: string;
+}
+
+export interface ConfigJiraConfigDTO {
+	/**
+	 * @type string
+	 */
+	api_type?: string;
+	api_url?: ConfigURLType2DTO;
+	/**
+	 * @type object
+	 */
+	custom_fields?: ConfigJiraConfigDTOCustomFields;
+	description?: ConfigJiraFieldConfigDTO;
+	http_config?: ConfigHTTPClientConfigDTO;
+	/**
+	 * @type string
+	 */
+	issue_type?: string;
+	/**
+	 * @type array
+	 */
+	labels?: string[];
+	/**
+	 * @type string
+	 */
+	priority?: string;
+	/**
+	 * @type string
+	 */
+	project?: string;
+	reopen_duration?: ModelDurationDTO;
+	/**
+	 * @type string
+	 */
+	reopen_transition?: string;
+	/**
+	 * @type string
+	 */
+	resolve_transition?: string;
+	/**
+	 * @type boolean
+	 */
+	send_resolved?: boolean;
+	summary?: ConfigJiraFieldConfigDTO;
+	/**
+	 * @type string
+	 */
+	wont_fix_resolution?: string;
+}
+
 export interface DashboardGridItemDTO {
 	content?: CommonJSONRefDTO;
 	/**
@@ -3492,6 +3586,7 @@ export enum TelemetrytypesFieldContextDTO {
 	span = 'span',
 	trace = 'trace',
 	resource = 'resource',
+	scope = 'scope',
 	attribute = 'attribute',
 	body = 'body',
 	'' = '',
@@ -4958,6 +5053,53 @@ export interface DashboardtypesGettablePublicDashboardDataV2DTO {
 	publicDashboard?: DashboardtypesGettablePublicDasbhboardDTO;
 }
 
+export interface DashboardtypesGettableSystemDashboardDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type string
+	 */
+	image?: string;
+	/**
+	 * @type boolean
+	 */
+	locked: boolean;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type string
+	 */
+	schemaVersion: string;
+	source: DashboardtypesSourceDTO;
+	spec: DashboardtypesDashboardSpecDTO;
+	/**
+	 * @type array,null
+	 */
+	tags: TagtypesGettableTagDTO[] | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
 export enum DashboardtypesPatchOpDTO {
 	add = 'add',
 	remove = 'remove',
@@ -5504,7 +5646,7 @@ export interface GatewaytypesPostableIngestionKeyLimitDTO {
 	/**
 	 * @type string
 	 */
-	key_id: string;
+	keyId: string;
 	/**
 	 * @type string
 	 */
@@ -7988,6 +8130,164 @@ export interface PreferencetypesUpdatablePreferenceDTO {
 	value?: unknown;
 }
 
+export enum PrometheusErrorResponseSchemaDTOErrorType {
+	bad_data = 'bad_data',
+	execution = 'execution',
+	canceled = 'canceled',
+	timeout = 'timeout',
+	internal = 'internal',
+}
+export enum PrometheusErrorResponseSchemaDTOStatus {
+	error = 'error',
+}
+export interface PrometheusErrorResponseSchemaDTO {
+	/**
+	 * @type string
+	 */
+	error: string;
+	/**
+	 * @enum bad_data,execution,canceled,timeout,internal
+	 * @type string
+	 */
+	errorType: PrometheusErrorResponseSchemaDTOErrorType;
+	/**
+	 * @enum error
+	 * @type string
+	 */
+	status: PrometheusErrorResponseSchemaDTOStatus;
+}
+
+export enum PrometheusMatrixDataSchemaDTOResultType {
+	matrix = 'matrix',
+}
+export type PrometheusSamplePairSchemaDTOItem = number | string;
+
+/**
+ * A [timestamp, value] pair: float unix seconds, then the string-encoded sample value ("NaN", "+Inf", "-Inf" included).
+ * @minItems 2
+ * @maxItems 2
+ * @nullable
+ */
+export type PrometheusSamplePairSchemaDTO =
+	| PrometheusSamplePairSchemaDTOItem[]
+	| null;
+
+export type PrometheusMatrixSeriesSchemaDTOMetricAnyOf = {
+	[key: string]: string;
+};
+
+/**
+ * @nullable
+ */
+export type PrometheusMatrixSeriesSchemaDTOMetric =
+	PrometheusMatrixSeriesSchemaDTOMetricAnyOf | null;
+
+export interface PrometheusMatrixSeriesSchemaDTO {
+	/**
+	 * @type object,null
+	 */
+	metric: PrometheusMatrixSeriesSchemaDTOMetric;
+	/**
+	 * @type array,null
+	 */
+	values: (PrometheusSamplePairSchemaDTO | null)[] | null;
+}
+
+export interface PrometheusMatrixDataSchemaDTO {
+	/**
+	 * @type array,null
+	 */
+	result: PrometheusMatrixSeriesSchemaDTO[] | null;
+	/**
+	 * @enum matrix
+	 * @type string
+	 */
+	resultType: PrometheusMatrixDataSchemaDTOResultType;
+}
+
+export type PrometheusVectorSampleSchemaDTOMetricAnyOf = {
+	[key: string]: string;
+};
+
+/**
+ * @nullable
+ */
+export type PrometheusVectorSampleSchemaDTOMetric =
+	PrometheusVectorSampleSchemaDTOMetricAnyOf | null;
+
+export interface PrometheusVectorSampleSchemaDTO {
+	/**
+	 * @type object,null
+	 */
+	metric: PrometheusVectorSampleSchemaDTOMetric;
+	value: PrometheusSamplePairSchemaDTO | null;
+}
+
+export enum PrometheusVectorDataSchemaDTOResultType {
+	vector = 'vector',
+}
+export interface PrometheusVectorDataSchemaDTO {
+	/**
+	 * @type array,null
+	 */
+	result: PrometheusVectorSampleSchemaDTO[] | null;
+	/**
+	 * @enum vector
+	 * @type string
+	 */
+	resultType: PrometheusVectorDataSchemaDTOResultType;
+}
+
+export enum PrometheusScalarDataSchemaDTOResultType {
+	scalar = 'scalar',
+}
+export interface PrometheusScalarDataSchemaDTO {
+	result: PrometheusSamplePairSchemaDTO | null;
+	/**
+	 * @enum scalar
+	 * @type string
+	 */
+	resultType: PrometheusScalarDataSchemaDTOResultType;
+}
+
+export enum PrometheusStringDataSchemaDTOResultType {
+	string = 'string',
+}
+export interface PrometheusStringDataSchemaDTO {
+	result: PrometheusSamplePairSchemaDTO | null;
+	/**
+	 * @enum string
+	 * @type string
+	 */
+	resultType: PrometheusStringDataSchemaDTOResultType;
+}
+
+export type PrometheusQueryDataSchemaDTO =
+	| PrometheusMatrixDataSchemaDTO
+	| PrometheusVectorDataSchemaDTO
+	| PrometheusScalarDataSchemaDTO
+	| PrometheusStringDataSchemaDTO;
+
+export enum PrometheusSuccessResponseSchemaDTOStatus {
+	success = 'success',
+}
+export interface PrometheusSuccessResponseSchemaDTO {
+	data: PrometheusQueryDataSchemaDTO;
+	/**
+	 * @type array
+	 */
+	infos?: string[];
+	/**
+	 * @enum success
+	 * @type string
+	 */
+	status: PrometheusSuccessResponseSchemaDTOStatus;
+	/**
+	 * @type array
+	 */
+	warnings?: string[];
+}
+
 export interface PromotetypesWrappedIndexDTO {
 	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
 	/**
@@ -9037,6 +9337,7 @@ export enum SavedviewtypesSourceDTO {
 	logs = 'logs',
 	metrics = 'metrics',
 	meter = 'meter',
+	ai_observability = 'ai_observability',
 }
 export interface SavedviewtypesSavedViewSpecDTO {
 	display?: SavedviewtypesDisplayDTO;
@@ -9106,13 +9407,6 @@ export interface SavedviewtypesUpdatableSavedViewDTO {
 	schemaVersion: SavedviewtypesSchemaVersionDTO;
 	source: SavedviewtypesSourceDTO;
 	spec: SavedviewtypesSavedViewSpecDTO;
-}
-
-export interface ServiceaccounttypesDeprecatedPostableServiceAccountRoleDTO {
-	/**
-	 * @type string
-	 */
-	id: string;
 }
 
 export interface ServiceaccounttypesGettableFactorAPIKeyDTO {
@@ -11036,21 +11330,6 @@ export type GetServiceAccountRoles200 = {
 	status: string;
 };
 
-export type CreateServiceAccountRoleDeprecatedPathParameters = {
-	id: string;
-};
-export type CreateServiceAccountRoleDeprecated201 = {
-	data: TypesIdentifiableDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type DeleteServiceAccountRoleDeprecatedPathParameters = {
-	id: string;
-	rid: string;
-};
 export type GetMyServiceAccount200 = {
 	data: ServiceaccounttypesServiceAccountWithRolesDTO;
 	/**
@@ -11342,6 +11621,17 @@ export type MigrateDashboardV2PathParameters = {
 };
 export type MigrateDashboardV2200 = {
 	data: DashboardtypesGettableDashboardV2DTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetSystemDashboardPathParameters = {
+	name: string;
+};
+export type GetSystemDashboard200 = {
+	data: DashboardtypesGettableSystemDashboardDTO;
 	/**
 	 * @type string
 	 */
@@ -12541,4 +12831,116 @@ export type ReplaceVariables200 = {
 	 * @type string
 	 */
 	status: string;
+};
+
+export type PrometheusQueryParams = {
+	/**
+	 * @type string
+	 * @description PromQL expression.
+	 */
+	query: string;
+	/**
+	 * @type string
+	 * @description Evaluation timestamp: RFC3339 or float unix seconds. Defaults to the server's current time.
+	 */
+	time?: string;
+	/**
+	 * @type string
+	 * @description Evaluation timeout: duration string or float seconds.
+	 */
+	timeout?: string;
+	/**
+	 * @type string
+	 * @description Any non-empty value includes query statistics in the response.
+	 */
+	stats?: string;
+};
+
+export type PrometheusQueryPostParams = {
+	/**
+	 * @type string
+	 * @description PromQL expression.
+	 */
+	query: string;
+	/**
+	 * @type string
+	 * @description Evaluation timestamp: RFC3339 or float unix seconds. Defaults to the server's current time.
+	 */
+	time?: string;
+	/**
+	 * @type string
+	 * @description Evaluation timeout: duration string or float seconds.
+	 */
+	timeout?: string;
+	/**
+	 * @type string
+	 * @description Any non-empty value includes query statistics in the response.
+	 */
+	stats?: string;
+};
+
+export type PrometheusQueryRangeParams = {
+	/**
+	 * @type string
+	 * @description PromQL expression.
+	 */
+	query: string;
+	/**
+	 * @type string
+	 * @description Range start: RFC3339 or float unix seconds.
+	 */
+	start: string;
+	/**
+	 * @type string
+	 * @description Range end: RFC3339 or float unix seconds.
+	 */
+	end: string;
+	/**
+	 * @type string
+	 * @description Resolution step: duration string or float seconds.
+	 */
+	step: string;
+	/**
+	 * @type string
+	 * @description Evaluation timeout: duration string or float seconds.
+	 */
+	timeout?: string;
+	/**
+	 * @type string
+	 * @description Any non-empty value includes query statistics in the response.
+	 */
+	stats?: string;
+};
+
+export type PrometheusQueryRangePostParams = {
+	/**
+	 * @type string
+	 * @description PromQL expression.
+	 */
+	query: string;
+	/**
+	 * @type string
+	 * @description Range start: RFC3339 or float unix seconds.
+	 */
+	start: string;
+	/**
+	 * @type string
+	 * @description Range end: RFC3339 or float unix seconds.
+	 */
+	end: string;
+	/**
+	 * @type string
+	 * @description Resolution step: duration string or float seconds.
+	 */
+	step: string;
+	/**
+	 * @type string
+	 * @description Evaluation timeout: duration string or float seconds.
+	 */
+	timeout?: string;
+	/**
+	 * @type string
+	 * @description Any non-empty value includes query statistics in the response.
+	 */
+	stats?: string;
 };

@@ -47,7 +47,9 @@
         "read",
         "update",
         "delete",
-        "list"
+        "list",
+        "attach",
+        "detach"
       ]
     },
     {
@@ -297,6 +299,14 @@
     },
     {
       "type": "metaresource",
+      "kind": "deployment-host",
+      "verbs": [
+        "list",
+        "update"
+      ]
+    },
+    {
+      "type": "metaresource",
       "kind": "user-preference",
       "verbs": [
         "read",
@@ -502,6 +512,13 @@
     },
     {
       "type": "metaresource",
+      "kind": "deployment-host",
+      "verbs": [
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
       "kind": "user-preference",
       "verbs": [
         "read",
@@ -653,6 +670,13 @@
       "kind": "ttl-setting",
       "verbs": [
         "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "deployment-host",
+      "verbs": [
         "list"
       ]
     },
