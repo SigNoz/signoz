@@ -19,6 +19,7 @@ export const definition: PanelDefinition<'signoz/BarChartPanel'> = {
 		EQueryType.CLICKHOUSE,
 		EQueryType.PROM,
 	],
+	supportsAIQuery: true,
 	queryBuilderFields: {},
 	actions: {
 		view: true,

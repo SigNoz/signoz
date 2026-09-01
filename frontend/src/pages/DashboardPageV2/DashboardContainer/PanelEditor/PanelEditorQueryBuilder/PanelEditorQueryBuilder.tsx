@@ -5,7 +5,7 @@ import {
 	useMemo,
 } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Atom, Terminal } from '@signozhq/icons';
+import { Atom, Sparkles, Terminal } from '@signozhq/icons';
 import { Tabs } from 'antd';
 import cx from 'classnames';
 import { Typography } from '@signozhq/ui/typography';
@@ -21,15 +21,24 @@ import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interface
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { EQueryType } from 'types/common/dashboard';
+import { DataSource } from 'types/common/queryBuilder';
 
 import {
 	getHiddenQueryBuilderFields,
 	getSupportedQueryTypes,
+	supportsAIQuery,
 } from '../../Panels/capabilities';
 import {
 	PANEL_KIND_TO_PANEL_TYPE,
 	type PanelKind,
 } from '../../Panels/types/panelKind';
+import {
+	AI_QUERY_TAB,
+	type QueryTabKey,
+	resolveActiveQueryTab,
+	toAIQuery,
+	withAIQueryType,
+} from './utils';
 
 import styles from './PanelEditorQueryBuilder.module.scss';
 
@@ -69,11 +78,20 @@ function PanelEditorQueryBuilder({
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const isDarkMode = useIsDarkMode();
 
+	// The AI tab is not a query type — it stamps `builderQueryType` onto the builder
+	// queries (and pins them to traces, the only signal AI queries support).
 	const handleQueryCategoryChange = useCallback(
-		(queryType: string): void => {
+		(nextTab: string): void => {
+			if (nextTab === AI_QUERY_TAB) {
+				redirectWithQueryBuilderData({
+					...toAIQuery(currentQuery),
+					queryType: EQueryType.QUERY_BUILDER,
+				});
+				return;
+			}
 			redirectWithQueryBuilderData({
-				...currentQuery,
-				queryType: queryType as EQueryType,
+				...withAIQueryType(currentQuery, false),
+				queryType: nextTab as EQueryType,
 			});
 		},
 		[currentQuery, redirectWithQueryBuilderData],
@@ -101,9 +119,32 @@ function PanelEditorQueryBuilder({
 	);
 
 	const items = useMemo(() => {
-		const supportedQueryTypes = getSupportedQueryTypes(panelKind);
+		const supportedQueryTypes: QueryTabKey[] = getSupportedQueryTypes(panelKind);
+		const supportedTabs = supportsAIQuery(panelKind)
+			? [...supportedQueryTypes, AI_QUERY_TAB]
+			: supportedQueryTypes;
 
 		const queryTypeComponents = {
+			[AI_QUERY_TAB]: {
+				icon: <Sparkles size={14} />,
+				label: 'AI Query Builder',
+				component: (
+					<div className="query-builder-v2-container">
+						<QueryBuilderV2
+							panelType={panelType}
+							filterConfigs={filterConfigs}
+							config={{
+								initialDataSource: DataSource.TRACES,
+								queryVariant: 'static',
+							}}
+							version="v3"
+							isListViewPanel={panelType === PANEL_TYPES.LIST}
+							queryComponents={{}}
+							savePreviousQuery
+						/>
+					</div>
+				),
+			},
 			[EQueryType.QUERY_BUILDER]: {
 				icon: <Atom size={14} />,
 				label: 'Query Builder',
@@ -138,15 +179,15 @@ function PanelEditorQueryBuilder({
 			},
 		};
 
-		return supportedQueryTypes.map((queryType) => ({
-			key: queryType,
+		return supportedTabs.map((tabKey) => ({
+			key: tabKey,
 			label: (
 				<div className={styles.queryTypeTab}>
-					{queryTypeComponents[queryType].icon}
-					<Typography>{queryTypeComponents[queryType].label}</Typography>
+					{queryTypeComponents[tabKey].icon}
+					<Typography>{queryTypeComponents[tabKey].label}</Typography>
 				</div>
 			),
-			children: queryTypeComponents[queryType].component,
+			children: queryTypeComponents[tabKey].component,
 		}));
 	}, [panelKind, panelType, filterConfigs, isDarkMode]);
 
@@ -163,7 +204,7 @@ function PanelEditorQueryBuilder({
 					className={cx(styles.tabsContainer, {
 						[styles.stickyNav]: stickyHeader,
 					})}
-					activeKey={currentQuery.queryType}
+					activeKey={resolveActiveQueryTab(currentQuery)}
 					onChange={handleQueryCategoryChange}
 					tabBarExtraContent={
 						<span className={styles.runQueryBtnContainer}>

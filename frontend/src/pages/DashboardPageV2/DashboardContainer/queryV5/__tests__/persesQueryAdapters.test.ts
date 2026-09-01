@@ -2,7 +2,11 @@ import type {
 	DashboardtypesQueryDTO,
 	Querybuildertypesv5QueryEnvelopeDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import {
+	initialQueriesMap,
+	initialQueryAIWithType,
+	PANEL_TYPES,
+} from 'constants/queryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
@@ -168,6 +172,23 @@ describe('persesQueryAdapters', () => {
 			);
 			expect(restored.builder.queryData[0].queryName).toBe(
 				original.builder.queryData[0].queryName,
+			);
+		});
+
+		it('preserves an AI builder query through toPerses → fromPerses', () => {
+			const original: Query = initialQueryAIWithType;
+
+			const perses = toPerses(original, PANEL_TYPES.TIME_SERIES);
+			const { queries } = perses[0].spec.plugin.spec as {
+				queries: Querybuildertypesv5QueryEnvelopeDTO[];
+			};
+			expect(queries[0].type).toBe('builder_ai_query');
+
+			const restored = fromPerses(perses, PANEL_TYPES.TIME_SERIES);
+
+			expect(restored.queryType).toBe(EQueryType.QUERY_BUILDER);
+			expect(restored.builder.queryData[0].builderQueryType).toBe(
+				'builder_ai_query',
 			);
 		});
 
