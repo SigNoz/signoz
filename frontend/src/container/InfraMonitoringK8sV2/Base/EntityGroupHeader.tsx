@@ -2,8 +2,9 @@ import { Group, Info } from '@signozhq/icons';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 
 import styles from './EntityGroupHeader.module.scss';
+import { DOCS_BASE_URL } from 'constants/app';
 
-const DOCS_BASE_URL = `${process.env.DOCS_BASE_URL}/docs`;
+const DOCS_ROOT = `${DOCS_BASE_URL}/docs`;
 
 interface EntityGroupHeaderProps {
 	title: string;
@@ -28,7 +29,7 @@ function EntityGroupHeader({
 						<>
 							{tooltipTitle}{' '}
 							<a
-								href={`${DOCS_BASE_URL}${docPath}`}
+								href={`${DOCS_ROOT}${docPath}`}
 								target="_blank"
 								rel="noopener"
 								onClick={(e): void => e.stopPropagation()}

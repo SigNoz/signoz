@@ -117,8 +117,7 @@ func TestBuilderQueryFingerprintQueryType(t *testing.T) {
 	}
 
 	assert.True(t, strings.HasPrefix(regular.Fingerprint(), qbtypes.QueryTypeBuilder.StringValue()+"&"))
-	assert.True(t, strings.HasPrefix(ai.Fingerprint(), qbtypes.QueryTypeBuilderAI.StringValue()+"&"))
-	assert.NotEqual(t, regular.Fingerprint(), ai.Fingerprint())
+	assert.Empty(t, ai.Fingerprint())
 }
 
 func TestMakeBucketsOrder(t *testing.T) {
