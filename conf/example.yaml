@@ -138,6 +138,8 @@ sqlstore:
 
 ##################### APIServer #####################
 apiserver:
+  # The TCP address the API server listens on, in the form "host:port".
+  address: 0.0.0.0:8080
   timeout:
     # Default request timeout.
     default: 60s
