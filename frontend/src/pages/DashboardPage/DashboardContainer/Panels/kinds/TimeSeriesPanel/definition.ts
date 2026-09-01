@@ -1,6 +1,7 @@
 import { ChartLine } from '@signozhq/icons';
 
 import type { PanelDefinition } from '../../types/panelDefinition';
+import QueryBuilderEditorPane from 'pages/DashboardPage/DashboardContainer/PanelEditor/PanelEditorQueryBuilder/QueryBuilderEditorPane';
 import Renderer from './Renderer';
 import { sections } from './sections';
 import {
@@ -15,6 +16,7 @@ export const definition: PanelDefinition<'signoz/TimeSeriesPanel'> = {
 	mode: 'query',
 	icon: ChartLine,
 	Renderer,
+	EditorPane: QueryBuilderEditorPane,
 	sections,
 	supportedSignals: [
 		TelemetrytypesSignalDTO.metrics,

@@ -7,6 +7,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 
 import type { PanelEditorHandoffState } from '../PanelEditor/panelEditorHandoff';
+import { isQuerylessPanelKind } from '../Panels/capabilities';
 import { getPanelBuilderQuery } from '../Panels/utils/getPanelBuilderQuery';
 import { useDashboardStore } from '../store/useDashboardStore';
 import { useTimeSearchParams } from './useTimeSearchParams';
@@ -46,7 +47,11 @@ export function useOpenPanelEditor(): (
 			new URLSearchParams(timeSearch).forEach((value, key) => {
 				params.set(key, value);
 			});
-			if (options?.panel) {
+			// A static kind carries no query state — nothing to stage or persist.
+			if (
+				options?.panel &&
+				!isQuerylessPanelKind(options.panel.spec.plugin.kind)
+			) {
 				const query = getPanelBuilderQuery(options.panel);
 				// Single-encoded: `useGetCompositeQueryParam` decodes once on top of the decode
 				// `URLSearchParams` already does.

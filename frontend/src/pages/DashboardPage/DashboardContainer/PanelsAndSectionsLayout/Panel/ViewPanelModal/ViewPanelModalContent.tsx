@@ -3,8 +3,6 @@ import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schem
 import { PanelMode } from 'lib/visualization/panels/types';
 import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import ContextMenu from 'periscope/components/ContextMenu';
-import ListColumnsEditor from 'pages/DashboardPage/DashboardContainer/PanelEditor/ListColumnsEditor/ListColumnsEditor';
-import PanelEditorQueryBuilder from 'pages/DashboardPage/DashboardContainer/PanelEditor/PanelEditorQueryBuilder/PanelEditorQueryBuilder';
 import PreviewPane from 'pages/DashboardPage/DashboardContainer/PanelEditor/PreviewPane/PreviewPane';
 import type { DashboardPreference } from 'pages/DashboardPage/DashboardContainer/Panels/types/rendererProps';
 import { useViewPanelStore } from 'pages/DashboardPage/DashboardContainer/store/useViewPanelStore';
@@ -71,7 +69,6 @@ function ViewPanelModalContent({
 		pagination,
 	} = query;
 
-	const isListPanel = draft.spec.plugin.kind === 'signoz/ListPanel';
 
 	// Grid drill-down, but filter-by-value / breakout refine this view in place. Drills the draft
 	// so it reflects in-modal edits (and the click's time range follows the per-view window).
@@ -116,6 +113,7 @@ function ViewPanelModalContent({
 	if (!panelDefinition) {
 		return null;
 	}
+	const { EditorPane } = panelDefinition;
 
 	const onSwitchToEdit = (): void => {
 		// Carry the drilldown edits so the editor opens on them, not the saved panel.
@@ -152,22 +150,15 @@ function ViewPanelModalContent({
 				onResetQuery={resetQuery}
 			/>
 			<div className={styles.queryBuilder}>
-				<PanelEditorQueryBuilder
-					panelKind={draft.spec.plugin.kind}
+				<EditorPane
+					panelDefinition={panelDefinition}
 					signal={signal}
 					isLoadingQueries={isFetching}
 					onStageRunQuery={runQuery}
 					onCancelQuery={cancelQuery}
 					stickyHeader={false}
-					footer={
-						isListPanel ? (
-							<ListColumnsEditor
-								spec={draft.spec}
-								onChangeSpec={setSpec}
-								signal={signal}
-							/>
-						) : undefined
-					}
+					spec={draft.spec}
+					onChangeSpec={setSpec}
 				/>
 			</div>
 			<div className={styles.body}>

@@ -30,8 +30,14 @@ jest.mock('../ViewPanelModal/useViewPanelMode', () => ({
 			draft: args.panel,
 			panelDefinition: {
 				kind,
+				mode: 'query',
 				actions: { search: kind === 'signoz/ListPanel' },
 				Renderer: (): null => null,
+				// Same testid as the real pane: the suite asserts the modal fills its
+				// query-builder slot from the definition.
+				EditorPane: (): JSX.Element => (
+					<div data-testid="panel-editor-v2-query-builder" />
+				),
 			},
 			query: {
 				data: { response: undefined, requestPayload: undefined, legendMap: {} },

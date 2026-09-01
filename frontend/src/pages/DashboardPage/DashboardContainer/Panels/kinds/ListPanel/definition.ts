@@ -1,6 +1,7 @@
 import { List } from '@signozhq/icons';
 
 import type { PanelDefinition } from '../../types/panelDefinition';
+import ListEditorPane from './ListEditorPane';
 import Renderer from './Renderer';
 import { sections } from './sections';
 import {
@@ -16,6 +17,7 @@ export const definition: PanelDefinition<'signoz/ListPanel'> = {
 	mode: 'query',
 	icon: List,
 	Renderer,
+	EditorPane: ListEditorPane,
 	// Raw records come from logs and traces; metrics don't produce row data.
 	supportedSignals: [
 		TelemetrytypesSignalDTO.logs,

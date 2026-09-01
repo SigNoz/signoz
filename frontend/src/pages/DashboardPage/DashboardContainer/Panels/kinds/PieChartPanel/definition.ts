@@ -1,6 +1,7 @@
 import { ChartPie } from '@signozhq/icons';
 
 import type { PanelDefinition } from '../../types/panelDefinition';
+import QueryBuilderEditorPane from 'pages/DashboardPage/DashboardContainer/PanelEditor/PanelEditorQueryBuilder/QueryBuilderEditorPane';
 import Renderer from './Renderer';
 import { sections } from './sections';
 import {
@@ -15,6 +16,7 @@ export const definition: PanelDefinition<'signoz/PieChartPanel'> = {
 	mode: 'query',
 	icon: ChartPie,
 	Renderer,
+	EditorPane: QueryBuilderEditorPane,
 	sections,
 	supportedSignals: [
 		TelemetrytypesSignalDTO.metrics,
