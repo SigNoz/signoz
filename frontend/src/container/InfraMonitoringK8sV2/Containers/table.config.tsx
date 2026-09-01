@@ -134,7 +134,9 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 	{
 		id: 'namespace',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath={CONTAINERS_DOC_PATH}>Namespace</ColumnHeader>
+			<ColumnHeader docPath={`${CONTAINERS_DOC_PATH}#additional-columns`}>
+				Namespace
+			</ColumnHeader>
 		),
 		accessorFn: (row): string =>
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NAMESPACE_NAME] || '',
@@ -420,7 +422,9 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 	{
 		id: 'node',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath={CONTAINERS_DOC_PATH}>Node</ColumnHeader>
+			<ColumnHeader docPath={`${CONTAINERS_DOC_PATH}#additional-columns`}>
+				Node
+			</ColumnHeader>
 		),
 		accessorFn: (row): string =>
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_NODE_NAME] || '',
@@ -434,7 +438,9 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 	{
 		id: 'cluster',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath={CONTAINERS_DOC_PATH}>Cluster</ColumnHeader>
+			<ColumnHeader docPath={`${CONTAINERS_DOC_PATH}#additional-columns`}>
+				Cluster
+			</ColumnHeader>
 		),
 		accessorFn: (row): string =>
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_CLUSTER_NAME] || '',
@@ -448,7 +454,9 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 	{
 		id: 'deployment',
 		header: (): React.ReactNode => (
-			<ColumnHeader docPath={CONTAINERS_DOC_PATH}>Deployment</ColumnHeader>
+			<ColumnHeader docPath={`${CONTAINERS_DOC_PATH}#additional-columns`}>
+				Deployment
+			</ColumnHeader>
 		),
 		accessorFn: (row): string =>
 			row.meta?.[INFRA_MONITORING_ATTR_KEYS.K8S_DEPLOYMENT_NAME] || '',
