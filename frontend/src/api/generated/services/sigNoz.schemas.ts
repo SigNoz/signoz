@@ -5646,7 +5646,7 @@ export interface GatewaytypesPostableIngestionKeyLimitDTO {
 	/**
 	 * @type string
 	 */
-	key_id: string;
+	keyId: string;
 	/**
 	 * @type string
 	 */

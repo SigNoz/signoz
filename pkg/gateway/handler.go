@@ -291,7 +291,7 @@ func (handler *handler) CreateIngestionKeyLimit(rw http.ResponseWriter, r *http.
 	}
 
 	if req.KeyID == "" {
-		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "key_id is required"))
+		render.Error(rw, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "keyId is required"))
 		return
 	}
 

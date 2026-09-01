@@ -92,7 +92,7 @@ type GettableCreatedIngestionKeyLimit struct {
 }
 
 type PostableIngestionKeyLimit struct {
-	KeyID  string      `json:"key_id" required:"true"`
+	KeyID  string      `json:"keyId" required:"true"`
 	Signal string      `json:"signal"`
 	Config LimitConfig `json:"config"`
 	Tags   []string    `json:"tags"`

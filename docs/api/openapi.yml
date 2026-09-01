@@ -4226,7 +4226,7 @@ components:
       properties:
         config:
           $ref: '#/components/schemas/GatewaytypesLimitConfig'
-        key_id:
+        keyId:
           type: string
         signal:
           type: string
@@ -4236,7 +4236,7 @@ components:
           nullable: true
           type: array
       required:
-      - key_id
+      - keyId
       type: object
     GatewaytypesUpdatableIngestionKeyLimit:
       properties:
@@ -16252,7 +16252,7 @@ paths:
     post:
       deprecated: false
       description: This endpoint creates an ingestion limit for the ingestion key
-        referenced by key_id
+        referenced by keyId
       operationId: CreateIngestionLimit
       requestBody:
         content:
