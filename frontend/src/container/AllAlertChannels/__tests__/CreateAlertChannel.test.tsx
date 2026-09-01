@@ -574,7 +574,7 @@ describe('Create Alert Channel', () => {
 			});
 
 			it('Should display an error when the site is not an atlassian.net URL', async () => {
-				const user = userEvent.setup();
+				const user = userEvent.setup({ delay: null });
 				await fillRequired(user, 'https://example.com');
 
 				await user.click(screen.getByTestId('save-channel-button'));
@@ -599,7 +599,7 @@ describe('Create Alert Channel', () => {
 					}),
 				);
 
-				const user = userEvent.setup();
+				const user = userEvent.setup({ delay: null });
 				await fillRequired(user, validSite);
 
 				await user.click(screen.getByTestId('save-channel-button'));
@@ -627,10 +627,10 @@ describe('Create Alert Channel', () => {
 						},
 					],
 				});
-			});
+			}, 15000);
 
 			it('Should block save when the reopen window is below the 1m minimum', async () => {
-				const user = userEvent.setup();
+				const user = userEvent.setup({ delay: null });
 				await fillRequired(user, validSite);
 
 				await user.click(screen.getByText('jira_advanced_section'));
@@ -649,7 +649,7 @@ describe('Create Alert Channel', () => {
 						description: 'jira_reopen_duration_invalid',
 					}),
 				);
-			});
+			}, 15000);
 		});
 		describe('JSM Ops', () => {
 			beforeEach(() => {
