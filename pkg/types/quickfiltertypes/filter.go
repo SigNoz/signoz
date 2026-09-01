@@ -70,21 +70,16 @@ type StorableQuickFilter struct {
 }
 
 type SourceFilters struct {
+	types.Identifiable
+	types.TimeAuditable
+
+	OrgID   valuer.UUID                        `json:"orgId"`
 	Source  Source                             `json:"source"`
 	Filters []telemetrytypes.TelemetryFieldKey `json:"filters" required:"true" nullable:"false"`
 }
 
 type UpdatableQuickFilters struct {
 	Filters []telemetrytypes.TelemetryFieldKey `json:"filters" required:"true" nullable:"false"`
-}
-
-func validateFilters(filters []telemetrytypes.TelemetryFieldKey) error {
-	for _, filter := range filters {
-		if filter.Name == "" {
-			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "filter name is required")
-		}
-	}
-	return nil
 }
 
 // NewStorableQuickFilter creates a new StorableQuickFilter after validation.
@@ -156,8 +151,11 @@ func NewSourceFilterFromStorableQuickFilter(storableQuickFilter *StorableQuickFi
 	}
 
 	return &SourceFilters{
-		Source:  storableQuickFilter.Source,
-		Filters: filters,
+		Identifiable:  storableQuickFilter.Identifiable,
+		OrgID:         storableQuickFilter.OrgID,
+		Source:        storableQuickFilter.Source,
+		Filters:       filters,
+		TimeAuditable: storableQuickFilter.TimeAuditable,
 	}, nil
 }
 
@@ -247,4 +245,13 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 	}
 
 	return storableQuickFilters, nil
+}
+
+func validateFilters(filters []telemetrytypes.TelemetryFieldKey) error {
+	for _, filter := range filters {
+		if filter.Name == "" {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "filter name is required")
+		}
+	}
+	return nil
 }

@@ -7385,13 +7385,24 @@ components:
       type: string
     QuickfiltertypesSourceFilters:
       properties:
+        createdAt:
+          format: date-time
+          type: string
         filters:
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
           type: array
+        id:
+          type: string
+        orgId:
+          type: string
         source:
           type: string
+        updatedAt:
+          format: date-time
+          type: string
       required:
+      - id
       - filters
       type: object
     QuickfiltertypesUpdatableQuickFilters:

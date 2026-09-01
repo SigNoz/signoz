@@ -35,6 +35,10 @@ def test_get_quick_filters_returns_defaults(
     assert {source_filters["source"] for source_filters in data} == ALL_SOURCES
 
     for source_filters in data:
+        assert source_filters["id"] != "00000000-0000-0000-0000-000000000000"
+        assert source_filters["orgId"] != "00000000-0000-0000-0000-000000000000"
+        assert source_filters["createdAt"] != ""
+        assert source_filters["updatedAt"] != ""
         assert len(source_filters["filters"]) > 0
         for field_key in source_filters["filters"]:
             assert field_key["name"] != ""
@@ -217,7 +221,10 @@ def test_update_quick_filters_creates_row_for_source_without_one(
         timeout=2,
     )
     assert response.status_code == HTTPStatus.OK, response.text
-    assert response.json()["data"] == {"source": "api_monitoring", "filters": []}
+    data = response.json()["data"]
+    assert data["source"] == "api_monitoring"
+    assert data["filters"] == []
+    assert data["id"] == "00000000-0000-0000-0000-000000000000"
 
     response = requests.put(
         signoz.self.host_configs["8080"].get("/api/v2/quick_filters/api_monitoring"),
@@ -241,7 +248,9 @@ def test_update_quick_filters_creates_row_for_source_without_one(
         timeout=2,
     )
     assert response.status_code == HTTPStatus.OK, response.text
-    assert [field_key["name"] for field_key in response.json()["data"]["filters"]] == ["service.name"]
+    data = response.json()["data"]
+    assert [field_key["name"] for field_key in data["filters"]] == ["service.name"]
+    assert data["id"] != "00000000-0000-0000-0000-000000000000"
 
 
 def test_update_quick_filters_rejects_invalid_input(

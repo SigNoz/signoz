@@ -81,9 +81,22 @@ func (migration *updateQuickFilters) Up(ctx context.Context, db *bun.DB) error {
 			return err
 		}
 
+		// The live storable maps the source column, which does not exist yet at
+		// this migration.
+		quickFilters := make([]*quickFilter, 0, len(storableQuickFilters))
+		for _, storableQuickFilter := range storableQuickFilters {
+			quickFilters = append(quickFilters, &quickFilter{
+				Identifiable:  storableQuickFilter.Identifiable,
+				OrgID:         storableQuickFilter.OrgID.StringValue(),
+				Filter:        storableQuickFilter.Filter,
+				Signal:        storableQuickFilter.Source.StringValue(),
+				TimeAuditable: storableQuickFilter.TimeAuditable,
+			})
+		}
+
 		// Insert all filters for this organization
 		_, err = tx.NewInsert().
-			Model(&storableQuickFilters).
+			Model(&quickFilters).
 			Exec(ctx)
 
 		if err != nil {

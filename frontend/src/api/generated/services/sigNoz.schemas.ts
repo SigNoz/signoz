@@ -8439,13 +8439,31 @@ export enum Querybuildertypesv5QueryTypeDTO {
 }
 export interface QuickfiltertypesSourceFiltersDTO {
 	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
 	 * @type array
 	 */
 	filters: TelemetrytypesTelemetryFieldKeyDTO[];
 	/**
 	 * @type string
 	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	orgId?: string;
+	/**
+	 * @type string
+	 */
 	source?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
 }
 
 export interface QuickfiltertypesUpdatableQuickFiltersDTO {

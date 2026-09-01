@@ -50,18 +50,6 @@ var quickFilterLegacyDataTypeToFieldDataType = map[string]string{
 	"float64": "number",
 }
 
-// quickFilterFieldDataType resolves legacy datatype spellings, with unknowns
-// normalized to unspecified.
-func quickFilterFieldDataType(legacyDataType string) string {
-	return quickFilterLegacyDataTypeToFieldDataType[strings.ToLower(strings.TrimSpace(legacyDataType))]
-}
-
-// quickFilterFieldContext resolves legacy type spellings, with unknowns
-// normalized to unspecified.
-func quickFilterFieldContext(legacyType string) string {
-	return quickFilterLegacyTypeToFieldContext[strings.ToLower(strings.TrimSpace(legacyType))]
-}
-
 type migrateQuickFilters struct {
 	sqlstore sqlstore.SQLStore
 	settings factory.ProviderSettings
@@ -111,6 +99,12 @@ func (migration *migrateQuickFilters) Up(ctx context.Context, db *bun.DB) error 
 
 	if _, err := migration.sqlstore.Dialect().RenameColumn(ctx, tx, "quick_filter", "signal", "source"); err != nil {
 		return err
+	}
+
+	for _, column := range []string{"created_by", "updated_by"} {
+		if err := migration.sqlstore.Dialect().DropColumn(ctx, tx, "quick_filter", column); err != nil {
+			return err
+		}
 	}
 
 	return tx.Commit()
@@ -171,4 +165,16 @@ func migrateQuickFilterEntries(filter string) (migrated string, changed bool, ok
 	}
 
 	return string(migratedJSON), true, true
+}
+
+// quickFilterFieldDataType resolves legacy datatype spellings, with unknowns
+// normalized to unspecified.
+func quickFilterFieldDataType(legacyDataType string) string {
+	return quickFilterLegacyDataTypeToFieldDataType[strings.ToLower(strings.TrimSpace(legacyDataType))]
+}
+
+// quickFilterFieldContext resolves legacy type spellings, with unknowns
+// normalized to unspecified.
+func quickFilterFieldContext(legacyType string) string {
+	return quickFilterLegacyTypeToFieldContext[strings.ToLower(strings.TrimSpace(legacyType))]
 }

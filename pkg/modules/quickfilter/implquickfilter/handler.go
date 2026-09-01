@@ -30,83 +30,6 @@ type legacySourceFilters struct {
 	Filters []v3.AttributeKey       `json:"filters"`
 }
 
-// newTelemetryFieldKeysFromLegacy converts a v1 write payload with the same
-// normalizations as the storage migration: alias contexts, numerics to number.
-// The v1 shape carries no per filter signal, so meter keys get it restored.
-func newTelemetryFieldKeysFromLegacy(source quickfiltertypes.Source, filters []v3.AttributeKey) ([]telemetrytypes.TelemetryFieldKey, error) {
-	var fieldSignal telemetrytypes.Signal
-	if source == quickfiltertypes.SourceMeter {
-		fieldSignal = telemetrytypes.SignalMetrics
-	}
-
-	fieldKeys := make([]telemetrytypes.TelemetryFieldKey, 0, len(filters))
-	for _, filter := range filters {
-		if err := filter.Validate(); err != nil {
-			return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid filter: %v", err)
-		}
-
-		fieldContext, ok := telemetrytypes.FieldContextFromText(string(filter.Type))
-		if !ok {
-			fieldContext = telemetrytypes.FieldContextUnspecified
-		}
-
-		var fieldDataType telemetrytypes.FieldDataType
-		if err := fieldDataType.Scan(string(filter.DataType)); err != nil {
-			fieldDataType = telemetrytypes.FieldDataTypeUnspecified
-		}
-		if fieldDataType == telemetrytypes.FieldDataTypeInt64 {
-			fieldDataType = telemetrytypes.FieldDataTypeNumber
-		}
-
-		fieldKeys = append(fieldKeys, telemetrytypes.TelemetryFieldKey{
-			Name:          filter.Key,
-			Signal:        fieldSignal,
-			FieldContext:  fieldContext,
-			FieldDataType: fieldDataType,
-		})
-	}
-
-	return fieldKeys, nil
-}
-
-// newLegacySourceFilters renders stored telemetry field keys
-// back into the v1 shape, restoring the legacy spellings v1 clients expect.
-func newLegacySourceFilters(sourceFilters *quickfiltertypes.SourceFilters) *legacySourceFilters {
-	filters := make([]v3.AttributeKey, 0, len(sourceFilters.Filters))
-	for _, fieldKey := range sourceFilters.Filters {
-		// Only tag and resource exist in the v3 enum; other contexts render as
-		// unspecified so v1 clients never see spellings their queries can't use.
-		var attributeType v3.AttributeKeyType
-		switch fieldKey.FieldContext {
-		case telemetrytypes.FieldContextAttribute:
-			attributeType = v3.AttributeKeyTypeTag
-		case telemetrytypes.FieldContextResource:
-			attributeType = v3.AttributeKeyTypeResource
-		default:
-			attributeType = v3.AttributeKeyTypeUnspecified
-		}
-
-		var dataType v3.AttributeKeyDataType
-		switch fieldKey.FieldDataType {
-		case telemetrytypes.FieldDataTypeNumber:
-			dataType = v3.AttributeKeyDataTypeFloat64
-		default:
-			dataType = v3.AttributeKeyDataType(fieldKey.FieldDataType.StringValue())
-		}
-
-		filters = append(filters, v3.AttributeKey{
-			Key:      fieldKey.Name,
-			Type:     attributeType,
-			DataType: dataType,
-		})
-	}
-
-	return &legacySourceFilters{
-		Source:  sourceFilters.Source,
-		Filters: filters,
-	}
-}
-
 func (handler *handler) GetQuickFilters(rw http.ResponseWriter, r *http.Request) {
 	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
@@ -254,4 +177,81 @@ func (handler *handler) sourceFiltersOrEmpty(filters []*quickfiltertypes.SourceF
 		return quickfiltertypes.NewSourceFiltersFromSource(source)
 	}
 	return filters[0]
+}
+
+// newTelemetryFieldKeysFromLegacy converts a v1 write payload with the same
+// normalizations as the storage migration: alias contexts, numerics to number.
+// The v1 shape carries no per filter signal, so meter keys get it restored.
+func newTelemetryFieldKeysFromLegacy(source quickfiltertypes.Source, filters []v3.AttributeKey) ([]telemetrytypes.TelemetryFieldKey, error) {
+	var fieldSignal telemetrytypes.Signal
+	if source == quickfiltertypes.SourceMeter {
+		fieldSignal = telemetrytypes.SignalMetrics
+	}
+
+	fieldKeys := make([]telemetrytypes.TelemetryFieldKey, 0, len(filters))
+	for _, filter := range filters {
+		if err := filter.Validate(); err != nil {
+			return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid filter: %v", err)
+		}
+
+		fieldContext, ok := telemetrytypes.FieldContextFromText(string(filter.Type))
+		if !ok {
+			fieldContext = telemetrytypes.FieldContextUnspecified
+		}
+
+		var fieldDataType telemetrytypes.FieldDataType
+		if err := fieldDataType.Scan(string(filter.DataType)); err != nil {
+			fieldDataType = telemetrytypes.FieldDataTypeUnspecified
+		}
+		if fieldDataType == telemetrytypes.FieldDataTypeInt64 {
+			fieldDataType = telemetrytypes.FieldDataTypeNumber
+		}
+
+		fieldKeys = append(fieldKeys, telemetrytypes.TelemetryFieldKey{
+			Name:          filter.Key,
+			Signal:        fieldSignal,
+			FieldContext:  fieldContext,
+			FieldDataType: fieldDataType,
+		})
+	}
+
+	return fieldKeys, nil
+}
+
+// newLegacySourceFilters renders stored telemetry field keys
+// back into the v1 shape, restoring the legacy spellings v1 clients expect.
+func newLegacySourceFilters(sourceFilters *quickfiltertypes.SourceFilters) *legacySourceFilters {
+	filters := make([]v3.AttributeKey, 0, len(sourceFilters.Filters))
+	for _, fieldKey := range sourceFilters.Filters {
+		// Only tag and resource exist in the v3 enum; other contexts render as
+		// unspecified so v1 clients never see spellings their queries can't use.
+		var attributeType v3.AttributeKeyType
+		switch fieldKey.FieldContext {
+		case telemetrytypes.FieldContextAttribute:
+			attributeType = v3.AttributeKeyTypeTag
+		case telemetrytypes.FieldContextResource:
+			attributeType = v3.AttributeKeyTypeResource
+		default:
+			attributeType = v3.AttributeKeyTypeUnspecified
+		}
+
+		var dataType v3.AttributeKeyDataType
+		switch fieldKey.FieldDataType {
+		case telemetrytypes.FieldDataTypeNumber:
+			dataType = v3.AttributeKeyDataTypeFloat64
+		default:
+			dataType = v3.AttributeKeyDataType(fieldKey.FieldDataType.StringValue())
+		}
+
+		filters = append(filters, v3.AttributeKey{
+			Key:      fieldKey.Name,
+			Type:     attributeType,
+			DataType: dataType,
+		})
+	}
+
+	return &legacySourceFilters{
+		Source:  sourceFilters.Source,
+		Filters: filters,
+	}
 }
