@@ -207,14 +207,13 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 		}
 
 		// now look at the field context
-		// the keys table holds attribute, resource and scope keys; the span
-		// context is served by the static fields appended below
-		switch fieldKeySelector.FieldContext {
-		case telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextResource, telemetrytypes.FieldContextScope:
+		// we don't write most of intrinsic fields to keys table
+		// for this reason we don't want to apply tagType if the field context
+		// is not attribute or resource attribute
+		if fieldKeySelector.FieldContext != telemetrytypes.FieldContextUnspecified &&
+			(fieldKeySelector.FieldContext == telemetrytypes.FieldContextAttribute ||
+				fieldKeySelector.FieldContext == telemetrytypes.FieldContextResource) {
 			fieldKeyConds = append(fieldKeyConds, sb.E("tagType", fieldKeySelector.FieldContext.TagType()))
-		case telemetrytypes.FieldContextUnspecified:
-		default:
-			continue
 		}
 
 		// now look at the field data type
@@ -225,67 +224,62 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 		conds = append(conds, sb.And(fieldKeyConds...))
 		limit += fieldKeySelector.Limit
 	}
+	// the span_attribute_keys has historically pushed the top level column as attributes
+	sb.Where(sb.Or(conds...)).Where("isColumn = false")
+	sb.GroupBy("tagKey", "tagType", "dataType")
 	if limit == 0 {
 		limit = 1000
 	}
 
+	mainSb := sqlbuilder.Select("tag_key", "tag_type", "tag_data_type", "max(priority) as priority")
+	mainSb.From(mainSb.BuilderAs(sb, "sub_query"))
+	mainSb.GroupBy("tag_key", "tag_type", "tag_data_type")
+	mainSb.OrderBy("priority")
+	// query one extra to check if we hit the limit
+	mainSb.Limit(limit + 1)
+
+	query, args := mainSb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
+	if err != nil {
+		return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTracesKeys.Error())
+	}
+	defer rows.Close()
 	keys := []*telemetrytypes.TelemetryFieldKey{}
 	rowCount := 0
+	for rows.Next() {
+		rowCount++
+		// reached the limit, we know there are more results
+		if rowCount > limit {
+			break
+		}
 
-	// span-context selectors add no conditions
-	if len(conds) > 0 {
-		// the span_attribute_keys has historically pushed the top level column as attributes
-		sb.Where(sb.Or(conds...)).Where("isColumn = false")
-		sb.GroupBy("tagKey", "tagType", "dataType")
-
-		mainSb := sqlbuilder.Select("tag_key", "tag_type", "tag_data_type", "max(priority) as priority")
-		mainSb.From(mainSb.BuilderAs(sb, "sub_query"))
-		mainSb.GroupBy("tag_key", "tag_type", "tag_data_type")
-		mainSb.OrderBy("priority")
-		// query one extra to check if we hit the limit
-		mainSb.Limit(limit + 1)
-
-		query, args := mainSb.BuildWithFlavor(sqlbuilder.ClickHouse)
-
-		rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
+		var name string
+		var fieldContext telemetrytypes.FieldContext
+		var fieldDataType telemetrytypes.FieldDataType
+		var priority uint8
+		err = rows.Scan(&name, &fieldContext, &fieldDataType, &priority)
 		if err != nil {
 			return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTracesKeys.Error())
 		}
-		defer rows.Close()
-		for rows.Next() {
-			rowCount++
-			// reached the limit, we know there are more results
-			if rowCount > limit {
-				break
-			}
+		key, ok := mapOfKeys[name+";"+fieldContext.StringValue()+";"+fieldDataType.StringValue()]
 
-			var name string
-			var fieldContext telemetrytypes.FieldContext
-			var fieldDataType telemetrytypes.FieldDataType
-			var priority uint8
-			err = rows.Scan(&name, &fieldContext, &fieldDataType, &priority)
-			if err != nil {
-				return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTracesKeys.Error())
+		// if there is no materialised column, create a key with the field context and data type
+		if !ok {
+			key = &telemetrytypes.TelemetryFieldKey{
+				Name:          name,
+				Signal:        telemetrytypes.SignalTraces,
+				FieldContext:  fieldContext,
+				FieldDataType: fieldDataType,
 			}
-			key, ok := mapOfKeys[name+";"+fieldContext.StringValue()+";"+fieldDataType.StringValue()]
-
-			// if there is no materialised column, create a key with the field context and data type
-			if !ok {
-				key = &telemetrytypes.TelemetryFieldKey{
-					Name:          name,
-					Signal:        telemetrytypes.SignalTraces,
-					FieldContext:  fieldContext,
-					FieldDataType: fieldDataType,
-				}
-			}
-
-			keys = append(keys, key)
-			mapOfKeys[name+";"+fieldContext.StringValue()+";"+fieldDataType.StringValue()] = key
 		}
 
-		if rows.Err() != nil {
-			return nil, false, errors.Wrap(rows.Err(), errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTracesKeys.Error())
-		}
+		keys = append(keys, key)
+		mapOfKeys[name+";"+fieldContext.StringValue()+";"+fieldDataType.StringValue()] = key
+	}
+
+	if rows.Err() != nil {
+		return nil, false, errors.Wrap(rows.Err(), errors.TypeInternal, errors.CodeInternal, ErrFailedToGetTracesKeys.Error())
 	}
 
 	// hit the limit? (only counting DB results)
