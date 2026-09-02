@@ -90,9 +90,12 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		return false, err
 	}
 
-	// title is required by the API; the default template can render empty when
-	// the group has no alertname label.
+	// title is required by the API; a channel title template can render empty,
+	// so fall back to the rule name, then to a static last resort.
 	title := result.Title
+	if strings.TrimSpace(title) == "" && len(as) > 0 {
+		title = string(as[0].Labels[ruletypes.LabelAlertName])
+	}
 	if strings.TrimSpace(title) == "" {
 		title = "SigNoz alert"
 	}
