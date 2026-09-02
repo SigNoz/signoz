@@ -44,6 +44,11 @@ func (migration *addChannelDisplayName) Up(ctx context.Context, db *bun.DB) erro
 		return err
 	}
 
+	table, uniqueConstraints, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("notification_channel"))
+	if err != nil {
+		return err
+	}
+
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -51,11 +56,6 @@ func (migration *addChannelDisplayName) Up(ctx context.Context, db *bun.DB) erro
 	defer func() {
 		_ = tx.Rollback()
 	}()
-
-	table, uniqueConstraints, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("notification_channel"))
-	if err != nil {
-		return err
-	}
 
 	if _, err := migration.sqlstore.Dialect().RenameColumn(ctx, tx, "notification_channel", "name", "display_name"); err != nil {
 		return err
