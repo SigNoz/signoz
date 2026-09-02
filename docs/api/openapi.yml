@@ -16103,10 +16103,8 @@ paths:
       security:
       - api_key:
         - ingestion-limit:list
-        - ingestion-key:read
       - tokenizer:
         - ingestion-limit:list
-        - ingestion-key:read
       summary: Get limits for the ingestion key
       tags:
       - gateway

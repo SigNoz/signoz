@@ -33,7 +33,7 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceMetaResourceIngestionKey,
 			Verb:     coretypes.VerbList,
-			Category: coretypes.ActionCategoryConfigurationChange,
+			Category: coretypes.ActionCategoryDataAccess,
 			Selector: coretypes.WildcardSelector,
 		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
@@ -60,7 +60,7 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceMetaResourceIngestionKey,
 			Verb:     coretypes.VerbList,
-			Category: coretypes.ActionCategoryConfigurationChange,
+			Category: coretypes.ActionCategoryDataAccess,
 			Selector: coretypes.WildcardSelector,
 		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
@@ -167,7 +167,7 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceMetaResourceIngestionKey,
 			Verb:     coretypes.VerbRead,
-			Category: coretypes.ActionCategoryConfigurationChange,
+			Category: coretypes.ActionCategoryDataAccess,
 			ID:       coretypes.PathParam("keyId"),
 			Selector: coretypes.IDSelector,
 		}),
@@ -189,23 +189,14 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusNotFound},
 			Deprecated:          false,
-			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceIngestionLimit.Scope(coretypes.VerbList), coretypes.ResourceMetaResourceIngestionKey.Scope(coretypes.VerbRead)}),
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceIngestionLimit.Scope(coretypes.VerbList)}),
 		},
-		handler.WithResourceDefs(
-			handler.BasicResourceDef{
-				Resource: coretypes.ResourceMetaResourceIngestionLimit,
-				Verb:     coretypes.VerbList,
-				Category: coretypes.ActionCategoryConfigurationChange,
-				Selector: coretypes.WildcardSelector,
-			},
-			handler.BasicResourceDef{
-				Resource: coretypes.ResourceMetaResourceIngestionKey,
-				Verb:     coretypes.VerbRead,
-				Category: coretypes.ActionCategoryConfigurationChange,
-				ID:       coretypes.PathParam("keyId"),
-				Selector: coretypes.IDSelector,
-			},
-		),
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceIngestionLimit,
+			Verb:     coretypes.VerbList,
+			Category: coretypes.ActionCategoryDataAccess,
+			Selector: coretypes.WildcardSelector,
+		}),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -370,7 +361,7 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		handler.WithResourceDefs(handler.BasicResourceDef{
 			Resource: coretypes.ResourceMetaResourceIngestionLimit,
 			Verb:     coretypes.VerbRead,
-			Category: coretypes.ActionCategoryConfigurationChange,
+			Category: coretypes.ActionCategoryDataAccess,
 			ID:       coretypes.PathParam("limitId"),
 			Selector: coretypes.IDSelector,
 		}),
