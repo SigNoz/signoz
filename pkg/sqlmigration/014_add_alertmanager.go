@@ -156,9 +156,12 @@ func (migration *addAlertmanager) populateOrgIDInChannels(ctx context.Context, t
 func (migration *addAlertmanager) populateAlertmanagerConfig(ctx context.Context, tx bun.Tx, orgID string) error {
 	var channels []*alertmanagertypes.Channel
 
+	// Columns are pinned so this migration keeps reading the table as it existed
+	// here rather than following later additions to the Channel model.
 	err := tx.
 		NewSelect().
 		Model(&channels).
+		Column("id", "created_at", "updated_at", "name", "type", "data", "org_id").
 		Where("org_id = ?", orgID).
 		Scan(ctx)
 	if err != nil {
@@ -233,6 +236,7 @@ func (migration *addAlertmanager) populateAlertmanagerConfig(ctx context.Context
 			if _, err := tx.
 				NewUpdate().
 				Model(channel).
+				Column("name", "type", "data", "org_id", "created_at", "updated_at").
 				WherePK().
 				Exec(ctx); err != nil {
 				return err
