@@ -168,9 +168,9 @@ func TestConditionFor(t *testing.T) {
 				FieldContext: telemetrytypes.FieldContextLog,
 			},
 			operator:      qbtypes.FilterOperatorEqual,
-			value:         "error message",
-			expectedSQL:   "body = ?",
-			expectedArgs:  []any{"error message"},
+			value:         "Error Message",
+			expectedSQL:   "(body = ? AND LOWER(body) = LOWER(?))",
+			expectedArgs:  []any{"Error Message", "Error Message"},
 			expectedError: nil,
 		},
 		{
@@ -207,8 +207,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorLike,
 			value:         "%error%",
-			expectedSQL:   "LOWER(body) LIKE LOWER(?)",
-			expectedArgs:  []any{"%error%"},
+			expectedSQL:   "(body LIKE ? AND LOWER(body) LIKE LOWER(?))",
+			expectedArgs:  []any{"%error%", "%error%"},
 			expectedError: nil,
 		},
 		{
@@ -219,7 +219,7 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorNotLike,
 			value:         "%error%",
-			expectedSQL:   "LOWER(body) NOT LIKE LOWER(?)",
+			expectedSQL:   "body NOT LIKE ?",
 			expectedArgs:  []any{"%error%"},
 			expectedError: nil,
 		},
@@ -619,8 +619,8 @@ func TestConditionForMultipleKeys(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorEqual,
 			value:         "error message",
-			expectedSQL:   "body = ? AND severity_text = ?",
-			expectedArgs:  []any{"error message", "error message"},
+			expectedSQL:   "(body = ? AND LOWER(body) = LOWER(?)) AND severity_text = ?",
+			expectedArgs:  []any{"error message", "error message", "error message"},
 			expectedError: nil,
 		},
 	}
@@ -906,8 +906,8 @@ func TestConditionForJSONBodySearch(t *testing.T) {
 	}
 }
 
-// IN on the body column routes each value back through the `=` path; the SQL it produces
-// must stay what the shared IN handling produced before, including for a mixed-type list.
+// IN on the body column routes each value back through the `=` path, so every arm picks up
+// the lower(body) companion — including the values a mixed-type list stringifies.
 func TestConditionForBodyIn(t *testing.T) {
 	testCases := []struct {
 		name         string
@@ -918,14 +918,14 @@ func TestConditionForBodyIn(t *testing.T) {
 		{
 			name:         "strings",
 			values:       []any{"alpha", "beta"},
-			expectedSQL:  "(body = ? OR body = ?)",
-			expectedArgs: []any{"alpha", "beta"},
+			expectedSQL:  "((body = ? AND LOWER(body) = LOWER(?)) OR (body = ? AND LOWER(body) = LOWER(?)))",
+			expectedArgs: []any{"alpha", "alpha", "beta", "beta"},
 		},
 		{
 			name:         "mixed types are stringified before they reach the column",
 			values:       []any{"alpha", float64(1), true},
-			expectedSQL:  "(body = ? OR body = ? OR body = ?)",
-			expectedArgs: []any{"alpha", "1", "true"},
+			expectedSQL:  "((body = ? AND LOWER(body) = LOWER(?)) OR (body = ? AND LOWER(body) = LOWER(?)) OR (body = ? AND LOWER(body) = LOWER(?)))",
+			expectedArgs: []any{"alpha", "alpha", "1", "1", "true", "true"},
 		},
 	}
 
@@ -951,6 +951,176 @@ func TestConditionForBodyIn(t *testing.T) {
 			sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 			assert.Contains(t, sql, tc.expectedSQL)
 			assert.Equal(t, tc.expectedArgs, args)
+		})
+	}
+}
+
+func TestBodyPathLiterals(t *testing.T) {
+	testCases := []struct {
+		name     string
+		key      string
+		expected []string
+	}{
+		{"quoting lifts a short name over the ngram size", "id", []string{`"id"`}},
+		{"one literal per component", "response.status_code", []string{`"response"`, `"status_code"`}},
+		{"array suffixes are trimmed", "items[*].sku", []string{`"items"`, `"sku"`}},
+		{"every component is carried", "a.b.count", []string{`"a"`, `"b"`, `"count"`}},
+		{"a component an encoder may rewrite is dropped", "user/name.email", []string{`"email"`}},
+		{"nothing usable", "us/er.na/me", nil},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			key := telemetrytypes.NewTelemetryFieldKey(tc.key, telemetrytypes.FieldContextBody, telemetrytypes.FieldDataTypeUnspecified)
+			assert.Equal(t, tc.expected, bodyPathLiterals(key))
+		})
+	}
+}
+
+// The path literals ride on the existence assertion and the value literals on the comparison, so
+// a filter carries each at most once. Nothing rides on a negated operator: it matches rows
+// without the path, which say nothing about the body text.
+func TestLegacyBodyIndexPredicates(t *testing.T) {
+	testCases := []struct {
+		name         string
+		key          string
+		operator     qbtypes.FilterOperator
+		value        any
+		expected     string
+		expectedArgs []any
+	}{
+		{
+			name:         "exists carries the path",
+			key:          "user_id",
+			operator:     qbtypes.FilterOperatorExists,
+			expected:     `LOWER(body) LIKE LOWER(?)`,
+			expectedArgs: []any{`%"user\_id"%`},
+		},
+		{
+			name:         "equality carries the value",
+			key:          "status",
+			operator:     qbtypes.FilterOperatorEqual,
+			value:        "timeout_error",
+			expected:     `LOWER(body) LIKE LOWER(?)`,
+			expectedArgs: []any{`%timeout\_error%`},
+		},
+		{
+			name:         "contains carries the value",
+			key:          "message",
+			operator:     qbtypes.FilterOperatorContains,
+			value:        "upstream refused",
+			expected:     `LOWER(body) LIKE LOWER(?)`,
+			expectedArgs: []any{`%upstream refused%`},
+		},
+		{
+			name:         "like carries one literal per run of the pattern",
+			key:          "message",
+			operator:     qbtypes.FilterOperatorLike,
+			value:        "%conn%refused%",
+			expected:     `LOWER(body) LIKE LOWER(?)`,
+			expectedArgs: []any{`%conn%refused%`},
+		},
+		{
+			name:     "has carries the path and the element",
+			key:      "tags[*]",
+			operator: qbtypes.FilterOperatorHas,
+			value:    []any{"production"},
+			// The element rides on its own predicate rather than being pinned next to the key:
+			// has() over the extracted array says nothing about where in the text it sits.
+			expected:     `LOWER(body) LIKE LOWER(?) AND LOWER(body) LIKE LOWER(?)`,
+			expectedArgs: []any{`%"tags"%`, "%production%"},
+		},
+		{
+			name:         "hasAll carries one literal per element",
+			key:          "tags[*]",
+			operator:     qbtypes.FilterOperatorHasAll,
+			value:        []any{[]any{"production", "webserver"}},
+			expected:     `LOWER(body) LIKE LOWER(?) AND LOWER(body) LIKE LOWER(?) AND LOWER(body) LIKE LOWER(?)`,
+			expectedArgs: []any{`%"tags"%`, "%production%", "%webserver%"},
+		},
+		{
+			// hasAny asks for one of the elements, so the arms are ORed — ANDing them would
+			// demand every element be present.
+			name:         "hasAny ORs the element literals",
+			key:          "tags[*]",
+			operator:     qbtypes.FilterOperatorHasAny,
+			value:        []any{[]any{"production", "webserver"}},
+			expected:     `LOWER(body) LIKE LOWER(?) AND (LOWER(body) LIKE LOWER(?) OR LOWER(body) LIKE LOWER(?))`,
+			expectedArgs: []any{`%"tags"%`, "%production%", "%webserver%"},
+		},
+		{
+			// one element with no usable literal voids the whole OR: the filter can still match
+			// through that element, so nothing about the text is implied.
+			name:         "hasAny drops the OR when an element carries no literal",
+			key:          "tags[*]",
+			operator:     qbtypes.FilterOperatorHasAny,
+			value:        []any{[]any{"production", "/"}},
+			expected:     `LOWER(body) LIKE LOWER(?)`,
+			expectedArgs: []any{`%"tags"%`},
+		},
+		{
+			name:         "numeric elements carry nothing",
+			key:          "ids[*]",
+			operator:     qbtypes.FilterOperatorHasAny,
+			value:        []any{[]any{"9007199254740993", "9007199254740994"}},
+			expected:     `LOWER(body) LIKE LOWER(?)`,
+			expectedArgs: []any{`%"ids"%`},
+		},
+		{
+			name:     "a number carries nothing",
+			key:      "user_id",
+			operator: qbtypes.FilterOperatorEqual,
+			value:    int64(123),
+		},
+		{
+			// IN delegates to `=`, so the literal rides each arm rather than the IN itself
+			name:         "IN carries one literal per arm it delegates to",
+			key:          "status",
+			operator:     qbtypes.FilterOperatorIn,
+			value:        []any{"timeout_error", "conn_refused"},
+			expected:     `(JSON_VALUE(body, '$."status"') = ? AND LOWER(body) LIKE LOWER(?)) OR (JSON_VALUE(body, '$."status"') = ? AND LOWER(body) LIKE LOWER(?))`,
+			expectedArgs: []any{`%timeout\_error%`, `%conn\_refused%`},
+		},
+		{
+			name:     "not equal carries nothing",
+			key:      "status",
+			operator: qbtypes.FilterOperatorNotEqual,
+			value:    "timeout_error",
+		},
+		{
+			name:     "not exists carries nothing",
+			key:      "user_id",
+			operator: qbtypes.FilterOperatorNotExists,
+		},
+		{
+			name:     "not contains carries nothing",
+			key:      "message",
+			operator: qbtypes.FilterOperatorNotContains,
+			value:    "upstream refused",
+		},
+	}
+
+	fl := flaggertest.New(t)
+	cb := NewConditionBuilder(NewFieldMapper(fl), fl)
+	ctx := context.Background()
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			sb := sqlbuilder.NewSelectBuilder()
+			sb.Select("1").From("t")
+			key := telemetrytypes.NewTelemetryFieldKey(tc.key, telemetrytypes.FieldContextBody, telemetrytypes.FieldDataTypeUnspecified)
+
+			cond, err := cb.conditionForResolvedKey(ctx, valuer.UUID{}, 0, 0, key, tc.operator, tc.value, sb)
+			require.NoError(t, err)
+
+			sb.Where(cond)
+			query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+			if tc.expected == "" {
+				assert.NotContains(t, query, "LOWER(body) LIKE")
+				return
+			}
+			assert.Contains(t, query, tc.expected)
+			assert.Subset(t, args, tc.expectedArgs)
 		})
 	}
 }
