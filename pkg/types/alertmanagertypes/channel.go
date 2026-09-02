@@ -1,6 +1,7 @@
 package alertmanagertypes
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"reflect"
 	"regexp"
@@ -93,6 +94,47 @@ func NewChannelFromReceiver(receiver *Receiver, orgID string) (*Channel, error) 
 	}
 
 	return &channel, nil
+}
+
+const channelNameSuffixLen = 8
+
+// generateChannelName is a copy of dashboardtypes.generateDashboardName: slugify
+// the display name, then append a random suffix rather than looping on collisions.
+func generateChannelName(displayName string) string {
+	const dns1123LabelMaxLen = 63
+	suffixAlphabet := []byte("abcdefghijklmnopqrstuvwxyz0123456789")
+
+	var b strings.Builder
+	b.Grow(len(displayName))
+	prevHyphen := false
+	for _, r := range strings.ToLower(displayName) {
+		switch {
+		case (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9'):
+			b.WriteRune(r)
+			prevHyphen = false
+		case b.Len() > 0 && !prevHyphen:
+			b.WriteByte('-')
+			prevHyphen = true
+		}
+	}
+	prefix := strings.TrimRight(b.String(), "-")
+
+	suffix := make([]byte, channelNameSuffixLen)
+	if _, err := rand.Read(suffix); err != nil {
+		panic(errors.WrapInternalf(err, errors.CodeInternal, "read random for channel name suffix"))
+	}
+	for i := range suffix {
+		suffix[i] = suffixAlphabet[int(suffix[i])%len(suffixAlphabet)]
+	}
+
+	maxPrefix := dns1123LabelMaxLen - 1 - channelNameSuffixLen
+	if len(prefix) > maxPrefix {
+		prefix = strings.TrimRight(prefix[:maxPrefix], "-")
+	}
+	if prefix == "" {
+		return string(suffix)
+	}
+	return prefix + "-" + string(suffix)
 }
 
 // NewChannelFromReceiverWithName overrides the name that NewChannelFromReceiver
