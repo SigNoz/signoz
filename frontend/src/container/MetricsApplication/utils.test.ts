@@ -73,9 +73,9 @@ describe('convertedTracesToDownloadData', () => {
 });
 
 describe('navigateToTrace', () => {
-	const apmToTraceQuery = ({
+	const apmToTraceQuery = {
 		builder: { queryData: [{ dataSource: 'traces' }] },
-	} as unknown) as Query;
+	} as unknown as Query;
 
 	const getUrl = (operation: string, servicename = 'branch-pay-dev'): URL => {
 		const safeNavigate = jest.fn();
@@ -96,8 +96,6 @@ describe('navigateToTrace', () => {
 	};
 
 	it('keeps compositeQuery when the operation name contains a "#"', () => {
-		// An unencoded `#` starts a URL fragment, which drops every parameter
-		// after it - including compositeQuery - leaving the explorer unfiltered.
 		const url = getUrl('AccountResource#getAccount');
 
 		expect(url.hash).toBe('');

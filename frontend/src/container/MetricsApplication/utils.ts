@@ -31,12 +31,6 @@ export const navigateToTrace = ({
 
 	const JSONCompositeQuery = encodeURIComponent(JSON.stringify(apmToTraceQuery));
 
-	// `servicename` and `operation` are interpolated into a JSON literal inside
-	// the query string, so they must be percent-encoded. Without this, a `#` in
-	// the value (every Spring/JAX-RS operation looks like `Resource#method`)
-	// starts a URL fragment and silently drops every parameter after it -
-	// including `compositeQuery`. The explorer then falls back to its empty
-	// default query and lists every trace instead of the one that was clicked.
 	const selectedParam = encodeURIComponent(
 		`{"serviceName":["${servicename}"],"operation":["${operation}"]}`,
 	);

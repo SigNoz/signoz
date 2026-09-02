@@ -67,9 +67,6 @@ export function generateExplorerPath(
 		? ROUTES.LOGS_EXPLORER
 		: ROUTES.TRACES_EXPLORER;
 
-	// Percent-encode the interpolated service name for the same reason as
-	// navigateToTrace in ../utils.ts: an unencoded `#` starts a URL fragment and
-	// truncates the query string, taking `compositeQuery` with it.
 	const selectedParam = encodeURIComponent(`{"serviceName":["${servicename}"]}`);
 
 	return `${basePath}?${urlParams.toString()}&selected=${selectedParam}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&${
