@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -32,8 +33,13 @@ const (
 	Integration = "opsgenie"
 )
 
-// https://docs.opsgenie.com/docs/alert-api - 130 characters meaning runes.
-const maxMessageLenRunes = 130
+// https://support.atlassian.com/opsgenie/docs/alert-fields/ - message 130,
+// description 15000, note 25000 runes.
+const (
+	maxMessageLenRunes     = 130
+	maxDescriptionLenRunes = 15000
+	maxNoteLenRunes        = 25000
+)
 
 // Notifier implements a Notifier for OpsGenie notifications.
 type Notifier struct {
@@ -43,21 +49,29 @@ type Notifier struct {
 	client    *http.Client
 	retrier   *notify.Retrier
 	templater alertmanagertypes.Templater
+	// advancedFeatures bundles the JSM Ops enrichments: render the default body as
+	// HTML (markdown -> HTML), and post a note per fire and on resolve to build an
+	// immutable timeline. Off for plain OpsGenie. The alert-refresh-on-refire part
+	// rides on the upstream UpdateAlerts config flag, set alongside this.
+	advancedFeatures bool
 }
 
-// New returns a new OpsGenie notifier.
-func New(c *config.OpsGenieConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
+// New returns a new OpsGenie notifier. advancedFeatures enables the JSM Ops
+// enrichments (HTML default body + a note timeline per fire and on resolve);
+// pass false for plain OpsGenie.
+func New(c *config.OpsGenieConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater, advancedFeatures bool, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
 	client, err := notify.NewClientWithTracing(*c.HTTPConfig, Integration, httpOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return &Notifier{
-		conf:      c,
-		tmpl:      t,
-		logger:    l,
-		client:    client,
-		retrier:   &notify.Retrier{RetryCodes: []int{http.StatusTooManyRequests}},
-		templater: templater,
+		conf:             c,
+		tmpl:             t,
+		logger:           l,
+		client:           client,
+		retrier:          &notify.Retrier{RetryCodes: []int{http.StatusTooManyRequests}},
+		templater:        templater,
+		advancedFeatures: advancedFeatures,
 	}, nil
 }
 
@@ -94,6 +108,30 @@ type opsGenieUpdateDescriptionMessage struct {
 	Description string `json:"description,omitempty"`
 }
 
+type opsGenieAddNoteMessage struct {
+	Note   string `json:"note"`
+	Source string `json:"source"`
+}
+
+// noteRequest builds a POST to the alert's notes endpoint (append-only timeline).
+func (n *Notifier) noteRequest(ctx context.Context, alias, note, source string) (*http.Request, error) {
+	noteEndpointURL := n.conf.APIURL.Copy()
+	noteEndpointURL.Path += fmt.Sprintf("v2/alerts/%s/notes", alias)
+	q := noteEndpointURL.Query()
+	q.Set("identifierType", "alias")
+	noteEndpointURL.RawQuery = q.Encode()
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(&opsGenieAddNoteMessage{Note: note, Source: source}); err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("POST", noteEndpointURL.String(), &buf)
+	if err != nil {
+		return nil, err
+	}
+	return req.WithContext(ctx), nil
+}
+
 // Notify implements the Notifier interface.
 func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	requests, retry, err := n.createRequests(ctx, as...)
@@ -110,10 +148,22 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		shouldRetry, err := n.retrier.Check(resp.StatusCode, resp.Body)
 		notify.Drain(resp)
 		if err != nil {
+			// notes are enrichment; a permanently-failed note (e.g. the first-fire
+			// note racing JSM's async alert create) must not fail the notification
+			if !shouldRetry && isNoteRequest(req) {
+				n.logger.WarnContext(ctx, "dropping failed note", slog.Int("status_code", resp.StatusCode), errors.Attr(err))
+				continue
+			}
 			return shouldRetry, notify.NewErrorWithReason(notify.GetFailureReasonFromStatusCode(resp.StatusCode), err)
 		}
 	}
 	return true, nil
+}
+
+// isNoteRequest reports whether req targets the notes endpoint, the only one
+// built by noteRequest.
+func isNoteRequest(req *http.Request) bool {
+	return strings.HasSuffix(req.URL.Path, "/notes")
 }
 
 // Like Split but filter out empty strings.
@@ -145,28 +195,13 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) (s
 	}
 
 	var description string
-	if result.IsDefaultBody {
+	if result.IsDefaultBody && !n.advancedFeatures {
 		description = strings.Join(result.Body, "\n")
 	} else {
-		var b strings.Builder
-		first := true
-		for _, part := range result.Body {
-			if part == "" {
-				continue
-			}
-			rendered, renderErr := markdownrenderer.RenderHTML(part)
-			if renderErr != nil {
-				return "", "", renderErr
-			}
-			if !first {
-				b.WriteString("<hr>")
-			}
-			b.WriteString("<div>")
-			b.WriteString(rendered)
-			b.WriteString("</div>")
-			first = false
+		description, err = buildHTMLDescription(result.Body, maxDescriptionLenRunes)
+		if err != nil {
+			return "", "", err
 		}
-		description = b.String()
 	}
 
 	title, truncated := notify.TruncateInRunes(result.Title, maxMessageLenRunes)
@@ -174,7 +209,139 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) (s
 		n.logger.WarnContext(ctx, "Truncated message", slog.Int("max_runes", maxMessageLenRunes))
 	}
 
+	// The API silently truncates over-limit descriptions, which would drop the
+	// trailing SigNoz link; cap here with an ellipsis instead. The HTML path is
+	// pre-fitted above, so this only ever cuts the plain-text default body.
+	description, descTruncated := notify.TruncateInRunes(description, maxDescriptionLenRunes)
+	if descTruncated {
+		n.logger.WarnContext(ctx, "Truncated description", slog.Int("max_runes", maxDescriptionLenRunes))
+	}
+
 	return title, description, nil
+}
+
+const (
+	// room reserved for the "+N more" trailer appended when parts are dropped.
+	descriptionTrailerReserveRunes = 80
+	// below this rendering budget a shrunk part carries no signal; drop it instead.
+	minShrinkBudgetRunes = 64
+)
+
+// buildHTMLDescription renders each markdown part to HTML (<div>-wrapped,
+// <hr>-joined) while keeping the total within budget runes. An over-budget part
+// is shrunk at the markdown level and re-rendered so the HTML stays well-formed;
+// fully dropped parts are summarized by a "+N more" trailer.
+func buildHTMLDescription(parts []string, budget int) (string, error) {
+	rendering := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if part != "" {
+			rendering = append(rendering, part)
+		}
+	}
+
+	budget -= descriptionTrailerReserveRunes
+	var b strings.Builder
+	used, included := 0, 0
+	for _, part := range rendering {
+		rendered, err := markdownrenderer.RenderHTML(part)
+		if err != nil {
+			return "", err
+		}
+		overhead := len("<div></div>")
+		if included > 0 {
+			overhead += len("<hr>")
+		}
+		if used+overhead+utf8.RuneCountInString(rendered) > budget {
+			rendered, err = shrinkMarkdownToFit(part, budget-used-overhead)
+			if err != nil {
+				return "", err
+			}
+			if rendered == "" {
+				break
+			}
+		}
+		if included > 0 {
+			b.WriteString("<hr>")
+		}
+		b.WriteString("<div>")
+		b.WriteString(rendered)
+		b.WriteString("</div>")
+		used += overhead + utf8.RuneCountInString(rendered)
+		included++
+	}
+	if dropped := len(rendering) - included; dropped > 0 {
+		fmt.Fprintf(&b, "<hr><div><i>…and %d more alerts. Open in SigNoz for the full list.</i></div>", dropped)
+	}
+	return b.String(), nil
+}
+
+// shrinkMarkdownToFit cuts markdown until its rendered HTML fits within budget
+// runes, returning "" when the budget is too small to carry anything useful.
+// Only the markdown is ever cut, never the rendered HTML, so goldmark always
+// emits balanced markup.
+func shrinkMarkdownToFit(md string, budget int) (string, error) {
+	if budget < minShrinkBudgetRunes {
+		return "", nil
+	}
+	for range 4 {
+		rendered, err := markdownrenderer.RenderHTML(md)
+		if err != nil {
+			return "", err
+		}
+		renderedLen := utf8.RuneCountInString(rendered)
+		if renderedLen <= budget {
+			return rendered, nil
+		}
+		runes := []rune(md)
+		keep := len(runes) * budget / renderedLen * 9 / 10
+		if keep >= len(runes) {
+			keep = len(runes) - 1
+		}
+		if keep < minShrinkBudgetRunes {
+			return "", nil
+		}
+		md = string(runes[:keep]) + "…"
+	}
+	return "", nil
+}
+
+// prepareNote renders the same body template as plain text for a timeline note.
+// JSM Ops notes render neither HTML nor markdown, so links flatten to
+// "text (url)" and all markers are stripped.
+func (n *Notifier) prepareNote(ctx context.Context, alerts []*types.Alert) (string, error) {
+	customTitle, customBody := alertmanagertemplate.ExtractTemplatesFromAnnotations(alerts)
+	result, err := n.templater.Expand(ctx, alertmanagertypes.ExpandRequest{
+		TitleTemplate:        customTitle,
+		BodyTemplate:         customBody,
+		DefaultTitleTemplate: n.conf.Message,
+		DefaultBodyTemplate:  n.conf.Description,
+	}, alerts)
+	if err != nil {
+		return "", err
+	}
+
+	var b strings.Builder
+	first := true
+	for _, part := range result.Body {
+		text, renderErr := markdownrenderer.RenderPlainText(part)
+		if renderErr != nil {
+			return "", renderErr
+		}
+		if text = strings.TrimSpace(text); text == "" {
+			continue
+		}
+		if !first {
+			b.WriteString("\n\n")
+		}
+		b.WriteString(text)
+		first = false
+	}
+
+	note, truncated := notify.TruncateInRunes(b.String(), maxNoteLenRunes)
+	if truncated {
+		n.logger.WarnContext(ctx, "Truncated note", slog.Int("max_runes", maxNoteLenRunes))
+	}
+	return note, nil
 }
 
 // Create requests for a list of alerts.
@@ -206,6 +373,21 @@ func (n *Notifier) createRequests(ctx context.Context, as ...*types.Alert) ([]*h
 	)
 	switch alerts.Status() {
 	case model.AlertResolved:
+		// Post the resolved snapshot to the timeline before closing (closed alerts
+		// reject notes), so the note lands first.
+		if n.advancedFeatures {
+			note, err := n.prepareNote(ctx, as)
+			if err != nil {
+				n.logger.ErrorContext(ctx, "failed to prepare notification content", errors.Attr(err))
+				return nil, false, err
+			}
+			noteReq, err := n.noteRequest(ctx, alias, note, tmpl(n.conf.Source))
+			if err != nil {
+				return nil, true, err
+			}
+			requests = append(requests, noteReq)
+		}
+
 		resolvedEndpointURL := n.conf.APIURL.Copy()
 		resolvedEndpointURL.Path += fmt.Sprintf("v2/alerts/%s/close", alias)
 		q := resolvedEndpointURL.Query()
@@ -321,6 +503,21 @@ func (n *Notifier) createRequests(ctx context.Context, as ...*types.Alert) ([]*h
 				return nil, true, err
 			}
 			requests = append(requests, req.WithContext(ctx))
+		}
+
+		// Append this fire's snapshot to the timeline (every fire, including the
+		// first, so no datapoint is lost when the description is overwritten).
+		// Notes are plain text, so this uses the plain-text render, not the HTML body.
+		if n.advancedFeatures {
+			note, err := n.prepareNote(ctx, as)
+			if err != nil {
+				return nil, false, err
+			}
+			noteReq, err := n.noteRequest(ctx, alias, note, tmpl(n.conf.Source))
+			if err != nil {
+				return nil, true, err
+			}
+			requests = append(requests, noteReq)
 		}
 	}
 

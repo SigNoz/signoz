@@ -216,13 +216,20 @@ func (PostableChannel) JSONSchema() (jsonschema.Schema, error) {
 	schema.WithRequired("name")
 
 	var oneOf []jsonschema.SchemaOrBool
-	// Walk both halves: native fields on Receiver, upstream on the embed.
+	seen := map[string]struct{}{}
+	// Walk both halves: native fields on Receiver, upstream on the embed. A native
+	// field can shadow an upstream one with the same tag (e.g. jira_configs), so
+	// dedupe to avoid emitting two identical oneOf branches.
 	collect := func(t reflect.Type) {
 		for i := 0; i < t.NumField(); i++ {
 			jsonTag := strings.Split(t.Field(i).Tag.Get("json"), ",")[0]
 			if !strings.HasSuffix(jsonTag, "_configs") {
 				continue
 			}
+			if _, ok := seen[jsonTag]; ok {
+				continue
+			}
+			seen[jsonTag] = struct{}{}
 			branch := (&jsonschema.Schema{}).WithRequired(jsonTag)
 			oneOf = append(oneOf, branch.ToSchemaOrBool())
 		}

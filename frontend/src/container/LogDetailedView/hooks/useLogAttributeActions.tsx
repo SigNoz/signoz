@@ -5,7 +5,6 @@ import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
-import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ICurrentQueryData } from 'hooks/useHandleExplorerTabChange';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
@@ -57,7 +56,6 @@ export function useLogAttributeActions({
 	const { pathname } = useLocation();
 	const { stagedQuery, updateQueriesData } = useQueryBuilder();
 	const { featureFlags } = useAppContext();
-	const { viewName } = useGetSavedViewParams();
 
 	const isBodyJsonQueryEnabled =
 		featureFlags?.find((flag) => flag.name === FeatureKeys.USE_JSON_BODY)
@@ -110,8 +108,6 @@ export function useLogAttributeActions({
 			);
 
 			const queryData: ICurrentQueryData = {
-				name: viewName,
-				id: updatedQuery.id,
 				query: updatedQuery,
 			};
 			handleChangeSelectedView?.(ExplorerViews.LIST, queryData);
@@ -120,7 +116,6 @@ export function useLogAttributeActions({
 			stagedQuery,
 			isBodyJsonQueryEnabled,
 			updateQueriesData,
-			viewName,
 			handleChangeSelectedView,
 			onApplyLogFilter,
 		],
@@ -147,8 +142,6 @@ export function useLogAttributeActions({
 			);
 
 			const queryData: ICurrentQueryData = {
-				name: viewName,
-				id: updatedQuery.id,
 				query: updatedQuery,
 			};
 			handleChangeSelectedView?.(ExplorerViews.TIMESERIES, queryData);
@@ -157,7 +150,6 @@ export function useLogAttributeActions({
 			stagedQuery,
 			isBodyJsonQueryEnabled,
 			updateQueriesData,
-			viewName,
 			handleChangeSelectedView,
 		],
 	);
@@ -183,8 +175,6 @@ export function useLogAttributeActions({
 			);
 
 			const queryData: ICurrentQueryData = {
-				name: viewName,
-				id: updatedQuery.id,
 				query: updatedQuery,
 			};
 			handleChangeSelectedView?.(ExplorerViews.LIST, queryData);
@@ -193,7 +183,6 @@ export function useLogAttributeActions({
 			stagedQuery,
 			isBodyJsonQueryEnabled,
 			updateQueriesData,
-			viewName,
 			handleChangeSelectedView,
 		],
 	);

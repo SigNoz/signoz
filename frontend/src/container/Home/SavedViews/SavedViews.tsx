@@ -115,8 +115,8 @@ export default function SavedViews({
 				currentPanelType,
 				{
 					query,
-					name,
-					id,
+					viewName: name,
+					viewKey: id,
 				},
 				SOURCEPAGE_VS_ROUTES[selectedEntity],
 			);

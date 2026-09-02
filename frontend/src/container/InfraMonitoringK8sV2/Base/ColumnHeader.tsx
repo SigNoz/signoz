@@ -4,8 +4,9 @@ import { TooltipSimple } from '@signozhq/ui/tooltip';
 import styles from './ColumnHeader.module.scss';
 import cx from 'classnames';
 import { MouseEventHandler } from 'react';
+import { DOCS_BASE_URL } from 'constants/app';
 
-const DOCS_BASE_URL = `${process.env.DOCS_BASE_URL}/docs`;
+const DOCS_ROOT = `${DOCS_BASE_URL}/docs`;
 
 interface ColumnHeaderProps {
 	children?: React.ReactNode;
@@ -43,7 +44,7 @@ function ColumnHeader({
 						<div onClick={stopPropagationHandler}>
 							{tooltipTitle}{' '}
 							<a
-								href={`${DOCS_BASE_URL}${docPath}`}
+								href={`${DOCS_ROOT}${docPath}`}
 								target="_blank"
 								rel="noopener"
 								onClick={stopPropagationHandler}
