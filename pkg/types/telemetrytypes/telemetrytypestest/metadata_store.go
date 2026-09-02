@@ -163,6 +163,14 @@ func (m *MockMetadataStore) GetKey(ctx context.Context, _ valuer.UUID, fieldKeyS
 	return result, nil
 }
 
+func (m *MockMetadataStore) GetColumnEvolutions(_ context.Context, selectors []*telemetrytypes.EvolutionSelector) ([]*telemetrytypes.EvolutionEntry, error) {
+	var evolutions []*telemetrytypes.EvolutionEntry
+	for _, selector := range selectors {
+		evolutions = append(evolutions, m.ColumnEvolutionMetadataMap[selector.QualifiedName()]...)
+	}
+	return evolutions, nil
+}
+
 // GetRelatedValues returns a list of related values for the given key name and selection.
 func (m *MockMetadataStore) GetRelatedValues(ctx context.Context, _ valuer.UUID, fieldValueSelector *telemetrytypes.FieldValueSelector) ([]string, bool, error) {
 	if fieldValueSelector == nil {

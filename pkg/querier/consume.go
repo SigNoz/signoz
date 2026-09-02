@@ -466,16 +466,60 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 	}, nil
 }
 
+// jsonAttributeMap returns the decoded document of a scanned JSON attributes column (the driver
+// scans it into telemetrystoretypes.JSONValue) and whether one was present.
+func jsonAttributeMap(v any) (map[string]any, bool) {
+	switch m := v.(type) {
+	case telemetrystoretypes.JSONValue:
+		if m == nil {
+			return nil, false
+		}
+		return m, true
+	case map[string]any:
+		if m == nil {
+			return nil, false
+		}
+		return m, true
+	default:
+		return nil, false
+	}
+}
+
+// flattenJSONPaths flattens a decoded JSON document into dotted keys (a nested {"http":{"route":x}}
+// becomes "http.route": x), matching the legacy map representation so the attributes bag has the
+// same flat shape whether it was read from the maps or the JSON column. Existing keys are
+// overwritten, so a JSON path wins over a same-named map entry.
+func flattenJSONPaths(prefix string, m map[string]any, out map[string]any) {
+	for k, v := range m {
+		key := k
+		if prefix != "" {
+			key = prefix + "." + k
+		}
+		switch child := v.(type) {
+		case map[string]any:
+			flattenJSONPaths(key, child, out)
+		case telemetrystoretypes.JSONValue:
+			flattenJSONPaths(key, child, out)
+		default:
+			out[key] = v
+		}
+	}
+}
+
 // mergeSpanAttributeColumns merges (attributes_string, attributes_number, attributes_bool, resources_string) into
 // unified "attributes" and "resource" keys, and parses the stringified `events`
 // and `links` columns into structured slices. Raw DB columns are removed.
+//
+// After the JSON rollout the attributes bag is read from the `attributes` JSON column instead of,
+// or alongside, the legacy maps; those paths are flattened in and win over the maps on collision.
 func mergeSpanAttributeColumns(data map[string]any) {
 	attrStr, hasStr := data["attributes_string"]
 	attrNum, hasNum := data["attributes_number"]
 	attrBool, hasBool := data["attributes_bool"]
+	attrJSON, hasJSON := jsonAttributeMap(data["attributes"])
 	// todo(nitya): move to resource json
 	resStr, hasRes := data["resources_string"]
-	if hasStr || hasNum || hasBool || hasRes {
+	if hasStr || hasNum || hasBool || hasJSON || hasRes {
 		attributes := make(map[string]any)
 		if m, ok := attrStr.(map[string]string); ok {
 			for k, v := range m {
@@ -491,6 +535,9 @@ func mergeSpanAttributeColumns(data map[string]any) {
 			for k, v := range m {
 				attributes[k] = v
 			}
+		}
+		if hasJSON {
+			flattenJSONPaths("", attrJSON, attributes)
 		}
 		delete(data, "attributes_string")
 		delete(data, "attributes_number")

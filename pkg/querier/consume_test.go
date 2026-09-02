@@ -195,3 +195,48 @@ func TestMergeSpanAttributeColumns_EmptyEventsAndLinks(t *testing.T) {
 		t.Fatalf("expected empty []spantypes.Link, got %#v", data["links"])
 	}
 }
+
+func TestMergeSpanAttributeColumns_JSONColumn(t *testing.T) {
+	t.Run("json only flattens nested paths and preserves types", func(t *testing.T) {
+		data := map[string]any{
+			"attributes": telemetrystoretypes.JSONValue{
+				"http": map[string]any{
+					"route": "/api/pay",
+					"retry": map[string]any{"count": float64(3)},
+				},
+				"cache.hit": true,
+			},
+			"resources_string": map[string]string{"service.name": "api"},
+		}
+
+		mergeSpanAttributeColumns(data)
+
+		attrs, ok := data["attributes"].(map[string]any)
+		require.True(t, ok, "attributes should be flattened to map[string]any, got %T", data["attributes"])
+		assert.Equal(t, "/api/pay", attrs["http.route"])
+		assert.Equal(t, float64(3), attrs["http.retry.count"])
+		assert.Equal(t, true, attrs["cache.hit"])
+		_, nested := attrs["http"]
+		assert.False(t, nested, "nested objects must be flattened away, not kept")
+	})
+
+	t.Run("straddle: json paths win over legacy map on collision, union otherwise", func(t *testing.T) {
+		data := map[string]any{
+			"attributes_string": map[string]string{"http.route": "/old", "only.map": "m"},
+			"attributes_number": map[string]float64{"http.status": 500},
+			"attributes":        telemetrystoretypes.JSONValue{"http": map[string]any{"route": "/new"}},
+			"resources_string":  map[string]string{"service.name": "api"},
+		}
+
+		mergeSpanAttributeColumns(data)
+
+		attrs := data["attributes"].(map[string]any)
+		assert.Equal(t, "/new", attrs["http.route"], "json home wins on collision")
+		assert.Equal(t, "m", attrs["only.map"], "map-only key survives")
+		assert.Equal(t, float64(500), attrs["http.status"], "number map key survives")
+		for _, removed := range []string{"attributes_string", "attributes_number", "attributes_bool"} {
+			_, present := data[removed]
+			assert.False(t, present, "%s should be removed", removed)
+		}
+	})
+}

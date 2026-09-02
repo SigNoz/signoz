@@ -19,6 +19,11 @@ type MetadataStore interface {
 	// GetKey returns a list of keys with the given name.
 	GetKey(ctx context.Context, orgID valuer.UUID, fieldKeySelector *FieldKeySelector) ([]*TelemetryFieldKey, error)
 
+	// GetColumnEvolutions returns the column-evolution entries matching the selectors (including
+	// __all__ family rows) without resolving concrete keys, so a whole-column read such as the
+	// list-view attributes bag can pick its physical homes for the query window.
+	GetColumnEvolutions(ctx context.Context, selectors []*EvolutionSelector) ([]*EvolutionEntry, error)
+
 	// GetRelatedValues returns a list of related values for the given key name
 	// and the existing selection of keys.
 	GetRelatedValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *FieldValueSelector) ([]string, bool, error)
