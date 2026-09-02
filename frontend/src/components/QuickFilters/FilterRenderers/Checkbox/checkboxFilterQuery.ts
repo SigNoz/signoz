@@ -101,45 +101,6 @@ export function deriveCheckboxState({
 	return filterState;
 }
 
-/**
- * Returns a new query with every clause for this attribute key removed, both
- * from the structured filter items and the raw filter expression.
- */
-export function clearFilterFromQuery({
-	currentQuery,
-	filter,
-	activeQueryIndex,
-}: {
-	currentQuery: Query;
-	filter: IQuickFiltersConfig;
-	activeQueryIndex: number;
-}): Query {
-	return {
-		...currentQuery,
-		builder: {
-			...currentQuery.builder,
-			queryData: currentQuery.builder.queryData.map((item, idx) => ({
-				...item,
-				filter: {
-					expression: removeKeysFromExpression(item.filter?.expression ?? '', [
-						filter.attributeKey.key,
-					]),
-				},
-				filters: {
-					...item.filters,
-					items:
-						idx === activeQueryIndex
-							? item.filters?.items?.filter(
-									(fil) => !isKeyMatch(fil.key?.key, filter.attributeKey.key),
-								) || []
-							: [...(item.filters?.items || [])],
-					op: item.filters?.op || 'AND',
-				},
-			})),
-		},
-	};
-}
-
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export function applyCheckboxToggle({
 	currentQuery,
