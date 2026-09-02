@@ -1,5 +1,8 @@
 /* eslint-disable sonarjs/no-identical-functions */
-import { removeKeysFromExpression } from 'components/QueryBuilderV2/utils';
+import {
+	convertFiltersToExpressionWithExistingQuery,
+	removeKeysFromExpression,
+} from 'components/QueryBuilderV2/utils';
 import {
 	IQuickFiltersConfig,
 	QuickFiltersSource,
@@ -194,12 +197,6 @@ export function applyCheckboxToggle({
 			(q) => !isKeyMatch(q.key?.key, filter.attributeKey.key),
 		);
 
-		if (query.filter?.expression) {
-			query.filter.expression = removeKeysFromExpression(query.filter.expression, [
-				filter.attributeKey.key,
-			]);
-		}
-
 		if (isOnlyOrAll === 'Only') {
 			const newFilterItem: TagFilterItem = {
 				id: uuid(),
@@ -267,12 +264,6 @@ export function applyCheckboxToggle({
 									}
 									return item;
 								});
-								if (query.filter?.expression) {
-									query.filter.expression = removeKeysFromExpression(
-										query.filter.expression,
-										[filter.attributeKey.key],
-									);
-								}
 							} else if (isArray(currentFilter.value)) {
 								// if we are removing some value when the running operator is IN we filter.
 								// example - key IN [value1,currentSelectedValue] becomes key IN [value1] in case of array
@@ -309,9 +300,10 @@ export function applyCheckboxToggle({
 							? currentFilter.value.includes(value)
 							: currentFilter.value === value;
 
-						// When clicking unchecked "Other" item, user wants to SELECT it
-						// Replace NOT IN filter with IN [value]
-						if (previousState === 'unchecked' && checked) {
+						// When clicking an unchecked value that is not itself excluded, the user
+						// wants to SELECT it: replace the NOT IN filter with IN [value]. A value
+						// that IS in the exclusion list falls through to the removal branch below.
+						if (previousState === 'unchecked' && checked && !isValueInFilter) {
 							const newFilter: TagFilterItem = {
 								id: uuid(),
 								op: getOperatorValue(OPERATORS.IN),
@@ -324,12 +316,6 @@ export function applyCheckboxToggle({
 								}
 								return item;
 							});
-							if (query.filter?.expression) {
-								query.filter.expression = removeKeysFromExpression(
-									query.filter.expression,
-									[filter.attributeKey.key],
-								);
-							}
 						} else if (!checked || !isValueInFilter) {
 							// Add to NOT IN when:
 							// - checked=false (user explicitly unchecked to exclude)
@@ -369,12 +355,6 @@ export function applyCheckboxToggle({
 									query.filters.items = query.filters.items.filter(
 										(item) => !isKeyMatch(item.key?.key, filter.attributeKey.key),
 									);
-									if (query.filter?.expression) {
-										query.filter.expression = removeKeysFromExpression(
-											query.filter.expression,
-											[filter.attributeKey.key],
-										);
-									}
 								} else {
 									query.filters.items = query.filters.items.map((item) => {
 										if (isKeyMatch(item.key?.key, filter.attributeKey.key)) {
@@ -384,16 +364,6 @@ export function applyCheckboxToggle({
 									});
 								}
 							} else {
-								const newFilter = {
-									...currentFilter,
-									value: currentFilter.value === value ? null : currentFilter.value,
-								};
-								if (newFilter.value === null && query.filter?.expression) {
-									query.filter.expression = removeKeysFromExpression(
-										query.filter.expression,
-										[filter.attributeKey.key],
-									);
-								}
 								query.filters.items = query.filters.items.filter(
 									(item) => !isKeyMatch(item.key?.key, filter.attributeKey.key),
 								);
@@ -454,6 +424,17 @@ export function applyCheckboxToggle({
 			};
 			query.filters.items = [...query.filters.items, newFilterItem];
 		}
+	}
+
+	if (query) {
+		const synced = convertFiltersToExpressionWithExistingQuery(
+			query.filters ?? { items: [], op: 'AND' },
+			removeKeysFromExpression(query.filter?.expression ?? '', [
+				filter.attributeKey.key,
+			]),
+		);
+		query.filter = synced.filter;
+		query.filters = synced.filters;
 	}
 
 	return {
