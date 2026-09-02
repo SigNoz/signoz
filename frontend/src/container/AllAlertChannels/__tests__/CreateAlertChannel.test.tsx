@@ -1,6 +1,10 @@
 import CreateAlertChannels from 'container/CreateAlertChannels';
 import { ChannelType } from 'container/CreateAlertChannels/config';
-import { GoogleChatInitialConfig } from 'container/CreateAlertChannels/defaults';
+import {
+	GoogleChatInitialConfig,
+	JiraInitialConfig,
+	JsmOpsInitialConfig,
+} from 'container/CreateAlertChannels/defaults';
 import {
 	googleChatDescriptionDefaultValue,
 	googleChatTitleDefaultValue,
@@ -521,6 +525,213 @@ describe('Create Alert Channel', () => {
 							title: GoogleChatInitialConfig.title,
 							text: GoogleChatInitialConfig.text,
 							send_resolved: true,
+						},
+					],
+				});
+			});
+		});
+		describe('Jira', () => {
+			const validSite = 'https://acme.atlassian.net';
+
+			const fillRequired = async (
+				user: ReturnType<typeof userEvent.setup>,
+				site: string,
+			): Promise<void> => {
+				await user.type(screen.getByTestId('channel-name-textbox'), 'jira-channel');
+				await user.type(screen.getByTestId('jira-site-textbox'), site);
+				await user.type(screen.getByTestId('jira-email-textbox'), 'me@acme.com');
+				await user.type(screen.getByTestId('jira-api-token-textbox'), 'tok123');
+				await user.type(screen.getByTestId('jira-project-textbox'), 'KAN');
+			};
+
+			beforeEach(() => {
+				render(<CreateAlertChannels preType={ChannelType.Jira} />);
+			});
+
+			it('Should check if the selected item in the type dropdown has text "Jira"', () => {
+				expect(screen.getByText('Jira')).toBeInTheDocument();
+			});
+
+			it('Should check if the Site URL field is displayed properly', () => {
+				testLabelInputAndHelpValue({
+					labelText: 'field_jira_site',
+					testId: 'jira-site-textbox',
+				});
+			});
+
+			it('Should prefill the issue type with Task', () => {
+				expect(screen.getByTestId('jira-issue-type-textbox')).toHaveValue('Task');
+			});
+
+			it('Should show the service-account recommendation tip linking to the docs', () => {
+				expect(screen.getByTestId('jira-service-account-tip')).toBeInTheDocument();
+				expect(
+					screen.getByRole('link', { name: 'jira_service_account_tip_link' }),
+				).toHaveAttribute(
+					'href',
+					'https://signoz.io/docs/alerts-management/notification-channel/jira/#use-a-service-account-recommended',
+				);
+			});
+
+			it('Should display an error when the site is not an atlassian.net URL', async () => {
+				const user = userEvent.setup({ delay: null });
+				await fillRequired(user, 'https://example.com');
+
+				await user.click(screen.getByTestId('save-channel-button'));
+
+				await waitFor(() =>
+					expect(errorNotification).toHaveBeenCalledWith({
+						message: 'Error',
+						description: 'jira_site_invalid',
+					}),
+				);
+			});
+
+			it('Should send a jira_configs payload with basic auth', async () => {
+				let requestBody: unknown;
+				server.use(
+					rest.post('http://localhost/api/v1/channels', async (req, res, ctx) => {
+						requestBody = await req.json();
+						return res(
+							ctx.status(201),
+							ctx.json({ status: 'success', data: 'channel created' }),
+						);
+					}),
+				);
+
+				const user = userEvent.setup({ delay: null });
+				await fillRequired(user, validSite);
+
+				await user.click(screen.getByTestId('save-channel-button'));
+
+				await waitFor(() =>
+					expect(successNotification).toHaveBeenCalledWith({
+						message: 'Success',
+						description: 'channel_creation_done',
+					}),
+				);
+
+				expect(requestBody).toStrictEqual({
+					name: 'jira-channel',
+					jira_configs: [
+						{
+							site: validSite,
+							project: 'KAN',
+							issue_type: 'Task',
+							summary: JiraInitialConfig.summary,
+							description: JiraInitialConfig.description,
+							send_resolved: true,
+							http_config: {
+								basic_auth: { username: 'me@acme.com', password: 'tok123' },
+							},
+						},
+					],
+				});
+			}, 15000);
+
+			it('Should block save when the reopen window is below the 1m minimum', async () => {
+				const user = userEvent.setup({ delay: null });
+				await fillRequired(user, validSite);
+
+				await user.click(screen.getByText('jira_advanced_section'));
+				await user.type(screen.getByTestId('jira-reopen-duration-textbox'), '30s');
+
+				// the rule surfaces an inline message, not just a red border
+				await expect(
+					screen.findByText('jira_reopen_duration_invalid'),
+				).resolves.toBeInTheDocument();
+
+				await user.click(screen.getByTestId('save-channel-button'));
+
+				await waitFor(() =>
+					expect(errorNotification).toHaveBeenCalledWith({
+						message: 'Error',
+						description: 'jira_reopen_duration_invalid',
+					}),
+				);
+			}, 15000);
+		});
+		describe('JSM Ops', () => {
+			beforeEach(() => {
+				render(<CreateAlertChannels preType={ChannelType.JsmOps} />);
+			});
+
+			it('Should show "Jira Service Management Ops" as the selected type', () => {
+				expect(screen.getByText('Jira Service Management Ops')).toBeInTheDocument();
+			});
+
+			it('Should display the API key field properly', () => {
+				testLabelInputAndHelpValue({
+					labelText: 'field_jsmops_api_key',
+					testId: 'jsmops-api-key-textbox',
+				});
+			});
+
+			it('Should show the tip linking to the JSM Ops docs', () => {
+				expect(screen.getByTestId('jsmops-tip')).toBeInTheDocument();
+				expect(
+					screen.getByRole('link', { name: 'jsmops_tip_link' }),
+				).toHaveAttribute(
+					'href',
+					'https://signoz.io/docs/alerts-management/notification-channel/jsm-ops/',
+				);
+			});
+
+			it('Should block save when the API key is missing', async () => {
+				const user = userEvent.setup();
+				await user.type(
+					screen.getByTestId('channel-name-textbox'),
+					'jsmops-channel',
+				);
+
+				await user.click(screen.getByTestId('save-channel-button'));
+
+				await waitFor(() =>
+					expect(errorNotification).toHaveBeenCalledWith({
+						message: 'Error',
+						description: 'api_key_required',
+					}),
+				);
+			});
+
+			it('Should send a jsmops_configs payload with prefilled defaults', async () => {
+				let requestBody: unknown;
+				server.use(
+					rest.post('http://localhost/api/v1/channels', async (req, res, ctx) => {
+						requestBody = await req.json();
+						return res(
+							ctx.status(201),
+							ctx.json({ status: 'success', data: 'channel created' }),
+						);
+					}),
+				);
+
+				const user = userEvent.setup();
+				await user.type(
+					screen.getByTestId('channel-name-textbox'),
+					'jsmops-channel',
+				);
+				await user.type(screen.getByTestId('jsmops-api-key-textbox'), 'key-abc');
+
+				await user.click(screen.getByTestId('save-channel-button'));
+
+				await waitFor(() =>
+					expect(successNotification).toHaveBeenCalledWith({
+						message: 'Success',
+						description: 'channel_creation_done',
+					}),
+				);
+
+				expect(requestBody).toStrictEqual({
+					name: 'jsmops-channel',
+					jsmops_configs: [
+						{
+							api_key: 'key-abc',
+							send_resolved: true,
+							message: JsmOpsInitialConfig.message,
+							description: JsmOpsInitialConfig.description,
+							priority: JsmOpsInitialConfig.priority,
+							tags: JsmOpsInitialConfig.tags?.join(','),
 						},
 					],
 				});
