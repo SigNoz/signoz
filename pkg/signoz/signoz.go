@@ -624,9 +624,16 @@ func New(
 		ctx,
 		providerSettings,
 		config.APIServer,
-		NewAPIServerProviderFactories(orgGetter, authz, modules, handlers, config.Global),
+		NewAPIServerProviderFactories(orgGetter, authz, modules, handlers, config.Global, identNResolver, sharder, auditor, web),
 		"signoz",
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Register the API server with the registry so its lifecycle is managed
+	// alongside the other services and it shows up in the health endpoint.
+	err = registry.Add(ctx, factory.NewNamedService(factory.MustNewName("apiserver"), apiserverInstance))
 	if err != nil {
 		return nil, err
 	}

@@ -2,16 +2,24 @@ package signozapiserver
 
 import (
 	"context"
+	"log/slog"
+	"net"
+	"net/http"
+	"slices"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apiserver"
+	"github.com/SigNoz/signoz/pkg/auditor"
 	"github.com/SigNoz/signoz/pkg/authz"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/gateway"
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/identn"
 	"github.com/SigNoz/signoz/pkg/modules/aiobservability"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
@@ -34,17 +42,27 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/ruler"
+	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/SigNoz/signoz/pkg/zeus"
+	gorillahandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
+	"go.opentelemetry.io/otel/propagation"
 )
 
 type provider struct {
 	config                     apiserver.Config
 	settings                   factory.ScopedProviderSettings
+	globalConfig               global.Config
+	web                        web.Web
 	router                     *mux.Router
+	server                     *http.Server
+	healthyC                   chan struct{}
 	authzMiddleware            *middleware.AuthZ
 	authzService               authz.AuthZ
 	orgHandler                 organization.Handler
@@ -116,6 +134,11 @@ func NewFactory(
 	rulerHandler ruler.Handler,
 	statsHandler statsreporter.Handler,
 	savedViewHandler savedview.Handler,
+	globalConfig global.Config,
+	identNResolver identn.IdentNResolver,
+	sharder sharder.Sharder,
+	auditor auditor.Auditor,
+	web web.Web,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
 		return newProvider(
@@ -156,6 +179,11 @@ func NewFactory(
 			rulerHandler,
 			statsHandler,
 			savedViewHandler,
+			globalConfig,
+			identNResolver,
+			sharder,
+			auditor,
+			web,
 		)
 	})
 }
@@ -198,6 +226,11 @@ func newProvider(
 	rulerHandler ruler.Handler,
 	statsHandler statsreporter.Handler,
 	savedViewHandler savedview.Handler,
+	globalConfig global.Config,
+	identNResolver identn.IdentNResolver,
+	sharder sharder.Sharder,
+	auditor auditor.Auditor,
+	web web.Web,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
@@ -205,7 +238,10 @@ func newProvider(
 	provider := &provider{
 		config:                     config,
 		settings:                   settings,
+		globalConfig:               globalConfig,
+		web:                        web,
 		router:                     router,
+		healthyC:                   make(chan struct{}),
 		orgHandler:                 orgHandler,
 		userHandler:                userHandler,
 		authzService:               authzService,
@@ -243,11 +279,98 @@ func newProvider(
 
 	provider.authzMiddleware = middleware.NewAuthZ(settings.Logger(), orgGetter, authzService)
 
+	router.Use(middleware.NewRecovery(settings.Logger()).Wrap)
+	router.Use(otelmux.Middleware(
+		"apiserver",
+		otelmux.WithMeterProvider(providerSettings.MeterProvider),
+		otelmux.WithTracerProvider(providerSettings.TracerProvider),
+		otelmux.WithPropagators(propagation.NewCompositeTextMapPropagator(propagation.Baggage{}, propagation.TraceContext{})),
+		otelmux.WithFilter(func(r *http.Request) bool {
+			return !slices.Contains([]string{"/api/v1/health"}, r.URL.Path)
+		}),
+	))
+	router.Use(middleware.NewIdentN(identNResolver, sharder, settings.Logger()).Wrap)
+	router.Use(middleware.NewTimeout(settings.Logger(),
+		config.Timeout.ExcludedRoutes,
+		config.Timeout.Default,
+		config.Timeout.Max,
+	).Wrap)
+	router.Use(middleware.NewResource(settings.Logger()).Wrap)
+	router.Use(middleware.NewAudit(settings.Logger(), config.Logging.ExcludedRoutes, auditor).Wrap)
+	router.Use(middleware.NewComment().Wrap)
+
 	if err := provider.AddToRouter(router); err != nil {
 		return nil, err
 	}
 
+	c := cors.New(cors.Options{
+		AllowedOrigins: []string{"*"},
+		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "PATCH", "OPTIONS"},
+		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "cache-control", "X-SIGNOZ-QUERY-ID", "Sec-WebSocket-Protocol"},
+	})
+
+	httpHandler := c.Handler(router)
+	httpHandler = gorillahandlers.CompressHandler(httpHandler)
+
+	routePrefix := globalConfig.ExternalPath()
+	if routePrefix != "" {
+		prefixed := http.StripPrefix(routePrefix, httpHandler)
+		httpHandler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			switch req.URL.Path {
+			case "/api/v1/health", "/api/v2/healthz", "/api/v2/readyz", "/api/v2/livez":
+				router.ServeHTTP(w, req)
+				return
+			}
+
+			prefixed.ServeHTTP(w, req)
+		})
+	}
+
+	provider.server = &http.Server{
+		Handler: httpHandler,
+	}
+
 	return provider, nil
+}
+
+func (provider *provider) Start(ctx context.Context) error {
+	// Mount the web routes last so the catch-all prefix does not shadow API
+	// routes registered on the router after construction.
+	if err := provider.web.AddToRouter(provider.router); err != nil {
+		return err
+	}
+
+	if provider.config.Address == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "apiserver.address is required")
+	}
+
+	listener, err := net.Listen("tcp", provider.config.Address)
+	if err != nil {
+		return err
+	}
+
+	provider.settings.Logger().InfoContext(ctx, "starting apiserver", slog.String("address", listener.Addr().String()))
+	close(provider.healthyC)
+
+	switch err := provider.server.Serve(listener); err {
+	case nil, http.ErrServerClosed:
+		// normal exit, nothing to do
+	default:
+		return err
+	}
+
+	return nil
+}
+
+func (provider *provider) Stop(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	return provider.server.Shutdown(ctx)
+}
+
+func (provider *provider) Healthy() <-chan struct{} {
+	return provider.healthyC
 }
 
 func (provider *provider) Router() *mux.Router {
