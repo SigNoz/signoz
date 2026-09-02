@@ -5,7 +5,6 @@ import type {
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPageV2/DashboardContainer/Panels/types/panelKind';
 import { fromPerses } from 'pages/DashboardPageV2/DashboardContainer/queryV5/persesQueryAdapters';
@@ -34,7 +33,6 @@ export function readPanelUnit(
  */
 export function buildAlertUrl(
 	query: Query,
-	panelType: PANEL_TYPES,
 	unit?: string,
 	prefill?: PanelAlertPrefill,
 ): string {
@@ -48,7 +46,6 @@ export function buildAlertUrl(
 		QueryParams.compositeQuery,
 		encodeURIComponent(JSON.stringify(query)),
 	);
-	params.set(QueryParams.panelTypes, panelType);
 	params.set(QueryParams.version, ENTITY_VERSION_V5);
 	params.set(QueryParams.source, YAxisSource.DASHBOARDS);
 
@@ -76,10 +73,5 @@ export function buildCreateAlertUrl(panel: DashboardtypesPanelDTO): string {
 	const panelType = PANEL_KIND_TO_PANEL_TYPE[panel.spec.plugin.kind];
 	const query = fromPerses(panel.spec.queries, panelType);
 	const unit = readPanelUnit(panel.spec.plugin);
-	return buildAlertUrl(
-		query,
-		panelType,
-		unit,
-		deriveAlertPrefill(panel, query, unit),
-	);
+	return buildAlertUrl(query, unit, deriveAlertPrefill(panel, query, unit));
 }
