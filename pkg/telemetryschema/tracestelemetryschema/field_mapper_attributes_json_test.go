@@ -271,8 +271,10 @@ func TestConditionForAttributeJSONTypeCollision(t *testing.T) {
 }
 
 // TestColumnExpressionForAttributeJSONTypeCollision covers group-by on a name stored under two
-// data types: both interpretations fold into a single multiIf output column, each guarded on the
-// shared raw path and coerced to the group-by type (String rendered directly, Int64 via toString).
+// data types. On the JSON column both interpretations read the same path, so the raw-path guard
+// can't tell them apart; each branch is instead guarded by whether the path casts to its type,
+// with the ::String branch as the last-resort fallback. A row is read as its actual stored type
+// (int via Nullable(Int64), everything else via ::String) rather than the first branch winning.
 func TestColumnExpressionForAttributeJSONTypeCollision(t *testing.T) {
 	ctx := context.Background()
 	fm := NewFieldMapper(flaggertest.New(t))
@@ -288,7 +290,30 @@ func TestColumnExpressionForAttributeJSONTypeCollision(t *testing.T) {
 	got, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, attrWindowAfter[0], attrWindowAfter[1], &ref, telemetrytypes.FieldDataTypeString, fieldKeys)
 	require.NoError(t, err)
 	assert.Equal(t,
-		"multiIf(attributes.`http.status_code` IS NOT NULL, attributes.`http.status_code`::String, attributes.`http.status_code` IS NOT NULL, toString(attributes.`http.status_code`::Nullable(Int64)), NULL)",
+		"multiIf(attributes.`http.status_code`::Nullable(Int64) IS NOT NULL, toString(attributes.`http.status_code`::Nullable(Int64)), attributes.`http.status_code` IS NOT NULL, attributes.`http.status_code`::String, NULL)",
+		got)
+}
+
+// TestColumnExpressionForAttributeJSONTypeCollisionNumericAgg covers a numeric aggregation over a
+// name colliding as Number and String: the numeric branch is read natively when the path casts to
+// a number, and only rows that are not numeric fall through to the string parse — so a genuinely
+// string-stored value is never silently nulled by a numeric-first cast.
+func TestColumnExpressionForAttributeJSONTypeCollisionNumericAgg(t *testing.T) {
+	ctx := context.Background()
+	fm := NewFieldMapper(flaggertest.New(t))
+	evo := MockAttributeEvolutionData(attrJSONRelease)
+
+	numKey := attrKey("http.status_code", telemetrytypes.FieldDataTypeNumber, evo)
+	strKey := attrKey("http.status_code", telemetrytypes.FieldDataTypeString, evo)
+	fieldKeys := map[string][]*telemetrytypes.TelemetryFieldKey{
+		"http.status_code": {&numKey, &strKey},
+	}
+
+	ref := attrKey("http.status_code", telemetrytypes.FieldDataTypeUnspecified, nil)
+	got, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, attrWindowAfter[0], attrWindowAfter[1], &ref, telemetrytypes.FieldDataTypeFloat64, fieldKeys)
+	require.NoError(t, err)
+	assert.Equal(t,
+		"multiIf(attributes.`http.status_code`::Nullable(Float64) IS NOT NULL, toFloat64(attributes.`http.status_code`::Nullable(Float64)), attributes.`http.status_code` IS NOT NULL, toFloat64OrNull(attributes.`http.status_code`::String), NULL)",
 		got)
 }
 
@@ -334,4 +359,77 @@ func TestColumnForUnspecifiedAttributeNoBranchFlip(t *testing.T) {
 	key := attrKey("user.id", telemetrytypes.FieldDataTypeUnspecified, evo)
 	_, err := fm.ColumnFor(ctx, valuer.UUID{}, attrWindowAfter[0], attrWindowAfter[1], &key)
 	assert.ErrorIs(t, err, qbtypes.ErrColumnNotFound)
+}
+
+// TestConditionForAttributeJSONNegativeOperatorParity pins Map-era semantics for negative
+// operators on numeric/bool attributes: an absent key must behave as the Map default (0/false),
+// so rows lacking the key are KEPT (0 != x is true). The NULL-capable JSON cast is folded back
+// to the type zero via ifNull; Map-era and collision expressions pass through untouched.
+func TestConditionForAttributeJSONNegativeOperatorParity(t *testing.T) {
+	ctx := context.Background()
+	fm := NewFieldMapper(flaggertest.New(t))
+	cb := NewConditionBuilder(fm, flaggertest.New(t))
+	evo := MockAttributeEvolutionData(attrJSONRelease)
+
+	build := func(t *testing.T, key telemetrytypes.TelemetryFieldKey, window [2]uint64, op qbtypes.FilterOperator, value any) string {
+		t.Helper()
+		sb := sqlbuilder.NewSelectBuilder()
+		conds, _, err := cb.ConditionFor(ctx, valuer.UUID{}, window[0], window[1], &key,
+			map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, qbtypes.ConditionBuilderOptions{}, op, value, sb)
+		require.NoError(t, err)
+		sb.Where(conds...)
+		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		return sql
+	}
+
+	t.Run("not equal number after -> ifNull 0", func(t *testing.T) {
+		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
+		sql := build(t, key, attrWindowAfter, qbtypes.FilterOperatorNotEqual, float64(200))
+		assert.Contains(t, sql, "ifNull(toFloat64(attributes.`http.status_code`::Nullable(Int64)), 0) <> ?")
+	})
+
+	t.Run("not equal bool after -> ifNull false", func(t *testing.T) {
+		key := attrKey("http.cache.hit", telemetrytypes.FieldDataTypeBool, evo)
+		sql := build(t, key, attrWindowAfter, qbtypes.FilterOperatorNotEqual, true)
+		assert.Contains(t, sql, "ifNull(attributes.`http.cache.hit`::Nullable(Bool), false) <> ?")
+	})
+
+	t.Run("not in number after -> each operand folded", func(t *testing.T) {
+		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
+		sql := build(t, key, attrWindowAfter, qbtypes.FilterOperatorNotIn, []any{float64(200), float64(404)})
+		assert.Contains(t, sql, "(ifNull(toFloat64(attributes.`http.status_code`::Nullable(Int64)), 0) <> ? AND ifNull(toFloat64(attributes.`http.status_code`::Nullable(Int64)), 0) <> ?)")
+	})
+
+	t.Run("not equal number straddle -> whole multiIf folded", func(t *testing.T) {
+		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
+		sql := build(t, key, attrWindowStraddle, qbtypes.FilterOperatorNotEqual, float64(200))
+		assert.Contains(t, sql, "ifNull(toFloat64(multiIf(attributes.`http.status_code` IS NOT NULL, attributes.`http.status_code`::Nullable(Int64), mapContains(attributes_number, 'http.status_code'), attributes_number['http.status_code'], NULL)), 0) <> ?")
+	})
+
+	t.Run("not equal number before -> harmless ifNull wrap on map read", func(t *testing.T) {
+		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
+		sql := build(t, key, attrWindowBefore, qbtypes.FilterOperatorNotEqual, float64(200))
+		assert.Contains(t, sql, "ifNull(toFloat64(attributes_number['http.status_code']), 0) <> ?")
+	})
+
+	t.Run("not equal number without rollout -> byte-identical to today", func(t *testing.T) {
+		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, nil)
+		sql := build(t, key, attrWindowBefore, qbtypes.FilterOperatorNotEqual, float64(200))
+		assert.Contains(t, sql, "toFloat64(attributes_number['http.status_code']) <> ?")
+		assert.NotContains(t, sql, "ifNull")
+	})
+
+	t.Run("not equal string after -> no fold, no guard (existing parity)", func(t *testing.T) {
+		key := attrKey("user.id", telemetrytypes.FieldDataTypeString, evo)
+		sql := build(t, key, attrWindowAfter, qbtypes.FilterOperatorNotEqual, "admin")
+		assert.Contains(t, sql, "attributes.`user.id`::String <> ?")
+		assert.NotContains(t, sql, "ifNull")
+	})
+
+	t.Run("not exists straddle -> never folded", func(t *testing.T) {
+		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
+		sql := build(t, key, attrWindowStraddle, qbtypes.FilterOperatorNotExists, nil)
+		assert.Contains(t, sql, "IS NULL")
+		assert.NotContains(t, sql, "ifNull")
+	})
 }
