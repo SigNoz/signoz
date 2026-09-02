@@ -213,26 +213,6 @@ func NewConfigFromChannels(globalConfig GlobalConfig, routeConfig RouteConfig, c
 	return cfg, nil
 }
 
-func GetChannelByID(channels Channels, id valuer.UUID) (int, *Channel, error) {
-	for i, channel := range channels {
-		if channel.ID == id {
-			return i, channel, nil
-		}
-	}
-
-	return 0, nil, errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerChannelNotFound, "cannot find channel with id %s", id.StringValue())
-}
-
-func GetChannelByName(channels Channels, name string) (int, *Channel, error) {
-	for i, channel := range channels {
-		if channel.Name == name {
-			return i, channel, nil
-		}
-	}
-
-	return 0, nil, errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerChannelNotFound, "cannot find channel with name %s", name)
-}
-
 func NewStatsFromChannels(channels Channels) map[string]any {
 	stats := make(map[string]any)
 	for _, channel := range channels {
