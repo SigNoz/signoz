@@ -1,24 +1,24 @@
 import { Typography } from '@signozhq/ui/typography';
-import { ChevronDown, ChevronRight } from '@signozhq/icons';
+import { ChevronDown, ChevronRight, Search, Undo2 } from '@signozhq/icons';
+
+import { SectionActionButton } from '../../shared/SectionActionButton/SectionActionButton';
 
 import styles from './CheckboxFilterV2Header.module.scss';
 
 interface CheckboxFilterHeaderProps {
 	title: string;
 	isOpen: boolean;
-	showClearAll: boolean;
 	onToggleOpen: () => void;
+	onToggleSearch: () => void;
 	onClear: () => void;
-	isSomeFilterPresentForCurrentAttribute: boolean;
 }
 
 export function CheckboxFilterV2Header({
 	title,
 	isOpen,
-	showClearAll,
 	onToggleOpen,
+	onToggleSearch,
 	onClear,
-	isSomeFilterPresentForCurrentAttribute,
 }: CheckboxFilterHeaderProps): JSX.Element {
 	return (
 		<section
@@ -42,21 +42,22 @@ export function CheckboxFilterV2Header({
 				)}
 				<Typography.Text className={styles.title}>{title}</Typography.Text>
 			</section>
-			<section className={styles.rightAction}>
-				{isOpen && showClearAll && isSomeFilterPresentForCurrentAttribute && (
-					<Typography.Text
-						className={styles.clearAll}
-						onClick={(e): void => {
-							e.stopPropagation();
-							e.preventDefault();
-							onClear();
-						}}
-						data-testid="checkbox-filter-clear-all"
-					>
-						Clear
-					</Typography.Text>
-				)}
-			</section>
+			{isOpen && (
+				<section className={styles.rightAction}>
+					<SectionActionButton
+						icon={<Search size={14} />}
+						tooltip="Search"
+						onClick={onToggleSearch}
+						testId="checkbox-filter-search-toggle"
+					/>
+					<SectionActionButton
+						icon={<Undo2 size={14} />}
+						tooltip="Reset"
+						onClick={onClear}
+						testId="checkbox-filter-clear-all"
+					/>
+				</section>
+			)}
 		</section>
 	);
 }

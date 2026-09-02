@@ -60,6 +60,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			await screen.findByTestId('checkbox-value-row-production');
 			expect(screen.getByTestId('checkbox-value-row-staging')).toBeInTheDocument();
 
+			await user.click(screen.getByTestId('checkbox-filter-search-toggle'));
 			const searchInput = screen.getByTestId('checkbox-filter-search');
 			await user.type(searchInput, 'prod');
 
@@ -143,6 +144,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			// Related values now appear in "Related" section (no badge, uses divider instead)
 			expect(screen.getByTestId('section-divider-related')).toBeInTheDocument();
 
+			await user.click(screen.getByTestId('checkbox-filter-search-toggle'));
 			const searchInput = screen.getByTestId('checkbox-filter-search');
 			await user.type(searchInput, 'prod');
 
@@ -192,6 +194,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 
 			await screen.findByTestId('checkbox-value-row-prod');
 
+			await user.click(screen.getByTestId('checkbox-filter-search-toggle'));
 			const searchInput = screen.getByTestId('checkbox-filter-search');
 			await user.type(searchInput, 'prod');
 
@@ -236,6 +239,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 
 			await screen.findByTestId('checkbox-value-row-prod');
 
+			await user.click(screen.getByTestId('checkbox-filter-search-toggle'));
 			const searchInput = screen.getByTestId('checkbox-filter-search');
 			await user.type(searchInput, 'xyz-no-match');
 
@@ -343,6 +347,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 
 			await screen.findByTestId('checkbox-value-row-pod-a-v1');
 
+			await user.click(screen.getByTestId('checkbox-filter-search-toggle'));
 			const searchInput = screen.getByTestId('checkbox-filter-search');
 			await user.type(searchInput, 'pod-a');
 
@@ -515,7 +520,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			expect(screen.getByTestId('checkbox-filter-clear-all')).toBeInTheDocument();
 		});
 
-		it('hides clear button when no filter applied for attribute', async () => {
+		it('shows the reset action when expanded even with no active filter', async () => {
 			mockFieldsValuesAPI({
 				stringValues: ['production'],
 			});
@@ -530,9 +535,9 @@ describe('CheckboxFilterV2 - interactions', () => {
 
 			await screen.findByTestId('checkbox-value-row-production');
 
-			expect(
-				screen.queryByTestId('checkbox-filter-clear-all'),
-			).not.toBeInTheDocument();
+			// Reset is always available on an expanded section now (hover-gated via
+			// CSS), not conditional on an active filter.
+			expect(screen.getByTestId('checkbox-filter-clear-all')).toBeInTheDocument();
 		});
 
 		it('calls onFilterChange when clear clicked', async () => {
