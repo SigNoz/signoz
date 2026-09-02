@@ -44,6 +44,11 @@ func (migration *addChannelDisplayName) Up(ctx context.Context, db *bun.DB) erro
 		return err
 	}
 
+	table, uniqueConstraints, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("notification_channel"))
+	if err != nil {
+		return err
+	}
+
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -51,11 +56,6 @@ func (migration *addChannelDisplayName) Up(ctx context.Context, db *bun.DB) erro
 	defer func() {
 		_ = tx.Rollback()
 	}()
-
-	table, uniqueConstraints, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("notification_channel"))
-	if err != nil {
-		return err
-	}
 
 	if _, err := migration.sqlstore.Dialect().RenameColumn(ctx, tx, "notification_channel", "name", "display_name"); err != nil {
 		return err
@@ -88,14 +88,11 @@ func (migration *addChannelDisplayName) Up(ctx context.Context, db *bun.DB) erro
 		DisplayName   string      `bun:"display_name"`
 	}
 
-	// Only rows the column add left empty are backfilled, so a retry after a
-	// partial run does not hand already-named channels a fresh random suffix.
 	var channels []channel
 	if err := tx.
 		NewSelect().
 		Model(&channels).
 		Column("id", "display_name").
-		Where("name = ?", "").
 		Scan(ctx); err != nil {
 		return err
 	}
