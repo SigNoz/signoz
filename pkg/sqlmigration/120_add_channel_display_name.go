@@ -88,14 +88,11 @@ func (migration *addChannelDisplayName) Up(ctx context.Context, db *bun.DB) erro
 		DisplayName   string      `bun:"display_name"`
 	}
 
-	// Only rows the column add left empty are backfilled, so a retry after a
-	// partial run does not hand already-named channels a fresh random suffix.
 	var channels []channel
 	if err := tx.
 		NewSelect().
 		Model(&channels).
 		Column("id", "display_name").
-		Where("name = ?", "").
 		Scan(ctx); err != nil {
 		return err
 	}
