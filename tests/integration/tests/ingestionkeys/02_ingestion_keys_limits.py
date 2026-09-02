@@ -519,6 +519,61 @@ def test_get_ingestion_limit(
     assert data["config"]["day"]["size"] == 1000
 
 
+def test_get_ingestion_key_limits(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    make_http_mocks: Callable[[types.TestContainerDocker, list], None],
+    get_token: Callable[[str, str], str],
+) -> None:
+    editor_token = get_token(GATEWAY_APIS_EDITOR_EMAIL, GATEWAY_APIS_EDITOR_PASSWORD)
+
+    gateway_url = f"/v1/workspaces/me/keys/{TEST_KEY_ID}/limits"
+
+    make_http_mocks(
+        signoz.gateway,
+        [
+            Mapping(
+                request=MappingRequest(
+                    method=HttpMethods.GET,
+                    url=gateway_url,
+                    headers=common_gateway_headers(),
+                ),
+                response=MappingResponse(
+                    status=200,
+                    json_body={
+                        "status": "success",
+                        "data": [
+                            {
+                                "id": TEST_LIMIT_ID,
+                                "key_id": TEST_KEY_ID,
+                                "signal": "logs",
+                                "config": {"day": {"size": 1000}},
+                                "tags": ["test"],
+                            }
+                        ],
+                    },
+                ),
+                persistent=False,
+            ),
+        ],
+    )
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v2/gateway/ingestion_keys/{TEST_KEY_ID}/limits"),
+        headers={"Authorization": f"Bearer {editor_token}"},
+        timeout=10,
+    )
+
+    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}: {response.text}"
+
+    data = response.json()["data"]
+    assert len(data) == 1
+    assert data[0]["id"] == TEST_LIMIT_ID
+    assert data[0]["key_id"] == TEST_KEY_ID
+    assert data[0]["signal"] == "logs"
+    assert data[0]["config"]["day"]["size"] == 1000
+
+
 def test_update_ingestion_limit(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
