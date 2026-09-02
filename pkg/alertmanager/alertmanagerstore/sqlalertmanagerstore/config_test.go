@@ -13,7 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-func TestCreateChannelRejectsDuplicateInternalNameInSameOrg(t *testing.T) {
+func TestCreateChannelRejectsDuplicateNameInSameOrg(t *testing.T) {
 	sqlstore := newTestStore(t)
 
 	_, err := sqlstore.BunDB().NewCreateTable().
@@ -24,8 +24,8 @@ func TestCreateChannelRejectsDuplicateInternalNameInSameOrg(t *testing.T) {
 
 	_, err = sqlstore.BunDB().NewCreateIndex().
 		Model((*alertmanagertypes.Channel)(nil)).
-		Index("notification_channel_org_id_internal_name_idx").
-		Column("org_id", "internal_name").
+		Index("notification_channel_org_id_name_idx").
+		Column("org_id", "name").
 		Unique().
 		Exec(t.Context())
 	require.NoError(t, err)
@@ -37,22 +37,22 @@ func TestCreateChannelRejectsDuplicateInternalNameInSameOrg(t *testing.T) {
 	firstChannel := &alertmanagertypes.Channel{
 		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
 		TimeAuditable: types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
-		Name:          "First Channel",
+		Name:          "shared-name",
+		DisplayName:   "First Channel",
 		Type:          "slack",
 		Data:          `{"name":"First Channel","slack_configs":[{"api_url":"https://hooks.slack.com/services/first"}]}`,
 		OrgID:         orgID,
-		InternalName:  "shared-internal-name",
 	}
 	require.NoError(t, store.CreateChannel(t.Context(), firstChannel))
 
 	duplicateChannel := &alertmanagertypes.Channel{
 		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
 		TimeAuditable: types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
-		Name:          "Second Channel",
+		Name:          "shared-name",
+		DisplayName:   "Second Channel",
 		Type:          "slack",
 		Data:          `{"name":"Second Channel","slack_configs":[{"api_url":"https://hooks.slack.com/services/second"}]}`,
 		OrgID:         orgID,
-		InternalName:  "shared-internal-name",
 	}
 	err = store.CreateChannel(t.Context(), duplicateChannel)
 	require.Error(t, err)
@@ -61,11 +61,11 @@ func TestCreateChannelRejectsDuplicateInternalNameInSameOrg(t *testing.T) {
 	otherOrgChannel := &alertmanagertypes.Channel{
 		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
 		TimeAuditable: types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
-		Name:          "Second Channel",
+		Name:          "shared-name",
+		DisplayName:   "Second Channel",
 		Type:          "slack",
 		Data:          `{"name":"Second Channel","slack_configs":[{"api_url":"https://hooks.slack.com/services/second"}]}`,
 		OrgID:         valuer.GenerateUUID().StringValue(),
-		InternalName:  "shared-internal-name",
 	}
 	assert.NoError(t, store.CreateChannel(t.Context(), otherOrgChannel))
 }

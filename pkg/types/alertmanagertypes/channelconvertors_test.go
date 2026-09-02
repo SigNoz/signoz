@@ -99,7 +99,7 @@ func TestPostableChannelToReceiverWritesTheExpectedConfigsField(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, testCase.postable.DisplayName, receiver.Name)
 
-			channel, err := NewChannelFromReceiverWithInternalName(receiver, testCase.postable.Name, "org-1")
+			channel, err := NewChannelFromReceiverWithName(receiver, testCase.postable.Name, "org-1")
 			require.NoError(t, err)
 
 			assert.Equal(t, testCase.expectedDerivedType, channel.Type)
@@ -270,7 +270,7 @@ func TestChannelToPostableChannelRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 			receiver, err := postable.ToReceiver()
 			require.NoError(t, err)
 
-			channel, err := NewChannelFromReceiverWithInternalName(receiver, postable.Name, "org-1")
+			channel, err := NewChannelFromReceiverWithName(receiver, postable.Name, "org-1")
 			require.NoError(t, err)
 
 			roundTripped, err := channel.toPostableNotificationChannel()
@@ -310,7 +310,7 @@ func TestChannelSpecWithoutSendResolvedTakesTheUpstreamDefault(t *testing.T) {
 			receiver, err := testCase.spec.toReceiver("probe")
 			require.NoError(t, err)
 
-			channel, err := NewChannelFromReceiverWithInternalName(receiver, "probe", "org-1")
+			channel, err := NewChannelFromReceiverWithName(receiver, "probe", "org-1")
 			require.NoError(t, err)
 
 			roundTripped, err := channel.toPostableNotificationChannel()
@@ -336,7 +336,7 @@ func TestChannelToPostableChannelReturnsDefaultsTheCallerDidNotSet(t *testing.T)
 	receiver, err := postable.ToReceiver()
 	require.NoError(t, err)
 
-	channel, err := NewChannelFromReceiverWithInternalName(receiver, postable.Name, "org-1")
+	channel, err := NewChannelFromReceiverWithName(receiver, postable.Name, "org-1")
 	require.NoError(t, err)
 
 	roundTripped, err := channel.toPostableNotificationChannel()
@@ -365,7 +365,7 @@ func TestPostableChannelToReceiverOmitsEmailTransportCredentials(t *testing.T) {
 	receiver, err := postable.ToReceiver()
 	require.NoError(t, err)
 
-	channel, err := NewChannelFromReceiverWithInternalName(receiver, postable.Name, "org-1")
+	channel, err := NewChannelFromReceiverWithName(receiver, postable.Name, "org-1")
 	require.NoError(t, err)
 
 	for _, credentialKey := range []string{"auth_username", "auth_password", "auth_secret", "tls_config"} {
@@ -420,7 +420,7 @@ func TestPostableChannelToReceiverRoundTripsWebhookAuthModes(t *testing.T) {
 			receiver, err := postable.ToReceiver()
 			require.NoError(t, err)
 
-			channel, err := NewChannelFromReceiverWithInternalName(receiver, postable.Name, "org-1")
+			channel, err := NewChannelFromReceiverWithName(receiver, postable.Name, "org-1")
 			require.NoError(t, err)
 			assert.Contains(t, channel.Data, testCase.expectedInData)
 
@@ -447,8 +447,8 @@ func TestChannelToPostableChannelRejectsUnrepresentableChannels(t *testing.T) {
 		{
 			description: "two notifier kinds in one channel",
 			channel: Channel{
-				Name: "mixed",
-				Data: `{"name":"mixed","slack_configs":[{"channel":"#a"}],"email_configs":[{"to":"a@b.c"}]}`,
+				DisplayName: "mixed",
+				Data:        `{"name":"mixed","slack_configs":[{"channel":"#a"}],"email_configs":[{"to":"a@b.c"}]}`,
 			},
 		},
 		{
@@ -456,29 +456,29 @@ func TestChannelToPostableChannelRejectsUnrepresentableChannels(t *testing.T) {
 			// dropped on the next write.
 			description: "two configs of the same notifier kind",
 			channel: Channel{
-				Name: "two-slacks",
-				Data: `{"name":"two-slacks","slack_configs":[{"channel":"#a"},{"channel":"#b"}]}`,
+				DisplayName: "two-slacks",
+				Data:        `{"name":"two-slacks","slack_configs":[{"channel":"#a"},{"channel":"#b"}]}`,
 			},
 		},
 		{
 			description: "no notifier configuration",
 			channel: Channel{
-				Name: "empty",
-				Data: `{"name":"empty"}`,
+				DisplayName: "empty",
+				Data:        `{"name":"empty"}`,
 			},
 		},
 		{
 			description: "notifier kind outside the supported set",
 			channel: Channel{
-				Name: "tg",
-				Data: `{"name":"tg","telegram_configs":[{"chat_id":1}]}`,
+				DisplayName: "tg",
+				Data:        `{"name":"tg","telegram_configs":[{"chat_id":1}]}`,
 			},
 		},
 		{
 			description: "legacy msteams v1 configs",
 			channel: Channel{
-				Name: "old-teams",
-				Data: `{"name":"old-teams","msteams_configs":[{"webhook_url":"https://a"}]}`,
+				DisplayName: "old-teams",
+				Data:        `{"name":"old-teams","msteams_configs":[{"webhook_url":"https://a"}]}`,
 			},
 		},
 		{
@@ -486,23 +486,23 @@ func TestChannelToPostableChannelRejectsUnrepresentableChannels(t *testing.T) {
 			// next write, so the read fails instead.
 			description: "webhook http_config beyond basic auth and bearer token",
 			channel: Channel{
-				Name: "proxied",
-				Data: `{"name":"proxied","webhook_configs":[{"url":"https://a","http_config":{"proxy_url":"https://proxy","tls_config":{"insecure_skip_verify":true}}}]}`,
+				DisplayName: "proxied",
+				Data:        `{"name":"proxied","webhook_configs":[{"url":"https://a","http_config":{"proxy_url":"https://proxy","tls_config":{"insecure_skip_verify":true}}}]}`,
 			},
 		},
 		{
 			description: "a modelled notifier kind alongside an unmodelled one",
 			channel: Channel{
-				Name: "slack-and-telegram",
-				Data: `{"name":"slack-and-telegram","slack_configs":[{"api_url":"https://a","channel":"#a"}],"telegram_configs":[{"chat_id":1,"bot_token":"t"}]}`,
+				DisplayName: "slack-and-telegram",
+				Data:        `{"name":"slack-and-telegram","slack_configs":[{"api_url":"https://a","channel":"#a"}],"telegram_configs":[{"chat_id":1,"bot_token":"t"}]}`,
 			},
 		},
 		{
 			// The spec models one config per kind, so the second would be lost.
 			description: "two configs of one notifier kind",
 			channel: Channel{
-				Name: "two-slacks",
-				Data: `{"name":"two-slacks","slack_configs":[{"api_url":"https://a","channel":"#a"},{"api_url":"https://b","channel":"#b"}]}`,
+				DisplayName: "two-slacks",
+				Data:        `{"name":"two-slacks","slack_configs":[{"api_url":"https://a","channel":"#a"},{"api_url":"https://b","channel":"#b"}]}`,
 			},
 		},
 		{
@@ -510,29 +510,29 @@ func TestChannelToPostableChannelRejectsUnrepresentableChannels(t *testing.T) {
 			// scheme would be rewritten as Bearer on the next write.
 			description: "webhook authorization scheme other than bearer",
 			channel: Channel{
-				Name: "token-auth",
-				Data: `{"name":"token-auth","webhook_configs":[{"url":"https://a","http_config":{"authorization":{"type":"Token","credentials":"abc"},"follow_redirects":true,"enable_http2":true}}]}`,
+				DisplayName: "token-auth",
+				Data:        `{"name":"token-auth","webhook_configs":[{"url":"https://a","http_config":{"authorization":{"type":"Token","credentials":"abc"},"follow_redirects":true,"enable_http2":true}}]}`,
 			},
 		},
 		{
 			description: "webhook credentials sourced from a file",
 			channel: Channel{
-				Name: "file-auth",
-				Data: `{"name":"file-auth","webhook_configs":[{"url":"https://a","http_config":{"authorization":{"type":"Bearer","credentials_file":"/run/token"},"follow_redirects":true,"enable_http2":true}}]}`,
+				DisplayName: "file-auth",
+				Data:        `{"name":"file-auth","webhook_configs":[{"url":"https://a","http_config":{"authorization":{"type":"Bearer","credentials_file":"/run/token"},"follow_redirects":true,"enable_http2":true}}]}`,
 			},
 		},
 		{
 			description: "webhook basic auth password sourced from a file",
 			channel: Channel{
-				Name: "file-password",
-				Data: `{"name":"file-password","webhook_configs":[{"url":"https://a","http_config":{"basic_auth":{"username":"u","password_file":"/run/pass"},"follow_redirects":true,"enable_http2":true}}]}`,
+				DisplayName: "file-password",
+				Data:        `{"name":"file-password","webhook_configs":[{"url":"https://a","http_config":{"basic_auth":{"username":"u","password_file":"/run/pass"},"follow_redirects":true,"enable_http2":true}}]}`,
 			},
 		},
 		{
 			description: "webhook inline tls material",
 			channel: Channel{
-				Name: "inline-tls",
-				Data: `{"name":"inline-tls","webhook_configs":[{"url":"https://a","http_config":{"tls_config":{"ca":"---PEM---","min_version":"TLS12"},"follow_redirects":true,"enable_http2":true}}]}`,
+				DisplayName: "inline-tls",
+				Data:        `{"name":"inline-tls","webhook_configs":[{"url":"https://a","http_config":{"tls_config":{"ca":"---PEM---","min_version":"TLS12"},"follow_redirects":true,"enable_http2":true}}]}`,
 			},
 		},
 	}

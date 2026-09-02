@@ -21,10 +21,6 @@ export interface AlertmanagertypesChannelDTO {
 	/**
 	 * @type string
 	 */
-	internalName: string;
-	/**
-	 * @type string
-	 */
 	name: string;
 	/**
 	 * @type string

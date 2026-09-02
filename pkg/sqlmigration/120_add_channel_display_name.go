@@ -13,28 +13,30 @@ import (
 	"github.com/uptrace/bun/migrate"
 )
 
-type addChannelInternalName struct {
+type addChannelDisplayName struct {
 	sqlstore  sqlstore.SQLStore
 	sqlschema sqlschema.SQLSchema
 }
 
-func NewAddChannelInternalNameFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
+func NewAddChannelDisplayNameFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(
-		factory.MustNewName("channel_internal_name"),
+		factory.MustNewName("channel_display_name"),
 		func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
-			return &addChannelInternalName{sqlstore: sqlstore, sqlschema: sqlschema}, nil
+			return &addChannelDisplayName{sqlstore: sqlstore, sqlschema: sqlschema}, nil
 		},
 	)
 }
 
-func (migration *addChannelInternalName) Register(migrations *migrate.Migrations) error {
+func (migration *addChannelDisplayName) Register(migrations *migrate.Migrations) error {
 	return migrations.Register(migration.Up, migration.Down)
 }
 
-// Up adds the DNS1123 identity alongside the free-text name. Nothing outside the
-// channel reads it yet: routing policies and rules still reference the name
-// column, and the alertmanager config still keys receivers by that same string.
-func (migration *addChannelInternalName) Up(ctx context.Context, db *bun.DB) error {
+// Up moves the free-text name onto display_name and gives name the DNS1123
+// identity, matching organizations and dashboards. Nothing outside the channel
+// reads the new name yet: routing policies and rules still reference
+// display_name, and the alertmanager config still keys receivers by that same
+// string.
+func (migration *addChannelDisplayName) Up(ctx context.Context, db *bun.DB) error {
 	// notification_channel references organizations; FK enforcement must be off
 	// for the SQLite recreate-table fallback the NOT NULL column add falls into.
 	if err := migration.sqlschema.ToggleFKEnforcement(ctx, db, false); err != nil {
@@ -54,13 +56,25 @@ func (migration *addChannelInternalName) Up(ctx context.Context, db *bun.DB) err
 		return err
 	}
 
-	internalNameColumn := &sqlschema.Column{
-		Name:     sqlschema.ColumnName("internal_name"),
+	if _, err := migration.sqlstore.Dialect().RenameColumn(ctx, tx, "notification_channel", "name", "display_name"); err != nil {
+		return err
+	}
+
+	// The table was inspected before the rename, and the recreate-table fallback
+	// below rebuilds the table from this description, so it has to follow.
+	for _, column := range table.Columns {
+		if column.Name == sqlschema.ColumnName("name") {
+			column.Name = sqlschema.ColumnName("display_name")
+		}
+	}
+
+	nameColumn := &sqlschema.Column{
+		Name:     sqlschema.ColumnName("name"),
 		DataType: sqlschema.DataTypeText,
 		Nullable: false,
 	}
 
-	sqls := migration.sqlschema.Operator().AddColumn(table, uniqueConstraints, internalNameColumn, "")
+	sqls := migration.sqlschema.Operator().AddColumn(table, uniqueConstraints, nameColumn, "")
 	for _, sql := range sqls {
 		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
 			return err
@@ -70,7 +84,7 @@ func (migration *addChannelInternalName) Up(ctx context.Context, db *bun.DB) err
 	type channel struct {
 		bun.BaseModel `bun:"table:notification_channel"`
 		ID            valuer.UUID `bun:"id,pk"`
-		Name          string      `bun:"name"`
+		DisplayName   string      `bun:"display_name"`
 	}
 
 	// Only rows the column add left empty are backfilled, so a retry after a
@@ -79,8 +93,8 @@ func (migration *addChannelInternalName) Up(ctx context.Context, db *bun.DB) err
 	if err := tx.
 		NewSelect().
 		Model(&channels).
-		Column("id", "name").
-		Where("internal_name = ?", "").
+		Column("id", "display_name").
+		Where("name = ?", "").
 		Scan(ctx); err != nil {
 		return err
 	}
@@ -89,7 +103,7 @@ func (migration *addChannelInternalName) Up(ctx context.Context, db *bun.DB) err
 		if _, err := tx.
 			NewUpdate().
 			Model((*channel)(nil)).
-			Set("internal_name = ?", slugifyChannelName(existing.Name)).
+			Set("name = ?", slugifyChannelName(existing.DisplayName)).
 			Where("id = ?", existing.ID).
 			Exec(ctx); err != nil {
 			return err
@@ -98,7 +112,7 @@ func (migration *addChannelInternalName) Up(ctx context.Context, db *bun.DB) err
 
 	indexSQLs := migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{
 		TableName:   "notification_channel",
-		ColumnNames: []sqlschema.ColumnName{"org_id", "internal_name"},
+		ColumnNames: []sqlschema.ColumnName{"org_id", "name"},
 	})
 	for _, sql := range indexSQLs {
 		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
@@ -113,7 +127,7 @@ func (migration *addChannelInternalName) Up(ctx context.Context, db *bun.DB) err
 	return migration.sqlschema.ToggleFKEnforcement(ctx, db, true)
 }
 
-func (migration *addChannelInternalName) Down(context.Context, *bun.DB) error {
+func (migration *addChannelDisplayName) Down(context.Context, *bun.DB) error {
 	return nil
 }
 

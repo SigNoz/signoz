@@ -246,7 +246,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddAuthDomainTuplesFactory(sqlstore),
 		sqlmigration.NewAddDeploymentHostTuplesFactory(sqlstore),
 		sqlmigration.NewAddSystemDashboardFactory(sqlstore, sqlschema),
-		sqlmigration.NewAddChannelInternalNameFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddChannelDisplayNameFactory(sqlstore, sqlschema),
 	)
 }
 

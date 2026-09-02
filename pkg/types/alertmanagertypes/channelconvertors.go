@@ -39,13 +39,13 @@ func (p *PostableNotificationChannel) ToReceiver() (*Receiver, error) {
 func (c *Channel) toPostableNotificationChannel() (*PostableNotificationChannel, error) {
 	receiver := &Receiver{Receiver: &config.Receiver{}}
 	if err := json.Unmarshal([]byte(c.Data), receiver); err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "unmarshal channel %q", c.Name)
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "unmarshal channel %q", c.DisplayName)
 	}
 
 	if total := countNotifierConfigs(receiver); total > 1 {
 		return nil, errors.NewInvalidInputf(
 			ErrCodeAlertmanagerChannelInvalid,
-			"channel %q carries %d notifier configurations; only one per channel is supported", c.Name, total,
+			"channel %q carries %d notifier configurations; only one per channel is supported", c.DisplayName, total,
 		)
 	}
 
@@ -54,21 +54,21 @@ func (c *Channel) toPostableNotificationChannel() (*PostableNotificationChannel,
 			continue
 		}
 
-		spec, err := channelKind.extractSpec(c.Name, receiver)
+		spec, err := channelKind.extractSpec(c.DisplayName, receiver)
 		if err != nil {
 			return nil, err
 		}
 
 		return &PostableNotificationChannel{
-			Name:        c.InternalName,
-			DisplayName: c.Name,
+			Name:        c.Name,
+			DisplayName: c.DisplayName,
 			Config:      ChannelConfig{Kind: channelKind.kind, Spec: spec},
 		}, nil
 	}
 
 	return nil, errors.NewNotFoundf(
 		ErrCodeChannelUnsupportedKind,
-		"channel %q carries no supported notifier configuration", c.Name,
+		"channel %q carries no supported notifier configuration", c.DisplayName,
 	)
 }
 

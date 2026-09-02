@@ -9,8 +9,6 @@ components:
           type: string
         id:
           type: string
-        internalName:
-          type: string
         name:
           type: string
         orgId:
@@ -26,7 +24,6 @@ components:
       - type
       - data
       - orgId
-      - internalName
       type: object
     AlertmanagertypesChannelConfig:
       discriminator:

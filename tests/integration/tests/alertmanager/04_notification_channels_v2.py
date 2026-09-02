@@ -211,7 +211,7 @@ def test_create_rejects_a_duplicate_name_with_conflict(
     cleanup_notification_channels.append(response.json()["data"]["id"])
 
     # Same name, different display name: only the unique index on
-    # (org_id, internal_name) can catch this one.
+    # (org_id, name) can catch this one.
     response = requests.post(
         signoz.self.host_configs["8080"].get(V2_BASE_URL),
         json={"name": name, "displayName": f"{name} second", "config": {"kind": "email", "spec": {"to": "second@integration.test", "html": "<p>body</p>"}}},

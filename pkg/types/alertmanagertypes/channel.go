@@ -49,14 +49,14 @@ type Channel struct {
 
 	types.Identifiable
 	types.TimeAuditable
-	Name  string `json:"name" required:"true" bun:"name"`
-	Type  string `json:"type" required:"true" bun:"type"`
-	Data  string `json:"data" required:"true" bun:"data"`
-	OrgID string `json:"orgId" required:"true" bun:"org_id"`
-
-	// InternalName is the DNS1123 identity references will migrate onto. Until then
-	// Name is the receiver name inside Data and what policies and rules reference.
-	InternalName string `json:"internalName" required:"true" bun:"internal_name"`
+	// Name is the DNS1123 identity references will migrate onto. Until then
+	// DisplayName is the receiver name inside Data and what policies and rules
+	// reference, so it keeps the v1 wire tag and Name stays off the v1 contract.
+	Name        string `json:"-" bun:"name"`
+	DisplayName string `json:"name" required:"true" bun:"display_name"`
+	Type        string `json:"type" required:"true" bun:"type"`
+	Data        string `json:"data" required:"true" bun:"data"`
+	OrgID       string `json:"orgId" required:"true" bun:"org_id"`
 }
 
 // NewChannelFromReceiver creates a new Channel from a Receiver.
@@ -76,10 +76,9 @@ func NewChannelFromReceiver(receiver *Receiver, orgID string) (*Channel, error) 
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
-		Name:  receiver.Name,
-		OrgID: orgID,
-
-		InternalName: generateChannelName(receiver.Name),
+		Name:        generateChannelName(receiver.Name),
+		DisplayName: receiver.Name,
+		OrgID:       orgID,
 	}
 
 	data, err := json.Marshal(receiver)
@@ -96,15 +95,15 @@ func NewChannelFromReceiver(receiver *Receiver, orgID string) (*Channel, error) 
 	return &channel, nil
 }
 
-// NewChannelFromReceiverWithInternalName overrides the internal name that
-// NewChannelFromReceiver generates.
-func NewChannelFromReceiverWithInternalName(receiver *Receiver, internalName string, orgID string) (*Channel, error) {
+// NewChannelFromReceiverWithName overrides the name that NewChannelFromReceiver
+// generates.
+func NewChannelFromReceiverWithName(receiver *Receiver, name string, orgID string) (*Channel, error) {
 	channel, err := NewChannelFromReceiver(receiver, orgID)
 	if err != nil {
 		return nil, err
 	}
 
-	channel.InternalName = internalName
+	channel.Name = name
 
 	return channel, nil
 }
@@ -236,18 +235,18 @@ func NewStatsFromChannels(channels Channels) map[string]any {
 }
 
 func (c *Channel) Update(receiver *Receiver) error {
-	channel, err := NewChannelFromReceiverWithInternalName(receiver, c.InternalName, c.OrgID)
+	channel, err := NewChannelFromReceiverWithName(receiver, c.Name, c.OrgID)
 	if err != nil {
 		return err
 	}
 
-	if c.Name != channel.Name {
+	if c.DisplayName != channel.DisplayName {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelNameMismatch, "cannot update channel name")
 	}
 
-	// Unreachable while the internal name is passed in above rather than derived
-	// from the receiver, which is why this is internal rather than invalid input.
-	if c.InternalName != channel.InternalName {
+	// Unreachable while the name is passed in above rather than derived from the
+	// receiver, which is why this is internal rather than invalid input.
+	if c.Name != channel.Name {
 		return errors.NewInternalf(ErrCodeAlertmanagerChannelNameMismatch, "cannot update channel internal name")
 	}
 

@@ -243,9 +243,9 @@ func TestNewChannelFromReceiver(t *testing.T) {
 				},
 			},
 			expected: &Channel{
-				Name: "test-receiver",
-				Type: "slack",
-				Data: `{"name":"test-receiver","slack_configs":[{"send_resolved":true,"api_url":"https://slack.com/api/test","channel":"#alerts","timeout":0}]}`,
+				DisplayName: "test-receiver",
+				Type:        "slack",
+				Data:        `{"name":"test-receiver","slack_configs":[{"send_resolved":true,"api_url":"https://slack.com/api/test","channel":"#alerts","timeout":0}]}`,
 			},
 			pass: true,
 		},
@@ -261,7 +261,7 @@ func TestNewChannelFromReceiver(t *testing.T) {
 			}
 
 			assert.NoError(t, err)
-			assert.Equal(t, testCase.expected.Name, channel.Name)
+			assert.Equal(t, testCase.expected.DisplayName, channel.DisplayName)
 			assert.Equal(t, testCase.expected.Type, channel.Type)
 			assert.Equal(t, testCase.expected.Data, channel.Data)
 		})
@@ -289,7 +289,7 @@ func TestNewChannelFromReceiverGoogleChat(t *testing.T) {
 
 	channel, err := NewChannelFromReceiver(receiver, "1")
 	assert.NoError(t, err)
-	assert.Equal(t, "googlechat-receiver", channel.Name)
+	assert.Equal(t, "googlechat-receiver", channel.DisplayName)
 	assert.Equal(t, "googlechat", channel.Type)
 	assert.JSONEq(t,
 		`{"name":"googlechat-receiver","googlechat_configs":[{"send_resolved":false,"webhook_url":"https://chat.googleapis.com/v1/spaces/test/messages","title":"Alert","text":"Body"}]}`,
