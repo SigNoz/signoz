@@ -385,12 +385,20 @@ export interface AlertmanagertypesGoogleChatReceiverConfigDTO {
 	webhook_url?: ConfigSecretURLDTO;
 }
 
+export type AlertmanagertypesIncidentIOReceiverConfigDTOMetadata = {
+	[key: string]: string;
+};
+
 export interface AlertmanagertypesIncidentIOReceiverConfigDTO {
 	/**
 	 * @type string
 	 */
 	description?: string;
 	http_config?: ConfigHTTPClientConfigDTO;
+	/**
+	 * @type object
+	 */
+	metadata?: AlertmanagertypesIncidentIOReceiverConfigDTOMetadata;
 	/**
 	 * @type boolean
 	 */
