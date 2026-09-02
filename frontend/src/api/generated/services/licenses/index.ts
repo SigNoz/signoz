@@ -119,6 +119,83 @@ export const useActivateLicenseDeprecated = <
 	return useMutation(getActivateLicenseDeprecatedMutationOptions(options));
 };
 /**
+ * This endpoint refreshes the active license of the organization from the upstream server.
+ * @deprecated
+ * @summary Refresh a license.
+ */
+export const refreshLicenseDeprecated = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v3/licenses`,
+		method: 'PUT',
+		signal,
+	});
+};
+
+export const getRefreshLicenseDeprecatedMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof refreshLicenseDeprecated>>,
+		TError,
+		void,
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof refreshLicenseDeprecated>>,
+	TError,
+	void,
+	TContext
+> => {
+	const mutationKey = ['refreshLicenseDeprecated'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof refreshLicenseDeprecated>>,
+		void
+	> = () => {
+		return refreshLicenseDeprecated();
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type RefreshLicenseDeprecatedMutationResult = NonNullable<
+	Awaited<ReturnType<typeof refreshLicenseDeprecated>>
+>;
+
+export type RefreshLicenseDeprecatedMutationError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @deprecated
+ * @summary Refresh a license.
+ */
+export const useRefreshLicenseDeprecated = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof refreshLicenseDeprecated>>,
+		TError,
+		void,
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof refreshLicenseDeprecated>>,
+	TError,
+	void,
+	TContext
+> => {
+	return useMutation(getRefreshLicenseDeprecatedMutationOptions(options));
+};
+/**
  * This endpoint lists all the licenses of the organization.
  * @summary List licenses.
  */

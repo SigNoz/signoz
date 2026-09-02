@@ -131,6 +131,14 @@ def test_refresh_license(
 
     assert response.status_code == http.HTTPStatus.NO_CONTENT
 
+    response = requests.put(
+        url=signoz.self.host_configs["8080"].get("/api/v3/licenses"),
+        headers={"Authorization": "Bearer " + access_token},
+        timeout=5,
+    )
+
+    assert response.status_code == http.HTTPStatus.NO_CONTENT
+
     response = requests.get(
         url=signoz.self.host_configs["8080"].get("/api/v4/licenses/active"),
         headers={"Authorization": "Bearer " + access_token},
@@ -145,7 +153,7 @@ def test_refresh_license(
         timeout=5,
     )
 
-    assert response.json()["count"] == 1
+    assert response.json()["count"] == 2
 
 
 def test_license_checkout(

@@ -65,6 +65,32 @@ func (provider *provider) addLicensingRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v3/licenses", handler.New(
+		provider.authzMiddleware.CheckResources(provider.licensingHandler.RefreshDeprecated, authtypes.SigNozAdminRoleName),
+		handler.OpenAPIDef{
+			ID:                  "RefreshLicenseDeprecated",
+			Tags:                []string{"licenses"},
+			Summary:             "Refresh a license.",
+			Description:         "This endpoint refreshes the active license of the organization from the upstream server.",
+			Request:             nil,
+			RequestContentType:  "",
+			Response:            nil,
+			ResponseContentType: "",
+			SuccessStatusCode:   http.StatusNoContent,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+			Deprecated:          true,
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceLicense.Scope(coretypes.VerbUpdate)}),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceLicense,
+			Verb:     coretypes.VerbUpdate,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			Selector: coretypes.WildcardSelector,
+		}),
+	)).Methods(http.MethodPut).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v4/licenses", handler.New(
 		provider.authzMiddleware.CheckResources(provider.licensingHandler.List, authtypes.SigNozAdminRoleName),
 		handler.OpenAPIDef{

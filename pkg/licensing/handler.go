@@ -68,6 +68,23 @@ func (handler *handler) ActivateDeprecated(rw http.ResponseWriter, r *http.Reque
 	render.Success(rw, http.StatusAccepted, nil)
 }
 
+func (handler *handler) RefreshDeprecated(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	if err := handler.licensing.Refresh(ctx, valuer.MustNewUUID(claims.OrgID)); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusNoContent, nil)
+}
+
 func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

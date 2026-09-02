@@ -53,6 +53,8 @@ type Handler interface {
 
 	ActivateDeprecated(http.ResponseWriter, *http.Request)
 
+	RefreshDeprecated(http.ResponseWriter, *http.Request)
+
 	List(http.ResponseWriter, *http.Request)
 
 	Get(http.ResponseWriter, *http.Request)
