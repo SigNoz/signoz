@@ -11,10 +11,10 @@ import {
 
 import {
 	applyCheckboxToggle,
-	clearFilterFromQuery,
 	deriveCheckboxState,
 	getNotInOperator,
 } from './checkboxFilterQuery';
+import { clearFilterFromQuery } from '../shared/filterQuery';
 import { CheckedState } from '../../types';
 import { SectionType } from './v2/itemRules';
 
@@ -505,7 +505,7 @@ describe('clearFilterFromQuery', () => {
 
 		const result = clearFilterFromQuery({
 			currentQuery: query,
-			filter: { attributeKey: { key: KEY, type: 'tag' } } as never,
+			filterKey: KEY,
 			activeQueryIndex: 0,
 		});
 

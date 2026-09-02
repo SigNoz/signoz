@@ -7,10 +7,8 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { isFunction } from 'lodash-es';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import {
-	applyCheckboxToggle,
-	clearFilterFromQuery,
-} from './checkboxFilterQuery';
+import { applyCheckboxToggle } from './checkboxFilterQuery';
+import { clearFilterFromQuery } from '../shared/filterQuery';
 import { CheckedState } from '../../types';
 import { SectionType } from './v2/itemRules';
 
@@ -94,7 +92,13 @@ function useCheckboxFilterActions({
 	};
 
 	const onClear = (): void => {
-		dispatch(clearFilterFromQuery({ currentQuery, filter, activeQueryIndex }));
+		dispatch(
+			clearFilterFromQuery({
+				currentQuery,
+				filterKey: filter.attributeKey.key,
+				activeQueryIndex,
+			}),
+		);
 	};
 
 	return { onChange, onClear };

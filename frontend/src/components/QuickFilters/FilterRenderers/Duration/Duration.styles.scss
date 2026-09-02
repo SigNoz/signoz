@@ -11,6 +11,16 @@
 		padding-right: 9px !important;
 	}
 
+	.duration-reset {
+		opacity: 0;
+		pointer-events: none;
+	}
+
+	.ant-collapse-header:hover .duration-reset {
+		opacity: 1;
+		pointer-events: auto;
+	}
+
 	.ant-collapse-header-text {
 		color: var(--l2-foreground);
 		font-family: Inter;
@@ -105,11 +115,6 @@
 .section-body-header {
 	display: flex;
 
-	> button {
-		position: absolute;
-		right: 4px;
-		padding-top: 13px;
-	}
 	.ant-collapse {
 		width: 100%;
 	}
