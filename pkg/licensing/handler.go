@@ -45,6 +45,29 @@ func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusCreated, types.Identifiable{ID: license.ID})
 }
 
+func (handler *handler) ActivateDeprecated(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	req := new(licensetypes.PostableLicense)
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	if _, err := handler.licensing.Activate(ctx, valuer.MustNewUUID(claims.OrgID), req.Key); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusAccepted, nil)
+}
+
 func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

@@ -33,6 +33,92 @@ import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
 /**
+ * This endpoint validates the license key with the upstream server and activates the license for the organization.
+ * @deprecated
+ * @summary Activate a license.
+ */
+export const activateLicenseDeprecated = (
+	licensetypesPostableLicenseDTO?: BodyType<LicensetypesPostableLicenseDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v3/licenses`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: licensetypesPostableLicenseDTO,
+		signal,
+	});
+};
+
+export const getActivateLicenseDeprecatedMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof activateLicenseDeprecated>>,
+		TError,
+		{ data?: BodyType<LicensetypesPostableLicenseDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof activateLicenseDeprecated>>,
+	TError,
+	{ data?: BodyType<LicensetypesPostableLicenseDTO> },
+	TContext
+> => {
+	const mutationKey = ['activateLicenseDeprecated'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof activateLicenseDeprecated>>,
+		{ data?: BodyType<LicensetypesPostableLicenseDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return activateLicenseDeprecated(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type ActivateLicenseDeprecatedMutationResult = NonNullable<
+	Awaited<ReturnType<typeof activateLicenseDeprecated>>
+>;
+export type ActivateLicenseDeprecatedMutationBody =
+	| BodyType<LicensetypesPostableLicenseDTO>
+	| undefined;
+export type ActivateLicenseDeprecatedMutationError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @deprecated
+ * @summary Activate a license.
+ */
+export const useActivateLicenseDeprecated = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof activateLicenseDeprecated>>,
+		TError,
+		{ data?: BodyType<LicensetypesPostableLicenseDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof activateLicenseDeprecated>>,
+	TError,
+	{ data?: BodyType<LicensetypesPostableLicenseDTO> },
+	TContext
+> => {
+	return useMutation(getActivateLicenseDeprecatedMutationOptions(options));
+};
+/**
  * This endpoint lists all the licenses of the organization.
  * @summary List licenses.
  */

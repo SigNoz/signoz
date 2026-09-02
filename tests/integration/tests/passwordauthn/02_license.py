@@ -65,12 +65,21 @@ def test_apply_license(
     assert response.json()["data"]["id"] == "0196360e-90cd-7a74-8313-1aa815ce2a67"
 
     response = requests.post(
+        url=signoz.self.host_configs["8080"].get("/api/v3/licenses"),
+        json={"key": "secret-key"},
+        headers={"Authorization": "Bearer " + access_token},
+        timeout=5,
+    )
+
+    assert response.status_code == http.HTTPStatus.CONFLICT
+
+    response = requests.post(
         url=signoz.zeus.host_configs["8080"].get("/__admin/requests/count"),
         json={"method": "GET", "url": "/v2/licenses/me"},
         timeout=5,
     )
 
-    assert response.json()["count"] == 1
+    assert response.json()["count"] == 2
 
 
 def test_refresh_license(

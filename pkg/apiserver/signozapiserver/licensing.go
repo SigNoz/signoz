@@ -39,6 +39,32 @@ func (provider *provider) addLicensingRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v3/licenses", handler.New(
+		provider.authzMiddleware.CheckResources(provider.licensingHandler.ActivateDeprecated, authtypes.SigNozAdminRoleName),
+		handler.OpenAPIDef{
+			ID:                  "ActivateLicenseDeprecated",
+			Tags:                []string{"licenses"},
+			Summary:             "Activate a license.",
+			Description:         "This endpoint validates the license key with the upstream server and activates the license for the organization.",
+			Request:             new(licensetypes.PostableLicense),
+			RequestContentType:  "application/json",
+			Response:            nil,
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusAccepted,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound, http.StatusConflict},
+			Deprecated:          true,
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceLicense.Scope(coretypes.VerbCreate)}),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceLicense,
+			Verb:     coretypes.VerbCreate,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			Selector: coretypes.WildcardSelector,
+		}),
+	)).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v4/licenses", handler.New(
 		provider.authzMiddleware.CheckResources(provider.licensingHandler.List, authtypes.SigNozAdminRoleName),
 		handler.OpenAPIDef{

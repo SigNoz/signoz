@@ -51,6 +51,8 @@ type API interface {
 type Handler interface {
 	Create(http.ResponseWriter, *http.Request)
 
+	ActivateDeprecated(http.ResponseWriter, *http.Request)
+
 	List(http.ResponseWriter, *http.Request)
 
 	Get(http.ResponseWriter, *http.Request)

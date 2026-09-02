@@ -24523,6 +24523,64 @@ paths:
       summary: Put profile in Zeus for a deployment.
       tags:
       - zeus
+  /api/v3/licenses:
+    post:
+      deprecated: true
+      description: This endpoint validates the license key with the upstream server
+        and activates the license for the organization.
+      operationId: ActivateLicenseDeprecated
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LicensetypesPostableLicense'
+      responses:
+        "202":
+          description: Accepted
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - license:create
+      - tokenizer:
+        - license:create
+      summary: Activate a license.
+      tags:
+      - licenses
   /api/v3/metrics/dashboards:
     get:
       deprecated: false
