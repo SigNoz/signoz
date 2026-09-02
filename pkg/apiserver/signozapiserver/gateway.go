@@ -176,6 +176,41 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/gateway/ingestion_keys/{keyId}/limits", handler.New(
+		provider.authzMiddleware.CheckResources(provider.gatewayHandler.GetIngestionKeyLimits, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		handler.OpenAPIDef{
+			ID:                  "GetIngestionKeyLimits",
+			Tags:                []string{"gateway"},
+			Summary:             "Get limits for the ingestion key",
+			Description:         "This endpoint returns the ingestion limits for an ingestion key",
+			Request:             nil,
+			RequestContentType:  "",
+			Response:            new([]gatewaytypes.Limit),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusNotFound},
+			Deprecated:          false,
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceIngestionLimit.Scope(coretypes.VerbList), coretypes.ResourceMetaResourceIngestionKey.Scope(coretypes.VerbRead)}),
+		},
+		handler.WithResourceDefs(
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourceIngestionLimit,
+				Verb:     coretypes.VerbList,
+				Category: coretypes.ActionCategoryConfigurationChange,
+				Selector: coretypes.WildcardSelector,
+			},
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourceIngestionKey,
+				Verb:     coretypes.VerbRead,
+				Category: coretypes.ActionCategoryConfigurationChange,
+				ID:       coretypes.PathParam("keyId"),
+				Selector: coretypes.IDSelector,
+			},
+		),
+	)).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/gateway/ingestion_keys/{keyId}/limits", handler.New(
 		provider.authzMiddleware.CheckResources(provider.gatewayHandler.DeprecatedCreateIngestionKeyLimit, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
 		handler.OpenAPIDef{
 			ID:                  "CreateIngestionKeyLimit",

@@ -30,6 +30,8 @@ import type {
 	GatewaytypesPostableIngestionKeyLimitDTO,
 	GatewaytypesUpdatableIngestionKeyLimitDTO,
 	GetIngestionKey200,
+	GetIngestionKeyLimits200,
+	GetIngestionKeyLimitsPathParameters,
 	GetIngestionKeyPathParameters,
 	GetIngestionKeys200,
 	GetIngestionKeysParams,
@@ -509,6 +511,108 @@ export const useUpdateIngestionKey = <
 > => {
 	return useMutation(getUpdateIngestionKeyMutationOptions(options));
 };
+/**
+ * This endpoint returns the ingestion limits for an ingestion key
+ * @summary Get limits for the ingestion key
+ */
+export const getIngestionKeyLimits = (
+	{ keyId }: GetIngestionKeyLimitsPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetIngestionKeyLimits200>({
+		url: `/api/v2/gateway/ingestion_keys/${keyId}/limits`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetIngestionKeyLimitsQueryKey = ({
+	keyId,
+}: GetIngestionKeyLimitsPathParameters) => {
+	return [`/api/v2/gateway/ingestion_keys/${keyId}/limits`] as const;
+};
+
+export const getGetIngestionKeyLimitsQueryOptions = <
+	TData = Awaited<ReturnType<typeof getIngestionKeyLimits>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ keyId }: GetIngestionKeyLimitsPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getIngestionKeyLimits>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getGetIngestionKeyLimitsQueryKey({ keyId });
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getIngestionKeyLimits>>
+	> = ({ signal }) => getIngestionKeyLimits({ keyId }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!keyId,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getIngestionKeyLimits>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetIngestionKeyLimitsQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getIngestionKeyLimits>>
+>;
+export type GetIngestionKeyLimitsQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get limits for the ingestion key
+ */
+
+export function useGetIngestionKeyLimits<
+	TData = Awaited<ReturnType<typeof getIngestionKeyLimits>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ keyId }: GetIngestionKeyLimitsPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getIngestionKeyLimits>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetIngestionKeyLimitsQueryOptions({ keyId }, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get limits for the ingestion key
+ */
+export const invalidateGetIngestionKeyLimits = async (
+	queryClient: QueryClient,
+	{ keyId }: GetIngestionKeyLimitsPathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetIngestionKeyLimitsQueryKey({ keyId }) },
+		options,
+	);
+
+	return queryClient;
+};
+
 /**
  * This endpoint creates an ingestion key limit.
  * @deprecated

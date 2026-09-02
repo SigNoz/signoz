@@ -11695,6 +11695,20 @@ export type GetIngestionKey200 = {
 export type UpdateIngestionKeyPathParameters = {
 	keyId: string;
 };
+export type GetIngestionKeyLimitsPathParameters = {
+	keyId: string;
+};
+export type GetIngestionKeyLimits200 = {
+	/**
+	 * @type array,null
+	 */
+	data: GatewaytypesLimitDTO[] | null;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type CreateIngestionKeyLimitPathParameters = {
 	keyId: string;
 };

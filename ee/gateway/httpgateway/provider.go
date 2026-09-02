@@ -212,6 +212,20 @@ func (provider *Provider) GetIngestionKeyLimit(ctx context.Context, orgID valuer
 	return &limit, nil
 }
 
+func (provider *Provider) GetIngestionKeyLimits(ctx context.Context, orgID valuer.UUID, keyID string) ([]gatewaytypes.Limit, error) {
+	responseBody, err := provider.do(ctx, orgID, http.MethodGet, "/v1/workspaces/me/keys/"+keyID+"/limits", nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var limits []gatewaytypes.Limit
+	if err := json.Unmarshal([]byte(gjson.GetBytes(responseBody, "data").String()), &limits); err != nil {
+		return nil, err
+	}
+
+	return limits, nil
+}
+
 func (provider *Provider) UpdateIngestionKeyLimit(ctx context.Context, orgID valuer.UUID, limitID string, limitConfig gatewaytypes.LimitConfig, tags []string) error {
 	requestBody := gatewaytypes.UpdatableIngestionKeyLimit{
 		Config: limitConfig,
