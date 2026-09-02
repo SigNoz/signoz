@@ -109,6 +109,57 @@ components:
         webhook_url:
           $ref: '#/components/schemas/ConfigSecretURL'
       type: object
+    AlertmanagertypesJSMOpsReceiverConfig:
+      properties:
+        api_key:
+          type: string
+        description:
+          type: string
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        message:
+          type: string
+        priority:
+          type: string
+        send_resolved:
+          type: boolean
+        tags:
+          type: string
+      type: object
+    AlertmanagertypesJiraReceiverConfig:
+      properties:
+        custom_fields:
+          additionalProperties: {}
+          type: object
+        description:
+          type: string
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        issue_type:
+          type: string
+        labels:
+          items:
+            type: string
+          type: array
+        priority:
+          type: string
+        project:
+          type: string
+        reopen_duration:
+          $ref: '#/components/schemas/ModelDuration'
+        reopen_transition:
+          type: string
+        resolve_transition:
+          type: string
+        send_resolved:
+          type: boolean
+        site:
+          type: string
+        summary:
+          type: string
+        wont_fix_resolution:
+          type: string
+      type: object
     AlertmanagertypesMaintenanceKind:
       enum:
       - fixed
@@ -163,6 +214,10 @@ components:
       - required:
         - googlechat_configs
       - required:
+        - jira_configs
+      - required:
+        - jsmops_configs
+      - required:
         - discord_configs
       - required:
         - email_configs
@@ -193,8 +248,6 @@ components:
       - required:
         - msteamsv2_configs
       - required:
-        - jira_configs
-      - required:
         - rocketchat_configs
       - required:
         - mattermost_configs
@@ -217,7 +270,11 @@ components:
           type: array
         jira_configs:
           items:
-            $ref: '#/components/schemas/ConfigJiraConfig'
+            $ref: '#/components/schemas/AlertmanagertypesJiraReceiverConfig'
+          type: array
+        jsmops_configs:
+          items:
+            $ref: '#/components/schemas/AlertmanagertypesJSMOpsReceiverConfig'
           type: array
         mattermost_configs:
           items:
@@ -344,7 +401,11 @@ components:
           type: array
         jira_configs:
           items:
-            $ref: '#/components/schemas/ConfigJiraConfig'
+            $ref: '#/components/schemas/AlertmanagertypesJiraReceiverConfig'
+          type: array
+        jsmops_configs:
+          items:
+            $ref: '#/components/schemas/AlertmanagertypesJSMOpsReceiverConfig'
           type: array
         mattermost_configs:
           items:
@@ -2943,6 +3004,46 @@ components:
           $ref: '#/components/schemas/DashboardtypesGettableDashboardV2'
         publicDashboard:
           $ref: '#/components/schemas/DashboardtypesGettablePublicDasbhboard'
+      type: object
+    DashboardtypesGettableSystemDashboard:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        image:
+          type: string
+        locked:
+          type: boolean
+        name:
+          type: string
+        orgId:
+          type: string
+        schemaVersion:
+          type: string
+        source:
+          $ref: '#/components/schemas/DashboardtypesSource'
+        spec:
+          $ref: '#/components/schemas/DashboardtypesDashboardSpec'
+        tags:
+          items:
+            $ref: '#/components/schemas/TagtypesGettableTag'
+          nullable: true
+          type: array
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - orgId
+      - locked
+      - source
+      - schemaVersion
+      - name
+      - tags
+      - spec
       type: object
     DashboardtypesHistogramBuckets:
       properties:
@@ -15499,6 +15600,73 @@ paths:
       - tokenizer:
         - dashboard:update
       summary: Migrate dashboard to v2
+      tags:
+      - dashboard
+  /api/v2/dashboards/system/{name}:
+    get:
+      deprecated: false
+      description: Returns a dashboard SigNoz ships and owns, addressed by its stable
+        definition name (e.g. `ai-o11y-overview`) rather than its id. System dashboards
+        are read-only and upgraded through releases. The dashboard's own `name` field
+        carries a reserved prefix that the path segment must not include.
+      operationId: GetSystemDashboard
+      parameters:
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesGettableSystemDashboard'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - dashboard:read
+      - tokenizer:
+        - dashboard:read
+      summary: Get system dashboard
       tags:
       - dashboard
   /api/v2/factor_password/forgot:
