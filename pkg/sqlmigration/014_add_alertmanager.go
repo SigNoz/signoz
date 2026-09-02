@@ -153,15 +153,27 @@ func (migration *addAlertmanager) populateOrgIDInChannels(ctx context.Context, t
 	return nil
 }
 
-func (migration *addAlertmanager) populateAlertmanagerConfig(ctx context.Context, tx bun.Tx, orgID string) error {
-	var channels []*alertmanagertypes.Channel
+// storableChannel is the channel table as it stood at this migration.
+// alertmanagertypes.Channel has grown columns since, and reading through it here
+// would put those columns into statements that run before they exist.
+type storableChannel struct {
+	bun.BaseModel `bun:"table:notification_channel"`
 
-	// Columns are pinned so this migration keeps reading the table as it existed
-	// here rather than following later additions to the Channel model.
+	ID        string    `bun:"id,pk,type:text"`
+	CreatedAt time.Time `bun:"created_at"`
+	UpdatedAt time.Time `bun:"updated_at"`
+	Name      string    `bun:"name"`
+	Type      string    `bun:"type"`
+	Data      string    `bun:"data"`
+	OrgID     string    `bun:"org_id"`
+}
+
+func (migration *addAlertmanager) populateAlertmanagerConfig(ctx context.Context, tx bun.Tx, orgID string) error {
+	var channels []*storableChannel
+
 	err := tx.
 		NewSelect().
 		Model(&channels).
-		Column("id", "created_at", "updated_at", "name", "type", "data", "org_id").
 		Where("org_id = ?", orgID).
 		Scan(ctx)
 	if err != nil {
@@ -208,7 +220,13 @@ func (migration *addAlertmanager) populateAlertmanagerConfig(ctx context.Context
 		}
 	}
 
-	config, err := alertmanagertypes.NewConfigFromChannels(alertmanagerserver.NewConfig().Global, alertmanagerserver.NewConfig().Route, channels, orgID)
+	// NewConfigFromChannels reads nothing off a channel but Data.
+	receiverChannels := make(alertmanagertypes.Channels, 0, len(channels))
+	for _, channel := range channels {
+		receiverChannels = append(receiverChannels, &alertmanagertypes.Channel{Data: channel.Data})
+	}
+
+	config, err := alertmanagertypes.NewConfigFromChannels(alertmanagerserver.NewConfig().Global, alertmanagerserver.NewConfig().Route, receiverChannels, orgID)
 	if err != nil {
 		return err
 	}
@@ -236,7 +254,6 @@ func (migration *addAlertmanager) populateAlertmanagerConfig(ctx context.Context
 			if _, err := tx.
 				NewUpdate().
 				Model(channel).
-				Column("name", "type", "data", "org_id", "created_at", "updated_at").
 				WherePK().
 				Exec(ctx); err != nil {
 				return err
@@ -277,7 +294,7 @@ func newReceiver(input string) (config.Receiver, error) {
 	return receiverWithDefaults, nil
 }
 
-func (migration *addAlertmanager) msTeamsChannelToMSTeamsV2Channel(c *alertmanagertypes.Channel) error {
+func (migration *addAlertmanager) msTeamsChannelToMSTeamsV2Channel(c *storableChannel) error {
 	if c.Type != "msteams" {
 		return nil
 	}
