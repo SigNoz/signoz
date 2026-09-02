@@ -57,6 +57,8 @@ export const useHandleExplorerTabChange = (): {
 		[currentQuery, updateAllQueriesOperators, updateQueriesData],
 	);
 
+	//TODO: this util is used not just to change explorer tab but also
+	// for changing just the query or saved view. consider renaming this.
 	const handleExplorerTabChange = useCallback(
 		(
 			type: string,
