@@ -214,6 +214,7 @@ export function K8sExpandedRow<
 					params.selectedItem,
 					params.clusterName,
 					params.namespaceName,
+					params.containerName,
 				);
 				queryClient.setQueryData(detailQueryKey, { data: row });
 			}
