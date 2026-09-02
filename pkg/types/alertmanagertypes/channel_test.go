@@ -22,9 +22,9 @@ func TestNewConfigFromChannels(t *testing.T) {
 			name: "OneEmailChannel",
 			channels: Channels{
 				{
-					Name: "email-receiver",
-					Type: "email",
-					Data: `{"name":"email-receiver","email_configs":[{"to":"test@example.com"}]}`,
+					DisplayName: "email-receiver",
+					Type:        "email",
+					Data:        `{"name":"email-receiver","email_configs":[{"to":"test@example.com"}]}`,
 				},
 			},
 			expectedRoutes: []map[string]any{{"receiver": "email-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1\""}}},
@@ -46,9 +46,9 @@ func TestNewConfigFromChannels(t *testing.T) {
 			name: "OneSlackChannel",
 			channels: Channels{
 				{
-					Name: "slack-receiver",
-					Type: "slack",
-					Data: `{"name":"slack-receiver","slack_configs":[{"channel":"#alerts","api_url":"https://slack.com/api/test","send_resolved":true}]}`,
+					DisplayName: "slack-receiver",
+					Type:        "slack",
+					Data:        `{"name":"slack-receiver","slack_configs":[{"channel":"#alerts","api_url":"https://slack.com/api/test","send_resolved":true}]}`,
 				},
 			},
 			expectedRoutes: []map[string]any{{"receiver": "slack-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1\""}}},
@@ -80,9 +80,9 @@ func TestNewConfigFromChannels(t *testing.T) {
 			name: "OnePagerdutyChannel",
 			channels: Channels{
 				{
-					Name: "pagerduty-receiver",
-					Type: "pagerduty",
-					Data: `{"name":"pagerduty-receiver","pagerduty_configs":[{"service_key":"test"}]}`,
+					DisplayName: "pagerduty-receiver",
+					Type:        "pagerduty",
+					Data:        `{"name":"pagerduty-receiver","pagerduty_configs":[{"service_key":"test"}]}`,
 				},
 			},
 			expectedRoutes: []map[string]any{{"receiver": "pagerduty-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1\""}}},
@@ -112,14 +112,14 @@ func TestNewConfigFromChannels(t *testing.T) {
 			name: "OnePagerdutyAndOneSlackChannel",
 			channels: Channels{
 				{
-					Name: "pagerduty-receiver",
-					Type: "pagerduty",
-					Data: `{"name":"pagerduty-receiver","pagerduty_configs":[{"service_key":"test"}]}`,
+					DisplayName: "pagerduty-receiver",
+					Type:        "pagerduty",
+					Data:        `{"name":"pagerduty-receiver","pagerduty_configs":[{"service_key":"test"}]}`,
 				},
 				{
-					Name: "slack-receiver",
-					Type: "slack",
-					Data: `{"name":"slack-receiver","slack_configs":[{"channel":"#alerts","api_url":"https://slack.com/api/test","send_resolved":true}]}`,
+					DisplayName: "slack-receiver",
+					Type:        "slack",
+					Data:        `{"name":"slack-receiver","slack_configs":[{"channel":"#alerts","api_url":"https://slack.com/api/test","send_resolved":true}]}`,
 				},
 			},
 			expectedRoutes: []map[string]any{{"receiver": "pagerduty-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1\""}}, {"receiver": "slack-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1\""}}},
