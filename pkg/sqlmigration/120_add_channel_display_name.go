@@ -37,8 +37,9 @@ func (migration *addChannelDisplayName) Register(migrations *migrate.Migrations)
 // display_name, and the alertmanager config still keys receivers by that same
 // string.
 func (migration *addChannelDisplayName) Up(ctx context.Context, db *bun.DB) error {
-	// notification_channel references organizations; FK enforcement must be off
-	// for the SQLite recreate-table fallback the NOT NULL column add falls into.
+	// Adding a NOT NULL column rebuilds the whole table on SQLite (create temp,
+	// copy, drop, rename), and notification_channel has a foreign key on org_id
+	// that the copy would re-validate. Enforcement stays off for the rebuild.
 	if err := migration.sqlschema.ToggleFKEnforcement(ctx, db, false); err != nil {
 		return err
 	}
