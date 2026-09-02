@@ -1,9 +1,12 @@
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
+
 import { getTopOperationList } from './__mocks__/getTopOperation';
 import { TopOperationList } from './TopOperationsTable';
 import {
 	convertedTracesToDownloadData,
 	getErrorRate,
 	getNearestHighestBucketValue,
+	navigateToTrace,
 } from './utils';
 
 describe('Error Rate', () => {
@@ -66,5 +69,67 @@ describe('convertedTracesToDownloadData', () => {
 				'Error Rate (%)': '10.00',
 			},
 		]);
+	});
+});
+
+describe('navigateToTrace', () => {
+	const apmToTraceQuery = ({
+		builder: { queryData: [{ dataSource: 'traces' }] },
+	} as unknown) as Query;
+
+	const getUrl = (operation: string, servicename = 'branch-pay-dev'): URL => {
+		const safeNavigate = jest.fn();
+
+		navigateToTrace({
+			servicename,
+			operation,
+			minTime: 1_000_000_000_000_000,
+			maxTime: 2_000_000_000_000_000,
+			selectedTraceTags: '[]',
+			apmToTraceQuery,
+			safeNavigate,
+			openInNewTab: false,
+		});
+
+		expect(safeNavigate).toHaveBeenCalledTimes(1);
+		return new URL(safeNavigate.mock.calls[0][0], 'https://signoz.example.com');
+	};
+
+	it('keeps compositeQuery when the operation name contains a "#"', () => {
+		// An unencoded `#` starts a URL fragment, which drops every parameter
+		// after it - including compositeQuery - leaving the explorer unfiltered.
+		const url = getUrl('AccountResource#getAccount');
+
+		expect(url.hash).toBe('');
+		expect(url.searchParams.get('compositeQuery')).toBe(
+			JSON.stringify(apmToTraceQuery),
+		);
+	});
+
+	it('round-trips the operation name through the selected param', () => {
+		const url = getUrl('AccountResource#getAccount');
+
+		expect(
+			JSON.parse(url.searchParams.get('selected') as string).operation[0],
+		).toBe('AccountResource#getAccount');
+	});
+
+	it('keeps compositeQuery when the service name contains a "#"', () => {
+		const url = getUrl('op', 'weird#service');
+
+		expect(url.hash).toBe('');
+		expect(url.searchParams.get('compositeQuery')).toBe(
+			JSON.stringify(apmToTraceQuery),
+		);
+	});
+
+	it('leaves plain operation names and the time range unchanged', () => {
+		const url = getUrl('HTTP GET /cart');
+
+		expect(url.searchParams.get('compositeQuery')).toBe(
+			JSON.stringify(apmToTraceQuery),
+		);
+		expect(url.searchParams.get('startTime')).toBe('1000000000');
+		expect(url.searchParams.get('endTime')).toBe('2000000000');
 	});
 });
