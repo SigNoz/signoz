@@ -10,8 +10,8 @@ import { useGetSavedViewParams } from './saveViews/useGetSavedViewParams';
 import { useQueryBuilder } from './queryBuilder/useQueryBuilder';
 
 export interface ICurrentQueryData {
-	name: string;
-	id: string;
+	viewName?: string;
+	viewKey?: string;
 	query: Query;
 }
 
@@ -77,8 +77,8 @@ export const useHandleExplorerTabChange = (): {
 					query,
 					{
 						[QueryParams.panelTypes]: newPanelType,
-						[QueryParams.viewName]: currentQueryData?.name || viewName,
-						[QueryParams.viewKey]: currentQueryData?.id || viewKey,
+						[QueryParams.viewName]: currentQueryData?.viewName || viewName,
+						[QueryParams.viewKey]: currentQueryData?.viewKey || viewKey,
 					},
 					redirectToUrl,
 					undefined,
@@ -89,8 +89,8 @@ export const useHandleExplorerTabChange = (): {
 					query,
 					{
 						[QueryParams.panelTypes]: newPanelType,
-						[QueryParams.viewName]: currentQueryData?.name || viewName,
-						[QueryParams.viewKey]: currentQueryData?.id || viewKey,
+						[QueryParams.viewName]: currentQueryData?.viewName || viewName,
+						[QueryParams.viewKey]: currentQueryData?.viewKey || viewKey,
 					},
 					undefined,
 					undefined,
