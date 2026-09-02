@@ -3,12 +3,20 @@
 	align-items: center;
 	justify-content: space-between;
 	cursor: pointer;
+	gap: var(--spacing-2);
 }
 
 .leftAction {
 	display: flex;
 	align-items: center;
 	gap: var(--spacing-3);
+	flex: 1 1 auto;
+	min-width: 0;
+
+	// The collapse chevron must keep its size; only the title absorbs the squeeze.
+	> svg {
+		flex-shrink: 0;
+	}
 }
 
 .title {
@@ -18,16 +26,31 @@
 	line-height: 18px;
 	letter-spacing: -0.07px;
 	text-transform: capitalize;
+	// Always ellipsize a long name; on hover the actions take width and it
+	// compresses further.
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .rightAction {
 	display: flex;
 	align-items: center;
-	min-width: 48px;
+	gap: var(--spacing-1);
+	flex-shrink: 0;
+	// Always laid out so the header height stays constant (no shift on hover);
+	// collapsed to zero width until hover, so the title uses the full width and
+	// reflows/ellipsizes when the actions appear.
+	width: 0;
+	overflow: hidden;
+	opacity: 0;
+	pointer-events: none;
 }
 
-.clearAll {
-	font-size: 12px;
-	color: var(--accent-primary);
-	cursor: pointer;
+.header:hover .rightAction {
+	width: auto;
+	opacity: 1;
+	pointer-events: auto;
 }
