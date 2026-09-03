@@ -26,46 +26,32 @@ import {
 	timeSeriesPoints,
 } from '@/storybook/msw/__story_mockdata__/queryRange';
 
+// The tab renders the traces explorer over `DataSource.TRACES`, so it asks the
+// same endpoints for the same shapes and answers from the traces builders.
 import {
 	exportDashboardsResponse,
 	savedTraceViewsResponse,
 	traceAttributeValuesResponse,
 	traceFieldKeysResponse,
 	traceFieldValues,
-	traceFunnelsResponse,
 	traceQuickFiltersResponse,
 	traceRootSpanRows,
 	traceSpanRows,
 	TRACES_EXPLORER_VIEWS,
-	TRACES_TABS,
-	type TracesTab,
-} from './__story_mockdata__/traces';
+} from '../../TracesModulePage/__story_mockdata__/traces';
 
-const VIEW = 'Traces · view';
-const LIST = 'Traces · list';
-const FILTERS = 'Traces · filters';
-const SAVED = 'Traces · saved';
+const VIEW = 'Explorer · view';
+const LIST = 'Explorer · list';
+const FILTERS = 'Explorer · filters';
+const SAVED = 'Explorer · saved';
 
-interface RouteValues {
-	tab: TracesTab;
-	view: ExplorerViews;
-}
-
-const tracesRoute = ({ tab, view }: RouteValues): string => {
-	if (tab === 'funnels') {
-		return ROUTES.TRACES_FUNNELS;
-	}
-
-	if (tab === 'views') {
-		return ROUTES.TRACES_SAVE_VIEWS;
-	}
-
+const explorerRoute = (view: ExplorerViews): string => {
 	const params = new URLSearchParams({
 		[QueryParams.panelTypes]: JSON.stringify(explorerViewToPanelType[view]),
 		[QueryParams.selectedExplorerView]: view,
 	});
 
-	return `${ROUTES.TRACES_EXPLORER}?${params.toString()}`;
+	return `${ROUTES.AI_OBSERVABILITY_EXPLORER}?${params.toString()}`;
 };
 
 interface RawQuerySpec {
@@ -79,15 +65,8 @@ const rawSpecOf = (body: QueryRangeRequestV5): RawQuerySpec => {
 	return spec as RawQuerySpec;
 };
 
-export const tracesMocks = defineStoryMocks({
+export const llmExplorerMocks = defineStoryMocks({
 	controls: {
-		tab: choiceControl<TracesTab>('Tab', {
-			group: VIEW,
-			description:
-				'The three pathnames the module tabs between. Clicking another tab leaves the story, so switch it here.',
-			options: TRACES_TABS,
-			value: 'explorer',
-		}),
 		view: choiceControl<ExplorerViews>('Explorer view', {
 			group: VIEW,
 			description:
@@ -98,7 +77,7 @@ export const tracesMocks = defineStoryMocks({
 		spans: countControl('Spans', {
 			group: LIST,
 			description:
-				'Spans the endpoint has, one root span per trace in the Trace view. The table asks for a page at a time, so a higher count paginates.',
+				'LLM spans the endpoint has, one root span per trace in the Trace view. The table asks for a page at a time, so a higher count paginates.',
 			value: 24,
 			max: 40,
 		}),
@@ -122,15 +101,9 @@ export const tracesMocks = defineStoryMocks({
 		}),
 		savedViews: countControl('Saved views', {
 			group: SAVED,
-			description: 'Fills the views dropdown and the Views tab.',
+			description: 'Fills the views dropdown the explorer options offer.',
 			value: 4,
 			max: 8,
-		}),
-		funnels: countControl('Funnels', {
-			group: SAVED,
-			description: 'Fills the Funnels tab.',
-			value: 3,
-			max: 6,
 		}),
 	},
 	handlers: (values, response) => [
@@ -163,11 +136,6 @@ export const tracesMocks = defineStoryMocks({
 		rest.get(
 			'http://localhost/api/v1/explorer/views',
 			response.json(() => savedTraceViewsResponse(values.savedViews)),
-		),
-
-		rest.get(
-			'http://localhost/api/v1/trace-funnels/list',
-			response.json(() => traceFunnelsResponse(values.funnels)),
 		),
 
 		rest.get(
@@ -237,7 +205,7 @@ export const tracesMocks = defineStoryMocks({
 			}),
 		),
 	],
-	config: (values) => ({ route: tracesRoute(values) }),
+	config: (values) => ({ route: explorerRoute(values.view) }),
 	// The quick-filter settings announcement is a first-run popover that covers
 	// the toolbar until it is closed, and closing it is what the app persists.
 	effect: () => {

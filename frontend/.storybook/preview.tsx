@@ -140,7 +140,7 @@ const preview: Preview = {
 						['List', 'Detail'],
 						'External APIs',
 						'AI Observability',
-						['Overview', 'Model Pricing', 'Attribute Mapping'],
+						['Overview', 'Explorer', 'Model Pricing', 'Attribute Mapping'],
 						'Noz',
 						'Metering',
 						['Cost Meter', 'Usage Explorer'],
