@@ -30,6 +30,9 @@ components:
         mapping:
           email: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfig'
           googlechat: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelGoogleChatConfig'
+          incidentio: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfig'
+          jira: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfig'
+          jsmops: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfig'
           msteams: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelMSTeamsConfig'
           opsgenie: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelOpsgenieConfig'
           pagerduty: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelPagerdutyConfig'
@@ -44,6 +47,9 @@ components:
       - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelOpsgenieConfig'
       - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelMSTeamsConfig'
       - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelGoogleChatConfig'
+      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfig'
+      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfig'
+      - $ref: '#/components/schemas/AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfig'
       type: object
     AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfig:
       properties:
@@ -65,6 +71,42 @@ components:
           type: string
         spec:
           $ref: '#/components/schemas/AlertmanagertypesChannelGoogleChatConfig'
+      required:
+      - kind
+      - spec
+      type: object
+    AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfig:
+      properties:
+        kind:
+          enum:
+          - incidentio
+          type: string
+        spec:
+          $ref: '#/components/schemas/AlertmanagertypesChannelIncidentIOConfig'
+      required:
+      - kind
+      - spec
+      type: object
+    AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfig:
+      properties:
+        kind:
+          enum:
+          - jsmops
+          type: string
+        spec:
+          $ref: '#/components/schemas/AlertmanagertypesChannelJSMOpsConfig'
+      required:
+      - kind
+      - spec
+      type: object
+    AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfig:
+      properties:
+        kind:
+          enum:
+          - jira
+          type: string
+        spec:
+          $ref: '#/components/schemas/AlertmanagertypesChannelJiraConfig'
       required:
       - kind
       - spec
@@ -162,6 +204,88 @@ components:
       - title
       - text
       type: object
+    AlertmanagertypesChannelIncidentIOConfig:
+      properties:
+        description:
+          type: string
+        metadata:
+          additionalProperties:
+            type: string
+          type: object
+        sendResolved:
+          nullable: true
+          type: boolean
+        title:
+          type: string
+        token:
+          type: string
+        url:
+          type: string
+      required:
+      - url
+      - token
+      type: object
+    AlertmanagertypesChannelJSMOpsConfig:
+      properties:
+        apiKey:
+          type: string
+        description:
+          type: string
+        message:
+          type: string
+        priority:
+          type: string
+        sendResolved:
+          nullable: true
+          type: boolean
+        tags:
+          type: string
+      required:
+      - apiKey
+      type: object
+    AlertmanagertypesChannelJiraConfig:
+      properties:
+        apiToken:
+          type: string
+        customFields:
+          additionalProperties: {}
+          type: object
+        description:
+          type: string
+        email:
+          type: string
+        issueType:
+          type: string
+        labels:
+          items:
+            type: string
+          type: array
+        priority:
+          type: string
+        project:
+          type: string
+        reopenDuration:
+          type: string
+        reopenTransition:
+          type: string
+        resolveTransition:
+          type: string
+        sendResolved:
+          nullable: true
+          type: boolean
+        site:
+          type: string
+        summary:
+          type: string
+        wontFixResolution:
+          type: string
+      required:
+      - site
+      - project
+      - issueType
+      - email
+      - apiToken
+      type: object
     AlertmanagertypesChannelKind:
       enum:
       - slack
@@ -171,6 +295,9 @@ components:
       - opsgenie
       - msteams
       - googlechat
+      - jira
+      - jsmops
+      - incidentio
       type: string
     AlertmanagertypesChannelMSTeamsConfig:
       properties:

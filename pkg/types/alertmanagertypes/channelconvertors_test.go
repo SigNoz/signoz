@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/prometheus/alertmanager/config"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/stretchr/testify/assert"
@@ -90,6 +91,45 @@ func TestPostableChannelToReceiverWritesTheExpectedConfigsField(t *testing.T) {
 			},
 			expectedDerivedType:   "googlechat",
 			expectedConfigsInData: "googlechat_configs",
+		},
+		{
+			description: "jira",
+			postable: PostableNotificationChannel{
+				Name:        "jira",
+				DisplayName: "jira",
+				Config: ChannelConfig{Kind: ChannelKindJira, Spec: &ChannelJiraConfig{
+					Site:      "https://acme.atlassian.net",
+					Project:   "OPS",
+					IssueType: "Bug",
+					Email:     "oncall@acme.com",
+					APIToken:  "api-token",
+				}},
+			},
+			expectedDerivedType:   "jira",
+			expectedConfigsInData: "jira_configs",
+		},
+		{
+			description: "jsmops",
+			postable: PostableNotificationChannel{
+				Name:        "jsm",
+				DisplayName: "jsm",
+				Config:      ChannelConfig{Kind: ChannelKindJSMOps, Spec: &ChannelJSMOpsConfig{APIKey: "api-key"}},
+			},
+			expectedDerivedType:   "jsmops",
+			expectedConfigsInData: "jsmops_configs",
+		},
+		{
+			description: "incidentio",
+			postable: PostableNotificationChannel{
+				Name:        "io",
+				DisplayName: "io",
+				Config: ChannelConfig{Kind: ChannelKindIncidentIO, Spec: &ChannelIncidentIOConfig{
+					URL:   "https://api.incident.io/v2/alert_events/http/01ABC",
+					Token: "token",
+				}},
+			},
+			expectedDerivedType:   "incidentio",
+			expectedConfigsInData: "incidentio_configs",
 		},
 	}
 
@@ -256,6 +296,84 @@ func TestChannelToPostableChannelRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				Text:         "googlechat text",
 			},
 		},
+		{
+			description: "jira",
+			kind:        ChannelKindJira,
+			spec: &ChannelJiraConfig{
+				SendResolved:      &sendResolved,
+				Site:              "https://acme.atlassian.net",
+				Project:           "OPS",
+				IssueType:         "Bug",
+				Summary:           "jira summary",
+				Description:       "jira description",
+				Priority:          "High",
+				Labels:            []string{"signoz", "alert"},
+				ResolveTransition: "Done",
+				ReopenTransition:  "Reopen",
+				ReopenDuration:    "3d",
+				WontFixResolution: "Won't Do",
+				CustomFields:      map[string]any{"customfield_10010": "Ops"},
+				Email:             "oncall@acme.com",
+				APIToken:          "api-token",
+			},
+			expectedRoundTrip: &ChannelJiraConfig{
+				SendResolved:      &sendResolved,
+				Site:              "https://acme.atlassian.net",
+				Project:           "OPS",
+				IssueType:         "Bug",
+				Summary:           "jira summary",
+				Description:       "jira description",
+				Priority:          "High",
+				Labels:            []string{"signoz", "alert"},
+				ResolveTransition: "Done",
+				ReopenTransition:  "Reopen",
+				ReopenDuration:    "3d",
+				WontFixResolution: "Won't Do",
+				CustomFields:      map[string]any{"customfield_10010": "Ops"},
+				Email:             "oncall@acme.com",
+				APIToken:          "api-token",
+			},
+		},
+		{
+			description: "jsmops",
+			kind:        ChannelKindJSMOps,
+			spec: &ChannelJSMOpsConfig{
+				SendResolved: &sendResolved,
+				APIKey:       "api-key",
+				Message:      "jsmops message",
+				Description:  "jsmops description",
+				Priority:     "P1",
+				Tags:         "signoz,oncall",
+			},
+			expectedRoundTrip: &ChannelJSMOpsConfig{
+				SendResolved: &sendResolved,
+				APIKey:       "api-key",
+				Message:      "jsmops message",
+				Description:  "jsmops description",
+				Priority:     "P1",
+				Tags:         "signoz,oncall",
+			},
+		},
+		{
+			description: "incidentio",
+			kind:        ChannelKindIncidentIO,
+			spec: &ChannelIncidentIOConfig{
+				SendResolved: &sendResolved,
+				URL:          "https://api.incident.io/v2/alert_events/http/01ABC",
+				Token:        "token",
+				Title:        "incidentio title",
+				Description:  "incidentio description",
+				Metadata:     map[string]string{"team": "platform"},
+			},
+			expectedRoundTrip: &ChannelIncidentIOConfig{
+				SendResolved: &sendResolved,
+				URL:          "https://api.incident.io/v2/alert_events/http/01ABC",
+				Token:        "token",
+				Title:        "incidentio title",
+				Description:  "incidentio description",
+				Metadata:     map[string]string{"team": "platform"},
+			},
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -289,7 +407,7 @@ func TestChannelToPostableChannelRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 // to treat these as server-computed.
 // send_resolved carries no omitempty, so a spec that leaves it unset would
 // marshal an explicit false and overwrite the notifier's default. Four of the
-// seven kinds default to true, which is what makes the difference visible.
+// ten kinds default to true, which is what makes the difference visible.
 func TestChannelSpecWithoutSendResolvedTakesTheUpstreamDefault(t *testing.T) {
 	testCases := []struct {
 		description  string
@@ -303,6 +421,9 @@ func TestChannelSpecWithoutSendResolvedTakesTheUpstreamDefault(t *testing.T) {
 		{"slack", &ChannelSlackConfig{APIURL: "https://hooks.slack.com/services/T/B/X"}, false},
 		{"email", &ChannelEmailConfig{To: "team@example.com"}, false},
 		{"googlechat", &ChannelGoogleChatConfig{WebhookURL: "https://chat.googleapis.com/v1/spaces/A/messages"}, false},
+		{"jira", &ChannelJiraConfig{Site: "https://acme.atlassian.net", Project: "OPS", IssueType: "Bug", Email: "oncall@acme.com", APIToken: "api-token"}, false},
+		{"jsmops", &ChannelJSMOpsConfig{APIKey: "api-key"}, false},
+		{"incidentio", &ChannelIncidentIOConfig{URL: "https://api.incident.io/v2/alert_events/http/01ABC", Token: "token"}, false},
 	}
 
 	for _, testCase := range testCases {
@@ -347,6 +468,86 @@ func TestChannelToPostableChannelReturnsDefaultsTheCallerDidNotSet(t *testing.T)
 	assert.Equal(t, "#alerts", spec.Channel)
 	assert.NotEmpty(t, spec.Title, "upstream's default title template is injected on write")
 	assert.NotEmpty(t, spec.Text, "upstream's default text template is injected on write")
+}
+
+// The SigNoz notifiers default their own template fields in UnmarshalYAML, which
+// ToReceiver reaches through the defaulting round-trip. Those fields therefore
+// stay optional on the spec, and a caller who omits them reads back the template
+// rather than an empty string. The whole spec is compared so the other fields
+// each notifier defaults are covered too.
+func TestChannelSpecWithoutTemplatesTakesTheNotifierDefaults(t *testing.T) {
+	sendResolved := false
+
+	testCases := []struct {
+		description       string
+		kind              ChannelKind
+		spec              ChannelSpec
+		expectedRoundTrip ChannelSpec
+	}{
+		{
+			description: "jira",
+			kind:        ChannelKindJira,
+			spec:        &ChannelJiraConfig{Site: "https://acme.atlassian.net", Project: "OPS", IssueType: "Bug", Email: "oncall@acme.com", APIToken: "api-token"},
+			expectedRoundTrip: &ChannelJiraConfig{
+				SendResolved: &sendResolved,
+				Site:         "https://acme.atlassian.net",
+				Project:      "OPS",
+				IssueType:    "Bug",
+				Summary:      DefaultJiraSummaryTemplate,
+				Description:  DefaultJiraDescriptionTemplate,
+				// defaultJiraReopenDuration, which model.Duration formats as "3d".
+				ReopenDuration: "3d",
+				Email:          "oncall@acme.com",
+				APIToken:       "api-token",
+			},
+		},
+		{
+			description: "jsmops",
+			kind:        ChannelKindJSMOps,
+			spec:        &ChannelJSMOpsConfig{APIKey: "api-key"},
+			expectedRoundTrip: &ChannelJSMOpsConfig{
+				SendResolved: &sendResolved,
+				APIKey:       "api-key",
+				Message:      DefaultJSMOpsMessageTemplate,
+				Description:  DefaultJSMOpsDescriptionTemplate,
+				Tags:         "signoz",
+			},
+		},
+		{
+			description: "incidentio",
+			kind:        ChannelKindIncidentIO,
+			spec:        &ChannelIncidentIOConfig{URL: "https://api.incident.io/v2/alert_events/http/01ABC", Token: "token"},
+			expectedRoundTrip: &ChannelIncidentIOConfig{
+				SendResolved: &sendResolved,
+				URL:          "https://api.incident.io/v2/alert_events/http/01ABC",
+				Token:        "token",
+				Title:        DefaultIncidentIOTitleTemplate,
+				Description:  DefaultIncidentIODescriptionTemplate,
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			postable := PostableNotificationChannel{
+				Name:        "channel",
+				DisplayName: "channel",
+				Config:      ChannelConfig{Kind: testCase.kind, Spec: testCase.spec},
+			}
+			require.NoError(t, postable.Validate())
+
+			receiver, err := postable.ToReceiver()
+			require.NoError(t, err)
+
+			channel, err := NewChannelFromReceiverWithName(receiver, postable.Name, "org-1")
+			require.NoError(t, err)
+
+			roundTripped, err := channel.toPostableNotificationChannel()
+			require.NoError(t, err)
+
+			assert.Equal(t, testCase.expectedRoundTrip, roundTripped.Config.Spec)
+		})
+	}
 }
 
 // Email transport is not representable in the channel spec, and no credential
@@ -427,6 +628,68 @@ func TestPostableChannelToReceiverRoundTripsWebhookAuthModes(t *testing.T) {
 			roundTripped, err := channel.toPostableNotificationChannel()
 			require.NoError(t, err)
 			assert.Equal(t, testCase.expectedRoundTrip, roundTripped.Config.Spec)
+		})
+	}
+}
+
+// The SigNoz notifiers validate in their UnmarshalYAML, which ToReceiver reaches
+// only through the defaulting round-trip. A spec that passes Validate can still
+// be rejected there, and the request has to fail as invalid input rather than as
+// an internal error.
+func TestPostableChannelToReceiverReportsNotifierValidationAsInvalidInput(t *testing.T) {
+	testCases := []struct {
+		description string
+		kind        ChannelKind
+		spec        ChannelSpec
+	}{
+		{
+			description: "jira site outside jira cloud",
+			kind:        ChannelKindJira,
+			spec: &ChannelJiraConfig{
+				Site: "https://jira.acme.com", Project: "OPS", IssueType: "Bug",
+				Email: "oncall@acme.com", APIToken: "api-token",
+				Summary: "jira summary", Description: "jira description",
+			},
+		},
+		{
+			description: "jira reopen duration below a minute",
+			kind:        ChannelKindJira,
+			spec: &ChannelJiraConfig{
+				Site: "https://acme.atlassian.net", Project: "OPS", IssueType: "Bug",
+				Email: "oncall@acme.com", APIToken: "api-token",
+				Summary: "jira summary", Description: "jira description", ReopenDuration: "30s",
+			},
+		},
+		{
+			description: "incidentio url outside the alert events api",
+			kind:        ChannelKindIncidentIO,
+			spec: &ChannelIncidentIOConfig{
+				URL: "https://api.incident.io/v2/incidents", Token: "token",
+				Title: "incidentio title", Description: "incidentio description",
+			},
+		},
+		{
+			description: "incidentio token carrying the bearer prefix",
+			kind:        ChannelKindIncidentIO,
+			spec: &ChannelIncidentIOConfig{
+				URL: "https://api.incident.io/v2/alert_events/http/01ABC", Token: "Bearer token",
+				Title: "incidentio title", Description: "incidentio description",
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			postable := PostableNotificationChannel{
+				Name:        "channel",
+				DisplayName: "channel",
+				Config:      ChannelConfig{Kind: testCase.kind, Spec: testCase.spec},
+			}
+			require.NoError(t, postable.Validate())
+
+			_, err := postable.ToReceiver()
+			require.Error(t, err)
+			assert.True(t, errors.Ast(err, errors.TypeInvalidInput), "got %v", err)
 		})
 	}
 }
@@ -533,6 +796,31 @@ func TestChannelToPostableChannelRejectsUnrepresentableChannels(t *testing.T) {
 			channel: Channel{
 				DisplayName: "inline-tls",
 				Data:        `{"name":"inline-tls","webhook_configs":[{"url":"https://a","http_config":{"tls_config":{"ca":"---PEM---","min_version":"TLS12"},"follow_redirects":true,"enable_http2":true}}]}`,
+			},
+		},
+		{
+			// ChannelJiraConfig lifts only basic auth out of http_config, because
+			// that is all Jira Cloud accepts.
+			description: "jira authorization header",
+			channel: Channel{
+				DisplayName: "jira-bearer",
+				Data:        `{"name":"jira-bearer","jira_configs":[{"site":"https://acme.atlassian.net","project":"OPS","issue_type":"Bug","http_config":{"authorization":{"type":"Bearer","credentials":"tok"},"follow_redirects":true,"enable_http2":true}}]}`,
+			},
+		},
+		{
+			// JSM Ops and incident.io authenticate through their own spec fields,
+			// so their specs model no http_config credentials at all.
+			description: "jsmops basic auth",
+			channel: Channel{
+				DisplayName: "jsm-basic",
+				Data:        `{"name":"jsm-basic","jsmops_configs":[{"api_key":"key","http_config":{"basic_auth":{"username":"u","password":"p"},"follow_redirects":true,"enable_http2":true}}]}`,
+			},
+		},
+		{
+			description: "incidentio authorization header",
+			channel: Channel{
+				DisplayName: "io-bearer",
+				Data:        `{"name":"io-bearer","incidentio_configs":[{"url":"https://api.incident.io/v2/alert_events/http/01ABC","token":"t","http_config":{"authorization":{"type":"Bearer","credentials":"tok"},"follow_redirects":true,"enable_http2":true}}]}`,
 			},
 		},
 	}

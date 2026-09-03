@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/alertmanager/config"
 	commoncfg "github.com/prometheus/common/config"
+	"github.com/prometheus/common/model"
 	"github.com/swaggest/jsonschema-go"
 )
 
@@ -37,6 +38,9 @@ var (
 	ChannelKindOpsgenie   = ChannelKind{valuer.NewString("opsgenie")}
 	ChannelKindMSTeams    = ChannelKind{valuer.NewString("msteams")}
 	ChannelKindGoogleChat = ChannelKind{valuer.NewString("googlechat")}
+	ChannelKindJira       = ChannelKind{valuer.NewString("jira")}
+	ChannelKindJSMOps     = ChannelKind{valuer.NewString("jsmops")}
+	ChannelKindIncidentIO = ChannelKind{valuer.NewString("incidentio")}
 )
 
 func (ChannelKind) Enum() []any {
@@ -145,6 +149,9 @@ func (ChannelConfig) JSONSchemaOneOf() []any {
 		ChannelConfigVariant[ChannelOpsgenieConfig]{Kind: ChannelKindOpsgenie.StringValue()},
 		ChannelConfigVariant[ChannelMSTeamsConfig]{Kind: ChannelKindMSTeams.StringValue()},
 		ChannelConfigVariant[ChannelGoogleChatConfig]{Kind: ChannelKindGoogleChat.StringValue()},
+		ChannelConfigVariant[ChannelJiraConfig]{Kind: ChannelKindJira.StringValue()},
+		ChannelConfigVariant[ChannelJSMOpsConfig]{Kind: ChannelKindJSMOps.StringValue()},
+		ChannelConfigVariant[ChannelIncidentIOConfig]{Kind: ChannelKindIncidentIO.StringValue()},
 	}
 }
 
@@ -159,6 +166,9 @@ func (ChannelConfig) PrepareJSONSchema(s *jsonschema.Schema) error {
 		ChannelKindOpsgenie.StringValue():   channelVariantRef("ChannelOpsgenieConfig"),
 		ChannelKindMSTeams.StringValue():    channelVariantRef("ChannelMSTeamsConfig"),
 		ChannelKindGoogleChat.StringValue(): channelVariantRef("ChannelGoogleChatConfig"),
+		ChannelKindJira.StringValue():       channelVariantRef("ChannelJiraConfig"),
+		ChannelKindJSMOps.StringValue():     channelVariantRef("ChannelJSMOpsConfig"),
+		ChannelKindIncidentIO.StringValue(): channelVariantRef("ChannelIncidentIOConfig"),
 	})
 }
 
@@ -625,6 +635,236 @@ func newChannelGoogleChatConfigFromReceiver(_ string, receiver *Receiver) (Chann
 	}, nil
 }
 
+type ChannelJiraConfig struct {
+	SendResolved *bool `json:"sendResolved,omitempty"`
+	// Site is the Jira Cloud base URL, https://<site>.atlassian.net. Only Jira
+	// Cloud is supported; the REST base is derived from it.
+	Site              string         `json:"site" required:"true"`
+	Project           string         `json:"project" required:"true"`
+	IssueType         string         `json:"issueType" required:"true"`
+	Summary           string         `json:"summary,omitempty"`
+	Description       string         `json:"description,omitempty"`
+	Priority          string         `json:"priority,omitempty"`
+	Labels            []string       `json:"labels,omitempty"`
+	ResolveTransition string         `json:"resolveTransition,omitempty"`
+	ReopenTransition  string         `json:"reopenTransition,omitempty"`
+	ReopenDuration    string         `json:"reopenDuration,omitempty"`
+	WontFixResolution string         `json:"wontFixResolution,omitempty"`
+	CustomFields      map[string]any `json:"customFields,omitempty"`
+
+	Email    string `json:"email" required:"true"`
+	APIToken string `json:"apiToken" required:"true"`
+}
+
+func (c ChannelJiraConfig) Validate() error {
+	for _, required := range []struct {
+		value string
+		field string
+	}{
+		{c.Site, "site"},
+		{c.Project, "project"},
+		{c.IssueType, "issueType"},
+		{c.Email, "email"},
+		{c.APIToken, "apiToken"},
+	} {
+		if required.value == "" {
+			return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.%s is required for a jira channel", required.field)
+		}
+	}
+
+	if c.ReopenDuration != "" {
+		if _, err := model.ParseDuration(c.ReopenDuration); err != nil {
+			return errors.WrapInvalidInputf(err, ErrCodeAlertmanagerChannelInvalid, "config.spec.reopenDuration %q is not a valid duration", c.ReopenDuration)
+		}
+	}
+
+	return nil
+}
+
+func (c ChannelJiraConfig) toReceiver(displayName string) (*Receiver, error) {
+	// Seeded from upstream's default rather than a zero value: FollowRedirects
+	// and EnableHTTP2 marshal unconditionally, so a zero value would persist them
+	// as false and read back as a config ChannelJiraConfig cannot represent.
+	httpConfig := commoncfg.DefaultHTTPClientConfig
+	httpConfig.BasicAuth = &commoncfg.BasicAuth{
+		Username: c.Email,
+		Password: commoncfg.Secret(c.APIToken),
+	}
+
+	jira := &JiraReceiverConfig{
+		// JiraReceiverConfig seeds no send_resolved of its own, so unset means off.
+		NotifierConfig:    config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, false)},
+		Site:              c.Site,
+		Project:           c.Project,
+		IssueType:         c.IssueType,
+		Summary:           c.Summary,
+		Description:       c.Description,
+		Priority:          c.Priority,
+		Labels:            c.Labels,
+		ResolveTransition: c.ResolveTransition,
+		ReopenTransition:  c.ReopenTransition,
+		WontFixResolution: c.WontFixResolution,
+		CustomFields:      c.CustomFields,
+		HTTPConfig:        &httpConfig,
+	}
+
+	if c.ReopenDuration != "" {
+		reopenDuration, err := model.ParseDuration(c.ReopenDuration)
+		if err != nil {
+			return nil, errors.WrapInvalidInputf(err, ErrCodeAlertmanagerChannelInvalid, "parse reopenDuration %q", c.ReopenDuration)
+		}
+		jira.ReopenDuration = reopenDuration
+	}
+
+	return &Receiver{
+		Receiver:    &config.Receiver{Name: displayName},
+		JiraConfigs: []*JiraReceiverConfig{jira},
+	}, nil
+}
+
+func newChannelJiraConfigFromReceiver(name string, receiver *Receiver) (ChannelSpec, error) {
+	jira := receiver.JiraConfigs[0]
+	sendResolved := jira.VSendResolved
+
+	if err := rejectUnmodelledHTTPAuth(name, jira.HTTPConfig, "basic_auth"); err != nil {
+		return nil, err
+	}
+
+	spec := &ChannelJiraConfig{
+		SendResolved:      &sendResolved,
+		Site:              jira.Site,
+		Project:           jira.Project,
+		IssueType:         jira.IssueType,
+		Summary:           jira.Summary,
+		Description:       jira.Description,
+		Priority:          jira.Priority,
+		Labels:            jira.Labels,
+		ResolveTransition: jira.ResolveTransition,
+		ReopenTransition:  jira.ReopenTransition,
+		ReopenDuration:    jira.ReopenDuration.String(),
+		WontFixResolution: jira.WontFixResolution,
+		CustomFields:      jira.CustomFields,
+	}
+
+	if jira.HTTPConfig != nil && jira.HTTPConfig.BasicAuth != nil {
+		spec.Email = jira.HTTPConfig.BasicAuth.Username
+		spec.APIToken = string(jira.HTTPConfig.BasicAuth.Password)
+	}
+
+	return spec, nil
+}
+
+// ChannelJSMOpsConfig carries no API URL: JSM Ops is a single global gateway
+// keyed by the integration API key, which the notifier pins itself.
+type ChannelJSMOpsConfig struct {
+	SendResolved *bool  `json:"sendResolved,omitempty"`
+	APIKey       string `json:"apiKey" required:"true"`
+	Message      string `json:"message,omitempty"`
+	Description  string `json:"description,omitempty"`
+	Priority     string `json:"priority,omitempty"`
+	// Tags is the comma-separated list JSM Ops attaches to the alert.
+	Tags string `json:"tags,omitempty"`
+}
+
+func (c ChannelJSMOpsConfig) Validate() error {
+	if c.APIKey == "" {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.apiKey is required for a jsmops channel")
+	}
+
+	return nil
+}
+
+func (c ChannelJSMOpsConfig) toReceiver(displayName string) (*Receiver, error) {
+	return &Receiver{
+		Receiver: &config.Receiver{Name: displayName},
+		JSMOpsConfigs: []*JSMOpsReceiverConfig{{
+			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, DefaultJSMOpsReceiverConfig.VSendResolved)},
+			APIKey:         config.Secret(c.APIKey),
+			Message:        c.Message,
+			Description:    c.Description,
+			Priority:       c.Priority,
+			Tags:           c.Tags,
+		}},
+	}, nil
+}
+
+func newChannelJSMOpsConfigFromReceiver(name string, receiver *Receiver) (ChannelSpec, error) {
+	jsmops := receiver.JSMOpsConfigs[0]
+	sendResolved := jsmops.VSendResolved
+
+	if err := rejectUnmodelledHTTPAuth(name, jsmops.HTTPConfig); err != nil {
+		return nil, err
+	}
+
+	return &ChannelJSMOpsConfig{
+		SendResolved: &sendResolved,
+		APIKey:       string(jsmops.APIKey),
+		Message:      jsmops.Message,
+		Description:  jsmops.Description,
+		Priority:     jsmops.Priority,
+		Tags:         jsmops.Tags,
+	}, nil
+}
+
+type ChannelIncidentIOConfig struct {
+	SendResolved *bool `json:"sendResolved,omitempty"`
+	// URL is the HTTP alert source's events endpoint,
+	// https://api.incident.io/v2/alert_events/http/<source_config_id>.
+	URL string `json:"url" required:"true"`
+	// Token is the source's secret on its own, without the Bearer prefix
+	// incident.io's setup page shows.
+	Token       string `json:"token" required:"true"`
+	Title       string `json:"title,omitempty"`
+	Description string `json:"description,omitempty"`
+	// Metadata is merged over the group's common labels, these entries winning on
+	// a key clash. Values are template-expanded.
+	Metadata map[string]string `json:"metadata,omitempty"`
+}
+
+func (c ChannelIncidentIOConfig) Validate() error {
+	if c.URL == "" {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.url is required for an incidentio channel")
+	}
+
+	if c.Token == "" {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.token is required for an incidentio channel")
+	}
+
+	return nil
+}
+
+func (c ChannelIncidentIOConfig) toReceiver(displayName string) (*Receiver, error) {
+	return &Receiver{
+		Receiver: &config.Receiver{Name: displayName},
+		IncidentIOConfigs: []*IncidentIOReceiverConfig{{
+			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, DefaultIncidentIOReceiverConfig.VSendResolved)},
+			URL:            c.URL,
+			Token:          config.Secret(c.Token),
+			Title:          c.Title,
+			Description:    c.Description,
+			Metadata:       c.Metadata,
+		}},
+	}, nil
+}
+
+func newChannelIncidentIOConfigFromReceiver(name string, receiver *Receiver) (ChannelSpec, error) {
+	incidentio := receiver.IncidentIOConfigs[0]
+	sendResolved := incidentio.VSendResolved
+
+	if err := rejectUnmodelledHTTPAuth(name, incidentio.HTTPConfig); err != nil {
+		return nil, err
+	}
+
+	return &ChannelIncidentIOConfig{
+		SendResolved: &sendResolved,
+		URL:          incidentio.URL,
+		Token:        string(incidentio.Token),
+		Title:        incidentio.Title,
+		Description:  incidentio.Description,
+		Metadata:     incidentio.Metadata,
+	}, nil
+}
+
 // ════════════════════════════════════════════════════════════════════════
 // Helpers
 // ════════════════════════════════════════════════════════════════════════
@@ -697,6 +937,33 @@ func extractStringDetails(name string, details map[string]any) (map[string]strin
 	}
 
 	return extracted, nil
+}
+
+// rejectUnmodelledHTTPAuth fails the read when http_config carries credentials
+// the kind's spec has no field for. Only the members named in modelled are
+// lifted into spec fields; anything else would be dropped here and would
+// unauthenticate the channel on the next write.
+func rejectUnmodelledHTTPAuth(name string, httpConfig *commoncfg.HTTPClientConfig, modelled ...string) error {
+	if httpConfig == nil {
+		return nil
+	}
+
+	for _, member := range []struct {
+		set  bool
+		name string
+	}{
+		{httpConfig.BasicAuth != nil, "basic_auth"},
+		{httpConfig.Authorization != nil, "authorization"},
+	} {
+		if member.set && !slices.Contains(modelled, member.name) {
+			return errors.NewInvalidInputf(
+				ErrCodeAlertmanagerChannelInvalid,
+				"channel %q sets http_config.%s, which is not supported", name, member.name,
+			)
+		}
+	}
+
+	return rejectUnrepresentableHTTPConfig(name, httpConfig)
 }
 
 // rejectUnrepresentableHTTPConfig fails the read when a stored webhook uses an
@@ -786,6 +1053,24 @@ var channelKinds = []channelKindEntry{
 		newSpec:      func() ChannelSpec { return new(ChannelGoogleChatConfig) },
 		countConfigs: func(receiver *Receiver) int { return len(receiver.GoogleChatConfigs) },
 		extractSpec:  newChannelGoogleChatConfigFromReceiver,
+	},
+	{
+		kind:         ChannelKindJira,
+		newSpec:      func() ChannelSpec { return new(ChannelJiraConfig) },
+		countConfigs: func(receiver *Receiver) int { return len(receiver.JiraConfigs) },
+		extractSpec:  newChannelJiraConfigFromReceiver,
+	},
+	{
+		kind:         ChannelKindJSMOps,
+		newSpec:      func() ChannelSpec { return new(ChannelJSMOpsConfig) },
+		countConfigs: func(receiver *Receiver) int { return len(receiver.JSMOpsConfigs) },
+		extractSpec:  newChannelJSMOpsConfigFromReceiver,
+	},
+	{
+		kind:         ChannelKindIncidentIO,
+		newSpec:      func() ChannelSpec { return new(ChannelIncidentIOConfig) },
+		countConfigs: func(receiver *Receiver) int { return len(receiver.IncidentIOConfigs) },
+		extractSpec:  newChannelIncidentIOConfigFromReceiver,
 	},
 }
 

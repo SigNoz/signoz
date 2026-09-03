@@ -65,6 +65,32 @@ func TestPostableChannelUnmarshalJSONDecodesSpecByType(t *testing.T) {
 			expectedKind: ChannelKindGoogleChat,
 			expectedSpec: &ChannelGoogleChatConfig{WebhookURL: "https://chat.example.com/hook", Title: "chat title", Text: "chat text"},
 		},
+		{
+			description:  "jira",
+			body:         `{"name":"jira","config":{"kind":"jira","spec":{"site":"https://acme.atlassian.net","project":"OPS","issueType":"Bug","email":"oncall@acme.com","apiToken":"api-token","summary":"jira summary","description":"jira description","reopenDuration":"3d","customFields":{"customfield_10010":"Ops"}}}}`,
+			expectedKind: ChannelKindJira,
+			expectedSpec: &ChannelJiraConfig{
+				Site: "https://acme.atlassian.net", Project: "OPS", IssueType: "Bug",
+				Email: "oncall@acme.com", APIToken: "api-token",
+				Summary: "jira summary", Description: "jira description", ReopenDuration: "3d",
+				CustomFields: map[string]any{"customfield_10010": "Ops"},
+			},
+		},
+		{
+			description:  "jsmops",
+			body:         `{"name":"jsm","config":{"kind":"jsmops","spec":{"apiKey":"api-key","message":"jsmops message","description":"jsmops description","tags":"signoz"}}}`,
+			expectedKind: ChannelKindJSMOps,
+			expectedSpec: &ChannelJSMOpsConfig{APIKey: "api-key", Message: "jsmops message", Description: "jsmops description", Tags: "signoz"},
+		},
+		{
+			description:  "incidentio",
+			body:         `{"name":"io","config":{"kind":"incidentio","spec":{"url":"https://api.incident.io/v2/alert_events/http/01ABC","token":"token","title":"incidentio title","description":"incidentio description"}}}`,
+			expectedKind: ChannelKindIncidentIO,
+			expectedSpec: &ChannelIncidentIOConfig{
+				URL: "https://api.incident.io/v2/alert_events/http/01ABC", Token: "token",
+				Title: "incidentio title", Description: "incidentio description",
+			},
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -254,6 +280,51 @@ func TestPostableChannelValidate(t *testing.T) {
 				Name:        "hook",
 				DisplayName: "hook",
 				Config:      ChannelConfig{Kind: ChannelKindWebhook, Spec: &ChannelWebhookConfig{URL: "https://a", Username: "u", Password: "p", BearerToken: "tok"}},
+			},
+			expectedError: true,
+		},
+		{
+			description: "jira without an api token",
+			postable: PostableNotificationChannel{
+				Name:        "jira",
+				DisplayName: "jira",
+				Config: ChannelConfig{Kind: ChannelKindJira, Spec: &ChannelJiraConfig{
+					Site: "https://acme.atlassian.net", Project: "OPS", IssueType: "Bug",
+					Email: "oncall@acme.com", Summary: "jira summary", Description: "jira description",
+				}},
+			},
+			expectedError: true,
+		},
+		{
+			description: "jira with an unparseable reopen duration",
+			postable: PostableNotificationChannel{
+				Name:        "jira",
+				DisplayName: "jira",
+				Config: ChannelConfig{Kind: ChannelKindJira, Spec: &ChannelJiraConfig{
+					Site: "https://acme.atlassian.net", Project: "OPS", IssueType: "Bug",
+					Email: "oncall@acme.com", APIToken: "api-token",
+					Summary: "jira summary", Description: "jira description", ReopenDuration: "three days",
+				}},
+			},
+			expectedError: true,
+		},
+		{
+			description: "jsmops without an api key",
+			postable: PostableNotificationChannel{
+				Name:        "jsm",
+				DisplayName: "jsm",
+				Config:      ChannelConfig{Kind: ChannelKindJSMOps, Spec: &ChannelJSMOpsConfig{Message: "jsmops message", Description: "jsmops description"}},
+			},
+			expectedError: true,
+		},
+		{
+			description: "incidentio without a token",
+			postable: PostableNotificationChannel{
+				Name:        "io",
+				DisplayName: "io",
+				Config: ChannelConfig{Kind: ChannelKindIncidentIO, Spec: &ChannelIncidentIOConfig{
+					URL: "https://api.incident.io/v2/alert_events/http/01ABC", Title: "incidentio title", Description: "incidentio description",
+				}},
 			},
 			expectedError: true,
 		},

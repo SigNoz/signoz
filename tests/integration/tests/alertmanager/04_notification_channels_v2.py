@@ -35,6 +35,11 @@ _PASSWORD = "password123Z$"
         pytest.param("msteams", {"webhookUrl": "https://teams.test/webhook/abc", "title": "Alert", "text": "{{ .CommonLabels.alertname }}"}, "title", "Alert", id="msteams"),
         # The google chat notifier only accepts https URLs on chat.googleapis.com.
         pytest.param("googlechat", {"webhookUrl": "https://chat.googleapis.com/v1/spaces/A/messages?key=k&token=t", "title": "Alert", "text": "{{ .CommonLabels.alertname }}"}, "title", "Alert", id="googlechat"),
+        # The jira notifier only accepts Jira Cloud sites and basic auth.
+        pytest.param("jira", {"site": "https://acme.atlassian.net", "project": "OPS", "issueType": "Bug", "email": "oncall@integration.test", "apiToken": "jira-api-token", "summary": "Alert", "description": "{{ .CommonLabels.alertname }}", "customFields": {"customfield_10010": "Ops"}}, "project", "OPS", id="jira"),
+        pytest.param("jsmops", {"apiKey": "jsm-api-key", "message": "Alert", "description": "{{ .CommonLabels.alertname }}", "priority": "P2"}, "priority", "P2", id="jsmops"),
+        # The incident.io notifier only accepts an alert source's events URL.
+        pytest.param("incidentio", {"url": "https://api.incident.io/v2/alert_events/http/01ABCDEF", "token": "incidentio-token", "title": "Alert", "description": "{{ .CommonLabels.alertname }}"}, "title", "Alert", id="incidentio"),
     ],
 )
 def test_create_returns_the_channel_for_every_kind(  # pylint: disable=too-many-arguments,too-many-positional-arguments
@@ -79,6 +84,9 @@ def test_create_returns_the_channel_for_every_kind(  # pylint: disable=too-many-
         pytest.param("opsgenie", {"apiKey": "og-api-key", "message": "subject", "description": "body", "priority": "P2"}, True, id="opsgenie"),
         pytest.param("msteams", {"webhookUrl": "https://teams.test/webhook/abc", "title": "Alert", "text": "body"}, True, id="msteams"),
         pytest.param("googlechat", {"webhookUrl": "https://chat.googleapis.com/v1/spaces/A/messages?key=k&token=t", "title": "Alert", "text": "body"}, False, id="googlechat"),
+        pytest.param("jira", {"site": "https://acme.atlassian.net", "project": "OPS", "issueType": "Bug", "email": "oncall@integration.test", "apiToken": "jira-api-token", "summary": "Alert", "description": "body"}, False, id="jira"),
+        pytest.param("jsmops", {"apiKey": "jsm-api-key", "message": "Alert", "description": "body"}, False, id="jsmops"),
+        pytest.param("incidentio", {"url": "https://api.incident.io/v2/alert_events/http/01ABCDEF", "token": "incidentio-token", "title": "Alert", "description": "body"}, False, id="incidentio"),
     ],
 )
 def test_create_without_send_resolved_returns_the_notifier_default(  # pylint: disable=too-many-arguments,too-many-positional-arguments
@@ -105,6 +113,41 @@ def test_create_without_send_resolved_returns_the_notifier_default(  # pylint: d
     cleanup_notification_channels.append(created["id"])
 
     assert created["config"]["spec"]["sendResolved"] is expected_send_resolved
+
+
+@pytest.mark.parametrize(
+    "kind,spec,template_fields",
+    [
+        pytest.param("jira", {"site": "https://acme.atlassian.net", "project": "OPS", "issueType": "Bug", "email": "oncall@integration.test", "apiToken": "jira-api-token"}, ["summary", "description"], id="jira"),
+        pytest.param("jsmops", {"apiKey": "jsm-api-key"}, ["message", "description"], id="jsmops"),
+        pytest.param("incidentio", {"url": "https://api.incident.io/v2/alert_events/http/01ABCDEF", "token": "incidentio-token"}, ["title", "description"], id="incidentio"),
+    ],
+)
+def test_create_without_templates_returns_the_notifier_defaults(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    cleanup_notification_channels: list[str],
+    kind: str,
+    spec: dict,
+    template_fields: list[str],
+) -> None:
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    name = f"v2-templates-{kind}-{uuid.uuid4().hex[:8]}"
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(V2_BASE_URL),
+        json={"name": name, "config": {"kind": kind, "spec": spec}},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=TIMEOUT,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+
+    created = response.json()["data"]
+    cleanup_notification_channels.append(created["id"])
+
+    for field in template_fields:
+        assert "{{" in created["config"]["spec"][field], f"{field} should come back carrying the notifier's default template"
 
 
 def test_create_defaults_display_name_to_name(
@@ -268,6 +311,13 @@ def test_create_rejects_a_duplicate_display_name(
         pytest.param({"name": "extra-field", "config": {"kind": "email", "spec": {"to": "a@integration.test", "html": "<p>body</p>"}}, "type": "email"}, id="unknown_envelope_field"),
         pytest.param({"name": "webhook-both-auth", "config": {"kind": "webhook", "spec": {"url": "https://webhook.test/hook", "username": "u", "password": "p", "bearerToken": "t"}}}, id="webhook_basic_auth_with_bearer_token"),
         pytest.param({"name": "webhook-half-auth", "config": {"kind": "webhook", "spec": {"url": "https://webhook.test/hook", "username": "u"}}}, id="webhook_basic_auth_without_password"),
+        # The last three reach the notifier's own validation rather than the
+        # spec's, so they assert it still surfaces as a 400 through v2.
+        pytest.param({"name": "jira-server-site", "config": {"kind": "jira", "spec": {"site": "https://jira.acme.com", "project": "OPS", "issueType": "Bug", "email": "a@integration.test", "apiToken": "t", "summary": "Alert", "description": "body"}}}, id="jira_site_not_jira_cloud"),
+        pytest.param(
+            {"name": "jira-short-reopen", "config": {"kind": "jira", "spec": {"site": "https://acme.atlassian.net", "project": "OPS", "issueType": "Bug", "email": "a@integration.test", "apiToken": "t", "summary": "Alert", "description": "body", "reopenDuration": "30s"}}}, id="jira_reopen_duration_below_a_minute"
+        ),
+        pytest.param({"name": "incidentio-bearer", "config": {"kind": "incidentio", "spec": {"url": "https://api.incident.io/v2/alert_events/http/01ABCDEF", "token": "Bearer incidentio-token", "title": "Alert", "description": "body"}}}, id="incidentio_token_with_bearer_prefix"),
     ],
 )
 def test_create_rejects_invalid_bodies(
