@@ -82,11 +82,7 @@ function PreviewPane({
 		<div className={styles.preview}>
 			{!hideHeader && (
 				<div className={styles.header}>
-					<PlotTag
-						queryType={queryType}
-						isListViewPanel={panel.spec.plugin.kind === 'signoz/ListPanel'}
-						className={styles.queryType}
-					/>
+					<PlotTag queryType={queryType} className={styles.queryType} />
 					<div className={styles.dateTimeSelector}>
 						<DateTimeSelectionV2 showAutoRefresh hideShareModal />
 					</div>
