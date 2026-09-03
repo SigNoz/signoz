@@ -1,7 +1,3 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
-
-export const DEFAULT_PANEL_TYPE = PANEL_TYPES.TRACE;
-
 export const TOOLBAR_VIEWS = {
 	list: {
 		name: 'list',
