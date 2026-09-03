@@ -94,18 +94,18 @@ export const OnboardingV2 = Loadable(
 export const DashboardsListPage = Loadable(
 	() =>
 		import(
-			/* webpackChunkName: "DashboardsListPage" */ 'pages/DashboardsListPageV2'
+			/* webpackChunkName: "DashboardsListPage" */ 'pages/DashboardsListPage'
 		),
 );
 
 export const DashboardPage = Loadable(
-	() => import(/* webpackChunkName: "DashboardPage" */ 'pages/DashboardPageV2'),
+	() => import(/* webpackChunkName: "DashboardPage" */ 'pages/DashboardPage'),
 );
 
 export const DashboardPanelEditorPage = Loadable(
 	() =>
 		import(
-			/* webpackChunkName: "DashboardPanelEditorPage" */ 'pages/DashboardPageV2/PanelEditorPage/PanelEditorPage'
+			/* webpackChunkName: "DashboardPanelEditorPage" */ 'pages/DashboardPage/PanelEditorPage/PanelEditorPage'
 		),
 );
 

@@ -10,16 +10,15 @@ import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import { MenuItemKeys } from 'container/GridCardLayout/WidgetHeader/contants';
+import { MenuItemKeys } from 'container/WidgetCard/Header/contants';
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariablesByType';
 import { useNotifications } from 'hooks/useNotifications';
 import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariables';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { isEmpty } from 'lodash-es';
-import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { AppState } from 'store/reducers';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { withBasePath } from 'utils/basePath';
 import { getGraphType } from 'utils/getGraphType';
@@ -27,7 +26,7 @@ import { getGraphType } from 'utils/getGraphType';
 /**
  * @deprecated V1-only. V2 dashboards seed alerts from a panel via
  * `useCreateAlertFromPanel` / `buildCreateAlertUrl`
- * (pages/DashboardPageV2/.../Panel). Do not use in new code.
+ * (pages/DashboardPage/.../Panel). Do not use in new code.
  */
 const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 	const queryRangeMutation = useMutation(getSubstituteVars);
@@ -38,8 +37,6 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 	>((state) => state.globalTime);
 
 	const { notifications } = useNotifications();
-
-	const { dashboardData } = useDashboardStore();
 
 	const { dashboardVariables } = useDashboardVariables();
 	const dashboardDynamicVariables = useDashboardVariablesByType(
@@ -55,8 +52,6 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 		if (caller === 'panelView') {
 			logEvent('Panel Edit: Create alert', {
 				panelType: widget.panelTypes,
-				dashboardName: dashboardData?.data?.title,
-				dashboardId: dashboardData?.id,
 				widgetId: widget.id,
 				queryType: widget.query.queryType,
 			});
@@ -64,8 +59,6 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 			logEvent('Dashboard Detail: Panel action', {
 				action: MenuItemKeys.CreateAlerts,
 				panelType: widget.panelTypes,
-				dashboardName: dashboardData?.data?.title,
-				dashboardId: dashboardData?.id,
 				widgetId: widget.id,
 				queryType: widget.query.queryType,
 			});
