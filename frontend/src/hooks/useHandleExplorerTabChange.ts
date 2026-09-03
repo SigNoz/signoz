@@ -10,8 +10,8 @@ import { useGetSavedViewParams } from './saveViews/useGetSavedViewParams';
 import { useQueryBuilder } from './queryBuilder/useQueryBuilder';
 
 export interface ICurrentQueryData {
-	name: string;
-	id: string;
+	viewName?: string;
+	viewKey?: string;
 	query: Query;
 }
 
@@ -57,6 +57,8 @@ export const useHandleExplorerTabChange = (): {
 		[currentQuery, updateAllQueriesOperators, updateQueriesData],
 	);
 
+	//TODO: this util is used not just to change explorer tab but also
+	// for changing just the query or saved view. consider renaming this.
 	const handleExplorerTabChange = useCallback(
 		(
 			type: string,
@@ -77,8 +79,8 @@ export const useHandleExplorerTabChange = (): {
 					query,
 					{
 						[QueryParams.panelTypes]: newPanelType,
-						[QueryParams.viewName]: currentQueryData?.name || viewName,
-						[QueryParams.viewKey]: currentQueryData?.id || viewKey,
+						[QueryParams.viewName]: currentQueryData?.viewName || viewName,
+						[QueryParams.viewKey]: currentQueryData?.viewKey || viewKey,
 					},
 					redirectToUrl,
 					undefined,
@@ -89,8 +91,8 @@ export const useHandleExplorerTabChange = (): {
 					query,
 					{
 						[QueryParams.panelTypes]: newPanelType,
-						[QueryParams.viewName]: currentQueryData?.name || viewName,
-						[QueryParams.viewKey]: currentQueryData?.id || viewKey,
+						[QueryParams.viewName]: currentQueryData?.viewName || viewName,
+						[QueryParams.viewKey]: currentQueryData?.viewKey || viewKey,
 					},
 					undefined,
 					undefined,

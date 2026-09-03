@@ -21,7 +21,7 @@ func New(_ context.Context, _ factory.ProviderSettings, _ zeus.Config) (zeus.Zeu
 	return &provider{}, nil
 }
 
-func (provider *provider) GetLicense(_ context.Context, _ string) ([]byte, error) {
+func (provider *provider) GetLicense(_ context.Context, _ string) (*zeustypes.License, error) {
 	return nil, errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "fetching license is not supported")
 }
 

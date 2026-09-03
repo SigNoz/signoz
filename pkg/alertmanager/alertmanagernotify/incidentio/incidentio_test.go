@@ -184,6 +184,24 @@ func TestNotifyMergesChannelMetadata(t *testing.T) {
 	assert.Equal(t, "critical", md["severity"])      // rule labels still present
 }
 
+func TestNotifyEmptyTitleFallsBackToRuleName(t *testing.T) {
+	m := newMockIncidentIO(t)
+	tmpl := test.CreateTmpl(t)
+	n, err := New(&alertmanagertypes.IncidentIOReceiverConfig{
+		URL:         m.srv.URL + "/v2/alert_events/http/src-1",
+		Token:       "tok-1",
+		Title:       `{{ .CommonLabels.nonexistent }}`,
+		Description: alertmanagertypes.DefaultIncidentIODescriptionTemplate,
+		HTTPConfig:  &commoncfg.HTTPClientConfig{},
+	}, tmpl, slog.New(slog.DiscardHandler), alertmanagertemplate.New(tmpl, slog.New(slog.DiscardHandler)))
+	require.NoError(t, err)
+
+	_, err = n.Notify(ctx(), alert(true))
+	require.NoError(t, err)
+
+	assert.Equal(t, "HighCPU", m.lastEvent(t).Title)
+}
+
 func TestNotifyTruncatesLongDescription(t *testing.T) {
 	m := newMockIncidentIO(t)
 	a := alert(true)
