@@ -7873,6 +7873,48 @@ components:
       - custom
       - text
       type: string
+    QuickfiltertypesSource:
+      enum:
+      - traces
+      - logs
+      - api_monitoring
+      - exceptions
+      - meter
+      - ai_observability
+      type: string
+    QuickfiltertypesSourceFilters:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        filters:
+          items:
+            $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          type: array
+        id:
+          type: string
+        orgId:
+          type: string
+        source:
+          $ref: '#/components/schemas/QuickfiltertypesSource'
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - orgId
+      - source
+      - filters
+      type: object
+    QuickfiltertypesUpdatableQuickFilters:
+      properties:
+        filters:
+          items:
+            $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          type: array
+      required:
+      - filters
+      type: object
     RenderErrorResponse:
       properties:
         error:
@@ -19196,6 +19238,170 @@ paths:
       summary: Get query range result (v2)
       tags:
       - dashboard
+  /api/v2/quick_filters:
+    get:
+      deprecated: false
+      description: Returns the org's quick filters for every source, each filter as
+        a telemetry field key.
+      operationId: ListQuickFilters
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/QuickfiltertypesSourceFilters'
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - quick-filter:list
+      - tokenizer:
+        - quick-filter:list
+      summary: List quick filters
+      tags:
+      - quick_filter
+  /api/v2/quick_filters/{source}:
+    get:
+      deprecated: false
+      description: Returns the org's quick filters for one source, each filter as
+        a telemetry field key.
+      operationId: GetQuickFilters
+      parameters:
+      - in: path
+        name: source
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/QuickfiltertypesSourceFilters'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - quick-filter:read
+      - tokenizer:
+        - quick-filter:read
+      summary: Get a source's quick filters
+      tags:
+      - quick_filter
+    put:
+      deprecated: false
+      description: Replaces the org's quick filters for the source named in the path.
+      operationId: UpdateQuickFilters
+      parameters:
+      - in: path
+        name: source
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuickfiltertypesUpdatableQuickFilters'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - quick-filter:update
+      - tokenizer:
+        - quick-filter:update
+      summary: Update quick filters
+      tags:
+      - quick_filter
   /api/v2/readyz:
     get:
       operationId: Readyz

@@ -9026,6 +9026,47 @@ export enum Querybuildertypesv5QueryTypeDTO {
 	clickhouse_sql = 'clickhouse_sql',
 	promql = 'promql',
 }
+export enum QuickfiltertypesSourceDTO {
+	traces = 'traces',
+	logs = 'logs',
+	api_monitoring = 'api_monitoring',
+	exceptions = 'exceptions',
+	meter = 'meter',
+	ai_observability = 'ai_observability',
+}
+export interface QuickfiltertypesSourceFiltersDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type array
+	 */
+	filters: TelemetrytypesTelemetryFieldKeyDTO[];
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	source: QuickfiltertypesSourceDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+}
+
+export interface QuickfiltertypesUpdatableQuickFiltersDTO {
+	/**
+	 * @type array
+	 */
+	filters: TelemetrytypesTelemetryFieldKeyDTO[];
+}
+
 export interface RenderErrorResponseDTO {
 	error: ErrorsJSONDTO;
 	/**
@@ -12482,6 +12523,31 @@ export type GetPublicDashboardPanelQueryRangeV2200 = {
 	status: string;
 };
 
+export type ListQuickFilters200 = {
+	/**
+	 * @type array
+	 */
+	data: QuickfiltertypesSourceFiltersDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetQuickFiltersPathParameters = {
+	source: string;
+};
+export type GetQuickFilters200 = {
+	data: QuickfiltertypesSourceFiltersDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateQuickFiltersPathParameters = {
+	source: string;
+};
 export type Readyz200 = {
 	data: FactoryResponseDTO;
 	/**
