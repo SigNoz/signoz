@@ -12,9 +12,9 @@ import {
 	statusCodeWidgetInfo,
 } from 'container/ApiMonitoring/utils';
 import BarChart from 'lib/visualization/charts/BarChart/BarChart';
-import { handleGraphClick } from 'container/GridCardLayout/GridCard/utils';
-import { useGraphClickToShowButton } from 'container/GridCardLayout/useGraphClickToShowButton';
-import useNavigateToExplorerPages from 'container/GridCardLayout/useNavigateToExplorerPages';
+import { handleGraphClick } from 'container/WidgetCard/Card/utils';
+import { useGraphClickToShowButton } from 'container/WidgetCard/hooks/useGraphClickToShowButton';
+import useNavigateToExplorerPages from 'container/WidgetCard/hooks/useNavigateToExplorerPages';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
@@ -23,7 +23,7 @@ import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { useTimezone } from 'providers/Timezone';
 import { SuccessResponse } from 'types/api';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import ErrorState from './ErrorState';

@@ -1,4 +1,4 @@
-import { TVariableQueryType } from 'types/api/dashboard/getAll';
+import { TVariableQueryType } from 'types/api/dashboard/variables';
 
 import {
 	IVariableFetchStoreState,

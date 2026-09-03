@@ -1,4 +1,4 @@
-import { evaluateThresholdWithConvertedValue } from 'container/GridTableComponent/utils';
+import { evaluateThresholdWithConvertedValue } from 'container/WidgetCard/Panels/TablePanel/utils';
 import { ThresholdProps } from 'types/api/widgets/threshold';
 
 function doesValueSatisfyThreshold(

@@ -2,12 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, Loader } from '@signozhq/icons';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import useUpdatedQuery from 'container/GridCardLayout/useResolveQuery';
+import useUpdatedQuery from 'container/WidgetCard/hooks/useResolveQuery';
 import { processContextLinks } from 'utils/contextLinks/utils';
 import useContextVariables from 'hooks/dashboard/useContextVariables';
 import { useNotifications } from 'hooks/useNotifications';
 import ContextMenu from 'periscope/components/ContextMenu';
-import { ContextLinksData } from 'types/api/dashboard/getAll';
+import { ContextLinksData } from 'types/api/widgets/widget';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { openInNewTab } from 'utils/navigation';
 

@@ -1,3 +1,4 @@
+import uPlot from 'uplot';
 import type { MouseEvent as ReactMouseEvent } from 'react';
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PrecisionOption } from 'components/Graph/types';
@@ -109,3 +110,13 @@ export interface PieChartProps {
 	onSliceClick?: (slice: PieSlice, event: ReactMouseEvent) => void;
 	'data-testid'?: string;
 }
+
+/** A uPlot series enriched with the aggregates the legend table shows. */
+export type ExtendedChartDataset = uPlot.Series & {
+	show: boolean;
+	sum: number;
+	avg: number;
+	min: number;
+	max: number;
+	index: number;
+};
