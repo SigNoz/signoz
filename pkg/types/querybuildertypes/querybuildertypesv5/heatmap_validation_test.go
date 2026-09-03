@@ -640,7 +640,7 @@ func TestResolveHeatmapBucketing(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			bucketing, err := ResolveHeatmapBucketing(testCase.aggregation, testCase.bucketOptions)
+			err := testCase.aggregation.ResolveHeatmapBucketing(testCase.bucketOptions)
 
 			if testCase.expectedErrContains != "" {
 				require.Error(t, err)
@@ -650,7 +650,7 @@ func TestResolveHeatmapBucketing(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			assert.Equal(t, testCase.expectedBucketing, bucketing)
+			assert.Equal(t, testCase.expectedBucketing, testCase.aggregation.HeatmapBucketing)
 		})
 	}
 }

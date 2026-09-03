@@ -73,31 +73,33 @@ func (b *BucketOptions) ResolveLogScale() int {
 	return MaxLogScale
 }
 
-// ResolveHeatmapBucketing picks the bucket axis a heatmap draws its rows from,
-// and refuses the metric types that cannot produce one. It cannot live in
-// validateHeatmap: MetricAggregation.Type is resolved from metadata after that.
-func ResolveHeatmapBucketing(aggregation MetricAggregation, bucketOptions *BucketOptions) (*HeatmapBucketing, error) {
-	switch aggregation.Type {
+// ResolveHeatmapBucketing sets a.HeatmapBucketing to the axis a heatmap draws its
+// rows from, and refuses the metric types that cannot produce one. It cannot live
+// in validateHeatmap: a.Type is resolved from metadata after that has run.
+func (a *MetricAggregation) ResolveHeatmapBucketing(bucketOptions *BucketOptions) error {
+	switch a.Type {
 	case metrictypes.HistogramType:
 		if bucketOptions != nil {
-			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput,
-				"bucketOptions are not supported for histogram metrics: %q takes its bucket axis from its own `le` labels, so nothing in the spec would be applied", aggregation.MetricName)
+			return errors.NewInvalidInputf(errors.CodeInvalidInput,
+				"bucketOptions are not supported for histogram metrics: %q takes its bucket axis from its own `le` labels, so nothing in the spec would be applied", a.MetricName)
 		}
-		return nil, nil
+		a.HeatmapBucketing = nil
+		return nil
 	// A summary carries no boundaries of its own either, and its samples reach
 	// the final select the same way a gauge's do, so it buckets identically.
 	case metrictypes.GaugeType, metrictypes.SumType, metrictypes.SummaryType:
 		bucketing := bucketOptions.ResolveBucketOptions()
-		return &bucketing, nil
+		a.HeatmapBucketing = &bucketing
+		return nil
 	case metrictypes.UnspecifiedType:
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"heatmaps need a metric whose type is known: no type is recorded for %q, so its bucket axis cannot be chosen", aggregation.MetricName)
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"heatmaps need a metric whose type is known: no type is recorded for %q, so its bucket axis cannot be chosen", a.MetricName)
 	case metrictypes.ExpHistogramType:
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"heatmaps are not supported for exponential histograms yet: %q keeps its bucket counts in a sketch column, which needs its own reader", aggregation.MetricName)
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"heatmaps are not supported for exponential histograms yet: %q keeps its bucket counts in a sketch column, which needs its own reader", a.MetricName)
 	default:
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"heatmaps are not supported for %s metrics", aggregation.Type.StringValue())
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"heatmaps are not supported for %s metrics", a.Type.StringValue())
 	}
 }
 

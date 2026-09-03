@@ -479,11 +479,9 @@ func (q *querier) resolveMetricMetadata(ctx context.Context, orgID valuer.UUID, 
 			// unresolved type outright rather than returning an empty result for
 			// it, so this has to run before the drop below.
 			if requestType == qbtypes.RequestTypeHeatmap && !spec.Disabled {
-				bucketing, err := qbtypes.ResolveHeatmapBucketing(spec.Aggregations[i], bucketOptions)
-				if err != nil {
+				if err := spec.Aggregations[i].ResolveHeatmapBucketing(bucketOptions); err != nil {
 					return nil, nil, err
 				}
-				spec.Aggregations[i].HeatmapBucketing = bucketing
 			}
 			if spec.Aggregations[i].Type == metrictypes.UnspecifiedType {
 				missingMetrics = append(missingMetrics, spec.Aggregations[i].MetricName)
