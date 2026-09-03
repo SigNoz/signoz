@@ -77,7 +77,7 @@ function Panel({
 	return (
 		<div
 			className={styles.panel}
-			data-panel-visible={isVisible ? 'true' : 'false'}
+			data-panel-visible={isOffScreen ? 'false' : 'true'}
 			// Stable locator so the "Download as PNG" action can find this node to
 			// capture, without threading a ref through the header/actions chain.
 			data-panel-root={panelId}

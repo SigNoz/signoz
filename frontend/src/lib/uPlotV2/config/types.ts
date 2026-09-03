@@ -82,7 +82,8 @@ export interface AxisProps {
 	gap?: number;
 	/** Explicit axis thickness. Left unset, the y axis sizes itself to its widest label. */
 	size?: uPlot.Axis.Size;
-	space?: number; // Space for log scale axes
+	/** Minimum pixels between ticks, capping how many uPlot draws. For log scale axes. */
+	space?: number;
 	/** Picks the dark or light default for stroke and grid color. */
 	isDarkMode?: boolean;
 	/** Axis is on a log scale — thins the grid lines to keep dense decades readable. */

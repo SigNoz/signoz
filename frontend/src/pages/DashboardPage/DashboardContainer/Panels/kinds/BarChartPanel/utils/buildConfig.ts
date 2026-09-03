@@ -1,32 +1,22 @@
 import type { DashboardtypesBarChartPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
-import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
-import { PanelMode } from 'lib/visualization/panels/types';
-import { buildBaseConfig } from 'pages/DashboardPage/DashboardContainer/Panels/utils/baseConfigBuilder';
+import {
+	buildBaseConfig,
+	type TimeAxisChromeArgs,
+} from 'pages/DashboardPage/DashboardContainer/Panels/utils/baseConfigBuilder';
 import { resolveSeriesLabelV5 } from 'pages/DashboardPage/DashboardContainer/Panels/utils/resolveSeriesLabel';
 import type { PanelSeries } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 import { toClickPluginPayload } from 'pages/DashboardPage/DashboardContainer/queryV5/uplotData';
 import getLabelName from 'lib/getLabelName';
-import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { DrawStyle } from 'lib/uPlotV2/config/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import type { BuilderQuery } from 'types/api/v5/queryRange';
 
-export interface BuildBarChartConfigArgs {
-	panelId: string;
+export interface BuildBarChartConfigArgs extends TimeAxisChromeArgs {
 	spec: DashboardtypesBarChartPanelSpecDTO;
 	/** Flat list of builder queries (see `getBuilderQueries`); powers per-query legend resolution. */
 	builderQueries: BuilderQuery[];
 	/** Flattened V5 series (see `flattenTimeSeries`). */
 	series: PanelSeries[];
-	/** Per-query step intervals from the response exec stats. */
-	stepIntervals?: Record<string, number>;
-	isDarkMode: boolean;
-	timezone: Timezone;
-	panelMode: PanelMode;
-	onDragSelect?: (start: number, end: number) => void;
-	onClick?: OnClickPluginOpts['onClick'];
-	minTimeScale?: number;
-	maxTimeScale?: number;
 }
 
 /** Builds a `UPlotConfigBuilder` for a Bar chart panel: shared scaffolding, optional stacking, one bar series per result. */

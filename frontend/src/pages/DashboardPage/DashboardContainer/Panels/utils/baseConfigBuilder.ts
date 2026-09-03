@@ -59,6 +59,18 @@ export interface BuildBaseConfigArgs {
 	onClick?: OnClickPluginOpts['onClick'];
 }
 
+/** What a kind's build args pass straight through; the rest is derived from its spec. */
+export type PanelChromeArgs = Pick<
+	BuildBaseConfigArgs,
+	'panelId' | 'isDarkMode' | 'timezone' | 'panelMode'
+>;
+
+export type TimeAxisChromeArgs = PanelChromeArgs &
+	Pick<
+		BuildBaseConfigArgs,
+		'stepIntervals' | 'minTimeScale' | 'maxTimeScale' | 'onDragSelect' | 'onClick'
+	>;
+
 /**
  * Builds the panel-agnostic scaffolding of a uPlot chart (scales, thresholds,
  * axes, drag-to-zoom, click plugin). Callers then `addSeries`/`addPlugin` on the
