@@ -2,7 +2,7 @@ import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import BreakDownPage from 'container/MeterExplorer/Breakdown/BreakDown';
 import ExplorerPage from 'container/MeterExplorer/Explorer';
-import { Compass, TowerControl } from '@signozhq/icons';
+import { Compass, Gauge, TowerControl } from '@signozhq/icons';
 import SaveView from 'pages/SaveView';
 
 export const Explorer: TabRoutes = {
@@ -31,7 +31,7 @@ export const Meter: TabRoutes = {
 	Component: BreakDownPage,
 	name: (
 		<div className="tab-item">
-			<TowerControl size={16} /> Meter
+			<Gauge size={16} /> Meter
 		</div>
 	),
 	route: ROUTES.METER,

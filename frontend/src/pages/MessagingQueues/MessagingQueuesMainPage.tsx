@@ -3,7 +3,7 @@ import RouteTab from 'components/RouteTab';
 import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { ListMinus, Rows3 } from '@signozhq/icons';
+import { BarChart, ListMinus, Rows3 } from '@signozhq/icons';
 import CeleryOverview from 'pages/Celery/CeleryOverview/CeleryOverview';
 
 import CeleryTask from '../Celery/CeleryTask/CeleryTask';
@@ -49,7 +49,7 @@ export const Overview: TabRoutes = {
 	Component: CeleryOverview,
 	name: (
 		<div className="tab-item">
-			<Rows3 size={16} /> Overview
+			<BarChart size={16} /> Overview
 		</div>
 	),
 	route: ROUTES.MESSAGING_QUEUES_OVERVIEW,
