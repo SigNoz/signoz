@@ -379,14 +379,89 @@ def jira_retry_search_mappings() -> list[Mapping]:
     ]
 
 
-def find_requests(notification_channel: types.TestContainerDocker, method: str, path: str) -> list[dict]:
-    """The wiremock journal entries for method+path (query strings ignored)."""
+def find_requests(notification_channel: types.TestContainerDocker, method: str, path: str | None = None, path_pattern: str | None = None) -> list[dict]:
+    """The wiremock journal entries for method+path (query strings ignored);
+    path_pattern matches the path as a regex instead, for paths that embed a
+    dynamic segment like the group-hash alias."""
+    matcher = {"method": method, "urlPath": path} if path is not None else {"method": method, "urlPathPattern": path_pattern}
     find = requests.post(
         notification_channel.host_configs["8080"].get("/__admin/requests/find"),
-        json={"method": method, "urlPath": path},
+        json=matcher,
         timeout=10,
     )
     return find.json()["requests"]
+
+
+JSMOPS_TEST_API_KEY = "jsmops-test-api-key"  # noqa: S105
+# The JSM Ops gateway lives on api.atlassian.com (already aliased for Jira
+# service accounts); the notifier appends v2/alerts... to this base.
+JSMOPS_API_BASE = "/jsm/ops/integration"
+JSMOPS_NOTES_PATH_PATTERN = f"{JSMOPS_API_BASE}/v2/alerts/[a-f0-9]+/notes"
+
+
+def jsmops_config(**overrides) -> dict:
+    """JSM Ops channel config. Message/description/tags are omitted so the
+    backend applies its defaults; overrides lay extra receiver fields on top."""
+    return {
+        "jsmops_configs": [
+            {
+                "api_key": JSMOPS_TEST_API_KEY,
+                **overrides,
+            }
+        ],
+    }
+
+
+def jsmops_create_mapping() -> Mapping:
+    return Mapping(
+        request=MappingRequest(method=HttpMethods.POST, url_path=f"{JSMOPS_API_BASE}/v2/alerts"),
+        response=MappingResponse(status=202, json_body={"result": "Request will be processed", "took": 0.005, "requestId": "1b1f0000-0000-4000-8000-000000000001"}),
+    )
+
+
+def jsmops_notes_mapping(status: int = 202, body: dict | None = None) -> Mapping:
+    return Mapping(
+        request=MappingRequest(method=HttpMethods.POST, url_path_pattern=JSMOPS_NOTES_PATH_PATTERN),
+        response=MappingResponse(status=status, json_body=body or {"result": "Request will be processed", "took": 0.002, "requestId": "1b1f0000-0000-4000-8000-000000000002"}),
+    )
+
+
+def jsmops_retry_create_mappings() -> list[Mapping]:
+    """429 on the first create then 202, via a wiremock scenario transition."""
+    scenario = "jsmops-retry-create"
+    return [
+        Mapping(
+            request=MappingRequest(method=HttpMethods.POST, url_path=f"{JSMOPS_API_BASE}/v2/alerts"),
+            response=MappingResponse(status=429, json_body={"message": "You are making too many requests!", "took": 0.001, "requestId": "x"}),
+            scenario_name=scenario,
+            required_scenario_state="Started",
+            new_scenario_state="ok",
+        ),
+        Mapping(
+            request=MappingRequest(method=HttpMethods.POST, url_path=f"{JSMOPS_API_BASE}/v2/alerts"),
+            response=MappingResponse(status=202, json_body={"result": "Request will be processed", "took": 0.005, "requestId": "x"}),
+            scenario_name=scenario,
+            required_scenario_state="ok",
+        ),
+    ]
+
+
+def jsmops_alert_subset(alertname: str, links: list[tuple[str, str]]) -> dict:
+    """A created-alert subset asserting message, alias, source, default tags,
+    details labels, and the HTML description: the rendered bold Alert run plus
+    each link's anchor (href as a regex), so a broken link is caught too.
+    links: (text, url_regex) pairs in default-template order."""
+    description = "(?s)" + re.escape("<strong>Alert:</strong>")
+    for text, url in links:
+        description += rf'.*<a href="[^"]*{url}[^"]*"[^>]*>{re.escape(text)}</a>'
+    return {
+        "alias": re.compile(r".+"),
+        "message": f"[FIRING:1] {alertname}",
+        "source": "SigNoz",
+        "tags": ["signoz"],
+        "details": {"alertname": alertname},
+        "description": re.compile(description),
+    }
 
 
 def jira_issue_subset(alertname: str, links: list[tuple[str, str]]) -> dict:

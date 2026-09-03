@@ -351,20 +351,23 @@ def verify_webhook_notification_expectation(
 ) -> bool:
     """Check that wiremock received the expected request(s) at the given path.
 
-    validation_data supports (all optional except path):
+    validation_data supports (all optional except one of path/path_pattern):
       - path: request url path (matched as urlPath, so query strings are ignored)
+      - path_pattern: url path regex instead of path, for paths that embed a
+        dynamic segment (e.g. a group-hash alias)
       - json_body: expected JSON subset of the request body
       - count: exact number of requests required at the path
       - min_count: minimum number of requests required (e.g. retries)
     The body constraint must be satisfied by a single request; count constraints
     apply to the total at the path."""
-    path = validation_data["path"]
+    path = validation_data.get("path")
     json_body = validation_data.get("json_body")
+    # urlPath ignores query strings; real webhook urls may carry their own (e.g. key/token).
+    matcher = {"method": "POST", "urlPath": path} if path is not None else {"method": "POST", "urlPathPattern": validation_data["path_pattern"]}
 
     url = notification_channel.host_configs["8080"].get("__admin/requests/find")
     try:
-        # urlPath ignores query strings; real webhook urls may carry their own (e.g. key/token).
-        res = requests.post(url, json={"method": "POST", "urlPath": path}, timeout=10)
+        res = requests.post(url, json=matcher, timeout=10)
     except requests.exceptions.RequestException:
         return False
     if res.status_code != HTTPStatus.OK:
@@ -442,8 +445,10 @@ def _received_notifications(
             if validation.destination_type != "webhook":
                 continue
             url = notification_channel.host_configs["8080"].get("__admin/requests/find")
+            path = validation.validation_data.get("path")
+            matcher = {"method": "POST", "urlPath": path} if path is not None else {"method": "POST", "urlPathPattern": validation.validation_data["path_pattern"]}
             try:
-                res = requests.post(url, json={"method": "POST", "urlPath": validation.validation_data["path"]}, timeout=10)
+                res = requests.post(url, json=matcher, timeout=10)
                 webhook_bodies.extend(json.loads(base64.b64decode(req["bodyAsBase64"]).decode("utf-8")) for req in res.json()["requests"])
             except requests.exceptions.RequestException as exc:
                 webhook_bodies.append(f"<failed to fetch wiremock journal: {exc}>")
