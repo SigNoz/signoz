@@ -45,7 +45,7 @@ func (b *scopedTraceStatementBuilder) buildAggregation(
 		return nil, err
 	}
 	if len(traceAggs) == 0 {
-		return b.buildDelegatedAggregation(ctx, orgID, start, end, requestType, query, variables)
+		return b.buildDelegated(ctx, orgID, start, end, requestType, query, variables)
 	}
 	return b.buildTraceAggregationQuery(ctx, orgID, querybuilder.ToNanoSecs(start), querybuilder.ToNanoSecs(end), requestType, query, variables, traceAggs)
 }
