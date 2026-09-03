@@ -19,16 +19,13 @@ const BLOCKED_AT = 1_766_000_000;
 export const workspaceLockedMocks = defineStoryMocks({
 	controls: {},
 	handlers: () => [
-		rest.post('http://localhost/api/v1/checkout', (_req, res, ctx) =>
+		rest.post('http://localhost/api/v1/subscriptions', (_req, res, ctx) =>
 			res(
 				ctx.json({
 					status: 'success',
 					data: { redirectURL: 'https://billing.signoz.io/checkout' },
 				}),
 			),
-		),
-		rest.put('http://localhost/api/v3/licenses', (_req, res, ctx) =>
-			res(ctx.json({ status: 'success', data: null })),
 		),
 	],
 	config: () => ({
