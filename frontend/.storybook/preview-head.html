@@ -6,6 +6,17 @@
 -->
 <link rel="stylesheet" href="storybook-fonts.css" />
 
+<!--
+	Third-party frames are the one thing msw cannot answer: a cross-origin iframe
+	navigates outside the service worker's scope, so the YouTube embeds and the
+	docs pane in onboarding reach the real network. Same intent as the boot data
+	below, enforced by the browser instead.
+-->
+<meta
+	http-equiv="Content-Security-Policy"
+	content="frame-src 'self' blob: data:"
+/>
+
 <link rel="stylesheet" href="css/uPlot.min.css" />
 
 <script>
