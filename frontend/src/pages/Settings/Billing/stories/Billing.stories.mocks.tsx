@@ -58,26 +58,20 @@ export const billingMocks = defineStoryMocks({
 	},
 	handlers: (values, response) => [
 		rest.get(
-			'http://localhost/api/v1/billing',
-			response.json(() => ({
-				status: 'success',
-				data: usageResponse(values.billedDays, values.subscription, values.pricing),
-			})),
+			'http://localhost/api/v1/subscriptions',
+			response.json(() =>
+				usageResponse(values.billedDays, values.subscription, values.pricing),
+			),
 		),
 
 		rest.post(
-			'http://localhost/api/v1/checkout',
-			response.json(() => checkoutResponse()),
-		),
-
-		rest.post(
-			'http://localhost/api/v1/portal',
+			'http://localhost/api/v1/subscriptions',
 			response.json(() => checkoutResponse()),
 		),
 
 		rest.put(
-			'http://localhost/api/v3/licenses',
-			response.json(() => ({ status: 'success', data: null })),
+			'http://localhost/api/v1/subscriptions',
+			response.json(() => checkoutResponse()),
 		),
 	],
 	config: ({ plan }) => ({

@@ -27,7 +27,7 @@ export const licenseMocks = defineStoryMocks({
 		}),
 	},
 	handlers: (values) => [
-		rest.post('http://localhost/api/v3/licenses', (_req, res, ctx) =>
+		rest.post('http://localhost/api/v4/licenses', (_req, res, ctx) =>
 			values.apply === 'accepted'
 				? res(ctx.json({ status: 'success', data: null }))
 				: res(

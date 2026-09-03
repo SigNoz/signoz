@@ -14,16 +14,13 @@ import { licenseInState } from '../../WorkspaceLocked/stories/__story_mockdata__
 export const workspaceSuspendedMocks = defineStoryMocks({
 	controls: {},
 	handlers: () => [
-		rest.post('http://localhost/api/v1/portal', (_req, res, ctx) =>
+		rest.put('http://localhost/api/v1/subscriptions', (_req, res, ctx) =>
 			res(
 				ctx.json({
 					status: 'success',
 					data: { redirectURL: 'https://billing.signoz.io/portal' },
 				}),
 			),
-		),
-		rest.put('http://localhost/api/v3/licenses', (_req, res, ctx) =>
-			res(ctx.json({ status: 'success', data: null })),
 		),
 	],
 	config: () => ({
