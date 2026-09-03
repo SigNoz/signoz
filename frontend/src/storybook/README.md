@@ -117,11 +117,17 @@ Handlers resolve first-match-wins, in this order:
 3. the global mocks' handlers (access);
 4. `msw/appShellHandlers.ts`, the endpoints the shell hits on every route, and
    the ones whose jest fixture is too thin to show it doing its job;
-5. `src/mocks-server/handlers.ts`, the jest handlers verbatim. An endpoint both
+5. `msw/queryBuilderHandlers.ts`, the legacy v3 autocomplete pair, which the
+   jest handlers answer for one query and 500 for every other;
+6. `src/mocks-server/handlers.ts`, the jest handlers verbatim. An endpoint both
    runners need belongs here so jest gets it too;
-6. a catch-all for `http://localhost/api/*` that logs and answers 501, so an
+7. a catch-all for `http://localhost/api/*` that logs and answers 501, so an
    endpoint nobody mocked fails loudly instead of hanging on a refused
    connection.
+
+A handler that returns nothing hands the request to the next one in the list, so
+a Storybook-level handler can cover the cases a jest fixture does not and leave
+the ones it does.
 
 The whole set is re-registered on every story render rather than handed to
 `setupWorker` once. Editing a handler module then takes effect on the next
