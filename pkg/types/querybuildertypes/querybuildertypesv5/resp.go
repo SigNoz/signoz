@@ -138,17 +138,29 @@ type TimeSeriesData struct {
 }
 
 type AggregationBucket struct {
-	Index int    `json:"index"` // or string Alias
-	Alias string `json:"alias"`
-	Meta  struct {
-		Unit string `json:"unit,omitempty"`
-	} `json:"meta,omitempty"`
-	Series []*TimeSeries `json:"series"` // no extra nesting
+	Index  int             `json:"index"` // or string Alias
+	Alias  string          `json:"alias"`
+	Meta   AggregationMeta `json:"meta,omitempty"`
+	Series []*TimeSeries   `json:"series"` // no extra nesting
 
 	PredictedSeries  []*TimeSeries `json:"predictedSeries,omitempty"`
 	UpperBoundSeries []*TimeSeries `json:"upperBoundSeries,omitempty"`
 	LowerBoundSeries []*TimeSeries `json:"lowerBoundSeries,omitempty"`
 	AnomalyScores    []*TimeSeries `json:"anomalyScores,omitempty"`
+}
+
+// HeatmapBucketColumn is the alias a heatmap statement gives the column holding
+// a row's bucket boundary. Every other aggregation returns a single numeric
+// column the reader treats as the value; this name tells the two apart.
+const HeatmapBucketColumn = "__bucket"
+
+type AggregationMeta struct {
+	Unit string `json:"unit,omitempty"`
+	// Buckets are the ascending bucket upper bounds shared by every series here.
+	// Set only for heatmap results, where each point's Values holds
+	// len(Buckets)+1 counts: one per bucket, then the open-above overflow, whose
+	// bound is `le=+Inf` and so cannot be listed as a JSON number.
+	Buckets []float64 `json:"buckets,omitempty"`
 }
 
 type TimeSeries struct {
@@ -254,13 +266,9 @@ type TimeSeriesValue struct {
 	// on the client side, these partial values are rendered differently.
 	Partial bool `json:"partial,omitempty"`
 
-	// for the heatmap type chart
+	// Values holds one count per histogram bucket for heatmap results, in the
+	// order of the aggregation's Meta.Buckets. Value is unused in that case.
 	Values []float64 `json:"values,omitempty"`
-	Bucket *Bucket   `json:"bucket,omitempty"`
-}
-
-type Bucket struct {
-	Step float64 `json:"step"`
 }
 
 type ColumnType struct {

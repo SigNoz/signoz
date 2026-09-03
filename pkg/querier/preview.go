@@ -50,7 +50,7 @@ func (q *querier) QueryRangePreview(
 		env := []qbtypes.QueryEnvelope{req.CompositeQuery.Queries[idx]}
 		ps.Warnings = append(ps.Warnings, q.adjustStepInterval(env, req.Start, req.End)...)
 
-		missingMetricQueries, metricWarnings, mErr := q.resolveMetricMetadata(ctx, orgID, env, req.Start, req.End)
+		missingMetricQueries, metricWarnings, mErr := q.resolveMetricMetadata(ctx, orgID, env, req.Start, req.End, req.RequestType, req.BucketOptions)
 		if mErr != nil {
 			// Report this query's error but keep previewing the rest.
 			ps.Error = mErr

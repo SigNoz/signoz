@@ -156,7 +156,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	// We need to set if it is unspecified or adjust it if value is not within recommended range
 	intervalWarnings := q.adjustStepInterval(req.CompositeQuery.Queries, req.Start, req.End)
 
-	missingMetricQueries, metricWarnings, err := q.resolveMetricMetadata(ctx, orgID, req.CompositeQuery.Queries, req.Start, req.End)
+	missingMetricQueries, metricWarnings, err := q.resolveMetricMetadata(ctx, orgID, req.CompositeQuery.Queries, req.Start, req.End, req.RequestType, req.BucketOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +177,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	preseededResults := make(map[string]any)
 	for _, name := range missingMetricQueries {
 		switch req.RequestType {
-		case qbtypes.RequestTypeTimeSeries:
+		case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
 			preseededResults[name] = &qbtypes.TimeSeriesData{QueryName: name}
 		case qbtypes.RequestTypeScalar:
 			preseededResults[name] = &qbtypes.ScalarData{QueryName: name}
@@ -334,15 +334,24 @@ func (q *querier) buildQueries(
 				if missingMetricQuerySet[spec.Name] {
 					continue
 				}
+				// A disabled query in a heatmap request is there to feed a
+				// formula, and the formula evaluator reads
+				// TimeSeriesValue.Value, which heatmap cells leave at zero in
+				// favour of Values. Its inputs therefore run as time series;
+				// applyFormulas buckets the formula's output into cells after.
+				requestType := req.RequestType
+				if requestType == qbtypes.RequestTypeHeatmap && spec.Disabled {
+					requestType = qbtypes.RequestTypeTimeSeries
+				}
 				spec.ShiftBy = extractShiftFromBuilderQuery(spec)
-				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
+				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, requestType)
 				var bq *builderQuery[qbtypes.MetricAggregation]
 
 				if spec.Source == telemetrytypes.SourceMeter {
 					event.Source = telemetrytypes.SourceMeter.StringValue()
-					bq = newBuilderQuery(q.logger, q.telemetryStore, orgID, q.meterStmtBuilder, query.Type, spec, timeRange, req.RequestType, tmplVars, builderConfig{})
+					bq = newBuilderQuery(q.logger, q.telemetryStore, orgID, q.meterStmtBuilder, query.Type, spec, timeRange, requestType, tmplVars, builderConfig{})
 				} else {
-					bq = newBuilderQuery(q.logger, q.telemetryStore, orgID, q.metricStmtBuilder, query.Type, spec, timeRange, req.RequestType, tmplVars, builderConfig{})
+					bq = newBuilderQuery(q.logger, q.telemetryStore, orgID, q.metricStmtBuilder, query.Type, spec, timeRange, requestType, tmplVars, builderConfig{})
 				}
 
 				queries[spec.Name] = bq
@@ -415,7 +424,7 @@ func (q *querier) populateQBEvent(event *qbtypes.QBEvent, queries []qbtypes.Quer
 //     resolved: never-seen metrics and dormant metrics (seen but no data in
 //     the query window).
 //   - err: Internal when a metadata fetch fails.
-func (q *querier) resolveMetricMetadata(ctx context.Context, orgID valuer.UUID, queries []qbtypes.QueryEnvelope, start, end uint64) (missingMetricQueries []string, metricWarnings []string, err error) {
+func (q *querier) resolveMetricMetadata(ctx context.Context, orgID valuer.UUID, queries []qbtypes.QueryEnvelope, start, end uint64, requestType qbtypes.RequestType, bucketOptions *qbtypes.BucketOptions) (missingMetricQueries []string, metricWarnings []string, err error) {
 	metricNames := make([]string, 0)
 	for idx := range queries {
 		if queries[idx].Type != qbtypes.QueryTypeBuilder {
@@ -464,6 +473,17 @@ func (q *querier) resolveMetricMetadata(ctx context.Context, orgID valuer.UUID, 
 				if foundMetricType, ok := metricTypes[spec.Aggregations[i].MetricName]; ok && foundMetricType != metrictypes.UnspecifiedType {
 					spec.Aggregations[i].Type = foundMetricType
 				}
+			}
+			// Only the enabled query draws cells, so only it needs an axis and
+			// the metric-type refusals that come with one. A heatmap refuses an
+			// unresolved type outright rather than returning an empty result for
+			// it, so this has to run before the drop below.
+			if requestType == qbtypes.RequestTypeHeatmap && !spec.Disabled {
+				bucketing, err := qbtypes.ResolveHeatmapBucketing(spec.Aggregations[i], bucketOptions)
+				if err != nil {
+					return nil, nil, err
+				}
+				spec.Aggregations[i].HeatmapBucketing = bucketing
 			}
 			if spec.Aggregations[i].Type == metrictypes.UnspecifiedType {
 				missingMetrics = append(missingMetrics, spec.Aggregations[i].MetricName)
@@ -1000,7 +1020,7 @@ func (q *querier) mergeResults(cached *qbtypes.Result, fresh []*qbtypes.Result) 
 
 		// Merge all fresh results including the first one
 		switch merged.Type {
-		case qbtypes.RequestTypeTimeSeries:
+		case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
 			// Pass nil as cached value to ensure proper merging of all fresh results
 			merged.Value = q.mergeTimeSeriesResults(nil, fresh)
 		}
@@ -1023,7 +1043,7 @@ func (q *querier) mergeResults(cached *qbtypes.Result, fresh []*qbtypes.Result) 
 	}
 
 	switch merged.Type {
-	case qbtypes.RequestTypeTimeSeries:
+	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
 		merged.Value = q.mergeTimeSeriesResults(cached.Value.(*qbtypes.TimeSeriesData), fresh)
 	}
 
@@ -1052,12 +1072,23 @@ func (q *querier) mergeTimeSeriesResults(cachedValue *qbtypes.TimeSeriesData, fr
 	// Map to store aggregation bucket metadata
 	bucketMetadata := make(map[int]*qbtypes.AggregationBucket)
 
+	// Both halves are moved onto the union of their axes before being merged
+	// positionally, so a band one range never reached reads as zero there.
+	axes := make([]*qbtypes.TimeSeriesData, 0, len(freshResults)+1)
+	axes = append(axes, cachedValue)
+	for _, result := range freshResults {
+		freshTS, _ := result.Value.(*qbtypes.TimeSeriesData)
+		axes = append(axes, freshTS)
+	}
+	mergedBoundaries := qbtypes.MergeHeatmapAxes(axes...)
+
 	// Process cached data if available
 	if cachedValue != nil && cachedValue.Aggregations != nil {
 		for _, aggBucket := range cachedValue.Aggregations {
 			if seriesMap[aggBucket.Index] == nil {
 				seriesMap[aggBucket.Index] = make(map[string]*qbtypes.TimeSeries)
 			}
+			qbtypes.RealignHeatmapValues(aggBucket.Series, aggBucket.Meta.Buckets, mergedBoundaries[aggBucket.Index])
 			if bucketMetadata[aggBucket.Index] == nil {
 				bucketMetadata[aggBucket.Index] = aggBucket
 			}
@@ -1109,6 +1140,7 @@ func (q *querier) mergeTimeSeriesResults(cachedValue *qbtypes.TimeSeriesData, fr
 		}
 
 		for _, aggBucket := range freshTS.Aggregations {
+			qbtypes.RealignHeatmapValues(aggBucket.Series, aggBucket.Meta.Buckets, mergedBoundaries[aggBucket.Index])
 			for _, series := range aggBucket.Series {
 				key := qbtypes.GetUniqueSeriesKey(series.Labels)
 
@@ -1171,6 +1203,9 @@ func (q *querier) mergeTimeSeriesResults(cachedValue *qbtypes.TimeSeriesData, fr
 		if metadata, ok := bucketMetadata[index]; ok {
 			bucket.Alias = metadata.Alias
 			bucket.Meta = metadata.Meta
+		}
+		if boundaries, ok := mergedBoundaries[index]; ok {
+			bucket.Meta.Buckets = boundaries
 		}
 
 		result.Aggregations = append(result.Aggregations, bucket)
