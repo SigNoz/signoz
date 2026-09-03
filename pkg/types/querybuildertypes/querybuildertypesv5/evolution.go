@@ -28,15 +28,16 @@ func SelectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetr
 	for _, e := range evolutions {
 		seen[e.ColumnName] = struct{}{}
 	}
+
+	// never modify evolutions in place, it may be cached and shared across queries.
+	sortedEvolutions := make([]*telemetrytypes.EvolutionEntry, 0, len(evolutions)+len(columns))
+	sortedEvolutions = append(sortedEvolutions, evolutions...)
 	for _, c := range columns {
 		if _, ok := seen[c.Name]; ok {
 			continue
 		}
-		evolutions = append(evolutions, &telemetrytypes.EvolutionEntry{ColumnName: c.Name, ReleaseTime: time.Unix(0, 0)})
+		sortedEvolutions = append(sortedEvolutions, &telemetrytypes.EvolutionEntry{ColumnName: c.Name, ReleaseTime: time.Unix(0, 0)})
 	}
-
-	sortedEvolutions := make([]*telemetrytypes.EvolutionEntry, len(evolutions))
-	copy(sortedEvolutions, evolutions)
 
 	// sort the evolutions by ReleaseTime ascending
 	sort.Slice(sortedEvolutions, func(i, j int) bool {
