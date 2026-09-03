@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { Typography } from '@signozhq/ui/typography';
 import Spinner from 'components/Spinner';
-import { NotFoundContainer } from 'container/GridCardLayout/GridCard/FullView/styles';
+import { NotFoundContainer } from 'container/WidgetCard/Card/FullView/styles';
 import { useFunnelDetails } from 'hooks/TracesFunnels/useFunnels';
 import { FunnelProvider } from 'pages/TracesFunnels/FunnelContext';
 

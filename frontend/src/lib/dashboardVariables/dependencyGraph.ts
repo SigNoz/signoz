@@ -1,6 +1,6 @@
 import { textContainsVariableReference } from 'lib/dashboardVariables/variableReference';
 import { IDependencyData } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
-import { IDashboardVariable } from 'types/api/dashboard/getAll';
+import { IDashboardVariable } from 'types/api/dashboard/variables';
 
 /**
  * Inter-variable dependency graph over the shared dashboard-variables store. A
@@ -9,7 +9,7 @@ import { IDashboardVariable } from 'types/api/dashboard/getAll';
  *
  * Keyed on `IDashboardVariable`. The V2 editor has a parallel implementation
  * over its own flat form model in
- * `pages/DashboardPageV2/DashboardContainer/VariablesBar/utils/variableDependencies.ts`.
+ * `pages/DashboardPage/DashboardContainer/VariablesBar/utils/variableDependencies.ts`.
  */
 
 export type VariableGraph = Record<string, string[]>;
