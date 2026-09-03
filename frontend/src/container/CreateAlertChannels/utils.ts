@@ -129,6 +129,9 @@ export const prepareJiraRequest = (
 	if (config.reopen_transition) {
 		jira.reopen_transition = config.reopen_transition;
 	}
+	if (config.wont_fix_resolution) {
+		jira.wont_fix_resolution = config.wont_fix_resolution;
+	}
 	if (config.reopen_duration) {
 		// the generated type models go's model.Duration as a number, the api takes a
 		// duration string like "72h"
