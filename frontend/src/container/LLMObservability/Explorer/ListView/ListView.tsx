@@ -17,12 +17,11 @@ import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import type { TableColumnDef } from 'components/TanStackTableView/types';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueryAIWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
 import TraceExplorerControls from 'container/TracesExplorer/Controls';
-import { getListViewQuery } from 'container/TracesExplorer/explorerUtils';
 import {
 	getTraceLink,
 	transformSpanRows,
@@ -43,6 +42,7 @@ import { Warning } from 'types/api';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { getListViewQuery } from '../explorerUtils';
 import {
 	defaultSelectedColumns,
 	PER_PAGE_OPTIONS,
@@ -94,7 +94,7 @@ function ListView({
 		paginationQueryData ?? getDefaultPaginationConfig(PER_PAGE_OPTIONS);
 
 	const requestQuery = useMemo(
-		() => getListViewQuery(stagedQuery || initialQueriesMap.traces, orderBy),
+		() => getListViewQuery(stagedQuery || initialQueryAIWithType, orderBy),
 		[stagedQuery, orderBy],
 	);
 

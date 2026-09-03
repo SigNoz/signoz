@@ -11,17 +11,13 @@ import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueryAIWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import LeftToolbarActions from 'container/QueryBuilder/components/ToolbarActions/LeftToolbarActions';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import Toolbar from 'container/Toolbar/Toolbar';
-import {
-	getExportQueryData,
-	getQueryByPanelType,
-} from 'container/TracesExplorer/explorerUtils';
 import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
 import { useGetExportToDashboardLink } from 'hooks/dashboard/useGetExportToDashboardLink';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
@@ -51,7 +47,8 @@ import {
 } from 'utils/explorerUtils';
 import { v4 } from 'uuid';
 
-import { TOOLBAR_VIEWS } from './constants';
+import { DEFAULT_PANEL_TYPE, TOOLBAR_VIEWS } from './constants';
+import { getExportQueryData, getQueryByPanelType } from './explorerUtils';
 import ListView from './ListView/ListView';
 import { defaultSelectedColumns } from './ListView/configs';
 import QuerySection from './QuerySection/QuerySection';
@@ -88,7 +85,7 @@ function Explorer(): JSX.Element {
 	const listQueryKeyRef = useRef<any>();
 
 	// Get panel type from URL
-	const panelTypesFromUrl = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
+	const panelTypesFromUrl = useGetPanelTypesQueryParam(DEFAULT_PANEL_TYPE);
 	const [isLoadingQueries, setIsLoadingQueries] = useState<boolean>(false);
 	const [isCancelled, setIsCancelled] = useState(false);
 
@@ -118,8 +115,8 @@ function Explorer(): JSX.Element {
 	const defaultQuery = useMemo(
 		(): Query =>
 			updateAllQueriesOperators(
-				initialQueriesMap.traces,
-				PANEL_TYPES.LIST,
+				initialQueryAIWithType,
+				DEFAULT_PANEL_TYPE,
 				DataSource.TRACES,
 			),
 		[updateAllQueriesOperators],
@@ -185,8 +182,8 @@ function Explorer(): JSX.Element {
 	const exportDefaultQuery = useMemo(
 		() =>
 			getQueryByPanelType(
-				stagedQuery || initialQueriesMap.traces,
-				panelType || PANEL_TYPES.LIST,
+				stagedQuery || initialQueryAIWithType,
+				panelType || DEFAULT_PANEL_TYPE,
 			),
 		[stagedQuery, panelType],
 	);

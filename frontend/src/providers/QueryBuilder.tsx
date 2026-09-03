@@ -475,6 +475,7 @@ export function QueryBuilderProvider({
 			const newQuery: IBuilderQuery = {
 				...initialBuilderQuery,
 				source: queries?.[0]?.source || '',
+				builderQueryType: queries?.[0]?.builderQueryType,
 				queryName: createNewBuilderItemName({ existNames, sourceNames: alphabet }),
 				expression: createNewBuilderItemName({
 					existNames,
