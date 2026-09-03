@@ -169,8 +169,6 @@ jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
 				variables: [],
 			},
 		},
-		setLayouts: jest.fn(),
-		setDashboardData: jest.fn(),
 		setColumnWidths: jest.fn(),
 	}),
 }));
