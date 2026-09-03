@@ -160,6 +160,8 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionKey}, WildCardSelectorString)},
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionKey}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionKey}, WildCardSelectorString)},
+		{Verb: VerbAttach, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionKey}, WildCardSelectorString)},
+		{Verb: VerbDetach, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionKey}, WildCardSelectorString)},
 		// ingestion-limit — editor+admin only
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionLimit}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionLimit}, WildCardSelectorString)},
@@ -264,6 +266,8 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionKey}, WildCardSelectorString)},
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionKey}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionKey}, WildCardSelectorString)},
+		{Verb: VerbAttach, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionKey}, WildCardSelectorString)},
+		{Verb: VerbDetach, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionKey}, WildCardSelectorString)},
 		// ingestion-limit — editor+admin only
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionLimit}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionLimit}, WildCardSelectorString)},
