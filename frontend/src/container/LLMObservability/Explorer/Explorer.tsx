@@ -32,7 +32,7 @@ import {
 	tracesChangeViewAction,
 	tracesRunQueryAction,
 	tracesSaveViewAction,
-} from 'pages/TracesExplorer/aiActions';
+} from './aiActions';
 import { Warning } from 'types/api';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';

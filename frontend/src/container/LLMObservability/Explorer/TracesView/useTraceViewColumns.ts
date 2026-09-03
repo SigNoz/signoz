@@ -11,7 +11,7 @@ import {
 } from 'components/TanStackTableView/useColumnStore';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
-import { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
+import { TracesTableRow } from '../TracesTable/getFieldColumn';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 

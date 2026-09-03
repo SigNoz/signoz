@@ -21,15 +21,9 @@ import { initialQueryAIWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
-import {
-	getTraceLink,
-	transformSpanRows,
-} from 'container/TracesExplorer/ListView/utils';
-import {
-	getFieldColumn,
-	TracesTableRow,
-} from 'container/TracesExplorer/TracesTable/getFieldColumn';
-import TracesTable from 'container/TracesExplorer/TracesTable/TracesTable';
+import { getTraceLink, transformSpanRows } from './utils';
+import { getFieldColumn, TracesTableRow } from '../TracesTable/getFieldColumn';
+import TracesTable from '../TracesTable/TracesTable';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination } from 'hooks/queryPagination';

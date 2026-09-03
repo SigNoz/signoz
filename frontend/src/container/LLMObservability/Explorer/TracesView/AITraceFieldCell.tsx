@@ -1,7 +1,7 @@
 import TanStackTable from 'components/TanStackTableView';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
-import FieldCell from 'container/TracesExplorer/TracesTable/FieldCell';
+import FieldCell from '../TracesTable/FieldCell';
 import { useTimezone } from 'providers/Timezone';
 
 import { DATETIME_FIELD_NAMES, DURATION_FIELD_NAMES } from './fieldFormats';
