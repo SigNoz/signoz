@@ -35,8 +35,20 @@ func (provider *noopLicensing) Stop(context.Context) error {
 	return nil
 }
 
-func (provider *noopLicensing) Activate(ctx context.Context, organizationID valuer.UUID, key string) error {
-	return errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "fetching license is not supported")
+func (provider *noopLicensing) Activate(ctx context.Context, organizationID valuer.UUID, key string) (*licensetypes.License, error) {
+	return nil, errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "fetching license is not supported")
+}
+
+func (provider *noopLicensing) Get(ctx context.Context, organizationID valuer.UUID, licenseID valuer.UUID) (*licensetypes.License, error) {
+	return nil, errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "fetching license is not supported")
+}
+
+func (provider *noopLicensing) List(ctx context.Context, organizationID valuer.UUID) ([]*licensetypes.License, error) {
+	return nil, errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "listing licenses is not supported")
+}
+
+func (provider *noopLicensing) Delete(ctx context.Context, organizationID valuer.UUID, licenseID valuer.UUID) error {
+	return errors.New(errors.TypeUnsupported, licensing.ErrCodeUnsupported, "deleting license is not supported")
 }
 
 func (provider *noopLicensing) Validate(ctx context.Context) error {

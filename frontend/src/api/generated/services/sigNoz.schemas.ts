@@ -385,6 +385,38 @@ export interface AlertmanagertypesGoogleChatReceiverConfigDTO {
 	webhook_url?: ConfigSecretURLDTO;
 }
 
+export type AlertmanagertypesIncidentIOReceiverConfigDTOMetadata = {
+	[key: string]: string;
+};
+
+export interface AlertmanagertypesIncidentIOReceiverConfigDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	http_config?: ConfigHTTPClientConfigDTO;
+	/**
+	 * @type object
+	 */
+	metadata?: AlertmanagertypesIncidentIOReceiverConfigDTOMetadata;
+	/**
+	 * @type boolean
+	 */
+	send_resolved?: boolean;
+	/**
+	 * @type string
+	 */
+	title?: string;
+	/**
+	 * @type string
+	 */
+	token?: string;
+	/**
+	 * @type string
+	 */
+	url?: string;
+}
+
 export interface AlertmanagertypesJSMOpsReceiverConfigDTO {
 	/**
 	 * @type string
@@ -685,39 +717,6 @@ export interface ConfigEmailConfigDTO {
 	to?: string;
 }
 
-export type TimeDurationDTO = number;
-
-export interface ConfigURLType2DTO {
-	[key: string]: unknown;
-}
-
-export interface ConfigIncidentioConfigDTO {
-	/**
-	 * @type string
-	 */
-	alert_source_token?: string;
-	/**
-	 * @type string
-	 */
-	alert_source_token_file?: string;
-	http_config?: ConfigHTTPClientConfigDTO;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	max_alerts?: number;
-	/**
-	 * @type boolean
-	 */
-	send_resolved?: boolean;
-	timeout?: TimeDurationDTO;
-	url?: ConfigURLType2DTO;
-	/**
-	 * @type string
-	 */
-	url_file?: string;
-}
-
 export interface ConfigMattermostFieldDTO {
 	/**
 	 * @type boolean,null
@@ -903,6 +902,10 @@ export interface ConfigMSTeamsV2ConfigDTO {
 	webhook_url_file?: string;
 }
 
+export interface ConfigURLType2DTO {
+	[key: string]: unknown;
+}
+
 export interface ConfigOpsGenieConfigResponderDTO {
 	/**
 	 * @type string
@@ -1010,6 +1013,8 @@ export interface ConfigPagerdutyLinkDTO {
 	 */
 	text?: string;
 }
+
+export type TimeDurationDTO = number;
 
 export type ConfigPagerdutyConfigDTODetails = { [key: string]: unknown };
 
@@ -1672,7 +1677,7 @@ export type AlertmanagertypesPostableChannelDTO = unknown & {
 	/**
 	 * @type array
 	 */
-	incidentio_configs?: ConfigIncidentioConfigDTO[];
+	incidentio_configs?: AlertmanagertypesIncidentIOReceiverConfigDTO[];
 	/**
 	 * @type array
 	 */
@@ -1803,7 +1808,7 @@ export interface AlertmanagertypesReceiverDTO {
 	/**
 	 * @type array
 	 */
-	incidentio_configs?: ConfigIncidentioConfigDTO[];
+	incidentio_configs?: AlertmanagertypesIncidentIOReceiverConfigDTO[];
 	/**
 	 * @type array
 	 */
@@ -3298,6 +3303,33 @@ export interface CommonJSONRefDTO {
 	 * @type string
 	 */
 	$ref?: string;
+}
+
+export interface ConfigIncidentioConfigDTO {
+	/**
+	 * @type string
+	 */
+	alert_source_token?: string;
+	/**
+	 * @type string
+	 */
+	alert_source_token_file?: string;
+	http_config?: ConfigHTTPClientConfigDTO;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	max_alerts?: number;
+	/**
+	 * @type boolean
+	 */
+	send_resolved?: boolean;
+	timeout?: TimeDurationDTO;
+	url?: ConfigURLType2DTO;
+	/**
+	 * @type string
+	 */
+	url_file?: string;
 }
 
 export type ConfigJiraConfigDTOCustomFields = { [key: string]: unknown };
@@ -7311,6 +7343,249 @@ export interface InframonitoringtypesVolumesDTO {
 	total: number;
 	type: InframonitoringtypesResponseTypeDTO;
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
+export interface LicensetypesFeatureDTO {
+	/**
+	 * @type boolean
+	 */
+	active?: boolean;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	route?: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	usage?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	usage_limit?: number;
+}
+
+export interface LicensetypesLicenseEventQueueDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	/**
+	 * @type string
+	 */
+	event: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	scheduledAt: string;
+	/**
+	 * @type string
+	 */
+	status: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: string;
+}
+
+export interface LicensetypesLicensePlanDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	/**
+	 * @type string
+	 */
+	description: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type boolean
+	 */
+	isActive: boolean;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: string;
+}
+
+export interface LicensetypesGettableActiveLicenseDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	eventQueue: LicensetypesLicenseEventQueueDTO;
+	/**
+	 * @type array
+	 */
+	features: LicensetypesFeatureDTO[];
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	freeUntil: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	plan: LicensetypesLicensePlanDTO;
+	/**
+	 * @type string
+	 */
+	platform: string;
+	/**
+	 * @type string
+	 */
+	state: string;
+	/**
+	 * @type string
+	 */
+	status: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	validFrom: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	validUntil: number;
+}
+
+export interface LicensetypesGettableLicenseDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	eventQueue: LicensetypesLicenseEventQueueDTO;
+	/**
+	 * @type array
+	 */
+	features: LicensetypesFeatureDTO[];
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	freeUntil: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	plan: LicensetypesLicensePlanDTO;
+	/**
+	 * @type string
+	 */
+	platform: string;
+	/**
+	 * @type string
+	 */
+	state: string;
+	/**
+	 * @type string
+	 */
+	status: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	validFrom: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	validUntil: number;
+}
+
+export interface LicensetypesGettableLicenseWithKeyDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	eventQueue: LicensetypesLicenseEventQueueDTO;
+	/**
+	 * @type array
+	 */
+	features: LicensetypesFeatureDTO[];
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	freeUntil: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 * @format password
+	 */
+	key: string;
+	plan: LicensetypesLicensePlanDTO;
+	/**
+	 * @type string
+	 */
+	platform: string;
+	/**
+	 * @type string
+	 */
+	state: string;
+	/**
+	 * @type string
+	 */
+	status: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	validFrom: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	validUntil: number;
+}
+
+export interface LicensetypesPostableLicenseDTO {
+	/**
+	 * @type string
+	 * @format password
+	 */
+	key?: string;
 }
 
 /**
@@ -12732,6 +13007,50 @@ export type GetFlamegraphPathParameters = {
 };
 export type GetFlamegraph200 = {
 	data: SpantypesGettableFlamegraphTraceDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListLicenses200 = {
+	/**
+	 * @type array
+	 */
+	data: LicensetypesGettableLicenseDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ActivateLicense201 = {
+	data: TypesIdentifiableDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteLicensePathParameters = {
+	id: string;
+};
+export type GetLicensePathParameters = {
+	id: string;
+};
+export type GetLicense200 = {
+	data: LicensetypesGettableLicenseWithKeyDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type RefreshLicensePathParameters = {
+	id: string;
+};
+export type GetActiveLicense200 = {
+	data: LicensetypesGettableActiveLicenseDTO;
 	/**
 	 * @type string
 	 */

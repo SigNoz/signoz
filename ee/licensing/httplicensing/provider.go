@@ -95,24 +95,65 @@ func (provider *provider) Validate(ctx context.Context) error {
 	return nil
 }
 
-func (provider *provider) Activate(ctx context.Context, organizationID valuer.UUID, key string) error {
-	data, err := provider.zeus.GetLicense(ctx, key)
+func (provider *provider) Activate(ctx context.Context, organizationID valuer.UUID, key string) (*licensetypes.License, error) {
+	zeusLicense, err := provider.zeus.GetLicense(ctx, key)
 	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "unable to fetch license data with upstream server")
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "unable to fetch license data with upstream server")
 	}
 
-	license, err := licensetypes.NewLicense(data, organizationID)
+	license, err := licensetypes.NewLicense(zeusLicense, organizationID)
 	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to create license entity")
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to create license entity")
 	}
 
 	storableLicense := licensetypes.NewStorableLicenseFromLicense(license)
 	err = provider.store.Create(ctx, storableLicense)
 	if err != nil {
+		return nil, err
+	}
+
+	return license, nil
+}
+
+func (provider *provider) Get(ctx context.Context, organizationID valuer.UUID, licenseID valuer.UUID) (*licensetypes.License, error) {
+	storableLicense, err := provider.store.Get(ctx, organizationID, licenseID)
+	if err != nil {
+		return nil, err
+	}
+
+	return licensetypes.NewLicenseFromStorableLicense(storableLicense)
+}
+
+func (provider *provider) List(ctx context.Context, organizationID valuer.UUID) ([]*licensetypes.License, error) {
+	storableLicenses, err := provider.store.GetAll(ctx, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	licenses := make([]*licensetypes.License, 0, len(storableLicenses))
+	for _, storableLicense := range storableLicenses {
+		license, err := licensetypes.NewLicenseFromStorableLicense(storableLicense)
+		if err != nil {
+			return nil, err
+		}
+
+		licenses = append(licenses, license)
+	}
+
+	return licenses, nil
+}
+
+func (provider *provider) Delete(ctx context.Context, organizationID valuer.UUID, licenseID valuer.UUID) error {
+	license, err := provider.Get(ctx, organizationID, licenseID)
+	if err != nil {
 		return err
 	}
 
-	return nil
+	if err := license.ErrIfCloud(); err != nil {
+		return errors.WithAdditionalf(err, "license %s cannot be deleted", licenseID.StringValue())
+	}
+
+	return provider.store.Delete(ctx, organizationID, licenseID)
 }
 
 func (provider *provider) GetActive(ctx context.Context, organizationID valuer.UUID) (*licensetypes.License, error) {
@@ -139,7 +180,7 @@ func (provider *provider) Refresh(ctx context.Context, organizationID valuer.UUI
 		return err
 	}
 
-	data, err := provider.zeus.GetLicense(ctx, activeLicense.Key)
+	zeusLicense, err := provider.zeus.GetLicense(ctx, activeLicense.Key)
 	if err != nil {
 		if time.Since(activeLicense.LastValidatedAt) > time.Duration(provider.config.FailureThreshold)*provider.config.PollInterval {
 			activeLicense.UpdateFeatures(licensetypes.BasicPlan)
@@ -154,7 +195,7 @@ func (provider *provider) Refresh(ctx context.Context, organizationID valuer.UUI
 		return err
 	}
 
-	err = activeLicense.Update(data)
+	err = activeLicense.Update(zeusLicense)
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to create license entity from license data")
 	}
