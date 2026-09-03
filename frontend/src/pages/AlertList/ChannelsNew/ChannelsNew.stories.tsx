@@ -63,6 +63,13 @@ export const PagerDuty: Story = {
 	},
 };
 
+/** The Opsgenie form: the integration API key, the alert body and its priority. */
+export const Opsgenie: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await selectChannelType(canvasElement, /^Opsgenie$/);
+	},
+};
+
 /** The email form: the recipients and the HTML body the alert is sent as. */
 export const Email: Story = {
 	play: async ({ canvasElement }): Promise<void> => {

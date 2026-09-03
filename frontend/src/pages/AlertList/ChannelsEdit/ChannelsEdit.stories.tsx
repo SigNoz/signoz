@@ -50,6 +50,14 @@ export const Webhook: Story = {
 };
 
 /**
+ * The Opsgenie channel, whose form carries the integration API key and the
+ * priority the alert is raised at.
+ */
+export const Opsgenie: Story = {
+	args: { channelType: 'opsgenie' },
+};
+
+/**
  * The Jira channel, which files an issue: the site and project it files into,
  * the transitions that resolve and reopen it, and the API token behind the
  * Atlassian account, which the form reads off the basic auth block.
