@@ -22,30 +22,10 @@ type conditionBuilder struct {
 }
 
 var _ qbtypes.ConditionBuilder = (*conditionBuilder)(nil)
+var _ querybuilder.TermSchema = (*conditionBuilder)(nil)
 
 func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
 	return &conditionBuilder{fm: fm}
-}
-
-func (c *conditionBuilder) conditionFor(
-	ctx context.Context,
-	orgID valuer.UUID,
-	startNs uint64,
-	endNs uint64,
-	logical *telemetrytypes.LogicalField,
-	operator qbtypes.FilterOperator,
-	value any,
-	sb *sqlbuilder.SelectBuilder,
-) (string, error) {
-	// TODO(srikanthccv): maybe extend this to every possible attribute
-	if logical.Name == "duration_nano" || logical.Name == "durationNano" { // QoL improvement
-		coerced, err := coerceDurationValue(value)
-		if err != nil {
-			return "", err
-		}
-		value = coerced
-	}
-	return querybuilder.LogicalFamilyCondition(ctx, orgID, startNs, endNs, c.fm, logical, operator, value, sb)
 }
 
 func coerceDurationValue(value any) (any, error) {
@@ -98,9 +78,9 @@ func candidateLookupKeys(key *telemetrytypes.TelemetryFieldKey, fieldKeys map[st
 	return nil
 }
 
-// ConditionFor resolves the referenced key to the key(s) to filter on (ResolveKeys, else
-// synthesized keys with a warning) and builds one condition per resolved key. fieldKeys is
-// the full metadata map; the builder owns key resolution.
+// ConditionFor rejects the logs-only function operators and hands the term to
+// the generic flow; the traces-specific behavior lives in the TermSchema
+// methods below.
 func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
 	orgID valuer.UUID,
@@ -114,121 +94,83 @@ func (c *conditionBuilder) ConditionFor(
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) ([]string, []string, error) {
-
 	// has/hasAny/hasAll/hasToken/search are logs-only functions; reject for traces.
 	if err := querybuilder.NewFunctionUnsupportedError(operator); err != nil {
 		return nil, nil, err
 	}
-
-	matches := logicalFields
-	skipResourceFilter := options.SkipResourceFilter
-
-	logicalFields, warning := querybuilder.ResolveLogicalFields(key, matches)
-	var warnings []string
-	if warning != "" {
-		warnings = append(warnings, warning)
-	}
-	// A bare key that names a real column filters on the column too — first. When metadata
-	// only knows the name under other contexts, prepend the column and keep metadata matches
-	// only where their type is consistent with it (a corrupt entry can't degrade the column).
-	if key.FieldContext == telemetrytypes.FieldContextUnspecified && len(logicalFields) > 0 {
-		hasColumn := false
-		for _, logical := range logicalFields {
-			if logical.FieldContext == telemetrytypes.FieldContextSpan {
-				hasColumn = true
-				break
-			}
-		}
-		if !hasColumn {
-			probe := telemetrytypes.NewTelemetryFieldKey(key.Name, telemetrytypes.FieldContextSpan, key.FieldDataType)
-			if cols, colErr := c.fm.ColumnFor(ctx, orgID, startNs, endNs, probe); colErr == nil && len(cols) > 0 {
-				combined := make([]*telemetrytypes.LogicalField, 0, len(logicalFields)+1)
-				combined = append(combined, telemetrytypes.SingleLogicalField(key.Name, probe))
-				for _, logical := range logicalFields {
-					if columnMatchesDataType(cols[0], logical.FieldDataType) {
-						combined = append(combined, logical)
-					}
-				}
-				logicalFields = combined
-			}
-		}
-	}
-
-	synthesized := false
-	if len(logicalFields) == 0 {
-		// Not in metadata. CandidateKeys resolves it: fold contexts (span/trace) get the
-		// metadata map so it can honor a real column, correct to a stripped-name metadata
-		// match, or synthesize; strict contexts pass nil and keep their synthesize path.
-		logicalFields = querybuilder.WrapAsLogicalFields(key.Name, c.fm.CandidateKeys(ctx, orgID, key, value, candidateLookupKeys(key, fieldKeys)))
-		if len(logicalFields) == 0 {
-			return nil, warnings, querybuilder.NewKeyNotFoundError(key.Name)
-		}
-		synthesized = true
-		warnings = append(warnings, querybuilder.NewKeyNotFoundWarning(key.Name))
-	}
-
-	// When a resource sub-query already covers the term, drop resource fields from the main
-	// query. Synthesized keys are exempt: the sub-query skips keys absent from metadata.
-	if skipResourceFilter && !synthesized {
-		filtered := make([]*telemetrytypes.LogicalField, 0, len(logicalFields))
-		for _, logical := range logicalFields {
-			if logical.FieldContext != telemetrytypes.FieldContextResource {
-				filtered = append(filtered, logical)
-			}
-		}
-		if len(filtered) == 0 {
-			return nil, warnings, nil
-		}
-		logicalFields = filtered
-	}
-
-	conds := make([]string, 0, len(logicalFields))
-	for _, logical := range logicalFields {
-		cond, err := c.conditionForLogicalField(ctx, orgID, startNs, endNs, logical, operator, value, sb)
-		if err != nil {
-			return nil, nil, err
-		}
-		conds = append(conds, cond)
-	}
-	return conds, warnings, nil
+	scope := querybuilder.CompileScope{OrgID: orgID, StartNs: startNs, EndNs: endNs}
+	return querybuilder.CompileTerm(ctx, scope, c, querybuilder.SkipResourceDrop, key, logicalFields, fieldKeys, options, operator, value, sb)
 }
 
-func (c *conditionBuilder) conditionForLogicalField(
-	ctx context.Context,
-	orgID valuer.UUID,
-	startNs uint64,
-	endNs uint64,
-	logical *telemetrytypes.LogicalField,
-	operator qbtypes.FilterOperator,
-	value any,
-	sb *sqlbuilder.SelectBuilder,
-) (string, error) {
+// AmendEvidence: a bare key that names a real column filters on the column too — first.
+// When metadata only knows the name under other contexts, prepend the column and keep
+// metadata matches only where their type is consistent with it (a corrupt entry can't
+// degrade the column).
+func (c *conditionBuilder) AmendEvidence(ctx context.Context, scope querybuilder.CompileScope, key *telemetrytypes.TelemetryFieldKey, fields []*telemetrytypes.LogicalField) []*telemetrytypes.LogicalField {
+	if key.FieldContext != telemetrytypes.FieldContextUnspecified || len(fields) == 0 {
+		return fields
+	}
+	for _, logical := range fields {
+		if logical.FieldContext == telemetrytypes.FieldContextSpan {
+			return fields
+		}
+	}
+	probe := telemetrytypes.NewTelemetryFieldKey(key.Name, telemetrytypes.FieldContextSpan, key.FieldDataType)
+	cols, colErr := c.fm.ColumnFor(ctx, scope.OrgID, scope.StartNs, scope.EndNs, probe)
+	if colErr != nil || len(cols) == 0 {
+		return fields
+	}
+	combined := make([]*telemetrytypes.LogicalField, 0, len(fields)+1)
+	combined = append(combined, telemetrytypes.SingleLogicalField(key.Name, probe))
+	for _, logical := range fields {
+		if columnMatchesDataType(cols[0], logical.FieldDataType) {
+			combined = append(combined, logical)
+		}
+	}
+	return combined
+}
+
+// Synthesize: not in metadata. CandidateKeys resolves it: fold contexts (span/trace) get
+// the metadata map so it can honor a real column, correct to a stripped-name metadata
+// match, or synthesize; strict contexts pass nil and keep their synthesize path.
+func (c *conditionBuilder) Synthesize(ctx context.Context, scope querybuilder.CompileScope, key *telemetrytypes.TelemetryFieldKey, _ qbtypes.FilterOperator, value any, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) ([]*telemetrytypes.LogicalField, []string, error) {
+	fields := querybuilder.WrapAsLogicalFields(key.Name, c.fm.CandidateKeys(ctx, scope.OrgID, key, value, candidateLookupKeys(key, fieldKeys)))
+	if len(fields) == 0 {
+		return nil, nil, querybuilder.NewKeyNotFoundError(key.Name)
+	}
+	return fields, []string{querybuilder.NewKeyNotFoundWarning(key.Name)}, nil
+}
+
+// CompileField: span-scope names build their own predicates; everything else compiles
+// through the shared operator switch (with the duration coercion in front), and the
+// default exists guard applies except to intrinsic columns, which always exist.
+func (c *conditionBuilder) CompileField(ctx context.Context, scope querybuilder.CompileScope, logical *telemetrytypes.LogicalField, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, []string, error) {
 	if c.isSpanScopeField(logical.Name) {
-		return c.buildSpanScopeCondition(logical.Single(), operator, value, startNs)
+		cond, err := c.buildSpanScopeCondition(logical.Single(), operator, value, scope.StartNs)
+		return cond, nil, err
 	}
 
-	condition, err := c.conditionFor(ctx, orgID, startNs, endNs, logical, operator, value, sb)
-	if err != nil {
-		return "", err
-	}
-
-	if operator.AddDefaultExistsFilter() {
-		// skip adding exists filter for intrinsic fields
-		field, _ := c.fm.FieldFor(ctx, orgID, startNs, endNs, logical.Single())
-		if slices.Contains(maps.Keys(IntrinsicFields), field) ||
-			slices.Contains(maps.Keys(IntrinsicFieldsDeprecated), field) ||
-			slices.Contains(maps.Keys(CalculatedFields), field) ||
-			slices.Contains(maps.Keys(CalculatedFieldsDeprecated), field) {
-			return condition, nil
-		}
-
-		existsCondition, err := c.conditionFor(ctx, orgID, startNs, endNs, logical, qbtypes.FilterOperatorExists, nil, sb)
+	// TODO(srikanthccv): maybe extend this to every possible attribute
+	if logical.Name == "duration_nano" || logical.Name == "durationNano" { // QoL improvement
+		coerced, err := coerceDurationValue(value)
 		if err != nil {
-			return "", err
+			return "", nil, err
 		}
-		return sb.And(condition, existsCondition), nil
+		value = coerced
 	}
-	return condition, nil
+
+	cond, err := querybuilder.CompileFieldWithSharedOperators(ctx, scope, c.fm, logical, operator, value, sb, !c.isIntrinsic(ctx, scope, logical))
+	return cond, nil, err
+}
+
+// isIntrinsic reports whether the field reads an always-present table column,
+// which needs no exists guard.
+func (c *conditionBuilder) isIntrinsic(ctx context.Context, scope querybuilder.CompileScope, logical *telemetrytypes.LogicalField) bool {
+	field, _ := c.fm.FieldFor(ctx, scope.OrgID, scope.StartNs, scope.EndNs, logical.Single())
+	return slices.Contains(maps.Keys(IntrinsicFields), field) ||
+		slices.Contains(maps.Keys(IntrinsicFieldsDeprecated), field) ||
+		slices.Contains(maps.Keys(CalculatedFields), field) ||
+		slices.Contains(maps.Keys(CalculatedFieldsDeprecated), field)
 }
 
 func (c *conditionBuilder) isSpanScopeField(name string) bool {

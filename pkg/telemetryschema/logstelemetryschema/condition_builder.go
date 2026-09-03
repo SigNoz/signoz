@@ -448,6 +448,9 @@ func candidateLookupKeys(key *telemetrytypes.TelemetryFieldKey, fieldKeys map[st
 	return nil
 }
 
+// ConditionFor handles search() (which resolves its own scope) in front and
+// hands the term to the generic flow; the logs-specific behavior lives in the
+// TermSchema methods below.
 func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
 	orgID valuer.UUID,
@@ -461,104 +464,79 @@ func (c *conditionBuilder) ConditionFor(
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) ([]string, []string, error) {
-	matches := logicalFields
-	skipResourceFilter := options.SkipResourceFilter
-
-	// search() resolves its own (optional) scope; handle it before key resolution.
 	if operator == qbtypes.FilterOperatorSearch {
 		return c.conditionForSearch(ctx, orgID, key, value, sb)
 	}
+	scope := querybuilder.CompileScope{OrgID: orgID, StartNs: startNs, EndNs: endNs}
+	return querybuilder.CompileTerm(ctx, scope, c, querybuilder.SkipResourceDrop, key, logicalFields, fieldKeys, options, operator, value, sb)
+}
 
-	logicalFields, warning := querybuilder.ResolveLogicalFields(key, matches)
+// AmendEvidence: logs fold no intrinsic storage into the evidence.
+func (c *conditionBuilder) AmendEvidence(_ context.Context, _ querybuilder.CompileScope, _ *telemetrytypes.TelemetryFieldKey, fields []*telemetrytypes.LogicalField) []*telemetrytypes.LogicalField {
+	return fields
+}
+
+// Synthesize: intrinsic log columns pass through as themselves; everything
+// else goes to CandidateKeys — fold-contexts get the metadata map so a
+// same-named key under another context wins before the prefix folds into the
+// key name (matching ColumnExpressionFor), strict contexts pass nil and stay
+// honored as-is. The body-JSON functions keep body candidates only.
+func (c *conditionBuilder) Synthesize(ctx context.Context, scope querybuilder.CompileScope, key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) ([]*telemetrytypes.LogicalField, []string, error) {
+	_, isIntrinsicColumn := logsV2Columns[key.Name]
+	var keys []*telemetrytypes.TelemetryFieldKey
+	switch {
+	case key.FieldContext == telemetrytypes.FieldContextBody && key.Name == "":
+		return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "missing key for body json search - expected key of the form `body.key` (ex: `body.status`)")
+	case key.FieldContext == telemetrytypes.FieldContextLog && isIntrinsicColumn:
+		return querybuilder.WrapAsLogicalFields(key.Name, []*telemetrytypes.TelemetryFieldKey{key}), nil, nil
+	default:
+		keys = c.fm.CandidateKeys(ctx, scope.OrgID, key, value, candidateLookupKeys(key, fieldKeys))
+		if operator.IsFunctionOperator() {
+			if key.FieldContext != telemetrytypes.FieldContextBody {
+				// has/hasAny/hasAll/hasToken are body-JSON only
+				return nil, nil, querybuilder.NewFunctionUnsupportedError(operator)
+			}
+			bodyKeys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(keys))
+			for _, k := range keys {
+				if k.FieldContext == telemetrytypes.FieldContextBody {
+					bodyKeys = append(bodyKeys, k)
+				}
+			}
+			keys = bodyKeys
+		}
+		if len(keys) == 0 {
+			return nil, nil, querybuilder.NewKeyNotFoundError(key.Name)
+		}
+		return querybuilder.WrapAsLogicalFields(key.Name, keys), []string{querybuilder.NewKeyNotFoundWarning(key.Name)}, nil
+	}
+}
+
+// CompileField: a family compiles through the shared operator switch with the
+// same default-exists guard as the single-key path — without it, an
+// empty-string equality (and LIKE '%', or an empty CONTAINS) would match
+// keyless rows. A single member keeps
+// the logs storage residue: body JSON, full-text, and the context-based guard
+// policy of conditionForKey.
+func (c *conditionBuilder) CompileField(ctx context.Context, scope querybuilder.CompileScope, logical *telemetrytypes.LogicalField, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, []string, error) {
+	if logical.IsFamily() {
+		// has/hasAny/hasAll/hasToken are body-JSON only; family members are
+		// attribute and resource keys, so keep the descriptive error.
+		if err := querybuilder.NewFunctionUnsupportedError(operator); err != nil {
+			return "", nil, err
+		}
+		cond, err := querybuilder.CompileFieldWithSharedOperators(ctx, scope, c.fm, logical, operator, value, sb, true)
+		return cond, nil, err
+	}
+	k := logical.Single()
+	cond, err := c.conditionForKey(ctx, scope.OrgID, scope.StartNs, scope.EndNs, k, operator, value, sb)
+	if err != nil {
+		return "", nil, err
+	}
 	var warnings []string
-	if warning != "" {
-		warnings = append(warnings, warning)
+	if w := c.bodyFullTextDefaultWarning(ctx, scope.OrgID, scope.StartNs, scope.EndNs, k, operator); w != "" {
+		warnings = append(warnings, w)
 	}
-
-	synthesized := false
-	if len(logicalFields) == 0 {
-		_, isIntrinsicColumn := logsV2Columns[key.Name]
-		var keys []*telemetrytypes.TelemetryFieldKey
-		switch {
-		case key.FieldContext == telemetrytypes.FieldContextBody && key.Name == "":
-			return nil, warnings, errors.NewInvalidInputf(errors.CodeInvalidInput, "missing key for body json search - expected key of the form `body.key` (ex: `body.status`)")
-		case key.FieldContext == telemetrytypes.FieldContextLog && isIntrinsicColumn:
-			keys = []*telemetrytypes.TelemetryFieldKey{key}
-		default:
-			// Fold-contexts get the metadata map so a same-named key under another context
-			// wins before the prefix folds into the key name (matching ColumnExpressionFor);
-			// strict contexts pass nil and stay honored as-is.
-			keys = c.fm.CandidateKeys(ctx, orgID, key, value, candidateLookupKeys(key, fieldKeys))
-			if operator.IsFunctionOperator() {
-				if key.FieldContext != telemetrytypes.FieldContextBody {
-					// has/hasAny/hasAll/hasToken are body-JSON only
-					return nil, warnings, querybuilder.NewFunctionUnsupportedError(operator)
-				}
-				bodyKeys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(keys))
-				for _, k := range keys {
-					if k.FieldContext == telemetrytypes.FieldContextBody {
-						bodyKeys = append(bodyKeys, k)
-					}
-				}
-				keys = bodyKeys
-			}
-			if len(keys) == 0 {
-				return nil, warnings, querybuilder.NewKeyNotFoundError(key.Name)
-			}
-			synthesized = true
-			warnings = append(warnings, querybuilder.NewKeyNotFoundWarning(key.Name))
-		}
-		logicalFields = querybuilder.WrapAsLogicalFields(key.Name, keys)
-	}
-
-	if skipResourceFilter && !synthesized {
-		filtered := make([]*telemetrytypes.LogicalField, 0, len(logicalFields))
-		for _, logical := range logicalFields {
-			if logical.FieldContext != telemetrytypes.FieldContextResource {
-				filtered = append(filtered, logical)
-			}
-		}
-		if len(filtered) == 0 {
-			return nil, warnings, nil
-		}
-		logicalFields = filtered
-	}
-
-	conds := make([]string, 0, len(logicalFields))
-	for _, logical := range logicalFields {
-		if logical.IsFamily() {
-			// has/hasAny/hasAll/hasToken are body-JSON only; family members are
-			// attribute and resource keys, so keep the descriptive error.
-			if err := querybuilder.NewFunctionUnsupportedError(operator); err != nil {
-				return nil, nil, err
-			}
-			cond, err := querybuilder.LogicalFamilyCondition(ctx, orgID, startNs, endNs, c.fm, logical, operator, value, sb)
-			if err != nil {
-				return nil, nil, err
-			}
-			// The same default-exists guard as the single-key path: without it,
-			// `key = ''` (and LIKE '%', CONTAINS '') would match keyless rows.
-			if operator.AddDefaultExistsFilter() {
-				existsCond, err := querybuilder.LogicalFamilyCondition(ctx, orgID, startNs, endNs, c.fm, logical, qbtypes.FilterOperatorExists, nil, sb)
-				if err != nil {
-					return nil, nil, err
-				}
-				cond = sb.And(cond, existsCond)
-			}
-			conds = append(conds, cond)
-			continue
-		}
-		k := logical.Single()
-		cond, err := c.conditionForKey(ctx, orgID, startNs, endNs, k, operator, value, sb)
-		if err != nil {
-			return nil, nil, err
-		}
-		conds = append(conds, cond)
-		if w := c.bodyFullTextDefaultWarning(ctx, orgID, startNs, endNs, k, operator); w != "" {
-			warnings = append(warnings, w)
-		}
-	}
-	return conds, warnings, nil
+	return cond, warnings, nil
 }
 
 // bodyFullTextDefaultWarning returns the advisory shown when a regexp full-text

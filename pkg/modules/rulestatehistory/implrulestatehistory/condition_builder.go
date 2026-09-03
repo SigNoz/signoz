@@ -22,6 +22,8 @@ func newConditionBuilder(fm qbtypes.FieldMapper) qbtypes.ConditionBuilder {
 }
 
 // Rule state history has no resource sub-query, so options are unused.
+// ConditionFor rejects the logs-only function operators and hands the term to
+// the generic flow; rule state history fields have no family support.
 func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
 	orgID valuer.UUID,
@@ -29,43 +31,37 @@ func (c *conditionBuilder) ConditionFor(
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	logicalFields []*telemetrytypes.LogicalField,
-	_ map[string][]*telemetrytypes.TelemetryFieldKey,
-	_ qbtypes.ConditionBuilderOptions,
+	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
+	options qbtypes.ConditionBuilderOptions,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) ([]string, []string, error) {
-
 	// has/hasAny/hasAll/hasToken/search are logs-only functions; reject for rule state history.
 	if err := querybuilder.NewFunctionUnsupportedError(operator); err != nil {
 		return nil, nil, err
 	}
+	scope := querybuilder.CompileScope{OrgID: orgID, StartNs: startNs, EndNs: endNs}
+	return querybuilder.CompileTerm(ctx, scope, c, querybuilder.SkipResourceNone, key, logicalFields, fieldKeys, options, operator, value, sb)
+}
 
-	// Rule state history fields have no family support, so every logical field
-	// is single-member and flattens losslessly to its physical key; SingleKeys
-	// refuses a family, so a wiring mistake fails loudly.
-	resolved, warning := querybuilder.ResolveLogicalFields(key, logicalFields)
-	keys, err := querybuilder.SingleKeys(resolved)
-	if err != nil {
-		return nil, nil, err
-	}
-	var warnings []string
-	if warning != "" {
-		warnings = append(warnings, warning)
-	}
-	if len(keys) == 0 {
-		return nil, warnings, querybuilder.NewKeyNotFoundError(key.Name)
-	}
+// AmendEvidence: rule state history folds no intrinsic storage into the evidence.
+func (c *conditionBuilder) AmendEvidence(_ context.Context, _ querybuilder.CompileScope, _ *telemetrytypes.TelemetryFieldKey, fields []*telemetrytypes.LogicalField) []*telemetrytypes.LogicalField {
+	return fields
+}
 
-	conds := make([]string, 0, len(keys))
-	for _, k := range keys {
-		cond, err := c.conditionForKey(ctx, orgID, startNs, endNs, k, operator, value, sb)
-		if err != nil {
-			return nil, nil, err
-		}
-		conds = append(conds, cond)
+// Synthesize: rule state history synthesizes nothing — an unknown key is an error.
+func (c *conditionBuilder) Synthesize(_ context.Context, _ querybuilder.CompileScope, key *telemetrytypes.TelemetryFieldKey, _ qbtypes.FilterOperator, _ any, _ map[string][]*telemetrytypes.TelemetryFieldKey) ([]*telemetrytypes.LogicalField, []string, error) {
+	return nil, nil, querybuilder.NewKeyNotFoundError(key.Name)
+}
+
+// CompileField: single keys only — a family is a wiring error for this signal.
+func (c *conditionBuilder) CompileField(ctx context.Context, scope querybuilder.CompileScope, logical *telemetrytypes.LogicalField, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, []string, error) {
+	if logical.IsFamily() {
+		return "", nil, errors.NewInternalf(errors.CodeInternal, "field %q resolved to a family, and this signal compiles single keys only", logical.Name)
 	}
-	return conds, warnings, nil
+	cond, err := c.conditionForKey(ctx, scope.OrgID, scope.StartNs, scope.EndNs, logical.Single(), operator, value, sb)
+	return cond, nil, err
 }
 
 func (c *conditionBuilder) conditionForKey(

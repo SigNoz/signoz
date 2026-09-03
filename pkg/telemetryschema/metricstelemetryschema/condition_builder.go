@@ -170,7 +170,8 @@ func (c *conditionBuilder) conditionFor(
 	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator: %v", operator)
 }
 
-// Metrics has no resource sub-query, so options are unused.
+// ConditionFor rejects the logs-only function operators and hands the term to
+// the generic flow; metrics has no resource sub-query, so options are unused.
 func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
 	orgID valuer.UUID,
@@ -179,52 +180,55 @@ func (c *conditionBuilder) ConditionFor(
 	key *telemetrytypes.TelemetryFieldKey,
 	logicalFields []*telemetrytypes.LogicalField,
 	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
-	_ qbtypes.ConditionBuilderOptions,
+	options qbtypes.ConditionBuilderOptions,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) ([]string, []string, error) {
-
 	// has/hasAny/hasAll/hasToken/search are logs-only functions; reject for metrics.
 	if err := querybuilder.NewFunctionUnsupportedError(operator); err != nil {
 		return nil, nil, err
 	}
+	scope := querybuilder.CompileScope{OrgID: orgID, StartNs: startNs, EndNs: endNs}
+	return querybuilder.CompileTerm(ctx, scope, c, querybuilder.SkipResourceNone, key, logicalFields, fieldKeys, options, operator, value, sb)
+}
 
+// AmendEvidence: metrics fold no intrinsic storage into the evidence.
+func (c *conditionBuilder) AmendEvidence(_ context.Context, _ querybuilder.CompileScope, _ *telemetrytypes.TelemetryFieldKey, fields []*telemetrytypes.LogicalField) []*telemetrytypes.LogicalField {
+	return fields
+}
+
+// Synthesize: an intrinsic time-series column passes through as itself; any
+// other name reads as a label (with the context-prefixed spelling second),
+// with an advisory when the metadata has never seen it. Labels always read
+// from the JSON, so an unknown name still queries instead of erroring.
+func (c *conditionBuilder) Synthesize(_ context.Context, _ querybuilder.CompileScope, key *telemetrytypes.TelemetryFieldKey, _ qbtypes.FilterOperator, _ any, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) ([]*telemetrytypes.LogicalField, []string, error) {
+	if _, isColumn := timeSeriesV4Columns[key.Name]; isColumn {
+		return querybuilder.WrapAsLogicalFields(key.Name, []*telemetrytypes.TelemetryFieldKey{key}), nil, nil
+	}
 	var warnings []string
-	if len(logicalFields) == 0 {
-		var keys []*telemetrytypes.TelemetryFieldKey
-		if _, isColumn := timeSeriesV4Columns[key.Name]; isColumn {
-			keys = []*telemetrytypes.TelemetryFieldKey{key}
-		} else {
-			if len(fieldKeys[key.Name]) == 0 {
-				warnings = append(warnings, fmt.Sprintf("label `%s` not found in metadata; check the label name for typos", key.Name))
-			}
-			keys = []*telemetrytypes.TelemetryFieldKey{
-				telemetrytypes.NewTelemetryFieldKey(key.Name, telemetrytypes.FieldContextAttribute, key.FieldDataType),
-			}
-			if key.FieldContext != telemetrytypes.FieldContextUnspecified {
-				keys = append(keys, telemetrytypes.NewTelemetryFieldKey(
-					key.FieldContext.StringValue()+"."+key.Name, telemetrytypes.FieldContextAttribute, key.FieldDataType))
-			}
-		}
-		logicalFields = querybuilder.WrapAsLogicalFields(key.Name, keys)
+	if len(fieldKeys[key.Name]) == 0 {
+		warnings = append(warnings, fmt.Sprintf("label `%s` not found in metadata; check the label name for typos", key.Name))
 	}
+	keys := []*telemetrytypes.TelemetryFieldKey{
+		telemetrytypes.NewTelemetryFieldKey(key.Name, telemetrytypes.FieldContextAttribute, key.FieldDataType),
+	}
+	if key.FieldContext != telemetrytypes.FieldContextUnspecified {
+		keys = append(keys, telemetrytypes.NewTelemetryFieldKey(
+			key.FieldContext.StringValue()+"."+key.Name, telemetrytypes.FieldContextAttribute, key.FieldDataType))
+	}
+	return querybuilder.WrapAsLogicalFields(key.Name, keys), warnings, nil
+}
 
-	conds := make([]string, 0, len(logicalFields))
-	for _, logical := range logicalFields {
-		if logical.IsFamily() {
-			cond, err := querybuilder.LogicalFamilyCondition(ctx, orgID, startNs, endNs, c.fm, logical, operator, value, sb)
-			if err != nil {
-				return nil, nil, err
-			}
-			conds = append(conds, cond)
-			continue
-		}
-		cond, err := c.conditionFor(ctx, orgID, startNs, endNs, logical.Single(), operator, value, sb)
-		if err != nil {
-			return nil, nil, err
-		}
-		conds = append(conds, cond)
+// CompileField: a family compiles through the shared operator switch; a
+// single label keeps the metrics operator forms (labels read back as String
+// from the labels JSON, so the collision handling differs) and takes no
+// exists guard.
+func (c *conditionBuilder) CompileField(ctx context.Context, scope querybuilder.CompileScope, logical *telemetrytypes.LogicalField, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, []string, error) {
+	if logical.IsFamily() {
+		cond, err := querybuilder.CompileFieldWithSharedOperators(ctx, scope, c.fm, logical, operator, value, sb, false)
+		return cond, nil, err
 	}
-	return conds, warnings, nil
+	cond, err := c.conditionFor(ctx, scope.OrgID, scope.StartNs, scope.EndNs, logical.Single(), operator, value, sb)
+	return cond, nil, err
 }

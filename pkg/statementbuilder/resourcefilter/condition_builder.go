@@ -108,7 +108,10 @@ func memberPresenceCondition(sb *sqlbuilder.SelectBuilder, column string, member
 	return sb.And(conditions...)
 }
 
-// SkipResourceFilter is not applicable here: the fingerprint table only stores resource attributes.
+// ConditionFor skips the logs-body function operators (they never apply to
+// the resource fingerprint table; the main query still evaluates them) and
+// hands the term to the generic flow. SkipResourceFilter the option is not
+// applicable here: this builder IS the resource sub-query.
 func (b *defaultConditionBuilder) ConditionFor(
 	ctx context.Context,
 	orgID valuer.UUID,
@@ -116,41 +119,35 @@ func (b *defaultConditionBuilder) ConditionFor(
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	logicalFields []*telemetrytypes.LogicalField,
-	_ map[string][]*telemetrytypes.TelemetryFieldKey,
-	_ qbtypes.ConditionBuilderOptions,
+	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
+	options qbtypes.ConditionBuilderOptions,
 	op qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) ([]string, []string, error) {
-	matches := logicalFields
-
-	// has/hasAny/hasAll/hasToken are logs-body-only functions; they never apply to the
-	// resource fingerprint table, so skip them (the main query still evaluates them).
 	if op.IsFunctionOperator() {
 		return nil, nil, nil
 	}
+	scope := querybuilder.CompileScope{OrgID: orgID, StartNs: startNs, EndNs: endNs}
+	return querybuilder.CompileTerm(ctx, scope, b, querybuilder.SkipResourceOnly, key, logicalFields, fieldKeys, options, op, value, sb)
+}
 
-	logicalFields, warning := querybuilder.ResolveLogicalFields(key, matches)
-	var warnings []string
-	if warning != "" {
-		warnings = append(warnings, warning)
-	}
+// AmendEvidence: the fingerprint table folds no intrinsic storage into the evidence.
+func (b *defaultConditionBuilder) AmendEvidence(_ context.Context, _ querybuilder.CompileScope, _ *telemetrytypes.TelemetryFieldKey, fields []*telemetrytypes.LogicalField) []*telemetrytypes.LogicalField {
+	return fields
+}
 
-	conds := make([]string, 0, len(logicalFields))
-	for _, logical := range logicalFields {
-		// the resource fingerprint table only stores resource attributes; fields from
-		// any other context contribute no condition and are omitted. An empty result
-		// (including an unknown key) lets the caller skip this filter entirely.
-		if logical.FieldContext != telemetrytypes.FieldContextResource {
-			continue
-		}
-		cond, err := b.conditionForLogicalField(ctx, orgID, startNs, endNs, logical, op, value, sb)
-		if err != nil {
-			return nil, nil, err
-		}
-		conds = append(conds, cond)
-	}
-	return conds, warnings, nil
+// Synthesize: an unknown key contributes no condition — the caller skips this
+// filter entirely, and the main query still evaluates the term.
+func (b *defaultConditionBuilder) Synthesize(_ context.Context, _ querybuilder.CompileScope, _ *telemetrytypes.TelemetryFieldKey, _ qbtypes.FilterOperator, _ any, _ map[string][]*telemetrytypes.TelemetryFieldKey) ([]*telemetrytypes.LogicalField, []string, error) {
+	return nil, nil, nil
+}
+
+// CompileField: the fingerprint operator forms with their bloom-index hints,
+// for families and singles alike.
+func (b *defaultConditionBuilder) CompileField(ctx context.Context, scope querybuilder.CompileScope, logical *telemetrytypes.LogicalField, op qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, []string, error) {
+	cond, err := b.conditionForLogicalField(ctx, scope.OrgID, scope.StartNs, scope.EndNs, logical, op, value, sb)
+	return cond, nil, err
 }
 
 func (b *defaultConditionBuilder) conditionForLogicalField(
