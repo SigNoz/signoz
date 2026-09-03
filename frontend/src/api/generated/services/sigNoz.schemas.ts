@@ -385,6 +385,38 @@ export interface AlertmanagertypesGoogleChatReceiverConfigDTO {
 	webhook_url?: ConfigSecretURLDTO;
 }
 
+export type AlertmanagertypesIncidentIOReceiverConfigDTOMetadata = {
+	[key: string]: string;
+};
+
+export interface AlertmanagertypesIncidentIOReceiverConfigDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	http_config?: ConfigHTTPClientConfigDTO;
+	/**
+	 * @type object
+	 */
+	metadata?: AlertmanagertypesIncidentIOReceiverConfigDTOMetadata;
+	/**
+	 * @type boolean
+	 */
+	send_resolved?: boolean;
+	/**
+	 * @type string
+	 */
+	title?: string;
+	/**
+	 * @type string
+	 */
+	token?: string;
+	/**
+	 * @type string
+	 */
+	url?: string;
+}
+
 export interface AlertmanagertypesJSMOpsReceiverConfigDTO {
 	/**
 	 * @type string
@@ -685,39 +717,6 @@ export interface ConfigEmailConfigDTO {
 	to?: string;
 }
 
-export type TimeDurationDTO = number;
-
-export interface ConfigURLType2DTO {
-	[key: string]: unknown;
-}
-
-export interface ConfigIncidentioConfigDTO {
-	/**
-	 * @type string
-	 */
-	alert_source_token?: string;
-	/**
-	 * @type string
-	 */
-	alert_source_token_file?: string;
-	http_config?: ConfigHTTPClientConfigDTO;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	max_alerts?: number;
-	/**
-	 * @type boolean
-	 */
-	send_resolved?: boolean;
-	timeout?: TimeDurationDTO;
-	url?: ConfigURLType2DTO;
-	/**
-	 * @type string
-	 */
-	url_file?: string;
-}
-
 export interface ConfigMattermostFieldDTO {
 	/**
 	 * @type boolean,null
@@ -903,6 +902,10 @@ export interface ConfigMSTeamsV2ConfigDTO {
 	webhook_url_file?: string;
 }
 
+export interface ConfigURLType2DTO {
+	[key: string]: unknown;
+}
+
 export interface ConfigOpsGenieConfigResponderDTO {
 	/**
 	 * @type string
@@ -1010,6 +1013,8 @@ export interface ConfigPagerdutyLinkDTO {
 	 */
 	text?: string;
 }
+
+export type TimeDurationDTO = number;
 
 export type ConfigPagerdutyConfigDTODetails = { [key: string]: unknown };
 
@@ -1672,7 +1677,7 @@ export type AlertmanagertypesPostableChannelDTO = unknown & {
 	/**
 	 * @type array
 	 */
-	incidentio_configs?: ConfigIncidentioConfigDTO[];
+	incidentio_configs?: AlertmanagertypesIncidentIOReceiverConfigDTO[];
 	/**
 	 * @type array
 	 */
@@ -1803,7 +1808,7 @@ export interface AlertmanagertypesReceiverDTO {
 	/**
 	 * @type array
 	 */
-	incidentio_configs?: ConfigIncidentioConfigDTO[];
+	incidentio_configs?: AlertmanagertypesIncidentIOReceiverConfigDTO[];
 	/**
 	 * @type array
 	 */
@@ -3298,6 +3303,33 @@ export interface CommonJSONRefDTO {
 	 * @type string
 	 */
 	$ref?: string;
+}
+
+export interface ConfigIncidentioConfigDTO {
+	/**
+	 * @type string
+	 */
+	alert_source_token?: string;
+	/**
+	 * @type string
+	 */
+	alert_source_token_file?: string;
+	http_config?: ConfigHTTPClientConfigDTO;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	max_alerts?: number;
+	/**
+	 * @type boolean
+	 */
+	send_resolved?: boolean;
+	timeout?: TimeDurationDTO;
+	url?: ConfigURLType2DTO;
+	/**
+	 * @type string
+	 */
+	url_file?: string;
 }
 
 export type ConfigJiraConfigDTOCustomFields = { [key: string]: unknown };

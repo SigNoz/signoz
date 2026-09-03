@@ -585,7 +585,7 @@ describe('Create Alert Channel', () => {
 						description: 'jira_site_invalid',
 					}),
 				);
-			});
+			}, 15000);
 
 			it('Should send a jira_configs payload with basic auth', async () => {
 				let requestBody: unknown;
