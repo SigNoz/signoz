@@ -75,6 +75,9 @@ export const CHANNEL_TYPES = [
 	'email',
 	'msteams',
 	'googlechat',
+	'jira',
+	'jsmops',
+	'incidentio',
 ] as const;
 
 export type ChannelType = (typeof CHANNEL_TYPES)[number];
@@ -616,6 +619,69 @@ const CHANNEL_SEEDS: ChannelSeed[] = [
 					send_resolved: true,
 					title: '{{ .CommonLabels.alertname }}',
 					description: '{{ .CommonAnnotations.summary }}',
+				},
+			],
+		},
+	},
+	{
+		name: 'tickets-jira',
+		type: 'jira',
+		receiver: {
+			jira_configs: [
+				{
+					site: 'https://signoz.atlassian.net',
+					project: 'ALERT',
+					issue_type: 'Task',
+					send_resolved: true,
+					summary: '{{ .CommonLabels.alertname }}',
+					description: '{{ .CommonAnnotations.summary }}',
+					priority: 'High',
+					labels: ['signoz', 'platform'],
+					resolve_transition: 'Done',
+					reopen_transition: 'Reopen',
+					wont_fix_resolution: "Won't Do",
+					reopen_duration: '72h',
+					// The form reads the credentials off the basic auth block rather than
+					// off the config itself, which is where the backend stores them.
+					http_config: {
+						basic_auth: {
+							username: 'alerts@signoz.io',
+							password: 'story-api-token',
+						},
+					},
+				},
+			],
+		},
+	},
+	{
+		name: 'oncall-jsmops',
+		type: 'jsmops',
+		receiver: {
+			jsmops_configs: [
+				{
+					api_key: 'story-jsm-api-key',
+					send_resolved: true,
+					message: '{{ .CommonLabels.alertname }}',
+					description: '{{ .CommonAnnotations.summary }}',
+					priority: 'P2',
+					// Stored comma-separated, which is what the form splits into chips.
+					tags: 'signoz,platform',
+				},
+			],
+		},
+	},
+	{
+		name: 'oncall-incidentio',
+		type: 'incidentio',
+		receiver: {
+			incidentio_configs: [
+				{
+					url: 'https://api.incident.io/v2/alert_events/http/story-source-config-id',
+					token: 'story-source-token',
+					send_resolved: true,
+					title: '{{ .CommonLabels.alertname }}',
+					description: '{{ .CommonAnnotations.summary }}',
+					metadata: { team: 'platform' },
 				},
 			],
 		},
