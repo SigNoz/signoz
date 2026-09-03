@@ -27,6 +27,15 @@ logger = setup_logger(__name__)
 # network under this alias and serves HTTPS on 443 with a certificate issued by
 # the integration CA that signoz trusts; channels point at https://<host>/...
 GOOGLE_CHAT_HOST = "chat.googleapis.com"
+# incident.io doesn't pin the host, but the same alias trick keeps channel URLs
+# identical to production ones.
+INCIDENTIO_HOST = "api.incident.io"
+TLS_HOSTS = [GOOGLE_CHAT_HOST, INCIDENTIO_HOST]
+
+# A reused container serving a cert without a newly added host (or missing its
+# network alias) fails TLS opaquely; this label records the hosts it was built
+# for so stale() recreates it when the list changes.
+TLS_HOSTS_LABEL = "signoz.integration.tls-hosts"
 
 
 EMAIL_TRANSPORT_KEYS = [
@@ -200,6 +209,76 @@ def googlechat_card_subset(alertname: str, buttons: list[tuple[str, str]]) -> di
     }
 
 
+INCIDENTIO_TEST_TOKEN = "incidentio-test-token"  # noqa: S105
+
+
+def incidentio_path(source_id: str) -> str:
+    return f"/v2/alert_events/http/{source_id}"
+
+
+def incidentio_config(source_id: str) -> dict:
+    """incident.io channel config for a per-test alert source id. Title/description
+    are omitted so the backend applies its default templates. The URL host is the
+    wiremock network alias, so no runtime injection is needed."""
+    return {
+        "incidentio_configs": [
+            {
+                "url": f"https://{INCIDENTIO_HOST}{incidentio_path(source_id)}",
+                "token": INCIDENTIO_TEST_TOKEN,
+            }
+        ],
+    }
+
+
+# recorded incident.io Alert Events V2 responses: 202 accepted-for-processing
+# echoing the dedup key; errors are {type, status, errors: [{code, message}]}
+def incidentio_ok_mappings(path: str) -> list[Mapping]:
+    return [
+        Mapping(
+            request=MappingRequest(method=HttpMethods.POST, url_path=path),
+            response=MappingResponse(status=202, json_body={"status": "accepted", "message": "Event accepted for processing", "deduplication_key": "x"}),
+        )
+    ]
+
+
+def incidentio_retry_mappings(path: str) -> list[Mapping]:
+    """429 on the first call then 202, via a wiremock scenario transition."""
+    scenario = f"incidentio-retry-{path}"
+    return [
+        Mapping(
+            request=MappingRequest(method=HttpMethods.POST, url_path=path),
+            response=MappingResponse(status=429, json_body={"type": "rate_limit_error", "status": 429}),
+            scenario_name=scenario,
+            required_scenario_state="Started",
+            new_scenario_state="ok",
+        ),
+        Mapping(
+            request=MappingRequest(method=HttpMethods.POST, url_path=path),
+            response=MappingResponse(status=202, json_body={"status": "accepted", "message": "Event accepted for processing", "deduplication_key": "x"}),
+            scenario_name=scenario,
+            required_scenario_state="ok",
+        ),
+    ]
+
+
+def incidentio_event_subset(alertname: str, links: list[tuple[str, str]]) -> dict:
+    """An alert-event subset asserting title, firing status, dedup key, SigNoz
+    source_url, metadata labels, and each markdown link's text AND url (as a
+    regex), so a broken link is caught too. links: (text, url_regex) pairs in
+    default-template order (View in SigNoz -> related logs -> related traces)."""
+    description = "(?s)" + re.escape(f"**Alert:** {alertname}")
+    for text, url in links:
+        description += rf".*\[{re.escape(text)}\]\([^)]*{url}"
+    return {
+        "title": f"[FIRING:1] {alertname}",
+        "status": "firing",
+        "deduplication_key": re.compile(r".+"),
+        "source_url": re.compile(r"/alerts/overview\?ruleId="),
+        "description": re.compile(description),
+        "metadata": {"alertname": alertname},
+    }
+
+
 @pytest.fixture(name="notification_channel", scope="package")
 def notification_channel(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     network: Network,
@@ -216,13 +295,13 @@ def notification_channel(  # pylint: disable=too-many-arguments,too-many-positio
         # http:8080 for admin API + plain webhook delivery; https:443 aliased as
         # chat.googleapis.com with a CA-issued cert so Google Chat's validated
         # webhook host routes here over real TLS (signoz trusts the integration CA).
-        keystore_path = issue_server_keystore(tls, tmpfs("notification-channel-certs"), GOOGLE_CHAT_HOST)
+        keystore_path = issue_server_keystore(tls, tmpfs("notification-channel-certs"), *TLS_HOSTS)
 
         container = WireMockContainer(image="wiremock/wiremock:2.35.1-1", secure=False)
         container.with_volume_mapping(str(keystore_path.parent), "/certs", "ro")
         container.with_network(network)
-        container.with_network_aliases(GOOGLE_CHAT_HOST)
-        container.with_kwargs(labels={CA_ID_LABEL: ca_id(tls)})
+        container.with_network_aliases(*TLS_HOSTS)
+        container.with_kwargs(labels={CA_ID_LABEL: ca_id(tls), TLS_HOSTS_LABEL: ",".join(TLS_HOSTS)})
 
         try:
             container.start(f"--port 8080 --https-port 443 --https-keystore /certs/keystore.p12 --keystore-type PKCS12 --keystore-password {KEYSTORE_PASSWORD}")
@@ -271,7 +350,7 @@ def notification_channel(  # pylint: disable=too-many-arguments,too-many-positio
             labels = client.containers.get(container_id=container.id).attrs["Config"]["Labels"]
         except docker.errors.NotFound:
             return True
-        return labels.get(CA_ID_LABEL) != ca_id(tls)
+        return labels.get(CA_ID_LABEL) != ca_id(tls) or labels.get(TLS_HOSTS_LABEL) != ",".join(TLS_HOSTS)
 
     return reuse.wrap(
         request,
