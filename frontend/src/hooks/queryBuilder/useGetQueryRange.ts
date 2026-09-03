@@ -4,7 +4,7 @@ import { isAxiosError } from 'axios';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { MAX_QUERY_RETRIES } from 'constants/reactQuery';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { updateBarStepInterval } from 'container/GridCardLayout/utils';
+import { updateBarStepInterval } from 'container/WidgetCard/utils';
 import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariablesByType';
 import {
 	GetMetricQueryRange,
@@ -25,11 +25,6 @@ type UseGetQueryRange = (
 	version: string,
 	options?: UseGetQueryRangeOptions,
 	headers?: Record<string, string>,
-	publicQueryMeta?: {
-		isPublic: boolean;
-		widgetIndex: number;
-		publicDashboardId: string;
-	},
 ) => UseQueryResult<MetricQueryRangeSuccessResponse, Error>;
 
 export const useGetQueryRange: UseGetQueryRange = (
@@ -37,7 +32,6 @@ export const useGetQueryRange: UseGetQueryRange = (
 	version,
 	options,
 	headers,
-	publicQueryMeta,
 ) => {
 	const dashboardDynamicVariables = useDashboardVariablesByType(
 		'DYNAMIC',
@@ -163,8 +157,6 @@ export const useGetQueryRange: UseGetQueryRange = (
 				dashboardDynamicVariables,
 				signal,
 				headers,
-				undefined,
-				publicQueryMeta,
 			),
 		...options,
 		retry,

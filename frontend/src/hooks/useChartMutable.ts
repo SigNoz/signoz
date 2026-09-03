@@ -1,5 +1,5 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { PanelTypeAndGraphManagerVisibilityProps } from 'container/GridCardLayout/GridCard/FullView/types';
+import { PanelTypeAndGraphManagerVisibilityProps } from 'container/WidgetCard/Card/FullView/types';
 import { PanelTypeKeys } from 'types/common/queryBuilder';
 
 export const useChartMutable = ({

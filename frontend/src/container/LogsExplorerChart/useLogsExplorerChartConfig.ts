@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
-import { buildBaseConfig } from 'container/DashboardContainer/visualization/panels/utils/baseConfigBuilder';
+import { buildBaseConfig } from 'lib/visualization/panels/utils/baseConfigBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import getLabelName from 'lib/getLabelName';
 import { colors } from 'lib/getRandomColor';
