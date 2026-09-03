@@ -19,7 +19,6 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { initialQueryAIWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { getListViewQuery } from 'container/TracesExplorer/explorerUtils';
 import { getTraceLink } from 'container/TracesExplorer/ListView/utils';
 import { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
 import TracesTable from 'container/TracesExplorer/TracesTable/TracesTable';
@@ -38,6 +37,7 @@ import {
 	TRACE_VIEW_DEFAULT_ORDER_BY,
 	TRACE_VIEW_STATIC_ORDER_BY_KEYS,
 } from '../constants';
+import { getListViewQuery } from '../explorerUtils';
 import { PER_PAGE_OPTIONS } from './configs';
 import { useTraceViewColumns } from './useTraceViewColumns';
 import styles from './TracesView.module.scss';

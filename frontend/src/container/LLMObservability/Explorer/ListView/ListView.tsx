@@ -21,7 +21,6 @@ import { initialQueryAIWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
-import { getListViewQuery } from 'container/TracesExplorer/explorerUtils';
 import {
 	getTraceLink,
 	transformSpanRows,
@@ -43,6 +42,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import ExplorerControls from '../Controls';
+import { getListViewQuery } from '../explorerUtils';
 import {
 	defaultSelectedColumns,
 	PER_PAGE_OPTIONS,
