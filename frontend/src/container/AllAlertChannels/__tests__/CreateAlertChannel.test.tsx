@@ -602,6 +602,11 @@ describe('Create Alert Channel', () => {
 
 				const user = userEvent.setup({ delay: null });
 				await fillRequired(user, validSite);
+				await user.click(screen.getByText('jira_advanced_section'));
+				await user.type(
+					screen.getByTestId('jira-wont-fix-resolution-textbox'),
+					"Won't Do",
+				);
 
 				await user.click(screen.getByTestId('save-channel-button'));
 
@@ -622,6 +627,7 @@ describe('Create Alert Channel', () => {
 							summary: JiraInitialConfig.summary,
 							description: JiraInitialConfig.description,
 							send_resolved: true,
+							wont_fix_resolution: "Won't Do",
 							http_config: {
 								basic_auth: { username: 'me@acme.com', password: 'tok123' },
 							},

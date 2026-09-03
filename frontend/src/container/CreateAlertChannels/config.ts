@@ -156,6 +156,9 @@ export interface JiraChannel extends Channel {
 	labels?: string[];
 	resolve_transition?: string;
 	reopen_transition?: string;
+	// issues resolved with this resolution are never reopened; a refire
+	// creates a new issue instead
+	wont_fix_resolution?: string;
 	// duration string, e.g. 72h or 3d
 	reopen_duration?: string;
 }
