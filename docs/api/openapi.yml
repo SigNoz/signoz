@@ -9565,6 +9565,27 @@ components:
       - tier
       - hosts
       type: object
+    ZeustypesGettableSubscription:
+      properties:
+        redirectURL:
+          type: string
+      type: object
+    ZeustypesGettableSubscriptionUsage:
+      properties:
+        billingPeriodEnd:
+          format: int64
+          type: integer
+        billingPeriodStart:
+          format: int64
+          type: integer
+        details:
+          $ref: '#/components/schemas/ZeustypesSubscriptionUsageDetails'
+        discount:
+          format: double
+          type: number
+        subscriptionStatus:
+          type: string
+      type: object
     ZeustypesHost:
       properties:
         is_default:
@@ -9621,6 +9642,91 @@ components:
       - number_of_hosts
       - where_did_you_discover_signoz
       - timeline_for_migrating_to_signoz
+      type: object
+    ZeustypesPostableSubscription:
+      properties:
+        url:
+          type: string
+      type: object
+    ZeustypesSubscriptionUsageBreakdown:
+      properties:
+        dayWiseBreakdown:
+          $ref: '#/components/schemas/ZeustypesSubscriptionUsageDayWiseBreakdown'
+        tiers:
+          items:
+            $ref: '#/components/schemas/ZeustypesSubscriptionUsageTier'
+          nullable: true
+          type: array
+        type:
+          type: string
+        unit:
+          type: string
+      type: object
+    ZeustypesSubscriptionUsageDayWiseBreakdown:
+      properties:
+        breakdown:
+          items:
+            $ref: '#/components/schemas/ZeustypesSubscriptionUsageDayWiseData'
+          nullable: true
+          type: array
+        type:
+          type: string
+      type: object
+    ZeustypesSubscriptionUsageDayWiseData:
+      properties:
+        count:
+          format: double
+          type: number
+        quantity:
+          format: double
+          type: number
+        size:
+          format: double
+          type: number
+        timestamp:
+          format: int64
+          type: integer
+        total:
+          format: double
+          type: number
+        unitPrice:
+          format: double
+          type: number
+      type: object
+    ZeustypesSubscriptionUsageDetails:
+      properties:
+        baseFee:
+          format: double
+          type: number
+        billTotal:
+          format: double
+          type: number
+        breakdown:
+          items:
+            $ref: '#/components/schemas/ZeustypesSubscriptionUsageBreakdown'
+          nullable: true
+          type: array
+        total:
+          format: double
+          type: number
+      type: object
+    ZeustypesSubscriptionUsageTier:
+      properties:
+        quantity:
+          format: double
+          type: number
+        tierCost:
+          format: double
+          type: number
+        tierEnd:
+          format: int64
+          type: integer
+        tierStart:
+          format: int64
+          type: integer
+        unitPrice:
+          format: double
+          type: number
       type: object
   securitySchemes:
     api_key:
@@ -25096,6 +25202,65 @@ paths:
       summary: Put host in Zeus for a deployment.
       tags:
       - zeus
+  /api/v2/zeus/meters:
+    get:
+      deprecated: false
+      description: This endpoint gets the metered usage and billing details of the
+        deployment's subscription from zeus.
+      operationId: GetSubscriptionUsage
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ZeustypesGettableSubscriptionUsage'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - subscription:read
+      - tokenizer:
+        - subscription:read
+      summary: Get subscription usage from Zeus.
+      tags:
+      - zeus
   /api/v2/zeus/profiles:
     put:
       deprecated: false
@@ -25151,6 +25316,139 @@ paths:
       - tokenizer:
         - ADMIN
       summary: Put profile in Zeus for a deployment.
+      tags:
+      - zeus
+  /api/v2/zeus/subscriptions:
+    post:
+      deprecated: false
+      description: This endpoint creates a checkout session in Zeus for the deployment's
+        subscription and returns the redirect URL.
+      operationId: CreateSubscription
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ZeustypesPostableSubscription'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ZeustypesGettableSubscription'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - subscription:create
+      - tokenizer:
+        - subscription:create
+      summary: Create a checkout session for the subscription.
+      tags:
+      - zeus
+    put:
+      deprecated: false
+      description: This endpoint creates a billing portal session in Zeus for the
+        deployment's subscription and returns the redirect URL.
+      operationId: UpdateSubscription
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ZeustypesPostableSubscription'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ZeustypesGettableSubscription'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - subscription:update
+      - tokenizer:
+        - subscription:update
+      summary: Create a billing portal session for the subscription.
       tags:
       - zeus
   /api/v3/licenses:

@@ -74,11 +74,11 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLicense}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLicense}, WildCardSelectorString)},
 		// subscription — admin only.
-		// Uniform LCRUD shape; actual ee routes are POST /api/v1/checkout
-		// (create), POST /api/v1/portal (update — opens Stripe portal), GET
-		// /api/v1/billing (read — current billing state). delete and list are
-		// placeholders for shape parity; cancellation flows through Stripe's
-		// portal, no in-process route serves them.
+		// Uniform LCRUD shape; actual routes are POST /api/v2/zeus/subscriptions
+		// (create — checkout session), PUT /api/v2/zeus/subscriptions (update —
+		// opens Stripe portal), GET /api/v2/zeus/meters (read — current usage
+		// and billing state). delete and list are placeholders for shape parity;
+		// cancellation flows through Stripe's portal, no in-process route serves them.
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSubscription}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSubscription}, WildCardSelectorString)},
 		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSubscription}, WildCardSelectorString)},
