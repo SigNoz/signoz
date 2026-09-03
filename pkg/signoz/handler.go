@@ -127,7 +127,7 @@ func NewHandlers(
 		FlaggerHandler:          flagger.NewHandler(flaggerService),
 		GatewayHandler:          gateway.NewHandler(gatewayService),
 		Fields:                  implfields.NewHandler(providerSettings, telemetryMetadataStore),
-		AIObservability:         implaiobservability.NewHandler(telemetryMetadataStore),
+		AIObservability:         implaiobservability.NewHandler(providerSettings, telemetryMetadataStore),
 		AuthzHandler:            signozauthzapi.NewHandler(authz),
 		ZeusHandler:             zeus.NewHandler(zeusService, licensingService),
 		LicensingHandler:        licensing.NewHandler(licensingService),

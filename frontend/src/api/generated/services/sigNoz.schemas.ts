@@ -10838,6 +10838,11 @@ export type GetAIObservabilityFieldsValuesParams = {
 	 * @description undefined
 	 */
 	name?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	existingQuery?: string;
 };
 
 export type GetAIObservabilityFieldsValues200 = {
