@@ -15,9 +15,9 @@ jest.mock('hooks/dashboard/useGetResolvedPublicDashboard', () => ({
 	useGetResolvedPublicDashboard: jest.fn(),
 }));
 
-jest.mock('../PublicDashboardV2/PublicDashboardV2', () => ({
+jest.mock('../PublicDashboardView/PublicDashboardView', () => ({
 	__esModule: true,
-	default: (): JSX.Element => <div data-testid="public-dashboard-v2" />,
+	default: (): JSX.Element => <div data-testid="public-dashboard-view" />,
 }));
 
 const mockResolved = useGetResolvedPublicDashboard as jest.Mock;
@@ -46,7 +46,7 @@ describe('PublicDashboardPage', () => {
 
 		render(<PublicDashboardPage />);
 
-		expect(screen.getByTestId('public-dashboard-v2')).toBeInTheDocument();
+		expect(screen.getByTestId('public-dashboard-view')).toBeInTheDocument();
 		expect(
 			screen.queryByTestId('public-dashboard-legacy'),
 		).not.toBeInTheDocument();
@@ -61,9 +61,9 @@ describe('PublicDashboardPage', () => {
 
 		expect(screen.getByTestId('public-dashboard-legacy')).toBeInTheDocument();
 		expect(
-			screen.getByText(/hasn't been migrated to the new experience/i),
+			screen.getByText(/hasn't been migrated to the new dashboard experience/i),
 		).toBeInTheDocument();
-		expect(screen.queryByTestId('public-dashboard-v2')).not.toBeInTheDocument();
+		expect(screen.queryByTestId('public-dashboard-view')).not.toBeInTheDocument();
 	});
 
 	it('renders the unavailable state on error', () => {

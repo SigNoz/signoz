@@ -1,4 +1,4 @@
-import { IDashboardVariable } from 'types/api/dashboard/getAll';
+import { IDashboardVariable } from 'types/api/dashboard/variables';
 
 import { IDashboardVariables } from '../dashboardVariablesStoreTypes';
 import {

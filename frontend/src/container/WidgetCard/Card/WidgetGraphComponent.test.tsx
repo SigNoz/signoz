@@ -161,8 +161,6 @@ const mockProps: WidgetGraphComponentProps = {
 	onOpenTraceBtnClick: jest.fn(),
 };
 
-// Mock useDashabord hook
-
 describe('WidgetGraphComponent', () => {
 	it('should show correct menu items when hovering over more options while loading', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
