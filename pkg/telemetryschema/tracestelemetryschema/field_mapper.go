@@ -442,34 +442,12 @@ func (m *fieldMapper) ColumnExpressionFor(
 		return "", err
 	}
 
-	// Group-by/order (String) and aggregation (String/Float64): every candidate is
-	// exists-guarded and coerced to requiredDataType, in a single multiIf. Raw select
-	// (Unspecified) keeps the lighter native shape below.
+	// Group-by/order (String) and aggregation (String/Float64) render through
+	// the generic coerced column; raw select (Unspecified) keeps the lighter
+	// native shape below.
 	if requiredDataType != telemetrytypes.FieldDataTypeUnspecified {
-		var dummyValue any = ""
-		if requiredDataType == telemetrytypes.FieldDataTypeFloat64 {
-			dummyValue = 0.0
-		}
-		stmts := make([]string, 0, len(candidates)*2)
-		for _, logical := range candidates {
-			value, err := querybuilder.LogicalValueExpr(ctx, orgID, startNs, endNs, m, logical)
-			if err != nil {
-				return "", err
-			}
-			guard, err := querybuilder.LogicalExistsExpr(ctx, orgID, startNs, endNs, m, logical, true)
-			if err != nil {
-				return "", err
-			}
-			coerced := value
-			// a time column keeps its native type; coercing it would yield seconds
-			if temporal, err := m.logicalIsTemporal(ctx, startNs, endNs, logical); err != nil {
-				return "", err
-			} else if !temporal {
-				coerced, _ = querybuilder.DataTypeCollisionHandledFieldName(logical.Single(), dummyValue, value, qbtypes.FilterOperatorUnknown)
-			}
-			stmts = append(stmts, guard, coerced)
-		}
-		return fmt.Sprintf("multiIf(%s, NULL)", strings.Join(stmts, ", ")), nil
+		scope := querybuilder.CompileScope{OrgID: orgID, StartNs: startNs, EndNs: endNs}
+		return querybuilder.RenderCoercedColumn(ctx, scope, m, m, candidates, requiredDataType)
 	}
 
 	if len(candidates) == 1 {
@@ -504,6 +482,23 @@ func (m *fieldMapper) ColumnExpressionFor(
 		args = append(args, fmt.Sprintf("%s, toString(%s)", guard, value))
 	}
 	return fmt.Sprintf("multiIf(%s, NULL)", strings.Join(args, ", ")), nil
+}
+
+// RawRead returns the uncoerced value read of one field for the generic
+// coerced column: the merged read for a family, the member's own read
+// otherwise.
+func (m *fieldMapper) RawRead(ctx context.Context, scope querybuilder.CompileScope, logical *telemetrytypes.LogicalField, _ any) (string, error) {
+	return querybuilder.LogicalValueExpr(ctx, scope.OrgID, scope.StartNs, scope.EndNs, m, logical)
+}
+
+// Uncoerced: a time column keeps its native type; coercing it would yield seconds.
+func (m *fieldMapper) Uncoerced(ctx context.Context, scope querybuilder.CompileScope, logical *telemetrytypes.LogicalField) (bool, error) {
+	return m.logicalIsTemporal(ctx, scope.StartNs, scope.EndNs, logical)
+}
+
+// BareCandidate: traces has no array-typed candidates.
+func (m *fieldMapper) BareCandidate(_ *telemetrytypes.LogicalField) bool {
+	return false
 }
 
 // logicalIsTemporal reports whether the logical field resolves to a single time

@@ -292,39 +292,14 @@ func (m *fieldMapper) ColumnExpressionFor(
 		}
 	}
 
-	// Group-by/order (String) and aggregation (String/Float64): every candidate is
-	// exists-guarded and coerced to requiredDataType, in a single multiIf. Raw select
-	// (Unspecified) keeps the lighter native shape below.
+	// Group-by/order (String) and aggregation (String/Float64) render through
+	// the generic coerced column; raw select (Unspecified) keeps the lighter
+	// native shape below. The schema value carries the body mode, so the flag
+	// reads one time per call.
 	if requiredDataType != telemetrytypes.FieldDataTypeUnspecified {
-		// arrays cannot sit inside Nullable/multiIf, so a lone array candidate stays bare
-		if len(candidates) == 1 && (strings.Contains(candidates[0].Name, telemetrytypes.ArraySep) ||
-			strings.Contains(candidates[0].Name, telemetrytypes.ArrayAnyIndex) ||
-			candidates[0].FieldDataType.IsArray()) {
-			return m.FieldFor(ctx, orgID, tsStart, tsEnd, candidates[0])
-		}
-		var dummyValue any = ""
-		if requiredDataType == telemetrytypes.FieldDataTypeFloat64 {
-			dummyValue = 0.0
-		}
-		var stmts []string
-		for _, key := range candidates {
-			guard, err := m.ExistsFor(ctx, orgID, tsStart, tsEnd, key, true)
-			if err != nil {
-				return "", err
-			}
-			var fieldExpression string
-			if key.FieldContext == telemetrytypes.FieldContextBody && !bodyJSONEnabled {
-				fieldExpression, _ = GetBodyJSONKey(ctx, key, qbtypes.FilterOperatorUnknown, dummyValue)
-			} else {
-				fieldExpression, err = m.FieldFor(ctx, orgID, tsStart, tsEnd, key)
-				if err != nil {
-					return "", err
-				}
-				fieldExpression, _ = querybuilder.DataTypeCollisionHandledFieldName(key, dummyValue, fieldExpression, qbtypes.FilterOperatorUnknown)
-			}
-			stmts = append(stmts, guard, fieldExpression)
-		}
-		return fmt.Sprintf("multiIf(%s, NULL)", strings.Join(stmts, ", ")), nil
+		scope := querybuilder.CompileScope{OrgID: orgID, StartNs: tsStart, EndNs: tsEnd}
+		schema := logsColumnSchema{fm: m, bodyJSONEnabled: bodyJSONEnabled}
+		return querybuilder.RenderCoercedColumn(ctx, scope, schema, m, querybuilder.WrapAsLogicalFields(field.Name, candidates), requiredDataType)
 	}
 
 	if len(candidates) == 1 {
@@ -375,6 +350,42 @@ func (m *fieldMapper) ColumnExpressionFor(
 	}
 
 	return fmt.Sprintf("multiIf(%s, NULL)", strings.Join(stmts, ", ")), nil
+}
+
+// logsColumnSchema answers the generic coerced-column questions with the
+// body mode fixed for one call.
+type logsColumnSchema struct {
+	fm              *fieldMapper
+	bodyJSONEnabled bool
+}
+
+// RawRead returns the uncoerced value read of one field; the legacy
+// string-body path keeps its own typed read. An array candidate reads bare
+// through its own field expression on both body modes. dummyValue only feeds
+// the legacy body read and leaves with it.
+func (s logsColumnSchema) RawRead(ctx context.Context, scope querybuilder.CompileScope, logical *telemetrytypes.LogicalField, dummyValue any) (string, error) {
+	key := logical.Single()
+	if key.FieldContext == telemetrytypes.FieldContextBody && !s.BareCandidate(logical) && !s.bodyJSONEnabled {
+		fieldExpression, _ := GetBodyJSONKey(ctx, key, qbtypes.FilterOperatorUnknown, dummyValue)
+		return fieldExpression, nil
+	}
+	return querybuilder.LogicalValueExpr(ctx, scope.OrgID, scope.StartNs, scope.EndNs, s.fm, logical)
+}
+
+// Uncoerced: the legacy body read carries its own typing, so the stage
+// coercion does not apply to it.
+func (s logsColumnSchema) Uncoerced(_ context.Context, _ querybuilder.CompileScope, logical *telemetrytypes.LogicalField) (bool, error) {
+	key := logical.Single()
+	return key.FieldContext == telemetrytypes.FieldContextBody && !s.bodyJSONEnabled, nil
+}
+
+// BareCandidate: arrays cannot sit inside Nullable/multiIf, so a lone array
+// candidate stays bare.
+func (s logsColumnSchema) BareCandidate(logical *telemetrytypes.LogicalField) bool {
+	key := logical.Single()
+	return strings.Contains(key.Name, telemetrytypes.ArraySep) ||
+		strings.Contains(key.Name, telemetrytypes.ArrayAnyIndex) ||
+		key.FieldDataType.IsArray()
 }
 
 func (m *fieldMapper) CandidateKeys(_ context.Context, _ valuer.UUID, field *telemetrytypes.TelemetryFieldKey, value any, keys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
