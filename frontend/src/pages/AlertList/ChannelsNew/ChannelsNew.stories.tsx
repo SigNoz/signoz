@@ -85,6 +85,16 @@ export const MicrosoftTeams: Story = {
 };
 
 /**
+ * The Google Chat form, whose webhook URL is rejected unless it is an https URL
+ * on `chat.googleapis.com`.
+ */
+export const GoogleChat: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await selectChannelType(canvasElement, /^Google Chat$/);
+	},
+};
+
+/**
  * The Jira form: where the issue is filed, the transitions that close and
  * reopen it, and the Atlassian account the API token belongs to.
  */

@@ -73,6 +73,11 @@ export const MicrosoftTeams: Story = {
 	args: { channelType: 'msteams' },
 };
 
+/** The Google Chat channel, filled from the space's incoming webhook. */
+export const GoogleChat: Story = {
+	args: { channelType: 'googlechat' },
+};
+
 /**
  * The Jira channel, which files an issue: the site and project it files into,
  * the transitions that resolve and reopen it, and the API token behind the
