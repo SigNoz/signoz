@@ -81,7 +81,7 @@ type GettableCreatedIngestionKey struct {
 	Value string `json:"value" required:"true"`
 }
 
-type PostableIngestionKeyLimit struct {
+type DeprecatedPostableIngestionKeyLimit struct {
 	Signal string      `json:"signal"`
 	Config LimitConfig `json:"config"`
 	Tags   []string    `json:"tags"`
@@ -89,6 +89,13 @@ type PostableIngestionKeyLimit struct {
 
 type GettableCreatedIngestionKeyLimit struct {
 	ID string `json:"id" required:"true"`
+}
+
+type PostableIngestionKeyLimit struct {
+	KeyID  string      `json:"keyId" required:"true"`
+	Signal string      `json:"signal"`
+	Config LimitConfig `json:"config"`
+	Tags   []string    `json:"tags"`
 }
 
 type UpdatableIngestionKeyLimit struct {

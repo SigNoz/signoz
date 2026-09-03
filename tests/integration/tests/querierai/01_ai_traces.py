@@ -72,8 +72,8 @@ def test_ai_list_having_aggregate_filter(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """Span + aggregate condition in one filter box splits into WHERE + HAVING; bare
-    and `trace.` spellings behave identically; an output-only aggregate is rejected."""
+    """One filter box splits into WHERE + HAVING; bare and `trace.` spellings behave
+    identically; an output-only aggregate is rejected."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-having"
 
@@ -209,6 +209,52 @@ def test_ai_span_list_excludes_non_gen_ai_spans(
     assert "POST /api/chat" not in names  # root span excluded
 
 
+def test_ai_span_list_trace_level_filter(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+) -> None:
+    """Span list (raw) with a trace-level condition returns only the gen_ai spans
+    of traces whose window-clipped aggregates qualify."""
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    service = "ai-it-spanlist-tracefilter"
+    small = ai_trace(now=now, service=service, user="a", in_tokens=10, out_tokens=100)
+    large = ai_trace(now=now, service=service, user="b", in_tokens=30, out_tokens=300)
+    insert_traces(small + large)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    start_ms, end_ms = query_window(now)
+
+    query = BuilderQuery(
+        signal="traces",
+        query_type="builder_ai_query",
+        name="A",
+        filter_expression=f"service.name = '{service}' AND trace.output_tokens > 100",
+        limit=10,
+    )
+    response = make_query_request(signoz, token, start_ms, end_ms, [query.to_dict()], request_type=RequestType.RAW)
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    rows = response.json()["data"]["data"]["results"][0]["rows"]
+    assert len(rows) == 1, f"expected only the large trace's LLM span, got {len(rows)} rows"
+    body = json.dumps(rows)
+    assert large[0].trace_id in body
+    assert small[0].trace_id not in body
+
+    # a threshold no trace meets: the empty qualification yields no spans, not an error
+    query = BuilderQuery(
+        signal="traces",
+        query_type="builder_ai_query",
+        name="A",
+        filter_expression=f"service.name = '{service}' AND trace.output_tokens > 1000",
+        limit=10,
+    )
+    response = make_query_request(signoz, token, start_ms, end_ms, [query.to_dict()], request_type=RequestType.RAW)
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert not (response.json()["data"]["data"]["results"][0].get("rows") or [])
+
+
 def test_ai_list_having_or_aggregates(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
@@ -322,9 +368,8 @@ def test_ai_list_nested_group_span_or_and_aggregate(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """service.name = X AND (has_error = true OR gen_ai.request.model = 'gpt-4o') AND
-    total_tokens > 100: the nested OR group must not flatten, span predicates go to
-    WHERE, the aggregate to HAVING."""
+    """A nested (span OR span) group ANDed with an aggregate must not flatten: span
+    predicates go to WHERE, the aggregate to HAVING."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "ai-it-nested"
 

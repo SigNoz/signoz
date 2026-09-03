@@ -6,12 +6,12 @@ import { SIGNOZ_VALUE } from 'container/QueryBuilder/filters/OrderByFilter/const
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { useGetSearchQueryParam } from './queryBuilder/useGetSearchQueryParam';
+import { useGetSavedViewParams } from './saveViews/useGetSavedViewParams';
 import { useQueryBuilder } from './queryBuilder/useQueryBuilder';
 
 export interface ICurrentQueryData {
-	name: string;
-	id: string;
+	viewName?: string;
+	viewKey?: string;
 	query: Query;
 }
 
@@ -31,9 +31,7 @@ export const useHandleExplorerTabChange = (): {
 		updateQueriesData,
 	} = useQueryBuilder();
 
-	const viewName = useGetSearchQueryParam(QueryParams.viewName) || '';
-
-	const viewKey = useGetSearchQueryParam(QueryParams.viewKey) || '';
+	const { viewName, viewKey } = useGetSavedViewParams();
 
 	const getUpdateQuery = useCallback(
 		(newPanelType: PANEL_TYPES): Query => {
@@ -59,6 +57,8 @@ export const useHandleExplorerTabChange = (): {
 		[currentQuery, updateAllQueriesOperators, updateQueriesData],
 	);
 
+	//TODO: this util is used not just to change explorer tab but also
+	// for changing just the query or saved view. consider renaming this.
 	const handleExplorerTabChange = useCallback(
 		(
 			type: string,
@@ -79,8 +79,8 @@ export const useHandleExplorerTabChange = (): {
 					query,
 					{
 						[QueryParams.panelTypes]: newPanelType,
-						[QueryParams.viewName]: currentQueryData?.name || viewName,
-						[QueryParams.viewKey]: currentQueryData?.id || viewKey,
+						[QueryParams.viewName]: currentQueryData?.viewName || viewName,
+						[QueryParams.viewKey]: currentQueryData?.viewKey || viewKey,
 					},
 					redirectToUrl,
 					undefined,
@@ -91,8 +91,8 @@ export const useHandleExplorerTabChange = (): {
 					query,
 					{
 						[QueryParams.panelTypes]: newPanelType,
-						[QueryParams.viewName]: currentQueryData?.name || viewName,
-						[QueryParams.viewKey]: currentQueryData?.id || viewKey,
+						[QueryParams.viewName]: currentQueryData?.viewName || viewName,
+						[QueryParams.viewKey]: currentQueryData?.viewKey || viewKey,
 					},
 					undefined,
 					undefined,
