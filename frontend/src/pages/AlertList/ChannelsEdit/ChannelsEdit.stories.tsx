@@ -66,6 +66,14 @@ export const Email: Story = {
 };
 
 /**
+ * The Microsoft Teams channel, stored under `msteamsv2_configs` and filled from
+ * the channel's incoming webhook.
+ */
+export const MicrosoftTeams: Story = {
+	args: { channelType: 'msteams' },
+};
+
+/**
  * The Jira channel, which files an issue: the site and project it files into,
  * the transitions that resolve and reopen it, and the API token behind the
  * Atlassian account, which the form reads off the basic auth block.

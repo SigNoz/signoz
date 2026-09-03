@@ -77,6 +77,13 @@ export const Email: Story = {
 	},
 };
 
+/** The Microsoft Teams form: the channel's incoming webhook and the card text. */
+export const MicrosoftTeams: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await selectChannelType(canvasElement, /^Microsoft Teams$/);
+	},
+};
+
 /**
  * The Jira form: where the issue is filed, the transitions that close and
  * reopen it, and the Atlassian account the API token belongs to.
