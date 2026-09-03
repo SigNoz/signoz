@@ -84,7 +84,7 @@ func (provider *provider) addZeusRoutes(router *mux.Router) error {
 		Response:            new(zeustypes.GettableSubscription),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusCreated,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound, http.StatusConflict},
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound, http.StatusConflict},
 		Deprecated:          false,
 		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceSubscription.Scope(coretypes.VerbCreate)}),
 	}, handler.WithResourceDefs(handler.BasicResourceDef{
@@ -105,8 +105,8 @@ func (provider *provider) addZeusRoutes(router *mux.Router) error {
 		RequestContentType:  "application/json",
 		Response:            new(zeustypes.GettableSubscription),
 		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusCreated,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound},
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceSubscription.Scope(coretypes.VerbUpdate)}),
 	}, handler.WithResourceDefs(handler.BasicResourceDef{
@@ -128,7 +128,7 @@ func (provider *provider) addZeusRoutes(router *mux.Router) error {
 		Response:            new(zeustypes.GettableSubscriptionUsage),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound},
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceSubscription.Scope(coretypes.VerbRead)}),
 	}, handler.WithResourceDefs(handler.BasicResourceDef{

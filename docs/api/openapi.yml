@@ -25399,7 +25399,7 @@ paths:
             schema:
               $ref: '#/components/schemas/ZeustypesPostableSubscription'
       responses:
-        "201":
+        "200":
           content:
             application/json:
               schema:
@@ -25412,7 +25412,7 @@ paths:
                 - status
                 - data
                 type: object
-          description: Created
+          description: OK
         "400":
           content:
             application/json:

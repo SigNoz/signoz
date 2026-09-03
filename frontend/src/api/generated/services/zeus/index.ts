@@ -22,7 +22,7 @@ import type {
 	GetHosts200,
 	GetSubscriptionUsage200,
 	RenderErrorResponseDTO,
-	UpdateSubscription201,
+	UpdateSubscription200,
 	ZeustypesPostableHostDTO,
 	ZeustypesPostableProfileDTO,
 	ZeustypesPostableSubscriptionDTO,
@@ -448,7 +448,7 @@ export const updateSubscription = (
 	zeustypesPostableSubscriptionDTO?: BodyType<ZeustypesPostableSubscriptionDTO>,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<UpdateSubscription201>({
+	return GeneratedAPIInstance<UpdateSubscription200>({
 		url: `/api/v2/zeus/subscriptions`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },

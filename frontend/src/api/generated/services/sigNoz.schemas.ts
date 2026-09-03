@@ -13286,7 +13286,7 @@ export type CreateSubscription201 = {
 	status: string;
 };
 
-export type UpdateSubscription201 = {
+export type UpdateSubscription200 = {
 	data: ZeustypesGettableSubscriptionDTO;
 	/**
 	 * @type string

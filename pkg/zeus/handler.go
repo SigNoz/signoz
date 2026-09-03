@@ -192,7 +192,7 @@ func (h *handler) Portal(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusCreated, &zeustypes.GettableSubscription{RedirectURL: gjson.GetBytes(response, "url").String()})
+	render.Success(rw, http.StatusOK, &zeustypes.GettableSubscription{RedirectURL: gjson.GetBytes(response, "url").String()})
 }
 
 func (h *handler) GetMeters(rw http.ResponseWriter, r *http.Request) {
