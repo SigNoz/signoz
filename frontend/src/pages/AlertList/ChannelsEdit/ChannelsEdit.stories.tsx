@@ -58,6 +58,14 @@ export const Opsgenie: Story = {
 };
 
 /**
+ * The email channel, whose only editable field is the comma-separated recipient
+ * list: the form keeps the HTML body and the headers it was saved with.
+ */
+export const Email: Story = {
+	args: { channelType: 'email' },
+};
+
+/**
  * The Jira channel, which files an issue: the site and project it files into,
  * the transitions that resolve and reopen it, and the API token behind the
  * Atlassian account, which the form reads off the basic auth block.
