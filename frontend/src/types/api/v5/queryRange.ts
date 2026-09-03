@@ -12,6 +12,7 @@ export type RequestType =
 	| 'trace'
 	| 'raw'
 	| 'distribution'
+	| 'heatmap'
 	| '';
 
 export type QueryType =
@@ -342,21 +343,18 @@ export interface Label {
 	value: any;
 }
 
-export interface Bucket {
-	step: number;
-}
-
 export interface TimeSeriesValue {
 	timestamp: number; // Unix timestamp in milliseconds
 	value: number;
-	values?: number[]; // For heatmap type charts
-	bucket?: Bucket;
+	values?: number[]; // For heatmap type charts - counts per bucket
+	bounds?: number[]; // For heatmap type charts - bucket boundaries
 	partial?: boolean;
 }
 
 export interface TimeSeries {
 	labels?: Label[];
 	values: TimeSeriesValue[];
+	bounds?: number[];
 }
 
 export interface AggregationBucket {

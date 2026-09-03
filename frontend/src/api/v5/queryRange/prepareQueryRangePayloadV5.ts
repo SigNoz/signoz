@@ -59,6 +59,8 @@ export function mapPanelTypeToRequestType(panelType: PANEL_TYPES): RequestType {
 			return 'raw';
 		case PANEL_TYPES.HISTOGRAM:
 			return 'distribution';
+		case PANEL_TYPES.HEATMAP:
+			return 'heatmap';
 		default:
 			return '';
 	}
@@ -304,10 +306,17 @@ export function createAggregation(
 	if (queryData.aggregations?.length > 0) {
 		return queryData.aggregations.flatMap(
 			(agg: { expression: string; alias?: string }) => {
+				if (agg.expression.trim().startsWith('heatmap(')) {
+					return [{ expression: agg.expression }];
+				}
+
 				const parsedAggregations = parseAggregations(agg.expression, agg?.alias);
-				return isEmpty(parsedAggregations)
-					? [{ expression: 'count()' }]
-					: parsedAggregations;
+
+				if (isEmpty(parsedAggregations)) {
+					return [{ expression: 'count()' }];
+				}
+
+				return parsedAggregations;
 			},
 		);
 	}
