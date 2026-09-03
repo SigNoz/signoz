@@ -18,10 +18,6 @@ import { useOptionsMenu } from 'container/OptionsMenu';
 import LeftToolbarActions from 'container/QueryBuilder/components/ToolbarActions/LeftToolbarActions';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import Toolbar from 'container/Toolbar/Toolbar';
-import {
-	getExportQueryData,
-	getQueryByPanelType,
-} from 'container/TracesExplorer/explorerUtils';
 import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
 import { useGetExportToDashboardLink } from 'hooks/dashboard/useGetExportToDashboardLink';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
@@ -52,6 +48,7 @@ import {
 import { v4 } from 'uuid';
 
 import { DEFAULT_PANEL_TYPE, TOOLBAR_VIEWS } from './constants';
+import { getExportQueryData, getQueryByPanelType } from './explorerUtils';
 import ListView from './ListView/ListView';
 import { defaultSelectedColumns } from './ListView/configs';
 import QuerySection from './QuerySection/QuerySection';
