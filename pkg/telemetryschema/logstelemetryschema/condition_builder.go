@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -72,6 +73,35 @@ func (c *conditionBuilder) conditionForSearch(
 	}
 	// The advisory rides on CostGuard (set by the visitor), not warnings.
 	return []string{sb.Or(conditions...)}, nil, nil
+}
+
+// numberAttributeIndexPredicate returns what an equality on a numeric attribute implies over
+// mapValues(attributes_number), which its bloom filter indexes while the subscript the comparison
+// reads matches nothing. The paired mapContains is what makes membership hold for the zero default.
+func numberAttributeIndexPredicate(columns []*schema.Column, value any, sb *sqlbuilder.SelectBuilder) string {
+	if len(columns) != 1 || columns[0].Name != LogsV2AttributesNumberColumn {
+		return ""
+	}
+	// a non-numeric value means the collision handler compared the column as text, where an
+	// Array(Float64) membership check has no supertype
+	switch value.(type) {
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
+		return fmt.Sprintf("has(mapValues(%s), %s)", LogsV2AttributesNumberColumn, sb.Var(value))
+	}
+	return ""
+}
+
+// stringAttributeIndexPredicate returns the raw-value match a case-insensitive one implies when
+// the pattern holds no ASCII letter, LOWER being the identity on those bytes. A letter breaks it:
+// an `a` in the pattern may have come from an `A` in the value.
+func stringAttributeIndexPredicate(columns []*schema.Column, fieldExpression, pattern string, sb *sqlbuilder.SelectBuilder) string {
+	if len(columns) != 1 || columns[0].Name != LogsV2AttributesStringColumn {
+		return ""
+	}
+	if strings.ContainsFunc(pattern, func(r rune) bool { return (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') }) {
+		return ""
+	}
+	return sb.Like(fieldExpression, pattern)
 }
 
 // isBodyJSONSearch reports whether a key addresses a path within the body JSON. Only
@@ -333,6 +363,9 @@ func (c *conditionBuilder) conditionForResolvedKey(
 	switch operator {
 	// regular operators
 	case qbtypes.FilterOperatorEqual:
+		if predicate := numberAttributeIndexPredicate(columns, value, sb); predicate != "" {
+			return sb.And(sb.E(fieldExpression, value), predicate), nil
+		}
 		return sb.E(fieldExpression, value), nil
 	case qbtypes.FilterOperatorNotEqual:
 		return sb.NE(fieldExpression, value), nil
@@ -351,6 +384,11 @@ func (c *conditionBuilder) conditionForResolvedKey(
 	case qbtypes.FilterOperatorNotLike:
 		return sb.NotLike(fieldExpression, value), nil
 	case qbtypes.FilterOperatorILike:
+		if pattern, ok := value.(string); ok {
+			if predicate := stringAttributeIndexPredicate(columns, fieldExpression, pattern, sb); predicate != "" {
+				return sb.And(sb.ILike(fieldExpression, pattern), predicate), nil
+			}
+		}
 		return sb.ILike(fieldExpression, value), nil
 	case qbtypes.FilterOperatorNotILike:
 		return sb.NotILike(fieldExpression, value), nil
@@ -369,7 +407,13 @@ func (c *conditionBuilder) conditionForResolvedKey(
 		return sqlbuilder.Escape(pred), nil
 
 	case qbtypes.FilterOperatorContains:
-		return sb.ILike(fieldExpression, fmt.Sprintf("%%%s%%", value)), nil
+		// The map value indexes are over raw mapValues, which a case-insensitive match reaches only
+		// for the patterns stringAttributeIndexPredicate can assert the raw value from.
+		pattern := fmt.Sprintf("%%%s%%", value)
+		if predicate := stringAttributeIndexPredicate(columns, fieldExpression, pattern, sb); predicate != "" {
+			return sb.And(sb.ILike(fieldExpression, pattern), predicate), nil
+		}
+		return sb.ILike(fieldExpression, pattern), nil
 	case qbtypes.FilterOperatorNotContains:
 		return sb.NotILike(fieldExpression, fmt.Sprintf("%%%s%%", value)), nil
 

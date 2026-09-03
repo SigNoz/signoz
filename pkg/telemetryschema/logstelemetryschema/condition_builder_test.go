@@ -258,8 +258,8 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorContains,
 			value:         521509198310,
-			expectedSQL:   "LOWER(attributes_string['user.id']) LIKE LOWER(?)",
-			expectedArgs:  []any{"%521509198310%"},
+			expectedSQL:   "(LOWER(attributes_string['user.id']) LIKE LOWER(?) AND attributes_string['user.id'] LIKE ?)",
+			expectedArgs:  []any{"%521509198310%", "%521509198310%"},
 			expectedError: nil,
 		},
 		{
