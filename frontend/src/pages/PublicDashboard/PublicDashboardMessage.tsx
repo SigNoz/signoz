@@ -7,7 +7,7 @@ interface PublicDashboardMessageProps {
 	icon: ReactNode;
 	title: string;
 	description: string;
-	testId?: string;
+	testId: string;
 }
 
 /**
@@ -55,9 +55,5 @@ function PublicDashboardMessage({
 		</div>
 	);
 }
-
-PublicDashboardMessage.defaultProps = {
-	testId: undefined,
-};
 
 export default PublicDashboardMessage;

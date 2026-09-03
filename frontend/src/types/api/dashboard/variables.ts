@@ -11,7 +11,7 @@ export type TSortVariableValuesType = (typeof VariableSortTypeArr)[number];
 
 export interface IDashboardVariable {
 	id: string;
-	/** Display position; absent for dashboards whose variables carry no explicit order. */
+	/** Display position. Nothing sets it now that the v2 API orders variables by array position. */
 	order?: number;
 	name?: string; // key will be the source of truth
 	description: string;
