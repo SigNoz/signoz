@@ -3,12 +3,24 @@
  * Do not hand-edit: regenerate instead.
  */
 
+import {
+	QuickfiltertypesSourceDTO,
+	TelemetrytypesFieldContextDTO,
+	TelemetrytypesFieldDataTypeDTO,
+	TelemetrytypesSignalDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import type {
+	GetQuickFilters200,
+	TelemetrytypesTelemetryFieldKeyDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { explorerView } from 'mocks-server/__mockdata__/explorer_views';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import type { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
-import type { Filter } from 'types/api/quickFilters/getCustomFilters';
 import type { FunnelData } from 'types/api/traceFunnels';
 import type { RawRow } from 'types/api/v5/queryRange';
+
+import { fieldKeysResponse } from '@/storybook/msw/__story_mockdata__/fields';
+import { quickFiltersResponse } from '@/storybook/msw/__story_mockdata__/quickFilters';
 
 export const TRACES_TABS = ['explorer', 'funnels', 'views'] as const;
 
@@ -165,23 +177,33 @@ export const traceRootSpanRows = (options: SpanRowsOptions): RawRow[] =>
 		},
 	}));
 
-const QUICK_FILTERS: Filter[] = [
-	{ key: 'service.name', dataType: 'string', type: 'resource' },
-	{ key: 'name', dataType: 'string', type: 'tag' },
-	{ key: 'has_error', dataType: 'bool', type: 'tag' },
-	{ key: 'http_method', dataType: 'string', type: 'tag' },
-	{ key: 'response_status_code', dataType: 'string', type: 'tag' },
-	{ key: 'deployment.environment', dataType: 'string', type: 'resource' },
-	{ key: 'kind_string', dataType: 'string', type: 'tag' },
-	{ key: 'rpc.method', dataType: 'string', type: 'tag' },
+const { resource, attribute } = TelemetrytypesFieldContextDTO;
+const { string: stringType, bool } = TelemetrytypesFieldDataTypeDTO;
+
+const QUICK_FILTERS: TelemetrytypesTelemetryFieldKeyDTO[] = [
+	{ name: 'service.name', fieldDataType: stringType, fieldContext: resource },
+	{ name: 'name', fieldDataType: stringType, fieldContext: attribute },
+	{ name: 'has_error', fieldDataType: bool, fieldContext: attribute },
+	{ name: 'http_method', fieldDataType: stringType, fieldContext: attribute },
+	{
+		name: 'response_status_code',
+		fieldDataType: stringType,
+		fieldContext: attribute,
+	},
+	{
+		name: 'deployment.environment',
+		fieldDataType: stringType,
+		fieldContext: resource,
+	},
+	{ name: 'kind_string', fieldDataType: stringType, fieldContext: attribute },
+	{ name: 'rpc.method', fieldDataType: stringType, fieldContext: attribute },
 ];
 
-export const traceQuickFiltersResponse = (
-	count: number,
-): { status: string; data: { filters: Filter[]; signal: string } } => ({
-	status: 'success',
-	data: { filters: QUICK_FILTERS.slice(0, count), signal: 'traces' },
-});
+export const traceQuickFiltersResponse = (count: number): GetQuickFilters200 =>
+	quickFiltersResponse(
+		QuickfiltertypesSourceDTO.traces,
+		QUICK_FILTERS.slice(0, count),
+	);
 
 const FIELD_KEYS = [
 	'service.name',
@@ -210,6 +232,41 @@ export const traceFieldKeys = (searchText: string | null): string[] => {
 	return search
 		? FIELD_KEYS.filter((key) => key.toLowerCase().includes(search))
 		: FIELD_KEYS;
+};
+
+const RESOURCE_KEYS = ['service.name', 'deployment.environment'];
+
+/**
+ * Resource and span keys come back from one call, each under its own context,
+ * so the query builder groups the suggestions the way it does against a real
+ * backend.
+ */
+export const traceFieldKeysResponse = (
+	searchText: string | null,
+): ReturnType<typeof fieldKeysResponse> => {
+	const names = traceFieldKeys(searchText);
+	const context = (name: string): TelemetrytypesFieldContextDTO =>
+		RESOURCE_KEYS.includes(name)
+			? TelemetrytypesFieldContextDTO.resource
+			: TelemetrytypesFieldContextDTO.span;
+
+	const byContext = [
+		TelemetrytypesFieldContextDTO.resource,
+		TelemetrytypesFieldContextDTO.span,
+	].map((fieldContext) =>
+		fieldKeysResponse(
+			names.filter((name) => context(name) === fieldContext),
+			{ signal: TelemetrytypesSignalDTO.traces, fieldContext },
+		),
+	);
+
+	return {
+		status: 'success',
+		data: {
+			complete: true,
+			keys: Object.assign({}, ...byContext.map(({ data }) => data?.keys)),
+		},
+	};
 };
 
 const FIELD_VALUES: Record<string, string[]> = {
