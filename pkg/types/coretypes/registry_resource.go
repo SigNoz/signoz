@@ -70,7 +70,7 @@ var (
 	ResourceMetaResourceTraceFunnel                      = NewResourceMetaResource(KindTraceFunnel)
 	ResourceMetaResourceFactorPassword                   = NewResourceMetaResource(KindFactorPassword)
 	ResourceMetaResourceFactorAPIKey                     = NewResourceMetaResource(KindFactorAPIKey, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)
-	ResourceMetaResourceLicense                          = NewResourceMetaResource(KindLicense)
+	ResourceMetaResourceLicense                          = NewResourceMetaResource(KindLicense, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)
 	ResourceMetaResourceSubscription                     = NewResourceMetaResource(KindSubscription)
 	ResourceMetaResourceDeploymentHost                   = NewResourceMetaResource(KindDeploymentHost, VerbList, VerbUpdate)
 	ResourceTelemetryResourceLogs                        = NewResourceTelemetryResource(KindLogs)

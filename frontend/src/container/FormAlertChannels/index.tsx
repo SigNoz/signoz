@@ -10,6 +10,8 @@ import {
 	ChannelType,
 	EmailChannel,
 	GoogleChatChannel,
+	JiraChannel,
+	JsmOpsChannel,
 	OpsgenieChannel,
 	PagerChannel,
 	SlackChannel,
@@ -19,6 +21,8 @@ import history from 'lib/history';
 
 import EmailSettings from './Settings/Email';
 import GoogleChatSettings from './Settings/GoogleChat';
+import JiraSettings from './Settings/Jira';
+import JsmOpsSettings from './Settings/JsmOps';
 import MsTeamsSettings from './Settings/MsTeams';
 import OpsgenieSettings from './Settings/Opsgenie';
 import PagerSettings from './Settings/Pager';
@@ -53,6 +57,10 @@ function FormAlertChannels({
 				return <MsTeamsSettings setSelectedConfig={setSelectedConfig} />;
 			case ChannelType.GoogleChat:
 				return <GoogleChatSettings setSelectedConfig={setSelectedConfig} />;
+			case ChannelType.Jira:
+				return <JiraSettings setSelectedConfig={setSelectedConfig} />;
+			case ChannelType.JsmOps:
+				return <JsmOpsSettings setSelectedConfig={setSelectedConfig} />;
 			case ChannelType.Opsgenie:
 				return <OpsgenieSettings setSelectedConfig={setSelectedConfig} />;
 			case ChannelType.Email:
@@ -141,6 +149,14 @@ function FormAlertChannels({
 						>
 							Google Chat
 						</Select.Option>
+
+						<Select.Option value="jira" key="jira" data-testid="select-option">
+							Jira
+						</Select.Option>
+
+						<Select.Option value="jsmops" key="jsmops" data-testid="select-option">
+							Jira Service Management Ops
+						</Select.Option>
 					</Select>
 				</Form.Item>
 
@@ -189,7 +205,9 @@ interface FormAlertChannelsProps {
 					PagerChannel &
 					OpsgenieChannel &
 					EmailChannel &
-					GoogleChatChannel
+					GoogleChatChannel &
+					JiraChannel &
+					JsmOpsChannel
 			>
 		>
 	>;

@@ -21,10 +21,16 @@ type Licensing interface {
 
 	// Validate validates the license with the upstream server
 	Validate(ctx context.Context) error
-	// Activate validates and enables the license
-	Activate(ctx context.Context, organizationID valuer.UUID, key string) error
+	// Activate validates the key with the upstream server and enables the license
+	Activate(ctx context.Context, organizationID valuer.UUID, key string) (*licensetypes.License, error)
 	// GetActive fetches the current active license in org
 	GetActive(ctx context.Context, organizationID valuer.UUID) (*licensetypes.License, error)
+	// Get fetches the license by id in org
+	Get(ctx context.Context, organizationID valuer.UUID, licenseID valuer.UUID) (*licensetypes.License, error)
+	// List fetches all the licenses in org
+	List(ctx context.Context, organizationID valuer.UUID) ([]*licensetypes.License, error)
+	// Delete deletes the license by id in org, cloud licenses cannot be deleted
+	Delete(ctx context.Context, organizationID valuer.UUID, licenseID valuer.UUID) error
 	// Refresh refreshes the license state from upstream server
 	Refresh(ctx context.Context, organizationID valuer.UUID) error
 	// Checkout creates a checkout session via upstream server and returns the redirection link
@@ -38,10 +44,24 @@ type Licensing interface {
 }
 
 type API interface {
-	Activate(http.ResponseWriter, *http.Request)
-	Refresh(http.ResponseWriter, *http.Request)
-	GetActive(http.ResponseWriter, *http.Request)
-
 	Checkout(http.ResponseWriter, *http.Request)
 	Portal(http.ResponseWriter, *http.Request)
+}
+
+type Handler interface {
+	Create(http.ResponseWriter, *http.Request)
+
+	ActivateDeprecated(http.ResponseWriter, *http.Request)
+
+	RefreshDeprecated(http.ResponseWriter, *http.Request)
+
+	List(http.ResponseWriter, *http.Request)
+
+	Get(http.ResponseWriter, *http.Request)
+
+	Refresh(http.ResponseWriter, *http.Request)
+
+	Delete(http.ResponseWriter, *http.Request)
+
+	GetActive(http.ResponseWriter, *http.Request)
 }

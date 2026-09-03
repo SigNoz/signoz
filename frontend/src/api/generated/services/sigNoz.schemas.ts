@@ -7313,6 +7313,249 @@ export interface InframonitoringtypesVolumesDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
+export interface LicensetypesFeatureDTO {
+	/**
+	 * @type boolean
+	 */
+	active?: boolean;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	route?: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	usage?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	usage_limit?: number;
+}
+
+export interface LicensetypesLicenseEventQueueDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	/**
+	 * @type string
+	 */
+	event: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	scheduledAt: string;
+	/**
+	 * @type string
+	 */
+	status: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: string;
+}
+
+export interface LicensetypesLicensePlanDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	/**
+	 * @type string
+	 */
+	description: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type boolean
+	 */
+	isActive: boolean;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: string;
+}
+
+export interface LicensetypesGettableActiveLicenseDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	eventQueue: LicensetypesLicenseEventQueueDTO;
+	/**
+	 * @type array
+	 */
+	features: LicensetypesFeatureDTO[];
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	freeUntil: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	plan: LicensetypesLicensePlanDTO;
+	/**
+	 * @type string
+	 */
+	platform: string;
+	/**
+	 * @type string
+	 */
+	state: string;
+	/**
+	 * @type string
+	 */
+	status: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	validFrom: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	validUntil: number;
+}
+
+export interface LicensetypesGettableLicenseDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	eventQueue: LicensetypesLicenseEventQueueDTO;
+	/**
+	 * @type array
+	 */
+	features: LicensetypesFeatureDTO[];
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	freeUntil: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	plan: LicensetypesLicensePlanDTO;
+	/**
+	 * @type string
+	 */
+	platform: string;
+	/**
+	 * @type string
+	 */
+	state: string;
+	/**
+	 * @type string
+	 */
+	status: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	validFrom: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	validUntil: number;
+}
+
+export interface LicensetypesGettableLicenseWithKeyDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	eventQueue: LicensetypesLicenseEventQueueDTO;
+	/**
+	 * @type array
+	 */
+	features: LicensetypesFeatureDTO[];
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	freeUntil: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 * @format password
+	 */
+	key: string;
+	plan: LicensetypesLicensePlanDTO;
+	/**
+	 * @type string
+	 */
+	platform: string;
+	/**
+	 * @type string
+	 */
+	state: string;
+	/**
+	 * @type string
+	 */
+	status: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	validFrom: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	validUntil: number;
+}
+
+export interface LicensetypesPostableLicenseDTO {
+	/**
+	 * @type string
+	 * @format password
+	 */
+	key?: string;
+}
+
 /**
  * @nullable
  */
@@ -12793,6 +13036,50 @@ export type GetFlamegraphPathParameters = {
 };
 export type GetFlamegraph200 = {
 	data: SpantypesGettableFlamegraphTraceDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListLicenses200 = {
+	/**
+	 * @type array
+	 */
+	data: LicensetypesGettableLicenseDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ActivateLicense201 = {
+	data: TypesIdentifiableDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteLicensePathParameters = {
+	id: string;
+};
+export type GetLicensePathParameters = {
+	id: string;
+};
+export type GetLicense200 = {
+	data: LicensetypesGettableLicenseWithKeyDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type RefreshLicensePathParameters = {
+	id: string;
+};
+export type GetActiveLicense200 = {
+	data: LicensetypesGettableActiveLicenseDTO;
 	/**
 	 * @type string
 	 */
