@@ -12,7 +12,6 @@ import ROUTES from 'constants/routes';
 import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import { RESTRICTED_SELECTED_FIELDS } from 'container/LogsFilters/config';
 import { MetricsType } from 'container/MetricsApplication/constant';
-import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ICurrentQueryData } from 'hooks/useHandleExplorerTabChange';
 import {
@@ -140,7 +139,6 @@ export default function TableViewActions(
 
 	const { pathname } = useLocation();
 	const { stagedQuery, updateQueriesData } = useQueryBuilder();
-	const { viewName } = useGetSavedViewParams();
 	const { dataType, logType: fieldType } = getFieldAttributes(record.field);
 
 	// there is no option for where clause in old logs explorer and live logs page or infra monitoring
@@ -201,8 +199,6 @@ export default function TableViewActions(
 		);
 
 		const queryData: ICurrentQueryData = {
-			name: viewName,
-			id: updatedQuery.id,
 			query: updatedQuery,
 		};
 
@@ -214,7 +210,6 @@ export default function TableViewActions(
 		fieldType,
 		dataType,
 		handleChangeSelectedView,
-		viewName,
 	]);
 
 	const handleReplaceFilter = useCallback((): void => {
@@ -264,8 +259,6 @@ export default function TableViewActions(
 		);
 
 		const queryData: ICurrentQueryData = {
-			name: viewName,
-			id: updatedQuery.id,
 			query: updatedQuery,
 		};
 
@@ -278,7 +271,6 @@ export default function TableViewActions(
 		dataType,
 		fieldData,
 		handleChangeSelectedView,
-		viewName,
 	]);
 
 	// Memoize textToCopy computation

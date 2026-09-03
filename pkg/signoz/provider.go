@@ -246,6 +246,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddAuthDomainTuplesFactory(sqlstore),
 		sqlmigration.NewAddDeploymentHostTuplesFactory(sqlstore),
 		sqlmigration.NewAddSystemDashboardFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddLicenseTuplesFactory(sqlstore),
 	)
 }
 
@@ -336,6 +337,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.AuthzHandler,
 			handlers.RawDataExport,
 			handlers.ZeusHandler,
+			handlers.LicensingHandler,
 			handlers.QuerierHandler,
 			handlers.ServiceAccountHandler,
 			modules.ServiceAccountGetter,
