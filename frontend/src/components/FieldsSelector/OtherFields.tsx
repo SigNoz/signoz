@@ -3,9 +3,7 @@ import { Button } from '@signozhq/ui/button';
 import { Skeleton } from 'antd';
 import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
-import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
 import {
 	FieldContext,
 	SignalType,
@@ -14,6 +12,8 @@ import {
 import { DataSource } from 'types/common/queryBuilder';
 
 import styles from './FieldsSelector.module.scss';
+import { StaticFieldsSource } from 'hooks/querySuggestions/staticFields';
+import { useSelectableFields } from 'hooks/querySuggestions/useSelectableFields';
 
 interface OtherFieldsProps {
 	signal: DataSource;
@@ -22,6 +22,7 @@ interface OtherFieldsProps {
 	onAdd: (field: TelemetryFieldKey) => void;
 	isAtLimit: boolean;
 	allowCustomFields?: boolean;
+	addStaticFields?: StaticFieldsSource;
 }
 
 function OtherFields({
@@ -31,21 +32,13 @@ function OtherFields({
 	onAdd,
 	isAtLimit,
 	allowCustomFields,
+	addStaticFields,
 }: OtherFieldsProps): JSX.Element {
-	const { data, isFetching } = useGetQueryKeySuggestions(
-		{
-			signal,
-			searchText: debouncedInputValue,
-		},
-		{
-			queryKey: [
-				REACT_QUERY_KEY.GET_FIELDS_SELECTOR_SUGGESTIONS,
-				signal,
-				debouncedInputValue,
-			],
-			enabled: true,
-		},
-	);
+	const { data, isFetching } = useSelectableFields({
+		signal,
+		searchText: debouncedInputValue,
+		source: addStaticFields,
+	});
 
 	const otherFields = useMemo<TelemetryFieldKey[]>(() => {
 		const rawSuggestions = Object.values(data?.data.data.keys || {}).flat();

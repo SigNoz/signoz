@@ -1,14 +1,20 @@
 import { fireEvent, render, screen } from 'tests/test-utils';
-import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import OtherFields from '../OtherFields';
+import { useSelectableFields } from 'hooks/querySuggestions/useSelectableFields';
 
-jest.mock('hooks/querySuggestions/useGetQueryKeySuggestions');
+jest.mock('hooks/querySuggestions/useSelectableFields', () => ({
+	useSelectableFields: jest.fn(() => ({
+		data: undefined,
+		isFetching: false,
+		isFetched: true,
+	})),
+}));
 
 const mockSuggestions = (names: string[]): void => {
-	(useGetQueryKeySuggestions as jest.Mock).mockReturnValue({
+	(useSelectableFields as jest.Mock).mockReturnValue({
 		data: {
 			data: {
 				data: {
@@ -24,6 +30,7 @@ const mockSuggestions = (names: string[]): void => {
 			},
 		},
 		isFetching: false,
+		isFetched: true,
 	});
 };
 
@@ -121,5 +128,60 @@ describe('OtherFields — custom (free-typed) option', () => {
 		expect(
 			screen.queryByRole('button', { name: /add/i }),
 		).not.toBeInTheDocument();
+	});
+});
+describe('OtherFields — addStaticFields (named pool)', () => {
+	const pool: TelemetryFieldKey[] = [
+		{ name: 'total_tokens', fieldContext: 'trace', fieldDataType: 'float64' },
+		{ name: 'llm_call_count', fieldContext: 'trace', fieldDataType: 'float64' },
+	];
+
+	const mockPool = (fields: TelemetryFieldKey[]): void => {
+		(useSelectableFields as jest.Mock).mockReturnValue({
+			data: { data: { data: { keys: { ai_o11y: fields } } } },
+			isFetching: false,
+			isFetched: true,
+		});
+	};
+
+	beforeEach(() => {
+		mockPool(pool);
+	});
+
+	it('lists the pool it is handed', () => {
+		renderOtherFields({ addStaticFields: 'ai_o11y', allowCustomFields: false });
+
+		expect(screen.getByText('total_tokens')).toBeInTheDocument();
+		expect(screen.getByText('llm_call_count')).toBeInTheDocument();
+	});
+
+	it('names the source and forwards the search so the hook can narrow the pool', () => {
+		renderOtherFields({
+			addStaticFields: 'ai_o11y',
+			allowCustomFields: false,
+			debouncedInputValue: 'llm',
+		});
+
+		expect(useSelectableFields).toHaveBeenCalledWith(
+			expect.objectContaining({ source: 'ai_o11y', searchText: 'llm' }),
+		);
+	});
+
+	it('omits pool fields that are already added', () => {
+		renderOtherFields({
+			addStaticFields: 'ai_o11y',
+			allowCustomFields: false,
+			addedFields: [
+				{
+					name: 'total_tokens',
+					fieldContext: 'trace',
+					fieldDataType: 'float64',
+					key: 'trace:total_tokens:float64',
+				},
+			],
+		});
+
+		expect(screen.queryByText('total_tokens')).not.toBeInTheDocument();
+		expect(screen.getByText('llm_call_count')).toBeInTheDocument();
 	});
 });

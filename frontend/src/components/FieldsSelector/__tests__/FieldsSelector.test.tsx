@@ -1,11 +1,17 @@
 import { act, fireEvent, render, screen } from 'tests/test-utils';
-import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import FieldsSelector from '../FieldsSelector';
+import { useSelectableFields } from 'hooks/querySuggestions/useSelectableFields';
 
-jest.mock('hooks/querySuggestions/useGetQueryKeySuggestions');
+jest.mock('hooks/querySuggestions/useSelectableFields', () => ({
+	useSelectableFields: jest.fn(() => ({
+		data: undefined,
+		isFetching: false,
+		isFetched: true,
+	})),
+}));
 
 jest.mock('@signozhq/ui/sonner', () => ({
 	...jest.requireActual('@signozhq/ui/sonner'),
@@ -21,7 +27,7 @@ jest.mock('periscope/components/FloatingPanel', () => ({
 }));
 
 const mockSuggestions = (names: string[]): void => {
-	(useGetQueryKeySuggestions as jest.Mock).mockReturnValue({
+	(useSelectableFields as jest.Mock).mockReturnValue({
 		data: {
 			data: {
 				data: {
@@ -37,6 +43,7 @@ const mockSuggestions = (names: string[]): void => {
 			},
 		},
 		isFetching: false,
+		isFetched: true,
 	});
 };
 

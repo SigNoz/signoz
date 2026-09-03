@@ -10,6 +10,7 @@ import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import AddedFields from './AddedFields';
+import { StaticFieldsSource } from 'hooks/querySuggestions/staticFields';
 import OtherFields from './OtherFields';
 
 import styles from './FieldsSelector.module.scss';
@@ -31,6 +32,7 @@ interface FieldsSelectorProps {
 	// Lets users add a free-typed field which
 	// does not show up in the suggestions
 	allowCustomFields?: boolean;
+	addStaticFields?: StaticFieldsSource;
 	width?: number;
 	height?: number;
 	defaultPosition?: { x: number; y: number };
@@ -50,6 +52,7 @@ function FieldsSelectorContent({
 	maxFields,
 	requiredFields,
 	allowCustomFields,
+	addStaticFields,
 	width = DEFAULT_PANEL_WIDTH,
 	height,
 	defaultPosition,
@@ -158,6 +161,7 @@ function FieldsSelectorContent({
 					onAdd={handleAdd}
 					isAtLimit={isAtLimit}
 					allowCustomFields={allowCustomFields}
+					addStaticFields={addStaticFields}
 				/>
 
 				{hasUnsavedChanges && (
