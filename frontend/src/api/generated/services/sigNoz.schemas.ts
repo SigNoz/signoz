@@ -8978,6 +8978,14 @@ export enum Querybuildertypesv5QueryTypeDTO {
 	clickhouse_sql = 'clickhouse_sql',
 	promql = 'promql',
 }
+export enum QuickfiltertypesSourceDTO {
+	traces = 'traces',
+	logs = 'logs',
+	api_monitoring = 'api_monitoring',
+	exceptions = 'exceptions',
+	meter = 'meter',
+	ai_observability = 'ai_observability',
+}
 export interface QuickfiltertypesSourceFiltersDTO {
 	/**
 	 * @type string
@@ -8995,11 +9003,8 @@ export interface QuickfiltertypesSourceFiltersDTO {
 	/**
 	 * @type string
 	 */
-	orgId?: string;
-	/**
-	 * @type string
-	 */
-	source?: string;
+	orgId: string;
+	source: QuickfiltertypesSourceDTO;
 	/**
 	 * @type string
 	 * @format date-time
@@ -12417,9 +12422,9 @@ export type GetPublicDashboardPanelQueryRangeV2200 = {
 
 export type ListQuickFilters200 = {
 	/**
-	 * @type array,null
+	 * @type array
 	 */
-	data: QuickfiltertypesSourceFiltersDTO[] | null;
+	data: QuickfiltertypesSourceFiltersDTO[];
 	/**
 	 * @type string
 	 */

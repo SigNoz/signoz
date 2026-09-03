@@ -40,6 +40,17 @@ var (
 	SourceAiObservability = Source{valuer.NewString("ai_observability")}
 )
 
+func (Source) Enum() []any {
+	return []any{
+		SourceTraces,
+		SourceLogs,
+		SourceApiMonitoring,
+		SourceExceptions,
+		SourceMeter,
+		SourceAiObservability,
+	}
+}
+
 // NewSource creates a Source from a string.
 func NewSource(s string) (Source, error) {
 	switch s {
@@ -73,8 +84,8 @@ type SourceFilters struct {
 	types.Identifiable
 	types.TimeAuditable
 
-	OrgID   valuer.UUID                        `json:"orgId"`
-	Source  Source                             `json:"source"`
+	OrgID   valuer.UUID                        `json:"orgId" required:"true"`
+	Source  Source                             `json:"source" required:"true"`
 	Filters []telemetrytypes.TelemetryFieldKey `json:"filters" required:"true" nullable:"false"`
 }
 

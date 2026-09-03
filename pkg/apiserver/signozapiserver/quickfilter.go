@@ -23,7 +23,7 @@ func (provider *provider) addQuickFilterRoutes(router *mux.Router) error {
 			Description:         "Returns the org's quick filters for every source, each filter as a telemetry field key.",
 			Request:             nil,
 			RequestContentType:  "",
-			Response:            new([]*quickfiltertypes.SourceFilters),
+			Response:            make([]*quickfiltertypes.SourceFilters, 0),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest},

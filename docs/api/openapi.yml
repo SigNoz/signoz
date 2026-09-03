@@ -7838,6 +7838,15 @@ components:
       - custom
       - text
       type: string
+    QuickfiltertypesSource:
+      enum:
+      - traces
+      - logs
+      - api_monitoring
+      - exceptions
+      - meter
+      - ai_observability
+      type: string
     QuickfiltertypesSourceFilters:
       properties:
         createdAt:
@@ -7852,12 +7861,14 @@ components:
         orgId:
           type: string
         source:
-          type: string
+          $ref: '#/components/schemas/QuickfiltertypesSource'
         updatedAt:
           format: date-time
           type: string
       required:
       - id
+      - orgId
+      - source
       - filters
       type: object
     QuickfiltertypesUpdatableQuickFilters:
@@ -18887,7 +18898,6 @@ paths:
                   data:
                     items:
                       $ref: '#/components/schemas/QuickfiltertypesSourceFilters'
-                    nullable: true
                     type: array
                   status:
                     type: string
