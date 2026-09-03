@@ -1,4 +1,9 @@
-import { readColumnWidths, writeColumnWidths } from '../columnWidthStorage';
+import {
+	clearColumnWidths,
+	readColumnWidths,
+	transferColumnWidths,
+	writeColumnWidths,
+} from '../columnWidthStorage';
 
 describe('columnWidthStorage', () => {
 	beforeEach(() => {
@@ -29,5 +34,34 @@ describe('columnWidthStorage', () => {
 
 		expect(readColumnWidths('panel-1')).toStrictEqual({ a: 150, c: 50 });
 		expect(readColumnWidths('panel-2')).toStrictEqual({ b: 300 });
+	});
+
+	it('clears one panel without touching the others', () => {
+		writeColumnWidths('panel-1', { a: 100 });
+		writeColumnWidths('panel-2', { b: 300 });
+
+		clearColumnWidths('panel-1');
+
+		expect(readColumnWidths('panel-1')).toStrictEqual({});
+		expect(readColumnWidths('panel-2')).toStrictEqual({ b: 300 });
+	});
+
+	it('transfers widths to the new id and drops the old entry', () => {
+		writeColumnWidths('new', { a: 100 });
+		writeColumnWidths('panel-2', { b: 300 });
+
+		transferColumnWidths('new', 'panel-1');
+
+		expect(readColumnWidths('new')).toStrictEqual({});
+		expect(readColumnWidths('panel-1')).toStrictEqual({ a: 100 });
+		expect(readColumnWidths('panel-2')).toStrictEqual({ b: 300 });
+	});
+
+	it('leaves the target untouched when the source has no widths', () => {
+		writeColumnWidths('panel-1', { a: 100 });
+
+		transferColumnWidths('new', 'panel-1');
+
+		expect(readColumnWidths('panel-1')).toStrictEqual({ a: 100 });
 	});
 });

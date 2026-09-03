@@ -25,6 +25,13 @@ function readStore(): ColumnWidthStore {
 	}
 }
 
+function writeStore(store: ColumnWidthStore): void {
+	setLocalStorageApi(
+		LOCALSTORAGE.DASHBOARD_V2_PANEL_COLUMN_WIDTHS,
+		JSON.stringify(store),
+	);
+}
+
 /** Reads the stored widths for one panel (empty when none persisted yet). */
 export function readColumnWidths(panelId: string): ColumnWidths {
 	return readStore()[panelId] ?? {};
@@ -34,8 +41,37 @@ export function readColumnWidths(panelId: string): ColumnWidths {
 export function writeColumnWidths(panelId: string, widths: ColumnWidths): void {
 	const store = readStore();
 	store[panelId] = widths;
-	setLocalStorageApi(
-		LOCALSTORAGE.DASHBOARD_V2_PANEL_COLUMN_WIDTHS,
-		JSON.stringify(store),
-	);
+	writeStore(store);
+}
+
+/** Drops one panel's entry (e.g. an abandoned new-panel draft). */
+export function clearColumnWidths(panelId: string): void {
+	const store = readStore();
+	if (!(panelId in store)) {
+		return;
+	}
+	delete store[panelId];
+	writeStore(store);
+}
+
+/**
+ * Re-keys one panel's widths and drops the source entry. A new panel is authored
+ * under the new-panel sentinel id and only gets its real id on save, so without
+ * this the widths set while authoring would be stranded under the sentinel.
+ */
+export function transferColumnWidths(
+	fromPanelId: string,
+	toPanelId: string,
+): void {
+	if (fromPanelId === toPanelId) {
+		return;
+	}
+	const store = readStore();
+	const widths = store[fromPanelId];
+	if (!widths) {
+		return;
+	}
+	delete store[fromPanelId];
+	store[toPanelId] = widths;
+	writeStore(store);
 }

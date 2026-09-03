@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 
 import { newPanelSearch, NEW_PANEL_ID } from '../PanelEditor/newPanelRoute';
 import type { PanelKind } from '../Panels/types/panelKind';
+import { clearColumnWidths } from '../Panels/utils/columnWidthStorage';
 import { useOpenPanelEditor } from './useOpenPanelEditor';
 
 interface UseCreatePanelResult {
@@ -40,6 +41,9 @@ export function useCreatePanel(): UseCreatePanelResult {
 		(panelKind: PanelKind, targetIndex?: number): void => {
 			setIsPickerOpen(false);
 			const target = targetIndex ?? layoutIndex;
+			// Every draft shares the sentinel id, so an abandoned draft's column widths
+			// would otherwise seed this one.
+			clearColumnWidths(NEW_PANEL_ID);
 			openPanelEditor(NEW_PANEL_ID, {
 				search: newPanelSearch(panelKind, target),
 			});
