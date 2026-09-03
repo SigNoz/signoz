@@ -50,6 +50,7 @@ jobs:
           - logspipelines
           - passwordauthn
           - preference
+          - quickfilter
           - querierlogs
           - queriertraces
           - queriermetrics

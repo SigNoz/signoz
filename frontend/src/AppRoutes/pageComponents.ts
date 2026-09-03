@@ -94,12 +94,12 @@ export const OnboardingV2 = Loadable(
 export const DashboardsListPage = Loadable(
 	() =>
 		import(
-			/* webpackChunkName: "DashboardsListPage" */ 'pages/DashboardsListPage'
+			/* webpackChunkName: "DashboardsListPage" */ 'pages/DashboardsListPageV2'
 		),
 );
 
 export const DashboardPage = Loadable(
-	() => import(/* webpackChunkName: "DashboardPage" */ 'pages/DashboardPage'),
+	() => import(/* webpackChunkName: "DashboardPage" */ 'pages/DashboardPageV2'),
 );
 
 export const DashboardWidget = Loadable(
