@@ -19,6 +19,7 @@ export const definition: PanelDefinition<'signoz/ListPanel'> = {
 	// hide `limit` (the server paginates raw spans). Mirrors QueryBuilderV2's internal
 	// list configs — the capabilities guard is the single source for both.
 	supportedQueryTypes: [EQueryType.QUERY_BUILDER],
+	supportsAIQuery: true,
 	queryBuilderFields: {
 		default: {
 			stepInterval: { isHidden: true, isDisabled: true },

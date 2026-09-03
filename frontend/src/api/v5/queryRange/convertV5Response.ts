@@ -2,14 +2,21 @@ import { cloneDeep, isEmpty } from 'lodash-es';
 import { SuccessResponse, Warning } from 'types/api';
 import { MetricRangePayloadV3 } from 'types/api/metrics/getQueryRange';
 import {
+	BuilderQuery,
 	DistributionData,
 	MetricRangePayloadV5,
+	QueryEnvelope,
 	QueryRangeRequestV5,
 	RawData,
 	ScalarData,
 	TimeSeriesData,
 } from 'types/api/v5/queryRange';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
+
+const isBuilderQueryEnvelope = (
+	envelope: QueryEnvelope,
+): envelope is QueryEnvelope & { spec: BuilderQuery } =>
+	envelope.type === 'builder_query' || envelope.type === 'builder_ai_query';
 
 function getColName(
 	col: ScalarData['columns'][number],
@@ -409,21 +416,15 @@ export function convertV5ResponseToLegacy(
 	const v5Data = payload?.data;
 
 	const aggregationPerQuery =
-		params?.compositeQuery?.queries
-			?.filter((query) => query.type === 'builder_query')
-			.reduce(
-				(acc, query) => {
-					if (
-						query.type === 'builder_query' &&
-						'aggregations' in query.spec &&
-						query.spec.name
-					) {
-						acc[query.spec.name] = query.spec.aggregations;
-					}
-					return acc;
-				},
-				{} as Record<string, any>,
-			) || {};
+		params?.compositeQuery?.queries?.filter(isBuilderQueryEnvelope).reduce(
+			(acc, query) => {
+				if ('aggregations' in query.spec && query.spec.name) {
+					acc[query.spec.name] = query.spec.aggregations;
+				}
+				return acc;
+			},
+			{} as Record<string, any>,
+		) || {};
 
 	// clickhouse_sql queries have no aggregation metadata; their value columns
 	// are named/keyed by the real SQL alias the response carries (see getColId).

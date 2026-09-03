@@ -5,7 +5,10 @@ import { handleQueryChange } from 'container/NewWidget/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import { resolveQueryType } from '../../../Panels/capabilities';
+import {
+	resolveQueryType,
+	supportsAIQuery,
+} from '../../../Panels/capabilities';
 import { getBuilderQueries } from '../../../Panels/utils/getBuilderQueries';
 import { toPerses } from '../../../queryV5/persesQueryAdapters';
 import { getSwitchedPluginSpec } from '../../getSwitchedPluginSpec';
@@ -19,6 +22,7 @@ jest.mock('container/NewWidget/utils', () => ({
 }));
 jest.mock('../../../Panels/capabilities', () => ({
 	resolveQueryType: jest.fn(),
+	supportsAIQuery: jest.fn(),
 }));
 jest.mock('../../../queryV5/persesQueryAdapters', () => ({
 	toPerses: jest.fn(),
@@ -33,6 +37,7 @@ jest.mock('../../../Panels/utils/getBuilderQueries', () => ({
 const mockUseQueryBuilder = useQueryBuilder as unknown as jest.Mock;
 const mockHandleQueryChange = handleQueryChange as unknown as jest.Mock;
 const mockResolveQueryType = resolveQueryType as unknown as jest.Mock;
+const mockSupportsAIQuery = supportsAIQuery as unknown as jest.Mock;
 const mockToPerses = toPerses as unknown as jest.Mock;
 const mockGetSwitchedPluginSpec = getSwitchedPluginSpec as unknown as jest.Mock;
 const mockGetBuilderQueries = getBuilderQueries as unknown as jest.Mock;
@@ -96,7 +101,11 @@ describe('usePanelTypeSwitch', () => {
 
 	it('does nothing when switching to the current kind', () => {
 		const setSpec = jest.fn();
-		const state = builderState({ id: 'q', queryType: 'builder' } as Query);
+		const state = builderState({
+			id: 'q',
+			queryType: 'builder',
+			builder: { queryData: [] },
+		} as unknown as Query);
 		mockUseQueryBuilder.mockReturnValue(state);
 
 		const { result } = renderHook(() =>
@@ -114,7 +123,11 @@ describe('usePanelTypeSwitch', () => {
 
 	it('on first visit: transforms the query and resets the spec to the new kind', () => {
 		const setSpec = jest.fn();
-		const tableQuery = { id: 'table-current', queryType: 'builder' } as Query;
+		const tableQuery = {
+			id: 'table-current',
+			queryType: 'builder',
+			builder: { queryData: [] },
+		} as unknown as Query;
 		const state = builderState(tableQuery);
 		mockUseQueryBuilder.mockReturnValue(state);
 
@@ -142,7 +155,11 @@ describe('usePanelTypeSwitch', () => {
 	it('seeds timestamp-desc Order By on every query when switching to a List panel', () => {
 		const setSpec = jest.fn();
 		mockUseQueryBuilder.mockReturnValue(
-			builderState({ id: 'ts-current', queryType: 'builder' } as Query),
+			builderState({
+				id: 'ts-current',
+				queryType: 'builder',
+				builder: { queryData: [] },
+			} as unknown as Query),
 		);
 		mockHandleQueryChange.mockReturnValue({
 			id: 'transformed',
@@ -169,7 +186,11 @@ describe('usePanelTypeSwitch', () => {
 
 	it('coerces the query type when the new kind disallows it (promql → List)', () => {
 		const setSpec = jest.fn();
-		const promQuery = { id: 'prom', queryType: 'promql' } as Query;
+		const promQuery = {
+			id: 'prom',
+			queryType: 'promql',
+			builder: { queryData: [] },
+		} as unknown as Query;
 		mockUseQueryBuilder.mockReturnValue(builderState(promQuery));
 
 		const { result } = renderHook(() =>
@@ -191,10 +212,88 @@ describe('usePanelTypeSwitch', () => {
 		expect((queryArg as Query).queryType).toBe('builder');
 	});
 
+	// `handleQueryChange` rebuilds from a field allow-list that omits `builderQueryType`,
+	// so the tag has to be re-applied after the rebuild or the AI tab silently reverts.
+	it('re-applies the AI envelope tag when the new kind supports AI queries', () => {
+		const setSpec = jest.fn();
+		mockSupportsAIQuery.mockReturnValue(true);
+		mockHandleQueryChange.mockReturnValue({
+			id: 'transformed',
+			queryType: 'builder',
+			builder: { queryData: [{ orderBy: [] }] },
+		} as unknown as Query);
+		const aiQuery = {
+			id: 'ai-current',
+			queryType: 'builder',
+			builder: { queryData: [{ builderQueryType: 'builder_ai_query' }] },
+		} as unknown as Query;
+		const state = builderState(aiQuery);
+		mockUseQueryBuilder.mockReturnValue(state);
+
+		const { result } = renderHook(() =>
+			usePanelTypeSwitch({
+				spec: makeSpec('signoz/TimeSeriesPanel', {}, TABLE_QUERIES),
+				panelType: PANEL_TYPES.TIME_SERIES,
+				setSpec,
+			}),
+		);
+		act(() => result.current.onChangePanelKind('signoz/TablePanel'));
+
+		const redirected = state.redirectWithQueryBuilderData.mock
+			.calls[0][0] as Query;
+		expect(redirected.builder.queryData[0].builderQueryType).toBe(
+			'builder_ai_query',
+		);
+	});
+
+	it('drops the AI envelope tag when the new kind has no AI tab', () => {
+		const setSpec = jest.fn();
+		mockSupportsAIQuery.mockReturnValue(false);
+		mockHandleQueryChange.mockReturnValue({
+			id: 'transformed',
+			queryType: 'builder',
+			builder: { queryData: [{ orderBy: [] }] },
+		} as unknown as Query);
+		const aiQuery = {
+			id: 'ai-current',
+			queryType: 'builder',
+			builder: { queryData: [{ builderQueryType: 'builder_ai_query' }] },
+		} as unknown as Query;
+		const state = builderState(aiQuery);
+		mockUseQueryBuilder.mockReturnValue(state);
+
+		const { result } = renderHook(() =>
+			usePanelTypeSwitch({
+				spec: makeSpec('signoz/TimeSeriesPanel', {}, TABLE_QUERIES),
+				panelType: PANEL_TYPES.TIME_SERIES,
+				setSpec,
+			}),
+		);
+		act(() => result.current.onChangePanelKind('signoz/ListPanel'));
+
+		// The rebuild receives an untagged query…
+		const [, queryArg] = mockHandleQueryChange.mock.calls[0];
+		expect((queryArg as Query).builder.queryData[0]).not.toHaveProperty(
+			'builderQueryType',
+		);
+		// …and nothing re-applies it afterwards.
+		const redirected = state.redirectWithQueryBuilderData.mock
+			.calls[0][0] as Query;
+		expect(redirected.builder.queryData[0].builderQueryType).toBeUndefined();
+	});
+
 	it('restores the original kind verbatim on switch-back (reversibility)', () => {
 		const setSpec = jest.fn();
-		const tableQuery = { id: 'table-current', queryType: 'builder' } as Query;
-		const listQuery = { id: 'list-current', queryType: 'builder' } as Query;
+		const tableQuery = {
+			id: 'table-current',
+			queryType: 'builder',
+			builder: { queryData: [] },
+		} as unknown as Query;
+		const listQuery = {
+			id: 'list-current',
+			queryType: 'builder',
+			builder: { queryData: [] },
+		} as unknown as Query;
 		let state = builderState(tableQuery);
 		mockUseQueryBuilder.mockImplementation(() => state);
 

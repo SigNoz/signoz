@@ -18,7 +18,7 @@ import type {
 	Query,
 } from 'types/api/queryBuilder/queryBuilderData';
 
-import { resolveQueryType } from '../../Panels/capabilities';
+import { resolveQueryType, supportsAIQuery } from '../../Panels/capabilities';
 import {
 	PANEL_KIND_TO_PANEL_TYPE,
 	type PanelKind,
@@ -29,6 +29,7 @@ import {
 	getSwitchedPluginSpec,
 	type SwitchedPluginSpec,
 } from '../getSwitchedPluginSpec';
+import { isAIQuery, withAIQueryType } from '../PanelEditorQueryBuilder/utils';
 
 // V1's handleQueryChange clears orderBy for lists; re-seed the fresh-list default (timestamp desc).
 const DEFAULT_LIST_ORDER_BY: OrderByPayload[] = [
@@ -139,16 +140,24 @@ export function usePanelTypeSwitch({
 			// First visit → coerce the query type if the new kind disallows it, then
 			// rebuild the builder query for the new type.
 			const queryType = resolveQueryType(newKind, query.queryType);
+			// AI-ness rides on the query, not on `queryType`, so `resolveQueryType` can't
+			// see it: carry it across only when the new kind has an AI tab to surface it.
+			const keepAIQueryType = supportsAIQuery(newKind) && isAIQuery(query);
 			const transformed = handleQueryChange(
 				newPanelType as keyof PartialPanelTypes,
-				{ ...query, queryType },
+				{ ...withAIQueryType(query, false), queryType },
 				panelTypeRef.current,
 			);
 			// Match a fresh list panel's default order so the builder's Order By isn't empty.
-			const nextQuery =
+			const reordered =
 				newPanelType === PANEL_TYPES.LIST
 					? withDefaultListOrder(transformed)
 					: transformed;
+			// `handleQueryChange` rebuilds each query from an allow-list of fields that
+			// doesn't include `builderQueryType`, so re-stamp it after the rebuild.
+			const nextQuery = keepAIQueryType
+				? withAIQueryType(reordered, true)
+				: reordered;
 			const signal = getBuilderQueries(currentSpec.queries)[0]
 				?.signal as TelemetrytypesSignalDTO;
 

@@ -14,7 +14,7 @@ import logEvent from 'api/common/logEvent';
 import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsMenu';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueryAIWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import TraceExplorerControls from 'container/TracesExplorer/Controls';
 import { getListViewQuery } from 'container/TracesExplorer/explorerUtils';
@@ -60,7 +60,7 @@ function TracesView({
 	);
 
 	const transformedQuery = useMemo(
-		() => getListViewQuery(stagedQuery || initialQueriesMap.traces),
+		() => getListViewQuery(stagedQuery || initialQueryAIWithType),
 		[stagedQuery],
 	);
 

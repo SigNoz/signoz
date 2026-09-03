@@ -15,6 +15,7 @@ export const definition: PanelDefinition<'signoz/PieChartPanel'> = {
 		TelemetrytypesSignalDTO.traces,
 	],
 	supportedQueryTypes: [EQueryType.QUERY_BUILDER, EQueryType.CLICKHOUSE],
+	supportsAIQuery: true,
 	queryBuilderFields: {},
 	actions: {
 		view: true,

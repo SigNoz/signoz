@@ -3,6 +3,7 @@ import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { OPERATORS } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { EQueryType } from 'types/common/dashboard';
+import { DataSource } from 'types/common/queryBuilder';
 
 import PanelEditorQueryBuilder from '../PanelEditorQueryBuilder';
 
@@ -61,6 +62,7 @@ function lastQueryBuilderProps(): {
 	panelType: string;
 	isListViewPanel: boolean;
 	filterConfigs: unknown;
+	config?: unknown;
 } {
 	const calls = mockQueryBuilderV2.mock.calls;
 	return calls[calls.length - 1][0];
@@ -70,15 +72,20 @@ describe('PanelEditorQueryBuilder query-type tabs (driven by the capabilities gu
 	beforeEach(() => {
 		jest.clearAllMocks();
 		mockUseQueryBuilder.mockReturnValue({
-			currentQuery: { queryType: EQueryType.QUERY_BUILDER },
+			currentQuery: {
+				queryType: EQueryType.QUERY_BUILDER,
+				builder: { queryData: [] },
+			},
 			redirectWithQueryBuilderData: jest.fn(),
+			updateAllQueriesOperators: jest.fn(),
 		});
 	});
 
-	it('shows only the Query Builder tab for the List kind', () => {
+	it('shows only the Query Builder tabs for the List kind', () => {
 		renderBuilder('signoz/ListPanel', TelemetrytypesSignalDTO.logs);
 
 		expect(screen.getByText('Query Builder')).toBeInTheDocument();
+		expect(screen.getByText('AI Query Builder')).toBeInTheDocument();
 		expect(screen.queryByText('ClickHouse Query')).not.toBeInTheDocument();
 		expect(screen.queryByText('PromQL')).not.toBeInTheDocument();
 	});
@@ -91,12 +98,49 @@ describe('PanelEditorQueryBuilder query-type tabs (driven by the capabilities gu
 		expect(screen.queryByText('PromQL')).not.toBeInTheDocument();
 	});
 
-	it('shows all three tabs for the Time Series kind', () => {
+	it('shows all four tabs for the Time Series kind', () => {
 		renderBuilder('signoz/TimeSeriesPanel');
 
 		expect(screen.getByText('Query Builder')).toBeInTheDocument();
+		expect(screen.getByText('AI Query Builder')).toBeInTheDocument();
 		expect(screen.getByText('ClickHouse Query')).toBeInTheDocument();
 		expect(screen.getByText('PromQL')).toBeInTheDocument();
+	});
+
+	// The AI tab is derived from `builderQueryType`, not from a stored tab key.
+	it('activates the AI tab when the builder query carries the AI envelope tag', () => {
+		mockUseQueryBuilder.mockReturnValue({
+			currentQuery: {
+				queryType: EQueryType.QUERY_BUILDER,
+				builder: { queryData: [{ builderQueryType: 'builder_ai_query' }] },
+			},
+			redirectWithQueryBuilderData: jest.fn(),
+			updateAllQueriesOperators: jest.fn(),
+		});
+
+		renderBuilder('signoz/TimeSeriesPanel');
+
+		expect(
+			screen.getByRole('tab', { name: 'AI Query Builder', selected: true }),
+		).toBeInTheDocument();
+	});
+
+	it('pins the AI tab builder to traces so the signal cannot be changed', () => {
+		mockUseQueryBuilder.mockReturnValue({
+			currentQuery: {
+				queryType: EQueryType.QUERY_BUILDER,
+				builder: { queryData: [{ builderQueryType: 'builder_ai_query' }] },
+			},
+			redirectWithQueryBuilderData: jest.fn(),
+			updateAllQueriesOperators: jest.fn(),
+		});
+
+		renderBuilder('signoz/TimeSeriesPanel');
+
+		expect(lastQueryBuilderProps().config).toStrictEqual({
+			initialDataSource: DataSource.TRACES,
+			queryVariant: 'static',
+		});
 	});
 });
 
@@ -104,8 +148,12 @@ describe('PanelEditorQueryBuilder field visibility (driven by the capabilities g
 	beforeEach(() => {
 		jest.clearAllMocks();
 		mockUseQueryBuilder.mockReturnValue({
-			currentQuery: { queryType: EQueryType.QUERY_BUILDER },
+			currentQuery: {
+				queryType: EQueryType.QUERY_BUILDER,
+				builder: { queryData: [] },
+			},
 			redirectWithQueryBuilderData: jest.fn(),
+			updateAllQueriesOperators: jest.fn(),
 		});
 	});
 
