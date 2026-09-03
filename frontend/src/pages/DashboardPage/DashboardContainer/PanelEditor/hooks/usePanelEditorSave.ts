@@ -13,6 +13,7 @@ import {
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 
 import { useOptimisticPatch } from '../../hooks/useOptimisticPatch';
+import { transferColumnWidths } from '../../Panels/utils/columnWidthStorage';
 import { createPanelOps } from '../../patchOps';
 
 interface UsePanelEditorSaveArgs {
@@ -75,6 +76,11 @@ export function usePanelEditorSave({
 
 			// Optimistic cache write + settle refetch (replaces the manual invalidate).
 			await patchAsync(ops);
+			if (isNew) {
+				// Column widths are stored per panel id, and a new panel was authored under
+				// the sentinel id — move them so the grid renders at the authored widths.
+				transferColumnWidths(panelId, savedPanelId);
+			}
 			void logEvent(DashboardDetailEvents.PanelEditorSaved, {
 				panelType: spec.plugin.kind,
 				isNew,

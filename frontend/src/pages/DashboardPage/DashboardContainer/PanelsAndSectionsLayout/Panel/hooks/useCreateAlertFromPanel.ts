@@ -6,9 +6,11 @@ import logEvent from 'api/common/logEvent';
 import { useReplaceVariables } from 'api/generated/services/querier';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 import { getPanelQueryType } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getPanelQueryType';
+import { useDashboardEventMeta } from 'pages/DashboardPage/DashboardContainer/hooks/useDashboardEventMeta';
 import { buildQueryRangeRequest } from 'pages/DashboardPage/DashboardContainer/queryV5/buildQueryRangeRequest';
 import { envelopesToQuery } from 'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters';
 import { selectResolvedVariables } from 'pages/DashboardPage/DashboardContainer/store/slices/variableSelectionSlice';
@@ -37,6 +39,7 @@ export function useCreateAlertFromPanel(): (
 	const { safeNavigate } = useSafeNavigate();
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
 	const variables = useDashboardStore(selectResolvedVariables(dashboardId));
+	const eventMeta = useDashboardEventMeta();
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -46,10 +49,10 @@ export function useCreateAlertFromPanel(): (
 		(panel: DashboardtypesPanelDTO, panelId: string): void => {
 			const panelType = PANEL_KIND_TO_PANEL_TYPE[panel.spec.plugin.kind];
 
-			void logEvent('Dashboard Detail: Panel action', {
+			void logEvent(DashboardDetailEvents.PanelAction, {
 				action: 'createAlerts',
 				panelType,
-				dashboardId,
+				...eventMeta,
 				widgetId: panelId,
 				queryType: getPanelQueryType(panel),
 			});
@@ -93,6 +96,6 @@ export function useCreateAlertFromPanel(): (
 				},
 			);
 		},
-		[dashboardId, variables, minTime, maxTime, substituteVars, safeNavigate],
+		[eventMeta, variables, minTime, maxTime, substituteVars, safeNavigate],
 	);
 }

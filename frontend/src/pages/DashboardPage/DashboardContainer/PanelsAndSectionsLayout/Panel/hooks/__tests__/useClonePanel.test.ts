@@ -20,6 +20,13 @@ jest.mock('@signozhq/ui/sonner', () => ({
 
 jest.mock('uuid', () => ({ v4: (): string => 'cloned-id' }));
 
+jest.mock('../../../../hooks/useDashboardEventMeta', () => ({
+	useDashboardEventMeta: (): { dashboardId: string; dashboardName: string } => ({
+		dashboardId: 'dash-1',
+		dashboardName: 'Infra overview',
+	}),
+}));
+
 const sourcePanel = {
 	kind: 'Panel',
 	spec: {

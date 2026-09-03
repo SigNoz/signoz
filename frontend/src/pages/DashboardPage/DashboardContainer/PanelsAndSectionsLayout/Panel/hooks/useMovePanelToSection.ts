@@ -6,6 +6,7 @@ import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPage/DashboardContainer
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
+import { useDashboardEventMeta } from '../../../hooks/useDashboardEventMeta';
 import { useOptimisticPatch } from '../../../hooks/useOptimisticPatch';
 import { bottomRowSlot, movePanelBetweenSectionsOps } from '../../../patchOps';
 import { useDashboardStore } from '../../../store/useDashboardStore';
@@ -30,6 +31,7 @@ export function useMovePanelToSection({
 	sections,
 }: Params): (args: MovePanelArgs) => Promise<void> {
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
+	const eventMeta = useDashboardEventMeta();
 	const { patchAsync } = useOptimisticPatch();
 	const { showErrorModal } = useErrorModal();
 
@@ -75,12 +77,12 @@ export function useMovePanelToSection({
 						? PANEL_KIND_TO_PANEL_TYPE[moved.panel.spec.plugin.kind]
 						: undefined,
 					panelId,
-					dashboardId,
+					...eventMeta,
 				});
 			} catch (error) {
 				showErrorModal(error as APIError);
 			}
 		},
-		[sections, dashboardId, patchAsync, showErrorModal],
+		[sections, dashboardId, eventMeta, patchAsync, showErrorModal],
 	);
 }

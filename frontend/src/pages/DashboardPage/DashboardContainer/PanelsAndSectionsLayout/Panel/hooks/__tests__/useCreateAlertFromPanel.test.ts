@@ -12,6 +12,19 @@ jest.mock('api/common/logEvent', () => ({
 	default: jest.fn(),
 }));
 
+jest.mock(
+	'pages/DashboardPage/DashboardContainer/hooks/useDashboardEventMeta',
+	() => ({
+		useDashboardEventMeta: (): {
+			dashboardId: string;
+			dashboardName: string;
+		} => ({
+			dashboardId: 'dash-1',
+			dashboardName: 'Infra overview',
+		}),
+	}),
+);
+
 const mockSafeNavigate = jest.fn();
 jest.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): { safeNavigate: jest.Mock } => ({
@@ -106,6 +119,7 @@ describe('useCreateAlertFromPanel', () => {
 				action: 'createAlerts',
 				panelType: PANEL_TYPES.TIME_SERIES,
 				dashboardId: 'dash-1',
+				dashboardName: 'Infra overview',
 				widgetId: 'panel-1',
 			}),
 		);

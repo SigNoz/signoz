@@ -25,7 +25,10 @@ export function buildSortedVariablesArray(
 		sortedVariablesArray.push({ ...value });
 	});
 
-	sortedVariablesArray.sort((a, b) => a.order - b.order);
+	// `order` is optional because nothing sets it any more: the v2 API orders
+	// variables by array position, so the sort is a stable no-op that preserves it.
+	// Drop the sort along with `order` when IDashboardVariable goes.
+	sortedVariablesArray.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
 	return sortedVariablesArray;
 }

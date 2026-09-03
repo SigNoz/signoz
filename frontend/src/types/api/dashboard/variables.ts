@@ -11,7 +11,8 @@ export type TSortVariableValuesType = (typeof VariableSortTypeArr)[number];
 
 export interface IDashboardVariable {
 	id: string;
-	order?: any;
+	/** Display position. Nothing sets it now that the v2 API orders variables by array position. */
+	order?: number;
 	name?: string; // key will be the source of truth
 	description: string;
 	type: TVariableQueryType;
@@ -20,7 +21,6 @@ export interface IDashboardVariable {
 	// Custom
 	customValue?: string;
 	// Textbox
-	// special case of variable where defaultValue is same as this. Otherwise, defaultValue is a single field
 	textboxValue?: string;
 
 	sort: TSortVariableValuesType;
@@ -32,12 +32,7 @@ export interface IDashboardVariable {
 		| number
 		| boolean
 		| (string | number | boolean)[];
-	// Internal use
-	modificationUUID?: string;
 	allSelected?: boolean;
-	change?: boolean;
-	defaultValue?: string;
 	dynamicVariablesAttribute?: string;
 	dynamicVariablesSource?: string;
-	haveCustomValuesSelected?: boolean;
 }

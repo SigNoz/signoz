@@ -8,6 +8,21 @@ import { EQueryType } from 'types/common/dashboard';
 
 import ConfigPane from '../ConfigPane';
 
+// ConfigActions seeds alerts from the panel, which reads the loaded dashboard for
+// analytics context — always present under the real editor route.
+jest.mock(
+	'pages/DashboardPage/DashboardContainer/hooks/useDashboardEventMeta',
+	() => ({
+		useDashboardEventMeta: (): {
+			dashboardId: string;
+			dashboardName: string;
+		} => ({
+			dashboardId: 'dash-1',
+			dashboardName: 'Infra overview',
+		}),
+	}),
+);
+
 function spec(unit?: string): DashboardtypesPanelSpecDTO {
 	return {
 		display: { name: 'CPU', description: 'usage' },

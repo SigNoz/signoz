@@ -117,7 +117,6 @@ export default function ChartManager({
 				onToggleSeriesOnOff: handleToggleSeriesOnOff,
 				onToggleSeriesVisibility,
 				yAxisUnit,
-				isGraphDisabled: false,
 				decimalPrecision,
 			}),
 		[
