@@ -30,7 +30,11 @@ GOOGLE_CHAT_HOST = "chat.googleapis.com"
 # incident.io doesn't pin the host, but the same alias trick keeps channel URLs
 # identical to production ones.
 INCIDENTIO_HOST = "api.incident.io"
-TLS_HOSTS = [GOOGLE_CHAT_HOST, INCIDENTIO_HOST]
+# Jira validates the site host (*.atlassian.net); service accounts additionally
+# go through the api.atlassian.com gateway.
+JIRA_HOST = "signoz-test.atlassian.net"
+ATLASSIAN_API_HOST = "api.atlassian.com"
+TLS_HOSTS = [GOOGLE_CHAT_HOST, INCIDENTIO_HOST, JIRA_HOST, ATLASSIAN_API_HOST]
 
 # A reused container serving a cert without a newly added host (or missing its
 # network alias) fails TLS opaquely; this label records the hosts it was built
@@ -276,6 +280,147 @@ def incidentio_event_subset(alertname: str, links: list[tuple[str, str]]) -> dic
         "source_url": re.compile(r"/alerts/overview\?ruleId="),
         "description": re.compile(description),
         "metadata": {"alertname": alertname},
+    }
+
+
+JIRA_TEST_EMAIL = "user@acme.io"
+JIRA_SA_EMAIL = "svc@serviceaccount.atlassian.com"
+JIRA_TEST_TOKEN = "jira-test-token"  # noqa: S105
+JIRA_API_BASE = "/rest/api/3"
+
+
+def jira_config(**overrides) -> dict:
+    """Jira channel config against the wiremock atlassian.net alias, personal
+    API token auth. Summary/description are omitted so the backend applies its
+    default templates; overrides lay extra receiver fields on top."""
+    return {
+        "jira_configs": [
+            {
+                "site": f"https://{JIRA_HOST}",
+                "project": "OPS",
+                "issue_type": "Task",
+                "http_config": {"basic_auth": {"username": JIRA_TEST_EMAIL, "password": JIRA_TEST_TOKEN}},
+                **overrides,
+            }
+        ],
+    }
+
+
+def jira_search_issue(key: str, done: bool, labels: list[str]) -> dict:
+    """One issue as returned by the /search/jql stub, with the fields the
+    notifier requests (status category + labels)."""
+    return {
+        "key": key,
+        "fields": {"status": {"statusCategory": {"key": "done" if done else "indeterminate"}}, "labels": labels},
+    }
+
+
+# Jira flows span several endpoints; each mapping helper stubs one, on any base
+# (site host for personal tokens, /ex/jira/<cloud_id> gateway for service accounts).
+def jira_search_mapping(issues: list[dict], base: str = JIRA_API_BASE) -> Mapping:
+    return Mapping(
+        request=MappingRequest(method=HttpMethods.POST, url_path=f"{base}/search/jql"),
+        response=MappingResponse(status=200, json_body={"issues": issues}),
+    )
+
+
+def jira_create_mapping(key: str = "OPS-1", base: str = JIRA_API_BASE) -> Mapping:
+    return Mapping(
+        request=MappingRequest(method=HttpMethods.POST, url_path=f"{base}/issue"),
+        response=MappingResponse(status=201, json_body={"id": "10001", "key": key}),
+    )
+
+
+def jira_update_mapping(key: str, base: str = JIRA_API_BASE) -> Mapping:
+    return Mapping(
+        request=MappingRequest(method=HttpMethods.PUT, url_path=f"{base}/issue/{key}"),
+        response=MappingResponse(status=204),
+    )
+
+
+def jira_transitions_mapping(key: str, transitions: list[dict], base: str = JIRA_API_BASE) -> Mapping:
+    return Mapping(
+        request=MappingRequest(method=HttpMethods.GET, url_path=f"{base}/issue/{key}/transitions"),
+        response=MappingResponse(status=200, json_body={"transitions": transitions}),
+    )
+
+
+def jira_transition_post_mapping(key: str, base: str = JIRA_API_BASE) -> Mapping:
+    return Mapping(
+        request=MappingRequest(method=HttpMethods.POST, url_path=f"{base}/issue/{key}/transitions"),
+        response=MappingResponse(status=204),
+    )
+
+
+def jira_comment_mapping(key: str, base: str = JIRA_API_BASE) -> Mapping:
+    return Mapping(
+        request=MappingRequest(method=HttpMethods.POST, url_path=f"{base}/issue/{key}/comment"),
+        response=MappingResponse(status=201, json_body={"id": "1"}),
+    )
+
+
+def jira_retry_search_mappings() -> list[Mapping]:
+    """429 on the first search then 200-empty, via a wiremock scenario transition."""
+    scenario = "jira-retry-search"
+    return [
+        Mapping(
+            request=MappingRequest(method=HttpMethods.POST, url_path=f"{JIRA_API_BASE}/search/jql"),
+            response=MappingResponse(status=429, json_body={"errorMessages": ["Rate limit exceeded"]}),
+            scenario_name=scenario,
+            required_scenario_state="Started",
+            new_scenario_state="ok",
+        ),
+        Mapping(
+            request=MappingRequest(method=HttpMethods.POST, url_path=f"{JIRA_API_BASE}/search/jql"),
+            response=MappingResponse(status=200, json_body={"issues": []}),
+            scenario_name=scenario,
+            required_scenario_state="ok",
+        ),
+    ]
+
+
+def find_requests(notification_channel: types.TestContainerDocker, method: str, path: str) -> list[dict]:
+    """The wiremock journal entries for method+path (query strings ignored)."""
+    find = requests.post(
+        notification_channel.host_configs["8080"].get("/__admin/requests/find"),
+        json={"method": method, "urlPath": path},
+        timeout=10,
+    )
+    return find.json()["requests"]
+
+
+def jira_issue_subset(alertname: str, links: list[tuple[str, str]]) -> dict:
+    """A created-issue subset asserting summary, group labels, ADF status panel,
+    the rendered alert text, and each deep-link's text AND url (as a regex), so
+    a broken link is caught too. links: (text, url_regex) pairs."""
+    # the ADF renderer splits text nodes at underscores, so the alertname never
+    # sits in one node; the summary pins it exactly, the body asserts the
+    # rendered "Alert:" strong run followed by the name's first fragment
+    description_content = [
+        {"type": "panel", "attrs": {"panelType": "error"}},
+        {
+            "type": "paragraph",
+            "content": [
+                {"type": "text", "text": "Alert:", "marks": [{"type": "strong"}]},
+                {"type": "text", "text": re.compile(re.escape(alertname.split("_", maxsplit=1)[0]))},
+            ],
+        },
+    ]
+    if links:
+        description_content.append(
+            {
+                "type": "paragraph",
+                "content": [{"type": "text", "text": text, "marks": [{"type": "link", "attrs": {"href": re.compile(url)}}]} for text, url in links],
+            }
+        )
+    return {
+        "fields": {
+            "project": {"key": "OPS"},
+            "issuetype": {"name": "Task"},
+            "summary": f"[FIRING:1] {alertname}",
+            "labels": ["signoz-alert", re.compile(r"ALERT\{")],
+            "description": {"type": "doc", "version": 1, "content": description_content},
+        },
     }
 
 
