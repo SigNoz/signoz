@@ -3045,6 +3045,58 @@ components:
       - tags
       - spec
       type: object
+    DashboardtypesHeatmapColorMode:
+      enum:
+      - scheme
+      - opacity
+      type: string
+    DashboardtypesHeatmapColorScale:
+      enum:
+      - log
+      - sqrt
+      - linear
+      type: string
+    DashboardtypesHeatmapColors:
+      properties:
+        fill:
+          type: string
+        max:
+          nullable: true
+          type: number
+        min:
+          nullable: true
+          type: number
+        mode:
+          $ref: '#/components/schemas/DashboardtypesHeatmapColorMode'
+        reverse:
+          type: boolean
+        scale:
+          $ref: '#/components/schemas/DashboardtypesHeatmapColorScale'
+        scheme:
+          type: string
+        steps:
+          type: integer
+      type: object
+    DashboardtypesHeatmapPanelSpec:
+      properties:
+        colors:
+          $ref: '#/components/schemas/DashboardtypesHeatmapColors'
+        formatting:
+          $ref: '#/components/schemas/DashboardtypesPanelFormatting'
+        legend:
+          $ref: '#/components/schemas/DashboardtypesLegend'
+        showOverflow:
+          type: boolean
+        visualization:
+          $ref: '#/components/schemas/DashboardtypesHeatmapVisualization'
+      type: object
+    DashboardtypesHeatmapVisualization:
+      properties:
+        showVisualMap:
+          type: boolean
+        timePreference:
+          $ref: '#/components/schemas/DashboardtypesTimePreference'
+      type: object
     DashboardtypesHistogramBuckets:
       properties:
         bucketCount:
@@ -3397,6 +3449,7 @@ components:
       discriminator:
         mapping:
           signoz/BarChartPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec'
+          signoz/HeatmapPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpec'
           signoz/HistogramPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec'
           signoz/ListPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec'
           signoz/NumberPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpec'
@@ -3412,6 +3465,7 @@ components:
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpec'
       type: object
     DashboardtypesPanelPluginKind:
       enum:
@@ -3422,6 +3476,7 @@ components:
       - signoz/TablePanel
       - signoz/HistogramPanel
       - signoz/ListPanel
+      - signoz/HeatmapPanel
       type: string
     DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec:
       properties:
@@ -3431,6 +3486,18 @@ components:
           type: string
         spec:
           $ref: '#/components/schemas/DashboardtypesBarChartPanelSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/HeatmapPanel
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesHeatmapPanelSpec'
       required:
       - kind
       - spec
@@ -6950,10 +7017,7 @@ components:
             $ref: '#/components/schemas/Querybuildertypesv5TimeSeries'
           type: array
         meta:
-          properties:
-            unit:
-              type: string
-          type: object
+          $ref: '#/components/schemas/Querybuildertypesv5AggregationMeta'
         predictedSeries:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5TimeSeries'
@@ -6968,12 +7032,51 @@ components:
             $ref: '#/components/schemas/Querybuildertypesv5TimeSeries'
           type: array
       type: object
-    Querybuildertypesv5Bucket:
+    Querybuildertypesv5AggregationMeta:
       properties:
-        step:
-          format: double
-          type: number
+        buckets:
+          items:
+            format: double
+            type: number
+          type: array
+        unit:
+          type: string
       type: object
+    Querybuildertypesv5BucketOptions:
+      discriminator:
+        mapping:
+          linear: '#/components/schemas/Querybuildertypesv5BucketOptionsLinear'
+          log: '#/components/schemas/Querybuildertypesv5BucketOptionsLog'
+        propertyName: kind
+      oneOf:
+      - $ref: '#/components/schemas/Querybuildertypesv5BucketOptionsLinear'
+      - $ref: '#/components/schemas/Querybuildertypesv5BucketOptionsLog'
+      type: object
+    Querybuildertypesv5BucketOptionsLinear:
+      properties:
+        kind:
+          $ref: '#/components/schemas/Querybuildertypesv5BucketsKind'
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5LinearBucketsSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    Querybuildertypesv5BucketOptionsLog:
+      properties:
+        kind:
+          $ref: '#/components/schemas/Querybuildertypesv5BucketsKind'
+        spec:
+          $ref: '#/components/schemas/Querybuildertypesv5LogBucketsSpec'
+      required:
+      - kind
+      - spec
+      type: object
+    Querybuildertypesv5BucketsKind:
+      enum:
+      - linear
+      - log
+      type: string
     Querybuildertypesv5BuilderQuerySpec:
       discriminator:
         mapping:
@@ -7154,12 +7257,28 @@ components:
         value:
           type: string
       type: object
+    Querybuildertypesv5LinearBucketsSpec:
+      properties:
+        maxValue:
+          format: double
+          type: number
+        numBuckets:
+          type: integer
+      required:
+      - maxValue
+      type: object
     Querybuildertypesv5LogAggregation:
       properties:
         alias:
           type: string
         expression:
           type: string
+      type: object
+    Querybuildertypesv5LogBucketsSpec:
+      properties:
+        scale:
+          nullable: true
+          type: integer
       type: object
     Querybuildertypesv5MetricAggregation:
       properties:
@@ -7619,6 +7738,8 @@ components:
         queries (traces, logs, metrics), formulas, joins, trace operators, PromQL,
         and ClickHouse SQL queries.
       properties:
+        bucketOptions:
+          $ref: '#/components/schemas/Querybuildertypesv5BucketOptions'
         compositeQuery:
           $ref: '#/components/schemas/Querybuildertypesv5CompositeQuery'
         end:
@@ -7718,6 +7839,7 @@ components:
       - raw
       - raw_stream
       - trace
+      - heatmap
       type: string
     Querybuildertypesv5ScalarData:
       properties:
@@ -7792,8 +7914,6 @@ components:
       type: object
     Querybuildertypesv5TimeSeriesValue:
       properties:
-        bucket:
-          $ref: '#/components/schemas/Querybuildertypesv5Bucket'
         partial:
           type: boolean
         timestamp:

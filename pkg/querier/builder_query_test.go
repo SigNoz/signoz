@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/stretchr/testify/assert"
@@ -118,6 +119,169 @@ func TestBuilderQueryFingerprintQueryType(t *testing.T) {
 
 	assert.True(t, strings.HasPrefix(regular.Fingerprint(), qbtypes.QueryTypeBuilder.StringValue()+"&"))
 	assert.Empty(t, ai.Fingerprint())
+}
+
+func TestBuilderQueryFingerprintHeatmapBucketing(t *testing.T) {
+	coarseLogScale := 1
+
+	testCases := []struct {
+		description   string
+		left          *builderQuery[qbtypes.MetricAggregation]
+		right         *builderQuery[qbtypes.MetricAggregation]
+		expectedEqual bool
+	}{
+		{
+			// ResolveBucketOptions pins LogScale to MaxLogScale whatever the
+			// caller asked for, so the two are indistinguishable here by design
+			description: "a coarser logScale reads the same cache entry",
+			left: &builderQuery[qbtypes.MetricAggregation]{
+				queryType: qbtypes.QueryTypeBuilder,
+				kind:      qbtypes.RequestTypeHeatmap,
+				spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+					Signal: telemetrytypes.SignalMetrics,
+					Aggregations: []qbtypes.MetricAggregation{{
+						MetricName:       "system.memory.usage",
+						Type:             metrictypes.GaugeType,
+						HeatmapBucketing: &qbtypes.HeatmapBucketing{Kind: qbtypes.BucketsKindLog, LogScale: qbtypes.MaxLogScale, NumBuckets: qbtypes.DefaultNumBuckets},
+					}},
+				},
+			},
+			right: &builderQuery[qbtypes.MetricAggregation]{
+				queryType: qbtypes.QueryTypeBuilder,
+				kind:      qbtypes.RequestTypeHeatmap,
+				spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+					Signal: telemetrytypes.SignalMetrics,
+					Aggregations: []qbtypes.MetricAggregation{{
+						MetricName:       "system.memory.usage",
+						Type:             metrictypes.GaugeType,
+						HeatmapBucketing: &qbtypes.HeatmapBucketing{Kind: qbtypes.BucketsKindLog, LogScale: qbtypes.MaxLogScale, NumBuckets: qbtypes.DefaultNumBuckets},
+					}},
+				},
+			},
+			expectedEqual: true,
+		},
+		{
+			description: "linear separates on maxValue",
+			left: &builderQuery[qbtypes.MetricAggregation]{
+				queryType: qbtypes.QueryTypeBuilder,
+				kind:      qbtypes.RequestTypeHeatmap,
+				spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+					Signal: telemetrytypes.SignalMetrics,
+					Aggregations: []qbtypes.MetricAggregation{{
+						MetricName:       "system.memory.usage",
+						Type:             metrictypes.GaugeType,
+						HeatmapBucketing: &qbtypes.HeatmapBucketing{Kind: qbtypes.BucketsKindLinear, MaxValue: 500, NumBuckets: 25},
+					}},
+				},
+			},
+			right: &builderQuery[qbtypes.MetricAggregation]{
+				queryType: qbtypes.QueryTypeBuilder,
+				kind:      qbtypes.RequestTypeHeatmap,
+				spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+					Signal: telemetrytypes.SignalMetrics,
+					Aggregations: []qbtypes.MetricAggregation{{
+						MetricName:       "system.memory.usage",
+						Type:             metrictypes.GaugeType,
+						HeatmapBucketing: &qbtypes.HeatmapBucketing{Kind: qbtypes.BucketsKindLinear, MaxValue: 800, NumBuckets: 25},
+					}},
+				},
+			},
+			expectedEqual: false,
+		},
+		{
+			description: "linear separates on numBuckets",
+			left: &builderQuery[qbtypes.MetricAggregation]{
+				queryType: qbtypes.QueryTypeBuilder,
+				kind:      qbtypes.RequestTypeHeatmap,
+				spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+					Signal: telemetrytypes.SignalMetrics,
+					Aggregations: []qbtypes.MetricAggregation{{
+						MetricName:       "system.memory.usage",
+						Type:             metrictypes.GaugeType,
+						HeatmapBucketing: &qbtypes.HeatmapBucketing{Kind: qbtypes.BucketsKindLinear, MaxValue: 500, NumBuckets: 25},
+					}},
+				},
+			},
+			right: &builderQuery[qbtypes.MetricAggregation]{
+				queryType: qbtypes.QueryTypeBuilder,
+				kind:      qbtypes.RequestTypeHeatmap,
+				spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+					Signal: telemetrytypes.SignalMetrics,
+					Aggregations: []qbtypes.MetricAggregation{{
+						MetricName:       "system.memory.usage",
+						Type:             metrictypes.GaugeType,
+						HeatmapBucketing: &qbtypes.HeatmapBucketing{Kind: qbtypes.BucketsKindLinear, MaxValue: 500, NumBuckets: 40},
+					}},
+				},
+			},
+			expectedEqual: false,
+		},
+		{
+			description: "linear and log are separate entries",
+			left: &builderQuery[qbtypes.MetricAggregation]{
+				queryType: qbtypes.QueryTypeBuilder,
+				kind:      qbtypes.RequestTypeHeatmap,
+				spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+					Signal: telemetrytypes.SignalMetrics,
+					Aggregations: []qbtypes.MetricAggregation{{
+						MetricName:       "system.memory.usage",
+						Type:             metrictypes.GaugeType,
+						HeatmapBucketing: &qbtypes.HeatmapBucketing{Kind: qbtypes.BucketsKindLinear, MaxValue: 500, NumBuckets: 25},
+					}},
+				},
+			},
+			right: &builderQuery[qbtypes.MetricAggregation]{
+				queryType: qbtypes.QueryTypeBuilder,
+				kind:      qbtypes.RequestTypeHeatmap,
+				spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+					Signal: telemetrytypes.SignalMetrics,
+					Aggregations: []qbtypes.MetricAggregation{{
+						MetricName:       "system.memory.usage",
+						Type:             metrictypes.GaugeType,
+						HeatmapBucketing: &qbtypes.HeatmapBucketing{Kind: qbtypes.BucketsKindLog, LogScale: qbtypes.MaxLogScale, NumBuckets: qbtypes.DefaultNumBuckets},
+					}},
+				},
+			},
+			expectedEqual: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			if testCase.expectedEqual {
+				assert.Equal(t, testCase.left.Fingerprint(), testCase.right.Fingerprint())
+				return
+			}
+			assert.NotEqual(t, testCase.left.Fingerprint(), testCase.right.Fingerprint())
+		})
+	}
+
+	t.Run("a coarser scale never reaches the axis clickhouse builds", func(t *testing.T) {
+		finest := (&qbtypes.BucketOptions{Kind: qbtypes.BucketsKindLog, Spec: qbtypes.LogBucketsSpec{}}).ResolveBucketOptions()
+		coarse := (&qbtypes.BucketOptions{Kind: qbtypes.BucketsKindLog, Spec: qbtypes.LogBucketsSpec{Scale: &coarseLogScale}}).ResolveBucketOptions()
+
+		assert.Equal(t, finest, coarse)
+	})
+
+	t.Run("a histogram folds in no bucket options at all", func(t *testing.T) {
+		// resolveHeatmapBucketing leaves histograms nil, so bucketOptions sent
+		// alongside one must not fragment its cache
+		histogram := &builderQuery[qbtypes.MetricAggregation]{
+			queryType: qbtypes.QueryTypeBuilder,
+			kind:      qbtypes.RequestTypeHeatmap,
+			spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Signal: telemetrytypes.SignalMetrics,
+				Aggregations: []qbtypes.MetricAggregation{{
+					MetricName: "signoz_latency",
+					Type:       metrictypes.HistogramType,
+				}},
+			},
+		}
+
+		fingerprint := histogram.Fingerprint()
+		assert.NotContains(t, fingerprint, qbtypes.BucketsKindLog.StringValue())
+		assert.NotContains(t, fingerprint, qbtypes.BucketsKindLinear.StringValue())
+	})
 }
 
 func TestMakeBucketsOrder(t *testing.T) {

@@ -31,6 +31,11 @@ var (
 	// written clickhouse query. The column alias indcate which value is
 	// to be considered as final result (or target).
 	legacyReservedColumnTargetAliases = []string{"__result", "__value", "result", "res", "value"}
+
+	// legacyHeatmapBucketColumn is the alias a user written clickhouse query can
+	// give its bucket boundary column, alongside the HeatmapBucketColumn the
+	// statement builder emits.
+	legacyHeatmapBucketColumn = "bucket"
 )
 
 // stripKeyAlias removes the __SELECT_KEY_<n>_ / __GROUP_BY_KEY_<n>_ prefix from a result
@@ -83,6 +88,8 @@ func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.Ti
 		payload, err = readAsTimeSeries(rows, queryWindow, step, queryName)
 	case qbtypes.RequestTypeScalar:
 		payload, err = readAsScalar(rows, queryName)
+	case qbtypes.RequestTypeHeatmap:
+		payload, err = readAsHeatmap(rows, queryWindow, step, queryName)
 	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeTrace, qbtypes.RequestTypeRawStream:
 		payload, err = readAsRaw(rows, queryName)
 		// TODO: add support for other request types
@@ -111,35 +118,6 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 	seriesMap := map[sKey]*qbtypes.TimeSeries{}
 
 	stepMs := uint64(step.Milliseconds())
-
-	// Helper function to check if a timestamp represents a partial value
-	isPartialValue := func(timestamp int64) bool {
-		if stepMs == 0 || queryWindow == nil {
-			return false
-		}
-
-		timestampMs := uint64(timestamp)
-
-		// For the first interval, check if query start is misaligned
-		// The first complete interval starts at the first timestamp >= queryWindow.From that is aligned to step
-		firstCompleteInterval := queryWindow.From
-		if queryWindow.From%stepMs != 0 {
-			// Round up to next step boundary
-			firstCompleteInterval = ((queryWindow.From / stepMs) + 1) * stepMs
-		}
-
-		// If timestamp is before the first complete interval, it's partial
-		if timestampMs < firstCompleteInterval {
-			return true
-		}
-
-		// For the last interval, check if it would extend beyond query end
-		if timestampMs+stepMs > queryWindow.To {
-			return queryWindow.To%stepMs != 0
-		}
-
-		return false
-	}
 
 	// Pre-allocate for labels based on column count
 	lblValsCapacity := len(colNames) - 1 // -1 for timestamp
@@ -271,7 +249,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 			series.Values = append(series.Values, &qbtypes.TimeSeriesValue{
 				Timestamp: ts,
 				Value:     val,
-				Partial:   isPartialValue(ts),
+				Partial:   isPartialValue(ts, queryWindow, stepMs),
 			})
 		}
 	}
@@ -313,6 +291,223 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 		QueryName:    queryName,
 		Aggregations: nonEmpty,
 	}, nil
+}
+
+// heatmapSeries accumulates one group's cells while the rows are read. Counts
+// are held against their boundary rather than a slice because the axis is only
+// known once every row has been seen.
+type heatmapSeries struct {
+	labels []*qbtypes.Label
+	counts map[int64]map[float64]float64
+}
+
+// heatmapAccumulator is shared by the readers of the two things a heatmap can
+// come back as: ClickHouse rows, and a PromQL matrix.
+type heatmapAccumulator struct {
+	seriesByKey map[string]*heatmapSeries
+	seriesOrder []string
+	boundaries  map[float64]struct{}
+}
+
+func newHeatmapAccumulator() *heatmapAccumulator {
+	return &heatmapAccumulator{
+		seriesByKey: map[string]*heatmapSeries{},
+		boundaries:  map[float64]struct{}{},
+	}
+}
+
+// addCell files one cell under the group labelsKey identifies, keeping the
+// labels from the first cell seen for it.
+func (a *heatmapAccumulator) addCell(labelsKey string, lbls []*qbtypes.Label, ts int64, boundary, count float64) {
+	series, ok := a.seriesByKey[labelsKey]
+	if !ok {
+		series = &heatmapSeries{labels: lbls, counts: map[int64]map[float64]float64{}}
+		a.seriesByKey[labelsKey] = series
+		a.seriesOrder = append(a.seriesOrder, labelsKey)
+	}
+	if series.counts[ts] == nil {
+		series.counts[ts] = map[float64]float64{}
+	}
+	series.counts[ts][boundary] += count
+	if !math.IsInf(boundary, 1) {
+		a.boundaries[boundary] = struct{}{}
+	}
+}
+
+// foldSeries turns the collected cells into one series per group, in the order
+// the groups first appeared.
+func (a *heatmapAccumulator) foldSeries(queryWindow *qbtypes.TimeRange, stepMs uint64, queryName string) *qbtypes.TimeSeriesData {
+	if len(a.seriesOrder) == 0 {
+		return &qbtypes.TimeSeriesData{QueryName: queryName}
+	}
+
+	boundaries := make([]float64, 0, len(a.boundaries))
+	for boundary := range a.boundaries {
+		boundaries = append(boundaries, boundary)
+	}
+	slices.Sort(boundaries)
+
+	// the band past the last boundary is where the +Inf overflow lands
+	bandIndexByBoundary := make(map[float64]int, len(boundaries)+1)
+	for band, boundary := range boundaries {
+		bandIndexByBoundary[boundary] = band
+	}
+	bandIndexByBoundary[math.Inf(1)] = len(boundaries)
+
+	bucket := &qbtypes.AggregationBucket{
+		Index:  0,
+		Alias:  "__result_0",
+		Meta:   qbtypes.AggregationMeta{Buckets: boundaries},
+		Series: make([]*qbtypes.TimeSeries, 0, len(a.seriesOrder)),
+	}
+
+	for _, labelsKey := range a.seriesOrder {
+		accumulated := a.seriesByKey[labelsKey]
+
+		timestamps := make([]int64, 0, len(accumulated.counts))
+		for ts := range accumulated.counts {
+			timestamps = append(timestamps, ts)
+		}
+		slices.Sort(timestamps)
+
+		series := &qbtypes.TimeSeries{
+			Labels: accumulated.labels,
+			Values: make([]*qbtypes.TimeSeriesValue, 0, len(timestamps)),
+		}
+		for _, ts := range timestamps {
+			values := make([]float64, len(boundaries)+1)
+			for boundary, count := range accumulated.counts[ts] {
+				values[bandIndexByBoundary[boundary]] = count
+			}
+			series.Values = append(series.Values, &qbtypes.TimeSeriesValue{
+				Timestamp: ts,
+				Values:    values,
+				Partial:   isPartialValue(ts, queryWindow, stepMs),
+			})
+		}
+		bucket.Series = append(bucket.Series, series)
+	}
+
+	return &qbtypes.TimeSeriesData{
+		QueryName:    queryName,
+		Aggregations: []*qbtypes.AggregationBucket{bucket},
+	}
+}
+
+// readAsHeatmap folds one row per cell — (timestamp, group labels, bucket upper
+// boundary, count) — into one series per group.
+func readAsHeatmap(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (*qbtypes.TimeSeriesData, error) {
+	colTypes := rows.ColumnTypes()
+	colNames := rows.Columns()
+
+	slots := make([]any, len(colTypes))
+	for i, ct := range colTypes {
+		slots[i] = reflect.New(ct.ScanType()).Interface()
+	}
+
+	stepMs := uint64(step.Milliseconds())
+
+	accumulator := newHeatmapAccumulator()
+
+	// every column that is not the timestamp, the boundary or the count is a label
+	lblValsCapacity := len(colNames) - 3
+	if lblValsCapacity < 0 {
+		lblValsCapacity = 0
+	}
+
+	for rows.Next() {
+		if err := rows.Scan(slots...); err != nil {
+			return nil, err
+		}
+
+		var (
+			ts       int64
+			boundary float64
+			count    float64
+			hasCell  bool
+			lblVals  = make([]string, 0, lblValsCapacity)
+			lblObjs  = make([]*qbtypes.Label, 0, lblValsCapacity)
+		)
+
+		for idx, ptr := range slots {
+			name := stripKeyAlias(colNames[idx])
+			value := derefValue(ptr)
+
+			if t, ok := value.(time.Time); ok {
+				ts = t.UnixMilli()
+				continue
+			}
+
+			switch name {
+			case qbtypes.HeatmapBucketColumn, legacyHeatmapBucketColumn:
+				boundary = numericAsFloat(value)
+				hasCell = true
+			default:
+				if aggRe.MatchString(name) || slices.Contains(legacyReservedColumnTargetAliases, name) {
+					count = numericAsFloat(value)
+					continue
+				}
+				// a nullable label column comes back as a nil any, which would
+				// otherwise key the series on the literal "<nil>"
+				if value == nil {
+					value = ""
+				}
+				lblVals = append(lblVals, fmt.Sprint(value))
+				lblObjs = append(lblObjs, &qbtypes.Label{
+					Key:   telemetrytypes.TelemetryFieldKey{Name: name},
+					Value: value,
+				})
+			}
+		}
+
+		if ts == 0 || !hasCell || math.IsNaN(boundary) || math.IsInf(boundary, -1) {
+			continue
+		}
+		if math.IsNaN(count) || math.IsInf(count, 0) {
+			continue
+		}
+
+		sort.Strings(lblVals)
+		labelsKey := strings.Join(lblVals, ",")
+
+		accumulator.addCell(labelsKey, lblObjs, ts, boundary, count)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return accumulator.foldSeries(queryWindow, stepMs, queryName), nil
+}
+
+// isPartialValue reports whether the step interval starting at timestamp is only
+// partly covered by the query window, which happens when the window boundaries
+// are not step-aligned.
+func isPartialValue(timestamp int64, queryWindow *qbtypes.TimeRange, stepMs uint64) bool {
+	if stepMs == 0 || queryWindow == nil {
+		return false
+	}
+
+	timestampMs := uint64(timestamp)
+
+	// For the first interval, check if query start is misaligned
+	// The first complete interval starts at the first timestamp >= queryWindow.From that is aligned to step
+	firstCompleteInterval := queryWindow.From
+	if queryWindow.From%stepMs != 0 {
+		// Round up to next step boundary
+		firstCompleteInterval = ((queryWindow.From / stepMs) + 1) * stepMs
+	}
+
+	// If timestamp is before the first complete interval, it's partial
+	if timestampMs < firstCompleteInterval {
+		return true
+	}
+
+	// For the last interval, check if it would extend beyond query end
+	if timestampMs+stepMs > queryWindow.To {
+		return queryWindow.To%stepMs != 0
+	}
+
+	return false
 }
 
 func isNumericKind(t reflect.Type) bool {

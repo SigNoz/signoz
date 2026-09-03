@@ -2,6 +2,7 @@ package querybuildertypesv5
 
 import (
 	"fmt"
+	"math"
 	"slices"
 	"strings"
 
@@ -581,7 +582,7 @@ func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
 
 	// Validate request type
 	switch r.RequestType {
-	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace, RequestTypeTimeSeries, RequestTypeScalar:
+	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace, RequestTypeTimeSeries, RequestTypeScalar, RequestTypeHeatmap:
 		opts = append(opts, GetValidationOptions(r.RequestType)...)
 	default:
 		return errors.NewInvalidInputf(
@@ -589,8 +590,12 @@ func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
 			"invalid request type: %s",
 			r.RequestType,
 		).WithAdditional(
-			"Valid request types are: raw, timeseries, scalar",
+			"Valid request types are: raw, timeseries, scalar, heatmap",
 		)
+	}
+
+	if err := r.validateHeatmap(); err != nil {
+		return err
 	}
 
 	// raw/trace request types don't support metric queries;
@@ -630,11 +635,15 @@ func (r *QueryRangeRequest) ValidateRequestScope() ([]ValidationOption, error) {
 
 	var opts []ValidationOption
 	switch r.RequestType {
-	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace, RequestTypeTimeSeries, RequestTypeScalar:
+	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace, RequestTypeTimeSeries, RequestTypeScalar, RequestTypeHeatmap:
 		opts = GetValidationOptions(r.RequestType)
 	default:
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid request type: %s", r.RequestType).
-			WithAdditional("Valid request types are: raw, timeseries, scalar")
+			WithAdditional("Valid request types are: raw, timeseries, scalar, heatmap")
+	}
+
+	if err := r.validateHeatmap(); err != nil {
+		return nil, err
 	}
 
 	if r.RequestType == RequestTypeRaw || r.RequestType == RequestTypeRawStream || r.RequestType == RequestTypeTrace {
@@ -838,9 +847,129 @@ func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) err
 	}
 }
 
+// validateHeatmap refuses request shapes a heatmap cannot render. Metric type is
+// deliberately not checked here: MetricAggregation.Type is resolved from metadata
+// after validation runs, so gauge/sum/counter and exponential histograms have to
+// be refused by the querier once that resolution has happened.
+func (r *QueryRangeRequest) validateHeatmap() error {
+	if r.RequestType != RequestTypeHeatmap {
+		return nil
+	}
+
+	if r.FormatOptions != nil && r.FormatOptions.FillGaps {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"fillGaps is not supported for heatmap requests: an absent column means collection stopped, which a zero-filled column would hide")
+	}
+
+	if err := r.BucketOptions.validateBucketOptions(); err != nil {
+		return err
+	}
+
+	enabled := 0
+	for _, envelope := range r.CompositeQuery.Queries {
+		switch spec := envelope.Spec.(type) {
+		case QueryBuilderQuery[MetricAggregation]:
+			if err := validateHeatmapQuery(spec.Functions, spec.Having); err != nil {
+				return err
+			}
+			if spec.Disabled {
+				continue
+			}
+			enabled++
+		case QueryBuilderFormula:
+			if err := validateHeatmapQuery(spec.Functions, spec.Having); err != nil {
+				return err
+			}
+			if spec.Disabled {
+				continue
+			}
+			enabled++
+		case ClickHouseQuery:
+			// The rows a ClickHouse query returns are read by request type, the
+			// same as for any other request, so one shaped as heatmap cells
+			// renders without the builder having produced it.
+			if spec.Disabled {
+				continue
+			}
+			enabled++
+		case PromQuery:
+			// A PromQL heatmap is a classic histogram read through its `le`
+			// labels, the same axis the builder's histogram path uses.
+			if r.BucketOptions != nil {
+				return errors.NewInvalidInputf(errors.CodeInvalidInput,
+					"bucketOptions are not supported for promql heatmap requests: the bucket axis comes from the `le` labels the query returns, so nothing in the spec would be applied")
+			}
+			if spec.Disabled {
+				continue
+			}
+			enabled++
+		default:
+			return errors.NewInvalidInputf(errors.CodeInvalidInput,
+				"heatmap requests support one metrics builder query, one formula over them, one clickhouse query, or one promql query, got %q", envelope.Type.StringValue())
+		}
+	}
+
+	if enabled != 1 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"heatmap requests need exactly one enabled query, got %d", enabled)
+	}
+
+	return nil
+}
+
+func (b *BucketOptions) validateBucketOptions() error {
+	if b == nil {
+		return nil
+	}
+
+	switch spec := b.Spec.(type) {
+	case LinearBucketsSpec:
+		// Boundaries are placed at maxValue*i/numBuckets, so a cap at or below
+		// zero collapses every one of them onto the same point, and a non-finite
+		// one compares false against every value so nothing reaches the overflow.
+		if math.IsNaN(spec.MaxValue) || math.IsInf(spec.MaxValue, 0) || spec.MaxValue <= 0 {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput,
+				"linear buckets need a finite maxValue greater than 0, got %v", spec.MaxValue)
+		}
+		if spec.NumBuckets < 0 || spec.NumBuckets > MaxNumBuckets {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput,
+				"numBuckets must be between 1 and %d, got %d", MaxNumBuckets, spec.NumBuckets)
+		}
+
+	case LogBucketsSpec:
+		if spec.Scale != nil && (*spec.Scale < MinLogScale || *spec.Scale > MaxLogScale) {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput,
+				"scale must be between %d and %d, got %d", MinLogScale, MaxLogScale, *spec.Scale)
+		}
+
+	default:
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"invalid bucketOptions kind %q, expected one of linear, log", b.Kind.StringValue())
+	}
+
+	return nil
+}
+
+// validateHeatmapQuery refuses the per-query settings that cannot mean anything
+// on a heatmap. It runs on disabled queries too: a disabled query is a formula
+// input, so whatever it does still reaches the cells.
+func validateHeatmapQuery(functions []Function, having *Having) error {
+	if len(functions) > 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"functions are not supported for heatmap requests: a heatmap point is a count per bucket, not a single value")
+	}
+
+	if having != nil && having.Expression != "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"having is not supported for heatmap requests: it filters individual cells, which breaks the cumulative differencing")
+	}
+
+	return nil
+}
+
 func GetValidationOptions(requestType RequestType) []ValidationOption {
 	switch requestType {
-	case RequestTypeTimeSeries:
+	case RequestTypeTimeSeries, RequestTypeHeatmap:
 		return []ValidationOption{WithSkipSelectFieldValidation(), WithTimestampGroupByValidation()}
 	case RequestTypeScalar:
 		return []ValidationOption{WithSkipSelectFieldValidation(), WithReduceToValidation()}

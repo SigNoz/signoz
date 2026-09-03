@@ -495,7 +495,8 @@ func TestToResultDropsNonFiniteValues(t *testing.T) {
 
 			var mu sync.Mutex
 			var rows, bytes uint64
-			result := q.toResult(matrix, nil, time.Now(), &mu, &rows, &bytes)
+			result, err := q.toResult(matrix, nil, time.Now(), &mu, &rows, &bytes)
+			require.NoError(t, err)
 
 			tsData, ok := result.Value.(*qbv5.TimeSeriesData)
 			require.True(t, ok)
@@ -526,7 +527,9 @@ func TestToResultDropsSeriesAndBucketLeftEmpty(t *testing.T) {
 
 	var mu sync.Mutex
 	var rows, bytes uint64
-	tsData, ok := q.toResult(matrix, nil, time.Now(), &mu, &rows, &bytes).Value.(*qbv5.TimeSeriesData)
+	result, err := q.toResult(matrix, nil, time.Now(), &mu, &rows, &bytes)
+	require.NoError(t, err)
+	tsData, ok := result.Value.(*qbv5.TimeSeriesData)
 	require.True(t, ok)
 	require.Len(t, tsData.Aggregations, 1)
 	require.Len(t, tsData.Aggregations[0].Series, 1, "the all-NaN series is gone")
@@ -535,7 +538,9 @@ func TestToResultDropsSeriesAndBucketLeftEmpty(t *testing.T) {
 	allNaN := promql.Matrix{
 		{Metric: labels.FromStrings("job_name", "idleJob"), Floats: []promql.FPoint{{T: 1000, F: math.NaN()}}},
 	}
-	tsData, ok = q.toResult(allNaN, nil, time.Now(), &mu, &rows, &bytes).Value.(*qbv5.TimeSeriesData)
+	result, err = q.toResult(allNaN, nil, time.Now(), &mu, &rows, &bytes)
+	require.NoError(t, err)
+	tsData, ok = result.Value.(*qbv5.TimeSeriesData)
 	require.True(t, ok)
 	assert.Empty(t, tsData.Aggregations)
 }
