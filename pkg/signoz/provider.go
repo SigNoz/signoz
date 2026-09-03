@@ -247,6 +247,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddDeploymentHostTuplesFactory(sqlstore),
 		sqlmigration.NewAddSystemDashboardFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddLicenseTuplesFactory(sqlstore),
+		sqlmigration.NewAddChannelDisplayNameFactory(sqlstore, sqlschema),
 	)
 }
 
