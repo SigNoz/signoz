@@ -13,12 +13,32 @@ import { cloneDeep, isArray } from 'lodash-es';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
 
-import { isKeyMatch } from './utils';
+import { getKeySpellings, isKeyMatch } from './utils';
 import { CheckedState } from '../../types';
 import { SectionType } from './v2/itemRules';
 
 export const SELECTED_OPERATORS = [OPERATORS['='], 'in'];
 export const NON_SELECTED_OPERATORS = [OPERATORS['!='], 'not in', 'nin'];
+
+// The operators this algebra emits, and so the only ones it may rewrite out of an
+// expression. A hand-written clause on the same key (CONTAINS, EXISTS, a range) is
+// none of its business and has to survive a toggle.
+const MANAGED_OPERATORS = [OPERATORS['='], OPERATORS['!='], 'in', 'not in'];
+
+/**
+ * Drops this filter's own clauses for `key` from `expression`, leaving every other
+ * key and any clause the checkbox does not manage untouched. Matches all context
+ * prefixes, since `isKeyMatch` treats `service.name` and `resource.service.name` as
+ * the same filter but expression rewrites match keys literally.
+ */
+function removeManagedClauses(expression: string, key: string): string {
+	return removeKeysFromExpression(
+		expression,
+		getKeySpellings(key),
+		false,
+		MANAGED_OPERATORS,
+	);
+}
 
 // Sources that use backend APIs expecting short operator format (e.g., 'nin' instead of 'not in')
 const SOURCES_WITH_SHORT_OPERATORS = [QuickFiltersSource.INFRA_MONITORING];
@@ -105,8 +125,8 @@ export function deriveCheckboxState({
 }
 
 /**
- * Returns a new query with every clause for this attribute key removed, both
- * from the structured filter items and the raw filter expression.
+ * Returns a new query with this filter's clauses for the attribute key removed from
+ * the active query, both from the structured filter items and the raw expression.
  */
 export function clearFilterFromQuery({
 	currentQuery,
@@ -121,24 +141,28 @@ export function clearFilterFromQuery({
 		...currentQuery,
 		builder: {
 			...currentQuery.builder,
-			queryData: currentQuery.builder.queryData.map((item, idx) => ({
-				...item,
-				filter: {
-					expression: removeKeysFromExpression(item.filter?.expression ?? '', [
-						filter.attributeKey.key,
-					]),
-				},
-				filters: {
-					...item.filters,
-					items:
-						idx === activeQueryIndex
-							? item.filters?.items?.filter(
-									(fil) => !isKeyMatch(fil.key?.key, filter.attributeKey.key),
-								) || []
-							: [...(item.filters?.items || [])],
-					op: item.filters?.op || 'AND',
-				},
-			})),
+			queryData: currentQuery.builder.queryData.map((item, idx) => {
+				if (idx !== activeQueryIndex) {
+					return item;
+				}
+				return {
+					...item,
+					filter: {
+						expression: removeManagedClauses(
+							item.filter?.expression ?? '',
+							filter.attributeKey.key,
+						),
+					},
+					filters: {
+						...item.filters,
+						items:
+							item.filters?.items?.filter(
+								(fil) => !isKeyMatch(fil.key?.key, filter.attributeKey.key),
+							) || [],
+						op: item.filters?.op || 'AND',
+					},
+				};
+			}),
 		},
 	};
 }
@@ -429,9 +453,10 @@ export function applyCheckboxToggle({
 	if (query) {
 		const synced = convertFiltersToExpressionWithExistingQuery(
 			query.filters ?? { items: [], op: 'AND' },
-			removeKeysFromExpression(query.filter?.expression ?? '', [
+			removeManagedClauses(
+				query.filter?.expression ?? '',
 				filter.attributeKey.key,
-			]),
+			),
 		);
 		query.filter = synced.filter;
 		query.filters = synced.filters;

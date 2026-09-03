@@ -1,249 +1,526 @@
-import { convertFiltersToExpressionWithExistingQuery } from 'components/QueryBuilderV2/utils';
 import {
-	FiltersType,
-	IQuickFiltersConfig,
-	QuickFiltersSource,
-} from 'components/QuickFilters/types';
-import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
+	convertFiltersToExpression,
+	convertFiltersToExpressionWithExistingQuery,
+} from 'components/QueryBuilderV2/utils';
+import { QuickFiltersSource } from 'components/QuickFilters/types';
+import {
+	Query,
+	TagFilter,
+	TagFilterItem,
+} from 'types/api/queryBuilder/queryBuilderData';
 
-import { applyCheckboxToggle } from './checkboxFilterQuery';
+import {
+	applyCheckboxToggle,
+	clearFilterFromQuery,
+	deriveCheckboxState,
+	getNotInOperator,
+} from './checkboxFilterQuery';
 import { CheckedState } from '../../types';
 import { SectionType } from './v2/itemRules';
 
-const ATTRIBUTE_KEY = 'k8s.cluster.name';
+const KEY = 'service.name';
 
-const filter = {
-	type: FiltersType.CHECKBOX,
-	title: 'Cluster',
-	attributeKey: {
-		key: ATTRIBUTE_KEY,
-		dataType: 'string',
-		type: 'tag',
-		isColumn: false,
-	},
-	dataSource: DataSource.METRICS,
-	defaultOpen: true,
-} as unknown as IQuickFiltersConfig;
+/**
+ * Mini test framework
+ * -------------------
+ * `filters.items` is the source of truth the checkbox algebra mutates.
+ * `filter.expression` is the derived value the backend actually reads, and it is
+ * authoritatively rebuilt from the items on every URL round trip
+ * (`useGetCompositeQueryParam` -> `convertFiltersToExpressionWithExistingQuery`).
+ * That rebuild is additive, so `applyCheckboxToggle` re-derives its own clauses
+ * into the expression itself: otherwise the round trip resurrects a clause the
+ * toggle removed, or appends a duplicate of one it replaced.
+ *
+ * So a case does not assert the intermediate expression the toggle emits. It
+ * asserts the pair that has to stay consistent:
+ *   - `items`      : exact structured clauses after the toggle
+ *   - `expression` : the expression AFTER the round trip, which is what ships
+ *
+ * `runToggle` runs the real reducer, then feeds its output through the real
+ * converter to get the shipped expression.
+ */
 
-function makeQuery(expression: string, items: TagFilterItem[]): Query {
+type SimpleItem = {
+	key: string;
+	op: string;
+	value: TagFilterItem['value'];
+};
+
+function toTagItem(item: SimpleItem, idx: number): TagFilterItem {
+	return {
+		id: `id-${idx}`,
+		key: { key: item.key, type: 'tag' } as TagFilterItem['key'],
+		op: item.op,
+		value: item.value,
+	};
+}
+
+// Serialises items into an expression (via the app's own converter) so a case's
+// starting state is self-consistent (items and expression agree), the way it
+// would be in the app after a prior round trip.
+const serializeItems = (items: SimpleItem[]): string =>
+	convertFiltersToExpression({ items: items.map(toTagItem), op: 'AND' })
+		.expression;
+
+function buildQuery(items: SimpleItem[], expression: string): Query {
 	return {
 		builder: {
-			queryData: [{ filter: { expression }, filters: { items, op: 'AND' } }],
+			queryData: [
+				{
+					filters: { items: items.map(toTagItem), op: 'AND' },
+					filter: { expression },
+				},
+			],
 		},
 	} as unknown as Query;
 }
 
-/**
- * Quick filters dispatch through the URL, and `useGetCompositeQueryParam` merges
- * `filters.items` into `filter.expression` on the way back in — a clause left in
- * the expression resurrects a filter the user just removed. Every assertion here
- * runs through that round-trip.
- */
-function roundTrip(query: Query): Query {
-	const queryData = query.builder.queryData[0];
-	const converted = convertFiltersToExpressionWithExistingQuery(
-		queryData.filters || { items: [], op: 'AND' },
-		queryData.filter?.expression || '',
+// Simulates the URL round trip: rebuild the shipped expression from the items,
+// reconciled against whatever expression the toggle left behind. Trimmed to
+// absorb a converter quirk that leaves a trailing space when it widens an
+// operator in place (e.g. `=` -> `IN`).
+function roundTripExpression(
+	items: TagFilterItem[],
+	emittedExpression: string,
+): string {
+	const filters: TagFilter = { items, op: 'AND' };
+	const { filter } = convertFiltersToExpressionWithExistingQuery(
+		filters,
+		emittedExpression,
 	);
-	return makeQuery(converted.filter.expression, converted.filters.items);
+	return (filter?.expression ?? '').trim();
 }
 
-function toggle(
-	query: Query,
+interface ToggleAction {
+	value: string;
+	checked: boolean;
+	isOnlyOrAllClicked?: boolean;
+	previousState?: CheckedState;
+	sectionType?: SectionType;
+	source?: QuickFiltersSource;
+	attributeValues?: string[];
+}
+
+interface ToggleCase {
+	name: string;
+	initial?: { items?: SimpleItem[]; expression?: string };
+	action: ToggleAction;
+	expected: { items: SimpleItem[]; expression: string };
+}
+
+function runToggle(c: ToggleCase): { items: SimpleItem[]; expression: string } {
+	const initialItems = c.initial?.items ?? [];
+	const initialExpression =
+		c.initial?.expression ?? serializeItems(initialItems);
+
+	const result = applyCheckboxToggle({
+		currentQuery: buildQuery(initialItems, initialExpression),
+		activeQueryIndex: 0,
+		filter: { attributeKey: { key: KEY, type: 'tag' } } as never,
+		source: c.action.source ?? QuickFiltersSource.LOGS_EXPLORER,
+		attributeValues: c.action.attributeValues ?? ['a', 'b', 'c'],
+		value: c.action.value,
+		checked: c.action.checked,
+		isOnlyOrAllClicked: c.action.isOnlyOrAllClicked ?? false,
+		previousState: c.action.previousState,
+		sectionType: c.action.sectionType,
+	});
+
+	const active = result.builder.queryData[0];
+	const items = active?.filters?.items ?? [];
+	return {
+		items: items.map((item) => ({
+			key: item.key?.key ?? '',
+			op: item.op,
+			value: item.value,
+		})),
+		expression: roundTripExpression(items, active?.filter?.expression ?? ''),
+	};
+}
+
+// Flat list. Every row asserts both the structured items and the shipped
+// (round-tripped) expression, which must stay in sync.
+const TOGGLE_CASES: ToggleCase[] = [
 	{
-		value,
-		checked,
-		previousState,
-		sectionType,
-		isOnlyOrAllClicked = false,
-		attributeValues = ['A', 'B', 'C'],
-	}: {
-		value: string;
-		checked: boolean;
-		previousState?: CheckedState;
-		sectionType?: SectionType;
-		isOnlyOrAllClicked?: boolean;
-		attributeValues?: string[];
+		name: 'no clause, checked -> IN',
+		action: { value: 'a', checked: true },
+		expected: {
+			items: [{ key: KEY, op: 'in', value: 'a' }],
+			expression: `service.name in ['a']`,
+		},
 	},
-): Query {
-	return roundTrip(
-		applyCheckboxToggle({
-			currentQuery: query,
-			activeQueryIndex: 0,
-			filter,
+	{
+		name: 'no clause, unchecked -> NOT IN',
+		action: { value: 'a', checked: false },
+		expected: {
+			items: [{ key: KEY, op: 'not in', value: 'a' }],
+			expression: `service.name not in ['a']`,
+		},
+	},
+	{
+		name: 'no clause, unchecked on infra -> not in',
+		action: {
+			value: 'a',
+			checked: false,
 			source: QuickFiltersSource.INFRA_MONITORING,
-			attributeValues,
-			value,
-			checked,
-			isOnlyOrAllClicked,
-			previousState,
-			sectionType,
-		}),
-	);
-}
-
-const expressionOf = (query: Query): string =>
-	query.builder.queryData[0].filter?.expression ?? '';
-
-const itemsOf = (query: Query): TagFilterItem[] =>
-	query.builder.queryData[0].filters?.items ?? [];
-
-describe('applyCheckboxToggle expression sync', () => {
-	it('unchecking a value excludes it, re-checking it clears the filter', () => {
-		let query = makeQuery('', []);
-
-		query = toggle(query, {
-			value: 'A',
+		},
+		// `nin` is what the source asks for, but re-deriving the expression
+		// normalises it. Nothing observes the difference: both infra pages send
+		// `filter.expression` and never `filters.items`.
+		expected: {
+			items: [{ key: KEY, op: 'not in', value: 'a' }],
+			expression: `service.name not in ['a']`,
+		},
+	},
+	{
+		name: 'IN, check another value -> appended',
+		initial: { items: [{ key: KEY, op: 'in', value: ['a'] }] },
+		action: { value: 'b', checked: true },
+		expected: {
+			items: [{ key: KEY, op: 'in', value: ['a', 'b'] }],
+			expression: `service.name in ['a', 'b']`,
+		},
+	},
+	{
+		name: 'IN, check when value is scalar -> promoted to array',
+		initial: { items: [{ key: KEY, op: 'in', value: 'a' }] },
+		action: { value: 'b', checked: true },
+		expected: {
+			items: [{ key: KEY, op: 'in', value: ['a', 'b'] }],
+			expression: `service.name in ['a', 'b']`,
+		},
+	},
+	{
+		name: 'IN, uncheck one of many -> filtered out',
+		initial: { items: [{ key: KEY, op: 'in', value: ['a', 'b'] }] },
+		action: { value: 'a', checked: false },
+		expected: {
+			items: [{ key: KEY, op: 'in', value: ['b'] }],
+			expression: `service.name in ['b']`,
+		},
+	},
+	{
+		name: 'IN, uncheck last value in array -> clause gone',
+		initial: { items: [{ key: KEY, op: 'in', value: ['a'] }] },
+		action: { value: 'a', checked: false },
+		expected: { items: [], expression: '' },
+	},
+	{
+		name: 'IN, uncheck scalar value -> clause gone',
+		initial: { items: [{ key: KEY, op: 'in', value: 'a' }] },
+		action: { value: 'a', checked: false },
+		expected: { items: [], expression: '' },
+	},
+	{
+		name: 'IN, uncheck in RELATED section -> replaced by NOT IN for that value',
+		initial: { items: [{ key: KEY, op: 'in', value: ['a', 'b'] }] },
+		action: { value: 'a', checked: false, sectionType: SectionType.RELATED },
+		expected: {
+			items: [{ key: KEY, op: 'not in', value: 'a' }],
+			expression: `service.name not in ['a']`,
+		},
+	},
+	{
+		name: 'NOT IN, was unchecked then checked -> replaced by IN for that value',
+		initial: { items: [{ key: KEY, op: 'not in', value: ['a'] }] },
+		action: { value: 'b', checked: true, previousState: 'unchecked' },
+		expected: {
+			items: [{ key: KEY, op: 'in', value: 'b' }],
+			expression: `service.name in ['b']`,
+		},
+	},
+	{
+		name: 'NOT IN, re-checking an excluded value clears it, not flips it to IN',
+		initial: { items: [{ key: KEY, op: 'not in', value: ['a'] }] },
+		action: { value: 'a', checked: true, previousState: 'unchecked' },
+		expected: { items: [], expression: '' },
+	},
+	{
+		name: 'NOT IN, re-checking one of several excluded values keeps the rest',
+		initial: { items: [{ key: KEY, op: 'not in', value: ['a', 'b'] }] },
+		action: { value: 'a', checked: true, previousState: 'unchecked' },
+		expected: {
+			items: [{ key: KEY, op: 'not in', value: ['b'] }],
+			expression: `service.name not in ['b']`,
+		},
+	},
+	{
+		name: 'NOT IN, exclude another value -> appended',
+		initial: { items: [{ key: KEY, op: 'not in', value: ['a'] }] },
+		action: { value: 'b', checked: false },
+		expected: {
+			items: [{ key: KEY, op: 'not in', value: ['a', 'b'] }],
+			expression: `service.name not in ['a', 'b']`,
+		},
+	},
+	{
+		name: 'NOT IN, exclude when scalar -> promoted to array',
+		initial: { items: [{ key: KEY, op: 'not in', value: 'a' }] },
+		action: { value: 'b', checked: false },
+		expected: {
+			items: [{ key: KEY, op: 'not in', value: ['a', 'b'] }],
+			expression: `service.name not in ['a', 'b']`,
+		},
+	},
+	{
+		name: 'NOT IN, check an excluded value -> removed from array',
+		initial: { items: [{ key: KEY, op: 'not in', value: ['a', 'b'] }] },
+		action: { value: 'a', checked: true },
+		expected: {
+			items: [{ key: KEY, op: 'not in', value: ['b'] }],
+			expression: `service.name not in ['b']`,
+		},
+	},
+	{
+		name: 'NOT IN, check last excluded value in array -> clause gone',
+		initial: { items: [{ key: KEY, op: 'not in', value: ['a'] }] },
+		action: { value: 'a', checked: true },
+		expected: { items: [], expression: '' },
+	},
+	{
+		name: 'NOT IN, check excluded scalar value -> clause gone',
+		initial: { items: [{ key: KEY, op: 'not in', value: 'a' }] },
+		action: { value: 'a', checked: true },
+		expected: { items: [], expression: '' },
+	},
+	{
+		name: '= check another value -> promoted to IN array',
+		initial: { items: [{ key: KEY, op: '=', value: 'a' }] },
+		action: { value: 'b', checked: true },
+		expected: {
+			items: [{ key: KEY, op: 'in', value: ['a', 'b'] }],
+			expression: `service.name in ['a', 'b']`,
+		},
+	},
+	{
+		name: '= uncheck -> clause gone',
+		initial: { items: [{ key: KEY, op: '=', value: 'a' }] },
+		action: { value: 'a', checked: false },
+		expected: { items: [], expression: '' },
+	},
+	{
+		name: '!= exclude another value -> promoted to NOT IN array',
+		initial: { items: [{ key: KEY, op: '!=', value: 'a' }] },
+		action: { value: 'b', checked: false },
+		expected: {
+			items: [{ key: KEY, op: 'not in', value: ['a', 'b'] }],
+			expression: `service.name not in ['a', 'b']`,
+		},
+	},
+	{
+		name: '!= exclude another value on infra -> not in array',
+		initial: { items: [{ key: KEY, op: '!=', value: 'a' }] },
+		action: {
+			value: 'b',
 			checked: false,
-			previousState: 'checked',
-			sectionType: SectionType.SELECTED,
-		});
-		expect(expressionOf(query)).toBe(`${ATTRIBUTE_KEY} not in ['A']`);
+			source: QuickFiltersSource.INFRA_MONITORING,
+		},
+		expected: {
+			items: [{ key: KEY, op: 'not in', value: ['a', 'b'] }],
+			expression: `service.name not in ['a', 'b']`,
+		},
+	},
+	{
+		name: '!= check -> clause gone',
+		initial: { items: [{ key: KEY, op: '!=', value: 'a' }] },
+		action: { value: 'a', checked: true },
+		expected: { items: [], expression: '' },
+	},
+	{
+		name: 'Only with no clause -> IN scalar',
+		action: { value: 'a', checked: true, isOnlyOrAllClicked: true },
+		expected: {
+			items: [{ key: KEY, op: 'in', value: 'a' }],
+			expression: `service.name in ['a']`,
+		},
+	},
+	{
+		name: 'Only replaces a multi-value IN with a single value',
+		initial: { items: [{ key: KEY, op: 'in', value: ['a', 'b'] }] },
+		action: { value: 'a', checked: true, isOnlyOrAllClicked: true },
+		expected: {
+			items: [{ key: KEY, op: 'in', value: 'a' }],
+			expression: `service.name in ['a']`,
+		},
+	},
+	{
+		name: 'All (clicking the sole selected value) -> clause gone',
+		initial: { items: [{ key: KEY, op: 'in', value: ['a'] }] },
+		action: { value: 'a', checked: true, isOnlyOrAllClicked: true },
+		expected: { items: [], expression: '' },
+	},
+	{
+		name: 'dropping the last clause keeps other keys in the expression',
+		initial: {
+			items: [{ key: KEY, op: 'in', value: 'a' }],
+			expression: `${KEY} = 'a' AND http.method = 'GET'`,
+		},
+		action: { value: 'a', checked: false },
+		// The seeded items omit the http.method clause the expression carries;
+		// re-deriving reconciles it back, which is why items is not empty here.
+		expected: {
+			items: [{ key: 'http.method', op: '=', value: 'GET' }],
+			expression: `http.method = 'GET'`,
+		},
+	},
+	{
+		name: 'dropping the last clause strips the prefixed spelling too',
+		initial: {
+			items: [{ key: 'resource.service.name', op: 'in', value: 'a' }],
+			expression: `resource.service.name = 'a'`,
+		},
+		action: { value: 'a', checked: false },
+		expected: { items: [], expression: '' },
+	},
+	{
+		name: 'removing the value must keep a free-form clause on the same key',
+		initial: {
+			items: [{ key: KEY, op: '=', value: 'a' }],
+			expression: `${KEY} = 'a' AND ${KEY} CONTAINS 'keepme'`,
+		},
+		action: { value: 'a', checked: false },
+		expected: {
+			items: [{ key: KEY, op: 'contains', value: 'keepme' }],
+			expression: `service.name CONTAINS 'keepme'`,
+		},
+	},
+	{
+		name: 'a second clause on the same key must not survive an add',
+		initial: {
+			items: [{ key: KEY, op: 'in', value: ['a'] }],
+			expression: `${KEY} IN ['a'] AND ${KEY} != 'z'`,
+		},
+		action: { value: 'b', checked: true },
+		expected: {
+			items: [{ key: KEY, op: 'in', value: ['a', 'b'] }],
+			expression: `service.name in ['a', 'b']`,
+		},
+	},
+];
 
-		query = toggle(query, {
-			value: 'A',
-			checked: true,
-			previousState: 'unchecked',
-			sectionType: SectionType.SELECTED,
-		});
-		expect(expressionOf(query)).toBe('');
-		expect(itemsOf(query)).toHaveLength(0);
+describe('applyCheckboxToggle (items + shipped expression stay in sync)', () => {
+	it.each(TOGGLE_CASES)('$name', (c) => {
+		const got = runToggle(c);
+		expect(got.items).toStrictEqual(c.expected.items);
+		expect(got.expression).toBe(c.expected.expression);
+	});
+});
+
+describe('getNotInOperator', () => {
+	it('returns short "nin" for infra monitoring', () => {
+		expect(getNotInOperator(QuickFiltersSource.INFRA_MONITORING)).toBe('nin');
 	});
 
-	it('toggling the same value repeatedly stays a two-state cycle', () => {
-		let query = makeQuery('', []);
+	it('returns long "not in" for other sources', () => {
+		expect(getNotInOperator(QuickFiltersSource.LOGS_EXPLORER)).toBe('not in');
+		expect(getNotInOperator(QuickFiltersSource.TRACES_EXPLORER)).toBe('not in');
+	});
+});
 
-		for (let i = 0; i < 3; i += 1) {
-			query = toggle(query, {
-				value: 'A',
-				checked: false,
-				previousState: 'checked',
-				sectionType: SectionType.SELECTED,
-			});
-			expect(expressionOf(query)).toBe(`${ATTRIBUTE_KEY} not in ['A']`);
+describe('deriveCheckboxState', () => {
+	const attributeValues = ['a', 'b', 'c'];
 
-			query = toggle(query, {
-				value: 'A',
-				checked: true,
-				previousState: 'unchecked',
-				sectionType: SectionType.SELECTED,
-			});
-			expect(expressionOf(query)).toBe('');
-		}
+	const state = (items: TagFilterItem[] | undefined): Record<string, boolean> =>
+		deriveCheckboxState({ attributeValues, filterItems: items, filterKey: KEY });
+
+	it('no clause for key -> everything checked', () => {
+		expect(state([])).toStrictEqual({ a: true, b: true, c: true });
+		expect(state(undefined)).toStrictEqual({ a: true, b: true, c: true });
 	});
 
-	it('re-including one of several excluded values leaves the rest excluded', () => {
-		let query = makeQuery(`${ATTRIBUTE_KEY} not in ['A', 'B']`, []);
-		query = roundTrip(query);
-
-		query = toggle(query, {
-			value: 'A',
-			checked: true,
-			previousState: 'unchecked',
-			sectionType: SectionType.SELECTED,
-		});
-
-		expect(expressionOf(query)).toBe(`${ATTRIBUTE_KEY} not in ['B']`);
+	it('unrelated clause only -> everything checked', () => {
+		expect(
+			state([toTagItem({ key: 'other', op: 'in', value: ['a'] }, 0)]),
+		).toStrictEqual({ a: true, b: true, c: true });
 	});
 
-	it('unchecking the last selected value clears the filter', () => {
-		let query = makeQuery(`${ATTRIBUTE_KEY} in ['A']`, []);
-		query = roundTrip(query);
-
-		query = toggle(query, {
-			value: 'A',
-			checked: false,
-			previousState: 'checked',
-			sectionType: SectionType.SELECTED,
-		});
-
-		expect(expressionOf(query)).toBe('');
-		expect(itemsOf(query)).toHaveLength(0);
+	it('IN [list] -> only listed values checked', () => {
+		expect(
+			state([toTagItem({ key: KEY, op: 'in', value: ['a', 'c'] }, 0)]),
+		).toStrictEqual({ a: true, b: false, c: true });
 	});
 
-	it('unchecking one of several selected values keeps the others', () => {
-		let query = makeQuery(`${ATTRIBUTE_KEY} in ['A', 'B']`, []);
-		query = roundTrip(query);
-
-		query = toggle(query, {
-			value: 'A',
-			checked: false,
-			previousState: 'checked',
-			sectionType: SectionType.SELECTED,
-		});
-
-		expect(expressionOf(query)).toBe(`${ATTRIBUTE_KEY} in ['B']`);
+	it('= "value" -> only that value checked', () => {
+		expect(
+			state([toTagItem({ key: KEY, op: '=', value: 'b' }, 0)]),
+		).toStrictEqual({ a: false, b: true, c: false });
 	});
 
-	it('checking a value that is not excluded narrows the filter to it', () => {
-		let query = makeQuery(`${ATTRIBUTE_KEY} not in ['A']`, []);
-		query = roundTrip(query);
-
-		query = toggle(query, {
-			value: 'C',
-			checked: true,
-			previousState: 'unchecked',
-			sectionType: SectionType.ALL_VALUES,
-		});
-
-		expect(expressionOf(query)).toBe(`${ATTRIBUTE_KEY} in ['C']`);
+	it('NOT IN [list] -> everything except excluded checked', () => {
+		expect(
+			state([toTagItem({ key: KEY, op: 'not in', value: ['a'] }, 0)]),
+		).toStrictEqual({ a: false, b: true, c: true });
 	});
 
-	it('excluding a related value replaces the selection with a NOT IN clause', () => {
-		let query = makeQuery(`${ATTRIBUTE_KEY} in ['A']`, []);
-		query = roundTrip(query);
-
-		query = toggle(query, {
-			value: 'B',
-			checked: false,
-			previousState: 'checked',
-			sectionType: SectionType.RELATED,
-		});
-
-		expect(expressionOf(query)).toBe(`${ATTRIBUTE_KEY} not in ['B']`);
+	it('!= "value" -> everything except that value checked', () => {
+		expect(
+			state([toTagItem({ key: KEY, op: '!=', value: 'b' }, 0)]),
+		).toStrictEqual({ a: true, b: false, c: true });
 	});
 
-	it('Only narrows to the clicked value and All clears the filter', () => {
-		let query = makeQuery('', []);
-
-		query = toggle(query, {
-			value: 'A',
-			checked: true,
-			isOnlyOrAllClicked: true,
-		});
-		expect(expressionOf(query)).toBe(`${ATTRIBUTE_KEY} in ['A']`);
-
-		query = toggle(query, {
-			value: 'A',
-			checked: true,
-			isOnlyOrAllClicked: true,
-		});
-		expect(expressionOf(query)).toBe('');
+	it('matches by base key across context prefixes', () => {
+		expect(
+			state([
+				toTagItem({ key: 'resource.service.name', op: 'in', value: ['a'] }, 0),
+			]),
+		).toStrictEqual({ a: true, b: false, c: false });
 	});
 
-	it('leaves clauses for other keys untouched', () => {
-		let query = makeQuery(`k8s.namespace.name = 'default'`, []);
-		query = roundTrip(query);
+	it('coerces boolean / number values to string keys', () => {
+		expect(
+			deriveCheckboxState({
+				attributeValues: ['true', '42'],
+				filterItems: [toTagItem({ key: KEY, op: '=', value: true }, 0)],
+				filterKey: KEY,
+			}),
+		).toStrictEqual({ true: true, '42': false });
+	});
+});
 
-		query = toggle(query, {
-			value: 'A',
-			checked: false,
-			previousState: 'checked',
-			sectionType: SectionType.SELECTED,
-		});
-		expect(expressionOf(query)).toContain(`k8s.namespace.name = 'default'`);
-		// consecutive clauses with no AND/OR are an implicit AND in the filter grammar
-		expect(expressionOf(query)).toMatch(
-			new RegExp(`${ATTRIBUTE_KEY} not in \\['A'\\]`, 'i'),
-		);
+describe('clearFilterFromQuery', () => {
+	it('removes the key from items and expression at the active index only', () => {
+		const query = {
+			builder: {
+				queryData: [
+					{
+						filters: {
+							items: [
+								toTagItem({ key: KEY, op: 'in', value: ['a'] }, 0),
+								toTagItem({ key: 'http.method', op: '=', value: 'GET' }, 1),
+							],
+							op: 'AND',
+						},
+						filter: { expression: `${KEY} = 'a' AND http.method = 'GET'` },
+					},
+					{
+						filters: {
+							items: [toTagItem({ key: KEY, op: 'in', value: ['a'] }, 2)],
+							op: 'AND',
+						},
+						filter: { expression: `${KEY} = 'a'` },
+					},
+				],
+			},
+		} as unknown as Query;
 
-		query = toggle(query, {
-			value: 'A',
-			checked: true,
-			previousState: 'unchecked',
-			sectionType: SectionType.SELECTED,
+		const result = clearFilterFromQuery({
+			currentQuery: query,
+			filter: { attributeKey: { key: KEY, type: 'tag' } } as never,
+			activeQueryIndex: 0,
 		});
-		expect(expressionOf(query)).toBe(`k8s.namespace.name = 'default'`);
+
+		const active = result.builder.queryData[0];
+		expect(active.filters?.items).toStrictEqual([
+			expect.objectContaining({
+				key: expect.objectContaining({ key: 'http.method' }),
+			}),
+		]);
+		expect(active.filter?.expression).toBe(`http.method = 'GET'`);
+
+		// Other queries keep both halves: stripping their expression while leaving
+		// their items alone only churned a clause the round trip put straight back.
+		const other = result.builder.queryData[1];
+		expect(other.filters?.items).toHaveLength(1);
+		expect(other.filter?.expression).toBe(`${KEY} = 'a'`);
 	});
 });
