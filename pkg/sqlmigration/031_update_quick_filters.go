@@ -3,11 +3,13 @@ package sqlmigration
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types/quickfiltertypes"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
@@ -38,6 +40,61 @@ func (migration *updateQuickFilters) Register(migrations *migrate.Migrations) er
 }
 
 func (migration *updateQuickFilters) Up(ctx context.Context, db *bun.DB) error {
+	// Frozen copy of the defaults as this migration shipped; migrations must not
+	// read live types. api_monitoring's service.name is "tag" here — 035 fixes it.
+	defaultFilters := []struct {
+		signal  string
+		filters []map[string]any
+	}{
+		{"traces", []map[string]any{
+			{"key": "duration_nano", "dataType": "float64", "type": "tag"},
+			{"key": "deployment.environment", "dataType": "string", "type": "resource"},
+			{"key": "hasError", "dataType": "bool", "type": "tag"},
+			{"key": "service.name", "dataType": "string", "type": "resource"},
+			{"key": "name", "dataType": "string", "type": "tag"},
+			{"key": "rpc.method", "dataType": "string", "type": "tag"},
+			{"key": "response_status_code", "dataType": "string", "type": "tag"},
+			{"key": "http_host", "dataType": "string", "type": "tag"},
+			{"key": "http.method", "dataType": "string", "type": "tag"},
+			{"key": "http.route", "dataType": "string", "type": "tag"},
+			{"key": "http_url", "dataType": "string", "type": "tag"},
+			{"key": "trace_id", "dataType": "string", "type": "tag"},
+		}},
+		{"logs", []map[string]any{
+			{"key": "severity_text", "dataType": "string", "type": "resource"},
+			{"key": "deployment.environment", "dataType": "string", "type": "resource"},
+			{"key": "service.name", "dataType": "string", "type": "resource"},
+			{"key": "host.name", "dataType": "string", "type": "resource"},
+			{"key": "k8s.cluster.name", "dataType": "string", "type": "resource"},
+			{"key": "k8s.deployment.name", "dataType": "string", "type": "resource"},
+			{"key": "k8s.namespace.name", "dataType": "string", "type": "resource"},
+			{"key": "k8s.pod.name", "dataType": "string", "type": "resource"},
+		}},
+		{"api_monitoring", []map[string]any{
+			{"key": "deployment.environment", "dataType": "string", "type": "resource"},
+			{"key": "service.name", "dataType": "string", "type": "tag"},
+			{"key": "rpc.method", "dataType": "string", "type": "tag"},
+		}},
+		{"exceptions", []map[string]any{
+			{"key": "deployment.environment", "dataType": "string", "type": "resource"},
+			{"key": "service.name", "dataType": "string", "type": "resource"},
+			{"key": "host.name", "dataType": "string", "type": "resource"},
+			{"key": "k8s.cluster.name", "dataType": "string", "type": "resource"},
+			{"key": "k8s.deployment.name", "dataType": "string", "type": "resource"},
+			{"key": "k8s.namespace.name", "dataType": "string", "type": "resource"},
+			{"key": "k8s.pod.name", "dataType": "string", "type": "resource"},
+		}},
+	}
+
+	signalFilters := make([]struct{ signal, filter string }, 0, len(defaultFilters))
+	for _, defaultFilter := range defaultFilters {
+		filterJSON, err := json.Marshal(defaultFilter.filters)
+		if err != nil {
+			return err
+		}
+		signalFilters = append(signalFilters, struct{ signal, filter string }{defaultFilter.signal, string(filterJSON)})
+	}
+
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -73,17 +130,28 @@ func (migration *updateQuickFilters) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	// For each organization, create new quick filters with the updated NewDefaultQuickFilter function
+	// For each organization, create new quick filters with the updated defaults
 	for _, orgID := range orgIDs {
-		// Get the updated default quick filters
-		storableQuickFilters, err := quickfiltertypes.NewDefaultQuickFilter(valuer.MustNewUUID(orgID))
-		if err != nil {
-			return err
+		now := time.Now()
+		quickFilters := make([]*quickFilter, 0, len(signalFilters))
+		for _, signalFilter := range signalFilters {
+			quickFilters = append(quickFilters, &quickFilter{
+				Identifiable: types.Identifiable{
+					ID: valuer.GenerateUUID(),
+				},
+				OrgID:  orgID,
+				Filter: signalFilter.filter,
+				Signal: signalFilter.signal,
+				TimeAuditable: types.TimeAuditable{
+					CreatedAt: now,
+					UpdatedAt: now,
+				},
+			})
 		}
 
 		// Insert all filters for this organization
 		_, err = tx.NewInsert().
-			Model(&storableQuickFilters).
+			Model(&quickFilters).
 			Exec(ctx)
 
 		if err != nil {

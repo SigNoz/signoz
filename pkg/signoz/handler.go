@@ -50,6 +50,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail/impltracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
+	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/ruler/signozruler"
@@ -77,6 +78,7 @@ type Handlers struct {
 	AIObservability         aiobservability.Handler
 	AuthzHandler            authz.Handler
 	ZeusHandler             zeus.Handler
+	LicensingHandler        licensing.Handler
 	QuerierHandler          querier.Handler
 	ServiceAccountHandler   serviceaccount.Handler
 	RegistryHandler         factory.Handler
@@ -84,6 +86,7 @@ type Handlers struct {
 	RuleStateHistory        rulestatehistory.Handler
 	SpanMapperHandler       spanmapper.Handler
 	AlertmanagerHandler     alertmanager.Handler
+	PrometheusHandler       prometheus.Handler
 	TraceDetail             tracedetail.Handler
 	RulerHandler            ruler.Handler
 	LLMPricingRuleHandler   llmpricingrule.Handler
@@ -95,7 +98,7 @@ func NewHandlers(
 	providerSettings factory.ProviderSettings,
 	analytics analytics.Analytics,
 	querierHandler querier.Handler,
-	licensing licensing.Licensing,
+	licensingService licensing.Licensing,
 	global global.Global,
 	flaggerService flagger.Flagger,
 	gatewayService gateway.Gateway,
@@ -104,6 +107,7 @@ func NewHandlers(
 	zeusService zeus.Zeus,
 	registryHandler factory.Handler,
 	alertmanagerService alertmanager.Alertmanager,
+	prometheusService prometheus.Prometheus,
 	rulerService ruler.Ruler,
 	statsAggregator statsreporter.Aggregator,
 ) Handlers {
@@ -123,9 +127,10 @@ func NewHandlers(
 		FlaggerHandler:          flagger.NewHandler(flaggerService),
 		GatewayHandler:          gateway.NewHandler(gatewayService),
 		Fields:                  implfields.NewHandler(providerSettings, telemetryMetadataStore),
-		AIObservability:         implaiobservability.NewHandler(telemetryMetadataStore),
+		AIObservability:         implaiobservability.NewHandler(providerSettings, telemetryMetadataStore),
 		AuthzHandler:            signozauthzapi.NewHandler(authz),
-		ZeusHandler:             zeus.NewHandler(zeusService, licensing),
+		ZeusHandler:             zeus.NewHandler(zeusService, licensingService),
+		LicensingHandler:        licensing.NewHandler(licensingService),
 		QuerierHandler:          querierHandler,
 		ServiceAccountHandler:   implserviceaccount.NewHandler(modules.ServiceAccount, modules.ServiceAccountGetter),
 		RegistryHandler:         registryHandler,
@@ -133,6 +138,7 @@ func NewHandlers(
 		CloudIntegrationHandler: implcloudintegration.NewHandler(modules.CloudIntegration),
 		SpanMapperHandler:       implspanmapper.NewHandler(modules.SpanMapper),
 		AlertmanagerHandler:     signozalertmanager.NewHandler(alertmanagerService),
+		PrometheusHandler:       prometheus.NewHandler(providerSettings.Logger, prometheusService),
 		TraceDetail:             impltracedetail.NewHandler(modules.TraceDetail),
 		RulerHandler:            signozruler.NewHandler(rulerService),
 		LLMPricingRuleHandler:   impllmpricingrule.NewHandler(modules.LLMPricingRule),

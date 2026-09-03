@@ -113,6 +113,20 @@ func BuildCompleteFieldKeyMap(releaseTime time.Time) map[string][]*telemetrytype
 				FieldDataType: telemetrytypes.FieldDataTypeBool,
 			},
 		},
+		"scope.name": {
+			{
+				Name:          "scope.name",
+				FieldContext:  telemetrytypes.FieldContextScope,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
+		"scope.version": {
+			{
+				Name:          "scope.version",
+				FieldContext:  telemetrytypes.FieldContextScope,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
 		// both spellings of an enabled semantic-convention family
 		"deployment.environment.name": {
 			{

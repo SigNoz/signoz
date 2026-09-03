@@ -33,6 +33,12 @@ type traceQueryStatementBuilder struct {
 	aggExprRewriter                qbtypes.AggExprRewriter
 	fl                             flagger.Flagger
 	skipResourceFingerprintEnabled bool
+	// traceScope, set only on the per-call copy made by BuildTraceScoped, constrains
+	// queries to spans whose trace_id is in the __trace_scope CTE.
+	traceScope *qbtypes.Statement
+	// traceScopeResource is the __resource_filter CTE traceScope's predicate references,
+	// emitted only when this builder's own resource filter did not already emit it.
+	traceScopeResource *qbtypes.Statement
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.TraceAggregation] = (*traceQueryStatementBuilder)(nil)
@@ -95,6 +101,41 @@ func NewTraceQueryStatementBuilder(
 		fl:                             flagger,
 		skipResourceFingerprintEnabled: skipResourceFingerprintEnable,
 	}
+}
+
+// BuildTraceScoped is Build constrained to trace_ids selected by traceScope; the
+// receiver is copied so the shared builder stays stateless.
+func (b *traceQueryStatementBuilder) BuildTraceScoped(
+	ctx context.Context,
+	orgID valuer.UUID,
+	start uint64,
+	end uint64,
+	requestType qbtypes.RequestType,
+	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
+	variables map[string]qbtypes.VariableItem,
+	traceScope, traceScopeResource *qbtypes.Statement,
+) (*qbtypes.Statement, error) {
+	scoped := *b
+	scoped.traceScope = traceScope
+	scoped.traceScopeResource = traceScopeResource
+	return scoped.Build(ctx, orgID, start, end, requestType, query, variables)
+}
+
+// attachTraceScope adds the trace-scope condition to sb and returns the CTE fragments
+// + args to prepend; resourceEmitted reports whether the query already carries the
+// __resource_filter CTE, so the scope's copy is emitted only when it does not.
+func (b *traceQueryStatementBuilder) attachTraceScope(sb *sqlbuilder.SelectBuilder, resourceEmitted bool) ([]string, [][]any) {
+	if b.traceScope == nil {
+		return nil, nil
+	}
+	sb.Where("trace_id GLOBAL IN (SELECT trace_id FROM __trace_scope)")
+	var frags []string
+	var args [][]any
+	if b.traceScopeResource != nil && !resourceEmitted {
+		frags = append(frags, fmt.Sprintf("__resource_filter AS (%s)", b.traceScopeResource.Query))
+		args = append(args, b.traceScopeResource.Args)
+	}
+	return append(frags, fmt.Sprintf("__trace_scope AS (%s)", b.traceScope.Query)), append(args, b.traceScope.Args)
 }
 
 // Build builds a SQL query for traces based on the given parameters.
@@ -163,31 +204,15 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) 
 	}
 
 	for idx := range query.GroupBy {
-		groupBy := query.GroupBy[idx]
-		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
-			Name:          groupBy.Name,
-			Signal:        telemetrytypes.SignalTraces,
-			FieldContext:  groupBy.FieldContext,
-			FieldDataType: groupBy.FieldDataType,
-		})
+		keySelectors = append(keySelectors, keySelectorsForField(query.GroupBy[idx].TelemetryFieldKey)...)
 	}
 
 	for idx := range query.SelectFields {
-		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
-			Name:          query.SelectFields[idx].Name,
-			Signal:        telemetrytypes.SignalTraces,
-			FieldContext:  query.SelectFields[idx].FieldContext,
-			FieldDataType: query.SelectFields[idx].FieldDataType,
-		})
+		keySelectors = append(keySelectors, keySelectorsForField(query.SelectFields[idx])...)
 	}
 
 	for idx := range query.Order {
-		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
-			Name:          query.Order[idx].Key.Name,
-			Signal:        telemetrytypes.SignalTraces,
-			FieldContext:  query.Order[idx].Key.FieldContext,
-			FieldDataType: query.Order[idx].Key.FieldDataType,
-		})
+		keySelectors = append(keySelectors, keySelectorsForField(query.Order[idx].Key.TelemetryFieldKey)...)
 	}
 
 	for idx := range keySelectors {
@@ -196,6 +221,26 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) 
 	}
 
 	return keySelectors
+}
+
+func keySelectorsForField(key telemetrytypes.TelemetryFieldKey) []*telemetrytypes.FieldKeySelector {
+	selectors := []*telemetrytypes.FieldKeySelector{
+		{
+			Name:          key.Name,
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  key.FieldContext,
+			FieldDataType: key.FieldDataType,
+		},
+	}
+	if key.FieldContext != telemetrytypes.FieldContextUnspecified {
+		selectors = append(selectors, &telemetrytypes.FieldKeySelector{
+			Name:          key.FieldContext.StringValue() + "." + key.Name,
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextUnspecified,
+			FieldDataType: key.FieldDataType,
+		})
+	}
+	return selectors
 }
 
 // mergeDeprecatedTraceKeys prepends deprecated intrinsic/calculated trace field
@@ -269,20 +314,14 @@ func adjustTraceKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*te
 
 		For example: trace_id (intrinsic), response_status_code (calculated).
 	*/
+	// Resolve against the context-qualified name first, then the bare name since that can be instrinsic field e.g. scope.name.
 	var isIntrinsicOrCalculatedField bool
 	var intrinsicOrCalculatedField telemetrytypes.TelemetryFieldKey
-	if _, ok := tracestelemetryschema.IntrinsicFields[key.Name]; ok {
-		isIntrinsicOrCalculatedField = true
-		intrinsicOrCalculatedField = tracestelemetryschema.IntrinsicFields[key.Name]
-	} else if _, ok := tracestelemetryschema.CalculatedFields[key.Name]; ok {
-		isIntrinsicOrCalculatedField = true
-		intrinsicOrCalculatedField = tracestelemetryschema.CalculatedFields[key.Name]
-	} else if _, ok := tracestelemetryschema.IntrinsicFieldsDeprecated[key.Name]; ok {
-		isIntrinsicOrCalculatedField = true
-		intrinsicOrCalculatedField = tracestelemetryschema.IntrinsicFieldsDeprecated[key.Name]
-	} else if _, ok := tracestelemetryschema.CalculatedFieldsDeprecated[key.Name]; ok {
-		isIntrinsicOrCalculatedField = true
-		intrinsicOrCalculatedField = tracestelemetryschema.CalculatedFieldsDeprecated[key.Name]
+	if key.FieldContext != telemetrytypes.FieldContextUnspecified {
+		intrinsicOrCalculatedField, isIntrinsicOrCalculatedField = lookupIntrinsicOrCalculatedField(key.FieldContext.StringValue() + "." + key.Name)
+	}
+	if !isIntrinsicOrCalculatedField {
+		intrinsicOrCalculatedField, isIntrinsicOrCalculatedField = lookupIntrinsicOrCalculatedField(key.Name)
 	}
 
 	if isIntrinsicOrCalculatedField {
@@ -292,6 +331,24 @@ func adjustTraceKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*te
 	}
 
 	return actions
+}
+
+// lookupIntrinsicOrCalculatedField returns the intrinsic or calculated field registered under
+// name, across the current and deprecated tables.
+func lookupIntrinsicOrCalculatedField(name string) (telemetrytypes.TelemetryFieldKey, bool) {
+	if f, ok := tracestelemetryschema.IntrinsicFields[name]; ok {
+		return f, true
+	}
+	if f, ok := tracestelemetryschema.CalculatedFields[name]; ok {
+		return f, true
+	}
+	if f, ok := tracestelemetryschema.IntrinsicFieldsDeprecated[name]; ok {
+		return f, true
+	}
+	if f, ok := tracestelemetryschema.CalculatedFieldsDeprecated[name]; ok {
+		return f, true
+	}
+	return telemetrytypes.TelemetryFieldKey{}, false
 }
 
 // buildListQuery builds a query for list panel type.
@@ -318,6 +375,11 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 	if frag != "" {
 		cteFragments = append(cteFragments, frag)
 		cteArgs = append(cteArgs, args)
+	}
+
+	if scopeFrags, scopeArgs := b.attachTraceScope(sb, frag != ""); len(scopeFrags) > 0 {
+		cteFragments = append(cteFragments, scopeFrags...)
+		cteArgs = append(cteArgs, scopeArgs...)
 	}
 
 	for i, field := range query.SelectFields {
@@ -521,6 +583,11 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		cteArgs = append(cteArgs, args)
 	}
 
+	if scopeFrags, scopeArgs := b.attachTraceScope(sb, frag != ""); len(scopeFrags) > 0 {
+		cteFragments = append(cteFragments, scopeFrags...)
+		cteArgs = append(cteArgs, scopeArgs...)
+	}
+
 	sb.SelectMore(fmt.Sprintf(
 		"toStartOfInterval(timestamp, INTERVAL %d SECOND) AS ts",
 		int64(query.StepInterval.Seconds()),
@@ -679,6 +746,13 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	if frag != "" && !skipResourceCTE {
 		cteFragments = append(cteFragments, frag)
 		cteArgs = append(cteArgs, args)
+	}
+
+	// skipResourceCTE means this scalar is embedded as a CTE of a time-series query,
+	// which has already emitted the __trace_scope fragment — add only the condition.
+	if scopeFrags, scopeArgs := b.attachTraceScope(sb, frag != ""); len(scopeFrags) > 0 && !skipResourceCTE {
+		cteFragments = append(cteFragments, scopeFrags...)
+		cteArgs = append(cteArgs, scopeArgs...)
 	}
 
 	allAggChArgs := []any{}

@@ -1,12 +1,4 @@
-import {
-	Dispatch,
-	RefObject,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useRef,
-	useState,
-} from 'react';
+import { RefObject, useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Skeleton, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
@@ -16,10 +8,8 @@ import { ToggleGraphProps } from 'components/Graph/types';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
-import { placeWidgetAtBottom } from 'container/NewWidget/utils';
 import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
 import useGetResolvedText from 'hooks/dashboard/useGetResolvedText';
-import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -30,11 +20,8 @@ import {
 	getStartAndEndTimesInMilliseconds,
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
-import { Widgets } from 'types/api/dashboard/getAll';
-import { Props } from 'types/api/dashboard/update';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
-import { v4 } from 'uuid';
 
 import { useGraphClickToShowButton } from '../useGraphClickToShowButton';
 import useNavigateToExplorerPages from '../useNavigateToExplorerPages';
@@ -69,7 +56,6 @@ function WidgetGraphComponent({
 	hidePagination,
 }: WidgetGraphComponentProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
-	const [deleteModal, setDeleteModal] = useState(false);
 	const { notifications } = useNotifications();
 	const { pathname, search } = useLocation();
 
@@ -101,8 +87,7 @@ function WidgetGraphComponent({
 
 	const navigateToExplorerPages = useNavigateToExplorerPages();
 
-	const { setLayouts, dashboardData, setDashboardData, setColumnWidths } =
-		useDashboardStore();
+	const { setColumnWidths } = useDashboardStore();
 
 	const onColumnWidthsChange = useCallback(
 		(widths: Record<string, number>) => {
@@ -110,119 +95,6 @@ function WidgetGraphComponent({
 		},
 		[setColumnWidths, widget.id],
 	);
-
-	const onToggleModal = useCallback(
-		(func: Dispatch<SetStateAction<boolean>>) => {
-			func((value) => !value);
-		},
-		[],
-	);
-
-	const updateDashboardMutation = useUpdateDashboard();
-
-	const onDeleteHandler = (): void => {
-		if (!dashboardData) {
-			return;
-		}
-
-		const updatedWidgets = dashboardData?.data?.widgets?.filter(
-			(e) => e.id !== widget.id,
-		);
-
-		const updatedLayout =
-			dashboardData.data.layout?.filter((e) => e.i !== widget.id) || [];
-
-		const updatedDashboardData: Props = {
-			data: {
-				...dashboardData.data,
-				widgets: updatedWidgets,
-				layout: updatedLayout,
-			},
-			id: dashboardData.id,
-		};
-
-		updateDashboardMutation.mutateAsync(updatedDashboardData, {
-			onSuccess: (updatedDashboard) => {
-				if (setLayouts) {
-					setLayouts(updatedDashboard.data?.data?.layout || []);
-				}
-				if (setDashboardData && updatedDashboard.data) {
-					setDashboardData(updatedDashboard.data);
-				}
-				setDeleteModal(false);
-			},
-		});
-	};
-
-	const onCloneHandler = async (): Promise<void> => {
-		if (!dashboardData) {
-			return;
-		}
-
-		const uuid = v4();
-
-		// this is added to make sure the cloned panel is of the same dimensions as the original one
-		const originalPanelLayout = dashboardData.data.layout?.find(
-			(l) => l.i === widget.id,
-		);
-
-		const newLayoutItem = placeWidgetAtBottom(
-			uuid,
-			dashboardData?.data.layout || [],
-			originalPanelLayout?.w || 6,
-			originalPanelLayout?.h || 6,
-		);
-
-		const layout = [...(dashboardData.data.layout || []), newLayoutItem];
-
-		updateDashboardMutation.mutateAsync(
-			{
-				id: dashboardData.id,
-
-				data: {
-					...dashboardData.data,
-					layout,
-					widgets: [
-						...(dashboardData.data.widgets || []),
-						{
-							...{
-								...widget,
-								id: uuid,
-							},
-						},
-					],
-				},
-			},
-			{
-				onSuccess: (updatedDashboard) => {
-					if (setLayouts) {
-						setLayouts(updatedDashboard.data?.data?.layout || []);
-					}
-					if (setDashboardData && updatedDashboard.data) {
-						setDashboardData(updatedDashboard.data);
-					}
-					notifications.success({
-						message: 'Panel cloned successfully, redirecting to new copy.',
-					});
-
-					const clonedWidget = updatedDashboard.data?.data?.widgets?.find(
-						(w) => w.id === uuid,
-					) as Widgets;
-
-					const queryParams = {
-						[QueryParams.graphType]: clonedWidget?.panelTypes,
-						[QueryParams.widgetId]: uuid,
-						...(clonedWidget?.query && {
-							[QueryParams.compositeQuery]: encodeURIComponent(
-								JSON.stringify(clonedWidget.query),
-							),
-						}),
-					};
-					safeNavigate(`${pathname}/new?${createQueryParams(queryParams)}`);
-				},
-			},
-		);
-	};
 
 	const handleOnView = (): void => {
 		const queryParams = {
@@ -243,14 +115,6 @@ function WidgetGraphComponent({
 			pathname,
 			search: newSearch,
 		});
-	};
-
-	const handleOnDelete = (): void => {
-		onToggleModal(setDeleteModal);
-	};
-
-	const onDeleteModelHandler = (): void => {
-		onToggleModal(setDeleteModal);
 	};
 
 	const onToggleModelHandler = (): void => {
@@ -337,19 +201,6 @@ function WidgetGraphComponent({
 			className="widget-graph-component-container"
 		>
 			<Modal
-				destroyOnClose
-				onCancel={onDeleteModelHandler}
-				open={deleteModal}
-				confirmLoading={updateDashboardMutation.isLoading}
-				title="Delete"
-				height="10vh"
-				onOk={onDeleteHandler}
-				centered
-			>
-				<Typography>Are you sure you want to delete this widget</Typography>
-			</Modal>
-
-			<Modal
 				title={
 					<Tooltip title={fullText} placement="top">
 						<span>{truncatedText || fullText || 'View'}</span>
@@ -385,8 +236,6 @@ function WidgetGraphComponent({
 					title={widget?.title}
 					widget={widget}
 					onView={handleOnView}
-					onDelete={handleOnDelete}
-					onClone={onCloneHandler}
 					queryResponse={queryResponse}
 					threshold={threshold}
 					headerMenuList={headerMenuList}

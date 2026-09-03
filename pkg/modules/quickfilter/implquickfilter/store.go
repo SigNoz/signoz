@@ -26,7 +26,7 @@ func (s *store) Get(ctx context.Context, orgID valuer.UUID) ([]*quickfiltertypes
 		NewSelect().
 		Model(&filters).
 		Where("org_id = ?", orgID).
-		Order("signal ASC").
+		Order("source ASC").
 		Scan(ctx)
 
 	if err != nil {
@@ -36,7 +36,7 @@ func (s *store) Get(ctx context.Context, orgID valuer.UUID) ([]*quickfiltertypes
 	return filters, nil
 }
 
-func (s *store) GetBySignal(ctx context.Context, orgID valuer.UUID, signal string) (*quickfiltertypes.StorableQuickFilter, error) {
+func (s *store) GetBySource(ctx context.Context, orgID valuer.UUID, source string) (*quickfiltertypes.StorableQuickFilter, error) {
 	filter := new(quickfiltertypes.StorableQuickFilter)
 
 	err := s.store.
@@ -44,12 +44,12 @@ func (s *store) GetBySignal(ctx context.Context, orgID valuer.UUID, signal strin
 		NewSelect().
 		Model(filter).
 		Where("org_id = ?", orgID).
-		Where("signal = ?", signal).
+		Where("source = ?", source).
 		Scan(ctx)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, s.store.WrapNotFoundErrf(err, errors.CodeNotFound, "No rows found for org_id: "+orgID.StringValue()+" signal: "+signal)
+			return nil, s.store.WrapNotFoundErrf(err, errors.CodeNotFound, "No rows found for org_id: "+orgID.StringValue()+" source: "+source)
 		}
 		return nil, err
 	}
@@ -62,7 +62,7 @@ func (s *store) Upsert(ctx context.Context, filter *quickfiltertypes.StorableQui
 		BunDB().
 		NewInsert().
 		Model(filter).
-		On("CONFLICT (id) DO UPDATE").
+		On("CONFLICT (org_id, source) DO UPDATE").
 		Set("filter = EXCLUDED.filter").
 		Set("updated_at = EXCLUDED.updated_at").
 		Exec(ctx)
@@ -78,7 +78,7 @@ func (s *store) Create(ctx context.Context, filters []*quickfiltertypes.Storable
 		BunDBCtx(ctx).
 		NewInsert().
 		Model(&filters).
-		On("CONFLICT (org_id, signal) DO NOTHING").
+		On("CONFLICT (org_id, source) DO NOTHING").
 		Exec(ctx)
 
 	if err != nil {
