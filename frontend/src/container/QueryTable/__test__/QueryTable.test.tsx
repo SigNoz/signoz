@@ -1,4 +1,4 @@
-import WidgetHeader from 'container/GridCardLayout/WidgetHeader';
+import WidgetHeader from 'container/WidgetCard/Header';
 import { fireEvent, render } from 'tests/test-utils';
 
 import { QueryTable } from '../QueryTable';

@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { act, renderHook } from '@testing-library/react';
 import { QueryParams } from 'constants/query';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import { EQueryType } from 'types/common/dashboard';
 
 import useCreateAlerts from '../useCreateAlerts';

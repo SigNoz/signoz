@@ -1,0 +1,98 @@
+import { useEffect } from 'react';
+import { FullScreen, useFullScreenHandle } from 'react-full-screen';
+
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
+
+import DashboardPageToolbar from './DashboardPageToolbar';
+import PanelsAndSectionsLayout from './PanelsAndSectionsLayout';
+import { useDashboardEditGuard } from './hooks/useDashboardEditGuard';
+import { useResolvedVariables } from './hooks/useResolvedVariables';
+import { useSyncVariablesForSuggestions } from './hooks/useSyncVariablesForSuggestions';
+import { useDashboardStore } from './store/useDashboardStore';
+import styles from './DashboardContainer.module.scss';
+import DashboardPageHeader from './components/DashboardPageHeader/DashboardPageHeader';
+import LockedIndicator from './components/LockedIndicator/LockedIndicator';
+import DashboardChangedDialog from './components/DashboardChangedDialog/DashboardChangedDialog';
+import { useDashboardStaleCheck } from './hooks/useDashboardStaleCheck';
+import { resolveDashboardImage } from 'pages/DashboardPage/DashboardContainer/dashboardIcons';
+
+interface DashboardContainerProps {
+	dashboard: DashboardtypesGettableDashboardV2DTO;
+	refetch: () => void;
+	/**
+	 * @deprecated
+	 * `canEditDashboardOverride` is a temporary solution to allow the dashboard to be view only.
+	 * This is only used for LLM Observability.
+	 * It will be removed in the future.
+	 *  TODO: @Ashwin / @Abhi — remove when the final solution is implemented.
+	 */
+	canEditDashboardOverride?: boolean;
+}
+
+function DashboardContainer({
+	dashboard,
+	refetch,
+	canEditDashboardOverride,
+}: DashboardContainerProps): JSX.Element {
+	const spec = dashboard.spec;
+	const image = resolveDashboardImage(dashboard.image);
+	const name = spec.display.name;
+
+	useEffect(() => {
+		document.title = name;
+	}, [name]);
+
+	// Store is app-level and outlives the page: clear transient variable fetch state on
+	// unmount so the next visit doesn't inherit stale states / climbing cycle ids.
+	const resetVariableFetch = useDashboardStore((s) => s.resetVariableFetch);
+	useEffect(() => resetVariableFetch, [resetVariableFetch]);
+
+	const fullScreenHandle = useFullScreenHandle();
+
+	const { isLocked, canEditDashboard } = useDashboardEditGuard(dashboard);
+
+	// Seed during render (not an effect) so the first Panel render already sees the id —
+	// useDashboardFetchRequired throws on a missing id. setEditContext self-guards.
+	const setEditContext = useDashboardStore((s) => s.setEditContext);
+
+	setEditContext({
+		dashboardId: dashboard.id,
+		isLocked,
+		canEditDashboard: canEditDashboardOverride ?? canEditDashboard,
+		refetch,
+	});
+
+	// Resolve the variable selection into the V5 query payload and publish it to
+	// the store, so each panel's query substitutes the bar's selected values.
+	useResolvedVariables(dashboard);
+
+	// Publish variables to the shared store so the query builder autocomplete
+	// suggests them ($variable) in the panel editor and dashboards-page builder.
+	useSyncVariablesForSuggestions(dashboard);
+
+	const staleCheck = useDashboardStaleCheck(dashboard, refetch);
+
+	// In full screen show only the sections and panels — the header/toolbar chrome
+	// is hidden for a clean presentation view (exit with Esc).
+	return (
+		<FullScreen handle={fullScreenHandle}>
+			<div className={styles.container}>
+				{!fullScreenHandle.active && (
+					<>
+						<DashboardPageHeader title={name} image={image} />
+						<DashboardPageToolbar dashboard={dashboard} handle={fullScreenHandle} />
+					</>
+				)}
+				<PanelsAndSectionsLayout layouts={spec.layouts} panels={spec.panels} />
+				{isLocked && <LockedIndicator />}
+				<DashboardChangedDialog
+					open={staleCheck.showPrompt}
+					onReload={staleCheck.reload}
+					onDismiss={staleCheck.dismiss}
+				/>
+			</div>
+		</FullScreen>
+	);
+}
+
+export default DashboardContainer;

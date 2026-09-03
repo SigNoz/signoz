@@ -18,7 +18,7 @@ import { Pagination } from 'hooks/queryPagination';
 import { convertNewDataToOld } from 'lib/newQueryBuilder/convertNewDataToOld';
 import { isEmpty } from 'lodash-es';
 import { SuccessResponseV2, Warning } from 'types/api';
-import { IDashboardVariable } from 'types/api/dashboard/getAll';
+import { IDashboardVariable } from 'types/api/dashboard/variables';
 import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import {
