@@ -6,13 +6,19 @@ import history from 'lib/history';
 
 import { getLogsSettingsRoute } from './config';
 
+import './LogsSettings.styles.scss';
+
 function LogsSettings(): JSX.Element {
 	const { pathname } = useLocation();
 	const { t } = useTranslation();
 
 	const routes = useMemo(() => getLogsSettingsRoute(t), [t]);
 
-	return <RouteTab activeKey={pathname} routes={routes} history={history} />;
+	return (
+		<div className="logs-settings-container">
+			<RouteTab activeKey={pathname} routes={routes} history={history} />
+		</div>
+	);
 }
 
 export default LogsSettings;

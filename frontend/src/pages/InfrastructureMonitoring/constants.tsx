@@ -6,7 +6,7 @@ import {
 	DEFAULT_K8S_CATEGORY,
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
 } from 'container/InfraMonitoringK8sV2/constants';
-import { Inbox } from '@signozhq/icons';
+import { Boxes, Server } from '@signozhq/icons';
 
 function HostsContainer(): JSX.Element {
 	return <InfraMonitoringHostsV2 />;
@@ -20,7 +20,7 @@ export const Hosts: TabRoutes = {
 	Component: HostsContainer,
 	name: (
 		<div className="tab-item">
-			<Inbox size={16} /> Hosts
+			<Server size={16} /> Hosts
 		</div>
 	),
 	route: ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
@@ -31,7 +31,7 @@ export const Kubernetes: TabRoutes = {
 	Component: KubernetesContainer,
 	name: (
 		<div className="tab-item">
-			<Inbox size={16} /> Kubernetes
+			<Boxes size={16} /> Kubernetes
 		</div>
 	),
 	route: `${ROUTES.INFRASTRUCTURE_MONITORING_KUBERNETES}?${INFRA_MONITORING_K8S_PARAMS_KEYS.CATEGORY}=${DEFAULT_K8S_CATEGORY}`,

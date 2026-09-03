@@ -19,6 +19,13 @@
 		margin: 0 8px;
 	}
 
+	.tab-item {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 8px;
+	}
+
 	&.filter-visible {
 		.all-errors-quick-filter-section {
 			width: 260px;
