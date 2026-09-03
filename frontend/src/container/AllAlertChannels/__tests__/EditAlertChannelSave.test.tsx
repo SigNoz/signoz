@@ -90,6 +90,40 @@ describe('EditAlertChannels save', () => {
 		await waitFor(() => expect(edit.calls).toHaveLength(1));
 	});
 
+	it('sends an incidentio_configs payload when editing an incident.io channel', async () => {
+		const edit = mockEditChannel();
+		render(
+			<EditAlertChannels
+				channelId="4"
+				initialValue={{
+					type: 'incidentio',
+					name: 'incidentio-channel',
+					url: 'https://api.incident.io/v2/alert_events/http/01M0D1JNVBGBGVTWX053EM12XV',
+					token: 'tok-abc',
+					send_resolved: true,
+					metadata: { env: 'prod' },
+				}}
+			/>,
+		);
+
+		const user = userEvent.setup();
+		await user.click(screen.getByTestId('save-channel-button'));
+
+		await waitFor(() => expect(edit.calls).toHaveLength(1));
+		expect(edit.calls[0].id).toBe('4');
+		expect(edit.calls[0].body).toStrictEqual({
+			name: 'incidentio-channel',
+			incidentio_configs: [
+				{
+					url: 'https://api.incident.io/v2/alert_events/http/01M0D1JNVBGBGVTWX053EM12XV',
+					token: 'tok-abc',
+					send_resolved: true,
+					metadata: { env: 'prod' },
+				},
+			],
+		});
+	});
+
 	it('persists send_resolved toggle in the edit request', async () => {
 		const edit = mockEditChannel();
 		render(

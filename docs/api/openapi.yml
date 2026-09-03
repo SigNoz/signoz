@@ -109,6 +109,25 @@ components:
         webhook_url:
           $ref: '#/components/schemas/ConfigSecretURL'
       type: object
+    AlertmanagertypesIncidentIOReceiverConfig:
+      properties:
+        description:
+          type: string
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        metadata:
+          additionalProperties:
+            type: string
+          type: object
+        send_resolved:
+          type: boolean
+        title:
+          type: string
+        token:
+          type: string
+        url:
+          type: string
+      type: object
     AlertmanagertypesJSMOpsReceiverConfig:
       properties:
         api_key:
@@ -218,11 +237,11 @@ components:
       - required:
         - jsmops_configs
       - required:
+        - incidentio_configs
+      - required:
         - discord_configs
       - required:
         - email_configs
-      - required:
-        - incidentio_configs
       - required:
         - pagerduty_configs
       - required:
@@ -266,7 +285,7 @@ components:
           type: array
         incidentio_configs:
           items:
-            $ref: '#/components/schemas/ConfigIncidentioConfig'
+            $ref: '#/components/schemas/AlertmanagertypesIncidentIOReceiverConfig'
           type: array
         jira_configs:
           items:
@@ -397,7 +416,7 @@ components:
           type: array
         incidentio_configs:
           items:
-            $ref: '#/components/schemas/ConfigIncidentioConfig'
+            $ref: '#/components/schemas/AlertmanagertypesIncidentIOReceiverConfig'
           type: array
         jira_configs:
           items:
@@ -5759,6 +5778,218 @@ components:
       - total
       - endTimeBeforeRetention
       type: object
+    LicensetypesFeature:
+      properties:
+        active:
+          type: boolean
+        name:
+          type: string
+        route:
+          type: string
+        usage:
+          format: int64
+          type: integer
+        usage_limit:
+          format: int64
+          type: integer
+      type: object
+    LicensetypesGettableActiveLicense:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        eventQueue:
+          $ref: '#/components/schemas/LicensetypesLicenseEventQueue'
+        features:
+          items:
+            $ref: '#/components/schemas/LicensetypesFeature'
+          type: array
+        freeUntil:
+          format: date-time
+          type: string
+        id:
+          type: string
+        plan:
+          $ref: '#/components/schemas/LicensetypesLicensePlan'
+        platform:
+          type: string
+        state:
+          type: string
+        status:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        validFrom:
+          format: int64
+          type: integer
+        validUntil:
+          format: int64
+          type: integer
+      required:
+      - id
+      - validFrom
+      - validUntil
+      - status
+      - state
+      - platform
+      - freeUntil
+      - createdAt
+      - updatedAt
+      - plan
+      - features
+      - eventQueue
+      type: object
+    LicensetypesGettableLicense:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        eventQueue:
+          $ref: '#/components/schemas/LicensetypesLicenseEventQueue'
+        features:
+          items:
+            $ref: '#/components/schemas/LicensetypesFeature'
+          type: array
+        freeUntil:
+          format: date-time
+          type: string
+        id:
+          type: string
+        plan:
+          $ref: '#/components/schemas/LicensetypesLicensePlan'
+        platform:
+          type: string
+        state:
+          type: string
+        status:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        validFrom:
+          format: int64
+          type: integer
+        validUntil:
+          format: int64
+          type: integer
+      required:
+      - id
+      - validFrom
+      - validUntil
+      - status
+      - state
+      - platform
+      - freeUntil
+      - createdAt
+      - updatedAt
+      - plan
+      - features
+      - eventQueue
+      type: object
+    LicensetypesGettableLicenseWithKey:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        eventQueue:
+          $ref: '#/components/schemas/LicensetypesLicenseEventQueue'
+        features:
+          items:
+            $ref: '#/components/schemas/LicensetypesFeature'
+          type: array
+        freeUntil:
+          format: date-time
+          type: string
+        id:
+          type: string
+        key:
+          format: password
+          type: string
+        plan:
+          $ref: '#/components/schemas/LicensetypesLicensePlan'
+        platform:
+          type: string
+        state:
+          type: string
+        status:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        validFrom:
+          format: int64
+          type: integer
+        validUntil:
+          format: int64
+          type: integer
+      required:
+      - id
+      - validFrom
+      - validUntil
+      - status
+      - state
+      - platform
+      - freeUntil
+      - createdAt
+      - updatedAt
+      - plan
+      - features
+      - eventQueue
+      - key
+      type: object
+    LicensetypesLicenseEventQueue:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        event:
+          type: string
+        scheduledAt:
+          format: date-time
+          type: string
+        status:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - event
+      - status
+      - scheduledAt
+      - createdAt
+      - updatedAt
+      type: object
+    LicensetypesLicensePlan:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        description:
+          type: string
+        id:
+          type: string
+        isActive:
+          type: boolean
+        name:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - name
+      - description
+      - isActive
+      - createdAt
+      - updatedAt
+      type: object
+    LicensetypesPostableLicense:
+      properties:
+        key:
+          format: password
+          type: string
+      type: object
     LlmpricingruletypesGettablePricingRules:
       properties:
         items:
@@ -7642,6 +7873,48 @@ components:
       - custom
       - text
       type: string
+    QuickfiltertypesSource:
+      enum:
+      - traces
+      - logs
+      - api_monitoring
+      - exceptions
+      - meter
+      - ai_observability
+      type: string
+    QuickfiltertypesSourceFilters:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        filters:
+          items:
+            $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          type: array
+        id:
+          type: string
+        orgId:
+          type: string
+        source:
+          $ref: '#/components/schemas/QuickfiltertypesSource'
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - orgId
+      - source
+      - filters
+      type: object
+    QuickfiltertypesUpdatableQuickFilters:
+      properties:
+        filters:
+          items:
+            $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          type: array
+      required:
+      - filters
+      type: object
     RenderErrorResponse:
       properties:
         error:
@@ -9480,6 +9753,10 @@ paths:
           type: integer
       - in: query
         name: name
+        schema:
+          type: string
+      - in: query
+        name: existingQuery
         schema:
           type: string
       responses:
@@ -18969,6 +19246,170 @@ paths:
       summary: Get query range result (v2)
       tags:
       - dashboard
+  /api/v2/quick_filters:
+    get:
+      deprecated: false
+      description: Returns the org's quick filters for every source, each filter as
+        a telemetry field key.
+      operationId: ListQuickFilters
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/QuickfiltertypesSourceFilters'
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - quick-filter:list
+      - tokenizer:
+        - quick-filter:list
+      summary: List quick filters
+      tags:
+      - quick_filter
+  /api/v2/quick_filters/{source}:
+    get:
+      deprecated: false
+      description: Returns the org's quick filters for one source, each filter as
+        a telemetry field key.
+      operationId: GetQuickFilters
+      parameters:
+      - in: path
+        name: source
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/QuickfiltertypesSourceFilters'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - quick-filter:read
+      - tokenizer:
+        - quick-filter:read
+      summary: Get a source's quick filters
+      tags:
+      - quick_filter
+    put:
+      deprecated: false
+      description: Replaces the org's quick filters for the source named in the path.
+      operationId: UpdateQuickFilters
+      parameters:
+      - in: path
+        name: source
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuickfiltertypesUpdatableQuickFilters'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - quick-filter:update
+      - tokenizer:
+        - quick-filter:update
+      summary: Update quick filters
+      tags:
+      - quick_filter
   /api/v2/readyz:
     get:
       operationId: Readyz
@@ -24712,6 +25153,110 @@ paths:
       summary: Put profile in Zeus for a deployment.
       tags:
       - zeus
+  /api/v3/licenses:
+    post:
+      deprecated: true
+      description: This endpoint validates the license key with the upstream server
+        and activates the license for the organization.
+      operationId: ActivateLicenseDeprecated
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LicensetypesPostableLicense'
+      responses:
+        "202":
+          description: Accepted
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - license:create
+      - tokenizer:
+        - license:create
+      summary: Activate a license.
+      tags:
+      - licenses
+    put:
+      deprecated: true
+      description: This endpoint refreshes the active license of the organization
+        from the upstream server.
+      operationId: RefreshLicenseDeprecated
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - license:update
+      - tokenizer:
+        - license:update
+      summary: Refresh a license.
+      tags:
+      - licenses
   /api/v3/metrics/dashboards:
     get:
       deprecated: false
@@ -24850,6 +25395,359 @@ paths:
       summary: Get flamegraph view for a trace
       tags:
       - tracedetail
+  /api/v4/licenses:
+    get:
+      deprecated: false
+      description: This endpoint lists all the licenses of the organization.
+      operationId: ListLicenses
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/LicensetypesGettableLicense'
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - license:list
+      - tokenizer:
+        - license:list
+      summary: List licenses.
+      tags:
+      - licenses
+    post:
+      deprecated: false
+      description: This endpoint validates the license key with the upstream server
+        and activates the license for the organization.
+      operationId: ActivateLicense
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LicensetypesPostableLicense'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesIdentifiable'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - license:create
+      - tokenizer:
+        - license:create
+      summary: Activate a license.
+      tags:
+      - licenses
+  /api/v4/licenses/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint deletes the license by id. Licenses managed by SigNoz
+        Cloud cannot be deleted.
+      operationId: DeleteLicense
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - license:delete
+      - tokenizer:
+        - license:delete
+      summary: Delete a license.
+      tags:
+      - licenses
+    get:
+      deprecated: false
+      description: This endpoint gets the license by id.
+      operationId: GetLicense
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/LicensetypesGettableLicenseWithKey'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - license:read
+      - tokenizer:
+        - license:read
+      summary: Get a license.
+      tags:
+      - licenses
+    put:
+      deprecated: false
+      description: This endpoint refreshes the active license of the organization
+        from the upstream server.
+      operationId: RefreshLicense
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - license:update
+      - tokenizer:
+        - license:update
+      summary: Refresh a license.
+      tags:
+      - licenses
+  /api/v4/licenses/active:
+    get:
+      deprecated: false
+      description: This endpoint gets the active license of the organization.
+      operationId: GetActiveLicense
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/LicensetypesGettableActiveLicense'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
+      security:
+      - api_key: []
+      - tokenizer: []
+      summary: Get the active license.
+      tags:
+      - licenses
   /api/v4/traces/{traceID}/waterfall:
     post:
       deprecated: false

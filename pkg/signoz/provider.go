@@ -247,6 +247,10 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddAuthDomainTuplesFactory(sqlstore),
 		sqlmigration.NewAddDeploymentHostTuplesFactory(sqlstore),
 		sqlmigration.NewAddSystemDashboardFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddLicenseTuplesFactory(sqlstore),
+		sqlmigration.NewAddChannelDisplayNameFactory(sqlstore, sqlschema),
+		sqlmigration.NewMigrateQuickFiltersFactory(sqlstore),
+		sqlmigration.NewAddQuickFilterTuplesFactory(sqlstore),
 		sqlmigration.NewAddIngestionTuplesFactory(sqlstore),
 	)
 }
@@ -339,6 +343,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.AuthzHandler,
 			handlers.RawDataExport,
 			handlers.ZeusHandler,
+			handlers.LicensingHandler,
 			handlers.QuerierHandler,
 			handlers.ServiceAccountHandler,
 			modules.ServiceAccountGetter,
@@ -353,6 +358,8 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.RulerHandler,
 			handlers.StatsHandler,
 			handlers.SavedView,
+			modules.QuickFilter,
+			handlers.QuickFilter,
 		),
 	)
 }

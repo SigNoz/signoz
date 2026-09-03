@@ -30,6 +30,7 @@ import useAxiosError from 'hooks/useAxiosError';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { isEmpty, pick } from 'lodash-es';
+import useActiveLicenseKey from 'hooks/useActiveLicenseKey/useActiveLicenseKey';
 import { useAppContext } from 'providers/App/App';
 import { ErrorResponse, SuccessResponse, SuccessResponseV2 } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
@@ -145,6 +146,7 @@ export default function BillingContainer(): JSX.Element {
 		activeLicense,
 		activeLicenseFetchError,
 	} = useAppContext();
+	const { licenseKey } = useActiveLicenseKey();
 	const { notifications } = useNotifications();
 
 	const handleError = useAxiosError();
@@ -207,9 +209,9 @@ export default function BillingContainer(): JSX.Element {
 		isFetching: isFetchingBillingData,
 		data: billingData,
 	} = useQuery([REACT_QUERY_KEY.GET_BILLING_USAGE, user?.id], {
-		queryFn: () => getUsage(activeLicense?.key || ''),
+		queryFn: () => getUsage(licenseKey || ''),
 		onError: handleError,
-		enabled: activeLicense !== null,
+		enabled: !!licenseKey,
 		onSuccess: processUsageData,
 	});
 

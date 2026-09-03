@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/aiobservability"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
@@ -24,6 +25,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
+	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
@@ -69,6 +71,7 @@ type provider struct {
 	authzHandler               authz.Handler
 	rawDataExportHandler       rawdataexport.Handler
 	zeusHandler                zeus.Handler
+	licensingHandler           licensing.Handler
 	querierHandler             querier.Handler
 	serviceAccountHandler      serviceaccount.Handler
 	serviceAccountGetter       serviceaccount.Getter
@@ -83,6 +86,8 @@ type provider struct {
 	llmPricingRuleHandler      llmpricingrule.Handler
 	statsHandler               statsreporter.Handler
 	savedViewHandler           savedview.Handler
+	quickFilterModule          quickfilter.Module
+	quickFilterHandler         quickfilter.Handler
 }
 
 func NewFactory(
@@ -109,6 +114,7 @@ func NewFactory(
 	authzHandler authz.Handler,
 	rawDataExportHandler rawdataexport.Handler,
 	zeusHandler zeus.Handler,
+	licensingHandler licensing.Handler,
 	querierHandler querier.Handler,
 	serviceAccountHandler serviceaccount.Handler,
 	serviceAccountGetter serviceaccount.Getter,
@@ -123,6 +129,8 @@ func NewFactory(
 	rulerHandler ruler.Handler,
 	statsHandler statsreporter.Handler,
 	savedViewHandler savedview.Handler,
+	quickFilterModule quickfilter.Module,
+	quickFilterHandler quickfilter.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
 		return newProvider(
@@ -152,6 +160,7 @@ func NewFactory(
 			authzHandler,
 			rawDataExportHandler,
 			zeusHandler,
+			licensingHandler,
 			querierHandler,
 			serviceAccountHandler,
 			serviceAccountGetter,
@@ -166,6 +175,8 @@ func NewFactory(
 			rulerHandler,
 			statsHandler,
 			savedViewHandler,
+			quickFilterModule,
+			quickFilterHandler,
 		)
 	})
 }
@@ -197,6 +208,7 @@ func newProvider(
 	authzHandler authz.Handler,
 	rawDataExportHandler rawdataexport.Handler,
 	zeusHandler zeus.Handler,
+	licensingHandler licensing.Handler,
 	querierHandler querier.Handler,
 	serviceAccountHandler serviceaccount.Handler,
 	serviceAccountGetter serviceaccount.Getter,
@@ -211,6 +223,8 @@ func newProvider(
 	rulerHandler ruler.Handler,
 	statsHandler statsreporter.Handler,
 	savedViewHandler savedview.Handler,
+	quickFilterModule quickfilter.Module,
+	quickFilterHandler quickfilter.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
@@ -241,6 +255,7 @@ func newProvider(
 		authzHandler:               authzHandler,
 		rawDataExportHandler:       rawDataExportHandler,
 		zeusHandler:                zeusHandler,
+		licensingHandler:           licensingHandler,
 		querierHandler:             querierHandler,
 		serviceAccountHandler:      serviceAccountHandler,
 		serviceAccountGetter:       serviceAccountGetter,
@@ -255,6 +270,8 @@ func newProvider(
 		llmPricingRuleHandler:      llmPricingRuleHandler,
 		statsHandler:               statsHandler,
 		savedViewHandler:           savedViewHandler,
+		quickFilterModule:          quickFilterModule,
+		quickFilterHandler:         quickFilterHandler,
 	}
 
 	provider.authzMiddleware = middleware.NewAuthZ(settings.Logger(), orgGetter, authzService)
@@ -343,6 +360,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 		return err
 	}
 
+	if err := provider.addLicensingRoutes(router); err != nil {
+		return err
+	}
+
 	if err := provider.addZeusRoutes(router); err != nil {
 		return err
 	}
@@ -396,6 +417,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addSavedViewRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addQuickFilterRoutes(router); err != nil {
 		return err
 	}
 
