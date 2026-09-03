@@ -275,7 +275,7 @@ func (m *fieldMapper) FieldFor(
 		for i, expr := range exprs {
 			finalExprs = append(finalExprs, fmt.Sprintf("%s, %s", existExpr[i], expr))
 		}
-		return "multiIf(" + strings.Join(finalExprs, ", ") + ", NULL)", nil
+		return "multiIf(" + strings.Join(finalExprs, ", ") + ", " + attributeStraddleAbsentDefault(key) + ")", nil
 	}
 
 	// should not reach here
@@ -326,7 +326,7 @@ func (m *fieldMapper) resolveColumnExprs(
 				}
 			case telemetrytypes.FieldContextAttribute:
 				path := fmt.Sprintf("%s.%s", columnName, querybuilder.ClickHouseIdentifier(key.Name))
-				exprs = append(exprs, fmt.Sprintf("%s::%s", path, attributeJSONCast(key.FieldDataType)))
+				exprs = append(exprs, attributeJSONValueExpr(path, key.FieldDataType))
 				existExprs = append(existExprs, fmt.Sprintf("%s IS NOT NULL", path))
 			default:
 				return nil, nil, nil, errors.NewInternalf(errors.CodeInternal, "only resource, scope and attribute context fields are supported for json columns, got %s", key.FieldContext.String)
@@ -382,20 +382,33 @@ func attributeColumnEvolutionRegistered(key *telemetrytypes.TelemetryFieldKey, c
 	return false
 }
 
-// attributeJSONCast returns the ClickHouse cast target for a span attribute read from the
-// JSON column. String (and data-type-unspecified) casts to non-nullable String so an absent
-// path folds to ” the way the Map column's default does, keeping negative-operator parity;
-// numeric and bool cast to Nullable so an absent or wrong-typed path reads NULL instead of a
-// spurious 0/false. GROUP BY accepts these Nullable scalar casts (unlike a raw Dynamic).
-func attributeJSONCast(dataType telemetrytypes.FieldDataType) string {
+// attributeStraddleAbsentDefault is the multiIf else for a value read across the rollout window,
+// where a row absent from every physical home falls through to it. For a numeric/bool attribute it
+// is the type zero so an absent key reads like the legacy Map default (0/false) — keeping negative
+// operators' Map parity
+func attributeStraddleAbsentDefault(key *telemetrytypes.TelemetryFieldKey) string {
+	if key.FieldContext == telemetrytypes.FieldContextAttribute {
+		switch key.FieldDataType {
+		case telemetrytypes.FieldDataTypeInt64,
+			telemetrytypes.FieldDataTypeFloat64,
+			telemetrytypes.FieldDataTypeNumber:
+			return "0"
+		case telemetrytypes.FieldDataTypeBool:
+			return "false"
+		}
+	}
+	return "NULL"
+}
+
+func attributeJSONValueExpr(path string, dataType telemetrytypes.FieldDataType) string {
 	switch dataType {
 	case telemetrytypes.FieldDataTypeInt64,
 		telemetrytypes.FieldDataTypeFloat64,
 		telemetrytypes.FieldDataTypeNumber,
 		telemetrytypes.FieldDataTypeBool:
-		return fmt.Sprintf("Nullable(%s)", telemetrytypes.MappingFieldDataTypeToJSONDataType[dataType].StringValue())
+		return fmt.Sprintf("accurateCastOrDefault(%s, '%s')", path, telemetrytypes.MappingFieldDataTypeToJSONDataType[dataType].StringValue())
 	default:
-		return "String"
+		return path + "::String"
 	}
 }
 
