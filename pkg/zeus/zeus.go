@@ -15,7 +15,7 @@ var (
 
 type Zeus interface {
 	// Returns the license for the given key.
-	GetLicense(context.Context, string) ([]byte, error)
+	GetLicense(context.Context, string) (*zeustypes.License, error)
 
 	// Returns the checkout URL for the given license key.
 	GetCheckoutURL(context.Context, string, []byte) ([]byte, error)

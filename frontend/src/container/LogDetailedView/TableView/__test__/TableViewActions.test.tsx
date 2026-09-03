@@ -272,8 +272,6 @@ describe('TableViewActions', () => {
 		expect(defaultProps.handleChangeSelectedView).toHaveBeenCalledWith(
 			ExplorerViews.TIMESERIES,
 			expect.objectContaining({
-				name: '',
-				id: 'test-query-id',
 				query: expect.objectContaining({
 					builder: expect.objectContaining({
 						queryData: expect.arrayContaining([

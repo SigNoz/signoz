@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/aiobservability"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
@@ -68,6 +69,7 @@ type provider struct {
 	authzHandler               authz.Handler
 	rawDataExportHandler       rawdataexport.Handler
 	zeusHandler                zeus.Handler
+	licensingHandler           licensing.Handler
 	querierHandler             querier.Handler
 	serviceAccountHandler      serviceaccount.Handler
 	serviceAccountGetter       serviceaccount.Getter
@@ -107,6 +109,7 @@ func NewFactory(
 	authzHandler authz.Handler,
 	rawDataExportHandler rawdataexport.Handler,
 	zeusHandler zeus.Handler,
+	licensingHandler licensing.Handler,
 	querierHandler querier.Handler,
 	serviceAccountHandler serviceaccount.Handler,
 	serviceAccountGetter serviceaccount.Getter,
@@ -149,6 +152,7 @@ func NewFactory(
 			authzHandler,
 			rawDataExportHandler,
 			zeusHandler,
+			licensingHandler,
 			querierHandler,
 			serviceAccountHandler,
 			serviceAccountGetter,
@@ -193,6 +197,7 @@ func newProvider(
 	authzHandler authz.Handler,
 	rawDataExportHandler rawdataexport.Handler,
 	zeusHandler zeus.Handler,
+	licensingHandler licensing.Handler,
 	querierHandler querier.Handler,
 	serviceAccountHandler serviceaccount.Handler,
 	serviceAccountGetter serviceaccount.Getter,
@@ -236,6 +241,7 @@ func newProvider(
 		authzHandler:               authzHandler,
 		rawDataExportHandler:       rawDataExportHandler,
 		zeusHandler:                zeusHandler,
+		licensingHandler:           licensingHandler,
 		querierHandler:             querierHandler,
 		serviceAccountHandler:      serviceAccountHandler,
 		serviceAccountGetter:       serviceAccountGetter,
@@ -335,6 +341,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addRawDataExportRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addLicensingRoutes(router); err != nil {
 		return err
 	}
 
