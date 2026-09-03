@@ -48,3 +48,28 @@ export const PagerDuty: Story = {
 export const Webhook: Story = {
 	args: { channelType: 'webhook' },
 };
+
+/**
+ * The Jira channel, which files an issue: the site and project it files into,
+ * the transitions that resolve and reopen it, and the API token behind the
+ * Atlassian account, which the form reads off the basic auth block.
+ */
+export const Jira: Story = {
+	args: { channelType: 'jira' },
+};
+
+/**
+ * The Jira Service Management Ops channel, whose tags are stored as one
+ * comma-separated string and come back as chips.
+ */
+export const JiraServiceManagementOps: Story = {
+	args: { channelType: 'jsmops' },
+};
+
+/**
+ * The incident.io channel, pointed at one alert source's events URL with the
+ * token for it and the metadata merged over the alert's labels.
+ */
+export const IncidentIO: Story = {
+	args: { channelType: 'incidentio' },
+};

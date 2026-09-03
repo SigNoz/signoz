@@ -69,3 +69,27 @@ export const Email: Story = {
 		await selectChannelType(canvasElement, /^Email$/);
 	},
 };
+
+/**
+ * The Jira form: where the issue is filed, the transitions that close and
+ * reopen it, and the Atlassian account the API token belongs to.
+ */
+export const Jira: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await selectChannelType(canvasElement, /^Jira$/);
+	},
+};
+
+/** The Jira Service Management Ops form: the API key, priority and tags. */
+export const JiraServiceManagementOps: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await selectChannelType(canvasElement, /^Jira Service Management Ops$/);
+	},
+};
+
+/** The incident.io form: the alert source's events URL and its token. */
+export const IncidentIO: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await selectChannelType(canvasElement, /^incident\.io$/);
+	},
+};
