@@ -17,6 +17,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
+	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/aiobservability"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
@@ -29,6 +30,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
+	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
@@ -81,6 +83,7 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ authz.Handler }{},
 		struct{ rawdataexport.Handler }{},
 		struct{ zeus.Handler }{},
+		struct{ licensing.Handler }{},
 		struct{ querier.Handler }{},
 		struct{ serviceaccount.Handler }{},
 		struct{ serviceaccount.Getter }{},
@@ -95,6 +98,8 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ ruler.Handler }{},
 		struct{ statsreporter.Handler }{},
 		struct{ savedview.Handler }{},
+		struct{ quickfilter.Module }{},
+		struct{ quickfilter.Handler }{},
 	).New(ctx, instrumentation.ToProviderSettings(), apiserver.Config{})
 	if err != nil {
 		return nil, err
