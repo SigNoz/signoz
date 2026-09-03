@@ -65,11 +65,6 @@ export const billingMocks = defineStoryMocks({
 			'http://localhost/api/v1/portal',
 			response.json(() => checkoutResponse()),
 		),
-
-		rest.put(
-			'http://localhost/api/v3/licenses',
-			response.json(() => ({ status: 'success', data: null })),
-		),
 	],
 	config: ({ plan }) => ({
 		route: ROUTES.BILLING,

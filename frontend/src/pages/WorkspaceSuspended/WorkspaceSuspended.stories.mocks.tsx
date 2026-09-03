@@ -22,9 +22,6 @@ export const workspaceSuspendedMocks = defineStoryMocks({
 				}),
 			),
 		),
-		rest.put('http://localhost/api/v3/licenses', (_req, res, ctx) =>
-			res(ctx.json({ status: 'success', data: null })),
-		),
 	],
 	config: () => ({
 		route: ROUTES.WORKSPACE_SUSPENDED,

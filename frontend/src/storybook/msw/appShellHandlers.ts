@@ -4,6 +4,7 @@ import {
 	changelogResponse,
 	globalConfigResponse,
 	latestGithubReleaseResponse,
+	licenseWithKeyResponse,
 	userPreferencesResponse,
 	versionResponse,
 	zeusHostsResponse,
@@ -30,6 +31,13 @@ export const appShellHandlers = [
 
 	rest.get('http://localhost/api/v1/global/config', (_req, res, ctx) =>
 		res(ctx.status(200), ctx.json(globalConfigResponse)),
+	),
+
+	// The settings, account and billing pages each read the workspace's licence
+	// key off this endpoint, which the app-shell context does not cover: it
+	// carries the active licence, and the key is only served by id.
+	rest.get('http://localhost/api/v4/licenses/:id', (_req, res, ctx) =>
+		res(ctx.status(200), ctx.json(licenseWithKeyResponse)),
 	),
 
 	rest.get('http://localhost/api/v1/version', (_req, res, ctx) =>
