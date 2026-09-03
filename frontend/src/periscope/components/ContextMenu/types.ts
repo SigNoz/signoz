@@ -1,4 +1,4 @@
-import { CustomDataColumnType } from 'container/WidgetCard/TablePanel/utils';
+import { CustomDataColumnType } from 'container/WidgetCard/Panels/TablePanel/utils';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 
 export interface ClickedData {

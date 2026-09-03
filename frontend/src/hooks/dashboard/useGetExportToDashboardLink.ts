@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import type { PANEL_TYPES } from 'constants/queryBuilder';
-import { buildExportPanelLink } from 'pages/DashboardPageV2/DashboardContainer/PanelEditor/newPanelRoute';
+import { buildExportPanelLink } from 'pages/DashboardPage/DashboardContainer/PanelEditor/newPanelRoute';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 interface ExportToDashboardLinkParams {

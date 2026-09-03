@@ -26,7 +26,7 @@ import { PanelMode } from 'lib/visualization/panels/types';
 import useDrilldown from 'container/WidgetCard/Card/FullView/useDrilldown';
 import { populateMultipleResults } from 'lib/query/populateMultipleResults';
 import { timeItems, timePreferance } from 'constants/timePreference';
-import PanelWrapper from 'container/WidgetCard/PanelWrapper/PanelWrapper';
+import PanelWrapper from 'container/WidgetCard/Panels/PanelWrapper';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';

@@ -6,7 +6,7 @@ import {
 import { Frown, TriangleAlert } from '@signozhq/icons';
 
 import PublicDashboardMessage from './PublicDashboardMessage';
-import PublicDashboardV2 from './PublicDashboardV2/PublicDashboardV2';
+import PublicDashboardView from './PublicDashboardView/PublicDashboardView';
 
 import './PublicDashboard.styles.scss';
 
@@ -26,15 +26,15 @@ function PublicDashboardPage(): JSX.Element {
 	return (
 		<div className="public-dashboard-page">
 			{resolved?.schema === PublicDashboardSchema.V2 && (
-				<PublicDashboardV2 publicDashboardId={dashboardId} data={resolved.data} />
+				<PublicDashboardView publicDashboardId={dashboardId} data={resolved.data} />
 			)}
 
 			{resolved?.schema === PublicDashboardSchema.Legacy && (
 				<PublicDashboardMessage
 					testId="public-dashboard-legacy"
 					icon={<TriangleAlert size={36} />}
-					title="This dashboard hasn't been migrated to the new experience yet."
-					description="Please reach out to the owner of the dashboard — they can migrate it and re-share the link."
+					title="This dashboard isn't available in the new experience"
+					description="It hasn't been migrated to the new dashboard experience yet, so it can't be shown here. Reach out to the owner of the dashboard — they can migrate it and re-share the link."
 				/>
 			)}
 
