@@ -40,6 +40,7 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 		targetLayoutIndex,
 	} = useCreatePanel();
 	const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+	const [isMaximized, setIsMaximized] = useState(false);
 
 	const { open, toggle } = useToggleSectionCollapse({ sectionId: section.id });
 
@@ -102,6 +103,8 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 				title={section.title}
 				open={open}
 				onToggle={toggle}
+				onMaximizeToggle={(): void => setIsMaximized((current) => !current)}
+				isMaximized={isMaximized}
 				repeatVariable={section.repeatVariable}
 				dragHandle={dragHandle}
 				disabledReason={isLocked ? DASHBOARD_LOCKED_REASON : ''}
