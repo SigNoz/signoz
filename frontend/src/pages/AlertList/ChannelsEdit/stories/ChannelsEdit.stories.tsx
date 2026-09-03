@@ -1,4 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { rest } from 'msw';
+import { screen, userEvent, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -19,12 +21,16 @@ const pageStory = storyMocks(channelsEditMocks, { layout: 'app' });
  */
 const meta = {
 	title: 'Pages/Alerts/Channels/Edit',
+	tags: ['play'],
 	component: AlertList,
 	...pageStory,
 	parameters: { ...pageStory.parameters },
 } satisfies Meta<ChannelsEditArgs>;
 
 export default meta;
+
+/** The page loads the saved channel before it renders the form. */
+const untilLoaded = { timeout: 15_000 };
 
 type Story = StoryObj<ChannelsEditArgs>;
 
@@ -33,6 +39,88 @@ type Story = StoryObj<ChannelsEditArgs>;
  * fixed, and the integration's own settings are filled from what was stored.
  */
 export const Default: Story = {};
+
+/** Mutation: clearing the required webhook URL surfaces the form's validation feedback. */
+export const InvalidRequiredFields: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+		const webhookUrl = await canvas.findByTestId(
+			'webhook-url-textbox',
+			undefined,
+			untilLoaded,
+		);
+
+		await userEvent.clear(webhookUrl);
+		await userEvent.click(
+			await canvas.findByTestId('save-channel-button', undefined, untilLoaded),
+		);
+		await screen.findByText('Webhook URL is mandatory');
+	},
+};
+
+/** Mutation: a failed test request keeps the edit form open and renders its error feedback. */
+export const TestChannelFailure: Story = {
+	parameters: {
+		msw: [
+			rest.post('http://localhost/api/v1/testChannel', (_req, res, ctx) =>
+				res(
+					ctx.status(500),
+					ctx.json({
+						status: 'error',
+						error: {
+							code: 'STORYBOOK_FAILURE',
+							message: 'Storybook forced channel failure',
+							url: '',
+							errors: [],
+						},
+					}),
+				),
+			),
+		],
+	},
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByTestId(
+				'test-channel-button',
+				undefined,
+				untilLoaded,
+			),
+		);
+		await screen.findByText('Storybook forced channel failure');
+	},
+};
+
+/** Mutation: a failed save leaves the saved channel editable and surfaces the request error. */
+export const SaveFailure: Story = {
+	parameters: {
+		msw: [
+			rest.put('http://localhost/api/v1/channels/:id', (_req, res, ctx) =>
+				res(
+					ctx.status(500),
+					ctx.json({
+						status: 'error',
+						error: {
+							code: 'STORYBOOK_FAILURE',
+							message: 'Storybook forced channel failure',
+							url: '',
+							errors: [],
+						},
+					}),
+				),
+			),
+		],
+	},
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByTestId(
+				'save-channel-button',
+				undefined,
+				untilLoaded,
+			),
+		);
+		await screen.findByText('Storybook forced channel failure');
+	},
+};
 
 /**
  * The PagerDuty channel, whose form carries the routing key and the extra
@@ -69,6 +157,11 @@ export const Email: Story = {
  */
 export const MicrosoftTeams: Story = {
 	args: { channelType: 'msteams' },
+};
+
+/** The Google Chat channel, filled from the space's incoming webhook. */
+export const GoogleChat: Story = {
+	args: { channelType: 'googlechat' },
 };
 
 /**

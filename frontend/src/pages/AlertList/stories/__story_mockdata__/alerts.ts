@@ -618,7 +618,7 @@ const CHANNEL_SEEDS: ChannelSeed[] = [
 					webhook_url: 'https://chat.googleapis.com/v1/spaces/story',
 					send_resolved: true,
 					title: '{{ .CommonLabels.alertname }}',
-					description: '{{ .CommonAnnotations.summary }}',
+					text: '{{ .CommonAnnotations.summary }}',
 				},
 			],
 		},
