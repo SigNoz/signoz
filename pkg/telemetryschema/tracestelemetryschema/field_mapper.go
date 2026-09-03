@@ -275,7 +275,7 @@ func (m *fieldMapper) FieldFor(
 		for i, expr := range exprs {
 			finalExprs = append(finalExprs, fmt.Sprintf("%s, %s", existExpr[i], expr))
 		}
-		return "multiIf(" + strings.Join(finalExprs, ", ") + ", " + attributeStraddleAbsentDefault(key) + ")", nil
+		return fmt.Sprintf("multiIf(%s, NULL)", strings.Join(finalExprs, ", ")), nil
 	}
 
 	// should not reach here
@@ -382,31 +382,18 @@ func attributeColumnEvolutionRegistered(key *telemetrytypes.TelemetryFieldKey, c
 	return false
 }
 
-// attributeStraddleAbsentDefault is the multiIf else for a value read across the rollout window,
-// where a row absent from every physical home falls through to it. For a numeric/bool attribute it
-// is the type zero so an absent key reads like the legacy Map default (0/false) — keeping negative
-// operators' Map parity
-func attributeStraddleAbsentDefault(key *telemetrytypes.TelemetryFieldKey) string {
-	if key.FieldContext == telemetrytypes.FieldContextAttribute {
-		switch key.FieldDataType {
-		case telemetrytypes.FieldDataTypeInt64,
-			telemetrytypes.FieldDataTypeFloat64,
-			telemetrytypes.FieldDataTypeNumber:
-			return "0"
-		case telemetrytypes.FieldDataTypeBool:
-			return "false"
-		}
-	}
-	return "NULL"
-}
-
+// attributeJSONValueExpr renders the value expression for a span attribute read from the JSON
+// column. Absent path reads ” the way the Map default does.
+// Numeric and bool use accurateCastOrNull, which reads an absent path or a same-named key
+// stored as another type as NULL rather than erroring — unlike a bare ::Int64/::Bool cast, and
+// unlike ::Nullable(Bool), which throws on a non-bool string.
 func attributeJSONValueExpr(path string, dataType telemetrytypes.FieldDataType) string {
 	switch dataType {
 	case telemetrytypes.FieldDataTypeInt64,
 		telemetrytypes.FieldDataTypeFloat64,
 		telemetrytypes.FieldDataTypeNumber,
 		telemetrytypes.FieldDataTypeBool:
-		return fmt.Sprintf("accurateCastOrDefault(%s, '%s')", path, telemetrytypes.MappingFieldDataTypeToJSONDataType[dataType].StringValue())
+		return fmt.Sprintf("accurateCastOrNull(%s, '%s')", path, telemetrytypes.MappingFieldDataTypeToJSONDataType[dataType].StringValue())
 	default:
 		return path + "::String"
 	}

@@ -53,12 +53,12 @@ func TestFieldForAttributeJSONEvolution(t *testing.T) {
 		{"string after -> json", telemetrytypes.FieldDataTypeString, attrWindowAfter, "attributes.`user.id`::String"},
 		{"string straddle -> dual", telemetrytypes.FieldDataTypeString, attrWindowStraddle, "multiIf(attributes.`user.id` IS NOT NULL, attributes.`user.id`::String, mapContains(attributes_string, 'user.id'), attributes_string['user.id'], NULL)"},
 		{"number before -> map", telemetrytypes.FieldDataTypeNumber, attrWindowBefore, "attributes_number['user.id']"},
-		{"number after -> json", telemetrytypes.FieldDataTypeNumber, attrWindowAfter, "accurateCastOrDefault(attributes.`user.id`, 'Float64')"},
-		{"number straddle -> dual", telemetrytypes.FieldDataTypeNumber, attrWindowStraddle, "multiIf(attributes.`user.id` IS NOT NULL, accurateCastOrDefault(attributes.`user.id`, 'Float64'), mapContains(attributes_number, 'user.id'), attributes_number['user.id'], 0)"},
-		{"int64 after -> json", telemetrytypes.FieldDataTypeInt64, attrWindowAfter, "accurateCastOrDefault(attributes.`user.id`, 'Int64')"},
+		{"number after -> json", telemetrytypes.FieldDataTypeNumber, attrWindowAfter, "accurateCastOrNull(attributes.`user.id`, 'Float64')"},
+		{"number straddle -> dual", telemetrytypes.FieldDataTypeNumber, attrWindowStraddle, "multiIf(attributes.`user.id` IS NOT NULL, accurateCastOrNull(attributes.`user.id`, 'Float64'), mapContains(attributes_number, 'user.id'), attributes_number['user.id'], NULL)"},
+		{"int64 after -> json", telemetrytypes.FieldDataTypeInt64, attrWindowAfter, "accurateCastOrNull(attributes.`user.id`, 'Int64')"},
 		{"bool before -> map", telemetrytypes.FieldDataTypeBool, attrWindowBefore, "attributes_bool['user.id']"},
-		{"bool after -> json", telemetrytypes.FieldDataTypeBool, attrWindowAfter, "accurateCastOrDefault(attributes.`user.id`, 'Bool')"},
-		{"bool straddle -> dual", telemetrytypes.FieldDataTypeBool, attrWindowStraddle, "multiIf(attributes.`user.id` IS NOT NULL, accurateCastOrDefault(attributes.`user.id`, 'Bool'), mapContains(attributes_bool, 'user.id'), attributes_bool['user.id'], false)"},
+		{"bool after -> json", telemetrytypes.FieldDataTypeBool, attrWindowAfter, "accurateCastOrNull(attributes.`user.id`, 'Bool')"},
+		{"bool straddle -> dual", telemetrytypes.FieldDataTypeBool, attrWindowStraddle, "multiIf(attributes.`user.id` IS NOT NULL, accurateCastOrNull(attributes.`user.id`, 'Bool'), mapContains(attributes_bool, 'user.id'), attributes_bool['user.id'], NULL)"},
 	}
 
 	for _, tc := range testCases {
@@ -124,7 +124,7 @@ func TestConditionForAttributeJSON(t *testing.T) {
 			name:     "greater than number",
 			key:      attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo),
 			operator: qbtypes.FilterOperatorGreaterThan, value: float64(200),
-			expected: "toFloat64(accurateCastOrDefault(attributes.`http.status_code`, 'Int64')) > ?",
+			expected: "toFloat64(accurateCastOrNull(attributes.`http.status_code`, 'Int64')) > ?",
 		},
 		{
 			name:     "ilike string",
@@ -160,7 +160,7 @@ func TestConditionForAttributeJSON(t *testing.T) {
 			name:     "between number",
 			key:      attrKey("latency", telemetrytypes.FieldDataTypeNumber, evo),
 			operator: qbtypes.FilterOperatorBetween, value: []any{float64(1), float64(9)},
-			expected: "toFloat64(accurateCastOrDefault(attributes.`latency`, 'Float64')) BETWEEN ? AND ?",
+			expected: "toFloat64(accurateCastOrNull(attributes.`latency`, 'Float64')) BETWEEN ? AND ?",
 		},
 	}
 
@@ -218,7 +218,7 @@ func TestColumnExpressionForAttributeJSON(t *testing.T) {
 		key := attrKey("latency", telemetrytypes.FieldDataTypeNumber, evo)
 		got, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, attrWindowAfter[0], attrWindowAfter[1], &key, telemetrytypes.FieldDataTypeFloat64, nil)
 		require.NoError(t, err)
-		assert.Equal(t, "multiIf(attributes.`latency` IS NOT NULL, toFloat64(accurateCastOrDefault(attributes.`latency`, 'Float64')), NULL)", got)
+		assert.Equal(t, "multiIf(attributes.`latency` IS NOT NULL, toFloat64(accurateCastOrNull(attributes.`latency`, 'Float64')), NULL)", got)
 	})
 }
 
@@ -265,7 +265,7 @@ func TestConditionForAttributeJSONTypeCollision(t *testing.T) {
 	sb.Where(sb.Or(conds...))
 	sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	assert.Contains(t, sql, "toFloat64OrNull(attributes.`http.status_code`::String) = ?")
-	assert.Contains(t, sql, "toFloat64(accurateCastOrDefault(attributes.`http.status_code`, 'Int64')) = ?")
+	assert.Contains(t, sql, "toFloat64(accurateCastOrNull(attributes.`http.status_code`, 'Int64')) = ?")
 	assert.Contains(t, sql, "attributes.`http.status_code` IS NOT NULL")
 	assert.NotEmpty(t, warnings, "a colliding name must surface the ambiguity warning")
 }
@@ -274,7 +274,7 @@ func TestConditionForAttributeJSONTypeCollision(t *testing.T) {
 // data types. On the JSON column both interpretations read the same path, so the raw-path guard
 // can't tell them apart; each branch is instead guarded by whether the path casts to its type,
 // with the ::String branch as the last-resort fallback. A row is read as its actual stored type
-// (int via accurateCastOrDefault to Int64, everything else via ::String) rather than the first branch winning.
+// (int via accurateCastOrNull to Int64, everything else via ::String) rather than the first branch winning.
 func TestColumnExpressionForAttributeJSONTypeCollision(t *testing.T) {
 	ctx := context.Background()
 	fm := NewFieldMapper(flaggertest.New(t))
@@ -290,7 +290,7 @@ func TestColumnExpressionForAttributeJSONTypeCollision(t *testing.T) {
 	got, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, attrWindowAfter[0], attrWindowAfter[1], &ref, telemetrytypes.FieldDataTypeString, fieldKeys)
 	require.NoError(t, err)
 	assert.Equal(t,
-		"multiIf(accurateCastOrDefault(attributes.`http.status_code`, 'Int64') IS NOT NULL, toString(accurateCastOrDefault(attributes.`http.status_code`, 'Int64')), attributes.`http.status_code` IS NOT NULL, attributes.`http.status_code`::String, NULL)",
+		"multiIf(accurateCastOrNull(attributes.`http.status_code`, 'Int64') IS NOT NULL, toString(accurateCastOrNull(attributes.`http.status_code`, 'Int64')), attributes.`http.status_code` IS NOT NULL, attributes.`http.status_code`::String, NULL)",
 		got)
 }
 
@@ -313,7 +313,7 @@ func TestColumnExpressionForAttributeJSONTypeCollisionNumericAgg(t *testing.T) {
 	got, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, attrWindowAfter[0], attrWindowAfter[1], &ref, telemetrytypes.FieldDataTypeFloat64, fieldKeys)
 	require.NoError(t, err)
 	assert.Equal(t,
-		"multiIf(accurateCastOrDefault(attributes.`http.status_code`, 'Float64') IS NOT NULL, toFloat64(accurateCastOrDefault(attributes.`http.status_code`, 'Float64')), attributes.`http.status_code` IS NOT NULL, toFloat64OrNull(attributes.`http.status_code`::String), NULL)",
+		"multiIf(accurateCastOrNull(attributes.`http.status_code`, 'Float64') IS NOT NULL, toFloat64(accurateCastOrNull(attributes.`http.status_code`, 'Float64')), attributes.`http.status_code` IS NOT NULL, toFloat64OrNull(attributes.`http.status_code`::String), NULL)",
 		got)
 }
 
@@ -361,12 +361,12 @@ func TestColumnForUnspecifiedAttributeNoBranchFlip(t *testing.T) {
 	assert.ErrorIs(t, err, qbtypes.ErrColumnNotFound)
 }
 
-// TestConditionForAttributeJSONNegativeOperatorParity pins Map parity for numeric/bool attributes:
-// an absent key reads as the Map default (0/false), so a negative operator KEEPS rows lacking the
-// key (0 != x is true) and a positive operator EXCLUDES them via the exists guard. Parity comes
-// from the value expression alone — accurateCastOrDefault on the single-home read, the type zero as
-// the straddle multiIf else, and the Map's own default on the pre-rollout read — with no
-// operator-specific folding in the condition builder.
+// TestConditionForAttributeJSONNegativeOperatorParity pins Map parity for numeric/bool attributes.
+// The value reads an absent key as NULL (accurateCastOrNull, or the straddle multiIf else); a
+// positive operator excludes such a row via the exists guard, but a negative operator has no guard,
+// so the condition builder folds the NULL to the Map's type zero (ifNull) for negatives only.
+// String needs no fold — ::String already reads absent as ”. The fold rides the attributes
+// evolution: a key without it (the pre-rollout system) is byte-identical to today.
 func TestConditionForAttributeJSONNegativeOperatorParity(t *testing.T) {
 	ctx := context.Background()
 	fm := NewFieldMapper(flaggertest.New(t))
@@ -384,64 +384,91 @@ func TestConditionForAttributeJSONNegativeOperatorParity(t *testing.T) {
 		return sql
 	}
 
-	t.Run("not equal number after -> absent reads 0, no fold", func(t *testing.T) {
+	t.Run("not equal number after -> NULL folded to 0", func(t *testing.T) {
 		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
 		sql := build(t, key, attrWindowAfter, qbtypes.FilterOperatorNotEqual, float64(200))
-		assert.Contains(t, sql, "toFloat64(accurateCastOrDefault(attributes.`http.status_code`, 'Int64')) <> ?")
-		assert.NotContains(t, sql, "ifNull")
+		assert.Contains(t, sql, "ifNull(toFloat64(accurateCastOrNull(attributes.`http.status_code`, 'Int64')), 0) <> ?")
 	})
 
-	t.Run("not equal bool after -> absent reads false", func(t *testing.T) {
+	t.Run("not equal bool after -> NULL folded to false", func(t *testing.T) {
 		key := attrKey("http.cache.hit", telemetrytypes.FieldDataTypeBool, evo)
 		sql := build(t, key, attrWindowAfter, qbtypes.FilterOperatorNotEqual, true)
-		assert.Contains(t, sql, "accurateCastOrDefault(attributes.`http.cache.hit`, 'Bool') <> ?")
+		assert.Contains(t, sql, "ifNull(accurateCastOrNull(attributes.`http.cache.hit`, 'Bool'), false) <> ?")
+	})
+
+	t.Run("equal number after -> not folded, exists guard excludes absent", func(t *testing.T) {
+		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
+		sql := build(t, key, attrWindowAfter, qbtypes.FilterOperatorEqual, float64(0))
+		assert.Contains(t, sql, "(toFloat64(accurateCastOrNull(attributes.`http.status_code`, 'Int64')) = ? AND attributes.`http.status_code` IS NOT NULL)")
 		assert.NotContains(t, sql, "ifNull")
 	})
 
-	t.Run("equal number after -> exists guard excludes absent", func(t *testing.T) {
-		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
-		sql := build(t, key, attrWindowAfter, qbtypes.FilterOperatorEqual, float64(200))
-		assert.Contains(t, sql, "(toFloat64(accurateCastOrDefault(attributes.`http.status_code`, 'Int64')) = ? AND attributes.`http.status_code` IS NOT NULL)")
-	})
-
-	t.Run("not in number after -> each operand reads 0", func(t *testing.T) {
+	t.Run("not in number after -> each operand folded to 0", func(t *testing.T) {
 		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
 		sql := build(t, key, attrWindowAfter, qbtypes.FilterOperatorNotIn, []any{float64(200), float64(404)})
-		assert.Contains(t, sql, "(toFloat64(accurateCastOrDefault(attributes.`http.status_code`, 'Int64')) <> ? AND toFloat64(accurateCastOrDefault(attributes.`http.status_code`, 'Int64')) <> ?)")
+		assert.Contains(t, sql, "(ifNull(toFloat64(accurateCastOrNull(attributes.`http.status_code`, 'Int64')), 0) <> ? AND ifNull(toFloat64(accurateCastOrNull(attributes.`http.status_code`, 'Int64')), 0) <> ?)")
 	})
 
-	t.Run("not equal number straddle -> multiIf else is the type zero", func(t *testing.T) {
+	t.Run("not equal number straddle -> whole multiIf folded", func(t *testing.T) {
 		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
 		sql := build(t, key, attrWindowStraddle, qbtypes.FilterOperatorNotEqual, float64(200))
-		assert.Contains(t, sql, "toFloat64(multiIf(attributes.`http.status_code` IS NOT NULL, accurateCastOrDefault(attributes.`http.status_code`, 'Int64'), mapContains(attributes_number, 'http.status_code'), attributes_number['http.status_code'], 0)) <> ?")
-		assert.NotContains(t, sql, "ifNull")
+		assert.Contains(t, sql, "ifNull(toFloat64(multiIf(attributes.`http.status_code` IS NOT NULL, accurateCastOrNull(attributes.`http.status_code`, 'Int64'), mapContains(attributes_number, 'http.status_code'), attributes_number['http.status_code'], NULL)), 0) <> ?")
 	})
 
-	t.Run("not equal number before -> plain map read, defaults itself", func(t *testing.T) {
+	t.Run("not equal number before -> harmless fold over the map read", func(t *testing.T) {
 		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
 		sql := build(t, key, attrWindowBefore, qbtypes.FilterOperatorNotEqual, float64(200))
-		assert.Contains(t, sql, "toFloat64(attributes_number['http.status_code']) <> ?")
-		assert.NotContains(t, sql, "accurateCastOrDefault")
+		assert.Contains(t, sql, "ifNull(toFloat64(attributes_number['http.status_code']), 0) <> ?")
 	})
 
 	t.Run("not equal number without rollout -> byte-identical to today", func(t *testing.T) {
 		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, nil)
 		sql := build(t, key, attrWindowBefore, qbtypes.FilterOperatorNotEqual, float64(200))
 		assert.Contains(t, sql, "toFloat64(attributes_number['http.status_code']) <> ?")
-		assert.NotContains(t, sql, "accurateCastOrDefault")
+		assert.NotContains(t, sql, "ifNull")
 	})
 
-	t.Run("not equal string after -> '' default, no guard (existing parity)", func(t *testing.T) {
+	t.Run("not equal string after -> '' default, never folded", func(t *testing.T) {
 		key := attrKey("user.id", telemetrytypes.FieldDataTypeString, evo)
 		sql := build(t, key, attrWindowAfter, qbtypes.FilterOperatorNotEqual, "admin")
 		assert.Contains(t, sql, "attributes.`user.id`::String <> ?")
 		assert.NotContains(t, sql, "ifNull")
 	})
+}
 
-	t.Run("not exists straddle -> raw path, never defaulted", func(t *testing.T) {
+// TestConditionForAttributeJSONStraddleAbsentKeyExclusion guards the straddle exists path: because
+// the value reads absent-in-both-homes as NULL (multiIf else), a positive zero-value comparison and
+// EXISTS/NOT EXISTS must still exclude a key absent from every home, rather than matching it.
+func TestConditionForAttributeJSONStraddleAbsentKeyExclusion(t *testing.T) {
+	ctx := context.Background()
+	fm := NewFieldMapper(flaggertest.New(t))
+	cb := NewConditionBuilder(fm, flaggertest.New(t))
+	evo := MockAttributeEvolutionData(attrJSONRelease)
+
+	build := func(t *testing.T, key telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOperator, value any) string {
+		t.Helper()
+		sb := sqlbuilder.NewSelectBuilder()
+		conds, _, err := cb.ConditionFor(ctx, valuer.UUID{}, attrWindowStraddle[0], attrWindowStraddle[1], &key,
+			map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, qbtypes.ConditionBuilderOptions{}, op, value, sb)
+		require.NoError(t, err)
+		sb.Where(conds...)
+		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		return sql
+	}
+
+	guard := "multiIf(attributes.`http.status_code` IS NOT NULL, accurateCastOrNull(attributes.`http.status_code`, 'Int64'), mapContains(attributes_number, 'http.status_code'), attributes_number['http.status_code'], NULL) IS NOT NULL"
+
+	t.Run("equal zero keeps the exists guard", func(t *testing.T) {
 		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
-		sql := build(t, key, attrWindowStraddle, qbtypes.FilterOperatorNotExists, nil)
-		assert.Contains(t, sql, "IS NULL")
-		assert.NotContains(t, sql, "ifNull")
+		assert.Contains(t, build(t, key, qbtypes.FilterOperatorEqual, float64(0)), guard)
+	})
+	t.Run("exists is the raw multiIf, not always-true", func(t *testing.T) {
+		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
+		assert.Contains(t, build(t, key, qbtypes.FilterOperatorExists, nil), guard)
+	})
+	t.Run("not exists negates the raw multiIf", func(t *testing.T) {
+		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
+		sql := build(t, key, qbtypes.FilterOperatorNotExists, nil)
+		assert.Contains(t, sql, ", NULL) IS NULL")
 	})
 }
