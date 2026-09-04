@@ -66,6 +66,8 @@ func wrapValidationError(cause error, contextIdentifier string, errorFormat stri
 const (
 	// Maximum limit for query results.
 	MaxQueryLimit = 10000
+
+	MaxNumBuckets = 512
 )
 
 // ValidationOption is a functional option for configuring validation behaviour.
