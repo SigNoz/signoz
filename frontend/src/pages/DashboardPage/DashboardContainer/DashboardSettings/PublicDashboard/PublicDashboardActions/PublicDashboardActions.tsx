@@ -1,7 +1,7 @@
 import { Globe, RefreshCw, Trash } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 
-import DisabledControlTooltip from '../../../components/DisabledControlTooltip/DisabledControlTooltip';
+import DisabledReasonTooltip from 'lib/authz/components/DisabledReasonTooltip/DisabledReasonTooltip';
 import styles from './PublicDashboardActions.module.scss';
 
 interface PublicDashboardActionsProps {
@@ -38,7 +38,7 @@ function PublicDashboardActions({
 		<div className={styles.footer}>
 			{isPublic ? (
 				<>
-					<DisabledControlTooltip reason={disabledReason} kind="denied">
+					<DisabledReasonTooltip reason={disabledReason} kind="denied">
 						<Button
 							variant="outlined"
 							color="destructive"
@@ -50,8 +50,8 @@ function PublicDashboardActions({
 						>
 							Unpublish Dashboard
 						</Button>
-					</DisabledControlTooltip>
-					<DisabledControlTooltip reason={disabledReason} kind="denied">
+					</DisabledReasonTooltip>
+					<DisabledReasonTooltip reason={disabledReason} kind="denied">
 						<Button
 							variant="solid"
 							color="primary"
@@ -63,10 +63,10 @@ function PublicDashboardActions({
 						>
 							Update Dashboard
 						</Button>
-					</DisabledControlTooltip>
+					</DisabledReasonTooltip>
 				</>
 			) : (
-				<DisabledControlTooltip reason={disabledReason} kind="denied">
+				<DisabledReasonTooltip reason={disabledReason} kind="denied">
 					<Button
 						variant="solid"
 						color="primary"
@@ -78,7 +78,7 @@ function PublicDashboardActions({
 					>
 						Publish Dashboard
 					</Button>
-				</DisabledControlTooltip>
+				</DisabledReasonTooltip>
 			)}
 		</div>
 	);

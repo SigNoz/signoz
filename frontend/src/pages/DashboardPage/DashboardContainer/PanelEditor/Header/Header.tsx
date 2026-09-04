@@ -11,7 +11,7 @@ import { useConfirmableAction } from 'hooks/useConfirmableAction';
 import type { DisabledState } from 'lib/authz/components/DisabledReasonTooltip/disabledState.types';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 
-import DisabledControlTooltip from '../../components/DisabledControlTooltip/DisabledControlTooltip';
+import DisabledReasonTooltip from 'lib/authz/components/DisabledReasonTooltip/DisabledReasonTooltip';
 import styles from './Header.module.scss';
 
 interface HeaderProps {
@@ -92,7 +92,7 @@ function Header({
 						Switch to View Mode
 					</Button>
 				)}
-				<DisabledControlTooltip
+				<DisabledReasonTooltip
 					reason={readOnly ? (readOnlyDisabled?.reason ?? '') : ''}
 					kind={readOnlyDisabled?.kind ?? 'denied'}
 				>
@@ -106,7 +106,7 @@ function Header({
 					>
 						Save changes
 					</Button>
-				</DisabledControlTooltip>
+				</DisabledReasonTooltip>
 			</div>
 
 			<DialogWrapper

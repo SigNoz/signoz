@@ -1,7 +1,7 @@
 import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 
-import DisabledControlTooltip from '../../../components/DisabledControlTooltip/DisabledControlTooltip';
+import DisabledReasonTooltip from 'lib/authz/components/DisabledReasonTooltip/DisabledReasonTooltip';
 
 /**
  * `disabledReason` is the only input: a non-empty reason both disables the button
@@ -16,7 +16,7 @@ const AddVariableButton = ({
 	disabledKind: 'denied' | 'blocked';
 	setIsEditing: (state: { type: 'new' }) => void;
 }): JSX.Element => (
-	<DisabledControlTooltip reason={disabledReason} kind={disabledKind}>
+	<DisabledReasonTooltip reason={disabledReason} kind={disabledKind}>
 		<Button
 			variant="solid"
 			color="primary"
@@ -28,7 +28,7 @@ const AddVariableButton = ({
 		>
 			Add variable
 		</Button>
-	</DisabledControlTooltip>
+	</DisabledReasonTooltip>
 );
 
 export default AddVariableButton;

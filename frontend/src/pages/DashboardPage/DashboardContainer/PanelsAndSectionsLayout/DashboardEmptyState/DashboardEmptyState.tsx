@@ -6,7 +6,7 @@ import dashboardEmojiUrl from '@/assets/Icons/dashboard_emoji.svg';
 import landscapeUrl from '@/assets/Icons/landscape.svg';
 
 import { useCreatePanel } from '../../hooks/useCreatePanel';
-import DisabledControlTooltip from '../../components/DisabledControlTooltip/DisabledControlTooltip';
+import DisabledReasonTooltip from 'lib/authz/components/DisabledReasonTooltip/DisabledReasonTooltip';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import PanelTypeSelectionModal from '../Panel/PanelTypeSelectionModal/PanelTypeSelectionModal';
 import styles from './DashboardEmptyState.module.scss';
@@ -51,7 +51,7 @@ function DashboardEmptyState({
 								</Typography.Text>
 							</div>
 						</div>
-						<DisabledControlTooltip
+						<DisabledReasonTooltip
 							reason={editDisabledReason}
 							kind={editDisabledKind}
 						>
@@ -65,7 +65,7 @@ function DashboardEmptyState({
 							>
 								Configure
 							</Button>
-						</DisabledControlTooltip>
+						</DisabledReasonTooltip>
 					</div>
 
 					<div className={styles.step}>
@@ -80,7 +80,7 @@ function DashboardEmptyState({
 								</Typography.Text>
 							</div>
 						</div>
-						<DisabledControlTooltip
+						<DisabledReasonTooltip
 							reason={editDisabledReason}
 							kind={editDisabledKind}
 						>
@@ -93,7 +93,7 @@ function DashboardEmptyState({
 							>
 								New Panel
 							</Button>
-						</DisabledControlTooltip>
+						</DisabledReasonTooltip>
 					</div>
 				</div>
 			</div>

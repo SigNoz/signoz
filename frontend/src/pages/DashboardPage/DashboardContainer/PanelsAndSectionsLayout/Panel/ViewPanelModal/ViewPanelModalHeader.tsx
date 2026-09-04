@@ -13,7 +13,7 @@ import type { PanelKind } from 'pages/DashboardPage/DashboardContainer/Panels/ty
 import type { EQueryType } from 'types/common/dashboard';
 
 import styles from './ViewPanelModal.module.scss';
-import DisabledControlTooltip from '../../../components/DisabledControlTooltip/DisabledControlTooltip';
+import DisabledReasonTooltip from 'lib/authz/components/DisabledReasonTooltip/DisabledReasonTooltip';
 import { useDashboardEditContext } from '../../../hooks/useDashboardEditContext';
 
 interface ViewPanelModalHeaderProps {
@@ -82,7 +82,7 @@ function ViewPanelModalHeader({
 					onChange={onChangePanelKind}
 				/>
 			</div>
-			<DisabledControlTooltip reason={editDisabledReason} kind={editDisabledKind}>
+			<DisabledReasonTooltip reason={editDisabledReason} kind={editDisabledKind}>
 				<Button
 					variant="outlined"
 					color="secondary"
@@ -93,7 +93,7 @@ function ViewPanelModalHeader({
 				>
 					Switch to Edit Mode
 				</Button>
-			</DisabledControlTooltip>
+			</DisabledReasonTooltip>
 			<Button
 				variant="link"
 				color="primary"

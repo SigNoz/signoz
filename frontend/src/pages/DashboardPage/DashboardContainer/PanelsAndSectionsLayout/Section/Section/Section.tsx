@@ -3,7 +3,7 @@ import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 
 import ConfirmDeleteDialog from '../../../components/ConfirmDeleteDialog/ConfirmDeleteDialog';
-import DisabledControlTooltip from '../../../components/DisabledControlTooltip/DisabledControlTooltip';
+import DisabledReasonTooltip from 'lib/authz/components/DisabledReasonTooltip/DisabledReasonTooltip';
 import { useCreatePanel } from '../../../hooks/useCreatePanel';
 import type { DashboardSection } from '../../../utils';
 import PanelTypeSelectionModal from '../../Panel/PanelTypeSelectionModal/PanelTypeSelectionModal';
@@ -123,7 +123,7 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 					grid
 				) : (
 					<div className={styles.emptySection}>
-						<DisabledControlTooltip
+						<DisabledReasonTooltip
 							reason={editDisabledReason}
 							kind={editDisabledKind}
 						>
@@ -140,7 +140,7 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 							>
 								New Panel
 							</Button>
-						</DisabledControlTooltip>
+						</DisabledReasonTooltip>
 					</div>
 				))}
 			<SectionTitleModal

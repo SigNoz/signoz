@@ -16,7 +16,7 @@ import { defineJsonEditorTheme, JSON_EDITOR_THEME } from './editorTheme';
 import styles from './JsonEditorDrawer.module.scss';
 import JsonEditorToolbar from './JsonEditorToolbar';
 import { useJsonEditor } from './useJsonEditor';
-import DisabledControlTooltip from '../../components/DisabledControlTooltip/DisabledControlTooltip';
+import DisabledReasonTooltip from 'lib/authz/components/DisabledReasonTooltip/DisabledReasonTooltip';
 import { useDashboardEditContext } from '../../hooks/useDashboardEditContext';
 
 interface JsonEditorDrawerProps {
@@ -178,7 +178,7 @@ function JsonEditorDrawer({
 						>
 							Cancel
 						</Button>
-						<DisabledControlTooltip
+						<DisabledReasonTooltip
 							reason={readOnly ? readOnlyReason : ''}
 							kind={readOnlyKind}
 						>
@@ -192,7 +192,7 @@ function JsonEditorDrawer({
 							>
 								Apply changes
 							</Button>
-						</DisabledControlTooltip>
+						</DisabledReasonTooltip>
 					</div>
 				</div>
 			}

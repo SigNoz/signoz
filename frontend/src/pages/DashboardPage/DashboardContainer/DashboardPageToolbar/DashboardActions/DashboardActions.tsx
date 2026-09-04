@@ -38,7 +38,7 @@ import { useDashboardLockPermission } from 'hooks/dashboards/useDashboardLockPer
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
-import DisabledControlTooltip from '../../components/DisabledControlTooltip/DisabledControlTooltip';
+import DisabledReasonTooltip from 'lib/authz/components/DisabledReasonTooltip/DisabledReasonTooltip';
 import DisabledMenuItemLabel from '../../components/DisabledMenuItemLabel/DisabledMenuItemLabel';
 import DashboardSettings from '../../DashboardSettings';
 import { useAddSection } from '../../PanelsAndSectionsLayout/Section/hooks/useAddSection';
@@ -303,7 +303,7 @@ function DashboardActions({
 					Actions
 				</Button>
 			</DropdownMenuSimple>
-			<DisabledControlTooltip reason={editDisabledReason} kind={editDisabledKind}>
+			<DisabledReasonTooltip reason={editDisabledReason} kind={editDisabledKind}>
 				<Button
 					variant="solid"
 					color="secondary"
@@ -316,7 +316,7 @@ function DashboardActions({
 				>
 					Configure
 				</Button>
-			</DisabledControlTooltip>
+			</DisabledReasonTooltip>
 			<SettingsDrawer
 				drawerTitle="Dashboard Configuration"
 				isOpen={isSettingsDrawerOpen}
@@ -339,7 +339,7 @@ function DashboardActions({
 			>
 				JSON
 			</Button>
-			<DisabledControlTooltip reason={editDisabledReason} kind={editDisabledKind}>
+			<DisabledReasonTooltip reason={editDisabledReason} kind={editDisabledKind}>
 				<Button
 					variant="solid"
 					color="primary"
@@ -351,7 +351,7 @@ function DashboardActions({
 				>
 					New Panel
 				</Button>
-			</DisabledControlTooltip>
+			</DisabledReasonTooltip>
 			<JsonEditorDrawer
 				dashboard={dashboard}
 				isOpen={isJsonEditorOpen}
