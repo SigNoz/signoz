@@ -1,4 +1,13 @@
-import type { ReactNode } from 'react';
+import {
+	cloneElement,
+	isValidElement,
+	type ReactElement,
+	type ReactNode,
+	type SyntheticEvent,
+	useCallback,
+	useRef,
+	useState,
+} from 'react';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
 
@@ -31,6 +40,11 @@ interface DisabledReasonTooltipProps {
 	kind?: 'denied' | 'blocked';
 }
 
+interface TriggerProps {
+	onPointerEnter?: (event: SyntheticEvent) => void;
+	onPointerLeave?: (event: SyntheticEvent) => void;
+}
+
 /**
  * The non-authz counterpart to `AuthZTooltip`: driven by a resolved reason string
  * rather than a permission check, for controls blocked by a lock, an immutable
@@ -47,6 +61,42 @@ function DisabledReasonTooltip({
 	asChild = false,
 	kind = 'denied',
 }: DisabledReasonTooltipProps): JSX.Element {
+	const isPointerOverRef = useRef(false);
+	const [isOpen, setIsOpen] = useState(false);
+
+	/**
+	 * Radix closes the tooltip on pointerdown and on click, and merges its own
+	 * handlers after the trigger's regardless of `preventDefault`, so the close
+	 * has to be filtered here instead. Clicking a disabled control does nothing,
+	 * which is exactly when its reason is still wanted, so a close is ignored
+	 * while the pointer remains on the control. Everything else — the open
+	 * delay, focus, pointer leave — stays Radix's to decide.
+	 */
+	const handleOpenChange = useCallback((next: boolean): void => {
+		if (!next && isPointerOverRef.current) {
+			return;
+		}
+		setIsOpen(next);
+	}, []);
+
+	const trackPointer = useCallback(
+		(element: ReactElement<TriggerProps>): ReactElement => {
+			const { onPointerEnter, onPointerLeave } = element.props;
+
+			return cloneElement(element, {
+				onPointerEnter: (event: SyntheticEvent): void => {
+					onPointerEnter?.(event);
+					isPointerOverRef.current = true;
+				},
+				onPointerLeave: (event: SyntheticEvent): void => {
+					onPointerLeave?.(event);
+					isPointerOverRef.current = false;
+				},
+			});
+		},
+		[],
+	);
+
 	if (!reason) {
 		return <>{children}</>;
 	}
@@ -55,6 +105,8 @@ function DisabledReasonTooltip({
 		<TooltipSimple
 			side={side}
 			title={reason}
+			open={isOpen}
+			onOpenChange={handleOpenChange}
 			// A denial has no arrow, matching AuthZTooltip, which is the same
 			// presentation elsewhere in the product.
 			arrow={kind === 'blocked'}
@@ -66,15 +118,17 @@ function DisabledReasonTooltip({
 				),
 			}}
 		>
-			{asChild ? (
-				children
-			) : (
-				// A disabled control swallows hover, so the wrapper is the trigger.
-				<span
-					className={cx(ownStyles.trigger, interactive && ownStyles.interactive)}
-				>
-					{children}
-				</span>
+			{trackPointer(
+				asChild && isValidElement<TriggerProps>(children) ? (
+					children
+				) : (
+					// A disabled control swallows hover, so the wrapper is the trigger.
+					<span
+						className={cx(ownStyles.trigger, interactive && ownStyles.interactive)}
+					>
+						{children}
+					</span>
+				),
 			)}
 		</TooltipSimple>
 	);
