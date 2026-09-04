@@ -66,7 +66,19 @@ const loadTableFromStorage = (tableKey: string): ColumnState | null => {
 			return cached.parsed;
 		}
 
-		const parsed = JSON.parse(raw) as ColumnState;
+		// Selectors read these fields directly, so a value persisted under an older
+		// schema must be filled in rather than handed to callers as `undefined`.
+		const stored = JSON.parse(raw) as Partial<ColumnState> | null;
+		const parsed: ColumnState = {
+			hiddenColumnIds: Array.isArray(stored?.hiddenColumnIds)
+				? stored.hiddenColumnIds
+				: [],
+			columnOrder: Array.isArray(stored?.columnOrder) ? stored.columnOrder : [],
+			columnSizing:
+				stored?.columnSizing && typeof stored.columnSizing === 'object'
+					? stored.columnSizing
+					: {},
+		};
 		persistedTableCache.set(tableKey, { raw, parsed });
 		return parsed;
 	} catch {
