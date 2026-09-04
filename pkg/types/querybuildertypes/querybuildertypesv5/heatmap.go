@@ -11,7 +11,6 @@ import (
 
 const (
 	DefaultNumBuckets = 60
-	MaxNumBuckets     = 512
 
 	// MaxLogScale is the resolution ClickHouse buckets every log heatmap at:
 	// 2^MaxLogScale bands per doubling. It is both the default and the finest
