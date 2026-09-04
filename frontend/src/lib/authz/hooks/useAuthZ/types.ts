@@ -97,5 +97,11 @@ export type UseAuthZResult = {
 	 * Checks that resolved as not granted (empty while loading/error).
 	 */
 	deniedPermissions: BrandedPermission[];
+	/**
+	 * Whether a single check resolved as granted. False while loading, on error,
+	 * and for any permission that wasn't part of `checks` — so callers get a plain
+	 * boolean instead of walking a possibly-null map.
+	 */
+	isGranted: (permission: BrandedPermission) => boolean;
 	refetchPermissions: () => void;
 };

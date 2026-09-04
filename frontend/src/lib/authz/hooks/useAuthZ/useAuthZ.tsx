@@ -240,6 +240,12 @@ export function useAuthZ(
 		return permissions.every((check) => data[check]?.isGranted === true);
 	}, [permissions, data, isLoading, error]);
 
+	const isGranted = useCallback(
+		(permission: BrandedPermission): boolean =>
+			data?.[permission]?.isGranted === true,
+		[data],
+	);
+
 	const deniedPermissions = useMemo(() => {
 		if (!data) {
 			return [];
@@ -254,6 +260,7 @@ export function useAuthZ(
 		permissions: data ?? null,
 		allowed,
 		deniedPermissions,
+		isGranted,
 		refetchPermissions,
 	};
 }
