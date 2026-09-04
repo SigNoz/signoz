@@ -1,0 +1,7 @@
+.rowAnchor {
+	/* The dropdown row is the positioned ancestor, so this covers it exactly. */
+	position: absolute;
+	inset: 0;
+	/* A disabled row stops pointer events; the overlay takes the hover instead. */
+	pointer-events: auto;
+}
