@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -199,7 +200,12 @@ func (c *conditionBuilder) conditionForKey(
 		return "", err
 	}
 
-	if key.FieldContext == telemetrytypes.FieldContextLog || key.FieldContext == telemetrytypes.FieldContextScope {
+	if key.FieldContext == telemetrytypes.FieldContextLog {
+		return condition, nil
+	}
+	// scope_name and scope_version are columns; a scope attribute lives in a
+	// map and follows the keyless contract like an attribute
+	if key.FieldContext == telemetrytypes.FieldContextScope && !c.mapBacked(ctx, orgID, startNs, endNs, key) {
 		return condition, nil
 	}
 
@@ -212,4 +218,10 @@ func (c *conditionBuilder) conditionForKey(
 	}
 
 	return condition, nil
+}
+
+// mapBacked reports whether the key reads a map column, so a row can lack it.
+func (c *conditionBuilder) mapBacked(ctx context.Context, orgID valuer.UUID, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey) bool {
+	columns, err := c.fm.ColumnFor(ctx, orgID, startNs, endNs, key)
+	return err == nil && len(columns) == 1 && columns[0].Type.GetType() == schema.ColumnTypeEnumMap
 }

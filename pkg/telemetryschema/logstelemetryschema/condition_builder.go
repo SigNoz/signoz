@@ -570,10 +570,16 @@ func (c *conditionBuilder) conditionForKey(
 	// Skip adding exists filter for intrinsic fields i.e. Table level log context fields
 	buildExistCondition := operator.AddDefaultExistsFilter()
 	switch key.FieldContext {
-	case telemetrytypes.FieldContextLog, telemetrytypes.FieldContextScope:
+	case telemetrytypes.FieldContextLog:
 		// pass; No need to build exist condition for top level columns
 		// immediately return
 		return condition, nil
+	case telemetrytypes.FieldContextScope:
+		// scope_name and scope_version are columns; a scope attribute lives in
+		// a map and follows the keyless contract like an attribute
+		if !c.mapBacked(ctx, orgID, startNs, endNs, key) {
+			return condition, nil
+		}
 	case telemetrytypes.FieldContextResource, telemetrytypes.FieldContextAttribute:
 		// build exist condition for resource and attribute fields based on filter operator
 	case telemetrytypes.FieldContextBody:
@@ -593,4 +599,10 @@ func (c *conditionBuilder) conditionForKey(
 	}
 
 	return condition, nil
+}
+
+// mapBacked reports whether the key reads a map column, so a row can lack it.
+func (c *conditionBuilder) mapBacked(ctx context.Context, orgID valuer.UUID, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey) bool {
+	columns, err := c.fm.ColumnFor(ctx, orgID, startNs, endNs, key)
+	return err == nil && len(columns) == 1 && columns[0].Type.GetType() == schema.ColumnTypeEnumMap
 }
