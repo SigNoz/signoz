@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from 'react-query';
-import { Button } from '@signozhq/ui/button';
-import DisabledReasonTooltip from 'lib/authz/components/DisabledReasonTooltip/DisabledReasonTooltip';
 import { Trash2 } from '@signozhq/icons';
+
+import ActionsMenuItem from './ActionsMenuItem';
 import { toast } from '@signozhq/ui/sonner';
 import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
@@ -45,7 +45,6 @@ function DeleteActionItem({
 	// for someone who holds only `delete`.
 	const { canDelete, deletePermission } = useDashboardPermissions(dashboardId);
 	const isDenied = !canDelete;
-	const isDisabled = isLocked || !canDelete;
 
 	const { mutate: runDelete } = useMutation({
 		mutationFn: () => deleteDashboardV2({ id: dashboardId }),
@@ -96,35 +95,19 @@ function DeleteActionItem({
 	return (
 		<>
 			{showDivider && <Divider />}
-			<DisabledReasonTooltip
-				reason={tooltip}
-				side="left"
-				kind={canDelete && isLocked ? 'blocked' : 'denied'}
-				asChild
-			>
-				<span
-					className={styles.menuItemWrap}
-					data-denied-permissions={isDenied ? deletePermission : undefined}
-				>
-					<Button
-						variant="ghost"
-						color="destructive"
-						className={styles.menuItem}
-						prefix={<Trash2 size={14} />}
-						disabled={isDisabled}
-						onClick={(e): void => {
-							e.preventDefault();
-							e.stopPropagation();
-							if (!isDisabled) {
-								openConfirm();
-							}
-						}}
-						testId="dashboard-action-delete"
-					>
-						Delete Dashboard
-					</Button>
-				</span>
-			</DisabledReasonTooltip>
+			<ActionsMenuItem
+				label="Delete Dashboard"
+				icon={<Trash2 size={14} />}
+				testId="dashboard-action-delete"
+				destructive
+				disabled={
+					tooltip
+						? { reason: tooltip, kind: canDelete && isLocked ? 'blocked' : 'denied' }
+						: undefined
+				}
+				deniedPermissions={isDenied ? [deletePermission] : undefined}
+				onClick={openConfirm}
+			/>
 			{contextHolder}
 		</>
 	);
