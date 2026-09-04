@@ -251,8 +251,8 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddChannelDisplayNameFactory(sqlstore, sqlschema),
 		sqlmigration.NewMigrateQuickFiltersFactory(sqlstore),
 		sqlmigration.NewAddQuickFilterTuplesFactory(sqlstore),
-		sqlmigration.NewAddSubscriptionTuplesFactory(sqlstore),
 		sqlmigration.NewAddIngestionTuplesFactory(sqlstore),
+		sqlmigration.NewAddSubscriptionTuplesFactory(sqlstore),
 	)
 }
 

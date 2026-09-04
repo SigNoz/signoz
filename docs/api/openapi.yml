@@ -9569,6 +9569,8 @@ components:
       properties:
         redirectURL:
           type: string
+      required:
+      - redirectURL
       type: object
     ZeustypesGettableSubscriptionUsage:
       properties:
@@ -9647,6 +9649,8 @@ components:
       properties:
         url:
           type: string
+      required:
+      - url
       type: object
     ZeustypesSubscriptionUsageBreakdown:
       properties:

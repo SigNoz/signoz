@@ -122,9 +122,7 @@
       "verbs": [
         "create",
         "read",
-        "update",
-        "delete",
-        "list"
+        "update"
       ]
     },
     {

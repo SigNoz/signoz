@@ -7,7 +7,7 @@ import (
 )
 
 type PostableSubscription struct {
-	SuccessURL string `json:"url"`
+	SuccessURL string `json:"url" required:"true"`
 }
 
 func (postableSubscription *PostableSubscription) UnmarshalJSON(data []byte) error {
@@ -28,5 +28,5 @@ func (postableSubscription *PostableSubscription) UnmarshalJSON(data []byte) err
 }
 
 type GettableSubscription struct {
-	RedirectURL string `json:"redirectURL"`
+	RedirectURL string `json:"redirectURL" required:"true"`
 }

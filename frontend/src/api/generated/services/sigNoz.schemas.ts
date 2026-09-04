@@ -10757,7 +10757,7 @@ export interface ZeustypesGettableSubscriptionDTO {
 	/**
 	 * @type string
 	 */
-	redirectURL?: string;
+	redirectURL: string;
 }
 
 export interface ZeustypesSubscriptionUsageDayWiseDataDTO {
@@ -10946,7 +10946,7 @@ export interface ZeustypesPostableSubscriptionDTO {
 	/**
 	 * @type string
 	 */
-	url?: string;
+	url: string;
 }
 
 export type GetAIObservabilityFieldsKeysParams = {
