@@ -187,8 +187,8 @@ type ChannelSlackConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
 	APIURL       string                       `json:"apiUrl" required:"true"`
 	Channel      string                       `json:"channel"`
-	Title        valuer.UnsetOrNonEmptyString `json:"title,omitempty"`
-	Text         valuer.UnsetOrNonEmptyString `json:"text,omitempty"`
+	Title        valuer.UnsetOrNonEmptyString `json:"title"`
+	Text         valuer.UnsetOrNonEmptyString `json:"text"`
 }
 
 func (c ChannelSlackConfig) Validate() error {
@@ -236,7 +236,7 @@ func newChannelSlackConfigFromReceiver(_ string, receiver *Receiver) (ChannelSpe
 type ChannelEmailConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
 	To           string                       `json:"to" required:"true"`
-	HTML         valuer.UnsetOrNonEmptyString `json:"html,omitempty"`
+	HTML         valuer.UnsetOrNonEmptyString `json:"html"`
 	Headers      map[string]string            `json:"headers,omitempty"`
 }
 
@@ -371,10 +371,10 @@ type ChannelPagerdutyConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
 	RoutingKey   string                       `json:"routingKey" required:"true"`
 	URL          string                       `json:"url"`
-	Source       valuer.UnsetOrNonEmptyString `json:"source,omitempty"`
-	Client       valuer.UnsetOrNonEmptyString `json:"client,omitempty"`
-	ClientURL    valuer.UnsetOrNonEmptyString `json:"clientUrl,omitempty"`
-	Description  valuer.UnsetOrNonEmptyString `json:"description,omitempty"`
+	Source       valuer.UnsetOrNonEmptyString `json:"source"`
+	Client       valuer.UnsetOrNonEmptyString `json:"client"`
+	ClientURL    valuer.UnsetOrNonEmptyString `json:"clientUrl"`
+	Description  valuer.UnsetOrNonEmptyString `json:"description"`
 	Severity     string                       `json:"severity"`
 	Component    string                       `json:"component"`
 	Group        string                       `json:"group"`
@@ -452,9 +452,9 @@ type ChannelOpsgenieConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
 	APIKey       string                       `json:"apiKey" required:"true"`
 	APIURL       string                       `json:"apiUrl"`
-	Message      valuer.UnsetOrNonEmptyString `json:"message,omitempty"`
-	Description  valuer.UnsetOrNonEmptyString `json:"description,omitempty"`
-	Source       valuer.UnsetOrNonEmptyString `json:"source,omitempty"`
+	Message      valuer.UnsetOrNonEmptyString `json:"message"`
+	Description  valuer.UnsetOrNonEmptyString `json:"description"`
+	Source       valuer.UnsetOrNonEmptyString `json:"source"`
 	Details      map[string]string            `json:"details,omitempty"`
 	Priority     string                       `json:"priority"`
 }
@@ -511,8 +511,8 @@ func newChannelOpsgenieConfigFromReceiver(_ string, receiver *Receiver) (Channel
 type ChannelMSTeamsConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
 	WebhookURL   string                       `json:"webhookUrl" required:"true"`
-	Title        valuer.UnsetOrNonEmptyString `json:"title,omitempty"`
-	Text         valuer.UnsetOrNonEmptyString `json:"text,omitempty"`
+	Title        valuer.UnsetOrNonEmptyString `json:"title"`
+	Text         valuer.UnsetOrNonEmptyString `json:"text"`
 }
 
 func (c ChannelMSTeamsConfig) Validate() error {
@@ -555,8 +555,8 @@ func newChannelMSTeamsConfigFromReceiver(_ string, receiver *Receiver) (ChannelS
 type ChannelGoogleChatConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
 	WebhookURL   string                       `json:"webhookUrl" required:"true"`
-	Title        valuer.UnsetOrNonEmptyString `json:"title,omitempty"`
-	Text         valuer.UnsetOrNonEmptyString `json:"text,omitempty"`
+	Title        valuer.UnsetOrNonEmptyString `json:"title"`
+	Text         valuer.UnsetOrNonEmptyString `json:"text"`
 }
 
 func (c ChannelGoogleChatConfig) Validate() error {
@@ -603,13 +603,13 @@ type ChannelJiraConfig struct {
 	Site              string                       `json:"site" required:"true"`
 	Project           string                       `json:"project" required:"true"`
 	IssueType         string                       `json:"issueType" required:"true"`
-	Summary           valuer.UnsetOrNonEmptyString `json:"summary,omitempty"`
-	Description       valuer.UnsetOrNonEmptyString `json:"description,omitempty"`
+	Summary           valuer.UnsetOrNonEmptyString `json:"summary"`
+	Description       valuer.UnsetOrNonEmptyString `json:"description"`
 	Priority          string                       `json:"priority"`
 	Labels            []string                     `json:"labels,omitempty"`
 	ResolveTransition string                       `json:"resolveTransition"`
 	ReopenTransition  string                       `json:"reopenTransition"`
-	ReopenDuration    valuer.UnsetOrNonEmptyString `json:"reopenDuration,omitempty"`
+	ReopenDuration    valuer.UnsetOrNonEmptyString `json:"reopenDuration"`
 	WontFixResolution string                       `json:"wontFixResolution"`
 	CustomFields      map[string]any               `json:"customFields,omitempty"`
 
@@ -728,11 +728,11 @@ func newChannelJiraConfigFromReceiver(name string, receiver *Receiver) (ChannelS
 type ChannelJSMOpsConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
 	APIKey       string                       `json:"apiKey" required:"true"`
-	Message      valuer.UnsetOrNonEmptyString `json:"message,omitempty"`
-	Description  valuer.UnsetOrNonEmptyString `json:"description,omitempty"`
+	Message      valuer.UnsetOrNonEmptyString `json:"message"`
+	Description  valuer.UnsetOrNonEmptyString `json:"description"`
 	Priority     string                       `json:"priority"`
 	// Tags is the comma-separated list JSM Ops attaches to the alert.
-	Tags valuer.UnsetOrNonEmptyString `json:"tags,omitempty"`
+	Tags valuer.UnsetOrNonEmptyString `json:"tags"`
 }
 
 func (c ChannelJSMOpsConfig) Validate() error {
@@ -779,8 +779,8 @@ type ChannelIncidentIOConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty"`
 	URL          string                       `json:"url" required:"true"`
 	Token        string                       `json:"token" required:"true"`
-	Title        valuer.UnsetOrNonEmptyString `json:"title,omitempty"`
-	Description  valuer.UnsetOrNonEmptyString `json:"description,omitempty"`
+	Title        valuer.UnsetOrNonEmptyString `json:"title"`
+	Description  valuer.UnsetOrNonEmptyString `json:"description"`
 	Metadata     map[string]string            `json:"metadata,omitempty"`
 }
 
