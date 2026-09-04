@@ -1,4 +1,4 @@
-package zeustypes
+package subscriptiontypes
 
 import (
 	"encoding/json"

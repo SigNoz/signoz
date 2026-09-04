@@ -74,10 +74,9 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLicense}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLicense}, WildCardSelectorString)},
 		// subscription — admin only.
-		// create = POST /api/v2/zeus/subscriptions (checkout session), list +
-		// update = PUT /api/v2/zeus/subscriptions (Stripe portal), read = GET
-		// /api/v2/zeus/meters (current usage and billing state). delete is a
-		// placeholder for shape parity; cancellation flows through Stripe's portal.
+		// create = POST /api/v1/subscriptions, list + update = PUT /api/v1/subscriptions,
+		// read = GET /api/v1/subscriptions. delete is a placeholder for shape parity;
+		// no in-process route serves it.
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSubscription}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSubscription}, WildCardSelectorString)},
 		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSubscription}, WildCardSelectorString)},
