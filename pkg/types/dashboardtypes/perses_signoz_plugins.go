@@ -173,10 +173,15 @@ const (
 	PanelKindTable      PanelPluginKind = "signoz/TablePanel"
 	PanelKindHistogram  PanelPluginKind = "signoz/HistogramPanel"
 	PanelKindList       PanelPluginKind = "signoz/ListPanel"
+	PanelKindText       PanelPluginKind = "signoz/TextPanel"
 )
 
 func (PanelPluginKind) Enum() []any {
-	return []any{PanelKindTimeSeries, PanelKindBarChart, PanelKindNumber, PanelKindPieChart, PanelKindTable, PanelKindHistogram, PanelKindList}
+	return []any{PanelKindTimeSeries, PanelKindBarChart, PanelKindNumber, PanelKindPieChart, PanelKindTable, PanelKindHistogram, PanelKindList, PanelKindText}
+}
+
+func (k PanelPluginKind) rendersWithoutQuery() bool {
+	return k == PanelKindText
 }
 
 type TimeSeriesPanelSpec struct {
@@ -237,6 +242,19 @@ type ListPanelSpec struct {
 	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitzero" validate:"dive"`
 }
 
+type TextPanelSpec struct {
+	Mode          TextMode         `json:"mode"`
+	Text          string           `json:"text"`
+	Presentation  TextPresentation `json:"presentation"`
+	HeaderOptions HeaderOptions    `json:"headerOptions"`
+}
+
+type TextPresentation struct {
+	TextAlign     TextAlign     `json:"textAlign"`
+	VerticalAlign VerticalAlign `json:"verticalAlign"`
+	Background    *string       `json:"background,omitempty" validate:"omitempty,hexcolor"`
+}
+
 // ══════════════════════════════════════════════
 // Panel common types
 // ══════════════════════════════════════════════
@@ -245,6 +263,13 @@ type Axes struct {
 	SoftMin    *float64 `json:"softMin"`
 	SoftMax    *float64 `json:"softMax"`
 	IsLogScale bool     `json:"isLogScale"`
+}
+
+// HeaderOptions controls the panel card's header strip — the title/description
+// row above the panel content. Phrased as hide so the zero value shows the
+// header, matching every other panel kind.
+type HeaderOptions struct {
+	Hide bool `json:"hide"`
 }
 
 type BasicVisualization struct {
@@ -656,6 +681,118 @@ func (sg SpanGaps) validate() error {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spanGaps.fillLessThan duration must be positive, got %q", sg.FillLessThan)
 	}
 	return nil
+}
+
+// TextMode is how a text panel interprets its `text`. Only markdown is
+// rendered today; further modes (e.g. plain text, HTML) are expected.
+type TextMode struct{ valuer.String }
+
+var TextModeMarkdown = TextMode{valuer.NewString("markdown")} // default
+
+func (TextMode) Enum() []any {
+	return []any{TextModeMarkdown}
+}
+
+func (m TextMode) ValueOrDefault() string {
+	if m.IsZero() {
+		return TextModeMarkdown.StringValue()
+	}
+	return m.StringValue()
+}
+
+func (m TextMode) MarshalJSON() ([]byte, error) {
+	return json.Marshal(m.ValueOrDefault())
+}
+
+func (m *TextMode) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid text mode: must be the string `markdown`")
+	}
+	tm := TextMode{valuer.NewString(v)}
+	switch tm {
+	case TextModeMarkdown:
+		*m = tm
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid text mode %q: must be `markdown`", v)
+	}
+}
+
+type TextAlign struct{ valuer.String }
+
+var (
+	TextAlignLeft   = TextAlign{valuer.NewString("left")} // default
+	TextAlignCenter = TextAlign{valuer.NewString("center")}
+	TextAlignRight  = TextAlign{valuer.NewString("right")}
+)
+
+func (TextAlign) Enum() []any {
+	return []any{TextAlignLeft, TextAlignCenter, TextAlignRight}
+}
+
+func (a TextAlign) ValueOrDefault() string {
+	if a.IsZero() {
+		return TextAlignLeft.StringValue()
+	}
+	return a.StringValue()
+}
+
+func (a TextAlign) MarshalJSON() ([]byte, error) {
+	return json.Marshal(a.ValueOrDefault())
+}
+
+func (a *TextAlign) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid text align: must be a string, one of `left`, `center`, or `right`")
+	}
+	val := TextAlign{valuer.NewString(v)}
+	switch val {
+	case TextAlignLeft, TextAlignCenter, TextAlignRight:
+		*a = val
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid text align %q: must be `left`, `center`, or `right`", v)
+	}
+}
+
+type VerticalAlign struct{ valuer.String }
+
+var (
+	VerticalAlignTop    = VerticalAlign{valuer.NewString("top")} // default
+	VerticalAlignCenter = VerticalAlign{valuer.NewString("center")}
+	VerticalAlignBottom = VerticalAlign{valuer.NewString("bottom")}
+)
+
+func (VerticalAlign) Enum() []any {
+	return []any{VerticalAlignTop, VerticalAlignCenter, VerticalAlignBottom}
+}
+
+func (a VerticalAlign) ValueOrDefault() string {
+	if a.IsZero() {
+		return VerticalAlignTop.StringValue()
+	}
+	return a.StringValue()
+}
+
+func (a VerticalAlign) MarshalJSON() ([]byte, error) {
+	return json.Marshal(a.ValueOrDefault())
+}
+
+func (a *VerticalAlign) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid vertical align: must be a string, one of `top`, `center`, or `bottom`")
+	}
+	val := VerticalAlign{valuer.NewString(v)}
+	switch val {
+	case VerticalAlignTop, VerticalAlignCenter, VerticalAlignBottom:
+		*a = val
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid vertical align %q: must be `top`, `center`, or `bottom`", v)
+	}
 }
 
 type PrecisionOption struct{ valuer.String }

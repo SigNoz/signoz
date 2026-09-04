@@ -1086,7 +1086,7 @@ func TestInvalidatePanelWithoutQueries(t *testing.T) {
 	}`)
 	_, err := unmarshalDashboard(data)
 	require.Error(t, err, "expected panel-without-queries to be rejected")
-	assert.Contains(t, err.Error(), "panel must have one query")
+	assert.Contains(t, err.Error(), "spec.queries: is required and must not be null")
 }
 
 func TestInvalidatePanelWithEmptyQueriesArray(t *testing.T) {
@@ -1134,6 +1134,155 @@ func TestInvalidatePanelWithMultipleDirectQueries(t *testing.T) {
 	_, err := unmarshalDashboard(data)
 	require.Error(t, err, "expected panel with two top-level queries to be rejected")
 	assert.Contains(t, err.Error(), "panel must have one query")
+}
+
+func TestValidateTextPanel(t *testing.T) {
+	wrapPanel := func(panelSpec string) []byte {
+		return []byte(`{
+			"variables": [],
+			"panels": {
+				"p1": {
+					"kind": "Panel",
+					"spec": {
+						"links": [],
+						"plugin": {"kind": "signoz/TextPanel", "spec": ` + panelSpec + `},
+						"queries": []
+					}
+				}
+			},
+			"links": [],
+			"layouts": []
+		}`)
+	}
+
+	t.Run("fully specified text panel validates", func(t *testing.T) {
+		d, err := unmarshalDashboard(wrapPanel(`{
+			"mode": "markdown",
+			"text": "# Runbook\n\nSee the [oncall doc](https://example.com).",
+			"presentation": {"textAlign": "center", "verticalAlign": "bottom", "background": "#1A2b3C"},
+			"headerOptions": {"hide": true}
+		}`))
+		require.NoError(t, err, "expected a fully specified text panel to validate")
+
+		spec, ok := d.Panels["p1"].Spec.Plugin.Spec.(*TextPanelSpec)
+		require.True(t, ok, "expected the panel spec to decode as *TextPanelSpec")
+		assert.Equal(t, TextModeMarkdown, spec.Mode)
+		assert.Equal(t, "# Runbook\n\nSee the [oncall doc](https://example.com).", spec.Text)
+		assert.Equal(t, TextAlignCenter, spec.Presentation.TextAlign)
+		assert.Equal(t, VerticalAlignBottom, spec.Presentation.VerticalAlign)
+		require.NotNil(t, spec.Presentation.Background, "expected background to be set")
+		assert.Equal(t, "#1A2b3C", *spec.Presentation.Background)
+		assert.True(t, spec.HeaderOptions.Hide)
+	})
+
+	// The header shows unless explicitly hidden, so the zero value must round-trip
+	// as a shown header. Background has no default: omitted stays omitted.
+	t.Run("omitted fields marshal back as their defaults", func(t *testing.T) {
+		d, err := unmarshalDashboard(wrapPanel(`{}`))
+		require.NoError(t, err, "expected an empty text panel spec to validate")
+
+		spec, ok := d.Panels["p1"].Spec.Plugin.Spec.(*TextPanelSpec)
+		require.True(t, ok, "expected the panel spec to decode as *TextPanelSpec")
+		assert.Nil(t, spec.Presentation.Background, "expected an omitted background to stay unset")
+
+		out, err := json.Marshal(d.Panels["p1"].Spec.Plugin.Spec)
+		require.NoError(t, err, "marshalling the decoded text panel spec")
+		assert.JSONEq(t, `{
+			"mode": "markdown",
+			"text": "",
+			"presentation": {"textAlign": "left", "verticalAlign": "top"},
+			"headerOptions": {"hide": false}
+		}`, string(out))
+	})
+
+	t.Run("a text panel carrying a query is rejected", func(t *testing.T) {
+		data := []byte(`{
+			"variables": [],
+			"panels": {
+				"p1": {
+					"kind": "Panel",
+					"spec": {
+						"links": [],
+						"plugin": {"kind": "signoz/TextPanel", "spec": {"text": "hi"}},
+						"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "metrics"}}}}]
+					}
+				}
+			},
+			"links": [],
+			"layouts": []
+		}`)
+		_, err := unmarshalDashboard(data)
+		require.Error(t, err, "expected a text panel with a query to be rejected")
+		assert.Contains(t, err.Error(), "renders without a query and must have queries: [], found 1")
+	})
+
+	t.Run("a text panel with null queries is rejected", func(t *testing.T) {
+		data := []byte(`{
+			"variables": [],
+			"panels": {
+				"p1": {
+					"kind": "Panel",
+					"spec": {
+						"links": [],
+						"plugin": {"kind": "signoz/TextPanel", "spec": {"text": "hi"}},
+						"queries": null
+					}
+				}
+			},
+			"links": [],
+			"layouts": []
+		}`)
+		_, err := unmarshalDashboard(data)
+		require.Error(t, err, "expected a text panel with null queries to be rejected")
+		assert.Contains(t, err.Error(), "spec.queries: is required and must not be null")
+	})
+
+	t.Run("hex background colours validate", func(t *testing.T) {
+		for _, background := range []string{"#abc", "#abcd", "#aabbcc", "#aabbccdd", "#AABBCC"} {
+			d, err := unmarshalDashboard(wrapPanel(`{"presentation": {"background": "` + background + `"}}`))
+			require.NoError(t, err, "expected background %q to validate", background)
+
+			spec, ok := d.Panels["p1"].Spec.Plugin.Spec.(*TextPanelSpec)
+			require.True(t, ok, "expected the panel spec to decode as *TextPanelSpec")
+			require.NotNil(t, spec.Presentation.Background)
+			assert.Equal(t, background, *spec.Presentation.Background)
+		}
+	})
+
+	t.Run("unknown enum values are rejected", func(t *testing.T) {
+		for field, spec := range map[string]string{
+			"mode":          `{"mode": "html"}`,
+			"textAlign":     `{"presentation": {"textAlign": "justify"}}`,
+			"verticalAlign": `{"presentation": {"verticalAlign": "middle"}}`,
+		} {
+			_, err := unmarshalDashboard(wrapPanel(spec))
+			assert.Error(t, err, "expected an unknown %s value to be rejected", field)
+		}
+	})
+
+	t.Run("invalid background colours are rejected", func(t *testing.T) {
+		for name, spec := range map[string]string{
+			"empty string":   `{"presentation": {"background": ""}}`,
+			"missing hash":   `{"presentation": {"background": "aabbcc"}}`,
+			"named colour":   `{"presentation": {"background": "red"}}`,
+			"wrong length":   `{"presentation": {"background": "#abcde"}}`,
+			"non hex digits": `{"presentation": {"background": "#gggggg"}}`,
+		} {
+			_, err := unmarshalDashboard(wrapPanel(spec))
+			assert.Error(t, err, "expected %s background to be rejected", name)
+		}
+	})
+
+	t.Run("unknown spec fields are rejected", func(t *testing.T) {
+		for field, spec := range map[string]string{
+			"top level":     `{"markdown": "hi"}`,
+			"presentation":  `{"presentation": {"horizontalAlign": "left"}}`,
+			"headerOptions": `{"headerOptions": {"show": true}}`,
+		} {
+			_, err := unmarshalDashboard(wrapPanel(spec))
+			assert.Error(t, err, "expected an unknown %s field to be rejected", field)
+		}
+	})
 }
 
 func TestValidateRequiredFields(t *testing.T) {
