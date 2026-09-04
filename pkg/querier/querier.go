@@ -474,12 +474,10 @@ func (q *querier) resolveMetricMetadata(ctx context.Context, orgID valuer.UUID, 
 					spec.Aggregations[i].Type = foundMetricType
 				}
 			}
-			// Only the enabled query draws cells, so only it needs an axis and
-			// the metric-type refusals that come with one. A heatmap refuses an
-			// unresolved type outright rather than returning an empty result for
-			// it, so this has to run before the drop below.
+			// Only the enabled query is used to render the heatmap, so bucket
+			// options are only applied to the enabled query.
 			if requestType == qbtypes.RequestTypeHeatmap && !spec.Disabled {
-				if err := spec.Aggregations[i].ResolveHeatmapBucketing(bucketOptions); err != nil {
+				if err := spec.Aggregations[i].VerifyAndApplyBucketOptions(bucketOptions); err != nil {
 					return nil, nil, err
 				}
 			}
