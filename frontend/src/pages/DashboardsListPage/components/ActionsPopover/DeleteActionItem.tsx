@@ -95,7 +95,12 @@ function DeleteActionItem({
 	return (
 		<>
 			{showDivider && <Divider />}
-			<DisabledReasonTooltip reason={tooltip} side="left" asChild>
+			<DisabledReasonTooltip
+				reason={tooltip}
+				side="left"
+				kind={isLocked ? 'blocked' : 'denied'}
+				asChild
+			>
 				<span
 					className={styles.menuItemWrap}
 					data-denied-permissions={isDenied ? deletePermission : undefined}

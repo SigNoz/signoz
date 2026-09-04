@@ -162,6 +162,7 @@ function ActionsPopoverContent({
 						icon={<PenLine size={14} />}
 						testId="dashboard-action-rename"
 						reason={editReason}
+						kind={isLocked ? 'blocked' : 'denied'}
 						deniedPermissions={editDenied ? editChecks : undefined}
 						onClick={onOpenRename}
 					/>
@@ -170,6 +171,7 @@ function ActionsPopoverContent({
 						icon={<Tag size={14} />}
 						testId="dashboard-action-edit-tags"
 						reason={editReason}
+						kind={isLocked ? 'blocked' : 'denied'}
 						deniedPermissions={editDenied ? editChecks : undefined}
 						onClick={onOpenEditTags}
 					/>
@@ -189,6 +191,7 @@ function ActionsPopoverContent({
 						icon={<LockKeyhole size={14} />}
 						testId="dashboard-action-lock"
 						reason={lockDisabledReason}
+						kind="blocked"
 						loading={isTogglingLock}
 						onClick={toggleLock}
 					/>
