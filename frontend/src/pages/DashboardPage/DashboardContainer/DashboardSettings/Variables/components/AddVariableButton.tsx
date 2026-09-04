@@ -1,14 +1,20 @@
 import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 
+import DisabledControlTooltip from '../../../components/DisabledControlTooltip/DisabledControlTooltip';
+
+/**
+ * `disabledReason` is the only input: a non-empty reason both disables the button
+ * and explains it, so there is no way to disable it silently.
+ */
 const AddVariableButton = ({
-	isEditable,
+	disabledReason = '',
 	setIsEditing,
 }: {
-	isEditable: boolean;
+	disabledReason?: string;
 	setIsEditing: (state: { type: 'new' }) => void;
-}): JSX.Element => {
-	return (
+}): JSX.Element => (
+	<DisabledControlTooltip reason={disabledReason}>
 		<Button
 			variant="solid"
 			color="primary"
@@ -16,11 +22,11 @@ const AddVariableButton = ({
 			size="md"
 			onClick={(): void => setIsEditing({ type: 'new' })}
 			testId="add-variable"
-			disabled={!isEditable}
+			disabled={!!disabledReason}
 		>
 			Add variable
 		</Button>
-	);
-};
+	</DisabledControlTooltip>
+);
 
 export default AddVariableButton;

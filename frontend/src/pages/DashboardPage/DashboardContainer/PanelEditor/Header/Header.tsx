@@ -90,7 +90,7 @@ function Header({
 						Switch to View Mode
 					</Button>
 				)}
-				<DisabledControlTooltip reason={readOnlyReason ?? ''} disabled={readOnly}>
+				<DisabledControlTooltip reason={readOnly ? (readOnlyReason ?? '') : ''}>
 					<Button
 						variant="solid"
 						color="primary"
