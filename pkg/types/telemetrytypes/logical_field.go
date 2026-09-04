@@ -35,8 +35,46 @@ type LogicalField struct {
 	// Members are the physical keys that store this field, in current-first
 	// order. Each member has its own physical data (Materialized,
 	// Evolutions, JSONPlan, ...). A per-member accessor does not need data
-	// from the other members.
+	// from the other members. The members are shared metadata keys and are
+	// never changed here.
 	Members []*TelemetryFieldKey
+
+	// ValueMaps is index-aligned with Members: the map that brings a
+	// member's stored values into the current member's vocabulary, nil
+	// when the vocabularies are the same. Resolution sets it on this
+	// wrapper; the reads apply it.
+	ValueMaps []*ValueMap
+}
+
+// ValueMap translates the values one family member stores into the current
+// member's vocabulary. Stored and Current are index-aligned, and several
+// stored values can map to one current value. A map never holds a sentinel
+// (an empty string, 0, false) on either side: a translated sentinel would
+// turn absent rows into values, so the generator rejects it. Three readers
+// apply it: the family folds in querybuilder, a storage's own Compile, and
+// the metadata values suggestions, which read members outside Compile and
+// carry the same obligation.
+type ValueMap struct {
+	Stored  []string
+	Current []string
+}
+
+// StoredValues returns the values a member stores for one current value:
+// the value itself when no map covers it.
+func (m *ValueMap) StoredValues(current string) []string {
+	if m == nil {
+		return []string{current}
+	}
+	var stored []string
+	for i, c := range m.Current {
+		if c == current {
+			stored = append(stored, m.Stored[i])
+		}
+	}
+	if len(stored) == 0 {
+		return []string{current}
+	}
+	return stored
 }
 
 // SingleLogicalField makes a logical field that has one physical key.

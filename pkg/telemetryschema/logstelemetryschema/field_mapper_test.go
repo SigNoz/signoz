@@ -2,6 +2,7 @@ package logstelemetryschema
 
 import (
 	"context"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"testing"
 	"time"
 
@@ -15,7 +16,6 @@ import (
 )
 
 func TestGetColumn(t *testing.T) {
-	ctx := context.Background()
 
 	testCases := []struct {
 		name          string
@@ -168,11 +168,11 @@ func TestGetColumn(t *testing.T) {
 	}
 
 	fl := flaggertest.New(t)
-	fm := NewFieldMapper(fl)
+	storage := NewStorage()
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			col, err := fm.ColumnFor(ctx, valuer.UUID{}, 0, 0, &tc.key)
+			col, err := storage.getColumn(querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalLogs, nil, 0, 0), &tc.key)
 
 			if tc.expectedError != nil {
 				assert.Equal(t, tc.expectedError, err)
@@ -277,14 +277,14 @@ func TestGetFieldKeyName(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			fl := flaggertest.New(t)
-			fm := NewFieldMapper(fl)
-			result, err := fm.FieldFor(ctx, valuer.UUID{}, 0, 0, &tc.key)
+			storage := NewStorage()
+			read, err := storage.Read(ctx, querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalLogs, nil, 0, 0), &tc.key)
 
 			if tc.expectedError != nil {
 				assert.Equal(t, tc.expectedError, err)
 			} else {
 				require.NoError(t, err)
-				assert.Equal(t, tc.expectedResult, result)
+				assert.Equal(t, tc.expectedResult, read.SQL)
 			}
 		})
 	}
@@ -519,19 +519,19 @@ func TestFieldForWithEvolutions(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			fl := flaggertest.New(t)
-			fm := NewFieldMapper(fl)
+			storage := NewStorage()
 
 			tsStart := uint64(tc.tsStartTime.UnixNano())
 			tsEnd := uint64(tc.tsEndTime.UnixNano())
 			tc.key.Evolutions = tc.evolutions
 
-			result, err := fm.FieldFor(ctx, valuer.UUID{}, tsStart, tsEnd, tc.key)
+			read, err := storage.Read(ctx, querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalLogs, nil, tsStart, tsEnd), tc.key)
 
 			if tc.expectedError != nil {
 				assert.Equal(t, tc.expectedError, err)
 			} else {
 				require.NoError(t, err)
-				assert.Equal(t, tc.expectedResult, result)
+				assert.Equal(t, tc.expectedResult, read.SQL)
 			}
 		})
 	}
@@ -585,15 +585,15 @@ func TestFieldForWithMaterialized(t *testing.T) {
 	}
 
 	fl := flaggertest.New(t)
-	fm := NewFieldMapper(fl)
+	storage := NewStorage()
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			start := uint64(tc.start.UnixNano())
 			end := uint64(tc.end.UnixNano())
-			result, err := fm.FieldFor(ctx, valuer.UUID{}, start, end, materializedKey)
+			read, err := storage.Read(ctx, querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalLogs, nil, start, end), materializedKey)
 			require.NoError(t, err)
-			assert.Equal(t, tc.expectedResult, result)
+			assert.Equal(t, tc.expectedResult, read.SQL)
 		})
 	}
 }

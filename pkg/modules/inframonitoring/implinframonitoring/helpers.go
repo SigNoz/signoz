@@ -446,14 +446,12 @@ func (m *module) buildFilterClause(ctx context.Context, orgID valuer.UUID, filte
 	}
 
 	opts := querybuilder.FilterExprVisitorOpts{
-		Context:          ctx,
-		Logger:           m.logger,
-		FieldMapper:      m.fieldMapper,
-		ConditionBuilder: m.condBuilder,
-		FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "metric_name", FieldContext: telemetrytypes.FieldContextMetric},
-		FieldKeys:        keys,
-		StartNs:          querybuilder.ToNanoSecs(uint64(startMillis)),
-		EndNs:            querybuilder.ToNanoSecs(uint64(endMillis)),
+		Context:        ctx,
+		Query:          querybuilder.NewQueryInfo(ctx, orgID, m.fl, telemetrytypes.SignalMetrics, nil, querybuilder.ToNanoSecs(uint64(startMillis)), querybuilder.ToNanoSecs(uint64(endMillis))),
+		Storage:        m.storage,
+		Logger:         m.logger,
+		FullTextColumn: &telemetrytypes.TelemetryFieldKey{Name: "metric_name", FieldContext: telemetrytypes.FieldContextMetric},
+		FieldKeys:      keys,
 	}
 
 	whereClause, err := querybuilder.PrepareWhereClause(expression, opts)

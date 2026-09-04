@@ -34,8 +34,7 @@ func bodyAliasExpression(bodyJSONEnabled bool) string {
 type logQueryStatementBuilder struct {
 	logger                         *slog.Logger
 	metadataStore                  telemetrytypes.MetadataStore
-	fm                             qbtypes.FieldMapper
-	cb                             qbtypes.ConditionBuilder
+	storage                        qbtypes.Storage
 	resourceFilterResolver         *resourcefilter.ResourceFingerprintResolver[qbtypes.LogAggregation]
 	aggExprRewriter                qbtypes.AggExprRewriter
 	fl                             flagger.Flagger
@@ -59,11 +58,10 @@ func NewFactory(
 	return factory.NewProviderFactory(
 		factory.MustNewName("logs"),
 		func(_ context.Context, settings factory.ProviderSettings, cfg statementbuilder.Config) (qbtypes.StatementBuilder[qbtypes.LogAggregation], error) {
-			fm := logstelemetryschema.NewFieldMapper(fl)
-			cb := logstelemetryschema.NewConditionBuilder(fm, fl)
-			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, logstelemetryschema.DefaultFullTextColumn, fm, cb, fl)
+			storage := logstelemetryschema.NewStorage()
+			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, logstelemetryschema.DefaultFullTextColumn, storage, fl, telemetrytypes.SignalLogs)
 			return NewLogQueryStatementBuilder(
-				settings, metadataStore, fm, cb, aggExprRewriter, logstelemetryschema.DefaultFullTextColumn,
+				settings, metadataStore, storage, aggExprRewriter, logstelemetryschema.DefaultFullTextColumn,
 				fl, telemetryStore, cfg,
 			), nil
 		},
@@ -73,8 +71,7 @@ func NewFactory(
 func NewLogQueryStatementBuilder(
 	settings factory.ProviderSettings,
 	metadataStore telemetrytypes.MetadataStore,
-	fieldMapper qbtypes.FieldMapper,
-	conditionBuilder qbtypes.ConditionBuilder,
+	storage qbtypes.Storage,
 	aggExprRewriter qbtypes.AggExprRewriter,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	fl flagger.Flagger,
@@ -99,8 +96,7 @@ func NewLogQueryStatementBuilder(
 	b := &logQueryStatementBuilder{
 		logger:                         logsSettings.Logger(),
 		metadataStore:                  metadataStore,
-		fm:                             fieldMapper,
-		cb:                             conditionBuilder,
+		storage:                        storage,
 		resourceFilterResolver:         resourceFilterResolver,
 		aggExprRewriter:                aggExprRewriter,
 		fl:                             fl,
@@ -322,6 +318,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
+	info := b.queryInfo(ctx, orgID, start, end)
 
 	var (
 		cteFragments []string
@@ -349,7 +346,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		sb.SelectMore(logstelemetryschema.LogsV2SeverityNumberColumn)
 		sb.SelectMore(logstelemetryschema.LogsV2ScopeNameColumn)
 		sb.SelectMore(logstelemetryschema.LogsV2ScopeVersionColumn)
-		sb.SelectMore(bodyAliasExpression(b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID))))
+		sb.SelectMore(bodyAliasExpression(info.BodyJSONOn))
 		sb.SelectMore(logstelemetryschema.LogsV2AttributesStringColumn)
 		sb.SelectMore(logstelemetryschema.LogsV2AttributesNumberColumn)
 		sb.SelectMore(logstelemetryschema.LogsV2AttributesBoolColumn)
@@ -364,7 +361,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 			}
 
 			// get column expression for the field - use array index directly to avoid pointer to loop variable
-			colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &query.SelectFields[index], telemetrytypes.FieldDataTypeUnspecified, keys)
+			colExpr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &query.SelectFields[index], telemetrytypes.FieldDataTypeUnspecified, keys)
 			if err != nil {
 				return nil, err
 			}
@@ -383,7 +380,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	// Add order by
 	for _, orderBy := range query.Order {
 
-		colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &orderBy.Key.TelemetryFieldKey, telemetrytypes.FieldDataTypeUnspecified, keys)
+		colExpr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &orderBy.Key.TelemetryFieldKey, telemetrytypes.FieldDataTypeUnspecified, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -447,13 +444,13 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	))
 
 	// Keep original column expressions so we can build the tuple
-	bodyJSONEnabled := b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID))
+	info := b.queryInfo(ctx, orgID, start, end)
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for i, gb := range query.GroupBy {
-		if !bodyJSONEnabled && (strings.Contains(gb.Name, telemetrytypes.ArraySep) || strings.Contains(gb.Name, telemetrytypes.ArrayAnyIndex)) {
+		if !info.BodyJSONOn && (strings.Contains(gb.Name, telemetrytypes.ArraySep) || strings.Contains(gb.Name, telemetrytypes.ArrayAnyIndex)) {
 			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the Array Paths: %s", gb.Name)
 		}
-		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -612,13 +609,13 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 
 	allAggChArgs := []any{}
 
-	bodyJSONEnabled := b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID))
+	info := b.queryInfo(ctx, orgID, start, end)
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for i, gb := range query.GroupBy {
-		if !bodyJSONEnabled && (strings.Contains(gb.Name, telemetrytypes.ArraySep) || strings.Contains(gb.Name, telemetrytypes.ArrayAnyIndex)) {
+		if !info.BodyJSONOn && (strings.Contains(gb.Name, telemetrytypes.ArraySep) || strings.Contains(gb.Name, telemetrytypes.ArrayAnyIndex)) {
 			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the Array Paths: %s", gb.Name)
 		}
-		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -731,16 +728,13 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 		// add filter expression
 		preparedWhereClause, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
 			Context:            ctx,
-			OrgID:              orgID,
+			Query:              b.queryInfo(ctx, orgID, start, end),
+			Storage:            b.storage,
 			Logger:             b.logger,
-			FieldMapper:        b.fm,
-			ConditionBuilder:   b.cb,
 			FieldKeys:          keys,
 			SkipResourceFilter: skipResourceFilter,
 			FullTextColumn:     b.fullTextColumn,
 			Variables:          variables,
-			StartNs:            start,
-			EndNs:              end,
 		})
 
 		if err != nil {
@@ -830,4 +824,10 @@ func (b *logQueryStatementBuilder) maybeAttachResourceFilter(
 	}
 	sb.Where("resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
 	return fmt.Sprintf("__resource_filter AS (%s)", stmt.Query), stmt.Args, true, nil
+}
+
+// queryInfo binds one request's context; the query-path flags are evaluated
+// one time here.
+func (b *logQueryStatementBuilder) queryInfo(ctx context.Context, orgID valuer.UUID, start, end uint64) qbtypes.QueryInfo {
+	return querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalLogs, nil, start, end)
 }

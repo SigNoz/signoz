@@ -7,7 +7,6 @@ import (
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 var (
@@ -18,21 +17,15 @@ var (
 	}
 )
 
-type defaultFieldMapper struct{}
+type storage struct{}
 
-var _ qbtypes.FieldMapper = (*defaultFieldMapper)(nil)
+var _ qbtypes.Storage = (*storage)(nil)
 
-// CandidateKeys returns nil: the resource filter has no attribute-map fallback, so a
-// context-missing key stays unresolved and the caller errors.
-func (m *defaultFieldMapper) CandidateKeys(_ context.Context, _ valuer.UUID, _ *telemetrytypes.TelemetryFieldKey, _ any, _ map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
-	return nil
+func newStorage() *storage {
+	return &storage{}
 }
 
-func NewFieldMapper() *defaultFieldMapper {
-	return &defaultFieldMapper{}
-}
-
-func (m *defaultFieldMapper) getColumn(
+func (m *storage) getColumn(
 	_ context.Context,
 	_, _ uint64,
 	key *telemetrytypes.TelemetryFieldKey,
@@ -46,22 +39,8 @@ func (m *defaultFieldMapper) getColumn(
 	return nil, qbtypes.ErrColumnNotFound
 }
 
-func (m *defaultFieldMapper) ColumnFor(
-	ctx context.Context,
-	_ valuer.UUID,
-	tsStart, tsEnd uint64,
-	key *telemetrytypes.TelemetryFieldKey,
-) ([]*schema.Column, error) {
-	return m.getColumn(ctx, tsStart, tsEnd, key)
-}
-
-func (m *defaultFieldMapper) FieldFor(
-	ctx context.Context,
-	_ valuer.UUID,
-	tsStart, tsEnd uint64,
-	key *telemetrytypes.TelemetryFieldKey,
-) (string, error) {
-	columns, err := m.getColumn(ctx, tsStart, tsEnd, key)
+func (m *storage) read(ctx context.Context, q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey) (string, error) {
+	columns, err := m.getColumn(ctx, q.StartNs, q.EndNs, key)
 	if err != nil {
 		return "", err
 	}
@@ -71,44 +50,36 @@ func (m *defaultFieldMapper) FieldFor(
 	return columns[0].Name, nil
 }
 
-// ExistsFor reports key presence in the fingerprint labels JSON. Only resource
-// context keys have a presence notion here; anything else is a real column and
-// always present.
-func (m *defaultFieldMapper) ExistsFor(
-	ctx context.Context,
-	_ valuer.UUID,
-	tsStart, tsEnd uint64,
-	key *telemetrytypes.TelemetryFieldKey,
-	exists bool,
-) (string, error) {
-	columns, err := m.getColumn(ctx, tsStart, tsEnd, key)
+// Read composes the bare read of one key with its membership test. Only a
+// resource key has a presence notion in the labels JSON; anything else is a
+// real column and always present.
+func (m *storage) Read(ctx context.Context, q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey) (qbtypes.Read, error) {
+	columns, err := m.getColumn(ctx, q.StartNs, q.EndNs, key)
 	if err != nil {
-		return "", err
+		return qbtypes.Read{}, err
+	}
+	sql, err := m.read(ctx, q, key)
+	if err != nil {
+		return qbtypes.Read{}, err
 	}
 	if key.FieldContext != telemetrytypes.FieldContextResource {
-		if exists {
-			return "true", nil
-		}
-		return "false", nil
+		return qbtypes.Read{SQL: sql, Presence: "true", Absence: "false", WhenAbsent: qbtypes.AlwaysPresent}, nil
 	}
-	pred := fmt.Sprintf("simpleJSONHas(%s, '%s')", columns[0].Name, key.Name)
-	if exists {
-		return pred, nil
-	}
-	return "NOT " + pred, nil
+	presence := fmt.Sprintf("simpleJSONHas(%s, '%s')", columns[0].Name, key.Name)
+	return qbtypes.Read{
+		SQL:        sql,
+		Presence:   presence,
+		Absence:    "NOT " + presence,
+		WhenAbsent: qbtypes.AbsentIsSentinel,
+	}, nil
 }
 
-func (m *defaultFieldMapper) ColumnExpressionFor(
-	ctx context.Context,
-	orgID valuer.UUID,
-	tsStart, tsEnd uint64,
-	key *telemetrytypes.TelemetryFieldKey,
-	_ telemetrytypes.FieldDataType,
-	_ map[string][]*telemetrytypes.TelemetryFieldKey,
-) (string, error) {
-	fieldExpression, err := m.FieldFor(ctx, orgID, tsStart, tsEnd, key)
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("%s AS `%s`", fieldExpression, key.Name), nil
+// Fallback returns nil: the fingerprint table holds only what the metadata
+// reports, and a term it cannot serve is the main query's to evaluate.
+func (m *storage) Fallback(context.Context, qbtypes.QueryInfo, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any) ([]*telemetrytypes.LogicalField, error) {
+	return nil, nil
+}
+
+func (m *storage) Traits() qbtypes.Traits {
+	return qbtypes.Traits{Split: qbtypes.FingerprintOfSplit, UnknownKey: qbtypes.IgnoreUnknownKey}
 }

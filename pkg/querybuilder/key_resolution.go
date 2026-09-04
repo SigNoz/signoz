@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -64,6 +65,28 @@ func ResolveLogicalFields(field *telemetrytypes.TelemetryFieldKey, logicalFields
 	return logicalFields, warning
 }
 
+// ColumnDataType is the field data type a table column reads as. A storage
+// stamps it on the column key its Fallback returns, so the intrinsic-column
+// step can drop a same-named metadata key of a contradicting type. A time
+// column has no field data type and matches none.
+func ColumnDataType(column *schema.Column) telemetrytypes.FieldDataType {
+	switch column.Type.GetType() {
+	case schema.ColumnTypeEnumBool:
+		return telemetrytypes.FieldDataTypeBool
+	case schema.ColumnTypeEnumInt8, schema.ColumnTypeEnumInt16, schema.ColumnTypeEnumInt32, schema.ColumnTypeEnumInt64,
+		schema.ColumnTypeEnumUInt8, schema.ColumnTypeEnumUInt16, schema.ColumnTypeEnumUInt32, schema.ColumnTypeEnumUInt64,
+		schema.ColumnTypeEnumFloat32, schema.ColumnTypeEnumFloat64:
+		return telemetrytypes.FieldDataTypeNumber
+	case schema.ColumnTypeEnumString, schema.ColumnTypeEnumFixedString:
+		return telemetrytypes.FieldDataTypeString
+	case schema.ColumnTypeEnumLowCardinality:
+		if lc, ok := column.Type.(schema.LowCardinalityColumnType); ok && lc.ElementType.GetType() == schema.ColumnTypeEnumString {
+			return telemetrytypes.FieldDataTypeString
+		}
+	}
+	return telemetrytypes.FieldDataTypeUnspecified
+}
+
 // WrapAsLogicalFields wraps physical keys (candidate or synthesized) as
 // single-member logical fields addressed by the requested spelling.
 func WrapAsLogicalFields(requestedName string, keys []*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.LogicalField {
@@ -74,22 +97,14 @@ func WrapAsLogicalFields(requestedName string, keys []*telemetrytypes.TelemetryF
 	return fields
 }
 
-// SingleKeys flattens logical fields to their single members. It is the
-// adapter for signals whose fields are single-member by construction (every
-// signal without family support); their condition builders keep compiling per
-// physical key.
-func SingleKeys(fields []*telemetrytypes.LogicalField) []*telemetrytypes.TelemetryFieldKey {
-	keys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(fields))
-	for _, field := range fields {
-		keys = append(keys, field.Single())
+// NewKeyNotFoundError builds the error for a key that neither metadata nor
+// the storage can serve, with the closest known names as suggestions.
+func NewKeyNotFoundError(name string, known []string) error {
+	err := errors.NewInvalidInputf(errors.CodeInvalidInput, "key `%s` not found", name).WithUrl(KeyNotFoundDocURL)
+	if len(known) == 0 {
+		return err
 	}
-	return keys
-}
-
-// NewKeyNotFoundError builds the error a condition builder returns when a filter term
-// references a key it has no matching field key for.
-func NewKeyNotFoundError(name string) error {
-	return errors.NewInvalidInputf(errors.CodeInvalidInput, "key `%s` not found", name).WithUrl(KeyNotFoundDocURL)
+	return err.WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(name, errors.NounKeys, known)...)
 }
 
 // NewKeyNotFoundWarning is the warning surfaced when a referenced key is absent from

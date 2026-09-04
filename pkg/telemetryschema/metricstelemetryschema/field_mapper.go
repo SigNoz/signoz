@@ -6,9 +6,9 @@ import (
 	"slices"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 var (
@@ -35,19 +35,15 @@ var (
 	}
 )
 
-type fieldMapper struct{}
+type storage struct{}
 
-// CandidateKeys returns nil: metrics has no attribute-map fallback, so a context-missing
-// key stays unresolved and the caller errors.
-func (m *fieldMapper) CandidateKeys(_ context.Context, _ valuer.UUID, _ *telemetrytypes.TelemetryFieldKey, _ any, _ map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
-	return nil
+var _ qbtypes.Storage = (*storage)(nil)
+
+func NewStorage() *storage {
+	return &storage{}
 }
 
-func NewFieldMapper() qbtypes.FieldMapper {
-	return &fieldMapper{}
-}
-
-func (m *fieldMapper) getColumn(_ context.Context, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
+func (m *storage) getColumn(_ context.Context, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
 
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource, telemetrytypes.FieldContextScope, telemetrytypes.FieldContextAttribute:
@@ -71,8 +67,8 @@ func (m *fieldMapper) getColumn(_ context.Context, _, _ uint64, key *telemetryty
 	return nil, qbtypes.ErrColumnNotFound
 }
 
-func (m *fieldMapper) FieldFor(ctx context.Context, _ valuer.UUID, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
-	columns, err := m.getColumn(ctx, startNs, endNs, key)
+func (m *storage) read(ctx context.Context, q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey) (string, error) {
+	columns, err := m.getColumn(ctx, q.StartNs, q.EndNs, key)
 	if err != nil {
 		return "", err
 	}
@@ -92,29 +88,59 @@ func (m *fieldMapper) FieldFor(ctx context.Context, _ valuer.UUID, startNs, endN
 	return columns[0].Name, nil
 }
 
-func (m *fieldMapper) ColumnFor(ctx context.Context, _ valuer.UUID, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
-	return m.getColumn(ctx, tsStart, tsEnd, key)
-}
-
-// ExistsFor implements the per-key existence primitive of qbtypes.FieldMapper.
-// Intrinsic fields always exist; labels are checked for key membership.
-func (m *fieldMapper) ExistsFor(_ context.Context, _ valuer.UUID, _, _ uint64, key *telemetrytypes.TelemetryFieldKey, exists bool) (string, error) {
+// Read composes the bare read of one key with its membership test. An
+// intrinsic column is always present. A label is checked for key membership;
+// absent, it reads the empty string, and that is the metrics keyless
+// contract, so no query guards it. Every read keeps its native type: a label
+// already reads back as String, and coercion adds nothing.
+func (m *storage) Read(ctx context.Context, q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey) (qbtypes.Read, error) {
+	sql, err := m.read(ctx, q, key)
+	if err != nil {
+		return qbtypes.Read{}, err
+	}
 	if slices.Contains(IntrinsicFields, key.Name) {
-		return "true", nil
+		return qbtypes.Read{SQL: sql, Presence: "true", Absence: "false", WhenAbsent: qbtypes.AlwaysPresent, KeepType: true}, nil
 	}
-	if exists {
-		return fmt.Sprintf("has(JSONExtractKeys(labels), '%s')", key.Name), nil
-	}
-	return fmt.Sprintf("not has(JSONExtractKeys(labels), '%s')", key.Name), nil
+	presence := fmt.Sprintf("has(JSONExtractKeys(labels), '%s')", key.Name)
+	return qbtypes.Read{
+		SQL:        sql,
+		Presence:   presence,
+		Absence:    "not " + presence,
+		WhenAbsent: qbtypes.AbsentIsValue,
+		KeepType:   true,
+	}, nil
 }
 
-func (m *fieldMapper) ColumnExpressionFor(
-	ctx context.Context,
-	orgID valuer.UUID,
-	startNs, endNs uint64,
-	field *telemetrytypes.TelemetryFieldKey,
-	_ telemetrytypes.FieldDataType,
-	_ map[string][]*telemetrytypes.TelemetryFieldKey,
-) (string, error) {
-	return m.FieldFor(ctx, orgID, startNs, endNs, field)
+// Fallback answers every name: a column name is the column, any other name
+// is a label, and a context-qualified name is also the label spelled with
+// its context, because a context can be a legitimate prefix in user data.
+func (m *storage) Fallback(_ context.Context, _ qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, _ qbtypes.FilterOperator, _ any) ([]*telemetrytypes.LogicalField, error) {
+	if column, isColumn := timeSeriesV4Columns[key.Name]; isColumn {
+		dataType := key.FieldDataType
+		if dataType == telemetrytypes.FieldDataTypeUnspecified {
+			dataType = querybuilder.ColumnDataType(column)
+		}
+		return querybuilder.WrapAsLogicalFields(key.Name, []*telemetrytypes.TelemetryFieldKey{telemetrytypes.NewTelemetryFieldKey(key.Name, key.FieldContext, dataType)}), nil
+	}
+	keys := []*telemetrytypes.TelemetryFieldKey{
+		telemetrytypes.NewTelemetryFieldKey(key.Name, telemetrytypes.FieldContextAttribute, key.FieldDataType),
+	}
+	if key.FieldContext != telemetrytypes.FieldContextUnspecified {
+		keys = append(keys, telemetrytypes.NewTelemetryFieldKey(
+			key.FieldContext.StringValue()+"."+key.Name, telemetrytypes.FieldContextAttribute, key.FieldDataType))
+	}
+	return querybuilder.WrapAsLogicalFields(key.Name, keys), nil
+}
+
+// Traits: every context addresses the one label bag, so a key under any
+// context resolves as if it had none.
+func (m *storage) Traits() qbtypes.Traits {
+	return qbtypes.Traits{
+		OwnContexts: []telemetrytypes.FieldContext{
+			telemetrytypes.FieldContextResource,
+			telemetrytypes.FieldContextScope,
+			telemetrytypes.FieldContextAttribute,
+			telemetrytypes.FieldContextMetric,
+		},
+	}
 }
