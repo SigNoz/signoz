@@ -5,11 +5,11 @@ import styles from './NoVariables.module.scss';
 
 const NoVariablesCard = ({
 	disabledReason = '',
-	disabledKind = 'blocked',
+	disabledKind,
 	setIsEditing,
 }: {
 	disabledReason?: string;
-	disabledKind?: 'denied' | 'blocked';
+	disabledKind: 'denied' | 'blocked';
 	setIsEditing: React.Dispatch<React.SetStateAction<EditingState | null>>;
 }): JSX.Element => {
 	return (

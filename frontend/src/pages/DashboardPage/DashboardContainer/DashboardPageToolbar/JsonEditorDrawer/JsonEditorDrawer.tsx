@@ -30,8 +30,11 @@ function JsonEditorDrawer({
 	isOpen,
 	onClose,
 }: JsonEditorDrawerProps): JSX.Element {
-	const { isEditable, editDisabledReason: readOnlyReason } =
-		useDashboardEditContext();
+	const {
+		isEditable,
+		editDisabledReason: readOnlyReason,
+		editDisabledKind: readOnlyKind,
+	} = useDashboardEditContext();
 	const [, copyToClipboard] = useCopyToClipboard();
 
 	// Inspect-only when not editable: Apply/Format/Reset disabled.
@@ -175,7 +178,10 @@ function JsonEditorDrawer({
 						>
 							Cancel
 						</Button>
-						<DisabledControlTooltip reason={readOnly ? readOnlyReason : ''}>
+						<DisabledControlTooltip
+							reason={readOnly ? readOnlyReason : ''}
+							kind={readOnlyKind}
+						>
 							<Button
 								variant="solid"
 								color="primary"

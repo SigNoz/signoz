@@ -64,7 +64,15 @@ function PanelEditorPage(): JSX.Element {
 	});
 	// Derived from the dashboard this route already holds: it is a root page, so
 	// the subtree hook (useDashboardEditContext) has nothing to read from yet.
-	const { isEditable, editDisabledReason } = useDashboardEditGuard(dashboard);
+	const { isEditable, editDisabledReason, editDisabledKind } =
+		useDashboardEditGuard(dashboard);
+	const editDisabled = useMemo(
+		() =>
+			editDisabledReason
+				? { reason: editDisabledReason, kind: editDisabledKind }
+				: undefined,
+		[editDisabledReason, editDisabledKind],
+	);
 
 	// On a refresh/direct URL this route is the only mount, so seed the edit
 	// context the way DashboardContainer does — during render, so the subtree's
@@ -163,7 +171,7 @@ function PanelEditorPage(): JSX.Element {
 			isNew={!!newKind}
 			layoutIndex={layoutIndex}
 			isEditable={isEditable}
-			editDisabledReason={editDisabledReason}
+			editDisabled={editDisabled}
 			onClose={backToDashboard}
 			onSaved={backToDashboard}
 		/>

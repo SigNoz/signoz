@@ -4,13 +4,14 @@ import { Button } from '@signozhq/ui/button';
 import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
 import type { MenuItem } from '@signozhq/ui/dropdown-menu';
 
+import type { DisabledState } from 'lib/authz/components/DisabledReasonTooltip/disabledState.types';
 import DisabledMenuItemLabel from '../../../components/DisabledMenuItemLabel/DisabledMenuItemLabel';
 import styles from './SectionActionsMenu.module.scss';
 
 interface SectionActionsMenuProps {
 	sectionId: string;
-	/** Non-empty when edits are unavailable — items render disabled with this reason. */
-	disabledReason?: string;
+	/** Present when edits are unavailable — items render disabled with its reason. */
+	disabled?: DisabledState;
 	onAddPanel?: () => void;
 	onRename?: () => void;
 	onCloneSection?: () => void;
@@ -19,17 +20,17 @@ interface SectionActionsMenuProps {
 
 function SectionActionsMenu({
 	sectionId,
-	disabledReason = '',
+	disabled,
 	onAddPanel,
 	onRename,
 	onCloneSection,
 	onDeleteSection,
 }: SectionActionsMenuProps): JSX.Element {
 	const items = useMemo<MenuItem[]>(() => {
-		const disabled = !!disabledReason;
+		const isDisabled = !!disabled;
 		const label = (text: string): ReactNode =>
 			disabled ? (
-				<DisabledMenuItemLabel reason={disabledReason}>
+				<DisabledMenuItemLabel reason={disabled.reason} kind={disabled.kind}>
 					{text}
 				</DisabledMenuItemLabel>
 			) : (
@@ -41,7 +42,7 @@ function SectionActionsMenu({
 				key: 'add-panel',
 				icon: <Plus size={14} />,
 				label: label('Add panel'),
-				disabled,
+				disabled: isDisabled,
 				onClick: onAddPanel,
 			});
 		}
@@ -50,7 +51,7 @@ function SectionActionsMenu({
 				key: 'rename',
 				icon: <PenLine size={14} />,
 				label: label('Rename section'),
-				disabled,
+				disabled: isDisabled,
 				onClick: onRename,
 			});
 		}
@@ -59,7 +60,7 @@ function SectionActionsMenu({
 				key: 'clone-section',
 				icon: <Copy size={14} />,
 				label: label('Clone section'),
-				disabled,
+				disabled: isDisabled,
 				onClick: onCloneSection,
 			});
 		}
@@ -71,13 +72,13 @@ function SectionActionsMenu({
 					danger: true,
 					icon: <Trash2 size={14} />,
 					label: label('Delete section'),
-					disabled,
+					disabled: isDisabled,
 					onClick: onDeleteSection,
 				},
 			);
 		}
 		return result;
-	}, [disabledReason, onAddPanel, onRename, onCloneSection, onDeleteSection]);
+	}, [disabled, onAddPanel, onRename, onCloneSection, onDeleteSection]);
 
 	return (
 		<DropdownMenuSimple menu={{ items }}>

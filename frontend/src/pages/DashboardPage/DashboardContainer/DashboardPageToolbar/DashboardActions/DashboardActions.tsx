@@ -73,7 +73,9 @@ function DashboardActions({
 		isLocked,
 		isEditable,
 		editDisabledReason,
+		editDisabledKind,
 		deleteDisabledReason,
+		deleteDisabledKind,
 		canDeleteDashboard,
 		canEditDashboard: canReadDashboard,
 	} = useDashboardEditContext();
@@ -82,11 +84,14 @@ function DashboardActions({
 	const { safeNavigate } = useSafeNavigate();
 	const { showErrorModal } = useErrorModal();
 	const { canCreate } = useDashboardCollectionPermissions();
-	const { canToggleLock, disabledReason: lockDisabledReason } =
-		useDashboardLockPermission({
-			dashboardId: dashboard.id,
-			createdBy: dashboard.createdBy,
-		});
+	const {
+		canToggleLock,
+		disabledReason: lockDisabledReason,
+		disabledKind: lockDisabledKind,
+	} = useDashboardLockPermission({
+		dashboardId: dashboard.id,
+		createdBy: dashboard.createdBy,
+	});
 
 	// Cloning creates a new dashboard from this one, so it needs create as well as
 	// the read this page already proves; it is not lock-gated.
@@ -179,9 +184,11 @@ function DashboardActions({
 	// Items stay in the menu when they aren't available, carrying the reason —
 	// lock or missing permission — instead of disappearing.
 	const disabledLabel = useCallback(
-		(text: string, reason: string): ReactNode =>
+		(text: string, reason: string, kind: 'denied' | 'blocked'): ReactNode =>
 			reason ? (
-				<DisabledMenuItemLabel reason={reason}>{text}</DisabledMenuItemLabel>
+				<DisabledMenuItemLabel reason={reason} kind={kind}>
+					{text}
+				</DisabledMenuItemLabel>
 			) : (
 				text
 			),
@@ -192,7 +199,7 @@ function DashboardActions({
 		const dashboardGroup: MenuItem[] = [
 			{
 				key: 'rename',
-				label: disabledLabel('Rename', editDisabledReason),
+				label: disabledLabel('Rename', editDisabledReason, editDisabledKind),
 				icon: <PenLine size={14} />,
 				disabled: !isEditable,
 				onClick: onOpenRename,
@@ -200,7 +207,7 @@ function DashboardActions({
 			// Clone creates a new dashboard, so it's not lock-gated.
 			{
 				key: 'clone',
-				label: disabledLabel('Clone dashboard', cloneDisabledReason),
+				label: disabledLabel('Clone dashboard', cloneDisabledReason, 'denied'),
 				icon: <Copy size={14} />,
 				disabled: isCloning || !!cloneDisabledReason,
 				onClick: (): void => void handleClone(),
@@ -210,6 +217,7 @@ function DashboardActions({
 				label: disabledLabel(
 					isDashboardLocked ? 'Unlock dashboard' : 'Lock dashboard',
 					lockDisabledReason,
+					lockDisabledKind,
 				),
 				icon: <LockKeyhole size={14} />,
 				disabled: !canToggleLock,
@@ -237,7 +245,7 @@ function DashboardActions({
 				children: [
 					{
 						key: 'new-section',
-						label: disabledLabel('New section', editDisabledReason),
+						label: disabledLabel('New section', editDisabledReason, editDisabledKind),
 						icon: <SquareStack size={14} />,
 						disabled: !isEditable,
 						onClick: (): void => setIsNewSectionOpen(true),
@@ -247,7 +255,11 @@ function DashboardActions({
 			{ type: 'divider', key: 'divider-danger' },
 			{
 				key: 'delete',
-				label: disabledLabel('Delete dashboard', deleteDisabledReason),
+				label: disabledLabel(
+					'Delete dashboard',
+					deleteDisabledReason,
+					deleteDisabledKind,
+				),
 				icon: <Trash2 size={14} />,
 				danger: true,
 				// Delete is independent of read/update, but a locked dashboard still
@@ -261,7 +273,9 @@ function DashboardActions({
 		isEditable,
 		isLocked,
 		editDisabledReason,
+		editDisabledKind,
 		deleteDisabledReason,
+		deleteDisabledKind,
 		canDeleteDashboard,
 		cloneDisabledReason,
 		isCloning,
@@ -289,7 +303,7 @@ function DashboardActions({
 					Actions
 				</Button>
 			</DropdownMenuSimple>
-			<DisabledControlTooltip reason={editDisabledReason}>
+			<DisabledControlTooltip reason={editDisabledReason} kind={editDisabledKind}>
 				<Button
 					variant="solid"
 					color="secondary"
@@ -325,7 +339,7 @@ function DashboardActions({
 			>
 				JSON
 			</Button>
-			<DisabledControlTooltip reason={editDisabledReason}>
+			<DisabledControlTooltip reason={editDisabledReason} kind={editDisabledKind}>
 				<Button
 					variant="solid"
 					color="primary"
