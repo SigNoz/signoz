@@ -14,6 +14,16 @@ const baseProps = {
 };
 
 describe('ActionsPopover', () => {
+	it('does not mount the menu body until the trigger is clicked', () => {
+		render(<ActionsPopover {...baseProps} />);
+
+		expect(screen.getByTestId('dashboard-action-icon')).toBeInTheDocument();
+		expect(screen.queryByTestId('dashboard-action-view')).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId('dashboard-action-delete'),
+		).not.toBeInTheDocument();
+	});
+
 	it('shows the full set of actions for a v2 dashboard', async () => {
 		render(<ActionsPopover {...baseProps} />);
 		await userEvent.click(screen.getByTestId('dashboard-action-icon'));

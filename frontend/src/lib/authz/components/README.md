@@ -43,6 +43,10 @@ const checks = [buildPermission('read', buildObjectString('dashboard', dashboard
 
 When adding authz to a new resource, create a permissions file under `lib/authz/hooks/useAuthZ/permissions/`.
 
+`dashboard.permissions.ts` (below) is a real file — see it, and the hooks that
+consume it in `hooks/dashboards/`, for a worked example of a fully migrated
+resource.
+
 ```tsx
 // lib/authz/hooks/useAuthZ/permissions/dashboard.permissions.ts
 import { buildPermission } from '../utils';

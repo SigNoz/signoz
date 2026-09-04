@@ -52,12 +52,11 @@ const makeDashboard = (
 		...overrides,
 	}) as unknown as DashboardListItem;
 
-const renderRow = (dashboard: DashboardListItem, canEdit = true): void => {
+const renderRow = (dashboard: DashboardListItem): void => {
 	render(
 		<DashboardRow
 			dashboard={dashboard}
 			index={0}
-			canEdit={canEdit}
 			showUpdatedAt={false}
 			showUpdatedBy={false}
 		/>,
@@ -108,16 +107,6 @@ describe('DashboardRow', () => {
 			expect(
 				screen.getByTestId('legacy-dashboard-retry-migration'),
 			).toBeInTheDocument();
-		});
-
-		it('withholds the retry action from a row the user cannot edit', async () => {
-			renderRow(makeDashboard({ legacy: true }), false);
-
-			await userEvent.click(screen.getByTestId('dashboard-title-0'));
-
-			expect(
-				screen.queryByTestId('legacy-dashboard-retry-migration'),
-			).not.toBeInTheDocument();
 		});
 	});
 });

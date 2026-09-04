@@ -107,6 +107,32 @@ denial message and the loading state.
 Prefer the HOC (`withAuthZ*`); reach for the JSX guard (`AuthZGuard*`) when the gate depends on conditional rendering
 and an HOC cannot express it. The components README has the full decision tree and how to build the `checks` array.
 
+## Worked example
+
+Dashboards are fully migrated and exercise most of this guide:
+
+| Piece | Where |
+| --- | --- |
+| Permission constants and builders | `src/lib/authz/hooks/useAuthZ/permissions/dashboard.permissions.ts` |
+| Resource-level hook (`canEdit` = read AND update, per rule 2) | `src/hooks/dashboards/useDashboardPermissions.ts` |
+| Collection-level hook (`list` / `create`) | `src/hooks/dashboards/useDashboardCollectionPermissions.ts` |
+| A compound rule the backend also enforces handler-side | `src/hooks/dashboards/useDashboardLockPermission.ts` |
+| Tooltip copy for disabled controls | `src/hooks/dashboards/dashboardPermissionReasons.ts` |
+| List-page pattern (table guarded, chrome kept, create independent of list) | `src/pages/DashboardsListPage/components/DashboardsList/DashboardsList.tsx` |
+| Per-row checks fired lazily, on menu open (rule 4) | `src/pages/DashboardsListPage/components/ActionsPopover/` |
+| Denial explained in place rather than as a load failure | `src/pages/DashboardPage/DashboardPage.tsx` |
+
+Two things it settled that aren't obvious from the rules alone:
+
+- **Disabled vs denied, while loading.** Permission checks are async, so a
+  control is disabled both in flight and when denied. Show the reason only once
+  the check resolves — an empty tooltip, or one that briefly claims a denial
+  that doesn't hold, is worse than none. Tests must wait on a post-resolution
+  signal, since a `toBeDisabled` assertion also passes during loading.
+- **Lock (or any non-authz block) wins over permission.** When a control is
+  blocked for a reason the user can act on, say that one; naming the missing
+  permission first sends them to an admin when they only needed to unlock.
+
 ## Migration checklist
 
 Use the existing components. Create a new one only if none fit.
