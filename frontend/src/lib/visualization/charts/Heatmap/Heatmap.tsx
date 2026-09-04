@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import ChartWrapper from 'container/DashboardContainer/visualization/charts/ChartWrapper/ChartWrapper';
+import ChartWrapper from 'lib/visualization/charts/ChartWrapper/ChartWrapper';
 import ColorBar from 'lib/uPlotV2/components/ColorBar/ColorBar';
 import Legend from 'lib/uPlotV2/components/Legend/Legend';
-import HeatmapTooltip from 'lib/uPlotV2/components/Tooltip/HeatmapTooltip';
+import HeatmapTooltip from 'lib/uPlotV2/components/Tooltip/components/HeatmapTooltip/HeatmapTooltip';
 import {
 	LegendPosition,
 	TooltipRenderArgs,
@@ -26,7 +26,7 @@ import {
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
 import { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 
-import { HeatmapChartProps } from './types';
+import { HeatmapChartProps } from 'lib/visualization/charts/types';
 import { useHeatmapGroupLegend } from './useHeatmapGroupLegend';
 import { buildHeatmapConfig, prepareHeatmapChartData } from './utils';
 
@@ -299,7 +299,6 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 			onClick={onCellClick ? handleClick : undefined}
 			yAxisUnit={yAxisUnit}
 			decimalPrecision={decimalPrecision}
-			timezone={timezone}
 			customTooltip={renderTooltip}
 			renderTooltipFooter={renderTooltipFooter}
 			tooltipPortalRoot={tooltipPortalRoot}
