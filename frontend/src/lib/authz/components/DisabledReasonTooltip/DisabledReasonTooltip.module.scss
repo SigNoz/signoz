@@ -1,5 +1,8 @@
 .trigger {
 	display: inline-flex;
+	/* Only ever wraps an unavailable control, and a disabled control stops
+	   pointer events, so the wrapper is what paints the cursor. */
+	cursor: not-allowed;
 }
 
 .interactive {
