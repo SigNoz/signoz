@@ -69,7 +69,7 @@ func TestExhaustiveJSONPlan_ConditionBuilder(t *testing.T) {
 }
 
 func TestExhaustiveJSONPlan_FieldMapper(t *testing.T) {
-	m := &fieldMapper{}
+	m := &storage{}
 
 	key := &telemetrytypes.TelemetryFieldKey{
 		Name:          "education[].name",

@@ -17,11 +17,11 @@ import (
 )
 
 type aggExprRewriter struct {
-	logger           *slog.Logger
-	fullTextColumn   *telemetrytypes.TelemetryFieldKey
-	fieldMapper      qbtypes.FieldMapper
-	conditionBuilder qbtypes.ConditionBuilder
-	flagger          flagger.Flagger
+	logger         *slog.Logger
+	fullTextColumn *telemetrytypes.TelemetryFieldKey
+	storage        qbtypes.Storage
+	flagger        flagger.Flagger
+	signal         telemetrytypes.Signal
 }
 
 var _ qbtypes.AggExprRewriter = (*aggExprRewriter)(nil)
@@ -29,18 +29,18 @@ var _ qbtypes.AggExprRewriter = (*aggExprRewriter)(nil)
 func NewAggExprRewriter(
 	settings factory.ProviderSettings,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
-	fieldMapper qbtypes.FieldMapper,
-	conditionBuilder qbtypes.ConditionBuilder,
+	storage qbtypes.Storage,
 	fl flagger.Flagger,
+	signal telemetrytypes.Signal,
 ) *aggExprRewriter {
 	set := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querybuilder/agg_rewrite")
 
 	return &aggExprRewriter{
-		logger:           set.Logger(),
-		fullTextColumn:   fullTextColumn,
-		fieldMapper:      fieldMapper,
-		conditionBuilder: conditionBuilder,
-		flagger:          fl,
+		logger:         set.Logger(),
+		fullTextColumn: fullTextColumn,
+		storage:        storage,
+		flagger:        fl,
+		signal:         signal,
 	}
 }
 
@@ -78,18 +78,14 @@ func (r *aggExprRewriter) Rewrite(
 		return "", nil, errors.NewInternalf(errors.CodeInternal, "no SELECT items for %q", expr)
 	}
 
-	visitor := newExprVisitor(
-		ctx,
-		orgID,
-		startNs,
-		endNs,
-		r.logger,
-		keys,
-		r.fullTextColumn,
-		r.fieldMapper,
-		r.conditionBuilder,
-		r.flagger,
-	)
+	visitor := &exprVisitor{
+		ctx:            ctx,
+		query:          NewQueryInfo(ctx, orgID, r.flagger, r.signal, nil, startNs, endNs),
+		logger:         r.logger,
+		fieldKeys:      keys,
+		fullTextColumn: r.fullTextColumn,
+		storage:        r.storage,
+	}
 	// Rewrite the first select item (our expression)
 	if err := sel.SelectItems[0].Accept(visitor); err != nil {
 		return "", nil, err
@@ -130,48 +126,19 @@ func (r *aggExprRewriter) RewriteMulti(
 	return out, chArgsList, nil
 }
 
-// exprVisitor walks FunctionExpr nodes and applies the mappers.
+// exprVisitor walks FunctionExpr nodes and resolves and renders their
+// arguments.
 type exprVisitor struct {
-	ctx     context.Context
-	orgID   valuer.UUID
-	startNs uint64
-	endNs   uint64
+	ctx   context.Context
+	query qbtypes.QueryInfo
 	chparser.DefaultASTVisitor
-	logger           *slog.Logger
-	fieldKeys        map[string][]*telemetrytypes.TelemetryFieldKey
-	fullTextColumn   *telemetrytypes.TelemetryFieldKey
-	fieldMapper      qbtypes.FieldMapper
-	conditionBuilder qbtypes.ConditionBuilder
-	flagger          flagger.Flagger
-	Modified         bool
-	chArgs           []any
-	isRate           bool
-}
-
-func newExprVisitor(
-	ctx context.Context,
-	orgID valuer.UUID,
-	startNs uint64,
-	endNs uint64,
-	logger *slog.Logger,
-	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
-	fullTextColumn *telemetrytypes.TelemetryFieldKey,
-	fieldMapper qbtypes.FieldMapper,
-	conditionBuilder qbtypes.ConditionBuilder,
-	fl flagger.Flagger,
-) *exprVisitor {
-	return &exprVisitor{
-		ctx:              ctx,
-		orgID:            orgID,
-		startNs:          startNs,
-		endNs:            endNs,
-		logger:           logger,
-		fieldKeys:        fieldKeys,
-		fullTextColumn:   fullTextColumn,
-		fieldMapper:      fieldMapper,
-		conditionBuilder: conditionBuilder,
-		flagger:          fl,
-	}
+	logger         *slog.Logger
+	fieldKeys      map[string][]*telemetrytypes.TelemetryFieldKey
+	fullTextColumn *telemetrytypes.TelemetryFieldKey
+	storage        qbtypes.Storage
+	Modified       bool
+	chArgs         []any
+	isRate         bool
 }
 
 // VisitFunctionExpr is invoked for each function call in the AST.
@@ -211,15 +178,12 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		whereClause, err := PrepareWhereClause(
 			origPred,
 			FilterExprVisitorOpts{
-				Context:          v.ctx,
-				OrgID:            v.orgID,
-				Logger:           v.logger,
-				FieldKeys:        v.fieldKeys,
-				FieldMapper:      v.fieldMapper,
-				ConditionBuilder: v.conditionBuilder,
-				FullTextColumn:   v.fullTextColumn,
-				StartNs:          v.startNs,
-				EndNs:            v.endNs,
+				Context:        v.ctx,
+				Query:          v.query,
+				Storage:        v.storage,
+				Logger:         v.logger,
+				FieldKeys:      v.fieldKeys,
+				FullTextColumn: v.fullTextColumn,
 			},
 		)
 		if err != nil {
@@ -244,7 +208,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		for i := 0; i < len(args)-1; i++ {
 			origVal := chparser.Format(args[i])
 			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(origVal)
-			expr, err := v.fieldMapper.ColumnExpressionFor(v.ctx, v.orgID, v.startNs, v.endNs, &fieldKey, dataType, v.fieldKeys)
+			expr, err := ResolveColumn(v.ctx, v.query, v.storage, &fieldKey, dataType, v.fieldKeys)
 			if err != nil {
 				return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to get table field name for %q", origVal)
 			}
@@ -261,7 +225,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		for i, arg := range args {
 			orig := chparser.Format(arg)
 			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(orig)
-			expr, err := v.fieldMapper.ColumnExpressionFor(v.ctx, v.orgID, v.startNs, v.endNs, &fieldKey, dataType, v.fieldKeys)
+			expr, err := ResolveColumn(v.ctx, v.query, v.storage, &fieldKey, dataType, v.fieldKeys)
 			if err != nil {
 				return err
 			}

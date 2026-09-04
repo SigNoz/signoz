@@ -2,13 +2,12 @@ package tracestelemetryschema
 
 import (
 	"context"
-	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"testing"
 	"time"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -147,8 +146,8 @@ func TestGetFieldKeyName(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			fm := NewFieldMapper(flaggertest.New(t))
-			result, err := fm.FieldFor(ctx, valuer.UUID{}, uint64(time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()), uint64(time.Date(2024, 6, 5, 0, 0, 0, 0, time.UTC).UnixNano()), &tc.key)
+			storage := NewStorage()
+			result, err := storage.Read(ctx, qbtypes.QueryInfo{StartNs: uint64(time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()), EndNs: uint64(time.Date(2024, 6, 5, 0, 0, 0, 0, time.UTC).UnixNano())}, &tc.key)
 
 			if tc.expectedError != nil {
 				assert.Equal(t, tc.expectedError, err)
@@ -235,8 +234,8 @@ func TestFieldForResourceWithEvolution(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			fm := NewFieldMapper(flaggertest.New(t))
-			result, err := fm.FieldFor(ctx, valuer.UUID{}, tc.tsStart, tc.tsEnd, &tc.key)
+			storage := NewStorage()
+			result, err := storage.Read(ctx, qbtypes.QueryInfo{StartNs: tc.tsStart, EndNs: tc.tsEnd}, &tc.key)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedResult, result)
 		})
@@ -289,14 +288,14 @@ func TestColumnExpressionForTemporalColumn(t *testing.T) {
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 			},
 			requiredDataType: telemetrytypes.FieldDataTypeString,
-			expectedResult:   "multiIf(mapContains(attributes_string, 'user.id'), attributes_string['user.id'], NULL)",
+			expectedResult:   "multiIf(mapContains(attributes_string, 'user.id'), attributes_string['user.id'], mapContains(attributes_string, 'attribute.user.id'), attributes_string['attribute.user.id'], NULL)",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			fm := NewFieldMapper(flaggertest.New(t))
-			result, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, tsStart, tsEnd, &tc.key, tc.requiredDataType, nil)
+			storage := NewStorage()
+			result, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: tsStart, EndNs: tsEnd}, storage, &tc.key, tc.requiredDataType, nil)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedResult, result)
 		})
@@ -323,11 +322,11 @@ func TestColumnExpressionForTimestampAttributeCollision(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper(flaggertest.New(t))
+	storage := NewStorage()
 
 	t.Run("bare timestamp resolves to the intrinsic column alone", func(t *testing.T) {
 		bare := telemetrytypes.TelemetryFieldKey{Name: "timestamp"}
-		result, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, tsStart, tsEnd, &bare, telemetrytypes.FieldDataTypeFloat64, keys)
+		result, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: tsStart, EndNs: tsEnd}, storage, &bare, telemetrytypes.FieldDataTypeFloat64, keys)
 		require.NoError(t, err)
 		assert.Equal(t, "timestamp", result)
 	})
@@ -338,7 +337,7 @@ func TestColumnExpressionForTimestampAttributeCollision(t *testing.T) {
 			FieldContext:  telemetrytypes.FieldContextAttribute,
 			FieldDataType: telemetrytypes.FieldDataTypeNumber,
 		}
-		result, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, tsStart, tsEnd, &attr, telemetrytypes.FieldDataTypeFloat64, keys)
+		result, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: tsStart, EndNs: tsEnd}, storage, &attr, telemetrytypes.FieldDataTypeFloat64, keys)
 		require.NoError(t, err)
 		assert.Contains(t, result, "attributes_number['timestamp']")
 	})
@@ -403,7 +402,7 @@ func TestColumnExpressionForScopeDeclaredPath(t *testing.T) {
 			name:           "attribute prefix reaches the named scope attribute",
 			key:            telemetrytypes.TelemetryFieldKey{Name: "attribute.name", FieldContext: telemetrytypes.FieldContextScope},
 			keys:           withAttr,
-			expectedResult: "multiIf(scope.attributes.`name` IS NOT NULL, scope.attributes.`name`::String, NULL)",
+			expectedResult: "multiIf(scope.attributes.`name` IS NOT NULL, scope.attributes.`name`::String, scope.attributes.`scope.attribute.name` IS NOT NULL, scope.attributes.`scope.attribute.name`::String, NULL)",
 		},
 		{
 			// the caller supplied the context, so `scope.` is part of the name rather than a
@@ -412,7 +411,7 @@ func TestColumnExpressionForScopeDeclaredPath(t *testing.T) {
 			name:           "explicit context keeps a scope-prefixed name intact",
 			key:            telemetrytypes.TelemetryFieldKey{Name: "scope.testing.env", FieldContext: telemetrytypes.FieldContextScope},
 			keys:           declaredOnly,
-			expectedResult: "multiIf(scope.attributes.`scope.testing.env` IS NOT NULL, scope.attributes.`scope.testing.env`::String, NULL)",
+			expectedResult: "multiIf(scope.attributes.`scope.testing.env` IS NOT NULL, scope.attributes.`scope.testing.env`::String, scope.attributes.`scope.scope.testing.env` IS NOT NULL, scope.attributes.`scope.scope.testing.env`::String, NULL)",
 		},
 		{
 			// metadata knows both homes under this name, so the short spelling coalesces
@@ -420,20 +419,20 @@ func TestColumnExpressionForScopeDeclaredPath(t *testing.T) {
 			name:           "short name coalesces a known scope attribute with the declared path",
 			key:            telemetrytypes.TelemetryFieldKey{Name: "name", FieldContext: telemetrytypes.FieldContextScope},
 			keys:           withAttr,
-			expectedResult: "multiIf(scope.attributes.`name` IS NOT NULL, toString(scope.attributes.`name`::String), scope.name::String <> '', toString(scope.name::String), NULL)",
+			expectedResult: "multiIf(scope.attributes.`name` IS NOT NULL, scope.attributes.`name`::String, scope.name::String <> '', scope.name::String, NULL)",
 		},
 		{
 			name:           "short version coalesces a known scope attribute with the declared path",
 			key:            telemetrytypes.TelemetryFieldKey{Name: "version", FieldContext: telemetrytypes.FieldContextScope},
 			keys:           withAttr,
-			expectedResult: "multiIf(scope.attributes.`version` IS NOT NULL, toString(scope.attributes.`version`::String), scope.version::String <> '', toString(scope.version::String), NULL)",
+			expectedResult: "multiIf(scope.attributes.`version` IS NOT NULL, scope.attributes.`version`::String, scope.version::String <> '', scope.version::String, NULL)",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			fm := NewFieldMapper(flaggertest.New(t))
-			result, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, 0, 0, &tc.key, telemetrytypes.FieldDataTypeUnspecified, tc.keys)
+			storage := NewStorage()
+			result, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{}, storage, &tc.key, telemetrytypes.FieldDataTypeUnspecified, tc.keys)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedResult, result)
 		})

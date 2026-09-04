@@ -10,7 +10,6 @@ import (
 	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/antlr4-go/antlr/v4"
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/assert"
@@ -590,15 +589,18 @@ func TestVisitKey(t *testing.T) {
 			// and decides not-found handling. Replay that here against the generic
 			// builder behavior (error unless the key is ignored). The test maps carry
 			// no signal, so every logical field is single-member and flattens losslessly.
-			matching := MatchingLogicalFields(context.Background(), valuer.UUID{}, nil, key, tt.fieldKeys)
+			matching := matchingLogicalFields(false, telemetrytypes.SignalUnspecified, key, tt.fieldKeys)
 			resolved, warning := ResolveLogicalFields(key, matching)
-			keys := SingleKeys(resolved)
+			keys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(resolved))
+			for _, logical := range resolved {
+				keys = append(keys, logical.Single())
+			}
 
 			var gotErrors []string
 			var gotMainErrURL, gotMainWrnURL string
 			var gotWarnings []string
 			if len(keys) == 0 && !tt.ignoreNotFoundKeys {
-				err := NewKeyNotFoundError(key.Name)
+				err := NewKeyNotFoundError(key.Name, nil)
 				gotErrors = append(gotErrors, err.Error())
 				_, _, _, _, gotMainErrURL, _ = errors.Unwrapb(err)
 			}
@@ -748,99 +750,67 @@ var visitTestKeys = map[string][]*telemetrytypes.TelemetryFieldKey{
 	"body": {{Name: "body", FieldContext: telemetrytypes.FieldContextLog, FieldDataType: telemetrytypes.FieldDataTypeString}},
 }
 
-type resourceConditionBuilder struct{}
+// resourceStorage mirrors the fingerprint storage: only resource keys
+// compile, and unknown keys and body functions are skipped.
+type resourceStorage struct{}
 
-func (b *resourceConditionBuilder) ConditionFor(
-	_ context.Context,
-	_ valuer.UUID,
-	_ uint64,
-	_ uint64,
-	key *telemetrytypes.TelemetryFieldKey,
-	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
-	_ qbtypes.ConditionBuilderOptions,
-	operator qbtypes.FilterOperator,
-	_ any,
-	_ *sqlbuilder.SelectBuilder,
-) ([]string, []string, error) {
-
-	// mirror the real resource builder: function operators never apply to resources
-	if operator.IsFunctionOperator() {
-		return nil, nil, nil
-	}
-
-	resolved, warning := ResolveLogicalFields(key, MatchingLogicalFields(context.Background(), valuer.UUID{}, nil, key, fieldKeys))
-	keys := SingleKeys(resolved)
-	var warnings []string
-	if warning != "" {
-		warnings = append(warnings, warning)
-	}
-
-	var conds []string
-	for _, k := range keys {
-		// only resource keys contribute; others (and unknown keys) are ignored
-		if k.FieldContext != telemetrytypes.FieldContextResource {
-			continue
-		}
-		conds = append(conds, fmt.Sprintf("%s_cond", k.Name))
-	}
-	return conds, warnings, nil
+func (resourceStorage) Read(_ context.Context, _ qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey) (string, error) {
+	return key.Name, nil
 }
 
-type conditionBuilder struct{}
+func (resourceStorage) Exists(_ context.Context, _ qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, _ bool) (qbtypes.Existence, error) {
+	return qbtypes.Existence{Predicate: "has(" + key.Name + ")", WhenAbsent: qbtypes.AbsentIsSentinel}, nil
+}
 
-func (b *conditionBuilder) ConditionFor(
-	_ context.Context,
-	_ valuer.UUID,
-	_ uint64,
-	_ uint64,
-	key *telemetrytypes.TelemetryFieldKey,
-	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
-	options qbtypes.ConditionBuilderOptions,
-	operator qbtypes.FilterOperator,
-	_ any,
-	_ *sqlbuilder.SelectBuilder,
-) ([]string, []string, error) {
+func (resourceStorage) Fallback(context.Context, qbtypes.QueryInfo, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any) ([]*telemetrytypes.LogicalField, error) {
+	return nil, nil
+}
 
-	// has/hasAny/hasAll/hasToken only support body fields; mirror the real
-	// condition builder which now owns this validation and errors for non-body keys.
-	switch operator {
-	case qbtypes.FilterOperatorHas, qbtypes.FilterOperatorHasAny, qbtypes.FilterOperatorHasAll, qbtypes.FilterOperatorHasToken:
-		if key.FieldContext != telemetrytypes.FieldContextBody {
-			return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "function supports only body JSON search")
-		}
-		return []string{fmt.Sprintf("%s_cond", key.Name)}, nil, nil
-	}
+func (resourceStorage) Traits() qbtypes.Traits {
+	return qbtypes.Traits{Split: qbtypes.FingerprintOfSplit, UnknownKey: qbtypes.IgnoreUnknownKey}
+}
 
-	resolved, warning := ResolveLogicalFields(key, MatchingLogicalFields(context.Background(), valuer.UUID{}, nil, key, fieldKeys))
-	keys := SingleKeys(resolved)
-	var warnings []string
-	if warning != "" {
-		warnings = append(warnings, warning)
-	}
-	if len(keys) == 0 {
-		// errors on unknown keys (no IgnoreNotFoundKeys equivalent for this builder)
-		return nil, warnings, NewKeyNotFoundError(key.Name)
-	}
+func (resourceStorage) Compile(_ context.Context, _ qbtypes.QueryInfo, logical *telemetrytypes.LogicalField, _ qbtypes.FilterOperator, _ any, _ *sqlbuilder.SelectBuilder) (qbtypes.Compiled, error) {
+	return qbtypes.Compiled{Condition: fmt.Sprintf("%s_cond", logical.Single().Name)}, nil
+}
 
-	// A resource sub-query already covers the term; drop resource keys from the main query.
-	if options.SkipResourceFilter {
-		filtered := make([]*telemetrytypes.TelemetryFieldKey, 0, len(keys))
-		for _, k := range keys {
-			if k.FieldContext != telemetrytypes.FieldContextResource {
-				filtered = append(filtered, k)
-			}
-		}
-		if len(filtered) == 0 {
-			return nil, warnings, nil
-		}
-		keys = filtered
-	}
+func (s resourceStorage) ColumnRead(ctx context.Context, q qbtypes.QueryInfo, logical *telemetrytypes.LogicalField, _ any) (qbtypes.ColumnExpr, error) {
+	return DefaultRead(ctx, q, s, logical)
+}
 
-	conds := make([]string, 0, len(keys))
-	for _, k := range keys {
-		conds = append(conds, fmt.Sprintf("%s_cond", k.Name))
+// mainStorage mirrors a main-query storage: body functions apply to body keys
+// only, an unknown key errors, and a body path without metadata matches is
+// its own fallback.
+type mainStorage struct{}
+
+func (mainStorage) Read(_ context.Context, _ qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey) (string, error) {
+	return key.Name, nil
+}
+
+func (mainStorage) Exists(_ context.Context, _ qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, _ bool) (qbtypes.Existence, error) {
+	return qbtypes.Existence{Predicate: "has(" + key.Name + ")", WhenAbsent: qbtypes.AbsentIsSentinel}, nil
+}
+
+func (mainStorage) Fallback(_ context.Context, _ qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, _ qbtypes.FilterOperator, _ any) ([]*telemetrytypes.LogicalField, error) {
+	if key.FieldContext != telemetrytypes.FieldContextBody {
+		return nil, nil
 	}
-	return conds, warnings, nil
+	return WrapAsLogicalFields(key.Name, []*telemetrytypes.TelemetryFieldKey{key}), nil
+}
+
+func (mainStorage) Traits() qbtypes.Traits {
+	return qbtypes.Traits{Split: qbtypes.MainOfSplit, SupportsBodyFunctions: true}
+}
+
+func (mainStorage) Compile(_ context.Context, _ qbtypes.QueryInfo, logical *telemetrytypes.LogicalField, operator qbtypes.FilterOperator, _ any, _ *sqlbuilder.SelectBuilder) (qbtypes.Compiled, error) {
+	if operator.IsFunctionOperator() && logical.FieldContext != telemetrytypes.FieldContextBody {
+		return qbtypes.Compiled{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "function supports only body JSON search")
+	}
+	return qbtypes.Compiled{Condition: fmt.Sprintf("%s_cond", logical.Single().Name)}, nil
+}
+
+func (s mainStorage) ColumnRead(ctx context.Context, q qbtypes.QueryInfo, logical *telemetrytypes.LogicalField, _ any) (qbtypes.ColumnExpr, error) {
+	return DefaultRead(ctx, q, s, logical)
 }
 
 // visitComparisonCase is a single test case for the TestVisitComparison_* family.
@@ -879,7 +849,7 @@ func visitComparisonOpts(t *testing.T) (rsbOpts, sbOpts FilterExprVisitorOpts) {
 	rsbOpts = FilterExprVisitorOpts{
 		Context:            t.Context(),
 		FieldKeys:          visitTestKeys,
-		ConditionBuilder:   &resourceConditionBuilder{},
+		Storage:            &resourceStorage{},
 		Variables:          allVariable,
 		SkipResourceFilter: false,
 		SkipFullTextFilter: true,
@@ -887,7 +857,7 @@ func visitComparisonOpts(t *testing.T) (rsbOpts, sbOpts FilterExprVisitorOpts) {
 	sbOpts = FilterExprVisitorOpts{
 		Context:            t.Context(),
 		FieldKeys:          visitTestKeys,
-		ConditionBuilder:   &conditionBuilder{},
+		Storage:            &mainStorage{},
 		Variables:          allVariable,
 		SkipResourceFilter: true,
 		SkipFullTextFilter: false,
@@ -1630,10 +1600,11 @@ func TestVisitComparison_FunctionCalls(t *testing.T) {
 			wantErrSB: true,
 		},
 		{
-			name:      "has on resource key",
-			expr:      "has(x, 'hello')",
-			wantRSB:   "",
-			wantErrSB: true,
+			// SB: the resource sub-query covers x, so the main query drops the term.
+			name:    "has on resource key",
+			expr:    "has(x, 'hello')",
+			wantRSB: "",
+			wantSB:  "",
 		},
 		{
 			// RSB: TrueConditionLiteral stripped by AND; x_cond remains.

@@ -209,7 +209,7 @@ def test_metrics_filter_unknown_label_matches_nothing(
     )
     assert response.status_code == HTTPStatus.OK, response.text
     assert querier.get_scalar_table_data(response.json()) == []
-    assert [w["message"] for w in querier.get_all_warnings(response.json())] == ["label `does_not_exist_label` not found in metadata; check the label name for typos"]
+    assert [w["message"] for w in querier.get_all_warnings(response.json())] == ["key `does_not_exist_label` not found in metadata; querying the underlying data directly. If this is unexpected, check the key name for typos."]
 
 
 def test_metrics_full_text_filter_does_not_error(

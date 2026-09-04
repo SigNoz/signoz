@@ -8,7 +8,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	qbvariables "github.com/SigNoz/signoz/pkg/variables"
 	"github.com/huandu/go-sqlbuilder"
 )
@@ -53,14 +52,15 @@ func (b *scopedTraceStatementBuilder) resolveTraceHaving(ctx context.Context, ex
 		fieldKeys[alias] = []*telemetrytypes.TelemetryFieldKey{key}
 	}
 
-	cb := &aliasConditionBuilder{allowed: allowed, used: make(map[string]struct{})}
+	storage := &aliasStorage{allowed: allowed, used: make(map[string]struct{})}
 	prepared, err := querybuilder.PrepareWhereClause(expr, querybuilder.FilterExprVisitorOpts{
-		Context:          ctx,
-		Logger:           b.logger,
-		ConditionBuilder: cb,
-		FieldKeys:        fieldKeys,
-		Variables:        variables,
-		Builder:          sb,
+		Context:   ctx,
+		Query:     qbtypes.QueryInfo{Signal: telemetrytypes.SignalTraces},
+		Storage:   storage,
+		Logger:    b.logger,
+		FieldKeys: fieldKeys,
+		Variables: variables,
+		Builder:   sb,
 	})
 	if err != nil {
 		return nil, err
@@ -68,37 +68,42 @@ func (b *scopedTraceStatementBuilder) resolveTraceHaving(ctx context.Context, ex
 	if prepared.IsEmpty() {
 		return nil, nil //nolint:nilnil
 	}
-	return &traceHaving{pred: prepared.Expr, used: cb.used}, nil
+	return &traceHaving{pred: prepared.Expr, used: storage.used}, nil
 }
 
-// aliasConditionBuilder renders filter conditions directly against the per-trace
-// aliases, recording the ones it touches; a key resolving to no alias is an error.
-type aliasConditionBuilder struct {
+// aliasStorage renders filter conditions directly against the per-trace
+// aliases, recording the ones it touches. Every alias is a computed column,
+// present in every row; a key resolving to no alias is an error.
+type aliasStorage struct {
 	allowed map[string]struct{}
 	used    map[string]struct{}
 }
 
-var _ qbtypes.ConditionBuilder = (*aliasConditionBuilder)(nil)
+var _ qbtypes.Storage = (*aliasStorage)(nil)
 
-func (c *aliasConditionBuilder) ConditionFor(
-	_ context.Context,
-	_ valuer.UUID,
-	_, _ uint64,
-	key *telemetrytypes.TelemetryFieldKey,
-	keys map[string][]*telemetrytypes.TelemetryFieldKey,
-	_ qbtypes.ConditionBuilderOptions,
-	op qbtypes.FilterOperator,
-	value any,
-	sb *sqlbuilder.SelectBuilder,
-) ([]string, []string, error) {
-	matching := keys[key.Name]
-	if len(matching) == 0 {
-		return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"aggregate %q cannot be used in a trace-level filter; filterable aggregates: %s",
-			key.Name, strings.Join(sortedAliases(c.allowed), ", "))
-	}
-	alias := matching[0].Name
-	c.used[alias] = struct{}{}
+func (s *aliasStorage) Read(_ context.Context, _ qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey) (string, error) {
+	s.used[key.Name] = struct{}{}
+	return quoteAlias(key.Name), nil
+}
+
+func (s *aliasStorage) Exists(context.Context, qbtypes.QueryInfo, *telemetrytypes.TelemetryFieldKey, bool) (qbtypes.Existence, error) {
+	return qbtypes.Existence{Predicate: "true", WhenAbsent: qbtypes.AlwaysPresent}, nil
+}
+
+func (s *aliasStorage) Fallback(_ context.Context, _ qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, _ qbtypes.FilterOperator, _ any) ([]*telemetrytypes.LogicalField, error) {
+	return nil, errors.NewInvalidInputf(errors.CodeInvalidInput,
+		"aggregate %q cannot be used in a trace-level filter; filterable aggregates: %s",
+		key.Name, strings.Join(sortedAliases(s.allowed), ", "))
+}
+
+func (s *aliasStorage) Traits() qbtypes.Traits {
+	return qbtypes.Traits{}
+}
+
+// Compile supports the comparison operators only: an aggregate is a number.
+func (s *aliasStorage) Compile(_ context.Context, _ qbtypes.QueryInfo, logical *telemetrytypes.LogicalField, op qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (qbtypes.Compiled, error) {
+	alias := logical.Single().Name
+	s.used[alias] = struct{}{}
 	col := quoteAlias(alias)
 
 	var cond string
@@ -128,7 +133,7 @@ func (c *aliasConditionBuilder) ConditionFor(
 	case qbtypes.FilterOperatorBetween, qbtypes.FilterOperatorNotBetween:
 		values, ok := value.([]any)
 		if !ok || len(values) != 2 {
-			return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput,
+			return qbtypes.Compiled{}, errors.NewInvalidInputf(errors.CodeInvalidInput,
 				"between on trace-level aggregate %q requires exactly two values", alias)
 		}
 		if op == qbtypes.FilterOperatorBetween {
@@ -137,8 +142,12 @@ func (c *aliasConditionBuilder) ConditionFor(
 			cond = sb.NotBetween(col, values[0], values[1])
 		}
 	default:
-		return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput,
+		return qbtypes.Compiled{}, errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"trace-level aggregate %q supports only comparison operators (=, !=, <, <=, >, >=, in, between)", alias)
 	}
-	return []string{cond}, nil, nil
+	return qbtypes.Compiled{Condition: cond}, nil
+}
+
+func (s *aliasStorage) ColumnRead(ctx context.Context, q qbtypes.QueryInfo, logical *telemetrytypes.LogicalField, _ any) (qbtypes.ColumnExpr, error) {
+	return querybuilder.DefaultRead(ctx, q, s, logical)
 }

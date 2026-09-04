@@ -8,12 +8,9 @@ import (
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz-otel-collector/utils"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
 
@@ -63,15 +60,15 @@ var (
 	}
 )
 
-type fieldMapper struct {
-	fl flagger.Flagger
+type storage struct{}
+
+var _ qbtypes.Storage = (*storage)(nil)
+
+func NewStorage() *storage {
+	return &storage{}
 }
 
-func NewFieldMapper(fl flagger.Flagger) qbtypes.FieldMapper {
-	return &fieldMapper{fl: fl}
-}
-
-func (m *fieldMapper) getColumn(ctx context.Context, orgID valuer.UUID, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
+func (m *storage) getColumn(q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
 		columns := []*schema.Column{logsV2Columns["resource"], logsV2Columns["resources_string"]}
@@ -95,7 +92,7 @@ func (m *fieldMapper) getColumn(ctx context.Context, orgID valuer.UUID, key *tel
 		}
 	case telemetrytypes.FieldContextBody:
 		// Body context is for JSON body fields. Use body_v2 if feature flag is enabled.
-		if m.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
+		if q.BodyJSONOn {
 			if key.Name == messageSubField {
 				return []*schema.Column{logsV2Columns[messageSubColumn]}, nil
 			}
@@ -104,7 +101,7 @@ func (m *fieldMapper) getColumn(ctx context.Context, orgID valuer.UUID, key *tel
 		// Fall back to legacy body column
 		return []*schema.Column{logsV2Columns["body"]}, nil
 	case telemetrytypes.FieldContextLog:
-		if key.Name == LogsV2BodyColumn && m.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
+		if key.Name == LogsV2BodyColumn && q.BodyJSONOn {
 			return []*schema.Column{logsV2Columns[messageSubColumn]}, nil
 		}
 		col, ok := logsV2Columns[key.Name]
@@ -117,13 +114,13 @@ func (m *fieldMapper) getColumn(ctx context.Context, orgID valuer.UUID, key *tel
 	return nil, qbtypes.ErrColumnNotFound
 }
 
-func (m *fieldMapper) FieldFor(ctx context.Context, orgID valuer.UUID, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
-	columns, err := m.getColumn(ctx, orgID, key)
+func (m *storage) Read(_ context.Context, q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey) (string, error) {
+	columns, err := m.getColumn(q, key)
 	if err != nil {
 		return "", err
 	}
 
-	newColumns, evolutionsEntries, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, tsStart, tsEnd)
+	newColumns, evolutionsEntries, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, q.StartNs, q.EndNs)
 	if err != nil {
 		return "", err
 	}
@@ -213,200 +210,8 @@ func (m *fieldMapper) FieldFor(ctx context.Context, orgID valuer.UUID, tsStart, 
 	return columns[0].Name, nil
 }
 
-func (m *fieldMapper) ColumnFor(ctx context.Context, orgID valuer.UUID, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
-	return m.getColumn(ctx, orgID, key)
-}
-
-func (m *fieldMapper) ColumnExpressionFor(
-	ctx context.Context,
-	orgID valuer.UUID,
-	tsStart, tsEnd uint64,
-	field *telemetrytypes.TelemetryFieldKey,
-	requiredDataType telemetrytypes.FieldDataType,
-	keys map[string][]*telemetrytypes.TelemetryFieldKey,
-) (string, error) {
-
-	bodyJSONEnabled := m.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID))
-
-	var candidates []*telemetrytypes.TelemetryFieldKey
-	switch _, err := m.FieldFor(ctx, orgID, tsStart, tsEnd, field); {
-	case err == nil:
-		if field.FieldContext == telemetrytypes.FieldContextBody && !bodyJSONEnabled {
-			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "Operation isn't available for the body column")
-		}
-		candidates = []*telemetrytypes.TelemetryFieldKey{field}
-	case errors.Is(err, qbtypes.ErrColumnNotFound):
-		if _, ok := logsV2Columns[field.Name]; ok {
-			field.FieldContext = telemetrytypes.FieldContextLog
-			candidates = []*telemetrytypes.TelemetryFieldKey{field}
-			break
-		}
-		candidates = keys[field.Name]
-		if len(candidates) == 0 {
-			candidates = keys[fmt.Sprintf("%s.%s", field.FieldContext.StringValue(), field.Name)]
-		}
-		if len(candidates) == 0 {
-			// synthesized attribute candidates first, body path last; legacy body
-			// doesn't support group by/select, so bare keys keep attributes only
-			for _, key := range m.CandidateKeys(ctx, orgID, field, nil, nil) {
-				if !bodyJSONEnabled && field.FieldContext == telemetrytypes.FieldContextUnspecified &&
-					key.FieldContext == telemetrytypes.FieldContextBody {
-					continue
-				}
-				candidates = append(candidates, key)
-			}
-		}
-		if len(candidates) == 0 {
-			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "field `%s` not found", field.Name)
-		}
-	default:
-		return "", err
-	}
-
-	// Group-by/order (String) and aggregation (String/Float64): every candidate is
-	// exists-guarded and coerced to requiredDataType, in a single multiIf. Raw select
-	// (Unspecified) keeps the lighter native shape below.
-	if requiredDataType != telemetrytypes.FieldDataTypeUnspecified {
-		// arrays cannot sit inside Nullable/multiIf, so a lone array candidate stays bare
-		if len(candidates) == 1 && (strings.Contains(candidates[0].Name, telemetrytypes.ArraySep) ||
-			strings.Contains(candidates[0].Name, telemetrytypes.ArrayAnyIndex) ||
-			candidates[0].FieldDataType.IsArray()) {
-			return m.FieldFor(ctx, orgID, tsStart, tsEnd, candidates[0])
-		}
-		var dummyValue any = ""
-		if requiredDataType == telemetrytypes.FieldDataTypeFloat64 {
-			dummyValue = 0.0
-		}
-		var stmts []string
-		for _, key := range candidates {
-			var fieldExpression string
-			var err error
-			if key.FieldContext == telemetrytypes.FieldContextBody && !bodyJSONEnabled {
-				fieldExpression, _ = GetBodyJSONKey(ctx, key, qbtypes.FilterOperatorUnknown, dummyValue)
-			} else {
-				fieldExpression, err = m.FieldFor(ctx, orgID, tsStart, tsEnd, key)
-				if err != nil {
-					return "", err
-				}
-				fieldExpression, _ = querybuilder.DataTypeCollisionHandledFieldName(key, dummyValue, fieldExpression, qbtypes.FilterOperatorUnknown)
-			}
-			// a column is present in every row: it takes no presence test, and no
-			// candidate after it can be reached
-			if m.plainColumn(ctx, orgID, tsStart, tsEnd, key) {
-				if len(stmts) == 0 {
-					return fieldExpression, nil
-				}
-				return fmt.Sprintf("multiIf(%s, %s)", strings.Join(stmts, ", "), fieldExpression), nil
-			}
-			guard, err := m.ExistsFor(ctx, orgID, tsStart, tsEnd, key, true)
-			if err != nil {
-				return "", err
-			}
-			stmts = append(stmts, guard, fieldExpression)
-		}
-		return fmt.Sprintf("multiIf(%s, NULL)", strings.Join(stmts, ", ")), nil
-	}
-
-	if len(candidates) == 1 {
-		// arrays cannot sit inside Nullable, so array candidates stay bare
-		if strings.Contains(candidates[0].Name, telemetrytypes.ArraySep) ||
-			strings.Contains(candidates[0].Name, telemetrytypes.ArrayAnyIndex) ||
-			candidates[0].FieldDataType.IsArray() {
-			return m.FieldFor(ctx, orgID, tsStart, tsEnd, candidates[0])
-		}
-		if !m.membershipGuarded(ctx, orgID, tsStart, tsEnd, candidates[0]) {
-			return m.FieldFor(ctx, orgID, tsStart, tsEnd, candidates[0])
-		}
-		guard, err := m.ExistsFor(ctx, orgID, tsStart, tsEnd, candidates[0], true)
-		if err != nil {
-			return "", err
-		}
-		var fieldExpression string
-		if candidates[0].FieldContext == telemetrytypes.FieldContextBody && !bodyJSONEnabled {
-			fieldExpression, _ = GetBodyJSONKey(ctx, candidates[0], qbtypes.FilterOperatorUnknown, "")
-		} else {
-			fieldExpression, err = m.FieldFor(ctx, orgID, tsStart, tsEnd, candidates[0])
-			if err != nil {
-				return "", err
-			}
-		}
-		return fmt.Sprintf("multiIf(%s, %s, NULL)", guard, fieldExpression), nil
-	}
-
-	var stmts []string
-	for _, key := range candidates {
-		guard, err := m.ExistsFor(ctx, orgID, tsStart, tsEnd, key, true)
-		if err != nil {
-			return "", err
-		}
-		stmts = append(stmts, guard)
-
-		var fieldExpression string
-		if key.FieldContext == telemetrytypes.FieldContextBody && !bodyJSONEnabled {
-			fieldExpression, _ = GetBodyJSONKey(ctx, key, qbtypes.FilterOperatorUnknown, "")
-		} else {
-			fieldExpression, err = m.FieldFor(ctx, orgID, tsStart, tsEnd, key)
-			if err != nil {
-				return "", err
-			}
-			fieldExpression, _ = querybuilder.DataTypeCollisionHandledFieldName(key, "", fieldExpression, qbtypes.FilterOperatorUnknown)
-		}
-		stmts = append(stmts, fieldExpression)
-	}
-
-	return fmt.Sprintf("multiIf(%s, NULL)", strings.Join(stmts, ", ")), nil
-}
-
-func (m *fieldMapper) CandidateKeys(_ context.Context, _ valuer.UUID, field *telemetrytypes.TelemetryFieldKey, value any, keys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
-	if matches := keys[field.Name]; len(matches) > 0 {
-		return matches
-	}
-	if matches := keys[fmt.Sprintf("%s.%s", field.FieldContext.StringValue(), field.Name)]; len(matches) > 0 {
-		return matches
-	}
-
-	switch field.FieldContext {
-	case telemetrytypes.FieldContextBody:
-		if field.Name == "" {
-			return nil
-		}
-		return []*telemetrytypes.TelemetryFieldKey{telemetrytypes.NewTelemetryFieldKey(field.Name, field.FieldContext, field.FieldDataType)}
-	case telemetrytypes.FieldContextUnspecified:
-		// a real column wins before synthesis (so adjustKeys is not needed to resolve these)
-		if _, ok := logsV2Columns[field.Name]; ok {
-			return []*telemetrytypes.TelemetryFieldKey{{Name: field.Name, FieldContext: telemetrytypes.FieldContextLog}}
-		}
-		bodyKey := telemetrytypes.NewTelemetryFieldKey(field.Name, telemetrytypes.FieldContextBody, field.FieldDataType)
-		if value == nil && bodyKey.FieldDataType == telemetrytypes.FieldDataTypeUnspecified {
-			bodyKey.FieldDataType = telemetrytypes.FieldDataTypeString
-		}
-		return append(querybuilder.SynthesizeKeys(field, value), bodyKey)
-	case telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextResource:
-		// stripped interpretation first, the literal `{context}.{name}` spelling second
-		literal := telemetrytypes.NewTelemetryFieldKey(field.FieldContext.StringValue()+"."+field.Name, field.FieldContext, field.FieldDataType)
-		return append(querybuilder.SynthesizeKeys(field, value), querybuilder.SynthesizeKeys(literal, value)...)
-	case telemetrytypes.FieldContextLog:
-		if _, ok := logsV2Columns[field.Name]; ok {
-			return []*telemetrytypes.TelemetryFieldKey{telemetrytypes.NewTelemetryFieldKey(field.Name, field.FieldContext, field.FieldDataType)}
-		}
-		stripped := telemetrytypes.NewTelemetryFieldKey(field.Name, telemetrytypes.FieldContextUnspecified, field.FieldDataType)
-		literal := telemetrytypes.NewTelemetryFieldKey(field.FieldContext.StringValue()+"."+field.Name, telemetrytypes.FieldContextUnspecified, field.FieldDataType)
-		// attribute candidates first (stripped, then literal), body paths last
-		candidates := append(querybuilder.SynthesizeKeys(stripped, value), querybuilder.SynthesizeKeys(literal, value)...)
-		for _, key := range []*telemetrytypes.TelemetryFieldKey{stripped, literal} {
-			bodyKey := telemetrytypes.NewTelemetryFieldKey(key.Name, telemetrytypes.FieldContextBody, key.FieldDataType)
-			if value == nil && bodyKey.FieldDataType == telemetrytypes.FieldDataTypeUnspecified {
-				bodyKey.FieldDataType = telemetrytypes.FieldDataTypeString
-			}
-			candidates = append(candidates, bodyKey)
-		}
-		return candidates
-	}
-	return nil
-}
-
 // buildFieldForJSON builds the field expression for body JSON fields using arrayConcat pattern.
-func (m *fieldMapper) buildFieldForJSON(key *telemetrytypes.TelemetryFieldKey) (string, error) {
+func (m *storage) buildFieldForJSON(key *telemetrytypes.TelemetryFieldKey) (string, error) {
 	plan := key.JSONPlan
 	if len(plan) == 0 {
 		if key.KeyNameContainsArray() {
@@ -477,7 +282,7 @@ func (m *fieldMapper) buildFieldForJSON(key *telemetrytypes.TelemetryFieldKey) (
 }
 
 // buildArrayConcat builds the arrayConcat pattern directly from the tree structure.
-func (m *fieldMapper) buildArrayConcat(plan telemetrytypes.JSONAccessPlan) (string, error) {
+func (m *storage) buildArrayConcat(plan telemetrytypes.JSONAccessPlan) (string, error) {
 	if len(plan) == 0 {
 		return "", errors.NewInternalf(CodeGroupByPlanEmpty, "group by plan is empty while building arrayConcat")
 	}
@@ -508,7 +313,7 @@ func (m *fieldMapper) buildArrayConcat(plan telemetrytypes.JSONAccessPlan) (stri
 }
 
 // buildArrayMap builds the arrayMap expression for a specific branch, handling all sub-branches.
-func (m *fieldMapper) buildArrayMap(currentNode *telemetrytypes.JSONAccessNode, branchType telemetrytypes.JSONAccessBranchType) (string, error) {
+func (m *storage) buildArrayMap(currentNode *telemetrytypes.JSONAccessNode, branchType telemetrytypes.JSONAccessBranchType) (string, error) {
 	if currentNode == nil {
 		return "", errors.NewInternalf(CodeCurrentNodeNil, "current node is nil while building arrayMap")
 	}
@@ -562,108 +367,6 @@ func (m *fieldMapper) buildArrayMap(currentNode *telemetrytypes.JSONAccessNode, 
 	return fmt.Sprintf("arrayMap(%s->%s, %s)", currentNode.Alias(), nestedExpr, arrayExpr), nil
 }
 
-// plainColumn reports whether the key reads one table column, a value every row
-// has with no presence test.
-func (m *fieldMapper) plainColumn(ctx context.Context, orgID valuer.UUID, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) bool {
-	if key.FieldContext == telemetrytypes.FieldContextBody {
-		return false
-	}
-	columns, err := m.getColumn(ctx, orgID, key)
-	if err != nil {
-		return false
-	}
-	newColumns, _, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, tsStart, tsEnd)
-	if err != nil || len(newColumns) != 1 {
-		return false
-	}
-	columnType := newColumns[0].Type.GetType()
-	return columnType != schema.ColumnTypeEnumMap && columnType != schema.ColumnTypeEnumJSON
-}
-
-func (m *fieldMapper) membershipGuarded(ctx context.Context, orgID valuer.UUID, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) bool {
-	if key.FieldContext == telemetrytypes.FieldContextBody {
-		return true
-	}
-	columns, err := m.getColumn(ctx, orgID, key)
-	if err != nil {
-		return false
-	}
-	newColumns, _, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, tsStart, tsEnd)
-	if err != nil || len(newColumns) != 1 {
-		return false
-	}
-	columnType := newColumns[0].Type.GetType()
-	return columnType == schema.ColumnTypeEnumMap || columnType == schema.ColumnTypeEnumJSON
-}
-
-// ExistsFor implements the per-key existence primitive of qbtypes.FieldMapper.
-func (m *fieldMapper) ExistsFor(
-	ctx context.Context,
-	orgID valuer.UUID,
-	tsStart, tsEnd uint64,
-	key *telemetrytypes.TelemetryFieldKey,
-	exists bool,
-) (string, error) {
-	columns, err := m.getColumn(ctx, orgID, key)
-	if errors.Is(err, qbtypes.ErrColumnNotFound) && key.FieldContext == telemetrytypes.FieldContextUnspecified {
-		bodyKey := telemetrytypes.NewTelemetryFieldKey(key.Name, telemetrytypes.FieldContextBody, key.FieldDataType)
-		columns, err = m.getColumn(ctx, orgID, bodyKey)
-	}
-	if err != nil {
-		return "", err
-	}
-
-	operator := qbtypes.FilterOperatorExists
-	if !exists {
-		operator = qbtypes.FilterOperatorNotExists
-	}
-
-	bodyJSONEnabled := m.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID))
-
-	for _, column := range columns {
-		if column.Type.GetType() == schema.ColumnTypeEnumJSON && isBodyJSONSearch(key, columns) && bodyJSONEnabled && key.Name != messageSubField {
-			valueType, value := InferDataType(nil, operator, key)
-			if len(key.JSONPlan) == 0 {
-				keyCopy := telemetrytypes.NewTelemetryFieldKey(key.Name, key.FieldContext, key.FieldDataType)
-				if err := keyCopy.SetExhaustiveJSONAccessPlan(
-					telemetrytypes.JSONColumnMetadata{BaseColumn: LogsV2BodyV2Column}, valueType,
-				); err != nil {
-					return "", err
-				}
-				key = keyCopy
-			}
-			sb := sqlbuilder.NewSelectBuilder()
-			cond, err := NewJSONConditionBuilder(key, valueType).buildJSONCondition(operator, value, sb)
-			if err != nil {
-				return "", err
-			}
-			sb.Where(cond)
-			expr, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-			expr = strings.TrimPrefix(expr, "WHERE ")
-			if len(args) > 0 {
-				expr, err = sqlbuilder.ClickHouse.Interpolate(expr, args)
-				if err != nil {
-					return "", err
-				}
-			}
-			return expr, nil
-		}
-	}
-
-	if isBodyJSONSearch(key, columns) && !bodyJSONEnabled {
-		if exists {
-			return GetBodyJSONKeyForExists(ctx, key, operator, nil), nil
-		}
-		return "NOT " + GetBodyJSONKeyForExists(ctx, key, operator, nil), nil
-	}
-
-	fieldExpression, err := m.FieldFor(ctx, orgID, tsStart, tsEnd, key)
-	if err != nil {
-		return "", err
-	}
-	return querybuilder.ExistsExpression(columns, key, tsStart, tsEnd, fieldExpression, exists)
-}
-
 // searchColumns is the single source of truth for the columns search() fans out across,
 // by context; body is body_v2 when useJSONBody, else the legacy body string.
 func searchColumns(fieldContext telemetrytypes.FieldContext, useJSONBody bool) []*schema.Column {
@@ -696,4 +399,160 @@ func searchColumns(fieldContext telemetrytypes.FieldContext, useJSONBody bool) [
 		columns = append(columns, searchColumns(telemetrytypes.FieldContextResource, useJSONBody)...)
 		return columns
 	}
+}
+
+func (m *storage) Exists(ctx context.Context, q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, exists bool) (qbtypes.Existence, error) {
+	columns, err := m.getColumn(q, key)
+	if errors.Is(err, qbtypes.ErrColumnNotFound) && key.FieldContext == telemetrytypes.FieldContextUnspecified {
+		bodyKey := telemetrytypes.NewTelemetryFieldKey(key.Name, telemetrytypes.FieldContextBody, key.FieldDataType)
+		columns, err = m.getColumn(q, bodyKey)
+	}
+	if err != nil {
+		return qbtypes.Existence{}, err
+	}
+
+	operator := qbtypes.FilterOperatorExists
+	if !exists {
+		operator = qbtypes.FilterOperatorNotExists
+	}
+
+	for _, column := range columns {
+		if column.Type.GetType() == schema.ColumnTypeEnumJSON && isBodyJSONSearch(key, columns) && q.BodyJSONOn && key.Name != messageSubField {
+			valueType, value := InferDataType(nil, operator, key)
+			if len(key.JSONPlan) == 0 {
+				keyCopy := telemetrytypes.NewTelemetryFieldKey(key.Name, key.FieldContext, key.FieldDataType)
+				if err := keyCopy.SetExhaustiveJSONAccessPlan(
+					telemetrytypes.JSONColumnMetadata{BaseColumn: LogsV2BodyV2Column}, valueType,
+				); err != nil {
+					return qbtypes.Existence{}, err
+				}
+				key = keyCopy
+			}
+			sb := sqlbuilder.NewSelectBuilder()
+			cond, err := NewJSONConditionBuilder(key, valueType).buildJSONCondition(operator, value, sb)
+			if err != nil {
+				return qbtypes.Existence{}, err
+			}
+			sb.Where(cond)
+			expr, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+			expr = strings.TrimPrefix(expr, "WHERE ")
+			if len(args) > 0 {
+				expr, err = sqlbuilder.ClickHouse.Interpolate(expr, args)
+				if err != nil {
+					return qbtypes.Existence{}, err
+				}
+			}
+			// a JSON path reads NULL when the row lacks it
+			return qbtypes.Existence{Predicate: expr, WhenAbsent: qbtypes.AbsentIsNull}, nil
+		}
+	}
+
+	if isBodyJSONSearch(key, columns) && !q.BodyJSONOn {
+		predicate := GetBodyJSONKeyForExists(ctx, key, operator, nil)
+		if !exists {
+			predicate = "NOT " + predicate
+		}
+		return qbtypes.Existence{Predicate: predicate, WhenAbsent: qbtypes.AbsentIsSentinel}, nil
+	}
+
+	fieldExpression, err := m.Read(ctx, q, key)
+	if err != nil {
+		return qbtypes.Existence{}, err
+	}
+	predicate, err := querybuilder.ExistsExpression(columns, key, q.StartNs, q.EndNs, fieldExpression, exists)
+	if err != nil {
+		return qbtypes.Existence{}, err
+	}
+	return qbtypes.Existence{Predicate: predicate, WhenAbsent: absentReads(q, key, columns)}, nil
+}
+
+// absentReads tells what a row without the key reads: NULL from a multi-era
+// read, the empty value from a map or from a JSON path (its ::String cast
+// folds NULL to the empty string), and a real value from every other column.
+func absentReads(q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, columns []*schema.Column) qbtypes.Absent {
+	newColumns, _, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, q.StartNs, q.EndNs)
+	if err != nil || len(newColumns) != 1 {
+		return qbtypes.AbsentIsNull
+	}
+	switch newColumns[0].Type.GetType() {
+	case schema.ColumnTypeEnumMap, schema.ColumnTypeEnumJSON:
+		return qbtypes.AbsentIsSentinel
+	}
+	return qbtypes.AlwaysPresent
+}
+
+// Fallback answers a key metadata does not report: a column name is the
+// column, a body path is itself, and any other name synthesizes its type
+// variants under the stripped and the literal spelling, with the body path
+// last. A body function narrows the answer to body paths.
+func (m *storage) Fallback(_ context.Context, _ qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator, value any) ([]*telemetrytypes.LogicalField, error) {
+	if key.FieldContext == telemetrytypes.FieldContextBody && key.Name == "" {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "missing key for body json search - expected key of the form `body.key` (ex: `body.status`)")
+	}
+	var keys []*telemetrytypes.TelemetryFieldKey
+	switch key.FieldContext {
+	case telemetrytypes.FieldContextBody:
+		keys = []*telemetrytypes.TelemetryFieldKey{telemetrytypes.NewTelemetryFieldKey(key.Name, key.FieldContext, key.FieldDataType)}
+	case telemetrytypes.FieldContextUnspecified:
+		if _, ok := logsV2Columns[key.Name]; ok {
+			keys = []*telemetrytypes.TelemetryFieldKey{{Name: key.Name, FieldContext: telemetrytypes.FieldContextLog}}
+			break
+		}
+		keys = append(querybuilder.SynthesizeKeys(key, value), bodyPath(key.Name, key.FieldDataType, value))
+	case telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextResource:
+		// a context can be a legitimate prefix in user data
+		literal := telemetrytypes.NewTelemetryFieldKey(key.FieldContext.StringValue()+"."+key.Name, key.FieldContext, key.FieldDataType)
+		keys = append(querybuilder.SynthesizeKeys(key, value), querybuilder.SynthesizeKeys(literal, value)...)
+	case telemetrytypes.FieldContextLog:
+		if _, ok := logsV2Columns[key.Name]; ok {
+			keys = []*telemetrytypes.TelemetryFieldKey{telemetrytypes.NewTelemetryFieldKey(key.Name, key.FieldContext, key.FieldDataType)}
+			break
+		}
+		stripped := telemetrytypes.NewTelemetryFieldKey(key.Name, telemetrytypes.FieldContextUnspecified, key.FieldDataType)
+		literal := telemetrytypes.NewTelemetryFieldKey(key.FieldContext.StringValue()+"."+key.Name, telemetrytypes.FieldContextUnspecified, key.FieldDataType)
+		keys = append(querybuilder.SynthesizeKeys(stripped, value), querybuilder.SynthesizeKeys(literal, value)...)
+		for _, spelling := range []*telemetrytypes.TelemetryFieldKey{stripped, literal} {
+			keys = append(keys, bodyPath(spelling.Name, spelling.FieldDataType, value))
+		}
+	}
+	if operator.IsFunctionOperator() {
+		if key.FieldContext != telemetrytypes.FieldContextBody {
+			return nil, querybuilder.NewFunctionUnsupportedError(operator)
+		}
+		bodyKeys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(keys))
+		for _, k := range keys {
+			if k.FieldContext == telemetrytypes.FieldContextBody {
+				bodyKeys = append(bodyKeys, k)
+			}
+		}
+		keys = bodyKeys
+	}
+	return querybuilder.WrapAsLogicalFields(key.Name, keys), nil
+}
+
+// bodyPath is the body JSON path for a name; without an operand to type it,
+// a string path.
+func bodyPath(name string, dataType telemetrytypes.FieldDataType, value any) *telemetrytypes.TelemetryFieldKey {
+	bodyKey := telemetrytypes.NewTelemetryFieldKey(name, telemetrytypes.FieldContextBody, dataType)
+	if value == nil && bodyKey.FieldDataType == telemetrytypes.FieldDataTypeUnspecified {
+		bodyKey.FieldDataType = telemetrytypes.FieldDataTypeString
+	}
+	return bodyKey
+}
+
+func (m *storage) Traits() qbtypes.Traits {
+	return qbtypes.Traits{
+		Split:                 qbtypes.MainOfSplit,
+		SupportsBodyFunctions: true,
+		OwnContexts:           []telemetrytypes.FieldContext{telemetrytypes.FieldContextLog},
+	}
+}
+
+// ColumnRead answers the legacy body column as not selectable: without the
+// JSON body, a body path has no column read.
+func (m *storage) ColumnRead(ctx context.Context, q qbtypes.QueryInfo, logical *telemetrytypes.LogicalField, _ any) (qbtypes.ColumnExpr, error) {
+	if logical.FieldContext == telemetrytypes.FieldContextBody && !q.BodyJSONOn {
+		return qbtypes.ColumnExpr{}, qbtypes.ErrNotSelectable
+	}
+	return querybuilder.DefaultRead(ctx, q, m, logical)
 }

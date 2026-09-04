@@ -5,26 +5,11 @@ import (
 	"fmt"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
-
-type defaultConditionBuilder struct {
-	fm qbtypes.FieldMapper
-	// fl evaluates the resolve_semconv_families flag during resolution.
-	// A nil flagger keeps resolution literal.
-	fl flagger.Flagger
-}
-
-var _ qbtypes.ConditionBuilder = (*defaultConditionBuilder)(nil)
-
-func NewConditionBuilder(fm qbtypes.FieldMapper, fl flagger.Flagger) *defaultConditionBuilder {
-	return &defaultConditionBuilder{fm: fm, fl: fl}
-}
 
 func valueForIndexFilter(op qbtypes.FilterOperator, key *telemetrytypes.TelemetryFieldKey, value any) any {
 	switch v := value.(type) {
@@ -112,55 +97,20 @@ func memberPresenceCondition(sb *sqlbuilder.SelectBuilder, column string, member
 	return sb.And(conditions...)
 }
 
-// SkipResourceFilter is not applicable here: the fingerprint table only stores resource attributes.
-func (b *defaultConditionBuilder) ConditionFor(
-	ctx context.Context,
-	orgID valuer.UUID,
-	startNs uint64,
-	endNs uint64,
-	key *telemetrytypes.TelemetryFieldKey,
-	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
-	_ qbtypes.ConditionBuilderOptions,
-	op qbtypes.FilterOperator,
-	value any,
-	sb *sqlbuilder.SelectBuilder,
-) ([]string, []string, error) {
-	matches := querybuilder.MatchingLogicalFields(ctx, orgID, b.fl, key, fieldKeys)
-
-	// has/hasAny/hasAll/hasToken are logs-body-only functions; they never apply to the
-	// resource fingerprint table, so skip them (the main query still evaluates them).
-	if op.IsFunctionOperator() {
-		return nil, nil, nil
+// Compile weaves the index hints of the fingerprint table into each
+// operator. It reads the members directly, so a member with a value map must
+// translate its operand through StoredValues before the hint is built.
+func (b *storage) Compile(ctx context.Context, q qbtypes.QueryInfo, logical *telemetrytypes.LogicalField, op qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (qbtypes.Compiled, error) {
+	condition, err := b.conditionForLogicalField(ctx, q, logical, op, value, sb)
+	if err != nil {
+		return qbtypes.Compiled{}, err
 	}
-
-	logicalFields, warning := querybuilder.ResolveLogicalFields(key, matches)
-	var warnings []string
-	if warning != "" {
-		warnings = append(warnings, warning)
-	}
-
-	conds := make([]string, 0, len(logicalFields))
-	for _, logical := range logicalFields {
-		// the resource fingerprint table only stores resource attributes; fields from
-		// any other context contribute no condition and are omitted. An empty result
-		// (including an unknown key) lets the caller skip this filter entirely.
-		if logical.FieldContext != telemetrytypes.FieldContextResource {
-			continue
-		}
-		cond, err := b.conditionForLogicalField(ctx, orgID, startNs, endNs, logical, op, value, sb)
-		if err != nil {
-			return nil, nil, err
-		}
-		conds = append(conds, cond)
-	}
-	return conds, warnings, nil
+	return qbtypes.Compiled{Condition: condition}, nil
 }
 
-func (b *defaultConditionBuilder) conditionForLogicalField(
+func (b *storage) conditionForLogicalField(
 	ctx context.Context,
-	orgID valuer.UUID,
-	startNs uint64,
-	endNs uint64,
+	q qbtypes.QueryInfo,
 	logical *telemetrytypes.LogicalField,
 	op qbtypes.FilterOperator,
 	value any,
@@ -173,7 +123,7 @@ func (b *defaultConditionBuilder) conditionForLogicalField(
 
 	// Every resource-context key maps to the labels column, so any member
 	// resolves the column for the whole field.
-	columns, err := b.fm.ColumnFor(ctx, orgID, startNs, endNs, logical.Single())
+	columns, err := b.getColumn(ctx, q.StartNs, q.EndNs, logical.Single())
 	if err != nil {
 		return "", err
 	}
@@ -191,7 +141,7 @@ func (b *defaultConditionBuilder) conditionForLogicalField(
 	keyIdxFilter := keyIndexCondition(sb, column.Name, members)
 	singleValueIndexFilter := valueForIndexFilter(op, members[0], value)
 
-	fieldName, err := querybuilder.LogicalValueExpr(ctx, orgID, startNs, endNs, b.fm, logical)
+	fieldName, err := querybuilder.LogicalValueExpr(ctx, q, b, logical)
 	if err != nil {
 		return "", err
 	}

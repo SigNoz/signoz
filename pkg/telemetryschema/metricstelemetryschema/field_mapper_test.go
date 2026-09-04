@@ -7,7 +7,6 @@ import (
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -120,11 +119,11 @@ func TestGetColumn(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
+	storage := NewStorage()
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			col, err := fm.ColumnFor(ctx, valuer.UUID{}, 0, 0, &tc.key)
+			col, err := storage.getColumn(ctx, 0, 0, &tc.key)
 
 			if tc.expectedError != nil {
 				assert.Equal(t, tc.expectedError, err)
@@ -204,11 +203,11 @@ func TestGetFieldKeyName(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
+	storage := NewStorage()
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := fm.FieldFor(ctx, valuer.UUID{}, 0, 0, &tc.key)
+			result, err := storage.Read(ctx, qbtypes.QueryInfo{}, &tc.key)
 
 			if tc.expectedError != nil {
 				assert.Equal(t, tc.expectedError, err)

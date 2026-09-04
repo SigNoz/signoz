@@ -106,7 +106,7 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __limit_cte AS (SELECT toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `__GROUP_BY_KEY_0_service.name`, countDistinct(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL) OR (attributes_string['http.method'] = ? AND mapContains(attributes_string, 'http.method'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_service.name` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `__GROUP_BY_KEY_0_service.name`, countDistinct(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE ((multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? AND multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL) OR (attributes_string['http.method'] = ? AND mapContains(attributes_string, 'http.method'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_service.name`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_service.name` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_service.name`",
+				Query: "WITH __limit_cte AS (SELECT toString(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)) AS `__GROUP_BY_KEY_0_service.name`, countDistinct(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)) AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? OR (attributes_string['http.method'] = ? AND mapContains(attributes_string, 'http.method'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_service.name` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)) AS `__GROUP_BY_KEY_0_service.name`, countDistinct(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL)) AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE (multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = ? OR (attributes_string['http.method'] = ? AND mapContains(attributes_string, 'http.method'))) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_service.name`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_service.name` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_service.name`",
 				Args:  []any{"redis-manual", "GET", "1705226400000000000", uint64(1705224600), "1705485600000000000", uint64(1705485600), 10, "redis-manual", "GET", "1705226400000000000", uint64(1705224600), "1705485600000000000", uint64(1705485600)},
 			},
 			expectedErr: nil,
@@ -218,16 +218,14 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 
 	mockMetadataStore.KeysMap = keysMap
 
-	fm := logstelemetryschema.NewFieldMapper(fl)
-	cb := logstelemetryschema.NewConditionBuilder(fm, fl)
+	storage := logstelemetryschema.NewStorage()
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalLogs)
 
 	statementBuilder := NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
-		fm,
-		cb,
+		storage,
 		aggExprRewriter,
 		logstelemetryschema.DefaultFullTextColumn,
 		fl,
@@ -356,20 +354,18 @@ func TestStatementBuilderListQuery(t *testing.T) {
 	ctx := context.Background()
 	fl := flaggertest.New(t)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	fm := logstelemetryschema.NewFieldMapper(fl)
+	storage := logstelemetryschema.NewStorage()
 
 	// Create a test release time
 	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 	mockMetadataStore.KeysMap = logstelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
-	cb := logstelemetryschema.NewConditionBuilder(fm, fl)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalLogs)
 
 	statementBuilder := NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
-		fm,
-		cb,
+		storage,
 		aggExprRewriter,
 		logstelemetryschema.DefaultFullTextColumn,
 		fl,
@@ -509,19 +505,17 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 	ctx := context.Background()
 	fl := flaggertest.New(t)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	fm := logstelemetryschema.NewFieldMapper(fl)
+	storage := logstelemetryschema.NewStorage()
 	// Create a test release time
 	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 	mockMetadataStore.KeysMap = logstelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
-	cb := logstelemetryschema.NewConditionBuilder(fm, fl)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalLogs)
 
 	statementBuilder := NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
-		fm,
-		cb,
+		storage,
 		aggExprRewriter,
 		logstelemetryschema.DefaultFullTextColumn,
 		fl,
@@ -579,26 +573,24 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 					},
 				},
 			},
-			expectedErrContains: "Operation isn't available for the body column",
+			expectedErrContains: "field cannot be selected",
 		},
 	}
 
 	ctx := context.Background()
 	fl := flaggertest.New(t)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	fm := logstelemetryschema.NewFieldMapper(fl)
+	storage := logstelemetryschema.NewStorage()
 	// Create a test release time
 	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 	mockMetadataStore.KeysMap = logstelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
-	cb := logstelemetryschema.NewConditionBuilder(fm, fl)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalLogs)
 
 	statementBuilder := NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
-		fm,
-		cb,
+		storage,
 		aggExprRewriter,
 		logstelemetryschema.DefaultFullTextColumn,
 		fl,
@@ -684,17 +676,15 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 	ctx := context.Background()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	fl := flaggertest.New(t)
-	fm := logstelemetryschema.NewFieldMapper(fl)
+	storage := logstelemetryschema.NewStorage()
 	mockMetadataStore.KeysMap = logstelemetryschema.BuildCompleteFieldKeyMapCollision()
-	cb := logstelemetryschema.NewConditionBuilder(fm, fl)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalLogs)
 
 	statementBuilder := NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
-		fm,
-		cb,
+		storage,
 		aggExprRewriter,
 		logstelemetryschema.DefaultFullTextColumn,
 		fl,
@@ -908,18 +898,16 @@ func TestAdjustKey(t *testing.T) {
 	}
 
 	fl := flaggertest.New(t)
-	fm := logstelemetryschema.NewFieldMapper(fl)
+	storage := logstelemetryschema.NewStorage()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = logstelemetryschema.BuildCompleteFieldKeyMapCollision()
-	cb := logstelemetryschema.NewConditionBuilder(fm, fl)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalLogs)
 
 	statementBuilder := NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
-		fm,
-		cb,
+		storage,
 		aggExprRewriter,
 		logstelemetryschema.DefaultFullTextColumn,
 		fl,
@@ -1052,20 +1040,18 @@ func TestStmtBuilderBodyField(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			fl := flaggertest.WithUseJSONBody(t, c.enableUseJSONBody)
-			fm := logstelemetryschema.NewFieldMapper(fl)
-			cb := logstelemetryschema.NewConditionBuilder(fm, fl)
+			storage := logstelemetryschema.NewStorage()
 			// build the key map
 			mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 			for _, field := range logstelemetryschema.IntrinsicFields {
 				f := field
 				mockMetadataStore.KeysMap[field.Name] = append(mockMetadataStore.KeysMap[field.Name], &f)
 			}
-			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalLogs)
 			statementBuilder := NewLogQueryStatementBuilder(
 				instrumentationtest.New().ToProviderSettings(),
 				mockMetadataStore,
-				fm,
-				cb,
+				storage,
 				aggExprRewriter,
 				logstelemetryschema.DefaultFullTextColumn,
 				fl,
@@ -1152,20 +1138,18 @@ func TestStmtBuilderBodyFullTextSearch(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			fl := flaggertest.WithUseJSONBody(t, c.enableUseJSONBody)
-			fm := logstelemetryschema.NewFieldMapper(fl)
-			cb := logstelemetryschema.NewConditionBuilder(fm, fl)
+			storage := logstelemetryschema.NewStorage()
 			// build the key map
 			mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 			for _, field := range logstelemetryschema.IntrinsicFields {
 				f := field
 				mockMetadataStore.KeysMap[field.Name] = append(mockMetadataStore.KeysMap[field.Name], &f)
 			}
-			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalLogs)
 			statementBuilder := NewLogQueryStatementBuilder(
 				instrumentationtest.New().ToProviderSettings(),
 				mockMetadataStore,
-				fm,
-				cb,
+				storage,
 				aggExprRewriter,
 				logstelemetryschema.DefaultFullTextColumn,
 				fl,
@@ -1269,24 +1253,16 @@ func newSkipResourceFingerprintLogsBuilder(
 	t.Helper()
 
 	fl := flaggertest.New(t)
-	fm := logstelemetryschema.NewFieldMapper(fl)
-	cb := logstelemetryschema.NewConditionBuilder(fm, fl)
+	storage := logstelemetryschema.NewStorage()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = logstelemetryschema.BuildCompleteFieldKeyMap(time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC))
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(
-		instrumentationtest.New().ToProviderSettings(),
-		logstelemetryschema.DefaultFullTextColumn,
-		fm,
-		cb,
-		fl,
-	)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), logstelemetryschema.DefaultFullTextColumn, storage, fl, telemetrytypes.SignalLogs)
 
 	return NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
-		fm,
-		cb,
+		storage,
 		aggExprRewriter,
 		logstelemetryschema.DefaultFullTextColumn,
 		fl,

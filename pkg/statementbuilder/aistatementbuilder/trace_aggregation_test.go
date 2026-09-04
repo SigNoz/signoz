@@ -718,7 +718,7 @@ SELECT sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'),
 FROM signoz_traces.distributed_signoz_index_v3
 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)
   AND trace_id GLOBAL IN (SELECT trace_id FROM __trace_scope)
-  AND (((mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))) AND ((multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = 'api' AND multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL)))
+  AND (((mapContains(attributes_string, 'gen_ai.request.model') OR mapContains(attributes_string, 'gen_ai.tool.name') OR mapContains(attributes_string, 'gen_ai.agent.name'))) AND (multiIf(resource.service.name IS NOT NULL, resource.service.name::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) = 'api'))
   AND timestamp >= '1747947419000000000'
   AND timestamp < '1747983448000000000'
   AND ts_bucket_start >= 1747945619

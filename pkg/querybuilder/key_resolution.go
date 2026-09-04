@@ -74,22 +74,14 @@ func WrapAsLogicalFields(requestedName string, keys []*telemetrytypes.TelemetryF
 	return fields
 }
 
-// SingleKeys flattens logical fields to their single members. It is the
-// adapter for signals whose fields are single-member by construction (every
-// signal without family support); their condition builders keep compiling per
-// physical key.
-func SingleKeys(fields []*telemetrytypes.LogicalField) []*telemetrytypes.TelemetryFieldKey {
-	keys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(fields))
-	for _, field := range fields {
-		keys = append(keys, field.Single())
+// NewKeyNotFoundError builds the error for a key that neither metadata nor
+// the storage can serve, with the closest known names as suggestions.
+func NewKeyNotFoundError(name string, known []string) error {
+	err := errors.NewInvalidInputf(errors.CodeInvalidInput, "key `%s` not found", name).WithUrl(KeyNotFoundDocURL)
+	if len(known) == 0 {
+		return err
 	}
-	return keys
-}
-
-// NewKeyNotFoundError builds the error a condition builder returns when a filter term
-// references a key it has no matching field key for.
-func NewKeyNotFoundError(name string) error {
-	return errors.NewInvalidInputf(errors.CodeInvalidInput, "key `%s` not found", name).WithUrl(KeyNotFoundDocURL)
+	return err.WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(name, errors.NounKeys, known)...)
 }
 
 // NewKeyNotFoundWarning is the warning surfaced when a referenced key is absent from

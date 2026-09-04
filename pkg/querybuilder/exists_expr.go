@@ -80,6 +80,11 @@ func ExistsExpression(columns []*schema.Column, key *telemetrytypes.TelemetryFie
 			return comparison("<>", "0"), nil
 		}
 		return comparison("=", "0"), nil
+	case schema.ColumnTypeEnumArray:
+		if exists {
+			return fmt.Sprintf("notEmpty(%s)", fieldExpression), nil
+		}
+		return fmt.Sprintf("empty(%s)", fieldExpression), nil
 	case schema.ColumnTypeEnumMap:
 		keyType := column.Type.(schema.MapColumnType).KeyType
 		if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {

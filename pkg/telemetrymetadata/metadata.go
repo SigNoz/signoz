@@ -65,8 +65,7 @@ type telemetryMetaStore struct {
 	relatedMetadataTblName         string
 	columnEvolutionMetadataTblName string
 
-	fm                 qbtypes.FieldMapper
-	conditionBuilder   qbtypes.ConditionBuilder
+	storage            qbtypes.Storage
 	fl                 flagger.Flagger
 	jsonColumnMetadata map[telemetrytypes.Signal]map[telemetrytypes.FieldContext]telemetrytypes.JSONColumnMetadata
 }
@@ -81,9 +80,6 @@ func NewTelemetryMetaStore(
 	fl flagger.Flagger,
 ) telemetrytypes.MetadataStore {
 	metadataSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrymetadata")
-
-	fm := NewFieldMapper()
-	conditionBuilder := NewConditionBuilder(fm)
 
 	t := &telemetryMetaStore{
 		logger:                         metadataSettings.Logger(),
@@ -117,9 +113,8 @@ func NewTelemetryMetaStore(
 				},
 			},
 		},
-		fl:               fl,
-		fm:               fm,
-		conditionBuilder: conditionBuilder,
+		fl:      fl,
+		storage: NewStorage(),
 	}
 
 	return t
@@ -1362,18 +1357,19 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 		FieldDataType: fieldValueSelector.FieldDataType,
 	}
 
-	selectColumn, err := t.fm.FieldFor(ctx, orgID, 0, 0, key)
+	q := querybuilder.NewQueryInfo(ctx, orgID, nil, fieldValueSelector.Signal, nil, 0, 0)
+	selectColumn, err := t.storage.Read(ctx, q, key)
 
 	if err != nil {
 		// we don't have a explicit column to select from the related metadata table
 		// so we will select either from resource_attributes or attributes table
 		// in that order
-		resourceColumn, _ := t.fm.FieldFor(ctx, orgID, 0, 0, &telemetrytypes.TelemetryFieldKey{
+		resourceColumn, _ := t.storage.Read(ctx, q, &telemetrytypes.TelemetryFieldKey{
 			Name:          key.Name,
 			FieldContext:  telemetrytypes.FieldContextResource,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
 		})
-		attributeColumn, _ := t.fm.FieldFor(ctx, orgID, 0, 0, &telemetrytypes.TelemetryFieldKey{
+		attributeColumn, _ := t.storage.Read(ctx, q, &telemetrytypes.TelemetryFieldKey{
 			Name:          key.Name,
 			FieldContext:  telemetrytypes.FieldContextAttribute,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
@@ -1394,11 +1390,11 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 		}
 
 		whereClause, err := querybuilder.PrepareWhereClause(fieldValueSelector.ExistingQuery, querybuilder.FilterExprVisitorOpts{
-			Context:          ctx,
-			Logger:           t.logger,
-			FieldMapper:      t.fm,
-			ConditionBuilder: t.conditionBuilder,
-			FieldKeys:        keys,
+			Context:   ctx,
+			Query:     q,
+			Storage:   t.storage,
+			Logger:    t.logger,
+			FieldKeys: keys,
 		})
 		if err != nil {
 			t.logger.WarnContext(ctx, "error parsing existing query for related values", errors.Attr(err))
@@ -1429,20 +1425,20 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 
 			// search on attributes
 			key.FieldContext = telemetrytypes.FieldContextAttribute
-			attrConds, _, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}}, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
+			attrConds, err := t.containsConditions(ctx, q, key, fieldValueSelector.Value, sb)
 			if err == nil {
 				conds = append(conds, attrConds...)
 			}
 
 			// search on resource
 			key.FieldContext = telemetrytypes.FieldContextResource
-			resourceConds, _, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}}, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
+			resourceConds, err := t.containsConditions(ctx, q, key, fieldValueSelector.Value, sb)
 			if err == nil {
 				conds = append(conds, resourceConds...)
 			}
 			key.FieldContext = origContext
 		} else {
-			keyConds, _, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}}, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
+			keyConds, err := t.containsConditions(ctx, q, key, fieldValueSelector.Value, sb)
 			if err == nil {
 				conds = append(conds, keyConds...)
 			}
@@ -2653,4 +2649,12 @@ func (t *telemetryMetaStore) fetchLastSeenInfoForTable(ctx context.Context, tabl
 		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error iterating over metrics temporality rows")
 	}
 	return lastSeenInfo, nil
+}
+
+// containsConditions compiles a contains search on one key of the related
+// values table; the key is its own metadata.
+func (t *telemetryMetaStore) containsConditions(ctx context.Context, q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, value string, sb *sqlbuilder.SelectBuilder) ([]string, error) {
+	fieldKeys := map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}}
+	conds, _, err := querybuilder.Conditions(ctx, q, t.storage, key, qbtypes.FilterOperatorContains, value, fieldKeys, false, sb)
+	return conds, err
 }

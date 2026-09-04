@@ -3,35 +3,36 @@ package scopedtracesstatementbuilder
 import (
 	"context"
 
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
 
-// columnResolver resolves keys to bare column/value expressions through the shared
-// field mapper. It binds no args, so its expressions embed in any builder; predicates
-// (which do bind args) are the predicateResolver's job.
+// columnResolver resolves keys to bare column/value expressions through the
+// shared storage. It binds no args, so its expressions embed in any builder;
+// predicates (which do bind args) are the predicateResolver's job.
 type columnResolver struct {
-	fm   qbtypes.FieldMapper
-	keys map[string][]*telemetrytypes.TelemetryFieldKey
+	storage qbtypes.Storage
+	keys    map[string][]*telemetrytypes.TelemetryFieldKey
 }
 
-func newColumnResolver(fm qbtypes.FieldMapper, keys map[string][]*telemetrytypes.TelemetryFieldKey) *columnResolver {
-	return &columnResolver{fm: fm, keys: keys}
+func newColumnResolver(storage qbtypes.Storage, keys map[string][]*telemetrytypes.TelemetryFieldKey) *columnResolver {
+	return &columnResolver{storage: storage, keys: keys}
 }
 
-func (r *columnResolver) FieldFor(ctx context.Context, orgID valuer.UUID, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
-	return r.fm.FieldFor(ctx, orgID, startNs, endNs, key)
+// Read returns the bare read of one field key.
+func (r *columnResolver) Read(ctx context.Context, q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey) (string, error) {
+	return r.storage.Read(ctx, q, key)
 }
 
 // ValueFor returns the value expression for an attribute key.
-func (r *columnResolver) ValueFor(ctx context.Context, orgID valuer.UUID, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey, dt telemetrytypes.FieldDataType) (string, error) {
+func (r *columnResolver) ValueFor(ctx context.Context, q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, dt telemetrytypes.FieldDataType) (string, error) {
 	// TODO(nitya): Fix this as this is not correct way
 	if cands := r.keys[key.Name]; len(cands) > 0 {
 		key = cands[0]
 	}
-	expr, err := r.fm.ColumnExpressionFor(ctx, orgID, startNs, endNs, key, dt, r.keys)
+	expr, err := querybuilder.ResolveColumn(ctx, q, r.storage, key, dt, r.keys)
 	if err != nil {
 		return "", err
 	}

@@ -3,15 +3,11 @@ package telemetrymetadata
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/huandu/go-sqlbuilder"
-	"golang.org/x/exp/maps"
 )
 
 var (
@@ -27,20 +23,15 @@ var (
 	}
 )
 
-type fieldMapper struct {
+type storage struct{}
+
+var _ qbtypes.Storage = (*storage)(nil)
+
+func NewStorage() *storage {
+	return &storage{}
 }
 
-// CandidateKeys returns nil: this mapper has no attribute-map fallback, so a context-missing
-// key stays unresolved and the caller errors.
-func (m *fieldMapper) CandidateKeys(_ context.Context, _ valuer.UUID, _ *telemetrytypes.TelemetryFieldKey, _ any, _ map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
-	return nil
-}
-
-func NewFieldMapper() qbtypes.FieldMapper {
-	return &fieldMapper{}
-}
-
-func (m *fieldMapper) getColumn(_ context.Context, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
+func (m *storage) getColumn(_ context.Context, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
 		return []*schema.Column{attributeMetadataColumns["resource_attributes"]}, nil
@@ -50,29 +41,8 @@ func (m *fieldMapper) getColumn(_ context.Context, _, _ uint64, key *telemetryty
 	return nil, qbtypes.ErrColumnNotFound
 }
 
-func (m *fieldMapper) ColumnFor(ctx context.Context, _ valuer.UUID, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
-	columns, err := m.getColumn(ctx, tsStart, tsEnd, key)
-	if err != nil {
-		return nil, err
-	}
-	return columns, nil
-}
-
-// ExistsFor implements the per-key existence primitive of qbtypes.FieldMapper.
-func (m *fieldMapper) ExistsFor(ctx context.Context, _ valuer.UUID, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey, exists bool) (string, error) {
-	columns, err := m.getColumn(ctx, tsStart, tsEnd, key)
-	if err != nil {
-		return "", err
-	}
-	pred := fmt.Sprintf("mapContains(%s, '%s')", columns[0].Name, key.Name)
-	if exists {
-		return pred, nil
-	}
-	return "NOT " + pred, nil
-}
-
-func (m *fieldMapper) FieldFor(ctx context.Context, _ valuer.UUID, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
-	columns, err := m.getColumn(ctx, startNs, endNs, key)
+func (m *storage) Read(ctx context.Context, q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey) (string, error) {
+	columns, err := m.getColumn(ctx, q.StartNs, q.EndNs, key)
 	if err != nil {
 		return "", err
 	}
@@ -87,48 +57,28 @@ func (m *fieldMapper) FieldFor(ctx context.Context, _ valuer.UUID, startNs, endN
 	return columns[0].Name, nil
 }
 
-func (m *fieldMapper) ColumnExpressionFor(
-	ctx context.Context,
-	orgID valuer.UUID,
-	startNs, endNs uint64,
-	field *telemetrytypes.TelemetryFieldKey,
-	_ telemetrytypes.FieldDataType,
-	keys map[string][]*telemetrytypes.TelemetryFieldKey,
-) (string, error) {
-
-	fieldExpression, err := m.FieldFor(ctx, orgID, startNs, endNs, field)
-	if errors.Is(err, qbtypes.ErrColumnNotFound) {
-		// the key didn't have the right context to be added to the query
-		// we try to use the context we know of
-		keysForField := keys[field.Name]
-		if len(keysForField) == 0 {
-			// is it a static field?
-			if _, ok := attributeMetadataColumns[field.Name]; ok {
-				// if it is, attach the column name directly
-				field.FieldContext = telemetrytypes.FieldContextSpan
-				fieldExpression, _ = m.FieldFor(ctx, orgID, startNs, endNs, field)
-			} else {
-				// - the context is not provided
-				// - there are not keys for the field
-				// - it is not a static field
-				// - the next best thing to do is see if there is a typo
-				// and suggest a correction
-				wrappedErr := errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
-				return "", wrappedErr
-			}
-		} else if len(keysForField) == 1 {
-			// we have a single key for the field, use it
-			fieldExpression, _ = m.FieldFor(ctx, orgID, startNs, endNs, keysForField[0])
-		} else {
-			// select any non-empty value from the keys
-			args := []string{}
-			for _, key := range keysForField {
-				fieldExpression, _ = m.FieldFor(ctx, orgID, startNs, endNs, key)
-				args = append(args, fmt.Sprintf("toString(%s) != '', toString(%s)", fieldExpression, fieldExpression))
-			}
-			fieldExpression = fmt.Sprintf("multiIf(%s, NULL)", strings.Join(args, ", "))
-		}
+func (m *storage) Exists(ctx context.Context, q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, exists bool) (qbtypes.Existence, error) {
+	columns, err := m.getColumn(ctx, q.StartNs, q.EndNs, key)
+	if err != nil {
+		return qbtypes.Existence{}, err
 	}
+	predicate := fmt.Sprintf("mapContains(%s, '%s')", columns[0].Name, key.Name)
+	if !exists {
+		predicate = "NOT " + predicate
+	}
+	return qbtypes.Existence{Predicate: predicate, WhenAbsent: qbtypes.AbsentIsSentinel}, nil
+}
 
-	return fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(fieldExpression), field.Name), nil
+// Fallback returns nil: the metadata tables have no attribute synthesis, so
+// a key metadata does not hold yields no condition.
+func (m *storage) Fallback(context.Context, qbtypes.QueryInfo, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any) ([]*telemetrytypes.LogicalField, error) {
+	return nil, nil
+}
+
+func (m *storage) Traits() qbtypes.Traits {
+	return qbtypes.Traits{UnknownKey: qbtypes.IgnoreUnknownKey}
+}
+
+func (m *storage) ColumnRead(ctx context.Context, q qbtypes.QueryInfo, logical *telemetrytypes.LogicalField, _ any) (qbtypes.ColumnExpr, error) {
+	return querybuilder.DefaultRead(ctx, q, m, logical)
 }

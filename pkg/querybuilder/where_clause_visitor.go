@@ -9,12 +9,10 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/flagger"
 	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
 	"github.com/SigNoz/signoz/pkg/semconv"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/antlr4-go/antlr/v4"
 
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
@@ -28,10 +26,8 @@ const stringMatchingOperatorDocURL = "https://signoz.io/docs/userguide/operators
 // to convert the parsed filter expressions into ClickHouse WHERE clause.
 type filterExpressionVisitor struct {
 	context            context.Context
-	orgID              valuer.UUID
-	fl                 flagger.Flagger
-	fieldMapper        qbtypes.FieldMapper
-	conditionBuilder   qbtypes.ConditionBuilder
+	query              qbtypes.QueryInfo
+	storage            qbtypes.Storage
 	warnings           []string
 	mainWarnURL        string
 	fieldKeys          map[string][]*telemetrytypes.TelemetryFieldKey
@@ -44,39 +40,31 @@ type filterExpressionVisitor struct {
 	variables          map[string]qbtypes.VariableItem
 
 	keysWithWarnings map[string]bool
-	startNs          uint64
-	endNs            uint64
 
 	requiresCostGuard bool
 }
 
 type FilterExprVisitorOpts struct {
 	Context context.Context
-	OrgID   valuer.UUID
-	// Flagger evaluates the resolve_semconv_families flag during resolution.
-	// A nil Flagger keeps resolution literal.
-	Flagger            flagger.Flagger
+	// Query is the request's context with the query-path flags evaluated
+	// one time; Storage answers the signal's part of every term.
+	Query              qbtypes.QueryInfo
+	Storage            qbtypes.Storage
 	Logger             *slog.Logger
-	FieldMapper        qbtypes.FieldMapper
-	ConditionBuilder   qbtypes.ConditionBuilder
 	FieldKeys          map[string][]*telemetrytypes.TelemetryFieldKey
 	Builder            *sqlbuilder.SelectBuilder
 	FullTextColumn     *telemetrytypes.TelemetryFieldKey
 	SkipResourceFilter bool
 	SkipFullTextFilter bool
 	Variables          map[string]qbtypes.VariableItem
-	StartNs            uint64
-	EndNs              uint64
 }
 
 // newFilterExpressionVisitor creates a new filterExpressionVisitor.
 func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVisitor {
 	return &filterExpressionVisitor{
 		context:            opts.Context,
-		orgID:              opts.OrgID,
-		fl:                 opts.Flagger,
-		fieldMapper:        opts.FieldMapper,
-		conditionBuilder:   opts.ConditionBuilder,
+		query:              opts.Query,
+		storage:            opts.Storage,
 		fieldKeys:          opts.FieldKeys,
 		builder:            opts.Builder,
 		fullTextColumn:     opts.FullTextColumn,
@@ -84,8 +72,6 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 		skipFullTextFilter: opts.SkipFullTextFilter,
 		variables:          opts.Variables,
 		keysWithWarnings:   make(map[string]bool),
-		startNs:            opts.StartNs,
-		endNs:              opts.EndNs,
 	}
 }
 
@@ -367,7 +353,7 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 				return ErrorConditionLiteral
 			}
 		}
-		conds, ok := v.buildConditions(v.fullTextColumn, []*telemetrytypes.LogicalField{telemetrytypes.SingleLogicalField(v.fullTextColumn.Name, v.fullTextColumn)}, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(searchText))
+		conds, ok := v.compile(storageKey(v.fullTextColumn), qbtypes.FilterOperatorRegexp, FormatFullTextSearch(searchText))
 		if !ok {
 			return ErrorConditionLiteral
 		}
@@ -386,7 +372,6 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 // VisitComparison handles all comparison operators.
 func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext) any {
 	key := v.Visit(ctx.Key()).(*telemetrytypes.TelemetryFieldKey)
-	matching := MatchingLogicalFields(v.context, v.orgID, v.fl, key, v.fieldKeys)
 
 	// Handle EXISTS specially
 	if ctx.EXISTS() != nil {
@@ -395,7 +380,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 			op = qbtypes.FilterOperatorNotExists
 		}
 
-		conds, ok := v.buildConditions(key, matching, op, nil)
+		conds, ok := v.buildConditions(key, op, nil)
 		if !ok {
 			return ErrorConditionLiteral
 		}
@@ -468,7 +453,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 			op = qbtypes.FilterOperatorNotIn
 		}
 
-		conds, ok := v.buildConditions(key, matching, op, values)
+		conds, ok := v.buildConditions(key, op, values)
 		if !ok {
 			return ErrorConditionLiteral
 		}
@@ -516,7 +501,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 			return ErrorConditionLiteral
 		}
 
-		conds, ok := v.buildConditions(key, matching, op, []any{value1, value2})
+		conds, ok := v.buildConditions(key, op, []any{value1, value2})
 		if !ok {
 			return ErrorConditionLiteral
 		}
@@ -600,7 +585,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 			}
 		}
 
-		conds, ok := v.buildConditions(key, matching, op, value)
+		conds, ok := v.buildConditions(key, op, value)
 		if !ok {
 			return ErrorConditionLiteral
 		}
@@ -682,7 +667,7 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 		v.errors = append(v.errors, "full text search is not supported")
 		return ErrorConditionLiteral
 	}
-	conds, ok := v.buildConditions(v.fullTextColumn, []*telemetrytypes.LogicalField{telemetrytypes.SingleLogicalField(v.fullTextColumn.Name, v.fullTextColumn)}, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text))
+	conds, ok := v.compile(storageKey(v.fullTextColumn), qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text))
 	if !ok {
 		return ErrorConditionLiteral
 	}
@@ -737,7 +722,7 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 		return ErrorConditionLiteral
 	}
 
-	conds, ok := v.buildConditions(key, MatchingLogicalFields(v.context, v.orgID, v.fl, key, v.fieldKeys), operator, value)
+	conds, ok := v.buildConditions(key, operator, value)
 	if !ok {
 		return ErrorConditionLiteral
 	}
@@ -793,6 +778,12 @@ func normalizeFunctionValue(operator qbtypes.FilterOperator, functionName string
 // search term plus optional field-context scopes, ORing one FilterOperatorSearch per
 // scope (no scope = keyless, covering every field).
 func (v *filterExpressionVisitor) VisitSearchCall(ctx *grammar.SearchCallContext) any {
+	if skip, err := RejectsBodyFunction(v.storage.Traits(), qbtypes.FilterOperatorSearch); err != nil {
+		v.recordError(err)
+		return ErrorConditionLiteral
+	} else if skip {
+		return SkipConditionLiteral
+	}
 	// Flag scan-heavy so the statement builder attaches the cost guard.
 	v.requiresCostGuard = true
 
@@ -835,7 +826,7 @@ func (v *filterExpressionVisitor) VisitSearchCall(ctx *grammar.SearchCallContext
 	var conds []string
 	for _, fieldContext := range fieldContexts {
 		key := telemetrytypes.NewTelemetryFieldKey("", fieldContext, telemetrytypes.FieldDataTypeUnspecified)
-		scoped, cok := v.buildConditions(key, nil, qbtypes.FilterOperatorSearch, searchText)
+		scoped, cok := v.compile(storageKey(key), qbtypes.FilterOperatorSearch, searchText)
 		if !cok {
 			return ErrorConditionLiteral
 		}
@@ -927,18 +918,53 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	return &fieldKey
 }
 
-// buildConditions invokes the condition builder for a filter term, folding its
-// warnings/errors into visitor state; returns false if an error was recorded.
-func (v *filterExpressionVisitor) buildConditions(key *telemetrytypes.TelemetryFieldKey, matching []*telemetrytypes.LogicalField, op qbtypes.FilterOperator, value any) ([]string, bool) {
-	conds, warns, err := v.conditionBuilder.ConditionFor(v.context, v.orgID, v.startNs, v.endNs, key, v.fieldKeys, qbtypes.ConditionBuilderOptions{SkipResourceFilter: v.skipResourceFilter}, op, value, v.builder)
+// buildConditions resolves and compiles one filter term, folding its
+// warnings and errors into the visitor state; ok is false when an error was
+// recorded.
+func (v *filterExpressionVisitor) buildConditions(key *telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOperator, value any) ([]string, bool) {
+	if skip, err := RejectsBodyFunction(v.storage.Traits(), op); err != nil {
+		v.recordError(err)
+		return nil, false
+	} else if skip {
+		return nil, true
+	}
+	resolved, err := Resolve(v.context, v.query, v.storage, key, op, value, v.fieldKeys)
 	if err != nil {
-		_, _, _, _, errURL, _ := errors.Unwrapb(err)
-		assignIfEmpty(&v.mainErrorURL, errURL)
-		v.errors = append(v.errors, err.Error())
+		v.recordError(err)
 		return nil, false
 	}
-	v.addWarnings(warns, len(matching) > 1)
+	v.addWarnings(resolved.Warnings, resolved.Ambiguous)
+	return v.compile(resolved, op, value)
+}
+
+// compile turns a resolved term into its conditions, folding the storage's
+// warnings into the visitor state.
+func (v *filterExpressionVisitor) compile(resolved qbtypes.Resolved, op qbtypes.FilterOperator, value any) ([]string, bool) {
+	conds, warns, err := Condition(v.context, v.query, v.storage, resolved, v.skipResourceFilter, op, value, v.builder)
+	if err != nil {
+		v.recordError(err)
+		return nil, false
+	}
+	v.addWarnings(warns, resolved.Ambiguous)
 	return conds, true
+}
+
+func (v *filterExpressionVisitor) recordError(err error) {
+	_, _, _, _, errURL, _ := errors.Unwrapb(err)
+	assignIfEmpty(&v.mainErrorURL, errURL)
+	v.errors = append(v.errors, err.Error())
+}
+
+// storageKey is a key the storage knows without metadata, resolved as
+// itself: the full-text column, or a search() scope that names a set of
+// columns. It is a fallback key: the fingerprint sub-query cannot serve it,
+// so the main query keeps it when the split runs.
+func storageKey(key *telemetrytypes.TelemetryFieldKey) qbtypes.Resolved {
+	return qbtypes.Resolved{
+		Key:          key,
+		Fields:       []*telemetrytypes.LogicalField{telemetrytypes.SingleLogicalField(key.Name, key)},
+		FromFallback: true,
+	}
 }
 
 // addWarnings appends de-duplicated warnings to the visitor. ambiguous marks warnings
@@ -988,15 +1014,14 @@ func assignIfEmpty(s *string, value string) {
 
 // familyMemberNames returns the physical spellings to look up for the
 // referenced key: the semantic-convention family members (current-first) when
-// the resolve_semconv_families flag is on for the org and the key can resolve
-// to traces, else just the requested name. Only trace field mappers understand
-// families today; logs and metrics keep the requested spelling until theirs
-// land.
-func familyMemberNames(ctx context.Context, orgID valuer.UUID, fl flagger.Flagger, field *telemetrytypes.TelemetryFieldKey) []string {
-	if !semconvFamiliesEnabled(ctx, orgID, fl) {
+// families are on and the query can resolve to traces, else just the requested
+// name. Only trace field mappers understand families today; logs and metrics
+// keep the requested spelling until theirs land.
+func familyMemberNames(familiesOn bool, signal telemetrytypes.Signal, field *telemetrytypes.TelemetryFieldKey) []string {
+	if !familiesOn {
 		return []string{field.Name}
 	}
-	if field.Signal != telemetrytypes.SignalUnspecified && field.Signal != telemetrytypes.SignalTraces {
+	if signal != telemetrytypes.SignalUnspecified && signal != telemetrytypes.SignalTraces {
 		return []string{field.Name}
 	}
 	return semconv.Members(semconv.KindAttribute, telemetrytypes.FieldKeySelector{
@@ -1006,7 +1031,7 @@ func familyMemberNames(ctx context.Context, orgID valuer.UUID, fl flagger.Flagge
 	})
 }
 
-// MatchingLogicalFields resolves the referenced key against the metadata map
+// matchingLogicalFields resolves the referenced key against the metadata map
 // into logical fields, honoring any context/data type the user specified.
 //
 // Physical keys that are members of one semantic-convention family (traces
@@ -1014,16 +1039,15 @@ func familyMemberNames(ctx context.Context, orgID valuer.UUID, fl flagger.Flagge
 // identity, members ordered current-first. Every other matching key becomes
 // its own single-member logical field. Ambiguity is the length of the
 // returned slice: one family is one element and is never ambiguous with
-// itself, but the slice can hold several logical fields — including several
+// itself, but the slice can hold several logical fields, including several
 // family fields, one per identity, when the family exists under more than
 // one context or data type. Members alias the metadata map entries; nothing
 // is copied or mutated.
 //
-// Family grouping only happens when the resolve_semconv_families flag is on
-// for the org. A nil flagger means off: every match then stays a
-// single-member logical field.
-func MatchingLogicalFields(ctx context.Context, orgID valuer.UUID, fl flagger.Flagger, field *telemetrytypes.TelemetryFieldKey, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.LogicalField {
-	members := familyMemberNames(ctx, orgID, fl, field)
+// Family grouping only happens when families are on for the query. Off,
+// every match stays a single-member logical field.
+func matchingLogicalFields(familiesOn bool, signal telemetrytypes.Signal, field *telemetrytypes.TelemetryFieldKey, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.LogicalField {
+	members := familyMemberNames(familiesOn, signal, field)
 	matches := collectMemberMatches(field, members, fieldKeys)
 	return groupIntoLogicalFields(field.Name, len(members) > 1, matches)
 }

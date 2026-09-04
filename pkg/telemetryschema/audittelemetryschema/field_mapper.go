@@ -9,19 +9,18 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
-
-	"golang.org/x/exp/maps"
 )
 
-type fieldMapper struct{}
+type storage struct{}
 
-func NewFieldMapper() qbtypes.FieldMapper {
-	return &fieldMapper{}
+var _ qbtypes.Storage = (*storage)(nil)
+
+func NewStorage() *storage {
+	return &storage{}
 }
 
-func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
+func (m *storage) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
 		return []*schema.Column{auditLogColumns["resource"]}, nil
@@ -53,7 +52,7 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 	return nil, qbtypes.ErrColumnNotFound
 }
 
-func (m *fieldMapper) FieldFor(ctx context.Context, _ valuer.UUID, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
+func (m *storage) Read(ctx context.Context, _ qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey) (string, error) {
 	columns, err := m.getColumn(ctx, key)
 	if err != nil {
 		return "", err
@@ -93,95 +92,51 @@ func (m *fieldMapper) FieldFor(ctx context.Context, _ valuer.UUID, _, _ uint64, 
 	return column.Name, nil
 }
 
-func (m *fieldMapper) ColumnFor(ctx context.Context, _ valuer.UUID, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
-	return m.getColumn(ctx, key)
-}
-
-// ExistsFor implements the per-key existence primitive of qbtypes.FieldMapper.
-func (m *fieldMapper) ExistsFor(ctx context.Context, orgID valuer.UUID, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey, exists bool) (string, error) {
-	fieldExpression, err := m.FieldFor(ctx, orgID, tsStart, tsEnd, key)
+func (m *storage) Exists(ctx context.Context, q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, exists bool) (qbtypes.Existence, error) {
+	fieldExpression, err := m.Read(ctx, q, key)
 	if err != nil {
-		return "", err
+		return qbtypes.Existence{}, err
 	}
 	columns, err := m.getColumn(ctx, key)
 	if err != nil {
-		return "", err
+		return qbtypes.Existence{}, err
 	}
-	return querybuilder.ExistsExpression(columns, key, tsStart, tsEnd, fieldExpression, exists)
+	predicate, err := querybuilder.ExistsExpression(columns, key, q.StartNs, q.EndNs, fieldExpression, exists)
+	if err != nil {
+		return qbtypes.Existence{}, err
+	}
+	return qbtypes.Existence{Predicate: predicate, WhenAbsent: absentReads(columns[0])}, nil
 }
 
-func (m *fieldMapper) ColumnExpressionFor(
-	ctx context.Context,
-	orgID valuer.UUID,
-	tsStart, tsEnd uint64,
-	field *telemetrytypes.TelemetryFieldKey,
-	requiredDataType telemetrytypes.FieldDataType,
-	keys map[string][]*telemetrytypes.TelemetryFieldKey,
-) (string, error) {
-	resolved := field
-	fieldExpression, err := m.FieldFor(ctx, orgID, tsStart, tsEnd, field)
-	if errors.Is(err, qbtypes.ErrColumnNotFound) {
-		keysForField := keys[field.Name]
-		if len(keysForField) == 0 {
-			if _, ok := auditLogColumns[field.Name]; ok {
-				field.FieldContext = telemetrytypes.FieldContextLog
-				fieldExpression, _ = m.FieldFor(ctx, orgID, tsStart, tsEnd, field)
-			} else {
-				wrappedErr := errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
-				return "", wrappedErr
-			}
-		} else {
-			resolved = keysForField[0]
-			fieldExpression, _ = m.FieldFor(ctx, orgID, tsStart, tsEnd, keysForField[0])
-		}
+// absentReads tells what a row without the key reads from the column: the
+// empty value of a map or of a JSON path (its ::String cast folds NULL to
+// the empty string), and a real value from every other column.
+func absentReads(column *schema.Column) qbtypes.Absent {
+	switch column.Type.GetType() {
+	case schema.ColumnTypeEnumMap, schema.ColumnTypeEnumJSON:
+		return qbtypes.AbsentIsSentinel
 	}
-
-	// Group-by/order (String) and aggregation (String/Float64): exists-guarded and coerced
-	// to requiredDataType, returned bare (the caller adds any alias). Raw select
-	// (Unspecified) returns the aliased column expression.
-	if requiredDataType != telemetrytypes.FieldDataTypeUnspecified {
-		var dummyValue any = ""
-		if requiredDataType == telemetrytypes.FieldDataTypeFloat64 {
-			dummyValue = 0.0
-		}
-		columns, err := m.getColumn(ctx, resolved)
-		if err != nil {
-			return "", err
-		}
-		coerced, _ := querybuilder.DataTypeCollisionHandledFieldName(resolved, dummyValue, fieldExpression, qbtypes.FilterOperatorUnknown)
-		// a column is present in every row: it takes no presence test
-		if !keyedColumn(columns[0]) {
-			return coerced, nil
-		}
-		guard, err := querybuilder.ExistsExpression(columns, resolved, tsStart, tsEnd, fieldExpression, true)
-		if err != nil {
-			return "", err
-		}
-		return fmt.Sprintf("multiIf(%s, %s, NULL)", guard, coerced), nil
-	}
-
-	// a map attribute reads the empty value for a row without the key; the
-	// raw select shows NULL there, like logs and traces do
-	if columns, err := m.getColumn(ctx, resolved); err == nil && columns[0].Type.GetType() == schema.ColumnTypeEnumMap {
-		guard, err := querybuilder.ExistsExpression(columns, resolved, tsStart, tsEnd, fieldExpression, true)
-		if err != nil {
-			return "", err
-		}
-		return fmt.Sprintf("multiIf(%s, %s, NULL) AS `%s`", guard, sqlbuilder.Escape(fieldExpression), field.Name), nil
-	}
-
-	return fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(fieldExpression), field.Name), nil
+	return qbtypes.AlwaysPresent
 }
 
-// CandidateKeys returns nil: audit has no synthesize-on-unknown-key fallback, so an
-// unknown key stays unresolved and the caller errors.
-func (m *fieldMapper) CandidateKeys(_ context.Context, _ valuer.UUID, _ *telemetrytypes.TelemetryFieldKey, _ any, _ map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
-	return nil
+// Fallback answers a column name with the column; audit has no attribute
+// synthesis, so any other unknown key stays unresolved and the caller errors.
+func (m *storage) Fallback(_ context.Context, _ qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, _ qbtypes.FilterOperator, _ any) ([]*telemetrytypes.LogicalField, error) {
+	if _, ok := auditLogColumns[key.Name]; !ok {
+		return nil, nil
+	}
+	column := telemetrytypes.NewTelemetryFieldKey(key.Name, telemetrytypes.FieldContextLog, key.FieldDataType)
+	return querybuilder.WrapAsLogicalFields(key.Name, []*telemetrytypes.TelemetryFieldKey{column}), nil
 }
 
-// keyedColumn reports whether the column holds keys a row can lack: a map or
-// a JSON column. Every other column is present in every row.
-func keyedColumn(column *schema.Column) bool {
-	columnType := column.Type.GetType()
-	return columnType == schema.ColumnTypeEnumMap || columnType == schema.ColumnTypeEnumJSON
+func (m *storage) Traits() qbtypes.Traits {
+	return qbtypes.Traits{Split: qbtypes.MainOfSplit}
+}
+
+func (m *storage) Compile(ctx context.Context, q qbtypes.QueryInfo, logical *telemetrytypes.LogicalField, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (qbtypes.Compiled, error) {
+	return querybuilder.SharedCondition(ctx, q, m, logical, operator, value, sb)
+}
+
+func (m *storage) ColumnRead(ctx context.Context, q qbtypes.QueryInfo, logical *telemetrytypes.LogicalField, _ any) (qbtypes.ColumnExpr, error) {
+	return querybuilder.DefaultRead(ctx, q, m, logical)
 }

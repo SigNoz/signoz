@@ -9,7 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
 
@@ -26,19 +25,15 @@ var ruleStateHistoryColumns = map[string]*schema.Column{
 	"value":                 {Name: "value", Type: schema.ColumnTypeFloat64},
 }
 
-type fieldMapper struct{}
+type storage struct{}
 
-func newFieldMapper() qbtypes.FieldMapper {
-	return &fieldMapper{}
+var _ qbtypes.Storage = (*storage)(nil)
+
+func newStorage() *storage {
+	return &storage{}
 }
 
-// CandidateKeys returns nil: rule-state history has no attribute-map fallback, so a
-// context-missing key stays unresolved and the caller errors.
-func (m *fieldMapper) CandidateKeys(_ context.Context, _ valuer.UUID, _ *telemetrytypes.TelemetryFieldKey, _ any, _ map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
-	return nil
-}
-
-func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) { //nolint:unparam
+func (m *storage) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) { //nolint:unparam
 	name := strings.TrimSpace(key.Name)
 	if col, ok := ruleStateHistoryColumns[name]; ok {
 		return col, nil
@@ -46,7 +41,7 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 	return ruleStateHistoryColumns["labels"], nil
 }
 
-func (m *fieldMapper) FieldFor(ctx context.Context, _ valuer.UUID, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
+func (m *storage) Read(ctx context.Context, _ qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey) (string, error) {
 	col, err := m.getColumn(ctx, key)
 	if err != nil {
 		return "", err
@@ -57,36 +52,39 @@ func (m *fieldMapper) FieldFor(ctx context.Context, _ valuer.UUID, _, _ uint64, 
 	return col.Name, nil
 }
 
-func (m *fieldMapper) ColumnFor(ctx context.Context, _ valuer.UUID, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
+// Exists answers a label inside the JSON with a membership check, with the
+// same condition that Read uses for extraction. Absent, a label reads the
+// empty string, and that is the keyless contract here, so no query guards
+// it; every real column always exists.
+func (m *storage) Exists(ctx context.Context, _ qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, exists bool) (qbtypes.Existence, error) {
 	col, err := m.getColumn(ctx, key)
 	if err != nil {
-		return nil, err
-	}
-	return []*schema.Column{col}, nil
-}
-
-// ExistsFor implements the per-key existence primitive of qbtypes.FieldMapper.
-// A label inside the JSON gets a membership check, with the same condition
-// that FieldFor uses for extraction; every real column always exists.
-func (m *fieldMapper) ExistsFor(ctx context.Context, _ valuer.UUID, _, _ uint64, key *telemetrytypes.TelemetryFieldKey, exists bool) (string, error) {
-	col, err := m.getColumn(ctx, key)
-	if err != nil {
-		return "", err
+		return qbtypes.Existence{}, err
 	}
 	if col.Name == "labels" && key.Name != "labels" {
-		pred := fmt.Sprintf("JSONHas(labels, %s)", querybuilder.ClickHouseStringLiteral(key.Name))
-		if exists {
-			return pred, nil
+		predicate := fmt.Sprintf("JSONHas(labels, %s)", querybuilder.ClickHouseStringLiteral(key.Name))
+		if !exists {
+			predicate = "not " + predicate
 		}
-		return "not " + pred, nil
+		return qbtypes.Existence{Predicate: predicate, WhenAbsent: qbtypes.AbsentIsValue}, nil
 	}
-	return "true", nil
+	return qbtypes.Existence{Predicate: "true", WhenAbsent: qbtypes.AlwaysPresent}, nil
 }
 
-func (m *fieldMapper) ColumnExpressionFor(ctx context.Context, orgID valuer.UUID, tsStart, tsEnd uint64, field *telemetrytypes.TelemetryFieldKey, _ telemetrytypes.FieldDataType, _ map[string][]*telemetrytypes.TelemetryFieldKey) (string, error) {
-	colName, err := m.FieldFor(ctx, orgID, tsStart, tsEnd, field)
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(colName), field.Name), nil
+// Fallback returns nil: rule-state history has no attribute-map fallback, so
+// a key metadata does not hold stays unresolved and the caller errors.
+func (m *storage) Fallback(context.Context, qbtypes.QueryInfo, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any) ([]*telemetrytypes.LogicalField, error) {
+	return nil, nil
+}
+
+func (m *storage) Traits() qbtypes.Traits {
+	return qbtypes.Traits{}
+}
+
+func (m *storage) Compile(ctx context.Context, q qbtypes.QueryInfo, logical *telemetrytypes.LogicalField, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (qbtypes.Compiled, error) {
+	return querybuilder.SharedCondition(ctx, q, m, logical, operator, value, sb)
+}
+
+func (m *storage) ColumnRead(ctx context.Context, q qbtypes.QueryInfo, logical *telemetrytypes.LogicalField, _ any) (qbtypes.ColumnExpr, error) {
+	return querybuilder.DefaultRead(ctx, q, m, logical)
 }

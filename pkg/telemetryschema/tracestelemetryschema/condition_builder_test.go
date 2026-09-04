@@ -2,13 +2,12 @@ package tracestelemetryschema
 
 import (
 	"context"
-	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"testing"
 	"time"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -289,13 +288,12 @@ func TestConditionFor(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper(flaggertest.New(t))
-	conditionBuilder := NewConditionBuilder(fm, flaggertest.New(t))
+	storage := NewStorage()
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, _, err := conditionBuilder.ConditionFor(ctx, valuer.UUID{}, 1761437108000000000, 1761458708000000000, &tc.key, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {&tc.key}}, qbtypes.ConditionBuilderOptions{}, tc.operator, tc.value, sb)
+			cond, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: 1761437108000000000, EndNs: 1761458708000000000}, storage, &tc.key, tc.operator, tc.value, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {&tc.key}}, false, sb)
 			sb.Where(cond...)
 
 			if tc.expectedError != nil {
@@ -376,13 +374,12 @@ func TestConditionForResourceWithEvolution(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper(flaggertest.New(t))
-	conditionBuilder := NewConditionBuilder(fm, flaggertest.New(t))
+	storage := NewStorage()
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, _, err := conditionBuilder.ConditionFor(ctx, valuer.UUID{}, tc.tsStart, tc.tsEnd, &tc.key, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {&tc.key}}, qbtypes.ConditionBuilderOptions{}, tc.operator, nil, sb)
+			cond, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{StartNs: tc.tsStart, EndNs: tc.tsEnd}, storage, &tc.key, tc.operator, nil, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {&tc.key}}, false, sb)
 			require.NoError(t, err)
 			sb.Where(cond...)
 			sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -399,8 +396,7 @@ func TestConditionForResourceWithEvolution(t *testing.T) {
 // undeclared (Dynamic) paths and genuinely NULL when absent.
 func TestConditionForScopeIntrinsicFields(t *testing.T) {
 	ctx := context.Background()
-	fm := NewFieldMapper(flaggertest.New(t))
-	conditionBuilder := NewConditionBuilder(fm, flaggertest.New(t))
+	storage := NewStorage()
 
 	testCases := []struct {
 		name        string
@@ -464,14 +460,14 @@ func TestConditionForScopeIntrinsicFields(t *testing.T) {
 			},
 			operator:    qbtypes.FilterOperatorEqual,
 			value:       "io.signoz.checkout",
-			expectedSQL: "(scope.attributes.`name`::String = ? AND scope.attributes.`name` IS NOT NULL)",
+			expectedSQL: "scope.attributes.`name`::String = ?",
 		},
 	}
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			conds, _, err := conditionBuilder.ConditionFor(ctx, valuer.UUID{}, 0, 0, &tc.key, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {&tc.key}}, qbtypes.ConditionBuilderOptions{}, tc.operator, tc.value, sb)
+			conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &tc.key, tc.operator, tc.value, map[string][]*telemetrytypes.TelemetryFieldKey{tc.key.Name: {&tc.key}}, false, sb)
 			require.NoError(t, err)
 			sb.Where(conds...)
 			sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -486,8 +482,7 @@ func TestConditionForScopeIntrinsicFields(t *testing.T) {
 // user input and queries anyway, emitting a warning instead of failing.
 func TestConditionForSynthesizedKeys(t *testing.T) {
 	ctx := context.Background()
-	fm := NewFieldMapper(flaggertest.New(t))
-	cb := NewConditionBuilder(fm, flaggertest.New(t))
+	storage := NewStorage()
 
 	// no metadata matches -> the builder must synthesize from user input
 	var noMatches map[string][]*telemetrytypes.TelemetryFieldKey
@@ -495,7 +490,7 @@ func TestConditionForSynthesizedKeys(t *testing.T) {
 	t.Run("bare key with string operand -> attribute string", func(t *testing.T) {
 		sb := sqlbuilder.NewSelectBuilder()
 		key := telemetrytypes.TelemetryFieldKey{Name: "error.type"}
-		conds, warnings, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, noMatches, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorEqual, "timeout", sb)
+		conds, warnings, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorEqual, "timeout", noMatches, false, sb)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, warnings, "a not-found warning should be emitted")
 		sb.Where(conds...)
@@ -507,7 +502,7 @@ func TestConditionForSynthesizedKeys(t *testing.T) {
 	t.Run("scope context with no metadata -> scope attribute", func(t *testing.T) {
 		sb := sqlbuilder.NewSelectBuilder()
 		key := telemetrytypes.TelemetryFieldKey{Name: "custom.attr", FieldContext: telemetrytypes.FieldContextScope}
-		conds, warnings, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, noMatches, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorEqual, "v", sb)
+		conds, warnings, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorEqual, "v", noMatches, false, sb)
 		assert.NoError(t, err, "an undeclared scope attribute must still be filterable")
 		assert.NotEmpty(t, warnings)
 		sb.Where(conds...)
@@ -521,7 +516,7 @@ func TestConditionForSynthesizedKeys(t *testing.T) {
 	t.Run("bare key with number operand -> attribute number", func(t *testing.T) {
 		sb := sqlbuilder.NewSelectBuilder()
 		key := telemetrytypes.TelemetryFieldKey{Name: "http.status"}
-		conds, warnings, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, noMatches, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorGreaterThan, float64(5), sb)
+		conds, warnings, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorGreaterThan, float64(5), noMatches, false, sb)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, warnings)
 		sb.Where(conds...)
@@ -532,7 +527,7 @@ func TestConditionForSynthesizedKeys(t *testing.T) {
 	t.Run("bare key with bool operand -> attribute bool", func(t *testing.T) {
 		sb := sqlbuilder.NewSelectBuilder()
 		key := telemetrytypes.TelemetryFieldKey{Name: "sampled"}
-		conds, _, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, noMatches, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorEqual, true, sb)
+		conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorEqual, true, noMatches, false, sb)
 		assert.NoError(t, err)
 		sb.Where(conds...)
 		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -542,7 +537,7 @@ func TestConditionForSynthesizedKeys(t *testing.T) {
 	t.Run("exists with no operand fans out across type variants", func(t *testing.T) {
 		sb := sqlbuilder.NewSelectBuilder()
 		key := telemetrytypes.TelemetryFieldKey{Name: "exception.type"}
-		conds, warnings, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, noMatches, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorExists, nil, sb)
+		conds, warnings, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorExists, nil, noMatches, false, sb)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, warnings)
 		assert.Len(t, conds, 3, "exists should fan out to string/number/bool")
@@ -556,7 +551,7 @@ func TestConditionForSynthesizedKeys(t *testing.T) {
 	t.Run("qualified data type honored without fanout", func(t *testing.T) {
 		sb := sqlbuilder.NewSelectBuilder()
 		key := telemetrytypes.TelemetryFieldKey{Name: "custom.key", FieldDataType: telemetrytypes.FieldDataTypeString}
-		conds, _, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, noMatches, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorEqual, "v", sb)
+		conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorEqual, "v", noMatches, false, sb)
 		assert.NoError(t, err)
 		assert.Len(t, conds, 1)
 		sb.Where(conds...)
@@ -567,7 +562,7 @@ func TestConditionForSynthesizedKeys(t *testing.T) {
 	t.Run("bare intrinsic column resolves to the column, not synthesized attributes", func(t *testing.T) {
 		sb := sqlbuilder.NewSelectBuilder()
 		key := telemetrytypes.TelemetryFieldKey{Name: "duration_nano"}
-		conds, _, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, noMatches, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorGreaterThan, float64(100), sb)
+		conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorGreaterThan, float64(100), noMatches, false, sb)
 		require.NoError(t, err)
 		require.Len(t, conds, 1)
 		sb.Where(conds...)
@@ -580,7 +575,7 @@ func TestConditionForSynthesizedKeys(t *testing.T) {
 	t.Run("bare deprecated alias resolves to the calculated column", func(t *testing.T) {
 		sb := sqlbuilder.NewSelectBuilder()
 		key := telemetrytypes.TelemetryFieldKey{Name: "httpMethod"}
-		conds, _, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, noMatches, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorEqual, "GET", sb)
+		conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorEqual, "GET", noMatches, false, sb)
 		require.NoError(t, err)
 		require.Len(t, conds, 1)
 		sb.Where(conds...)
@@ -592,7 +587,7 @@ func TestConditionForSynthesizedKeys(t *testing.T) {
 	t.Run("span-context key that is a real column stays the column", func(t *testing.T) {
 		sb := sqlbuilder.NewSelectBuilder()
 		key := telemetrytypes.TelemetryFieldKey{Name: "duration_nano", FieldContext: telemetrytypes.FieldContextSpan}
-		conds, _, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, noMatches, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorGreaterThan, float64(100), sb)
+		conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorGreaterThan, float64(100), noMatches, false, sb)
 		require.NoError(t, err)
 		require.Len(t, conds, 1)
 		sb.Where(conds...)
@@ -607,9 +602,9 @@ func TestConditionForSynthesizedKeys(t *testing.T) {
 		keysMap := map[string][]*telemetrytypes.TelemetryFieldKey{
 			"http.method": {{Name: "http.method", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString}},
 		}
-		conds, warnings, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, keysMap, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorEqual, "GET", sb)
+		conds, warnings, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorEqual, "GET", keysMap, false, sb)
 		require.NoError(t, err)
-		assert.NotEmpty(t, warnings)
+		assert.Empty(t, warnings, "the stripped name matches metadata, not a guess")
 		require.Len(t, conds, 1)
 		sb.Where(conds...)
 		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -620,7 +615,7 @@ func TestConditionForSynthesizedKeys(t *testing.T) {
 	t.Run("span-context key absent from metadata synthesizes the stripped name", func(t *testing.T) {
 		sb := sqlbuilder.NewSelectBuilder()
 		key := telemetrytypes.TelemetryFieldKey{Name: "custom.attr", FieldContext: telemetrytypes.FieldContextSpan}
-		conds, warnings, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, noMatches, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorEqual, "v", sb)
+		conds, warnings, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorEqual, "v", noMatches, false, sb)
 		require.NoError(t, err)
 		assert.NotEmpty(t, warnings)
 		require.Len(t, conds, 1)
@@ -633,7 +628,7 @@ func TestConditionForSynthesizedKeys(t *testing.T) {
 	t.Run("qualified resource context honored with literal spelling second", func(t *testing.T) {
 		sb := sqlbuilder.NewSelectBuilder()
 		key := telemetrytypes.TelemetryFieldKey{Name: "k8s.cluster.name", FieldContext: telemetrytypes.FieldContextResource}
-		conds, _, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, noMatches, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorEqual, "prod", sb)
+		conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorEqual, "prod", noMatches, false, sb)
 		assert.NoError(t, err)
 		assert.Len(t, conds, 2, "stripped interpretation first, literal `resource.` spelling second")
 		sb.Where(conds...)
@@ -646,7 +641,7 @@ func TestConditionForSynthesizedKeys(t *testing.T) {
 		// the resource sub-query never covered a key absent from metadata
 		sb := sqlbuilder.NewSelectBuilder()
 		key := telemetrytypes.TelemetryFieldKey{Name: "deployment.environment", FieldContext: telemetrytypes.FieldContextResource}
-		conds, warnings, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, nil, qbtypes.ConditionBuilderOptions{SkipResourceFilter: true}, qbtypes.FilterOperatorEqual, "prod", sb)
+		conds, warnings, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorEqual, "prod", nil, true, sb)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, warnings)
 		assert.Len(t, conds, 2, "the synthesized resource conditions must not be dropped")
@@ -662,7 +657,7 @@ func TestConditionForSynthesizedKeys(t *testing.T) {
 		keysMap := map[string][]*telemetrytypes.TelemetryFieldKey{
 			"service.name": {{Name: "service.name", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString}},
 		}
-		conds, _, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, keysMap, qbtypes.ConditionBuilderOptions{SkipResourceFilter: true}, qbtypes.FilterOperatorEqual, "redis", sb)
+		conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorEqual, "redis", keysMap, true, sb)
 		assert.NoError(t, err)
 		assert.Empty(t, conds, "the resource CTE covers metadata-backed keys")
 	})
@@ -670,7 +665,7 @@ func TestConditionForSynthesizedKeys(t *testing.T) {
 	t.Run("synthesized resource key coerces numeric operand", func(t *testing.T) {
 		sb := sqlbuilder.NewSelectBuilder()
 		key := telemetrytypes.TelemetryFieldKey{Name: "replica.count", FieldContext: telemetrytypes.FieldContextResource}
-		conds, _, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, noMatches, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorEqual, float64(3), sb)
+		conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorEqual, float64(3), noMatches, false, sb)
 		assert.NoError(t, err)
 		sb.Where(conds...)
 		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -681,7 +676,7 @@ func TestConditionForSynthesizedKeys(t *testing.T) {
 	t.Run("negative operator builds without exists guard (matches-everything semantics)", func(t *testing.T) {
 		sb := sqlbuilder.NewSelectBuilder()
 		key := telemetrytypes.TelemetryFieldKey{Name: "error.type"}
-		conds, _, err := cb.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, noMatches, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorNotEqual, "fatal", sb)
+		conds, _, err := querybuilder.Conditions(ctx, qbtypes.QueryInfo{}, storage, &key, qbtypes.FilterOperatorNotEqual, "fatal", noMatches, false, sb)
 		assert.NoError(t, err)
 		sb.Where(conds...)
 		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)

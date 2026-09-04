@@ -54,50 +54,95 @@ The `fieldContexts` map includes aliases (`tag` -> `attribute`, `spanfield` -> `
 
 ## The Abstraction Stack
 
-The query pipeline is built from four interfaces that compose vertically. Each layer has a single responsibility. Each layer depends only on the layers below it. This layering is intentional and must be preserved.
+The query pipeline has three layers. The generic layer is written one time, in `pkg/querybuilder`. A storage is written one time per signal. The statement builders compose them. Each layer depends only on the layer below it. This layering is intentional and must be preserved.
 
 ```
-StatementBuilder          <- Orchestrates everything into executable SQL
-  ├── AggExprRewriter     <- Rewrites aggregation expressions (maps field refs to columns)
-  ├── ConditionBuilder    <- Builds WHERE predicates (field + operator + value -> SQL)
-  └── FieldMapper         <- Maps TelemetryFieldKey -> ClickHouse column expression
+StatementBuilder                <- Composes one query into executable SQL
+  ├── AggExprRewriter           <- Rewrites aggregation expressions through the generic layer
+  ├── filter visitor            <- Parses the filter expression and compiles it one term at a time
+  └── querybuilder (generic)    <- Resolution, the condition builder, the column expression builder
+        └── Storage             <- What one signal's tables can answer about one field key
 ```
 
-### FieldMapper
+### Storage
 
-**Contract:** Given a `TelemetryFieldKey`, return a ClickHouse column expression that yields the value for that field when used in a SELECT.
+**Contract:** `qbtypes.Storage` in `pkg/types/querybuildertypes/querybuildertypesv5/qb.go`. One implementation per signal: traces, logs, metrics, audit, rule state history, the resource fingerprint sub-query, and the related-values metadata.
 
-**Principle:** This is the *only* place where field-to-column translation happens. No other layer should contain knowledge of how fields map to storage. If you need a column expression, go through the FieldMapper.
+A storage answers five questions and nothing else:
 
-**Why:** The user says `http.request.method`. ClickHouse might store it as `attributes_string['http.request.method']`, or as a materialized column `` `attribute_string_http$$request$$method` ``, or via a JSON access path in a body column. This variation is entirely contained within the FieldMapper. Everything above it is storage-agnostic.
+- `Read(field)`: the bare SQL read of one field key. No alias, no guard, no cast. It honors the materialization and the evolutions the field carries.
+- `Exists(field, exists)`: the presence test of one field key, and how the field reads when a row lacks it (`Absent`, below).
+- `Fallback(key, operator, value)`: the field keys that could hold a key metadata does not report: column aliases, the type variants of a map read, body paths, and virtual keys that compile to structural predicates (a span search scope, a full-text search over a scope).
+- `Traits()`: the storage's part in the resource fingerprint split, whether it supports body functions, what it does with an unknown key, and which contexts mean "this signal's own record".
+- `Compile` and `ColumnRead`: two overrides for a storage with its own condition language (the body JSON language in logs, the index hints of the resource fingerprint, the polarity form of the related values, the String-typed labels of metrics). Every other storage returns `querybuilder.SharedCondition` and `querybuilder.DefaultRead`.
 
-### ConditionBuilder
+**Principle:** A storage describes its field keys. It never decides a guard, an ambiguity, a warning, or the shape of a fold. Those decisions are derived one time, in the generic layer, from those descriptions.
 
-**Contract:** Given a field key, an operator, and a value, produce a valid SQL predicate for a WHERE clause.
+### Absent
 
-**Dependency:** Uses FieldMapper for the left-hand side of the condition.
+`Exists` returns the field's `Absent`: what a row without the field reads. It is a property of the read, not of the column. `resource.x::String` reads the empty string for an absent row, the multi-era fold `multiIf(..., NULL)` reads NULL, and a table column always reads a real value. Every guard derives from it:
 
-**Principle:** The ConditionBuilder owns all the complexity of operator semantics, i.e type casting, array operators (`hasAny`/`hasAll` vs `=`), existence checks, and negative operator behavior. This complexity must not leak upward into the StatementBuilder.
+| WhenAbsent | Absent row reads | Positive filter | Raw select | Multi-candidate column | Field keys |
+|---|---|---|---|---|---|
+| `AlwaysPresent` | a real value | no guard | no guard | no branch, ends the candidate list | table columns |
+| `AbsentIsSentinel` | `''`, 0, false, and that is not a value | exists guard | exists guard | presence branch | map attributes, cast JSON paths, string families |
+| `AbsentIsNull` | NULL | no guard | no guard | presence branch | multi-era folds, body JSON paths, numeric families |
+| `AbsentIsValue` | `''`, and that is the keyless contract | no guard | no guard | no presence branch | metrics labels, rule state history labels |
 
-### AggExprRewriter
+### The generic layer
 
-**Contract:** Given a user-facing aggregation expression like `sum(duration_nano)`, resolve field references within it and produce valid ClickHouse SQL.
+`pkg/querybuilder` needs two inputs, made one time per request:
 
-**Dependency:** Uses FieldMapper to resolve field names within expressions.
+- The metadata keys: `keys := metadataStore.GetKeysMulti(...)`, the field keys the metadata store reports for the query's names, as `map[name][]*TelemetryFieldKey`.
+- `q := querybuilder.NewQueryInfo(ctx, orgID, fl, signal, metric, startNs, endNs)`: the org and time range every read needs, the signal and the queried metric that family admission needs, and the query-path flags (`FamiliesOn`, `BodyJSONOn`), evaluated one time.
 
-**Principle:** Aggregation expressions are user-authored strings that contain field references. The rewriter parses them, identifies field references, resolves each through the FieldMapper, and reassembles the expression.
+The functions, from the outside in:
 
-### StatementBuilder
+| Function | Does |
+|---|---|
+| `PrepareWhereClause(query, opts)` | The filter visitor. Parses the filter grammar and compiles each term through `RejectsBodyFunction`, `Resolve`, and `Condition`. Returns the WHERE clause, the warnings, and the cost-guard flag. |
+| `NewAggExprRewriter(settings, fullTextColumn, storage, fl, signal)` | Parses an aggregation expression such as `sum(duration_nano)` and resolves each field reference through `ResolveColumn`. |
+| `ResolveColumn(ctx, q, storage, key, target, metadata)` | `Resolve` with `FilterOperatorUnknown`, then `Column`. The column stages (raw select, order by, group by, aggregation arguments) call it. |
+| `Resolve(ctx, q, storage, key, operator, value, metadata)` | One requested key to its meanings in this storage (see "A resolved key"). |
+| `Condition(ctx, q, storage, resolved, dropResourceFields, operator, value, sb)` | A resolved key to the conditions of one filter term: the split narrows the fields, and each field compiles through `storage.Compile`. |
+| `Conditions(...)` | `RejectsBodyFunction`, `Resolve`, and `Condition` in one call, for callers outside the visitor: the related-values metadata, the scoped traces predicate resolver, tests. |
+| `Column(ctx, q, storage, resolved, target)` | A resolved key to one bare column expression. The caller aliases. |
+| `RejectsBodyFunction(traits, operator)` | Before resolution: a storage without body functions (`has`, `hasAny`, `hasAll`, `hasToken`, `search`) errors; the fingerprint side of a split skips the term, because the main query evaluates it. |
+| `SharedCondition(...)` | The `Compile` of every storage without its own condition language: `LogicalValueExpr`, the shared data-type collision cast, `OperatorCondition`, then the guard rule. |
+| `OperatorCondition(...)` | The operator switch over an already cast read. A storage with its own cast policy composes with it. |
+| `DefaultRead(...)` | The `ColumnRead` of every storage without a target-dependent read: `LogicalValueExpr` as an uncoerced column expression. |
+| `LogicalValueExpr(...)`, `LogicalExistsExpr(...)` | The only place family expressions are built. A single-member field reads through its member. A family merges the member reads current-first (`COALESCE(NULLIF(m1, ''), NULLIF(m2, ''), '')` for strings, `multiIf` with a NULL tail for numbers) and ORs the member presence tests. A member with a value map reads through `TransformRead`. |
 
-**Contract:** Given a complete `QueryBuilderQuery`, a time range, and a request type, produces an executable SQL statement.
+### A resolved key
 
-**Dependency:** Uses all three abstractions above.
+`Resolve` turns one requested key into a `Resolved` value. It is the only thing the condition builder and the column expression builder receive. Compile it with the operator and value it was resolved with: the stage is the operand, and a nil value means a column or presence use.
 
-**Principle:** This is the composition layer. It does not contain field mapping logic, condition building logic, or expression rewriting logic. It orchestrates the other abstractions. If you find storage-specific logic creeping into the StatementBuilder, push it down into the appropriate abstraction.
+```go
+type Resolved struct {
+	Key          *TelemetryFieldKey // the spelling the request used
+	Fields       []*LogicalField    // its meanings in this storage, one per interpretation
+	FromFallback bool               // the fields came from the storage's Fallback, not from metadata matches
+	Ambiguous    bool               // the matches held several interpretations
+	Skipped      bool               // the storage contributes nothing for this key
+	Warnings     []string           // the warnings to surface: ambiguity, not-found
+}
+```
+
+A `LogicalField` is one meaning: one name, context, and data type, backed by one or more physical members. A family (one field with several spellings) is one logical field with several members, current spelling first. Ambiguity (one name, different fields) is several logical fields.
+
+The resolution order is the same for every storage and every stage:
+
+1. **Own context.** A key under one of the storage's own contexts (`span.x`, `log.x`) looks up as if it had no context. Strict contexts (`resource.`, `attribute.`, `scope.`, `body.`) are honored as written.
+2. **Matches.** The metadata keys under the key's spellings, grouped into families when the flag is on. Each combination of context and data type is one interpretation.
+3. **Ambiguity.** A filter settles several interpretations by resource over attribute, with a warning. A column stage keeps every interpretation in metadata order and folds them, so a select or a group by sees the value wherever it is.
+4. **Intrinsic column first**, bare keys only. A column every row has leads the list, whether metadata reports it or the storage's `Fallback` does. Sentinel-reading fields with a contradicting data type drop. A metadata gap degrades to the correct column, never to a corrupt metadata key.
+5. **Fallback.** With no match, the storage's fallback keys for the key. When the storage ignores unknown keys (a side query whose main query owns the error), the key is `Skipped`. Otherwise a key nothing can serve is an error with suggestions. The not-found warning fires only when every fallback key is a guess, that is, none of them is always present.
+
+The condition builder then applies the fingerprint split (`MainOfSplit` drops the resource fields the sub-query serves and keeps fallback keys; `FingerprintOfSplit` keeps resource fields only), compiles each field, and the visitor joins the per-field conditions by the operator's polarity. The column expression builder reads each field through `ColumnRead`, casts for the coerced stages unless the read keeps its type, guards by `Absent`, and renders one candidate bare or several as `multiIf(..., NULL)`. A candidate that is not selectable (`ErrNotSelectable`) drops; the error surfaces only when none remains.
 
 ### Invariant: No layer skipping
 
-The StatementBuilder must not call FieldMapper directly to build conditions, it goes through the ConditionBuilder. The AggExprRewriter must not hardcode column names, it goes through the FieldMapper. Skipping layers creates hidden coupling and makes the system fragile to storage changes.
+A statement builder must not spell a column or a condition. It calls `ResolveColumn` and the filter visitor. A storage must not decide a guard or an ambiguity. It declares `Absent` and answers the five questions. Skipping layers recreates the per-signal copies the contract removed.
 
 ---
 
@@ -119,14 +164,15 @@ Only additive/counting aggregations (`count`, `count_distinct`, `sum`, `rate`) d
 
 **Enforcement:** `GetQueriesSupportingZeroDefault` determines which queries can default to zero. The `FormulaEvaluator` consumes this via `canDefaultZero`. Changes to aggregation handling must preserve this distinction.
 
-### Constraint: Existence semantics differ for positive vs negative operators
+### Constraint: The exists guard derives from the operator and from the field
 
-- **Positive operators** (`=`, `>`, `LIKE`, `IN`, etc.) implicitly assert field existence. `http.method = GET` means "the field exists AND equals GET".
-- **Negative operators** (`!=`, `NOT IN`, `NOT LIKE`, etc.) do **not** add an existence check. `http.method != GET` includes records where the field doesn't exist at all.
+- **Positive operators** (`=`, `>`, `LIKE`, `IN`, etc.) implicitly assert field existence for a field that reads a sentinel when absent. `http.method = GET` on a map attribute means "the field exists AND equals GET".
+- **Negative operators** (`!=`, `NOT IN`, `NOT LIKE`, etc.) never add an existence check. `http.method != GET` includes records where the field doesn't exist at all.
+- A field that reads NULL when absent, and a table column, take no guard on any operator: the comparison already excludes the absent row, or there is no absent row.
 
-**Why:** The user's intent with negative operators is ambiguous. Rather than guess, we take the broader interpretation. Users can add an explicit `EXISTS` filter if they want the narrower one. This is documented in `AddDefaultExistsFilter`.
+**Why:** The user's intent with negative operators is ambiguous. Rather than guess, we take the broader interpretation. Users can add an explicit `EXISTS` filter if they want the narrower one. The operator side is declared in `AddDefaultExistsFilter`; the field side is the `Absent` a storage returns from `Exists`.
 
-**Consequence:** Any new operator must declare its existence behavior in `AddDefaultExistsFilter`. Do not add operators without considering this.
+**Consequence:** Any new operator must declare its existence behavior in `AddDefaultExistsFilter`. Any new read must declare what an absent row reads. Never add a guard by hand in a storage.
 
 ### Constraint: Post-processing functions operate on result sets, not in SQL
 
@@ -188,11 +234,11 @@ The `MetadataStore` interface provides runtime field discovery and type resoluti
 
 The same name can map to multiple `TelemetryFieldKey` variants (different contexts, different types). The metadata store returns *all* variants. Resolution to a single field happens during query building, using the query's signal and any explicit context/type hints from the user.
 
-**Consequence:** Code that calls `GetKey` or `GetKeys` must handle multiple results. Do not assume a name maps to a single field.
+**Consequence:** Code that calls `GetKey` or `GetKeys` must handle multiple results. Do not assume a name maps to a single field. `querybuilder.Resolve` is where the variants settle: it returns every interpretation as a `LogicalField`, marks the result `Ambiguous`, and carries the warning.
 
 ### Principle: Materialized fields are a performance optimization, not a semantic distinction
 
-A materialized field and its non-materialized equivalent represent the same logical field. The `Materialized` flag tells the FieldMapper to generate a simpler column expression. The user should never need to know whether a field is materialized.
+A materialized field and its non-materialized equivalent represent the same logical field. The `Materialized` flag tells the storage's `Read` to generate a simpler column expression. The user should never need to know whether a field is materialized.
 
 ### Principle: JSON body fields require access plans
 
@@ -203,14 +249,14 @@ Fields inside JSON body columns (`body.response.errors[].code`) need pre-compute
 ## Summary of Inviolable Rules
 
 1. **User-facing types never contain ClickHouse column names or SQL fragments.**
-2. **Field-to-column translation only happens in FieldMapper.**
+2. **Field-to-column translation only happens in a Storage (`Read`, `Exists`, `Fallback`).**
 3. **Normalization happens once at the API boundary, never deeper.**
 4. **Historical aliases in fieldContexts and fieldDataTypes must not be removed.**
 5. **Formula evaluation stays in Go — do not push it into ClickHouse JOINs.**
 6. **Zero-defaulting is aggregation-type-dependent — do not universally default to zero.**
-7. **Positive operators imply existence, negative operators do not.**
+7. **The exists guard derives from `AddDefaultExistsFilter` and `Absent`; positive operators guard sentinel reads, negative operators never guard.**
 8. **Post-processing functions operate on Go result sets, not in SQL.**
 9. **All user-facing types reject unknown JSON fields with suggestions.**
 10. **Validation rules are gated by request type.**
 11. **Query names must be unique within a composite query.**
-12. **The four-layer abstraction stack (FieldMapper -> ConditionBuilder -> AggExprRewriter -> StatementBuilder) must not be bypassed or flattened.**
+12. **The three-layer abstraction stack (Storage -> querybuilder generic layer -> StatementBuilder) must not be bypassed or flattened. A storage describes its field keys; the generic layer decides.**

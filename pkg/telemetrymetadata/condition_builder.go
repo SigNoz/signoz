@@ -8,61 +8,26 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
 
-type conditionBuilder struct {
-	fm qbtypes.FieldMapper
+// Compile keeps the related-values polarity form for a single key: the key
+// must exist to apply the filter, and a row without it answers with the
+// operator's polarity. A family compiles through the shared condition.
+func (s *storage) Compile(ctx context.Context, q qbtypes.QueryInfo, logical *telemetrytypes.LogicalField, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (qbtypes.Compiled, error) {
+	if logical.IsFamily() {
+		return querybuilder.SharedCondition(ctx, q, s, logical, operator, value, sb)
+	}
+	condition, err := s.conditionForKey(ctx, q, logical.Single(), operator, value, sb)
+	if err != nil {
+		return qbtypes.Compiled{}, err
+	}
+	return qbtypes.Compiled{Condition: condition}, nil
 }
 
-func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
-	return &conditionBuilder{fm: fm}
-}
-
-// Metadata has no resource sub-query, so options are unused.
-func (c *conditionBuilder) ConditionFor(
+func (s *storage) conditionForKey(
 	ctx context.Context,
-	orgID valuer.UUID,
-	tsStart, tsEnd uint64,
-	key *telemetrytypes.TelemetryFieldKey,
-	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
-	_ qbtypes.ConditionBuilderOptions,
-	operator qbtypes.FilterOperator,
-	value any,
-	sb *sqlbuilder.SelectBuilder,
-) ([]string, []string, error) {
-
-	// has/hasAny/hasAll/hasToken are logs-body-only; reject to avoid malformed related-values SQL.
-	if err := querybuilder.NewFunctionUnsupportedError(operator); err != nil {
-		return nil, nil, err
-	}
-
-	// an unknown key simply yields no condition rather than an error. Metadata
-	// fields have no family support, so every logical field is single-member
-	// and flattens losslessly to its physical key.
-	resolved, warning := querybuilder.ResolveLogicalFields(key, querybuilder.MatchingLogicalFields(ctx, orgID, nil, key, fieldKeys))
-	keys := querybuilder.SingleKeys(resolved)
-	var warnings []string
-	if warning != "" {
-		warnings = append(warnings, warning)
-	}
-
-	conds := make([]string, 0, len(keys))
-	for _, k := range keys {
-		cond, err := c.conditionForKey(ctx, orgID, tsStart, tsEnd, k, operator, value, sb)
-		if err != nil {
-			return nil, nil, err
-		}
-		conds = append(conds, cond)
-	}
-	return conds, warnings, nil
-}
-
-func (c *conditionBuilder) conditionForKey(
-	ctx context.Context,
-	orgID valuer.UUID,
-	tsStart, tsEnd uint64,
+	q qbtypes.QueryInfo,
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
@@ -79,13 +44,13 @@ func (c *conditionBuilder) conditionForKey(
 		value = querybuilder.FormatValueForContains(value)
 	}
 
-	columns, err := c.fm.ColumnFor(ctx, orgID, tsStart, tsEnd, key)
+	columns, err := s.getColumn(ctx, q.StartNs, q.EndNs, key)
 	if err != nil {
 		// if we don't have a column, we can't build a condition for related values
 		return "", nil
 	}
 
-	fieldExpression, err := c.fm.FieldFor(ctx, orgID, tsStart, tsEnd, key)
+	fieldExpression, err := s.Read(ctx, q, key)
 	if err != nil {
 		// if we don't have a table field name, we can't build a condition for related values
 		return "", nil

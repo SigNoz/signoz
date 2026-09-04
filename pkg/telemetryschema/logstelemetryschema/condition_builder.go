@@ -7,32 +7,17 @@ import (
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 
 	"github.com/huandu/go-sqlbuilder"
 )
 
-type conditionBuilder struct {
-	fm qbtypes.FieldMapper
-	fl flagger.Flagger
-}
-
-var _ qbtypes.ConditionBuilder = (*conditionBuilder)(nil)
-
-func NewConditionBuilder(fm qbtypes.FieldMapper, fl flagger.Flagger) *conditionBuilder {
-	return &conditionBuilder{fm: fm, fl: fl}
-}
-
 // conditionForSearch ORs a case-insensitive match of the search term across the key
 // context's searchable columns (unspecified context = every column).
-func (c *conditionBuilder) conditionForSearch(
-	ctx context.Context,
-	orgID valuer.UUID,
+func (s *storage) conditionForSearch(
+	q qbtypes.QueryInfo,
 	key *telemetrytypes.TelemetryFieldKey,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
@@ -41,7 +26,7 @@ func (c *conditionBuilder) conditionForSearch(
 	// LOWER(toString(body_v2)) skip index.
 	term := regexp.QuoteMeta(fmt.Sprintf("%v", value))
 
-	useJSONBody := c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID))
+	useJSONBody := q.BodyJSONOn
 
 	var conditions []string
 
@@ -91,9 +76,8 @@ func isBodyJSONSearch(key *telemetrytypes.TelemetryFieldKey, columns []*schema.C
 
 // conditionForArrayFunction builds has/hasAny/hasAll over a body JSON path — via the JSON
 // access plan (flag on) or legacy typed extraction (flag off).
-func (c *conditionBuilder) conditionForArrayFunction(
-	ctx context.Context,
-	orgID valuer.UUID,
+func (s *storage) conditionForArrayFunction(
+	q qbtypes.QueryInfo,
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
@@ -110,7 +94,7 @@ func (c *conditionBuilder) conditionForArrayFunction(
 		needle = args[0]
 	}
 
-	if c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
+	if q.BodyJSONOn {
 		// JSON access plan: data-type collision handling, nested array paths.
 		valueType, needle := InferDataType(needle, operator, key)
 		// A not-found (synthesized) body path carries no metadata plan; build an exhaustive
@@ -184,9 +168,8 @@ func firstTokenSeparator(s string) (string, bool) {
 
 // conditionForHasToken builds a hasToken full-text search over the body column, resolving the
 // column from the key name + use_json_body flag.
-func (c *conditionBuilder) conditionForHasToken(
-	ctx context.Context,
-	orgID valuer.UUID,
+func (s *storage) conditionForHasToken(
+	q qbtypes.QueryInfo,
 	key *telemetrytypes.TelemetryFieldKey,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
@@ -211,7 +194,7 @@ func (c *conditionBuilder) conditionForHasToken(
 			needleStr, sep, needleStr).WithUrl(hasTokenFunctionDocURL)
 	}
 
-	bodyJSONEnabled := c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID))
+	bodyJSONEnabled := q.BodyJSONOn
 
 	if !bodyJSONEnabled {
 		// legacy: token search over the plain body string column only.
@@ -246,10 +229,9 @@ func (c *conditionBuilder) conditionForHasToken(
 		"function `hasToken` only supports the body field or a body JSON string field as first parameter").WithUrl(hasTokenFunctionDocURL)
 }
 
-func (c *conditionBuilder) conditionForResolvedKey(
+func (s *storage) conditionForResolvedKey(
 	ctx context.Context,
-	orgID valuer.UUID,
-	startNs, endNs uint64,
+	q qbtypes.QueryInfo,
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
@@ -257,13 +239,13 @@ func (c *conditionBuilder) conditionForResolvedKey(
 ) (string, error) {
 	// hasToken resolves from the key name + flag alone (no column resolution), so handle it first.
 	if operator == qbtypes.FilterOperatorHasToken {
-		return c.conditionForHasToken(ctx, orgID, key, value, sb)
+		return s.conditionForHasToken(q, key, value, sb)
 	}
 
-	columns, err := c.fm.ColumnFor(ctx, orgID, startNs, endNs, key)
+	columns, err := s.getColumn(q, key)
 	if errors.Is(err, qbtypes.ErrColumnNotFound) && key.FieldContext == telemetrytypes.FieldContextUnspecified {
 		key = telemetrytypes.NewTelemetryFieldKey(key.Name, telemetrytypes.FieldContextBody, key.FieldDataType)
-		columns, err = c.fm.ColumnFor(ctx, orgID, startNs, endNs, key)
+		columns, err = s.getColumn(q, key)
 	}
 	if err != nil {
 		return "", err
@@ -271,12 +253,12 @@ func (c *conditionBuilder) conditionForResolvedKey(
 
 	// has/hasAny/hasAll take the body-JSON path, not the normal operator paths.
 	if operator.IsArrayFunctionOperator() {
-		return c.conditionForArrayFunction(ctx, orgID, key, operator, value, columns, sb)
+		return s.conditionForArrayFunction(q, key, operator, value, columns, sb)
 	}
 
 	// TODO(Piyush): Update this to support multiple JSON columns based on evolutions
 	for _, column := range columns {
-		if column.Type.GetType() == schema.ColumnTypeEnumJSON && isBodyJSONSearch(key, columns) && c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) && key.Name != messageSubField {
+		if column.Type.GetType() == schema.ColumnTypeEnumJSON && isBodyJSONSearch(key, columns) && q.BodyJSONOn && key.Name != messageSubField {
 			valueType, value := InferDataType(value, operator, key)
 			if len(key.JSONPlan) == 0 {
 				keyCopy := telemetrytypes.NewTelemetryFieldKey(key.Name, key.FieldContext, key.FieldDataType)
@@ -299,13 +281,13 @@ func (c *conditionBuilder) conditionForResolvedKey(
 		value = querybuilder.FormatValueForContains(value)
 	}
 
-	fieldExpression, err := c.fm.FieldFor(ctx, orgID, startNs, endNs, key)
+	fieldExpression, err := s.Read(ctx, q, key)
 	if err != nil {
 		return "", err
 	}
 
 	// Check if this is a body JSON search (legacy string-body path, JSON flag off).
-	if isBodyJSONSearch(key, columns) && !c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
+	if isBodyJSONSearch(key, columns) && !q.BodyJSONOn {
 		fieldExpression, value = GetBodyJSONKey(ctx, key, operator, value)
 	}
 
@@ -356,13 +338,13 @@ func (c *conditionBuilder) conditionForResolvedKey(
 		return sb.NotILike(fieldExpression, value), nil
 
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
-		if isBodyJSONSearch(key, columns) && !c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
+		if isBodyJSONSearch(key, columns) && !q.BodyJSONOn {
 			if operator == qbtypes.FilterOperatorExists {
 				return GetBodyJSONKeyForExists(ctx, key, operator, value), nil
 			}
 			return "NOT " + GetBodyJSONKeyForExists(ctx, key, operator, value), nil
 		}
-		pred, err := querybuilder.ExistsExpression(columns, key, startNs, endNs, fieldExpression, operator == qbtypes.FilterOperatorExists)
+		pred, err := querybuilder.ExistsExpression(columns, key, q.StartNs, q.EndNs, fieldExpression, operator == qbtypes.FilterOperatorExists)
 		if err != nil {
 			return "", err
 		}
@@ -410,7 +392,7 @@ func (c *conditionBuilder) conditionForResolvedKey(
 		// instead of using IN, we use `=` + `OR` to make use of index
 		conditions := []string{}
 		for _, value := range values {
-			cond, err := c.conditionForResolvedKey(ctx, orgID, startNs, endNs, key, qbtypes.FilterOperatorEqual, value, sb)
+			cond, err := s.conditionForResolvedKey(ctx, q, key, qbtypes.FilterOperatorEqual, value, sb)
 			if err != nil {
 				return "", err
 			}
@@ -425,7 +407,7 @@ func (c *conditionBuilder) conditionForResolvedKey(
 		// instead of using NOT IN, we use `!=` + `AND` to make use of index
 		conditions := []string{}
 		for _, value := range values {
-			cond, err := c.conditionForResolvedKey(ctx, orgID, startNs, endNs, key, qbtypes.FilterOperatorNotEqual, value, sb)
+			cond, err := s.conditionForResolvedKey(ctx, q, key, qbtypes.FilterOperatorNotEqual, value, sb)
 			if err != nil {
 				return "", err
 			}
@@ -437,132 +419,29 @@ func (c *conditionBuilder) conditionForResolvedKey(
 	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator: %v", operator)
 }
 
-// candidateLookupKeys returns the metadata map only for fold-contexts, where CandidateKeys
-// would otherwise fold the prefix into the key name. Handing it the map lets a same-named
-// key under another context resolve first (as ColumnExpressionFor does). Strict contexts
-// (resource/attribute/scope) get nil so their explicit context is always honored.
-func candidateLookupKeys(key *telemetrytypes.TelemetryFieldKey, fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey) map[string][]*telemetrytypes.TelemetryFieldKey {
-	if key.FieldContext == telemetrytypes.FieldContextLog {
-		return fieldKeys
-	}
-	return nil
-}
-
-func (c *conditionBuilder) ConditionFor(
-	ctx context.Context,
-	orgID valuer.UUID,
-	startNs uint64,
-	endNs uint64,
-	key *telemetrytypes.TelemetryFieldKey,
-	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
-	options qbtypes.ConditionBuilderOptions,
-	operator qbtypes.FilterOperator,
-	value any,
-	sb *sqlbuilder.SelectBuilder,
-) ([]string, []string, error) {
-	matches := querybuilder.MatchingLogicalFields(ctx, orgID, nil, key, fieldKeys)
-	skipResourceFilter := options.SkipResourceFilter
-
-	// search() resolves its own (optional) scope; handle it before key resolution.
-	if operator == qbtypes.FilterOperatorSearch {
-		return c.conditionForSearch(ctx, orgID, key, value, sb)
-	}
-
-	// Logs fields have no family support yet, so every logical field is
-	// single-member and flattens losslessly to its physical key.
-	resolved, warning := querybuilder.ResolveLogicalFields(key, matches)
-	keys := querybuilder.SingleKeys(resolved)
-	var warnings []string
-	if warning != "" {
-		warnings = append(warnings, warning)
-	}
-
-	synthesized := false
-	if len(keys) == 0 {
-		_, isIntrinsicColumn := logsV2Columns[key.Name]
-		switch {
-		case key.FieldContext == telemetrytypes.FieldContextBody && key.Name == "":
-			return nil, warnings, errors.NewInvalidInputf(errors.CodeInvalidInput, "missing key for body json search - expected key of the form `body.key` (ex: `body.status`)")
-		case key.FieldContext == telemetrytypes.FieldContextLog && isIntrinsicColumn:
-			keys = []*telemetrytypes.TelemetryFieldKey{key}
-		default:
-			// Fold-contexts get the metadata map so a same-named key under another context
-			// wins before the prefix folds into the key name (matching ColumnExpressionFor);
-			// strict contexts pass nil and stay honored as-is.
-			keys = c.fm.CandidateKeys(ctx, orgID, key, value, candidateLookupKeys(key, fieldKeys))
-			if operator.IsFunctionOperator() {
-				if key.FieldContext != telemetrytypes.FieldContextBody {
-					// has/hasAny/hasAll/hasToken are body-JSON only
-					return nil, warnings, querybuilder.NewFunctionUnsupportedError(operator)
-				}
-				bodyKeys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(keys))
-				for _, k := range keys {
-					if k.FieldContext == telemetrytypes.FieldContextBody {
-						bodyKeys = append(bodyKeys, k)
-					}
-				}
-				keys = bodyKeys
-			}
-			if len(keys) == 0 {
-				return nil, warnings, querybuilder.NewKeyNotFoundError(key.Name)
-			}
-			synthesized = true
-			warnings = append(warnings, querybuilder.NewKeyNotFoundWarning(key.Name))
-		}
-	}
-
-	if skipResourceFilter && !synthesized {
-		filtered := make([]*telemetrytypes.TelemetryFieldKey, 0, len(keys))
-		for _, k := range keys {
-			if k.FieldContext != telemetrytypes.FieldContextResource {
-				filtered = append(filtered, k)
-			}
-		}
-		if len(filtered) == 0 {
-			return nil, warnings, nil
-		}
-		keys = filtered
-	}
-
-	conds := make([]string, 0, len(keys))
-	for _, k := range keys {
-		cond, err := c.conditionForKey(ctx, orgID, startNs, endNs, k, operator, value, sb)
-		if err != nil {
-			return nil, nil, err
-		}
-		conds = append(conds, cond)
-		if w := c.bodyFullTextDefaultWarning(ctx, orgID, startNs, endNs, k, operator); w != "" {
-			warnings = append(warnings, w)
-		}
-	}
-	return conds, warnings, nil
-}
-
 // bodyFullTextDefaultWarning returns the advisory shown when a regexp full-text
 // search on `body` resolves to the body.message sub-field (JSON mode), else "". This
 // keeps the JSON-vs-legacy decision in the builder rather than the filter visitor.
-func (c *conditionBuilder) bodyFullTextDefaultWarning(ctx context.Context, orgID valuer.UUID, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator) string {
+func (s *storage) bodyFullTextDefaultWarning(ctx context.Context, q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator) string {
 	if operator != qbtypes.FilterOperatorRegexp || key.Name != LogsV2BodyColumn {
 		return ""
 	}
-	if field, err := c.fm.FieldFor(ctx, orgID, startNs, endNs, key); err == nil && field == messageSubColumn {
+	if field, err := s.Read(ctx, q, key); err == nil && field == messageSubColumn {
 		return querybuilder.BodyFullTextSearchDefaultWarning
 	}
 	return ""
 }
 
-func (c *conditionBuilder) conditionForKey(
+func (s *storage) conditionForKey(
 	ctx context.Context,
-	orgID valuer.UUID,
-	startNs uint64,
-	endNs uint64,
+	q qbtypes.QueryInfo,
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
 
-	condition, err := c.conditionForResolvedKey(ctx, orgID, startNs, endNs, key, operator, value, sb)
+	condition, err := s.conditionForResolvedKey(ctx, q, key, operator, value, sb)
 	if err != nil {
 		return "", err
 	}
@@ -577,7 +456,7 @@ func (c *conditionBuilder) conditionForKey(
 	case telemetrytypes.FieldContextScope:
 		// scope_name and scope_version are columns; a scope attribute lives in
 		// a map and follows the keyless contract like an attribute
-		if !c.mapBacked(ctx, orgID, startNs, endNs, key) {
+		if !s.mapBacked(q, key) {
 			return condition, nil
 		}
 	case telemetrytypes.FieldContextResource, telemetrytypes.FieldContextAttribute:
@@ -585,13 +464,13 @@ func (c *conditionBuilder) conditionForKey(
 	case telemetrytypes.FieldContextBody:
 		// Querying JSON fields already account for Nullability of fields
 		// so additional exists checks are not needed
-		if c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
+		if q.BodyJSONOn {
 			return condition, nil
 		}
 	}
 
 	if buildExistCondition {
-		existsCondition, err := c.conditionForResolvedKey(ctx, orgID, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb)
+		existsCondition, err := s.conditionForResolvedKey(ctx, q, key, qbtypes.FilterOperatorExists, nil, sb)
 		if err != nil {
 			return "", err
 		}
@@ -602,7 +481,42 @@ func (c *conditionBuilder) conditionForKey(
 }
 
 // mapBacked reports whether the key reads a map column, so a row can lack it.
-func (c *conditionBuilder) mapBacked(ctx context.Context, orgID valuer.UUID, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey) bool {
-	columns, err := c.fm.ColumnFor(ctx, orgID, startNs, endNs, key)
+func (s *storage) mapBacked(q qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey) bool {
+	columns, err := s.getColumn(q, key)
 	return err == nil && len(columns) == 1 && columns[0].Type.GetType() == schema.ColumnTypeEnumMap
+}
+
+// Compile keeps the body language: search over a scope, the body functions,
+// the body JSON paths, and the body column forms that use its index. Every
+// other field compiles through the shared condition.
+func (s *storage) Compile(ctx context.Context, q qbtypes.QueryInfo, logical *telemetrytypes.LogicalField, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (qbtypes.Compiled, error) {
+	if operator == qbtypes.FilterOperatorSearch {
+		conditions, _, err := s.conditionForSearch(q, logical.Single(), value, sb)
+		if err != nil || len(conditions) == 0 {
+			return qbtypes.Compiled{}, err
+		}
+		return qbtypes.Compiled{Condition: conditions[0]}, nil
+	}
+	if logical.IsFamily() || !s.ownLanguage(logical.Single(), operator) {
+		return querybuilder.SharedCondition(ctx, q, s, logical, operator, value, sb)
+	}
+	key := logical.Single()
+	condition, err := s.conditionForKey(ctx, q, key, operator, value, sb)
+	if err != nil {
+		return qbtypes.Compiled{}, err
+	}
+	compiled := qbtypes.Compiled{Condition: condition}
+	if w := s.bodyFullTextDefaultWarning(ctx, q, key, operator); w != "" {
+		compiled.Warnings = append(compiled.Warnings, w)
+	}
+	return compiled, nil
+}
+
+// ownLanguage reports whether a term needs the body language: a body path,
+// a body function, or the body column itself.
+func (s *storage) ownLanguage(key *telemetrytypes.TelemetryFieldKey, operator qbtypes.FilterOperator) bool {
+	if operator.IsFunctionOperator() || key.FieldContext == telemetrytypes.FieldContextBody {
+		return true
+	}
+	return key.Name == LogsV2BodyColumn && (key.FieldContext == telemetrytypes.FieldContextLog || key.FieldContext == telemetrytypes.FieldContextUnspecified)
 }
