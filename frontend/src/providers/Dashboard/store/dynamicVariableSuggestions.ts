@@ -1,4 +1,4 @@
-import createStore from './store';
+import { create } from 'zustand';
 
 /**
  * A dynamic dashboard variable reduced to what query-builder autocomplete needs:
@@ -9,12 +9,17 @@ export interface DynamicVariableSuggestion {
 	attribute: string;
 }
 
-export const dynamicVariableSuggestionsStore = createStore<
-	DynamicVariableSuggestion[]
->([]);
+interface DynamicVariableSuggestionsState {
+	suggestions: DynamicVariableSuggestion[];
+}
+
+export const useDynamicVariableSuggestionsStore =
+	create<DynamicVariableSuggestionsState>(() => ({
+		suggestions: [],
+	}));
 
 export function setDynamicVariableSuggestions(
 	suggestions: DynamicVariableSuggestion[],
 ): void {
-	dynamicVariableSuggestionsStore.set(() => suggestions);
+	useDynamicVariableSuggestionsStore.setState({ suggestions });
 }

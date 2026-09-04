@@ -179,7 +179,7 @@ export const getLegend = (
 export async function GetMetricQueryRange(
 	props: GetQueryResultsProps,
 	version: string,
-	dynamicVariables?: DynamicVariableSuggestion[],
+	dynamicVariables: DynamicVariableSuggestion[] = [],
 	signal?: AbortSignal,
 	headers?: Record<string, string>,
 ): Promise<MetricQueryRangeSuccessResponse> {

@@ -813,8 +813,8 @@ function QueryBuilderSearchV2(
 				values.push(...(attributeValues?.payload?.[key] || []));
 
 				// here we want to suggest the variable name matching with the key here, we will go over the dynamic variables for the keys
-				const variableName = dashboardDynamicVariables?.find(
-					(variable) => variable?.attribute === currentFilterItem?.key?.key,
+				const variableName = dashboardDynamicVariables.find(
+					(variable) => variable.attribute === currentFilterItem?.key?.key,
 				)?.name;
 
 				if (variableName) {

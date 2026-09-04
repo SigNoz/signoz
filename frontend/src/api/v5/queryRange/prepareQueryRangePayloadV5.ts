@@ -557,7 +557,7 @@ export const prepareQueryRangePayloadV5 = ({
 	formatForWeb,
 	originalGraphType,
 	fillGaps,
-	dynamicVariables,
+	dynamicVariables = [],
 }: GetQueryResultsProps): PrepareQueryRangePayloadV5Result => {
 	let legendMap: Record<string, string> = {};
 	const requestType = mapPanelTypeToRequestType(graphType);
@@ -671,7 +671,7 @@ export const prepareQueryRangePayloadV5 = ({
 			(acc, [key, value]) => {
 				acc[key] = {
 					value,
-					type: dynamicVariables?.some((v) => v.name === key)
+					type: dynamicVariables.some((v) => v.name === key)
 						? ('dynamic' as VariableType)
 						: undefined,
 				};

@@ -1,7 +1,6 @@
-import { useSyncExternalStore } from 'react';
 import {
 	DynamicVariableSuggestion,
-	dynamicVariableSuggestionsStore,
+	useDynamicVariableSuggestionsStore,
 } from 'providers/Dashboard/store/dynamicVariableSuggestions';
 
 /**
@@ -10,8 +9,5 @@ import {
  * surfaces with no dashboard behind them (APM, Celery, messaging queues).
  */
 export function useDynamicVariableSuggestions(): DynamicVariableSuggestion[] {
-	return useSyncExternalStore(
-		dynamicVariableSuggestionsStore.subscribe,
-		dynamicVariableSuggestionsStore.getSnapshot,
-	);
+	return useDynamicVariableSuggestionsStore((state) => state.suggestions);
 }

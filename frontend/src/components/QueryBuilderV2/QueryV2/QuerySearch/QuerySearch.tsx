@@ -1185,8 +1185,8 @@ function QuerySearch({
 			);
 
 			// Add dynamic variables suggestions for the current key
-			const variableName = dashboardDynamicVariables?.find(
-				(variable) => variable?.attribute === keyName,
+			const variableName = dashboardDynamicVariables.find(
+				(variable) => variable.attribute === keyName,
 			)?.name;
 
 			if (variableName) {
