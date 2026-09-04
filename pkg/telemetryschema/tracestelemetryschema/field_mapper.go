@@ -391,9 +391,10 @@ func attributeJSONValueExpr(path string, dataType telemetrytypes.FieldDataType) 
 	switch dataType {
 	case telemetrytypes.FieldDataTypeInt64,
 		telemetrytypes.FieldDataTypeFloat64,
-		telemetrytypes.FieldDataTypeNumber,
-		telemetrytypes.FieldDataTypeBool:
-		return fmt.Sprintf("accurateCastOrNull(%s, '%s')", path, telemetrytypes.MappingFieldDataTypeToJSONDataType[dataType].StringValue())
+		telemetrytypes.FieldDataTypeNumber:
+		return fmt.Sprintf("accurateCastOrNull(%s, 'Float64')", path) // all numeric times to float64 like attributes_number map.
+	case telemetrytypes.FieldDataTypeBool:
+		return fmt.Sprintf("accurateCastOrNull(%s, 'Bool')", path)
 	default:
 		return path + "::String"
 	}
