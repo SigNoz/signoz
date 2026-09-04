@@ -398,8 +398,6 @@ type QueryRangeRequest struct {
 
 	FormatOptions *FormatOptions `json:"formatOptions,omitempty"`
 
-	// BucketOptions shapes the bucket axis for heatmap requests, and is refused
-	// rather than ignored for the metrics that bucket on their own `le` labels.
 	BucketOptions *BucketOptions `json:"bucketOptions,omitempty"`
 }
 
