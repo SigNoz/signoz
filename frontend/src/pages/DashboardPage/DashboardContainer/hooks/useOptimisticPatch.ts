@@ -12,7 +12,7 @@ import type {
 import APIError from 'types/api/error';
 
 import { applyJsonPatch } from '../optimistic/applyJsonPatch';
-import { DASHBOARD_LOCKED_REASON } from '../store/slices/editContextSlice';
+import { DASHBOARD_LOCKED_REASON } from 'hooks/dashboards/dashboardPermissionReasons';
 import { useDashboardStore } from '../store/useDashboardStore';
 
 /** Cached dashboard snapshot, kept for rollback on error. */
@@ -37,7 +37,6 @@ export function useOptimisticPatch(
 	dashboardIdOverride?: string,
 ): UseOptimisticPatch {
 	const storeDashboardId = useDashboardStore((s) => s.dashboardId);
-	const storeIsEditable = useDashboardStore((s) => s.isEditable);
 	const dashboardId = dashboardIdOverride ?? storeDashboardId;
 	const queryClient = useQueryClient();
 	const queryKey = getGetDashboardV2QueryKey({ id: dashboardId });
@@ -78,12 +77,16 @@ export function useOptimisticPatch(
 	const { mutateAsync } = mutation;
 	const patchAsync = useCallback(
 		(ops: DashboardtypesJSONPatchOperationDTO[]): Promise<unknown> => {
-			if (storeDashboardId === dashboardId && !storeIsEditable) {
+			// Defense-in-depth against a lock, read straight from the cache this hook
+			// already owns. Permission is enforced by the UI and, definitively, by the
+			// backend — checking it here would drag authz into every mutation.
+			const cached = queryClient.getQueryData<GetDashboardV2200>(queryKey);
+			if (cached?.data?.locked) {
 				return Promise.reject(new Error(DASHBOARD_LOCKED_REASON));
 			}
 			return mutateAsync(ops);
 		},
-		[storeDashboardId, dashboardId, storeIsEditable, mutateAsync],
+		[queryClient, queryKey, mutateAsync],
 	);
 
 	return {
