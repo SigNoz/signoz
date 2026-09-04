@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { FullScreen, useFullScreenHandle } from 'react-full-screen';
 
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
+import AutoRefreshTicker from 'container/TopNav/AutoRefreshV2/AutoRefreshTicker';
 
 import DashboardPageToolbar from './DashboardPageToolbar';
 import PanelsAndSectionsLayout from './PanelsAndSectionsLayout';
@@ -77,7 +78,10 @@ function DashboardContainer({
 	return (
 		<FullScreen handle={fullScreenHandle}>
 			<div className={styles.container}>
-				{!fullScreenHandle.active && (
+				{fullScreenHandle.active ? (
+					// The hidden toolbar owns the auto-refresh timer.
+					<AutoRefreshTicker />
+				) : (
 					<>
 						<DashboardPageHeader title={name} image={image} />
 						<DashboardPageToolbar dashboard={dashboard} handle={fullScreenHandle} />
