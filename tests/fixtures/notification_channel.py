@@ -1,22 +1,45 @@
 # pylint: disable=line-too-long
 import json
+import re
 import time
+import uuid
 from collections.abc import Callable
 from http import HTTPStatus
+from pathlib import Path
 
 import docker
 import docker.errors
 import pytest
 import requests
 from testcontainers.core.container import Network
+from wiremock.resources.mappings import HttpMethods, Mapping, MappingRequest, MappingResponse
 from wiremock.testing.testcontainer import WireMockContainer
 
 from fixtures import reuse, types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logger import setup_logger
 from fixtures.maildev import MAILDEV_INCOMING_PASS, SMTP_TEST_FROM
+from fixtures.tls import CA_ID_LABEL, KEYSTORE_PASSWORD, ca_id, issue_server_keystore
 
 logger = setup_logger(__name__)
+
+# Google Chat validates the webhook host, so the WireMock container joins the
+# network under this alias and serves HTTPS on 443 with a certificate issued by
+# the integration CA that signoz trusts; channels point at https://<host>/...
+GOOGLE_CHAT_HOST = "chat.googleapis.com"
+# incident.io doesn't pin the host, but the same alias trick keeps channel URLs
+# identical to production ones.
+INCIDENTIO_HOST = "api.incident.io"
+# Jira validates the site host (*.atlassian.net); service accounts additionally
+# go through the api.atlassian.com gateway.
+JIRA_HOST = "signoz-test.atlassian.net"
+ATLASSIAN_API_HOST = "api.atlassian.com"
+TLS_HOSTS = [GOOGLE_CHAT_HOST, INCIDENTIO_HOST, JIRA_HOST, ATLASSIAN_API_HOST]
+
+# A reused container serving a cert without a newly added host (or missing its
+# network alias) fails TLS opaquely; this label records the hosts it was built
+# for so stale() recreates it when the list changes.
+TLS_HOSTS_LABEL = "signoz.integration.tls-hosts"
 
 
 EMAIL_TRANSPORT_KEYS = [
@@ -124,9 +147,363 @@ email_default_config = {
 }
 
 
+def googlechat_config(space: str) -> dict:
+    """Google Chat channel config for a per-test WireMock space path. Title/text are
+    omitted so the backend applies its default templates. The host is injected at
+    runtime by update_raw_channel_config."""
+    return {
+        "googlechat_configs": [
+            {
+                "webhook_url": f"/v1/spaces/{space}/messages",  # host set on runtime
+            }
+        ],
+    }
+
+
+def googlechat_ok_mappings(path: str) -> list[Mapping]:
+    return [
+        Mapping(
+            request=MappingRequest(method=HttpMethods.POST, url_path=path),
+            response=MappingResponse(status=200, json_body={"name": "spaces/x/messages/x"}),
+        )
+    ]
+
+
+def googlechat_retry_mappings(path: str) -> list[Mapping]:
+    """429 on the first call then 200, via a wiremock scenario transition."""
+    scenario = f"gc-retry-{path}"
+    return [
+        Mapping(
+            request=MappingRequest(method=HttpMethods.POST, url_path=path),
+            response=MappingResponse(status=429, json_body={"error": {"code": 429, "status": "RESOURCE_EXHAUSTED"}}),
+            scenario_name=scenario,
+            required_scenario_state="Started",
+            new_scenario_state="ok",
+        ),
+        Mapping(
+            request=MappingRequest(method=HttpMethods.POST, url_path=path),
+            response=MappingResponse(status=200, json_body={"name": "spaces/x/messages/x"}),
+            scenario_name=scenario,
+            required_scenario_state="ok",
+        ),
+    ]
+
+
+def googlechat_card_subset(alertname: str, buttons: list[tuple[str, str]]) -> dict:
+    """A cardsV2 subset asserting title, firing banner, rendered body, and each
+    button's text AND deep-link url (as a regex), so a broken link is caught too.
+    buttons: list of (text, url_regex)."""
+    return {
+        "text": f"[FIRING:1] {alertname}",
+        "cardsV2": [
+            {
+                "cardId": "signoz-alert",
+                "card": {
+                    "header": {"title": f"[FIRING:1] {alertname}"},
+                    "sections": [
+                        # firing banner
+                        {"widgets": [{"textParagraph": {"text": re.compile("FIRING")}}]},
+                        # rendered alert body mentions the alertname
+                        {"widgets": [{"textParagraph": {"text": re.compile(re.escape(alertname))}}]},
+                    ]
+                    + [{"widgets": [{"buttonList": {"buttons": [{"text": text, "onClick": {"openLink": {"url": re.compile(url)}}}]}}]} for text, url in buttons],
+                },
+            }
+        ],
+    }
+
+
+INCIDENTIO_TEST_TOKEN = "incidentio-test-token"  # noqa: S105
+
+
+def incidentio_path(source_id: str) -> str:
+    return f"/v2/alert_events/http/{source_id}"
+
+
+def incidentio_config(source_id: str) -> dict:
+    """incident.io channel config for a per-test alert source id. Title/description
+    are omitted so the backend applies its default templates. The URL host is the
+    wiremock network alias, so no runtime injection is needed."""
+    return {
+        "incidentio_configs": [
+            {
+                "url": f"https://{INCIDENTIO_HOST}{incidentio_path(source_id)}",
+                "token": INCIDENTIO_TEST_TOKEN,
+            }
+        ],
+    }
+
+
+# recorded incident.io Alert Events V2 responses: 202 accepted-for-processing
+# echoing the dedup key; errors are {type, status, errors: [{code, message}]}
+def incidentio_ok_mappings(path: str) -> list[Mapping]:
+    return [
+        Mapping(
+            request=MappingRequest(method=HttpMethods.POST, url_path=path),
+            response=MappingResponse(status=202, json_body={"status": "accepted", "message": "Event accepted for processing", "deduplication_key": "x"}),
+        )
+    ]
+
+
+def incidentio_retry_mappings(path: str) -> list[Mapping]:
+    """429 on the first call then 202, via a wiremock scenario transition."""
+    scenario = f"incidentio-retry-{path}"
+    return [
+        Mapping(
+            request=MappingRequest(method=HttpMethods.POST, url_path=path),
+            response=MappingResponse(status=429, json_body={"type": "rate_limit_error", "status": 429}),
+            scenario_name=scenario,
+            required_scenario_state="Started",
+            new_scenario_state="ok",
+        ),
+        Mapping(
+            request=MappingRequest(method=HttpMethods.POST, url_path=path),
+            response=MappingResponse(status=202, json_body={"status": "accepted", "message": "Event accepted for processing", "deduplication_key": "x"}),
+            scenario_name=scenario,
+            required_scenario_state="ok",
+        ),
+    ]
+
+
+def incidentio_event_subset(alertname: str, links: list[tuple[str, str]]) -> dict:
+    """An alert-event subset asserting title, firing status, dedup key, SigNoz
+    source_url, metadata labels, and each markdown link's text AND url (as a
+    regex), so a broken link is caught too. links: (text, url_regex) pairs in
+    default-template order (View in SigNoz -> related logs -> related traces)."""
+    description = "(?s)" + re.escape(f"**Alert:** {alertname}")
+    for text, url in links:
+        description += rf".*\[{re.escape(text)}\]\([^)]*{url}"
+    return {
+        "title": f"[FIRING:1] {alertname}",
+        "status": "firing",
+        "deduplication_key": re.compile(r".+"),
+        "source_url": re.compile(r"/alerts/overview\?ruleId="),
+        "description": re.compile(description),
+        "metadata": {"alertname": alertname},
+    }
+
+
+JIRA_TEST_EMAIL = "user@acme.io"
+JIRA_SA_EMAIL = "svc@serviceaccount.atlassian.com"
+JIRA_TEST_TOKEN = "jira-test-token"  # noqa: S105
+JIRA_API_BASE = "/rest/api/3"
+
+
+def jira_config(**overrides) -> dict:
+    """Jira channel config against the wiremock atlassian.net alias, personal
+    API token auth. Summary/description are omitted so the backend applies its
+    default templates; overrides lay extra receiver fields on top."""
+    return {
+        "jira_configs": [
+            {
+                "site": f"https://{JIRA_HOST}",
+                "project": "OPS",
+                "issue_type": "Task",
+                "http_config": {"basic_auth": {"username": JIRA_TEST_EMAIL, "password": JIRA_TEST_TOKEN}},
+                **overrides,
+            }
+        ],
+    }
+
+
+def jira_search_issue(key: str, done: bool, labels: list[str]) -> dict:
+    """One issue as returned by the /search/jql stub, with the fields the
+    notifier requests (status category + labels)."""
+    return {
+        "key": key,
+        "fields": {"status": {"statusCategory": {"key": "done" if done else "indeterminate"}}, "labels": labels},
+    }
+
+
+# Jira flows span several endpoints; each mapping helper stubs one, on any base
+# (site host for personal tokens, /ex/jira/<cloud_id> gateway for service accounts).
+def jira_search_mapping(issues: list[dict], base: str = JIRA_API_BASE) -> Mapping:
+    return Mapping(
+        request=MappingRequest(method=HttpMethods.POST, url_path=f"{base}/search/jql"),
+        response=MappingResponse(status=200, json_body={"issues": issues}),
+    )
+
+
+def jira_create_mapping(key: str = "OPS-1", base: str = JIRA_API_BASE) -> Mapping:
+    return Mapping(
+        request=MappingRequest(method=HttpMethods.POST, url_path=f"{base}/issue"),
+        response=MappingResponse(status=201, json_body={"id": "10001", "key": key}),
+    )
+
+
+def jira_update_mapping(key: str, base: str = JIRA_API_BASE) -> Mapping:
+    return Mapping(
+        request=MappingRequest(method=HttpMethods.PUT, url_path=f"{base}/issue/{key}"),
+        response=MappingResponse(status=204),
+    )
+
+
+def jira_transitions_mapping(key: str, transitions: list[dict], base: str = JIRA_API_BASE) -> Mapping:
+    return Mapping(
+        request=MappingRequest(method=HttpMethods.GET, url_path=f"{base}/issue/{key}/transitions"),
+        response=MappingResponse(status=200, json_body={"transitions": transitions}),
+    )
+
+
+def jira_transition_post_mapping(key: str, base: str = JIRA_API_BASE) -> Mapping:
+    return Mapping(
+        request=MappingRequest(method=HttpMethods.POST, url_path=f"{base}/issue/{key}/transitions"),
+        response=MappingResponse(status=204),
+    )
+
+
+def jira_comment_mapping(key: str, base: str = JIRA_API_BASE) -> Mapping:
+    return Mapping(
+        request=MappingRequest(method=HttpMethods.POST, url_path=f"{base}/issue/{key}/comment"),
+        response=MappingResponse(status=201, json_body={"id": "1"}),
+    )
+
+
+def jira_retry_search_mappings() -> list[Mapping]:
+    """429 on the first search then 200-empty, via a wiremock scenario transition."""
+    scenario = "jira-retry-search"
+    return [
+        Mapping(
+            request=MappingRequest(method=HttpMethods.POST, url_path=f"{JIRA_API_BASE}/search/jql"),
+            response=MappingResponse(status=429, json_body={"errorMessages": ["Rate limit exceeded"]}),
+            scenario_name=scenario,
+            required_scenario_state="Started",
+            new_scenario_state="ok",
+        ),
+        Mapping(
+            request=MappingRequest(method=HttpMethods.POST, url_path=f"{JIRA_API_BASE}/search/jql"),
+            response=MappingResponse(status=200, json_body={"issues": []}),
+            scenario_name=scenario,
+            required_scenario_state="ok",
+        ),
+    ]
+
+
+def find_requests(notification_channel: types.TestContainerDocker, method: str, path: str | None = None, path_pattern: str | None = None) -> list[dict]:
+    """The wiremock journal entries for method+path (query strings ignored);
+    path_pattern matches the path as a regex instead, for paths that embed a
+    dynamic segment like the group-hash alias."""
+    matcher = {"method": method, "urlPath": path} if path is not None else {"method": method, "urlPathPattern": path_pattern}
+    find = requests.post(
+        notification_channel.host_configs["8080"].get("/__admin/requests/find"),
+        json=matcher,
+        timeout=10,
+    )
+    return find.json()["requests"]
+
+
+JSMOPS_TEST_API_KEY = "jsmops-test-api-key"  # noqa: S105
+# The JSM Ops gateway lives on api.atlassian.com (already aliased for Jira
+# service accounts); the notifier appends v2/alerts... to this base.
+JSMOPS_API_BASE = "/jsm/ops/integration"
+JSMOPS_NOTES_PATH_PATTERN = f"{JSMOPS_API_BASE}/v2/alerts/[a-f0-9]+/notes"
+
+
+def jsmops_config(**overrides) -> dict:
+    """JSM Ops channel config. Message/description/tags are omitted so the
+    backend applies its defaults; overrides lay extra receiver fields on top."""
+    return {
+        "jsmops_configs": [
+            {
+                "api_key": JSMOPS_TEST_API_KEY,
+                **overrides,
+            }
+        ],
+    }
+
+
+def jsmops_create_mapping() -> Mapping:
+    return Mapping(
+        request=MappingRequest(method=HttpMethods.POST, url_path=f"{JSMOPS_API_BASE}/v2/alerts"),
+        response=MappingResponse(status=202, json_body={"result": "Request will be processed", "took": 0.005, "requestId": "1b1f0000-0000-4000-8000-000000000001"}),
+    )
+
+
+def jsmops_notes_mapping(status: int = 202, body: dict | None = None) -> Mapping:
+    return Mapping(
+        request=MappingRequest(method=HttpMethods.POST, url_path_pattern=JSMOPS_NOTES_PATH_PATTERN),
+        response=MappingResponse(status=status, json_body=body or {"result": "Request will be processed", "took": 0.002, "requestId": "1b1f0000-0000-4000-8000-000000000002"}),
+    )
+
+
+def jsmops_retry_create_mappings() -> list[Mapping]:
+    """429 on the first create then 202, via a wiremock scenario transition."""
+    scenario = "jsmops-retry-create"
+    return [
+        Mapping(
+            request=MappingRequest(method=HttpMethods.POST, url_path=f"{JSMOPS_API_BASE}/v2/alerts"),
+            response=MappingResponse(status=429, json_body={"message": "You are making too many requests!", "took": 0.001, "requestId": "x"}),
+            scenario_name=scenario,
+            required_scenario_state="Started",
+            new_scenario_state="ok",
+        ),
+        Mapping(
+            request=MappingRequest(method=HttpMethods.POST, url_path=f"{JSMOPS_API_BASE}/v2/alerts"),
+            response=MappingResponse(status=202, json_body={"result": "Request will be processed", "took": 0.005, "requestId": "x"}),
+            scenario_name=scenario,
+            required_scenario_state="ok",
+        ),
+    ]
+
+
+def jsmops_alert_subset(alertname: str, links: list[tuple[str, str]]) -> dict:
+    """A created-alert subset asserting message, alias, source, default tags,
+    details labels, and the HTML description: the rendered bold Alert run plus
+    each link's anchor (href as a regex), so a broken link is caught too.
+    links: (text, url_regex) pairs in default-template order."""
+    description = "(?s)" + re.escape("<strong>Alert:</strong>")
+    for text, url in links:
+        description += rf'.*<a href="[^"]*{url}[^"]*"[^>]*>{re.escape(text)}</a>'
+    return {
+        "alias": re.compile(r".+"),
+        "message": f"[FIRING:1] {alertname}",
+        "source": "SigNoz",
+        "tags": ["signoz"],
+        "details": {"alertname": alertname},
+        "description": re.compile(description),
+    }
+
+
+def jira_issue_subset(alertname: str, links: list[tuple[str, str]]) -> dict:
+    """A created-issue subset asserting summary, group labels, ADF status panel,
+    the rendered alert text, and each deep-link's text AND url (as a regex), so
+    a broken link is caught too. links: (text, url_regex) pairs."""
+    # the ADF renderer splits text nodes at underscores, so the alertname never
+    # sits in one node; the summary pins it exactly, the body asserts the
+    # rendered "Alert:" strong run followed by the name's first fragment
+    description_content = [
+        {"type": "panel", "attrs": {"panelType": "error"}},
+        {
+            "type": "paragraph",
+            "content": [
+                {"type": "text", "text": "Alert:", "marks": [{"type": "strong"}]},
+                {"type": "text", "text": re.compile(re.escape(alertname.split("_", maxsplit=1)[0]))},
+            ],
+        },
+    ]
+    if links:
+        description_content.append(
+            {
+                "type": "paragraph",
+                "content": [{"type": "text", "text": text, "marks": [{"type": "link", "attrs": {"href": re.compile(url)}}]} for text, url in links],
+            }
+        )
+    return {
+        "fields": {
+            "project": {"key": "OPS"},
+            "issuetype": {"name": "Task"},
+            "summary": f"[FIRING:1] {alertname}",
+            "labels": ["signoz-alert", re.compile(r"ALERT\{")],
+            "description": {"type": "doc", "version": 1, "content": description_content},
+        },
+    }
+
+
 @pytest.fixture(name="notification_channel", scope="package")
-def notification_channel(
+def notification_channel(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     network: Network,
+    tls: types.TLS,
+    tmpfs: Callable[[str], Path],
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
 ) -> types.TestContainerDocker:
@@ -135,9 +512,25 @@ def notification_channel(
     """
 
     def create() -> types.TestContainerDocker:
+        # http:8080 for admin API + plain webhook delivery; https:443 aliased as
+        # chat.googleapis.com with a CA-issued cert so Google Chat's validated
+        # webhook host routes here over real TLS (signoz trusts the integration CA).
+        keystore_path = issue_server_keystore(tls, tmpfs("notification-channel-certs"), *TLS_HOSTS)
+
         container = WireMockContainer(image="wiremock/wiremock:2.35.1-1", secure=False)
+        container.with_volume_mapping(str(keystore_path.parent), "/certs", "ro")
         container.with_network(network)
-        container.start()
+        container.with_network_aliases(*TLS_HOSTS)
+        container.with_kwargs(labels={CA_ID_LABEL: ca_id(tls), TLS_HOSTS_LABEL: ",".join(TLS_HOSTS)})
+
+        try:
+            container.start(f"--port 8080 --https-port 443 --https-keystore /certs/keystore.p12 --keystore-type PKCS12 --keystore-password {KEYSTORE_PASSWORD}")
+        except Exception:
+            # Ryuk is disabled: a started-but-unready container would survive and
+            # keep squatting on the chat.googleapis.com alias, poisoning DNS for
+            # any replacement on the shared network.
+            container.stop()
+            raise
 
         return types.TestContainerDocker(
             id=container.get_wrapped_container().id,
@@ -148,7 +541,11 @@ def notification_channel(
                     container.get_exposed_port(8080),
                 )
             },
-            container_configs={"8080": types.TestContainerUrlConfig("http", container.get_wrapped_container().name, 8080)},
+            container_configs={
+                "8080": types.TestContainerUrlConfig("http", container.get_wrapped_container().name, 8080),
+                # Google Chat delivery: https to the validated host via the network alias.
+                "443": types.TestContainerUrlConfig("https", GOOGLE_CHAT_HOST, 443),
+            },
         )
 
     def delete(container: types.TestContainerDocker):
@@ -165,6 +562,16 @@ def notification_channel(
     def restore(cache: dict) -> types.TestContainerDocker:
         return types.TestContainerDocker.from_cache(cache)
 
+    def stale(container: types.TestContainerDocker) -> bool:
+        # A container built against a rotated/absent CA can't serve a cert signoz
+        # trusts; recreate it instead of failing TLS opaquely.
+        client = docker.from_env()
+        try:
+            labels = client.containers.get(container_id=container.id).attrs["Config"]["Labels"]
+        except docker.errors.NotFound:
+            return True
+        return labels.get(CA_ID_LABEL) != ca_id(tls) or labels.get(TLS_HOSTS_LABEL) != ",".join(TLS_HOSTS)
+
     return reuse.wrap(
         request,
         pytestconfig,
@@ -173,6 +580,7 @@ def notification_channel(
         create,
         delete,
         restore,
+        stale=stale,
     )
 
 
@@ -246,6 +654,31 @@ def create_webhook_notification_channel(
         return channel_id
 
     return _create_webhook_notification_channel
+
+
+def wait_for_org_registration(signoz: types.SigNoz, token: str, notification_channel: types.TestContainerDocker, wait_seconds: int = 60) -> None:
+    """Polls until the org's alertmanager server is registered (one poll tick).
+
+    channels/test 404s until then, before reaching any notifier. The sentinel
+    receiver posts to its own unstubbed wiremock path, so request journals
+    asserted by tests stay clean."""
+    sentinel = {
+        "name": str(uuid.uuid4()),
+        "webhook_configs": [{"url": notification_channel.container_configs["8080"].get("/org-registration-sentinel")}],
+    }
+    deadline = time.time() + wait_seconds
+    last = None
+    while time.time() < deadline:
+        last = requests.post(
+            signoz.self.host_configs["8080"].get("/api/v1/channels/test"),
+            json=sentinel,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=30,
+        )
+        if last.status_code != HTTPStatus.NOT_FOUND:
+            return
+        time.sleep(2)
+    raise AssertionError(f"org alertmanager did not register within {wait_seconds}s, last response: {last.status_code} {last.text}")
 
 
 def send_test_notification(signoz: types.SigNoz, token: str, receiver: dict, wait_seconds: int = 90) -> None:
