@@ -1,0 +1,38 @@
+// Shared presentation for every "you can't use this, here's why" tooltip, so the
+// explanation looks the same wherever it surfaces.
+//
+// These drive the bubble AND the arrow: @signozhq/ui paints both from
+// --tooltip-background / --tooltip-border-color, so setting the variables keeps
+// them in step. Overriding `background`/`border-color` directly styles only the
+// bubble and leaves the arrow on the default fill.
+.errorContent {
+	--tooltip-background: var(--callout-error-background);
+	--tooltip-border-color: var(--callout-error-border);
+	--tooltip-foreground: var(--foreground);
+
+	backdrop-filter: blur(15px);
+	border-radius: 4px;
+	font-style: normal;
+	font-weight: 400;
+	white-space: nowrap;
+}
+
+// A block the user can act on themselves — a lock, an integration-owned or
+// legacy dashboard — reads as state, not as an access error.
+.blockedContent {
+	--tooltip-background: var(--l2-background);
+	--tooltip-border-color: var(--l2-border);
+	--tooltip-foreground: var(--l1-foreground);
+
+	backdrop-filter: blur(15px);
+	border-radius: 4px;
+	font-style: normal;
+	font-weight: 400;
+	white-space: nowrap;
+}
+
+.aboveOverlay {
+	// Lift above the dropdown menu (z 50) and the antd Drawer (z 1000) so the
+	// tooltip is never clipped behind them. The arrow reads this too.
+	--tooltip-z-index: 1100;
+}
