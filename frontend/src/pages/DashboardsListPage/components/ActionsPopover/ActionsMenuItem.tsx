@@ -1,6 +1,7 @@
 import type { MouseEvent, ReactElement, ReactNode } from 'react';
 import { Button } from '@signozhq/ui/button';
 import DisabledReasonTooltip from 'lib/authz/components/DisabledReasonTooltip/DisabledReasonTooltip';
+import type { DisabledState } from 'lib/authz/components/DisabledReasonTooltip/disabledState.types';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
 import styles from './ActionsPopover.module.scss';
@@ -11,14 +12,13 @@ interface Props {
 	testId: string;
 	onClick: () => void;
 	/**
-	 * Why the item is unavailable. Non-empty both disables it and explains it, so
-	 * it cannot be disabled silently.
+	 * Present when the item is unavailable: it both disables the item and
+	 * explains it, so it cannot be disabled silently or explained in the wrong
+	 * register.
 	 */
-	reason?: string;
+	disabled?: DisabledState;
 	/** Exact denied scopes, surfaced on the DOM for support and tests. */
 	deniedPermissions?: BrandedPermission[];
-	/** Access denial vs a state the user can act on, e.g. a lock. */
-	kind?: 'denied' | 'blocked';
 	loading?: boolean;
 	destructive?: boolean;
 }
@@ -30,17 +30,23 @@ function ActionsMenuItem({
 	icon,
 	testId,
 	onClick,
-	reason = '',
+	disabled: disabledState,
 	deniedPermissions,
-	kind = 'denied',
 	loading = false,
 	destructive = false,
 }: Props): JSX.Element {
 	// A spinner explains itself, so an in-flight action needs no reason.
-	const disabled = loading || !!reason;
+	const disabled = loading || !!disabledState;
 
 	return (
-		<DisabledReasonTooltip reason={reason} side="left" kind={kind} asChild>
+		// Anchored to the full-width row, so the tooltip lands clear of the menu
+		// rather than over the row's own icon.
+		<DisabledReasonTooltip
+			reason={disabledState?.reason ?? ''}
+			side="left"
+			kind={disabledState?.kind ?? 'denied'}
+			asChild
+		>
 			{/* The Button drops unknown data-* props, so the denied scopes ride on the
 			    wrapper — which is also the hover target for the tooltip. */}
 			<span

@@ -97,6 +97,9 @@ function ActionsPopoverContent({
 
 	// Clone reads the source and creates a new dashboard, so it needs both — and
 	// it is not lock-gated, since the copy is a fresh unlocked dashboard.
+	const editDisabled = editReason
+		? { reason: editReason, kind: editKind }
+		: undefined;
 	const canClone = canRead && canCreate;
 	const cloneDenied = !canClone;
 
@@ -164,8 +167,7 @@ function ActionsPopoverContent({
 						label="Rename"
 						icon={<PenLine size={14} />}
 						testId="dashboard-action-rename"
-						reason={editReason}
-						kind={editKind}
+						disabled={editDisabled}
 						deniedPermissions={editDenied ? editChecks : undefined}
 						onClick={onOpenRename}
 					/>
@@ -173,8 +175,7 @@ function ActionsPopoverContent({
 						label={tags.length > 0 ? 'Edit Tags' : 'Add Tags'}
 						icon={<Tag size={14} />}
 						testId="dashboard-action-edit-tags"
-						reason={editReason}
-						kind={editKind}
+						disabled={editDisabled}
 						deniedPermissions={editDenied ? editChecks : undefined}
 						onClick={onOpenEditTags}
 					/>
@@ -182,7 +183,11 @@ function ActionsPopoverContent({
 						label="Duplicate"
 						icon={<Copy size={14} />}
 						testId="dashboard-action-duplicate"
-						reason={cloneDenied ? DASHBOARD_CLONE_DENIED_REASON : ''}
+						disabled={
+							cloneDenied
+								? { reason: DASHBOARD_CLONE_DENIED_REASON, kind: 'denied' }
+								: undefined
+						}
 						deniedPermissions={
 							cloneDenied ? [readPermission, DashboardCreatePermission] : undefined
 						}
@@ -193,8 +198,11 @@ function ActionsPopoverContent({
 						label={isLocked ? 'Unlock Dashboard' : 'Lock Dashboard'}
 						icon={<LockKeyhole size={14} />}
 						testId="dashboard-action-lock"
-						reason={lockDisabledReason}
-						kind={lockDisabledKind}
+						disabled={
+							lockDisabledReason
+								? { reason: lockDisabledReason, kind: lockDisabledKind }
+								: undefined
+						}
 						loading={isTogglingLock}
 						onClick={toggleLock}
 					/>
