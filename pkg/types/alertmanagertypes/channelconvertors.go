@@ -20,7 +20,7 @@ func (p *PostableNotificationChannel) ToReceiver() (*Receiver, error) {
 		return nil, errors.NewInternalf(errors.CodeInternal, "config.spec was not decoded into a known type")
 	}
 
-	receiver, err := spec.toReceiver(p.DisplayName)
+	receiver, err := spec.toUndefaultedReceiver(p.DisplayName)
 	if err != nil {
 		return nil, err
 	}

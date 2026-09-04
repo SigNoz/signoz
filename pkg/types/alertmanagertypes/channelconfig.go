@@ -176,13 +176,9 @@ func (ChannelConfig) PrepareJSONSchema(s *jsonschema.Schema) error {
 // Specs
 // ════════════════════════════════════════════════════════════════════════
 
-// ChannelSpec is implemented by every per-type channel configuration. Exactly
-// one implementation is carried by a channel, selected by its ChannelKind.
-// toReceiver is part of the interface so a new kind cannot be registered in
-// channelKinds without also being convertible to an upstream receiver.
 type ChannelSpec interface {
 	Validate() error
-	toReceiver(displayName string) (*Receiver, error)
+	toUndefaultedReceiver(displayName string) (*Receiver, error)
 }
 
 type ChannelSlackConfig struct {
@@ -201,7 +197,7 @@ func (c ChannelSlackConfig) Validate() error {
 	return nil
 }
 
-func (c ChannelSlackConfig) toReceiver(displayName string) (*Receiver, error) {
+func (c ChannelSlackConfig) toUndefaultedReceiver(displayName string) (*Receiver, error) {
 	apiURL, err := parseSecretURL(c.APIURL)
 	if err != nil {
 		return nil, err
@@ -250,7 +246,7 @@ func (c ChannelEmailConfig) Validate() error {
 	return nil
 }
 
-func (c ChannelEmailConfig) toReceiver(displayName string) (*Receiver, error) {
+func (c ChannelEmailConfig) toUndefaultedReceiver(displayName string) (*Receiver, error) {
 	return &Receiver{Receiver: &config.Receiver{
 		Name: displayName,
 		EmailConfigs: []*config.EmailConfig{{
@@ -303,7 +299,7 @@ func (c ChannelWebhookConfig) Validate() error {
 	return nil
 }
 
-func (c ChannelWebhookConfig) toReceiver(displayName string) (*Receiver, error) {
+func (c ChannelWebhookConfig) toUndefaultedReceiver(displayName string) (*Receiver, error) {
 	webhook := &config.WebhookConfig{
 		NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, config.DefaultWebhookConfig.VSendResolved)},
 		URL:            config.SecretTemplateURL(c.URL),
@@ -384,7 +380,7 @@ func (c ChannelPagerdutyConfig) Validate() error {
 	return nil
 }
 
-func (c ChannelPagerdutyConfig) toReceiver(displayName string) (*Receiver, error) {
+func (c ChannelPagerdutyConfig) toUndefaultedReceiver(displayName string) (*Receiver, error) {
 	var eventsURL *config.URL
 	if c.URL != "" {
 		parsed, err := parseUpstreamURL(c.URL)
@@ -466,7 +462,7 @@ func (c ChannelOpsgenieConfig) Validate() error {
 	return nil
 }
 
-func (c ChannelOpsgenieConfig) toReceiver(displayName string) (*Receiver, error) {
+func (c ChannelOpsgenieConfig) toUndefaultedReceiver(displayName string) (*Receiver, error) {
 	var apiURL *config.URL
 	if c.APIURL != "" {
 		parsed, err := parseUpstreamURL(c.APIURL)
@@ -522,7 +518,7 @@ func (c ChannelMSTeamsConfig) Validate() error {
 	return nil
 }
 
-func (c ChannelMSTeamsConfig) toReceiver(displayName string) (*Receiver, error) {
+func (c ChannelMSTeamsConfig) toUndefaultedReceiver(displayName string) (*Receiver, error) {
 	webhookURL, err := parseSecretURL(c.WebhookURL)
 	if err != nil {
 		return nil, err
@@ -566,7 +562,7 @@ func (c ChannelGoogleChatConfig) Validate() error {
 	return nil
 }
 
-func (c ChannelGoogleChatConfig) toReceiver(displayName string) (*Receiver, error) {
+func (c ChannelGoogleChatConfig) toUndefaultedReceiver(displayName string) (*Receiver, error) {
 	webhookURL, err := parseSecretURL(c.WebhookURL)
 	if err != nil {
 		return nil, err
@@ -641,7 +637,7 @@ func (c ChannelJiraConfig) Validate() error {
 	return nil
 }
 
-func (c ChannelJiraConfig) toReceiver(displayName string) (*Receiver, error) {
+func (c ChannelJiraConfig) toUndefaultedReceiver(displayName string) (*Receiver, error) {
 	// Seeded from upstream's default rather than a zero value: FollowRedirects
 	// and EnableHTTP2 marshal unconditionally, so a zero value would persist them
 	// as false and read back as a config ChannelJiraConfig cannot represent.
@@ -734,7 +730,7 @@ func (c ChannelJSMOpsConfig) Validate() error {
 	return nil
 }
 
-func (c ChannelJSMOpsConfig) toReceiver(displayName string) (*Receiver, error) {
+func (c ChannelJSMOpsConfig) toUndefaultedReceiver(displayName string) (*Receiver, error) {
 	return &Receiver{
 		Receiver: &config.Receiver{Name: displayName},
 		JSMOpsConfigs: []*JSMOpsReceiverConfig{{
@@ -793,7 +789,7 @@ func (c ChannelIncidentIOConfig) Validate() error {
 	return nil
 }
 
-func (c ChannelIncidentIOConfig) toReceiver(displayName string) (*Receiver, error) {
+func (c ChannelIncidentIOConfig) toUndefaultedReceiver(displayName string) (*Receiver, error) {
 	return &Receiver{
 		Receiver: &config.Receiver{Name: displayName},
 		IncidentIOConfigs: []*IncidentIOReceiverConfig{{

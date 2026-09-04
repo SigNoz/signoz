@@ -428,7 +428,7 @@ func TestChannelSpecWithoutSendResolvedTakesTheUpstreamDefault(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			receiver, err := testCase.spec.toReceiver("probe")
+			receiver, err := testCase.spec.toUndefaultedReceiver("probe")
 			require.NoError(t, err)
 
 			channel, err := NewChannelFromReceiverWithName(receiver, "probe", "org-1")
