@@ -34,6 +34,11 @@ interface Props {
 	onQueryChange: (value: string) => void;
 	// Rendered at the end of the search row (e.g. the New Dashboard action).
 	rightSlot?: ReactNode;
+	/**
+	 * Why filtering is unavailable. Non-empty makes the chrome non-interactive and
+	 * explains it, rather than leaving a dead search box.
+	 */
+	disabledReason?: string;
 }
 
 // The filter command zone. The query box is a DRAFT: typing and the Created-by /
@@ -47,7 +52,9 @@ function FilterZone({
 	source,
 	onQueryChange,
 	rightSlot,
+	disabledReason = '',
 }: Props): JSX.Element {
+	const disabled = !!disabledReason;
 	const [draft, setDraft] = useState(query);
 
 	useEffect(() => {
@@ -136,6 +143,7 @@ function FilterZone({
 					onUpdatedChange={handleUpdatedChange}
 					onApply={run}
 					onClearCreatedBy={handleClearCreatedBy}
+					disabled={disabled}
 				/>
 				{!isEmpty && (
 					<Button
@@ -144,6 +152,7 @@ function FilterZone({
 						size="sm"
 						prefix={<X size={12} />}
 						onClick={handleClear}
+						disabled={disabled}
 						testId="dashboards-filter-clear"
 					>
 						Clear

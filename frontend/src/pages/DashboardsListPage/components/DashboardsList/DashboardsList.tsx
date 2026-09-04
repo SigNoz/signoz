@@ -5,8 +5,11 @@ import {
 	DashboardtypesListOrderDTO,
 	DashboardtypesListSortDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import useComponentPermission from 'hooks/useComponentPermission';
+import { DASHBOARD_NO_LIST_PERMISSION_REASON } from 'hooks/dashboards/dashboardPermissionReasons';
+import { useDashboardCollectionPermissions } from 'hooks/dashboards/useDashboardCollectionPermissions';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
+import { DashboardListPermission } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
 import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
 import { useAppContext } from 'providers/App/App';
 import { toAPIError } from 'utils/errorUtils';
@@ -43,16 +46,19 @@ const PAGE_SIZE = 20;
 // Favorites / recently-viewed are filtered client-side (no server id filter), so
 // we pull a single large page and constrain it in-memory.
 const CLIENT_VIEW_LIMIT = 200;
+const LIST_CHECKS = [DashboardListPermission];
 
 function DashboardsList(): JSX.Element {
 	const { isCloudUser } = useGetTenantLicense();
 
 	const { user } = useAppContext();
-	const [editDashboard, canCreateNewDashboard] = useComponentPermission(
-		['edit_dashboard', 'create_new_dashboards'],
-		user.role,
-	);
-	const canEdit = !!editDashboard;
+	// `list` also authorizes pinning and saved views, so it gates the table only.
+	// Already resolved — the page gates on it before mounting this tree. A failed
+	// check falls open: fetch anyway and let the API decide, so an authz outage
+	// doesn't leave a permanently empty list.
+	const { canList, hasError: hasPermissionError } =
+		useDashboardCollectionPermissions();
+	const mayList = canList || hasPermissionError;
 
 	const { query, isEmpty: filtersEmpty, setQuery } = useDashboardFilters();
 	const [sortColumn, setSortColumn] = useSortColumn();
@@ -144,7 +150,7 @@ function DashboardsList(): JSX.Element {
 		error,
 		refetch,
 	} = useListDashboardsForUserV2(listParams, {
-		query: { keepPreviousData: true },
+		query: { keepPreviousData: true, enabled: mayList },
 	});
 
 	const apiError = useMemo(
@@ -271,6 +277,7 @@ function DashboardsList(): JSX.Element {
 	// The workspace-empty CTA ("create your first dashboard") belongs only to the
 	// unfiltered All view; every other view's zero result is a no-results state.
 	const showWorkspaceEmpty =
+		mayList &&
 		!error &&
 		dashboards.length === 0 &&
 		activeViewId === BuiltinViewId.All &&
@@ -295,15 +302,11 @@ function DashboardsList(): JSX.Element {
 				onReset={handleResetView}
 				onDelete={handleRemoveView}
 				onRename={renameView}
-				canEdit={canEdit}
 			/>
 			<div className={styles.main}>
 				<div className={styles.mainScroll}>
 					{isWorkspaceEmpty ? (
-						<WorkspaceEmptyState
-							canCreate={canCreateNewDashboard}
-							onCreate={openCreate}
-						/>
+						<WorkspaceEmptyState onCreate={openCreate} />
 					) : (
 						<>
 							<div className={styles.headerZone}>
@@ -311,43 +314,44 @@ function DashboardsList(): JSX.Element {
 									label={activeLabel}
 									count={total}
 									isModified={isModified}
-									canCreate={canCreateNewDashboard}
 									onCreate={openCreate}
 								/>
 								<FilterZone
 									query={query}
 									creatorOptions={creatorOptions}
 									source={source}
+									disabledReason={mayList ? '' : DASHBOARD_NO_LIST_PERMISSION_REASON}
 									onQueryChange={handleQueryChange}
 								/>
 							</div>
 							<div className={styles.viewContent}>
-								<DashboardsResults
-									isLoading={isLoading}
-									hasError={!!error}
-									isCloudUser={!!isCloudUser}
-									onRetry={(): void => {
-										refetch();
-									}}
-									errorHttpStatus={errorHttpStatus}
-									errorMessage={errorMessage}
-									dashboards={dashboards}
-									activeViewId={activeViewId}
-									searchValue={query}
-									hasFilters={!filtersEmpty}
-									sortColumn={sortColumn}
-									onSortChange={onSortChange}
-									sortOrder={sortOrder}
-									onOrderChange={onOrderChange}
-									page={page}
-									pageSize={clientView ? CLIENT_VIEW_LIMIT : PAGE_SIZE}
-									total={total}
-									onPageChange={setPage}
-									canEdit={canEdit}
-									showUpdatedAt={visibleColumns.updatedAt}
-									showUpdatedBy={visibleColumns.updatedBy}
-									loading={isFetching}
-								/>
+								<AuthZGuardContent checks={LIST_CHECKS}>
+									<DashboardsResults
+										isLoading={isLoading}
+										hasError={!!error}
+										isCloudUser={!!isCloudUser}
+										onRetry={(): void => {
+											refetch();
+										}}
+										errorHttpStatus={errorHttpStatus}
+										errorMessage={errorMessage}
+										dashboards={dashboards}
+										activeViewId={activeViewId}
+										searchValue={query}
+										hasFilters={!filtersEmpty}
+										sortColumn={sortColumn}
+										onSortChange={onSortChange}
+										sortOrder={sortOrder}
+										onOrderChange={onOrderChange}
+										page={page}
+										pageSize={clientView ? CLIENT_VIEW_LIMIT : PAGE_SIZE}
+										total={total}
+										onPageChange={setPage}
+										showUpdatedAt={visibleColumns.updatedAt}
+										showUpdatedBy={visibleColumns.updatedBy}
+										loading={isFetching}
+									/>
+								</AuthZGuardContent>
 							</div>
 						</>
 					)}
