@@ -28,6 +28,7 @@ import (
 	eequerier "github.com/SigNoz/signoz/ee/querier"
 	enterpriseapp "github.com/SigNoz/signoz/ee/query-service/app"
 	eerules "github.com/SigNoz/signoz/ee/query-service/rules"
+	"github.com/SigNoz/signoz/ee/subscription/httpsubscription"
 	enterprisezeus "github.com/SigNoz/signoz/ee/zeus"
 	"github.com/SigNoz/signoz/ee/zeus/httpzeus"
 	"github.com/SigNoz/signoz/pkg/alertmanager"
@@ -60,6 +61,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/ruler/signozruler"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/subscription"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
@@ -102,6 +104,9 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		enterpriselicensing.Config(24*time.Hour, 3),
 		func(sqlstore sqlstore.SQLStore, zeus zeus.Zeus, orgGetter organization.Getter, analytics analytics.Analytics) factory.ProviderFactory[licensing.Licensing, licensing.Config] {
 			return httplicensing.NewProviderFactory(sqlstore, zeus, orgGetter, analytics)
+		},
+		func(zeus zeus.Zeus, licensing licensing.Licensing) subscription.Subscription {
+			return httpsubscription.New(zeus, licensing)
 		},
 		signoz.NewEmailingProviderFactories(),
 		signoz.NewCacheProviderFactories(),

@@ -53,12 +53,9 @@ type Zeus interface {
 }
 
 type Handler interface {
-	// API level handler for PutProfile
 	PutProfile(http.ResponseWriter, *http.Request)
 
-	// API level handler for getting hosts a slim wrapper around GetDeployment
 	GetHosts(http.ResponseWriter, *http.Request)
 
-	// API level handler for PutHost
 	PutHost(http.ResponseWriter, *http.Request)
 }

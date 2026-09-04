@@ -22,7 +22,6 @@ export const routeConfig: Record<string, QueryParams[]> = {
 	[ROUTES.CHANNELS_EDIT]: [QueryParams.resourceAttributes],
 	[ROUTES.CHANNELS_NEW]: [QueryParams.resourceAttributes],
 	[ROUTES.DASHBOARD]: [QueryParams.resourceAttributes],
-	[ROUTES.DASHBOARD_WIDGET]: [QueryParams.resourceAttributes],
 	[ROUTES.EDIT_ALERTS]: [QueryParams.resourceAttributes],
 	[ROUTES.ERROR_DETAIL]: [QueryParams.resourceAttributes],
 	[ROUTES.HOME_PAGE]: [QueryParams.resourceAttributes],

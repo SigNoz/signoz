@@ -109,6 +109,25 @@ components:
         webhook_url:
           $ref: '#/components/schemas/ConfigSecretURL'
       type: object
+    AlertmanagertypesIncidentIOReceiverConfig:
+      properties:
+        description:
+          type: string
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        metadata:
+          additionalProperties:
+            type: string
+          type: object
+        send_resolved:
+          type: boolean
+        title:
+          type: string
+        token:
+          type: string
+        url:
+          type: string
+      type: object
     AlertmanagertypesJSMOpsReceiverConfig:
       properties:
         api_key:
@@ -218,11 +237,11 @@ components:
       - required:
         - jsmops_configs
       - required:
+        - incidentio_configs
+      - required:
         - discord_configs
       - required:
         - email_configs
-      - required:
-        - incidentio_configs
       - required:
         - pagerduty_configs
       - required:
@@ -266,7 +285,7 @@ components:
           type: array
         incidentio_configs:
           items:
-            $ref: '#/components/schemas/ConfigIncidentioConfig'
+            $ref: '#/components/schemas/AlertmanagertypesIncidentIOReceiverConfig'
           type: array
         jira_configs:
           items:
@@ -397,7 +416,7 @@ components:
           type: array
         incidentio_configs:
           items:
-            $ref: '#/components/schemas/ConfigIncidentioConfig'
+            $ref: '#/components/schemas/AlertmanagertypesIncidentIOReceiverConfig'
           type: array
         jira_configs:
           items:
@@ -4138,6 +4157,18 @@ components:
           nullable: true
           type: object
       type: object
+    GatewaytypesDeprecatedPostableIngestionKeyLimit:
+      properties:
+        config:
+          $ref: '#/components/schemas/GatewaytypesLimitConfig'
+        signal:
+          type: string
+        tags:
+          items:
+            type: string
+          nullable: true
+          type: array
+      type: object
     GatewaytypesGettableCreatedIngestionKey:
       properties:
         id:
@@ -4281,6 +4312,8 @@ components:
       properties:
         config:
           $ref: '#/components/schemas/GatewaytypesLimitConfig'
+        keyId:
+          type: string
         signal:
           type: string
         tags:
@@ -4288,6 +4321,8 @@ components:
             type: string
           nullable: true
           type: array
+      required:
+      - keyId
       type: object
     GatewaytypesUpdatableIngestionKeyLimit:
       properties:
@@ -7958,6 +7993,48 @@ components:
       - custom
       - text
       type: string
+    QuickfiltertypesSource:
+      enum:
+      - traces
+      - logs
+      - api_monitoring
+      - exceptions
+      - meter
+      - ai_observability
+      type: string
+    QuickfiltertypesSourceFilters:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        filters:
+          items:
+            $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          type: array
+        id:
+          type: string
+        orgId:
+          type: string
+        source:
+          $ref: '#/components/schemas/QuickfiltertypesSource'
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - orgId
+      - source
+      - filters
+      type: object
+    QuickfiltertypesUpdatableQuickFilters:
+      properties:
+        filters:
+          items:
+            $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          type: array
+      required:
+      - filters
+      type: object
     RenderErrorResponse:
       properties:
         error:
@@ -9260,6 +9337,116 @@ components:
       required:
       - references
       type: object
+    SubscriptiontypesGettableSubscription:
+      properties:
+        redirectURL:
+          type: string
+      required:
+      - redirectURL
+      type: object
+    SubscriptiontypesGettableSubscriptionUsage:
+      properties:
+        billingPeriodEnd:
+          format: int64
+          type: integer
+        billingPeriodStart:
+          format: int64
+          type: integer
+        details:
+          $ref: '#/components/schemas/SubscriptiontypesSubscriptionUsageDetails'
+        discount:
+          format: double
+          type: number
+        subscriptionStatus:
+          type: string
+      type: object
+    SubscriptiontypesPostableSubscription:
+      properties:
+        url:
+          type: string
+      required:
+      - url
+      type: object
+    SubscriptiontypesSubscriptionUsageBreakdown:
+      properties:
+        dayWiseBreakdown:
+          $ref: '#/components/schemas/SubscriptiontypesSubscriptionUsageDayWiseBreakdown'
+        tiers:
+          items:
+            $ref: '#/components/schemas/SubscriptiontypesSubscriptionUsageTier'
+          nullable: true
+          type: array
+        type:
+          type: string
+        unit:
+          type: string
+      type: object
+    SubscriptiontypesSubscriptionUsageDayWiseBreakdown:
+      properties:
+        breakdown:
+          items:
+            $ref: '#/components/schemas/SubscriptiontypesSubscriptionUsageDayWiseData'
+          nullable: true
+          type: array
+        type:
+          type: string
+      type: object
+    SubscriptiontypesSubscriptionUsageDayWiseData:
+      properties:
+        count:
+          format: double
+          type: number
+        quantity:
+          format: double
+          type: number
+        size:
+          format: double
+          type: number
+        timestamp:
+          format: int64
+          type: integer
+        total:
+          format: double
+          type: number
+        unitPrice:
+          format: double
+          type: number
+      type: object
+    SubscriptiontypesSubscriptionUsageDetails:
+      properties:
+        baseFee:
+          format: double
+          type: number
+        billTotal:
+          format: double
+          type: number
+        breakdown:
+          items:
+            $ref: '#/components/schemas/SubscriptiontypesSubscriptionUsageBreakdown'
+          nullable: true
+          type: array
+        total:
+          format: double
+          type: number
+      type: object
+    SubscriptiontypesSubscriptionUsageTier:
+      properties:
+        quantity:
+          format: double
+          type: number
+        tierCost:
+          format: double
+          type: number
+        tierEnd:
+          format: int64
+          type: integer
+        tierStart:
+          format: int64
+          type: integer
+        unitPrice:
+          format: double
+          type: number
+      type: object
     TagtypesGettableTag:
       properties:
         key:
@@ -9796,6 +9983,10 @@ paths:
           type: integer
       - in: query
         name: name
+        schema:
+          type: string
+      - in: query
+        name: existingQuery
         schema:
           type: string
       responses:
@@ -14480,6 +14671,197 @@ paths:
       summary: Get stats
       tags:
       - stats
+  /api/v1/subscriptions:
+    get:
+      deprecated: false
+      description: This endpoint gets the organization's subscription along with its
+        usage and billing details.
+      operationId: GetSubscription
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SubscriptiontypesGettableSubscriptionUsage'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - subscription:read
+      - tokenizer:
+        - subscription:read
+      summary: Get the subscription.
+      tags:
+      - subscriptions
+    post:
+      deprecated: false
+      description: This endpoint creates a subscription for the organization.
+      operationId: CreateSubscription
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptiontypesPostableSubscription'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SubscriptiontypesGettableSubscription'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - subscription:create
+      - tokenizer:
+        - subscription:create
+      summary: Create a subscription.
+      tags:
+      - subscriptions
+    put:
+      deprecated: false
+      description: This endpoint updates the organization's subscription.
+      operationId: UpdateSubscription
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptiontypesPostableSubscription'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SubscriptiontypesGettableSubscription'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - subscription:list
+        - subscription:update
+      - tokenizer:
+        - subscription:list
+        - subscription:update
+      summary: Update the subscription.
+      tags:
+      - subscriptions
   /api/v1/testChannel:
     post:
       deprecated: true
@@ -16166,9 +16548,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - ingestion-key:list
       - tokenizer:
-        - EDITOR
+        - ingestion-key:list
       summary: Get ingestion keys for workspace
       tags:
       - gateway
@@ -16216,9 +16598,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - ingestion-key:create
       - tokenizer:
-        - EDITOR
+        - ingestion-key:create
       summary: Create ingestion key for workspace
       tags:
       - gateway
@@ -16256,10 +16638,67 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - ingestion-key:delete
       - tokenizer:
-        - EDITOR
+        - ingestion-key:delete
       summary: Delete ingestion key for workspace
+      tags:
+      - gateway
+    get:
+      deprecated: false
+      description: This endpoint returns an ingestion key for the workspace
+      operationId: GetIngestionKey
+      parameters:
+      - in: path
+        name: keyId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/GatewaytypesIngestionKey'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ingestion-key:read
+      - tokenizer:
+        - ingestion-key:read
+      summary: Get ingestion key for workspace
       tags:
       - gateway
     patch:
@@ -16300,16 +16739,76 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - ingestion-key:update
       - tokenizer:
-        - EDITOR
+        - ingestion-key:update
       summary: Update ingestion key for workspace
       tags:
       - gateway
   /api/v2/gateway/ingestion_keys/{keyId}/limits:
-    post:
+    get:
       deprecated: false
-      description: This endpoint creates an ingestion key limit
+      description: This endpoint returns the ingestion limits for an ingestion key
+      operationId: GetIngestionKeyLimits
+      parameters:
+      - in: path
+        name: keyId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/GatewaytypesLimit'
+                    nullable: true
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ingestion-limit:list
+      - tokenizer:
+        - ingestion-limit:list
+      summary: Get limits for the ingestion key
+      tags:
+      - gateway
+    post:
+      deprecated: true
+      description: This endpoint creates an ingestion key limit.
       operationId: CreateIngestionKeyLimit
       parameters:
       - in: path
@@ -16321,7 +16820,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GatewaytypesPostableIngestionKeyLimit'
+              $ref: '#/components/schemas/GatewaytypesDeprecatedPostableIngestionKeyLimit'
       responses:
         "201":
           content:
@@ -16357,15 +16856,17 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - ingestion-limit:create
+        - ingestion-key:attach
       - tokenizer:
-        - EDITOR
+        - ingestion-limit:create
+        - ingestion-key:attach
       summary: Create limit for the ingestion key
       tags:
       - gateway
   /api/v2/gateway/ingestion_keys/limits/{limitId}:
     delete:
-      deprecated: false
+      deprecated: true
       description: This endpoint deletes an ingestion key limit
       operationId: DeleteIngestionKeyLimit
       parameters:
@@ -16397,15 +16898,17 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - ingestion-limit:delete
+        - ingestion-key:detach
       - tokenizer:
-        - EDITOR
+        - ingestion-limit:delete
+        - ingestion-key:detach
       summary: Delete limit for the ingestion key
       tags:
       - gateway
     patch:
-      deprecated: false
-      description: This endpoint updates an ingestion key limit
+      deprecated: true
+      description: This endpoint updates an ingestion key limit.
       operationId: UpdateIngestionKeyLimit
       parameters:
       - in: path
@@ -16441,9 +16944,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - ingestion-limit:update
       - tokenizer:
-        - EDITOR
+        - ingestion-limit:update
       summary: Update limit for the ingestion key
       tags:
       - gateway
@@ -16501,10 +17004,213 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - ingestion-key:list
       - tokenizer:
-        - EDITOR
+        - ingestion-key:list
       summary: Search ingestion keys for workspace
+      tags:
+      - gateway
+  /api/v2/gateway/ingestion_limits:
+    post:
+      deprecated: false
+      description: This endpoint creates an ingestion limit for the ingestion key
+        referenced by keyId
+      operationId: CreateIngestionLimit
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GatewaytypesPostableIngestionKeyLimit'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesIdentifiable'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ingestion-limit:create
+        - ingestion-key:attach
+      - tokenizer:
+        - ingestion-limit:create
+        - ingestion-key:attach
+      summary: Create ingestion limit
+      tags:
+      - gateway
+  /api/v2/gateway/ingestion_limits/{limitId}:
+    delete:
+      deprecated: false
+      description: This endpoint deletes an ingestion limit
+      operationId: DeleteIngestionLimit
+      parameters:
+      - in: path
+        name: limitId
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ingestion-limit:delete
+        - ingestion-key:detach
+      - tokenizer:
+        - ingestion-limit:delete
+        - ingestion-key:detach
+      summary: Delete ingestion limit
+      tags:
+      - gateway
+    get:
+      deprecated: false
+      description: This endpoint returns an ingestion limit
+      operationId: GetIngestionLimit
+      parameters:
+      - in: path
+        name: limitId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/GatewaytypesLimit'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ingestion-limit:read
+      - tokenizer:
+        - ingestion-limit:read
+      summary: Get ingestion limit
+      tags:
+      - gateway
+    patch:
+      deprecated: false
+      description: This endpoint updates an ingestion limit
+      operationId: UpdateIngestionLimit
+      parameters:
+      - in: path
+        name: limitId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GatewaytypesUpdatableIngestionKeyLimit'
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ingestion-limit:update
+      - tokenizer:
+        - ingestion-limit:update
+      summary: Update ingestion limit
       tags:
       - gateway
   /api/v2/healthz:
@@ -18961,6 +19667,170 @@ paths:
       summary: Get query range result (v2)
       tags:
       - dashboard
+  /api/v2/quick_filters:
+    get:
+      deprecated: false
+      description: Returns the org's quick filters for every source, each filter as
+        a telemetry field key.
+      operationId: ListQuickFilters
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/QuickfiltertypesSourceFilters'
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - quick-filter:list
+      - tokenizer:
+        - quick-filter:list
+      summary: List quick filters
+      tags:
+      - quick_filter
+  /api/v2/quick_filters/{source}:
+    get:
+      deprecated: false
+      description: Returns the org's quick filters for one source, each filter as
+        a telemetry field key.
+      operationId: GetQuickFilters
+      parameters:
+      - in: path
+        name: source
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/QuickfiltertypesSourceFilters'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - quick-filter:read
+      - tokenizer:
+        - quick-filter:read
+      summary: Get a source's quick filters
+      tags:
+      - quick_filter
+    put:
+      deprecated: false
+      description: Replaces the org's quick filters for the source named in the path.
+      operationId: UpdateQuickFilters
+      parameters:
+      - in: path
+        name: source
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuickfiltertypesUpdatableQuickFilters'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - quick-filter:update
+      - tokenizer:
+        - quick-filter:update
+      summary: Update quick filters
+      tags:
+      - quick_filter
   /api/v2/readyz:
     get:
       operationId: Readyz

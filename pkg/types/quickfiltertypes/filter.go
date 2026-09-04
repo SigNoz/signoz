@@ -5,58 +5,69 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
 
-type Signal struct {
+type Source struct {
 	valuer.String
 }
 
-func (enum *Signal) UnmarshalJSON(data []byte) error {
+func (enum *Source) UnmarshalJSON(data []byte) error {
 	var str string
 	if err := json.Unmarshal(data, &str); err != nil {
 		return err
 	}
 
-	signal, err := NewSignal(str)
+	source, err := NewSource(str)
 	if err != nil {
 		return err
 	}
 
-	*enum = signal
+	*enum = source
 	return nil
 }
 
 var (
-	SignalTraces          = Signal{valuer.NewString("traces")}
-	SignalLogs            = Signal{valuer.NewString("logs")}
-	SignalApiMonitoring   = Signal{valuer.NewString("api_monitoring")}
-	SignalExceptions      = Signal{valuer.NewString("exceptions")}
-	SignalMeter           = Signal{valuer.NewString("meter")}
-	SignalAiObservability = Signal{valuer.NewString("ai_observability")}
+	SourceTraces          = Source{valuer.NewString("traces")}
+	SourceLogs            = Source{valuer.NewString("logs")}
+	SourceApiMonitoring   = Source{valuer.NewString("api_monitoring")}
+	SourceExceptions      = Source{valuer.NewString("exceptions")}
+	SourceMeter           = Source{valuer.NewString("meter")}
+	SourceAiObservability = Source{valuer.NewString("ai_observability")}
 )
 
-// NewSignal creates a Signal from a string.
-func NewSignal(s string) (Signal, error) {
+func (Source) Enum() []any {
+	return []any{
+		SourceTraces,
+		SourceLogs,
+		SourceApiMonitoring,
+		SourceExceptions,
+		SourceMeter,
+		SourceAiObservability,
+	}
+}
+
+// NewSource creates a Source from a string.
+func NewSource(s string) (Source, error) {
 	switch s {
 	case "traces":
-		return SignalTraces, nil
+		return SourceTraces, nil
 	case "logs":
-		return SignalLogs, nil
+		return SourceLogs, nil
 	case "api_monitoring":
-		return SignalApiMonitoring, nil
+		return SourceApiMonitoring, nil
 	case "exceptions":
-		return SignalExceptions, nil
+		return SourceExceptions, nil
 	case "meter":
-		return SignalMeter, nil
+		return SourceMeter, nil
 	case "ai_observability":
-		return SignalAiObservability, nil
+		return SourceAiObservability, nil
 	default:
-		return Signal{}, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid signal: %s", s)
+		return Source{}, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid source: %s", s)
 	}
 }
 
@@ -65,33 +76,46 @@ type StorableQuickFilter struct {
 	types.Identifiable
 	OrgID  valuer.UUID `bun:"org_id,type:text,notnull"`
 	Filter string      `bun:"filter,type:text,notnull"`
-	Signal Signal      `bun:"signal,type:text,notnull"`
+	Source Source      `bun:"source,type:text,notnull"`
 	types.TimeAuditable
 }
 
-type SignalFilters struct {
-	Signal  Signal            `json:"signal"`
-	Filters []v3.AttributeKey `json:"filters"`
+type SourceFilters struct {
+	types.Identifiable
+	types.TimeAuditable
+
+	OrgID   valuer.UUID                        `json:"orgId" required:"true"`
+	Source  Source                             `json:"source" required:"true"`
+	Filters []telemetrytypes.TelemetryFieldKey `json:"filters" required:"true" nullable:"false"`
 }
 
 type UpdatableQuickFilters struct {
-	Signal  Signal            `json:"signal"`
-	Filters []v3.AttributeKey `json:"filters"`
+	Filters []telemetrytypes.TelemetryFieldKey `json:"filters" required:"true" nullable:"false"`
 }
 
 // NewStorableQuickFilter creates a new StorableQuickFilter after validation.
-func NewStorableQuickFilter(orgID valuer.UUID, signal Signal, filterJSON []byte) (*StorableQuickFilter, error) {
-	if orgID.StringValue() == "" {
+func NewStorableQuickFilter(orgID valuer.UUID, source Source, filters []telemetrytypes.TelemetryFieldKey) (*StorableQuickFilter, error) {
+	if orgID.IsZero() {
 		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "orgID is required")
 	}
 
-	if _, err := NewSignal(signal.StringValue()); err != nil {
+	if _, err := NewSource(source.StringValue()); err != nil {
 		return nil, err
 	}
 
-	var filters []v3.AttributeKey
-	if err := json.Unmarshal(filterJSON, &filters); err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid filter JSON")
+	if err := validateFilters(filters); err != nil {
+		return nil, err
+	}
+
+	// A nil slice marshals to the JSON literal "null"; store an empty array so
+	// reads never have to render a null filter list.
+	if filters == nil {
+		filters = []telemetrytypes.TelemetryFieldKey{}
+	}
+
+	filterJSON, err := json.Marshal(filters)
+	if err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error marshalling filters")
 	}
 
 	now := time.Now()
@@ -100,7 +124,7 @@ func NewStorableQuickFilter(orgID valuer.UUID, signal Signal, filterJSON []byte)
 			ID: valuer.GenerateUUID(),
 		},
 		OrgID:  orgID,
-		Signal: signal,
+		Source: source,
 		Filter: string(filterJSON),
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: now,
@@ -109,25 +133,21 @@ func NewStorableQuickFilter(orgID valuer.UUID, signal Signal, filterJSON []byte)
 	}, nil
 }
 
-// Update updates an existing StorableQuickFilter with new filter data after validation.
-func (quickfilter *StorableQuickFilter) Update(filterJSON []byte) error {
-	var filters []v3.AttributeKey
-	if err := json.Unmarshal(filterJSON, &filters); err != nil {
-		return errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid filter JSON")
+// NewSourceFiltersFromSource creates a SourceFilters with no filters for a source.
+func NewSourceFiltersFromSource(source Source) *SourceFilters {
+	return &SourceFilters{
+		Source:  source,
+		Filters: []telemetrytypes.TelemetryFieldKey{},
 	}
-
-	quickfilter.Filter = string(filterJSON)
-	quickfilter.UpdatedAt = time.Now()
-	return nil
 }
 
-// NewSignalFilterFromStorableQuickFilter converts a StorableQuickFilter to a SignalFilters object.
-func NewSignalFilterFromStorableQuickFilter(storableQuickFilter *StorableQuickFilter) (*SignalFilters, error) {
+// NewSourceFilterFromStorableQuickFilter converts a StorableQuickFilter to a SourceFilters object.
+func NewSourceFilterFromStorableQuickFilter(storableQuickFilter *StorableQuickFilter) (*SourceFilters, error) {
 	if storableQuickFilter == nil {
 		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "storableQuickFilter cannot be nil")
 	}
 
-	var filters []v3.AttributeKey
+	filters := []telemetrytypes.TelemetryFieldKey{}
 	if storableQuickFilter.Filter != "" {
 		err := json.Unmarshal([]byte(storableQuickFilter.Filter), &filters)
 		if err != nil {
@@ -135,178 +155,114 @@ func NewSignalFilterFromStorableQuickFilter(storableQuickFilter *StorableQuickFi
 		}
 	}
 
-	return &SignalFilters{
-		Signal:  storableQuickFilter.Signal,
-		Filters: filters,
+	// Stored filter JSON can be the literal "null" (a nil slice was upserted),
+	// which unmarshals to nil; the API contract requires a non-null array.
+	if filters == nil {
+		filters = []telemetrytypes.TelemetryFieldKey{}
+	}
+
+	return &SourceFilters{
+		Identifiable:  storableQuickFilter.Identifiable,
+		OrgID:         storableQuickFilter.OrgID,
+		Source:        storableQuickFilter.Source,
+		Filters:       filters,
+		TimeAuditable: storableQuickFilter.TimeAuditable,
 	}, nil
 }
 
-// NewDefaultQuickFilter generates default filters for all supported signals.
+// NewDefaultQuickFilter generates default filters for all supported sources.
 func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
-	tracesFilters := []map[string]interface{}{
-		{"key": "duration_nano", "dataType": "float64", "type": "tag"},
-		{"key": "deployment.environment", "dataType": "string", "type": "resource"},
-		{"key": "hasError", "dataType": "bool", "type": "tag"},
-		{"key": "service.name", "dataType": "string", "type": "resource"},
-		{"key": "name", "dataType": "string", "type": "tag"},
-		{"key": "rpc.method", "dataType": "string", "type": "tag"},
-		{"key": "response_status_code", "dataType": "string", "type": "tag"},
-		{"key": "http_host", "dataType": "string", "type": "tag"},
-		{"key": "http.method", "dataType": "string", "type": "tag"},
-		{"key": "http.route", "dataType": "string", "type": "tag"},
-		{"key": "http_url", "dataType": "string", "type": "tag"},
-		{"key": "trace_id", "dataType": "string", "type": "tag"},
+	tracesFilters := []telemetrytypes.TelemetryFieldKey{
+		{Name: "duration_nano", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeNumber},
+		{Name: "deployment.environment", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "hasError", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeBool},
+		{Name: "service.name", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "name", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "rpc.method", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "response_status_code", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "http_host", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "http.method", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "http.route", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "http_url", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "trace_id", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
 	}
 
-	logsFilters := []map[string]interface{}{
-		{"key": "severity_text", "dataType": "string", "type": "resource"},
-		{"key": "deployment.environment", "dataType": "string", "type": "resource"},
-		{"key": "service.name", "dataType": "string", "type": "resource"},
-		{"key": "host.name", "dataType": "string", "type": "resource"},
-		{"key": "k8s.cluster.name", "dataType": "string", "type": "resource"},
-		{"key": "k8s.deployment.name", "dataType": "string", "type": "resource"},
-		{"key": "k8s.namespace.name", "dataType": "string", "type": "resource"},
-		{"key": "k8s.pod.name", "dataType": "string", "type": "resource"},
+	logsFilters := []telemetrytypes.TelemetryFieldKey{
+		{Name: "severity_text", FieldContext: telemetrytypes.FieldContextLog, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "deployment.environment", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "service.name", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "host.name", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "k8s.cluster.name", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "k8s.deployment.name", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "k8s.namespace.name", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "k8s.pod.name", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString},
 	}
 
-	apiMonitoringFilters := []map[string]interface{}{
-		{"key": "deployment.environment", "dataType": "string", "type": "resource"},
-		{"key": "service.name", "dataType": "string", "type": "resource"},
-		{"key": "rpc.method", "dataType": "string", "type": "tag"},
+	apiMonitoringFilters := []telemetrytypes.TelemetryFieldKey{
+		{Name: "deployment.environment", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "service.name", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "rpc.method", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
 	}
 
-	exceptionsFilters := []map[string]interface{}{
-		{"key": "deployment.environment", "dataType": "string", "type": "resource"},
-		{"key": "service.name", "dataType": "string", "type": "resource"},
-		{"key": "host.name", "dataType": "string", "type": "resource"},
-		{"key": "k8s.cluster.name", "dataType": "string", "type": "resource"},
-		{"key": "k8s.deployment.name", "dataType": "string", "type": "resource"},
-		{"key": "k8s.namespace.name", "dataType": "string", "type": "resource"},
-		{"key": "k8s.pod.name", "dataType": "string", "type": "resource"},
+	exceptionsFilters := []telemetrytypes.TelemetryFieldKey{
+		{Name: "deployment.environment", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "service.name", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "host.name", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "k8s.cluster.name", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "k8s.deployment.name", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "k8s.namespace.name", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "k8s.pod.name", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString},
 	}
 
-	meterFilters := []map[string]interface{}{
-		{"key": "deployment.environment", "dataType": "float64", "type": "Sum"},
-		{"key": "service.name", "dataType": "float64", "type": "Sum"},
-		{"key": "host.name", "dataType": "float64", "type": "Sum"},
+	// Meter keys are label names with no context or datatype: the meter fields
+	// API returns them as name+signal only, so the defaults mirror that shape.
+	meterFilters := []telemetrytypes.TelemetryFieldKey{
+		{Name: "deployment.environment", Signal: telemetrytypes.SignalMetrics},
+		{Name: "service.name", Signal: telemetrytypes.SignalMetrics},
+		{Name: "host.name", Signal: telemetrytypes.SignalMetrics},
 	}
 
 	// AI observability (builder_ai_query trace explorer), ordered by expected
 	// usage: env scoping, the LLM identity keys, then service and the rest.
-	aiObservabilityFilters := []map[string]interface{}{
-		{"key": "deployment.environment", "dataType": "string", "type": "resource"},
-		{"key": aiobservabilitytypes.GenAIOperationName, "dataType": "string", "type": "tag"},
-		{"key": aiobservabilitytypes.GenAIProviderName, "dataType": "string", "type": "tag"},
-		{"key": aiobservabilitytypes.GenAIRequestModel, "dataType": "string", "type": "tag"},
-		{"key": "service.name", "dataType": "string", "type": "resource"},
-		{"key": aiobservabilitytypes.GenAIToolName, "dataType": "string", "type": "tag"},
-		{"key": aiobservabilitytypes.GenAIAgentName, "dataType": "string", "type": "tag"},
+	aiObservabilityFilters := []telemetrytypes.TelemetryFieldKey{
+		{Name: "deployment.environment", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: aiobservabilitytypes.GenAIOperationName, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: aiobservabilitytypes.GenAIProviderName, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: aiobservabilitytypes.GenAIRequestModel, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: "service.name", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: aiobservabilitytypes.GenAIToolName, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: aiobservabilitytypes.GenAIAgentName, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
 	}
 
-	tracesJSON, err := json.Marshal(tracesFilters)
-	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal traces filters")
+	defaults := []struct {
+		source  Source
+		filters []telemetrytypes.TelemetryFieldKey
+	}{
+		{SourceTraces, tracesFilters},
+		{SourceLogs, logsFilters},
+		{SourceApiMonitoring, apiMonitoringFilters},
+		{SourceExceptions, exceptionsFilters},
+		{SourceMeter, meterFilters},
+		{SourceAiObservability, aiObservabilityFilters},
 	}
 
-	logsJSON, err := json.Marshal(logsFilters)
-	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal logs filters")
+	storableQuickFilters := make([]*StorableQuickFilter, 0, len(defaults))
+	for _, def := range defaults {
+		storableQuickFilter, err := NewStorableQuickFilter(orgID, def.source, def.filters)
+		if err != nil {
+			return nil, err
+		}
+		storableQuickFilters = append(storableQuickFilters, storableQuickFilter)
 	}
 
-	apiMonitoringJSON, err := json.Marshal(apiMonitoringFilters)
-	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal api monitoring filters")
+	return storableQuickFilters, nil
+}
+
+func validateFilters(filters []telemetrytypes.TelemetryFieldKey) error {
+	for _, filter := range filters {
+		if filter.Name == "" {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "filter name is required")
+		}
 	}
-
-	exceptionsJSON, err := json.Marshal(exceptionsFilters)
-	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal exceptions filters")
-	}
-
-	meterJSON, err := json.Marshal(meterFilters)
-	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal meter filters")
-	}
-
-	aiObservabilityJSON, err := json.Marshal(aiObservabilityFilters)
-	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal ai observability filters")
-	}
-
-	timeRightNow := time.Now()
-
-	return []*StorableQuickFilter{
-		{
-			Identifiable: types.Identifiable{
-				ID: valuer.GenerateUUID(),
-			},
-			OrgID:  orgID,
-			Filter: string(tracesJSON),
-			Signal: SignalTraces,
-			TimeAuditable: types.TimeAuditable{
-				CreatedAt: timeRightNow,
-				UpdatedAt: timeRightNow,
-			},
-		},
-		{
-			Identifiable: types.Identifiable{
-				ID: valuer.GenerateUUID(),
-			},
-			OrgID:  orgID,
-			Filter: string(logsJSON),
-			Signal: SignalLogs,
-			TimeAuditable: types.TimeAuditable{
-				CreatedAt: timeRightNow,
-				UpdatedAt: timeRightNow,
-			},
-		},
-		{
-			Identifiable: types.Identifiable{
-				ID: valuer.GenerateUUID(),
-			},
-			OrgID:  orgID,
-			Filter: string(apiMonitoringJSON),
-			Signal: SignalApiMonitoring,
-			TimeAuditable: types.TimeAuditable{
-				CreatedAt: timeRightNow,
-				UpdatedAt: timeRightNow,
-			},
-		},
-		{
-			Identifiable: types.Identifiable{
-				ID: valuer.GenerateUUID(),
-			},
-			OrgID:  orgID,
-			Filter: string(exceptionsJSON),
-			Signal: SignalExceptions,
-			TimeAuditable: types.TimeAuditable{
-				CreatedAt: timeRightNow,
-				UpdatedAt: timeRightNow,
-			},
-		},
-		{
-			Identifiable: types.Identifiable{
-				ID: valuer.GenerateUUID(),
-			},
-			OrgID:  orgID,
-			Filter: string(meterJSON),
-			Signal: SignalMeter,
-			TimeAuditable: types.TimeAuditable{
-				CreatedAt: timeRightNow,
-				UpdatedAt: timeRightNow,
-			},
-		},
-		{
-			Identifiable: types.Identifiable{
-				ID: valuer.GenerateUUID(),
-			},
-			OrgID:  orgID,
-			Filter: string(aiObservabilityJSON),
-			Signal: SignalAiObservability,
-			TimeAuditable: types.TimeAuditable{
-				CreatedAt: timeRightNow,
-				UpdatedAt: timeRightNow,
-			},
-		},
-	}, nil
+	return nil
 }
