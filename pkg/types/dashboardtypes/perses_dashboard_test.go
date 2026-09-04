@@ -1159,7 +1159,7 @@ func TestValidateTextPanel(t *testing.T) {
 		d, err := unmarshalDashboard(wrapPanel(`{
 			"mode": "markdown",
 			"text": "# Runbook\n\nSee the [oncall doc](https://example.com).",
-			"presentation": {"textAlign": "center", "verticalAlign": "bottom", "background": "transparent"},
+			"presentation": {"textAlign": "center", "verticalAlign": "bottom", "background": "#1A2b3C"},
 			"headerOptions": {"hide": true}
 		}`))
 		require.NoError(t, err, "expected a fully specified text panel to validate")
@@ -1170,22 +1170,27 @@ func TestValidateTextPanel(t *testing.T) {
 		assert.Equal(t, "# Runbook\n\nSee the [oncall doc](https://example.com).", spec.Text)
 		assert.Equal(t, TextAlignCenter, spec.Presentation.TextAlign)
 		assert.Equal(t, VerticalAlignBottom, spec.Presentation.VerticalAlign)
-		assert.Equal(t, PanelBackgroundTransparent, spec.Presentation.Background)
+		require.NotNil(t, spec.Presentation.Background, "expected background to be set")
+		assert.Equal(t, "#1A2b3C", *spec.Presentation.Background)
 		assert.True(t, spec.HeaderOptions.Hide)
 	})
 
 	// The header shows unless explicitly hidden, so the zero value must round-trip
-	// as a shown header.
+	// as a shown header. Background has no default: omitted stays omitted.
 	t.Run("omitted fields marshal back as their defaults", func(t *testing.T) {
 		d, err := unmarshalDashboard(wrapPanel(`{}`))
 		require.NoError(t, err, "expected an empty text panel spec to validate")
+
+		spec, ok := d.Panels["p1"].Spec.Plugin.Spec.(*TextPanelSpec)
+		require.True(t, ok, "expected the panel spec to decode as *TextPanelSpec")
+		assert.Nil(t, spec.Presentation.Background, "expected an omitted background to stay unset")
 
 		out, err := json.Marshal(d.Panels["p1"].Spec.Plugin.Spec)
 		require.NoError(t, err, "marshalling the decoded text panel spec")
 		assert.JSONEq(t, `{
 			"mode": "markdown",
 			"text": "",
-			"presentation": {"textAlign": "left", "verticalAlign": "top", "background": "solid"},
+			"presentation": {"textAlign": "left", "verticalAlign": "top"},
 			"headerOptions": {"hide": false}
 		}`, string(out))
 	})
@@ -1232,15 +1237,39 @@ func TestValidateTextPanel(t *testing.T) {
 		assert.Contains(t, err.Error(), "spec.queries: is required and must not be null")
 	})
 
+	t.Run("hex background colours validate", func(t *testing.T) {
+		for _, background := range []string{"#abc", "#abcd", "#aabbcc", "#aabbccdd", "#AABBCC"} {
+			d, err := unmarshalDashboard(wrapPanel(`{"presentation": {"background": "` + background + `"}}`))
+			require.NoError(t, err, "expected background %q to validate", background)
+
+			spec, ok := d.Panels["p1"].Spec.Plugin.Spec.(*TextPanelSpec)
+			require.True(t, ok, "expected the panel spec to decode as *TextPanelSpec")
+			require.NotNil(t, spec.Presentation.Background)
+			assert.Equal(t, background, *spec.Presentation.Background)
+		}
+	})
+
 	t.Run("unknown enum values are rejected", func(t *testing.T) {
 		for field, spec := range map[string]string{
 			"mode":          `{"mode": "html"}`,
 			"textAlign":     `{"presentation": {"textAlign": "justify"}}`,
 			"verticalAlign": `{"presentation": {"verticalAlign": "middle"}}`,
-			"background":    `{"presentation": {"background": "blurred"}}`,
 		} {
 			_, err := unmarshalDashboard(wrapPanel(spec))
 			assert.Error(t, err, "expected an unknown %s value to be rejected", field)
+		}
+	})
+
+	t.Run("invalid background colours are rejected", func(t *testing.T) {
+		for name, spec := range map[string]string{
+			"empty string":   `{"presentation": {"background": ""}}`,
+			"missing hash":   `{"presentation": {"background": "aabbcc"}}`,
+			"named colour":   `{"presentation": {"background": "red"}}`,
+			"wrong length":   `{"presentation": {"background": "#abcde"}}`,
+			"non hex digits": `{"presentation": {"background": "#gggggg"}}`,
+		} {
+			_, err := unmarshalDashboard(wrapPanel(spec))
+			assert.Error(t, err, "expected %s background to be rejected", name)
 		}
 	})
 

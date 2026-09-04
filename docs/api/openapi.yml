@@ -3406,11 +3406,6 @@ components:
       - kind
       - spec
       type: object
-    DashboardtypesPanelBackground:
-      enum:
-      - solid
-      - transparent
-      type: string
     DashboardtypesPanelFormatting:
       properties:
         decimalPrecision:
@@ -3854,7 +3849,8 @@ components:
     DashboardtypesTextPresentation:
       properties:
         background:
-          $ref: '#/components/schemas/DashboardtypesPanelBackground'
+          nullable: true
+          type: string
         textAlign:
           $ref: '#/components/schemas/DashboardtypesTextAlign'
         verticalAlign:

@@ -250,9 +250,9 @@ type TextPanelSpec struct {
 }
 
 type TextPresentation struct {
-	TextAlign     TextAlign       `json:"textAlign"`
-	VerticalAlign VerticalAlign   `json:"verticalAlign"`
-	Background    PanelBackground `json:"background"`
+	TextAlign     TextAlign     `json:"textAlign"`
+	VerticalAlign VerticalAlign `json:"verticalAlign"`
+	Background    *string       `json:"background,omitempty" validate:"omitempty,hexcolor"`
 }
 
 // ══════════════════════════════════════════════
@@ -792,45 +792,6 @@ func (a *VerticalAlign) UnmarshalJSON(data []byte) error {
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid vertical align %q: must be `top`, `center`, or `bottom`", v)
-	}
-}
-
-// PanelBackground selects the panel's surface: `solid` draws the standard panel
-// card, `transparent` drops the card so only the content shows.
-type PanelBackground struct{ valuer.String }
-
-var (
-	PanelBackgroundSolid       = PanelBackground{valuer.NewString("solid")} // default
-	PanelBackgroundTransparent = PanelBackground{valuer.NewString("transparent")}
-)
-
-func (PanelBackground) Enum() []any {
-	return []any{PanelBackgroundSolid, PanelBackgroundTransparent}
-}
-
-func (b PanelBackground) ValueOrDefault() string {
-	if b.IsZero() {
-		return PanelBackgroundSolid.StringValue()
-	}
-	return b.StringValue()
-}
-
-func (b PanelBackground) MarshalJSON() ([]byte, error) {
-	return json.Marshal(b.ValueOrDefault())
-}
-
-func (b *PanelBackground) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid background: must be a string, one of `solid` or `transparent`")
-	}
-	val := PanelBackground{valuer.NewString(v)}
-	switch val {
-	case PanelBackgroundSolid, PanelBackgroundTransparent:
-		*b = val
-		return nil
-	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid background %q: must be `solid` or `transparent`", v)
 	}
 }
 
