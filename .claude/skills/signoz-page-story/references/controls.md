@@ -102,7 +102,7 @@ where the state lives.
 ## Wiring it up
 
 ```ts
-// src/pages/Services/Services.stories.mocks.tsx
+// src/pages/Services/stories/Services.stories.mocks.tsx
 /**
  * AI-owned. Generated and maintained by the `signoz-page-story` skill.
  * Do not hand-edit: regenerate instead.
@@ -126,7 +126,7 @@ export const servicesMocks = defineStoryMocks({
 ```
 
 ```tsx
-// src/pages/Services/Services.stories.tsx
+// src/pages/Services/stories/Services.stories.tsx
 type ServicesArgs = PageStoryArgs<typeof servicesMocks>;
 
 const meta = {

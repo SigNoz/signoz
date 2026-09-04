@@ -135,7 +135,7 @@ one re-registers the msw handlers and remounts the story with an empty query
 cache, so the page fetches again and renders the new data.
 
 ```tsx
-// src/pages/HomePage/HomePage.stories.mocks.ts
+// src/pages/HomePage/stories/HomePage.stories.mocks.ts
 export const homeMocks = defineStoryMocks({
 	controls: {
 		logsIngestion: toggleControl('Logs ingestion', { group: SIGNALS, value: true }),
@@ -156,7 +156,7 @@ export const homeMocks = defineStoryMocks({
 ```
 
 ```tsx
-// src/pages/HomePage/HomePage.stories.tsx
+// src/pages/HomePage/stories/HomePage.stories.tsx
 type HomeArgs = PageStoryArgs<typeof homeMocks>;
 
 const meta = {
@@ -298,9 +298,10 @@ The `signoz-page-story` skill in `.claude/skills/` carries this as a workflow:
 mapping the page, deriving its controls, and the checks a story has to pass.
 
 1. Point the story at the page component under `src/pages/<Page>`.
-2. Declare the page's mocks in `<Page>.stories.mocks.ts` next to it, with its
-   payload builders under `<Page>/__story_mockdata__/`, and spread
-   `storyMocks(<page>Mocks, { route })` into the meta.
+2. Keep every story file under `src/pages/<Page>/stories/`: the story, the
+   page's mocks in `<Page>.stories.mocks.ts`, and its payload builders under
+   `stories/__story_mockdata__/`. Spread `storyMocks(<page>Mocks, { route })`
+   into the meta.
 3. Add `decorators: [withAppLayout]` to the meta.
 4. Give the default story every widget populated. A page story earns its keep by
    showing what the page looks like with data, not with empty states.

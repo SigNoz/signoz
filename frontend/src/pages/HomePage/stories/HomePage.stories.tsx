@@ -6,7 +6,7 @@ import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import { withAppLayout } from '@/storybook/decorators/withAppLayout';
 import { homeMocks } from './HomePage.stories.mocks';
 
-import HomePage from './HomePage';
+import HomePage from '../HomePage';
 
 type HomeArgs = PageStoryArgs<typeof homeMocks>;
 

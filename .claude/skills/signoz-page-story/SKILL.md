@@ -47,10 +47,10 @@ process on top of it.
   navigation works inside a story; a different pathname is blocked and reported
   by the overlay. A control for a param is worth it only when the param is a page
   mode someone would want to flip.
-- **File layout**: `src/pages/<Page>/<Page>.stories.tsx`,
-  `src/pages/<Page>/<Page>.stories.mocks.tsx`, payload builders in
-  `src/pages/<Page>/__story_mockdata__/<page>.ts`. Nothing page-specific in
-  `src/storybook/controls/`.
+- **File layout**: every story file for a page lives under
+  `src/pages/<Page>/stories/`: `<Page>.stories.tsx`, `<Page>.stories.mocks.tsx`,
+  payload builders in `stories/__story_mockdata__/<page>.ts`. Nothing
+  page-specific in `src/storybook/controls/`.
 - **The mocks are AI-owned and say so.** `<Page>.stories.mocks.tsx` and every file
   under a `__story_mockdata__/` open with this banner, above the imports:
 
