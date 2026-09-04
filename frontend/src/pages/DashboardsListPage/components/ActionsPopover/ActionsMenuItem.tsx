@@ -17,6 +17,8 @@ interface Props {
 	reason?: string;
 	/** Exact denied scopes, surfaced on the DOM for support and tests. */
 	deniedPermissions?: BrandedPermission[];
+	/** Access denial vs a state the user can act on, e.g. a lock. */
+	kind?: 'denied' | 'blocked';
 	loading?: boolean;
 	destructive?: boolean;
 }
@@ -30,6 +32,7 @@ function ActionsMenuItem({
 	onClick,
 	reason = '',
 	deniedPermissions,
+	kind = 'denied',
 	loading = false,
 	destructive = false,
 }: Props): JSX.Element {
@@ -37,7 +40,7 @@ function ActionsMenuItem({
 	const disabled = loading || !!reason;
 
 	return (
-		<DisabledReasonTooltip reason={reason} side="left" asChild>
+		<DisabledReasonTooltip reason={reason} side="left" kind={kind} asChild>
 			{/* The Button drops unknown data-* props, so the denied scopes ride on the
 			    wrapper — which is also the hover target for the tooltip. */}
 			<span
