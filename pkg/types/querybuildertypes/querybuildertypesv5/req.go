@@ -401,7 +401,6 @@ type QueryRangeRequest struct {
 	BucketOptions *BucketOptions `json:"bucketOptions,omitempty"`
 }
 
-// BucketOptions configures how a value range is divided into heatmap buckets.
 type BucketOptions struct {
 	Kind BucketsKind `json:"kind"`
 	// Spec holds the LinearBucketsSpec or LogBucketsSpec for Kind.
