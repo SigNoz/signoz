@@ -1,11 +1,16 @@
 import { ReactNode, useEffect, useMemo } from 'react';
 import { Router } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
+import { TooltipProvider } from '@signozhq/ui/tooltip';
+import AppPageProviders from '@/app/AppPageProviders';
+import AppProviders from '@/app/AppProviders';
+import AppShell from '@/app/AppShell';
+import type { AppLayer } from '@/app/types';
 import { CmdKPalette } from 'components/cmdKPalette/cmdKPalette';
-import AppHarness from '@/harness/AppHarness';
+import AppLayout from 'container/AppLayout';
 import history from 'lib/history';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { useAppContext } from 'providers/App/App';
+import { AppContext, useAppContext } from 'providers/App/App';
 
 import { createStoryAppContext } from '../mocks/createStoryAppContext';
 import { interceptExternalNavigation } from '../navigation/interceptExternalNavigation';
@@ -35,17 +40,25 @@ function StoryContextProbe(): null {
 	return null;
 }
 
-/**
- * The Storybook adapter over `AppHarness`: the app's provider tree, with the
- * router on the contained history, nuqs on its testing adapter, and a fresh
- * store and query cache per story.
- */
+const storyRouter: AppLayer = (children) => (
+	<Router history={history}>
+		<CompatRouter>{children}</CompatRouter>
+	</Router>
+);
+
+const appLayout: AppLayer = (children) => <AppLayout>{children}</AppLayout>;
+
+const bareLayout: AppLayer = (children) => (
+	<TooltipProvider>{children}</TooltipProvider>
+);
+
 function StorybookProviders({
 	children,
 	role,
 	appContext,
 	queryBuilder,
 	route = '/',
+	layout = 'none',
 	reduxState,
 }: StorybookProvidersProps): JSX.Element {
 	const searchParams = useStoryRoute(route);
@@ -59,33 +72,36 @@ function StorybookProviders({
 	useEffect(interceptExternalNavigation, []);
 
 	return (
-		<AppHarness
-			appContext={appContextValue}
+		<AppProviders
 			store={store}
 			queryClient={queryClient}
-			queryBuilder={queryBuilder}
-			router={(routed): ReactNode => (
-				<Router history={history}>
-					<CompatRouter>{routed}</CompatRouter>
-				</Router>
+			appContext={(scoped): ReactNode => (
+				<AppContext.Provider value={appContextValue}>{scoped}</AppContext.Provider>
 			)}
 			searchParams={(scoped): ReactNode => (
 				<NuqsTestingAdapter searchParams={searchParams} hasMemory>
 					{scoped}
 				</NuqsTestingAdapter>
 			)}
-			overlays={
-				<>
-					<StoryContextProbe />
-					{/* The AuthZ dev modal and its floating indicator, so a story can
-					    override single permissions by hand. */}
-					<CmdKPalette userRole={role} />
-					<NavigationBlockedOverlay />
-				</>
-			}
 		>
-			{children}
-		</AppHarness>
+			<AppShell
+				router={storyRouter}
+				overlays={
+					<>
+						<StoryContextProbe />
+						<CmdKPalette userRole={role} />
+						<NavigationBlockedOverlay />
+					</>
+				}
+			>
+				<AppPageProviders
+					layout={layout === 'app' ? appLayout : bareLayout}
+					queryBuilder={queryBuilder}
+				>
+					{children}
+				</AppPageProviders>
+			</AppShell>
+		</AppProviders>
 	);
 }
 

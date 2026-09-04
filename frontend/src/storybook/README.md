@@ -17,11 +17,11 @@ pnpm storybook:build    # static build into storybook-static/
 | `controls/`       | Declaring controls (`defineStoryMocks`) and composing mock modules      |
 | `globals/`        | The mock modules every story carries: app shell and access             |
 | `access/`         | What a permission grant allows, and the legacy role it derives          |
-| `providers/`      | The Storybook adapter over `src/harness/AppHarness`                     |
+| `providers/`      | The Storybook adapter over the app's provider tree in `src/app/`        |
 | `navigation/`     | Keeping a story on its page, and reporting what it tried to leave for   |
 | `msw/`            | The default handler set and the shell's endpoints                       |
 | `mocks/`          | Modules aliased in place of the app's own                               |
-| `decorators/`     | `withProviders` (global) and `withAppLayout` (opt-in per page)          |
+| `decorators/`     | `withProviders`, the global decorator                                   |
 
 A page's own mocks live with the page, not here. See [Adding a page
 story](#adding-a-page-story).
@@ -29,14 +29,23 @@ story](#adding-a-page-story).
 ## What a story gets for free
 
 `withProviders` (global decorator, `.storybook/preview.tsx`) wraps every story in
-`StorybookProviders`, the Storybook adapter over `src/harness/AppHarness`.
-`AppHarness` is the app's provider tree from `src/index.tsx` +
-`src/AppRoutes/index.tsx`, minus Sentry, posthog and `AppProvider`, with the
-pieces a runner has to choose left as props: the router, the nuqs adapter, the
-store, the query client and the mocked `AppContext`.
+`StorybookProviders`, the Storybook adapter over the app's own provider tree.
+That tree is not a copy: `src/index.tsx` and `src/AppRoutes/index.tsx` mount the
+same three components, and each leaves the pieces a runner has to choose as
+props.
+
+| Component               | What it holds                                                         | What the runner chooses               |
+| ----------------------- | --------------------------------------------------------------------- | ------------------------------------- |
+| `app/AppProviders`      | Helmet, nuqs, theme, timezone, react-query, redux, `AppContext`         | store, query client, nuqs adapter, `AppContext` |
+| `app/AppShell`          | antd config, router, cmd-K, notifications, the error modal              | router, the overlays beside the routes |
+| `app/AppPageProviders`  | resource attributes, query builder, hotkeys, the layout, preferences    | the layout, a fixed query-builder context |
+
+What stays with the app and never reaches a story: Sentry, posthog, `AppProvider`
+(Storybook has no user, license or flags to fetch), `PrivateRoute` and the route
+switch.
 
 `tests/test-utils` mounts its own, smaller tree for jest and does not go through
-`AppHarness`: the suite has ~20 files that mock `hooks/useDarkMode`,
+them: the suite has ~20 files that mock `hooks/useDarkMode`,
 `hooks/useNotifications` or `providers/cmdKProvider` down to a single export, so
 the providers those modules also carry would come back `undefined`. A provider
 added to the app therefore still needs adding in both places.
@@ -116,16 +125,19 @@ Anything a page declares as a control belongs in `args`, not in `parameters`.
 ## The app shell
 
 A page story always runs inside the real `AppLayout` (side nav, top nav,
-banners). A page without its shell is not the page anyone sees. Declare it once
+banners). A page without its shell is not the page anyone sees. Ask for it once
 on the meta so every story of that page inherits it:
 
 ```tsx
 const meta = {
 	title: 'Pages/Home',
 	component: HomePage,
-	decorators: [withAppLayout],
+	...storyMocks(homeMocks, { route: ROUTES.HOME, layout: 'app' }),
 } satisfies Meta<typeof HomePage>;
 ```
+
+`layout: 'app'` mounts the story where the router mounts a page, inside
+`AppPageProviders`, rather than in a decorator below the providers.
 
 ## Controls
 
@@ -162,8 +174,7 @@ type HomeArgs = PageStoryArgs<typeof homeMocks>;
 const meta = {
 	title: 'Pages/Home',
 	component: HomePage,
-	decorators: [withAppLayout],
-	...storyMocks(homeMocks, { route: ROUTES.HOME }),
+	...storyMocks(homeMocks, { route: ROUTES.HOME, layout: 'app' }),
 } satisfies Meta<HomeArgs>;
 
 export const NoIngestion: StoryObj<HomeArgs> = {
@@ -302,7 +313,8 @@ mapping the page, deriving its controls, and the checks a story has to pass.
    page's mocks in `<Page>.stories.mocks.ts`, and its payload builders under
    `stories/__story_mockdata__/`. Spread `storyMocks(<page>Mocks, { route })`
    into the meta.
-3. Add `decorators: [withAppLayout]` to the meta.
+3. Pass `layout: 'app'` in the same config, so the page renders inside
+   `AppLayout` where a route puts it.
 4. Give the default story every widget populated. A page story earns its keep by
    showing what the page looks like with data, not with empty states.
 5. Run it and watch the console: an msw warning or a `[storybook] no msw handler`

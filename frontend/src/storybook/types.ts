@@ -10,6 +10,8 @@ export type StoryTheme = 'dark' | 'light';
 
 export type StoryRole = ROLES;
 
+export type StoryLayout = 'app' | 'none';
+
 /** What a story or a mock module may set about the tree it renders in. */
 export interface StoryOwnedConfig {
 	/** Deep-merged over the default mocked `AppContext` value. */
@@ -20,6 +22,12 @@ export interface StoryOwnedConfig {
 	route?: string;
 	/** Overrides the theme toolbar for this story. */
 	theme?: StoryTheme;
+	/**
+	 * `'app'` mounts the story inside `AppLayout`, where a route renders: the nav
+	 * rail, the banners and the shell's own providers. Page stories want it;
+	 * `'none'`, the default, leaves the story bare.
+	 */
+	layout?: StoryLayout;
 	/**
 	 * When set, the real redux store is seeded with this state instead of the
 	 * reducers' own initial state.

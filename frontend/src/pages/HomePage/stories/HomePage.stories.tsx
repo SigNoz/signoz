@@ -3,7 +3,6 @@ import ROUTES from 'constants/routes';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
-import { withAppLayout } from '@/storybook/decorators/withAppLayout';
 import { homeMocks } from './HomePage.stories.mocks';
 
 import HomePage from '../HomePage';
@@ -13,8 +12,7 @@ type HomeArgs = PageStoryArgs<typeof homeMocks>;
 const meta = {
 	title: 'Pages/Home',
 	component: HomePage,
-	decorators: [withAppLayout],
-	...storyMocks(homeMocks, { route: ROUTES.HOME }),
+	...storyMocks(homeMocks, { route: ROUTES.HOME, layout: 'app' }),
 } satisfies Meta<HomeArgs>;
 
 export default meta;

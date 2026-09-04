@@ -15,7 +15,6 @@ inside `src/storybook/` import each other relatively.
 | `defineStoryMocks`, `storyMocks` | `../controls/defineStoryMocks` |
 | `PageStoryArgs` | `../controls/resolveStoryMocks` |
 | `MockRequest`, `MockResponse` | `../controls/types` |
-| `withAppLayout` | `@/storybook/decorators/withAppLayout` |
 | the page's mocks, from the story | `./<Page>.stories.mocks` |
 | `queryRangeV5ScalarResponse`, `queryRangeV5RawResponse`, etc. | `@/storybook/msw/__story_mockdata__/queryRange` |
 
@@ -132,8 +131,7 @@ type ServicesArgs = PageStoryArgs<typeof servicesMocks>;
 const meta = {
 	title: 'Pages/Services',
 	component: Services,
-	decorators: [withAppLayout],
-	...storyMocks(servicesMocks, { route: ROUTES.APPLICATION }),
+	...storyMocks(servicesMocks, { route: ROUTES.APPLICATION, layout: 'app' }),
 } satisfies Meta<ServicesArgs>;
 ```
 

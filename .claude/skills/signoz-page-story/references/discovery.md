@@ -49,7 +49,7 @@ the story.
 ## Pass 2: let it run
 
 Write the story and an empty `defineStoryMocks({ controls: {} })`, point it at the
-route, add `withAppLayout`, then open it (see verify.md). The console is the
+route with `layout: 'app'`, then open it (see verify.md). The console is the
 oracle:
 
 - `[storybook] no msw handler` or a 501 from the catch-all: an endpoint pass 1
