@@ -2,6 +2,7 @@ package alertmanagertypes
 
 import (
 	"encoding/json"
+	"reflect"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/prometheus/alertmanager/config"
@@ -70,6 +71,33 @@ func (c *Channel) toPostableNotificationChannel() (*PostableNotificationChannel,
 		ErrCodeChannelUnsupportedKind,
 		"channel %q carries no supported notifier configuration", c.DisplayName,
 	)
+}
+
+// countNotifierConfigs totals every *_configs entry on the receiver, including
+// notifier kinds no ChannelSpec models, so a row mixing a modelled kind with
+// an unmodelled one is not mistaken for a single-notifier channel.
+func countNotifierConfigs(receiver *Receiver) int {
+	return countConfigsFields(reflect.ValueOf(*receiver)) +
+		countConfigsFields(reflect.ValueOf(*receiver.Receiver))
+}
+
+func countConfigsFields(v reflect.Value) int {
+	t := v.Type()
+	total := 0
+	for i := 0; i < t.NumField(); i++ {
+		fieldVal := v.Field(i)
+		if fieldVal.Kind() != reflect.Slice || fieldVal.Len() == 0 {
+			continue
+		}
+
+		if !receiverTypeRegex.MatchString(t.Field(i).Tag.Get("yaml")) {
+			continue
+		}
+
+		total += fieldVal.Len()
+	}
+
+	return total
 }
 
 func (c *Channel) ToGettableNotificationChannel() (*GettableNotificationChannel, error) {
