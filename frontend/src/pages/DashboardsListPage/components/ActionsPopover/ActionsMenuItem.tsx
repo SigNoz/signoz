@@ -1,6 +1,6 @@
 import type { MouseEvent, ReactElement, ReactNode } from 'react';
-import { Tooltip } from 'antd';
 import { Button } from '@signozhq/ui/button';
+import DisabledReasonTooltip from 'lib/authz/components/DisabledReasonTooltip/DisabledReasonTooltip';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
 import styles from './ActionsPopover.module.scss';
@@ -37,7 +37,7 @@ function ActionsMenuItem({
 	const disabled = loading || !!reason;
 
 	return (
-		<Tooltip placement="left" title={reason}>
+		<DisabledReasonTooltip reason={reason} side="left" asChild>
 			{/* The Button drops unknown data-* props, so the denied scopes ride on the
 			    wrapper — which is also the hover target for the tooltip. */}
 			<span
@@ -63,7 +63,7 @@ function ActionsMenuItem({
 					{label}
 				</Button>
 			</span>
-		</Tooltip>
+		</DisabledReasonTooltip>
 	);
 }
 
