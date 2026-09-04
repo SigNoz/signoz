@@ -3,7 +3,7 @@ import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useMutation, useQuery } from 'react-query';
+import { useMutation } from 'react-query';
 import { CircleCheck, Landmark, MonitorDown } from '@signozhq/icons';
 import {
 	Card,
@@ -15,25 +15,34 @@ import {
 	TableColumnsType as ColumnsType,
 } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
-import getUsage, {
-	BreakdownEntry,
-	UsageResponsePayloadProps,
-} from 'api/billing/getUsage';
 import logEvent from 'api/common/logEvent';
-import updateCreditCardApi from 'api/v1/checkout/create';
-import manageCreditCardApi from 'api/v1/portal/create';
+import type {
+	CreateSubscription201,
+	GetSubscriptionUsage200,
+	ZeustypesGettableSubscriptionUsageDTO,
+	ZeustypesSubscriptionUsageBreakdownDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import {
+	createSubscription,
+	updateSubscription,
+	useGetSubscriptionUsage,
+} from 'api/generated/services/zeus';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
 import Spinner from 'components/Spinner';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import useAxiosError from 'hooks/useAxiosError';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { isEmpty, pick } from 'lodash-es';
-import useActiveLicenseKey from 'hooks/useActiveLicenseKey/useActiveLicenseKey';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
+import {
+	SubscriptionCreatePermission,
+	SubscriptionReadPermission,
+	SubscriptionUpdatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/subscription.permissions';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { useAppContext } from 'providers/App/App';
-import { ErrorResponse, SuccessResponse, SuccessResponseV2 } from 'types/api';
-import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import { getBaseUrl } from 'utils/basePath';
 import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
 
@@ -135,7 +144,7 @@ export default function BillingContainer(): JSX.Element {
 	const [isFreeTrial, setIsFreeTrial] = useState(false);
 	const [data, setData] = useState<DataType[]>([]);
 	const [apiResponse, setApiResponse] = useState<
-		Partial<UsageResponsePayloadProps>
+		Partial<ZeustypesGettableSubscriptionUsageDTO>
 	>({});
 
 	const {
@@ -146,7 +155,9 @@ export default function BillingContainer(): JSX.Element {
 		activeLicense,
 		activeLicenseFetchError,
 	} = useAppContext();
-	const { licenseKey } = useActiveLicenseKey();
+	const { allowed: canReadSubscription } = useAuthZ([
+		SubscriptionReadPermission,
+	]);
 	const { notifications } = useNotifications();
 
 	const handleError = useAxiosError();
@@ -154,33 +165,31 @@ export default function BillingContainer(): JSX.Element {
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const processUsageData = useCallback(
-		(data: SuccessResponse<UsageResponsePayloadProps> | ErrorResponse): void => {
-			if (isEmpty(data?.payload)) {
+		(response: GetSubscriptionUsage200): void => {
+			const usage = response?.data;
+			if (isEmpty(usage)) {
 				return;
 			}
-			const {
-				details: { breakdown = [], billTotal },
-				billingPeriodStart,
-				billingPeriodEnd,
-			} = (data as SuccessResponse<UsageResponsePayloadProps>).payload;
+			const breakdown = usage.details?.breakdown ?? [];
+			const billTotal = usage.details?.billTotal ?? 0;
+			const billingPeriodStart = usage.billingPeriodStart ?? 0;
+			const billingPeriodEnd = usage.billingPeriodEnd ?? 0;
 			const formattedUsageData: DataType[] = [];
 
-			if (breakdown && Array.isArray(breakdown)) {
-				for (let index = 0; index < breakdown.length; index += 1) {
-					const element: BreakdownEntry = breakdown[index];
-
-					element?.tiers?.forEach((tier, i: number) => {
+			breakdown.forEach(
+				(element: ZeustypesSubscriptionUsageBreakdownDTO, index: number) => {
+					element?.tiers?.forEach((tier, tierIndex: number) => {
 						formattedUsageData.push({
-							key: `${index}${i}`,
-							name: i === 0 ? element?.type : '',
+							key: `${index}${tierIndex}`,
+							name: tierIndex === 0 ? (element?.type ?? '') : '',
 							unit: element?.unit ?? '',
 							dataIngested: `${tier.quantity} ${element?.unit}`,
 							pricePerUnit: String(tier.unitPrice),
 							cost: `$ ${tier.tierCost}`,
 						});
 					});
-				}
-			}
+				},
+			);
 
 			setData(formattedUsageData);
 
@@ -196,7 +205,7 @@ export default function BillingContainer(): JSX.Element {
 				setBillAmount(billTotal);
 			}
 
-			setApiResponse(data?.payload || {});
+			setApiResponse(usage);
 		},
 		[trialInfo?.onTrial],
 	);
@@ -208,11 +217,12 @@ export default function BillingContainer(): JSX.Element {
 		isLoading,
 		isFetching: isFetchingBillingData,
 		data: billingData,
-	} = useQuery([REACT_QUERY_KEY.GET_BILLING_USAGE, user?.id], {
-		queryFn: () => getUsage(licenseKey || ''),
-		onError: handleError,
-		enabled: !!licenseKey,
-		onSuccess: processUsageData,
+	} = useGetSubscriptionUsage({
+		query: {
+			enabled: canReadSubscription,
+			onError: handleError,
+			onSuccess: processUsageData,
+		},
 	});
 
 	useEffect(() => {
@@ -284,9 +294,7 @@ export default function BillingContainer(): JSX.Element {
 		/>
 	);
 
-	const handleBillingOnSuccess = (
-		data: SuccessResponseV2<CheckoutSuccessPayloadProps>,
-	): void => {
+	const handleBillingOnSuccess = (data: CreateSubscription201): void => {
 		if (data?.data?.redirectURL) {
 			const newTab = document.createElement('a');
 			newTab.href = data.data.redirectURL;
@@ -303,7 +311,7 @@ export default function BillingContainer(): JSX.Element {
 	};
 
 	const { mutate: updateCreditCard, isLoading: isLoadingBilling } = useMutation(
-		updateCreditCardApi,
+		createSubscription,
 		{
 			onSuccess: (data) => {
 				handleBillingOnSuccess(data);
@@ -313,7 +321,7 @@ export default function BillingContainer(): JSX.Element {
 	);
 
 	const { mutate: manageCreditCard, isLoading: isLoadingManageBilling } =
-		useMutation(manageCreditCardApi, {
+		useMutation(updateSubscription, {
 			onSuccess: (data) => {
 				handleBillingOnSuccess(data);
 			},
@@ -394,6 +402,10 @@ export default function BillingContainer(): JSX.Element {
 		}
 	}, [apiResponse, notifications]);
 
+	const billingActionPermission = trialInfo?.trialConvertedToSubscription
+		? SubscriptionUpdatePermission
+		: SubscriptionCreatePermission;
+
 	const showGracePeriodMessage =
 		!isLoading &&
 		!trialInfo?.trialConvertedToSubscription &&
@@ -429,7 +441,8 @@ export default function BillingContainer(): JSX.Element {
 							</p>
 						) : null}
 					</Flex>
-					<Button
+					<AuthZButton
+						checks={[billingActionPermission]}
 						testId="header-billing-button"
 						variant="solid"
 						color="secondary"
@@ -443,7 +456,7 @@ export default function BillingContainer(): JSX.Element {
 						{trialInfo?.trialConvertedToSubscription
 							? t('manage_billing')
 							: t('upgrade_plan')}
-					</Button>
+					</AuthZButton>
 				</Flex>
 
 				{trialInfo?.onTrial && trialInfo?.trialConvertedToSubscription && (
@@ -495,66 +508,73 @@ export default function BillingContainer(): JSX.Element {
 					))}
 			</Card>
 
-			<div className={styles.billingGraphSection}>
-				{!isLoading && !isFetchingBillingData ? (
-					<BillingUsageGraph data={apiResponse} billAmount={billAmount} />
-				) : (
-					<Card className={styles.emptyGraphCard} bordered={false}>
-						<Spinner size="large" tip="Loading..." height="35vh" />
-					</Card>
-				)}
-				{!isLoading && !isFetchingBillingData && (
-					<div className={styles.billingGraphFooter}>
-						<Button
-							variant="outlined"
-							color="secondary"
-							size="md"
-							onClick={handleCsvDownload}
-							prefix={<MonitorDown size={14} />}
-							testId="download-csv-button"
-							className={styles.billingFooterBtn}
-						>
-							Download CSV
-						</Button>
-						<RefreshPaymentStatus type="button" className={styles.billingFooterBtn} />
+			<AuthZGuardContent checks={[SubscriptionReadPermission]}>
+				<>
+					<div className={styles.billingGraphSection}>
+						{!isLoading && !isFetchingBillingData ? (
+							<BillingUsageGraph data={apiResponse} billAmount={billAmount} />
+						) : (
+							<Card className={styles.emptyGraphCard} bordered={false}>
+								<Spinner size="large" tip="Loading..." height="35vh" />
+							</Card>
+						)}
+						{!isLoading && !isFetchingBillingData && (
+							<div className={styles.billingGraphFooter}>
+								<Button
+									variant="outlined"
+									color="secondary"
+									size="md"
+									onClick={handleCsvDownload}
+									prefix={<MonitorDown size={14} />}
+									testId="download-csv-button"
+									className={styles.billingFooterBtn}
+								>
+									Download CSV
+								</Button>
+								<RefreshPaymentStatus
+									type="button"
+									className={styles.billingFooterBtn}
+								/>
+							</div>
+						)}
 					</div>
-				)}
-			</div>
-			{!isLoading && !isFetchingBillingData && (
-				<Callout type="info" size="small" className={styles.billingUpdateNote}>
-					Billing metrics are updated once every 24 hours.
-				</Callout>
-			)}
+					{!isLoading && !isFetchingBillingData && (
+						<Callout type="info" size="small" className={styles.billingUpdateNote}>
+							Billing metrics are updated once every 24 hours.
+						</Callout>
+					)}
 
-			<div className={styles.billingDetails}>
-				{!isLoading && !isFetchingBillingData && (
-					<Table
-						columns={columns}
-						dataSource={data}
-						pagination={false}
-						bordered={false}
-						components={{
-							header: {
-								cell: ({
-									style,
-									...props
-								}: React.ThHTMLAttributes<HTMLTableCellElement>): JSX.Element => {
-									const { background: _, boxShadow: __, ...safeStyle } = style ?? {};
-									return (
-										<th
-											{...props}
-											style={safeStyle}
-											className={`${props.className ?? ''} ${styles.billingDetailsHeaderCell}`}
-										/>
-									);
-								},
-							},
-						}}
-					/>
-				)}
+					<div className={styles.billingDetails}>
+						{!isLoading && !isFetchingBillingData && (
+							<Table
+								columns={columns}
+								dataSource={data}
+								pagination={false}
+								bordered={false}
+								components={{
+									header: {
+										cell: ({
+											style,
+											...props
+										}: React.ThHTMLAttributes<HTMLTableCellElement>): JSX.Element => {
+											const { background: _, boxShadow: __, ...safeStyle } = style ?? {};
+											return (
+												<th
+													{...props}
+													style={safeStyle}
+													className={`${props.className ?? ''} ${styles.billingDetailsHeaderCell}`}
+												/>
+											);
+										},
+									},
+								}}
+							/>
+						)}
 
-				{(isLoading || isFetchingBillingData) && renderTableSkeleton()}
-			</div>
+						{(isLoading || isFetchingBillingData) && renderTableSkeleton()}
+					</div>
+				</>
+			</AuthZGuardContent>
 
 			{isCloudUserVal && activeLicense?.state === LicenseState.ACTIVATED && (
 				<CancelSubscriptionBanner />
@@ -597,7 +617,8 @@ export default function BillingContainer(): JSX.Element {
 							</Typography.Text>
 						</Col>
 						<Col span={4} style={{ display: 'flex', justifyContent: 'flex-end' }}>
-							<Button
+							<AuthZButton
+								checks={[billingActionPermission]}
 								testId="upgrade-plan-button"
 								variant="solid"
 								color="primary"
@@ -606,7 +627,7 @@ export default function BillingContainer(): JSX.Element {
 								onClick={handleBilling}
 							>
 								{t('upgrade_plan')}
-							</Button>
+							</AuthZButton>
 						</Col>
 					</Row>
 				</div>

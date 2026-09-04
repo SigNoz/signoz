@@ -1,4 +1,4 @@
-import { UsageResponsePayloadProps } from 'api/billing/getUsage';
+import { ZeustypesGettableSubscriptionUsageDTO } from 'api/generated/services/sigNoz.schemas';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { prepareChartData } from 'lib/uPlotV2/utils/dataUtils';
@@ -117,7 +117,9 @@ export function csvFileName(csvData: QuantityData[]): string {
 	return `billing_usage_(${startDate}-${endDate}).csv`;
 }
 
-export function prepareCsvData(data: Partial<UsageResponsePayloadProps>): {
+export function prepareCsvData(
+	data: Partial<ZeustypesGettableSubscriptionUsageDTO>,
+): {
 	csvData: string;
 	fileName: string;
 } {
@@ -135,12 +137,14 @@ export function prepareCsvData(data: Partial<UsageResponsePayloadProps>): {
 }
 
 export function calculateStartEndTime(
-	data: Partial<UsageResponsePayloadProps>,
+	data: Partial<ZeustypesGettableSubscriptionUsageDTO>,
 ): { startTime: number | undefined; endTime: number | undefined } {
 	const timestamps: number[] = [];
 	data?.details?.breakdown?.forEach((breakdown) => {
 		breakdown?.dayWiseBreakdown?.breakdown?.forEach((entry) => {
-			timestamps.push(entry.timestamp);
+			if (typeof entry.timestamp === 'number') {
+				timestamps.push(entry.timestamp);
+			}
 		});
 	});
 

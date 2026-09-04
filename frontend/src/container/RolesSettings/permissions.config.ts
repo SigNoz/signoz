@@ -6,6 +6,7 @@ import {
 	Gauge,
 	Key,
 	Logs,
+	Receipt,
 	Shield,
 } from '@signozhq/icons';
 
@@ -68,6 +69,14 @@ export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
 		icon: FileKey,
 		selectorPlaceholder: 'Type license ID, separate multiple with comma or space',
 		docsAnchor: 'license',
+	},
+	subscription: {
+		label: 'Billing',
+		description:
+			'Billing and subscription of the workspace: usage, checkout and the billing portal.',
+		icon: Receipt,
+		selectorPlaceholder: 'Type * to cover the workspace subscription',
+		docsAnchor: 'subscription',
 	},
 	logs: {
 		label: 'Logs',

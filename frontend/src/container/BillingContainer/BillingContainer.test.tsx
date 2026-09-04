@@ -1,9 +1,11 @@
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { billingSuccessResponse } from 'mocks-server/__mockdata__/billing';
 import {
 	licensesSuccessResponse,
 	notOfTrailResponse,
 	trialConvertedToSubscriptionResponse,
 } from 'mocks-server/__mockdata__/licenses';
+import { server } from 'mocks-server/server';
 import { act, render, screen, getAppContextMock } from 'tests/test-utils';
 import APIError from 'types/api/error';
 import {
@@ -14,11 +16,6 @@ import {
 import { getFormattedDate } from 'utils/timeUtils';
 
 import BillingContainer from './BillingContainer';
-
-jest.mock('hooks/useActiveLicenseKey/useActiveLicenseKey', () => ({
-	__esModule: true,
-	default: jest.fn(() => ({ licenseKey: 'test-key', isLoading: false })),
-}));
 
 window.ResizeObserver =
 	window.ResizeObserver ||
@@ -31,14 +28,22 @@ window.ResizeObserver =
 describe('BillingContainer', () => {
 	jest.setTimeout(30000);
 
+	beforeEach(() => {
+		server.use(setupAuthzAdmin());
+	});
+
+	afterEach(() => {
+		server.resetHandlers();
+	});
+
 	it('Component should render', async () => {
 		render(<BillingContainer />);
 
-		const dataInjection = screen.getByRole('columnheader', {
+		const dataInjection = await screen.findByRole('columnheader', {
 			name: /data ingested/i,
 		});
 		expect(dataInjection).toBeInTheDocument();
-		const pricePerUnit = screen.getByRole('columnheader', {
+		const pricePerUnit = await screen.findByRole('columnheader', {
 			name: /price per unit/i,
 		});
 		expect(pricePerUnit).toBeInTheDocument();

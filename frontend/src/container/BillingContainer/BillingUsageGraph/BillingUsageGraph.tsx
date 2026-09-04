@@ -12,7 +12,7 @@ import {
 } from 'lib/uPlotV2/components/types';
 import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import type uPlot from 'uplot';
-import type { UsageResponsePayloadProps } from 'api/billing/getUsage';
+import type { ZeustypesGettableSubscriptionUsageDTO } from 'api/generated/services/sigNoz.schemas';
 
 import { BillingBarChartTooltip } from './BillingBarChartTooltip';
 import { prepareBillingBarConfig } from './prepareBillingBarConfig';
@@ -25,7 +25,7 @@ import {
 import styles from './BillingUsageGraph.module.scss';
 
 interface BillingUsageGraphProps {
-	data: Partial<UsageResponsePayloadProps>;
+	data: Partial<ZeustypesGettableSubscriptionUsageDTO>;
 	billAmount: number;
 }
 
@@ -55,7 +55,7 @@ export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 					const currentDay = breakdown.dayWiseBreakdown.breakdown[0];
 					const nextDay = {
 						...currentDay,
-						timestamp: currentDay.timestamp + 86400,
+						timestamp: (currentDay.timestamp ?? 0) + 86400,
 						count: 0,
 						size: 0,
 						quantity: 0,
@@ -94,7 +94,9 @@ export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 
 	const { startTime, endTime } = useMemo(
 		() =>
-			calculateStartEndTime(normalizedData as Partial<UsageResponsePayloadProps>),
+			calculateStartEndTime(
+				normalizedData as Partial<ZeustypesGettableSubscriptionUsageDTO>,
+			),
 		[normalizedData],
 	);
 

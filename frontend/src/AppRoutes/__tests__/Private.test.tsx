@@ -1626,6 +1626,7 @@ describe('PrivateRoute', () => {
 				path: ROUTES.WORKSPACE_ACCESS_RESTRICTED,
 				deniedRoles: DENIED_ROLES,
 			},
+			BILLING: { path: ROUTES.BILLING, deniedRoles: DENIED_ROLES },
 		};
 
 		const authzRouteRolePairs: [string, string, ROLES][] = Object.entries(

@@ -33,7 +33,7 @@ export const getRoutes = (
 	const isAdmin = userRole === USER_ROLES.ADMIN;
 	const isEditor = userRole === USER_ROLES.EDITOR;
 
-	if (isWorkspaceBlocked && isAdmin) {
+	if (isWorkspaceBlocked) {
 		settings.push(
 			...organizationSettings(t),
 			...membersSettings(t),
@@ -73,7 +73,7 @@ export const getRoutes = (
 		settings.push(...membersSettings(t));
 	}
 
-	if ((isCloudUser || isEnterpriseSelfHostedUser) && isAdmin) {
+	if (isCloudUser || isEnterpriseSelfHostedUser) {
 		settings.push(...billingSettings(t));
 	}
 

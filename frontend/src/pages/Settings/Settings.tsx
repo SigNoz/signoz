@@ -58,14 +58,15 @@ function SettingsPage(): JSX.Element {
 			if (trialInfo?.workSpaceBlock && !isFetchingActiveLicense) {
 				updatedItems = updatedItems.map((item) => ({
 					...item,
-					isEnabled: !!(
-						isAdmin &&
-						(item.key === ROUTES.BILLING ||
-							item.key === ROUTES.ORG_SETTINGS ||
-							item.key === ROUTES.MEMBERS_SETTINGS ||
-							item.key === ROUTES.MY_SETTINGS ||
-							item.key === ROUTES.SHORTCUTS)
-					),
+					isEnabled:
+						item.key === ROUTES.BILLING ||
+						!!(
+							isAdmin &&
+							(item.key === ROUTES.ORG_SETTINGS ||
+								item.key === ROUTES.MEMBERS_SETTINGS ||
+								item.key === ROUTES.MY_SETTINGS ||
+								item.key === ROUTES.SHORTCUTS)
+						),
 				}));
 
 				return updatedItems;
@@ -76,6 +77,7 @@ function SettingsPage(): JSX.Element {
 				updatedItems = updatedItems.map((item) => ({
 					...item,
 					isEnabled:
+						item.key === ROUTES.BILLING ||
 						item.key === ROUTES.ROLES_SETTINGS ||
 						item.key === ROUTES.ROLE_CREATE ||
 						item.key === ROUTES.ROLE_DETAILS ||
@@ -89,7 +91,6 @@ function SettingsPage(): JSX.Element {
 					updatedItems = updatedItems.map((item) => ({
 						...item,
 						isEnabled:
-							item.key === ROUTES.BILLING ||
 							item.key === ROUTES.INTEGRATIONS ||
 							item.key === ROUTES.INGESTION_SETTINGS ||
 							item.key === ROUTES.ORG_SETTINGS ||
@@ -127,6 +128,7 @@ function SettingsPage(): JSX.Element {
 				updatedItems = updatedItems.map((item) => ({
 					...item,
 					isEnabled:
+						item.key === ROUTES.BILLING ||
 						item.key === ROUTES.ROLES_SETTINGS ||
 						item.key === ROUTES.ROLE_CREATE ||
 						item.key === ROUTES.ROLE_DETAILS ||
@@ -140,7 +142,6 @@ function SettingsPage(): JSX.Element {
 					updatedItems = updatedItems.map((item) => ({
 						...item,
 						isEnabled:
-							item.key === ROUTES.BILLING ||
 							item.key === ROUTES.INTEGRATIONS ||
 							item.key === ROUTES.ORG_SETTINGS ||
 							item.key === ROUTES.MEMBERS_SETTINGS ||
