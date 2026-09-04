@@ -148,11 +148,15 @@ func (m *fieldMapper) ColumnExpressionFor(
 		if err != nil {
 			return "", err
 		}
+		coerced, _ := querybuilder.DataTypeCollisionHandledFieldName(resolved, dummyValue, fieldExpression, qbtypes.FilterOperatorUnknown)
+		// a column is present in every row: it takes no presence test
+		if !keyedColumn(columns[0]) {
+			return coerced, nil
+		}
 		guard, err := querybuilder.ExistsExpression(columns, resolved, tsStart, tsEnd, fieldExpression, true)
 		if err != nil {
 			return "", err
 		}
-		coerced, _ := querybuilder.DataTypeCollisionHandledFieldName(resolved, dummyValue, fieldExpression, qbtypes.FilterOperatorUnknown)
 		return fmt.Sprintf("multiIf(%s, %s, NULL)", guard, coerced), nil
 	}
 
@@ -163,4 +167,11 @@ func (m *fieldMapper) ColumnExpressionFor(
 // unknown key stays unresolved and the caller errors.
 func (m *fieldMapper) CandidateKeys(_ context.Context, _ valuer.UUID, _ *telemetrytypes.TelemetryFieldKey, _ any, _ map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
 	return nil
+}
+
+// keyedColumn reports whether the column holds keys a row can lack: a map or
+// a JSON column. Every other column is present in every row.
+func keyedColumn(column *schema.Column) bool {
+	columnType := column.Type.GetType()
+	return columnType == schema.ColumnTypeEnumMap || columnType == schema.ColumnTypeEnumJSON
 }

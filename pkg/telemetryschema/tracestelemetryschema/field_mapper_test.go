@@ -261,25 +261,25 @@ func TestColumnExpressionForTemporalColumn(t *testing.T) {
 			name:             "time column is not coerced under a numeric aggregation",
 			key:              telemetrytypes.TelemetryFieldKey{Name: "timestamp"},
 			requiredDataType: telemetrytypes.FieldDataTypeFloat64,
-			expectedResult:   "multiIf(timestamp <> toDateTime64(0, 9), timestamp, NULL)",
+			expectedResult:   "timestamp",
 		},
 		{
 			name:             "time column is not coerced under a group by",
 			key:              telemetrytypes.TelemetryFieldKey{Name: "timestamp"},
 			requiredDataType: telemetrytypes.FieldDataTypeString,
-			expectedResult:   "multiIf(timestamp <> toDateTime64(0, 9), timestamp, NULL)",
+			expectedResult:   "timestamp",
 		},
 		{
-			name:             "numeric intrinsic keeps its cast and guard",
+			name:             "numeric intrinsic keeps its cast and takes no guard",
 			key:              telemetrytypes.TelemetryFieldKey{Name: "duration_nano"},
 			requiredDataType: telemetrytypes.FieldDataTypeFloat64,
-			expectedResult:   "multiIf(duration_nano <> 0, accurateCastOrNull(duration_nano, 'Float64'), NULL)",
+			expectedResult:   "accurateCastOrNull(duration_nano, 'Float64')",
 		},
 		{
-			name:             "string intrinsic keeps its cast and guard",
+			name:             "string intrinsic keeps its cast and takes no guard",
 			key:              telemetrytypes.TelemetryFieldKey{Name: "name"},
 			requiredDataType: telemetrytypes.FieldDataTypeFloat64,
-			expectedResult:   "multiIf(name <> '', accurateCastOrNull(name, 'Float64'), NULL)",
+			expectedResult:   "accurateCastOrNull(name, 'Float64')",
 		},
 		{
 			name: "map-backed attribute keeps its exists guard",
@@ -329,7 +329,7 @@ func TestColumnExpressionForTimestampAttributeCollision(t *testing.T) {
 		bare := telemetrytypes.TelemetryFieldKey{Name: "timestamp"}
 		result, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, tsStart, tsEnd, &bare, telemetrytypes.FieldDataTypeFloat64, keys)
 		require.NoError(t, err)
-		assert.Equal(t, "multiIf(timestamp <> toDateTime64(0, 9), timestamp, NULL)", result)
+		assert.Equal(t, "timestamp", result)
 	})
 
 	t.Run("explicit attribute context still reaches the attribute", func(t *testing.T) {

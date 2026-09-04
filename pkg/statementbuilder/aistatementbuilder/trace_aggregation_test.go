@@ -154,7 +154,7 @@ func TestBuild_FullSQL_Scalar_GroupByIntrinsic(t *testing.T) {
 	assertSQLEqual(t, `
 WITH __scoped_traces AS (
     SELECT trace_id,
-        toString(multiIf(name <> '', toString(name), NULL)) AS __GROUP_BY_KEY_0_name,
+        toString(toString(name)) AS __GROUP_BY_KEY_0_name,
         sum(multiIf(mapContains(attributes_number, 'gen_ai.usage.output_tokens'), toFloat64(attributes_number['gen_ai.usage.output_tokens']), NULL)) AS output_tokens
     FROM signoz_traces.distributed_signoz_index_v3
     WHERE timestamp >= '1747947419000000000'

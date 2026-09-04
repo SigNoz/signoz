@@ -450,16 +450,24 @@ func (m *fieldMapper) ColumnExpressionFor(
 			if err != nil {
 				return "", err
 			}
-			guard, err := querybuilder.LogicalExistsExpr(ctx, orgID, startNs, endNs, m, logical, true)
-			if err != nil {
-				return "", err
-			}
 			coerced := value
 			// a time column keeps its native type; coercing it would yield seconds
 			if temporal, err := m.logicalIsTemporal(ctx, startNs, endNs, logical); err != nil {
 				return "", err
 			} else if !temporal {
 				coerced, _ = querybuilder.DataTypeCollisionHandledFieldName(logical.Single(), dummyValue, value, qbtypes.FilterOperatorUnknown)
+			}
+			// a column is present in every row: it takes no presence test, and no
+			// candidate after it can be reached
+			if m.plainColumn(ctx, startNs, endNs, logical) {
+				if len(stmts) == 0 {
+					return coerced, nil
+				}
+				return fmt.Sprintf("multiIf(%s, %s)", strings.Join(stmts, ", "), coerced), nil
+			}
+			guard, err := querybuilder.LogicalExistsExpr(ctx, orgID, startNs, endNs, m, logical, true)
+			if err != nil {
+				return "", err
 			}
 			stmts = append(stmts, guard, coerced)
 		}
@@ -498,6 +506,16 @@ func (m *fieldMapper) ColumnExpressionFor(
 		args = append(args, fmt.Sprintf("%s, toString(%s)", guard, value))
 	}
 	return fmt.Sprintf("multiIf(%s, NULL)", strings.Join(args, ", ")), nil
+}
+
+// plainColumn reports whether the field reads one table column, a value every
+// row has with no presence test.
+func (m *fieldMapper) plainColumn(ctx context.Context, startNs, endNs uint64, logical *telemetrytypes.LogicalField) bool {
+	if logical.IsFamily() {
+		return false
+	}
+	exprs, existExprs, _, err := m.resolveColumnExprs(ctx, startNs, endNs, logical.Single())
+	return err == nil && len(exprs) == 1 && len(existExprs) == 0
 }
 
 // logicalIsTemporal reports whether the logical field resolves to a single time

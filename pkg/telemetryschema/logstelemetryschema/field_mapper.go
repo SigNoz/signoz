@@ -279,11 +279,8 @@ func (m *fieldMapper) ColumnExpressionFor(
 		}
 		var stmts []string
 		for _, key := range candidates {
-			guard, err := m.ExistsFor(ctx, orgID, tsStart, tsEnd, key, true)
-			if err != nil {
-				return "", err
-			}
 			var fieldExpression string
+			var err error
 			if key.FieldContext == telemetrytypes.FieldContextBody && !bodyJSONEnabled {
 				fieldExpression, _ = GetBodyJSONKey(ctx, key, qbtypes.FilterOperatorUnknown, dummyValue)
 			} else {
@@ -292,6 +289,18 @@ func (m *fieldMapper) ColumnExpressionFor(
 					return "", err
 				}
 				fieldExpression, _ = querybuilder.DataTypeCollisionHandledFieldName(key, dummyValue, fieldExpression, qbtypes.FilterOperatorUnknown)
+			}
+			// a column is present in every row: it takes no presence test, and no
+			// candidate after it can be reached
+			if m.plainColumn(ctx, orgID, tsStart, tsEnd, key) {
+				if len(stmts) == 0 {
+					return fieldExpression, nil
+				}
+				return fmt.Sprintf("multiIf(%s, %s)", strings.Join(stmts, ", "), fieldExpression), nil
+			}
+			guard, err := m.ExistsFor(ctx, orgID, tsStart, tsEnd, key, true)
+			if err != nil {
+				return "", err
 			}
 			stmts = append(stmts, guard, fieldExpression)
 		}
@@ -551,6 +560,24 @@ func (m *fieldMapper) buildArrayMap(currentNode *telemetrytypes.JSONAccessNode, 
 	}
 
 	return fmt.Sprintf("arrayMap(%s->%s, %s)", currentNode.Alias(), nestedExpr, arrayExpr), nil
+}
+
+// plainColumn reports whether the key reads one table column, a value every row
+// has with no presence test.
+func (m *fieldMapper) plainColumn(ctx context.Context, orgID valuer.UUID, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) bool {
+	if key.FieldContext == telemetrytypes.FieldContextBody {
+		return false
+	}
+	columns, err := m.getColumn(ctx, orgID, key)
+	if err != nil {
+		return false
+	}
+	newColumns, _, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, tsStart, tsEnd)
+	if err != nil || len(newColumns) != 1 {
+		return false
+	}
+	columnType := newColumns[0].Type.GetType()
+	return columnType != schema.ColumnTypeEnumMap && columnType != schema.ColumnTypeEnumJSON
 }
 
 func (m *fieldMapper) membershipGuarded(ctx context.Context, orgID valuer.UUID, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) bool {
