@@ -49,20 +49,24 @@ export function deriveEditContext({
 			deleteDisabledReason: DASHBOARD_READ_ONLY_VIEW_REASON,
 		};
 	}
-	if (isLocked) {
+	// Access before state: someone who lacks the permission needs to hear that,
+	// not that the dashboard is locked - otherwise they go asking for an unlock
+	// when what they need is access. An edit-capable user still gets the lock,
+	// which is the thing they can act on.
+	if (!canEdit) {
+		editDisabledReason = DASHBOARD_NO_EDIT_PERMISSION_REASON;
+	} else if (isLocked) {
 		editDisabledReason = DASHBOARD_LOCKED_REASON;
+	}
+	if (!canDelete) {
+		deleteDisabledReason = DASHBOARD_NO_DELETE_PERMISSION_REASON;
+	} else if (isLocked) {
 		deleteDisabledReason = DASHBOARD_LOCKED_REASON;
-	} else {
-		if (!canEdit) {
-			editDisabledReason = DASHBOARD_NO_EDIT_PERMISSION_REASON;
-		}
-		if (!canDelete) {
-			deleteDisabledReason = DASHBOARD_NO_DELETE_PERMISSION_REASON;
-		}
 	}
 
 	return {
-		disabledKind: isLocked || readOnlyOverride ? 'blocked' : 'denied',
+		// The reason above is a permission message unless access was fine.
+		disabledKind: canEdit && isLocked ? 'blocked' : 'denied',
 		isEditable: canEdit && !isLocked,
 		isLocked,
 		canEditDashboard: canEdit,
