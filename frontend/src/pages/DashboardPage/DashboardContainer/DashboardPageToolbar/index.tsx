@@ -1,25 +1,18 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useQueryClient } from 'react-query';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FullScreenHandle } from 'react-full-screen';
 import { toast } from '@signozhq/ui/sonner';
 import logEvent from 'api/common/logEvent';
-import {
-	getGetDashboardV2QueryKey,
-	lockDashboardV2,
-	unlockDashboardV2,
-} from 'api/generated/services/dashboard';
 import type {
 	DashboardtypesGettableDashboardV2DTO,
 	DashboardtypesJSONPatchOperationDTO,
-	GetDashboardV2200,
 } from 'api/generated/services/sigNoz.schemas';
 import { resolveDashboardImage } from 'pages/DashboardPage/DashboardContainer/dashboardIcons';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
-import { useAppContext } from 'providers/App/App';
+import { useDashboardLockPermission } from 'hooks/dashboards/useDashboardLockPermission';
+import { useToggleDashboardLock } from 'hooks/dashboards/useToggleDashboardLock';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
-import { USER_ROLES } from 'types/roles';
 import { getAbsoluteUrl } from 'utils/basePath';
 
 import { useCreatePanel } from '../hooks/useCreatePanel';
@@ -42,7 +35,6 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 	const { dashboard, handle } = props;
 
 	const id = dashboard.id;
-	const queryClient = useQueryClient();
 
 	// Session-local lock state: the toggle appears once locked and persists for the page.
 	const [isDashboardLocked, setIsDashboardLocked] = useState(!!dashboard.locked);
@@ -64,7 +56,6 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 		[dashboard.tags],
 	);
 
-	const { user } = useAppContext();
 	const { showErrorModal } = useErrorModal();
 	const { patchAsync } = useOptimisticPatch();
 	const {
@@ -75,59 +66,52 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 		targetLayoutIndex,
 	} = useCreatePanel();
 
-	const isAuthor =
-		!!user?.email && !!dashboard.createdBy && dashboard.createdBy === user.email;
-
-	// Author/admin can lock-unlock (mirrors the Actions menu gate); integration-owned
+	// dashboard:update plus the backend's creator-or-admin rule; integration-owned
 	// dashboards are never toggleable.
-	const canToggleLock =
-		(isAuthor || user.role === USER_ROLES.ADMIN) &&
-		dashboard.createdBy !== 'integration';
+	const { canToggleLock, disabledReason: lockDisabledReason } =
+		useDashboardLockPermission({
+			dashboardId: id,
+			createdBy: dashboard.createdBy,
+		});
 
 	// Public-sharing meta (deduped react-query read); drives the header globe.
 	const { isPublic, publicMeta } = usePublicDashboardMeta(id);
 	const publicUrl = getAbsoluteUrl(publicMeta?.publicPath ?? '');
 
+	// Shared with the list's row menu — it owns the API call, the toast and the
+	// detail-cache patch; the optimistic local state and this page's event stay here.
+	const lockSource = useRef<'menu' | 'header'>('header');
+	const { toggleLock } = useToggleDashboardLock({
+		dashboardId: id,
+		isLocked: isDashboardLocked,
+		onSuccess: (locked) => {
+			void logEvent(DashboardDetailEvents.LockToggled, {
+				dashboardId: id,
+				dashboardName: title,
+				locked,
+				source: lockSource.current,
+			});
+		},
+		onError: (error) => {
+			setIsDashboardLocked(isDashboardLocked);
+			showErrorModal(error);
+		},
+	});
+
 	const handleLockDashboardToggle = useCallback(
-		async (source: 'menu' | 'header'): Promise<void> => {
+		(source: 'menu' | 'header'): void => {
 			if (!id) {
 				return;
 			}
+			lockSource.current = source;
 			const next = !isDashboardLocked;
 			setIsDashboardLocked(next);
 			if (next) {
 				setShowLockToggle(true);
 			}
-			try {
-				if (next) {
-					await lockDashboardV2({ id });
-					toast.success('Dashboard locked');
-				} else {
-					await unlockDashboardV2({ id });
-					toast.success('Dashboard unlocked');
-				}
-				// Patch just the `locked` flag in the cache — a full refetch would reload
-				// every panel's chart data for a metadata-only change.
-				const key = getGetDashboardV2QueryKey({ id });
-				const cached = queryClient.getQueryData<GetDashboardV2200>(key);
-				if (cached) {
-					queryClient.setQueryData<GetDashboardV2200>(key, {
-						...cached,
-						data: { ...cached.data, locked: next },
-					});
-				}
-				void logEvent(DashboardDetailEvents.LockToggled, {
-					dashboardId: id,
-					dashboardName: title,
-					locked: next,
-					source,
-				});
-			} catch (error) {
-				setIsDashboardLocked(!next);
-				showErrorModal(error as APIError);
-			}
+			toggleLock();
 		},
-		[id, title, isDashboardLocked, queryClient, showErrorModal],
+		[id, isDashboardLocked, toggleLock],
 	);
 
 	const onNameSave = useCallback(
@@ -184,9 +168,10 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 					showLockToggle={showLockToggle}
 					onToggleLock={
 						canToggleLock
-							? (): void => void handleLockDashboardToggle('header')
+							? (): void => handleLockDashboardToggle('header')
 							: undefined
 					}
+					lockDisabledReason={lockDisabledReason}
 					isEditing={isEditing}
 					draft={draft}
 					onDraftChange={setDraft}
@@ -199,9 +184,8 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 					dashboard={dashboard}
 					handle={handle}
 					isDashboardLocked={isDashboardLocked}
-					isAuthor={isAuthor}
 					onAddPanel={onAddPanel}
-					onLockToggle={(): void => void handleLockDashboardToggle('menu')}
+					onLockToggle={(): void => handleLockDashboardToggle('menu')}
 					onOpenRename={startEdit}
 				/>
 			</div>

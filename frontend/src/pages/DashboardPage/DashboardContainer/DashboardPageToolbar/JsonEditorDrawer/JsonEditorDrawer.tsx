@@ -17,7 +17,7 @@ import styles from './JsonEditorDrawer.module.scss';
 import JsonEditorToolbar from './JsonEditorToolbar';
 import { useJsonEditor } from './useJsonEditor';
 import DisabledControlTooltip from '../../components/DisabledControlTooltip/DisabledControlTooltip';
-import { useDashboardStore } from '../../store/useDashboardStore';
+import { useDashboardEditContext } from '../../hooks/useDashboardEditContext';
 
 interface JsonEditorDrawerProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
@@ -30,10 +30,10 @@ function JsonEditorDrawer({
 	isOpen,
 	onClose,
 }: JsonEditorDrawerProps): JSX.Element {
+	const { isEditable, editDisabledReason: readOnlyReason } =
+		useDashboardEditContext();
 	const [, copyToClipboard] = useCopyToClipboard();
 
-	const isEditable = useDashboardStore((s) => s.isEditable);
-	const readOnlyReason = useDashboardStore((s) => s.editDisabledReason);
 	// Inspect-only when not editable: Apply/Format/Reset disabled.
 	const readOnly = !isEditable;
 
@@ -175,7 +175,7 @@ function JsonEditorDrawer({
 						>
 							Cancel
 						</Button>
-						<DisabledControlTooltip reason={readOnlyReason} disabled={readOnly}>
+						<DisabledControlTooltip reason={readOnly ? readOnlyReason : ''}>
 							<Button
 								variant="solid"
 								color="primary"

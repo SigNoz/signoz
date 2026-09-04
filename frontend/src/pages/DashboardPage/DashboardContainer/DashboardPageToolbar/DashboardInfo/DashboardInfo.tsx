@@ -25,6 +25,7 @@ import { TOOLTIP_SCROLL_CONTENT_CLASS } from 'components/TooltipScrollArea/Toolt
 import TagsOverflowTooltip from './TagsOverflowTooltip';
 import { DASHBOARD_NAME_MAX_LENGTH } from '../../constants';
 import { useDashboardStore } from '../../store/useDashboardStore';
+import { useDashboardEditContext } from '../../hooks/useDashboardEditContext';
 
 // The tag cluster keeps a fixed footprint so a long title ellipsizes around it
 // instead of collapsing the tags: show up to two tags, then a `+N` overflow badge.
@@ -43,6 +44,8 @@ interface DashboardInfoProps {
 	showLockToggle: boolean;
 	/** When provided, the lock icon toggles lock/unlock (author/admin only). */
 	onToggleLock?: () => void;
+	/** Why the toggle is unavailable, when onToggleLock is absent. */
+	lockDisabledReason?: string;
 	isEditing: boolean;
 	draft: string;
 	onDraftChange: (value: string) => void;
@@ -61,6 +64,7 @@ function DashboardInfo({
 	isDashboardLocked,
 	showLockToggle,
 	onToggleLock,
+	lockDisabledReason,
 	isEditing,
 	draft,
 	onDraftChange,
@@ -68,7 +72,7 @@ function DashboardInfo({
 	onCommit,
 	onCancel,
 }: DashboardInfoProps): JSX.Element {
-	const canEdit = useDashboardStore((s) => s.isEditable);
+	const { isEditable: canEdit } = useDashboardEditContext();
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
 
 	const hasTags = tags.length > 0;
@@ -77,11 +81,15 @@ function DashboardInfo({
 	const visibleTags = tags.slice(0, MAX_VISIBLE_TAGS);
 	const remainingTags = tags.slice(MAX_VISIBLE_TAGS);
 
+	// Without a toggle, say why it can't be toggled rather than only restating the
+	// lock state.
 	let lockTooltip: string;
 	if (onToggleLock) {
 		lockTooltip = isDashboardLocked
 			? 'Locked — click to unlock'
 			: 'Unlocked — click to lock';
+	} else if (lockDisabledReason) {
+		lockTooltip = lockDisabledReason;
 	} else {
 		lockTooltip = isDashboardLocked
 			? 'This dashboard is locked'

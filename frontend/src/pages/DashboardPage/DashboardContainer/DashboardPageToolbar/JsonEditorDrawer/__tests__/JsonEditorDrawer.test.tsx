@@ -65,6 +65,23 @@ function hookValue(
 	} as ReturnType<typeof useJsonEditor>;
 }
 
+// The derivation has its own suite (useDashboardEditGuard.authz); these cases are
+// about what the UI does with a given edit context, so control it directly.
+const mockEditContext = {
+	isEditable: true,
+	isLocked: false,
+	canEditDashboard: true,
+	canDeleteDashboard: true,
+	editDisabledReason: '',
+	deleteDisabledReason: '',
+};
+jest.mock(
+	'pages/DashboardPage/DashboardContainer/hooks/useDashboardEditContext',
+	() => ({
+		useDashboardEditContext: (): typeof mockEditContext => mockEditContext,
+	}),
+);
+
 describe('JsonEditorDrawer', () => {
 	beforeEach(() => jest.clearAllMocks());
 
