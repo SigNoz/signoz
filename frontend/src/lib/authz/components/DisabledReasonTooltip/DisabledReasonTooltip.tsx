@@ -55,7 +55,9 @@ function DisabledReasonTooltip({
 		<TooltipSimple
 			side={side}
 			title={reason}
-			arrow
+			// A denial has no arrow, matching AuthZTooltip, which is the same
+			// presentation elsewhere in the product.
+			arrow={kind === 'blocked'}
 			disableHoverableContent
 			tooltipContentProps={{
 				className: cx(
