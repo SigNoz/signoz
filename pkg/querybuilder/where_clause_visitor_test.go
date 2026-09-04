@@ -14,6 +14,7 @@ import (
 	"github.com/antlr4-go/antlr/v4"
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestPrepareWhereClause_EmptyVariableList ensures PrepareWhereClause errors when a variable has an empty list value.
@@ -590,9 +591,10 @@ func TestVisitKey(t *testing.T) {
 			// and decides not-found handling. Replay that here against the generic
 			// builder behavior (error unless the key is ignored). The test maps carry
 			// no signal, so every logical field is single-member and flattens losslessly.
-			matching := MatchingLogicalFields(context.Background(), valuer.UUID{}, nil, key, tt.fieldKeys)
+			matching := MatchingLogicalFields(context.Background(), valuer.UUID{}, nil, telemetrytypes.SignalUnspecified, nil, key, tt.fieldKeys)
 			resolved, warning := ResolveLogicalFields(key, matching)
-			keys := SingleKeys(resolved)
+			keys, err := SingleKeys(resolved)
+			require.NoError(t, err)
 
 			var gotErrors []string
 			var gotMainErrURL, gotMainWrnURL string
@@ -756,6 +758,7 @@ func (b *resourceConditionBuilder) ConditionFor(
 	_ uint64,
 	_ uint64,
 	key *telemetrytypes.TelemetryFieldKey,
+	_ []*telemetrytypes.LogicalField,
 	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
 	_ qbtypes.ConditionBuilderOptions,
 	operator qbtypes.FilterOperator,
@@ -768,8 +771,11 @@ func (b *resourceConditionBuilder) ConditionFor(
 		return nil, nil, nil
 	}
 
-	resolved, warning := ResolveLogicalFields(key, MatchingLogicalFields(context.Background(), valuer.UUID{}, nil, key, fieldKeys))
-	keys := SingleKeys(resolved)
+	resolved, warning := ResolveLogicalFields(key, MatchingLogicalFields(context.Background(), valuer.UUID{}, nil, telemetrytypes.SignalUnspecified, nil, key, fieldKeys))
+	keys, err := SingleKeys(resolved)
+	if err != nil {
+		return nil, nil, err
+	}
 	var warnings []string
 	if warning != "" {
 		warnings = append(warnings, warning)
@@ -794,6 +800,7 @@ func (b *conditionBuilder) ConditionFor(
 	_ uint64,
 	_ uint64,
 	key *telemetrytypes.TelemetryFieldKey,
+	_ []*telemetrytypes.LogicalField,
 	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
 	options qbtypes.ConditionBuilderOptions,
 	operator qbtypes.FilterOperator,
@@ -811,8 +818,11 @@ func (b *conditionBuilder) ConditionFor(
 		return []string{fmt.Sprintf("%s_cond", key.Name)}, nil, nil
 	}
 
-	resolved, warning := ResolveLogicalFields(key, MatchingLogicalFields(context.Background(), valuer.UUID{}, nil, key, fieldKeys))
-	keys := SingleKeys(resolved)
+	resolved, warning := ResolveLogicalFields(key, MatchingLogicalFields(context.Background(), valuer.UUID{}, nil, telemetrytypes.SignalUnspecified, nil, key, fieldKeys))
+	keys, err := SingleKeys(resolved)
+	if err != nil {
+		return nil, nil, err
+	}
 	var warnings []string
 	if warning != "" {
 		warnings = append(warnings, warning)

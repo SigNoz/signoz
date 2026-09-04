@@ -135,7 +135,8 @@ func (c *conditionBuilder) ConditionFor(
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
-	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
+	logicalFields []*telemetrytypes.LogicalField,
+	_ map[string][]*telemetrytypes.TelemetryFieldKey,
 	options qbtypes.ConditionBuilderOptions,
 	operator qbtypes.FilterOperator,
 	value any,
@@ -148,9 +149,13 @@ func (c *conditionBuilder) ConditionFor(
 	}
 
 	// Audit fields have no family support, so every logical field is
-	// single-member and flattens losslessly to its physical key.
-	resolved, warning := querybuilder.ResolveLogicalFields(key, querybuilder.MatchingLogicalFields(ctx, orgID, nil, key, fieldKeys))
-	keys := querybuilder.SingleKeys(resolved)
+	// single-member and flattens losslessly to its physical key; SingleKeys
+	// refuses a family, so a wiring mistake fails loudly.
+	resolved, warning := querybuilder.ResolveLogicalFields(key, logicalFields)
+	keys, err := querybuilder.SingleKeys(resolved)
+	if err != nil {
+		return nil, nil, err
+	}
 	var warnings []string
 	if warning != "" {
 		warnings = append(warnings, warning)

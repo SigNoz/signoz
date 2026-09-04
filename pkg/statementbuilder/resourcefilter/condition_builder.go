@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -15,15 +14,12 @@ import (
 
 type defaultConditionBuilder struct {
 	fm qbtypes.FieldMapper
-	// fl evaluates the resolve_semconv_families flag during resolution.
-	// A nil flagger keeps resolution literal.
-	fl flagger.Flagger
 }
 
 var _ qbtypes.ConditionBuilder = (*defaultConditionBuilder)(nil)
 
-func NewConditionBuilder(fm qbtypes.FieldMapper, fl flagger.Flagger) *defaultConditionBuilder {
-	return &defaultConditionBuilder{fm: fm, fl: fl}
+func NewConditionBuilder(fm qbtypes.FieldMapper) *defaultConditionBuilder {
+	return &defaultConditionBuilder{fm: fm}
 }
 
 func valueForIndexFilter(op qbtypes.FilterOperator, key *telemetrytypes.TelemetryFieldKey, value any) any {
@@ -119,13 +115,14 @@ func (b *defaultConditionBuilder) ConditionFor(
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
-	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
+	logicalFields []*telemetrytypes.LogicalField,
+	_ map[string][]*telemetrytypes.TelemetryFieldKey,
 	_ qbtypes.ConditionBuilderOptions,
 	op qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) ([]string, []string, error) {
-	matches := querybuilder.MatchingLogicalFields(ctx, orgID, b.fl, key, fieldKeys)
+	matches := logicalFields
 
 	// has/hasAny/hasAll/hasToken are logs-body-only functions; they never apply to the
 	// resource fingerprint table, so skip them (the main query still evaluates them).

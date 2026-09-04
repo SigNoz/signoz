@@ -2,10 +2,35 @@
 #
 # Families are keyed by their current OpenTelemetry name. Schema-derived
 # families are disabled by default so rollout remains explicit and reversible.
+# The signals list is the per-family rollout gate.
 default_enabled: false
 
 families:
   deployment.environment.name:
     enabled: true
+    signals: [traces, logs, metrics]
+    # The family names an attribute of the resource or the span/log, never a
+    # field inside a log body: without this gate a body-context key with the
+    # same path joins the family and skips the body-JSON machinery.
+    contexts: [resource, attribute]
   db.system.name:
+    # The db.system value domain also renamed (mssql -> microsoft.sql_server
+    # and others), and no value mapping is read yet. A name-only merge matches
+    # half the history on every signal, so the family stays off until a
+    # value-mapping reader exists.
+    enabled: false
+
+  # These metric renames predate the vendored schema history, so the overlay
+  # declares the old names itself.
+  k8s.pod.cpu.usage:
     enabled: true
+    kind: metric
+    old: [k8s.pod.cpu.utilization]
+  k8s.node.cpu.usage:
+    enabled: true
+    kind: metric
+    old: [k8s.node.cpu.utilization]
+  container.cpu.usage:
+    enabled: true
+    kind: metric
+    old: [container.cpu.utilization]

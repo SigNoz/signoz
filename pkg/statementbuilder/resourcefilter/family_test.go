@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -18,7 +19,8 @@ import (
 // the metadata map as trace resource attributes.
 
 func TestFamilyEqualWidensIndexHintsToAnyMember(t *testing.T) {
-	cb := NewConditionBuilder(NewFieldMapper(), flaggertest.WithBooleanFlags(t, map[string]bool{flagger.FeatureResolveSemconvFamilies.String(): true}))
+	fl := flaggertest.WithBooleanFlags(t, map[string]bool{flagger.FeatureResolveSemconvFamilies.String(): true})
+	cb := NewConditionBuilder(NewFieldMapper())
 	fieldKeys := map[string][]*telemetrytypes.TelemetryFieldKey{
 		"deployment.environment.name": {{
 			Name:          "deployment.environment.name",
@@ -37,6 +39,7 @@ func TestFamilyEqualWidensIndexHintsToAnyMember(t *testing.T) {
 	sb := sqlbuilder.NewSelectBuilder()
 	conds, _, err := cb.ConditionFor(context.Background(), valuer.UUID{}, 0, 0,
 		&telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"},
+		querybuilder.MatchingLogicalFields(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, fieldKeys),
 		fieldKeys, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorEqual, "production", sb)
 	require.NoError(t, err)
 	require.Len(t, conds, 1)
@@ -47,7 +50,8 @@ func TestFamilyEqualWidensIndexHintsToAnyMember(t *testing.T) {
 }
 
 func TestFamilyNotEqualDropsNegatedValueHint(t *testing.T) {
-	cb := NewConditionBuilder(NewFieldMapper(), flaggertest.WithBooleanFlags(t, map[string]bool{flagger.FeatureResolveSemconvFamilies.String(): true}))
+	fl := flaggertest.WithBooleanFlags(t, map[string]bool{flagger.FeatureResolveSemconvFamilies.String(): true})
+	cb := NewConditionBuilder(NewFieldMapper())
 	fieldKeys := map[string][]*telemetrytypes.TelemetryFieldKey{
 		"deployment.environment.name": {{
 			Name:          "deployment.environment.name",
@@ -66,6 +70,7 @@ func TestFamilyNotEqualDropsNegatedValueHint(t *testing.T) {
 	sb := sqlbuilder.NewSelectBuilder()
 	conds, _, err := cb.ConditionFor(context.Background(), valuer.UUID{}, 0, 0,
 		&telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"},
+		querybuilder.MatchingLogicalFields(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, fieldKeys),
 		fieldKeys, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorNotEqual, "production", sb)
 	require.NoError(t, err)
 	require.Len(t, conds, 1)
@@ -76,7 +81,8 @@ func TestFamilyNotEqualDropsNegatedValueHint(t *testing.T) {
 }
 
 func TestFamilyExistsIsAnyMemberPresence(t *testing.T) {
-	cb := NewConditionBuilder(NewFieldMapper(), flaggertest.WithBooleanFlags(t, map[string]bool{flagger.FeatureResolveSemconvFamilies.String(): true}))
+	fl := flaggertest.WithBooleanFlags(t, map[string]bool{flagger.FeatureResolveSemconvFamilies.String(): true})
+	cb := NewConditionBuilder(NewFieldMapper())
 	fieldKeys := map[string][]*telemetrytypes.TelemetryFieldKey{
 		"deployment.environment.name": {{
 			Name:          "deployment.environment.name",
@@ -95,6 +101,7 @@ func TestFamilyExistsIsAnyMemberPresence(t *testing.T) {
 	sb := sqlbuilder.NewSelectBuilder()
 	conds, _, err := cb.ConditionFor(context.Background(), valuer.UUID{}, 0, 0,
 		&telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"},
+		querybuilder.MatchingLogicalFields(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, fieldKeys),
 		fieldKeys, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorExists, nil, sb)
 	require.NoError(t, err)
 	require.Len(t, conds, 1)
@@ -106,6 +113,7 @@ func TestFamilyExistsIsAnyMemberPresence(t *testing.T) {
 	sb = sqlbuilder.NewSelectBuilder()
 	conds, _, err = cb.ConditionFor(context.Background(), valuer.UUID{}, 0, 0,
 		&telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"},
+		querybuilder.MatchingLogicalFields(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, fieldKeys),
 		fieldKeys, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorNotExists, nil, sb)
 	require.NoError(t, err)
 	require.Len(t, conds, 1)
@@ -118,7 +126,8 @@ func TestFamilyExistsIsAnyMemberPresence(t *testing.T) {
 // With only one member in metadata the SQL keeps the exact pre-family shape,
 // including the negated value hint on !=.
 func TestSingleMemberShapesUnchanged(t *testing.T) {
-	cb := NewConditionBuilder(NewFieldMapper(), flaggertest.WithBooleanFlags(t, map[string]bool{flagger.FeatureResolveSemconvFamilies.String(): true}))
+	fl := flaggertest.WithBooleanFlags(t, map[string]bool{flagger.FeatureResolveSemconvFamilies.String(): true})
+	cb := NewConditionBuilder(NewFieldMapper())
 	fieldKeys := map[string][]*telemetrytypes.TelemetryFieldKey{
 		"deployment.environment.name": {{
 			Name:          "deployment.environment.name",
@@ -131,6 +140,7 @@ func TestSingleMemberShapesUnchanged(t *testing.T) {
 	sb := sqlbuilder.NewSelectBuilder()
 	conds, _, err := cb.ConditionFor(context.Background(), valuer.UUID{}, 0, 0,
 		&telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"},
+		querybuilder.MatchingLogicalFields(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, fieldKeys),
 		fieldKeys, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorNotEqual, "production", sb)
 	require.NoError(t, err)
 	require.Len(t, conds, 1)

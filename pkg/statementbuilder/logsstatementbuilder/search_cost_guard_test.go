@@ -30,7 +30,7 @@ func TestSearchCostGuard(t *testing.T) {
 	cb := logstelemetryschema.NewConditionBuilder(fm, fl)
 	store := telemetrytypestest.NewMockMetadataStore()
 	store.KeysMap = logstelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
-	rewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+	rewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl, telemetrytypes.SignalLogs)
 	sb := NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		store, fm, cb, rewriter, logstelemetryschema.DefaultFullTextColumn, fl, nil,
@@ -61,7 +61,7 @@ func TestSearchCostGuardJSONBody(t *testing.T) {
 	cb := logstelemetryschema.NewConditionBuilder(fm, fl)
 	store := telemetrytypestest.NewMockMetadataStore()
 	store.KeysMap = logstelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
-	rewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+	rewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl, telemetrytypes.SignalLogs)
 	sb := NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		store, fm, cb, rewriter, logstelemetryschema.DefaultFullTextColumn, fl, nil,

@@ -3,6 +3,9 @@ package scopedtracesstatementbuilder
 import (
 	"context"
 
+	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
+
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -13,12 +16,13 @@ import (
 // field mapper. It binds no args, so its expressions embed in any builder; predicates
 // (which do bind args) are the predicateResolver's job.
 type columnResolver struct {
+	fl   flagger.Flagger
 	fm   qbtypes.FieldMapper
 	keys map[string][]*telemetrytypes.TelemetryFieldKey
 }
 
-func newColumnResolver(fm qbtypes.FieldMapper, keys map[string][]*telemetrytypes.TelemetryFieldKey) *columnResolver {
-	return &columnResolver{fm: fm, keys: keys}
+func newColumnResolver(fm qbtypes.FieldMapper, fl flagger.Flagger, keys map[string][]*telemetrytypes.TelemetryFieldKey) *columnResolver {
+	return &columnResolver{fm: fm, fl: fl, keys: keys}
 }
 
 func (r *columnResolver) FieldFor(ctx context.Context, orgID valuer.UUID, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
@@ -31,7 +35,7 @@ func (r *columnResolver) ValueFor(ctx context.Context, orgID valuer.UUID, startN
 	if cands := r.keys[key.Name]; len(cands) > 0 {
 		key = cands[0]
 	}
-	expr, err := r.fm.ColumnExpressionFor(ctx, orgID, startNs, endNs, key, dt, r.keys)
+	expr, err := r.fm.ColumnExpressionFor(ctx, orgID, startNs, endNs, key, querybuilder.MatchingLogicalFields(ctx, orgID, r.fl, telemetrytypes.SignalTraces, nil, key, r.keys), dt, r.keys)
 	if err != nil {
 		return "", err
 	}

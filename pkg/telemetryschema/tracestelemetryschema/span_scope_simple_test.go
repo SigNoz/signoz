@@ -2,7 +2,6 @@ package tracestelemetryschema
 
 import (
 	"context"
-	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
@@ -15,8 +14,8 @@ import (
 
 func TestSpanScopeFilterExpression(t *testing.T) {
 	// Test that span scope fields work in filter expressions
-	fm := NewFieldMapper(flaggertest.New(t))
-	cb := NewConditionBuilder(fm, flaggertest.New(t))
+	fm := NewFieldMapper()
+	cb := NewConditionBuilder(fm)
 
 	tests := []struct {
 		name              string
@@ -129,8 +128,8 @@ func TestSpanScopeWithResourceFilter(t *testing.T) {
 			// For now, just verify the expression parses correctly
 			// In a real implementation, we'd need to check that the resource filter
 			// is properly skipped when span scope fields are present
-			fm := NewFieldMapper(flaggertest.New(t))
-			cb := NewConditionBuilder(fm, flaggertest.New(t))
+			fm := NewFieldMapper()
+			cb := NewConditionBuilder(fm)
 
 			// Prepare field keys for the test
 			fieldKeys := make(map[string][]*telemetrytypes.TelemetryFieldKey)

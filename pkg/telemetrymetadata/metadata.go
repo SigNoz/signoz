@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/semconv"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/audittelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/logstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/metertelemetryschema"
@@ -73,6 +74,26 @@ type telemetryMetaStore struct {
 
 func escapeForLike(s string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(s, `_`, `\_`), `%`, `\%`)
+}
+
+// familyValueNames returns the spellings whose stored values merge into the
+// requested name's suggestions when the resolve_semconv_families flag is on
+// for the org; otherwise just the requested name. A filter on any family
+// spelling matches every member, so the suggested values must cover them all.
+func (t *telemetryMetaStore) familyValueNames(ctx context.Context, orgID valuer.UUID, signal telemetrytypes.Signal, fieldValueSelector *telemetrytypes.FieldValueSelector) []string {
+	if !querybuilder.SemconvFamiliesEnabled(ctx, orgID, t.fl) {
+		return []string{fieldValueSelector.Name}
+	}
+	selector := telemetrytypes.FieldKeySelector{
+		Name:          fieldValueSelector.Name,
+		Signal:        signal,
+		FieldContext:  fieldValueSelector.FieldContext,
+		MetricContext: fieldValueSelector.MetricContext,
+	}
+	if signal == telemetrytypes.SignalMetrics {
+		return querybuilder.MetricLabelSpellings(selector)
+	}
+	return semconv.Members(semconv.KindAttribute, selector)
 }
 
 func NewTelemetryMetaStore(
@@ -1362,23 +1383,39 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 		FieldDataType: fieldValueSelector.FieldDataType,
 	}
 
-	selectColumn, err := t.fm.FieldFor(ctx, orgID, 0, 0, key)
-
-	if err != nil {
-		// we don't have a explicit column to select from the related metadata table
-		// so we will select either from resource_attributes or attributes table
-		// in that order
-		resourceColumn, _ := t.fm.FieldFor(ctx, orgID, 0, 0, &telemetrytypes.TelemetryFieldKey{
-			Name:          key.Name,
-			FieldContext:  telemetrytypes.FieldContextResource,
-			FieldDataType: telemetrytypes.FieldDataTypeString,
-		})
-		attributeColumn, _ := t.fm.FieldFor(ctx, orgID, 0, 0, &telemetrytypes.TelemetryFieldKey{
-			Name:          key.Name,
-			FieldContext:  telemetrytypes.FieldContextAttribute,
-			FieldDataType: telemetrytypes.FieldDataTypeString,
-		})
-		selectColumn = fmt.Sprintf("if(notEmpty(%s), %s, %s)", resourceColumn, resourceColumn, attributeColumn)
+	// One column per family spelling, merged current-first so suggestions
+	// cover rows that carry only an old spelling.
+	names := t.familyValueNames(ctx, orgID, fieldValueSelector.Signal, fieldValueSelector)
+	memberColumns := make([]string, 0, len(names))
+	for _, name := range names {
+		memberKey := &telemetrytypes.TelemetryFieldKey{
+			Name:          name,
+			Signal:        fieldValueSelector.Signal,
+			FieldContext:  fieldValueSelector.FieldContext,
+			FieldDataType: fieldValueSelector.FieldDataType,
+		}
+		memberColumn, err := t.fm.FieldFor(ctx, orgID, 0, 0, memberKey)
+		if err != nil {
+			// we don't have a explicit column to select from the related metadata table
+			// so we will select either from resource_attributes or attributes table
+			// in that order
+			resourceColumn, _ := t.fm.FieldFor(ctx, orgID, 0, 0, &telemetrytypes.TelemetryFieldKey{
+				Name:          name,
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			})
+			attributeColumn, _ := t.fm.FieldFor(ctx, orgID, 0, 0, &telemetrytypes.TelemetryFieldKey{
+				Name:          name,
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			})
+			memberColumn = fmt.Sprintf("if(notEmpty(%s), %s, %s)", resourceColumn, resourceColumn, attributeColumn)
+		}
+		memberColumns = append(memberColumns, memberColumn)
+	}
+	selectColumn := memberColumns[len(memberColumns)-1]
+	for i := len(memberColumns) - 2; i >= 0; i-- {
+		selectColumn = fmt.Sprintf("if(notEmpty(%s), %s, %s)", memberColumns[i], memberColumns[i], selectColumn)
 	}
 
 	sb := sqlbuilder.Select("DISTINCT " + selectColumn).From(t.relatedMetadataDBName + "." + t.relatedMetadataTblName)
@@ -1388,6 +1425,7 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 		for _, keySelector := range keySelectors {
 			keySelector.Signal = fieldValueSelector.Signal
 		}
+		keySelectors = querybuilder.ExpandKeySelectorsForFamilies(ctx, orgID, t.fl, keySelectors)
 		keys, _, err := t.GetKeysMulti(ctx, orgID, keySelectors)
 		if err != nil {
 			return nil, false, err
@@ -1395,6 +1433,9 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 
 		whereClause, err := querybuilder.PrepareWhereClause(fieldValueSelector.ExistingQuery, querybuilder.FilterExprVisitorOpts{
 			Context:          ctx,
+			OrgID:            orgID,
+			Flagger:          t.fl,
+			Signal:           fieldValueSelector.Signal,
 			Logger:           t.logger,
 			FieldMapper:      t.fm,
 			ConditionBuilder: t.conditionBuilder,
@@ -1422,6 +1463,17 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 	}
 
 	if fieldValueSelector.Value != "" {
+		// The synthetic metadata carries every family spelling in the probed
+		// context, so the search narrows suggestions across the whole family.
+		searchKeysFor := func(fieldContext telemetrytypes.FieldContext) map[string][]*telemetrytypes.TelemetryFieldKey {
+			searchKeys := make(map[string][]*telemetrytypes.TelemetryFieldKey, len(names))
+			for _, name := range names {
+				searchKeys[name] = []*telemetrytypes.TelemetryFieldKey{
+					telemetrytypes.NewTelemetryFieldKey(name, fieldContext, key.FieldDataType),
+				}
+			}
+			return searchKeys
+		}
 		var conds []string
 		if fieldValueSelector.FieldContext != telemetrytypes.FieldContextAttribute &&
 			fieldValueSelector.FieldContext != telemetrytypes.FieldContextResource {
@@ -1429,20 +1481,23 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 
 			// search on attributes
 			key.FieldContext = telemetrytypes.FieldContextAttribute
-			attrConds, _, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}}, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
+			attrKeys := searchKeysFor(telemetrytypes.FieldContextAttribute)
+			attrConds, _, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, querybuilder.MatchingLogicalFields(ctx, orgID, t.fl, fieldValueSelector.Signal, nil, key, attrKeys), attrKeys, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
 			if err == nil {
 				conds = append(conds, attrConds...)
 			}
 
 			// search on resource
 			key.FieldContext = telemetrytypes.FieldContextResource
-			resourceConds, _, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}}, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
+			resourceKeys := searchKeysFor(telemetrytypes.FieldContextResource)
+			resourceConds, _, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, querybuilder.MatchingLogicalFields(ctx, orgID, t.fl, fieldValueSelector.Signal, nil, key, resourceKeys), resourceKeys, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
 			if err == nil {
 				conds = append(conds, resourceConds...)
 			}
 			key.FieldContext = origContext
 		} else {
-			keyConds, _, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}}, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
+			contextKeys := searchKeysFor(key.FieldContext)
+			keyConds, _, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, querybuilder.MatchingLogicalFields(ctx, orgID, t.fl, fieldValueSelector.Signal, nil, key, contextKeys), contextKeys, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
 			if err == nil {
 				conds = append(conds, keyConds...)
 			}
@@ -1500,7 +1555,7 @@ func (t *telemetryMetaStore) GetRelatedValues(ctx context.Context, orgID valuer.
 	return t.getRelatedValues(ctx, orgID, fieldValueSelector)
 }
 
-func (t *telemetryMetaStore) getSpanFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
+func (t *telemetryMetaStore) getSpanFieldValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
 		instrumentationtypes.CodeNamespace:    "metadata",
@@ -1515,7 +1570,11 @@ func (t *telemetryMetaStore) getSpanFieldValues(ctx context.Context, fieldValueS
 	sb := sqlbuilder.Select("DISTINCT string_value, number_value").From(t.tracesDBName + "." + t.tracesFieldsTblName)
 
 	if fieldValueSelector.Name != "" {
-		sb.Where(sb.E("tag_key", fieldValueSelector.Name))
+		if names := t.familyValueNames(ctx, orgID, telemetrytypes.SignalTraces, fieldValueSelector); len(names) > 1 {
+			sb.Where(sb.In("tag_key", sqlbuilder.List(names)))
+		} else {
+			sb.Where(sb.E("tag_key", fieldValueSelector.Name))
+		}
 	}
 
 	// now look at the field context
@@ -1590,7 +1649,7 @@ func (t *telemetryMetaStore) getSpanFieldValues(ctx context.Context, fieldValueS
 	return values, complete, nil
 }
 
-func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
+func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
 		instrumentationtypes.CodeNamespace:    "metadata",
@@ -1605,7 +1664,11 @@ func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSe
 	sb := sqlbuilder.Select("DISTINCT string_value, number_value").From(t.logsDBName + "." + t.logsFieldsTblName)
 
 	if fieldValueSelector.Name != "" {
-		sb.Where(sb.E("tag_key", fieldValueSelector.Name))
+		if names := t.familyValueNames(ctx, orgID, telemetrytypes.SignalLogs, fieldValueSelector); len(names) > 1 {
+			sb.Where(sb.In("tag_key", sqlbuilder.List(names)))
+		} else {
+			sb.Where(sb.E("tag_key", fieldValueSelector.Name))
+		}
 	}
 
 	if fieldValueSelector.FieldContext != telemetrytypes.FieldContextUnspecified {
@@ -1803,7 +1866,11 @@ func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, orgID val
 		From(t.metricsDBName + "." + t.metricsFieldsTblName)
 
 	if fieldValueSelector.Name != "" {
-		sb.Where(sb.E("attr_name", fieldValueSelector.Name))
+		if names := t.familyValueNames(ctx, orgID, telemetrytypes.SignalMetrics, fieldValueSelector); len(names) > 1 {
+			sb.Where(sb.In("attr_name", sqlbuilder.List(names)))
+		} else {
+			sb.Where(sb.E("attr_name", fieldValueSelector.Name))
+		}
 	}
 
 	if fieldValueSelector.FieldContext != telemetrytypes.FieldContextUnspecified {
@@ -1815,7 +1882,15 @@ func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, orgID val
 	}
 
 	if fieldValueSelector.MetricContext != nil && fieldValueSelector.MetricContext.MetricName != "" {
-		sb.Where(sb.E("metric_name", fieldValueSelector.MetricContext.MetricName))
+		metricNames := []string{fieldValueSelector.MetricContext.MetricName}
+		if querybuilder.SemconvFamiliesEnabled(ctx, orgID, t.fl) {
+			metricNames = querybuilder.MetricNameSpellings(fieldValueSelector.MetricContext.MetricName)
+		}
+		if len(metricNames) > 1 {
+			sb.Where(sb.In("metric_name", sqlbuilder.List(metricNames)))
+		} else {
+			sb.Where(sb.E("metric_name", fieldValueSelector.MetricContext.MetricName))
+		}
 	}
 	if fieldValueSelector.MetricContext != nil && fieldValueSelector.MetricContext.MetricNamespace != "" {
 		sb.Where(sb.Like("metric_name", escapeForLike(fieldValueSelector.MetricContext.MetricNamespace)+"%"))
@@ -2125,12 +2200,12 @@ func (t *telemetryMetaStore) GetAllValues(ctx context.Context, orgID valuer.UUID
 
 	switch fieldValueSelector.Signal {
 	case telemetrytypes.SignalTraces:
-		values, complete, err = t.getSpanFieldValues(ctx, fieldValueSelector)
+		values, complete, err = t.getSpanFieldValues(ctx, orgID, fieldValueSelector)
 	case telemetrytypes.SignalLogs:
 		if fieldValueSelector.Source == telemetrytypes.SourceAudit {
 			values, complete, err = t.getAuditFieldValues(ctx, fieldValueSelector)
 		} else {
-			values, complete, err = t.getLogFieldValues(ctx, fieldValueSelector)
+			values, complete, err = t.getLogFieldValues(ctx, orgID, fieldValueSelector)
 		}
 	case telemetrytypes.SignalMetrics:
 		if fieldValueSelector.Source == telemetrytypes.SourceMeter {
@@ -2143,13 +2218,13 @@ func (t *telemetryMetaStore) GetAllValues(ctx context.Context, orgID valuer.UUID
 		mapOfRelatedValues := make(map[any]bool)
 		allUnspecifiedValues := &telemetrytypes.TelemetryFieldValues{}
 
-		tracesValues, tracesComplete, err := t.getSpanFieldValues(ctx, fieldValueSelector)
+		tracesValues, tracesComplete, err := t.getSpanFieldValues(ctx, orgID, fieldValueSelector)
 		if err == nil {
 			populateComplete := populateAllUnspecifiedValues(allUnspecifiedValues, mapOfValues, mapOfRelatedValues, tracesValues, limit)
 			complete = complete && tracesComplete && populateComplete
 		}
 
-		logsValues, logsComplete, err := t.getLogFieldValues(ctx, fieldValueSelector)
+		logsValues, logsComplete, err := t.getLogFieldValues(ctx, orgID, fieldValueSelector)
 		if err == nil {
 			populateComplete := populateAllUnspecifiedValues(allUnspecifiedValues, mapOfValues, mapOfRelatedValues, logsValues, limit)
 			complete = complete && logsComplete && populateComplete

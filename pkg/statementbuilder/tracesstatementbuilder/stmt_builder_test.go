@@ -465,11 +465,11 @@ func TestStatementBuilder(t *testing.T) {
 	}
 
 	fl := flaggertest.New(t)
-	fm := tracestelemetryschema.NewFieldMapper(fl)
-	cb := tracestelemetryschema.NewConditionBuilder(fm, fl)
+	fm := tracestelemetryschema.NewFieldMapper()
+	cb := tracestelemetryschema.NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl, telemetrytypes.SignalTraces)
 
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -766,11 +766,11 @@ func TestStatementBuilderListQuery(t *testing.T) {
 	}
 
 	fl := flaggertest.New(t)
-	fm := tracestelemetryschema.NewFieldMapper(fl)
-	cb := tracestelemetryschema.NewConditionBuilder(fm, fl)
+	fm := tracestelemetryschema.NewFieldMapper()
+	cb := tracestelemetryschema.NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl, telemetrytypes.SignalTraces)
 
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -1030,14 +1030,14 @@ func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			fl := flaggertest.New(t)
-			fm := tracestelemetryschema.NewFieldMapper(fl)
-			cb := tracestelemetryschema.NewConditionBuilder(fm, fl)
+			fm := tracestelemetryschema.NewFieldMapper()
+			cb := tracestelemetryschema.NewConditionBuilder(fm)
 			mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 			mockMetadataStore.KeysMap = c.keysMap
 			if mockMetadataStore.KeysMap == nil {
 				mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
 			}
-			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl, telemetrytypes.SignalTraces)
 
 			statementBuilder := NewTraceQueryStatementBuilder(
 				instrumentationtest.New().ToProviderSettings(),
@@ -1105,11 +1105,11 @@ func TestStatementBuilderGroupByResourceEvolution(t *testing.T) {
 	}
 
 	fl := flaggertest.New(t)
-	fm := tracestelemetryschema.NewFieldMapper(fl)
-	cb := tracestelemetryschema.NewConditionBuilder(fm, fl)
+	fm := tracestelemetryschema.NewFieldMapper()
+	cb := tracestelemetryschema.NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl, telemetrytypes.SignalTraces)
 
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -1272,11 +1272,11 @@ func TestStatementBuilderTraceQuery(t *testing.T) {
 	}
 
 	fl := flaggertest.New(t)
-	fm := tracestelemetryschema.NewFieldMapper(fl)
-	cb := tracestelemetryschema.NewConditionBuilder(fm, fl)
+	fm := tracestelemetryschema.NewFieldMapper()
+	cb := tracestelemetryschema.NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl, telemetrytypes.SignalTraces)
 
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -1910,14 +1910,14 @@ func newSkipResourceFingerprintBuilder(
 	t.Helper()
 
 	fl := flaggertest.New(t)
-	fm := tracestelemetryschema.NewFieldMapper(fl)
-	cb := tracestelemetryschema.NewConditionBuilder(fm, fl)
+	fm := tracestelemetryschema.NewFieldMapper()
+	cb := tracestelemetryschema.NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
 
 	aggExprRewriter := querybuilder.NewAggExprRewriter(
-		instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl,
+		instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl, telemetrytypes.SignalTraces,
 	)
 
 	return NewTraceQueryStatementBuilder(
@@ -1940,11 +1940,11 @@ func TestStatementBuilderGroupByUnseenKey(t *testing.T) {
 	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 
 	fl := flaggertest.New(t)
-	fm := tracestelemetryschema.NewFieldMapper(fl)
-	cb := tracestelemetryschema.NewConditionBuilder(fm, fl)
+	fm := tracestelemetryschema.NewFieldMapper()
+	cb := tracestelemetryschema.NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl, telemetrytypes.SignalTraces)
 
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -1982,11 +1982,11 @@ func TestStatementBuilderAggregationUnseenKey(t *testing.T) {
 	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 
 	fl := flaggertest.New(t)
-	fm := tracestelemetryschema.NewFieldMapper(fl)
-	cb := tracestelemetryschema.NewConditionBuilder(fm, fl)
+	fm := tracestelemetryschema.NewFieldMapper()
+	cb := tracestelemetryschema.NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl, telemetrytypes.SignalTraces)
 
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -2012,6 +2012,55 @@ func TestStatementBuilderAggregationUnseenKey(t *testing.T) {
 	assert.Contains(t, q.Query, "attributes_string['error.type']")
 	assert.Contains(t, q.Query, "attributes_number['error.type']")
 	assert.Contains(t, q.Query, "attributes_bool['error.type']")
+}
+
+// The mid-migration state: metadata holds only the old spelling, and the
+// query names the current one. The resource-filter condition and the group-by
+// column both read the stored spelling, so the filter and the groups agree.
+func TestStatementBuilderSemconvSingleSpelling(t *testing.T) {
+	fl := flaggertest.WithBooleanFlags(t, map[string]bool{
+		flagger.FeatureResolveSemconvFamilies.String(): true,
+	})
+	fm := tracestelemetryschema.NewFieldMapper()
+	cb := tracestelemetryschema.NewConditionBuilder(fm)
+	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	mockMetadataStore.KeysMap = map[string][]*telemetrytypes.TelemetryFieldKey{
+		"deployment.environment": {{
+			Name:          "deployment.environment",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextResource,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		}},
+	}
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl, telemetrytypes.SignalTraces)
+
+	statementBuilder := NewTraceQueryStatementBuilder(
+		instrumentationtest.New().ToProviderSettings(),
+		mockMetadataStore,
+		fm,
+		cb,
+		aggExprRewriter,
+		nil,
+		fl,
+		false,
+		100000,
+	)
+
+	query := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+		Signal:       telemetrytypes.SignalTraces,
+		StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+		Aggregations: []qbtypes.TraceAggregation{{Expression: "count()"}},
+		Filter: &qbtypes.Filter{
+			Expression: "deployment.environment.name = 'production'",
+		},
+		GroupBy: []qbtypes.GroupByKey{
+			{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}},
+		},
+	}
+
+	q, err := statementBuilder.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, qbtypes.RequestTypeScalar, query, nil)
+	require.NoError(t, err)
+	require.Equal(t, "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'deployment.environment') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT toString(multiIf(mapContains(attributes_string, 'deployment.environment.name'), attributes_string['deployment.environment.name'], mapContains(attributes_number, 'deployment.environment.name'), toString(attributes_number['deployment.environment.name']), mapContains(attributes_bool, 'deployment.environment.name'), toString(attributes_bool['deployment.environment.name']), multiIf(resource.`deployment.environment` IS NOT NULL, resource.`deployment.environment`::String, mapContains(resources_string, 'deployment.environment'), resources_string['deployment.environment'], NULL) IS NOT NULL, multiIf(resource.`deployment.environment` IS NOT NULL, resource.`deployment.environment`::String, mapContains(resources_string, 'deployment.environment'), resources_string['deployment.environment'], NULL), NULL)) AS `__GROUP_BY_KEY_0_deployment.environment.name`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_deployment.environment.name` ORDER BY __result_0 DESC", q.Query)
 }
 
 // TestStatementBuilderSemconvFamilies builds the same family-member filter
@@ -2057,11 +2106,11 @@ func TestStatementBuilderSemconvFamilies(t *testing.T) {
 			fl := flaggertest.WithBooleanFlags(t, map[string]bool{
 				flagger.FeatureResolveSemconvFamilies.String(): c.flag,
 			})
-			fm := tracestelemetryschema.NewFieldMapper(fl)
-			cb := tracestelemetryschema.NewConditionBuilder(fm, fl)
+			fm := tracestelemetryschema.NewFieldMapper()
+			cb := tracestelemetryschema.NewConditionBuilder(fm)
 			mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 			mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
-			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl, telemetrytypes.SignalTraces)
 
 			statementBuilder := NewTraceQueryStatementBuilder(
 				instrumentationtest.New().ToProviderSettings(),

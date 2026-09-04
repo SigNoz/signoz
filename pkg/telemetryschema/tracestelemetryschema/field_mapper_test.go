@@ -2,7 +2,7 @@ package tracestelemetryschema
 
 import (
 	"context"
-	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"testing"
 	"time"
 
@@ -147,7 +147,7 @@ func TestGetFieldKeyName(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			fm := NewFieldMapper(flaggertest.New(t))
+			fm := NewFieldMapper()
 			result, err := fm.FieldFor(ctx, valuer.UUID{}, uint64(time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()), uint64(time.Date(2024, 6, 5, 0, 0, 0, 0, time.UTC).UnixNano()), &tc.key)
 
 			if tc.expectedError != nil {
@@ -235,7 +235,7 @@ func TestFieldForResourceWithEvolution(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			fm := NewFieldMapper(flaggertest.New(t))
+			fm := NewFieldMapper()
 			result, err := fm.FieldFor(ctx, valuer.UUID{}, tc.tsStart, tc.tsEnd, &tc.key)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedResult, result)
@@ -295,8 +295,8 @@ func TestColumnExpressionForTemporalColumn(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			fm := NewFieldMapper(flaggertest.New(t))
-			result, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, tsStart, tsEnd, &tc.key, tc.requiredDataType, nil)
+			fm := NewFieldMapper()
+			result, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, tsStart, tsEnd, &tc.key, nil, tc.requiredDataType, nil)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedResult, result)
 		})
@@ -323,11 +323,11 @@ func TestColumnExpressionForTimestampAttributeCollision(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper(flaggertest.New(t))
+	fm := NewFieldMapper()
 
 	t.Run("bare timestamp resolves to the intrinsic column alone", func(t *testing.T) {
 		bare := telemetrytypes.TelemetryFieldKey{Name: "timestamp"}
-		result, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, tsStart, tsEnd, &bare, telemetrytypes.FieldDataTypeFloat64, keys)
+		result, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, tsStart, tsEnd, &bare, querybuilder.MatchingLogicalFields(ctx, valuer.UUID{}, nil, telemetrytypes.SignalTraces, nil, &bare, keys), telemetrytypes.FieldDataTypeFloat64, keys)
 		require.NoError(t, err)
 		assert.Equal(t, "multiIf(timestamp <> toDateTime64(0, 9), timestamp, NULL)", result)
 	})
@@ -338,7 +338,7 @@ func TestColumnExpressionForTimestampAttributeCollision(t *testing.T) {
 			FieldContext:  telemetrytypes.FieldContextAttribute,
 			FieldDataType: telemetrytypes.FieldDataTypeNumber,
 		}
-		result, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, tsStart, tsEnd, &attr, telemetrytypes.FieldDataTypeFloat64, keys)
+		result, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, tsStart, tsEnd, &attr, querybuilder.MatchingLogicalFields(ctx, valuer.UUID{}, nil, telemetrytypes.SignalTraces, nil, &attr, keys), telemetrytypes.FieldDataTypeFloat64, keys)
 		require.NoError(t, err)
 		assert.Contains(t, result, "attributes_number['timestamp']")
 	})
@@ -432,8 +432,8 @@ func TestColumnExpressionForScopeDeclaredPath(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			fm := NewFieldMapper(flaggertest.New(t))
-			result, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, 0, 0, &tc.key, telemetrytypes.FieldDataTypeUnspecified, tc.keys)
+			fm := NewFieldMapper()
+			result, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, 0, 0, &tc.key, querybuilder.MatchingLogicalFields(ctx, valuer.UUID{}, nil, telemetrytypes.SignalTraces, nil, &tc.key, tc.keys), telemetrytypes.FieldDataTypeUnspecified, tc.keys)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedResult, result)
 		})

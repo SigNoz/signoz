@@ -31,12 +31,16 @@ type FieldMapper interface {
 	FieldFor(ctx context.Context, orgID valuer.UUID, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) (string, error)
 	// ColumnFor returns the column for the given key.
 	ColumnFor(ctx context.Context, orgID valuer.UUID, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error)
-	// ColumnExpressionFor returns the column expression for the given key. The audit,
-	// metrics, metadata, and resource-filter mappers return it aliased (`expr AS name`);
-	// the logs and traces mappers return a bare expression and callers add their own alias.
+	// ColumnExpressionFor returns the column expression for the given key. The caller
+	// resolves the key once (querybuilder.MatchingLogicalFields over the same keys map)
+	// and passes the result as logicalFields; the mapper renders it, and keeps only the
+	// fallback synthesis for names resolution does not cover. A nil logicalFields means
+	// the caller resolves literally. The audit, metrics, metadata, and resource-filter
+	// mappers return the expression aliased (`expr AS name`); the logs and traces
+	// mappers return a bare expression and callers add their own alias.
 	// requiredDataType selects the mode: Unspecified builds a group-by/select expression;
 	// a concrete type (String/Float64) builds an aggregation-argument expression coerced to it.
-	ColumnExpressionFor(ctx context.Context, orgID valuer.UUID, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey, requiredDataType telemetrytypes.FieldDataType, keys map[string][]*telemetrytypes.TelemetryFieldKey) (string, error)
+	ColumnExpressionFor(ctx context.Context, orgID valuer.UUID, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey, logicalFields []*telemetrytypes.LogicalField, requiredDataType telemetrytypes.FieldDataType, keys map[string][]*telemetrytypes.TelemetryFieldKey) (string, error)
 	// CandidateKeys returns the key(s) to query for a referenced field: metadata matches for
 	// the name (or `{context}.{name}`) first, else synthesized type-variant keys for sources
 	// that support it, else nil (caller errors). value is the filter operand, nil otherwise.
@@ -48,10 +52,12 @@ type FieldMapper interface {
 	ExistsFor(ctx context.Context, orgID valuer.UUID, tsStart, tsEnd uint64, key *telemetrytypes.TelemetryFieldKey, exists bool) (string, error)
 }
 
-// ConditionBuilder builds the conditions for a filter term. The builder owns key resolution:
-// the visitor hands it the raw key + full metadata map + options, not a pre-matched key list.
+// ConditionBuilder builds the conditions for a filter term. The caller owns key
+// resolution: it resolves the key once and hands the logical fields in, and the
+// builder compiles them — it retains only fallback synthesis and its signal's
+// own quirks (scope handling, duration coercion, body-JSON routing).
 type ConditionBuilder interface {
-	ConditionFor(ctx context.Context, orgID valuer.UUID, startNs uint64, endNs uint64, key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey, options ConditionBuilderOptions, operator FilterOperator, value any, sb *sqlbuilder.SelectBuilder) ([]string, []string, error)
+	ConditionFor(ctx context.Context, orgID valuer.UUID, startNs uint64, endNs uint64, key *telemetrytypes.TelemetryFieldKey, logicalFields []*telemetrytypes.LogicalField, keys map[string][]*telemetrytypes.TelemetryFieldKey, options ConditionBuilderOptions, operator FilterOperator, value any, sb *sqlbuilder.SelectBuilder) ([]string, []string, error)
 }
 
 type ConditionBuilderOptions struct {

@@ -57,7 +57,7 @@ func newTestAuditStatementBuilder(t *testing.T) *auditQueryStatementBuilder {
 
 	fm := audittelemetryschema.NewFieldMapper()
 	cb := audittelemetryschema.NewConditionBuilder(fm)
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl, telemetrytypes.SignalUnspecified)
 
 	return NewAuditQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),

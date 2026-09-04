@@ -115,6 +115,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 	orgID valuer.UUID,
 	tsStart, tsEnd uint64,
 	field *telemetrytypes.TelemetryFieldKey,
+	_ []*telemetrytypes.LogicalField,
 	requiredDataType telemetrytypes.FieldDataType,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {

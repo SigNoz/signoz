@@ -58,8 +58,8 @@ func NewFactory(
 			if err != nil {
 				return nil, err
 			}
-			fm := tracestelemetryschema.NewFieldMapper(fl)
-			cb := tracestelemetryschema.NewConditionBuilder(fm, fl)
+			fm := tracestelemetryschema.NewFieldMapper()
+			cb := tracestelemetryschema.NewConditionBuilder(fm)
 			return NewScopedTraceStatementBuilder(settings, metadataStore, fm, cb, scope, traceStmtBuilder, fl), nil
 		},
 	)
@@ -351,8 +351,8 @@ func (b *scopedTraceStatementBuilder) resolverFieldKeys() []*telemetrytypes.Tele
 // resolveFor renders the gate mask and every scope column with condition args bound
 // into sb.
 func (b *scopedTraceStatementBuilder) resolveFor(ctx context.Context, orgID valuer.UUID, start, end uint64, keys map[string][]*telemetrytypes.TelemetryFieldKey, sb *sqlbuilder.SelectBuilder) (string, []resolvedColumn, error) {
-	cols := newColumnResolver(b.fm, keys)
-	preds := newPredicateResolver(b.cb, keys, sb)
+	cols := newColumnResolver(b.fm, b.fl, keys)
+	preds := newPredicateResolver(b.cb, b.fl, keys, sb)
 	maskExpr, err := b.resolveMask(ctx, orgID, start, end, preds)
 	if err != nil {
 		return "", nil, err
@@ -491,6 +491,7 @@ func (b *scopedTraceStatementBuilder) resolveSpanPredicate(ctx context.Context, 
 		Context:          ctx,
 		OrgID:            orgID,
 		Flagger:          b.fl,
+		Signal:           telemetrytypes.SignalTraces,
 		Logger:           b.logger,
 		FieldMapper:      b.fm,
 		ConditionBuilder: b.cb,

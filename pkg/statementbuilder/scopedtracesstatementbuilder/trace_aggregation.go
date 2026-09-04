@@ -483,7 +483,7 @@ func (b *scopedTraceStatementBuilder) resolveGroupColumns(ctx context.Context, o
 	}
 	out := make([]groupColumn, 0, len(groupBy))
 	for i := range groupBy {
-		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &groupBy[i].TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &groupBy[i].TelemetryFieldKey, querybuilder.MatchingLogicalFields(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, &groupBy[i].TelemetryFieldKey, keys), telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}

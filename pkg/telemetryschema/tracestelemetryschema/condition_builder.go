@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -20,15 +19,12 @@ import (
 
 type conditionBuilder struct {
 	fm qbtypes.FieldMapper
-	// fl evaluates the resolve_semconv_families flag during resolution.
-	// A nil flagger keeps resolution literal.
-	fl flagger.Flagger
 }
 
 var _ qbtypes.ConditionBuilder = (*conditionBuilder)(nil)
 
-func NewConditionBuilder(fm qbtypes.FieldMapper, fl flagger.Flagger) *conditionBuilder {
-	return &conditionBuilder{fm: fm, fl: fl}
+func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
+	return &conditionBuilder{fm: fm}
 }
 
 func (c *conditionBuilder) conditionFor(
@@ -41,140 +37,43 @@ func (c *conditionBuilder) conditionFor(
 	value any,
 	sb *sqlbuilder.SelectBuilder,
 ) (string, error) {
-
-	if operator.IsStringSearchOperator() {
-		value = querybuilder.FormatValueForContains(value)
-	}
-
-	fieldExpression, err := querybuilder.LogicalValueExpr(ctx, orgID, startNs, endNs, c.fm, logical)
-	if err != nil {
-		return "", err
-	}
-
 	// TODO(srikanthccv): maybe extend this to every possible attribute
 	if logical.Name == "duration_nano" || logical.Name == "durationNano" { // QoL improvement
-		switch v := value.(type) {
-		case string:
-			if duration, err := time.ParseDuration(v); err == nil {
-				value = duration.Nanoseconds()
-			} else if f, err := strconv.ParseFloat(v, 64); err == nil {
-				value = int64(f)
-			} else {
-				return "", errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid duration value: %s", v)
-			}
-		case float64:
-			value = int64(v)
-		case float32:
-			value = int64(v)
-		}
-	}
-
-	// Coercion switches only on the data type, which every member shares, so
-	// the first member stands in for the field.
-	fieldExpression, value = querybuilder.DataTypeCollisionHandledFieldName(logical.Single(), value, fieldExpression, operator)
-
-	// regular operators
-	switch operator {
-	// regular operators
-	case qbtypes.FilterOperatorEqual:
-		return sb.E(fieldExpression, value), nil
-	case qbtypes.FilterOperatorNotEqual:
-		return sb.NE(fieldExpression, value), nil
-	case qbtypes.FilterOperatorGreaterThan:
-		return sb.G(fieldExpression, value), nil
-	case qbtypes.FilterOperatorGreaterThanOrEq:
-		return sb.GE(fieldExpression, value), nil
-	case qbtypes.FilterOperatorLessThan:
-		return sb.LT(fieldExpression, value), nil
-	case qbtypes.FilterOperatorLessThanOrEq:
-		return sb.LE(fieldExpression, value), nil
-
-	// like and not like
-	case qbtypes.FilterOperatorLike:
-		return sb.Like(fieldExpression, value), nil
-	case qbtypes.FilterOperatorNotLike:
-		return sb.NotLike(fieldExpression, value), nil
-	case qbtypes.FilterOperatorILike:
-		return sb.ILike(fieldExpression, value), nil
-	case qbtypes.FilterOperatorNotILike:
-		return sb.NotILike(fieldExpression, value), nil
-
-	case qbtypes.FilterOperatorContains:
-		return sb.ILike(fieldExpression, fmt.Sprintf("%%%s%%", value)), nil
-	case qbtypes.FilterOperatorNotContains:
-		return sb.NotILike(fieldExpression, fmt.Sprintf("%%%s%%", value)), nil
-
-	case qbtypes.FilterOperatorRegexp:
-		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
-		// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
-		return fmt.Sprintf(`match(%s, %s)`, sqlbuilder.Escape(fieldExpression), sb.Var(value)), nil
-	case qbtypes.FilterOperatorNotRegexp:
-		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
-		// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
-		return fmt.Sprintf(`NOT match(%s, %s)`, sqlbuilder.Escape(fieldExpression), sb.Var(value)), nil
-	// between and not between
-	case qbtypes.FilterOperatorBetween:
-		values, ok := value.([]any)
-		if !ok {
-			return "", qbtypes.ErrBetweenValues
-		}
-		if len(values) != 2 {
-			return "", qbtypes.ErrBetweenValues
-		}
-		return sb.Between(fieldExpression, values[0], values[1]), nil
-	case qbtypes.FilterOperatorNotBetween:
-		values, ok := value.([]any)
-		if !ok {
-			return "", qbtypes.ErrBetweenValues
-		}
-		if len(values) != 2 {
-			return "", qbtypes.ErrBetweenValues
-		}
-		return sb.NotBetween(fieldExpression, values[0], values[1]), nil
-
-	// in and not in
-	case qbtypes.FilterOperatorIn:
-		values, ok := value.([]any)
-		if !ok {
-			return "", qbtypes.ErrInValues
-		}
-		// instead of using IN, we use `=` + `OR` to make use of index
-		conditions := []string{}
-		for _, value := range values {
-			cond, err := c.conditionFor(ctx, orgID, startNs, endNs, logical, qbtypes.FilterOperatorEqual, value, sb)
-			if err != nil {
-				return "", err
-			}
-			conditions = append(conditions, cond)
-		}
-		return sb.Or(conditions...), nil
-	case qbtypes.FilterOperatorNotIn:
-		values, ok := value.([]any)
-		if !ok {
-			return "", qbtypes.ErrInValues
-		}
-		// instead of using NOT IN, we use `!=` + `AND` to make use of index
-		conditions := []string{}
-		for _, value := range values {
-			cond, err := c.conditionFor(ctx, orgID, startNs, endNs, logical, qbtypes.FilterOperatorNotEqual, value, sb)
-			if err != nil {
-				return "", err
-			}
-			conditions = append(conditions, cond)
-		}
-		return sb.And(conditions...), nil
-
-	// exists and not exists
-	// in the query builder, `exists` and `not exists` are used for
-	// key membership checks, so depending on the column type, the condition changes
-	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
-		pred, err := querybuilder.LogicalExistsExpr(ctx, orgID, startNs, endNs, c.fm, logical, operator == qbtypes.FilterOperatorExists)
+		coerced, err := coerceDurationValue(value)
 		if err != nil {
 			return "", err
 		}
-		return sqlbuilder.Escape(pred), nil
+		value = coerced
 	}
-	return "", nil
+	return querybuilder.LogicalFamilyCondition(ctx, orgID, startNs, endNs, c.fm, logical, operator, value, sb)
+}
+
+func coerceDurationValue(value any) (any, error) {
+	switch v := value.(type) {
+	case string:
+		if duration, err := time.ParseDuration(v); err == nil {
+			return duration.Nanoseconds(), nil
+		} else if f, err := strconv.ParseFloat(v, 64); err == nil {
+			return int64(f), nil
+		} else {
+			return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid duration value: %s", v)
+		}
+	case float64:
+		return int64(v), nil
+	case float32:
+		return int64(v), nil
+	case []any:
+		coerced := make([]any, len(v))
+		for i, item := range v {
+			itemValue, err := coerceDurationValue(item)
+			if err != nil {
+				return nil, err
+			}
+			coerced[i] = itemValue
+		}
+		return coerced, nil
+	}
+	return value, nil
 }
 
 // isFoldContext reports whether the context is one CandidateKeys would fold the prefix into
@@ -208,6 +107,7 @@ func (c *conditionBuilder) ConditionFor(
 	startNs uint64,
 	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
+	logicalFields []*telemetrytypes.LogicalField,
 	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
 	options qbtypes.ConditionBuilderOptions,
 	operator qbtypes.FilterOperator,
@@ -220,7 +120,7 @@ func (c *conditionBuilder) ConditionFor(
 		return nil, nil, err
 	}
 
-	matches := querybuilder.MatchingLogicalFields(ctx, orgID, c.fl, key, fieldKeys)
+	matches := logicalFields
 	skipResourceFilter := options.SkipResourceFilter
 
 	logicalFields, warning := querybuilder.ResolveLogicalFields(key, matches)

@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
+	"strings"
 )
 
 type conditionBuilder struct {
@@ -26,7 +27,8 @@ func (c *conditionBuilder) ConditionFor(
 	orgID valuer.UUID,
 	tsStart, tsEnd uint64,
 	key *telemetrytypes.TelemetryFieldKey,
-	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
+	logicalFields []*telemetrytypes.LogicalField,
+	_ map[string][]*telemetrytypes.TelemetryFieldKey,
 	_ qbtypes.ConditionBuilderOptions,
 	operator qbtypes.FilterOperator,
 	value any,
@@ -38,25 +40,94 @@ func (c *conditionBuilder) ConditionFor(
 		return nil, nil, err
 	}
 
-	// an unknown key simply yields no condition rather than an error. Metadata
-	// fields have no family support, so every logical field is single-member
-	// and flattens losslessly to its physical key.
-	resolved, warning := querybuilder.ResolveLogicalFields(key, querybuilder.MatchingLogicalFields(ctx, orgID, nil, key, fieldKeys))
-	keys := querybuilder.SingleKeys(resolved)
+	// an unknown key simply yields no condition rather than an error
+	resolved, warning := querybuilder.ResolveLogicalFields(key, logicalFields)
 	var warnings []string
 	if warning != "" {
 		warnings = append(warnings, warning)
 	}
 
-	conds := make([]string, 0, len(keys))
-	for _, k := range keys {
-		cond, err := c.conditionForKey(ctx, orgID, tsStart, tsEnd, k, operator, value, sb)
+	conds := make([]string, 0, len(resolved))
+	for _, logical := range resolved {
+		if logical.IsFamily() {
+			cond, err := c.conditionForFamily(ctx, orgID, tsStart, tsEnd, logical, operator, value, sb)
+			if err != nil {
+				return nil, nil, err
+			}
+			if cond != "" {
+				conds = append(conds, cond)
+			}
+			continue
+		}
+		cond, err := c.conditionForKey(ctx, orgID, tsStart, tsEnd, logical.Single(), operator, value, sb)
 		if err != nil {
 			return nil, nil, err
 		}
 		conds = append(conds, cond)
 	}
 	return conds, warnings, nil
+}
+
+// conditionForFamily keeps the merged-value contract of the main query path:
+// the operator applies once to the current-first merge (an empty member falls
+// through), and the presence guard covers any member with the same polarity
+// fallback as a single key.
+func (c *conditionBuilder) conditionForFamily(
+	ctx context.Context,
+	orgID valuer.UUID,
+	tsStart, tsEnd uint64,
+	logical *telemetrytypes.LogicalField,
+	operator qbtypes.FilterOperator,
+	value any,
+	sb *sqlbuilder.SelectBuilder,
+) (string, error) {
+	presenceParts := make([]string, 0, len(logical.Members))
+	valueParts := make([]string, 0, len(logical.Members))
+	for _, member := range logical.Members {
+		if member.FieldDataType != telemetrytypes.FieldDataTypeString &&
+			member.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
+			continue
+		}
+		columns, err := c.fm.ColumnFor(ctx, orgID, tsStart, tsEnd, member)
+		if err != nil {
+			continue
+		}
+		fieldExpression, err := c.fm.FieldFor(ctx, orgID, tsStart, tsEnd, member)
+		if err != nil {
+			continue
+		}
+		presenceParts = append(presenceParts, fmt.Sprintf("mapContains(%s, %s)", columns[0].Name, sb.Var(member.Name)))
+		valueParts = append(valueParts, fmt.Sprintf("NULLIF(%s, '')", fieldExpression))
+	}
+	if len(presenceParts) == 0 {
+		return "", nil
+	}
+
+	presence := "(" + strings.Join(presenceParts, " OR ") + ")"
+	merged := "COALESCE(" + strings.Join(valueParts, ", ") + ", '')"
+
+	if operator == qbtypes.FilterOperatorExists || operator == qbtypes.FilterOperatorNotExists {
+		if operator == qbtypes.FilterOperatorExists {
+			return sb.E(presence, true), nil
+		}
+		return sb.NE(presence, true), nil
+	}
+
+	switch operator {
+	case qbtypes.FilterOperatorContains,
+		qbtypes.FilterOperatorNotContains,
+		qbtypes.FilterOperatorILike,
+		qbtypes.FilterOperatorNotILike,
+		qbtypes.FilterOperatorLike,
+		qbtypes.FilterOperatorNotLike:
+		value = querybuilder.FormatValueForContains(value)
+	}
+	merged, value = querybuilder.DataTypeCollisionHandledFieldName(logical.Single(), value, merged, operator)
+	cond, err := operatorCondition(merged, operator, value, sb)
+	if err != nil || cond == "" {
+		return "", err
+	}
+	return fmt.Sprintf("if(%s, %s, %t)", presence, cond, operator.IsNegativeOperator()), nil
 }
 
 func (c *conditionBuilder) conditionForKey(
@@ -107,62 +178,9 @@ func (c *conditionBuilder) conditionForKey(
 
 	var cond string
 
-	// regular operators
-	switch operator {
-	// regular operators
-	case qbtypes.FilterOperatorEqual:
-		cond = sb.E(fieldExpression, value)
-	case qbtypes.FilterOperatorNotEqual:
-		cond = sb.NE(fieldExpression, value)
-
-	// like and not like
-	case qbtypes.FilterOperatorLike:
-		cond = sb.Like(fieldExpression, value)
-	case qbtypes.FilterOperatorNotLike:
-		cond = sb.NotLike(fieldExpression, value)
-	case qbtypes.FilterOperatorILike:
-		cond = sb.ILike(fieldExpression, value)
-	case qbtypes.FilterOperatorNotILike:
-		cond = sb.NotILike(fieldExpression, value)
-
-	case qbtypes.FilterOperatorContains:
-		cond = sb.ILike(fieldExpression, fmt.Sprintf("%%%s%%", value))
-	case qbtypes.FilterOperatorNotContains:
-		cond = sb.NotILike(fieldExpression, fmt.Sprintf("%%%s%%", value))
-
-	case qbtypes.FilterOperatorRegexp:
-		cond = fmt.Sprintf(`match(%s, %s)`, fieldExpression, sb.Var(value))
-	case qbtypes.FilterOperatorNotRegexp:
-		cond = fmt.Sprintf(`NOT match(%s, %s)`, fieldExpression, sb.Var(value))
-
-	// in and not in
-	case qbtypes.FilterOperatorIn:
-		values, ok := value.([]any)
-		if !ok {
-			return "", qbtypes.ErrInValues
-		}
-		// instead of using IN, we use `=` + `OR` to make use of index
-		conditions := []string{}
-		for _, value := range values {
-			conditions = append(conditions, sb.E(fieldExpression, value))
-		}
-		cond = sb.Or(conditions...)
-	case qbtypes.FilterOperatorNotIn:
-		values, ok := value.([]any)
-		if !ok {
-			return "", qbtypes.ErrInValues
-		}
-		// instead of using NOT IN, we use `!=` + `AND` to make use of index
-		conditions := []string{}
-		for _, value := range values {
-			conditions = append(conditions, sb.NE(fieldExpression, value))
-		}
-		cond = sb.And(conditions...)
-
-	// exists and not exists
-	// in the query builder, `exists` and `not exists` are used for
-	// key membership checks, so depending on the column type, the condition changes
-	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
+	if operator == qbtypes.FilterOperatorExists || operator == qbtypes.FilterOperatorNotExists {
+		// in the query builder, `exists` and `not exists` are used for
+		// key membership checks, so depending on the column type, the condition changes
 		switch columns[0].Type {
 		case schema.MapColumnType{
 			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
@@ -175,7 +193,64 @@ func (c *conditionBuilder) conditionForKey(
 				cond = sb.NE(leftOperand, true)
 			}
 		}
+	} else {
+		var err error
+		cond, err = operatorCondition(fieldExpression, operator, value, sb)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	return fmt.Sprintf(expr, columns[0].Name, sb.Var(key.Name), cond, keyMissingFallback), nil
+}
+
+func operatorCondition(fieldExpression string, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
+	switch operator {
+	case qbtypes.FilterOperatorEqual:
+		return sb.E(fieldExpression, value), nil
+	case qbtypes.FilterOperatorNotEqual:
+		return sb.NE(fieldExpression, value), nil
+
+	case qbtypes.FilterOperatorLike:
+		return sb.Like(fieldExpression, value), nil
+	case qbtypes.FilterOperatorNotLike:
+		return sb.NotLike(fieldExpression, value), nil
+	case qbtypes.FilterOperatorILike:
+		return sb.ILike(fieldExpression, value), nil
+	case qbtypes.FilterOperatorNotILike:
+		return sb.NotILike(fieldExpression, value), nil
+
+	case qbtypes.FilterOperatorContains:
+		return sb.ILike(fieldExpression, fmt.Sprintf("%%%s%%", value)), nil
+	case qbtypes.FilterOperatorNotContains:
+		return sb.NotILike(fieldExpression, fmt.Sprintf("%%%s%%", value)), nil
+
+	case qbtypes.FilterOperatorRegexp:
+		return fmt.Sprintf(`match(%s, %s)`, fieldExpression, sb.Var(value)), nil
+	case qbtypes.FilterOperatorNotRegexp:
+		return fmt.Sprintf(`NOT match(%s, %s)`, fieldExpression, sb.Var(value)), nil
+
+	// `=`+OR / `!=`+AND instead of IN / NOT IN, to make use of the index
+	case qbtypes.FilterOperatorIn:
+		values, ok := value.([]any)
+		if !ok {
+			return "", qbtypes.ErrInValues
+		}
+		conditions := []string{}
+		for _, value := range values {
+			conditions = append(conditions, sb.E(fieldExpression, value))
+		}
+		return sb.Or(conditions...), nil
+	case qbtypes.FilterOperatorNotIn:
+		values, ok := value.([]any)
+		if !ok {
+			return "", qbtypes.ErrInValues
+		}
+		conditions := []string{}
+		for _, value := range values {
+			conditions = append(conditions, sb.NE(fieldExpression, value))
+		}
+		return sb.And(conditions...), nil
+	}
+	return "", nil
 }

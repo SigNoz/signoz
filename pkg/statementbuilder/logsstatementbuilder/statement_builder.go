@@ -61,7 +61,7 @@ func NewFactory(
 		func(_ context.Context, settings factory.ProviderSettings, cfg statementbuilder.Config) (qbtypes.StatementBuilder[qbtypes.LogAggregation], error) {
 			fm := logstelemetryschema.NewFieldMapper(fl)
 			cb := logstelemetryschema.NewConditionBuilder(fm, fl)
-			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, logstelemetryschema.DefaultFullTextColumn, fm, cb, fl)
+			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, logstelemetryschema.DefaultFullTextColumn, fm, cb, fl, telemetrytypes.SignalLogs)
 			return NewLogQueryStatementBuilder(
 				settings, metadataStore, fm, cb, aggExprRewriter, logstelemetryschema.DefaultFullTextColumn,
 				fl, telemetryStore, cfg,
@@ -128,6 +128,7 @@ func (b *logQueryStatementBuilder) Build(
 	bodyJSONEnabled := b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID))
 
 	keySelectors, warnings := getKeySelectors(query, bodyJSONEnabled)
+	keySelectors = querybuilder.ExpandKeySelectorsForFamilies(ctx, orgID, b.fl, keySelectors)
 	keys, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, keySelectors)
 	if err != nil {
 		return nil, err
@@ -364,7 +365,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 			}
 
 			// get column expression for the field - use array index directly to avoid pointer to loop variable
-			colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &query.SelectFields[index], telemetrytypes.FieldDataTypeUnspecified, keys)
+			colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &query.SelectFields[index], querybuilder.MatchingLogicalFields(ctx, orgID, b.fl, telemetrytypes.SignalLogs, nil, &query.SelectFields[index], keys), telemetrytypes.FieldDataTypeUnspecified, keys)
 			if err != nil {
 				return nil, err
 			}
@@ -383,7 +384,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	// Add order by
 	for _, orderBy := range query.Order {
 
-		colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &orderBy.Key.TelemetryFieldKey, telemetrytypes.FieldDataTypeUnspecified, keys)
+		colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &orderBy.Key.TelemetryFieldKey, querybuilder.MatchingLogicalFields(ctx, orgID, b.fl, telemetrytypes.SignalLogs, nil, &orderBy.Key.TelemetryFieldKey, keys), telemetrytypes.FieldDataTypeUnspecified, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -453,7 +454,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		if !bodyJSONEnabled && (strings.Contains(gb.Name, telemetrytypes.ArraySep) || strings.Contains(gb.Name, telemetrytypes.ArrayAnyIndex)) {
 			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the Array Paths: %s", gb.Name)
 		}
-		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &gb.TelemetryFieldKey, querybuilder.MatchingLogicalFields(ctx, orgID, b.fl, telemetrytypes.SignalLogs, nil, &gb.TelemetryFieldKey, keys), telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -618,7 +619,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		if !bodyJSONEnabled && (strings.Contains(gb.Name, telemetrytypes.ArraySep) || strings.Contains(gb.Name, telemetrytypes.ArrayAnyIndex)) {
 			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the Array Paths: %s", gb.Name)
 		}
-		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &gb.TelemetryFieldKey, querybuilder.MatchingLogicalFields(ctx, orgID, b.fl, telemetrytypes.SignalLogs, nil, &gb.TelemetryFieldKey, keys), telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -741,6 +742,8 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 			Variables:          variables,
 			StartNs:            start,
 			EndNs:              end,
+			Flagger:            b.fl,
+			Signal:             telemetrytypes.SignalLogs,
 		})
 
 		if err != nil {

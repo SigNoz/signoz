@@ -3,6 +3,9 @@ package scopedtracesstatementbuilder
 import (
 	"context"
 
+	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
+
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -15,19 +18,20 @@ import (
 // (Scoped* aggregates embed it).
 type predicateResolver struct {
 	cb       qbtypes.ConditionBuilder
+	fl       flagger.Flagger
 	keys     map[string][]*telemetrytypes.TelemetryFieldKey
 	sb       *sqlbuilder.SelectBuilder
 	maskExpr string
 }
 
-func newPredicateResolver(cb qbtypes.ConditionBuilder, keys map[string][]*telemetrytypes.TelemetryFieldKey, sb *sqlbuilder.SelectBuilder) *predicateResolver {
-	return &predicateResolver{cb: cb, keys: keys, sb: sb}
+func newPredicateResolver(cb qbtypes.ConditionBuilder, fl flagger.Flagger, keys map[string][]*telemetrytypes.TelemetryFieldKey, sb *sqlbuilder.SelectBuilder) *predicateResolver {
+	return &predicateResolver{cb: cb, fl: fl, keys: keys, sb: sb}
 }
 
 // ConditionFor returns a boolean predicate for key via the condition builder
 // (materialized column when present, else map access), args bound into sb.
 func (r *predicateResolver) ConditionFor(ctx context.Context, orgID valuer.UUID, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOperator, value any) (string, error) {
-	conds, _, err := r.cb.ConditionFor(ctx, orgID, startNs, endNs, key, r.keys, qbtypes.ConditionBuilderOptions{}, op, value, r.sb)
+	conds, _, err := r.cb.ConditionFor(ctx, orgID, startNs, endNs, key, querybuilder.MatchingLogicalFields(ctx, orgID, r.fl, telemetrytypes.SignalTraces, nil, key, r.keys), r.keys, qbtypes.ConditionBuilderOptions{}, op, value, r.sb)
 	if err != nil {
 		return "", err
 	}

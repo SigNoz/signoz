@@ -7,7 +7,6 @@ import (
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -161,16 +160,12 @@ var (
 	}
 )
 
-type fieldMapper struct {
-	// fl evaluates the resolve_semconv_families flag during resolution.
-	// A nil flagger keeps resolution literal.
-	fl flagger.Flagger
-}
+type fieldMapper struct{}
 
 var _ qbtypes.FieldMapper = (*fieldMapper)(nil)
 
-func NewFieldMapper(fl flagger.Flagger) *fieldMapper {
-	return &fieldMapper{fl: fl}
+func NewFieldMapper() *fieldMapper {
+	return &fieldMapper{}
 }
 
 func (m *fieldMapper) getColumn(
@@ -353,14 +348,16 @@ func (m *fieldMapper) resolveColumnExprs(
 	return exprs, existExprs, columns, nil
 }
 
-// upgradeToFamilies swaps single-member candidates for their family when the
-// metadata map proves membership. Candidate order and every non-family
+// upgradeToResolvedSpellings swaps requested-name candidates for the
+// caller-resolved fields that read other spellings: families, and the
+// cross-spelling single member of the mid-migration state (metadata holds one
+// spelling, the request names the other). Candidate order and every untouched
 // candidate stay exactly as the legacy flow produced them; sibling candidates
-// of an already-emitted family are dropped rather than duplicated.
-func (m *fieldMapper) upgradeToFamilies(ctx context.Context, orgID valuer.UUID, field *telemetrytypes.TelemetryFieldKey, candidates []*telemetrytypes.LogicalField, keys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.LogicalField {
+// of an already-emitted swap are dropped rather than duplicated.
+func upgradeToResolvedSpellings(field *telemetrytypes.TelemetryFieldKey, candidates, resolved []*telemetrytypes.LogicalField) []*telemetrytypes.LogicalField {
 	var families []*telemetrytypes.LogicalField
-	for _, logical := range querybuilder.MatchingLogicalFields(ctx, orgID, m.fl, field, keys) {
-		if logical.IsFamily() {
+	for _, logical := range resolved {
+		if querybuilder.ReadsOtherSpelling(logical, field.Name) {
 			families = append(families, logical)
 		}
 	}
@@ -398,6 +395,14 @@ func (m *fieldMapper) upgradeToFamilies(ctx context.Context, orgID valuer.UUID, 
 		emitted[family] = true
 		out = append(out, family)
 	}
+	// A resolved field with no candidate of its identity still reads rows the
+	// filter matches — the mid-migration state stores the field in a context
+	// the synthesized candidates do not cover — so it joins after them.
+	for _, fam := range families {
+		if !emitted[fam] {
+			out = append(out, fam)
+		}
+	}
 	return out
 }
 
@@ -409,16 +414,17 @@ func (m *fieldMapper) ColumnExpressionFor(
 	orgID valuer.UUID,
 	startNs, endNs uint64,
 	field *telemetrytypes.TelemetryFieldKey,
+	logicalFields []*telemetrytypes.LogicalField,
 	requiredDataType telemetrytypes.FieldDataType,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
 
-	// Resolve the candidate logical field(s).
-	var candidates []*telemetrytypes.LogicalField
+	// The caller resolved the field once; the mapper renders. Names FieldFor
+	// cannot serve keep the legacy candidate flow as the authority: caller
+	// resolution contributes only its families there.
+	candidates := logicalFields
 	switch _, err := m.FieldFor(ctx, orgID, startNs, endNs, field); {
 	case err == nil:
-		// Every match from metadata is kept, similar to the filter path.
-		candidates = querybuilder.MatchingLogicalFields(ctx, orgID, m.fl, field, keys)
 		if len(candidates) == 0 {
 			candidates = []*telemetrytypes.LogicalField{telemetrytypes.SingleLogicalField(field.Name, field)}
 		}
@@ -431,7 +437,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 		if len(raw) == 0 {
 			return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
 		}
-		candidates = m.upgradeToFamilies(ctx, orgID, field, querybuilder.WrapAsLogicalFields(field.Name, raw), keys)
+		candidates = upgradeToResolvedSpellings(field, querybuilder.WrapAsLogicalFields(field.Name, raw), logicalFields)
 	default:
 		return "", err
 	}
