@@ -71,7 +71,7 @@ var (
 	ResourceMetaResourceFactorPassword                   = NewResourceMetaResource(KindFactorPassword)
 	ResourceMetaResourceFactorAPIKey                     = NewResourceMetaResource(KindFactorAPIKey, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)
 	ResourceMetaResourceLicense                          = NewResourceMetaResource(KindLicense, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)
-	ResourceMetaResourceSubscription                     = NewResourceMetaResource(KindSubscription, VerbCreate, VerbRead, VerbUpdate)
+	ResourceMetaResourceSubscription                     = NewResourceMetaResource(KindSubscription)
 	ResourceMetaResourceDeploymentHost                   = NewResourceMetaResource(KindDeploymentHost, VerbList, VerbUpdate)
 	ResourceTelemetryResourceLogs                        = NewResourceTelemetryResource(KindLogs)
 	ResourceTelemetryResourceTraces                      = NewResourceTelemetryResource(KindTraces)

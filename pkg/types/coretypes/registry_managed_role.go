@@ -74,13 +74,15 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLicense}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLicense}, WildCardSelectorString)},
 		// subscription — admin only.
-		// create = POST /api/v2/zeus/subscriptions (checkout session), update =
-		// PUT /api/v2/zeus/subscriptions (Stripe portal), read = GET
-		// /api/v2/zeus/meters (current usage and billing state). Cancellation
-		// flows through Stripe's portal, so the resource has no delete or list.
+		// create = POST /api/v2/zeus/subscriptions (checkout session), list +
+		// update = PUT /api/v2/zeus/subscriptions (Stripe portal), read = GET
+		// /api/v2/zeus/meters (current usage and billing state). delete is a
+		// placeholder for shape parity; cancellation flows through Stripe's portal.
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSubscription}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSubscription}, WildCardSelectorString)},
+		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSubscription}, WildCardSelectorString)},
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSubscription}, WildCardSelectorString)},
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSubscription}, WildCardSelectorString)},
 		// org-preference — admin only
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindOrgPreference}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindOrgPreference}, WildCardSelectorString)},
