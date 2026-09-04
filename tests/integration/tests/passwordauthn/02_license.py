@@ -185,7 +185,7 @@ def test_license_checkout(
     access_token = get_token("admin@integration.test", "password123Z$")
 
     response = requests.post(
-        url=signoz.self.host_configs["8080"].get("/api/v1/checkout"),
+        url=signoz.self.host_configs["8080"].get("/api/v2/zeus/subscriptions"),
         json={"url": "https://integration-signoz.com"},
         headers={"Authorization": "Bearer " + access_token},
         timeout=5,
@@ -231,14 +231,14 @@ def test_license_portal(
 
     access_token = get_token("admin@integration.test", "password123Z$")
 
-    response = requests.post(
-        url=signoz.self.host_configs["8080"].get("/api/v1/portal"),
+    response = requests.put(
+        url=signoz.self.host_configs["8080"].get("/api/v2/zeus/subscriptions"),
         json={"url": "https://integration-signoz.com"},
         headers={"Authorization": "Bearer " + access_token},
         timeout=5,
     )
 
-    assert response.status_code == http.HTTPStatus.CREATED
+    assert response.status_code == http.HTTPStatus.OK
     assert response.json()["data"]["redirectURL"] == "https://signoz.portal.com"
 
     response = requests.post(
