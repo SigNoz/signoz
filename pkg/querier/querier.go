@@ -693,7 +693,7 @@ func (q *querier) run(
 			if val, ok := result.Value.(*qbtypes.RawData); ok && val != nil {
 				return len(val.Rows) != 0
 			}
-		case qbtypes.RequestTypeTimeSeries:
+		case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
 			if val, ok := result.Value.(*qbtypes.TimeSeriesData); ok && val != nil {
 				if len(val.Aggregations) != 0 {
 					anyNonEmpty := false
