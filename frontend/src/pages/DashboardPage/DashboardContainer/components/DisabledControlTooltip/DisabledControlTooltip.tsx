@@ -4,18 +4,17 @@ import { TooltipSimple } from '@signozhq/ui/tooltip';
 import styles from './DisabledControlTooltip.module.scss';
 
 interface DisabledControlTooltipProps {
+	/** Why the wrapped control is unavailable. Empty means it is available. */
 	reason: string;
-	disabled: boolean;
 	children: ReactNode;
 }
 
 // A disabled button swallows hover, so the wrapping span is the tooltip trigger.
 function DisabledControlTooltip({
 	reason,
-	disabled,
 	children,
 }: DisabledControlTooltipProps): JSX.Element {
-	if (!disabled) {
+	if (!reason) {
 		return <>{children}</>;
 	}
 	return (

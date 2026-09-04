@@ -13,6 +13,10 @@ function DisabledMenuItemLabel({
 	reason,
 	children,
 }: DisabledMenuItemLabelProps): JSX.Element {
+	// Guards against an empty tooltip bubble if a caller passes no reason.
+	if (!reason) {
+		return <>{children}</>;
+	}
 	return (
 		<TooltipSimple
 			title={reason}
