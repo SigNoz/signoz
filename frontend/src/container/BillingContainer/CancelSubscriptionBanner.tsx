@@ -11,6 +11,8 @@ import { Button } from '@signozhq/ui/button';
 import { DialogWrapper } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
 import logEvent from 'api/common/logEvent';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import { SubscriptionDeletePermission } from 'lib/authz/hooks/useAuthZ/permissions/subscription.permissions';
 import { pick } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { useCopyToClipboard } from 'react-use';
@@ -178,15 +180,17 @@ function CancelSubscriptionBanner(): JSX.Element {
 						immediately and removed from our servers.
 					</span>
 				</div>
-				<Button
+				<AuthZButton
+					checks={[SubscriptionDeletePermission]}
 					variant="solid"
 					color="secondary"
 					prefix={<X size={12} />}
 					onClick={handleOpenCancelDialog}
 					className={styles.cancelButton}
+					testId="cancel-subscription-btn"
 				>
 					Cancel Subscription
-				</Button>
+				</AuthZButton>
 			</div>
 			<DialogWrapper
 				open={dialogView !== null}
