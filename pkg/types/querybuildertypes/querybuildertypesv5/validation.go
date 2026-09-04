@@ -890,16 +890,11 @@ func (r *QueryRangeRequest) validateHeatmap() error {
 			}
 			enabled++
 		case ClickHouseQuery:
-			// The rows a ClickHouse query returns are read by request type, the
-			// same as for any other request, so one shaped as heatmap cells
-			// renders without the builder having produced it.
 			if spec.Disabled {
 				continue
 			}
 			enabled++
 		case PromQuery:
-			// A PromQL heatmap is a classic histogram read through its `le`
-			// labels, the same axis the builder's histogram path uses.
 			if r.BucketOptions != nil {
 				return errors.NewInvalidInputf(errors.CodeInvalidInput,
 					"bucketOptions are not supported for promql heatmap requests: the bucket axis comes from the `le` labels the query returns, so nothing in the spec would be applied")
