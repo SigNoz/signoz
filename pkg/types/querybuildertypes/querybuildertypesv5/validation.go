@@ -943,8 +943,13 @@ func (b *BucketOptions) validateBucketOptions() error {
 		}
 
 	default:
-		return errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"invalid bucketOptions kind %q, expected one of linear, log", b.Kind.StringValue())
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"invalid bucketOptions kind: %s",
+			b.Kind.StringValue(),
+		).WithAdditional(
+			"Valid bucket kinds are: linear, log",
+		)
 	}
 
 	return nil
