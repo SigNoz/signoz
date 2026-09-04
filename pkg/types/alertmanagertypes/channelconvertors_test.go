@@ -367,9 +367,9 @@ func TestPostableChannelToReceiverReportsNotifierValidationAsInvalidInput(t *tes
 	assert.True(t, errors.Ast(err, errors.TypeInvalidInput), "got %v", err)
 }
 
-// rejectUnrepresentableHTTPConfig enumerates the members it rejects, so a field
-// added upstream would pass unnoticed and be dropped on read. Pinning the counts
-// turns a dependency bump into a failing test rather than silent data loss.
+// rejectUnsupportedHTTPConfig enumerates the fields it rejects, so one added
+// upstream would pass unnoticed and be dropped on read. Pinning the counts turns
+// a dependency bump into a failing test rather than silent data loss.
 func TestRejectUnrepresentableHTTPConfigCoversEveryUpstreamMember(t *testing.T) {
 	assert.Equal(t, 10, reflect.TypeFor[commoncfg.HTTPClientConfig]().NumField())
 	assert.Equal(t, 5, reflect.TypeFor[commoncfg.ProxyConfig]().NumField())
@@ -469,6 +469,43 @@ func TestChannelToPostableChannelRejectsUnrepresentableChannels(t *testing.T) {
 			channel: Channel{
 				DisplayName: "inline-tls",
 				Data:        `{"name":"inline-tls","webhook_configs":[{"url":"https://a","http_config":{"tls_config":{"ca":"---PEM---","min_version":"TLS12"},"follow_redirects":true,"enable_http2":true}}]}`,
+			},
+		},
+		{
+			// The upstream kinds lift nothing out of http_config, so any credential
+			// or transport setting stored there would be dropped on the next write.
+			description: "slack basic auth",
+			channel: Channel{
+				DisplayName: "slack-basic",
+				Data:        `{"name":"slack-basic","slack_configs":[{"api_url":"https://a","channel":"#a","http_config":{"basic_auth":{"username":"u","password":"p"},"follow_redirects":true,"enable_http2":true}}]}`,
+			},
+		},
+		{
+			description: "opsgenie proxy",
+			channel: Channel{
+				DisplayName: "og-proxy",
+				Data:        `{"name":"og-proxy","opsgenie_configs":[{"api_key":"k","http_config":{"proxy_url":"https://proxy","follow_redirects":true,"enable_http2":true}}]}`,
+			},
+		},
+		{
+			description: "pagerduty authorization header",
+			channel: Channel{
+				DisplayName: "pd-bearer",
+				Data:        `{"name":"pd-bearer","pagerduty_configs":[{"routing_key":"k","http_config":{"authorization":{"type":"Bearer","credentials":"tok"},"follow_redirects":true,"enable_http2":true}}]}`,
+			},
+		},
+		{
+			description: "msteams inline tls material",
+			channel: Channel{
+				DisplayName: "teams-tls",
+				Data:        `{"name":"teams-tls","msteamsv2_configs":[{"webhook_url":"https://a","http_config":{"tls_config":{"ca":"---PEM---"},"follow_redirects":true,"enable_http2":true}}]}`,
+			},
+		},
+		{
+			description: "googlechat basic auth",
+			channel: Channel{
+				DisplayName: "chat-basic",
+				Data:        `{"name":"chat-basic","googlechat_configs":[{"webhook_url":"https://chat.googleapis.com/v1/spaces/A/messages","http_config":{"basic_auth":{"username":"u","password":"p"},"follow_redirects":true,"enable_http2":true}}]}`,
 			},
 		},
 		{

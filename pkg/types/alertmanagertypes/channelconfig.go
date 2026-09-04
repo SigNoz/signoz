@@ -217,9 +217,13 @@ func (c ChannelSlackConfig) toUndefaultedReceiver(displayName string) (*Receiver
 	}}, nil
 }
 
-func newChannelSlackConfigFromReceiver(_ string, receiver *Receiver) (ChannelSpec, error) {
+func newChannelSlackConfigFromReceiver(name string, receiver *Receiver) (ChannelSpec, error) {
 	slack := receiver.SlackConfigs[0]
 	sendResolved := slack.VSendResolved
+
+	if err := rejectAnyHTTPAuth(name, slack.HTTPConfig); err != nil {
+		return nil, err
+	}
 
 	return &ChannelSlackConfig{
 		SendResolved: &sendResolved,
@@ -345,7 +349,15 @@ func (c ChannelWebhookConfig) toUndefaultedReceiver(displayName string) (*Receiv
 func newChannelWebhookConfigFromReceiver(name string, receiver *Receiver) (ChannelSpec, error) {
 	upstream := receiver.WebhookConfigs[0]
 	sendResolved := upstream.VSendResolved
-	if err := rejectUnrepresentableHTTPConfig(name, upstream.HTTPConfig); err != nil {
+	if err := rejectUnsupportedHTTPConfig(name, upstream.HTTPConfig); err != nil {
+		return nil, err
+	}
+
+	if err := rejectHTTPBasicAuthBeyondPassword(name, upstream.HTTPConfig); err != nil {
+		return nil, err
+	}
+
+	if err := rejectHTTPAuthorizationBeyondBearer(name, upstream.HTTPConfig); err != nil {
 		return nil, err
 	}
 
@@ -423,6 +435,10 @@ func newChannelPagerdutyConfigFromReceiver(name string, receiver *Receiver) (Cha
 	pagerduty := receiver.PagerdutyConfigs[0]
 	sendResolved := pagerduty.VSendResolved
 
+	if err := rejectAnyHTTPAuth(name, pagerduty.HTTPConfig); err != nil {
+		return nil, err
+	}
+
 	var details map[string]string
 	if len(pagerduty.Details) > 0 {
 		extracted, err := extractStringDetails(name, pagerduty.Details)
@@ -492,9 +508,13 @@ func (c ChannelOpsgenieConfig) toUndefaultedReceiver(displayName string) (*Recei
 	}}, nil
 }
 
-func newChannelOpsgenieConfigFromReceiver(_ string, receiver *Receiver) (ChannelSpec, error) {
+func newChannelOpsgenieConfigFromReceiver(name string, receiver *Receiver) (ChannelSpec, error) {
 	opsgenie := receiver.OpsGenieConfigs[0]
 	sendResolved := opsgenie.VSendResolved
+
+	if err := rejectAnyHTTPAuth(name, opsgenie.HTTPConfig); err != nil {
+		return nil, err
+	}
 
 	return &ChannelOpsgenieConfig{
 		SendResolved: &sendResolved,
@@ -540,9 +560,13 @@ func (c ChannelMSTeamsConfig) toUndefaultedReceiver(displayName string) (*Receiv
 	}}, nil
 }
 
-func newChannelMSTeamsConfigFromReceiver(_ string, receiver *Receiver) (ChannelSpec, error) {
+func newChannelMSTeamsConfigFromReceiver(name string, receiver *Receiver) (ChannelSpec, error) {
 	msteams := receiver.MSTeamsV2Configs[0]
 	sendResolved := msteams.VSendResolved
+
+	if err := rejectAnyHTTPAuth(name, msteams.HTTPConfig); err != nil {
+		return nil, err
+	}
 
 	return &ChannelMSTeamsConfig{
 		SendResolved: &sendResolved,
@@ -584,9 +608,13 @@ func (c ChannelGoogleChatConfig) toUndefaultedReceiver(displayName string) (*Rec
 	}, nil
 }
 
-func newChannelGoogleChatConfigFromReceiver(_ string, receiver *Receiver) (ChannelSpec, error) {
+func newChannelGoogleChatConfigFromReceiver(name string, receiver *Receiver) (ChannelSpec, error) {
 	googlechat := receiver.GoogleChatConfigs[0]
 	sendResolved := googlechat.VSendResolved
+
+	if err := rejectAnyHTTPAuth(name, googlechat.HTTPConfig); err != nil {
+		return nil, err
+	}
 
 	return &ChannelGoogleChatConfig{
 		SendResolved: &sendResolved,
@@ -695,7 +723,15 @@ func newChannelJiraConfigFromReceiver(name string, receiver *Receiver) (ChannelS
 	jira := receiver.JiraConfigs[0]
 	sendResolved := jira.VSendResolved
 
-	if err := rejectUnmodelledHTTPAuth(name, jira.HTTPConfig, "basic_auth"); err != nil {
+	if err := rejectUnsupportedHTTPConfig(name, jira.HTTPConfig); err != nil {
+		return nil, err
+	}
+
+	if jira.HTTPConfig != nil && jira.HTTPConfig.Authorization != nil {
+		return nil, errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets http_config.authorization, which is not supported", name)
+	}
+
+	if err := rejectHTTPBasicAuthBeyondPassword(name, jira.HTTPConfig); err != nil {
 		return nil, err
 	}
 
@@ -761,7 +797,7 @@ func newChannelJSMOpsConfigFromReceiver(name string, receiver *Receiver) (Channe
 	jsmops := receiver.JSMOpsConfigs[0]
 	sendResolved := jsmops.VSendResolved
 
-	if err := rejectUnmodelledHTTPAuth(name, jsmops.HTTPConfig); err != nil {
+	if err := rejectAnyHTTPAuth(name, jsmops.HTTPConfig); err != nil {
 		return nil, err
 	}
 
@@ -814,7 +850,7 @@ func newChannelIncidentIOConfigFromReceiver(name string, receiver *Receiver) (Ch
 	incidentio := receiver.IncidentIOConfigs[0]
 	sendResolved := incidentio.VSendResolved
 
-	if err := rejectUnmodelledHTTPAuth(name, incidentio.HTTPConfig); err != nil {
+	if err := rejectAnyHTTPAuth(name, incidentio.HTTPConfig); err != nil {
 		return nil, err
 	}
 
@@ -902,69 +938,74 @@ func extractStringDetails(name string, details map[string]any) (map[string]strin
 	return extracted, nil
 }
 
-// rejectUnmodelledHTTPAuth fails the read when http_config carries credentials
-// the kind's spec has no field for. Only the members named in modelled are
-// lifted into spec fields; anything else would be dropped here and would
-// unauthenticate the channel on the next write.
-func rejectUnmodelledHTTPAuth(name string, httpConfig *commoncfg.HTTPClientConfig, modelled ...string) error {
+func rejectAnyHTTPAuth(channelName string, httpConfig *commoncfg.HTTPClientConfig) error {
 	if httpConfig == nil {
 		return nil
 	}
 
-	for _, member := range []struct {
-		set  bool
-		name string
-	}{
-		{httpConfig.BasicAuth != nil, "basic_auth"},
-		{httpConfig.Authorization != nil, "authorization"},
-	} {
-		if member.set && !slices.Contains(modelled, member.name) {
-			return errors.NewInvalidInputf(
-				ErrCodeAlertmanagerChannelInvalid,
-				"channel %q sets http_config.%s, which is not supported", name, member.name,
-			)
-		}
+	if httpConfig.BasicAuth != nil {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets http_config.basic_auth, which is not supported", channelName)
 	}
 
-	return rejectUnrepresentableHTTPConfig(name, httpConfig)
+	if httpConfig.Authorization != nil {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets http_config.authorization, which is not supported", channelName)
+	}
+
+	return rejectUnsupportedHTTPConfig(channelName, httpConfig)
 }
 
-// rejectUnrepresentableHTTPConfig fails the read when a stored webhook uses an
-// http_config member ChannelWebhookConfig has no field for.
-func rejectUnrepresentableHTTPConfig(name string, httpConfig *commoncfg.HTTPClientConfig) error {
+func rejectUnsupportedHTTPConfig(channelName string, httpConfig *commoncfg.HTTPClientConfig) error {
 	if httpConfig == nil {
 		return nil
 	}
 
-	// basic_auth and authorization are the only members ChannelWebhookConfig
-	// partly models, so rather than checking whether they are set at all, compare
-	// them against what it would write back for the same credentials.
-	basicAuth := httpConfig.BasicAuth
-	authorization := httpConfig.Authorization
-
-	for _, unrepresentable := range []struct {
-		set    bool
-		member string
+	for _, field := range []struct {
+		fieldName         string
+		isFieldConfigured bool
 	}{
-		{httpConfig.OAuth2 != nil, "oauth2"},
-		{httpConfig.BearerToken != "", "bearer_token"},
-		{httpConfig.BearerTokenFile != "", "bearer_token_file"},
-		{httpConfig.ProxyURL.URL != nil && httpConfig.ProxyURL.String() != "", "proxy_url"},
-		{httpConfig.NoProxy != "", "no_proxy"},
-		{httpConfig.ProxyFromEnvironment, "proxy_from_environment"},
-		{httpConfig.HTTPHeaders != nil, "http_headers"},
-		{httpConfig.TLSConfig != (commoncfg.TLSConfig{}), "tls_config"},
-		{basicAuth != nil && *basicAuth != (commoncfg.BasicAuth{Username: basicAuth.Username, Password: basicAuth.Password}), "basic_auth"},
-		{authorization != nil && *authorization != (commoncfg.Authorization{Type: bearerAuthorizationType, Credentials: authorization.Credentials}), "authorization"},
-		{!httpConfig.FollowRedirects, "follow_redirects"},
-		{!httpConfig.EnableHTTP2, "enable_http2"},
+		{"oauth2", httpConfig.OAuth2 != nil},
+		{"bearer_token", httpConfig.BearerToken != ""},
+		{"bearer_token_file", httpConfig.BearerTokenFile != ""},
+		{"proxy_url", httpConfig.ProxyURL.URL != nil && httpConfig.ProxyURL.String() != ""},
+		{"no_proxy", httpConfig.NoProxy != ""},
+		{"proxy_from_environment", httpConfig.ProxyFromEnvironment},
+		{"http_headers", httpConfig.HTTPHeaders != nil},
+		{"tls_config", httpConfig.TLSConfig != (commoncfg.TLSConfig{})},
+		{"follow_redirects", !httpConfig.FollowRedirects},
+		{"enable_http2", !httpConfig.EnableHTTP2},
 	} {
-		if unrepresentable.set {
+		if field.isFieldConfigured {
 			return errors.NewInvalidInputf(
 				ErrCodeAlertmanagerChannelInvalid,
-				"channel %q sets http_config.%s, which is not supported", name, unrepresentable.member,
+				"channel %q sets http_config.%s, which is not supported", channelName, field.fieldName,
 			)
 		}
+	}
+
+	return nil
+}
+
+func rejectHTTPBasicAuthBeyondPassword(channelName string, httpConfig *commoncfg.HTTPClientConfig) error {
+	if httpConfig == nil || httpConfig.BasicAuth == nil {
+		return nil
+	}
+
+	basicAuth := httpConfig.BasicAuth
+	if *basicAuth != (commoncfg.BasicAuth{Username: basicAuth.Username, Password: basicAuth.Password}) {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets http_config.basic_auth, which is not supported", channelName)
+	}
+
+	return nil
+}
+
+func rejectHTTPAuthorizationBeyondBearer(channelName string, httpConfig *commoncfg.HTTPClientConfig) error {
+	if httpConfig == nil || httpConfig.Authorization == nil {
+		return nil
+	}
+
+	authorization := httpConfig.Authorization
+	if *authorization != (commoncfg.Authorization{Type: bearerAuthorizationType, Credentials: authorization.Credentials}) {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets http_config.authorization, which is not supported", channelName)
 	}
 
 	return nil
