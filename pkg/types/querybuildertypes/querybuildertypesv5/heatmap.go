@@ -82,10 +82,8 @@ func (b *BucketOptions) ResolveLogScale() int {
 	return MaxLogScale
 }
 
-// ResolveHeatmapBucketing sets a.HeatmapBucketing to the axis a heatmap draws its
-// rows from, and refuses the metric types that cannot produce one. It cannot live
-// in validateHeatmap: a.Type is resolved from metadata after that has run.
-func (a *MetricAggregation) ResolveHeatmapBucketing(bucketOptions *BucketOptions) error {
+// This cannot be called in validateHeatmap cuz type is resolved in querier.go.
+func (a *MetricAggregation) VerifyAndApplyBucketOptions(bucketOptions *BucketOptions) error {
 	switch a.Type {
 	case metrictypes.HistogramType:
 		if bucketOptions != nil {
