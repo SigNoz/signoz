@@ -16,6 +16,7 @@ import * as Sentry from '@sentry/react';
 import { Toaster } from '@signozhq/ui/sonner';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { Flex } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import getChangelogByVersion from 'api/changelog/getChangelogByVersion';
@@ -32,10 +33,7 @@ import ChatSupportGateway from 'components/ChatSupportGateway/ChatSupportGateway
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
-import {
-	SubscriptionListPermission,
-	SubscriptionUpdatePermission,
-} from 'lib/authz/hooks/useAuthZ/permissions/subscription.permissions';
+import { SubscriptionManagePermissions } from 'lib/authz/hooks/useAuthZ/permissions/subscription.permissions';
 import { MIN_ACCOUNT_AGE_FOR_CHANGELOG } from 'constants/changelog';
 import { Events } from 'constants/events';
 import { FeatureKeys } from 'constants/features';
@@ -821,12 +819,15 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 								<span>
 									{' '}
 									Please{' '}
-									<AuthZTooltip
-										checks={[SubscriptionListPermission, SubscriptionUpdatePermission]}
-									>
-										<a className="upgrade-link" onClick={handleFailedPayment}>
+									<AuthZTooltip checks={SubscriptionManagePermissions}>
+										<Button
+											variant="link"
+											color="none"
+											className="upgrade-link"
+											onClick={handleFailedPayment}
+										>
 											pay the bill
-										</a>
+										</Button>
 									</AuthZTooltip>
 									to continue using SigNoz features.
 									<span className="refresh-payment-status">

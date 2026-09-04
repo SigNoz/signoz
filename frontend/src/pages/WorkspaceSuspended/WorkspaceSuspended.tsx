@@ -8,10 +8,7 @@ import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPayment
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
-import {
-	SubscriptionListPermission,
-	SubscriptionUpdatePermission,
-} from 'lib/authz/hooks/useAuthZ/permissions/subscription.permissions';
+import { SubscriptionManagePermissions } from 'lib/authz/hooks/useAuthZ/permissions/subscription.permissions';
 import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
 import APIError from 'types/api/error';
@@ -122,7 +119,7 @@ function WorkspaceSuspended(): JSX.Element {
 							>
 								<Flex gap={8} justify="center" align="center">
 									<AuthZTooltip
-										checks={[SubscriptionListPermission, SubscriptionUpdatePermission]}
+										checks={SubscriptionManagePermissions}
 										withPortal={false}
 									>
 										<Button

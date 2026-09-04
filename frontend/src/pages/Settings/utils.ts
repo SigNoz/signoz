@@ -34,13 +34,19 @@ export const getRoutes = (
 	const isEditor = userRole === USER_ROLES.EDITOR;
 
 	if (isWorkspaceBlocked) {
-		settings.push(
-			...organizationSettings(t),
-			...membersSettings(t),
-			...mySettings(t),
-			...billingSettings(t),
-			...keyboardShortcuts(t),
-		);
+		if (isAdmin) {
+			settings.push(
+				...organizationSettings(t),
+				...membersSettings(t),
+				...mySettings(t),
+			);
+		}
+
+		settings.push(...billingSettings(t));
+
+		if (isAdmin) {
+			settings.push(...keyboardShortcuts(t));
+		}
 
 		return settings;
 	}

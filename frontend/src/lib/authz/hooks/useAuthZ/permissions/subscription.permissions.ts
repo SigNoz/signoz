@@ -20,3 +20,7 @@ export const SubscriptionDeletePermission = buildPermission(
 	'delete',
 	'subscription:*',
 );
+export const SubscriptionManagePermissions = [
+	SubscriptionListPermission,
+	SubscriptionUpdatePermission,
+];

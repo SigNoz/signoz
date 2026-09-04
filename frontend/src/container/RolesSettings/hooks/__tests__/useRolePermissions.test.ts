@@ -332,14 +332,14 @@ describe('transformTransactionGroupsToResourcePermissions', () => {
 		expect(result).toHaveLength(9);
 		expect(result.map((r) => r.resourceKind)).toStrictEqual([
 			'factor-api-key',
+			'license',
+			'logs',
+			'meter-metrics',
+			'metrics',
 			'role',
 			'serviceaccount',
-			'license',
 			'subscription',
-			'logs',
 			'traces',
-			'metrics',
-			'meter-metrics',
 		]);
 	});
 
@@ -423,14 +423,14 @@ describe('createEmptyRolePermissions', () => {
 		expect(result).toHaveLength(9);
 		expect(result.map((r) => r.resourceKind)).toStrictEqual([
 			'factor-api-key',
+			'license',
+			'logs',
+			'meter-metrics',
+			'metrics',
 			'role',
 			'serviceaccount',
-			'license',
 			'subscription',
-			'logs',
 			'traces',
-			'metrics',
-			'meter-metrics',
 		]);
 	});
 
