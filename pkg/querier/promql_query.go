@@ -155,9 +155,7 @@ func (q *promqlQuery) Fingerprint() string {
 	if q.opts.serve != nil {
 		return ""
 	}
-	// Only a result that is one value per timestamp, or one vector of counts
-	// per timestamp, decomposes into cacheable time buckets. A scalar result is
-	// its window's last point, which says nothing about any sub-range of it.
+
 	switch q.requestType {
 	case qbv5.RequestTypeTimeSeries, qbv5.RequestTypeHeatmap:
 	default:
