@@ -13,6 +13,12 @@ export interface DashboardLockPermission {
 	isLoading: boolean;
 	/** '' while loading or when the toggle is allowed. */
 	disabledReason: string;
+	/**
+	 * Whether the reason is an access problem or a state of the dashboard.
+	 * Access is checked first, so a missing permission is reported as such even
+	 * on an integration-owned dashboard.
+	 */
+	disabledKind: 'denied' | 'blocked';
 }
 
 /**
@@ -42,16 +48,21 @@ export function useDashboardLockPermission({
 	const canToggleLock =
 		!isLoading && !isIntegrationOwned && canEdit && (isAuthor || isOrgAdmin);
 
+	// Access first: if the caller can't edit, or isn't the creator or an org
+	// admin, that's what they need to hear - saying the dashboard is
+	// integration-owned would point them at the wrong thing.
 	let disabledReason = '';
+	let disabledKind: 'denied' | 'blocked' = 'denied';
 	if (!isLoading && !canToggleLock) {
-		if (isIntegrationOwned) {
-			disabledReason = DASHBOARD_LOCK_INTEGRATION_REASON;
-		} else if (!canEdit) {
+		if (!canEdit) {
 			disabledReason = DASHBOARD_NO_EDIT_PERMISSION_REASON;
-		} else {
+		} else if (!isAuthor && !isOrgAdmin) {
 			disabledReason = DASHBOARD_LOCK_NOT_OWNER_REASON;
+		} else {
+			disabledReason = DASHBOARD_LOCK_INTEGRATION_REASON;
+			disabledKind = 'blocked';
 		}
 	}
 
-	return { canToggleLock, isLoading, disabledReason };
+	return { canToggleLock, isLoading, disabledReason, disabledKind };
 }
