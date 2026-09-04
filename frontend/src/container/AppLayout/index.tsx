@@ -32,7 +32,10 @@ import ChatSupportGateway from 'components/ChatSupportGateway/ChatSupportGateway
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
-import { SubscriptionUpdatePermission } from 'lib/authz/hooks/useAuthZ/permissions/subscription.permissions';
+import {
+	SubscriptionListPermission,
+	SubscriptionUpdatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/subscription.permissions';
 import { MIN_ACCOUNT_AGE_FOR_CHANGELOG } from 'constants/changelog';
 import { Events } from 'constants/events';
 import { FeatureKeys } from 'constants/features';
@@ -818,7 +821,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 								<span>
 									{' '}
 									Please{' '}
-									<AuthZTooltip checks={[SubscriptionUpdatePermission]}>
+									<AuthZTooltip
+										checks={[SubscriptionListPermission, SubscriptionUpdatePermission]}
+									>
 										<a className="upgrade-link" onClick={handleFailedPayment}>
 											pay the bill
 										</a>

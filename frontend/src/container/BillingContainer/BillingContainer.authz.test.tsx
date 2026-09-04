@@ -1,6 +1,7 @@
 import {
 	SubscriptionCreatePermission,
 	SubscriptionReadPermission,
+	SubscriptionUpdatePermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/subscription.permissions';
 import {
 	setupAuthzAdmin,
@@ -84,5 +85,29 @@ describe('BillingContainer - AuthZ', () => {
 			expect(screen.getByTestId('header-billing-button')).toBeDisabled();
 		});
 		expect(screen.queryByTestId('upgrade-plan-button')).not.toBeInTheDocument();
+	});
+
+	it('disables manage billing when subscription list is denied', async () => {
+		server.use(
+			setupAuthzAllow(
+				SubscriptionReadPermission,
+				SubscriptionCreatePermission,
+				SubscriptionUpdatePermission,
+			),
+		);
+
+		render(
+			<BillingContainer />,
+			{},
+			{
+				appContextOverrides: {
+					trialInfo: trialConvertedToSubscriptionResponse.data,
+				},
+			},
+		);
+
+		await waitFor(() => {
+			expect(screen.getByTestId('header-billing-button')).toBeDisabled();
+		});
 	});
 });

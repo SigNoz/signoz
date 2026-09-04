@@ -38,6 +38,7 @@ import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
 import {
 	SubscriptionCreatePermission,
+	SubscriptionListPermission,
 	SubscriptionReadPermission,
 	SubscriptionUpdatePermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/subscription.permissions';
@@ -402,9 +403,9 @@ export default function BillingContainer(): JSX.Element {
 		}
 	}, [apiResponse, notifications]);
 
-	const billingActionPermission = trialInfo?.trialConvertedToSubscription
-		? SubscriptionUpdatePermission
-		: SubscriptionCreatePermission;
+	const billingActionPermissions = trialInfo?.trialConvertedToSubscription
+		? [SubscriptionListPermission, SubscriptionUpdatePermission]
+		: [SubscriptionCreatePermission];
 
 	const showGracePeriodMessage =
 		!isLoading &&
@@ -442,7 +443,7 @@ export default function BillingContainer(): JSX.Element {
 						) : null}
 					</Flex>
 					<AuthZButton
-						checks={[billingActionPermission]}
+						checks={billingActionPermissions}
 						testId="header-billing-button"
 						variant="solid"
 						color="secondary"
@@ -618,7 +619,7 @@ export default function BillingContainer(): JSX.Element {
 						</Col>
 						<Col span={4} style={{ display: 'flex', justifyContent: 'flex-end' }}>
 							<AuthZButton
-								checks={[billingActionPermission]}
+								checks={billingActionPermissions}
 								testId="upgrade-plan-button"
 								variant="solid"
 								color="primary"
