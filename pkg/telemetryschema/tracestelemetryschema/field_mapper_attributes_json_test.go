@@ -54,11 +54,11 @@ func TestFieldForAttributeJSONEvolution(t *testing.T) {
 		{"string straddle -> dual", telemetrytypes.FieldDataTypeString, attrWindowStraddle, "multiIf(attributes.`user.id` IS NOT NULL, attributes.`user.id`::String, mapContains(attributes_string, 'user.id'), attributes_string['user.id'], NULL)"},
 		{"number before -> map", telemetrytypes.FieldDataTypeNumber, attrWindowBefore, "attributes_number['user.id']"},
 		{"number after -> json", telemetrytypes.FieldDataTypeNumber, attrWindowAfter, "accurateCastOrNull(attributes.`user.id`, 'Float64')"},
-		{"number straddle -> dual", telemetrytypes.FieldDataTypeNumber, attrWindowStraddle, "multiIf(attributes.`user.id` IS NOT NULL, accurateCastOrNull(attributes.`user.id`, 'Float64'), mapContains(attributes_number, 'user.id'), attributes_number['user.id'], NULL)"},
-		{"int64 after -> json", telemetrytypes.FieldDataTypeInt64, attrWindowAfter, "accurateCastOrNull(attributes.`user.id`, 'Int64')"},
+		{"number straddle -> dual", telemetrytypes.FieldDataTypeNumber, attrWindowStraddle, "multiIf(accurateCastOrNull(attributes.`user.id`, 'Float64') IS NOT NULL, accurateCastOrNull(attributes.`user.id`, 'Float64'), mapContains(attributes_number, 'user.id'), attributes_number['user.id'], NULL)"},
+		{"int64 after -> json", telemetrytypes.FieldDataTypeInt64, attrWindowAfter, "accurateCastOrNull(attributes.`user.id`, 'Float64')"},
 		{"bool before -> map", telemetrytypes.FieldDataTypeBool, attrWindowBefore, "attributes_bool['user.id']"},
 		{"bool after -> json", telemetrytypes.FieldDataTypeBool, attrWindowAfter, "accurateCastOrNull(attributes.`user.id`, 'Bool')"},
-		{"bool straddle -> dual", telemetrytypes.FieldDataTypeBool, attrWindowStraddle, "multiIf(attributes.`user.id` IS NOT NULL, accurateCastOrNull(attributes.`user.id`, 'Bool'), mapContains(attributes_bool, 'user.id'), attributes_bool['user.id'], NULL)"},
+		{"bool straddle -> dual", telemetrytypes.FieldDataTypeBool, attrWindowStraddle, "multiIf(accurateCastOrNull(attributes.`user.id`, 'Bool') IS NOT NULL, accurateCastOrNull(attributes.`user.id`, 'Bool'), mapContains(attributes_bool, 'user.id'), attributes_bool['user.id'], NULL)"},
 	}
 
 	for _, tc := range testCases {
@@ -124,7 +124,7 @@ func TestConditionForAttributeJSON(t *testing.T) {
 			name:     "greater than number",
 			key:      attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo),
 			operator: qbtypes.FilterOperatorGreaterThan, value: float64(200),
-			expected: "toFloat64(accurateCastOrNull(attributes.`http.status_code`, 'Int64')) > ?",
+			expected: "toFloat64(accurateCastOrNull(attributes.`http.status_code`, 'Float64')) > ?",
 		},
 		{
 			name:     "ilike string",
@@ -218,7 +218,7 @@ func TestColumnExpressionForAttributeJSON(t *testing.T) {
 		key := attrKey("latency", telemetrytypes.FieldDataTypeNumber, evo)
 		got, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, attrWindowAfter[0], attrWindowAfter[1], &key, telemetrytypes.FieldDataTypeFloat64, nil)
 		require.NoError(t, err)
-		assert.Equal(t, "multiIf(attributes.`latency` IS NOT NULL, toFloat64(accurateCastOrNull(attributes.`latency`, 'Float64')), NULL)", got)
+		assert.Equal(t, "multiIf(accurateCastOrNull(attributes.`latency`, 'Float64') IS NOT NULL, toFloat64(accurateCastOrNull(attributes.`latency`, 'Float64')), NULL)", got)
 	})
 }
 
@@ -265,16 +265,16 @@ func TestConditionForAttributeJSONTypeCollision(t *testing.T) {
 	sb.Where(sb.Or(conds...))
 	sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	assert.Contains(t, sql, "toFloat64OrNull(attributes.`http.status_code`::String) = ?")
-	assert.Contains(t, sql, "toFloat64(accurateCastOrNull(attributes.`http.status_code`, 'Int64')) = ?")
+	assert.Contains(t, sql, "toFloat64(accurateCastOrNull(attributes.`http.status_code`, 'Float64')) = ?")
 	assert.Contains(t, sql, "attributes.`http.status_code` IS NOT NULL")
 	assert.NotEmpty(t, warnings, "a colliding name must surface the ambiguity warning")
 }
 
 // TestColumnExpressionForAttributeJSONTypeCollision covers group-by on a name stored under two
-// data types. On the JSON column both interpretations read the same path, so the raw-path guard
-// can't tell them apart; each branch is instead guarded by whether the path casts to its type,
-// with the ::String branch as the last-resort fallback. A row is read as its actual stored type
-// (int via accurateCastOrNull to Int64, everything else via ::String) rather than the first branch winning.
+// data types. On the JSON column both interpretations read one path: the numeric branch is guarded
+// by its cast (a wrong-typed row reads NULL and falls through), and the ::String branch renders any
+// stored scalar faithfully (200 -> '200', true -> 'true'), so every candidate order reads each row
+// as its actual stored type.
 func TestColumnExpressionForAttributeJSONTypeCollision(t *testing.T) {
 	ctx := context.Background()
 	fm := NewFieldMapper(flaggertest.New(t))
@@ -290,14 +290,15 @@ func TestColumnExpressionForAttributeJSONTypeCollision(t *testing.T) {
 	got, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, attrWindowAfter[0], attrWindowAfter[1], &ref, telemetrytypes.FieldDataTypeString, fieldKeys)
 	require.NoError(t, err)
 	assert.Equal(t,
-		"multiIf(accurateCastOrNull(attributes.`http.status_code`, 'Int64') IS NOT NULL, toString(accurateCastOrNull(attributes.`http.status_code`, 'Int64')), attributes.`http.status_code` IS NOT NULL, attributes.`http.status_code`::String, NULL)",
+		"multiIf(attributes.`http.status_code` IS NOT NULL, attributes.`http.status_code`::String, accurateCastOrNull(attributes.`http.status_code`, 'Float64') IS NOT NULL, toString(accurateCastOrNull(attributes.`http.status_code`, 'Float64')), NULL)",
 		got)
 }
 
 // TestColumnExpressionForAttributeJSONTypeCollisionNumericAgg covers a numeric aggregation over a
-// name colliding as Number and String: the numeric branch is read natively when the path casts to
-// a number, and only rows that are not numeric fall through to the string parse — so a genuinely
-// string-stored value is never silently nulled by a numeric-first cast.
+// name colliding as Number and String: the cast-guarded numeric branch takes numeric rows (a
+// wrong-typed row reads NULL and falls through), and the string branch parses whatever remains —
+// non-numeric strings parse to NULL and stay out of the aggregate, the per-type Map union's
+// coverage.
 func TestColumnExpressionForAttributeJSONTypeCollisionNumericAgg(t *testing.T) {
 	ctx := context.Background()
 	fm := NewFieldMapper(flaggertest.New(t))
@@ -387,7 +388,7 @@ func TestConditionForAttributeJSONNegativeOperatorParity(t *testing.T) {
 	t.Run("not equal number after -> NULL folded to 0", func(t *testing.T) {
 		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
 		sql := build(t, key, attrWindowAfter, qbtypes.FilterOperatorNotEqual, float64(200))
-		assert.Contains(t, sql, "ifNull(toFloat64(accurateCastOrNull(attributes.`http.status_code`, 'Int64')), 0) <> ?")
+		assert.Contains(t, sql, "ifNull(toFloat64(accurateCastOrNull(attributes.`http.status_code`, 'Float64')), 0) <> ?")
 	})
 
 	t.Run("not equal bool after -> NULL folded to false", func(t *testing.T) {
@@ -399,20 +400,20 @@ func TestConditionForAttributeJSONNegativeOperatorParity(t *testing.T) {
 	t.Run("equal number after -> not folded, exists guard excludes absent", func(t *testing.T) {
 		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
 		sql := build(t, key, attrWindowAfter, qbtypes.FilterOperatorEqual, float64(0))
-		assert.Contains(t, sql, "(toFloat64(accurateCastOrNull(attributes.`http.status_code`, 'Int64')) = ? AND attributes.`http.status_code` IS NOT NULL)")
+		assert.Contains(t, sql, "(toFloat64(accurateCastOrNull(attributes.`http.status_code`, 'Float64')) = ? AND attributes.`http.status_code` IS NOT NULL)")
 		assert.NotContains(t, sql, "ifNull")
 	})
 
 	t.Run("not in number after -> each operand folded to 0", func(t *testing.T) {
 		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
 		sql := build(t, key, attrWindowAfter, qbtypes.FilterOperatorNotIn, []any{float64(200), float64(404)})
-		assert.Contains(t, sql, "(ifNull(toFloat64(accurateCastOrNull(attributes.`http.status_code`, 'Int64')), 0) <> ? AND ifNull(toFloat64(accurateCastOrNull(attributes.`http.status_code`, 'Int64')), 0) <> ?)")
+		assert.Contains(t, sql, "(ifNull(toFloat64(accurateCastOrNull(attributes.`http.status_code`, 'Float64')), 0) <> ? AND ifNull(toFloat64(accurateCastOrNull(attributes.`http.status_code`, 'Float64')), 0) <> ?)")
 	})
 
 	t.Run("not equal number straddle -> whole multiIf folded", func(t *testing.T) {
 		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)
 		sql := build(t, key, attrWindowStraddle, qbtypes.FilterOperatorNotEqual, float64(200))
-		assert.Contains(t, sql, "ifNull(toFloat64(multiIf(attributes.`http.status_code` IS NOT NULL, accurateCastOrNull(attributes.`http.status_code`, 'Int64'), mapContains(attributes_number, 'http.status_code'), attributes_number['http.status_code'], NULL)), 0) <> ?")
+		assert.Contains(t, sql, "ifNull(toFloat64(multiIf(accurateCastOrNull(attributes.`http.status_code`, 'Float64') IS NOT NULL, accurateCastOrNull(attributes.`http.status_code`, 'Float64'), mapContains(attributes_number, 'http.status_code'), attributes_number['http.status_code'], NULL)), 0) <> ?")
 	})
 
 	t.Run("not equal number before -> harmless fold over the map read", func(t *testing.T) {
@@ -456,7 +457,7 @@ func TestConditionForAttributeJSONStraddleAbsentKeyExclusion(t *testing.T) {
 		return sql
 	}
 
-	guard := "multiIf(attributes.`http.status_code` IS NOT NULL, accurateCastOrNull(attributes.`http.status_code`, 'Int64'), mapContains(attributes_number, 'http.status_code'), attributes_number['http.status_code'], NULL) IS NOT NULL"
+	guard := "multiIf(accurateCastOrNull(attributes.`http.status_code`, 'Float64') IS NOT NULL, accurateCastOrNull(attributes.`http.status_code`, 'Float64'), mapContains(attributes_number, 'http.status_code'), attributes_number['http.status_code'], NULL) IS NOT NULL"
 
 	t.Run("equal zero keeps the exists guard", func(t *testing.T) {
 		key := attrKey("http.status_code", telemetrytypes.FieldDataTypeInt64, evo)

@@ -3,7 +3,6 @@ package tracestelemetryschema
 import (
 	"context"
 	"fmt"
-	"slices"
 	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
@@ -326,8 +325,18 @@ func (m *fieldMapper) resolveColumnExprs(
 				}
 			case telemetrytypes.FieldContextAttribute:
 				path := fmt.Sprintf("%s.%s", columnName, querybuilder.ClickHouseIdentifier(key.Name))
-				exprs = append(exprs, attributeJSONValueExpr(path, key.FieldDataType))
-				existExprs = append(existExprs, fmt.Sprintf("%s IS NOT NULL", path))
+				expr := attributeJSONValueExpr(path, key.FieldDataType)
+				exprs = append(exprs, expr)
+				switch key.FieldDataType {
+				case telemetrytypes.FieldDataTypeInt64,
+					telemetrytypes.FieldDataTypeFloat64,
+					telemetrytypes.FieldDataTypeNumber,
+					telemetrytypes.FieldDataTypeBool:
+					// Numeric/bool reads are NULL-capable, so existence means present AS THIS TYPE
+					existExprs = append(existExprs, expr+" IS NOT NULL")
+				default:
+					existExprs = append(existExprs, fmt.Sprintf("%s IS NOT NULL", path))
+				}
 			default:
 				return nil, nil, nil, errors.NewInternalf(errors.CodeInternal, "only resource, scope and attribute context fields are supported for json columns, got %s", key.FieldContext.String)
 			}
@@ -486,15 +495,6 @@ func (m *fieldMapper) ColumnExpressionFor(
 	// Group-by/order (String) and aggregation (String/Float64): every candidate is
 	// exists-guarded and coerced to requiredDataType, in a single multiIf. Raw select
 	// (Unspecified) keeps the lighter native shape below.
-	// A JSON type-collision shows up as several candidates sharing one physical path (and so one
-	// raw-path guard). Guarding each branch by that shared path can't tell the types apart, so
-	// discriminate by castability instead. Map candidates keep distinct per-column guards and are
-	// left to the normal folds below.
-	if fold, ok, err := m.foldCastDiscriminated(ctx, startNs, endNs, candidates, requiredDataType); err != nil {
-		return "", err
-	} else if ok {
-		return fold, nil
-	}
 
 	if requiredDataType != telemetrytypes.FieldDataTypeUnspecified {
 		var dummyValue any = ""
@@ -503,11 +503,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 		}
 		stmts := make([]string, 0, len(candidates)*2)
 		for _, logical := range candidates {
-			value, err := querybuilder.LogicalValueExpr(ctx, orgID, startNs, endNs, m, logical)
-			if err != nil {
-				return "", err
-			}
-			guard, err := querybuilder.LogicalExistsExpr(ctx, orgID, startNs, endNs, m, logical, true)
+			value, guard, err := m.branchValueAndGuard(ctx, orgID, startNs, endNs, logical)
 			if err != nil {
 				return "", err
 			}
@@ -544,11 +540,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 	// stringified so branches share a type.
 	args := make([]string, 0, len(candidates))
 	for _, logical := range candidates {
-		value, err := querybuilder.LogicalValueExpr(ctx, orgID, startNs, endNs, m, logical)
-		if err != nil {
-			return "", err
-		}
-		guard, err := querybuilder.LogicalExistsExpr(ctx, orgID, startNs, endNs, m, logical, true)
+		value, guard, err := m.branchValueAndGuard(ctx, orgID, startNs, endNs, logical)
 		if err != nil {
 			return "", err
 		}
@@ -557,100 +549,41 @@ func (m *fieldMapper) ColumnExpressionFor(
 	return fmt.Sprintf("multiIf(%s, NULL)", strings.Join(args, ", ")), nil
 }
 
-// foldCastDiscriminated renders a JSON type-collision: candidates that each resolve to a single
-// column in the window and share an identical raw-path existence guard (every type of one
-// attribute lives at one JSON path). It guards each numeric/bool branch by whether the path casts
-// to that type (`<cast> IS NOT NULL`) and keeps the ::String branch as the last-resort fallback,
-// so each row is read as its actual stored type instead of the first branch always winning.
-//
-// It returns ok=false — leaving the caller's normal fold in place — unless the candidates are
-// exactly such a collision: fewer than two candidates, a family, a straddle/multi-column
-// candidate, or candidates with distinct guards (map columns) all decline.
-func (m *fieldMapper) foldCastDiscriminated(
-	ctx context.Context,
+// branchValueAndGuard resolves a candidate's value expression and branch guard. A
+// single-column attribute candidate takes both from one column resolution: the guard is
+// the per-type existence (on the JSON column, the cast itself for numeric/bool), so a row
+// stored as another type falls through to the branch that renders it. Families and
+// multi-column (straddle) candidates keep the presence guard from LogicalExistsExpr.
+func (m *fieldMapper) branchValueAndGuard(ctx context.Context,
+	orgID valuer.UUID,
 	startNs, endNs uint64,
-	candidates []*telemetrytypes.LogicalField,
-	requiredDataType telemetrytypes.FieldDataType,
-) (string, bool, error) {
-	if len(candidates) < 2 {
-		return "", false, nil
-	}
-
-	type branch struct {
-		guard    string
-		value    string
-		member   *telemetrytypes.TelemetryFieldKey
-		catchAll bool
-	}
-	branches := make([]branch, 0, len(candidates))
-	rawGuardCount := make(map[string]int, len(candidates))
-	for _, logical := range candidates {
-		if logical.IsFamily() {
-			return "", false, nil
-		}
+	logical *telemetrytypes.LogicalField,
+) (string, string, error) {
+	if !logical.IsFamily() {
 		member := logical.Single()
-		exprs, existExprs, _, err := m.resolveColumnExprs(ctx, startNs, endNs, member)
-		if err != nil {
-			return "", false, err
-		}
-		if len(exprs) != 1 || len(existExprs) != 1 {
-			return "", false, nil
-		}
-		rawGuardCount[existExprs[0]]++
-		catchAll := member.FieldDataType == telemetrytypes.FieldDataTypeString ||
-			member.FieldDataType == telemetrytypes.FieldDataTypeUnspecified
-		guard := existExprs[0]
-		if !catchAll {
-			guard = exprs[0] + " IS NOT NULL"
-		}
-		branches = append(branches, branch{guard: guard, value: exprs[0], member: member, catchAll: catchAll})
-	}
-
-	collision := false
-	for _, n := range rawGuardCount {
-		if n > 1 {
-			collision = true
-			break
+		if member.FieldContext == telemetrytypes.FieldContextAttribute {
+			exprs, existExprs, _, err := m.resolveColumnExprs(ctx, startNs, endNs, member)
+			if err != nil {
+				return "", "", err
+			}
+			if len(exprs) == 1 && len(existExprs) == 1 {
+				return exprs[0], existExprs[0], nil
+			}
 		}
 	}
-	if !collision {
-		return "", false, nil
+	value, err := querybuilder.LogicalValueExpr(ctx, orgID, startNs, endNs, m, logical)
+	if err != nil {
+		return "", "", err
 	}
-
-	slices.SortStableFunc(branches, func(a, b branch) int {
-		switch {
-		case a.catchAll == b.catchAll:
-			return 0
-		case a.catchAll:
-			return 1
-		default:
-			return -1
-		}
-	})
-
-	var dummyValue any = ""
-	if requiredDataType == telemetrytypes.FieldDataTypeFloat64 {
-		dummyValue = 0.0
+	guard, err := querybuilder.LogicalExistsExpr(ctx, orgID, startNs, endNs, m, logical, true)
+	if err != nil {
+		return "", "", err
 	}
-	stmts := make([]string, 0, len(branches)*2)
-	seen := make(map[string]struct{}, len(branches))
-	for _, br := range branches {
-		if _, dup := seen[br.guard]; dup {
-			continue
-		}
-		seen[br.guard] = struct{}{}
-		value := br.value
-		if requiredDataType == telemetrytypes.FieldDataTypeUnspecified {
-			value = fmt.Sprintf("toString(%s)", value)
-		} else {
-			value, _ = querybuilder.DataTypeCollisionHandledFieldName(br.member, dummyValue, value, qbtypes.FilterOperatorUnknown)
-		}
-		stmts = append(stmts, br.guard, value)
-	}
-	return fmt.Sprintf("multiIf(%s, NULL)", strings.Join(stmts, ", ")), true, nil
+	return value, guard, nil
 }
 
 // logicalIsTemporal reports whether the logical field resolves to a single time
+
 // column. A family is attribute-backed and never temporal.
 func (m *fieldMapper) logicalIsTemporal(ctx context.Context, startNs, endNs uint64, logical *telemetrytypes.LogicalField) (bool, error) {
 	if logical.IsFamily() {
