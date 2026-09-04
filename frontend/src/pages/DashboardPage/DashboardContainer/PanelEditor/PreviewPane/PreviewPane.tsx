@@ -7,7 +7,6 @@ import PanelBody from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsL
 import PanelHeader from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelHeader/PanelHeader';
 import type { AnyPanelInteractionProps } from 'pages/DashboardPage/DashboardContainer/Panels/types/interactions';
 import type { RenderablePanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
-import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 import type { DashboardPreference } from 'pages/DashboardPage/DashboardContainer/Panels/types/rendererProps';
 import { getPanelQueryType } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getPanelQueryType';
 import type {
@@ -72,7 +71,6 @@ function PreviewPane({
 	onClick,
 	enableDrillDown,
 }: PreviewPaneProps): JSX.Element {
-	const panelType = PANEL_KIND_TO_PANEL_TYPE[panel.spec.plugin.kind];
 	const queryType = getPanelQueryType(panel);
 
 	// Search term is ephemeral preview state, threaded to header + renderer but
@@ -84,11 +82,7 @@ function PreviewPane({
 		<div className={styles.preview}>
 			{!hideHeader && (
 				<div className={styles.header}>
-					<PlotTag
-						queryType={queryType}
-						panelType={panelType}
-						className={styles.queryType}
-					/>
+					<PlotTag queryType={queryType} className={styles.queryType} />
 					<div className={styles.dateTimeSelector}>
 						<DateTimeSelectionV2 showAutoRefresh hideShareModal />
 					</div>

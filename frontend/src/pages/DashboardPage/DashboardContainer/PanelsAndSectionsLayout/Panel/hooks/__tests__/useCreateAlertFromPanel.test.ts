@@ -162,7 +162,9 @@ describe('useCreateAlertFromPanel', () => {
 			expect(mockBuildQueryRangeRequest).toHaveBeenCalledWith(
 				expect.objectContaining({
 					queries: panel.spec.queries,
-					panelType: PANEL_TYPES.TIME_SERIES,
+					queryCapabilities: expect.objectContaining({
+						requestType: 'time_series',
+					}),
 					variables: { service: { type: 'query', value: 'checkout' } },
 				}),
 			);

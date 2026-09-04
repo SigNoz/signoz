@@ -3,7 +3,6 @@ import type {
 	DashboardtypesThresholdWithLabelDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { PanelMode } from 'lib/visualization/panels/types';
 import onClickPlugin, {
 	OnClickPluginOpts,
@@ -26,7 +25,11 @@ import {
  */
 export interface BuildBaseConfigArgs {
 	panelId: string;
-	panelType: PANEL_TYPES;
+	/**
+	 * X axis plots timestamps, so its ticks format as dates/times. Each kind states this
+	 * for itself — a bucketed x axis (histogram) passes false.
+	 */
+	isTimeAxis: boolean;
 	isDarkMode: boolean;
 	timezone: Timezone;
 	panelMode: PanelMode;
@@ -56,6 +59,18 @@ export interface BuildBaseConfigArgs {
 	onClick?: OnClickPluginOpts['onClick'];
 }
 
+/** What a kind's build args pass straight through; the rest is derived from its spec. */
+export type PanelChromeArgs = Pick<
+	BuildBaseConfigArgs,
+	'panelId' | 'isDarkMode' | 'timezone' | 'panelMode'
+>;
+
+export type TimeAxisChromeArgs = PanelChromeArgs &
+	Pick<
+		BuildBaseConfigArgs,
+		'stepIntervals' | 'minTimeScale' | 'maxTimeScale' | 'onDragSelect' | 'onClick'
+	>;
+
 /**
  * Builds the panel-agnostic scaffolding of a uPlot chart (scales, thresholds,
  * axes, drag-to-zoom, click plugin). Callers then `addSeries`/`addPlugin` on the
@@ -63,7 +78,7 @@ export interface BuildBaseConfigArgs {
  */
 export function buildBaseConfig({
 	panelId,
-	panelType,
+	isTimeAxis,
 	isDarkMode,
 	timezone,
 	panelMode,
@@ -133,7 +148,7 @@ export function buildBaseConfig({
 		side: 2,
 		isDarkMode,
 		isLogScale,
-		panelType,
+		isTimeAxis,
 	});
 
 	builder.addAxis({
@@ -143,7 +158,6 @@ export function buildBaseConfig({
 		isDarkMode,
 		isLogScale,
 		yAxisUnit,
-		panelType,
 	});
 
 	return builder;

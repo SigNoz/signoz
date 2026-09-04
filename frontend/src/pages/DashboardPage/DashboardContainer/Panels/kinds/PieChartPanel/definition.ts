@@ -1,7 +1,10 @@
 import type { PanelDefinition } from '../../types/panelDefinition';
 import Renderer from './Renderer';
 import { sections } from './sections';
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	Querybuildertypesv5RequestTypeDTO,
+	TelemetrytypesSignalDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { EQueryType } from 'types/common/dashboard';
 
 export const definition: PanelDefinition<'signoz/PieChartPanel'> = {
@@ -16,6 +19,13 @@ export const definition: PanelDefinition<'signoz/PieChartPanel'> = {
 	],
 	supportedQueryTypes: [EQueryType.QUERY_BUILDER, EQueryType.CLICKHOUSE],
 	queryBuilderFields: {},
+	queryCapabilities: {
+		requestType: Querybuildertypesv5RequestTypeDTO.scalar,
+		formatTableResultForUI: false,
+		bucketedStepInterval: false,
+		orderTiebreaker: false,
+		serverPaginated: false,
+	},
 	actions: {
 		view: true,
 		edit: true,

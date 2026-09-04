@@ -3,7 +3,6 @@ import { useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports -- TODO: migrate global time selector off redux
 import { useSelector } from 'react-redux';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	DASHBOARD_CACHE_TIME,
 	DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
@@ -24,7 +23,7 @@ import {
 	queryReferencesAnyVariable,
 } from '../queryV5/getReferencedVariables';
 import { getBuilderQueries } from '../Panels/utils/getBuilderQueries';
-import { PANEL_KIND_TO_PANEL_TYPE } from '../Panels/types/panelKind';
+import type { PanelQueryCapabilities } from '../Panels/types/panelCapabilities';
 import { selectResolvedVariables } from '../store/slices/variableSelectionSlice';
 import { useDashboardStore } from '../store/useDashboardStore';
 import { resolvePanelTimeWindow } from './resolvePanelTimeWindow';
@@ -38,6 +37,8 @@ const DEFAULT_LIST_PAGE_SIZE = 25;
 export interface UsePanelQueryArgs {
 	panel: DashboardtypesPanelDTO;
 	panelId: string;
+	/** The panel kind's declared query capabilities — `panelDefinition.queryCapabilities` at the call site. */
+	queryCapabilities: PanelQueryCapabilities;
 	/**
 	 * Gate the fetch (default true). PanelV2 sets false for unregistered kinds to skip a wasted
 	 * call. The hook also auto-disables internally when the panel has no runnable queries.
@@ -85,21 +86,20 @@ export interface UsePanelQueryResult {
 export function usePanelQuery({
 	panel,
 	panelId,
+	queryCapabilities,
 	enabled = true,
 	time,
 }: UsePanelQueryArgs): UsePanelQueryResult {
 	const fullKind = panel.spec.plugin.kind;
-	const panelType =
-		(fullKind && PANEL_KIND_TO_PANEL_TYPE[fullKind]) ?? PANEL_TYPES.TIME_SERIES;
 	const queries = panel.spec.queries;
 
-	// V1 parity: a list query with an explicit `limit` shows without a server pager; without
-	// one it pages server-side at a user-selectable size.
+	// V1 parity: a query with an explicit `limit` shows without a server pager; without
+	// one a paging kind fetches server-side at a user-selectable size.
 	const hasExplicitLimit = useMemo(
 		() => !!getBuilderQueries(queries)[0]?.limit,
 		[queries],
 	);
-	const isPaginated = panelType === PANEL_TYPES.LIST && !hasExplicitLimit;
+	const isPaginated = queryCapabilities.serverPaginated && !hasExplicitLimit;
 
 	const [pageSize, setPageSize] = useState(DEFAULT_LIST_PAGE_SIZE);
 	const [offset, setOffset] = useState(0);
@@ -188,7 +188,7 @@ export function usePanelQuery({
 		() =>
 			buildQueryRangeRequest({
 				queries,
-				panelType,
+				queryCapabilities,
 				startMs,
 				endMs,
 				fillGaps,
@@ -197,7 +197,7 @@ export function usePanelQuery({
 			}),
 		[
 			queries,
-			panelType,
+			queryCapabilities,
 			startMs,
 			endMs,
 			fillGaps,
