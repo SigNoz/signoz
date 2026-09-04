@@ -1,31 +1,23 @@
 import type { ReactNode } from 'react';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
-
-import styles from './DisabledMenuItemLabel.module.scss';
+import DisabledReasonTooltip from 'lib/authz/components/DisabledReasonTooltip/DisabledReasonTooltip';
 
 interface DisabledMenuItemLabelProps {
 	reason: string;
 	children: ReactNode;
 }
 
-// A disabled row has pointer-events: none, so the label re-enables them to catch hover.
+/**
+ * Label for a disabled dropdown row. The row sets `pointer-events: none`, so the
+ * wrapper re-enables them to catch hover.
+ */
 function DisabledMenuItemLabel({
 	reason,
 	children,
 }: DisabledMenuItemLabelProps): JSX.Element {
-	// Guards against an empty tooltip bubble if a caller passes no reason.
-	if (!reason) {
-		return <>{children}</>;
-	}
 	return (
-		<TooltipSimple
-			title={reason}
-			arrow
-			disableHoverableContent
-			tooltipContentProps={{ className: styles.aboveOverlay }}
-		>
-			<span className={styles.label}>{children}</span>
-		</TooltipSimple>
+		<DisabledReasonTooltip reason={reason} interactive>
+			{children}
+		</DisabledReasonTooltip>
 	);
 }
 
