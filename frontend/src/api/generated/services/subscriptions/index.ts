@@ -113,7 +113,7 @@ export const invalidateGetSubscription = async (
 };
 
 /**
- * This endpoint creates a subscription for the organization and returns the URL where it is completed.
+ * This endpoint creates a subscription for the organization.
  * @summary Create a subscription.
  */
 export const createSubscription = (
@@ -196,7 +196,7 @@ export const useCreateSubscription = <
 	return useMutation(getCreateSubscriptionMutationOptions(options));
 };
 /**
- * This endpoint updates the organization's subscription and returns the URL where it is managed.
+ * This endpoint updates the organization's subscription.
  * @summary Update the subscription.
  */
 export const updateSubscription = (
