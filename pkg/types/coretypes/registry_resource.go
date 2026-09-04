@@ -62,7 +62,7 @@ var (
 	ResourceMetaResourcePipeline                         = NewResourceMetaResource(KindPipeline)
 	ResourceMetaResourceUserPreference                   = NewResourceMetaResource(KindUserPreference)
 	ResourceMetaResourceOrgPreference                    = NewResourceMetaResource(KindOrgPreference)
-	ResourceMetaResourceQuickFilter                      = NewResourceMetaResource(KindQuickFilter)
+	ResourceMetaResourceQuickFilter                      = NewResourceMetaResource(KindQuickFilter, VerbList, VerbRead, VerbUpdate)
 	ResourceMetaResourceTTLSetting                       = NewResourceMetaResource(KindTTLSetting)
 	ResourceMetaResourceRule                             = NewResourceMetaResource(KindRule)
 	ResourceMetaResourcePlannedMaintenance               = NewResourceMetaResource(KindPlannedMaintenance)

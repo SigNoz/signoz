@@ -4,7 +4,7 @@ import { Skeleton } from 'antd';
 import cx from 'classnames';
 import { InfraMonitoringEvents } from 'constants/events';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import TimeSeries from 'container/DashboardContainer/visualization/charts/TimeSeries/TimeSeries';
+import TimeSeries from 'lib/visualization/charts/TimeSeries/TimeSeries';
 import {
 	IRenderTooltipFooterArgs,
 	LegendPosition,

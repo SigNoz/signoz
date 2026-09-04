@@ -27,7 +27,7 @@ import {
 	QUERY_BUILDER_OPERATORS_BY_KEY_TYPE,
 	queryOperatorSuggestions,
 } from 'constants/antlrQueryConstants';
-import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariablesByType';
+import { useDynamicVariableSuggestions } from 'hooks/dashboard/useDynamicVariableSuggestions';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebounce from 'hooks/useDebounce';
 import { debounce, isNull } from 'lodash-es';
@@ -258,10 +258,7 @@ function QuerySearch({
 	const lastValueRef = useRef<string>('');
 	const isMountedRef = useRef<boolean>(true);
 
-	const dashboardDynamicVariables = useDashboardVariablesByType(
-		'DYNAMIC',
-		'values',
-	);
+	const dashboardDynamicVariables = useDynamicVariableSuggestions();
 
 	// Add back the generateOptions function and useEffect
 	const generateOptions = (keys: {
@@ -1188,8 +1185,8 @@ function QuerySearch({
 			);
 
 			// Add dynamic variables suggestions for the current key
-			const variableName = dashboardDynamicVariables?.find(
-				(variable) => variable?.dynamicVariablesAttribute === keyName,
+			const variableName = dashboardDynamicVariables.find(
+				(variable) => variable.attribute === keyName,
 			)?.name;
 
 			if (variableName) {

@@ -5493,6 +5493,34 @@ export interface FeaturetypesGettableFeatureDTO {
 	variants?: FeaturetypesGettableFeatureDTOVariants;
 }
 
+export interface GatewaytypesLimitValueDTO {
+	/**
+	 * @type integer,null
+	 */
+	count?: number | null;
+	/**
+	 * @type integer,null
+	 */
+	size?: number | null;
+}
+
+export interface GatewaytypesLimitConfigDTO {
+	day?: GatewaytypesLimitValueDTO;
+	second?: GatewaytypesLimitValueDTO;
+}
+
+export interface GatewaytypesDeprecatedPostableIngestionKeyLimitDTO {
+	config?: GatewaytypesLimitConfigDTO;
+	/**
+	 * @type string
+	 */
+	signal?: string;
+	/**
+	 * @type array,null
+	 */
+	tags?: string[] | null;
+}
+
 export interface GatewaytypesGettableCreatedIngestionKeyDTO {
 	/**
 	 * @type string
@@ -5528,22 +5556,6 @@ export interface GatewaytypesPaginationDTO {
 	 * @type integer
 	 */
 	total?: number;
-}
-
-export interface GatewaytypesLimitValueDTO {
-	/**
-	 * @type integer,null
-	 */
-	count?: number | null;
-	/**
-	 * @type integer,null
-	 */
-	size?: number | null;
-}
-
-export interface GatewaytypesLimitConfigDTO {
-	day?: GatewaytypesLimitValueDTO;
-	second?: GatewaytypesLimitValueDTO;
 }
 
 export interface GatewaytypesLimitMetricValueDTO {
@@ -5663,6 +5675,10 @@ export interface GatewaytypesPostableIngestionKeyDTO {
 
 export interface GatewaytypesPostableIngestionKeyLimitDTO {
 	config?: GatewaytypesLimitConfigDTO;
+	/**
+	 * @type string
+	 */
+	keyId: string;
 	/**
 	 * @type string
 	 */
@@ -9010,6 +9026,47 @@ export enum Querybuildertypesv5QueryTypeDTO {
 	clickhouse_sql = 'clickhouse_sql',
 	promql = 'promql',
 }
+export enum QuickfiltertypesSourceDTO {
+	traces = 'traces',
+	logs = 'logs',
+	api_monitoring = 'api_monitoring',
+	exceptions = 'exceptions',
+	meter = 'meter',
+	ai_observability = 'ai_observability',
+}
+export interface QuickfiltertypesSourceFiltersDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type array
+	 */
+	filters: TelemetrytypesTelemetryFieldKeyDTO[];
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	source: QuickfiltertypesSourceDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+}
+
+export interface QuickfiltertypesUpdatableQuickFiltersDTO {
+	/**
+	 * @type array
+	 */
+	filters: TelemetrytypesTelemetryFieldKeyDTO[];
+}
+
 export interface RenderErrorResponseDTO {
 	error: ErrorsJSONDTO;
 	/**
@@ -10465,6 +10522,153 @@ export interface SpantypesUpdatableSpanMapperGroupDTO {
 	name?: string | null;
 }
 
+export interface SubscriptiontypesGettableSubscriptionDTO {
+	/**
+	 * @type string
+	 */
+	redirectURL: string;
+}
+
+export interface SubscriptiontypesSubscriptionUsageDayWiseDataDTO {
+	/**
+	 * @type number
+	 * @format double
+	 */
+	count?: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	quantity?: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	size?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	timestamp?: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	total?: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	unitPrice?: number;
+}
+
+export interface SubscriptiontypesSubscriptionUsageDayWiseBreakdownDTO {
+	/**
+	 * @type array,null
+	 */
+	breakdown?: SubscriptiontypesSubscriptionUsageDayWiseDataDTO[] | null;
+	/**
+	 * @type string
+	 */
+	type?: string;
+}
+
+export interface SubscriptiontypesSubscriptionUsageTierDTO {
+	/**
+	 * @type number
+	 * @format double
+	 */
+	quantity?: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	tierCost?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	tierEnd?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	tierStart?: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	unitPrice?: number;
+}
+
+export interface SubscriptiontypesSubscriptionUsageBreakdownDTO {
+	dayWiseBreakdown?: SubscriptiontypesSubscriptionUsageDayWiseBreakdownDTO;
+	/**
+	 * @type array,null
+	 */
+	tiers?: SubscriptiontypesSubscriptionUsageTierDTO[] | null;
+	/**
+	 * @type string
+	 */
+	type?: string;
+	/**
+	 * @type string
+	 */
+	unit?: string;
+}
+
+export interface SubscriptiontypesSubscriptionUsageDetailsDTO {
+	/**
+	 * @type number
+	 * @format double
+	 */
+	baseFee?: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	billTotal?: number;
+	/**
+	 * @type array,null
+	 */
+	breakdown?: SubscriptiontypesSubscriptionUsageBreakdownDTO[] | null;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	total?: number;
+}
+
+export interface SubscriptiontypesGettableSubscriptionUsageDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	billingPeriodEnd?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	billingPeriodStart?: number;
+	details?: SubscriptiontypesSubscriptionUsageDetailsDTO;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	discount?: number;
+	/**
+	 * @type string
+	 */
+	subscriptionStatus?: string;
+}
+
+export interface SubscriptiontypesPostableSubscriptionDTO {
+	/**
+	 * @type string
+	 */
+	url: string;
+}
+
 export type TelemetrytypesGettableFieldKeysDTOKeysAnyOf = {
 	[key: string]: TelemetrytypesTelemetryFieldKeyDTO[];
 };
@@ -10822,6 +11026,11 @@ export type GetAIObservabilityFieldsValuesParams = {
 	 * @description undefined
 	 */
 	name?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	existingQuery?: string;
 };
 
 export type GetAIObservabilityFieldsValues200 = {
@@ -11678,6 +11887,30 @@ export type GetStats200 = {
 	status: string;
 };
 
+export type GetSubscription200 = {
+	data: SubscriptiontypesGettableSubscriptionUsageDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateSubscription201 = {
+	data: SubscriptiontypesGettableSubscriptionDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateSubscription200 = {
+	data: SubscriptiontypesGettableSubscriptionDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetTraceAggregationsPathParameters = {
 	traceID: string;
 };
@@ -11940,9 +12173,34 @@ export type CreateIngestionKey201 = {
 export type DeleteIngestionKeyPathParameters = {
 	keyId: string;
 };
+export type GetIngestionKeyPathParameters = {
+	keyId: string;
+};
+export type GetIngestionKey200 = {
+	data: GatewaytypesIngestionKeyDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type UpdateIngestionKeyPathParameters = {
 	keyId: string;
 };
+export type GetIngestionKeyLimitsPathParameters = {
+	keyId: string;
+};
+export type GetIngestionKeyLimits200 = {
+	/**
+	 * @type array,null
+	 */
+	data: GatewaytypesLimitDTO[] | null;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type CreateIngestionKeyLimitPathParameters = {
 	keyId: string;
 };
@@ -11986,6 +12244,31 @@ export type SearchIngestionKeys200 = {
 	status: string;
 };
 
+export type CreateIngestionLimit201 = {
+	data: TypesIdentifiableDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteIngestionLimitPathParameters = {
+	limitId: string;
+};
+export type GetIngestionLimitPathParameters = {
+	limitId: string;
+};
+export type GetIngestionLimit200 = {
+	data: GatewaytypesLimitDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateIngestionLimitPathParameters = {
+	limitId: string;
+};
 export type Healthz200 = {
 	data: FactoryResponseDTO;
 	/**
@@ -12411,6 +12694,31 @@ export type GetPublicDashboardPanelQueryRangeV2200 = {
 	status: string;
 };
 
+export type ListQuickFilters200 = {
+	/**
+	 * @type array
+	 */
+	data: QuickfiltertypesSourceFiltersDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetQuickFiltersPathParameters = {
+	source: string;
+};
+export type GetQuickFilters200 = {
+	data: QuickfiltertypesSourceFiltersDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateQuickFiltersPathParameters = {
+	source: string;
+};
 export type Readyz200 = {
 	data: FactoryResponseDTO;
 	/**

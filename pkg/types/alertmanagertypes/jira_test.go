@@ -87,13 +87,6 @@ func TestJiraIsServiceAccount(t *testing.T) {
 	assert.False(t, (&JiraReceiverConfig{}).IsServiceAccount())
 }
 
-func TestJiraReceiverConfigTrailingSlashSite(t *testing.T) {
-	r, err := NewReceiver(jiraReceiverJSON("https://acme.atlassian.net/", "KAN", "Task", true))
-	require.NoError(t, err)
-	assert.Equal(t, "https://acme.atlassian.net", r.JiraConfigs[0].Site)
-	assert.Equal(t, "https://acme.atlassian.net/rest/api/3", r.JiraConfigs[0].APIBaseURL(""))
-}
-
 func TestJiraReceiverConfigValidation(t *testing.T) {
 	cases := []struct {
 		name string
@@ -104,6 +97,8 @@ func TestJiraReceiverConfigValidation(t *testing.T) {
 		{"non-cloud host", jiraReceiverJSON("https://jira.acme.com", "KAN", "Task", true)},
 		{"lookalike host suffix", jiraReceiverJSON("https://www.iamnotatlassian.net", "KAN", "Task", true)},
 		{"bare atlassian.net", jiraReceiverJSON("https://atlassian.net", "KAN", "Task", true)},
+		{"trailing slash site", jiraReceiverJSON("https://acme.atlassian.net/", "KAN", "Task", true)},
+		{"padded site", jiraReceiverJSON(" https://acme.atlassian.net ", "KAN", "Task", true)},
 		{"missing project", jiraReceiverJSON("https://acme.atlassian.net", "", "Task", true)},
 		{"missing issue_type", jiraReceiverJSON("https://acme.atlassian.net", "KAN", "", true)},
 		{"missing basic auth", jiraReceiverJSON("https://acme.atlassian.net", "KAN", "Task", false)},
