@@ -104,10 +104,10 @@ func (a *MetricAggregation) ResolveHeatmapBucketing(bucketOptions *BucketOptions
 		return errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"heatmaps need a metric whose type is known: no type is recorded for %q, so its bucket axis cannot be chosen", a.MetricName)
 	case metrictypes.ExpHistogramType:
-		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+		return errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported,
 			"heatmaps are not supported for exponential histograms yet: %q keeps its bucket counts in a sketch column, which needs its own reader", a.MetricName)
 	default:
-		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+		return errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported,
 			"heatmaps are not supported for %s metrics", a.Type.StringValue())
 	}
 }
