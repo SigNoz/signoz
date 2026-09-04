@@ -9217,6 +9217,116 @@ components:
       required:
       - references
       type: object
+    SubscriptiontypesGettableSubscription:
+      properties:
+        redirectURL:
+          type: string
+      required:
+      - redirectURL
+      type: object
+    SubscriptiontypesGettableSubscriptionUsage:
+      properties:
+        billingPeriodEnd:
+          format: int64
+          type: integer
+        billingPeriodStart:
+          format: int64
+          type: integer
+        details:
+          $ref: '#/components/schemas/SubscriptiontypesSubscriptionUsageDetails'
+        discount:
+          format: double
+          type: number
+        subscriptionStatus:
+          type: string
+      type: object
+    SubscriptiontypesPostableSubscription:
+      properties:
+        url:
+          type: string
+      required:
+      - url
+      type: object
+    SubscriptiontypesSubscriptionUsageBreakdown:
+      properties:
+        dayWiseBreakdown:
+          $ref: '#/components/schemas/SubscriptiontypesSubscriptionUsageDayWiseBreakdown'
+        tiers:
+          items:
+            $ref: '#/components/schemas/SubscriptiontypesSubscriptionUsageTier'
+          nullable: true
+          type: array
+        type:
+          type: string
+        unit:
+          type: string
+      type: object
+    SubscriptiontypesSubscriptionUsageDayWiseBreakdown:
+      properties:
+        breakdown:
+          items:
+            $ref: '#/components/schemas/SubscriptiontypesSubscriptionUsageDayWiseData'
+          nullable: true
+          type: array
+        type:
+          type: string
+      type: object
+    SubscriptiontypesSubscriptionUsageDayWiseData:
+      properties:
+        count:
+          format: double
+          type: number
+        quantity:
+          format: double
+          type: number
+        size:
+          format: double
+          type: number
+        timestamp:
+          format: int64
+          type: integer
+        total:
+          format: double
+          type: number
+        unitPrice:
+          format: double
+          type: number
+      type: object
+    SubscriptiontypesSubscriptionUsageDetails:
+      properties:
+        baseFee:
+          format: double
+          type: number
+        billTotal:
+          format: double
+          type: number
+        breakdown:
+          items:
+            $ref: '#/components/schemas/SubscriptiontypesSubscriptionUsageBreakdown'
+          nullable: true
+          type: array
+        total:
+          format: double
+          type: number
+      type: object
+    SubscriptiontypesSubscriptionUsageTier:
+      properties:
+        quantity:
+          format: double
+          type: number
+        tierCost:
+          format: double
+          type: number
+        tierEnd:
+          format: int64
+          type: integer
+        tierStart:
+          format: int64
+          type: integer
+        unitPrice:
+          format: double
+          type: number
+      type: object
     TagtypesGettableTag:
       properties:
         key:
@@ -14441,6 +14551,197 @@ paths:
       summary: Get stats
       tags:
       - stats
+  /api/v1/subscriptions:
+    get:
+      deprecated: false
+      description: This endpoint gets the organization's subscription along with its
+        usage and billing details.
+      operationId: GetSubscription
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SubscriptiontypesGettableSubscriptionUsage'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - subscription:read
+      - tokenizer:
+        - subscription:read
+      summary: Get the subscription.
+      tags:
+      - subscriptions
+    post:
+      deprecated: false
+      description: This endpoint creates a subscription for the organization.
+      operationId: CreateSubscription
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptiontypesPostableSubscription'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SubscriptiontypesGettableSubscription'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - subscription:create
+      - tokenizer:
+        - subscription:create
+      summary: Create a subscription.
+      tags:
+      - subscriptions
+    put:
+      deprecated: false
+      description: This endpoint updates the organization's subscription.
+      operationId: UpdateSubscription
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptiontypesPostableSubscription'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SubscriptiontypesGettableSubscription'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - subscription:list
+        - subscription:update
+      - tokenizer:
+        - subscription:list
+        - subscription:update
+      summary: Update the subscription.
+      tags:
+      - subscriptions
   /api/v1/testChannel:
     post:
       deprecated: true
