@@ -301,7 +301,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 									View Billing
 								</Button>
 
-								<RefreshPaymentStatus />
+								<RefreshPaymentStatus withPortal={false} />
 							</Flex>
 
 							<Button

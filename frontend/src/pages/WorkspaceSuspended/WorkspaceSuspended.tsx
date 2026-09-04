@@ -135,7 +135,7 @@ function WorkspaceSuspended(): JSX.Element {
 											{t('continueMyJourney')}
 										</Button>
 									</AuthZTooltip>
-									<RefreshPaymentStatus />
+									<RefreshPaymentStatus withPortal={false} />
 								</Flex>
 							</Row>
 							<div className="workspace-suspended__creative">
