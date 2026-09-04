@@ -58,10 +58,4 @@ type Handler interface {
 	GetHosts(http.ResponseWriter, *http.Request)
 
 	PutHost(http.ResponseWriter, *http.Request)
-
-	Checkout(http.ResponseWriter, *http.Request)
-
-	Portal(http.ResponseWriter, *http.Request)
-
-	GetMeters(http.ResponseWriter, *http.Request)
 }
