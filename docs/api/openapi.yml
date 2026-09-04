@@ -14612,8 +14612,7 @@ paths:
       - subscriptions
     post:
       deprecated: false
-      description: This endpoint creates a subscription for the organization and returns
-        the URL where it is completed.
+      description: This endpoint creates a subscription for the organization.
       operationId: CreateSubscription
       requestBody:
         content:
@@ -14681,8 +14680,7 @@ paths:
       - subscriptions
     put:
       deprecated: false
-      description: This endpoint updates the organization's subscription and returns
-        the URL where it is managed.
+      description: This endpoint updates the organization's subscription.
       operationId: UpdateSubscription
       requestBody:
         content:
