@@ -52,8 +52,10 @@ var (
 			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 			ValueType: schema.ColumnTypeString,
 		}},
-		"resource": {Name: "resource", Type: schema.JSONColumnType{}},
-		"scope":    {Name: "scope", Type: schema.JSONColumnType{}},
+		"resource":            {Name: "resource", Type: schema.JSONColumnType{}},
+		"scope":               {Name: "scope", Type: schema.JSONColumnType{}},
+		"attributes":          {Name: "attributes", Type: schema.JSONColumnType{}},
+		"attributes_promoted": {Name: "attributes_promoted", Type: schema.JSONColumnType{}},
 
 		"events": {Name: "events", Type: schema.ArrayColumnType{
 			ElementType: schema.ColumnTypeString,
@@ -184,16 +186,28 @@ func (m *fieldMapper) getColumn(
 	case telemetrytypes.FieldContextScope:
 		return []*schema.Column{indexV3Columns["scope"]}, nil
 	case telemetrytypes.FieldContextAttribute:
+		var mapCol *schema.Column
 		switch key.FieldDataType {
 		case telemetrytypes.FieldDataTypeString:
-			return []*schema.Column{indexV3Columns["attributes_string"]}, nil
+			mapCol = indexV3Columns["attributes_string"]
 		case telemetrytypes.FieldDataTypeInt64,
 			telemetrytypes.FieldDataTypeFloat64,
 			telemetrytypes.FieldDataTypeNumber:
-			return []*schema.Column{indexV3Columns["attributes_number"]}, nil
+			mapCol = indexV3Columns["attributes_number"]
 		case telemetrytypes.FieldDataTypeBool:
-			return []*schema.Column{indexV3Columns["attributes_bool"]}, nil
+			mapCol = indexV3Columns["attributes_bool"]
+		default:
+			return nil, qbtypes.ErrColumnNotFound
 		}
+		// The `attributes` evolution entry is the rollout control.
+		if attributeColumnEvolutionRegistered(key, SpanAttributesColumn) {
+			cols := make([]*schema.Column, 0, 3)
+			if attributeColumnEvolutionRegistered(key, SpanAttributesPromotedColumn) {
+				cols = append(cols, indexV3Columns["attributes_promoted"])
+			}
+			return append(cols, indexV3Columns["attributes"], mapCol), nil
+		}
+		return []*schema.Column{mapCol}, nil
 	case telemetrytypes.FieldContextSpan:
 		// Check if this is a span scope field
 		if strings.ToLower(key.Name) == SpanSearchScopeRoot || strings.ToLower(key.Name) == SpanSearchScopeEntryPoint {
@@ -260,7 +274,7 @@ func (m *fieldMapper) FieldFor(
 		for i, expr := range exprs {
 			finalExprs = append(finalExprs, fmt.Sprintf("%s, %s", existExpr[i], expr))
 		}
-		return "multiIf(" + strings.Join(finalExprs, ", ") + ", NULL)", nil
+		return fmt.Sprintf("multiIf(%s, NULL)", strings.Join(finalExprs, ", ")), nil
 	}
 
 	// should not reach here
@@ -309,8 +323,13 @@ func (m *fieldMapper) resolveColumnExprs(
 					exprs = append(exprs, fmt.Sprintf("%s.attributes.%s::String", columnName, querybuilder.ClickHouseIdentifier(attributeName)))
 					existExprs = append(existExprs, fmt.Sprintf("%s.attributes.%s IS NOT NULL", columnName, querybuilder.ClickHouseIdentifier(attributeName)))
 				}
+			case telemetrytypes.FieldContextAttribute:
+				path := fmt.Sprintf("%s.%s", columnName, querybuilder.ClickHouseIdentifier(key.Name))
+				expr, existExpr := attributeJSONValueExpr(path, key.FieldDataType)
+				exprs = append(exprs, expr)
+				existExprs = append(existExprs, existExpr)
 			default:
-				return nil, nil, nil, errors.NewInternalf(errors.CodeInternal, "only resource and scope context fields are supported for json columns, got %s", key.FieldContext.String)
+				return nil, nil, nil, errors.NewInternalf(errors.CodeInternal, "only resource, scope and attribute context fields are supported for json columns, got %s", key.FieldContext.String)
 			}
 		case schema.ColumnTypeEnumString,
 			schema.ColumnTypeEnumUInt64,
@@ -351,6 +370,39 @@ func (m *fieldMapper) resolveColumnExprs(
 	}
 
 	return exprs, existExprs, columns, nil
+}
+
+// attributeColumnEvolutionRegistered reports whether key carries an evolution entry for the given column.
+func attributeColumnEvolutionRegistered(key *telemetrytypes.TelemetryFieldKey, columnName string) bool {
+	for _, e := range key.Evolutions {
+		if e != nil && e.ColumnName == columnName {
+			return true
+		}
+	}
+	return false
+}
+
+// attributeJSONValueExpr renders the value expression for a span attribute read from the JSON
+// column along with its per-type existence guard.
+// Numeric and bool gate a crash-safe accurateCastOrNull by dynamicType: the cast alone coerces
+// across domains (bool true reads 1, '200' reads 200, 200.5 reads true), so the read is
+// restricted to values stored as that type — the per-type separation the typed maps gave
+// structurally. Being NULL-capable, the gated read itself is the existence guard (present AS
+// THIS TYPE). Other reads are total (::String folds absent to '' on the raw path), so the
+// guard is presence on the raw path.
+func attributeJSONValueExpr(path string, dataType telemetrytypes.FieldDataType) (string, string) {
+	switch dataType {
+	case telemetrytypes.FieldDataTypeInt64,
+		telemetrytypes.FieldDataTypeFloat64,
+		telemetrytypes.FieldDataTypeNumber:
+		expr := fmt.Sprintf("if(dynamicType(%s) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(%s, 'Float64'), NULL)", path, path) // all numeric types to float64 like attributes_number map.
+		return expr, expr + " IS NOT NULL"
+	case telemetrytypes.FieldDataTypeBool:
+		expr := fmt.Sprintf("if(dynamicType(%s) = 'Bool', accurateCastOrNull(%s, 'Bool'), NULL)", path, path)
+		return expr, expr + " IS NOT NULL"
+	default:
+		return path + "::String", fmt.Sprintf("%s IS NOT NULL", path)
+	}
 }
 
 // upgradeToFamilies swaps single-member candidates for their family when the
@@ -439,6 +491,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 	// Group-by/order (String) and aggregation (String/Float64): every candidate is
 	// exists-guarded and coerced to requiredDataType, in a single multiIf. Raw select
 	// (Unspecified) keeps the lighter native shape below.
+
 	if requiredDataType != telemetrytypes.FieldDataTypeUnspecified {
 		var dummyValue any = ""
 		if requiredDataType == telemetrytypes.FieldDataTypeFloat64 {
@@ -446,11 +499,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 		}
 		stmts := make([]string, 0, len(candidates)*2)
 		for _, logical := range candidates {
-			value, err := querybuilder.LogicalValueExpr(ctx, orgID, startNs, endNs, m, logical)
-			if err != nil {
-				return "", err
-			}
-			guard, err := querybuilder.LogicalExistsExpr(ctx, orgID, startNs, endNs, m, logical, true)
+			value, guard, err := m.branchValueAndGuard(ctx, orgID, startNs, endNs, logical)
 			if err != nil {
 				return "", err
 			}
@@ -487,11 +536,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 	// stringified so branches share a type.
 	args := make([]string, 0, len(candidates))
 	for _, logical := range candidates {
-		value, err := querybuilder.LogicalValueExpr(ctx, orgID, startNs, endNs, m, logical)
-		if err != nil {
-			return "", err
-		}
-		guard, err := querybuilder.LogicalExistsExpr(ctx, orgID, startNs, endNs, m, logical, true)
+		value, guard, err := m.branchValueAndGuard(ctx, orgID, startNs, endNs, logical)
 		if err != nil {
 			return "", err
 		}
@@ -500,7 +545,41 @@ func (m *fieldMapper) ColumnExpressionFor(
 	return fmt.Sprintf("multiIf(%s, NULL)", strings.Join(args, ", ")), nil
 }
 
+// branchValueAndGuard resolves a candidate's value expression and branch guard. A
+// single-column attribute candidate takes both from one column resolution: the guard is
+// the per-type existence (on the JSON column, the cast itself for numeric/bool), so a row
+// stored as another type falls through to the branch that renders it. Families and
+// multi-column (straddle) candidates keep the presence guard from LogicalExistsExpr.
+func (m *fieldMapper) branchValueAndGuard(ctx context.Context,
+	orgID valuer.UUID,
+	startNs, endNs uint64,
+	logical *telemetrytypes.LogicalField,
+) (string, string, error) {
+	if !logical.IsFamily() {
+		member := logical.Single()
+		if member.FieldContext == telemetrytypes.FieldContextAttribute {
+			exprs, existExprs, _, err := m.resolveColumnExprs(ctx, startNs, endNs, member)
+			if err != nil {
+				return "", "", err
+			}
+			if len(exprs) == 1 && len(existExprs) == 1 {
+				return exprs[0], existExprs[0], nil
+			}
+		}
+	}
+	value, err := querybuilder.LogicalValueExpr(ctx, orgID, startNs, endNs, m, logical)
+	if err != nil {
+		return "", "", err
+	}
+	guard, err := querybuilder.LogicalExistsExpr(ctx, orgID, startNs, endNs, m, logical, true)
+	if err != nil {
+		return "", "", err
+	}
+	return value, guard, nil
+}
+
 // logicalIsTemporal reports whether the logical field resolves to a single time
+
 // column. A family is attribute-backed and never temporal.
 func (m *fieldMapper) logicalIsTemporal(ctx context.Context, startNs, endNs uint64, logical *telemetrytypes.LogicalField) (bool, error) {
 	if logical.IsFamily() {

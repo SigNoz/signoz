@@ -292,6 +292,7 @@ class Traces(ABC):
     events: list[dict[str, Any]]
     links: list[dict[str, Any]]
     resource_json: dict[str, str]
+    attributes_json: dict[str, Any]
     response_status_code: str
     external_http_url: str
     http_url: str
@@ -330,6 +331,7 @@ class Traces(ABC):
         flags: np.uint32 = 0,
         scope: dict[str, Any] = {},
         resource_write_mode: Literal["legacy_only", "dual_write"] = "dual_write",
+        attribute_write_mode: Literal["legacy_only", "dual_write"] = "dual_write",
     ) -> None:
         if timestamp is None:
             timestamp = datetime.datetime.now()
@@ -510,6 +512,11 @@ class Traces(ABC):
                     )
                 )
 
+        # Spans before the attribute JSON-evolution time populate only the legacy
+        # attributes_{string,number,bool} maps; spans at or after it dual-write the
+        # native-typed `attributes` JSON column too.
+        self.attributes_json = {} if attribute_write_mode == "legacy_only" else dict(attributes)
+
         # Process events and derive error events. self.events holds the parsed
         # response shape; np_arr() encodes back to the DB format on insert.
         self.events = []
@@ -689,6 +696,7 @@ class Traces(ABC):
                 self.is_remote,
                 self.resource_json,
                 self.scope_json,
+                self.attributes_json,
             ],
             dtype=object,
         )
@@ -860,6 +868,7 @@ def insert_traces_to_clickhouse(conn, traces: list[Traces]) -> None:
             "is_remote",
             "resource",
             "scope",
+            "attributes",
         ],
         data=[trace.np_arr() for trace in traces],
     )
@@ -920,6 +929,37 @@ def insert_traces(
     truncate_traces_tables(
         clickhouse.conn,
         clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"],
+    )
+
+
+def insert_attribute_evolution_to_clickhouse(conn, signal: str, release_time: datetime.datetime) -> None:
+    """Seed the `attributes` JSON column-evolution row for a signal at release_time. Unlike the
+    resource row (seeded by the migrator at install), the attribute JSON rollout is install-specific
+    and not migrator-seeded, so tests insert it to gate map-vs-JSON resolution across a window."""
+    conn.command(
+        """
+        INSERT INTO signoz_metadata.distributed_column_evolution_metadata
+            (signal, column_name, column_type, field_context, field_name, version, release_time)
+        VALUES (%(signal)s, 'attributes', 'JSON()', 'attribute', '__all__', 1, %(release_time_ns)s)
+        """,
+        parameters={"signal": signal, "release_time_ns": int(release_time.timestamp() * 1e9)},
+    )
+
+
+@pytest.fixture(name="seed_attribute_evolution", scope="function")
+def seed_attribute_evolution(
+    clickhouse: types.TestContainerClickhouse,
+) -> Generator[Callable[[str, datetime.datetime], None], Any]:
+    def _seed(signal: str, release_time: datetime.datetime) -> None:
+        insert_attribute_evolution_to_clickhouse(clickhouse.conn, signal, release_time)
+
+    yield _seed
+
+    cluster = clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"]
+    clickhouse.conn.query(
+        f"ALTER TABLE signoz_metadata.column_evolution_metadata ON CLUSTER '{cluster}' "
+        "DELETE WHERE column_name = 'attributes' AND field_context = 'attribute' AND field_name = '__all__' "
+        "SETTINGS mutations_sync = 1"
     )
 
 

@@ -40,10 +40,12 @@ const (
 	SpanIsRemoteColumn           = "is_remote"
 
 	// Contextual Columns.
-	SpanAttributesStringColumn = "attributes_string"
-	SpanAttributesNumberColumn = "attributes_number"
-	SpanAttributesBoolColumn   = "attributes_bool"
-	SpanResourcesStringColumn  = "resources_string"
+	SpanAttributesStringColumn   = "attributes_string"
+	SpanAttributesNumberColumn   = "attributes_number"
+	SpanAttributesBoolColumn     = "attributes_bool"
+	SpanAttributesColumn         = "attributes"
+	SpanAttributesPromotedColumn = "attributes_promoted"
+	SpanResourcesStringColumn    = "resources_string"
 )
 
 var (

@@ -2500,13 +2500,15 @@ func (k *telemetryMetaStore) updateColumnEvolutionMetadataForKeys(ctx context.Co
 				FieldContext: key.FieldContext,
 				FieldName:    "__all__",
 			}
-			// first check if there is evolutions that with field name as __all__
-			if keyEvolutions, ok := evolutionsByUniqueKey[selector.QualifiedName()]; ok {
-				keysToUpdate[i].Evolutions = keyEvolutions
-			}
-			// then check for specific field name
+			// the per-field entries add to the column-wide ones, they don't replace them.
+			// NOTE: if a field evolved to its own column before an __all__ migration for the
+			// same signal+context, that later __all__ entry does not really apply to this field
+			// (the field had already moved). We ignore that case as it does not occur currently.
+			var keyEvolutions []*telemetrytypes.EvolutionEntry
+			keyEvolutions = append(keyEvolutions, evolutionsByUniqueKey[selector.QualifiedName()]...)
 			selector.FieldName = key.Name
-			if keyEvolutions, ok := evolutionsByUniqueKey[selector.QualifiedName()]; ok {
+			keyEvolutions = append(keyEvolutions, evolutionsByUniqueKey[selector.QualifiedName()]...)
+			if len(keyEvolutions) > 0 {
 				keysToUpdate[i].Evolutions = keyEvolutions
 			}
 		}

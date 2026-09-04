@@ -396,14 +396,15 @@ func (m *MockMetadataStore) updateColumnEvolutionMetadataForKeys(_ context.Conte
 			FieldContext: selector.FieldContext,
 			FieldName:    "__all__",
 		}
-		key := sel.QualifiedName()
-		if entries, exists := m.ColumnEvolutionMetadataMap[key]; exists {
-			result[key] = entries
-		}
+		// column-wide (__all__) homes plus this field's own homes, appended not replaced,
+		// mirroring the real store
+		var evolutions []*telemetrytypes.EvolutionEntry
+		evolutions = append(evolutions, m.ColumnEvolutionMetadataMap[sel.QualifiedName()]...)
 		sel.FieldName = metadataKeySelectors[i].FieldName
-		key = sel.QualifiedName()
-		if entries, exists := m.ColumnEvolutionMetadataMap[key]; exists {
-			result[key] = entries
+		evolutions = append(evolutions, m.ColumnEvolutionMetadataMap[sel.QualifiedName()]...)
+		if len(evolutions) > 0 {
+			keysToUpdate[i].Evolutions = evolutions
+			result[sel.QualifiedName()] = evolutions
 		}
 	}
 	return result
