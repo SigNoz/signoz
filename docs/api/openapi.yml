@@ -3064,9 +3064,19 @@ components:
       - tags
       - spec
       type: object
+    DashboardtypesHeatmapAxes:
+      properties:
+        yScale:
+          $ref: '#/components/schemas/DashboardtypesHeatmapYScale'
+      type: object
+    DashboardtypesHeatmapChartAppearance:
+      properties:
+        colors:
+          $ref: '#/components/schemas/DashboardtypesHeatmapColors'
+      type: object
     DashboardtypesHeatmapColorMode:
       enum:
-      - scheme
+      - palette
       - opacity
       type: string
     DashboardtypesHeatmapColorScale:
@@ -3079,43 +3089,54 @@ components:
       properties:
         fill:
           type: string
-        max:
+        maxCount:
           nullable: true
           type: number
-        min:
+        minCount:
           nullable: true
           type: number
         mode:
           $ref: '#/components/schemas/DashboardtypesHeatmapColorMode'
-        reverse:
-          type: boolean
+        palette:
+          $ref: '#/components/schemas/DashboardtypesHeatmapPalette'
         scale:
           $ref: '#/components/schemas/DashboardtypesHeatmapColorScale'
-        scheme:
-          type: string
         steps:
           type: integer
       type: object
+    DashboardtypesHeatmapPalette:
+      enum:
+      - ice
+      - moss
+      - rust
+      - graphite
+      - ember
+      - lagoon
+      - orchid
+      - verdant
+      - lava
+      - beacon
+      type: string
     DashboardtypesHeatmapPanelSpec:
       properties:
-        colors:
-          $ref: '#/components/schemas/DashboardtypesHeatmapColors'
+        axes:
+          $ref: '#/components/schemas/DashboardtypesHeatmapAxes'
+        chartAppearance:
+          $ref: '#/components/schemas/DashboardtypesHeatmapChartAppearance'
         formatting:
           $ref: '#/components/schemas/DashboardtypesPanelFormatting'
         legend:
           $ref: '#/components/schemas/DashboardtypesLegend'
-        showOverflow:
-          type: boolean
         visualization:
-          $ref: '#/components/schemas/DashboardtypesHeatmapVisualization'
+          $ref: '#/components/schemas/DashboardtypesBasicVisualization'
       type: object
-    DashboardtypesHeatmapVisualization:
-      properties:
-        showVisualMap:
-          type: boolean
-        timePreference:
-          $ref: '#/components/schemas/DashboardtypesTimePreference'
-      type: object
+    DashboardtypesHeatmapYScale:
+      enum:
+      - auto
+      - linear
+      - log
+      - symlog
+      type: string
     DashboardtypesHistogramBuckets:
       properties:
         bucketCount:
