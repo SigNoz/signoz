@@ -161,7 +161,22 @@ describe('ActionsPopover - AuthZ', () => {
 	});
 
 	describe('locked dashboard', () => {
-		// Lock wins over permission: it is what an edit-capable user can act on.
+		// Access before state: without the permission, the lock is the wrong thing
+		// to point at.
+		it('reports the permission, not the lock, without edit rights', async () => {
+			server.use(setupAuthzDeny(buildDashboardUpdatePermission(DASHBOARD_ID)));
+
+			render(<ActionsPopover {...baseProps} isLocked />);
+			await openMenu();
+
+			await waitFor(() => {
+				expect(deniedScopes('dashboard-action-rename')).toContain(
+					buildDashboardUpdatePermission(DASHBOARD_ID),
+				);
+			});
+			expect(screen.getByTestId('dashboard-action-rename')).toBeDisabled();
+		});
+
 		it('reports the lock, not the permission, for an editor', async () => {
 			server.use(setupAuthzAdmin());
 

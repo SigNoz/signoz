@@ -82,14 +82,15 @@ function DeleteActionItem({
 		});
 	}, [confirmDelete, dashboardName, runDelete]);
 
-	// Lock wins over permission: it is the thing a delete-capable user can act on.
+	// Access before state: the lock only matters to someone who could otherwise
+	// delete it.
 	const tooltip = ((): string => {
-		if (isLocked) {
-			return canDelete
-				? t('dashboard:locked_dashboard_delete_tooltip_admin_author')
-				: t('dashboard:locked_dashboard_delete_tooltip_editor');
+		if (!canDelete) {
+			return DASHBOARD_NO_DELETE_PERMISSION_REASON;
 		}
-		return canDelete ? '' : DASHBOARD_NO_DELETE_PERMISSION_REASON;
+		return isLocked
+			? t('dashboard:locked_dashboard_delete_tooltip_admin_author')
+			: '';
 	})();
 
 	return (
@@ -98,7 +99,7 @@ function DeleteActionItem({
 			<DisabledReasonTooltip
 				reason={tooltip}
 				side="left"
-				kind={isLocked ? 'blocked' : 'denied'}
+				kind={canDelete && isLocked ? 'blocked' : 'denied'}
 				asChild
 			>
 				<span

@@ -71,6 +71,7 @@ function ActionsPopoverContent({
 	const {
 		isLoading: isLockPermissionLoading,
 		disabledReason: lockDisabledReason,
+		disabledKind: lockDisabledKind,
 	} = useDashboardLockPermission({ dashboardId, createdBy });
 
 	const { clone, isCloning } = useCloneDashboardAction({
@@ -82,15 +83,17 @@ function ActionsPopoverContent({
 		isLocked,
 	});
 
-	// Lock wins over permission: an editor looking at a locked dashboard should be
-	// told about the lock, which is the thing they can act on.
+	// Access before state: someone without the permission needs to hear that, not
+	// that the dashboard is locked. An edit-capable user still gets the lock.
 	let editReason = '';
-	if (isLocked) {
-		editReason = DASHBOARD_LOCKED_REASON;
-	} else if (!canEdit) {
+	if (!canEdit) {
 		editReason = DASHBOARD_NO_EDIT_PERMISSION_REASON;
+	} else if (isLocked) {
+		editReason = DASHBOARD_LOCKED_REASON;
 	}
-	const editDenied = !isLocked && !canEdit;
+	const editDenied = !canEdit;
+	const editKind: 'denied' | 'blocked' =
+		canEdit && isLocked ? 'blocked' : 'denied';
 
 	// Clone reads the source and creates a new dashboard, so it needs both — and
 	// it is not lock-gated, since the copy is a fresh unlocked dashboard.
@@ -162,7 +165,7 @@ function ActionsPopoverContent({
 						icon={<PenLine size={14} />}
 						testId="dashboard-action-rename"
 						reason={editReason}
-						kind={isLocked ? 'blocked' : 'denied'}
+						kind={editKind}
 						deniedPermissions={editDenied ? editChecks : undefined}
 						onClick={onOpenRename}
 					/>
@@ -171,7 +174,7 @@ function ActionsPopoverContent({
 						icon={<Tag size={14} />}
 						testId="dashboard-action-edit-tags"
 						reason={editReason}
-						kind={isLocked ? 'blocked' : 'denied'}
+						kind={editKind}
 						deniedPermissions={editDenied ? editChecks : undefined}
 						onClick={onOpenEditTags}
 					/>
@@ -191,7 +194,7 @@ function ActionsPopoverContent({
 						icon={<LockKeyhole size={14} />}
 						testId="dashboard-action-lock"
 						reason={lockDisabledReason}
-						kind="blocked"
+						kind={lockDisabledKind}
 						loading={isTogglingLock}
 						onClick={toggleLock}
 					/>
