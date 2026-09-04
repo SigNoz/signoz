@@ -153,6 +153,21 @@ function TablePanelRenderer({
 	const [page, setPage] = useState(1);
 	useEffect(() => setPage(1), [searchTerm]);
 
+	// The measured size is only a default; without this the controlled `pageSize`
+	// snaps a size-changer pick straight back to the fitted value.
+	const [selectedPageSize, setSelectedPageSize] = useState<number>();
+	const effectivePageSize = selectedPageSize ?? pageSize;
+
+	const handlePaginationChange = useCallback(
+		(nextPage: number, nextPageSize: number): void => {
+			setPage(nextPage);
+			if (nextPageSize !== effectivePageSize) {
+				setSelectedPageSize(nextPageSize);
+			}
+		},
+		[effectivePageSize],
+	);
+
 	return (
 		<div
 			ref={containerRef}
@@ -170,10 +185,10 @@ function TablePanelRenderer({
 						dataSource={filteredDataSource}
 						pagination={{
 							current: page,
-							pageSize,
+							pageSize: effectivePageSize,
 							hideOnSinglePage: true,
 							size: 'small',
-							onChange: setPage,
+							onChange: handlePaginationChange,
 						}}
 						scroll={{ x: 'max-content', y: scrollY }}
 					/>
