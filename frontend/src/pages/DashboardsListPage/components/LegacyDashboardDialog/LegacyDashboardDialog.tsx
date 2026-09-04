@@ -6,7 +6,10 @@ import { useCopyToClipboard } from 'react-use';
 import { toast } from '@signozhq/ui/sonner';
 import logEvent from 'api/common/logEvent';
 import { handleContactSupport } from 'container/Integrations/utils';
+import { DASHBOARD_NO_EDIT_PERMISSION_REASON } from 'hooks/dashboards/dashboardPermissionReasons';
+import { useDashboardPermissions } from 'hooks/dashboards/useDashboardPermissions';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
 
 import { useRetryMigration } from '../../hooks/useRetryMigration';
@@ -17,26 +20,25 @@ interface LegacyDashboardDialogProps {
 	open: boolean;
 	dashboardId: string;
 	dashboardName: string;
-	canEdit: boolean;
 	onClose: () => void;
 }
 
 /**
  * Explains why a legacy (pre-v2) dashboard can't be opened in the new experience
  * and offers to re-run the migration. Legacy rows are surfaced by the list API
- * with `legacy: true` but have no v2 spec to render. Retrying needs edit access,
- * so viewers only get the dashboard ID to share with support.
+ * with `legacy: true` but have no v2 spec to render. Retrying runs a migrate
+ * call, which the backend gates on dashboard:update.
  */
 function LegacyDashboardDialog({
 	open,
 	dashboardId,
 	dashboardName,
-	canEdit,
 	onClose,
 }: LegacyDashboardDialogProps): JSX.Element {
 	const [, copyToClipboard] = useCopyToClipboard();
 	const { isCloudUser } = useGetTenantLicense();
 	const { retryMigration, isMigrating } = useRetryMigration(onClose);
+	const { canEdit, editChecks } = useDashboardPermissions(dashboardId);
 
 	const onCopyId = (): void => {
 		copyToClipboard(dashboardId);
@@ -95,20 +97,21 @@ function LegacyDashboardDialog({
 					>
 						Contact Support
 					</Button>
-					{canEdit && (
-						<Button
-							variant="solid"
-							color="primary"
-							size="md"
-							prefix={<RotateCw size={14} />}
-							disabled={isMigrating}
-							loading={isMigrating}
-							onClick={onRetryMigration}
-							testId="legacy-dashboard-retry-migration"
-						>
-							Retry migration
-						</Button>
-					)}
+					<AuthZButton
+						checks={editChecks}
+						tooltipMessage={DASHBOARD_NO_EDIT_PERMISSION_REASON}
+						withPortal={false}
+						variant="solid"
+						color="primary"
+						size="md"
+						prefix={<RotateCw size={14} />}
+						disabled={isMigrating}
+						loading={isMigrating}
+						onClick={onRetryMigration}
+						testId="legacy-dashboard-retry-migration"
+					>
+						Retry migration
+					</AuthZButton>
 				</div>
 			}
 		>

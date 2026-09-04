@@ -13,18 +13,17 @@ import {
 	invalidateListDashboardsForUserV2,
 } from 'api/generated/services/dashboard';
 import { useDeleteConfirm } from 'components/DeleteConfirmModal/useDeleteConfirm';
+import { DASHBOARD_NO_DELETE_PERMISSION_REASON } from 'hooks/dashboards/dashboardPermissionReasons';
+import { useDashboardPermissions } from 'hooks/dashboards/useDashboardPermissions';
 import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
-import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
-import { USER_ROLES } from 'types/roles';
 
 import styles from './ActionsPopover.module.scss';
 
 interface Props {
 	dashboardId: string;
 	dashboardName: string;
-	createdBy: string;
 	isLocked: boolean;
 	// Delete sits below the other actions, so it leads with a divider. When it's
 	// the only item (a legacy dashboard), the divider is suppressed.
@@ -34,18 +33,19 @@ interface Props {
 function DeleteActionItem({
 	dashboardId,
 	dashboardName,
-	createdBy,
 	isLocked,
 	showDivider = true,
 }: Props): JSX.Element {
 	const { t } = useTranslation(['dashboard']);
-	const { user } = useAppContext();
 	const { showErrorModal } = useErrorModal();
 	const queryClient = useQueryClient();
 	const { contextHolder, confirmDelete } = useDeleteConfirm();
 
-	const isAuthor = user?.email === createdBy;
-	const isDisabled = isLocked || (user.role === USER_ROLES.VIEWER && !isAuthor);
+	// Delete is independent of read/update per the authz guide, so it stays usable
+	// for someone who holds only `delete`.
+	const { canDelete, deletePermission } = useDashboardPermissions(dashboardId);
+	const isDenied = !canDelete;
+	const isDisabled = isLocked || !canDelete;
 
 	const { mutate: runDelete } = useMutation({
 		mutationFn: () => deleteDashboardV2({ id: dashboardId }),
@@ -82,21 +82,24 @@ function DeleteActionItem({
 		});
 	}, [confirmDelete, dashboardName, runDelete]);
 
+	// Lock wins over permission: it is the thing a delete-capable user can act on.
 	const tooltip = ((): string => {
-		if (!isLocked) {
-			return '';
+		if (isLocked) {
+			return canDelete
+				? t('dashboard:locked_dashboard_delete_tooltip_admin_author')
+				: t('dashboard:locked_dashboard_delete_tooltip_editor');
 		}
-		if (user.role === USER_ROLES.ADMIN || isAuthor) {
-			return t('dashboard:locked_dashboard_delete_tooltip_admin_author');
-		}
-		return t('dashboard:locked_dashboard_delete_tooltip_editor');
+		return canDelete ? '' : DASHBOARD_NO_DELETE_PERMISSION_REASON;
 	})();
 
 	return (
 		<>
 			{showDivider && <Divider />}
 			<Tooltip placement="left" title={tooltip}>
-				<span className={styles.menuItemWrap}>
+				<span
+					className={styles.menuItemWrap}
+					data-denied-permissions={isDenied ? deletePermission : undefined}
+				>
 					<Button
 						variant="ghost"
 						color="destructive"
