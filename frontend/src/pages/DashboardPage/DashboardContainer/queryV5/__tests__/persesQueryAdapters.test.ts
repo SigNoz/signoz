@@ -7,7 +7,12 @@ import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { envelopesToQuery, fromPerses, toPerses } from '../persesQueryAdapters';
+import {
+	envelopesToQuery,
+	fromPerses,
+	panelTypeToRequestType,
+	toPerses,
+} from '../persesQueryAdapters';
 
 /** A bare perses query (single plugin, not wrapped in a CompositeQuery). */
 function bareQuery(
@@ -21,6 +26,23 @@ function bareQuery(
 }
 
 describe('persesQueryAdapters', () => {
+	describe('panelTypeToRequestType', () => {
+		it.each([
+			[PANEL_TYPES.TIME_SERIES, 'time_series'],
+			// HISTOGRAM and BAR bin client-side from time-series data; sending
+			// 'distribution' would return a shape the renderers can't bin.
+			[PANEL_TYPES.BAR, 'time_series'],
+			[PANEL_TYPES.HISTOGRAM, 'time_series'],
+			[PANEL_TYPES.TABLE, 'scalar'],
+			[PANEL_TYPES.PIE, 'scalar'],
+			[PANEL_TYPES.VALUE, 'scalar'],
+			[PANEL_TYPES.LIST, 'raw'],
+			[PANEL_TYPES.TRACE, 'trace'],
+		])('%s → %s', (panelType, requestType) => {
+			expect(panelTypeToRequestType(panelType)).toBe(requestType);
+		});
+	});
+
 	describe('fromPerses', () => {
 		it('returns a fresh metrics builder query for an empty panel', () => {
 			const query = fromPerses([], PANEL_TYPES.TIME_SERIES);

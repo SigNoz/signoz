@@ -33,7 +33,12 @@ function panelWith(
 	timePreference?: DashboardtypesTimePreferenceDTO,
 ): DashboardtypesPanelDTO {
 	return {
-		spec: { plugin: { spec: { visualization: { timePreference } } } },
+		spec: {
+			plugin: {
+				kind: 'signoz/TimeSeriesPanel',
+				spec: { visualization: { timePreference } },
+			},
+		},
 	} as unknown as DashboardtypesPanelDTO;
 }
 
@@ -44,7 +49,7 @@ describe('NoData', () => {
 	});
 
 	it('renders the empty-state title and hint', () => {
-		render(<NoData />);
+		render(<NoData panel={panelWith()} />);
 
 		expect(screen.getByTestId('panel-no-data')).toBeInTheDocument();
 		expect(screen.getByText('No data in this time range')).toBeInTheDocument();
@@ -55,7 +60,7 @@ describe('NoData', () => {
 
 	it('offers to extend the window as the primary action', () => {
 		mockUseExtendTimeWindow.mockReturnValue(extender());
-		render(<NoData />);
+		render(<NoData panel={panelWith()} />);
 
 		const action = screen.getByTestId('panel-no-data-action');
 		expect(action).toHaveTextContent('Extend time range');
@@ -68,7 +73,7 @@ describe('NoData', () => {
 	it('renders both Extend (primary) and Retry (secondary) when a retry handler is given', () => {
 		const onRetry = jest.fn();
 		mockUseExtendTimeWindow.mockReturnValue(extender());
-		render(<NoData onRetry={onRetry} />);
+		render(<NoData onRetry={onRetry} panel={panelWith()} />);
 
 		expect(screen.getByTestId('panel-no-data-action')).toHaveTextContent(
 			'Extend time range',
@@ -82,7 +87,7 @@ describe('NoData', () => {
 
 	it('falls back to Retry as the sole action when the window cannot be widened', () => {
 		const onRetry = jest.fn();
-		render(<NoData onRetry={onRetry} />);
+		render(<NoData onRetry={onRetry} panel={panelWith()} />);
 
 		const action = screen.getByTestId('panel-no-data-action');
 		expect(action).toHaveTextContent('Retry');
@@ -101,7 +106,7 @@ describe('NoData', () => {
 		useViewPanelStore.setState({
 			viewPanelExtendWindow: extender({ extend: storeExtend }),
 		});
-		render(<NoData />);
+		render(<NoData panel={panelWith()} />);
 
 		fireEvent.click(screen.getByTestId('panel-no-data-action'));
 		expect(storeExtend).toHaveBeenCalledTimes(1);
@@ -109,7 +114,7 @@ describe('NoData', () => {
 	});
 
 	it('renders no action when nothing can be widened and no retry handler', () => {
-		render(<NoData />);
+		render(<NoData panel={panelWith()} />);
 
 		expect(screen.queryByTestId('panel-no-data-action')).not.toBeInTheDocument();
 		expect(
@@ -119,7 +124,7 @@ describe('NoData', () => {
 
 	it('shows the panel loader (not the empty state) while refetching', () => {
 		mockUseExtendTimeWindow.mockReturnValue(extender());
-		render(<NoData isFetching />);
+		render(<NoData isFetching panel={panelWith()} />);
 
 		expect(screen.getByTestId('panel-loading')).toBeInTheDocument();
 		expect(screen.queryByTestId('panel-no-data')).not.toBeInTheDocument();
@@ -128,7 +133,7 @@ describe('NoData', () => {
 
 	it('honours the data-testid override for the number panel', () => {
 		mockUseExtendTimeWindow.mockReturnValue(extender());
-		render(<NoData data-testid="number-panel-no-data" />);
+		render(<NoData data-testid="number-panel-no-data" panel={panelWith()} />);
 
 		expect(screen.getByTestId('number-panel-no-data')).toBeInTheDocument();
 	});

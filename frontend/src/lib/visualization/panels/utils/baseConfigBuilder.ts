@@ -14,6 +14,7 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import uPlot from 'uplot';
 
 import { PanelMode } from 'lib/visualization/panels/types';
+import { plotsTimeOnXAxis } from 'lib/visualization/panels/utils/panelAxis';
 
 export interface BaseConfigBuilderProps {
 	id: string;
@@ -124,7 +125,7 @@ export function buildBaseConfig({
 		side: 2,
 		isDarkMode,
 		isLogScale,
-		panelType,
+		isTimeAxis: plotsTimeOnXAxis(panelType),
 	});
 
 	builder.addAxis({
@@ -134,7 +135,6 @@ export function buildBaseConfig({
 		isDarkMode,
 		isLogScale,
 		yAxisUnit,
-		panelType,
 	});
 
 	return builder;

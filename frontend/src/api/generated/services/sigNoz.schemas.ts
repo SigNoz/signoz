@@ -11034,6 +11034,153 @@ export interface SpantypesUpdatableSpanMapperGroupDTO {
 	name?: string | null;
 }
 
+export interface SubscriptiontypesGettableSubscriptionDTO {
+	/**
+	 * @type string
+	 */
+	redirectURL: string;
+}
+
+export interface SubscriptiontypesSubscriptionUsageDayWiseDataDTO {
+	/**
+	 * @type number
+	 * @format double
+	 */
+	count?: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	quantity?: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	size?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	timestamp?: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	total?: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	unitPrice?: number;
+}
+
+export interface SubscriptiontypesSubscriptionUsageDayWiseBreakdownDTO {
+	/**
+	 * @type array,null
+	 */
+	breakdown?: SubscriptiontypesSubscriptionUsageDayWiseDataDTO[] | null;
+	/**
+	 * @type string
+	 */
+	type?: string;
+}
+
+export interface SubscriptiontypesSubscriptionUsageTierDTO {
+	/**
+	 * @type number
+	 * @format double
+	 */
+	quantity?: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	tierCost?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	tierEnd?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	tierStart?: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	unitPrice?: number;
+}
+
+export interface SubscriptiontypesSubscriptionUsageBreakdownDTO {
+	dayWiseBreakdown?: SubscriptiontypesSubscriptionUsageDayWiseBreakdownDTO;
+	/**
+	 * @type array,null
+	 */
+	tiers?: SubscriptiontypesSubscriptionUsageTierDTO[] | null;
+	/**
+	 * @type string
+	 */
+	type?: string;
+	/**
+	 * @type string
+	 */
+	unit?: string;
+}
+
+export interface SubscriptiontypesSubscriptionUsageDetailsDTO {
+	/**
+	 * @type number
+	 * @format double
+	 */
+	baseFee?: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	billTotal?: number;
+	/**
+	 * @type array,null
+	 */
+	breakdown?: SubscriptiontypesSubscriptionUsageBreakdownDTO[] | null;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	total?: number;
+}
+
+export interface SubscriptiontypesGettableSubscriptionUsageDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	billingPeriodEnd?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	billingPeriodStart?: number;
+	details?: SubscriptiontypesSubscriptionUsageDetailsDTO;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	discount?: number;
+	/**
+	 * @type string
+	 */
+	subscriptionStatus?: string;
+}
+
+export interface SubscriptiontypesPostableSubscriptionDTO {
+	/**
+	 * @type string
+	 */
+	url: string;
+}
+
 export type TelemetrytypesGettableFieldKeysDTOKeysAnyOf = {
 	[key: string]: TelemetrytypesTelemetryFieldKeyDTO[];
 };
@@ -12246,6 +12393,30 @@ export type GetStats200 = {
 	 * @type object
 	 */
 	data: GetStats200Data;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetSubscription200 = {
+	data: SubscriptiontypesGettableSubscriptionUsageDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateSubscription201 = {
+	data: SubscriptiontypesGettableSubscriptionDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateSubscription200 = {
+	data: SubscriptiontypesGettableSubscriptionDTO;
 	/**
 	 * @type string
 	 */

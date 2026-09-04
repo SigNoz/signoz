@@ -5,6 +5,7 @@ import { definition as PieChart } from './kinds/PieChartPanel/definition';
 import { definition as TimeSeries } from './kinds/TimeSeriesPanel/definition';
 import { definition as Table } from './kinds/TablePanel/definition';
 import { definition as List } from './kinds/ListPanel/definition';
+import { UNSUPPORTED_PANEL } from './kinds/UnsupportedPanel/definition';
 import type {
 	PanelRegistry,
 	RenderablePanelDefinition,
@@ -22,8 +23,24 @@ export const PANELS: PanelRegistry = {
 	[List.kind]: List,
 };
 
+/**
+ * Whether this build can render the kind. `PanelKind` spans every kind the API declares,
+ * but a dashboard spec written by a newer SigNoz can name one this client has never heard
+ * of — so ask before doing work on a panel's behalf, such as fetching its data.
+ */
+export function isPanelKindSupported(kind: PanelKind): boolean {
+	return kind in PANELS;
+}
+
+/**
+ * The definition for a kind — always one. An unregistered kind resolves to
+ * {@link UNSUPPORTED_PANEL}, which declares no capabilities and renders as unsupported, so
+ * callers read a definition's fields without first proving it exists.
+ */
 export function getPanelDefinition(kind: PanelKind): RenderablePanelDefinition {
 	// Single intentional cast widening the per-kind Renderer to the kind-agnostic
 	// prop surface (a per-kind renderer can't be statically validated against the union).
-	return PANELS[kind] as RenderablePanelDefinition;
+	return (
+		(PANELS[kind] as RenderablePanelDefinition | undefined) ?? UNSUPPORTED_PANEL
+	);
 }
