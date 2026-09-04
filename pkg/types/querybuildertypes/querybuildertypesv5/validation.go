@@ -847,12 +847,22 @@ func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) err
 	}
 }
 
-// validateHeatmap refuses request shapes a heatmap cannot render. Metric type is
+// validateHeatmap refuses request shapes a heatmap cannot render, and heatmap-only
+// options carried by requests that are not heatmaps. Metric type is
 // deliberately not checked here: MetricAggregation.Type is resolved from metadata
 // after validation runs, so gauge/sum/counter and exponential histograms have to
 // be refused by the querier once that resolution has happened.
 func (r *QueryRangeRequest) validateHeatmap() error {
 	if r.RequestType != RequestTypeHeatmap {
+		// Only the heatmap path reads BucketOptions, so accepting it anywhere else
+		// would drop it without saying so.
+		if r.BucketOptions != nil {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"bucketOptions are only supported for heatmap requests, got %s",
+				r.RequestType,
+			)
+		}
 		return nil
 	}
 
