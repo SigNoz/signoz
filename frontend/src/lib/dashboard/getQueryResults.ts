@@ -226,10 +226,7 @@ export async function GetMetricQueryRange(
 	}
 
 	if (version === ENTITY_VERSION_V5) {
-		const v5Result = prepareQueryRangePayloadV5({
-			...props,
-			dynamicVariables,
-		});
+		const v5Result = prepareQueryRangePayloadV5(props, dynamicVariables);
 		legendMap = v5Result.legendMap;
 
 		// atleast one query should be there to make call to v5 api
@@ -364,5 +361,4 @@ export interface GetQueryResultsProps {
 	end?: number;
 	step?: number;
 	originalGraphType?: PANEL_TYPES;
-	dynamicVariables?: DynamicVariableSuggestion[];
 }

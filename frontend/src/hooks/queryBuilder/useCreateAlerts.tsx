@@ -57,14 +57,16 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 				queryType: widget.query.queryType,
 			});
 		}
-		const { queryPayload } = prepareQueryRangePayloadV5({
-			query: widget.query,
-			globalSelectedInterval,
-			graphType: getGraphType(widget.panelTypes),
-			selectedTime: widget.timePreferance,
-			originalGraphType: widget.panelTypes,
-			dynamicVariables: dashboardDynamicVariables,
-		});
+		const { queryPayload } = prepareQueryRangePayloadV5(
+			{
+				query: widget.query,
+				globalSelectedInterval,
+				graphType: getGraphType(widget.panelTypes),
+				selectedTime: widget.timePreferance,
+				originalGraphType: widget.panelTypes,
+			},
+			dashboardDynamicVariables,
+		);
 		queryRangeMutation.mutate(queryPayload, {
 			onSuccess: (data) => {
 				const updatedQuery = mapQueryDataFromApi(data.data.compositeQuery);

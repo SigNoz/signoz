@@ -46,14 +46,16 @@ function useUpdatedQuery(): UseUpdatedQueryResult {
 			}
 
 			// Prepare query payload with resolved variables
-			const { queryPayload } = prepareQueryRangePayloadV5({
-				query: widgetConfig.query,
-				graphType: getGraphType(widgetConfig.panelTypes),
-				selectedTime: widgetConfig.timePreferance,
-				globalSelectedInterval,
-				originalGraphType: widgetConfig.panelTypes,
-				dynamicVariables: dashboardDynamicVariables,
-			});
+			const { queryPayload } = prepareQueryRangePayloadV5(
+				{
+					query: widgetConfig.query,
+					graphType: getGraphType(widgetConfig.panelTypes),
+					selectedTime: widgetConfig.timePreferance,
+					globalSelectedInterval,
+					originalGraphType: widgetConfig.panelTypes,
+				},
+				dashboardDynamicVariables,
+			);
 
 			// Execute query and process results
 			const queryResult = await queryRangeMutation.mutateAsync(queryPayload);
