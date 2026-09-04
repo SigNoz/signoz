@@ -16,7 +16,7 @@ export default {
 			{
 				kind: 'subscription',
 				type: 'metaresource',
-				allowedVerbs: ['create', 'read', 'update'],
+				allowedVerbs: ['create', 'delete', 'list', 'read', 'update'],
 			},
 			{
 				kind: 'role',
