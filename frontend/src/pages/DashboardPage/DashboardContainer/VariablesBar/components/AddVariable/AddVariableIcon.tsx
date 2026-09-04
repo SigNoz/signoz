@@ -1,6 +1,7 @@
 import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
+import DisabledReasonTooltip from 'lib/authz/components/DisabledReasonTooltip/DisabledReasonTooltip';
 
 import { useDashboardStore } from '../../../store/useDashboardStore';
 import styles from './AddVariable.module.scss';
@@ -12,6 +13,7 @@ import styles from './AddVariable.module.scss';
  */
 interface AddVariableIconProps {
 	disabledReason?: string;
+	disabledKind?: 'denied' | 'blocked';
 }
 
 /**
@@ -21,25 +23,40 @@ interface AddVariableIconProps {
  */
 function AddVariableIcon({
 	disabledReason = '',
+	disabledKind = 'blocked',
 }: AddVariableIconProps): JSX.Element {
 	const requestSettings = useDashboardStore((s) => s.requestSettings);
 
+	const trigger = (
+		<Button
+			variant="outlined"
+			color="secondary"
+			size="icon"
+			className={styles.addVariableIcon}
+			aria-label="Add variable"
+			testId="dashboard-variables-add"
+			disabled={!!disabledReason}
+			onClick={(): void =>
+				requestSettings({ tab: 'Variables', addVariable: true })
+			}
+		>
+			<Plus size={14} />
+		</Button>
+	);
+
+	// A disabled trigger explains itself through the shared reason tooltip; an
+	// enabled one just gets its label.
+	if (disabledReason) {
+		return (
+			<DisabledReasonTooltip reason={disabledReason} kind={disabledKind}>
+				{trigger}
+			</DisabledReasonTooltip>
+		);
+	}
+
 	return (
-		<TooltipSimple side="top" title={disabledReason || 'Add variable'}>
-			<Button
-				variant="outlined"
-				color="secondary"
-				size="icon"
-				className={styles.addVariableIcon}
-				aria-label="Add variable"
-				testId="dashboard-variables-add"
-				disabled={!!disabledReason}
-				onClick={(): void =>
-					requestSettings({ tab: 'Variables', addVariable: true })
-				}
-			>
-				<Plus size={14} />
-			</Button>
+		<TooltipSimple side="top" title="Add variable">
+			{trigger}
 		</TooltipSimple>
 	);
 }

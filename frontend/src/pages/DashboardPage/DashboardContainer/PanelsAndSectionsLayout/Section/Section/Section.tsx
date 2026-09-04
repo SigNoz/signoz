@@ -29,7 +29,8 @@ interface SectionProps {
 }
 
 function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
-	const { isEditable, editDisabledReason } = useDashboardEditContext();
+	const { isEditable, editDisabledReason, disabledKind } =
+		useDashboardEditContext();
 	const {
 		isPickerOpen,
 		openPicker,
@@ -115,7 +116,7 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 					grid
 				) : (
 					<div className={styles.emptySection}>
-						<DisabledControlTooltip reason={editDisabledReason}>
+						<DisabledControlTooltip reason={editDisabledReason} kind={disabledKind}>
 							<Button
 								type="button"
 								variant="dashed"
