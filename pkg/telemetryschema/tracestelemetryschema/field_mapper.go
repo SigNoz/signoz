@@ -372,6 +372,28 @@ func (m *fieldMapper) resolveColumnExprs(
 	return exprs, existExprs, columns, nil
 }
 
+// BulkAttributeColumns returns the physical attribute columns a whole-bag (list-view) read must
+// scan over [startNs, endNs] given the attributes column-evolution entries: the three legacy maps
+// before the JSON rollout, the JSON column after it, and both across the rollout — the same
+// per-window home selection the per-key path uses, applied to the whole column. With no rollout
+// entry it stays on the legacy maps.
+func BulkAttributeColumns(evolutions []*telemetrytypes.EvolutionEntry, startNs, endNs uint64) ([]*schema.Column, error) {
+	maps := []*schema.Column{
+		indexV3Columns["attributes_string"],
+		indexV3Columns["attributes_number"],
+		indexV3Columns["attributes_bool"],
+	}
+	if len(evolutions) == 0 {
+		return maps, nil
+	}
+	family := append([]*schema.Column{indexV3Columns["attributes"]}, maps...)
+	cols, _, err := qbtypes.SelectEvolutionsForColumns(family, evolutions, startNs, endNs)
+	if err != nil {
+		return nil, err
+	}
+	return cols, nil
+}
+
 // attributeColumnEvolutionRegistered reports whether key carries an evolution entry for the given column.
 func attributeColumnEvolutionRegistered(key *telemetrytypes.TelemetryFieldKey, columnName string) bool {
 	for _, e := range key.Evolutions {

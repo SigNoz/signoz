@@ -4,6 +4,10 @@ import (
 	"time"
 )
 
+// EvolutionFieldNameAll is the field_name of a column-wide (whole-signal-context) evolution
+// entry, as opposed to a per-field promotion entry.
+const EvolutionFieldNameAll = "__all__"
+
 type EvolutionEntry struct {
 	Signal       Signal       `json:"signal"`
 	ColumnName   string       `json:"column_name"`
