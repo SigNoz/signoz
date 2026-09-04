@@ -373,6 +373,28 @@ func TestValidateHeatmapRequest(t *testing.T) {
 			},
 			expectedErrContains: "fillGaps is not supported",
 		},
+		{
+			description: "bucketOptions on a time series request is refused",
+			request: QueryRangeRequest{
+				Start:         1710000000000,
+				End:           1710003600000,
+				RequestType:   RequestTypeTimeSeries,
+				BucketOptions: &BucketOptions{Kind: BucketsKindLog, Spec: LogBucketsSpec{}},
+				CompositeQuery: CompositeQuery{Queries: []QueryEnvelope{{
+					Type: QueryTypeBuilder,
+					Spec: QueryBuilderQuery[MetricAggregation]{
+						Name:   "A",
+						Signal: telemetrytypes.SignalMetrics,
+						Aggregations: []MetricAggregation{{
+							MetricName:       "http.server.request.duration",
+							TimeAggregation:  metrictypes.TimeAggregationIncrease,
+							SpaceAggregation: metrictypes.SpaceAggregationSum,
+						}},
+					},
+				}}},
+			},
+			expectedErrContains: "bucketOptions are only supported for heatmap requests",
+		},
 	}
 
 	for _, testCase := range testCases {
