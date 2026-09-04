@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from 'react-query';
-import { Tooltip } from 'antd';
 import { Button } from '@signozhq/ui/button';
+import DisabledReasonTooltip from 'lib/authz/components/DisabledReasonTooltip/DisabledReasonTooltip';
 import { Trash2 } from '@signozhq/icons';
 import { toast } from '@signozhq/ui/sonner';
 import { Divider } from '@signozhq/ui/divider';
@@ -95,7 +95,7 @@ function DeleteActionItem({
 	return (
 		<>
 			{showDivider && <Divider />}
-			<Tooltip placement="left" title={tooltip}>
+			<DisabledReasonTooltip reason={tooltip} side="left" asChild>
 				<span
 					className={styles.menuItemWrap}
 					data-denied-permissions={isDenied ? deletePermission : undefined}
@@ -118,7 +118,7 @@ function DeleteActionItem({
 						Delete Dashboard
 					</Button>
 				</span>
-			</Tooltip>
+			</DisabledReasonTooltip>
 			{contextHolder}
 		</>
 	);
