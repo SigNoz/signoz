@@ -239,28 +239,33 @@ type ListPanelSpec struct {
 }
 
 type HeatmapPanelSpec struct {
-	Visualization HeatmapVisualization `json:"visualization"`
-	Formatting    PanelFormatting      `json:"formatting"`
-	Legend        Legend               `json:"legend"`
-	ShowOverflow  bool                 `json:"showOverflow"`
-	Colors        HeatmapColors        `json:"colors"`
+	Visualization   BasicVisualization     `json:"visualization"`
+	Formatting      PanelFormatting        `json:"formatting"`
+	Axes            HeatmapAxes            `json:"axes"`
+	Legend          Legend                 `json:"legend"`
+	ChartAppearance HeatmapChartAppearance `json:"chartAppearance"`
 }
 
-type HeatmapVisualization struct {
-	BasicVisualization
-	ShowVisualMap bool `json:"showVisualMap"`
+// HeatmapAxes carries only the Y scale. The shared Axes type models a value
+// axis with soft bounds, where a heatmap's Y axis is the bucket boundaries the
+// response already fixed.
+type HeatmapAxes struct {
+	YScale HeatmapYScale `json:"yScale"`
+}
+
+type HeatmapChartAppearance struct {
+	Colors HeatmapColors `json:"colors"`
 }
 
 type HeatmapColors struct {
-	Mode  HeatmapColorMode  `json:"mode"`
-	Scale HeatmapColorScale `json:"scale"`
-	// Min and Max clamp the colour scale; nil means derive from the data.
-	Min *float64 `json:"min"`
-	Max *float64 `json:"max"`
-	// Scheme, Steps and Reverse apply in scheme mode.
-	Scheme  string `json:"scheme"`
-	Steps   int    `json:"steps" validate:"omitempty,min=2,max=128"`
-	Reverse bool   `json:"reverse"`
+	Mode    HeatmapColorMode  `json:"mode"`
+	Palette HeatmapPalette    `json:"palette"`
+	Scale   HeatmapColorScale `json:"scale"`
+	Steps   int               `json:"steps" validate:"omitempty,min=2,max=128"`
+	// MinCount and MaxCount clamp the colour scale; nil derives them from the
+	// grid, 0 and the highest count in it.
+	MinCount *float64 `json:"minCount"`
+	MaxCount *float64 `json:"maxCount"`
 	// Fill applies in opacity mode; empty means the selected group's legend colour.
 	Fill string `json:"fill"`
 }
@@ -276,9 +281,9 @@ func (c *HeatmapColors) UnmarshalJSON(data []byte) error {
 }
 
 func (c HeatmapColors) validate() error {
-	if c.Min != nil && c.Max != nil && *c.Min > *c.Max {
+	if c.MinCount != nil && c.MaxCount != nil && *c.MinCount > *c.MaxCount {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
-			"heatmap colors.min %v is greater than colors.max %v", *c.Min, *c.Max)
+			"heatmap colors.minCount %v is greater than colors.maxCount %v", *c.MinCount, *c.MaxCount)
 	}
 	return nil
 }
@@ -759,17 +764,17 @@ func (p *PrecisionOption) UnmarshalJSON(data []byte) error {
 type HeatmapColorMode struct{ valuer.String }
 
 var (
-	HeatmapColorModeScheme  = HeatmapColorMode{valuer.NewString("scheme")} // default
+	HeatmapColorModePalette = HeatmapColorMode{valuer.NewString("palette")} // default
 	HeatmapColorModeOpacity = HeatmapColorMode{valuer.NewString("opacity")}
 )
 
 func (HeatmapColorMode) Enum() []any {
-	return []any{HeatmapColorModeScheme, HeatmapColorModeOpacity}
+	return []any{HeatmapColorModePalette, HeatmapColorModeOpacity}
 }
 
 func (m HeatmapColorMode) ValueOrDefault() string {
 	if m.IsZero() {
-		return HeatmapColorModeScheme.StringValue()
+		return HeatmapColorModePalette.StringValue()
 	}
 	return m.StringValue()
 }
@@ -781,15 +786,105 @@ func (m HeatmapColorMode) MarshalJSON() ([]byte, error) {
 func (m *HeatmapColorMode) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
-		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid heatmap color mode: must be a string, one of `scheme` or `opacity`")
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid heatmap color mode: must be a string, one of `palette` or `opacity`")
 	}
 	mode := HeatmapColorMode{valuer.NewString(v)}
 	switch mode {
-	case HeatmapColorModeScheme, HeatmapColorModeOpacity:
+	case HeatmapColorModePalette, HeatmapColorModeOpacity:
 		*m = mode
 		return nil
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid heatmap color mode %q: must be `scheme` or `opacity`", v)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid heatmap color mode %q: must be `palette` or `opacity`", v)
+	}
+}
+
+type HeatmapPalette struct{ valuer.String }
+
+var (
+	HeatmapPaletteIce      = HeatmapPalette{valuer.NewString("ice")}
+	HeatmapPaletteMoss     = HeatmapPalette{valuer.NewString("moss")}
+	HeatmapPaletteRust     = HeatmapPalette{valuer.NewString("rust")}
+	HeatmapPaletteGraphite = HeatmapPalette{valuer.NewString("graphite")}
+	HeatmapPaletteEmber    = HeatmapPalette{valuer.NewString("ember")}
+	HeatmapPaletteLagoon   = HeatmapPalette{valuer.NewString("lagoon")}
+	HeatmapPaletteOrchid   = HeatmapPalette{valuer.NewString("orchid")}
+	HeatmapPaletteVerdant  = HeatmapPalette{valuer.NewString("verdant")}
+	HeatmapPaletteLava     = HeatmapPalette{valuer.NewString("lava")} // default
+	HeatmapPaletteBeacon   = HeatmapPalette{valuer.NewString("beacon")}
+)
+
+func (HeatmapPalette) Enum() []any {
+	return []any{
+		HeatmapPaletteIce, HeatmapPaletteMoss, HeatmapPaletteRust, HeatmapPaletteGraphite,
+		HeatmapPaletteEmber, HeatmapPaletteLagoon, HeatmapPaletteOrchid, HeatmapPaletteVerdant,
+		HeatmapPaletteLava, HeatmapPaletteBeacon,
+	}
+}
+
+func (p HeatmapPalette) ValueOrDefault() string {
+	if p.IsZero() {
+		return HeatmapPaletteLava.StringValue()
+	}
+	return p.StringValue()
+}
+
+func (p HeatmapPalette) MarshalJSON() ([]byte, error) {
+	return json.Marshal(p.ValueOrDefault())
+}
+
+func (p *HeatmapPalette) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid heatmap palette: must be a string, one of `ice`, `moss`, `rust`, `graphite`, `ember`, `lagoon`, `orchid`, `verdant`, `lava`, or `beacon`")
+	}
+	palette := HeatmapPalette{valuer.NewString(v)}
+	switch palette {
+	case HeatmapPaletteIce, HeatmapPaletteMoss, HeatmapPaletteRust, HeatmapPaletteGraphite,
+		HeatmapPaletteEmber, HeatmapPaletteLagoon, HeatmapPaletteOrchid, HeatmapPaletteVerdant,
+		HeatmapPaletteLava, HeatmapPaletteBeacon:
+		*p = palette
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid heatmap palette %q: must be `ice`, `moss`, `rust`, `graphite`, `ember`, `lagoon`, `orchid`, `verdant`, `lava`, or `beacon`", v)
+	}
+}
+
+type HeatmapYScale struct{ valuer.String }
+
+var (
+	HeatmapYScaleAuto   = HeatmapYScale{valuer.NewString("auto")} // default
+	HeatmapYScaleLinear = HeatmapYScale{valuer.NewString("linear")}
+	HeatmapYScaleLog    = HeatmapYScale{valuer.NewString("log")}
+	HeatmapYScaleSymlog = HeatmapYScale{valuer.NewString("symlog")}
+)
+
+func (HeatmapYScale) Enum() []any {
+	return []any{HeatmapYScaleAuto, HeatmapYScaleLinear, HeatmapYScaleLog, HeatmapYScaleSymlog}
+}
+
+func (s HeatmapYScale) ValueOrDefault() string {
+	if s.IsZero() {
+		return HeatmapYScaleAuto.StringValue()
+	}
+	return s.StringValue()
+}
+
+func (s HeatmapYScale) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.ValueOrDefault())
+}
+
+func (s *HeatmapYScale) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid heatmap y scale: must be a string, one of `auto`, `linear`, `log`, or `symlog`")
+	}
+	scale := HeatmapYScale{valuer.NewString(v)}
+	switch scale {
+	case HeatmapYScaleAuto, HeatmapYScaleLinear, HeatmapYScaleLog, HeatmapYScaleSymlog:
+		*s = scale
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid heatmap y scale %q: must be `auto`, `linear`, `log`, or `symlog`", v)
 	}
 }
 
