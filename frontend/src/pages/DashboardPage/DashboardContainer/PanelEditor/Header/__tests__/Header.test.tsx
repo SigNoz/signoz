@@ -82,7 +82,11 @@ describe('PanelEditor Header', () => {
 	it('disables Save only while read-only or saving', () => {
 		mockUseIsAIAssistantEnabled.mockReturnValue(false);
 
-		renderHeader({ isDirty: true, readOnly: true, readOnlyReason: 'Locked' });
+		renderHeader({
+			isDirty: true,
+			readOnly: true,
+			readOnlyDisabled: { reason: 'Locked', kind: 'blocked' as const },
+		});
 
 		expect(screen.getByTestId('panel-editor-v2-save')).toBeDisabled();
 	});

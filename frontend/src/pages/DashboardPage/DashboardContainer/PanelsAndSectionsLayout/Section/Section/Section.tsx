@@ -1,14 +1,12 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 
 import ConfirmDeleteDialog from '../../../components/ConfirmDeleteDialog/ConfirmDeleteDialog';
 import DisabledControlTooltip from '../../../components/DisabledControlTooltip/DisabledControlTooltip';
-import { DASHBOARD_LOCKED_REASON } from '../../../hooks/useDashboardEditGuard';
 import { useCreatePanel } from '../../../hooks/useCreatePanel';
 import type { DashboardSection } from '../../../utils';
 import PanelTypeSelectionModal from '../../Panel/PanelTypeSelectionModal/PanelTypeSelectionModal';
-import { useDashboardStore } from '../../../store/useDashboardStore';
 import { useCloneSection } from '../hooks/useCloneSection';
 import { useDeleteSection } from '../hooks/useDeleteSection';
 import { useRenameSection } from '../hooks/useRenameSection';
@@ -20,6 +18,7 @@ import SectionHeader, {
 	type SectionDragHandle,
 } from '../SectionHeader/SectionHeader';
 import styles from './Section.module.scss';
+import { useDashboardEditContext } from '../../../hooks/useDashboardEditContext';
 
 interface SectionProps {
 	section: DashboardSection;
@@ -30,8 +29,15 @@ interface SectionProps {
 }
 
 function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
-	const canEditDashboard = useDashboardStore((s) => s.canEditDashboard);
-	const isLocked = useDashboardStore((s) => s.isLocked);
+	const { isEditable, editDisabledReason, editDisabledKind } =
+		useDashboardEditContext();
+	const sectionDisabled = useMemo(
+		() =>
+			editDisabledReason
+				? { reason: editDisabledReason, kind: editDisabledKind }
+				: undefined,
+		[editDisabledReason, editDisabledKind],
+	);
 	const {
 		isPickerOpen,
 		openPicker,
@@ -104,43 +110,37 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 				onToggle={toggle}
 				repeatVariable={section.repeatVariable}
 				dragHandle={dragHandle}
-				disabledReason={isLocked ? DASHBOARD_LOCKED_REASON : ''}
-				actions={
-					canEditDashboard
-						? {
-								onRename: (): void => setIsRenaming(true),
-								onAddPanel: (): void => openPicker(section.layoutIndex),
-								onCloneSection: (): void => void cloneSection(section),
-								onDeleteSection: (): void => setIsDeleteOpen(true),
-							}
-						: undefined
-				}
+				disabled={sectionDisabled}
+				actions={{
+					onRename: (): void => setIsRenaming(true),
+					onAddPanel: (): void => openPicker(section.layoutIndex),
+					onCloneSection: (): void => void cloneSection(section),
+					onDeleteSection: (): void => setIsDeleteOpen(true),
+				}}
 			/>
 			{open &&
 				(section.items.length > 0 ? (
 					grid
 				) : (
 					<div className={styles.emptySection}>
-						{canEditDashboard && (
-							<DisabledControlTooltip
-								reason={DASHBOARD_LOCKED_REASON}
-								disabled={isLocked}
+						<DisabledControlTooltip
+							reason={editDisabledReason}
+							kind={editDisabledKind}
+						>
+							<Button
+								type="button"
+								variant="dashed"
+								color="secondary"
+								prefix={<Plus size="md" />}
+								disabled={!isEditable}
+								onClick={
+									isEditable ? (): void => openPicker(section.layoutIndex) : undefined
+								}
+								testId={`section-add-panel-${section.id}`}
 							>
-								<Button
-									type="button"
-									variant="dashed"
-									color="secondary"
-									prefix={<Plus size="md" />}
-									disabled={isLocked}
-									onClick={
-										isLocked ? undefined : (): void => openPicker(section.layoutIndex)
-									}
-									testId={`section-add-panel-${section.id}`}
-								>
-									New Panel
-								</Button>
-							</DisabledControlTooltip>
-						)}
+								New Panel
+							</Button>
+						</DisabledControlTooltip>
 					</div>
 				))}
 			<SectionTitleModal

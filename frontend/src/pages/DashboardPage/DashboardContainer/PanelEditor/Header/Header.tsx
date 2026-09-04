@@ -8,6 +8,7 @@ import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import { useConfirmableAction } from 'hooks/useConfirmableAction';
+import type { DisabledState } from 'lib/authz/components/DisabledReasonTooltip/disabledState.types';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 
 import DisabledControlTooltip from '../../components/DisabledControlTooltip/DisabledControlTooltip';
@@ -20,7 +21,8 @@ interface HeaderProps {
 	showSwitchToView?: boolean;
 	/** Locked/no-permission dashboard — Save is disabled with a reason. */
 	readOnly?: boolean;
-	readOnlyReason?: string;
+	/** Present when saving is unavailable — the Save button explains itself with it. */
+	readOnlyDisabled?: DisabledState;
 	onSave: () => void;
 	onSwitchToView?: () => void;
 	onClose: () => void;
@@ -31,7 +33,7 @@ function Header({
 	isSaving,
 	showSwitchToView = false,
 	readOnly = false,
-	readOnlyReason,
+	readOnlyDisabled,
 	onSave,
 	onSwitchToView,
 	onClose,
@@ -90,7 +92,10 @@ function Header({
 						Switch to View Mode
 					</Button>
 				)}
-				<DisabledControlTooltip reason={readOnlyReason ?? ''} disabled={readOnly}>
+				<DisabledControlTooltip
+					reason={readOnly ? (readOnlyDisabled?.reason ?? '') : ''}
+					kind={readOnlyDisabled?.kind ?? 'denied'}
+				>
 					<Button
 						variant="solid"
 						color="primary"

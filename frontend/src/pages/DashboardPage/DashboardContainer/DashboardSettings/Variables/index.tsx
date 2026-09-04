@@ -20,13 +20,15 @@ import styles from './Variables.module.scss';
 import AddVariableButton from './components/AddVariableButton';
 import NoVariablesCard from './components/NoVariablesCard/NoVariablesCard';
 import { EditingState } from './types';
+import { useDashboardEditContext } from '../../hooks/useDashboardEditContext';
 
 interface VariablesSettingsProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
 }
 
 function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
-	const isEditable = useDashboardStore((s) => s.isEditable);
+	const { isEditable, editDisabledReason, editDisabledKind } =
+		useDashboardEditContext();
 	// The drawer destroys on close, so reading this once on mount is enough to
 	// open the add-form when deep-linked (e.g. the bar's "Add variable" button).
 	const openAddOnMount = useDashboardStore(
@@ -127,7 +129,11 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 	return (
 		<div className={cx(styles.container, settingsStyles.settingsCard)}>
 			{variables.length === 0 ? (
-				<NoVariablesCard isEditable={isEditable} setIsEditing={setIsEditing} />
+				<NoVariablesCard
+					disabledReason={editDisabledReason}
+					disabledKind={editDisabledKind}
+					setIsEditing={setIsEditing}
+				/>
 			) : (
 				<>
 					<VariablesList
@@ -143,7 +149,11 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 						appliedToAllNames={appliedToAllNames}
 					/>
 					<div className={styles.footer}>
-						<AddVariableButton isEditable={isEditable} setIsEditing={setIsEditing} />
+						<AddVariableButton
+							disabledReason={editDisabledReason}
+							disabledKind={editDisabledKind}
+							setIsEditing={setIsEditing}
+						/>
 					</div>
 				</>
 			)}

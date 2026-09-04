@@ -1,32 +1,27 @@
 import type { ReactNode } from 'react';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
-
-import styles from './DisabledControlTooltip.module.scss';
+import DisabledReasonTooltip from 'lib/authz/components/DisabledReasonTooltip/DisabledReasonTooltip';
 
 interface DisabledControlTooltipProps {
+	/** Why the wrapped control is unavailable. Empty means it is available. */
 	reason: string;
-	disabled: boolean;
 	children: ReactNode;
+	/**
+	 * Required so a caller can never fall back to a default that mis-styles an
+	 * access problem as a state the user could resolve themselves.
+	 */
+	kind: 'denied' | 'blocked';
 }
 
-// A disabled button swallows hover, so the wrapping span is the tooltip trigger.
+/** Dashboard-flavoured alias so control sites read declaratively. */
 function DisabledControlTooltip({
 	reason,
-	disabled,
 	children,
+	kind,
 }: DisabledControlTooltipProps): JSX.Element {
-	if (!disabled) {
-		return <>{children}</>;
-	}
 	return (
-		<TooltipSimple
-			title={reason}
-			arrow
-			disableHoverableContent
-			tooltipContentProps={{ className: styles.aboveOverlay }}
-		>
-			<span className={styles.trigger}>{children}</span>
-		</TooltipSimple>
+		<DisabledReasonTooltip reason={reason} kind={kind}>
+			{children}
+		</DisabledReasonTooltip>
 	);
 }
 

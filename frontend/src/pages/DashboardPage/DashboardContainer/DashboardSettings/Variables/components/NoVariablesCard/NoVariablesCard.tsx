@@ -4,10 +4,12 @@ import { EditingState } from '../../types';
 import styles from './NoVariables.module.scss';
 
 const NoVariablesCard = ({
-	isEditable,
+	disabledReason = '',
+	disabledKind,
 	setIsEditing,
 }: {
-	isEditable: boolean;
+	disabledReason?: string;
+	disabledKind: 'denied' | 'blocked';
 	setIsEditing: React.Dispatch<React.SetStateAction<EditingState | null>>;
 }): JSX.Element => {
 	return (
@@ -20,7 +22,11 @@ const NoVariablesCard = ({
 					Create a variable to parameterize your panel queries.
 				</Typography.Text>
 			</div>
-			<AddVariableButton isEditable={isEditable} setIsEditing={setIsEditing} />
+			<AddVariableButton
+				disabledReason={disabledReason}
+				disabledKind={disabledKind}
+				setIsEditing={setIsEditing}
+			/>
 		</div>
 	);
 };

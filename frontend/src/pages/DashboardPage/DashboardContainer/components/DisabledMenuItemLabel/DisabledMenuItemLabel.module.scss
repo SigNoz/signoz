@@ -1,10 +1,10 @@
-.label {
-	// Re-enable pointer events so the tooltip fires while the disabled row
-	// (pointer-events: none) suppresses selection.
+.rowAnchor {
+	/* The dropdown row is the positioned ancestor, so this covers it exactly. */
+	position: absolute;
+	inset: 0;
+	/* A disabled row stops pointer events; the overlay takes the hover instead. */
 	pointer-events: auto;
-}
-
-.aboveOverlay {
-	// Lift the tooltip above the dropdown menu (z 50) and the antd Drawer (z 1000).
-	--tooltip-z-index: 1100;
+	/* The row keeps its clickable cursor when disabled, and the overlay would
+	   inherit it, so state it here — the overlay covers exactly the dead area. */
+	cursor: not-allowed;
 }
