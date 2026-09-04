@@ -109,6 +109,76 @@ components:
         webhook_url:
           $ref: '#/components/schemas/ConfigSecretURL'
       type: object
+    AlertmanagertypesIncidentIOReceiverConfig:
+      properties:
+        description:
+          type: string
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        metadata:
+          additionalProperties:
+            type: string
+          type: object
+        send_resolved:
+          type: boolean
+        title:
+          type: string
+        token:
+          type: string
+        url:
+          type: string
+      type: object
+    AlertmanagertypesJSMOpsReceiverConfig:
+      properties:
+        api_key:
+          type: string
+        description:
+          type: string
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        message:
+          type: string
+        priority:
+          type: string
+        send_resolved:
+          type: boolean
+        tags:
+          type: string
+      type: object
+    AlertmanagertypesJiraReceiverConfig:
+      properties:
+        custom_fields:
+          additionalProperties: {}
+          type: object
+        description:
+          type: string
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        issue_type:
+          type: string
+        labels:
+          items:
+            type: string
+          type: array
+        priority:
+          type: string
+        project:
+          type: string
+        reopen_duration:
+          $ref: '#/components/schemas/ModelDuration'
+        reopen_transition:
+          type: string
+        resolve_transition:
+          type: string
+        send_resolved:
+          type: boolean
+        site:
+          type: string
+        summary:
+          type: string
+        wont_fix_resolution:
+          type: string
+      type: object
     AlertmanagertypesMaintenanceKind:
       enum:
       - fixed
@@ -163,11 +233,15 @@ components:
       - required:
         - googlechat_configs
       - required:
+        - jira_configs
+      - required:
+        - jsmops_configs
+      - required:
+        - incidentio_configs
+      - required:
         - discord_configs
       - required:
         - email_configs
-      - required:
-        - incidentio_configs
       - required:
         - pagerduty_configs
       - required:
@@ -193,8 +267,6 @@ components:
       - required:
         - msteamsv2_configs
       - required:
-        - jira_configs
-      - required:
         - rocketchat_configs
       - required:
         - mattermost_configs
@@ -213,11 +285,15 @@ components:
           type: array
         incidentio_configs:
           items:
-            $ref: '#/components/schemas/ConfigIncidentioConfig'
+            $ref: '#/components/schemas/AlertmanagertypesIncidentIOReceiverConfig'
           type: array
         jira_configs:
           items:
-            $ref: '#/components/schemas/ConfigJiraConfig'
+            $ref: '#/components/schemas/AlertmanagertypesJiraReceiverConfig'
+          type: array
+        jsmops_configs:
+          items:
+            $ref: '#/components/schemas/AlertmanagertypesJSMOpsReceiverConfig'
           type: array
         mattermost_configs:
           items:
@@ -340,11 +416,15 @@ components:
           type: array
         incidentio_configs:
           items:
-            $ref: '#/components/schemas/ConfigIncidentioConfig'
+            $ref: '#/components/schemas/AlertmanagertypesIncidentIOReceiverConfig'
           type: array
         jira_configs:
           items:
-            $ref: '#/components/schemas/ConfigJiraConfig'
+            $ref: '#/components/schemas/AlertmanagertypesJiraReceiverConfig'
+          type: array
+        jsmops_configs:
+          items:
+            $ref: '#/components/schemas/AlertmanagertypesJSMOpsReceiverConfig'
           type: array
         mattermost_configs:
           items:
@@ -2944,6 +3024,46 @@ components:
         publicDashboard:
           $ref: '#/components/schemas/DashboardtypesGettablePublicDasbhboard'
       type: object
+    DashboardtypesGettableSystemDashboard:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        image:
+          type: string
+        locked:
+          type: boolean
+        name:
+          type: string
+        orgId:
+          type: string
+        schemaVersion:
+          type: string
+        source:
+          $ref: '#/components/schemas/DashboardtypesSource'
+        spec:
+          $ref: '#/components/schemas/DashboardtypesDashboardSpec'
+        tags:
+          items:
+            $ref: '#/components/schemas/TagtypesGettableTag'
+          nullable: true
+          type: array
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - orgId
+      - locked
+      - source
+      - schemaVersion
+      - name
+      - tags
+      - spec
+      type: object
     DashboardtypesHeaderOptions:
       properties:
         hide:
@@ -4031,6 +4151,18 @@ components:
           nullable: true
           type: object
       type: object
+    GatewaytypesDeprecatedPostableIngestionKeyLimit:
+      properties:
+        config:
+          $ref: '#/components/schemas/GatewaytypesLimitConfig'
+        signal:
+          type: string
+        tags:
+          items:
+            type: string
+          nullable: true
+          type: array
+      type: object
     GatewaytypesGettableCreatedIngestionKey:
       properties:
         id:
@@ -4174,6 +4306,8 @@ components:
       properties:
         config:
           $ref: '#/components/schemas/GatewaytypesLimitConfig'
+        keyId:
+          type: string
         signal:
           type: string
         tags:
@@ -4181,6 +4315,8 @@ components:
             type: string
           nullable: true
           type: array
+      required:
+      - keyId
       type: object
     GatewaytypesUpdatableIngestionKeyLimit:
       properties:
@@ -5703,6 +5839,218 @@ components:
       - total
       - endTimeBeforeRetention
       type: object
+    LicensetypesFeature:
+      properties:
+        active:
+          type: boolean
+        name:
+          type: string
+        route:
+          type: string
+        usage:
+          format: int64
+          type: integer
+        usage_limit:
+          format: int64
+          type: integer
+      type: object
+    LicensetypesGettableActiveLicense:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        eventQueue:
+          $ref: '#/components/schemas/LicensetypesLicenseEventQueue'
+        features:
+          items:
+            $ref: '#/components/schemas/LicensetypesFeature'
+          type: array
+        freeUntil:
+          format: date-time
+          type: string
+        id:
+          type: string
+        plan:
+          $ref: '#/components/schemas/LicensetypesLicensePlan'
+        platform:
+          type: string
+        state:
+          type: string
+        status:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        validFrom:
+          format: int64
+          type: integer
+        validUntil:
+          format: int64
+          type: integer
+      required:
+      - id
+      - validFrom
+      - validUntil
+      - status
+      - state
+      - platform
+      - freeUntil
+      - createdAt
+      - updatedAt
+      - plan
+      - features
+      - eventQueue
+      type: object
+    LicensetypesGettableLicense:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        eventQueue:
+          $ref: '#/components/schemas/LicensetypesLicenseEventQueue'
+        features:
+          items:
+            $ref: '#/components/schemas/LicensetypesFeature'
+          type: array
+        freeUntil:
+          format: date-time
+          type: string
+        id:
+          type: string
+        plan:
+          $ref: '#/components/schemas/LicensetypesLicensePlan'
+        platform:
+          type: string
+        state:
+          type: string
+        status:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        validFrom:
+          format: int64
+          type: integer
+        validUntil:
+          format: int64
+          type: integer
+      required:
+      - id
+      - validFrom
+      - validUntil
+      - status
+      - state
+      - platform
+      - freeUntil
+      - createdAt
+      - updatedAt
+      - plan
+      - features
+      - eventQueue
+      type: object
+    LicensetypesGettableLicenseWithKey:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        eventQueue:
+          $ref: '#/components/schemas/LicensetypesLicenseEventQueue'
+        features:
+          items:
+            $ref: '#/components/schemas/LicensetypesFeature'
+          type: array
+        freeUntil:
+          format: date-time
+          type: string
+        id:
+          type: string
+        key:
+          format: password
+          type: string
+        plan:
+          $ref: '#/components/schemas/LicensetypesLicensePlan'
+        platform:
+          type: string
+        state:
+          type: string
+        status:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        validFrom:
+          format: int64
+          type: integer
+        validUntil:
+          format: int64
+          type: integer
+      required:
+      - id
+      - validFrom
+      - validUntil
+      - status
+      - state
+      - platform
+      - freeUntil
+      - createdAt
+      - updatedAt
+      - plan
+      - features
+      - eventQueue
+      - key
+      type: object
+    LicensetypesLicenseEventQueue:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        event:
+          type: string
+        scheduledAt:
+          format: date-time
+          type: string
+        status:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - event
+      - status
+      - scheduledAt
+      - createdAt
+      - updatedAt
+      type: object
+    LicensetypesLicensePlan:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        description:
+          type: string
+        id:
+          type: string
+        isActive:
+          type: boolean
+        name:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - name
+      - description
+      - isActive
+      - createdAt
+      - updatedAt
+      type: object
+    LicensetypesPostableLicense:
+      properties:
+        key:
+          format: password
+          type: string
+      type: object
     LlmpricingruletypesGettablePricingRules:
       properties:
         items:
@@ -6520,6 +6868,148 @@ components:
         value: {}
       type: object
     PreferencetypesValue:
+      type: object
+    PrometheusErrorResponseSchema:
+      properties:
+        error:
+          type: string
+        errorType:
+          enum:
+          - bad_data
+          - execution
+          - canceled
+          - timeout
+          - internal
+          type: string
+        status:
+          enum:
+          - error
+          type: string
+      required:
+      - status
+      - errorType
+      - error
+      type: object
+    PrometheusMatrixDataSchema:
+      properties:
+        result:
+          items:
+            $ref: '#/components/schemas/PrometheusMatrixSeriesSchema'
+          nullable: true
+          type: array
+        resultType:
+          enum:
+          - matrix
+          type: string
+      required:
+      - resultType
+      - result
+      type: object
+    PrometheusMatrixSeriesSchema:
+      properties:
+        metric:
+          additionalProperties:
+            type: string
+          nullable: true
+          type: object
+        values:
+          items:
+            $ref: '#/components/schemas/PrometheusSamplePairSchema'
+          nullable: true
+          type: array
+      required:
+      - metric
+      - values
+      type: object
+    PrometheusQueryDataSchema:
+      oneOf:
+      - $ref: '#/components/schemas/PrometheusMatrixDataSchema'
+      - $ref: '#/components/schemas/PrometheusVectorDataSchema'
+      - $ref: '#/components/schemas/PrometheusScalarDataSchema'
+      - $ref: '#/components/schemas/PrometheusStringDataSchema'
+      type: object
+    PrometheusSamplePairSchema:
+      description: 'A [timestamp, value] pair: float unix seconds, then the string-encoded
+        sample value ("NaN", "+Inf", "-Inf" included).'
+      items:
+        oneOf:
+        - type: number
+        - type: string
+      maxItems: 2
+      minItems: 2
+      nullable: true
+      type: array
+    PrometheusScalarDataSchema:
+      properties:
+        result:
+          $ref: '#/components/schemas/PrometheusSamplePairSchema'
+        resultType:
+          enum:
+          - scalar
+          type: string
+      required:
+      - resultType
+      - result
+      type: object
+    PrometheusStringDataSchema:
+      properties:
+        result:
+          $ref: '#/components/schemas/PrometheusSamplePairSchema'
+        resultType:
+          enum:
+          - string
+          type: string
+      required:
+      - resultType
+      - result
+      type: object
+    PrometheusSuccessResponseSchema:
+      properties:
+        data:
+          $ref: '#/components/schemas/PrometheusQueryDataSchema'
+        infos:
+          items:
+            type: string
+          type: array
+        status:
+          enum:
+          - success
+          type: string
+        warnings:
+          items:
+            type: string
+          type: array
+      required:
+      - status
+      - data
+      type: object
+    PrometheusVectorDataSchema:
+      properties:
+        result:
+          items:
+            $ref: '#/components/schemas/PrometheusVectorSampleSchema'
+          nullable: true
+          type: array
+        resultType:
+          enum:
+          - vector
+          type: string
+      required:
+      - resultType
+      - result
+      type: object
+    PrometheusVectorSampleSchema:
+      properties:
+        metric:
+          additionalProperties:
+            type: string
+          nullable: true
+          type: object
+        value:
+          $ref: '#/components/schemas/PrometheusSamplePairSchema'
+      required:
+      - metric
+      - value
       type: object
     PromotetypesPromotePath:
       properties:
@@ -7444,6 +7934,48 @@ components:
       - custom
       - text
       type: string
+    QuickfiltertypesSource:
+      enum:
+      - traces
+      - logs
+      - api_monitoring
+      - exceptions
+      - meter
+      - ai_observability
+      type: string
+    QuickfiltertypesSourceFilters:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        filters:
+          items:
+            $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          type: array
+        id:
+          type: string
+        orgId:
+          type: string
+        source:
+          $ref: '#/components/schemas/QuickfiltertypesSource'
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - orgId
+      - source
+      - filters
+      type: object
+    QuickfiltertypesUpdatableQuickFilters:
+      properties:
+        filters:
+          items:
+            $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          type: array
+      required:
+      - filters
+      type: object
     RenderErrorResponse:
       properties:
         error:
@@ -8746,6 +9278,116 @@ components:
       required:
       - references
       type: object
+    SubscriptiontypesGettableSubscription:
+      properties:
+        redirectURL:
+          type: string
+      required:
+      - redirectURL
+      type: object
+    SubscriptiontypesGettableSubscriptionUsage:
+      properties:
+        billingPeriodEnd:
+          format: int64
+          type: integer
+        billingPeriodStart:
+          format: int64
+          type: integer
+        details:
+          $ref: '#/components/schemas/SubscriptiontypesSubscriptionUsageDetails'
+        discount:
+          format: double
+          type: number
+        subscriptionStatus:
+          type: string
+      type: object
+    SubscriptiontypesPostableSubscription:
+      properties:
+        url:
+          type: string
+      required:
+      - url
+      type: object
+    SubscriptiontypesSubscriptionUsageBreakdown:
+      properties:
+        dayWiseBreakdown:
+          $ref: '#/components/schemas/SubscriptiontypesSubscriptionUsageDayWiseBreakdown'
+        tiers:
+          items:
+            $ref: '#/components/schemas/SubscriptiontypesSubscriptionUsageTier'
+          nullable: true
+          type: array
+        type:
+          type: string
+        unit:
+          type: string
+      type: object
+    SubscriptiontypesSubscriptionUsageDayWiseBreakdown:
+      properties:
+        breakdown:
+          items:
+            $ref: '#/components/schemas/SubscriptiontypesSubscriptionUsageDayWiseData'
+          nullable: true
+          type: array
+        type:
+          type: string
+      type: object
+    SubscriptiontypesSubscriptionUsageDayWiseData:
+      properties:
+        count:
+          format: double
+          type: number
+        quantity:
+          format: double
+          type: number
+        size:
+          format: double
+          type: number
+        timestamp:
+          format: int64
+          type: integer
+        total:
+          format: double
+          type: number
+        unitPrice:
+          format: double
+          type: number
+      type: object
+    SubscriptiontypesSubscriptionUsageDetails:
+      properties:
+        baseFee:
+          format: double
+          type: number
+        billTotal:
+          format: double
+          type: number
+        breakdown:
+          items:
+            $ref: '#/components/schemas/SubscriptiontypesSubscriptionUsageBreakdown'
+          nullable: true
+          type: array
+        total:
+          format: double
+          type: number
+      type: object
+    SubscriptiontypesSubscriptionUsageTier:
+      properties:
+        quantity:
+          format: double
+          type: number
+        tierCost:
+          format: double
+          type: number
+        tierEnd:
+          format: int64
+          type: integer
+        tierStart:
+          format: int64
+          type: integer
+        unitPrice:
+          format: double
+          type: number
+      type: object
     TagtypesGettableTag:
       properties:
         key:
@@ -9282,6 +9924,10 @@ paths:
           type: integer
       - in: query
         name: name
+        schema:
+          type: string
+      - in: query
+        name: existingQuery
         schema:
           type: string
       responses:
@@ -13966,6 +14612,197 @@ paths:
       summary: Get stats
       tags:
       - stats
+  /api/v1/subscriptions:
+    get:
+      deprecated: false
+      description: This endpoint gets the organization's subscription along with its
+        usage and billing details.
+      operationId: GetSubscription
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SubscriptiontypesGettableSubscriptionUsage'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - subscription:read
+      - tokenizer:
+        - subscription:read
+      summary: Get the subscription.
+      tags:
+      - subscriptions
+    post:
+      deprecated: false
+      description: This endpoint creates a subscription for the organization.
+      operationId: CreateSubscription
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptiontypesPostableSubscription'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SubscriptiontypesGettableSubscription'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - subscription:create
+      - tokenizer:
+        - subscription:create
+      summary: Create a subscription.
+      tags:
+      - subscriptions
+    put:
+      deprecated: false
+      description: This endpoint updates the organization's subscription.
+      operationId: UpdateSubscription
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptiontypesPostableSubscription'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SubscriptiontypesGettableSubscription'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - subscription:list
+        - subscription:update
+      - tokenizer:
+        - subscription:list
+        - subscription:update
+      summary: Update the subscription.
+      tags:
+      - subscriptions
   /api/v1/testChannel:
     post:
       deprecated: true
@@ -15420,6 +16257,73 @@ paths:
       summary: Migrate dashboard to v2
       tags:
       - dashboard
+  /api/v2/dashboards/system/{name}:
+    get:
+      deprecated: false
+      description: Returns a dashboard SigNoz ships and owns, addressed by its stable
+        definition name (e.g. `ai-o11y-overview`) rather than its id. System dashboards
+        are read-only and upgraded through releases. The dashboard's own `name` field
+        carries a reserved prefix that the path segment must not include.
+      operationId: GetSystemDashboard
+      parameters:
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesGettableSystemDashboard'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - dashboard:read
+      - tokenizer:
+        - dashboard:read
+      summary: Get system dashboard
+      tags:
+      - dashboard
   /api/v2/factor_password/forgot:
     post:
       deprecated: false
@@ -15585,9 +16489,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - ingestion-key:list
       - tokenizer:
-        - EDITOR
+        - ingestion-key:list
       summary: Get ingestion keys for workspace
       tags:
       - gateway
@@ -15635,9 +16539,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - ingestion-key:create
       - tokenizer:
-        - EDITOR
+        - ingestion-key:create
       summary: Create ingestion key for workspace
       tags:
       - gateway
@@ -15675,10 +16579,67 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - ingestion-key:delete
       - tokenizer:
-        - EDITOR
+        - ingestion-key:delete
       summary: Delete ingestion key for workspace
+      tags:
+      - gateway
+    get:
+      deprecated: false
+      description: This endpoint returns an ingestion key for the workspace
+      operationId: GetIngestionKey
+      parameters:
+      - in: path
+        name: keyId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/GatewaytypesIngestionKey'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ingestion-key:read
+      - tokenizer:
+        - ingestion-key:read
+      summary: Get ingestion key for workspace
       tags:
       - gateway
     patch:
@@ -15719,16 +16680,76 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - ingestion-key:update
       - tokenizer:
-        - EDITOR
+        - ingestion-key:update
       summary: Update ingestion key for workspace
       tags:
       - gateway
   /api/v2/gateway/ingestion_keys/{keyId}/limits:
-    post:
+    get:
       deprecated: false
-      description: This endpoint creates an ingestion key limit
+      description: This endpoint returns the ingestion limits for an ingestion key
+      operationId: GetIngestionKeyLimits
+      parameters:
+      - in: path
+        name: keyId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/GatewaytypesLimit'
+                    nullable: true
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ingestion-limit:list
+      - tokenizer:
+        - ingestion-limit:list
+      summary: Get limits for the ingestion key
+      tags:
+      - gateway
+    post:
+      deprecated: true
+      description: This endpoint creates an ingestion key limit.
       operationId: CreateIngestionKeyLimit
       parameters:
       - in: path
@@ -15740,7 +16761,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GatewaytypesPostableIngestionKeyLimit'
+              $ref: '#/components/schemas/GatewaytypesDeprecatedPostableIngestionKeyLimit'
       responses:
         "201":
           content:
@@ -15776,15 +16797,17 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - ingestion-limit:create
+        - ingestion-key:attach
       - tokenizer:
-        - EDITOR
+        - ingestion-limit:create
+        - ingestion-key:attach
       summary: Create limit for the ingestion key
       tags:
       - gateway
   /api/v2/gateway/ingestion_keys/limits/{limitId}:
     delete:
-      deprecated: false
+      deprecated: true
       description: This endpoint deletes an ingestion key limit
       operationId: DeleteIngestionKeyLimit
       parameters:
@@ -15816,15 +16839,17 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - ingestion-limit:delete
+        - ingestion-key:detach
       - tokenizer:
-        - EDITOR
+        - ingestion-limit:delete
+        - ingestion-key:detach
       summary: Delete limit for the ingestion key
       tags:
       - gateway
     patch:
-      deprecated: false
-      description: This endpoint updates an ingestion key limit
+      deprecated: true
+      description: This endpoint updates an ingestion key limit.
       operationId: UpdateIngestionKeyLimit
       parameters:
       - in: path
@@ -15860,9 +16885,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - ingestion-limit:update
       - tokenizer:
-        - EDITOR
+        - ingestion-limit:update
       summary: Update limit for the ingestion key
       tags:
       - gateway
@@ -15920,10 +16945,213 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - ingestion-key:list
       - tokenizer:
-        - EDITOR
+        - ingestion-key:list
       summary: Search ingestion keys for workspace
+      tags:
+      - gateway
+  /api/v2/gateway/ingestion_limits:
+    post:
+      deprecated: false
+      description: This endpoint creates an ingestion limit for the ingestion key
+        referenced by keyId
+      operationId: CreateIngestionLimit
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GatewaytypesPostableIngestionKeyLimit'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesIdentifiable'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ingestion-limit:create
+        - ingestion-key:attach
+      - tokenizer:
+        - ingestion-limit:create
+        - ingestion-key:attach
+      summary: Create ingestion limit
+      tags:
+      - gateway
+  /api/v2/gateway/ingestion_limits/{limitId}:
+    delete:
+      deprecated: false
+      description: This endpoint deletes an ingestion limit
+      operationId: DeleteIngestionLimit
+      parameters:
+      - in: path
+        name: limitId
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ingestion-limit:delete
+        - ingestion-key:detach
+      - tokenizer:
+        - ingestion-limit:delete
+        - ingestion-key:detach
+      summary: Delete ingestion limit
+      tags:
+      - gateway
+    get:
+      deprecated: false
+      description: This endpoint returns an ingestion limit
+      operationId: GetIngestionLimit
+      parameters:
+      - in: path
+        name: limitId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/GatewaytypesLimit'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ingestion-limit:read
+      - tokenizer:
+        - ingestion-limit:read
+      summary: Get ingestion limit
+      tags:
+      - gateway
+    patch:
+      deprecated: false
+      description: This endpoint updates an ingestion limit
+      operationId: UpdateIngestionLimit
+      parameters:
+      - in: path
+        name: limitId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GatewaytypesUpdatableIngestionKeyLimit'
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ingestion-limit:update
+      - tokenizer:
+        - ingestion-limit:update
+      summary: Update ingestion limit
       tags:
       - gateway
   /api/v2/healthz:
@@ -18380,6 +19608,170 @@ paths:
       summary: Get query range result (v2)
       tags:
       - dashboard
+  /api/v2/quick_filters:
+    get:
+      deprecated: false
+      description: Returns the org's quick filters for every source, each filter as
+        a telemetry field key.
+      operationId: ListQuickFilters
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/QuickfiltertypesSourceFilters'
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - quick-filter:list
+      - tokenizer:
+        - quick-filter:list
+      summary: List quick filters
+      tags:
+      - quick_filter
+  /api/v2/quick_filters/{source}:
+    get:
+      deprecated: false
+      description: Returns the org's quick filters for one source, each filter as
+        a telemetry field key.
+      operationId: GetQuickFilters
+      parameters:
+      - in: path
+        name: source
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/QuickfiltertypesSourceFilters'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - quick-filter:read
+      - tokenizer:
+        - quick-filter:read
+      summary: Get a source's quick filters
+      tags:
+      - quick_filter
+    put:
+      deprecated: false
+      description: Replaces the org's quick filters for the source named in the path.
+      operationId: UpdateQuickFilters
+      parameters:
+      - in: path
+        name: source
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuickfiltertypesUpdatableQuickFilters'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - quick-filter:update
+      - tokenizer:
+        - quick-filter:update
+      summary: Update quick filters
+      tags:
+      - quick_filter
   /api/v2/readyz:
     get:
       operationId: Readyz
@@ -24123,6 +25515,110 @@ paths:
       summary: Put profile in Zeus for a deployment.
       tags:
       - zeus
+  /api/v3/licenses:
+    post:
+      deprecated: true
+      description: This endpoint validates the license key with the upstream server
+        and activates the license for the organization.
+      operationId: ActivateLicenseDeprecated
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LicensetypesPostableLicense'
+      responses:
+        "202":
+          description: Accepted
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - license:create
+      - tokenizer:
+        - license:create
+      summary: Activate a license.
+      tags:
+      - licenses
+    put:
+      deprecated: true
+      description: This endpoint refreshes the active license of the organization
+        from the upstream server.
+      operationId: RefreshLicenseDeprecated
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - license:update
+      - tokenizer:
+        - license:update
+      summary: Refresh a license.
+      tags:
+      - licenses
   /api/v3/metrics/dashboards:
     get:
       deprecated: false
@@ -24261,6 +25757,359 @@ paths:
       summary: Get flamegraph view for a trace
       tags:
       - tracedetail
+  /api/v4/licenses:
+    get:
+      deprecated: false
+      description: This endpoint lists all the licenses of the organization.
+      operationId: ListLicenses
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/LicensetypesGettableLicense'
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - license:list
+      - tokenizer:
+        - license:list
+      summary: List licenses.
+      tags:
+      - licenses
+    post:
+      deprecated: false
+      description: This endpoint validates the license key with the upstream server
+        and activates the license for the organization.
+      operationId: ActivateLicense
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LicensetypesPostableLicense'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesIdentifiable'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - license:create
+      - tokenizer:
+        - license:create
+      summary: Activate a license.
+      tags:
+      - licenses
+  /api/v4/licenses/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint deletes the license by id. Licenses managed by SigNoz
+        Cloud cannot be deleted.
+      operationId: DeleteLicense
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - license:delete
+      - tokenizer:
+        - license:delete
+      summary: Delete a license.
+      tags:
+      - licenses
+    get:
+      deprecated: false
+      description: This endpoint gets the license by id.
+      operationId: GetLicense
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/LicensetypesGettableLicenseWithKey'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - license:read
+      - tokenizer:
+        - license:read
+      summary: Get a license.
+      tags:
+      - licenses
+    put:
+      deprecated: false
+      description: This endpoint refreshes the active license of the organization
+        from the upstream server.
+      operationId: RefreshLicense
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - license:update
+      - tokenizer:
+        - license:update
+      summary: Refresh a license.
+      tags:
+      - licenses
+  /api/v4/licenses/active:
+    get:
+      deprecated: false
+      description: This endpoint gets the active license of the organization.
+      operationId: GetActiveLicense
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/LicensetypesGettableActiveLicense'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Implemented
+      security:
+      - api_key: []
+      - tokenizer: []
+      summary: Get the active license.
+      tags:
+      - licenses
   /api/v4/traces/{traceID}/waterfall:
     post:
       deprecated: false
@@ -24872,6 +26721,374 @@ paths:
       summary: Replace variables
       tags:
       - querier
+  /prometheus/api/v1/query:
+    get:
+      description: 'Prometheus-compatible endpoint: the request and response contract
+        is the upstream Prometheus HTTP API (https://prometheus.io/docs/prometheus/latest/querying/api/).
+        Parameters are accepted as URL query parameters or a form-encoded body, on
+        GET and POST alike.'
+      operationId: PrometheusQuery
+      parameters:
+      - description: PromQL expression.
+        in: query
+        name: query
+        required: true
+        schema:
+          description: PromQL expression.
+          type: string
+      - description: 'Evaluation timestamp: RFC3339 or float unix seconds. Defaults
+          to the server''s current time.'
+        in: query
+        name: time
+        schema:
+          description: 'Evaluation timestamp: RFC3339 or float unix seconds. Defaults
+            to the server''s current time.'
+          type: string
+      - description: 'Evaluation timeout: duration string or float seconds.'
+        in: query
+        name: timeout
+        schema:
+          description: 'Evaluation timeout: duration string or float seconds.'
+          type: string
+      - description: Any non-empty value includes query statistics in the response.
+        in: query
+        name: stats
+        schema:
+          description: Any non-empty value includes query statistics in the response.
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusSuccessResponseSchema'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Internal Server Error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Service Unavailable
+      security:
+      - api_key:
+        - metrics:read
+      - tokenizer:
+        - metrics:read
+      summary: Prometheus instant query
+      tags:
+      - prometheus
+    post:
+      description: 'Prometheus-compatible endpoint: the request and response contract
+        is the upstream Prometheus HTTP API (https://prometheus.io/docs/prometheus/latest/querying/api/).
+        Parameters are accepted as URL query parameters or a form-encoded body, on
+        GET and POST alike.'
+      operationId: PrometheusQueryPost
+      parameters:
+      - description: PromQL expression.
+        in: query
+        name: query
+        required: true
+        schema:
+          description: PromQL expression.
+          type: string
+      - description: 'Evaluation timestamp: RFC3339 or float unix seconds. Defaults
+          to the server''s current time.'
+        in: query
+        name: time
+        schema:
+          description: 'Evaluation timestamp: RFC3339 or float unix seconds. Defaults
+            to the server''s current time.'
+          type: string
+      - description: 'Evaluation timeout: duration string or float seconds.'
+        in: query
+        name: timeout
+        schema:
+          description: 'Evaluation timeout: duration string or float seconds.'
+          type: string
+      - description: Any non-empty value includes query statistics in the response.
+        in: query
+        name: stats
+        schema:
+          description: Any non-empty value includes query statistics in the response.
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusSuccessResponseSchema'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Internal Server Error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Service Unavailable
+      security:
+      - api_key:
+        - metrics:read
+      - tokenizer:
+        - metrics:read
+      summary: Prometheus instant query
+      tags:
+      - prometheus
+  /prometheus/api/v1/query_range:
+    get:
+      description: 'Prometheus-compatible endpoint: the request and response contract
+        is the upstream Prometheus HTTP API (https://prometheus.io/docs/prometheus/latest/querying/api/).
+        Parameters are accepted as URL query parameters or a form-encoded body, on
+        GET and POST alike.'
+      operationId: PrometheusQueryRange
+      parameters:
+      - description: PromQL expression.
+        in: query
+        name: query
+        required: true
+        schema:
+          description: PromQL expression.
+          type: string
+      - description: 'Range start: RFC3339 or float unix seconds.'
+        in: query
+        name: start
+        required: true
+        schema:
+          description: 'Range start: RFC3339 or float unix seconds.'
+          type: string
+      - description: 'Range end: RFC3339 or float unix seconds.'
+        in: query
+        name: end
+        required: true
+        schema:
+          description: 'Range end: RFC3339 or float unix seconds.'
+          type: string
+      - description: 'Resolution step: duration string or float seconds.'
+        in: query
+        name: step
+        required: true
+        schema:
+          description: 'Resolution step: duration string or float seconds.'
+          type: string
+      - description: 'Evaluation timeout: duration string or float seconds.'
+        in: query
+        name: timeout
+        schema:
+          description: 'Evaluation timeout: duration string or float seconds.'
+          type: string
+      - description: Any non-empty value includes query statistics in the response.
+        in: query
+        name: stats
+        schema:
+          description: Any non-empty value includes query statistics in the response.
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusSuccessResponseSchema'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Internal Server Error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Service Unavailable
+      security:
+      - api_key:
+        - metrics:read
+      - tokenizer:
+        - metrics:read
+      summary: Prometheus range query
+      tags:
+      - prometheus
+    post:
+      description: 'Prometheus-compatible endpoint: the request and response contract
+        is the upstream Prometheus HTTP API (https://prometheus.io/docs/prometheus/latest/querying/api/).
+        Parameters are accepted as URL query parameters or a form-encoded body, on
+        GET and POST alike.'
+      operationId: PrometheusQueryRangePost
+      parameters:
+      - description: PromQL expression.
+        in: query
+        name: query
+        required: true
+        schema:
+          description: PromQL expression.
+          type: string
+      - description: 'Range start: RFC3339 or float unix seconds.'
+        in: query
+        name: start
+        required: true
+        schema:
+          description: 'Range start: RFC3339 or float unix seconds.'
+          type: string
+      - description: 'Range end: RFC3339 or float unix seconds.'
+        in: query
+        name: end
+        required: true
+        schema:
+          description: 'Range end: RFC3339 or float unix seconds.'
+          type: string
+      - description: 'Resolution step: duration string or float seconds.'
+        in: query
+        name: step
+        required: true
+        schema:
+          description: 'Resolution step: duration string or float seconds.'
+          type: string
+      - description: 'Evaluation timeout: duration string or float seconds.'
+        in: query
+        name: timeout
+        schema:
+          description: 'Evaluation timeout: duration string or float seconds.'
+          type: string
+      - description: Any non-empty value includes query statistics in the response.
+        in: query
+        name: stats
+        schema:
+          description: Any non-empty value includes query statistics in the response.
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusSuccessResponseSchema'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Internal Server Error
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusErrorResponseSchema'
+          description: Service Unavailable
+      security:
+      - api_key:
+        - metrics:read
+      - tokenizer:
+        - metrics:read
+      summary: Prometheus range query
+      tags:
+      - prometheus
 servers:
 - description: The fully qualified URL to the SigNoz APIServer.
   url: https://{host}:{port}{base_path}

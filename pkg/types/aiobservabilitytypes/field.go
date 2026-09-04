@@ -15,11 +15,12 @@ type PostableFieldKeysParams struct {
 	Limit          int                          `query:"limit"`
 }
 
-// existingQuery is unsupported until the computed per-trace aggregates it may
-// reference can be narrowed on.
+// existingQuery may reference the computed per-trace aggregates, which are
+// never ingested; those filters are stripped before narrowing values.
 type PostableFieldValueParams struct {
 	PostableFieldKeysParams
-	Name string `query:"name"`
+	Name          string `query:"name"`
+	ExistingQuery string `query:"existingQuery"`
 }
 
 func NewFieldKeySelectorFromPostableFieldKeysParams(params PostableFieldKeysParams) *telemetrytypes.FieldKeySelector {
@@ -30,6 +31,7 @@ func NewFieldValueSelectorFromPostableFieldValueParams(params PostableFieldValue
 	return telemetrytypes.NewFieldValueSelectorFromPostableFieldValueParams(telemetrytypes.PostableFieldValueParams{
 		PostableFieldKeysParams: params.telemetryParams(),
 		Name:                    params.Name,
+		ExistingQuery:           params.ExistingQuery,
 	})
 }
 

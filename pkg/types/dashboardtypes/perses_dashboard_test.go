@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/perses/spec/go/dashboard"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -2045,6 +2046,40 @@ func TestEnsureSingleExpressionAggregation(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
+		})
+	}
+}
+
+// Guards the constant: a prefixed name must stay a valid DNS-1123 label.
+func TestSystemDashboardNamePrefix(t *testing.T) {
+	require.NoError(t, validateDashboardName(SystemDashboardNamePrefix+"ai-o11y-overview"))
+}
+
+func TestNewDashboardV2RejectsReservedName(t *testing.T) {
+	testCases := []struct {
+		description string
+		name        string
+		source      Source
+		errContains string
+	}{
+		{description: "reserved name for a system dashboard", name: SystemDashboardNamePrefix + "overview", source: SourceSystem},
+		{description: "reserved name for a user dashboard", name: SystemDashboardNamePrefix + "overview", source: SourceUser, errContains: "reserved for system dashboards"},
+		{description: "reserved name for an integration dashboard", name: SystemDashboardNamePrefix + "overview", source: SourceIntegration, errContains: "reserved for system dashboards"},
+		{description: "unprefixed name for a system dashboard", name: "overview", source: SourceSystem, errContains: "must start with"},
+		{description: "ordinary name for a user dashboard", name: "overview", source: SourceUser},
+		{description: "fewer hyphens than the prefix for a user dashboard", name: "signoz--overview", source: SourceUser},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			postable := PostableDashboardV2{Name: testCase.name}
+			_, err := postable.NewDashboardV2(valuer.GenerateUUID(), "user@signoz.io", testCase.source)
+			if testCase.errContains != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), testCase.errContains)
+				return
+			}
+			require.NoError(t, err)
 		})
 	}
 }

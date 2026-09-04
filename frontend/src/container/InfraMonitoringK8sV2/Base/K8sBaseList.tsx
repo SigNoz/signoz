@@ -296,6 +296,7 @@ export function K8sBaseList<
 						params.selectedItem,
 						params.clusterName,
 						params.namespaceName,
+						params.containerName,
 					);
 					queryClient.setQueryData(detailQueryKey, { data: record });
 				}
@@ -346,6 +347,12 @@ export function K8sBaseList<
 					url.searchParams.set(
 						INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_NAMESPACE_NAME,
 						params.namespaceName,
+					);
+				}
+				if (params.containerName) {
+					url.searchParams.set(
+						INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CONTAINER_NAME,
+						params.containerName,
 					);
 				}
 			} else {

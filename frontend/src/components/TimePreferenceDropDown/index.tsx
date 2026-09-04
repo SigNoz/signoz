@@ -6,7 +6,7 @@ import { Typography } from '@signozhq/ui/typography';
 import TimeItems, {
 	timePreferance,
 	timePreferenceType,
-} from 'container/NewWidget/RightContainer/timeItems';
+} from 'constants/timePreference';
 
 import { menuItems } from './config';
 

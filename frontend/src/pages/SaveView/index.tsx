@@ -209,8 +209,8 @@ function SaveView(): JSX.Element {
 				currentPanelType,
 				{
 					query,
-					name,
-					id,
+					viewName: name,
+					viewKey: id,
 				},
 				SOURCEPAGE_VS_ROUTES[sourcepage],
 			);
