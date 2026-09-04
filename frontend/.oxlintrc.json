@@ -323,9 +323,10 @@
             "name": "react",
             "importNames": [
               "createContext",
-              "useContext"
+              "useContext",
+              "useSyncExternalStore"
             ],
-            "message": "[State mgmt] React Context is deprecated. Migrate shared state to Zustand."
+            "message": "[State mgmt] React Context and hand-rolled external stores are deprecated. Migrate shared state to Zustand."
           },
           {
             "name": "immer",

@@ -7,8 +7,7 @@ import { getSubstituteVars } from 'api/dashboard/substitute_vars';
 import { prepareQueryRangePayloadV5 } from 'api/v5/v5';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { timePreferenceType } from 'constants/timePreference';
-import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariablesByType';
-import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariables';
+import { useDynamicVariableSuggestions } from 'hooks/dashboard/useDynamicVariableSuggestions';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { AppState } from 'store/reducers';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -21,7 +20,6 @@ interface UseUpdatedQueryOptions {
 		panelTypes: PANEL_TYPES;
 		timePreferance: timePreferenceType;
 	};
-	dashboardData?: any;
 }
 
 interface UseUpdatedQueryResult {
@@ -37,34 +35,27 @@ function useUpdatedQuery(): UseUpdatedQueryResult {
 
 	const queryRangeMutation = useMutation(getSubstituteVars);
 
-	const dashboardDynamicVariables = useDashboardVariablesByType(
-		'DYNAMIC',
-		'values',
-	);
+	const dashboardDynamicVariables = useDynamicVariableSuggestions();
 
 	const getUpdatedQuery = useCallback(
-		async ({
-			widgetConfig,
-			dashboardData,
-		}: UseUpdatedQueryOptions): Promise<Query> => {
-			const variables = getDashboardVariables(dashboardData?.data?.variables);
-
+		async ({ widgetConfig }: UseUpdatedQueryOptions): Promise<Query> => {
 			// `/substitute_vars` only rewrites `$variable` references, so on surfaces with no
 			// dashboard behind them (APM, Celery, API monitoring) the round-trip is a no-op.
-			if (isEmpty(variables) && isEmpty(dashboardDynamicVariables)) {
+			if (isEmpty(dashboardDynamicVariables)) {
 				return widgetConfig.query;
 			}
 
 			// Prepare query payload with resolved variables
-			const { queryPayload } = prepareQueryRangePayloadV5({
-				query: widgetConfig.query,
-				graphType: getGraphType(widgetConfig.panelTypes),
-				selectedTime: widgetConfig.timePreferance,
-				globalSelectedInterval,
-				variables,
-				originalGraphType: widgetConfig.panelTypes,
-				dynamicVariables: dashboardDynamicVariables,
-			});
+			const { queryPayload } = prepareQueryRangePayloadV5(
+				{
+					query: widgetConfig.query,
+					graphType: getGraphType(widgetConfig.panelTypes),
+					selectedTime: widgetConfig.timePreferance,
+					globalSelectedInterval,
+					originalGraphType: widgetConfig.panelTypes,
+				},
+				dashboardDynamicVariables,
+			);
 
 			// Execute query and process results
 			const queryResult = await queryRangeMutation.mutateAsync(queryPayload);

@@ -17,8 +17,8 @@ import {
 import { Pagination } from 'hooks/queryPagination';
 import { convertNewDataToOld } from 'lib/newQueryBuilder/convertNewDataToOld';
 import { isEmpty } from 'lodash-es';
+import { DynamicVariableSuggestion } from 'providers/Dashboard/store/dynamicVariableSuggestions';
 import { SuccessResponseV2, Warning } from 'types/api';
-import { IDashboardVariable } from 'types/api/dashboard/variables';
 import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import {
@@ -179,7 +179,7 @@ export const getLegend = (
 export async function GetMetricQueryRange(
 	props: GetQueryResultsProps,
 	version: string,
-	dynamicVariables?: IDashboardVariable[],
+	dynamicVariables: DynamicVariableSuggestion[] = [],
 	signal?: AbortSignal,
 	headers?: Record<string, string>,
 ): Promise<MetricQueryRangeSuccessResponse> {
@@ -226,10 +226,7 @@ export async function GetMetricQueryRange(
 	}
 
 	if (version === ENTITY_VERSION_V5) {
-		const v5Result = prepareQueryRangePayloadV5({
-			...props,
-			dynamicVariables,
-		});
+		const v5Result = prepareQueryRangePayloadV5(props, dynamicVariables);
 		legendMap = v5Result.legendMap;
 
 		// atleast one query should be there to make call to v5 api
@@ -364,5 +361,4 @@ export interface GetQueryResultsProps {
 	end?: number;
 	step?: number;
 	originalGraphType?: PANEL_TYPES;
-	dynamicVariables?: IDashboardVariable[];
 }

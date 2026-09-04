@@ -21,7 +21,7 @@ import {
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import type { WhereClauseConfig } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
-import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariablesByType';
+import { useDynamicVariableSuggestions } from 'hooks/dashboard/useDynamicVariableSuggestions';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useGetAggregateValues } from 'hooks/queryBuilder/useGetAggregateValues';
@@ -263,10 +263,7 @@ function QueryBuilderSearchV2(
 		return false;
 	}, [currentState, query.aggregateAttribute?.dataType, query.dataSource]);
 
-	const dashboardDynamicVariables = useDashboardVariablesByType(
-		'DYNAMIC',
-		'values',
-	);
+	const dashboardDynamicVariables = useDynamicVariableSuggestions();
 
 	const { data, isFetching } = useGetAggregateKeys(
 		{
@@ -816,9 +813,8 @@ function QueryBuilderSearchV2(
 				values.push(...(attributeValues?.payload?.[key] || []));
 
 				// here we want to suggest the variable name matching with the key here, we will go over the dynamic variables for the keys
-				const variableName = dashboardDynamicVariables?.find(
-					(variable) =>
-						variable?.dynamicVariablesAttribute === currentFilterItem?.key?.key,
+				const variableName = dashboardDynamicVariables.find(
+					(variable) => variable.attribute === currentFilterItem?.key?.key,
 				)?.name;
 
 				if (variableName) {
