@@ -160,6 +160,16 @@ func (m *fieldMapper) ColumnExpressionFor(
 		return fmt.Sprintf("multiIf(%s, %s, NULL)", guard, coerced), nil
 	}
 
+	// a map attribute reads the empty value for a row without the key; the
+	// raw select shows NULL there, like logs and traces do
+	if columns, err := m.getColumn(ctx, resolved); err == nil && columns[0].Type.GetType() == schema.ColumnTypeEnumMap {
+		guard, err := querybuilder.ExistsExpression(columns, resolved, tsStart, tsEnd, fieldExpression, true)
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("multiIf(%s, %s, NULL) AS `%s`", guard, sqlbuilder.Escape(fieldExpression), field.Name), nil
+	}
+
 	return fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(fieldExpression), field.Name), nil
 }
 
