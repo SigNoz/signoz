@@ -2,6 +2,8 @@ import type { Preview } from '@storybook/react-vite';
 import type { SetupWorker } from 'msw';
 import { setupWorker } from 'msw';
 
+import PageDocs from '../src/storybook/docs/PageDocs';
+import ThemedDocsContainer from '../src/storybook/docs/ThemedDocsContainer';
 import { withProviders } from '../src/storybook/decorators/withProviders';
 import { globalMocks } from '../src/storybook/globals';
 import { resetStoryHistory } from '../src/storybook/navigation/containment';
@@ -12,6 +14,11 @@ import {
 } from '../src/storybook/runtime/resolveStory';
 
 import '../src/ReactI18';
+
+// `src/index.tsx` does this at boot: without it `@monaco-editor/react` falls back
+// to its loader default and pulls Monaco from cdn.jsdelivr.net, which msw does
+// not report because the requests look like static assets.
+import '../src/lib/monaco/setup';
 
 import '../src/styles.scss';
 
@@ -65,7 +72,120 @@ const preview: Preview = {
 	parameters: {
 		layout: 'fullscreen',
 		controls: { expanded: true },
+		// The sidebar order, mirroring the app's own side nav
+		// (`container/SideNav/menuItems.tsx`), so a page sits where someone would
+		// click it in the product. Storybook's default is the order the story files
+		// happen to be globbed in, which puts `src/modules` first. Anything missing
+		// from a level lands after the entries listed for it, in file order, so a new
+		// story shows up at the end of its area rather than disappearing. Stories
+		// inside a file are never listed, so they keep the order they are declared
+		// in, `Default` first. Storybook parses this out of the file, so it has to
+		// stay an inline literal.
+		options: {
+			storySort: {
+				order: [
+					'Docs',
+					'Pages',
+					[
+						'Home',
+						'Alerts',
+						[
+							'Rules',
+							'Triggered',
+							'Overview',
+							'History',
+							'Create',
+							'Edit',
+							'Planned Downtime',
+							'Routing Policies',
+							'Channels',
+							['List', 'New', 'Edit'],
+						],
+						'Dashboards',
+						['List', 'Detail', 'Panel Editor', 'Widget Editor', 'Public'],
+						'Services',
+						['List', 'Detail', 'Top Level Operations', 'Service Map'],
+						'Logs',
+						[
+							'Explorer',
+							'Live Tail',
+							'Saved Views',
+							'Pipelines',
+							'Settings',
+							'Legacy Explorer',
+						],
+						'Traces',
+						['Explorer', 'Trace Details', 'Funnel Details', 'Legacy Explorer'],
+						'Metrics',
+						['Explorer'],
+						'Infrastructure',
+						[
+							'Overview',
+							'Kubernetes',
+							[
+								'Clusters',
+								'Nodes',
+								'Namespaces',
+								'Pods',
+								'Deployments',
+								'DaemonSets',
+								'StatefulSets',
+								'Jobs',
+								'Volumes',
+							],
+						],
+						'Integrations',
+						['List', 'Details', 'Cloud Account'],
+						'Exceptions',
+						['List', 'Detail'],
+						'External APIs',
+						'AI Observability',
+						['Overview', 'Explorer', 'Model Pricing', 'Attribute Mapping'],
+						'Noz',
+						'Metering',
+						['Cost Meter', 'Usage Explorer'],
+						'Messaging Queues',
+						['Overview', 'Kafka', 'Kafka Detail', 'Celery'],
+						'Onboarding',
+						['Questionnaire', 'Add Data Source'],
+						'Settings',
+						[
+							'Workspace',
+							'Account',
+							'Billing',
+							'MCP Server',
+							'Roles',
+							'Role Details',
+							'Role Editor',
+							'Members',
+							'Service Accounts',
+							'Ingestion',
+							'Single Sign-on',
+							'Keyboard Shortcuts',
+						],
+						'Auth',
+						['Login', 'Sign Up', 'Forgot Password', 'Reset Password'],
+						'System',
+						[
+							'Status',
+							'Support',
+							'License',
+							'Not Found',
+							'Unauthorized',
+							'Error Fallback',
+							'Workspace Locked',
+							'Workspace Suspended',
+							'Workspace Access Restricted',
+						],
+					],
+				],
+			},
+		},
+		docs: { page: PageDocs, container: ThemedDocsContainer },
 	},
+	// Every page story gets a docs page: the descriptions on the meta and on each
+	// story are the page's documentation, and without this they render nowhere.
+	tags: ['autodocs'],
 	globalTypes: {
 		theme: {
 			description: 'SigNoz color scheme',

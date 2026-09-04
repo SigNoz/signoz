@@ -28,6 +28,11 @@ const mockAliases = [
 		replacement: `${srcPath}/storybook/mocks/logEvent.mock.ts`,
 	},
 	{
+		// jest: not replaced, the suite mounts a mock store per test.
+		find: /^(?:src\/)?store$/,
+		replacement: `${srcPath}/storybook/mocks/store.mock.ts`,
+	},
+	{
 		// jest: __mocks__/env.ts, which leaves `baseURL` empty because jsdom already
 		// resolves a relative `/api/...` against `http://localhost`.
 		find: /^(?:src\/)?constants\/env$/,
@@ -55,12 +60,12 @@ const isExcluded = (plugin: PluginOption): boolean =>
 
 const config: StorybookConfig = {
 	framework: '@storybook/react-vite',
-	stories: ['../src/**/*.stories.@(ts|tsx)'],
+	stories: ['../src/storybook/docs/**/*.mdx', '../src/**/*.stories.@(ts|tsx)'],
 	// `../public` carries the fonts, icons and i18n bundles the app expects at
 	// the root; `./public` carries the msw worker, which must not ship in a
 	// production build.
 	staticDirs: ['../public', './public'],
-	addons: ['@storybook/addon-a11y'],
+	addons: ['@storybook/addon-a11y', '@storybook/addon-docs'],
 	core: { disableTelemetry: true },
 	viteFinal: async (viteConfig) => {
 		const plugins = (viteConfig.plugins ?? [])
@@ -77,6 +82,14 @@ const config: StorybookConfig = {
 
 		return {
 			...viteConfig,
+			build: {
+				...viteConfig.build,
+				// `vite.config.ts` sets this for the app; Storybook's builder replaces
+				// `build` wholesale, which leaves rolldown-vite on its default
+				// lightningcss. That one rejects `:global()` in a plain stylesheet, which
+				// the app has, and the static build dies in CSS minification.
+				cssMinify: 'esbuild',
+			},
 			plugins,
 			resolve: {
 				...viteConfig.resolve,

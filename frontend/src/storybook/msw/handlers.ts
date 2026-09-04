@@ -2,6 +2,7 @@ import { rest } from 'msw';
 import { handlers as sharedHandlers } from 'mocks-server/handlers';
 
 import { appShellHandlers } from './appShellHandlers';
+import { queryBuilderHandlers } from './queryBuilderHandlers';
 
 /**
  * Last resort: every axios instance is built on `ENVIRONMENT.baseURL`, which
@@ -24,13 +25,15 @@ const unmockedApiGuard = [
 
 /**
  * Default handler set for every story, resolved first match wins: the
- * Storybook-only shell handlers override the jest ones where the shell needs
- * richer data, and both a page's control-driven handlers and a story's own
- * `parameters.msw.handlers` are layered on top at render time. An endpoint both
- * runners need belongs in `src/mocks-server/handlers.ts` instead.
+ * Storybook-only shell and query builder handlers override the jest ones where
+ * those answer with a fixture too thin for a page to render on, and both a
+ * page's control-driven handlers and a story's own `parameters.msw.handlers`
+ * are layered on top at render time. An endpoint both runners need belongs in
+ * `src/mocks-server/handlers.ts` instead.
  */
 export const storybookHandlers = [
 	...appShellHandlers,
+	...queryBuilderHandlers,
 	...sharedHandlers,
 	...unmockedApiGuard,
 ];

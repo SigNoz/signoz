@@ -359,6 +359,9 @@ importers:
       '@storybook/addon-a11y':
         specifier: 10.5.9
         version: 10.5.9(storybook@10.5.9(@types/react@18.0.26)(prettier@3.8.3)(react@18.2.0))
+      '@storybook/addon-docs':
+        specifier: 10.5.9
+        version: 10.5.9(@types/react-dom@18.0.10)(@types/react@18.0.26)(esbuild@0.28.1)(rolldown-vite@7.3.1(@types/node@16.18.25)(esbuild@0.28.1)(jiti@2.6.1)(less@4.9.0)(sass@1.97.3)(stylus@0.62.0)(terser@5.46.2)(yaml@2.8.4))(storybook@10.5.9(@types/react@18.0.26)(prettier@3.8.3)(react@18.2.0))
       '@storybook/react-vite':
         specifier: 10.5.9
         version: 10.5.9(@types/react-dom@18.0.10)(@types/react@18.0.26)(esbuild@0.28.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(rolldown-vite@7.3.1(@types/node@16.18.25)(esbuild@0.28.1)(jiti@2.6.1)(less@4.9.0)(sass@1.97.3)(stylus@0.62.0)(terser@5.46.2)(yaml@2.8.4))(storybook@10.5.9(@types/react@18.0.26)(prettier@3.8.3)(react@18.2.0))(typescript@5.9.3)
@@ -2152,6 +2155,12 @@ packages:
   '@marijn/find-cluster-break@1.0.2':
     resolution: {integrity: sha512-l0h88YhZFyKdXIFNfSWpyjStDjGHwZ/U7iobcK1cQQD8sejsONdQtTVU+1wVN1PBw40PiiHB1vA5S7VTfQiP9g==}
 
+  '@mdx-js/react@3.1.1':
+    resolution: {integrity: sha512-f++rKLQgUVYDAtECQ6fn/is15GkEH9+nZPM3MS0RcxVqoTfawHvDlSCH7JbMhAM6uJ32v3eXLvLmLvjGu7PTQw==}
+    peerDependencies:
+      '@types/react': '>=16'
+      react: '>=16'
+
   '@monaco-editor/loader@1.7.0':
     resolution: {integrity: sha512-gIwR1HrJrrx+vfyOhYmCZ0/JcWqG5kbfG7+d3f/C1LXk2EvzAbHSg3MQ5lO2sMlo9izoAZ04shohfKLVT6crVA==}
 
@@ -3717,6 +3726,15 @@ packages:
     peerDependencies:
       storybook: ^10.5.9
 
+  '@storybook/addon-docs@10.5.9':
+    resolution: {integrity: sha512-8sFsMkZYrrdqCLdV+hnwTwDF7RaBsBPRwl4wfc8ve9Q/7Yhi5REe/Xjvd8x1yn6fBPPw9tnID9dx6Agdnr81fw==}
+    peerDependencies:
+      '@types/react': ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      storybook: ^10.5.9
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+
   '@storybook/builder-vite@10.5.9':
     resolution: {integrity: sha512-Zg4JbGQiHFPGlFJ9HM+XPgzKmU/RFPCymhohVRJhBBYfmgaQgz0flWWzscseCDpl638MNd8/r/H+nwuoBgSYDg==}
     peerDependencies:
@@ -4033,6 +4051,9 @@ packages:
 
   '@types/mdast@4.0.3':
     resolution: {integrity: sha512-LsjtqsyF+d2/yFOYaN22dHZI1Cpwkrj+g06G8+qtUKlhovPW89YhqSnfKtMbkgmEtYpH2gydRNULd6y8mciAFg==}
+
+  '@types/mdx@2.0.14':
+    resolution: {integrity: sha512-T48PeuJtvLosNTPVhfnIp3i/n3a4g4Bad7YCq5k64D4u7NwDrAotikQ+5+sjtUvBmxCMlbo3dVL+C2dP0rWHzg==}
 
   '@types/ms@0.7.31':
     resolution: {integrity: sha512-iiUgKzV9AuaEkZqkOLDIvlQiL6ltuZd9tGcW3gwpnX8JbuiuhFlEGmmFXEXkN50Cvq7Os88IY2v0dkDqXYWVgA==}
@@ -11643,6 +11664,12 @@ snapshots:
 
   '@marijn/find-cluster-break@1.0.2': {}
 
+  '@mdx-js/react@3.1.1(@types/react@18.0.26)(react@18.2.0)':
+    dependencies:
+      '@types/mdx': 2.0.14
+      '@types/react': 18.0.26
+      react: 18.2.0
+
   '@monaco-editor/loader@1.7.0':
     dependencies:
       state-local: 1.0.7
@@ -13046,6 +13073,25 @@ snapshots:
       axe-core: 4.13.0
       storybook: 10.5.9(@types/react@18.0.26)(prettier@3.8.3)(react@18.2.0)
 
+  '@storybook/addon-docs@10.5.9(@types/react-dom@18.0.10)(@types/react@18.0.26)(esbuild@0.28.1)(rolldown-vite@7.3.1(@types/node@16.18.25)(esbuild@0.28.1)(jiti@2.6.1)(less@4.9.0)(sass@1.97.3)(stylus@0.62.0)(terser@5.46.2)(yaml@2.8.4))(storybook@10.5.9(@types/react@18.0.26)(prettier@3.8.3)(react@18.2.0))':
+    dependencies:
+      '@mdx-js/react': 3.1.1(@types/react@18.0.26)(react@18.2.0)
+      '@storybook/csf-plugin': 10.5.9(esbuild@0.28.1)(rolldown-vite@7.3.1(@types/node@16.18.25)(esbuild@0.28.1)(jiti@2.6.1)(less@4.9.0)(sass@1.97.3)(stylus@0.62.0)(terser@5.46.2)(yaml@2.8.4))(storybook@10.5.9(@types/react@18.0.26)(prettier@3.8.3)(react@18.2.0))
+      '@storybook/icons': 2.1.0(react@18.2.0)
+      '@storybook/react-dom-shim': 10.5.9(@types/react-dom@18.0.10)(@types/react@18.0.26)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(storybook@10.5.9(@types/react@18.0.26)(prettier@3.8.3)(react@18.2.0))
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
+      storybook: 10.5.9(@types/react@18.0.26)(prettier@3.8.3)(react@18.2.0)
+      ts-dedent: 2.3.0
+    optionalDependencies:
+      '@types/react': 18.0.26
+    transitivePeerDependencies:
+      - '@types/react-dom'
+      - esbuild
+      - rollup
+      - vite
+      - webpack
+
   '@storybook/builder-vite@10.5.9(esbuild@0.28.1)(rolldown-vite@7.3.1(@types/node@16.18.25)(esbuild@0.28.1)(jiti@2.6.1)(less@4.9.0)(sass@1.97.3)(stylus@0.62.0)(terser@5.46.2)(yaml@2.8.4))(storybook@10.5.9(@types/react@18.0.26)(prettier@3.8.3)(react@18.2.0))':
     dependencies:
       '@storybook/csf-plugin': 10.5.9(esbuild@0.28.1)(rolldown-vite@7.3.1(@types/node@16.18.25)(esbuild@0.28.1)(jiti@2.6.1)(less@4.9.0)(sass@1.97.3)(stylus@0.62.0)(terser@5.46.2)(yaml@2.8.4))(storybook@10.5.9(@types/react@18.0.26)(prettier@3.8.3)(react@18.2.0))
@@ -13389,6 +13435,8 @@ snapshots:
   '@types/mdast@4.0.3':
     dependencies:
       '@types/unist': 3.0.2
+
+  '@types/mdx@2.0.14': {}
 
   '@types/ms@0.7.31': {}
 

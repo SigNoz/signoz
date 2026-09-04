@@ -26,6 +26,88 @@ process on top of it.
 5. **Verify in the browser**: [references/verify.md](references/verify.md). Never
    report the story as done without it.
 
+## Where it lands in the sidebar
+
+The sidebar mirrors the app's own side nav (`container/SideNav/menuItems.tsx`), so
+a page sits where someone would click it in the product. Four things decide that,
+and all four are part of writing the story, not a follow-up.
+
+**Title.** `Pages/<Area>/<Page>`, where `<Area>` is the nav section and `<Page>`
+is the label the nav gives it.
+
+- The leaf is the product's label, never the component's name: `MetricsExplorer`
+  is `Metrics/Explorer`, `MeterExplorer` is `Metering/Cost Meter`,
+  `AIAssistantPage` is `Noz`.
+- Never repeat the area in the leaf: `Alerts/Rules`, not `Alerts/AlertRules`.
+- A leaf never shares its name with a sibling folder. The folder wins and the
+  page becomes `List`, or `Overview` for a tab strip: `Services/List` beside
+  `Services/Detail`.
+- Title Case with spaces. No camelCase, no kebab.
+- Four levels is the floor to stay under: `Pages/Alerts/Channels/New` is as deep
+  as it goes.
+- Pages nobody navigates to on purpose go under `Pages/System` (`Status`,
+  `Unauthorized`, `Workspace Locked`), and the pre-session pages under
+  `Pages/Auth`.
+
+**Order.** The `storySort.order` literal in `.storybook/preview.tsx` carries the
+order for every level. A new page in an existing area is appended to that area's
+array, in the order the product lists it; a new area goes where the side nav
+puts it. Storybook parses the order out of the file statically, so it has to
+stay an inline literal. Missing entries fall to the end of their level rather
+than disappearing, so a forgotten edit is a page at the bottom of its area, not
+a broken sidebar.
+
+**Tags.** Declared on the meta, right under `title`, and what the sidebar's tag
+filter answers questions with. Only these:
+
+| Tag | When |
+| --- | --- |
+| `authz` | The page gates UI on permission checks through `lib/authz` (`AuthZButton`, `AuthZGuard`, `useAuthZ`). |
+| `role-gated` | The page still branches on the legacy role (`user.role`, `hasEditPermission`) and has no authz check. |
+| `beta` | `isBeta` on its nav entry. Drop the tag when the product drops the badge. |
+| `legacy` | Superseded by another page but still routed. The doc comment names the page to start from instead. |
+| `play` | The story file has a `play` function, so at least one state is reached by an interaction. |
+
+`autodocs` comes from `preview.tsx` and is never written on a meta.
+
+**Doc comment on the meta.** What the page is, in the page's own terms, then a
+blank line, then the route:
+
+```tsx
+const pageStory = storyMocks(logsExplorerMocks, { route: explorerRoute('explorer') });
+
+/**
+ * The logs explorer: the query builder, the list, the frequency chart and the log
+ * detail drawer, with quick filters and saved views beside them.
+ *
+ * Route: `/logs/logs-explorer`.
+ */
+const meta = {
+	title: 'Pages/Logs/Explorer',
+	tags: ['play'],
+	component: LogsModulePage,
+	decorators: [withAppLayout],
+	...pageStory,
+	parameters: { ...pageStory.parameters },
+} satisfies Meta<LogsExplorerArgs>;
+```
+
+The `pageStory` const and the trailing `parameters` line are what make the doc
+comment safe. The comment compiles to a `parameters` property that the csf plugin
+appends after the spread, so a meta that spreads `storyMocks(...)` and stops
+there loses `parameters.signoz` and renders the page against the global handlers
+alone: every one of the page's endpoints misses. Restating `parameters` as a
+literal gives the plugin something to merge into. `resolveStory` logs the
+combination that says it happened, so the console names it rather than leaving it
+to be found by reading the page.
+
+It is the description on the page's Docs page, which is the only place a reader
+who is not in the code finds out what the page is for. Two or three sentences:
+what it shows, what drives it, and the gating worth knowing about (`Gated on
+authz permissions`, `follows the legacy editor role`). A control-driven route
+says so instead of a path: ``Route: `/metrics-explorer/*`, the tab control picks
+which``.
+
 ## Rules
 
 - **Default is the loaded page.** `export const Default: Story = {}` with no args,
@@ -50,7 +132,24 @@ process on top of it.
 - **File layout**: `src/pages/<Page>/<Page>.stories.tsx`,
   `src/pages/<Page>/<Page>.stories.mocks.tsx`, payload builders in
   `src/pages/<Page>/__story_mockdata__/<page>.ts`. Nothing page-specific in
-  `src/storybook/controls/`.
+  `src/storybook/controls/`. A page that is a tab strip over several routes gets
+  one story file per tab, in its own folder under the module page
+  (`LogsModulePage/Pipelines/Pipelines.stories.tsx`), each with its own mocks and
+  `__story_mockdata__/`; the builders more than one tab needs stay in the module
+  page's own. Every one of them renders the module page, so the tab strip is
+  there, and the `route` its mocks return decides which tab is open.
+- **A state only a click reaches is a story with a `play` function**, not a
+  control: a drawer, a modal, an edit mode the page holds in component state.
+  Drive it with `userEvent` and the queries from `storybook/test`, take the first
+  of a repeated row action, and wait on the state's own text. The page fetches
+  before it renders a row, so the finder needs a timeout past the 1s default. A
+  state the app drops again on its own, such as one keyed on an array identity
+  that a refetch replaces, does not get a story: it would not survive being
+  looked at. A *sequence* of such states, a wizard's steps or a
+  questionnaire's pages, is still a control: declare the steps in the mocks
+  module and walk them from a `play` on the meta that destructures `mount`, which
+  is what makes Storybook replay it on an arg change. See
+  [references/controls.md](references/controls.md).
 - **The mocks are AI-owned and say so.** `<Page>.stories.mocks.tsx` and every file
   under a `__story_mockdata__/` open with this banner, above the imports:
 
@@ -74,6 +173,13 @@ process on top of it.
   writing a response shape inline, check if a builder exists; if not and the
   shape will repeat, add it there. Page-specific builders stay in the page's
   `__story_mockdata__/`.
+- **The story's own doc comment is per state.** Every `export const` gets one:
+  what that state shows, not how it is built. It renders in the States list on
+  the page's Docs page, so `Undocumented.` there is a story nobody described.
+- **Story names come from a fixed vocabulary** where one fits: `Default`,
+  `Viewer`, `Empty`, `Loading`, `Error`. Page-specific states get page-specific
+  names (`NoIngestion`, `Unlicensed`), never a second spelling of one of those
+  (`ViewerAccess`, `NonAdmin`).
 - **No comment is the default.** Write one only for what the code cannot show:
   a shape the backend dictates, an app bug the mock reproduces, an ordering or
   cap the page depends on, a workaround and the reason for it. Never restate a
@@ -85,6 +191,13 @@ process on top of it.
 ## Done means
 
 - [ ] `Default` shows the page with data, checked in dark and light
+- [ ] title follows the sidebar rules, tags declared, and the page's entry added
+      to the `storySort.order` literal in `.storybook/preview.tsx`
+- [ ] the meta carries its doc comment with the `Route:` line, the meta restates
+      `parameters: { ...pageStory.parameters }` after the spread, and every story
+      export carries its own doc comment
+- [ ] the page's Docs page renders: description, controls table, and one row per
+      state with no `Undocumented.`
 - [ ] the mocks module and every `__story_mockdata__` file carry the AI-owned banner
 - [ ] every control flipped once, its effect seen on screen
 - [ ] console clean: no `[storybook] no msw handler`, no 501, no msw unhandled

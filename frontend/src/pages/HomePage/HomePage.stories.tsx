@@ -10,11 +10,22 @@ import HomePage from './HomePage';
 
 type HomeArgs = PageStoryArgs<typeof homeMocks>;
 
+const pageStory = storyMocks(homeMocks, { route: ROUTES.HOME });
+
+/**
+ * The workspace landing page: ingestion state per signal, the welcome checklist
+ * while a signal is missing, then alert rules, dashboards, saved views and the
+ * services table.
+ *
+ * Route: `/home`.
+ */
 const meta = {
 	title: 'Pages/Home',
+	tags: ['role-gated'],
 	component: HomePage,
 	decorators: [withAppLayout],
-	...storyMocks(homeMocks, { route: ROUTES.HOME }),
+	...pageStory,
+	parameters: { ...pageStory.parameters },
 } satisfies Meta<HomeArgs>;
 
 export default meta;

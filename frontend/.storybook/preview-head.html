@@ -1,9 +1,22 @@
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link
-	href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
-	rel="stylesheet"
+<!--
+	Third-party frames are the one thing msw cannot answer: a cross-origin iframe
+	navigates outside the service worker's scope, so the YouTube embeds and the
+	docs pane in onboarding reach the real network. Same intent as the boot data
+	below, enforced by the browser instead.
+-->
+<meta
+	http-equiv="Content-Security-Policy"
+	content="frame-src 'self' blob: data:"
 />
+
+<!--
+	`index.html` links Inter from Google Fonts here. The link is parsed before the
+	msw worker has started, so that one request escapes the iframe while every
+	other font request the app makes is answered with an empty stylesheet; the
+	local faces stand in for both.
+-->
+<link rel="stylesheet" href="storybook-fonts.css" />
+
 <link rel="stylesheet" href="css/uPlot.min.css" />
 
 <script>
