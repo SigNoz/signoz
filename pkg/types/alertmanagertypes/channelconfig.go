@@ -357,19 +357,18 @@ func newChannelWebhookConfigFromReceiver(name string, receiver *Receiver) (Chann
 }
 
 type ChannelPagerdutyConfig struct {
-	SendResolved *bool  `json:"sendResolved,omitempty"`
-	RoutingKey   string `json:"routingKey" required:"true"`
-	// URL overrides the PagerDuty Events API endpoint, for proxies and tests.
-	URL         string            `json:"url,omitempty"`
-	Source      string            `json:"source,omitempty"`
-	Client      string            `json:"client,omitempty"`
-	ClientURL   string            `json:"clientUrl,omitempty"`
-	Description string            `json:"description,omitempty"`
-	Severity    string            `json:"severity,omitempty"`
-	Component   string            `json:"component,omitempty"`
-	Group       string            `json:"group,omitempty"`
-	Class       string            `json:"class,omitempty"`
-	Details     map[string]string `json:"details,omitempty"`
+	SendResolved *bool             `json:"sendResolved,omitempty"`
+	RoutingKey   string            `json:"routingKey" required:"true"`
+	URL          string            `json:"url,omitempty"`
+	Source       string            `json:"source,omitempty"`
+	Client       string            `json:"client,omitempty"`
+	ClientURL    string            `json:"clientUrl,omitempty"`
+	Description  string            `json:"description,omitempty"`
+	Severity     string            `json:"severity,omitempty"`
+	Component    string            `json:"component,omitempty"`
+	Group        string            `json:"group,omitempty"`
+	Class        string            `json:"class,omitempty"`
+	Details      map[string]string `json:"details,omitempty"`
 }
 
 func (c ChannelPagerdutyConfig) Validate() error {
@@ -439,19 +438,14 @@ func newChannelPagerdutyConfigFromReceiver(name string, receiver *Receiver) (Cha
 }
 
 type ChannelOpsgenieConfig struct {
-	SendResolved *bool  `json:"sendResolved,omitempty"`
-	APIKey       string `json:"apiKey" required:"true"`
-	// APIURL selects a non-default Opsgenie region, e.g. https://api.eu.opsgenie.com.
-	APIURL      string            `json:"apiUrl,omitempty"`
-	Message     string            `json:"message,omitempty"`
-	Description string            `json:"description,omitempty"`
-	Source      string            `json:"source,omitempty"`
-	Details     map[string]string `json:"details,omitempty"`
-
-	// Priority stays optional: nothing seeds it, so v1 channels that never set
-	// one hold an empty value, and an empty priority is meaningful — the
-	// notifier omits it and Opsgenie applies its own.
-	Priority string `json:"priority,omitempty"`
+	SendResolved *bool             `json:"sendResolved,omitempty"`
+	APIKey       string            `json:"apiKey" required:"true"`
+	APIURL       string            `json:"apiUrl,omitempty"`
+	Message      string            `json:"message,omitempty"`
+	Description  string            `json:"description,omitempty"`
+	Source       string            `json:"source,omitempty"`
+	Details      map[string]string `json:"details,omitempty"`
+	Priority     string            `json:"priority,omitempty"`
 }
 
 func (c ChannelOpsgenieConfig) Validate() error {
@@ -763,18 +757,12 @@ func newChannelJSMOpsConfigFromReceiver(name string, receiver *Receiver) (Channe
 }
 
 type ChannelIncidentIOConfig struct {
-	SendResolved *bool `json:"sendResolved,omitempty"`
-	// URL is the HTTP alert source's events endpoint,
-	// https://api.incident.io/v2/alert_events/http/<source_config_id>.
-	URL string `json:"url" required:"true"`
-	// Token is the source's secret on its own, without the Bearer prefix
-	// incident.io's setup page shows.
-	Token       string `json:"token" required:"true"`
-	Title       string `json:"title,omitempty"`
-	Description string `json:"description,omitempty"`
-	// Metadata is merged over the group's common labels, these entries winning on
-	// a key clash. Values are template-expanded.
-	Metadata map[string]string `json:"metadata,omitempty"`
+	SendResolved *bool             `json:"sendResolved,omitempty"`
+	URL          string            `json:"url" required:"true"`
+	Token        string            `json:"token" required:"true"`
+	Title        string            `json:"title,omitempty"`
+	Description  string            `json:"description,omitempty"`
+	Metadata     map[string]string `json:"metadata,omitempty"`
 }
 
 func (c ChannelIncidentIOConfig) Validate() error {
