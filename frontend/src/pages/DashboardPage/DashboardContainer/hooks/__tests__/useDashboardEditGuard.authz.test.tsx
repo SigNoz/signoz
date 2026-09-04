@@ -82,7 +82,7 @@ describe('useDashboardEditGuard - AuthZ', () => {
 			expect(result.current.deleteDisabledReason).toBe(
 				DASHBOARD_NO_DELETE_PERMISSION_REASON,
 			);
-			expect(result.current.disabledKind).toBe('denied');
+			expect(result.current.editDisabledKind).toBe('denied');
 		});
 
 		it('reports the permission when unlocked', async () => {
