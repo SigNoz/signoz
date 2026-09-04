@@ -10,6 +10,9 @@ interface DisabledMenuItemLabelProps {
 /**
  * Label for a disabled dropdown row. The row sets `pointer-events: none`, so the
  * wrapper re-enables them to catch hover.
+ *
+ * The tooltip sits to the left, beside the row it explains — above would cover
+ * the row before it in the menu. Matches the dashboards list's row menu.
  */
 function DisabledMenuItemLabel({
 	reason,
@@ -17,7 +20,7 @@ function DisabledMenuItemLabel({
 	kind = 'blocked',
 }: DisabledMenuItemLabelProps): JSX.Element {
 	return (
-		<DisabledReasonTooltip reason={reason} kind={kind} interactive>
+		<DisabledReasonTooltip reason={reason} kind={kind} side="left" interactive>
 			{children}
 		</DisabledReasonTooltip>
 	);
