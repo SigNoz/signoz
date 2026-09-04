@@ -108,13 +108,21 @@ func (provider *provider) addZeusRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceSubscription.Scope(coretypes.VerbUpdate)}),
-	}, handler.WithResourceDefs(handler.BasicResourceDef{
-		Resource: coretypes.ResourceMetaResourceSubscription,
-		Verb:     coretypes.VerbUpdate,
-		Category: coretypes.ActionCategoryConfigurationChange,
-		Selector: coretypes.WildcardSelector,
-	}))).Methods(http.MethodPut).GetError(); err != nil {
+		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceSubscription.Scope(coretypes.VerbList), coretypes.ResourceMetaResourceSubscription.Scope(coretypes.VerbUpdate)}),
+	}, handler.WithResourceDefs(
+		handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceSubscription,
+			Verb:     coretypes.VerbList,
+			Category: coretypes.ActionCategoryDataAccess,
+			Selector: coretypes.WildcardSelector,
+		},
+		handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceSubscription,
+			Verb:     coretypes.VerbUpdate,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			Selector: coretypes.WildcardSelector,
+		},
+	))).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 

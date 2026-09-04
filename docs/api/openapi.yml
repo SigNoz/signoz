@@ -25449,8 +25449,10 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
+        - subscription:list
         - subscription:update
       - tokenizer:
+        - subscription:list
         - subscription:update
       summary: Create a billing portal session for the subscription.
       tags:
