@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/react';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
+import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 
@@ -11,6 +12,8 @@ import DomainList from './Domains/DomainList';
 import './Explorer.styles.scss';
 
 function Explorer(): JSX.Element {
+	const quickFilterFieldApis = useSignalFieldApis();
+
 	useEffect(() => {
 		logEvent('API Monitoring: Landing page visited', {});
 	}, []);
@@ -26,6 +29,7 @@ function Explorer(): JSX.Element {
 						showFilterCollapse={false}
 						showQueryName={false}
 						handleFilterVisibilityChange={(): void => {}}
+						useFieldApis={quickFilterFieldApis}
 					/>
 				</section>
 				<DomainList />
