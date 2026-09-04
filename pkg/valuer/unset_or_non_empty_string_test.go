@@ -90,3 +90,8 @@ func TestUnsetOrNonEmptyStringUnmarshalParamRejectsAnEmptyString(t *testing.T) {
 
 	assert.Error(t, nonEmptyString.UnmarshalParam(""))
 }
+
+func TestUnsetIfEmpty(t *testing.T) {
+	assert.True(t, UnsetIfEmpty("").IsZero())
+	assert.Equal(t, MustNewUnsetOrNonEmptyString("oncall"), UnsetIfEmpty("oncall"))
+}

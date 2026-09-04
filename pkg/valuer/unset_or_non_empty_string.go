@@ -33,6 +33,13 @@ func MustNewUnsetOrNonEmptyString(val string) UnsetOrNonEmptyString {
 	return nonEmptyString
 }
 
+// UnsetIfEmpty reads a value back from a store, where an empty string is how
+// unset is spelled. It is the only way to reach the zero value from a string, so
+// it must never be used on caller input, which has to reject "" instead.
+func UnsetIfEmpty(val string) UnsetOrNonEmptyString {
+	return UnsetOrNonEmptyString{val: val}
+}
+
 func (enum UnsetOrNonEmptyString) IsZero() bool {
 	return enum.val == ""
 }

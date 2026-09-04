@@ -178,37 +178,17 @@ func (ChannelConfig) PrepareJSONSchema(s *jsonschema.Schema) error {
 // Specs
 // ════════════════════════════════════════════════════════════════════════
 
-// DefaultedString is a field the notifier fills in when it is absent. It has no
-// empty value: a "" would read back as the default, so omitting the field is the
-// only way to ask for one.
-type DefaultedString string
-
-func (s *DefaultedString) UnmarshalJSON(data []byte) error {
-	var value string
-	if err := json.Unmarshal(data, &value); err != nil {
-		return err
-	}
-
-	if value == "" {
-		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "must not be empty; omit it to take the default")
-	}
-
-	*s = DefaultedString(value)
-
-	return nil
-}
-
 type ChannelSpec interface {
 	Validate() error
 	toUndefaultedReceiver(displayName string) (*Receiver, error)
 }
 
 type ChannelSlackConfig struct {
-	SendResolved *bool           `json:"sendResolved,omitempty"`
-	APIURL       string          `json:"apiUrl" required:"true"`
-	Channel      string          `json:"channel"`
-	Title        DefaultedString `json:"title,omitempty"`
-	Text         DefaultedString `json:"text,omitempty"`
+	SendResolved *bool                        `json:"sendResolved,omitempty"`
+	APIURL       string                       `json:"apiUrl" required:"true"`
+	Channel      string                       `json:"channel"`
+	Title        valuer.UnsetOrNonEmptyString `json:"title,omitempty"`
+	Text         valuer.UnsetOrNonEmptyString `json:"text,omitempty"`
 }
 
 func (c ChannelSlackConfig) Validate() error {
@@ -231,8 +211,8 @@ func (c ChannelSlackConfig) toUndefaultedReceiver(displayName string) (*Receiver
 			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, config.DefaultSlackConfig.VSendResolved)},
 			APIURL:         apiURL,
 			Channel:        c.Channel,
-			Title:          string(c.Title),
-			Text:           string(c.Text),
+			Title:          c.Title.StringValue(),
+			Text:           c.Text.StringValue(),
 		}},
 	}}, nil
 }
@@ -245,8 +225,8 @@ func newChannelSlackConfigFromReceiver(_ string, receiver *Receiver) (ChannelSpe
 		SendResolved: &sendResolved,
 		APIURL:       formatSecretURL(slack.APIURL),
 		Channel:      slack.Channel,
-		Title:        DefaultedString(slack.Title),
-		Text:         DefaultedString(slack.Text),
+		Title:        valuer.UnsetIfEmpty(slack.Title),
+		Text:         valuer.UnsetIfEmpty(slack.Text),
 	}, nil
 }
 
@@ -254,10 +234,10 @@ func newChannelSlackConfigFromReceiver(_ string, receiver *Receiver) (ChannelSpe
 // credentials and TLS settings come from the deployment's global config, so a
 // channel can only choose recipients and body.
 type ChannelEmailConfig struct {
-	SendResolved *bool             `json:"sendResolved,omitempty"`
-	To           string            `json:"to" required:"true"`
-	HTML         DefaultedString   `json:"html,omitempty"`
-	Headers      map[string]string `json:"headers,omitempty"`
+	SendResolved *bool                        `json:"sendResolved,omitempty"`
+	To           string                       `json:"to" required:"true"`
+	HTML         valuer.UnsetOrNonEmptyString `json:"html,omitempty"`
+	Headers      map[string]string            `json:"headers,omitempty"`
 }
 
 func (c ChannelEmailConfig) Validate() error {
@@ -283,7 +263,7 @@ func (c ChannelEmailConfig) toUndefaultedReceiver(displayName string) (*Receiver
 		EmailConfigs: []*config.EmailConfig{{
 			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, config.DefaultEmailConfig.VSendResolved)},
 			To:             c.To,
-			HTML:           string(c.HTML),
+			HTML:           c.HTML.StringValue(),
 			Headers:        c.Headers,
 		}},
 	}}, nil
@@ -296,7 +276,7 @@ func newChannelEmailConfigFromReceiver(_ string, receiver *Receiver) (ChannelSpe
 	return &ChannelEmailConfig{
 		SendResolved: &sendResolved,
 		To:           email.To,
-		HTML:         DefaultedString(email.HTML),
+		HTML:         valuer.UnsetIfEmpty(email.HTML),
 		Headers:      email.Headers,
 	}, nil
 }
@@ -388,18 +368,18 @@ func newChannelWebhookConfigFromReceiver(name string, receiver *Receiver) (Chann
 }
 
 type ChannelPagerdutyConfig struct {
-	SendResolved *bool             `json:"sendResolved,omitempty"`
-	RoutingKey   string            `json:"routingKey" required:"true"`
-	URL          string            `json:"url"`
-	Source       DefaultedString   `json:"source,omitempty"`
-	Client       DefaultedString   `json:"client,omitempty"`
-	ClientURL    DefaultedString   `json:"clientUrl,omitempty"`
-	Description  DefaultedString   `json:"description,omitempty"`
-	Severity     string            `json:"severity"`
-	Component    string            `json:"component"`
-	Group        string            `json:"group"`
-	Class        string            `json:"class"`
-	Details      map[string]string `json:"details,omitempty"`
+	SendResolved *bool                        `json:"sendResolved,omitempty"`
+	RoutingKey   string                       `json:"routingKey" required:"true"`
+	URL          string                       `json:"url"`
+	Source       valuer.UnsetOrNonEmptyString `json:"source,omitempty"`
+	Client       valuer.UnsetOrNonEmptyString `json:"client,omitempty"`
+	ClientURL    valuer.UnsetOrNonEmptyString `json:"clientUrl,omitempty"`
+	Description  valuer.UnsetOrNonEmptyString `json:"description,omitempty"`
+	Severity     string                       `json:"severity"`
+	Component    string                       `json:"component"`
+	Group        string                       `json:"group"`
+	Class        string                       `json:"class"`
+	Details      map[string]string            `json:"details,omitempty"`
 }
 
 func (c ChannelPagerdutyConfig) Validate() error {
@@ -426,10 +406,10 @@ func (c ChannelPagerdutyConfig) toUndefaultedReceiver(displayName string) (*Rece
 			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, config.DefaultPagerdutyConfig.VSendResolved)},
 			RoutingKey:     config.Secret(c.RoutingKey),
 			URL:            eventsURL,
-			Source:         string(c.Source),
-			Client:         string(c.Client),
-			ClientURL:      string(c.ClientURL),
-			Description:    string(c.Description),
+			Source:         c.Source.StringValue(),
+			Client:         c.Client.StringValue(),
+			ClientURL:      c.ClientURL.StringValue(),
+			Description:    c.Description.StringValue(),
 			Severity:       c.Severity,
 			Component:      c.Component,
 			Group:          c.Group,
@@ -456,10 +436,10 @@ func newChannelPagerdutyConfigFromReceiver(name string, receiver *Receiver) (Cha
 		SendResolved: &sendResolved,
 		RoutingKey:   string(pagerduty.RoutingKey),
 		URL:          formatUpstreamURL(pagerduty.URL),
-		Source:       DefaultedString(pagerduty.Source),
-		Client:       DefaultedString(pagerduty.Client),
-		ClientURL:    DefaultedString(pagerduty.ClientURL),
-		Description:  DefaultedString(pagerduty.Description),
+		Source:       valuer.UnsetIfEmpty(pagerduty.Source),
+		Client:       valuer.UnsetIfEmpty(pagerduty.Client),
+		ClientURL:    valuer.UnsetIfEmpty(pagerduty.ClientURL),
+		Description:  valuer.UnsetIfEmpty(pagerduty.Description),
 		Severity:     pagerduty.Severity,
 		Component:    pagerduty.Component,
 		Group:        pagerduty.Group,
@@ -469,14 +449,14 @@ func newChannelPagerdutyConfigFromReceiver(name string, receiver *Receiver) (Cha
 }
 
 type ChannelOpsgenieConfig struct {
-	SendResolved *bool             `json:"sendResolved,omitempty"`
-	APIKey       string            `json:"apiKey" required:"true"`
-	APIURL       string            `json:"apiUrl"`
-	Message      DefaultedString   `json:"message,omitempty"`
-	Description  DefaultedString   `json:"description,omitempty"`
-	Source       DefaultedString   `json:"source,omitempty"`
-	Details      map[string]string `json:"details,omitempty"`
-	Priority     string            `json:"priority"`
+	SendResolved *bool                        `json:"sendResolved,omitempty"`
+	APIKey       string                       `json:"apiKey" required:"true"`
+	APIURL       string                       `json:"apiUrl"`
+	Message      valuer.UnsetOrNonEmptyString `json:"message,omitempty"`
+	Description  valuer.UnsetOrNonEmptyString `json:"description,omitempty"`
+	Source       valuer.UnsetOrNonEmptyString `json:"source,omitempty"`
+	Details      map[string]string            `json:"details,omitempty"`
+	Priority     string                       `json:"priority"`
 }
 
 func (c ChannelOpsgenieConfig) Validate() error {
@@ -503,9 +483,9 @@ func (c ChannelOpsgenieConfig) toUndefaultedReceiver(displayName string) (*Recei
 			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, config.DefaultOpsGenieConfig.VSendResolved)},
 			APIKey:         config.Secret(c.APIKey),
 			APIURL:         apiURL,
-			Message:        string(c.Message),
-			Description:    string(c.Description),
-			Source:         string(c.Source),
+			Message:        c.Message.StringValue(),
+			Description:    c.Description.StringValue(),
+			Source:         c.Source.StringValue(),
 			Priority:       c.Priority,
 			Details:        c.Details,
 		}},
@@ -520,19 +500,19 @@ func newChannelOpsgenieConfigFromReceiver(_ string, receiver *Receiver) (Channel
 		SendResolved: &sendResolved,
 		APIKey:       string(opsgenie.APIKey),
 		APIURL:       formatUpstreamURL(opsgenie.APIURL),
-		Message:      DefaultedString(opsgenie.Message),
-		Description:  DefaultedString(opsgenie.Description),
-		Source:       DefaultedString(opsgenie.Source),
+		Message:      valuer.UnsetIfEmpty(opsgenie.Message),
+		Description:  valuer.UnsetIfEmpty(opsgenie.Description),
+		Source:       valuer.UnsetIfEmpty(opsgenie.Source),
 		Priority:     opsgenie.Priority,
 		Details:      opsgenie.Details,
 	}, nil
 }
 
 type ChannelMSTeamsConfig struct {
-	SendResolved *bool           `json:"sendResolved,omitempty"`
-	WebhookURL   string          `json:"webhookUrl" required:"true"`
-	Title        DefaultedString `json:"title,omitempty"`
-	Text         DefaultedString `json:"text,omitempty"`
+	SendResolved *bool                        `json:"sendResolved,omitempty"`
+	WebhookURL   string                       `json:"webhookUrl" required:"true"`
+	Title        valuer.UnsetOrNonEmptyString `json:"title,omitempty"`
+	Text         valuer.UnsetOrNonEmptyString `json:"text,omitempty"`
 }
 
 func (c ChannelMSTeamsConfig) Validate() error {
@@ -554,8 +534,8 @@ func (c ChannelMSTeamsConfig) toUndefaultedReceiver(displayName string) (*Receiv
 		MSTeamsV2Configs: []*config.MSTeamsV2Config{{
 			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, config.DefaultMSTeamsV2Config.VSendResolved)},
 			WebhookURL:     webhookURL,
-			Title:          string(c.Title),
-			Text:           string(c.Text),
+			Title:          c.Title.StringValue(),
+			Text:           c.Text.StringValue(),
 		}},
 	}}, nil
 }
@@ -567,16 +547,16 @@ func newChannelMSTeamsConfigFromReceiver(_ string, receiver *Receiver) (ChannelS
 	return &ChannelMSTeamsConfig{
 		SendResolved: &sendResolved,
 		WebhookURL:   formatSecretURL(msteams.WebhookURL),
-		Title:        DefaultedString(msteams.Title),
-		Text:         DefaultedString(msteams.Text),
+		Title:        valuer.UnsetIfEmpty(msteams.Title),
+		Text:         valuer.UnsetIfEmpty(msteams.Text),
 	}, nil
 }
 
 type ChannelGoogleChatConfig struct {
-	SendResolved *bool           `json:"sendResolved,omitempty"`
-	WebhookURL   string          `json:"webhookUrl" required:"true"`
-	Title        DefaultedString `json:"title,omitempty"`
-	Text         DefaultedString `json:"text,omitempty"`
+	SendResolved *bool                        `json:"sendResolved,omitempty"`
+	WebhookURL   string                       `json:"webhookUrl" required:"true"`
+	Title        valuer.UnsetOrNonEmptyString `json:"title,omitempty"`
+	Text         valuer.UnsetOrNonEmptyString `json:"text,omitempty"`
 }
 
 func (c ChannelGoogleChatConfig) Validate() error {
@@ -598,8 +578,8 @@ func (c ChannelGoogleChatConfig) toUndefaultedReceiver(displayName string) (*Rec
 		GoogleChatConfigs: []*GoogleChatReceiverConfig{{
 			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, DefaultGoogleChatReceiverConfig.VSendResolved)},
 			WebhookURL:     webhookURL,
-			Title:          string(c.Title),
-			Text:           string(c.Text),
+			Title:          c.Title.StringValue(),
+			Text:           c.Text.StringValue(),
 		}},
 	}, nil
 }
@@ -611,8 +591,8 @@ func newChannelGoogleChatConfigFromReceiver(_ string, receiver *Receiver) (Chann
 	return &ChannelGoogleChatConfig{
 		SendResolved: &sendResolved,
 		WebhookURL:   formatSecretURL(googlechat.WebhookURL),
-		Title:        DefaultedString(googlechat.Title),
-		Text:         DefaultedString(googlechat.Text),
+		Title:        valuer.UnsetIfEmpty(googlechat.Title),
+		Text:         valuer.UnsetIfEmpty(googlechat.Text),
 	}, nil
 }
 
@@ -620,18 +600,18 @@ type ChannelJiraConfig struct {
 	SendResolved *bool `json:"sendResolved,omitempty"`
 	// Site is the Jira Cloud base URL, https://<site>.atlassian.net. Only Jira
 	// Cloud is supported; the REST base is derived from it.
-	Site              string          `json:"site" required:"true"`
-	Project           string          `json:"project" required:"true"`
-	IssueType         string          `json:"issueType" required:"true"`
-	Summary           DefaultedString `json:"summary,omitempty"`
-	Description       DefaultedString `json:"description,omitempty"`
-	Priority          string          `json:"priority"`
-	Labels            []string        `json:"labels,omitempty"`
-	ResolveTransition string          `json:"resolveTransition"`
-	ReopenTransition  string          `json:"reopenTransition"`
-	ReopenDuration    DefaultedString `json:"reopenDuration,omitempty"`
-	WontFixResolution string          `json:"wontFixResolution"`
-	CustomFields      map[string]any  `json:"customFields,omitempty"`
+	Site              string                       `json:"site" required:"true"`
+	Project           string                       `json:"project" required:"true"`
+	IssueType         string                       `json:"issueType" required:"true"`
+	Summary           valuer.UnsetOrNonEmptyString `json:"summary,omitempty"`
+	Description       valuer.UnsetOrNonEmptyString `json:"description,omitempty"`
+	Priority          string                       `json:"priority"`
+	Labels            []string                     `json:"labels,omitempty"`
+	ResolveTransition string                       `json:"resolveTransition"`
+	ReopenTransition  string                       `json:"reopenTransition"`
+	ReopenDuration    valuer.UnsetOrNonEmptyString `json:"reopenDuration,omitempty"`
+	WontFixResolution string                       `json:"wontFixResolution"`
+	CustomFields      map[string]any               `json:"customFields,omitempty"`
 
 	Email    string `json:"email" required:"true"`
 	APIToken string `json:"apiToken" required:"true"`
@@ -653,8 +633,8 @@ func (c ChannelJiraConfig) Validate() error {
 		}
 	}
 
-	if c.ReopenDuration != "" {
-		reopenDuration, err := model.ParseDuration(string(c.ReopenDuration))
+	if !c.ReopenDuration.IsZero() {
+		reopenDuration, err := model.ParseDuration(c.ReopenDuration.StringValue())
 		if err != nil {
 			return errors.WrapInvalidInputf(err, ErrCodeAlertmanagerChannelInvalid, "config.spec.reopenDuration %q is not a valid duration", c.ReopenDuration)
 		}
@@ -662,7 +642,7 @@ func (c ChannelJiraConfig) Validate() error {
 		// A read reports the duration as model.Duration formats it, collapsing
 		// "72h" into "3d", so a value that is not already in that form is rejected
 		// rather than answered with one the caller never sent.
-		if canonical := reopenDuration.String(); canonical != string(c.ReopenDuration) {
+		if canonical := reopenDuration.String(); canonical != c.ReopenDuration.StringValue() {
 			return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.reopenDuration %q must be written as %q", c.ReopenDuration, canonical)
 		}
 	}
@@ -686,8 +666,8 @@ func (c ChannelJiraConfig) toUndefaultedReceiver(displayName string) (*Receiver,
 		Site:              c.Site,
 		Project:           c.Project,
 		IssueType:         c.IssueType,
-		Summary:           string(c.Summary),
-		Description:       string(c.Description),
+		Summary:           c.Summary.StringValue(),
+		Description:       c.Description.StringValue(),
 		Priority:          c.Priority,
 		Labels:            c.Labels,
 		ResolveTransition: c.ResolveTransition,
@@ -697,8 +677,8 @@ func (c ChannelJiraConfig) toUndefaultedReceiver(displayName string) (*Receiver,
 		HTTPConfig:        &httpConfig,
 	}
 
-	if c.ReopenDuration != "" {
-		reopenDuration, err := model.ParseDuration(string(c.ReopenDuration))
+	if !c.ReopenDuration.IsZero() {
+		reopenDuration, err := model.ParseDuration(c.ReopenDuration.StringValue())
 		if err != nil {
 			return nil, errors.WrapInvalidInputf(err, ErrCodeAlertmanagerChannelInvalid, "parse reopenDuration %q", c.ReopenDuration)
 		}
@@ -724,13 +704,13 @@ func newChannelJiraConfigFromReceiver(name string, receiver *Receiver) (ChannelS
 		Site:              jira.Site,
 		Project:           jira.Project,
 		IssueType:         jira.IssueType,
-		Summary:           DefaultedString(jira.Summary),
-		Description:       DefaultedString(jira.Description),
+		Summary:           valuer.UnsetIfEmpty(jira.Summary),
+		Description:       valuer.UnsetIfEmpty(jira.Description),
 		Priority:          jira.Priority,
 		Labels:            jira.Labels,
 		ResolveTransition: jira.ResolveTransition,
 		ReopenTransition:  jira.ReopenTransition,
-		ReopenDuration:    DefaultedString(jira.ReopenDuration.String()),
+		ReopenDuration:    valuer.UnsetIfEmpty(jira.ReopenDuration.String()),
 		WontFixResolution: jira.WontFixResolution,
 		CustomFields:      jira.CustomFields,
 	}
@@ -746,13 +726,13 @@ func newChannelJiraConfigFromReceiver(name string, receiver *Receiver) (ChannelS
 // ChannelJSMOpsConfig carries no API URL: JSM Ops is a single global gateway
 // keyed by the integration API key, which the notifier pins itself.
 type ChannelJSMOpsConfig struct {
-	SendResolved *bool           `json:"sendResolved,omitempty"`
-	APIKey       string          `json:"apiKey" required:"true"`
-	Message      DefaultedString `json:"message,omitempty"`
-	Description  DefaultedString `json:"description,omitempty"`
-	Priority     string          `json:"priority"`
+	SendResolved *bool                        `json:"sendResolved,omitempty"`
+	APIKey       string                       `json:"apiKey" required:"true"`
+	Message      valuer.UnsetOrNonEmptyString `json:"message,omitempty"`
+	Description  valuer.UnsetOrNonEmptyString `json:"description,omitempty"`
+	Priority     string                       `json:"priority"`
 	// Tags is the comma-separated list JSM Ops attaches to the alert.
-	Tags DefaultedString `json:"tags,omitempty"`
+	Tags valuer.UnsetOrNonEmptyString `json:"tags,omitempty"`
 }
 
 func (c ChannelJSMOpsConfig) Validate() error {
@@ -769,10 +749,10 @@ func (c ChannelJSMOpsConfig) toUndefaultedReceiver(displayName string) (*Receive
 		JSMOpsConfigs: []*JSMOpsReceiverConfig{{
 			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, DefaultJSMOpsReceiverConfig.VSendResolved)},
 			APIKey:         config.Secret(c.APIKey),
-			Message:        string(c.Message),
-			Description:    string(c.Description),
+			Message:        c.Message.StringValue(),
+			Description:    c.Description.StringValue(),
 			Priority:       c.Priority,
-			Tags:           string(c.Tags),
+			Tags:           c.Tags.StringValue(),
 		}},
 	}, nil
 }
@@ -788,20 +768,20 @@ func newChannelJSMOpsConfigFromReceiver(name string, receiver *Receiver) (Channe
 	return &ChannelJSMOpsConfig{
 		SendResolved: &sendResolved,
 		APIKey:       string(jsmops.APIKey),
-		Message:      DefaultedString(jsmops.Message),
-		Description:  DefaultedString(jsmops.Description),
+		Message:      valuer.UnsetIfEmpty(jsmops.Message),
+		Description:  valuer.UnsetIfEmpty(jsmops.Description),
 		Priority:     jsmops.Priority,
-		Tags:         DefaultedString(jsmops.Tags),
+		Tags:         valuer.UnsetIfEmpty(jsmops.Tags),
 	}, nil
 }
 
 type ChannelIncidentIOConfig struct {
-	SendResolved *bool             `json:"sendResolved,omitempty"`
-	URL          string            `json:"url" required:"true"`
-	Token        string            `json:"token" required:"true"`
-	Title        DefaultedString   `json:"title,omitempty"`
-	Description  DefaultedString   `json:"description,omitempty"`
-	Metadata     map[string]string `json:"metadata,omitempty"`
+	SendResolved *bool                        `json:"sendResolved,omitempty"`
+	URL          string                       `json:"url" required:"true"`
+	Token        string                       `json:"token" required:"true"`
+	Title        valuer.UnsetOrNonEmptyString `json:"title,omitempty"`
+	Description  valuer.UnsetOrNonEmptyString `json:"description,omitempty"`
+	Metadata     map[string]string            `json:"metadata,omitempty"`
 }
 
 func (c ChannelIncidentIOConfig) Validate() error {
@@ -823,8 +803,8 @@ func (c ChannelIncidentIOConfig) toUndefaultedReceiver(displayName string) (*Rec
 			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, DefaultIncidentIOReceiverConfig.VSendResolved)},
 			URL:            c.URL,
 			Token:          config.Secret(c.Token),
-			Title:          string(c.Title),
-			Description:    string(c.Description),
+			Title:          c.Title.StringValue(),
+			Description:    c.Description.StringValue(),
 			Metadata:       c.Metadata,
 		}},
 	}, nil
@@ -842,8 +822,8 @@ func newChannelIncidentIOConfigFromReceiver(name string, receiver *Receiver) (Ch
 		SendResolved: &sendResolved,
 		URL:          incidentio.URL,
 		Token:        string(incidentio.Token),
-		Title:        DefaultedString(incidentio.Title),
-		Description:  DefaultedString(incidentio.Description),
+		Title:        valuer.UnsetIfEmpty(incidentio.Title),
+		Description:  valuer.UnsetIfEmpty(incidentio.Description),
 		Metadata:     incidentio.Metadata,
 	}, nil
 }

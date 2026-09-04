@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -59,7 +60,7 @@ func TestPostableChannelValidate(t *testing.T) {
 				Config: ChannelConfig{Kind: ChannelKindJira, Spec: &ChannelJiraConfig{
 					Site: "https://acme.atlassian.net", Project: "OPS", IssueType: "Bug",
 					Email: "oncall@acme.com", APIToken: "api-token",
-					Summary: "jira summary", Description: "jira description", ReopenDuration: "three days",
+					Summary: valuer.MustNewUnsetOrNonEmptyString("jira summary"), Description: valuer.MustNewUnsetOrNonEmptyString("jira description"), ReopenDuration: valuer.MustNewUnsetOrNonEmptyString("three days"),
 				}},
 			},
 		},
@@ -96,7 +97,7 @@ func TestGettableChannelMarshalsAsPostablePlusServerFields(t *testing.T) {
 	gettable := GettableNotificationChannel{
 		Name:        "oncall",
 		DisplayName: "#oncall",
-		Config:      ChannelConfig{Kind: ChannelKindSlack, Spec: &ChannelSlackConfig{APIURL: "https://a", Channel: "#c", Title: "slack title", Text: "slack text"}},
+		Config:      ChannelConfig{Kind: ChannelKindSlack, Spec: &ChannelSlackConfig{APIURL: "https://a", Channel: "#c", Title: valuer.MustNewUnsetOrNonEmptyString("slack title"), Text: valuer.MustNewUnsetOrNonEmptyString("slack text")}},
 	}
 
 	raw, err := json.Marshal(gettable)
@@ -120,7 +121,7 @@ func TestGettableChannelMarshalsAsPostablePlusServerFields(t *testing.T) {
 func TestChannelConfigValidateRejectsSpecOfAnotherKind(t *testing.T) {
 	config := ChannelConfig{
 		Kind: ChannelKindSlack,
-		Spec: &ChannelEmailConfig{To: "team@example.com", HTML: "<p>body</p>"},
+		Spec: &ChannelEmailConfig{To: "team@example.com", HTML: valuer.MustNewUnsetOrNonEmptyString("<p>body</p>")},
 	}
 
 	err := config.Validate()
