@@ -810,8 +810,13 @@ func (b *BucketOptions) UnmarshalJSON(data []byte) error {
 		b.Spec = spec
 
 	default:
-		return errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"invalid bucketOptions kind %q, expected one of linear, log", shadow.Kind.StringValue())
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"invalid bucketOptions kind: %s",
+			shadow.Kind.StringValue(),
+		).WithAdditional(
+			"Valid bucket kinds are: linear, log",
+		)
 	}
 
 	return nil
