@@ -1,7 +1,3 @@
-"""
-Look at the histogram_data_1h.jsonl file for the relevant data
-"""
-
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
@@ -509,3 +505,45 @@ def test_histogram_percentile_for_delta_service(
     assert result_values[0]["value"] == zeroth_value
     assert result_values[1]["value"] == first_value
     assert result_values[-1]["value"] == last_value
+
+
+def test_histogram_percentile_explicit_le_group_by(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[list[Metrics]], None],
+) -> None:
+    """`le` is grouped by internally and then collapsed by histogramQuantile, so naming it
+    explicitly must not change the result — not even ahead of another key, where dropping it
+    from the output shifts the remaining group-by positions."""
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    metric_name = "test_explicit_le_bucket"
+
+    metrics = Metrics.load_from_file(
+        FILE,
+        base_time=now - timedelta(minutes=60),
+        metric_name_override=metric_name,
+    )
+    insert_metrics(metrics)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms,
+        end_ms,
+        [
+            build_builder_query("A", metric_name, "doesnotreallymatter", "p95", group_by=["le", "service"]),
+            build_builder_query("B", metric_name, "doesnotreallymatter", "p95", group_by=["service"]),
+        ],
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    data = response.json()
+    with_le = get_all_series(data, "A")
+    without_le = get_all_series(data, "B")
+
+    assert [[label["key"]["name"] for label in series["labels"]] for series in with_le] == [["service"], ["service"]], f"le must be collapsed out of the output labels, got {[series['labels'] for series in with_le]}"
+    assert {series["labels"][0]["value"]: sorted(series["values"], key=lambda v: v["timestamp"]) for series in with_le} == {series["labels"][0]["value"]: sorted(series["values"], key=lambda v: v["timestamp"]) for series in without_le}

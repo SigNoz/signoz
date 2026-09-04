@@ -50,15 +50,12 @@ jest.mock('../../EntityDateTimeSelector/useEntityDetailsTime', () => ({
 	}),
 }));
 
-jest.mock(
-	'container/DashboardContainer/visualization/charts/TimeSeries/TimeSeries',
-	() => ({
-		__esModule: true,
-		default: (): JSX.Element => (
-			<div data-testid="uplot-chart">TimeSeries Chart</div>
-		),
-	}),
-);
+jest.mock('lib/visualization/charts/TimeSeries/TimeSeries', () => ({
+	__esModule: true,
+	default: (): JSX.Element => (
+		<div data-testid="uplot-chart">TimeSeries Chart</div>
+	),
+}));
 
 jest.mock('providers/Timezone', () => ({
 	useTimezone: (): { timezone: { value: string } } => ({
@@ -121,12 +118,6 @@ jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
 			plan_version: 'test-plan-version',
 		},
 	},
-	featureFlags: [
-		{
-			name: 'DOT_METRICS_ENABLED',
-			active: false,
-		},
-	],
 } as any);
 
 const mockEntity = {

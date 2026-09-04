@@ -9,6 +9,8 @@ const fieldContextToSuggestionMap: Record<
 	[TelemetrytypesFieldContextDTO.span]: 'span',
 	[TelemetrytypesFieldContextDTO.attribute]: 'attribute',
 	// no maps for the following values on suggestion context
+	[TelemetrytypesFieldContextDTO.trace]: undefined,
+	[TelemetrytypesFieldContextDTO.scope]: undefined,
 	[TelemetrytypesFieldContextDTO.body]: undefined,
 	[TelemetrytypesFieldContextDTO.metric]: undefined,
 	[TelemetrytypesFieldContextDTO.log]: undefined,

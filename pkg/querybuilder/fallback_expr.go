@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strconv"
 
+	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -192,6 +193,16 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 		}
 	}
 	return tblFieldName, value
+}
+
+// ColumnIsTemporal reports whether a column carries a time value.
+func ColumnIsTemporal(col *schema.Column) bool {
+	switch col.Type.GetType() {
+	case schema.ColumnTypeEnumDateTime64, schema.ColumnTypeEnumDateTime,
+		schema.ColumnTypeEnumDate, schema.ColumnTypeEnumDate32:
+		return true
+	}
+	return false
 }
 
 func castFloat(col string) string     { return fmt.Sprintf("toFloat64OrNull(%s)", col) }

@@ -25,6 +25,10 @@ const (
 	dashboardNameSuffixLen = 8
 )
 
+// SystemDashboardNamePrefix is reserved for dashboards SigNoz ships and owns. Generated
+// names never contain consecutive hyphens, so only a typed name can carry it — create rejects that.
+const SystemDashboardNamePrefix = "signoz---"
+
 const (
 	dashboardIconPathPrefix = "/assets/Icons/"
 	dashboardLogoPathPrefix = "/assets/Logos/"
@@ -75,8 +79,8 @@ type DashboardV2 struct {
 }
 
 func (d *DashboardV2) ErrIfNotMutable() error {
-	if d.Source == SourceIntegration {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "integration dashboards cannot be modified")
+	if d.Source != SourceUser {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "%s dashboards cannot be modified", d.Source)
 	}
 	return nil
 }
@@ -95,6 +99,11 @@ func (d *DashboardV2) Update(updatable UpdatableDashboardV2, updatedBy string, r
 	if err := d.ErrIfNotUpdatable(); err != nil {
 		return err
 	}
+	return d.UpdateUnsafe(updatable, updatedBy, resolvedTags)
+}
+
+// UpdateUnsafe applies the update without the source/lock gate. Intended for internal system callers.
+func (d *DashboardV2) UpdateUnsafe(updatable UpdatableDashboardV2, updatedBy string, resolvedTags []*tagtypes.Tag) error {
 	if updatable.Name != d.Name {
 		return errors.NewInvalidInputf(ErrCodeDashboardImmutable, "name is immutable; cannot change from %q to %q", d.Name, updatable.Name)
 	}
@@ -129,12 +138,9 @@ func (d *DashboardV2) LockUnlock(lock bool, isAdmin bool, updatedBy string) erro
 	return nil
 }
 
-func (d *DashboardV2) ErrIfNotDeletable() error {
-	if d.Locked {
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot delete a locked dashboard, please unlock the dashboard to delete")
-	}
-	if !d.Source.isUserDeletable() {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "%s dashboards cannot be deleted", d.Source)
+func (d *DashboardV2) ErrIfNotSystem() error {
+	if d.Source != SourceSystem {
+		return errors.Newf(errors.TypeNotFound, ErrCodeDashboardNotFound, "dashboard %q is not a system dashboard", d.Name)
 	}
 	return nil
 }
@@ -215,12 +221,20 @@ type PostableDashboardV2 struct {
 	Spec         DashboardSpec          `json:"spec" required:"true"`
 }
 
-func (postable PostableDashboardV2) NewDashboardV2(orgID valuer.UUID, createdBy string, source Source) *DashboardV2 {
+func (postable PostableDashboardV2) NewDashboardV2(orgID valuer.UUID, createdBy string, source Source) (*DashboardV2, error) {
 	now := time.Now()
 
 	name := postable.Name
 	if postable.GenerateName {
 		name = generateDashboardName(postable.Spec.Display.Name)
+	}
+	// Checked on the final name, here rather than in validateName, because only
+	// the constructor knows the source.
+	if source != SourceSystem && strings.HasPrefix(name, SystemDashboardNamePrefix) {
+		return nil, errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "name %q is invalid: the %q prefix is reserved for system dashboards", name, SystemDashboardNamePrefix)
+	}
+	if source == SourceSystem && !strings.HasPrefix(name, SystemDashboardNamePrefix) {
+		return nil, errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "name %q is invalid: system dashboard names must start with the %q prefix", name, SystemDashboardNamePrefix)
 	}
 
 	return &DashboardV2{
@@ -234,7 +248,7 @@ func (postable PostableDashboardV2) NewDashboardV2(orgID valuer.UUID, createdBy 
 		Name:                    name,
 		Tags:                    tagtypes.NewTagsFromPostableTags(orgID, coretypes.KindDashboard, postable.Tags),
 		Spec:                    postable.Spec,
-	}
+	}, nil
 }
 
 func (p *PostableDashboardV2) UnmarshalJSON(data []byte) error {
@@ -363,6 +377,36 @@ type GettableDashboardV2 struct {
 func (d DashboardV2) ToGettableDashboardV2() GettableDashboardV2 {
 	return GettableDashboardV2{
 		Identifiable:            d.Identifiable,
+		TimeAuditable:           d.TimeAuditable,
+		UserAuditable:           d.UserAuditable,
+		OrgID:                   d.OrgID,
+		Locked:                  d.Locked,
+		Source:                  d.Source,
+		DashboardV2MetadataBase: d.DashboardV2MetadataBase,
+		Name:                    d.Name,
+		Tags:                    tagtypes.NewGettableTagsFromTags(d.Tags),
+		Spec:                    d.Spec,
+	}
+}
+
+// GettableSystemDashboard is the system-dashboard endpoint's response. System
+// dashboards are addressed by their stable definition name, so it carries no id.
+type GettableSystemDashboard struct {
+	types.TimeAuditable
+	types.UserAuditable
+
+	OrgID  valuer.UUID `json:"orgId" required:"true"`
+	Locked bool        `json:"locked" required:"true"`
+	Source Source      `json:"source" required:"true"`
+
+	DashboardV2MetadataBase
+	Name string                  `json:"name" required:"true"`
+	Tags []*tagtypes.GettableTag `json:"tags" required:"true"`
+	Spec DashboardSpec           `json:"spec" required:"true"`
+}
+
+func (d DashboardV2) ToGettableSystemDashboard() GettableSystemDashboard {
+	return GettableSystemDashboard{
 		TimeAuditable:           d.TimeAuditable,
 		UserAuditable:           d.UserAuditable,
 		OrgID:                   d.OrgID,

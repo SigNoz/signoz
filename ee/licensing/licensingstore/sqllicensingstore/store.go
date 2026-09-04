@@ -64,6 +64,22 @@ func (store *store) GetAll(ctx context.Context, organizationID valuer.UUID) ([]*
 	return storableLicenses, nil
 }
 
+func (store *store) Delete(ctx context.Context, organizationID valuer.UUID, licenseID valuer.UUID) error {
+	_, err := store.
+		sqlstore.
+		BunDB().
+		NewDelete().
+		Model(new(licensetypes.StorableLicense)).
+		Where("org_id = ?", organizationID).
+		Where("id = ?", licenseID).
+		Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "unable to delete license with ID: %s", licenseID)
+	}
+
+	return nil
+}
+
 func (store *store) Update(ctx context.Context, organizationID valuer.UUID, storableLicense *licensetypes.StorableLicense) error {
 	_, err := store.
 		sqlstore.

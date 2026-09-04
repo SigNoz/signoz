@@ -48,7 +48,9 @@ func TestQueryRange_MetricTypeMissing(t *testing.T) {
 		nil, // telemetryStore
 		metadataStore,
 		nil,                // prometheus
+		nil,                // promV2
 		nil,                // traceStmtBuilder
+		nil,                // aiTraceStmtBuilder
 		nil,                // logStmtBuilder
 		nil,                // auditStmtBuilder
 		nil,                // metricStmtBuilder
@@ -120,7 +122,9 @@ func TestQueryRange_MetricTypeFromStore(t *testing.T) {
 		telemetryStore,
 		metadataStore,
 		nil, // prometheus
+		nil, // promV2
 		nil, // traceStmtBuilder
+		nil, // aiTraceStmtBuilder
 		nil, // logStmtBuilder
 		nil, // auditStmtBuilder
 		&mockMetricStmtBuilder{},
@@ -185,6 +189,7 @@ func TestRunExecutesQueriesConcurrently(t *testing.T) {
 
 	q := &querier{
 		logger:               instrumentationtest.New().Logger(),
+		fl:                   flaggertest.New(t),
 		maxConcurrentQueries: numQueries,
 	}
 
@@ -232,6 +237,7 @@ func TestRunRespectsMaxConcurrentQueries(t *testing.T) {
 
 	q := &querier{
 		logger:               instrumentationtest.New().Logger(),
+		fl:                   flaggertest.New(t),
 		maxConcurrentQueries: limit,
 	}
 
@@ -269,6 +275,7 @@ func TestRunRespectsMaxConcurrentQueries(t *testing.T) {
 func TestRunQueryErrorCancelsSiblings(t *testing.T) {
 	q := &querier{
 		logger:               instrumentationtest.New().Logger(),
+		fl:                   flaggertest.New(t),
 		maxConcurrentQueries: 4,
 	}
 

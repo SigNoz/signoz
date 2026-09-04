@@ -70,15 +70,21 @@ type Config struct {
 // on Receiver, and extensions to customConfigsOf + isEmpty.
 type customReceiverConfigs struct {
 	GoogleChat []*GoogleChatReceiverConfig
+	Jira       []*JiraReceiverConfig
+	JSMOps     []*JSMOpsReceiverConfig
+	IncidentIO []*IncidentIOReceiverConfig
 }
 
 func (c customReceiverConfigs) isEmpty() bool {
-	return len(c.GoogleChat) == 0
+	return len(c.GoogleChat) == 0 && len(c.Jira) == 0 && len(c.JSMOps) == 0 && len(c.IncidentIO) == 0
 }
 
 func customConfigsOf(receiver *Receiver) customReceiverConfigs {
 	return customReceiverConfigs{
 		GoogleChat: receiver.GoogleChatConfigs,
+		Jira:       receiver.JiraConfigs,
+		JSMOps:     receiver.JSMOpsConfigs,
+		IncidentIO: receiver.IncidentIOConfigs,
 	}
 }
 
@@ -116,6 +122,11 @@ func NewConfigFromStoreableConfig(sc *StoreableConfig) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// It must be replaced with an empty, non-nil global, upstream swaps nil for
+	// DefaultGlobalConfig, which would let a path that skips SetGlobalConfig pass
+	// validation and fail silently at delivery instead of failing fast here.
+	alertmanagerConfig.Global = &config.GlobalConfig{}
 
 	return &Config{
 		alertmanagerConfig: alertmanagerConfig,
@@ -174,7 +185,7 @@ func newConfigFromString(s string) (*config.Config, map[string]customReceiverCon
 	return amConfig, customConfigs, nil
 }
 
-func newRawFromConfig(c *config.Config, customConfigs map[string]customReceiverConfigs) []byte {
+func extendedReceivers(c *config.Config, customConfigs map[string]customReceiverConfigs) []*Receiver {
 	receivers := make([]*Receiver, len(c.Receivers))
 	for i := range c.Receivers {
 		base := c.Receivers[i]
@@ -182,10 +193,20 @@ func newRawFromConfig(c *config.Config, customConfigs map[string]customReceiverC
 		receivers[i] = &Receiver{
 			Receiver:          &base,
 			GoogleChatConfigs: custom.GoogleChat,
+			JiraConfigs:       custom.Jira,
+			JSMOpsConfigs:     custom.JSMOps,
+			IncidentIOConfigs: custom.IncidentIO,
 		}
 	}
 
-	b, err := json.Marshal(storedConfig{Config: c, Receivers: receivers})
+	return receivers
+}
+
+func newRawFromConfig(c *config.Config, customConfigs map[string]customReceiverConfigs) []byte {
+	persistable := *c
+	persistable.Global = nil
+
+	b, err := json.Marshal(storedConfig{Config: &persistable, Receivers: extendedReceivers(c, customConfigs)})
 	if err != nil {
 		// Taking inspiration from the upstream. This is never expected to happen.
 		return []byte(fmt.Sprintf("<error creating config string: %s>", err))
@@ -204,6 +225,37 @@ func (c *Config) flush() {
 	c.storeableConfig.Config = raw
 	c.storeableConfig.Hash = fmt.Sprintf("%x", newConfigHash(raw))
 	c.storeableConfig.UpdatedAt = time.Now()
+}
+
+func (c *Config) Resolved() (*Config, error) {
+	raw, err := json.Marshal(storedConfig{Config: c.alertmanagerConfig, Receivers: extendedReceivers(c.alertmanagerConfig, c.customConfigs)})
+	if err != nil {
+		return nil, err
+	}
+
+	alertmanagerConfig, customConfigs, err := newConfigFromString(string(raw))
+	if err != nil {
+		return nil, err
+	}
+
+	if err := alertmanagerConfig.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
+		return nil, err
+	}
+
+	storeableConfig := *c.storeableConfig
+	resolved := &Config{
+		alertmanagerConfig: alertmanagerConfig,
+		customConfigs:      customConfigs,
+		storeableConfig:    &storeableConfig,
+	}
+	resolved.applyNativeDefaults()
+
+	return resolved, nil
+}
+
+func (c *Config) validate() error {
+	_, err := c.Resolved()
+	return err
 }
 
 func (c *Config) CopyWithReset() (*Config, error) {
@@ -271,6 +323,15 @@ func (c *Config) StoreableConfig() *StoreableConfig {
 	return c.storeableConfig
 }
 
+func cloneReceiver(receiver *Receiver) (*Receiver, error) {
+	raw, err := json.Marshal(receiver)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewReceiver(string(raw))
+}
+
 func (c *Config) CreateReceiver(receiver *Receiver) error {
 	// check that receiver name is not already used
 	for _, existingReceiver := range c.alertmanagerConfig.Receivers {
@@ -279,16 +340,21 @@ func (c *Config) CreateReceiver(receiver *Receiver) error {
 		}
 	}
 
-	route, err := NewRouteFromReceiver(receiver)
+	owned, err := cloneReceiver(receiver)
+	if err != nil {
+		return err
+	}
+
+	route, err := NewRouteFromReceiver(owned)
 	if err != nil {
 		return err
 	}
 
 	c.alertmanagerConfig.Route.Routes = append(c.alertmanagerConfig.Route.Routes, route)
-	c.alertmanagerConfig.Receivers = append(c.alertmanagerConfig.Receivers, *receiver.Receiver)
-	c.setCustomConfigs(receiver)
+	c.alertmanagerConfig.Receivers = append(c.alertmanagerConfig.Receivers, *owned.Receiver)
+	c.setCustomConfigs(owned)
 
-	if err := c.alertmanagerConfig.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
+	if err := c.validate(); err != nil {
 		return err
 	}
 	c.applyNativeDefaults()
@@ -305,6 +371,9 @@ func (c *Config) GetReceiver(name string) (*Receiver, error) {
 			return &Receiver{
 				Receiver:          &base,
 				GoogleChatConfigs: custom.GoogleChat,
+				JiraConfigs:       custom.Jira,
+				JSMOpsConfigs:     custom.JSMOps,
+				IncidentIOConfigs: custom.IncidentIO,
 			}, nil
 		}
 	}
@@ -313,16 +382,21 @@ func (c *Config) GetReceiver(name string) (*Receiver, error) {
 }
 
 func (c *Config) UpdateReceiver(receiver *Receiver) error {
+	owned, err := cloneReceiver(receiver)
+	if err != nil {
+		return err
+	}
+
 	// find and update receiver
 	for i, existingReceiver := range c.alertmanagerConfig.Receivers {
-		if existingReceiver.Name == receiver.Name {
-			c.alertmanagerConfig.Receivers[i] = *receiver.Receiver
-			c.setCustomConfigs(receiver)
+		if existingReceiver.Name == owned.Name {
+			c.alertmanagerConfig.Receivers[i] = *owned.Receiver
+			c.setCustomConfigs(owned)
 			break
 		}
 	}
 
-	if err := c.alertmanagerConfig.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
+	if err := c.validate(); err != nil {
 		return err
 	}
 	c.applyNativeDefaults()
@@ -377,6 +451,21 @@ func (c *Config) applyNativeDefaults() {
 		for _, gc := range custom.GoogleChat {
 			if gc.HTTPConfig == nil {
 				gc.HTTPConfig = httpDefault
+			}
+		}
+		for _, jc := range custom.Jira {
+			if jc.HTTPConfig == nil {
+				jc.HTTPConfig = httpDefault
+			}
+		}
+		for _, jc := range custom.JSMOps {
+			if jc.HTTPConfig == nil {
+				jc.HTTPConfig = httpDefault
+			}
+		}
+		for _, ic := range custom.IncidentIO {
+			if ic.HTTPConfig == nil {
+				ic.HTTPConfig = httpDefault
 			}
 		}
 	}

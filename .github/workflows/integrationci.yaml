@@ -39,6 +39,8 @@ jobs:
       matrix:
         suite:
           - alerts
+          - alertmanager
+          - alertmanagerrotation
           - basepath
           - callbackauthn
           - cloudintegrations
@@ -48,16 +50,21 @@ jobs:
           - logspipelines
           - passwordauthn
           - preference
+          - quickfilter
           - querierlogs
           - queriertraces
           - queriermetrics
           - querierscalar
           - queriercommon
+          - querierai
           - rawexportdata
           - promqlconformance
+          - promapiconformance
           - querierauthz
           - role
           - rootuser
+          - savedview
+          - semconvfamilies
           - serviceaccount
           - spanmapper
           - querier_json_body

@@ -16,6 +16,7 @@ import {
 	ArrowUpDown,
 	ArrowUpToLine,
 	Bolt,
+	Box,
 	Boxes,
 	Computer,
 	Container,
@@ -31,6 +32,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { K8sDynamicList } from './Base/K8sDynamicList';
 import {
 	GetClustersQuickFiltersConfig,
+	GetContainersQuickFiltersConfig,
 	GetDaemonsetsQuickFiltersConfig,
 	GetDeploymentsQuickFiltersConfig,
 	GetJobsQuickFiltersConfig,
@@ -47,18 +49,19 @@ import {
 	useInfraMonitoringCategory,
 	useInfraMonitoringGroupBy,
 	useInfraMonitoringOrderBy,
+	useInfraMonitoringPageListing,
 	useInfraMonitoringSelectedItemParams,
 } from './hooks';
 
 import styles from './InfraMonitoringK8s.module.scss';
-import {
-	logInfraFilterCustomizedEvent,
-	logInfraMonitoringListViewedEvent,
-	InfraMonitoringEvents,
-} from 'constants/events';
+import { InfraMonitoringEvents } from 'constants/events';
 import logEvent from 'api/common/logEvent';
 import { NANO_SECOND_MULTIPLIER, useGlobalTimeStore } from 'store/globalTime';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
+import {
+	logInfraFilterCustomizedEvent,
+	logInfraMonitoringListViewedEvent,
+} from 'container/InfraMonitoringK8sV2/Base/events';
 
 export default function InfraMonitoringK8s(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
@@ -67,6 +70,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 	const [, setGroupBy] = useInfraMonitoringGroupBy();
 	const [, setOrderBy] = useInfraMonitoringOrderBy();
 	const [, setSelectedItemParams] = useInfraMonitoringSelectedItemParams();
+	const [, setCurrentPage] = useInfraMonitoringPageListing();
 
 	const compositeQuery = useGetCompositeQueryParam();
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
@@ -151,6 +155,12 @@ export default function InfraMonitoringK8s(): JSX.Element {
 	const categories = useMemo(
 		() => [
 			{
+				key: K8sCategories.CONTAINERS,
+				label: 'Containers',
+				icon: <Box size={14} />,
+				config: GetContainersQuickFiltersConfig(),
+			},
+			{
 				key: K8sCategories.PODS,
 				label: 'Pods',
 				icon: <Container size={14} />,
@@ -218,6 +228,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			void setSelectedCategory(key as string);
 			void setOrderBy(null);
 			void setGroupBy(null);
+			void setCurrentPage(null);
 			setSelectedItemParams(null);
 			redirectWithQueryBuilderData({
 				...currentQuery,

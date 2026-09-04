@@ -22,7 +22,8 @@ func newTestDashboardV2(t *testing.T, orgID valuer.UUID, source Source) *Dashboa
 	updatedAt := time.Date(2026, time.January, 2, 12, 0, 0, 0, time.UTC)
 
 	spec := DashboardSpec{
-		Display: Display{Name: "Test Dashboard"},
+		Display:   Display{Name: "Test Dashboard"},
+		Variables: []Variable{},
 		Panels: map[string]*Panel{
 			"p1": {
 				Kind: "Panel",
@@ -88,21 +89,25 @@ func TestPostableDashboardV2NewDashboardV2(t *testing.T) {
 	cases := []struct {
 		scenario       string
 		source         Source
+		name           string
 		expectedLocked bool
 	}{
 		{
 			scenario:       "user source is not locked",
 			source:         SourceUser,
+			name:           "my-dashboard",
 			expectedLocked: false,
 		},
 		{
 			scenario:       "system source is not locked",
 			source:         SourceSystem,
+			name:           SystemDashboardNamePrefix + "my-dashboard",
 			expectedLocked: false,
 		},
 		{
 			scenario:       "integration source is locked",
 			source:         SourceIntegration,
+			name:           "my-dashboard",
 			expectedLocked: true,
 		},
 	}
@@ -114,7 +119,7 @@ func TestPostableDashboardV2NewDashboardV2(t *testing.T) {
 					SchemaVersion: SchemaVersion,
 					Image:         "img",
 				},
-				Name: "my-dashboard",
+				Name: tc.name,
 				Tags: []tagtypes.PostableTag{
 					{Key: "team", Value: "platform"},
 					{Key: "env", Value: "prod"},
@@ -123,7 +128,8 @@ func TestPostableDashboardV2NewDashboardV2(t *testing.T) {
 			}
 
 			before := time.Now()
-			dashboard := postable.NewDashboardV2(orgID, "alice", tc.source)
+			dashboard, err := postable.NewDashboardV2(orgID, "alice", tc.source)
+			require.NoError(t, err)
 			after := time.Now()
 
 			require.NotNil(t, dashboard)
@@ -159,8 +165,10 @@ func TestPostableDashboardV2NewDashboardV2(t *testing.T) {
 			Spec:                    DashboardSpec{},
 		}
 
-		first := postable.NewDashboardV2(orgID, "alice", SourceUser)
-		second := postable.NewDashboardV2(orgID, "alice", SourceUser)
+		first, err := postable.NewDashboardV2(orgID, "alice", SourceUser)
+		require.NoError(t, err)
+		second, err := postable.NewDashboardV2(orgID, "alice", SourceUser)
+		require.NoError(t, err)
 		assert.NotEqual(t, first.ID, second.ID, "expected distinct UUIDs across invocations")
 	})
 
@@ -173,7 +181,8 @@ func TestPostableDashboardV2NewDashboardV2(t *testing.T) {
 			},
 		}
 
-		dashboard := postable.NewDashboardV2(orgID, "alice", SourceUser)
+		dashboard, err := postable.NewDashboardV2(orgID, "alice", SourceUser)
+		require.NoError(t, err)
 		assert.True(t, strings.HasPrefix(dashboard.Name, "my-dashboard-"), "expected slug prefix, got %q", dashboard.Name)
 		assert.Len(t, dashboard.Name, len("my-dashboard-")+dashboardNameSuffixLen)
 	})

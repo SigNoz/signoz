@@ -46,12 +46,16 @@ import type {
 	GetPublicDashboardPathParameters,
 	GetPublicDashboardWidgetQueryRange200,
 	GetPublicDashboardWidgetQueryRangePathParameters,
+	GetSystemDashboard200,
+	GetSystemDashboardPathParameters,
 	ListDashboardViews200,
 	ListDashboardsForUserV2200,
 	ListDashboardsForUserV2Params,
 	ListDashboardsV2200,
 	ListDashboardsV2Params,
 	LockDashboardV2PathParameters,
+	MigrateDashboardV2200,
+	MigrateDashboardV2PathParameters,
 	PatchDashboardV2200,
 	PatchDashboardV2PathParameters,
 	PinDashboardV2PathParameters,
@@ -1804,6 +1808,187 @@ export const useLockDashboardV2 = <
 > => {
 	return useMutation(getLockDashboardV2MutationOptions(options));
 };
+/**
+ * This endpoint retries the v1→v2 (Perses) migration on a dashboard still stored in the v1 schema and returns the v2-shape result. It is idempotent: a dashboard already in the v2 schema is returned unchanged.
+ * @summary Migrate dashboard to v2
+ */
+export const migrateDashboardV2 = (
+	{ id }: MigrateDashboardV2PathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<MigrateDashboardV2200>({
+		url: `/api/v2/dashboards/${id}/migrate`,
+		method: 'POST',
+		signal,
+	});
+};
+
+export const getMigrateDashboardV2MutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof migrateDashboardV2>>,
+		TError,
+		{ pathParams: MigrateDashboardV2PathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof migrateDashboardV2>>,
+	TError,
+	{ pathParams: MigrateDashboardV2PathParameters },
+	TContext
+> => {
+	const mutationKey = ['migrateDashboardV2'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof migrateDashboardV2>>,
+		{ pathParams: MigrateDashboardV2PathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return migrateDashboardV2(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type MigrateDashboardV2MutationResult = NonNullable<
+	Awaited<ReturnType<typeof migrateDashboardV2>>
+>;
+
+export type MigrateDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Migrate dashboard to v2
+ */
+export const useMigrateDashboardV2 = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof migrateDashboardV2>>,
+		TError,
+		{ pathParams: MigrateDashboardV2PathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof migrateDashboardV2>>,
+	TError,
+	{ pathParams: MigrateDashboardV2PathParameters },
+	TContext
+> => {
+	return useMutation(getMigrateDashboardV2MutationOptions(options));
+};
+/**
+ * Returns a dashboard SigNoz ships and owns, addressed by its stable definition name (e.g. `ai-o11y-overview`) rather than its id. System dashboards are read-only and upgraded through releases. The dashboard's own `name` field carries a reserved prefix that the path segment must not include.
+ * @summary Get system dashboard
+ */
+export const getSystemDashboard = (
+	{ name }: GetSystemDashboardPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetSystemDashboard200>({
+		url: `/api/v2/dashboards/system/${name}`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetSystemDashboardQueryKey = ({
+	name,
+}: GetSystemDashboardPathParameters) => {
+	return [`/api/v2/dashboards/system/${name}`] as const;
+};
+
+export const getGetSystemDashboardQueryOptions = <
+	TData = Awaited<ReturnType<typeof getSystemDashboard>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ name }: GetSystemDashboardPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getSystemDashboard>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getGetSystemDashboardQueryKey({ name });
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getSystemDashboard>>
+	> = ({ signal }) => getSystemDashboard({ name }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!name,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getSystemDashboard>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetSystemDashboardQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getSystemDashboard>>
+>;
+export type GetSystemDashboardQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get system dashboard
+ */
+
+export function useGetSystemDashboard<
+	TData = Awaited<ReturnType<typeof getSystemDashboard>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ name }: GetSystemDashboardPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getSystemDashboard>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetSystemDashboardQueryOptions({ name }, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get system dashboard
+ */
+export const invalidateGetSystemDashboard = async (
+	queryClient: QueryClient,
+	{ name }: GetSystemDashboardPathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetSystemDashboardQueryKey({ name }) },
+		options,
+	);
+
+	return queryClient;
+};
+
 /**
  * This endpoint returns the sanitized v2-shape dashboard data for public access. Each panel query is reduced to a safe field subset, so filters and raw query strings are not exposed.
  * @summary Get public dashboard data (v2)

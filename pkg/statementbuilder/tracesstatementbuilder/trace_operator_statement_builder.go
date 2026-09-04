@@ -25,6 +25,7 @@ type traceOperatorStatementBuilder struct {
 	traceStmtBuilder          qbtypes.StatementBuilder[qbtypes.TraceAggregation]
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation]
 	aggExprRewriter           qbtypes.AggExprRewriter
+	fl                        flagger.Flagger
 }
 
 var _ qbtypes.TraceOperatorStatementBuilder = (*traceOperatorStatementBuilder)(nil)
@@ -41,8 +42,8 @@ func NewOperatorFactory(
 	return factory.NewProviderFactory(
 		factory.MustNewName("traceoperator"),
 		func(_ context.Context, settings factory.ProviderSettings, cfg statementbuilder.Config) (qbtypes.TraceOperatorStatementBuilder, error) {
-			fm := tracestelemetryschema.NewFieldMapper()
-			cb := tracestelemetryschema.NewConditionBuilder(fm)
+			fm := tracestelemetryschema.NewFieldMapper(fl)
+			cb := tracestelemetryschema.NewConditionBuilder(fm, fl)
 			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, fm, cb, fl)
 			traceStmtBuilder := NewTraceQueryStatementBuilder(
 				settings, metadataStore, fm, cb, aggExprRewriter, telemetryStore, fl,
@@ -85,6 +86,7 @@ func NewTraceOperatorStatementBuilder(
 		traceStmtBuilder:          traceStmtBuilder,
 		resourceFilterStmtBuilder: resourceFilterStmtBuilder,
 		aggExprRewriter:           aggExprRewriter,
+		fl:                        flagger,
 	}
 }
 

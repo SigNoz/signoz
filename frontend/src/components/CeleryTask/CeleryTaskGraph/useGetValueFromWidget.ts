@@ -8,7 +8,7 @@ import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { getQueryPayloadFromWidgetsData } from 'pages/Celery/CeleryOverview/CeleryOverviewUtils';
 import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { GlobalReducer } from 'types/reducer/globalTime';
 

@@ -16,15 +16,13 @@ import {
 	getUserExpressionFromCombined,
 } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
 import { ResizeTable } from 'components/ResizeTable';
-import {
-	InfraMonitoringEvents,
-	logInfraDrawerFilterCustomizedEvent,
-} from 'constants/events';
+import { InfraMonitoringEvents } from 'constants/events';
 import Controls from 'container/Controls';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import { PER_PAGE_OPTIONS } from 'container/TracesExplorer/ListView/configs';
 import { TracesLoading } from 'container/TracesExplorer/TraceLoading/TraceLoading';
+import { saveRecentQueryByExpression } from 'lib/recentQueries/saveRecentQuery';
 import { useQueryState } from 'nuqs';
 import { DataSource } from 'types/common/queryBuilder';
 import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
@@ -41,6 +39,7 @@ import { getEntityTracesQueryPayload } from './utils';
 
 import styles from './EntityTraces.module.scss';
 import { useTimezone } from 'providers/Timezone';
+import { logInfraDrawerFilterCustomizedEvent } from 'container/InfraMonitoringK8sV2/EntityDetailsUtils/events';
 
 interface Props {
 	eventEntity: string;
@@ -100,6 +99,7 @@ function EntityTracesContent({
 					: newUserExpression || '',
 			);
 			if (validation.isValid) {
+				saveRecentQueryByExpression(DataSource.TRACES, newUserExpression);
 				querySearchOnRun(newUserExpression || '');
 
 				void logEvent(InfraMonitoringEvents.FilterApplied, {

@@ -1,21 +1,44 @@
 /* eslint-disable sonarjs/no-identical-functions */
-import { removeKeysFromExpression } from 'components/QueryBuilderV2/utils';
+import {
+	convertFiltersToExpressionWithExistingQuery,
+	removeKeysFromExpression,
+} from 'components/QueryBuilderV2/utils';
 import {
 	IQuickFiltersConfig,
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
 import { OPERATORS } from 'constants/antlrQueryConstants';
-import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
+import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearchV2/utils';
 import { cloneDeep, isArray } from 'lodash-es';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
 
-import { isKeyMatch } from './utils';
+import { getKeySpellings, isKeyMatch } from './utils';
 import { CheckedState } from '../../types';
 import { SectionType } from './v2/itemRules';
 
 export const SELECTED_OPERATORS = [OPERATORS['='], 'in'];
 export const NON_SELECTED_OPERATORS = [OPERATORS['!='], 'not in', 'nin'];
+
+// The operators this algebra emits, and so the only ones it may rewrite out of an
+// expression. A hand-written clause on the same key (CONTAINS, EXISTS, a range) is
+// none of its business and has to survive a toggle.
+const MANAGED_OPERATORS = [OPERATORS['='], OPERATORS['!='], 'in', 'not in'];
+
+/**
+ * Drops this filter's own clauses for `key` from `expression`, leaving every other
+ * key and any clause the checkbox does not manage untouched. Matches all context
+ * prefixes, since `isKeyMatch` treats `service.name` and `resource.service.name` as
+ * the same filter but expression rewrites match keys literally.
+ */
+function removeManagedClauses(expression: string, key: string): string {
+	return removeKeysFromExpression(
+		expression,
+		getKeySpellings(key),
+		false,
+		MANAGED_OPERATORS,
+	);
+}
 
 // Sources that use backend APIs expecting short operator format (e.g., 'nin' instead of 'not in')
 const SOURCES_WITH_SHORT_OPERATORS = [QuickFiltersSource.INFRA_MONITORING];
@@ -102,8 +125,8 @@ export function deriveCheckboxState({
 }
 
 /**
- * Returns a new query with every clause for this attribute key removed, both
- * from the structured filter items and the raw filter expression.
+ * Returns a new query with this filter's clauses for the attribute key removed from
+ * the active query, both from the structured filter items and the raw expression.
  */
 export function clearFilterFromQuery({
 	currentQuery,
@@ -118,24 +141,28 @@ export function clearFilterFromQuery({
 		...currentQuery,
 		builder: {
 			...currentQuery.builder,
-			queryData: currentQuery.builder.queryData.map((item, idx) => ({
-				...item,
-				filter: {
-					expression: removeKeysFromExpression(item.filter?.expression ?? '', [
-						filter.attributeKey.key,
-					]),
-				},
-				filters: {
-					...item.filters,
-					items:
-						idx === activeQueryIndex
-							? item.filters?.items?.filter(
-									(fil) => !isKeyMatch(fil.key?.key, filter.attributeKey.key),
-								) || []
-							: [...(item.filters?.items || [])],
-					op: item.filters?.op || 'AND',
-				},
-			})),
+			queryData: currentQuery.builder.queryData.map((item, idx) => {
+				if (idx !== activeQueryIndex) {
+					return item;
+				}
+				return {
+					...item,
+					filter: {
+						expression: removeManagedClauses(
+							item.filter?.expression ?? '',
+							filter.attributeKey.key,
+						),
+					},
+					filters: {
+						...item.filters,
+						items:
+							item.filters?.items?.filter(
+								(fil) => !isKeyMatch(fil.key?.key, filter.attributeKey.key),
+							) || [],
+						op: item.filters?.op || 'AND',
+					},
+				};
+			}),
 		},
 	};
 }
@@ -193,12 +220,6 @@ export function applyCheckboxToggle({
 		query.filters.items = query.filters.items.filter(
 			(q) => !isKeyMatch(q.key?.key, filter.attributeKey.key),
 		);
-
-		if (query.filter?.expression) {
-			query.filter.expression = removeKeysFromExpression(query.filter.expression, [
-				filter.attributeKey.key,
-			]);
-		}
 
 		if (isOnlyOrAll === 'Only') {
 			const newFilterItem: TagFilterItem = {
@@ -267,12 +288,6 @@ export function applyCheckboxToggle({
 									}
 									return item;
 								});
-								if (query.filter?.expression) {
-									query.filter.expression = removeKeysFromExpression(
-										query.filter.expression,
-										[filter.attributeKey.key],
-									);
-								}
 							} else if (isArray(currentFilter.value)) {
 								// if we are removing some value when the running operator is IN we filter.
 								// example - key IN [value1,currentSelectedValue] becomes key IN [value1] in case of array
@@ -309,9 +324,10 @@ export function applyCheckboxToggle({
 							? currentFilter.value.includes(value)
 							: currentFilter.value === value;
 
-						// When clicking unchecked "Other" item, user wants to SELECT it
-						// Replace NOT IN filter with IN [value]
-						if (previousState === 'unchecked' && checked) {
+						// When clicking an unchecked value that is not itself excluded, the user
+						// wants to SELECT it: replace the NOT IN filter with IN [value]. A value
+						// that IS in the exclusion list falls through to the removal branch below.
+						if (previousState === 'unchecked' && checked && !isValueInFilter) {
 							const newFilter: TagFilterItem = {
 								id: uuid(),
 								op: getOperatorValue(OPERATORS.IN),
@@ -324,12 +340,6 @@ export function applyCheckboxToggle({
 								}
 								return item;
 							});
-							if (query.filter?.expression) {
-								query.filter.expression = removeKeysFromExpression(
-									query.filter.expression,
-									[filter.attributeKey.key],
-								);
-							}
 						} else if (!checked || !isValueInFilter) {
 							// Add to NOT IN when:
 							// - checked=false (user explicitly unchecked to exclude)
@@ -369,12 +379,6 @@ export function applyCheckboxToggle({
 									query.filters.items = query.filters.items.filter(
 										(item) => !isKeyMatch(item.key?.key, filter.attributeKey.key),
 									);
-									if (query.filter?.expression) {
-										query.filter.expression = removeKeysFromExpression(
-											query.filter.expression,
-											[filter.attributeKey.key],
-										);
-									}
 								} else {
 									query.filters.items = query.filters.items.map((item) => {
 										if (isKeyMatch(item.key?.key, filter.attributeKey.key)) {
@@ -384,16 +388,6 @@ export function applyCheckboxToggle({
 									});
 								}
 							} else {
-								const newFilter = {
-									...currentFilter,
-									value: currentFilter.value === value ? null : currentFilter.value,
-								};
-								if (newFilter.value === null && query.filter?.expression) {
-									query.filter.expression = removeKeysFromExpression(
-										query.filter.expression,
-										[filter.attributeKey.key],
-									);
-								}
 								query.filters.items = query.filters.items.filter(
 									(item) => !isKeyMatch(item.key?.key, filter.attributeKey.key),
 								);
@@ -454,6 +448,18 @@ export function applyCheckboxToggle({
 			};
 			query.filters.items = [...query.filters.items, newFilterItem];
 		}
+	}
+
+	if (query) {
+		const synced = convertFiltersToExpressionWithExistingQuery(
+			query.filters ?? { items: [], op: 'AND' },
+			removeManagedClauses(
+				query.filter?.expression ?? '',
+				filter.attributeKey.key,
+			),
+		);
+		query.filter = synced.filter;
+		query.filters = synced.filters;
 	}
 
 	return {

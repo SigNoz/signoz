@@ -374,7 +374,7 @@ func (q *QueryBuilderQuery[T]) validateAggregations(cfg validationConfig) error 
 	return nil
 }
 
-func (m MetricAggregation) ValidateForType() error {
+func (m MetricAggregation) ValidateForTypeAndTemporality() error {
 	if m.SpaceAggregation.IsPercentile() && !m.Type.IsPercentileSpaceAggregationAllowed() {
 		return errors.Newf(
 			errors.TypeInvalidInput,
@@ -382,6 +382,17 @@ func (m MetricAggregation) ValidateForType() error {
 			"invalid space aggregation `%s` for metric type `%s`, percentile space aggregations are only supported for `histogram`, `exponentialhistogram` metric types",
 			m.SpaceAggregation.StringValue(),
 			m.Type.StringValue(),
+		)
+	}
+	// reading a step's distribution out of a cumulative sketch would mean
+	// subtracting the previous point's sketch, which ClickHouse cannot do
+	if m.Type == metrictypes.ExpHistogramType && m.Temporality != metrictypes.Delta {
+		return errors.Newf(
+			errors.TypeUnsupported,
+			errors.CodeUnsupported,
+			"metric `%s` is an exponential histogram recorded with `%s` temporality, which cannot be queried; only `delta` exponential histograms are supported",
+			m.MetricName,
+			m.Temporality.StringValue(),
 		)
 	}
 	return nil
@@ -641,7 +652,7 @@ func (r *QueryRangeRequest) ValidateRequestScope() ([]ValidationOption, error) {
 	// Builder query names must be unique across the composite query.
 	queryNames := make(map[string]bool)
 	for _, envelope := range r.CompositeQuery.Queries {
-		if envelope.Type == QueryTypeBuilder || envelope.Type == QueryTypeSubQuery {
+		if envelope.Type == QueryTypeBuilder || envelope.Type == QueryTypeSubQuery || envelope.Type == QueryTypeBuilderAI {
 			name := envelope.GetQueryName()
 			if name != "" {
 				if queryNames[name] {
@@ -710,7 +721,7 @@ func (c *CompositeQuery) Validate(opts ...ValidationOption) error {
 		}
 
 		// Check name uniqueness for builder queries
-		if envelope.Type == QueryTypeBuilder || envelope.Type == QueryTypeSubQuery {
+		if envelope.Type == QueryTypeBuilder || envelope.Type == QueryTypeSubQuery || envelope.Type == QueryTypeBuilderAI {
 			name := envelope.GetQueryName()
 			if name != "" {
 				if queryNames[name] {
@@ -744,6 +755,15 @@ func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) err
 				"unknown query spec type",
 			)
 		}
+	case QueryTypeBuilderAI:
+		spec, ok := envelope.Spec.(QueryBuilderQuery[TraceAggregation])
+		if !ok {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"invalid AI builder query spec",
+			)
+		}
+		return spec.Validate(opts...)
 	case QueryTypeFormula:
 		spec, ok := envelope.Spec.(QueryBuilderFormula)
 		if !ok {
@@ -813,7 +833,7 @@ func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) err
 			"unknown query type: %s",
 			envelope.Type,
 		).WithAdditional(
-			"Valid query types are: builder_query, builder_sub_query, builder_formula, builder_join, promql, clickhouse_sql, trace_operator",
+			"Valid query types are: builder_query, builder_ai_query, builder_sub_query, builder_formula, builder_join, promql, clickhouse_sql, trace_operator",
 		).WithSuggestions(errors.NewValidReferences(errors.NounQueryTypes, QueryType{}.Enum()...))
 	}
 }

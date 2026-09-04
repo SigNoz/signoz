@@ -74,21 +74,27 @@ export const jobWidgetInfo = [
 		title: 'CPU usage',
 		yAxisUnit: '',
 		docPath: '/infrastructure-monitoring/kubernetes/jobs/#cpu-usage',
+		description: 'CPU consumption in cores summed across the pods of the Job.',
 	},
 	{
 		title: 'Memory Usage',
 		yAxisUnit: 'bytes',
 		docPath: '/infrastructure-monitoring/kubernetes/jobs/#memory-usage',
+		description: 'Memory consumption in bytes summed across the pods of the Job.',
 	},
 	{
 		title: 'Network IO',
 		yAxisUnit: 'binBps',
 		docPath: '/infrastructure-monitoring/kubernetes/jobs/#network-io',
+		description:
+			'Transmit and receive throughput per interface across all pods of the Job.',
 	},
 	{
 		title: 'Network errors count',
 		yAxisUnit: '',
 		docPath: '/infrastructure-monitoring/kubernetes/jobs/#network-errors-count',
+		description:
+			'Per-pod-interface network error counts by direction and interface, reported by the kubelet.',
 	},
 ];
 

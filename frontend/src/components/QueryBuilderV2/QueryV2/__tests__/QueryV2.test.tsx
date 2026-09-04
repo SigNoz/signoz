@@ -212,6 +212,32 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 		expect(handleRunQueryMock).toHaveBeenCalled();
 	});
 
+	it('does not crash when builder.queryFormulas/queryTraceOperator are missing (partial/legacy query)', () => {
+		const currentQueryBase = baseQBContext.currentQuery as Query;
+
+		mockedUseQueryBuilder.mockReturnValue({
+			...baseQBContext,
+			currentQuery: {
+				...currentQueryBase,
+				builder: {
+					queryData: currentQueryBase.builder.queryData,
+					queryFormulas: undefined as unknown as [],
+					queryTraceOperator: undefined as unknown as [],
+				},
+			},
+		});
+
+		expect(() =>
+			render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} version="v4" />),
+		).not.toThrow();
+
+		// query list still renders from queryData, formulas block is skipped
+		expect(document.querySelector('.query-names-section')).toBeInTheDocument();
+		expect(
+			document.querySelector('.qb-formulas-container'),
+		).not.toBeInTheDocument();
+	});
+
 	it('fx button is disabled when functions already exist', () => {
 		const currentQueryBase = baseQBContext.currentQuery as Query;
 		const supersetQueryBase = baseQBContext.supersetQuery as Query;

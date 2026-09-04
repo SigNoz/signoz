@@ -1,10 +1,11 @@
 import { useCallback, useMemo, useRef } from 'react';
 import { Card, Flex } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import BarChart from 'container/DashboardContainer/visualization/charts/BarChart/BarChart';
+import BarChart from 'lib/visualization/charts/BarChart/BarChart';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { prepareChartData } from 'lib/uPlotV2/utils/dataUtils';
+import { StackMode } from 'lib/uPlotV2/config/types';
 import {
 	LegendPosition,
 	TooltipRenderArgs,
@@ -131,9 +132,9 @@ export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 			<div ref={graphRef} className={styles.graphContainer}>
 				{containerDimensions.width > 0 && containerDimensions.height > 0 && (
 					<BarChart
+						stack={StackMode.Normal}
 						config={config}
 						data={chartData}
-						isStackedBarChart
 						legendConfig={{ position: LegendPosition.BOTTOM }}
 						customTooltip={renderBillingTooltip}
 						width={containerDimensions.width}

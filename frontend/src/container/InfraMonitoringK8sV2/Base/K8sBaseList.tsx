@@ -7,13 +7,10 @@ import TanStackTable, {
 	TableColumnDef,
 	useCalculatedPageSize,
 	useHiddenColumnIds,
+	useRecoverFromEmptyPage,
 	useTableParams,
 } from 'components/TanStackTableView';
-import {
-	InfraMonitoringEvents,
-	logInfraColumnSortedEvent,
-	logInfraTimeRangeCustomizedEvent,
-} from 'constants/events';
+import { InfraMonitoringEvents } from 'constants/events';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGlobalTimeStore } from 'store/globalTime';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
@@ -48,6 +45,10 @@ import { K8sInstrumentationChecksCallout } from './components/K8sInstrumentation
 
 import styles from './K8sBaseList.module.scss';
 import cx from 'classnames';
+import {
+	logInfraColumnSortedEvent,
+	logInfraTimeRangeCustomizedEvent,
+} from 'container/InfraMonitoringK8sV2/Base/events';
 
 export type K8sBaseListEmptyStateContext = {
 	isError: boolean;
@@ -128,12 +129,15 @@ export function K8sBaseList<
 
 	const { containerRef, calculatedPageSize } = useCalculatedPageSize({
 		rowHeight: 42,
+		headerHeight: 58,
+		paginationHeight: 52,
 	});
 
 	const {
 		page: currentPage,
 		limit: currentPageSize,
 		setLimit,
+		setPage,
 	} = useTableParams(
 		{
 			page: INFRA_MONITORING_K8S_PARAMS_KEYS.PAGE,
@@ -241,6 +245,16 @@ export function K8sBaseList<
 	const totalCount = data?.total || 0;
 	const hasFilters = !!expression?.trim();
 
+	useRecoverFromEmptyPage({
+		page: currentPage,
+		pageSize: currentPageSize,
+		rowCount: pageData.length,
+		total: totalCount,
+		isFetching: isLoading || isFetching,
+		isDisabled: isError || Boolean(data?.error),
+		setPage,
+	});
+
 	const getGroupKeyFn = useCallback(
 		(item: T) => getGroupedByMeta(item, groupBy),
 		[groupBy],
@@ -282,6 +296,7 @@ export function K8sBaseList<
 						params.selectedItem,
 						params.clusterName,
 						params.namespaceName,
+						params.containerName,
 					);
 					queryClient.setQueryData(detailQueryKey, { data: record });
 				}
@@ -332,6 +347,12 @@ export function K8sBaseList<
 					url.searchParams.set(
 						INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_NAMESPACE_NAME,
 						params.namespaceName,
+					);
+				}
+				if (params.containerName) {
+					url.searchParams.set(
+						INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CONTAINER_NAME,
+						params.containerName,
 					);
 				}
 			} else {
@@ -436,16 +457,17 @@ export function K8sBaseList<
 				isFetching={isFetching}
 				cancelQuery={cancelQuery}
 			/>
+
+			<K8sInstrumentationChecksCallout entity={entity} />
+
+			<K8sTableToolbar
+				entity={entity}
+				eventCategory={eventCategory}
+				leftFilters={leftFilters}
+				onOpenOptionsDrawer={handleOpenOptionsDrawer}
+			/>
+
 			<div ref={containerRef} className={styles.tableContainer}>
-				<K8sInstrumentationChecksCallout entity={entity} />
-
-				<K8sTableToolbar
-					entity={entity}
-					eventCategory={eventCategory}
-					leftFilters={leftFilters}
-					onOpenOptionsDrawer={handleOpenOptionsDrawer}
-				/>
-
 				{isError && (
 					<Typography>
 						{data?.error?.toString() || 'Something went wrong'}

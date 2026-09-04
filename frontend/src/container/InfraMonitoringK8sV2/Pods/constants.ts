@@ -67,74 +67,98 @@ export const podWidgetInfo = [
 	{
 		title: 'CPU Usage (cores)',
 		yAxisUnit: '',
-		docPath: '/infrastructure-monitoring/kubernetes/pods/#cpu-usage-cores',
+		docPath: '/infrastructure-monitoring/kubernetes/pods/#cpu-usage-cores-1',
+		description:
+			'Avg, max and min CPU consumption of the pod in cores, showing how volatile it is.',
 	},
 	{
 		title: 'CPU Request, Limit Utilization',
 		yAxisUnit: 'percentunit',
 		docPath:
 			'/infrastructure-monitoring/kubernetes/pods/#cpu-request-limit-utilization',
+		description:
+			'Pod CPU usage as a fraction of its total container CPU requests and limits, to spot throttling.',
 	},
 	{
 		title: 'Memory Usage (bytes)',
 		yAxisUnit: 'bytes',
 		docPath: '/infrastructure-monitoring/kubernetes/pods/#memory-usage-bytes',
+		description:
+			'Avg, max and min memory consumption of the pod, including reclaimable page cache.',
 	},
 	{
 		title: 'Memory Request, Limit Utilization',
 		yAxisUnit: 'percentunit',
 		docPath:
 			'/infrastructure-monitoring/kubernetes/pods/#memory-request-limit-utilization',
+		description:
+			'Pod memory usage as a fraction of its total container memory requests and limits.',
 	},
 	{
 		title: 'Memory by State',
 		yAxisUnit: 'bytes',
 		docPath: '/infrastructure-monitoring/kubernetes/pods/#memory-by-state',
+		description:
+			'RSS, working set and cache memory of the pod, separating heap growth from file cache.',
 	},
 	{
 		title: 'Memory Major Page Faults',
 		yAxisUnit: '',
 		docPath:
 			'/infrastructure-monitoring/kubernetes/pods/#memory-major-page-faults',
+		description:
+			'Major page fault rate of the pod; sustained values mean the working set is paging to disk.',
 	},
 	{
 		title: 'CPU Usage by Container (cores)',
 		yAxisUnit: '',
 		docPath:
 			'/infrastructure-monitoring/kubernetes/pods/#cpu-usage-by-container-cores',
+		description:
+			'CPU consumption in cores per container, showing which container drives the pod CPU.',
 	},
 	{
 		title: 'CPU Request, Limit Utilization by Container',
 		yAxisUnit: 'percentunit',
 		docPath:
 			'/infrastructure-monitoring/kubernetes/pods/#cpu-request-limit-utilization-by-container',
+		description:
+			'Each container CPU usage as a fraction of its own request and limit, to find the throttled one.',
 	},
 	{
 		title: 'Memory Usage by Container (bytes)',
 		yAxisUnit: 'bytes',
 		docPath:
 			'/infrastructure-monitoring/kubernetes/pods/#memory-usage-by-container-bytes',
+		description: 'Usage, working set and RSS memory per container of the pod.',
 	},
 	{
 		title: 'Memory Request, Limit Utilization by Container',
 		yAxisUnit: 'percentunit',
 		docPath:
 			'/infrastructure-monitoring/kubernetes/pods/#memory-request-limit-utilization-by-container',
+		description:
+			'Each container memory usage as a fraction of its own request and limit; near 100% risks an OOMKill.',
 	},
 	{
 		title: 'Network rate',
 		yAxisUnit: 'binBps',
 		docPath: '/infrastructure-monitoring/kubernetes/pods/#network-rate',
+		description: 'Pod network throughput in bytes/s by direction and interface.',
 	},
 	{
 		title: 'Network errors',
 		yAxisUnit: '',
 		docPath: '/infrastructure-monitoring/kubernetes/pods/#network-errors',
+		description:
+			'Network error counts on the pod interfaces; sustained non-zero values point to CNI or MTU issues.',
 	},
 	{
 		title: 'File system (bytes)',
 		yAxisUnit: 'bytes',
 		docPath: '/infrastructure-monitoring/kubernetes/pods/#file-system-bytes',
+		description:
+			'Capacity, available and used bytes of the local filesystem of the pod.',
 	},
 ];
 

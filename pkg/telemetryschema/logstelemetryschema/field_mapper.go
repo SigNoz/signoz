@@ -279,7 +279,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 		}
 		var stmts []string
 		for _, key := range candidates {
-			guard, err := m.existsExpressionFor(ctx, orgID, tsStart, tsEnd, key, true)
+			guard, err := m.ExistsFor(ctx, orgID, tsStart, tsEnd, key, true)
 			if err != nil {
 				return "", err
 			}
@@ -308,7 +308,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 		if !m.membershipGuarded(ctx, orgID, tsStart, tsEnd, candidates[0]) {
 			return m.FieldFor(ctx, orgID, tsStart, tsEnd, candidates[0])
 		}
-		guard, err := m.existsExpressionFor(ctx, orgID, tsStart, tsEnd, candidates[0], true)
+		guard, err := m.ExistsFor(ctx, orgID, tsStart, tsEnd, candidates[0], true)
 		if err != nil {
 			return "", err
 		}
@@ -326,7 +326,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 
 	var stmts []string
 	for _, key := range candidates {
-		guard, err := m.existsExpressionFor(ctx, orgID, tsStart, tsEnd, key, true)
+		guard, err := m.ExistsFor(ctx, orgID, tsStart, tsEnd, key, true)
 		if err != nil {
 			return "", err
 		}
@@ -569,7 +569,8 @@ func (m *fieldMapper) membershipGuarded(ctx context.Context, orgID valuer.UUID, 
 	return columnType == schema.ColumnTypeEnumMap || columnType == schema.ColumnTypeEnumJSON
 }
 
-func (m *fieldMapper) existsExpressionFor(
+// ExistsFor implements the per-key existence primitive of qbtypes.FieldMapper.
+func (m *fieldMapper) ExistsFor(
 	ctx context.Context,
 	orgID valuer.UUID,
 	tsStart, tsEnd uint64,
@@ -634,4 +635,38 @@ func (m *fieldMapper) existsExpressionFor(
 		return "", err
 	}
 	return querybuilder.ExistsExpression(columns, key, tsStart, tsEnd, fieldExpression, exists)
+}
+
+// searchColumns is the single source of truth for the columns search() fans out across,
+// by context; body is body_v2 when useJSONBody, else the legacy body string.
+func searchColumns(fieldContext telemetrytypes.FieldContext, useJSONBody bool) []*schema.Column {
+	switch fieldContext {
+	case telemetrytypes.FieldContextLog:
+		return []*schema.Column{
+			logsV2Columns[LogsV2SeverityTextColumn],
+			logsV2Columns[LogsV2TraceIDColumn],
+			logsV2Columns[LogsV2SpanIDColumn],
+		}
+	case telemetrytypes.FieldContextBody:
+		if useJSONBody {
+			return []*schema.Column{logsV2Columns[LogsV2BodyV2Column]}
+		}
+		return []*schema.Column{logsV2Columns[LogsV2BodyColumn]}
+	case telemetrytypes.FieldContextAttribute:
+		return []*schema.Column{
+			logsV2Columns[LogsV2AttributesStringColumn],
+			logsV2Columns[LogsV2AttributesNumberColumn],
+			logsV2Columns[LogsV2AttributesBoolColumn],
+		}
+	case telemetrytypes.FieldContextResource:
+		return []*schema.Column{
+			logsV2Columns[LogsV2ResourcesStringColumn],
+		}
+	default:
+		columns := searchColumns(telemetrytypes.FieldContextLog, useJSONBody)
+		columns = append(columns, searchColumns(telemetrytypes.FieldContextBody, useJSONBody)...)
+		columns = append(columns, searchColumns(telemetrytypes.FieldContextAttribute, useJSONBody)...)
+		columns = append(columns, searchColumns(telemetrytypes.FieldContextResource, useJSONBody)...)
+		return columns
+	}
 }

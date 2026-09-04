@@ -23,6 +23,14 @@ import (
 type Receiver struct {
 	*config.Receiver
 	GoogleChatConfigs []*GoogleChatReceiverConfig `json:"googlechat_configs,omitempty" yaml:"googlechat_configs,omitempty"`
+	// Shadows upstream's jira_configs so our custom notifier (rich ADF, deep-links,
+	// lifecycle comments) handles it instead of upstream's plain Jira notifier.
+	JiraConfigs []*JiraReceiverConfig `json:"jira_configs,omitempty" yaml:"jira_configs,omitempty"`
+	// JSM Ops (ex-Opsgenie alert API); delivered by reusing the Opsgenie notifier.
+	JSMOpsConfigs []*JSMOpsReceiverConfig `json:"jsmops_configs,omitempty" yaml:"jsmops_configs,omitempty"`
+	// Shadows upstream's incidentio_configs so our custom notifier (templater,
+	// group-key dedup, label metadata) handles it instead of upstream's.
+	IncidentIOConfigs []*IncidentIOReceiverConfig `json:"incidentio_configs,omitempty" yaml:"incidentio_configs,omitempty"`
 }
 
 // NewReceiver builds a Receiver from its JSON input, applying each notifier
@@ -37,6 +45,7 @@ func NewReceiver(input string) (*Receiver, error) {
 	if err != nil {
 		return nil, err
 	}
+	stripEmailTransport(withDefaults)
 	receiver.Receiver = withDefaults
 
 	// Extend this block when adding another native notifier type.
@@ -50,7 +59,48 @@ func NewReceiver(input string) (*Receiver, error) {
 		receiver.GoogleChatConfigs[i] = defaulted
 	}
 
+	for i, jc := range receiver.JiraConfigs {
+		defaulted, err := defaultedNotifierConfig(jc)
+		if err != nil {
+			return nil, err
+		}
+		receiver.JiraConfigs[i] = defaulted
+	}
+
+	for i, jc := range receiver.JSMOpsConfigs {
+		defaulted, err := defaultedNotifierConfig(jc)
+		if err != nil {
+			return nil, err
+		}
+		receiver.JSMOpsConfigs[i] = defaulted
+	}
+
+	for i, ic := range receiver.IncidentIOConfigs {
+		defaulted, err := defaultedNotifierConfig(ic)
+		if err != nil {
+			return nil, err
+		}
+		receiver.IncidentIOConfigs[i] = defaulted
+	}
+
 	return receiver, nil
+}
+
+func stripEmailTransport(base *config.Receiver) {
+	for _, ec := range base.EmailConfigs {
+		ec.From = ""
+		ec.Hello = ""
+		ec.Smarthost = config.HostPort{}
+		ec.AuthUsername = ""
+		ec.AuthPassword = ""
+		ec.AuthPasswordFile = ""
+		ec.AuthSecret = ""
+		ec.AuthSecretFile = ""
+		ec.AuthIdentity = ""
+		ec.RequireTLS = nil
+		ec.TLSConfig = nil
+		ec.ForceImplicitTLS = nil
+	}
 }
 
 func defaultedBaseReceiver(base *config.Receiver) (*config.Receiver, error) {
@@ -102,7 +152,12 @@ func TestReceiver(ctx context.Context, receiver *Receiver, receiverIntegrationsF
 		return err
 	}
 
-	defaultedReceiver, err := testConfig.GetReceiver(receiver.Name)
+	resolvedConfig, err := testConfig.Resolved()
+	if err != nil {
+		return err
+	}
+
+	defaultedReceiver, err := resolvedConfig.GetReceiver(receiver.Name)
 	if err != nil {
 		return err
 	}

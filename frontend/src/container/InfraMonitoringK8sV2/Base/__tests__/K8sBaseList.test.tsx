@@ -591,12 +591,14 @@ describe('K8sBaseList', () => {
 	});
 
 	describe('with empty data', () => {
+		const onUrlUpdateMock = jest.fn<void, [UrlUpdateEvent]>();
 		const fetchListDataMock = jest.fn<
 			ReturnType<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>,
 			Parameters<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>
 		>();
 
 		beforeEach(() => {
+			onUrlUpdateMock.mockClear();
 			fetchListDataMock.mockClear();
 			fetchListDataMock.mockResolvedValue({
 				data: [],
@@ -605,6 +607,7 @@ describe('K8sBaseList', () => {
 			});
 
 			renderComponent<TestItem>({
+				onUrlUpdate: onUrlUpdateMock,
 				entity: InfraMonitoringEntity.PODS,
 				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
@@ -623,6 +626,177 @@ describe('K8sBaseList', () => {
 		it('should still call fetchListData', async () => {
 			await waitFor(() => {
 				expect(fetchListDataMock).toHaveBeenCalled();
+			});
+		});
+
+		it('should not rewrite the page when already on the first page', async () => {
+			await waitFor(() => {
+				expect(fetchListDataMock).toHaveBeenCalled();
+			});
+
+			const pageUpdates = onUrlUpdateMock.mock.calls
+				.map((call) => call[0].searchParams.get('page'))
+				.filter(Boolean);
+
+			expect(pageUpdates).toHaveLength(0);
+		});
+	});
+
+	describe('with a page beyond the end of the list', () => {
+		const onUrlUpdateMock = jest.fn<void, [UrlUpdateEvent]>();
+		const fetchListDataMock = jest.fn<
+			ReturnType<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>,
+			Parameters<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>
+		>();
+
+		// 25 rows exist, so pages 1-3 serve data and page 7 of 10 comes back empty.
+		const rows: TestItem[] = Array.from({ length: 25 }, (_, index) => ({
+			id: `pod-${index + 1}`,
+		}));
+
+		beforeEach(() => {
+			onUrlUpdateMock.mockClear();
+			fetchListDataMock.mockClear();
+			// Offset-aware on purpose: a mock that answers empty for every offset would let
+			// the assertions pass against a page the recovery has already moved on from.
+			fetchListDataMock.mockImplementation(async ({ offset = 0, limit = 10 }) => ({
+				data: rows.slice(offset, offset + limit),
+				total: rows.length,
+				error: null,
+			}));
+
+			renderComponent<TestItem>({
+				onUrlUpdate: onUrlUpdateMock,
+				entity: InfraMonitoringEntity.PODS,
+				eventCategory: InfraMonitoringEvents.Pod,
+				fetchListData: fetchListDataMock,
+				queryParams: { page: '7', pageSize: '10' },
+				tableColumns: createTestColumns(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): string => row.id,
+			});
+		});
+
+		it('should send the user back to the last page holding data', async () => {
+			// The rows of page 3 on screen are what proves the recovery settled there,
+			// rather than passing through on its way somewhere else.
+			await expect(screen.findByText('pod-21')).resolves.toBeInTheDocument();
+
+			const pageUpdates = onUrlUpdateMock.mock.calls
+				.map((call) => call[0].searchParams.get('page'))
+				.filter(Boolean);
+
+			expect(pageUpdates).toStrictEqual(['3']);
+		});
+
+		it('should correct the page in a single hop', async () => {
+			await expect(screen.findByText('pod-21')).resolves.toBeInTheDocument();
+
+			// Only the original out-of-range page and the corrected one are requested.
+			expect(
+				fetchListDataMock.mock.calls.map((call) => call[0].offset),
+			).toStrictEqual([60, 20]);
+		});
+
+		it('should replace the history entry instead of pushing the correction', async () => {
+			await expect(screen.findByText('pod-21')).resolves.toBeInTheDocument();
+
+			const pageCorrection = onUrlUpdateMock.mock.calls.find(
+				(call) => call[0].searchParams.get('page') === '3',
+			);
+
+			expect(pageCorrection?.[0].options.history).toBe('replace');
+		});
+	});
+
+	describe('with a page below the first one', () => {
+		const onUrlUpdateMock = jest.fn<void, [UrlUpdateEvent]>();
+		const fetchListDataMock = jest.fn<
+			ReturnType<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>,
+			Parameters<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>
+		>();
+
+		beforeEach(() => {
+			onUrlUpdateMock.mockClear();
+			fetchListDataMock.mockClear();
+			// page=0 turns into offset=-10, which the API rejects outright — the list
+			// can only recover by clamping the page, never by reading the response.
+			fetchListDataMock.mockImplementation(async ({ offset = 0 }) => {
+				if (offset < 0) {
+					throw new APIError({
+						httpStatusCode: 400,
+						error: {
+							code: 'invalid_input',
+							message: 'offset cannot be negative',
+							url: '',
+							errors: [],
+						},
+					});
+				}
+
+				return { data: [{ id: 'pod-1' }], total: 1, error: null };
+			});
+
+			renderComponent<TestItem>({
+				onUrlUpdate: onUrlUpdateMock,
+				entity: InfraMonitoringEntity.PODS,
+				eventCategory: InfraMonitoringEvents.Pod,
+				fetchListData: fetchListDataMock,
+				queryParams: { page: '0', pageSize: '10' },
+				tableColumns: createTestColumns(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): string => row.id,
+			});
+		});
+
+		it('should reject the request that carried the negative offset', async () => {
+			await waitFor(() => {
+				expect(
+					fetchListDataMock.mock.calls.some((call) => call[0].offset === -10),
+				).toBe(true);
+			});
+
+			await expect(
+				fetchListDataMock.mock.results[0].value as Promise<unknown>,
+			).rejects.toThrow('offset cannot be negative');
+		});
+
+		it('should clamp the page to the first one even though the request failed', async () => {
+			await waitFor(() => {
+				expect(onUrlUpdateMock).toHaveBeenCalled();
+			});
+
+			// Page 1 is the default, so the correction drops the param rather than
+			// writing `page=1`.
+			const pageCorrection = onUrlUpdateMock.mock.calls.find(
+				(call) => call[0].searchParams.get('page') === null,
+			);
+
+			expect(pageCorrection).toBeDefined();
+			expect(pageCorrection?.[0].queryString).toBe('?pageSize=10');
+		});
+
+		it('should replace the history entry instead of pushing the correction', async () => {
+			await waitFor(() => {
+				expect(onUrlUpdateMock).toHaveBeenCalled();
+			});
+
+			const pageCorrection = onUrlUpdateMock.mock.calls.find(
+				(call) => call[0].searchParams.get('page') === null,
+			);
+
+			expect(pageCorrection?.[0].options.history).toBe('replace');
+		});
+
+		it('should refetch with a non-negative offset after clamping', async () => {
+			await waitFor(() => {
+				expect(
+					fetchListDataMock.mock.calls.some((call) => call[0].offset === 0),
+				).toBe(true);
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('pod-1')).toBeInTheDocument();
 			});
 		});
 	});
@@ -1368,6 +1542,129 @@ describe('K8sBaseList', () => {
 			await expect(
 				screen.findByText('k8s.pod.memory.limit'),
 			).resolves.toBeInTheDocument();
+		});
+	});
+
+	describe('groupBy change clears orderBy', () => {
+		const onUrlUpdateMock = jest.fn<void, [UrlUpdateEvent]>();
+		const fetchListDataMock = jest.fn<
+			ReturnType<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>,
+			Parameters<NonNullable<K8sBaseListProps<TestItem>['fetchListData']>>
+		>();
+
+		beforeEach(() => {
+			onUrlUpdateMock.mockClear();
+			fetchListDataMock.mockClear();
+			fetchListDataMock.mockResolvedValue({
+				data: [{ id: 'item-1' }],
+				total: 1,
+				error: null,
+			});
+
+			server.use(
+				rest.get('http://localhost/api/v2/infra_monitoring/checks', (_, res, ctx) =>
+					res(ctx.json({ status: 'success', data: { ready: true } })),
+				),
+				rest.get('http://localhost/api/v1/fields/keys', (_, res, ctx) =>
+					res(
+						ctx.json({
+							status: 'success',
+							data: {
+								keys: {
+									resource: [{ name: 'k8s.namespace.name' }],
+								},
+							},
+						}),
+					),
+				),
+			);
+		});
+
+		it('should clear orderBy for name columns when groupBy is changed', async () => {
+			const user = userEvent.setup();
+
+			renderComponent<TestItem>({
+				onUrlUpdate: onUrlUpdateMock,
+				entity: InfraMonitoringEntity.PODS,
+				eventCategory: InfraMonitoringEvents.Pod,
+				fetchListData: fetchListDataMock,
+				queryParams: {
+					// k8s.pod.name is a name column - should be cleared
+					orderBy: JSON.stringify({ columnName: 'k8s.pod.name', order: 'desc' }),
+				},
+				tableColumns: createTestColumns(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): string => row.id,
+			});
+
+			await waitFor(() => {
+				expect(screen.getByTestId('k8s-table-group-by')).toBeInTheDocument();
+			});
+
+			// Open group by dropdown using testId
+			const groupByContainer = screen.getByTestId('k8s-table-group-by-select');
+			const groupBySelect = groupByContainer.querySelector(
+				'.ant-select-selector',
+			) as Element;
+			await user.click(groupBySelect);
+
+			// Wait for options to load and click on the namespace option
+			const namespaceOption = await screen.findByTitle('k8s.namespace.name');
+			await user.click(namespaceOption);
+
+			// Verify orderBy was cleared (set to null) for name column
+			await waitFor(() => {
+				const orderByCalls = onUrlUpdateMock.mock.calls
+					.map((call) => call[0].searchParams.get('orderBy'))
+					.filter((v) => v !== undefined);
+
+				const hasOrderByCleared = orderByCalls.some((v) => v === null);
+				expect(hasOrderByCleared).toBe(true);
+			});
+		});
+
+		it('should keep orderBy for non-name columns when groupBy is changed', async () => {
+			const user = userEvent.setup();
+
+			renderComponent<TestItem>({
+				onUrlUpdate: onUrlUpdateMock,
+				entity: InfraMonitoringEntity.PODS,
+				eventCategory: InfraMonitoringEvents.Pod,
+				fetchListData: fetchListDataMock,
+				queryParams: {
+					// cpu is NOT a name column - should be kept
+					orderBy: JSON.stringify({ columnName: 'cpu', order: 'desc' }),
+				},
+				tableColumns: createTestColumns(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): string => row.id,
+			});
+
+			await waitFor(() => {
+				expect(screen.getByTestId('k8s-table-group-by')).toBeInTheDocument();
+			});
+
+			// Open group by dropdown using testId
+			const groupByContainer = screen.getByTestId('k8s-table-group-by-select');
+			const groupBySelect = groupByContainer.querySelector(
+				'.ant-select-selector',
+			) as Element;
+			await user.click(groupBySelect);
+
+			// Wait for options to load and click on the namespace option
+			const namespaceOption = await screen.findByTitle('k8s.namespace.name');
+			await user.click(namespaceOption);
+
+			// Verify orderBy was NOT cleared for non-name column
+			await waitFor(() => {
+				const orderByCalls = onUrlUpdateMock.mock.calls
+					.map((call) => call[0].searchParams.get('orderBy'))
+					.filter((v) => v !== undefined);
+
+				// orderBy should never be set to null
+				const hasOrderByCleared = orderByCalls.some((v) => v === null);
+				expect(hasOrderByCleared).toBe(false);
+			});
 		});
 	});
 });
