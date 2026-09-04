@@ -11,11 +11,11 @@ import {
 import type { DashboardtypesLayoutDTO } from 'api/generated/services/sigNoz.schemas';
 
 import type { DashboardSection } from '../../utils';
-import { useDashboardStore } from '../../store/useDashboardStore';
 import { useSectionDragReorder } from './hooks/useSectionDragReorder';
 import Section from './Section/Section';
 import SectionDragPreview from './SectionDragPreview/SectionDragPreview';
 import SortableSection from './SortableSection';
+import { useDashboardEditContext } from '../../hooks/useDashboardEditContext';
 
 interface SectionListProps {
 	sections: DashboardSection[];
@@ -23,7 +23,7 @@ interface SectionListProps {
 }
 
 function SectionList({ sections, layouts }: SectionListProps): JSX.Element {
-	const isEditable = useDashboardStore((s) => s.isEditable);
+	const { isEditable } = useDashboardEditContext();
 
 	const {
 		sensors,
@@ -41,16 +41,9 @@ function SectionList({ sections, layouts }: SectionListProps): JSX.Element {
 		[orderedSections],
 	);
 
-	if (!isEditable) {
-		return (
-			<>
-				{sections.map((section) => (
-					<Section key={section.id} section={section} />
-				))}
-			</>
-		);
-	}
-
+	// The DnD tree stays mounted whether or not the user can reorder: permissions
+	// resolve asynchronously, and swapping the subtree shape on that transition
+	// would remount every section and its panels.
 	return (
 		<DndContext
 			sensors={sensors}
@@ -63,7 +56,12 @@ function SectionList({ sections, layouts }: SectionListProps): JSX.Element {
 			<SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
 				{orderedSections.map((section) =>
 					section.title ? (
-						<SortableSection key={section.id} section={section} sections={sections} />
+						<SortableSection
+							key={section.id}
+							section={section}
+							sections={sections}
+							disabled={!isEditable}
+						/>
 					) : (
 						<Section key={section.id} section={section} sections={sections} />
 					),
