@@ -401,142 +401,6 @@ type QueryRangeRequest struct {
 	BucketOptions *BucketOptions `json:"bucketOptions,omitempty"`
 }
 
-type BucketOptions struct {
-	Kind BucketsKind `json:"kind"`
-	// Spec holds the LinearBucketsSpec or LogBucketsSpec for Kind.
-	Spec any `json:"spec"`
-}
-
-const (
-	DefaultNumBuckets = 60
-	MaxNumBuckets     = 512
-
-	// MaxLogScale is the resolution ClickHouse buckets every log heatmap at:
-	// 2^MaxLogScale bands per doubling. It is both the default and the finest
-	// available, since a coarser LogBucketsSpec.Scale folds down from it.
-	MaxLogScale = 4
-	// MinLogScale is one band per 16x, the coarsest axis worth rendering.
-	MinLogScale = -4
-)
-
-type BucketsKind struct {
-	valuer.String
-}
-
-var (
-	BucketsKindLinear = BucketsKind{valuer.NewString("linear")}
-	BucketsKindLog    = BucketsKind{valuer.NewString("log")}
-)
-
-// Enum implements jsonschema.Enum.
-func (BucketsKind) Enum() []any {
-	return []any{
-		BucketsKindLinear,
-		BucketsKindLog,
-	}
-}
-
-// LinearBucketsSpec divides (0, MaxValue] into NumBuckets equal bands.
-type LinearBucketsSpec struct {
-	// Everything above MaxValue is counted in the trailing overflow band. Evenly
-	// spaced boundaries have no top to divide without it, so it is required.
-	MaxValue float64 `json:"maxValue" required:"true"`
-	// DefaultNumBuckets applies when unset.
-	NumBuckets int `json:"numBuckets,omitempty"`
-}
-
-// LogBucketsSpec spaces boundaries at 2^Scale bands per doubling, the mapping
-// an exponential histogram uses.
-type LogBucketsSpec struct {
-	// ClickHouse always buckets at MaxLogScale and the surplus is folded away
-	// afterwards, so every Scale reads the same cache entry. MaxLogScale applies
-	// when unset.
-	Scale *int `json:"scale,omitempty"`
-}
-
-// bucketOptionsLinear and bucketOptionsLog are the OpenAPI schemas for the two
-// BucketOptions variants. They have to be named types: the reflector turns an
-// anonymous one into an inline subschema, leaving the discriminator mapping in
-// PrepareJSONSchema pointing at components that were never emitted. `kind` is
-// required:"true" on both so oapi-codegen renders the discriminator non-pointer.
-type bucketOptionsLinear struct {
-	Kind BucketsKind       `json:"kind" required:"true" description:"How the boundaries are spaced."`
-	Spec LinearBucketsSpec `json:"spec" required:"true" description:"The evenly spaced bucket specification."`
-}
-
-type bucketOptionsLog struct {
-	Kind BucketsKind    `json:"kind" required:"true" description:"How the boundaries are spaced."`
-	Spec LogBucketsSpec `json:"spec" required:"true" description:"The logarithmic bucket specification."`
-}
-
-var _ jsonschema.OneOfExposer = BucketOptions{}
-
-func (BucketOptions) JSONSchemaOneOf() []any {
-	return []any{
-		bucketOptionsLinear{},
-		bucketOptionsLog{},
-	}
-}
-
-var _ jsonschema.Preparer = BucketOptions{}
-
-// PrepareJSONSchema marks the options as a `kind`-discriminated union;
-// signoz.attachDiscriminators promotes it and strips the base properties.
-func (BucketOptions) PrepareJSONSchema(s *jsonschema.Schema) error {
-	if s.ExtraProperties == nil {
-		s.ExtraProperties = map[string]any{}
-	}
-	s.ExtraProperties["x-signoz-discriminator"] = map[string]any{
-		"propertyName": "kind",
-		"mapping": map[string]string{
-			BucketsKindLinear.StringValue(): "#/components/schemas/Querybuildertypesv5BucketOptionsLinear",
-			BucketsKindLog.StringValue():    "#/components/schemas/Querybuildertypesv5BucketOptionsLog",
-		},
-	}
-	return nil
-}
-
-func (b *BucketOptions) UnmarshalJSON(data []byte) error {
-	var shadow struct {
-		Kind BucketsKind     `json:"kind"`
-		Spec json.RawMessage `json:"spec"`
-	}
-	if err := binding.JSON.BindBody(bytes.NewReader(data), &shadow, binding.WithDisallowUnknownFields(true)); err != nil {
-		return err
-	}
-
-	b.Kind = shadow.Kind
-
-	// An absent spec is a malformed pair rather than a request for defaults;
-	// `"spec": {}` asks for those.
-	if len(shadow.Spec) == 0 {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"bucketOptions spec is required, use an empty object for the kind's defaults")
-	}
-
-	switch shadow.Kind {
-	case BucketsKindLinear:
-		var spec LinearBucketsSpec
-		if err := binding.JSON.BindBody(bytes.NewReader(shadow.Spec), &spec, binding.WithDisallowUnknownFields(true), binding.WithUnknownFieldContext("linear buckets spec")); err != nil {
-			return err
-		}
-		b.Spec = spec
-
-	case BucketsKindLog:
-		var spec LogBucketsSpec
-		if err := binding.JSON.BindBody(bytes.NewReader(shadow.Spec), &spec, binding.WithDisallowUnknownFields(true), binding.WithUnknownFieldContext("log buckets spec")); err != nil {
-			return err
-		}
-		b.Spec = spec
-
-	default:
-		return errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"invalid bucketOptions kind %q, expected one of linear, log", shadow.Kind.StringValue())
-	}
-
-	return nil
-}
-
 // PrepareJSONSchema adds description to the QueryRangeRequest schema.
 func (q *QueryRangeRequest) PrepareJSONSchema(schema *jsonschema.Schema) error {
 	schema.WithDescription("Request body for the v5 query range endpoint. Supports builder queries (traces, logs, metrics), formulas, joins, trace operators, PromQL, and ClickHouse SQL queries.")
@@ -871,4 +735,138 @@ func (r *QueryRangeRequest) GetQueriesSupportingZeroDefault() map[string]bool {
 	}
 
 	return canDefaultZero
+}
+
+type BucketOptions struct {
+	Kind BucketsKind `json:"kind"`
+	Spec any         `json:"spec"`
+}
+
+type BucketsKind struct {
+	valuer.String
+}
+
+var (
+	BucketsKindLinear = BucketsKind{valuer.NewString("linear")}
+	BucketsKindLog    = BucketsKind{valuer.NewString("log")}
+)
+
+// Enum implements jsonschema.Enum.
+func (BucketsKind) Enum() []any {
+	return []any{
+		BucketsKindLinear,
+		BucketsKindLog,
+	}
+}
+
+// LinearBucketsSpec divides (0, MaxValue] into NumBuckets equal bands.
+type LinearBucketsSpec struct {
+	// Everything above MaxValue is counted in the trailing overflow band. Evenly
+	// spaced boundaries have no top to divide without it, so it is required.
+	MaxValue   float64 `json:"maxValue" required:"true"`
+	NumBuckets int     `json:"numBuckets,omitempty"`
+}
+
+// LogBucketsSpec spaces boundaries at 2^Scale bands per doubling, the mapping
+// an exponential histogram uses.
+type LogBucketsSpec struct {
+	// ClickHouse always buckets at MaxLogScale and the surplus is folded away
+	// afterwards, so every Scale reads the same cache entry. MaxLogScale applies
+	// when unset.
+	Scale *int `json:"scale,omitempty"`
+}
+
+const (
+	DefaultNumBuckets = 60
+	MaxNumBuckets     = 512
+
+	// MaxLogScale is the resolution ClickHouse buckets every log heatmap at:
+	// 2^MaxLogScale bands per doubling. It is both the default and the finest
+	// available, since a coarser LogBucketsSpec.Scale folds down from it.
+	MaxLogScale = 4
+	// MinLogScale is one band per 16x, the coarsest axis worth rendering.
+	MinLogScale = -4
+)
+
+func (b *BucketOptions) UnmarshalJSON(data []byte) error {
+	var shadow struct {
+		Kind BucketsKind     `json:"kind"`
+		Spec json.RawMessage `json:"spec"`
+	}
+	if err := binding.JSON.BindBody(bytes.NewReader(data), &shadow, binding.WithDisallowUnknownFields(true)); err != nil {
+		return err
+	}
+
+	b.Kind = shadow.Kind
+
+	// An absent spec is a malformed pair rather than a request for defaults;
+	// `"spec": {}` asks for those.
+	if len(shadow.Spec) == 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"bucketOptions spec is required, use an empty object for the kind's defaults")
+	}
+
+	switch shadow.Kind {
+	case BucketsKindLinear:
+		var spec LinearBucketsSpec
+		if err := binding.JSON.BindBody(bytes.NewReader(shadow.Spec), &spec, binding.WithDisallowUnknownFields(true), binding.WithUnknownFieldContext("linear buckets spec")); err != nil {
+			return err
+		}
+		b.Spec = spec
+
+	case BucketsKindLog:
+		var spec LogBucketsSpec
+		if err := binding.JSON.BindBody(bytes.NewReader(shadow.Spec), &spec, binding.WithDisallowUnknownFields(true), binding.WithUnknownFieldContext("log buckets spec")); err != nil {
+			return err
+		}
+		b.Spec = spec
+
+	default:
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"invalid bucketOptions kind %q, expected one of linear, log", shadow.Kind.StringValue())
+	}
+
+	return nil
+}
+
+// bucketOptionsLinear and bucketOptionsLog are the OpenAPI schemas for the two
+// BucketOptions variants. They have to be named types: the reflector turns an
+// anonymous one into an inline subschema, leaving the discriminator mapping in
+// PrepareJSONSchema pointing at components that were never emitted. `kind` is
+// required:"true" on both so oapi-codegen renders the discriminator non-pointer.
+type bucketOptionsLinear struct {
+	Kind BucketsKind       `json:"kind" required:"true" description:"How the boundaries are spaced."`
+	Spec LinearBucketsSpec `json:"spec" required:"true" description:"The evenly spaced bucket specification."`
+}
+
+type bucketOptionsLog struct {
+	Kind BucketsKind    `json:"kind" required:"true" description:"How the boundaries are spaced."`
+	Spec LogBucketsSpec `json:"spec" required:"true" description:"The logarithmic bucket specification."`
+}
+
+var _ jsonschema.OneOfExposer = BucketOptions{}
+
+func (BucketOptions) JSONSchemaOneOf() []any {
+	return []any{
+		bucketOptionsLinear{},
+		bucketOptionsLog{},
+	}
+}
+
+var _ jsonschema.Preparer = BucketOptions{}
+
+// PrepareJSONSchema marks the options as a `kind`-discriminated union;
+// signoz.attachDiscriminators promotes it and strips the base properties.
+func (BucketOptions) PrepareJSONSchema(s *jsonschema.Schema) error {
+	if s.ExtraProperties == nil {
+		s.ExtraProperties = map[string]any{}
+	}
+	s.ExtraProperties["x-signoz-discriminator"] = map[string]any{
+		"propertyName": "kind",
+		"mapping": map[string]string{
+			BucketsKindLinear.StringValue(): "#/components/schemas/Querybuildertypesv5BucketOptionsLinear",
+			BucketsKindLog.StringValue():    "#/components/schemas/Querybuildertypesv5BucketOptionsLog",
+		},
+	}
+	return nil
 }
