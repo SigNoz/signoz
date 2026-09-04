@@ -324,6 +324,10 @@ def test_create_rejects_a_duplicate_display_name(
             {"name": "jira-short-reopen", "config": {"kind": "jira", "spec": {"site": "https://acme.atlassian.net", "project": "OPS", "issueType": "Bug", "email": "a@integration.test", "apiToken": "t", "summary": "Alert", "description": "body", "reopenDuration": "30s"}}}, id="jira_reopen_duration_below_a_minute"
         ),
         pytest.param({"name": "incidentio-bearer", "config": {"kind": "incidentio", "spec": {"url": "https://api.incident.io/v2/alert_events/http/01ABCDEF", "token": "Bearer incidentio-token", "title": "Alert", "description": "body"}}}, id="incidentio_token_with_bearer_prefix"),
+        pytest.param({"name": "slack-empty-title", "config": {"kind": "slack", "spec": {"apiUrl": "https://hooks.slack.test/services/T/B/X", "title": ""}}}, id="empty_string_on_a_defaulted_field"),
+        pytest.param({"name": "jsmops-empty-tags", "config": {"kind": "jsmops", "spec": {"apiKey": "jsm-api-key", "tags": ""}}}, id="empty_string_on_a_defaulted_signoz_field"),
+        pytest.param({"name": "jira-noncanonical-reopen", "config": {"kind": "jira", "spec": {"site": "https://acme.atlassian.net", "project": "OPS", "issueType": "Bug", "email": "a@integration.test", "apiToken": "t", "reopenDuration": "72h"}}}, id="jira_reopen_duration_not_as_reported"),
+        pytest.param({"name": "email-lowercase-header", "config": {"kind": "email", "spec": {"to": "a@integration.test", "headers": {"subject": "Alert"}}}}, id="email_header_name_not_as_reported"),
     ],
 )
 def test_create_rejects_invalid_bodies(
@@ -405,7 +409,33 @@ def test_create_accepts_an_opsgenie_channel_without_a_priority(
     created = response.json()["data"]
     cleanup_notification_channels.append(created["id"])
 
-    assert "priority" not in created["config"]["spec"]
+    assert created["config"]["spec"]["priority"] == ""
+
+
+def test_create_echoes_an_empty_value_on_a_field_with_no_default(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    cleanup_notification_channels: list[str],
+) -> None:
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(V2_BASE_URL),
+        json={
+            "name": f"v2-pd-empty-{uuid.uuid4().hex[:8]}",
+            "config": {"kind": "pagerduty", "spec": {"routingKey": "pd-routing-key", "severity": "", "class": ""}},
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=TIMEOUT,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+
+    created = response.json()["data"]
+    cleanup_notification_channels.append(created["id"])
+
+    assert created["config"]["spec"]["severity"] == ""
+    assert created["config"]["spec"]["class"] == ""
 
 
 def test_setup_managed_role_users(
