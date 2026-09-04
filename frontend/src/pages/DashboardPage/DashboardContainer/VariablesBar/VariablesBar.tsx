@@ -33,7 +33,8 @@ interface VariablesBarProps {
  */
 function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 	const dashboardId = dashboard.id ?? '';
-	const { isEditable, editDisabledReason } = useDashboardEditContext();
+	const { isEditable, editDisabledReason, disabledKind } =
+		useDashboardEditContext();
 	const { variables, selection, setSelection, autoSelect } =
 		useVariableSelection(dashboard);
 	// Persisted per dashboard so the full/collapsed view survives reloads.
@@ -133,7 +134,10 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 				    so the row still flows under the floated time selector, and always
 				    mounted so measuring never toggles it. */}
 				<span className={styles.addSlot}>
-					<AddVariableIcon disabledReason={editDisabledReason} />
+					<AddVariableIcon
+						disabledReason={editDisabledReason}
+						disabledKind={disabledKind}
+					/>
 				</span>
 			</div>
 		</div>

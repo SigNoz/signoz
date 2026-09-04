@@ -19,7 +19,8 @@ interface DashboardEmptyStateProps {
 function DashboardEmptyState({
 	canAddPanel,
 }: DashboardEmptyStateProps): JSX.Element {
-	const { isEditable, editDisabledReason } = useDashboardEditContext();
+	const { isEditable, editDisabledReason, disabledKind } =
+		useDashboardEditContext();
 	const { isPickerOpen, openPicker, closePicker, createPanel } =
 		useCreatePanel();
 	const requestSettings = useDashboardStore((s) => s.requestSettings);
@@ -50,7 +51,7 @@ function DashboardEmptyState({
 								</Typography.Text>
 							</div>
 						</div>
-						<DisabledControlTooltip reason={editDisabledReason}>
+						<DisabledControlTooltip reason={editDisabledReason} kind={disabledKind}>
 							<Button
 								variant="solid"
 								color="secondary"
@@ -76,7 +77,7 @@ function DashboardEmptyState({
 								</Typography.Text>
 							</div>
 						</div>
-						<DisabledControlTooltip reason={editDisabledReason}>
+						<DisabledControlTooltip reason={editDisabledReason} kind={disabledKind}>
 							<Button
 								color="primary"
 								prefix={<Plus size="md" />}

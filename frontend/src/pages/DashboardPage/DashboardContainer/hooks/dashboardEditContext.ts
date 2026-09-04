@@ -13,6 +13,11 @@ export interface DashboardEditContext {
 	/** '' when the action is available. */
 	editDisabledReason: string;
 	deleteDisabledReason: string;
+	/**
+	 * Whether the block is an access problem or a state the user can act on.
+	 * Drives how the reason is presented; meaningless when the reason is ''.
+	 */
+	disabledKind: 'denied' | 'blocked';
 }
 
 /**
@@ -35,6 +40,7 @@ export function deriveEditContext({
 	let deleteDisabledReason = '';
 	if (readOnlyOverride) {
 		return {
+			disabledKind: 'blocked',
 			isEditable: false,
 			isLocked,
 			canEditDashboard: false,
@@ -56,6 +62,7 @@ export function deriveEditContext({
 	}
 
 	return {
+		disabledKind: isLocked || readOnlyOverride ? 'blocked' : 'denied',
 		isEditable: canEdit && !isLocked,
 		isLocked,
 		canEditDashboard: canEdit,
