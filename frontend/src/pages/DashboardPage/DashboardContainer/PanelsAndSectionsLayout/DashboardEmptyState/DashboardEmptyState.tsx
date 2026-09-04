@@ -6,9 +6,11 @@ import dashboardEmojiUrl from '@/assets/Icons/dashboard_emoji.svg';
 import landscapeUrl from '@/assets/Icons/landscape.svg';
 
 import { useCreatePanel } from '../../hooks/useCreatePanel';
+import DisabledControlTooltip from '../../components/DisabledControlTooltip/DisabledControlTooltip';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import PanelTypeSelectionModal from '../Panel/PanelTypeSelectionModal/PanelTypeSelectionModal';
 import styles from './DashboardEmptyState.module.scss';
+import { useDashboardEditContext } from '../../hooks/useDashboardEditContext';
 
 interface DashboardEmptyStateProps {
 	canAddPanel: boolean;
@@ -17,9 +19,9 @@ interface DashboardEmptyStateProps {
 function DashboardEmptyState({
 	canAddPanel,
 }: DashboardEmptyStateProps): JSX.Element {
+	const { isEditable, editDisabledReason } = useDashboardEditContext();
 	const { isPickerOpen, openPicker, closePicker, createPanel } =
 		useCreatePanel();
-	const isEditable = useDashboardStore((s) => s.isEditable);
 	const requestSettings = useDashboardStore((s) => s.requestSettings);
 
 	return (
@@ -48,17 +50,18 @@ function DashboardEmptyState({
 								</Typography.Text>
 							</div>
 						</div>
-						{isEditable && (
+						<DisabledControlTooltip reason={editDisabledReason}>
 							<Button
 								variant="solid"
 								color="secondary"
 								prefix={<Configure size="md" />}
+								disabled={!isEditable}
 								onClick={(): void => requestSettings({ tab: 'Overview' })}
 								testId="empty-configure"
 							>
 								Configure
 							</Button>
-						)}
+						</DisabledControlTooltip>
 					</div>
 
 					<div className={styles.step}>
@@ -73,16 +76,17 @@ function DashboardEmptyState({
 								</Typography.Text>
 							</div>
 						</div>
-						{canAddPanel && (
+						<DisabledControlTooltip reason={editDisabledReason}>
 							<Button
 								color="primary"
 								prefix={<Plus size="md" />}
+								disabled={!canAddPanel}
 								onClick={(): void => openPicker()}
 								testId="add-panel"
 							>
 								New Panel
 							</Button>
-						)}
+						</DisabledControlTooltip>
 					</div>
 				</div>
 			</div>

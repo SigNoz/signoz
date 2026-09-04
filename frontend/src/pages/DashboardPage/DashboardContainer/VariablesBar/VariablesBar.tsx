@@ -16,6 +16,7 @@ import { useVariableSelection } from './hooks/useVariableSelection';
 import { resolveDefaultSelection } from './utils/resolveVariableSelection';
 import VariableSelector from './components/VariableSelector/VariableSelector';
 import styles from './VariablesBar.module.scss';
+import { useDashboardEditContext } from '../hooks/useDashboardEditContext';
 
 interface VariablesBarProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
@@ -32,9 +33,9 @@ interface VariablesBarProps {
  */
 function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 	const dashboardId = dashboard.id ?? '';
+	const { isEditable, editDisabledReason } = useDashboardEditContext();
 	const { variables, selection, setSelection, autoSelect } =
 		useVariableSelection(dashboard);
-	const isEditable = useDashboardStore((s) => s.isEditable);
 	// Persisted per dashboard so the full/collapsed view survives reloads.
 	const expanded = useDashboardStore(selectVariablesExpanded(dashboardId));
 	const setVariablesExpanded = useDashboardStore((s) => s.setVariablesExpanded);
@@ -131,11 +132,9 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 				{/* After the more/less trigger, in every state. Kept inline (not block)
 				    so the row still flows under the floated time selector, and always
 				    mounted so measuring never toggles it. */}
-				{isEditable && (
-					<span className={styles.addSlot}>
-						<AddVariableIcon />
-					</span>
-				)}
+				<span className={styles.addSlot}>
+					<AddVariableIcon disabledReason={editDisabledReason} />
+				</span>
 			</div>
 		</div>
 	);

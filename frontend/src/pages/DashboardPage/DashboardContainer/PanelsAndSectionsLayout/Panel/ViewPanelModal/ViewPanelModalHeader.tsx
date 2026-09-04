@@ -13,7 +13,8 @@ import type { PanelKind } from 'pages/DashboardPage/DashboardContainer/Panels/ty
 import type { EQueryType } from 'types/common/dashboard';
 
 import styles from './ViewPanelModal.module.scss';
-import { useDashboardStore } from 'pages/DashboardPage/DashboardContainer/store/useDashboardStore';
+import DisabledControlTooltip from '../../../components/DisabledControlTooltip/DisabledControlTooltip';
+import { useDashboardEditContext } from '../../../hooks/useDashboardEditContext';
 
 interface ViewPanelModalHeaderProps {
 	selectedInterval: Time | CustomTimeType;
@@ -62,13 +63,11 @@ function ViewPanelModalHeader({
 	onChangePanelKind,
 	onResetQuery,
 }: ViewPanelModalHeaderProps): JSX.Element {
+	const { isEditable: canSwitchToEdit, editDisabledReason } =
+		useDashboardEditContext();
 	// Same capabilities-guarded options as the editor's PanelTypeSwitcher, so the two
 	// selectors disable the same kinds (e.g. List under PromQL, metrics-only kinds).
 	const panelTypeItems = usePanelTypeSelectItems({ queryType, signal });
-	const canEditDashboard = useDashboardStore((s) => s.canEditDashboard);
-	const isLocked = useDashboardStore((s) => s.isLocked);
-
-	const canSwitchToEdit = canEditDashboard && !isLocked;
 
 	return (
 		<div className={styles.toolbar}>
@@ -80,17 +79,18 @@ function ViewPanelModalHeader({
 					onChange={onChangePanelKind}
 				/>
 			</div>
-			{canSwitchToEdit && (
+			<DisabledControlTooltip reason={editDisabledReason}>
 				<Button
 					variant="outlined"
 					color="secondary"
 					prefix={<PenLine />}
+					disabled={!canSwitchToEdit}
 					onClick={onSwitchToEdit}
 					data-testid="view-panel-switch-to-edit"
 				>
 					Switch to Edit Mode
 				</Button>
-			)}
+			</DisabledControlTooltip>
 			<Button
 				variant="link"
 				color="primary"

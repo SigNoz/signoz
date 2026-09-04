@@ -9,7 +9,6 @@ import {
 } from '@signozhq/icons';
 import type { MenuItem } from '@signozhq/ui/dropdown-menu';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
-import useComponentPermission from 'hooks/useComponentPermission';
 import {
 	type ConfirmableAction,
 	useConfirmableAction,
@@ -17,8 +16,6 @@ import {
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 import { useOpenPanelEditor } from 'pages/DashboardPage/DashboardContainer/hooks/useOpenPanelEditor';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
-import { useDashboardStore } from 'pages/DashboardPage/DashboardContainer/store/useDashboardStore';
-import { useAppContext } from 'providers/App/App';
 
 import type { DashboardSection } from '../../../utils';
 import type { PanelActionsConfig } from '../Panel';
@@ -29,9 +26,8 @@ import { useDownloadPanelMenuItem } from '../hooks/useDownloadPanelMenuItem';
 import { useMovePanelToSection } from '../hooks/useMovePanelToSection';
 import { useViewPanel } from '../hooks/useViewPanel';
 import { buildMoveItems } from '../utils/buildMoveItems';
-import { PANEL_ACTION_META } from './panelActionMeta';
 import DisabledMenuItemLabel from '../../../components/DisabledMenuItemLabel/DisabledMenuItemLabel';
-import { DASHBOARD_LOCKED_REASON } from '../../../hooks/useDashboardEditGuard';
+import { useDashboardEditContext } from '../../../hooks/useDashboardEditContext';
 
 // Stable fallback so renders without layout context don't churn the mutation
 // hooks' deps (a fresh [] each render would re-create their callbacks).
@@ -54,10 +50,12 @@ export interface PanelActionItems {
 }
 
 /**
- * Resolves the panel actions menu items. Each action passes three gates before
- * it appears: kind (PanelDefinition.actions), role (useComponentPermission) and
- * context (dashboard editable + layout config present). View and Download stay
- * available on read-only dashboards, as in V1.
+ * Resolves the panel actions menu items. Panels are part of the dashboard spec
+ * and have no authz kind of their own, so every mutating action maps to the
+ * dashboard's edit rights; the kind gate (PanelDefinition.actions) still decides
+ * which actions make sense at all. Actions the user can't take stay in the menu,
+ * disabled with the reason. View, Download and Create Alerts never mutate the
+ * dashboard and are always available.
  */
 export function usePanelActionItems({
 	panelId,
@@ -66,18 +64,7 @@ export function usePanelActionItems({
 	panelActions,
 }: UsePanelActionItemsArgs): PanelActionItems {
 	const panelKind = panel.spec.plugin.kind;
-	const { user } = useAppContext();
-	const [canEditWidget, canMove, canDelete] = useComponentPermission(
-		[
-			// edit_widget gates both Edit and Clone, exactly as in V1.
-			PANEL_ACTION_META.edit.permission ?? 'edit_widget',
-			PANEL_ACTION_META.move.permission ?? 'edit_dashboard',
-			PANEL_ACTION_META.delete.permission ?? 'delete_widget',
-		],
-		user.role,
-	);
-	const canEditDashboard = useDashboardStore((s) => s.canEditDashboard);
-	const isLocked = useDashboardStore((s) => s.isLocked);
+	const { isEditable, editDisabledReason } = useDashboardEditContext();
 	const openPanelEditor = useOpenPanelEditor();
 	const createAlert = useCreateAlertFromPanel();
 	const { openView } = useViewPanel();
@@ -112,12 +99,9 @@ export function usePanelActionItems({
 	const { request: requestDelete } = deleteConfirm;
 
 	const items = useMemo<MenuItem[]>(() => {
-		// Edit actions are shown only to edit-permitted users; the lock is their only
-		// disabled state, surfaced as a hover tooltip on the row.
-		const canEdit = canEditDashboard;
 		const label = (text: string): ReactNode =>
-			isLocked ? (
-				<DisabledMenuItemLabel reason={DASHBOARD_LOCKED_REASON}>
+			editDisabledReason ? (
+				<DisabledMenuItemLabel reason={editDisabledReason}>
 					{text}
 				</DisabledMenuItemLabel>
 			) : (
@@ -133,22 +117,22 @@ export function usePanelActionItems({
 				onClick: (): void => openView(panelId, panel),
 			});
 		}
-		if (canEdit && canEditWidget && panelCapabilities.edit) {
+		if (panelCapabilities.edit) {
 			panelGroup.push({
 				key: 'edit-panel',
 				label: label('Edit panel'),
 				icon: <PenLine size={14} />,
-				disabled: isLocked,
+				disabled: !isEditable,
 				onClick: (): void => openPanelEditor(panelId, { panel }),
 			});
 		}
-		if (canEdit && canEditWidget && panelCapabilities.clone) {
+		if (panelCapabilities.clone) {
 			// Needs section context to place the copy; disabled without it.
 			panelGroup.push({
 				key: 'clone-panel',
 				label: label('Clone'),
 				icon: <Copy size={14} />,
-				disabled: isLocked || !panelActions,
+				disabled: !isEditable || !panelActions,
 				onClick: (): void => {
 					if (panelActions) {
 						void clonePanel({
@@ -176,39 +160,33 @@ export function usePanelActionItems({
 			});
 		}
 
-		let moveGroup: MenuItem[] = [];
-		if (canEdit && canMove) {
-			moveGroup =
-				!isLocked && panelActions
-					? buildMoveItems({
-							sections,
-							currentLayoutIndex: panelActions.currentLayoutIndex,
-							panelId,
-							movePanel,
-						})
-					: [
-							{
-								key: 'move',
-								label: label('Move to section'),
-								icon: <FolderInput size={14} />,
-								disabled: true,
-							},
-						];
-		}
-
-		const deleteGroup: MenuItem[] =
-			canEdit && canDelete
-				? [
+		const moveGroup: MenuItem[] =
+			isEditable && panelActions
+				? buildMoveItems({
+						sections,
+						currentLayoutIndex: panelActions.currentLayoutIndex,
+						panelId,
+						movePanel,
+					})
+				: [
 						{
-							key: 'delete-panel',
-							danger: true,
-							icon: <Trash2 size={14} />,
-							label: label('Delete panel'),
-							disabled: isLocked || !panelActions,
-							onClick: (): void => requestDelete(),
+							key: 'move',
+							label: label('Move to section'),
+							icon: <FolderInput size={14} />,
+							disabled: true,
 						},
-					]
-				: [];
+					];
+
+		const deleteGroup: MenuItem[] = [
+			{
+				key: 'delete-panel',
+				danger: true,
+				icon: <Trash2 size={14} />,
+				label: label('Delete panel'),
+				disabled: !isEditable || !panelActions,
+				onClick: (): void => requestDelete(),
+			},
+		];
 
 		return [panelGroup, dataGroup, moveGroup, deleteGroup]
 			.filter((group) => group.length > 0)
@@ -216,11 +194,8 @@ export function usePanelActionItems({
 				index === 0 ? group : [{ type: 'divider' as const }, ...group],
 			);
 	}, [
-		canEditDashboard,
-		isLocked,
-		canEditWidget,
-		canMove,
-		canDelete,
+		isEditable,
+		editDisabledReason,
 		panelCapabilities,
 		panel,
 		panelActions,
