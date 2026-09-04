@@ -384,19 +384,21 @@ func attributeColumnEvolutionRegistered(key *telemetrytypes.TelemetryFieldKey, c
 
 // attributeJSONValueExpr renders the value expression for a span attribute read from the JSON
 // column along with its per-type existence guard.
-// Numeric and bool use accurateCastOrNull, which reads an absent path or a same-named key
-// stored as another type as NULL rather than erroring — unlike a bare ::Int64/::Bool cast, and
-// unlike ::Nullable(Bool), which throws on a non-bool string. Being NULL-capable, the cast
-// itself is the existence guard (present AS THIS TYPE). Other reads are total
+// Numeric and bool gate a crash-safe accurateCastOrNull by dynamicType: the cast alone coerces
+// across domains (bool true reads 1, '200' reads 200, 200.5 reads true), so the read is
+// restricted to values stored as that type — the per-type separation the typed maps gave
+// structurally. Being NULL-capable, the gated read itself is the existence guard (present AS
+// THIS TYPE). Other reads are total (::String folds absent to '' on the raw path), so the
+// guard is presence on the raw path.
 func attributeJSONValueExpr(path string, dataType telemetrytypes.FieldDataType) (string, string) {
 	switch dataType {
 	case telemetrytypes.FieldDataTypeInt64,
 		telemetrytypes.FieldDataTypeFloat64,
 		telemetrytypes.FieldDataTypeNumber:
-		expr := fmt.Sprintf("accurateCastOrNull(%s, 'Float64')", path) // cast all numeric types to float64 like attributes_number map.
+		expr := fmt.Sprintf("if(dynamicType(%s) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(%s, 'Float64'), NULL)", path, path) // all numeric types to float64 like attributes_number map.
 		return expr, expr + " IS NOT NULL"
 	case telemetrytypes.FieldDataTypeBool:
-		expr := fmt.Sprintf("accurateCastOrNull(%s, 'Bool')", path)
+		expr := fmt.Sprintf("if(dynamicType(%s) = 'Bool', accurateCastOrNull(%s, 'Bool'), NULL)", path, path)
 		return expr, expr + " IS NOT NULL"
 	default:
 		return path + "::String", fmt.Sprintf("%s IS NOT NULL", path)
