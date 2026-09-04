@@ -169,9 +169,7 @@ func (q *promqlQuery) Fingerprint() string {
 	}
 	parts := []string{
 		"promql",
-		// the cache key is the fingerprint alone, and a heatmap and a time
-		// series query over one expression return different shapes, so the
-		// request type has to separate their entries
+		// one expression returns a different shape per request type
 		fmt.Sprintf("requestType=%s", q.requestType.StringValue()),
 		query,
 		q.query.Step.String(),
