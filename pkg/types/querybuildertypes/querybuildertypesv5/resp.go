@@ -156,10 +156,9 @@ const HeatmapBucketColumn = "__bucket"
 
 type AggregationMeta struct {
 	Unit string `json:"unit,omitempty"`
-	// Buckets are the ascending bucket upper bounds shared by every series here.
-	// Set only for heatmap results, where each point's Values holds
-	// len(Buckets)+1 counts: one per bucket, then the open-above overflow, whose
-	// bound is `le=+Inf` and so cannot be listed as a JSON number.
+	// Buckets holds ascending upper bounds shared by every series in the
+	// AggregationBucket, set only for heatmap results. Each point's Values holds
+	// len(Buckets)+1 counts: one per bound, then the open-above overflow.
 	Buckets []float64 `json:"buckets,omitempty"`
 }
 
