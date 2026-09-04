@@ -244,6 +244,40 @@ func (provider *provider) CreateChannel(ctx context.Context, orgID string, recei
 	return channel, nil
 }
 
+func (provider *provider) CreateNotificationChannel(ctx context.Context, orgID string, postable *alertmanagertypes.PostableNotificationChannel) (*alertmanagertypes.Channel, error) {
+	receiver, err := postable.ToReceiver()
+	if err != nil {
+		return nil, err
+	}
+
+	config, err := provider.configStore.Get(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := config.SetGlobalConfig(provider.config.Signoz.Global); err != nil {
+		return nil, err
+	}
+
+	if err := config.CreateReceiverV2(receiver); err != nil {
+		return nil, err
+	}
+
+	channel, err := alertmanagertypes.NewChannelFromReceiverWithName(receiver, postable.Name, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = provider.configStore.CreateChannel(ctx, channel, alertmanagertypes.WithCb(func(ctx context.Context) error {
+		return provider.configStore.Set(ctx, config)
+	}))
+	if err != nil {
+		return nil, err
+	}
+
+	return channel, nil
+}
+
 func (provider *provider) Config() alertmanagerserver.Config {
 	return provider.config.Signoz.Config
 }

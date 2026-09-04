@@ -37,6 +37,476 @@ export interface AlertmanagertypesChannelDTO {
 	updatedAt?: string;
 }
 
+export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfigDTOKind {
+	slack = 'slack',
+}
+export interface AlertmanagertypesChannelSlackConfigDTO {
+	/**
+	 * @type string
+	 */
+	apiUrl: string;
+	/**
+	 * @type string
+	 */
+	channel?: string;
+	/**
+	 * @type boolean,null
+	 */
+	sendResolved?: boolean | null;
+	/**
+	 * @type string
+	 */
+	text?: string;
+	/**
+	 * @type string
+	 */
+	title?: string;
+}
+
+export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfigDTO {
+	/**
+	 * @enum slack
+	 * @type string
+	 */
+	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfigDTOKind;
+	spec: AlertmanagertypesChannelSlackConfigDTO;
+}
+
+export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfigDTOKind {
+	email = 'email',
+}
+export type AlertmanagertypesChannelEmailConfigDTOHeaders = {
+	[key: string]: string;
+};
+
+export interface AlertmanagertypesChannelEmailConfigDTO {
+	/**
+	 * @type object
+	 */
+	headers?: AlertmanagertypesChannelEmailConfigDTOHeaders;
+	/**
+	 * @type string
+	 */
+	html?: string;
+	/**
+	 * @type boolean,null
+	 */
+	sendResolved?: boolean | null;
+	/**
+	 * @type string
+	 */
+	to: string;
+}
+
+export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfigDTO {
+	/**
+	 * @enum email
+	 * @type string
+	 */
+	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfigDTOKind;
+	spec: AlertmanagertypesChannelEmailConfigDTO;
+}
+
+export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelWebhookConfigDTOKind {
+	webhook = 'webhook',
+}
+export interface AlertmanagertypesChannelWebhookConfigDTO {
+	/**
+	 * @type string
+	 */
+	bearerToken?: string;
+	/**
+	 * @type string
+	 */
+	password?: string;
+	/**
+	 * @type boolean,null
+	 */
+	sendResolved?: boolean | null;
+	/**
+	 * @type string
+	 */
+	url: string;
+	/**
+	 * @type string
+	 */
+	username?: string;
+}
+
+export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelWebhookConfigDTO {
+	/**
+	 * @enum webhook
+	 * @type string
+	 */
+	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelWebhookConfigDTOKind;
+	spec: AlertmanagertypesChannelWebhookConfigDTO;
+}
+
+export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelPagerdutyConfigDTOKind {
+	pagerduty = 'pagerduty',
+}
+export type AlertmanagertypesChannelPagerdutyConfigDTODetails = {
+	[key: string]: string;
+};
+
+export interface AlertmanagertypesChannelPagerdutyConfigDTO {
+	/**
+	 * @type string
+	 */
+	class?: string;
+	/**
+	 * @type string
+	 */
+	client?: string;
+	/**
+	 * @type string
+	 */
+	clientUrl?: string;
+	/**
+	 * @type string
+	 */
+	component?: string;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type object
+	 */
+	details?: AlertmanagertypesChannelPagerdutyConfigDTODetails;
+	/**
+	 * @type string
+	 */
+	group?: string;
+	/**
+	 * @type string
+	 */
+	routingKey: string;
+	/**
+	 * @type boolean,null
+	 */
+	sendResolved?: boolean | null;
+	/**
+	 * @type string
+	 */
+	severity?: string;
+	/**
+	 * @type string
+	 */
+	source?: string;
+	/**
+	 * @type string
+	 */
+	url?: string;
+}
+
+export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelPagerdutyConfigDTO {
+	/**
+	 * @enum pagerduty
+	 * @type string
+	 */
+	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelPagerdutyConfigDTOKind;
+	spec: AlertmanagertypesChannelPagerdutyConfigDTO;
+}
+
+export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelOpsgenieConfigDTOKind {
+	opsgenie = 'opsgenie',
+}
+export type AlertmanagertypesChannelOpsgenieConfigDTODetails = {
+	[key: string]: string;
+};
+
+export interface AlertmanagertypesChannelOpsgenieConfigDTO {
+	/**
+	 * @type string
+	 */
+	apiKey: string;
+	/**
+	 * @type string
+	 */
+	apiUrl?: string;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type object
+	 */
+	details?: AlertmanagertypesChannelOpsgenieConfigDTODetails;
+	/**
+	 * @type string
+	 */
+	message?: string;
+	/**
+	 * @type string
+	 */
+	priority?: string;
+	/**
+	 * @type boolean,null
+	 */
+	sendResolved?: boolean | null;
+	/**
+	 * @type string
+	 */
+	source?: string;
+}
+
+export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelOpsgenieConfigDTO {
+	/**
+	 * @enum opsgenie
+	 * @type string
+	 */
+	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelOpsgenieConfigDTOKind;
+	spec: AlertmanagertypesChannelOpsgenieConfigDTO;
+}
+
+export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelMSTeamsConfigDTOKind {
+	msteams = 'msteams',
+}
+export interface AlertmanagertypesChannelMSTeamsConfigDTO {
+	/**
+	 * @type boolean,null
+	 */
+	sendResolved?: boolean | null;
+	/**
+	 * @type string
+	 */
+	text?: string;
+	/**
+	 * @type string
+	 */
+	title?: string;
+	/**
+	 * @type string
+	 */
+	webhookUrl: string;
+}
+
+export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelMSTeamsConfigDTO {
+	/**
+	 * @enum msteams
+	 * @type string
+	 */
+	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelMSTeamsConfigDTOKind;
+	spec: AlertmanagertypesChannelMSTeamsConfigDTO;
+}
+
+export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelGoogleChatConfigDTOKind {
+	googlechat = 'googlechat',
+}
+export interface AlertmanagertypesChannelGoogleChatConfigDTO {
+	/**
+	 * @type boolean,null
+	 */
+	sendResolved?: boolean | null;
+	/**
+	 * @type string
+	 */
+	text?: string;
+	/**
+	 * @type string
+	 */
+	title?: string;
+	/**
+	 * @type string
+	 */
+	webhookUrl: string;
+}
+
+export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelGoogleChatConfigDTO {
+	/**
+	 * @enum googlechat
+	 * @type string
+	 */
+	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelGoogleChatConfigDTOKind;
+	spec: AlertmanagertypesChannelGoogleChatConfigDTO;
+}
+
+export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfigDTOKind {
+	jira = 'jira',
+}
+export type AlertmanagertypesChannelJiraConfigDTOCustomFields = {
+	[key: string]: unknown;
+};
+
+export interface AlertmanagertypesChannelJiraConfigDTO {
+	/**
+	 * @type string
+	 */
+	apiToken: string;
+	/**
+	 * @type object
+	 */
+	customFields?: AlertmanagertypesChannelJiraConfigDTOCustomFields;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	email: string;
+	/**
+	 * @type string
+	 */
+	issueType: string;
+	/**
+	 * @type array
+	 */
+	labels?: string[];
+	/**
+	 * @type string
+	 */
+	priority?: string;
+	/**
+	 * @type string
+	 */
+	project: string;
+	/**
+	 * @type string
+	 */
+	reopenDuration?: string;
+	/**
+	 * @type string
+	 */
+	reopenTransition?: string;
+	/**
+	 * @type string
+	 */
+	resolveTransition?: string;
+	/**
+	 * @type boolean,null
+	 */
+	sendResolved?: boolean | null;
+	/**
+	 * @type string
+	 */
+	site: string;
+	/**
+	 * @type string
+	 */
+	summary?: string;
+	/**
+	 * @type string
+	 */
+	wontFixResolution?: string;
+}
+
+export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfigDTO {
+	/**
+	 * @enum jira
+	 * @type string
+	 */
+	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfigDTOKind;
+	spec: AlertmanagertypesChannelJiraConfigDTO;
+}
+
+export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfigDTOKind {
+	jsmops = 'jsmops',
+}
+export interface AlertmanagertypesChannelJSMOpsConfigDTO {
+	/**
+	 * @type string
+	 */
+	apiKey: string;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	message?: string;
+	/**
+	 * @type string
+	 */
+	priority?: string;
+	/**
+	 * @type boolean,null
+	 */
+	sendResolved?: boolean | null;
+	/**
+	 * @type string
+	 */
+	tags?: string;
+}
+
+export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfigDTO {
+	/**
+	 * @enum jsmops
+	 * @type string
+	 */
+	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfigDTOKind;
+	spec: AlertmanagertypesChannelJSMOpsConfigDTO;
+}
+
+export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfigDTOKind {
+	incidentio = 'incidentio',
+}
+export type AlertmanagertypesChannelIncidentIOConfigDTOMetadata = {
+	[key: string]: string;
+};
+
+export interface AlertmanagertypesChannelIncidentIOConfigDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type object
+	 */
+	metadata?: AlertmanagertypesChannelIncidentIOConfigDTOMetadata;
+	/**
+	 * @type boolean,null
+	 */
+	sendResolved?: boolean | null;
+	/**
+	 * @type string
+	 */
+	title?: string;
+	/**
+	 * @type string
+	 */
+	token: string;
+	/**
+	 * @type string
+	 */
+	url: string;
+}
+
+export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfigDTO {
+	/**
+	 * @enum incidentio
+	 * @type string
+	 */
+	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfigDTOKind;
+	spec: AlertmanagertypesChannelIncidentIOConfigDTO;
+}
+
+export type AlertmanagertypesChannelConfigDTO =
+	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfigDTO
+	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfigDTO
+	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelWebhookConfigDTO
+	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelPagerdutyConfigDTO
+	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelOpsgenieConfigDTO
+	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelMSTeamsConfigDTO
+	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelGoogleChatConfigDTO
+	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfigDTO
+	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfigDTO
+	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfigDTO;
+
+export enum AlertmanagertypesChannelKindDTO {
+	slack = 'slack',
+	email = 'email',
+	webhook = 'webhook',
+	pagerduty = 'pagerduty',
+	opsgenie = 'opsgenie',
+	msteams = 'msteams',
+	googlechat = 'googlechat',
+	jira = 'jira',
+	jsmops = 'jsmops',
+	incidentio = 'incidentio',
+}
 export interface ModelLabelSetDTO {
 	[key: string]: string;
 }
@@ -88,6 +558,32 @@ export enum AlertmanagertypesExpressionKindDTO {
 	rule = 'rule',
 	policy = 'policy',
 }
+export interface AlertmanagertypesGettableNotificationChannelDTO {
+	config: AlertmanagertypesChannelConfigDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	/**
+	 * @type string
+	 */
+	displayName: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: string;
+}
+
 export interface AlertmanagertypesGettableRoutePolicyDTO {
 	/**
 	 * @type array,null
@@ -1747,6 +2243,22 @@ export type AlertmanagertypesPostableChannelDTO = unknown & {
 	 */
 	wechat_configs?: ConfigWechatConfigDTO[];
 };
+
+export interface AlertmanagertypesPostableNotificationChannelDTO {
+	config: AlertmanagertypesChannelConfigDTO;
+	/**
+	 * @type string
+	 */
+	displayName?: string;
+	/**
+	 * @type boolean
+	 */
+	generateName?: boolean;
+	/**
+	 * @type string
+	 */
+	name?: string;
+}
 
 export interface AlertmanagertypesPostablePlannedMaintenanceDTO {
 	/**
@@ -12644,6 +13156,14 @@ export type GetMetricsStats200 = {
 
 export type GetMetricsTreemap200 = {
 	data: MetricsexplorertypesTreemapResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateNotificationChannel201 = {
+	data: AlertmanagertypesGettableNotificationChannelDTO;
 	/**
 	 * @type string
 	 */
