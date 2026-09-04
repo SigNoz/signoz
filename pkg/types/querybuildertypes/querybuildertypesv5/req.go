@@ -776,18 +776,6 @@ type LogBucketsSpec struct {
 	Scale *int `json:"scale,omitempty"`
 }
 
-const (
-	DefaultNumBuckets = 60
-	MaxNumBuckets     = 512
-
-	// MaxLogScale is the resolution ClickHouse buckets every log heatmap at:
-	// 2^MaxLogScale bands per doubling. It is both the default and the finest
-	// available, since a coarser LogBucketsSpec.Scale folds down from it.
-	MaxLogScale = 4
-	// MinLogScale is one band per 16x, the coarsest axis worth rendering.
-	MinLogScale = -4
-)
-
 func (b *BucketOptions) UnmarshalJSON(data []byte) error {
 	var shadow struct {
 		Kind BucketsKind     `json:"kind"`

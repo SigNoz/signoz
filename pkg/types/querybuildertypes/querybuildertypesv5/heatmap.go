@@ -10,6 +10,16 @@ import (
 )
 
 const (
+	DefaultNumBuckets = 60
+	MaxNumBuckets     = 512
+
+	// MaxLogScale is the resolution ClickHouse buckets every log heatmap at:
+	// 2^MaxLogScale bands per doubling. It is both the default and the finest
+	// available, since a coarser LogBucketsSpec.Scale folds down from it.
+	MaxLogScale = 4
+	// MinLogScale is one band per 16x, the coarsest axis worth rendering.
+	MinLogScale = -4
+
 	// A positive value approaching zero runs its band index off to -inf, so
 	// without a clamp one near-zero sample would stretch the axis by thousands
 	// of bands once DensifyHeatmapAxis fills the empty ones in.
