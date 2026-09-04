@@ -18,15 +18,15 @@ import { Badge } from '@signozhq/ui/badge';
 import logEvent from 'api/common/logEvent';
 import type {
 	CreateSubscription201,
-	GetSubscriptionUsage200,
-	ZeustypesGettableSubscriptionUsageDTO,
-	ZeustypesSubscriptionUsageBreakdownDTO,
+	GetSubscription200,
+	SubscriptiontypesGettableSubscriptionUsageDTO,
+	SubscriptiontypesSubscriptionUsageBreakdownDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import {
 	createSubscription,
 	updateSubscription,
-	useGetSubscriptionUsage,
-} from 'api/generated/services/zeus';
+	useGetSubscription,
+} from 'api/generated/services/subscriptions';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
 import Spinner from 'components/Spinner';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -145,7 +145,7 @@ export default function BillingContainer(): JSX.Element {
 	const [isFreeTrial, setIsFreeTrial] = useState(false);
 	const [data, setData] = useState<DataType[]>([]);
 	const [apiResponse, setApiResponse] = useState<
-		Partial<ZeustypesGettableSubscriptionUsageDTO>
+		Partial<SubscriptiontypesGettableSubscriptionUsageDTO>
 	>({});
 
 	const {
@@ -166,7 +166,7 @@ export default function BillingContainer(): JSX.Element {
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const processUsageData = useCallback(
-		(response: GetSubscriptionUsage200): void => {
+		(response: GetSubscription200): void => {
 			const usage = response?.data;
 			if (isEmpty(usage)) {
 				return;
@@ -178,7 +178,10 @@ export default function BillingContainer(): JSX.Element {
 			const formattedUsageData: DataType[] = [];
 
 			breakdown.forEach(
-				(element: ZeustypesSubscriptionUsageBreakdownDTO, index: number) => {
+				(
+					element: SubscriptiontypesSubscriptionUsageBreakdownDTO,
+					index: number,
+				) => {
 					element?.tiers?.forEach((tier, tierIndex: number) => {
 						formattedUsageData.push({
 							key: `${index}${tierIndex}`,
@@ -218,7 +221,7 @@ export default function BillingContainer(): JSX.Element {
 		isLoading,
 		isFetching: isFetchingBillingData,
 		data: billingData,
-	} = useGetSubscriptionUsage({
+	} = useGetSubscription({
 		query: {
 			enabled: canReadSubscription,
 			onError: handleError,

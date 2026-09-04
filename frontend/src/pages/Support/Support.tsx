@@ -4,7 +4,7 @@ import { useHistory, useLocation } from 'react-router-dom';
 import { Button, Card, Modal } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import { createSubscription } from 'api/generated/services/zeus';
+import { createSubscription } from 'api/generated/services/subscriptions';
 import type { CreateSubscription201 } from 'api/generated/services/sigNoz.schemas';
 import { FeatureKeys } from 'constants/features';
 import { useNotifications } from 'hooks/useNotifications';
