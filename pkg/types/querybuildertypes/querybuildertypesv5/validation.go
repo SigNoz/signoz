@@ -927,9 +927,6 @@ func (b *BucketOptions) validateBucketOptions() error {
 
 	switch spec := b.Spec.(type) {
 	case LinearBucketsSpec:
-		// Boundaries are placed at maxValue*i/numBuckets, so a cap at or below
-		// zero collapses every one of them onto the same point, and a non-finite
-		// one compares false against every value so nothing reaches the overflow.
 		if math.IsNaN(spec.MaxValue) || math.IsInf(spec.MaxValue, 0) || spec.MaxValue <= 0 {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput,
 				"linear buckets need a finite maxValue greater than 0, got %v", spec.MaxValue)
