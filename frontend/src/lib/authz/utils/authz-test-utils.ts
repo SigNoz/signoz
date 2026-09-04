@@ -170,6 +170,7 @@ export function mockUseAuthZGrantAll(
 		) as UseAuthZResult['permissions'],
 		allowed: true,
 		deniedPermissions: [],
+		isGranted: (): boolean => true,
 		refetchPermissions: jest.fn(),
 	};
 }
@@ -187,6 +188,7 @@ export function mockUseAuthZDenyAll(
 		) as UseAuthZResult['permissions'],
 		allowed: false,
 		deniedPermissions: permissions,
+		isGranted: (): boolean => false,
 		refetchPermissions: jest.fn(),
 	};
 }
@@ -213,6 +215,8 @@ export function mockUseAuthZGrantByPrefix(
 			) as UseAuthZResult['permissions'],
 			allowed: denied.length === 0,
 			deniedPermissions: denied,
+			isGranted: (permission): boolean =>
+				prefixes.some((prefix) => permission.startsWith(prefix)),
 			refetchPermissions: jest.fn(),
 		};
 	};
