@@ -27,7 +27,7 @@ interface VariablesSettingsProps {
 }
 
 function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
-	const { isEditable, editDisabledReason, disabledKind } =
+	const { isEditable, editDisabledReason, editDisabledKind } =
 		useDashboardEditContext();
 	// The drawer destroys on close, so reading this once on mount is enough to
 	// open the add-form when deep-linked (e.g. the bar's "Add variable" button).
@@ -131,7 +131,7 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 			{variables.length === 0 ? (
 				<NoVariablesCard
 					disabledReason={editDisabledReason}
-					disabledKind={disabledKind}
+					disabledKind={editDisabledKind}
 					setIsEditing={setIsEditing}
 				/>
 			) : (
@@ -151,7 +151,7 @@ function VariablesSettings({ dashboard }: VariablesSettingsProps): JSX.Element {
 					<div className={styles.footer}>
 						<AddVariableButton
 							disabledReason={editDisabledReason}
-							disabledKind={disabledKind}
+							disabledKind={editDisabledKind}
 							setIsEditing={setIsEditing}
 						/>
 					</div>

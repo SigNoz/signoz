@@ -66,7 +66,7 @@ function ViewPanelModalHeader({
 	const {
 		isEditable: canSwitchToEdit,
 		editDisabledReason,
-		disabledKind,
+		editDisabledKind,
 	} = useDashboardEditContext();
 	// Same capabilities-guarded options as the editor's PanelTypeSwitcher, so the two
 	// selectors disable the same kinds (e.g. List under PromQL, metrics-only kinds).
@@ -82,7 +82,7 @@ function ViewPanelModalHeader({
 					onChange={onChangePanelKind}
 				/>
 			</div>
-			<DisabledControlTooltip reason={editDisabledReason} kind={disabledKind}>
+			<DisabledControlTooltip reason={editDisabledReason} kind={editDisabledKind}>
 				<Button
 					variant="outlined"
 					color="secondary"

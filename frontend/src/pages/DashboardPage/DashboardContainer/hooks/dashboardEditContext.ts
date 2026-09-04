@@ -14,10 +14,12 @@ export interface DashboardEditContext {
 	editDisabledReason: string;
 	deleteDisabledReason: string;
 	/**
-	 * Whether the block is an access problem or a state the user can act on.
-	 * Drives how the reason is presented; meaningless when the reason is ''.
+	 * Whether each reason is an access problem or a state the user can act on.
+	 * Drives how it is presented; meaningless when the reason is ''. Delete has
+	 * its own, since it is gated independently of edit.
 	 */
-	disabledKind: 'denied' | 'blocked';
+	editDisabledKind: 'denied' | 'blocked';
+	deleteDisabledKind: 'denied' | 'blocked';
 }
 
 /**
@@ -40,7 +42,8 @@ export function deriveEditContext({
 	let deleteDisabledReason = '';
 	if (readOnlyOverride) {
 		return {
-			disabledKind: 'blocked',
+			editDisabledKind: 'blocked',
+			deleteDisabledKind: 'blocked',
 			isEditable: false,
 			isLocked,
 			canEditDashboard: false,
@@ -65,8 +68,10 @@ export function deriveEditContext({
 	}
 
 	return {
-		// The reason above is a permission message unless access was fine.
-		disabledKind: canEdit && isLocked ? 'blocked' : 'denied',
+		// Each reason above is a permission message unless access was fine and the
+		// lock is the only obstacle.
+		editDisabledKind: canEdit && isLocked ? 'blocked' : 'denied',
+		deleteDisabledKind: canDelete && isLocked ? 'blocked' : 'denied',
 		isEditable: canEdit && !isLocked,
 		isLocked,
 		canEditDashboard: canEdit,
