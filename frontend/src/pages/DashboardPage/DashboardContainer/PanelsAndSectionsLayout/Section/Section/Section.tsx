@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 
@@ -31,6 +31,13 @@ interface SectionProps {
 function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 	const { isEditable, editDisabledReason, editDisabledKind } =
 		useDashboardEditContext();
+	const sectionDisabled = useMemo(
+		() =>
+			editDisabledReason
+				? { reason: editDisabledReason, kind: editDisabledKind }
+				: undefined,
+		[editDisabledReason, editDisabledKind],
+	);
 	const {
 		isPickerOpen,
 		openPicker,
@@ -103,7 +110,7 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 				onToggle={toggle}
 				repeatVariable={section.repeatVariable}
 				dragHandle={dragHandle}
-				disabledReason={editDisabledReason}
+				disabled={sectionDisabled}
 				actions={{
 					onRename: (): void => setIsRenaming(true),
 					onAddPanel: (): void => openPicker(section.layoutIndex),
@@ -116,7 +123,10 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 					grid
 				) : (
 					<div className={styles.emptySection}>
-						<DisabledControlTooltip reason={editDisabledReason} kind={editDisabledKind}>
+						<DisabledControlTooltip
+							reason={editDisabledReason}
+							kind={editDisabledKind}
+						>
 							<Button
 								type="button"
 								variant="dashed"

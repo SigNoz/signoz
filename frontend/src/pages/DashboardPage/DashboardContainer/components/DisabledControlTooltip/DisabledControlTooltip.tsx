@@ -5,15 +5,18 @@ interface DisabledControlTooltipProps {
 	/** Why the wrapped control is unavailable. Empty means it is available. */
 	reason: string;
 	children: ReactNode;
-	/** Defaults to a state block, which is what most page controls hit. */
-	kind?: 'denied' | 'blocked';
+	/**
+	 * Required so a caller can never fall back to a default that mis-styles an
+	 * access problem as a state the user could resolve themselves.
+	 */
+	kind: 'denied' | 'blocked';
 }
 
 /** Dashboard-flavoured alias so control sites read declaratively. */
 function DisabledControlTooltip({
 	reason,
 	children,
-	kind = 'blocked',
+	kind,
 }: DisabledControlTooltipProps): JSX.Element {
 	return (
 		<DisabledReasonTooltip reason={reason} kind={kind}>

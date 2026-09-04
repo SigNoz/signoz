@@ -4,7 +4,11 @@ import DisabledReasonTooltip from 'lib/authz/components/DisabledReasonTooltip/Di
 interface DisabledMenuItemLabelProps {
 	reason: string;
 	children: ReactNode;
-	kind?: 'denied' | 'blocked';
+	/**
+	 * Required so a caller can never fall back to a default that mis-styles an
+	 * access problem as a state the user could resolve themselves.
+	 */
+	kind: 'denied' | 'blocked';
 }
 
 /**
@@ -17,7 +21,7 @@ interface DisabledMenuItemLabelProps {
 function DisabledMenuItemLabel({
 	reason,
 	children,
-	kind = 'blocked',
+	kind,
 }: DisabledMenuItemLabelProps): JSX.Element {
 	return (
 		<DisabledReasonTooltip reason={reason} kind={kind} side="left" interactive>

@@ -38,7 +38,7 @@ function PublicDashboardActions({
 		<div className={styles.footer}>
 			{isPublic ? (
 				<>
-					<DisabledControlTooltip reason={disabledReason}>
+					<DisabledControlTooltip reason={disabledReason} kind="denied">
 						<Button
 							variant="outlined"
 							color="destructive"
@@ -51,7 +51,7 @@ function PublicDashboardActions({
 							Unpublish Dashboard
 						</Button>
 					</DisabledControlTooltip>
-					<DisabledControlTooltip reason={disabledReason}>
+					<DisabledControlTooltip reason={disabledReason} kind="denied">
 						<Button
 							variant="solid"
 							color="primary"
@@ -66,7 +66,7 @@ function PublicDashboardActions({
 					</DisabledControlTooltip>
 				</>
 			) : (
-				<DisabledControlTooltip reason={disabledReason}>
+				<DisabledControlTooltip reason={disabledReason} kind="denied">
 					<Button
 						variant="solid"
 						color="primary"

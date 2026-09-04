@@ -6,6 +6,7 @@ import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 
 import SectionActionsMenu from '../SectionActionsMenu/SectionActionsMenu';
+import type { DisabledState } from 'lib/authz/components/DisabledReasonTooltip/disabledState.types';
 import styles from './SectionHeader.module.scss';
 
 export interface SectionDragHandle {
@@ -32,8 +33,8 @@ interface SectionHeaderProps {
 	dragHandle?: SectionDragHandle;
 	/** Present for edit-permitted users; absent (no menu) in view mode. */
 	actions?: SectionHeaderActions;
-	/** Non-empty when locked — actions render disabled with this reason. */
-	disabledReason?: string;
+	/** Present when edits are unavailable — actions render disabled with its reason. */
+	disabled?: DisabledState;
 }
 
 function SectionHeader({
@@ -44,7 +45,7 @@ function SectionHeader({
 	repeatVariable,
 	dragHandle,
 	actions,
-	disabledReason = '',
+	disabled,
 }: SectionHeaderProps): JSX.Element {
 	return (
 		<div className={cx(styles.header, { [styles.headerOpen]: open })}>
@@ -83,7 +84,7 @@ function SectionHeader({
 			{actions ? (
 				<SectionActionsMenu
 					sectionId={sectionId}
-					disabledReason={disabledReason}
+					disabled={disabled}
 					onAddPanel={actions.onAddPanel}
 					onRename={actions.onRename}
 					onCloneSection={actions.onCloneSection}

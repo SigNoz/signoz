@@ -13,7 +13,7 @@ import styles from './AddVariable.module.scss';
  */
 interface AddVariableIconProps {
 	disabledReason?: string;
-	disabledKind?: 'denied' | 'blocked';
+	disabledKind: 'denied' | 'blocked';
 }
 
 /**
@@ -23,7 +23,7 @@ interface AddVariableIconProps {
  */
 function AddVariableIcon({
 	disabledReason = '',
-	disabledKind = 'blocked',
+	disabledKind,
 }: AddVariableIconProps): JSX.Element {
 	const requestSettings = useDashboardStore((s) => s.requestSettings);
 

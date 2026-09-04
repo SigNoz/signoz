@@ -9,11 +9,11 @@ import DisabledControlTooltip from '../../../components/DisabledControlTooltip/D
  */
 const AddVariableButton = ({
 	disabledReason = '',
-	disabledKind = 'blocked',
+	disabledKind,
 	setIsEditing,
 }: {
 	disabledReason?: string;
-	disabledKind?: 'denied' | 'blocked';
+	disabledKind: 'denied' | 'blocked';
 	setIsEditing: (state: { type: 'new' }) => void;
 }): JSX.Element => (
 	<DisabledControlTooltip reason={disabledReason} kind={disabledKind}>

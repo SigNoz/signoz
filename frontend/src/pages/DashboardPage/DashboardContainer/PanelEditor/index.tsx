@@ -42,6 +42,7 @@ import ListColumnsEditor from './ListColumnsEditor/ListColumnsEditor';
 import styles from './PanelEditor.module.scss';
 import logEvent from '@/api/common/logEvent';
 import { DashboardEvents } from '../../constants/events';
+import type { DisabledState } from 'lib/authz/components/DisabledReasonTooltip/disabledState.types';
 
 // The query builder sits in an `overflow:hidden` resizable pane, so its Select
 // popups (group-by, order-by, having, …) clip when they open into the short pane.
@@ -66,7 +67,7 @@ interface PanelEditorContainerProps {
 	/** The dashboard can be edited (unlocked + permission); gates Save. */
 	isEditable: boolean;
 	/** Why Save is disabled (locked / no permission); '' when editable. */
-	editDisabledReason: string;
+	editDisabled?: DisabledState;
 	/** Leave the editor (navigate back to the dashboard) without saving. */
 	onClose: () => void;
 	/** Called after a successful save — navigates back to the dashboard. */
@@ -86,7 +87,7 @@ function PanelEditorContainer({
 	isNew = false,
 	layoutIndex,
 	isEditable,
-	editDisabledReason,
+	editDisabled,
 	onClose,
 	onSaved,
 }: PanelEditorContainerProps): JSX.Element {
@@ -280,7 +281,7 @@ function PanelEditorContainer({
 				isSaving={isSaving}
 				showSwitchToView={!isNew}
 				readOnly={!isEditable}
-				readOnlyReason={editDisabledReason}
+				readOnlyDisabled={editDisabled}
 				onSave={onSave}
 				onSwitchToView={switchToViewMode}
 				onClose={onCloseEditor}
