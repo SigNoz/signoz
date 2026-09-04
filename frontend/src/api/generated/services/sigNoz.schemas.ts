@@ -56,11 +56,11 @@ export interface AlertmanagertypesChannelSlackConfigDTO {
 	/**
 	 * @type string
 	 */
-	text: string;
+	text?: string;
 	/**
 	 * @type string
 	 */
-	title: string;
+	title?: string;
 }
 
 export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfigDTO {
@@ -87,7 +87,7 @@ export interface AlertmanagertypesChannelEmailConfigDTO {
 	/**
 	 * @type string
 	 */
-	html: string;
+	html?: string;
 	/**
 	 * @type boolean,null
 	 */
@@ -169,7 +169,7 @@ export interface AlertmanagertypesChannelPagerdutyConfigDTO {
 	/**
 	 * @type string
 	 */
-	description: string;
+	description?: string;
 	/**
 	 * @type object
 	 */
@@ -228,7 +228,7 @@ export interface AlertmanagertypesChannelOpsgenieConfigDTO {
 	/**
 	 * @type string
 	 */
-	description: string;
+	description?: string;
 	/**
 	 * @type object
 	 */
@@ -236,7 +236,7 @@ export interface AlertmanagertypesChannelOpsgenieConfigDTO {
 	/**
 	 * @type string
 	 */
-	message: string;
+	message?: string;
 	/**
 	 * @type string
 	 */
@@ -271,11 +271,11 @@ export interface AlertmanagertypesChannelMSTeamsConfigDTO {
 	/**
 	 * @type string
 	 */
-	text: string;
+	text?: string;
 	/**
 	 * @type string
 	 */
-	title: string;
+	title?: string;
 	/**
 	 * @type string
 	 */
@@ -302,11 +302,11 @@ export interface AlertmanagertypesChannelGoogleChatConfigDTO {
 	/**
 	 * @type string
 	 */
-	text: string;
+	text?: string;
 	/**
 	 * @type string
 	 */
-	title: string;
+	title?: string;
 	/**
 	 * @type string
 	 */

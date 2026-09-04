@@ -470,59 +470,93 @@ func TestChannelToPostableChannelReturnsDefaultsTheCallerDidNotSet(t *testing.T)
 	assert.NotEmpty(t, spec.Text, "upstream's default text template is injected on write")
 }
 
-// The SigNoz notifiers default their own template fields in UnmarshalYAML, which
-// ToReceiver reaches through the defaulting round-trip. Those fields therefore
-// stay optional on the spec, and a caller who omits them reads back the template
-// rather than an empty string. The whole spec is compared so the other fields
-// each notifier defaults are covered too.
-func TestChannelSpecWithoutTemplatesTakesTheNotifierDefaults(t *testing.T) {
-	sendResolved := false
-
+// No spec field that the backend can fill in is required. Each kind is built
+// from its required fields alone, and every field with a default has to come
+// back carrying it — so marking one required again fails here rather than
+// silently forcing callers to supply a value the server already knows.
+func TestChannelSpecOmittingDefaultedFieldsReadsBackTheDefaults(t *testing.T) {
 	testCases := []struct {
 		description       string
 		kind              ChannelKind
 		spec              ChannelSpec
-		expectedRoundTrip ChannelSpec
+		expectedDefaulted map[string]string
 	}{
+		{
+			description: "slack",
+			kind:        ChannelKindSlack,
+			spec:        &ChannelSlackConfig{APIURL: "https://hooks.slack.com/services/T/B/X"},
+			expectedDefaulted: map[string]string{
+				"Title": config.DefaultSlackConfig.Title,
+				"Text":  config.DefaultSlackConfig.Text,
+			},
+		},
+		{
+			description:       "email",
+			kind:              ChannelKindEmail,
+			spec:              &ChannelEmailConfig{To: "team@example.com"},
+			expectedDefaulted: map[string]string{"HTML": config.DefaultEmailConfig.HTML},
+		},
+		{
+			description:       "pagerduty",
+			kind:              ChannelKindPagerduty,
+			spec:              &ChannelPagerdutyConfig{RoutingKey: "routing-key"},
+			expectedDefaulted: map[string]string{"Description": config.DefaultPagerdutyConfig.Description},
+		},
+		{
+			description: "opsgenie",
+			kind:        ChannelKindOpsgenie,
+			spec:        &ChannelOpsgenieConfig{APIKey: "api-key"},
+			expectedDefaulted: map[string]string{
+				"Message":     config.DefaultOpsGenieConfig.Message,
+				"Description": config.DefaultOpsGenieConfig.Description,
+			},
+		},
+		{
+			description: "msteams",
+			kind:        ChannelKindMSTeams,
+			spec:        &ChannelMSTeamsConfig{WebhookURL: "https://teams.example.com/hook"},
+			expectedDefaulted: map[string]string{
+				"Title": config.DefaultMSTeamsV2Config.Title,
+				"Text":  config.DefaultMSTeamsV2Config.Text,
+			},
+		},
+		{
+			description: "googlechat",
+			kind:        ChannelKindGoogleChat,
+			spec:        &ChannelGoogleChatConfig{WebhookURL: "https://chat.googleapis.com/v1/spaces/A/messages"},
+			expectedDefaulted: map[string]string{
+				"Title": DefaultGoogleChatReceiverConfig.Title,
+				"Text":  DefaultGoogleChatReceiverConfig.Text,
+			},
+		},
 		{
 			description: "jira",
 			kind:        ChannelKindJira,
 			spec:        &ChannelJiraConfig{Site: "https://acme.atlassian.net", Project: "OPS", IssueType: "Bug", Email: "oncall@acme.com", APIToken: "api-token"},
-			expectedRoundTrip: &ChannelJiraConfig{
-				SendResolved: &sendResolved,
-				Site:         "https://acme.atlassian.net",
-				Project:      "OPS",
-				IssueType:    "Bug",
-				Summary:      DefaultJiraSummaryTemplate,
-				Description:  DefaultJiraDescriptionTemplate,
+			expectedDefaulted: map[string]string{
+				"Summary":     DefaultJiraSummaryTemplate,
+				"Description": DefaultJiraDescriptionTemplate,
 				// defaultJiraReopenDuration, which model.Duration formats as "3d".
-				ReopenDuration: "3d",
-				Email:          "oncall@acme.com",
-				APIToken:       "api-token",
+				"ReopenDuration": "3d",
 			},
 		},
 		{
 			description: "jsmops",
 			kind:        ChannelKindJSMOps,
 			spec:        &ChannelJSMOpsConfig{APIKey: "api-key"},
-			expectedRoundTrip: &ChannelJSMOpsConfig{
-				SendResolved: &sendResolved,
-				APIKey:       "api-key",
-				Message:      DefaultJSMOpsMessageTemplate,
-				Description:  DefaultJSMOpsDescriptionTemplate,
-				Tags:         "signoz",
+			expectedDefaulted: map[string]string{
+				"Message":     DefaultJSMOpsMessageTemplate,
+				"Description": DefaultJSMOpsDescriptionTemplate,
+				"Tags":        "signoz",
 			},
 		},
 		{
 			description: "incidentio",
 			kind:        ChannelKindIncidentIO,
 			spec:        &ChannelIncidentIOConfig{URL: "https://api.incident.io/v2/alert_events/http/01ABC", Token: "token"},
-			expectedRoundTrip: &ChannelIncidentIOConfig{
-				SendResolved: &sendResolved,
-				URL:          "https://api.incident.io/v2/alert_events/http/01ABC",
-				Token:        "token",
-				Title:        DefaultIncidentIOTitleTemplate,
-				Description:  DefaultIncidentIODescriptionTemplate,
+			expectedDefaulted: map[string]string{
+				"Title":       DefaultIncidentIOTitleTemplate,
+				"Description": DefaultIncidentIODescriptionTemplate,
 			},
 		},
 	}
@@ -545,7 +579,12 @@ func TestChannelSpecWithoutTemplatesTakesTheNotifierDefaults(t *testing.T) {
 			roundTripped, err := channel.toPostableNotificationChannel()
 			require.NoError(t, err)
 
-			assert.Equal(t, testCase.expectedRoundTrip, roundTripped.Config.Spec)
+			spec := reflect.ValueOf(roundTripped.Config.Spec).Elem()
+			for field, expected := range testCase.expectedDefaulted {
+				value := spec.FieldByName(field)
+				require.True(t, value.IsValid(), "no field %s on the %s spec", field, testCase.description)
+				assert.Equal(t, expected, value.String(), "%s should read back its default", field)
+			}
 		})
 	}
 }

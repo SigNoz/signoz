@@ -189,21 +189,13 @@ type ChannelSlackConfig struct {
 	SendResolved *bool  `json:"sendResolved,omitempty"`
 	APIURL       string `json:"apiUrl" required:"true"`
 	Channel      string `json:"channel,omitempty"`
-	Title        string `json:"title" required:"true"`
-	Text         string `json:"text" required:"true"`
+	Title        string `json:"title,omitempty"`
+	Text         string `json:"text,omitempty"`
 }
 
 func (c ChannelSlackConfig) Validate() error {
 	if c.APIURL == "" {
 		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.apiUrl is required for a slack channel")
-	}
-
-	if c.Title == "" {
-		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.title is required for a slack channel")
-	}
-
-	if c.Text == "" {
-		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.text is required for a slack channel")
 	}
 
 	return nil
@@ -246,17 +238,13 @@ func newChannelSlackConfigFromReceiver(_ string, receiver *Receiver) (ChannelSpe
 type ChannelEmailConfig struct {
 	SendResolved *bool             `json:"sendResolved,omitempty"`
 	To           string            `json:"to" required:"true"`
-	HTML         string            `json:"html" required:"true"`
+	HTML         string            `json:"html,omitempty"`
 	Headers      map[string]string `json:"headers,omitempty"`
 }
 
 func (c ChannelEmailConfig) Validate() error {
 	if c.To == "" {
 		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.to is required for an email channel")
-	}
-
-	if c.HTML == "" {
-		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.html is required for an email channel")
 	}
 
 	return nil
@@ -380,7 +368,7 @@ type ChannelPagerdutyConfig struct {
 	Source      string            `json:"source,omitempty"`
 	Client      string            `json:"client,omitempty"`
 	ClientURL   string            `json:"clientUrl,omitempty"`
-	Description string            `json:"description" required:"true"`
+	Description string            `json:"description,omitempty"`
 	Severity    string            `json:"severity,omitempty"`
 	Component   string            `json:"component,omitempty"`
 	Group       string            `json:"group,omitempty"`
@@ -391,10 +379,6 @@ type ChannelPagerdutyConfig struct {
 func (c ChannelPagerdutyConfig) Validate() error {
 	if c.RoutingKey == "" {
 		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.routingKey is required for a pagerduty channel")
-	}
-
-	if c.Description == "" {
-		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.description is required for a pagerduty channel")
 	}
 
 	return nil
@@ -463,8 +447,8 @@ type ChannelOpsgenieConfig struct {
 	APIKey       string `json:"apiKey" required:"true"`
 	// APIURL selects a non-default Opsgenie region, e.g. https://api.eu.opsgenie.com.
 	APIURL      string            `json:"apiUrl,omitempty"`
-	Message     string            `json:"message" required:"true"`
-	Description string            `json:"description" required:"true"`
+	Message     string            `json:"message,omitempty"`
+	Description string            `json:"description,omitempty"`
 	Source      string            `json:"source,omitempty"`
 	Details     map[string]string `json:"details,omitempty"`
 
@@ -477,14 +461,6 @@ type ChannelOpsgenieConfig struct {
 func (c ChannelOpsgenieConfig) Validate() error {
 	if c.APIKey == "" {
 		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.apiKey is required for an opsgenie channel")
-	}
-
-	if c.Message == "" {
-		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.message is required for an opsgenie channel")
-	}
-
-	if c.Description == "" {
-		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.description is required for an opsgenie channel")
 	}
 
 	return nil
@@ -534,21 +510,13 @@ func newChannelOpsgenieConfigFromReceiver(_ string, receiver *Receiver) (Channel
 type ChannelMSTeamsConfig struct {
 	SendResolved *bool  `json:"sendResolved,omitempty"`
 	WebhookURL   string `json:"webhookUrl" required:"true"`
-	Title        string `json:"title" required:"true"`
-	Text         string `json:"text" required:"true"`
+	Title        string `json:"title,omitempty"`
+	Text         string `json:"text,omitempty"`
 }
 
 func (c ChannelMSTeamsConfig) Validate() error {
 	if c.WebhookURL == "" {
 		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.webhookUrl is required for an msteams channel")
-	}
-
-	if c.Title == "" {
-		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.title is required for an msteams channel")
-	}
-
-	if c.Text == "" {
-		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.text is required for an msteams channel")
 	}
 
 	return nil
@@ -586,21 +554,13 @@ func newChannelMSTeamsConfigFromReceiver(_ string, receiver *Receiver) (ChannelS
 type ChannelGoogleChatConfig struct {
 	SendResolved *bool  `json:"sendResolved,omitempty"`
 	WebhookURL   string `json:"webhookUrl" required:"true"`
-	Title        string `json:"title" required:"true"`
-	Text         string `json:"text" required:"true"`
+	Title        string `json:"title,omitempty"`
+	Text         string `json:"text,omitempty"`
 }
 
 func (c ChannelGoogleChatConfig) Validate() error {
 	if c.WebhookURL == "" {
 		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.webhookUrl is required for a googlechat channel")
-	}
-
-	if c.Title == "" {
-		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.title is required for a googlechat channel")
-	}
-
-	if c.Text == "" {
-		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.text is required for a googlechat channel")
 	}
 
 	return nil

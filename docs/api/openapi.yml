@@ -186,7 +186,6 @@ components:
           type: string
       required:
       - to
-      - html
       type: object
     AlertmanagertypesChannelGoogleChatConfig:
       properties:
@@ -201,8 +200,6 @@ components:
           type: string
       required:
       - webhookUrl
-      - title
-      - text
       type: object
     AlertmanagertypesChannelIncidentIOConfig:
       properties:
@@ -312,8 +309,6 @@ components:
           type: string
       required:
       - webhookUrl
-      - title
-      - text
       type: object
     AlertmanagertypesChannelOpsgenieConfig:
       properties:
@@ -338,8 +333,6 @@ components:
           type: string
       required:
       - apiKey
-      - message
-      - description
       type: object
     AlertmanagertypesChannelPagerdutyConfig:
       properties:
@@ -372,7 +365,6 @@ components:
           type: string
       required:
       - routingKey
-      - description
       type: object
     AlertmanagertypesChannelSlackConfig:
       properties:
@@ -389,8 +381,6 @@ components:
           type: string
       required:
       - apiUrl
-      - title
-      - text
       type: object
     AlertmanagertypesChannelWebhookConfig:
       properties:
