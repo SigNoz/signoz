@@ -90,6 +90,45 @@ describe('EditAlertChannels save', () => {
 		await waitFor(() => expect(edit.calls).toHaveLength(1));
 	});
 
+	it('preserves the jira wont-fix resolution on save', async () => {
+		const edit = mockEditChannel();
+		render(
+			<EditAlertChannels
+				channelId="3"
+				initialValue={{
+					type: 'jira',
+					name: 'jira-channel',
+					site: 'https://acme.atlassian.net',
+					username: 'user@acme.io',
+					password: 'token',
+					project: 'OPS',
+					issue_type: 'Task',
+					send_resolved: true,
+					wont_fix_resolution: "Won't Do",
+				}}
+			/>,
+		);
+		const user = userEvent.setup();
+		await user.click(screen.getByTestId('save-channel-button'));
+
+		await waitFor(() => expect(edit.calls).toHaveLength(1));
+		expect(edit.calls[0].body).toStrictEqual({
+			name: 'jira-channel',
+			jira_configs: [
+				{
+					site: 'https://acme.atlassian.net',
+					project: 'OPS',
+					issue_type: 'Task',
+					send_resolved: true,
+					wont_fix_resolution: "Won't Do",
+					http_config: {
+						basic_auth: { username: 'user@acme.io', password: 'token' },
+					},
+				},
+			],
+		});
+	});
+
 	it('sends an incidentio_configs payload when editing an incident.io channel', async () => {
 		const edit = mockEditChannel();
 		render(

@@ -22,6 +22,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/flagger/configflagger"
+	"github.com/SigNoz/signoz/pkg/gateway"
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/global/signozglobal"
 	"github.com/SigNoz/signoz/pkg/identn"
@@ -250,6 +251,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddChannelDisplayNameFactory(sqlstore, sqlschema),
 		sqlmigration.NewMigrateQuickFiltersFactory(sqlstore),
 		sqlmigration.NewAddQuickFilterTuplesFactory(sqlstore),
+		sqlmigration.NewAddIngestionTuplesFactory(sqlstore),
 	)
 }
 
@@ -315,7 +317,7 @@ func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, p
 	)
 }
 
-func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.AuthZ, modules Modules, handlers Handlers, globalConfig global.Config) factory.NamedMap[factory.ProviderFactory[apiserver.APIServer, apiserver.Config]] {
+func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.AuthZ, modules Modules, handlers Handlers, globalConfig global.Config, gatewayService gateway.Gateway) factory.NamedMap[factory.ProviderFactory[apiserver.APIServer, apiserver.Config]] {
 	return factory.MustNewNamedMap(
 		signozapiserver.NewFactory(
 			orgGetter,
@@ -335,6 +337,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.MetricReductionRule,
 			handlers.InfraMonitoring,
 			handlers.GatewayHandler,
+			gatewayService,
 			handlers.Fields,
 			handlers.AIObservability,
 			handlers.AuthzHandler,
