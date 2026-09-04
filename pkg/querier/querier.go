@@ -334,13 +334,11 @@ func (q *querier) buildQueries(
 				if missingMetricQuerySet[spec.Name] {
 					continue
 				}
-				// A disabled query in a heatmap request is there to feed a
-				// formula, and the formula evaluator reads
-				// TimeSeriesValue.Value, which heatmap cells leave at zero in
-				// favour of Values. Its inputs therefore run as time series;
-				// applyFormulas buckets the formula's output into cells after.
 				requestType := req.RequestType
 				if requestType == qbtypes.RequestTypeHeatmap && spec.Disabled {
+					// A disabled query in a heatmap request feeds a formula, and the
+					// formula converts time series into heatmap data, so its inputs
+					// run as time series queries.
 					requestType = qbtypes.RequestTypeTimeSeries
 				}
 				spec.ShiftBy = extractShiftFromBuilderQuery(spec)
