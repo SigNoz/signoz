@@ -9,9 +9,13 @@ import { Typography } from '@signozhq/ui/typography';
 import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
+import { useDashboardPermissions } from 'hooks/dashboards/useDashboardPermissions';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import PermissionDeniedCallout from 'lib/authz/components/PermissionDeniedCallout/PermissionDeniedCallout';
+import { buildDashboardReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
 
 import { useDashboardFetch } from '../DashboardContainer/hooks/useDashboardFetch';
+import { useDashboardReadDenied } from '../DashboardContainer/hooks/useDashboardReadDenied';
 import { useDashboardEditGuard } from '../DashboardContainer/hooks/useDashboardEditGuard';
 import { useResolvedVariables } from '../DashboardContainer/hooks/useResolvedVariables';
 import PanelEditorContainer from '../DashboardContainer/PanelEditor';
@@ -47,22 +51,27 @@ function PanelEditorPage(): JSX.Element {
 
 	const { dashboard, isLoading, isError, error, refetch } =
 		useDashboardFetch(dashboardId);
-	// Derived here (not from the store) because the editor route doesn't mount
-	// DashboardContainer, so the store's edit context may be cold on a direct URL.
-	const { isEditable, isLocked, canEditDashboard, editDisabledReason } =
-		useDashboardEditGuard(dashboard);
+	const {
+		canRead,
+		isLoading: isPermissionLoading,
+		hasError: hasPermissionError,
+	} = useDashboardPermissions(dashboardId);
+	const isReadDenied = useDashboardReadDenied({
+		canRead,
+		hasPermissionError,
+		isError,
+		error,
+	});
+	// Derived from the dashboard this route already holds: it is a root page, so
+	// the subtree hook (useDashboardEditContext) has nothing to read from yet.
+	const { isEditable, editDisabledReason } = useDashboardEditGuard(dashboard);
 
 	// On a refresh/direct URL this route is the only mount, so seed the edit
 	// context the way DashboardContainer does — during render, so the subtree's
 	// first render already sees the id (useDashboardFetchRequired throws without it).
 	const setEditContext = useDashboardStore((s) => s.setEditContext);
 	if (dashboard?.id) {
-		setEditContext({
-			dashboardId: dashboard.id,
-			isLocked,
-			canEditDashboard,
-			refetch,
-		});
+		setEditContext({ dashboardId: dashboard.id, refetch });
 	}
 
 	// No variables bar on this route: seed the selection and publish the resolved
@@ -113,8 +122,18 @@ function PanelEditorPage(): JSX.Element {
 		safeNavigate(timeSearch ? `${path}?${timeSearch}` : path);
 	}, [safeNavigate, dashboardId, timeSearch]);
 
-	if (isLoading) {
+	if (isLoading || isPermissionLoading) {
 		return <Spinner tip="Loading dashboard..." />;
+	}
+
+	if (isReadDenied) {
+		return (
+			<div className={styles.errorState}>
+				<PermissionDeniedCallout
+					deniedPermissions={[buildDashboardReadPermission(dashboardId)]}
+				/>
+			</div>
+		);
 	}
 
 	if (isError || !dashboard) {
