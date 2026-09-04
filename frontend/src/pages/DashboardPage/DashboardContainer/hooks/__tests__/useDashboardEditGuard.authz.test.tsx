@@ -52,14 +52,15 @@ describe('useDashboardEditGuard - AuthZ', () => {
 			expect(result.current.deleteDisabledReason).toBe('');
 		});
 
-		// Lock wins over permission for an edit-capable user: the lock is the thing
-		// they can actually act on.
+		// An edit-capable user gets the lock: it's the thing they can act on.
 		it('reports the lock when locked', async () => {
 			server.use(setupAuthzAdmin());
 
 			const { result } = renderGuard(true);
 
-			await waitFor(() => expect(result.current.editDisabledReason).not.toBe(''));
+			// Settle on the resolved grant: the in-flight state has canEdit false, so
+			// a non-empty reason is not enough to know the check has landed.
+			await waitFor(() => expect(result.current.canEditDashboard).toBe(true));
 			expect(result.current.isEditable).toBe(false);
 			expect(result.current.editDisabledReason).toBe(DASHBOARD_LOCKED_REASON);
 			expect(result.current.deleteDisabledReason).toBe(DASHBOARD_LOCKED_REASON);
@@ -67,6 +68,23 @@ describe('useDashboardEditGuard - AuthZ', () => {
 	});
 
 	describe('permission denied', () => {
+		// Access before state: a lock would send them asking for the wrong thing.
+		it('reports the permission, not the lock, when both apply', async () => {
+			server.use(setupAuthzDenyAll());
+
+			const { result } = renderGuard(true);
+
+			await waitFor(() =>
+				expect(result.current.editDisabledReason).toBe(
+					DASHBOARD_NO_EDIT_PERMISSION_REASON,
+				),
+			);
+			expect(result.current.deleteDisabledReason).toBe(
+				DASHBOARD_NO_DELETE_PERMISSION_REASON,
+			);
+			expect(result.current.disabledKind).toBe('denied');
+		});
+
 		it('reports the permission when unlocked', async () => {
 			server.use(setupAuthzDenyAll());
 
