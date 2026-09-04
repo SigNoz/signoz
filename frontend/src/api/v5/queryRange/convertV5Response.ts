@@ -418,7 +418,11 @@ export function convertV5ResponseToLegacy(
 	const aggregationPerQuery =
 		params?.compositeQuery?.queries?.filter(isBuilderQueryEnvelope).reduce(
 			(acc, query) => {
-				if ('aggregations' in query.spec && query.spec.name) {
+				if (
+					isBuilderQueryEnvelope(query) &&
+					'aggregations' in query.spec &&
+					query.spec.name
+				) {
 					acc[query.spec.name] = query.spec.aggregations;
 				}
 				return acc;

@@ -29,20 +29,6 @@ export const getListViewQuery = (
 		queryData.orderBy = orderByPayload;
 	}
 
-	if (
-		query.builder.queryTraceOperator &&
-		query.builder.queryTraceOperator.length > 0
-	) {
-		for (let i = 0; i < query.builder.queryTraceOperator.length; i++) {
-			const queryTraceOperator = query.builder.queryTraceOperator[i];
-			queryTraceOperator.groupBy = [];
-			queryTraceOperator.having = {
-				expression: '',
-			};
-			queryTraceOperator.orderBy = orderByPayload;
-		}
-	}
-
 	return query;
 };
 
