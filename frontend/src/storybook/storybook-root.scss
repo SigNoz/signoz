@@ -1,0 +1,6 @@
+/* `styles.scss` sizes `#root`; the Storybook preview mounts into
+   `#storybook-root`, which needs the same box for `AppLayout` to lay out. */
+#storybook-root {
+	height: 100%;
+	overflow: hidden;
+}
