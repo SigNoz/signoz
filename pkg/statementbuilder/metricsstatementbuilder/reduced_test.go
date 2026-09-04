@@ -169,6 +169,7 @@ func TestReducedStatementBuilder(t *testing.T) {
 		require.Contains(t, got.Query, "signoz_metrics.distributed_samples_v4_buffer")
 		require.Contains(t, got.Query, "signoz_metrics.time_series_v4_buffer")
 		require.Contains(t, got.Query, "is_reduced")
+		require.Contains(t, got.Query, "bitAnd(flags, 1) = 0")
 		require.NotContains(t, got.Query, "UNION ALL")
 	})
 
