@@ -4,4 +4,7 @@
 	inset: 0;
 	/* A disabled row stops pointer events; the overlay takes the hover instead. */
 	pointer-events: auto;
+	/* The row keeps its clickable cursor when disabled, and the overlay would
+	   inherit it, so state it here — the overlay covers exactly the dead area. */
+	cursor: not-allowed;
 }
