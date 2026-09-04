@@ -80,16 +80,18 @@ func (enum *UnsetOrNonEmptyString) Scan(val any) error {
 		return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "unset_or_non_empty_string: (nil \"%T\")", enum)
 	}
 
+	if val == nil {
+		*enum = UnsetOrNonEmptyString{}
+		return nil
+	}
+
 	str, ok := val.(string)
 	if !ok {
 		return errors.Newf(errors.TypeInternal, ErrCodeUnknownValuerScan, "unset_or_non_empty_string: (non-string \"%T\")", val)
 	}
 
-	var err error
-	*enum, err = NewUnsetOrNonEmptyString(str)
-	if err != nil {
-		return err
-	}
+	// scan is run when reading stored data where we can assume "" means unset, so no errors on seeing "".
+	*enum = UnsetIfEmpty(str)
 
 	return nil
 }

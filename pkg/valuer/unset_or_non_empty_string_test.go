@@ -63,14 +63,22 @@ func TestUnsetOrNonEmptyStringMarshalJSON(t *testing.T) {
 	assert.JSONEq(t, `"Alert"`, string(raw))
 }
 
-func TestUnsetOrNonEmptyStringScanRejectsAnEmptyString(t *testing.T) {
-	var nonEmptyString UnsetOrNonEmptyString
+// A store spells unset as an empty or null column, so scanning one is the unset
+// case rather than a failure. Only a non-string column is an error.
+func TestUnsetOrNonEmptyStringScanReadsAnEmptyColumnAsUnset(t *testing.T) {
+	var unsetOrNonEmpty UnsetOrNonEmptyString
 
-	require.NoError(t, nonEmptyString.Scan("oncall"))
-	assert.Equal(t, "oncall", nonEmptyString.StringValue())
+	require.NoError(t, unsetOrNonEmpty.Scan("oncall"))
+	assert.Equal(t, "oncall", unsetOrNonEmpty.StringValue())
 
-	assert.Error(t, nonEmptyString.Scan(""))
-	assert.Error(t, nonEmptyString.Scan(nil))
+	require.NoError(t, unsetOrNonEmpty.Scan(""))
+	assert.True(t, unsetOrNonEmpty.IsZero())
+
+	require.NoError(t, unsetOrNonEmpty.Scan("oncall"))
+	require.NoError(t, unsetOrNonEmpty.Scan(nil))
+	assert.True(t, unsetOrNonEmpty.IsZero())
+
+	assert.Error(t, unsetOrNonEmpty.Scan(42))
 }
 
 func TestUnsetOrNonEmptyStringUnmarshalTextRejectsAnEmptyString(t *testing.T) {
