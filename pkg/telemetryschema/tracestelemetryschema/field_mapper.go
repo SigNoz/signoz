@@ -325,18 +325,9 @@ func (m *fieldMapper) resolveColumnExprs(
 				}
 			case telemetrytypes.FieldContextAttribute:
 				path := fmt.Sprintf("%s.%s", columnName, querybuilder.ClickHouseIdentifier(key.Name))
-				expr := attributeJSONValueExpr(path, key.FieldDataType)
+				expr, existExpr := attributeJSONValueExpr(path, key.FieldDataType)
 				exprs = append(exprs, expr)
-				switch key.FieldDataType {
-				case telemetrytypes.FieldDataTypeInt64,
-					telemetrytypes.FieldDataTypeFloat64,
-					telemetrytypes.FieldDataTypeNumber,
-					telemetrytypes.FieldDataTypeBool:
-					// Numeric/bool reads are NULL-capable, so existence means present AS THIS TYPE
-					existExprs = append(existExprs, expr+" IS NOT NULL")
-				default:
-					existExprs = append(existExprs, fmt.Sprintf("%s IS NOT NULL", path))
-				}
+				existExprs = append(existExprs, existExpr)
 			default:
 				return nil, nil, nil, errors.NewInternalf(errors.CodeInternal, "only resource, scope and attribute context fields are supported for json columns, got %s", key.FieldContext.String)
 			}
@@ -392,20 +383,23 @@ func attributeColumnEvolutionRegistered(key *telemetrytypes.TelemetryFieldKey, c
 }
 
 // attributeJSONValueExpr renders the value expression for a span attribute read from the JSON
-// column. Absent path reads ” the way the Map default does.
+// column along with its per-type existence guard.
 // Numeric and bool use accurateCastOrNull, which reads an absent path or a same-named key
 // stored as another type as NULL rather than erroring — unlike a bare ::Int64/::Bool cast, and
-// unlike ::Nullable(Bool), which throws on a non-bool string.
-func attributeJSONValueExpr(path string, dataType telemetrytypes.FieldDataType) string {
+// unlike ::Nullable(Bool), which throws on a non-bool string. Being NULL-capable, the cast
+// itself is the existence guard (present AS THIS TYPE). Other reads are total
+func attributeJSONValueExpr(path string, dataType telemetrytypes.FieldDataType) (string, string) {
 	switch dataType {
 	case telemetrytypes.FieldDataTypeInt64,
 		telemetrytypes.FieldDataTypeFloat64,
 		telemetrytypes.FieldDataTypeNumber:
-		return fmt.Sprintf("accurateCastOrNull(%s, 'Float64')", path) // all numeric times to float64 like attributes_number map.
+		expr := fmt.Sprintf("accurateCastOrNull(%s, 'Float64')", path) // cast all numeric types to float64 like attributes_number map.
+		return expr, expr + " IS NOT NULL"
 	case telemetrytypes.FieldDataTypeBool:
-		return fmt.Sprintf("accurateCastOrNull(%s, 'Bool')", path)
+		expr := fmt.Sprintf("accurateCastOrNull(%s, 'Bool')", path)
+		return expr, expr + " IS NOT NULL"
 	default:
-		return path + "::String"
+		return path + "::String", fmt.Sprintf("%s IS NOT NULL", path)
 	}
 }
 
