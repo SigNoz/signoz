@@ -456,7 +456,7 @@ func TestResolveBucketOptions(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			assert.Equal(t, testCase.expectedBucketing, testCase.options.ResolveBucketOptions())
+			assert.Equal(t, testCase.expectedBucketing, testCase.options.ToHeatmapBucketing())
 			assert.Equal(t, testCase.expectedLogScale, testCase.options.ResolveLogScale())
 		})
 	}

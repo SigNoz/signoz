@@ -257,8 +257,8 @@ func TestBuilderQueryFingerprintHeatmapBucketing(t *testing.T) {
 	}
 
 	t.Run("a coarser scale never reaches the axis clickhouse builds", func(t *testing.T) {
-		finest := (&qbtypes.BucketOptions{Kind: qbtypes.BucketsKindLog, Spec: qbtypes.LogBucketsSpec{}}).ResolveBucketOptions()
-		coarse := (&qbtypes.BucketOptions{Kind: qbtypes.BucketsKindLog, Spec: qbtypes.LogBucketsSpec{Scale: &coarseLogScale}}).ResolveBucketOptions()
+		finest := (&qbtypes.BucketOptions{Kind: qbtypes.BucketsKindLog, Spec: qbtypes.LogBucketsSpec{}}).ToHeatmapBucketing()
+		coarse := (&qbtypes.BucketOptions{Kind: qbtypes.BucketsKindLog, Spec: qbtypes.LogBucketsSpec{Scale: &coarseLogScale}}).ToHeatmapBucketing()
 
 		assert.Equal(t, finest, coarse)
 	})

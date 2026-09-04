@@ -46,10 +46,10 @@ type HeatmapBucketing struct {
 	NumBuckets int
 }
 
-// ResolveBucketOptions fills in what the caller left unset. An absent
+// ToHeatmapBucketing fills in what the caller left unset. An absent
 // BucketOptions resolves to the finest log axis, the one kind that needs nothing
 // from the caller.
-func (b *BucketOptions) ResolveBucketOptions() HeatmapBucketing {
+func (b *BucketOptions) ToHeatmapBucketing() HeatmapBucketing {
 	resolved := HeatmapBucketing{
 		Kind:       BucketsKindLog,
 		LogScale:   MaxLogScale,
@@ -97,7 +97,7 @@ func (a *MetricAggregation) ResolveHeatmapBucketing(bucketOptions *BucketOptions
 	// A summary carries no boundaries of its own either, and its samples reach
 	// the final select the same way a gauge's do, so it buckets identically.
 	case metrictypes.GaugeType, metrictypes.SumType, metrictypes.SummaryType:
-		bucketing := bucketOptions.ResolveBucketOptions()
+		bucketing := bucketOptions.ToHeatmapBucketing()
 		a.HeatmapBucketing = &bucketing
 		return nil
 	case metrictypes.UnspecifiedType:
