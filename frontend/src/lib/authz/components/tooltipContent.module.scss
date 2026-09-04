@@ -14,7 +14,10 @@
 	border-radius: 4px;
 	font-style: normal;
 	font-weight: 400;
-	white-space: nowrap;
+	// Reasons naming two permissions run long; wrap rather than stretch the
+	// bubble across the viewport.
+	max-width: 260px;
+	white-space: normal;
 }
 
 // A block the user can act on themselves — a lock, an integration-owned or
@@ -28,7 +31,8 @@
 	border-radius: 4px;
 	font-style: normal;
 	font-weight: 400;
-	white-space: nowrap;
+	max-width: 260px;
+	white-space: normal;
 }
 
 .aboveOverlay {
