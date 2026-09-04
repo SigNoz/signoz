@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { Card } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import { CardContainer } from 'container/GridCardLayout/styles';
+import { CardContainer } from 'container/WidgetCard/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ChevronDown, ChevronUp } from '@signozhq/icons';
 import { AppState } from 'store/reducers';
