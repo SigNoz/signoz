@@ -12,6 +12,7 @@ import {
 	buildPluginSpec,
 	type SeededPluginSpec,
 } from '../DashboardContainer/Panels/utils/buildPluginSpec';
+import { getSectionControls } from '../DashboardContainer/Panels/utils/getSectionControls';
 import { toPerses } from '../DashboardContainer/queryV5/persesQueryAdapters';
 
 interface NewPanelSeed {
@@ -19,15 +20,6 @@ interface NewPanelSeed {
 	kind: PanelKind;
 	queries: DashboardtypesQueryDTO[];
 	pluginSpec: SeededPluginSpec;
-}
-
-function kindSupportsUnit(kind: PanelKind): boolean {
-	return getPanelDefinition(kind).sections.some(
-		(section) =>
-			section.kind === SectionKind.Formatting &&
-			'controls' in section &&
-			section.controls.unit === true,
-	);
 }
 
 /** Kind to fall back to for a query language a builder-only kind (List) can't hold. */
@@ -74,7 +66,10 @@ export function buildNewPanelSeed(
 	const queries = converted.length > 0 ? converted : buildDefaultQueries(kind);
 
 	// Explorers put the single `unit` on the query itself, not the panel spec.
-	if (compositeQuery.unit && kindSupportsUnit(kind)) {
+	if (
+		compositeQuery.unit &&
+		getSectionControls(kind, SectionKind.Formatting)?.unit
+	) {
 		return {
 			kind,
 			queries,
