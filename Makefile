@@ -117,11 +117,7 @@ go-build-community: $(GO_BUILD_ARCHS_COMMUNITY)
 $(GO_BUILD_ARCHS_COMMUNITY): go-build-community-%: $(TARGET_DIR)
 	@mkdir -p $(TARGET_DIR)/$(OS)-$*
 	@echo ">> building binary $(TARGET_DIR)/$(OS)-$*/$(NAME)-community"
-	@if [ $* = "arm64" ]; then \
-		GOARCH=$* GOOS=$(OS) go build -C $(GO_BUILD_CONTEXT_COMMUNITY) -tags timetzdata -o $(TARGET_DIR)/$(OS)-$*/$(NAME)-community -ldflags "-s -w $(GO_BUILD_LDFLAGS_COMMUNITY)"; \
-	else \
-		GOARCH=$* GOOS=$(OS) go build -C $(GO_BUILD_CONTEXT_COMMUNITY) -tags timetzdata -o $(TARGET_DIR)/$(OS)-$*/$(NAME)-community -ldflags "-s -w $(GO_BUILD_LDFLAGS_COMMUNITY)"; \
-	fi
+	@CGO_ENABLED=0 GOARCH=$* GOOS=$(OS) go build -C $(GO_BUILD_CONTEXT_COMMUNITY) -tags timetzdata -o $(TARGET_DIR)/$(OS)-$*/$(NAME)-community -ldflags "-s -w $(GO_BUILD_LDFLAGS_COMMUNITY)"
 
 
 .PHONY: go-build-enterprise $(GO_BUILD_ARCHS_ENTERPRISE)
@@ -130,11 +126,7 @@ go-build-enterprise: $(GO_BUILD_ARCHS_ENTERPRISE)
 $(GO_BUILD_ARCHS_ENTERPRISE): go-build-enterprise-%: $(TARGET_DIR)
 	@mkdir -p $(TARGET_DIR)/$(OS)-$*
 	@echo ">> building binary $(TARGET_DIR)/$(OS)-$*/$(NAME)"
-	@if [ $* = "arm64" ]; then \
-		GOARCH=$* GOOS=$(OS) go build -C $(GO_BUILD_CONTEXT_ENTERPRISE) -tags timetzdata -o $(TARGET_DIR)/$(OS)-$*/$(NAME) -ldflags "-s -w $(GO_BUILD_LDFLAGS_ENTERPRISE)"; \
-	else \
-		GOARCH=$* GOOS=$(OS) go build -C $(GO_BUILD_CONTEXT_ENTERPRISE) -tags timetzdata -o $(TARGET_DIR)/$(OS)-$*/$(NAME) -ldflags "-s -w $(GO_BUILD_LDFLAGS_ENTERPRISE)"; \
-	fi
+	@CGO_ENABLED=0 GOARCH=$* GOOS=$(OS) go build -C $(GO_BUILD_CONTEXT_ENTERPRISE) -tags timetzdata -o $(TARGET_DIR)/$(OS)-$*/$(NAME) -ldflags "-s -w $(GO_BUILD_LDFLAGS_ENTERPRISE)"
 
 .PHONY: go-build-enterprise-race $(GO_BUILD_ARCHS_ENTERPRISE_RACE)
 go-build-enterprise-race: ## Builds the go backend server for enterprise with race
@@ -142,11 +134,7 @@ go-build-enterprise-race: $(GO_BUILD_ARCHS_ENTERPRISE_RACE)
 $(GO_BUILD_ARCHS_ENTERPRISE_RACE): go-build-enterprise-race-%: $(TARGET_DIR)
 	@mkdir -p $(TARGET_DIR)/$(OS)-$*
 	@echo ">> building binary $(TARGET_DIR)/$(OS)-$*/$(NAME)"
-	@if [ $* = "arm64" ]; then \
-		GOARCH=$* GOOS=$(OS) go build -C $(GO_BUILD_CONTEXT_ENTERPRISE) -race -tags timetzdata -o $(TARGET_DIR)/$(OS)-$*/$(NAME) -ldflags "-s -w $(GO_BUILD_LDFLAGS_ENTERPRISE)"; \
-	else \
-		GOARCH=$* GOOS=$(OS) go build -C $(GO_BUILD_CONTEXT_ENTERPRISE) -race -tags timetzdata -o $(TARGET_DIR)/$(OS)-$*/$(NAME) -ldflags "-s -w $(GO_BUILD_LDFLAGS_ENTERPRISE)"; \
-	fi
+	@CGO_ENABLED=0 GOARCH=$* GOOS=$(OS) go build -C $(GO_BUILD_CONTEXT_ENTERPRISE) -race -tags timetzdata -o $(TARGET_DIR)/$(OS)-$*/$(NAME) -ldflags "-s -w $(GO_BUILD_LDFLAGS_ENTERPRISE)"
 
 ##############################################################
 # js commands
