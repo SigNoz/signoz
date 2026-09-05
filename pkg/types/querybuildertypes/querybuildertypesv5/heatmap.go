@@ -26,7 +26,7 @@ const (
 
 	// A positive value approaching zero runs its band index off to -inf, so
 	// without a clamp one near-zero sample would stretch the axis by thousands
-	// of bands once DensifyHeatmapAxis fills the empty ones in.
+	// of bands once AddHeatmapBucketsWithNoCounts spans it.
 	MinLogBandIndex = -512 // 2^-32, about 2.3e-10
 	MaxLogBandIndex = 1024 // 2^64, about 1.8e19
 )
@@ -131,103 +131,97 @@ func MergeBucketUpperBounds(tsData ...*TimeSeriesData) map[int][]float64 {
 	return upperBoundsByAggregation
 }
 
-// regroupAxis rewrites the aggregation onto upperBounds, moving the count held
-// in band i to targetBandIndexes[i] and summing where several bands land together.
-// A band past the end of targetBandIndexes is the overflow, which stays the
-// overflow on any axis.
-func regroupAxis(aggBucket *AggregationBucket, upperBounds []float64, targetBandIndexes []int) {
+// DownscaleHeatmapResolution folds the MaxLogScale axis ClickHouse buckets at
+// down to toScale, merging every 2^(MaxLogScale-toScale) adjacent bands into
+// one. The coarser upper bounds are a subset of the finer ones, so the fold is
+// exact.
+func DownscaleHeatmapResolution(tsData *TimeSeriesData, toScale int) {
+	if tsData == nil || toScale >= MaxLogScale {
+		return
+	}
+	for _, aggBucket := range tsData.Aggregations {
+		downscaleHeatmapResolutionForAggregation(aggBucket, toScale)
+	}
+}
+
+func downscaleHeatmapResolutionForAggregation(aggBucket *AggregationBucket, toScale int) {
+	if aggBucket == nil || len(aggBucket.Meta.Buckets) == 0 {
+		return
+	}
+
+	factor := int(math.Exp2(float64(MaxLogScale - toScale)))
+
+	// Merging is by index in the exponential mapping, not by position in
+	// Meta.Buckets, which lists only the upper bounds some series reached.
+	coarseUpperBounds := make([]float64, 0, len(aggBucket.Meta.Buckets))
+	upperBoundToCoarseIndex := make(map[float64]int, len(aggBucket.Meta.Buckets))
+	mergedInto := make([]int, len(aggBucket.Meta.Buckets))
+	for index, upperBound := range aggBucket.Meta.Buckets {
+		coarsened := coarsenUpperBound(upperBound, toScale, factor)
+		coarseIndex, ok := upperBoundToCoarseIndex[coarsened]
+		if !ok {
+			coarseIndex = len(coarseUpperBounds)
+			coarseUpperBounds = append(coarseUpperBounds, coarsened)
+			upperBoundToCoarseIndex[coarsened] = coarseIndex
+		}
+		mergedInto[index] = coarseIndex
+	}
+
+	overflowIndex := len(coarseUpperBounds)
 	for _, series := range aggBucket.Series {
 		for _, point := range series.Values {
 			if len(point.Values) == 0 {
 				continue
 			}
-			regrouped := make([]float64, len(upperBounds)+1)
-			for band, count := range point.Values {
-				if band >= len(targetBandIndexes) {
-					regrouped[len(upperBounds)] += count
+			coarseCounts := make([]float64, overflowIndex+1)
+			for index, count := range point.Values {
+				if index >= len(mergedInto) {
+					coarseCounts[overflowIndex] += count
 					continue
 				}
-				regrouped[targetBandIndexes[band]] += count
+				coarseCounts[mergedInto[index]] += count
 			}
-			point.Values = regrouped
+			point.Values = coarseCounts
 		}
 	}
-	aggBucket.Meta.Buckets = upperBounds
+	aggBucket.Meta.Buckets = coarseUpperBounds
 }
 
-// DownscaleHeatmapAxis folds a log axis bucketed at fromScale down to toScale,
-// merging every 2^(fromScale-toScale) adjacent bands into one. The coarser
-// upper bounds are a subset of the finer ones, so the fold is exact.
-func DownscaleHeatmapAxis(tsData *TimeSeriesData, fromScale, toScale int) {
-	if tsData == nil || toScale >= fromScale {
-		return
-	}
-	for _, aggBucket := range tsData.Aggregations {
-		downscaleAggregationAxis(aggBucket, fromScale, toScale)
-	}
-}
-
-func downscaleAggregationAxis(aggBucket *AggregationBucket, fromScale, toScale int) {
-	if aggBucket == nil || len(aggBucket.Meta.Buckets) == 0 {
-		return
-	}
-
-	factor := int(math.Exp2(float64(fromScale - toScale)))
-
-	// Bands merge by their index in the exponential mapping, not by position in
-	// Meta.Buckets, which lists only the upper bounds some series reached.
-	coarse := make([]float64, 0, len(aggBucket.Meta.Buckets))
-	targetBandIndexes := make([]int, len(aggBucket.Meta.Buckets))
-	seen := make(map[float64]int, len(aggBucket.Meta.Buckets))
-	for band, upperBound := range aggBucket.Meta.Buckets {
-		merged := coarsenUpperBound(upperBound, fromScale, toScale, factor)
-		coarseBandIndex, ok := seen[merged]
-		if !ok {
-			coarseBandIndex = len(coarse)
-			coarse = append(coarse, merged)
-			seen[merged] = coarseBandIndex
-		}
-		targetBandIndexes[band] = coarseBandIndex
-	}
-
-	regroupAxis(aggBucket, coarse, targetBandIndexes)
-}
-
-// coarsenUpperBound moves an upper bound from the fromScale exponential axis
+// coarsenUpperBound moves an upper bound from the MaxLogScale exponential axis
 // onto the toScale one. The zero band has no exponent to rescale and stays put.
-func coarsenUpperBound(upperBound float64, fromScale, toScale, factor int) float64 {
+func coarsenUpperBound(upperBound float64, toScale, factor int) float64 {
 	if upperBound <= 0 || math.IsInf(upperBound, 0) || math.IsNaN(upperBound) {
 		return upperBound
 	}
-	index := int(math.Round(math.Log2(upperBound) * math.Exp2(float64(fromScale))))
+	index := int(math.Round(math.Log2(upperBound) * math.Exp2(MaxLogScale)))
 	merged := int(math.Ceil(float64(index) / float64(factor)))
 	return math.Exp2(float64(merged) / math.Exp2(float64(toScale)))
 }
 
-// DensifyHeatmapAxis fills in the bands no series reached, which are left out of
-// Meta.Buckets entirely and would otherwise render with the two sides of a gap
-// touching.
+// AddHeatmapBucketsWithNoCounts spans the range from the lowest upper bound some
+// series reached to the highest. Meta.Buckets leaves the ones in between out
+// entirely, so without this a gap renders with its two sides touching.
 //
-// Only a value-derived axis can be densified: its upper bounds come from an index
+// Only a value-derived axis can be spanned: its upper bounds come from an index
 // that is a pure function of the value, so the ones in between are known without
 // having seen them. Nothing says what sits between two `le` labels.
-func DensifyHeatmapAxis(tsData *TimeSeriesData, bucketing HeatmapBucketing) {
+func AddHeatmapBucketsWithNoCounts(tsData *TimeSeriesData, bucketing HeatmapBucketing) {
 	if tsData == nil {
 		return
 	}
 	for _, aggBucket := range tsData.Aggregations {
-		densifyAggregationAxis(aggBucket, bucketing)
+		addHeatmapBucketsWithNoCountsForAggregation(aggBucket, bucketing)
 	}
 }
 
-func densifyAggregationAxis(aggBucket *AggregationBucket, bucketing HeatmapBucketing) {
+func addHeatmapBucketsWithNoCountsForAggregation(aggBucket *AggregationBucket, bucketing HeatmapBucketing) {
 	if aggBucket == nil || len(aggBucket.Meta.Buckets) == 0 {
 		return
 	}
 
-	// The zero band holds everything at or below zero. It has no index on either
-	// axis and sits below every other upper bound, so it keeps band 0 and the fill
-	// runs over the rest.
+	// The zero bucket holds everything at or below zero. It has no index on either
+	// axis and sits below every other upper bound, so it keeps index 0 and the
+	// fill runs over the rest.
 	offset := 0
 	if aggBucket.Meta.Buckets[0] <= 0 {
 		offset = 1
@@ -237,7 +231,7 @@ func densifyAggregationAxis(aggBucket *AggregationBucket, bucketing HeatmapBucke
 		return
 	}
 
-	// Only finite upper bounds have a band index, and the fill sizes a slice from
+	// Only finite upper bounds have an index, and the fill sizes a slice from
 	// one. Nothing should put +Inf or NaN on the axis, but bail if it happens.
 	indexes := make([]int, len(positive))
 	for i, upperBound := range positive {
@@ -248,23 +242,40 @@ func densifyAggregationAxis(aggBucket *AggregationBucket, bucketing HeatmapBucke
 	}
 	lowest, highest := slices.Min(indexes), slices.Max(indexes)
 
-	dense := append([]float64{}, aggBucket.Meta.Buckets[:offset]...)
+	denseUpperBounds := append([]float64{}, aggBucket.Meta.Buckets[:offset]...)
 	for index := lowest; index <= highest; index++ {
-		dense = append(dense, bucketing.calculateBandUpperBound(index))
+		denseUpperBounds = append(denseUpperBounds, bucketing.calculateBandUpperBound(index))
 	}
-	if len(dense) == len(aggBucket.Meta.Buckets) {
+	if len(denseUpperBounds) == len(aggBucket.Meta.Buckets) {
 		return
 	}
 
-	// Bands map through their index rather than by matching upper bounds, so a
+	// Counts map through their index rather than by matching upper bounds, so a
 	// regenerated upper bound differing from ClickHouse's in its last bit still
-	// lands on the band it came from.
-	targetBandIndexes := make([]int, len(aggBucket.Meta.Buckets))
+	// lands where it came from.
+	shiftedTo := make([]int, len(aggBucket.Meta.Buckets))
 	for i, index := range indexes {
-		targetBandIndexes[i+offset] = index - lowest + offset
+		shiftedTo[i+offset] = index - lowest + offset
 	}
 
-	regroupAxis(aggBucket, dense, targetBandIndexes)
+	overflowIndex := len(denseUpperBounds)
+	for _, series := range aggBucket.Series {
+		for _, point := range series.Values {
+			if len(point.Values) == 0 {
+				continue
+			}
+			denseCounts := make([]float64, overflowIndex+1)
+			for index, count := range point.Values {
+				if index >= len(shiftedTo) {
+					denseCounts[overflowIndex] += count
+					continue
+				}
+				denseCounts[shiftedTo[index]] += count
+			}
+			point.Values = denseCounts
+		}
+	}
+	aggBucket.Meta.Buckets = denseUpperBounds
 }
 
 // calculateBandIndex and calculateBandUpperBound are inverses over the axis being

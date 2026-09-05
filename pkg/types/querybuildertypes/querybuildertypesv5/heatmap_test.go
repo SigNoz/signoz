@@ -92,10 +92,9 @@ func TestReindexValuesToNewUpperBoundsWithoutTargetAxis(t *testing.T) {
 	assert.Equal(t, []float64{5, 10}, aggBucket.Meta.Buckets)
 }
 
-func TestDownscaleHeatmapAxis(t *testing.T) {
+func TestDownscaleHeatmapResolution(t *testing.T) {
 	testCases := []struct {
 		description     string
-		fromScale       int
 		toScale         int
 		buckets         []float64
 		values          []float64
@@ -104,7 +103,6 @@ func TestDownscaleHeatmapAxis(t *testing.T) {
 	}{
 		{
 			description: "four scale-4 bands merge into one scale-2 band",
-			fromScale:   4,
 			toScale:     2,
 			buckets: []float64{
 				math.Exp2(0),
@@ -119,7 +117,6 @@ func TestDownscaleHeatmapAxis(t *testing.T) {
 		},
 		{
 			description:     "bands below 1 fold onto the same coarse upper bound",
-			fromScale:       4,
 			toScale:         2,
 			buckets:         []float64{math.Exp2(-3.0 / 16), math.Exp2(-2.0 / 16), math.Exp2(-1.0 / 16)},
 			values:          []float64{1, 2, 3, 4},
@@ -128,7 +125,6 @@ func TestDownscaleHeatmapAxis(t *testing.T) {
 		},
 		{
 			description:     "the zero band keeps its own slot",
-			fromScale:       4,
 			toScale:         2,
 			buckets:         []float64{0, math.Exp2(1.0 / 16), math.Exp2(4.0 / 16)},
 			values:          []float64{7, 1, 2, 3},
@@ -139,7 +135,6 @@ func TestDownscaleHeatmapAxis(t *testing.T) {
 			// at scale 0 the whole doubling above 1 is a single band, and 2^(16/16)
 			// is its upper bound rather than the start of the next one
 			description:     "a doubling's worth of bands collapses into one at scale 0",
-			fromScale:       4,
 			toScale:         0,
 			buckets:         []float64{math.Exp2(1.0 / 16), math.Exp2(8.0 / 16), math.Exp2(16.0 / 16)},
 			values:          []float64{1, 2, 3, 4},
@@ -148,7 +143,6 @@ func TestDownscaleHeatmapAxis(t *testing.T) {
 		},
 		{
 			description:     "the finest scale is left alone",
-			fromScale:       4,
 			toScale:         4,
 			buckets:         []float64{math.Exp2(1.0 / 16), math.Exp2(2.0 / 16)},
 			values:          []float64{1, 2, 3},
@@ -168,7 +162,7 @@ func TestDownscaleHeatmapAxis(t *testing.T) {
 				}},
 			}
 
-			DownscaleHeatmapAxis(tsData, testCase.fromScale, testCase.toScale)
+			DownscaleHeatmapResolution(tsData, testCase.toScale)
 
 			aggBucket := tsData.Aggregations[0]
 			assert.Equal(t, testCase.expectedBuckets, aggBucket.Meta.Buckets)
@@ -177,7 +171,7 @@ func TestDownscaleHeatmapAxis(t *testing.T) {
 	}
 }
 
-func TestDownscaleHeatmapAxisKeepsTheTotalCount(t *testing.T) {
+func TestDownscaleHeatmapResolutionKeepsTheTotalCount(t *testing.T) {
 	buckets := make([]float64, 0, 64)
 	values := make([]float64, 0, 65)
 	for index := range 64 {
@@ -200,7 +194,7 @@ func TestDownscaleHeatmapAxisKeepsTheTotalCount(t *testing.T) {
 		before += count
 	}
 
-	DownscaleHeatmapAxis(tsData, MaxLogScale, 1)
+	DownscaleHeatmapResolution(tsData, 1)
 
 	aggBucket := tsData.Aggregations[0]
 	// bands 0..63 fold onto ceil(k/8), so 0..8: the upper bound at 2^0 keeps a band
@@ -215,7 +209,7 @@ func TestDownscaleHeatmapAxisKeepsTheTotalCount(t *testing.T) {
 	assert.Equal(t, before, after)
 }
 
-func TestDensifyHeatmapAxis(t *testing.T) {
+func TestAddHeatmapBucketsWithNoCounts(t *testing.T) {
 	testCases := []struct {
 		description     string
 		bucketing       HeatmapBucketing
@@ -294,7 +288,7 @@ func TestDensifyHeatmapAxis(t *testing.T) {
 				}},
 			}
 
-			DensifyHeatmapAxis(tsData, testCase.bucketing)
+			AddHeatmapBucketsWithNoCounts(tsData, testCase.bucketing)
 
 			aggBucket := tsData.Aggregations[0]
 			assert.Equal(t, testCase.expectedBuckets, aggBucket.Meta.Buckets)
@@ -303,7 +297,7 @@ func TestDensifyHeatmapAxis(t *testing.T) {
 	}
 }
 
-func TestDensifyHeatmapAxisKeepsTheTotalCount(t *testing.T) {
+func TestAddHeatmapBucketsWithNoCountsKeepsTheTotalCount(t *testing.T) {
 	tsData := &TimeSeriesData{
 		Aggregations: []*AggregationBucket{{
 			Meta: AggregationMeta{Buckets: []float64{0, math.Exp2(2.0 / 16), math.Exp2(37.0 / 16)}},
@@ -316,7 +310,7 @@ func TestDensifyHeatmapAxisKeepsTheTotalCount(t *testing.T) {
 		}},
 	}
 
-	DensifyHeatmapAxis(tsData, HeatmapBucketing{Kind: BucketsKindLog, LogScale: MaxLogScale})
+	AddHeatmapBucketsWithNoCounts(tsData, HeatmapBucketing{Kind: BucketsKindLog, LogScale: MaxLogScale})
 
 	aggBucket := tsData.Aggregations[0]
 	// the zero band plus every band from index 2 to index 37
@@ -496,7 +490,7 @@ func TestLogAxisClampsStayOnTheGridAtEveryScale(t *testing.T) {
 	}
 }
 
-func TestDensifyHeatmapAxisIsBoundedByTheFloor(t *testing.T) {
+func TestAddHeatmapBucketsWithNoCountsIsBoundedByTheFloor(t *testing.T) {
 	bucketing := HeatmapBucketing{Kind: BucketsKindLog, LogScale: MaxLogScale}
 
 	tsData := &TimeSeriesData{
@@ -511,7 +505,7 @@ func TestDensifyHeatmapAxisIsBoundedByTheFloor(t *testing.T) {
 	}
 
 	BucketTimeSeriesValues(tsData, bucketing)
-	DensifyHeatmapAxis(tsData, bucketing)
+	AddHeatmapBucketsWithNoCounts(tsData, bucketing)
 
 	// 1e-30 clamps to the floor, so the fill spans MinLogBandIndex upwards
 	// rather than chasing that value's own index near -1594
@@ -521,7 +515,7 @@ func TestDensifyHeatmapAxisIsBoundedByTheFloor(t *testing.T) {
 	assert.Len(t, buckets, highest-MinLogBandIndex+1)
 }
 
-func TestDensifyHeatmapAxisSkipsANonFiniteUpperBound(t *testing.T) {
+func TestAddHeatmapBucketsWithNoCountsSkipsANonFiniteUpperBound(t *testing.T) {
 	// the overflow is the slot past the axis, never an upper bound on it; a bad one
 	// would otherwise size the fill from a garbage band index
 	tsData := &TimeSeriesData{
@@ -531,12 +525,12 @@ func TestDensifyHeatmapAxisSkipsANonFiniteUpperBound(t *testing.T) {
 		}},
 	}
 
-	DensifyHeatmapAxis(tsData, HeatmapBucketing{Kind: BucketsKindLog, LogScale: MaxLogScale})
+	AddHeatmapBucketsWithNoCounts(tsData, HeatmapBucketing{Kind: BucketsKindLog, LogScale: MaxLogScale})
 
 	assert.Equal(t, []float64{1, math.Inf(1)}, tsData.Aggregations[0].Meta.Buckets)
 }
 
-func TestDensifyHeatmapAxisWorstCaseSpan(t *testing.T) {
+func TestAddHeatmapBucketsWithNoCountsWorstCaseSpan(t *testing.T) {
 	bucketing := HeatmapBucketing{Kind: BucketsKindLog, LogScale: MaxLogScale}
 
 	tsData := &TimeSeriesData{
@@ -546,7 +540,7 @@ func TestDensifyHeatmapAxisWorstCaseSpan(t *testing.T) {
 		}},
 	}
 
-	DensifyHeatmapAxis(tsData, bucketing)
+	AddHeatmapBucketsWithNoCounts(tsData, bucketing)
 
 	// the widest axis the bucketing can produce, whatever the data does
 	assert.Len(t, tsData.Aggregations[0].Meta.Buckets, MaxLogBandIndex-MinLogBandIndex+1)

@@ -195,14 +195,14 @@ func postProcessBuilderQuery[T any](
 	return result
 }
 
-// resolveHeatmapAxis brings a heatmap axis to the resolution the caller asked
-// for. Coarsening runs before the fill so the empty bands land at the resolution
-// being returned rather than the one ClickHouse bucketed at.
-func resolveHeatmapAxis(tsData *qbtypes.TimeSeriesData, bucketing qbtypes.HeatmapBucketing) {
-	if bucketing.Kind == qbtypes.BucketsKindLog && bucketing.LogScale < qbtypes.MaxLogScale {
-		qbtypes.DownscaleHeatmapAxis(tsData, qbtypes.MaxLogScale, bucketing.LogScale)
+// resolveHeatmapBucketAxis brings the bucket axis to the resolution the caller
+// asked for. Downscaling runs first so AddHeatmapBucketsWithNoCounts adds them
+// at that resolution rather than the finer one ClickHouse bucketed at.
+func resolveHeatmapBucketAxis(tsData *qbtypes.TimeSeriesData, bucketing qbtypes.HeatmapBucketing) {
+	if bucketing.Kind == qbtypes.BucketsKindLog {
+		qbtypes.DownscaleHeatmapResolution(tsData, bucketing.LogScale)
 	}
-	qbtypes.DensifyHeatmapAxis(tsData, bucketing)
+	qbtypes.AddHeatmapBucketsWithNoCounts(tsData, bucketing)
 }
 
 // postProcessMetricQuery applies postprocessing to a metric query result.
@@ -228,7 +228,7 @@ func postProcessMetricQuery(
 
 	if req.RequestType == qbtypes.RequestTypeHeatmap && config.HeatmapBucketing != nil {
 		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
-			resolveHeatmapAxis(tsData, *config.HeatmapBucketing)
+			resolveHeatmapBucketAxis(tsData, *config.HeatmapBucketing)
 		}
 	}
 
@@ -366,7 +366,7 @@ func (q *querier) applyFormulas(ctx context.Context, results map[string]*qbtypes
 				if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
 					bucketing := req.BucketOptions.ToHeatmapBucketing()
 					qbtypes.BucketTimeSeriesValues(tsData, bucketing)
-					resolveHeatmapAxis(tsData, bucketing)
+					resolveHeatmapBucketAxis(tsData, bucketing)
 				}
 				result = q.applySeriesLimit(result, formula.Limit, formula.Order)
 				results[name] = result
