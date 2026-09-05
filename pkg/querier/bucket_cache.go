@@ -476,31 +476,33 @@ func (bc *bucketCache) mergeTimeSeriesValues(ctx context.Context, buckets []*qbt
 	}
 	seriesMap := make(map[seriesKey]*qbtypes.TimeSeries, estimatedSeries)
 
-	decoded := make([]*qbtypes.TimeSeriesData, 0, len(buckets))
-	newestOf := map[int]*qbtypes.AggregationBucket{}
-	newestStartOf := map[int]uint64{}
+	decodedTimeSeriesData := make([]*qbtypes.TimeSeriesData, 0, len(buckets))
+
+	// Alias and Meta are taken from whichever cached bucket covers the latest
+	// range, and the buckets do not arrive in StartMs order, so keep the winner
+	// per AggregationBucket.Index alongside the StartMs that won it.
+	aggregationIndexToLatest := map[int]*qbtypes.AggregationBucket{}
+	aggregationIndexToLatestStartMs := map[int]uint64{}
+
 	for _, bucket := range buckets {
 		var tsData *qbtypes.TimeSeriesData
 		if err := json.Unmarshal(bucket.Value, &tsData); err != nil {
 			bc.logger.ErrorContext(ctx, "failed to unmarshal time series data", errors.Attr(err))
 			continue
 		}
-		decoded = append(decoded, tsData)
+		decodedTimeSeriesData = append(decodedTimeSeriesData, tsData)
 
-		// The buckets are not guaranteed to arrive in order here, and Alias and
-		// Unit are taken from the most recent one, so track that explicitly
-		// rather than relying on iteration order.
 		for _, aggBucket := range tsData.Aggregations {
-			if _, seen := newestOf[aggBucket.Index]; !seen || bucket.StartMs >= newestStartOf[aggBucket.Index] {
-				newestOf[aggBucket.Index] = aggBucket
-				newestStartOf[aggBucket.Index] = bucket.StartMs
+			if _, seen := aggregationIndexToLatest[aggBucket.Index]; !seen || bucket.StartMs >= aggregationIndexToLatestStartMs[aggBucket.Index] {
+				aggregationIndexToLatest[aggBucket.Index] = aggBucket
+				aggregationIndexToLatestStartMs[aggBucket.Index] = bucket.StartMs
 			}
 		}
 	}
 
-	mergedUpperBounds := qbtypes.MergeBucketUpperBounds(decoded...)
+	mergedUpperBounds := qbtypes.MergeBucketUpperBounds(decodedTimeSeriesData...)
 
-	for _, tsData := range decoded {
+	for _, tsData := range decodedTimeSeriesData {
 		for _, aggBucket := range tsData.Aggregations {
 			aggBucket.ReindexValuesToNewUpperBounds(mergedUpperBounds[aggBucket.Index])
 
@@ -580,9 +582,9 @@ func (bc *bucketCache) mergeTimeSeriesValues(ctx context.Context, buckets []*qbt
 			Index:  index,
 			Series: seriesList,
 		}
-		if newest, ok := newestOf[index]; ok {
-			aggBucket.Alias = newest.Alias
-			aggBucket.Meta = newest.Meta
+		if latest, ok := aggregationIndexToLatest[index]; ok {
+			aggBucket.Alias = latest.Alias
+			aggBucket.Meta = latest.Meta
 		}
 		result.Aggregations = append(result.Aggregations, aggBucket)
 	}
