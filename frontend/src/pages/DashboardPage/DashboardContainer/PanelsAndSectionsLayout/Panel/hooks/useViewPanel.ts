@@ -8,7 +8,6 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
-import { isQuerylessPanelKind } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
 import { getPanelBuilderQuery } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getPanelBuilderQuery';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -53,9 +52,9 @@ export function useViewPanel(): UseViewPanelApi {
 			// Only a drilldown retargets the panel type.
 			next.delete(QueryParams.graphType);
 			clearViewPanelHandoff();
-			// A static kind carries no query state — nothing to stage or persist.
-			if (!isQuerylessPanelKind(panel.spec.plugin.kind)) {
-				const query = getPanelBuilderQuery(panel);
+			// `null` for a static kind — no query state to stage or persist.
+			const query = getPanelBuilderQuery(panel);
+			if (query) {
 				next.set(
 					QueryParams.compositeQuery,
 					encodeURIComponent(JSON.stringify(query)),
