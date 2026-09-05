@@ -38,8 +38,8 @@ var (
 // histograms, whose boundaries come from their own `le` labels.
 type HeatmapBucketing struct {
 	Kind BucketsKind
-	// LogScale is always MaxLogScale; LogBucketsSpec.Scale coarsens the result
-	// afterwards rather than changing this.
+	// LogScale is the resolution the caller asked for. ClickHouse always buckets
+	// at MaxLogScale, and postprocessing folds the axis down to this.
 	LogScale int
 	// MaxValue and NumBuckets are linear only.
 	MaxValue   float64
@@ -59,27 +59,20 @@ func (b *BucketOptions) ToHeatmapBucketing() HeatmapBucketing {
 		return resolved
 	}
 
-	if spec, ok := b.Spec.(LinearBucketsSpec); ok {
+	switch spec := b.Spec.(type) {
+	case LinearBucketsSpec:
 		resolved.Kind = BucketsKindLinear
 		resolved.MaxValue = spec.MaxValue
 		if spec.NumBuckets > 0 {
 			resolved.NumBuckets = spec.NumBuckets
 		}
+	case LogBucketsSpec:
+		if spec.Scale != nil {
+			resolved.LogScale = *spec.Scale
+		}
 	}
 
 	return resolved
-}
-
-// ResolveLogScale returns the axis resolution the caller wants back, which
-// postprocessing folds the MaxLogScale axis down to.
-func (b *BucketOptions) ResolveLogScale() int {
-	if b == nil {
-		return MaxLogScale
-	}
-	if spec, ok := b.Spec.(LogBucketsSpec); ok && spec.Scale != nil {
-		return *spec.Scale
-	}
-	return MaxLogScale
 }
 
 // This cannot be called in validateHeatmap cuz type is resolved in querier.go.
@@ -313,9 +306,10 @@ func densifyAggregationAxis(aggBucket *AggregationBucket, bucketing HeatmapBucke
 	regroupAxis(aggBucket, dense, targetBandIndexes)
 }
 
-// calculateBandIndex and calculateBandBoundary are inverses, and match the
-// expressions the statement builder renders: k * maxValue / numBuckets on a
-// linear axis, 2^(k / 2^scale) on a log one.
+// calculateBandIndex and calculateBandBoundary are inverses over the axis being
+// returned, so they read h.LogScale where calculateValueBoundary reads
+// MaxLogScale: k * maxValue / numBuckets on a linear axis, 2^(k / 2^scale) on a
+// log one.
 func (h HeatmapBucketing) calculateBandIndex(boundary float64) int {
 	if h.Kind == BucketsKindLinear {
 		return int(math.Round(boundary * float64(h.NumBuckets) / h.MaxValue))
@@ -407,6 +401,6 @@ func (h HeatmapBucketing) calculateValueBoundary(value float64) float64 {
 	if value > HighestLogBoundary {
 		return math.Inf(1)
 	}
-	bandsPerDoubling := math.Exp2(float64(h.LogScale))
+	bandsPerDoubling := math.Exp2(MaxLogScale)
 	return math.Exp2(math.Ceil(math.Log2(value)*bandsPerDoubling) / bandsPerDoubling)
 }
