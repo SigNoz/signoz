@@ -949,7 +949,7 @@ func buildValueHeatmapFinalSelect(
 			query.Aggregations[0].Type.StringValue())
 	}
 
-	boundary, err := heatmapBoundaryExpr(*bucketing)
+	boundary, err := renderHeatmapBoundaryExpr(*bucketing)
 	if err != nil {
 		return nil, err
 	}
@@ -969,41 +969,36 @@ func buildValueHeatmapFinalSelect(
 	return &qbtypes.Statement{Query: combined + q, Args: append(args, a...)}, nil
 }
 
-// heatmapBoundaryExpr renders the upper bound of the band `value` falls in.
-// Values at or below zero have no log band of their own and no linear band below
-// the first, so both scalings report them at the axis's lowest boundary rather
-// than dropping the row: an upper bound still describes them truthfully.
-func heatmapBoundaryExpr(bucketing qbtypes.HeatmapBucketing) (string, error) {
+// renderHeatmapBoundaryExpr renders the upper bound of the band `value` falls in.
+func renderHeatmapBoundaryExpr(bucketing qbtypes.HeatmapBucketing) (string, error) {
 	switch bucketing.Kind {
 	case qbtypes.BucketsKindLinear:
-		maxValue := formatFloat(bucketing.MaxValue)
-		numBuckets := strconv.Itoa(bucketing.NumBuckets)
-		// Indexing on value*numBuckets/maxValue rather than on a precomputed
-		// width keeps the top boundary exactly maxValue instead of a rounded
-		// multiple of that width.
-		return fmt.Sprintf(
-			"multiIf(value > %s, toFloat64('+Inf'), least(greatest(ceil(value * %s / %s), 1), %s) * %s / %s)",
-			maxValue, numBuckets, maxValue, numBuckets, maxValue, numBuckets,
-		), nil
+		return renderLinearBoundaryExpr(bucketing), nil
 	case qbtypes.BucketsKindLog:
-		// The exponential histogram mapping at a fixed scale: 2^LogScale bands
-		// per doubling makes a band's index a pure function of the value, so the
-		// data never has to be scanned to decide where the boundaries go.
-		//
-		// The two clamps keep the axis finite. Without the lower one a single
-		// value approaching zero runs the band index off to -inf, and filling
-		// the empty bands below it would then cost thousands of slots per point.
-		bandsPerDoubling := formatFloat(math.Exp2(float64(bucketing.LogScale)))
-		lowest := formatFloat(qbtypes.LowestLogBoundary)
-		highest := formatFloat(qbtypes.HighestLogBoundary)
-		return fmt.Sprintf(
-			"multiIf(value <= 0, toFloat64(0), value <= %s, %s, value > %s, toFloat64('+Inf'), pow(2, ceil(log2(value) * %s) / %s))",
-			lowest, lowest, highest, bandsPerDoubling, bandsPerDoubling,
-		), nil
+		return renderLogBoundaryExpr(bucketing), nil
 	default:
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"unsupported bucketsScaling %q for heatmap requests", bucketing.Kind.StringValue())
 	}
+}
+
+func renderLinearBoundaryExpr(bucketing qbtypes.HeatmapBucketing) string {
+	maxValue := formatFloat(bucketing.MaxValue)
+	numBuckets := strconv.Itoa(bucketing.NumBuckets)
+	return fmt.Sprintf(
+		"multiIf(value > %s, toFloat64('+Inf'), least(greatest(ceil(value * %s / %s), 1), %s) * %s / %s)",
+		maxValue, numBuckets, maxValue, numBuckets, maxValue, numBuckets,
+	)
+}
+
+func renderLogBoundaryExpr(bucketing qbtypes.HeatmapBucketing) string {
+	bandsPerDoubling := formatFloat(math.Exp2(float64(bucketing.LogScale)))
+	lowest := formatFloat(qbtypes.LowestLogBoundary)
+	highest := formatFloat(qbtypes.HighestLogBoundary)
+	return fmt.Sprintf(
+		"multiIf(value <= 0, toFloat64(0), value <= %s, %s, value > %s, toFloat64('+Inf'), pow(2, ceil(log2(value) * %s) / %s))",
+		lowest, lowest, highest, bandsPerDoubling, bandsPerDoubling,
+	)
 }
 
 // formatFloat renders a float64 as the shortest literal that reads back as the
