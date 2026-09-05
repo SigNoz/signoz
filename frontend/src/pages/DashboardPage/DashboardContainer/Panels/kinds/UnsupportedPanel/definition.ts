@@ -1,4 +1,5 @@
 import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { TriangleAlert } from '@signozhq/icons';
 
 import {
 	NO_PANEL_ACTIONS,
@@ -18,6 +19,8 @@ import Renderer from './Renderer';
 export const UNSUPPORTED_PANEL: RenderablePanelDefinition = {
 	kind: '<unsupported>' as RenderablePanelDefinition['kind'],
 	displayName: 'Unsupported panel',
+	// Never offered in the UI — the kind lists come from the registry, which omits this.
+	icon: TriangleAlert,
 	Renderer,
 	sections: [],
 	supportedSignals: [],

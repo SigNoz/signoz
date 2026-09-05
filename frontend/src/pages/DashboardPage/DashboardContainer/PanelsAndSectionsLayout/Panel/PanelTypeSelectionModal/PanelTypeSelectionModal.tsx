@@ -4,8 +4,8 @@ import { DialogWrapper } from '@signozhq/ui/dialog';
 import cx from 'classnames';
 
 import { useDashboardSections } from '../../../hooks/useDashboardSections';
+import { PANEL_OPTIONS } from '../../../Panels/registry';
 import type { PanelKind } from '../../../Panels/types/panelKind';
-import { PANEL_TYPES } from './constants';
 import PanelTypeSelectionModalFooter from './PanelTypeSelectionModalFooter';
 import { buildSectionOptions, resolveDefaultSectionValue } from './utils';
 import styles from './PanelTypeSelectionModal.module.scss';
@@ -91,19 +91,19 @@ function PanelTypeSelectionModal({
 					<span className={styles.pickerLabel}>Select panel type</span>
 				)}
 				<div className={styles.grid}>
-					{PANEL_TYPES.map(({ panelKind, label, Icon }) => (
+					{PANEL_OPTIONS.map(({ kind, displayName, icon: Icon }) => (
 						<button
-							key={panelKind}
+							key={kind}
 							type="button"
 							className={cx(styles.panelTypeCard, {
-								[styles.panelTypeCardSelected]: panelKind === selectedPanelKind,
+								[styles.panelTypeCardSelected]: kind === selectedPanelKind,
 							})}
-							data-testid={`panel-type-${panelKind}`}
-							aria-pressed={panelKind === selectedPanelKind}
-							onClick={(): void => handleTileClick(panelKind)}
+							data-testid={`panel-type-${kind}`}
+							aria-pressed={kind === selectedPanelKind}
+							onClick={(): void => handleTileClick(kind)}
 						>
 							<Icon size={24} color={Color.BG_ROBIN_400} />
-							{label}
+							{displayName}
 						</button>
 					))}
 				</div>

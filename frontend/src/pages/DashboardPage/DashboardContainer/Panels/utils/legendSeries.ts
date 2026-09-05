@@ -2,9 +2,9 @@ import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schem
 import { themeColors } from 'constants/theme';
 import getLabelName from 'lib/getLabelName';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
-import { preparePieData } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/PieChartPanel/prepareData';
-import { getBuilderQueries } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getBuilderQueries';
-import { resolveSeriesLabelV5 } from 'pages/DashboardPage/DashboardContainer/Panels/utils/resolveSeriesLabel';
+import { preparePieData } from '../kinds/PieChartPanel/prepareData';
+import { getBuilderQueries } from './getBuilderQueries';
+import { resolveSeriesLabelV5 } from './resolveSeriesLabel';
 import { prepareScalarTables } from 'pages/DashboardPage/DashboardContainer/queryV5/prepareScalarTables';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 import {
@@ -21,6 +21,15 @@ export interface LegendSeries {
 }
 
 type PanelQueries = DashboardtypesPanelDTO['spec']['queries'];
+
+export interface LegendSeriesArgs {
+	queries: PanelQueries;
+	data: PanelQueryData;
+	isDarkMode: boolean;
+}
+
+/** Resolves a kind's output into the legend entries the colors control keys overrides by. */
+export type LegendSeriesResolver = (args: LegendSeriesArgs) => LegendSeries[];
 
 /**
  * Dedupes `labels` (first-seen order, empties dropped) into `{ label, defaultColor }`
@@ -48,10 +57,10 @@ function buildLegendSeries(
  * draws (without overrides, so their colors are the defaults) so the color control keys
  * overrides by the same labels the chart does.
  */
-export function resolvePieLegendSeries(
-	data: PanelQueryData,
-	isDarkMode: boolean,
-): LegendSeries[] {
+export function resolvePieLegendSeries({
+	data,
+	isDarkMode,
+}: LegendSeriesArgs): LegendSeries[] {
 	const slices = preparePieData({
 		tables: prepareScalarTables({
 			results: getScalarResults(data.response),
@@ -70,11 +79,11 @@ export function resolvePieLegendSeries(
  * Time-series kinds: resolve each flattened series' label the way the renderer does
  * (`getLabelName` → `resolveSeriesLabelV5`) and color it with `generateColor`.
  */
-export function resolveTimeSeriesLegendSeries(
-	queries: PanelQueries,
-	data: PanelQueryData,
-	isDarkMode: boolean,
-): LegendSeries[] {
+export function resolveTimeSeriesLegendSeries({
+	queries,
+	data,
+	isDarkMode,
+}: LegendSeriesArgs): LegendSeries[] {
 	const palette = isDarkMode
 		? themeColors.chartcolors
 		: themeColors.lightModeColor;
