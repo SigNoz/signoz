@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react';
 import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import type { ChartLine } from '@signozhq/icons';
 import type { EQueryType } from 'types/common/dashboard';
 
 import type { SectionConfig } from './sections';
@@ -60,9 +61,14 @@ export const NO_PANEL_ACTIONS: PanelActionCapabilities = {
 	drilldown: false,
 };
 
+// Derived from an icon component so the props stay exact (size is a constrained
+// IconSize union) and ForwardRef-compatible.
+export type PanelIcon = typeof ChartLine;
+
 export interface PanelDefinition<K extends PanelKind = PanelKind> {
 	kind: K;
 	displayName: string;
+	icon: PanelIcon;
 	Renderer: ComponentType<PanelRendererProps<K>>;
 	sections: SectionConfig[];
 	/** Signals this kind can visualize. */

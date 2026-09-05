@@ -11,6 +11,10 @@ jest.mock('pages/DashboardPage/DashboardContainer/Panels/registry', () => ({
 		supportedSignals: ['metrics', 'logs', 'traces'],
 		supportedQueryTypes: ['builder', 'clickhouse_sql', 'promql'],
 	})),
+	PANEL_OPTIONS: [
+		{ kind: 'signoz/TimeSeriesPanel', displayName: 'Time Series' },
+		{ kind: 'signoz/TablePanel', displayName: 'Table' },
+	].map((option) => ({ ...option, icon: (): null => null })),
 }));
 
 // Open the antd Select by clicking its selector, then pick the option by label.

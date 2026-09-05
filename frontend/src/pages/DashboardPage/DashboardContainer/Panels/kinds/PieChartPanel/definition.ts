@@ -1,3 +1,5 @@
+import { ChartPie } from '@signozhq/icons';
+
 import type { PanelDefinition } from '../../types/panelDefinition';
 import Renderer from './Renderer';
 import { sections } from './sections';
@@ -10,6 +12,7 @@ import { EQueryType } from 'types/common/dashboard';
 export const definition: PanelDefinition<'signoz/PieChartPanel'> = {
 	kind: 'signoz/PieChartPanel',
 	displayName: 'Pie Chart',
+	icon: ChartPie,
 	Renderer,
 	sections,
 	supportedSignals: [
