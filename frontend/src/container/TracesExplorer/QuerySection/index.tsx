@@ -54,6 +54,8 @@ function QuerySection(): JSX.Element {
 				panelTypes === PANEL_TYPES.LIST || panelTypes === PANEL_TYPES.TRACE
 			}
 			version="v3" // setting this to v3 as we this is rendered in logs explorer
+			// POC: AI O11y — search bar key/value suggestions send type=builder_ai_query
+			queryType="builder_ai_query"
 		/>
 	);
 }

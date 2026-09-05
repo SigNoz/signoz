@@ -112,6 +112,11 @@ interface QuerySearchProps {
 		numberValues: number[];
 		complete: boolean;
 	}>;
+	/**
+	 * POC / AI O11y: forwarded as `type` on /fields/keys and /fields/values
+	 * (e.g. 'builder_ai_query'). Optional — existing callers unchanged.
+	 */
+	queryType?: string;
 }
 
 function QuerySearch({
@@ -126,6 +131,7 @@ function QuerySearch({
 	initialExpression,
 	metricNamespace,
 	valueSuggestionsOverride,
+	queryType,
 }: QuerySearchProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const [valueSuggestions, setValueSuggestions] = useState<any[]>([]);
@@ -323,6 +329,7 @@ function QuerySearch({
 				metricName: debouncedMetricName ?? undefined,
 				signalSource: signalSource as 'meter' | '',
 				metricNamespace,
+				type: queryType,
 			});
 
 			if (response.data.data) {
@@ -360,6 +367,7 @@ function QuerySearch({
 			hardcodedAttributeKeys,
 			showFilterSuggestionsWithoutMetric,
 			metricNamespace,
+			queryType,
 		],
 	);
 
@@ -499,6 +507,7 @@ function QuerySearch({
 							signal: dataSource,
 							signalSource: signalSource as 'meter' | '',
 							metricName: debouncedMetricName ?? undefined,
+							type: queryType,
 						}).then((response) => {
 							const responseData = response.data as any;
 							const data = responseData.data || {};
@@ -601,6 +610,7 @@ function QuerySearch({
 			signalSource,
 			toggleSuggestions,
 			valueSuggestionsOverride,
+			queryType,
 		],
 	);
 
@@ -1748,6 +1758,7 @@ QuerySearch.defaultProps = {
 		"Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')",
 	showFilterSuggestionsWithoutMetric: false,
 	initialExpression: undefined,
+	queryType: undefined,
 };
 
 export default QuerySearch;

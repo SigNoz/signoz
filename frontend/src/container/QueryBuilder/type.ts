@@ -35,4 +35,9 @@ export type QueryProps = {
 	hasTraceOperator?: boolean;
 	signalSource?: string;
 	isMultiQueryAllowed?: boolean;
+	/**
+	 * POC / AI O11y: forwarded to QuerySearch as suggestion `type`
+	 * (e.g. 'builder_ai_query').
+	 */
+	queryType?: string;
 } & Pick<QueryBuilderProps, 'filterConfigs' | 'queryComponents'>;

@@ -117,15 +117,24 @@ function TracesExplorer(): JSX.Element {
 	const [warning, setWarning] = useState<Warning | undefined>();
 	const [isOpen, setOpen] = useState<boolean>(true);
 
-	const defaultQuery = useMemo(
-		(): Query =>
-			updateAllQueriesOperators(
-				initialQueriesMap.traces,
-				PANEL_TYPES.LIST,
-				DataSource.TRACES,
-			),
-		[updateAllQueriesOperators],
-	);
+	const defaultQuery = useMemo((): Query => {
+		const query = updateAllQueriesOperators(
+			initialQueriesMap.traces,
+			PANEL_TYPES.LIST,
+			DataSource.TRACES,
+		);
+		// POC: tag queries source:'ai' so query-range serializes as builder_ai_query
+		return {
+			...query,
+			builder: {
+				...query.builder,
+				queryData: query.builder.queryData.map((qd) => ({
+					...qd,
+					source: 'ai' as const,
+				})),
+			},
+		};
+	}, [updateAllQueriesOperators]);
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 	const { safeNavigate } = useSafeNavigate();

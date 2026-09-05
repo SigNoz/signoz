@@ -16,6 +16,7 @@ export type RequestType =
 
 export type QueryType =
 	| 'builder_query'
+	| 'builder_ai_query'
 	| 'builder_trace_operator'
 	| 'builder_formula'
 	| 'builder_sub_query'
