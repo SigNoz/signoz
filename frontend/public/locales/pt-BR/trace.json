@@ -1,0 +1,11 @@
+{
+	"options_menu": {
+		"options": "Opções",
+		"format": "Formato",
+		"raw": "Bruto",
+		"default": "Padrão",
+		"column": "Coluna",
+		"maxLines": "Máximo de linhas por Linha (Row)",
+		"addColumn": "Adicionar uma coluna"
+	}
+}
