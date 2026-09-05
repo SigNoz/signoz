@@ -442,12 +442,6 @@ export function PlannedDowntimeForm(
 				<Form.Item
 					label="Ends on"
 					name="endTime"
-					required={recurrenceType === recurrenceOptions.doesNotRepeat.value}
-					rules={[
-						{
-							required: recurrenceType === recurrenceOptions.doesNotRepeat.value,
-						},
-					]}
 					className={!isEmpty(endTimeText) ? 'formItemWithBullet' : ''}
 				>
 					<DatePicker

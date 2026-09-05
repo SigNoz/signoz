@@ -437,6 +437,39 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			skip: false,
 		},
 		{
+			name: "fixed planned maintenance with no end time (forever), ts > start",
+			maintenance: &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone:  "UTC",
+					StartTime: time.Now().UTC().Add(-time.Hour),
+				},
+			},
+			ts:   time.Now().UTC(),
+			skip: true,
+		},
+		{
+			name: "fixed planned maintenance with no end time (forever), ts == start",
+			maintenance: &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+				},
+			},
+			ts:   time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+			skip: true,
+		},
+		{
+			name: "fixed planned maintenance with no end time (forever), ts < start",
+			maintenance: &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone:  "UTC",
+					StartTime: time.Now().UTC().Add(time.Hour),
+				},
+			},
+			ts:   time.Now().UTC(),
+			skip: false,
+		},
+		{
 			name: "recurring maintenance, repeat sunday, saturday, weekly for 24 hours, in Us/Eastern timezone",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
