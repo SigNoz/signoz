@@ -26,16 +26,3 @@
 		background: var(--l2-border);
 	}
 }
-
-// The static editor's preview: the panel card the grid shows, minus actions.
-.staticPreviewSurface {
-	display: flex;
-	flex-direction: column;
-	height: 100%;
-	min-height: 0;
-	margin: 12px;
-	border: 1px solid var(--l2-border);
-	border-radius: 4px;
-	background: var(--l2-background);
-	overflow: hidden;
-}

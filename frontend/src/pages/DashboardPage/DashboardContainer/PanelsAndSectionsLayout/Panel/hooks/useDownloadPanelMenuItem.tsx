@@ -14,7 +14,7 @@ import { useDownloadPanelImage } from './useDownloadPanelImage';
 interface UseDownloadPanelMenuItemArgs {
 	panelId: string;
 	panel: DashboardtypesPanelDTO;
-	data: PanelQueryData;
+	data?: PanelQueryData;
 	actions: PanelActionCapabilities;
 }
 

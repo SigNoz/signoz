@@ -77,7 +77,6 @@ function QueryViewModalBody({
 		pagination,
 	} = query;
 
-
 	// Grid drill-down, but filter-by-value / breakout refine this view in place. Drills the draft
 	// so it reflects in-modal edits (and the click's time range follows the per-view window).
 	const drilldown = useDrilldown(draft, panelId, {
@@ -125,7 +124,7 @@ function QueryViewModalBody({
 
 	const onSwitchToEdit = (): void => {
 		// Carry the drilldown edits so the editor opens on them, not the saved panel.
-		logEvent(DashboardEvents.SWITCH_TO_EDIT_MODE, {
+		void logEvent(DashboardEvents.SWITCH_TO_EDIT_MODE, {
 			panelId: panelId,
 		});
 		openPanelEditor(panelId, {
@@ -136,6 +135,7 @@ function QueryViewModalBody({
 	return (
 		<div className={styles.content} data-testid="view-panel-modal-content">
 			<ViewPanelModalHeader
+				mode="query"
 				selectedInterval={selectedInterval}
 				startMs={timeOverride.startMs}
 				endMs={timeOverride.endMs}

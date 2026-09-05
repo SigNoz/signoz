@@ -12,6 +12,7 @@ import {
 } from 'lib/dashboardVariables/variableReference';
 
 import { toQueryEnvelopes } from '../../../queryV5/buildQueryRangeRequest';
+import { getTextPanelBody } from './getTextPanelBody';
 import { dtoToFormModel } from '../variableAdapters';
 
 /** The kind of query text a variable is referenced from. */
@@ -19,7 +20,8 @@ export type VariableUsageKind =
 	| 'builder'
 	| 'promql'
 	| 'clickhouse'
-	| 'variable';
+	| 'variable'
+	| 'text';
 
 export type VariableImpactMode = 'rename' | 'delete' | 'apply';
 
@@ -81,7 +83,7 @@ function computeResultingText(
 		return rewriteVariableReferences(text, variableName, newName);
 	}
 	// delete: only builder filter clauses can be safely auto-stripped; raw PromQL/
-	// ClickHouse and variable queries are left for the user to edit.
+	// ClickHouse, markdown bodies and variable queries are left for the user to edit.
 	return kind === 'builder'
 		? removeVariableFromExpression(text, variableName)
 		: text;
@@ -106,6 +108,31 @@ export function findVariableUsages(
 	const spec = dashboard.spec;
 
 	Object.entries(spec.panels ?? {}).forEach(([panelId, panel]) => {
+		// A static kind references variables from its body, not a query (TDD D5 —
+		// rename must rewrite text bodies too, or it silently orphans the tokens).
+		const textBody = getTextPanelBody(panel?.spec);
+		if (typeof textBody === 'string') {
+			if (textContainsVariableReference(textBody, variableName)) {
+				usages.push({
+					id: `panel:${panelId}:0`,
+					sourceType: 'panel',
+					sourceId: panelId,
+					sourceLabel: panel.spec?.display?.name || panelId,
+					kind: 'text',
+					envelopeIndex: 0,
+					currentText: textBody,
+					resultingText: computeResultingText(
+						'text',
+						textBody,
+						variableName,
+						mode,
+						newName,
+					),
+				});
+			}
+			return;
+		}
+
 		const queries = panel?.spec?.queries;
 		if (!queries?.length) {
 			return;

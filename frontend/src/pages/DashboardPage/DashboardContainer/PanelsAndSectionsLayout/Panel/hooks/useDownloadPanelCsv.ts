@@ -3,14 +3,14 @@ import logEvent from 'api/common/logEvent';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import { getTableCsvRows } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/TablePanel/tableCsv';
-import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
+import { toLegacyPanelType } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 import type { PanelOfKind } from 'pages/DashboardPage/DashboardContainer/Panels/types/rendererProps';
 import { downloadCsv } from 'pages/DashboardPage/DashboardContainer/Panels/utils/downloadCsv';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
 interface UseDownloadPanelCsvArgs {
 	panel: DashboardtypesPanelDTO;
-	data: PanelQueryData;
+	data?: PanelQueryData;
 	/**
 	 * Whether the kind's definition declares CSV as a downloadable format
 	 * (`actions.download.csv`). Only tables carry tabular data, so this is the
@@ -32,7 +32,7 @@ export function useDownloadPanelCsv({
 	const fileName = panel.spec.display.name;
 
 	return useCallback((): void => {
-		if (!canDownloadCsv) {
+		if (!canDownloadCsv || !data) {
 			return;
 		}
 		const rows = getTableCsvRows(panel as PanelOfKind<'signoz/TablePanel'>, data);
@@ -42,7 +42,7 @@ export function useDownloadPanelCsv({
 		downloadCsv(rows, fileName);
 		void logEvent(DashboardDetailEvents.PanelExported, {
 			format: 'csv',
-			panelType: PANEL_KIND_TO_PANEL_TYPE[panel.spec.plugin.kind],
+			panelType: toLegacyPanelType(panel.spec.plugin.kind),
 			panelKind: panel.spec.plugin.kind,
 		});
 	}, [canDownloadCsv, fileName, panel, data]);

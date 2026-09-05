@@ -23,6 +23,11 @@ jest.mock('../DashboardContainer/Panels/registry', () => ({
 }));
 jest.mock('../DashboardContainer/Panels/capabilities', () => ({
 	isQueryTypeSupportedByPanelKind: jest.fn(),
+	// Real predicate: these specs exercise query kinds; the static guard has its
+	// own case below.
+	isQuerylessPanelKind: jest.requireActual(
+		'../DashboardContainer/Panels/capabilities',
+	).isQuerylessPanelKind,
 }));
 
 const mockToPerses = toPerses as jest.Mock;

@@ -2,6 +2,7 @@ import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { EQueryType } from 'types/common/dashboard';
 
 import {
+	isQuerylessPanelKind,
 	isQueryTypeSupportedByPanelKind,
 	isSignalSupported,
 } from '../../../Panels/capabilities';
@@ -37,6 +38,12 @@ export function getPanelTypeDisabledReason({
 	signal?: TelemetrytypesSignalDTO;
 	label: string;
 }): string | undefined {
+	// A kind that renders without a query pairs with anything — it declares no
+	// query types or signals, and the checks below would read that as "supports
+	// nothing" and disable it everywhere.
+	if (isQuerylessPanelKind(kind)) {
+		return undefined;
+	}
 	if (!isQueryTypeSupportedByPanelKind(kind, queryType)) {
 		return `${label} isn't available for ${QUERY_TYPE_LABEL[queryType]} queries`;
 	}

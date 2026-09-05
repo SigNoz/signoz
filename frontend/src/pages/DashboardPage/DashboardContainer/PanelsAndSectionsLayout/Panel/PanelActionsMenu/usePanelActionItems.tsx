@@ -42,7 +42,7 @@ interface UsePanelActionItemsArgs {
 	/** The panel itself — seeds "Create Alerts" and the download filename. */
 	panel: DashboardtypesPanelDTO;
 	/** The panel's query response — the source for "Download as CSV". */
-	data: PanelQueryData;
+	data?: PanelQueryData;
 	/** Layout context for move/delete — absent outside editable mode. */
 	panelActions?: PanelActionsConfig;
 }

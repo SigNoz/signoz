@@ -4,9 +4,12 @@ import {
 	DashboardtypesLegendPositionDTO,
 	DashboardtypesLineInterpolationDTO,
 	DashboardtypesLineStyleDTO,
+	DashboardtypesPanelBackgroundDTO,
 	type DashboardtypesPanelSpecDTO,
 	DashboardtypesThresholdFormatDTO,
+	DashboardtypesTextAlignDTO,
 	DashboardtypesTimePreferenceDTO,
+	DashboardtypesVerticalAlignDTO,
 	type TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
@@ -35,6 +38,10 @@ export interface SeededPluginSpec {
 	>;
 	selectFields?: SectionSpecMap[SectionKind.Columns];
 	thresholds?: AnyThreshold[];
+	presentation?: SectionSpecMap[SectionKind.TextLayout];
+	headerOptions?: SectionSpecMap[SectionKind.PanelHeader];
+	/** Text panel body. Not a config section — the editor's main pane owns it. */
+	text?: string;
 }
 
 export interface SeedContext {
@@ -114,6 +121,33 @@ function isEmptySlice(value: object): boolean {
 }
 
 const SECTION_SEEDS: SectionSeeds = {
+	[SectionKind.TextLayout]: {
+		specKey: 'presentation',
+		// Explicit defaults (not the API's implicit ones) so the alignment controls
+		// open on a value, and the body carries across a kind switch and back.
+		seed: (
+			_controls,
+			{ oldPluginSpec },
+		): SectionSpecMap[SectionKind.TextLayout] => ({
+			textAlign:
+				oldPluginSpec?.presentation?.textAlign ?? DashboardtypesTextAlignDTO.left,
+			verticalAlign:
+				oldPluginSpec?.presentation?.verticalAlign ??
+				DashboardtypesVerticalAlignDTO.top,
+			background:
+				oldPluginSpec?.presentation?.background ??
+				DashboardtypesPanelBackgroundDTO.solid,
+		}),
+	},
+	[SectionKind.PanelHeader]: {
+		specKey: 'headerOptions',
+		// Only an active opt-out carries; absent = show (the API's zero value).
+		seed: (
+			_controls,
+			{ oldPluginSpec },
+		): SectionSpecMap[SectionKind.PanelHeader] =>
+			oldPluginSpec?.headerOptions?.hide ? { hide: true } : {},
+	},
 	[SectionKind.Visualization]: {
 		specKey: 'visualization',
 		seed: (

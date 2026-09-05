@@ -45,6 +45,16 @@ function promqlPanel(name: string, query: string): unknown {
 	};
 }
 
+function textPanel(name: string, text: string): unknown {
+	return {
+		spec: {
+			display: { name },
+			plugin: { kind: 'signoz/TextPanel', spec: { text } },
+			queries: [],
+		},
+	};
+}
+
 function dashboard(
 	panels: Record<string, unknown>,
 	variables: VariableFormModel[],
@@ -98,6 +108,38 @@ describe('findVariableUsages', () => {
 
 	it('returns nothing for an unreferenced variable', () => {
 		expect(findVariableUsages(dash, 'nope', 'delete')).toStrictEqual([]);
+	});
+
+	describe('text panel bodies (TDD D5)', () => {
+		const textDash = dashboard(
+			{
+				runbook: textPanel(
+					'Runbook',
+					'env {{svc}} / {{.svc}} / [[svc]] / $svc / {{svcx}}',
+				),
+				unrelated: textPanel('Plain', 'no tokens here'),
+			},
+			[variable({ name: 'svc', type: 'QUERY' })],
+		);
+
+		it('finds the body usage and skips bodies without the token', () => {
+			const usages = findVariableUsages(textDash, 'svc', 'rename', 'zone');
+			expect(usages.map((u) => u.id)).toStrictEqual(['panel:runbook:0']);
+			expect(usages[0].kind).toBe('text');
+			expect(usages[0].sourceLabel).toBe('Runbook');
+		});
+
+		it('rewrites all four syntaxes on rename, leaving other names alone', () => {
+			const [usage] = findVariableUsages(textDash, 'svc', 'rename', 'zone');
+			expect(usage.resultingText).toBe(
+				'env {{zone}} / {{.zone}} / [[zone]] / $zone / {{svcx}}',
+			);
+		});
+
+		it('leaves the body for review on delete', () => {
+			const [usage] = findVariableUsages(textDash, 'svc', 'delete');
+			expect(usage.resultingText).toBe(usage.currentText);
+		});
 	});
 });
 

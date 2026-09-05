@@ -14,9 +14,8 @@ import { useDrilldown } from './hooks/useDrilldown';
 import { usePanelInteractions } from './hooks/usePanelInteractions';
 import PanelBody from './PanelBody/PanelBody';
 import PanelHeader from './PanelHeader/PanelHeader';
-import styles from './Panel.module.scss';
 
-interface QueryPanelProps {
+interface QueryPanelContentProps {
 	panel: DashboardtypesPanelDTO;
 	panelId: string;
 	/** The kind's definition, narrowed to the query arm by `Panel`'s fork. */
@@ -28,17 +27,17 @@ interface QueryPanelProps {
 }
 
 /**
- * A query-backed dashboard panel (header + body). Thin orchestrator: fetching
- * lives in `usePanelQuery`, interactions in `usePanelInteractions`, state in
- * `PanelBody`.
+ * The query arm's content (header + body) — its own component so these hooks
+ * never mount for a static kind. Thin orchestrator: fetching lives in
+ * `usePanelQuery`, interactions in `usePanelInteractions`, state in `PanelBody`.
  */
-function QueryPanel({
+function QueryPanelContent({
 	panel,
 	panelId,
 	panelDefinition,
 	isVisible,
 	panelActions,
-}: QueryPanelProps): JSX.Element {
+}: QueryPanelContentProps): JSX.Element {
 	const timeLabel = panelTimePreferenceLabel(getPanelTimePreference(panel));
 
 	const panelKind = panel.spec.plugin.kind;
@@ -67,14 +66,9 @@ function QueryPanel({
 	const drilldown = useDrilldown(panel, panelId);
 
 	return (
-		<div
-			className={styles.panel}
-			data-panel-visible={isOffScreen ? 'false' : 'true'}
-			// Stable locator so the "Download as PNG" action can find this node to
-			// capture, without threading a ref through the header/actions chain.
-			data-panel-root={panelId}
-		>
+		<>
 			<PanelHeader
+				mode="query"
 				panelId={panelId}
 				panel={panel}
 				data={data}
@@ -105,8 +99,8 @@ function QueryPanel({
 				enableDrillDown={drilldown.enableDrillDown}
 			/>
 			<ContextMenu {...drilldown.contextMenuProps} />
-		</div>
+		</>
 	);
 }
 
-export default QueryPanel;
+export default QueryPanelContent;

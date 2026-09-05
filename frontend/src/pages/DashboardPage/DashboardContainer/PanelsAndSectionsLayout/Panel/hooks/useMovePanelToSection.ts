@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import logEvent from 'api/common/logEvent';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
-import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
+import { toLegacyPanelType } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
@@ -79,7 +79,7 @@ export function useMovePanelToSection({
 					// is the V2 identity.
 					...(movedKind
 						? {
-								panelType: PANEL_KIND_TO_PANEL_TYPE[movedKind],
+								panelType: toLegacyPanelType(movedKind),
 								panelKind: movedKind,
 							}
 						: {}),

@@ -7,7 +7,7 @@ import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
+import { toLegacyPanelType } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 import {
 	SectionKind,
 	type PanelFormattingSlice,
@@ -73,7 +73,7 @@ export function buildAlertUrl(
  * and assembles the URL from the resolved queries via {@link buildAlertUrl}.
  */
 export function buildCreateAlertUrl(panel: DashboardtypesPanelDTO): string {
-	const panelType = PANEL_KIND_TO_PANEL_TYPE[panel.spec.plugin.kind];
+	const panelType = toLegacyPanelType(panel.spec.plugin.kind);
 	const query = fromPerses(panel.spec.queries, panelType);
 	const unit = readPanelUnit(panel.spec.plugin);
 	return buildAlertUrl(
