@@ -65,6 +65,22 @@ class TracesKind(Enum):
     def from_value(cls, value: int) -> "TracesKind":
         return cls(value)
 
+    def kind_string(self) -> str:
+        """The `kind_string` column value, mirroring ptrace.SpanKind.String() — the exporter
+        writes `otelSpan.Kind().String()`. Features filter on these, e.g. third-party-apis
+        requires `kind_string = 'Client'`."""
+        return _KIND_STRINGS[self]
+
+
+_KIND_STRINGS = {
+    TracesKind.SPAN_KIND_UNSPECIFIED: "Unspecified",
+    TracesKind.SPAN_KIND_INTERNAL: "Internal",
+    TracesKind.SPAN_KIND_SERVER: "Server",
+    TracesKind.SPAN_KIND_CLIENT: "Client",
+    TracesKind.SPAN_KIND_PRODUCER: "Producer",
+    TracesKind.SPAN_KIND_CONSUMER: "Consumer",
+}
+
 
 class TracesStatusCode(Enum):
     STATUS_CODE_UNSET = 0
@@ -286,6 +302,7 @@ class Traces(ABC):
     db_operation: str
     has_error: bool
     is_remote: str
+    scope_json: dict[str, Any]
 
     resource: list[TracesResource]
     tag_attributes: list[TracesTagAttributes]
@@ -311,6 +328,7 @@ class Traces(ABC):
         links: list[TracesLink] = [],
         trace_state: str = "",
         flags: np.uint32 = 0,
+        scope: dict[str, Any] = {},
         resource_write_mode: Literal["legacy_only", "dual_write"] = "dual_write",
     ) -> None:
         if timestamp is None:
@@ -344,7 +362,7 @@ class Traces(ABC):
         self.flags = flags
         self.name = name
         self.kind = kind.value
-        self.kind_string = kind.name
+        self.kind_string = kind.kind_string()
         self.status_code = status_code.value
         self.status_message = status_message
         self.status_code_string = status_code.name
@@ -391,6 +409,33 @@ class Traces(ABC):
 
         # Calculate resource fingerprint
         self.resource_fingerprint = LogsOrTracesFingerprint(self.resources_string).calculate()
+
+        # Process scope mirroring the InstrumentationScope on the OTLP span.
+        scope_name = scope.get("name", "")
+        scope_version = scope.get("version", "")
+        scope_string = {k: str(v) for k, v in scope.get("attributes", {}).items()}
+        self.scope_json = {
+            "name": scope_name,
+            "version": scope_version,
+            "attributes": scope_string,
+        }
+
+        scope_keys = {"scope.name": scope_name, "scope.version": scope_version}
+        scope_keys.update(scope_string)
+        for k, v in scope_keys.items():
+            if v == "":
+                continue
+            self.tag_attributes.append(
+                TracesTagAttributes(
+                    timestamp=timestamp,
+                    tag_key=k,
+                    tag_type="scope",
+                    tag_data_type="string",
+                    string_value=v,
+                    number_value=None,
+                )
+            )
+            self.attribute_keys.append(TracesResourceOrAttributeKeys(name=k, datatype="string", tag_type="scope"))
 
         # Process attributes by type and populate custom fields
         self.attribute_string = {}
@@ -609,7 +654,6 @@ class Traces(ABC):
             self.response_status_code = str_value
 
     def np_arr(self) -> np.array:
-        """Return span data as numpy array for database insertion"""
         return np.array(
             [
                 self.ts_bucket_start,
@@ -644,6 +688,7 @@ class Traces(ABC):
                 self.has_error,
                 self.is_remote,
                 self.resource_json,
+                self.scope_json,
             ],
             dtype=object,
         )
@@ -653,7 +698,6 @@ class Traces(ABC):
         cls,
         data: dict,
     ) -> "Traces":
-        """Create a Traces instance from a dict."""
         # parse timestamp from iso format
         timestamp = parse_timestamp(data["timestamp"])
         duration = parse_duration(data.get("duration", "PT1S"))
@@ -675,6 +719,7 @@ class Traces(ABC):
             attributes=data.get("attributes", {}),
             trace_state=data.get("trace_state", ""),
             flags=data.get("flags", 0),
+            scope=data.get("scope", {}),
         )
 
     @classmethod
@@ -814,6 +859,7 @@ def insert_traces_to_clickhouse(conn, traces: list[Traces]) -> None:
             "has_error",
             "is_remote",
             "resource",
+            "scope",
         ],
         data=[trace.np_arr() for trace in traces],
     )

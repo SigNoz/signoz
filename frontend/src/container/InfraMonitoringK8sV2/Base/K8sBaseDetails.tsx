@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useQuery } from 'react-query';
-import { Color, Spacing } from '@signozhq/design-tokens';
 import { X } from '@signozhq/icons';
 import { Divider } from '@signozhq/ui/divider';
+import { Button } from '@signozhq/ui/button';
+import { DrawerWrapper, DrawerWrapperProps } from '@signozhq/ui/drawer';
+import { toast } from '@signozhq/ui/sonner';
 import { Typography } from '@signozhq/ui/typography';
-import { Drawer } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import APIError from 'types/api/error';
 import { InfraMonitoringEvents } from 'constants/events';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import {
 	GlobalTimeProvider,
 	NANO_SECOND_MULTIPLIER,
@@ -18,12 +18,15 @@ import {
 
 import { INFRA_MONITORING_K8S_PARAMS_KEYS } from '../constants';
 import { useInfraMonitoringSelectedItemParams } from '../hooks';
+import CopyButton from 'periscope/components/CopyButton/CopyButton';
 import LoadingContainer from '../LoadingContainer';
 
 import K8sBaseDetailsContent from './K8sBaseDetailsContent';
 import { K8sBaseDetailsProps } from './types';
+import { useDrawerLifecycleStore } from './useDrawerLifecycleStore';
 
-import '../EntityDetailsUtils/entityDetails.styles.scss';
+import styles from '../EntityDetailsUtils/entityDetails.module.scss';
+import { INFRA_MONITORING_DETAILS_CACHE_TIME } from 'constants/queryCacheTime';
 
 export type {
 	CustomTab,
@@ -33,6 +36,27 @@ export type {
 	K8sDetailsFilters,
 	K8sDetailsMetadataConfig,
 } from './types';
+
+// TODO(H4ad): Improve this on component level
+const DRAWER_TRANSITION = { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] };
+// Be careful when changing these props, this must be animated with transform but later
+// replaced with none, otherwise, the tooltip of the chart will be not positioned correctly
+// due to how the tooltip positioning calculation works
+const DRAWER_MOTION_PROPS = {
+	onOpenAutoFocus: (e: Event): void => e.preventDefault(),
+	initial: { opacity: 0, transform: 'translateX(100%)' },
+	animate: {
+		opacity: 1,
+		transform: 'translateX(0%)',
+		transition: DRAWER_TRANSITION,
+		transitionEnd: { transform: 'none' },
+	},
+	exit: {
+		opacity: 0,
+		transform: 'translateX(100%)',
+		transition: DRAWER_TRANSITION,
+	},
+} as unknown as DrawerWrapperProps['drawerContentProps'];
 
 export default function K8sBaseDetails<T>({
 	category,
@@ -58,8 +82,6 @@ export default function K8sBaseDetails<T>({
 		(s) => s.getAutoRefreshQueryKey,
 	);
 
-	const isDarkMode = useIsDarkMode();
-
 	const [selectedItemParams, setSelectedItemParams] =
 		useInfraMonitoringSelectedItemParams();
 	const selectedItem = selectedItemParams.selectedItem;
@@ -72,12 +94,14 @@ export default function K8sBaseDetails<T>({
 				selectedItem,
 				selectedItemParams.clusterName,
 				selectedItemParams.namespaceName,
+				selectedItemParams.containerName,
 			),
 		[
 			queryKeyPrefix,
 			selectedItem,
 			selectedItemParams.clusterName,
 			selectedItemParams.namespaceName,
+			selectedItemParams.containerName,
 			selectedTime,
 			getAutoRefreshQueryKey,
 		],
@@ -101,6 +125,8 @@ export default function K8sBaseDetails<T>({
 
 			return fetchEntityData({ filter: { expression }, start, end }, signal);
 		},
+		cacheTime: INFRA_MONITORING_DETAILS_CACHE_TIME,
+		staleTime: INFRA_MONITORING_DETAILS_CACHE_TIME,
 		enabled: !!selectedItem,
 	});
 
@@ -121,9 +147,33 @@ export default function K8sBaseDetails<T>({
 		return getInitialEventsExpression(entity);
 	}, [entity, getInitialEventsExpression]);
 
+	const markDrawerOpened = useDrawerLifecycleStore((s) => s.markOpened);
+	const markDrawerClosed = useDrawerLifecycleStore((s) => s.markClosed);
+
+	useEffect(() => {
+		if (selectedItem) {
+			markDrawerOpened();
+		} else {
+			markDrawerClosed();
+		}
+	}, [selectedItem, markDrawerOpened, markDrawerClosed]);
+
 	const handleClose = useCallback((): void => {
 		setSelectedItemParams(null);
 	}, [setSelectedItemParams]);
+
+	const handleOpenChange = useCallback(
+		(open: boolean): void => {
+			if (!open) {
+				handleClose();
+			}
+		},
+		[handleClose],
+	);
+
+	const handleCopyId = useCallback((): void => {
+		toast.success('ID copied to clipboard', { position: 'bottom-left' });
+	}, []);
 
 	const entityName = entity ? getEntityName(entity) : '';
 
@@ -137,31 +187,45 @@ export default function K8sBaseDetails<T>({
 		}
 	}, [entity, eventCategory]);
 
+	// TODO(H4ad): Improve this on component level
+	// DrawerWrapper types `title` as string but renders any ReactNode.
+	const drawerTitle = (
+		<>
+			<Button
+				variant="ghost"
+				size="sm"
+				color="secondary"
+				onClick={handleClose}
+				data-testid="close-drawer-button"
+				className={styles.closeButton}
+				prefix={<X />}
+			/>
+			<Divider type="vertical" />
+			<Typography.Text className={styles.title}>
+				{entityName ||
+					((isEntityError || hasResponseError) && 'Failed to load entity details') ||
+					(isEntityLoading && 'Loading...') ||
+					'-'}
+			</Typography.Text>
+			<CopyButton
+				value={selectedItem ?? ''}
+				ariaLabel="Copy ID"
+				className={styles.copyIdButton}
+				testId="copy-id-button"
+				onCopy={handleCopyId}
+			/>
+		</>
+	) as unknown as string;
+
 	return (
-		<Drawer
-			width="70%"
-			title={
-				<>
-					<Divider type="vertical" />
-					<Typography.Text className="title">
-						{entityName ||
-							((isEntityError || hasResponseError) &&
-								'Failed to load entity details') ||
-							(isEntityLoading && 'Loading...') ||
-							'-'}
-					</Typography.Text>
-				</>
-			}
-			placement="right"
-			onClose={handleClose}
+		<DrawerWrapper
 			open={!!selectedItem}
-			style={{
-				overscrollBehavior: 'contain',
-				background: isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100,
-			}}
-			className="entity-detail-drawer"
-			destroyOnClose
-			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
+			onOpenChange={handleOpenChange}
+			direction="right"
+			title={drawerTitle}
+			showCloseButton={false}
+			drawerContentProps={DRAWER_MOTION_PROPS}
+			className={styles.entityDetailDrawer}
 		>
 			{(isEntityLoading || !selectedItem) && <LoadingContainer />}
 
@@ -210,6 +274,6 @@ export default function K8sBaseDetails<T>({
 					/>
 				</GlobalTimeProvider>
 			)}
-		</Drawer>
+		</DrawerWrapper>
 	);
 }

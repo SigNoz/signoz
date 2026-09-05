@@ -94,7 +94,7 @@ def test_service_account_role_access_admin(
         json={
             "schemaVersion": "v6",
             "name": "admin-sa-dash",
-            "spec": {"display": {"name": "admin-sa-dash"}, "links": []},
+            "spec": {"variables": [], "panels": {}, "layouts": [], "display": {"name": "admin-sa-dash"}, "links": []},
             "tags": [],
         },
         headers={"SIGNOZ-API-KEY": api_key},
@@ -134,7 +134,7 @@ def test_service_account_role_access_editor(
         json={
             "schemaVersion": "v6",
             "name": "editor-sa-dash",
-            "spec": {"display": {"name": "editor-sa-dash"}, "links": []},
+            "spec": {"variables": [], "panels": {}, "layouts": [], "display": {"name": "editor-sa-dash"}, "links": []},
             "tags": [],
         },
         headers={"SIGNOZ-API-KEY": api_key},
@@ -174,7 +174,7 @@ def test_service_account_role_access_viewer(
         json={
             "schemaVersion": "v6",
             "name": "viewer-sa-dash",
-            "spec": {"display": {"name": "viewer-sa-dash"}, "links": []},
+            "spec": {"variables": [], "panels": {}, "layouts": [], "display": {"name": "viewer-sa-dash"}, "links": []},
             "tags": [],
         },
         headers={"SIGNOZ-API-KEY": api_key},

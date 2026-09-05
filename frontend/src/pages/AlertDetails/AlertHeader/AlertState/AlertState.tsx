@@ -1,23 +1,26 @@
 import { Color } from '@signozhq/design-tokens';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { BellOff, CircleCheck, CircleOff, Flame } from '@signozhq/icons';
+import { RuletypesAlertStateDTO } from 'api/generated/services/sigNoz.schemas';
 
 import './AlertState.styles.scss';
 
 type AlertStateProps = {
-	state: string;
+	state: RuletypesAlertStateDTO | string;
 	showLabel?: boolean;
+	testId?: string;
 };
 
 export default function AlertState({
 	state,
 	showLabel,
+	testId,
 }: AlertStateProps): JSX.Element {
 	let icon;
 	let label;
 	const isDarkMode = useIsDarkMode();
 	switch (state) {
-		case 'nodata':
+		case RuletypesAlertStateDTO.nodata:
 			icon = (
 				<CircleOff
 					size={18}
@@ -28,7 +31,7 @@ export default function AlertState({
 			label = <span style={{ color: Color.BG_SIENNA_400 }}>No Data</span>;
 			break;
 
-		case 'disabled':
+		case RuletypesAlertStateDTO.disabled:
 			icon = (
 				<BellOff
 					size={18}
@@ -38,15 +41,16 @@ export default function AlertState({
 			);
 			label = <span style={{ color: Color.BG_VANILLA_400 }}>Muted</span>;
 			break;
-		case 'firing':
+
+		case RuletypesAlertStateDTO.firing:
 			icon = (
 				<Flame size={18} fill={Color.BG_CHERRY_500} color={Color.BG_CHERRY_500} />
 			);
 			label = <span style={{ color: Color.BG_CHERRY_500 }}>Firing</span>;
 			break;
 
-		case 'normal':
-		case 'inactive':
+		case RuletypesAlertStateDTO.inactive:
+		case 'normal': // legacy
 			icon = (
 				<CircleCheck
 					size={18}
@@ -62,7 +66,7 @@ export default function AlertState({
 	}
 
 	return (
-		<div className="alert-state">
+		<div className="alert-state" data-testid={testId}>
 			{icon} {showLabel && <div className="alert-state__label">{label}</div>}
 		</div>
 	);
@@ -70,4 +74,5 @@ export default function AlertState({
 
 AlertState.defaultProps = {
 	showLabel: false,
+	testId: undefined,
 };

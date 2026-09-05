@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as Sentry from '@sentry/react';
-import { Button, Tooltip } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import {
+	QuickFilterChangeEventData,
 	QuickFilterCheckboxUseFieldApis,
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
@@ -14,6 +16,7 @@ import {
 	ArrowUpDown,
 	ArrowUpToLine,
 	Bolt,
+	Box,
 	Boxes,
 	Computer,
 	Container,
@@ -29,6 +32,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { K8sDynamicList } from './Base/K8sDynamicList';
 import {
 	GetClustersQuickFiltersConfig,
+	GetContainersQuickFiltersConfig,
 	GetDaemonsetsQuickFiltersConfig,
 	GetDeploymentsQuickFiltersConfig,
 	GetJobsQuickFiltersConfig,
@@ -45,6 +49,7 @@ import {
 	useInfraMonitoringCategory,
 	useInfraMonitoringGroupBy,
 	useInfraMonitoringOrderBy,
+	useInfraMonitoringPageListing,
 	useInfraMonitoringSelectedItemParams,
 } from './hooks';
 
@@ -53,6 +58,10 @@ import { InfraMonitoringEvents } from 'constants/events';
 import logEvent from 'api/common/logEvent';
 import { NANO_SECOND_MULTIPLIER, useGlobalTimeStore } from 'store/globalTime';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
+import {
+	logInfraFilterCustomizedEvent,
+	logInfraMonitoringListViewedEvent,
+} from 'container/InfraMonitoringK8sV2/Base/events';
 
 export default function InfraMonitoringK8s(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
@@ -61,6 +70,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 	const [, setGroupBy] = useInfraMonitoringGroupBy();
 	const [, setOrderBy] = useInfraMonitoringOrderBy();
 	const [, setSelectedItemParams] = useInfraMonitoringSelectedItemParams();
+	const [, setCurrentPage] = useInfraMonitoringPageListing();
 
 	const compositeQuery = useGetCompositeQueryParam();
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
@@ -120,14 +130,36 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			category: selectedCategory,
 			view: InfraMonitoringEvents.QuickFiltersView,
 		});
+
+		// The category query param is a plain string; entities are validated by
+		// getEntityConfig before rendering
+		logInfraMonitoringListViewedEvent(selectedCategory as InfraMonitoringEntity);
 	}, [selectedCategory]);
 
 	const handleFilterVisibilityChange = useCallback((): void => {
 		setShowFilters((show) => !show);
 	}, []);
 
+	const handleQuickFilterChange = useCallback(
+		(data: QuickFilterChangeEventData): void => {
+			logInfraFilterCustomizedEvent(
+				selectedCategory as InfraMonitoringEntity,
+				'quick_filter',
+				data.expression,
+				data.filterItemKeys,
+			);
+		},
+		[selectedCategory],
+	);
+
 	const categories = useMemo(
 		() => [
+			{
+				key: K8sCategories.CONTAINERS,
+				label: 'Containers',
+				icon: <Box size={14} />,
+				config: GetContainersQuickFiltersConfig(),
+			},
 			{
 				key: K8sCategories.PODS,
 				label: 'Pods',
@@ -196,6 +228,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			void setSelectedCategory(key as string);
 			void setOrderBy(null);
 			void setGroupBy(null);
+			void setCurrentPage(null);
 			setSelectedItemParams(null);
 			redirectWithQueryBuilderData({
 				...currentQuery,
@@ -218,14 +251,15 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			<>
 				{!showFilters && (
 					<div className={styles.k8SOpenQuickFilters}>
-						<Button
-							className="periscope-btn ghost"
-							type="text"
-							size="small"
-							onClick={handleFilterVisibilityChange}
-						>
-							<Filter size={14} />
-						</Button>
+						<TooltipSimple title="Open Filters" arrow side="left">
+							<Button
+								variant="ghost"
+								size="icon"
+								color="secondary"
+								onClick={handleFilterVisibilityChange}
+								prefix={<Filter size={14} />}
+							/>
+						</TooltipSimple>
 					</div>
 				)}
 			</>
@@ -246,13 +280,13 @@ export default function InfraMonitoringK8s(): JSX.Element {
 												Viewing · Resource
 											</Typography.Text>
 											<div className={styles.sectionLine} />
-											<Tooltip title="Collapse Filters">
+											<TooltipSimple title="Collapse Filters" arrow>
 												<ArrowUpToLine
 													style={{ transform: 'rotate(270deg)' }}
 													onClick={handleFilterVisibilityChange}
 													size="md"
 												/>
-											</Tooltip>
+											</TooltipSimple>
 										</div>
 										<div className={styles.categoryCard}>
 											<div className={styles.categoryList}>
@@ -289,6 +323,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 												config={selectedCategoryConfig}
 												handleFilterVisibilityChange={handleFilterVisibilityChange}
 												useFieldApis={selectedCategoryUseFieldApis}
+												onQuickFilterChange={handleQuickFilterChange}
 											/>
 										)}
 									</div>

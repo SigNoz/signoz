@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import refreshPaymentStatus from 'api/v3/licenses/put';
+import { refreshLicense } from 'api/generated/services/licenses';
 import { Button } from '@signozhq/ui/button';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { RefreshCcw } from '@signozhq/icons';
@@ -14,17 +14,21 @@ function RefreshPaymentStatus({
 	className?: string;
 }): JSX.Element {
 	const { t } = useTranslation(['failedPayment']);
-	const { activeLicenseRefetch } = useAppContext();
+	const { activeLicense, activeLicenseRefetch } = useAppContext();
 
 	const [isLoading, setIsLoading] = useState(false);
 
 	const handleRefreshPaymentStatus = async (): Promise<void> => {
+		if (!activeLicense) {
+			return;
+		}
+
 		setIsLoading(true);
 
 		try {
-			await refreshPaymentStatus();
+			await refreshLicense({ id: activeLicense.id });
 
-			await Promise.all([activeLicenseRefetch()]);
+			activeLicenseRefetch();
 		} catch (e) {
 			console.error(e);
 		}

@@ -7,6 +7,7 @@ import (
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -52,6 +53,7 @@ var (
 			ValueType: schema.ColumnTypeString,
 		}},
 		"resource": {Name: "resource", Type: schema.JSONColumnType{}},
+		"scope":    {Name: "scope", Type: schema.JSONColumnType{}},
 
 		"events": {Name: "events", Type: schema.ArrayColumnType{
 			ElementType: schema.ColumnTypeString,
@@ -159,12 +161,16 @@ var (
 	}
 )
 
-type fieldMapper struct{}
+type fieldMapper struct {
+	// fl evaluates the resolve_semconv_families flag during resolution.
+	// A nil flagger keeps resolution literal.
+	fl flagger.Flagger
+}
 
 var _ qbtypes.FieldMapper = (*fieldMapper)(nil)
 
-func NewFieldMapper() *fieldMapper {
-	return &fieldMapper{}
+func NewFieldMapper(fl flagger.Flagger) *fieldMapper {
+	return &fieldMapper{fl: fl}
 }
 
 func (m *fieldMapper) getColumn(
@@ -176,7 +182,7 @@ func (m *fieldMapper) getColumn(
 	case telemetrytypes.FieldContextResource:
 		return []*schema.Column{indexV3Columns["resource"], indexV3Columns["resources_string"]}, nil
 	case telemetrytypes.FieldContextScope:
-		return []*schema.Column{}, qbtypes.ErrColumnNotFound
+		return []*schema.Column{indexV3Columns["scope"]}, nil
 	case telemetrytypes.FieldContextAttribute:
 		switch key.FieldDataType {
 		case telemetrytypes.FieldDataTypeString:
@@ -287,14 +293,25 @@ func (m *fieldMapper) resolveColumnExprs(
 
 		switch column.Type.GetType() {
 		case schema.ColumnTypeEnumJSON:
-			// json is only supported for resource context as of now
-			if key.FieldContext != telemetrytypes.FieldContextResource {
-				return nil, nil, nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource context fields are supported for json columns, got %s", key.FieldContext.String)
-			}
 			// have to add ::string as clickHouse throws an error :- data types Variant/Dynamic are not allowed in GROUP BY
 			// once clickHouse dependency is updated, we need to check if we can remove it.
-			exprs = append(exprs, fmt.Sprintf("%s.`%s`::String", columnName, key.Name))
-			existExprs = append(existExprs, fmt.Sprintf("%s.`%s` IS NOT NULL", columnName, key.Name))
+			switch key.FieldContext {
+			case telemetrytypes.FieldContextResource:
+				exprs = append(exprs, fmt.Sprintf("%s.`%s`::String", columnName, key.Name))
+				existExprs = append(existExprs, fmt.Sprintf("%s.`%s` IS NOT NULL", columnName, key.Name))
+			case telemetrytypes.FieldContextScope:
+				if f, ok := IntrinsicFields[key.Name]; ok && f.FieldContext == telemetrytypes.FieldContextScope {
+					// declared String paths on the scope column read '' for the missing case
+					exprs = append(exprs, fmt.Sprintf("%s::String", key.Name))
+					existExprs = append(existExprs, fmt.Sprintf("%s <> ''", key.Name))
+				} else {
+					attributeName := strings.TrimPrefix(key.Name, "attribute.") // literal "attribute" prefix in attribute keys needs double prefix
+					exprs = append(exprs, fmt.Sprintf("%s.attributes.%s::String", columnName, querybuilder.ClickHouseIdentifier(attributeName)))
+					existExprs = append(existExprs, fmt.Sprintf("%s.attributes.%s IS NOT NULL", columnName, querybuilder.ClickHouseIdentifier(attributeName)))
+				}
+			default:
+				return nil, nil, nil, errors.NewInternalf(errors.CodeInternal, "only resource and scope context fields are supported for json columns, got %s", key.FieldContext.String)
+			}
 		case schema.ColumnTypeEnumString,
 			schema.ColumnTypeEnumUInt64,
 			schema.ColumnTypeEnumUInt32,
@@ -336,6 +353,54 @@ func (m *fieldMapper) resolveColumnExprs(
 	return exprs, existExprs, columns, nil
 }
 
+// upgradeToFamilies swaps single-member candidates for their family when the
+// metadata map proves membership. Candidate order and every non-family
+// candidate stay exactly as the legacy flow produced them; sibling candidates
+// of an already-emitted family are dropped rather than duplicated.
+func (m *fieldMapper) upgradeToFamilies(ctx context.Context, orgID valuer.UUID, field *telemetrytypes.TelemetryFieldKey, candidates []*telemetrytypes.LogicalField, keys map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.LogicalField {
+	var families []*telemetrytypes.LogicalField
+	for _, logical := range querybuilder.MatchingLogicalFields(ctx, orgID, m.fl, field, keys) {
+		if logical.IsFamily() {
+			families = append(families, logical)
+		}
+	}
+	if len(families) == 0 {
+		return candidates
+	}
+
+	out := make([]*telemetrytypes.LogicalField, 0, len(candidates))
+	emitted := make(map[*telemetrytypes.LogicalField]bool)
+	for _, candidate := range candidates {
+		var family *telemetrytypes.LogicalField
+		for _, fam := range families {
+			if fam.FieldContext != candidate.FieldContext || fam.FieldDataType != candidate.FieldDataType {
+				continue
+			}
+			memberOfFamily := candidate.Single().Name == field.Name
+			for _, member := range fam.Members {
+				if member.Name == candidate.Single().Name {
+					memberOfFamily = true
+					break
+				}
+			}
+			if memberOfFamily {
+				family = fam
+				break
+			}
+		}
+		if family == nil {
+			out = append(out, candidate)
+			continue
+		}
+		if emitted[family] {
+			continue
+		}
+		emitted[family] = true
+		out = append(out, family)
+	}
+	return out
+}
+
 // ColumnExpressionFor returns the bare (unaliased) SQL expression for the field, resolving
 // unknown keys via CandidateKeys and wrapping guardable columns with exists-guard multiIfs
 // so an absent key yields NULL.
@@ -348,18 +413,25 @@ func (m *fieldMapper) ColumnExpressionFor(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
 
-	// Resolve the candidate column(s).
-	var candidates []*telemetrytypes.TelemetryFieldKey
+	// Resolve the candidate logical field(s).
+	var candidates []*telemetrytypes.LogicalField
 	switch _, err := m.FieldFor(ctx, orgID, startNs, endNs, field); {
 	case err == nil:
-		candidates = []*telemetrytypes.TelemetryFieldKey{field}
-	case errors.Is(err, qbtypes.ErrColumnNotFound):
-		// column (when the bare name is one) plus metadata matches, else synthesized
-		// type-variant keys.
-		candidates = m.CandidateKeys(ctx, orgID, field, nil, keys)
+		// Every match from metadata is kept, similar to the filter path.
+		candidates = querybuilder.MatchingLogicalFields(ctx, orgID, m.fl, field, keys)
 		if len(candidates) == 0 {
+			candidates = []*telemetrytypes.LogicalField{telemetrytypes.SingleLogicalField(field.Name, field)}
+		}
+	case errors.Is(err, qbtypes.ErrColumnNotFound):
+		// The legacy candidate flow, unchanged: column (when the bare name is
+		// one) plus metadata matches, else synthesized type-variant keys. The
+		// family step below only swaps candidates for their family; it never
+		// changes candidate order or non-family behavior.
+		raw := m.CandidateKeys(ctx, orgID, field, nil, keys)
+		if len(raw) == 0 {
 			return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name).WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(field.Name, errors.NounKeys, maps.Keys(keys))...)
 		}
+		candidates = m.upgradeToFamilies(ctx, orgID, field, querybuilder.WrapAsLogicalFields(field.Name, raw), keys)
 	default:
 		return "", err
 	}
@@ -373,29 +445,36 @@ func (m *fieldMapper) ColumnExpressionFor(
 			dummyValue = 0.0
 		}
 		stmts := make([]string, 0, len(candidates)*2)
-		for _, key := range candidates {
-			value, err := m.FieldFor(ctx, orgID, startNs, endNs, key)
+		for _, logical := range candidates {
+			value, err := querybuilder.LogicalValueExpr(ctx, orgID, startNs, endNs, m, logical)
 			if err != nil {
 				return "", err
 			}
-			guard, err := m.existsExpressionFor(ctx, orgID, startNs, endNs, key, true)
+			guard, err := querybuilder.LogicalExistsExpr(ctx, orgID, startNs, endNs, m, logical, true)
 			if err != nil {
 				return "", err
 			}
-			coerced, _ := querybuilder.DataTypeCollisionHandledFieldName(key, dummyValue, value, qbtypes.FilterOperatorUnknown)
+			coerced := value
+			// a time column keeps its native type; coercing it would yield seconds
+			if temporal, err := m.logicalIsTemporal(ctx, startNs, endNs, logical); err != nil {
+				return "", err
+			} else if !temporal {
+				coerced, _ = querybuilder.DataTypeCollisionHandledFieldName(logical.Single(), dummyValue, value, qbtypes.FilterOperatorUnknown)
+			}
 			stmts = append(stmts, guard, coerced)
 		}
 		return fmt.Sprintf("multiIf(%s, NULL)", strings.Join(stmts, ", ")), nil
 	}
 
 	if len(candidates) == 1 {
-		value, err := m.FieldFor(ctx, orgID, startNs, endNs, candidates[0])
+		logical := candidates[0]
+		value, err := querybuilder.LogicalValueExpr(ctx, orgID, startNs, endNs, m, logical)
 		if err != nil {
 			return "", err
 		}
-		exprs, existExprs, _, _ := m.resolveColumnExprs(ctx, startNs, endNs, candidates[0])
-		if len(exprs) == 1 && len(existExprs) == 1 {
-			guard, err := m.existsExpressionFor(ctx, orgID, startNs, endNs, candidates[0], true)
+		exprs, existExprs, _, _ := m.resolveColumnExprs(ctx, startNs, endNs, logical.Single())
+		if !logical.IsFamily() && len(exprs) == 1 && len(existExprs) == 1 {
+			guard, err := querybuilder.LogicalExistsExpr(ctx, orgID, startNs, endNs, m, logical, true)
 			if err != nil {
 				return "", err
 			}
@@ -407,18 +486,41 @@ func (m *fieldMapper) ColumnExpressionFor(
 	// Multiple candidates (collision / synth): multiIf picks the first that exists,
 	// stringified so branches share a type.
 	args := make([]string, 0, len(candidates))
-	for _, key := range candidates {
-		value, err := m.FieldFor(ctx, orgID, startNs, endNs, key)
+	for _, logical := range candidates {
+		value, err := querybuilder.LogicalValueExpr(ctx, orgID, startNs, endNs, m, logical)
 		if err != nil {
 			return "", err
 		}
-		guard, err := m.existsExpressionFor(ctx, orgID, startNs, endNs, key, true)
+		guard, err := querybuilder.LogicalExistsExpr(ctx, orgID, startNs, endNs, m, logical, true)
 		if err != nil {
 			return "", err
 		}
 		args = append(args, fmt.Sprintf("%s, toString(%s)", guard, value))
 	}
 	return fmt.Sprintf("multiIf(%s, NULL)", strings.Join(args, ", ")), nil
+}
+
+// logicalIsTemporal reports whether the logical field resolves to a single time
+// column. A family is attribute-backed and never temporal.
+func (m *fieldMapper) logicalIsTemporal(ctx context.Context, startNs, endNs uint64, logical *telemetrytypes.LogicalField) (bool, error) {
+	if logical.IsFamily() {
+		return false, nil
+	}
+	return m.columnIsTemporal(ctx, startNs, endNs, logical.Single())
+}
+
+// columnIsTemporal reports whether key resolves to a single time column, after evolution
+// selection. Multiple columns mean an attribute-map union, which is never temporal.
+func (m *fieldMapper) columnIsTemporal(ctx context.Context, startNs, endNs uint64, key *telemetrytypes.TelemetryFieldKey) (bool, error) {
+	columns, err := m.getColumn(ctx, startNs, endNs, key)
+	if err != nil {
+		return false, err
+	}
+	newColumns, _, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, startNs, endNs)
+	if err != nil {
+		return false, err
+	}
+	return len(newColumns) == 1 && querybuilder.ColumnIsTemporal(newColumns[0]), nil
 }
 
 // columnMatchesDataType reports whether a metadata field's data type is consistent with a
@@ -432,9 +534,11 @@ func columnMatchesDataType(col *schema.Column, dt telemetrytypes.FieldDataType) 
 	switch col.Type.GetType() {
 	case schema.ColumnTypeEnumBool:
 		return dt == telemetrytypes.FieldDataTypeBool
+	case schema.ColumnTypeEnumDateTime64:
+		return false
 	case schema.ColumnTypeEnumUInt64, schema.ColumnTypeEnumUInt32,
 		schema.ColumnTypeEnumInt8, schema.ColumnTypeEnumInt16,
-		schema.ColumnTypeEnumFloat64, schema.ColumnTypeEnumDateTime64:
+		schema.ColumnTypeEnumFloat64:
 		return dt == telemetrytypes.FieldDataTypeInt64 ||
 			dt == telemetrytypes.FieldDataTypeFloat64 ||
 			dt == telemetrytypes.FieldDataTypeNumber
@@ -491,16 +595,39 @@ func (m *fieldMapper) CandidateKeys(ctx context.Context, _ valuer.UUID, field *t
 		// honored as-is: the stripped name lives in the attribute maps
 		stripped := telemetrytypes.NewTelemetryFieldKey(field.Name, telemetrytypes.FieldContextUnspecified, field.FieldDataType)
 		return querybuilder.SynthesizeKeys(stripped, value)
-	case telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextResource:
+	case telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextResource, telemetrytypes.FieldContextScope:
 		// strict context honored as-is: stripped interpretation first, literal spelling second
 		literal := telemetrytypes.NewTelemetryFieldKey(field.FieldContext.StringValue()+"."+field.Name, field.FieldContext, field.FieldDataType)
 		return append(querybuilder.SynthesizeKeys(field, value), querybuilder.SynthesizeKeys(literal, value)...)
 	}
-	// contexts that don't exist on spans (log, body, scope, …) have nothing to synthesize
+	// contexts that don't exist on spans (log, body, …) have nothing to synthesize
 	return nil
 }
 
-func (m *fieldMapper) existsExpressionFor(
+// scopeJSONExistsExpression renders the existence predicate for the scope JSON column, the one
+// signal-specific case the generic querybuilder.ExistsExpression must not carry.
+func scopeJSONExistsExpression(key *telemetrytypes.TelemetryFieldKey, fieldExpression string, exists bool) (string, bool) {
+	if key.FieldContext != telemetrytypes.FieldContextScope {
+		return "", false
+	}
+	// Declared String paths are non-Nullable (absent reads '' not NULL).
+	if f, ok := IntrinsicFields[key.Name]; ok && f.FieldContext == telemetrytypes.FieldContextScope {
+		if exists {
+			return fieldExpression + " <> ''", true
+		}
+		return fieldExpression + " = ''", true
+	}
+	// Scope attribute: the value expression casts the JSON path to String, which folds a missing
+	// key's NULL to '', so presence must test the raw path — drop the ::String cast.
+	path := strings.TrimSuffix(fieldExpression, "::String")
+	if exists {
+		return path + " IS NOT NULL", true
+	}
+	return path + " IS NULL", true
+}
+
+// ExistsFor implements the per-key existence primitive of qbtypes.FieldMapper.
+func (m *fieldMapper) ExistsFor(
 	ctx context.Context,
 	orgID valuer.UUID,
 	tsStart, tsEnd uint64,
@@ -514,6 +641,9 @@ func (m *fieldMapper) existsExpressionFor(
 	fieldExpression, err := m.FieldFor(ctx, orgID, tsStart, tsEnd, key)
 	if err != nil {
 		return "", err
+	}
+	if expr, ok := scopeJSONExistsExpression(key, fieldExpression, exists); ok {
+		return expr, nil
 	}
 	return querybuilder.ExistsExpression(columns, key, tsStart, tsEnd, fieldExpression, exists)
 }

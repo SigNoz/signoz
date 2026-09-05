@@ -19,6 +19,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
 	"github.com/SigNoz/signoz/pkg/statementbuilder"
+	"github.com/SigNoz/signoz/pkg/statementbuilder/aistatementbuilder"
 	"github.com/SigNoz/signoz/pkg/statementbuilder/auditstatementbuilder"
 	"github.com/SigNoz/signoz/pkg/statementbuilder/logsstatementbuilder"
 	"github.com/SigNoz/signoz/pkg/statementbuilder/meterstatementbuilder"
@@ -117,6 +118,8 @@ func NewTestManager(t *testing.T, testOpts *TestManagerOptions) *Manager {
 	ctx := context.Background()
 	traceStmtBuilder, err := tracesstatementbuilder.NewFactory(telemetryStore, metadataStore, flagger).New(ctx, providerSettings, cfg)
 	require.NoError(t, err)
+	aiTraceStmtBuilder, err := aistatementbuilder.NewFactory(telemetryStore, metadataStore, flagger).New(ctx, providerSettings, cfg)
+	require.NoError(t, err)
 	traceOperatorStmtBuilder, err := tracesstatementbuilder.NewOperatorFactory(telemetryStore, metadataStore, flagger).New(ctx, providerSettings, cfg)
 	require.NoError(t, err)
 	logStmtBuilder, err := logsstatementbuilder.NewFactory(telemetryStore, metadataStore, flagger).New(ctx, providerSettings, cfg)
@@ -128,7 +131,7 @@ func NewTestManager(t *testing.T, testOpts *TestManagerOptions) *Manager {
 	meterStmtBuilder, err := meterstatementbuilder.NewFactory(metadataStore, flagger).New(ctx, providerSettings, cfg)
 	require.NoError(t, err)
 	bucketCache := querier.NewBucketCache(providerSettings, cache, 0, 0)
-	providerFactory := signozquerier.NewFactory(telemetryStore, prometheus, metadataStore, traceStmtBuilder, logStmtBuilder, auditStmtBuilder, metricStmtBuilder, meterStmtBuilder, traceOperatorStmtBuilder, bucketCache, flagger)
+	providerFactory := signozquerier.NewFactory(telemetryStore, prometheus, nil, metadataStore, traceStmtBuilder, aiTraceStmtBuilder, logStmtBuilder, auditStmtBuilder, metricStmtBuilder, meterStmtBuilder, traceOperatorStmtBuilder, bucketCache, flagger)
 	mockQuerier, err := providerFactory.New(context.Background(), providerSettings, querier.Config{})
 	require.NoError(t, err)
 

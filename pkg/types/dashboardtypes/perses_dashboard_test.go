@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/perses/spec/go/dashboard"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -47,6 +48,7 @@ func TestInvalidateNotAJSON(t *testing.T) {
 // UnmarshalJSON methods (panel/query/variable plugin envelopes).
 func TestUnmarshalErrorPreservesNestedMessage(t *testing.T) {
 	data := []byte(`{
+		"variables": [],
 		"panels": {
 			"p1": {
 				"kind": "Panel",
@@ -77,14 +79,15 @@ func TestUnmarshalErrorPreservesNestedMessage(t *testing.T) {
 }
 
 func TestValidateEmptySpec(t *testing.T) {
-	// no variables no panels no links
-	data := []byte(`{}`)
+	// The three required collections must be present, but may be empty.
+	data := []byte(`{"variables": [], "panels": {}, "layouts": []}`)
 	_, err := unmarshalDashboard(data)
 	assert.NoError(t, err, "expected valid")
 }
 
 func TestValidateOnlyVariables(t *testing.T) {
 	data := []byte(`{
+		"panels": {},
 		"variables": [
 			{
 				"kind": "ListVariable",
@@ -116,8 +119,60 @@ func TestValidateOnlyVariables(t *testing.T) {
 	assert.NoError(t, err, "expected valid")
 }
 
+// TestInvalidateAbsentOrNullRequiredCollections pins the strict reading of the
+// schema on the three required, non-nullable collections: an absent key breaks
+// `required`, an explicit null breaks the array/object type, and both are
+// rejected. Only the empty collection is accepted.
+func TestInvalidateAbsentOrNullRequiredCollections(t *testing.T) {
+	cases := []struct {
+		description  string
+		specJSON     string
+		expectedPath string
+	}{
+		{
+			description:  "variables absent",
+			specJSON:     `{"panels": {}, "layouts": []}`,
+			expectedPath: "spec.variables",
+		},
+		{
+			description:  "variables null",
+			specJSON:     `{"variables": null, "panels": {}, "layouts": []}`,
+			expectedPath: "spec.variables",
+		},
+		{
+			description:  "panels absent",
+			specJSON:     `{"variables": [], "layouts": []}`,
+			expectedPath: "spec.panels",
+		},
+		{
+			description:  "panels null",
+			specJSON:     `{"variables": [], "panels": null, "layouts": []}`,
+			expectedPath: "spec.panels",
+		},
+		{
+			description:  "layouts absent",
+			specJSON:     `{"variables": [], "panels": {}}`,
+			expectedPath: "spec.layouts",
+		},
+		{
+			description:  "layouts null",
+			specJSON:     `{"variables": [], "panels": {}, "layouts": null}`,
+			expectedPath: "spec.layouts",
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.description, func(t *testing.T) {
+			_, err := unmarshalDashboard([]byte(c.specJSON))
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), c.expectedPath+": is required and must not be null")
+		})
+	}
+}
+
 func TestInvalidateDuplicateVariableNames(t *testing.T) {
 	data := []byte(`{
+		"panels": {},
 		"variables": [
 			{
 				"kind": "TextVariable",
@@ -147,6 +202,7 @@ func TestInvalidateDuplicateVariableNames(t *testing.T) {
 func TestInvalidateVariableNameWithInvalidChars(t *testing.T) {
 	listVarWithName := func(name string) []byte {
 		return []byte(`{
+			"panels": {},
 			"variables": [
 				{
 					"kind": "ListVariable",
@@ -187,6 +243,7 @@ func TestInvalidateVariableNameWithInvalidChars(t *testing.T) {
 
 func TestInvalidatePanelKey(t *testing.T) {
 	data := []byte(`{
+		"variables": [],
 		"panels": {
 			"bad key!": {
 				"kind": "Panel",
@@ -213,6 +270,7 @@ func TestInvalidatePanelKey(t *testing.T) {
 func TestInvalidateListVariableCrossFields(t *testing.T) {
 	listVar := func(specFields string) []byte {
 		return []byte(`{
+			"panels": {},
 			"variables": [
 				{
 					"kind": "ListVariable",
@@ -295,11 +353,13 @@ func TestInvalidateListVariableCrossFields(t *testing.T) {
 func TestInvalidateEmptyVariableName(t *testing.T) {
 	cases := map[string][]byte{
 		"text variable": []byte(`{
+			"panels": {},
 			"variables": [{"kind": "TextVariable", "spec": {"name": "", "value": "x"}}],
 			"links": [],
 			"layouts": []
 		}`),
 		"list variable": []byte(`{
+			"panels": {},
 			"variables": [{
 				"kind": "ListVariable",
 				"spec": {
@@ -331,6 +391,7 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 		{
 			name: "unknown panel plugin",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
@@ -348,6 +409,7 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 		{
 			name: "unknown panel envelope kind",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Row",
@@ -364,6 +426,7 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 		{
 			name: "unknown query plugin",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
@@ -387,6 +450,7 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 		{
 			name: "unknown query envelope kind",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
@@ -410,6 +474,7 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 		{
 			name: "empty query envelope kind",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
@@ -433,6 +498,7 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 		{
 			name: "unknown variable plugin",
 			data: `{
+				"panels": {},
 				"variables": [{
 					"kind": "ListVariable",
 					"spec": {
@@ -460,6 +526,7 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 
 func TestInvalidateOneInvalidPanel(t *testing.T) {
 	data := []byte(`{
+		"variables": [],
 		"panels": {
 			"good": {
 				"kind": "Panel",
@@ -495,7 +562,7 @@ func TestInvalidateLayoutPanelReferences(t *testing.T) {
 		}
 	}`
 	layout := func(items string) []byte {
-		return []byte(`{` + validPanels + `, "links": [], "layouts": [{"kind": "Grid", "spec": {"items": [` + items + `]}}]}`)
+		return []byte(`{"variables": [], ` + validPanels + `, "links": [], "layouts": [{"kind": "Grid", "spec": {"items": [` + items + `]}}]}`)
 	}
 
 	tests := []struct {
@@ -547,6 +614,7 @@ func TestRejectUnknownFieldsInPluginSpec(t *testing.T) {
 		{
 			name: "unknown field in panel spec",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
@@ -567,6 +635,7 @@ func TestRejectUnknownFieldsInPluginSpec(t *testing.T) {
 		{
 			name: "unknown field in query spec",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
@@ -593,6 +662,7 @@ func TestRejectUnknownFieldsInPluginSpec(t *testing.T) {
 		{
 			name: "unknown field in variable spec",
 			data: `{
+				"panels": {},
 				"variables": [{
 					"kind": "ListVariable",
 					"spec": {
@@ -630,6 +700,7 @@ func TestInvalidateWrongFieldTypeInPluginSpec(t *testing.T) {
 		{
 			name: "wrong type on panel plugin field",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
@@ -650,6 +721,7 @@ func TestInvalidateWrongFieldTypeInPluginSpec(t *testing.T) {
 		{
 			name: "wrong type on query plugin field",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
@@ -676,6 +748,7 @@ func TestInvalidateWrongFieldTypeInPluginSpec(t *testing.T) {
 		{
 			name: "wrong type on variable plugin field",
 			data: `{
+				"panels": {},
 				"variables": [{
 					"kind": "ListVariable",
 					"spec": {
@@ -715,6 +788,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 		{
 			name: "bad signal in builder query",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
@@ -744,6 +818,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 		{
 			name: "bad line interpolation",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
@@ -764,6 +839,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 		{
 			name: "bad line style",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
@@ -784,6 +860,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 		{
 			name: "bad fill mode",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
@@ -804,6 +881,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 		{
 			name: "bad spanGaps fillLessThan",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
@@ -824,6 +902,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 		{
 			name: "bad time preference",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
@@ -844,6 +923,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 		{
 			name: "bad legend position",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
@@ -864,6 +944,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 		{
 			name: "bad legend mode",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
@@ -884,6 +965,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 		{
 			name: "bad threshold format",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
@@ -904,6 +986,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 		{
 			name: "bad comparison operator",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
@@ -924,6 +1007,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 		{
 			name: "bad precision",
 			data: `{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
@@ -964,6 +1048,7 @@ func TestThresholdLabelOptional(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			data := []byte(`{
+				"variables": [],
 				"panels": {
 					"p1": {
 						"kind": "Panel",
@@ -989,6 +1074,7 @@ func TestThresholdLabelOptional(t *testing.T) {
 
 func TestInvalidatePanelWithoutQueries(t *testing.T) {
 	data := []byte(`{
+		"variables": [],
 		"panels": {
 			"p1": {
 				"kind": "Panel",
@@ -1005,6 +1091,7 @@ func TestInvalidatePanelWithoutQueries(t *testing.T) {
 
 func TestInvalidatePanelWithEmptyQueriesArray(t *testing.T) {
 	data := []byte(`{
+		"variables": [],
 		"panels": {
 			"p1": {
 				"kind": "Panel",
@@ -1027,6 +1114,7 @@ func TestInvalidatePanelWithEmptyQueriesArray(t *testing.T) {
 // signoz/CompositeQuery, not by listing multiple top-level queries.
 func TestInvalidatePanelWithMultipleDirectQueries(t *testing.T) {
 	data := []byte(`{
+		"variables": [],
 		"panels": {
 			"p1": {
 				"kind": "Panel",
@@ -1136,6 +1224,7 @@ func TestValidateRequiredFields(t *testing.T) {
 
 func TestTimeSeriesPanelDefaults(t *testing.T) {
 	data := []byte(`{
+		"variables": [],
 		"panels": {
 			"p1": {
 				"kind": "Panel",
@@ -1188,6 +1277,7 @@ func TestTimeSeriesPanelDefaults(t *testing.T) {
 
 func TestNumberPanelDefaults(t *testing.T) {
 	data := []byte(`{
+		"variables": [],
 		"panels": {
 			"p1": {
 				"kind": "Panel",
@@ -1251,6 +1341,7 @@ func TestPersesFixtureStorageRoundTrip(t *testing.T) {
 // then unmarshal it back (what would be read from DB), and verify defaults survive.
 func TestStorageRoundTrip(t *testing.T) {
 	input := []byte(`{
+		"variables": [],
 		"panels": {
 			"p1": {
 				"kind": "Panel",
@@ -1336,7 +1427,7 @@ func TestStorageRoundTrip(t *testing.T) {
 }
 
 func TestPostableDashboardV2GenerateNameFlag(t *testing.T) {
-	const validSpec = `"spec": {"panels": {}, "layouts": [], "links": []}`
+	const validSpec = `"spec": {"variables": [], "panels": {}, "layouts": [], "links": []}`
 
 	tests := []struct {
 		scenario     string
@@ -1348,13 +1439,13 @@ func TestPostableDashboardV2GenerateNameFlag(t *testing.T) {
 	}{
 		{
 			scenario:    "flag true with display.name derives name on conversion",
-			body:        `{"schemaVersion":"` + SchemaVersion + `","generateName":true,"spec":{"display":{"name":"My Dashboard!"},"panels":{},"layouts":[],"links":[]}}`,
+			body:        `{"schemaVersion":"` + SchemaVersion + `","generateName":true,"spec":{"display":{"name":"My Dashboard!"},"variables":[],"panels":{},"layouts":[],"links":[]}}`,
 			wantName:    "",
 			wantDisplay: "My Dashboard!",
 		},
 		{
 			scenario:     "flag true with non-empty name is rejected",
-			body:         `{"schemaVersion":"` + SchemaVersion + `","name":"already-set","generateName":true,"spec":{"display":{"name":"My Dashboard"},"panels":{},"layouts":[],"links":[]}}`,
+			body:         `{"schemaVersion":"` + SchemaVersion + `","name":"already-set","generateName":true,"spec":{"display":{"name":"My Dashboard"},"variables":[],"panels":{},"layouts":[],"links":[]}}`,
 			wantErr:      true,
 			wantErrMatch: "name must be empty when generateName is true",
 		},
@@ -1513,6 +1604,7 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 	}
 	mkQuery := func(panelKind, queryKind, querySpec string) []byte {
 		return []byte(`{
+			"variables": [],
 			"panels": {"p1": {"kind": "Panel", "spec": {
 				"links": [],
 				"plugin": {"kind": "` + panelKind + `", "spec": {}},
@@ -1524,6 +1616,7 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 	}
 	mkComposite := func(panelKind, subType, subSpec string) []byte {
 		return []byte(`{
+			"variables": [],
 			"panels": {"p1": {"kind": "Panel", "spec": {
 				"links": [],
 				"plugin": {"kind": "` + panelKind + `", "spec": {}},
@@ -1574,6 +1667,7 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 func TestCommaSeparatedAggregationRejectedOnWrite(t *testing.T) {
 	buildDashboardWithLogsAggregation := func(aggregationsJSON string) []byte {
 		return []byte(`{
+		"variables": [],
 		"panels": {"p1": {"kind": "Panel", "spec": {
 			"links": [],
 			"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
@@ -1694,6 +1788,7 @@ func TestValidateGridItemLimit(t *testing.T) {
 // the unmarshal path — it does, via DashboardSpec.Validate -> validateLayouts.
 func TestInvalidateLayoutOverlapViaUnmarshal(t *testing.T) {
 	data := []byte(`{
+		"variables": [],
 		"panels": {
 			"p1": {"kind": "Panel", "spec": {"links": [],"plugin": {"kind": "signoz/TablePanel", "spec": {}}, "queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}}}]}},
 			"p2": {"kind": "Panel", "spec": {"links": [],"plugin": {"kind": "signoz/TablePanel", "spec": {}}, "queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}}}]}}
@@ -1714,6 +1809,7 @@ func TestInvalidateLayoutOverlapViaUnmarshal(t *testing.T) {
 // two items are side by side so they clear the overlap check first.
 func TestInvalidateDuplicatePanelReference(t *testing.T) {
 	data := []byte(`{
+		"variables": [],
 		"panels": {
 			"p1": {"kind": "Panel", "spec": {"links": [],"plugin": {"kind": "signoz/TablePanel", "spec": {}}, "queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "logs", "aggregations": [{"expression": "count()"}]}}}}]}}
 		},
@@ -1745,39 +1841,43 @@ func TestInvalidateDisplayNameTooLong(t *testing.T) {
 		expectedLabel    string
 	}{
 		{
-			scenario:         "dashboard display name",
-			limit:            MaxDisplayNameLen,
-			dashboardJSONFmt: `{"display": {"name": "%s"}, "links": [], "layouts": []}`,
-			expectedLabel:    "dashboard",
-			expectedPath:     "spec.display.name",
+			scenario: "dashboard display name",
+			limit:    MaxDisplayNameLen,
+			dashboardJSONFmt: `{
+		"variables": [],
+		"panels": {},"display": {"name": "%s"}, "links": [], "layouts": []}`,
+			expectedLabel: "dashboard",
+			expectedPath:  "spec.display.name",
 		},
 		{
 			scenario:         "panel display name",
 			limit:            MaxDisplayNameLen,
-			dashboardJSONFmt: `{"panels": {"p1": {"kind": "Panel", "spec": {"links": [], "display": {"name": "%s"}, "plugin": {"kind": "signoz/TablePanel", "spec": {}}, "queries": []}}}, "links": [], "layouts": []}`,
+			dashboardJSONFmt: `{"variables": [], "panels": {"p1": {"kind": "Panel", "spec": {"links": [], "display": {"name": "%s"}, "plugin": {"kind": "signoz/TablePanel", "spec": {}}, "queries": []}}}, "links": [], "layouts": []}`,
 			expectedLabel:    "panel",
 			expectedPath:     "spec.panels.p1.spec.display.name",
 		},
 		{
 			scenario:         "list variable display name",
 			limit:            MaxDisplayNameLen,
-			dashboardJSONFmt: `{"variables": [{"kind": "ListVariable", "spec": {"name": "svc", "display": {"name": "%s"}, "plugin": {"kind": "signoz/DynamicVariable", "spec": {"name": "service.name", "signal": "metrics"}}}}], "links": [], "layouts": []}`,
+			dashboardJSONFmt: `{"panels": {}, "variables": [{"kind": "ListVariable", "spec": {"name": "svc", "display": {"name": "%s"}, "plugin": {"kind": "signoz/DynamicVariable", "spec": {"name": "service.name", "signal": "metrics"}}}}], "links": [], "layouts": []}`,
 			expectedLabel:    "variable",
 			expectedPath:     "spec.variables[0].spec.display.name",
 		},
 		{
 			scenario:         "text variable display name",
 			limit:            MaxDisplayNameLen,
-			dashboardJSONFmt: `{"variables": [{"kind": "TextVariable", "spec": {"name": "mytext", "value": "v", "display": {"name": "%s"}}}], "links": [], "layouts": []}`,
+			dashboardJSONFmt: `{"panels": {}, "variables": [{"kind": "TextVariable", "spec": {"name": "mytext", "value": "v", "display": {"name": "%s"}}}], "links": [], "layouts": []}`,
 			expectedLabel:    "variable",
 			expectedPath:     "spec.variables[0].spec.display.name",
 		},
 		{
-			scenario:         "layout title",
-			limit:            MaxLayoutTitleLen,
-			dashboardJSONFmt: `{"links": [], "layouts": [{"kind": "Grid", "spec": {"display": {"title": "%s"}, "items": []}}]}`,
-			expectedLabel:    "layout",
-			expectedPath:     "spec.layouts[0].spec.display.title",
+			scenario: "layout title",
+			limit:    MaxLayoutTitleLen,
+			dashboardJSONFmt: `{
+		"variables": [],
+		"panels": {},"links": [], "layouts": [{"kind": "Grid", "spec": {"display": {"title": "%s"}, "items": []}}]}`,
+			expectedLabel: "layout",
+			expectedPath:  "spec.layouts[0].spec.display.title",
 		},
 	}
 
@@ -1797,7 +1897,9 @@ func TestInvalidateDisplayNameTooLong(t *testing.T) {
 // A display name at exactly the limit is accepted.
 func TestValidateDisplayNameAtMaxLength(t *testing.T) {
 	atLimit := strings.Repeat("x", MaxDisplayNameLen)
-	_, err := unmarshalDashboard([]byte(`{"display": {"name": "` + atLimit + `"}, "links": [], "layouts": []}`))
+	_, err := unmarshalDashboard([]byte(`{
+		"variables": [],
+		"panels": {},"display": {"name": "` + atLimit + `"}, "links": [], "layouts": []}`))
 	assert.NoError(t, err)
 }
 
@@ -1824,6 +1926,40 @@ func TestEnsureSingleExpressionAggregation(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
+		})
+	}
+}
+
+// Guards the constant: a prefixed name must stay a valid DNS-1123 label.
+func TestSystemDashboardNamePrefix(t *testing.T) {
+	require.NoError(t, validateDashboardName(SystemDashboardNamePrefix+"ai-o11y-overview"))
+}
+
+func TestNewDashboardV2RejectsReservedName(t *testing.T) {
+	testCases := []struct {
+		description string
+		name        string
+		source      Source
+		errContains string
+	}{
+		{description: "reserved name for a system dashboard", name: SystemDashboardNamePrefix + "overview", source: SourceSystem},
+		{description: "reserved name for a user dashboard", name: SystemDashboardNamePrefix + "overview", source: SourceUser, errContains: "reserved for system dashboards"},
+		{description: "reserved name for an integration dashboard", name: SystemDashboardNamePrefix + "overview", source: SourceIntegration, errContains: "reserved for system dashboards"},
+		{description: "unprefixed name for a system dashboard", name: "overview", source: SourceSystem, errContains: "must start with"},
+		{description: "ordinary name for a user dashboard", name: "overview", source: SourceUser},
+		{description: "fewer hyphens than the prefix for a user dashboard", name: "signoz--overview", source: SourceUser},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			postable := PostableDashboardV2{Name: testCase.name}
+			_, err := postable.NewDashboardV2(valuer.GenerateUUID(), "user@signoz.io", testCase.source)
+			if testCase.errContains != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), testCase.errContains)
+				return
+			}
+			require.NoError(t, err)
 		})
 	}
 }

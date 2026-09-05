@@ -3,8 +3,6 @@ import {
 	getResourceDeploymentKeys,
 } from 'hooks/useResourceAttribute/utils';
 
-import { FeatureKeys } from '../../../../constants/features';
-import { useAppContext } from '../../../../providers/App/App';
 import { QueryChipContainer, QueryChipItem } from '../../styles';
 import { IQueryChipProps } from './types';
 
@@ -13,13 +11,7 @@ function QueryChip({ queryData, onClose }: IQueryChipProps): JSX.Element {
 		onClose(queryData.id);
 	};
 
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
-
-	const isClosable =
-		queryData.tagKey !== getResourceDeploymentKeys(dotMetricsEnabled);
+	const isClosable = queryData.tagKey !== getResourceDeploymentKeys();
 
 	return (
 		<QueryChipContainer>

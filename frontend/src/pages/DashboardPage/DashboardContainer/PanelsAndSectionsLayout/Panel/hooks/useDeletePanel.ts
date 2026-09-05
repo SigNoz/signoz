@@ -1,0 +1,74 @@
+import { useCallback } from 'react';
+import logEvent from 'api/common/logEvent';
+import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
+import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
+
+import { useErrorModal } from 'providers/ErrorModalProvider';
+import APIError from 'types/api/error';
+
+import { useDashboardEventMeta } from '../../../hooks/useDashboardEventMeta';
+import { useOptimisticPatch } from '../../../hooks/useOptimisticPatch';
+import { removePanelOp, replaceSectionItemsOp } from '../../../patchOps';
+import { useDashboardStore } from '../../../store/useDashboardStore';
+import type { DashboardSection } from '../../../utils';
+
+interface Params {
+	sections: DashboardSection[];
+}
+
+export interface DeletePanelArgs {
+	panelId: string;
+	layoutIndex: number;
+}
+
+/**
+ * Removes a panel: drops its item ref from the section's items and deletes the
+ * panel from `spec.panels`, as one atomic patch.
+ */
+export function useDeletePanel({
+	sections,
+}: Params): (args: DeletePanelArgs) => Promise<void> {
+	const dashboardId = useDashboardStore((s) => s.dashboardId);
+	const eventMeta = useDashboardEventMeta();
+	const { patchAsync } = useOptimisticPatch();
+	const { showErrorModal } = useErrorModal();
+
+	return useCallback(
+		async ({ panelId, layoutIndex }: DeletePanelArgs): Promise<void> => {
+			if (!dashboardId) {
+				return;
+			}
+			const section = sections.find((s) => s.layoutIndex === layoutIndex);
+			if (!section) {
+				return;
+			}
+
+			const removed = section.items.find((i) => i.id === panelId);
+			const removedKind = removed?.panel?.spec.plugin.kind;
+			const nextItems = section.items.filter((i) => i.id !== panelId);
+			try {
+				await patchAsync([
+					replaceSectionItemsOp(layoutIndex, nextItems),
+					removePanelOp(panelId),
+				]);
+				void logEvent(DashboardDetailEvents.PanelAction, {
+					action: 'delete',
+					// An item ref can outlive its panel, so both fields go on together or
+					// not at all: `panelType` keeps existing reports resolving, `panelKind`
+					// is the V2 identity.
+					...(removedKind
+						? {
+								panelType: PANEL_KIND_TO_PANEL_TYPE[removedKind],
+								panelKind: removedKind,
+							}
+						: {}),
+					panelId,
+					...eventMeta,
+				});
+			} catch (error) {
+				showErrorModal(error as APIError);
+			}
+		},
+		[sections, dashboardId, eventMeta, patchAsync, showErrorModal],
+	);
+}

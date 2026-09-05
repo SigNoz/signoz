@@ -51,6 +51,7 @@ import { useColumnHandlers } from './useColumnHandlers';
 import { useColumnState } from './useColumnState';
 import { useEffectiveData } from './useEffectiveData';
 import { useFlatItems } from './useFlatItems';
+import { useResetScroll } from './useResetScroll';
 import { useRowKeyData } from './useRowKeyData';
 import { useTableParams } from './useTableParams';
 import { buildPageSizeItems, buildTanstackColumnDef } from './utils';
@@ -92,11 +93,11 @@ function TanStackTableInner<TData, TItemKey = string>(
 		getGroupKey,
 		getRowStyle,
 		getRowClassName,
+		getRowTestId,
 		isRowActive,
 		renderRowActions,
 		onRowClick,
 		onRowClickNewTab,
-		onRowDeactivate,
 		onSort,
 		activeRowIndex,
 		renderExpandedRow,
@@ -110,6 +111,7 @@ function TanStackTableInner<TData, TItemKey = string>(
 		suffixPaginationContent,
 		enableAlternatingRowColors,
 		disableVirtualScroll,
+		resetScrollKey,
 	}: TanStackTableProps<TData, TItemKey>,
 	forwardedRef: React.ForwardedRef<TanStackTableHandle>,
 ): JSX.Element {
@@ -324,6 +326,8 @@ function TanStackTableInner<TData, TItemKey = string>(
 		});
 	}, [flatIndexForActiveRow]);
 
+	useResetScroll(virtuosoRef, resetScrollKey);
+
 	const { sensors, columnIds, handleDragEnd } = useColumnDnd({
 		columns: effectiveColumns,
 		onColumnOrderChange: handleColumnOrderChange,
@@ -378,11 +382,11 @@ function TanStackTableInner<TData, TItemKey = string>(
 		() => ({
 			getRowStyle,
 			getRowClassName,
+			getRowTestId,
 			isRowActive,
 			renderRowActions,
 			onRowClick,
 			onRowClickNewTab,
-			onRowDeactivate,
 			renderExpandedRow,
 			getRowKeyData,
 			colCount: visibleColumnsCount,
@@ -396,11 +400,11 @@ function TanStackTableInner<TData, TItemKey = string>(
 		[
 			getRowStyle,
 			getRowClassName,
+			getRowTestId,
 			isRowActive,
 			renderRowActions,
 			onRowClick,
 			onRowClickNewTab,
-			onRowDeactivate,
 			renderExpandedRow,
 			getRowKeyData,
 			visibleColumnsCount,
@@ -660,6 +664,7 @@ function TanStackTableInner<TData, TItemKey = string>(
 										value={limit?.toString()}
 										defaultValue="10"
 										onChange={(value): void => {
+											value ??= '10';
 											setLimit(+value);
 											pagination.onLimitChange?.(+value);
 											if (page !== 1) {

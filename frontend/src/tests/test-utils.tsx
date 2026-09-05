@@ -150,13 +150,6 @@ export const defaultFeatureFlags = [
 		usage_limit: -1,
 		route: '',
 	},
-	{
-		name: FeatureKeys.USE_FINE_GRAINED_AUTHZ,
-		active: true,
-		usage: 0,
-		usage_limit: -1,
-		route: '',
-	},
 ];
 
 export function getAppContextMock(
@@ -165,30 +158,30 @@ export function getAppContextMock(
 ): IAppContext {
 	return {
 		activeLicense: {
-			key: 'test-key',
-			event_queue: {
-				created_at: '0',
+			id: 'test-license-id',
+			eventQueue: {
+				createdAt: '0',
 				event: LicenseEvent.NO_EVENT,
-				scheduled_at: '0',
+				scheduledAt: '0',
 				status: '',
-				updated_at: '0',
+				updatedAt: '0',
 			},
 			state: LicenseState.ACTIVATED,
 			status: LicenseStatus.VALID,
 			platform: LicensePlatform.CLOUD,
-			created_at: '0',
+			createdAt: '0',
 			plan: {
-				created_at: '0',
+				id: '0',
+				createdAt: '0',
 				description: '',
-				is_active: true,
+				isActive: true,
 				name: '',
-				updated_at: '0',
+				updatedAt: '0',
 			},
-			plan_id: '0',
-			free_until: '0',
-			updated_at: '0',
-			valid_from: 0,
-			valid_until: 0,
+			freeUntil: '0',
+			updatedAt: '0',
+			validFrom: 0,
+			validUntil: 0,
 		},
 		trialInfo: {
 			trialStart: -1,
@@ -242,6 +235,7 @@ export function getAppContextMock(
 		userPreferences: [],
 		updateUserPreferenceInContext: jest.fn(),
 		isFetchingOrgPreferences: false,
+		isFetchingUserPreferences: false,
 		orgPreferencesFetchError: null,
 		isLoggedIn: true,
 		isPreflightLoading: false,

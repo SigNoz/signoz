@@ -13,9 +13,15 @@ import LLMObservability from '../LLMObservability';
 // The Overview tab renders the full V2 DashboardContainer (toolbar + date picker
 // call useNavigationType, which needs a data router this integration test doesn't
 // set up). These cases assert tab routing, not dashboard rendering, so stub it.
-jest.mock('pages/DashboardPageV2/DashboardContainer', () => ({
+jest.mock('pages/DashboardPage/DashboardContainer', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="llm-overview-dashboard" />,
+}));
+
+// Same data-router gap as the dashboard above: the Explorer toolbar calls useNavigationType.
+jest.mock('container/LLMObservability/Explorer/Explorer', () => ({
+	__esModule: true,
+	default: (): JSX.Element => <div data-testid="llm-observability-explorer" />,
 }));
 
 function setupList(items = mockRules): void {
@@ -44,6 +50,7 @@ describe('LLMObservability (integration)', () => {
 		expect(screen.getByTestId('llm-observability-overview')).toBeInTheDocument();
 		expect(screen.getByTestId('llm-overview-dashboard')).toBeInTheDocument();
 		expect(screen.getByRole('tab', { name: 'Overview' })).toBeInTheDocument();
+		expect(screen.getByRole('tab', { name: 'Explorer' })).toBeInTheDocument();
 		expect(
 			screen.getByRole('tab', { name: 'Model pricing' }),
 		).toBeInTheDocument();
@@ -76,6 +83,27 @@ describe('LLMObservability (integration)', () => {
 		expect(safeNavigateMock).toHaveBeenCalledWith(
 			ROUTES.AI_OBSERVABILITY_ATTRIBUTE_MAPPING,
 		);
+	});
+
+	it('navigates to the explorer route when the Explorer tab is clicked', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(<LLMObservability />, undefined, {
+			initialRoute: ROUTES.AI_OBSERVABILITY_OVERVIEW,
+		});
+
+		await user.click(screen.getByRole('tab', { name: 'Explorer' }));
+
+		expect(safeNavigateMock).toHaveBeenCalledWith(
+			ROUTES.AI_OBSERVABILITY_EXPLORER,
+		);
+	});
+
+	it('renders the explorer panel on the explorer route', () => {
+		render(<LLMObservability />, undefined, {
+			initialRoute: ROUTES.AI_OBSERVABILITY_EXPLORER,
+		});
+
+		expect(screen.getByTestId('llm-observability-explorer')).toBeInTheDocument();
 	});
 
 	it('renders the attribute mapping page on the attribute mapping route', () => {

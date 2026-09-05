@@ -57,53 +57,72 @@ export const nodeWidgetInfo = [
 	{
 		title: 'CPU Usage (cores)',
 		yAxisUnit: '',
-		docPath: '/infrastructure-monitoring/kubernetes/nodes/#cpu-usage-cores',
+		docPath: '/infrastructure-monitoring/kubernetes/nodes/#cpu-usage-cores-1',
+		description:
+			'Avg, max and min node CPU usage against allocatable capacity and the CPU requests scheduled on the node.',
 	},
 	{
 		title: 'Memory Usage (bytes)',
 		yAxisUnit: 'bytes',
 		docPath: '/infrastructure-monitoring/kubernetes/nodes/#memory-usage-bytes',
+		description:
+			'Node memory usage, working set and RSS against allocatable memory and scheduled memory requests.',
 	},
 	{
 		title: 'CPU Usage (%)',
 		yAxisUnit: 'percentunit',
 		docPath: '/infrastructure-monitoring/kubernetes/nodes/#cpu-usage-',
+		description:
+			'Node CPU usage as a percentage of allocatable capacity and of the CPU requests scheduled on the node.',
 	},
 	{
 		title: 'Memory Usage (%)',
 		yAxisUnit: 'percentunit',
 		docPath: '/infrastructure-monitoring/kubernetes/nodes/#memory-usage-',
+		description:
+			'Node memory usage as a percentage of allocatable memory and of the memory requests scheduled on the node.',
 	},
 	{
 		title: 'Pods by CPU (top 10)',
 		yAxisUnit: '',
 		docPath: '/infrastructure-monitoring/kubernetes/nodes/#pods-by-cpu-top-10',
+		description:
+			'CPU consumption in cores for the ten highest-consuming pods on this node.',
 	},
 	{
 		title: 'Pods by Memory (top 10)',
 		yAxisUnit: 'bytes',
 		docPath: '/infrastructure-monitoring/kubernetes/nodes/#pods-by-memory-top-10',
+		description:
+			'Memory consumption in bytes for the ten highest-consuming pods on this node.',
 	},
 	{
 		title: 'Network error count',
 		yAxisUnit: '',
 		docPath: '/infrastructure-monitoring/kubernetes/nodes/#network-error-count',
+		description:
+			'Per-interface network error counts by direction, from the kubelet error counters.',
 	},
 	{
 		title: 'Network IO rate',
 		yAxisUnit: 'binBps',
 		docPath: '/infrastructure-monitoring/kubernetes/nodes/#network-io-rate',
+		description:
+			'Transmit and receive throughput per network interface on the node.',
 	},
 	{
 		title: 'Filesystem usage (bytes)',
 		yAxisUnit: 'bytes',
 		docPath:
 			'/infrastructure-monitoring/kubernetes/nodes/#filesystem-usage-bytes',
+		description:
+			'Capacity, available and used bytes for the primary filesystem of the node.',
 	},
 	{
 		title: 'Filesystem usage (%)',
 		yAxisUnit: 'percentunit',
 		docPath: '/infrastructure-monitoring/kubernetes/nodes/#filesystem-usage-',
+		description: 'Percentage of the nodefs filesystem currently consumed.',
 	},
 ];
 

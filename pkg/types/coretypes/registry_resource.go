@@ -31,6 +31,7 @@ var Resources = []Resource{
 	ResourceMetaResourceFactorAPIKey,
 	ResourceMetaResourceLicense,
 	ResourceMetaResourceSubscription,
+	ResourceMetaResourceDeploymentHost,
 	ResourceTelemetryResourceLogs,
 	ResourceTelemetryResourceTraces,
 	ResourceTelemetryResourceMetrics,
@@ -54,23 +55,24 @@ var (
 	ResourceMetaResourceCloudIntegration                 = NewResourceMetaResource(KindCloudIntegration)
 	ResourceMetaResourceCloudIntegrationService          = NewResourceMetaResource(KindCloudIntegrationService)
 	ResourceMetaResourceIntegration                      = NewResourceMetaResource(KindIntegration)
-	ResourceMetaResourceDashboard                        = NewResourceMetaResource(KindDashboard)
+	ResourceMetaResourceDashboard                        = NewResourceMetaResource(KindDashboard, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)
 	ResourceMetaResourcePublicDashboard                  = NewResourceMetaResource(KindPublicDashboard)
 	ResourceMetaResourceIngestionKey                     = NewResourceMetaResource(KindIngestionKey)
 	ResourceMetaResourceIngestionLimit                   = NewResourceMetaResource(KindIngestionLimit)
 	ResourceMetaResourcePipeline                         = NewResourceMetaResource(KindPipeline)
 	ResourceMetaResourceUserPreference                   = NewResourceMetaResource(KindUserPreference)
 	ResourceMetaResourceOrgPreference                    = NewResourceMetaResource(KindOrgPreference)
-	ResourceMetaResourceQuickFilter                      = NewResourceMetaResource(KindQuickFilter)
+	ResourceMetaResourceQuickFilter                      = NewResourceMetaResource(KindQuickFilter, VerbList, VerbRead, VerbUpdate)
 	ResourceMetaResourceTTLSetting                       = NewResourceMetaResource(KindTTLSetting)
 	ResourceMetaResourceRule                             = NewResourceMetaResource(KindRule)
 	ResourceMetaResourcePlannedMaintenance               = NewResourceMetaResource(KindPlannedMaintenance)
-	ResourceMetaResourceSavedView                        = NewResourceMetaResource(KindSavedView)
+	ResourceMetaResourceSavedView                        = NewResourceMetaResource(KindSavedView, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)
 	ResourceMetaResourceTraceFunnel                      = NewResourceMetaResource(KindTraceFunnel)
 	ResourceMetaResourceFactorPassword                   = NewResourceMetaResource(KindFactorPassword)
 	ResourceMetaResourceFactorAPIKey                     = NewResourceMetaResource(KindFactorAPIKey, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)
-	ResourceMetaResourceLicense                          = NewResourceMetaResource(KindLicense)
+	ResourceMetaResourceLicense                          = NewResourceMetaResource(KindLicense, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)
 	ResourceMetaResourceSubscription                     = NewResourceMetaResource(KindSubscription)
+	ResourceMetaResourceDeploymentHost                   = NewResourceMetaResource(KindDeploymentHost, VerbList, VerbUpdate)
 	ResourceTelemetryResourceLogs                        = NewResourceTelemetryResource(KindLogs)
 	ResourceTelemetryResourceTraces                      = NewResourceTelemetryResource(KindTraces)
 	ResourceTelemetryResourceMetrics                     = NewResourceTelemetryResource(KindMetrics)

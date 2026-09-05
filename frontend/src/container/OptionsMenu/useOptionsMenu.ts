@@ -281,7 +281,8 @@ const useOptionsMenu = ({
 	const handleRemoveSelectedColumn = useCallback(
 		(columnKey: string) => {
 			const newSelectedColumns = preferences?.columns?.filter(
-				(f) => buildCompositeKey(f.name, f.fieldContext) !== columnKey,
+				(f) =>
+					buildCompositeKey(f.name, f.fieldContext, f.fieldDataType) !== columnKey,
 			);
 
 			if (!newSelectedColumns?.length && dataSource !== DataSource.LOGS) {
@@ -364,7 +365,10 @@ const useOptionsMenu = ({
 		(orderedIds: string[]): void => {
 			const current = preferences?.columns ?? [];
 			const byCompositeKey = new Map(
-				current.map((f) => [buildCompositeKey(f.name, f.fieldContext), f]),
+				current.map((f) => [
+					buildCompositeKey(f.name, f.fieldContext, f.fieldDataType),
+					f,
+				]),
 			);
 			const reordered = orderedIds
 				.map((id) => byCompositeKey.get(id))
@@ -399,7 +403,7 @@ const useOptionsMenu = ({
 				onReorder: reorderSelectColumns,
 			},
 			fieldsSelector: {
-				value: preferences?.columns ?? [],
+				value: preferences?.columns?.filter((item) => has(item, 'name')) ?? [],
 				onFieldsChange: updateColumns,
 			},
 			format: {

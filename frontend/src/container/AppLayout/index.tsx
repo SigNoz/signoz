@@ -104,6 +104,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		isFetchingFeatureFlags,
 		featureFlagsFetchError,
 		userPreferences,
+		isFetchingUserPreferences,
 		updateChangelog,
 		toggleChangelogModal,
 		showChangelogModal,
@@ -452,7 +453,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		if (
 			!isFetchingActiveLicense &&
 			!isNull(activeLicense) &&
-			activeLicense?.event_queue?.event === LicenseEvent.DEFAULT
+			activeLicense?.eventQueue?.event === LicenseEvent.DEFAULT
 		) {
 			setShowPaymentFailedWarning(true);
 		}
@@ -724,12 +725,12 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		}
 	}, []);
 
-	// Set sidebar as loaded after user preferences are fetched
+	// Set sidebar as loaded after user preferences fetch completes (success or error)
 	useEffect(() => {
-		if (userPreferences !== null) {
+		if (!isFetchingUserPreferences) {
 			setIsSidebarLoaded(true);
 		}
-	}, [userPreferences]);
+	}, [isFetchingUserPreferences]);
 
 	// Use localStorage value as fallback until preferences are loaded
 	const isSideNavPinned = isSidebarLoaded
@@ -819,7 +820,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 								Your bill payment has failed. Your workspace will get suspended on{' '}
 								<span>
 									{getFormattedDateWithMinutes(
-										dayjs(activeLicense?.event_queue?.scheduled_at).unix() || Date.now(),
+										activeLicense?.eventQueue?.scheduledAt
+											? dayjs(activeLicense.eventQueue.scheduledAt).unix()
+											: dayjs().unix(),
 									)}
 									.
 								</span>

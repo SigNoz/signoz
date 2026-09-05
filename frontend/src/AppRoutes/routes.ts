@@ -13,7 +13,6 @@ import {
 	DashboardPage,
 	DashboardPanelEditorPage,
 	DashboardsListPage,
-	DashboardWidget,
 	EditRulesPage,
 	ErrorDetails,
 	ForgotPassword,
@@ -182,13 +181,6 @@ const routes: AppRoutes[] = [
 		component: PublicDashboardPage,
 		isPrivate: false,
 		key: 'PUBLIC_DASHBOARD',
-	},
-	{
-		path: ROUTES.DASHBOARD_WIDGET,
-		exact: true,
-		component: DashboardWidget,
-		isPrivate: true,
-		key: 'DASHBOARD_WIDGET',
 	},
 	{
 		path: ROUTES.DASHBOARD_PANEL_EDITOR,
@@ -525,6 +517,13 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: LLMObservabilityPage,
 		key: 'AI_OBSERVABILITY_OVERVIEW',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.AI_OBSERVABILITY_EXPLORER,
+		exact: true,
+		component: LLMObservabilityPage,
+		key: 'AI_OBSERVABILITY_EXPLORER',
 		isPrivate: true,
 	},
 	{

@@ -32,9 +32,9 @@ type module struct {
 	tagModule          tag.Module
 }
 
-func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing, tagModule tag.Module) dashboard.Module {
+func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing, tagModule tag.Module, systemDashboardRegistry dashboardtypes.SystemDashboardRegistry) dashboard.Module {
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/ee/modules/dashboard/impldashboard")
-	pkgDashboardModule := pkgimpldashboard.NewModule(store, settings, analytics, orgGetter, queryParser, tagModule)
+	pkgDashboardModule := pkgimpldashboard.NewModule(store, settings, analytics, orgGetter, queryParser, tagModule, systemDashboardRegistry)
 
 	return &module{
 		pkgDashboardModule: pkgDashboardModule,
@@ -276,6 +276,10 @@ func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UU
 	return module.pkgDashboardModule.GetV2(ctx, orgID, id)
 }
 
+func (module *module) MigrateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
+	return module.pkgDashboardModule.MigrateV2(ctx, orgID, id)
+}
+
 func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updatable dashboardtypes.UpdatableDashboardV2) (*dashboardtypes.DashboardV2, error) {
 	return module.pkgDashboardModule.UpdateV2(ctx, orgID, id, updatedBy, updatable)
 }
@@ -355,6 +359,14 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 
 func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error {
 	return module.pkgDashboardModule.LockUnlock(ctx, orgID, id, updatedBy, isAdmin, lock)
+}
+
+func (module *module) ReconcileSystemDashboards(ctx context.Context, orgID valuer.UUID) error {
+	return module.pkgDashboardModule.ReconcileSystemDashboards(ctx, orgID)
+}
+
+func (module *module) GetSystemDashboard(ctx context.Context, orgID valuer.UUID, name string) (*dashboardtypes.DashboardV2, error) {
+	return module.pkgDashboardModule.GetSystemDashboard(ctx, orgID, name)
 }
 
 func (module *module) delete(ctx context.Context, orgID, id valuer.UUID) error {

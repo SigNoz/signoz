@@ -4,8 +4,6 @@ import (
 	"os"
 )
 
-var LicenseSignozIo = "https://license.signoz.io/api/v1"
-var LicenseAPIKey = GetOrDefaultEnv("SIGNOZ_LICENSE_API_KEY", "")
 var SaasSegmentKey = GetOrDefaultEnv("SIGNOZ_SAAS_SEGMENT_KEY", "")
 var FetchFeatures = GetOrDefaultEnv("FETCH_FEATURES", "false")
 var ZeusFeaturesURL = GetOrDefaultEnv("ZEUS_FEATURES_URL", "ZeusFeaturesURL")
@@ -16,16 +14,4 @@ func GetOrDefaultEnv(key string, fallback string) string {
 		return fallback
 	}
 	return v
-}
-
-// constant functions that override env vars
-
-const DotMetricsEnabled = "DOT_METRICS_ENABLED"
-
-var IsDotMetricsEnabled = false
-
-func init() {
-	if GetOrDefaultEnv(DotMetricsEnabled, "true") == "true" {
-		IsDotMetricsEnabled = true
-	}
 }

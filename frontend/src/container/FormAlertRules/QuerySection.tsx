@@ -105,7 +105,7 @@ function QuerySection({
 		{
 			label: (
 				<Tooltip title="Query Builder">
-					<Button className="nav-btns">
+					<Button className="nav-btns" data-testid="query-builder-tab">
 						<Atom size={14} />
 						<Typography.Text>Query Builder</Typography.Text>
 					</Button>
@@ -122,7 +122,11 @@ function QuerySection({
 							: 'ClickHouse'
 					}
 				>
-					<Button className="nav-btns" disabled={isAnomalyDetection}>
+					<Button
+						className="nav-btns"
+						disabled={isAnomalyDetection}
+						data-testid="clickhouse-tab"
+					>
 						<Terminal size={14} />
 						<Typography.Text>ClickHouse Query</Typography.Text>
 					</Button>
@@ -162,7 +166,11 @@ function QuerySection({
 								: 'ClickHouse'
 						}
 					>
-						<Button className="nav-btns" disabled={isAnomalyDetection}>
+						<Button
+							className="nav-btns"
+							disabled={isAnomalyDetection}
+							data-testid="clickhouse-tab"
+						>
 							<Terminal size={14} />
 							<Typography.Text>ClickHouse Query</Typography.Text>
 						</Button>
@@ -180,7 +188,11 @@ function QuerySection({
 								: 'PromQL'
 						}
 					>
-						<Button className="nav-btns" disabled={isAnomalyDetection}>
+						<Button
+							className="nav-btns"
+							disabled={isAnomalyDetection}
+							data-testid="promql-tab"
+						>
 							<PromQLIcon
 								fillColor={isDarkMode ? Color.BG_VANILLA_200 : Color.BG_INK_300}
 							/>

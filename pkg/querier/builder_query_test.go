@@ -3,6 +3,7 @@ package querier
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -20,7 +21,8 @@ func TestBuilderQueryFingerprint(t *testing.T) {
 		{
 			name: "fingerprint includes shiftby when ShiftBy field is set",
 			query: &builderQuery[qbtypes.MetricAggregation]{
-				kind: qbtypes.RequestTypeTimeSeries,
+				queryType: qbtypes.QueryTypeBuilder,
+				kind:      qbtypes.RequestTypeTimeSeries,
 				spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
 					Signal:  telemetrytypes.SignalMetrics,
 					ShiftBy: 3600,
@@ -40,7 +42,8 @@ func TestBuilderQueryFingerprint(t *testing.T) {
 		{
 			name: "fingerprint includes shiftby but not other functions",
 			query: &builderQuery[qbtypes.MetricAggregation]{
-				kind: qbtypes.RequestTypeTimeSeries,
+				queryType: qbtypes.QueryTypeBuilder,
+				kind:      qbtypes.RequestTypeTimeSeries,
 				spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
 					Signal:  telemetrytypes.SignalMetrics,
 					ShiftBy: 3600,
@@ -63,7 +66,8 @@ func TestBuilderQueryFingerprint(t *testing.T) {
 		{
 			name: "no shiftby in fingerprint when ShiftBy is zero",
 			query: &builderQuery[qbtypes.MetricAggregation]{
-				kind: qbtypes.RequestTypeTimeSeries,
+				queryType: qbtypes.QueryTypeBuilder,
+				kind:      qbtypes.RequestTypeTimeSeries,
 				spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
 					Signal:  telemetrytypes.SignalMetrics,
 					ShiftBy: 0,
@@ -92,6 +96,28 @@ func TestBuilderQueryFingerprint(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestBuilderQueryFingerprintQueryType(t *testing.T) {
+	spec := qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+		Signal:       telemetrytypes.SignalTraces,
+		StepInterval: qbtypes.Step{Duration: 60 * time.Second},
+		Aggregations: []qbtypes.TraceAggregation{{Expression: "count()"}},
+		Filter:       &qbtypes.Filter{Expression: "gen_ai.request.model EXISTS"},
+	}
+	regular := &builderQuery[qbtypes.TraceAggregation]{
+		queryType: qbtypes.QueryTypeBuilder,
+		kind:      qbtypes.RequestTypeTimeSeries,
+		spec:      spec,
+	}
+	ai := &builderQuery[qbtypes.TraceAggregation]{
+		queryType: qbtypes.QueryTypeBuilderAI,
+		kind:      qbtypes.RequestTypeTimeSeries,
+		spec:      spec,
+	}
+
+	assert.True(t, strings.HasPrefix(regular.Fingerprint(), qbtypes.QueryTypeBuilder.StringValue()+"&"))
+	assert.Empty(t, ai.Fingerprint())
 }
 
 func TestMakeBucketsOrder(t *testing.T) {

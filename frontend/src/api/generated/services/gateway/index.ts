@@ -21,18 +21,28 @@ import type {
 	CreateIngestionKey201,
 	CreateIngestionKeyLimit201,
 	CreateIngestionKeyLimitPathParameters,
+	CreateIngestionLimit201,
 	DeleteIngestionKeyLimitPathParameters,
 	DeleteIngestionKeyPathParameters,
+	DeleteIngestionLimitPathParameters,
+	GatewaytypesDeprecatedPostableIngestionKeyLimitDTO,
 	GatewaytypesPostableIngestionKeyDTO,
 	GatewaytypesPostableIngestionKeyLimitDTO,
 	GatewaytypesUpdatableIngestionKeyLimitDTO,
+	GetIngestionKey200,
+	GetIngestionKeyLimits200,
+	GetIngestionKeyLimitsPathParameters,
+	GetIngestionKeyPathParameters,
 	GetIngestionKeys200,
 	GetIngestionKeysParams,
+	GetIngestionLimit200,
+	GetIngestionLimitPathParameters,
 	RenderErrorResponseDTO,
 	SearchIngestionKeys200,
 	SearchIngestionKeysParams,
 	UpdateIngestionKeyLimitPathParameters,
 	UpdateIngestionKeyPathParameters,
+	UpdateIngestionLimitPathParameters,
 } from '../sigNoz.schemas';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
@@ -301,6 +311,108 @@ export const useDeleteIngestionKey = <
 	return useMutation(getDeleteIngestionKeyMutationOptions(options));
 };
 /**
+ * This endpoint returns an ingestion key for the workspace
+ * @summary Get ingestion key for workspace
+ */
+export const getIngestionKey = (
+	{ keyId }: GetIngestionKeyPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetIngestionKey200>({
+		url: `/api/v2/gateway/ingestion_keys/${keyId}`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetIngestionKeyQueryKey = ({
+	keyId,
+}: GetIngestionKeyPathParameters) => {
+	return [`/api/v2/gateway/ingestion_keys/${keyId}`] as const;
+};
+
+export const getGetIngestionKeyQueryOptions = <
+	TData = Awaited<ReturnType<typeof getIngestionKey>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ keyId }: GetIngestionKeyPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getIngestionKey>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getGetIngestionKeyQueryKey({ keyId });
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof getIngestionKey>>> = ({
+		signal,
+	}) => getIngestionKey({ keyId }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!keyId,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getIngestionKey>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetIngestionKeyQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getIngestionKey>>
+>;
+export type GetIngestionKeyQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get ingestion key for workspace
+ */
+
+export function useGetIngestionKey<
+	TData = Awaited<ReturnType<typeof getIngestionKey>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ keyId }: GetIngestionKeyPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getIngestionKey>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetIngestionKeyQueryOptions({ keyId }, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get ingestion key for workspace
+ */
+export const invalidateGetIngestionKey = async (
+	queryClient: QueryClient,
+	{ keyId }: GetIngestionKeyPathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetIngestionKeyQueryKey({ keyId }) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
  * This endpoint updates an ingestion key for the workspace
  * @summary Update ingestion key for workspace
  */
@@ -400,19 +512,122 @@ export const useUpdateIngestionKey = <
 	return useMutation(getUpdateIngestionKeyMutationOptions(options));
 };
 /**
- * This endpoint creates an ingestion key limit
+ * This endpoint returns the ingestion limits for an ingestion key
+ * @summary Get limits for the ingestion key
+ */
+export const getIngestionKeyLimits = (
+	{ keyId }: GetIngestionKeyLimitsPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetIngestionKeyLimits200>({
+		url: `/api/v2/gateway/ingestion_keys/${keyId}/limits`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetIngestionKeyLimitsQueryKey = ({
+	keyId,
+}: GetIngestionKeyLimitsPathParameters) => {
+	return [`/api/v2/gateway/ingestion_keys/${keyId}/limits`] as const;
+};
+
+export const getGetIngestionKeyLimitsQueryOptions = <
+	TData = Awaited<ReturnType<typeof getIngestionKeyLimits>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ keyId }: GetIngestionKeyLimitsPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getIngestionKeyLimits>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getGetIngestionKeyLimitsQueryKey({ keyId });
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getIngestionKeyLimits>>
+	> = ({ signal }) => getIngestionKeyLimits({ keyId }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!keyId,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getIngestionKeyLimits>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetIngestionKeyLimitsQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getIngestionKeyLimits>>
+>;
+export type GetIngestionKeyLimitsQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get limits for the ingestion key
+ */
+
+export function useGetIngestionKeyLimits<
+	TData = Awaited<ReturnType<typeof getIngestionKeyLimits>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ keyId }: GetIngestionKeyLimitsPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getIngestionKeyLimits>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetIngestionKeyLimitsQueryOptions({ keyId }, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get limits for the ingestion key
+ */
+export const invalidateGetIngestionKeyLimits = async (
+	queryClient: QueryClient,
+	{ keyId }: GetIngestionKeyLimitsPathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetIngestionKeyLimitsQueryKey({ keyId }) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * This endpoint creates an ingestion key limit.
+ * @deprecated
  * @summary Create limit for the ingestion key
  */
 export const createIngestionKeyLimit = (
 	{ keyId }: CreateIngestionKeyLimitPathParameters,
-	gatewaytypesPostableIngestionKeyLimitDTO?: BodyType<GatewaytypesPostableIngestionKeyLimitDTO>,
+	gatewaytypesDeprecatedPostableIngestionKeyLimitDTO?: BodyType<GatewaytypesDeprecatedPostableIngestionKeyLimitDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<CreateIngestionKeyLimit201>({
 		url: `/api/v2/gateway/ingestion_keys/${keyId}/limits`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		data: gatewaytypesPostableIngestionKeyLimitDTO,
+		data: gatewaytypesDeprecatedPostableIngestionKeyLimitDTO,
 		signal,
 	});
 };
@@ -426,7 +641,7 @@ export const getCreateIngestionKeyLimitMutationOptions = <
 		TError,
 		{
 			pathParams: CreateIngestionKeyLimitPathParameters;
-			data?: BodyType<GatewaytypesPostableIngestionKeyLimitDTO>;
+			data?: BodyType<GatewaytypesDeprecatedPostableIngestionKeyLimitDTO>;
 		},
 		TContext
 	>;
@@ -435,7 +650,7 @@ export const getCreateIngestionKeyLimitMutationOptions = <
 	TError,
 	{
 		pathParams: CreateIngestionKeyLimitPathParameters;
-		data?: BodyType<GatewaytypesPostableIngestionKeyLimitDTO>;
+		data?: BodyType<GatewaytypesDeprecatedPostableIngestionKeyLimitDTO>;
 	},
 	TContext
 > => {
@@ -452,7 +667,7 @@ export const getCreateIngestionKeyLimitMutationOptions = <
 		Awaited<ReturnType<typeof createIngestionKeyLimit>>,
 		{
 			pathParams: CreateIngestionKeyLimitPathParameters;
-			data?: BodyType<GatewaytypesPostableIngestionKeyLimitDTO>;
+			data?: BodyType<GatewaytypesDeprecatedPostableIngestionKeyLimitDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -467,12 +682,13 @@ export type CreateIngestionKeyLimitMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createIngestionKeyLimit>>
 >;
 export type CreateIngestionKeyLimitMutationBody =
-	| BodyType<GatewaytypesPostableIngestionKeyLimitDTO>
+	| BodyType<GatewaytypesDeprecatedPostableIngestionKeyLimitDTO>
 	| undefined;
 export type CreateIngestionKeyLimitMutationError =
 	ErrorType<RenderErrorResponseDTO>;
 
 /**
+ * @deprecated
  * @summary Create limit for the ingestion key
  */
 export const useCreateIngestionKeyLimit = <
@@ -484,7 +700,7 @@ export const useCreateIngestionKeyLimit = <
 		TError,
 		{
 			pathParams: CreateIngestionKeyLimitPathParameters;
-			data?: BodyType<GatewaytypesPostableIngestionKeyLimitDTO>;
+			data?: BodyType<GatewaytypesDeprecatedPostableIngestionKeyLimitDTO>;
 		},
 		TContext
 	>;
@@ -493,7 +709,7 @@ export const useCreateIngestionKeyLimit = <
 	TError,
 	{
 		pathParams: CreateIngestionKeyLimitPathParameters;
-		data?: BodyType<GatewaytypesPostableIngestionKeyLimitDTO>;
+		data?: BodyType<GatewaytypesDeprecatedPostableIngestionKeyLimitDTO>;
 	},
 	TContext
 > => {
@@ -501,6 +717,7 @@ export const useCreateIngestionKeyLimit = <
 };
 /**
  * This endpoint deletes an ingestion key limit
+ * @deprecated
  * @summary Delete limit for the ingestion key
  */
 export const deleteIngestionKeyLimit = (
@@ -559,6 +776,7 @@ export type DeleteIngestionKeyLimitMutationError =
 	ErrorType<RenderErrorResponseDTO>;
 
 /**
+ * @deprecated
  * @summary Delete limit for the ingestion key
  */
 export const useDeleteIngestionKeyLimit = <
@@ -580,7 +798,8 @@ export const useDeleteIngestionKeyLimit = <
 	return useMutation(getDeleteIngestionKeyLimitMutationOptions(options));
 };
 /**
- * This endpoint updates an ingestion key limit
+ * This endpoint updates an ingestion key limit.
+ * @deprecated
  * @summary Update limit for the ingestion key
  */
 export const updateIngestionKeyLimit = (
@@ -653,6 +872,7 @@ export type UpdateIngestionKeyLimitMutationError =
 	ErrorType<RenderErrorResponseDTO>;
 
 /**
+ * @deprecated
  * @summary Update limit for the ingestion key
  */
 export const useUpdateIngestionKeyLimit = <
@@ -778,4 +998,371 @@ export const invalidateSearchIngestionKeys = async (
 	);
 
 	return queryClient;
+};
+
+/**
+ * This endpoint creates an ingestion limit for the ingestion key referenced by keyId
+ * @summary Create ingestion limit
+ */
+export const createIngestionLimit = (
+	gatewaytypesPostableIngestionKeyLimitDTO?: BodyType<GatewaytypesPostableIngestionKeyLimitDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<CreateIngestionLimit201>({
+		url: `/api/v2/gateway/ingestion_limits`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: gatewaytypesPostableIngestionKeyLimitDTO,
+		signal,
+	});
+};
+
+export const getCreateIngestionLimitMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof createIngestionLimit>>,
+		TError,
+		{ data?: BodyType<GatewaytypesPostableIngestionKeyLimitDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof createIngestionLimit>>,
+	TError,
+	{ data?: BodyType<GatewaytypesPostableIngestionKeyLimitDTO> },
+	TContext
+> => {
+	const mutationKey = ['createIngestionLimit'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof createIngestionLimit>>,
+		{ data?: BodyType<GatewaytypesPostableIngestionKeyLimitDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return createIngestionLimit(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type CreateIngestionLimitMutationResult = NonNullable<
+	Awaited<ReturnType<typeof createIngestionLimit>>
+>;
+export type CreateIngestionLimitMutationBody =
+	| BodyType<GatewaytypesPostableIngestionKeyLimitDTO>
+	| undefined;
+export type CreateIngestionLimitMutationError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Create ingestion limit
+ */
+export const useCreateIngestionLimit = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof createIngestionLimit>>,
+		TError,
+		{ data?: BodyType<GatewaytypesPostableIngestionKeyLimitDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof createIngestionLimit>>,
+	TError,
+	{ data?: BodyType<GatewaytypesPostableIngestionKeyLimitDTO> },
+	TContext
+> => {
+	return useMutation(getCreateIngestionLimitMutationOptions(options));
+};
+/**
+ * This endpoint deletes an ingestion limit
+ * @summary Delete ingestion limit
+ */
+export const deleteIngestionLimit = (
+	{ limitId }: DeleteIngestionLimitPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v2/gateway/ingestion_limits/${limitId}`,
+		method: 'DELETE',
+		signal,
+	});
+};
+
+export const getDeleteIngestionLimitMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof deleteIngestionLimit>>,
+		TError,
+		{ pathParams: DeleteIngestionLimitPathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof deleteIngestionLimit>>,
+	TError,
+	{ pathParams: DeleteIngestionLimitPathParameters },
+	TContext
+> => {
+	const mutationKey = ['deleteIngestionLimit'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof deleteIngestionLimit>>,
+		{ pathParams: DeleteIngestionLimitPathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return deleteIngestionLimit(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteIngestionLimitMutationResult = NonNullable<
+	Awaited<ReturnType<typeof deleteIngestionLimit>>
+>;
+
+export type DeleteIngestionLimitMutationError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Delete ingestion limit
+ */
+export const useDeleteIngestionLimit = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof deleteIngestionLimit>>,
+		TError,
+		{ pathParams: DeleteIngestionLimitPathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof deleteIngestionLimit>>,
+	TError,
+	{ pathParams: DeleteIngestionLimitPathParameters },
+	TContext
+> => {
+	return useMutation(getDeleteIngestionLimitMutationOptions(options));
+};
+/**
+ * This endpoint returns an ingestion limit
+ * @summary Get ingestion limit
+ */
+export const getIngestionLimit = (
+	{ limitId }: GetIngestionLimitPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetIngestionLimit200>({
+		url: `/api/v2/gateway/ingestion_limits/${limitId}`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetIngestionLimitQueryKey = ({
+	limitId,
+}: GetIngestionLimitPathParameters) => {
+	return [`/api/v2/gateway/ingestion_limits/${limitId}`] as const;
+};
+
+export const getGetIngestionLimitQueryOptions = <
+	TData = Awaited<ReturnType<typeof getIngestionLimit>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ limitId }: GetIngestionLimitPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getIngestionLimit>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getGetIngestionLimitQueryKey({ limitId });
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getIngestionLimit>>
+	> = ({ signal }) => getIngestionLimit({ limitId }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!limitId,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getIngestionLimit>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetIngestionLimitQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getIngestionLimit>>
+>;
+export type GetIngestionLimitQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get ingestion limit
+ */
+
+export function useGetIngestionLimit<
+	TData = Awaited<ReturnType<typeof getIngestionLimit>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ limitId }: GetIngestionLimitPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getIngestionLimit>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetIngestionLimitQueryOptions({ limitId }, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get ingestion limit
+ */
+export const invalidateGetIngestionLimit = async (
+	queryClient: QueryClient,
+	{ limitId }: GetIngestionLimitPathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetIngestionLimitQueryKey({ limitId }) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * This endpoint updates an ingestion limit
+ * @summary Update ingestion limit
+ */
+export const updateIngestionLimit = (
+	{ limitId }: UpdateIngestionLimitPathParameters,
+	gatewaytypesUpdatableIngestionKeyLimitDTO?: BodyType<GatewaytypesUpdatableIngestionKeyLimitDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v2/gateway/ingestion_limits/${limitId}`,
+		method: 'PATCH',
+		headers: { 'Content-Type': 'application/json' },
+		data: gatewaytypesUpdatableIngestionKeyLimitDTO,
+		signal,
+	});
+};
+
+export const getUpdateIngestionLimitMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateIngestionLimit>>,
+		TError,
+		{
+			pathParams: UpdateIngestionLimitPathParameters;
+			data?: BodyType<GatewaytypesUpdatableIngestionKeyLimitDTO>;
+		},
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof updateIngestionLimit>>,
+	TError,
+	{
+		pathParams: UpdateIngestionLimitPathParameters;
+		data?: BodyType<GatewaytypesUpdatableIngestionKeyLimitDTO>;
+	},
+	TContext
+> => {
+	const mutationKey = ['updateIngestionLimit'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof updateIngestionLimit>>,
+		{
+			pathParams: UpdateIngestionLimitPathParameters;
+			data?: BodyType<GatewaytypesUpdatableIngestionKeyLimitDTO>;
+		}
+	> = (props) => {
+		const { pathParams, data } = props ?? {};
+
+		return updateIngestionLimit(pathParams, data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateIngestionLimitMutationResult = NonNullable<
+	Awaited<ReturnType<typeof updateIngestionLimit>>
+>;
+export type UpdateIngestionLimitMutationBody =
+	| BodyType<GatewaytypesUpdatableIngestionKeyLimitDTO>
+	| undefined;
+export type UpdateIngestionLimitMutationError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Update ingestion limit
+ */
+export const useUpdateIngestionLimit = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateIngestionLimit>>,
+		TError,
+		{
+			pathParams: UpdateIngestionLimitPathParameters;
+			data?: BodyType<GatewaytypesUpdatableIngestionKeyLimitDTO>;
+		},
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof updateIngestionLimit>>,
+	TError,
+	{
+		pathParams: UpdateIngestionLimitPathParameters;
+		data?: BodyType<GatewaytypesUpdatableIngestionKeyLimitDTO>;
+	},
+	TContext
+> => {
+	return useMutation(getUpdateIngestionLimitMutationOptions(options));
 };
