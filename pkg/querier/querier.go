@@ -1065,7 +1065,7 @@ func mergeBucketUpperBounds(cachedValue *qbtypes.TimeSeriesData, freshResults []
 		freshTS, _ := result.Value.(*qbtypes.TimeSeriesData)
 		upperBoundSources = append(upperBoundSources, freshTS)
 	}
-	return qbtypes.MergeHeatmapAxes(upperBoundSources...)
+	return qbtypes.MergeBucketUpperBounds(upperBoundSources...)
 }
 
 // mergeTimeSeriesResults merges time series data.
