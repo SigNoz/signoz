@@ -293,107 +293,6 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 	}, nil
 }
 
-// heatmapSeries accumulates one group's cells while the rows are read. Counts
-// are held against their boundary rather than a slice because the axis is only
-// known once every row has been seen.
-type heatmapSeries struct {
-	labels []*qbtypes.Label
-	counts map[int64]map[float64]float64
-}
-
-// heatmapAccumulator is shared by the readers of the two things a heatmap can
-// come back as: ClickHouse rows, and a PromQL matrix.
-type heatmapAccumulator struct {
-	seriesByKey map[string]*heatmapSeries
-	seriesOrder []string
-	boundaries  map[float64]struct{}
-}
-
-func newHeatmapAccumulator() *heatmapAccumulator {
-	return &heatmapAccumulator{
-		seriesByKey: map[string]*heatmapSeries{},
-		boundaries:  map[float64]struct{}{},
-	}
-}
-
-// addCell files one cell under the group labelsKey identifies, keeping the
-// labels from the first cell seen for it.
-func (a *heatmapAccumulator) addCell(labelsKey string, lbls []*qbtypes.Label, ts int64, boundary, count float64) {
-	series, ok := a.seriesByKey[labelsKey]
-	if !ok {
-		series = &heatmapSeries{labels: lbls, counts: map[int64]map[float64]float64{}}
-		a.seriesByKey[labelsKey] = series
-		a.seriesOrder = append(a.seriesOrder, labelsKey)
-	}
-	if series.counts[ts] == nil {
-		series.counts[ts] = map[float64]float64{}
-	}
-	series.counts[ts][boundary] += count
-	if !math.IsInf(boundary, 1) {
-		a.boundaries[boundary] = struct{}{}
-	}
-}
-
-// foldSeries turns the collected cells into one series per group, in the order
-// the groups first appeared.
-func (a *heatmapAccumulator) foldSeries(queryWindow *qbtypes.TimeRange, stepMs uint64, queryName string) *qbtypes.TimeSeriesData {
-	if len(a.seriesOrder) == 0 {
-		return &qbtypes.TimeSeriesData{QueryName: queryName}
-	}
-
-	boundaries := make([]float64, 0, len(a.boundaries))
-	for boundary := range a.boundaries {
-		boundaries = append(boundaries, boundary)
-	}
-	slices.Sort(boundaries)
-
-	// the band past the last boundary is where the +Inf overflow lands
-	bandIndexByBoundary := make(map[float64]int, len(boundaries)+1)
-	for band, boundary := range boundaries {
-		bandIndexByBoundary[boundary] = band
-	}
-	bandIndexByBoundary[math.Inf(1)] = len(boundaries)
-
-	bucket := &qbtypes.AggregationBucket{
-		Index:  0,
-		Alias:  "__result_0",
-		Meta:   qbtypes.AggregationMeta{Buckets: boundaries},
-		Series: make([]*qbtypes.TimeSeries, 0, len(a.seriesOrder)),
-	}
-
-	for _, labelsKey := range a.seriesOrder {
-		accumulated := a.seriesByKey[labelsKey]
-
-		timestamps := make([]int64, 0, len(accumulated.counts))
-		for ts := range accumulated.counts {
-			timestamps = append(timestamps, ts)
-		}
-		slices.Sort(timestamps)
-
-		series := &qbtypes.TimeSeries{
-			Labels: accumulated.labels,
-			Values: make([]*qbtypes.TimeSeriesValue, 0, len(timestamps)),
-		}
-		for _, ts := range timestamps {
-			values := make([]float64, len(boundaries)+1)
-			for boundary, count := range accumulated.counts[ts] {
-				values[bandIndexByBoundary[boundary]] = count
-			}
-			series.Values = append(series.Values, &qbtypes.TimeSeriesValue{
-				Timestamp: ts,
-				Values:    values,
-				Partial:   isPartialValue(ts, queryWindow, stepMs),
-			})
-		}
-		bucket.Series = append(bucket.Series, series)
-	}
-
-	return &qbtypes.TimeSeriesData{
-		QueryName:    queryName,
-		Aggregations: []*qbtypes.AggregationBucket{bucket},
-	}
-}
-
 // readAsHeatmap folds one row per cell — (timestamp, group labels, bucket upper
 // boundary, count) — into one series per group.
 func readAsHeatmap(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (*qbtypes.TimeSeriesData, error) {
@@ -460,7 +359,7 @@ func readAsHeatmap(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtype
 			}
 		}
 
-		if ts == 0 || !hasCell || math.IsNaN(boundary) || math.IsInf(boundary, -1) {
+		if ts == 0 || !hasCell || !canBoundBand(boundary) {
 			continue
 		}
 		if math.IsNaN(count) || math.IsInf(count, 0) {
