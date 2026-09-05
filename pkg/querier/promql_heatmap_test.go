@@ -46,8 +46,7 @@ func TestFoldMatrixAsHeatmapDifferencesAlongTheBucketLabel(t *testing.T) {
 		},
 	}
 
-	data, err := foldMatrixAsHeatmap(matrix, &qbv5.TimeRange{From: 1710000000000, To: 1710000120000}, uint64(time.Minute.Milliseconds()), "A")
-	require.NoError(t, err)
+	data := foldMatrixAsHeatmap(matrix, &qbv5.TimeRange{From: 1710000000000, To: 1710000120000}, uint64(time.Minute.Milliseconds()), "A")
 	require.Len(t, data.Aggregations, 1)
 
 	aggregation := data.Aggregations[0]
@@ -84,8 +83,7 @@ func TestToResultShapesAHeatmapRequestAsCells(t *testing.T) {
 
 	var mu sync.Mutex
 	var rows, bytes uint64
-	result, err := q.toResult(matrix, nil, time.Now(), &mu, &rows, &bytes)
-	require.NoError(t, err)
+	result := q.toResult(matrix, nil, time.Now(), &mu, &rows, &bytes)
 	assert.Equal(t, qbv5.RequestTypeHeatmap, result.Type)
 
 	tsData, ok := result.Value.(*qbv5.TimeSeriesData)
@@ -99,7 +97,7 @@ func TestToResultShapesAHeatmapRequestAsCells(t *testing.T) {
 	assert.Zero(t, point.Value)
 }
 
-func TestToResultRefusesAHeatmapRequestWithoutTheBucketLabel(t *testing.T) {
+func TestToResultDrawsNothingForAHeatmapRequestWithoutTheBucketLabel(t *testing.T) {
 	q := &promqlQuery{
 		query:       qbv5.PromQuery{Name: "A", Step: qbv5.Step{Duration: time.Minute}},
 		tr:          qbv5.TimeRange{From: 1710000000000, To: 1710000060000},
@@ -111,9 +109,11 @@ func TestToResultRefusesAHeatmapRequestWithoutTheBucketLabel(t *testing.T) {
 
 	var mu sync.Mutex
 	var rows, bytes uint64
-	result, err := q.toResult(matrix, nil, time.Now(), &mu, &rows, &bytes)
-	require.Error(t, err)
-	assert.Nil(t, result)
+	result := q.toResult(matrix, nil, time.Now(), &mu, &rows, &bytes)
+
+	tsData, ok := result.Value.(*qbv5.TimeSeriesData)
+	require.True(t, ok)
+	assert.Empty(t, tsData.Aggregations)
 }
 
 // The cache key is the fingerprint alone, so two request types over one
@@ -138,7 +138,9 @@ func TestFingerprintSeparatesHeatmapFromTimeSeries(t *testing.T) {
 	assert.Empty(t, fingerprintFor(qbv5.RequestTypeScalar), "a scalar result is its window's last point")
 }
 
-func TestFoldMatrixAsHeatmapRefusesAMatrixWithoutTheBucketLabel(t *testing.T) {
+// A series with no `le` has no band to sit in, so an expression that dropped the
+// label draws nothing rather than collapsing every sample into one band.
+func TestFoldMatrixAsHeatmapDrawsNothingWithoutTheBucketLabel(t *testing.T) {
 	matrix := promql.Matrix{
 		{
 			Metric: labels.FromStrings("service.name", "cart"),
@@ -146,15 +148,14 @@ func TestFoldMatrixAsHeatmapRefusesAMatrixWithoutTheBucketLabel(t *testing.T) {
 		},
 	}
 
-	data, err := foldMatrixAsHeatmap(matrix, &qbv5.TimeRange{From: 1710000000000, To: 1710000060000}, uint64(time.Minute.Milliseconds()), "A")
-	require.Error(t, err)
-	assert.Nil(t, data)
-	assert.Contains(t, err.Error(), `"le"`)
+	data := foldMatrixAsHeatmap(matrix, &qbv5.TimeRange{From: 1710000000000, To: 1710000060000}, uint64(time.Minute.Milliseconds()), "A")
+
+	assert.Equal(t, "A", data.QueryName)
+	assert.Empty(t, data.Aggregations)
 }
 
 func TestFoldMatrixAsHeatmapAcceptsAnEmptyMatrix(t *testing.T) {
-	data, err := foldMatrixAsHeatmap(promql.Matrix{}, &qbv5.TimeRange{From: 1710000000000, To: 1710000060000}, uint64(time.Minute.Milliseconds()), "A")
-	require.NoError(t, err)
+	data := foldMatrixAsHeatmap(promql.Matrix{}, &qbv5.TimeRange{From: 1710000000000, To: 1710000060000}, uint64(time.Minute.Milliseconds()), "A")
 	assert.Equal(t, "A", data.QueryName)
 	assert.Empty(t, data.Aggregations)
 }
@@ -173,8 +174,7 @@ func TestFoldMatrixAsHeatmapClampsADecreasingCumulativeCount(t *testing.T) {
 		},
 	}
 
-	data, err := foldMatrixAsHeatmap(matrix, &qbv5.TimeRange{From: 1710000000000, To: 1710000060000}, uint64(time.Minute.Milliseconds()), "A")
-	require.NoError(t, err)
+	data := foldMatrixAsHeatmap(matrix, &qbv5.TimeRange{From: 1710000000000, To: 1710000060000}, uint64(time.Minute.Milliseconds()), "A")
 	require.Len(t, data.Aggregations, 1)
 
 	// a cumulative count that went backwards would difference to -6
@@ -199,8 +199,7 @@ func TestFoldMatrixAsHeatmapWidensTheBandOverAMissingBoundary(t *testing.T) {
 		},
 	}
 
-	data, err := foldMatrixAsHeatmap(matrix, &qbv5.TimeRange{From: 1710000000000, To: 1710000060000}, uint64(time.Minute.Milliseconds()), "A")
-	require.NoError(t, err)
+	data := foldMatrixAsHeatmap(matrix, &qbv5.TimeRange{From: 1710000000000, To: 1710000060000}, uint64(time.Minute.Milliseconds()), "A")
 	require.Len(t, data.Aggregations, 1)
 
 	aggregation := data.Aggregations[0]
@@ -220,8 +219,7 @@ func TestFoldMatrixAsHeatmapHidesInternalLabels(t *testing.T) {
 		},
 	}
 
-	data, err := foldMatrixAsHeatmap(matrix, &qbv5.TimeRange{From: 1710000000000, To: 1710000060000}, uint64(time.Minute.Milliseconds()), "A")
-	require.NoError(t, err)
+	data := foldMatrixAsHeatmap(matrix, &qbv5.TimeRange{From: 1710000000000, To: 1710000060000}, uint64(time.Minute.Milliseconds()), "A")
 	require.Len(t, data.Aggregations, 1)
 	require.Len(t, data.Aggregations[0].Series, 1)
 

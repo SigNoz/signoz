@@ -12,10 +12,7 @@ import (
 // known once every cell has been seen.
 type heatmapColumn map[float64]float64
 
-// canBoundBand reports whether a cell's boundary can serve as a band's upper
-// bound. +Inf can: it is what the open-above overflow is keyed on. NaN and -Inf
-// bound nothing, so a cell carrying either is dropped.
-func canBoundBand(boundary float64) bool {
+func isValidBucketUpperBound(boundary float64) bool {
 	return !math.IsNaN(boundary) && !math.IsInf(boundary, -1)
 }
 
