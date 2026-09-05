@@ -31,6 +31,11 @@ var (
 	// written clickhouse query. The column alias indcate which value is
 	// to be considered as final result (or target).
 	legacyReservedColumnTargetAliases = []string{"__result", "__value", "result", "res", "value"}
+
+	// userHeatmapBucketColumn is the alias a user written clickhouse query can
+	// give its bucket upper bound column, alongside the HeatmapBucketColumn the
+	// statement builder emits.
+	userHeatmapBucketColumn = "bucket"
 )
 
 // stripKeyAlias removes the __SELECT_KEY_<n>_ / __GROUP_BY_KEY_<n>_ prefix from a result
@@ -83,6 +88,8 @@ func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.Ti
 		payload, err = readAsTimeSeries(rows, queryWindow, step, queryName)
 	case qbtypes.RequestTypeScalar:
 		payload, err = readAsScalar(rows, queryName)
+	case qbtypes.RequestTypeHeatmap:
+		payload, err = readAsHeatmap(rows, queryWindow, step, queryName)
 	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeTrace, qbtypes.RequestTypeRawStream:
 		payload, err = readAsRaw(rows, queryName)
 		// TODO: add support for other request types
@@ -111,35 +118,6 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 	seriesMap := map[sKey]*qbtypes.TimeSeries{}
 
 	stepMs := uint64(step.Milliseconds())
-
-	// Helper function to check if a timestamp represents a partial value
-	isPartialValue := func(timestamp int64) bool {
-		if stepMs == 0 || queryWindow == nil {
-			return false
-		}
-
-		timestampMs := uint64(timestamp)
-
-		// For the first interval, check if query start is misaligned
-		// The first complete interval starts at the first timestamp >= queryWindow.From that is aligned to step
-		firstCompleteInterval := queryWindow.From
-		if queryWindow.From%stepMs != 0 {
-			// Round up to next step boundary
-			firstCompleteInterval = ((queryWindow.From / stepMs) + 1) * stepMs
-		}
-
-		// If timestamp is before the first complete interval, it's partial
-		if timestampMs < firstCompleteInterval {
-			return true
-		}
-
-		// For the last interval, check if it would extend beyond query end
-		if timestampMs+stepMs > queryWindow.To {
-			return queryWindow.To%stepMs != 0
-		}
-
-		return false
-	}
 
 	// Pre-allocate for labels based on column count
 	lblValsCapacity := len(colNames) - 1 // -1 for timestamp
@@ -271,7 +249,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 			series.Values = append(series.Values, &qbtypes.TimeSeriesValue{
 				Timestamp: ts,
 				Value:     val,
-				Partial:   isPartialValue(ts),
+				Partial:   isPartialValue(ts, queryWindow, stepMs),
 			})
 		}
 	}
@@ -313,6 +291,120 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 		QueryName:    queryName,
 		Aggregations: nonEmpty,
 	}, nil
+}
+
+func isHeatmapBucketColumn(colName string) bool {
+	name := stripKeyAlias(colName)
+	return name == qbtypes.HeatmapBucketColumn || name == userHeatmapBucketColumn
+}
+
+// readAsHeatmap folds one row per cell — (timestamp, group labels, bucket upper
+// bound, count) — into one series per group.
+func readAsHeatmap(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (*qbtypes.TimeSeriesData, error) {
+	colTypes := rows.ColumnTypes()
+	colNames := rows.Columns()
+
+	if !slices.ContainsFunc(colNames, isHeatmapBucketColumn) {
+		// there is no heatmap bucket column so empty response is returned.
+		return &qbtypes.TimeSeriesData{QueryName: queryName}, nil
+	}
+
+	slots := make([]any, len(colTypes))
+	for i, ct := range colTypes {
+		slots[i] = reflect.New(ct.ScanType()).Interface()
+	}
+
+	stepMs := uint64(step.Milliseconds())
+
+	accumulator := newHeatmapAccumulator()
+
+	for rows.Next() {
+		if err := rows.Scan(slots...); err != nil {
+			return nil, err
+		}
+
+		var (
+			ts         int64
+			upperBound float64
+			count      float64
+			lblVals    []string
+			lblObjs    []*qbtypes.Label
+		)
+
+		for idx, ptr := range slots {
+			name := stripKeyAlias(colNames[idx])
+			value := derefValue(ptr)
+
+			if t, ok := value.(time.Time); ok {
+				ts = t.UnixMilli()
+				continue
+			}
+
+			switch name {
+			case qbtypes.HeatmapBucketColumn, userHeatmapBucketColumn:
+				upperBound = numericAsFloat(value)
+			default:
+				if aggRe.MatchString(name) || slices.Contains(legacyReservedColumnTargetAliases, name) {
+					count = numericAsFloat(value)
+					continue
+				}
+				// a nullable label column comes back as a nil any, which would
+				// otherwise key the series on the literal "<nil>"
+				if value == nil {
+					value = ""
+				}
+				lblVals = append(lblVals, fmt.Sprint(value))
+				lblObjs = append(lblObjs, &qbtypes.Label{
+					Key:   telemetrytypes.TelemetryFieldKey{Name: name},
+					Value: value,
+				})
+			}
+		}
+
+		if ts == 0 || !isValidBucketUpperBound(upperBound) || math.IsNaN(count) || math.IsInf(count, 0) {
+			continue
+		}
+		sort.Strings(lblVals)
+		labelsKey := strings.Join(lblVals, ",")
+
+		accumulator.addCell(labelsKey, lblObjs, ts, upperBound, count)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return accumulator.foldSeries(queryWindow, stepMs, queryName), nil
+}
+
+// isPartialValue reports whether the step interval starting at timestamp is only
+// partly covered by the query window, which happens when the window boundaries
+// are not step-aligned.
+func isPartialValue(timestamp int64, queryWindow *qbtypes.TimeRange, stepMs uint64) bool {
+	if stepMs == 0 || queryWindow == nil {
+		return false
+	}
+
+	timestampMs := uint64(timestamp)
+
+	// For the first interval, check if query start is misaligned
+	// The first complete interval starts at the first timestamp >= queryWindow.From that is aligned to step
+	firstCompleteInterval := queryWindow.From
+	if queryWindow.From%stepMs != 0 {
+		// Round up to next step boundary
+		firstCompleteInterval = ((queryWindow.From / stepMs) + 1) * stepMs
+	}
+
+	// If timestamp is before the first complete interval, it's partial
+	if timestampMs < firstCompleteInterval {
+		return true
+	}
+
+	// For the last interval, check if it would extend beyond query end
+	if timestampMs+stepMs > queryWindow.To {
+		return queryWindow.To%stepMs != 0
+	}
+
+	return false
 }
 
 func isNumericKind(t reflect.Type) bool {

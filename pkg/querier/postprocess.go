@@ -195,6 +195,16 @@ func postProcessBuilderQuery[T any](
 	return result
 }
 
+// resolveHeatmapAxis brings a heatmap axis to the resolution the caller asked
+// for. Coarsening runs before the fill so the empty bands land at the resolution
+// being returned rather than the one ClickHouse bucketed at.
+func resolveHeatmapAxis(tsData *qbtypes.TimeSeriesData, bucketing qbtypes.HeatmapBucketing) {
+	if bucketing.Kind == qbtypes.BucketsKindLog && bucketing.LogScale < qbtypes.MaxLogScale {
+		qbtypes.DownscaleHeatmapAxis(tsData, qbtypes.MaxLogScale, bucketing.LogScale)
+	}
+	qbtypes.DensifyHeatmapAxis(tsData, bucketing)
+}
+
 // postProcessMetricQuery applies postprocessing to a metric query result.
 func postProcessMetricQuery(
 	q *querier,
@@ -213,6 +223,12 @@ func postProcessMetricQuery(
 			query.Order[idx].Key.Name == timeAggOrderBy ||
 			query.Order[idx].Key.Name == timeSpaceAggOrderBy {
 			query.Order[idx].Key.Name = qbtypes.DefaultOrderByKey
+		}
+	}
+
+	if req.RequestType == qbtypes.RequestTypeHeatmap && config.HeatmapBucketing != nil {
+		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
+			resolveHeatmapAxis(tsData, *config.HeatmapBucketing)
 		}
 	}
 
@@ -339,6 +355,19 @@ func (q *querier) applyFormulas(ctx context.Context, results map[string]*qbtypes
 		case qbtypes.RequestTypeTimeSeries:
 			result := q.processTimeSeriesFormula(ctx, results, formula, req)
 			if result != nil {
+				result = q.applySeriesLimit(result, formula.Limit, formula.Order)
+				results[name] = result
+			}
+		case qbtypes.RequestTypeHeatmap:
+			// The queries a formula reads were run as time series, so what
+			// arrives here is one value per group per timestamp.
+			result := q.processTimeSeriesFormula(ctx, results, formula, req)
+			if result != nil {
+				if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
+					bucketing := req.BucketOptions.ToHeatmapBucketing()
+					qbtypes.BucketTimeSeriesValues(tsData, bucketing)
+					resolveHeatmapAxis(tsData, bucketing)
+				}
 				result = q.applySeriesLimit(result, formula.Limit, formula.Order)
 				results[name] = result
 			}
@@ -494,7 +523,7 @@ func (q *querier) processScalarFormula(
 				bucket := &qbtypes.AggregationBucket{
 					Index:  aggIdx,
 					Alias:  scalarData.Columns[colIdx].Name,
-					Meta:   scalarData.Columns[colIdx].Meta,
+					Meta:   qbtypes.AggregationMeta{Unit: scalarData.Columns[colIdx].Meta.Unit},
 					Series: make([]*qbtypes.TimeSeries, 0),
 				}
 
@@ -667,13 +696,14 @@ func convertTimeSeriesDataToScalar(tsData *qbtypes.TimeSeriesData, queryName str
 		if name == "" {
 			name = fmt.Sprintf("__result_%d", agg.Index)
 		}
-		columns = append(columns, &qbtypes.ColumnDescriptor{
+		column := &qbtypes.ColumnDescriptor{
 			TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: name},
 			QueryName:         queryName,
 			AggregationIndex:  int64(agg.Index),
-			Meta:              agg.Meta,
 			Type:              qbtypes.ColumnTypeAggregation,
-		})
+		}
+		column.Meta.Unit = agg.Meta.Unit
+		columns = append(columns, column)
 	}
 
 	// Build rows.

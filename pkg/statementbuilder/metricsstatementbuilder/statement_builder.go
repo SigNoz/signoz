@@ -4,9 +4,13 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"math"
 	"slices"
+	"strconv"
+	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -113,7 +117,7 @@ func (b *StatementBuilder) Build(
 	orgID valuer.UUID,
 	start uint64,
 	end uint64,
-	_ qbtypes.RequestType,
+	requestType qbtypes.RequestType,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
@@ -125,13 +129,14 @@ func (b *StatementBuilder) Build(
 
 	start, end = querybuilder.AdjustedMetricTimeRange(start, end, uint64(query.StepInterval.Seconds()), query)
 
-	return b.buildPipelineStatement(ctx, orgID, start, end, query, keys, variables)
+	return b.buildPipelineStatement(ctx, orgID, start, end, requestType, query, keys, variables)
 }
 
 func (b *StatementBuilder) buildPipelineStatement(
 	ctx context.Context,
 	orgID valuer.UUID,
 	start, end uint64,
+	requestType qbtypes.RequestType,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
@@ -144,7 +149,7 @@ func (b *StatementBuilder) buildPipelineStatement(
 	cteQuery := query
 	if query.Aggregations[0].Type == metrictypes.HistogramType {
 		query.GroupBy = slices.DeleteFunc(slices.Clone(query.GroupBy), isHistogramBucket)
-		cteQuery = histogramCTEQuery(query)
+		cteQuery = rewriteQueryForHistogramCTE(requestType, query)
 	}
 
 	agg := cteQuery.Aggregations[0]
@@ -216,7 +221,7 @@ func (b *StatementBuilder) buildPipelineStatement(
 		}
 	}
 
-	mainStmt, err := b.BuildFinalSelect(cteFragments, cteArgs, query)
+	mainStmt, err := b.BuildFinalSelect(cteFragments, cteArgs, requestType, query)
 	if err != nil {
 		return nil, err
 	}
@@ -224,11 +229,27 @@ func (b *StatementBuilder) buildPipelineStatement(
 	if reducedFragments == nil {
 		return mainStmt, nil
 	}
-	reducedStmt, err := b.BuildFinalSelect(reducedFragments, reducedArgs, query)
+	reducedStmt, err := b.BuildFinalSelect(reducedFragments, reducedArgs, requestType, query)
 	if err != nil {
 		return nil, err
 	}
 	return unionStatements(mainStmt, reducedStmt, query)
+}
+
+func rewriteQueryForHistogramCTE(requestType qbtypes.RequestType, query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]) qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation] {
+	query.GroupBy = append(slices.Clone(query.GroupBy), qbtypes.GroupByKey{
+		TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: histogramBucketKey},
+	})
+
+	query.Aggregations = slices.Clone(query.Aggregations)
+	if query.Aggregations[0].SpaceAggregation.IsPercentile() && requestType != qbtypes.RequestTypeHeatmap {
+		query.Aggregations[0].TimeAggregation = metrictypes.TimeAggregationRate
+	} else {
+		query.Aggregations[0].TimeAggregation = metrictypes.TimeAggregationIncrease
+	}
+	query.Aggregations[0].SpaceAggregation = metrictypes.SpaceAggregationSum
+
+	return query
 }
 
 func unionStatements(main, reduced *qbtypes.Statement, query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]) (*qbtypes.Statement, error) {
@@ -758,17 +779,31 @@ func (b *StatementBuilder) buildSpatialAggregationCTE(
 func (b *StatementBuilder) BuildFinalSelect(
 	cteFragments []string,
 	cteArgs [][]any,
+	requestType qbtypes.RequestType,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 ) (*qbtypes.Statement, error) {
-	metricType := query.Aggregations[0].Type
-	spaceAgg := query.Aggregations[0].SpaceAggregation
-
 	combined := querybuilder.CombineCTEs(cteFragments)
 
 	var args []any
 	for _, a := range cteArgs {
 		args = append(args, a...)
 	}
+
+	if requestType == qbtypes.RequestTypeHeatmap {
+		return buildHeatmapFinalSelect(combined, args, query)
+	}
+	return buildAggregationFinalSelect(combined, args, query)
+}
+
+// buildAggregationFinalSelect reads __spatial_aggregation_cte as one value per
+// (group, timestamp), which is what every request type but heatmap wants.
+func buildAggregationFinalSelect(
+	combined string,
+	args []any,
+	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
+) (*qbtypes.Statement, error) {
+	metricType := query.Aggregations[0].Type
+	spaceAgg := query.Aggregations[0].SpaceAggregation
 
 	sb := sqlbuilder.NewSelectBuilder()
 
@@ -842,24 +877,136 @@ func (b *StatementBuilder) BuildFinalSelect(
 	return &qbtypes.Statement{Query: combined + q, Args: append(args, a...)}, nil
 }
 
-const histogramBucketKey = "le"
+const (
+	histogramBucketKey = "le"
+
+	heatmapValueAlias = "__result_0"
+	heatmapWindow     = "__heatmap_window"
+)
 
 func isHistogramBucket(k qbtypes.GroupByKey) bool { return k.Name == histogramBucketKey }
 
-func histogramCTEQuery(query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]) qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation] {
-	query.GroupBy = append(slices.Clone(query.GroupBy), qbtypes.GroupByKey{
-		TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: histogramBucketKey},
-	})
-
-	query.Aggregations = slices.Clone(query.Aggregations)
-	if query.Aggregations[0].SpaceAggregation.IsPercentile() {
-		query.Aggregations[0].TimeAggregation = metrictypes.TimeAggregationRate
-	} else {
-		query.Aggregations[0].TimeAggregation = metrictypes.TimeAggregationIncrease
+// buildHeatmapFinalSelect turns __spatial_aggregation_cte into one row per
+// heatmap cell: (ts, group labels..., bucket upper bound, count).
+func buildHeatmapFinalSelect(
+	combined string,
+	args []any,
+	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
+) (*qbtypes.Statement, error) {
+	if query.Aggregations[0].Type == metrictypes.HistogramType {
+		return buildHistogramHeatmapFinalSelect(combined, args, query)
 	}
-	query.Aggregations[0].SpaceAggregation = metrictypes.SpaceAggregationSum
+	return buildValueHeatmapFinalSelect(combined, args, query)
+}
 
-	return query
+// buildHistogramHeatmapFinalSelect differences the cumulative per-`le` counts in
+// __spatial_aggregation_cte into a count per band. The upper bound reported is the
+// `le` itself, so the `le=+Inf` row reaches the reader as an infinite upper bound
+// for it to fold into the overflow band.
+func buildHistogramHeatmapFinalSelect(
+	combined string,
+	args []any,
+	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
+) (*qbtypes.Statement, error) {
+	groupAliases := GroupByAliases(query.GroupBy)
+	partitionBy := append(append([]string{}, groupAliases...), "ts")
+
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("ts")
+	sb.SelectMore(groupAliases...)
+	sb.SelectMore(fmt.Sprintf("toFloat64(%s) AS %s", histogramBucketKey, qbtypes.HeatmapBucketColumn))
+	// a partial scrape can break monotonicity across `le`, and a negative cell
+	// count has no meaning
+	sb.SelectMore(fmt.Sprintf(
+		"greatest(value - lagInFrame(value, 1, 0) OVER %s, 0) AS %s",
+		heatmapWindow, heatmapValueAlias,
+	))
+	// sqlbuilder has no WINDOW clause; appending it to FROM lands it between FROM
+	// and ORDER BY, since these statements carry no WHERE or GROUP BY
+	sb.From(fmt.Sprintf(
+		"__spatial_aggregation_cte WINDOW %s AS (PARTITION BY %s ORDER BY toFloat64(%s))",
+		heatmapWindow, strings.Join(partitionBy, ", "), histogramBucketKey,
+	))
+	sb.OrderBy(groupAliases...)
+	sb.OrderBy("ts", fmt.Sprintf("toFloat64(%s)", histogramBucketKey))
+
+	q, a := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	return &qbtypes.Statement{Query: combined + q, Args: append(args, a...)}, nil
+}
+
+// buildValueHeatmapFinalSelect places each spatially aggregated value in a band
+// of the requested axis. __spatial_aggregation_cte holds one row per (group,
+// timestamp), so every cell counts exactly one.
+func buildValueHeatmapFinalSelect(
+	combined string,
+	args []any,
+	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
+) (*qbtypes.Statement, error) {
+	bucketing := query.Aggregations[0].HeatmapBucketing
+	if bucketing == nil {
+		return nil, errors.NewInternalf(errors.CodeInternal,
+			"heatmap over a %s metric reached the statement builder without a resolved bucket axis",
+			query.Aggregations[0].Type.StringValue())
+	}
+
+	upperBound, err := renderHeatmapUpperBoundExpr(*bucketing)
+	if err != nil {
+		return nil, err
+	}
+
+	groupAliases := GroupByAliases(query.GroupBy)
+
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("ts")
+	sb.SelectMore(groupAliases...)
+	sb.SelectMore(fmt.Sprintf("%s AS %s", upperBound, qbtypes.HeatmapBucketColumn))
+	sb.SelectMore(fmt.Sprintf("toFloat64(1) AS %s", heatmapValueAlias))
+	sb.From("__spatial_aggregation_cte")
+	sb.OrderBy(groupAliases...)
+	sb.OrderBy("ts", qbtypes.HeatmapBucketColumn)
+
+	q, a := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	return &qbtypes.Statement{Query: combined + q, Args: append(args, a...)}, nil
+}
+
+// renderHeatmapUpperBoundExpr renders the upper bound of the band `value` falls in.
+func renderHeatmapUpperBoundExpr(bucketing qbtypes.HeatmapBucketing) (string, error) {
+	switch bucketing.Kind {
+	case qbtypes.BucketsKindLinear:
+		return renderLinearUpperBoundExpr(bucketing), nil
+	case qbtypes.BucketsKindLog:
+		return renderLogUpperBoundExpr(), nil
+	default:
+		return "", errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"unsupported bucketsScaling %q for heatmap requests", bucketing.Kind.StringValue())
+	}
+}
+
+func renderLinearUpperBoundExpr(bucketing qbtypes.HeatmapBucketing) string {
+	maxValue := formatFloat(bucketing.MaxValue)
+	numBuckets := strconv.Itoa(bucketing.NumBuckets)
+	return fmt.Sprintf(
+		"multiIf(value > %s, toFloat64('+Inf'), least(greatest(ceil(value * %s / %s), 1), %s) * %s / %s)",
+		maxValue, numBuckets, maxValue, numBuckets, maxValue, numBuckets,
+	)
+}
+
+// ClickHouse buckets at MaxLogScale whatever HeatmapBucketing.LogScale asks for;
+// postprocessing folds the axis down afterwards.
+func renderLogUpperBoundExpr() string {
+	bandsPerDoubling := formatFloat(math.Exp2(qbtypes.MaxLogScale))
+	lowest := formatFloat(qbtypes.MinLogUpperBound)
+	highest := formatFloat(qbtypes.MaxLogUpperBound)
+	return fmt.Sprintf(
+		"multiIf(value <= 0, toFloat64(0), value <= %s, %s, value > %s, toFloat64('+Inf'), pow(2, ceil(log2(value) * %s) / %s))",
+		lowest, lowest, highest, bandsPerDoubling, bandsPerDoubling,
+	)
+}
+
+// formatFloat renders a float64 as the shortest literal that reads back as the
+// same value, so an upper bound computed from it is identical on every row.
+func formatFloat(v float64) string {
+	return strconv.FormatFloat(v, 'g', -1, 64)
 }
 
 func GroupByColumnAlias(i int, name string) string {

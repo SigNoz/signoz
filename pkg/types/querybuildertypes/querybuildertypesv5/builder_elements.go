@@ -540,6 +540,8 @@ type MetricAggregation struct {
 	// reduce to operator for metric scalar requests
 	ReduceTo ReduceTo `json:"reduceTo,omitzero"`
 
+	HeatmapBucketing *HeatmapBucketing `json:"-"`
+
 	Reduced bool `json:"-"`
 }
 
@@ -553,6 +555,10 @@ func (m MetricAggregation) Copy() MetricAggregation {
 	if m.ValueFilter != nil {
 		valueFilterCopy := *m.ValueFilter
 		c.ValueFilter = &valueFilterCopy
+	}
+	if m.HeatmapBucketing != nil {
+		bucketingCopy := *m.HeatmapBucketing
+		c.HeatmapBucketing = &bucketingCopy
 	}
 	return c
 }
