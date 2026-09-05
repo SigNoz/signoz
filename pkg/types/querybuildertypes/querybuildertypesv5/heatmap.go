@@ -108,12 +108,8 @@ func (a *MetricAggregation) VerifyAndApplyBucketOptions(bucketOptions *BucketOpt
 	}
 }
 
-// MergeHeatmapAxes collects, per aggregation index, every bucket upper bound
-// any of tsData reached, so that halves holding different bands can be merged
-// onto one axis. Only heatmap results carry upper bounds, so it comes back
-// empty for everything else and the realignment it feeds is a no-op.
-func MergeHeatmapAxes(tsData ...*TimeSeriesData) map[int][]float64 {
-	reached := map[int]map[float64]struct{}{}
+func MergeBucketUpperBounds(tsData ...*TimeSeriesData) map[int][]float64 {
+	upperBoundsByAggregation := map[int][]float64{}
 
 	for _, data := range tsData {
 		if data == nil {
@@ -123,21 +119,16 @@ func MergeHeatmapAxes(tsData ...*TimeSeriesData) map[int][]float64 {
 			if len(aggBucket.Meta.Buckets) == 0 {
 				continue
 			}
-			if reached[aggBucket.Index] == nil {
-				reached[aggBucket.Index] = map[float64]struct{}{}
-			}
-			for _, upperBound := range aggBucket.Meta.Buckets {
-				reached[aggBucket.Index][upperBound] = struct{}{}
-			}
+			upperBoundsByAggregation[aggBucket.Index] = append(upperBoundsByAggregation[aggBucket.Index], aggBucket.Meta.Buckets...)
 		}
 	}
 
-	merged := make(map[int][]float64, len(reached))
-	for index, upperBoundSet := range reached {
-		merged[index] = slices.Sorted(maps.Keys(upperBoundSet))
+	for index, upperBounds := range upperBoundsByAggregation {
+		slices.Sort(upperBounds)
+		upperBoundsByAggregation[index] = slices.Compact(upperBounds)
 	}
 
-	return merged
+	return upperBoundsByAggregation
 }
 
 // regroupAxis rewrites the aggregation onto upperBounds, moving the count held

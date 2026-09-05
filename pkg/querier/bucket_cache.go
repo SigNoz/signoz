@@ -498,7 +498,7 @@ func (bc *bucketCache) mergeTimeSeriesValues(ctx context.Context, buckets []*qbt
 		}
 	}
 
-	mergedUpperBounds := qbtypes.MergeHeatmapAxes(decoded...)
+	mergedUpperBounds := qbtypes.MergeBucketUpperBounds(decoded...)
 
 	for _, tsData := range decoded {
 		for _, aggBucket := range tsData.Aggregations {
