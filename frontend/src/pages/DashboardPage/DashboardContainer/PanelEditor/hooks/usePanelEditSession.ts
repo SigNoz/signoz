@@ -4,24 +4,19 @@ import type {
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { PANEL_TYPES } from 'constants/queryBuilder';
-import {
-	getPanelDefinition,
-	isPanelKindSupported,
-} from 'pages/DashboardPage/DashboardContainer/Panels/registry';
-import type { RenderablePanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
-import {
-	PANEL_KIND_TO_PANEL_TYPE,
-	type PanelKind,
-} from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
+import { requireQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
+import { isPanelKindSupported } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
+import type { RenderableQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
+import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 import {
 	usePanelQuery,
 	type PanelQueryTimeOverride,
 	type UsePanelQueryResult,
 } from 'pages/DashboardPage/DashboardContainer/hooks/usePanelQuery';
 
+import type { PanelEditorDraftApi } from '../types';
 import { usePanelEditorDraft } from './usePanelEditorDraft';
 import { usePanelEditorQuerySync } from './usePanelEditorQuerySync';
-import { usePanelTypeSwitch } from './usePanelTypeSwitch';
 
 interface UsePanelEditSessionArgs {
 	panel: DashboardtypesPanelDTO;
@@ -38,6 +33,12 @@ interface UsePanelEditSessionArgs {
 	alwaysSerializeQuery?: boolean;
 	/** Seed an empty builder with the kind's default signal (new panels) — off for drilldown. */
 	seedQuerySignal?: boolean;
+	/**
+	 * Externally-owned draft. The editor shell hoists it above its mode fork so a
+	 * kind switch across modes survives the branch swap; hosts without a fork (the
+	 * View modal, until it forks) omit it and the session owns the draft.
+	 */
+	draftApi?: PanelEditorDraftApi;
 }
 
 export interface UsePanelEditSessionReturn {
@@ -50,7 +51,7 @@ export interface UsePanelEditSessionReturn {
 	reset: () => void;
 	/** Draft kind → V1 panel type (drives the query builder + preview). */
 	panelType: PANEL_TYPES;
-	panelDefinition: RenderablePanelDefinition;
+	panelDefinition: RenderableQueryPanelDefinition;
 	/** The kind's first supported signal — seeds new queries/columns. */
 	defaultSignal: TelemetrytypesSignalDTO;
 	/** Shared query result for the draft over the resolved time window. */
@@ -62,8 +63,6 @@ export interface UsePanelEditSessionReturn {
 	buildSaveSpec: (
 		spec: DashboardtypesPanelSpecDTO,
 	) => DashboardtypesPanelSpecDTO;
-	/** Switch the draft's visualization kind in place (reversible per session). */
-	onChangePanelKind: (kind: PanelKind) => void;
 }
 
 /**
@@ -80,14 +79,17 @@ export function usePanelEditSession({
 	time,
 	alwaysSerializeQuery = false,
 	seedQuerySignal = false,
+	draftApi,
 }: UsePanelEditSessionArgs): UsePanelEditSessionReturn {
-	const { draft, spec, setSpec, isSpecDirty, reset } = usePanelEditorDraft(
-		panel,
-		savedPanel,
-	);
+	// Called unconditionally (hooks rules); unused when a hoisted draft is passed in.
+	const internalDraftApi = usePanelEditorDraft(panel, savedPanel);
+	const { draft, spec, setSpec, isSpecDirty, reset } =
+		draftApi ?? internalDraftApi;
 
 	const panelKind = draft.spec.plugin.kind;
-	const panelDefinition = getPanelDefinition(panelKind);
+	// Hosts fork on `definition.mode` before mounting this session (the editor and
+	// View modal shells) — asserted rather than assumed.
+	const panelDefinition = requireQueryPanelDefinition(panelKind);
 	const panelType = PANEL_KIND_TO_PANEL_TYPE[panelKind];
 	const defaultSignal = panelDefinition.supportedSignals[0];
 
@@ -109,12 +111,6 @@ export function usePanelEditSession({
 		savedQueries: savedPanel?.spec.queries,
 	});
 
-	const { onChangePanelKind } = usePanelTypeSwitch({
-		spec: draft.spec,
-		panelType,
-		setSpec,
-	});
-
 	return {
 		draft,
 		spec,
@@ -128,6 +124,5 @@ export function usePanelEditSession({
 		runQuery,
 		isQueryDirty,
 		buildSaveSpec,
-		onChangePanelKind,
 	};
 }

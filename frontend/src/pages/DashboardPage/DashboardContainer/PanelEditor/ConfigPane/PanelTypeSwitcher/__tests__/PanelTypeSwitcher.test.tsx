@@ -44,6 +44,7 @@ describe('PanelTypeSwitcher', () => {
 		// List supports only logs/traces; every other kind also supports metrics.
 		// Query-type support comes from SUPPORTED_QUERY_TYPES (all three by default).
 		mockGetPanelDefinition.mockImplementation((kind: string) => ({
+			mode: 'query',
 			supportedSignals:
 				kind === 'signoz/ListPanel'
 					? ['logs', 'traces']

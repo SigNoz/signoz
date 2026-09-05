@@ -1,9 +1,10 @@
 import { TooltipProvider } from '@signozhq/ui/tooltip';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { fireEvent, render, screen } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
+
+import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 
 import ViewPanelModal from '../ViewPanelModal/ViewPanelModal';
 
@@ -21,6 +22,30 @@ jest.mock(
 );
 
 // Isolate from the draft/query-builder plumbing (its own suite covers it).
+// Real registry by default; the static-fork test overrides one kind.
+jest.mock('pages/DashboardPage/DashboardContainer/Panels/registry', () => {
+	const actual = jest.requireActual(
+		'pages/DashboardPage/DashboardContainer/Panels/registry',
+	);
+	return { ...actual, getPanelDefinition: jest.fn(actual.getPanelDefinition) };
+});
+
+// The shell reads the URL seed + kind switch itself; stub its collaborators so
+// the suite needs no router and keeps asserting through the mocked mode hook.
+jest.mock('hooks/queryBuilder/useGetCompositeQueryParam', () => ({
+	useGetCompositeQueryParam: (): null => null,
+}));
+jest.mock('hooks/useUrlQuery', () => ({
+	__esModule: true,
+	default: (): URLSearchParams => new URLSearchParams(),
+}));
+jest.mock(
+	'pages/DashboardPage/DashboardContainer/PanelEditor/hooks/usePanelTypeSwitch',
+	() => ({
+		usePanelTypeSwitch: (): unknown => ({ onChangePanelKind: jest.fn() }),
+	}),
+);
+
 jest.mock('../ViewPanelModal/useViewPanelMode', () => ({
 	useViewPanelMode: (args: {
 		panel: { spec: { plugin: { kind: string } } };
@@ -30,8 +55,14 @@ jest.mock('../ViewPanelModal/useViewPanelMode', () => ({
 			draft: args.panel,
 			panelDefinition: {
 				kind,
+				mode: 'query',
 				actions: { search: kind === 'signoz/ListPanel' },
 				Renderer: (): null => null,
+				// Same testid as the real pane: the suite asserts the modal fills its
+				// query-builder slot from the definition.
+				EditorPane: (): JSX.Element => (
+					<div data-testid="panel-editor-v2-query-builder" />
+				),
 			},
 			query: {
 				data: { response: undefined, requestPayload: undefined, legendMap: {} },
@@ -161,8 +192,7 @@ describe('ViewPanelModal', () => {
 		expect(screen.getByTestId('preview-pane')).toBeInTheDocument();
 	});
 
-	it('invokes onClose when the modal is dismissed', async () => {
-		const user = userEvent.setup();
+	it('invokes onClose when the modal is dismissed', () => {
 		const onClose = jest.fn();
 		renderWithProvider(
 			<ViewPanelModal
@@ -172,8 +202,49 @@ describe('ViewPanelModal', () => {
 				onClose={onClose}
 			/>,
 		);
-		await user.click(screen.getByLabelText('Close'));
+		// fireEvent: user-event's pointer walk races Radix's layer bookkeeping in
+		// jsdom, transiently dropping the dialog's pointer-events and failing the
+		// interaction check. The assertion is only that Close wires to onClose.
+		fireEvent.click(screen.getByLabelText('Close'));
 		expect(onClose).toHaveBeenCalled();
+	});
+
+	it('mounts the static body — editor pane, no query builder slot — for a static kind', () => {
+		const actual = jest.requireActual(
+			'pages/DashboardPage/DashboardContainer/Panels/registry',
+		);
+		const staticDefinition = {
+			kind: 'signoz/TimeSeriesPanel',
+			displayName: 'Static',
+			sections: [],
+			actions: {},
+			mode: 'static',
+			Renderer: (): JSX.Element => <div data-testid="fake-static-renderer" />,
+			EditorPane: (): JSX.Element => <div data-testid="static-editor-pane" />,
+		};
+		(getPanelDefinition as jest.Mock).mockImplementation((kind: string) =>
+			kind === 'signoz/TimeSeriesPanel' ? staticDefinition : actual.getPanelDefinition(kind),
+		);
+
+		renderWithProvider(
+			<ViewPanelModal
+				panel={makePanel('signoz/TimeSeriesPanel')}
+				panelId="p1"
+				open
+				onClose={jest.fn()}
+			/>,
+		);
+
+		expect(screen.getByTestId('static-editor-pane')).toBeInTheDocument();
+		expect(screen.getByTestId('fake-static-renderer')).toBeInTheDocument();
+		expect(
+			screen.queryByTestId('panel-editor-v2-query-builder'),
+		).not.toBeInTheDocument();
+		expect(mockPreviewPaneRender).not.toHaveBeenCalled();
+
+		(getPanelDefinition as jest.Mock).mockImplementation(
+			actual.getPanelDefinition,
+		);
 	});
 
 	// Charts share one global cursor-sync key and uPlot replays drag across the

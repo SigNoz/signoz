@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { toast } from '@signozhq/ui/sonner';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { getSupportedSignals } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 
 import PanelEditorContainer from '../index';
@@ -232,7 +233,12 @@ describe('PanelEditorContainer composition', () => {
 			}),
 		);
 		expect(mockQbProps).toHaveBeenCalledWith(
-			expect.objectContaining({ panelKind: 'signoz/TimeSeriesPanel' }),
+			expect.objectContaining({
+				panelDefinition: expect.objectContaining({
+					kind: 'signoz/TimeSeriesPanel',
+					mode: 'query',
+				}),
+			}),
 		);
 		expect(mockConfigProps).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -256,7 +262,7 @@ describe('PanelEditorContainer composition', () => {
 				setSpec: mockSetSpec,
 				refetch: mockRefetch,
 				alwaysSerializeQuery: false,
-				signal: getPanelDefinition('signoz/TimeSeriesPanel').supportedSignals[0],
+				signal: getSupportedSignals('signoz/TimeSeriesPanel')[0],
 			}),
 		);
 		expect(mockUseTypeSwitch).toHaveBeenCalledWith(

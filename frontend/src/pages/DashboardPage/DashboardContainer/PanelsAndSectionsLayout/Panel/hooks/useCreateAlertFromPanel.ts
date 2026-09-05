@@ -15,7 +15,7 @@ import { buildQueryRangeRequest } from 'pages/DashboardPage/DashboardContainer/q
 import { envelopesToQuery } from 'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters';
 import { selectResolvedVariables } from 'pages/DashboardPage/DashboardContainer/store/slices/variableSelectionSlice';
 import { useDashboardStore } from 'pages/DashboardPage/DashboardContainer/store/useDashboardStore';
-import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
+import { requireQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -70,7 +70,8 @@ export function useCreateAlertFromPanel(): (
 			// Redux global time is nanoseconds; the request DTO takes epoch ms.
 			const request = buildQueryRangeRequest({
 				queries: panel.spec.queries,
-				queryCapabilities: getPanelDefinition(panelKind).queryCapabilities,
+				// Reached only through the menu item `actions.createAlert` gates.
+				queryCapabilities: requireQueryPanelDefinition(panelKind).queryCapabilities,
 				startMs: Math.floor(minTime / NANO_SECOND_MULTIPLIER),
 				endMs: Math.floor(maxTime / NANO_SECOND_MULTIPLIER),
 				variables,
