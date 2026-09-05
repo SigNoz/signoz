@@ -1,10 +1,4 @@
 import { useCallback, useMemo } from 'react';
-import {
-	ResizableHandle,
-	ResizablePanel,
-	ResizablePanelGroup,
-	useDefaultLayout,
-} from '@signozhq/ui/resizable';
 import { toast } from '@signozhq/ui/sonner';
 import { ConfigProvider } from 'antd';
 import {
@@ -12,9 +6,7 @@ import {
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import type {
-	RenderableQueryPanelDefinition,
-} from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
+import type { RenderableQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
 import type { PanelKind } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 import {
@@ -30,7 +22,9 @@ import { usePanelInteractions } from '../PanelsAndSectionsLayout/Panel/hooks/use
 import { useScrollIntoViewStore } from '../store/useScrollIntoViewStore';
 import ConfigPane from './ConfigPane/ConfigPane';
 import Header from './Header/Header';
-import layoutStorage from './layoutStorage';
+import PanelEditorLayout, {
+	PANE_SPLIT,
+} from './PanelEditorLayout/PanelEditorLayout';
 import PreviewPane from './PreviewPane/PreviewPane';
 import { useLegendSeries } from './hooks/useLegendSeries';
 import type { PanelEditorDraftApi } from './types';
@@ -42,7 +36,6 @@ import { useSwitchColumnsOnSignalChange } from './hooks/useSwitchColumnsOnSignal
 import { useSwitchToViewMode } from './hooks/useSwitchToViewMode';
 import { useTableColumns } from './hooks/useTableColumns';
 
-import styles from './PanelEditor.module.scss';
 import logEvent from '@/api/common/logEvent';
 import { DashboardEvents } from '../../constants/events';
 
@@ -141,18 +134,6 @@ function QueryEditorBody({
 		panelId,
 		isNew,
 		layoutIndex,
-	});
-	const { defaultLayout, onLayoutChanged } = useDefaultLayout({
-		id: 'panel-editor-v2',
-		storage: layoutStorage,
-	});
-
-	const {
-		defaultLayout: mainDefaultLayout,
-		onLayoutChanged: onMainLayoutChanged,
-	} = useDefaultLayout({
-		id: 'panel-editor-v2-main',
-		storage: layoutStorage,
 	});
 
 	const panelKind = draft.spec.plugin.kind;
@@ -288,84 +269,62 @@ function QueryEditorBody({
 	}, [onSwitchToView]);
 
 	return (
-		<div className={styles.page} data-testid="panel-editor-v2">
-			<Header
-				isDirty={isDirty}
-				isSaving={isSaving}
-				showSwitchToView={!isNew}
-				readOnly={!isEditable}
-				readOnlyReason={editDisabledReason}
-				onSave={onSave}
-				onSwitchToView={switchToViewMode}
-				onClose={onCloseEditor}
-			/>
-			<ResizablePanelGroup
-				id="panel-editor-v2"
-				orientation="horizontal"
-				defaultLayout={defaultLayout}
-				onLayoutChanged={onLayoutChanged}
-			>
-				<ResizablePanel minSize="75%" maxSize="80%" defaultSize="80%">
-					<div className={styles.left}>
-						<ResizablePanelGroup
-							id="panel-editor-v2-main"
-							orientation="vertical"
-							defaultLayout={mainDefaultLayout}
-							onLayoutChanged={onMainLayoutChanged}
-						>
-							<ResizablePanel minSize="55%" maxSize="65%" defaultSize="60%">
-								<PreviewPane
-									panelId={panelId}
-									panel={draft}
-									panelDefinition={panelDefinition}
-									data={data}
-									isFetching={isFetching}
-									isPreviousData={isPreviousData}
-									error={error}
-									refetch={refetch}
-									onDragSelect={onDragSelect}
-									pagination={pagination}
-								/>
-							</ResizablePanel>
-							<ResizableHandle withHandle className={styles.handle} />
-							<ResizablePanel minSize="35%" maxSize="45%" defaultSize="40%">
-								<ConfigProvider getPopupContainer={getBodyPopupContainer}>
-									<EditorPane
-										panelDefinition={panelDefinition}
-										signal={listSignal}
-										isLoadingQueries={isFetching}
-										onStageRunQuery={runQuery}
-										onCancelQuery={cancelQuery}
-										spec={spec}
-										onChangeSpec={setSpec}
-									/>
-								</ConfigProvider>
-							</ResizablePanel>
-						</ResizablePanelGroup>
-					</div>
-				</ResizablePanel>
-				<ResizableHandle withHandle className={styles.handle} />
-				<ResizablePanel
-					minSize="20%"
-					maxSize="25%"
-					defaultSize="20%"
-					className={styles.right}
-				>
-					<ConfigPane
-						panel={draft}
-						panelId={panelId}
+		<PanelEditorLayout
+			split={PANE_SPLIT.query}
+			header={
+				<Header
+					isDirty={isDirty}
+					isSaving={isSaving}
+					showSwitchToView={!isNew}
+					readOnly={!isEditable}
+					readOnlyReason={editDisabledReason}
+					onSave={onSave}
+					onSwitchToView={switchToViewMode}
+					onClose={onCloseEditor}
+				/>
+			}
+			preview={
+				<PreviewPane
+					panelId={panelId}
+					panel={draft}
+					panelDefinition={panelDefinition}
+					data={data}
+					isFetching={isFetching}
+					isPreviousData={isPreviousData}
+					error={error}
+					refetch={refetch}
+					onDragSelect={onDragSelect}
+					pagination={pagination}
+				/>
+			}
+			editor={
+				<ConfigProvider getPopupContainer={getBodyPopupContainer}>
+					<EditorPane
+						panelDefinition={panelDefinition}
+						signal={listSignal}
+						isLoadingQueries={isFetching}
+						onStageRunQuery={runQuery}
+						onCancelQuery={cancelQuery}
 						spec={spec}
 						onChangeSpec={setSpec}
-						onChangePanelKind={onChangePanelKind}
-						queryType={currentQuery.queryType}
-						legendSeries={legendSeries}
-						tableColumns={tableColumns}
-						stepInterval={stepInterval}
-						metricUnit={metricUnit}
 					/>
-				</ResizablePanel>
-			</ResizablePanelGroup>
-		</div>
+				</ConfigProvider>
+			}
+			config={
+				<ConfigPane
+					panel={draft}
+					panelId={panelId}
+					spec={spec}
+					onChangeSpec={setSpec}
+					onChangePanelKind={onChangePanelKind}
+					queryType={currentQuery.queryType}
+					legendSeries={legendSeries}
+					tableColumns={tableColumns}
+					stepInterval={stepInterval}
+					metricUnit={metricUnit}
+				/>
+			}
+		/>
 	);
 }
 
