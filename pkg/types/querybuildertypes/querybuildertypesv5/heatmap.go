@@ -10,6 +10,11 @@ import (
 )
 
 const (
+	// HeatmapBucketColumn is the alias a heatmap statement gives the column holding
+	// a row's bucket boundary. Every other aggregation returns a single numeric
+	// column the reader treats as the value; this name tells the two apart.
+	HeatmapBucketColumn = "__bucket"
+
 	DefaultNumBuckets = 60
 
 	// MaxLogScale is the resolution ClickHouse buckets every log heatmap at:

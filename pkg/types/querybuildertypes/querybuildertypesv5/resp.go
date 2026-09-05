@@ -149,11 +149,6 @@ type AggregationBucket struct {
 	AnomalyScores    []*TimeSeries `json:"anomalyScores,omitempty"`
 }
 
-// HeatmapBucketColumn is the alias a heatmap statement gives the column holding
-// a row's bucket boundary. Every other aggregation returns a single numeric
-// column the reader treats as the value; this name tells the two apart.
-const HeatmapBucketColumn = "__bucket"
-
 type AggregationMeta struct {
 	Unit string `json:"unit,omitempty"`
 	// Buckets holds ascending upper bounds shared by every series in the
