@@ -20,13 +20,18 @@ import (
 // cumulative upper bound on, in PromQL as in the metric itself.
 const promHistogramBucketLabel = "le"
 
+// cumulativeColumn maps a bucket's upper boundary to the cumulative count at it,
+// the form a classic histogram's `le` series arrive in. Differencing along the
+// boundaries turns it into the per-band counts a heatmapColumn holds.
+type cumulativeColumn map[float64]float64
+
 // promHeatmapGroup accumulates one group's cumulative counts. `le` series are
 // separate series in a matrix, so a group is assembled across several of them
 // and the differencing can only run once they have all been read.
 type promHeatmapGroup struct {
 	labels     []*qbv5.Label
 	labelsKey  string
-	cumulative map[int64]heatmapColumn
+	cumulative map[int64]cumulativeColumn
 }
 
 // foldMatrixAsHeatmap folds a classic histogram matrix, one series per (group,
@@ -59,7 +64,7 @@ func collectCumulativeGroups(matrix promql.Matrix) (groups map[string]*promHeatm
 		lbls, labelsKey := extractHeatmapGroup(promSeries.Metric)
 		group, ok := groups[labelsKey]
 		if !ok {
-			group = &promHeatmapGroup{labels: lbls, labelsKey: labelsKey, cumulative: map[int64]heatmapColumn{}}
+			group = &promHeatmapGroup{labels: lbls, labelsKey: labelsKey, cumulative: map[int64]cumulativeColumn{}}
 			groups[labelsKey] = group
 			groupOrder = append(groupOrder, labelsKey)
 		}
@@ -73,7 +78,7 @@ func collectCumulativeGroups(matrix promql.Matrix) (groups map[string]*promHeatm
 				continue
 			}
 			if group.cumulative[point.T] == nil {
-				group.cumulative[point.T] = heatmapColumn{}
+				group.cumulative[point.T] = cumulativeColumn{}
 			}
 			group.cumulative[point.T][boundary] = point.F
 		}
