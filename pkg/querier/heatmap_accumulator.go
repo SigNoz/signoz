@@ -7,13 +7,13 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
-// heatmapColumn maps a bucket's upper boundary to the count in it, holding one
+// heatmapColumn maps a bucket's upper bound to the count in it, holding one
 // timestamp's cells. Keyed rather than indexed by band because the axis is only
 // known once every cell has been seen.
 type heatmapColumn map[float64]float64
 
-func isValidBucketUpperBound(boundary float64) bool {
-	return !math.IsNaN(boundary) && !math.IsInf(boundary, -1)
+func isValidBucketUpperBound(upperBound float64) bool {
+	return !math.IsNaN(upperBound) && !math.IsInf(upperBound, -1)
 }
 
 // heatmapSeries accumulates one group's columns while the rows are read.
@@ -27,19 +27,19 @@ type heatmapSeries struct {
 type heatmapAccumulator struct {
 	seriesByKey map[string]*heatmapSeries
 	seriesOrder []string
-	boundaries  map[float64]struct{}
+	upperBounds map[float64]struct{}
 }
 
 func newHeatmapAccumulator() *heatmapAccumulator {
 	return &heatmapAccumulator{
 		seriesByKey: map[string]*heatmapSeries{},
-		boundaries:  map[float64]struct{}{},
+		upperBounds: map[float64]struct{}{},
 	}
 }
 
 // addCell files one cell under the group labelsKey identifies, keeping the
 // labels from the first cell seen for it.
-func (a *heatmapAccumulator) addCell(labelsKey string, lbls []*qbtypes.Label, ts int64, boundary, count float64) {
+func (a *heatmapAccumulator) addCell(labelsKey string, lbls []*qbtypes.Label, ts int64, upperBound, count float64) {
 	series, ok := a.seriesByKey[labelsKey]
 	if !ok {
 		series = &heatmapSeries{labels: lbls, columnsByTimestamp: map[int64]heatmapColumn{}}
@@ -49,9 +49,9 @@ func (a *heatmapAccumulator) addCell(labelsKey string, lbls []*qbtypes.Label, ts
 	if series.columnsByTimestamp[ts] == nil {
 		series.columnsByTimestamp[ts] = heatmapColumn{}
 	}
-	series.columnsByTimestamp[ts][boundary] += count
-	if !math.IsInf(boundary, 1) {
-		a.boundaries[boundary] = struct{}{}
+	series.columnsByTimestamp[ts][upperBound] += count
+	if !math.IsInf(upperBound, 1) {
+		a.upperBounds[upperBound] = struct{}{}
 	}
 }
 
@@ -62,23 +62,23 @@ func (a *heatmapAccumulator) foldSeries(queryWindow *qbtypes.TimeRange, stepMs u
 		return &qbtypes.TimeSeriesData{QueryName: queryName}
 	}
 
-	boundaries := make([]float64, 0, len(a.boundaries))
-	for boundary := range a.boundaries {
-		boundaries = append(boundaries, boundary)
+	upperBounds := make([]float64, 0, len(a.upperBounds))
+	for upperBound := range a.upperBounds {
+		upperBounds = append(upperBounds, upperBound)
 	}
-	slices.Sort(boundaries)
+	slices.Sort(upperBounds)
 
-	// the band past the last boundary is where the +Inf overflow lands
-	bandIndexByBoundary := make(map[float64]int, len(boundaries)+1)
-	for band, boundary := range boundaries {
-		bandIndexByBoundary[boundary] = band
+	// the band past the last upper bound is where the +Inf overflow lands
+	bandIndexByUpperBound := make(map[float64]int, len(upperBounds)+1)
+	for band, upperBound := range upperBounds {
+		bandIndexByUpperBound[upperBound] = band
 	}
-	bandIndexByBoundary[math.Inf(1)] = len(boundaries)
+	bandIndexByUpperBound[math.Inf(1)] = len(upperBounds)
 
 	bucket := &qbtypes.AggregationBucket{
 		Index:  0,
 		Alias:  "__result_0",
-		Meta:   qbtypes.AggregationMeta{Buckets: boundaries},
+		Meta:   qbtypes.AggregationMeta{Buckets: upperBounds},
 		Series: make([]*qbtypes.TimeSeries, 0, len(a.seriesOrder)),
 	}
 
@@ -96,9 +96,9 @@ func (a *heatmapAccumulator) foldSeries(queryWindow *qbtypes.TimeRange, stepMs u
 			Values: make([]*qbtypes.TimeSeriesValue, 0, len(timestamps)),
 		}
 		for _, ts := range timestamps {
-			values := make([]float64, len(boundaries)+1)
-			for boundary, count := range accumulated.columnsByTimestamp[ts] {
-				values[bandIndexByBoundary[boundary]] = count
+			values := make([]float64, len(upperBounds)+1)
+			for upperBound, count := range accumulated.columnsByTimestamp[ts] {
+				values[bandIndexByUpperBound[upperBound]] = count
 			}
 			series.Values = append(series.Values, &qbtypes.TimeSeriesValue{
 				Timestamp: ts,
