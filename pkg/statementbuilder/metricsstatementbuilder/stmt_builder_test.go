@@ -412,6 +412,72 @@ func TestStatementBuilder(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
+			// cumulative keeps CanShortCircuitDelta false, so the counts reach the
+			// bucket differencing through the temporal CTE rather than the delta
+			// fast path
+			name:        "test_histogram_heatmap_cumulative",
+			requestType: qbtypes.RequestTypeHeatmap,
+			query: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Signal:       telemetrytypes.SignalMetrics,
+				StepInterval: qbtypes.Step{Duration: 60 * time.Second},
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "http_server_duration_bucket",
+						Type:             metrictypes.HistogramType,
+						Temporality:      metrictypes.Cumulative,
+						TimeAggregation:  metrictypes.TimeAggregationRate,
+						SpaceAggregation: metrictypes.SpaceAggregationPercentile95,
+					},
+				},
+				GroupBy: []qbtypes.GroupByKey{
+					{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: "service.name",
+						},
+					},
+				},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __temporal_aggregation_cte AS (SELECT ts, `__GROUP_BY_KEY_0_service.name`, `le`, multiIf(row_number() OVER rate_window = 1, nan, (per_series_value - lagInFrame(per_series_value, 1) OVER rate_window) < 0, per_series_value, per_series_value - lagInFrame(per_series_value, 1) OVER rate_window) AS per_series_value FROM (SELECT fingerprint, toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60)) AS ts, `__GROUP_BY_KEY_0_service.name`, `le`, max(value) AS per_series_value FROM signoz_metrics.distributed_samples_v4 AS points INNER JOIN (SELECT fingerprint, JSONExtractString(labels, 'service.name') AS `__GROUP_BY_KEY_0_service.name`, JSONExtractString(labels, 'le') AS `le` FROM signoz_metrics.time_series_v4_6hrs WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli <= ? AND LOWER(temporality) LIKE LOWER(?) GROUP BY fingerprint, `__GROUP_BY_KEY_0_service.name`, `le`) AS filtered_time_series ON points.fingerprint = filtered_time_series.fingerprint WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli < ? GROUP BY fingerprint, ts, `__GROUP_BY_KEY_0_service.name`, `le` ORDER BY fingerprint, ts) WINDOW rate_window AS (PARTITION BY fingerprint ORDER BY fingerprint, ts)), __spatial_aggregation_cte AS (SELECT ts, `__GROUP_BY_KEY_0_service.name`, `le`, sum(per_series_value) AS value FROM __temporal_aggregation_cte WHERE isNaN(per_series_value) = ? GROUP BY ts, `__GROUP_BY_KEY_0_service.name`, `le`) SELECT ts, `__GROUP_BY_KEY_0_service.name`, toFloat64(le) AS __bucket, greatest(value - lagInFrame(value, 1, 0) OVER __heatmap_window, 0) AS __result_0 FROM __spatial_aggregation_cte WINDOW __heatmap_window AS (PARTITION BY `__GROUP_BY_KEY_0_service.name`, ts ORDER BY toFloat64(le)) ORDER BY `__GROUP_BY_KEY_0_service.name`, ts, toFloat64(le)",
+				Args:  []any{"http_server_duration_bucket", uint64(1747936800000), uint64(1747983420000), "cumulative", "http_server_duration_bucket", uint64(1747947300000), uint64(1747983420000), 0},
+			},
+			expectedErr: nil,
+		},
+		{
+			name:        "test_sum_heatmap_cumulative",
+			requestType: qbtypes.RequestTypeHeatmap,
+			query: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Signal:       telemetrytypes.SignalMetrics,
+				StepInterval: qbtypes.Step{Duration: 60 * time.Second},
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "signoz_calls_total",
+						Type:             metrictypes.SumType,
+						Temporality:      metrictypes.Cumulative,
+						TimeAggregation:  metrictypes.TimeAggregationIncrease,
+						SpaceAggregation: metrictypes.SpaceAggregationSum,
+						HeatmapBucketing: &qbtypes.HeatmapBucketing{
+							Kind:       qbtypes.BucketsKindLog,
+							LogScale:   qbtypes.MaxLogScale,
+							NumBuckets: qbtypes.DefaultNumBuckets,
+						},
+					},
+				},
+				GroupBy: []qbtypes.GroupByKey{
+					{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: "service.name",
+						},
+					},
+				},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __temporal_aggregation_cte AS (SELECT ts, `__GROUP_BY_KEY_0_service.name`, multiIf(row_number() OVER rate_window = 1, nan, (per_series_value - lagInFrame(per_series_value, 1) OVER rate_window) < 0, per_series_value, per_series_value - lagInFrame(per_series_value, 1) OVER rate_window) AS per_series_value FROM (SELECT fingerprint, toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60)) AS ts, `__GROUP_BY_KEY_0_service.name`, max(value) AS per_series_value FROM signoz_metrics.distributed_samples_v4 AS points INNER JOIN (SELECT fingerprint, JSONExtractString(labels, 'service.name') AS `__GROUP_BY_KEY_0_service.name` FROM signoz_metrics.time_series_v4_6hrs WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli <= ? AND LOWER(temporality) LIKE LOWER(?) GROUP BY fingerprint, `__GROUP_BY_KEY_0_service.name`) AS filtered_time_series ON points.fingerprint = filtered_time_series.fingerprint WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli < ? GROUP BY fingerprint, ts, `__GROUP_BY_KEY_0_service.name` ORDER BY fingerprint, ts) WINDOW rate_window AS (PARTITION BY fingerprint ORDER BY fingerprint, ts)), __spatial_aggregation_cte AS (SELECT ts, `__GROUP_BY_KEY_0_service.name`, sum(per_series_value) AS value FROM __temporal_aggregation_cte WHERE isNaN(per_series_value) = ? GROUP BY ts, `__GROUP_BY_KEY_0_service.name`) SELECT ts, `__GROUP_BY_KEY_0_service.name`, multiIf(value <= 0, toFloat64(0), value <= 2.3283064365386963e-10, 2.3283064365386963e-10, value > 1.8446744073709552e+19, toFloat64('+Inf'), pow(2, ceil(log2(value) * 16) / 16)) AS __bucket, toFloat64(1) AS __result_0 FROM __spatial_aggregation_cte ORDER BY `__GROUP_BY_KEY_0_service.name`, ts, __bucket",
+				Args:  []any{"signoz_calls_total", uint64(1747936800000), uint64(1747983420000), "cumulative", "signoz_calls_total", uint64(1747947300000), uint64(1747983420000), 0},
+			},
+			expectedErr: nil,
+		},
+		{
 			name:        "test_gauge_avg_sum",
 			requestType: qbtypes.RequestTypeTimeSeries,
 			query: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
