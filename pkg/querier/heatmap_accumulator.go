@@ -7,9 +7,9 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
-// heatmapColumn holds the cells at one timestamp, keyed by bucket upper
-// boundary. Keyed rather than indexed because the axis is only known once every
-// cell has been seen.
+// heatmapColumn maps a bucket's upper boundary to the count in it, holding one
+// timestamp's cells. Keyed rather than indexed by band because the axis is only
+// known once every cell has been seen.
 type heatmapColumn map[float64]float64
 
 // canBoundBand reports whether a cell's boundary can serve as a band's upper
