@@ -21,8 +21,8 @@ func canBoundBand(boundary float64) bool {
 
 // heatmapSeries accumulates one group's columns while the rows are read.
 type heatmapSeries struct {
-	labels []*qbtypes.Label
-	counts map[int64]heatmapColumn
+	labels             []*qbtypes.Label
+	columnsByTimestamp map[int64]heatmapColumn
 }
 
 // heatmapAccumulator collects cells from either reader and folds them into one
@@ -45,14 +45,14 @@ func newHeatmapAccumulator() *heatmapAccumulator {
 func (a *heatmapAccumulator) addCell(labelsKey string, lbls []*qbtypes.Label, ts int64, boundary, count float64) {
 	series, ok := a.seriesByKey[labelsKey]
 	if !ok {
-		series = &heatmapSeries{labels: lbls, counts: map[int64]heatmapColumn{}}
+		series = &heatmapSeries{labels: lbls, columnsByTimestamp: map[int64]heatmapColumn{}}
 		a.seriesByKey[labelsKey] = series
 		a.seriesOrder = append(a.seriesOrder, labelsKey)
 	}
-	if series.counts[ts] == nil {
-		series.counts[ts] = heatmapColumn{}
+	if series.columnsByTimestamp[ts] == nil {
+		series.columnsByTimestamp[ts] = heatmapColumn{}
 	}
-	series.counts[ts][boundary] += count
+	series.columnsByTimestamp[ts][boundary] += count
 	if !math.IsInf(boundary, 1) {
 		a.boundaries[boundary] = struct{}{}
 	}
@@ -88,8 +88,8 @@ func (a *heatmapAccumulator) foldSeries(queryWindow *qbtypes.TimeRange, stepMs u
 	for _, labelsKey := range a.seriesOrder {
 		accumulated := a.seriesByKey[labelsKey]
 
-		timestamps := make([]int64, 0, len(accumulated.counts))
-		for ts := range accumulated.counts {
+		timestamps := make([]int64, 0, len(accumulated.columnsByTimestamp))
+		for ts := range accumulated.columnsByTimestamp {
 			timestamps = append(timestamps, ts)
 		}
 		slices.Sort(timestamps)
@@ -100,7 +100,7 @@ func (a *heatmapAccumulator) foldSeries(queryWindow *qbtypes.TimeRange, stepMs u
 		}
 		for _, ts := range timestamps {
 			values := make([]float64, len(boundaries)+1)
-			for boundary, count := range accumulated.counts[ts] {
+			for boundary, count := range accumulated.columnsByTimestamp[ts] {
 				values[bandIndexByBoundary[boundary]] = count
 			}
 			series.Values = append(series.Values, &qbtypes.TimeSeriesValue{
