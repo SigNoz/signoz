@@ -1058,10 +1058,6 @@ func (q *querier) mergeResults(cached *qbtypes.Result, fresh []*qbtypes.Result) 
 	return merged
 }
 
-// mergeBucketUpperBounds returns, per aggregation index, the union of the bucket
-// upper bounds the cached and fresh halves reached. A heatmap point's Values are
-// positional against those upper bounds, so both halves are realigned onto the
-// union before they are merged.
 func mergeBucketUpperBounds(cachedValue *qbtypes.TimeSeriesData, freshResults []*qbtypes.Result) map[int][]float64 {
 	upperBoundSources := make([]*qbtypes.TimeSeriesData, 0, len(freshResults)+1)
 	upperBoundSources = append(upperBoundSources, cachedValue)
