@@ -502,7 +502,7 @@ func (bc *bucketCache) mergeTimeSeriesValues(ctx context.Context, buckets []*qbt
 
 	for _, tsData := range decoded {
 		for _, aggBucket := range tsData.Aggregations {
-			qbtypes.RealignHeatmapValues(aggBucket.Series, aggBucket.Meta.Buckets, mergedUpperBounds[aggBucket.Index])
+			aggBucket.ReindexValuesToNewUpperBounds(mergedUpperBounds[aggBucket.Index])
 
 			for _, series := range aggBucket.Series {
 				// Create series key from labels
@@ -583,9 +583,6 @@ func (bc *bucketCache) mergeTimeSeriesValues(ctx context.Context, buckets []*qbt
 		if newest, ok := newestOf[index]; ok {
 			aggBucket.Alias = newest.Alias
 			aggBucket.Meta = newest.Meta
-		}
-		if upperBounds, ok := mergedUpperBounds[index]; ok {
-			aggBucket.Meta.Buckets = upperBounds
 		}
 		result.Aggregations = append(result.Aggregations, aggBucket)
 	}

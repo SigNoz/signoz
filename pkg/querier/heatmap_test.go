@@ -89,11 +89,13 @@ func TestTrimResultToFluxBoundaryKeepsTheHeatmapAxis(t *testing.T) {
 func TestRealignFromAnEmptyAxisCollapsesIntoTheOverflow(t *testing.T) {
 	// pins the behaviour the trim bug exposed: with no axis to read the counts
 	// against, everything lands in the overflow slot
-	series := []*qbtypes.TimeSeries{{
-		Values: []*qbtypes.TimeSeriesValue{{Timestamp: 1710000000000, Values: []float64{7, 8, 9, 10}}},
-	}}
+	aggBucket := &qbtypes.AggregationBucket{
+		Series: []*qbtypes.TimeSeries{{
+			Values: []*qbtypes.TimeSeriesValue{{Timestamp: 1710000000000, Values: []float64{7, 8, 9, 10}}},
+		}},
+	}
 
-	qbtypes.RealignHeatmapValues(series, nil, []float64{1, 2, 4})
+	aggBucket.ReindexValuesToNewUpperBounds([]float64{1, 2, 4})
 
-	assert.Equal(t, []float64{0, 0, 0, 7}, series[0].Values[0].Values)
+	assert.Equal(t, []float64{0, 0, 0, 7}, aggBucket.Series[0].Values[0].Values)
 }

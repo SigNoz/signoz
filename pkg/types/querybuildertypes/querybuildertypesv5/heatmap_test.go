@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestRealignHeatmapValues(t *testing.T) {
+func TestReindexValuesToNewUpperBounds(t *testing.T) {
 	testCases := []struct {
 		description    string
 		from           []float64
@@ -25,68 +25,71 @@ func TestRealignHeatmapValues(t *testing.T) {
 			expectedValues: []float64{1, 2, 3},
 		},
 		{
-			description:    "an inserted bucket shifts the counts above it",
+			description:    "a band no series here reached is inserted below",
 			from:           []float64{5, 10},
 			onto:           []float64{2, 5, 10},
 			values:         []float64{1, 2, 3},
 			expectedValues: []float64{0, 1, 2, 3},
 		},
 		{
-			description:    "a dropped bucket loses its counts but the overflow survives",
-			from:           []float64{5, 10, 25},
-			onto:           []float64{5, 25},
-			values:         []float64{1, 2, 3, 4},
-			expectedValues: []float64{1, 3, 4},
+			description:    "a band no series here reached is inserted between",
+			from:           []float64{2, 10},
+			onto:           []float64{2, 5, 10},
+			values:         []float64{1, 2, 3},
+			expectedValues: []float64{1, 0, 2, 3},
 		},
 		{
-			description:    "an axis with nothing in common keeps only the overflow",
-			from:           []float64{5, 10},
-			onto:           []float64{100, 200},
-			values:         []float64{1, 2, 3},
-			expectedValues: []float64{0, 0, 3},
-		},
-		{
-			description:    "counts beyond the axis they were read against are dropped",
-			from:           []float64{5},
-			onto:           []float64{5, 10},
-			values:         []float64{1, 2, 3},
-			expectedValues: []float64{1, 0, 2},
+			description:    "the overflow stays the overflow however many bands are inserted",
+			from:           []float64{10},
+			onto:           []float64{2, 5, 10},
+			values:         []float64{1, 2},
+			expectedValues: []float64{0, 0, 1, 2},
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			series := []*TimeSeries{{
-				Values: []*TimeSeriesValue{{Timestamp: 1710000000000, Values: testCase.values}},
-			}}
+			aggBucket := &AggregationBucket{
+				Meta: AggregationMeta{Buckets: testCase.from},
+				Series: []*TimeSeries{{
+					Values: []*TimeSeriesValue{{Timestamp: 1710000000000, Values: testCase.values}},
+				}},
+			}
 
-			RealignHeatmapValues(series, testCase.from, testCase.onto)
+			aggBucket.ReindexValuesToNewUpperBounds(testCase.onto)
 
-			require.Len(t, series[0].Values, 1)
-			assert.Equal(t, testCase.expectedValues, series[0].Values[0].Values)
+			require.Len(t, aggBucket.Series[0].Values, 1)
+			assert.Equal(t, testCase.expectedValues, aggBucket.Series[0].Values[0].Values)
+			assert.Equal(t, testCase.onto, aggBucket.Meta.Buckets)
 		})
 	}
 }
 
-func TestRealignHeatmapValuesLeavesNonHeatmapPointsAlone(t *testing.T) {
-	series := []*TimeSeries{{
-		Values: []*TimeSeriesValue{{Timestamp: 1710000000000, Value: 42}},
-	}}
+func TestReindexValuesToNewUpperBoundsLeavesNonHeatmapPointsAlone(t *testing.T) {
+	aggBucket := &AggregationBucket{
+		Series: []*TimeSeries{{
+			Values: []*TimeSeriesValue{{Timestamp: 1710000000000, Value: 42}},
+		}},
+	}
 
-	RealignHeatmapValues(series, nil, []float64{5, 10})
+	aggBucket.ReindexValuesToNewUpperBounds([]float64{5, 10})
 
-	assert.Equal(t, float64(42), series[0].Values[0].Value)
-	assert.Empty(t, series[0].Values[0].Values)
+	assert.Equal(t, float64(42), aggBucket.Series[0].Values[0].Value)
+	assert.Empty(t, aggBucket.Series[0].Values[0].Values)
 }
 
-func TestRealignHeatmapValuesWithoutTargetAxis(t *testing.T) {
-	series := []*TimeSeries{{
-		Values: []*TimeSeriesValue{{Timestamp: 1710000000000, Values: []float64{1, 2}}},
-	}}
+func TestReindexValuesToNewUpperBoundsWithoutTargetAxis(t *testing.T) {
+	aggBucket := &AggregationBucket{
+		Meta: AggregationMeta{Buckets: []float64{5, 10}},
+		Series: []*TimeSeries{{
+			Values: []*TimeSeriesValue{{Timestamp: 1710000000000, Values: []float64{1, 2}}},
+		}},
+	}
 
-	RealignHeatmapValues(series, []float64{5, 10}, nil)
+	aggBucket.ReindexValuesToNewUpperBounds(nil)
 
-	assert.Equal(t, []float64{1, 2}, series[0].Values[0].Values)
+	assert.Equal(t, []float64{1, 2}, aggBucket.Series[0].Values[0].Values)
+	assert.Equal(t, []float64{5, 10}, aggBucket.Meta.Buckets)
 }
 
 func TestDownscaleHeatmapAxis(t *testing.T) {
