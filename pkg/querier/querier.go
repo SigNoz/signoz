@@ -1084,7 +1084,7 @@ func (q *querier) mergeTimeSeriesResults(cachedValue *qbtypes.TimeSeriesData, fr
 			if seriesMap[aggBucket.Index] == nil {
 				seriesMap[aggBucket.Index] = make(map[string]*qbtypes.TimeSeries)
 			}
-			qbtypes.RealignHeatmapValues(aggBucket.Series, aggBucket.Meta.Buckets, mergedUpperBounds[aggBucket.Index])
+			aggBucket.ReindexValuesToNewUpperBounds(mergedUpperBounds[aggBucket.Index])
 			if bucketMetadata[aggBucket.Index] == nil {
 				bucketMetadata[aggBucket.Index] = aggBucket
 			}
@@ -1136,7 +1136,7 @@ func (q *querier) mergeTimeSeriesResults(cachedValue *qbtypes.TimeSeriesData, fr
 		}
 
 		for _, aggBucket := range freshTS.Aggregations {
-			qbtypes.RealignHeatmapValues(aggBucket.Series, aggBucket.Meta.Buckets, mergedUpperBounds[aggBucket.Index])
+			aggBucket.ReindexValuesToNewUpperBounds(mergedUpperBounds[aggBucket.Index])
 			for _, series := range aggBucket.Series {
 				key := qbtypes.GetUniqueSeriesKey(series.Labels)
 
@@ -1199,9 +1199,6 @@ func (q *querier) mergeTimeSeriesResults(cachedValue *qbtypes.TimeSeriesData, fr
 		if metadata, ok := bucketMetadata[index]; ok {
 			bucket.Alias = metadata.Alias
 			bucket.Meta = metadata.Meta
-		}
-		if upperBounds, ok := mergedUpperBounds[index]; ok {
-			bucket.Meta.Buckets = upperBounds
 		}
 
 		result.Aggregations = append(result.Aggregations, bucket)

@@ -149,6 +149,46 @@ type AggregationBucket struct {
 	AnomalyScores    []*TimeSeries `json:"anomalyScores,omitempty"`
 }
 
+// ReindexValuesToNewUpperBounds moves each count to the index its upper bound
+// holds in onto, a superset of Meta.Buckets. No count changes, only its position
+// in Values.
+func (a *AggregationBucket) ReindexValuesToNewUpperBounds(onto []float64) {
+	if a == nil {
+		return
+	}
+
+	from := a.Meta.Buckets
+	if len(onto) == 0 || slices.Equal(from, onto) {
+		return
+	}
+
+	upperBoundToIndex := make(map[float64]int, len(onto))
+	for index, upperBound := range onto {
+		upperBoundToIndex[upperBound] = index
+	}
+
+	for _, series := range a.Series {
+		for _, point := range series.Values {
+			if len(point.Values) == 0 {
+				continue
+			}
+			reindexed := make([]float64, len(onto)+1)
+			for index, count := range point.Values {
+				if index >= len(from) {
+					reindexed[len(onto)] = count
+					break
+				}
+				if newIndex, ok := upperBoundToIndex[from[index]]; ok {
+					reindexed[newIndex] = count
+				}
+			}
+			point.Values = reindexed
+		}
+	}
+
+	a.Meta.Buckets = onto
+}
+
 type AggregationMeta struct {
 	Unit string `json:"unit,omitempty"`
 	// Buckets holds ascending upper bounds shared by every series in the

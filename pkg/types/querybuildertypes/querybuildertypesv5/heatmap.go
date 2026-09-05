@@ -155,41 +155,6 @@ func regroupAxis(aggBucket *AggregationBucket, upperBounds []float64, targetBand
 	aggBucket.Meta.Buckets = upperBounds
 }
 
-// RealignHeatmapValues moves every point's per-bucket counts from the axis they
-// were read against onto onto, matching on upper bound rather than position. Two
-// ranges of one query disagree on their axes when a histogram's `le` labels
-// change partway through a window, or when one range's data never reached a
-// band the other did.
-func RealignHeatmapValues(series []*TimeSeries, from, onto []float64) {
-	if len(onto) == 0 || slices.Equal(from, onto) {
-		return
-	}
-
-	bandIndexByUpperBound := make(map[float64]int, len(onto))
-	for band, upperBound := range onto {
-		bandIndexByUpperBound[upperBound] = band
-	}
-
-	for _, s := range series {
-		for _, point := range s.Values {
-			if len(point.Values) == 0 {
-				continue
-			}
-			realigned := make([]float64, len(onto)+1)
-			for band, count := range point.Values {
-				if band >= len(from) {
-					realigned[len(onto)] = count
-					break
-				}
-				if targetBand, ok := bandIndexByUpperBound[from[band]]; ok {
-					realigned[targetBand] = count
-				}
-			}
-			point.Values = realigned
-		}
-	}
-}
-
 // DownscaleHeatmapAxis folds a log axis bucketed at fromScale down to toScale,
 // merging every 2^(fromScale-toScale) adjacent bands into one. The coarser
 // upper bounds are a subset of the finer ones, so the fold is exact.
