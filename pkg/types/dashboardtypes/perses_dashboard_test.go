@@ -524,6 +524,96 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 	}
 }
 
+// TestHeatmapPanelQueryKinds pins the panel allowlist to what validateHeatmap
+// accepts in querybuildertypesv5: everything but a trace operator.
+func TestHeatmapPanelQueryKinds(t *testing.T) {
+	testCases := []struct {
+		description     string
+		queryPluginKind string
+		queryPluginSpec string
+		expectedAllowed bool
+	}{
+		{
+			description:     "a metrics builder query is allowed",
+			queryPluginKind: "signoz/BuilderQuery",
+			queryPluginSpec: `{"name": "A", "signal": "metrics", "aggregations": [
+				{"metricName": "http.server.request.duration", "timeAggregation": "increase", "spaceAggregation": "sum"}
+			]}`,
+			expectedAllowed: true,
+		},
+		{
+			description:     "a promql query is allowed",
+			queryPluginKind: "signoz/PromQLQuery",
+			queryPluginSpec: `{"name": "A", "query": "sum by (le) (increase(signoz_latency_bucket[5m]))"}`,
+			expectedAllowed: true,
+		},
+		{
+			description:     "a clickhouse query is allowed",
+			queryPluginKind: "signoz/ClickHouseSQL",
+			queryPluginSpec: `{"name": "A", "query": "SELECT ts, bucket, value FROM cells"}`,
+			expectedAllowed: true,
+		},
+		{
+			description:     "a formula is allowed",
+			queryPluginKind: "signoz/Formula",
+			queryPluginSpec: `{"name": "F1", "expression": "A / B"}`,
+			expectedAllowed: true,
+		},
+		{
+			description:     "a composite query is allowed, since a formula needs its disabled inputs alongside it",
+			queryPluginKind: "signoz/CompositeQuery",
+			queryPluginSpec: `{"queries": [
+				{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "disabled": true, "aggregations": [
+					{"metricName": "http.server.request.duration", "timeAggregation": "increase", "spaceAggregation": "sum"}
+				]}},
+				{"type": "builder_formula", "spec": {"name": "F1", "expression": "A * 2"}}
+			]}`,
+			expectedAllowed: true,
+		},
+		{
+			description:     "a trace operator is refused",
+			queryPluginKind: "signoz/TraceOperator",
+			queryPluginSpec: `{"name": "T1", "expression": "A => B"}`,
+			expectedAllowed: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.description, func(t *testing.T) {
+			data := fmt.Sprintf(`{
+				"variables": [],
+				"panels": {
+					"p1": {
+						"kind": "Panel",
+						"spec": {
+							"links": [],
+							"plugin": {"kind": "signoz/HeatmapPanel", "spec": {}},
+							"queries": [{
+								"kind": "heatmap",
+								"spec": {
+									"plugin": {"kind": %q, "spec": %s}
+								}
+							}]
+						}
+					}
+				},
+				"links": [],
+				"layouts": []
+			}`, testCase.queryPluginKind, testCase.queryPluginSpec)
+
+			_, err := unmarshalDashboard([]byte(data))
+
+			if testCase.expectedAllowed {
+				require.NoError(t, err)
+				return
+			}
+
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "is not supported by panel kind")
+		})
+	}
+}
+
 func TestInvalidateOneInvalidPanel(t *testing.T) {
 	data := []byte(`{
 		"variables": [],

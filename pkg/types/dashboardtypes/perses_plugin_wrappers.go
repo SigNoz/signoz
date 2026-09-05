@@ -253,7 +253,7 @@ var (
 		PanelKindPieChart:   {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
 		PanelKindTable:      {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
 		PanelKindList:       {QueryKindBuilder},
-		PanelKindHeatmap:    {QueryKindBuilder},
+		PanelKindHeatmap:    {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindPromQL, QueryKindClickHouseSQL},
 	}
 )
 
