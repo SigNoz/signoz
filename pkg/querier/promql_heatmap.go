@@ -81,7 +81,6 @@ func collectCumulativeGroups(matrix promql.Matrix) (groups map[string]*promHeatm
 	return groups, groupOrder
 }
 
-// `le` is a string label, so `+Inf` arrives as one and parses to the overflow bound.
 func extractBucketUpperBound(metric labels.Labels) (float64, bool) {
 	raw := metric.Get(promHistogramBucketLabel)
 	if raw == "" {
@@ -94,10 +93,7 @@ func extractBucketUpperBound(metric labels.Labels) (float64, bool) {
 	return upperBound, true
 }
 
-// extractHeatmapGroup returns a series' group labels — everything but `le` — and
-// a key for them. The key holds names as well as values, unlike the row reader's:
-// two matrix series can carry different label sets where two rows of one result
-// cannot, so values alone would collide.
+// extractHeatmapGroup returns a series' group labels — everything but `le`.
 func extractHeatmapGroup(metric labels.Labels) ([]*qbv5.Label, string) {
 	lbls := make([]*qbv5.Label, 0, metric.Len())
 	pairs := make([]string, 0, metric.Len())
@@ -117,7 +113,7 @@ func extractHeatmapGroup(metric labels.Labels) ([]*qbv5.Label, string) {
 	return lbls, strings.Join(pairs, ",")
 }
 
-// each cell is its upper bound's cumulative count less the one below it
+// each cell is its upper bound's cumulative count minus the one below it.
 func (g *promHeatmapGroup) addDifferencedCells(accumulator *heatmapAccumulator) {
 	for ts, cumulative := range g.cumulative {
 		upperBounds := make([]float64, 0, len(cumulative))
