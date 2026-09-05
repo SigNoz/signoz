@@ -1,7 +1,6 @@
 package querybuildertypesv5
 
 import (
-	"maps"
 	"math"
 	"slices"
 
@@ -238,13 +237,13 @@ func addHeatmapBucketsWithNoCountsForAggregation(aggBucket *AggregationBucket, b
 		if math.IsInf(upperBound, 0) || math.IsNaN(upperBound) {
 			return
 		}
-		indexes[i] = bucketing.calculateBandIndex(upperBound)
+		indexes[i] = bucketing.calculateIndexOfUpperBound(upperBound)
 	}
 	lowest, highest := slices.Min(indexes), slices.Max(indexes)
 
 	denseUpperBounds := append([]float64{}, aggBucket.Meta.Buckets[:offset]...)
 	for index := lowest; index <= highest; index++ {
-		denseUpperBounds = append(denseUpperBounds, bucketing.calculateBandUpperBound(index))
+		denseUpperBounds = append(denseUpperBounds, bucketing.calculateUpperBoundAtIndex(index))
 	}
 	if len(denseUpperBounds) == len(aggBucket.Meta.Buckets) {
 		return
@@ -278,101 +277,20 @@ func addHeatmapBucketsWithNoCountsForAggregation(aggBucket *AggregationBucket, b
 	aggBucket.Meta.Buckets = denseUpperBounds
 }
 
-// calculateBandIndex and calculateBandUpperBound are inverses over the axis being
-// returned, so they read h.LogScale where calculateValueUpperBound reads
-// MaxLogScale: k * maxValue / numBuckets on a linear axis, 2^(k / 2^scale) on a
-// log one.
-func (h HeatmapBucketing) calculateBandIndex(upperBound float64) int {
+// calculateIndexOfUpperBound and calculateUpperBoundAtIndex are inverses over
+// the axis being returned, so they read h.LogScale rather than the MaxLogScale
+// ClickHouse bucketed at: k * maxValue / numBuckets on a linear axis,
+// 2^(k / 2^scale) on a log one.
+func (h HeatmapBucketing) calculateIndexOfUpperBound(upperBound float64) int {
 	if h.Kind == BucketsKindLinear {
 		return int(math.Round(upperBound * float64(h.NumBuckets) / h.MaxValue))
 	}
 	return int(math.Round(math.Log2(upperBound) * math.Exp2(float64(h.LogScale))))
 }
 
-func (h HeatmapBucketing) calculateBandUpperBound(index int) float64 {
+func (h HeatmapBucketing) calculateUpperBoundAtIndex(index int) float64 {
 	if h.Kind == BucketsKindLinear {
 		return float64(index) * h.MaxValue / float64(h.NumBuckets)
 	}
 	return math.Exp2(float64(index) / math.Exp2(float64(h.LogScale)))
-}
-
-// BucketTimeSeriesValues turns one value per (series, timestamp) into heatmap
-// cells on the axis bucketing describes, which is what ClickHouse does for a
-// gauge or sum. A formula has no statement to carry the upper bound expression, so
-// its output is bucketed here instead. Every value counts the one series it came
-// from, so a point ends up with a single occupied cell.
-func BucketTimeSeriesValues(tsData *TimeSeriesData, bucketing HeatmapBucketing) {
-	if tsData == nil {
-		return
-	}
-	for _, aggBucket := range tsData.Aggregations {
-		bucketAggregationValues(aggBucket, bucketing)
-	}
-}
-
-func bucketAggregationValues(aggBucket *AggregationBucket, bucketing HeatmapBucketing) {
-	if aggBucket == nil {
-		return
-	}
-
-	// +Inf is the open-above overflow rather than an upper bound of its own, and a
-	// NaN value has no band at all
-	upperBoundSet := map[float64]struct{}{}
-	for _, series := range aggBucket.Series {
-		for _, point := range series.Values {
-			upperBound := bucketing.calculateValueUpperBound(point.Value)
-			if !math.IsNaN(upperBound) && !math.IsInf(upperBound, 0) {
-				upperBoundSet[upperBound] = struct{}{}
-			}
-		}
-	}
-	upperBounds := slices.Sorted(maps.Keys(upperBoundSet))
-
-	upperBoundToIndex := make(map[float64]int, len(upperBounds))
-	for index, upperBound := range upperBounds {
-		upperBoundToIndex[upperBound] = index
-	}
-
-	for _, series := range aggBucket.Series {
-		for _, point := range series.Values {
-			upperBound := bucketing.calculateValueUpperBound(point.Value)
-			point.Values = make([]float64, len(upperBounds)+1)
-			point.Value = 0
-			switch {
-			case math.IsNaN(upperBound):
-			case math.IsInf(upperBound, 1):
-				point.Values[len(upperBounds)] = 1
-			default:
-				point.Values[upperBoundToIndex[upperBound]] = 1
-			}
-		}
-	}
-
-	aggBucket.Meta.Buckets = upperBounds
-}
-
-// calculateValueUpperBound renders the upper bound of the band value falls in. It
-// is the Go side of the expression the statement builder emits and has to stay
-// identical to it: a formula heatmap and a metric heatmap that disagreed here
-// would put their bands in different places.
-func (h HeatmapBucketing) calculateValueUpperBound(value float64) float64 {
-	if h.Kind == BucketsKindLinear {
-		if value > h.MaxValue {
-			return math.Inf(1)
-		}
-		numBuckets := float64(h.NumBuckets)
-		index := math.Min(math.Max(math.Ceil(value*numBuckets/h.MaxValue), 1), numBuckets)
-		return index * h.MaxValue / numBuckets
-	}
-	if value <= 0 {
-		return 0
-	}
-	if value <= MinLogUpperBound {
-		return MinLogUpperBound
-	}
-	if value > MaxLogUpperBound {
-		return math.Inf(1)
-	}
-	bandsPerDoubling := math.Exp2(MaxLogScale)
-	return math.Exp2(math.Ceil(math.Log2(value)*bandsPerDoubling) / bandsPerDoubling)
 }
