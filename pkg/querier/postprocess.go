@@ -365,7 +365,7 @@ func (q *querier) applyFormulas(ctx context.Context, results map[string]*qbtypes
 			if result != nil {
 				if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
 					bucketing := req.BucketOptions.ToHeatmapBucketing()
-					qbtypes.BucketTimeSeriesValues(tsData, bucketing)
+					bucketFormulaOutputAsHeatmap(tsData, bucketing)
 					resolveHeatmapBucketAxis(tsData, bucketing)
 				}
 				result = q.applySeriesLimit(result, formula.Limit, formula.Order)
@@ -437,6 +437,89 @@ func (q *querier) processTimeSeriesFormula(
 	}
 
 	return result
+}
+
+func bucketFormulaOutputAsHeatmap(tsData *qbtypes.TimeSeriesData, bucketing qbtypes.HeatmapBucketing) {
+	// A formula is one expression, so processTimeSeriesFormula gives it one
+	// aggregation.
+	if tsData == nil || len(tsData.Aggregations) == 0 || tsData.Aggregations[0] == nil {
+		return
+	}
+	aggBucket := tsData.Aggregations[0]
+
+	calculateUpperBound := calculateLogValueUpperBound
+	if bucketing.Kind == qbtypes.BucketsKindLinear {
+		calculateUpperBound = func(value float64) float64 {
+			return calculateLinearValueUpperBound(bucketing, value)
+		}
+	}
+
+	// +Inf is the open-above overflow rather than an upper bound of its own, and
+	// a NaN value has no bucket at all, so neither goes on the axis.
+	upperBounds := []float64{}
+	for _, series := range aggBucket.Series {
+		for _, point := range series.Values {
+			upperBound := calculateUpperBound(point.Value)
+			if !math.IsNaN(upperBound) && !math.IsInf(upperBound, 0) {
+				upperBounds = append(upperBounds, upperBound)
+			}
+		}
+	}
+	slices.Sort(upperBounds)
+	upperBounds = slices.Compact(upperBounds)
+
+	upperBoundToIndex := make(map[float64]int, len(upperBounds))
+	for index, upperBound := range upperBounds {
+		upperBoundToIndex[upperBound] = index
+	}
+
+	overflowIndex := len(upperBounds)
+	for _, series := range aggBucket.Series {
+		for _, point := range series.Values {
+			upperBound := calculateUpperBound(point.Value)
+			point.Values = make([]float64, overflowIndex+1)
+			point.Value = 0
+			switch {
+			case math.IsNaN(upperBound):
+			case math.IsInf(upperBound, 1):
+				point.Values[overflowIndex] = 1
+			default:
+				point.Values[upperBoundToIndex[upperBound]] = 1
+			}
+		}
+	}
+
+	aggBucket.Meta.Buckets = upperBounds
+}
+
+// calculateLinearValueUpperBound and calculateLogValueUpperBound are the Go side
+// of what renderLinearUpperBoundExpr and renderLogUpperBoundExpr emit, and have
+// to stay identical to them: a formula heatmap and a metric heatmap that
+// disagreed here would put their counts in different buckets.
+func calculateLinearValueUpperBound(bucketing qbtypes.HeatmapBucketing, value float64) float64 {
+	if value > bucketing.MaxValue {
+		return math.Inf(1)
+	}
+	numBuckets := float64(bucketing.NumBuckets)
+	index := math.Min(math.Max(math.Ceil(value*numBuckets/bucketing.MaxValue), 1), numBuckets)
+	return index * bucketing.MaxValue / numBuckets
+}
+
+// Like renderLogUpperBoundExpr, this reads MaxLogScale rather than the requested
+// scale: ClickHouse buckets at the finest resolution and resolveHeatmapBucketAxis
+// folds the axis down afterwards.
+func calculateLogValueUpperBound(value float64) float64 {
+	if value <= 0 {
+		return 0
+	}
+	if value <= qbtypes.MinLogUpperBound {
+		return qbtypes.MinLogUpperBound
+	}
+	if value > qbtypes.MaxLogUpperBound {
+		return math.Inf(1)
+	}
+	bucketsPerDoubling := math.Exp2(qbtypes.MaxLogScale)
+	return math.Exp2(math.Ceil(math.Log2(value)*bucketsPerDoubling) / bucketsPerDoubling)
 }
 
 func (q *querier) processScalarFormula(
