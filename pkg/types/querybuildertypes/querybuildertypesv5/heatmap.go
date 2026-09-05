@@ -11,7 +11,7 @@ import (
 
 const (
 	// HeatmapBucketColumn is the alias a heatmap statement gives the column holding
-	// a row's bucket boundary. Every other aggregation returns a single numeric
+	// a row's bucket upper bound. Every other aggregation returns a single numeric
 	// column the reader treats as the value; this name tells the two apart.
 	HeatmapBucketColumn = "__bucket"
 
@@ -31,16 +31,16 @@ const (
 	MaxLogBandIndex = 1024 // 2^64, about 1.8e19
 )
 
-// LowestLogBoundary and HighestLogBoundary are the ends the log axis is clamped
+// MinLogUpperBound and MaxLogUpperBound are the ends the log axis is clamped
 // to. They do not vary with the requested scale.
 var (
-	LowestLogBoundary  = math.Exp2(float64(MinLogBandIndex) / math.Exp2(MaxLogScale))
-	HighestLogBoundary = math.Exp2(float64(MaxLogBandIndex) / math.Exp2(MaxLogScale))
+	MinLogUpperBound = math.Exp2(float64(MinLogBandIndex) / math.Exp2(MaxLogScale))
+	MaxLogUpperBound = math.Exp2(float64(MaxLogBandIndex) / math.Exp2(MaxLogScale))
 )
 
 // HeatmapBucketing is the bucket axis a heatmap statement builds in ClickHouse,
 // resolved from BucketOptions once the metric type is known. It stays nil for
-// histograms, whose boundaries come from their own `le` labels.
+// histograms, whose upper bounds come from their own `le` labels.
 type HeatmapBucketing struct {
 	Kind BucketsKind
 	// LogScale is the resolution the caller asked for. ClickHouse always buckets
@@ -90,7 +90,7 @@ func (a *MetricAggregation) VerifyAndApplyBucketOptions(bucketOptions *BucketOpt
 		}
 		a.HeatmapBucketing = nil
 		return nil
-	// A summary carries no boundaries of its own either, and its samples reach
+	// A summary carries no upper bounds of its own either, and its samples reach
 	// the final select the same way a gauge's do, so it buckets identically.
 	case metrictypes.GaugeType, metrictypes.SumType, metrictypes.SummaryType:
 		bucketing := bucketOptions.ToHeatmapBucketing()
@@ -108,10 +108,10 @@ func (a *MetricAggregation) VerifyAndApplyBucketOptions(bucketOptions *BucketOpt
 	}
 }
 
-// MergeHeatmapAxes collects, per aggregation index, every bucket boundary any of
-// tsData reached, so that halves holding different bands can be merged onto one
-// axis. Only heatmap results carry boundaries, so it comes back empty for
-// everything else and the realignment it feeds is a no-op.
+// MergeHeatmapAxes collects, per aggregation index, every bucket upper bound
+// any of tsData reached, so that halves holding different bands can be merged
+// onto one axis. Only heatmap results carry upper bounds, so it comes back
+// empty for everything else and the realignment it feeds is a no-op.
 func MergeHeatmapAxes(tsData ...*TimeSeriesData) map[int][]float64 {
 	reached := map[int]map[float64]struct{}{}
 
@@ -126,34 +126,34 @@ func MergeHeatmapAxes(tsData ...*TimeSeriesData) map[int][]float64 {
 			if reached[aggBucket.Index] == nil {
 				reached[aggBucket.Index] = map[float64]struct{}{}
 			}
-			for _, boundary := range aggBucket.Meta.Buckets {
-				reached[aggBucket.Index][boundary] = struct{}{}
+			for _, upperBound := range aggBucket.Meta.Buckets {
+				reached[aggBucket.Index][upperBound] = struct{}{}
 			}
 		}
 	}
 
 	merged := make(map[int][]float64, len(reached))
-	for index, boundarySet := range reached {
-		merged[index] = slices.Sorted(maps.Keys(boundarySet))
+	for index, upperBoundSet := range reached {
+		merged[index] = slices.Sorted(maps.Keys(upperBoundSet))
 	}
 
 	return merged
 }
 
-// regroupAxis rewrites the aggregation onto boundaries, moving the count held in
-// band i to targetBandIndexes[i] and summing where several bands land together.
+// regroupAxis rewrites the aggregation onto upperBounds, moving the count held
+// in band i to targetBandIndexes[i] and summing where several bands land together.
 // A band past the end of targetBandIndexes is the overflow, which stays the
 // overflow on any axis.
-func regroupAxis(aggBucket *AggregationBucket, boundaries []float64, targetBandIndexes []int) {
+func regroupAxis(aggBucket *AggregationBucket, upperBounds []float64, targetBandIndexes []int) {
 	for _, series := range aggBucket.Series {
 		for _, point := range series.Values {
 			if len(point.Values) == 0 {
 				continue
 			}
-			regrouped := make([]float64, len(boundaries)+1)
+			regrouped := make([]float64, len(upperBounds)+1)
 			for band, count := range point.Values {
 				if band >= len(targetBandIndexes) {
-					regrouped[len(boundaries)] += count
+					regrouped[len(upperBounds)] += count
 					continue
 				}
 				regrouped[targetBandIndexes[band]] += count
@@ -161,11 +161,11 @@ func regroupAxis(aggBucket *AggregationBucket, boundaries []float64, targetBandI
 			point.Values = regrouped
 		}
 	}
-	aggBucket.Meta.Buckets = boundaries
+	aggBucket.Meta.Buckets = upperBounds
 }
 
 // RealignHeatmapValues moves every point's per-bucket counts from the axis they
-// were read against onto onto, matching on boundary rather than position. Two
+// were read against onto onto, matching on upper bound rather than position. Two
 // ranges of one query disagree on their axes when a histogram's `le` labels
 // change partway through a window, or when one range's data never reached a
 // band the other did.
@@ -174,9 +174,9 @@ func RealignHeatmapValues(series []*TimeSeries, from, onto []float64) {
 		return
 	}
 
-	bandIndexByBoundary := make(map[float64]int, len(onto))
-	for band, boundary := range onto {
-		bandIndexByBoundary[boundary] = band
+	bandIndexByUpperBound := make(map[float64]int, len(onto))
+	for band, upperBound := range onto {
+		bandIndexByUpperBound[upperBound] = band
 	}
 
 	for _, s := range series {
@@ -190,7 +190,7 @@ func RealignHeatmapValues(series []*TimeSeries, from, onto []float64) {
 					realigned[len(onto)] = count
 					break
 				}
-				if targetBand, ok := bandIndexByBoundary[from[band]]; ok {
+				if targetBand, ok := bandIndexByUpperBound[from[band]]; ok {
 					realigned[targetBand] = count
 				}
 			}
@@ -201,7 +201,7 @@ func RealignHeatmapValues(series []*TimeSeries, from, onto []float64) {
 
 // DownscaleHeatmapAxis folds a log axis bucketed at fromScale down to toScale,
 // merging every 2^(fromScale-toScale) adjacent bands into one. The coarser
-// boundaries are a subset of the finer ones, so the fold is exact.
+// upper bounds are a subset of the finer ones, so the fold is exact.
 func DownscaleHeatmapAxis(tsData *TimeSeriesData, fromScale, toScale int) {
 	if tsData == nil || toScale >= fromScale {
 		return
@@ -219,12 +219,12 @@ func downscaleAggregationAxis(aggBucket *AggregationBucket, fromScale, toScale i
 	factor := int(math.Exp2(float64(fromScale - toScale)))
 
 	// Bands merge by their index in the exponential mapping, not by position in
-	// Meta.Buckets, which lists only the boundaries some series reached.
+	// Meta.Buckets, which lists only the upper bounds some series reached.
 	coarse := make([]float64, 0, len(aggBucket.Meta.Buckets))
 	targetBandIndexes := make([]int, len(aggBucket.Meta.Buckets))
 	seen := make(map[float64]int, len(aggBucket.Meta.Buckets))
-	for band, boundary := range aggBucket.Meta.Buckets {
-		merged := coarsenHeatmapBoundary(boundary, fromScale, toScale, factor)
+	for band, upperBound := range aggBucket.Meta.Buckets {
+		merged := coarsenUpperBound(upperBound, fromScale, toScale, factor)
 		coarseBandIndex, ok := seen[merged]
 		if !ok {
 			coarseBandIndex = len(coarse)
@@ -237,13 +237,13 @@ func downscaleAggregationAxis(aggBucket *AggregationBucket, fromScale, toScale i
 	regroupAxis(aggBucket, coarse, targetBandIndexes)
 }
 
-// coarsenHeatmapBoundary moves a boundary from the fromScale exponential axis
+// coarsenUpperBound moves an upper bound from the fromScale exponential axis
 // onto the toScale one. The zero band has no exponent to rescale and stays put.
-func coarsenHeatmapBoundary(boundary float64, fromScale, toScale, factor int) float64 {
-	if boundary <= 0 || math.IsInf(boundary, 0) || math.IsNaN(boundary) {
-		return boundary
+func coarsenUpperBound(upperBound float64, fromScale, toScale, factor int) float64 {
+	if upperBound <= 0 || math.IsInf(upperBound, 0) || math.IsNaN(upperBound) {
+		return upperBound
 	}
-	index := int(math.Round(math.Log2(boundary) * math.Exp2(float64(fromScale))))
+	index := int(math.Round(math.Log2(upperBound) * math.Exp2(float64(fromScale))))
 	merged := int(math.Ceil(float64(index) / float64(factor)))
 	return math.Exp2(float64(merged) / math.Exp2(float64(toScale)))
 }
@@ -252,7 +252,7 @@ func coarsenHeatmapBoundary(boundary float64, fromScale, toScale, factor int) fl
 // Meta.Buckets entirely and would otherwise render with the two sides of a gap
 // touching.
 //
-// Only a value-derived axis can be densified: its boundaries come from an index
+// Only a value-derived axis can be densified: its upper bounds come from an index
 // that is a pure function of the value, so the ones in between are known without
 // having seen them. Nothing says what sits between two `le` labels.
 func DensifyHeatmapAxis(tsData *TimeSeriesData, bucketing HeatmapBucketing) {
@@ -270,7 +270,7 @@ func densifyAggregationAxis(aggBucket *AggregationBucket, bucketing HeatmapBucke
 	}
 
 	// The zero band holds everything at or below zero. It has no index on either
-	// axis and sits below every other boundary, so it keeps band 0 and the fill
+	// axis and sits below every other upper bound, so it keeps band 0 and the fill
 	// runs over the rest.
 	offset := 0
 	if aggBucket.Meta.Buckets[0] <= 0 {
@@ -281,27 +281,27 @@ func densifyAggregationAxis(aggBucket *AggregationBucket, bucketing HeatmapBucke
 		return
 	}
 
-	// Only finite boundaries have a band index, and the fill sizes a slice from
+	// Only finite upper bounds have a band index, and the fill sizes a slice from
 	// one. Nothing should put +Inf or NaN on the axis, but bail if it happens.
 	indexes := make([]int, len(positive))
-	for i, boundary := range positive {
-		if math.IsInf(boundary, 0) || math.IsNaN(boundary) {
+	for i, upperBound := range positive {
+		if math.IsInf(upperBound, 0) || math.IsNaN(upperBound) {
 			return
 		}
-		indexes[i] = bucketing.calculateBandIndex(boundary)
+		indexes[i] = bucketing.calculateBandIndex(upperBound)
 	}
 	lowest, highest := slices.Min(indexes), slices.Max(indexes)
 
 	dense := append([]float64{}, aggBucket.Meta.Buckets[:offset]...)
 	for index := lowest; index <= highest; index++ {
-		dense = append(dense, bucketing.calculateBandBoundary(index))
+		dense = append(dense, bucketing.calculateBandUpperBound(index))
 	}
 	if len(dense) == len(aggBucket.Meta.Buckets) {
 		return
 	}
 
-	// Bands map through their index rather than by matching boundaries, so a
-	// regenerated boundary differing from ClickHouse's in its last bit still
+	// Bands map through their index rather than by matching upper bounds, so a
+	// regenerated upper bound differing from ClickHouse's in its last bit still
 	// lands on the band it came from.
 	targetBandIndexes := make([]int, len(aggBucket.Meta.Buckets))
 	for i, index := range indexes {
@@ -311,18 +311,18 @@ func densifyAggregationAxis(aggBucket *AggregationBucket, bucketing HeatmapBucke
 	regroupAxis(aggBucket, dense, targetBandIndexes)
 }
 
-// calculateBandIndex and calculateBandBoundary are inverses over the axis being
-// returned, so they read h.LogScale where calculateValueBoundary reads
+// calculateBandIndex and calculateBandUpperBound are inverses over the axis being
+// returned, so they read h.LogScale where calculateValueUpperBound reads
 // MaxLogScale: k * maxValue / numBuckets on a linear axis, 2^(k / 2^scale) on a
 // log one.
-func (h HeatmapBucketing) calculateBandIndex(boundary float64) int {
+func (h HeatmapBucketing) calculateBandIndex(upperBound float64) int {
 	if h.Kind == BucketsKindLinear {
-		return int(math.Round(boundary * float64(h.NumBuckets) / h.MaxValue))
+		return int(math.Round(upperBound * float64(h.NumBuckets) / h.MaxValue))
 	}
-	return int(math.Round(math.Log2(boundary) * math.Exp2(float64(h.LogScale))))
+	return int(math.Round(math.Log2(upperBound) * math.Exp2(float64(h.LogScale))))
 }
 
-func (h HeatmapBucketing) calculateBandBoundary(index int) float64 {
+func (h HeatmapBucketing) calculateBandUpperBound(index int) float64 {
 	if h.Kind == BucketsKindLinear {
 		return float64(index) * h.MaxValue / float64(h.NumBuckets)
 	}
@@ -331,7 +331,7 @@ func (h HeatmapBucketing) calculateBandBoundary(index int) float64 {
 
 // BucketTimeSeriesValues turns one value per (series, timestamp) into heatmap
 // cells on the axis bucketing describes, which is what ClickHouse does for a
-// gauge or sum. A formula has no statement to carry the boundary expression, so
+// gauge or sum. A formula has no statement to carry the upper bound expression, so
 // its output is bucketed here instead. Every value counts the one series it came
 // from, so a point ends up with a single occupied cell.
 func BucketTimeSeriesValues(tsData *TimeSeriesData, bucketing HeatmapBucketing) {
@@ -348,47 +348,47 @@ func bucketAggregationValues(aggBucket *AggregationBucket, bucketing HeatmapBuck
 		return
 	}
 
-	// +Inf is the open-above overflow rather than a boundary of its own, and a
+	// +Inf is the open-above overflow rather than an upper bound of its own, and a
 	// NaN value has no band at all
-	boundarySet := map[float64]struct{}{}
+	upperBoundSet := map[float64]struct{}{}
 	for _, series := range aggBucket.Series {
 		for _, point := range series.Values {
-			boundary := bucketing.calculateValueBoundary(point.Value)
-			if !math.IsNaN(boundary) && !math.IsInf(boundary, 0) {
-				boundarySet[boundary] = struct{}{}
+			upperBound := bucketing.calculateValueUpperBound(point.Value)
+			if !math.IsNaN(upperBound) && !math.IsInf(upperBound, 0) {
+				upperBoundSet[upperBound] = struct{}{}
 			}
 		}
 	}
-	boundaries := slices.Sorted(maps.Keys(boundarySet))
+	upperBounds := slices.Sorted(maps.Keys(upperBoundSet))
 
-	bandIndexByBoundary := make(map[float64]int, len(boundaries))
-	for band, boundary := range boundaries {
-		bandIndexByBoundary[boundary] = band
+	bandIndexByUpperBound := make(map[float64]int, len(upperBounds))
+	for band, upperBound := range upperBounds {
+		bandIndexByUpperBound[upperBound] = band
 	}
 
 	for _, series := range aggBucket.Series {
 		for _, point := range series.Values {
-			boundary := bucketing.calculateValueBoundary(point.Value)
-			point.Values = make([]float64, len(boundaries)+1)
+			upperBound := bucketing.calculateValueUpperBound(point.Value)
+			point.Values = make([]float64, len(upperBounds)+1)
 			point.Value = 0
 			switch {
-			case math.IsNaN(boundary):
-			case math.IsInf(boundary, 1):
-				point.Values[len(boundaries)] = 1
+			case math.IsNaN(upperBound):
+			case math.IsInf(upperBound, 1):
+				point.Values[len(upperBounds)] = 1
 			default:
-				point.Values[bandIndexByBoundary[boundary]] = 1
+				point.Values[bandIndexByUpperBound[upperBound]] = 1
 			}
 		}
 	}
 
-	aggBucket.Meta.Buckets = boundaries
+	aggBucket.Meta.Buckets = upperBounds
 }
 
-// calculateValueBoundary renders the upper bound of the band value falls in. It
+// calculateValueUpperBound renders the upper bound of the band value falls in. It
 // is the Go side of the expression the statement builder emits and has to stay
 // identical to it: a formula heatmap and a metric heatmap that disagreed here
 // would put their bands in different places.
-func (h HeatmapBucketing) calculateValueBoundary(value float64) float64 {
+func (h HeatmapBucketing) calculateValueUpperBound(value float64) float64 {
 	if h.Kind == BucketsKindLinear {
 		if value > h.MaxValue {
 			return math.Inf(1)
@@ -400,10 +400,10 @@ func (h HeatmapBucketing) calculateValueBoundary(value float64) float64 {
 	if value <= 0 {
 		return 0
 	}
-	if value <= LowestLogBoundary {
-		return LowestLogBoundary
+	if value <= MinLogUpperBound {
+		return MinLogUpperBound
 	}
-	if value > HighestLogBoundary {
+	if value > MaxLogUpperBound {
 		return math.Inf(1)
 	}
 	bandsPerDoubling := math.Exp2(MaxLogScale)

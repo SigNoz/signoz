@@ -115,7 +115,7 @@ func TestDownscaleHeatmapAxis(t *testing.T) {
 			expectedValues:  []float64{1, 14, 6},
 		},
 		{
-			description:     "bands below 1 fold onto the same coarse boundary",
+			description:     "bands below 1 fold onto the same coarse upper bound",
 			fromScale:       4,
 			toScale:         2,
 			buckets:         []float64{math.Exp2(-3.0 / 16), math.Exp2(-2.0 / 16), math.Exp2(-1.0 / 16)},
@@ -200,7 +200,7 @@ func TestDownscaleHeatmapAxisKeepsTheTotalCount(t *testing.T) {
 	DownscaleHeatmapAxis(tsData, MaxLogScale, 1)
 
 	aggBucket := tsData.Aggregations[0]
-	// bands 0..63 fold onto ceil(k/8), so 0..8: the boundary at 2^0 keeps a band
+	// bands 0..63 fold onto ceil(k/8), so 0..8: the upper bound at 2^0 keeps a band
 	// of its own and the four doublings above it take two each
 	assert.Len(t, aggBucket.Meta.Buckets, 9)
 	assert.Len(t, aggBucket.Series[0].Values[0].Values, 10)
@@ -358,7 +358,7 @@ func TestBucketTimeSeriesValues(t *testing.T) {
 			},
 		},
 		{
-			// the log axis has no band below zero, so both report the boundary
+			// the log axis has no band below zero, so both report the upper bound
 			// that means "everything at or below zero"
 			description:     "zero and negative values share the lowest log band",
 			bucketing:       HeatmapBucketing{Kind: BucketsKindLog, LogScale: MaxLogScale},
@@ -446,49 +446,49 @@ func TestBucketTimeSeriesValuesSharesOneAxisAcrossSeries(t *testing.T) {
 	assert.Equal(t, []float64{0, 1, 0}, aggBucket.Series[1].Values[0].Values)
 }
 
-func TestBucketTimeSeriesValuesMatchesTheStatementBuilderBoundaries(t *testing.T) {
+func TestBucketTimeSeriesValuesMatchesTheStatementBuilderUpperBounds(t *testing.T) {
 	// the same expressions the statement builder renders, evaluated in Go:
 	// multiIf(value <= 0, 0, pow(2, ceil(log2(value) * 16) / 16)) and
 	// multiIf(value > max, +Inf, least(greatest(ceil(value * n / max), 1), n) * max / n)
 	logBucketing := HeatmapBucketing{Kind: BucketsKindLog, LogScale: MaxLogScale}
-	assert.Equal(t, math.Exp2(math.Ceil(math.Log2(37)*16)/16), logBucketing.calculateValueBoundary(37))
-	assert.Equal(t, 0.0, logBucketing.calculateValueBoundary(-1))
+	assert.Equal(t, math.Exp2(math.Ceil(math.Log2(37)*16)/16), logBucketing.calculateValueUpperBound(37))
+	assert.Equal(t, 0.0, logBucketing.calculateValueUpperBound(-1))
 
 	linearBucketing := HeatmapBucketing{Kind: BucketsKindLinear, MaxValue: 500, NumBuckets: 25}
-	assert.Equal(t, math.Ceil(37.0*25/500)*500/25, linearBucketing.calculateValueBoundary(37))
-	assert.Equal(t, 1*500.0/25, linearBucketing.calculateValueBoundary(0))
-	assert.True(t, math.IsInf(linearBucketing.calculateValueBoundary(501), 1))
+	assert.Equal(t, math.Ceil(37.0*25/500)*500/25, linearBucketing.calculateValueUpperBound(37))
+	assert.Equal(t, 1*500.0/25, linearBucketing.calculateValueUpperBound(0))
+	assert.True(t, math.IsInf(linearBucketing.calculateValueUpperBound(501), 1))
 }
 
-func TestHeatmapBoundaryForClampsTheLogAxis(t *testing.T) {
+func TestCalculateValueUpperBoundClampsTheLogAxis(t *testing.T) {
 	bucketing := HeatmapBucketing{Kind: BucketsKindLog, LogScale: MaxLogScale}
 
 	// without the clamp the band index runs off to -inf as a positive value
 	// approaches zero, and the axis fill follows it
-	assert.Equal(t, LowestLogBoundary, bucketing.calculateValueBoundary(1e-30))
-	assert.Equal(t, LowestLogBoundary, bucketing.calculateValueBoundary(math.SmallestNonzeroFloat64))
-	assert.Equal(t, LowestLogBoundary, bucketing.calculateValueBoundary(LowestLogBoundary))
+	assert.Equal(t, MinLogUpperBound, bucketing.calculateValueUpperBound(1e-30))
+	assert.Equal(t, MinLogUpperBound, bucketing.calculateValueUpperBound(math.SmallestNonzeroFloat64))
+	assert.Equal(t, MinLogUpperBound, bucketing.calculateValueUpperBound(MinLogUpperBound))
 
-	assert.True(t, math.IsInf(bucketing.calculateValueBoundary(1e30), 1))
-	assert.True(t, math.IsInf(bucketing.calculateValueBoundary(math.MaxFloat64), 1))
-	assert.Equal(t, HighestLogBoundary, bucketing.calculateValueBoundary(HighestLogBoundary))
+	assert.True(t, math.IsInf(bucketing.calculateValueUpperBound(1e30), 1))
+	assert.True(t, math.IsInf(bucketing.calculateValueUpperBound(math.MaxFloat64), 1))
+	assert.Equal(t, MaxLogUpperBound, bucketing.calculateValueUpperBound(MaxLogUpperBound))
 
 	// zero and negatives keep their own band below the floor
-	assert.Equal(t, 0.0, bucketing.calculateValueBoundary(0))
-	assert.Equal(t, 0.0, bucketing.calculateValueBoundary(-5))
+	assert.Equal(t, 0.0, bucketing.calculateValueUpperBound(0))
+	assert.Equal(t, 0.0, bucketing.calculateValueUpperBound(-5))
 
 	// anything in between is untouched
-	assert.Equal(t, math.Exp2(math.Ceil(math.Log2(37)*16)/16), bucketing.calculateValueBoundary(37))
+	assert.Equal(t, math.Exp2(math.Ceil(math.Log2(37)*16)/16), bucketing.calculateValueUpperBound(37))
 }
 
 func TestLogAxisClampsStayOnTheGridAtEveryScale(t *testing.T) {
-	// a coarser fold must land the clamped ends on real boundaries, which holds
+	// a coarser fold must land the clamped ends on real upper bounds, which holds
 	// because both indexes are powers of two
 	for scale := MinLogScale; scale <= MaxLogScale; scale++ {
 		bandsPerDoubling := math.Exp2(float64(scale))
-		for _, boundary := range []float64{LowestLogBoundary, HighestLogBoundary} {
-			index := math.Log2(boundary) * bandsPerDoubling
-			assert.Equal(t, math.Trunc(index), index, "scale %d, boundary %g", scale, boundary)
+		for _, upperBound := range []float64{MinLogUpperBound, MaxLogUpperBound} {
+			index := math.Log2(upperBound) * bandsPerDoubling
+			assert.Equal(t, math.Trunc(index), index, "scale %d, upperBound %g", scale, upperBound)
 		}
 	}
 }
@@ -513,13 +513,13 @@ func TestDensifyHeatmapAxisIsBoundedByTheFloor(t *testing.T) {
 	// 1e-30 clamps to the floor, so the fill spans MinLogBandIndex upwards
 	// rather than chasing that value's own index near -1594
 	buckets := tsData.Aggregations[0].Meta.Buckets
-	highest := bucketing.calculateBandIndex(bucketing.calculateValueBoundary(1000))
-	assert.Equal(t, LowestLogBoundary, buckets[0])
+	highest := bucketing.calculateBandIndex(bucketing.calculateValueUpperBound(1000))
+	assert.Equal(t, MinLogUpperBound, buckets[0])
 	assert.Len(t, buckets, highest-MinLogBandIndex+1)
 }
 
-func TestDensifyHeatmapAxisSkipsANonFiniteBoundary(t *testing.T) {
-	// the overflow is the slot past the axis, never a boundary on it; a bad one
+func TestDensifyHeatmapAxisSkipsANonFiniteUpperBound(t *testing.T) {
+	// the overflow is the slot past the axis, never an upper bound on it; a bad one
 	// would otherwise size the fill from a garbage band index
 	tsData := &TimeSeriesData{
 		Aggregations: []*AggregationBucket{{
@@ -538,7 +538,7 @@ func TestDensifyHeatmapAxisWorstCaseSpan(t *testing.T) {
 
 	tsData := &TimeSeriesData{
 		Aggregations: []*AggregationBucket{{
-			Meta:   AggregationMeta{Buckets: []float64{LowestLogBoundary, HighestLogBoundary}},
+			Meta:   AggregationMeta{Buckets: []float64{MinLogUpperBound, MaxLogUpperBound}},
 			Series: []*TimeSeries{{Values: []*TimeSeriesValue{{Timestamp: 1710000000000, Values: []float64{1, 1, 0}}}}},
 		}},
 	}

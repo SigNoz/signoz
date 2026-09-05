@@ -1058,6 +1058,20 @@ func (q *querier) mergeResults(cached *qbtypes.Result, fresh []*qbtypes.Result) 
 	return merged
 }
 
+// mergeBucketUpperBounds returns, per aggregation index, the union of the bucket
+// upper bounds the cached and fresh halves reached. A heatmap point's Values are
+// positional against those upper bounds, so both halves are realigned onto the
+// union before they are merged.
+func mergeBucketUpperBounds(cachedValue *qbtypes.TimeSeriesData, freshResults []*qbtypes.Result) map[int][]float64 {
+	upperBoundSources := make([]*qbtypes.TimeSeriesData, 0, len(freshResults)+1)
+	upperBoundSources = append(upperBoundSources, cachedValue)
+	for _, result := range freshResults {
+		freshTS, _ := result.Value.(*qbtypes.TimeSeriesData)
+		upperBoundSources = append(upperBoundSources, freshTS)
+	}
+	return qbtypes.MergeHeatmapAxes(upperBoundSources...)
+}
+
 // mergeTimeSeriesResults merges time series data.
 func (q *querier) mergeTimeSeriesResults(cachedValue *qbtypes.TimeSeriesData, freshResults []*qbtypes.Result) *qbtypes.TimeSeriesData {
 
@@ -1066,15 +1080,7 @@ func (q *querier) mergeTimeSeriesResults(cachedValue *qbtypes.TimeSeriesData, fr
 	// Map to store aggregation bucket metadata
 	bucketMetadata := make(map[int]*qbtypes.AggregationBucket)
 
-	// Both halves are moved onto the union of their axes before being merged
-	// positionally, so a band one range never reached reads as zero there.
-	axes := make([]*qbtypes.TimeSeriesData, 0, len(freshResults)+1)
-	axes = append(axes, cachedValue)
-	for _, result := range freshResults {
-		freshTS, _ := result.Value.(*qbtypes.TimeSeriesData)
-		axes = append(axes, freshTS)
-	}
-	mergedBoundaries := qbtypes.MergeHeatmapAxes(axes...)
+	mergedUpperBounds := mergeBucketUpperBounds(cachedValue, freshResults)
 
 	// Process cached data if available
 	if cachedValue != nil && cachedValue.Aggregations != nil {
@@ -1082,7 +1088,7 @@ func (q *querier) mergeTimeSeriesResults(cachedValue *qbtypes.TimeSeriesData, fr
 			if seriesMap[aggBucket.Index] == nil {
 				seriesMap[aggBucket.Index] = make(map[string]*qbtypes.TimeSeries)
 			}
-			qbtypes.RealignHeatmapValues(aggBucket.Series, aggBucket.Meta.Buckets, mergedBoundaries[aggBucket.Index])
+			qbtypes.RealignHeatmapValues(aggBucket.Series, aggBucket.Meta.Buckets, mergedUpperBounds[aggBucket.Index])
 			if bucketMetadata[aggBucket.Index] == nil {
 				bucketMetadata[aggBucket.Index] = aggBucket
 			}
@@ -1134,7 +1140,7 @@ func (q *querier) mergeTimeSeriesResults(cachedValue *qbtypes.TimeSeriesData, fr
 		}
 
 		for _, aggBucket := range freshTS.Aggregations {
-			qbtypes.RealignHeatmapValues(aggBucket.Series, aggBucket.Meta.Buckets, mergedBoundaries[aggBucket.Index])
+			qbtypes.RealignHeatmapValues(aggBucket.Series, aggBucket.Meta.Buckets, mergedUpperBounds[aggBucket.Index])
 			for _, series := range aggBucket.Series {
 				key := qbtypes.GetUniqueSeriesKey(series.Labels)
 
@@ -1198,8 +1204,8 @@ func (q *querier) mergeTimeSeriesResults(cachedValue *qbtypes.TimeSeriesData, fr
 			bucket.Alias = metadata.Alias
 			bucket.Meta = metadata.Meta
 		}
-		if boundaries, ok := mergedBoundaries[index]; ok {
-			bucket.Meta.Buckets = boundaries
+		if upperBounds, ok := mergedUpperBounds[index]; ok {
+			bucket.Meta.Buckets = upperBounds
 		}
 
 		result.Aggregations = append(result.Aggregations, bucket)

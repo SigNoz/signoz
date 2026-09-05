@@ -762,12 +762,12 @@ func (BucketsKind) Enum() []any {
 // LinearBucketsSpec divides (0, MaxValue] into NumBuckets equal bands.
 type LinearBucketsSpec struct {
 	// Everything above MaxValue is counted in the trailing overflow band. Evenly
-	// spaced boundaries have no top to divide without it, so it is required.
+	// spaced upper bounds have no top to divide without it, so it is required.
 	MaxValue   float64 `json:"maxValue" required:"true"`
 	NumBuckets int     `json:"numBuckets,omitempty"`
 }
 
-// LogBucketsSpec spaces boundaries at 2^Scale bands per doubling, the mapping
+// LogBucketsSpec spaces upper bounds at 2^Scale bands per doubling, the mapping
 // an exponential histogram uses.
 type LogBucketsSpec struct {
 	// ClickHouse always buckets at MaxLogScale and the surplus is folded away
@@ -828,12 +828,12 @@ func (b *BucketOptions) UnmarshalJSON(data []byte) error {
 // PrepareJSONSchema pointing at components that were never emitted. `kind` is
 // required:"true" on both so oapi-codegen renders the discriminator non-pointer.
 type bucketOptionsLinear struct {
-	Kind BucketsKind       `json:"kind" required:"true" description:"How the boundaries are spaced."`
+	Kind BucketsKind       `json:"kind" required:"true" description:"How the upper bounds are spaced."`
 	Spec LinearBucketsSpec `json:"spec" required:"true" description:"The evenly spaced bucket specification."`
 }
 
 type bucketOptionsLog struct {
-	Kind BucketsKind    `json:"kind" required:"true" description:"How the boundaries are spaced."`
+	Kind BucketsKind    `json:"kind" required:"true" description:"How the upper bounds are spaced."`
 	Spec LogBucketsSpec `json:"spec" required:"true" description:"The logarithmic bucket specification."`
 }
 

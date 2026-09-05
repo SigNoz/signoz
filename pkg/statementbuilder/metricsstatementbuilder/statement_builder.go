@@ -887,7 +887,7 @@ const (
 func isHistogramBucket(k qbtypes.GroupByKey) bool { return k.Name == histogramBucketKey }
 
 // buildHeatmapFinalSelect turns __spatial_aggregation_cte into one row per
-// heatmap cell: (ts, group labels..., bucket upper boundary, count).
+// heatmap cell: (ts, group labels..., bucket upper bound, count).
 func buildHeatmapFinalSelect(
 	combined string,
 	args []any,
@@ -900,8 +900,8 @@ func buildHeatmapFinalSelect(
 }
 
 // buildHistogramHeatmapFinalSelect differences the cumulative per-`le` counts in
-// __spatial_aggregation_cte into a count per band. The boundary reported is the
-// `le` itself, so the `le=+Inf` row reaches the reader as an infinite boundary
+// __spatial_aggregation_cte into a count per band. The upper bound reported is the
+// `le` itself, so the `le=+Inf` row reaches the reader as an infinite upper bound
 // for it to fold into the overflow band.
 func buildHistogramHeatmapFinalSelect(
 	combined string,
@@ -949,7 +949,7 @@ func buildValueHeatmapFinalSelect(
 			query.Aggregations[0].Type.StringValue())
 	}
 
-	boundary, err := renderHeatmapBoundaryExpr(*bucketing)
+	upperBound, err := renderHeatmapUpperBoundExpr(*bucketing)
 	if err != nil {
 		return nil, err
 	}
@@ -959,7 +959,7 @@ func buildValueHeatmapFinalSelect(
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("ts")
 	sb.SelectMore(groupAliases...)
-	sb.SelectMore(fmt.Sprintf("%s AS %s", boundary, qbtypes.HeatmapBucketColumn))
+	sb.SelectMore(fmt.Sprintf("%s AS %s", upperBound, qbtypes.HeatmapBucketColumn))
 	sb.SelectMore(fmt.Sprintf("toFloat64(1) AS %s", heatmapValueAlias))
 	sb.From("__spatial_aggregation_cte")
 	sb.OrderBy(groupAliases...)
@@ -969,20 +969,20 @@ func buildValueHeatmapFinalSelect(
 	return &qbtypes.Statement{Query: combined + q, Args: append(args, a...)}, nil
 }
 
-// renderHeatmapBoundaryExpr renders the upper bound of the band `value` falls in.
-func renderHeatmapBoundaryExpr(bucketing qbtypes.HeatmapBucketing) (string, error) {
+// renderHeatmapUpperBoundExpr renders the upper bound of the band `value` falls in.
+func renderHeatmapUpperBoundExpr(bucketing qbtypes.HeatmapBucketing) (string, error) {
 	switch bucketing.Kind {
 	case qbtypes.BucketsKindLinear:
-		return renderLinearBoundaryExpr(bucketing), nil
+		return renderLinearUpperBoundExpr(bucketing), nil
 	case qbtypes.BucketsKindLog:
-		return renderLogBoundaryExpr(), nil
+		return renderLogUpperBoundExpr(), nil
 	default:
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"unsupported bucketsScaling %q for heatmap requests", bucketing.Kind.StringValue())
 	}
 }
 
-func renderLinearBoundaryExpr(bucketing qbtypes.HeatmapBucketing) string {
+func renderLinearUpperBoundExpr(bucketing qbtypes.HeatmapBucketing) string {
 	maxValue := formatFloat(bucketing.MaxValue)
 	numBuckets := strconv.Itoa(bucketing.NumBuckets)
 	return fmt.Sprintf(
@@ -993,10 +993,10 @@ func renderLinearBoundaryExpr(bucketing qbtypes.HeatmapBucketing) string {
 
 // ClickHouse buckets at MaxLogScale whatever HeatmapBucketing.LogScale asks for;
 // postprocessing folds the axis down afterwards.
-func renderLogBoundaryExpr() string {
+func renderLogUpperBoundExpr() string {
 	bandsPerDoubling := formatFloat(math.Exp2(qbtypes.MaxLogScale))
-	lowest := formatFloat(qbtypes.LowestLogBoundary)
-	highest := formatFloat(qbtypes.HighestLogBoundary)
+	lowest := formatFloat(qbtypes.MinLogUpperBound)
+	highest := formatFloat(qbtypes.MaxLogUpperBound)
 	return fmt.Sprintf(
 		"multiIf(value <= 0, toFloat64(0), value <= %s, %s, value > %s, toFloat64('+Inf'), pow(2, ceil(log2(value) * %s) / %s))",
 		lowest, lowest, highest, bandsPerDoubling, bandsPerDoubling,
@@ -1004,7 +1004,7 @@ func renderLogBoundaryExpr() string {
 }
 
 // formatFloat renders a float64 as the shortest literal that reads back as the
-// same value, so a boundary computed from it is identical on every row.
+// same value, so an upper bound computed from it is identical on every row.
 func formatFloat(v float64) string {
 	return strconv.FormatFloat(v, 'g', -1, 64)
 }
