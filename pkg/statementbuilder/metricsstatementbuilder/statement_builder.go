@@ -236,6 +236,25 @@ func (b *StatementBuilder) buildPipelineStatement(
 	return unionStatements(mainStmt, reducedStmt, query)
 }
 
+func histogramCTEQuery(requestType qbtypes.RequestType, query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]) qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation] {
+	query.GroupBy = append(slices.Clone(query.GroupBy), qbtypes.GroupByKey{
+		TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: histogramBucketKey},
+	})
+
+	query.Aggregations = slices.Clone(query.Aggregations)
+	// A heatmap cell is an observation count whatever space aggregation was
+	// asked for, since the axis is the `le` labels rather than anything the
+	// space aggregation picks out. Rates would scale every cell by the step.
+	if query.Aggregations[0].SpaceAggregation.IsPercentile() && requestType != qbtypes.RequestTypeHeatmap {
+		query.Aggregations[0].TimeAggregation = metrictypes.TimeAggregationRate
+	} else {
+		query.Aggregations[0].TimeAggregation = metrictypes.TimeAggregationIncrease
+	}
+	query.Aggregations[0].SpaceAggregation = metrictypes.SpaceAggregationSum
+
+	return query
+}
+
 func unionStatements(main, reduced *qbtypes.Statement, query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]) (*qbtypes.Statement, error) {
 	orderBy := "ts"
 	for i, g := range query.GroupBy {
@@ -1003,25 +1022,6 @@ func heatmapBoundaryExpr(bucketing qbtypes.HeatmapBucketing) (string, error) {
 // same value, so a boundary computed from it is identical on every row.
 func formatFloat(v float64) string {
 	return strconv.FormatFloat(v, 'g', -1, 64)
-}
-
-func histogramCTEQuery(requestType qbtypes.RequestType, query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]) qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation] {
-	query.GroupBy = append(slices.Clone(query.GroupBy), qbtypes.GroupByKey{
-		TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: histogramBucketKey},
-	})
-
-	query.Aggregations = slices.Clone(query.Aggregations)
-	// A heatmap cell is an observation count whatever space aggregation was
-	// asked for, since the axis is the `le` labels rather than anything the
-	// space aggregation picks out. Rates would scale every cell by the step.
-	if query.Aggregations[0].SpaceAggregation.IsPercentile() && requestType != qbtypes.RequestTypeHeatmap {
-		query.Aggregations[0].TimeAggregation = metrictypes.TimeAggregationRate
-	} else {
-		query.Aggregations[0].TimeAggregation = metrictypes.TimeAggregationIncrease
-	}
-	query.Aggregations[0].SpaceAggregation = metrictypes.SpaceAggregationSum
-
-	return query
 }
 
 func GroupByColumnAlias(i int, name string) string {
