@@ -57,7 +57,7 @@ func TestFoldMatrixAsHeatmapClampsADecreasingCumulativeCount(t *testing.T) {
 	assert.Equal(t, []float64{10, 0, 0}, data.Aggregations[0].Series[0].Values[0].Values)
 }
 
-func TestFoldMatrixAsHeatmapWidensTheBandOverAMissingBoundary(t *testing.T) {
+func TestFoldMatrixAsHeatmapWidensTheBandOverAMissingUpperBound(t *testing.T) {
 	at := int64(1710000000000)
 
 	matrix := promql.Matrix{

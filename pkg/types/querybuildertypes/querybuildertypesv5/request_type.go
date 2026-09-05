@@ -42,7 +42,7 @@ var (
 	// []Bucket (struct{Lower,Upper,Count float64}), example: histogram.
 	RequestTypeDistribution = RequestType{valuer.NewString("distribution")}
 	// TimeSeriesData carrying one count per histogram bucket at each timestamp,
-	// with the shared bucket boundaries on the aggregation's meta.
+	// with the shared bucket upper bounds on the aggregation's meta.
 	RequestTypeHeatmap = RequestType{valuer.NewString("heatmap")}
 )
 
