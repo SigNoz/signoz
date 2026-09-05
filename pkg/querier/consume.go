@@ -33,7 +33,7 @@ var (
 	legacyReservedColumnTargetAliases = []string{"__result", "__value", "result", "res", "value"}
 
 	// userHeatmapBucketColumn is the alias a user written clickhouse query can
-	// give its bucket boundary column, alongside the HeatmapBucketColumn the
+	// give its bucket upper bound column, alongside the HeatmapBucketColumn the
 	// statement builder emits.
 	userHeatmapBucketColumn = "bucket"
 )
@@ -299,7 +299,7 @@ func isHeatmapBucketColumn(colName string) bool {
 }
 
 // readAsHeatmap folds one row per cell — (timestamp, group labels, bucket upper
-// boundary, count) — into one series per group.
+// bound, count) — into one series per group.
 func readAsHeatmap(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (*qbtypes.TimeSeriesData, error) {
 	colTypes := rows.ColumnTypes()
 	colNames := rows.Columns()
@@ -324,11 +324,11 @@ func readAsHeatmap(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtype
 		}
 
 		var (
-			ts       int64
-			boundary float64
-			count    float64
-			lblVals  []string
-			lblObjs  []*qbtypes.Label
+			ts         int64
+			upperBound float64
+			count      float64
+			lblVals    []string
+			lblObjs    []*qbtypes.Label
 		)
 
 		for idx, ptr := range slots {
@@ -342,7 +342,7 @@ func readAsHeatmap(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtype
 
 			switch name {
 			case qbtypes.HeatmapBucketColumn, userHeatmapBucketColumn:
-				boundary = numericAsFloat(value)
+				upperBound = numericAsFloat(value)
 			default:
 				if aggRe.MatchString(name) || slices.Contains(legacyReservedColumnTargetAliases, name) {
 					count = numericAsFloat(value)
@@ -361,13 +361,13 @@ func readAsHeatmap(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtype
 			}
 		}
 
-		if ts == 0 || !isValidBucketUpperBound(boundary) || math.IsNaN(count) || math.IsInf(count, 0) {
+		if ts == 0 || !isValidBucketUpperBound(upperBound) || math.IsNaN(count) || math.IsInf(count, 0) {
 			continue
 		}
 		sort.Strings(lblVals)
 		labelsKey := strings.Join(lblVals, ",")
 
-		accumulator.addCell(labelsKey, lblObjs, ts, boundary, count)
+		accumulator.addCell(labelsKey, lblObjs, ts, upperBound, count)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

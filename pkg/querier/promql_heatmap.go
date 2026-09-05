@@ -20,9 +20,9 @@ import (
 // cumulative upper bound on, in PromQL as in the metric itself.
 const promHistogramBucketLabel = "le"
 
-// cumulativeColumn maps a bucket's upper boundary to the cumulative count at it,
+// cumulativeColumn maps a bucket's upper bound to the cumulative count at it,
 // the form a classic histogram's `le` series arrive in. Differencing along the
-// boundaries turns it into the per-band counts a heatmapColumn holds.
+// upper bounds turns it into the per-band counts a heatmapColumn holds.
 type cumulativeColumn map[float64]float64
 
 // promHeatmapGroup accumulates one group's cumulative counts. `le` series are
@@ -35,7 +35,7 @@ type promHeatmapGroup struct {
 }
 
 // foldMatrixAsHeatmap folds a classic histogram matrix, one series per (group,
-// `le`) carrying the cumulative count at that boundary, into one series per
+// `le`) carrying the cumulative count at that upper bound, into one series per
 // group whose points hold a count per band.
 func foldMatrixAsHeatmap(matrix promql.Matrix, queryWindow *qbv5.TimeRange, stepMs uint64, queryName string) *qbv5.TimeSeriesData {
 	groups, groupOrder := collectCumulativeGroups(matrix)
@@ -49,14 +49,14 @@ func foldMatrixAsHeatmap(matrix promql.Matrix, queryWindow *qbv5.TimeRange, step
 }
 
 // collectCumulativeGroups reads the matrix into one group per label set, each
-// holding the cumulative count at every (timestamp, boundary) pair. A series
+// holding the cumulative count at every (timestamp, upper bound) pair. A series
 // without `le` has no band to sit in and is skipped, so an expression that
 // dropped the label draws nothing.
 func collectCumulativeGroups(matrix promql.Matrix) (groups map[string]*promHeatmapGroup, groupOrder []string) {
 	groups = map[string]*promHeatmapGroup{}
 
 	for _, promSeries := range matrix {
-		boundary, ok := extractBucketBoundary(promSeries.Metric)
+		upperBound, ok := extractBucketUpperBound(promSeries.Metric)
 		if !ok {
 			continue
 		}
@@ -72,7 +72,7 @@ func collectCumulativeGroups(matrix promql.Matrix) (groups map[string]*promHeatm
 		for _, point := range promSeries.Floats {
 			// A non-finite cumulative count has nothing to difference against.
 			// Skipping the point leaves the band above it differenced against
-			// the next boundary that does have one, which is what lagInFrame
+			// the next upper bound that does have one, which is what lagInFrame
 			// does with an absent row on the builder path.
 			if math.IsNaN(point.F) || math.IsInf(point.F, 0) {
 				continue
@@ -80,7 +80,7 @@ func collectCumulativeGroups(matrix promql.Matrix) (groups map[string]*promHeatm
 			if group.cumulative[point.T] == nil {
 				group.cumulative[point.T] = cumulativeColumn{}
 			}
-			group.cumulative[point.T][boundary] = point.F
+			group.cumulative[point.T][upperBound] = point.F
 		}
 	}
 
@@ -88,35 +88,35 @@ func collectCumulativeGroups(matrix promql.Matrix) (groups map[string]*promHeatm
 }
 
 // addDifferencedCells turns the group's cumulative counts into one cell per
-// band, differencing each boundary against the one below it.
+// band, differencing each upper bound against the one below it.
 func (g *promHeatmapGroup) addDifferencedCells(accumulator *heatmapAccumulator) {
 	for ts, cumulative := range g.cumulative {
-		boundaries := make([]float64, 0, len(cumulative))
-		for boundary := range cumulative {
-			boundaries = append(boundaries, boundary)
+		upperBounds := make([]float64, 0, len(cumulative))
+		for upperBound := range cumulative {
+			upperBounds = append(upperBounds, upperBound)
 		}
-		slices.Sort(boundaries)
+		slices.Sort(upperBounds)
 
 		previous := float64(0)
-		for _, boundary := range boundaries {
-			accumulator.addCell(g.labelsKey, g.labels, ts, boundary, math.Max(cumulative[boundary]-previous, 0))
-			previous = cumulative[boundary]
+		for _, upperBound := range upperBounds {
+			accumulator.addCell(g.labelsKey, g.labels, ts, upperBound, math.Max(cumulative[upperBound]-previous, 0))
+			previous = cumulative[upperBound]
 		}
 	}
 }
 
-// extractBucketBoundary reads the `le` label as a boundary. The label is a
-// string, so `+Inf` arrives as one and parses to the overflow boundary.
-func extractBucketBoundary(metric labels.Labels) (float64, bool) {
+// extractBucketUpperBound reads the `le` label as an upper bound. The label is a
+// string, so `+Inf` arrives as one and parses to the overflow bound.
+func extractBucketUpperBound(metric labels.Labels) (float64, bool) {
 	raw := metric.Get(promHistogramBucketLabel)
 	if raw == "" {
 		return 0, false
 	}
-	boundary, err := strconv.ParseFloat(raw, 64)
-	if err != nil || !isValidBucketUpperBound(boundary) {
+	upperBound, err := strconv.ParseFloat(raw, 64)
+	if err != nil || !isValidBucketUpperBound(upperBound) {
 		return 0, false
 	}
-	return boundary, true
+	return upperBound, true
 }
 
 // extractHeatmapGroup returns the labels identifying a series' group — every
