@@ -68,12 +68,12 @@ func (a *heatmapAccumulator) foldSeries(queryWindow *qbtypes.TimeRange, stepMs u
 	}
 	slices.Sort(upperBounds)
 
-	// the band past the last upper bound is where the +Inf overflow lands
-	bandIndexByUpperBound := make(map[float64]int, len(upperBounds)+1)
-	for band, upperBound := range upperBounds {
-		bandIndexByUpperBound[upperBound] = band
+	// the index past the last upper bound is where the +Inf overflow lands
+	upperBoundToIndex := make(map[float64]int, len(upperBounds)+1)
+	for index, upperBound := range upperBounds {
+		upperBoundToIndex[upperBound] = index
 	}
-	bandIndexByUpperBound[math.Inf(1)] = len(upperBounds)
+	upperBoundToIndex[math.Inf(1)] = len(upperBounds)
 
 	bucket := &qbtypes.AggregationBucket{
 		Index:  0,
@@ -98,7 +98,7 @@ func (a *heatmapAccumulator) foldSeries(queryWindow *qbtypes.TimeRange, stepMs u
 		for _, ts := range timestamps {
 			values := make([]float64, len(upperBounds)+1)
 			for upperBound, count := range accumulated.columnsByTimestamp[ts] {
-				values[bandIndexByUpperBound[upperBound]] = count
+				values[upperBoundToIndex[upperBound]] = count
 			}
 			series.Values = append(series.Values, &qbtypes.TimeSeriesValue{
 				Timestamp: ts,
