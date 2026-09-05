@@ -477,24 +477,27 @@ func collectExecStats(began time.Time, statsMu *sync.Mutex, rowsScanned, bytesSc
 	}
 }
 
-// toResult converts an evaluated matrix into the v5 result shape, attaching
-// the ClickHouse scan stats accumulated during evaluation.
 func (q *promqlQuery) toResult(matrix promql.Matrix, warnings []string, began time.Time, statsMu *sync.Mutex, rowsScanned, bytesScanned *uint64) (*qbv5.Result, error) {
-	// A heatmap reads one label as its Y axis and returns a count per band, so
-	// the per-series copy below cannot produce it.
 	if q.requestType == qbv5.RequestTypeHeatmap {
-		tsData, err := foldMatrixAsHeatmap(matrix, &q.tr, uint64(q.query.Step.Milliseconds()), q.query.Name)
-		if err != nil {
-			return nil, err
-		}
-		return &qbv5.Result{
-			Type:     q.requestType,
-			Value:    tsData,
-			Warnings: warnings,
-			Stats:    collectExecStats(began, statsMu, rowsScanned, bytesScanned),
-		}, nil
+		return q.toResultForHeatmap(matrix, warnings, began, statsMu, rowsScanned, bytesScanned)
 	}
+	return q.toResultForTimeSeriesAndScalar(matrix, warnings, began, statsMu, rowsScanned, bytesScanned), nil
+}
 
+func (q *promqlQuery) toResultForHeatmap(matrix promql.Matrix, warnings []string, began time.Time, statsMu *sync.Mutex, rowsScanned, bytesScanned *uint64) (*qbv5.Result, error) {
+	tsData, err := foldMatrixAsHeatmap(matrix, &q.tr, uint64(q.query.Step.Milliseconds()), q.query.Name)
+	if err != nil {
+		return nil, err
+	}
+	return &qbv5.Result{
+		Type:     q.requestType,
+		Value:    tsData,
+		Warnings: warnings,
+		Stats:    collectExecStats(began, statsMu, rowsScanned, bytesScanned),
+	}, nil
+}
+
+func (q *promqlQuery) toResultForTimeSeriesAndScalar(matrix promql.Matrix, warnings []string, began time.Time, statsMu *sync.Mutex, rowsScanned, bytesScanned *uint64) *qbv5.Result {
 	var series []*qbv5.TimeSeries
 	for _, v := range matrix {
 		var s qbv5.TimeSeries
@@ -561,5 +564,5 @@ func (q *promqlQuery) toResult(matrix promql.Matrix, warnings []string, began ti
 		Value:    payload,
 		Warnings: warnings,
 		Stats:    stats,
-	}, nil
+	}
 }
