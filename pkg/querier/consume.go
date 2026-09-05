@@ -293,11 +293,21 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 	}, nil
 }
 
+func isHeatmapBucketColumn(colName string) bool {
+	name := stripKeyAlias(colName)
+	return name == qbtypes.HeatmapBucketColumn || name == userHeatmapBucketColumn
+}
+
 // readAsHeatmap folds one row per cell — (timestamp, group labels, bucket upper
 // boundary, count) — into one series per group.
 func readAsHeatmap(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (*qbtypes.TimeSeriesData, error) {
 	colTypes := rows.ColumnTypes()
 	colNames := rows.Columns()
+
+	if !slices.ContainsFunc(colNames, isHeatmapBucketColumn) {
+		// there is no heatmap bucket column so empty response is returned.
+		return &qbtypes.TimeSeriesData{QueryName: queryName}, nil
+	}
 
 	slots := make([]any, len(colTypes))
 	for i, ct := range colTypes {
@@ -317,7 +327,6 @@ func readAsHeatmap(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtype
 			ts       int64
 			boundary float64
 			count    float64
-			hasCell  bool
 			lblVals  []string
 			lblObjs  []*qbtypes.Label
 		)
@@ -334,7 +343,6 @@ func readAsHeatmap(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtype
 			switch name {
 			case qbtypes.HeatmapBucketColumn, userHeatmapBucketColumn:
 				boundary = numericAsFloat(value)
-				hasCell = true
 			default:
 				if aggRe.MatchString(name) || slices.Contains(legacyReservedColumnTargetAliases, name) {
 					count = numericAsFloat(value)
@@ -353,13 +361,9 @@ func readAsHeatmap(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtype
 			}
 		}
 
-		if ts == 0 || !hasCell || !canBoundBand(boundary) {
+		if ts == 0 || !isValidBucketUpperBound(boundary) || math.IsNaN(count) || math.IsInf(count, 0) {
 			continue
 		}
-		if math.IsNaN(count) || math.IsInf(count, 0) {
-			continue
-		}
-
 		sort.Strings(lblVals)
 		labelsKey := strings.Join(lblVals, ",")
 

@@ -12,7 +12,6 @@ import (
 
 	"github.com/prometheus/prometheus/promql"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	qbv5 "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -33,27 +32,22 @@ type promHeatmapGroup struct {
 // foldMatrixAsHeatmap folds a classic histogram matrix, one series per (group,
 // `le`) carrying the cumulative count at that boundary, into one series per
 // group whose points hold a count per band.
-func foldMatrixAsHeatmap(matrix promql.Matrix, queryWindow *qbv5.TimeRange, stepMs uint64, queryName string) (*qbv5.TimeSeriesData, error) {
-	groups, groupOrder, sawBucketLabel := collectCumulativeGroups(matrix)
-
-	if len(matrix) > 0 && !sawBucketLabel {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"promql heatmap needs a %q label to draw its bucket axis from, and %q returned none: keep it in the result, as in `sum by (%s) (increase(metric_bucket[5m]))`",
-			promHistogramBucketLabel, queryName, promHistogramBucketLabel)
-	}
+func foldMatrixAsHeatmap(matrix promql.Matrix, queryWindow *qbv5.TimeRange, stepMs uint64, queryName string) *qbv5.TimeSeriesData {
+	groups, groupOrder := collectCumulativeGroups(matrix)
 
 	accumulator := newHeatmapAccumulator()
 	for _, labelsKey := range groupOrder {
 		groups[labelsKey].addDifferencedCells(accumulator)
 	}
 
-	return accumulator.foldSeries(queryWindow, stepMs, queryName), nil
+	return accumulator.foldSeries(queryWindow, stepMs, queryName)
 }
 
 // collectCumulativeGroups reads the matrix into one group per label set, each
-// holding the cumulative count at every (timestamp, boundary) pair.
-// sawBucketLabel reports whether any series carried `le` at all.
-func collectCumulativeGroups(matrix promql.Matrix) (groups map[string]*promHeatmapGroup, groupOrder []string, sawBucketLabel bool) {
+// holding the cumulative count at every (timestamp, boundary) pair. A series
+// without `le` has no band to sit in and is skipped, so an expression that
+// dropped the label draws nothing.
+func collectCumulativeGroups(matrix promql.Matrix) (groups map[string]*promHeatmapGroup, groupOrder []string) {
 	groups = map[string]*promHeatmapGroup{}
 
 	for _, promSeries := range matrix {
@@ -61,7 +55,6 @@ func collectCumulativeGroups(matrix promql.Matrix) (groups map[string]*promHeatm
 		if !ok {
 			continue
 		}
-		sawBucketLabel = true
 
 		lbls, labelsKey := extractHeatmapGroup(promSeries.Metric)
 		group, ok := groups[labelsKey]
@@ -86,7 +79,7 @@ func collectCumulativeGroups(matrix promql.Matrix) (groups map[string]*promHeatm
 		}
 	}
 
-	return groups, groupOrder, sawBucketLabel
+	return groups, groupOrder
 }
 
 // addDifferencedCells turns the group's cumulative counts into one cell per
@@ -115,7 +108,7 @@ func extractBucketBoundary(metric labels.Labels) (float64, bool) {
 		return 0, false
 	}
 	boundary, err := strconv.ParseFloat(raw, 64)
-	if err != nil || !canBoundBand(boundary) {
+	if err != nil || !isValidBucketUpperBound(boundary) {
 		return 0, false
 	}
 	return boundary, true

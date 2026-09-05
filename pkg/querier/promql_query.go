@@ -374,7 +374,7 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 			}
 			return nil, err
 		}
-		return q.toResult(matrix, nil, began, &statsMu, &rowsScanned, &bytesScanned)
+		return q.toResult(matrix, nil, began, &statsMu, &rowsScanned, &bytesScanned), nil
 	}
 
 	// When the serving provider has the RangeExecutor capability
@@ -390,7 +390,7 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 			return nil, err
 		}
 		if served {
-			return q.toResult(matrix, nil, began, &statsMu, &rowsScanned, &bytesScanned)
+			return q.toResult(matrix, nil, began, &statsMu, &rowsScanned, &bytesScanned), nil
 		}
 	}
 
@@ -451,7 +451,7 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 	}
 
 	warnings, _ := res.Warnings.AsStrings(query, 10, 0)
-	return q.toResult(matrix, warnings, began, &statsMu, &rowsScanned, &bytesScanned)
+	return q.toResult(matrix, warnings, began, &statsMu, &rowsScanned, &bytesScanned), nil
 }
 
 // excludePromLabel hides only known SigNoz storage keys: label names are user
@@ -477,24 +477,20 @@ func collectExecStats(began time.Time, statsMu *sync.Mutex, rowsScanned, bytesSc
 	}
 }
 
-func (q *promqlQuery) toResult(matrix promql.Matrix, warnings []string, began time.Time, statsMu *sync.Mutex, rowsScanned, bytesScanned *uint64) (*qbv5.Result, error) {
+func (q *promqlQuery) toResult(matrix promql.Matrix, warnings []string, began time.Time, statsMu *sync.Mutex, rowsScanned, bytesScanned *uint64) *qbv5.Result {
 	if q.requestType == qbv5.RequestTypeHeatmap {
 		return q.toResultForHeatmap(matrix, warnings, began, statsMu, rowsScanned, bytesScanned)
 	}
-	return q.toResultForTimeSeriesAndScalar(matrix, warnings, began, statsMu, rowsScanned, bytesScanned), nil
+	return q.toResultForTimeSeriesAndScalar(matrix, warnings, began, statsMu, rowsScanned, bytesScanned)
 }
 
-func (q *promqlQuery) toResultForHeatmap(matrix promql.Matrix, warnings []string, began time.Time, statsMu *sync.Mutex, rowsScanned, bytesScanned *uint64) (*qbv5.Result, error) {
-	tsData, err := foldMatrixAsHeatmap(matrix, &q.tr, uint64(q.query.Step.Milliseconds()), q.query.Name)
-	if err != nil {
-		return nil, err
-	}
+func (q *promqlQuery) toResultForHeatmap(matrix promql.Matrix, warnings []string, began time.Time, statsMu *sync.Mutex, rowsScanned, bytesScanned *uint64) *qbv5.Result {
 	return &qbv5.Result{
 		Type:     q.requestType,
-		Value:    tsData,
+		Value:    foldMatrixAsHeatmap(matrix, &q.tr, uint64(q.query.Step.Milliseconds()), q.query.Name),
 		Warnings: warnings,
 		Stats:    collectExecStats(began, statsMu, rowsScanned, bytesScanned),
-	}, nil
+	}
 }
 
 func (q *promqlQuery) toResultForTimeSeriesAndScalar(matrix promql.Matrix, warnings []string, began time.Time, statsMu *sync.Mutex, rowsScanned, bytesScanned *uint64) *qbv5.Result {
