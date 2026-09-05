@@ -5,7 +5,7 @@ import { Input } from 'antd';
 import type { DashboardtypesLegendDTOCustomColors } from 'api/generated/services/sigNoz.schemas';
 import { Virtuoso } from 'react-virtuoso';
 
-import type { LegendSeries } from '../../../utils/legendSeries';
+import type { LegendSeries } from 'pages/DashboardPage/DashboardContainer/Panels/utils/legendSeries';
 import LegendColorRow from './LegendColorRow';
 import {
 	clearSeriesColor,
