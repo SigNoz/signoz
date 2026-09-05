@@ -317,9 +317,9 @@ func bucketAggregationValues(aggBucket *AggregationBucket, bucketing HeatmapBuck
 	}
 	upperBounds := slices.Sorted(maps.Keys(upperBoundSet))
 
-	bandIndexByUpperBound := make(map[float64]int, len(upperBounds))
-	for band, upperBound := range upperBounds {
-		bandIndexByUpperBound[upperBound] = band
+	upperBoundToIndex := make(map[float64]int, len(upperBounds))
+	for index, upperBound := range upperBounds {
+		upperBoundToIndex[upperBound] = index
 	}
 
 	for _, series := range aggBucket.Series {
@@ -332,7 +332,7 @@ func bucketAggregationValues(aggBucket *AggregationBucket, bucketing HeatmapBuck
 			case math.IsInf(upperBound, 1):
 				point.Values[len(upperBounds)] = 1
 			default:
-				point.Values[bandIndexByUpperBound[upperBound]] = 1
+				point.Values[upperBoundToIndex[upperBound]] = 1
 			}
 		}
 	}
