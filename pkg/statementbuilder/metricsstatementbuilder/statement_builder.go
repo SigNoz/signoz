@@ -887,9 +887,7 @@ const (
 func isHistogramBucket(k qbtypes.GroupByKey) bool { return k.Name == histogramBucketKey }
 
 // buildHeatmapFinalSelect turns __spatial_aggregation_cte into one row per
-// heatmap cell: (ts, group labels..., bucket upper boundary, count). Histograms
-// already carry their boundaries as `le` labels; every other metric type has its
-// axis derived from the aggregated value itself.
+// heatmap cell: (ts, group labels..., bucket upper boundary, count).
 func buildHeatmapFinalSelect(
 	combined string,
 	args []any,
@@ -902,13 +900,9 @@ func buildHeatmapFinalSelect(
 }
 
 // buildHistogramHeatmapFinalSelect differences the cumulative per-`le` counts in
-// __spatial_aggregation_cte into a count per band.
-//
-// `le` labels are cumulative upper bounds, so a bucket's own count is the
-// difference against the next-smallest `le` in the same (group, timestamp).
-// The boundary reported is the `le` itself, which leaves the `le=+Inf` row
-// carrying an infinite boundary for the reader to turn into the open-above
-// overflow band.
+// __spatial_aggregation_cte into a count per band. The boundary reported is the
+// `le` itself, so the `le=+Inf` row reaches the reader as an infinite boundary
+// for it to fold into the overflow band.
 func buildHistogramHeatmapFinalSelect(
 	combined string,
 	args []any,
@@ -921,15 +915,14 @@ func buildHistogramHeatmapFinalSelect(
 	sb.Select("ts")
 	sb.SelectMore(groupAliases...)
 	sb.SelectMore(fmt.Sprintf("toFloat64(%s) AS %s", histogramBucketKey, qbtypes.HeatmapBucketColumn))
-	// Counts across `le` should rise monotonically; partial scrapes can break
-	// that, and a negative cell count has no meaning on a heatmap.
+	// a partial scrape can break monotonicity across `le`, and a negative cell
+	// count has no meaning
 	sb.SelectMore(fmt.Sprintf(
 		"greatest(value - lagInFrame(value, 1, 0) OVER %s, 0) AS %s",
 		heatmapWindow, heatmapValueAlias,
 	))
-	// sqlbuilder has no WINDOW clause, and the fragment has to land between FROM
-	// and ORDER BY. Heatmap statements never carry a WHERE or GROUP BY here, so
-	// appending it to FROM puts it in the right place.
+	// sqlbuilder has no WINDOW clause; appending it to FROM lands it between FROM
+	// and ORDER BY, since these statements carry no WHERE or GROUP BY
 	sb.From(fmt.Sprintf(
 		"__spatial_aggregation_cte WINDOW %s AS (PARTITION BY %s ORDER BY toFloat64(%s))",
 		heatmapWindow, strings.Join(partitionBy, ", "), histogramBucketKey,
@@ -943,9 +936,7 @@ func buildHistogramHeatmapFinalSelect(
 
 // buildValueHeatmapFinalSelect places each spatially aggregated value in a band
 // of the requested axis. __spatial_aggregation_cte holds one row per (group,
-// timestamp), so a cell counts the one group it came from; the panel sums
-// across the series it is showing, which is what lets the legend select among
-// them.
+// timestamp), so every cell counts exactly one.
 func buildValueHeatmapFinalSelect(
 	combined string,
 	args []any,
