@@ -198,10 +198,9 @@ func postProcessBuilderQuery[T any](
 // resolveHeatmapAxis brings a heatmap axis to the resolution the caller asked
 // for. Coarsening runs before the fill so the empty bands land at the resolution
 // being returned rather than the one ClickHouse bucketed at.
-func resolveHeatmapAxis(tsData *qbtypes.TimeSeriesData, bucketing qbtypes.HeatmapBucketing, requestedScale int) {
-	if bucketing.Kind == qbtypes.BucketsKindLog && requestedScale < bucketing.LogScale {
-		qbtypes.DownscaleHeatmapAxis(tsData, bucketing.LogScale, requestedScale)
-		bucketing.LogScale = requestedScale
+func resolveHeatmapAxis(tsData *qbtypes.TimeSeriesData, bucketing qbtypes.HeatmapBucketing) {
+	if bucketing.Kind == qbtypes.BucketsKindLog && bucketing.LogScale < qbtypes.MaxLogScale {
+		qbtypes.DownscaleHeatmapAxis(tsData, qbtypes.MaxLogScale, bucketing.LogScale)
 	}
 	qbtypes.DensifyHeatmapAxis(tsData, bucketing)
 }
@@ -229,7 +228,7 @@ func postProcessMetricQuery(
 
 	if req.RequestType == qbtypes.RequestTypeHeatmap && config.HeatmapBucketing != nil {
 		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
-			resolveHeatmapAxis(tsData, *config.HeatmapBucketing, req.BucketOptions.ResolveLogScale())
+			resolveHeatmapAxis(tsData, *config.HeatmapBucketing)
 		}
 	}
 
@@ -367,7 +366,7 @@ func (q *querier) applyFormulas(ctx context.Context, results map[string]*qbtypes
 				if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
 					bucketing := req.BucketOptions.ToHeatmapBucketing()
 					qbtypes.BucketTimeSeriesValues(tsData, bucketing)
-					resolveHeatmapAxis(tsData, bucketing, req.BucketOptions.ResolveLogScale())
+					resolveHeatmapAxis(tsData, bucketing)
 				}
 				result = q.applySeriesLimit(result, formula.Limit, formula.Order)
 				results[name] = result

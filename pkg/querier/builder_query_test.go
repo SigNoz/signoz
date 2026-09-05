@@ -131,8 +131,8 @@ func TestBuilderQueryFingerprintHeatmapBucketing(t *testing.T) {
 		expectedEqual bool
 	}{
 		{
-			// ResolveBucketOptions pins LogScale to MaxLogScale whatever the
-			// caller asked for, so the two are indistinguishable here by design
+			// fingerprintHeatmapBucketing leaves LogScale out, so the two are
+			// indistinguishable here by design
 			description: "a coarser logScale reads the same cache entry",
 			left: &builderQuery[qbtypes.MetricAggregation]{
 				queryType: qbtypes.QueryTypeBuilder,
@@ -256,11 +256,12 @@ func TestBuilderQueryFingerprintHeatmapBucketing(t *testing.T) {
 		})
 	}
 
-	t.Run("a coarser scale never reaches the axis clickhouse builds", func(t *testing.T) {
+	t.Run("a coarser scale is carried but reads the same cache entry", func(t *testing.T) {
 		finest := (&qbtypes.BucketOptions{Kind: qbtypes.BucketsKindLog, Spec: qbtypes.LogBucketsSpec{}}).ToHeatmapBucketing()
 		coarse := (&qbtypes.BucketOptions{Kind: qbtypes.BucketsKindLog, Spec: qbtypes.LogBucketsSpec{Scale: &coarseLogScale}}).ToHeatmapBucketing()
 
-		assert.Equal(t, finest, coarse)
+		assert.NotEqual(t, finest.LogScale, coarse.LogScale)
+		assert.Equal(t, fingerprintHeatmapBucketing(finest), fingerprintHeatmapBucketing(coarse))
 	})
 
 	t.Run("a histogram folds in no bucket options at all", func(t *testing.T) {

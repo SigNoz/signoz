@@ -426,38 +426,32 @@ func TestResolveBucketOptions(t *testing.T) {
 		description       string
 		options           *BucketOptions
 		expectedBucketing HeatmapBucketing
-		expectedLogScale  int
 	}{
 		{
 			description:       "an absent config defaults to the finest log axis",
 			options:           nil,
 			expectedBucketing: HeatmapBucketing{Kind: BucketsKindLog, LogScale: MaxLogScale, NumBuckets: DefaultNumBuckets},
-			expectedLogScale:  MaxLogScale,
 		},
 		{
 			description:       "a linear spec carries its cap and count through",
 			options:           &BucketOptions{Kind: BucketsKindLinear, Spec: LinearBucketsSpec{MaxValue: 1024, NumBuckets: 20}},
 			expectedBucketing: HeatmapBucketing{Kind: BucketsKindLinear, LogScale: MaxLogScale, MaxValue: 1024, NumBuckets: 20},
-			expectedLogScale:  MaxLogScale,
 		},
 		{
 			description:       "a linear spec without a count takes the default",
 			options:           &BucketOptions{Kind: BucketsKindLinear, Spec: LinearBucketsSpec{MaxValue: 1024}},
 			expectedBucketing: HeatmapBucketing{Kind: BucketsKindLinear, LogScale: MaxLogScale, MaxValue: 1024, NumBuckets: DefaultNumBuckets},
-			expectedLogScale:  MaxLogScale,
 		},
 		{
-			description:       "a coarser scale is kept out of the axis clickhouse builds",
+			description:       "a coarser scale is carried as the resolution to fold down to",
 			options:           &BucketOptions{Kind: BucketsKindLog, Spec: LogBucketsSpec{Scale: &coarseScale}},
-			expectedBucketing: HeatmapBucketing{Kind: BucketsKindLog, LogScale: MaxLogScale, NumBuckets: DefaultNumBuckets},
-			expectedLogScale:  2,
+			expectedBucketing: HeatmapBucketing{Kind: BucketsKindLog, LogScale: coarseScale, NumBuckets: DefaultNumBuckets},
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
 			assert.Equal(t, testCase.expectedBucketing, testCase.options.ToHeatmapBucketing())
-			assert.Equal(t, testCase.expectedLogScale, testCase.options.ResolveLogScale())
 		})
 	}
 }
@@ -637,10 +631,10 @@ func TestResolveHeatmapBucketing(t *testing.T) {
 			expectedBucketing: &HeatmapBucketing{Kind: BucketsKindLinear, LogScale: MaxLogScale, MaxValue: 500, NumBuckets: 25},
 		},
 		{
-			description:       "a coarser scale does not change the axis clickhouse builds",
+			description:       "a coarser scale is carried as the resolution to fold down to",
 			aggregation:       MetricAggregation{MetricName: "system.memory.usage", Type: metrictypes.GaugeType},
 			bucketOptions:     &BucketOptions{Kind: BucketsKindLog, Spec: LogBucketsSpec{Scale: &coarseScale}},
-			expectedBucketing: &HeatmapBucketing{Kind: BucketsKindLog, LogScale: MaxLogScale, NumBuckets: DefaultNumBuckets},
+			expectedBucketing: &HeatmapBucketing{Kind: BucketsKindLog, LogScale: coarseScale, NumBuckets: DefaultNumBuckets},
 		},
 		{
 			description:         "an unresolved type is refused",

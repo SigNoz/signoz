@@ -975,7 +975,7 @@ func renderHeatmapBoundaryExpr(bucketing qbtypes.HeatmapBucketing) (string, erro
 	case qbtypes.BucketsKindLinear:
 		return renderLinearBoundaryExpr(bucketing), nil
 	case qbtypes.BucketsKindLog:
-		return renderLogBoundaryExpr(bucketing), nil
+		return renderLogBoundaryExpr(), nil
 	default:
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"unsupported bucketsScaling %q for heatmap requests", bucketing.Kind.StringValue())
@@ -991,8 +991,10 @@ func renderLinearBoundaryExpr(bucketing qbtypes.HeatmapBucketing) string {
 	)
 }
 
-func renderLogBoundaryExpr(bucketing qbtypes.HeatmapBucketing) string {
-	bandsPerDoubling := formatFloat(math.Exp2(float64(bucketing.LogScale)))
+// ClickHouse buckets at MaxLogScale whatever HeatmapBucketing.LogScale asks for;
+// postprocessing folds the axis down afterwards.
+func renderLogBoundaryExpr() string {
+	bandsPerDoubling := formatFloat(math.Exp2(qbtypes.MaxLogScale))
 	lowest := formatFloat(qbtypes.LowestLogBoundary)
 	highest := formatFloat(qbtypes.HighestLogBoundary)
 	return fmt.Sprintf(
