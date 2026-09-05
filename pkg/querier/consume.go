@@ -308,12 +308,6 @@ func readAsHeatmap(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtype
 
 	accumulator := newHeatmapAccumulator()
 
-	// every column that is not the timestamp, the boundary or the count is a label
-	lblValsCapacity := len(colNames) - 3
-	if lblValsCapacity < 0 {
-		lblValsCapacity = 0
-	}
-
 	for rows.Next() {
 		if err := rows.Scan(slots...); err != nil {
 			return nil, err
@@ -324,8 +318,8 @@ func readAsHeatmap(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtype
 			boundary float64
 			count    float64
 			hasCell  bool
-			lblVals  = make([]string, 0, lblValsCapacity)
-			lblObjs  = make([]*qbtypes.Label, 0, lblValsCapacity)
+			lblVals  []string
+			lblObjs  []*qbtypes.Label
 		)
 
 		for idx, ptr := range slots {
