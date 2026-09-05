@@ -28,6 +28,7 @@ import { useOptionsMenu } from 'container/OptionsMenu';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
 import TraceExplorerControls from 'container/TracesExplorer/Controls';
 import { getListViewQuery } from 'container/TracesExplorer/explorerUtils';
+import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination } from 'hooks/queryPagination';
@@ -38,6 +39,7 @@ import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { getListOrderBy } from 'utils/explorerUtils';
 
 import {
 	defaultSelectedColumns,
@@ -68,7 +70,11 @@ function ListView({
 
 	const panelType = panelTypeFromQueryBuilder || PANEL_TYPES.LIST;
 
-	const [orderBy, setOrderBy] = useState<string>('timestamp:desc');
+	const compositeQuery = useGetCompositeQueryParam();
+
+	const [orderBy, setOrderBy] = useState<string>(() =>
+		getListOrderBy(compositeQuery),
+	);
 
 	const {
 		selectedTime: globalSelectedTime,
