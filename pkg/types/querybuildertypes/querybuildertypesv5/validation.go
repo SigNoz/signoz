@@ -903,6 +903,10 @@ func (r *QueryRangeRequest) validateHeatmap() error {
 				continue
 			}
 			enabled++
+		// Logs and traces land here. Whichever case admits them must cap
+		// Aggregations at one: each carries its own Meta.Buckets, and a heatmap
+		// renders against a single bucket axis. Metrics needs no such cap, the
+		// statement builder reading Aggregations[0] alone.
 		default:
 			return errors.NewInvalidInputf(errors.CodeInvalidInput,
 				"heatmap requests support one metrics builder query, one formula over them, one clickhouse query, or one promql query, got %q", envelope.Type.StringValue())
