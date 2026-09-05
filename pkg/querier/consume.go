@@ -32,10 +32,10 @@ var (
 	// to be considered as final result (or target).
 	legacyReservedColumnTargetAliases = []string{"__result", "__value", "result", "res", "value"}
 
-	// legacyHeatmapBucketColumn is the alias a user written clickhouse query can
+	// userHeatmapBucketColumn is the alias a user written clickhouse query can
 	// give its bucket boundary column, alongside the HeatmapBucketColumn the
 	// statement builder emits.
-	legacyHeatmapBucketColumn = "bucket"
+	userHeatmapBucketColumn = "bucket"
 )
 
 // stripKeyAlias removes the __SELECT_KEY_<n>_ / __GROUP_BY_KEY_<n>_ prefix from a result
@@ -338,7 +338,7 @@ func readAsHeatmap(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtype
 			}
 
 			switch name {
-			case qbtypes.HeatmapBucketColumn, legacyHeatmapBucketColumn:
+			case qbtypes.HeatmapBucketColumn, userHeatmapBucketColumn:
 				boundary = numericAsFloat(value)
 				hasCell = true
 			default:
