@@ -162,7 +162,7 @@ func TestReceiver(ctx context.Context, receiver *Receiver, receiverIntegrationsF
 		return err
 	}
 
-	integrations, err := receiverIntegrationsFunc(defaultedReceiver, tmpl, logger, templater)
+	integrations, err := receiverIntegrationsFunc(defaultedReceiver, tmpl, logger, templater, "", nil)
 	if err != nil {
 		return err
 	}
