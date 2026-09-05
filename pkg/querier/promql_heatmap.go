@@ -30,18 +30,9 @@ type promHeatmapGroup struct {
 	cumulative map[int64]map[float64]float64
 }
 
-// foldMatrixAsHeatmap reads a classic histogram matrix as heatmap cells: one
-// series per (group, `le`) carrying the cumulative count at that boundary,
-// folded into one series per group whose points hold a count per band.
-//
-// This is readAsHeatmap's counterpart for a result the builder did not produce.
-// buildHistogramHeatmapFinalSelect differences along `le` in SQL with
-// lagInFrame; there is no statement here to attach that to, so it runs below
-// against the same rules.
-//
-// Whether the expression kept `le` can only be seen in the result, so a matrix
-// carrying data but no `le` anywhere is refused rather than drawn as one
-// meaningless band.
+// foldMatrixAsHeatmap folds a classic histogram matrix, one series per (group,
+// `le`) carrying the cumulative count at that boundary, into one series per
+// group whose points hold a count per band.
 func foldMatrixAsHeatmap(matrix promql.Matrix, queryWindow *qbv5.TimeRange, stepMs uint64, queryName string) (*qbv5.TimeSeriesData, error) {
 	groups := map[string]*promHeatmapGroup{}
 	groupOrder := []string{}
