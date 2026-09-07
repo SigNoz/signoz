@@ -766,10 +766,15 @@ export function QueryBuilderProvider({
 							queryItem.dataSource
 						].builder.queryData;
 
-					propsRequired?.push('dataSource');
-					propsRequired?.forEach((p: any) => {
-						set(queryItem, p, get(newQueryItem, p));
-					});
+					// `dataSource` travels with the panel type's fields, but is appended to a
+					// copy: `propsRequired` is the list held in
+					// `panelTypeDataSourceFormValuesMap`, and pushing onto it grew that
+					// module-level array by one entry on every call.
+					if (propsRequired) {
+						[...propsRequired, 'dataSource'].forEach((p: any) => {
+							set(queryItem, p, get(newQueryItem, p));
+						});
+					}
 					return queryItem;
 				}
 
