@@ -33,6 +33,7 @@ class RequestType:
     TIME_SERIES = "time_series"
     SCALAR = "scalar"
     TABLE = "table"
+    HEATMAP = "heatmap"
 
 
 @dataclass
@@ -173,6 +174,7 @@ def make_query_request(
     request_type: str = RequestType.TIME_SERIES,
     format_options: dict | None = None,
     variables: dict | None = None,
+    bucket_options: dict | None = None,
     no_cache: bool = True,
     timeout: int = QUERY_TIMEOUT,
     headers: dict | None = None,
@@ -191,6 +193,8 @@ def make_query_request(
     }
     if variables:
         payload["variables"] = variables
+    if bucket_options is not None:
+        payload["bucketOptions"] = bucket_options
 
     return requests.post(
         signoz.self.host_configs["8080"].get("/api/v5/query_range"),
@@ -359,6 +363,20 @@ def build_formula_query(
     return {"type": "builder_formula", "spec": spec}
 
 
+def build_log_bucket_options(scale: int | None = None) -> dict:
+    spec: dict[str, Any] = {}
+    if scale is not None:
+        spec["scale"] = scale
+    return {"kind": "log", "spec": spec}
+
+
+def build_linear_bucket_options(max_value: float, num_buckets: int | None = None) -> dict:
+    spec: dict[str, Any] = {"maxValue": max_value}
+    if num_buckets is not None:
+        spec["numBuckets"] = num_buckets
+    return {"kind": "linear", "spec": spec}
+
+
 def build_function(name: str, *args: Any) -> dict:
     func: dict[str, Any] = {"name": name}
     if args:
@@ -391,6 +409,24 @@ def get_all_series(response_json: dict, query_name: str) -> list[dict]:
         return []
     # at the time of writing this, the series is always a list with one element
     return aggregations[0].get("series", [])
+
+
+def get_heatmap_buckets(response_json: dict, query_name: str) -> list[float]:
+    """The ascending bucket upper bounds a heatmap result's counts are positional against.
+    Each point holds one more count than there are bounds: the trailing one is the open-above overflow."""
+    results = response_json.get("data", {}).get("data", {}).get("results", [])
+    result = find_named_result(results, query_name)
+    if not result:
+        return []
+    aggregations = result.get("aggregations", [])
+    if not aggregations:
+        return []
+    return aggregations[0].get("meta", {}).get("buckets", [])
+
+
+def get_heatmap_columns(response_json: dict, query_name: str) -> list[dict]:
+    """A heatmap result's points for its single series, oldest first."""
+    return sorted(get_series_values(response_json, query_name), key=lambda point: point["timestamp"])
 
 
 def get_scalar_value(response_json: dict, query_name: str) -> float | None:
