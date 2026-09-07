@@ -25102,8 +25102,12 @@ paths:
       security:
       - api_key:
         - user:create
+        - user:attach
+        - role:attach
       - tokenizer:
         - user:create
+        - user:attach
+        - role:attach
       summary: Create user
       tags:
       - users

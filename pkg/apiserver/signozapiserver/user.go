@@ -1,6 +1,7 @@
 package signozapiserver
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
@@ -86,15 +87,30 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusCreated,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusConflict},
 			Deprecated:          false,
-			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceUser.Scope(coretypes.VerbCreate)}),
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceUser.Scope(coretypes.VerbCreate), coretypes.ResourceUser.Scope(coretypes.VerbAttach), coretypes.ResourceRole.Scope(coretypes.VerbAttach)}),
 		},
-		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceUser,
-			Verb:     coretypes.VerbCreate,
-			Category: coretypes.ActionCategoryAccessControl,
-			ID:       coretypes.ResponseJSONPath("data.id"),
-			Selector: coretypes.WildcardSelector,
-		}),
+		handler.WithResourceDefs(
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceUser,
+				Verb:     coretypes.VerbCreate,
+				Category: coretypes.ActionCategoryAccessControl,
+				ID:       coretypes.ResponseJSONPath("data.id"),
+				Selector: coretypes.WildcardSelector,
+			},
+			// roles sent along in the request are attached to the new user, so the
+			// actor needs attach on the user (collection-level, the instance does
+			// not exist yet) and on every role in the payload.
+			handler.AttachDetachSiblingResourceDef{
+				Verb:           coretypes.VerbAttach,
+				Category:       coretypes.ActionCategoryAccessControl,
+				SourceResource: coretypes.ResourceUser,
+				SourceIDs:      coretypes.OneID(coretypes.ResponseJSONPath("data.id")),
+				SourceSelector: coretypes.WildcardSelector,
+				TargetResource: coretypes.ResourceRole,
+				TargetIDs:      coretypes.BodyJSONArray("userRoles.#.id"),
+				TargetSelector: provider.roleAttachSelector,
+			},
+		),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -461,6 +477,17 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 	}
 
 	return nil
+}
+
+// roleAttachSelector behaves like roleSelector but treats an empty id as
+// collection-level access (wildcard only), for payloads where the role list
+// is optional (e.g. userRoles on user creation).
+func (provider *provider) roleAttachSelector(ctx context.Context, resource coretypes.Resource, id string, orgID valuer.UUID) ([]coretypes.Selector, error) {
+	if id == "" {
+		return []coretypes.Selector{resource.Type().MustSelector(coretypes.WildCardSelectorString)}, nil
+	}
+
+	return provider.roleSelector(ctx, resource, id, orgID)
 }
 
 func (provider *provider) userRoleUserIDExtractor() coretypes.ResourceIDExtractor {
