@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Heatmap POC</title>
+	<link rel="stylesheet" href="style.css">
+</head>
+<body>
+	<header>
+		<h1>Heatmap POC</h1>
+		<p class="sub"><code>POST /api/v5/query_range</code> with <code>requestType: "heatmap"</code></p>
+	</header>
+
+	<div class="layout">
+		<form id="form" class="card form">
+			<div class="segmented" id="modes">
+				<button type="button" data-mode="metric" class="on">Metric</button>
+				<button type="button" data-mode="formula">Formula</button>
+				<button type="button" data-mode="promql">PromQL</button>
+			</div>
+
+			<div class="grid-2">
+				<label>Time range
+					<select id="range">
+						<option value="15">Last 15 minutes</option>
+						<option value="60" selected>Last 1 hour</option>
+						<option value="180">Last 3 hours</option>
+						<option value="360">Last 6 hours</option>
+						<option value="1440">Last 24 hours</option>
+						<option value="10080">Last 7 days</option>
+					</select>
+				</label>
+				<label>Step (seconds)
+					<input id="step" type="number" min="1" step="1" value="60">
+				</label>
+			</div>
+
+			<section id="builder-pane">
+				<div id="rows"></div>
+				<button type="button" id="add-row" class="ghost" hidden>+ Add metric</button>
+
+				<label id="formula-field" hidden>Formula
+					<input id="formula" placeholder="A / B" autocomplete="off">
+				</label>
+
+				<div class="chips-field">
+					<span class="chips-label">Group by</span>
+					<div id="group-chips" class="chips"></div>
+					<input id="group-input" list="group-options" placeholder="Add an attribute…" autocomplete="off">
+					<datalist id="group-options"></datalist>
+					<p class="hint" id="group-hint" hidden></p>
+				</div>
+			</section>
+
+			<section id="promql-pane" hidden>
+				<label>PromQL
+					<textarea id="promql" rows="4" spellcheck="false" placeholder='sum by (le) (increase({__name__="http.server.duration.bucket"}[5m]))'></textarea>
+				</label>
+				<p class="hint">The bucket axis comes from the <code>le</code> labels the query returns, so bucket options are rejected here. A dotted metric name needs the <code>{__name__="…"}</code> form.</p>
+			</section>
+
+			<fieldset id="bucket-pane">
+				<legend>Bucket options</legend>
+				<div class="segmented small" id="bucket-kinds">
+					<button type="button" data-kind="default" class="on">Default</button>
+					<button type="button" data-kind="log">Log</button>
+					<button type="button" data-kind="linear">Linear</button>
+				</div>
+				<p class="hint" id="bucket-default-hint">Omitted from the request. The backend falls back to a log axis at scale 4.</p>
+				<label id="scale-field" hidden>Scale
+					<input id="scale" type="number" min="-4" max="4" step="1" value="4">
+					<span class="hint" id="scale-hint"></span>
+				</label>
+				<div class="grid-2" id="linear-fields" hidden>
+					<label>Max value
+						<input id="max-value" type="number" min="0" step="any" value="1000">
+					</label>
+					<label>Number of buckets
+						<input id="num-buckets" type="number" min="1" max="512" step="1" value="60">
+					</label>
+				</div>
+			</fieldset>
+
+			<div class="run-row">
+				<button type="submit" id="run">Run query</button>
+				<label class="inline"><input type="checkbox" id="no-cache" checked> Bypass cache</label>
+			</div>
+		</form>
+
+		<div class="results">
+			<p id="banner" hidden></p>
+
+			<section class="card">
+				<div class="card-head">
+					<h2>Heatmap</h2>
+					<div class="head-tools">
+						<label class="inline">Colour scale
+							<select id="color-scale">
+								<option value="linear" selected>Linear</option>
+								<option value="log">Log</option>
+							</select>
+						</label>
+					</div>
+				</div>
+				<div id="chart" class="chart"><p class="empty">Run a query to draw the heatmap.</p></div>
+				<div id="legend" class="legend"></div>
+			</section>
+
+			<section class="card" id="groups-card" hidden>
+				<div class="card-head">
+					<h2>Groups <span id="group-count" class="count"></span></h2>
+					<div class="head-tools">
+						<button type="button" class="ghost" id="select-all">All</button>
+						<button type="button" class="ghost" id="select-none">None</button>
+					</div>
+				</div>
+				<div id="groups" class="groups"></div>
+			</section>
+
+			<div class="grid-2 json-grid">
+				<section class="card">
+					<div class="card-head">
+						<h2>Request</h2>
+						<button type="button" class="ghost" data-copy="request">Copy</button>
+					</div>
+					<pre id="request" class="json"></pre>
+				</section>
+				<section class="card">
+					<div class="card-head">
+						<h2>Response</h2>
+						<button type="button" class="ghost" data-copy="response">Copy</button>
+					</div>
+					<pre id="response" class="json"></pre>
+				</section>
+			</div>
+		</div>
+	</div>
+
+	<div id="tooltip" class="tooltip" hidden></div>
+
+	<template id="row-template">
+		<div class="metric-row">
+			<span class="row-name"></span>
+			<div class="row-body">
+				<div class="metric-field">
+					<input class="metric-input" placeholder="Search metrics…" autocomplete="off" spellcheck="false">
+					<datalist></datalist>
+					<span class="badge" hidden></span>
+				</div>
+				<div class="agg-fields" hidden>
+					<label>Time
+						<select class="time-agg"></select>
+					</label>
+					<label>Space
+						<select class="space-agg"></select>
+					</label>
+				</div>
+				<input class="filter-input" placeholder='Filter, e.g. service = "api"' autocomplete="off" spellcheck="false">
+				<p class="row-note hint" hidden></p>
+			</div>
+			<button type="button" class="remove-row" title="Remove this metric">&times;</button>
+		</div>
+	</template>
+
+	<script src="app.js" type="module"></script>
+</body>
+</html>
