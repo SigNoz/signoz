@@ -368,7 +368,8 @@ def test_sorting(
         "prom uptime probe",
     ]
 
-    # state display priority: inactive (rank 1) outranks disabled (rank 0)
+    # state display priority: inactive (rank 1) outranks disabled (rank 0);
+    # the four inactive rules tie on state and must break on name asc
     response = requests.get(
         signoz.self.host_configs["8080"].get(BASE_URL),
         params={"sort": "state", "order": "desc"},
@@ -376,9 +377,15 @@ def test_sorting(
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK
-    names = [rule["alert"] for rule in response.json()["data"]["rules"]]
-    assert names[-1] == "checkout conversion drop", "disabled rule must sort last on state desc"
+    assert [rule["alert"] for rule in response.json()["data"]["rules"]] == [
+        "infra cpu saturation",
+        "payment gateway errors",
+        "payment latency high",
+        "prom uptime probe",
+        "checkout conversion drop",
+    ]
 
+    # asc flips the state buckets but the name tiebreak stays ascending
     response = requests.get(
         signoz.self.host_configs["8080"].get(BASE_URL),
         params={"sort": "state", "order": "asc"},
@@ -386,10 +393,16 @@ def test_sorting(
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK
-    assert response.json()["data"]["rules"][0]["alert"] == "checkout conversion drop"
+    assert [rule["alert"] for rule in response.json()["data"]["rules"]] == [
+        "checkout conversion drop",
+        "infra cpu saturation",
+        "payment gateway errors",
+        "payment latency high",
+        "prom uptime probe",
+    ]
 
     # severity: known ranks first (critical > warning), then custom values
-    # lexically, then rules without severity
+    # lexically, then rules without severity tie and break on name asc
     response = requests.get(
         signoz.self.host_configs["8080"].get(BASE_URL),
         params={"sort": "severity", "order": "desc"},
@@ -397,9 +410,13 @@ def test_sorting(
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK
-    names = [rule["alert"] for rule in response.json()["data"]["rules"]]
-    assert names[:3] == ["payment latency high", "payment gateway errors", "checkout conversion drop"]
-    assert set(names[3:]) == {"infra cpu saturation", "prom uptime probe"}
+    assert [rule["alert"] for rule in response.json()["data"]["rules"]] == [
+        "payment latency high",
+        "payment gateway errors",
+        "checkout conversion drop",
+        "infra cpu saturation",
+        "prom uptime probe",
+    ]
 
     for order in ("asc", "desc"):
         response = requests.get(
@@ -442,6 +459,27 @@ def test_pagination(
     flattened = [name for page in pages for name in page]
     assert len(flattened) == len(set(flattened)), "pages must be disjoint"
     assert set(flattened) == {r["alert"] for r in SEED_RULES}
+
+    # state sort is almost all ties (four inactive rules); the name/id tiebreak
+    # must keep the pages disjoint and in the same order on every request
+    tie_pages = []
+    for offset in (0, 2, 4):
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(BASE_URL),
+            params={"sort": "state", "order": "desc", "limit": 2, "offset": offset},
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.OK
+        tie_pages.append([rule["alert"] for rule in response.json()["data"]["rules"]])
+
+    assert [name for page in tie_pages for name in page] == [
+        "infra cpu saturation",
+        "payment gateway errors",
+        "payment latency high",
+        "prom uptime probe",
+        "checkout conversion drop",
+    ], "tied rows must not shuffle between page requests"
 
     # a past-the-end offset returns an empty page but keeps the real total
     response = requests.get(

@@ -95,14 +95,21 @@ var severityDisplayRank = map[string]int{
 
 // SortListableRules sorts in place. Severity ranks the well-known values and
 // falls back to a lexical compare between custom ones; name compares
-// case-insensitively.
+// case-insensitively. Ties break on name then id (always ascending, so pages
+// stay stable across requests) with order applied to the primary key only.
 func SortListableRules(rules []*ListableRule, sortBy ListSort, order ListOrder) {
 	direction := 1
 	if order == ListOrderDesc {
 		direction = -1
 	}
 	slices.SortStableFunc(rules, func(a, b *ListableRule) int {
-		return direction * compareListableRules(a, b, sortBy)
+		if c := direction * compareListableRules(a, b, sortBy); c != 0 {
+			return c
+		}
+		if c := strings.Compare(strings.ToLower(a.AlertName), strings.ToLower(b.AlertName)); c != 0 {
+			return c
+		}
+		return strings.Compare(a.Id, b.Id)
 	})
 }
 

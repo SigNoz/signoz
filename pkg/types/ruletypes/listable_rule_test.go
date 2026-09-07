@@ -89,12 +89,53 @@ func TestSortListableRules(t *testing.T) {
 			order:     ListOrderDesc,
 			wantNames: []string{"new", "old"},
 		},
+		{
+			name: "state desc ties break on name asc",
+			rules: []*ListableRule{
+				listableRule("banana", StateFiring, "", base),
+				listableRule("zebra", StateDisabled, "", base),
+				listableRule("Apple", StateFiring, "", base),
+				listableRule("cherry", StateFiring, "", base),
+			},
+			sortBy:    ListSortState,
+			order:     ListOrderDesc,
+			wantNames: []string{"Apple", "banana", "cherry", "zebra"},
+		},
+		{
+			name: "state asc flips buckets but tiebreak stays name asc",
+			rules: []*ListableRule{
+				listableRule("banana", StateFiring, "", base),
+				listableRule("zebra", StateDisabled, "", base),
+				listableRule("Apple", StateFiring, "", base),
+				listableRule("cherry", StateFiring, "", base),
+			},
+			sortBy:    ListSortState,
+			order:     ListOrderAsc,
+			wantNames: []string{"zebra", "Apple", "banana", "cherry"},
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			SortListableRules(tc.rules, tc.sortBy, tc.order)
 			assert.Equal(t, tc.wantNames, names(tc.rules))
+		})
+	}
+}
+
+func TestSortListableRulesIdTiebreak(t *testing.T) {
+	base := time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC)
+
+	for _, order := range []ListOrder{ListOrderAsc, ListOrderDesc} {
+		t.Run(order.StringValue(), func(t *testing.T) {
+			older := listableRule("dup", StateFiring, "", base)
+			older.Id = "01aaa"
+			newer := listableRule("dup", StateFiring, "", base)
+			newer.Id = "01bbb"
+
+			rules := []*ListableRule{newer, older}
+			SortListableRules(rules, ListSortState, order)
+			assert.Equal(t, []string{"01aaa", "01bbb"}, []string{rules[0].Id, rules[1].Id})
 		})
 	}
 }
