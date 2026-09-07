@@ -1,0 +1,78 @@
+{
+  "id": "kafka",
+  "title": "Kafka",
+  "description": "Monitor Kafka brokers, consumer lag, partition offsets, and replication health",
+  "author": {
+    "name": "SigNoz",
+    "email": "integrations@signoz.io",
+    "homepage": "https://signoz.io"
+  },
+  "icon": "file://icon.svg",
+  "categories": ["Messaging Queue"],
+  "overview": "file://overview.md",
+  "configuration": [
+    {
+      "title": "Prerequisites",
+      "instructions": "file://config/prerequisites.md"
+    },
+    {
+      "title": "Collect Metrics",
+      "instructions": "file://config/collect-metrics.md"
+    }
+  ],
+  "assets": {
+    "logs": {
+      "pipelines": []
+    },
+    "dashboards": ["file://assets/dashboards/overview.json"],
+    "alerts": []
+  },
+  "connection_tests": {},
+  "data_collected": {
+    "logs": [],
+    "metrics": [
+      {
+        "name": "kafka_brokers",
+        "type": "sum",
+        "unit": "number",
+        "description": "Number of brokers detected in the cluster."
+      },
+      {
+        "name": "kafka_consumer_group_lag",
+        "type": "gauge",
+        "unit": "number",
+        "description": "Approximate lag of a consumer group per topic partition."
+      },
+      {
+        "name": "kafka_consumer_group_lag_sum",
+        "type": "gauge",
+        "unit": "number",
+        "description": "Approximate lag of a consumer group across all partitions in a topic."
+      },
+      {
+        "name": "kafka_partition_current_offset",
+        "type": "gauge",
+        "unit": "number",
+        "description": "Current partition offset."
+      },
+      {
+        "name": "kafka_partition_oldest_offset",
+        "type": "gauge",
+        "unit": "number",
+        "description": "Oldest retained partition offset."
+      },
+      {
+        "name": "kafka_partition_replicas_in_sync",
+        "type": "sum",
+        "unit": "number",
+        "description": "Number of in-sync replicas for a partition."
+      },
+      {
+        "name": "kafka_topic_partitions",
+        "type": "sum",
+        "unit": "number",
+        "description": "Number of partitions in a topic."
+      }
+    ]
+  }
+}
