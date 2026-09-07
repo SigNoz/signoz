@@ -590,6 +590,7 @@ function GeneralSettings({
 					total_retention={logsTtlValuesPayload.expected_logs_ttl_duration_hrs}
 					status={logsTtlValuesPayload.status}
 					s3_retention={logsTtlValuesPayload.expected_logs_move_ttl_duration_hrs}
+					error_message={logsTtlValuesPayload.error_message}
 				/>
 			),
 		},
