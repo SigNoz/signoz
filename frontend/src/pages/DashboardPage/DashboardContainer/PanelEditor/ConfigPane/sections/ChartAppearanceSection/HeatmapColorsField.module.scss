@@ -1,0 +1,30 @@
+.colors {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.field {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.bounds {
+	display: flex;
+	gap: 8px;
+}
+
+.fill {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.swatch {
+	width: 28px;
+	height: 12px;
+	flex: none;
+	border-radius: 2px;
+}

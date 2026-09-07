@@ -99,6 +99,7 @@ export type PartialPanelTypes = {
 	[PANEL_TYPES.VALUE]: 'value';
 	[PANEL_TYPES.PIE]: 'pie';
 	[PANEL_TYPES.HISTOGRAM]: 'histogram';
+	[PANEL_TYPES.HEATMAP]: 'heatmap';
 };
 
 export const panelTypeDataSourceFormValuesMap: Record<
@@ -300,6 +301,75 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'disabled',
 					'queryName',
 					'legend',
+					'expression',
+					'aggregations',
+				],
+			},
+		},
+	},
+	// A heatmap point is a count per bucket, so `functions` and `having` are dropped
+	// rather than carried: the request rejects both, and switching to a heatmap has to
+	// leave a query it accepts. Only metrics carry a bucket axis, but the map is keyed
+	// by the query's own signal, which a switch can still be holding.
+	[PANEL_TYPES.HEATMAP]: {
+		[DataSource.LOGS]: {
+			builder: {
+				queryData: [
+					'aggregateAttribute',
+					'aggregateOperator',
+					'timeAggregation',
+					'filters',
+					'filter',
+					'spaceAggregation',
+					'groupBy',
+					'limit',
+					'orderBy',
+					'stepInterval',
+					'legend',
+					'queryName',
+					'disabled',
+					'expression',
+					'aggregations',
+				],
+			},
+		},
+		[DataSource.METRICS]: {
+			builder: {
+				queryData: [
+					'aggregateAttribute',
+					'aggregateOperator',
+					'timeAggregation',
+					'filters',
+					'filter',
+					'spaceAggregation',
+					'groupBy',
+					'limit',
+					'orderBy',
+					'stepInterval',
+					'legend',
+					'queryName',
+					'disabled',
+					'expression',
+					'aggregations',
+				],
+			},
+		},
+		[DataSource.TRACES]: {
+			builder: {
+				queryData: [
+					'aggregateAttribute',
+					'aggregateOperator',
+					'timeAggregation',
+					'filters',
+					'filter',
+					'spaceAggregation',
+					'groupBy',
+					'limit',
+					'orderBy',
+					'stepInterval',
+					'legend',
+					'queryName',
+					'disabled',
 					'expression',
 					'aggregations',
 				],

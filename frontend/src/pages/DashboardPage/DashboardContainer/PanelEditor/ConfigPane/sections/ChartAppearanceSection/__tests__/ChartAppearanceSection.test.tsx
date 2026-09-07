@@ -85,6 +85,36 @@ describe('ChartAppearanceSection', () => {
 		).not.toBeInTheDocument();
 	});
 
+	it('offers the heatmap colour ramp only when the colors flag is set', () => {
+		const { unmount } = render(
+			<ChartAppearanceSection
+				value={undefined}
+				controls={ALL_CONTROLS}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(
+			screen.queryByTestId('panel-editor-v2-heatmap-color-mode'),
+		).not.toBeInTheDocument();
+		unmount();
+
+		render(
+			<ChartAppearanceSection
+				value={undefined}
+				controls={{ colors: true }}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(
+			screen.getByTestId('panel-editor-v2-heatmap-color-mode'),
+		).toBeInTheDocument();
+		expect(
+			screen.queryByTestId('panel-editor-v2-line-style'),
+		).not.toBeInTheDocument();
+	});
+
 	it('writes the chosen fill mode through the segmented control', async () => {
 		const user = userEvent.setup();
 		const onChange = jest.fn();

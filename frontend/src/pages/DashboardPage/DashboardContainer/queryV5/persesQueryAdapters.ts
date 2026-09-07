@@ -108,6 +108,8 @@ export function panelTypeToRequestType(
 			return Querybuildertypesv5RequestTypeDTO.scalar;
 		case PANEL_TYPES.LIST:
 			return Querybuildertypesv5RequestTypeDTO.raw;
+		case PANEL_TYPES.HEATMAP:
+			return Querybuildertypesv5RequestTypeDTO.heatmap;
 		case PANEL_TYPES.TRACE:
 			return Querybuildertypesv5RequestTypeDTO.trace;
 		default:

@@ -15,6 +15,7 @@ import ConfigSwitch from '../../controls/ConfigSwitch/ConfigSwitch';
 import { SegmentIcon } from '../../controls/segmentIcons';
 import type { SectionEditorContext } from '../../sectionContext';
 import DisconnectValuesField from './DisconnectValuesField';
+import HeatmapColorsField from './HeatmapColorsField';
 
 import styles from './ChartAppearanceSection.module.scss';
 
@@ -73,9 +74,9 @@ const FILL_MODE_OPTIONS = [
 ];
 
 /**
- * Edits the `chartAppearance` slice of a TimeSeries panel spec: line style /
- * interpolation, fill mode, point markers, and the connect-null-gaps threshold. Each
- * control is gated by its `controls` flag.
+ * Edits the `chartAppearance` slice of a panel spec: line style / interpolation, fill
+ * mode, point markers and the connect-null-gaps threshold for the time-axis charts,
+ * the cell colour ramp for the heatmap. Each control is gated by its `controls` flag.
  */
 function ChartAppearanceSection({
 	value,
@@ -148,6 +149,13 @@ function ChartAppearanceSection({
 					value={value?.spanGaps}
 					stepInterval={stepInterval}
 					onChange={(spanGaps): void => onChange({ ...value, spanGaps })}
+				/>
+			)}
+
+			{controls.colors && (
+				<HeatmapColorsField
+					value={value?.colors}
+					onChange={(colors): void => onChange({ ...value, colors })}
 				/>
 			)}
 		</>

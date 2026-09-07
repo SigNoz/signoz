@@ -4402,6 +4402,83 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	spec: DashboardtypesListPanelSpecDTO;
 }
 
+export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTOKind {
+	'signoz/HeatmapPanel' = 'signoz/HeatmapPanel',
+}
+export enum DashboardtypesHeatmapYScaleDTO {
+	auto = 'auto',
+	linear = 'linear',
+	log = 'log',
+	symlog = 'symlog',
+}
+export interface DashboardtypesHeatmapAxesDTO {
+	yScale?: DashboardtypesHeatmapYScaleDTO;
+}
+
+export enum DashboardtypesHeatmapColorModeDTO {
+	palette = 'palette',
+	opacity = 'opacity',
+}
+export enum DashboardtypesHeatmapPaletteDTO {
+	ice = 'ice',
+	moss = 'moss',
+	rust = 'rust',
+	graphite = 'graphite',
+	ember = 'ember',
+	lagoon = 'lagoon',
+	orchid = 'orchid',
+	verdant = 'verdant',
+	lava = 'lava',
+	beacon = 'beacon',
+}
+export enum DashboardtypesHeatmapColorScaleDTO {
+	log = 'log',
+	sqrt = 'sqrt',
+	linear = 'linear',
+}
+export interface DashboardtypesHeatmapColorsDTO {
+	/**
+	 * @type string
+	 */
+	fill?: string;
+	/**
+	 * @type number,null
+	 */
+	maxCount?: number | null;
+	/**
+	 * @type number,null
+	 */
+	minCount?: number | null;
+	mode?: DashboardtypesHeatmapColorModeDTO;
+	palette?: DashboardtypesHeatmapPaletteDTO;
+	scale?: DashboardtypesHeatmapColorScaleDTO;
+	/**
+	 * @type integer
+	 */
+	steps?: number;
+}
+
+export interface DashboardtypesHeatmapChartAppearanceDTO {
+	colors?: DashboardtypesHeatmapColorsDTO;
+}
+
+export interface DashboardtypesHeatmapPanelSpecDTO {
+	axes?: DashboardtypesHeatmapAxesDTO;
+	chartAppearance?: DashboardtypesHeatmapChartAppearanceDTO;
+	formatting?: DashboardtypesPanelFormattingDTO;
+	legend?: DashboardtypesLegendDTO;
+	visualization?: DashboardtypesBasicVisualizationDTO;
+}
+
+export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTO {
+	/**
+	 * @enum signoz/HeatmapPanel
+	 * @type string
+	 */
+	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTOKind;
+	spec: DashboardtypesHeatmapPanelSpecDTO;
+}
+
 export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpecDTO
@@ -4409,7 +4486,8 @@ export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpecDTO
-	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTO;
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTO
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTO;
 
 export enum Querybuildertypesv5RequestTypeDTO {
 	scalar = 'scalar',
@@ -4417,6 +4495,7 @@ export enum Querybuildertypesv5RequestTypeDTO {
 	raw = 'raw',
 	raw_stream = 'raw_stream',
 	trace = 'trace',
+	heatmap = 'heatmap',
 }
 export enum DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpecDTOKind {
 	'signoz/BuilderQuery' = 'signoz/BuilderQuery',
@@ -5331,6 +5410,7 @@ export enum DashboardtypesPanelPluginKindDTO {
 	'signoz/TablePanel' = 'signoz/TablePanel',
 	'signoz/HistogramPanel' = 'signoz/HistogramPanel',
 	'signoz/ListPanel' = 'signoz/ListPanel',
+	'signoz/HeatmapPanel' = 'signoz/HeatmapPanel',
 }
 /**
  * @nullable
@@ -8030,16 +8110,7 @@ export interface Querybuildertypesv5LabelDTO {
 	value?: Querybuildertypesv5LabelDTOValue;
 }
 
-export interface Querybuildertypesv5BucketDTO {
-	/**
-	 * @type number
-	 * @format double
-	 */
-	step?: number;
-}
-
 export interface Querybuildertypesv5TimeSeriesValueDTO {
-	bucket?: Querybuildertypesv5BucketDTO;
 	/**
 	 * @type boolean
 	 */
@@ -8590,12 +8661,16 @@ export interface PromotetypesPromotePathDTO {
 	promote?: boolean;
 }
 
-export type Querybuildertypesv5AggregationBucketDTOMeta = {
+export interface Querybuildertypesv5AggregationMetaDTO {
+	/**
+	 * @type array
+	 */
+	buckets?: number[];
 	/**
 	 * @type string
 	 */
 	unit?: string;
-};
+}
 
 export interface Querybuildertypesv5AggregationBucketDTO {
 	/**
@@ -8614,10 +8689,7 @@ export interface Querybuildertypesv5AggregationBucketDTO {
 	 * @type array
 	 */
 	lowerBoundSeries?: Querybuildertypesv5TimeSeriesDTO[];
-	/**
-	 * @type object
-	 */
-	meta?: Querybuildertypesv5AggregationBucketDTOMeta;
+	meta?: Querybuildertypesv5AggregationMetaDTO;
 	/**
 	 * @type array
 	 */
@@ -8632,6 +8704,57 @@ export interface Querybuildertypesv5AggregationBucketDTO {
 	upperBoundSeries?: Querybuildertypesv5TimeSeriesDTO[];
 }
 
+export enum Querybuildertypesv5BucketOptionsLinearDTOKind {
+	linear = 'linear',
+}
+export interface Querybuildertypesv5LinearBucketsSpecDTO {
+	/**
+	 * @type number
+	 * @format double
+	 */
+	maxValue: number;
+	/**
+	 * @type integer
+	 */
+	numBuckets?: number;
+}
+
+export interface Querybuildertypesv5BucketOptionsLinearDTO {
+	/**
+	 * @type string
+	 * @enum linear
+	 */
+	kind: Querybuildertypesv5BucketOptionsLinearDTOKind;
+	spec: Querybuildertypesv5LinearBucketsSpecDTO;
+}
+
+export enum Querybuildertypesv5BucketOptionsLogDTOKind {
+	log = 'log',
+}
+export interface Querybuildertypesv5LogBucketsSpecDTO {
+	/**
+	 * @type integer,null
+	 */
+	scale?: number | null;
+}
+
+export interface Querybuildertypesv5BucketOptionsLogDTO {
+	/**
+	 * @type string
+	 * @enum log
+	 */
+	kind: Querybuildertypesv5BucketOptionsLogDTOKind;
+	spec: Querybuildertypesv5LogBucketsSpecDTO;
+}
+
+export type Querybuildertypesv5BucketOptionsDTO =
+	| Querybuildertypesv5BucketOptionsLinearDTO
+	| Querybuildertypesv5BucketOptionsLogDTO;
+
+export enum Querybuildertypesv5BucketsKindDTO {
+	linear = 'linear',
+	log = 'log',
+}
 export type Querybuildertypesv5ColumnDescriptorDTOMeta = {
 	/**
 	 * @type string
@@ -8981,6 +9104,7 @@ export type Querybuildertypesv5QueryRangeRequestDTOVariables = {
  * Request body for the v5 query range endpoint. Supports builder queries (traces, logs, metrics), formulas, joins, trace operators, PromQL, and ClickHouse SQL queries.
  */
 export interface Querybuildertypesv5QueryRangeRequestDTO {
+	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	compositeQuery?: Querybuildertypesv5CompositeQueryDTO;
 	/**
 	 * @type integer
