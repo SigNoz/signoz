@@ -1,12 +1,17 @@
 import { useMemo } from 'react';
 import { Button, Skeleton } from 'antd';
+import { useGetFieldsKeys } from 'api/generated/services/fields';
+import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
+import { DATA_SOURCE_TO_SIGNAL } from 'components/QuickFilters/FilterRenderers/Checkbox/v2/useFieldValues';
 import { SIGNAL_DATA_SOURCE_MAP } from 'components/QuickFilters/QuickFiltersSettings/constants';
 import { SignalType } from 'components/QuickFilters/types';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
-import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
-import { FieldContext, TelemetryFieldKey } from 'types/api/v5/queryRange';
+import {
+	FieldContext,
+	FieldDataType,
+	TelemetryFieldKey,
+} from 'types/api/v5/queryRange';
 
 function OtherFiltersSkeleton(): JSX.Element {
 	return (
@@ -37,27 +42,26 @@ function OtherFilters({
 }): JSX.Element {
 	const isMeterDataSource = signal === SignalType.METER_EXPLORER;
 
-	const { data, isFetching } = useGetQueryKeySuggestions(
+	const { data, isFetching } = useGetFieldsKeys(
 		{
 			searchText: inputValue,
-			signal: SIGNAL_DATA_SOURCE_MAP[signal as SignalType],
-			signalSource: isMeterDataSource ? 'meter' : '',
+			signal: signal
+				? DATA_SOURCE_TO_SIGNAL[SIGNAL_DATA_SOURCE_MAP[signal]]
+				: undefined,
+			source: isMeterDataSource ? TelemetrytypesSourceDTO.meter : undefined,
 		},
-		{
-			queryKey: [REACT_QUERY_KEY.GET_OTHER_FILTERS, signal, inputValue],
-			enabled: !!signal,
-		},
+		{ query: { enabled: !!signal } },
 	);
 
 	const otherFilters = useMemo<TelemetryFieldKey[]>(() => {
-		const rawSuggestions = Object.values(data?.data?.data?.keys || {}).flat();
+		const rawSuggestions = Object.values(data?.data?.keys ?? {}).flat();
 		// Normalize: synthesize the composite `key` once so downstream reads (dedupe,
 		// add, render) can trust it.
 		const suggestions: TelemetryFieldKey[] = rawSuggestions.map((attr) => ({
 			name: attr.name,
-			signal: attr.signal,
+			signal: attr.signal as TelemetryFieldKey['signal'],
 			fieldContext: attr.fieldContext as FieldContext,
-			fieldDataType: attr.fieldDataType,
+			fieldDataType: attr.fieldDataType as FieldDataType,
 			key: buildCompositeKey(attr.name, attr.fieldContext, attr.fieldDataType),
 		}));
 
