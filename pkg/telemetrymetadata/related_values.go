@@ -9,33 +9,30 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/sync/semaphore"
 )
 
-// dataSourceCountsTTL is how long the per-signal row counts of the metadata
-// table are cached; they only steer which signal a signal-less request scans.
-const dataSourceCountsTTL = 10 * time.Minute
-
 // relatedValuesWindow returns the window of the related-values query. The
 // requested window is clamped to maxWindow (an unset start becomes end minus
-// maxWindow, an unset end becomes now), then the start is floored and the end
-// ceiled to the bucket so repeated requests share the same predicate.
-func relatedValuesWindow(startMs, endMs int64, now time.Time, maxWindow time.Duration, bucketMs int64) (int64, int64) {
+// maxWindow, an unset end becomes now) and the start is floored to the bucket
+// that holds it. truncated reports that the clamp moved the start, so the
+// result covers less than the request asked for.
+func relatedValuesWindow(startMs, endMs int64, now time.Time, maxWindow time.Duration, bucketMs int64) (int64, int64, bool) {
 	if endMs == 0 {
 		endMs = now.UnixMilli()
 	}
+	truncated := false
 	if maxWindow > 0 && (startMs == 0 || endMs-startMs > maxWindow.Milliseconds()) {
 		startMs = endMs - maxWindow.Milliseconds()
+		truncated = true
 	}
 	if bucketMs > 0 {
 		startMs -= startMs % bucketMs
-		if rem := endMs % bucketMs; rem != 0 {
-			endMs += bucketMs - rem
-		}
 	}
-	return startMs, endMs
+	return startMs, endMs, truncated
 }
 
 // relatedTarget is where the requested key was found: the metadata contexts
@@ -83,11 +80,24 @@ func resolveRelatedTarget(selector *telemetrytypes.FieldValueSelector, keys []*t
 	return target
 }
 
+// relatedValuesContexts returns the maps the key is read from and searched
+// in: the maps it resolved to, or all three when nothing is known about it.
+// The span name is also read from attributes for rows written before the
+// intrinsic map existed.
+func relatedValuesContexts(name string, target relatedTarget) []telemetrytypes.FieldContext {
+	contexts := target.contexts
+	if len(contexts) == 0 {
+		return []telemetrytypes.FieldContext{telemetrytypes.FieldContextSpan, telemetrytypes.FieldContextResource, telemetrytypes.FieldContextAttribute}
+	}
+	if name == "name" && len(contexts) == 1 && (contexts[0] == telemetrytypes.FieldContextSpan || contexts[0] == telemetrytypes.FieldContextLog) {
+		return append([]telemetrytypes.FieldContext{contexts[0]}, telemetrytypes.FieldContextAttribute)
+	}
+	return contexts
+}
+
 // relatedValuesSelectColumn returns the expression that reads the key from
-// the metadata table: the single map the key resolved to, a multiIf over the
-// maps it resolved to, or all three when nothing is known about it. The span
-// name is also read from attributes for rows written before the intrinsic map
-// existed.
+// the metadata table: the single map it is read from, or a multiIf over
+// several.
 func (t *telemetryMetaStore) relatedValuesSelectColumn(ctx context.Context, orgID valuer.UUID, name string, target relatedTarget) string {
 	fieldFor := func(fieldContext telemetrytypes.FieldContext) string {
 		column, _ := t.fm.FieldFor(ctx, orgID, 0, 0, &telemetrytypes.TelemetryFieldKey{
@@ -98,13 +108,7 @@ func (t *telemetryMetaStore) relatedValuesSelectColumn(ctx context.Context, orgI
 		return column
 	}
 
-	contexts := target.contexts
-	if len(contexts) == 0 {
-		contexts = []telemetrytypes.FieldContext{telemetrytypes.FieldContextSpan, telemetrytypes.FieldContextResource, telemetrytypes.FieldContextAttribute}
-	}
-	if name == "name" && len(contexts) == 1 && (contexts[0] == telemetrytypes.FieldContextSpan || contexts[0] == telemetrytypes.FieldContextLog) {
-		contexts = append(contexts, telemetrytypes.FieldContextAttribute)
-	}
+	contexts := relatedValuesContexts(name, target)
 	if len(contexts) == 1 {
 		return fieldFor(contexts[0])
 	}
@@ -118,10 +122,10 @@ func (t *telemetryMetaStore) relatedValuesSelectColumn(ctx context.Context, orgI
 }
 
 // relatedValuesSignal picks the data source to scan for a request without a
-// signal: the one signal the key was seen in, or for a resource key seen in
-// several signals the signal with the fewest rows, since resource values are
-// shared across signals.
-func (t *telemetryMetaStore) relatedValuesSignal(ctx context.Context, orgID valuer.UUID, requested telemetrytypes.Signal, target relatedTarget) telemetrytypes.Signal {
+// signal: the one signal the key was seen in. A key seen in several signals
+// keeps scanning all of them, since the values of one signal need not cover
+// the others.
+func relatedValuesSignal(requested telemetrytypes.Signal, target relatedTarget) telemetrytypes.Signal {
 	if requested != telemetrytypes.SignalUnspecified {
 		return requested
 	}
@@ -130,51 +134,27 @@ func (t *telemetryMetaStore) relatedValuesSignal(ctx context.Context, orgID valu
 			return signal
 		}
 	}
-	if len(target.signals) < 2 || len(target.contexts) != 1 || target.contexts[0] != telemetrytypes.FieldContextResource {
-		return telemetrytypes.SignalUnspecified
-	}
-	counts, err := t.dataSourceRowCounts(ctx, orgID)
-	if err != nil {
-		t.logger.DebugContext(ctx, "failed to read data source row counts", errors.Attr(err))
-		return telemetrytypes.SignalUnspecified
-	}
-	smallest := telemetrytypes.SignalUnspecified
-	var smallestRows uint64
-	for signal := range target.signals {
-		rows, ok := counts[signal.StringValue()]
-		if !ok {
-			continue
-		}
-		if smallest == telemetrytypes.SignalUnspecified || rows < smallestRows {
-			smallest, smallestRows = signal, rows
-		}
-	}
-	return smallest
+	return telemetrytypes.SignalUnspecified
 }
 
-func (t *telemetryMetaStore) dataSourceRowCounts(ctx context.Context, orgID valuer.UUID) (map[string]uint64, error) {
-	counts, err := t.countsMemo.do("datasource-counts:"+orgID.StringValue(), func() (any, error) {
-		query := fmt.Sprintf("SELECT data_source, count() AS rows FROM %s.%s GROUP BY data_source", t.relatedMetadataDBName, t.relatedMetadataTblName)
-		rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query)
-		if err != nil {
-			return nil, err
-		}
-		defer rows.Close()
-		counts := map[string]uint64{}
-		for rows.Next() {
-			var dataSource string
-			var count uint64
-			if err := rows.Scan(&dataSource, &count); err != nil {
-				return nil, err
-			}
-			counts[dataSource] = count
-		}
-		return counts, rows.Err()
-	})
-	if err != nil {
-		return nil, err
+// relatedValuesQueryContext applies the related-values bounds to the queries
+// run with the context: the execution time (checked from the start, and the
+// values found by then are returned), the thread count and the read buffer.
+func (t *telemetryMetaStore) relatedValuesQueryContext(ctx context.Context) context.Context {
+	cfg := t.config.RelatedValues
+	settings := map[string]any{}
+	if cfg.MaxExecutionTime > 0 {
+		settings["max_execution_time"] = cfg.MaxExecutionTime.Seconds()
+		settings["timeout_overflow_mode"] = "break"
+		settings["timeout_before_checking_execution_speed"] = 0
 	}
-	return counts.(map[string]uint64), nil
+	if cfg.MaxThreads > 0 {
+		settings["max_threads"] = cfg.MaxThreads
+	}
+	if cfg.ReadBufferSize > 0 {
+		settings["max_read_buffer_size_local_fs"] = cfg.ReadBufferSize
+	}
+	return ctxtypes.SetClickhouseSettings(ctx, settings)
 }
 
 // relatedValuesFilterAbsent reports whether an equality term of the existing

@@ -169,8 +169,6 @@ querier:
 
 ##################### TelemetryMetadata #####################
 telemetrymetadata:
-  # How long key lookups (table statements, tag keys, column evolution) are cached per org.
-  keys_cache_ttl: 1m
   related_values:
     # Server-side bound for the related-values query of the fields API; the values
     # found by then are returned and the response is marked incomplete.

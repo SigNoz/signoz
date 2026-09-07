@@ -4,6 +4,7 @@ import (
 	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/antlr4-go/antlr/v4"
+	"strconv"
 )
 
 // QueryStringToKeysSelectors converts a query string to a list of field key selectors
@@ -105,7 +106,7 @@ func QueryStringEqualityTerms(query string) (terms []EqualityTerm, ok bool) {
 			equalsSeen = lastKey != nil
 		case grammar.FilterQueryLexerQUOTED_TEXT, grammar.FilterQueryLexerNUMBER, grammar.FilterQueryLexerBOOL:
 			if equalsSeen && lastKey != nil {
-				terms = append(terms, EqualityTerm{Key: lastKey, Value: unquote(tok.GetText())})
+				terms = append(terms, EqualityTerm{Key: lastKey, Value: literalText(tok.GetTokenType(), tok.GetText())})
 			}
 			lastKey = nil
 			equalsSeen = false
@@ -117,11 +118,15 @@ func QueryStringEqualityTerms(query string) (terms []EqualityTerm, ok bool) {
 	return terms, true
 }
 
-func unquote(text string) string {
-	if len(text) >= 2 {
-		first, last := text[0], text[len(text)-1]
-		if first == last && (first == '\'' || first == '"') {
-			return text[1 : len(text)-1]
+// literalText returns a literal as the where-clause visitor reads it: quoted
+// text with its quotes and escapes removed, a number in its decimal form.
+func literalText(tokenType int, text string) string {
+	switch tokenType {
+	case grammar.FilterQueryLexerQUOTED_TEXT:
+		return trimQuotes(text)
+	case grammar.FilterQueryLexerNUMBER:
+		if f, err := strconv.ParseFloat(text, 64); err == nil {
+			return strconv.FormatFloat(f, 'f', -1, 64)
 		}
 	}
 	return text

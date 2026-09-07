@@ -17,48 +17,52 @@ func TestRelatedValuesWindow(t *testing.T) {
 	day := 24 * time.Hour
 
 	tests := []struct {
-		name      string
-		start     int64
-		end       int64
-		maxWindow time.Duration
-		wantStart int64
-		wantEnd   int64
+		name          string
+		start         int64
+		end           int64
+		maxWindow     time.Duration
+		wantStart     int64
+		wantEnd       int64
+		wantTruncated bool
 	}{
 		{
-			name:      "window inside the clamp is floored and ceiled to the bucket",
+			name:      "window inside the clamp keeps its end and is floored to the bucket",
 			start:     now.Add(-3 * time.Hour).UnixMilli(),
 			end:       now.UnixMilli(),
 			maxWindow: day,
 			wantStart: 1788760800000, // 06:00
-			wantEnd:   1788782400000, // 12:00
+			wantEnd:   now.UnixMilli(),
 		},
 		{
-			name:      "window over the clamp keeps its end and loses its start",
-			start:     now.Add(-30 * day).UnixMilli(),
-			end:       now.UnixMilli(),
-			maxWindow: day,
-			wantStart: 1788674400000, // the day before, 10:30 floored to 06:00
-			wantEnd:   1788782400000,
+			name:          "window over the clamp keeps its end and loses its start",
+			start:         now.Add(-30 * day).UnixMilli(),
+			end:           now.UnixMilli(),
+			maxWindow:     day,
+			wantStart:     1788674400000, // the day before, 10:30 floored to 06:00
+			wantEnd:       now.UnixMilli(),
+			wantTruncated: true,
 		},
 		{
-			name:      "unset bounds mean the last clamp window up to now",
-			maxWindow: day,
-			wantStart: 1788674400000,
-			wantEnd:   1788782400000,
+			name:          "unset bounds mean the last clamp window up to now",
+			maxWindow:     day,
+			wantStart:     1788674400000,
+			wantEnd:       now.UnixMilli(),
+			wantTruncated: true,
 		},
 		{
 			name:      "no clamp keeps the requested start",
 			start:     now.Add(-30 * day).UnixMilli(),
 			end:       now.UnixMilli(),
 			wantStart: now.Add(-30*day).UnixMilli() - now.Add(-30*day).UnixMilli()%sixHours,
-			wantEnd:   1788782400000,
+			wantEnd:   now.UnixMilli(),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			start, end := relatedValuesWindow(tt.start, tt.end, now, tt.maxWindow, sixHours)
+			start, end, truncated := relatedValuesWindow(tt.start, tt.end, now, tt.maxWindow, sixHours)
 			assert.Equal(t, tt.wantStart, start)
 			assert.Equal(t, tt.wantEnd, end)
+			assert.Equal(t, tt.wantTruncated, truncated)
 		})
 	}
 }
@@ -126,21 +130,30 @@ func TestRelatedValuesSelectColumnFollowsTheResolvedContext(t *testing.T) {
 }
 
 func TestRelatedValuesSignalScopesToTheOnlySignalSeen(t *testing.T) {
-	store := &telemetryMetaStore{fm: NewFieldMapper()}
-	ctx := context.Background()
-	selector := &telemetrytypes.FieldValueSelector{FieldKeySelector: &telemetrytypes.FieldKeySelector{Name: "http.route"}}
+	selector := &telemetrytypes.FieldValueSelector{FieldKeySelector: &telemetrytypes.FieldKeySelector{Name: "service.name"}}
 
 	target := resolveRelatedTarget(selector, []*telemetrytypes.TelemetryFieldKey{
-		{Name: "http.route", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute},
+		{Name: "service.name", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextResource},
 	})
-	assert.Equal(t, telemetrytypes.SignalTraces, store.relatedValuesSignal(ctx, valuer.UUID{}, telemetrytypes.SignalUnspecified, target))
-	assert.Equal(t, telemetrytypes.SignalLogs, store.relatedValuesSignal(ctx, valuer.UUID{}, telemetrytypes.SignalLogs, target), "a requested signal is kept")
+	assert.Equal(t, telemetrytypes.SignalTraces, relatedValuesSignal(telemetrytypes.SignalUnspecified, target))
+	assert.Equal(t, telemetrytypes.SignalLogs, relatedValuesSignal(telemetrytypes.SignalLogs, target), "a requested signal is kept")
 
 	target = resolveRelatedTarget(selector, []*telemetrytypes.TelemetryFieldKey{
-		{Name: "http.route", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute},
-		{Name: "http.route", Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextAttribute},
+		{Name: "service.name", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextResource},
+		{Name: "service.name", Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextResource},
 	})
-	assert.Equal(t, telemetrytypes.SignalUnspecified, store.relatedValuesSignal(ctx, valuer.UUID{}, telemetrytypes.SignalUnspecified, target), "an attribute seen in two signals scans both")
+	assert.Equal(t, telemetrytypes.SignalUnspecified, relatedValuesSignal(telemetrytypes.SignalUnspecified, target), "a key seen in two signals scans both")
+}
+
+func TestRelatedValuesContextsAreSharedBySelectAndSearch(t *testing.T) {
+	selector := &telemetrytypes.FieldValueSelector{FieldKeySelector: &telemetrytypes.FieldKeySelector{Name: "http_method"}}
+	target := resolveRelatedTarget(selector, []*telemetrytypes.TelemetryFieldKey{
+		{Name: "http_method", Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextSpan},
+	})
+	assert.Equal(t, []telemetrytypes.FieldContext{telemetrytypes.FieldContextSpan}, relatedValuesContexts("http_method", target), "a span field is searched in the intrinsic map only")
+
+	selector = &telemetrytypes.FieldValueSelector{FieldKeySelector: &telemetrytypes.FieldKeySelector{Name: "name", FieldContext: telemetrytypes.FieldContextSpan}}
+	assert.Equal(t, []telemetrytypes.FieldContext{telemetrytypes.FieldContextSpan, telemetrytypes.FieldContextAttribute}, relatedValuesContexts("name", resolveRelatedTarget(selector, nil)))
 }
 
 func TestConfigValidate(t *testing.T) {

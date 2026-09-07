@@ -34,10 +34,6 @@ type RelatedValuesConfig struct {
 
 // Config is the configuration of the telemetry metadata store.
 type Config struct {
-	// KeysCacheTTL is how long key lookups (table statements, tag keys,
-	// column evolution) are cached per org.
-	KeysCacheTTL time.Duration `mapstructure:"keys_cache_ttl"`
-
 	RelatedValues RelatedValuesConfig `mapstructure:"related_values"`
 }
 
@@ -52,7 +48,6 @@ func newConfig() factory.Config {
 // NewConfig returns the default configuration.
 func NewConfig() Config {
 	return Config{
-		KeysCacheTTL: time.Minute,
 		RelatedValues: RelatedValuesConfig{
 			MaxExecutionTime:   2 * time.Second,
 			MaxWindow:          7 * 24 * time.Hour,
@@ -65,9 +60,6 @@ func NewConfig() Config {
 }
 
 func (c Config) Validate() error {
-	if c.KeysCacheTTL < 0 {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "keys_cache_ttl must not be negative, got %v", c.KeysCacheTTL)
-	}
 	if c.RelatedValues.MaxExecutionTime < 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "related_values.max_execution_time must not be negative, got %v", c.RelatedValues.MaxExecutionTime)
 	}

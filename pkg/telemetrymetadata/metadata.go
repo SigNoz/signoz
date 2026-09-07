@@ -1,7 +1,6 @@
 package telemetrymetadata
 
 import (
-	"encoding/json"
 	"sync"
 
 	"context"
@@ -75,10 +74,6 @@ type telemetryMetaStore struct {
 	jsonColumnMetadata map[telemetrytypes.Signal]map[telemetrytypes.FieldContext]telemetrytypes.JSONColumnMetadata
 
 	config Config
-	// keysMemo caches key lookups for config.KeysCacheTTL; countsMemo caches
-	// the per-signal row counts of the metadata table.
-	keysMemo   *memo
-	countsMemo *memo
 
 	relatedSlotsMu sync.Mutex
 	relatedSlots   map[valuer.UUID]*semaphore.Weighted
@@ -135,57 +130,14 @@ func NewTelemetryMetaStore(
 		fm:               fm,
 		conditionBuilder: conditionBuilder,
 		config:           config,
-		keysMemo:         newMemo(config.KeysCacheTTL),
-		countsMemo:       newMemo(dataSourceCountsTTL),
 		relatedSlots:     map[valuer.UUID]*semaphore.Weighted{},
 	}
 
 	return t
 }
 
-// cachedKeys runs fn under the keys cache and returns a copy of its keys, so
-// callers can annotate them without touching the cached ones.
-func (t *telemetryMetaStore) cachedKeys(cacheKey string, fn func() ([]*telemetrytypes.TelemetryFieldKey, error)) ([]*telemetrytypes.TelemetryFieldKey, error) {
-	cached, err := t.keysMemo.do(cacheKey, func() (any, error) { return fn() })
-	if err != nil {
-		return nil, err
-	}
-	return copyKeys(cached.([]*telemetrytypes.TelemetryFieldKey)), nil
-}
-
-func copyKeys(keys []*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
-	out := make([]*telemetrytypes.TelemetryFieldKey, len(keys))
-	for i, key := range keys {
-		copied := *key
-		out[i] = &copied
-	}
-	return out
-}
-
-func copyKeysMap(keys map[string][]*telemetrytypes.TelemetryFieldKey) map[string][]*telemetrytypes.TelemetryFieldKey {
-	out := make(map[string][]*telemetrytypes.TelemetryFieldKey, len(keys))
-	for name, keysForName := range keys {
-		out[name] = copyKeys(keysForName)
-	}
-	return out
-}
-
-type keysResult struct {
-	keys     map[string][]*telemetrytypes.TelemetryFieldKey
-	complete bool
-}
-
-func selectorsCacheKey(kind string, orgID valuer.UUID, selectors []*telemetrytypes.FieldKeySelector) string {
-	encoded, _ := json.Marshal(selectors)
-	return kind + ":" + orgID.StringValue() + ":" + string(encoded)
-}
-
 // tracesTblStatementToFieldKeys returns materialised attribute/resource/scope keys from the traces table.
 func (t *telemetryMetaStore) tracesTblStatementToFieldKeys(ctx context.Context) ([]*telemetrytypes.TelemetryFieldKey, error) {
-	return t.cachedKeys("tbl:traces", func() ([]*telemetrytypes.TelemetryFieldKey, error) { return t.loadTracesTblStatementToFieldKeys(ctx) })
-}
-
-func (t *telemetryMetaStore) loadTracesTblStatementToFieldKeys(ctx context.Context) ([]*telemetrytypes.TelemetryFieldKey, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
 		instrumentationtypes.CodeNamespace:    "metadata",
@@ -393,10 +345,6 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 
 // logsTblStatementToFieldKeys returns materialised attribute/resource/scope keys from the logs table.
 func (t *telemetryMetaStore) logsTblStatementToFieldKeys(ctx context.Context) ([]*telemetrytypes.TelemetryFieldKey, error) {
-	return t.cachedKeys("tbl:logs", func() ([]*telemetrytypes.TelemetryFieldKey, error) { return t.loadLogsTblStatementToFieldKeys(ctx) })
-}
-
-func (t *telemetryMetaStore) loadLogsTblStatementToFieldKeys(ctx context.Context) ([]*telemetrytypes.TelemetryFieldKey, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
 		instrumentationtypes.CodeNamespace:    "metadata",
@@ -743,10 +691,6 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, orgID valuer.UUID,
 }
 
 func (t *telemetryMetaStore) auditTblStatementToFieldKeys(ctx context.Context) ([]*telemetrytypes.TelemetryFieldKey, error) {
-	return t.cachedKeys("tbl:audit", func() ([]*telemetrytypes.TelemetryFieldKey, error) { return t.loadAuditTblStatementToFieldKeys(ctx) })
-}
-
-func (t *telemetryMetaStore) loadAuditTblStatementToFieldKeys(ctx context.Context) ([]*telemetrytypes.TelemetryFieldKey, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
 		instrumentationtypes.CodeNamespace:    "metadata",
@@ -1261,21 +1205,6 @@ func matchesSelectorName(selectorName, target string, matchType telemetrytypes.F
 }
 
 func (t *telemetryMetaStore) GetKeys(ctx context.Context, orgID valuer.UUID, fieldKeySelector *telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
-	cached, err := t.keysMemo.do(selectorsCacheKey("keys", orgID, []*telemetrytypes.FieldKeySelector{fieldKeySelector}), func() (any, error) {
-		keys, complete, err := t.getKeys(ctx, orgID, fieldKeySelector)
-		if err != nil {
-			return nil, err
-		}
-		return keysResult{keys: keys, complete: complete}, nil
-	})
-	if err != nil {
-		return nil, false, err
-	}
-	result := cached.(keysResult)
-	return copyKeysMap(result.keys), result.complete, nil
-}
-
-func (t *telemetryMetaStore) getKeys(ctx context.Context, orgID valuer.UUID, fieldKeySelector *telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
 	var keys []*telemetrytypes.TelemetryFieldKey
 	var complete = true
 	var err error
@@ -1340,21 +1269,6 @@ func (t *telemetryMetaStore) getKeys(ctx context.Context, orgID valuer.UUID, fie
 }
 
 func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID, fieldKeySelectors []*telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
-	cached, err := t.keysMemo.do(selectorsCacheKey("keys-multi", orgID, fieldKeySelectors), func() (any, error) {
-		keys, complete, err := t.getKeysMulti(ctx, orgID, fieldKeySelectors)
-		if err != nil {
-			return nil, err
-		}
-		return keysResult{keys: keys, complete: complete}, nil
-	})
-	if err != nil {
-		return nil, false, err
-	}
-	result := cached.(keysResult)
-	return copyKeysMap(result.keys), result.complete, nil
-}
-
-func (t *telemetryMetaStore) getKeysMulti(ctx context.Context, orgID valuer.UUID, fieldKeySelectors []*telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
 
 	logsSelectors := []*telemetrytypes.FieldKeySelector{}
 	auditSelectors := []*telemetrytypes.FieldKeySelector{}
@@ -1453,7 +1367,7 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 	}
 
 	cfg := t.config.RelatedValues
-	startMs, endMs := relatedValuesWindow(fieldValueSelector.StartUnixMilli, fieldValueSelector.EndUnixMilli, time.Now(), cfg.MaxWindow, telemetrytypes.MetadataBucketMilli(fieldValueSelector.Signal))
+	startMs, endMs, truncated := relatedValuesWindow(fieldValueSelector.StartUnixMilli, fieldValueSelector.EndUnixMilli, time.Now(), cfg.MaxWindow, telemetrytypes.MetadataBucketMilli(fieldValueSelector.Signal))
 
 	key := &telemetrytypes.TelemetryFieldKey{
 		Name:          fieldValueSelector.Name,
@@ -1480,10 +1394,20 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 	}
 
 	target := resolveRelatedTarget(fieldValueSelector, keys[fieldValueSelector.Name])
-	signal := t.relatedValuesSignal(ctx, orgID, fieldValueSelector.Signal, target)
+	signal := relatedValuesSignal(fieldValueSelector.Signal, target)
+
+	// every query from here on, the existence checks included, runs in the
+	// org's related-values slot and under the related-values bounds
+	if slot := t.relatedValuesSlot(orgID); slot != nil {
+		if err := slot.Acquire(ctx, 1); err != nil {
+			return nil, false, ErrFailedToGetRelatedValues
+		}
+		defer slot.Release(1)
+	}
+	ctx = t.relatedValuesQueryContext(ctx)
 
 	if t.relatedValuesFilterAbsent(ctx, orgID, fieldValueSelector, signal, keys, startMs, endMs) {
-		return []string{}, true, nil
+		return []string{}, !truncated, nil
 	}
 
 	selectColumn := t.relatedValuesSelectColumn(ctx, orgID, fieldValueSelector.Name, target)
@@ -1511,35 +1435,17 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 	}
 
 	if fieldValueSelector.Value != "" {
+		// the search text is matched in every map the key is read from
 		var conds []string
-		if fieldValueSelector.FieldContext != telemetrytypes.FieldContextAttribute &&
-			fieldValueSelector.FieldContext != telemetrytypes.FieldContextResource {
-			origContext := key.FieldContext
-
-			// search on attributes
-			key.FieldContext = telemetrytypes.FieldContextAttribute
-			attrConds, _, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}}, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
-			if err == nil {
-				conds = append(conds, attrConds...)
-			}
-
-			// search on resource
-			key.FieldContext = telemetrytypes.FieldContextResource
-			resourceConds, _, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}}, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
-			if err == nil {
-				conds = append(conds, resourceConds...)
-			}
-			key.FieldContext = origContext
-		} else {
-			keyConds, _, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, key, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {key}}, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
+		for _, fieldContext := range relatedValuesContexts(fieldValueSelector.Name, target) {
+			searchKey := *key
+			searchKey.FieldContext = fieldContext
+			keyConds, _, err := t.conditionBuilder.ConditionFor(ctx, orgID, 0, 0, &searchKey, map[string][]*telemetrytypes.TelemetryFieldKey{searchKey.Name: {&searchKey}}, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
 			if err == nil {
 				conds = append(conds, keyConds...)
 			}
 		}
-
 		if len(conds) != 0 {
-			// the key may sit in the resource or attribute map (or both), so OR the
-			// two conditions — match if the key's value in either map contains searchText.
 			sb.Where(sb.Or(conds...))
 		}
 	}
@@ -1554,27 +1460,6 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	t.logger.DebugContext(ctx, "query for related values", slog.String("query", query), slog.Any("args", args))
-
-	if slot := t.relatedValuesSlot(orgID); slot != nil {
-		if err := slot.Acquire(ctx, 1); err != nil {
-			return nil, false, ErrFailedToGetRelatedValues
-		}
-		defer slot.Release(1)
-	}
-
-	// the query is bounded on the server and returns what it found by then
-	settings := map[string]any{}
-	if cfg.MaxExecutionTime > 0 {
-		settings["max_execution_time"] = cfg.MaxExecutionTime.Seconds()
-		settings["timeout_overflow_mode"] = "break"
-	}
-	if cfg.ReadBufferSize > 0 {
-		settings["max_read_buffer_size_local_fs"] = cfg.ReadBufferSize
-	}
-	ctx = ctxtypes.SetClickhouseSettings(ctx, settings)
-	if cfg.MaxThreads > 0 {
-		ctx = ctxtypes.SetClickhouseMaxThreads(ctx, cfg.MaxThreads)
-	}
 
 	started := time.Now()
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
@@ -1601,8 +1486,8 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 		}
 	}
 
-	// hit the limit, or the time bound cut the scan short?
-	complete := rowCount <= limit
+	// hit the limit, the window was clamped, or the time bound cut the scan short?
+	complete := rowCount <= limit && !truncated
 	if cfg.MaxExecutionTime > 0 && time.Since(started) >= cfg.MaxExecutionTime {
 		complete = false
 	}
@@ -2522,17 +2407,6 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporalityAndType(ctx conte
 }
 
 func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Context, selectors []*telemetrytypes.EvolutionSelector) ([]*telemetrytypes.EvolutionEntry, error) {
-	encoded, _ := json.Marshal(selectors)
-	cached, err := k.keysMemo.do("evolution:"+string(encoded), func() (any, error) {
-		return k.loadEvolutionEntryFromClickHouse(ctx, selectors)
-	})
-	if err != nil {
-		return nil, err
-	}
-	return cached.([]*telemetrytypes.EvolutionEntry), nil
-}
-
-func (k *telemetryMetaStore) loadEvolutionEntryFromClickHouse(ctx context.Context, selectors []*telemetrytypes.EvolutionSelector) ([]*telemetrytypes.EvolutionEntry, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("signal", "column_name", "column_type", "field_context", "field_name", "version", "release_time")
 	sb.From(fmt.Sprintf("%s.%s", k.relatedMetadataDBName, k.columnEvolutionMetadataTblName))

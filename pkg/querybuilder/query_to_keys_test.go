@@ -172,4 +172,23 @@ func TestQueryStringEqualityTerms(t *testing.T) {
 	if !ok || len(terms) != 1 || terms[0].Key.Name != "env" {
 		t.Fatalf("expected only the equality term, got %v ok=%v", terms, ok)
 	}
+
+	terms, ok = QueryStringEqualityTerms(`resource.owner = 'O\'Reilly' AND http.status_code = 5e2 AND ratio = 1.50`)
+	if !ok || len(terms) != 3 {
+		t.Fatalf("expected three terms, got %v ok=%v", terms, ok)
+	}
+	for _, want := range []struct{ name, value string }{{"owner", "O'Reilly"}, {"http.status_code", "500"}, {"ratio", "1.5"}} {
+		found := false
+		for _, term := range terms {
+			if term.Key.Name == want.name {
+				found = true
+				if term.Value != want.value {
+					t.Fatalf("expected %s = %q, got %q", want.name, want.value, term.Value)
+				}
+			}
+		}
+		if !found {
+			t.Fatalf("expected a term for %s", want.name)
+		}
+	}
 }
