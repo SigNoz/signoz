@@ -1,10 +1,7 @@
-import {
-	TelemetrytypesFieldContextDTO,
-	TelemetrytypesFieldDataTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
 import { SIGNAL_DATA_SOURCE_MAP } from 'components/QuickFilters/QuickFiltersSettings/constants';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+import { fieldDataTypeToDataType } from 'utils/fieldDataType';
 
 import { FiltersType, IQuickFiltersConfig, SignalType } from './types';
 
@@ -17,27 +14,15 @@ const FILTER_TYPE_MAP: Record<string, FiltersType> = {
 	duration_nano: FiltersType.DURATION,
 };
 
-// Both maps below exist only for the old v3 attribute-values fetch
+// The map below exists only for the old v3 attribute-values fetch
 // (useCheckboxFilterValues), the sole reader of attributeKey.dataType/type.
-// Once the values fetch moves to fields/values, remove these and reduce
+// Once the values fetch moves to fields/values, remove this and reduce
 // attributeKey to { id, key }.
-
-const FIELD_DATA_TYPE_TO_DATA_TYPE: Record<string, DataTypes> = {
-	[TelemetrytypesFieldDataTypeDTO.string]: DataTypes.String,
-	[TelemetrytypesFieldDataTypeDTO.bool]: DataTypes.bool,
-	[TelemetrytypesFieldDataTypeDTO.float64]: DataTypes.Float64,
-	[TelemetrytypesFieldDataTypeDTO.int64]: DataTypes.Int64,
-	[TelemetrytypesFieldDataTypeDTO.number]: DataTypes.Float64,
-};
 
 const FIELD_CONTEXT_TO_ATTRIBUTE_TYPE: Record<string, string> = {
 	[TelemetrytypesFieldContextDTO.attribute]: 'tag',
 	[TelemetrytypesFieldContextDTO.resource]: 'resource',
 };
-
-const mapFieldDataType = (fieldDataType?: string): DataTypes =>
-	(fieldDataType && FIELD_DATA_TYPE_TO_DATA_TYPE[fieldDataType]) ||
-	DataTypes.EMPTY;
 
 const mapFieldContext = (fieldContext?: string): string =>
 	(fieldContext && FIELD_CONTEXT_TO_ATTRIBUTE_TYPE[fieldContext]) || '';
@@ -81,7 +66,7 @@ export const getFilterConfig = (
 				attributeKey: {
 					id: att.name,
 					key: att.name,
-					dataType: mapFieldDataType(att.fieldDataType),
+					dataType: fieldDataTypeToDataType(att.fieldDataType),
 					type: mapFieldContext(att.fieldContext),
 				},
 				defaultOpen: index < 2,
