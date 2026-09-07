@@ -19,8 +19,10 @@ import type {
 
 import type {
 	AlertmanagertypesPostableChannelDTO,
+	AlertmanagertypesPostableNotificationChannelDTO,
 	AlertmanagertypesReceiverDTO,
 	CreateChannel201,
+	CreateNotificationChannel201,
 	DeleteChannelByIDPathParameters,
 	GetChannelByID200,
 	GetChannelByIDPathParameters,
@@ -646,4 +648,88 @@ export const useTestChannelDeprecated = <
 	TContext
 > => {
 	return useMutation(getTestChannelDeprecatedMutationOptions(options));
+};
+/**
+ * This endpoint creates a notification channel
+ * @summary Create notification channel
+ */
+export const createNotificationChannel = (
+	alertmanagertypesPostableNotificationChannelDTO?: BodyType<AlertmanagertypesPostableNotificationChannelDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<CreateNotificationChannel201>({
+		url: `/api/v2/notification_channels`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: alertmanagertypesPostableNotificationChannelDTO,
+		signal,
+	});
+};
+
+export const getCreateNotificationChannelMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof createNotificationChannel>>,
+		TError,
+		{ data?: BodyType<AlertmanagertypesPostableNotificationChannelDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof createNotificationChannel>>,
+	TError,
+	{ data?: BodyType<AlertmanagertypesPostableNotificationChannelDTO> },
+	TContext
+> => {
+	const mutationKey = ['createNotificationChannel'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof createNotificationChannel>>,
+		{ data?: BodyType<AlertmanagertypesPostableNotificationChannelDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return createNotificationChannel(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type CreateNotificationChannelMutationResult = NonNullable<
+	Awaited<ReturnType<typeof createNotificationChannel>>
+>;
+export type CreateNotificationChannelMutationBody =
+	| BodyType<AlertmanagertypesPostableNotificationChannelDTO>
+	| undefined;
+export type CreateNotificationChannelMutationError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Create notification channel
+ */
+export const useCreateNotificationChannel = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof createNotificationChannel>>,
+		TError,
+		{ data?: BodyType<AlertmanagertypesPostableNotificationChannelDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof createNotificationChannel>>,
+	TError,
+	{ data?: BodyType<AlertmanagertypesPostableNotificationChannelDTO> },
+	TContext
+> => {
+	return useMutation(getCreateNotificationChannelMutationOptions(options));
 };
