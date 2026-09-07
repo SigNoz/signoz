@@ -4,13 +4,12 @@ import { useParams } from 'react-router-dom';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import Spinner from 'components/Spinner';
-import PermissionDeniedCallout from 'lib/authz/components/PermissionDeniedCallout/PermissionDeniedCallout';
+import { withAuthZPage } from 'lib/authz/components/withAuthZ/withAuthZPage';
 import { buildDashboardReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 
 import DashboardContainer from './DashboardContainer';
 import { useDashboardFetch } from './DashboardContainer/hooks/useDashboardFetch';
-import { useDashboardReadDenied } from './DashboardContainer/hooks/useDashboardReadDenied';
 import { useDashboardPermissions } from 'hooks/dashboards/useDashboardPermissions';
 import styles from './DashboardPage.module.scss';
 
@@ -19,19 +18,11 @@ function DashboardPage(): JSX.Element {
 
 	const { dashboard, isLoading, isError, error, refetch } =
 		useDashboardFetch(dashboardId);
-	// Fired in parallel with the dashboard GET, then both are awaited below, so the
-	// tree mounts once with permissions already known.
-	const {
-		canRead,
-		isLoading: isPermissionLoading,
-		hasError: hasPermissionError,
-	} = useDashboardPermissions(dashboardId);
-	const isReadDenied = useDashboardReadDenied({
-		canRead,
-		hasPermissionError,
-		isError,
-		error,
-	});
+	// `read` is already resolved by the page guard; this resolves `update` and
+	// `delete` so the subtree mounts once with every permission known, instead of
+	// rendering controls enabled and flipping them.
+	const { isLoading: isPermissionLoading } =
+		useDashboardPermissions(dashboardId);
 
 	// Fire once per dashboard load (re-fires on navigating to a different id).
 	const openedRef = useRef<string | null>(null);
@@ -54,19 +45,6 @@ function DashboardPage(): JSX.Element {
 		return <Spinner tip="Loading dashboard..." />;
 	}
 
-	// The route stays reachable and the denial is explained in place, rather than
-	// reading as a generic failure — a dashboard you can list but not read is a
-	// normal outcome of the backend's collection-scoped list.
-	if (isReadDenied) {
-		return (
-			<div className={styles.errorState}>
-				<PermissionDeniedCallout
-					deniedPermissions={[buildDashboardReadPermission(dashboardId)]}
-				/>
-			</div>
-		);
-	}
-
 	if (isError || !dashboard) {
 		return (
 			<div className={styles.errorState}>
@@ -79,4 +57,11 @@ function DashboardPage(): JSX.Element {
 	return <DashboardContainer dashboard={dashboard} refetch={refetch} />;
 }
 
-export default DashboardPage;
+// Typed explicitly because the route lazy-loads this module, and Loadable needs
+// an indexable props type.
+export default withAuthZPage<Record<string, unknown>>(DashboardPage, {
+	checks: (_props, router) => [
+		buildDashboardReadPermission(router.params.dashboardId ?? ''),
+	],
+	fallbackOnLoading: <Spinner tip="Loading dashboard..." />,
+});

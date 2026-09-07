@@ -11,12 +11,10 @@ import ROUTES from 'constants/routes';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useDashboardPermissions } from 'hooks/dashboards/useDashboardPermissions';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import PermissionDeniedCallout from 'lib/authz/components/PermissionDeniedCallout/PermissionDeniedCallout';
+import { withAuthZPage } from 'lib/authz/components/withAuthZ/withAuthZPage';
 import { buildDashboardReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
 
 import { useDashboardFetch } from '../DashboardContainer/hooks/useDashboardFetch';
-import { useDashboardReadDenied } from '../DashboardContainer/hooks/useDashboardReadDenied';
-import { useDashboardEditGuard } from '../DashboardContainer/hooks/useDashboardEditGuard';
 import { useResolvedVariables } from '../DashboardContainer/hooks/useResolvedVariables';
 import PanelEditorContainer from '../DashboardContainer/PanelEditor';
 import type { PanelEditorHandoffState } from '../DashboardContainer/PanelEditor/panelEditorHandoff';
@@ -51,29 +49,10 @@ function PanelEditorPage(): JSX.Element {
 
 	const { dashboard, isLoading, isError, error, refetch } =
 		useDashboardFetch(dashboardId);
-	const {
-		canRead,
-		isLoading: isPermissionLoading,
-		hasError: hasPermissionError,
-	} = useDashboardPermissions(dashboardId);
-	const isReadDenied = useDashboardReadDenied({
-		canRead,
-		hasPermissionError,
-		isError,
-		error,
-	});
-	// Derived from the dashboard this route already holds: it is a root page, so
-	// the subtree hook (useDashboardEditContext) has nothing to read from yet.
-	const { isEditable, editDisabledReason, editDisabledKind } =
-		useDashboardEditGuard(dashboard);
-	const editDisabled = useMemo(
-		() =>
-			editDisabledReason
-				? { reason: editDisabledReason, kind: editDisabledKind }
-				: undefined,
-		[editDisabledReason, editDisabledKind],
-	);
-
+	// `read` is resolved by the page guard; this resolves `update` and `delete` so
+	// the editor mounts with every permission known.
+	const { isLoading: isPermissionLoading } =
+		useDashboardPermissions(dashboardId);
 	// On a refresh/direct URL this route is the only mount, so seed the edit
 	// context the way DashboardContainer does — during render, so the subtree's
 	// first render already sees the id (useDashboardFetchRequired throws without it).
@@ -134,16 +113,6 @@ function PanelEditorPage(): JSX.Element {
 		return <Spinner tip="Loading dashboard..." />;
 	}
 
-	if (isReadDenied) {
-		return (
-			<div className={styles.errorState}>
-				<PermissionDeniedCallout
-					deniedPermissions={[buildDashboardReadPermission(dashboardId)]}
-				/>
-			</div>
-		);
-	}
-
 	if (isError || !dashboard) {
 		return (
 			<div className={styles.errorState}>
@@ -170,12 +139,17 @@ function PanelEditorPage(): JSX.Element {
 			savedPanel={existingPanel}
 			isNew={!!newKind}
 			layoutIndex={layoutIndex}
-			isEditable={isEditable}
-			editDisabled={editDisabled}
 			onClose={backToDashboard}
 			onSaved={backToDashboard}
 		/>
 	);
 }
 
-export default PanelEditorPage;
+// Typed explicitly because the route lazy-loads this module, and Loadable needs
+// an indexable props type.
+export default withAuthZPage<Record<string, unknown>>(PanelEditorPage, {
+	checks: (_props, router) => [
+		buildDashboardReadPermission(router.params.dashboardId ?? ''),
+	],
+	fallbackOnLoading: <Spinner tip="Loading dashboard..." />,
+});

@@ -4,6 +4,7 @@ import { render, screen, waitFor } from 'tests/test-utils';
 import {
 	AUTHZ_CHECK_URL,
 	setupAuthzAdmin,
+	setupAuthzDenyAll,
 } from 'lib/authz/utils/authz-test-utils';
 
 import DashboardPage from '../DashboardPage';
@@ -28,7 +29,25 @@ describe('DashboardPage - AuthZ', () => {
 
 	// The list is collection-scoped, so a row the caller cannot read is expected —
 	// opening it should explain itself, not read as a failure.
-	it('explains a read denial instead of showing a generic load error', async () => {
+	it('blocks the page when the read check is denied', async () => {
+		server.use(setupAuthzDenyAll());
+
+		render(<DashboardPage />);
+
+		await expect(
+			screen.findByText('Uh-oh! You are not authorized'),
+		).resolves.toBeInTheDocument();
+		expect(
+			screen.getByText(`read:dashboard:${DASHBOARD_ID}`),
+		).toBeInTheDocument();
+		expect(
+			screen.queryByText('Failed to load dashboard'),
+		).not.toBeInTheDocument();
+	});
+
+	// The check is the only authority on permission. A 403 from the dashboard GET
+	// is an API failure like any other and reads as one.
+	it('shows the generic load error for a 403 from the dashboard request', async () => {
 		server.use(
 			rest.get(DASHBOARD_URL, (_req, res, ctx) =>
 				res(
@@ -48,13 +67,10 @@ describe('DashboardPage - AuthZ', () => {
 		render(<DashboardPage />);
 
 		await expect(
-			screen.findByText(/is not authorized to perform/),
+			screen.findByText('Failed to load dashboard'),
 		).resolves.toBeInTheDocument();
 		expect(
-			screen.getByText(`read:dashboard:${DASHBOARD_ID}`),
-		).toBeInTheDocument();
-		expect(
-			screen.queryByText('Failed to load dashboard'),
+			screen.queryByText('Uh-oh! You are not authorized'),
 		).not.toBeInTheDocument();
 	});
 
@@ -116,7 +132,7 @@ describe('DashboardPage - AuthZ', () => {
 
 		await waitFor(() => {
 			expect(
-				screen.queryByText(/is not authorized to perform/),
+				screen.queryByText('Uh-oh! You are not authorized'),
 			).not.toBeInTheDocument();
 		});
 	});
@@ -134,7 +150,7 @@ describe('DashboardPage - AuthZ', () => {
 			screen.findByText('Failed to load dashboard'),
 		).resolves.toBeInTheDocument();
 		expect(
-			screen.queryByText(/is not authorized to perform/),
+			screen.queryByText('Uh-oh! You are not authorized'),
 		).not.toBeInTheDocument();
 	});
 });

@@ -1,4 +1,3 @@
-import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 import { server } from 'mocks-server/server';
 import { AllTheProviders, renderHook, waitFor } from 'tests/test-utils';
 import {
@@ -18,24 +17,33 @@ import {
 	DASHBOARD_NO_EDIT_PERMISSION_REASON,
 } from 'hooks/dashboards/dashboardPermissionReasons';
 
-import { useDashboardEditGuard } from '../useDashboardEditGuard';
+import { useDashboardEditContext } from '../useDashboardEditContext';
 
 const DASHBOARD_ID = 'dash-1';
 
-const dashboard = (locked = false): DashboardtypesGettableDashboardV2DTO =>
-	({ id: DASHBOARD_ID, locked }) as DashboardtypesGettableDashboardV2DTO;
+let lockedDashboard = false;
+
+// The hook reads the dashboard from the loaded subtree, which a bare renderHook
+// has no root page to establish — stand in for it so these cases stay about the
+// permissions and the derivation.
+jest.mock('../useDashboardFetchRequired', () => ({
+	useDashboardFetchRequired: (): { dashboard: unknown } => ({
+		dashboard: { id: DASHBOARD_ID, locked: lockedDashboard },
+	}),
+}));
 
 function renderGuard(
 	locked = false,
 ): ReturnType<
-	typeof renderHook<ReturnType<typeof useDashboardEditGuard>, void>
+	typeof renderHook<ReturnType<typeof useDashboardEditContext>, void>
 > {
-	return renderHook(() => useDashboardEditGuard(dashboard(locked)), {
+	lockedDashboard = locked;
+	return renderHook(() => useDashboardEditContext(), {
 		wrapper: AllTheProviders,
 	});
 }
 
-describe('useDashboardEditGuard - AuthZ', () => {
+describe('useDashboardEditContext - AuthZ', () => {
 	afterEach(() => {
 		jest.restoreAllMocks();
 		server.resetHandlers();

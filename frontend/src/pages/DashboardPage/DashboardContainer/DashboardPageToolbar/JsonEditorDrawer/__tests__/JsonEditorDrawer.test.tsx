@@ -65,7 +65,7 @@ function hookValue(
 	} as ReturnType<typeof useJsonEditor>;
 }
 
-// The derivation has its own suite (useDashboardEditGuard.authz); these cases are
+// The derivation has its own suite (useDashboardEditContext.authz); these cases are
 // about what the UI does with a given edit context, so control it directly.
 const mockEditContext = {
 	isEditable: true,
