@@ -115,9 +115,11 @@ describe('DashboardsList - AuthZ', () => {
 			const cta = screen.getByTestId('new-dashboard-cta');
 			expect(cta).not.toBeDisabled();
 
-			// The chrome stays visible but inert — a live search box over a blocked
-			// table would only produce results the caller cannot be shown.
+			// The chrome stays visible but inert — a live search box or views rail
+			// over a blocked table would only drive filters the caller cannot see the
+			// results of.
 			expect(screen.getByLabelText('Run search')).toBeDisabled();
+			expect(screen.getByTestId('dashboards-view-search')).toBeDisabled();
 		});
 
 		it('renders the table when list is granted', async () => {
@@ -157,9 +159,10 @@ describe('DashboardsList - AuthZ', () => {
 	});
 
 	describe('check failure', () => {
-		// An authz outage must not leave a permanently empty list: fetch anyway and
-		// let the API decide, matching AuthZGuard's fail-open default.
-		it('still fetches the list when the permission check fails', async () => {
+		// The check is the only authority on permission, so an unanswered check is
+		// not a grant. The table is gated on the same signal as the request, so it
+		// explains itself instead of rendering empty.
+		it('blocks the table when the permission check fails', async () => {
 			const onList = jest.fn();
 			server.use(
 				rest.post(AUTHZ_CHECK_URL, (_req, res, ctx) => res(ctx.status(500))),
@@ -169,18 +172,7 @@ describe('DashboardsList - AuthZ', () => {
 						ctx.status(200),
 						ctx.json({
 							status: 'success',
-							data: {
-								dashboards: [
-									{
-										id: 'dash-1',
-										createdBy: 'someone@signoz.io',
-										tags: [],
-										spec: { display: { name: 'Checkout latency' } },
-									},
-								],
-								total: 1,
-								tags: [],
-							},
+							data: { dashboards: [], total: 0, tags: [] },
 						}),
 					);
 				}),
@@ -188,10 +180,12 @@ describe('DashboardsList - AuthZ', () => {
 
 			renderList();
 
-			await expect(
-				screen.findByText('Checkout latency'),
-			).resolves.toBeInTheDocument();
-			expect(onList).toHaveBeenCalled();
+			await waitFor(() => {
+				expect(
+					screen.getByText(/is not authorized to perform/),
+				).toBeInTheDocument();
+			});
+			expect(onList).not.toHaveBeenCalled();
 		});
 	});
 

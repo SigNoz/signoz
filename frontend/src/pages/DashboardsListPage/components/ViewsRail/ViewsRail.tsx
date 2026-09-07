@@ -14,6 +14,7 @@ import { type BuiltinView } from '../../utils/views';
 import ViewNamePopover from './ViewNamePopover';
 
 import styles from './ViewsRail.module.scss';
+import DisabledReasonTooltip from 'lib/authz/components/DisabledReasonTooltip/DisabledReasonTooltip';
 
 interface Props {
 	activeViewId: string;
@@ -29,6 +30,12 @@ interface Props {
 	onReset: () => void;
 	onDelete: (id: string) => Promise<void>;
 	onRename: (id: string, name: string) => void;
+	/**
+	 * Non-empty when the caller cannot list dashboards. Views drive the table, so
+	 * the rail goes inert with the reason rather than rewriting filters for a
+	 * table that cannot render.
+	 */
+	disabledReason?: string;
 }
 
 interface ViewRow {
@@ -54,7 +61,9 @@ function ViewsRail({
 	onReset,
 	onDelete,
 	onRename,
+	disabledReason = '',
 }: Props): JSX.Element {
+	const disabled = !!disabledReason;
 	const [saveOpen, setSaveOpen] = useState(false);
 	const [renamingId, setRenamingId] = useState<string | null>(null);
 	const [query, setQuery] = useState('');
@@ -115,6 +124,7 @@ function ViewsRail({
 					variant="ghost"
 					color="secondary"
 					className={styles.item}
+					disabled={disabled}
 					onClick={(): void => onSelect(row.id)}
 					testId={`dashboards-view-${row.id}`}
 				>
@@ -145,6 +155,7 @@ function ViewsRail({
 									className={styles.itemAction}
 									aria-label="Rename view"
 									title="Rename view"
+									disabled={disabled}
 									onClick={(e): void => e.stopPropagation()}
 								>
 									<PenLine size={12} />
@@ -158,6 +169,7 @@ function ViewsRail({
 							className={cx(styles.itemAction, styles.itemActionDanger)}
 							aria-label="Delete view"
 							title="Delete view"
+							disabled={disabled}
 							onClick={(e): void => {
 								e.stopPropagation();
 								onConfirmDelete(row.id, row.label);
@@ -172,143 +184,168 @@ function ViewsRail({
 	};
 
 	return (
-		<aside className={cx(styles.rail, { [styles.collapsed]: collapsed })}>
-			<div className={styles.header}>
-				<h4 className={styles.headerTitle}>Views</h4>
-				<ViewNamePopover
-					open={saveOpen}
-					onOpenChange={setSaveOpen}
-					onSubmit={handleSaveAsView}
-					title="Save as view"
-					confirmLabel="Save view"
-					testIdPrefix="save-view"
-					trigger={
-						<Button
-							variant="ghost"
-							color="secondary"
-							size="icon"
-							title="Save current filters as a view"
-							testId="dashboards-view-save-trigger"
-						>
-							<Plus size={14} />
-						</Button>
-					}
-				/>
-			</div>
+		// One explanation for the rail rather than one per control: every control in
+		// it is blocked by the same missing permission.
+		<DisabledReasonTooltip
+			reason={disabledReason}
+			kind="denied"
+			side="right"
+			asChild
+		>
+			<aside className={cx(styles.rail, { [styles.collapsed]: collapsed })}>
+				<div className={styles.header}>
+					<h4 className={styles.headerTitle}>Views</h4>
+					<ViewNamePopover
+						open={saveOpen}
+						onOpenChange={setSaveOpen}
+						onSubmit={handleSaveAsView}
+						title="Save as view"
+						confirmLabel="Save view"
+						testIdPrefix="save-view"
+						trigger={
+							<Button
+								variant="ghost"
+								color="secondary"
+								size="icon"
+								title="Save current filters as a view"
+								disabled={disabled}
+								testId="dashboards-view-save-trigger"
+							>
+								<Plus size={14} />
+							</Button>
+						}
+					/>
+				</div>
 
-			<div className={styles.search}>
-				<Input
-					value={query}
-					placeholder="Filter views by name"
-					prefix={<Search size={12} />}
-					testId="dashboards-view-search"
-					onChange={(e: ChangeEvent<HTMLInputElement>): void =>
-						setQuery(e.target.value)
-					}
-				/>
-			</div>
+				<div className={styles.search}>
+					<Input
+						value={query}
+						placeholder="Filter views by name"
+						prefix={<Search size={12} />}
+						disabled={disabled}
+						testId="dashboards-view-search"
+						onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+							setQuery(e.target.value)
+						}
+					/>
+				</div>
 
-			<div className={styles.scroll}>
-				{personal.length > 0 && (
-					<>
-						<div className={styles.groupLabel}>Personal</div>
-						{personal.map((v) => renderItem(v))}
-					</>
-				)}
+				<div className={styles.scroll}>
+					{personal.length > 0 && (
+						<>
+							<div className={styles.groupLabel}>Personal</div>
+							{personal.map((v) => renderItem(v))}
+						</>
+					)}
 
-				{system.length > 0 && (
-					<>
-						<div className={cx(styles.groupLabel, styles.groupLabelSpaced)}>
-							System
-						</div>
-						{system.map((v) => renderItem(v))}
-					</>
-				)}
-
-				{(!q || custom.length > 0) && (
-					<>
-						<div className={cx(styles.groupLabel, styles.groupLabelSpaced)}>
-							My views
-							<Typography.Text className={styles.groupCount}>
-								{customViews.length}
-							</Typography.Text>
-						</div>
-						{customViewsLoading ? (
-							<div className={styles.empty}>Loading views…</div>
-						) : customViews.length === 0 ? (
-							<div className={styles.empty}>
-								No saved views yet. Filter the list, then save it as a view.
+					{system.length > 0 && (
+						<>
+							<div className={cx(styles.groupLabel, styles.groupLabelSpaced)}>
+								System
 							</div>
-						) : (
-							custom.map((v) =>
-								renderItem({
-									id: v.id,
-									label: v.name,
-									icon: Bookmark,
-									deletable: true,
-								}),
-							)
-						)}
-					</>
+							{system.map((v) => renderItem(v))}
+						</>
+					)}
+
+					{(!q || custom.length > 0) && (
+						<>
+							<div className={cx(styles.groupLabel, styles.groupLabelSpaced)}>
+								My views
+								<Typography.Text className={styles.groupCount}>
+									{customViews.length}
+								</Typography.Text>
+							</div>
+							{customViewsLoading ? (
+								<div className={styles.empty}>Loading views…</div>
+							) : customViews.length === 0 ? (
+								<div className={styles.empty}>
+									No saved views yet. Filter the list, then save it as a view.
+								</div>
+							) : (
+								custom.map((v) =>
+									renderItem({
+										id: v.id,
+										label: v.name,
+										icon: Bookmark,
+										deletable: true,
+									}),
+								)
+							)}
+						</>
+					)}
+
+					{noMatches && (
+						<div className={styles.searchEmpty}>
+							No views match &ldquo;{query}&rdquo;
+						</div>
+					)}
+				</div>
+
+				{isCustomActive && isModified && (
+					<div className={styles.dirtyPanel}>
+						<div className={styles.dirtyTitle}>Unsaved changes</div>
+						<div className={styles.dirtyActions}>
+							<Button
+								variant="solid"
+								color="primary"
+								size="sm"
+								disabled={disabled}
+								onClick={handleSaveViewChanges}
+								testId="dashboards-view-save-changes"
+							>
+								Save
+							</Button>
+							<Button
+								variant="outlined"
+								color="secondary"
+								size="sm"
+								disabled={disabled}
+								onClick={(): void => setSaveOpen(true)}
+							>
+								Save as…
+							</Button>
+							<Button
+								variant="ghost"
+								color="secondary"
+								size="sm"
+								disabled={disabled}
+								onClick={onReset}
+							>
+								Reset
+							</Button>
+						</div>
+					</div>
 				)}
 
-				{noMatches && (
-					<div className={styles.searchEmpty}>
-						No views match &ldquo;{query}&rdquo;
+				{!isCustomActive && isModified && (
+					<div className={cx(styles.dirtyPanel, styles.dirtyPanelDefault)}>
+						<div className={styles.dirtyTitle}>Filters active</div>
+						<div className={styles.dirtyActions}>
+							<Button
+								variant="solid"
+								color="primary"
+								size="sm"
+								prefix={<Plus size={12} />}
+								onClick={(): void => setSaveOpen(true)}
+								testId="dashboards-view-save-as-new"
+							>
+								Save as new view
+							</Button>
+							<Button
+								variant="ghost"
+								color="secondary"
+								size="sm"
+								disabled={disabled}
+								onClick={onReset}
+							>
+								Reset
+							</Button>
+						</div>
 					</div>
 				)}
-			</div>
-
-			{isCustomActive && isModified && (
-				<div className={styles.dirtyPanel}>
-					<div className={styles.dirtyTitle}>Unsaved changes</div>
-					<div className={styles.dirtyActions}>
-						<Button
-							variant="solid"
-							color="primary"
-							size="sm"
-							onClick={handleSaveViewChanges}
-							testId="dashboards-view-save-changes"
-						>
-							Save
-						</Button>
-						<Button
-							variant="outlined"
-							color="secondary"
-							size="sm"
-							onClick={(): void => setSaveOpen(true)}
-						>
-							Save as…
-						</Button>
-						<Button variant="ghost" color="secondary" size="sm" onClick={onReset}>
-							Reset
-						</Button>
-					</div>
-				</div>
-			)}
-
-			{!isCustomActive && isModified && (
-				<div className={cx(styles.dirtyPanel, styles.dirtyPanelDefault)}>
-					<div className={styles.dirtyTitle}>Filters active</div>
-					<div className={styles.dirtyActions}>
-						<Button
-							variant="solid"
-							color="primary"
-							size="sm"
-							prefix={<Plus size={12} />}
-							onClick={(): void => setSaveOpen(true)}
-							testId="dashboards-view-save-as-new"
-						>
-							Save as new view
-						</Button>
-						<Button variant="ghost" color="secondary" size="sm" onClick={onReset}>
-							Reset
-						</Button>
-					</div>
-				</div>
-			)}
-			{contextHolder}
-		</aside>
+				{contextHolder}
+			</aside>
+		</DisabledReasonTooltip>
 	);
 }
 

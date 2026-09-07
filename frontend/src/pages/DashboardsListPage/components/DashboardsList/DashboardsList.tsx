@@ -53,9 +53,8 @@ function DashboardsList(): JSX.Element {
 
 	const { user } = useAppContext();
 	// `list` also authorizes pinning and saved views, so it gates the table only.
-	const { canList, hasError: hasPermissionError } =
-		useDashboardCollectionPermissions();
-	const mayList = canList || hasPermissionError;
+	const { canList } = useDashboardCollectionPermissions();
+	const listDisabledReason = canList ? '' : DASHBOARD_NO_LIST_PERMISSION_REASON;
 
 	const { query, isEmpty: filtersEmpty, setQuery } = useDashboardFilters();
 	const [sortColumn, setSortColumn] = useSortColumn();
@@ -147,7 +146,7 @@ function DashboardsList(): JSX.Element {
 		error,
 		refetch,
 	} = useListDashboardsForUserV2(listParams, {
-		query: { keepPreviousData: true, enabled: mayList },
+		query: { keepPreviousData: true, enabled: canList },
 	});
 
 	const apiError = useMemo(
@@ -274,7 +273,7 @@ function DashboardsList(): JSX.Element {
 	// The workspace-empty CTA ("create your first dashboard") belongs only to the
 	// unfiltered All view; every other view's zero result is a no-results state.
 	const showWorkspaceEmpty =
-		mayList &&
+		canList &&
 		!error &&
 		dashboards.length === 0 &&
 		activeViewId === BuiltinViewId.All &&
@@ -286,6 +285,7 @@ function DashboardsList(): JSX.Element {
 	return (
 		<div className={styles.layout}>
 			<ViewsRail
+				disabledReason={listDisabledReason}
 				activeViewId={activeViewId}
 				builtinViews={builtinViews}
 				customViews={customViews}
@@ -317,12 +317,16 @@ function DashboardsList(): JSX.Element {
 									query={query}
 									creatorOptions={creatorOptions}
 									source={source}
-									disabledReason={mayList ? '' : DASHBOARD_NO_LIST_PERMISSION_REASON}
+									disabledReason={listDisabledReason}
 									onQueryChange={handleQueryChange}
 								/>
 							</div>
 							<div className={styles.viewContent}>
-								<AuthZGuardContent checks={LIST_CHECKS}>
+								{/* Fails closed, unlike the guard's default: the fetch is
+								    already gated on the same check, so falling open would
+								    render the table shell with nothing in it and no reason
+								    given. */}
+								<AuthZGuardContent checks={LIST_CHECKS} onFailRenderContent={false}>
 									<DashboardsResults
 										isLoading={isLoading}
 										hasError={!!error}
