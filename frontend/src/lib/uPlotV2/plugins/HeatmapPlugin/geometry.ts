@@ -80,21 +80,67 @@ function createSymlogTransform(threshold: number): AxisTransform {
 	};
 }
 
-function resolveAxisTransform(
-	bounds: number[],
-	scale: HeatmapAxisScale,
-): AxisTransform {
-	if (scale !== HeatmapAxisScale.Log) {
-		return LINEAR_TRANSFORM;
-	}
-	if (canUseLogAxis(bounds)) {
-		return LOG_TRANSFORM;
-	}
-	// All-zero bounds have no magnitude to scale against.
+/** Symmetric log about the threshold the bucket layout implies. All-zero
+ *  boundaries have no magnitude to scale against and stay linear. */
+function resolveSymlogTransform(bounds: number[]): AxisTransform {
 	if (!bounds.some((bound) => bound !== 0)) {
 		return LINEAR_TRANSFORM;
 	}
 	return createSymlogTransform(resolveLinearThreshold(bounds));
+}
+
+/** One typical bucket, in axis space — the mean ratio between adjacent positive
+ *  boundaries, which on a geometric layout is exactly one bucket. */
+function resolveLogGap(positive: number[]): number {
+	const axisFirst = Math.log10(positive[0]);
+	const axisLast = Math.log10(positive[positive.length - 1]);
+	const gap =
+		positive.length > 1
+			? (axisLast - axisFirst) / (positive.length - 1)
+			: Math.log10(FALLBACK_LOG_RATIO);
+	return gap > 0 ? gap : Math.log10(FALLBACK_LOG_RATIO);
+}
+
+/**
+ * Plain log10, with the boundaries a logarithm has no answer for — zero and
+ * below — pinned one bucket beneath the smallest positive one. They keep their
+ * own rows, ticks and labels; only their height is synthetic, and it is the
+ * height of a bucket rather than the decade a symmetric log would spend on them.
+ *
+ * Several of them share that one edge, which squashes them together: a layout
+ * that straddles zero wants `Symlog`. This is the scale for the one non-positive
+ * boundary an explicit-bounds histogram routinely carries — its zero bucket.
+ */
+function createFloorLogTransform(positive: number[]): AxisTransform {
+	const floor = Math.log10(positive[0]) - resolveLogGap(positive);
+	return {
+		toAxisValue: (value) => (value > 0 ? Math.log10(value) : floor),
+		toBucketValue: (axisValue) => 10 ** axisValue,
+	};
+}
+
+function resolveAxisTransform(
+	bounds: number[],
+	scale: HeatmapAxisScale,
+): AxisTransform {
+	if (scale === HeatmapAxisScale.Linear) {
+		return LINEAR_TRANSFORM;
+	}
+	if (scale === HeatmapAxisScale.Symlog) {
+		return resolveSymlogTransform(bounds);
+	}
+	if (canUseLogAxis(bounds)) {
+		return LOG_TRANSFORM;
+	}
+	// A plain log is still a plain log where the boundaries allow one; `Auto`
+	// instead reads the layout and answers with the scale that fits it.
+	if (scale === HeatmapAxisScale.Log) {
+		const positive = bounds.filter((bound) => bound > 0);
+		return positive.length > 0
+			? createFloorLogTransform(positive)
+			: LINEAR_TRANSFORM;
+	}
+	return resolveSymlogTransform(bounds);
 }
 
 /**
