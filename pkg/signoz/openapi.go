@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/apiserver/signozapiserver"
 	"github.com/SigNoz/signoz/pkg/auditor"
 	"github.com/SigNoz/signoz/pkg/authz"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/gateway"
@@ -65,6 +66,13 @@ type OpenAPI struct {
 }
 
 func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumentation) (*OpenAPI, error) {
+	// Build the apiserver with the default config. Only route registration is
+	// needed for spec generation, the server is never started.
+	apiserverConfig, ok := apiserver.NewConfigFactory().New().(*apiserver.Config)
+	if !ok {
+		return nil, errors.NewInternalf(errors.CodeInternal, "cannot build apiserver config for openapi generation")
+	}
+
 	apiserver, err := signozapiserver.NewFactory(
 		struct{ organization.Getter }{},
 		struct{ authz.AuthZ }{},
@@ -112,7 +120,7 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ web.Web }{},
 		struct{ quickfilter.Module }{},
 		struct{ quickfilter.Handler }{},
-	).New(ctx, instrumentation.ToProviderSettings(), apiserver.Config{})
+	).New(ctx, instrumentation.ToProviderSettings(), *apiserverConfig)
 	if err != nil {
 		return nil, err
 	}
