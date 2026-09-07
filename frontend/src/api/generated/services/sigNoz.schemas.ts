@@ -507,6 +507,15 @@ export enum AlertmanagertypesChannelKindDTO {
 	jsmops = 'jsmops',
 	incidentio = 'incidentio',
 }
+export enum AlertmanagertypesChannelListOrderDTO {
+	asc = 'asc',
+	desc = 'desc',
+}
+export enum AlertmanagertypesChannelListSortDTO {
+	updated_at = 'updated_at',
+	created_at = 'created_at',
+	name = 'name',
+}
 export interface ModelLabelSetDTO {
 	[key: string]: string;
 }
@@ -998,6 +1007,44 @@ export interface AlertmanagertypesJiraReceiverConfigDTO {
 	 * @type string
 	 */
 	wont_fix_resolution?: string;
+}
+
+export interface AlertmanagertypesListedNotificationChannelDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	/**
+	 * @type string
+	 */
+	displayName: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	kind?: AlertmanagertypesChannelKindDTO;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: string;
+}
+
+export interface AlertmanagertypesListableNotificationChannelDTO {
+	/**
+	 * @type array
+	 */
+	channels: AlertmanagertypesListedNotificationChannelDTO[];
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	total: number;
 }
 
 export enum AlertmanagertypesMaintenanceKindDTO {
@@ -2389,6 +2436,14 @@ export interface AlertmanagertypesReceiverDTO {
 	 * @type array
 	 */
 	wechat_configs?: ConfigWechatConfigDTO[];
+}
+
+export interface AlertmanagertypesTestableNotificationChannelDTO {
+	config: AlertmanagertypesChannelConfigDTO;
+}
+
+export interface AlertmanagertypesUpdatableNotificationChannelDTO {
+	config: AlertmanagertypesChannelConfigDTO;
 }
 
 export interface AuthtypesAttributeMappingDTO {
@@ -13162,7 +13217,70 @@ export type GetMetricsTreemap200 = {
 	status: string;
 };
 
+export type ListNotificationChannelsParams = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	query?: string;
+	/**
+	 * @description undefined
+	 */
+	kind?: AlertmanagertypesChannelKindDTO;
+	/**
+	 * @description undefined
+	 */
+	sort?: AlertmanagertypesChannelListSortDTO;
+	/**
+	 * @description undefined
+	 */
+	order?: AlertmanagertypesChannelListOrderDTO;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	offset?: number;
+};
+
+export type ListNotificationChannels200 = {
+	data: AlertmanagertypesListableNotificationChannelDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type CreateNotificationChannel201 = {
+	data: AlertmanagertypesGettableNotificationChannelDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteNotificationChannelPathParameters = {
+	id: string;
+};
+export type GetNotificationChannelPathParameters = {
+	id: string;
+};
+export type GetNotificationChannel200 = {
+	data: AlertmanagertypesGettableNotificationChannelDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateNotificationChannelPathParameters = {
+	id: string;
+};
+export type UpdateNotificationChannel200 = {
 	data: AlertmanagertypesGettableNotificationChannelDTO;
 	/**
 	 * @type string

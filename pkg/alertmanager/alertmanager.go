@@ -37,6 +37,9 @@ type Alertmanager interface {
 	// ListAllChannels lists all channels for all organizations. It is used by the legacy alertmanager only.
 	ListAllChannels(context.Context) ([]*alertmanagertypes.Channel, error)
 
+	// Nil params lists every channel, unordered and unpaged.
+	ListNotificationChannels(context.Context, string, *alertmanagertypes.ListChannelsParams) (*alertmanagertypes.ListableNotificationChannel, error)
+
 	// GetChannelByID gets a channel for the organization.
 	GetChannelByID(context.Context, string, valuer.UUID) (*alertmanagertypes.Channel, error)
 
@@ -48,7 +51,12 @@ type Alertmanager interface {
 
 	// CreateNotificationChannel takes the postable rather than a receiver, because
 	// a receiver carries only the display name.
-	CreateNotificationChannel(context.Context, string, *alertmanagertypes.PostableNotificationChannel) (*alertmanagertypes.Channel, error)
+	CreateNotificationChannel(context.Context, string, alertmanagertypes.PostableNotificationChannel) (*alertmanagertypes.Channel, error)
+
+	UpdateNotificationChannel(context.Context, string, valuer.UUID, alertmanagertypes.UpdatableNotificationChannel) (*alertmanagertypes.Channel, error)
+
+	// TestNotificationChannel sends a test notification for a channel that need not exist.
+	TestNotificationChannel(context.Context, string, alertmanagertypes.TestableNotificationChannel) error
 
 	// DeleteChannelByID deletes a channel for the organization.
 	DeleteChannelByID(context.Context, string, valuer.UUID) error

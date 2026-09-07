@@ -10,7 +10,6 @@ from fixtures import types
 from fixtures.auth import (
     USER_ADMIN_EMAIL,
     USER_ADMIN_PASSWORD,
-    create_active_user,
 )
 
 TIMEOUT = 10
@@ -436,3 +435,273 @@ def test_create_echoes_an_empty_value_on_a_field_with_no_default(
 
     assert created["config"]["spec"]["severity"] == ""
     assert created["config"]["spec"]["class"] == ""
+
+
+def test_notification_channel_v2_lifecycle(  # pylint: disable=too-many-statements
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    cleanup_notification_channels: list[str],
+) -> None:
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    token_hex = uuid.uuid4().hex[:8]
+
+    # ── stage 1: create one channel per kind, oldest first ───────────────────
+    ids: dict[str, str] = {}
+    for label, display_name, kind, spec in [
+        ("alpha", f"Alpha Overview {token_hex}", "slack", {"apiUrl": "https://hooks.slack.test/services/T/B/SECRET", "channel": "#alerts"}),
+        ("beta", f"Beta Escalation {token_hex}", "msteams", {"webhookUrl": "https://teams.test/webhook/abc"}),
+        ("gamma", f"Gamma Overview {token_hex}", "webhook", {"url": "https://webhook.test/hook"}),
+    ]:
+        response = requests.post(
+            signoz.self.host_configs["8080"].get(V2_BASE_URL),
+            json={"name": f"v2-list-{label}-{token_hex}", "displayName": display_name, "config": {"kind": kind, "spec": spec}},
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=TIMEOUT,
+        )
+        assert response.status_code == HTTPStatus.CREATED, response.text
+        ids[label] = response.json()["data"]["id"]
+        cleanup_notification_channels.append(ids[label])
+
+    # ── stage 2: list ─────────────────────────────────────────────────────────
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(V2_BASE_URL),
+        params={"query": token_hex},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=TIMEOUT,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    listed = response.json()["data"]
+    assert listed["total"] == 3
+    assert {channel["kind"] for channel in listed["channels"]} == {"slack", "msteams", "webhook"}
+    assert all("config" not in channel for channel in listed["channels"])
+    assert "SECRET" not in response.text
+    assert [channel["displayName"] for channel in listed["channels"]] == [
+        f"Gamma Overview {token_hex}",
+        f"Beta Escalation {token_hex}",
+        f"Alpha Overview {token_hex}",
+    ]
+
+    # ── stage 3: update ──────────────────────────────────────────────────────
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{V2_BASE_URL}/{ids['alpha']}"),
+        json={"config": {"kind": "slack", "spec": {"apiUrl": "https://hooks.slack.test/services/T/B/Z", "channel": "#incidents"}}},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=TIMEOUT,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    updated = response.json()["data"]
+    assert updated["name"] == f"v2-list-alpha-{token_hex}"
+    assert updated["displayName"] == f"Alpha Overview {token_hex}"
+    assert updated["config"]["spec"]["channel"] == "#incidents"
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(V2_BASE_URL),
+        params={"query": token_hex},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=TIMEOUT,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert [channel["displayName"] for channel in response.json()["data"]["channels"]] == [
+        f"Alpha Overview {token_hex}",
+        f"Gamma Overview {token_hex}",
+        f"Beta Escalation {token_hex}",
+    ]
+
+    # ── stage 4: search by display name ───────────────────────────────────────
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(V2_BASE_URL),
+        params={"query": f"overview {token_hex}"},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=TIMEOUT,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    listed = response.json()["data"]
+    assert listed["total"] == 2
+    assert {channel["displayName"] for channel in listed["channels"]} == {f"Alpha Overview {token_hex}", f"Gamma Overview {token_hex}"}
+
+    # ── stage 5: filter by kind ───────────────────────────────────────────────
+    # msteams is stored as msteamsv2, so the filter has to translate the api kind
+    # rather than match Channel.Type directly.
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(V2_BASE_URL),
+        params={"query": token_hex, "kind": "msteams"},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=TIMEOUT,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    listed = response.json()["data"]
+    assert listed["total"] == 1
+    assert listed["channels"][0]["kind"] == "msteams"
+
+    # ── stage 6: page ─────────────────────────────────────────────────────────
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(V2_BASE_URL),
+        params={"query": token_hex, "limit": 2},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=TIMEOUT,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    listed = response.json()["data"]
+    assert listed["total"] == 3
+    assert len(listed["channels"]) == 2
+
+    # ── stage 7: get by id ────────────────────────────────────────────────────
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{V2_BASE_URL}/{ids['alpha']}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=TIMEOUT,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    fetched = response.json()["data"]
+    assert fetched["name"] == f"v2-list-alpha-{token_hex}"
+    assert fetched["displayName"] == f"Alpha Overview {token_hex}"
+    assert fetched["config"]["spec"]["apiUrl"] == "https://hooks.slack.test/services/T/B/Z"
+    assert fetched["config"]["spec"]["channel"] == "#incidents"
+
+    # ── stage 8: update the kind ──────────────────────────────────────────────
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{V2_BASE_URL}/{ids['beta']}"),
+        json={"config": {"kind": "webhook", "spec": {"url": "https://webhook.test/hook"}}},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=TIMEOUT,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["data"]["config"]["kind"] == "webhook"
+
+    # ── stage 9: delete ───────────────────────────────────────────────────────
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"{V2_BASE_URL}/{ids['gamma']}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=TIMEOUT,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+    cleanup_notification_channels.remove(ids["gamma"])
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{V2_BASE_URL}/{ids['gamma']}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=TIMEOUT,
+    )
+    assert response.status_code == HTTPStatus.NOT_FOUND, response.text
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(V2_BASE_URL),
+        params={"query": token_hex},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=TIMEOUT,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["data"]["total"] == 2
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        pytest.param({"sort": "data"}, id="sort_outside_the_enum"),
+        pytest.param({"order": "sideways"}, id="order_outside_the_enum"),
+        pytest.param({"kind": "telegram"}, id="kind_outside_the_enum"),
+        pytest.param({"limit": -1}, id="negative_limit"),
+        pytest.param({"offset": -1}, id="negative_offset"),
+    ],
+)
+def test_list_rejects_invalid_params(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    params: dict,
+) -> None:
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(V2_BASE_URL),
+        params=params,
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=TIMEOUT,
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+
+
+def test_get_unknown_id(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+) -> None:
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{V2_BASE_URL}/0199a1b2-c3d4-7000-8000-000000000000"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=TIMEOUT,
+    )
+    assert response.status_code == HTTPStatus.NOT_FOUND, response.text
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        pytest.param({"name": "renamed", "config": {"kind": "slack", "spec": {"apiUrl": "https://hooks.slack.test/services/T/B/X"}}}, id="name_in_body"),
+        pytest.param({"displayName": "Renamed", "config": {"kind": "slack", "spec": {"apiUrl": "https://hooks.slack.test/services/T/B/X"}}}, id="display_name_in_body"),
+        pytest.param({"config": {"kind": "slack", "spec": {}}}, id="spec_missing_required_field"),
+        pytest.param({}, id="no_config"),
+    ],
+)
+def test_update_rejects_invalid_bodies(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    cleanup_notification_channels: list[str],
+    body: dict,
+) -> None:
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    name = f"v2-badupdate-{uuid.uuid4().hex[:8]}"
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(V2_BASE_URL),
+        json={"name": name, "config": {"kind": "slack", "spec": {"apiUrl": "https://hooks.slack.test/services/T/B/X"}}},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=TIMEOUT,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    channel_id = response.json()["data"]["id"]
+    cleanup_notification_channels.append(channel_id)
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{V2_BASE_URL}/{channel_id}"),
+        json=body,
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=TIMEOUT,
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        pytest.param({"name": "test-send", "config": {"kind": "slack", "spec": {"apiUrl": "https://hooks.slack.test/services/T/B/X"}}}, id="name_in_body"),
+        pytest.param({"config": {"kind": "slack", "spec": {}}}, id="spec_missing_required_field"),
+        pytest.param({"config": {"kind": "telegram", "spec": {"chatId": 1}}}, id="unmodelled_kind"),
+        pytest.param({}, id="no_config"),
+    ],
+)
+def test_test_rejects_invalid_bodies(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    body: dict,
+) -> None:
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(f"{V2_BASE_URL}/test"),
+        json=body,
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=TIMEOUT,
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text

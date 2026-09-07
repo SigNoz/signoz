@@ -3,6 +3,7 @@ package sqlalertmanagerstore
 import (
 	"context"
 	"database/sql"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -138,21 +139,79 @@ func (store *config) DeleteChannelByID(ctx context.Context, orgID string, id val
 	}, opts...)
 }
 
-func (store *config) ListChannels(ctx context.Context, orgID string) ([]*alertmanagertypes.Channel, error) {
-	var channels []*alertmanagertypes.Channel
+func (store *config) ListChannels(ctx context.Context, orgID string, params *alertmanagertypes.ListChannelsParams) ([]*alertmanagertypes.Channel, int64, error) {
+	// Nil params means no pagination, so every match is on the only page.
+	if params == nil {
+		var channels []*alertmanagertypes.Channel
 
-	err := store.
+		if err := store.
+			sqlstore.
+			BunDB().
+			NewSelect().
+			Model(&channels).
+			Where("org_id = ?", orgID).
+			Scan(ctx); err != nil {
+			return nil, 0, err
+		}
+
+		return channels, int64(len(channels)), nil
+	}
+
+	type listedChannel struct {
+		*alertmanagertypes.Channel `bun:",extend"`
+
+		Total int64 `bun:"total"`
+	}
+
+	rows := make([]*listedChannel, 0)
+
+	q := store.
 		sqlstore.
 		BunDB().
 		NewSelect().
-		Model(&channels).
-		Where("org_id = ?", orgID).
-		Scan(ctx)
-	if err != nil {
-		return nil, err
+		Model(&rows).
+		ColumnExpr("*").
+		ColumnExpr("COUNT(*) OVER () AS total").
+		Where("org_id = ?", orgID)
+
+	formatter := store.sqlstore.Formatter()
+
+	if params.Query != "" {
+		// LOWER(col) LIKE LOWER(?) behaves the same on SQLite (no ILIKE) and
+		// Postgres. The value's % and _ are escaped to match literally, with
+		// ESCAPE pinning backslash as the escape character.
+		q = q.Where(
+			string(formatter.LowerExpression("display_name"))+" LIKE LOWER(?) ESCAPE '\\'",
+			"%"+formatter.EscapeLikePattern(params.Query)+"%",
+		)
 	}
 
-	return channels, nil
+	if !params.Kind.IsZero() {
+		q = q.Where("type = ?", params.Kind.ToStoredType())
+	}
+
+	q = q.
+		OrderExpr(params.Sort.ToColumn() + " " + strings.ToUpper(params.Order.StringValue())).
+		Limit(params.Limit).
+		Offset(params.Offset)
+
+	if err := q.Scan(ctx); err != nil {
+		return nil, 0, err
+	}
+
+	// COUNT(*) OVER () is computed pre-LIMIT, so any returned row carries the
+	// full filter total. Empty result page => zero matches.
+	var total int64
+	if len(rows) > 0 {
+		total = rows[0].Total
+	}
+
+	channels := make([]*alertmanagertypes.Channel, len(rows))
+	for index, row := range rows {
+		channels[index] = row.Channel
+	}
+
+	return channels, total, nil
 }
 
 func (store *config) ListAllChannels(ctx context.Context) ([]*alertmanagertypes.Channel, error) {

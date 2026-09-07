@@ -25,16 +25,10 @@ type PostableNotificationChannel struct {
 }
 
 func (p *PostableNotificationChannel) UnmarshalJSON(data []byte) error {
-	dec := json.NewDecoder(bytes.NewReader(data))
-	dec.DisallowUnknownFields()
-
 	type alias PostableNotificationChannel
 	var tmp alias
-	if err := dec.Decode(&tmp); err != nil {
-		if errors.Ast(err, errors.TypeInvalidInput) {
-			return err
-		}
-		return errors.WrapInvalidInputf(err, ErrCodeAlertmanagerChannelInvalid, "%s", err.Error())
+	if err := decodeStrict(data, &tmp); err != nil {
+		return err
 	}
 
 	*p = PostableNotificationChannel(tmp)
@@ -93,6 +87,81 @@ func (p *PostableNotificationChannel) validateName() error {
 }
 
 // ════════════════════════════════════════════════════════════════════════
+// Updatable
+// ════════════════════════════════════════════════════════════════════════
+
+// Name is immutable, and DisplayName cannot be edited until the routing
+// policies and rules referencing it migrate onto Name.
+type UpdatableNotificationChannel struct {
+	Config ChannelConfig `json:"config" required:"true"`
+}
+
+func (u *UpdatableNotificationChannel) UnmarshalJSON(data []byte) error {
+	if err := decodeChannelConfigBody(data, &u.Config); err != nil {
+		return err
+	}
+
+	return u.Validate()
+}
+
+func (u *UpdatableNotificationChannel) Validate() error {
+	return u.Config.Validate()
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// Testable
+// ════════════════════════════════════════════════════════════════════════
+
+// It carries no name because nothing is persisted: the receiver a test builds
+// is thrown away once the notification is delivered.
+type TestableNotificationChannel struct {
+	Config ChannelConfig `json:"config" required:"true"`
+}
+
+func (t *TestableNotificationChannel) UnmarshalJSON(data []byte) error {
+	if err := decodeChannelConfigBody(data, &t.Config); err != nil {
+		return err
+	}
+
+	return t.Validate()
+}
+
+func (t *TestableNotificationChannel) Validate() error {
+	return t.Config.Validate()
+}
+
+func decodeChannelConfigBody(data []byte, config *ChannelConfig) error {
+	var body struct {
+		Config ChannelConfig `json:"config"`
+	}
+
+	if err := decodeStrict(data, &body); err != nil {
+		return err
+	}
+
+	*config = body.Config
+
+	return nil
+}
+
+// decodeStrict rejects unknown fields. A nested UnmarshalJSON (ChannelConfig,
+// then the spec) already reports which level failed, so its error is returned
+// as it is rather than re-wrapped.
+func decodeStrict(data []byte, target any) error {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+
+	if err := dec.Decode(target); err != nil {
+		if errors.Ast(err, errors.TypeInvalidInput) {
+			return err
+		}
+		return errors.WrapInvalidInputf(err, ErrCodeAlertmanagerChannelInvalid, "%s", err.Error())
+	}
+
+	return nil
+}
+
+// ════════════════════════════════════════════════════════════════════════
 // Gettable
 // ════════════════════════════════════════════════════════════════════════
 
@@ -103,4 +172,28 @@ type GettableNotificationChannel struct {
 	ID          valuer.UUID   `json:"id" required:"true"`
 	CreatedAt   time.Time     `json:"createdAt" required:"true"`
 	UpdatedAt   time.Time     `json:"updatedAt" required:"true"`
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// Listed
+// ════════════════════════════════════════════════════════════════════════
+
+// ListedNotificationChannel carries no configuration. The spec, credentials
+// included, is only returned by a fetch by ID.
+type ListedNotificationChannel struct {
+	ID          valuer.UUID `json:"id" required:"true"`
+	Name        string      `json:"name" required:"true"`
+	DisplayName string      `json:"displayName" required:"true"`
+	// Kind is absent for a row whose stored type no ChannelKind models, which v1
+	// allowed because it accepted every upstream notifier kind.
+	Kind      *ChannelKind `json:"kind,omitempty"`
+	CreatedAt time.Time    `json:"createdAt" required:"true"`
+	UpdatedAt time.Time    `json:"updatedAt" required:"true"`
+}
+
+// ListableNotificationChannel is one page of the channel list. Total counts every
+// channel the filter matches, not just the ones on the page.
+type ListableNotificationChannel struct {
+	Channels []*ListedNotificationChannel `json:"channels" required:"true" nullable:"false"`
+	Total    int64                        `json:"total" required:"true"`
 }

@@ -141,7 +141,23 @@ func (provider *provider) TestAlert(ctx context.Context, orgID string, ruleID st
 }
 
 func (provider *provider) ListChannels(ctx context.Context, orgID string) ([]*alertmanagertypes.Channel, error) {
-	return provider.configStore.ListChannels(ctx, orgID)
+	channels, _, err := provider.configStore.ListChannels(ctx, orgID, nil)
+
+	return channels, err
+}
+
+func (provider *provider) ListNotificationChannels(ctx context.Context, orgID string, params *alertmanagertypes.ListChannelsParams) (*alertmanagertypes.ListableNotificationChannel, error) {
+	channels, total, err := provider.configStore.ListChannels(ctx, orgID, params)
+	if err != nil {
+		return nil, err
+	}
+
+	listed := make([]*alertmanagertypes.ListedNotificationChannel, 0, len(channels))
+	for _, channel := range channels {
+		listed = append(listed, channel.ToListedNotificationChannel())
+	}
+
+	return &alertmanagertypes.ListableNotificationChannel{Channels: listed, Total: total}, nil
 }
 
 func (provider *provider) ListAllChannels(ctx context.Context) ([]*alertmanagertypes.Channel, error) {
@@ -244,7 +260,7 @@ func (provider *provider) CreateChannel(ctx context.Context, orgID string, recei
 	return channel, nil
 }
 
-func (provider *provider) CreateNotificationChannel(ctx context.Context, orgID string, postable *alertmanagertypes.PostableNotificationChannel) (*alertmanagertypes.Channel, error) {
+func (provider *provider) CreateNotificationChannel(ctx context.Context, orgID string, postable alertmanagertypes.PostableNotificationChannel) (*alertmanagertypes.Channel, error) {
 	receiver, err := postable.ToReceiver()
 	if err != nil {
 		return nil, err
@@ -278,6 +294,55 @@ func (provider *provider) CreateNotificationChannel(ctx context.Context, orgID s
 	return channel, nil
 }
 
+// UpdateNotificationChannel replaces the channel's configuration. The display
+// name is not in the updatable body because it cannot change, so it is read off
+// the stored channel and fed back into the receiver.
+func (provider *provider) UpdateNotificationChannel(ctx context.Context, orgID string, id valuer.UUID, updatable alertmanagertypes.UpdatableNotificationChannel) (*alertmanagertypes.Channel, error) {
+	channel, err := provider.configStore.GetChannelByID(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	receiver, err := updatable.ToReceiver(channel.DisplayName)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := channel.Update(receiver); err != nil {
+		return nil, err
+	}
+
+	config, err := provider.configStore.Get(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := config.SetGlobalConfig(provider.config.Signoz.Global); err != nil {
+		return nil, err
+	}
+
+	if err := config.UpdateReceiver(receiver); err != nil {
+		return nil, err
+	}
+
+	if err := provider.configStore.UpdateChannel(ctx, orgID, channel, alertmanagertypes.WithCb(func(ctx context.Context) error {
+		return provider.configStore.Set(ctx, config)
+	})); err != nil {
+		return nil, err
+	}
+
+	return channel, nil
+}
+
+func (provider *provider) TestNotificationChannel(ctx context.Context, orgID string, testable alertmanagertypes.TestableNotificationChannel) error {
+	receiver, err := testable.ToReceiver()
+	if err != nil {
+		return err
+	}
+
+	return provider.service.TestReceiver(ctx, orgID, receiver)
+}
+
 func (provider *provider) Config() alertmanagerserver.Config {
 	return provider.config.Signoz.Config
 }
@@ -300,7 +365,7 @@ func (provider *provider) SetDefaultConfig(ctx context.Context, orgID string) er
 }
 
 func (provider *provider) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
-	channels, err := provider.configStore.ListChannels(ctx, orgID.String())
+	channels, _, err := provider.configStore.ListChannels(ctx, orgID.String(), nil)
 	if err != nil {
 		return nil, err
 	}

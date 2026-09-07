@@ -29,6 +29,22 @@ func (p *PostableNotificationChannel) ToReceiver() (*Receiver, error) {
 	return newDefaultedReceiver(receiver)
 }
 
+// ToReceiver builds the upstream receiver for an existing channel, whose display
+// name the caller supplies because the update body cannot carry it.
+func (u *UpdatableNotificationChannel) ToReceiver(displayName string) (*Receiver, error) {
+	postable := PostableNotificationChannel{DisplayName: displayName, Config: u.Config}
+	return postable.ToReceiver()
+}
+
+const testReceiverName = "test-receiver"
+
+// ToReceiver builds a throwaway receiver for a test send. The name is never
+// stored, so it only has to be something the notifier accepts.
+func (t *TestableNotificationChannel) ToReceiver() (*Receiver, error) {
+	postable := PostableNotificationChannel{DisplayName: testReceiverName, Config: t.Config}
+	return postable.ToReceiver()
+}
+
 // ════════════════════════════════════════════════════════════════════════
 // Storage -> API
 // ════════════════════════════════════════════════════════════════════════
@@ -114,4 +130,23 @@ func (c *Channel) ToGettableNotificationChannel() (*GettableNotificationChannel,
 		CreatedAt:   c.CreatedAt,
 		UpdatedAt:   c.UpdatedAt,
 	}, nil
+}
+
+// ToListedNotificationChannel never fails. A row whose stored type no ChannelKind
+// models is listed without a Kind rather than dropped, so one such row cannot
+// fail the whole page.
+func (c *Channel) ToListedNotificationChannel() *ListedNotificationChannel {
+	listed := &ListedNotificationChannel{
+		ID:          c.ID,
+		Name:        c.Name,
+		DisplayName: c.DisplayName,
+		CreatedAt:   c.CreatedAt,
+		UpdatedAt:   c.UpdatedAt,
+	}
+
+	if channelKind, ok := parseStoredChannelType(c.Type); ok {
+		listed.Kind = &channelKind
+	}
+
+	return listed
 }
