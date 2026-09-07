@@ -6,14 +6,18 @@ package opsgenie
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"os"
+	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
@@ -44,6 +48,7 @@ func TestOpsGenieRetry(t *testing.T) {
 		tmpl,
 		promslog.NewNopLogger(),
 		newTestTemplater(tmpl),
+		false,
 	)
 	require.NoError(t, err)
 
@@ -69,6 +74,7 @@ func TestOpsGenieRedactedURL(t *testing.T) {
 		tmpl,
 		promslog.NewNopLogger(),
 		newTestTemplater(tmpl),
+		false,
 	)
 	require.NoError(t, err)
 
@@ -96,6 +102,7 @@ func TestGettingOpsGegineApikeyFromFile(t *testing.T) {
 		tmpl,
 		promslog.NewNopLogger(),
 		newTestTemplater(tmpl),
+		false,
 	)
 	require.NoError(t, err)
 
@@ -216,7 +223,7 @@ func TestOpsGenie(t *testing.T) {
 		},
 	} {
 		t.Run(tc.title, func(t *testing.T) {
-			notifier, err := New(tc.cfg, tmpl, logger, newTestTemplater(tmpl))
+			notifier, err := New(tc.cfg, tmpl, logger, newTestTemplater(tmpl), false)
 			require.NoError(t, err)
 
 			ctx := context.Background()
@@ -292,7 +299,7 @@ func TestOpsGenieWithUpdate(t *testing.T) {
 		APIURL:       &config.URL{URL: u},
 		HTTPConfig:   &commoncfg.HTTPClientConfig{},
 	}
-	notifierWithUpdate, err := New(&opsGenieConfigWithUpdate, tmpl, promslog.NewNopLogger(), newTestTemplater(tmpl))
+	notifierWithUpdate, err := New(&opsGenieConfigWithUpdate, tmpl, promslog.NewNopLogger(), newTestTemplater(tmpl), false)
 	alert := &types.Alert{
 		Alert: model.Alert{
 			StartsAt: time.Now(),
@@ -324,6 +331,111 @@ func TestOpsGenieWithUpdate(t *testing.T) {
 	assert.JSONEq(t, `{"description":"new description"}`, body2)
 }
 
+func TestOpsGenieAdvancedFeatures(t *testing.T) {
+	u, err := url.Parse("https://test-opsgenie-url")
+	require.NoError(t, err)
+	tmpl := test.CreateTmpl(t)
+	ctx := notify.WithGroupKey(context.Background(), "1")
+	key, _ := notify.ExtractGroupKey(ctx)
+	alias := key.Hash()
+
+	cfg := &config.OpsGenieConfig{
+		NotifierConfig: config.NotifierConfig{VSendResolved: true},
+		Message:        `{{ .CommonLabels.Message }}`,
+		Description:    `{{ .CommonLabels.Description }}`,
+		UpdateAlerts:   true,
+		APIKey:         "k",
+		APIURL:         &config.URL{URL: u},
+		HTTPConfig:     &commoncfg.HTTPClientConfig{},
+	}
+	notifier, err := New(cfg, tmpl, promslog.NewNopLogger(), newTestTemplater(tmpl), true)
+	require.NoError(t, err)
+
+	firing := &types.Alert{Alert: model.Alert{
+		StartsAt: time.Now(),
+		EndsAt:   time.Now().Add(time.Hour),
+		Labels:   model.LabelSet{"Message": "m", "Description": "**Alert:** d [View](https://s.io/a)"},
+	}}
+
+	// Fire: create + update message + update description + a timeline note.
+	reqs, _, err := notifier.createRequests(ctx, firing)
+	require.NoError(t, err)
+	require.Len(t, reqs, 4)
+	assert.Equal(t, "https://test-opsgenie-url/v2/alerts", reqs[0].URL.String())
+	assert.Equal(t, fmt.Sprintf("https://test-opsgenie-url/v2/alerts/%s/notes?identifierType=alias", alias), reqs[3].URL.String())
+	assert.Equal(t, http.MethodPost, reqs[3].Method)
+
+	// the note body is the plain-text render: markers stripped, link flattened
+	var noteMsg opsGenieAddNoteMessage
+	require.NoError(t, json.Unmarshal([]byte(readBody(t, reqs[3])), &noteMsg))
+	assert.Equal(t, "Alert: d View (https://s.io/a)", noteMsg.Note)
+
+	// Resolve: note posted before the close.
+	resolved := &types.Alert{Alert: model.Alert{
+		StartsAt: time.Now().Add(-time.Hour),
+		EndsAt:   time.Now().Add(-time.Minute),
+		Labels:   model.LabelSet{"Message": "m", "Description": "d"},
+	}}
+	reqs, _, err = notifier.createRequests(ctx, resolved)
+	require.NoError(t, err)
+	require.Len(t, reqs, 2)
+	assert.Equal(t, fmt.Sprintf("https://test-opsgenie-url/v2/alerts/%s/notes?identifierType=alias", alias), reqs[0].URL.String())
+	assert.Equal(t, fmt.Sprintf("https://test-opsgenie-url/v2/alerts/%s/close?identifierType=alias", alias), reqs[1].URL.String())
+}
+
+func TestOpsGenieNotifyBestEffortNote(t *testing.T) {
+	tmpl := test.CreateTmpl(t)
+	ctx := notify.WithGroupKey(context.Background(), "1")
+
+	firing := &types.Alert{Alert: model.Alert{
+		StartsAt: time.Now(),
+		EndsAt:   time.Now().Add(time.Hour),
+		Labels:   model.LabelSet{"Message": "m", "Description": "d"},
+	}}
+
+	for _, tc := range []struct {
+		name         string
+		createStatus int
+		noteStatus   int
+		wantErr      bool
+		wantRetry    bool
+	}{
+		{name: "note_404_is_dropped", createStatus: http.StatusAccepted, noteStatus: http.StatusNotFound, wantErr: false, wantRetry: true},
+		{name: "note_429_still_retries", createStatus: http.StatusAccepted, noteStatus: http.StatusTooManyRequests, wantErr: true, wantRetry: true},
+		{name: "create_404_still_fails", createStatus: http.StatusNotFound, noteStatus: http.StatusAccepted, wantErr: true, wantRetry: false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if strings.HasSuffix(r.URL.Path, "/notes") {
+					w.WriteHeader(tc.noteStatus)
+					return
+				}
+				w.WriteHeader(tc.createStatus)
+			}))
+			defer srv.Close()
+
+			u, err := url.Parse(srv.URL)
+			require.NoError(t, err)
+			notifier, err := New(&config.OpsGenieConfig{
+				Message:     `{{ .CommonLabels.Message }}`,
+				Description: `{{ .CommonLabels.Description }}`,
+				APIKey:      "k",
+				APIURL:      &config.URL{URL: u},
+				HTTPConfig:  &commoncfg.HTTPClientConfig{},
+			}, tmpl, promslog.NewNopLogger(), newTestTemplater(tmpl), true)
+			require.NoError(t, err)
+
+			retry, err := notifier.Notify(ctx, firing)
+			if tc.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			assert.Equal(t, tc.wantRetry, retry)
+		})
+	}
+}
+
 func TestOpsGenieApiKeyFile(t *testing.T) {
 	u, err := url.Parse("https://test-opsgenie-url")
 	require.NoError(t, err)
@@ -335,7 +447,7 @@ func TestOpsGenieApiKeyFile(t *testing.T) {
 		APIURL:     &config.URL{URL: u},
 		HTTPConfig: &commoncfg.HTTPClientConfig{},
 	}
-	notifierWithUpdate, err := New(&opsGenieConfigWithUpdate, tmpl, promslog.NewNopLogger(), newTestTemplater(tmpl))
+	notifierWithUpdate, err := New(&opsGenieConfigWithUpdate, tmpl, promslog.NewNopLogger(), newTestTemplater(tmpl), false)
 
 	require.NoError(t, err)
 	requests, _, err := notifierWithUpdate.createRequests(ctx)
@@ -435,6 +547,109 @@ func TestPrepareContent(t *testing.T) {
 		// Each alert body wrapped in <div>, separated by <hr>
 		assert.Equal(t, "<div><p>Alert firing in NS: potter-the-harry</p>\n</div><hr><div><p>Alert firing in NS: smart-the-rat</p>\n</div>", desc)
 	})
+}
+
+func TestShrinkMarkdownToFit(t *testing.T) {
+	cases := []struct {
+		name      string
+		md        string
+		budget    int
+		wantEmpty bool
+	}{
+		{"fits untouched", "**bold** text", 1000, false},
+		{"shrinks to fit", strings.Repeat("lorem ipsum ", 500), 1000, false},
+		{"budget too small", strings.Repeat("lorem ipsum ", 500), 10, true},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got, err := shrinkMarkdownToFit(c.md, c.budget)
+			require.NoError(t, err)
+			if c.wantEmpty {
+				assert.Empty(t, got)
+				return
+			}
+			assert.NotEmpty(t, got)
+			assert.LessOrEqual(t, utf8.RuneCountInString(got), c.budget)
+			assert.Equal(t, strings.Count(got, "<p>"), strings.Count(got, "</p>"))
+		})
+	}
+}
+
+func TestBuildHTMLDescriptionOverflow(t *testing.T) {
+	bigPart := strings.Repeat("alpha beta gamma ", 100)
+	cases := []struct {
+		name        string
+		parts       []string
+		budget      int
+		wantTrailer bool
+	}{
+		{"all parts fit", []string{"**a**", "**b**"}, maxDescriptionLenRunes, false},
+		{"empty parts skipped", []string{"", "hello", ""}, maxDescriptionLenRunes, false},
+		{"overflow drops parts with trailer", repeatParts(bigPart, 12), maxDescriptionLenRunes, true},
+		{"single huge part shrunk without trailer", []string{strings.Repeat(bigPart, 20)}, maxDescriptionLenRunes, false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got, err := buildHTMLDescription(c.parts, c.budget)
+			require.NoError(t, err)
+			assert.LessOrEqual(t, utf8.RuneCountInString(got), c.budget)
+			assert.Equal(t, strings.Count(got, "<div>"), strings.Count(got, "</div>"))
+			assert.True(t, strings.HasSuffix(got, "</div>"))
+			if c.wantTrailer {
+				assert.Regexp(t, `…and \d+ more alerts\. Open in SigNoz for the full list\.`, got)
+			} else {
+				assert.NotContains(t, got, "more alerts")
+			}
+		})
+	}
+}
+
+// prepareContent end-to-end: 40 custom-template alerts overflow the description
+// budget yet the posted HTML stays within limits and well-formed.
+func TestPrepareContentDescriptionOverflow(t *testing.T) {
+	tmpl := test.CreateTmpl(t)
+	notifier := &Notifier{
+		conf: &config.OpsGenieConfig{
+			Message:     `{{ .CommonLabels.alertname }}`,
+			Description: `{{ .CommonLabels.alertname }}`,
+		},
+		tmpl:             tmpl,
+		logger:           promslog.NewNopLogger(),
+		templater:        newTestTemplater(tmpl),
+		advancedFeatures: true,
+	}
+
+	bodyTemplate := "**Alert in** $labels.namespace\n\n" + strings.Repeat("detail line for the runbook ", 30)
+	alerts := make([]*types.Alert, 0, 40)
+	for i := range 40 {
+		alerts = append(alerts, &types.Alert{
+			Alert: model.Alert{
+				Labels: model.LabelSet{
+					"alertname": "overflow",
+					"namespace": model.LabelValue(fmt.Sprintf("ns-%d", i)),
+				},
+				Annotations: model.LabelSet{
+					ruletypes.AnnotationBodyTemplate: model.LabelValue(bodyTemplate),
+				},
+				StartsAt: time.Now(),
+				EndsAt:   time.Now().Add(time.Hour),
+			},
+		})
+	}
+
+	_, desc, err := notifier.prepareContent(notify.WithGroupKey(context.Background(), "1"), alerts)
+	require.NoError(t, err)
+	assert.LessOrEqual(t, utf8.RuneCountInString(desc), maxDescriptionLenRunes)
+	assert.Equal(t, strings.Count(desc, "<div>"), strings.Count(desc, "</div>"))
+	assert.Regexp(t, `…and \d+ more alerts\. Open in SigNoz for the full list\.`, desc)
+}
+
+func repeatParts(part string, n int) []string {
+	parts := make([]string, n)
+	for i := range parts {
+		parts[i] = part
+	}
+	return parts
 }
 
 func readBody(t *testing.T, r *http.Request) string {

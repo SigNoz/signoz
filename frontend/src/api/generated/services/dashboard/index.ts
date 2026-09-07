@@ -46,6 +46,8 @@ import type {
 	GetPublicDashboardPathParameters,
 	GetPublicDashboardWidgetQueryRange200,
 	GetPublicDashboardWidgetQueryRangePathParameters,
+	GetSystemDashboard200,
+	GetSystemDashboardPathParameters,
 	ListDashboardViews200,
 	ListDashboardsForUserV2200,
 	ListDashboardsForUserV2Params,
@@ -1885,6 +1887,108 @@ export const useMigrateDashboardV2 = <
 > => {
 	return useMutation(getMigrateDashboardV2MutationOptions(options));
 };
+/**
+ * Returns a dashboard SigNoz ships and owns, addressed by its stable definition name (e.g. `ai-o11y-overview`) rather than its id. System dashboards are read-only and upgraded through releases. The dashboard's own `name` field carries a reserved prefix that the path segment must not include.
+ * @summary Get system dashboard
+ */
+export const getSystemDashboard = (
+	{ name }: GetSystemDashboardPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetSystemDashboard200>({
+		url: `/api/v2/dashboards/system/${name}`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetSystemDashboardQueryKey = ({
+	name,
+}: GetSystemDashboardPathParameters) => {
+	return [`/api/v2/dashboards/system/${name}`] as const;
+};
+
+export const getGetSystemDashboardQueryOptions = <
+	TData = Awaited<ReturnType<typeof getSystemDashboard>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ name }: GetSystemDashboardPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getSystemDashboard>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getGetSystemDashboardQueryKey({ name });
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getSystemDashboard>>
+	> = ({ signal }) => getSystemDashboard({ name }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!name,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getSystemDashboard>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetSystemDashboardQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getSystemDashboard>>
+>;
+export type GetSystemDashboardQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get system dashboard
+ */
+
+export function useGetSystemDashboard<
+	TData = Awaited<ReturnType<typeof getSystemDashboard>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ name }: GetSystemDashboardPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getSystemDashboard>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetSystemDashboardQueryOptions({ name }, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get system dashboard
+ */
+export const invalidateGetSystemDashboard = async (
+	queryClient: QueryClient,
+	{ name }: GetSystemDashboardPathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetSystemDashboardQueryKey({ name }) },
+		options,
+	);
+
+	return queryClient;
+};
+
 /**
  * This endpoint returns the sanitized v2-shape dashboard data for public access. Each panel query is reduced to a safe field subset, so filters and raw query strings are not exposed.
  * @summary Get public dashboard data (v2)

@@ -377,6 +377,11 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 		cteArgs = append(cteArgs, args)
 	}
 
+	if scopeFrags, scopeArgs := b.attachTraceScope(sb, frag != ""); len(scopeFrags) > 0 {
+		cteFragments = append(cteFragments, scopeFrags...)
+		cteArgs = append(cteArgs, scopeArgs...)
+	}
+
 	for i, field := range query.SelectFields {
 		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &field, telemetrytypes.FieldDataTypeUnspecified, keys)
 		if err != nil {

@@ -11,6 +11,7 @@ import { jobEntityConfig } from '../Jobs/entity.config';
 import { daemonSetEntityConfig } from '../DaemonSets/entity.config';
 import { statefulSetEntityConfig } from '../StatefulSets/entity.config';
 import { volumeEntityConfig } from '../Volumes/entity.config';
+import { containerEntityConfig } from '../Containers/entity.config';
 
 type AnyEntityConfig = K8sEntityConfig<
 	K8sEntityData,
@@ -34,6 +35,7 @@ export const entityRegistry: Record<string, AnyEntityConfig> = {
 	[K8sCategories.DAEMONSETS]: registerConfig(daemonSetEntityConfig),
 	[K8sCategories.STATEFULSETS]: registerConfig(statefulSetEntityConfig),
 	[K8sCategories.VOLUMES]: registerConfig(volumeEntityConfig),
+	[K8sCategories.CONTAINERS]: registerConfig(containerEntityConfig),
 };
 
 export function getEntityConfig(category: string): AnyEntityConfig | undefined {

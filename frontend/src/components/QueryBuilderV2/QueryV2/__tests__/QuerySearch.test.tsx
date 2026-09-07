@@ -21,12 +21,6 @@ jest.mock('hooks/useDarkMode', () => ({
 	useIsDarkMode: (): boolean => false,
 }));
 
-jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
-	useDashboardStore: (): { dashboardData: undefined } => ({
-		dashboardData: undefined,
-	}),
-}));
-
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => {
 	const handleRunQuery = jest.fn();
 	return {
@@ -152,15 +146,16 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 			/>,
 		);
 
-		// Wait for debounced API call (300ms debounce + some buffer)
-		await waitFor(() => expect(mockedGetKeysOnMount).toHaveBeenCalled(), {
-			timeout: 2000,
-		});
-
-		const lastArgs = mockedGetKeysOnMount.mock.calls[
-			mockedGetKeysOnMount.mock.calls.length - 1
-		]?.[0] as { signal: unknown; searchText: string };
-		expect(lastArgs).toMatchObject({ signal: DataSource.LOGS, searchText: '' });
+		// Wait for the mount fetch specifically. A debounced fetch from an earlier test
+		// can still land after mockClear(), so waiting on "any call" would let this
+		// assert against that one instead and make the result order-dependent.
+		await waitFor(
+			() =>
+				expect(mockedGetKeysOnMount).toHaveBeenCalledWith(
+					expect.objectContaining({ signal: DataSource.LOGS, searchText: '' }),
+				),
+			{ timeout: 2000 },
+		);
 	});
 
 	it('calls provided onRun on Mod-Enter', async () => {

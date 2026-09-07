@@ -1,4 +1,4 @@
-import PromQLQueryBuilder from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/promQL/query';
+import PromQLQueryBuilder from 'container/QueryBuilder/rawQueryEditors/PromQL/query';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 
 function PromqlSection(): JSX.Element {

@@ -9,7 +9,6 @@ import {
 import { Button } from '@signozhq/ui/button';
 import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
 import { TooltipSimple } from '@signozhq/ui/tooltip';
-import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
 import { InfraMonitoringEvents } from 'constants/events';
@@ -42,6 +41,7 @@ import {
 } from '../hooks';
 
 import { EntityCountsSection } from './components/EntityCountsSection/EntityCountsSection';
+import { EntityMetadataItem } from './components/EntityMetadataItem/EntityMetadataItem';
 import { K8sBaseDetailsContentProps } from './types';
 import { getDrawerDurationMs } from './useDrawerLifecycleStore';
 
@@ -239,41 +239,18 @@ export default function K8sBaseDetailsContent<T>({
 		<>
 			<div className={styles.entityDetailsEntity}>
 				<div className={styles.entityDetailsGrid}>
-					<div className={styles.labelsRow}>
-						{metadataConfig.map((config) => (
-							<Typography.Text
+					{metadataConfig.map((config) => {
+						const value = config.getValue(entity);
+
+						return (
+							<EntityMetadataItem
 								key={config.label}
-								color="muted"
-								size="small"
-								weight="medium"
-								className={styles.entityDetailsMetadataLabel}
-							>
-								{config.label}
-							</Typography.Text>
-						))}
-					</div>
-
-					<div className={styles.valuesRow}>
-						{metadataConfig.map((config) => {
-							const value = config.getValue(entity);
-
-							if (config.render) {
-								return config.render(value, entity);
-							}
-
-							const displayValue = String(value);
-							return (
-								<Typography.Text
-									key={config.label}
-									size="small"
-									weight="medium"
-									className={styles.entityDetailsMetadataValue}
-								>
-									{displayValue}
-								</Typography.Text>
-							);
-						})}
-					</div>
+								label={config.label}
+								value={String(value)}
+								renderedValue={config.render?.(value, entity)}
+							/>
+						);
+					})}
 				</div>
 
 				{countsConfig &&

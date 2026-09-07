@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef } from 'react';
 import { Card, Flex } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import BarChart from 'container/DashboardContainer/visualization/charts/BarChart/BarChart';
+import BarChart from 'lib/visualization/charts/BarChart/BarChart';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { prepareChartData } from 'lib/uPlotV2/utils/dataUtils';

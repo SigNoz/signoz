@@ -16,7 +16,6 @@ import {
 } from 'constants/antlrQueryConstants';
 import { FeatureKeys } from 'constants/features';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
-import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ICurrentQueryData } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
@@ -49,7 +48,6 @@ function BodyTitleRenderer({
 	const { featureFlags } = useAppContext();
 	const [, setCopy] = useCopyToClipboard();
 	const { notifications } = useNotifications();
-	const { viewName } = useGetSavedViewParams();
 
 	const cleanedNodeKey = removeObjectFromString(nodeKey);
 	const isBodyJsonQueryEnabled =
@@ -123,8 +121,6 @@ function BodyTitleRenderer({
 		);
 
 		const queryData: ICurrentQueryData = {
-			name: viewName,
-			id: updatedQuery.id,
 			query: updatedQuery,
 		};
 
@@ -137,7 +133,6 @@ function BodyTitleRenderer({
 		stagedQuery,
 		updateQueriesData,
 		value,
-		viewName,
 	]);
 
 	const onClickHandler = (key: string): void => {

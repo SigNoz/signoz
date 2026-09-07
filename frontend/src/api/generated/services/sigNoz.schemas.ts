@@ -385,6 +385,125 @@ export interface AlertmanagertypesGoogleChatReceiverConfigDTO {
 	webhook_url?: ConfigSecretURLDTO;
 }
 
+export type AlertmanagertypesIncidentIOReceiverConfigDTOMetadata = {
+	[key: string]: string;
+};
+
+export interface AlertmanagertypesIncidentIOReceiverConfigDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	http_config?: ConfigHTTPClientConfigDTO;
+	/**
+	 * @type object
+	 */
+	metadata?: AlertmanagertypesIncidentIOReceiverConfigDTOMetadata;
+	/**
+	 * @type boolean
+	 */
+	send_resolved?: boolean;
+	/**
+	 * @type string
+	 */
+	title?: string;
+	/**
+	 * @type string
+	 */
+	token?: string;
+	/**
+	 * @type string
+	 */
+	url?: string;
+}
+
+export interface AlertmanagertypesJSMOpsReceiverConfigDTO {
+	/**
+	 * @type string
+	 */
+	api_key?: string;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	http_config?: ConfigHTTPClientConfigDTO;
+	/**
+	 * @type string
+	 */
+	message?: string;
+	/**
+	 * @type string
+	 */
+	priority?: string;
+	/**
+	 * @type boolean
+	 */
+	send_resolved?: boolean;
+	/**
+	 * @type string
+	 */
+	tags?: string;
+}
+
+export type AlertmanagertypesJiraReceiverConfigDTOCustomFields = {
+	[key: string]: unknown;
+};
+
+export type ModelDurationDTO = number;
+
+export interface AlertmanagertypesJiraReceiverConfigDTO {
+	/**
+	 * @type object
+	 */
+	custom_fields?: AlertmanagertypesJiraReceiverConfigDTOCustomFields;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	http_config?: ConfigHTTPClientConfigDTO;
+	/**
+	 * @type string
+	 */
+	issue_type?: string;
+	/**
+	 * @type array
+	 */
+	labels?: string[];
+	/**
+	 * @type string
+	 */
+	priority?: string;
+	/**
+	 * @type string
+	 */
+	project?: string;
+	reopen_duration?: ModelDurationDTO;
+	/**
+	 * @type string
+	 */
+	reopen_transition?: string;
+	/**
+	 * @type string
+	 */
+	resolve_transition?: string;
+	/**
+	 * @type boolean
+	 */
+	send_resolved?: boolean;
+	/**
+	 * @type string
+	 */
+	site?: string;
+	/**
+	 * @type string
+	 */
+	summary?: string;
+	/**
+	 * @type string
+	 */
+	wont_fix_resolution?: string;
+}
+
 export enum AlertmanagertypesMaintenanceKindDTO {
 	fixed = 'fixed',
 	recurring = 'recurring',
@@ -598,102 +717,6 @@ export interface ConfigEmailConfigDTO {
 	to?: string;
 }
 
-export type TimeDurationDTO = number;
-
-export interface ConfigURLType2DTO {
-	[key: string]: unknown;
-}
-
-export interface ConfigIncidentioConfigDTO {
-	/**
-	 * @type string
-	 */
-	alert_source_token?: string;
-	/**
-	 * @type string
-	 */
-	alert_source_token_file?: string;
-	http_config?: ConfigHTTPClientConfigDTO;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	max_alerts?: number;
-	/**
-	 * @type boolean
-	 */
-	send_resolved?: boolean;
-	timeout?: TimeDurationDTO;
-	url?: ConfigURLType2DTO;
-	/**
-	 * @type string
-	 */
-	url_file?: string;
-}
-
-export interface ConfigJiraFieldConfigDTO {
-	/**
-	 * @type boolean,null
-	 */
-	enable_update?: boolean | null;
-	/**
-	 * @type string
-	 */
-	template?: string;
-}
-
-export type ModelDurationDTO = number;
-
-export type ConfigJiraConfigDTOCustomFields = { [key: string]: unknown };
-
-export interface ConfigJiraConfigDTO {
-	/**
-	 * @type string
-	 */
-	api_type?: string;
-	api_url?: ConfigURLType2DTO;
-	/**
-	 * @type object
-	 */
-	custom_fields?: ConfigJiraConfigDTOCustomFields;
-	description?: ConfigJiraFieldConfigDTO;
-	http_config?: ConfigHTTPClientConfigDTO;
-	/**
-	 * @type string
-	 */
-	issue_type?: string;
-	/**
-	 * @type array
-	 */
-	labels?: string[];
-	/**
-	 * @type string
-	 */
-	priority?: string;
-	/**
-	 * @type string
-	 */
-	project?: string;
-	reopen_duration?: ModelDurationDTO;
-	/**
-	 * @type string
-	 */
-	reopen_transition?: string;
-	/**
-	 * @type string
-	 */
-	resolve_transition?: string;
-	/**
-	 * @type boolean
-	 */
-	send_resolved?: boolean;
-	summary?: ConfigJiraFieldConfigDTO;
-	/**
-	 * @type string
-	 */
-	wont_fix_resolution?: string;
-}
-
 export interface ConfigMattermostFieldDTO {
 	/**
 	 * @type boolean,null
@@ -879,6 +902,10 @@ export interface ConfigMSTeamsV2ConfigDTO {
 	webhook_url_file?: string;
 }
 
+export interface ConfigURLType2DTO {
+	[key: string]: unknown;
+}
+
 export interface ConfigOpsGenieConfigResponderDTO {
 	/**
 	 * @type string
@@ -986,6 +1013,8 @@ export interface ConfigPagerdutyLinkDTO {
 	 */
 	text?: string;
 }
+
+export type TimeDurationDTO = number;
 
 export type ConfigPagerdutyConfigDTODetails = { [key: string]: unknown };
 
@@ -1648,11 +1677,15 @@ export type AlertmanagertypesPostableChannelDTO = unknown & {
 	/**
 	 * @type array
 	 */
-	incidentio_configs?: ConfigIncidentioConfigDTO[];
+	incidentio_configs?: AlertmanagertypesIncidentIOReceiverConfigDTO[];
 	/**
 	 * @type array
 	 */
-	jira_configs?: ConfigJiraConfigDTO[];
+	jira_configs?: AlertmanagertypesJiraReceiverConfigDTO[];
+	/**
+	 * @type array
+	 */
+	jsmops_configs?: AlertmanagertypesJSMOpsReceiverConfigDTO[];
 	/**
 	 * @type array
 	 */
@@ -1775,11 +1808,15 @@ export interface AlertmanagertypesReceiverDTO {
 	/**
 	 * @type array
 	 */
-	incidentio_configs?: ConfigIncidentioConfigDTO[];
+	incidentio_configs?: AlertmanagertypesIncidentIOReceiverConfigDTO[];
 	/**
 	 * @type array
 	 */
-	jira_configs?: ConfigJiraConfigDTO[];
+	jira_configs?: AlertmanagertypesJiraReceiverConfigDTO[];
+	/**
+	 * @type array
+	 */
+	jsmops_configs?: AlertmanagertypesJSMOpsReceiverConfigDTO[];
 	/**
 	 * @type array
 	 */
@@ -3266,6 +3303,94 @@ export interface CommonJSONRefDTO {
 	 * @type string
 	 */
 	$ref?: string;
+}
+
+export interface ConfigIncidentioConfigDTO {
+	/**
+	 * @type string
+	 */
+	alert_source_token?: string;
+	/**
+	 * @type string
+	 */
+	alert_source_token_file?: string;
+	http_config?: ConfigHTTPClientConfigDTO;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	max_alerts?: number;
+	/**
+	 * @type boolean
+	 */
+	send_resolved?: boolean;
+	timeout?: TimeDurationDTO;
+	url?: ConfigURLType2DTO;
+	/**
+	 * @type string
+	 */
+	url_file?: string;
+}
+
+export type ConfigJiraConfigDTOCustomFields = { [key: string]: unknown };
+
+export interface ConfigJiraFieldConfigDTO {
+	/**
+	 * @type boolean,null
+	 */
+	enable_update?: boolean | null;
+	/**
+	 * @type string
+	 */
+	template?: string;
+}
+
+export interface ConfigJiraConfigDTO {
+	/**
+	 * @type string
+	 */
+	api_type?: string;
+	api_url?: ConfigURLType2DTO;
+	/**
+	 * @type object
+	 */
+	custom_fields?: ConfigJiraConfigDTOCustomFields;
+	description?: ConfigJiraFieldConfigDTO;
+	http_config?: ConfigHTTPClientConfigDTO;
+	/**
+	 * @type string
+	 */
+	issue_type?: string;
+	/**
+	 * @type array
+	 */
+	labels?: string[];
+	/**
+	 * @type string
+	 */
+	priority?: string;
+	/**
+	 * @type string
+	 */
+	project?: string;
+	reopen_duration?: ModelDurationDTO;
+	/**
+	 * @type string
+	 */
+	reopen_transition?: string;
+	/**
+	 * @type string
+	 */
+	resolve_transition?: string;
+	/**
+	 * @type boolean
+	 */
+	send_resolved?: boolean;
+	summary?: ConfigJiraFieldConfigDTO;
+	/**
+	 * @type string
+	 */
+	wont_fix_resolution?: string;
 }
 
 export interface DashboardGridItemDTO {
@@ -4960,6 +5085,53 @@ export interface DashboardtypesGettablePublicDashboardDataV2DTO {
 	publicDashboard?: DashboardtypesGettablePublicDasbhboardDTO;
 }
 
+export interface DashboardtypesGettableSystemDashboardDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type string
+	 */
+	image?: string;
+	/**
+	 * @type boolean
+	 */
+	locked: boolean;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type string
+	 */
+	schemaVersion: string;
+	source: DashboardtypesSourceDTO;
+	spec: DashboardtypesDashboardSpecDTO;
+	/**
+	 * @type array,null
+	 */
+	tags: TagtypesGettableTagDTO[] | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
 export enum DashboardtypesPatchOpDTO {
 	add = 'add',
 	remove = 'remove',
@@ -5321,6 +5493,34 @@ export interface FeaturetypesGettableFeatureDTO {
 	variants?: FeaturetypesGettableFeatureDTOVariants;
 }
 
+export interface GatewaytypesLimitValueDTO {
+	/**
+	 * @type integer,null
+	 */
+	count?: number | null;
+	/**
+	 * @type integer,null
+	 */
+	size?: number | null;
+}
+
+export interface GatewaytypesLimitConfigDTO {
+	day?: GatewaytypesLimitValueDTO;
+	second?: GatewaytypesLimitValueDTO;
+}
+
+export interface GatewaytypesDeprecatedPostableIngestionKeyLimitDTO {
+	config?: GatewaytypesLimitConfigDTO;
+	/**
+	 * @type string
+	 */
+	signal?: string;
+	/**
+	 * @type array,null
+	 */
+	tags?: string[] | null;
+}
+
 export interface GatewaytypesGettableCreatedIngestionKeyDTO {
 	/**
 	 * @type string
@@ -5356,22 +5556,6 @@ export interface GatewaytypesPaginationDTO {
 	 * @type integer
 	 */
 	total?: number;
-}
-
-export interface GatewaytypesLimitValueDTO {
-	/**
-	 * @type integer,null
-	 */
-	count?: number | null;
-	/**
-	 * @type integer,null
-	 */
-	size?: number | null;
-}
-
-export interface GatewaytypesLimitConfigDTO {
-	day?: GatewaytypesLimitValueDTO;
-	second?: GatewaytypesLimitValueDTO;
 }
 
 export interface GatewaytypesLimitMetricValueDTO {
@@ -5491,6 +5675,10 @@ export interface GatewaytypesPostableIngestionKeyDTO {
 
 export interface GatewaytypesPostableIngestionKeyLimitDTO {
 	config?: GatewaytypesLimitConfigDTO;
+	/**
+	 * @type string
+	 */
+	keyId: string;
 	/**
 	 * @type string
 	 */
@@ -7173,6 +7361,249 @@ export interface InframonitoringtypesVolumesDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
+export interface LicensetypesFeatureDTO {
+	/**
+	 * @type boolean
+	 */
+	active?: boolean;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	route?: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	usage?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	usage_limit?: number;
+}
+
+export interface LicensetypesLicenseEventQueueDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	/**
+	 * @type string
+	 */
+	event: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	scheduledAt: string;
+	/**
+	 * @type string
+	 */
+	status: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: string;
+}
+
+export interface LicensetypesLicensePlanDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	/**
+	 * @type string
+	 */
+	description: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type boolean
+	 */
+	isActive: boolean;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: string;
+}
+
+export interface LicensetypesGettableActiveLicenseDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	eventQueue: LicensetypesLicenseEventQueueDTO;
+	/**
+	 * @type array
+	 */
+	features: LicensetypesFeatureDTO[];
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	freeUntil: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	plan: LicensetypesLicensePlanDTO;
+	/**
+	 * @type string
+	 */
+	platform: string;
+	/**
+	 * @type string
+	 */
+	state: string;
+	/**
+	 * @type string
+	 */
+	status: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	validFrom: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	validUntil: number;
+}
+
+export interface LicensetypesGettableLicenseDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	eventQueue: LicensetypesLicenseEventQueueDTO;
+	/**
+	 * @type array
+	 */
+	features: LicensetypesFeatureDTO[];
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	freeUntil: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	plan: LicensetypesLicensePlanDTO;
+	/**
+	 * @type string
+	 */
+	platform: string;
+	/**
+	 * @type string
+	 */
+	state: string;
+	/**
+	 * @type string
+	 */
+	status: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	validFrom: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	validUntil: number;
+}
+
+export interface LicensetypesGettableLicenseWithKeyDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	eventQueue: LicensetypesLicenseEventQueueDTO;
+	/**
+	 * @type array
+	 */
+	features: LicensetypesFeatureDTO[];
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	freeUntil: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 * @format password
+	 */
+	key: string;
+	plan: LicensetypesLicensePlanDTO;
+	/**
+	 * @type string
+	 */
+	platform: string;
+	/**
+	 * @type string
+	 */
+	state: string;
+	/**
+	 * @type string
+	 */
+	status: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	validFrom: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	validUntil: number;
+}
+
+export interface LicensetypesPostableLicenseDTO {
+	/**
+	 * @type string
+	 * @format password
+	 */
+	key?: string;
+}
+
 /**
  * @nullable
  */
@@ -8595,6 +9026,47 @@ export enum Querybuildertypesv5QueryTypeDTO {
 	clickhouse_sql = 'clickhouse_sql',
 	promql = 'promql',
 }
+export enum QuickfiltertypesSourceDTO {
+	traces = 'traces',
+	logs = 'logs',
+	api_monitoring = 'api_monitoring',
+	exceptions = 'exceptions',
+	meter = 'meter',
+	ai_observability = 'ai_observability',
+}
+export interface QuickfiltertypesSourceFiltersDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type array
+	 */
+	filters: TelemetrytypesTelemetryFieldKeyDTO[];
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	source: QuickfiltertypesSourceDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+}
+
+export interface QuickfiltertypesUpdatableQuickFiltersDTO {
+	/**
+	 * @type array
+	 */
+	filters: TelemetrytypesTelemetryFieldKeyDTO[];
+}
+
 export interface RenderErrorResponseDTO {
 	error: ErrorsJSONDTO;
 	/**
@@ -10050,6 +10522,153 @@ export interface SpantypesUpdatableSpanMapperGroupDTO {
 	name?: string | null;
 }
 
+export interface SubscriptiontypesGettableSubscriptionDTO {
+	/**
+	 * @type string
+	 */
+	redirectURL: string;
+}
+
+export interface SubscriptiontypesSubscriptionUsageDayWiseDataDTO {
+	/**
+	 * @type number
+	 * @format double
+	 */
+	count?: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	quantity?: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	size?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	timestamp?: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	total?: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	unitPrice?: number;
+}
+
+export interface SubscriptiontypesSubscriptionUsageDayWiseBreakdownDTO {
+	/**
+	 * @type array,null
+	 */
+	breakdown?: SubscriptiontypesSubscriptionUsageDayWiseDataDTO[] | null;
+	/**
+	 * @type string
+	 */
+	type?: string;
+}
+
+export interface SubscriptiontypesSubscriptionUsageTierDTO {
+	/**
+	 * @type number
+	 * @format double
+	 */
+	quantity?: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	tierCost?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	tierEnd?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	tierStart?: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	unitPrice?: number;
+}
+
+export interface SubscriptiontypesSubscriptionUsageBreakdownDTO {
+	dayWiseBreakdown?: SubscriptiontypesSubscriptionUsageDayWiseBreakdownDTO;
+	/**
+	 * @type array,null
+	 */
+	tiers?: SubscriptiontypesSubscriptionUsageTierDTO[] | null;
+	/**
+	 * @type string
+	 */
+	type?: string;
+	/**
+	 * @type string
+	 */
+	unit?: string;
+}
+
+export interface SubscriptiontypesSubscriptionUsageDetailsDTO {
+	/**
+	 * @type number
+	 * @format double
+	 */
+	baseFee?: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	billTotal?: number;
+	/**
+	 * @type array,null
+	 */
+	breakdown?: SubscriptiontypesSubscriptionUsageBreakdownDTO[] | null;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	total?: number;
+}
+
+export interface SubscriptiontypesGettableSubscriptionUsageDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	billingPeriodEnd?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	billingPeriodStart?: number;
+	details?: SubscriptiontypesSubscriptionUsageDetailsDTO;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	discount?: number;
+	/**
+	 * @type string
+	 */
+	subscriptionStatus?: string;
+}
+
+export interface SubscriptiontypesPostableSubscriptionDTO {
+	/**
+	 * @type string
+	 */
+	url: string;
+}
+
 export type TelemetrytypesGettableFieldKeysDTOKeysAnyOf = {
 	[key: string]: TelemetrytypesTelemetryFieldKeyDTO[];
 };
@@ -10407,6 +11026,11 @@ export type GetAIObservabilityFieldsValuesParams = {
 	 * @description undefined
 	 */
 	name?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	existingQuery?: string;
 };
 
 export type GetAIObservabilityFieldsValues200 = {
@@ -11263,6 +11887,30 @@ export type GetStats200 = {
 	status: string;
 };
 
+export type GetSubscription200 = {
+	data: SubscriptiontypesGettableSubscriptionUsageDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateSubscription201 = {
+	data: SubscriptiontypesGettableSubscriptionDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateSubscription200 = {
+	data: SubscriptiontypesGettableSubscriptionDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetTraceAggregationsPathParameters = {
 	traceID: string;
 };
@@ -11471,6 +12119,17 @@ export type MigrateDashboardV2200 = {
 	status: string;
 };
 
+export type GetSystemDashboardPathParameters = {
+	name: string;
+};
+export type GetSystemDashboard200 = {
+	data: DashboardtypesGettableSystemDashboardDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetFeatures200 = {
 	/**
 	 * @type array
@@ -11514,9 +12173,34 @@ export type CreateIngestionKey201 = {
 export type DeleteIngestionKeyPathParameters = {
 	keyId: string;
 };
+export type GetIngestionKeyPathParameters = {
+	keyId: string;
+};
+export type GetIngestionKey200 = {
+	data: GatewaytypesIngestionKeyDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type UpdateIngestionKeyPathParameters = {
 	keyId: string;
 };
+export type GetIngestionKeyLimitsPathParameters = {
+	keyId: string;
+};
+export type GetIngestionKeyLimits200 = {
+	/**
+	 * @type array,null
+	 */
+	data: GatewaytypesLimitDTO[] | null;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type CreateIngestionKeyLimitPathParameters = {
 	keyId: string;
 };
@@ -11560,6 +12244,31 @@ export type SearchIngestionKeys200 = {
 	status: string;
 };
 
+export type CreateIngestionLimit201 = {
+	data: TypesIdentifiableDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteIngestionLimitPathParameters = {
+	limitId: string;
+};
+export type GetIngestionLimitPathParameters = {
+	limitId: string;
+};
+export type GetIngestionLimit200 = {
+	data: GatewaytypesLimitDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateIngestionLimitPathParameters = {
+	limitId: string;
+};
 export type Healthz200 = {
 	data: FactoryResponseDTO;
 	/**
@@ -11985,6 +12694,31 @@ export type GetPublicDashboardPanelQueryRangeV2200 = {
 	status: string;
 };
 
+export type ListQuickFilters200 = {
+	/**
+	 * @type array
+	 */
+	data: QuickfiltertypesSourceFiltersDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetQuickFiltersPathParameters = {
+	source: string;
+};
+export type GetQuickFilters200 = {
+	data: QuickfiltertypesSourceFiltersDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateQuickFiltersPathParameters = {
+	source: string;
+};
 export type Readyz200 = {
 	data: FactoryResponseDTO;
 	/**
@@ -12581,6 +13315,50 @@ export type GetFlamegraphPathParameters = {
 };
 export type GetFlamegraph200 = {
 	data: SpantypesGettableFlamegraphTraceDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListLicenses200 = {
+	/**
+	 * @type array
+	 */
+	data: LicensetypesGettableLicenseDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ActivateLicense201 = {
+	data: TypesIdentifiableDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteLicensePathParameters = {
+	id: string;
+};
+export type GetLicensePathParameters = {
+	id: string;
+};
+export type GetLicense200 = {
+	data: LicensetypesGettableLicenseWithKeyDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type RefreshLicensePathParameters = {
+	id: string;
+};
+export type GetActiveLicense200 = {
+	data: LicensetypesGettableActiveLicenseDTO;
 	/**
 	 * @type string
 	 */
