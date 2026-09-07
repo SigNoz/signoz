@@ -39,11 +39,9 @@ export interface ResourcePanelConfig {
 /**
  * Do not use CoretypesTypeDTO to represent this,
  * we want to add resource panel configs for only types we actually are using,
- * not all of them. Unmapped resources fall back in `getResourcePanel`.
+ * not all of them
  */
-export const RESOURCE_PANELS: Partial<
-	Record<AuthZResource, ResourcePanelConfig>
-> = {
+export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
 	dashboard: {
 		label: 'Dashboards',
 		description: 'Dashboards and their panels across the workspace.',

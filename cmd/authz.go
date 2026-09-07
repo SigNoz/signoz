@@ -97,7 +97,6 @@ func runGenerateAuthz(_ context.Context) error {
 		coretypes.NewResourceRef(coretypes.ResourceRole).String():                          true,
 		coretypes.NewResourceRef(coretypes.ResourceMetaResourceFactorAPIKey).String():      true,
 		coretypes.NewResourceRef(coretypes.ResourceMetaResourceDashboard).String():         true,
-		coretypes.NewResourceRef(coretypes.ResourceMetaResourcePublicDashboard).String():   true,
 		coretypes.NewResourceRef(coretypes.ResourceMetaResourceLicense).String():           true,
 		coretypes.NewResourceRef(coretypes.ResourceMetaResourceSubscription).String():      true,
 		coretypes.NewResourceRef(coretypes.ResourceTelemetryResourceLogs).String():         true,

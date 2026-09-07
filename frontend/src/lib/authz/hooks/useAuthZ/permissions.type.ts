@@ -19,19 +19,6 @@ export default {
 				allowedVerbs: ['create', 'delete', 'list', 'read', 'update'],
 			},
 			{
-				kind: 'public-dashboard',
-				type: 'metaresource',
-				allowedVerbs: [
-					'attach',
-					'create',
-					'delete',
-					'detach',
-					'list',
-					'read',
-					'update',
-				],
-			},
-			{
 				kind: 'subscription',
 				type: 'metaresource',
 				allowedVerbs: ['create', 'delete', 'list', 'read', 'update'],
