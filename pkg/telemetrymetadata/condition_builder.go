@@ -94,6 +94,9 @@ func (c *conditionBuilder) conditionForKey(
 
 	switch key.FieldDataType {
 	case telemetrytypes.FieldDataTypeString, telemetrytypes.FieldDataTypeUnspecified:
+		// the metadata maps hold strings only, so a numeric operand is
+		// compared in its decimal form instead of casting the map value
+		value = numericOperandToString(value)
 	case telemetrytypes.FieldDataTypeBool:
 		// bool fields are stored as the strings "true" and "false" in the
 		// intrinsic map, so the operand is compared in that form against the
@@ -111,10 +114,13 @@ func (c *conditionBuilder) conditionForKey(
 	fieldExpression, value = querybuilder.DataTypeCollisionHandledFieldName(key, value, fieldExpression, operator)
 
 	// key must exist to apply the main filter. for positive operators the
-	// absent-key rows are excluded (fallback false); for negative operators
-	// they are kept (fallback true) so rows legitimately lacking the key match.
-	keyMissingFallback := operator.IsNegativeOperator()
-	expr := `if(mapContains(%s, %s), %s, %t)`
+	// condition is a plain conjunction, which the skip indexes can analyse;
+	// for negative operators rows lacking the key are kept (fallback true)
+	// so rows legitimately lacking the key match.
+	expr := `(mapContains(%s, %s) AND %s)`
+	if operator.IsNegativeOperator() {
+		expr = `if(mapContains(%s, %s), %s, true)`
+	}
 
 	var cond string
 
@@ -152,23 +158,13 @@ func (c *conditionBuilder) conditionForKey(
 		if !ok {
 			return "", qbtypes.ErrInValues
 		}
-		// instead of using IN, we use `=` + `OR` to make use of index
-		conditions := []string{}
-		for _, value := range values {
-			conditions = append(conditions, sb.E(fieldExpression, value))
-		}
-		cond = sb.Or(conditions...)
+		cond = sb.In(fieldExpression, values...)
 	case qbtypes.FilterOperatorNotIn:
 		values, ok := value.([]any)
 		if !ok {
 			return "", qbtypes.ErrInValues
 		}
-		// instead of using NOT IN, we use `!=` + `AND` to make use of index
-		conditions := []string{}
-		for _, value := range values {
-			conditions = append(conditions, sb.NE(fieldExpression, value))
-		}
-		cond = sb.And(conditions...)
+		cond = sb.NotIn(fieldExpression, values...)
 
 	// exists and not exists
 	// in the query builder, `exists` and `not exists` are used for
@@ -188,7 +184,33 @@ func (c *conditionBuilder) conditionForKey(
 		}
 	}
 
-	return fmt.Sprintf(expr, columns[0].Name, sb.Var(key.Name), cond, keyMissingFallback), nil
+	return fmt.Sprintf(expr, columns[0].Name, sb.Var(key.Name), cond), nil
+}
+
+// numericOperandToString converts a numeric operand, or a list of them, to
+// its decimal string form. Other values are returned unchanged.
+func numericOperandToString(value any) any {
+	switch v := value.(type) {
+	case float64:
+		return strconv.FormatFloat(v, 'f', -1, 64)
+	case float32:
+		return strconv.FormatFloat(float64(v), 'f', -1, 32)
+	case int:
+		return strconv.Itoa(v)
+	case int64:
+		return strconv.FormatInt(v, 10)
+	case int32:
+		return strconv.FormatInt(int64(v), 10)
+	case uint64:
+		return strconv.FormatUint(v, 10)
+	case []any:
+		out := make([]any, len(v))
+		for i, item := range v {
+			out[i] = numericOperandToString(item)
+		}
+		return out
+	}
+	return value
 }
 
 // boolOperandToString converts a bool operand, or a list of them, to the

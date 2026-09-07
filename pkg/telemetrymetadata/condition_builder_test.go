@@ -35,7 +35,7 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorILike,
 			value:         "%admin%",
-			expectedSQL:   "WHERE if(mapContains(attributes, ?), LOWER(attributes['user.id']) LIKE LOWER(?), false)",
+			expectedSQL:   "WHERE (mapContains(attributes, ?) AND LOWER(attributes['user.id']) LIKE LOWER(?))",
 			expectedError: nil,
 		},
 		{
@@ -59,7 +59,7 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorEqual,
 			value:         "admin",
-			expectedSQL:   "WHERE if(mapContains(attributes, ?), attributes['user.id'] = ?, false)",
+			expectedSQL:   "WHERE (mapContains(attributes, ?) AND attributes['user.id'] = ?)",
 			expectedError: nil,
 		},
 		{
@@ -83,7 +83,7 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorIn,
 			value:         []any{"admin", "root"},
-			expectedSQL:   "WHERE if(mapContains(attributes, ?), (attributes['user.id'] = ? OR attributes['user.id'] = ?), false)",
+			expectedSQL:   "WHERE (mapContains(attributes, ?) AND attributes['user.id'] IN (?, ?))",
 			expectedError: nil,
 		},
 		{
@@ -95,7 +95,7 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorNotIn,
 			value:         []any{"admin", "root"},
-			expectedSQL:   "WHERE if(mapContains(attributes, ?), (attributes['user.id'] <> ? AND attributes['user.id'] <> ?), true)",
+			expectedSQL:   "WHERE if(mapContains(attributes, ?), attributes['user.id'] NOT IN (?, ?), true)",
 			expectedError: nil,
 		},
 		{
@@ -107,7 +107,7 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorLike,
 			value:         "%admin%",
-			expectedSQL:   "WHERE if(mapContains(attributes, ?), attributes['user.id'] LIKE ?, false)",
+			expectedSQL:   "WHERE (mapContains(attributes, ?) AND attributes['user.id'] LIKE ?)",
 			expectedError: nil,
 		},
 		{
@@ -131,7 +131,7 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorContains,
 			value:         "admin",
-			expectedSQL:   "WHERE if(mapContains(attributes, ?), LOWER(attributes['user.id']) LIKE LOWER(?), false)",
+			expectedSQL:   "WHERE (mapContains(attributes, ?) AND LOWER(attributes['user.id']) LIKE LOWER(?))",
 			expectedError: nil,
 		},
 		{
@@ -155,7 +155,7 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorRegexp,
 			value:         "adm.*",
-			expectedSQL:   "WHERE if(mapContains(attributes, ?), match(attributes['user.id'], ?), false)",
+			expectedSQL:   "WHERE (mapContains(attributes, ?) AND match(attributes['user.id'], ?))",
 			expectedError: nil,
 		},
 		{
@@ -179,7 +179,7 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorEqual,
 			value:         "GET",
-			expectedSQL:   "WHERE if(mapContains(intrinsic_attributes, ?), intrinsic_attributes['http_method'] = ?, false)",
+			expectedSQL:   "WHERE (mapContains(intrinsic_attributes, ?) AND intrinsic_attributes['http_method'] = ?)",
 			expectedError: nil,
 		},
 		{
@@ -191,7 +191,7 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorEqual,
 			value:         true,
-			expectedSQL:   "WHERE if(mapContains(intrinsic_attributes, ?), intrinsic_attributes['has_error'] = ?, false)",
+			expectedSQL:   "WHERE (mapContains(intrinsic_attributes, ?) AND intrinsic_attributes['has_error'] = ?)",
 			expectedArgs:  []any{"has_error", "true"},
 			expectedError: nil,
 		},
@@ -216,7 +216,7 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorEqual,
 			value:         "ERROR",
-			expectedSQL:   "WHERE if(mapContains(intrinsic_attributes, ?), intrinsic_attributes['severity_text'] = ?, false)",
+			expectedSQL:   "WHERE (mapContains(intrinsic_attributes, ?) AND intrinsic_attributes['severity_text'] = ?)",
 			expectedError: nil,
 		},
 		{
@@ -228,7 +228,7 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorExists,
 			value:         nil,
-			expectedSQL:   "WHERE if(mapContains(attributes, ?), mapContains(attributes, 'user.id') = ?, false)",
+			expectedSQL:   "WHERE (mapContains(attributes, ?) AND mapContains(attributes, 'user.id') = ?)",
 			expectedError: nil,
 		},
 		{
@@ -263,4 +263,30 @@ func TestConditionFor(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestConditionForComparesNumbersAsStrings(t *testing.T) {
+	ctx := context.Background()
+	conditionBuilder := NewConditionBuilder(NewFieldMapper())
+	key := telemetrytypes.TelemetryFieldKey{
+		Name:          "http.status_code",
+		FieldContext:  telemetrytypes.FieldContextAttribute,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	}
+
+	sb := sqlbuilder.NewSelectBuilder()
+	cond, _, err := conditionBuilder.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorEqual, float64(200), sb)
+	require.NoError(t, err)
+	sb.Where(cond...)
+	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	assert.Contains(t, sql, "WHERE (mapContains(attributes, ?) AND attributes['http.status_code'] = ?)")
+	assert.Equal(t, []any{"http.status_code", "200"}, args)
+
+	sb = sqlbuilder.NewSelectBuilder()
+	cond, _, err = conditionBuilder.ConditionFor(ctx, valuer.UUID{}, 0, 0, &key, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, qbtypes.ConditionBuilderOptions{}, qbtypes.FilterOperatorIn, []any{float64(200), int64(404)}, sb)
+	require.NoError(t, err)
+	sb.Where(cond...)
+	sql, args = sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	assert.Contains(t, sql, "attributes['http.status_code'] IN (?, ?)")
+	assert.Equal(t, []any{"http.status_code", "200", "404"}, args)
 }
