@@ -79,10 +79,7 @@ def test_gauge_heatmap(
     # this one axis
     assert get_heatmap_buckets(data, "A") == pytest.approx([256.0, 512.0, 1024.0])
 
-    columns_by_host = {
-        host: sorted(series["values"], key=lambda column: column["timestamp"])
-        for host, series in index_series_by_label(get_all_series(data, "A"), "host").items()
-    }
+    columns_by_host = {host: sorted(series["values"], key=lambda column: column["timestamp"]) for host, series in index_series_by_label(get_all_series(data, "A"), "host").items()}
     assert len(columns_by_host) == len(value_by_host)
 
     # a column holds one count per bucket plus a trailing one for the overflow
@@ -138,10 +135,7 @@ def test_sum_heatmap(
     data = response.json()
     assert get_heatmap_buckets(data, "A") == pytest.approx([128.0, 256.0, 512.0, 1024.0])
 
-    columns_by_endpoint = {
-        endpoint: sorted(series["values"], key=lambda column: column["timestamp"])
-        for endpoint, series in index_series_by_label(get_all_series(data, "A"), "endpoint").items()
-    }
+    columns_by_endpoint = {endpoint: sorted(series["values"], key=lambda column: column["timestamp"]) for endpoint, series in index_series_by_label(get_all_series(data, "A"), "endpoint").items()}
     assert len(columns_by_endpoint) == len(value_by_endpoint)
 
     for endpoint, columns in columns_by_endpoint.items():
@@ -247,6 +241,7 @@ def test_linear_buckets(
         [0, 0, 1, 0],
         [0, 0, 0, 1],
     ]
+
 
 def test_zero_bucket(
     signoz: types.SigNoz,
