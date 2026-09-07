@@ -114,6 +114,10 @@ describe('DashboardsList - AuthZ', () => {
 
 			const cta = screen.getByTestId('new-dashboard-cta');
 			expect(cta).not.toBeDisabled();
+
+			// The chrome stays visible but inert — a live search box over a blocked
+			// table would only produce results the caller cannot be shown.
+			expect(screen.getByLabelText('Run search')).toBeDisabled();
 		});
 
 		it('renders the table when list is granted', async () => {

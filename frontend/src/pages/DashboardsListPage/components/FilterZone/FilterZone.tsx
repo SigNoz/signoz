@@ -124,6 +124,7 @@ function FilterZone({
 				<div className={styles.searchInput}>
 					<SearchBar
 						value={draft}
+						disabledReason={disabledReason}
 						placeholder="DSL Filter — e.g. name CONTAINS 'api' AND env IN ['prod','staging']"
 						source={source}
 						dirty={dirty}

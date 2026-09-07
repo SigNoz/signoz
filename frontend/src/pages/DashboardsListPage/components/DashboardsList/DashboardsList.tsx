@@ -53,9 +53,6 @@ function DashboardsList(): JSX.Element {
 
 	const { user } = useAppContext();
 	// `list` also authorizes pinning and saved views, so it gates the table only.
-	// Already resolved — the page gates on it before mounting this tree. A failed
-	// check falls open: fetch anyway and let the API decide, so an authz outage
-	// doesn't leave a permanently empty list.
 	const { canList, hasError: hasPermissionError } =
 		useDashboardCollectionPermissions();
 	const mayList = canList || hasPermissionError;
