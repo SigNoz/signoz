@@ -41,8 +41,17 @@ export interface HeatmapColorOptions {
 
 /** Row-height distribution of the bucket axis. */
 export enum HeatmapAxisScale {
-	Log = 'log',
+	/** Whichever of the three below the boundaries admit: log when they are all
+	 *  positive, symmetric log when they cross zero, linear when they are all
+	 *  zero. The choice is a property of the data, so this is the default. */
+	Auto = 'auto',
 	Linear = 'linear',
+	/** Plain log10. A boundary at or below zero has no logarithm, so it is pinned
+	 *  one bucket below the smallest positive one — see `resolveHeatmapYAxis`. */
+	Log = 'log',
+	/** Linear within ±the smallest non-zero boundary, logarithmic beyond,
+	 *  mirrored across zero. The scale for boundaries that straddle zero. */
+	Symlog = 'symlog',
 }
 
 export interface HeatmapSeriesPoint {

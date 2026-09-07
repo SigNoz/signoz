@@ -48,7 +48,7 @@ export default function Heatmap(props: HeatmapChartProps): JSX.Element {
 		width,
 		height,
 		isDarkMode,
-		axisScale = HeatmapAxisScale.Log,
+		axisScale = HeatmapAxisScale.Auto,
 		yAxisUnit,
 		decimalPrecision,
 		timezone,

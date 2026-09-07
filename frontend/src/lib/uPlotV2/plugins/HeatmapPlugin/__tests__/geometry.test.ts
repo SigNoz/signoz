@@ -254,7 +254,7 @@ describe('decimateAxisSplits', () => {
 	});
 });
 
-describe('resolveHeatmapYAxis — symmetric log', () => {
+describe('resolveHeatmapYAxis — the scale auto picks', () => {
 	// The OTel SDK default explicit bucket boundaries, which start at zero.
 	const OTEL = [
 		0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000,
@@ -266,7 +266,7 @@ describe('resolveHeatmapYAxis — symmetric log', () => {
 
 	/** Row heights in axis units, which map linearly to pixels. */
 	function rowHeights(bounds: number[]): number[] {
-		const { edges } = resolveHeatmapYAxis(bounds, HeatmapAxisScale.Log);
+		const { edges } = resolveHeatmapYAxis(bounds, HeatmapAxisScale.Auto);
 		return edges.slice(1).map((edge, index) => edge - edges[index]);
 	}
 
@@ -281,21 +281,27 @@ describe('resolveHeatmapYAxis — symmetric log', () => {
 	}
 
 	it('keeps a zero boundary on a log axis instead of giving up to linear', () => {
-		const { splits } = resolveHeatmapYAxis([0, 5, 10], HeatmapAxisScale.Log);
+		const { splits } = resolveHeatmapYAxis([0, 5, 10], HeatmapAxisScale.Auto);
 
 		// A linear fallback would leave the boundaries untransformed.
 		expect(splits).not.toStrictEqual([0, 5, 10]);
 	});
 
+	it('is what an all-positive layout does NOT get — that stays a plain log', () => {
+		const { splits } = resolveHeatmapYAxis(BOUNDS, HeatmapAxisScale.Auto);
+
+		expect(splits).toStrictEqual(BOUNDS.map((bound) => Math.log10(bound)));
+	});
+
 	it('gives every row a usable height for the OTel default boundaries', () => {
 		// Linear squeezes the 0–100ms buckets — where the data is — under a pixel.
 		expect(shortestRowPx(OTEL, HeatmapAxisScale.Linear)).toBeLessThan(1);
-		expect(shortestRowPx(OTEL, HeatmapAxisScale.Log)).toBeGreaterThan(4);
+		expect(shortestRowPx(OTEL, HeatmapAxisScale.Auto)).toBeGreaterThan(4);
 	});
 
 	it('gives the zero-crossing row a full decade, since it cannot be compressed', () => {
 		const heights = rowHeights(OTEL);
-		const { rows } = resolveHeatmapYAxis(OTEL, HeatmapAxisScale.Log);
+		const { rows } = resolveHeatmapYAxis(OTEL, HeatmapAxisScale.Auto);
 		const nearZero = rows.findIndex((row) => row.lower === 0 && row.upper === 5);
 
 		// One axis unit — the same space a decade gets above the threshold.
@@ -309,7 +315,7 @@ describe('resolveHeatmapYAxis — symmetric log', () => {
 	});
 
 	it('keeps negative boundaries ascending', () => {
-		const { edges } = resolveHeatmapYAxis(SKEW, HeatmapAxisScale.Log);
+		const { edges } = resolveHeatmapYAxis(SKEW, HeatmapAxisScale.Auto);
 
 		expect([...edges].sort((a, b) => a - b)).toStrictEqual(edges);
 	});
@@ -317,7 +323,7 @@ describe('resolveHeatmapYAxis — symmetric log', () => {
 	it('round-trips a boundary back to its bucket value', () => {
 		const { splits, toBucketValue } = resolveHeatmapYAxis(
 			SKEW,
-			HeatmapAxisScale.Log,
+			HeatmapAxisScale.Auto,
 		);
 
 		expect(
@@ -329,7 +335,7 @@ describe('resolveHeatmapYAxis — symmetric log', () => {
 		// Threshold 10 puts -10 at -1 and 0 at 0 in axis space.
 		const { edges, rows } = resolveHeatmapYAxis(
 			[-100, -10, 0, 10, 100],
-			HeatmapAxisScale.Log,
+			HeatmapAxisScale.Auto,
 		);
 		const crossing = rows.findIndex(
 			(row) => row.lower === -10 && row.upper === 0,
@@ -342,14 +348,96 @@ describe('resolveHeatmapYAxis — symmetric log', () => {
 	it('leaves an all-positive layout on a plain log axis', () => {
 		const { splits } = resolveHeatmapYAxis(
 			[128, 256, 1024],
-			HeatmapAxisScale.Log,
+			HeatmapAxisScale.Auto,
 		);
 
 		expect(splits).toStrictEqual([128, 256, 1024].map((b) => Math.log10(b)));
 	});
 
 	it('falls back to linear when every boundary is zero', () => {
-		const { splits } = resolveHeatmapYAxis([0], HeatmapAxisScale.Log);
+		const { splits } = resolveHeatmapYAxis([0], HeatmapAxisScale.Auto);
+
+		expect(splits).toStrictEqual([0]);
+	});
+});
+
+describe('resolveHeatmapYAxis — an explicitly chosen scale', () => {
+	// The low end of the OTel SDK defaults: a zero bucket, then positive bounds.
+	const ZERO_HEAD = [0, 5, 10, 25];
+	// Clock skew in ms — a field that straddles zero.
+	const SKEW = [-100, -10, 0, 10, 100];
+
+	/** Row heights in axis units, which map linearly to pixels. */
+	function rowHeights(bounds: number[], scale: HeatmapAxisScale): number[] {
+		const { edges } = resolveHeatmapYAxis(bounds, scale);
+		return edges.slice(1).map((edge, index) => edge - edges[index]);
+	}
+
+	it('log stays a plain log10 for a positive layout', () => {
+		const { splits } = resolveHeatmapYAxis(BOUNDS, HeatmapAxisScale.Log);
+
+		expect(splits).toStrictEqual(BOUNDS.map((bound) => Math.log10(bound)));
+	});
+
+	it('log keeps its own answer for a zero bucket rather than becoming a symlog', () => {
+		const { splits } = resolveHeatmapYAxis(ZERO_HEAD, HeatmapAxisScale.Log);
+		// One bucket below the smallest positive bound, where a symlog would put it
+		// a whole decade below.
+		const gap = (Math.log10(25) - Math.log10(5)) / 2;
+
+		expect(splits[0]).toBeCloseTo(Math.log10(5) - gap, 6);
+		expect(splits.slice(1)).toStrictEqual([5, 10, 25].map((b) => Math.log10(b)));
+	});
+
+	it('log spends a bucket on the zero-crossing row where symlog spends a decade', () => {
+		const gap = (Math.log10(25) - Math.log10(5)) / 2;
+
+		// Row 1 is (0, 5] — the row above the zero bucket.
+		expect(rowHeights(ZERO_HEAD, HeatmapAxisScale.Log)[1]).toBeCloseTo(gap, 6);
+		expect(rowHeights(ZERO_HEAD, HeatmapAxisScale.Symlog)[1]).toBeCloseTo(1, 6);
+	});
+
+	it('log leaves every edge ascending with a zero bucket in the layout', () => {
+		const { edges } = resolveHeatmapYAxis(ZERO_HEAD, HeatmapAxisScale.Log);
+
+		expect([...edges].sort((a, b) => a - b)).toStrictEqual(edges);
+	});
+
+	it('log squashes several non-positive boundaries onto one edge — what symlog is for', () => {
+		const { edges } = resolveHeatmapYAxis(SKEW, HeatmapAxisScale.Log);
+
+		// -100, -10 and 0 have no logarithm and share the floor.
+		expect(edges[1]).toBe(edges[2]);
+		expect(edges[2]).toBe(edges[3]);
+		expect([...edges].sort((a, b) => a - b)).toStrictEqual(edges);
+	});
+
+	it('log has nothing to compress without a positive boundary and stays linear', () => {
+		const { splits } = resolveHeatmapYAxis([-5, 0], HeatmapAxisScale.Log);
+
+		expect(splits).toStrictEqual([-5, 0]);
+	});
+
+	it('symlog is a choice for a positive layout too, and is not the log axis', () => {
+		const positive = [1, 10, 100];
+
+		expect(
+			resolveHeatmapYAxis(positive, HeatmapAxisScale.Log).splits,
+		).toStrictEqual([0, 1, 2]);
+		// Threshold 1: the boundaries sit a decade apart, one unit above the linear band.
+		expect(
+			resolveHeatmapYAxis(positive, HeatmapAxisScale.Symlog).splits,
+		).toStrictEqual([1, 2, 3]);
+	});
+
+	it('symlog places boundaries either side of zero symmetrically', () => {
+		const heights = rowHeights(SKEW, HeatmapAxisScale.Symlog);
+
+		expect(Math.max(...heights) - Math.min(...heights)).toBeCloseTo(0, 6);
+	});
+
+	it('symlog has no magnitude to scale against when every boundary is zero', () => {
+		const { splits } = resolveHeatmapYAxis([0], HeatmapAxisScale.Symlog);
 
 		expect(splits).toStrictEqual([0]);
 	});
