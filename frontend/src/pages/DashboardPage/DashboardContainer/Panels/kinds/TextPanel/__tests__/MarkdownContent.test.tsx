@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
 
-import MarkdownContent from '../MarkdownContent';
-import { loadLanguage } from '../syntaxLanguages';
+import MarkdownContent from '../components/MarkdownContent/MarkdownContent';
+import { loadLanguage } from '../../../utils/syntaxLanguages';
 
 describe('MarkdownContent', () => {
 	describe('security', () => {

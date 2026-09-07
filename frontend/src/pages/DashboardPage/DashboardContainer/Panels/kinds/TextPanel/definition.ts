@@ -1,7 +1,7 @@
 import { Type } from '@signozhq/icons';
 
 import type { PanelDefinition } from '../../types/panelDefinition';
-import EditorPane from './EditorPane';
+import EditorPane from './components/EditorPane/EditorPane';
 import Renderer from './Renderer';
 import { sections } from './sections';
 

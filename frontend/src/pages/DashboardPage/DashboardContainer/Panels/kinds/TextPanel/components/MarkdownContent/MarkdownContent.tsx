@@ -7,10 +7,10 @@ import remarkGfm from 'remark-gfm';
 import {
 	editRenderedOccurrence,
 	type EditableConstruct,
-} from '../../utils/markdownSource';
-import { TASK_LIST } from '../../utils/taskList';
-import CodeBlock from './CodeBlock';
-import TaskCheckbox from './TaskCheckbox';
+} from '../../../../utils/markdownSource';
+import { TASK_LIST } from '../../../../utils/taskList';
+import CodeBlock from '../CodeBlock/CodeBlock';
+import TaskCheckbox from '../TaskCheckbox/TaskCheckbox';
 import { TaskItemOffsetContext } from './taskItemOffset';
 
 import styles from './MarkdownContent.module.scss';
@@ -75,7 +75,6 @@ function MarkdownContent({
 	className,
 	testId = 'markdown-content',
 }: MarkdownContentProps): JSX.Element | null {
-	// Dashboards re-render on every variable tick; parsing is the expensive half.
 	// Element overrides that write back to the source: one entry per interactive
 	// construct, pairing an `EditableConstruct` with the element it renders as.
 	const components = useMemo<Components>(() => {
@@ -103,10 +102,10 @@ function MarkdownContent({
 
 		return {
 			...READ_ONLY_COMPONENTS,
-			li: ({ node, children: items, ...props }): JSX.Element => (
+			li: ({ node, children, ...props }): JSX.Element => (
 				<li {...props}>
 					<TaskItemOffsetContext.Provider value={node.position?.start.offset}>
-						{items}
+						{children}
 					</TaskItemOffsetContext.Provider>
 				</li>
 			),
@@ -124,6 +123,7 @@ function MarkdownContent({
 		};
 	}, [interactive, children]);
 
+	// Dashboards re-render on every variable tick; parsing is the expensive half.
 	const body = useMemo(
 		() =>
 			children.trim() ? (

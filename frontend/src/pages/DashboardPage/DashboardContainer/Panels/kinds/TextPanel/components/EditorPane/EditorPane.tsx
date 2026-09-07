@@ -4,7 +4,7 @@ import type { EditorVariable } from 'components/MarkdownEditor/types';
 import { dtoToFormModel } from 'pages/DashboardPage/DashboardContainer/DashboardSettings/Variables/variableAdapters';
 import { useDashboardFetchRequired } from 'pages/DashboardPage/DashboardContainer/hooks/useDashboardFetchRequired';
 
-import type { StaticEditorPaneProps } from '../../types/panelDefinition';
+import type { StaticEditorPaneProps } from '../../../../types/panelDefinition';
 import type {
 	DashboardtypesPanelSpecDTO,
 	DashboardtypesTextPanelSpecDTO,

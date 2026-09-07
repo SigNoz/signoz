@@ -8,10 +8,10 @@ import { selectResolvedVariables } from 'pages/DashboardPage/DashboardContainer/
 import { useDashboardStore } from 'pages/DashboardPage/DashboardContainer/store/useDashboardStore';
 
 import type { StaticRendererProps } from '../../types/rendererProps';
-import { interpolateVariables } from './interpolateVariables';
-import MarkdownContent from './MarkdownContent';
-import ScrollToBottomPill from './ScrollToBottomPill';
-import { useOverflowBelow } from './useOverflowBelow';
+import { interpolateVariables } from '../../utils/interpolateVariables';
+import MarkdownContent from './components/MarkdownContent/MarkdownContent';
+import ScrollToBottomPill from './components/ScrollToBottomPill/ScrollToBottomPill';
+import { useOverflowBelow } from '../../hooks/useOverflowBelow';
 
 import styles from './Renderer.module.scss';
 

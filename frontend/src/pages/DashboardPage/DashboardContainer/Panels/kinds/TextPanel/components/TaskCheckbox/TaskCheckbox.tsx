@@ -1,4 +1,4 @@
-import { useTaskItemOffset } from './taskItemOffset';
+import { useTaskItemOffset } from '../MarkdownContent/taskItemOffset';
 
 interface TaskCheckboxProps {
 	checked: boolean;

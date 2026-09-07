@@ -1,4 +1,4 @@
-@use '../../../../../../styles/scrollbar' as *;
+@use '../../../../../../../../styles/scrollbar' as *;
 
 // Style isolation: the subtree is rolled back to user-agent styling, so no global
 // rule reaches the rendered body and the rules below are the only author styles that
