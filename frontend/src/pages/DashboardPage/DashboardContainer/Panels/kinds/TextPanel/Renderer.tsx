@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Pencil } from '@signozhq/icons';
 import cx from 'classnames';
 import {
 	DashboardtypesTextAlignDTO,
@@ -7,6 +8,7 @@ import {
 import { selectResolvedVariables } from 'pages/DashboardPage/DashboardContainer/store/slices/variableSelectionSlice';
 import { useDashboardStore } from 'pages/DashboardPage/DashboardContainer/store/useDashboardStore';
 
+import PanelMessage from '../../components/PanelMessage/PanelMessage';
 import type { StaticRendererProps } from '../../types/rendererProps';
 import { interpolateVariables } from '../../utils/interpolateVariables';
 import MarkdownContent from './components/MarkdownContent/MarkdownContent';
@@ -20,6 +22,16 @@ const HORIZONTAL_ALIGN_CLASS: Record<DashboardtypesTextAlignDTO, string> = {
 	[DashboardtypesTextAlignDTO.center]: styles.alignCenter,
 	[DashboardtypesTextAlignDTO.right]: styles.alignRight,
 };
+
+// Static, so it is not rebuilt on every variable tick.
+const EMPTY_STATE = (
+	<PanelMessage
+		icon={<Pencil size={18} />}
+		title="Nothing written yet"
+		description="Add Markdown to this panel to show content."
+		data-testid="text-panel-empty"
+	/>
+);
 
 const VERTICAL_ALIGN_CLASS: Record<DashboardtypesVerticalAlignDTO, string> = {
 	[DashboardtypesVerticalAlignDTO.top]: styles.alignTop,
@@ -77,7 +89,9 @@ function Renderer({
 				)}
 				data-testid="text-panel"
 			>
-				<MarkdownContent interactive={interactive}>{body}</MarkdownContent>
+				<MarkdownContent interactive={interactive} emptyState={EMPTY_STATE}>
+					{body}
+				</MarkdownContent>
 			</div>
 			{hasMoreBelow && <ScrollToBottomPill onClick={scrollToBottom} />}
 		</div>
