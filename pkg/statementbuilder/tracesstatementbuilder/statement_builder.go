@@ -352,29 +352,6 @@ func lookupIntrinsicOrCalculatedField(name string) (telemetrytypes.TelemetryFiel
 }
 
 // buildListQuery builds a query for list panel type.
-// bulkAttributeColumnNames returns the attribute columns the empty-selectFields list path scans:
-// the physical homes the attributes column-evolution resolves to for [start, end] (legacy maps,
-// the JSON column, or both across the rollout). resources_string is appended separately by the
-// caller and stays a legacy map until the resource column moves to JSON.
-func (b *traceQueryStatementBuilder) bulkAttributeColumnNames(ctx context.Context, start, end uint64) ([]string, error) {
-	evolutions, err := b.metadataStore.GetColumnEvolutions(ctx, []*telemetrytypes.EvolutionSelector{{
-		Signal:       telemetrytypes.SignalTraces,
-		FieldContext: telemetrytypes.FieldContextAttribute,
-		FieldName:    telemetrytypes.EvolutionFieldNameAll,
-	}})
-	if err != nil {
-		return nil, err
-	}
-	cols, err := tracestelemetryschema.BulkAttributeColumns(evolutions, start, end)
-	if err != nil {
-		return nil, err
-	}
-	names := make([]string, len(cols))
-	for i, c := range cols {
-		names[i] = c.Name
-	}
-	return names, nil
-}
 
 func (b *traceQueryStatementBuilder) buildListQuery(
 	ctx context.Context,
@@ -410,14 +387,18 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 	}
 
 	if isSelectFieldsEmpty {
-		attrCols, err := b.bulkAttributeColumnNames(ctx, start, end)
-		if err != nil {
-			return nil, err
-		}
-		for _, col := range attrCols {
+		// The attributes bag is read whole: every physical home is selected
+		// unconditionally — a row's attributes live in exactly one home (or both,
+		// agreeing, during dual-write), and consume.go merges them per row with the
+		// JSON column winning. No evolution lookup is needed for the bag (unlike
+		// per-key reads, which pick typed homes per window for index/cost), and the
+		// read stays correct for rows written by a maps-only exporter past the
+		// rollout. The attributes JSON column exists since migration 1012, the same
+		// assumption getColumn already makes for the resource/scope JSON columns.
+		for _, col := range tracestelemetryschema.ContextualSpanColumns {
 			sb.SelectMore(col)
 		}
-		sb.SelectMore(tracestelemetryschema.SpanResourcesStringColumn)
+		sb.SelectMore(tracestelemetryschema.SpanAttributesColumn)
 	}
 
 	// From table
