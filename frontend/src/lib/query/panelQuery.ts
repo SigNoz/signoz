@@ -101,441 +101,99 @@ export type PartialPanelTypes = {
 	[PANEL_TYPES.HISTOGRAM]: 'histogram';
 };
 
+/**
+ * Builder fields carried across a panel-type switch, per panel type and data source.
+ *
+ * The 21 combinations reduce to a handful of rules, so they are composed rather than
+ * spelled out: logs and traces carry the same fields in every case, metrics splits its
+ * aggregation in two, and each panel type is one of four query shapes. Order is
+ * irrelevant — `handleQueryChange` copies each field independently.
+ *
+ * `panelTypeFormValues` in `__tests__/__fixtures__` pins the previous literal table so
+ * the composition can be shown to reproduce it exactly.
+ */
+
+/** Every field an aggregating query carries — shared by charts, table and pie. */
+const AGGREGATING_FIELDS = [
+	'aggregateAttribute',
+	'aggregateOperator',
+	'filters',
+	'filter',
+	'groupBy',
+	'limit',
+	'having',
+	'orderBy',
+	'functions',
+	'stepInterval',
+	'disabled',
+	'queryName',
+	'legend',
+	'expression',
+	'aggregations',
+] as const;
+
+/** Metrics aggregates over time and then over space, so it carries both steps. */
+const METRICS_AGGREGATION = ['timeAggregation', 'spaceAggregation'] as const;
+
+function omit(fields: readonly string[], ...omitted: string[]): string[] {
+	return fields.filter((field) => !omitted.includes(field));
+}
+
+const SERIES = [...AGGREGATING_FIELDS];
+const SERIES_METRICS = [...SERIES, ...METRICS_AGGREGATION];
+
+// Table and pie reduce each series to a single cell/slice. Note the asymmetry, carried
+// over from the previous table: `reduceTo` is offered for metrics only.
+const SCALAR_METRICS = [...SERIES_METRICS, 'reduceTo'];
+
+/** A single value has no series to group, limit or order. */
+const SINGLE_VALUE = [
+	...omit(AGGREGATING_FIELDS, 'groupBy', 'limit', 'orderBy'),
+	'reduceTo',
+];
+const SINGLE_VALUE_METRICS = [...SINGLE_VALUE, ...METRICS_AGGREGATION];
+
+/** Raw rows carry no aggregation at all. */
+const RAW_ROWS = [
+	'queryName',
+	'filters',
+	'filter',
+	'limit',
+	'orderBy',
+	'functions',
+	'aggregations',
+];
+// Metrics rows drop paging and ordering too, as before.
+const RAW_ROWS_METRICS = ['queryName', 'filters', 'filter', 'aggregations'];
+
+/**
+ * Logs and traces share a builder surface; metrics is the one that differs.
+ *
+ * Each cell gets its own copy. `QueryBuilder`'s provider pushes onto the list it reads
+ * from this map, so cells sharing one array instance would contaminate each other.
+ */
+function bySource(
+	logsAndTraces: readonly string[],
+	metrics: readonly string[],
+): Record<DataSource, any> {
+	return {
+		[DataSource.LOGS]: { builder: { queryData: [...logsAndTraces] } },
+		[DataSource.TRACES]: { builder: { queryData: [...logsAndTraces] } },
+		[DataSource.METRICS]: { builder: { queryData: [...metrics] } },
+	};
+}
+
 export const panelTypeDataSourceFormValuesMap: Record<
 	keyof PartialPanelTypes,
 	Record<DataSource, any>
 > = {
-	[PANEL_TYPES.BAR]: {
-		[DataSource.LOGS]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'filters',
-					'filter',
-					'groupBy',
-					'limit',
-					'having',
-					'orderBy',
-					'functions',
-					'stepInterval',
-					'disabled',
-					'queryName',
-					'legend',
-					'expression',
-					'aggregations',
-				],
-			},
-		},
-		[DataSource.METRICS]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'timeAggregation',
-					'filters',
-					'filter',
-					'spaceAggregation',
-					'groupBy',
-					'limit',
-					'having',
-					'orderBy',
-					'stepInterval',
-					'legend',
-					'queryName',
-					'disabled',
-					'functions',
-					'expression',
-					'aggregations',
-				],
-			},
-		},
-		[DataSource.TRACES]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'filters',
-					'filter',
-					'groupBy',
-					'limit',
-					'having',
-					'orderBy',
-					'functions',
-					'stepInterval',
-					'disabled',
-					'queryName',
-					'legend',
-					'expression',
-					'aggregations',
-				],
-			},
-		},
-	},
-	[PANEL_TYPES.TIME_SERIES]: {
-		[DataSource.LOGS]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'filters',
-					'filter',
-					'groupBy',
-					'limit',
-					'having',
-					'orderBy',
-					'functions',
-					'stepInterval',
-					'disabled',
-					'queryName',
-					'legend',
-					'expression',
-					'aggregations',
-				],
-			},
-		},
-		[DataSource.METRICS]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'timeAggregation',
-					'filters',
-					'filter',
-					'spaceAggregation',
-					'groupBy',
-					'limit',
-					'having',
-					'orderBy',
-					'stepInterval',
-					'legend',
-					'queryName',
-					'disabled',
-					'functions',
-					'expression',
-					'aggregations',
-				],
-			},
-		},
-		[DataSource.TRACES]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'filters',
-					'filter',
-					'groupBy',
-					'limit',
-					'having',
-					'orderBy',
-					'functions',
-					'stepInterval',
-					'disabled',
-					'queryName',
-					'legend',
-					'expression',
-					'aggregations',
-				],
-			},
-		},
-	},
-	[PANEL_TYPES.HISTOGRAM]: {
-		[DataSource.LOGS]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'filters',
-					'filter',
-					'groupBy',
-					'limit',
-					'having',
-					'orderBy',
-					'functions',
-					'stepInterval',
-					'disabled',
-					'queryName',
-					'legend',
-					'expression',
-					'aggregations',
-				],
-			},
-		},
-		[DataSource.METRICS]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'timeAggregation',
-					'filters',
-					'filter',
-					'spaceAggregation',
-					'groupBy',
-					'limit',
-					'having',
-					'orderBy',
-					'stepInterval',
-					'legend',
-					'queryName',
-					'disabled',
-					'functions',
-					'expression',
-					'aggregations',
-				],
-			},
-		},
-		[DataSource.TRACES]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'filters',
-					'filter',
-					'groupBy',
-					'limit',
-					'having',
-					'orderBy',
-					'functions',
-					'stepInterval',
-					'disabled',
-					'queryName',
-					'legend',
-					'expression',
-					'aggregations',
-				],
-			},
-		},
-	},
-	[PANEL_TYPES.TABLE]: {
-		[DataSource.LOGS]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'filters',
-					'filter',
-					'groupBy',
-					'limit',
-					'having',
-					'orderBy',
-					'functions',
-					'stepInterval',
-					'disabled',
-					'queryName',
-					'expression',
-					'legend',
-					'aggregations',
-				],
-			},
-		},
-		[DataSource.METRICS]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'timeAggregation',
-					'filters',
-					'filter',
-					'spaceAggregation',
-					'groupBy',
-					'reduceTo',
-					'limit',
-					'having',
-					'orderBy',
-					'stepInterval',
-					'legend',
-					'queryName',
-					'expression',
-					'disabled',
-					'functions',
-					'aggregations',
-				],
-			},
-		},
-		[DataSource.TRACES]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'filters',
-					'filter',
-					'groupBy',
-					'limit',
-					'having',
-					'orderBy',
-					'functions',
-					'stepInterval',
-					'disabled',
-					'queryName',
-					'expression',
-					'legend',
-					'aggregations',
-				],
-			},
-		},
-	},
-	[PANEL_TYPES.PIE]: {
-		[DataSource.LOGS]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'filters',
-					'filter',
-					'groupBy',
-					'limit',
-					'having',
-					'orderBy',
-					'functions',
-					'stepInterval',
-					'disabled',
-					'queryName',
-					'expression',
-					'legend',
-					'aggregations',
-				],
-			},
-		},
-		[DataSource.METRICS]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'timeAggregation',
-					'filters',
-					'filter',
-					'spaceAggregation',
-					'groupBy',
-					'reduceTo',
-					'limit',
-					'having',
-					'orderBy',
-					'stepInterval',
-					'legend',
-					'queryName',
-					'expression',
-					'disabled',
-					'functions',
-					'aggregations',
-				],
-			},
-		},
-		[DataSource.TRACES]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'filters',
-					'filter',
-					'groupBy',
-					'limit',
-					'having',
-					'orderBy',
-					'functions',
-					'stepInterval',
-					'disabled',
-					'queryName',
-					'expression',
-					'legend',
-					'aggregations',
-				],
-			},
-		},
-	},
-	[PANEL_TYPES.LIST]: {
-		[DataSource.LOGS]: {
-			builder: {
-				queryData: [
-					'queryName',
-					'filters',
-					'filter',
-					'limit',
-					'orderBy',
-					'functions',
-					'aggregations',
-				],
-			},
-		},
-		[DataSource.METRICS]: {
-			builder: {
-				queryData: ['queryName', 'filters', 'filter', 'aggregations'],
-			},
-		},
-		[DataSource.TRACES]: {
-			builder: {
-				queryData: [
-					'queryName',
-					'filters',
-					'filter',
-					'limit',
-					'orderBy',
-					'functions',
-					'aggregations',
-				],
-			},
-		},
-	},
-	[PANEL_TYPES.VALUE]: {
-		[DataSource.LOGS]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'filters',
-					'filter',
-					'reduceTo',
-					'having',
-					'functions',
-					'stepInterval',
-					'queryName',
-					'expression',
-					'disabled',
-					'legend',
-					'aggregations',
-				],
-			},
-		},
-		[DataSource.METRICS]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'timeAggregation',
-					'filters',
-					'filter',
-					'spaceAggregation',
-					'having',
-					'reduceTo',
-					'stepInterval',
-					'legend',
-					'queryName',
-					'expression',
-					'disabled',
-					'functions',
-					'aggregations',
-				],
-			},
-		},
-		[DataSource.TRACES]: {
-			builder: {
-				queryData: [
-					'aggregateAttribute',
-					'aggregateOperator',
-					'filters',
-					'filter',
-					'reduceTo',
-					'having',
-					'functions',
-					'stepInterval',
-					'queryName',
-					'expression',
-					'disabled',
-					'legend',
-					'aggregations',
-				],
-			},
-		},
-	},
+	[PANEL_TYPES.TIME_SERIES]: bySource(SERIES, SERIES_METRICS),
+	[PANEL_TYPES.BAR]: bySource(SERIES, SERIES_METRICS),
+	[PANEL_TYPES.HISTOGRAM]: bySource(SERIES, SERIES_METRICS),
+	[PANEL_TYPES.TABLE]: bySource(SERIES, SCALAR_METRICS),
+	[PANEL_TYPES.PIE]: bySource(SERIES, SCALAR_METRICS),
+	[PANEL_TYPES.VALUE]: bySource(SINGLE_VALUE, SINGLE_VALUE_METRICS),
+	[PANEL_TYPES.LIST]: bySource(RAW_ROWS, RAW_ROWS_METRICS),
 };
 
 export function handleQueryChange(
