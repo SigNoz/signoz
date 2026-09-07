@@ -15,17 +15,29 @@ const exploreDataSourceMap = [DataSource.LOGS, DataSource.TRACES];
 export const DataSourceDropdown = memo(function DataSourceDropdown(
 	props: QueryLabelProps,
 ): JSX.Element {
-	const { onChange, value, style, isListViewPanel = false } = props;
+	const {
+		onChange,
+		value,
+		style,
+		supportedDataSources,
+		isListViewPanel = false,
+	} = props;
 
-	const dataSourceOptions: SelectOption<DataSource, string>[] = isListViewPanel
-		? exploreDataSourceMap.map((source) => ({
-				label: transformToUpperCase(source),
-				value: source,
-			}))
-		: dataSourceMap.map((source) => ({
-				label: transformToUpperCase(source),
-				value: source,
-			}));
+	// An explicit list wins: it says what the caller can visualize, where
+	// `isListViewPanel` only says which panel is asking.
+	const sources =
+		supportedDataSources && supportedDataSources.length > 0
+			? supportedDataSources
+			: isListViewPanel
+				? exploreDataSourceMap
+				: dataSourceMap;
+
+	const dataSourceOptions: SelectOption<DataSource, string>[] = sources.map(
+		(source) => ({
+			label: transformToUpperCase(source),
+			value: source,
+		}),
+	);
 
 	return (
 		<Select

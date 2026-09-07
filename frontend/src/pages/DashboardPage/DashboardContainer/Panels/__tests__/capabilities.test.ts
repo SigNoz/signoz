@@ -12,6 +12,7 @@ import { NO_PANEL_ACTIONS } from '../types/panelDefinition';
 import {
 	getHiddenQueryBuilderFields,
 	getQueryPanelDefinition,
+	getSupportedDataSources,
 	requireQueryPanelDefinition,
 	getSupportedQueryTypes,
 	getSupportedSignals,
@@ -202,6 +203,21 @@ describe('panel capabilities guard', () => {
 	describe('signal support', () => {
 		it.each(ALL_KINDS)('declares the expected signals for %s', (kind) => {
 			expect(getSupportedSignals(kind)).toStrictEqual(EXPECTED_SIGNALS[kind]);
+		});
+
+		it.each(ALL_KINDS)(
+			'offers %s the data sources its signals name, and nothing else',
+			(kind) => {
+				expect(getSupportedDataSources(kind)).toStrictEqual(
+					EXPECTED_SIGNALS[kind].map((signal) => signal as string),
+				);
+			},
+		);
+
+		it('offers nothing for a kind this build cannot render', () => {
+			expect(
+				getSupportedDataSources('signoz/SomeFutureKindPanel' as PanelKind),
+			).toStrictEqual([]);
 		});
 
 		it('List excludes metrics', () => {

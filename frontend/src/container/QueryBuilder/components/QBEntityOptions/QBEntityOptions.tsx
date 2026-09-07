@@ -41,6 +41,8 @@ interface QBEntityOptionsProps {
 	showTraceOperator?: boolean;
 	hasTraceOperator?: boolean;
 	queryVariant?: 'dropdown' | 'static';
+	/** Restricts the data-source dropdown; every known source when omitted. */
+	supportedDataSources?: DataSource[];
 	onChangeDataSource?: (value: DataSource) => void;
 }
 
@@ -62,6 +64,7 @@ export default function QBEntityOptions({
 	onCloneQuery,
 	index,
 	queryVariant,
+	supportedDataSources,
 	hasTraceOperator = false,
 	showTraceOperator = false,
 	onChangeDataSource,
@@ -138,6 +141,7 @@ export default function QBEntityOptions({
 										}}
 										data-testid={`query-data-source-selector-${index}`}
 										value={query?.dataSource || DataSource.METRICS}
+										supportedDataSources={supportedDataSources}
 										isListViewPanel={isListViewPanel}
 										className="query-data-source-dropdown"
 									/>

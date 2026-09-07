@@ -19,6 +19,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 	panelType: newPanelType,
 	filterConfigs = {},
 	queryComponents,
+	supportedDataSources,
 	isListViewPanel = false,
 	showOnlyWhereClause = false,
 	showTraceOperator = false,
@@ -201,6 +202,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 							query={currentQuery.builder.queryData[0]}
 							filterConfigs={queryFilterConfigs}
 							queryComponents={queryComponents}
+							supportedDataSources={supportedDataSources}
 							isMultiQueryAllowed={isMultiQueryAllowed}
 							showTraceOperator={showTraceOperator}
 							hasTraceOperator={hasTraceOperator}
@@ -224,6 +226,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 								query={query}
 								filterConfigs={queryFilterConfigs}
 								queryComponents={queryComponents}
+								supportedDataSources={supportedDataSources}
 								version={version}
 								isMultiQueryAllowed={isMultiQueryAllowed}
 								isAvailableToDisable={false}

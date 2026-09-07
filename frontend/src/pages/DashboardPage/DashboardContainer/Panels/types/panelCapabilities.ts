@@ -1,8 +1,9 @@
 import {
 	Querybuildertypesv5RequestTypeDTO,
-	type TelemetrytypesSignalDTO,
+	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
+import { DataSource } from 'types/common/queryBuilder';
 
 /**
  * Query-builder field-visibility config a panel kind can declare, mirroring the
@@ -12,6 +13,20 @@ import type { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.inte
 export type FilterConfigsPartial = NonNullable<
 	QueryBuilderProps['filterConfigs']
 >;
+
+/**
+ * A signal as the query builder's legacy `DataSource`. The empty signal names no
+ * data source, so it maps to nothing — the one signal a kind never declares.
+ */
+export const SIGNAL_TO_DATA_SOURCE: Record<
+	TelemetrytypesSignalDTO,
+	DataSource | undefined
+> = {
+	[TelemetrytypesSignalDTO.logs]: DataSource.LOGS,
+	[TelemetrytypesSignalDTO.traces]: DataSource.TRACES,
+	[TelemetrytypesSignalDTO.metrics]: DataSource.METRICS,
+	[TelemetrytypesSignalDTO['']]: undefined,
+};
 
 /**
  * Per-signal query-builder field rules for a panel kind. `default` applies to every

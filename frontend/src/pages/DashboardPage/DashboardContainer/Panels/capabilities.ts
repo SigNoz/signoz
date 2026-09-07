@@ -1,9 +1,11 @@
 import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { EQueryType } from 'types/common/dashboard';
+import type { DataSource } from 'types/common/queryBuilder';
 
 import { getPanelDefinition } from './registry';
 import {
 	mergeQueryBuilderFieldRule,
+	SIGNAL_TO_DATA_SOURCE,
 	type FilterConfigsPartial,
 } from './types/panelCapabilities';
 import type { RenderableQueryPanelDefinition } from './types/panelDefinition';
@@ -57,6 +59,18 @@ export function getSupportedSignals(
 	kind: PanelKind,
 ): TelemetrytypesSignalDTO[] {
 	return getQueryPanelDefinition(kind)?.supportedSignals ?? [];
+}
+
+/**
+ * The kind's signals as the query builder's `DataSource` list — what its signal
+ * dropdown offers. A kind that visualizes one signal offers one, so the builder
+ * can't be pointed at data the panel would then refuse to render.
+ */
+export function getSupportedDataSources(kind: PanelKind): DataSource[] {
+	return getSupportedSignals(kind).flatMap((signal) => {
+		const dataSource = SIGNAL_TO_DATA_SOURCE[signal];
+		return dataSource ? [dataSource] : [];
+	});
 }
 
 export function isSignalSupported(

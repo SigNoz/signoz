@@ -35,4 +35,7 @@ export type QueryProps = {
 	hasTraceOperator?: boolean;
 	signalSource?: string;
 	isMultiQueryAllowed?: boolean;
-} & Pick<QueryBuilderProps, 'filterConfigs' | 'queryComponents'>;
+} & Pick<
+	QueryBuilderProps,
+	'filterConfigs' | 'queryComponents' | 'supportedDataSources'
+>;

@@ -21,6 +21,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { EQueryType } from 'types/common/dashboard';
 
+import { getSupportedDataSources } from '../../Panels/capabilities';
 import { mergeQueryBuilderFieldRule } from '../../Panels/types/panelCapabilities';
 import type { RenderableQueryPanelDefinition } from '../../Panels/types/panelDefinition';
 import { PANEL_KIND_TO_PANEL_TYPE } from '../../Panels/types/panelKind';
@@ -98,6 +99,13 @@ function PanelEditorQueryBuilder({
 		[panelDefinition.queryBuilderFields, signal],
 	);
 
+	// The signal dropdown offers what this kind can visualize, not every signal the
+	// builder knows — a Heatmap reads a bucket axis, which only metrics carry.
+	const supportedDataSources = useMemo(
+		() => getSupportedDataSources(panelDefinition.kind),
+		[panelDefinition.kind],
+	);
+
 	const items = useMemo(() => {
 		const { supportedQueryTypes } = panelDefinition;
 
@@ -110,6 +118,7 @@ function PanelEditorQueryBuilder({
 						<QueryBuilderV2
 							panelType={panelType}
 							filterConfigs={filterConfigs}
+							supportedDataSources={supportedDataSources}
 							showTraceOperator={!isListViewPanel}
 							version="v3"
 							isListViewPanel={isListViewPanel}
@@ -146,7 +155,14 @@ function PanelEditorQueryBuilder({
 			),
 			children: queryTypeComponents[queryType].component,
 		}));
-	}, [panelDefinition, panelType, filterConfigs, isDarkMode, isListViewPanel]);
+	}, [
+		panelDefinition,
+		panelType,
+		filterConfigs,
+		supportedDataSources,
+		isDarkMode,
+		isListViewPanel,
+	]);
 
 	return (
 		<div

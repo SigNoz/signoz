@@ -32,6 +32,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 		queryVariant,
 		query,
 		filterConfigs,
+		supportedDataSources,
 		isListViewPanel = false,
 		showTraceOperator = false,
 		hasTraceOperator = false,
@@ -169,6 +170,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 									isListViewPanel={isListViewPanel}
 									index={index}
 									queryVariant={queryVariant}
+									supportedDataSources={supportedDataSources}
 									onChangeDataSource={handleChangeDataSource}
 								/>
 							</div>

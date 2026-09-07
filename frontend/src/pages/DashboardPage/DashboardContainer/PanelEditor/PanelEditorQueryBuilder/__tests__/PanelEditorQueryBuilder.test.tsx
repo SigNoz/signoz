@@ -65,6 +65,7 @@ function lastQueryBuilderProps(): {
 	isListViewPanel: boolean;
 	showTraceOperator: boolean;
 	filterConfigs: unknown;
+	supportedDataSources: string[];
 } {
 	const calls = mockQueryBuilderV2.mock.calls;
 	return calls[calls.length - 1][0];
@@ -149,5 +150,42 @@ describe('PanelEditorQueryBuilder field visibility (driven by the capabilities g
 			limit: { isHidden: true, isDisabled: true },
 			filters: { customKey: 'body', customOp: OPERATORS.CONTAINS },
 		});
+	});
+});
+
+describe('PanelEditorQueryBuilder signal dropdown (driven by the capabilities guard)', () => {
+	beforeEach(() => {
+		jest.clearAllMocks();
+		mockUseQueryBuilder.mockReturnValue({
+			currentQuery: { queryType: EQueryType.QUERY_BUILDER },
+			redirectWithQueryBuilderData: jest.fn(),
+		});
+	});
+
+	it('offers metrics alone for the Heatmap kind — the only signal with a bucket axis', () => {
+		renderBuilder('signoz/HeatmapPanel', TelemetrytypesSignalDTO.metrics);
+
+		expect(lastQueryBuilderProps().supportedDataSources).toStrictEqual([
+			'metrics',
+		]);
+	});
+
+	it('offers logs and traces for the List kind, which reads raw rows', () => {
+		renderBuilder('signoz/ListPanel', TelemetrytypesSignalDTO.logs);
+
+		expect(lastQueryBuilderProps().supportedDataSources).toStrictEqual([
+			'logs',
+			'traces',
+		]);
+	});
+
+	it('offers every signal for a kind that visualizes them all', () => {
+		renderBuilder('signoz/TimeSeriesPanel', TelemetrytypesSignalDTO.metrics);
+
+		expect(lastQueryBuilderProps().supportedDataSources).toStrictEqual([
+			'metrics',
+			'logs',
+			'traces',
+		]);
 	});
 });
