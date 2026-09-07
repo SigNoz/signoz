@@ -502,7 +502,9 @@ func (provider *provider) addQuerierRoutes(router *mux.Router) error {
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
-		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+		// Substitution belongs in the frontend, which already holds these values.
+		Deprecated:      true,
+		SecuritySchemes: newSecuritySchemes(types.RoleViewer),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}

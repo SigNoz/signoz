@@ -27078,7 +27078,7 @@ paths:
       - querier
   /api/v5/substitute_vars:
     post:
-      deprecated: false
+      deprecated: true
       description: Replace variables in a query
       operationId: ReplaceVariables
       requestBody:

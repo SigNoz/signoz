@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -22,6 +23,15 @@ import (
 	"github.com/SigNoz/signoz/pkg/variables"
 )
 
+const (
+	// RFC 8594. The boolean form, because removal waits on the frontend, not a date.
+	deprecationHeader      = "Deprecation"
+	deprecationHeaderValue = "true"
+
+	// Named here only so the deprecation log shows a path callers recognise.
+	substituteVarsPath = "/api/v5/substitute_vars"
+)
+
 type Handler interface {
 	QueryRange(rw http.ResponseWriter, req *http.Request)
 	QueryRangePreview(rw http.ResponseWriter, req *http.Request)
@@ -33,10 +43,16 @@ type handler struct {
 	set       factory.ProviderSettings
 	analytics analytics.Analytics
 	querier   Querier
+	logger    *slog.Logger
 }
 
 func NewHandler(set factory.ProviderSettings, querier Querier, analytics analytics.Analytics) Handler {
-	return &handler{set: set, querier: querier, analytics: analytics}
+	return &handler{
+		set:       set,
+		querier:   querier,
+		analytics: analytics,
+		logger:    factory.NewScopedProviderSettings(set, "github.com/SigNoz/signoz/pkg/querier").Logger(),
+	}
 }
 
 func (handler *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
@@ -237,9 +253,20 @@ func (handler *handler) QueryRawStream(rw http.ResponseWriter, req *http.Request
 	}
 }
 
-// TODO(srikanthccv): everything done here can be done on frontend as well
-// For the time being I am adding a helper function.
+// ReplaceVariables substitutes variable values into a query's filter expressions
+// and echoes the rewritten request back.
+//
+// Deprecated: callers already hold these values and can substitute locally.
+// Stays functional until the frontend migrates; removal is a separate change.
 func (handler *handler) ReplaceVariables(rw http.ResponseWriter, req *http.Request) {
+	// Set before decoding, so error responses carry the signal too.
+	rw.Header().Set(deprecationHeader, deprecationHeaderValue)
+	handler.logger.InfoContext(
+		req.Context(),
+		"deprecated endpoint called",
+		slog.String("endpoint", substituteVarsPath),
+		slog.String("replacement", "substitute variables in the frontend before building the request"),
+	)
 
 	var queryRangeRequest qbtypes.QueryRangeRequest
 	if err := binding.JSON.BindBody(req.Body, &queryRangeRequest); err != nil {
