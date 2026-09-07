@@ -38,6 +38,7 @@ func TestGetFirstSeenFromMetricMetadata(t *testing.T) {
 		instrumentationtest.New().ToProviderSettings(),
 		mockTelemetryStore,
 		flaggertest.New(t),
+		NewConfig(),
 	)
 
 	lookupKeys := []telemetrytypes.MetricMetadataLookupKey{

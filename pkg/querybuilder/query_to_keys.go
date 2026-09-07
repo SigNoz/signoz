@@ -72,3 +72,57 @@ func QueryStringToKeysSelectors(query string) []*telemetrytypes.FieldKeySelector
 
 	return keys
 }
+
+// EqualityTerm is one `key = value` term of a filter expression.
+type EqualityTerm struct {
+	Key   *telemetrytypes.TelemetryFieldKey
+	Value string
+}
+
+// QueryStringEqualityTerms returns the `key = value` terms of a filter
+// expression that is a conjunction: every term must hold for a row to match.
+// ok is false when the expression contains OR or NOT, since a term may then
+// be optional.
+func QueryStringEqualityTerms(query string) (terms []EqualityTerm, ok bool) {
+	lexer := grammar.NewFilterQueryLexer(antlr.NewInputStream(query))
+	var lastKey *telemetrytypes.TelemetryFieldKey
+	equalsSeen := false
+	for {
+		tok := lexer.NextToken()
+		if tok.GetTokenType() == antlr.TokenEOF {
+			break
+		}
+		switch tok.GetTokenType() {
+		case grammar.FilterQueryLexerWS:
+			continue
+		case grammar.FilterQueryLexerOR, grammar.FilterQueryLexerNOT, grammar.FilterQueryLexerNOT_EQUALS, grammar.FilterQueryLexerNEQ:
+			return nil, false
+		case grammar.FilterQueryLexerKEY:
+			key := telemetrytypes.GetFieldKeyFromKeyText(tok.GetText())
+			lastKey = &key
+			equalsSeen = false
+		case grammar.FilterQueryLexerEQUALS:
+			equalsSeen = lastKey != nil
+		case grammar.FilterQueryLexerQUOTED_TEXT, grammar.FilterQueryLexerNUMBER, grammar.FilterQueryLexerBOOL:
+			if equalsSeen && lastKey != nil {
+				terms = append(terms, EqualityTerm{Key: lastKey, Value: unquote(tok.GetText())})
+			}
+			lastKey = nil
+			equalsSeen = false
+		default:
+			lastKey = nil
+			equalsSeen = false
+		}
+	}
+	return terms, true
+}
+
+func unquote(text string) string {
+	if len(text) >= 2 {
+		first, last := text[0], text[len(text)-1]
+		if first == last && (first == '\'' || first == '"') {
+			return text[1 : len(text)-1]
+		}
+	}
+	return text
+}

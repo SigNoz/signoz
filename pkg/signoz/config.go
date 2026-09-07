@@ -40,6 +40,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
+	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -96,6 +97,9 @@ type Config struct {
 
 	// Querier config
 	Querier querier.Config `mapstructure:"querier"`
+
+	// TelemetryMetadata config
+	TelemetryMetadata telemetrymetadata.Config `mapstructure:"telemetrymetadata"`
 
 	// Ruler config
 	Ruler ruler.Config `mapstructure:"ruler"`
@@ -166,6 +170,7 @@ func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.R
 		prometheus.NewConfigFactory(),
 		alertmanager.NewConfigFactory(),
 		querier.NewConfigFactory(),
+		telemetrymetadata.NewConfigFactory(),
 		ruler.NewConfigFactory(),
 		emailing.NewConfigFactory(),
 		sharder.NewConfigFactory(),

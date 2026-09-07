@@ -133,3 +133,43 @@ func TestQueryToKeys(t *testing.T) {
 		}
 	}
 }
+
+func TestQueryStringEqualityTerms(t *testing.T) {
+	terms, ok := QueryStringEqualityTerms(`service.name = 'checkout' AND resource.k8s.namespace.name = "prod" AND http.status_code = 500 AND has_error = true`)
+	if !ok {
+		t.Fatalf("expected a conjunction to be accepted")
+	}
+	got := map[string]string{}
+	contexts := map[string]telemetrytypes.FieldContext{}
+	for _, term := range terms {
+		got[term.Key.Name] = term.Value
+		contexts[term.Key.Name] = term.Key.FieldContext
+	}
+	want := map[string]string{"service.name": "checkout", "k8s.namespace.name": "prod", "http.status_code": "500", "has_error": "true"}
+	if len(got) != len(want) {
+		t.Fatalf("expected %d terms, got %v", len(want), got)
+	}
+	for name, value := range want {
+		if got[name] != value {
+			t.Fatalf("expected %s = %q, got %q", name, value, got[name])
+		}
+	}
+	if contexts["k8s.namespace.name"] != telemetrytypes.FieldContextResource {
+		t.Fatalf("expected the resource prefix to set the context")
+	}
+
+	for _, query := range []string{
+		`service.name = 'checkout' OR service.name = 'cart'`,
+		`NOT service.name = 'checkout'`,
+		`service.name != 'checkout'`,
+	} {
+		if _, ok := QueryStringEqualityTerms(query); ok {
+			t.Fatalf("expected %q to be rejected", query)
+		}
+	}
+
+	terms, ok = QueryStringEqualityTerms(`service.name IN ('a', 'b') AND http.route LIKE '/api%' AND env = 'prod'`)
+	if !ok || len(terms) != 1 || terms[0].Key.Name != "env" {
+		t.Fatalf("expected only the equality term, got %v ok=%v", terms, ok)
+	}
+}

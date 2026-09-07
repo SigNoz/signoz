@@ -125,7 +125,7 @@ func newQueryStack(
 	querier.BucketCache,
 	error,
 ) {
-	metadataStore := telemetrymetadata.NewTelemetryMetaStore(settings, telemetryStore, fl)
+	metadataStore := telemetrymetadata.NewTelemetryMetaStore(settings, telemetryStore, fl, config.TelemetryMetadata)
 
 	cfg := config.Querier.Config
 	traceStmtBuilder, err := tracesstatementbuilder.NewFactory(telemetryStore, metadataStore, fl).New(ctx, settings, cfg)

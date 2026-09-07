@@ -1,8 +1,12 @@
 package telemetrymetadata
 
 import (
+	"encoding/json"
+	"sync"
+
 	"context"
 	"fmt"
+	"golang.org/x/sync/semaphore"
 	"log/slog"
 	"strings"
 	"time"
@@ -69,6 +73,15 @@ type telemetryMetaStore struct {
 	conditionBuilder   qbtypes.ConditionBuilder
 	fl                 flagger.Flagger
 	jsonColumnMetadata map[telemetrytypes.Signal]map[telemetrytypes.FieldContext]telemetrytypes.JSONColumnMetadata
+
+	config Config
+	// keysMemo caches key lookups for config.KeysCacheTTL; countsMemo caches
+	// the per-signal row counts of the metadata table.
+	keysMemo   *memo
+	countsMemo *memo
+
+	relatedSlotsMu sync.Mutex
+	relatedSlots   map[valuer.UUID]*semaphore.Weighted
 }
 
 func escapeForLike(s string) string {
@@ -79,6 +92,7 @@ func NewTelemetryMetaStore(
 	settings factory.ProviderSettings,
 	telemetrystore telemetrystore.TelemetryStore,
 	fl flagger.Flagger,
+	config Config,
 ) telemetrytypes.MetadataStore {
 	metadataSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrymetadata")
 
@@ -120,13 +134,58 @@ func NewTelemetryMetaStore(
 		fl:               fl,
 		fm:               fm,
 		conditionBuilder: conditionBuilder,
+		config:           config,
+		keysMemo:         newMemo(config.KeysCacheTTL),
+		countsMemo:       newMemo(dataSourceCountsTTL),
+		relatedSlots:     map[valuer.UUID]*semaphore.Weighted{},
 	}
 
 	return t
 }
 
+// cachedKeys runs fn under the keys cache and returns a copy of its keys, so
+// callers can annotate them without touching the cached ones.
+func (t *telemetryMetaStore) cachedKeys(cacheKey string, fn func() ([]*telemetrytypes.TelemetryFieldKey, error)) ([]*telemetrytypes.TelemetryFieldKey, error) {
+	cached, err := t.keysMemo.do(cacheKey, func() (any, error) { return fn() })
+	if err != nil {
+		return nil, err
+	}
+	return copyKeys(cached.([]*telemetrytypes.TelemetryFieldKey)), nil
+}
+
+func copyKeys(keys []*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
+	out := make([]*telemetrytypes.TelemetryFieldKey, len(keys))
+	for i, key := range keys {
+		copied := *key
+		out[i] = &copied
+	}
+	return out
+}
+
+func copyKeysMap(keys map[string][]*telemetrytypes.TelemetryFieldKey) map[string][]*telemetrytypes.TelemetryFieldKey {
+	out := make(map[string][]*telemetrytypes.TelemetryFieldKey, len(keys))
+	for name, keysForName := range keys {
+		out[name] = copyKeys(keysForName)
+	}
+	return out
+}
+
+type keysResult struct {
+	keys     map[string][]*telemetrytypes.TelemetryFieldKey
+	complete bool
+}
+
+func selectorsCacheKey(kind string, orgID valuer.UUID, selectors []*telemetrytypes.FieldKeySelector) string {
+	encoded, _ := json.Marshal(selectors)
+	return kind + ":" + orgID.StringValue() + ":" + string(encoded)
+}
+
 // tracesTblStatementToFieldKeys returns materialised attribute/resource/scope keys from the traces table.
 func (t *telemetryMetaStore) tracesTblStatementToFieldKeys(ctx context.Context) ([]*telemetrytypes.TelemetryFieldKey, error) {
+	return t.cachedKeys("tbl:traces", func() ([]*telemetrytypes.TelemetryFieldKey, error) { return t.loadTracesTblStatementToFieldKeys(ctx) })
+}
+
+func (t *telemetryMetaStore) loadTracesTblStatementToFieldKeys(ctx context.Context) ([]*telemetrytypes.TelemetryFieldKey, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
 		instrumentationtypes.CodeNamespace:    "metadata",
@@ -334,6 +393,10 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 
 // logsTblStatementToFieldKeys returns materialised attribute/resource/scope keys from the logs table.
 func (t *telemetryMetaStore) logsTblStatementToFieldKeys(ctx context.Context) ([]*telemetrytypes.TelemetryFieldKey, error) {
+	return t.cachedKeys("tbl:logs", func() ([]*telemetrytypes.TelemetryFieldKey, error) { return t.loadLogsTblStatementToFieldKeys(ctx) })
+}
+
+func (t *telemetryMetaStore) loadLogsTblStatementToFieldKeys(ctx context.Context) ([]*telemetrytypes.TelemetryFieldKey, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
 		instrumentationtypes.CodeNamespace:    "metadata",
@@ -680,6 +743,10 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, orgID valuer.UUID,
 }
 
 func (t *telemetryMetaStore) auditTblStatementToFieldKeys(ctx context.Context) ([]*telemetrytypes.TelemetryFieldKey, error) {
+	return t.cachedKeys("tbl:audit", func() ([]*telemetrytypes.TelemetryFieldKey, error) { return t.loadAuditTblStatementToFieldKeys(ctx) })
+}
+
+func (t *telemetryMetaStore) loadAuditTblStatementToFieldKeys(ctx context.Context) ([]*telemetrytypes.TelemetryFieldKey, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
 		instrumentationtypes.CodeNamespace:    "metadata",
@@ -1194,6 +1261,21 @@ func matchesSelectorName(selectorName, target string, matchType telemetrytypes.F
 }
 
 func (t *telemetryMetaStore) GetKeys(ctx context.Context, orgID valuer.UUID, fieldKeySelector *telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
+	cached, err := t.keysMemo.do(selectorsCacheKey("keys", orgID, []*telemetrytypes.FieldKeySelector{fieldKeySelector}), func() (any, error) {
+		keys, complete, err := t.getKeys(ctx, orgID, fieldKeySelector)
+		if err != nil {
+			return nil, err
+		}
+		return keysResult{keys: keys, complete: complete}, nil
+	})
+	if err != nil {
+		return nil, false, err
+	}
+	result := cached.(keysResult)
+	return copyKeysMap(result.keys), result.complete, nil
+}
+
+func (t *telemetryMetaStore) getKeys(ctx context.Context, orgID valuer.UUID, fieldKeySelector *telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
 	var keys []*telemetrytypes.TelemetryFieldKey
 	var complete = true
 	var err error
@@ -1258,6 +1340,21 @@ func (t *telemetryMetaStore) GetKeys(ctx context.Context, orgID valuer.UUID, fie
 }
 
 func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID, fieldKeySelectors []*telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
+	cached, err := t.keysMemo.do(selectorsCacheKey("keys-multi", orgID, fieldKeySelectors), func() (any, error) {
+		keys, complete, err := t.getKeysMulti(ctx, orgID, fieldKeySelectors)
+		if err != nil {
+			return nil, err
+		}
+		return keysResult{keys: keys, complete: complete}, nil
+	})
+	if err != nil {
+		return nil, false, err
+	}
+	result := cached.(keysResult)
+	return copyKeysMap(result.keys), result.complete, nil
+}
+
+func (t *telemetryMetaStore) getKeysMulti(ctx context.Context, orgID valuer.UUID, fieldKeySelectors []*telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
 
 	logsSelectors := []*telemetrytypes.FieldKeySelector{}
 	auditSelectors := []*telemetrytypes.FieldKeySelector{}
@@ -1343,36 +1440,6 @@ func (t *telemetryMetaStore) GetKey(ctx context.Context, orgID valuer.UUID, fiel
 	return keys[fieldKeySelector.Name], nil
 }
 
-// relatedValuesSelectColumn returns the expression that reads the key's value
-// from the metadata table. A span or log field is read from the intrinsic map,
-// falling back to the attributes map for rows written before the intrinsic
-// map existed. A key without a context is read from whichever map holds it,
-// intrinsic first, then resource, then attributes.
-func (t *telemetryMetaStore) relatedValuesSelectColumn(ctx context.Context, orgID valuer.UUID, key *telemetrytypes.TelemetryFieldKey) string {
-	fieldFor := func(fieldContext telemetrytypes.FieldContext) string {
-		column, _ := t.fm.FieldFor(ctx, orgID, 0, 0, &telemetrytypes.TelemetryFieldKey{
-			Name:          key.Name,
-			FieldContext:  fieldContext,
-			FieldDataType: telemetrytypes.FieldDataTypeString,
-		})
-		return column
-	}
-
-	switch key.FieldContext {
-	case telemetrytypes.FieldContextResource, telemetrytypes.FieldContextAttribute:
-		return fieldFor(key.FieldContext)
-	case telemetrytypes.FieldContextSpan, telemetrytypes.FieldContextLog:
-		intrinsic := fieldFor(key.FieldContext)
-		attribute := fieldFor(telemetrytypes.FieldContextAttribute)
-		return fmt.Sprintf("if(notEmpty(%s), %s, %s)", intrinsic, intrinsic, attribute)
-	}
-
-	intrinsic := fieldFor(telemetrytypes.FieldContextSpan)
-	resource := fieldFor(telemetrytypes.FieldContextResource)
-	attribute := fieldFor(telemetrytypes.FieldContextAttribute)
-	return fmt.Sprintf("multiIf(notEmpty(%s), %s, notEmpty(%s), %s, %s)", intrinsic, intrinsic, resource, resource, attribute)
-}
-
 func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *telemetrytypes.FieldValueSelector) ([]string, bool, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  fieldValueSelector.Signal.StringValue(),
@@ -1385,6 +1452,9 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 		return nil, true, nil
 	}
 
+	cfg := t.config.RelatedValues
+	startMs, endMs := relatedValuesWindow(fieldValueSelector.StartUnixMilli, fieldValueSelector.EndUnixMilli, time.Now(), cfg.MaxWindow, telemetrytypes.MetadataBucketMilli(fieldValueSelector.Signal))
+
 	key := &telemetrytypes.TelemetryFieldKey{
 		Name:          fieldValueSelector.Name,
 		Signal:        fieldValueSelector.Signal,
@@ -1392,46 +1462,52 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 		FieldDataType: fieldValueSelector.FieldDataType,
 	}
 
-	selectColumn := t.relatedValuesSelectColumn(ctx, orgID, key)
+	// the keys of the existing query and the requested key are looked up by
+	// their exact names, in the requested signal
+	keySelectors := querybuilder.QueryStringToKeysSelectors(fieldValueSelector.ExistingQuery)
+	keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
+		Name:          fieldValueSelector.Name,
+		FieldContext:  fieldValueSelector.FieldContext,
+		FieldDataType: fieldValueSelector.FieldDataType,
+	})
+	for _, keySelector := range keySelectors {
+		keySelector.Signal = fieldValueSelector.Signal
+		keySelector.SelectorMatchType = telemetrytypes.FieldSelectorMatchTypeExact
+	}
+	keys, _, err := t.GetKeysMulti(ctx, orgID, keySelectors)
+	if err != nil {
+		return nil, false, err
+	}
 
+	target := resolveRelatedTarget(fieldValueSelector, keys[fieldValueSelector.Name])
+	signal := t.relatedValuesSignal(ctx, orgID, fieldValueSelector.Signal, target)
+
+	if t.relatedValuesFilterAbsent(ctx, orgID, fieldValueSelector, signal, keys, startMs, endMs) {
+		return []string{}, true, nil
+	}
+
+	selectColumn := t.relatedValuesSelectColumn(ctx, orgID, fieldValueSelector.Name, target)
 	sb := sqlbuilder.Select("DISTINCT " + selectColumn).From(t.relatedMetadataDBName + "." + t.relatedMetadataTblName)
 
-	if len(fieldValueSelector.ExistingQuery) != 0 {
-		keySelectors := querybuilder.QueryStringToKeysSelectors(fieldValueSelector.ExistingQuery)
-		for _, keySelector := range keySelectors {
-			keySelector.Signal = fieldValueSelector.Signal
-		}
-		keys, _, err := t.GetKeysMulti(ctx, orgID, keySelectors)
-		if err != nil {
-			return nil, false, err
-		}
-
-		whereClause, err := querybuilder.PrepareWhereClause(fieldValueSelector.ExistingQuery, querybuilder.FilterExprVisitorOpts{
-			Context:          ctx,
-			Logger:           t.logger,
-			FieldMapper:      t.fm,
-			ConditionBuilder: t.conditionBuilder,
-			FieldKeys:        keys,
-		})
-		if err != nil {
-			t.logger.WarnContext(ctx, "error parsing existing query for related values", errors.Attr(err))
-		}
-		if !whereClause.IsEmpty() {
-			sb.AddWhereClause(whereClause.WhereClause)
-		}
+	whereClause, err := querybuilder.PrepareWhereClause(fieldValueSelector.ExistingQuery, querybuilder.FilterExprVisitorOpts{
+		Context:          ctx,
+		Logger:           t.logger,
+		FieldMapper:      t.fm,
+		ConditionBuilder: t.conditionBuilder,
+		FieldKeys:        keys,
+	})
+	if err != nil {
+		t.logger.WarnContext(ctx, "error parsing existing query for related values", errors.Attr(err))
+	}
+	if !whereClause.IsEmpty() {
+		sb.AddWhereClause(whereClause.WhereClause)
 	}
 
-	if fieldValueSelector.StartUnixMilli != 0 {
-		sb.Where(sb.GE("unix_milli", fieldValueSelector.StartUnixMilli))
-	}
+	sb.Where(sb.GE("unix_milli", startMs))
+	sb.Where(sb.LE("unix_milli", endMs))
 
-	if fieldValueSelector.EndUnixMilli != 0 {
-		sb.Where(sb.LE("unix_milli", fieldValueSelector.EndUnixMilli))
-	}
-
-	// scope to the requested signal's rows;
-	if fieldValueSelector.Signal != telemetrytypes.SignalUnspecified {
-		sb.Where(sb.E("data_source", fieldValueSelector.Signal.StringValue()))
+	if signal != telemetrytypes.SignalUnspecified {
+		sb.Where(sb.E("data_source", signal.StringValue()))
 	}
 
 	if fieldValueSelector.Value != "" {
@@ -1479,6 +1555,28 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 
 	t.logger.DebugContext(ctx, "query for related values", slog.String("query", query), slog.Any("args", args))
 
+	if slot := t.relatedValuesSlot(orgID); slot != nil {
+		if err := slot.Acquire(ctx, 1); err != nil {
+			return nil, false, ErrFailedToGetRelatedValues
+		}
+		defer slot.Release(1)
+	}
+
+	// the query is bounded on the server and returns what it found by then
+	settings := map[string]any{}
+	if cfg.MaxExecutionTime > 0 {
+		settings["max_execution_time"] = cfg.MaxExecutionTime.Seconds()
+		settings["timeout_overflow_mode"] = "break"
+	}
+	if cfg.ReadBufferSize > 0 {
+		settings["max_read_buffer_size_local_fs"] = cfg.ReadBufferSize
+	}
+	ctx = ctxtypes.SetClickhouseSettings(ctx, settings)
+	if cfg.MaxThreads > 0 {
+		ctx = ctxtypes.SetClickhouseMaxThreads(ctx, cfg.MaxThreads)
+	}
+
+	started := time.Now()
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
 		return nil, false, ErrFailedToGetRelatedValues
@@ -1503,8 +1601,11 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 		}
 	}
 
-	// hit the limit?
+	// hit the limit, or the time bound cut the scan short?
 	complete := rowCount <= limit
+	if cfg.MaxExecutionTime > 0 && time.Since(started) >= cfg.MaxExecutionTime {
+		complete = false
+	}
 
 	return attributeValues, complete, nil
 }
@@ -2421,6 +2522,17 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporalityAndType(ctx conte
 }
 
 func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Context, selectors []*telemetrytypes.EvolutionSelector) ([]*telemetrytypes.EvolutionEntry, error) {
+	encoded, _ := json.Marshal(selectors)
+	cached, err := k.keysMemo.do("evolution:"+string(encoded), func() (any, error) {
+		return k.loadEvolutionEntryFromClickHouse(ctx, selectors)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return cached.([]*telemetrytypes.EvolutionEntry), nil
+}
+
+func (k *telemetryMetaStore) loadEvolutionEntryFromClickHouse(ctx context.Context, selectors []*telemetrytypes.EvolutionSelector) ([]*telemetrytypes.EvolutionEntry, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("signal", "column_name", "column_type", "field_context", "field_name", "version", "release_time")
 	sb.From(fmt.Sprintf("%s.%s", k.relatedMetadataDBName, k.columnEvolutionMetadataTblName))

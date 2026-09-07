@@ -113,7 +113,7 @@ func NewTestManager(t *testing.T, testOpts *TestManagerOptions) *Manager {
 	}
 
 	// Create querier with test values
-	metadataStore := telemetrymetadata.NewTelemetryMetaStore(providerSettings, telemetryStore, flagger)
+	metadataStore := telemetrymetadata.NewTelemetryMetaStore(providerSettings, telemetryStore, flagger, telemetrymetadata.NewConfig())
 	cfg := statementbuilder.Config{}
 	ctx := context.Background()
 	traceStmtBuilder, err := tracesstatementbuilder.NewFactory(telemetryStore, metadataStore, flagger).New(ctx, providerSettings, cfg)

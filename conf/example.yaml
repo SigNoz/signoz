@@ -167,6 +167,28 @@ querier:
   # to 0 to disable.
   log_trace_id_window_padding: 5m
 
+##################### TelemetryMetadata #####################
+telemetrymetadata:
+  # How long key lookups (table statements, tag keys, column evolution) are cached per org.
+  keys_cache_ttl: 1m
+  related_values:
+    # Server-side bound for the related-values query of the fields API; the values
+    # found by then are returned and the response is marked incomplete.
+    max_execution_time: 2s
+    # The related-values window is clamped to this length; the requested window
+    # keeps driving the all-values lookup.
+    max_window: 168h
+    # Related-values queries an org runs at once; further requests wait for a slot.
+    max_concurrency: 2
+    # max_threads for the related-values query; 0 keeps the server default.
+    max_threads: 0
+    # max_read_buffer_size_local_fs for the related-values query, in bytes; 0 keeps
+    # the server default.
+    read_buffer_size: 0
+    # Equality terms of the existing query whose value is checked against the
+    # all-values set before the scan; an absent value makes the related set empty.
+    max_existence_checks: 4
+
 ##################### TelemetryStore #####################
 telemetrystore:
   # Maximum number of idle connections in the connection pool.

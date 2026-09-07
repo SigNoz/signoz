@@ -312,7 +312,8 @@ const (
 	metadataMetricsBucketMilli int64 = 24 * 60 * 60 * 1000
 )
 
-func metadataBucketFor(signal Signal) int64 {
+// MetadataBucketMilli returns the write bucket of the metadata table for the signal.
+func MetadataBucketMilli(signal Signal) int64 {
 	switch signal {
 	case SignalTraces, SignalLogs:
 		return metadataBucketMilli
@@ -326,7 +327,7 @@ func NewFieldKeySelectorFromPostableFieldKeysParams(params PostableFieldKeysPara
 
 	if params.StartUnixMilli != 0 {
 		req.StartUnixMilli = params.StartUnixMilli
-		req.StartUnixMilli -= req.StartUnixMilli % metadataBucketFor(params.Signal)
+		req.StartUnixMilli -= req.StartUnixMilli % MetadataBucketMilli(params.Signal)
 	}
 
 	if params.EndUnixMilli != 0 {
