@@ -854,12 +854,12 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 				whereClause := contextlinks.PrepareFilterExpression(lbls, filterExpr, q.GroupBy)
 
 				res.Items[idx].RelatedLogsLink = contextlinks.PrepareParamsForLogsV5(start, end, whereClause).Encode()
-			} else if rule.AlertType == ruletypes.AlertTypeTraces {
+			} else if rule.AlertType == ruletypes.AlertTypeTraces || rule.AlertType == ruletypes.AlertTypeAITraces {
 				// TODO(srikanthccv): re-visit this and support multiple queries
 				var q qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]
 
 				for _, query := range rule.RuleCondition.CompositeQuery.Queries {
-					if query.Type == qbtypes.QueryTypeBuilder {
+					if query.Type == qbtypes.QueryTypeBuilder || query.Type == qbtypes.QueryTypeBuilderAI {
 						switch spec := query.Spec.(type) {
 						case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
 							q = spec
@@ -873,7 +873,7 @@ func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request
 				}
 
 				whereClause := contextlinks.PrepareFilterExpression(lbls, filterExpr, q.GroupBy)
-				res.Items[idx].RelatedTracesLink = contextlinks.PrepareParamsForTracesV5(start, end, whereClause).Encode()
+				res.Items[idx].RelatedTracesLink = contextlinks.PrepareParamsForTracesV5(start, end, whereClause, rule.AlertType.BuilderQueryType()).Encode()
 			}
 		}
 	}

@@ -101,3 +101,47 @@ def test_traces_rule_history_related_links(
     assert contributor_link["start"] == query_start_ms * 1_000_000
     assert contributor_link["end"] == query_end_ms * 1_000_000
     assert_related_link_query(contributor_link, "traces", ["http.request.path", "/order", "service.name", "order-service"])
+
+
+def test_ai_traces_rule_history_related_links(
+    signoz: types.SigNoz,
+    create_alert_rule_with_channel: Callable[[str], str],
+    insert_alert_data: Callable[[list[types.AlertData], datetime], None],
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    query_start_ms = int((datetime.now(tz=UTC) - timedelta(minutes=30)).timestamp() * 1000)
+
+    insert_alert_data(
+        [types.AlertData(type="traces", data_path="alerts/test_scenarios/rule_state_history_ai_traces/alert_data.jsonl")],
+        base_time=datetime.now(tz=UTC) - timedelta(minutes=5),
+    )
+    rule_id = create_alert_rule_with_channel("alerts/test_scenarios/rule_state_history_ai_traces/rule.json")
+
+    (item, query_end_ms) = wait_for_firing_timeline_entry(signoz, token, rule_id, query_start_ms)
+
+    assert labels_to_map(item["labels"]).get("service.name") == "llm-gateway"
+    assert item.get("relatedLogsLink", "") == ""
+    assert item.get("relatedTracesLink", "") != ""
+
+    # AI alert links follow the traces explorer shape: a nanosecond range
+    # anchored to the second-truncated entry timestamp
+    link = parse_related_link(item["relatedTracesLink"])
+    assert link["end"] == (item["unixMilli"] // 1000) * 1_000_000_000
+    assert link["end"] - link["start"] == RELATED_LINK_WINDOW_SECONDS * 1_000_000_000
+    assert_related_link_query(link, "traces", ["trace.input_tokens", "100", "service.name", "llm-gateway"])
+    # the AI explorer only resolves trace.* fields for builder_ai_query
+    assert link["composite_query"]["builder"]["queryData"][0]["builderQueryType"] == "builder_ai_query"
+
+    contributors = get_rule_history_top_contributors(signoz, token, rule_id, query_start_ms, query_end_ms)
+    contributors = [c for c in contributors if labels_to_map(c["labels"]).get("service.name") == "llm-gateway"]
+    assert len(contributors) == 1
+    assert contributors[0]["count"] >= 1
+    assert contributors[0].get("relatedLogsLink", "") == ""
+    assert contributors[0].get("relatedTracesLink", "") != ""
+
+    contributor_link = parse_related_link(contributors[0]["relatedTracesLink"])
+    assert contributor_link["start"] == query_start_ms * 1_000_000
+    assert contributor_link["end"] == query_end_ms * 1_000_000
+    assert_related_link_query(contributor_link, "traces", ["trace.input_tokens", "100", "service.name", "llm-gateway"])
+    assert contributor_link["composite_query"]["builder"]["queryData"][0]["builderQueryType"] == "builder_ai_query"

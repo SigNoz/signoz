@@ -9241,6 +9241,7 @@ export enum RuletypesAlertTypeDTO {
 	TRACES_BASED_ALERT = 'TRACES_BASED_ALERT',
 	LOGS_BASED_ALERT = 'LOGS_BASED_ALERT',
 	EXCEPTIONS_BASED_ALERT = 'EXCEPTIONS_BASED_ALERT',
+	AI_TRACES_BASED_ALERT = 'AI_TRACES_BASED_ALERT',
 }
 export enum RuletypesMatchTypeDTO {
 	at_least_once = 'at_least_once',

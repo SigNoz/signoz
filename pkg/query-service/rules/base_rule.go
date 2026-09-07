@@ -420,7 +420,7 @@ func (r *BaseRule) ShouldSkipNewGroups() bool {
 func (r *BaseRule) isFilterNewSeriesSupported() bool {
 	if r.ruleCondition.CompositeQuery.QueryType == ruletypes.QueryTypeBuilder {
 		for _, query := range r.ruleCondition.CompositeQuery.Queries {
-			if query.Type != qbtypes.QueryTypeBuilder {
+			if query.Type != qbtypes.QueryTypeBuilder && query.Type != qbtypes.QueryTypeBuilderAI {
 				continue
 			}
 			switch query.Spec.(type) {

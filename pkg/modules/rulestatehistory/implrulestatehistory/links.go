@@ -41,7 +41,8 @@ func (m *module) relatedLinkBuilderForRule(ctx context.Context, orgID valuer.UUI
 		return nil
 	}
 
-	if rule.AlertType != ruletypes.AlertTypeLogs && rule.AlertType != ruletypes.AlertTypeTraces {
+	signal, ok := relatedLinkSignal(rule.AlertType)
+	if !ok {
 		return nil
 	}
 	if rule.RuleCondition == nil || rule.RuleCondition.CompositeQuery == nil {
@@ -62,10 +63,6 @@ func (m *module) relatedLinkBuilderForRule(ctx context.Context, orgID valuer.UUI
 		builder.evaluation = ruletypes.RollingWindow{EvalWindow: evalWindow}
 	}
 
-	signal := telemetrytypes.SignalLogs
-	if rule.AlertType == ruletypes.AlertTypeTraces {
-		signal = telemetrytypes.SignalTraces
-	}
 	// links are still built from the labels alone when the rule has no builder
 	// query for the signal (e.g. ClickHouse SQL alerts)
 	builder.filterExpr, builder.groupBy, _ = contextlinks.BuilderQueryForSignal(rule.RuleCondition.CompositeQuery.Queries, signal)
@@ -97,8 +94,20 @@ func (b *relatedLinkBuilder) links(labels rulestatehistorytypes.LabelsString, st
 	switch b.alertType {
 	case ruletypes.AlertTypeLogs:
 		return contextlinks.PrepareParamsForLogsV5(start, end, whereClause).Encode(), ""
-	case ruletypes.AlertTypeTraces:
-		return "", contextlinks.PrepareParamsForTracesV5(start, end, whereClause).Encode()
+	case ruletypes.AlertTypeTraces, ruletypes.AlertTypeAITraces:
+		return "", contextlinks.PrepareParamsForTracesV5(start, end, whereClause, b.alertType.BuilderQueryType()).Encode()
 	}
 	return "", ""
+}
+
+// relatedLinkSignal returns the explorer signal that related links open for
+// the alert type, or ok=false when the alert type has none (e.g. metrics).
+func relatedLinkSignal(alertType ruletypes.AlertType) (telemetrytypes.Signal, bool) {
+	switch alertType {
+	case ruletypes.AlertTypeLogs:
+		return telemetrytypes.SignalLogs, true
+	case ruletypes.AlertTypeTraces, ruletypes.AlertTypeAITraces:
+		return telemetrytypes.SignalTraces, true
+	}
+	return telemetrytypes.SignalUnspecified, false
 }
