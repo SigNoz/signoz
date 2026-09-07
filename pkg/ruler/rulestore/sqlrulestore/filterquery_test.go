@@ -119,10 +119,26 @@ func TestCompileSeverityAndLabels(t *testing.T) {
 			expectedArgs:      []any{"critical"},
 		},
 		{
-			subtestName:       "severity negation includes rules without severity",
+			subtestName:       "severity negation treats a missing label as empty string",
 			dslQueryToCompile: "severity != 'critical'",
-			expectedSQL:       `(json_extract("rule"."data", '$.labels."severity"') IS NULL OR json_extract("rule"."data", '$.labels."severity"') <> ?)`,
+			expectedSQL:       `COALESCE(json_extract("rule"."data", '$.labels."severity"'), '') <> ?`,
 			expectedArgs:      []any{"critical"},
+		},
+		{
+			subtestName:       "severity != empty string excludes rules without severity",
+			dslQueryToCompile: "severity != ''",
+			expectedSQL:       `COALESCE(json_extract("rule"."data", '$.labels."severity"'), '') <> ?`,
+			expectedArgs:      []any{""},
+		},
+		{
+			subtestName:       "severity exists through the alias",
+			dslQueryToCompile: "severity EXISTS",
+			expectedSQL:       `json_extract("rule"."data", '$.labels."severity"') IS NOT NULL`,
+		},
+		{
+			subtestName:       "severity not exists through the alias",
+			dslQueryToCompile: "severity NOT EXISTS",
+			expectedSQL:       `json_extract("rule"."data", '$.labels."severity"') IS NULL`,
 		},
 		{
 			subtestName:       "label equals",
@@ -155,13 +171,13 @@ func TestCompileSeverityAndLabels(t *testing.T) {
 		{
 			subtestName:       "label not contains includes label-less rules",
 			dslQueryToCompile: "labels.team NOT CONTAINS 'infra'",
-			expectedSQL:       `(json_extract("rule"."data", '$.labels."team"') IS NULL OR json_extract("rule"."data", '$.labels."team"') NOT LIKE ? ESCAPE '\')`,
+			expectedSQL:       `COALESCE(json_extract("rule"."data", '$.labels."team"'), '') NOT LIKE ? ESCAPE '\'`,
 			expectedArgs:      []any{"%infra%"},
 		},
 		{
 			subtestName:       "label not in includes label-less rules",
 			dslQueryToCompile: "labels.team NOT IN ['a', 'b']",
-			expectedSQL:       `(json_extract("rule"."data", '$.labels."team"') IS NULL OR json_extract("rule"."data", '$.labels."team"') NOT IN (?, ?))`,
+			expectedSQL:       `COALESCE(json_extract("rule"."data", '$.labels."team"'), '') NOT IN (?, ?)`,
 			expectedArgs:      []any{"a", "b"},
 		},
 	})

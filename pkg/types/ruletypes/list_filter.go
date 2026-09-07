@@ -50,8 +50,10 @@ func ReservedFilterKeys() []DSLKey {
 // ReservedOps lists the operators each reserved DSL key accepts. Keys under
 // the labels namespace use LabelsKeyOps instead.
 var ReservedOps = map[DSLKey]map[qbtypesv5.FilterOperator]struct{}{
-	DSLKeyName:      stringSearchOps(),
-	DSLKeySeverity:  stringSearchOps(),
+	DSLKeyName: stringSearchOps(),
+	// severity is an alias for labels.severity, so it takes the labels
+	// operator set — including EXISTS/NOT EXISTS.
+	DSLKeySeverity:  LabelsKeyOps,
 	DSLKeyCreatedBy: stringSearchOps(),
 	DSLKeyUpdatedBy: stringSearchOps(),
 	DSLKeyCreatedAt: numericRangeOps(),

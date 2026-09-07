@@ -205,10 +205,11 @@ func (v *visitor) visitComparisonForReservedKeys(ctx *grammar.ComparisonContext,
 	return ""
 }
 
-// visitComparisonForLabels builds a predicate on one label's value. Negative
-// operators (and NOT EXISTS) must also match rules that don't carry the label
-// at all: the extracted value is NULL there, and a bare `col != ?` would go
-// NULL and drop them, so negations get an explicit `col IS NULL OR ...` arm.
+// visitComparisonForLabels builds a predicate on one label's value with the
+// querier's map-attribute semantics (FilterOperator.AddDefaultExistsFilter): a
+// positive operator only matches rules that carry the label, while a negative
+// operator evaluates a missing label as the empty string — so `!= 'x'` matches
+// label-less rules but `!= ''` does not. EXISTS/NOT EXISTS test presence.
 func (v *visitor) visitComparisonForLabels(ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator, labelKey string) string {
 	if _, allowed := ruletypes.LabelsKeyOps[operation]; !allowed {
 		v.addError("operator %s is not allowed on a labels.<key> filter", operationName(operation))
@@ -228,14 +229,10 @@ func (v *visitor) buildLabelComparison(ctx *grammar.ComparisonContext, operation
 	}
 
 	keyForError := ruletypes.DSLLabelsKeyPrefix + labelKey
-	predicate := v.buildStringOperation(v.selectBuilder, ctx, operation, columnExpression, keyForError)
-	if predicate == "" {
-		return ""
-	}
 	if operation.IsNegativeOperator() {
-		return fmt.Sprintf("(%s IS NULL OR %s)", columnExpression, predicate)
+		columnExpression = fmt.Sprintf("COALESCE(%s, '')", columnExpression)
 	}
-	return predicate
+	return v.buildStringOperation(v.selectBuilder, ctx, operation, columnExpression, keyForError)
 }
 
 func (v *visitor) buildEnumComparison(ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator, key ruletypes.DSLKey, jsonPath string, allowedValues []string) string {
