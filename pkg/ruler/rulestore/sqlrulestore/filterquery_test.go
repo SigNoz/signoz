@@ -115,7 +115,7 @@ func TestCompileSeverityAndLabels(t *testing.T) {
 		{
 			subtestName:       "severity equals targets labels map",
 			dslQueryToCompile: "severity = 'critical'",
-			expectedSQL:       `json_extract("rule"."data", '$.labels."severity"') = ?`,
+			expectedSQL:       `COALESCE(json_extract("rule"."data", '$.labels."severity"'), '') = ?`,
 			expectedArgs:      []any{"critical"},
 		},
 		{
@@ -143,19 +143,19 @@ func TestCompileSeverityAndLabels(t *testing.T) {
 		{
 			subtestName:       "label equals",
 			dslQueryToCompile: "labels.team = 'infra'",
-			expectedSQL:       `json_extract("rule"."data", '$.labels."team"') = ?`,
+			expectedSQL:       `COALESCE(json_extract("rule"."data", '$.labels."team"'), '') = ?`,
 			expectedArgs:      []any{"infra"},
 		},
 		{
 			subtestName:       "dotted label key is one map entry",
 			dslQueryToCompile: "labels.k8s.cluster = 'prod-1'",
-			expectedSQL:       `json_extract("rule"."data", '$.labels."k8s.cluster"') = ?`,
+			expectedSQL:       `COALESCE(json_extract("rule"."data", '$.labels."k8s.cluster"'), '') = ?`,
 			expectedArgs:      []any{"prod-1"},
 		},
 		{
 			subtestName:       "label key keeps its case",
 			dslQueryToCompile: "labels.Team = 'infra'",
-			expectedSQL:       `json_extract("rule"."data", '$.labels."Team"') = ?`,
+			expectedSQL:       `COALESCE(json_extract("rule"."data", '$.labels."Team"'), '') = ?`,
 			expectedArgs:      []any{"infra"},
 		},
 		{
@@ -263,7 +263,7 @@ func TestCompileComposition(t *testing.T) {
 		{
 			subtestName:       "and of label and column",
 			dslQueryToCompile: "labels.team = 'infra' AND created_by = 'x'",
-			expectedSQL:       `(json_extract("rule"."data", '$.labels."team"') = ? AND rule.created_by = ?)`,
+			expectedSQL:       `(COALESCE(json_extract("rule"."data", '$.labels."team"'), '') = ? AND rule.created_by = ?)`,
 			expectedArgs:      []any{"infra", "x"},
 		},
 		{
@@ -275,7 +275,7 @@ func TestCompileComposition(t *testing.T) {
 		{
 			subtestName:       "or of name and severity",
 			dslQueryToCompile: "name CONTAINS 'pay' OR severity = 'critical'",
-			expectedSQL:       `(json_extract("rule"."data", '$.alert') LIKE ? ESCAPE '\' OR json_extract("rule"."data", '$.labels."severity"') = ?)`,
+			expectedSQL:       `(json_extract("rule"."data", '$.alert') LIKE ? ESCAPE '\' OR COALESCE(json_extract("rule"."data", '$.labels."severity"'), '') = ?)`,
 			expectedArgs:      []any{"%pay%", "critical"},
 		},
 	})
