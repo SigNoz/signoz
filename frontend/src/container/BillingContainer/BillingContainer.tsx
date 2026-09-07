@@ -430,7 +430,7 @@ export default function BillingContainer(): JSX.Element {
 
 			<Card
 				bordered={false}
-				style={{ marginBottom: 16 }}
+				style={{ marginBottom: 8 }}
 				className={styles.pageInfo}
 			>
 				<Flex justify="space-between" align="center">
