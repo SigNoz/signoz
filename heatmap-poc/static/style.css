@@ -1,0 +1,552 @@
+:root {
+	color-scheme: dark;
+
+	--surface: #0b0d12;
+	--card: #12151d;
+	--card-head: #171b25;
+	--line: #242a38;
+	--line-soft: #1b2030;
+
+	--ink: #e6e9f0;
+	--ink-soft: #a2abbd;
+	--ink-faint: #6b7488;
+
+	--accent: #4a80c4;
+	--accent-ink: #b9d8f5;
+	--danger: #e0736b;
+	--danger-bg: #2a1618;
+
+	--cell-zero: #0e1016;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+/* the display rules below would otherwise beat the UA's [hidden] rule, and SVG
+   elements never honoured the attribute on their own */
+[hidden] {
+	display: none !important;
+}
+
+body {
+	margin: 0;
+	padding: 20px;
+	background: var(--surface);
+	color: var(--ink);
+	font: 13px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+header {
+	margin-bottom: 16px;
+}
+
+h1 {
+	margin: 0;
+	font-size: 17px;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+}
+
+h2 {
+	margin: 0;
+	font-size: 12px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--ink-soft);
+}
+
+.sub {
+	margin: 3px 0 0;
+	color: var(--ink-faint);
+}
+
+code {
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-size: 0.92em;
+	color: var(--ink-soft);
+}
+
+.layout {
+	display: grid;
+	grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
+	gap: 16px;
+	align-items: start;
+}
+
+@media (max-width: 900px) {
+	.layout {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.card {
+	background: var(--card);
+	border: 1px solid var(--line);
+	border-radius: 8px;
+	overflow: hidden;
+}
+
+.card-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	padding: 8px 12px;
+	background: var(--card-head);
+	border-bottom: 1px solid var(--line);
+}
+
+.head-tools {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.count {
+	color: var(--ink-faint);
+	font-weight: 400;
+	text-transform: none;
+	letter-spacing: 0;
+}
+
+/* ---------- form ---------- */
+
+.form {
+	padding: 14px;
+	display: grid;
+	gap: 14px;
+	position: sticky;
+	top: 20px;
+}
+
+label {
+	display: grid;
+	gap: 5px;
+	font-size: 12px;
+	color: var(--ink-soft);
+}
+
+label.inline {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.grid-2 {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 10px;
+}
+
+input,
+select,
+textarea {
+	width: 100%;
+	padding: 6px 8px;
+	background: var(--surface);
+	color: var(--ink);
+	border: 1px solid var(--line);
+	border-radius: 5px;
+	font: inherit;
+}
+
+input[type="checkbox"] {
+	width: auto;
+	accent-color: var(--accent);
+}
+
+textarea {
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	resize: vertical;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+button:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 1px;
+}
+
+fieldset {
+	margin: 0;
+	padding: 10px 12px 12px;
+	border: 1px solid var(--line);
+	border-radius: 6px;
+	display: grid;
+	gap: 10px;
+}
+
+legend {
+	padding: 0 5px;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--ink-soft);
+}
+
+button {
+	padding: 6px 12px;
+	background: var(--accent);
+	color: #fff;
+	border: 1px solid transparent;
+	border-radius: 5px;
+	font: inherit;
+	font-weight: 500;
+	cursor: pointer;
+}
+
+button:hover {
+	filter: brightness(1.12);
+}
+
+button.ghost {
+	background: transparent;
+	color: var(--ink-soft);
+	border-color: var(--line);
+	font-weight: 400;
+}
+
+button.ghost:hover {
+	color: var(--ink);
+	border-color: var(--ink-faint);
+	filter: none;
+}
+
+button[disabled] {
+	opacity: 0.5;
+	cursor: default;
+	filter: none;
+}
+
+.segmented {
+	display: flex;
+	gap: 2px;
+	padding: 2px;
+	background: var(--surface);
+	border: 1px solid var(--line);
+	border-radius: 6px;
+}
+
+.segmented button {
+	flex: 1;
+	background: transparent;
+	color: var(--ink-soft);
+	font-weight: 400;
+}
+
+.segmented button.on {
+	background: var(--line);
+	color: var(--ink);
+}
+
+.segmented button:hover {
+	filter: none;
+	color: var(--ink);
+}
+
+.segmented.small button {
+	padding: 4px 8px;
+	font-size: 12px;
+}
+
+.hint {
+	margin: 0;
+	font-size: 11px;
+	color: var(--ink-faint);
+}
+
+.hint.warn {
+	color: var(--danger);
+}
+
+.run-row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.run-row button {
+	flex: 1;
+}
+
+/* ---------- metric rows ---------- */
+
+#rows {
+	display: grid;
+	gap: 8px;
+}
+
+.metric-row {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	gap: 8px;
+	align-items: start;
+	padding: 8px;
+	background: var(--surface);
+	border: 1px solid var(--line-soft);
+	border-radius: 6px;
+}
+
+.row-name {
+	width: 20px;
+	padding-top: 6px;
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-weight: 600;
+	color: var(--accent-ink);
+	text-align: center;
+}
+
+.row-body {
+	display: grid;
+	gap: 8px;
+	min-width: 0;
+}
+
+.metric-field {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+}
+
+.badge {
+	flex: none;
+	padding: 2px 6px;
+	background: var(--line);
+	border-radius: 4px;
+	font-size: 10px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--accent-ink);
+	white-space: nowrap;
+}
+
+.badge.bad {
+	background: var(--danger-bg);
+	color: var(--danger);
+}
+
+.agg-fields {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 8px;
+}
+
+.remove-row {
+	padding: 2px 7px;
+	background: transparent;
+	color: var(--ink-faint);
+	border-color: transparent;
+	font-size: 15px;
+	line-height: 1.2;
+}
+
+.remove-row:hover {
+	color: var(--danger);
+	filter: none;
+}
+
+/* ---------- group by chips ---------- */
+
+.chips-field {
+	display: grid;
+	gap: 6px;
+}
+
+.chips-label {
+	font-size: 12px;
+	color: var(--ink-soft);
+}
+
+.chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 5px;
+}
+
+.chips:empty {
+	display: none;
+}
+
+.chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 2px 4px 2px 8px;
+	background: var(--line);
+	border-radius: 11px;
+	font-size: 12px;
+}
+
+.chip button {
+	padding: 0 3px;
+	background: transparent;
+	color: var(--ink-faint);
+	border: 0;
+	font-size: 13px;
+	line-height: 1;
+}
+
+.chip button:hover {
+	color: var(--danger);
+	filter: none;
+}
+
+/* ---------- results ---------- */
+
+.results {
+	display: grid;
+	gap: 16px;
+	min-width: 0;
+}
+
+#banner {
+	margin: 0;
+	padding: 10px 12px;
+	background: var(--danger-bg);
+	border: 1px solid #4a2427;
+	border-radius: 8px;
+	color: var(--danger);
+	white-space: pre-wrap;
+}
+
+.chart {
+	padding: 12px;
+	overflow: auto;
+	max-height: 620px;
+}
+
+.chart svg {
+	display: block;
+}
+
+.empty {
+	margin: 0;
+	padding: 28px 0;
+	color: var(--ink-faint);
+	text-align: center;
+}
+
+.axis-label {
+	fill: var(--ink-faint);
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-size: 10px;
+}
+
+.axis-line {
+	stroke: var(--line);
+	stroke-width: 1;
+}
+
+.cursor-cell {
+	fill: none;
+	stroke: var(--accent-ink);
+	stroke-width: 1.5;
+	pointer-events: none;
+}
+
+.legend {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 0 12px 12px;
+	color: var(--ink-faint);
+	font-size: 11px;
+}
+
+.legend:empty {
+	display: none;
+}
+
+.legend .swatches {
+	display: flex;
+	gap: 2px;
+}
+
+.legend .swatch {
+	width: 20px;
+	height: 10px;
+	border-radius: 2px;
+}
+
+.groups {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	gap: 2px 12px;
+	padding: 10px 12px;
+	max-height: 220px;
+	overflow: auto;
+}
+
+.groups label {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	min-width: 0;
+	padding: 2px 0;
+	color: var(--ink);
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-size: 11px;
+	cursor: pointer;
+}
+
+.groups .name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.groups .total {
+	margin-left: auto;
+	flex: none;
+	color: var(--ink-faint);
+}
+
+.json-grid {
+	align-items: start;
+}
+
+@media (max-width: 1200px) {
+	.json-grid {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.json {
+	margin: 0;
+	padding: 12px;
+	max-height: 420px;
+	overflow: auto;
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-size: 11px;
+	line-height: 1.55;
+	color: var(--ink-soft);
+	white-space: pre;
+	tab-size: 2;
+}
+
+.tooltip {
+	position: fixed;
+	z-index: 10;
+	max-width: 320px;
+	padding: 7px 9px;
+	background: #1c212e;
+	border: 1px solid var(--line);
+	border-radius: 6px;
+	box-shadow: 0 6px 18px rgb(0 0 0 / 45%);
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-size: 11px;
+	line-height: 1.6;
+	pointer-events: none;
+	white-space: pre;
+}
+
+.tooltip b {
+	color: var(--accent-ink);
+	font-weight: 600;
+}
