@@ -5,10 +5,8 @@ import { dtoToFormModel } from 'pages/DashboardPage/DashboardContainer/Dashboard
 import { useDashboardFetchRequired } from 'pages/DashboardPage/DashboardContainer/hooks/useDashboardFetchRequired';
 
 import type { StaticEditorPaneProps } from '../../../../types/panelDefinition';
-import type {
-	DashboardtypesPanelSpecDTO,
-	DashboardtypesTextPanelSpecDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { withPanelText } from '../../../../utils/withPanelText';
+import type { DashboardtypesTextPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 
 import styles from './EditorPane.module.scss';
 
@@ -37,22 +35,8 @@ function EditorPane({
 	);
 
 	const onChangeText = useCallback(
-		(text: string): void => {
-			// Written back through the same cast: `plugin` is the kind-discriminated
-			// union, and TS resolves a bare object literal against the wrong arm.
-			const nextPluginSpec: DashboardtypesTextPanelSpecDTO = {
-				...pluginSpec,
-				text,
-			};
-			onChangeSpec({
-				...spec,
-				plugin: {
-					...spec.plugin,
-					spec: nextPluginSpec,
-				} as DashboardtypesPanelSpecDTO['plugin'],
-			});
-		},
-		[spec, pluginSpec, onChangeSpec],
+		(text: string): void => onChangeSpec(withPanelText(spec, text)),
+		[spec, onChangeSpec],
 	);
 
 	return (

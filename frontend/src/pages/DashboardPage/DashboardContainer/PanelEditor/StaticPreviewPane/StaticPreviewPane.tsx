@@ -13,6 +13,8 @@ interface StaticPreviewPaneProps {
 	panel: DashboardtypesPanelDTO;
 	panelDefinition: RenderableStaticPanelDefinition;
 	panelMode: PanelMode;
+	/** Saves an edit made from the rendered body into the draft; absent = read-only. */
+	onChangeText?: (text: string) => void;
 }
 
 /**
@@ -26,6 +28,7 @@ function StaticPreviewPane({
 	panel,
 	panelDefinition,
 	panelMode,
+	onChangeText,
 }: StaticPreviewPaneProps): JSX.Element {
 	const background = useTextBackground(panel.spec);
 
@@ -40,6 +43,7 @@ function StaticPreviewPane({
 					panel={panel}
 					panelId={panelId}
 					panelMode={panelMode}
+					onChangeText={onChangeText}
 				/>
 			</div>
 		</div>

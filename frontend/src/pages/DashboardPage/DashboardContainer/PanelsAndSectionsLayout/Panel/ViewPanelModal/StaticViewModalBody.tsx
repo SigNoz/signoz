@@ -6,6 +6,7 @@ import StaticPreviewPane from 'pages/DashboardPage/DashboardContainer/PanelEdito
 import type { PanelEditorDraftApi } from 'pages/DashboardPage/DashboardContainer/PanelEditor/types';
 import type { RenderableStaticPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
 import type { PanelKind } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
+import { withPanelText } from 'pages/DashboardPage/DashboardContainer/Panels/utils/withPanelText';
 import { useOpenPanelEditor } from 'pages/DashboardPage/DashboardContainer/hooks/useOpenPanelEditor';
 import { DashboardEvents } from 'pages/DashboardPage/constants/events';
 
@@ -35,6 +36,12 @@ function StaticViewModalBody({
 	const { EditorPane } = panelDefinition;
 	const openPanelEditor = useOpenPanelEditor();
 
+	// Temporary, like every edit here: "Switch to Edit Mode" carries it over.
+	const onChangeText = useCallback(
+		(text: string): void => setSpec(withPanelText(spec, text)),
+		[spec, setSpec],
+	);
+
 	const onSwitchToEdit = useCallback((): void => {
 		void logEvent(DashboardEvents.SWITCH_TO_EDIT_MODE, { panelId });
 		// Carry the in-modal edits so the editor opens on them, not the saved panel.
@@ -60,6 +67,7 @@ function StaticViewModalBody({
 					panel={draft}
 					panelDefinition={panelDefinition}
 					panelMode={PanelMode.STANDALONE_VIEW}
+					onChangeText={onChangeText}
 				/>
 			</div>
 		</div>

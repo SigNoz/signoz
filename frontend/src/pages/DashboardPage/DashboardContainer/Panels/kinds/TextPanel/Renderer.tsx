@@ -35,6 +35,7 @@ const VERTICAL_ALIGN_CLASS: Record<DashboardtypesVerticalAlignDTO, string> = {
 function Renderer({
 	panel,
 	dashboardId,
+	onChangeText,
 }: StaticRendererProps<'signoz/TextPanel'>): JSX.Element {
 	const { text, presentation } = panel.spec.plugin.spec;
 
@@ -47,6 +48,15 @@ function Renderer({
 	const body = useMemo(
 		() => interpolateVariables(text ?? '', variables),
 		[text, variables],
+	);
+
+	// The authored body, not the interpolated one: an edit lands on what is saved.
+	const interactive = useMemo(
+		() =>
+			onChangeText
+				? { source: text ?? '', onChangeSource: onChangeText }
+				: undefined,
+		[onChangeText, text],
 	);
 
 	const { scrollRef, hasMoreBelow, scrollToBottom } =
@@ -67,7 +77,7 @@ function Renderer({
 				)}
 				data-testid="text-panel"
 			>
-				<MarkdownContent>{body}</MarkdownContent>
+				<MarkdownContent interactive={interactive}>{body}</MarkdownContent>
 			</div>
 			{hasMoreBelow && <ScrollToBottomPill onClick={scrollToBottom} />}
 		</div>

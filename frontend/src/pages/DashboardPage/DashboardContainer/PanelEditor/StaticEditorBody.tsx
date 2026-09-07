@@ -16,6 +16,7 @@ import PanelEditorLayout, {
 import StaticPreviewPane from './StaticPreviewPane/StaticPreviewPane';
 import type { PanelEditorContainerProps } from './index';
 import type { PanelEditorDraftApi } from './types';
+import { withPanelText } from '../Panels/utils/withPanelText';
 import { usePanelEditorSave } from './hooks/usePanelEditorSave';
 
 interface StaticEditorBodyProps extends PanelEditorContainerProps {
@@ -76,6 +77,11 @@ function StaticEditorBody({
 		}
 	}, [isEditable, save, draft.spec, setScrollTargetId, onSaved, showErrorModal]);
 
+	const onChangeText = useCallback(
+		(text: string): void => setSpec(withPanelText(spec, text)),
+		[spec, setSpec],
+	);
+
 	const onCloseEditor = useCallback((): void => {
 		if (!isNew) {
 			setScrollTargetId(panelId);
@@ -104,6 +110,7 @@ function StaticEditorBody({
 					panel={draft}
 					panelDefinition={panelDefinition}
 					panelMode={PanelMode.DASHBOARD_EDIT}
+					onChangeText={isEditable ? onChangeText : undefined}
 				/>
 			}
 			editor={<EditorPane spec={spec} onChangeSpec={setSpec} />}

@@ -50,6 +50,13 @@ jest.mock('periscope/components/ContextMenu', () => ({
 	__esModule: true,
 	default: (): null => null,
 }));
+// Reaches react-query for the dashboard patch; this file renders without providers.
+jest.mock(
+	'pages/DashboardPage/DashboardContainer/Panels/hooks/useUpdatePanelText',
+	() => ({
+		useUpdatePanelText: (): undefined => undefined,
+	}),
+);
 
 const mockUsePanelQuery = usePanelQuery as jest.Mock;
 const mockGetPanelDefinition = getPanelDefinition as jest.Mock;

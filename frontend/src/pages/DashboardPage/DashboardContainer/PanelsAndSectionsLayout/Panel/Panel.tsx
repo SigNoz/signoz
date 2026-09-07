@@ -2,6 +2,7 @@ import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schem
 import cx from 'classnames';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 import { useTextBackground } from 'pages/DashboardPage/DashboardContainer/Panels/hooks/useTextBackground';
+import { useUpdatePanelText } from 'pages/DashboardPage/DashboardContainer/Panels/hooks/useUpdatePanelText';
 import { isPanelHeaderHidden } from 'pages/DashboardPage/DashboardContainer/Panels/utils/isPanelHeaderHidden';
 
 import type { DashboardSection } from '../../utils';
@@ -42,6 +43,7 @@ function Panel({
 }: PanelProps): JSX.Element {
 	const panelDefinition = getPanelDefinition(panel.spec.plugin.kind);
 	const background = useTextBackground(panel.spec);
+	const onChangeText = useUpdatePanelText(panelId);
 
 	return (
 		<div
@@ -80,6 +82,7 @@ function Panel({
 						Renderer={panelDefinition.Renderer}
 						panel={panel}
 						panelId={panelId}
+						onChangeText={onChangeText}
 					/>
 				</>
 			) : (

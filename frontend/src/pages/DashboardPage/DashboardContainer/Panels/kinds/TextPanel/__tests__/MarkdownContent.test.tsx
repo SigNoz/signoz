@@ -1,3 +1,4 @@
+import userEvent from '@testing-library/user-event';
 import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
 
 import MarkdownContent from '../components/MarkdownContent/MarkdownContent';
@@ -232,6 +233,23 @@ describe('MarkdownContent — interactive task lists', () => {
 		expect(first).toBeEnabled();
 		expect(first).not.toBeChecked();
 		expect(second).toBeChecked();
+	});
+
+	it('warns on hover that a tick edits the panel', async () => {
+		const user = userEvent.setup();
+		render(
+			<MarkdownContent interactive={{ source, onChangeSource: jest.fn() }}>
+				{source}
+			</MarkdownContent>,
+		);
+
+		await user.hover(screen.getAllByRole('checkbox')[0]);
+
+		await waitFor(() => {
+			expect(screen.getByRole('tooltip')).toHaveTextContent(
+				'Toggling this updates the panel spec',
+			);
+		});
 	});
 
 	it('checking one rewrites its marker in the source', () => {
