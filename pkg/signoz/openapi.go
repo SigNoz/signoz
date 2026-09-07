@@ -66,6 +66,7 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ authz.AuthZ }{},
 		struct{ organization.Handler }{},
 		struct{ user.Handler }{},
+		struct{ user.Getter }{},
 		struct{ session.Handler }{},
 		struct{ authdomain.Handler }{},
 		struct{ authdomain.Module }{},
