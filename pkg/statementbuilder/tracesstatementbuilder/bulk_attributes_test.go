@@ -23,7 +23,7 @@ import (
 // the `attributes_string`/`_number`/`_bool` maps), mid-list or as the last column before FROM.
 var jsonAttrColRe = regexp.MustCompile(`,\s*attributes\s*(,| FROM )`)
 
-func newBulkTestBuilder(t *testing.T, releaseTime time.Time) (*traceQueryStatementBuilder, *telemetrytypestest.MockMetadataStore) {
+func newBulkTestBuilder(t *testing.T, releaseTime time.Time) *traceQueryStatementBuilder {
 	t.Helper()
 	fl := flaggertest.New(t)
 	fm := tracestelemetryschema.NewFieldMapper(fl)
@@ -39,23 +39,21 @@ func newBulkTestBuilder(t *testing.T, releaseTime time.Time) (*traceQueryStateme
 	store.ColumnEvolutionMetadataMap["traces:attribute:__all__"] = tracestelemetryschema.MockAttributeEvolutionData(releaseTime)
 
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
-	b := NewTraceQueryStatementBuilder(
+	return NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		store, fm, cb, aggExprRewriter, nil, fl, false, 100000,
 	)
-	return b, store
 }
 
-// TestListQuerySelectsAllAttributeHomes asserts the empty-selectFields ("all fields") list query
-// always scans every physical home of the attributes bag — the three legacy maps and the JSON
-// column — in any window and without consulting evolution metadata. consume.go merges them per
-// row, so a row's attributes surface whichever home they were written to.
+// TestListQuerySelectsAllAttributeHomes: the empty-selectFields list query scans every
+// attributes-bag home (the three legacy maps and the JSON column) in any window, with no
+// evolution lookup.
 func TestListQuerySelectsAllAttributeHomes(t *testing.T) {
 	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 	rel := releaseTime.UnixMilli()
 	day := int64(24 * time.Hour / time.Millisecond)
 
-	b, _ := newBulkTestBuilder(t, releaseTime)
+	b := newBulkTestBuilder(t, releaseTime)
 
 	cases := []struct {
 		name    string
@@ -94,7 +92,7 @@ func TestGroupByAttributeAfterRolloutReadsJSON(t *testing.T) {
 	rel := releaseTime.UnixMilli()
 	day := int64(24 * time.Hour / time.Millisecond)
 
-	b, _ := newBulkTestBuilder(t, releaseTime)
+	b := newBulkTestBuilder(t, releaseTime)
 
 	stmt, err := b.Build(
 		context.Background(), valuer.UUID{}, uint64(rel+day), uint64(rel+2*day),
