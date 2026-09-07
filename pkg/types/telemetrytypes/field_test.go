@@ -422,3 +422,33 @@ func TestNewFieldKeySelectorFromPostableFieldKeysParamsMetricNamespace(t *testin
 		t.Fatalf("expected metric name to remain empty, got %q", selector.MetricContext.MetricName)
 	}
 }
+
+func TestNewFieldKeySelectorFromPostableFieldKeysParamsFloorsStartToTheMetadataBucket(t *testing.T) {
+	// 2026-09-07T10:30:00Z
+	start := int64(1788777000000)
+	sixHourFloor := int64(1788760800000)
+	dayFloor := int64(1788739200000)
+
+	tests := []struct {
+		signal Signal
+		want   int64
+	}{
+		{signal: SignalTraces, want: sixHourFloor},
+		{signal: SignalLogs, want: sixHourFloor},
+		{signal: SignalMetrics, want: dayFloor},
+		{signal: SignalUnspecified, want: dayFloor},
+	}
+	for _, tt := range tests {
+		t.Run(tt.signal.StringValue(), func(t *testing.T) {
+			selector := NewFieldKeySelectorFromPostableFieldKeysParams(PostableFieldKeysParams{Signal: tt.signal, StartUnixMilli: start})
+			if selector.StartUnixMilli != tt.want {
+				t.Fatalf("expected start %d, got %d", tt.want, selector.StartUnixMilli)
+			}
+		})
+	}
+
+	selector := NewFieldKeySelectorFromPostableFieldKeysParams(PostableFieldKeysParams{Signal: SignalTraces})
+	if selector.StartUnixMilli != 0 {
+		t.Fatalf("expected an unset start to stay unset, got %d", selector.StartUnixMilli)
+	}
+}
