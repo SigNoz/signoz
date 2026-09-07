@@ -10,10 +10,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/uptrace/bun"
 )
 
 type rule struct {
@@ -70,7 +72,53 @@ func (r *rule) EditRule(ctx context.Context, storedRule *ruletypes.StorableRule,
 
 func (r *rule) DeleteRule(ctx context.Context, orgID valuer.UUID, id valuer.UUID, cb func(context.Context) error) error {
 	if err := r.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
-		_, err := r.sqlstore.
+		// Find maintenance windows that would be left with no rules after this
+		// deletion. An empty RuleIDs list is treated as "suppress all rules", so
+		// we must delete those windows rather than leave them in that state.
+		soloWindowsSubq := r.sqlstore.BunDBCtx(ctx).NewSelect().
+			TableExpr("planned_maintenance_rule").
+			ColumnExpr("planned_maintenance_id").
+			Where("rule_id != ?", id.StringValue())
+
+		var soloWindowIDs []string
+		err := r.sqlstore.BunDBCtx(ctx).NewSelect().
+			TableExpr("planned_maintenance_rule").
+			ColumnExpr("planned_maintenance_id").
+			Where("rule_id = ? AND planned_maintenance_id NOT IN (?)", id.StringValue(), soloWindowsSubq).
+			Scan(ctx, &soloWindowIDs)
+		if err != nil {
+			return err
+		}
+
+		if len(soloWindowIDs) > 0 {
+			_, err = r.sqlstore.BunDBCtx(ctx).NewDelete().
+				Model(new(alertmanagertypes.StorablePlannedMaintenanceRule)).
+				Where("planned_maintenance_id IN (?)", bun.In(soloWindowIDs)).
+				Exec(ctx)
+			if err != nil {
+				return err
+			}
+			_, err = r.sqlstore.BunDBCtx(ctx).NewDelete().
+				Model(new(alertmanagertypes.StorablePlannedMaintenance)).
+				Where("id IN (?)", bun.In(soloWindowIDs)).
+				Exec(ctx)
+			if err != nil {
+				return err
+			}
+		}
+
+		// Remove this rule from any remaining maintenance windows.
+		_, err = r.sqlstore.
+			BunDBCtx(ctx).
+			NewDelete().
+			Model(new(alertmanagertypes.StorablePlannedMaintenanceRule)).
+			Where("rule_id = ?", id.StringValue()).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+
+		_, err = r.sqlstore.
 			BunDBCtx(ctx).
 			NewDelete().
 			Model(new(ruletypes.StorableRule)).
@@ -78,7 +126,7 @@ func (r *rule) DeleteRule(ctx context.Context, orgID valuer.UUID, id valuer.UUID
 			Where("id = ?", id.StringValue()).
 			Exec(ctx)
 		if err != nil {
-			return r.sqlstore.WrapAlreadyExistsErrf(err, errors.CodeAlreadyExists, "cannot delete rule because it is referenced by a planned maintenance, remove the rule from the planned maintenance first")
+			return err
 		}
 
 		return cb(ctx)
