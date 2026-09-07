@@ -20,8 +20,8 @@ import (
 )
 
 // jsonAttrColRe matches the raw `attributes` JSON column in the SELECT list (a bare column, not
-// the `attributes_string`/`_number`/`_bool` maps).
-var jsonAttrColRe = regexp.MustCompile(`,\s*attributes\s*,`)
+// the `attributes_string`/`_number`/`_bool` maps), mid-list or as the last column before FROM.
+var jsonAttrColRe = regexp.MustCompile(`,\s*attributes\s*(,| FROM )`)
 
 func newBulkTestBuilder(t *testing.T, releaseTime time.Time) (*traceQueryStatementBuilder, *telemetrytypestest.MockMetadataStore) {
 	t.Helper()
@@ -46,10 +46,11 @@ func newBulkTestBuilder(t *testing.T, releaseTime time.Time) (*traceQueryStateme
 	return b, store
 }
 
-// TestBulkAttributeColumnsAcrossWindows asserts the empty-selectFields ("all fields") list query
-// scans the attribute homes the column evolution resolves to for the window: the legacy maps before
-// the JSON rollout, the JSON column after it, and both across it.
-func TestBulkAttributeColumnsAcrossWindows(t *testing.T) {
+// TestListQuerySelectsAllAttributeHomes asserts the empty-selectFields ("all fields") list query
+// always scans every physical home of the attributes bag — the three legacy maps and the JSON
+// column — in any window and without consulting evolution metadata. consume.go merges them per
+// row, so a row's attributes surface whichever home they were written to.
+func TestListQuerySelectsAllAttributeHomes(t *testing.T) {
 	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 	rel := releaseTime.UnixMilli()
 	day := int64(24 * time.Hour / time.Millisecond)
@@ -57,15 +58,13 @@ func TestBulkAttributeColumnsAcrossWindows(t *testing.T) {
 	b, _ := newBulkTestBuilder(t, releaseTime)
 
 	cases := []struct {
-		name          string
-		startMs       uint64
-		endMs         uint64
-		wantJSON      bool
-		wantLegacyMap bool
+		name    string
+		startMs uint64
+		endMs   uint64
 	}{
-		{"before rollout -> maps only", uint64(rel - 2*day), uint64(rel - day), false, true},
-		{"after rollout -> json only", uint64(rel + day), uint64(rel + 2*day), true, false},
-		{"straddle rollout -> both", uint64(rel - day), uint64(rel + day), true, true},
+		{"before rollout", uint64(rel - 2*day), uint64(rel - day)},
+		{"after rollout", uint64(rel + day), uint64(rel + 2*day)},
+		{"straddling rollout", uint64(rel - day), uint64(rel + day)},
 	}
 
 	for _, tt := range cases {
@@ -79,12 +78,10 @@ func TestBulkAttributeColumnsAcrossWindows(t *testing.T) {
 			require.NoError(t, err)
 			selectList := stmt.Query[:strings.Index(stmt.Query, " FROM ")]
 
-			assert.Equal(t, tt.wantJSON, jsonAttrColRe.MatchString(stmt.Query),
-				"json `attributes` column presence; select=%s", selectList)
-			assert.Equal(t, tt.wantLegacyMap, strings.Contains(stmt.Query, "attributes_string"),
-				"legacy map presence; select=%s", selectList)
-			// resources_string stays a legacy map in every window (out of scope for this change).
-			assert.Contains(t, stmt.Query, "resources_string")
+			assert.Regexp(t, jsonAttrColRe, stmt.Query, "json `attributes` column; select=%s", selectList)
+			for _, col := range []string{"attributes_string", "attributes_number", "attributes_bool", "resources_string"} {
+				assert.Contains(t, stmt.Query, col, "select=%s", selectList)
+			}
 		})
 	}
 }
