@@ -242,9 +242,9 @@ func (q *queryCache) getCachedSeriesData(orgID valuer.UUID, cacheKey string) []*
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return nil
 	}
-	cachedSeriesData := make([]*CachedSeriesData, 0)
-	for _, cachedSeries := range cacheableSeriesData.Series {
-		cachedSeriesData = append(cachedSeriesData, &cachedSeries)
+	cachedSeriesData := make([]*CachedSeriesData, 0, len(cacheableSeriesData.Series))
+	for i := range cacheableSeriesData.Series {
+		cachedSeriesData = append(cachedSeriesData, &cacheableSeriesData.Series[i])
 	}
 	return cachedSeriesData
 }
