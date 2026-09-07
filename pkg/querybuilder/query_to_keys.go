@@ -56,6 +56,17 @@ func QueryStringToKeysSelectors(query string) []*telemetrytypes.FieldKeySelector
 					FieldDataType: key.FieldDataType,
 				})
 			}
+
+			// todo(tushar): consider reverting changes done to this method in below PR to avoid scope specific checks
+			// https://github.com/SigNoz/signoz/issues/11374
+			if key.FieldContext == telemetrytypes.FieldContextScope {
+				keys = append(keys, &telemetrytypes.FieldKeySelector{
+					Name:          key.FieldContext.StringValue() + "." + key.Name,
+					Signal:        key.Signal,
+					FieldContext:  telemetrytypes.FieldContextUnspecified, // this allows 'scope.' prefix for keys with other context as well
+					FieldDataType: key.FieldDataType,
+				})
+			}
 		}
 	}
 

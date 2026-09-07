@@ -50,6 +50,7 @@ jobs:
           - logspipelines
           - passwordauthn
           - preference
+          - quickfilter
           - querierlogs
           - queriertraces
           - queriermetrics
@@ -58,6 +59,7 @@ jobs:
           - querierai
           - rawexportdata
           - promqlconformance
+          - promapiconformance
           - querierauthz
           - role
           - rootuser

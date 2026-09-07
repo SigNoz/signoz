@@ -7,13 +7,11 @@ import GroupByIcon from 'assets/CustomIcons/GroupByIcon';
 import cx from 'classnames';
 import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { QueryParams } from 'constants/query';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import { RESTRICTED_SELECTED_FIELDS } from 'container/LogsFilters/config';
 import { MetricsType } from 'container/MetricsApplication/constant';
-import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ICurrentQueryData } from 'hooks/useHandleExplorerTabChange';
 import {
@@ -141,7 +139,6 @@ export default function TableViewActions(
 
 	const { pathname } = useLocation();
 	const { stagedQuery, updateQueriesData } = useQueryBuilder();
-	const viewName = useGetSearchQueryParam(QueryParams.viewName) || '';
 	const { dataType, logType: fieldType } = getFieldAttributes(record.field);
 
 	// there is no option for where clause in old logs explorer and live logs page or infra monitoring
@@ -202,8 +199,6 @@ export default function TableViewActions(
 		);
 
 		const queryData: ICurrentQueryData = {
-			name: viewName,
-			id: updatedQuery.id,
 			query: updatedQuery,
 		};
 
@@ -215,7 +210,6 @@ export default function TableViewActions(
 		fieldType,
 		dataType,
 		handleChangeSelectedView,
-		viewName,
 	]);
 
 	const handleReplaceFilter = useCallback((): void => {
@@ -265,8 +259,6 @@ export default function TableViewActions(
 		);
 
 		const queryData: ICurrentQueryData = {
-			name: viewName,
-			id: updatedQuery.id,
 			query: updatedQuery,
 		};
 
@@ -279,7 +271,6 @@ export default function TableViewActions(
 		dataType,
 		fieldData,
 		handleChangeSelectedView,
-		viewName,
 	]);
 
 	// Memoize textToCopy computation

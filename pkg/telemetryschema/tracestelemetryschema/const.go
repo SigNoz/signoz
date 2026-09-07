@@ -121,6 +121,20 @@ var (
 			FieldContext:  telemetrytypes.FieldContextSpan,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
 		},
+		"scope.name": {
+			Name:          "scope.name",
+			Description:   "Instrumentation scope name",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextScope,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
+		"scope.version": {
+			Name:          "scope.version",
+			Description:   "Instrumentation scope version",
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextScope,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		},
 	}
 	IntrinsicFieldsDeprecated = map[string]telemetrytypes.TelemetryFieldKey{
 		"traceID": {

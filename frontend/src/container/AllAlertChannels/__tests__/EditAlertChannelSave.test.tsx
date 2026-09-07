@@ -58,6 +58,111 @@ describe('EditAlertChannels save', () => {
 		expect(edit.calls[0].id).toBe('3');
 	});
 
+	it('blocks jira save when the reopen window is below the 1m minimum', async () => {
+		const edit = mockEditChannel();
+		const jiraInitialValue = {
+			type: 'jira',
+			name: 'jira-channel',
+			site: 'https://acme.atlassian.net',
+			username: 'user@acme.io',
+			password: 'token',
+			project: 'OPS',
+			issue_type: 'Task',
+			send_resolved: true,
+			reopen_duration: '30s',
+		};
+
+		const { unmount } = render(
+			<EditAlertChannels channelId="3" initialValue={jiraInitialValue} />,
+		);
+		const user = userEvent.setup();
+		await user.click(screen.getByTestId('save-channel-button'));
+		expect(edit.calls).toHaveLength(0);
+		unmount();
+
+		render(
+			<EditAlertChannels
+				channelId="3"
+				initialValue={{ ...jiraInitialValue, reopen_duration: '72h' }}
+			/>,
+		);
+		await user.click(screen.getByTestId('save-channel-button'));
+		await waitFor(() => expect(edit.calls).toHaveLength(1));
+	});
+
+	it('preserves the jira wont-fix resolution on save', async () => {
+		const edit = mockEditChannel();
+		render(
+			<EditAlertChannels
+				channelId="3"
+				initialValue={{
+					type: 'jira',
+					name: 'jira-channel',
+					site: 'https://acme.atlassian.net',
+					username: 'user@acme.io',
+					password: 'token',
+					project: 'OPS',
+					issue_type: 'Task',
+					send_resolved: true,
+					wont_fix_resolution: "Won't Do",
+				}}
+			/>,
+		);
+		const user = userEvent.setup();
+		await user.click(screen.getByTestId('save-channel-button'));
+
+		await waitFor(() => expect(edit.calls).toHaveLength(1));
+		expect(edit.calls[0].body).toStrictEqual({
+			name: 'jira-channel',
+			jira_configs: [
+				{
+					site: 'https://acme.atlassian.net',
+					project: 'OPS',
+					issue_type: 'Task',
+					send_resolved: true,
+					wont_fix_resolution: "Won't Do",
+					http_config: {
+						basic_auth: { username: 'user@acme.io', password: 'token' },
+					},
+				},
+			],
+		});
+	});
+
+	it('sends an incidentio_configs payload when editing an incident.io channel', async () => {
+		const edit = mockEditChannel();
+		render(
+			<EditAlertChannels
+				channelId="4"
+				initialValue={{
+					type: 'incidentio',
+					name: 'incidentio-channel',
+					url: 'https://api.incident.io/v2/alert_events/http/01M0D1JNVBGBGVTWX053EM12XV',
+					token: 'tok-abc',
+					send_resolved: true,
+					metadata: { env: 'prod' },
+				}}
+			/>,
+		);
+
+		const user = userEvent.setup();
+		await user.click(screen.getByTestId('save-channel-button'));
+
+		await waitFor(() => expect(edit.calls).toHaveLength(1));
+		expect(edit.calls[0].id).toBe('4');
+		expect(edit.calls[0].body).toStrictEqual({
+			name: 'incidentio-channel',
+			incidentio_configs: [
+				{
+					url: 'https://api.incident.io/v2/alert_events/http/01M0D1JNVBGBGVTWX053EM12XV',
+					token: 'tok-abc',
+					send_resolved: true,
+					metadata: { env: 'prod' },
+				},
+			],
+		});
+	});
+
 	it('persists send_resolved toggle in the edit request', async () => {
 		const edit = mockEditChannel();
 		render(

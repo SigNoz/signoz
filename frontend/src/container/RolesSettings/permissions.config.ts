@@ -2,6 +2,7 @@ import {
 	Bot,
 	ChartLine,
 	DraftingCompass,
+	FileKey,
 	Gauge,
 	Key,
 	Logs,
@@ -60,6 +61,13 @@ export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
 		selectorPlaceholder:
 			'Type service account ID, separate multiple with comma or space',
 		docsAnchor: 'service-account',
+	},
+	license: {
+		label: 'Licenses',
+		description: 'Licenses of the workspace, including the license key.',
+		icon: FileKey,
+		selectorPlaceholder: 'Type license ID, separate multiple with comma or space',
+		docsAnchor: 'license',
 	},
 	logs: {
 		label: 'Logs',

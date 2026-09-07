@@ -7,11 +7,14 @@ import { parseSpanInput } from './testPayload';
 
 export const SAMPLE_SPAN_JSON = `{
   "attributes": {
-    "my_company.llm.input": "What is quantum computing?",
-    "llm.input_messages": "What is quantum computing?",
-    "gen_ai.request.model": "gpt-4",
-    "gen_ai.usage.total_tokens": 1250,
-    "gen_ai.content.completion": "Quantum computing leverages..."
+    "llm.model_name": "gpt-4o",
+    "llm.provider": "openai",
+    "llm.token_count.prompt": 1024,
+    "llm.token_count.completion": 226,
+    "llm.token_count.prompt_details.cache_read": 512,
+    "input.value": "What is quantum computing?",
+    "output.value": "Quantum computing leverages superposition and entanglement...",
+    "session.id": "chat-8f2e41"
   },
   "resource": {
     "service.name": "llm-gateway",

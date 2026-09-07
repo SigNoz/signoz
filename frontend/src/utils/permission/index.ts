@@ -72,7 +72,6 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	CHANNELS_EDIT: ['ADMIN'],
 	CHANNELS_NEW: ['ADMIN'],
 	DASHBOARD: ['ADMIN', 'EDITOR', 'VIEWER'],
-	DASHBOARD_WIDGET: ['ADMIN', 'EDITOR', 'VIEWER'],
 	DASHBOARD_PANEL_EDITOR: ['ADMIN', 'EDITOR', 'VIEWER'],
 	EDIT_ALERTS: ['ADMIN', 'EDITOR'],
 	ERROR_DETAIL: ['ADMIN', 'EDITOR', 'VIEWER'],
@@ -184,4 +183,7 @@ export const routeWithInitialAuthZSupport = {
 	METRICS_EXPLORER_VOLUME_CONTROL: true,
 	METER_EXPLORER: true,
 	METER: true,
+	WORKSPACE_LOCKED: true,
+	WORKSPACE_SUSPENDED: true,
+	WORKSPACE_ACCESS_RESTRICTED: true,
 } as const satisfies Partial<Record<keyof typeof ROUTES, true>>;

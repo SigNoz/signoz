@@ -19,6 +19,12 @@
 	& [data-hide-expanded='true'] {
 		display: none;
 	}
+
+	// The icon slot is rendered even when the icon inside it is hidden, and the
+	// header's flex gap then indents the title past the values below it.
+	& [data-slot='icon']:has([data-hide-expanded='true']) {
+		display: none;
+	}
 }
 
 .expandedTableFooter {

@@ -88,7 +88,8 @@ func (e *executor) TryExecuteRange(ctx context.Context, qs string, start, end ti
 	}
 
 	// Evaluate every unit concurrently on its own grid (the query grid, or a
-	// subquery grid); each is one series lookup plus one grid query.
+	// subquery grid); each is one grid query (see executeUnit for when a
+	// series lookup precedes it).
 	results := make([][]transpiledSeries, len(plan.units))
 	eg, egCtx := errgroup.WithContext(ctx)
 	for i, unit := range plan.units {
@@ -142,19 +143,27 @@ func (e *executor) executeUnit(ctx context.Context, unit *coreUnit, grid gridCon
 	dataStart := startMs - unit.offsetMs - windowMs
 	dataEnd := endMs - unit.offsetMs
 
-	seriesQuery, seriesArgs, err := buildSeriesQuery(dataStart, dataEnd, unit.matchers)
-	if err != nil {
-		return nil, err
-	}
-	lookup, err := e.client.selectSeries(ctx, seriesQuery, seriesArgs)
-	if err != nil {
-		return nil, err
-	}
-	if len(lookup.fingerprints) == 0 {
-		return nil, nil
+	// The group-key join resolves the matchers on its own, so the unit
+	// statement only needs concrete metric names for the samples
+	// primary-key prefix. A selector without a static __name__ learns them
+	// through the series lookup; every other selector skips the roundtrip.
+	metricNames := metricNamesFromMatchers(unit.matchers)
+	if metricNames == nil {
+		seriesQuery, seriesArgs, err := buildSeriesQuery(dataStart, dataEnd, unit.matchers)
+		if err != nil {
+			return nil, err
+		}
+		lookup, err := e.client.selectSeries(ctx, seriesQuery, seriesArgs)
+		if err != nil {
+			return nil, err
+		}
+		if len(lookup.fingerprints) == 0 {
+			return nil, nil
+		}
+		metricNames = lookup.metricNames
 	}
 
-	query, args, err := buildUnitSQL(unit, lookup.metricNames, dataStart, dataEnd, startMs, endMs, stepMs, e.client.lookbackMs)
+	query, args, err := buildUnitSQL(unit, metricNames, dataStart, dataEnd, startMs, endMs, stepMs, e.client.lookbackMs)
 	if err != nil {
 		return nil, err
 	}

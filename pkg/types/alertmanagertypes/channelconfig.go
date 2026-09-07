@@ -1,0 +1,1193 @@
+package alertmanagertypes
+
+import (
+	"bytes"
+	"encoding/json"
+	"maps"
+	"net/textproto"
+	"net/url"
+	"reflect"
+	"slices"
+	"strings"
+
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/prometheus/alertmanager/config"
+	commoncfg "github.com/prometheus/common/config"
+	"github.com/prometheus/common/model"
+	"github.com/swaggest/jsonschema-go"
+)
+
+var (
+	ErrCodeChannelUnsupportedKind = errors.MustNewCode("channel_unsupported_kind")
+)
+
+// ════════════════════════════════════════════════════════════════════════
+// Kind
+// ════════════════════════════════════════════════════════════════════════
+
+// ChannelKind selects which ChannelSpec a channel carries and which notifier
+// integration is built for it.
+type ChannelKind struct {
+	valuer.String
+}
+
+var (
+	ChannelKindSlack      = ChannelKind{valuer.NewString("slack")}
+	ChannelKindEmail      = ChannelKind{valuer.NewString("email")}
+	ChannelKindWebhook    = ChannelKind{valuer.NewString("webhook")}
+	ChannelKindPagerduty  = ChannelKind{valuer.NewString("pagerduty")}
+	ChannelKindOpsgenie   = ChannelKind{valuer.NewString("opsgenie")}
+	ChannelKindMSTeams    = ChannelKind{valuer.NewString("msteams")}
+	ChannelKindGoogleChat = ChannelKind{valuer.NewString("googlechat")}
+	ChannelKindJira       = ChannelKind{valuer.NewString("jira")}
+	ChannelKindJSMOps     = ChannelKind{valuer.NewString("jsmops")}
+	ChannelKindIncidentIO = ChannelKind{valuer.NewString("incidentio")}
+)
+
+func (ChannelKind) Enum() []any {
+	kinds := make([]any, 0, len(channelKinds))
+	for _, channelKind := range channelKinds {
+		kinds = append(kinds, channelKind.kind)
+	}
+	return kinds
+}
+
+func (t ChannelKind) IsValid() bool {
+	return slices.ContainsFunc(t.Enum(), func(v any) bool { return v == t })
+}
+
+func ErrUnsupportedChannelKind(s string) error {
+	return errors.Newf(
+		errors.TypeInvalidInput,
+		ErrCodeChannelUnsupportedKind,
+		"unknown notification channel kind %q; allowed values: %s",
+		s, allowedValuesForChannelKind(),
+	)
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// Union
+// ════════════════════════════════════════════════════════════════════════
+
+// ChannelConfig is the discriminated union of per-kind configurations. The
+// envelope sits on config rather than the resource root, so clients narrow on
+// config.kind instead of every request and response flavor becoming a oneOf.
+type ChannelConfig struct {
+	Kind ChannelKind `json:"kind" required:"true"`
+	Spec any         `json:"spec" required:"true"`
+}
+
+func (c ChannelConfig) Validate() error {
+	newSpec, ok := newChannelSpec(c.Kind)
+	if !ok {
+		return ErrUnsupportedChannelKind(c.Kind.StringValue())
+	}
+
+	if c.Spec == nil {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec is required")
+	}
+
+	spec, ok := c.Spec.(ChannelSpec)
+	if !ok {
+		return errors.NewInternalf(errors.CodeInternal, "config.spec was not decoded into a known type")
+	}
+
+	// A decoded config cannot disagree, because UnmarshalJSON builds the spec
+	// from the kind. A caller assembling the struct can, and the conversion to a
+	// receiver dispatches on the spec, so a mismatch would silently outrank the
+	// declared kind.
+	if reflect.TypeOf(spec) != reflect.TypeOf(newSpec()) {
+		return errors.NewInternalf(errors.CodeInternal, "config.spec does not match kind %q", c.Kind.StringValue())
+	}
+
+	return spec.Validate()
+}
+
+func (c *ChannelConfig) UnmarshalJSON(data []byte) error {
+	channelKindString, specJSON, err := extractKindAndSpec(data)
+	if err != nil {
+		return err
+	}
+
+	factory, ok := newChannelSpec(ChannelKind{valuer.NewString(channelKindString)})
+	if !ok {
+		return ErrUnsupportedChannelKind(channelKindString)
+	}
+
+	spec, err := decodeChannelSpec(specJSON, factory(), channelKindString)
+	if err != nil {
+		return err
+	}
+
+	c.Kind = ChannelKind{valuer.NewString(channelKindString)}
+	c.Spec = *spec
+
+	return nil
+}
+
+// ChannelConfigVariant names one branch of the union. Each instantiation becomes
+// its own OpenAPI component with kind pinned to the one value it accepts.
+type ChannelConfigVariant[S any] struct {
+	Kind string `json:"kind" required:"true"`
+	Spec S      `json:"spec" required:"true"`
+}
+
+func (v ChannelConfigVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
+	return restrictKindToOneValue(s, v.Kind)
+}
+
+var (
+	_ jsonschema.OneOfExposer = ChannelConfig{}
+	_ jsonschema.Preparer     = ChannelConfig{}
+)
+
+func (ChannelConfig) JSONSchemaOneOf() []any {
+	return []any{
+		ChannelConfigVariant[ChannelSlackConfig]{Kind: ChannelKindSlack.StringValue()},
+		ChannelConfigVariant[ChannelEmailConfig]{Kind: ChannelKindEmail.StringValue()},
+		ChannelConfigVariant[ChannelWebhookConfig]{Kind: ChannelKindWebhook.StringValue()},
+		ChannelConfigVariant[ChannelPagerdutyConfig]{Kind: ChannelKindPagerduty.StringValue()},
+		ChannelConfigVariant[ChannelOpsgenieConfig]{Kind: ChannelKindOpsgenie.StringValue()},
+		ChannelConfigVariant[ChannelMSTeamsConfig]{Kind: ChannelKindMSTeams.StringValue()},
+		ChannelConfigVariant[ChannelGoogleChatConfig]{Kind: ChannelKindGoogleChat.StringValue()},
+		ChannelConfigVariant[ChannelJiraConfig]{Kind: ChannelKindJira.StringValue()},
+		ChannelConfigVariant[ChannelJSMOpsConfig]{Kind: ChannelKindJSMOps.StringValue()},
+		ChannelConfigVariant[ChannelIncidentIOConfig]{Kind: ChannelKindIncidentIO.StringValue()},
+	}
+}
+
+// PrepareJSONSchema marks the envelope with x-signoz-discriminator, which
+// signoz.attachDiscriminators promotes to a real discriminator after reflection.
+func (ChannelConfig) PrepareJSONSchema(s *jsonschema.Schema) error {
+	return markDiscriminator(s, "kind", map[string]string{
+		ChannelKindSlack.StringValue():      channelVariantRef("ChannelSlackConfig"),
+		ChannelKindEmail.StringValue():      channelVariantRef("ChannelEmailConfig"),
+		ChannelKindWebhook.StringValue():    channelVariantRef("ChannelWebhookConfig"),
+		ChannelKindPagerduty.StringValue():  channelVariantRef("ChannelPagerdutyConfig"),
+		ChannelKindOpsgenie.StringValue():   channelVariantRef("ChannelOpsgenieConfig"),
+		ChannelKindMSTeams.StringValue():    channelVariantRef("ChannelMSTeamsConfig"),
+		ChannelKindGoogleChat.StringValue(): channelVariantRef("ChannelGoogleChatConfig"),
+		ChannelKindJira.StringValue():       channelVariantRef("ChannelJiraConfig"),
+		ChannelKindJSMOps.StringValue():     channelVariantRef("ChannelJSMOpsConfig"),
+		ChannelKindIncidentIO.StringValue(): channelVariantRef("ChannelIncidentIOConfig"),
+	})
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// Specs
+// ════════════════════════════════════════════════════════════════════════
+
+type ChannelSpec interface {
+	Validate() error
+	toUndefaultedReceiver(displayName string) (*Receiver, error)
+}
+
+type ChannelSlackConfig struct {
+	SendResolved *bool                        `json:"sendResolved,omitempty"`
+	APIURL       string                       `json:"apiUrl" required:"true"`
+	Channel      string                       `json:"channel"`
+	Title        valuer.UnsetOrNonEmptyString `json:"title"`
+	Text         valuer.UnsetOrNonEmptyString `json:"text"`
+}
+
+func (c ChannelSlackConfig) Validate() error {
+	if c.APIURL == "" {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.apiUrl is required for a slack channel")
+	}
+
+	return nil
+}
+
+func (c ChannelSlackConfig) toUndefaultedReceiver(displayName string) (*Receiver, error) {
+	apiURL, err := parseSecretURL(c.APIURL)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Receiver{Receiver: &config.Receiver{
+		Name: displayName,
+		SlackConfigs: []*config.SlackConfig{{
+			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, config.DefaultSlackConfig.VSendResolved)},
+			APIURL:         apiURL,
+			Channel:        c.Channel,
+			Title:          c.Title.StringValue(),
+			Text:           c.Text.StringValue(),
+		}},
+	}}, nil
+}
+
+func newChannelSlackConfigFromReceiver(name string, receiver *Receiver) (ChannelSpec, error) {
+	slack := receiver.SlackConfigs[0]
+	sendResolved := slack.VSendResolved
+
+	if err := rejectAnyHTTPAuth(name, slack.HTTPConfig); err != nil {
+		return nil, err
+	}
+
+	return &ChannelSlackConfig{
+		SendResolved: &sendResolved,
+		APIURL:       formatSecretURL(slack.APIURL),
+		Channel:      slack.Channel,
+		Title:        valuer.UnsetIfEmpty(slack.Title),
+		Text:         valuer.UnsetIfEmpty(slack.Text),
+	}, nil
+}
+
+// ChannelEmailConfig carries no SMTP transport fields: the smarthost,
+// credentials and TLS settings come from the deployment's global config, so a
+// channel can only choose recipients and body.
+type ChannelEmailConfig struct {
+	SendResolved *bool                        `json:"sendResolved,omitempty"`
+	To           string                       `json:"to" required:"true"`
+	HTML         valuer.UnsetOrNonEmptyString `json:"html"`
+	Headers      map[string]string            `json:"headers,omitempty"`
+}
+
+func (c ChannelEmailConfig) Validate() error {
+	if c.To == "" {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.to is required for an email channel")
+	}
+
+	// A read reports header names as textproto canonicalizes them, turning
+	// "subject" into "Subject", so a name that is not already in that form is
+	// rejected rather than answered with one the caller never sent.
+	for _, header := range slices.Sorted(maps.Keys(c.Headers)) {
+		if canonical := textproto.CanonicalMIMEHeaderKey(header); canonical != header {
+			return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.headers name %q must be written as %q", header, canonical)
+		}
+	}
+
+	return nil
+}
+
+func (c ChannelEmailConfig) toUndefaultedReceiver(displayName string) (*Receiver, error) {
+	return &Receiver{Receiver: &config.Receiver{
+		Name: displayName,
+		EmailConfigs: []*config.EmailConfig{{
+			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, config.DefaultEmailConfig.VSendResolved)},
+			To:             c.To,
+			HTML:           c.HTML.StringValue(),
+			Headers:        c.Headers,
+		}},
+	}}, nil
+}
+
+func newChannelEmailConfigFromReceiver(_ string, receiver *Receiver) (ChannelSpec, error) {
+	email := receiver.EmailConfigs[0]
+	sendResolved := email.VSendResolved
+
+	return &ChannelEmailConfig{
+		SendResolved: &sendResolved,
+		To:           email.To,
+		HTML:         valuer.UnsetIfEmpty(email.HTML),
+		Headers:      email.Headers,
+	}, nil
+}
+
+// ChannelWebhookConfig splits apart the two authentication modes the legacy API
+// overloaded onto one password field, where an empty username meant the password
+// was really a bearer token.
+type ChannelWebhookConfig struct {
+	SendResolved *bool  `json:"sendResolved,omitempty"`
+	URL          string `json:"url" required:"true"`
+	Username     string `json:"username"`
+	Password     string `json:"password"`
+	BearerToken  string `json:"bearerToken"`
+}
+
+func (c ChannelWebhookConfig) Validate() error {
+	if c.URL == "" {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.url is required for a webhook channel")
+	}
+
+	usesBasicAuth := c.Username != "" || c.Password != ""
+
+	if usesBasicAuth && c.BearerToken != "" {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.bearerToken cannot be combined with config.spec.username or config.spec.password")
+	}
+
+	if usesBasicAuth && (c.Username == "" || c.Password == "") {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.username and config.spec.password must both be set for basic auth")
+	}
+
+	return nil
+}
+
+func (c ChannelWebhookConfig) toUndefaultedReceiver(displayName string) (*Receiver, error) {
+	webhook := &config.WebhookConfig{
+		NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, config.DefaultWebhookConfig.VSendResolved)},
+		URL:            config.SecretTemplateURL(c.URL),
+	}
+
+	// Seeded from upstream's default rather than a zero value: FollowRedirects
+	// and EnableHTTP2 marshal unconditionally, so a zero value would persist
+	// them as false and read back as a config ChannelWebhookConfig cannot represent.
+	switch {
+	case c.Username != "":
+		httpConfig := commoncfg.DefaultHTTPClientConfig
+		httpConfig.BasicAuth = &commoncfg.BasicAuth{
+			Username: c.Username,
+			Password: commoncfg.Secret(c.Password),
+		}
+		webhook.HTTPConfig = &httpConfig
+	case c.BearerToken != "":
+		httpConfig := commoncfg.DefaultHTTPClientConfig
+		httpConfig.Authorization = &commoncfg.Authorization{
+			Type:        bearerAuthorizationType,
+			Credentials: commoncfg.Secret(c.BearerToken),
+		}
+		webhook.HTTPConfig = &httpConfig
+	}
+
+	return &Receiver{Receiver: &config.Receiver{
+		Name:           displayName,
+		WebhookConfigs: []*config.WebhookConfig{webhook},
+	}}, nil
+}
+
+func newChannelWebhookConfigFromReceiver(name string, receiver *Receiver) (ChannelSpec, error) {
+	upstream := receiver.WebhookConfigs[0]
+	sendResolved := upstream.VSendResolved
+	if err := rejectUnsupportedHTTPConfig(name, upstream.HTTPConfig); err != nil {
+		return nil, err
+	}
+
+	if err := rejectHTTPBasicAuthBeyondPassword(name, upstream.HTTPConfig); err != nil {
+		return nil, err
+	}
+
+	if err := rejectHTTPAuthorizationBeyondBearer(name, upstream.HTTPConfig); err != nil {
+		return nil, err
+	}
+
+	webhook := &ChannelWebhookConfig{
+		SendResolved: &sendResolved,
+		URL:          string(upstream.URL),
+	}
+
+	if upstream.HTTPConfig != nil {
+		if basicAuth := upstream.HTTPConfig.BasicAuth; basicAuth != nil {
+			webhook.Username = basicAuth.Username
+			webhook.Password = string(basicAuth.Password)
+		}
+		if authorization := upstream.HTTPConfig.Authorization; authorization != nil {
+			webhook.BearerToken = string(authorization.Credentials)
+		}
+	}
+
+	return webhook, nil
+}
+
+type ChannelPagerdutyConfig struct {
+	SendResolved *bool                        `json:"sendResolved,omitempty"`
+	RoutingKey   string                       `json:"routingKey" required:"true"`
+	URL          string                       `json:"url"`
+	Source       valuer.UnsetOrNonEmptyString `json:"source"`
+	Client       valuer.UnsetOrNonEmptyString `json:"client"`
+	ClientURL    valuer.UnsetOrNonEmptyString `json:"clientUrl"`
+	Description  valuer.UnsetOrNonEmptyString `json:"description"`
+	Severity     string                       `json:"severity"`
+	Component    string                       `json:"component"`
+	Group        string                       `json:"group"`
+	Class        string                       `json:"class"`
+	Details      map[string]string            `json:"details,omitempty"`
+}
+
+func (c ChannelPagerdutyConfig) Validate() error {
+	if c.RoutingKey == "" {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.routingKey is required for a pagerduty channel")
+	}
+
+	return nil
+}
+
+func (c ChannelPagerdutyConfig) toUndefaultedReceiver(displayName string) (*Receiver, error) {
+	var eventsURL *config.URL
+	if c.URL != "" {
+		parsed, err := parseUpstreamURL(c.URL)
+		if err != nil {
+			return nil, err
+		}
+		eventsURL = parsed
+	}
+
+	return &Receiver{Receiver: &config.Receiver{
+		Name: displayName,
+		PagerdutyConfigs: []*config.PagerdutyConfig{{
+			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, config.DefaultPagerdutyConfig.VSendResolved)},
+			RoutingKey:     config.Secret(c.RoutingKey),
+			URL:            eventsURL,
+			Source:         c.Source.StringValue(),
+			Client:         c.Client.StringValue(),
+			ClientURL:      c.ClientURL.StringValue(),
+			Description:    c.Description.StringValue(),
+			Severity:       c.Severity,
+			Component:      c.Component,
+			Group:          c.Group,
+			Class:          c.Class,
+			Details:        newUpstreamDetails(c.Details),
+		}},
+	}}, nil
+}
+
+func newChannelPagerdutyConfigFromReceiver(name string, receiver *Receiver) (ChannelSpec, error) {
+	pagerduty := receiver.PagerdutyConfigs[0]
+	sendResolved := pagerduty.VSendResolved
+
+	if err := rejectAnyHTTPAuth(name, pagerduty.HTTPConfig); err != nil {
+		return nil, err
+	}
+
+	var details map[string]string
+	if len(pagerduty.Details) > 0 {
+		extracted, err := extractStringDetails(name, pagerduty.Details)
+		if err != nil {
+			return nil, err
+		}
+		details = extracted
+	}
+
+	return &ChannelPagerdutyConfig{
+		SendResolved: &sendResolved,
+		RoutingKey:   string(pagerduty.RoutingKey),
+		URL:          formatUpstreamURL(pagerduty.URL),
+		Source:       valuer.UnsetIfEmpty(pagerduty.Source),
+		Client:       valuer.UnsetIfEmpty(pagerduty.Client),
+		ClientURL:    valuer.UnsetIfEmpty(pagerduty.ClientURL),
+		Description:  valuer.UnsetIfEmpty(pagerduty.Description),
+		Severity:     pagerduty.Severity,
+		Component:    pagerduty.Component,
+		Group:        pagerduty.Group,
+		Class:        pagerduty.Class,
+		Details:      details,
+	}, nil
+}
+
+type ChannelOpsgenieConfig struct {
+	SendResolved *bool                        `json:"sendResolved,omitempty"`
+	APIKey       string                       `json:"apiKey" required:"true"`
+	APIURL       string                       `json:"apiUrl"`
+	Message      valuer.UnsetOrNonEmptyString `json:"message"`
+	Description  valuer.UnsetOrNonEmptyString `json:"description"`
+	Source       valuer.UnsetOrNonEmptyString `json:"source"`
+	Details      map[string]string            `json:"details,omitempty"`
+	Priority     string                       `json:"priority"`
+}
+
+func (c ChannelOpsgenieConfig) Validate() error {
+	if c.APIKey == "" {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.apiKey is required for an opsgenie channel")
+	}
+
+	return nil
+}
+
+func (c ChannelOpsgenieConfig) toUndefaultedReceiver(displayName string) (*Receiver, error) {
+	var apiURL *config.URL
+	if c.APIURL != "" {
+		parsed, err := parseUpstreamURL(c.APIURL)
+		if err != nil {
+			return nil, err
+		}
+		apiURL = parsed
+	}
+
+	return &Receiver{Receiver: &config.Receiver{
+		Name: displayName,
+		OpsGenieConfigs: []*config.OpsGenieConfig{{
+			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, config.DefaultOpsGenieConfig.VSendResolved)},
+			APIKey:         config.Secret(c.APIKey),
+			APIURL:         apiURL,
+			Message:        c.Message.StringValue(),
+			Description:    c.Description.StringValue(),
+			Source:         c.Source.StringValue(),
+			Priority:       c.Priority,
+			Details:        c.Details,
+		}},
+	}}, nil
+}
+
+func newChannelOpsgenieConfigFromReceiver(name string, receiver *Receiver) (ChannelSpec, error) {
+	opsgenie := receiver.OpsGenieConfigs[0]
+	sendResolved := opsgenie.VSendResolved
+
+	if err := rejectAnyHTTPAuth(name, opsgenie.HTTPConfig); err != nil {
+		return nil, err
+	}
+
+	return &ChannelOpsgenieConfig{
+		SendResolved: &sendResolved,
+		APIKey:       string(opsgenie.APIKey),
+		APIURL:       formatUpstreamURL(opsgenie.APIURL),
+		Message:      valuer.UnsetIfEmpty(opsgenie.Message),
+		Description:  valuer.UnsetIfEmpty(opsgenie.Description),
+		Source:       valuer.UnsetIfEmpty(opsgenie.Source),
+		Priority:     opsgenie.Priority,
+		Details:      opsgenie.Details,
+	}, nil
+}
+
+type ChannelMSTeamsConfig struct {
+	SendResolved *bool                        `json:"sendResolved,omitempty"`
+	WebhookURL   string                       `json:"webhookUrl" required:"true"`
+	Title        valuer.UnsetOrNonEmptyString `json:"title"`
+	Text         valuer.UnsetOrNonEmptyString `json:"text"`
+}
+
+func (c ChannelMSTeamsConfig) Validate() error {
+	if c.WebhookURL == "" {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.webhookUrl is required for an msteams channel")
+	}
+
+	return nil
+}
+
+func (c ChannelMSTeamsConfig) toUndefaultedReceiver(displayName string) (*Receiver, error) {
+	webhookURL, err := parseSecretURL(c.WebhookURL)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Receiver{Receiver: &config.Receiver{
+		Name: displayName,
+		MSTeamsV2Configs: []*config.MSTeamsV2Config{{
+			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, config.DefaultMSTeamsV2Config.VSendResolved)},
+			WebhookURL:     webhookURL,
+			Title:          c.Title.StringValue(),
+			Text:           c.Text.StringValue(),
+		}},
+	}}, nil
+}
+
+func newChannelMSTeamsConfigFromReceiver(name string, receiver *Receiver) (ChannelSpec, error) {
+	msteams := receiver.MSTeamsV2Configs[0]
+	sendResolved := msteams.VSendResolved
+
+	if err := rejectAnyHTTPAuth(name, msteams.HTTPConfig); err != nil {
+		return nil, err
+	}
+
+	return &ChannelMSTeamsConfig{
+		SendResolved: &sendResolved,
+		WebhookURL:   formatSecretURL(msteams.WebhookURL),
+		Title:        valuer.UnsetIfEmpty(msteams.Title),
+		Text:         valuer.UnsetIfEmpty(msteams.Text),
+	}, nil
+}
+
+type ChannelGoogleChatConfig struct {
+	SendResolved *bool                        `json:"sendResolved,omitempty"`
+	WebhookURL   string                       `json:"webhookUrl" required:"true"`
+	Title        valuer.UnsetOrNonEmptyString `json:"title"`
+	Text         valuer.UnsetOrNonEmptyString `json:"text"`
+}
+
+func (c ChannelGoogleChatConfig) Validate() error {
+	if c.WebhookURL == "" {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.webhookUrl is required for a googlechat channel")
+	}
+
+	return nil
+}
+
+func (c ChannelGoogleChatConfig) toUndefaultedReceiver(displayName string) (*Receiver, error) {
+	webhookURL, err := parseSecretURL(c.WebhookURL)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Receiver{
+		Receiver: &config.Receiver{Name: displayName},
+		GoogleChatConfigs: []*GoogleChatReceiverConfig{{
+			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, DefaultGoogleChatReceiverConfig.VSendResolved)},
+			WebhookURL:     webhookURL,
+			Title:          c.Title.StringValue(),
+			Text:           c.Text.StringValue(),
+		}},
+	}, nil
+}
+
+func newChannelGoogleChatConfigFromReceiver(name string, receiver *Receiver) (ChannelSpec, error) {
+	googlechat := receiver.GoogleChatConfigs[0]
+	sendResolved := googlechat.VSendResolved
+
+	if err := rejectAnyHTTPAuth(name, googlechat.HTTPConfig); err != nil {
+		return nil, err
+	}
+
+	return &ChannelGoogleChatConfig{
+		SendResolved: &sendResolved,
+		WebhookURL:   formatSecretURL(googlechat.WebhookURL),
+		Title:        valuer.UnsetIfEmpty(googlechat.Title),
+		Text:         valuer.UnsetIfEmpty(googlechat.Text),
+	}, nil
+}
+
+type ChannelJiraConfig struct {
+	SendResolved *bool `json:"sendResolved,omitempty"`
+	// Site is the Jira Cloud base URL, https://<site>.atlassian.net. Only Jira
+	// Cloud is supported; the REST base is derived from it.
+	Site              string                       `json:"site" required:"true"`
+	Project           string                       `json:"project" required:"true"`
+	IssueType         string                       `json:"issueType" required:"true"`
+	Summary           valuer.UnsetOrNonEmptyString `json:"summary"`
+	Description       valuer.UnsetOrNonEmptyString `json:"description"`
+	Priority          string                       `json:"priority"`
+	Labels            []string                     `json:"labels,omitempty"`
+	ResolveTransition string                       `json:"resolveTransition"`
+	ReopenTransition  string                       `json:"reopenTransition"`
+	ReopenDuration    valuer.UnsetOrNonEmptyString `json:"reopenDuration"`
+	WontFixResolution string                       `json:"wontFixResolution"`
+	CustomFields      map[string]any               `json:"customFields,omitempty"`
+
+	Email    string `json:"email" required:"true"`
+	APIToken string `json:"apiToken" required:"true"`
+}
+
+func (c ChannelJiraConfig) Validate() error {
+	for _, required := range []struct {
+		value string
+		field string
+	}{
+		{c.Site, "site"},
+		{c.Project, "project"},
+		{c.IssueType, "issueType"},
+		{c.Email, "email"},
+		{c.APIToken, "apiToken"},
+	} {
+		if required.value == "" {
+			return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.%s is required for a jira channel", required.field)
+		}
+	}
+
+	if !c.ReopenDuration.IsZero() {
+		reopenDuration, err := model.ParseDuration(c.ReopenDuration.StringValue())
+		if err != nil {
+			return errors.WrapInvalidInputf(err, ErrCodeAlertmanagerChannelInvalid, "config.spec.reopenDuration %q is not a valid duration", c.ReopenDuration)
+		}
+
+		// A read reports the duration as model.Duration formats it, collapsing
+		// "72h" into "3d", so a value that is not already in that form is rejected
+		// rather than answered with one the caller never sent.
+		if canonical := reopenDuration.String(); canonical != c.ReopenDuration.StringValue() {
+			return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.reopenDuration %q must be written as %q", c.ReopenDuration, canonical)
+		}
+	}
+
+	return nil
+}
+
+func (c ChannelJiraConfig) toUndefaultedReceiver(displayName string) (*Receiver, error) {
+	// Seeded from upstream's default rather than a zero value: FollowRedirects
+	// and EnableHTTP2 marshal unconditionally, so a zero value would persist them
+	// as false and read back as a config ChannelJiraConfig cannot represent.
+	httpConfig := commoncfg.DefaultHTTPClientConfig
+	httpConfig.BasicAuth = &commoncfg.BasicAuth{
+		Username: c.Email,
+		Password: commoncfg.Secret(c.APIToken),
+	}
+
+	jira := &JiraReceiverConfig{
+		// JiraReceiverConfig seeds no send_resolved of its own, so unset means off.
+		NotifierConfig:    config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, false)},
+		Site:              c.Site,
+		Project:           c.Project,
+		IssueType:         c.IssueType,
+		Summary:           c.Summary.StringValue(),
+		Description:       c.Description.StringValue(),
+		Priority:          c.Priority,
+		Labels:            c.Labels,
+		ResolveTransition: c.ResolveTransition,
+		ReopenTransition:  c.ReopenTransition,
+		WontFixResolution: c.WontFixResolution,
+		CustomFields:      c.CustomFields,
+		HTTPConfig:        &httpConfig,
+	}
+
+	if !c.ReopenDuration.IsZero() {
+		reopenDuration, err := model.ParseDuration(c.ReopenDuration.StringValue())
+		if err != nil {
+			return nil, errors.WrapInvalidInputf(err, ErrCodeAlertmanagerChannelInvalid, "parse reopenDuration %q", c.ReopenDuration)
+		}
+		jira.ReopenDuration = reopenDuration
+	}
+
+	return &Receiver{
+		Receiver:    &config.Receiver{Name: displayName},
+		JiraConfigs: []*JiraReceiverConfig{jira},
+	}, nil
+}
+
+func newChannelJiraConfigFromReceiver(name string, receiver *Receiver) (ChannelSpec, error) {
+	jira := receiver.JiraConfigs[0]
+	sendResolved := jira.VSendResolved
+
+	if err := rejectUnsupportedHTTPConfig(name, jira.HTTPConfig); err != nil {
+		return nil, err
+	}
+
+	if jira.HTTPConfig != nil && jira.HTTPConfig.Authorization != nil {
+		return nil, errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets http_config.authorization, which is not supported", name)
+	}
+
+	if err := rejectHTTPBasicAuthBeyondPassword(name, jira.HTTPConfig); err != nil {
+		return nil, err
+	}
+
+	spec := &ChannelJiraConfig{
+		SendResolved:      &sendResolved,
+		Site:              jira.Site,
+		Project:           jira.Project,
+		IssueType:         jira.IssueType,
+		Summary:           valuer.UnsetIfEmpty(jira.Summary),
+		Description:       valuer.UnsetIfEmpty(jira.Description),
+		Priority:          jira.Priority,
+		Labels:            jira.Labels,
+		ResolveTransition: jira.ResolveTransition,
+		ReopenTransition:  jira.ReopenTransition,
+		ReopenDuration:    valuer.UnsetIfEmpty(jira.ReopenDuration.String()),
+		WontFixResolution: jira.WontFixResolution,
+		CustomFields:      jira.CustomFields,
+	}
+
+	if jira.HTTPConfig != nil && jira.HTTPConfig.BasicAuth != nil {
+		spec.Email = jira.HTTPConfig.BasicAuth.Username
+		spec.APIToken = string(jira.HTTPConfig.BasicAuth.Password)
+	}
+
+	return spec, nil
+}
+
+// ChannelJSMOpsConfig carries no API URL: JSM Ops is a single global gateway
+// keyed by the integration API key, which the notifier pins itself.
+type ChannelJSMOpsConfig struct {
+	SendResolved *bool                        `json:"sendResolved,omitempty"`
+	APIKey       string                       `json:"apiKey" required:"true"`
+	Message      valuer.UnsetOrNonEmptyString `json:"message"`
+	Description  valuer.UnsetOrNonEmptyString `json:"description"`
+	Priority     string                       `json:"priority"`
+	// Tags is the comma-separated list JSM Ops attaches to the alert.
+	Tags valuer.UnsetOrNonEmptyString `json:"tags"`
+}
+
+func (c ChannelJSMOpsConfig) Validate() error {
+	if c.APIKey == "" {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.apiKey is required for a jsmops channel")
+	}
+
+	return nil
+}
+
+func (c ChannelJSMOpsConfig) toUndefaultedReceiver(displayName string) (*Receiver, error) {
+	return &Receiver{
+		Receiver: &config.Receiver{Name: displayName},
+		JSMOpsConfigs: []*JSMOpsReceiverConfig{{
+			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, DefaultJSMOpsReceiverConfig.VSendResolved)},
+			APIKey:         config.Secret(c.APIKey),
+			Message:        c.Message.StringValue(),
+			Description:    c.Description.StringValue(),
+			Priority:       c.Priority,
+			Tags:           c.Tags.StringValue(),
+		}},
+	}, nil
+}
+
+func newChannelJSMOpsConfigFromReceiver(name string, receiver *Receiver) (ChannelSpec, error) {
+	jsmops := receiver.JSMOpsConfigs[0]
+	sendResolved := jsmops.VSendResolved
+
+	if err := rejectAnyHTTPAuth(name, jsmops.HTTPConfig); err != nil {
+		return nil, err
+	}
+
+	return &ChannelJSMOpsConfig{
+		SendResolved: &sendResolved,
+		APIKey:       string(jsmops.APIKey),
+		Message:      valuer.UnsetIfEmpty(jsmops.Message),
+		Description:  valuer.UnsetIfEmpty(jsmops.Description),
+		Priority:     jsmops.Priority,
+		Tags:         valuer.UnsetIfEmpty(jsmops.Tags),
+	}, nil
+}
+
+type ChannelIncidentIOConfig struct {
+	SendResolved *bool                        `json:"sendResolved,omitempty"`
+	URL          string                       `json:"url" required:"true"`
+	Token        string                       `json:"token" required:"true"`
+	Title        valuer.UnsetOrNonEmptyString `json:"title"`
+	Description  valuer.UnsetOrNonEmptyString `json:"description"`
+	Metadata     map[string]string            `json:"metadata,omitempty"`
+}
+
+func (c ChannelIncidentIOConfig) Validate() error {
+	if c.URL == "" {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.url is required for an incidentio channel")
+	}
+
+	if c.Token == "" {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.token is required for an incidentio channel")
+	}
+
+	return nil
+}
+
+func (c ChannelIncidentIOConfig) toUndefaultedReceiver(displayName string) (*Receiver, error) {
+	return &Receiver{
+		Receiver: &config.Receiver{Name: displayName},
+		IncidentIOConfigs: []*IncidentIOReceiverConfig{{
+			NotifierConfig: config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, DefaultIncidentIOReceiverConfig.VSendResolved)},
+			URL:            c.URL,
+			Token:          config.Secret(c.Token),
+			Title:          c.Title.StringValue(),
+			Description:    c.Description.StringValue(),
+			Metadata:       c.Metadata,
+		}},
+	}, nil
+}
+
+func newChannelIncidentIOConfigFromReceiver(name string, receiver *Receiver) (ChannelSpec, error) {
+	incidentio := receiver.IncidentIOConfigs[0]
+	sendResolved := incidentio.VSendResolved
+
+	if err := rejectAnyHTTPAuth(name, incidentio.HTTPConfig); err != nil {
+		return nil, err
+	}
+
+	return &ChannelIncidentIOConfig{
+		SendResolved: &sendResolved,
+		URL:          incidentio.URL,
+		Token:        string(incidentio.Token),
+		Title:        valuer.UnsetIfEmpty(incidentio.Title),
+		Description:  valuer.UnsetIfEmpty(incidentio.Description),
+		Metadata:     incidentio.Metadata,
+	}, nil
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// Helpers
+// ════════════════════════════════════════════════════════════════════════
+
+// bearerAuthorizationType is the scheme SigNoz writes for token auth.
+const bearerAuthorizationType = "Bearer"
+
+// parseSecretURL and parseUpstreamURL wrap the two URL types upstream uses for
+// notifier endpoints. Callers holding an optional URL skip the call on an empty
+// string, so the field stays nil and is omitted rather than stored as an empty URL.
+func parseSecretURL(raw string) (*config.SecretURL, error) {
+	parsed, err := parseUpstreamURL(raw)
+	if err != nil {
+		return nil, err
+	}
+
+	return (*config.SecretURL)(parsed), nil
+}
+
+func parseUpstreamURL(raw string) (*config.URL, error) {
+	parsed, err := url.Parse(raw)
+	if err != nil {
+		return nil, errors.WrapInvalidInputf(err, ErrCodeAlertmanagerChannelInvalid, "parse url %q", raw)
+	}
+
+	return &config.URL{URL: parsed}, nil
+}
+
+func formatSecretURL(secretURL *config.SecretURL) string {
+	if secretURL == nil {
+		return ""
+	}
+
+	return formatUpstreamURL((*config.URL)(secretURL))
+}
+
+func formatUpstreamURL(upstreamURL *config.URL) string {
+	if upstreamURL == nil || upstreamURL.URL == nil {
+		return ""
+	}
+
+	return upstreamURL.String()
+}
+
+// PagerDuty is the one notifier whose details upstream types as map[string]any.
+func newUpstreamDetails(details map[string]string) map[string]any {
+	if details == nil {
+		return nil
+	}
+
+	upstream := make(map[string]any, len(details))
+	for key, value := range details {
+		upstream[key] = value
+	}
+
+	return upstream
+}
+
+func extractStringDetails(name string, details map[string]any) (map[string]string, error) {
+	extracted := make(map[string]string, len(details))
+	for key, value := range details {
+		stringValue, ok := value.(string)
+		if !ok {
+			return nil, errors.NewInvalidInputf(
+				ErrCodeAlertmanagerChannelInvalid,
+				"channel %q sets a non-string value for details.%s, which is not supported", name, key,
+			)
+		}
+		extracted[key] = stringValue
+	}
+
+	return extracted, nil
+}
+
+func rejectAnyHTTPAuth(channelName string, httpConfig *commoncfg.HTTPClientConfig) error {
+	if httpConfig == nil {
+		return nil
+	}
+
+	if httpConfig.BasicAuth != nil {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets http_config.basic_auth, which is not supported", channelName)
+	}
+
+	if httpConfig.Authorization != nil {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets http_config.authorization, which is not supported", channelName)
+	}
+
+	return rejectUnsupportedHTTPConfig(channelName, httpConfig)
+}
+
+func rejectUnsupportedHTTPConfig(channelName string, httpConfig *commoncfg.HTTPClientConfig) error {
+	if httpConfig == nil {
+		return nil
+	}
+
+	for _, field := range []struct {
+		fieldName         string
+		isFieldConfigured bool
+	}{
+		{"oauth2", httpConfig.OAuth2 != nil},
+		{"bearer_token", httpConfig.BearerToken != ""},
+		{"bearer_token_file", httpConfig.BearerTokenFile != ""},
+		{"proxy_url", httpConfig.ProxyURL.URL != nil && httpConfig.ProxyURL.String() != ""},
+		{"no_proxy", httpConfig.NoProxy != ""},
+		{"proxy_from_environment", httpConfig.ProxyFromEnvironment},
+		{"http_headers", httpConfig.HTTPHeaders != nil},
+		{"tls_config", httpConfig.TLSConfig != (commoncfg.TLSConfig{})},
+		{"follow_redirects", !httpConfig.FollowRedirects},
+		{"enable_http2", !httpConfig.EnableHTTP2},
+	} {
+		if field.isFieldConfigured {
+			return errors.NewInvalidInputf(
+				ErrCodeAlertmanagerChannelInvalid,
+				"channel %q sets http_config.%s, which is not supported", channelName, field.fieldName,
+			)
+		}
+	}
+
+	return nil
+}
+
+func rejectHTTPBasicAuthBeyondPassword(channelName string, httpConfig *commoncfg.HTTPClientConfig) error {
+	if httpConfig == nil || httpConfig.BasicAuth == nil {
+		return nil
+	}
+
+	basicAuth := httpConfig.BasicAuth
+	if *basicAuth != (commoncfg.BasicAuth{Username: basicAuth.Username, Password: basicAuth.Password}) {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets http_config.basic_auth, which is not supported", channelName)
+	}
+
+	return nil
+}
+
+func rejectHTTPAuthorizationBeyondBearer(channelName string, httpConfig *commoncfg.HTTPClientConfig) error {
+	if httpConfig == nil || httpConfig.Authorization == nil {
+		return nil
+	}
+
+	authorization := httpConfig.Authorization
+	if *authorization != (commoncfg.Authorization{Type: bearerAuthorizationType, Credentials: authorization.Credentials}) {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets http_config.authorization, which is not supported", channelName)
+	}
+
+	return nil
+}
+
+// channelKinds registers each notification kind with the spec constructor
+// UnmarshalJSON picks by kind and the extractor that reads a stored receiver
+// back. The ChannelKind enum derives from it; the JSON schema hooks stay
+// literal lists so each branch reads as one line.
+var channelKinds = []channelKindEntry{
+	{
+		kind:         ChannelKindSlack,
+		newSpec:      func() ChannelSpec { return new(ChannelSlackConfig) },
+		countConfigs: func(receiver *Receiver) int { return len(receiver.SlackConfigs) },
+		extractSpec:  newChannelSlackConfigFromReceiver,
+	},
+	{
+		kind:         ChannelKindEmail,
+		newSpec:      func() ChannelSpec { return new(ChannelEmailConfig) },
+		countConfigs: func(receiver *Receiver) int { return len(receiver.EmailConfigs) },
+		extractSpec:  newChannelEmailConfigFromReceiver,
+	},
+	{
+		kind:         ChannelKindWebhook,
+		newSpec:      func() ChannelSpec { return new(ChannelWebhookConfig) },
+		countConfigs: func(receiver *Receiver) int { return len(receiver.WebhookConfigs) },
+		extractSpec:  newChannelWebhookConfigFromReceiver,
+	},
+	{
+		kind:         ChannelKindPagerduty,
+		newSpec:      func() ChannelSpec { return new(ChannelPagerdutyConfig) },
+		countConfigs: func(receiver *Receiver) int { return len(receiver.PagerdutyConfigs) },
+		extractSpec:  newChannelPagerdutyConfigFromReceiver,
+	},
+	{
+		kind:         ChannelKindOpsgenie,
+		newSpec:      func() ChannelSpec { return new(ChannelOpsgenieConfig) },
+		countConfigs: func(receiver *Receiver) int { return len(receiver.OpsGenieConfigs) },
+		extractSpec:  newChannelOpsgenieConfigFromReceiver,
+	},
+	{
+		kind:         ChannelKindMSTeams,
+		newSpec:      func() ChannelSpec { return new(ChannelMSTeamsConfig) },
+		countConfigs: func(receiver *Receiver) int { return len(receiver.MSTeamsV2Configs) },
+		extractSpec:  newChannelMSTeamsConfigFromReceiver,
+	},
+	{
+		kind:         ChannelKindGoogleChat,
+		newSpec:      func() ChannelSpec { return new(ChannelGoogleChatConfig) },
+		countConfigs: func(receiver *Receiver) int { return len(receiver.GoogleChatConfigs) },
+		extractSpec:  newChannelGoogleChatConfigFromReceiver,
+	},
+	{
+		kind:         ChannelKindJira,
+		newSpec:      func() ChannelSpec { return new(ChannelJiraConfig) },
+		countConfigs: func(receiver *Receiver) int { return len(receiver.JiraConfigs) },
+		extractSpec:  newChannelJiraConfigFromReceiver,
+	},
+	{
+		kind:         ChannelKindJSMOps,
+		newSpec:      func() ChannelSpec { return new(ChannelJSMOpsConfig) },
+		countConfigs: func(receiver *Receiver) int { return len(receiver.JSMOpsConfigs) },
+		extractSpec:  newChannelJSMOpsConfigFromReceiver,
+	},
+	{
+		kind:         ChannelKindIncidentIO,
+		newSpec:      func() ChannelSpec { return new(ChannelIncidentIOConfig) },
+		countConfigs: func(receiver *Receiver) int { return len(receiver.IncidentIOConfigs) },
+		extractSpec:  newChannelIncidentIOConfigFromReceiver,
+	},
+}
+
+type channelKindEntry struct {
+	kind    ChannelKind
+	newSpec func() ChannelSpec
+	// countConfigs guards extractSpec, which reads the receiver's first config of
+	// this kind and so must not be called when there is none.
+	countConfigs func(receiver *Receiver) int
+	extractSpec  func(name string, receiver *Receiver) (ChannelSpec, error)
+}
+
+func newChannelSpec(kind ChannelKind) (func() ChannelSpec, bool) {
+	for _, channelKind := range channelKinds {
+		if channelKind.kind == kind {
+			return channelKind.newSpec, true
+		}
+	}
+	return nil, false
+}
+
+// resolveSendResolved falls back to the notifier's own upstream default, because
+// send_resolved has no omitempty: a zero value would marshal as an explicit false
+// and overwrite the default rather than leave it in place.
+func resolveSendResolved(sendResolved *bool, upstreamDefault bool) bool {
+	if sendResolved == nil {
+		return upstreamDefault
+	}
+
+	return *sendResolved
+}
+
+func allowedValuesForChannelKind() string {
+	values := make([]string, 0, len(channelKinds))
+	for _, channelKind := range channelKinds {
+		values = append(values, "`"+channelKind.kind.StringValue()+"`")
+	}
+	slices.Sort(values)
+	return strings.Join(values, ", ")
+}
+
+// extractKindAndSpec parses a {"kind": "...", "spec": {...}} envelope. Unknown
+// keys are rejected here rather than by the caller's decoder: a custom
+// UnmarshalJSON receives raw bytes, so DisallowUnknownFields on the request body
+// does not reach inside config.
+func extractKindAndSpec(data []byte) (string, []byte, error) {
+	var head struct {
+		Kind string          `json:"kind"`
+		Spec json.RawMessage `json:"spec"`
+	}
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&head); err != nil {
+		return "", nil, errors.WrapInvalidInputf(err, ErrCodeAlertmanagerChannelInvalid, "invalid channel config envelope")
+	}
+	return head.Kind, head.Spec, nil
+}
+
+// decodeChannelSpec rejects unknown fields so a spec meant for another kind is an
+// error rather than a silently empty struct, and validates before returning.
+func decodeChannelSpec[T ChannelSpec](specJSON []byte, target T, channelType string) (*T, error) {
+	if len(specJSON) == 0 {
+		return nil, errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "type %q: spec is required", channelType)
+	}
+	dec := json.NewDecoder(bytes.NewReader(specJSON))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(target); err != nil {
+		return nil, errors.WrapInvalidInputf(err, ErrCodeAlertmanagerChannelInvalid, "type %q: invalid spec JSON", channelType)
+	}
+	if err := target.Validate(); err != nil {
+		return nil, errors.WrapInvalidInputf(err, ErrCodeAlertmanagerChannelInvalid, "type %q: %s", channelType, err.Error())
+	}
+	return &target, nil
+}
+
+// signozDiscriminatorKey is the extension key that signoz.attachDiscriminators
+// promotes into a native OpenAPI 3 discriminator after reflection.
+const signozDiscriminatorKey = "x-signoz-discriminator"
+
+// schemaRef builds a local component schema reference for a discriminator mapping.
+func schemaRef(name string) string {
+	return "#/components/schemas/" + name
+}
+
+// channelVariantRef builds the component reference the reflector derives for a
+// ChannelConfigVariant instantiation: the generic's name followed by the fully
+// qualified type argument.
+func channelVariantRef(spec string) string {
+	return schemaRef("AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypes" + spec)
+}
+
+// markDiscriminator tags a oneOf schema with x-signoz-discriminator, keyed on
+// propertyName with the given value -> schema-ref mapping, so generated clients
+// get a discriminated DTO instead of an intersection.
+func markDiscriminator(s *jsonschema.Schema, propertyName string, mapping map[string]string) error {
+	if s.ExtraProperties == nil {
+		s.ExtraProperties = map[string]any{}
+	}
+	s.ExtraProperties[signozDiscriminatorKey] = map[string]any{
+		"propertyName": propertyName,
+		"mapping":      mapping,
+	}
+	return nil
+}
+
+// restrictKindToOneValue pins a variant's kind to its single legal value, so
+// ChannelConfigVariant[ChannelSlackConfig] only accepts "slack".
+func restrictKindToOneValue(schema *jsonschema.Schema, channelType string) error {
+	kindProp, ok := schema.Properties["kind"]
+	if !ok || kindProp.TypeObject == nil {
+		return errors.NewInternalf(errors.CodeInternal, "variant schema missing `kind` property")
+	}
+	kindProp.TypeObject.WithEnum(channelType)
+	schema.Properties["kind"] = kindProp
+	return nil
+}

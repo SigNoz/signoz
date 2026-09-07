@@ -70,15 +70,21 @@ type Config struct {
 // on Receiver, and extensions to customConfigsOf + isEmpty.
 type customReceiverConfigs struct {
 	GoogleChat []*GoogleChatReceiverConfig
+	Jira       []*JiraReceiverConfig
+	JSMOps     []*JSMOpsReceiverConfig
+	IncidentIO []*IncidentIOReceiverConfig
 }
 
 func (c customReceiverConfigs) isEmpty() bool {
-	return len(c.GoogleChat) == 0
+	return len(c.GoogleChat) == 0 && len(c.Jira) == 0 && len(c.JSMOps) == 0 && len(c.IncidentIO) == 0
 }
 
 func customConfigsOf(receiver *Receiver) customReceiverConfigs {
 	return customReceiverConfigs{
 		GoogleChat: receiver.GoogleChatConfigs,
+		Jira:       receiver.JiraConfigs,
+		JSMOps:     receiver.JSMOpsConfigs,
+		IncidentIO: receiver.IncidentIOConfigs,
 	}
 }
 
@@ -187,6 +193,9 @@ func extendedReceivers(c *config.Config, customConfigs map[string]customReceiver
 		receivers[i] = &Receiver{
 			Receiver:          &base,
 			GoogleChatConfigs: custom.GoogleChat,
+			JiraConfigs:       custom.Jira,
+			JSMOpsConfigs:     custom.JSMOps,
+			IncidentIOConfigs: custom.IncidentIO,
 		}
 	}
 
@@ -325,12 +334,32 @@ func cloneReceiver(receiver *Receiver) (*Receiver, error) {
 
 func (c *Config) CreateReceiver(receiver *Receiver) error {
 	// check that receiver name is not already used
-	for _, existingReceiver := range c.alertmanagerConfig.Receivers {
-		if existingReceiver.Name == receiver.Name {
-			return errors.New(errors.TypeInvalidInput, ErrCodeAlertmanagerConfigConflict, "the receiver name has to be unique, please choose a different name")
-		}
+	if c.hasReceiver(receiver.Name) {
+		return errors.New(errors.TypeInvalidInput, ErrCodeAlertmanagerConfigConflict, "the receiver name has to be unique, please choose a different name")
 	}
 
+	return c.createReceiver(receiver)
+}
+
+// CreateReceiverV2 differs from CreateReceiver only in reporting a name already in
+// use as a conflict rather than as invalid input. The v2 create path is the sole
+// caller: v1 create, NewConfigFromChannels and TestReceiver stay on CreateReceiver
+// so their responses keep the status code clients already see.
+func (c *Config) CreateReceiverV2(receiver *Receiver) error {
+	if c.hasReceiver(receiver.Name) {
+		return errors.Newf(errors.TypeAlreadyExists, ErrCodeAlertmanagerChannelAlreadyExists, "channel with display name %q already exists", receiver.Name)
+	}
+
+	return c.createReceiver(receiver)
+}
+
+func (c *Config) hasReceiver(name string) bool {
+	return slices.ContainsFunc(c.alertmanagerConfig.Receivers, func(existing config.Receiver) bool {
+		return existing.Name == name
+	})
+}
+
+func (c *Config) createReceiver(receiver *Receiver) error {
 	owned, err := cloneReceiver(receiver)
 	if err != nil {
 		return err
@@ -362,6 +391,9 @@ func (c *Config) GetReceiver(name string) (*Receiver, error) {
 			return &Receiver{
 				Receiver:          &base,
 				GoogleChatConfigs: custom.GoogleChat,
+				JiraConfigs:       custom.Jira,
+				JSMOpsConfigs:     custom.JSMOps,
+				IncidentIOConfigs: custom.IncidentIO,
 			}, nil
 		}
 	}
@@ -439,6 +471,21 @@ func (c *Config) applyNativeDefaults() {
 		for _, gc := range custom.GoogleChat {
 			if gc.HTTPConfig == nil {
 				gc.HTTPConfig = httpDefault
+			}
+		}
+		for _, jc := range custom.Jira {
+			if jc.HTTPConfig == nil {
+				jc.HTTPConfig = httpDefault
+			}
+		}
+		for _, jc := range custom.JSMOps {
+			if jc.HTTPConfig == nil {
+				jc.HTTPConfig = httpDefault
+			}
+		}
+		for _, ic := range custom.IncidentIO {
+			if ic.HTTPConfig == nil {
+				ic.HTTPConfig = httpDefault
 			}
 		}
 	}

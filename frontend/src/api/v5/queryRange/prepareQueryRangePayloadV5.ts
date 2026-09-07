@@ -6,6 +6,7 @@ import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import { isEmpty } from 'lodash-es';
+import { DynamicVariableSuggestion } from 'providers/Dashboard/store/dynamicVariableSuggestions';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
@@ -545,20 +546,22 @@ function reduceQueriesToObject(queryArray: any[]): {
 /**
  * Prepares V5 query range payload from GetQueryResultsProps
  */
-export const prepareQueryRangePayloadV5 = ({
-	query,
-	globalSelectedInterval,
-	graphType,
-	selectedTime,
-	tableParams,
-	variables = {},
-	start: startTime,
-	end: endTime,
-	formatForWeb,
-	originalGraphType,
-	fillGaps,
-	dynamicVariables,
-}: GetQueryResultsProps): PrepareQueryRangePayloadV5Result => {
+export const prepareQueryRangePayloadV5 = (
+	{
+		query,
+		globalSelectedInterval,
+		graphType,
+		selectedTime,
+		tableParams,
+		variables = {},
+		start: startTime,
+		end: endTime,
+		formatForWeb,
+		originalGraphType,
+		fillGaps,
+	}: GetQueryResultsProps,
+	dynamicVariables: DynamicVariableSuggestion[] = [],
+): PrepareQueryRangePayloadV5Result => {
 	let legendMap: Record<string, string> = {};
 	const requestType = mapPanelTypeToRequestType(graphType);
 	let queries: QueryEnvelope[] = [];
@@ -671,9 +674,9 @@ export const prepareQueryRangePayloadV5 = ({
 			(acc, [key, value]) => {
 				acc[key] = {
 					value,
-					type: dynamicVariables
-						?.find((v) => v.name === key)
-						?.type?.toLowerCase() as VariableType,
+					type: dynamicVariables.some((v) => v.name === key)
+						? ('dynamic' as VariableType)
+						: undefined,
 				};
 				return acc;
 			},

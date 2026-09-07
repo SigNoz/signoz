@@ -1,6 +1,6 @@
 import Uplot from 'components/Uplot';
-import GridTableComponent from 'container/GridTableComponent';
-import GridValueComponent from 'container/GridValueComponent';
+import GridTableComponent from 'container/WidgetCard/Panels/TablePanel';
+import GridValueComponent from 'container/WidgetCard/Panels/ValuePanel';
 import LogsPanelComponent from 'container/LogsPanelTable/LogsPanelComponent';
 import TracesTableComponent from 'container/TracesTableComponent/TracesTableComponent';
 import { DataSource } from 'types/common/queryBuilder';

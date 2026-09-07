@@ -17,7 +17,7 @@ jest.mock('container/ApiMonitoring/utils', () => ({
 	getGroupByFiltersFromGroupByValues: jest.fn(),
 }));
 
-jest.mock('container/GridCardLayout/GridCard', () => ({
+jest.mock('container/WidgetCard/Card', () => ({
 	__esModule: true,
 	default: jest.fn().mockImplementation(({ customOnRowClick }) => (
 		<div data-testid="grid-card-mock">
