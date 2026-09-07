@@ -1,5 +1,4 @@
-import { useCallback, useMemo } from 'react';
-import { useWindowSize } from 'react-use';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Group } from '@visx/group';
 import { Treemap } from '@visx/hierarchy';
 import { Empty, Select, Skeleton, Tooltip } from 'antd';
@@ -33,16 +32,15 @@ function MetricsTreemapInternal({
 	data,
 	viewType,
 	openMetricDetails,
+	containerWidth,
 }: MetricsTreemapInternalProps): JSX.Element {
-	const { width: windowWidth } = useWindowSize();
-
 	const treemapWidth = useMemo(
 		() =>
 			Math.max(
-				windowWidth - TREEMAP_MARGINS.LEFT - TREEMAP_MARGINS.RIGHT - 70,
+				containerWidth - TREEMAP_MARGINS.LEFT - TREEMAP_MARGINS.RIGHT,
 				300,
 			),
-		[windowWidth],
+		[containerWidth],
 	);
 
 	const treemapData = useMemo(() => {
@@ -185,8 +183,29 @@ function MetricsTreemap({
 	openMetricDetails,
 	setHeatmapView,
 }: MetricsTreemapProps): JSX.Element {
+	const containerRef = useRef<HTMLDivElement>(null);
+	const [containerWidth, setContainerWidth] = useState(0);
+
+	useEffect(() => {
+		const container = containerRef.current;
+		if (!container) return;
+
+		const observer = new ResizeObserver((entries) => {
+			for (const entry of entries) {
+				setContainerWidth(entry.contentRect.width);
+			}
+		});
+		observer.observe(container);
+
+		// Set initial width
+		setContainerWidth(container.getBoundingClientRect().width);
+
+		return (): void => observer.disconnect();
+	}, []);
+
 	return (
 		<div
+			ref={containerRef}
 			className="metrics-treemap-container"
 			data-testid="metrics-treemap-container"
 		>
@@ -214,6 +233,7 @@ function MetricsTreemap({
 				data={data}
 				viewType={viewType}
 				openMetricDetails={openMetricDetails}
+				containerWidth={containerWidth}
 			/>
 		</div>
 	);
