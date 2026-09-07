@@ -164,7 +164,6 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 	api.RegisterLogsRoutes(r, am)
 	api.RegisterIntegrationRoutes(r, am)
 	api.RegisterQueryRangeV3Routes(r, am)
-	api.RegisterWebSocketPaths(r, am)
 	api.RegisterQueryRangeV4Routes(r, am)
 	api.RegisterMessagingQueuesRoutes(r, am)
 	api.RegisterThirdPartyApiRoutes(r, am)
@@ -178,7 +177,7 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
 		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "PATCH", "OPTIONS"},
-		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "cache-control", "X-SIGNOZ-QUERY-ID", "Sec-WebSocket-Protocol"},
+		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "cache-control"},
 	})
 
 	handler := c.Handler(r)
