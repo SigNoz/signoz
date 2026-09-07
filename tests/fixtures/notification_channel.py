@@ -35,6 +35,26 @@ EMAIL_TRANSPORT_KEYS = [
 ]
 
 
+def ensure_notification_channel(signoz: types.SigNoz, token: str, channel_config: dict) -> None:
+    """Creates the channel if a channel with that name doesn't already exist."""
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/channels"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK
+    if channel_config["name"] in [channel["name"] for channel in response.json()["data"] or []]:
+        return
+
+    create_response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/channels"),
+        json=channel_config,
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert create_response.status_code == HTTPStatus.CREATED, f"failed to create channel: {create_response.text}"
+
+
 def assert_email_channel_payload_clean(payload: str) -> None:
     receiver = json.loads(payload)
     for email_config in receiver["email_configs"]:

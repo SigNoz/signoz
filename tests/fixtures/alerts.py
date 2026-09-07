@@ -88,6 +88,23 @@ def create_alert_rule_with_channel(
     return _create_alert_rule_with_channel
 
 
+def delete_all_rules(signoz: types.SigNoz, token: str) -> None:
+    """Deletes every alert rule in the org so list assertions start clean."""
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/rules"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK
+    for rule in response.json()["data"]:
+        delete_response = requests.delete(
+            signoz.self.host_configs["8080"].get(f"/api/v1/rules/{rule['id']}"),
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert delete_response.status_code == HTTPStatus.OK, f"failed to delete rule {rule['id']}: {delete_response.text}"
+
+
 def labels_to_map(labels: list[dict]) -> dict[str, str]:
     """Converts the label list shape of the v2 rule history APIs to a plain map."""
     return {label["key"]["name"]: label["value"] for label in labels or []}
