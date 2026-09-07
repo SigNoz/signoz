@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
-	"slices"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
@@ -52,11 +51,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/SigNoz/signoz/pkg/zeus"
-	gorillahandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/rs/cors"
-	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
-	"go.opentelemetry.io/otel/propagation"
 )
 
 type provider struct {
@@ -319,15 +314,7 @@ func newProvider(
 	provider.authzMiddleware = middleware.NewAuthZ(settings.Logger(), orgGetter, authzService)
 
 	router.Use(middleware.NewRecovery(settings.Logger()).Wrap)
-	router.Use(otelmux.Middleware(
-		"apiserver",
-		otelmux.WithMeterProvider(providerSettings.MeterProvider),
-		otelmux.WithTracerProvider(providerSettings.TracerProvider),
-		otelmux.WithPropagators(propagation.NewCompositeTextMapPropagator(propagation.Baggage{}, propagation.TraceContext{})),
-		otelmux.WithFilter(func(r *http.Request) bool {
-			return !slices.Contains([]string{"/api/v1/health"}, r.URL.Path)
-		}),
-	))
+	router.Use(middleware.NewOtel("apiserver", providerSettings.MeterProvider, providerSettings.TracerProvider).Wrap)
 	router.Use(middleware.NewIdentN(identNResolver, sharder, settings.Logger()).Wrap)
 	router.Use(middleware.NewTimeout(settings.Logger(),
 		config.Timeout.ExcludedRoutes,
@@ -342,14 +329,8 @@ func newProvider(
 		return nil, err
 	}
 
-	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"*"},
-		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "PATCH", "OPTIONS"},
-		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "cache-control", "X-SIGNOZ-QUERY-ID", "Sec-WebSocket-Protocol"},
-	})
-
-	httpHandler := c.Handler(router)
-	httpHandler = gorillahandlers.CompressHandler(httpHandler)
+	httpHandler := middleware.NewCors().Wrap(router)
+	httpHandler = middleware.NewCompress().Wrap(httpHandler)
 
 	routePrefix := globalConfig.ExternalPath()
 	if routePrefix != "" {
