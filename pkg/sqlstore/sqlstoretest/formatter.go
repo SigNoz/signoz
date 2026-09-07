@@ -25,6 +25,13 @@ func (f *formatter) JSONExtractString(column, path string) []byte {
 	return sql
 }
 
+func (f *formatter) JSONExtractMapValue(column, mapField, key string) []byte {
+	// Mirrors the sqlite formatter: the key becomes one quoted path segment
+	// so dots inside it are not treated as nesting.
+	escapedKey := strings.NewReplacer(`\`, `\\`, `"`, `\"`).Replace(key)
+	return f.JSONExtractString(column, `$.`+mapField+`."`+escapedKey+`"`)
+}
+
 func (f *formatter) JSONType(column, path string) []byte {
 	var sql []byte
 	sql = append(sql, "json_type("...)
