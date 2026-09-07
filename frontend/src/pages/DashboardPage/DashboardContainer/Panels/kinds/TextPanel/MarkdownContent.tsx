@@ -4,7 +4,14 @@ import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+import {
+	editRenderedOccurrence,
+	type EditableConstruct,
+} from '../../utils/markdownSource';
+import { TASK_LIST } from '../../utils/taskList';
 import CodeBlock from './CodeBlock';
+import TaskCheckbox from './TaskCheckbox';
+import { TaskItemOffsetContext } from './taskItemOffset';
 
 import styles from './MarkdownContent.module.scss';
 
@@ -21,7 +28,7 @@ const REMARK_PLUGINS = [remarkGfm];
 // would still put `javascript:` in the DOM, so the anchor is dropped instead.
 const REJECTED_HREF = `javascript:${'void(0)'}`;
 
-const COMPONENTS: Components = {
+const READ_ONLY_COMPONENTS: Components = {
 	a: ({ node: _node, children, href, ...props }): JSX.Element => {
 		if (!href || href === REJECTED_HREF) {
 			return <span {...props}>{children}</span>;
@@ -43,9 +50,17 @@ const COMPONENTS: Components = {
 	pre: ({ children }): JSX.Element => <>{children}</>,
 };
 
+/** Absent on a read-only surface, which is what keeps the public view inert. */
+export interface MarkdownInteractive {
+	/** The body before interpolation — what an edit is applied to. */
+	source: string;
+	onChangeSource: (next: string) => void;
+}
+
 export interface MarkdownContentProps {
 	/** Variable interpolation happens upstream, before parsing. */
 	children: string;
+	interactive?: MarkdownInteractive;
 	/** Rendered instead of the body when the source is blank. */
 	emptyState?: ReactNode;
 	className?: string;
@@ -55,19 +70,68 @@ export interface MarkdownContentProps {
 /** CommonMark + GFM, styled in isolation — see the reset in the SCSS module. */
 function MarkdownContent({
 	children,
+	interactive,
 	emptyState = null,
 	className,
 	testId = 'markdown-content',
 }: MarkdownContentProps): JSX.Element | null {
 	// Dashboards re-render on every variable tick; parsing is the expensive half.
+	// Element overrides that write back to the source: one entry per interactive
+	// construct, pairing an `EditableConstruct` with the element it renders as.
+	const components = useMemo<Components>(() => {
+		// A const, so the narrowing survives into the handler's closure.
+		const capability = interactive;
+		if (!capability) {
+			return READ_ONLY_COMPONENTS;
+		}
+
+		const edit = <T,>(
+			construct: EditableConstruct<T>,
+			renderedOffset: number,
+			value: T,
+		): void => {
+			const next = editRenderedOccurrence(construct, {
+				source: capability.source,
+				rendered: children,
+				renderedOffset,
+				value,
+			});
+			if (next !== null) {
+				capability.onChangeSource(next);
+			}
+		};
+
+		return {
+			...READ_ONLY_COMPONENTS,
+			li: ({ node, children: items, ...props }): JSX.Element => (
+				<li {...props}>
+					<TaskItemOffsetContext.Provider value={node.position?.start.offset}>
+						{items}
+					</TaskItemOffsetContext.Provider>
+				</li>
+			),
+			input: ({ checked, type }): JSX.Element | null => {
+				if (type !== 'checkbox') {
+					return null;
+				}
+				return (
+					<TaskCheckbox
+						checked={checked === true}
+						onChange={(next, offset): void => edit(TASK_LIST, offset, next)}
+					/>
+				);
+			},
+		};
+	}, [interactive, children]);
+
 	const body = useMemo(
 		() =>
 			children.trim() ? (
-				<ReactMarkdown remarkPlugins={REMARK_PLUGINS} components={COMPONENTS}>
+				<ReactMarkdown remarkPlugins={REMARK_PLUGINS} components={components}>
 					{children}
 				</ReactMarkdown>
 			) : null,
-		[children],
+		[children, components],
 	);
 
 	if (!body) {

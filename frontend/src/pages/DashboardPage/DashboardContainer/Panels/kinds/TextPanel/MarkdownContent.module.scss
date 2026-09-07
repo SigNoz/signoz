@@ -160,6 +160,10 @@
 	accent-color: var(--md-link);
 }
 
+.content.content input[type='checkbox']:not(:disabled) {
+	cursor: pointer;
+}
+
 .content.content a {
 	color: var(--md-link);
 	text-decoration: none;
@@ -187,7 +191,7 @@
 .content.content code {
 	padding: 1px 4px;
 	border-radius: 2px;
-	
+
 	background: var(--md-surface);
 	font-family: var(--font-family-sf-mono);
 	font-size: var(--code-small-400-font-size);

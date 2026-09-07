@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from 'tests/test-utils';
+import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
 
 import MarkdownContent from '../MarkdownContent';
 import { loadLanguage } from '../syntaxLanguages';
@@ -18,7 +18,9 @@ describe('MarkdownContent', () => {
 
 		it('renders raw HTML as text rather than markup', () => {
 			const { container } = render(
-				<MarkdownContent>{'<b>bold</b> and <img src="x" onerror="alert(1)">'}</MarkdownContent>,
+				<MarkdownContent>
+					{'<b>bold</b> and <img src="x" onerror="alert(1)">'}
+				</MarkdownContent>,
 			);
 
 			expect(container.querySelector('b')).toBeNull();
@@ -103,10 +105,14 @@ describe('MarkdownContent', () => {
 			);
 
 			await waitFor(() => {
-				expect(container.querySelector('.token.keyword')).toHaveTextContent('const');
+				expect(container.querySelector('.token.keyword')).toHaveTextContent(
+					'const',
+				);
 			});
 			expect(container.querySelector('.token.number')).toHaveTextContent('1');
-			expect(container.querySelector('.token.comment')).toHaveTextContent('// note');
+			expect(container.querySelector('.token.comment')).toHaveTextContent(
+				'// note',
+			);
 		});
 
 		it('shows the source verbatim while the language is still loading', () => {
@@ -114,7 +120,9 @@ describe('MarkdownContent', () => {
 				<MarkdownContent>{'```rust\nfn main() {}\n```'}</MarkdownContent>,
 			);
 
-			expect(container.querySelector('pre code')).toHaveTextContent('fn main() {}');
+			expect(container.querySelector('pre code')).toHaveTextContent(
+				'fn main() {}',
+			);
 			expect(container.querySelector('.token')).toBeNull();
 		});
 
@@ -124,7 +132,9 @@ describe('MarkdownContent', () => {
 				<MarkdownContent>{'```sql\nSELECT 1\n```'}</MarkdownContent>,
 			);
 
-			expect(container.querySelector('.token.keyword')).toHaveTextContent('SELECT');
+			expect(container.querySelector('.token.keyword')).toHaveTextContent(
+				'SELECT',
+			);
 		});
 
 		it('tags the code element with the language', () => {
@@ -140,7 +150,9 @@ describe('MarkdownContent', () => {
 				<MarkdownContent>{'```promql\nrate(foo[5m])\n```'}</MarkdownContent>,
 			);
 
-			expect(container.querySelector('pre code')).toHaveTextContent('rate(foo[5m])');
+			expect(container.querySelector('pre code')).toHaveTextContent(
+				'rate(foo[5m])',
+			);
 			expect(container.querySelector('.token')).toBeNull();
 		});
 
@@ -194,8 +206,108 @@ describe('code block copy button', () => {
 	it('renders no copy control on inline code', () => {
 		render(<MarkdownContent>{'run `npm i` now'}</MarkdownContent>);
 
-		expect(
-			screen.queryByTestId('text-panel-copy-code'),
-		).not.toBeInTheDocument();
+		expect(screen.queryByTestId('text-panel-copy-code')).not.toBeInTheDocument();
+	});
+});
+
+describe('MarkdownContent — interactive task lists', () => {
+	const source = ['- [ ] first', '- [x] second'].join('\n');
+
+	it('renders task checkboxes disabled without the capability', () => {
+		render(<MarkdownContent>{source}</MarkdownContent>);
+
+		const boxes = screen.getAllByRole('checkbox');
+		expect(boxes).toHaveLength(2);
+		boxes.forEach((box) => expect(box).toBeDisabled());
+	});
+
+	it('renders them enabled, and checked to match the source', () => {
+		render(
+			<MarkdownContent interactive={{ source, onChangeSource: jest.fn() }}>
+				{source}
+			</MarkdownContent>,
+		);
+
+		const [first, second] = screen.getAllByRole('checkbox');
+		expect(first).toBeEnabled();
+		expect(first).not.toBeChecked();
+		expect(second).toBeChecked();
+	});
+
+	it('checking one rewrites its marker in the source', () => {
+		const onChangeSource = jest.fn();
+		render(
+			<MarkdownContent interactive={{ source, onChangeSource }}>
+				{source}
+			</MarkdownContent>,
+		);
+
+		fireEvent.click(screen.getAllByRole('checkbox')[0]);
+
+		expect(onChangeSource).toHaveBeenCalledWith(
+			['- [x] first', '- [x] second'].join('\n'),
+		);
+	});
+
+	it('unchecking one rewrites only that marker', () => {
+		const onChangeSource = jest.fn();
+		render(
+			<MarkdownContent interactive={{ source, onChangeSource }}>
+				{source}
+			</MarkdownContent>,
+		);
+
+		fireEvent.click(screen.getAllByRole('checkbox')[1]);
+
+		expect(onChangeSource).toHaveBeenCalledWith(
+			['- [ ] first', '- [ ] second'].join('\n'),
+		);
+	});
+
+	it('maps a click back through an expanded variable', () => {
+		const onChangeSource = jest.fn();
+		const withVariable = ['- [ ] $env first', '- [ ] second'].join('\n');
+		render(
+			<MarkdownContent interactive={{ source: withVariable, onChangeSource }}>
+				{['- [ ] production first', '- [ ] second'].join('\n')}
+			</MarkdownContent>,
+		);
+
+		fireEvent.click(screen.getAllByRole('checkbox')[1]);
+
+		expect(onChangeSource).toHaveBeenCalledWith(
+			['- [ ] $env first', '- [x] second'].join('\n'),
+		);
+	});
+
+	it('saves nothing when a variable injected a marker of its own', () => {
+		const onChangeSource = jest.fn();
+		render(
+			<MarkdownContent interactive={{ source: '- [ ] $tasks', onChangeSource }}>
+				{['- [ ] one', '- [ ] two'].join('\n')}
+			</MarkdownContent>,
+		);
+
+		fireEvent.click(screen.getAllByRole('checkbox')[0]);
+
+		expect(onChangeSource).not.toHaveBeenCalled();
+	});
+
+	it('ignores a task marker inside a fence', () => {
+		const onChangeSource = jest.fn();
+		const fenced = ['```', '- [ ] fenced', '```', '', '- [ ] real'].join('\n');
+		render(
+			<MarkdownContent interactive={{ source: fenced, onChangeSource }}>
+				{fenced}
+			</MarkdownContent>,
+		);
+
+		expect(screen.getAllByRole('checkbox')).toHaveLength(1);
+
+		fireEvent.click(screen.getByRole('checkbox'));
+
+		expect(onChangeSource).toHaveBeenCalledWith(
+			fenced.replace('- [ ] real', '- [x] real'),
+		);
 	});
 });
