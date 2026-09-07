@@ -22,6 +22,7 @@ func TestConditionFor(t *testing.T) {
 		operator      qbtypes.FilterOperator
 		value         any
 		expectedSQL   string
+		expectedArgs  []any
 		expectedError error
 	}{
 
@@ -170,6 +171,55 @@ func TestConditionFor(t *testing.T) {
 			expectedError: nil,
 		},
 		{
+			name: "Equal operator - span field in the intrinsic map",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "http_method",
+				FieldContext:  telemetrytypes.FieldContextSpan,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:      qbtypes.FilterOperatorEqual,
+			value:         "GET",
+			expectedSQL:   "WHERE if(mapContains(intrinsic_attributes, ?), intrinsic_attributes['http_method'] = ?, false)",
+			expectedError: nil,
+		},
+		{
+			name: "Equal operator - bool span field compares the string form",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "has_error",
+				FieldContext:  telemetrytypes.FieldContextSpan,
+				FieldDataType: telemetrytypes.FieldDataTypeBool,
+			},
+			operator:      qbtypes.FilterOperatorEqual,
+			value:         true,
+			expectedSQL:   "WHERE if(mapContains(intrinsic_attributes, ?), intrinsic_attributes['has_error'] = ?, false)",
+			expectedArgs:  []any{"has_error", "true"},
+			expectedError: nil,
+		},
+		{
+			name: "Equal operator - numeric span field builds no condition",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "duration_nano",
+				FieldContext:  telemetrytypes.FieldContextSpan,
+				FieldDataType: telemetrytypes.FieldDataTypeNumber,
+			},
+			operator:      qbtypes.FilterOperatorEqual,
+			value:         1000,
+			expectedSQL:   "",
+			expectedError: nil,
+		},
+		{
+			name: "Equal operator - log severity in the intrinsic map",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "severity_text",
+				FieldContext:  telemetrytypes.FieldContextLog,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:      qbtypes.FilterOperatorEqual,
+			value:         "ERROR",
+			expectedSQL:   "WHERE if(mapContains(intrinsic_attributes, ?), intrinsic_attributes['severity_text'] = ?, false)",
+			expectedError: nil,
+		},
+		{
 			name: "Exists operator - positive fallback false",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:          "user.id",
@@ -205,8 +255,11 @@ func TestConditionFor(t *testing.T) {
 				assert.Equal(t, tc.expectedError, err)
 			} else {
 				require.NoError(t, err)
-				sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+				sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 				assert.Contains(t, sql, tc.expectedSQL)
+				if tc.expectedArgs != nil {
+					assert.Equal(t, tc.expectedArgs, args)
+				}
 			}
 		})
 	}

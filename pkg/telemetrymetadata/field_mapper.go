@@ -24,6 +24,13 @@ var (
 			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 			ValueType: schema.ColumnTypeString,
 		}},
+		// intrinsic_attributes holds the span and log context fields: span
+		// name, kind, status, the calculated HTTP and database fields, and log
+		// severity. See metadata migration 1002 in signoz-otel-collector.
+		"intrinsic_attributes": {Name: "intrinsic_attributes", Type: schema.MapColumnType{
+			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
+			ValueType: schema.ColumnTypeString,
+		}},
 	}
 )
 
@@ -46,6 +53,8 @@ func (m *fieldMapper) getColumn(_ context.Context, _, _ uint64, key *telemetryty
 		return []*schema.Column{attributeMetadataColumns["resource_attributes"]}, nil
 	case telemetrytypes.FieldContextAttribute:
 		return []*schema.Column{attributeMetadataColumns["attributes"]}, nil
+	case telemetrytypes.FieldContextSpan, telemetrytypes.FieldContextLog:
+		return []*schema.Column{attributeMetadataColumns["intrinsic_attributes"]}, nil
 	}
 	return nil, qbtypes.ErrColumnNotFound
 }

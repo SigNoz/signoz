@@ -115,10 +115,28 @@ func TestGetColumn(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			name: "Log field - nonexistent",
+			name: "Span field - intrinsic map",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "http_method",
+				FieldContext: telemetrytypes.FieldContextSpan,
+			},
+			expectedCol:   attributeMetadataColumns["intrinsic_attributes"],
+			expectedError: nil,
+		},
+		{
+			name: "Log field - intrinsic map",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "severity_text",
+				FieldContext: telemetrytypes.FieldContextLog,
+			},
+			expectedCol:   attributeMetadataColumns["intrinsic_attributes"],
+			expectedError: nil,
+		},
+		{
+			name: "Metric field - no column",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:         "nonexistent_field",
-				FieldContext: telemetrytypes.FieldContextLog,
+				FieldContext: telemetrytypes.FieldContextMetric,
 			},
 			expectedCol:   nil,
 			expectedError: qbtypes.ErrColumnNotFound,
@@ -195,7 +213,7 @@ func TestGetFieldKeyName(t *testing.T) {
 			name: "Non-existent column",
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:         "nonexistent_field",
-				FieldContext: telemetrytypes.FieldContextLog,
+				FieldContext: telemetrytypes.FieldContextMetric,
 			},
 			expectedResult: "",
 			expectedError:  qbtypes.ErrColumnNotFound,

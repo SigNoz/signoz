@@ -3,6 +3,7 @@ package telemetrymetadata
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -91,9 +92,19 @@ func (c *conditionBuilder) conditionForKey(
 		return "", nil
 	}
 
-	if key.FieldDataType != telemetrytypes.FieldDataTypeString &&
-		key.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
-		// if the field data type is not string, we can't build a condition for related values
+	switch key.FieldDataType {
+	case telemetrytypes.FieldDataTypeString, telemetrytypes.FieldDataTypeUnspecified:
+	case telemetrytypes.FieldDataTypeBool:
+		// bool fields are stored as the strings "true" and "false" in the
+		// intrinsic map, so the operand is compared in that form against the
+		// field as a string
+		value = boolOperandToString(value)
+		stringKey := *key
+		stringKey.FieldDataType = telemetrytypes.FieldDataTypeString
+		key = &stringKey
+	default:
+		// numeric fields are not stored in the metadata maps, so there is no
+		// condition to build for related values
 		return "", nil
 	}
 
@@ -178,4 +189,21 @@ func (c *conditionBuilder) conditionForKey(
 	}
 
 	return fmt.Sprintf(expr, columns[0].Name, sb.Var(key.Name), cond, keyMissingFallback), nil
+}
+
+// boolOperandToString converts a bool operand, or a list of them, to the
+// "true"/"false" strings stored in the metadata maps. Other values are
+// returned unchanged.
+func boolOperandToString(value any) any {
+	switch v := value.(type) {
+	case bool:
+		return strconv.FormatBool(v)
+	case []any:
+		out := make([]any, len(v))
+		for i, item := range v {
+			out[i] = boolOperandToString(item)
+		}
+		return out
+	}
+	return value
 }

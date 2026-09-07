@@ -1343,6 +1343,36 @@ func (t *telemetryMetaStore) GetKey(ctx context.Context, orgID valuer.UUID, fiel
 	return keys[fieldKeySelector.Name], nil
 }
 
+// relatedValuesSelectColumn returns the expression that reads the key's value
+// from the metadata table. A span or log field is read from the intrinsic map,
+// falling back to the attributes map for rows written before the intrinsic
+// map existed. A key without a context is read from whichever map holds it,
+// intrinsic first, then resource, then attributes.
+func (t *telemetryMetaStore) relatedValuesSelectColumn(ctx context.Context, orgID valuer.UUID, key *telemetrytypes.TelemetryFieldKey) string {
+	fieldFor := func(fieldContext telemetrytypes.FieldContext) string {
+		column, _ := t.fm.FieldFor(ctx, orgID, 0, 0, &telemetrytypes.TelemetryFieldKey{
+			Name:          key.Name,
+			FieldContext:  fieldContext,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		})
+		return column
+	}
+
+	switch key.FieldContext {
+	case telemetrytypes.FieldContextResource, telemetrytypes.FieldContextAttribute:
+		return fieldFor(key.FieldContext)
+	case telemetrytypes.FieldContextSpan, telemetrytypes.FieldContextLog:
+		intrinsic := fieldFor(key.FieldContext)
+		attribute := fieldFor(telemetrytypes.FieldContextAttribute)
+		return fmt.Sprintf("if(notEmpty(%s), %s, %s)", intrinsic, intrinsic, attribute)
+	}
+
+	intrinsic := fieldFor(telemetrytypes.FieldContextSpan)
+	resource := fieldFor(telemetrytypes.FieldContextResource)
+	attribute := fieldFor(telemetrytypes.FieldContextAttribute)
+	return fmt.Sprintf("multiIf(notEmpty(%s), %s, notEmpty(%s), %s, %s)", intrinsic, intrinsic, resource, resource, attribute)
+}
+
 func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *telemetrytypes.FieldValueSelector) ([]string, bool, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  fieldValueSelector.Signal.StringValue(),
@@ -1362,24 +1392,7 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 		FieldDataType: fieldValueSelector.FieldDataType,
 	}
 
-	selectColumn, err := t.fm.FieldFor(ctx, orgID, 0, 0, key)
-
-	if err != nil {
-		// we don't have a explicit column to select from the related metadata table
-		// so we will select either from resource_attributes or attributes table
-		// in that order
-		resourceColumn, _ := t.fm.FieldFor(ctx, orgID, 0, 0, &telemetrytypes.TelemetryFieldKey{
-			Name:          key.Name,
-			FieldContext:  telemetrytypes.FieldContextResource,
-			FieldDataType: telemetrytypes.FieldDataTypeString,
-		})
-		attributeColumn, _ := t.fm.FieldFor(ctx, orgID, 0, 0, &telemetrytypes.TelemetryFieldKey{
-			Name:          key.Name,
-			FieldContext:  telemetrytypes.FieldContextAttribute,
-			FieldDataType: telemetrytypes.FieldDataTypeString,
-		})
-		selectColumn = fmt.Sprintf("if(notEmpty(%s), %s, %s)", resourceColumn, resourceColumn, attributeColumn)
-	}
+	selectColumn := t.relatedValuesSelectColumn(ctx, orgID, key)
 
 	sb := sqlbuilder.Select("DISTINCT " + selectColumn).From(t.relatedMetadataDBName + "." + t.relatedMetadataTblName)
 
