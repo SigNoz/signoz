@@ -61,6 +61,7 @@ type provider struct {
 	authzService               authz.AuthZ
 	orgHandler                 organization.Handler
 	userHandler                user.Handler
+	userGetter                 user.Getter
 	sessionHandler             session.Handler
 	authDomainHandler          authdomain.Handler
 	authDomainModule           authdomain.Module
@@ -105,6 +106,7 @@ func NewFactory(
 	authzService authz.AuthZ,
 	orgHandler organization.Handler,
 	userHandler user.Handler,
+	userGetter user.Getter,
 	sessionHandler session.Handler,
 	authDomainHandler authdomain.Handler,
 	authDomainModule authdomain.Module,
@@ -157,6 +159,7 @@ func NewFactory(
 			authzService,
 			orgHandler,
 			userHandler,
+			userGetter,
 			sessionHandler,
 			authDomainHandler,
 			authDomainModule,
@@ -211,6 +214,7 @@ func newProvider(
 	authzService authz.AuthZ,
 	orgHandler organization.Handler,
 	userHandler user.Handler,
+	userGetter user.Getter,
 	sessionHandler session.Handler,
 	authDomainHandler authdomain.Handler,
 	authDomainModule authdomain.Module,
@@ -264,6 +268,7 @@ func newProvider(
 		healthyC:                   make(chan struct{}),
 		orgHandler:                 orgHandler,
 		userHandler:                userHandler,
+		userGetter:                 userGetter,
 		authzService:               authzService,
 		sessionHandler:             sessionHandler,
 		authDomainHandler:          authDomainHandler,
