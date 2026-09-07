@@ -140,6 +140,49 @@ type seriesLookup struct {
 	// maps a variable to its series keys, letting evaluation iterate a single
 	// variable's series directly.
 	variableToSeriesKeys map[string][]string
+	// seriesKey -> label set encoded as id pairs, used as the "subset" side of isSubset
+	// during dedup and evaluation so label comparison is an integer compare.
+	encodedLabels map[string][]encodedLabel
+}
+
+// encodedLabel is a label's key name and value replaced with stable integer ids by an
+// encodedLabelsBuilder, so comparing two encodedLabels is an integer compare rather than
+// a per-byte string compare (runtime.efaceeq/strequal/memeqbody).
+type encodedLabel struct {
+	keyID   uint32
+	valueID uint32
+}
+
+// encodedLabelsBuilder stores a stable uint32 id for each distinct label key name and label
+// value (dictionary encoding). Populated single-threaded in buildSeriesLookup and
+// read-only thereafter, so the parallel evaluation phase never writes to it.
+type encodedLabelsBuilder struct {
+	encodedKeyIDs   map[string]uint32
+	encodedValueIDs map[any]uint32
+}
+
+func newEncodedLabelsBuilder() *encodedLabelsBuilder {
+	return &encodedLabelsBuilder{encodedKeyIDs: map[string]uint32{}, encodedValueIDs: map[any]uint32{}}
+}
+
+func (b *encodedLabelsBuilder) encode(labels []*Label) []encodedLabel {
+	out := make([]encodedLabel, len(labels))
+	for i, label := range labels {
+		encodedKey, ok := b.encodedKeyIDs[label.Key.Name]
+		if !ok {
+			encodedKey = uint32(len(b.encodedKeyIDs)) // acts as a sequential counter.
+			b.encodedKeyIDs[label.Key.Name] = encodedKey
+		}
+
+		encodedValue, ok := b.encodedValueIDs[label.Value]
+		if !ok {
+			encodedValue = uint32(len(b.encodedValueIDs)) // acts as a sequential counter.
+			b.encodedValueIDs[label.Value] = encodedValue
+		}
+
+		out[i] = encodedLabel{keyID: encodedKey, valueID: encodedValue}
+	}
+	return out
 }
 
 // FormulaEvaluator handles formula evaluation b/w time series from different aggregations
@@ -299,7 +342,7 @@ func (fe *FormulaEvaluator) EvaluateFormula(timeSeriesData map[string]*TimeSerie
 	// Work per label-set is cheap  enough that spawning a goroutine per item
 	// costs more in scheduler signaling  than it saves in parallelism.
 	const numWorkers = 4
-	workCh := make(chan []*Label, len(uniqueLabelSets))
+	workCh := make(chan labelSetCandidate, len(uniqueLabelSets))
 	resultChan := make(chan *TimeSeries, len(uniqueLabelSets))
 
 	var wg sync.WaitGroup
@@ -348,7 +391,11 @@ func (fe *FormulaEvaluator) buildSeriesLookup(timeSeriesData map[string]*TimeSer
 		seriesMetadata: make(map[string]*TimeSeries),
 
 		variableToSeriesKeys: make(map[string][]string),
+
+		encodedLabels: make(map[string][]encodedLabel),
 	}
+
+	encodedLabelsBuilder := newEncodedLabelsBuilder()
 
 	for variable, aggRef := range fe.aggRefs {
 		// We are only interested in the time series data for the queries that are
@@ -399,6 +446,7 @@ func (fe *FormulaEvaluator) buildSeriesLookup(timeSeriesData map[string]*TimeSer
 			if _, exists := lookup.data[seriesKey]; !exists {
 				lookup.data[seriesKey] = make(map[int64]float64, len(series.Values))
 				lookup.seriesMetadata[seriesKey] = series
+				lookup.encodedLabels[seriesKey] = encodedLabelsBuilder.encode(series.Labels)
 				lookup.variableToSeriesKeys[variable] = append(lookup.variableToSeriesKeys[variable], seriesKey)
 			}
 
@@ -461,58 +509,74 @@ func (fe *FormulaEvaluator) buildSeriesKey(variable string, seriesIndex int, lab
 // The result of any expression that uses the series with `{"service": "frontend", "operation": "GET /api"}`
 // and `{"service": "frontend"}` would be the series with `{"service": "frontend", "operation": "GET /api"}`
 // So, we create a set of labels sets that can be termed as candidates for the final result.
-func (fe *FormulaEvaluator) findUniqueLabelSets(lookup *seriesLookup) [][]*Label {
-	var allLabelSets [][]*Label
-
-	// Collect all label sets from series metadata
-	for _, series := range lookup.seriesMetadata {
-		allLabelSets = append(allLabelSets, series.Labels)
+func (fe *FormulaEvaluator) findUniqueLabelSets(lookup *seriesLookup) []labelSetCandidate {
+	// original labels (for the result series) paired with their encoded form (for the
+	// subset comparison).
+	type labelSet struct {
+		labels  []*Label
+		encoded []encodedLabel
+	}
+	allLabelSets := make([]labelSet, 0, len(lookup.seriesMetadata))
+	for key, series := range lookup.seriesMetadata {
+		allLabelSets = append(allLabelSets, labelSet{labels: series.Labels, encoded: lookup.encodedLabels[key]})
 	}
 
-	// sort the label sets by the number of labels in descending order
-	slices.SortFunc(allLabelSets, func(i, j []*Label) int {
-		if len(i) > len(j) {
+	// sort the label sets by the number of labels in descending order.
+	slices.SortFunc(allLabelSets, func(i, j labelSet) int {
+		if len(i.labels) > len(j.labels) {
 			return -1
 		}
-		if len(i) < len(j) {
+		if len(i.labels) < len(j.labels) {
 			return 1
 		}
 		return 0
 	})
 
-	// Find unique label sets using proper label comparison
-	var uniqueSets [][]*Label
-	var uniqueMaps []map[string]any
+	// Find unique label sets using integer-id label comparison.
+	var uniqueSets []labelSetCandidate
 	for _, labelSet := range allLabelSets {
 		isUnique := true
-		for _, uniqueMap := range uniqueMaps {
-			if isSubset(uniqueMap, labelSet) {
+		for _, uniqueSet := range uniqueSets {
+			if isSubset(uniqueSet.encodedKeyToEncodedValueMap, labelSet.encoded) {
 				isUnique = false
 				break
 			}
 		}
 		if isUnique {
-			uniqueSets = append(uniqueSets, labelSet)
-			uniqueMaps = append(uniqueMaps, labelsToMap(labelSet))
+			uniqueSets = append(uniqueSets, labelSetCandidate{
+				labels:                      labelSet.labels,
+				encodedKeyToEncodedValueMap: encodedLabelsToMap(labelSet.encoded),
+			})
 		}
 	}
 
 	return uniqueSets
 }
 
-func labelsToMap(labels []*Label) map[string]any {
-	m := make(map[string]any, len(labels))
+// labelSetCandidate is a maximal label set kept by findUniqueLabelSets: the original
+// labels (preserved for the result series) plus a keyID->valueID map used as the
+// "superset" when matching series during evaluation.
+type labelSetCandidate struct {
+	labels                      []*Label
+	encodedKeyToEncodedValueMap map[uint32]uint32
+}
+
+func encodedLabelsToMap(labels []encodedLabel) map[uint32]uint32 {
+	m := make(map[uint32]uint32, len(labels))
 	for _, label := range labels {
-		m[label.Key.Name] = label.Value
+		m[label.keyID] = label.valueID
 	}
 	return m
 }
 
 // isSubset reports whether every label in subset is present with the same value in
 // supersetMap (i.e. subset ⊆ superset).
-func isSubset(supersetMap map[string]any, subset []*Label) bool {
+func isSubset(supersetMap map[uint32]uint32, subset []encodedLabel) bool {
 	for _, label := range subset {
-		if val, ok := supersetMap[label.Key.Name]; !ok || val != label.Value {
+		// each key and value of string/any type in the overall label set in the whole result
+		// has a corresponding unique uint32 assigned to it by buildSeriesLookup, which helps us
+		// do a simple integer comparison in place of a much more expensive str/any comparison.
+		if valID, ok := supersetMap[label.keyID]; !ok || valID != label.valueID {
 			return false
 		}
 	}
@@ -520,7 +584,7 @@ func isSubset(supersetMap map[string]any, subset []*Label) bool {
 }
 
 // evaluateForLabelSet performs formula evaluation for a specific label set.
-func (fe *FormulaEvaluator) evaluateForLabelSet(targetLabels []*Label, lookup *seriesLookup) *TimeSeries {
+func (fe *FormulaEvaluator) evaluateForLabelSet(targetLabels labelSetCandidate, lookup *seriesLookup) *TimeSeries {
 	// Find matching series for each variable
 	variableData := make(map[string]map[int64]float64)
 	// not every series would have a value for every timestamp
@@ -528,14 +592,14 @@ func (fe *FormulaEvaluator) evaluateForLabelSet(targetLabels []*Label, lookup *s
 	// for the variable
 	var allTimestamps = make(map[int64]struct{})
 
-	// targetLabels is fixed for this call, so build its lookup once and reuse it
-	// across every series comparison below.
-	targetMap := labelsToMap(targetLabels)
+	// target.encodedKeyToEncodedValueMap is the superset map, precomputed once in
+	// findUniqueLabelSets and reused across every series comparison below.
+	targetMap := targetLabels.encodedKeyToEncodedValueMap
 
 	for variable := range fe.aggRefs {
 		// only this variable's series.
 		for _, seriesKey := range lookup.variableToSeriesKeys[variable] {
-			if isSubset(targetMap, lookup.seriesMetadata[seriesKey].Labels) {
+			if isSubset(targetMap, lookup.encodedLabels[seriesKey]) {
 				if timestampData, exists := lookup.data[seriesKey]; exists {
 					variableData[variable] = timestampData
 					// Collect all timestamps
@@ -623,8 +687,8 @@ func (fe *FormulaEvaluator) evaluateForLabelSet(targetLabels []*Label, lookup *s
 	}
 
 	// Preserve original label structure and metadata
-	resultLabels := make([]*Label, len(targetLabels))
-	copy(resultLabels, targetLabels)
+	resultLabels := make([]*Label, len(targetLabels.labels))
+	copy(resultLabels, targetLabels.labels)
 
 	return &TimeSeries{
 		Labels: resultLabels,
