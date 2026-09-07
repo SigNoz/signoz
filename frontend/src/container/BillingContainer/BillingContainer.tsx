@@ -18,15 +18,15 @@ import { Badge } from '@signozhq/ui/badge';
 import logEvent from 'api/common/logEvent';
 import type {
 	CreateSubscription201,
-	GetSubscriptionUsage200,
-	ZeustypesGettableSubscriptionUsageDTO,
-	ZeustypesSubscriptionUsageBreakdownDTO,
+	GetSubscription200,
+	SubscriptiontypesGettableSubscriptionUsageDTO,
+	SubscriptiontypesSubscriptionUsageBreakdownDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import {
 	createSubscription,
 	updateSubscription,
-	useGetSubscriptionUsage,
-} from 'api/generated/services/zeus';
+	useGetSubscription,
+} from 'api/generated/services/subscriptions';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
 import Spinner from 'components/Spinner';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -35,11 +35,12 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { isEmpty, pick } from 'lodash-es';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
 import {
 	SubscriptionCreatePermission,
+	SubscriptionManagePermissions,
 	SubscriptionReadPermission,
-	SubscriptionUpdatePermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/subscription.permissions';
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { useAppContext } from 'providers/App/App';
@@ -144,7 +145,7 @@ export default function BillingContainer(): JSX.Element {
 	const [isFreeTrial, setIsFreeTrial] = useState(false);
 	const [data, setData] = useState<DataType[]>([]);
 	const [apiResponse, setApiResponse] = useState<
-		Partial<ZeustypesGettableSubscriptionUsageDTO>
+		Partial<SubscriptiontypesGettableSubscriptionUsageDTO>
 	>({});
 
 	const {
@@ -155,9 +156,8 @@ export default function BillingContainer(): JSX.Element {
 		activeLicense,
 		activeLicenseFetchError,
 	} = useAppContext();
-	const { allowed: canReadSubscription } = useAuthZ([
-		SubscriptionReadPermission,
-	]);
+	const { allowed: canReadSubscription, error: subscriptionAuthZError } =
+		useAuthZ([SubscriptionReadPermission]);
 	const { notifications } = useNotifications();
 
 	const handleError = useAxiosError();
@@ -165,7 +165,7 @@ export default function BillingContainer(): JSX.Element {
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const processUsageData = useCallback(
-		(response: GetSubscriptionUsage200): void => {
+		(response: GetSubscription200): void => {
 			const usage = response?.data;
 			if (isEmpty(usage)) {
 				return;
@@ -177,7 +177,10 @@ export default function BillingContainer(): JSX.Element {
 			const formattedUsageData: DataType[] = [];
 
 			breakdown.forEach(
-				(element: ZeustypesSubscriptionUsageBreakdownDTO, index: number) => {
+				(
+					element: SubscriptiontypesSubscriptionUsageBreakdownDTO,
+					index: number,
+				) => {
 					element?.tiers?.forEach((tier, tierIndex: number) => {
 						formattedUsageData.push({
 							key: `${index}${tierIndex}`,
@@ -217,9 +220,9 @@ export default function BillingContainer(): JSX.Element {
 		isLoading,
 		isFetching: isFetchingBillingData,
 		data: billingData,
-	} = useGetSubscriptionUsage({
+	} = useGetSubscription({
 		query: {
-			enabled: canReadSubscription,
+			enabled: canReadSubscription || !!subscriptionAuthZError,
 			onError: handleError,
 			onSuccess: processUsageData,
 		},
@@ -356,15 +359,21 @@ export default function BillingContainer(): JSX.Element {
 		updateCreditCard,
 	]);
 
+	const billingActionPermissions = trialInfo?.trialConvertedToSubscription
+		? SubscriptionManagePermissions
+		: [SubscriptionCreatePermission];
+
 	const subscriptionPastDueMessage = (): JSX.Element => (
 		<Typography>
 			{`We were not able to process payments for your account. Please update your card details `}
-			<Typography.Link
-				onClick={handleBilling}
-				style={{ cursor: 'pointer', color: 'var(--bg-cherry-500)' }}
-			>
-				{t('here')}
-			</Typography.Link>
+			<AuthZTooltip checks={billingActionPermissions}>
+				<Typography.Link
+					onClick={handleBilling}
+					style={{ cursor: 'pointer', color: 'var(--bg-cherry-500)' }}
+				>
+					{t('here')}
+				</Typography.Link>
+			</AuthZTooltip>
 			{` if your payment information has changed. Email us at `}
 			<Typography.Text color="muted">cloud-support@signoz.io</Typography.Text>
 			{` otherwise. Be sure to provide this information immediately to avoid interruption to your service.`}
@@ -402,10 +411,6 @@ export default function BillingContainer(): JSX.Element {
 		}
 	}, [apiResponse, notifications]);
 
-	const billingActionPermission = trialInfo?.trialConvertedToSubscription
-		? SubscriptionUpdatePermission
-		: SubscriptionCreatePermission;
-
 	const showGracePeriodMessage =
 		!isLoading &&
 		!trialInfo?.trialConvertedToSubscription &&
@@ -423,11 +428,7 @@ export default function BillingContainer(): JSX.Element {
 				</Typography.Text>
 			</Flex>
 
-			<Card
-				bordered={false}
-				style={{ minHeight: 150, marginBottom: 16 }}
-				className={styles.pageInfo}
-			>
+			<Card bordered={false} className={styles.pageInfo}>
 				<Flex justify="space-between" align="center">
 					<Flex vertical gap={8}>
 						<p className={styles.pageInfoTitle}>
@@ -435,14 +436,14 @@ export default function BillingContainer(): JSX.Element {
 							{isFreeTrial ? <Badge color="success"> Free Trial </Badge> : ''}
 						</p>
 
-						{!isLoading && !isFetchingBillingData && !showGracePeriodMessage ? (
+						{billingData && !isFetchingBillingData && !showGracePeriodMessage ? (
 							<p className={styles.pageInfoSubtitle}>
 								{daysRemaining} {daysRemainingStr}
 							</p>
 						) : null}
 					</Flex>
 					<AuthZButton
-						checks={[billingActionPermission]}
+						checks={billingActionPermissions}
 						testId="header-billing-button"
 						variant="solid"
 						color="secondary"
@@ -618,7 +619,7 @@ export default function BillingContainer(): JSX.Element {
 						</Col>
 						<Col span={4} style={{ display: 'flex', justifyContent: 'flex-end' }}>
 							<AuthZButton
-								checks={[billingActionPermission]}
+								checks={[SubscriptionCreatePermission]}
 								testId="upgrade-plan-button"
 								variant="solid"
 								color="primary"

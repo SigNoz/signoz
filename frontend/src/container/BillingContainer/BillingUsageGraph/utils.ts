@@ -1,4 +1,4 @@
-import { ZeustypesGettableSubscriptionUsageDTO } from 'api/generated/services/sigNoz.schemas';
+import { SubscriptiontypesGettableSubscriptionUsageDTO } from 'api/generated/services/sigNoz.schemas';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { prepareChartData } from 'lib/uPlotV2/utils/dataUtils';
@@ -118,7 +118,7 @@ export function csvFileName(csvData: QuantityData[]): string {
 }
 
 export function prepareCsvData(
-	data: Partial<ZeustypesGettableSubscriptionUsageDTO>,
+	data: Partial<SubscriptiontypesGettableSubscriptionUsageDTO>,
 ): {
 	csvData: string;
 	fileName: string;
@@ -137,7 +137,7 @@ export function prepareCsvData(
 }
 
 export function calculateStartEndTime(
-	data: Partial<ZeustypesGettableSubscriptionUsageDTO>,
+	data: Partial<SubscriptiontypesGettableSubscriptionUsageDTO>,
 ): { startTime: number | undefined; endTime: number | undefined } {
 	const timestamps: number[] = [];
 	data?.details?.breakdown?.forEach((breakdown) => {

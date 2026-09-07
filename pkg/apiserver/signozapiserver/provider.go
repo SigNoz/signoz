@@ -38,6 +38,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
+	"github.com/SigNoz/signoz/pkg/subscription"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/zeus"
@@ -72,6 +73,7 @@ type provider struct {
 	rawDataExportHandler       rawdataexport.Handler
 	zeusHandler                zeus.Handler
 	licensingHandler           licensing.Handler
+	subscriptionHandler        subscription.Handler
 	querierHandler             querier.Handler
 	serviceAccountHandler      serviceaccount.Handler
 	serviceAccountGetter       serviceaccount.Getter
@@ -115,6 +117,7 @@ func NewFactory(
 	rawDataExportHandler rawdataexport.Handler,
 	zeusHandler zeus.Handler,
 	licensingHandler licensing.Handler,
+	subscriptionHandler subscription.Handler,
 	querierHandler querier.Handler,
 	serviceAccountHandler serviceaccount.Handler,
 	serviceAccountGetter serviceaccount.Getter,
@@ -161,6 +164,7 @@ func NewFactory(
 			rawDataExportHandler,
 			zeusHandler,
 			licensingHandler,
+			subscriptionHandler,
 			querierHandler,
 			serviceAccountHandler,
 			serviceAccountGetter,
@@ -209,6 +213,7 @@ func newProvider(
 	rawDataExportHandler rawdataexport.Handler,
 	zeusHandler zeus.Handler,
 	licensingHandler licensing.Handler,
+	subscriptionHandler subscription.Handler,
 	querierHandler querier.Handler,
 	serviceAccountHandler serviceaccount.Handler,
 	serviceAccountGetter serviceaccount.Getter,
@@ -256,6 +261,7 @@ func newProvider(
 		rawDataExportHandler:       rawDataExportHandler,
 		zeusHandler:                zeusHandler,
 		licensingHandler:           licensingHandler,
+		subscriptionHandler:        subscriptionHandler,
 		querierHandler:             querierHandler,
 		serviceAccountHandler:      serviceAccountHandler,
 		serviceAccountGetter:       serviceAccountGetter,
@@ -365,6 +371,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addZeusRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addSubscriptionRoutes(router); err != nil {
 		return err
 	}
 

@@ -32,7 +32,7 @@ import ROUTES from 'constants/routes';
 import {
 	panelTypeDataSourceFormValuesMap,
 	PartialPanelTypes,
-} from 'container/NewWidget/utils';
+} from 'lib/query/panelQuery';
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
@@ -475,6 +475,7 @@ export function QueryBuilderProvider({
 			const newQuery: IBuilderQuery = {
 				...initialBuilderQuery,
 				source: queries?.[0]?.source || '',
+				builderQueryType: queries?.[0]?.builderQueryType,
 				queryName: createNewBuilderItemName({ existNames, sourceNames: alphabet }),
 				expression: createNewBuilderItemName({
 					existNames,

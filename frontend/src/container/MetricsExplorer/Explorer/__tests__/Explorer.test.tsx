@@ -10,7 +10,6 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import * as useOptionsMenuHooks from 'container/OptionsMenu';
-import * as useUpdateDashboardHooks from 'hooks/dashboard/useUpdateDashboard';
 import * as useQueryBuilderHooks from 'hooks/queryBuilder/useQueryBuilder';
 import * as useHandleExplorerTabChangeHooks from 'hooks/useHandleExplorerTabChange';
 import * as appContextHooks from 'providers/App/App';
@@ -95,10 +94,6 @@ jest.mock('react-redux', () => ({
 	}),
 }));
 
-jest.spyOn(useUpdateDashboardHooks, 'useUpdateDashboard').mockReturnValue({
-	mutate: jest.fn(),
-	isLoading: false,
-} as any);
 jest.spyOn(useOptionsMenuHooks, 'useOptionsMenu').mockReturnValue({
 	options: {
 		selectColumns: [],

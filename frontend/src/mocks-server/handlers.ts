@@ -139,7 +139,7 @@ export const handlers = [
 		res(ctx.status(200), ctx.json(licensesSuccessResponse)),
 	),
 
-	rest.get('http://localhost/api/v2/zeus/meters', (req, res, ctx) =>
+	rest.get('http://localhost/api/v1/subscriptions', (req, res, ctx) =>
 		res(ctx.status(200), ctx.json(billingSuccessResponse)),
 	),
 

@@ -71,9 +71,8 @@ export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
 		docsAnchor: 'license',
 	},
 	subscription: {
-		label: 'Billing',
-		description:
-			'Billing and subscription of the workspace: usage, checkout and the billing portal.',
+		label: 'Subscription',
+		description: 'The workspace subscription, its usage and billing details.',
 		icon: Receipt,
 		selectorPlaceholder: 'Type * to cover the workspace subscription',
 		docsAnchor: 'subscription',
@@ -116,7 +115,11 @@ export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
 	},
 };
 
-export const RESOURCE_ORDER = Object.keys(RESOURCE_PANELS) as AuthZResource[];
+export const RESOURCE_ORDER = (
+	Object.keys(RESOURCE_PANELS) as AuthZResource[]
+).sort((left, right) =>
+	RESOURCE_PANELS[left].label.localeCompare(RESOURCE_PANELS[right].label),
+);
 
 export function getResourcePanel(resource: AuthZResource): ResourcePanelConfig {
 	const panel = RESOURCE_PANELS[resource];

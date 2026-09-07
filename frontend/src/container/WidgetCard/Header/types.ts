@@ -1,0 +1,17 @@
+import { ReactNode } from 'react';
+
+import { MenuItemKeys } from 'container/WidgetCard/Header/contants';
+
+export interface MenuItem {
+	key: MenuItemKeys;
+	icon: ReactNode;
+	label: ReactNode;
+	rightIcon?: ReactNode;
+	isVisible: boolean;
+	disabled: boolean;
+	danger?: boolean;
+}
+
+export interface DisplayThresholdProps {
+	threshold: ReactNode;
+}

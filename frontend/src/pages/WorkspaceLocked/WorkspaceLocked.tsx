@@ -17,7 +17,7 @@ import {
 } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import { createSubscription } from 'api/generated/services/zeus';
+import { createSubscription } from 'api/generated/services/subscriptions';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
@@ -301,7 +301,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 									View Billing
 								</Button>
 
-								<RefreshPaymentStatus />
+								<RefreshPaymentStatus withPortal={false} />
 							</Flex>
 
 							<Button

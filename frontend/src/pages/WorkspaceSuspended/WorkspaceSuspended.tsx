@@ -3,12 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
 import { Button, Col, Flex, Modal, Row, Skeleton, Space } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import { updateSubscription } from 'api/generated/services/zeus';
+import { updateSubscription } from 'api/generated/services/subscriptions';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
-import { SubscriptionUpdatePermission } from 'lib/authz/hooks/useAuthZ/permissions/subscription.permissions';
+import { SubscriptionManagePermissions } from 'lib/authz/hooks/useAuthZ/permissions/subscription.permissions';
 import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
 import APIError from 'types/api/error';
@@ -119,7 +119,7 @@ function WorkspaceSuspended(): JSX.Element {
 							>
 								<Flex gap={8} justify="center" align="center">
 									<AuthZTooltip
-										checks={[SubscriptionUpdatePermission]}
+										checks={SubscriptionManagePermissions}
 										withPortal={false}
 									>
 										<Button
@@ -132,7 +132,7 @@ function WorkspaceSuspended(): JSX.Element {
 											{t('continueMyJourney')}
 										</Button>
 									</AuthZTooltip>
-									<RefreshPaymentStatus />
+									<RefreshPaymentStatus withPortal={false} />
 								</Flex>
 							</Row>
 							<div className="workspace-suspended__creative">
