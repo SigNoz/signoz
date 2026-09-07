@@ -9384,6 +9384,99 @@ export interface RuletypesGettableTestRuleDTO {
 	message?: string;
 }
 
+export interface RuletypesLabelPairDTO {
+	/**
+	 * @type string
+	 */
+	key: string;
+	/**
+	 * @type string
+	 */
+	value: string;
+}
+
+export enum RuletypesListOrderDTO {
+	asc = 'asc',
+	desc = 'desc',
+}
+export enum RuletypesListSortDTO {
+	updated_at = 'updated_at',
+	created_at = 'created_at',
+	name = 'name',
+	state = 'state',
+	severity = 'severity',
+}
+export type RuletypesListableRuleDTOLabels = { [key: string]: string };
+
+export enum RuletypesRuleTypeDTO {
+	threshold_rule = 'threshold_rule',
+	promql_rule = 'promql_rule',
+	anomaly_rule = 'anomaly_rule',
+}
+export interface RuletypesListableRuleDTO {
+	/**
+	 * @type string
+	 */
+	alert: string;
+	alertType: RuletypesAlertTypeDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type boolean
+	 */
+	disabled?: boolean;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type object
+	 */
+	labels?: RuletypesListableRuleDTOLabels;
+	ruleType: RuletypesRuleTypeDTO;
+	state: RuletypesAlertStateDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
+export interface RuletypesListableRulesDTO {
+	/**
+	 * @type array
+	 */
+	labels: RuletypesLabelPairDTO[];
+	/**
+	 * @type array
+	 */
+	reservedKeywords: string[];
+	/**
+	 * @type array
+	 */
+	rules: RuletypesListableRuleDTO[];
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	total: number;
+}
+
 export interface RuletypesRenotifyDTO {
 	/**
 	 * @type array,null
@@ -9480,11 +9573,6 @@ export interface RuletypesRuleConditionDTO {
 	thresholds?: RuletypesRuleThresholdDataDTO;
 }
 
-export enum RuletypesRuleTypeDTO {
-	threshold_rule = 'threshold_rule',
-	promql_rule = 'promql_rule',
-	anomaly_rule = 'anomaly_rule',
-}
 export interface RuletypesPostableRuleDTO {
 	/**
 	 * @type string
@@ -13304,6 +13392,45 @@ export type GetMetricDashboardsV2Params = {
 
 export type GetMetricDashboardsV2200 = {
 	data: MetricsexplorertypesMetricDashboardPanelsResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListRulesV3Params = {
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	query?: string;
+	/**
+	 * @type array
+	 * @description undefined
+	 */
+	states?: string[];
+	/**
+	 * @description undefined
+	 */
+	sort?: RuletypesListSortDTO;
+	/**
+	 * @description undefined
+	 */
+	order?: RuletypesListOrderDTO;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	offset?: number;
+};
+
+export type ListRulesV3200 = {
+	data: RuletypesListableRulesDTO;
 	/**
 	 * @type string
 	 */
