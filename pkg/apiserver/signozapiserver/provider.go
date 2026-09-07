@@ -2,10 +2,7 @@ package signozapiserver
 
 import (
 	"context"
-	"log/slog"
-	"net"
 	"net/http"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apiserver"
@@ -18,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
+	httpserver "github.com/SigNoz/signoz/pkg/http/server"
 	"github.com/SigNoz/signoz/pkg/identn"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/aiobservability"
@@ -55,12 +53,10 @@ import (
 )
 
 type provider struct {
-	config                     apiserver.Config
-	settings                   factory.ScopedProviderSettings
 	globalConfig               global.Config
 	web                        web.Web
 	router                     *mux.Router
-	server                     *http.Server
+	httpServer                 *httpserver.Server
 	healthyC                   chan struct{}
 	authzMiddleware            *middleware.AuthZ
 	authzService               authz.AuthZ
@@ -263,8 +259,6 @@ func newProvider(
 	router := mux.NewRouter().UseEncodedPath()
 
 	provider := &provider{
-		config:                     config,
-		settings:                   settings,
 		globalConfig:               globalConfig,
 		web:                        web,
 		router:                     router,
@@ -346,9 +340,15 @@ func newProvider(
 		})
 	}
 
-	provider.server = &http.Server{
-		Handler: httpHandler,
+	if config.Address == "" {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "apiserver.address is required")
 	}
+
+	httpServer, err := httpserver.New(settings.Logger(), httpserver.Config{Address: config.Address}, httpHandler)
+	if err != nil {
+		return nil, err
+	}
+	provider.httpServer = httpServer
 
 	return provider, nil
 }
@@ -360,33 +360,13 @@ func (provider *provider) Start(ctx context.Context) error {
 		return err
 	}
 
-	if provider.config.Address == "" {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "apiserver.address is required")
-	}
-
-	listener, err := net.Listen("tcp", provider.config.Address)
-	if err != nil {
-		return err
-	}
-
-	provider.settings.Logger().InfoContext(ctx, "starting apiserver", slog.String("address", listener.Addr().String()))
 	close(provider.healthyC)
 
-	switch err := provider.server.Serve(listener); err {
-	case nil, http.ErrServerClosed:
-		// normal exit, nothing to do
-	default:
-		return err
-	}
-
-	return nil
+	return provider.httpServer.Start(ctx)
 }
 
 func (provider *provider) Stop(ctx context.Context) error {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
-	return provider.server.Shutdown(ctx)
+	return provider.httpServer.Stop(ctx)
 }
 
 func (provider *provider) Healthy() <-chan struct{} {
