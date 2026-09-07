@@ -173,6 +173,39 @@ func (rc *RuleCondition) SelectedQueryName() string {
 	return keys[len(keys)-1]
 }
 
+// GroupByKeys returns the group by key names across all enabled builder
+// queries in the composite query.
+func (rc *RuleCondition) GroupByKeys() []string {
+	keys := []string{}
+	if rc.CompositeQuery == nil {
+		return keys
+	}
+
+	for _, query := range rc.CompositeQuery.Queries {
+		switch spec := query.Spec.(type) {
+		case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+			if !spec.Disabled {
+				for _, groupBy := range spec.GroupBy {
+					keys = append(keys, groupBy.Name)
+				}
+			}
+		case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
+			if !spec.Disabled {
+				for _, groupBy := range spec.GroupBy {
+					keys = append(keys, groupBy.Name)
+				}
+			}
+		case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
+			if !spec.Disabled {
+				for _, groupBy := range spec.GroupBy {
+					keys = append(keys, groupBy.Name)
+				}
+			}
+		}
+	}
+	return keys
+}
+
 // ShouldEval checks if the further series should be evaluated at all for alerts.
 func (rc *RuleCondition) ShouldEval(series *qbtypes.TimeSeries) bool {
 	return !rc.RequireMinPoints || len(series.Values) >= rc.RequiredNumPoints

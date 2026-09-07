@@ -470,6 +470,17 @@ func (r *PostableRule) Validate() error {
 		}
 	}
 
+	groupByKeys := make(map[string]struct{})
+	for _, key := range r.RuleCondition.GroupByKeys() {
+		groupByKeys[key] = struct{}{}
+	}
+	for k := range r.Labels {
+		if _, ok := groupByKeys[k]; ok {
+			errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
+				"label %q conflicts with a group by attribute in the query; remove it from labels or from the group by", k))
+		}
+	}
+
 	for k := range r.Annotations {
 		if !isValidLabelName(k) {
 			errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid annotation name: %s", k))
