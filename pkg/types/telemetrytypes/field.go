@@ -303,23 +303,16 @@ type PostableFieldValueParams struct {
 	ExistingQuery string `query:"existingQuery"`
 }
 
-// Metadata rows are written once per bucket at the bucket start: six hours
-// for traces and logs, one day for metrics. A window start is floored to the
-// bucket of its signal, or to the largest bucket when the signal is unknown,
-// so the rows of the bucket holding the start are not left out.
-const (
-	metadataBucketMilli        int64 = 6 * 60 * 60 * 1000
-	metadataMetricsBucketMilli int64 = 24 * 60 * 60 * 1000
-)
+// Metadata rows are written once per six-hour bucket at the bucket start, for
+// every signal (the collector's default bucket). A window start is floored to
+// the bucket holding it so that bucket's rows are not left out.
+const metadataBucketMilli int64 = 6 * 60 * 60 * 1000
 
-// MetadataBucketMilli returns the write bucket of the metadata table for the signal.
-func MetadataBucketMilli(signal Signal) int64 {
-	switch signal {
-	case SignalTraces, SignalLogs:
-		return metadataBucketMilli
-	default:
-		return metadataMetricsBucketMilli
-	}
+// MetadataBucketMilli returns the write bucket of the metadata table for the
+// signal. Every signal uses the six-hour bucket until the collector writes a
+// longer one for metrics.
+func MetadataBucketMilli(_ Signal) int64 {
+	return metadataBucketMilli
 }
 
 func NewFieldKeySelectorFromPostableFieldKeysParams(params PostableFieldKeysParams) *FieldKeySelector {

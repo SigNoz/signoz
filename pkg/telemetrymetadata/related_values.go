@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strconv"
 	"strings"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/huandu/go-sqlbuilder"
 	"golang.org/x/sync/semaphore"
 )
 
@@ -138,15 +140,18 @@ func relatedValuesSignal(requested telemetrytypes.Signal, target relatedTarget) 
 }
 
 // relatedValuesQueryContext applies the related-values bounds to the queries
-// run with the context: the execution time (checked from the start, and the
-// values found by then are returned), the thread count and the read buffer.
-func (t *telemetryMetaStore) relatedValuesQueryContext(ctx context.Context) context.Context {
+// run with the context: the execution time, checked from the start, the
+// thread count and the read buffer. With partialOnTimeout the values found by
+// the bound are returned; without it the query fails on the bound.
+func (t *telemetryMetaStore) relatedValuesQueryContext(ctx context.Context, partialOnTimeout bool) context.Context {
 	cfg := t.config.RelatedValues
 	settings := map[string]any{}
 	if cfg.MaxExecutionTime > 0 {
 		settings["max_execution_time"] = cfg.MaxExecutionTime.Seconds()
-		settings["timeout_overflow_mode"] = "break"
 		settings["timeout_before_checking_execution_speed"] = 0
+		if partialOnTimeout {
+			settings["timeout_overflow_mode"] = "break"
+		}
 	}
 	if cfg.MaxThreads > 0 {
 		settings["max_threads"] = cfg.MaxThreads
@@ -181,28 +186,56 @@ func (t *telemetryMetaStore) relatedValuesFilterAbsent(ctx context.Context, orgI
 			continue
 		}
 		checked++
-		values, _, err := t.GetAllValues(ctx, orgID, &telemetrytypes.FieldValueSelector{
-			FieldKeySelector: &telemetrytypes.FieldKeySelector{
-				Signal:         signal,
-				Source:         selector.Source,
-				Name:           term.Key.Name,
-				FieldContext:   fieldContext,
-				Limit:          1,
-				StartUnixMilli: startMs,
-				EndUnixMilli:   endMs,
-			},
-			Value: term.Value,
-		})
+		// the check fails on the time bound instead of returning a partial
+		// result, and a failed check proves nothing
+		exists, err := t.tagValueExists(t.relatedValuesQueryContext(ctx, false), signal, term.Key.Name, fieldContext, term.Value, startMs)
 		if err != nil {
 			t.logger.DebugContext(ctx, "failed to check filter value existence", slog.String("key", term.Key.Name), errors.Attr(err))
 			continue
 		}
-		if values.NumValues() == 0 {
+		if !exists {
 			t.logger.DebugContext(ctx, "related values skipped: filter value absent in window", slog.String("key", term.Key.Name), slog.String("value", term.Value))
 			return true
 		}
 	}
 	return false
+}
+
+// tagValueExists reports whether the tag table of the signal holds the value
+// for the key, as a string or as the number it parses to, since the window
+// start.
+func (t *telemetryMetaStore) tagValueExists(ctx context.Context, signal telemetrytypes.Signal, name string, fieldContext telemetrytypes.FieldContext, value string, startMs int64) (bool, error) {
+	var table string
+	switch signal {
+	case telemetrytypes.SignalTraces:
+		table = t.tracesDBName + "." + t.tracesFieldsTblName
+	case telemetrytypes.SignalLogs:
+		table = t.logsDBName + "." + t.logsFieldsTblName
+	default:
+		return true, nil
+	}
+
+	sb := sqlbuilder.Select("1").From(table)
+	sb.Where(sb.E("tag_key", name))
+	sb.Where(sb.E("tag_type", fieldContext.TagType()))
+	valueConds := []string{sb.E("string_value", value)}
+	if number, err := strconv.ParseFloat(value, 64); err == nil {
+		valueConds = append(valueConds, sb.E("number_value", number))
+	}
+	sb.Where(sb.Or(valueConds...))
+	if startMs > 0 {
+		sb.Where(sb.GE("unix_milli", startMs))
+	}
+	sb.Limit(1)
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
+	if err != nil {
+		return false, err
+	}
+	defer rows.Close()
+	exists := rows.Next()
+	return exists, rows.Err()
 }
 
 // singleMapContext returns the resource or attribute context a filter key

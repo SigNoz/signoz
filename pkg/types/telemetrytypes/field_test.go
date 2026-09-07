@@ -427,7 +427,6 @@ func TestNewFieldKeySelectorFromPostableFieldKeysParamsFloorsStartToTheMetadataB
 	// 2026-09-07T10:30:00Z
 	start := int64(1788777000000)
 	sixHourFloor := int64(1788760800000)
-	dayFloor := int64(1788739200000)
 
 	tests := []struct {
 		signal Signal
@@ -435,8 +434,8 @@ func TestNewFieldKeySelectorFromPostableFieldKeysParamsFloorsStartToTheMetadataB
 	}{
 		{signal: SignalTraces, want: sixHourFloor},
 		{signal: SignalLogs, want: sixHourFloor},
-		{signal: SignalMetrics, want: dayFloor},
-		{signal: SignalUnspecified, want: dayFloor},
+		{signal: SignalMetrics, want: sixHourFloor},
+		{signal: SignalUnspecified, want: sixHourFloor},
 	}
 	for _, tt := range tests {
 		t.Run(tt.signal.StringValue(), func(t *testing.T) {

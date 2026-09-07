@@ -1404,7 +1404,7 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 		}
 		defer slot.Release(1)
 	}
-	ctx = t.relatedValuesQueryContext(ctx)
+	ctx = t.relatedValuesQueryContext(ctx, true)
 
 	if t.relatedValuesFilterAbsent(ctx, orgID, fieldValueSelector, signal, keys, startMs, endMs) {
 		return []string{}, !truncated, nil
