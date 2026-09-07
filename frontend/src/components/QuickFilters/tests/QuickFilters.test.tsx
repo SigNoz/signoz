@@ -513,11 +513,10 @@ describe('Quick Filters with custom filters', () => {
 		});
 
 		const requestBody = putHandler.mock.calls[0][0];
-		expect(requestBody.filters).toStrictEqual(
-			expect.arrayContaining([
-				expect.not.objectContaining({ name: FILTER_OS_DESCRIPTION }),
-			]),
+		expect(requestBody.filters).not.toContainEqual(
+			expect.objectContaining({ name: FILTER_OS_DESCRIPTION }),
 		);
+		expect(requestBody.filters).toHaveLength(10);
 	});
 
 	it('should render duration slider for duration_nono filter', async () => {
