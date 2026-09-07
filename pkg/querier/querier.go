@@ -470,7 +470,7 @@ func (q *querier) resolveMetricMetadata(ctx context.Context, orgID valuer.UUID, 
 				continue
 			}
 			// Type is resolved now; validate aggregation compatibility against it.
-			if err := spec.Aggregations[i].ValidateForType(); err != nil {
+			if err := spec.Aggregations[i].ValidateForTypeAndTemporality(); err != nil {
 				return nil, nil, err
 			}
 			if reducedMetricsSet[spec.Aggregations[i].MetricName] {

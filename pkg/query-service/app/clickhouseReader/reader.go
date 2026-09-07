@@ -336,7 +336,7 @@ func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, start, end
 	return &operations, nil
 }
 
-func (r *ClickHouseReader) buildResourceSubQuery(tags []model.TagQueryParam, svc string, start, end time.Time) (string, error) {
+func (r *ClickHouseReader) buildResourceSubQuery(ctx context.Context, orgID valuer.UUID, tags []model.TagQueryParam, svc string, start, end time.Time) (string, error) {
 	// assuming all will be resource attributes.
 	// and resource attributes are string for traces
 	filterSet := v3.FilterSet{}
@@ -387,7 +387,8 @@ func (r *ClickHouseReader) buildResourceSubQuery(tags []model.TagQueryParam, svc
 		&filterSet,
 		[]v3.AttributeKey{},
 		v3.AttributeKey{},
-		false)
+		false,
+		r.fl.BooleanOrEmpty(ctx, flagger.FeatureResolveSemconvFamilies, featuretypes.NewFlaggerEvaluationContext(orgID)))
 	if err != nil {
 		r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 		return "", err
@@ -395,7 +396,7 @@ func (r *ClickHouseReader) buildResourceSubQuery(tags []model.TagQueryParam, svc
 	return resourceSubQuery, nil
 }
 
-func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceItem, *model.ApiError) {
+func (r *ClickHouseReader) GetServices(ctx context.Context, orgID valuer.UUID, queryParams *model.GetServicesParams) (*[]model.ServiceItem, *model.ApiError) {
 
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
@@ -467,7 +468,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 				clickhouse.Named("names", ops),
 			)
 
-			resourceSubQuery, err := r.buildResourceSubQuery(queryParams.Tags, svc, *queryParams.Start, *queryParams.End)
+			resourceSubQuery, err := r.buildResourceSubQuery(ctx, orgID, queryParams.Tags, svc, *queryParams.Start, *queryParams.End)
 			if err != nil {
 				r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 				return
@@ -703,9 +704,9 @@ func addExistsOperator(item model.TagQuery, tagMapType string, not bool) (string
 	return fmt.Sprintf(" AND %s (%s)", notStr, strings.Join(tagOperatorPair, " OR ")), args
 }
 
-func (r *ClickHouseReader) GetEntryPointOperations(ctx context.Context, queryParams *model.GetTopOperationsParams) (*[]model.TopOperationsItem, error) {
+func (r *ClickHouseReader) GetEntryPointOperations(ctx context.Context, orgID valuer.UUID, queryParams *model.GetTopOperationsParams) (*[]model.TopOperationsItem, error) {
 	// Step 1: Get top operations for the given service
-	topOps, err := r.GetTopOperations(ctx, queryParams)
+	topOps, err := r.GetTopOperations(ctx, orgID, queryParams)
 	if err != nil {
 		return nil, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "Error in getting Top Operations")
 	}
@@ -757,7 +758,7 @@ func (r *ClickHouseReader) GetEntryPointOperations(ctx context.Context, queryPar
 	return &filtered, nil
 }
 
-func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *model.GetTopOperationsParams) (*[]model.TopOperationsItem, *model.ApiError) {
+func (r *ClickHouseReader) GetTopOperations(ctx context.Context, orgID valuer.UUID, queryParams *model.GetTopOperationsParams) (*[]model.TopOperationsItem, *model.ApiError) {
 
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
@@ -787,7 +788,7 @@ func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *mo
 		r.TraceDB, r.traceTableName,
 	)
 
-	resourceSubQuery, err := r.buildResourceSubQuery(queryParams.Tags, queryParams.ServiceName, *queryParams.Start, *queryParams.End)
+	resourceSubQuery, err := r.buildResourceSubQuery(ctx, orgID, queryParams.Tags, queryParams.ServiceName, *queryParams.Start, *queryParams.End)
 	if err != nil {
 		r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query")}
@@ -858,7 +859,7 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 	return &usageItems, nil
 }
 
-func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error) {
+func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, orgID valuer.UUID, queryParams *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error) {
 
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
@@ -895,7 +896,7 @@ func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, queryParams *
 	)
 
 	tags := createTagQueryFromTagQueryParams(queryParams.Tags)
-	filterQuery, filterArgs := services.BuildServiceMapQuery(tags)
+	filterQuery, filterArgs := services.BuildServiceMapQuery(tags, r.fl.BooleanOrEmpty(ctx, flagger.FeatureResolveSemconvFamilies, featuretypes.NewFlaggerEvaluationContext(orgID)))
 	query += filterQuery + " GROUP BY src, dest;"
 	args = append(args, filterArgs...)
 

@@ -57,8 +57,8 @@ function MenuItemGenerator({
 
 			handleExplorerTabChange(currentPanelType, {
 				query,
-				name,
-				id,
+				viewName: name,
+				viewKey: id,
 			});
 		},
 		[viewData, handleExplorerTabChange],

@@ -6,6 +6,9 @@ import (
 
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/semconv"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 var resourceLogOperators = map[v3.FilterOperator]string{
@@ -30,22 +33,49 @@ var resourceLogOperators = map[v3.FilterOperator]string{
 }
 
 // buildResourceFilter builds a clickhouse filter string for resource labels
-func buildResourceFilter(logsOp string, key string, op v3.FilterOperator, value interface{}) string {
+func buildResourceFilter(logsOp string, key string, op v3.FilterOperator, value interface{}, members []string) string {
 	// for all operators except contains and like
-	searchKey := fmt.Sprintf("simpleJSONExtractString(labels, '%s')", key)
+	searchKey := fmt.Sprintf("simpleJSONExtractString(labels, %s)", querybuilder.ClickHouseStringLiteral(key))
+	if len(members) > 1 {
+		values := make([]string, 0, len(members))
+		for _, member := range members {
+			values = append(values, fmt.Sprintf("NULLIF(simpleJSONExtractString(labels, %s), '')", querybuilder.ClickHouseStringLiteral(member)))
+		}
+		searchKey = "COALESCE(" + strings.Join(values, ", ") + ", '')"
+	}
 
 	// for contains and like it will be case insensitive
-	lowerSearchKey := fmt.Sprintf("simpleJSONExtractString(lower(labels), '%s')", key)
+	lowerSearchKey := fmt.Sprintf("simpleJSONExtractString(lower(labels), %s)", querybuilder.ClickHouseStringLiteral(key))
+	if len(members) > 1 {
+		lowerSearchKey = "lower(" + searchKey + ")"
+	}
 
 	chFmtVal := utils.ClickHouseFormattedValue(value)
 
 	lowerValue := strings.ToLower(fmt.Sprintf("%s", value))
 
 	switch op {
-	case v3.FilterOperatorExists:
-		return fmt.Sprintf("simpleJSONHas(labels, '%s')", key)
-	case v3.FilterOperatorNotExists:
-		return fmt.Sprintf("not simpleJSONHas(labels, '%s')", key)
+	case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
+		exists := op == v3.FilterOperatorExists
+		if len(members) == 1 {
+			if exists {
+				return fmt.Sprintf("simpleJSONHas(labels, %s)", querybuilder.ClickHouseStringLiteral(key))
+			}
+			return fmt.Sprintf("not simpleJSONHas(labels, %s)", querybuilder.ClickHouseStringLiteral(key))
+		}
+		presence := make([]string, 0, len(members))
+		for _, member := range members {
+			if exists {
+				presence = append(presence, fmt.Sprintf("simpleJSONHas(labels, %s)", querybuilder.ClickHouseStringLiteral(member)))
+			} else {
+				presence = append(presence, fmt.Sprintf("not simpleJSONHas(labels, %s)", querybuilder.ClickHouseStringLiteral(member)))
+			}
+		}
+		separator := " OR "
+		if !exists {
+			separator = " AND "
+		}
+		return "(" + strings.Join(presence, separator) + ")"
 	case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex:
 		return fmt.Sprintf(logsOp, searchKey, chFmtVal)
 	case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
@@ -93,9 +123,10 @@ func buildIndexFilterForInOperator(key string, op v3.FilterOperator, value inter
 
 	// if there are no values to filter on, return an empty string
 	if len(values) > 0 {
+		escapedKey := utils.QuoteEscapedStringForContains(key, true)
 		for _, v := range values {
 			value := utils.QuoteEscapedStringForContains(v, true)
-			conditions = append(conditions, fmt.Sprintf("labels %s '%%\"%s\":\"%s\"%%'", sqlOp, key, value))
+			conditions = append(conditions, fmt.Sprintf("labels %s '%%\"%s\":\"%s\"%%'", sqlOp, escapedKey, value))
 		}
 		return "(" + strings.Join(conditions, separator) + ")"
 	}
@@ -109,8 +140,34 @@ func buildIndexFilterForInOperator(key string, op v3.FilterOperator, value inter
 // for like/contains we will use lower index
 // we can use lower index for =, in etc but it's difficult to do it for !=, NIN etc
 // if as x != "ABC" we cannot predict something like "not lower(labels) like '%%x%%abc%%'". It has it be "not lower(labels) like '%%x%%ABC%%'"
-func buildResourceIndexFilter(key string, op v3.FilterOperator, value interface{}) string {
+func buildResourceIndexFilter(key string, op v3.FilterOperator, value interface{}, members []string) string {
+	if len(members) > 1 {
+		// A negated hint would drop rows where another member holds the value.
+		switch op {
+		case v3.FilterOperatorNotEqual,
+			v3.FilterOperatorNotLike,
+			v3.FilterOperatorNotILike,
+			v3.FilterOperatorNotContains,
+			v3.FilterOperatorNotExists,
+			v3.FilterOperatorNotRegex,
+			v3.FilterOperatorNotIn:
+			return ""
+		}
+
+		conditions := make([]string, 0, len(members))
+		for _, member := range members {
+			if condition := buildResourceIndexFilter(member, op, value, []string{member}); condition != "" {
+				conditions = append(conditions, condition)
+			}
+		}
+		if len(conditions) == 0 {
+			return ""
+		}
+		return "(" + strings.Join(conditions, " OR ") + ")"
+	}
+
 	// not using clickhouseFormattedValue as we don't wan't the quotes
+	escapedKey := utils.QuoteEscapedStringForContains(key, true)
 	strVal := fmt.Sprintf("%s", value)
 	fmtValEscapedForContains := utils.QuoteEscapedStringForContains(strVal, true)
 	fmtValEscapedForContainsLower := strings.ToLower(fmtValEscapedForContains)
@@ -119,36 +176,36 @@ func buildResourceIndexFilter(key string, op v3.FilterOperator, value interface{
 	// add index filters
 	switch op {
 	case v3.FilterOperatorEqual:
-		return fmt.Sprintf("labels like '%%%s\":\"%s%%'", key, fmtValEscapedForContains)
+		return fmt.Sprintf("labels like '%%%s\":\"%s%%'", escapedKey, fmtValEscapedForContains)
 	case v3.FilterOperatorNotEqual:
-		return fmt.Sprintf("labels not like '%%%s\":\"%s%%'", key, fmtValEscapedForContains)
+		return fmt.Sprintf("labels not like '%%%s\":\"%s%%'", escapedKey, fmtValEscapedForContains)
 	case v3.FilterOperatorLike, v3.FilterOperatorILike:
-		return fmt.Sprintf("lower(labels) like '%%%s%%%s%%'", key, fmtValEscapedLower)
+		return fmt.Sprintf("lower(labels) like '%%%s%%%s%%'", escapedKey, fmtValEscapedLower)
 	case v3.FilterOperatorNotLike, v3.FilterOperatorNotILike:
 		// cannot apply not contains x%y as y can be somewhere else
 		return ""
 	case v3.FilterOperatorContains:
-		return fmt.Sprintf("lower(labels) like '%%%s%%%s%%'", key, fmtValEscapedForContainsLower)
+		return fmt.Sprintf("lower(labels) like '%%%s%%%s%%'", escapedKey, fmtValEscapedForContainsLower)
 	case v3.FilterOperatorNotContains:
 		// cannot apply not contains x%y as y can be somewhere else
 		return ""
 	case v3.FilterOperatorExists:
-		return fmt.Sprintf("lower(labels) like '%%%s%%'", key)
+		return fmt.Sprintf("lower(labels) like '%%%s%%'", escapedKey)
 	case v3.FilterOperatorNotExists:
-		return fmt.Sprintf("lower(labels) not like '%%%s%%'", key)
+		return fmt.Sprintf("lower(labels) not like '%%%s%%'", escapedKey)
 	case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex:
 		// don't try to do anything for regex.
 		return ""
 	case v3.FilterOperatorIn, v3.FilterOperatorNotIn:
 		return buildIndexFilterForInOperator(key, op, value)
 	default:
-		return fmt.Sprintf("labels like '%%%s%%'", key)
+		return fmt.Sprintf("labels like '%%%s%%'", escapedKey)
 	}
 }
 
 // buildResourceFiltersFromFilterItems builds a list of clickhouse filter strings for resource labels from a FilterSet.
 // It skips any filter items that are not resource attributes and checks that the operator is supported and the data type is correct.
-func buildResourceFiltersFromFilterItems(fs *v3.FilterSet) ([]string, error) {
+func buildResourceFiltersFromFilterItems(fs *v3.FilterSet, resolveSemconvFamilies bool) ([]string, error) {
 	var conditions []string
 	if fs == nil || len(fs.Items) == 0 {
 		return nil, nil
@@ -182,12 +239,20 @@ func buildResourceFiltersFromFilterItems(fs *v3.FilterSet) ([]string, error) {
 		}
 
 		if logsOp, ok := resourceLogOperators[op]; ok {
+			members := []string{keyName}
+			if resolveSemconvFamilies {
+				members = semconv.Members(semconv.KindAttribute, telemetrytypes.FieldKeySelector{
+					Name:         keyName,
+					Signal:       telemetrytypes.SignalTraces,
+					FieldContext: telemetrytypes.FieldContextResource,
+				})
+			}
 			// the filter
-			if resourceFilter := buildResourceFilter(logsOp, keyName, op, value); resourceFilter != "" {
+			if resourceFilter := buildResourceFilter(logsOp, keyName, op, value, members); resourceFilter != "" {
 				conditions = append(conditions, resourceFilter)
 			}
 			// the additional filter for better usage of the index
-			if resourceIndexFilter := buildResourceIndexFilter(keyName, op, value); resourceIndexFilter != "" {
+			if resourceIndexFilter := buildResourceIndexFilter(keyName, op, value, members); resourceIndexFilter != "" {
 				conditions = append(conditions, resourceIndexFilter)
 			}
 		} else {
@@ -219,12 +284,12 @@ func buildResourceFiltersFromAggregateAttribute(aggregateAttribute v3.AttributeK
 	return ""
 }
 
-func BuildResourceSubQuery(dbName, tableName string, bucketStart, bucketEnd int64, fs *v3.FilterSet, groupBy []v3.AttributeKey, aggregateAttribute v3.AttributeKey, isLiveTail bool) (string, error) {
+func BuildResourceSubQuery(dbName, tableName string, bucketStart, bucketEnd int64, fs *v3.FilterSet, groupBy []v3.AttributeKey, aggregateAttribute v3.AttributeKey, isLiveTail bool, resolveSemconvFamilies bool) (string, error) {
 
 	// BUILD THE WHERE CLAUSE
 	var conditions []string
 	// only add the resource attributes to the filters here
-	rs, err := buildResourceFiltersFromFilterItems(fs)
+	rs, err := buildResourceFiltersFromFilterItems(fs, resolveSemconvFamilies)
 	if err != nil {
 		return "", err
 	}

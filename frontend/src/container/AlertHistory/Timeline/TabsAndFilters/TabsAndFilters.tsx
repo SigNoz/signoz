@@ -23,6 +23,7 @@ function TimelineTabs(): JSX.Element {
 		{
 			value: TimelineTab.OVERALL_STATUS,
 			label: 'Overall Status',
+			testId: 'timeline-tab-overall-status',
 		},
 		{
 			value: TimelineTab.TOP_5_CONTRIBUTORS,
@@ -33,6 +34,7 @@ function TimelineTabs(): JSX.Element {
 				</div>
 			),
 			disabled: true,
+			testId: 'timeline-tab-top-contributors',
 		},
 	];
 
@@ -57,14 +59,17 @@ function TimelineFilters(): JSX.Element {
 		{
 			value: TimelineFilter.ALL,
 			label: 'All',
+			testId: 'timeline-filter-all',
 		},
 		{
 			value: TimelineFilter.FIRED,
 			label: 'Fired',
+			testId: 'timeline-filter-fired',
 		},
 		{
 			value: TimelineFilter.RESOLVED,
 			label: 'Resolved',
+			testId: 'timeline-filter-resolved',
 		},
 	];
 

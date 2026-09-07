@@ -23,17 +23,25 @@ export function resolveSeriesColor(
 
 export function getTooltipBaseValue({
 	data,
+	unstackedData,
 	index,
 	dataIndex,
 	isStackedBarChart,
 	series,
 }: {
 	data: AlignedData;
+	unstackedData?: AlignedData;
 	index: number;
 	dataIndex: number;
 	isStackedBarChart?: boolean;
 	series?: Series[];
 }): number | null {
+	// The subtraction below only recovers the raw value under `normal` stacking.
+	const unstackedSeries = unstackedData?.[index];
+	if (unstackedSeries) {
+		return unstackedSeries[dataIndex] ?? null;
+	}
+
 	let baseValue = data[index][dataIndex] ?? null;
 	// Top-down stacking (first series at top): raw = stacked[i] - stacked[nextVisible].
 	// When series are hidden, we must use the next *visible* series, not index+1,
@@ -56,6 +64,7 @@ export function getTooltipBaseValue({
 
 export function buildTooltipContent({
 	data,
+	unstackedData,
 	series,
 	dataIndexes,
 	activeSeriesIndex,
@@ -67,6 +76,7 @@ export function buildTooltipContent({
 	syncFilterMode,
 }: {
 	data: AlignedData;
+	unstackedData?: AlignedData;
 	series: Series[];
 	dataIndexes: Array<number | null>;
 	activeSeriesIndex: number | null;
@@ -115,6 +125,7 @@ export function buildTooltipContent({
 
 		const baseValue = getTooltipBaseValue({
 			data,
+			unstackedData,
 			index: seriesIndex,
 			dataIndex,
 			isStackedBarChart,

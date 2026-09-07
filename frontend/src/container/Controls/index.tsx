@@ -1,11 +1,12 @@
 import { memo, useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from '@signozhq/icons';
-import { Button, Flex, Select } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Select } from 'antd';
 import { DEFAULT_PER_PAGE_OPTIONS, Pagination } from 'hooks/queryPagination';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { defaultSelectStyle } from './config';
-import { Container } from './styles';
+import styles from './Controls.module.scss';
 
 function Controls({
 	offset = 0,
@@ -34,28 +35,24 @@ function Controls({
 	);
 
 	return (
-		<Container>
+		<div className={styles.container}>
 			<Button
-				loading={isLoading}
-				size="small"
-				type="link"
+				variant="link"
+				size="md"
 				disabled={isPreviousDisabled}
+				prefix={<ChevronLeft size={16} />}
 				onClick={handleNavigatePrevious}
 			>
-				<Flex align="center" gap="4px">
-					<ChevronLeft size={16} /> Previous
-				</Flex>
+				Previous
 			</Button>
 			<Button
-				loading={isLoading}
-				size="small"
-				type="link"
+				variant="link"
+				size="md"
 				disabled={isNextDisabled}
+				suffix={<ChevronRight size={16} />}
 				onClick={handleNavigateNext}
 			>
-				<Flex align="center" gap="4px">
-					Next <ChevronRight size={16} />
-				</Flex>
+				Next
 			</Button>
 
 			{showSizeChanger && (
@@ -74,7 +71,7 @@ function Controls({
 					))}
 				</Select>
 			)}
-		</Container>
+		</div>
 	);
 }
 

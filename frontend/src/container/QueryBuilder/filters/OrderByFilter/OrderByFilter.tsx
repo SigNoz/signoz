@@ -5,7 +5,7 @@ import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
 import { getParsedAggregationOptionsForOrderBy } from 'utils/aggregationConverter';
 import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 
-import { selectStyle } from '../QueryBuilderSearch/config';
+import { selectStyle } from '../QueryBuilderSearchV2/config';
 import { OrderByFilterProps } from './OrderByFilter.interfaces';
 import { useOrderByFilter } from './useOrderByFilter';
 

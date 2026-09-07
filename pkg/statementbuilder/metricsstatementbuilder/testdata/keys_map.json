@@ -31,6 +31,14 @@
             "signal": "metrics"
         }
     ],
+    "success": [
+        {
+            "name": "success",
+            "fieldContext": "attribute",
+            "fieldDataType": "bool",
+            "signal": "metrics"
+        }
+    ],
     "materialized.key.name": [
         {
             "name": "materialized.key.name",

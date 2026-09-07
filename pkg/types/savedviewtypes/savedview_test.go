@@ -39,6 +39,7 @@ func TestSourceValidate(t *testing.T) {
 		{name: "logs", source: SourceLogs},
 		{name: "metrics", source: SourceMetrics},
 		{name: "meter", source: SourceMeter},
+		{name: "ai_observability", source: SourceAIObservability},
 		{name: "unknown is rejected", source: Source{valuer.NewString("bogus")}, expectError: true},
 	}
 

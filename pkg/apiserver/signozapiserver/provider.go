@@ -20,6 +20,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/identn"
+	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/aiobservability"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
@@ -32,6 +33,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
+	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
@@ -40,10 +42,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
+	"github.com/SigNoz/signoz/pkg/subscription"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/web"
@@ -69,6 +73,7 @@ type provider struct {
 	userHandler                user.Handler
 	sessionHandler             session.Handler
 	authDomainHandler          authdomain.Handler
+	authDomainModule           authdomain.Module
 	preferenceHandler          preference.Handler
 	globalHandler              global.Handler
 	promoteHandler             promote.Handler
@@ -79,11 +84,14 @@ type provider struct {
 	metricReductionRuleHandler metricreductionrule.Handler
 	infraMonitoringHandler     inframonitoring.Handler
 	gatewayHandler             gateway.Handler
+	gatewayService             gateway.Gateway
 	fieldsHandler              fields.Handler
 	aiObservabilityHandler     aiobservability.Handler
 	authzHandler               authz.Handler
 	rawDataExportHandler       rawdataexport.Handler
 	zeusHandler                zeus.Handler
+	licensingHandler           licensing.Handler
+	subscriptionHandler        subscription.Handler
 	querierHandler             querier.Handler
 	serviceAccountHandler      serviceaccount.Handler
 	serviceAccountGetter       serviceaccount.Getter
@@ -92,11 +100,14 @@ type provider struct {
 	ruleStateHistoryHandler    rulestatehistory.Handler
 	spanMapperHandler          spanmapper.Handler
 	alertmanagerHandler        alertmanager.Handler
+	prometheusHandler          prometheus.Handler
 	traceDetailHandler         tracedetail.Handler
 	rulerHandler               ruler.Handler
 	llmPricingRuleHandler      llmpricingrule.Handler
 	statsHandler               statsreporter.Handler
 	savedViewHandler           savedview.Handler
+	quickFilterModule          quickfilter.Module
+	quickFilterHandler         quickfilter.Handler
 }
 
 func NewFactory(
@@ -106,6 +117,7 @@ func NewFactory(
 	userHandler user.Handler,
 	sessionHandler session.Handler,
 	authDomainHandler authdomain.Handler,
+	authDomainModule authdomain.Module,
 	preferenceHandler preference.Handler,
 	globalHandler global.Handler,
 	promoteHandler promote.Handler,
@@ -116,11 +128,14 @@ func NewFactory(
 	metricReductionRuleHandler metricreductionrule.Handler,
 	infraMonitoringHandler inframonitoring.Handler,
 	gatewayHandler gateway.Handler,
+	gatewayService gateway.Gateway,
 	fieldsHandler fields.Handler,
 	aiObservabilityHandler aiobservability.Handler,
 	authzHandler authz.Handler,
 	rawDataExportHandler rawdataexport.Handler,
 	zeusHandler zeus.Handler,
+	licensingHandler licensing.Handler,
+	subscriptionHandler subscription.Handler,
 	querierHandler querier.Handler,
 	serviceAccountHandler serviceaccount.Handler,
 	serviceAccountGetter serviceaccount.Getter,
@@ -129,6 +144,7 @@ func NewFactory(
 	ruleStateHistoryHandler rulestatehistory.Handler,
 	spanMapperHandler spanmapper.Handler,
 	alertmanagerHandler alertmanager.Handler,
+	prometheusHandler prometheus.Handler,
 	llmPricingRuleHandler llmpricingrule.Handler,
 	traceDetailHandler tracedetail.Handler,
 	rulerHandler ruler.Handler,
@@ -139,6 +155,8 @@ func NewFactory(
 	sharder sharder.Sharder,
 	auditor auditor.Auditor,
 	web web.Web,
+	quickFilterModule quickfilter.Module,
+	quickFilterHandler quickfilter.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
 		return newProvider(
@@ -151,6 +169,7 @@ func NewFactory(
 			userHandler,
 			sessionHandler,
 			authDomainHandler,
+			authDomainModule,
 			preferenceHandler,
 			globalHandler,
 			promoteHandler,
@@ -161,11 +180,14 @@ func NewFactory(
 			metricReductionRuleHandler,
 			infraMonitoringHandler,
 			gatewayHandler,
+			gatewayService,
 			fieldsHandler,
 			aiObservabilityHandler,
 			authzHandler,
 			rawDataExportHandler,
 			zeusHandler,
+			licensingHandler,
+			subscriptionHandler,
 			querierHandler,
 			serviceAccountHandler,
 			serviceAccountGetter,
@@ -174,6 +196,7 @@ func NewFactory(
 			ruleStateHistoryHandler,
 			spanMapperHandler,
 			alertmanagerHandler,
+			prometheusHandler,
 			llmPricingRuleHandler,
 			traceDetailHandler,
 			rulerHandler,
@@ -184,6 +207,8 @@ func NewFactory(
 			sharder,
 			auditor,
 			web,
+			quickFilterModule,
+			quickFilterHandler,
 		)
 	})
 }
@@ -198,6 +223,7 @@ func newProvider(
 	userHandler user.Handler,
 	sessionHandler session.Handler,
 	authDomainHandler authdomain.Handler,
+	authDomainModule authdomain.Module,
 	preferenceHandler preference.Handler,
 	globalHandler global.Handler,
 	promoteHandler promote.Handler,
@@ -208,11 +234,14 @@ func newProvider(
 	metricReductionRuleHandler metricreductionrule.Handler,
 	infraMonitoringHandler inframonitoring.Handler,
 	gatewayHandler gateway.Handler,
+	gatewayService gateway.Gateway,
 	fieldsHandler fields.Handler,
 	aiObservabilityHandler aiobservability.Handler,
 	authzHandler authz.Handler,
 	rawDataExportHandler rawdataexport.Handler,
 	zeusHandler zeus.Handler,
+	licensingHandler licensing.Handler,
+	subscriptionHandler subscription.Handler,
 	querierHandler querier.Handler,
 	serviceAccountHandler serviceaccount.Handler,
 	serviceAccountGetter serviceaccount.Getter,
@@ -221,6 +250,7 @@ func newProvider(
 	ruleStateHistoryHandler rulestatehistory.Handler,
 	spanMapperHandler spanmapper.Handler,
 	alertmanagerHandler alertmanager.Handler,
+	prometheusHandler prometheus.Handler,
 	llmPricingRuleHandler llmpricingrule.Handler,
 	traceDetailHandler tracedetail.Handler,
 	rulerHandler ruler.Handler,
@@ -231,6 +261,8 @@ func newProvider(
 	sharder sharder.Sharder,
 	auditor auditor.Auditor,
 	web web.Web,
+	quickFilterModule quickfilter.Module,
+	quickFilterHandler quickfilter.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
@@ -247,6 +279,7 @@ func newProvider(
 		authzService:               authzService,
 		sessionHandler:             sessionHandler,
 		authDomainHandler:          authDomainHandler,
+		authDomainModule:           authDomainModule,
 		preferenceHandler:          preferenceHandler,
 		globalHandler:              globalHandler,
 		promoteHandler:             promoteHandler,
@@ -257,11 +290,14 @@ func newProvider(
 		metricReductionRuleHandler: metricReductionRuleHandler,
 		infraMonitoringHandler:     infraMonitoringHandler,
 		gatewayHandler:             gatewayHandler,
+		gatewayService:             gatewayService,
 		fieldsHandler:              fieldsHandler,
 		aiObservabilityHandler:     aiObservabilityHandler,
 		authzHandler:               authzHandler,
 		rawDataExportHandler:       rawDataExportHandler,
 		zeusHandler:                zeusHandler,
+		licensingHandler:           licensingHandler,
+		subscriptionHandler:        subscriptionHandler,
 		querierHandler:             querierHandler,
 		serviceAccountHandler:      serviceAccountHandler,
 		serviceAccountGetter:       serviceAccountGetter,
@@ -270,11 +306,14 @@ func newProvider(
 		ruleStateHistoryHandler:    ruleStateHistoryHandler,
 		spanMapperHandler:          spanMapperHandler,
 		alertmanagerHandler:        alertmanagerHandler,
+		prometheusHandler:          prometheusHandler,
 		traceDetailHandler:         traceDetailHandler,
 		rulerHandler:               rulerHandler,
 		llmPricingRuleHandler:      llmPricingRuleHandler,
 		statsHandler:               statsHandler,
 		savedViewHandler:           savedViewHandler,
+		quickFilterModule:          quickFilterModule,
+		quickFilterHandler:         quickFilterHandler,
 	}
 
 	provider.authzMiddleware = middleware.NewAuthZ(settings.Logger(), orgGetter, authzService)
@@ -450,11 +489,23 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 		return err
 	}
 
+	if err := provider.addLicensingRoutes(router); err != nil {
+		return err
+	}
+
 	if err := provider.addZeusRoutes(router); err != nil {
 		return err
 	}
 
+	if err := provider.addSubscriptionRoutes(router); err != nil {
+		return err
+	}
+
 	if err := provider.addQuerierRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addPrometheusRoutes(router); err != nil {
 		return err
 	}
 
@@ -499,6 +550,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addSavedViewRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addQuickFilterRoutes(router); err != nil {
 		return err
 	}
 

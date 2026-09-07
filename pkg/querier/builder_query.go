@@ -82,6 +82,12 @@ func (q *builderQuery[T]) Fingerprint() string {
 		return ""
 	}
 
+	// AI trace aggregations qualify and rank traces on whole-window per-trace
+	// values, which do not decompose into cacheable time buckets.
+	if q.queryType == qbtypes.QueryTypeBuilderAI {
+		return ""
+	}
+
 	// Create a deterministic fingerprint for builder queries
 	// This needs to include all fields that affect the query results
 	parts := []string{q.queryType.StringValue()}

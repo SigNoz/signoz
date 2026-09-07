@@ -11,8 +11,8 @@ import {
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
 
-import ExampleQueriesRendererForLogs from '../QueryBuilderSearch/ExampleQueriesRendererForLogs';
-import { convertExampleQueriesToOptions } from '../QueryBuilderSearch/utils';
+import ExampleQueriesRendererForLogs from './ExampleQueriesRendererForLogs';
+import { convertExampleQueriesToOptions } from './utils';
 import { ITag, Option } from './QueryBuilderSearchV2';
 
 import './QueryBuilderSearchV2.styles.scss';

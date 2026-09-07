@@ -22,6 +22,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/flagger/configflagger"
+	"github.com/SigNoz/signoz/pkg/gateway"
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/global/signozglobal"
 	"github.com/SigNoz/signoz/pkg/identn"
@@ -242,6 +243,16 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewRestructureAuthDomainConfigFactory(sqlstore),
 		sqlmigration.NewFixSavedViewSelectFieldsFactory(sqlstore),
 		sqlmigration.NewDeleteOrphanUserRolesFactory(),
+		sqlmigration.NewMigrateLambdaDashboardsFactory(),
+		sqlmigration.NewAddAuthDomainTuplesFactory(sqlstore),
+		sqlmigration.NewAddDeploymentHostTuplesFactory(sqlstore),
+		sqlmigration.NewAddSystemDashboardFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddLicenseTuplesFactory(sqlstore),
+		sqlmigration.NewAddChannelDisplayNameFactory(sqlstore, sqlschema),
+		sqlmigration.NewMigrateQuickFiltersFactory(sqlstore),
+		sqlmigration.NewAddQuickFilterTuplesFactory(sqlstore),
+		sqlmigration.NewAddIngestionTuplesFactory(sqlstore),
+		sqlmigration.NewAddSubscriptionTuplesFactory(sqlstore),
 	)
 }
 
@@ -307,7 +318,7 @@ func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, p
 	)
 }
 
-func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.AuthZ, modules Modules, handlers Handlers, globalConfig global.Config, identNResolver identn.IdentNResolver, sharder sharder.Sharder, auditor auditor.Auditor, web web.Web) factory.NamedMap[factory.ProviderFactory[apiserver.APIServer, apiserver.Config]] {
+func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.AuthZ, modules Modules, handlers Handlers, globalConfig global.Config, gatewayService gateway.Gateway, identNResolver identn.IdentNResolver, sharder sharder.Sharder, auditor auditor.Auditor, web web.Web) factory.NamedMap[factory.ProviderFactory[apiserver.APIServer, apiserver.Config]] {
 	return factory.MustNewNamedMap(
 		signozapiserver.NewFactory(
 			orgGetter,
@@ -316,6 +327,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			impluser.NewHandler(modules.UserSetter, modules.UserGetter),
 			implsession.NewHandler(modules.Session, globalConfig),
 			implauthdomain.NewHandler(modules.AuthDomain),
+			modules.AuthDomain,
 			implpreference.NewHandler(modules.Preference),
 			handlers.Global,
 			implpromote.NewHandler(modules.Promote),
@@ -326,11 +338,14 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.MetricReductionRule,
 			handlers.InfraMonitoring,
 			handlers.GatewayHandler,
+			gatewayService,
 			handlers.Fields,
 			handlers.AIObservability,
 			handlers.AuthzHandler,
 			handlers.RawDataExport,
 			handlers.ZeusHandler,
+			handlers.LicensingHandler,
+			handlers.SubscriptionHandler,
 			handlers.QuerierHandler,
 			handlers.ServiceAccountHandler,
 			modules.ServiceAccountGetter,
@@ -339,6 +354,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.RuleStateHistory,
 			handlers.SpanMapperHandler,
 			handlers.AlertmanagerHandler,
+			handlers.PrometheusHandler,
 			handlers.LLMPricingRuleHandler,
 			handlers.TraceDetail,
 			handlers.RulerHandler,
@@ -349,6 +365,8 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			sharder,
 			auditor,
 			web,
+			modules.QuickFilter,
+			handlers.QuickFilter,
 		),
 	)
 }

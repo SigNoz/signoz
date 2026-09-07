@@ -1,6 +1,7 @@
 package alertmanagertypes
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"reflect"
 	"regexp"
@@ -16,9 +17,10 @@ import (
 )
 
 var (
-	ErrCodeAlertmanagerChannelNotFound     = errors.MustNewCode("alertmanager_channel_not_found")
-	ErrCodeAlertmanagerChannelNameMismatch = errors.MustNewCode("alertmanager_channel_name_mismatch")
-	ErrCodeAlertmanagerChannelInvalid      = errors.MustNewCode("alertmanager_channel_invalid")
+	ErrCodeAlertmanagerChannelNotFound      = errors.MustNewCode("alertmanager_channel_not_found")
+	ErrCodeAlertmanagerChannelNameMismatch  = errors.MustNewCode("alertmanager_channel_name_mismatch")
+	ErrCodeAlertmanagerChannelInvalid       = errors.MustNewCode("alertmanager_channel_invalid")
+	ErrCodeAlertmanagerChannelAlreadyExists = errors.MustNewCode("alertmanager_channel_already_exists")
 )
 
 var (
@@ -48,14 +50,19 @@ type Channel struct {
 
 	types.Identifiable
 	types.TimeAuditable
-	Name  string `json:"name" required:"true" bun:"name"`
-	Type  string `json:"type" required:"true" bun:"type"`
-	Data  string `json:"data" required:"true" bun:"data"`
-	OrgID string `json:"orgId" required:"true" bun:"org_id"`
+	// Name is the DNS1123 identity references will migrate onto. Until then
+	// DisplayName is the receiver name inside Data and what policies and rules
+	// reference, so it keeps the v1 wire tag and Name stays off the v1 contract.
+	Name        string `json:"-" bun:"name"`
+	DisplayName string `json:"name" required:"true" bun:"display_name"`
+	Type        string `json:"type" required:"true" bun:"type"`
+	Data        string `json:"data" required:"true" bun:"data"`
+	OrgID       string `json:"orgId" required:"true" bun:"org_id"`
 }
 
 // NewChannelFromReceiver creates a new Channel from a Receiver.
 // It can return nil if the receiver is the default receiver.
+// A receiver carries no internal name, so one is generated from its name.
 func NewChannelFromReceiver(receiver *Receiver, orgID string) (*Channel, error) {
 	if receiver.Name == DefaultReceiverName {
 		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelInvalid, "cannot use %s name as a channel name", receiver.Name)
@@ -70,8 +77,9 @@ func NewChannelFromReceiver(receiver *Receiver, orgID string) (*Channel, error) 
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
-		Name:  receiver.Name,
-		OrgID: orgID,
+		Name:        generateChannelName(receiver.Name),
+		DisplayName: receiver.Name,
+		OrgID:       orgID,
 	}
 
 	data, err := json.Marshal(receiver)
@@ -86,6 +94,60 @@ func NewChannelFromReceiver(receiver *Receiver, orgID string) (*Channel, error) 
 	}
 
 	return &channel, nil
+}
+
+const channelNameSuffixLen = 8
+
+// generateChannelName is a copy of dashboardtypes.generateDashboardName: slugify
+// the display name, then append a random suffix rather than looping on collisions.
+func generateChannelName(displayName string) string {
+	const dns1123LabelMaxLen = 63
+	suffixAlphabet := []byte("abcdefghijklmnopqrstuvwxyz0123456789")
+
+	var b strings.Builder
+	b.Grow(len(displayName))
+	prevHyphen := false
+	for _, r := range strings.ToLower(displayName) {
+		switch {
+		case (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9'):
+			b.WriteRune(r)
+			prevHyphen = false
+		case b.Len() > 0 && !prevHyphen:
+			b.WriteByte('-')
+			prevHyphen = true
+		}
+	}
+	prefix := strings.TrimRight(b.String(), "-")
+
+	suffix := make([]byte, channelNameSuffixLen)
+	if _, err := rand.Read(suffix); err != nil {
+		panic(errors.WrapInternalf(err, errors.CodeInternal, "read random for channel name suffix"))
+	}
+	for i := range suffix {
+		suffix[i] = suffixAlphabet[int(suffix[i])%len(suffixAlphabet)]
+	}
+
+	maxPrefix := dns1123LabelMaxLen - 1 - channelNameSuffixLen
+	if len(prefix) > maxPrefix {
+		prefix = strings.TrimRight(prefix[:maxPrefix], "-")
+	}
+	if prefix == "" {
+		return string(suffix)
+	}
+	return prefix + "-" + string(suffix)
+}
+
+// NewChannelFromReceiverWithName overrides the name that NewChannelFromReceiver
+// generates.
+func NewChannelFromReceiverWithName(receiver *Receiver, name string, orgID string) (*Channel, error) {
+	channel, err := NewChannelFromReceiver(receiver, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	channel.Name = name
+
+	return channel, nil
 }
 
 // receiverChannelType returns the channel.Type discriminator. Walks
@@ -151,26 +213,6 @@ func NewConfigFromChannels(globalConfig GlobalConfig, routeConfig RouteConfig, c
 	return cfg, nil
 }
 
-func GetChannelByID(channels Channels, id valuer.UUID) (int, *Channel, error) {
-	for i, channel := range channels {
-		if channel.ID == id {
-			return i, channel, nil
-		}
-	}
-
-	return 0, nil, errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerChannelNotFound, "cannot find channel with id %s", id.StringValue())
-}
-
-func GetChannelByName(channels Channels, name string) (int, *Channel, error) {
-	for i, channel := range channels {
-		if channel.Name == name {
-			return i, channel, nil
-		}
-	}
-
-	return 0, nil, errors.Newf(errors.TypeNotFound, ErrCodeAlertmanagerChannelNotFound, "cannot find channel with name %s", name)
-}
-
 func NewStatsFromChannels(channels Channels) map[string]any {
 	stats := make(map[string]any)
 	for _, channel := range channels {
@@ -188,13 +230,19 @@ func NewStatsFromChannels(channels Channels) map[string]any {
 }
 
 func (c *Channel) Update(receiver *Receiver) error {
-	channel, err := NewChannelFromReceiver(receiver, c.OrgID)
+	channel, err := NewChannelFromReceiverWithName(receiver, c.Name, c.OrgID)
 	if err != nil {
 		return err
 	}
 
-	if c.Name != channel.Name {
+	if c.DisplayName != channel.DisplayName {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelNameMismatch, "cannot update channel name")
+	}
+
+	// Unreachable while the name is passed in above rather than derived from the
+	// receiver, which is why this is internal rather than invalid input.
+	if c.Name != channel.Name {
+		return errors.NewInternalf(ErrCodeAlertmanagerChannelNameMismatch, "cannot update channel internal name")
 	}
 
 	c.Type = channel.Type
@@ -216,13 +264,20 @@ func (PostableChannel) JSONSchema() (jsonschema.Schema, error) {
 	schema.WithRequired("name")
 
 	var oneOf []jsonschema.SchemaOrBool
-	// Walk both halves: native fields on Receiver, upstream on the embed.
+	seen := map[string]struct{}{}
+	// Walk both halves: native fields on Receiver, upstream on the embed. A native
+	// field can shadow an upstream one with the same tag (e.g. jira_configs), so
+	// dedupe to avoid emitting two identical oneOf branches.
 	collect := func(t reflect.Type) {
 		for i := 0; i < t.NumField(); i++ {
 			jsonTag := strings.Split(t.Field(i).Tag.Get("json"), ",")[0]
 			if !strings.HasSuffix(jsonTag, "_configs") {
 				continue
 			}
+			if _, ok := seen[jsonTag]; ok {
+				continue
+			}
+			seen[jsonTag] = struct{}{}
 			branch := (&jsonschema.Schema{}).WithRequired(jsonTag)
 			oneOf = append(oneOf, branch.ToSchemaOrBool())
 		}

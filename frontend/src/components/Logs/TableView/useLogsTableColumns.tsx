@@ -92,7 +92,7 @@ export function useLogsTableColumns({
 		};
 
 		const makeUserFieldCol = (f: IField): TableColumnDef<ILog> => ({
-			id: buildCompositeKey(f.name, f.type),
+			id: buildCompositeKey(f.name, f.type, f.dataType),
 			header: f.name,
 			accessorFn: (log): unknown =>
 				getLogFieldValue(log, f.name, isBodyJsonEnabled),

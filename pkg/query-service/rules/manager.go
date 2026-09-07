@@ -333,7 +333,7 @@ func (m *Manager) validateChannels(ctx context.Context, orgID string, rule *rule
 
 	known := make(map[string]struct{}, len(orgChannels))
 	for _, ch := range orgChannels {
-		known[ch.Name] = struct{}{}
+		known[ch.DisplayName] = struct{}{}
 	}
 
 	var unknown []string
@@ -544,7 +544,7 @@ func (m *Manager) deleteTask(taskName string) {
 }
 
 // CreateRule stores rule def into db and also
-// starts an executor for the rule
+// starts an executor for the rule, unless the rule is disabled
 func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.GettableRule, error) {
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
@@ -611,7 +611,7 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 		}
 
 		taskName := prepareTaskName(id.StringValue())
-		if err = m.addTask(ctx, orgID, &parsedRule, taskName); err != nil {
+		if err = m.syncRuleStateWithTask(ctx, orgID, taskName, &parsedRule); err != nil {
 			return err
 		}
 

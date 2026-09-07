@@ -48,11 +48,16 @@ function TopContributorsCard({
 
 	return (
 		<>
-			<div className="top-contributors-card">
+			<div className="top-contributors-card" data-testid="top-contributors-card">
 				<div className="top-contributors-card__header">
 					<div className="title">top contributors</div>
 					{topContributorsData.length > 3 && (
-						<Button type="text" className="view-all" onClick={toggleViewAllDrawer}>
+						<Button
+							type="text"
+							className="view-all"
+							onClick={toggleViewAllDrawer}
+							data-testid="top-contributors-view-all"
+						>
 							<div className="label">View all</div>
 							<div className="icon">
 								<ArrowRight

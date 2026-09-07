@@ -29,6 +29,7 @@ function PopoverContent({
 				<Link
 					to={`${ROUTES.LOGS_EXPLORER}?${relatedLogsLink}`}
 					className="contributor-row-popover-buttons__button"
+					data-testid="alert-popover-view-logs"
 				>
 					<div className="icon">
 						<LogsIcon />
@@ -40,6 +41,7 @@ function PopoverContent({
 				<Link
 					to={`${ROUTES.TRACES_EXPLORER}?${relatedTracesLink}`}
 					className="contributor-row-popover-buttons__button"
+					data-testid="alert-popover-view-traces"
 				>
 					<div className="icon">
 						<DraftingCompass

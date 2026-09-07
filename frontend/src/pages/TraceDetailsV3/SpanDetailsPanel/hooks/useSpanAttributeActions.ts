@@ -7,7 +7,7 @@ import { convertFiltersToExpressionWithExistingQuery } from 'components/QueryBui
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { PANEL_TYPES, QueryBuilderKeys } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
+import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearchV2/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 import { ArrowDownToDot, ArrowUpFromDot } from '@signozhq/icons';

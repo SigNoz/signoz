@@ -1,4 +1,4 @@
-import DashboardContainer from 'pages/DashboardPageV2/DashboardContainer';
+import DashboardContainer from 'pages/DashboardPage/DashboardContainer';
 
 import { useSeededDashboardV2 } from './hooks/useSeededDashboardV2';
 import styles from './Overview.module.scss';
@@ -9,7 +9,11 @@ function Overview(): JSX.Element {
 
 	return (
 		<div className={styles.overview} data-testid="llm-observability-overview">
-			<DashboardContainer dashboard={dashboard} refetch={refetch} />
+			<DashboardContainer
+				dashboard={dashboard}
+				refetch={refetch}
+				canEditDashboardOverride={false}
+			/>
 		</div>
 	);
 }

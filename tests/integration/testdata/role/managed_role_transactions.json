@@ -47,7 +47,9 @@
         "read",
         "update",
         "delete",
-        "list"
+        "list",
+        "attach",
+        "detach"
       ]
     },
     {
@@ -230,7 +232,9 @@
         "read",
         "update",
         "delete",
-        "list"
+        "list",
+        "attach",
+        "detach"
       ]
     },
     {
@@ -291,6 +295,14 @@
         "read",
         "update",
         "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "deployment-host",
+      "verbs": [
+        "list",
+        "update"
       ]
     },
     {
@@ -442,7 +454,9 @@
         "read",
         "update",
         "delete",
-        "list"
+        "list",
+        "attach",
+        "detach"
       ]
     },
     {
@@ -493,6 +507,13 @@
       "kind": "ttl-setting",
       "verbs": [
         "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "deployment-host",
+      "verbs": [
         "list"
       ]
     },
@@ -649,6 +670,13 @@
       "kind": "ttl-setting",
       "verbs": [
         "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "deployment-host",
+      "verbs": [
         "list"
       ]
     },

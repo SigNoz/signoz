@@ -127,7 +127,7 @@ export const useRouteTabUtils = (): { routes: TabRoutes[] } => {
 		{
 			Component: EditRules,
 			name: (
-				<div className="tab-item">
+				<div className="tab-item" data-testid="alert-details-tab-overview">
 					<Table size={14} />
 					Overview
 				</div>
@@ -138,7 +138,7 @@ export const useRouteTabUtils = (): { routes: TabRoutes[] } => {
 		{
 			Component: AlertHistory,
 			name: (
-				<div className="tab-item">
+				<div className="tab-item" data-testid="alert-details-tab-history">
 					<History size={14} />
 					History
 					<BetaTag />

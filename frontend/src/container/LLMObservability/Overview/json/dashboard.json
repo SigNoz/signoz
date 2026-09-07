@@ -1,7 +1,7 @@
 {
   "id": "llm-observability-overview",
   "orgId": "",
-  "locked": true,
+  "locked": false,
   "name": "AI Observability Overview",
   "schemaVersion": "v6",
   "source": "system",

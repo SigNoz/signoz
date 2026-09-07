@@ -53,7 +53,7 @@ export function ErrorResponseHandler(error: AxiosError): ErrorResponse {
 		};
 	}
 	// anything else
-	console.error('any');
+	console.error('ErrorResponseHandler: unclassified error');
 	return {
 		statusCode: 500,
 		payload: null,

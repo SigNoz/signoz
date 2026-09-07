@@ -2,21 +2,21 @@ import json
 import math
 import os
 from collections.abc import Callable
-from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.metrics import Metrics
+from fixtures.promqltestcorpus import ingest_promqltest_corpus
 from fixtures.querier import get_all_series, make_query_request
 
 TESTDATA_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "testdata")
-# Frozen corpus extracted from Prometheus' own promql/promqltest testdata by
-# scripts/promqltestcorpus (upstream load scripts + the vendored reference engine).
-# Unlike live-vs-live parity suites, the oracle is this committed file, so the suite
-# keeps working when the serving path itself is the thing being changed — the one
-# situation where comparing two live paths against each other is blind.
-CORPUS_FILE = os.path.join(TESTDATA_DIR, "promqltestcorpus", "corpus.json")
+# The corpus (see fixtures/promqltestcorpus.py) is frozen from Prometheus' own
+# promql/promqltest testdata by scripts/promqltestcorpus (upstream load scripts
+# + the vendored reference engine). Unlike live-vs-live parity suites, the
+# oracle is a committed file, so the suite keeps working when the serving path
+# itself is the thing being changed — the one situation where comparing two
+# live paths against each other is blind.
 
 # One ledger per leg, enforced exactly in both directions. The default leg's
 # ledger is empty and pinned there; the clickhousev2 ledger is the rollout
@@ -40,9 +40,6 @@ LEGS: list[tuple[str, dict | None]] = [
     ("clickhousev2", {"X-SigNoz-PromQL-Provider": "clickhousev2"}),
 ]
 
-# Datasets sit on disjoint time windows (2h gaps, far beyond the 5m lookback) so
-# one bulk ingest serves every case without cross-talk.
-ISOLATION_GAP_MS = 2 * 3600 * 1000
 SPECIALS = {"NaN": math.nan, "Inf": math.inf, "-Inf": -math.inf}
 
 
@@ -52,51 +49,7 @@ def test_upstream_promqltest_corpus(
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[list[Metrics]], None],
 ) -> None:
-    with open(CORPUS_FILE, encoding="utf-8") as f:
-        corpus = json.load(f)
-
-    cases_by_dataset: dict[int, list[dict]] = {}
-    for case in corpus["cases"]:
-        cases_by_dataset.setdefault(case["dataset"], []).append(case)
-
-    # Lay datasets end to end on the timeline, newest last, ending safely in
-    # the past; spans are per-dataset so the whole corpus stays within days.
-    spans = {}
-    for ds in corpus["datasets"]:
-        sample_max = max((s["samples"][-1][0] for s in ds["series"] if s["samples"]), default=0)
-        case_max = max((c["end_ms"] for c in cases_by_dataset.get(ds["id"], [])), default=0)
-        spans[ds["id"]] = max(sample_max, case_max) + corpus["meta"]["lookback_ms"]
-
-    # Hour-aligned dataset bases: registration rows are hour-bucketed, so
-    # behavior depends on where samples fall relative to hour boundaries —
-    # the exact known-divergences enforcement needs that identical every run.
-    hour_ms = 3_600_000
-    advances = {ds["id"]: -(-(spans[ds["id"]] + ISOLATION_GAP_MS) // hour_ms) * hour_ms for ds in corpus["datasets"]}
-    total = sum(advances.values())
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    cursor = (int((now - timedelta(hours=1)).timestamp() * 1000) - total) // hour_ms * hour_ms
-
-    bases: dict[int, int] = {}
-    metrics: list[Metrics] = []
-    for ds in corpus["datasets"]:
-        bases[ds["id"]] = cursor
-        for series in ds["series"]:
-            labels = dict(series["labels"])
-            metric_name = labels.pop("__name__")
-            for off_ms, raw in series["samples"]:
-                stale = raw == "stale"
-                metrics.append(
-                    Metrics(
-                        metric_name=metric_name,
-                        labels=labels,
-                        timestamp=datetime.fromtimestamp((cursor + off_ms) / 1000, tz=UTC),
-                        value=0.0 if stale else (SPECIALS[raw] if isinstance(raw, str) else float(raw)),
-                        flags=1 if stale else 0,
-                    )
-                )
-        cursor += advances[ds["id"]]
-
-    insert_metrics(metrics)
+    corpus, bases = ingest_promqltest_corpus(insert_metrics)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     failures: dict[str, list[str]] = {leg: [] for leg, _ in LEGS}

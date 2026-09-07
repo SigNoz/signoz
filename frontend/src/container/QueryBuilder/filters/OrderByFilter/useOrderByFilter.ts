@@ -7,7 +7,7 @@ import { parse } from 'papaparse';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { OrderByPayload } from 'types/api/queryBuilder/queryBuilderData';
 
-import { getRemoveOrderFromValue } from '../QueryBuilderSearch/utils';
+import { getRemoveOrderFromValue } from '../QueryBuilderSearchV2/utils';
 import { getUniqueOrderByValues, getValidOrderByResult } from '../utils';
 import { ORDERBY_FILTERS } from './config';
 import { SIGNOZ_VALUE } from './constants';

@@ -2,7 +2,7 @@
 import { Dispatch, SetStateAction } from 'react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
-import { saveLegendEntriesToLocalStorage } from 'container/GridCardLayout/GridCard/FullView/utils';
+import { saveLegendEntriesToLocalStorage } from 'container/WidgetCard/Card/FullView/utils';
 import { Dimensions } from 'hooks/useDimensions';
 import getLabelName from 'lib/getLabelName';
 import _noop from 'lodash-es/noop';

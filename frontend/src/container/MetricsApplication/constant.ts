@@ -1,5 +1,5 @@
 import { DownloadOptions } from 'container/Download/Download.types';
-import { MenuItemKeys } from 'container/GridCardLayout/WidgetHeader/contants';
+import { MenuItemKeys } from 'container/WidgetCard/Header/contants';
 import {
 	MetricAggregateOperator,
 	TracesAggregatorOperator,

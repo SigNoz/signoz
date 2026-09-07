@@ -31,7 +31,7 @@ jest.mock('hooks/useDebounce', () => ({
 	default: <T,>(value: T): T => value,
 }));
 
-jest.mock('../QueryBuilderSearch/OptionRenderer', () => ({
+jest.mock('../OptionRenderer/OptionRenderer', () => ({
 	__esModule: true,
 	default: ({ value }: { value: string }): JSX.Element => <span>{value}</span>,
 }));

@@ -107,8 +107,8 @@ func SynthesizeKeys(field *telemetrytypes.TelemetryFieldKey, value any) []*telem
 		fieldContext = telemetrytypes.FieldContextAttribute
 	}
 	fieldDataType := field.FieldDataType
-	// Resource values are strings; pin the type so operand coercion applies.
-	if fieldContext == telemetrytypes.FieldContextResource &&
+	// Resource and scope values are strings; pin the type so operand coercion applies.
+	if (fieldContext == telemetrytypes.FieldContextResource || fieldContext == telemetrytypes.FieldContextScope) &&
 		fieldDataType == telemetrytypes.FieldDataTypeUnspecified {
 		fieldDataType = telemetrytypes.FieldDataTypeString
 	}

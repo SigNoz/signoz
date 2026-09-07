@@ -428,20 +428,24 @@ func (b *StatementBuilder) buildTemporalAggDeltaFastPath(
 		sb.SelectMore(fmt.Sprintf("`%s`", GroupByColumnAlias(i, g.Name)))
 	}
 
-	aggCol, err := metricstelemetryschema.AggregationColumnForSamplesTable(
-		samplesTable, query.Aggregations[0].Temporality, query.Aggregations[0].TimeAggregation,
-	)
-	if err != nil {
-		return "", nil, err
-	}
-	if query.Aggregations[0].TimeAggregation == metrictypes.TimeAggregationRate {
-		// TODO(srikanthccv): should it be step interval or use [start_time_unix_nano](https://github.com/open-telemetry/opentelemetry-proto/blob/d3fb76d70deb0874692bd0ebe03148580d85f3bb/opentelemetry/proto/metrics/v1/metrics.proto#L400C11-L400C31)?
-		aggCol = fmt.Sprintf("%s/%d", aggCol, stepSec)
-	}
-
+	var aggCol string
 	if query.Aggregations[0].SpaceAggregation.IsPercentile() &&
 		query.Aggregations[0].Type == metrictypes.ExpHistogramType {
+		// merging sketches already spans every series in the step, so neither a
+		// samples-table value column nor the rate divisor applies
 		aggCol = fmt.Sprintf("quantilesDDMerge(0.01, %f)(sketch)[1]", query.Aggregations[0].SpaceAggregation.Percentile())
+	} else {
+		col, err := metricstelemetryschema.AggregationColumnForSamplesTable(
+			samplesTable, query.Aggregations[0].Temporality, query.Aggregations[0].TimeAggregation,
+		)
+		if err != nil {
+			return "", nil, err
+		}
+		aggCol = col
+		if query.Aggregations[0].TimeAggregation == metrictypes.TimeAggregationRate {
+			// TODO(srikanthccv): should it be step interval or use [start_time_unix_nano](https://github.com/open-telemetry/opentelemetry-proto/blob/d3fb76d70deb0874692bd0ebe03148580d85f3bb/opentelemetry/proto/metrics/v1/metrics.proto#L400C11-L400C31)?
+			aggCol = fmt.Sprintf("%s/%d", aggCol, stepSec)
+		}
 	}
 
 	sb.SelectMore(fmt.Sprintf("%s AS value", aggCol))

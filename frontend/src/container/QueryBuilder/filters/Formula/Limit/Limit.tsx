@@ -1,6 +1,6 @@
 import { InputNumber } from 'antd';
 
-import { selectStyle } from '../../QueryBuilderSearch/config';
+import { selectStyle } from '../../QueryBuilderSearchV2/config';
 import { handleKeyDownLimitFilter } from '../../utils';
 import { LimitFilterProps } from './types';
 

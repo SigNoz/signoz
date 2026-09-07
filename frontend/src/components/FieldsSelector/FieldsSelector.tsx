@@ -28,6 +28,9 @@ interface FieldsSelectorProps {
 	signal: DataSource;
 	maxFields?: number;
 	requiredFields?: readonly string[];
+	// Lets users add a free-typed field which
+	// does not show up in the suggestions
+	allowCustomFields?: boolean;
 	width?: number;
 	height?: number;
 	defaultPosition?: { x: number; y: number };
@@ -46,6 +49,7 @@ function FieldsSelectorContent({
 	signal,
 	maxFields,
 	requiredFields,
+	allowCustomFields,
 	width = DEFAULT_PANEL_WIDTH,
 	height,
 	defaultPosition,
@@ -67,7 +71,7 @@ function FieldsSelectorContent({
 
 	const handleInputChange = useCallback(
 		(e: React.ChangeEvent<HTMLInputElement>): void => {
-			const value = e.target.value.trim().toLowerCase();
+			const value = e.target.value.trim();
 			setInputValue(value);
 			debouncedUpdate(value);
 		},
@@ -153,6 +157,7 @@ function FieldsSelectorContent({
 					addedFields={draftFields}
 					onAdd={handleAdd}
 					isAtLimit={isAtLimit}
+					allowCustomFields={allowCustomFields}
 				/>
 
 				{hasUnsavedChanges && (
@@ -192,7 +197,7 @@ function FieldsSelector({
 		() =>
 			fields.map((f) => ({
 				...f,
-				key: f.key ?? buildCompositeKey(f.name, f.fieldContext),
+				key: buildCompositeKey(f.name, f.fieldContext, f.fieldDataType),
 			})),
 		[fields],
 	);

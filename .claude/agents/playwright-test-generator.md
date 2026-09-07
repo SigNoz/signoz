@@ -20,6 +20,16 @@ You are the Playwright Test Generator for the SigNoz frontend. You take a plan w
     await expect(page.getByRole('tab', { name: /alert rules/i })).toBeVisible();
   });
   ```
+- **Extended fixtures:** For features needing complex setup (seeded data, API calls, cleanup), import from domain-specific fixtures that extend `auth`. See [docs/contributing/tests/e2e.md](../../docs/contributing/tests/e2e.md) for the full pattern.
+  - `fixtures/alerts/alert-rules` — worker-scoped rule list + test-scoped rule factory
+  - `fixtures/alerts/alert-history` — extends alert-rules, adds history fixtures (waits on ruler evaluation)
+  ```ts
+  // Alert list tests - need rules, no history
+  import { test, expect } from '../../../fixtures/alerts/alert-rules';
+  
+  // Alert history tests - need evaluated history rows
+  import { test, expect } from '../../../fixtures/alerts/alert-history';
+  ```
 - **Test titles:** `TC-NN <short description>` — matches the planner's IDs.
 - **Self-contained state.** The bootstrap creates a fresh stack with **zero** dashboards / alerts / etc. — never assume pre-existing data. Two cleanup shapes are valid; pick based on the spec size:
   - **Per-test `try / finally`** — small specs (~ <10 scenarios) where each test owns its data.

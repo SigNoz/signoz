@@ -15,6 +15,11 @@ import { getFormattedDate } from 'utils/timeUtils';
 
 import BillingContainer from './BillingContainer';
 
+jest.mock('hooks/useActiveLicenseKey/useActiveLicenseKey', () => ({
+	__esModule: true,
+	default: jest.fn(() => ({ licenseKey: 'test-key', isLoading: false })),
+}));
+
 window.ResizeObserver =
 	window.ResizeObserver ||
 	jest.fn().mockImplementation(() => ({

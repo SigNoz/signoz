@@ -1,4 +1,3 @@
-import { AttributeValuesMap } from 'components/ClientSideQBSearch/ClientSideQBSearch';
 import { OperatorConfigKeys, OPERATORS_CONFIG } from 'constants/queryBuilder';
 import { HAVING_FILTER_REGEXP } from 'constants/regExp';
 import { IOption } from 'hooks/useResourceAttribute/types';
@@ -11,7 +10,7 @@ import {
 	orderByValueDelimiter,
 	splitOrderByFromString,
 } from './OrderByFilter/utils';
-import { getRemoveOrderFromValue } from './QueryBuilderSearch/utils';
+import { getRemoveOrderFromValue } from './QueryBuilderSearchV2/utils';
 
 export const handleKeyDownLimitFilter: React.KeyboardEventHandler<
 	HTMLInputElement
@@ -100,23 +99,6 @@ export const getValidOrderByResult = (result: IOption[]): IOption[] =>
 
 		return acc;
 	}, []);
-
-export const transformKeyValuesToAttributeValuesMap = (
-	attributeValuesMap: Record<string, string[] | number[] | boolean[]>,
-): AttributeValuesMap =>
-	Object.fromEntries(
-		Object.entries(attributeValuesMap || {}).map(([key, values]) => [
-			key,
-			{
-				stringAttributeValues:
-					typeof values[0] === 'string' ? (values as string[]) : [],
-				numberAttributeValues:
-					typeof values[0] === 'number' ? (values as number[]) : [],
-				boolAttributeValues:
-					typeof values[0] === 'boolean' ? (values as boolean[]) : [],
-			},
-		]),
-	);
 
 export const filterByOperatorConfig = (
 	options: IOption[],

@@ -8,12 +8,19 @@ import {
 
 import ChangelogRenderer from '../components/ChangelogRenderer';
 
-// Mock react-markdown to just render children as plain text
+// Mock react-markdown to render children as plain text and a sample
+// anchor through the `components.a` override
 jest.mock(
 	'react-markdown',
 	() =>
-		function ReactMarkdown({ children }: any) {
-			return <div>{children}</div>;
+		function ReactMarkdown({ children, components }: any) {
+			const Anchor = components?.a;
+			return (
+				<div>
+					{children}
+					{Anchor && <Anchor href="https://signoz.io/docs">docs</Anchor>}
+				</div>
+			);
 		},
 );
 
@@ -61,5 +68,15 @@ describe('ChangelogRenderer', () => {
 		expect(screen.getByText('Feature 1')).toBeInTheDocument();
 		expect(screen.getByAltText('Media')).toBeInTheDocument();
 		expect(screen.getByText('Description for feature 1')).toBeInTheDocument();
+	});
+
+	it('renders markdown links that open in a new tab', () => {
+		render(<ChangelogRenderer changelog={mockChangelog} />);
+		const links = screen.getAllByRole('link', { name: 'docs' });
+		expect(links.length).toBeGreaterThan(0);
+		links.forEach((link) => {
+			expect(link).toHaveAttribute('target', '_blank');
+			expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+		});
 	});
 });

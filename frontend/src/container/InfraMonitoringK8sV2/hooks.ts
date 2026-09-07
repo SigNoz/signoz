@@ -16,8 +16,8 @@ import {
 import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
 
 import {
+	DEFAULT_K8S_CATEGORY,
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
-	K8sCategories,
 	VIEWS,
 } from './constants';
 import { orderBySchema, OrderBySchemaType } from './schemas';
@@ -34,6 +34,9 @@ export const useInfraMonitoringPageListing = (): UseQueryStateReturn<
 > =>
 	useQueryState(
 		INFRA_MONITORING_K8S_PARAMS_KEYS.PAGE,
+		// do not use .withDefault here, this can cause bugs when
+		// two hooks of nuqs define default twice, this is also
+		// defined at useTableParams
 		parseAsInteger.withOptions(defaultNuqsOptions),
 	);
 
@@ -127,19 +130,23 @@ export const useInfraMonitoringCategory = (): UseQueryStateReturn<
 > =>
 	useQueryState(
 		INFRA_MONITORING_K8S_PARAMS_KEYS.CATEGORY,
-		parseAsString.withDefault(K8sCategories.PODS).withOptions(defaultNuqsOptions),
+		parseAsString
+			.withDefault(DEFAULT_K8S_CATEGORY)
+			.withOptions({ ...defaultNuqsOptions, clearOnDefault: false }),
 	);
 
 export interface SelectedItemParams {
 	selectedItem: string | null;
 	clusterName?: string | null;
 	namespaceName?: string | null;
+	containerName?: string | null;
 }
 
 const selectedItemParamsParsers = {
 	[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM]: parseAsString,
 	[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CLUSTER_NAME]: parseAsString,
 	[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_NAMESPACE_NAME]: parseAsString,
+	[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CONTAINER_NAME]: parseAsString,
 };
 
 export type UseSelectedItemParamsReturn = [
@@ -164,6 +171,9 @@ export const useInfraMonitoringSelectedItemParams =
 				namespaceName:
 					rawParams[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_NAMESPACE_NAME] ??
 					null,
+				containerName:
+					rawParams[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CONTAINER_NAME] ??
+					null,
 			}),
 			[rawParams],
 		);
@@ -175,6 +185,7 @@ export const useInfraMonitoringSelectedItemParams =
 						[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM]: null,
 						[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CLUSTER_NAME]: null,
 						[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_NAMESPACE_NAME]: null,
+						[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CONTAINER_NAME]: null,
 					});
 					return;
 				}
@@ -186,6 +197,8 @@ export const useInfraMonitoringSelectedItemParams =
 						newParams.clusterName ?? null,
 					[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_NAMESPACE_NAME]:
 						newParams.namespaceName ?? null,
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CONTAINER_NAME]:
+						newParams.containerName ?? null,
 				});
 			},
 			[setRawParams],

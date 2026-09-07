@@ -2,6 +2,8 @@ package impldashboard
 
 import (
 	"context"
+	"log/slog"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/transition"
@@ -19,9 +21,12 @@ func (m *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy stri
 		return nil, err
 	}
 
-	dashboard := postable.NewDashboardV2(orgID, createdBy, source)
+	dashboard, err := postable.NewDashboardV2(orgID, createdBy, source)
+	if err != nil {
+		return nil, err
+	}
 
-	err := m.store.RunInTx(ctx, func(ctx context.Context) error {
+	err = m.store.RunInTx(ctx, func(ctx context.Context) error {
 		resolvedTags, err := m.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, dashboard.ID, postable.Tags)
 		if err != nil {
 			return err
@@ -120,6 +125,20 @@ func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UU
 	return storable.ToDashboardV2(tags)
 }
 
+func (module *module) getByNameV2(ctx context.Context, orgID valuer.UUID, name string) (*dashboardtypes.DashboardV2, error) {
+	storable, err := module.store.GetByName(ctx, orgID, name)
+	if err != nil {
+		return nil, err
+	}
+
+	tags, err := module.tagModule.ListForResource(ctx, orgID, coretypes.KindDashboard, storable.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return storable.ToDashboardV2(tags)
+}
+
 // MigrateV2 retries the v1→v2 migration on a dashboard still stored as v1 (one the
 // bulk 103 migration skipped or failed). Idempotent: an already-v2 one is unchanged.
 func (module *module) MigrateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
@@ -179,13 +198,33 @@ func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer
 		return nil, err
 	}
 
-	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
-		resolvedTags, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, id, updatable.Tags)
+	return module.updateV2(ctx, orgID, existing, updatedBy, updatable, existing.Update)
+}
+
+// updateUnsafeV2 updates a dashboard bypassing the guards. Intended for internal system callers.
+func (module *module) updateUnsafeV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, updatable dashboardtypes.UpdatableDashboardV2) (*dashboardtypes.DashboardV2, error) {
+	if err := updatable.Validate(); err != nil {
+		return nil, err
+	}
+
+	existing, err := module.GetV2(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return module.updateV2(ctx, orgID, existing, updatedBy, updatable, existing.UpdateUnsafe)
+}
+
+// apply is existing.Update or existing.UpdateUnsafe, so the gated path keeps its
+// in-transaction checks and only updateUnsafeV2 skips them.
+func (module *module) updateV2(ctx context.Context, orgID valuer.UUID, existing *dashboardtypes.DashboardV2, updatedBy string, updatable dashboardtypes.UpdatableDashboardV2, apply func(dashboardtypes.UpdatableDashboardV2, string, []*tagtypes.Tag) error) (*dashboardtypes.DashboardV2, error) {
+	err := module.store.RunInTx(ctx, func(ctx context.Context) error {
+		resolvedTags, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, existing.ID, updatable.Tags)
 		if err != nil {
 			return err
 		}
 
-		err = existing.Update(updatable, updatedBy, resolvedTags)
+		err = apply(updatable, updatedBy, resolvedTags)
 		if err != nil {
 			return err
 		}
@@ -295,4 +334,99 @@ func (module *module) UnpinV2(ctx context.Context, orgID valuer.UUID, userID val
 
 func (module *module) DeletePreferencesForUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) error {
 	return module.store.DeletePreferencesForUser(ctx, orgID, userID)
+}
+
+func (m *module) ReconcileSystemDashboards(ctx context.Context, orgID valuer.UUID) error {
+	for _, definition := range m.systemDashboardRegistry.List() {
+		if err := m.reconcileSystemDashboard(ctx, orgID, definition); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *module) reconcileSystemDashboard(ctx context.Context, orgID valuer.UUID, definition dashboardtypes.SystemDashboardDefinition) error {
+	existing, err := m.getByNameV2(ctx, orgID, definition.Name())
+	if err != nil {
+		if !errors.Ast(err, errors.TypeNotFound) {
+			return err
+		}
+		return m.provisionSystemDashboard(ctx, orgID, definition)
+	}
+
+	state, err := m.store.GetSystemDashboard(ctx, orgID, definition.Name())
+	if err != nil {
+		return err
+	}
+	// Only ever move forward: a downgrade must not rewrite the newer content.
+	if state.Version >= definition.Version {
+		return nil
+	}
+
+	return m.upgradeSystemDashboard(ctx, orgID, existing.ID, definition)
+}
+
+// provisionSystemDashboard creates the dashboard and its state row in one transaction,
+// so a system dashboard can never exist without the version it was provisioned at.
+// A concurrent provisioner (another replica, or the org-creation hook racing the
+// startup sweep) loses on the state row's unique (org_id, name) index and rolls back.
+func (m *module) provisionSystemDashboard(ctx context.Context, orgID valuer.UUID, definition dashboardtypes.SystemDashboardDefinition) error {
+	err := m.store.RunInTx(ctx, func(ctx context.Context) error {
+		created, err := m.CreateV2(
+			ctx,
+			orgID,
+			dashboardtypes.ProvisionerIdentity,
+			valuer.UUID{},
+			dashboardtypes.SourceSystem,
+			definition.Dashboard,
+		)
+		if err != nil {
+			return err
+		}
+
+		return m.store.CreateSystemDashboard(ctx, dashboardtypes.NewStorableSystemDashboard(orgID, created.ID, definition.Name(), definition.Version))
+	})
+	if err != nil {
+		if errors.Ast(err, errors.TypeAlreadyExists) {
+			m.settings.Logger().DebugContext(ctx, "system dashboard already provisioned concurrently", slog.String("name", definition.Name()), slog.String("org_id", orgID.StringValue()))
+			return nil
+		}
+		return err
+	}
+
+	m.settings.Logger().InfoContext(ctx, "provisioned system dashboard", slog.String("name", definition.Name()), slog.Int("version", definition.Version), slog.String("org_id", orgID.StringValue()))
+	return nil
+}
+
+func (m *module) upgradeSystemDashboard(ctx context.Context, orgID valuer.UUID, id valuer.UUID, definition dashboardtypes.SystemDashboardDefinition) error {
+	err := m.store.RunInTx(ctx, func(ctx context.Context) error {
+		if _, err := m.updateUnsafeV2(ctx, orgID, id, dashboardtypes.ProvisionerIdentity, definition.ToUpdatable()); err != nil {
+			return err
+		}
+
+		return m.store.UpdateSystemDashboardVersion(ctx, orgID, definition.Name(), definition.Version)
+	})
+	if err != nil {
+		return err
+	}
+
+	m.settings.Logger().InfoContext(ctx, "upgraded system dashboard", slog.String("name", definition.Name()), slog.Int("version", definition.Version), slog.String("org_id", orgID.StringValue()))
+	return nil
+}
+
+func (m *module) GetSystemDashboard(ctx context.Context, orgID valuer.UUID, name string) (*dashboardtypes.DashboardV2, error) {
+	if strings.HasPrefix(name, dashboardtypes.SystemDashboardNamePrefix) {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "name must not carry the %q prefix", dashboardtypes.SystemDashboardNamePrefix)
+	}
+
+	existing, err := m.getByNameV2(ctx, orgID, dashboardtypes.SystemDashboardNamePrefix+name)
+	if err != nil {
+		return nil, err
+	}
+	if err := existing.ErrIfNotSystem(); err != nil {
+		return nil, err
+	}
+
+	return existing, nil
 }

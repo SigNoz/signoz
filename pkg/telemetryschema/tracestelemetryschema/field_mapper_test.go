@@ -85,6 +85,45 @@ func TestGetFieldKeyName(t *testing.T) {
 			expectedError:  nil,
 		},
 		{
+			name: "Scope field - scope.name",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "scope.name",
+				FieldContext: telemetrytypes.FieldContextScope,
+			},
+			expectedResult: "scope.name::String",
+			expectedError:  nil,
+		},
+		{
+			name: "Scope field - scope.version",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "scope.version",
+				FieldContext: telemetrytypes.FieldContextScope,
+			},
+			expectedResult: "scope.version::String",
+			expectedError:  nil,
+		},
+		{
+			name: "Scope field - custom attribute",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "custom.attr",
+				FieldContext: telemetrytypes.FieldContextScope,
+			},
+			expectedResult: "scope.attributes.`custom.attr`::String",
+			expectedError:  nil,
+		},
+		{
+			// `scope.attribute.name` normalizes to {attribute.name, scope}; the literal
+			// `attribute.` prefix is dropped so it addresses the scope attribute named `name`
+			// (which the declared `scope.name` path deliberately does not).
+			name: "Scope field - attribute prefix addresses the named scope attribute",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:         "attribute.name",
+				FieldContext: telemetrytypes.FieldContextScope,
+			},
+			expectedResult: "scope.attributes.`name`::String",
+			expectedError:  nil,
+		},
+		{
 			// Query like `attribute.attribute_string:string` should resolve to `attributes_string['attribute_string']`.
 			name: "Attribute key whose name collides with contextual map column resolves as a map lookup",
 			key: telemetrytypes.TelemetryFieldKey{
@@ -303,4 +342,100 @@ func TestColumnExpressionForTimestampAttributeCollision(t *testing.T) {
 		require.NoError(t, err)
 		assert.Contains(t, result, "attributes_number['timestamp']")
 	})
+}
+
+// TestColumnExpressionForScopeDeclaredPath covers select-side resolution of scope names that
+// collide with a declared scope path. A short name under scope context (or the bare
+// `scope.<x>` spelling that normalizes to it) names both homes and coalesces them when
+// metadata knows a same-named scope attribute, and binds to the declared path alone when it
+// does not. The full `scope.<x>` name under explicit scope context addresses the declared
+// path alone; the explicit `scope.attribute.` prefix addresses the attribute alone.
+func TestColumnExpressionForScopeDeclaredPath(t *testing.T) {
+	ctx := context.Background()
+
+	scopeKey := func(name string) *telemetrytypes.TelemetryFieldKey {
+		return &telemetrytypes.TelemetryFieldKey{
+			Name:          name,
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  telemetrytypes.FieldContextScope,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		}
+	}
+	declaredOnly := map[string][]*telemetrytypes.TelemetryFieldKey{
+		"scope.name":    {scopeKey("scope.name")},
+		"scope.version": {scopeKey("scope.version")},
+	}
+	withAttr := map[string][]*telemetrytypes.TelemetryFieldKey{
+		"scope.name":    {scopeKey("scope.name")},
+		"scope.version": {scopeKey("scope.version")},
+		"name":          {scopeKey("name")},
+		"version":       {scopeKey("version")},
+	}
+
+	testCases := []struct {
+		name           string
+		key            telemetrytypes.TelemetryFieldKey
+		keys           map[string][]*telemetrytypes.TelemetryFieldKey
+		expectedResult string
+	}{
+		{
+			name:           "short name under scope context binds to the declared path",
+			key:            telemetrytypes.TelemetryFieldKey{Name: "version", FieldContext: telemetrytypes.FieldContextScope},
+			keys:           declaredOnly,
+			expectedResult: "multiIf(scope.version::String <> '', scope.version::String, NULL)",
+		},
+		{
+			name:           "full scope.version name under scope context addresses the declared path alone",
+			key:            telemetrytypes.TelemetryFieldKey{Name: "scope.version", FieldContext: telemetrytypes.FieldContextScope},
+			keys:           withAttr,
+			expectedResult: "multiIf(scope.version::String <> '', scope.version::String, NULL)",
+		},
+		{
+			name:           "full scope.name name under scope context addresses the declared path alone",
+			key:            telemetrytypes.TelemetryFieldKey{Name: "scope.name", FieldContext: telemetrytypes.FieldContextScope},
+			keys:           withAttr,
+			expectedResult: "multiIf(scope.name::String <> '', scope.name::String, NULL)",
+		},
+		{
+			// `scope.attribute.name` normalizes to {attribute.name, scope}; the `attribute.`
+			// prefix is dropped so it addresses the scope attribute named `name` — the only
+			// way to reach it, since `scope.name` is reserved for the declared path.
+			name:           "attribute prefix reaches the named scope attribute",
+			key:            telemetrytypes.TelemetryFieldKey{Name: "attribute.name", FieldContext: telemetrytypes.FieldContextScope},
+			keys:           withAttr,
+			expectedResult: "multiIf(scope.attributes.`name` IS NOT NULL, scope.attributes.`name`::String, NULL)",
+		},
+		{
+			// the caller supplied the context, so `scope.` is part of the name rather than a
+			// prefix to strip: this addresses a scope attribute literally named
+			// `scope.testing.env`, not the attribute `testing.env`
+			name:           "explicit context keeps a scope-prefixed name intact",
+			key:            telemetrytypes.TelemetryFieldKey{Name: "scope.testing.env", FieldContext: telemetrytypes.FieldContextScope},
+			keys:           declaredOnly,
+			expectedResult: "multiIf(scope.attributes.`scope.testing.env` IS NOT NULL, scope.attributes.`scope.testing.env`::String, NULL)",
+		},
+		{
+			// metadata knows both homes under this name, so the short spelling coalesces
+			// them instead of being rejected as ambiguous
+			name:           "short name coalesces a known scope attribute with the declared path",
+			key:            telemetrytypes.TelemetryFieldKey{Name: "name", FieldContext: telemetrytypes.FieldContextScope},
+			keys:           withAttr,
+			expectedResult: "multiIf(scope.attributes.`name` IS NOT NULL, toString(scope.attributes.`name`::String), scope.name::String <> '', toString(scope.name::String), NULL)",
+		},
+		{
+			name:           "short version coalesces a known scope attribute with the declared path",
+			key:            telemetrytypes.TelemetryFieldKey{Name: "version", FieldContext: telemetrytypes.FieldContextScope},
+			keys:           withAttr,
+			expectedResult: "multiIf(scope.attributes.`version` IS NOT NULL, toString(scope.attributes.`version`::String), scope.version::String <> '', toString(scope.version::String), NULL)",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			fm := NewFieldMapper(flaggertest.New(t))
+			result, err := fm.ColumnExpressionFor(ctx, valuer.UUID{}, 0, 0, &tc.key, telemetrytypes.FieldDataTypeUnspecified, tc.keys)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedResult, result)
+		})
+	}
 }

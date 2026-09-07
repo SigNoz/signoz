@@ -332,6 +332,33 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v2/dashboards/system/{name}", handler.New(
+		provider.authzMiddleware.CheckResources(provider.dashboardHandler.GetSystemDashboard, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
+		handler.OpenAPIDef{
+			ID:                  "GetSystemDashboard",
+			Tags:                []string{"dashboard"},
+			Summary:             "Get system dashboard",
+			Description:         "Returns a dashboard SigNoz ships and owns, addressed by its stable definition name (e.g. `ai-o11y-overview`) rather than its id. System dashboards are read-only and upgraded through releases. The dashboard's own `name` field carries a reserved prefix that the path segment must not include.",
+			Request:             nil,
+			RequestContentType:  "",
+			Response:            new(dashboardtypes.GettableSystemDashboard),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+			Deprecated:          false,
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceDashboard.Scope(coretypes.VerbRead)}),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceDashboard,
+			Verb:     coretypes.VerbRead,
+			Category: coretypes.ActionCategoryDataAccess,
+			ID:       provider.systemDashboardID(),
+			Selector: coretypes.IDSelector,
+		}),
+	)).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
 	// Pinning mutates the calling user's pin list, not the dashboard, so it rides
 	// on the collection-level list permission rather than a per-dashboard check.
 	// The id is still extracted, for audit.
@@ -717,4 +744,24 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 	}
 
 	return nil
+}
+
+// systemDashboardID resolves the {name} path param to the dashboard's id. Authz
+// tuples and audit records are written against ids, so the name has to be
+// resolved before either runs.
+func (provider *provider) systemDashboardID() coretypes.ResourceIDExtractor {
+	return coretypes.NewResourceIDExtractor(coretypes.PhaseRequest, func(ec coretypes.ExtractorContext) (string, error) {
+		ctx := ec.Request.Context()
+		claims, err := authtypes.ClaimsFromContext(ctx)
+		if err != nil {
+			return "", err
+		}
+
+		systemDashboard, err := provider.dashboardModule.GetSystemDashboard(ctx, valuer.MustNewUUID(claims.OrgID), mux.Vars(ec.Request)["name"])
+		if err != nil {
+			return "", err
+		}
+
+		return systemDashboard.ID.StringValue(), nil
+	})
 }

@@ -16,6 +16,7 @@ import {
 	Link,
 } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
+import { normalizeTimeToMs } from 'utils/timeUtils';
 import { ILog } from 'types/api/logs/log';
 import { MouseEvent, MouseEventHandler } from 'react';
 import { useCopyToClipboard } from 'react-use';
@@ -67,6 +68,11 @@ function LogDetailsHeader({
 		},
 	];
 
+	const rawTimestamp = log.date ?? log.timestamp;
+	const displayTimestamp = Number.isNaN(Number(rawTimestamp))
+		? rawTimestamp
+		: normalizeTimeToMs(rawTimestamp);
+
 	return (
 		<div className={styles.header} data-log-detail-ignore="true">
 			<div className={styles.leftSection}>
@@ -76,7 +82,7 @@ function LogDetailsHeader({
 					data-testid="log-details-header-timestamp"
 				>
 					{formatTimezoneAdjustedTimestamp(
-						log.date ?? log.timestamp,
+						displayTimestamp,
 						DATE_TIME_FORMATS.DASH_DATETIME,
 					)}
 				</Typography.Text>

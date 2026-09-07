@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { RESTRICTED_SELECTED_FIELDS } from 'container/LogsFilters/config';
-import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
+import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 
@@ -88,7 +88,7 @@ jest.mock('react-router-dom', () => ({
 }));
 
 jest.mock('hooks/queryBuilder/useQueryBuilder');
-jest.mock('hooks/queryBuilder/useGetSearchQueryParam');
+jest.mock('hooks/saveViews/useGetSavedViewParams');
 
 describe('TableViewActions', () => {
 	const TEST_VALUE = 'test value';
@@ -140,8 +140,10 @@ describe('TableViewActions', () => {
 			}),
 		} as any);
 
-		// Default mock for useGetSearchQueryParam
-		jest.mocked(useGetSearchQueryParam).mockReturnValue(null);
+		// Default mock for useGetSavedViewParams
+		jest
+			.mocked(useGetSavedViewParams)
+			.mockReturnValue({ viewName: '', viewKey: '' });
 	});
 
 	it('should render without crashing', () => {
@@ -249,7 +251,9 @@ describe('TableViewActions', () => {
 			updateQueriesData: mockUpdateQueriesData,
 		} as any);
 
-		jest.mocked(useGetSearchQueryParam).mockReturnValue(null);
+		jest
+			.mocked(useGetSavedViewParams)
+			.mockReturnValue({ viewName: '', viewKey: '' });
 
 		render(
 			<TableViewActions
@@ -268,8 +272,6 @@ describe('TableViewActions', () => {
 		expect(defaultProps.handleChangeSelectedView).toHaveBeenCalledWith(
 			ExplorerViews.TIMESERIES,
 			expect.objectContaining({
-				name: '',
-				id: 'test-query-id',
 				query: expect.objectContaining({
 					builder: expect.objectContaining({
 						queryData: expect.arrayContaining([

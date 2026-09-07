@@ -78,8 +78,6 @@ function AllAttributes({
 				PANEL_TYPES.TIME_SERIES,
 				{
 					query: compositeQuery,
-					name: metricName,
-					id: metricName,
 				},
 				ROUTES.METRICS_EXPLORER_EXPLORER,
 				true,
@@ -109,8 +107,6 @@ function AllAttributes({
 				PANEL_TYPES.TIME_SERIES,
 				{
 					query: compositeQuery,
-					name: metricName,
-					id: metricName,
 				},
 				ROUTES.METRICS_EXPLORER_EXPLORER,
 				true,

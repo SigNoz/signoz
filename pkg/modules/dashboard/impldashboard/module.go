@@ -21,23 +21,25 @@ import (
 )
 
 type module struct {
-	store       dashboardtypes.Store
-	settings    factory.ScopedProviderSettings
-	analytics   analytics.Analytics
-	orgGetter   organization.Getter
-	queryParser queryparser.QueryParser
-	tagModule   tag.Module
+	store                   dashboardtypes.Store
+	settings                factory.ScopedProviderSettings
+	analytics               analytics.Analytics
+	orgGetter               organization.Getter
+	queryParser             queryparser.QueryParser
+	tagModule               tag.Module
+	systemDashboardRegistry dashboardtypes.SystemDashboardRegistry
 }
 
-func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, queryParser queryparser.QueryParser, tagModule tag.Module) dashboard.Module {
+func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, queryParser queryparser.QueryParser, tagModule tag.Module, systemDashboardRegistry dashboardtypes.SystemDashboardRegistry) dashboard.Module {
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard")
 	return &module{
-		store:       store,
-		settings:    scopedProviderSettings,
-		analytics:   analytics,
-		orgGetter:   orgGetter,
-		queryParser: queryParser,
-		tagModule:   tagModule,
+		store:                   store,
+		settings:                scopedProviderSettings,
+		analytics:               analytics,
+		orgGetter:               orgGetter,
+		queryParser:             queryParser,
+		tagModule:               tagModule,
+		systemDashboardRegistry: systemDashboardRegistry,
 	}
 }
 

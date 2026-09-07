@@ -19,6 +19,7 @@ pytest_plugins = [
     "fixtures.traces",
     "fixtures.metrics",
     "fixtures.queriercommon",
+    "fixtures.semconvfamilies",
     "fixtures.metadata",
     "fixtures.meter",
     "fixtures.browser",

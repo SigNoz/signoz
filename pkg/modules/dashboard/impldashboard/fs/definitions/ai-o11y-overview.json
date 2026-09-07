@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "definition": {
+    "schemaVersion": "v6",
+    "name": "signoz---ai-o11y-overview",
+    "tags": [],
+    "spec": {
+      "display": {
+        "name": "AI Observability Overview",
+        "description": "Overview of LLM traffic. Panels ship in an upcoming release."
+      },
+      "variables": [],
+      "panels": {},
+      "layouts": []
+    }
+  }
+}
