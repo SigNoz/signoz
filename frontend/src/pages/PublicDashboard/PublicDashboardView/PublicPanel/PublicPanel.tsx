@@ -1,5 +1,4 @@
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
-import cx from 'classnames';
 import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { noop } from 'lodash-es';
 import PanelBody from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelBody/PanelBody';
@@ -8,8 +7,8 @@ import StaticPanelBody from 'pages/DashboardPage/DashboardContainer/PanelsAndSec
 import type { DashboardPreference } from 'pages/DashboardPage/DashboardContainer/Panels/types/rendererProps';
 import type { RenderableQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
+import { useTextBackground } from 'pages/DashboardPage/DashboardContainer/Panels/hooks/useTextBackground';
 import { isPanelHeaderHidden } from 'pages/DashboardPage/DashboardContainer/Panels/utils/isPanelHeaderHidden';
-import { isTransparentPanel } from 'pages/DashboardPage/DashboardContainer/Panels/utils/isTransparentPanel';
 
 import { usePublicPanelQuery } from '../hooks/usePublicPanelQuery';
 import styles from './PublicPanel.module.scss';
@@ -40,12 +39,12 @@ const PUBLIC_DASHBOARD_PREFERENCE: DashboardPreference = {
 function PublicPanel(props: PublicPanelProps): JSX.Element {
 	const { panel, panelKey } = props;
 	const panelDefinition = getPanelDefinition(panel.spec.plugin.kind);
+	const background = useTextBackground(panel.spec);
 
 	return (
 		<div
-			className={cx(styles.panel, {
-				[styles.transparent]: isTransparentPanel(panel.spec),
-			})}
+			className={styles.panel}
+			style={background.style}
 			data-panel-root={panelKey}
 		>
 			{panelDefinition.mode === 'static' ? (

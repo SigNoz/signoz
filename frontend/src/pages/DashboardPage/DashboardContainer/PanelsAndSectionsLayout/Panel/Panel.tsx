@@ -1,8 +1,8 @@
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
+import { useTextBackground } from 'pages/DashboardPage/DashboardContainer/Panels/hooks/useTextBackground';
 import { isPanelHeaderHidden } from 'pages/DashboardPage/DashboardContainer/Panels/utils/isPanelHeaderHidden';
-import { isTransparentPanel } from 'pages/DashboardPage/DashboardContainer/Panels/utils/isTransparentPanel';
 
 import type { DashboardSection } from '../../utils';
 import PanelActionsMenu from './PanelActionsMenu/PanelActionsMenu';
@@ -41,12 +41,12 @@ function Panel({
 	panelActions,
 }: PanelProps): JSX.Element {
 	const panelDefinition = getPanelDefinition(panel.spec.plugin.kind);
+	const background = useTextBackground(panel.spec);
 
 	return (
 		<div
-			className={cx(styles.panel, {
-				[styles.transparent]: isTransparentPanel(panel.spec),
-			})}
+			className={styles.panel}
+			style={background.style}
 			data-panel-visible={isVisible === false ? 'false' : 'true'}
 			// Stable locator so the "Download as PNG" action can find this node to
 			// capture, without threading a ref through the header/actions chain.

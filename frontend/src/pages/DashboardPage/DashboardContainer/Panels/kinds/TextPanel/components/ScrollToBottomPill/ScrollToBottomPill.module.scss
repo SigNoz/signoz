@@ -9,16 +9,16 @@
 	justify-content: center;
 	gap: 4px;
 	padding: 4px 12px 4px 10px;
-	background-color: var(--l1-border);
+	background-color: var(--text-panel-pill-surface, var(--l1-border));
 	border-radius: 20px;
 	cursor: pointer;
 	transition: background-color 0.1s;
-	color: var(--l2-foreground);
+	color: var(--text-panel-ink, var(--l2-foreground));
 
 	span {
 		font-size: 12px;
 		line-height: 18px;
-		color: var(--l2-foreground);
+		color: var(--text-panel-ink, var(--l2-foreground));
 	}
 
 	svg {

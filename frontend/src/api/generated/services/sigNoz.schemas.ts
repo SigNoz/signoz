@@ -5032,10 +5032,6 @@ export interface DashboardtypesHeaderOptionsDTO {
 export enum DashboardtypesTextModeDTO {
 	markdown = 'markdown',
 }
-export enum DashboardtypesPanelBackgroundDTO {
-	solid = 'solid',
-	transparent = 'transparent',
-}
 export enum DashboardtypesTextAlignDTO {
 	left = 'left',
 	center = 'center',
@@ -5047,7 +5043,10 @@ export enum DashboardtypesVerticalAlignDTO {
 	bottom = 'bottom',
 }
 export interface DashboardtypesTextPresentationDTO {
-	background?: DashboardtypesPanelBackgroundDTO;
+	/**
+	 * @type string,null
+	 */
+	background?: string | null;
 	textAlign?: DashboardtypesTextAlignDTO;
 	verticalAlign?: DashboardtypesVerticalAlignDTO;
 }

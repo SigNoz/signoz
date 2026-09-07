@@ -4,9 +4,11 @@
 	flex-direction: column;
 	height: 100%;
 	width: 100%;
-	background: var(--l2-background);
-	border: 1px solid var(--l2-border);
+	background: var(--text-panel-surface, var(--l2-background));
+	border: 1px solid var(--text-panel-border, var(--l2-border));
 	border-radius: 4px;
+	// Inherits into the header and the body, so no descendant names a colour.
+	color: var(--text-panel-ink, inherit);
 	overflow: hidden;
 }
 
@@ -24,7 +26,6 @@
 	opacity: 0;
 	pointer-events: none;
 	transition: opacity 0.15s ease;
-	background: linear-gradient(to bottom, var(--l2-background), transparent);
 }
 
 // The open-menu case: the dropdown is a portal, so hovering it un-hovers the
@@ -40,7 +41,7 @@
 	width: 64px;
 	height: 6px;
 	border-radius: 999px;
-	background: var(--l2-border);
+	background: var(--text-panel-grip, var(--l2-border));
 	cursor: grab;
 }
 
@@ -48,11 +49,4 @@
 	position: absolute;
 	top: 4px;
 	right: 8px;
-}
-
-// D7: a static kind may drop the card so its body sits on the dashboard canvas
-// (section headers). Chrome only — hover actions in the header stay reachable.
-.transparent {
-	background: transparent;
-	border-color: transparent;
 }

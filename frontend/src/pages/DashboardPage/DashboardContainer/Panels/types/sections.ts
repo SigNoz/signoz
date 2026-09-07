@@ -185,7 +185,7 @@ export const SECTION_METADATA = {
 	[SectionKind.Thresholds]: { title: 'Thresholds', icon: Antenna },
 	[SectionKind.ContextLinks]: { title: 'Context Links', icon: Link2 },
 	[SectionKind.Columns]: { title: 'Columns', icon: Columns3 },
-	[SectionKind.TextLayout]: { title: 'Text layout', icon: AlignLeft },
+	[SectionKind.TextLayout]: { title: 'Panel appearance', icon: AlignLeft },
 	[SectionKind.PanelHeader]: { title: 'Panel header', icon: PanelTop },
 } as const satisfies Record<SectionKind, SectionMetadata>;
 

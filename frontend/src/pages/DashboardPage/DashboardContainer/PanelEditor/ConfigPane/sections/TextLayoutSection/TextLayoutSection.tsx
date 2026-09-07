@@ -1,16 +1,23 @@
 import {
-	DashboardtypesPanelBackgroundDTO,
 	DashboardtypesTextAlignDTO,
 	DashboardtypesVerticalAlignDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { Typography } from '@signozhq/ui/typography';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import {
+	resolveTextBackground,
+	selectionFromResolved,
+	storedFromSelection,
+} from 'pages/DashboardPage/DashboardContainer/Panels/kinds/TextPanel/background/resolveTextBackground';
+import type { TextBackgroundSelection } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/TextPanel/background/types';
 import type {
 	SectionEditorProps,
 	SectionKind,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 
+import BackgroundSwatches from '../../controls/BackgroundSwatches/BackgroundSwatches';
+import CustomBackgroundRow from '../../controls/BackgroundSwatches/CustomBackgroundRow';
 import ConfigSegmented from '../../controls/ConfigSegmented/ConfigSegmented';
-import ConfigSwitch from '../../controls/ConfigSwitch/ConfigSwitch';
 
 import styles from './TextLayoutSection.module.scss';
 
@@ -27,14 +34,16 @@ const VERTICAL_OPTIONS = [
 ];
 
 /**
- * Edits the Text panel's `presentation` slice: body alignment and the
- * solid/transparent card background (TDD D7 — transparency is scoped to the
- * text spec, not the panel envelope).
+ * Edits the Text panel's `presentation` slice: body alignment and the card
+ * background (TDD D7 — scoped to the text spec, not the panel envelope).
  */
 function TextLayoutSection({
 	value,
 	onChange,
 }: SectionEditorProps<SectionKind.TextLayout>): JSX.Element {
+	const theme = useIsDarkMode() ? 'dark' : 'light';
+	const background = resolveTextBackground(value?.background, theme);
+
 	return (
 		<div className={styles.section}>
 			<div className={styles.field}>
@@ -55,20 +64,26 @@ function TextLayoutSection({
 					onChange={(verticalAlign): void => onChange({ ...value, verticalAlign })}
 				/>
 			</div>
-			<ConfigSwitch
-				testId="text-layout-transparent"
-				title="Transparent panel"
-				description="Drop the card background and border — for section headers on the canvas."
-				value={value?.background === DashboardtypesPanelBackgroundDTO.transparent}
-				onChange={(transparent): void =>
-					onChange({
-						...value,
-						background: transparent
-							? DashboardtypesPanelBackgroundDTO.transparent
-							: DashboardtypesPanelBackgroundDTO.solid,
-					})
-				}
-			/>
+			<div className={styles.field}>
+				<Typography.Text>Background</Typography.Text>
+				<BackgroundSwatches
+					testId="text-layout-background"
+					label="Panel background"
+					theme={theme}
+					value={selectionFromResolved(background)}
+					onChange={(selection: TextBackgroundSelection): void =>
+						onChange({
+							...value,
+							background: storedFromSelection(selection, theme),
+						})
+					}
+				/>
+				<CustomBackgroundRow
+					testId="text-layout-background-custom"
+					value={background.kind === 'custom' ? background.surface : undefined}
+					onChange={(hex): void => onChange({ ...value, background: hex })}
+				/>
+			</div>
 		</div>
 	);
 }

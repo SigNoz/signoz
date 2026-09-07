@@ -5,7 +5,7 @@ import type {
 
 /**
  * Whether the panel opted out of its header strip (`headerOptions.hide`) —
- * one localized cast over the plugin-spec union, as `isTransparentPanel`.
+ * one localized cast over the plugin-spec union, as `useTextBackground`.
  */
 export function isPanelHeaderHidden(spec: DashboardtypesPanelSpecDTO): boolean {
 	const headerOptions = (

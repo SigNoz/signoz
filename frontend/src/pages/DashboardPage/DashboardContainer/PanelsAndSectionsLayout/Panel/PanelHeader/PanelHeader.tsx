@@ -9,8 +9,6 @@ import cx from 'classnames';
 import type { PanelTimePreferenceLabel } from 'pages/DashboardPage/DashboardContainer/hooks/resolvePanelTimeWindow';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
-import { isTransparentPanel } from 'pages/DashboardPage/DashboardContainer/Panels/utils/isTransparentPanel';
-
 import type { PanelActionsConfig } from '../Panel';
 import PanelActionsMenu from '../PanelActionsMenu/PanelActionsMenu';
 import PanelHeaderSearch from './PanelHeaderSearch';
@@ -102,11 +100,7 @@ function PanelHeader(props: PanelHeaderProps): JSX.Element {
 	}
 
 	return (
-		<div
-			className={cx(styles.header, 'panel-drag-handle', {
-				[styles.transparent]: isTransparentPanel(panel.spec),
-			})}
-		>
+		<div className={cx(styles.header, 'panel-drag-handle')}>
 			<div className={styles.headerLeft}>
 				<Typography.Text className={styles.headerTitle}>{name}</Typography.Text>
 				{description && (
